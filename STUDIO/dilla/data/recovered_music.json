@@ -1,0 +1,4859 @@
+{
+  "meta": {
+    "schema": "dilla.recovered_music.v1",
+    "version": 1,
+    "recovered_from": "anon987654321/pub3:multimedia/dilla/dilla_data.json",
+    "source_blob_sha": "c81ea03303c415818bd6b02b8a9639ab174ba876",
+    "source_updated": "2025-10-16T23:43:37Z",
+    "purpose": "Preserve legacy chord theory, style-study progressions, drum grids and hardware-processing notes without presenting them as verified transcriptions.",
+    "rules": [
+      "Legacy artist and track labels are retained as research leads, not proof of a direct transcription.",
+      "Legacy frequency arrays are omitted; notes are regenerated through pub4's canonical chord parser.",
+      "Recovered progression profiles are selectable but never added to the default stream rotation.",
+      "Timing values are implementation defaults, not measured facts about an artist or recording."
+    ]
+  },
+  "chord_types": {
+    "triads": {
+      "major": {
+        "intervals": [
+          0,
+          4,
+          7
+        ],
+        "formula": "1-3-5"
+      },
+      "minor": {
+        "intervals": [
+          0,
+          3,
+          7
+        ],
+        "formula": "1-b3-5"
+      },
+      "diminished": {
+        "intervals": [
+          0,
+          3,
+          6
+        ],
+        "formula": "1-b3-b5"
+      },
+      "augmented": {
+        "intervals": [
+          0,
+          4,
+          8
+        ],
+        "formula": "1-3-#5"
+      },
+      "sus2": {
+        "intervals": [
+          0,
+          2,
+          7
+        ],
+        "formula": "1-2-5"
+      },
+      "sus4": {
+        "intervals": [
+          0,
+          5,
+          7
+        ],
+        "formula": "1-4-5"
+      }
+    },
+    "sevenths": {
+      "maj7": {
+        "intervals": [
+          0,
+          4,
+          7,
+          11
+        ],
+        "formula": "1-3-5-7"
+      },
+      "dom7": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10
+        ],
+        "formula": "1-3-5-b7"
+      },
+      "min7": {
+        "intervals": [
+          0,
+          3,
+          7,
+          10
+        ],
+        "formula": "1-b3-5-b7"
+      },
+      "min7b5": {
+        "intervals": [
+          0,
+          3,
+          6,
+          10
+        ],
+        "formula": "1-b3-b5-b7"
+      },
+      "dim7": {
+        "intervals": [
+          0,
+          3,
+          6,
+          9
+        ],
+        "formula": "1-b3-b5-bb7"
+      },
+      "minMaj7": {
+        "intervals": [
+          0,
+          3,
+          7,
+          11
+        ],
+        "formula": "1-b3-5-7"
+      }
+    },
+    "extended": {
+      "maj9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          11,
+          14
+        ],
+        "formula": "1-3-5-7-9"
+      },
+      "dom9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          14
+        ],
+        "formula": "1-3-5-b7-9"
+      },
+      "min9": {
+        "intervals": [
+          0,
+          3,
+          7,
+          10,
+          14
+        ],
+        "formula": "1-b3-5-b7-9"
+      },
+      "dom7b9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          13
+        ],
+        "formula": "1-3-5-b7-b9"
+      },
+      "dom7#9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          15
+        ],
+        "formula": "1-3-5-b7-#9"
+      },
+      "maj11": {
+        "intervals": [
+          0,
+          4,
+          7,
+          11,
+          14,
+          17
+        ],
+        "formula": "1-3-5-7-9-11"
+      },
+      "min11": {
+        "intervals": [
+          0,
+          3,
+          7,
+          10,
+          14,
+          17
+        ],
+        "formula": "1-b3-5-b7-9-11"
+      },
+      "dom11": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          14,
+          17
+        ],
+        "formula": "1-3-5-b7-9-11"
+      },
+      "maj13": {
+        "intervals": [
+          0,
+          4,
+          7,
+          11,
+          14,
+          21
+        ],
+        "formula": "1-3-5-7-9-13"
+      },
+      "dom13": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          14,
+          21
+        ],
+        "formula": "1-3-5-b7-9-13"
+      },
+      "min13": {
+        "intervals": [
+          0,
+          3,
+          7,
+          10,
+          14,
+          21
+        ],
+        "formula": "1-b3-5-b7-9-13"
+      }
+    },
+    "altered": {
+      "dom7#11": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          18
+        ],
+        "formula": "1-3-5-b7-#11"
+      },
+      "maj9#11": {
+        "intervals": [
+          0,
+          4,
+          7,
+          11,
+          14,
+          18
+        ],
+        "formula": "1-3-5-7-9-#11"
+      },
+      "dom7b5": {
+        "intervals": [
+          0,
+          4,
+          6,
+          10
+        ],
+        "formula": "1-3-b5-b7"
+      },
+      "dom7#5": {
+        "intervals": [
+          0,
+          4,
+          8,
+          10
+        ],
+        "formula": "1-3-#5-b7"
+      },
+      "dom9b5": {
+        "intervals": [
+          0,
+          4,
+          6,
+          10,
+          14
+        ],
+        "formula": "1-3-b5-b7-9"
+      },
+      "dom9#5": {
+        "intervals": [
+          0,
+          4,
+          8,
+          10,
+          14
+        ],
+        "formula": "1-3-#5-b7-9"
+      },
+      "dom13b9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          13,
+          21
+        ],
+        "formula": "1-3-5-b7-b9-13"
+      },
+      "dom13#11": {
+        "intervals": [
+          0,
+          4,
+          7,
+          10,
+          14,
+          18,
+          21
+        ],
+        "formula": "1-3-5-b7-9-#11-13"
+      }
+    },
+    "sus": {
+      "7sus4": {
+        "intervals": [
+          0,
+          5,
+          7,
+          10
+        ],
+        "formula": "1-4-5-b7"
+      },
+      "9sus4": {
+        "intervals": [
+          0,
+          5,
+          7,
+          10,
+          14
+        ],
+        "formula": "1-4-5-b7-9"
+      },
+      "13sus4": {
+        "intervals": [
+          0,
+          5,
+          7,
+          10,
+          14,
+          21
+        ],
+        "formula": "1-4-5-b7-9-13"
+      }
+    },
+    "add": {
+      "add9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          14
+        ],
+        "formula": "1-3-5-9"
+      },
+      "madd9": {
+        "intervals": [
+          0,
+          3,
+          7,
+          14
+        ],
+        "formula": "1-b3-5-9"
+      },
+      "6add9": {
+        "intervals": [
+          0,
+          4,
+          7,
+          9,
+          14
+        ],
+        "formula": "1-3-5-6-9"
+      }
+    }
+  },
+  "documented_progressions": {
+    "legacy_ii_V_I_major": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 120,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 6,
+      "voicing": "rootless",
+      "chords": [
+        "Dm7",
+        "G7",
+        "Cmaj7"
+      ],
+      "legacy_label": "ii-V-I Major (Essential Jazz)",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "Most important jazz progression - establishes tonal center through subdominant-dominant-tonic motion",
+      "legacy_chords": [
+        "Dm7",
+        "G7",
+        "Cmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_ii_V_I_minor": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 110,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 6,
+      "voicing": "rootless",
+      "chords": [
+        "Dm7b5",
+        "G7b9",
+        "Cm7"
+      ],
+      "legacy_label": "ii-V-i Minor",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "Minor version with half-diminished ii chord",
+      "legacy_chords": [
+        "Dm7b5",
+        "G7b9",
+        "Cmin7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_tritone_substitution": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 140,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 6,
+      "voicing": "rootless",
+      "chords": [
+        "Dm7",
+        "Db7",
+        "Cmaj7"
+      ],
+      "legacy_label": "Tritone Sub ii-V-I",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "Substitutes V7 with bII7 (3 half-steps down) - shares same 3rd and 7th",
+      "legacy_chords": [
+        "Dm7",
+        "Db7",
+        "Cmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_coltrane_changes": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 280,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 14,
+      "voicing": "rootless",
+      "chords": [
+        "Bmaj7",
+        "D7",
+        "Gmaj7",
+        "Bb7",
+        "Ebmaj7",
+        "F#7",
+        "Bmaj7"
+      ],
+      "legacy_label": "Coltrane Changes (Giant Steps)",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "Key changes by major thirds - B, Eb, G tonal centers",
+      "legacy_chords": [
+        "Bmaj7",
+        "D7",
+        "Gmaj7",
+        "Bb7",
+        "Ebmaj7",
+        "F#7",
+        "Bmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_rhythm_changes": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 200,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 16,
+      "voicing": "rootless",
+      "chords": [
+        "Bbmaj7",
+        "G7",
+        "Cm7",
+        "F7",
+        "Dm7",
+        "G7",
+        "Cm7",
+        "F7"
+      ],
+      "legacy_label": "Rhythm Changes (I Got Rhythm)",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "George Gershwin 32-bar AABA form - foundation of bebop",
+      "legacy_chords": [
+        "Bbmaj7",
+        "G7",
+        "Cm7",
+        "F7",
+        "Dm7",
+        "G7",
+        "Cm7",
+        "F7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_modal_dorian": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 130,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Dm7",
+        "Dm7",
+        "Ebm7",
+        "Ebm7"
+      ],
+      "legacy_label": "Modal Dorian (So What)",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "Miles Davis modal jazz - stays in Dorian mode rather than functional harmony",
+      "legacy_chords": [
+        "Dm7",
+        "Dm7",
+        "Ebm7",
+        "Ebm7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_borrowed_chord_progression": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 90,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Cmaj7",
+        "Abmaj7",
+        "Bb7",
+        "Cmaj7"
+      ],
+      "legacy_label": "Modal Interchange (Borrowed Chords)",
+      "legacy_group": "jazz_progressions",
+      "legacy_theory": "Borrows chords from parallel minor (e.g., bVI and bVII in major key)",
+      "legacy_chords": [
+        "Cmaj7",
+        "Abmaj7",
+        "Bb7",
+        "Cmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_dilla_life": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 90,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Bbm9",
+        "C7",
+        "Fm9",
+        "Bbm9"
+      ],
+      "legacy_label": "J Dilla 'Life' Progression",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Extended 9th chords with Dorian ii-V movement",
+      "legacy_chords": [
+        "Bbm9",
+        "C7",
+        "Fm9",
+        "Bbm9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_neo_soul_classic": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 90,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Cmaj9",
+        "Am11",
+        "Fmaj13",
+        "G13sus4"
+      ],
+      "legacy_label": "Neo-Soul Classic",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Extended jazz chords with sus voicings",
+      "legacy_chords": [
+        "Cmaj9",
+        "Am11",
+        "Fmaj13",
+        "G13sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_dilla_dreamscape": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 85,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Ebmaj9",
+        "Cm9",
+        "Abmaj13",
+        "Bb13sus4"
+      ],
+      "legacy_label": "Dilla Dreamscape",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Ethereal 9th and 13th voicings",
+      "legacy_chords": [
+        "Ebmaj9",
+        "Cm9",
+        "Abmaj13",
+        "Bb13sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_floating_rhodes": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 92,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Dmaj9",
+        "Bm11",
+        "Gmaj9#11",
+        "A13sus4"
+      ],
+      "legacy_label": "Floating Rhodes",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Bright maj9 and #11 altered chords",
+      "legacy_chords": [
+        "Dmaj9",
+        "Bm11",
+        "Gmaj9#11",
+        "A13sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_soulquarians_butter": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 96,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Fmaj9",
+        "Dm11",
+        "Bbmaj13",
+        "C13"
+      ],
+      "legacy_label": "Soulquarians Butter",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "13th chords with sus voicings - Rhodes electric piano staple",
+      "legacy_chords": [
+        "Fmaj9",
+        "Dm11",
+        "Bbmaj13",
+        "C13"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_donut_shop": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 82,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Amaj9",
+        "F#m11",
+        "Dmaj9",
+        "E13sus4"
+      ],
+      "legacy_label": "Donut Shop Dreams",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Warm major progressions with suspended endings",
+      "legacy_chords": [
+        "Amaj9",
+        "F#m11",
+        "Dmaj9",
+        "E13sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_slum_village": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 98,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Gmaj9",
+        "Em11",
+        "Cmaj13",
+        "D13sus4"
+      ],
+      "legacy_label": "Slum Village Glow",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Bright G major tonality with extended voicings",
+      "legacy_chords": [
+        "Gmaj9",
+        "Em11",
+        "Cmaj13",
+        "D13sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_ethiojazz": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 80,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Dm9b5",
+        "Gm11",
+        "Ebmaj7#11",
+        "Am7b13"
+      ],
+      "legacy_label": "Ethiojazz Nights",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Ethiopian pentatonic scales with altered jazz voicings",
+      "legacy_chords": [
+        "Dm9(b5)",
+        "Gm11",
+        "Ebmaj7#11",
+        "Am7b13"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_ahmad_jamal": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 88,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Emaj7",
+        "G#m7",
+        "C#m7",
+        "F#9"
+      ],
+      "legacy_label": "Ahmad Jamal 'Awakening'",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Modal jazz with E major tonality",
+      "legacy_chords": [
+        "Emaj7",
+        "G#m7",
+        "C#m7",
+        "F#9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_isley_brothers": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 92,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Gbmaj9",
+        "Ebm11",
+        "Abm9",
+        "Db13"
+      ],
+      "legacy_label": "Isley Brothers Style",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Soul progressions in Gb major with lush voicings",
+      "legacy_chords": [
+        "Gbmaj9",
+        "Ebm11",
+        "Abm9",
+        "Db13"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_organic_dilla": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 90,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Cm7",
+        "F7",
+        "Bbmaj7",
+        "Gm7"
+      ],
+      "legacy_label": "Organic Dilla (Randomized Per Render)",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "ii-V-I in Bb with organic parameter variation",
+      "legacy_chords": [
+        "Cm7",
+        "F7",
+        "Bbmaj7",
+        "Gm7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_vinyl_soul": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 85,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Fmaj7",
+        "Dm7",
+        "Gm7",
+        "C9"
+      ],
+      "legacy_label": "Worn Vinyl Soul",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Curtis Mayfield style with vinyl degradation",
+      "legacy_chords": [
+        "Fmaj7",
+        "Dm7",
+        "Gm7",
+        "C9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_flylo_space": {
+      "producer": "catalogue",
+      "timing_family": "flylo",
+      "key": "legacy study; not independently verified",
+      "bpm": 140,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "C#m11",
+        "F#7#9",
+        "Amaj9",
+        "E7sus4"
+      ],
+      "legacy_label": "Flying Lotus Cosmic",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Experimental modal harmony with deep modulation",
+      "legacy_chords": [
+        "C#m11",
+        "F#7#9",
+        "Amaj9",
+        "E7sus4"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_blade_runner_dystopia": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 70,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Csus2",
+        "Bbsus4",
+        "Absus2",
+        "Gbmaj7"
+      ],
+      "legacy_label": "Blade Runner Dystopian Pads (CS-80)",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Vangelis-style haunting atmosphere with suspended chords",
+      "legacy_chords": [
+        "Csus2",
+        "Bbsus4",
+        "Absus2",
+        "Gbmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_shine_on_floyd": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 72,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Gm7",
+        "Dm7",
+        "Ebmaj7",
+        "F7"
+      ],
+      "legacy_label": "Pink Floyd Yearning Brass (Minimoog)",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Minor seventh progression with brass-like pads",
+      "legacy_chords": [
+        "Gm7",
+        "Dm7",
+        "Eb maj7",
+        "F7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_vienna_strings": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 110,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Cmaj7",
+        "Am7",
+        "Fmaj7",
+        "G7"
+      ],
+      "legacy_label": "Ultravox Lush Strings (Solina)",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Romantic string ensemble progression",
+      "legacy_chords": [
+        "Cmaj7",
+        "Am7",
+        "Fmaj7",
+        "G7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_eno_ascent": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 50,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "E",
+        "F#m",
+        "A",
+        "B"
+      ],
+      "legacy_label": "Brian Eno Celestial Ambient",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Minimalist ascending drones",
+      "legacy_chords": [
+        "E",
+        "F#m",
+        "A",
+        "B"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_pyramids_ocean": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 105,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Dmaj9",
+        "Bm11",
+        "Gmaj7#11",
+        "A13"
+      ],
+      "legacy_label": "Frank Ocean Dreamy Oberheim",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Modern R&B with lush analog warmth",
+      "legacy_chords": [
+        "Dmaj9",
+        "Bm11",
+        "Gmaj7#11",
+        "A13"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_industrial_techno_dilla": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 130,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Am9",
+        "Dm7b5",
+        "Em7",
+        "Fmaj7#11"
+      ],
+      "legacy_label": "Industrial Techno x Dilla Soul",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Dark minor progression with heavy bass emphasis",
+      "legacy_chords": [
+        "Am9",
+        "Dm7b5",
+        "Em7",
+        "Fmaj7#11"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_modal_jazz": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 80,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Ebmaj7#5",
+        "Fm11",
+        "Dbmaj9",
+        "Cm7"
+      ],
+      "legacy_label": "Modal Jazz",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Modal movements with altered chord extensions",
+      "legacy_chords": [
+        "Ebmaj7#5",
+        "Fm11",
+        "Dbmaj9",
+        "Cm7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_erykah_badu_on_and_on": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 92,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Bm7",
+        "Gmaj7",
+        "Bm7",
+        "Gmaj7"
+      ],
+      "legacy_label": "Erykah Badu 'On & On'",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Simple minor progression with major 7th color",
+      "legacy_chords": [
+        "Bm7",
+        "Gmaj7",
+        "Bm7",
+        "Gmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_flylo_ethereal": {
+      "producer": "catalogue",
+      "timing_family": "flylo",
+      "key": "legacy study; not independently verified",
+      "bpm": 85,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Ebmaj9",
+        "Cm9",
+        "Abmaj13",
+        "Bb13sus4"
+      ],
+      "legacy_label": "Flying Lotus Ethereal Voicings",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Stacked 9ths and 11ths with jazz-fusion influences",
+      "legacy_chords": [
+        "Ebmaj9",
+        "Cm9",
+        "Abmaj13",
+        "Bb13sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_madlib_yesterday_new_quintet": {
+      "producer": "catalogue",
+      "timing_family": "madlib",
+      "key": "legacy study; not independently verified",
+      "bpm": 110,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Gm9",
+        "C13",
+        "Fmaj9",
+        "Bb13"
+      ],
+      "legacy_label": "Madlib Yesterday's New Quintet",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Jazz standard reharmonization with extended chords",
+      "legacy_chords": [
+        "Gm9",
+        "C13",
+        "Fmaj9",
+        "Bb13"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_modal_interchange_epic": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 95,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 32,
+      "voicing": "rootless",
+      "chords": [
+        "Cmaj7",
+        "Am7",
+        "Fmaj7",
+        "Fm7",
+        "Em7",
+        "Ebmaj7",
+        "Dm7",
+        "Db7",
+        "Cmaj9",
+        "Abmaj7",
+        "Gm7",
+        "C7",
+        "Fmaj9",
+        "Bbmaj7",
+        "Em11",
+        "A7#9"
+      ],
+      "legacy_label": "Modal Interchange Epic Journey",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "16-chord progression using borrowed chords from parallel minor/major, chromatic mediants",
+      "legacy_chords": [
+        "Cmaj7",
+        "Am7",
+        "Fmaj7",
+        "Fm7",
+        "Em7",
+        "Ebmaj7",
+        "Dm7",
+        "Db7",
+        "Cmaj9",
+        "Abmaj7",
+        "Gm7",
+        "C7",
+        "Fmaj9",
+        "Bbmaj7",
+        "Em11",
+        "A7#9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_coltrane_extended": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 265,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 24,
+      "voicing": "rootless",
+      "chords": [
+        "Bmaj7",
+        "D7",
+        "Gmaj7",
+        "Bb7",
+        "Ebmaj9",
+        "F#7#9",
+        "Bmaj9",
+        "Fm7",
+        "Bb7",
+        "Ebmaj7",
+        "Am7",
+        "D7"
+      ],
+      "legacy_label": "Coltrane Changes Extended",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Giant Steps-style major third modulations with extensions",
+      "legacy_chords": [
+        "Bmaj7",
+        "D7",
+        "Gmaj7",
+        "Bb7",
+        "Ebmaj9",
+        "F#7#9",
+        "Bmaj9",
+        "Fm7",
+        "Bb7",
+        "Ebmaj7",
+        "Am7",
+        "D7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_neo_soul_extended": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 88,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 32,
+      "voicing": "rootless",
+      "chords": [
+        "Em11",
+        "A13sus4",
+        "Dmaj9",
+        "Gmaj13",
+        "F#m11",
+        "Bm9",
+        "Em9",
+        "A7#9",
+        "Dmaj7",
+        "Cmaj9",
+        "Bm11",
+        "E7b9",
+        "Am9",
+        "D13",
+        "Gmaj7",
+        "C#m7b5"
+      ],
+      "legacy_label": "Neo-Soul Extended Vamp",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Erykah Badu / D'Angelo style with extended voicings and suspensions",
+      "legacy_chords": [
+        "Em11",
+        "A13sus",
+        "Dmaj9",
+        "Gmaj13",
+        "F#m11",
+        "Bm9",
+        "Em9",
+        "A7#9",
+        "Dmaj7",
+        "Cmaj9",
+        "Bm11",
+        "E7b9",
+        "Am9",
+        "D13",
+        "Gmaj7",
+        "C#m7b5"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_techno_hypnotic": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 128,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 16,
+      "voicing": "rootless",
+      "chords": [
+        "Am",
+        "Am",
+        "Dm",
+        "Dm",
+        "Em",
+        "Em",
+        "Am",
+        "Am"
+      ],
+      "legacy_label": "Techno Hypnotic Loop",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Minimal techno progression with suspended tonality",
+      "legacy_chords": [
+        "Am",
+        "Am",
+        "Dm",
+        "Dm",
+        "Em",
+        "Em",
+        "Am",
+        "Am"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_fusion_chromatic": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 112,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 28,
+      "voicing": "rootless",
+      "chords": [
+        "Cmaj9",
+        "B7#9",
+        "Bbmaj7#11",
+        "A7b13",
+        "Abmaj9",
+        "G7#9",
+        "Gbmaj7",
+        "Fmaj13",
+        "Em11",
+        "Ebm11",
+        "Dm9",
+        "Dbmaj7#11",
+        "Cmaj9",
+        "G7sus4"
+      ],
+      "legacy_label": "Jazz Fusion Chromatic Descent",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Herbie Hancock style with chromatic bass movement",
+      "legacy_chords": [
+        "Cmaj9",
+        "B7#9",
+        "Bbmaj7#11",
+        "A7b13",
+        "Abmaj9",
+        "G7#9",
+        "Gbmaj7",
+        "Fmaj13",
+        "Em11",
+        "Ebm11",
+        "Dm9",
+        "Dbmaj7#11",
+        "Cmaj9",
+        "G7sus"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_hiphop_dark_epic": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 90,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 24,
+      "voicing": "rootless",
+      "chords": [
+        "Dm",
+        "Dm",
+        "Bbmaj7",
+        "C",
+        "Gm7",
+        "Am7",
+        "Dm9",
+        "F",
+        "Gm9",
+        "A7",
+        "Dm11",
+        "Csus2"
+      ],
+      "legacy_label": "Hip-Hop Dark Minor Epic",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Wu-Tang / Mobb Deep style minor key darkness with modal shifts",
+      "legacy_chords": [
+        "Dm",
+        "Dm",
+        "Bbmaj7",
+        "C",
+        "Gm7",
+        "Am7",
+        "Dm9",
+        "F",
+        "Gm9",
+        "A7",
+        "Dm11",
+        "Csus2"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_floating_melody": {
+      "producer": "catalogue",
+      "timing_family": "dilla",
+      "key": "legacy study; not independently verified",
+      "bpm": 75,
+      "swing": 54,
+      "chord_bars": 2,
+      "phrase_bars": 20,
+      "voicing": "rootless",
+      "chords": [
+        "Fsus2",
+        "Gsus2",
+        "Am11",
+        "Bbmaj7",
+        "Csus4",
+        "Dm9",
+        "Ebmaj9",
+        "Dm9",
+        "Csus2",
+        "Fsus2"
+      ],
+      "legacy_label": "Floating Melody Sequence",
+      "legacy_group": "neo_soul_progressions",
+      "legacy_theory": "Suspended floating chords with stepwise voice leading",
+      "legacy_chords": [
+        "Fsus2",
+        "Gsus2",
+        "Am11",
+        "Bbmaj7",
+        "Csus4",
+        "Dm9",
+        "Ebmaj9",
+        "Dm9",
+        "Csus2",
+        "Fsus2"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_james_brown_vamp": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 120,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "E7#9",
+        "E7#9",
+        "E7#9",
+        "E7#9"
+      ],
+      "legacy_label": "James Brown Funk Vamp",
+      "legacy_group": "funk_soul_progressions",
+      "legacy_theory": "Static funk - stays on one chord with rhythmic emphasis",
+      "legacy_chords": [
+        "E7#9",
+        "E7#9",
+        "E7#9",
+        "E7#9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_curtis_mayfield_superfly": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 95,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Fm7",
+        "Bb7",
+        "Ebmaj7",
+        "Abmaj7"
+      ],
+      "legacy_label": "Curtis Mayfield 'Superfly'",
+      "legacy_group": "funk_soul_progressions",
+      "legacy_theory": "Smooth soul with chromatic bass movement",
+      "legacy_chords": [
+        "Fmin7",
+        "Bb7",
+        "Ebmaj7",
+        "Abmaj7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_stevie_wonder_superstition": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 100,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Ebm7",
+        "Ebm7",
+        "Bb7#9",
+        "Bb7#9"
+      ],
+      "legacy_label": "Stevie Wonder 'Superstition'",
+      "legacy_group": "funk_soul_progressions",
+      "legacy_theory": "Clavinet-driven funk with 9b5 altered chords",
+      "legacy_chords": [
+        "Ebm7",
+        "Ebm7",
+        "Bb7#9",
+        "Bb7#9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_herbie_hancock_chameleon": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 104,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Bbm7",
+        "Eb7",
+        "Bbm7",
+        "Eb7"
+      ],
+      "legacy_label": "Herbie Hancock 'Chameleon'",
+      "legacy_group": "funk_soul_progressions",
+      "legacy_theory": "Jazz-funk modal vamp over Bb minor pentatonic",
+      "legacy_chords": [
+        "Bbm7",
+        "Eb7",
+        "Bbm7",
+        "Eb7"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    },
+    "legacy_marvin_gaye_inner_city": {
+      "producer": "catalogue",
+      "timing_family": "straight",
+      "key": "legacy study; not independently verified",
+      "bpm": 78,
+      "swing": 50,
+      "chord_bars": 2,
+      "phrase_bars": 8,
+      "voicing": "rootless",
+      "chords": [
+        "Em9",
+        "Am9",
+        "Em9",
+        "Am9"
+      ],
+      "legacy_label": "Marvin Gaye 'Inner City Blues'",
+      "legacy_group": "funk_soul_progressions",
+      "legacy_theory": "Minor modal progression with gospel influences",
+      "legacy_chords": [
+        "Em9",
+        "Am9",
+        "Em9",
+        "Am9"
+      ],
+      "source": "pub3/multimedia/dilla/dilla_data.json",
+      "source_note": "Recovered as a historical engine/style study. The old title, artist attribution and frequency arrays are not verified transcriptions. Frequencies are regenerated by pub4's canonical chord parser; this profile is excluded from the default stream rotation."
+    }
+  },
+  "legacy_progression_groups": {
+    "jazz_progressions": {
+      "ii_V_I_major": {
+        "name": "ii-V-I Major (Essential Jazz)",
+        "theory": "Most important jazz progression - establishes tonal center through subdominant-dominant-tonic motion",
+        "chords": [
+          "Dm7",
+          "G7",
+          "Cmaj7"
+        ],
+        "tempo": 120,
+        "duration": 2,
+        "evidence": "Found in 80% of jazz standards (Real Book analysis)",
+        "freqs": [
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466
+          ]
+        ],
+        "instrument": "minimoog",
+        "fx": "dilla_butter"
+      },
+      "ii_V_I_minor": {
+        "name": "ii-V-i Minor",
+        "theory": "Minor version with half-diminished ii chord",
+        "chords": [
+          "Dm7b5",
+          "G7b9",
+          "Cmin7"
+        ],
+        "tempo": 110,
+        "duration": 2,
+        "freqs": [
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            130.81,
+            155.56018271350595,
+            195.9935487262387,
+            233.07692263987556
+          ]
+        ],
+        "instrument": "strings",
+        "fx": "dilla_butter"
+      },
+      "tritone_substitution": {
+        "name": "Tritone Sub ii-V-I",
+        "theory": "Substitutes V7 with bII7 (3 half-steps down) - shares same 3rd and 7th",
+        "chords": [
+          "Dm7",
+          "Db7",
+          "Cmaj7"
+        ],
+        "tempo": 140,
+        "duration": 1.5,
+        "evidence": "Charlie Parker, Dizzy Gillespie standard technique",
+        "freqs": [
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            138.59,
+            174.61245830493047,
+            207.6503777843393
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466
+          ]
+        ],
+        "instrument": "ambient",
+        "fx": "dilla_butter"
+      },
+      "coltrane_changes": {
+        "name": "Coltrane Changes (Giant Steps)",
+        "theory": "Key changes by major thirds - B, Eb, G tonal centers",
+        "chords": [
+          "Bmaj7",
+          "D7",
+          "Gmaj7",
+          "Bb7",
+          "Ebmaj7",
+          "F#7",
+          "Bmaj7"
+        ],
+        "tempo": 280,
+        "duration": 1,
+        "evidence": "Giant Steps (1960) - demonstrated advanced harmonic substitution",
+        "freqs": [
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773,
+            466.1606455472348
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            369.99873057122386
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285
+          ],
+          [
+            185,
+            233.08539423055154,
+            277.18680922218607
+          ],
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773,
+            466.1606455472348
+          ]
+        ],
+        "instrument": "oberheim",
+        "fx": "dilla_butter"
+      },
+      "rhythm_changes": {
+        "name": "Rhythm Changes (I Got Rhythm)",
+        "theory": "George Gershwin 32-bar AABA form - foundation of bebop",
+        "chords": [
+          "Bbmaj7",
+          "G7",
+          "Cm7",
+          "F7",
+          "Dm7",
+          "G7",
+          "Cm7",
+          "F7"
+        ],
+        "tempo": 200,
+        "duration": 1.5,
+        "evidence": "300+ jazz compositions use this form",
+        "freqs": [
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695,
+            439.9964495996983
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374
+          ]
+        ],
+        "instrument": "rhodes",
+        "fx": "dilla_butter"
+      },
+      "modal_dorian": {
+        "name": "Modal Dorian (So What)",
+        "theory": "Miles Davis modal jazz - stays in Dorian mode rather than functional harmony",
+        "chords": [
+          "Dm7",
+          "Dm7",
+          "Ebm7",
+          "Ebm7"
+        ],
+        "tempo": 130,
+        "duration": 2.5,
+        "evidence": "Kind of Blue (1959) - revolutionary modal approach",
+        "freqs": [
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ]
+        ],
+        "instrument": "fm",
+        "fx": "dilla_butter"
+      },
+      "borrowed_chord_progression": {
+        "name": "Modal Interchange (Borrowed Chords)",
+        "theory": "Borrows chords from parallel minor (e.g., bVI and bVII in major key)",
+        "chords": [
+          "Cmaj7",
+          "Abmaj7",
+          "Bb7",
+          "Cmaj7"
+        ],
+        "tempo": 90,
+        "duration": 2,
+        "freqs": [
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466
+          ],
+          [
+            207.65,
+            261.62260601067044,
+            311.1234645134429,
+            391.9910020567073
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466
+          ]
+        ],
+        "instrument": "cs80",
+        "fx": "dilla_butter"
+      }
+    },
+    "neo_soul_progressions": {
+      "dilla_life": {
+        "name": "J Dilla 'Life' Progression",
+        "artist": "J Dilla / Slum Village",
+        "theory": "Extended 9th chords with Dorian ii-V movement",
+        "chords": [
+          "Bbm9",
+          "C7",
+          "Fm9",
+          "Bbm9"
+        ],
+        "freqs": [
+          [
+            116.54,
+            174.61,
+            220,
+            261.63,
+            329.63
+          ],
+          [
+            130.81,
+            164.81,
+            196,
+            233.08,
+            293.66
+          ],
+          [
+            174.61,
+            207.65,
+            261.63,
+            311.13,
+            392
+          ],
+          [
+            116.54,
+            174.61,
+            220,
+            261.63,
+            329.63
+          ]
+        ],
+        "tempo": 90,
+        "duration": 2,
+        "fx": "dilla_butter",
+        "evidence": "Fantastic Vol. 2 (2000)"
+      },
+      "neo_soul_classic": {
+        "name": "Neo-Soul Classic",
+        "theory": "Extended jazz chords with sus voicings",
+        "chords": [
+          "Cmaj9",
+          "Am11",
+          "Fmaj13",
+          "G13sus"
+        ],
+        "freqs": [
+          [
+            130.81,
+            164.81,
+            196,
+            246.94,
+            329.63
+          ],
+          [
+            110,
+            164.81,
+            220,
+            261.63,
+            329.63
+          ],
+          [
+            174.61,
+            220,
+            261.63,
+            329.63,
+            440
+          ],
+          [
+            196,
+            261.63,
+            293.66,
+            392,
+            493.88
+          ]
+        ],
+        "tempo": 90,
+        "duration": 2,
+        "fx": "warm_tape"
+      },
+      "dilla_dreamscape": {
+        "name": "Dilla Dreamscape",
+        "theory": "Ethereal 9th and 13th voicings",
+        "chords": [
+          "Ebmaj9",
+          "Cm9",
+          "Abmaj13",
+          "Bb13sus"
+        ],
+        "freqs": [
+          [
+            155.56,
+            196,
+            233.08,
+            293.66,
+            369.99
+          ],
+          [
+            130.81,
+            155.56,
+            196,
+            233.08,
+            293.66
+          ],
+          [
+            207.65,
+            261.63,
+            311.13,
+            415.3,
+            523.25
+          ],
+          [
+            233.08,
+            311.13,
+            349.23,
+            466.16,
+            587.33
+          ]
+        ],
+        "tempo": 85,
+        "duration": 2.5,
+        "fx": "lofi_dream"
+      },
+      "floating_rhodes": {
+        "name": "Floating Rhodes",
+        "theory": "Bright maj9 and #11 altered chords",
+        "chords": [
+          "Dmaj9",
+          "Bm11",
+          "Gmaj9#11",
+          "A13sus"
+        ],
+        "freqs": [
+          [
+            146.83,
+            185,
+            220,
+            277.18,
+            369.99
+          ],
+          [
+            123.47,
+            185,
+            246.94,
+            293.66,
+            369.99
+          ],
+          [
+            196,
+            246.94,
+            293.66,
+            392,
+            493.88
+          ],
+          [
+            220,
+            293.66,
+            329.63,
+            440,
+            554.37
+          ]
+        ],
+        "tempo": 92,
+        "duration": 2,
+        "fx": "analog_lush"
+      },
+      "soulquarians_butter": {
+        "name": "Soulquarians Butter",
+        "artist": "D'Angelo / Questlove / Dilla",
+        "theory": "13th chords with sus voicings - Rhodes electric piano staple",
+        "chords": [
+          "Fmaj9",
+          "Dm11",
+          "Bbmaj13",
+          "C13"
+        ],
+        "freqs": [
+          [
+            174.61,
+            220,
+            261.63,
+            329.63,
+            440
+          ],
+          [
+            146.83,
+            220,
+            293.66,
+            349.23,
+            440
+          ],
+          [
+            233.08,
+            293.66,
+            349.23,
+            466.16,
+            587.33
+          ],
+          [
+            130.81,
+            164.81,
+            196,
+            246.94,
+            329.63
+          ]
+        ],
+        "tempo": 96,
+        "duration": 2,
+        "fx": "dilla_butter",
+        "evidence": "Voodoo (2000), Like Water for Chocolate (2000)"
+      },
+      "donut_shop": {
+        "name": "Donut Shop Dreams",
+        "theory": "Warm major progressions with suspended endings",
+        "chords": [
+          "Amaj9",
+          "F#m11",
+          "Dmaj9",
+          "E13sus"
+        ],
+        "freqs": [
+          [
+            110,
+            138.59,
+            164.81,
+            207.65,
+            277.18
+          ],
+          [
+            92.5,
+            138.59,
+            185,
+            220,
+            277.18
+          ],
+          [
+            146.83,
+            185,
+            220,
+            277.18,
+            369.99
+          ],
+          [
+            164.81,
+            220,
+            246.94,
+            329.63,
+            415.3
+          ]
+        ],
+        "tempo": 82,
+        "duration": 2.5,
+        "fx": "lofi_dream"
+      },
+      "slum_village": {
+        "name": "Slum Village Glow",
+        "theory": "Bright G major tonality with extended voicings",
+        "chords": [
+          "Gmaj9",
+          "Em11",
+          "Cmaj13",
+          "D13sus"
+        ],
+        "freqs": [
+          [
+            196,
+            246.94,
+            293.66,
+            369.99,
+            493.88
+          ],
+          [
+            164.81,
+            246.94,
+            329.63,
+            392,
+            493.88
+          ],
+          [
+            130.81,
+            164.81,
+            196,
+            261.63,
+            349.23
+          ],
+          [
+            146.83,
+            196,
+            220,
+            293.66,
+            369.99
+          ]
+        ],
+        "tempo": 98,
+        "duration": 2,
+        "fx": "warm_tape"
+      },
+      "ethiojazz": {
+        "name": "Ethiojazz Nights",
+        "theory": "Ethiopian pentatonic scales with altered jazz voicings",
+        "chords": [
+          "Dm9(b5)",
+          "Gm11",
+          "Ebmaj7#11",
+          "Am7b13"
+        ],
+        "freqs": [
+          [
+            146.83,
+            174.61,
+            207.65,
+            261.63,
+            329.63
+          ],
+          [
+            196,
+            293.66,
+            392,
+            466.16,
+            587.33
+          ],
+          [
+            155.56,
+            196,
+            246.94,
+            311.13,
+            415.3
+          ],
+          [
+            110,
+            130.81,
+            164.81,
+            207.65,
+            261.63
+          ]
+        ],
+        "tempo": 80,
+        "duration": 2.5,
+        "fx": "analog_lush"
+      },
+      "ahmad_jamal": {
+        "name": "Ahmad Jamal 'Awakening'",
+        "theory": "Modal jazz with E major tonality",
+        "chords": [
+          "Emaj7",
+          "G#m7",
+          "C#m7",
+          "F#9"
+        ],
+        "freqs": [
+          [
+            164.81,
+            207.65,
+            246.94,
+            311.13
+          ],
+          [
+            207.65,
+            246.94,
+            311.13,
+            369.99
+          ],
+          [
+            138.59,
+            164.81,
+            207.65,
+            246.94
+          ],
+          [
+            92.5,
+            116.54,
+            138.59,
+            174.61,
+            220
+          ]
+        ],
+        "tempo": 88,
+        "duration": 2.2,
+        "fx": "dilla_butter"
+      },
+      "isley_brothers": {
+        "name": "Isley Brothers Style",
+        "theory": "Soul progressions in Gb major with lush voicings",
+        "chords": [
+          "Gbmaj9",
+          "Ebm11",
+          "Abm9",
+          "Db13"
+        ],
+        "freqs": [
+          [
+            185,
+            233.08,
+            277.18,
+            349.23,
+            466.16
+          ],
+          [
+            155.56,
+            233.08,
+            311.13,
+            369.99,
+            466.16
+          ],
+          [
+            207.65,
+            246.94,
+            311.13,
+            369.99,
+            493.88
+          ],
+          [
+            138.59,
+            174.61,
+            207.65,
+            261.63,
+            349.23
+          ]
+        ],
+        "tempo": 92,
+        "duration": 2,
+        "fx": "analog_lush"
+      },
+      "organic_dilla": {
+        "name": "Organic Dilla (Randomized Per Render)",
+        "theory": "ii-V-I in Bb with organic parameter variation",
+        "chords": [
+          "Cm7",
+          "F7",
+          "Bbmaj7",
+          "Gm7"
+        ],
+        "freqs": [
+          [
+            130.81,
+            155.56,
+            196,
+            233.08
+          ],
+          [
+            87.31,
+            103.83,
+            130.81,
+            155.56,
+            196
+          ],
+          [
+            116.54,
+            146.83,
+            174.61,
+            220
+          ],
+          [
+            98,
+            116.54,
+            146.83,
+            174.61
+          ]
+        ],
+        "tempo": 90,
+        "duration": 2,
+        "instrument": "rhodes",
+        "fx": "dilla_magic_organic",
+        "organic": true,
+        "evidence": "Research: Organic randomization for 'magical' analog drift"
+      },
+      "vinyl_soul": {
+        "name": "Worn Vinyl Soul",
+        "theory": "Curtis Mayfield style with vinyl degradation",
+        "chords": [
+          "Fmaj7",
+          "Dm7",
+          "Gm7",
+          "C9"
+        ],
+        "freqs": [
+          [
+            87.31,
+            110,
+            130.81,
+            164.81
+          ],
+          [
+            73.42,
+            87.31,
+            110,
+            130.81
+          ],
+          [
+            98,
+            116.54,
+            146.83,
+            174.61
+          ],
+          [
+            65.41,
+            82.41,
+            98,
+            116.54,
+            146.83
+          ]
+        ],
+        "tempo": 85,
+        "duration": 2.2,
+        "instrument": "fm",
+        "fx": "vinyl_worn",
+        "evidence": "Vinyl crackle from SoX brownnoise generator (synth.c recursive low-pass)"
+      },
+      "flylo_space": {
+        "name": "Flying Lotus Cosmic",
+        "theory": "Experimental modal harmony with deep modulation",
+        "chords": [
+          "C#m11",
+          "F#7#9",
+          "Amaj9",
+          "E7sus4"
+        ],
+        "freqs": [
+          [
+            138.59,
+            164.81,
+            207.65,
+            246.94,
+            311.13
+          ],
+          [
+            92.5,
+            116.54,
+            138.59,
+            174.61,
+            220
+          ],
+          [
+            110,
+            138.59,
+            164.81,
+            207.65,
+            277.18
+          ],
+          [
+            82.41,
+            123.47,
+            164.81,
+            207.65
+          ]
+        ],
+        "tempo": 140,
+        "duration": 1.8,
+        "instrument": "fm",
+        "fx": "flylo_cosmic",
+        "evidence": "Flying Lotus: Cosmogramma (2010) production aesthetic"
+      },
+      "blade_runner_dystopia": {
+        "name": "Blade Runner Dystopian Pads (CS-80)",
+        "theory": "Vangelis-style haunting atmosphere with suspended chords",
+        "chords": [
+          "Csus2",
+          "Bbsus4",
+          "Absus2",
+          "Gbmaj7"
+        ],
+        "freqs": [
+          [
+            130.81,
+            146.83,
+            196
+          ],
+          [
+            116.54,
+            155.56,
+            174.61
+          ],
+          [
+            103.83,
+            116.54,
+            155.56
+          ],
+          [
+            92.5,
+            116.54,
+            138.59,
+            174.61
+          ]
+        ],
+        "tempo": 70,
+        "duration": 4,
+        "instrument": "cs80",
+        "fx": "vinyl_clean",
+        "evidence": "Blade Runner (1982) - CS-80 slow envelopes + detuned saws"
+      },
+      "shine_on_floyd": {
+        "name": "Pink Floyd Yearning Brass (Minimoog)",
+        "theory": "Minor seventh progression with brass-like pads",
+        "chords": [
+          "Gm7",
+          "Dm7",
+          "Eb maj7",
+          "F7"
+        ],
+        "freqs": [
+          [
+            98,
+            116.54,
+            146.83,
+            174.61
+          ],
+          [
+            73.42,
+            87.31,
+            110,
+            130.81
+          ],
+          [
+            77.78,
+            98,
+            116.54,
+            146.83
+          ],
+          [
+            87.31,
+            110,
+            130.81,
+            155.56
+          ]
+        ],
+        "tempo": 72,
+        "duration": 3.5,
+        "instrument": "minimoog",
+        "fx": "warm_tape",
+        "evidence": "Shine On You Crazy Diamond (1975) - Moog brass pads"
+      },
+      "vienna_strings": {
+        "name": "Ultravox Lush Strings (Solina)",
+        "theory": "Romantic string ensemble progression",
+        "chords": [
+          "Cmaj7",
+          "Am7",
+          "Fmaj7",
+          "G7"
+        ],
+        "freqs": [
+          [
+            130.81,
+            164.81,
+            196,
+            246.94
+          ],
+          [
+            110,
+            130.81,
+            164.81,
+            196
+          ],
+          [
+            87.31,
+            110,
+            130.81,
+            164.81
+          ],
+          [
+            98,
+            123.47,
+            146.83,
+            174.61
+          ]
+        ],
+        "tempo": 110,
+        "duration": 2,
+        "instrument": "strings",
+        "fx": "analog_lush",
+        "evidence": "Vienna (1980) - ARP Solina 3-voice ensemble"
+      },
+      "eno_ascent": {
+        "name": "Brian Eno Celestial Ambient",
+        "theory": "Minimalist ascending drones",
+        "chords": [
+          "E",
+          "F#m",
+          "A",
+          "B"
+        ],
+        "freqs": [
+          [
+            164.81,
+            207.65,
+            246.94
+          ],
+          [
+            92.5,
+            110,
+            138.59
+          ],
+          [
+            110,
+            138.59,
+            164.81
+          ],
+          [
+            123.47,
+            155.56,
+            185
+          ]
+        ],
+        "tempo": 50,
+        "duration": 8,
+        "instrument": "ambient",
+        "fx": "lofi_dream",
+        "evidence": "An Ending (Ascent) (1983) - Ultra-slow envelopes"
+      },
+      "pyramids_ocean": {
+        "name": "Frank Ocean Dreamy Oberheim",
+        "theory": "Modern R&B with lush analog warmth",
+        "chords": [
+          "Dmaj9",
+          "Bm11",
+          "Gmaj7#11",
+          "A13"
+        ],
+        "freqs": [
+          [
+            146.83,
+            185,
+            220,
+            277.18,
+            329.63
+          ],
+          [
+            123.47,
+            146.83,
+            185,
+            220,
+            277.18
+          ],
+          [
+            98,
+            123.47,
+            146.83,
+            185,
+            246.94
+          ],
+          [
+            110,
+            138.59,
+            164.81,
+            196,
+            246.94
+          ]
+        ],
+        "tempo": 105,
+        "duration": 2.5,
+        "instrument": "oberheim",
+        "fx": "dilla_magic_organic",
+        "organic": true,
+        "evidence": "Pyramids (2012) - OB-8 unison detune"
+      },
+      "industrial_techno_dilla": {
+        "name": "Industrial Techno x Dilla Soul",
+        "theory": "Dark minor progression with heavy bass emphasis",
+        "chords": [
+          "Am9",
+          "Dm7b5",
+          "Em7",
+          "Fmaj7#11"
+        ],
+        "freqs": [
+          [
+            110,
+            130.81,
+            164.81,
+            196,
+            246.94
+          ],
+          [
+            73.42,
+            87.31,
+            103.83,
+            130.81
+          ],
+          [
+            82.41,
+            98,
+            123.47,
+            146.83
+          ],
+          [
+            87.31,
+            110,
+            138.59,
+            164.81,
+            220
+          ]
+        ],
+        "tempo": 130,
+        "duration": 1.5,
+        "instrument": "cs80",
+        "fx": "sp1200_authentic",
+        "evidence": "Fusion: Detroit techno + J Dilla chord theory"
+      },
+      "modal_jazz": {
+        "name": "Modal Jazz",
+        "theory": "Modal movements with altered chord extensions",
+        "chords": [
+          "Ebmaj7#5",
+          "Fm11",
+          "Dbmaj9",
+          "Cm7"
+        ],
+        "freqs": [
+          [
+            155.56,
+            196,
+            246.94,
+            329.63
+          ],
+          [
+            174.61,
+            261.63,
+            349.23,
+            415.3,
+            523.25
+          ],
+          [
+            138.59,
+            174.61,
+            207.65,
+            261.63,
+            349.23
+          ],
+          [
+            130.81,
+            155.56,
+            196,
+            233.08
+          ]
+        ],
+        "tempo": 80,
+        "duration": 2.5,
+        "fx": "warm_tape"
+      },
+      "erykah_badu_on_and_on": {
+        "name": "Erykah Badu 'On & On'",
+        "theory": "Simple minor progression with major 7th color",
+        "chords": [
+          "Bm7",
+          "Gmaj7",
+          "Bm7",
+          "Gmaj7"
+        ],
+        "tempo": 92,
+        "duration": 2,
+        "evidence": "Baduizm (1997)",
+        "freqs": [
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            369.99873057122386
+          ],
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            369.99873057122386
+          ]
+        ],
+        "instrument": "rhodes",
+        "fx": "dilla_butter"
+      },
+      "flylo_ethereal": {
+        "name": "Flying Lotus Ethereal Voicings",
+        "artist": "Flying Lotus",
+        "theory": "Stacked 9ths and 11ths with jazz-fusion influences",
+        "chords": [
+          "Ebmaj9",
+          "Cm9",
+          "Abmaj13",
+          "Bb13sus"
+        ],
+        "tempo": 85,
+        "duration": 2.5,
+        "evidence": "Cosmogramma (2010)",
+        "freqs": [
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285,
+            349.22039247001214
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387
+          ],
+          [
+            207.65,
+            261.62260601067044,
+            311.1234645134429,
+            391.9910020567073,
+            466.15848866288263,
+            698.4485625097353
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ]
+        ],
+        "instrument": "fm",
+        "fx": "dilla_butter"
+      },
+      "madlib_yesterday_new_quintet": {
+        "name": "Madlib Yesterday's New Quintet",
+        "theory": "Jazz standard reharmonization with extended chords",
+        "chords": [
+          "Gm9",
+          "C13",
+          "Fmaj9",
+          "Bb13"
+        ],
+        "tempo": 110,
+        "duration": 2,
+        "evidence": "Yesterdays Universe (2000)",
+        "freqs": [
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374,
+            329.619787474701,
+            391.98619651059926
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ]
+        ],
+        "instrument": "cs80",
+        "fx": "dilla_butter"
+      },
+      "modal_interchange_epic": {
+        "name": "Modal Interchange Epic Journey",
+        "theory": "16-chord progression using borrowed chords from parallel minor/major, chromatic mediants",
+        "chords": [
+          "Cmaj7",
+          "Am7",
+          "Fmaj7",
+          "Fm7",
+          "Em7",
+          "Ebmaj7",
+          "Dm7",
+          "Db7",
+          "Cmaj9",
+          "Abmaj7",
+          "Gm7",
+          "C7",
+          "Fmaj9",
+          "Bbmaj7",
+          "Em11",
+          "A7#9"
+        ],
+        "tempo": 95,
+        "duration": 2,
+        "instrument": "oberheim",
+        "fx": "analog_lush",
+        "evidence": "Modal interchange: Bill Evans, Steely Dan, Radiohead",
+        "freqs": [
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374,
+            329.619787474701
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            138.59,
+            174.61245830493047,
+            207.6503777843393
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466,
+            293.6585210786982
+          ],
+          [
+            207.65,
+            261.62260601067044,
+            311.1234645134429,
+            391.9910020567073
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374,
+            329.619787474701,
+            391.98619651059926
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695,
+            439.9964495996983
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699,
+            391.99543598174927,
+            523.2511306011972
+          ]
+        ]
+      },
+      "coltrane_extended": {
+        "name": "Coltrane Changes Extended",
+        "theory": "Giant Steps-style major third modulations with extensions",
+        "chords": [
+          "Bmaj7",
+          "D7",
+          "Gmaj7",
+          "Bb7",
+          "Ebmaj9",
+          "F#7#9",
+          "Bmaj9",
+          "Fm7",
+          "Bb7",
+          "Ebmaj7",
+          "Am7",
+          "D7"
+        ],
+        "tempo": 265,
+        "duration": 1,
+        "instrument": "rhodes",
+        "fx": "dilla_butter",
+        "evidence": "Giant Steps (1960) - three-key modulatory system",
+        "freqs": [
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773,
+            466.1606455472348
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            369.99873057122386
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285,
+            349.22039247001214
+          ],
+          [
+            185,
+            233.08539423055154,
+            277.18680922218607,
+            329.63252571192555,
+            440.00663255100676
+          ],
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773,
+            466.1606455472348,
+            554.3615564190331
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ]
+        ]
+      },
+      "neo_soul_extended": {
+        "name": "Neo-Soul Extended Vamp",
+        "theory": "Erykah Badu / D'Angelo style with extended voicings and suspensions",
+        "chords": [
+          "Em11",
+          "A13sus",
+          "Dmaj9",
+          "Gmaj13",
+          "F#m11",
+          "Bm9",
+          "Em9",
+          "A7#9",
+          "Dmaj7",
+          "Cmaj9",
+          "Bm11",
+          "E7b9",
+          "Am9",
+          "D13",
+          "Gmaj7",
+          "C#m7b5"
+        ],
+        "tempo": 88,
+        "duration": 2.5,
+        "instrument": "fm",
+        "fx": "dilla_magic_organic",
+        "organic": true,
+        "evidence": "Voodoo (2000), Baduizm (1997)",
+        "freqs": [
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318,
+            277.1781306621061,
+            329.6222051065305
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            369.99873057122386,
+            440.0051229372742,
+            659.2627895589121
+          ],
+          [
+            185,
+            233.08539423055154,
+            277.18680922218607
+          ],
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699,
+            391.99543598174927,
+            523.2511306011972
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318,
+            277.1781306621061
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466,
+            293.6585210786982
+          ],
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            369.99873057122386
+          ],
+          [
+            138.59,
+            174.61245830493047,
+            207.6503777843393
+          ]
+        ]
+      },
+      "techno_hypnotic": {
+        "name": "Techno Hypnotic Loop",
+        "theory": "Minimal techno progression with suspended tonality",
+        "chords": [
+          "Am",
+          "Am",
+          "Dm",
+          "Dm",
+          "Em",
+          "Em",
+          "Am",
+          "Am"
+        ],
+        "tempo": 128,
+        "duration": 4,
+        "instrument": "ambient",
+        "fx": "lofi_dream",
+        "evidence": "Jeff Mills, Robert Hood - minimal Detroit techno",
+        "freqs": [
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ]
+        ]
+      },
+      "fusion_chromatic": {
+        "name": "Jazz Fusion Chromatic Descent",
+        "theory": "Herbie Hancock style with chromatic bass movement",
+        "chords": [
+          "Cmaj9",
+          "B7#9",
+          "Bbmaj7#11",
+          "A7b13",
+          "Abmaj9",
+          "G7#9",
+          "Gbmaj7",
+          "Fmaj13",
+          "Em11",
+          "Ebm11",
+          "Dm9",
+          "Dbmaj7#11",
+          "Cmaj9",
+          "G7sus"
+        ],
+        "tempo": 112,
+        "duration": 1.8,
+        "instrument": "cs80",
+        "fx": "warm_tape",
+        "evidence": "Headhunters (1973) - chromatic sophistication",
+        "freqs": [
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466,
+            293.6585210786982
+          ],
+          [
+            246.94,
+            311.12490406103996,
+            369.99194956392773,
+            439.9970589151508,
+            587.3256099575439
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            207.65,
+            261.62260601067044,
+            311.1234645134429,
+            391.9910020567073,
+            466.15848866288263
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296,
+            349.232297511013,
+            466.16918908106663
+          ],
+          [
+            185,
+            233.08539423055154,
+            277.18680922218607,
+            349.2334956922266
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374,
+            329.619787474701,
+            391.98619651059926,
+            587.3156922698045
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            138.59,
+            174.61245830493047,
+            207.6503777843393
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387,
+            246.93639768378466,
+            293.6585210786982
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ]
+        ]
+      },
+      "hiphop_dark_epic": {
+        "name": "Hip-Hop Dark Minor Epic",
+        "theory": "Wu-Tang / Mobb Deep style minor key darkness with modal shifts",
+        "chords": [
+          "Dm",
+          "Dm",
+          "Bbmaj7",
+          "C",
+          "Gm7",
+          "Am7",
+          "Dm9",
+          "F",
+          "Gm9",
+          "A7",
+          "Dm11",
+          "Csus2"
+        ],
+        "tempo": 90,
+        "duration": 3,
+        "instrument": "minimoog",
+        "fx": "vinyl_worn",
+        "evidence": "36 Chambers (1993), The Infamous (1995)",
+        "freqs": [
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695,
+            439.9964495996983
+          ],
+          [
+            130.81,
+            164.81027253674836,
+            195.9935487262387
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            174.61,
+            219.99481452214383,
+            261.6193986934374
+          ],
+          [
+            196,
+            246.94452577939515,
+            293.6681870678296
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            130.81,
+            146.8292605393491,
+            195.9935487262387
+          ]
+        ]
+      },
+      "floating_melody": {
+        "name": "Floating Melody Sequence",
+        "theory": "Suspended floating chords with stepwise voice leading",
+        "chords": [
+          "Fsus2",
+          "Gsus2",
+          "Am11",
+          "Bbmaj7",
+          "Csus4",
+          "Dm9",
+          "Ebmaj9",
+          "Dm9",
+          "Csus2",
+          "Fsus2"
+        ],
+        "tempo": 75,
+        "duration": 4,
+        "instrument": "strings",
+        "fx": "analog_lush",
+        "evidence": "Neuroscience-backed: stepwise motion = mirror neuron pleasure",
+        "freqs": [
+          [
+            174.61,
+            195.99309825529963,
+            261.6193986934374
+          ],
+          [
+            196,
+            220.0025614686371,
+            293.6681870678296
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695,
+            439.9964495996983
+          ],
+          [
+            130.81,
+            174.6104013239822,
+            195.9935487262387
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285,
+            349.22039247001214
+          ],
+          [
+            146.83,
+            184.99420775606424,
+            219.99642809780318
+          ],
+          [
+            130.81,
+            146.8292605393491,
+            195.9935487262387
+          ],
+          [
+            174.61,
+            195.99309825529963,
+            261.6193986934374
+          ]
+        ]
+      }
+    },
+    "funk_soul_progressions": {
+      "james_brown_vamp": {
+        "name": "James Brown Funk Vamp",
+        "artist": "James Brown",
+        "theory": "Static funk - stays on one chord with rhythmic emphasis",
+        "chords": [
+          "E7#9",
+          "E7#9",
+          "E7#9",
+          "E7#9"
+        ],
+        "tempo": 120,
+        "duration": 1,
+        "evidence": "Funky Drummer (1970) - sampled 1000+ times",
+        "freqs": [
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459,
+            293.65803547341864,
+            391.9864492471969
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459,
+            293.65803547341864,
+            391.9864492471969
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459,
+            293.65803547341864,
+            391.9864492471969
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459,
+            293.65803547341864,
+            391.9864492471969
+          ]
+        ],
+        "instrument": "minimoog",
+        "fx": "dilla_butter"
+      },
+      "curtis_mayfield_superfly": {
+        "name": "Curtis Mayfield 'Superfly'",
+        "theory": "Smooth soul with chromatic bass movement",
+        "chords": [
+          "Fmin7",
+          "Bb7",
+          "Ebmaj7",
+          "Abmaj7"
+        ],
+        "tempo": 95,
+        "duration": 2,
+        "evidence": "Super Fly (1972)",
+        "freqs": [
+          [
+            174.61,
+            207.64745435062514,
+            261.6193986934374,
+            311.1196503489693
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657,
+            293.6581761615285
+          ],
+          [
+            207.65,
+            261.62260601067044,
+            311.1234645134429,
+            391.9910020567073
+          ]
+        ],
+        "instrument": "strings",
+        "fx": "dilla_butter"
+      },
+      "stevie_wonder_superstition": {
+        "name": "Stevie Wonder 'Superstition'",
+        "theory": "Clavinet-driven funk with 9b5 altered chords",
+        "chords": [
+          "Ebm7",
+          "Ebm7",
+          "Bb7#9",
+          "Bb7#9"
+        ],
+        "tempo": 100,
+        "duration": 1.5,
+        "evidence": "Talking Book (1972)",
+        "freqs": [
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695,
+            415.3013464483006,
+            554.3607887296685
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695,
+            415.3013464483006,
+            554.3607887296685
+          ]
+        ],
+        "instrument": "ambient",
+        "fx": "dilla_butter"
+      },
+      "herbie_hancock_chameleon": {
+        "name": "Herbie Hancock 'Chameleon'",
+        "theory": "Jazz-funk modal vamp over Bb minor pentatonic",
+        "chords": [
+          "Bbm7",
+          "Eb7",
+          "Bbm7",
+          "Eb7"
+        ],
+        "tempo": 104,
+        "duration": 2,
+        "evidence": "Head Hunters (1973)",
+        "freqs": [
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ],
+          [
+            233.08,
+            293.66239830949706,
+            349.22541347841695
+          ],
+          [
+            155.56,
+            195.99331852164647,
+            233.07664887893657
+          ]
+        ],
+        "instrument": "oberheim",
+        "fx": "dilla_butter"
+      },
+      "marvin_gaye_inner_city": {
+        "name": "Marvin Gaye 'Inner City Blues'",
+        "theory": "Minor modal progression with gospel influences",
+        "chords": [
+          "Em9",
+          "Am9",
+          "Em9",
+          "Am9"
+        ],
+        "tempo": 78,
+        "duration": 2.5,
+        "evidence": "What's Going On (1971)",
+        "freqs": [
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ],
+          [
+            164.81,
+            207.64758823317405,
+            246.9359893400459
+          ],
+          [
+            220,
+            277.1826309768721,
+            329.6275569128699
+          ]
+        ],
+        "instrument": "rhodes",
+        "fx": "dilla_butter"
+      }
+    }
+  },
+  "drums": {
+    "swing_theory": {
+      "evidence_based": {
+        "source": "arXiv 1904.03442 - Does it Swing? Microtiming Deviations",
+        "finding": "Naturally fluctuating microtiming deviations are NOT essential for swing feel",
+        "implication": "Consistent swing ratio more important than random microtiming",
+        "recommendation": "Use fixed swing percentages rather than random timing jitter"
+      },
+      "swing_ratios": {
+        "straight": {
+          "percent": 50,
+          "ratio": "1:1",
+          "description": "No swing - quantized grid"
+        },
+        "subtle": {
+          "percent": 54,
+          "ratio": "1.17:1",
+          "description": "Slight shuffle feel"
+        },
+        "dilla": {
+          "percent": 58,
+          "ratio": "1.39:1",
+          "description": "J Dilla signature - golden ratio approximation"
+        },
+        "classic": {
+          "percent": 62,
+          "ratio": "1.63:1",
+          "description": "Classic jazz swing"
+        },
+        "hard": {
+          "percent": 66,
+          "ratio": "1.94:1",
+          "description": "Hard shuffle - blues feel"
+        },
+        "dotted": {
+          "percent": 67,
+          "ratio": "2:1",
+          "description": "Dotted 8th notes - maximum swing"
+        },
+        "septuplet": {
+          "percent": 57,
+          "ratio": "1.33:1",
+          "description": "7-tuplet swing - Dilla alternate"
+        }
+      }
+    },
+    "hip_hop_patterns": {
+      "dilla_classic": {
+        "name": "J Dilla Classic Boom-Bap",
+        "tempo": 90,
+        "swing": 58,
+        "pattern": {
+          "kick": [
+            0,
+            6,
+            12
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "hihat_open": [
+            7,
+            15
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.9,
+            0.7,
+            0.85
+          ],
+          "snare": [
+            1,
+            0.95
+          ],
+          "hihat_closed": [
+            0.6,
+            0.4,
+            0.65,
+            0.5,
+            0.6,
+            0.4,
+            0.7,
+            0.5
+          ],
+          "hihat_open": [
+            0.8,
+            0.75
+          ]
+        },
+        "evidence": "Donuts (2006) - analyzed timing patterns",
+        "characteristics": "Kick slightly ahead of beat, snare on 2 and 4, swung hi-hats"
+      },
+      "flylo_broken": {
+        "name": "Flying Lotus Broken Beat",
+        "tempo": 85,
+        "swing": 62,
+        "pattern": {
+          "kick": [
+            0,
+            5,
+            10,
+            14
+          ],
+          "snare": [
+            4,
+            11
+          ],
+          "hihat_closed": [
+            0,
+            1,
+            3,
+            5,
+            7,
+            9,
+            11,
+            13,
+            15
+          ],
+          "rimshot": [
+            8
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            1,
+            0.6,
+            0.8,
+            0.7
+          ],
+          "snare": [
+            0.95,
+            0.9
+          ],
+          "hihat_closed": [
+            0.5,
+            0.3,
+            0.6,
+            0.4,
+            0.5,
+            0.3,
+            0.7,
+            0.4,
+            0.5
+          ],
+          "rimshot": [
+            0.6
+          ]
+        },
+        "evidence": "Cosmogramma (2010) - polyrhythmic analysis",
+        "characteristics": "Syncopated kicks, broken snare placement, rapid hi-hat rolls"
+      },
+      "madlib_dusty": {
+        "name": "Madlib Dusty Fingers",
+        "tempo": 95,
+        "swing": 54,
+        "pattern": {
+          "kick": [
+            0,
+            7,
+            13
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "crash": [
+            0
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.85,
+            0.75,
+            0.8
+          ],
+          "snare": [
+            0.9,
+            0.85
+          ],
+          "hihat_closed": [
+            0.55,
+            0.45,
+            0.6,
+            0.5,
+            0.55,
+            0.45,
+            0.65,
+            0.5
+          ],
+          "crash": [
+            0.7
+          ]
+        },
+        "evidence": "Shades of Blue (2003) - sample-based timing",
+        "characteristics": "Subtle swing, vintage feel, lower dynamics for lo-fi aesthetic"
+      },
+      "boom_bap_classic": {
+        "name": "Classic Boom-Bap (Premier/Pete Rock)",
+        "tempo": 93,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            6,
+            14
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            1,
+            0.8,
+            0.85
+          ],
+          "snare": [
+            1,
+            0.95
+          ],
+          "hihat_closed": [
+            0.6,
+            0.5,
+            0.7,
+            0.5,
+            0.6,
+            0.5,
+            0.7,
+            0.5
+          ]
+        },
+        "evidence": "1990s NYC hip-hop golden era analysis",
+        "characteristics": "Straight quantization, heavy kick and snare, consistent hi-hat"
+      },
+      "trap_pattern": {
+        "name": "Modern Trap",
+        "tempo": 140,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            3,
+            6,
+            9,
+            13
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "hihat_open": [
+            2,
+            6,
+            10,
+            14
+          ],
+          "rim": [
+            7,
+            11,
+            15
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.95,
+            0.7,
+            0.85,
+            0.7,
+            0.8
+          ],
+          "snare": [
+            1,
+            0.95
+          ],
+          "hihat_closed": [
+            0.4,
+            0.3,
+            0.5,
+            0.3,
+            0.6,
+            0.3,
+            0.5,
+            0.3,
+            0.4,
+            0.3,
+            0.5,
+            0.3,
+            0.6,
+            0.3,
+            0.5,
+            0.3
+          ],
+          "hihat_open": [
+            0.7,
+            0.65,
+            0.7,
+            0.65
+          ],
+          "rim": [
+            0.5,
+            0.5,
+            0.5
+          ]
+        },
+        "evidence": "Metro Boomin / 808 Mafia production analysis",
+        "characteristics": "32nd note hi-hat rolls, syncopated kicks, crisp 808 snares"
+      }
+    },
+    "reggae_patterns": {
+      "one_drop": {
+        "name": "One Drop (Roots Reggae)",
+        "tempo": 75,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            8
+          ],
+          "snare": [
+            8
+          ],
+          "hihat_closed": [
+            2,
+            6,
+            10,
+            14
+          ],
+          "rimshot": [
+            8
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            1
+          ],
+          "snare": [
+            0.9
+          ],
+          "hihat_closed": [
+            0.5,
+            0.6,
+            0.5,
+            0.6
+          ],
+          "rimshot": [
+            0.7
+          ]
+        },
+        "evidence": "Bob Marley / Carlton Barrett analysis",
+        "characteristics": "Drop beat 1, emphasis on 3, swung hi-hats, rimshot on 3"
+      },
+      "rockers": {
+        "name": "Rockers (Sly & Robbie)",
+        "tempo": 80,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "hihat_open": [
+            6,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.8,
+            0.7,
+            0.85,
+            0.7,
+            0.9,
+            0.7,
+            0.85,
+            0.7
+          ],
+          "snare": [
+            1,
+            0.95
+          ],
+          "hihat_closed": [
+            0.6,
+            0.5,
+            0.65,
+            0.5,
+            0.6,
+            0.5,
+            0.65,
+            0.5
+          ],
+          "hihat_open": [
+            0.75,
+            0.7
+          ]
+        },
+        "evidence": "Sly & Robbie discography - 8th note kick analysis",
+        "characteristics": "Steady 8th note kick, driving feel, more propulsive than one drop"
+      },
+      "steppers": {
+        "name": "Steppers (Four on Floor Reggae)",
+        "tempo": 125,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            4,
+            8,
+            12
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "crash": [
+            0,
+            8
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.9,
+            0.85,
+            0.9,
+            0.85
+          ],
+          "snare": [
+            0.95,
+            0.9
+          ],
+          "hihat_closed": [
+            0.6,
+            0.5,
+            0.65,
+            0.5,
+            0.6,
+            0.5,
+            0.65,
+            0.5
+          ],
+          "crash": [
+            0.7,
+            0.65
+          ]
+        },
+        "evidence": "Digital reggae / dancehall transition analysis",
+        "characteristics": "Four on floor kick, higher tempo, energetic forward drive"
+      }
+    },
+    "techno_house_patterns": {
+      "detroit_techno_909": {
+        "name": "Detroit Techno (Derrick May / Juan Atkins)",
+        "tempo": 130,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            4,
+            8,
+            12
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "hihat_open": [
+            6,
+            14
+          ],
+          "clap": [
+            4,
+            12
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            1,
+            0.95,
+            1,
+            0.95
+          ],
+          "snare": [
+            0.9,
+            0.85
+          ],
+          "hihat_closed": [
+            0.6,
+            0.4,
+            0.65,
+            0.4,
+            0.6,
+            0.4,
+            0.65,
+            0.4
+          ],
+          "hihat_open": [
+            0.8,
+            0.75
+          ],
+          "clap": [
+            0.85,
+            0.8
+          ]
+        },
+        "evidence": "TR-909 programming guides from Belleville Three era",
+        "characteristics": "Aggressive 909 kick, open hats on upbeats, layered clap+snare"
+      },
+      "chicago_house": {
+        "name": "Chicago House (Frankie Knuckles)",
+        "tempo": 120,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            4,
+            8,
+            12
+          ],
+          "clap": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            2,
+            6,
+            10,
+            14
+          ],
+          "hihat_open": [
+            2,
+            6,
+            10,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            1,
+            0.95,
+            1,
+            0.95
+          ],
+          "clap": [
+            0.9,
+            0.85
+          ],
+          "hihat_closed": [
+            0.5,
+            0.6,
+            0.5,
+            0.6
+          ],
+          "hihat_open": [
+            0.7,
+            0.75,
+            0.7,
+            0.75
+          ]
+        },
+        "evidence": "Warehouse club recordings - TR-808 analysis",
+        "characteristics": "Four on floor, claps on 2&4, open hats on upbeats, disco influence"
+      },
+      "dub_techno": {
+        "name": "Dub Techno (Basic Channel / Rhythm & Sound)",
+        "tempo": 125,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            4,
+            8,
+            12
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "ride": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.85,
+            0.8,
+            0.85,
+            0.8
+          ],
+          "snare": [
+            0.6,
+            0.55
+          ],
+          "hihat_closed": [
+            0.4,
+            0.3,
+            0.45,
+            0.3,
+            0.4,
+            0.3,
+            0.45,
+            0.3
+          ],
+          "ride": [
+            0.5,
+            0.4,
+            0.55,
+            0.4,
+            0.5,
+            0.4,
+            0.55,
+            0.4
+          ]
+        },
+        "evidence": "Basic Channel discography - minimal techno analysis",
+        "characteristics": "Subdued dynamics, layers of percussion, space and reverb focus"
+      },
+      "industrial_techno": {
+        "name": "Industrial Techno (Berghain Style)",
+        "tempo": 135,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            3,
+            4,
+            7,
+            8,
+            11,
+            12,
+            15
+          ],
+          "clap": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "tom_high": [
+            2,
+            10
+          ],
+          "tom_low": [
+            6,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            1,
+            0.7,
+            0.95,
+            0.7,
+            1,
+            0.7,
+            0.95,
+            0.7
+          ],
+          "clap": [
+            0.95,
+            0.9
+          ],
+          "hihat_closed": [
+            0.5,
+            0.3,
+            0.4,
+            0.3,
+            0.6,
+            0.3,
+            0.4,
+            0.3,
+            0.5,
+            0.3,
+            0.4,
+            0.3,
+            0.6,
+            0.3,
+            0.4,
+            0.3
+          ],
+          "tom_high": [
+            0.7,
+            0.7
+          ],
+          "tom_low": [
+            0.8,
+            0.8
+          ]
+        },
+        "evidence": "Berghain / Ostgut Ton analysis - aggressive techno programming",
+        "characteristics": "Off-beat kicks, 16th note hi-hats, tom percussion, hard dynamics"
+      },
+      "uk_garage": {
+        "name": "UK Garage (2-Step)",
+        "tempo": 130,
+        "swing": 62,
+        "pattern": {
+          "kick": [
+            0,
+            7,
+            10
+          ],
+          "snare": [
+            4,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "hihat_open": [
+            3,
+            7,
+            11,
+            15
+          ],
+          "rim": [
+            2,
+            6,
+            10,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.95,
+            0.85,
+            0.8
+          ],
+          "snare": [
+            1,
+            0.95
+          ],
+          "hihat_closed": [
+            0.6,
+            0.5,
+            0.65,
+            0.5,
+            0.6,
+            0.5,
+            0.65,
+            0.5
+          ],
+          "hihat_open": [
+            0.75,
+            0.8,
+            0.75,
+            0.8
+          ],
+          "rim": [
+            0.5,
+            0.5,
+            0.5,
+            0.5
+          ]
+        },
+        "evidence": "UK garage golden era (1999-2003) rhythm analysis",
+        "characteristics": "Syncopated kicks, swung hi-hats, shuffled feel, intricate percussion"
+      }
+    },
+    "jazz_patterns": {
+      "jazz_standard_swing": {
+        "name": "Jazz Standard Swing (Ride Pattern)",
+        "tempo": 180,
+        "swing": 66,
+        "pattern": {
+          "ride": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ],
+          "hihat_foot": [
+            4,
+            12
+          ],
+          "snare": [
+            4,
+            7,
+            12,
+            15
+          ],
+          "kick": [
+            0,
+            6,
+            10
+          ]
+        },
+        "dynamics": {
+          "ride": [
+            0.7,
+            0.5,
+            0.8,
+            0.5,
+            0.7,
+            0.5,
+            0.8,
+            0.5
+          ],
+          "hihat_foot": [
+            0.6,
+            0.6
+          ],
+          "snare": [
+            0.4,
+            0.3,
+            0.45,
+            0.35
+          ],
+          "kick": [
+            0.5,
+            0.4,
+            0.45
+          ]
+        },
+        "evidence": "Bebop analysis - Art Blakey / Max Roach patterns",
+        "characteristics": "Ride cymbal swing pattern, feathered kick, light snare comping"
+      },
+      "bossa_nova": {
+        "name": "Bossa Nova (João Gilberto Style)",
+        "tempo": 120,
+        "swing": 50,
+        "pattern": {
+          "kick": [
+            0,
+            6,
+            10
+          ],
+          "rim": [
+            0,
+            4,
+            6,
+            10,
+            12
+          ],
+          "hihat_closed": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14
+          ]
+        },
+        "dynamics": {
+          "kick": [
+            0.7,
+            0.6,
+            0.65
+          ],
+          "rim": [
+            0.5,
+            0.6,
+            0.5,
+            0.6,
+            0.5
+          ],
+          "hihat_closed": [
+            0.4,
+            0.3,
+            0.45,
+            0.3,
+            0.4,
+            0.3,
+            0.45,
+            0.3
+          ]
+        },
+        "evidence": "Brazilian rhythm analysis - clave-based pattern",
+        "characteristics": "Syncopated kick pattern, cross-stick rim, gentle dynamics"
+      }
+    },
+    "synthesis_parameters": {
+      "sox_commands": {
+        "kick": "synth 0.3 sine 50-30 gain -3",
+        "snare": "synth 0.15 noise band 2000 1000 gain -8",
+        "hihat_closed": "synth 0.05 noise band 8000 2000 gain -18",
+        "hihat_open": "synth 0.25 noise band 8000 2000 gain -15",
+        "clap": "synth 0.12 noise band 1500 800 gain -10",
+        "rimshot": "synth 0.08 sine 1000-100 gain -12",
+        "tom_high": "synth 0.25 sine 150-80 gain -6",
+        "tom_low": "synth 0.3 sine 100-50 gain -5",
+        "ride": "synth 0.4 noise band 6000 1500 gain -16 reverb 20",
+        "crash": "synth 1.0 noise band 5000 2000 gain -12 reverb 40"
+      },
+      "vintage_processing": {
+        "808": {
+          "description": "TR-808 analog character",
+          "sox_chain": "bass 3 treble -2 reverb 15 gain -1"
+        },
+        "909": {
+          "description": "TR-909 punchy digital sound",
+          "sox_chain": "compand 0.01,0.05 -inf,-50,-30,-10 -3 gain -1"
+        },
+        "sp1200": {
+          "description": "Akai SP-1200 12-bit quantization + 26kHz aliasing",
+          "sox_chain": "rate 26000 dither gain -3 rate 44100"
+        },
+        "mpc60": {
+          "description": "Akai MPC60 16-bit with analog warmth",
+          "sox_chain": "compand 0.1,0.2 -inf,-60,-40,-20 -5 gain -2"
+        }
+      }
+    }
+  },
+  "sample_studies": [
+    {
+      "key": "ahmad_jamal_swahililand",
+      "source": "Ahmad Jamal — Swahililand",
+      "claimed_flip": "De La Soul — Stakes Is High",
+      "status": "candidate_unverified"
+    },
+    {
+      "key": "george_duke_vulcan",
+      "source": "George Duke — Vulcan Mind Probe",
+      "claimed_flip": "Common — Thelonious",
+      "status": "candidate_unverified"
+    },
+    {
+      "key": "joao_donato_samba",
+      "source": "João Donato — Samba de Orfeu",
+      "claimed_flip": "J Dilla — To the ZZ ZZ Ah You Don't Stop",
+      "status": "candidate_unverified"
+    },
+    {
+      "key": "gary_burton_flip",
+      "source": "Gary Burton — Sing Me Softly of the Blues",
+      "status": "candidate_unverified"
+    },
+    {
+      "key": "get_dis_money",
+      "source": "Herbie Hancock — Come Running to Me",
+      "claimed_flip": "Slum Village — Get Dis Money",
+      "status": "research_lead"
+    }
+  ]
+}

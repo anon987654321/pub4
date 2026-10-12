@@ -226,6 +226,13 @@ module DillaLofiMachine
     # note called "9" and raises KeyError. A suffix with a slash in it can
     # never be reached here.
     "69" => [0, 4, 7, 9, 2],
+    # Chord qualities recovered from pub3's theory catalog but missing as
+    # directly parseable suffixes in pub4.
+    "maj11" => [0, 4, 7, 11, 14, 17],
+    "11" => [0, 4, 7, 10, 14, 17],
+    "9b5" => [0, 4, 6, 10, 14],
+    "9#5" => [0, 4, 8, 10, 14],
+    "6add9" => [0, 4, 7, 9, 14],
   }.freeze
 
   CHORD_TEMPLATES = CHORD_CATALOG.fetch("templates").transform_keys(&:to_s)
@@ -333,7 +340,8 @@ module DillaLofiMachine
   CHORD_SUFFIXES = ([
     *CHORD_CATALOG_SUFFIXES,
     "maj9low", "mmaj7", "m9b5", "m11b5", "7#9b13", "7#9#11",
-    "13b9", "13#11", "9sus4", "9sus", "69", "maj7#11", "sus9"
+    "13b9", "13#11", "9sus4", "13sus4", "9sus", "69", "maj7#11", "sus9",
+    "maj11", "11", "9b5", "9#5", "6add9"
   ]).uniq.freeze + [""].freeze
 
 # Compiled once. The interpolated form was rebuilt on every iteration of every
@@ -343,6 +351,54 @@ module DillaLofiMachine
 SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.freeze
 
   PAD_WAVEFORMS = %i[sine square sawtooth triangle].freeze
+
+  RECOVERED_MUSIC_PATH = File.expand_path("../data/recovered_music.json", __dir__).freeze
+
+  # The recovered catalogue is an opt-in research bank, not a new default
+  # rotation. Legacy patterns retain step maps and dynamics, while the renderer
+  # gets the role arrays it already understands.
+  def self.load_recovered_drum_presets
+    return {} unless File.file?(RECOVERED_MUSIC_PATH)
+
+    data = YAML.safe_load_file(RECOVERED_MUSIC_PATH, aliases: false)
+    groups = data.fetch("drums", {})
+    groups.each_with_object({}) do |(group_name, entries), out|
+      next unless entries.is_a?(Hash) && group_name != "swing_theory" && group_name != "synthesis_parameters"
+
+      entries.each do |name, spec|
+        next unless spec.is_a?(Hash) && spec["pattern"].is_a?(Hash)
+
+        pattern = spec.fetch("pattern")
+        percussion = pattern.select do |role, _steps|
+          !%w[kick snare hihat_closed hihat_open ghost clap].include?(role)
+        end.values.flatten.uniq
+        out["legacy_#{name}".to_sym] = {
+          swing: (spec["swing"] || 50).to_i.clamp(0, 75),
+          humanize: 0,
+          bpm: (spec["tempo"] || 90).to_i.clamp(30, 300),
+          mode: :legacy_research,
+          kicks: Array(pattern["kick"]).map(&:to_i),
+          snares: Array(pattern["snare"]).map(&:to_i),
+          hats: Array(pattern["hihat_closed"]).map(&:to_i),
+          open_hats: Array(pattern["hihat_open"]).map(&:to_i),
+          ghosts: Array(pattern["ghost"]).map(&:to_i),
+          claps: Array(pattern["clap"]).map(&:to_i),
+          perc: percussion.map(&:to_i),
+          dynamics: spec["dynamics"] || {},
+          source: spec["evidence"] || "legacy research bank",
+          characteristics: spec["characteristics"] || ""
+        }
+      end
+    end
+  rescue StandardError, Psych::Exception => e
+    warn "recovered drum bank not loaded (#{e.message})"
+    {}
+  end
+
+  STRAIGHT_TIMING = {
+    snare: 0..0, ghost: 0..0, hat_down: 0..0, hat_up: 0..0,
+    kick_anchor: 0..0, kick_sync: 0..0, bass: 0..0, pad: 0..0,
+  }.freeze
 
   # 16-step MPC grids: kicks/snares/hats/ghosts/claps/perc + swing/humanize.
   DRUM_PRESETS = {
@@ -905,7 +961,7 @@ euclid_sparse: {
     bit_depth: 12, vinyl: 0.40, pad_lowpass_hz: 3200, master_lowpass_hz: 2800,
     pad_attack_ms: 800, pad_release_ms: 2000, pad_volume_pct: 40,
     filter_cutoff_hz: 12_000
-  }.freeze
+  }.merge(load_recovered_drum_presets).freeze
 
   DEFAULT_DRUM_PRESET = :dilla_slight
   DEFAULT_PAD_WAVE = :sine
@@ -1327,6 +1383,7 @@ euclid_sparse: {
     paths = [
       File.expand_path("../data/dilla_reference.yml", __dir__),
       File.expand_path("../free_midi_chords.yml", __dir__),
+      RECOVERED_MUSIC_PATH,
     ].select { |candidate| File.file?(candidate) }
     return {} if paths.empty?
 
@@ -1335,15 +1392,25 @@ euclid_sparse: {
     end
     entries.each_with_object({}) do |(key, e), out|
       producer = e["producer"].to_sym
-      wonky = producer == :wonky
+      timing_family = (e["timing_family"] || (producer == :wonky ? "flylo" : producer.to_s)).to_sym
+      timing, feel, drum_preset = case timing_family
+                                  when :flylo, :wonky
+                                    [WONKY_TIMING, :wonky_abstract, :wonky_abstract]
+                                  when :madlib
+                                    [MADLIB_TIMING, :timeless, :madlib_dusty]
+                                  when :straight, :jazz
+                                    [STRAIGHT_TIMING, :timeless, :dilla_slight]
+                                  else
+                                    [DILLA_TIMING, :timeless, :dilla_slight]
+                                  end
       out[key.to_sym] = {
         producer:, key: e["key"], bpm: e["bpm"], swing: e["swing"],
         chord_bars: e["chord_bars"], phrase_bars: e["phrase_bars"],
-        voicing: e["voicing"].to_sym,
-        feel: wonky ? :wonky_abstract : :timeless,
-        drum_preset: wonky ? :wonky_abstract : :dilla_slight,
-        chords: e["chords"],
-        timing: wonky ? WONKY_TIMING : DILLA_TIMING
+        voicing: e["voicing"].to_sym, feel:, drum_preset:,
+        chords: e["chords"], timing:,
+        legacy_label: e["legacy_label"], legacy_group: e["legacy_group"],
+        legacy_theory: e["legacy_theory"], source: e["source"],
+        source_note: e["source_note"], research_status: e["research_status"]
       }
     end
   rescue StandardError, Psych::Exception => e
