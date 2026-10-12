@@ -79,6 +79,16 @@ doas rm -rf public/assets
 doas chown -R dev:dev public
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails assets:precompile
+# rc.d master runs the daemon as `master`, which writes web/tmp and web/log and
+# nothing else under the checkout: both are dev:master 2775 (see the header of
+# etc/rc.d/master). The dev-run steps above leave tmp owned dev:dev 0755, and
+# Rails.cache then dies mkdir-ing tmp/cache, so every rate-limited request 500s
+# (2026-10-12: chat and /health, while / and /up still answered).
+echo "==> runtime dirs"
+doas install -d -o dev -g master -m 2775 tmp log
+doas chown -R dev:master tmp log
+doas chmod -R ug+rwX tmp log
+doas chmod 2775 tmp log tmp/**/*(/N) log/**/*(/N)
 # The asset gate, through whichever door exists. MASTER/gates/runner.rb was
 # deleted on 2026-09-16 and every deploy script still named it, so `vps-deploy
 # master` died here under set -e with the box half deployed: new assets on disk,
