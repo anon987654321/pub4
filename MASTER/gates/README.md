@@ -45,7 +45,8 @@ failed resource requests, and a PNG screenshot. It writes a run-scoped
 visual baselines. The committed structural baseline remains `layout_snapshot`.
 
 Uncaught JavaScript exceptions, document HTTP errors, first-party server errors,
-and missing screenshot evidence fail the gate. Ordinary console errors/warnings
+failed first-party scripts/stylesheets, and missing screenshot evidence fail the
+gate. Ordinary console errors/warnings
 and other resource failures remain soft until `GATE_STRICT_SOFT=1`, preserving the
 existing severity calibration. Each route/viewport prints PASS, FAIL, SKIPPED or
 INCONCLUSIVE and the manifest links its screenshot and detailed browser evidence.
