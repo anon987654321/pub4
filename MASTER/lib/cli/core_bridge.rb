@@ -327,9 +327,8 @@ module Master
 
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)
         return "core: no goal" if goal.to_s.strip.empty?
-        # An injected model (tests) runs offline; a real one needs a provider key.
-        return Master.no_api_key_message if model.nil? && !Master.any_api_key_present?
-
+        # The dispatcher owns lane reachability. A local model or a signed-in CLI
+        # can answer without an API key; a blanket preflight here would hide it.
         result = run(goal, root:, bus:, model:, model_id:)
         header = "core: #{result[:reason]} turns=#{result[:turns]}"
         [header, *result[:transcript], result[:summary]].compact.join("\n")
