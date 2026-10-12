@@ -255,7 +255,103 @@ test("the browser overlay uses the existing face frame clock, with no second ani
   const fallback = readFileSync(join(here, "..", "public", "face_2d_fallback.js"), "utf8");
   assert.equal(typeof ascii.update, "function");
   assert.equal(typeof ascii.createView, "function");
-  assert.match(frame, /MASTER_FACE_ASCII\\?\.update/);
-  assert.match(fallback, /MASTER_FACE_ASCII\.createView/);
+  assert.match(frame, /MASTER_FACE_ASCII\?\.update/);
+  assert.match(fallback, /window\.MASTER_FACE_ASCII/);
+  assert.match(fallback, /ascii\.createView/);
   assert.doesNotMatch(source, /requestAnimationFrame/);
+});
+
+// ---- Mask morph targets ------------------------------------------------------------
+// MASTER/lib/cli/face/masks.rb holds the same morph, trigger and choice; the fixtures
+// carry what Ruby drew for each mask at mix 0, 0.5 and 1.0, and what it computed.
+
+function maskFrame(c) {
+  const head = engine.head(c.rows, c.cols);
+  const renderer = new engine.Renderer(engine.Masks.source(head, c.mask, c.mix), c.rows, c.cols, { chars: fixtures.chars, mode: "dark" });
+  return { renderer, frame: renderer.render(engine.pose(c.state, c.t, c.seed), c.state) };
+}
+
+test("every mask fixture frame is reproduced character for character", () => {
+  assert.equal(fixtures.masks.length, engine.Masks.ORDER.length * 4);
+  for (const c of fixtures.masks) {
+    const { renderer, frame } = maskFrame(c);
+    assert.equal(rubyDigest(renderer.fitted()), c.digest, `${c.name}: the points differ from the Ruby mask`);
+    assert.deepEqual(frame.lines, c.lines.map((l) => l.replace(/ +$/, "")), c.name);
+    assert.match(frame.toString(), PRINTABLE, c.name);
+    assert.ok(!BRAILLE.test(frame.toString()), c.name);
+  }
+});
+
+test("the trigger section is reproduced: the session's mask, the mix, and the parameters at the middle", () => {
+  for (const [session, mask] of Object.entries(fixtures.trigger.picks)) assert.equal(engine.Masks.pick(session), mask, JSON.stringify(session));
+  for (const m of fixtures.trigger.mixes) assert.ok(Math.abs(engine.Masks.mix(m.state, m.t, m.since, m.from) - m.mix) < 1e-15, JSON.stringify(m));
+  for (const [mask, middle] of Object.entries(fixtures.trigger.morphs)) {
+    const got = engine.Masks.morph(engine.Masks.params(null), engine.Masks.params(mask), 0.5);
+    assert.deepEqual(Object.keys(got).sort(), Object.keys(middle).sort(), mask);
+    for (const [key, want] of Object.entries(middle)) assert.equal(got[key], want, `${mask} ${key}`);
+  }
+});
+
+test("morph ends are exact, and every target sits on the head's own lattice", () => {
+  const human = engine.Masks.params(null);
+  for (const mask of engine.Masks.ORDER) {
+    const target = engine.Masks.params(mask);
+    assert.equal(engine.Masks.morph(human, target, 0), human);
+    assert.equal(engine.Masks.morph(human, target, 1), target);
+    assert.deepEqual(engine.Masks.morph(human, target, 0.37), engine.Masks.morph(human, target, 0.37));
+    for (const [rows, cols] of [[20, 40], [28, 64]]) {
+      const head = engine.head(rows, cols);
+      for (const mix of [0.3, 1.0]) {
+        assert.equal(engine.Masks.source(head, mask, mix).points.length, head.points.length, `${mask} ${rows}x${cols} ${mix}`);
+      }
+    }
+  }
+  const head = engine.head(20, 40);
+  assert.equal(engine.Masks.source(head, "baining", 0), head);
+  assert.equal(engine.Masks.smoothstep(0.25), 0.15625);
+});
+
+test("the human parameters rebuild the head point for point", () => {
+  const head = engine.head(20, 40);
+  const shaped = engine.Masks.source(head, "maprik_yam", 1e-300);
+  assert.equal(shaped.points.length, head.points.length);
+  const plain = engine.Masks.source(head, "maprik_yam", 0);
+  assert.deepEqual(plain.points, head.points);
+});
+
+test("the mask follows thinking only, and reduced motion or a small window shows none", () => {
+  for (const state of engine.STATES.filter((s) => s !== "thinking")) assert.equal(engine.Masks.mix(state, 5, 0, 0), 0, state);
+  assert.equal(engine.Masks.mix("thinking", 0, 0, 0), 0);
+  assert.ok(Math.abs(engine.Masks.mix("thinking", 0.6, 0, 0) - 0.5) < 1e-12);
+  assert.equal(engine.Masks.mix("thinking", 1.2, 0, 0), 1);
+  assert.ok(Math.abs(engine.Masks.mix("idle", 0.4, 0, 1) - 0.5) < 1e-12);
+  assert.equal(engine.pose("thinking", 2, 1).mask, null, "no schedule, no mask");
+  const look = engine.lookFor({ state: "thinking", t: 2, session: "abc", since: 0, from: 0 });
+  assert.equal(look.mask, "iatmul_mei");
+  assert.equal(look.mix, 1);
+  assert.equal(engine.lookFor({ state: "thinking", t: 2, session: "abc", since: 0, from: 0, reduced: true }).mix, 0);
+  assert.equal(engine.lookFor({ state: "idle", t: 2, session: "abc", since: 0, from: 0 }).mix, 0);
+  const plain = engine.frame({ rows: 24, cols: 60, state: "thinking", look: { ...look, mix: 0 } });
+  const morphed = engine.frame({ rows: 24, cols: 60, state: "thinking", look });
+  assert.notDeepEqual(morphed.lines, plain.lines);
+  const small = engine.frame({ rows: engine.MIN_ROWS - 1, cols: 60, state: "thinking", look });
+  assert.ok(small.word);
+});
+
+test("the view eases into the mask while thinking and back out when it stops", () => {
+  const { canvas } = stubCanvas(900, 900);
+  const view = ascii.createView(canvas, { contract, env: pageWindow() });
+  view.draw(0, { state: "idle", session: "abc" });
+  assert.equal(view.maskMix, 0);
+  view.draw(1000, { state: "thinking", session: "abc" });
+  assert.equal(view.maskMix, 0);
+  view.draw(1600, { state: "thinking", session: "abc" });
+  assert.ok(Math.abs(view.maskMix - 0.5) < 1e-9);
+  view.draw(3000, { state: "thinking", session: "abc" });
+  assert.equal(view.maskMix, 1);
+  view.draw(3400, { state: "idle", session: "abc" });
+  view.draw(3800, { state: "idle", session: "abc" });
+  assert.ok(Math.abs(view.maskMix - 0.5) < 1e-9);
+  view.draw(5000, { state: "idle", session: "abc", reduced: true });
+  assert.equal(view.maskMix, 0);
 });

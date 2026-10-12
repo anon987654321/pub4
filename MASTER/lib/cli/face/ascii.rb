@@ -43,10 +43,11 @@ module Master
           @ramp = Glyphs.ramp(chars || ENV["MASTER_FACE_CHARS"] || Glyphs::DEFAULT_CHARS, mode || ENV["MASTER_FACE_MODE"] || CONFIG.fetch("mode"))
           @points = []
           source.each_point { |x, y, z, b, zone, *| @points << [x, y, z, b, zone] }
-          lift = @points.map { |p| p[1] }.minmax.sum / 2.0
+          above, aside = source.respond_to?(:margins) ? source.margins : [0.0, 0.0]
+          lift = (@points.map { |p| p[1] }.minmax.sum + above) / 2.0
           @points.each { |p| p[1] -= lift }
-          reach = @points.map { |p| Math.hypot(p[0], p[2]) }.max
-          span = @points.map { |p| p[1] }.minmax.then { |lo, hi| hi - lo }
+          reach = [@points.map { |p| Math.hypot(p[0], p[2]) }.max, aside].max
+          span = @points.map { |p| p[1] }.minmax.then { |lo, hi| hi - lo + above }
           @scale = [((@w / 2.0) - 1) / reach, (@h - 2) / span].min * FIT
           @features = Features.new(@points, source)
         end
@@ -90,6 +91,9 @@ module Master
           end
         end
 
+        # Sub-pixels per source unit, as fitted.
+        attr_reader :scale
+
         # A source-space point in sub-pixels, and its depth in the same units.
         def project(x, y, z)
           rx = (x * @cy) + (z * @sy)
@@ -100,12 +104,14 @@ module Master
           [@w / 2.0 + (((rx * @cr) - (ry * @sr)) * k), @rows - (((rx * @sr) + (ry * @cr)) * k) - @bob, rz * @scale]
         end
 
-        def hidden?(px, py, depth)
+        # slack lets a feature that stands off the surface (a ring round a raised
+        # beak) count as seen where the surface is a little nearer.
+        def hidden?(px, py, depth, slack = 0.0)
           x = px.floor
           y = py.floor
           return true unless x.between?(0, @w - 1) && y.between?(0, @h - 1)
 
-          @zb[(y * @w) + x] > depth + OCCLUSION
+          @zb[(y * @w) + x] > depth + OCCLUSION + slack
         end
 
         private

@@ -312,12 +312,16 @@
       const centre = [(xmax + xmin) / 2, (Math.max(...ys) + Math.min(...ys)) / 2];
       const spacing = mask.length > 1 ? Math.abs(mask[0][0] - mask[1][0]) : 0.05;
       const out = [];
+      const cells = [];
       mask.forEach((r) => {
         const y = r[0];
         const pts = r[1];
         let reach = 0;
         pts.forEach((p) => { const d = Math.abs(p[0] - centre[0]); if (d > reach) reach = d; });
         const hw = reach + (spacing / 2);
+        const depth = hw * DEPTH_RATIO * CRANIUM_SCALE;
+        const count = Math.max(Math.round(Math.PI * (hw + depth) / 2 / spacing), 2);
+        const fronts = [];
         pts.forEach((p) => {
           const x = p[0];
           const l = p[1];
@@ -327,16 +331,138 @@
           const localX = (x - centre[0]) * widthScale;
           const across = clamp(localX / (hw * CRANIAL_WIDTH), -1.0, 1.0);
           const z = (hw * DEPTH_RATIO * CRANIUM_SCALE * Math.sqrt(1 - (across * across))) + ((l - 0.5) * RELIEF);
-          out.push([localX, localY, z, l, zoneAt(x, y)]);
+          const zone = zoneAt(x, y);
+          out.push([localX, localY, z, l, zone]);
+          fronts.push([x, l, zone]);
         });
-        const depth = hw * DEPTH_RATIO * CRANIUM_SCALE;
-        const count = Math.max(Math.round(Math.PI * (hw + depth) / 2 / spacing), 2);
+        // Kept for maskSource, which places these same lattice points again.
+        cells.push([y, hw, count, fronts]);
         for (let i = 1; i < count; i += 1) {
           const angle = (Math.PI / 2) + (Math.PI * i / count);
           out.push([hw * Math.sin(angle), y - centre[1], depth * Math.cos(angle), BACK_LIGHT, SKIN_ZONE]);
         }
       });
-      return { points: out, features: true };
+      return { points: out, features: true, cells, centre };
+    }
+
+    // ---- Face::Masks --------------------------------------------------------
+    // The mask morph targets: numbers laid over the head's morphology, blended by
+    // smoothstep, on the head's own lattice. All of them are in the contract.
+    const MASKS = ascii.masks || {};
+    const MASK_ORDER = MASKS.order || [];
+    const MASK_TRIGGERS = MASKS.trigger_states || [];
+    const MASK_EASE = MASKS.ease || { in: 1.2, out: 0.8 };
+    const MASK_TAKEOVER = num(MASKS.takeover, 0.5);
+    const BEAK_MIN = num(MASKS.beak_min, 0.015);
+    const BROW_MIN = num(MASKS.brow_min, 0.03);
+    const MOUTH_SLACK = num(MASKS.mouth_slack, 0.0);
+    const RING_MIN_PX = num(MASKS.ring_min_px, 1.0);
+    const MASK_GLYPHS = MASKS.glyphs || {};
+    const NEUTRAL = Object.assign({
+      cranium_scale: CRANIUM_SCALE,
+      cranial_width: CRANIAL_WIDTH,
+      upper_face_scale: UPPER_FACE_SCALE,
+      lower_face_scale: LOWER_FACE_SCALE,
+      facial_verticalization: FACIAL_VERTICALIZATION,
+      jaw_projection: JAW_PROJECTION,
+      jaw_softening: JAW_SOFTENING,
+      masticatory_scale: MASTICATORY_SCALE,
+      nasal_projection: NASAL_PROJECTION,
+    }, MASKS.neutral || {});
+
+    function smoothstep(s) {
+      const c = clamp(s, 0.0, 1.0);
+      return c * c * (3.0 - (2.0 * c));
+    }
+
+    // The parameters of a target, or the human head's when name is null.
+    function maskParams(name) {
+      if (name === null || name === undefined) return NEUTRAL;
+      const target = (MASKS.targets || {})[name];
+      if (!target) throw new Error(`masks: no target ${name}`);
+      Object.keys(target).forEach((key) => { if (!(key in NEUTRAL)) throw new Error(`masks: ${name} sets unknown key ${key}`); });
+      return Object.assign({}, NEUTRAL, target);
+    }
+
+    // Parameter-wise interpolation by smoothstep; the ends are exact.
+    function morph(from, to, s) {
+      if (s <= 0.0) return from;
+      if (s >= 1.0) return to;
+      const e = smoothstep(s);
+      const out = {};
+      Object.keys(from).forEach((key) => { out[key] = from[key] + ((to[key] - from[key]) * e); });
+      return out;
+    }
+
+    // How far toward the mask the face is at time t, linear, 0 to 1.
+    function maskMix(state, t, since, from) {
+      const trigger = MASK_TRIGGERS.indexOf(String(state)) >= 0;
+      const span = trigger ? MASK_EASE.in : MASK_EASE.out;
+      const progress = span > 0 ? clamp((t - since) / span, 0.0, 1.0) : 1.0;
+      const start = from === undefined ? 0.0 : from;
+      return start + (((trigger ? 1.0 : 0.0) - start) * progress);
+    }
+
+    // The mask a session wears: FNV-1a over its id's UTF-8 bytes.
+    function pickMask(session) {
+      let id = session === undefined || session === null ? "" : String(session);
+      if (id === "") id = MASKS.default_session || "master";
+      const bytes = new TextEncoder().encode(id);
+      let h = 2166136261;
+      for (let i = 0; i < bytes.length; i += 1) h = Math.imul(h ^ bytes[i], 16777619) >>> 0;
+      return MASK_ORDER[h % MASK_ORDER.length];
+    }
+
+    // The head's lattice under a mask at a mix: the head itself at 0.
+    function maskSource(headObj, name, amount) {
+      if (name === null || name === undefined || !(amount > 0.0)) return headObj;
+      const p = morph(NEUTRAL, maskParams(name), amount);
+      const depthRatio = 1.10 * p.jaw_projection * p.jaw_softening * p.masticatory_scale;
+      const relief = 0.20 * p.nasal_projection;
+      const cy = headObj.centre[1];
+      const cx = headObj.centre[0];
+      const beak = (x, y) => {
+        const t = (p.beak_top - y) / p.beak_length;
+        if (t < 0) return 0.0;
+        const past = (t - 1.0) * p.beak_length / 0.04;
+        const taper = t <= 1.0 ? smoothstep(t) : Math.exp(-(past * past));
+        const side = x / p.beak_width;
+        return p.beak_projection * taper * Math.exp(-(side * side));
+      };
+      const bumps = (x, y, zone) => {
+        let lift = 0.0;
+        if (p.beak_projection > 0) lift += beak(x, y);
+        if (p.brow_ridge > 0) {
+          const up = (y - p.brow_y) / p.brow_height;
+          const across = x / p.brow_width;
+          lift += p.brow_ridge * Math.exp(-(up * up)) * Math.exp(-(across * across * across * across));
+        }
+        if (p.socket_depth > 0 && zone >= 1 && zone <= 2) lift -= p.socket_depth * (zone === 1 ? 1.0 : 0.4);
+        return lift;
+      };
+      const points = [];
+      headObj.cells.forEach(([y, hw, count, fronts]) => {
+        fronts.forEach(([x, l, zone]) => {
+          const baseY = (y - cy) * p.facial_verticalization;
+          const upper = clamp((baseY + 0.38) / 0.80, 0.0, 1.0);
+          const localX = (x - cx) * (p.lower_face_scale + ((p.upper_face_scale - p.lower_face_scale) * upper));
+          const across = clamp(localX / (hw * p.cranial_width), -1.0, 1.0);
+          let z = ((hw * depthRatio * p.cranium_scale * Math.sqrt(1 - (across * across))) * p.depth_scale) + ((l - 0.5) * relief * p.relief);
+          z += bumps(localX, baseY, zone);
+          points.push([localX * p.width, baseY * p.face_length, z, l + ((p.flat_brightness - l) * p.flatten), zone]);
+        });
+        const depth = hw * depthRatio * p.cranium_scale;
+        for (let i = 1; i < count; i += 1) {
+          const angle = (Math.PI / 2) + (Math.PI * i / count);
+          points.push([hw * Math.sin(angle) * p.width, (y - cy) * p.face_length, depth * Math.cos(angle) * p.depth_scale, BACK_LIGHT, 0]);
+        }
+      });
+      let reach = 0;
+      headObj.cells.forEach((cell) => { if (cell[1] > reach) reach = cell[1]; });
+      reach *= p.width;
+      const above = p.halo > 0 ? (p.halo_rise * p.halo) + ((halfUp(p.halo_rows) - 1) * p.halo_gap) : 0.0;
+      const aside = p.disc > 0 ? reach + (p.disc_offset * p.disc) + (p.disc_radius * p.disc) : 0.0;
+      return { points, features: true, params: p, margins: [above, aside] };
     }
 
     // ---- Face::Mesh ---------------------------------------------------------
@@ -479,14 +605,22 @@
         this.points = source.points.map((p) => [p[0], p[1], p[2], p[3], p[4]]);
         const ysRaw = this.points.map((p) => p[1]);
         const [ylo, yhi] = minMax(ysRaw);
-        const lift = (ylo + yhi) / 2.0;
+        const margins = source.margins || [0.0, 0.0];
+        const above = margins[0];
+        const lift = (ylo + yhi + above) / 2.0;
         this.points.forEach((p) => { p[1] -= lift; });
         let reach = 0;
         this.points.forEach((p) => { const d = hypot(p[0], p[2]); if (d > reach) reach = d; });
+        reach = Math.max(reach, margins[1]);
         const [slo, shi] = minMax(this.points.map((p) => p[1]));
-        const span = shi - slo;
+        const span = shi - slo + above;
         this.scale = Math.min(((this.w / 2.0) - 1) / reach, (this.h - 2) / span) * FIT;
         this.anchors = source.features ? findAnchors(this.points) : null;
+        this.mask = source.params || null;
+        if (this.mask && this.anchors) {
+          this.top = maxBy(this.points.map((p) => p[1]), (v) => v);
+          this.side = maxBy(this.points.map((p) => Math.abs(p[0])), (v) => v);
+        }
       }
 
       // The points as fitted (x, y, z, brightness), which the fixtures fingerprint: the
@@ -517,11 +651,11 @@
         return [this.w / 2.0 + (((rx * this.cr) - (ry * this.sr)) * k), this.rows - (((rx * this.sr) + (ry * this.cr)) * k) - this.bob, rz * this.scale];
       }
 
-      hidden(px, py, depth) {
+      hidden(px, py, depth, slack) {
         const x = Math.floor(px);
         const y = Math.floor(py);
         if (!(x >= 0 && x <= this.w - 1 && y >= 0 && y <= this.h - 1)) return true;
-        return this.zb[(y * this.w) + x] > depth + OCCLUSION;
+        return this.zb[(y * this.w) + x] > depth + OCCLUSION + (slack || 0.0);
       }
 
       turn(look) {
@@ -710,9 +844,9 @@
       }
 
       // ---- Face::Features ---------------------------------------------------
-      cellOf(point) {
+      cellOf(point, slack) {
         const [px, py, depth] = this.project(point[0], point[1], point[2]);
-        return [px, py, depth, this.hidden(px, py, depth)];
+        return [px, py, depth, this.hidden(px, py, depth, slack)];
       }
 
       put(col, row, glyph) {
@@ -727,9 +861,16 @@
 
       drawFeatures(look, state) {
         this.look = look;
-        this.anchors.eyes.forEach((eye) => this.eyebrowAndEye(eye));
+        const mask = this.mask;
+        this.rings = !!(mask && mask.ring >= MASK_TAKEOVER);
+        this.slack = mask ? (mask.beak_projection + mask.brow_ridge) * this.scale : 0.0;
+        this.mouthSlack = mask ? MOUTH_SLACK * this.scale : 0.0;
+        this.anchors.eyes.forEach((eye) => (this.rings ? this.ringEye(eye) : this.eyebrowAndEye(eye)));
         this.nose();
         this.mouth(state);
+        if (!mask) return;
+        this.halo();
+        this.discs();
       }
 
       eyebrowAndEye(eye) {
@@ -755,13 +896,16 @@
           this.run(left, row, FEATURE.eye_open + " ".repeat(inner) + FEATURE.eye_close);
           this.put(col + glance, row, FEATURE.pupil);
         }
-        this.run(left, row - 1, FEATURE.brow.repeat(width));
+        if (!this.mask || this.mask.brow_line >= 0.5) this.run(left, row - 1, FEATURE.brow.repeat(width));
+        if (this.mask && this.mask.brow_ridge >= BROW_MIN) this.run(left, row - 2, MASK_GLYPHS.brow_heavy.repeat(width));
       }
 
       nose() {
+        if (this.mask && this.mask.nose_line < 0.5) return;
         const [bx, by, , bh] = this.cellOf(this.anchors.bridge);
         const [tx, ty, , th] = this.cellOf(this.anchors.tip);
         if (bh || th) return;
+        if (this.mask && this.mask.beak_projection >= BEAK_MIN) { this.beak(bx, by, tx, ty); return; }
         const steps = Math.ceil(Math.max(Math.abs(tx - bx), Math.abs(ty - by) / 2));
         const glyph = line(tx - bx, by - ty);
         for (let i = 0; i < steps; i += 1) {
@@ -771,10 +915,103 @@
         this.put(halfUp(tx), Math.floor(ty / 2), FEATURE.nose_tip);
       }
 
+      // The nose as a ridge: two rails that part from the bridge toward the tip.
+      beak(bx, by, tx, ty) {
+        const tip = this.anchors.tip;
+        const flare = Math.abs(this.project(tip[0] + this.mask.beak_flare, tip[1], tip[2])[0] - tx);
+        const steps = Math.ceil(Math.max(Math.abs(tx - bx), Math.abs(ty - by) / 2));
+        const rails = [-1, 1].map((side) => [side, line((tx + (side * flare)) - bx, by - ty)]);
+        for (let i = 0; i < steps; i += 1) {
+          const f = i / steps;
+          const y = Math.floor((by + ((ty - by) * f)) / 2);
+          rails.forEach(([side, glyph]) => this.put(halfUp(bx + ((tx - bx) * f) + (side * flare * f)), y, glyph));
+        }
+        const tipGlyph = MASK_GLYPHS.beak_tip;
+        this.run(halfUp(tx) - half(tipGlyph.length), Math.floor(ty / 2), tipGlyph);
+      }
+
+      // Eyes as concentric rings of the eye's own plane, outermost glyph first.
+      ringEye(eye) {
+        if (this.cellOf(eye.left)[3] && this.cellOf(eye.right)[3]) return;
+        const [px, py] = this.cellOf(eye.pupil);
+        const count = halfUp(this.mask.ring_count);
+        const radius = this.mask.ring_radius * this.mask.ring;
+        this.clear(eye.pupil, radius);
+        const glyphs = MASK_GLYPHS.ring;
+        for (let i = 1; i <= count; i += 1) this.circle(eye.pupil, radius * i / count, glyphs[(count - i) % glyphs.length]);
+        this.put(halfUp(px), Math.floor(py / 2), this.look.eye_open < SHUT ? FEATURE.lid : FEATURE.pupil);
+      }
+
+      // An arc above the crown in the contour glyphs, a row of it per arc.
+      halo() {
+        const m = this.mask;
+        const span = m.halo_span * m.halo;
+        if (span < 1.0) return;
+        const radius = m.halo_radius;
+        const centre = this.top + (m.halo_rise * m.halo) - radius;
+        const steps = Math.ceil(2 * span);
+        const rows = halfUp(m.halo_rows);
+        for (let row = 0; row < rows; row += 1) {
+          const r = radius - (row * m.halo_gap);
+          const seen = [];
+          for (let i = 0; i <= steps; i += 1) {
+            const angle = (-span + (2 * span * i / steps)) * Math.PI / 180;
+            seen.push(this.project(r * Math.sin(angle), centre + (r * Math.cos(angle)), 0.0));
+          }
+          seen.forEach(([px, py, depth], i) => {
+            if (this.hidden(px, py, depth)) return;
+            const before = seen[Math.max(i - 1, 0)];
+            const after = seen[Math.min(i + 1, steps)];
+            let glyph = line(after[0] - before[0], before[1] - after[1]);
+            if (glyph === "-") glyph = MASK_GLYPHS.halo[row > 0 ? 1 : 0];
+            this.put(halfUp(px), Math.floor(py / 2), glyph);
+          });
+        }
+      }
+
+      // A pair of ear discs, each two circles, at the head's widest.
+      discs() {
+        const m = this.mask;
+        const radius = m.disc_radius * m.disc;
+        if (radius <= 0.0) return;
+        const y = (kbSum(this.anchors.eyes.map((e) => e.pupil[1])) / 2.0) + m.disc_height;
+        [-1, 1].forEach((side) => {
+          const centre = [side * (this.side + (m.disc_offset * m.disc)), y, 0.0];
+          Array.from(MASK_GLYPHS.disc).forEach((g, i) => this.circle(centre, radius * (1.0 - (i * 0.5)), g));
+        });
+      }
+
+      // Blank every cell whose centre falls within r of a point, so rings stand on clear ground.
+      clear(centre, r) {
+        const [cx, cy] = this.project(centre[0], centre[1], centre[2]);
+        const edge = Math.abs(this.project(centre[0] + r, centre[1], centre[2])[0] - cx);
+        if (edge < RING_MIN_PX) return;
+        const mid = Math.floor(cy / 2);
+        for (let row = mid - Math.ceil(edge); row <= mid + Math.ceil(edge); row += 1) {
+          if (row < 0 || row >= this.frame.chars.length) continue;
+          for (let col = Math.floor(cx - edge); col <= Math.ceil(cx + edge); col += 1) {
+            if (col < 0 || col >= this.frame.chars[0].length) continue;
+            if (hypot(col - cx, ((2 * row) + 1) - cy) <= edge) this.frame.chars[row][col] = " ";
+          }
+        }
+      }
+
+      // A circle of radius r in the head's x-y plane about a point.
+      circle(centre, r, glyph) {
+        const edge = this.project(centre[0] + r, centre[1], centre[2])[0] - this.project(centre[0], centre[1], centre[2])[0];
+        if (Math.abs(edge) < RING_MIN_PX) return;
+        const steps = Math.max(Math.ceil(9.42 * Math.abs(edge)), 12);
+        for (let i = 0; i < steps; i += 1) {
+          const angle = 2 * Math.PI * i / steps;
+          const [px, py, depth] = this.project(centre[0] + (r * Math.cos(angle)), centre[1] + (r * Math.sin(angle)), centre[2]);
+          if (!this.hidden(px, py, depth, this.slack)) this.put(halfUp(px), Math.floor(py / 2), glyph);
+        }
+      }
+
       mouth(state) {
         const spec = this.anchors.mouth;
-        const [lx, , , lh] = this.cellOf(spec.left);
-        const [rx, , , rh] = this.cellOf(spec.right);
+        const [lx, , , lh] = this.cellOf(spec.left, this.mouthSlack);
+        const [rx, , , rh] = this.cellOf(spec.right, this.mouthSlack);
         if (lh && rh) return;
         const mid = this.cellOf(spec.centre);
         const row = Math.floor(mid[1] / 2);
@@ -810,9 +1047,12 @@
       return clamp((Math.abs(Math.sin(tick * 1.1)) * 0.7) + (mod(tick, 3) * 0.15), 0.0, 1.0);
     }
 
-    // The Look for a still frame as a pure function of (state, t, seed).
-    function pose(state, t, seed) {
+    // The Look for a still frame as a pure function of (state, t, seed). since, from and
+    // session (in extra) add the mask: without since there is none.
+    function pose(state, t, seed, extra) {
       const sd = seed === undefined ? 0 : seed;
+      const ex = extra || {};
+      const masked = ex.since !== undefined && ex.since !== null;
       const spinning = MOTION.spin_states.indexOf(state) >= 0;
       const shut = mod(t + (mod(sd, 7) * 0.37), MOTION.blink_period) >= MOTION.blink_period - MOTION.blink_length;
       const k = Math.floor(t * FPS);
@@ -829,6 +1069,8 @@
         mouth: state === "speaking" ? timedLevel(k) : 0.0,
         mouth_open: 1.0,
         mouth_wide: 0.0,
+        mask: masked ? pickMask(ex.session) : null,
+        mix: masked ? maskMix(state, t, ex.since, ex.from) : 0.0,
       };
     }
 
@@ -838,7 +1080,7 @@
     // shapes it; reduced motion holds the head still and leaves the mouth and eyes alone.
     function lookFor(input) {
       const state = STATES.indexOf(input.state) >= 0 ? input.state : "idle";
-      const look = pose(state, input.t, input.seed === undefined ? 1 : input.seed);
+      const look = pose(state, input.t, input.seed === undefined ? 1 : input.seed, { session: input.session, since: input.since, from: input.from });
       if (state === "speaking") {
         if (typeof input.level === "number" && Number.isFinite(input.level)) look.mouth = clamp(input.level, 0.0, 1.0);
         const shape = input.viseme && input.viseme !== "neutral" && input.shapes ? input.shapes[input.viseme] : null;
@@ -848,7 +1090,7 @@
         }
       }
       if (input.reduced) {
-        look.turn = 0.0; look.pitch = 0.0; look.roll = 0.0; look.scale = 1.0; look.dolly = 1.0; look.bob = 0.0;
+        look.turn = 0.0; look.pitch = 0.0; look.roll = 0.0; look.scale = 1.0; look.dolly = 1.0; look.bob = 0.0; look.mix = 0.0;
       }
       return look;
     }
@@ -865,6 +1107,7 @@
     // A frame's text and depth for a window: the head, or the state's name when the
     // window is too small for a face worth the name.
     const cache = new Map();
+    const heads = new Map();
     function frame(options) {
       const rows = options.rows;
       const cols = options.cols;
@@ -872,9 +1115,15 @@
       const key = `${rows}x${cols}`;
       let renderer = cache.get(key);
       if (!renderer) {
-        if (cache.size >= 6) cache.clear();
-        renderer = new Renderer(head(rows, cols), rows, cols, { chars: options.chars, mode: options.mode });
+        if (cache.size >= 6) { cache.clear(); heads.clear(); }
+        const built = head(rows, cols);
+        heads.set(key, built);
+        renderer = new Renderer(built, rows, cols, { chars: options.chars, mode: options.mode });
         cache.set(key, renderer);
+      }
+      // A morphed head is new every frame, so it is not kept.
+      if (options.look.mix > 0) {
+        renderer = new Renderer(maskSource(heads.get(key), options.look.mask, options.look.mix), rows, cols, { chars: options.chars, mode: options.mode });
       }
       const out = renderer.render(options.look, options.state);
       return { word: false, lines: out.chars.map((row) => row.join("")), depth: out.depth };
@@ -888,6 +1137,7 @@
       mesh,
       Renderer,
       pose,
+      Masks: { ORDER: MASK_ORDER, params: maskParams, morph, mix: maskMix, pick: pickMask, source: maskSource, smoothstep },
       lookFor,
       timedLevel,
       frame,
@@ -1024,7 +1274,11 @@
       const fps = input.reduced ? num(budget.reduced_motion_fps, 8) : num(calm ? budget.idle_fps : budget.active_fps, 24);
       if (now - view.lastAt < 1000 / fps) return false;
       view.lastAt = now;
-      const look = engine.lookFor({ state, t: now / 1000, level: input.level, viseme: input.viseme, shapes: input.shapes, reduced: input.reduced });
+      const t = now / 1000;
+      // The mask's mix is remembered from the moment the state last changed.
+      if (state !== view.maskState) { view.maskState = state; view.maskSince = t; view.maskFrom = view.maskMix || 0.0; }
+      const look = engine.lookFor({ state, t, level: input.level, viseme: input.viseme, shapes: input.shapes, reduced: input.reduced, session: input.session, since: view.maskSince, from: view.maskFrom });
+      view.maskMix = look.mix;
       const out = engine.frame({ rows: view.rows, cols: view.cols, state, look, mode: contract.ascii.mode });
       const field = lawFieldVisible ? paintLawField(out.lines, out.depth, laws) : { lines: out.lines, depth: out.depth };
       const text = field.lines.join("\n");
@@ -1080,7 +1334,7 @@
     const reduced = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches)
       || doc.body.dataset.reducedMotion === "1";
     return overlayView.draw(Number.isFinite(now) ? now : (root.performance ? root.performance.now() : Date.now()),
-      { state:activeState(), reduced });
+      { state:activeState(), reduced, session: doc.body.dataset.session || doc.body.dataset.conversation });
   }
 
   function resize() {

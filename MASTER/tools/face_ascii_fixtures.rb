@@ -41,6 +41,15 @@ CASES = [
   ["cube", :cube, 16, 40, :idle, 2.0, 0]
 ].freeze
 
+# Each mask at mix 0, 0.5 and 1.0 on the front, and at 1.0 turned three-quarters.
+MASK_CASES = Face::Masks::ORDER.flat_map do |mask|
+  [0.0, 0.5, 1.0].map { |mix| ["#{mask} #{mix}", mask, mix, 0.0] } + [["#{mask} 1.0 turned", mask, 1.0, 2.6]]
+end.freeze
+SESSIONS = ["", "master", "abc", "session-1", "conversation 42", "öéあ", "0", "7"].freeze
+MIXES = [[:thinking, 0.0, 0.0, 0.0], [:thinking, 0.6, 0.0, 0.0], [:thinking, 1.2, 0.0, 0.0], [:thinking, 5.0, 0.0, 0.0],
+         [:thinking, 0.3, 0.5, 0.25], [:idle, 0.4, 0.0, 1.0], [:speaking, 0.4, 0.0, 0.7], [:idle, 3.0, 1.0, 1.0],
+         [:listening, 0.1, 0.0, 0.5]].freeze
+
 def source(kind) = kind == :head ? nil : Face::Mesh.parse(CUBE)
 
 cases = CASES.map do |name, kind, rows, cols, state, t, seed|
@@ -48,9 +57,24 @@ cases = CASES.map do |name, kind, rows, cols, state, t, seed|
   look = Face::Pose.at(state, t, seed)
   ascii = Face::Ascii.new(src, rows, cols, chars: Face::Glyphs::DEFAULT_CHARS, mode: "dark")
   { name:, source: kind == :head ? { kind: "head" } : { kind: "mesh", ref: "cube" }, rows:, cols:, state: state.to_s, t:, seed:,
-    look: look.to_h.except(:particles), digest: ascii.digest, lines: ascii.render(look, state:).chars.map(&:join) }
+    look: look.to_h.except(:particles, :mask, :mix), digest: ascii.digest, lines: ascii.render(look, state:).chars.map(&:join) }
 end
 
+masks = MASK_CASES.map do |name, mask, mix, t|
+  rows = 28
+  cols = 64
+  look = Face::Pose.at(:idle, t, 1)
+  ascii = Face::Ascii.new(Face::Masks.source(Face::Head.for(rows, cols), mask, mix), rows, cols, chars: Face::Glyphs::DEFAULT_CHARS, mode: "dark")
+  { name:, source: { kind: "head" }, mask:, mix:, rows:, cols:, state: "idle", t:, seed: 1,
+    look: look.to_h.except(:particles, :mask, :mix), digest: ascii.digest, lines: ascii.render(look, state: :idle).chars.map(&:join) }
+end
+
+trigger = {
+  picks: SESSIONS.to_h { |s| [s, Face::Masks.pick(s)] },
+  mixes: MIXES.map { |state, t, since, from| { state: state.to_s, t:, since:, from:, mix: Face::Masks.mix(state, t, since:, from:) } },
+  morphs: Face::Masks::ORDER.to_h { |mask| [mask, Face::Masks.morph(Face::Masks.params(nil), Face::Masks.params(mask), 0.5)] }
+}
+
 path = File.join(__dir__, "..", "test", "fixtures", "face_ascii_frames.json")
-File.write(path, "#{JSON.pretty_generate({ schema: 1, tolerance: 0.01, chars: Face::Glyphs::DEFAULT_CHARS, meshes: { cube: CUBE }, cases: })}\n")
-puts "wrote #{cases.size} frames to #{path}"
+File.write(path, "#{JSON.pretty_generate({ schema: 1, tolerance: 0.01, chars: Face::Glyphs::DEFAULT_CHARS, meshes: { cube: CUBE }, cases:, masks:, trigger: })}\n")
+puts "wrote #{cases.size} frames and #{masks.size} mask frames to #{path}"

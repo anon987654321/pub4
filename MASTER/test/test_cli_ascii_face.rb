@@ -52,6 +52,144 @@ class TestCliAsciiFace < Minitest::Test
     end
   end
 
+  def mask_frame(rows, cols, mask, mix, look: Face::Pose.at(:idle, 0.0, 1))
+    src = Face::Masks.source(Face::Head.for(rows, cols), mask, mix)
+    Face::Ascii.new(src, rows, cols, chars: Face::Glyphs::DEFAULT_CHARS, mode: "dark").render(look)
+  end
+
+  def test_every_mask_fixture_frame_is_reproduced_and_plain_ascii
+    cases = FIXTURES.fetch("masks")
+    assert_equal Face::Masks::ORDER.size * 4, cases.size
+    cases.each do |c|
+      src = Face::Masks.source(Face::Head.for(c["rows"], c["cols"]), c["mask"], c["mix"])
+      ascii = Face::Ascii.new(src, c["rows"], c["cols"], chars: FIXTURES["chars"], mode: "dark")
+      frame = ascii.render(Face::Pose.at(c["state"].to_sym, c["t"], c["seed"]), state: c["state"].to_sym)
+      assert_equal c["digest"], ascii.digest, "#{c["name"]}: points changed"
+      assert_equal c["lines"].map(&:rstrip), frame.lines, c["name"]
+      assert_match PRINTABLE, frame.to_s, c["name"]
+    end
+  end
+
+  def test_the_fixture_trigger_section_is_reproduced
+    trigger = FIXTURES.fetch("trigger")
+    trigger["picks"].each { |session, mask| assert_equal mask, Face::Masks.pick(session), session.inspect }
+    trigger["mixes"].each do |m|
+      assert_in_delta m["mix"], Face::Masks.mix(m["state"].to_sym, m["t"], since: m["since"], from: m["from"]), 1e-15
+    end
+    trigger["morphs"].each do |mask, mid|
+      assert_equal mid, Face::Masks.morph(Face::Masks.params(nil), Face::Masks.params(mask), 0.5)
+    end
+  end
+
+  def test_morph_ends_are_exact_and_the_middle_is_deterministic
+    human = Face::Masks.params(nil)
+    Face::Masks::ORDER.each do |mask|
+      target = Face::Masks.params(mask)
+      assert_same human, Face::Masks.morph(human, target, 0.0)
+      assert_same target, Face::Masks.morph(human, target, 1.0)
+      assert_equal Face::Masks.morph(human, target, 0.37), Face::Masks.morph(human, target, 0.37)
+      middle = Face::Masks.morph(human, target, 0.5)
+      human.each_key { |k| assert_in_delta (human[k] + target[k]) / 2.0, middle[k], 1e-12, "#{mask} #{k}: smoothstep(0.5) is one half" }
+    end
+    assert_equal 0.0, Face::Masks.smoothstep(-1)
+    assert_equal 1.0, Face::Masks.smoothstep(2)
+    assert_in_delta 0.15625, Face::Masks.smoothstep(0.25), 1e-15
+  end
+
+  def test_the_human_parameters_rebuild_the_head_point_for_point
+    head = Face::Head.for(20, 40)
+    shape = Face::Masks::Shape.new(head, Face::Masks.params(nil))
+    mine = []
+    shape.each_point { |x, y, z, b, zone, *| mine << [x, y, z, b, zone] }
+    theirs = []
+    head.each_point { |x, y, z, b, zone, *| theirs << [x, y, z, b, zone] }
+    assert_equal theirs, mine
+    assert_same head, Face::Masks.source(head, "baining", 0.0)
+  end
+
+  def test_every_target_sits_on_the_same_lattice
+    [[20, 40], [28, 64], [14, 30]].each do |rows, cols|
+      head = Face::Head.for(rows, cols)
+      Face::Masks::ORDER.each do |mask|
+        [0.3, 1.0].each do |mix|
+          count = 0
+          Face::Masks.source(head, mask, mix).each_point { |*| count += 1 }
+          assert_equal head.count, count, "#{mask} at #{rows}x#{cols}, mix #{mix}"
+        end
+      end
+    end
+  end
+
+  def test_the_five_masks_differ_from_each_other_and_from_the_head
+    plain = head_frame(28, 64, Face::Pose.at(:idle, 0.0, 1)).lines
+    frames = Face::Masks::ORDER.to_h { |m| [m, mask_frame(28, 64, m, 1.0).lines] }
+    frames.each { |m, f| refute_equal plain, f, m }
+    assert_equal frames.size, frames.values.uniq.size
+    assert_equal plain, mask_frame(28, 64, "maprik_yam", 0.0).lines
+    frames.each_value { |f| assert_match PRINTABLE, f.join("\n") }
+  end
+
+  def test_each_extra_feature_reads_in_plain_ascii
+    maprik = mask_frame(28, 64, "maprik_yam", 1.0).lines.join("\n")
+    assert_match(/OO+/, maprik, "ring eyes")
+    assert_match(/-----'+-----/, maprik, "the halo")
+    assert_includes maprik, "\\_/", "the beak's tip"
+    assert_match(/=====/, mask_frame(28, 64, "iatmul_mei", 1.0).lines.join("\n"), "heavy brow")
+    sepik = mask_frame(28, 64, "sepik_woven", 1.0).lines
+    assert sepik.any? { |l| l.start_with?("  ") && l.lstrip.start_with?("OOO") }, "ear discs stand outside the head"
+    gourd = mask_frame(28, 64, "highlands_gourd", 1.0).lines.join("\n")
+    assert_includes gourd, "(   o   )", "the gourd keeps its eyes and little else"
+    refute_includes gourd, "\\_/"
+  end
+
+  def test_the_mask_follows_thinking_only
+    mix = ->(state, t, since: 0.0, from: 0.0) { Face::Masks.mix(state, t, since:, from:) }
+    Face::STATES.reject { |s| s == :thinking }.each { |s| assert_equal 0.0, mix.call(s, 5.0), s.to_s }
+    assert_equal 0.0, mix.call(:thinking, 0.0)
+    assert_in_delta 0.5, mix.call(:thinking, 0.6), 1e-12
+    assert_equal 1.0, mix.call(:thinking, 1.2)
+    assert_equal 1.0, mix.call(:thinking, 60.0)
+    assert_in_delta 0.5, mix.call(:idle, 0.4, from: 1.0), 1e-12
+    assert_equal 0.0, mix.call(:speaking, 0.8, from: 1.0)
+    assert_equal :thinking, Master::Face::Contract.ascii.dig("masks", "trigger_states").first.to_sym
+  end
+
+  def test_pose_carries_the_mask_only_when_asked
+    assert_nil Face::Pose.at(:thinking, 2.0, 1).mask
+    assert_equal 0.0, Face::Pose.at(:thinking, 2.0, 1).mix
+    look = Face::Pose.at(:thinking, 2.0, 1, session: "abc", since: 0.0)
+    assert_equal "iatmul_mei", look.mask
+    assert_equal 1.0, look.mix
+    assert_equal 0.0, Face::Pose.at(:idle, 2.0, 1, session: "abc", since: 0.0).mix
+  end
+
+  def test_motion_eases_in_while_thinking_and_back_out_after
+    motion = Face::Motion.new(session: "abc")
+    mixes = [[:idle, 0.0], [:idle, 0.5], [:thinking, 1.0], [:thinking, 1.6], [:thinking, 2.3], [:thinking, 3.0], [:idle, 3.4], [:idle, 3.8], [:idle, 4.2]].map do |state, t|
+      motion.step(state:, t:, count: 0).mix
+    end
+    assert_equal [0.0, 0.0], mixes.first(2)
+    assert_in_delta 0.5, mixes[3], 1e-12
+    assert_equal 1.0, mixes[5]
+    assert_equal 1.0, mixes[6]
+    assert_in_delta 0.5, mixes[7], 1e-12, "easing back out of a full mask takes ease.out seconds"
+    assert_equal 0.0, mixes.last
+    assert_equal "iatmul_mei", motion.step(state: :idle, t: 5.0, count: 0).mask
+  end
+
+  def test_the_frame_morphs_while_thinking_and_not_when_quiet_reduced_or_small
+    thinking = lambda do |rows: 24, cols: 60, plain: false|
+      motion = Face::Motion.new(session: "abc")
+      motion.step(state: :idle, t: 0.0, count: 0)
+      motion.step(state: :thinking, t: 1.0, count: 0)
+      Face.frame(state: :thinking, rows:, cols:, t: 3.0, motion:, source: plain ? Face::Head.for(rows, cols) : nil)
+    end
+    refute_equal thinking.call(plain: true), thinking.call
+    with_env(MASTER_REDUCED_MOTION: "1") { assert_equal thinking.call(plain: true), thinking.call }
+    with_env(MASTER_CLI_QUIET: "1") { assert_equal "thinking", thinking.call.lines.map(&:strip).reject(&:empty?).first }
+    assert_equal "thinking", thinking.call(rows: Face::MIN_ROWS - 1).lines.map(&:strip).reject(&:empty?).first
+  end
+
   def test_no_braille_anywhere_in_the_face_sources_or_output
     sources = Dir[File.join(__dir__, "..", "lib", "cli", "face*"), File.join(__dir__, "..", "lib", "cli", "face", "*.rb")].select { |f| File.file?(f) }
     refute_empty sources

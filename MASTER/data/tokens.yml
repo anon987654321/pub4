@@ -536,6 +536,159 @@ tokens:
         mouth_listening: ["\\", "_", "/"]
         mouth_corner_top: "."
         mouth_corner_bottom: "'"
+      # Mask morph targets: the head eases toward one of these while MASTER is
+      # thinking, and back when it stops. Provenance: the proportions are
+      # abstracted from the mask traditions of Papua New Guinea, named here as
+      # sources only - Maprik and Yam woven masks, Iatmul mei, Baining bark-cloth
+      # masks, Sepik basketry masks, and the Highlands gourd form. They are
+      # ceremonial objects; only their proportions are stylized here as numbers.
+      # No mask is MASTER's face, and none is named as such in the interface.
+      # A target is a set of overrides on `neutral` (the human head, whose
+      # geometry keys are the morphology block, so a key there is not repeated);
+      # Face::Masks.morph(from, to, s) blends every key by smoothstep(s) =
+      # s*s*(3-2s), clamped, and returns `from` at s <= 0 and `to` at s >= 1
+      # exactly. The lattice is the human head's, point for point; only where
+      # each point sits changes, so the count never does. Keys:
+      #  width, face_length, depth_scale: scales of x, y and z on the head.
+      #  upper_face_scale, lower_face_scale, cranial_width, cranium_scale,
+      #    facial_verticalization, jaw_projection, jaw_softening,
+      #    masticatory_scale, nasal_projection: the morphology keys, absolute.
+      #  relief: scales the painted relief; flatten, flat_brightness: pull the
+      #    painted brightness toward one value (a smooth gourd has no paint).
+      #  socket_depth: sinks the eye zones (the groove under a ring eye).
+      #  brow_ridge, brow_y, brow_width, brow_height: a horizontal ridge; from
+      #    brow_min it is drawn as a second row of glyphs.brow_heavy above the brow.
+      #  beak_projection, beak_top, beak_length, beak_width, beak_flare: a nose
+      #    ridge that grows toward its tip (head units; the flare is the drawn
+      #    rails' spread at the tip).
+      #  ring (amount 0..1), ring_radius, ring_count: concentric eye rings.
+      #  halo (amount), halo_radius, halo_rise, halo_span (degrees), halo_rows,
+      #    halo_gap: an arc above the crown, amount scaling its rise and span.
+      #  disc (amount), disc_radius, disc_offset, disc_height: ear discs.
+      #  brow_line, nose_line: 1 draws the glyph line, below one half it is gone.
+      # The step that draws them, after the mouth: a ring is the circle of the
+      # eye's own plane sampled at ring_radius*ring*i/ring_count, outermost
+      # first, glyphs from `glyphs.ring` cycling inward; the halo is the arc of
+      # radius halo_radius centred (0, top + rise - radius), drawn in `-` and
+      # `'`; a disc is two circles at x = +-(widest + offset). Each sample is
+      # drawn only where the z-buffer does not hide it. Sample counts are
+      # ceil(2*span_degrees)+1 for an arc and max(ceil(9.42*r_px), 12) for a
+      # circle; columns are floor(x + 0.5), rows floor(y / 2).
+      # The trigger: Face::Masks.mix(state, t, since:, from:) ramps linearly
+      # from `from` (the mix when the state last changed, at time `since`)
+      # to 1 in a trigger state over ease.in seconds, else to 0 over ease.out.
+      # pick(session) is FNV-1a over the session id's UTF-8 bytes, mod
+      # order.size, so the terminal and the web face choose alike.
+      masks:
+        order: [maprik_yam, iatmul_mei, baining, sepik_woven, highlands_gourd]
+        default_session: master
+        trigger_states: [thinking]
+        ease: { in: 1.2, out: 0.8 }
+        takeover: 0.5
+        beak_min: 0.015
+        brow_min: 0.03
+        # How much nearer a surface may stand and still leave the mouth's corners
+        # seen (head units): a narrow mask curves its chin steeply away.
+        mouth_slack: 0.08
+        ring_min_px: 1.0
+        glyphs: { ring: "OoO0", disc: "Oo", halo: ["-", "'"], beak_tip: "\\_/", brow_heavy: "=" }
+        neutral:
+          width: 1.0
+          face_length: 1.0
+          depth_scale: 1.0
+          relief: 1.0
+          flatten: 0.0
+          flat_brightness: 0.72
+          socket_depth: 0.0
+          brow_ridge: 0.0
+          brow_y: 0.14
+          brow_width: 0.26
+          brow_height: 0.04
+          beak_projection: 0.0
+          beak_top: 0.02
+          beak_length: 0.28
+          beak_width: 0.06
+          beak_flare: 0.0
+          ring: 0.0
+          ring_radius: 0.10
+          ring_count: 2
+          halo: 0.0
+          halo_radius: 0.50
+          halo_rise: 0.14
+          halo_span: 70.0
+          halo_rows: 2
+          halo_gap: 0.035
+          disc: 0.0
+          disc_radius: 0.10
+          disc_offset: 0.04
+          disc_height: 0.04
+          brow_line: 1.0
+          nose_line: 1.0
+        targets:
+          maprik_yam:
+            face_length: 1.10
+            width: 0.95
+            socket_depth: 0.04
+            beak_projection: 0.12
+            beak_length: 0.26
+            beak_flare: 0.05
+            ring: 1.0
+            ring_radius: 0.105
+            ring_count: 2
+            halo: 1.0
+            halo_radius: 0.42
+            halo_rise: 0.12
+            halo_span: 58.0
+            brow_line: 0.0
+          iatmul_mei:
+            face_length: 1.30
+            width: 0.80
+            depth_scale: 0.92
+            relief: 1.2
+            brow_ridge: 0.07
+            beak_projection: 0.11
+            beak_length: 0.32
+            beak_flare: 0.035
+          baining:
+            face_length: 0.95
+            width: 1.35
+            depth_scale: 0.75
+            lower_face_scale: 0.96
+            socket_depth: 0.03
+            beak_projection: 0.06
+            beak_length: 0.28
+            beak_width: 0.09
+            beak_flare: 0.04
+            ring: 1.0
+            ring_radius: 0.12
+            ring_count: 1
+            brow_line: 0.0
+          sepik_woven:
+            face_length: 1.35
+            width: 0.78
+            lower_face_scale: 0.90
+            socket_depth: 0.03
+            beak_projection: 0.05
+            beak_length: 0.22
+            beak_flare: 0.03
+            ring: 1.0
+            ring_radius: 0.085
+            ring_count: 2
+            disc: 1.0
+            disc_radius: 0.09
+            disc_offset: 0.10
+            disc_height: -0.06
+            brow_line: 0.0
+          highlands_gourd:
+            face_length: 0.95
+            width: 1.20
+            depth_scale: 1.10
+            upper_face_scale: 0.82
+            lower_face_scale: 1.0
+            relief: 0.15
+            flatten: 0.85
+            brow_line: 0.0
+            nose_line: 0.0
     spatial:
       topology_profiles:
         papua-mask: { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }

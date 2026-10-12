@@ -45,9 +45,12 @@ module Master
 
         Particle = Struct.new(:angle, :radius, :height, :spin, :rise, :push, :lift)
 
-        def initialize(seed: 7)
+        def initialize(seed: 7, session: nil)
           @rng = Random.new(seed)
           @seed = seed
+          @mask = Masks.pick(session)
+          @mix_state = nil
+          @mix = 0.0
           @t = nil
           @yaw, @pitch, @roll, @lean, @dip = Array.new(5) { Spring.new(0.0, 0.0) }
           @turn = 0.0
@@ -71,6 +74,7 @@ module Master
           events.each { |event| react(event) }
           turn(state, t, dt)
           spin(state, dt)
+          ease_mask(state, t)
           features(state, t, dt, level)
           drift(state, t, dt, count)
           look(t)
@@ -218,6 +222,16 @@ module Master
           spawn(-1.15).each_pair { |field, value| particle[field] = value }
         end
 
+        # The mask's mix follows Masks.mix from the moment the state last changed.
+        def ease_mask(state, t)
+          if state != @mix_state
+            @mix_state = state
+            @mix_since = t
+            @mix_from = @mix
+          end
+          @mix = Masks.mix(state, t, since: @mix_since, from: @mix_from)
+        end
+
         def look(t)
           breath = 1.0 + (BREATH * Math.sin(t * 1.6))
           Look.new(
@@ -226,7 +240,7 @@ module Master
             bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
             mouth_open: @mouth_open.x.clamp(0.0, 1.0), mouth_wide: @mouth_wide.x.clamp(-1.0, 1.0),
-            particles: @particles.map { |p| place(p, t) }
+            particles: @particles.map { |p| place(p, t) }, mask: @mask, mix: @mix
           )
         end
 
@@ -238,12 +252,12 @@ module Master
         end
 
         # One frame's worth of motion, in model units and radians.
-        Look = Data.define(:yaw, :turn, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles)
+        Look = Data.define(:yaw, :turn, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles, :mask, :mix)
 
         # A Look at rest, for a still frame or a test: front, eyes open, mouth shut.
         def self.rest(**over)
           Look.new(**{ yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0, eye_open: 1.0, gaze: [0.0, 0.0],
-                       mouth: 0.0, mouth_open: 1.0, mouth_wide: 0.0, particles: [] }.merge(over))
+                       mouth: 0.0, mouth_open: 1.0, mouth_wide: 0.0, particles: [], mask: nil, mix: 0.0 }.merge(over))
         end
 
         # Smooth value noise in [-1, 1]: lattice values from an integer hash,

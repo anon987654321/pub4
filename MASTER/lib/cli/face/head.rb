@@ -68,7 +68,7 @@ module Master
         MOUTH_REACH = 0.14 * LOWER_FACE_SCALE * MORPHOLOGY.fetch("mouth_scale", 0.84).to_f
         STRIDE = 7
 
-        attr_reader :count, :dots_wide, :dots_high, :scale, :centre, :eyes, :mouth
+        attr_reader :count, :dots_wide, :dots_high, :scale, :centre, :eyes, :mouth, :cells
 
         def self.for(rows, cols)
           @cache ||= {}
@@ -81,7 +81,9 @@ module Master
           @dots_high = rows * 4
           mask = lattice(density)
           @centre = middle(mask)
+          @cells = []
           @points = wrap(mask).freeze
+          @cells.freeze
           @eyes = EYES.map { |ex, ey| [ex - @centre[0], ey - @centre[1]] }
           @mouth = [MOUTH[0] - @centre[0], MOUTH[1] - @centre[1]]
           @count = @points.size / STRIDE
@@ -135,6 +137,10 @@ module Master
           spacing = mask.size > 1 ? (mask[0][0] - mask[1][0]).abs : 0.05
           mask.each_with_object([]) do |(y, points), flat|
             half = points.map { |x, _| (x - @centre[0]).abs }.max + (spacing / 2)
+            # Kept for Masks::Shape, which places these same lattice points under
+            # another morphology: the row, its reach, its back-point count, and
+            # each front point's paint and zone.
+            @cells << [y, half, back_count(half, spacing), points.map { |x, lum| [x, lum, zone(x, y)] }.freeze].freeze
             points.each { |x, lum| flat.push(*front(x, y, lum, half), phases.rand(2 * Math::PI), 0) }
             back(y, half, spacing).each { |x, z| flat.push(x, y - @centre[1], z, BACK_LIGHT, SKIN_ZONE, phases.rand(2 * Math::PI), 0) }
           end
@@ -154,12 +160,14 @@ module Master
         # The back half of the row's ellipse, at the lattice's spacing.
         def back(_y, half, spacing)
           depth = half * DEPTH_RATIO * CRANIUM_SCALE
-          count = [(Math::PI * (half + depth) / 2 / spacing).round, 2].max
+          count = back_count(half, spacing)
           (1...count).map do |i|
             angle = (Math::PI / 2) + (Math::PI * i / count)
             [half * Math.sin(angle), depth * Math.cos(angle)]
           end
         end
+
+        def back_count(half, spacing) = [(Math::PI * (half + (half * DEPTH_RATIO * CRANIUM_SCALE)) / 2 / spacing).round, 2].max
 
         def zone(x, y)
           return MOUTH_ZONE if Math.hypot(x - MOUTH[0], y - MOUTH[1]) < MOUTH_REACH

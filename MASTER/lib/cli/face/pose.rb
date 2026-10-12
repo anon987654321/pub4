@@ -12,7 +12,9 @@ module Master
 
         module_function
 
-        def at(state, t, seed = 0)
+        # since and from say when the state last changed and how far the mask
+        # had come then; without since there is no mask.
+        def at(state, t, seed = 0, session: nil, since: nil, from: 0.0)
           m = MOTION
           spinning = m.fetch("spin_states").include?(state.to_s)
           shut = ((t + ((seed % 7) * 0.37)) % m.fetch("blink_period")) >= m.fetch("blink_period") - m.fetch("blink_length")
@@ -25,7 +27,9 @@ module Master
             bob: m.fetch("bob") * Math.sin(m.fetch("bob_rate") * t),
             dolly: m.fetch("dolly").fetch(state.to_s, 1.0),
             eye_open: shut ? 0.0 : 1.0,
-            mouth: state.to_sym == :speaking ? Face.timed_level(k) : 0.0
+            mouth: state.to_sym == :speaking ? Face.timed_level(k) : 0.0,
+            mask: since ? Masks.pick(session) : nil,
+            mix: since ? Masks.mix(state, t, since:, from:) : 0.0
           )
         end
       end
