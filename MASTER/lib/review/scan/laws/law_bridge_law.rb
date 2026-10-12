@@ -28,28 +28,31 @@ module Master
           end
 
           def check(code, path:)
+            # Two distinct deterministic sweeps. A detector is assigned only
+            # to the stream declared by its Law::Definition#mode; the capability
+            # audit reports the other stream as a gap instead of pretending this
+            # detector can answer both questions.
+            %i[violation opportunity].flat_map do |mode|
+              check_stream(code, path:, mode:)
+            end
+          end
+
+          def check_stream(code, path:, mode:)
             lang = language(path)&.to_sym
-            # law/ files arrive already neutralized: FileProcessor#law_conducted
-            # runs Law.conduct at the one read site, so every rule — this
-            # bridge and the registry classes alike — sees fixtures and
-            # detectors as declarations, not conduct.
             ::Law.definitions.each_value.flat_map do |law|
               next [] unless law.enforceable?
+              next [] unless law.scannable?
+              next [] unless law.mode.to_sym == mode
               next [] unless law.applies?(path, lang)
 
+              stream = mode == :opportunity ? :lexical_opportunities : :lexical_violations
               law.scan(code, file: path).map do |hit|
                 Finding.build(
-                  # The id unchanged, not downcased. Downcasing made every
-                  # law-emitted finding a stranger to its own id: violation
-                  # priors, exemptions and dedupe key on UNBOUNDED_RETRY and
-                  # received unbounded_retry, and one line could carry two
-                  # findings that differed only by case while a registry twin
-                  # lived. One id, whatever implements it.
                   law: law.id.to_s,
                   message: "#{law.id}: #{law.fix}",
                   line: hit.line,
                   severity: severity_for(law.severity),
-                  tags: [law.id.to_s],
+                  tags: [law.id.to_s, stream, mode],
                 )
               end
             end
