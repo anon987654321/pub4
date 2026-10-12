@@ -104,6 +104,7 @@ class TestModernWebPlatformEvidence < Minitest::Test
       assert_match(/^#{id}: \S/, context)
     end
   end
+
   def test_baseline_guidance_covers_new_features_and_keeps_accessibility_separate
     law = Law.definitions.fetch(:BASELINE_COMPATIBILITY)
 

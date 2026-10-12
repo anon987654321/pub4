@@ -14,16 +14,31 @@ Law.define(:BASELINE_COMPATIBILITY) do
   source "MDN Web Platform Baseline — compatibility is not accessibility"
   severity :warning
   mode :opportunity
-  ask "Does a web change depend on a newly available HTML, CSS, JavaScript, or PWA API without checking the supported browser/device matrix, fallback behavior, accessibility, and security contract?"
-  fix "Check current Baseline status when reviewing. Prefer widely available semantics for core paths; progressively enhance newer APIs such as field-sizing, container style queries, contrast-color(), CSS anchor positioning, Trusted Types, and the Navigation API. Verify the target browser matrix, feature detection, keyboard and assistive-technology behavior, and a usable fallback. Baseline is compatibility evidence, not proof of accessibility or security."
+  ask <<~'ASK'.strip
+    Does a web change depend on a newly available HTML, CSS, JavaScript, or PWA API without checking the
+    supported browser/device matrix, fallback behavior, accessibility, and security contract?
+  ASK
+  fix <<~'FIX'.strip
+    Check current Baseline status when reviewing. Prefer widely available semantics for core paths; progressively
+    enhance newer APIs such as field-sizing, container style queries, contrast-color(), CSS anchor positioning,
+    Trusted Types, and the Navigation API. Verify the target browser matrix, feature detection, keyboard and
+    assistive-technology behavior, and a usable fallback. Baseline is compatibility evidence, not proof of
+    accessibility or security.
+  FIX
 end
 
 Law.define(:CORE_WEB_VITALS) do
   source "web.dev Core Web Vitals thresholds — field data, not a lab-only claim"
   severity :warning
   mode :opportunity
-  ask "Does a web performance or interaction-quality claim lack representative real-user evidence for 75th-percentile LCP ≤ 2.5 s, INP ≤ 200 ms, and CLS ≤ 0.1, especially on mobile?"
-  fix "Use field data such as CrUX or first-party RUM at the 75th percentile; use lab traces and feature-detected Long Animation Frames as diagnostics, not substitutes for field evidence."
+  ask <<~'ASK'.strip
+    Does a web performance or interaction-quality claim lack representative real-user evidence for 75th-percentile
+    LCP ≤ 2.5 s, INP ≤ 200 ms, and CLS ≤ 0.1, especially on mobile?
+  ASK
+  fix <<~'FIX'.strip
+    Use field data such as CrUX or first-party RUM at the 75th percentile; use lab traces and feature-detected
+    Long Animation Frames as diagnostics, not substitutes for field evidence.
+  FIX
 end
 
 Law.define(:FAIL_VISIBLY) do
