@@ -56,7 +56,7 @@ class DialectPurityGateTest < Minitest::Test
     plant(dir, "MASTER/data/tokens.yml", MASTER_RULES)
     plant(dir, "RAILS/__shared/README.md", DESIGN_DOC)
     plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss", BRGEN)
-    plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS)
+    plant(dir, "RAILS/bsdports/app/assets/stylesheets/_bsdports_tokens.scss", BSDPORTS)
     plant(dir, "RAILS/amber/app/assets/stylesheets/application.scss", "// luxury palette\n")
   end
 
@@ -98,7 +98,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_bsdports_with_rounded_corners_fails
     result = gate_over do |dir|
-      plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS.sub("--radius-card: 0;", "--radius-card: 8px;"))
+      plant(dir, "RAILS/bsdports/app/assets/stylesheets/_bsdports_tokens.scss", BSDPORTS.sub("--radius-card: 0;", "--radius-card: 8px;"))
     end
 
     refute result.ok?, "bsdports without the wscons radii on :root passed"
