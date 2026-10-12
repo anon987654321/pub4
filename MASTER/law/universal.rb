@@ -26,6 +26,8 @@ Law.define(:BASELINE_COMPATIBILITY) do
     behavior, and a usable fallback. Do not make network access or a new package a build/test prerequisite.
     Baseline is compatibility evidence, not proof of accessibility or security.
   FIX
+  bad "el.style.fieldSizing = %q(content)  // no feature detection, no fallback"
+  good "if (CSS.supports(%q(field-sizing), %q(content))) { el.style.fieldSizing = %q(content) }"
 end
 
 Law.define(:CORE_WEB_VITALS) do
@@ -40,6 +42,8 @@ Law.define(:CORE_WEB_VITALS) do
     Use field data such as CrUX or first-party RUM at the 75th percentile; use lab traces and feature-detected
     Long Animation Frames as diagnostics, not substitutes for field evidence.
   FIX
+  bad "report(%q(LCP ok), lab_trace.lcp)"
+  good "report(%q(LCP p75), field_data.lcp_p75)"
 end
 
 Law.define(:WEB_PLATFORM_DEFAULTS) do
