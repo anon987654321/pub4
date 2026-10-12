@@ -1112,11 +1112,14 @@
     const target = event.target;
     if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
     setLawField(!lawFieldVisible);
-    const status = root.document.getElementById("master-face-ascii-status");
+    const status = root.document.getElementById("master-face-ascii-status")
+      || root.document.getElementById("ui-status");
     if (status) status.textContent = lawFieldVisible
       ? "Constitutional law glyphs visible"
       : "Constitutional law glyphs hidden";
-    if (overlayView) update(root.performance ? root.performance.now() : Date.now());
+    // The regular face loop observes lawFieldVisible and repaints only changed
+    // glyph cells. Calling update() here would create a second canvas on the
+    // primary ASCII face instead of merely revealing its law field.
   }
 
   const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode };
