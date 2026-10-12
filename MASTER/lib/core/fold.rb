@@ -12,6 +12,7 @@ module Master::Core
   # a constraint, add a rule. The spine never grows.
   class Fold
     Done = Data.define(:reason, :turns, :summary)
+    BLOCK_LIMIT = 3
 
     # observer, if given, is called once per turn with (turn:, effect:, observation:)
     # after the outcome is recorded. It only watches — it cannot change the fold —
@@ -28,6 +29,7 @@ module Master::Core
     def run(goal)
       @memory.note(:goal, goal)
       blocked_effects = Hash.new(0)
+      blocked_by = Hash.new(0)
 
       @max_turns.times do |turn|
         effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
@@ -37,8 +39,13 @@ module Master::Core
           observation = Observation.no("refused by #{by}: #{reason}")
           @memory.record(effect, observation)
           emit(turn, effect, observation)
+          blocked_by[by.to_s] += 1
           signature = [effect.verb, by.to_s, reason.to_s]
           blocked_effects[signature] += 1
+          if blocked_by[by.to_s] >= BLOCK_LIMIT
+            summary = "stopped after #{BLOCK_LIMIT} constitutional blocks by #{by}: #{reason}"
+            return Done.new(reason: :blocked, turns: turn + 1, summary:)
+          end
           if blocked_effects[signature] >= 2
             summary = "stopped after repeated #{effect.verb} refusal by #{by}: #{reason}"
             return Done.new(reason: :blocked, turns: turn + 1, summary:)
