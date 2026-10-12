@@ -25,10 +25,40 @@ module Deploy
     # Hash#dig on a nested value returns a plain Hash, so only a read that
     # starts at the map is seen. Every gate reads that way.
     class Map < Hash
+      def initialize(values = {}, path = [])
+        super()
+        @path = path
+        values.each do |key, value|
+          self[key] = wrap_value(value, @path + [key])
+        end
+      end
+
+      # Track direct bracket reads as well as dig. Nested hashes and hashes
+      # inside arrays stay wrapped, carrying their full path so a miss is
+      # reported as typography.hierarchy.some_key, not just some_key.
+      def [](key)
+        value = super
+        TokenReads.note(@path + [key], found: !value.nil?)
+        value
+      end
+
       def dig(*path)
         value = super
-        TokenReads.note(path, found: !value.nil?)
+        TokenReads.note(@path + path, found: !value.nil?)
         value
+      end
+
+      private
+
+      def wrap_value(value, path)
+        case value
+        when Hash
+          self.class.new(value, path)
+        when Array
+          value.each_with_index.map { |item, index| wrap_value(item, path + [index]) }
+        else
+          value
+        end
       end
     end
 
@@ -36,7 +66,7 @@ module Deploy
 
     module_function
 
-    def wrap(blocks) = Map[blocks.to_h]
+    def wrap(blocks) = Map.new(blocks.to_h)
 
     def note(path, found:)
       key = path.map(&:to_s).join(".")
