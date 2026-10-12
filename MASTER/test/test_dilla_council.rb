@@ -22,6 +22,17 @@ class TestDillaCouncil < Minitest::Test
     assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/sequencer.rb"
   end
 
+  def test_dilla_preset_sources_resolve_from_master_root
+    data = Master.load_yaml(Master::COUNCIL_PATH)
+    files = data.dig("presets", "dilla_critique", "files")
+
+    refute_empty files
+    files.each do |relative|
+      path = File.expand_path(relative, Master::ROOT)
+      assert File.file?(path), "missing Dilla council source: " + relative + " -> " + path
+    end
+  end
+
   def test_dilla_panel_personas_exist_in_council_yaml
     names = Master::Review::Council::Personas.load.map(&:name)
     [
