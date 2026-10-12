@@ -23,6 +23,7 @@ class TestFaceLawField < Minitest::Test
     assert_match(/\A[0-9a-f]{64}\z/, payload.fetch(:digest))
     assert_equal "v", payload.fetch(:toggle_key)
     assert_equal true, payload.fetch(:enabled)
+    assert_equal "ctrl-v", Master::Face::LawField.config.fetch("terminal_toggle_key")
     assert_equal payload.fetch(:laws), Master::Face::LawField.laws
     refute payload.key?(:points), "the browser renderer owns the shared contract-driven geometry"
   end
