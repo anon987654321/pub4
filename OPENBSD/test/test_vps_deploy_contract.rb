@@ -177,10 +177,42 @@ class VpsDeployContractTest < Minitest::Test
       File.write(File.join(lock, "owner"), "999999 #{Socket.gethostname.split(".").first} #{Time.now.to_i}\n")
 
       observed_lock = 'before_identity=$(stat -f \'%d:%i\' "$lock_dir" 2>/dev/null) || return 1'
-      barrier_step = <<~'ZSH'.strip
-        print -r -- "$" >> "$VPS_DEPLOY_TEST_BARRIER"
+      barrier_step = <<~'ZSH'
+        print -r -- "$$" >> "$VPS_DEPLOY_TEST_BARRIER"
         local -i waited=0
-        while [[ $(<"$VPS_DEPLOY_TEST_BARRIER") != *
+        while [[ $(<"$VPS_DEPLOY_TEST_BARRIER") != *$'\n'* ]] && (( waited < 200 )); do
+          sleep 0.01
+          (( waited += 1 ))
+        done
+        [[ $(<"$VPS_DEPLOY_TEST_BARRIER") == *$'\n'* ]] || return 1
+        OBSERVED_LOCK
+      ZSH
+      barrier_step = barrier_step.sub("OBSERVED_LOCK", observed_lock).strip
+      racing_block = lock_block.sub(observed_lock, barrier_step)
+      refute_equal lock_block, racing_block, "the two-process barrier did not attach to stale-lock recovery"
+
+      output_paths = 2.times.map { |i| File.join(dir, "reaper-#{i}.log") }
+      pids = output_paths.each_with_index.map do |output_path, i|
+        script = "#{racing_block}\nsleep 0.2\nprint -r -- acquired-#{i}\n"
+        Process.spawn(
+          {
+            "VPS_DEPLOY_LOCK_DIR" => lock,
+            "VPS_DEPLOY_LOCK_TTL" => "7200",
+            "VPS_DEPLOY_TEST_BARRIER" => barrier,
+          },
+          "zsh", "-c", script,
+          out: output_path, err: [:child, :out]
+        )
+      end
+      statuses = pids.map { |pid| Process.wait2(pid).last.exitstatus }
+      outputs = output_paths.map { |path| File.read(path) }
+
+      assert_equal [0, 75], statuses.sort
+      assert_equal 1, outputs.count { |out| out.match?(/acquired-\d/) },
+                   "exactly one deploy may acquire the lock after simultaneous stale observations"
+    end
+  end
+
   def test_a_live_local_owner_is_not_reaped_just_because_the_ttl_elapsed
     Dir.mktmpdir do |dir|
       lock = File.join(dir, "deploy.lock")
