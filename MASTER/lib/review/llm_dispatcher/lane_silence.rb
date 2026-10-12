@@ -76,9 +76,7 @@ end
             lane = lane_of(model)
             return message(lane) if silent?(lane)
 
-            rows = Master::Io::LaneQuota.report
-            shared = rows.find { |row| row.start_with?("openrouter-free: ") } if model.to_s.end_with?(":free")
-            shared || rows.find { |row| row.start_with?("#{lane}: ") } || "#{lane}: dead (quota)"
+            Master::Io::LaneQuota.report_for(model) || "#{lane}: dead (quota)"
           end
 
           def message(lane = ANY)
