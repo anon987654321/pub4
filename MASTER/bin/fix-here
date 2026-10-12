@@ -144,4 +144,18 @@ end
 ensure
   system(operator, "triangle", "down", chdir: ROOT, out: File::NULL, err: File::NULL) if live
 end
-exit(status&.exitstatus || 1)
+
+# The child can exit 0 having done nothing: an option error is printed and the message
+# is dropped. A /fix run always writes fix0 lines, so a log without one is a failure.
+code = status&.exitstatus || 1
+if code.zero?
+  text = File.file?(log) ? File.read(log, encoding: "UTF-8", invalid: :replace, undef: :replace) : ""
+  reason = if text.match?(/option error|invalid option/) then "the runtime rejected an option"
+           elsif !text.match?(/^fix0 /) then "the run wrote no fix0 line, so /fix never started"
+           end
+  if reason
+    warn "fix-here: the child exited 0 but #{reason}. Log: #{log}"
+    code = 70
+  end
+end
+exit code

@@ -39,16 +39,22 @@ if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
   exit!(0)
 end
 
-def initial_message_from_argv(argv)
-  options = parse_initial_message_options(argv)
-  message = options[:message]
-  return argv.join(" ").strip if message.nil?
+# Flags the slash commands read from their own argument text (/fix --max-files=25).
+# The top-level parser does not know them and must not reject them or drop them.
+COMMAND_FLAG = /\A--(?:autofix|max-files)=/
 
-  tail = argv.reject { |arg| arg.start_with?("--") }
-  [message, *tail].join(" ").strip
+def initial_message_from_argv(argv)
+  kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }
+  rest = argv.reject { |arg| arg.match?(COMMAND_FLAG) }
+  options = parse_initial_message_options(rest)
+  message = options[:message]
+  return [*rest, *kept].join(" ").strip if message.nil?
+
+  tail = rest.reject { |arg| arg.start_with?("--") }
+  [message, *tail, *kept].join(" ").strip
 rescue OptionParser::ParseError => e
   Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr)
-  argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
+  argv.reject { |arg| arg.start_with?("--") && !arg.match?(COMMAND_FLAG) }.join(" ").strip
 end
 
 def parse_initial_message_options(argv)

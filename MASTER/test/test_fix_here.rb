@@ -45,6 +45,30 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_a_child_that_exits_zero_after_an_option_error_fails_the_wrapper
+    with_worktree do |_main, worker, tools_bin|
+      output, status = run_fix_here(
+        worker, tools_bin, "MASTER", "--model", "none", "--no-probe",
+        env: { "FAKE_FIRST_LINE" => "cli0: option error, invalid option: --max-files=25" },
+      )
+
+      assert_equal 70, status.exitstatus, output
+      assert_includes output, "rejected an option"
+    end
+  end
+
+  def test_a_child_that_never_starts_fix_fails_the_wrapper
+    with_worktree do |_main, worker, tools_bin|
+      output, status = run_fix_here(
+        worker, tools_bin, "MASTER", "--model", "none", "--no-probe",
+        env: { "FAKE_FIRST_LINE" => "master0: booted" },
+      )
+
+      assert_equal 70, status.exitstatus, output
+      assert_includes output, "never started"
+    end
+  end
+
   private
 
   def with_worktree
@@ -55,9 +79,11 @@ class TestFixHere < Minitest::Test
       FileUtils.mkdir_p(File.join(main, "MASTER/bin"))
       FileUtils.mkdir_p(tools_bin)
       FileUtils.cp(SCRIPT, File.join(main, "MASTER/bin/fix-here"))
+      FileUtils.mkdir_p(File.join(main, "MASTER/lib/operator"))
+      %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
         File.join(main, "MASTER/bin/master"),
-        "#!/usr/bin/env ruby\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
+        "#!/usr/bin/env ruby\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
       )
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/fix-here"))
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/master"))
