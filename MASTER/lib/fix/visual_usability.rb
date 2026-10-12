@@ -7,6 +7,8 @@ module Master
       # constitutional laws are relevant to rendered product review.
       IDS = %w[
         SYSTEM_STATUS
+        VISUAL_HIERARCHY
+        CONTEXTUAL_STATUS_CUES
         MATCH_REAL_WORLD
         USER_CONTROL
         CONSISTENCY
