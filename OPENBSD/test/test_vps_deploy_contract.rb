@@ -178,13 +178,14 @@ class VpsDeployContractTest < Minitest::Test
 
       observed_lock = 'before_identity=$(stat -f \'%d:%i\' "$lock_dir" 2>/dev/null) || return 1'
       barrier_step = <<~'ZSH'
+        # $(<file) drops the trailing newline, so two pids read back with one.
         print -r -- "$$" >> "$VPS_DEPLOY_TEST_BARRIER"
         local -i waited=0
-        while [[ $(<"$VPS_DEPLOY_TEST_BARRIER") != *$'\n'*$'\n'* ]] && (( waited < 200 )); do
+        while [[ $(<"$VPS_DEPLOY_TEST_BARRIER") != *$'\n'* ]] && (( waited < 200 )); do
           sleep 0.01
           (( waited += 1 ))
         done
-        [[ $(<"$VPS_DEPLOY_TEST_BARRIER") == *$'\n'*$'\n'* ]] || return 1
+        [[ $(<"$VPS_DEPLOY_TEST_BARRIER") == *$'\n'* ]] || return 1
         OBSERVED_LOCK
       ZSH
       barrier_step = barrier_step.sub("OBSERVED_LOCK", observed_lock).strip
@@ -207,7 +208,7 @@ class VpsDeployContractTest < Minitest::Test
       statuses = pids.map { |pid| Process.wait2(pid).last.exitstatus }
       outputs = output_paths.map { |path| File.read(path) }
 
-      assert_equal [0, 75], statuses.sort
+      assert_equal [0, 75], statuses.sort, outputs.inspect
       assert_equal 1, outputs.count { |out| out.match?(/acquired-\d/) },
                    "exactly one deploy may acquire the lock after simultaneous stale observations"
     end
