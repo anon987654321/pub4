@@ -17,6 +17,24 @@ class TestSemanticLawScope < Minitest::Test
 
   def scoped(language) = rule.send(:rules_for, language).keys
 
+  def test_missing_model_agent_is_inconclusive_not_clean
+    semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
+
+    error = assert_raises(RuntimeError) { semantic.check("def foo; end", path: "foo.rb") }
+    assert_match(/INCONCLUSIVE.*no model agent configured/, error.message)
+  end
+
+  def test_provider_configuration_failure_is_inconclusive_not_clean
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, operation:|
+      raise "missing configuration: API key"
+    end
+    semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
+
+    error = assert_raises(RuntimeError) { semantic.check("def foo; end", path: "foo.rb") }
+    assert_match(/INCONCLUSIVE.*provider capability/, error.message)
+  end
+
   def test_an_unexpected_model_failure_is_not_reported_as_clean
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
