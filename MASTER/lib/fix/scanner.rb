@@ -332,7 +332,7 @@ module Master
         end
 
         # Confidence answers "did it find the thing", never "is fixing it safe".
-        # A deterministic finding carries no confidence at all and Fix::LawLoop
+        # A deterministic finding carries no confidence at all and Fix::RepairLoop
         # reads the absence as 1.0, so a threshold here would wave through exactly
         # the findings nobody scored.
         def should_autofix?(law_id, _observed_conf, allow_deletions: false)

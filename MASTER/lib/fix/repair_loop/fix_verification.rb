@@ -4,9 +4,9 @@ require_relative "../../operator/ruby_runner"
 
 module Master
   module Fix
-    class LawLoop
+    class RepairLoop
       # Staleness/verification checks run before and after we apply a fix
-      # (fingerprint drift, missing test coverage) — separate from LawLoop's
+      # (fingerprint drift, missing test coverage) — separate from RepairLoop's
       # own scan/prompt/apply pipeline.
       module FixVerification
         def fingerprint_matches?(violation)
@@ -18,7 +18,7 @@ module Master
           return true if current == stored.to_s
 
           @bus&.publish(
-            "law_loop:stale_scan", law: @law.id, file: violation[:file], expected: stored, actual: current
+            "repair_loop:stale_scan", law: @law.id, file: violation[:file], expected: stored, actual: current
           )
           false
         end
@@ -27,10 +27,10 @@ module Master
           return if test_file_for(violation[:file]).any?
 
           @bus&.publish(
-            "law_loop:fix_unverified", rule: @law.id, file: violation[:file], note: "fix unverified — add test"
+            "repair_loop:fix_unverified", rule: @law.id, file: violation[:file], note: "fix unverified — add test"
           )
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "law_loop.note_unverified_fix", event_bus: @bus)
+          Master::Ground::Swallow.log(e, context: "repair_loop.note_unverified_fix", event_bus: @bus)
           nil
         end
 
@@ -70,7 +70,7 @@ module Master
           src = File.read(path, encoding: "UTF-8")
           Master::Review::Scan::SemanticFingerprint.for(src)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "law_loop.semantic_fingerprint", event_bus: @bus, path:)
+          Master::Ground::Swallow.log(e, context: "repair_loop.semantic_fingerprint", event_bus: @bus, path:)
           ""
         end
 
@@ -83,8 +83,8 @@ module Master
           ]
           patterns.flat_map { |pattern| Dir.glob(pattern) }.uniq.select { |file| File.file?(file) }
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "law_loop.test_file_for", event_bus: @bus, path:)
-          raise "law_loop: test discovery failed for #{path}: #{e.class}: #{e.message}"
+          Master::Ground::Swallow.log(e, context: "repair_loop.test_file_for", event_bus: @bus, path:)
+          raise "repair_loop: test discovery failed for #{path}: #{e.class}: #{e.message}"
         end
       end
     end

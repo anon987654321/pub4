@@ -6,7 +6,7 @@ module Master
   module Fix
     # Finds high-confidence maintenance opportunities that a syntax/rule scan
     # cannot express. These are evidence-backed prompts for the normal Council +
-    # LawLoop path, not a second fixer.
+    # RepairLoop path, not a second fixer.
     class OpportunityPass
       LAW_ID = "CONVERGENCE_OPPORTUNITY"
       TEXT_FILES = %w[.md .rb .rake .yml .yaml .erb .html .js .css .scss].freeze

@@ -13,26 +13,26 @@ require_relative "primitive_first"
 require_relative "taste_memory"
 require_relative "severity"
 require_relative "violation"
-require_relative "law_loop/collapse_guard"
-require_relative "law_loop/fix_strategies"
-require_relative "law_loop/fix_verification"
-require_relative "law_loop/outcome_tracking"
+require_relative "repair_loop/collapse_guard"
+require_relative "repair_loop/fix_strategies"
+require_relative "repair_loop/fix_verification"
+require_relative "repair_loop/outcome_tracking"
 require_relative "visual_custody_blocking"
 require_relative "best_of_n"
 require_relative "tool_breaker"
 require_relative "../review/scan/law_health"
-require_relative "law_loop/autofix_policy"
+require_relative "repair_loop/autofix_policy"
 
 module Master
   module Fix
   # Single-pass fixer for one law across a set of files.
-  # FixLoop owns the outer convergence loop; LawLoop fixes one batch per call.
+  # FixLoop owns the outer convergence loop; RepairLoop fixes one batch per call.
   #
   # Fix routing (per violation severity + file size):
   #   error tier  → council_fix   (3-reviewer veto before apply)
   #   large file  → diff_fix      (unified diff patch; arch #5)
   #   small file  → genetic_fix   (N candidates, rescan, best wins; arch #9)
-    class LawLoop
+    class RepairLoop
       RATE_LIMIT_SLEEP = 10
       MAX_FIX_RETRIES = 2
       RETRY_WAIT_SLICE = 0.25
@@ -85,8 +85,8 @@ module Master
           Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "law_loop.golden_law")
-          raise "law_loop: constitutional preamble unreadable: #{e.class}: #{e.message}"
+          Master::Ground::Swallow.log(e, context: "repair_loop.golden_law")
+          raise "repair_loop: constitutional preamble unreadable: #{e.class}: #{e.message}"
         end
       end
 
@@ -126,10 +126,10 @@ module Master
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
-        @bus&.publish("law_loop:pass", law: @law.id, violations: violations.size, fixed:, status:)
+        @bus&.publish("repair_loop:pass", law: @law.id, violations: violations.size, fixed:, status:)
         { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
-        @bus&.publish("law_loop:error", law: @law.id, error: e.message)
+        @bus&.publish("repair_loop:error", law: @law.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
@@ -165,13 +165,13 @@ module Master
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
           @bus&.publish("fix:requires_operator_decision", finding: review)
-          @bus&.publish("law_loop:operator_gap", law: violation[:law], file: violation[:file], gap:)
+          @bus&.publish("repair_loop:operator_gap", law: violation[:law], file: violation[:file], gap:)
           Master::Trace::Dmesg.gap("fix0", "#{violation[:law]} listed, not attempted, operator-owned rendered value: #{violation[:file]}", gap)
           return :needs_person
         end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
-          @bus&.publish("law_loop:human_decision_required", law: violation[:law], file: violation[:file])
+          @bus&.publish("repair_loop:human_decision_required", law: violation[:law], file: violation[:file])
           return :needs_person
         end
         return :skip_confidence unless autofix_allowed?(violation)
@@ -221,8 +221,8 @@ end) if source.to_s.strip.empty?
 
         :applied
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, law: @law.id)
-        @bus&.publish("law_loop:commit_refused", law: @law.id, file: violation[:file], error: e.message[0, 160])
+        Master::Ground::Swallow.log(e, context: "RepairLoop.commit_applied_fix", event_bus: @bus, law: @law.id)
+        @bus&.publish("repair_loop:commit_refused", law: @law.id, file: violation[:file], error: e.message[0, 160])
         :commit_refused
       end
 
@@ -249,7 +249,7 @@ end) if source.to_s.strip.empty?
         )
       rescue StandardError => e
         # A broken quorum must not silently approve. Refuse and say why.
-        Master::Ground::Swallow.log(e, context: "LawLoop#consensus_approves?") if defined?(Master::Ground::Swallow)
+        Master::Ground::Swallow.log(e, context: "RepairLoop#consensus_approves?") if defined?(Master::Ground::Swallow)
         false
       end
 
@@ -283,11 +283,11 @@ end) if source.to_s.strip.empty?
           return reject_fix(path, old_src, "visual_regression", evidence: [custody.message, custody.gap&.clause].compact.join(", ")) unless custody.ok?
         end
 
-        @bus&.publish("law_loop:fix_applied", law: @law.id, file: path)
+        @bus&.publish("repair_loop:fix_applied", law: @law.id, file: path)
         FixTrace.accepted(@law.id, path)
         true
       rescue StandardError => e
-        @bus&.publish("law_loop:write_error", law: @law.id, file: path, error: e.message)
+        @bus&.publish("repair_loop:write_error", law: @law.id, file: path, error: e.message)
         restore_after_error(path, old_src, e)
         false
       end
@@ -298,10 +298,10 @@ end) if source.to_s.strip.empty?
         return unless old_src
 
         write_atomic(path, old_src)
-        @bus&.publish("law_loop:fix_rejected", law: @law.id, file: path, reason: "exception", error: error.message[0, 160])
+        @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason: "exception", error: error.message[0, 160])
         FixTrace.rejected(@law.id, path, "exception #{error.class}, restored: #{error.message[0, 120]}")
       rescue StandardError => restore_error
-        Master::Ground::Swallow.log(restore_error, context: "LawLoop.restore_after_error", event_bus: @bus, law: @law.id)
+        Master::Ground::Swallow.log(restore_error, context: "RepairLoop.restore_after_error", event_bus: @bus, law: @law.id)
       end
 
       # Boyscout, line-scoped. The golden rule this loop runs under demands the
@@ -347,7 +347,7 @@ end) if source.to_s.strip.empty?
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        @bus&.publish("law_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
+        @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false
       end
@@ -454,7 +454,7 @@ end) if source.to_s.strip.empty?
         "text"
       end
 
-      def genetic_autofix_candidates = LawLoop::GENETIC_AUTOFIX_CANDIDATES
+      def genetic_autofix_candidates = RepairLoop::GENETIC_AUTOFIX_CANDIDATES
 
       def scan_all(path)
         result = Master::Result.wrap(@scanner.scan(path))
@@ -462,7 +462,7 @@ end) if source.to_s.strip.empty?
 
         result.value!
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "law_loop.scan_all", event_bus: @bus, path:)
+        Master::Ground::Swallow.log(e, context: "repair_loop.scan_all", event_bus: @bus, path:)
         raise
       end
 
@@ -481,8 +481,8 @@ end) if source.to_s.strip.empty?
 
       def publish_fix_failure(category, event, violation, message)
         name = {
-          permanent: "law_loop:fail_fast",
-          ambiguous: "law_loop:human_intervention",
+          permanent: "repair_loop:fail_fast",
+          ambiguous: "repair_loop:human_intervention",
         }.fetch(category, event)
         @bus&.publish(name, law: violation[:law], file: violation[:file], error: message[0, 120])
       end

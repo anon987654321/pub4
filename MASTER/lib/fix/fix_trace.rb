@@ -81,7 +81,7 @@ module Master
         Thread.current[:fix_trace_attempt] = nil
       end
 
-      # A suite drives LawLoop against the real checkout; its attempts are not
+      # A suite drives RepairLoop against the real checkout; its attempts are not
       # a /fix run, so they leave no transcript unless a test names a root.
       def record(name, kind, data)
         return false if ENV["MASTER_IN_PROOF"] == "1" && ENV["MASTER_FIX_TRANSCRIPT_ROOT"].to_s.empty?

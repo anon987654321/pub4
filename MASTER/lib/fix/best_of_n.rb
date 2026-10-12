@@ -15,7 +15,7 @@ module Master
     # highest mean layout score wins, the smallest diff breaking a tie.
     #
     # MASTER_FIX_BEST_OF sets N (default 1). At 1 the pass is inactive and
-    # LawLoop behaves exactly as it did without it.
+    # RepairLoop behaves exactly as it did without it.
     module BestOfN
       LAW_ID = "RENDERED_VISUAL_REFINEMENT"
       MAX_N = 8

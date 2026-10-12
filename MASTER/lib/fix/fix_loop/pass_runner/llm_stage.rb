@@ -37,7 +37,7 @@ module Master
 
               law = Wishlist::Law.new(Wishlist::LAW_ID)
               proposal = finding[:wishlist_proposal] || {}
-              loop = LawLoop.new(
+              loop = RepairLoop.new(
                 law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                 learnings: @learnings, committer: @committer, stage_commit: true,
                 visual_custody: @visual_pass&.custody
@@ -172,7 +172,7 @@ module Master
           end
 
           def run_law_once(law, files, pass, council: nil, external_violations: nil)
-            rl = LawLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+            rl = RepairLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")

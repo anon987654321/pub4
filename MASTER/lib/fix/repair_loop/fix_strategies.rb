@@ -4,7 +4,7 @@ require "tmpdir"
 
 module Master
   module Fix
-    class LawLoop
+    class RepairLoop
       module FixStrategies
         ARCHITECTURE_PLAN_GUIDANCE = <<~TEXT.strip
           Before answering, perform a depth check:
@@ -29,8 +29,8 @@ module Master
           original_src = begin
             File.read(path, encoding: "UTF-8")
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LawLoop.reflexion_source_read", rule: @law.id)
-            @bus&.publish("law_loop:reflexion_rejected", law: @law.id, file: path,
+            Master::Ground::Swallow.log(e, context: "RepairLoop.reflexion_source_read", rule: @law.id)
+            @bus&.publish("repair_loop:reflexion_rejected", law: @law.id, file: path,
               reason: "source read failed: #{e.message[0, 120]}")
             return
           end
@@ -44,8 +44,8 @@ module Master
         rescue StandardError => e
           # A check that could not run approves nothing, as a broken quorum
           # approves nothing: the fix is refused and says why.
-          Master::Ground::Swallow.log(e, context: "LawLoop.reflexion_verify", rule: @law.id)
-          @bus&.publish("law_loop:reflexion_rejected", rule: @law.id, file: path, reason: "reflexion failed: #{e.message[0, 120]}")
+          Master::Ground::Swallow.log(e, context: "RepairLoop.reflexion_verify", rule: @law.id)
+          @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason: "reflexion failed: #{e.message[0, 120]}")
           nil
         end
 
@@ -89,10 +89,10 @@ module Master
         # paragraph, an empty string, approved the fix before.
         def handle_reflexion_response(response, path, proposed_src)
           unless response.match?(/\ASAFE\b/)
-            @bus&.publish("law_loop:reflexion_rejected", rule: @law.id, file: path, reason: response[0, 160])
+            @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason: response[0, 160])
             return
           end
-          @bus&.publish("law_loop:reflexion_approved", rule: @law.id, file: path)
+          @bus&.publish("repair_loop:reflexion_approved", rule: @law.id, file: path)
           proposed_src
         end
 
@@ -101,7 +101,7 @@ module Master
           return unless File.exist?(path)
           src = File.read(path, encoding: "UTF-8")
           prompt = build_prompt_for(violation:, src:, path:, style: :council)
-          fix_attempt(violation, event: "law_loop:council_error").first_code(
+          fix_attempt(violation, event: "repair_loop:council_error").first_code(
             prompt:,
             ext: File.extname(path).downcase,
             source: src,
@@ -131,7 +131,7 @@ module Master
             return result.source if result.is_a?(PatchApplier::Success)
             return whole_file_fallback(violation:, src:, path:, reason: result.reason)
           rescue StandardError => e
-            action = handle_fix_exception(e, violation, event: "law_loop:fix_error")
+            action = handle_fix_exception(e, violation, event: "repair_loop:fix_error")
             next if action == :retry
             return
           end
@@ -141,7 +141,7 @@ module Master
         def genetic_fix(violation:, src:, path:)
           ext = File.extname(path).downcase
           prompt = build_prompt_for(violation:, src:, path:)
-          candidates = fix_attempt(violation, attempts: genetic_autofix_candidates, event: "law_loop:fix_error").codes(
+          candidates = fix_attempt(violation, attempts: genetic_autofix_candidates, event: "repair_loop:fix_error").codes(
             prompt:,
             ext:,
             source: src,
@@ -169,7 +169,7 @@ module Master
 
           response
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.architect_then_fix", rule: @law.id)
+          Master::Ground::Swallow.log(e, context: "RepairLoop.architect_then_fix", rule: @law.id)
           whole_file_fallback(violation:, src:, path:, reason: e.message)
         end
 
@@ -187,7 +187,7 @@ module Master
           return unless attempt.positive?
 
           delay = RATE_LIMIT_SLEEP * attempt
-          @bus&.publish("law_loop:retry_wait", rule:, file:, mode:, attempt:, delay:)
+          @bus&.publish("repair_loop:retry_wait", rule:, file:, mode:, attempt:, delay:)
           deadline = Time.now + delay
           while (remaining = deadline - Time.now).positive?
             sleep [remaining, RETRY_WAIT_SLICE].min
@@ -206,7 +206,7 @@ module Master
           end
           scored.empty? ? nil : scored.min_by(&:first).last
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.best_candidate", rule: @law.id)
+          Master::Ground::Swallow.log(e, context: "RepairLoop.best_candidate", rule: @law.id)
           nil
         end
 
@@ -219,12 +219,12 @@ module Master
             result.value!.size
           end
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.rescan_candidate", rule: @law.id)
+          Master::Ground::Swallow.log(e, context: "RepairLoop.rescan_candidate", rule: @law.id)
           raise
         end
 
         def whole_file_fallback(violation:, src:, path:, reason:)
-          @bus&.publish("law_loop:edit_format_fallback", rule: @law.id, file: path, reason: reason.to_s[0, 160])
+          @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: reason.to_s[0, 160])
           prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
           raw = model ? ask_once_agent(prompt, model:, image: @visual_image).to_s : ask_once_agent(prompt, image: @visual_image).to_s
@@ -238,7 +238,7 @@ module Master
           raw = model ? ask_once_agent(prompt, model:, image: @visual_image) : ask_once_agent(prompt, image: @visual_image)
           raw.to_s
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.architecture_plan", rule: @law.id)
+          Master::Ground::Swallow.log(e, context: "RepairLoop.architecture_plan", rule: @law.id)
           ""
         end
 
@@ -276,7 +276,7 @@ module Master
               fast: routed_fix_model(:code_generation, fallback: :detect_lexical),
             }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LawLoop.routing_model_ids", event_bus: @bus)
+            Master::Ground::Swallow.log(e, context: "RepairLoop.routing_model_ids", event_bus: @bus)
             { strong: nil, fast: nil }
           end
         end
@@ -290,7 +290,7 @@ module Master
 
           @agent.model_for(operation:)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.routed_fix_model", operation:)
+          Master::Ground::Swallow.log(e, context: "RepairLoop.routed_fix_model", operation:)
           return @agent.model_for(operation: fallback) if @agent.respond_to?(:model_for)
 
           nil

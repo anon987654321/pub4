@@ -108,8 +108,8 @@ class TestFixRunBudget < Minitest::Test
     run.boundary(2)
     say.call("fix_loop:pass_start", pass: 2, target: "MASTER", file_count: 2638)
     say.call("scan:progress", done: 812, total: 2638, path: "lib/fix/run_pulse.rb", violations: 1)
-    say.call("law_loop:fix_applied", law: "X", file: "a.rb")
-    say.call("law_loop:fix_rejected", law: "X", file: "b.rb", reason: "lint")
+    say.call("repair_loop:fix_applied", law: "X", file: "a.rb")
+    say.call("repair_loop:fix_rejected", law: "X", file: "b.rb", reason: "lint")
     say.call("llm:send", model: "claude-cli:claude-opus-5-5")
     say.call("llm:provider_outcome", model: "claude-cli:claude-opus-5-5", status: "success")
     @now = 2412.0
@@ -146,9 +146,9 @@ class TestFixRunBudget < Minitest::Test
     @said.clear
     cost(0.1, 5000)
     say.call("fix_loop:pass_start", pass: 1, target: "MASTER", file_count: 3)
-    say.call("law_loop:pass", law: "A", violations: 7, fixed: 4, status: :continue)
+    say.call("repair_loop:pass", law: "A", violations: 7, fixed: 4, status: :continue)
     say.call("fix_loop:rule_result", pass: 1, rule: "B", violations: 3, fixed: 1)
-    say.call("law_loop:fix_applied", law: "A", file: "a.rb")
+    say.call("repair_loop:fix_applied", law: "A", file: "a.rb")
     say.call("fix_loop:skip_breakdown", pass: 1, declined: 2, fixed: 5)
     run.pass_end(1)
 
@@ -187,7 +187,7 @@ class TestFixRunBudget < Minitest::Test
   Rule = Struct.new(:id, :severity)
 
   # Every attempt writes a ledger row of 400 tokens at $0.00, as a subscription lane does.
-  class BillingLoop < Master::Fix::LawLoop
+  class BillingLoop < Master::Fix::RepairLoop
     attr_reader :asked
 
     def initialize(ledger:, **)

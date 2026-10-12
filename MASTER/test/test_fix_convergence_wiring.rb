@@ -11,7 +11,7 @@ class FixConvergenceWiringTest < Minitest::Test
     llm_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/llm_stage.rb", __dir__))
     wishlist_source = File.read(File.expand_path("../lib/fix/wishlist.rb", __dir__))
     journal_source = File.read(File.expand_path("../lib/fix/run_journal.rb", __dir__))
-    rule_source = File.read(File.expand_path("../lib/fix/law_loop.rb", __dir__))
+    rule_source = File.read(File.expand_path("../lib/fix/repair_loop.rb", __dir__))
 
     assert_includes loop_source, 'require_relative "visual_pass"'
     assert_includes loop_source, 'require_relative "opportunity_pass"'

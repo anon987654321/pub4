@@ -129,7 +129,7 @@ class TestCouncilDeadline < Minitest::Test
     assert_includes pulse.line(elapsed: 5, tokens: 0, eta: nil), "phase council (2 of 5 personas answered)"
 
     pulse.observe("fix_loop:phase", { stage: :model_fixes })
-    pulse.observe("law_loop:pass", { law: "NO_GOD_CLASS", violations: 1, fixed: 0 })
+    pulse.observe("repair_loop:pass", { law: "NO_GOD_CLASS", violations: 1, fixed: 0 })
     pulse.observe("scan:progress", { done: 3, total: 10, path: "/x/lib/big.rb" })
     assert_includes pulse.line(elapsed: 5, tokens: 0, eta: nil), "phase fix NO_GOD_CLASS big.rb"
   end
@@ -171,7 +171,7 @@ class TestCouncilDeadline < Minitest::Test
     now = 0.0
     pulse = Master::Fix::RunPulse.new(max_passes: 8, clock: -> { now }, load: -> { 0.0 })
     pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 10 })
-    pulse.observe("law_loop:fix_applied", {})
+    pulse.observe("repair_loop:fix_applied", {})
     now = 900.0
     assert_nil pulse.stall(now)
   end

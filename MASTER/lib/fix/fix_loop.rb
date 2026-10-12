@@ -307,7 +307,7 @@ module Master
 
       def collect_files(target) = @file_collector.collect(target)
 
-      def self.preamble_from_soul = [LawLoop.soul_preamble, Protocol.instruction].join("\n\n")
+      def self.preamble_from_soul = [RepairLoop.soul_preamble, Protocol.instruction].join("\n\n")
 
       private
 

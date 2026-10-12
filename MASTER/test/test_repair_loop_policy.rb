@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-class TestLawLoopPolicy < Minitest::Test
+class TestRepairLoopPolicy < Minitest::Test
   Rule = Struct.new(:id, :severity)
 
   class FakeBus
@@ -99,7 +99,7 @@ class TestLawLoopPolicy < Minitest::Test
       operation.to_sym == :file_write ? "grok-cli:auto" : "ollama:glm-5.3-flash:cloud"
     end
 
-    loop = Master::Fix::LawLoop.allocate
+    loop = Master::Fix::RepairLoop.allocate
     loop.instance_variable_set(:@agent, agent)
     selected = loop.send(:routing_model_ids)
 
@@ -108,7 +108,7 @@ class TestLawLoopPolicy < Minitest::Test
   end
 
   def test_visual_custody_is_limited_to_frontend_rails_sources
-    loop = Master::Fix::LawLoop.allocate
+    loop = Master::Fix::RepairLoop.allocate
 
     assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/assets/stylesheets/application.scss")
     assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/views/home/index.html.erb")
@@ -127,7 +127,7 @@ class TestLawLoopPolicy < Minitest::Test
 
       assert applied, "the fix was not applied: #{bus.events.last.inspect}"
       assert_equal "clean\n", File.read(path)
-      refute_includes bus.events.map(&:first), "law_loop:write_error"
+      refute_includes bus.events.map(&:first), "repair_loop:write_error"
     end
   end
 
@@ -146,7 +146,7 @@ class TestLawLoopPolicy < Minitest::Test
 
       refute loop.send(:apply, path, "clean\n", violation), "a fix its test fails must not stand"
       assert_equal "violation\n", File.read(path)
-      rejected = bus.events.find { |event, _| event == "law_loop:fix_rejected" }
+      rejected = bus.events.find { |event, _| event == "repair_loop:fix_rejected" }
       assert_equal "test_failed", rejected&.last&.fetch(:reason)
 
       assert loop.send(:apply, path, "kept\n", violation), "a fix its test passes stands"
@@ -160,7 +160,7 @@ class TestLawLoopPolicy < Minitest::Test
     end
   end
 
-  def test_law_loop_scan_failure_is_not_clean
+  def test_repair_loop_scan_failure_is_not_clean
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\n")
@@ -199,7 +199,7 @@ class TestLawLoopPolicy < Minitest::Test
 
       assert_equal 0, result[:fixed]
       assert_equal 0, agent.calls
-      assert_includes bus.events.map(&:first), "law_loop:autofix_skipped"
+      assert_includes bus.events.map(&:first), "repair_loop:autofix_skipped"
     end
   end
 
@@ -233,7 +233,7 @@ class TestLawLoopPolicy < Minitest::Test
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\n")
       learnings = RecordingLearnings.new
-      loop = Master::Fix::LawLoop.new(
+      loop = Master::Fix::RepairLoop.new(
         law: Rule.new("TEST_RULE", :warning),
         agent: Agent.new,
         scanner: Scanner.new(allow_autofix: false),
@@ -260,7 +260,7 @@ class TestLawLoopPolicy < Minitest::Test
       result = loop.run_once([path])
 
       assert_equal :stuck, result[:status]
-      assert_includes bus.events.map(&:first), "law_loop:fail_fast"
+      assert_includes bus.events.map(&:first), "repair_loop:fail_fast"
     end
   end
 
@@ -275,14 +275,14 @@ class TestLawLoopPolicy < Minitest::Test
       result = loop.run_once([path])
 
       assert_equal :stuck, result[:status]
-      assert_includes bus.events.map(&:first), "law_loop:human_intervention"
+      assert_includes bus.events.map(&:first), "repair_loop:human_intervention"
     end
   end
 
-  def test_preamble_loads_soul_once_across_law_loops
+  def test_preamble_loads_soul_once_across_repair_loops
     original = Master.method(:load_yaml)
     count = 0
-    Master::Fix::LawLoop.clear_preamble_cache!
+    Master::Fix::RepairLoop.clear_preamble_cache!
     Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
       if path.end_with?("soul.yml")
         count += 1
@@ -305,7 +305,7 @@ class TestLawLoopPolicy < Minitest::Test
     Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
       original.call(path, symbolize_names:, default:)
     end
-    Master::Fix::LawLoop.clear_preamble_cache!
+    Master::Fix::RepairLoop.clear_preamble_cache!
   end
 
   def test_rescan_candidate_preserves_original_file_extension
@@ -467,7 +467,7 @@ class TestLawLoopPolicy < Minitest::Test
       loop = build_loop(root:, bus:, scanner: Scanner.new, agent: SilentAgent.new)
 
       outcome = loop.send(:fix_violation,
-                          Master::Fix::LawLoop::Violation.from_finding(
+                          Master::Fix::RepairLoop::Violation.from_finding(
                             { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
                             file: path, ext: ".rb",
                           ))
@@ -544,7 +544,7 @@ class TestLawLoopPolicy < Minitest::Test
       )
 
       assert_equal :needs_person, loop.send(:fix_violation, violation)
-      assert_includes bus.events.map(&:first), "law_loop:human_decision_required"
+      assert_includes bus.events.map(&:first), "repair_loop:human_decision_required"
     end
   end
 
@@ -586,7 +586,7 @@ class TestLawLoopPolicy < Minitest::Test
   end
 
   def build_loop(root:, bus:, scanner:, agent:)
-    Master::Fix::LawLoop.new(
+    Master::Fix::RepairLoop.new(
       law: Rule.new("TEST_RULE", :warning),
       agent:,
       scanner:,

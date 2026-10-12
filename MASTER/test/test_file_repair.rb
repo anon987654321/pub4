@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 
 # One repair per file: every finding in one prompt, one candidate, no
-# architecture plan. LawLoop took about four calls a finding, one rule at a
+# architecture plan. RepairLoop took about four calls a finding, one rule at a
 # time, and /fix MASTER reached thirty-odd files an hour.
 class TestFileRepair < Minitest::Test
   Rule = Struct.new(:id, :description)

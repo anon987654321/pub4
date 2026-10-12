@@ -10,8 +10,8 @@ class TestToolBreaker < Minitest::Test
   Rule = Struct.new(:id, :severity)
   Breaker = Master::Fix::ToolBreaker
 
-  # A LawLoop whose model call is a counter that always fails to propose.
-  class CountingLoop < Master::Fix::LawLoop
+  # A RepairLoop whose model call is a counter that always fails to propose.
+  class CountingLoop < Master::Fix::RepairLoop
     attr_reader :asked
 
     def fix_violation(_violation)

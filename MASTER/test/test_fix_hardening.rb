@@ -60,7 +60,7 @@ class FixHardeningTest < Minitest::Test
     assert_equal 2, Master::Fix::ProtocolDetectorMatrix.summary(matrix).fetch("total_laws")
   end
 
-  def test_measurement_only_finding_is_not_repaired_in_law_loop
+  def test_measurement_only_finding_is_not_repaired_in_repair_loop
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\\n")
@@ -70,7 +70,7 @@ class FixHardeningTest < Minitest::Test
       end
       agent = Object.new
       agent.define_singleton_method(:ask) { |_prompt| raise "measurement-only finding reached the model" }
-      loop = Master::Fix::LawLoop.new(
+      loop = Master::Fix::RepairLoop.new(
         law: RuleStub.new(id: "CQS", severity: :warning),
         agent:,
         scanner:,
@@ -85,7 +85,7 @@ class FixHardeningTest < Minitest::Test
   end
 
   def test_rendered_value_block_is_a_human_decision
-    loop = Master::Fix::LawLoop.allocate
+    loop = Master::Fix::RepairLoop.allocate
     finding = {
       law: "TYPE_SCALE",
       file: File.join(Master::ROOT, "..", "RAILS", "master_web", "face.css"),

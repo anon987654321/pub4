@@ -44,7 +44,7 @@ class EventsController < ApplicationController
     skills:**
     codebase:**
     fix_loop:**
-    law_loop:**
+    repair_loop:**
     tts:**
     voice:**
     link

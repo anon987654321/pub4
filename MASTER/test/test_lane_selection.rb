@@ -257,7 +257,7 @@ class TestLaneSelection < Minitest::Test
   # The fix loop asks through the real Agent: ask -> routed chain -> router ->
   # LaneSelection. The dispatcher is a counting stub that records which model the
   # request was addressed to, in the real provider spellings.
-  def test_the_law_loop_request_reaches_the_selection_and_lands_on_the_first_live_lane
+  def test_the_repair_loop_request_reaches_the_selection_and_lands_on_the_first_live_lane
     Quota.note(AGY, AGY_REPLY)
     router = router_over([NEMOTRON, AGY, OPUS, GROK, NANO], [NEMOTRON, AGY, OPUS])
     sent = []
@@ -269,11 +269,11 @@ class TestLaneSelection < Minitest::Test
     agent.instance_variable_set(:@config, Config.new(task_type: "code_generation", model: OPUS))
     agent.instance_variable_set(:@bus, nil)
     law = Struct.new(:id, :severity).new("TEST_RULE", :warning)
-    loop = Master::Fix::LawLoop.new(law:, agent:, scanner: Object.new, root: Master::ROOT, bus: nil)
+    loop = Master::Fix::RepairLoop.new(law:, agent:, scanner: Object.new, root: Master::ROOT, bus: nil)
 
     counting(:order_or_all) do |calls|
       assert_equal "fixed", loop.send(:ask_agent, "repair this")
-      refute_empty calls, "the law loop's ask never reached LaneSelection"
+      refute_empty calls, "the repair loop's ask never reached LaneSelection"
     end
 
     assert_equal [OPUS], sent, "the first live lane of the tier, not the dead agy and not a free nemotron"

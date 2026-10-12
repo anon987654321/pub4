@@ -13,7 +13,7 @@ module Master
     class RunPulse
       WAITING_AFTER = 5
       FILE_CHARS = 24
-      BUS_PATTERNS = %w[llm:* fix_loop:* law_loop:* scan:* council:*].freeze
+      BUS_PATTERNS = %w[llm:* fix_loop:* repair_loop:* scan:* council:*].freeze
       STALL_SECONDS = 600
       # The stages that name themselves with a "fix_loop:phase" event, as the log words them.
       PHASES = {
@@ -142,11 +142,11 @@ module Master
         when "fix_loop:phase" then enter_phase(payload)
         when "council:progress" then @council = [payload[:answered].to_i, payload[:total].to_i]
         when "scan:progress" then scanned(payload)
-        when "fix_loop:rule_result", "law_loop:pass" then ruled(payload)
+        when "fix_loop:rule_result", "repair_loop:pass" then ruled(payload)
         when "fix_loop:skip_breakdown" then skipped(payload)
-        when "law_loop:fix_applied", "fix_loop:ast_fixed" then count_fix(:ok)
-        when "law_loop:fix_rejected" then count_fix(:failed)
-        when "law_loop:operator_gap" then @listed[payload[:law].to_s] += 1
+        when "repair_loop:fix_applied", "fix_loop:ast_fixed" then count_fix(:ok)
+        when "repair_loop:fix_rejected" then count_fix(:failed)
+        when "repair_loop:operator_gap" then @listed[payload[:law].to_s] += 1
         end
       end
 

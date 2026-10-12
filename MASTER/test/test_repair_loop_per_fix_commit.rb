@@ -6,7 +6,7 @@ require_relative "test_helper"
 # two guards that keep a per-fix pipeline honest: a proposal that collapses a
 # file (the 2026-09-17 UNCHANGED corruption) never reaches the write, and a
 # fix that leaves a new violation on the lines it changed is not a repair.
-class TestLawLoopPerFixCommit < Minitest::Test
+class TestRepairLoopPerFixCommit < Minitest::Test
   Rule = Struct.new(:id, :severity)
 
   class FakeBus
@@ -69,7 +69,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
   end
 
   def build_loop(root:, bus:, scanner:, agent:, committer: nil)
-    loop = Master::Fix::LawLoop.new(
+    loop = Master::Fix::RepairLoop.new(
       law: Rule.new("TEST_RULE", :warning),
       agent:,
       scanner:,
@@ -94,7 +94,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
   # The sentinel half of the collapse guard: the refusal spellings, and not
   # the words a real file can wear.
   def test_collapse_guard_sentinels
-    guard = Master::Fix::LawLoop::CollapseGuard
+    guard = Master::Fix::RepairLoop::CollapseGuard
     assert guard.sentinel?("UNCHANGED")
     assert guard.sentinel?("unchanged\n")
     assert guard.sentinel?("No changes")
@@ -106,7 +106,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
   end
 
   def test_collapse_guard_shrink_ratio_and_deletion_exempt
-    guard = Master::Fix::LawLoop::CollapseGuard
+    guard = Master::Fix::RepairLoop::CollapseGuard
     big = "x" * 1_000
     assert guard.collapse?("TRAILING_COMMAS", big, "x" * 100)
     refute guard.collapse?("TRAILING_COMMAS", big, "x" * 600)
@@ -128,7 +128,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
 
       refute loop.send(:apply, path, "UNCHANGED", violation_in(path))
       assert_equal "line\n" * 40, File.read(path)
-      rejected = bus.events.find { |event, _| event == "law_loop:fix_rejected" }
+      rejected = bus.events.find { |event, _| event == "repair_loop:fix_rejected" }
       assert_equal "collapsed_content", rejected&.last&.fetch(:reason)
     end
   end
@@ -152,7 +152,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
 
       refute loop.send(:apply, path, "model wrote this\n", violation_in(path))
       assert_equal "violation\n", File.read(path)
-      rejected = bus.events.find { |event, _| event == "law_loop:fix_rejected" }
+      rejected = bus.events.find { |event, _| event == "repair_loop:fix_rejected" }
       assert_equal "exception", rejected&.last&.fetch(:reason)
     end
   end
@@ -183,7 +183,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
 
       refute loop.send(:apply, path, "clean but wrong\n", violation_in(path))
       assert_equal "violation\n", File.read(path)
-      rejected = bus.events.find { |event, _| event == "law_loop:fix_rejected" }
+      rejected = bus.events.find { |event, _| event == "repair_loop:fix_rejected" }
       assert_equal "boyscout_violation", rejected&.last&.fetch(:reason)
     end
   end
@@ -255,7 +255,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
 
       assert_equal :commit_refused, outcome
       assert_equal "clean\n", File.read(path)
-      assert_includes bus.events.map(&:first), "law_loop:commit_refused"
+      assert_includes bus.events.map(&:first), "repair_loop:commit_refused"
     end
   end
 

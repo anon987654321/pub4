@@ -7,7 +7,7 @@ require File.expand_path("../lib/fix/violation", __dir__)
 
 # The selector a visual finding names is the fix's anchor: a chrome move inside
 # it is the fix's own work, a chrome move elsewhere is drift. The anchor has to
-# survive finding -> Violation -> LawLoop#apply -> custody -> drift budget.
+# survive finding -> Violation -> RepairLoop#apply -> custody -> drift budget.
 class TestVisualAnchorThreading < Minitest::Test
   Surface = Struct.new(:id, :viewport, :snapshot)
   Q = Master::Fix::VisualQualityGates
@@ -18,7 +18,7 @@ class TestVisualAnchorThreading < Minitest::Test
     assert_equal ".site-nav", v.to_h[:anchor]
   end
 
-  def test_law_loop_hands_the_anchor_to_custody
+  def test_repair_loop_hands_the_anchor_to_custody
     Dir.mktmpdir do |root|
       path = File.join(root, "RAILS", "brgen", "app", "assets", "x.scss")
       FileUtils.mkdir_p(File.dirname(path))
@@ -28,7 +28,7 @@ class TestVisualAnchorThreading < Minitest::Test
       custody.define_singleton_method(:verify!) { |anchors: []| seen << anchors && Master::Result.ok(state: :preserved) }
       scanner = Object.new
       scanner.define_singleton_method(:scan) { |_p, laws: nil| Master::Result.ok([]) }
-      loop = Master::Fix::LawLoop.new(law: Struct.new(:id, :severity).new("TEST_RULE", :warning), agent: nil,
+      loop = Master::Fix::RepairLoop.new(law: Struct.new(:id, :severity).new("TEST_RULE", :warning), agent: nil,
                                       scanner:, root:, visual_custody: custody)
       loop.send(:apply, path, "b{}\n", { law: "TEST_RULE", file: path, line: 1, anchor: ".site-nav" })
       assert_equal [[".site-nav"]], seen

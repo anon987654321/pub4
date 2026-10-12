@@ -14,7 +14,7 @@ module Master
     # The committed layout snapshot is the protected surface contract: it must
     # match before a visual proposal is trusted, and it must still match after
     # the proposal is written. A mismatch restores the old source through
-    # LawLoop#reject_fix instead of blessing the new render.
+    # RepairLoop#reject_fix instead of blessing the new render.
     class VisualCustody
       # Nothing was measured and no measurement here will change that without
       # someone fixing the setup: a fact, not a decision.

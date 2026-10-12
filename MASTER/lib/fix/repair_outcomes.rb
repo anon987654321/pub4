@@ -24,7 +24,7 @@ module Master
       SUMMARY_BYTES = 900
       LOCK = Mutex.new
 
-      # LawLoop's per-violation outcome symbols, folded to three verdicts.
+      # RepairLoop's per-violation outcome symbols, folded to three verdicts.
       ACCEPTED = %i[applied commit_refused].freeze
       REVERTED = %i[rejected].freeze
       REJECTED = %i[no_proposal reflexion_rejected consensus_rejected].freeze
