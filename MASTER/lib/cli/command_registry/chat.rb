@@ -189,7 +189,7 @@ module Master
       def chat_private_message(chat, args, **)
         return "chat0: /msg is available on IRC only" unless chat.is_a?(Io::Irc)
 
-        recipient, text = args.split(/\\s+/, 2)
+        recipient, text = args.split(/\s+/, 2)
         raise ArgumentError, "usage: /msg <nick> <text>" if recipient.to_s.empty? || text.to_s.strip.empty?
         raise ArgumentError, "bad nick" unless recipient.match?(Io::Irc::NICK)
 
