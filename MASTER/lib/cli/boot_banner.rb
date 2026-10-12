@@ -23,18 +23,6 @@ module Master
         end
       end
 
-      # The line-art wordmark, once, on an interactive terminal, above the boot
-      # lines; nothing when output is piped or MASTER_CLI_QUIET=1.
-      def wordmark(io: $stderr)
-        return false unless io.respond_to?(:tty?) && io.tty? && $stdin.tty? && ENV["MASTER_CLI_QUIET"] != "1"
-        return false if @wordmark_shown
-
-        @wordmark_shown = true
-        io.puts(Master::Face::Contract.wordmark)
-        io.puts
-        true
-      end
-
       def banner_lines
         status = Master::Ops::LoopSlot.status
         budget = Master::Ops::ProcessBudget.status

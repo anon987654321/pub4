@@ -161,7 +161,6 @@ module Master
     end
 
     def boot(root: Dir.pwd)
-      CLI::BootBanner.wordmark
       prepare_runtime!
       emit_device_status
       onboard

@@ -87,7 +87,7 @@ module Master
         end
 
         def prompt_token
-          Master::Face::Contract.glyph(:input)
+          File.basename(ENV["SHELL"].to_s) == "zsh" ? "%" : "$"
         end
 
         def phase_prompt(last_ok, _phase)

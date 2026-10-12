@@ -106,6 +106,18 @@ class TestRenderer < Minitest::Test
     assert_match(/[%$] \z/, strip_ansi(prompt))
   end
 
+  def test_prompt_token_follows_zsh_and_posix_shell_conventions
+    renderer = FakeRenderer.new(config: {})
+    old_shell = ENV["SHELL"]
+
+    ENV["SHELL"] = "/bin/zsh"
+    assert_equal "%", renderer.prompt_token
+    ENV["SHELL"] = "/bin/sh"
+    assert_equal "$", renderer.prompt_token
+  ensure
+    ENV["SHELL"] = old_shell
+  end
+
   def test_prompt_line_state_shows_context_usage
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
