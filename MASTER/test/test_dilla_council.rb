@@ -18,8 +18,11 @@ class TestDillaCouncil < Minitest::Test
     assert_match(/cherry-pick/i, dilla[:ideation_prompt])
     assert_includes dilla[:files], "../STUDIO/dilla/dilla.rb"
     assert_includes dilla[:files], "../STUDIO/dilla/data/dilla.json"
+    assert_includes dilla[:files], "../STUDIO/dilla/data/showcase.json"
     assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/engine.rb"
     assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/sequencer.rb"
+    assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/colour.rb"
+    assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/echo.rb"
   end
 
   def test_dilla_preset_sources_resolve_from_master_root
