@@ -1,0 +1,191 @@
+// ============================================================ pages: organize
+
+// Closet organization page. Each tip is a rule with its principle attached,
+// so the principle gets its own line rather than being folded into the body —
+// you should be able to skim the principles alone and disagree with one.
+
+.organize-tip {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-extra-light-grey);
+
+  h3 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+  }
+
+  p {
+    margin: 0;
+    max-width: var(--measure);
+  }
+}
+
+.organize-principle {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  font-style: italic;
+}
+
+// ============================================================ components: today's look
+
+// The Style Assistant card on the dashboard. A list, not a lookbook: the
+// suggestion has to be readable before the photos load, and the reason beside
+// each garment is the point of the feature.
+
+.today-look {
+  margin: var(--space-6) 0;
+  padding: var(--space-6);
+  border: 1px solid var(--color-extra-light-grey);
+}
+
+.today-look-head {
+  h2 {
+    margin: 0;
+  }
+
+  p {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+  }
+}
+
+.today-look-picks {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+
+.today-look-pick {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-extra-light-grey);
+}
+
+.today-look-zone {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-grey-text);
+}
+
+.today-look-why {
+  // Second row under the garment, spanning past the zone column, so a long
+  // list of reasons wraps into the card rather than out of it.
+  grid-column: 2;
+  font-size: var(--text-xs);
+}
+
+.today-look-actions {
+  margin-top: var(--space-3);
+}
+
+// ============================================================ pages: home looks
+
+/* Four looks, stacked, with the air between them the operator asked for
+   (2026-09-25, after antigravity.google): whole screens of white, a large
+   tightly tracked title, then the figure. */
+.amber-looks {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(120px, 16vw, 200px);
+  padding-block-end: clamp(120px, 16vw, 200px);
+}
+
+main#main-content .amber-look-title {
+  margin: 0;
+  max-width: none;
+  text-align: center;
+  font-size: clamp(40px, 6vw, 88px);
+  font-weight: var(--weight-normal);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+/* The figure and the slides share one box, the mannequin's 160:390, centred in the stage and
+   clear of the caption line, so a zone's percentages land on the same body
+   in both layers. */
+.amber-look-stage {
+  position: relative;
+  height: min(78svh, 640px);
+  margin-block-start: var(--space-8);
+}
+
+.amber-look-figure,
+.amber-look-body {
+  position: absolute;
+  inset-block: 0 3rem;
+  inset-inline-start: 50%;
+  height: calc(100% - 3rem);
+  aspect-ratio: 160 / 390;
+  transform: translateX(-50%);
+}
+
+.amber-look-figure {
+  --particle-ink: var(--figure-ink);
+}
+
+/* The dressing room lets its particles spill past the mannequin; here they
+   fill the body box, so the garments land on the body the points draw. */
+.amber-look-figure .mannequin-particles {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.amber-look-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.amber-look-slide {
+  position: relative;
+  flex: 0 0 100%;
+  margin: 0;
+  scroll-snap-align: start;
+}
+
+.amber-look-position {
+  margin-inline-start: var(--space-2);
+  color: var(--luxury-muted);
+}
+
+.amber-look-slide figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Where each garment is worn, in percent of the body box: the mannequin's
+   own 160x390 grid, where the dressing room's .zone boxes sit too. */
+.look-zone {
+  position: absolute;
+  display: block;
+}
+
+.look-zone svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.look-zone--torso { inset: 18% 6% auto; height: 34%; }
+.look-zone--dress { inset: 18% 8% auto; height: 60%; }
+.look-zone--legs { inset: 52% 10% auto; height: 43%; }
+.look-zone--feet { inset: 93% 6% auto; height: 7%; }
+.look-zone--crown { inset: 0.5% 30% auto; height: 8%; }
+.look-zone--eyes { inset: 6% 33% auto; height: 4%; }
+.look-zone--ears { inset: 8% 30% auto; height: 6%; }
+.look-zone--hand { inset: 50% -6% auto 78%; height: 10%; }
+
