@@ -19,9 +19,9 @@ transcendent:
   paralinguistic_tags: true
   melodic_enabled: true
   melodic_threshold: 0.40
-  # Performance is now part of the normal conversational path. Edge receives the
-  # resulting phrase contour through edge_melodic; local engines receive the same
-  # measured emotion controls.
+  # Expressive performance applies in MASTER_TTS_MODE=transcendent. Edge receives
+  # the phrase contour through edge_melodic; local engines receive the same
+  # measured emotion controls. The normal conversation path stays direct and fast.
   phrase_rhythm_enabled: true
   phrase_language_switching: true
   mlx_model: mlx-community/chatterbox-fp16
