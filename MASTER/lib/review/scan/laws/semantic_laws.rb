@@ -117,7 +117,11 @@ module Master
             # silently turning an unevaluated semantic tier into CLEAN.
             offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
             limited = note_model_failure(e)
-            return [] if offline || limited
+            reason = offline ? "provider capability/configuration unavailable" : "provider spend/quota limit reached" if limited
+            if offline || limited
+              detail = reason || e.message
+              raise "semantic assessment INCONCLUSIVE: #{detail} for #{path} (#{e.class}: #{e.message})"
+            end
 
             Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             raise
@@ -161,8 +165,11 @@ module Master
 
           def check(code, path:)
             lang = language(path)
-            return [] unless lang && @agent
-            return [] if quota_paused?
+            return [] unless lang
+            raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}" unless @agent
+            if quota_paused?
+              raise "semantic assessment INCONCLUSIVE: quota gate paused model assessment for #{path}"
+            end
 
             reload_semantic_laws_if_stale
             scoped = laws_for(lang)
