@@ -88,15 +88,20 @@ class PublicErrorPagesTest < Minitest::Test
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 
-  def test_shared_503_fallback_uses_brand_typography_and_safe_area
+  def test_shared_503_fallback_uses_brand_typography_and_all_safe_area_edges
     source = File.read(File.join(ROOT, "__shared", "public", "503.html"))
 
     assert_includes source, MASTER_WEB_FONT
     assert_includes source, "line-height: 1.5;"
     assert_includes source, "0.8rem/1.25 ui-monospace"
     assert_includes source, "min-height: 100dvh"
-    assert_includes source, "env(safe-area-inset-top"
-    assert_includes source, "env(safe-area-inset-bottom"
+    assert_match(/name="viewport" content="[^"]*viewport-fit=cover/, source)
+    %w[top right bottom left].each do |edge|
+      assert_includes source, "env(safe-area-inset-#{edge}, 0px)",
+                      "503 fallback must respect the #{edge} safe area"
+    end
+    assert_includes source, "max-width: 20ch;"
+    assert_includes source, "a:focus-visible"
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 end
