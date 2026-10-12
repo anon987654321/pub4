@@ -55,7 +55,9 @@ module Master
           @cols = cols
           @sw = cols * SAMPLES
           @sh = rows * 2 * SAMPLES
-          @ramp = Glyphs.ramp(chars || ENV["MASTER_FACE_CHARS"] || Glyphs::DEFAULT_CHARS, mode || ENV["MASTER_FACE_MODE"] || CONFIG.fetch("mode"))
+          named_ramp = Glyphs::CONFIG.fetch("ramps", {}).fetch(ENV.fetch("MASTER_FACE_RAMP", "").to_s, Glyphs::DEFAULT_CHARS)
+          chosen_chars = chars || ENV["MASTER_FACE_CHARS"] || named_ramp
+          @ramp = Glyphs.ramp(chosen_chars, mode || ENV["MASTER_FACE_MODE"] || CONFIG.fetch("mode"))
           above, aside = @mesh.margins
           _, _, ylo, yhi, reach = @mesh.bounds
           @lift = (ylo + yhi + above) / 2.0
