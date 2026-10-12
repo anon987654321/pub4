@@ -67,6 +67,21 @@ class DemoMediaTest < Minitest::Test
     end
   end
 
+  def test_catalogued_remote_images_keep_a_source_and_credit
+    skip "bergen catalog missing" unless CATALOG.file?
+
+    images = YAML.safe_load_file(CATALOG, permitted_classes: [], aliases: true).fetch("images", {})
+    rows = images.values.select do |row|
+      row.is_a?(Hash) && row["url"].to_s.start_with?("https://") && !row["credit"].to_s.empty?
+    end
+
+    refute_empty rows
+    rows.each do |row|
+      assert_match(%r{\Ahttps://}, row["url"])
+      assert row["credit"].to_s.length.positive?
+    end
+  end
+
   private
 
   def with_env(overrides)
