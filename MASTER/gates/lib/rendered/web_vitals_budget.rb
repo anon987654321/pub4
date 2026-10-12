@@ -41,6 +41,15 @@ module Deploy
     # over the page's life, and reading it at first paint reports the shift that
     # has not happened yet as zero.
     SETTLE_S = 2.0
+    # One mobile first screen per product. A single brgen page previously stood
+    # in for the whole fleet, allowing regressions in Amber, BSDPorts and the
+    # MASTER face to pass the budget without being visited.
+    SURFACE_IDS = %w[
+      brgen/core/mobile
+      amber/home/mobile
+      bsdports/home/mobile
+      master/chat/mobile
+    ].freeze
 
     def self.run = new.run
 
@@ -83,7 +92,11 @@ module Deploy
         return
       end
 
-      surfaces = GeometryProbe.surfaces.first(1)
+      surfaces = selected_surfaces
+      if surfaces.empty?
+        @result.inconclusive!("web_vitals_budget: no representative surfaces selected — paint budget not measured")
+        return
+      end
       GeometryProbe.unreachable_apps(surfaces).each do |app|
         @result.skipped_live("web_vitals_budget: #{app} port closed — paint budget not measured")
       end
@@ -98,6 +111,19 @@ module Deploy
       @result.errored!("web_vitals_budget: #{e.class}: #{e.message.lines.first.to_s.strip}")
     end
 
+    def selected_surfaces
+      rows = GeometryProbe.surfaces
+      # Honor focused runs such as GATE_SURFACES=amber/wardrobe. Outside a
+      # scoped run, the four canonical first screens represent the product fleet.
+      if ENV["GATE_SURFACES"].to_s.strip.empty?
+        SURFACE_IDS.filter_map { |id| rows.find { |surface| surface.id == id } }
+      else
+        rows.group_by(&:app).values.map do |app_rows|
+          app_rows.find { |surface| surface.viewport == "mobile" } || app_rows.first
+        end
+      end
+    end
+
     def judge(cdp, surface)
       cdp.navigate(surface.url, settle: SETTLE_S)
       vitals = JSON.parse(cdp.evaluate(COLLECT, await_promise: true).to_s)
@@ -110,17 +136,17 @@ module Deploy
     # nothing large enough to qualify, and reporting that as within budget is the
     # measured-nothing failure this suite already refuses elsewhere.
     def judge_lcp(surface, value)
-      return @result.inconclusive!("web_vitals_budget: #{surface.label} reported no LCP entry") if value.nil?
+      return @result.inconclusive!("web_vitals_budget: #{surface.id} reported no LCP entry") if value.nil?
       return if value <= LCP_BUDGET_MS
 
-      @result.fail("web_vitals_budget: #{surface.label} LCP #{value.round}ms over #{LCP_BUDGET_MS}ms")
+      @result.fail("web_vitals_budget: #{surface.id} LCP #{value.round}ms over #{LCP_BUDGET_MS}ms")
     end
 
     def judge_cls(surface, value)
-      return @result.inconclusive!("web_vitals_budget: #{surface.label} reported no CLS entry") if value.nil?
+      return @result.inconclusive!("web_vitals_budget: #{surface.id} reported no CLS entry") if value.nil?
       return if value <= CLS_BUDGET
 
-      @result.fail("web_vitals_budget: #{surface.label} CLS #{value.round(3)} over #{CLS_BUDGET}")
+      @result.fail("web_vitals_budget: #{surface.id} CLS #{value.round(3)} over #{CLS_BUDGET}")
     end
 
     def rel(path) = path.sub("#{ROOT}/", "")
