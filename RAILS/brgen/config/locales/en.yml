@@ -46,6 +46,11 @@ en:
     site_id_label: TradeDoubler Site ID
   app:
     name: Brgen
+  demo_mode:
+    notice: "DEMO SITE — accounts, posts, comments, profiles, listings and activity are simulated examples, not real community activity."
+  demo_media:
+    photo_by: "Photo by"
+    on_source: "on"
   feed:
     compose_prompt: What are you up to today?
     compose_blank: Write something first.
