@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "yaml"
 require "tmpdir"
 require "fileutils"
+require "stringio"
 require_relative "../../OPENBSD/lib/gate_result"
 require_relative "../../MASTER/gates/lib/source/css_constitution"
 require_relative "../../MASTER/gates/support/design_metrics"
@@ -45,6 +46,10 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     assert_equal :passed, result.outcome
     assert_empty result.failures
     assert_equal 1, result.warnings.size
+    refute result.conclusive?, "a live skip means not every declared check ran"
+
+    stdout, = capture_io { result.render("design metrics passed") }
+    assert_match(/design metrics passed \\(50 check\\(s\\) ran, 1 live check\\(s\\) skipped\\)/, stdout)
   end
 
   def test_require_live_turns_the_same_skip_into_a_failure
