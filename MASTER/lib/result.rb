@@ -29,7 +29,7 @@ module Master
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
       PERMANENT = %i[validation model_missing axiom_violation budget no_api_key policy shutdown abort
-                     handler_exception crash].freeze
+                     handler_exception crash skip].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
@@ -73,6 +73,7 @@ module Master
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
       abort: "operation aborted",
+      skip: "nothing to do for this target (no app, no checkout) — neither failure nor success",
       inconclusive: "evidence could not be gathered (browser, surface or reviewer unavailable) — no verdict either way",
     }.freeze
 

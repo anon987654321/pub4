@@ -101,6 +101,7 @@ def publish_pending! = :nothing_to_publish
   def setup
     @root = Dir.mktmpdir("fix_loop_osc_test")
     File.write(File.join(@root, "dummy.yml"), "---\n")
+    system("git", "-C", @root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL) || raise("git init failed")
     @bus = FakeBus.new
   end
 
