@@ -28,6 +28,20 @@ module Master
         assessed_clean violation_found opportunity_found not_applicable inconclusive
       ].freeze
 
+      # Machine-readable expectations only. A declared contract is not runtime
+      # proof; callers must supply assessors and emit evidence for each cell.
+      def self.contract
+        {
+          version: 1,
+          streams: STREAMS.map(&:to_s),
+          surfaces: SURFACES.map(&:to_s),
+          statuses: (STATES + [:pending]).map(&:to_s),
+          clean_passes_required: 2,
+          completion_rule: "all applicable law × stream × surface cells have two consecutive evidence-backed clean readings after the last mutation",
+          runtime_status: "contract_only_not_measurement",
+        }
+      end
+
       Result = Data.define(
         :law, :stream, :surface, :status, :iteration, :generation,
         :reason, :evidence, :findings, :repair
