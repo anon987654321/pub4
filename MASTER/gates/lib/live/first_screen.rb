@@ -81,7 +81,7 @@ SCHEMA_FOR_LABEL = {
         css_touch: [["amber/app/assets/stylesheets/application.scss", /\A\.btn\z/, TAP_MIN]] },
       { app: "bsdports", port_key: "bsdports", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{BSD|port}i],
-        css_touch: [["bsdports/app/assets/stylesheets/application.scss", nil, "--font"]] },
+        css_touch: [["bsdports/app/assets/stylesheets/_bsdports_layout.scss", /main#main-content :is\(button, input\[type="submit"\], \.btn\)/, TAP_MIN]] },
       { app: "bsdports", port_key: "bsdports", path: "/ports", host: nil, label: "ports",
         first_screen: [%r{search|port}i, %r{<main\b|main-content}i],
         css_touch: [] },
