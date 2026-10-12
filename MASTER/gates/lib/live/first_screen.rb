@@ -42,12 +42,11 @@ module Deploy
     # what the token resolves to and #assert_token_floor fails if it is not 44.
     TAP_MIN = 'min-height:\s*(?:44px|var\(--tap-min\))'
 
-    # A css_touch row is [stylesheet, selector, needle]. The selector names the
-    # rule the needle has to sit in, because each app styles every surface from
-    # one application.scss and "the file declares a tap floor" would pass on any
-    # rule in it. A nil selector reads the whole file; a nil needle only asks
-    # that the rule exists.
+    # A css_touch row is [stylesheet, selector, needle]. Host-shell rules and
+    # vertical feature rules name their owning partial so a floor in another
+    # module cannot make an unmeasured control pass.
     BRGEN_CSS = "brgen/app/assets/stylesheets/application.scss"
+    BRGEN_MARKETPLACE_CSS = "brgen/app/assets/stylesheets/_brgen_marketplace.scss"
 
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
@@ -73,7 +72,7 @@ SCHEMA_FOR_LABEL = {
       { app: "brgen", port_key: "brgen", path: "/", host: nil, label: "core_ip",
         first_screen: [%r{skip-link|Skip to main}i, %r{<main\b|main-content}i, %r{<h1\b}i],
         css_touch: [[BRGEN_CSS, /\.feed-tab\b/, TAP_MIN],
-                    [BRGEN_CSS, /\.deal-cat\b/, TAP_MIN]] },
+                    [BRGEN_MARKETPLACE_CSS, /\.deal-cat\b/, TAP_MIN]] },
       { app: "amber", port_key: "amber", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
         # A real 44px floor on a control amber renders. The row once named
@@ -101,7 +100,7 @@ SCHEMA_FOR_LABEL = {
           first_screen: Array(s[:expect_body]) + landmarks,
           skip_h1: json_api || s[:label].to_s.start_with?("maps"),
           css_touch: s[:label].to_s.start_with?("marketplace") ? [
-            [BRGEN_CSS, /\.deal-card\b/, nil],
+            [BRGEN_MARKETPLACE_CSS, /\.deal-card\b/, nil],
             ["__shared/app/assets/stylesheets/_search_yep.scss", nil, '\.search'],
           ] : [],
         }
