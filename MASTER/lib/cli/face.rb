@@ -52,7 +52,10 @@ module Master
 
       def renderer(source, rows, cols, chars, mode)
         RENDERERS.clear if RENDERERS.size >= 6
-        RENDERERS[[source.object_id, rows, cols, chars, mode]] ||= Ascii.new(source, rows, cols, chars:, mode:)
+        named_ramp = Glyphs::CONFIG.fetch("ramps", {}).fetch(ENV.fetch("MASTER_FACE_RAMP", "").to_s, Glyphs::DEFAULT_CHARS)
+        chosen_chars = chars || ENV["MASTER_FACE_CHARS"] || named_ramp
+        chosen_mode = mode || ENV["MASTER_FACE_MODE"] || Glyphs::CONFIG.fetch("mode")
+        RENDERERS[[source.object_id, rows, cols, chosen_chars, chosen_mode]] ||= Ascii.new(source, rows, cols, chars: chosen_chars, mode: chosen_mode)
       end
 
       # The state's name, centred, on an otherwise empty window.
