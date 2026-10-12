@@ -65,7 +65,40 @@ class DesignContractTest < Minitest::Test
   end
 
   def app_rules(app)
-    Operator::ScssRules.rules(File.read(File.join(ROOT, app, "app", "assets", "stylesheets", "application.scss")))
+    styles = File.join(ROOT, app, "app", "assets", "stylesheets")
+    source = File.read(File.join(styles, "application.scss"))
+    Dir.glob(File.join(styles, "_#{app}_*.scss")).sort.each do |path|
+      source = "#{source}\n#{File.read(path)}"
+    end
+    Operator::ScssRules.rules(source)
+  end
+
+  def test_bsdports_styles_load_as_ordered_feature_modules
+    app = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss"))
+    names = %w[
+      bsdports_base
+      bsdports_components
+      bsdports_shared_chrome
+      bsdports_tokens
+      bsdports_layout
+      bsdports_pages
+      bsdports_states
+    ]
+    positions = names.map { |name| app.index(%(@include meta.load-css("#{name}");)) }
+
+    assert positions.all?, "every BSDPorts feature module must be loaded"
+    assert_equal positions.sort, positions, "BSDPorts module order is a cascade contract"
+    names.each do |name|
+      path = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_#{name}.scss")
+      assert File.file?(path), "missing BSDPorts feature module #{path}"
+    end
+
+    assert_includes File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_tokens.scss")),
+                    "@include x.app-root-tokens;"
+    assert_includes File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss")),
+                    "article > header"
+    assert_includes app, "@include endgame.bsdports;"
+    assert_operator app.lines.count, :<, 50, "application.scss should remain an entrypoint, not a second monolith"
   end
 
   # amber wears luxury, and stack's social light outranks a plain :root.
