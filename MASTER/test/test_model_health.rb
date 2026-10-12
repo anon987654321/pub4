@@ -5,8 +5,9 @@ require_relative "test_helper"
 class TestModelHealth < Minitest::Test
   Registry = Master::CLI::CommandRegistry
 
-  Pool = Struct.new(:stats) do
+  Pool = Struct.new(:stats, :rows) do
     def snapshot = stats
+    def inventory(task_type:) = rows
   end
 
   Router = Struct.new(:compute_pool) do
@@ -53,6 +54,30 @@ class TestModelHealth < Minitest::Test
       "model health: no recorded calls yet; /model compute lists reachable lanes",
       report("untried" => { calls: 0, successes: 0, failures: 0, latency_ms: 0.0 }),
     )
+  end
+
+  def test_model_compute_shows_calls_and_measured_latency
+    rows = [{
+      rank: 1,
+      id: "ollama:gemma3:4b",
+      lane: "local",
+      quota_remaining: nil,
+      quota_state: :available,
+      calls: 4,
+      success_rate: 0.75,
+      latency_ms: 325.7,
+    }]
+    router = Router.new(Pool.new({}, rows))
+
+    result = Registry.dispatch_model(
+      agent: Agent.new(router),
+      config: nil,
+      metrics: nil,
+      root: Master::ROOT,
+      arg: "compute",
+    )
+
+    assert_equal "1. ollama:gemma3:4b  local  available  success=75% calls=4 avg_ok=326ms", result
   end
 
   def test_health_report_caps_the_number_of_model_rows
