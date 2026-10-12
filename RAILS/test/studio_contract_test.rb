@@ -9,6 +9,7 @@ class StudioContractTest < Minitest::Test
     Dir.mktmpdir do |root|
       File.write(File.join(root, "photograph.rb"), <<~RUBY)
         # frozen_string_literal: true
+        require "json"
         puts JSON.generate("still" => "/tmp/still.jpg")
       RUBY
 

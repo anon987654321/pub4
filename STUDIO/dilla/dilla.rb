@@ -104,6 +104,7 @@ require_relative "lib/beat_library"
 require_relative "lib/groove"
 require_relative "lib/techno_patterns"
 require_relative "lib/listen"
+require_relative "lib/hear_drums"
 require_relative "lib/midi_effects"
 require_relative "lib/scene"
 require_relative "lib/musical_film"
@@ -45245,6 +45246,13 @@ DISPATCH = {
     dest = ARGV.shift or abort "usage: ruby dilla.rb rerender <src.mp3|sidecar> <dest> [KEY=VAL...]"
     rerender_from_sidecar(src, dest, replay_overrides(ARGV))
   end,
+  # Source to hashed drum dossier, failing closed at every stage. The analyzer is
+  # the engine's own step-grid measurement; lib/hear_drums.rb owns the pipeline.
+  "hear-drums" => lambda do
+    exit HearDrums.cli(ARGV.shift(ARGV.length),
+                       analyzer: ->(drums) { drum_step_grid_from_wav(drums) },
+                       demucs_argv: demucs_cmd || ["demucs"])
+  end,
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.
   "album" => -> { album_master(ARGV.shift || File.join(ROOT, "ALBUM.mp3")) },
 }.freeze
@@ -45261,7 +45269,7 @@ end
 if __FILE__ == $PROGRAM_NAME
   # The live side and the bed play what they are given: the defaults tables, the
   # provenance recipe and the asset check belong to the older render path.
-  if %w[live bed].include?(ARGV.first)
+  if %w[live bed hear-drums].include?(ARGV.first)
     DISPATCH.fetch(ARGV.shift).call
     exit
   end

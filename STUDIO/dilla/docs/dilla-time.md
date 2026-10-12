@@ -15,7 +15,7 @@ This is an implementation guide, not a substitute for Dan Charnas's book or a cl
 
 ## Suggested implementation order
 
-- First: expose a compact groove-analysis dossier and ensure failed ingest/separation/analysis fails closed.
+- Done, tested with fake adapters: a compact groove-analysis dossier (`hear-drums`, `lib/hear_drums.rb`) that fails closed at validation, ingest, separation, analysis and write, and keeps artist and style tags on every per-source record. Real Demucs and yt-dlp runs are untested on this Mac, and the dossier carries bpm, swing label, step grid and density, not yet per-role timing distributions or residuals.
 - Next: add deterministic groove transformations that operate on existing event data and are unit-tested independently of audio playback.
 - Then: add an A/B learning workflow that compares measured onset maps with generated events and persists source hashes, tool versions, profile labels, seed, and residuals.
 - Finally: use those measured results to tune the existing groove engine. Do not add a new subsystem until a test demonstrates a gap in the current engine.
