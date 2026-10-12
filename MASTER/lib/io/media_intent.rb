@@ -376,9 +376,15 @@ module Master
         requested = arg.to_s.strip
         # Typing a script name should select the canonical showcase, not ask the
         # improviser to play an instrument literally called "dilla.rb".
-        showcase = requested.empty? || requested.match?(/\A(?:dilla\.rb|showcase|live|dilla\s+(?:live|showcase))\z/i)
-        name = showcase ? "" : requested.sub(/\.rb\z/i, "")
-        command = showcase ? "live showcase" : "live play #{Shellwords.escape(name)}"
+        showcase = requested.empty? || requested.match?(/\A(?:dilla\.rb|live|dilla\s+(?:live|showcase))\z/i)
+        # `/play showcase` is the three livesets in turn (livesets.rb), the mix;
+        # bare /play stays the dilla.rb showcase.
+        liveset = requested.match?(/\A(?:showcase|livesets?(?:\.rb)?)\z/i)
+        name = showcase || liveset ? "" : requested.sub(/\.rb\z/i, "")
+        command = if liveset then "live broadcast"
+                  elsif showcase then "live showcase"
+                  else "live play #{Shellwords.escape(name)}"
+                  end
         env = { "DILLA_COLTRANE" => "0" }
         # /play, /play dilla.rb and its showcase aliases pin the same Dillatime
         # kit, so stale inherited DILLA_LIVE_KIT state cannot resurrect an older groove.

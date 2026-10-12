@@ -128,6 +128,18 @@ class MediaIntentSpec < Minitest::Test
     assert_equal "live showcase", captured[:arg]
   end
 
+  def test_play_showcase_broadcasts_the_livesets
+    captured = nil
+    runner = lambda do |**kwargs|
+      captured = kwargs
+      Master::Result.ok("broadcast started")
+    end
+
+    with_dispatch_stub(runner) { assert MediaIntent.play_live_music("showcase").ok? }
+
+    assert_equal "live broadcast", captured[:arg]
+  end
+
   def test_dilla_rb_alias_starts_the_canonical_showcase
     captured = nil
     runner = lambda do |**kwargs|

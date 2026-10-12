@@ -59,6 +59,7 @@ module Master
             "/play flying lotus — Flying Lotus source harmony (Camel), rendered through the good live improviser.",
             "/play madlib — Madlib source harmony (Accordion), rendered through the good live improviser.",
             "/play royksopp — Röyksopp source harmony (What Else Is There?), rendered through the good live improviser.",
+            "/play showcase — the three livesets in turn (livesets.rb); bare /play is the dilla.rb showcase.",
             "Aliases accept Röyksopp and .rb; unknown names are refused locally.",
           ],
         },
