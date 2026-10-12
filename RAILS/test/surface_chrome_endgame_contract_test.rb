@@ -33,7 +33,9 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
   def test_amber_endgame_is_after_late_luxury_and_messenger_rules
     app = source("amber/app/assets/stylesheets/application.scss")
     endpoint = source("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
-    all_sources = "#{app}\n#{endpoint}"
+    features = Dir.glob(File.join(ROOT, "amber/app/assets/stylesheets/_amber_*.scss"))
+                  .map { |path| File.read(path, encoding: "UTF-8") }.join("\n")
+    all_sources = "#{app}\n#{features}"
 
     [".feed-post {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select {",
      'body[data-surface="luxury"] .item-card--luxury {'].each do |selector|
