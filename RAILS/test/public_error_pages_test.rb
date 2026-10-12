@@ -50,6 +50,19 @@ class PublicErrorPagesTest < Minitest::Test
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 
+  def test_shared_error_stylesheet_keeps_type_rhythm_tokens_and_flat_surfaces
+    source = File.read(File.join(ROOT, "__shared", "public", "styles", "errors.css"))
+
+    assert_includes source, "font-family: var(--font);"
+    assert_includes source, "font-size: clamp(0.9375rem, 2.5vw, 1.25rem);"
+    assert_includes source, "line-height: 1.5;"
+    assert_includes source, "min-height: 100dvh;"
+    assert_includes source, "min-height: 44px;"
+    assert_includes source, "background: var(--bg);"
+    assert_includes source, "color: var(--text);"
+    refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
+  end
+
   def test_shared_503_fallback_uses_brand_typography_and_safe_area
     source = File.read(File.join(ROOT, "__shared", "public", "503.html"))
 
