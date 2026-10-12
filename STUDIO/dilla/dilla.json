@@ -1,207 +1,142 @@
 {
-  "meta": {
-    "name": "dilla.rb data",
-    "version": "1.0",
-    "notes": "Frequencies in Hz, A4=440. Progressions derived from Slum Village Fantastic Vol.1/2 sample sources and transcription notes. Frequencies are starting voicings; edit freely."
+  "progressions": [
+    ["F7","Dm7","Gm7"],
+    ["Dm9","Gm9","Bbmaj7","A7sus4"],
+    ["Dm7","G7","Cmaj7","Fmaj7"],
+    ["Abmaj7","Fm9","Dbmaj7","Eb7"],
+    ["Ebmaj7","Cm7","Fm7","Bb7"],
+    ["Fmaj9","Dm9","Gm9","C13"],
+    ["Fmaj7","Dm7","Gm7","C7"],
+    ["Cm9","Fm9","Bbm9","Ebmaj7"],
+    ["Bbm9","C7","Fm9","Bbm9"],
+    ["Fm9","Bbm9","Eb13","Abmaj9","Dbmaj7#11","C7alt"],
+    ["Bb7","Cm9","Dm9","Ebmaj9","F13","Gm9","Cm9","Bb7"],
+    ["Cm9","Bb13","Abmaj9","Fm9","Ebmaj7","Abm9","G7alt","Cm9"],
+    ["Cm9","Fm11","Bb13","Ebmaj9","Abm9","Dbmaj7#11","G7alt","Cm9"],
+    ["Cmaj9","Am9","Dm11","G13","Fmaj9","Bb7","Dbmaj7#11","Cmaj9"],
+    ["Cm9","Abmaj7#11","Fm9","Bb13","Ebmaj9","Db7alt","Cm9","Fm9"],
+    ["Fmaj9","Dm9","Gm9","Am9","Gm7","C7#9","Dm9","Gm9"],
+    ["Dbmaj9","Cm9","Fm9","Bbm9"],
+    ["Bmaj7","D7","Gmaj7","Bb7","Ebmaj7","Am7","D7","Gmaj7","Bb7","Ebmaj7","F#7","Bmaj7","Fm7","Bb7","Ebmaj7","Am7","D7","Gmaj7","C#m7","F#7","Bmaj7","Fm7","Bb7","Ebmaj7","C#m7","F#7"],
+    ["Dm7","Ebm7","Dm7"],
+    ["Bbmaj7#11","A7#9","Dm9","C#7","Cm9","F7b9","Bbmaj7","A7#5#9","Dm6/9","E7#5#9","Am9","Dm9","Bbmaj7#11","A7#9","A7b9","Dm6/9"],
+    ["D7sus4","F7sus4","Eb7sus4","Db7sus4"],
+    ["Dbmaj7/Eb","Ebm9","Amaj7/Eb","Gmaj7/Eb","Abmaj7","Bmaj7/Bb","Bb13b9","Bmaj7/Bb","Bb13b9","Dmaj7/Bb","Bmaj7/Bb","Abmaj7/Bb","Emaj7/Bb"],
+    ["Cm7","F7","Bbmaj7","Ebmaj7","Am7b5","D7b9","Gm6"],
+    ["Ebmaj7","Bbm7","Eb7","Abmaj7","Abm7","Db7","Ebmaj7","Cm7","Fm7","Bb7","Gm7","C7","Fm7","Bb7","Ebmaj7"],
+    ["Eb","Gm","Ab","Bb"],
+    ["Emaj7","C#m7","F#m7","Am6","B11","A","Emaj7","C#m7"],
+    ["Ebmaj7","Cm7","Fm7","Bb7","Ebmaj7","Abmaj7","Fm7/Ab","Eb6/9","Fm7","Bb7"],
+    ["Am","Em","G","Am","G"],
+    ["C#m7","F#9","E"],
+    ["C","G/B","Am","F"],
+    ["F#m","D","A","C#m","Bm"],
+    ["G","Em","C","Am","D","G","C"],
+    ["Bm","Em","D","Bm","G"],
+    ["Bm","D","Bm","F#m"],
+    ["A","D","E"],
+    ["Bbm7","Eb7"],
+    ["F7","Bb7","F7","C7","Bb7"],
+    ["Em","D","Bm","C"],
+    ["Bm7/D","D/F#","C/G","Am","G9"],
+    ["B7#5","Em11"],
+    ["B","D#m","G#m7","Eadd9","F#"],
+    ["Dm7","Am7","Gm7","Am7"],
+    ["Ebm7","Fm"],
+    ["Dbmaj7","Cm7","Fm7","Bbm7sus4","Eb"],
+    ["Ebm(add11)","Fm"],
+    ["Dm9","Am7"],
+    ["C#m","F#m","G#","A9","G#sus4"],
+    ["B9","D#m6/9","G#m7","A#m7/E","D#m9sus4"],
+    ["Dm","Cm","Bb/Ab","Bbm7","A7","Dmaj7/G"],
+    ["C9(add13,b5)","Bb7(add11)","C9(add13,b5)","Em(add11)","F(add6)"],
+    ["Dm7","G7","Cmaj7"],
+    ["Dm7b5","G7b9","Cm7"],
+    ["Dm7","Db7","Cmaj7"],
+    ["Bmaj7","D7","Gmaj7","Bb7","Ebmaj7","F#7","Bmaj7"],
+    ["Bbmaj7","G7","Cm7","F7","Dm7","G7","Cm7","F7"],
+    ["Dm7","Ebm7"],
+    ["Cmaj7","Abmaj7","Bb7","Cmaj7"],
+    ["Cmaj9","Am11","Fmaj13","G13sus4"],
+    ["Ebmaj9","Cm9","Abmaj13","Bb13sus4"],
+    ["Dmaj9","Bm11","Gmaj9#11","A13sus4"],
+    ["Fmaj9","Dm11","Bbmaj13","C13"],
+    ["Amaj9","F#m11","Dmaj9","E13sus4"],
+    ["Gmaj9","Em11","Cmaj13","D13sus4"],
+    ["Dm9b5","Gm11","Ebmaj7#11","Am7b13"],
+    ["Emaj7","G#m7","C#m7","F#9"],
+    ["Gbmaj9","Ebm11","Abm9","Db13"],
+    ["Cm7","F7","Bbmaj7","Gm7"],
+    ["Fmaj7","Dm7","Gm7","C9"],
+    ["C#m11","F#7#9","Amaj9","E7sus4"],
+    ["Csus2","Bbsus4","Absus2","Gbmaj7"],
+    ["Gm7","Dm7","Ebmaj7","F7"],
+    ["Cmaj7","Am7","Fmaj7","G7"],
+    ["E","F#m","A","B"],
+    ["Dmaj9","Bm11","Gmaj7#11","A13"],
+    ["Am9","Dm7b5","Em7","Fmaj7#11"],
+    ["Ebmaj7#5","Fm11","Dbmaj9","Cm7"],
+    ["Bm7","Gmaj7","Bm7","Gmaj7"],
+    ["Gm9","C13","Fmaj9","Bb13"],
+    ["Cmaj7","Am7","Fmaj7","Fm7","Em7","Ebmaj7","Dm7","Db7","Cmaj9","Abmaj7","Gm7","C7","Fmaj9","Bbmaj7","Em11","A7#9"],
+    ["Bmaj7","D7","Gmaj7","Bb7","Ebmaj9","F#7#9","Bmaj9","Fm7","Bb7","Ebmaj7","Am7","D7"],
+    ["Em11","A13sus4","Dmaj9","Gmaj13","F#m11","Bm9","Em9","A7#9","Dmaj7","Cmaj9","Bm11","E7b9","Am9","D13","Gmaj7","C#m7b5"],
+    ["Am","Dm","Em","Am"],
+    ["Cmaj9","B7#9","Bbmaj7#11","A7b13","Abmaj9","G7#9","Gbmaj7","Fmaj13","Em11","Ebm11","Dm9","Dbmaj7#11","Cmaj9","G7sus4"],
+    ["Dm","Bbmaj7","C","Gm7","Am7","Dm9","F","Gm9","A7","Dm11","Csus2"],
+    ["Fsus2","Gsus2","Am11","Bbmaj7","Csus4","Dm9","Ebmaj9","Dm9","Csus2","Fsus2"],
+    ["Fm7","Bb7","Ebmaj7","Abmaj7"],
+    ["Ebm7","Bb7#9"],
+    ["Bbm7","Eb7","Bbm7","Eb7"],
+    ["Em9","Am9","Em9","Am9"],
+    ["Dm7b5","G7b9","Cmin7"],
+    ["Cmaj9","Am11","Fmaj13","G13sus"],
+    ["Ebmaj9","Cm9","Abmaj13","Bb13sus"],
+    ["Dmaj9","Bm11","Gmaj9#11","A13sus"],
+    ["Amaj9","F#m11","Dmaj9","E13sus"],
+    ["Gmaj9","Em11","Cmaj13","D13sus"],
+    ["Dm9(b5)","Gm11","Ebmaj7#11","Am7b13"],
+    ["Em11","A13sus","Dmaj9","Gmaj13","F#m11","Bm9","Em9","A7#9","Dmaj7","Cmaj9","Bm11","E7b9","Am9","D13","Gmaj7","C#m7b5"],
+    ["Cmaj9","B7#9","Bbmaj7#11","A7b13","Abmaj9","G7#9","Gbmaj7","Fmaj13","Em11","Ebm11","Dm9","Dbmaj7#11","Cmaj9","G7sus"],
+    ["Fmin7","Bb7","Ebmaj7","Abmaj7"],
+    ["E9sus4","Db/E","C/E","Bm/E","Bbm/E","Am/E"],
+    ["B7b9","F7#11","E9sus4"],
+    ["Dm11","G7","Cmaj9","Am11"],
+    ["Em","A","Bb7"],
+    ["Am","G","Bbm","Bb","F"],
+    ["Bbm","Em","Am","F"]
+  ],
+
+  "groove_profiles": {
+    "soft_swing": {"swing":0.542,"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}},
+    "lush": {"swing":0.54,"texture":{"detune":0.008,"reverb":0.45,"lowpass":6000}},
+    "dry": {"swing":0.5,"texture":{"detune":0.0,"reverb":0.0,"lowpass":12000}},
+    "early_snare_late_hats": {"swing":0.542,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.55},"offsets":{"kick":0.012,"snare":-0.01,"hat":0.015,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}},
+    "behind_the_beat": {"swing":0.54,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.54},"offsets":{"kick":0.008,"snare":0.014,"hat":0.018,"kick_first":0.0},"drunk_amount":0.3,"pd_amount":1.0,"texture":{"detune":0.006,"reverb":0.3,"lowpass":7000}},
+    "late_snare": {"swing":0.54,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.56},"offsets":{"kick":0.0,"snare":0.02,"hat":0.008,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}},
+    "loose_pocket": {"swing":0.545,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.56},"offsets":{"kick":0.01,"snare":-0.008,"hat":0.012,"kick_first":0.0},"drunk_amount":0.5,"pd_amount":1.0,"texture":{"detune":0.007,"reverb":0.35,"lowpass":7000}},
+    "pump": {"swing":0.54,"sidechain":{"amount":0.55,"release":0.18},"offsets":{"kick":0.0,"snare":-0.006,"hat":0.01,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.006,"reverb":0.3,"lowpass":7000}}
   },
 
-  "fx": {
-    "dilla_butter": {
-      "swing": 0.542,
-      "detune": 0.005,
-      "reverb": 0.25,
-      "lowpass": 8000
-    },
-    "analog_lush": {
-      "swing": 0.540,
-      "detune": 0.008,
-      "reverb": 0.45,
-      "lowpass": 6000
-    },
-    "dry": {
-      "swing": 0.500,
-      "detune": 0.000,
-      "reverb": 0.00,
-      "lowpass": 12000
-    }
-  },
-
-  "drums": {
-    "boom_bap": {
-      "kick":  [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0],
-      "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-      "hat":   [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1]
-    },
-    "dilla_swing": {
-      "kick":  [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
-      "snare": [0,0,0,0, 1,0,0,0, 0,0,0,1, 0,1,0,0],
-      "hat":   [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
-    },
-    "sparse": {
-      "kick":  [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-      "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],
-      "hat":   [1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0]
-    }
-  },
-
-  "progressions": {
-    "sv_intro": {
-      "name": "Slum Village – Fantastic Vol. 2 Intro",
-      "artist": "Slum Village / J Dilla",
-      "theory": "D minor, minor ii–V motion (F7–Dm7–Gm7). From Chordify transcription.",
-      "chords": ["F7", "Dm7", "Gm7"],
-      "freqs": [
-        [349.23, 440.00, 523.25, 622.25],
-        [293.66, 349.23, 440.00, 523.25],
-        [196.00, 233.08, 293.66, 349.23]
-      ],
-      "tempo": 90,
-      "duration": 2.0,
-      "fx": "dilla_butter"
-    },
-
-    "sv_fantastic": {
-      "name": "Slum Village – 'Fantastic' (Vol.1)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Inspired by Herbie Hancock – 'You'll Know When You Get There'. Modal D minor, quartal upper voicings.",
-      "chords": ["Dm9", "Gm9", "Bbmaj7", "A7sus4"],
-      "freqs": [
-        [293.66, 349.23, 440.00, 523.25, 659.26],
-        [196.00, 233.08, 293.66, 349.23, 440.00],
-        [233.08, 293.66, 349.23, 440.00],
-        [220.00, 293.66, 329.63, 392.00]
-      ],
-      "tempo": 88,
-      "duration": 2.0,
-      "fx": "analog_lush"
-    },
-
-    "sv_keep_it_on": {
-      "name": "Slum Village – 'Keep It On' (Vol.1)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Inspired by Gil Evans – 'Snowflake Bop'. Approximate ii–V–I–IV in C major.",
-      "chords": ["Dm7", "G7", "Cmaj7", "Fmaj7"],
-      "freqs": [
-        [293.66, 349.23, 440.00, 523.25],
-        [196.00, 246.94, 293.66, 349.23],
-        [261.63, 329.63, 392.00, 493.88],
-        [349.23, 440.00, 523.25, 659.26]
-      ],
-      "tempo": 92,
-      "duration": 2.0,
-      "fx": "dilla_butter"
-    },
-
-    "sv_look_of_love": {
-      "name": "Slum Village – 'Look of Love (Remix)' (Vol.1)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Inspired by Minnie Riperton – 'Inside My Love'. Slow Ab major, extended 9th voicings.",
-      "chords": ["Abmaj7", "Fm9", "Dbmaj7", "Eb7"],
-      "freqs": [
-        [207.65, 261.63, 311.13, 392.00],
-        [174.61, 207.65, 261.63, 311.13, 392.00],
-        [277.18, 349.23, 415.30, 523.25],
-        [311.13, 392.00, 466.16, 554.37]
-      ],
-      "tempo": 76,
-      "duration": 2.0,
-      "fx": "analog_lush"
-    },
-
-    "sv_estimate": {
-      "name": "Slum Village – 'Estimate' (Vol.1)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Inspired by Clare Fischer – 'You Call It Madness'. Eb major, chromatic turnaround.",
-      "chords": ["Ebmaj7", "Cm7", "Fm7", "Bb7"],
-      "freqs": [
-        [311.13, 392.00, 466.16, 587.33],
-        [261.63, 311.13, 392.00, 466.16],
-        [349.23, 415.30, 523.25, 622.25],
-        [233.08, 293.66, 349.23, 415.30]
-      ],
-      "tempo": 84,
-      "duration": 2.0,
-      "fx": "dilla_butter"
-    },
-
-    "sv_conant_gardens": {
-      "name": "Slum Village – 'Conant Gardens' (Vol.2)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Interpolates Willie Hale – 'A Tribute To Wes'. Soul-jazz F major with 13th color.",
-      "chords": ["Fmaj9", "Dm9", "Gm9", "C13"],
-      "freqs": [
-        [349.23, 440.00, 523.25, 659.26, 783.99],
-        [293.66, 349.23, 440.00, 523.25, 659.26],
-        [196.00, 233.08, 293.66, 349.23, 440.00],
-        [261.63, 329.63, 392.00, 466.16, 587.33]
-      ],
-      "tempo": 94,
-      "duration": 2.0,
-      "fx": "dilla_butter"
-    },
-
-    "sv_get_dis_money": {
-      "name": "Slum Village – 'Get Dis Money' (Vol.2)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Inspired by Herbie Hancock – 'Come Running To Me'. Bb major, lush 9ths.",
-      "chords": ["Ebmaj7", "Cm9", "Abmaj7", "Bb7"],
-      "freqs": [
-        [311.13, 392.00, 466.16, 587.33],
-        [261.63, 311.13, 392.00, 466.16, 587.33],
-        [207.65, 261.63, 311.13, 392.00],
-        [233.08, 293.66, 349.23, 415.30]
-      ],
-      "tempo": 96,
-      "duration": 2.0,
-      "fx": "analog_lush"
-    },
-
-    "sv_fall_in_love": {
-      "name": "Slum Village – 'Fall In Love' (Vol.2)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Inspired by The Singers Unlimited – 'Clair'. F major, classic I–vi–ii–V.",
-      "chords": ["Fmaj7", "Dm7", "Gm7", "C7"],
-      "freqs": [
-        [349.23, 440.00, 523.25, 659.26],
-        [293.66, 349.23, 440.00, 523.25],
-        [196.00, 233.08, 293.66, 349.23],
-        [261.63, 329.63, 392.00, 466.16]
-      ],
-      "tempo": 86,
-      "duration": 2.0,
-      "fx": "dilla_butter"
-    },
-
-    "sv_jealousy": {
-      "name": "Slum Village – 'Jealousy' (Vol.2)",
-      "artist": "Slum Village / J Dilla",
-      "theory": "Interpolates Bill Evans – 'Are You All The Things'. C minor, minor 9th chain.",
-      "chords": ["Cm9", "Fm9", "Bbm9", "Ebmaj7"],
-      "freqs": [
-        [261.63, 311.13, 392.00, 466.16, 587.33],
-        [174.61, 207.65, 261.63, 311.13, 392.00],
-        [233.08, 277.18, 349.23, 415.30, 523.25],
-        [311.13, 392.00, 466.16, 587.33]
-      ],
-      "tempo": 82,
-      "duration": 2.0,
-      "fx": "analog_lush"
-    },
-
-    "dilla_life": {
-      "name": "Reference – 'Life' progression",
-      "artist": "J Dilla / Slum Village",
-      "theory": "Extended 9th chords with Dorian ii–V movement. Included as a baseline.",
-      "chords": ["Bbm9", "C7", "Fm9", "Bbm9"],
-      "freqs": [
-        [116.54, 174.61, 220.00, 261.63, 329.63],
-        [130.81, 164.81, 196.00, 233.08],
-        [174.61, 207.65, 261.63, 311.13, 392.00],
-        [116.54, 174.61, 220.00, 261.63, 329.63]
-      ],
-      "tempo": 90,
-      "duration": 2.0,
-      "fx": "dilla_butter"
-    }
+  "drum_patterns": {
+    "boom_bap": { "kick": [1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1] },
+    "syncopated_swing": { "kick": [1,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "sparse": { "kick": [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], "hat": [1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0] },
+    "offbeat_inversion": { "kick": [0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0] },
+    "drunk_16ths": { "kick": [1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], "drunk": 1.0 },
+    "swung_classic": { "kick": [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "broken_beat": { "kick": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0], "hat": [1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1] },
+    "dusty_laid_back": { "kick": [1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "boom_bap_straight": { "kick": [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "trap_rolls": { "kick": [1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
+    "one_drop": { "kick": [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "snare": [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "hat": [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0] },
+    "rockers": { "kick": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "steppers": { "kick": [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "techno_four_floor": { "kick": [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "house_four_floor": { "kick": [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0] },
+    "dub_techno": { "kick": [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "two_step_garage": { "kick": [1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0], "snare": [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "jazz_swing": { "kick": [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0], "snare": [0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    "bossa": { "kick": [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0], "snare": [1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0], "hat": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] }
   }
 }

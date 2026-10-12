@@ -1,19 +1,25 @@
 #!/usr/bin/env ruby
-# dilla.rb — radically simplified J Dilla–style generator.
+# frozen_string_literal: true
+
+# dilla.rb -- chord progressions, a little late, with drums that sit a little off the grid.
 #
 # Usage:
 #   ruby dilla.rb --list
-#   ruby dilla.rb --progression sv_intro --out out/sv_intro.wav
-#   ruby dilla.rb --progression sv_intro --drums boom_bap --out out/full.wav
+#   ruby dilla.rb --progression 3 --out out/three.wav
+#   ruby dilla.rb --progression 3 --drums offbeat_inversion --profile early_snare_late_hats --out out/full.wav
+#   ruby dilla.rb --random --midi out/random.mid --out out/random.wav
 #   ruby dilla.rb --quick
 #
-# Reads dilla.json (same directory). Writes 16-bit mono 44.1kHz WAV.
+# Everything it chooses from is in dilla.json (same directory): progressions as arrays of
+# chord names, groove profiles, drum patterns. Voicings are worked out from the chord names.
+# Writes 16-bit mono 44.1 kHz WAV, and with --midi a Standard MIDI File. Standard library only.
 
 require 'json'
 require 'optparse'
 require 'fileutils'
 
 SAMPLE_RATE = 44_100
+MAX_OFFSET = 0.035 # seconds: no role is ever moved further than this from its place
 
 # ---------------------------------------------------------------- WAV writer
 module WAV
@@ -36,6 +42,118 @@ module WAV
 
     File.binwrite(path, header + data)
   end
+end
+
+# ------------------------------------------------------------------- chords
+# A chord name becomes notes here and nowhere else: the root and slash bass in the low
+# octave, then the upper structure without the root, each note placed as close as it can
+# be to the last chord so the voices move by the smallest step.
+module Chords
+  NOTE_PC = { 'C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, 'B' => 11 }.freeze
+  ACCIDENTAL = { 'b' => -1, '#' => 1, '' => 0 }.freeze
+
+  # "Dbmaj7#11" => root pitch class, tones in semitones above the root, slash bass or nil.
+  def self.parse(name)
+    m = name.to_s.sub('6/9', '69').match(%r{\A([A-G])([b#]?)([^/]*)(?:/([A-G])([b#]?))?\z}) or
+      raise ArgumentError, "chord #{name.inspect}: no root"
+    bass = m[4] && (NOTE_PC.fetch(m[4]) + ACCIDENTAL.fetch(m[5])) % 12
+    { pc: (NOTE_PC.fetch(m[1]) + ACCIDENTAL.fetch(m[2])) % 12, tones: tones(m[3], name), bass: bass }
+  end
+
+  # Triads, sixths, sevenths, ninths, elevenths, thirteenths, add9/11/13, sus2/sus4 and
+  # the alterations b5 #5 b9 #9 #11 b13. Anything left over is an error, named.
+  def self.tones(quality, name)
+    s = quality.delete('(),')
+    third = 4
+    fifth = 7
+    seventh = sixth = nil
+    extensions = []
+    third = 3 if s.sub!(/\A(?:min|mi|-|m(?!aj))/, '')
+    if s.sub!(/\Adim/, '')
+      third = 3
+      fifth = 6
+      seventh = 9 if s.start_with?('7')
+    end
+    fifth = 8 if s.sub!(/\A(?:aug|\+)/, '')
+    third = 2 if s.sub!(/sus2/, '')
+    third = 5 if s.sub!(/sus4|sus/, '')
+    level = 0
+    if s.sub!(/\A(?:maj|M)(7|9|11|13)?/, '')
+      level = Regexp.last_match(1).to_i
+      seventh = 11 if level.positive?
+    elsif (digits = s[/\A(?:7|9|11|13)/])
+      level = digits.to_i
+      seventh ||= 10
+      s.sub!(/\A(?:7|9|11|13)/, '')
+    elsif s.sub!(/\A69/, '')
+      sixth = 9
+      extensions << 14
+    elsif s.sub!(/\A6/, '')
+      sixth = 9
+    end
+    extensions << 14 if level >= 9
+    extensions << 17 if level == 11
+    extensions << 21 if level >= 13
+    extensions << 14 if s.sub!(/add9/, '')
+    extensions << 17 if s.sub!(/add11/, '')
+    extensions << 21 if s.sub!(/add13/, '')
+    sixth = 9 if s.sub!(/add6/, '')
+    if s.sub!(/alt/, '')
+      seventh ||= 10
+      fifth = nil
+      extensions = [13, 20]
+    end
+    while (alteration = s.slice!(/[b#](?:5|9|11|13)/))
+      case alteration
+      when 'b5' then fifth = 6
+      when '#5' then fifth = 8
+      when 'b9' then extensions = extensions.reject { |e| e == 14 } + [13]
+      when '#9' then extensions = extensions.reject { |e| e == 14 } + [15]
+      when '#11' then extensions = extensions.reject { |e| e == 17 } + [18]
+      when 'b13' then extensions = extensions.reject { |e| e == 21 } + [20]
+      end
+    end
+    raise ArgumentError, "chord #{name.inspect}: cannot read #{s.inspect}" unless s.empty?
+
+    ([0, third, fifth, sixth, seventh] + extensions).compact.uniq.sort
+  end
+
+  # MIDI notes, lowest first, and the centre the next chord is voiced around.
+  def self.voice(name, centre = 64)
+    chord = parse(name)
+    bass_pc = chord[:bass] || chord[:pc]
+    bass = 36 + ((bass_pc - 36) % 12)
+    semis = chord[:tones].size > 3 ? chord[:tones].drop(1) : chord[:tones]
+    semis -= [6, 7, 8] if semis.size > 4 # a pad can do without the fifth
+    upper = semis.map { |semi| (chord[:pc] + semi) % 12 }.uniq.map do |pc|
+      base = 12 * (centre / 12) + pc
+      [base - 12, base, base + 12].min_by { |n| (n - centre).abs }
+    end.sort
+    upper = upper.map { |n| n - 12 } while upper.max > 79
+    upper = upper.map { |n| n + 12 } while upper.min < 52
+    notes = [bass] + apart(upper)
+    [notes, upper.sum / upper.size]
+  end
+
+  # A minor second between neighbours is a rub: the upper one goes up an octave.
+  def self.apart(notes)
+    out = notes.dup
+    out.each_index { |i| out[i] += 12 if i.positive? && out[i] - out[i - 1] == 1 }
+    out.sort
+  end
+
+  def self.hz(midi) = 440.0 * (2.0**((midi - 69) / 12.0))
+
+  # One voicing per chord of a progression, as MIDI notes.
+  def self.midi_notes(names)
+    centre = 64
+    names.map do |name|
+      notes, centre = voice(name, centre)
+      notes
+    end
+  end
+
+  def self.freqs(names) = midi_notes(names).map { |notes| notes.map { |n| hz(n) } }
 end
 
 # --------------------------------------------------------------- synthesis
@@ -83,39 +201,40 @@ module Synth
 end
 
 # ------------------------------------------------------------------- drums
-module Drums
-  def self.kick(dur = 0.25)
+# Soft, short, synthesised. The noise is seeded, so a seed names a render.
+class Drums
+  def initialize(seed)
+    @rng = Random.new(seed)
+  end
+
+  def kick(dur = 0.25)
     n = (dur * SAMPLE_RATE).to_i
-    out = Array.new(n)
-    n.times do |i|
+    Array.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
       f = 80 * Math.exp(-t * 30) + 40
-      out[i] = Math.sin(2 * Math::PI * f * t) * Math.exp(-t * 12) * 0.9
+      Math.sin(2 * Math::PI * f * t) * Math.exp(-t * 12) * 0.9
     end
-    out
   end
 
-  def self.snare(dur = 0.20)
+  def snare(dur = 0.20)
     n = (dur * SAMPLE_RATE).to_i
-    out = Array.new(n)
-    n.times do |i|
+    Array.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
-      noise = rand * 2 - 1
+      noise = @rng.rand * 2 - 1
       tone  = Math.sin(2 * Math::PI * 180 * t)
-      out[i] = (noise * 0.7 + tone * 0.3) * Math.exp(-t * 25) * 0.7
+      (noise * 0.7 + tone * 0.3) * Math.exp(-t * 25) * 0.7
     end
-    out
   end
 
-  def self.hat(dur = 0.06)
+  def hat(dur = 0.06)
     n = (dur * SAMPLE_RATE).to_i
-    out = Array.new(n)
-    n.times do |i|
+    Array.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
-      out[i] = (rand * 2 - 1) * Math.exp(-t * 90) * 0.3
+      (@rng.rand * 2 - 1) * Math.exp(-t * 90) * 0.3
     end
-    out
   end
+
+  def sounds = { 'kick' => kick, 'snare' => snare, 'hat' => hat }
 end
 
 # ---------------------------------------------------------------------- FX
@@ -145,114 +264,221 @@ module FX
     peak > 1.0 ? out.map { |s| s / peak } : out
   end
 
-  def self.apply(buf, preset)
-    return buf if preset.nil?
-    b = buf
-    b = lowpass(b, preset['lowpass']) if preset['lowpass']
-    b = reverb(b, preset['reverb'])   if preset['reverb']
-    b
+  # The profile's texture: lowpass, then reverb.
+  def self.apply(buf, profile)
+    t = profile['texture'] || {}
+    reverb(lowpass(buf, t['lowpass']), t['reverb'])
   end
 end
 
-# --------------------------------------------------------------- sequencer
+# ---------------------------------------------------------------- sequencer
+# One groove profile says how the render is played. Everything is in seconds or in
+# fractions, all of it scaled by pd_amount (0 is the grid, 1 is the profile, up to 1.5).
+#
+#   swing         where the second chord of a pair lands (0.5 straight, 0.54 a little late)
+#   drum_swing    the same for the off-beat sixteenths, per role: kick, snare, hat
+#   offsets       seconds a role sits from the grid: kick, snare, hat, and kick_first
+#   drunk_amount  0..1, a seeded random nudge on every hit, never past MAX_OFFSET
+#   sidechain     { amount, release }: the chords dip on every kick (default: none)
+#   texture       { detune, lowpass, reverb }
 class Sequencer
-  def initialize(data)
+  attr_reader :seed, :pd_amount
+
+  def initialize(data, profile_name:, pd_amount: nil, seed: nil)
     @data = data
+    @profile = data['groove_profiles'].fetch(profile_name) { abort "No groove profile: #{profile_name}" }
+    @seed = seed || Random.new_seed % 1_000_000
+    @pd_amount = (pd_amount || @profile.fetch('pd_amount', 1.0)).to_f.clamp(0.0, 1.5)
   end
 
-  def render_progression(key)
-    prog = @data['progressions'][key] or abort "No progression: #{key}"
-    tempo    = prog['tempo']    || 90
-    beats    = prog['duration'] || 2.0
-    fx_name  = prog['fx']
-    fx       = @data['fx'][fx_name]
-    detune   = (fx && fx['detune']) || 0.0
-    swing    = (fx && fx['swing'])  || 0.5
+  def detune = (@profile['texture'] || {}).fetch('detune', 0.0)
 
-    beat      = 60.0 / tempo
-    chord_dur = beats * beat
-
+  # Chords, each the same length, the odd ones swung late.
+  def render_chords(names, bpm, beats)
+    beat = 60.0 / bpm
+    swing = @profile.fetch('swing', 0.5)
     buf = []
-    prog['freqs'].each_with_index do |freqs, idx|
-      delay = (idx.even? ? 0.0 : (swing - 0.5) * beat)
-      pad   = (delay * SAMPLE_RATE).to_i
+    Chords.freqs(names).each_with_index do |freqs, idx|
+      delay = idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount
+      pad = (delay * SAMPLE_RATE).to_i
       buf.concat(Array.new(pad, 0.0)) if pad > 0
-      buf.concat(Synth.chord(freqs, chord_dur, detune: detune))
+      buf.concat(Synth.chord(freqs, beats * beat, detune: detune))
     end
-
-    buf = FX.apply(buf, fx) if fx
     buf
   end
 
-  def overlay_drums(chord_buf, drum_key, tempo)
-    pat = @data['drums'][drum_key] or return chord_buf
-    beat = 60.0 / tempo
-    step = beat / 4.0
-    total = chord_buf.size
-    out = chord_buf.dup
+  # Where every hit lands, in seconds: the 16-step pattern repeats bar after bar until
+  # the chords end. Returns [[role, time]], earliest first.
+  def drum_hits(pattern_name, bpm, seconds)
+    pattern = @data['drum_patterns'].fetch(pattern_name) { abort "No drum pattern: #{pattern_name}" }
+    rng = Random.new(@seed)
+    step = 60.0 / bpm / 4.0
+    offsets = @profile['offsets'] || {}
+    swings = @profile['drum_swing'] || {}
+    drunk = pattern.fetch('drunk', @profile.fetch('drunk_amount', 0.0)).to_f
+    hits = []
+    first_kick = true
+    (seconds / (step * 16)).ceil.times do |bar|
+      16.times do |i|
+        pattern.each do |role, row|
+          next unless row.is_a?(Array) && row[i].to_i.positive?
 
-    sources = { 'kick' => Drums.kick, 'snare' => Drums.snare, 'hat' => Drums.hat }
-    sources.each do |name, sound|
-      pattern = pat[name] || []
-      pattern.each_with_index do |hit, i|
-        next if hit.to_i.zero?
-        start = (i * step * SAMPLE_RATE).to_i
-        sound.each_with_index do |s, j|
-          idx = start + j
-          break if idx >= total
-          out[idx] += s * 0.8
+          nudge = offsets.fetch(role, 0.0)
+          if role == 'kick' && first_kick
+            nudge = offsets.fetch('kick_first', nudge)
+            first_kick = false
+          end
+          nudge += (rng.rand * 2 - 1) * MAX_OFFSET * drunk
+          # the off-beat eighth (step 2 of 4) and the odd sixteenths take the swing
+          pair = i % 4 == 2 ? 2 * step : (i.odd? ? step : 0.0)
+          late = (swings.fetch(role, 0.5) - 0.5) * 2 * pair
+          # offset, swing and drunk together never move a hit more than MAX_OFFSET
+          moved = ((nudge + late) * @pd_amount).clamp(-MAX_OFFSET, MAX_OFFSET)
+          t = ((bar * 16 + i) * step) + moved
+          hits << [role, [t, 0.0].max] if t < seconds
         end
       end
     end
+    hits.sort_by(&:last)
+  end
 
+  def overlay_drums(chord_buf, hits)
+    out = chord_buf.dup
+    sounds = Drums.new(@seed).sounds
+    hits.each do |role, time|
+      start = (time * SAMPLE_RATE).to_i
+      sounds.fetch(role).each_with_index do |s, j|
+        idx = start + j
+        break if idx >= out.size
+        out[idx] += s * 0.8
+      end
+    end
     peak = out.map(&:abs).max
     peak > 1.0 ? out.map { |s| s / peak } : out
+  end
+
+  # The chords duck on every kick: a gain envelope keyed to the hits, not an oscillator.
+  def duck(chord_buf, hits)
+    sc = @profile['sidechain'] or return chord_buf
+    amount = sc.fetch('amount', 0.0) * @pd_amount
+    release = sc.fetch('release', 0.15) * SAMPLE_RATE
+    return chord_buf if amount.zero?
+
+    gain = Array.new(chord_buf.size, 1.0)
+    hits.each do |role, time|
+      next unless role == 'kick'
+
+      start = (time * SAMPLE_RATE).to_i
+      (0...(release * 4).to_i).each do |n|
+        idx = start + n
+        break if idx >= gain.size
+        g = 1.0 - amount * Math.exp(-n / release)
+        gain[idx] = g if g < gain[idx]
+      end
+    end
+    chord_buf.each_with_index.map { |s, i| s * gain[i] }
+  end
+end
+
+# ------------------------------------------------------------------- MIDI
+# A Standard MIDI File, format 0: the chords on channel 1 and the drums on channel 10
+# (kick 36, snare 38, hat 42). Times are the same ones the WAV uses.
+module MIDI
+  PPQN = 480
+  DRUM_NOTES = { 'kick' => 36, 'snare' => 38, 'hat' => 42 }.freeze
+
+  def self.vlq(number)
+    bytes = [number & 0x7f]
+    while (number >>= 7).positive?
+      bytes.unshift((number & 0x7f) | 0x80)
+    end
+    bytes.pack('C*')
+  end
+
+  def self.write(path, names, bpm, beats, hits)
+    ticks = ->(seconds) { (seconds * bpm / 60.0 * PPQN).round }
+    chord_len = (beats * PPQN).round
+    events = []
+    Chords.midi_notes(names).each_with_index do |notes, idx|
+      notes.each do |n|
+        events << [idx * chord_len, 0x90, n, 80]
+        events << [(idx + 1) * chord_len, 0x80, n, 0]
+      end
+    end
+    hits.each do |role, time|
+      on = ticks.call(time)
+      events << [on, 0x99, DRUM_NOTES.fetch(role), 100]
+      events << [on + 30, 0x89, DRUM_NOTES.fetch(role), 0]
+    end
+    track = "\x00\xFF\x51\x03".b + [(60_000_000 / bpm).round].pack('N')[1, 3]
+    last = 0
+    events.sort_by { |tick, status, *| [tick, status & 0xf0 == 0x80 ? 0 : 1] }.each do |tick, status, note, vel|
+      track << vlq(tick - last) << [status, note, vel].pack('C3')
+      last = tick
+    end
+    track << "\x00\xFF\x2F\x00".b
+    header = 'MThd'.b + [6, 0, 1, PPQN].pack('Nnnn')
+    File.binwrite(path, header + 'MTrk'.b + [track.bytesize].pack('N') + track)
   end
 end
 
 # ---------------------------------------------------------------------- CLI
-options = {}
-OptionParser.new do |o|
-  o.banner = "Usage: ruby dilla.rb [options]"
-  o.on('--list',                    'List progressions')      { options[:list] = true }
-  o.on('--progression NAME',        'Progression key')        { |v| options[:prog] = v }
-  o.on('--drums NAME',              'Drum pattern key')       { |v| options[:drums] = v }
-  o.on('--out PATH',                'Output WAV path')        { |v| options[:out] = v }
-  o.on('--quick',                   'Render first progression as smoke test') { options[:quick] = true }
-end.parse!
+def run(argv)
+  options = {}
+  OptionParser.new do |o|
+    o.banner = 'Usage: ruby dilla.rb [options]'
+    o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
+    o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
+    o.on('--random', 'Random progression, drum pattern and groove profile') { options[:random] = true }
+    o.on('--drums NAME', 'Drum pattern name') { |v| options[:drums] = v }
+    o.on('--profile NAME', 'Groove profile name') { |v| options[:profile] = v }
+    o.on('--groove N', Float, 'pd_amount, 0 to 1.5: how far the profile pulls from the grid') { |v| options[:groove] = v }
+    o.on('--bpm N', Float, 'Tempo (default 88)') { |v| options[:bpm] = v }
+    o.on('--beats N', Float, 'Beats per chord (default 4)') { |v| options[:beats] = v }
+    o.on('--seed N', Integer, 'Seed: the same seed plays the same render') { |v| options[:seed] = v }
+    o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
+    o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
+    o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
+  end.parse!(argv)
 
-data_path = File.join(__dir__, 'dilla.json')
-data = JSON.parse(File.read(data_path))
+  data = JSON.parse(File.read(File.join(__dir__, 'dilla.json')))
+  progressions = data.fetch('progressions')
 
-if options[:list] || (options[:prog].nil? && !options[:quick])
-  puts "Progressions:"
-  data['progressions'].each do |k, v|
-    puts "  #{k.ljust(20)} #{v['name']} (#{v['artist']})"
+  if options[:list] || (options[:prog].nil? && !options[:random] && !options[:quick])
+    puts 'Progressions:'
+    progressions.each_with_index { |chords, i| puts format('%4d  %s', i, chords.join(' ')) }
+    puts
+    puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
+    puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
+    return
   end
-  puts
-  puts "Drum patterns: #{data['drums'].keys.join(', ')}"
-  puts "FX presets:    #{data['fx'].keys.join(', ')}"
-  exit
+
+  seed = options[:seed] || Random.new_seed % 1_000_000
+  pick = Random.new(seed)
+  index = options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size))
+  names = progressions.fetch(index) { abort "No progression: #{index}" }
+  drums = options[:drums] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
+  profile = options[:profile] || (options[:random] ? data['groove_profiles'].keys.sample(random: pick) : 'soft_swing')
+  bpm = options[:bpm] || 88.0
+  beats = options[:beats] || 4.0
+
+  seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed)
+  buf = seq.render_chords(names, bpm, beats)
+  seconds = buf.size / SAMPLE_RATE.to_f
+  hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
+  buf = seq.duck(buf, hits)
+  buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
+  buf = seq.overlay_drums(buf, hits) if drums
+
+  out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
+  FileUtils.mkdir_p(File.dirname(out))
+  WAV.write(out, buf)
+  if options[:midi]
+    FileUtils.mkdir_p(File.dirname(options[:midi]))
+    MIDI.write(options[:midi], names, bpm, beats, hits)
+  end
+  puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
+  puts "  drums=#{drums || 'none'} profile=#{profile} groove=#{seq.pd_amount} bpm=#{bpm} seed=#{seed}"
 end
 
-seq = Sequencer.new(data)
-
-if options[:quick]
-  key = data['progressions'].keys.first
-  buf = seq.render_progression(key)
-  FileUtils.mkdir_p('out')
-  WAV.write('out/quick.wav', buf)
-  puts "Wrote out/quick.wav (#{buf.size} samples, #{(buf.size / SAMPLE_RATE.to_f).round(2)}s)"
-  exit
-end
-
-key   = options[:prog]
-tempo = data['progressions'][key]['tempo'] || 90
-
-buf = seq.render_progression(key)
-buf = seq.overlay_drums(buf, options[:drums], tempo) if options[:drums]
-
-out_path = options[:out] || "out/#{key}#{options[:drums] ? "_#{options[:drums]}" : ''}.wav"
-FileUtils.mkdir_p(File.dirname(out_path))
-WAV.write(out_path, buf)
-puts "Wrote #{out_path} (#{(buf.size / SAMPLE_RATE.to_f).round(2)}s, #{buf.size} samples)"
+run(ARGV) if $PROGRAM_NAME == __FILE__
