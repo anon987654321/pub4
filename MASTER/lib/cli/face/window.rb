@@ -234,7 +234,14 @@ module Master
         def toggle_law_field
           @law_field_visible = !@law_field_visible
           nudge(:key)
-          show(["constitutional law glyphs #{@law_field_visible ? "visible" : "hidden"}"])
+          state = "constitutional law glyphs #{@law_field_visible ? "visible" : "hidden"}"
+          if @law_field_visible
+            legend = Master::Face::LawField.laws.map do |law|
+              "#{law.fetch("glyph")} #{law.fetch("id").to_s.downcase.split("_").first}"
+            end.join(" ")
+            state = "#{state}: #{legend}" unless legend.empty?
+          end
+          show([state])
         end
 
         def hearing? = @hearing&.alive?
