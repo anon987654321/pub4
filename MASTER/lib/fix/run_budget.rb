@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "run_pulse"
+require_relative "autofix_guard"
 require_relative "tool_breaker"
 
 module Master
@@ -174,6 +175,7 @@ module Master
       def pass_end(pass)
         fused = ToolBreaker.fused_count
         lines = @pulse.pass_summary(pass, tokens: spend.last)
+        lines.concat(AutofixGuard.summary_lines)
         lines << "fix0: pass #{pass} #{fused} tuples fused" if fused.positive?
         lines << "fix0: pass #{pass} #{@laws_over.size} laws over budget" if @laws_over.any?
         lines.each { |text| @say.call(text) }

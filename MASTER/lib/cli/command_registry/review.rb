@@ -264,6 +264,9 @@ module Master
       # the split spelling did before it was joined.
       ONLY_FLAG = /\A--only(?:=(.+))?\z/i
 
+      # off, dry or on: what the deterministic autofix stage may do (Fix::AutofixGuard).
+      AUTOFIX_FLAG = /\A--autofix=(off|dry|on)\z/i
+
       def parse_pass_flags(raw)
         flags = { apply: nil, critique: nil, aesthetic: true, only: nil }
         path_bits = []
@@ -272,6 +275,8 @@ module Master
             flags[flag.first] = flag.last
           elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?(INCLUDE_DIRTY_FLAG)
             next
+          elsif token =~ AUTOFIX_FLAG
+            Master::Fix::AutofixGuard.mode = Regexp.last_match(1)
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)
           else

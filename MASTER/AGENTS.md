@@ -228,6 +228,20 @@ MASTER's own chat path. `--no-autofix` and `--dry-run` hold it back. Read the
 printed diff before committing, and never commit rewrites of generated caches:
 the scanner descends into them.
 
+The deterministic autofix stage, which runs before any model is asked, answers
+to `Fix::AutofixGuard`. It never opens a protected path: the sacred paths
+`soul.yml` declares (all of `data/`), `lib/cli/face/`, the voice and TTS files,
+`STUDIO/dilla/`, `STUDIO/postpro/` and golden fixtures. It parses every
+candidate (Ruby, YAML, JSON) and never applies an edit to a data file that only
+moves whitespace. After a write it runs the file's own `test_<name>.rb` when one
+exists and puts the original bytes back if that test goes red. RuboCop's
+correction of a nested ternary is off, because it rewrote one into an unindented
+`if` and broke the ASCII face's golden frame. A run changes at most fifteen
+files (`MASTER_AUTOFIX_MAX_FILES`); the rest are named in the pass summary.
+`--autofix=off|dry|on` sets the mode (`MASTER_AUTOFIX_MODE` is the default): off
+writes nothing, dry writes the diff to `.master/autofix-<time>.patch` and leaves
+every file as it was.
+
 **A red gate that names no finding is usually a gate that cannot load.**
 `rails_runtime` failed at `require` time for months and read as a normal
 failure. Check the gate before chasing its verdict.

@@ -42,7 +42,9 @@ module Master
       def parse_scan_args(ctx)
         arg = arg_for(ctx)
         dry_run = dry_run_arg?(arg)
-        no_autofix = no_autofix_arg?(arg)
+        mode = arg.to_s[/(?:\A|\s)--autofix=(off|dry|on)\b/i, 1]
+        Master::Fix::AutofixGuard.mode = mode if mode
+        no_autofix = no_autofix_arg?(arg) || mode&.downcase == "off"
         clean_arg = strip_scan_flags(arg)
         do_autofix = !dry_run && !no_autofix && Master::Fix::Scan::MechanicalAutofix.enabled?
         [arg, dry_run, no_autofix, clean_arg, do_autofix]
@@ -163,7 +165,7 @@ module Master
       end
 
       def strip_scan_flags(arg)
-        arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" || part == "--no-autofix" }.join(" ")
+        arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" || part == "--no-autofix" || part.match?(/\A--autofix=/) }.join(" ")
       end
     end
   end

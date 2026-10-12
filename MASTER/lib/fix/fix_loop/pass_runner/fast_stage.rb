@@ -2,6 +2,7 @@
 
 require_relative "../../../operator/ruby_runner"
 require_relative "../../scan/mechanical_autofix"
+require_relative "../../autofix_guard"
 
 module Master
   module Fix
@@ -73,6 +74,65 @@ module Master
           # one, and asking by re-running rubocop on each file cost fifteen
           # minutes over MASTER's 893 files while correcting nothing further.
           def rubocop_pass(files, root)
+            files = rubocop_candidates(files)
+            return 0 if files.empty?
+
+            snapshot = files.to_h { |path| [path, File.binread(path)] }
+            corrected = rubocop_run(files, root)
+            settle_rubocop(snapshot, root)
+            corrected
+          end
+
+          # What RuboCop may open: not protected, not capped out, not already
+          # dirty (another session's edit), and only when autofix is on or dry.
+          def rubocop_candidates(files)
+            return [] if Master::Fix::AutofixGuard.mode == "off"
+
+            files.select do |path|
+              next false if Master::Fix::AutofixGuard.protected_reason(path, root: @root)
+              next false if @committer.respond_to?(:dirty_at_baseline?) && @committer.dirty_at_baseline?(path)
+
+              true
+            end
+          end
+
+          # RuboCop wrote in place; each changed file is judged like any other
+          # autofix candidate and the original bytes go back on a verdict
+          # against it. dry puts every file back and keeps the diff.
+          def settle_rubocop(snapshot, root)
+            snapshot.each do |path, before|
+              after = File.binread(path)
+              next if after == before
+
+              reason = rubocop_verdict(path, before.dup.force_encoding("UTF-8"), after.dup.force_encoding("UTF-8"))
+              if reason || Master::Fix::AutofixGuard.mode == "dry"
+                Master::Fix::AutofixGuard.record_patch(path, before, after, root: @root) unless reason
+                File.binwrite(path, before)
+                next unless reason
+
+                Master::Fix::AutofixGuard.note_refused(path, "rubocop: #{reason}")
+                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop fix reverted, #{path.delete_prefix("#{@root}/")}: #{reason[0, 140]}")
+              else
+                Master::Fix::AutofixGuard.note_written(path)
+              end
+            end
+          end
+
+          def rubocop_verdict(path, before, after)
+            guard = Master::Fix::AutofixGuard
+            if guard.capped?(path)
+              guard.note_capped(path)
+              return "per-run cap of #{guard.max_files} files reached"
+            end
+
+            reason = guard.candidate_reason(path, before, after)
+            return reason if reason
+            return if guard.mode == "dry"
+
+            guard.test_reason(path)
+          end
+
+          def rubocop_run(files, root)
             rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect, #{Master::Trace::Dmesg.counted(files.size, "file")} in #{rel_root}")
             autocorrect = ENV["MASTER_AUTOFIX"] == "1" ? "-A" : "-a"

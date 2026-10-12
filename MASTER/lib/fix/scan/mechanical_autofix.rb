@@ -2,6 +2,7 @@
 
 require_relative "../ast_fixer"
 require_relative "../write_guard"
+require_relative "../autofix_guard"
 
 module Master
   module Fix
@@ -45,18 +46,42 @@ module Master
         # uncommitted edit; the caller reports what the status means.
         def rewrite(path, source)
           return Rewrite.new(status: :dirty, content: source, transforms: []) if dirty?(path)
+          if (why = AutofixGuard.admit(path, root: @root))
+            return Rewrite.new(status: :unchanged, content: source, transforms: [], reason: why)
+          end
 
           candidate = AstFixer.propose(path, source, event_bus: @bus)
           return Rewrite.new(status: :unchanged, content: source, transforms: []) unless candidate&.changed
 
+          if (why = AutofixGuard.candidate_reason(path, source, candidate.content))
+            AutofixGuard.note_refused(path, why)
+            return Rewrite.new(status: :refused, content: source, transforms: [], reason: why)
+          end
           verdict = write_guard.verdict(path:, content: candidate.content)
           return Rewrite.new(status: :refused, content: source, transforms: [], reason: verdict.reason) if verdict.blocked?
 
-          AstFixer.write(path, candidate.content, event_bus: @bus, transforms: candidate.transforms)
-          Rewrite.new(status: :written, content: candidate.content, transforms: candidate.transforms)
+          if AutofixGuard.mode == "dry"
+            AutofixGuard.record_patch(path, source, candidate.content, root: @root)
+            return Rewrite.new(status: :unchanged, content: source, transforms: [])
+          end
+
+          write_checked(path, source, candidate)
         end
 
         private
+
+        # The write, then the file's own test; a red test puts the bytes back.
+        def write_checked(path, source, candidate)
+          AstFixer.write(path, candidate.content, event_bus: @bus, transforms: candidate.transforms)
+          if (why = AutofixGuard.test_reason(path))
+            AstFixer.write(path, source, event_bus: @bus, transforms: [])
+            AutofixGuard.note_refused(path, why)
+            return Rewrite.new(status: :refused, content: source, transforms: [], reason: why)
+          end
+
+          AutofixGuard.note_written(path)
+          Rewrite.new(status: :written, content: candidate.content, transforms: candidate.transforms)
+        end
 
         def fix_path(path)
           return unless File.file?(path)

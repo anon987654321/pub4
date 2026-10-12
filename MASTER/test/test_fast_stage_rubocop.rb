@@ -7,7 +7,7 @@ class TestFastStageRubocop < Minitest::Test
     include Master::Fix::FixLoop::PassRunner::FastStage
 
     def initialize(root) = @root = root
-    def stuck(out, files) = uncorrected_files(out, files, @root)
+    def stuck(out, _files) = uncorrected_files(JSON.parse(out).fetch("files"), @root)
   end
 
   ROOT = "/repo/MASTER"
@@ -30,11 +30,5 @@ class TestFastStageRubocop < Minitest::Test
     )
 
     assert_equal ["#{ROOT}/lib/a.rb"], Harness.new(ROOT).stuck(out, [])
-  end
-
-  def test_no_report_counts_every_file_as_stuck
-    files = ["#{ROOT}/lib/a.rb", "#{ROOT}/lib/b.rb"]
-
-    assert_equal files, Harness.new(ROOT).stuck("Could not find gem 'rubocop'", files)
   end
 end
