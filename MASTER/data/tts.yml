@@ -1,13 +1,13 @@
-# Transcendent TTS — emotion-aware multi-engine orchestration (MLX / Replicate).
+# TTS policy — low-latency conversation by default; expressive synthesis on request.
 #
-# THIS FILE DECIDES HOW MASTER SOUNDS ON THE COMMAND LINE. Transcendent.load_config
-# reads it, enabled/default_mode select the normal speech path, and Speech.synthesize
-# hands conversational replies to Transcendent when that mode is "transcendent".
+# `fast_mode` selects classic Edge neural TTS and progressive playback for normal
+# conversation. Set MASTER_TTS_MODE=transcendent to request the expressive MLX /
+# Chatterbox / phrase-rhythm pipeline for a particular session.
 #
 transcendent:
   enabled: true
-  fast_mode: false
-  default_mode: transcendent
+  fast_mode: true
+  default_mode: classic
   personality: warm_supportive
   warmth: 0.82
   depth: 0.68
