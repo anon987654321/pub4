@@ -74,11 +74,16 @@ them all (`etc/relayd.conf`).
 
 Seven city domains serve brgen, each scoped to its own city: `brgen.no`,
 `oshlo.no`, `trndheim.no`, `stvanger.no`, `cardff.uk`, `edinbrgh.uk`,
-`frankfrt.de`. Six more are registered, in `ALL_DOMAINS`, hold a zone that nsd
-serves and an `acme-client.conf` block, and are waiting on one thing each:
-`brmingham.uk`, `brssels.be`, `dnver.us`, `glasgw.uk`, `lverpool.uk`,
-`mnchester.uk`. None of them has an NS record at its registrar, so nothing asks
-our nameserver for them.
+`frankfrt.de`. Six more hold a zone that nsd serves and an `acme-client.conf` block, and
+none has an NS record at its registrar, so nothing asks our nameserver for
+them. Registry lookups on 2026-10-12 found only `brssels.be` registered.
+`brmingham.uk`, `glasgw.uk`, `lverpool.uk` and `mnchester.uk` (Nominet,
+"This domain name has not been registered", after "Renewal required" in
+June) and `dnver.us` are unregistered: the .uk names lapsed on 24 and 25 June
+2026 and anyone may now register them. Bringing one up starts with buying it
+back, which is a registrar login, or with deleting its zone and
+`acme-client.conf` block if the city is dropped (record that in
+`data/domain_released.yml`). `ruby OPENBSD/bin/domain_watch.rb` is the check.
 
 The order below is not a preference. Each step needs the one above it, and the
 last step is the one that bites: relayd refuses to start when a `tls keypair`

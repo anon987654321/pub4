@@ -6,6 +6,16 @@ amberapp.art:
   created: '2026-09-25T05:35:06.0Z'
   expires: '2027-09-25T23:59:59.0Z'
   registrar: Domeneshop AS dba domainnameshop.com
+amberapp.no:
+  state: registered
+  created: '2026-09-25'
+  expires: '2027-09-25'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
+amberapp.online:
+  state: registered
+  created: '2026-09-25T12:15:05.751Z'
+  expires: '2027-09-25T12:15:05.751Z'
+  registrar: Domeneshop AS dba domainnameshop.com
 amstrdam.nl:
   state: registered
   created: '2026-05-18'
@@ -23,16 +33,19 @@ brdeaux.fr:
 brgen.no:
   state: registered
   created: '2020-08-25'
+  expires: '2027-08-25'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 brmingham.uk:
-  state: registered
-  created: 24-Jun-2021
-  expires: 24-Jun-2026
-  status: Renewal required.
-  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+  state: available
 brssels.be:
   state: registered
 bsddocs.org:
   state: available
+bsdports.net:
+  state: registered
+  created: '2022-08-08T14:15:12Z'
+  expires: '2027-08-08T14:15:12Z'
+  registrar: Domeneshop AS dba domainnameshop.com
 bsdports.org:
   state: registered
   created: '2022-08-08T14:15:10Z'
@@ -68,20 +81,20 @@ edinbrgh.uk:
 foball.no:
   state: registered
   created: '2022-07-30'
+  expires: '2027-07-30'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 foodielicio.us:
   state: available
 frankfrt.de:
   state: registered
+  expires: '2027-08-17'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 freehelp.legal:
   state: available
 gdnsk.pl:
   state: available
 glasgw.uk:
-  state: registered
-  created: 24-Jun-2021
-  expires: 24-Jun-2026
-  status: Renewal required.
-  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+  state: available
 gtebrg.se:
   state: available
 hlsinki.fi:
@@ -109,23 +122,20 @@ lsangeles.com:
   created: '2026-09-23T15:55:03Z'
   expires: '2027-09-23T15:55:03Z'
   registrar: Domeneshop AS dba domainnameshop.com
-lverpool.uk:
+lsangeles.store:
   state: registered
-  created: 25-Jun-2021
-  expires: 25-Jun-2026
-  status: Renewal required.
-  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+  created: '2026-09-23T15:55:08.423Z'
+  expires: '2027-09-23T15:55:08.423Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+lverpool.uk:
+  state: available
 mlan.it:
   state: unknown
   note: 'Domain:             mlan.it'
 mlmoe.se:
   state: available
 mnchester.uk:
-  state: registered
-  created: 25-Jun-2021
-  expires: 25-Jun-2026
-  status: Renewal required.
-  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+  state: available
 mnnesota.com:
   state: available
 mrseille.fr:
@@ -135,6 +145,8 @@ newyrk.us:
 oshlo.no:
   state: registered
   created: '2020-08-22'
+  expires: '2027-08-22'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 prtland.com:
   state: available
 pub.attorney:
@@ -152,19 +164,34 @@ stholm.se:
 stvanger.no:
   state: registered
   created: '2020-08-22'
+  expires: '2027-08-22'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
+svalbrd.no:
+  state: registered
+  created: '2020-09-06'
+  expires: '2026-09-06'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 trmso.no:
   state: available
 trndheim.no:
   state: registered
   created: '2020-08-22'
+  expires: '2027-08-22'
+  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 utrcht.nl:
-  state: available
+  state: unknown
+  note: registry referral, not a domain record
 wrsawa.pl:
   state: available
 wshingtondc.com:
   state: registered
   created: '2021-08-22T04:10:03Z'
   expires: '2027-08-22T04:10:03Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+wshingtondc.us:
+  state: registered
+  created: '2021-08-20T18:20:09Z'
+  expires: '2027-08-20T18:20:09Z'
   registrar: Domeneshop AS dba domainnameshop.com
 zrich.ch:
   state: unknown

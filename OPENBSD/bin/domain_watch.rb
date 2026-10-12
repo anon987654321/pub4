@@ -228,7 +228,22 @@ module Deploy
     end
 
     def scan
-      zones.select { |z| registrable?(z) }.to_h { |z| [z, query(z)] }
+      with_recorded_expiry(zones.select { |z| registrable?(z) }.to_h { |z| [z, query(z)] })
+    end
+
+    # Norid publishes no expiry, so a registered .no row carries none. The
+    # registrar-recorded date in RAILS/apps.yml is the only expiry the repo can
+    # hold for it; it is labelled as that, never passed off as a registry answer,
+    # and a stale recorded date then shows up as LAPSED instead of being skipped.
+    def with_recorded_expiry(rows)
+      facts = YAML.safe_load_file(RAILS_APPS).fetch("owned_domain_facts", {})
+      rows.to_h do |domain, row|
+        recorded = facts.dig(domain, "expires")
+        if row["state"] == "registered" && row["expires"].to_s.empty? && recorded
+          row = row.merge("expires" => recorded.to_s, "expires_source" => "RAILS/apps.yml owned_domain_facts; the registry publishes none")
+        end
+        [domain, row]
+      end
     end
 
     def compare(current, previous)
