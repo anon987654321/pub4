@@ -156,6 +156,27 @@ class TestChatIrc < Minitest::Test
     assert_in_delta 4.0, @clock.now, 0.01
   end
 
+  def test_msg_is_registered_explicit_private_and_read_only_by_default
+    build
+    registry = Master::CLI::CommandRegistry
+    assert_includes registry::CHAT_VERBS, "msg"
+    assert_includes registry.help_text("msg"), "/msg <nick> <text>"
+
+    Master::Io::Chat.stub(:current, @irc) do
+      denied = registry.dispatch_chat("msg", ctx: { args: "friend hello" })
+      assert_match(/read-only/, denied)
+      refute @io.written.any? { |line| line.start_with?("PRIVMSG friend") }
+
+      @irc.policy.speak = true
+      sent = registry.dispatch_chat("msg", ctx: { args: "friend hello there" })
+      assert_includes sent, "-> friend hello there"
+      assert_equal "PRIVMSG friend hello there", @io.written.last
+
+      assert_match(/bad nick/, registry.dispatch_chat("msg", ctx: { args: "#help hello" }))
+      assert_match(/usage/, registry.dispatch_chat("msg", ctx: { args: "friend" }))
+    end
+  end
+
   def test_status_never_shows_the_password
     build(env: { "MASTER_IRC_PASSWORD" => "s3cret-pass" })
     assert_equal "CAP REQ :sasl", @io.written.first
