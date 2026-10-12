@@ -81,7 +81,9 @@ module Master
 
         if continuation_only?(record)
           reason = "auto-continue blocked: #{record["goal"].to_s.inspect} is a continuation, not a durable task; submit the resolved objective"
-          Mission.new(root: @root, bus: @bus).block!(reason:)
+          blocked = Mission.new(root: @root, bus: @bus).block_if_unleased!(id: record["id"], reason:)
+          return :idle unless blocked
+
           @bus&.publish("task_steward:blocked", mission: record["id"], reason:)
           return Master::Result.err(reason, category: :validation)
         end
