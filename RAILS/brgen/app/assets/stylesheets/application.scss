@@ -142,7 +142,6 @@
 
 // ============================================================ base
 
-a { color: var(--text); text-decoration: none; }
 @include meta.load-css("brgen_core_shell");
 
 // ============================================================ chrome: nav
