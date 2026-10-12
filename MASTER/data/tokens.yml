@@ -1059,7 +1059,7 @@ tokens:
       thorough: true
       action: Score design changes against Dieter Rams-style usefulness and honesty.
     font_personality:
-      traditional_trustworthy: serif
+      traditional_trustworthy: neo_grotesque_sans
       modern_innovative: geometric_sans
       accessible_interface: humanist_sans
       impact: bold_display
@@ -1787,11 +1787,10 @@ tokens:
         mobile: collapse_secondary_columns
     swiss_style:
       left_aligned_ragged_right: true
-      sans_serif_default: Inter
+      sans_serif_default: Helvetica Neue Pro
       alternative_faces:
-      - Helvetica
-      - Akzidenz-Grotesk
-      - IBM Plex Sans
+      - Helvetica Neue
+      - Arial
       visible_grid_optional: false
       font_feature_settings:
         Inter: '"ss03" 1'
