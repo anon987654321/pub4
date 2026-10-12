@@ -145,6 +145,27 @@ class TestSnapshotGenerator < Minitest::Test
     end
   end
 
+  def test_snapshot_extractor_refuses_symlink_destinations
+    Dir.mktmpdir do |dir|
+      fence = "`" * 3
+      outside = File.join(dir, "outside")
+      target = File.join(dir, "rehydrated")
+      FileUtils.mkdir_p(outside)
+      FileUtils.mkdir_p(target)
+      File.symlink(outside, File.join(target, "MASTER"))
+      pack_path = File.join(dir, "pack.md")
+      header = "Pack: tree=MASTER git=abc123 part=1/1 text_total=1 fragments_total=1 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000"
+      heading = "## `MASTER/escaped.txt [bytes=6 newline=1]`"
+      File.write(pack_path, ["# MASTER", "", header, "", heading, "", "#{fence}text", "owned", fence, "", "## Snapshot part complete", ""].join("\n"))
+
+      pack = Operator::SnapshotExtract.parse(pack_path)
+      error = assert_raises(RuntimeError) { Operator::SnapshotExtract.write([pack], target) }
+
+      assert_includes error.message, "refuses symlink directory"
+      refute File.exist?(File.join(outside, "escaped.txt"))
+    end
+  end
+
   def test_snapshot_extractor_rejects_incomplete_or_inconsistent_metadata
     Dir.mktmpdir do |dir|
       fence = "`" * 3
