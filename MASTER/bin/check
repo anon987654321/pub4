@@ -49,6 +49,15 @@ web_live = ENV["MASTER_WEB_LIVE"] == "1"
 # rather than assuming the shell will.
 node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
                       .map { |dir| File.join(dir, "node") }.find { |p| File.executable?(p) }
+web_test_dir = File.join(ROOT, "..", "RAILS", "master_web", "test")
+web_node_tests = Dir[File.join(web_test_dir, "**/*.test.mjs")].sort
+web_node_step = if node_bin && web_node_tests.any?
+  ["web ui behaviour", node_bin, "--test", *web_node_tests]
+else
+  reason = node_bin ? "no JavaScript tests found beneath #{web_test_dir}" :
+    "Node.js unavailable; web behavior was not measured"
+  ["web ui behaviour unavailable", RUBY, "-e", "warn #{reason.inspect}; exit 3"]
+end
 
 # test:subsystems groups the cli/io/fix suites for a focused run, and the step
 # is in the operator and contributor profiles and the ci list so a break there
@@ -85,16 +94,11 @@ law_syntax = ["law syntax", RUBY, "-e", <<~'RUBY', ROOT]
 RUBY
 
 ci_steps = [law_syntax, boot_smoke, rake["test"], rake["test:core"], rake["test:subsystems"],
-            rake["selftest"], rake["lint:data_singularity"], rake["core_smoke"],
-            rake["tools"]]
+            rake["test:web"], rake["test:web_ui"], rake["selftest"],
+            rake["lint:data_singularity"], rake["core_smoke"], rake["tools"]]
 ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["MASTER_CI_FULL"] == "1"
-if node_bin
-  node_tests = Dir[File.join(ROOT, "web/test/*.test.mjs")].sort
-  ci_steps << ["web ui behaviour", node_bin, "--test", *node_tests] unless node_tests.empty?
-else
-  Master::Trace::Dmesg.status("web0", "node tests skipped, no node interpreter")
-end
-ci_steps += [rake["test:web"], rake["test:integration_web"]] if ENV["MASTER_CI_WEB"] == "1"
+ci_steps << web_node_step
+ci_steps << rake["test:integration_web"] if ENV["MASTER_CI_WEB"] == "1"
 if ENV["MASTER_CI_BROWSER"] == "1"
   webgl = File.join(ROOT, "..", "RAILS", "master_web", "script", "probe_webgl_guard.mjs")
   if node_bin && File.file?(webgl)
@@ -125,19 +129,14 @@ PROFILES = {
   # wearing the other coat. 0.2s.
   "agent"       => [law_syntax, boot_smoke, rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
                     rake["lint:word_boundary"], rake["tools"]],
-  # Face tests keep three homes because they need three runtimes: web/test/*_test.rb boots
-  # Rails, test/test_web_*.rb runs in MASTER's bundle, and web/test/*.test.mjs runs under node.
-  #
-  # web/test/*.test.mjs evaluate the shipped face sources under node:vm, which is
-  # the only way to assert anything about code that only exists inside a browser
-  # feature check. Twenty-five of them were in the tree and in no profile, so
-  # nothing ran them: one had been failing since the blink rates were retuned on
-  # 2026-08-10, and another asserted face.runtime.js matches its sources while
-  # being unable to report that it did not. Skipped rather than failed where node
-  # is absent — a missing interpreter is not a red gate.
-  "web"         => [law_syntax, ["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
-                    *(node_bin ? [["web ui behaviour", node_bin, "--test", *Dir[File.join(ROOT, "web/test/*.test.mjs")].sort]] : []),
-                    *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],
+  # Face tests keep three runtimes: the MASTER Rack UI test, the Rails-backed
+  # RAILS/master_web suite, and every shipped JavaScript behavior test under Node.
+  # The canonical web tree moved to RAILS/master_web; the old MASTER/web glob
+  # selected zero files without failing, so CI reported green without measuring
+  # any of those JavaScript tests. An empty inventory or missing runtime is now
+  # a visible non-pass rather than a silent omission.
+  "web"         => [law_syntax, rake["test:web_ui"], web_node_step, rake["test:web"],
+                    *(web_live ? [rake["test:integration_web"]] : [])],
   "ci"          => ci_steps,
   "full"        => [*full_ci, run_bin["probe", "all"], rake["audit"]],
 }.freeze

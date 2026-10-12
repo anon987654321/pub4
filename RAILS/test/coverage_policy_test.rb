@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "open3"
+require "rbconfig"
 require "yaml"
 
 class CoveragePolicyTest < Minitest::Test
@@ -123,5 +125,16 @@ class CoveragePolicyTest < Minitest::Test
     assert_includes source, 'ENV["FULL_COVERAGE"] == "1" || ENV["PUB4_CI_GUARD"] == "1"'
     assert_includes source, "minimum 100, per: own_source"
   end
+
+
+  def test_premerge_pwa_group_lists_both_runtime_test_suites
+    runner = File.join(ROOT, "..", "MASTER", "tools", "rails", "premerge.rb")
+    output, status = Open3.capture2e(RbConfig.ruby, runner, "--pwa", "--list", chdir: ROOT)
+
+    assert status.success?, output
+    assert_includes output, "PWA offline-store runtime"
+    assert_includes output, "Stimulus components runtime"
+  end
+
 
 end

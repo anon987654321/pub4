@@ -60,14 +60,19 @@ def app_steps
   end
 end
 
-def pwa_step
-  Step.new(name: "PWA runtime", group: :pwa, run: lambda {
-    package = File.join(ROOT, "package.json")
-    next [BLOCKED, "RAILS/package.json is missing"] unless File.file?(package)
+def pwa_steps
+  [
+    ["PWA offline-store runtime", "test:pwa:runtime"],
+    ["Stimulus components runtime", "test:stimulus"],
+  ].map do |name, script|
+    Step.new(name:, group: :pwa, run: lambda {
+      package = File.join(ROOT, "package.json")
+      next [BLOCKED, "RAILS/package.json is missing"] unless File.file?(package)
 
-    ok = system("npm", "run", "test:pwa:runtime", chdir: ROOT)
-    ok ? [PASSED, nil] : [FAILED, "npm run test:pwa:runtime exited non-zero"]
-  })
+      ok = system("npm", "run", script, chdir: ROOT)
+      ok ? [PASSED, nil] : [FAILED, "npm run #{script} exited non-zero"]
+    })
+  end
 end
 
 def contracts_step
@@ -123,7 +128,7 @@ def gate_steps
 end
 
 def steps_for(groups)
-  (app_steps + [pwa_step, contracts_step, coverage_step] + gate_steps).select { |s| groups.include?(s.group) }
+  (app_steps + pwa_steps + [contracts_step, coverage_step] + gate_steps).select { |s| groups.include?(s.group) }
 end
 
 groups = if ARGV.include?("--apps") then [:apps]

@@ -83,6 +83,7 @@ class TestModernWebPlatformEvidence < Minitest::Test
   MODERN_LAWS = %w[
     INTRINSIC_LAYOUT CONTAINER_RESPONSIVENESS MODERN_FORMS NATIVE_DISCLOSURE ANCHOR_RELATIONSHIPS
     SCOPED_CSS MOBILE_VIEWPORT SCROLL_INTEGRITY MOTION_ACCESSIBILITY NAVIGATION_CONTINUITY
+    BASELINE_COMPATIBILITY CORE_WEB_VITALS
   ].freeze
 
   def test_modern_web_laws_are_part_of_visual_constitution
@@ -103,4 +104,23 @@ class TestModernWebPlatformEvidence < Minitest::Test
       assert_match(/^#{id}: \S/, context)
     end
   end
+  def test_baseline_guidance_covers_new_features_and_keeps_accessibility_separate
+    law = Law.definitions.fetch(:BASELINE_COMPATIBILITY)
+
+    ["field-sizing", "contrast-color()", "Trusted Types", "Navigation API"].each do |feature|
+      assert_includes law.fix, feature
+    end
+    assert_includes law.fix, "feature detection"
+    assert_includes law.fix, "keyboard"
+    assert_includes law.fix, "not proof of accessibility or security"
+  end
+
+  def test_core_web_vitals_guidance_uses_current_field_thresholds
+    law = Law.definitions.fetch(:CORE_WEB_VITALS)
+
+    %w[LCP INP CLS].each { |metric| assert_includes law.ask, metric }
+    %w[2.5 200 0.1 75th percentile].each { |threshold| assert_includes "#{law.ask} #{law.fix}", threshold }
+    assert_includes law.fix, "field data"
+  end
+
 end

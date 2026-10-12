@@ -7,6 +7,25 @@
 # rescue/ensure open new reachability. This file regex called `x = return_val`
 # a terminator and every method's last line unreachable.
 
+# Reviewed 2026-10 against MDN Baseline, WCAG 2.2 mobile guidance and web.dev
+# Core Web Vitals thresholds. Feature status changes; consult the current
+# Baseline record during review rather than treating this snapshot as evergreen.
+Law.define(:BASELINE_COMPATIBILITY) do
+  source "MDN Web Platform Baseline — compatibility is not accessibility"
+  severity :warning
+  mode :opportunity
+  ask "Does a web change depend on a newly available HTML, CSS, JavaScript, or PWA API without checking the supported browser/device matrix, fallback behavior, accessibility, and security contract?"
+  fix "Check current Baseline status when reviewing. Prefer widely available semantics for core paths; progressively enhance newer APIs such as field-sizing, container style queries, contrast-color(), CSS anchor positioning, Trusted Types, and the Navigation API. Verify the target browser matrix, feature detection, keyboard and assistive-technology behavior, and a usable fallback. Baseline is compatibility evidence, not proof of accessibility or security."
+end
+
+Law.define(:CORE_WEB_VITALS) do
+  source "web.dev Core Web Vitals thresholds — field data, not a lab-only claim"
+  severity :warning
+  mode :opportunity
+  ask "Does a web performance or interaction-quality claim lack representative real-user evidence for 75th-percentile LCP ≤ 2.5 s, INP ≤ 200 ms, and CLS ≤ 0.1, especially on mobile?"
+  fix "Use field data such as CrUX or first-party RUM at the 75th percentile; use lab traces and feature-detected Long Animation Frames as diagnostics, not substitutes for field evidence."
+end
+
 Law.define(:FAIL_VISIBLY) do
   source "Fail Fast (Jim Shore, IEEE Software 2004)"
   severity :error
