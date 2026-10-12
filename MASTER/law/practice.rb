@@ -589,14 +589,17 @@ end
 Law.define(:MASTER_PROMPT_AESTHETIC) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
-  ask "Does the interactive CLI prompt follow the OpenBSD dmesg console idiom first, keeping location, Git state, phase and input token plain, compact and useful in scrollback?"
+  ask "Does the interactive CLI prompt make the current working location unambiguous while preserving Git state, phase and input token in the OpenBSD dmesg console style?"
   practice <<~TEXT
-    Renderer prompt_line follows the OpenBSD dmesg console idiom first: a
-    compact plain-text path, Git state, phase and shell token. Keep events as
-    append-only factual unit0: lines; do not dress the prompt as Starship or
-    powerline. Status colour is never the only carrier of meaning.
+    The prompt names the checkout and governed tree when the working directory
+    is inside pub4, then shows the current subdirectory, Git state, phase and
+    shell token. On a long path, preserve the checkout/tree prefix and current
+    leaf rather than truncating away where the operator is. Outside the checkout,
+    use a home-relative or absolute path. Keep one bounded plain-text line;
+    append-only factual unit0: events carry detail. Never depend on colour,
+    badges or Starship/powerline segments to explain state.
   TEXT
-  fix "Keep the prompt compact, plain and factual; send detail to dmesg-style status lines rather than adding visual segments."
+  fix "Keep the current checkout/tree and working directory legible in the one-line prompt; preserve that location under truncation and leave detail to dmesg-style events."
   bad  "recolours the prompt line and adds badges"
   good "keeps the one-line prompt plain and emits a factual fix0: status when work changes state"
 end

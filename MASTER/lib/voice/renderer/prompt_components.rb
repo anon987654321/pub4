@@ -125,15 +125,53 @@ module Master
         # the tail you are actually in stays readable. Use an ASCII truncation
         # marker to preserve console output and copy/paste across old terminals.
         def prompt_path(suffix_length: 0)
-          path = home_path(Dir.pwd)
+          current = File.expand_path(Dir.pwd)
+          location = repository_location(current) || home_path(current)
           budget = prompt_path_budget(suffix_length:)
-          return path if path.length <= budget
+          return location if location.length <= budget
 
-          tail = ".../#{path.split('/').last(2).join('/')}"
+          if (prefix = repository_path_prefix(current))
+            tail = repository_relative_path(current).to_s.split("/").reject(&:empty?).last(2)
+            candidates = []
+            candidates << "#{prefix}/.../#{tail.join("/")}" if tail.length == 2
+            candidates << "#{prefix}/.../#{tail.last}" if tail.any?
+            candidates << prefix
+            return candidates.find { |candidate| candidate.length <= budget } || prefix[0, budget]
+          end
+
+          tail = ".../#{location.split('/').last(2).join('/')}"
           return tail if tail.length <= budget
-          return File.basename(path) if File.basename(path).length <= budget
+          return File.basename(location) if File.basename(location).length <= budget
 
-          path[-budget, budget]
+          location[-budget, budget]
+        end
+
+        # Within pub4, identify both the checkout and its governed tree. A
+        # truncated path must preserve that prefix and the directory being used.
+        def repository_location(path)
+          relative = repository_relative_path(path)
+          return unless relative
+
+          root_name = File.basename(Master.repo_root)
+          relative.empty? ? root_name : "#{root_name}/#{relative}"
+        end
+
+        def repository_relative_path(path)
+          root = File.expand_path(Master.repo_root)
+          current = File.expand_path(path)
+          return "" if current == root
+          return unless current.start_with?("#{root}/")
+
+          current.delete_prefix("#{root}/")
+        end
+
+        def repository_path_prefix(path)
+          relative = repository_relative_path(path)
+          return unless relative
+
+          root_name = File.basename(Master.repo_root)
+          tree = relative.split("/").first
+          tree ? "#{root_name}/#{tree}" : root_name
         end
 
         def home_path(path)

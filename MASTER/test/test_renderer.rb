@@ -186,6 +186,29 @@ class TestRenderer < Minitest::Test
     assert_equal "/tmp/pub4", renderer.send(:home_path, "/tmp/pub4")
   end
 
+  def test_shell_prompt_names_the_checkout_and_governed_tree
+    renderer = FakeRenderer.new(config: {})
+    expected = "#{File.basename(Master.repo_root)}/MASTER"
+
+    Dir.stub(:pwd, File.join(Master.repo_root, "MASTER")) do
+      assert_equal expected, renderer.send(:prompt_path, suffix_length: 20)
+    end
+  end
+
+  def test_shell_prompt_keeps_checkout_tree_and_current_leaf_when_truncated
+    renderer = FakeRenderer.new(config: {})
+    path = File.join(Master.repo_root, "RAILS", "brgen", "app", "controllers", "messages", "directs")
+
+    Dir.stub(:pwd, path) do
+      displayed = renderer.send(:prompt_path, suffix_length: 34)
+
+      assert_match(/\Apub4\/RAILS\//, displayed)
+      assert_match(/\/\.\.\//, displayed)
+      assert_match(/directs\z/, displayed)
+      assert_operator displayed.length, :<=, renderer.send(:prompt_path_budget, suffix_length: 34)
+    end
+  end
+
   def test_prompt_uses_one_bounded_git_status_probe
     renderer = FakeRenderer.new(config: {})
     calls = []
