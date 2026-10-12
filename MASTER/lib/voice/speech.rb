@@ -116,7 +116,7 @@ module Master
         warn: { rate: "-4%", pitch: "-16Hz" },
         fail: { rate: "-7%", pitch: "-28Hz" },
         question: { rate: "+0%", pitch: "+10Hz" },
-        warm: { rate: "-2%", pitch: "+0Hz" },
+        warm: { rate: "+4%", pitch: "+0Hz" },
         soulful: { rate: "-4%", pitch: "-1Hz" },
 
         dramatic:     { rate: "-10%", pitch: "-36Hz" },
@@ -140,6 +140,28 @@ module Master
       def last_error = @last_error
 
       def clear_last_error! = (@last_error = nil)
+
+      # Opt-in wall-clock timings for separating model/engine delay from audio
+      # post-processing. Telemetry must never prevent a reply from being spoken.
+      def log_timing(stage, started_at, text_length: nil)
+        return unless ENV["MASTER_TTS_TIMING"] == "1" && started_at
+
+        elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
+        fields = ["timing", "stage=#{stage}", "elapsed_ms=#{elapsed_ms}"]
+        fields << "chars=#{text_length}" unless text_length.nil?
+        message = fields.join(" ")
+        if defined?(Master::Trace::Dmesg)
+          Master::Trace::Dmesg.status("tts0", message, io: $stderr)
+        else
+          $stderr.puts("tts0: #{message}")
+        end
+      rescue StandardError => e
+        unless @timing_log_failure_reported
+          @timing_log_failure_reported = true
+          $stderr.puts("tts0: timing logger failed, #{e.class}: #{e.message}")
+        end
+        nil
+      end
 
       def available?
         edge_tts_available? || !espeak_path.nil? || Engines.replicate_token? || say_available?
@@ -379,6 +401,7 @@ module Master
       end
 
       def synthesize(text, voice: nil, style: default_style, rate: nil, pitch: nil, mode: nil, voice_locked: false, style_locked: false)
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         if Human.active?
           human = Human.synthesize(text.to_s, voice: voice_locked ? voice : nil, rate:, pitch:)
           return shaped(human) if human
@@ -408,9 +431,11 @@ module Master
         return path if path
 
         synthesize_say(text_str)
+      ensure
+        log_timing("synthesis_total", started_at, text_length: text.to_s.length) if started_at
       end
 
-      def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
+            def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
         use_mode = (mode || synthesis_mode).to_s
         return [false, nil] unless use_mode == "transcendent" && Transcendent.enabled?
 
@@ -494,28 +519,34 @@ module Master
       end
 
       def synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk: nil, **opts)
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        first_chunk = false
         clear_last_error!
         text_str = clean_text(text)
         return false if text_str.empty?
 
+        # Count the first returned audio frame even when the caller does not
+        # install a progress callback. This measures synthesis time-to-first-audio,
+        # not model response-generation time.
+        progress = lambda do |bytes|
+          unless first_chunk
+            log_timing("first_audio_chunk", started_at, text_length: text_str.length)
+            first_chunk = true
+          end
+          on_chunk&.call(bytes)
+        end
+
         voice, style_config = resolve_streaming_style(text_str, opts)
 
-        # The web path used to bypass Transcendent entirely, so the face got
-        # one flat Edge utterance while the CLI already had emotion, phrase
-        # rhythm and engine fallback. Use the same expressive path when enabled;
-        # short lines or unavailable engines fall through to the proven Edge path.
-        return output_path if transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
-        return output_path if edge_stream_written?(text_str, voice, style_config, output_path, on_chunk)
+        # Expressive synthesis remains available by explicit request. The normal
+        # path streams Edge audio directly and falls back only when it fails.
+        return output_path if transcendent_stream_written?(text_str, voice, opts, output_path, progress)
+        return output_path if edge_stream_written?(text_str, voice, style_config, output_path, progress)
 
-        # Edge TTS is a third-party network call (Microsoft) that can time out
-        # or be unreachable independent of anything local; without this, a
-        # single Edge hiccup meant no audio at all even though espeak-ng sits
-        # right there. synthesize() (the non-streaming caller) already had
-        # this fallback -- this path (the one TtsJob actually uses) didn't.
-        path = attempt_espeak_synthesis(text_str, output_path, on_chunk)
+        path = attempt_espeak_synthesis(text_str, output_path, progress)
         return path if path
 
-        path = attempt_say_synthesis(text_str, output_path, on_chunk)
+        path = attempt_say_synthesis(text_str, output_path, progress)
         return path if path
 
         @last_error ||= "streaming synthesis produced empty audio"
@@ -523,9 +554,11 @@ module Master
       rescue StandardError => e
         @last_error = "#{e.class}: #{e.message}"
         false
+      ensure
+        log_timing("stream_total", started_at, text_length: text_str.to_s.length) if started_at
       end
 
-      def transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
+            def transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
         return false unless transcendent_streaming_enabled?(opts)
 
         transcendent_path = synthesize_transcendent_stream(text_str, voice:, opts:)
@@ -676,6 +709,7 @@ module Master
       end
 
       def synthesize_edge(text, voice:, style_config:, shape: true)
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
         attempts = fast_tts_mode? ? 1 : 2
@@ -693,9 +727,12 @@ module Master
 
         path = synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
         shape ? shaped(path) : path
+      ensure
+        log_timing("edge_total", started_at, text_length: text.to_s.length) if started_at
       end
 
-      # data/voice.yml tts.post_chain, applied.
+
+            # data/voice.yml tts.post_chain, applied.
       #
       # Edge returns a bare neural voice with no shaping of its own, so every
       # decision about how MASTER sounds past the choice of mouth lives in that
@@ -706,6 +743,7 @@ module Master
       # result all return the unshaped path. A missing effect must cost the effect,
       # never the sentence.
       def shaped(path)
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         chain = Policy.shaped_chain
         return path unless path && chain && File.size?(path)
 
@@ -717,9 +755,12 @@ module Master
       rescue StandardError => e
         warn_tts("post_chain skipped: #{e.class}: #{e.message.lines.first.to_s.strip}")
         path
+      ensure
+        log_timing("postprocess", started_at) if started_at
       end
 
-      # A profile that declares layers needs a second input, so it goes through
+
+            # A profile that declares layers needs a second input, so it goes through
       # Layers; every other voice keeps the plain -af chain.
       def render_shaped(path, out, chain)
         return Layers.apply(path, out) if Layers.active?
