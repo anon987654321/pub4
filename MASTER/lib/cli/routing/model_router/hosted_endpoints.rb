@@ -54,6 +54,7 @@ module Master
             {
               "base" => base.chomp("/"),
               "key_env" => %w[MASTER_LLM_GATEWAY_KEY FREELLMPOOL_PROXY_KEY],
+              "keyless" => {},
             }
           end
 
