@@ -69,6 +69,11 @@
       at the top of that file, which names this tunnel), so there is nothing left
       to paint. %>
   <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+  <% if Brgen::DemoMode.disclosure_enabled? %>
+    <aside class="demo-mode-notice" role="note">
+      <%= t("demo_mode.notice") %>
+    </aside>
+  <% end %>
   <div class="brgen-top-chrome" aria-hidden="true"></div>
   <%# After the skip link, not before it — the sprite is inert (aria-hidden,
       focusable="false", 0x0) so it cannot take focus either way, but the rule
