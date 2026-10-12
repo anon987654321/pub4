@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../support/token_reads"
 require_relative "../../support/rendered_contrast_checks"
 require_relative "../../../lib/gap"
 require_relative "../../support/rendered_geometry/token_checks"
@@ -99,7 +100,7 @@ module Deploy
     private
 
     def load_design_rules
-      @rules = Operator::MasterDesign.blocks(MASTER_RULES)
+      @rules = TokenReads.wrap(Operator::MasterDesign.blocks(MASTER_RULES))
       @tokens = Operator::MasterDesign.tokens
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f

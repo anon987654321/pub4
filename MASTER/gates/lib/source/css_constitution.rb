@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../support/token_reads"
 require "yaml"
 require_relative "../../support/gate_result"
 require_relative "../../support/gate_autofix"
@@ -107,7 +108,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
     def run_once
       @result = GateResult.new
-      @design = Operator::MasterDesign.blocks(MASTER_DESIGN)
+      @design = TokenReads.wrap(Operator::MasterDesign.blocks(MASTER_DESIGN))
       check_tap_token
 
       files = css_files

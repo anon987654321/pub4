@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../support/token_reads"
 require "yaml"
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
@@ -122,7 +123,7 @@ module Deploy
     private
 
     def load_master_context
-      @design_rules = Operator::MasterDesign.blocks(DESIGN_RULES)
+      @design_rules = TokenReads.wrap(Operator::MasterDesign.blocks(DESIGN_RULES))
       @law_map = File.file?(LAW_MAP) ? (YAML.safe_load_file(LAW_MAP, aliases: true)["law_map"] || {}) : {}
       unless File.file?(DESIGN_RULES)
         @result.fail("user_flow: missing MASTER/data/tokens.yml")

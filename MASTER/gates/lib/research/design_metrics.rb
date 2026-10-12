@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../support/token_reads"
 require "json"
 require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
@@ -68,7 +69,7 @@ module Deploy
         @result.fail("design_metrics: missing MASTER/data/laws.yml")
         return @result
       end
-      @rules = Operator::MasterDesign.blocks(MASTER_RULES)
+      @rules = TokenReads.wrap(Operator::MasterDesign.blocks(MASTER_RULES))
       @tokens = Operator::MasterDesign.design_system
 
       @result.checked!(SOURCE_CHECKS.size)

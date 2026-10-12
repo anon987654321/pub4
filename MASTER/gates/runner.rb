@@ -25,6 +25,7 @@ $LOAD_PATH.unshift(ROOT, GATES_DIR)
 require File.join(ROOT, "MASTER", "gates", "support", "gate_result")
 require File.join(ROOT, "MASTER", "gates", "support", "gate_ledger")
 require File.join(ROOT, "MASTER", "gates", "support", "flow_coverage")
+require File.join(ROOT, "MASTER", "gates", "support", "token_reads")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
 require File.join(ROOT, "MASTER", "lib", "gap")
 
@@ -235,6 +236,17 @@ names.each_with_index do |name, index|
     say(["#{name} #{verdict}", ("skipped:app-down #{down.join(',')}" unless down.empty?),
          (result.gaps.values.first&.clause if outcome == :inconclusive)].compact.join(", "))
   end
+end
+
+# Last, because it reports on the gates above: what they asked the token map
+# for and did not get. Skipped when none of them read it, as on a single-gate
+# run of a gate that has no thresholds.
+token_reads = Deploy::TokenReads.result
+unless token_reads.outcome == :inconclusive
+  record("token_reads", token_reads, 0)
+  results["token_reads"] = token_reads
+  token_reads.render
+  say("token_reads #{token_reads.outcome}")
 end
 
 elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
