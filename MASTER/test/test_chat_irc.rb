@@ -170,7 +170,7 @@ class TestChatIrc < Minitest::Test
       @irc.policy.speak = true
       sent = registry.dispatch_chat("msg", ctx: { args: "friend hello there" })
       assert_includes sent, "-> friend hello there"
-      assert_equal "PRIVMSG friend hello there", @io.written.last
+      assert_equal "PRIVMSG friend :hello there", @io.written.last
 
       assert_match(/bad nick/, registry.dispatch_chat("msg", ctx: { args: "#help hello" }))
       assert_match(/usage/, registry.dispatch_chat("msg", ctx: { args: "friend" }))
