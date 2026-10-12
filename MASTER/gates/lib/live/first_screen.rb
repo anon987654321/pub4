@@ -46,6 +46,7 @@ module Deploy
     # vertical feature rules name their owning partial so a floor in another
     # module cannot make an unmeasured control pass.
     BRGEN_CSS = "brgen/app/assets/stylesheets/application.scss"
+    BRGEN_NAV_CSS = "brgen/app/assets/stylesheets/_brgen_navigation.scss"
     BRGEN_MARKETPLACE_CSS = "brgen/app/assets/stylesheets/_brgen_marketplace.scss"
 
     # Map surface labels (from SURFACES / verticals) → schema ids.
@@ -71,7 +72,7 @@ SCHEMA_FOR_LABEL = {
     BASE_SURFACES = [
       { app: "brgen", port_key: "brgen", path: "/", host: nil, label: "core_ip",
         first_screen: [%r{skip-link|Skip to main}i, %r{<main\b|main-content}i, %r{<h1\b}i],
-        css_touch: [[BRGEN_CSS, /\.feed-tab\b/, TAP_MIN],
+        css_touch: [[BRGEN_NAV_CSS, /\.feed-tab\b/, TAP_MIN],
                     [BRGEN_MARKETPLACE_CSS, /\.deal-cat\b/, TAP_MIN]] },
       { app: "amber", port_key: "amber", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
