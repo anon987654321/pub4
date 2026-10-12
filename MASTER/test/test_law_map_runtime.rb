@@ -146,9 +146,12 @@ class TestLawMapRuntime < Minitest::Test
     registered = Master::Review::Scan::Law.registry.filter_map do |klass|
       Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
     end
+    require_relative "../law/definition"
+    ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.definitions.empty?
+    executable = ::Law.definitions.keys.map { |id| id.to_s.upcase }
     declared = Master.law_entries(root: @root).map { |rule| rule["id"].to_s.upcase }
 
-    findings = map.integrity(registered_law_ids: registered | declared)
+    findings = map.integrity(registered_law_ids: registered | declared | executable)
     assert map.covered.any?
     assert_empty findings, "law-map integrity findings: #{findings.join('; ')}"
   end
