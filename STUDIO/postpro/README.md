@@ -168,9 +168,8 @@ through `Io::MediaIntent` as `/postpro`. Route new path references through those
 hardcode the file location. `MASTER/tools/postpro` is a compatibility symlink into this folder.
 
 The file `video.yml` is the one video-facing piece. Postpro remains an image engine and never
-runs once per video frame, but dilla's audiovisual renderer reads the same recipes in a single
-ffmpeg pass after capture. Geometry is dilla's; postpro supplies the photographic substrate
-and the controlled damage. `DILLA_VIDEO_POSTPRO=0` gives an untreated export.
+runs once per video frame; the recipes in it are for whatever renders video to read in a single
+ffmpeg pass after capture. `DILLA_VIDEO_POSTPRO=0` gives an untreated export.
 
 ## Trust
 
