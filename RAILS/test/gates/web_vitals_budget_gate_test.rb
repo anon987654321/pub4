@@ -59,12 +59,28 @@ class WebVitalsBudgetGateTest < Minitest::Test
 
   def dark = with_methods(PROBE, available?: proc { false }) { GATE.run }
 
+  def test_default_surface_matrix_covers_each_product_first_screen
+    rows = [
+      surface,
+      PROBE::Surface.new(app: "amber", label: "home", path: "/", viewport: "mobile", port: 61_352),
+      PROBE::Surface.new(app: "bsdports", label: "home", path: "/", viewport: "mobile", port: 47_312),
+      PROBE::Surface.new(app: "master", label: "chat", path: "/", viewport: "mobile", port: 42_001),
+    ]
+    previous = ENV.delete("GATE_SURFACES")
+    with_methods(PROBE, surfaces: proc { |*, **| rows }) do
+      selected = GATE.new.send(:selected_surfaces)
+      assert_equal GATE::SURFACE_IDS, selected.map(&:id)
+    end
+  ensure
+    ENV["GATE_SURFACES"] = previous if previous
+  end
+
   def test_a_page_over_the_lcp_budget_is_named_with_its_number
     with_sampler do
       result = measured(lcp: 4200.4, cls: 0.0)
 
       assert_equal :failed, result.outcome
-      assert_match(/web_vitals_budget: core LCP 4200ms over 2500ms/, result.failures.join(" | "))
+      assert_match(/web_vitals_budget: brgen\/core\/mobile LCP 4200ms over 2500ms/, result.failures.join(" | "))
     end
   end
 
