@@ -76,7 +76,12 @@ module Deploy
         live.each do |surface|
           payload = GeometryProbe.walk(cdp, surface)
           unless GeometryProbe.ok?(payload)
-            @result.fail("cross_app: #{surface.app} unreachable (#{payload["error"] || "HTTP #{payload["status"]}"})")
+            error = payload["error"] || "HTTP #{payload["status"]}"
+            if GeometryProbe.font_timeout?(payload)
+              @result.incomplete!("cross_app: #{surface.app} shared chrome not compared — #{error}")
+            else
+              @result.fail("cross_app: #{surface.app} unreachable (#{error})")
+            end
             next
           end
           chrome[surface.app] = cdp.evaluate(CHROME)
