@@ -10,9 +10,10 @@ module Master
     class TransformationPlan
       Operation = Data.define(:name, :position, :purpose)
 
+      # Membership only; the authoritative order lives in data/laws.yml.
       REQUIRED = %w[
-        defragment decouple flatten merge split hoist relocate rename reorder remove
-        reflow simplify recommend
+        decouple defragment flatten hoist merge recommend relocate remove rename
+        reorder reflow simplify split
       ].freeze
 
       def initialize(root: Master::ROOT, policy: nil)
