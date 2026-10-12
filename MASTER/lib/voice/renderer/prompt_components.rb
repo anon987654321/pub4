@@ -83,7 +83,7 @@ module Master
         end
 
         def phase_tinted(text, _phase)
-          d(text)
+          text.to_s
         end
 
         def prompt_token
@@ -91,7 +91,7 @@ module Master
         end
 
         def phase_prompt(last_ok, _phase)
-          last_ok ? d(prompt_token) : d("!")
+          last_ok ? prompt_token : "!"
         end
 
         def token_label(tokens)
@@ -131,7 +131,7 @@ module Master
           budget = prompt_path_budget(suffix_length:)
           return path if path.length <= budget
 
-          tail = "#{Aesthetic.wscons? ? '...' : '…'}/#{path.split('/').last(2).join('/')}"
+          tail = ".../#{path.split('/').last(2).join('/')}"
           return tail if tail.length <= budget
           return File.basename(path) if File.basename(path).length <= budget
 
@@ -254,12 +254,12 @@ module Master
           state = prompt_git_state
           return "" unless state
 
-          d(branch_status(**state))
+          branch_status(**state)
         end
 
         def branch_status(branch:, ahead:, behind:, dirty:)
           branch = branch.to_s
-          branch = "#{branch[0, 26]}…" if branch.length > 27
+          branch = "#{branch[0, 24]}..." if branch.length > 27
           parts = [dirty ? "#{branch}*" : branch]
           parts << "+#{ahead}" if ahead.positive?
           parts << "-#{behind}" if behind.positive?
