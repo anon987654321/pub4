@@ -2,6 +2,8 @@
 
 require "minitest/autorun"
 require "yaml"
+require "tmpdir"
+require "fileutils"
 require_relative "../../OPENBSD/lib/gate_result"
 require_relative "../../MASTER/gates/lib/source/css_constitution"
 require_relative "../../MASTER/gates/support/design_metrics"
@@ -271,6 +273,50 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   def test_danger_reads_as_a_foreground_token
     assert_match Deploy::DesignMetrics::FOREGROUND_KEY, "danger"
     assert_match Deploy::DesignMetrics::FOREGROUND_KEY, "dark_danger"
+  end
+
+  def test_light_theme_scan_preserves_nested_scope_and_covers_engine_stylesheets
+    Dir.mktmpdir("design-metrics") do |root|
+      fixtures = {
+        "shared/app/assets/stylesheets/nested.scss" => <<~SCSS,
+          :root[data-theme="light"] {
+            .first {
+              color: var(--text);
+            }
+            .second {
+              color: var(--vertical-marketplace-accent-hover);
+            }
+          }
+        SCSS
+        "brgen/engines/sample/app/assets/stylesheets/engine.scss" => <<~SCSS,
+          :root[data-theme="light"] {
+            .engine-action {
+              color: var(--vertical-engine-accent-hover);
+            }
+          }
+        SCSS
+        "brgen/app/assets/stylesheets/outside.scss" => <<~SCSS,
+          .outside {
+            color: var(--vertical-outside-accent-hover);
+          }
+        SCSS
+      }
+
+      fixtures.each do |relative, source|
+        path = File.join(root, relative)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, source)
+      end
+
+      keys = Deploy::DesignMetrics.light_only_vertical_keys(root)
+
+      assert_includes keys, "marketplace_hover",
+                      "a nested selector must not end the enclosing light-theme scope"
+      assert_includes keys, "engine_hover",
+                      "engine stylesheets must be included in the scan"
+      refute_includes keys, "outside_hover",
+                      "a token also used outside light theme is not light-only"
+    end
   end
 
   def spacing_gate
