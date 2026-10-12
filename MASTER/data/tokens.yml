@@ -439,6 +439,98 @@ tokens:
       complete: ready
       converged: ready
       settled: idle
+    # The plain-ASCII face. Two readers: lib/cli/face/ascii.rb (the terminal)
+    # and the web face (RAILS/master_web), which ports the same steps, so every
+    # tunable lives here and nowhere else. Braille is retired. Rounding is
+    # floor(x + 0.5), half up, and every cell index is a floor; the dither is
+    # an integer matrix; the renderer uses no randomness. Steps, in order, for
+    # a frame of rows x cols cells (the buffer is cols wide and 2 * rows high:
+    # two square sub-rows per cell, a cell being twice as tall as wide):
+    #  1 fit: scale = min((cols/2 - 1) / R, (2*rows - 2) / spanY) * fit, with R
+    #    the largest hypot(x, z) of the points, so turning never resizes it.
+    #  2 turn each point by yaw (look.yaw + look.turn), then pitch, then roll;
+    #    k = scale * look.scale * c / (c - rz) with c = camera / look.dolly;
+    #    px = floor(cols/2 + x*k), py = floor(rows*0.96 - y*k - bob*scale);
+    #    the z-buffer keeps the largest rz*scale at each splat offset.
+    #  3 smooth the z-buffer with a 3x3 mean of valid neighbours; occupancy is
+    #    a 5x5 mean of valid pixels.
+    #  4 per cell (a pair of sub-rows): empty is a space. A silhouette cell (an
+    #    invalid sub-pixel beside it) takes its glyph from the occupancy
+    #    gradient. A crease cell (largest |Hessian eigenvalue| of the smoothed
+    #    z at least crease) takes it from the ridge direction. Otherwise shade:
+    #    normal (-dz/dx, dz/dy_down, 1) normalised, lum = max(n.light, 0),
+    #    tone = min((base + gain*lum) * (1 - paint + paint*brightness), ceiling),
+    #    index = floor(tone*(n-1) + 0.5 + ((bayer[row%4][col%4] + 0.5)/16 - 0.5) * dither_gain), the dither
+    #    fixed in screen space. Light mode reverses the ramp.
+    #  5 a line direction (dx, dy_up) in square sub-pixels picks "-", "/", "|"
+    #    or "\" by the glyph's own slope on a cell: "/" is atan(aspect) from
+    #    horizontal. A horizontal edge picks by sub-row: boundary at the cell
+    #    top "'", middle "-", bottom "_".
+    #  6 features over the shading (eyes, brows, nose line, mouth), projected
+    #    like points and drawn only where the z-buffer does not hide them.
+    #  7 depth class: rz*scale as a fraction of the visible range, at least `near` bold,
+    #    at most `far` dim.
+    #  Pose.at(state, t, seed) gives the Look for a still frame: turn = spin * t in
+    #  the spin states, else 0; scale = 1 + breath*sin(breath_rate*t); pitch =
+    #  pitch_sway*sin(pitch_rate*t); roll and bob likewise; the eyes shut while
+    #  (t + (seed mod 7) * 0.37) mod blink_period >= blink_period - blink_length;
+    #  speaking opens the mouth by 0.7*|sin(1.1*k)| + 0.15*(k mod 3), k = floor(20*t).
+    ascii:
+      chars: " .:-=+*#%@"
+      mode: dark
+      fit: 0.92
+      camera: 3.2
+      aspect: 2.0
+      light: [-0.4, 0.5, 0.75]
+      splat: [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1]]
+      crease: 0.8
+      shade: { base: 0.18, gain: 0.75, paint: 0.8, ceiling: 0.97 }
+      edge_gradient: 0.02
+      hollow: 0.5
+      gap: 3
+      see_through: 2.5
+      dither_gain: 0.55
+      dither: [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+      depth: { near: 0.62, far: 0.30 }
+      # Read by Face::Motion (live, springs and noise) and by Face::Pose, the
+      # pure function of (state, t, seed) a port can match to the float.
+      motion:
+        spin: 0.35
+        breath: 0.015
+        breath_rate: 1.6
+        pitch_sway: 0.06
+        pitch_rate: 0.43
+        roll: 0.18
+        roll_rate: 0.7
+        bob: 0.02
+        bob_rate: 1.1
+        blink_period: 3.4
+        blink_length: 0.16
+        dolly: { idle: 1.0, listening: 1.018, thinking: 1.045, speaking: 1.032 }
+        spin_states: [idle, thinking, working, sleeping, ready]
+      occlusion: 2.5
+      min_rows: 8
+      min_cols: 16
+      # Line art from | / \ _ - only; shown once above the boot lines on an
+      # interactive terminal. The prompt glyphs are the same drawing in small: input,
+      # a continuation line, and output. The web shell reads them from here too.
+      wordmark:
+        - "|\\  /|  /\\   __  ----- |--- |--\\"
+        - "| \\/ | /--\\ \\__    |   |--  |--/"
+        - "|    | /  \\  __/   |   |___ |  \\"
+      prompt: { input: "|-", continuation: "\\_", output: "/" }
+      features:
+        eye_open: "("
+        eye_close: ")"
+        pupil: "o"
+        lid: "-"
+        brow: "-"
+        nose: "|"
+        nose_tip: "."
+        mouth_line: "-"
+        mouth_listening: ["\\", "_", "/"]
+        mouth_corner_top: "."
+        mouth_corner_bottom: "'"
     spatial:
       topology_profiles:
         papua-mask: { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }

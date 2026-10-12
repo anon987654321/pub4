@@ -2,14 +2,13 @@
 
 module Master
   module CLI
-    # The face drawn in text, for a window too small or too plain for WebGL:
-    # Termux:Float on a phone. It is the web face itself, as ai.brgen.no draws
-    # it: a cloud of points sampled from the same painted depth map
-    # (Face::Head), stippled from slate to ice with small cyan/periwinkle
-    # accents on truecolor terminals, and a void in the lower face where the
-    # points thin out, turned in 3D and projected onto Braille dots, two
-    # across and four down in every cell. Monochrome terminals retain 256 greys.
-    # Face::Motion keeps all of it moving.
+    # The face drawn in plain ASCII, for a window too small or too plain for
+    # WebGL: Termux:Float on a phone. It is the web face's head (Face::Head,
+    # the same morphology and painted depth map) turned in 3D and inked with
+    # | - / \ contours, a dithered ramp for the surface and glyph features
+    # (Face::Ascii); any mesh (Face::Mesh) shows the same way. Braille is
+    # retired. Face::Motion keeps it moving: a constant slow turn, a breath, a
+    # pitch sway, blinks and glances.
     #
     # A frame is a function of state, size, time and events, with one small
     # mutable Motion carried from frame to frame. Nothing here touches the
@@ -19,248 +18,44 @@ module Master
       FPS = 20
       # Below this there is not room for a face worth the name, and the frame
       # names the state instead.
-      MIN_ROWS = 8
-      MIN_COLS = 16
+      MIN_ROWS = Glyphs::CONFIG.fetch("min_rows")
+      MIN_COLS = Glyphs::CONFIG.fetch("min_cols")
+      RENDERERS = {}
 
       module_function
 
-      # rows lines of cols cells, joined by newlines; with colour, each run
-      # of cells carries its grey. t is seconds on any steady clock; events
-      # are what happened since the last frame (Motion::EVENTS). level is the
-      # audio's loudness from 0.0 to 1.0 while speaking, or nil when no
-      # envelope reached us, and the mouth moves on a timer.
-      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral")
+      # rows lines of cols cells, joined by newlines; with colour, each run of
+      # cells carries its depth tone (near bold, far dim). t is seconds on any
+      # steady clock; events are what happened since the last frame
+      # (Motion::EVENTS). level is the audio's loudness from 0.0 to 1.0 while
+      # speaking, or nil when no envelope reached us. source is any point
+      # source (Head by default); chars and mode replace the ramp and invert it
+      # (MASTER_FACE_CHARS, MASTER_FACE_MODE=light). MASTER_CLI_QUIET=1 draws
+      # the plain word only; MASTER_REDUCED_MOTION=1 holds the head still.
+      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
-        look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: ((rows * cols) / 72).clamp(6, 36))
-        return Braille.new(rows, cols).word(state.to_s) unless rows >= MIN_ROWS && cols >= MIN_COLS
+        look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: 0)
+        return word(state.to_s, rows, cols) unless rows >= MIN_ROWS && cols >= MIN_COLS && ENV["MASTER_CLI_QUIET"] != "1"
 
-        braille = Braille.new(rows, cols)
-        Drawing.new(braille, look, t).draw
-        braille.to_s(color:)
+        look = look.with(yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0) if ENV["MASTER_REDUCED_MOTION"] == "1"
+        renderer(source || Head.for(rows, cols), rows, cols, chars, mode).render(look, state:).to_s(color:)
+      end
+
+      def renderer(source, rows, cols, chars, mode)
+        RENDERERS.clear if RENDERERS.size >= 6
+        RENDERERS[[source.object_id, rows, cols, chars, mode]] ||= Ascii.new(source, rows, cols, chars:, mode:)
+      end
+
+      # The state's name, centred, on an otherwise empty window.
+      def word(text, rows, cols)
+        lines = Array.new(rows) { " " * cols }
+        lines[rows / 2] = text[0, cols].center(cols)
+        lines.join("\n")
       end
 
       # The mouth on a timer, for a player that gives no envelope back.
       def timed_level(tick) = ((Math.sin(tick * 1.1).abs * 0.7) + ((tick % 3) * 0.15)).clamp(0.0, 1.0)
-
-      # A grid of Braille cells, each a two-by-four block of dots, with how
-      # much light has landed in each cell and whether it holds the head.
-      class Braille
-        # The bit for the dot at [row][column] inside a cell, from U+2800.
-        BITS = [[0x01, 0x08], [0x02, 0x10], [0x04, 0x20], [0x40, 0x80]].freeze
-        BASE = 0x2800
-        GREYS = (232..255)
-        FACE_LOW = [38, 57, 83].freeze
-        FACE_HIGH = [226, 239, 255].freeze
-        SPECK_COLORS = [[111, 202, 255], [128, 231, 239], [174, 164, 255], [218, 233, 255]].freeze
-        # A cell reads as fully lit from about three bright points.
-        FULL = 2.5
-
-        attr_reader :rows, :cols
-
-        def initialize(rows, cols)
-          @rows = [rows.to_i, 1].max
-          @cols = [cols.to_i, 1].max
-          @bits = Array.new(@rows * @cols, 0)
-          @light = Array.new(@rows * @cols, 0.0)
-          @head = Array.new(@rows * @cols, false)
-          @speck = Array.new(@rows * @cols, false)
-        end
-
-        def dots_wide = cols * 2
-        def dots_high = rows * 4
-
-        # A dot at x, y in dot units; head dots mark their cell as the head's,
-        # and a speck lands only in a cell the head left empty.
-        def dot(x, y, light, head: true)
-          return if x.negative? || y.negative? || x >= dots_wide || y >= dots_high
-
-          cell = ((y >> 2) * cols) + (x >> 1)
-          return if !head && @head[cell]
-
-          @bits[cell] |= BITS[y & 3][x & 1]
-          @light[cell] += light
-          if head
-            @head[cell] = true
-          else
-            @speck[cell] = true
-          end
-        end
-
-        def head?(col, row) = @head[(row * cols) + col]
-        def lit?(col, row) = @bits[(row * cols) + col].positive?
-
-        def word(text)
-          label = text[0, cols]
-          lines = Array.new(rows) { " " * cols }
-          lines[rows / 2] = label.center(cols)
-          lines.join("\n")
-        end
-
-        def to_s(color: false)
-          (0...rows).map { |row| line(row, color) }.join("\n")
-        end
-
-        private
-
-        def line(row, color)
-          text = +""
-          grey = nil
-          rgb = nil
-          (row * cols).upto(((row + 1) * cols) - 1) do |cell|
-            bits = @bits[cell]
-            next text << " " if bits.zero?
-
-            shade = GREYS.min + ((@light[cell] / FULL).clamp(0.0, 1.0) * (GREYS.size - 1)).round
-            if color
-              tone = if @speck[cell]
-                       SPECK_COLORS[((row * 3) + (cell * 5)) % SPECK_COLORS.size]
-                     else
-                       fraction = (shade - GREYS.min).to_f / (GREYS.size - 1)
-                       FACE_LOW.zip(FACE_HIGH).map { |low, high| (low + ((high - low) * fraction)).round }
-                     end
-              text << "\e[38;2;#{tone.join(";")}m" if tone != rgb
-              rgb = tone
-            else
-              text << "\e[38;5;#{grey = shade}m" if shade != grey
-            end
-            text << (BASE + bits).chr(Encoding::UTF_8)
-          end
-          color && (rgb || grey) ? "#{text}\e[0m" : text
-        end
-      end
-
-      # One Look on the Braille grid at time t: every point turned, the far
-      # half dropped so the eye and mouth voids read against the near half,
-      # a third of the rest dropped afresh each frame for the shimmer, and
-      # what is left dotted; then the specks.
-      class Drawing
-        CAMERA = 3.2
-        # Only points nearer than this, after turning, are drawn.
-        NEAR = -0.05
-        # Preserve the silhouette; movement comes from depth and light, not holes.
-        SHIMMER = 0.055
-        # The void between the lips at rest, and how far the loudest syllable
-        # opens it, in the points' own units.
-        VOID = 0.045
-        VOID_OPEN = 0.085
-        # A blink closes a socket; below this the lid is shut.
-        SHUT = 0.5
-        # Particles orbit in head units; the points span 0.62 of centre.
-        SPECK_SPAN = 0.45
-        SPECK_LIGHT = 0.22
-
-        def initialize(braille, look, t)
-          @braille = braille
-          @look = look
-          @t = t.to_f
-          @head = Head.for(braille.rows, braille.cols)
-          @shimmer = Random.new((@t * FPS).floor)
-        end
-
-        def draw
-          points
-          specks
-        end
-
-        private
-
-        # The hot loop: every point, every frame. The turn is yaw, then
-        # pitch, then roll, unpacked into locals and inlined, because on a
-        # phone a method call per point is the difference between fifteen
-        # frames a second and five. Positive pitch lowers the face toward
-        # the input line.
-        def points
-          cy, sy, cp, sp, cr, sr = [@look.yaw, @look.pitch, @look.roll].flat_map { |a| [Math.cos(a), Math.sin(a)] }
-          camera = CAMERA / @look.dolly
-          reach = @head.scale * @look.scale
-          mid_x = @braille.dots_wide / 2.0
-          mid_y = (@braille.dots_high * 0.46) - (@look.bob * @head.scale)
-          @head.each_point do |x, y, z, lum, zone, phase|
-            next if @shimmer.rand < SHIMMER
-
-            unless zone.zero?
-              x, y = feature(x, y, zone, phase)
-              next unless x
-            end
-
-            rx = (x * cy) + (z * sy)
-            rz = (-x * sy) + (z * cy)
-            ry = (y * cp) - (rz * sp)
-            rz = (y * sp) + (rz * cp)
-            next if rz < NEAR
-
-            depth = camera / (camera - rz) * reach
-            px = mid_x + (((rx * cr) - (ry * sr)) * depth)
-            py = mid_y - (((rx * sr) + (ry * cr)) * depth)
-            @braille.dot(px.floor, py.floor, illumination(lum, x, y, z, phase, zone))
-          end
-        end
-
-        # Where a point of the face goes this frame, or nil where there is a
-        # void: the socket round an open eye is empty but for the pupil,
-        # which follows the gaze; a closing lid gathers the socket to a line;
-        # the mouth void opens with the audio and thins at its rim.
-        def feature(x, y, zone, phase)
-          mouth_x, mouth_y = @head.mouth
-          void = VOID + (VOID_OPEN * @look.mouth * @look.mouth_open)
-          if zone == Head::MOUTH_ZONE
-            # The opening is an ellipse: wide stretches it sideways, negative
-            # (O, U) rounds it, in the proportions the contract declares.
-            stretch = 1.0 + (0.6 * @look.mouth_wide)
-            squeeze = 1.0 - (0.3 * @look.mouth_wide)
-            reach = ((((x - mouth_x) / stretch)**2) + (((y - mouth_y) / squeeze)**2))
-            return if reach < void * void * (0.7 + (0.3 * Math.sin(phase * 7)))
-
-            return [x, y]
-          end
-
-          eye_x, eye_y = x.negative? ? @head.eyes[0] : @head.eyes[1]
-          open = @look.eye_open
-          return [x, eye_y + ((y - eye_y) * open)] if open < SHUT
-          return if zone == Head::EYE_ZONE
-
-          gaze_x, gaze_y = @look.gaze
-          [x + (gaze_x * 0.3), y + (gaze_y * 0.3)]
-        end
-
-        def illumination(lum, x, y, z, phase, zone = nil)
-          nx = x / 0.62
-          ny = y / 0.62
-          nz = z / 0.72
-          length = Math.sqrt((nx * nx) + (ny * ny) + (nz * nz)).nonzero? || 1.0
-          nx /= length
-          ny /= length
-          nz /= length
-
-          key = [dot(nx, ny, nz, -0.48, 0.28, 0.84), 0.0].max
-          fill = [dot(nx, ny, nz, 0.34, -0.08, 0.94), 0.0].max * 0.52
-          rim_phase = 0.55 + (0.45 * Math.sin((@t * 0.31) + phase))
-          edge = (1.0 - nz.abs).clamp(0.0, 1.0)
-          rim = edge * (0.18 + (0.08 * ((nx + 1.0) * 0.5))) * rim_phase
-          depth = ((nz + 1.0) * 0.5).clamp(0.0, 1.0)
-          grade = 0.68 + (0.18 * depth) + (0.08 * fill) + (0.20 * key) + rim
-          grade *= 0.62 if zone == Head::EYE_ZONE
-          grade += 0.24 if zone == Head::PUPIL_ZONE
-          (lum * grade).clamp(0.0, 1.0)
-        end
-
-        def dot(ax, ay, az, bx, by, bz)
-          (ax * bx) + (ay * by) + (az * bz)
-        end
-
-        def specks
-          reach = @head.scale * SPECK_SPAN
-          mid_x = @braille.dots_wide / 2.0
-          mid_y = @braille.dots_high / 2.0
-          camera = CAMERA / @look.dolly
-          @look.particles.each do |x, y, z|
-            depth = camera / (camera - (z * SPECK_SPAN))
-            light = SPECK_LIGHT * (0.72 + (0.28 * (((z * SPECK_SPAN) + 0.5).clamp(0.0, 1.0))))
-            @braille.dot((mid_x + (x * depth * reach)).floor, (mid_y - (y * depth * reach)).floor, light, head: false)
-          end
-        end
-      end
     end
   end
 end

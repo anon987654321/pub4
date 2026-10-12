@@ -18,9 +18,12 @@ module Master
       # window keeps one Motion and hands it to Face.frame with each tick.
       class Motion
         TAU = 2 * Math::PI
-        # Radians a second: the face turns only a little at rest and in thought.
-        # Full rotation made the Braille head collapse into a narrow silhouette.
-        YAW = { idle: [0.20, 0.32], thinking: [0.28, 0.55] }.freeze
+        # The ASCII face's tunables, shared with the web face: a constant slow
+        # spin in the resting states, a settle to the front in the attending ones.
+        ASCII = Master::Face::Contract.ascii.fetch("motion").freeze
+        SPIN = ASCII.fetch("spin").to_f
+        SPINNING = ASCII.fetch("spin_states").map(&:to_sym).freeze
+        BREATH = ASCII.fetch("breath").to_f
         EVENTS = %i[key listen nod thinking phantom council anticipate].freeze
         # How the face attends, from the contract the browser face reads too.
         AWARE = Master::Voice::Policy.awareness.freeze
@@ -47,6 +50,7 @@ module Master
           @seed = seed
           @t = nil
           @yaw, @pitch, @roll, @lean, @dip = Array.new(5) { Spring.new(0.0, 0.0) }
+          @turn = 0.0
           @dolly = Spring.new(1.0, 0.0)
           @eye = Spring.new(1.0, 0.0)
           @gaze_lon, @gaze_lat, @mouth, @mouth_wide = Array.new(4) { Spring.new(0.0, 0.0) }
@@ -66,6 +70,7 @@ module Master
           @viseme = viseme
           events.each { |event| react(event) }
           turn(state, t, dt)
+          spin(state, dt)
           features(state, t, dt, level)
           drift(state, t, dt, count)
           look(t)
@@ -111,18 +116,21 @@ module Master
         # The face stays readable in front view. State changes alter the
         # amount and speed of the turn, but never enough to hide the features.
         def turn(state, t, dt)
-          if (sway = YAW[state])
-            amount, speed = sway
-            @yaw.toward(amount * Math.sin(t * speed), 3.5, dt)
-          else
-            sway = state == :speaking ? 0.2 * noise(t * 0.4, 1) : 0.05 * noise(t * 0.3, 2)
-            @yaw.toward(sway, 2.5, dt)
-          end
+          sway = state == :speaking ? 0.2 * noise(t * 0.4, 1) : 0.05 * noise(t * 0.3, 2)
+          @yaw.toward(sway, 2.5, dt)
           @pitch.toward(pitch_for(state, t), 6.0, dt)
           @roll.toward(state == :listening ? 0.13 : 0.18 * Math.sin(t * 0.7), 4.0, dt)
           @lean.toward(lean_for(state), 4.0, dt)
           @dip.toward(0.0, 7.0, dt)
           @dolly.toward(dolly_for(state, t), 3.8, dt)
+        end
+
+        # Turning is constant while at rest; attending eases the head back to
+        # the nearest front so the features face the user.
+        def spin(state, dt)
+          return @turn += SPIN * dt if SPINNING.include?(state)
+
+          @turn += ((@turn / TAU).round * TAU - @turn) * (1 - Math.exp(-2.5 * dt))
         end
 
         # Leaning in is the listening settle, and a little more while the user is
@@ -139,7 +147,7 @@ module Master
         end
 
         def pitch_for(state, t)
-          nod = 0.12 * Math.sin(t * 0.43)
+          nod = ASCII.fetch("pitch_sway").to_f * Math.sin(t * ASCII.fetch("pitch_rate").to_f)
           return nod - 0.12 if state == :thinking
           return 0.08 if state == :listening
 
@@ -211,9 +219,9 @@ module Master
         end
 
         def look(t)
-          breath = 1.0 + (0.025 * Math.sin(t * 1.6))
+          breath = 1.0 + (BREATH * Math.sin(t * 1.6))
           Look.new(
-            yaw: @yaw.x, pitch: @pitch.x, roll: @roll.x, scale: breath * (1.0 + @lean.x),
+            yaw: @yaw.x, turn: @turn, pitch: @pitch.x, roll: @roll.x, scale: breath * (1.0 + @lean.x),
             dolly: @dolly.x.clamp(0.96, 1.09),
             bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
@@ -230,7 +238,13 @@ module Master
         end
 
         # One frame's worth of motion, in model units and radians.
-        Look = Data.define(:yaw, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles)
+        Look = Data.define(:yaw, :turn, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles)
+
+        # A Look at rest, for a still frame or a test: front, eyes open, mouth shut.
+        def self.rest(**over)
+          Look.new(**{ yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0, eye_open: 1.0, gaze: [0.0, 0.0],
+                       mouth: 0.0, mouth_open: 1.0, mouth_wide: 0.0, particles: [] }.merge(over))
+        end
 
         # Smooth value noise in [-1, 1]: lattice values from an integer hash,
         # eased between, so drift wanders without repeating.

@@ -9,7 +9,9 @@ class TestCliTerminalFace < Minitest::Test
     def available? = missing.nil?
   end
 
-  BRAILLE = /[⠁-⣿]/
+  # Braille is retired: the face is plain ASCII.
+  BRAILLE = /[\u2800-\u28FF]/
+  CONTOUR = %r{[|/\\\-]}
 
   def window
     Master::CLI::Face::Window.new(
@@ -30,17 +32,20 @@ class TestCliTerminalFace < Minitest::Test
 
   def test_the_face_owns_the_stage_and_control_strip
     painted = rows_of(window.screen(30, 80, 2.0)).values
-    assert painted.any? { |text| text.match?(BRAILLE) }
+    assert painted.any? { |text| text.match?(CONTOUR) }
+    refute painted.any? { |text| text.match?(BRAILLE) }
     assert painted.any? { |text| text.include?("idle, mic on") }
     refute painted.any? { |text| text.include?("/ FACE") }
     refute painted.any? { |text| text.include?("recent") }
   end
 
-  def test_face_specks_use_a_cool_accent_in_truecolor_terminals
-    grid = Master::CLI::Face::Braille.new(1, 2)
-    grid.dot(0, 0, 0.5, head: false)
+  def test_depth_is_bold_near_and_dim_far_in_colour_terminals
+    head = Master::CLI::Face::Head.for(20, 40)
+    frame = Master::CLI::Face::Ascii.new(head, 20, 40).render(Master::CLI::Face::Motion.rest)
 
-    assert_match(/\e\[38;2;\d+;\d+;\d+m/, grid.to_s(color: true))
+    assert_match(/\e\[0;1;38;2;\d+;\d+;\d+m/, frame.to_s(color: true))
+    assert_match(/\e\[0;2;38;2;\d+;\d+;\d+m/, frame.to_s(color: true))
+    refute_includes frame.to_s, "\e"
   end
 
   def test_every_row_of_the_window_is_painted
@@ -65,12 +70,21 @@ class TestCliTerminalFace < Minitest::Test
     assert_operator thinking, :>, 0.95
   end
 
+  def test_motion_turns_constantly_at_rest_and_settles_to_the_front_when_attending
+    motion = Master::CLI::Face::Motion.new(seed: 7)
+    turns = (1..40).map { |i| motion.step(state: :idle, t: i * 0.25).turn }
+    assert_in_delta Master::CLI::Face::Motion::SPIN * 0.25, turns[10] - turns[9], 0.01
+    40.times { |i| motion.step(state: :listening, t: 10.0 + (i * 0.25)) }
+    turn = motion.step(state: :listening, t: 20.0).turn
+    assert_in_delta 0.0, Math.sin(turn / 2), 0.02
+  end
+
   def test_motion_keeps_the_face_readable
     motion = Master::CLI::Face::Motion.new(seed: 7)
     120.times do |i|
       look = motion.step(state: :idle, t: (i + 1) / 15.0)
       assert_operator look.yaw.abs, :<=, 0.5
-      assert_operator look.dolly, :between?, 0.95, 1.10
+      assert look.dolly.between?(0.95, 1.10)
     end
   end
 

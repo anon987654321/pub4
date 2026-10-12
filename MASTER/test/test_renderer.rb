@@ -147,7 +147,7 @@ class TestRenderer < Minitest::Test
     assert_match(/\A(?:~|…|\/|[A-Za-z0-9_])/, lines.first)
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_match(/discover [%$] \z/, lines.first)
+    assert_match(/discover \|- \z/, lines.first)
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 

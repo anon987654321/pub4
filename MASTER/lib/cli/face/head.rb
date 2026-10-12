@@ -14,7 +14,7 @@ module Master
       # the way round, the terminal face wraps that mask onto the front of a
       # head whose outline, row by row, is the mask's own, lifts each point
       # by its painted brightness, and closes the back with points at the
-      # same spacing. The lattice is as fine as the window's Braille dots can
+      # same spacing. The lattice is as fine as the window's cells can
       # show, so a phone draws a few thousand points and a wide terminal more.
       #
       # Built once per window size and kept, since a resize is rare and a

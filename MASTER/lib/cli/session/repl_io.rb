@@ -131,7 +131,7 @@ module Master
         lines = []
         Master::Trace::Dmesg.status("input0", "enter lines, blank line to send")
         loop do
-          inner = safe_read_line("  ")
+          inner = safe_read_line("#{Master::Face::Contract.glyph(:continuation)} ")
           break if inner.nil? || inner.strip.empty?
           lines << inner
           if lines.size >= MULTILINE_MAX_LINES
