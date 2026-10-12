@@ -1,10 +1,13 @@
 # Approved visual baselines
 
 This directory holds **approved reference PNGs**, not the latest run's screenshots.
-For each surface opted into the structural layout snapshot, the filename is
-`<app>-<surface>-<viewport>.png`, derived from
-`MASTER/gates/data/geometry_surfaces.yml`. The rendered gate never copies a
-fresh screenshot here during an ordinary run or through `GATE_AUTOFIX`.
+Only a deliberately small set of surfaces opt into pixel comparison via
+`pixel_snapshot: true` in `MASTER/gates/data/geometry_surfaces.yml` or the
+`pixel_snapshot: true` field on a row in `MASTER/gates/support/brgen_vertical_surfaces.rb`.
+Structural `snapshot: true` does not automatically opt a page into PNG tests.
+The filename is `<app>-<surface>-<viewport>.png`, derived from the same canonical
+surface inventory. The rendered gate never copies a fresh screenshot here during
+an ordinary run or through `GATE_AUTOFIX`.
 
 ## Compare
 
