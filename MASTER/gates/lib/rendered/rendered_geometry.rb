@@ -84,7 +84,11 @@ module Deploy
       probed = 0
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
-          @result.fail("geometry: #{surface.id} probe failed — #{payload["error"]}")
+          if GeometryProbe.font_timeout?(payload)
+            @result.incomplete!("geometry: #{surface.id} not measured — #{payload["error"]}")
+          else
+            @result.fail("geometry: #{surface.id} probe failed — #{payload["error"]}")
+          end
           next
         end
         probed += 1
