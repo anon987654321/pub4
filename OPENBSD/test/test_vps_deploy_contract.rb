@@ -39,6 +39,9 @@ class VpsDeployContractTest < Minitest::Test
   def test_the_order_that_survives_its_own_side_effects
     assert_equal "master", deploy_all.first
     assert_equal %w[amber bsdports], deploy_all.last(2).sort
+    degraded = SOURCE[/^DEPLOY_ALL_DEGRADED=\(([^)]*)\)/, 1]&.split
+    assert_equal "master", degraded&.last, "when the box cannot take master first, master goes last"
+    assert_equal deploy_all.sort, degraded.sort
   end
 
   def test_deploy_paths_export_openbsd_package_path

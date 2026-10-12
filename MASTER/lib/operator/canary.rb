@@ -4,7 +4,9 @@ require "json"
 require "net/http"
 require "open3"
 require "optparse"
+require "rbconfig"
 require "socket"
+require "timeout"
 require "yaml"
 require_relative "../fix/routes_manifest"
 
@@ -19,6 +21,8 @@ module Operator
   #   routes     every public GET route from the route manifest: 200..399, under
   #              the latency budget, response headers under relayd's 8 KB limit,
   #              no "translation missing" in the body.
+  #   flows      the HTTP-only user journeys in gates/data/flows.yml (local mode only:
+  #              they read the apps on 127.0.0.1), one result per journey.
   #   smoke      OPENBSD/bin/deploy-smoke.sh, the rehearsal subset that needs only
   #              the box itself.
   #
@@ -36,17 +40,18 @@ module Operator
     module_function
 
     def main(argv, root: File.expand_path("../../..", __dir__), out: $stdout, **runner_opts)
-      opts = { mode: :local, apps: nil, budget_ms: DEFAULT_BUDGET_MS, smoke: true, json: false }
+      opts = { mode: :local, apps: nil, budget_ms: DEFAULT_BUDGET_MS, smoke: true, flows: true, json: false }
       OptionParser.new do |o|
         o.on("--local") { opts[:mode] = :local }
         o.on("--public") { opts[:mode] = :public }
         o.on("--app LIST") { |v| opts[:apps] = v.split(",") }
         o.on("--budget-ms N", Integer) { |v| opts[:budget_ms] = v }
         o.on("--no-smoke") { opts[:smoke] = false }
+        o.on("--no-flows") { opts[:flows] = false }
         o.on("--json") { opts[:json] = true }
       end.parse!(argv.dup)
 
-      results = Runner.new(root:, **opts.slice(:mode, :apps, :budget_ms, :smoke), **runner_opts).run
+      results = Runner.new(root:, **opts.slice(:mode, :apps, :budget_ms, :smoke, :flows), **runner_opts).run
       out.puts(opts[:json] ? JSON.pretty_generate(results.map(&:to_h)) : render(results, root))
       results.all?(&:ok) ? 0 : 1
     end
@@ -81,12 +86,13 @@ module Operator
     end
 
     class Runner
-      def initialize(root:, mode: :local, apps: nil, budget_ms: DEFAULT_BUDGET_MS, smoke: true,
+      def initialize(root:, mode: :local, apps: nil, budget_ms: DEFAULT_BUDGET_MS, smoke: true, flows: true,
                      http: nil, shell: nil, connect: nil)
         @root = root
         @mode = mode
         @budget_ms = budget_ms
         @smoke = smoke
+        @flows = flows
         @http = http || method(:fetch)
         @shell = shell || ->(*argv) { Open3.capture2e(*argv) }
         @connect = connect || method(:open_port)
@@ -98,6 +104,7 @@ module Operator
         results.concat(port_checks) if @mode == :local
         results.concat(service_checks) if @mode == :local
         results.concat(route_checks)
+        results.concat(flow_checks) if @flows && @mode == :local
         results.concat(smoke_check) if @smoke
         results
       end
@@ -163,6 +170,30 @@ module Operator
         headers.sum { |k, vs| Array(vs).sum { |v| "#{k}: #{v}\r\n".bytesize } }
       end
 
+      FLOW_LINE = %r{surface0: (?<app>[\w-]+)/(?<id>\S+) (?<state>PASS|FAIL|INCONCLUSIVE|SKIPPED|ERROR)\b}
+      FLOW_PROBLEM = /^\s*- flow:(?<id>\S+?)[\s:\/](?<why>.*)$/
+
+      # The flow_journey gate, scoped to the apps under test, reported per journey.
+      # A journey that could not run (no credentials, port closed) is not a failure
+      # here: the port and rcctl checks own "down", and an unmeasured journey is
+      # named as such rather than counted as passed.
+      def flow_checks
+        script = File.join(@root, "MASTER", "gates", "runner.rb")
+        return [] unless File.file?(script)
+
+        out, status = @shell.call("env", "GATE_AUTOFIX=0", "FLOW_APP=#{@apps.keys.join(',')}", RbConfig.ruby, script, "flow_journey")
+        rows = out.to_s.lines.filter_map { |line| FLOW_LINE.match(line) }
+        return [Result.new(name: "flows", ok: false, detail: out.to_s.lines.last(3).join.strip)] if rows.empty? && !status.success?
+
+        problems = out.to_s.lines.filter_map { |line| FLOW_PROBLEM.match(line) }.to_h { |m| [m[:id], m[:why].strip] }
+        rows.map do |m|
+          bad = %w[FAIL ERROR].include?(m[:state])
+          Result.new(name: "flow #{m[:app]}/#{m[:id]}", ok: !bad, detail: bad ? (problems[m[:id]] || m[:state]) : m[:state].downcase)
+        end
+      rescue SystemCallError => e
+        [Result.new(name: "flows", ok: false, detail: "#{e.class}: #{e.message}")]
+      end
+
       def smoke_check
         script = File.join(@root, "OPENBSD", "bin", "deploy-smoke.sh")
         return [] unless File.file?(script)
@@ -191,4 +222,137 @@ module Operator
       end
     end
   end
+
+  # The checks the code about to be deployed must pass before anything on vm23
+  # is stopped. On 2026-10-12 a pull took a SyntaxError and then a law that raised
+  # at boot onto the box; master's container died there and the pass halted with
+  # production already shed. Each check below reproduces one of those failures
+  # where it is cheap, which is before the deploy and not after the stop.
+  #
+  #   syntax       every Ruby file under MASTER/lib, MASTER/law and RAILS/*/app
+  #                compiles (one process, no per-file ruby -c)
+  #   law files    MASTER/test/test_law_files_load.rb, each law file in its own process
+  #   boot smoke   MASTER/tools/boot_smoke.rb, which builds the FixLoop
+  #   rehearse     OPENBSD/bin/rehearse, the static deploy contracts (the Mac only:
+  #                it loads RAILS tests the box has no reason to carry)
+  module DeployPreflight
+    Result = Struct.new(:name, :ok, :detail, keyword_init: true)
+    SWEEP_GLOBS = %w[MASTER/lib/**/*.rb MASTER/law/**/*.rb RAILS/*/app/**/*.rb].freeze
+    TIMEOUT = 900
+
+    module_function
+
+    def main(argv, root: File.expand_path("../../..", __dir__), out: $stdout)
+      opts = { rehearse: true }
+      OptionParser.new do |o|
+        o.on("--root DIR") { |v| root = v }
+        o.on("--no-rehearse") { opts[:rehearse] = false }
+      end.parse!(argv.dup)
+      results = run(root:, **opts)
+      out.puts(report(results))
+      results.all?(&:ok) ? 0 : 1
+    end
+
+    # Stops at the first failure: the later checks load the same code, and the
+    # first message is the one the operator needs.
+    def run(root:, rehearse: true, runner: method(:capture))
+      results = []
+      steps(root, rehearse, runner).each do |name, step|
+        results << step.call
+        results.last.name = name
+        break unless results.last.ok
+      end
+      results
+    end
+
+    def steps(root, rehearse, runner)
+      ruby = RbConfig.ruby
+      list = {
+        "syntax" => -> { syntax(root) },
+        "law files" => -> { shell(runner, [ruby, "-Itest", "test/test_law_files_load.rb"], File.join(root, "MASTER")) },
+        "boot smoke" => -> { shell(runner, [ruby, "tools/boot_smoke.rb"], File.join(root, "MASTER")) }
+      }
+      list["rehearse"] = -> { shell(runner, [ruby, "OPENBSD/bin/rehearse"], root) } if rehearse
+      list
+    end
+
+    def syntax(root)
+      bad = SWEEP_GLOBS.flat_map { |glob| Dir.glob(File.join(root, glob)) }.sort.filter_map do |file|
+        RubyVM::InstructionSequence.compile_file(file)
+        nil
+      rescue SyntaxError => e
+        "#{file.delete_prefix("#{root}/")}: #{e.message.lines.first.to_s.strip}"
+      end
+      Result.new(ok: bad.empty?, detail: bad.first(5).join("\n"))
+    end
+
+    def shell(runner, argv, chdir)
+      out, ok = runner.call(argv, chdir)
+      Result.new(ok:, detail: ok ? "" : out.to_s.lines.last(12).join)
+    end
+
+    def capture(argv, chdir)
+      out = +""
+      status = nil
+      Open3.popen2e(*argv, chdir:) do |stdin, io, wait|
+        stdin.close
+        reader = Thread.new { io.each_line { |line| out << line } }
+        begin
+          Timeout.timeout(TIMEOUT) { status = wait.value }
+        rescue Timeout::Error
+          Process.kill("TERM", wait.pid)
+          out << "timed out after #{TIMEOUT}s\n"
+        end
+        reader.join(2)
+      end
+      [out, status&.success? || false]
+    end
+
+    # `bin/operator vps deploy <app> --remote`: judge the commit here, then hand the
+    # box the exact SHA and the word that it passed. Returns [true, command] or
+    # [false, reason]; the caller runs the command or prints the reason.
+    #
+    # The commit judged is HEAD, and HEAD must be origin/main with no edits to
+    # tracked files in the governed trees, because the box deploys origin/main and a
+    # preflight of anything else proves nothing about what it will run.
+    def remote_command(root:, app:, env: ENV, git: method(:git_out), runner: method(:capture), out: $stdout)
+      git.call(root, "fetch", "-q", "origin", "main")
+      sha = git.call(root, "rev-parse", "HEAD")
+      return [false, "cannot read HEAD of #{root}"] if sha.empty?
+      return [false, "HEAD #{sha[0, 9]} is not origin/main (#{git.call(root, 'rev-parse', 'origin/main')[0, 9]}); the box deploys origin/main, so push and deploy from that commit"] unless git.call(root, "rev-parse", "origin/main") == sha
+
+      dirty = git.call(root, "status", "--porcelain", "-uno", "--", "MASTER", "RAILS", "OPENBSD")
+      return [false, "tracked files are modified, so the preflight would judge your edits, not the commit:\n#{dirty.lines.first(5).join}Use a clean worktree (bin/operator worktree <name>)."] unless dirty.empty?
+
+      lead = "cd /home/dev/pub4 && VPS_DEPLOY_SHA=#{sha}"
+      tail = "zsh OPENBSD/bin/vps-deploy #{app}"
+      if env["VPS_DEPLOY_SKIP_PREFLIGHT"] == "1"
+        return [false, "VPS_DEPLOY_SKIP_PREFLIGHT=1 needs the human-only I_UNDERSTAND_FAST_DEPLOY=1"] unless env["I_UNDERSTAND_FAST_DEPLOY"] == "1"
+
+        return [true, "#{lead} VPS_DEPLOY_SKIP_PREFLIGHT=1 I_UNDERSTAND_FAST_DEPLOY=1 #{tail}"]
+      end
+
+      results = run(root:, runner:)
+      out.puts(report(results))
+      return [false, "preflight failed on #{sha[0, 9]}; nothing was sent to the box"] unless results.all?(&:ok)
+
+      [true, "#{lead} VPS_DEPLOY_PREFLIGHT_SHA=#{sha} #{tail}"]
+    end
+
+    def git_out(root, *argv)
+      Open3.capture2("git", "-C", root, *argv, err: File::NULL).first.to_s.strip
+    end
+
+    def report(results)
+      failed = results.find { |r| !r.ok }
+      lines = results.map { |r| "#{r.ok ? 'ok  ' : 'FAIL'} preflight #{r.name}" }
+      return (lines << "preflight: all #{results.size} checks passed").join("\n") unless failed
+
+      lines << failed.detail.to_s.lines.map { |l| "       #{l.rstrip}" }.join("\n")
+      lines << "preflight: #{failed.name} FAILED - this commit does not boot. Nothing was stopped or pulled onto the box."
+      lines.join("\n")
+    end
+  end
 end
+
+exit Operator::DeployPreflight.main(ARGV) if $PROGRAM_NAME == __FILE__

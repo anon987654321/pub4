@@ -78,6 +78,69 @@ pexp="ruby[0-9.]*.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
+# --- stop path: tolerate a process that is already gone, then prove the port is free ---
+#
+# `rcctl restart master` once printed `kill: 87387: No such process`. The pid was
+# not ours: rc.subr starts a wait-for-start timer, and its `kill -ALRM ${_TIMERSUB}`
+# after rc_start is unguarded, so a timer that already exited (a fast start) prints
+# that line on stderr. It never changed an exit status. This wrapper silences only
+# that signal, so a real kill failure elsewhere in the file still speaks.
+#
+# There is no pidfile on this service: rc.subr finds the daemon with pgrep/pkill on
+# pexp. So "stale pid" cannot occur; the real hazards are a daemon that survives
+# TERM and keeps :53187 held (the next falcon then dies on EADDRINUSE and the
+# restart reports a start that never served), and a stop on an already-dead service.
+kill() {
+  case "$1" in
+    -ALRM) command kill "$@" 2>/dev/null; return 0 ;;
+    *) command kill "$@" ;;
+  esac
+}
+
+master_port_held() { nc -z -w 1 127.0.0.1 "$PORT" >/dev/null 2>&1; }
+
+# Waits up to $1 seconds for the port to free. Returns 1 when it never does.
+master_wait_port_free() {
+  _w=0
+  while master_port_held; do
+    _w=$((_w + 1))
+    [ "$_w" -ge "${1:-20}" ] && return 1
+    sleep 1
+  done
+  return 0
+}
+
+# Signals the process group of every falcon bound to the port. A pid that vanished
+# between pgrep and ps yields no group and is skipped, never an error; rc's own
+# group is never signalled.
+master_group_signal() {
+  _own=$(set -- $(ps -o pgid= -p $$ 2>/dev/null); echo "$1")
+  for _p in $(pgrep -f "falcon.*${PORT}" 2>/dev/null); do
+    _g=$(set -- $(ps -o pgid= -p "$_p" 2>/dev/null); echo "$1")
+    [ -n "$_g" ] || continue
+    [ "$_g" = "$_own" ] && continue
+    pkill "-$1" -g "$_g" 2>/dev/null
+  done
+  return 0
+}
+
+# TERM by pexp (rc.subr's own path, silent when nothing matches), then the group.
+# Always 0: a service that is not running is already stopped.
+rc_stop() {
+  _rc_sendsig ${rc_stop_signal} 2>/dev/null
+  master_group_signal TERM
+  return 0
+}
+
+# Runs after every stop and after a failed start. A port still held after the
+# grace period gets a group KILL; if it is held after that, the stop failed.
+rc_post() {
+  master_wait_port_free 10 && return 0
+  master_group_signal KILL
+  master_wait_port_free 10
+}
+# --- end stop path ---
+
 rc_pre() {
   # Deploy-in-progress lock, first: resource_guard reads this flag to hold off
   # shedding during the bundle check and the cold boot that follow.
@@ -95,6 +158,16 @@ rc_pre() {
   pkill -f "ruby[0-9.]*.*${PORT}" 2>/dev/null
   pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
   rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
+  # A held port means the next falcon cannot bind; refuse here, with the reason,
+  # instead of reporting a start that never serves.
+  if ! master_wait_port_free 20; then
+    master_group_signal KILL
+    master_wait_port_free 10 || {
+      logger -t master "CRITICAL: :${PORT} still held after TERM and KILL, refusing to start"
+      rm -f /home/dev/pub4/.deploying 2>/dev/null || true
+      exit 1
+    }
+  fi
   # Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
   rm -rf /home/dev/pub4/RAILS/master_web/public/assets/assets 2>/dev/null || true
   _face_ok=1

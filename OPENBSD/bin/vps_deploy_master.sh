@@ -24,8 +24,17 @@ ROOT="${ROOT:-/home/dev/pub4}"
 . "$ROOT/OPENBSD/lib/ruby_select.sh"
 WEB="$ROOT/RAILS/master_web"
 
-echo "==> git pull"
-cd "$ROOT" && git pull --ff-only origin main
+# vps-deploy pins one SHA and moves the checkout to it before any step runs; this
+# script then only checks that nothing moved it. A hand run (no VPS_DEPLOY_SHA, the
+# fallback this file's header describes) still pulls.
+cd "$ROOT"
+if [ -n "${VPS_DEPLOY_SHA:-}" ]; then
+  echo "==> checkout is pinned to $VPS_DEPLOY_SHA"
+  [ "$(git rev-parse HEAD)" = "$VPS_DEPLOY_SHA" ] || { echo "HEAD is $(git rev-parse HEAD), not the pinned SHA" >&2; exit 1; }
+else
+  echo "==> git pull"
+  git pull --ff-only origin main
+fi
 
 cd "$WEB"
 export LANG=C.UTF-8 LC_ALL=C.UTF-8

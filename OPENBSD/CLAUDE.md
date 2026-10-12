@@ -22,7 +22,13 @@ the checkout for everything; only a deploy makes any of it live.
 The order is load-bearing, not alphabetical. Every deploy sheds amber and
 bsdports: they land in `rcctl failed` with ports 61352/47312 closed while relayd
 keeps answering TLS, so the outage reads as a hang rather than a 5xx and nothing
-reports it. Deploying those two last folds the restore into the same pass.
+reports it. Deploying those two last folds the restore into the same pass, and
+the top-level run's exit trap restores every service that was started when the
+deploy began, one at a time, so a halt no longer leaves production down.
+Since 2026-10-12 the pass also pins one SHA, refuses a commit that fails
+`MASTER/lib/operator/canary.rb`, and puts master first only when the
+apps are up and memory allows; `RUNBOOK.md`, "The deploy sequence and its
+recovery", has the steps.
 
 Related, and worth knowing before you diagnose a deploy: **a shed and a relayd
 failure look nothing alike once you check.** A shed leaves 443 answering with

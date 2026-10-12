@@ -64,7 +64,10 @@ class RestoreScriptsTest < Minitest::Test
     assert write, "write_stamp function missing"
     assert_includes write, "rev-parse --short HEAD"
     refute_match(/sha=\$\(git -C "\$repo" rev-parse --short HEAD\)\nstarted=/, source.split("write_stamp()")[0])
-    assert_includes source, "pull --ff-only origin main"
+    # The pin moves the checkout (merge --ff-only of the pinned SHA); a hand run of
+    # vps_deploy_master.sh without a pin still pulls.
+    assert_includes source, %q{merge -q --ff-only "$pin"}
+    assert_includes File.read(File.join(ROOT, "bin/vps_deploy_master.sh")), "pull --ff-only origin main"
     assert_includes source, 'write_stamp master failed'
     assert_includes source, 'write_stamp "$app" failed'
   end

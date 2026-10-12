@@ -117,6 +117,49 @@ class CanaryTest < Minitest::Test
     assert_includes asked, %w[rcctl check amber]
   end
 
+FLOW_OUTPUT = <<~OUT
+    Warnings:
+      - surface0: demo/demo_browse PASS - 2 step(s) - demo.test [/, /up]
+      - surface0: demo/demo_search FAIL - 1 step(s) - demo.test [/search]
+      - surface0: demo/demo_signed_in INCONCLUSIVE - 2 step(s) - credentials unavailable
+    Failures:
+      - flow:demo_search invariant broken: hits(0) > 0 - search is wired to data
+  OUT
+
+  def test_flow_journeys_are_reported_one_result_per_flow_scoped_to_the_apps
+    write("MASTER/gates/runner.rb", "")
+    asked = []
+    shell = lambda do |*argv|
+      asked << argv
+      [FLOW_OUTPUT, Ok.new(false)]
+    end
+    got = by_name(runner(shell:).run)
+    assert got["flow demo/demo_browse"].ok
+    refute got["flow demo/demo_search"].ok
+    assert_match(/invariant broken: hits\(0\) > 0/, got["flow demo/demo_search"].detail)
+    assert got["flow demo/demo_signed_in"].ok, "an unmeasured journey is named, not failed"
+    assert_equal "inconclusive", got["flow demo/demo_signed_in"].detail
+    call = asked.find { |a| a.include?("flow_journey") }
+    assert_includes call, "FLOW_APP=demo"
+    assert_includes call, "GATE_AUTOFIX=0"
+  end
+
+  def test_a_crashed_flow_runner_is_one_failed_result_and_no_flows_skips_it
+    write("MASTER/gates/runner.rb", "")
+    crash = ->(*_) { ["boom\n", Ok.new(false)] }
+    got = by_name(runner(shell: crash).run)
+    refute got["flows"].ok
+    assert_includes got["flows"].detail, "boom"
+    refute(by_name(runner(shell: crash, flows: false).run).key?("flows"))
+  end
+
+  def test_public_mode_never_runs_flows_because_they_read_the_box_loopback
+    write("MASTER/gates/runner.rb", "")
+    asked = []
+    runner(mode: :public, shell: ->(*argv) { asked << argv; ["", Ok.new(true)] }).run
+    assert(asked.none? { |a| a.include?("flow_journey") })
+  end
+
   def test_the_deploy_shed_ports_are_probed_by_number
     real = File.expand_path("../..", __dir__)
     ports = []

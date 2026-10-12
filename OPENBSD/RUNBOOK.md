@@ -309,6 +309,68 @@ releases the lock and the deploy flag, and appends `finished ... exit=N
 stage=...` to `~/vps-deploy.log` directly, so a dropped ssh session still leaves
 the verdict. A kill or hangup counts as a failure with the stage it interrupted.
 
+### The deploy sequence and its recovery
+
+`bin/vps-deploy all` (or one app) now does this, in order, and stops at the first
+failure. Nothing is stopped before step 4.
+
+1. Take the lock and start the log. Print nothing about services yet.
+2. Pin one commit. The target is `VPS_DEPLOY_SHA`, or `origin/main` fetched once
+   here, and the run prints `pinned <sha> (box HEAD was <sha>)`. It must be a
+   fast-forward of the box. No later step pulls; each checks `HEAD` against the pin.
+3. Prove the commit boots. `bin/operator vps deploy <app> --remote` runs
+   `Operator::DeployPreflight` (`MASTER/lib/operator/canary.rb`) on your machine (Ruby syntax sweep of
+   `MASTER/lib`, `MASTER/law` and `RAILS/*/app`; `test_law_files_load.rb`;
+   `MASTER/tools/boot_smoke.rb`; `OPENBSD/bin/rehearse`) and sends the box the SHA
+   with `VPS_DEPLOY_PREFLIGHT_SHA`. A run typed on the box has no such word and
+   runs the first three itself, on the pinned commit, detached; a failure puts the
+   checkout back where it was. Break-glass is `VPS_DEPLOY_SKIP_PREFLIGHT=1` and,
+   like the runtime-gate skip, only with `I_UNDERSTAND_FAST_DEPLOY=1`.
+4. Record `doas rcctl ls started`. This is what the exit trap restores.
+5. Choose the order. `master` leads only when every app that was started answers
+   `/up` and the last `resource_guard` tick shows `mem_avail` at or above
+   `VPS_DEPLOY_MASTER_MIN_AVAIL` (10). Otherwise: brgen, amber, bsdports, master.
+6. For each target: wait until every running app answers `/up` (no CI, bundle or
+   precompile on top of a Falcon boot); disk and load preflight; CI and sync;
+   migrate; precompile (again after settling); restart; `/up`; stylesheet;
+   solid_queue proof; restore anything shed, one service at a time, each waiting for
+   its `/up`; the loopback gates; the flow journeys for that app only
+   (`FLOW_APP=<app>`, HTTP only, one pass or fail line per flow).
+7. On any failure the exit trap of the top-level run restores every service from
+   the step 4 list that is not running, in serving order (brgen, amber, bsdports,
+   master, then the rest), one at a time, each waiting up to
+   `VPS_DEPLOY_RESTORE_WAIT` (240) seconds for `/up`. Each line says whether the
+   deploy stopped it, `resource_guard` shed it, or it went down for another reason.
+   The exit status stays the failure's, and the trap names the stage.
+
+Recovery by hand, one app at a time, waiting for each port before the next. Falcon
+needs 30 to 40 seconds under load, and two booting together is how the apps got
+shed. Use `restart`, not `start`: `rc.d/master` runs its relayd restart, TTS warmup
+and deploy-flag removal only on restart.
+
+```zsh
+doas rcctl restart brgen
+until curl -fsS http://127.0.0.1:38182/up >/dev/null; do sleep 3; done
+doas rcctl restart amber
+until curl -fsS http://127.0.0.1:61352/up >/dev/null; do sleep 3; done
+doas rcctl restart bsdports
+until curl -fsS http://127.0.0.1:47312/up >/dev/null; do sleep 3; done
+doas rcctl restart master
+until curl -fsS http://127.0.0.1:53187/up >/dev/null; do sleep 3; done
+OPENBSD/bin/canary --local        # ports, rcctl, every public route, then each flow journey
+```
+
+`rcctl restart master` may print `kill: <pid>: No such process`. That was rc.subr's
+own wait-for-start timer, not a stale pid (the service has no pidfile); the rc.d now
+silences that one signal. The stop path exits 0 when the process is already gone,
+kills the process group if one is left, and `rc_post` fails the stop if `:53187` is
+still held, so a start never races a survivor. The ports above are the ones in `RAILS/apps.yml`; read them there if they change.
+
+To deploy an exact commit, not the tip: `VPS_DEPLOY_SHA=<sha> zsh OPENBSD/bin/vps-deploy all`
+on the box, or push it and use `bin/operator vps deploy all --remote` from a clean
+worktree at that commit. A stale `~/.pub4-vps-deploy.lock` is reaped by the next run
+when its pid is gone; every exit, including a halted `all`, releases it.
+
 ## Deploy-all disambiguation
 
 Four scripts read as “do everything”, and they do four different things. Pick

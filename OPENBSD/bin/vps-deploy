@@ -9,7 +9,10 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 usage() {
   print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (run as dev, never under doas)
 
-  all          master, then every app, amber and bsdports last
+  all          master, then every app, amber and bsdports last (master last when the box is short of memory)
+  VPS_DEPLOY_SHA=<sha>   deploy exactly this commit (default: origin/main, fetched once)
+  VPS_DEPLOY_PREFLIGHT_SHA=<sha>   the operator's machine already proved this commit boots
+  VPS_DEPLOY_SKIP_PREFLIGHT=1      break-glass, needs I_UNDERSTAND_FAST_DEPLOY=1
   SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime gate still run
   VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
   PUB4_DEPLOY_BROWSER_GATES=1   add the browser gates after restart"
@@ -178,10 +181,110 @@ hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
 deploy_stage=start
 app_stopped=0
 stamp_written=0
+halted_app=
+typeset -a own_stops
+
+# Services the deploy needs to put back, and how it waits for them.
+#
+# On 2026-10-12 a halted `all` pass left brgen, amber and bsdports down for minutes
+# until the operator typed rcctl start by hand: the restore sat at the end of a pass
+# that never got there. The snapshot of started services is taken before anything is
+# touched (VPS_DEPLOY_STARTED, exported so the children see it), and the exit trap
+# of the top-level process puts back whatever is missing, one service at a time.
+# Falcon needs 30-40 s to boot on this box, and two booting at once is what shed
+# the apps in the first place, so each service answers /up before the next starts.
+typeset -A deploy_ports
+load_deploy_ports() {
+  (( $#deploy_ports )) && return 0
+  deploy_ports[master]=53187
+  local line
+  for line in ${(f)"$("$RUBY" -ryaml -e 'YAML.safe_load_file(ARGV[0]).fetch("apps").each { |n, v| puts "#{n} #{v["port"]}" if v["port"] }' "$repo/RAILS/apps.yml" 2>/dev/null)"}; do
+    deploy_ports[${line%% *}]=${line##* }
+  done
+  return 0
+}
+
+# Bounded wait for http://127.0.0.1:PORT/up. Returns 1 when the limit passes.
+wait_up() {
+  local port=$1 limit=${2:-${VPS_DEPLOY_RESTORE_WAIT:-240}} step=${VPS_DEPLOY_POLL:-3} waited=0
+  while (( waited < limit )); do
+    curl -fsS --max-time 5 "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && return 0
+    sleep $step
+    waited=$(( waited + step ))
+  done
+  return 1
+}
+
+# Every service that was started and is running must answer /up before the next
+# memory-heavy step (CI, bundle, precompile). A service that is down is not booting
+# and is not waited for; one that never answers is reported, not waited on forever.
+settle_boots() {
+  local svc port
+  load_deploy_ports
+  for svc in ${=VPS_DEPLOY_STARTED:-}; do
+    port=${deploy_ports[$svc]:-}
+    [[ -n $port ]] || continue
+    doas rcctl check "$svc" >/dev/null 2>&1 || continue
+    wait_up "$port" "${VPS_DEPLOY_SETTLE_WAIT:-240}" \
+      || print -u2 "vps-deploy: WARNING - $svc is running but :${port}/up did not answer within ${VPS_DEPLOY_SETTLE_WAIT:-240}s"
+  done
+  return 0
+}
+
+# Who stopped it: this deploy, resource_guard (its shed ledger), or neither.
+stop_origin() {
+  local svc=$1 shed_file=${VPS_DEPLOY_SHED_FILE:-/var/db/resource_guard_shed}
+  if [[ $svc == $halted_app ]] || (( ${own_stops[(Ie)$svc]} )); then
+    print "stopped by this deploy"
+  elif [[ -r $shed_file ]] && (( ${${(f)"$(<$shed_file)"}[(Ie)$svc]} )); then
+    print "shed by resource_guard"
+  else
+    print "down for another reason (crashed or stopped outside the deploy)"
+  fi
+}
+
+# Starts, one at a time and in serving order, every service that was started when
+# the deploy began and is not running now. Returns 1 if any would not come back.
+restore_started() {
+  [[ -n ${VPS_DEPLOY_STARTED:-} ]] || return 0
+  load_deploy_ports
+  local -a want order failed restored
+  local svc port origin
+  want=( ${=VPS_DEPLOY_STARTED} )
+  for svc in brgen amber bsdports master; do (( ${want[(Ie)$svc]} )) && order+=($svc); done
+  for svc in $want; do (( ${order[(Ie)$svc]} )) || order+=($svc); done
+  for svc in $order; do
+    doas rcctl check "$svc" >/dev/null 2>&1 && continue
+    origin=$(stop_origin "$svc")
+    print "vps-deploy: restore $svc ($origin)"
+    port=${deploy_ports[$svc]:-}
+    # restart, not start: rc.d/master runs its relayd restart, TTS warmup and flag
+    # removal only on restart, and restart on a stopped service is a start.
+    doas rcctl restart "$svc" >/dev/null 2>&1 || true
+    if [[ -n $port ]]; then
+      wait_up "$port" || { doas rcctl restart "$svc" >/dev/null 2>&1 || true; wait_up "$port"; } || {
+        print -u2 "vps-deploy: restore $svc FAILED - :${port}/up not ready, read /var/log/daemon"
+        failed+=($svc); continue
+      }
+    else
+      sleep 3
+      doas rcctl check "$svc" >/dev/null 2>&1 || { print -u2 "vps-deploy: restore $svc FAILED - rcctl check"; failed+=($svc); continue }
+    fi
+    print "vps-deploy: restore $svc ok"
+    restored+=($svc)
+  done
+  (( $#restored )) && print "vps-deploy: restored ${restored}"
+  (( $#failed )) && print -u2 "vps-deploy: STILL DOWN after restore: ${failed}  (doas rcctl restart <name>, one at a time)"
+  (( $#failed == 0 ))
+}
+
 finish() {
   local rc=$?
   trap - EXIT
   rm -f -- "$deploy_flag"
+  if (( rc != 0 )) && [[ $app == all ]]; then
+    print -u2 "vps-deploy: all FAILED at stage \"$deploy_stage\" (exit $rc)"
+  fi
   if (( rc != 0 )) && [[ $app != all ]]; then
     if (( ! stamp_written )) && (( $+functions[write_stamp] )); then
       write_stamp "$app" failed || true
@@ -202,6 +305,11 @@ finish() {
         || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — doas rcctl restart $other"
     done
   fi
+  # Only the process that owns the lock restores: the children of `all` fail into
+  # their parent, which knows the whole pass. Each restore result is printed.
+  if (( rc != 0 )) && (( lock_owner )); then
+    restore_started || print -u2 "vps-deploy: production is NOT fully restored - see the lines above"
+  fi
   print -r -- "==> vps-deploy $app finished $(date '+%Y-%m-%d %H:%M:%S') exit=$rc stage=$deploy_stage" \
     >> "${deploy_log:-$HOME/vps-deploy.log}" 2>/dev/null || true
   release_deploy_lock
@@ -213,6 +321,62 @@ trap finish EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+# Pin the commit, prove it boots, record what is running.
+#
+# Done once, by the process that owns the lock, before any service is touched.
+#
+# The deploy used to pull origin/main at whatever instant each step reached its
+# pull, so a commit pushed mid-pass was deployed half-way through it. On 2026-10-12
+# the pulled tip carried a SyntaxError and later a law that raised at boot; master's
+# container died on the box and the pass halted with production already shed. Now
+# the target is one SHA, resolved here (VPS_DEPLOY_SHA, or origin/main fetched
+# once), and every later step checks HEAD against it instead of pulling.
+#
+# The checks (MASTER/lib/operator/canary.rb) ran on the operator's
+# machine when `bin/operator vps deploy --remote` started this run and said so with
+# VPS_DEPLOY_PREFLIGHT_SHA; a direct run on the box has no such word and runs the
+# MASTER-only subset itself on the pinned commit, detached, so a refusal leaves the
+# checkout where it was. VPS_DEPLOY_SKIP_PREFLIGHT=1 is break-glass and, like the
+# runtime-gate skip, needs the human-only I_UNDERSTAND_FAST_DEPLOY=1.
+deploy_refuse() { print -u2 "vps-deploy: refused - $1"; print -u2 "            Nothing was stopped."; exit 1 }
+if (( lock_owner )); then
+  deploy_stage=pin
+  source "$repo/OPENBSD/lib/ruby_select.sh"
+  git -C "$repo" fetch -q origin main || deploy_refuse "git fetch origin main failed"
+  pin=$(git -C "$repo" rev-parse --verify -q "${VPS_DEPLOY_SHA:-FETCH_HEAD}^{commit}") \
+    || deploy_refuse "${VPS_DEPLOY_SHA:-origin/main} is not a commit this checkout can see"
+  head_before=$(git -C "$repo" rev-parse HEAD)
+  git -C "$repo" merge-base --is-ancestor "$head_before" "$pin" \
+    || deploy_refuse "$pin is not a fast-forward of the box's HEAD $head_before"
+  export VPS_DEPLOY_SHA=$pin
+  print "vps-deploy: pinned $pin (box HEAD was $head_before)"
+  if [[ -n ${VPS_DEPLOY_PREFLIGHT_SHA:-} ]]; then
+    [[ $VPS_DEPLOY_PREFLIGHT_SHA == $pin ]] \
+      || deploy_refuse "preflight ran on $VPS_DEPLOY_PREFLIGHT_SHA but this run would deploy $pin"
+    print "vps-deploy: preflight passed on the operator's machine for $pin"
+  elif [[ ${VPS_DEPLOY_SKIP_PREFLIGHT:-} == 1 ]]; then
+    [[ ${I_UNDERSTAND_FAST_DEPLOY:-} == 1 ]] \
+      || deploy_refuse "VPS_DEPLOY_SKIP_PREFLIGHT=1 needs the human-only I_UNDERSTAND_FAST_DEPLOY=1"
+    print "vps-deploy: WARNING - preflight skipped (break-glass); $pin was not proven to boot"
+  else
+    deploy_stage=preflight-boot
+    print "vps-deploy: preflight on $pin (syntax, law files, boot smoke)"
+    back_to=$(git -C "$repo" symbolic-ref -q --short HEAD || print -r -- "$head_before")
+    git -C "$repo" switch -q --detach "$pin" || deploy_refuse "cannot check out $pin in $repo (local changes?)"
+    if ! "$RUBY" "$repo/MASTER/lib/operator/canary.rb" --no-rehearse; then
+      git -C "$repo" switch -q "$back_to" || true
+      deploy_refuse "preflight failed on $pin; the checkout is back on $back_to and the previous release is still serving"
+    fi
+    git -C "$repo" switch -q "$back_to" || deploy_refuse "cannot return to $back_to"
+  fi
+  git -C "$repo" merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
+  deploy_stage=snapshot
+  VPS_DEPLOY_STARTED="$(doas rcctl ls started 2>/dev/null)"
+  VPS_DEPLOY_STARTED=${VPS_DEPLOY_STARTED//$'\n'/ }
+  export VPS_DEPLOY_STARTED
+  print "vps-deploy: started before this deploy: $VPS_DEPLOY_STARTED"
+fi
 
 # The whole fleet, in the order that survives its own side effects.
 #
@@ -228,9 +392,42 @@ trap 'exit 143' TERM
 # the Rails apps and is the one that gets forgotten.
 DEPLOY_ALL=(master brgen amber bsdports)
 
+# master leads only when the box can take it: every app that was started is
+# answering /up and memory availability (the last resource_guard tick) is at or
+# above VPS_DEPLOY_MASTER_MIN_AVAIL percent. Otherwise the apps go first and master
+# last, so a master failure halts a pass whose apps are already deployed and up
+# instead of one that has shed them. The restore in the exit trap covers either order.
+DEPLOY_ALL_DEGRADED=(brgen amber bsdports master)
+choose_deploy_order() {
+  local svc port avail why=
+  load_deploy_ports
+  avail=$("$RUBY" -e 'print File.readlines(ARGV[0]).last.to_s[/mem_avail=(\d+)/, 1].to_s' \
+    "${VPS_DEPLOY_GUARD_LOG:-/var/log/resource_guard_history.log}" 2>/dev/null)
+  for svc in brgen amber bsdports; do
+    (( ${${=VPS_DEPLOY_STARTED:-}[(Ie)$svc]} )) || continue
+    port=${deploy_ports[$svc]:-}
+    [[ -n $port ]] && wait_up "$port" 5 || why="$svc is not answering /up"
+  done
+  if [[ -z $why ]]; then
+    [[ $avail == <-> ]] || why="memory availability unreadable"
+  fi
+  if [[ -z $why ]] && (( avail < ${VPS_DEPLOY_MASTER_MIN_AVAIL:-10} )); then
+    why="memory availability ${avail}% is under ${VPS_DEPLOY_MASTER_MIN_AVAIL:-10}%"
+  fi
+  if [[ -z $why ]]; then
+    deploy_order=($DEPLOY_ALL)
+  else
+    print "vps-deploy: all - master goes last: $why"
+    deploy_order=($DEPLOY_ALL_DEGRADED)
+  fi
+}
+
 if [[ $app == all ]]; then
   typeset -i first=1
-  for one in $DEPLOY_ALL; do
+  typeset -a deploy_order
+  choose_deploy_order
+  print "vps-deploy: all order: ${deploy_order}"
+  for one in $deploy_order; do
     # Let the previous app's deploy drain before starting the next one's CI.
     #
     # One CPU, four apps back to back: each deploy leaves precompile, a restart
@@ -251,9 +448,10 @@ if [[ $app == all ]]; then
     # Re-entrant rather than inlined: each app gets the full path including its
     # own health gate and deploy stamp, and a failure halts the pass instead of
     # deploying the next one on top of a broken box.
-    zsh "$0" "$one" || { print -u2 "vps-deploy: all halted at $one"; exit 1 }
+    deploy_stage="all:$one"
+    zsh "$0" "$one" || { halted_app=$one; print -u2 "vps-deploy: all halted at $one"; exit 1 }
   done
-  print "vps-deploy: all ok ($DEPLOY_ALL)"
+  print "vps-deploy: all ok ($deploy_order)"
   exit 0
 fi
 
@@ -282,8 +480,20 @@ EOF
 deploy_stage=master
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
+  settle_boots
   if zsh "$repo/OPENBSD/bin/vps_deploy_master.sh"; then
+    # The loopback journeys that need no browser, for this app only.
+    deploy_stage=master-flows
+    hold_deploy_flag
+    if ! FLOW_APP=master MASTER_STRICT=deploy GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 "$RUBY" "$repo/MASTER/gates/runner.rb" flow_journey; then
+      write_stamp master failed
+      print -u2 "vps-deploy: master flow journeys failed - see the per-flow lines above"
+      exit 1
+    fi
+    deploy_stage=restore-shed
+    restore_started && restore_ok=1 || restore_ok=0
     write_stamp master ok
+    (( restore_ok )) || { print -u2 "vps-deploy: master deployed, but a service that was running before is still down"; exit 1 }
     exit 0
   fi
   # A failed run stamps failed, or last_deploy_master.json keeps saying ok
@@ -300,8 +510,11 @@ fi
 # days. master pulls inside vps_deploy_master.sh; this is the matching step for
 # the three copy-tree apps.
 deploy_stage=pull
-print "vps-deploy: $app (git pull --ff-only)"
-git -C "$repo" pull --ff-only origin main
+# No pull here: the top-level process pinned one SHA and moved the checkout to it.
+# A checkout that has moved off it since means another hand touched the box.
+print "vps-deploy: $app (checkout must be ${VPS_DEPLOY_SHA:?no pinned SHA, run through the top-level vps-deploy})"
+[[ $(git -C "$repo" rev-parse HEAD) == "$VPS_DEPLOY_SHA" ]] \
+  || { print -u2 "vps-deploy: $app refused - HEAD is $(git -C "$repo" rev-parse HEAD), not the pinned $VPS_DEPLOY_SHA"; exit 1 }
 
 # Free space, before anything is stopped. A bundle install, an asset precompile or
 # a CI mirror that runs out of disk dies halfway, after the app was stopped for the
@@ -374,11 +587,14 @@ else
   # nothing in a CI test section means the runner was killed, not that a test
   # failed. Stopped and restarted here so the knowledge lives in the deploy
   # rather than in whoever remembers to type it.
+  # No other app may still be booting when CI starts: a Falcon cold boot and a test
+  # suite on one core is how the apps were shed.
+  settle_boots
   jobs_service="${app}_jobs"
   jobs_was_up=0
   if doas rcctl get "$jobs_service" >/dev/null 2>&1 && doas rcctl check "$jobs_service" >/dev/null 2>&1; then
     print "vps-deploy: $app (stand down $jobs_service for the CI run)"
-    doas rcctl stop "$jobs_service" >/dev/null 2>&1 && jobs_was_up=1
+    doas rcctl stop "$jobs_service" >/dev/null 2>&1 && { jobs_was_up=1; own_stops+=("$jobs_service") }
   fi
 
   deploy_stage=ci+sync
@@ -420,6 +636,7 @@ print "vps-deploy: $app (primary db migrate + secondary schemas)"
 print "vps-deploy: $app (stop for sqlite migrate)"
 doas rcctl stop "$app" 2>/dev/null || true
 app_stopped=1
+own_stops+=("$app")
 db_create_migrate_as_app "$app" "/home/${app}/app"
 
 # The SKIP_CI=1 path (${app}.sh -> deploy_tracked_app -> rails_runtime_gate)
@@ -431,6 +648,7 @@ db_create_migrate_as_app "$app" "/home/${app}/app"
 # call unconditionally: Propshaft precompile is idempotent.
 deploy_stage=precompile
 print "vps-deploy: $app (assets precompile)"
+settle_boots
 rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 
 deploy_stage=restart
@@ -503,18 +721,8 @@ fi
 # single-app deploy, the common case, the same restore. Reported, not silent — a
 # service that needed restoring is a fact about the box worth seeing.
 deploy_stage=restore-shed
-restored=()
-for other in amber bsdports; do
-  [[ $other == "$app" ]] && continue
-  doas rcctl get "$other" >/dev/null 2>&1 || continue          # not configured here
-  doas rcctl check "$other" >/dev/null 2>&1 && continue        # already up
-  if doas rcctl restart "$other" >/dev/null 2>&1 && doas rcctl check "$other" >/dev/null 2>&1; then
-    restored+=("$other")
-  else
-    print -u2 "vps-deploy: $other is down and would not restart — check it"
-  fi
-done
-(( ${#restored} )) && print "vps-deploy: restored after shedding: ${restored}"
+restore_failed=0
+restore_started || restore_failed=1
 
 # The gates, on the deployed thing.
 #
@@ -554,7 +762,7 @@ fi
 deploy_stage=gates
 print "vps-deploy: $app (gates: ${gate_names})"
 hold_deploy_flag
-if ! MASTER_STRICT=deploy GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
+if ! FLOW_APP="$app" MASTER_STRICT=deploy GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
   write_stamp "$app" failed
   print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
   print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."
@@ -576,3 +784,5 @@ fi
 
 print "vps-deploy: $app ok"
 write_stamp "$app" ok
+(( restore_failed )) && { print -u2 "vps-deploy: $app deployed, but a service that was running before is still down"; exit 1 }
+exit 0

@@ -29,6 +29,10 @@ module Deploy
     def run
       @result = GateResult.new
       flows = Array(YAML.safe_load_file(@path)["flows"])
+      # vps-deploy judges one app at a time: FLOW_APP=brgen runs only brgen's journeys,
+      # so another app that is shed or mid-boot cannot fail this app's deploy.
+      only = ENV["FLOW_APP"].to_s.split(",").map(&:strip).reject(&:empty?)
+      flows = flows.select { |flow| only.include?(flow["app"]) } unless only.empty?
       ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
       # MASTER web is not a RAILS/apps.yml row — face + mission control.
       ports["master"] ||= 53_187

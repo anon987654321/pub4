@@ -40,7 +40,7 @@ def usage
       bin/operator fix status [--trees=A,B] [--json]  /fix runs, queue, pass, logs, commits and retained worktrees; read-only
       bin/operator vps state [--json] [--remote]
       bin/operator vps master <status|start|stop|restart> [--remote]
-      bin/operator vps deploy <app|master> [--remote]
+      bin/operator vps deploy <app|all|master> [--remote]  --remote runs the preflight here, pins the SHA, then deploys on the box
       bin/operator vps logs <app> [--lines N] [--remote]
       bin/operator vps canary [--remote] [--app a,b] [--budget-ms N]  post-deploy probe: ports, rcctl, every public GET route (--remote runs on the box, otherwise the public domains)
       bin/operator vps rollback <sha>     prints the manual rollback; vps-deploy takes no SHA, so nothing is run
@@ -735,7 +735,12 @@ when "vps"
     app = ARGV.shift
     die("vps", usage.lines.first.to_s.strip, 64) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["zsh", "OPENBSD/bin/vps-deploy", app])}")
+      # Prove the commit boots here, then send the box that exact SHA; the box
+      # refuses a different one. See Operator::DeployPreflight.
+      require "operator/canary"
+      ok, command = Operator::DeployPreflight.remote_command(root: ROOT, app: Shellwords.escape(app))
+      die("vps", "deploy refused, #{command}", 1) unless ok
+      ssh_run(command)
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-deploy"), app, *ARGV)
     end
