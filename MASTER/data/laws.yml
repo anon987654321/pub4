@@ -256,32 +256,38 @@ transformation_policy:
   preflight:
     - inventory
     - classify
+  # One dependency-aware sequence. Remove proven waste before defragmenting;
+  # flatten before decoupling; split unlike concerns before merging like ones;
+  # hoist shared values before the merge; reflow only after structural changes.
+  # law_deps adds law-specific constraints that do not fit a universal sequence.
   order:
+    - remove
     - defragment
-    - decouple
     - flatten
-    - merge
+    - decouple
     - split
+    - hoist
+    - merge
     - relocate
     - rename
     - reorder
-    - remove
     - reflow
     - simplify
     - recommend
   postflight:
     - prove
   operations:
+    remove: "Delete only proven dead, redundant, historical, transitional, or otherwise unnecessary material."
     defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
-    decouple: "Remove unnecessary dependencies and references between independent concerns."
     flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
-    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
-    split: "Separate unlike concerns that have been fused into one unit."
+    decouple: "Remove unnecessary dependencies and references between independent concerns, after flattening exposes them."
+    split: "Separate unlike concerns that have been fused into one unit before consolidating equivalent units."
+    hoist: "Lift a shared constant or invariant to its authoritative owner before merging its consumers."
+    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure only after checking their reason to change."
     relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
     rename: "Names state present meaning; rename files, constants, methods, variables, laws, and sections when the existing name misleads."
     reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
-    remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
-    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
+    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm after structural edits."
     simplify: "Pull incidental complexity out after structural changes and prefer the smallest coherent form."
     recommend: "When evidence is insufficient for a safe automatic transformation, recommend the smallest useful change instead of guessing."
   preservation:
