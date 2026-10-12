@@ -43,7 +43,6 @@ module Operator
       STUDIO/Rakefile
       MASTER/gates/runner.rb
       MASTER/gates/release.rb
-      package.json
     ].freeze
 
     # `rails test` globs inside the framework, not in any file here. An app's
