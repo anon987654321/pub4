@@ -46,7 +46,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp default_profile drum_patterns echo groove_profiles progressions], DATA.keys.sort
+    assert_equal %w[arp default_profile drum_patterns echo groove_profiles progressions strum], DATA.keys.sort
   end
 
   # ------------------------------------------------------------- progressions
@@ -486,6 +486,91 @@ class DillaTest < Minitest::Test
       assert_operator File.size(arp), :>, File.size(plain), "the echo tail makes it longer"
       assert_operator File.binread(arp).byteslice(44..).unpack("s<*").map(&:abs).max, :>, 1000
     end
+  end
+
+  # ------------------------------------------------------------- arp modifiers and strum
+
+  def plucks(count = 8)
+    Array.new(count) { |i| Pluck.new(i * 0.2, 0.0, 60 + i, 0.15, i.even? ? 1.0 : 0.5) }
+  end
+
+  def modify(name, params, count: 8, seed: 1)
+    Arp.modify(plucks(count), name, params, Random.new(seed), slot: 0.2, peak: 1.0)
+  end
+
+  def test_euclidean_keeps_the_pulses_of_the_steps
+    kept = modify("euclidean", { "steps" => 8, "pulses" => 5 })
+    assert_equal 5, kept.size
+    assert_equal 8, modify("euclidean", { "steps" => 8, "pulses" => 8 }).size
+    assert_equal 6, modify("euclidean", { "steps" => 8, "pulses" => 3 }, count: 16).size
+  end
+
+  def test_probability_drops_notes_by_seed
+    assert_equal 8, modify("probability", { "probability" => 1.0 }).size
+    assert_empty modify("probability", { "probability" => 0.0 })
+    some = modify("probability", { "probability" => 0.5 }, count: 200)
+    assert some.size.between?(70, 130), some.size.to_s
+    assert_equal some.map(&:midi), modify("probability", { "probability" => 0.5 }, count: 200).map(&:midi)
+  end
+
+  def test_note_repeat_splits_each_note_and_each_repeat_is_six_percent_quieter
+    out = modify("note_repeat", { "count" => 3 }, count: 2)
+    assert_equal 6, out.size
+    assert_in_delta 0.2 / 3, out[1].base - out[0].base, 1e-9
+    assert_in_delta 0.94, out[1].gain / out[0].gain, 1e-9
+    assert_equal 8, modify("note_repeat", { "count" => 1 }).size
+    assert_equal 6, modify("note_repeat", { "count" => 99 }, count: 1).size
+  end
+
+  def test_ratchet_only_splits_accented_notes_into_at_most_the_maximum
+    out = modify("ratchet", { "max" => 3, "chance" => 1.0 })
+    accented = out.select { |p| p.gain >= 0.99 }
+    assert_operator out.size, :>, 8
+    assert_operator out.size, :<=, 4 * 3 + 4
+    assert_equal 4, out.count { |p| p.gain == 0.5 }, "the soft notes stay whole"
+    assert_operator accented.size, :>=, 4
+    assert_equal 8, modify("ratchet", { "max" => 3, "chance" => 0.0 }).size
+  end
+
+  def test_humanize_moves_time_and_gain_a_little_and_the_clamp_holds
+    out = modify("humanize", { "ms" => 4.0, "gain" => 0.06 }, count: 50)
+    assert(out.all? { |p| p.off.abs <= 0.004 + 1e-9 })
+    assert(out.any? { |p| p.off.abs > 1e-5 })
+    assert(out.all? { |p| p.gain.between?(0.0, 1.0) })
+    Dir.mktmpdir do |dir|
+      data = JSON.parse(JSON.generate(DATA))
+      data["arp"].merge!("modifiers" => ["humanize"], "humanize" => { "ms" => 500.0, "gain" => 0.0 })
+      seq = sequencer("dry", data:)
+      buf = seq.render_arp(%w[Cm9], 120.0, 4.0, seq.arp_settings(true))
+      assert_operator buf.size, :>, 0
+    end
+  end
+
+  def test_grace_notes_come_before_the_note_and_softer
+    out = modify("grace", { "interval" => -1, "gain" => 0.3 }, count: 2)
+    assert_equal 4, out.size
+    assert_equal [59, 60], out.first(2).map(&:midi)
+    assert_operator out[0].base, :<, out[1].base
+    assert_in_delta 0.3, out[0].gain, 1e-9
+  end
+
+  def test_an_unknown_modifier_is_refused_and_modifiers_chain_in_order
+    assert_raises(ArgumentError) { modify("sideways", {}) }
+    seq = sequencer("arp_echo")
+    arp = seq.arp_settings(nil)
+    assert_equal %w[ratchet probability humanize], arp["modifiers"]
+    a = seq.render_arp(%w[Cm9], 150.0, 2.0, arp)
+    assert_equal a, seq.render_arp(%w[Cm9], 150.0, 2.0, arp)
+  end
+
+  def test_strum_staggers_the_voices_lowest_first
+    flat = Synth.chord([220.0, 330.0], 0.5)
+    strummed = Synth.chord([220.0, 330.0], 0.5, strum: 0.02)
+    assert_equal flat.size, strummed.size
+    refute_equal flat, strummed
+    assert_in_delta 0.018, sequencer("dry").strum(true), 1e-9
+    assert_equal 0.0, sequencer("dry").strum(nil)
+    assert_in_delta 0.03, sequencer("dry").strum(30.0), 1e-9
   end
 
   # ------------------------------------------------------------- the sidechain

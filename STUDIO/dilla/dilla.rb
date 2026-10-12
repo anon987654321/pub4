@@ -239,13 +239,14 @@ module Synth
   end
 
   # One chord = sum of its notes, each with alternating detune for warmth.
-  def self.chord(freqs, dur, detune: 0.0)
+  def self.chord(freqs, dur, detune: 0.0, strum: 0.0)
     n = (dur * SAMPLE_RATE).to_i
     buf = Array.new(n, 0.0)
     freqs.each_with_index do |f, idx|
       d = detune * (idx.even? ? 1 : -1)
       note_buf = note(f, dur, detune: d, amp: 1.0 / freqs.size)
-      note_buf.each_with_index { |s, i| buf[i] += s if i < n }
+      late = (strum * idx * SAMPLE_RATE).to_i # each voice a little after the one below
+      note_buf.each_with_index { |s, i| buf[i + late] += s if i + late < n }
     end
     buf
   end
@@ -349,6 +350,58 @@ module Arp
   end
 end
 
+# One arpeggio note: `base` is where its step falls on the grid, `off` how far it leans from
+# there (swing and humanize, clamped to MAX_OFFSET), the rest as they sound.
+Pluck = Struct.new(:base, :off, :midi, :dur, :gain)
+
+module Arp
+  # The small modifiers that shape the note stream, applied in the order the arp lists them.
+  # `slot` is the length of one arp step in seconds; `peak` the strongest accent gain.
+  def self.modify(plucks, name, params, rng, slot:, peak:)
+    case name
+    when 'euclidean'
+      steps = params.fetch('steps', 8)
+      pulses = params.fetch('pulses', 5).clamp(1, steps)
+      plucks.each_with_index.select { |_, i| ((i * pulses) % steps) < pulses }.map(&:first)
+    when 'probability'
+      plucks.select { |_| rng.rand <= params.fetch('probability', 1.0) }
+    when 'note_repeat'
+      count = params.fetch('count', 1).clamp(1, 6)
+      plucks.flat_map { |p| split(p, count, slot, 0.72, 0.06) }
+    when 'ratchet'
+      max = params.fetch('max', 3).clamp(1, 4)
+      plucks.flat_map do |p|
+        accented = p.gain >= peak * 0.99 && rng.rand < params.fetch('chance', 0.5)
+        accented && max > 1 ? split(p, rng.rand(2..max), slot, 0.86, 0.11) : [p]
+      end
+    when 'humanize'
+      ms = params.fetch('ms', 4.0) / 1000.0
+      g = params.fetch('gain', 0.06)
+      plucks.each do |p|
+        p.off += rng.rand(-ms..ms)
+        p.gain = (p.gain + rng.rand(-g..g)).clamp(0.0, 1.0)
+      end
+    when 'grace'
+      interval = params.fetch('interval', -1)
+      plucks.flat_map do |p|
+        grace = Pluck.new(p.base - [p.dur * 0.18, 0.035].max, p.off, p.midi + interval, [p.dur * 0.12, 0.018].max, p.gain * params.fetch('gain', 0.3))
+        [grace, p]
+      end
+    else raise ArgumentError, "no arp modifier #{name.inspect}"
+    end
+  end
+
+  # `count` evenly spaced copies of a note within its slot, each `fade` quieter than the last.
+  def self.split(pluck, count, slot, held, fade)
+    return [pluck] if count <= 1
+
+    each = slot / count
+    Array.new(count) do |i|
+      Pluck.new(pluck.base + (each * i), pluck.off, pluck.midi, [each * held, 0.018].max, pluck.gain * (1.0 - (fade * i)))
+    end
+  end
+end
+
 # -------------------------------------------------------------- tape echo
 # A space echo: three playback heads read one loop at 1x, 2x and 3x the base delay. The
 # heads in use are summed, darkened by a lowpass and a mild saturation, and fed back, so each
@@ -406,7 +459,7 @@ class Sequencer
   def detune = (@profile['texture'] || {}).fetch('detune', 0.0)
 
   # Chords, each the same length, the odd ones swung late.
-  def render_chords(names, bpm, beats, search: true)
+  def render_chords(names, bpm, beats, search: true, strum: 0.0)
     beat = 60.0 / bpm
     swing = @profile.fetch('swing', 0.5)
     buf = []
@@ -414,7 +467,7 @@ class Sequencer
       delay = idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount
       pad = (delay * SAMPLE_RATE).to_i
       buf.concat(Array.new(pad, 0.0)) if pad > 0
-      buf.concat(Synth.chord(freqs, beats * beat, detune: detune))
+      buf.concat(Synth.chord(freqs, beats * beat, detune: detune, strum:))
     end
     buf
   end
@@ -429,6 +482,13 @@ class Sequencer
     settings['pattern'] ||= settings.fetch('default_pattern')
     abort "No arp pattern: #{settings['pattern']}" unless settings.fetch('patterns').include?(settings['pattern'])
     settings
+  end
+
+  # Seconds each voice of a chord waits for the one below it: the flag's milliseconds, the data's when bare.
+  def strum(flag)
+    return 0.0 unless flag
+
+    (flag == true ? @data.fetch('strum').fetch('ms') : flag) / 1000.0
   end
 
   # The echo settings with the flags laid over them, or nil when nothing asks for one.
@@ -451,7 +511,6 @@ class Sequencer
     beat = 60.0 / bpm
     step = beat / 4.0
     rate = arp.fetch('rate', 2)
-    gate = arp.fetch('gate', 0.8)
     accent = arp.fetch('accent', [1.0])
     swing = @profile.fetch('swing', 0.5)
     chord_steps = (beats * 4).round
@@ -459,15 +518,19 @@ class Sequencer
     buf = Array.new(((total + 1.0) * SAMPLE_RATE).to_i, 0.0)
     Chords.midi_notes(names, search:).each_with_index do |voices, idx|
       pool = Arp.pool(voices, arp.fetch('octaves', 1))
-      count = chord_steps / rate
-      notes = Arp.sequence(arp.fetch('pattern'), pool, count, Zlib.crc32("#{@seed}:#{idx}"))
-      notes.each_with_index do |midi, k|
+      notes = Arp.sequence(arp.fetch('pattern'), pool, chord_steps / rate, Zlib.crc32("#{@seed}:#{idx}"))
+      plucks = notes.each_with_index.map do |midi, k|
         s = (idx * chord_steps) + (k * rate)
         pair = s % 4 == 2 ? 2 * step : (s.odd? ? step : 0.0)
-        late = (((swing - 0.5) * 2 * pair) * @pd_amount).clamp(-MAX_OFFSET, MAX_OFFSET)
-        dur = rate * step * gate
-        samples = Synth.note(Chords.hz(midi), dur, detune: detune, amp: 0.22 * accent[k % accent.size], release: dur * 0.5)
-        start = (((s * step) + late) * SAMPLE_RATE).to_i
+        Pluck.new(s * step, (swing - 0.5) * 2 * pair * @pd_amount, midi, rate * step * arp.fetch('gate', 0.8), accent[k % accent.size])
+      end
+      rng = Random.new(Zlib.crc32("#{@seed}:modifiers:#{idx}"))
+      arp.fetch('modifiers', []).each do |name|
+        plucks = Arp.modify(plucks, name, arp.fetch(name, {}), rng, slot: rate * step, peak: accent.max)
+      end
+      plucks.each do |p|
+        samples = Synth.note(Chords.hz(p.midi), p.dur, detune: detune, amp: 0.22 * p.gain, release: p.dur * 0.5)
+        start = [((p.base + p.off.clamp(-MAX_OFFSET, MAX_OFFSET)) * SAMPLE_RATE).to_i, 0].max
         samples.each_with_index { |v, j| buf[start + j] += v if start + j < buf.size }
       end
     end
@@ -635,6 +698,7 @@ def run(argv)
     o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
     o.on('--no-voice-search', 'Voice each chord by nearest tones only, without the octave search') { options[:plain] = true }
     o.on('--arp [PATTERN]', 'Play each chord one note at a time: up, down, updown, converge, random_seeded') { |v| options[:arp] = v || true }
+    o.on('--strum [MS]', Float, 'Stagger the notes of each chord, lowest first, by MS milliseconds (default from the data)') { |v| options[:strum] = v || true }
     o.on('--pad', 'A soft sustained pad under the arpeggio') { options[:pad] = true }
     o.on('--echo [HEADS]', 'Tape space echo; heads such as 1 or 1,2 or 1,2,3') { |v| options[:echo] = v || true }
     o.on('--echo-mix N', Float, 'Echo volume against the dry sound') { |v| options[:echo_mix] = v }
@@ -666,7 +730,7 @@ def run(argv)
 
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed)
   arp = seq.arp_settings(options[:arp])
-  buf = arp ? seq.render_arp(names, bpm, beats, arp, search: !options[:plain], pad: options[:pad]) : seq.render_chords(names, bpm, beats, search: !options[:plain])
+  buf = arp ? seq.render_arp(names, bpm, beats, arp, search: !options[:plain], pad: options[:pad]) : seq.render_chords(names, bpm, beats, search: !options[:plain], strum: seq.strum(options[:strum]))
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
   buf = seq.echo(buf, echo, bpm) if echo
   seconds = buf.size / SAMPLE_RATE.to_f
