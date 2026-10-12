@@ -57,10 +57,12 @@ class TestSpeech < Minitest::Test
     ENV.delete("MASTER_TTS_TIMING")
     output, = capture_io { speech.log_timing("probe", started_at, text_length: 4) }
     assert_empty output
+    assert_operator speech.last_timings.fetch("probe").fetch(:elapsed_ms), :>=, 0
 
     ENV["MASTER_TTS_TIMING"] = "1"
     output, err = capture_io { speech.log_timing("probe", started_at, text_length: 4) }
     assert_match(/timing stage=probe elapsed_ms=\d+ chars=4/, output + err)
+    assert_operator speech.last_timings.fetch("probe").fetch(:chars), :==, 4
   ensure
     original ? ENV["MASTER_TTS_TIMING"] = original : ENV.delete("MASTER_TTS_TIMING")
   end
