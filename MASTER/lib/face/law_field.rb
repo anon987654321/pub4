@@ -36,7 +36,8 @@ module Master
           schema: 1,
           laws: rows,
           digest: Digest::SHA256.hexdigest(JSON.generate(rows)),
-          toggle_key: settings.fetch("web_toggle_key", "v"),
+          toggle_key: settings.fetch("web_law_toggle_key", "l"),
+          overlay_toggle_key: settings.fetch("web_toggle_key", "v"),
           enabled: settings.fetch("web_overlay", true)
         }
       end
