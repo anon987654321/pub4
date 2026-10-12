@@ -109,11 +109,12 @@ POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
 #
 # postpro's own --random reads the Downloads folder and writes back to it, so a
 # set rendered here cannot reach it. Its presets are those chains under names,
-# so the draw happens here and postpro is handed one preset per frame. Drawn by
+# so the draw happens here and postpro is handed one preset per frame. Every
+# preset prints an `fx:` line of its own, which is a chain and not a preset name. Drawn by
 # sitting number, so frame 7 grades the same way on every run and two takes of
 # it stay comparable.
 def postpro_presets
-  @postpro_presets ||= `ruby #{POSTPRO} --list-presets 2>/dev/null`.scan(/^([a-z][a-z0-9_]*): /).flatten.uniq
+  @postpro_presets ||= `ruby #{POSTPRO} --list-presets 2>/dev/null`.scan(/^([a-z][a-z0-9_]*): /).flatten.uniq - %w[fx]
 end
 
 def preset_for(grade, number)
