@@ -172,7 +172,7 @@ class TestLaneQuota < Minitest::Test
     refute Quota.dead?("nvidia/nemotron-paid")
 
     Quota.revive("openrouter-free")
-    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", "rate limited: try again in 15 minutes")
+    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", "HTTP 429 Retry-After: 900")
     assert Quota.dead?("nvidia/another:free"), "same vendor's short 429 is vendor-scoped"
     refute Quota.dead?("google/gemma-4-31b-it:free"), "a vendor 429 is not the shared free-pool limit"
   end
