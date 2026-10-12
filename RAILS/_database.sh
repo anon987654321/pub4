@@ -5,12 +5,16 @@ set -euo pipefail
 
 # app_secret_for APP_NAME — read or create SECRET_KEY_BASE in /etc/<app>.env
 app_secret_for() {
-  local app_name=$1 env_file secret
+  local app_name=$1 env_file secret contents line
 
   for env_file in /etc/${app_name}.env /etc/rails/${app_name}.env; do
     if ${_PRIV} test -r "$env_file"; then
-      secret=$(${_PRIV} grep '^SECRET_KEY_BASE=' "$env_file" | head -1 | cut -d= -f2-)
-      [[ -n $secret ]] && { print -r -- "$secret"; return 0; }
+      contents=$(${_PRIV} cat "$env_file") || continue
+      for line in "${(@f)contents}"; do
+        [[ $line == SECRET_KEY_BASE=* ]] || continue
+        secret=${line#SECRET_KEY_BASE=}
+        [[ -n $secret ]] && { print -r -- "$secret"; return 0; }
+      done
     fi
   done
 

@@ -200,6 +200,7 @@ class TestRenderer < Minitest::Test
       assert_no_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       assert_includes clean, "read-only:irc:#a-ve..."
+      assert_includes clean, "feat...*"
       assert_match(/[%$] \z/, clean)
     end
   end
@@ -257,7 +258,7 @@ class TestRenderer < Minitest::Test
       clean = strip_ansi(prompt)
       assert_no_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes strip_ansi(prompt), "feature..."
+      assert_includes strip_ansi(prompt), "feat..."
     end
   end
 

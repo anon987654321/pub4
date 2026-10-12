@@ -9,6 +9,14 @@ class CritiqueImplementationTest < Minitest::Test
 
   def read(path) = File.read(File.join(ROOT, path))
 
+  def brgen_css_source
+    host = read("brgen/app/assets/stylesheets/application.scss")
+    features = Dir.glob(File.join(ROOT, "brgen/app/assets/stylesheets/_brgen_*.scss")).sort
+                 .map { |path| File.read(path, encoding: "UTF-8") }
+
+    ([host] + features).join("\n")
+  end
+
   # These pages render through I18n, so a literal English string stopped being
   # in the template the moment the page was localised — the assertion failed on
   # a view that had got better. Pin the key in the template and the copy in that
@@ -30,7 +38,7 @@ class CritiqueImplementationTest < Minitest::Test
     home = read("brgen/app/views/home/index.html.erb")
     post = read("brgen/app/views/posts/_post.html.erb")
     compose = read("brgen/app/views/shared/_feed_compose.html.erb")
-    feed_actions = Operator::ScssRules.matching(read("brgen/app/assets/stylesheets/application.scss"), /\A\.feed-action\z/)
+    feed_actions = Operator::ScssRules.matching(brgen_css_source, /\A\.feed-action\z/)
 
     # The single ranking control lives in posts/index, not the layout — the
     # layout's feed tabs are subapp navigation (subapp_nav_items), a different
@@ -105,7 +113,7 @@ class CritiqueImplementationTest < Minitest::Test
     rooms = read("brgen/app/views/conversations/_rooms_rail.html.erb")
     window = read("brgen/app/views/conversations/show.html.erb")
     channel = read("brgen/app/views/channels/show.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
     artifact = read("__shared/app/views/shared/_messenger_artifacts.html.erb")
 
     assert_includes rooms, 'class="messenger-rail"'
@@ -121,7 +129,7 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_amber_product_detail_uses_photo_first_editorial_geometry
     show = read("amber/app/views/items/show.html.erb")
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
 
     assert_includes show, 'class="luxury-detail-grid"'
     assert_includes show, 'class="luxury-photos"'
@@ -143,7 +151,7 @@ class CritiqueImplementationTest < Minitest::Test
     search = read("__shared/app/assets/stylesheets/_search_yep.scss")
     affiliate = read("__shared/app/views/shared/_affiliate_feed_unit.html.erb")
     affiliate_css = read("__shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+    brgen_css = brgen_css_source
 
     assert_includes search, "width: 480px;"
     assert_includes search, "box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;"
@@ -161,7 +169,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_yep_search_is_the_shared_rails_search_default
     shared_stack = read("__shared/app/assets/stylesheets/_stack.scss")
     brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
-    amber = read("amber/app/assets/stylesheets/application.scss")
+    amber = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
     brgen = read("brgen/app/assets/stylesheets/application.scss")
 
@@ -188,7 +196,7 @@ class CritiqueImplementationTest < Minitest::Test
     search = read("shared/app/assets/stylesheets/_search_yep.scss")
     affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
     affiliate_css = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+    brgen_css = brgen_css_source
 
     assert_includes search, "width: 480px;"
     assert_includes search, "box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;"
@@ -248,7 +256,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_yep_search_is_the_shared_rails_search_default
     shared_stack = read("shared/app/assets/stylesheets/_stack.scss")
     brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
-    amber = read("amber/app/assets/stylesheets/application.scss")
+    amber = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
     brgen = read("brgen/app/assets/stylesheets/application.scss")
 
@@ -264,7 +272,7 @@ class CritiqueImplementationTest < Minitest::Test
     mannequin = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
     carousel = read("amber/app/javascript/controllers/wardrobe_carousel_controller.js")
     dressing = read("amber/app/views/shared/_dressing_room.html.erb")
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
 
     assert_includes looks, 'data-controller="mannequin-3d"'
     assert_includes looks, "data-mannequin-3d-slides-value"
@@ -282,7 +290,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_amber_mannequin_particles_are_sparse_cool_and_open
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     renderer = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
     mannequin_css = read("amber/app/assets/stylesheets/_mannequin_3d.scss")
 
@@ -295,9 +303,9 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
-    brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+    brgen_css = brgen_css_source
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
-    amber_css = read("amber/app/assets/stylesheets/application.scss")
+    amber_css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     amber_polish = read("amber/app/assets/stylesheets/_commerce_polish.scss")
     seller = read("brgen/engines/marketplace/app/views/marketplace/stores/show.html.erb")
     item = read("amber/app/views/items/show.html.erb")
@@ -319,7 +327,7 @@ class CritiqueImplementationTest < Minitest::Test
     controller = read("__shared/frontend/post_progressive_controller.js")
     boot = read("__shared/frontend/stimulus_boot_social.js")
     importmap = read("__shared/config/importmap_baseline.rb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
 
     assert_includes form, 'post-progressive'
     assert_includes form, 'post_progressive_target: "mediaInput"'
@@ -368,7 +376,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_brgen_post_detail_renders_all_attached_media
     controller = read("brgen/app/controllers/posts_controller.rb")
     show = read("brgen/app/views/posts/show.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
 
     assert_includes controller, "with_attached_image.with_attached_video.with_attached_audio"
     assert_includes show, 'video_tag @post.video, controls: true'
@@ -382,7 +390,7 @@ class CritiqueImplementationTest < Minitest::Test
     controller = read("brgen/app/controllers/home_controller.rb")
     feed = read("brgen/app/views/home/_live_search_results.html.erb")
     card = read("brgen/app/views/home/_media_card.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
 
     assert_includes home, "home.feed_view"
     assert_includes home, "home.media_wall_view"
@@ -425,7 +433,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_amber_post_feed_and_detail_share_the_reading_anatomy
     feed = read("amber/app/views/posts/_post.html.erb")
     show = read("amber/app/views/posts/show.html.erb")
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
 
     assert_includes feed, 'variant: :prose'
     assert_includes feed, 'show_votes: true'

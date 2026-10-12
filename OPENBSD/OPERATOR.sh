@@ -272,9 +272,14 @@ sync_openbsd_apply() {
   # STRICT laws.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
   # Run MASTER deep scan on OPERATOR tree before any service restart. Block on violations (tier1 critical + veto).
   # Uses ground_truth_check (fresh read), self_test (laws on OPERATOR), evidence_scoring (scan_clean).
-  # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
-  if [[ -n ${SKIP_MASTER_SCAN:-} ]]; then
-    log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
+  # Also covers lexical/structural for sh, yml, conf, erb.
+  # A scan bypass is a break-glass action and needs both explicit acknowledgements.
+  if [[ ${SKIP_MASTER_SCAN:-0} != 0 ]]; then
+    if [[ ${SKIP_MASTER_SCAN} != 1 || ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
+      log ERROR "SKIP_MASTER_SCAN=1 requires I_UNDERSTAND_FAST_DEPLOY=1 — refusing sync/apply"
+      return 1
+    fi
+    log WARN "MASTER scan skipped by explicit fast-deploy acknowledgement"
   elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
     typeset scan_log_dir=/var/db/pub4
     typeset scan_log=$scan_log_dir/master_deploy_scan.log

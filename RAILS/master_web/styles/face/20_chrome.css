@@ -1,0 +1,277 @@
+/* Pristine chrome: only the logo, face, and shell prompt stay visible --
+   drop every top-right and bottom-right badge/status element. #mic-dot is
+   exempt: it is the only feedback about whether the microphone is open.
+   It used to be free when idle because it was invisible then — and that was
+   the bug, since "off" and "no indicator" looked the same. It is now always
+   drawn, grey when idle. One 18px glyph is the price of not having to guess. */
+.model-badge,
+.sound-on-chip,
+.provider-chip,
+body[data-council-persona]::after {
+  display: none !important;
+}
+
+/* .ui-status is sr-only as of 2026-08-14, at the operator's request: no visible
+   status text in the bottom-right corner.
+
+   It is sr-only rather than display: none, and that distinction is the whole of
+   what the 2026-08-13 exemption was defending. showStage writes "routing…",
+   "scanning…" and "speaking…" here through an aria-live region, and display:
+   none takes an element out of the accessibility tree entirely, so the
+   announcements reached nobody — not the screen, not a screen reader. .sr-only
+   clips instead, so the element still exists to assistive tech while rendering
+   nothing. Sighted users lost a label they had for one day; screen reader users
+   keep what that commit restored. Do not "simplify" this to display: none. */
+
+/* Top-left logo — brgen wordmark (shared x tokens) */
+.top-left-logo {
+  position: fixed;
+  top: calc(14px + var(--safe-top));
+  inset-inline-start: calc(14px + var(--safe-left));
+  z-index: var(--z-ui);
+  font: 800 clamp(15px,3.8vw,24px)/1 var(--font-logo);
+  letter-spacing: -.03em;
+  text-transform: none; /* brgen wordmark is lowercase */
+  color: var(--x-text, var(--c-text));
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  text-rendering: optimizeLegibility;
+  transition: opacity 1.2s var(--ease-out);
+}
+/* Mic indicator — top-right, always present, two states.
+ *
+ * Was a 10px dot at opacity 0 that appeared only while listening. That made
+ * "microphone off" and "no indicator exists" the same picture, so the only way
+ * to find out was to speak and wait for nothing to happen. Operator report
+ * 2026-08-10: "no mic icon to indicate when its on and when its off (dark
+ * grey), so user has to guess".
+ *
+ * Idle is dark grey and legible rather than hidden — a control you can see is
+ * off is not clutter, it is the answer to the question. Listening keeps the
+ * live colour and the pulse it always had. */
+#mic-dot {
+  position: fixed;
+  top: calc(var(--inset-t) + 2px);
+  inset-inline-end: calc(var(--inset-r) + 2px);
+  width: 28px;
+  height: 28px;
+  color: var(--c-mic-off, #6b6b6b);
+  opacity: 1;
+  pointer-events: none;
+  z-index: var(--z-ui);
+  display: grid;
+  place-items: center;
+  transition: color 160ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+
+#mic-dot svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: currentColor;
+}
+
+#mic-dot[data-mic="open"] {
+  color: var(--c-danger);
+}
+
+#mic-dot[data-mic="closed"] {
+  color: var(--c-mic-off, #6b6b6b);
+}
+
+body[data-mic-open="1"] #mic-dot[data-mic="open"] {
+  animation: micPulse 1.4s var(--ease-in-out) infinite;
+}
+
+body[data-mic-open="0"] #mic-dot[data-mic="closed"] {
+  animation: none;
+}
+
+/* Listening: live colour and the pulse. */
+body[data-mode="listening"] #mic-dot {
+  color: var(--c-danger);
+  will-change: transform;
+  animation: micPulse 1.4s var(--ease-in-out) infinite;
+}
+
+/* While MASTER is speaking the mic is deliberately not listening, and saying so
+ * is worth more than going blank -- this is the moment a user is most likely to
+ * talk over it and wonder why nothing was heard. */
+body[data-mode="speaking"] #mic-dot {
+  opacity: 0.45;
+}
+
+@keyframes micPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+/* Bottom-right status label */
+.face-controls {
+  position: fixed;
+  inset-inline-start: var(--inset-l);
+  bottom: var(--hud-tier-status);
+  z-index: var(--z-ui);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: min(calc(100vw - 24px - var(--safe-left) - var(--safe-right)), 520px);
+  padding: 8px 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-lg);
+  background: #000;
+  contain: layout style paint;
+}
+
+.model-badge {
+  position: fixed;
+  top: calc(var(--inset-t) + 18px);
+  inset-inline-end: var(--inset-r);
+  z-index: var(--z-ui);
+  padding: 8px 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: #000;
+  color: var(--face-muted);
+  font: var(--text-meta)/1 var(--font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  pointer-events: none;
+}
+
+.model-badge[data-visible="1"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.soul-drift {
+  position: fixed;
+  top: var(--inset-t);
+  z-index: var(--z-ui);
+  pointer-events: none;
+}
+
+.soul-drift {
+  inset-inline-start: var(--inset-l);
+  padding: 8px 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: #000;
+  color: var(--face-muted);
+  font: var(--text-meta)/1 var(--font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.face-scale {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--face-muted);
+  font: var(--text-meta)/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .15em;
+}
+
+.face-scale input[type="range"] {
+  width: 88px;
+  accent-color: var(--face-fg);
+}
+
+/* SR-only for a11y live announcements (mood changes etc) — screen readers only, no visual */
+.sr-only {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: -0px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Primer overlay — Radio Bergen dialog style */
+#primer {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: var(--z-modal);
+  background: color-mix(in srgb, var(--face-bg) 86%, transparent);
+  cursor: pointer;
+  text-align: center;
+  padding: 16px;
+  transition: opacity var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
+  touch-action: manipulation;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
+
+[id="face"]:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
+
+#primer h1 {
+  margin: 0;
+  font: 400 clamp(1.05rem,3.2vw,1.5rem)/1.5 var(--font-mono);
+  letter-spacing: .01em;
+  color: var(--face-fg);
+  transition: transform var(--transition-fast) var(--ease-out);
+}
+
+#primer:active h1 { transform: scale(1.03); }
+#primer .primer-consent { max-width: 42ch; margin: 16px auto 0; color: var(--face-muted); font: 400 .8125rem/1.5 var(--font-mono); }
+
+/* Tap ripple */
+@keyframes ripple { to { transform: translate(var(--x),var(--y)) translate(-50%,-50%) scale(22); opacity: 0; } }
+.tap-ripple {
+  position: fixed;
+  inset-inline-start: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(var(--x),var(--y)) translate(-50%,-50%) scale(.4);
+  opacity: .7;
+  background: var(--border-strong);
+  animation: ripple 680ms var(--ease-out) forwards;
+  z-index: calc(var(--z-modal) - 1);
+}
+
+#chat-shell {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(var(--face-bar-height) + var(--safe-bottom));
+  z-index: var(--z-chrome);
+  pointer-events: none;
+}
+
+/* #41 Scroll momentum */
+#chat-log {
+  max-height: 40dvh;
+  overflow-y: auto;
+  padding: 8px 16px;
+  font: 1rem/1.5 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  scroll-behavior: smooth;
+  color: var(--face-fg);
+  pointer-events: none;
+  touch-action: pan-y;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--face-fg) 28%, transparent) transparent;
+}
+
+#chat-log::-webkit-scrollbar { width: 8px; height: 8px; }
+#chat-log::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--face-fg) 22%, transparent); border-radius: 4px; }
+
+#chat-log:not(:empty) { pointer-events: auto; }

@@ -30,12 +30,23 @@ if File.file?(doas_conf)
     # script — --stage-1's DNS-wipe gate, the console gate, production seeds, the
     # deploy scan skip, the mail image format.
     allowlist = dev_rule[/setenv\s*\{([^}]*)\}/, 1].to_s.split
-    %w[I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT].each do |name|
+    %w[I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK I_UNDERSTAND_FAST_DEPLOY RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT].each do |name|
       failures << "etc/doas.conf: dev rule must setenv-allowlist #{name}" unless allowlist.include?(name)
     end
   end
 else
   failures << "missing tracked etc/doas.conf"
+end
+
+operator_script = File.join(OPENBSD, "OPERATOR.sh")
+if File.file?(operator_script)
+  operator = File.read(operator_script)
+  unless operator.include?('[[ ${SKIP_MASTER_SCAN:-0} != 0 ]]') &&
+         operator.include?('[[ ${SKIP_MASTER_SCAN} != 1 || ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]')
+    failures << "OPERATOR.sh: MASTER scan bypass requires SKIP_MASTER_SCAN=1 plus I_UNDERSTAND_FAST_DEPLOY=1"
+  end
+else
+  failures << "missing tracked OPERATOR.sh"
 end
 
 validate_doas = File.join(TOOLING, "validate_doas.ksh")

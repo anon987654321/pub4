@@ -227,10 +227,8 @@ module Deploy
     # text, or the whole file when the selector is nil.
     def sample_css(app, selector = nil)
       body = read_css(File.join(RAILS, app, "app/assets/stylesheets/application.scss"))
-      if app == "brgen"
-        partials = Dir.glob(File.join(RAILS, "brgen/app/assets/stylesheets/_brgen_*.scss")).sort
-        partials.each { |path| body = "#{body}\n#{read_css(path)}" }
-      end
+      partials = Dir.glob(File.join(RAILS, app, "app/assets/stylesheets/_#{app}_*.scss")).sort
+      partials.each { |path| body = "#{body}\n#{read_css(path)}" }
       return body if selector.nil?
 
       Operator::ScssRules.matching(body, selector).map { |rule| "#{rule.selector} { #{rule.body} }\n" }.join

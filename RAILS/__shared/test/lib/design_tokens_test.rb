@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
 require_relative "../../../../MASTER/tools/design_tokens"
+require_relative "../../../../MASTER/tools/rails/build_face_css"
 
 class DesignTokensTest < Minitest::Test
   FACE_CSS = File.expand_path("../../../../RAILS/master_web/public/face.css", __dir__)
@@ -89,6 +90,11 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
     assert_nil drift, "RAILS/master_web/public/face.css :root has drifted from " \
                       "generated design projection (#{drift}) — run " \
                       "`ruby MASTER/tools/rails/generate_face_root_css.rb`"
+  end
+
+  def test_committed_face_css_matches_ordered_source_modules
+    assert_equal MasterFaceStylesheet.render, File.read(FACE_CSS, encoding: "UTF-8"),
+                 "MASTER face CSS differs from source modules — run ruby MASTER/tools/rails/build_face_css.rb"
   end
 
   def test_committed_dialect_scss_anchors_match_design_tokens

@@ -110,13 +110,12 @@ module Deploy
           "#{MP}/controllers/marketplace/checkouts_controller.rb",
         ],
       },
-      # A stylesheet marker names the rule that styles the surface, not a file:
-      # the jOx chrome lives in each app's one application.scss.
+      # A stylesheet marker names the file that owns the rule, not the entrypoint.
       "amber" => {
         "jox chrome" => [["app/assets/stylesheets/application.scss", /\.jox-logo\b/]],
       },
       "bsdports" => {
-        "jox chrome" => [["app/assets/stylesheets/application.scss", /\.jox-logo\b/]],
+        "jox chrome" => [["app/assets/stylesheets/_bsdports_shared_chrome.scss", /\.jox-logo\b/]],
       },
     }.freeze
 

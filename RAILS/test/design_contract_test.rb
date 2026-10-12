@@ -65,7 +65,40 @@ class DesignContractTest < Minitest::Test
   end
 
   def app_rules(app)
-    Operator::ScssRules.rules(File.read(File.join(ROOT, app, "app", "assets", "stylesheets", "application.scss")))
+    styles = File.join(ROOT, app, "app", "assets", "stylesheets")
+    source = File.read(File.join(styles, "application.scss"))
+    Dir.glob(File.join(styles, "_#{app}_*.scss")).sort.each do |path|
+      source = "#{source}\n#{File.read(path)}"
+    end
+    Operator::ScssRules.rules(source)
+  end
+
+  def test_bsdports_styles_load_as_ordered_feature_modules
+    app = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss"))
+    names = %w[
+      bsdports_base
+      bsdports_components
+      bsdports_shared_chrome
+      bsdports_tokens
+      bsdports_layout
+      bsdports_pages
+      bsdports_states
+    ]
+    positions = names.map { |name| app.index(%(@include meta.load-css("#{name}");)) }
+
+    assert positions.all?, "every BSDPorts feature module must be loaded"
+    assert_equal positions.sort, positions, "BSDPorts module order is a cascade contract"
+    names.each do |name|
+      path = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_#{name}.scss")
+      assert File.file?(path), "missing BSDPorts feature module #{path}"
+    end
+
+    assert_includes File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_tokens.scss")),
+                    "@include x.app-root-tokens;"
+    assert_includes File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss")),
+                    "article > header"
+    assert_includes app, "@include endgame.bsdports;"
+    assert_operator app.lines.count, :<, 50, "application.scss should remain an entrypoint, not a second monolith"
   end
 
   # amber wears luxury, and stack's social light outranks a plain :root.
@@ -136,26 +169,65 @@ class DesignContractTest < Minitest::Test
   end
 
   def test_brgen_composer_uses_starting_style_entry
-    css = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    composer = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_composer.scss"))
+    css = "#{app}\n#{composer}"
     refute_includes css, "composer-drop-in"
     refute_includes css, "composer-backdrop-in"
     assert_includes css, "@starting-style"
     assert_includes css, ".composer[open]::backdrop"
   end
 
-  def test_brgen_marketplace_rules_are_loaded_from_one_feature_partial
+  def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
     app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    marketplace_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
-    verticals_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_surfaces.scss")
-    marketplace = File.read(marketplace_path)
-    verticals = File.read(verticals_path)
+    feature_paths = Dir.glob(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_*.scss")).sort
 
-    assert_includes app, '@include meta.load-css("brgen_marketplace");'
-    assert_includes app, '@include meta.load-css("brgen_vertical_surfaces");'
-    assert_includes marketplace, ".deal-card"
-    assert_includes marketplace, ".deal-cat"
-    assert_includes verticals, ".listing-buy-bar-cta"
-    refute_includes app, ".listing-buy-bar-cta"
+    refute_empty feature_paths, "Brgen must have feature-owned stylesheet modules"
+    reachable = []
+    pending = [app]
+    until pending.empty?
+      source = pending.shift
+      source.scan(/@include meta\.load-css\(["']([^"']+)["']\)/).flatten.each do |module_name|
+        candidate = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_#{module_name}.scss")
+        next unless File.file?(candidate)
+        next if reachable.include?(candidate)
+
+        reachable << candidate
+        pending << File.read(candidate)
+      end
+    end
+
+    feature_paths.each do |path|
+      module_name = File.basename(path).delete_prefix("_").delete_suffix(".scss")
+      assert_includes reachable, path, "#{module_name} is not reachable from the host stylesheet"
+      refute_empty File.read(path), "#{module_name} is empty"
+    end
+
+    expected_rules = {
+      "_brgen_marketplace.scss" => ".deal-card",
+      "_brgen_vertical_surfaces.scss" => ".listing-buy-bar-cta",
+      "_brgen_shared_city_campaigns.scss" => ".store-promo-art-cta",
+      "_brgen_messenger.scss" => ".messenger-artifact-pane",
+      "_brgen_composer.scss" => ".composer[open]::backdrop",
+      "_brgen_feed_posts.scss" => ".feed-action",
+      "_brgen_nearby_channels.scss" => ".nearby-alert",
+      "_brgen_share_media.scss" => ".media-actions",
+      "_brgen_dating.scss" => ".swipe-card",
+      "_brgen_vertical_shell.scss" => "body[class*=\"vertical-\"] .feed-header",
+      "_brgen_city_surfaces.scss" => ".profile-header"
+    }
+    expected_rules.each do |name, selector|
+      path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", name)
+      assert_includes feature_paths, path
+      assert_includes File.read(path), selector, "#{name} lost its representative feature rule"
+    end
+
+    [".deal-card", ".listing-buy-bar-cta", ".store-promo-art-cta", ".messenger-artifact-pane",
+     ".composer[open]::backdrop", ".feed-action", ".nearby-alert", ".media-actions",
+     ".swipe-card", ".profile-header"].each do |selector|
+      refute Operator::ScssRules.matching(app, /#{Regexp.escape(selector)}/).any?,
+             "#{selector} should live in a feature partial, not application.scss"
+    end
   end
 
   def test_brgen_mounts_theme_bootstrap_once_in_head
