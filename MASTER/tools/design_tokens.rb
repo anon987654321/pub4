@@ -73,6 +73,74 @@ module DesignTokens
     Operator::MasterDesign.tokens(SOURCE)
   end
 
+  def static_tokens_css
+    tokens = load
+    social = tokens.fetch("social")
+    shared_chrome = tokens.fetch("shared_chrome")
+    face_layout = tokens.fetch("face_root").fetch("layout")
+    family = shared_chrome.fetch("font")
+
+    <<~CSS
+      /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
+      :root {
+        color-scheme: dark;
+        --bg: #{social.fetch("bg")};
+        --surface: #{social.fetch("surface")};
+        --surface-elevated: #{social.fetch("surface_elevated")};
+        --search-bg: #{social.fetch("search_bg")};
+        --text: #{social.fetch("text")};
+        --text-secondary: #{social.fetch("text_secondary")};
+        --border: #{social.fetch("border")};
+        --hover: color-mix(in srgb, var(--text) 10%, transparent);
+        --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+        --accent: #{social.fetch("accent")};
+        --danger: #{social.fetch("danger")};
+        --font: #{family};
+        --weight-normal: 400;
+        --weight-medium: 500;
+        --weight-bold: 700;
+        --weight-heavy: 800;
+        --radius-xs: #{social.fetch("radius_xs")};
+        --radius-sm: #{social.fetch("radius_sm")};
+        --radius-md: #{social.fetch("radius_md")};
+        --radius-card: #{social.fetch("radius_card")};
+        --radius-lg: #{social.fetch("radius_lg")};
+        --radius-pill: #{social.fetch("radius_pill")};
+        --transition-fast: #{shared_chrome.fetch("transition_fast")};
+        --transition-normal: #{shared_chrome.fetch("transition_normal")};
+        --z-chrome: #{face_layout.fetch("z-chrome")};
+        --z-ui: #{face_layout.fetch("z-ui")};
+        --z-overlay: #{face_layout.fetch("z-overlay")};
+        --z-modal: #{face_layout.fetch("z-modal")};
+        --z-toast: #{face_layout.fetch("z-toast")};
+        --z-skip: #{face_layout.fetch("z-skip")};
+        --color-background: var(--bg);
+        --color-midtone: var(--text-secondary);
+        --color-highlight: var(--surface);
+        --color-accent: var(--accent);
+        --color-border: var(--border);
+        --text-primary: var(--text);
+        --text-secondary: var(--text-secondary);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          color-scheme: light;
+          --bg: #ffffff;
+          --text: #0f1419;
+          --text-secondary: #536471;
+          --border: #eff3f4;
+          --hover: color-mix(in srgb, var(--text) 10%, transparent);
+          --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+          --color-background: var(--bg);
+          --color-highlight: var(--bg);
+          --text-primary: var(--text);
+          --text-secondary: var(--text-secondary);
+        }
+      }
+    CSS
+  end
+
+
   def face_root_css
     root = load
     data = root.fetch("face_root")
@@ -197,10 +265,14 @@ module DesignTokens
     "face.css :root drift — run: ruby MASTER/tools/design_tokens.rb generate_face_root_css"
   end
 
-  # Every .scss under RAILS/. Generated CSS is a projection of the canonical
-  # MASTER design system and is never an authority of its own.
-  def all_scss_files
-    Dir.glob(File.join(ROOT, "RAILS", "*/app/assets/stylesheets/**/*.scss"))
+  # Every Rails app and mountable engine stylesheet participates in token
+  # reconciliation. The one-level app glob missed RAILS/<app>/engines/* sources,
+  # so a vertical could carry stale shared tokens without the drift check seeing it.
+  # Vendor and built copies are artifacts, not sources to repair.
+  def all_scss_files(root = ROOT)
+    Dir.glob(File.join(root, "RAILS", "**", "app", "assets", "stylesheets", "**", "*.scss"))
+      .reject { |path| path.match?(%r{/(?:vendor|node_modules|builds)/}) }
+      .sort
   end
 
   def property_pattern(css_var)
