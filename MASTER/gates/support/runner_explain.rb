@@ -34,7 +34,6 @@ ENV_SWITCHES = {
   "GATE_SKIP_NESTED" => "production skips the leaves it would otherwise run itself",
   "VISUAL_CAPTURE" => "1 lets visual_contract capture pixels (VISUAL_CAPTURE_APP, VISUAL_CAPTURE_BASE); " \
                       "without it the gate compares nothing and exits inconclusive",
-  "GATE_PIXEL_BASELINE_APPROVE" => "explicitly writes approved PNG baselines after reviewing current captures",
   "GATE_PIXEL_BASELINE_STRICT" => "missing or unsupported PNG baselines fail browser_diagnostics",
   "GATE_PIXEL_DIFF_MAX_RATIO" => "maximum changed-pixel ratio per viewport; finite from 0 to 1, default 0.01",
   "GATES_FILE" => "reads a different gate registry in place of gates.yml",
