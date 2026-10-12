@@ -218,8 +218,10 @@ module Master
 
         def react(key)
           return @closing = true if key == :eof || LEAVE.include?(key)
-          return interrupt_ear(key) if hearing?
+          # Display controls remain usable while the mic is armed; ordinary
+          # keys still interrupt capture and become the start of the prompt.
           return toggle_law_field if key == @law_toggle_key
+          return interrupt_ear(key) if hearing?
 
           nudge(:key)
           return submit if ENTER.include?(key)
