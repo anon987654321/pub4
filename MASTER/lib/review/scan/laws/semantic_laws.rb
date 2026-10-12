@@ -276,7 +276,7 @@ module Master
               question = law.ask.to_s.strip
               question = "Does this artifact breach #{law.id} or miss an improvement implied by its repair contract?" if question.empty?
               h[law.id.to_s] = {
-                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\\n"),
+                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\n"),
                 severity: law.severity,
                 mode: law.mode,
                 reversibility: nil,
