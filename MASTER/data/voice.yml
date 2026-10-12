@@ -17,17 +17,13 @@ tts:
   neural: en-US-ChristopherNeural
   rotation:
     - christopher
-  # Language locks are families, not a stylistic lottery. With no gender asked
-  # for, language_voices decides (English: Christopher). MASTER_TTS_GENDER=female
-  # selects the declared female counterpart for that language (English: Jenny)
-  # and =male the male one (English: Christopher; Andrew stays reachable by
-  # name). Norwegian stays Pernille, Malay Yasmin, whichever way it is asked.
+  # English stays Christopher regardless of gender preferences or stale caller input.
+  # Norwegian and Malay retain their own language routes.
   language_voices:
     en: christopher
     nb: pernille
     ms: yasmin
   language_voice_families:
-    en: { female: jenny, male: christopher }
     nb: { female: pernille, male: finn }
     ms: { female: yasmin, male: osman }
   persona_affects_text_only: true
@@ -659,7 +655,7 @@ tts:
           smoothing_hz: 35
           boost_db: 14
           seeds: [11, 12]
-        # Levels are measured against the RMS of a Jenny sentence through the
+        # Levels are measured against the RMS of a Christopher sentence through the
         # chain above: the whisper sits near 20 dB under the voice and the
         # breath-in near 36 dB under it.
         breath:
