@@ -152,4 +152,28 @@ class TestCouncilSelector < Minitest::Test
     missing = selector_names.uniq - known
     assert_empty missing, "selector references unknown council personas: #{missing.inspect}"
   end
+
+  # The design lead holds the design-review lens (one memorable element, devices
+  # that encode information, purposeful motion, AA focus and contrast, plain copy).
+  # Rendered values are the operator's, so the lens must never tell a model to pick
+  # a palette, a typeface or an aesthetic risk.
+  def design_lead
+    Master::Review::Council::Personas.load.find { |persona| persona.name == "Design Lead" }
+  end
+
+  def test_design_lead_sits_on_the_visual_critique
+    assert_includes S.for(task: :ui), "Design Lead"
+    panel = Master.load_yaml(Master::COUNCIL_PATH).dig("presets", "ui_critique", "panel")
+
+    assert_includes panel, "Design Lead"
+  end
+
+  def test_design_lead_carries_the_lens_and_no_value_choosing
+    refute_nil design_lead
+    text = [design_lead.prompt, design_lead.question].join(" ")
+
+    ["memorable", "reduced motion", "AA", "one name per action", "how to fix"].each { |part| assert_includes text, part }
+    refute_match(/\b(?:pick|choose|select|invent|propose|try|use)\b[^.]*\b(?:palettes?|typefaces?|fonts?|colou?rs?)\b/i, text)
+    refute_match(/\b(?:risk|risky|bold|daring|unexpected|experimental)\b/i, text)
+  end
 end
