@@ -77,7 +77,7 @@ module Deploy
           payload = GeometryProbe.walk(cdp, surface)
           unless GeometryProbe.ok?(payload)
             error = payload["error"] || "HTTP #{payload["status"]}"
-            if GeometryProbe.font_timeout?(payload)
+            if GeometryProbe.timeout?(payload)
               @result.incomplete!("cross_app: #{surface.app} shared chrome not compared — #{error}")
             else
               @result.fail("cross_app: #{surface.app} unreachable (#{error})")
