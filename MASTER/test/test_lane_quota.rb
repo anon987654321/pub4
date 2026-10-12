@@ -172,4 +172,11 @@ class TestLaneQuota < Minitest::Test
     assert_equal "openrouter-free", Silence.lane_of("google/gemma-4-31b-it:free")
   end
 
+  def test_lane_normalization_preserves_hyphenated_cli_provider_names
+    assert_equal "claude-cli", Quota.lane_of("claude-cli:claude-opus-5-5")
+    assert_equal "grok-cli", Quota.lane_of("grok-cli:auto")
+    assert_equal "deepseek", Quota.lane_of("deepseek-chat")
+    assert_equal "google", Quota.lane_of("google/gemini-2.5-flash")
+  end
+
 end
