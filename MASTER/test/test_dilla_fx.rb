@@ -55,17 +55,26 @@ class TestDillaFx < Minitest::Test
       assert_equal :pernille, Policy.voice_for_language(:nb)
       assert_equal :yasmin, Policy.voice_for_language(:ms)
     end
-    with_env("MASTER_TTS_GENDER" => "female") { assert_equal :jenny, Policy.voice_for_language(:en) }
+    with_env("MASTER_TTS_GENDER" => "female") { assert_equal :christopher, Policy.voice_for_language(:en) }
     with_env("MASTER_TTS_GENDER" => "male") do
       assert_equal :christopher, Policy.voice_for_language(:en)
       assert_equal :finn, Policy.voice_for_language(:nb)
     end
   end
 
-  def test_no_data_file_reader_still_names_jenny_as_the_default
+  def test_jenny_is_retired_from_all_english_voice_selection
     voice = File.read(File.expand_path("../data/voice.yml", __dir__))
     top = voice[/^tts:\n(.*?)^  persona_affects_text_only/m, 1]
-    refute_match(/single_voice: jenny|neural: en-US-JennyNeural|^    - jenny/, top)
+    refute_match(/jenny|JennyNeural/i, top)
+    refute Master::Voice::Speech::VOICES.key?(:jenny)
+    assert_equal :christopher, Master::Voice::Speech.resolve_voice(:jenny)
+    assert_equal :christopher, Master::Voice::Speech.resolve_voice("en-US-JennyNeural")
+
+    with_env("MASTER_TTS_VOICE" => "jenny", "MASTER_TTS_GENDER" => "female") do
+      assert_equal :christopher, Master::Voice::Speech.default_voice
+      assert_equal :christopher, Master::Voice::Speech.voice_for_text("I think this should work.")
+    end
+
     face = File.read(File.expand_path("../../RAILS/master_web/public/face_speech_runtime.js", __dir__))
     refute_includes face, "|| 'en-US-JennyNeural'"
   end
