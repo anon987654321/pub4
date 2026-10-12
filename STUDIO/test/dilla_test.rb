@@ -46,7 +46,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp default_profile drum_patterns echo groove_profiles progressions strum], DATA.keys.sort
+    assert_equal %w[arp default_profile drum_patterns echo groove_profiles play_profiles progressions strum], DATA.keys.sort
   end
 
   # ------------------------------------------------------------- progressions
@@ -470,7 +470,7 @@ class DillaTest < Minitest::Test
     settings = seq.echo_settings(flag: true, mix: 0.3, feedback: 0.7, time_ms: 250.0)
     assert_equal [0.3, 0.7, 250.0], settings.values_at("echo_volume", "intensity", "time_ms")
     assert_equal [1, 2], sequencer("arp_echo_soft").echo_settings["heads"]
-    assert_equal [[1, 2, 3], 0.75, 1], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
+    assert_equal [[1, 2, 3], 0.85, 1], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
   end
 
   def test_arp_and_echo_render_a_wav_and_the_plain_render_is_untouched_by_them
@@ -571,6 +571,38 @@ class DillaTest < Minitest::Test
     assert_in_delta 0.018, sequencer("dry").strum(true), 1e-9
     assert_equal 0.0, sequencer("dry").strum(nil)
     assert_in_delta 0.03, sequencer("dry").strum(30.0), 1e-9
+  end
+
+  # ------------------------------------------------------------- endless play
+
+  def test_play_renders_ahead_and_never_repeats_the_last_progression
+    Dir.mktmpdir do |dir|
+      log = File.join(dir, "played.txt")
+      player = File.join(dir, "fake.sh")
+      File.write(player, "#!/bin/sh\necho \"$1\" >> #{log}\n")
+      File.chmod(0o755, player)
+      out, err, status = run_dilla("--play", "--player", player, "--passes", "4", "--beats", "1", "--seed", "8",
+                                   "--profile", "dry", "--out", File.join(dir, "x.wav"), chdir: dir)
+      assert status.success?, err
+      passes = out.scan(/^pass (\d+):\nWrote \S+ \(\S+\) progression (\d+): /)
+      assert_equal %w[1 2 3 4], passes.map(&:first)
+      indices = passes.map { |_, i| i.to_i }
+      indices.each_cons(2) { |a, b| refute_equal a, b }
+      assert_equal 4, File.readlines(log).size, "each render was handed to the player"
+      assert_equal 4, out.scan(/seed=\d+/).uniq.size, "a fresh seed each pass"
+    end
+  end
+
+  def test_the_echo_tail_rings_on_after_the_last_note
+    settings = sequencer("arp_echo").echo_settings
+    assert_equal [1, 2, 3], settings["heads"]
+    assert_operator settings["echo_volume"], :>=, 0.85
+    assert_operator settings["tail"], :>=, 10
+    assert_equal 78.0, sequencer("arp_echo").bpm
+    assert_equal 88.0, sequencer("dry").bpm
+    out = Echo.process(impulse(100), delay: 0.05, heads: [1], intensity: 0.85, volume: 1.0, lowpass: nil, saturation: 0.0, tail: 3.0)
+    assert_equal 100 + (3 * SAMPLE_RATE), out.size
+    assert_operator out.last(2205).map(&:abs).max, :<, out[2205, 2205].map(&:abs).max, "the tail dies away"
   end
 
   # ------------------------------------------------------------- the sidechain

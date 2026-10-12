@@ -18,6 +18,7 @@ require 'json'
 require 'optparse'
 require 'fileutils'
 require 'zlib'
+require 'shellwords'
 
 SAMPLE_RATE = 44_100
 MAX_OFFSET = 0.035 # seconds: no role is ever moved further than this from its place
@@ -409,11 +410,11 @@ end
 module Echo
   MAX_INTENSITY = 0.9 # feedback never reaches one, so the loop cannot run away
 
-  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0)
+  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0, tail: 4.0)
     intensity = intensity.to_f.clamp(0.0, MAX_INTENSITY)
     d = [(delay * SAMPLE_RATE).round, 1].max
     ring = Array.new((heads.max * d) + 1, 0.0)
-    tail = [heads.max * d * 6, SAMPLE_RATE * 4].min
+    tail = (tail * SAMPLE_RATE).to_i # the repeats ring on after the last note and die away of themselves
     cutoff = lowpass ? 1.0 / ((2 * Math::PI * lowpass * (1.0 / SAMPLE_RATE)) + 1.0) : 0.0
     drive = 1.0 + (2.0 * saturation)
     share = 1.0 / heads.size
@@ -457,6 +458,9 @@ class Sequencer
   end
 
   def detune = (@profile['texture'] || {}).fetch('detune', 0.0)
+
+  # The tempo the profile plays at unless --bpm says otherwise.
+  def bpm = @profile.fetch('bpm', 88.0)
 
   # Chords, each the same length, the odd ones swung late.
   def render_chords(names, bpm, beats, search: true, strum: 0.0)
@@ -546,7 +550,8 @@ class Sequencer
     delay = settings['time_ms'] ? settings['time_ms'] / 1000.0 : settings.fetch('time_beats') * 60.0 / bpm
     out = Echo.process(buf, delay:, heads: settings.fetch('heads'), intensity: settings.fetch('intensity'),
                             volume: settings.fetch('echo_volume'), lowpass: settings['lowpass'],
-                            saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0))
+                            saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0),
+                            tail: settings.fetch('tail', 4.0))
     peak = out.map(&:abs).max
     peak > 1.0 ? out.map { |v| v / peak } : out
   end
@@ -704,31 +709,41 @@ def run(argv)
     o.on('--echo-mix N', Float, 'Echo volume against the dry sound') { |v| options[:echo_mix] = v }
     o.on('--echo-feedback N', Float, 'Echo intensity, 0 to 0.9: how much of each repeat comes round again') { |v| options[:echo_feedback] = v }
     o.on('--echo-time MS', Float, 'Echo base delay in milliseconds (default a dotted eighth)') { |v| options[:echo_time] = v }
+    o.on('--play', '--endless', 'Never stop: render the next progression while this one plays') { options[:play] = true }
+    o.on('--player CMD', 'The command that plays a wav (default afplay, else ffplay)') { |v| options[:player] = v }
+    o.on('--passes N', Integer, 'With --play, stop after N progressions') { |v| options[:passes] = v }
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
 
   data = JSON.parse(File.read(File.join(__dir__, 'dilla.json')))
   progressions = data.fetch('progressions')
 
-  if options[:list] || (options[:prog].nil? && !options[:random] && !options[:quick])
+  if options[:play]
+    play_forever(data, options)
+  elsif options[:list] || (options[:prog].nil? && !options[:random] && !options[:quick])
     puts 'Progressions:'
     progressions.each_with_index { |chords, i| puts format('%4d  %s', i, chords.join(' ')) }
     puts
     puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
-    return
+  else
+    render(data, options)
   end
+end
 
+# One render: the options name a progression or let the seed choose one. Returns the output path.
+def render(data, options)
+  progressions = data.fetch('progressions')
   seed = options[:seed] || Random.new_seed % 1_000_000
   pick = Random.new(seed)
   index = options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size))
   names = progressions.fetch(index) { abort "No progression: #{index}" }
   drums = options[:drums] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
   profile = options[:profile] || data.fetch('default_profile')
-  bpm = options[:bpm] || 88.0
-  beats = options[:beats] || 4.0
 
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed)
+  bpm = options[:bpm] || seq.bpm
+  beats = options[:beats] || 4.0
   arp = seq.arp_settings(options[:arp])
   buf = arp ? seq.render_arp(names, bpm, beats, arp, search: !options[:plain], pad: options[:pad]) : seq.render_chords(names, bpm, beats, search: !options[:plain], strum: seq.strum(options[:strum]))
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
@@ -748,6 +763,43 @@ def run(argv)
   end
   puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
   puts "  drums=#{drums || 'none'} profile=#{profile} groove=#{seq.pd_amount} bpm=#{bpm} seed=#{seed}"
+  out
+end
+
+# The player command for a wav: --player, else afplay on a Mac, else ffplay.
+def player_command(options)
+  return Shellwords.split(options[:player]) if options[:player]
+
+  RUBY_PLATFORM.include?('darwin') ? ['afplay'] : %w[ffplay -nodisp -autoexit -loglevel quiet]
+end
+
+# Never stops: each pass draws a progression other than the last (from the whole list), a
+# fresh seed and a profile, renders it while the one before plays, and plays it when that ends.
+# Two files alternate, so the one being played is never the one being written.
+def play_forever(data, options)
+  rng = Random.new(options[:seed] || Random.new_seed)
+  count = data.fetch('progressions').size
+  names = data.fetch('play_profiles')
+  command = player_command(options)
+  dir = options[:out] ? File.dirname(options[:out]) : 'out/play'
+  last = nil
+  pid = nil
+  trap('INT') { pid && Process.kill('TERM', pid); exit }
+  trap('TERM') { pid && Process.kill('TERM', pid); exit }
+  (1..(options[:passes] || Float::INFINITY)).each do |pass|
+    index = ((0...count).to_a - [last]).sample(random: rng)
+    profile = options[:profile] || names.sample(random: rng)
+    drums = options[:drums] || data['groove_profiles'].fetch(profile)['drums'] ||
+            (data['groove_profiles'].fetch(profile).key?('arp') ? nil : data['drum_patterns'].keys.sample(random: rng))
+    puts "pass #{pass}:"
+    path = render(data, options.merge(prog: index, seed: rng.rand(1_000_000), profile:, drums:, random: false, quick: false,
+                                      out: File.join(dir, "play_#{pass.odd? ? 'a' : 'b'}.wav")))
+    Process.wait(pid) if pid
+    pid = nil
+    last = index
+    pid = Process.spawn(*command, path)
+  end
+  Process.wait(pid) if pid
 end
 
 run(ARGV) if $PROGRAM_NAME == __FILE__
