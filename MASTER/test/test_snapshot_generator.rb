@@ -111,9 +111,9 @@ class TestSnapshotGenerator < Minitest::Test
       master1 = File.join(dir, "snapshot_MASTER.md")
       master2 = File.join(dir, "snapshot_MASTER.part002.md")
       rails1 = File.join(dir, "snapshot_RAILS.md")
-      File.write(master1, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading1, "", "#{fence}ruby", "first", fence, "", "## Snapshot part complete", ""].join("\n"))
-      File.write(master2, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading2, "", "#{fence}ruby", "second", fence, "", "## Snapshot part complete", ""].join("\n"))
-      File.write(rails1, ["# RAILS", "", "Pack: tree=RAILS git=abc123 part=1/1 text_total=1 fragments_total=1 binary=0 omitted=0", "", "## `RAILS/example.rb [bytes=5 newline=1]`", "", "#{fence}ruby", "rails", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(master1, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000", "", heading1, "", "#{fence}ruby", "first", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(master2, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000", "", heading2, "", "#{fence}ruby", "second", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(rails1, ["# RAILS", "", "Pack: tree=RAILS git=abc123 part=1/1 text_total=1 fragments_total=1 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000", "", "## `RAILS/example.rb [bytes=6 newline=1]`", "", "#{fence}ruby", "rails", fence, "", "## Snapshot part complete", ""].join("\n"))
 
       target = File.join(dir, "rehydrated")
       packs = [master1, master2, rails1].map { |path| Operator::SnapshotExtract.parse(path) }
