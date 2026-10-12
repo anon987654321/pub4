@@ -24,7 +24,42 @@ module Master
 
           private
 
-          def hosted_endpoints = @rules.fetch("openai_compatible", nil) || {}
+          # A local OpenAI-compatible gateway is optional and deliberately opt-in.
+          # Set MASTER_LLM_GATEWAY_URL to its /v1 base; the endpoint is then
+          # discovered and routed through the same health/fallback chain as the
+          # catalogued providers. No extra Ruby routing gem is required.
+          def hosted_endpoints
+            configured = @rules.fetch("openai_compatible", {}) || {}
+            base = ENV["MASTER_LLM_GATEWAY_URL"].to_s.strip
+            return configured if base.empty?
+
+            configured.merge("gateway" => gateway_spec(base))
+          rescue URI::Error, ArgumentError => e
+            Master::Ground::Swallow.log(e, context: "model_router.gateway_config")
+            configured || {}
+          end
+
+          def gateway_spec(base)
+            uri = URI.parse(base)
+            unless uri.is_a?(URI::HTTP) && !uri.host.to_s.empty?
+              raise ArgumentError, "MASTER_LLM_GATEWAY_URL must be an absolute HTTP(S) URL"
+            end
+            if uri.userinfo || uri.query || uri.fragment
+              raise ArgumentError, "MASTER_LLM_GATEWAY_URL must not include credentials, query or fragment"
+            end
+            if uri.scheme == "http" && !loopback_gateway_host?(uri.host)
+              raise ArgumentError, "unencrypted remote gateway refused; use loopback HTTP or HTTPS"
+            end
+
+            {
+              "base" => base.chomp("/"),
+              "key_env" => %w[MASTER_LLM_GATEWAY_KEY FREELLMPOOL_PROXY_KEY],
+            }
+          end
+
+          def loopback_gateway_host?(host)
+            %w[localhost 127.0.0.1 ::1].include?(host.to_s.downcase)
+          end
 
           def hosted_index
             return {} if ENV["MASTER_NO_POOL_PROBES"] == "1"
