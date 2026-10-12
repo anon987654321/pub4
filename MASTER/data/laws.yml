@@ -3709,7 +3709,7 @@ law_map:
       - code
       - linked-2026-08-07
     security:
-      meaning: credentials and secrets must stay out of source code and logs
+      meaning: hard-coded credential values must not appear as source literals
       detects: plaintext_secrets
       severity: critical
       confidence: 0.9
