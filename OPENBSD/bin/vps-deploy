@@ -147,6 +147,73 @@ if [[ -z ${VPS_DEPLOY_LOGGING:-} ]]; then
   print "==> vps-deploy $app started $(date '+%Y-%m-%d %H:%M:%S')"
 fi
 
+repo=${PUB4_ROOT:-/home/dev/pub4}
+
+# The guard's deploy flag, held for the whole deploy and not only the restart.
+#
+# rc.d/<app> touches .deploying-<app> from rc_pre to the end of its /up wait and
+# removes it there. CI, migrate, precompile and the gates all run outside that
+# window at the box's highest load, and resource_guard counts every one of those
+# ticks as a strike. So the counter already stands past GUARD_SHED_STRIKES when
+# the restart's flag comes off, and the next tick sheds the first OPTIONAL
+# service. bsdports leads that list, which is why its own deploy exits 0 and
+# vps-state then reads bsdports(failed) with :47312 closed.
+#
+# Taken after the preflight guard run, which may still shed to free memory for
+# CI. A tick that sees the flag resets the counter, so the guard needs two fresh
+# breaching ticks after this deploy ends before it sheds anything. The name is
+# not .deploying-<app>, because rc.d removes that one mid-deploy; it is touched
+# again at each long stage because the guard ignores a flag older than 30 minutes.
+deploy_flag="$repo/.deploying-vps-deploy-${app}"
+hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
+
+# The terminal result, recorded however the script ends.
+#
+# A failure past `rcctl stop` used to leave the app stopped under a stamp that
+# still said ok, and an ssh disconnect cut the tee pipe before the last line
+# reached the log. Every exit now lands here: it stamps failed (unless a stage
+# already did), names the stage and the services left down, prints the safe next
+# command, and appends the verdict straight to the log file rather than through
+# tee. Each step is `|| true`: a trap that fails would hide the failure it reports.
+deploy_stage=start
+app_stopped=0
+stamp_written=0
+finish() {
+  local rc=$?
+  trap - EXIT
+  rm -f -- "$deploy_flag"
+  if (( rc != 0 )) && [[ $app != all ]]; then
+    if (( ! stamp_written )) && (( $+functions[write_stamp] )); then
+      write_stamp "$app" failed || true
+    fi
+    print -u2 "vps-deploy: $app FAILED at stage \"$deploy_stage\" (exit $rc)"
+    if (( app_stopped )); then
+      print -u2 "vps-deploy: $app was stopped for this deploy and is DOWN — read /var/log/daemon, then"
+      print -u2 "            doas rcctl start $app   (or rerun: zsh OPENBSD/bin/vps-deploy $app)"
+    else
+      print -u2 "vps-deploy: $app was not stopped; the previous release is still serving. Fix the cause and rerun:"
+      print -u2 "            zsh OPENBSD/bin/vps-deploy $app"
+    fi
+    local other
+    for other in amber bsdports; do
+      [[ $other == "$app" ]] && continue
+      doas rcctl get "$other" >/dev/null 2>&1 || continue
+      doas rcctl check "$other" >/dev/null 2>&1 \
+        || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — doas rcctl restart $other"
+    done
+  fi
+  print -r -- "==> vps-deploy $app finished $(date '+%Y-%m-%d %H:%M:%S') exit=$rc stage=$deploy_stage" \
+    >> "${deploy_log:-$HOME/vps-deploy.log}" 2>/dev/null || true
+  release_deploy_lock
+  exit $rc
+}
+# zsh runs the EXIT trap for HUP but not for TERM or INT, so name all three: a
+# dropped ssh session or a kill is a failure with a recorded stage, not a silent end.
+trap finish EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 # The whole fleet, in the order that survives its own side effects.
 #
 # master is not under /home/*/app, so an operator enumerating the Rails apps does
@@ -190,7 +257,6 @@ if [[ $app == all ]]; then
   exit 0
 fi
 
-repo=${PUB4_ROOT:-/home/dev/pub4}
 source "$repo/OPENBSD/lib/ruby_select.sh"
 stamp_dir=/var/db/pub4
 mkdir -p "$stamp_dir" 2>/dev/null || doas mkdir -p "$stamp_dir"
@@ -203,6 +269,7 @@ doas chmod 755 "$stamp_dir" 2>/dev/null || true
 write_stamp() {
   local name=$1 stamp_status=$2
   local sha started file
+  stamp_written=1
   sha=$(git -C "$repo" rev-parse --short HEAD)
   started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   file=$stamp_dir/last_deploy_${name}.json
@@ -212,6 +279,7 @@ EOF
   doas chmod 644 "$file" 2>/dev/null || true
 }
 
+deploy_stage=master
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
   if zsh "$repo/OPENBSD/bin/vps_deploy_master.sh"; then
@@ -231,36 +299,16 @@ fi
 # syncs whatever the VPS checkout already holds, which can lag origin/main by
 # days. master pulls inside vps_deploy_master.sh; this is the matching step for
 # the three copy-tree apps.
+deploy_stage=pull
 print "vps-deploy: $app (git pull --ff-only)"
 git -C "$repo" pull --ff-only origin main
 
+deploy_stage=preflight
 print "vps-deploy: $app (preflight load)"
 if [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then
   doas ksh "$repo/OPENBSD/bin/resource_guard.sh" || true
 fi
 
-# The guard's deploy flag, held for the whole deploy and not only the restart.
-#
-# rc.d/<app> touches .deploying-<app> from rc_pre to the end of its /up wait and
-# removes it there. CI, migrate, precompile and the gates all run outside that
-# window at the box's highest load, and resource_guard counts every one of those
-# ticks as a strike. So the counter already stands past GUARD_SHED_STRIKES when
-# the restart's flag comes off, and the next tick sheds the first OPTIONAL
-# service. bsdports leads that list, which is why its own deploy exits 0 and
-# vps-state then reads bsdports(failed) with :47312 closed.
-#
-# Taken after the preflight guard run, which may still shed to free memory for
-# CI. A tick that sees the flag resets the counter, so the guard needs two fresh
-# breaching ticks after this deploy ends before it sheds anything. The name is
-# not .deploying-<app>, because rc.d removes that one mid-deploy; it is touched
-# again at each long stage because the guard ignores a flag older than 30 minutes.
-deploy_flag="$repo/.deploying-vps-deploy-${app}"
-hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
-cleanup() {
-  rm -f -- "$deploy_flag"
-  release_deploy_lock
-}
-trap cleanup EXIT
 hold_deploy_flag
 
 # What is about to be deployed, against what is actually running.
@@ -315,6 +363,7 @@ else
     doas rcctl stop "$jobs_service" >/dev/null 2>&1 && jobs_was_up=1
   fi
 
+  deploy_stage=ci+sync
   print "vps-deploy: $app (ci + sync)"
   # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This
   # script runs under `set -e`, so a bare failing CI run exits here and the
@@ -341,6 +390,7 @@ fi
 # reaches production: on 2026-07-29 brgen shipped a counter-cache column its
 # views already read, and every feed render 500'd until an operator ran the
 # three pending migrations by hand.
+deploy_stage=migrate
 print "vps-deploy: $app (primary db migrate + secondary schemas)"
 . "$repo/RAILS/_core.sh"
 . "$repo/RAILS/_bundle.sh"
@@ -351,6 +401,7 @@ print "vps-deploy: $app (primary db migrate + secondary schemas)"
 # lock a live Falcon worker already holds on production.sqlite3.
 print "vps-deploy: $app (stop for sqlite migrate)"
 doas rcctl stop "$app" 2>/dev/null || true
+app_stopped=1
 db_create_migrate_as_app "$app" "/home/${app}/app"
 
 # The SKIP_CI=1 path (${app}.sh -> deploy_tracked_app -> rails_runtime_gate)
@@ -360,15 +411,19 @@ db_create_migrate_as_app "$app" "/home/${app}/app"
 # never created for a plain `vps-deploy $app` run, so Propshaft 404s
 # every asset_path() and the page renders with no CSS at all. Safe to
 # call unconditionally: Propshaft precompile is idempotent.
+deploy_stage=precompile
 print "vps-deploy: $app (assets precompile)"
 rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 
+deploy_stage=restart
 print "vps-deploy: $app (restart)"
 hold_deploy_flag
 if ! doas rcctl restart "$app" || ! doas rcctl check "$app"; then
   write_stamp "$app" failed
   exit 1
 fi
+app_stopped=0
+deploy_stage=health
 
 port=$("$RUBY" -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
 up_ok=0
@@ -410,6 +465,7 @@ else
   print "vps-deploy: $app no /assets stylesheet linked on / — nothing to verify"
 fi
 
+deploy_stage=solid_queue
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
   print "vps-deploy: $app (solid_queue proof)"
@@ -428,6 +484,7 @@ fi
 # `vps-deploy all` folds the restore into its ordering; this pass gives a
 # single-app deploy, the common case, the same restore. Reported, not silent — a
 # service that needed restoring is a fact about the box worth seeing.
+deploy_stage=restore-shed
 restored=()
 for other in amber bsdports; do
   [[ $other == "$app" ]] && continue
@@ -476,6 +533,7 @@ gate_names=(production port_inventory generated_asset schema_migration
 if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
   gate_names+=(rendered_suite layout_suite)
 fi
+deploy_stage=gates
 print "vps-deploy: $app (gates: ${gate_names})"
 hold_deploy_flag
 if ! MASTER_STRICT=deploy GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
@@ -485,6 +543,7 @@ if ! MASTER_STRICT=deploy GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb" 
   exit 1
 fi
 
+deploy_stage=final-check
 # The app deployed last has to be the app still running when the deploy says ok.
 # Every check above ran minutes ago, and a deploy whose own app is down on exit
 # is the one outcome the stamp must never call ok.

@@ -78,7 +78,7 @@ class VpsDeployContractTest < Minitest::Test
   GUARD = File.read(File.join(ROOT, "OPENBSD", "bin", "resource_guard.sh"), encoding: "UTF-8")
 
   def flag_block
-    SOURCE[/^deploy_flag=.*?^hold_deploy_flag$/m]
+    SOURCE[/^deploy_flag=.*?^trap 'exit 143' TERM$/m]
   end
 
   # resource_guard stops shedding while a .deploying* flag is fresh. rc.d holds
@@ -92,7 +92,7 @@ class VpsDeployContractTest < Minitest::Test
     refute_nil guard_glob, "resource_guard no longer reads a deploy flag glob"
 
     Dir.mktmpdir do |repo|
-      script = "repo=#{repo}; app=bsdports\nrelease_deploy_lock() { :; }\n#{flag_block}\nprint -r -- $deploy_flag\n[[ -e $deploy_flag ]] && print held\n"
+      script = "repo=#{repo}; app=bsdports; deploy_log=#{repo}/deploy.log\nrelease_deploy_lock() { :; }\n#{flag_block}\nhold_deploy_flag\nprint -r -- $deploy_flag\n[[ -e $deploy_flag ]] && print held\n"
       out = IO.popen(["zsh", "-c", script], &:read).lines.map(&:chomp)
       flag = out.first
 
@@ -101,7 +101,7 @@ class VpsDeployContractTest < Minitest::Test
              "#{flag} is not a name resource_guard's #{guard_glob} reads"
       refute File.exist?(flag), "the flag outlived the script, so shedding stays off for 30 minutes"
 
-      rcd_flag = File.read(File.join(ROOT, "OPENBSD", "etc", "rc.d", "bsdports"))[%r{touch \S+/(\.deploying\S*)}, 1]
+      rcd_flag = File.read(File.join(ROOT, "OPENBSD", "etc", "rc.d", "bsdports"), encoding: "UTF-8")[%r{touch \S+/(\.deploying\S*)}, 1]
       refute_equal rcd_flag, File.basename(flag),
                    "rc.d removes its own flag after /up, so sharing its name drops the hold mid-deploy"
     end
@@ -211,10 +211,91 @@ class VpsDeployContractTest < Minitest::Test
       gemfile = File.join(ROOT, "RAILS", app, "Gemfile")
       next unless File.file?(gemfile)
 
-      File.read(gemfile).scan(%r{path:\s*"\.\./([^/"]+)}).flatten.uniq.each do |sibling|
+      File.read(gemfile, encoding: "UTF-8").scan(%r{path:\s*"\.\./([^/"]+)}).flatten.uniq.each do |sibling|
         synced = sibling == "__shared" || (app == "brgen" && sibling.start_with?("brgen_"))
         assert synced, "#{app}/Gemfile names ../#{sibling}, which vps_ci.sh does not sync beside app/"
       end
     end
+  end
+
+  # The trap block alone, in zsh, with doas and write_stamp stubbed: what a failed
+  # deploy says, stamps and leaves behind is the contract an operator reads at 3 a.m.
+  def finish_block
+    SOURCE[/^deploy_stage=start$.*?^trap 'exit 143' TERM$/m]
+  end
+
+  def finish_run(dir, body, down: "amber")
+    log = File.join(dir, "deploy.log")
+    script = <<~ZSH
+      app=brgen; repo=#{dir}; deploy_log=#{log}; deploy_flag=#{dir}/.flag; lock_owner=0
+      release_deploy_lock() { print released; }
+      write_stamp() { stamp_written=1; print "stamp $1 $2"; }
+      doas() { [[ $1 == rcctl && $2 == check && $3 == #{down} ]] && return 1; return 0; }
+      #{finish_block}
+      touch $deploy_flag
+      #{body}
+    ZSH
+    out = IO.popen(["zsh", "-c", script, { err: %i[child out] }], &:read)
+    [out, $?.exitstatus, File.exist?(log) ? File.read(log) : ""]
+  end
+
+  def test_a_failure_after_the_stop_stamps_failed_names_the_stage_and_what_is_down
+    refute_nil finish_block, "the terminal-result block is gone — the scan broke, or the block did"
+    Dir.mktmpdir do |dir|
+      out, status, log = finish_run(dir, "deploy_stage=migrate; app_stopped=1; exit 1")
+
+      assert_equal 1, status
+      assert_includes out, "stamp brgen failed"
+      assert_includes out, 'brgen FAILED at stage "migrate" (exit 1)'
+      assert_includes out, "brgen was stopped for this deploy and is DOWN"
+      assert_includes out, "doas rcctl start brgen"
+      assert_includes out, "amber is DOWN"
+      refute_includes out, "bsdports is DOWN"
+      assert_includes out, "released"
+      assert_match(/exit=1 stage=migrate/, log)
+      refute File.exist?(File.join(dir, ".flag")), "the deploy flag outlived the script"
+    end
+  end
+
+  def test_a_failure_before_the_stop_says_the_previous_release_is_still_serving
+    Dir.mktmpdir do |dir|
+      out, status, = finish_run(dir, "deploy_stage=ci+sync; exit 3", down: "none")
+
+      assert_equal 3, status
+      assert_includes out, 'FAILED at stage "ci+sync" (exit 3)'
+      assert_includes out, "was not stopped; the previous release is still serving"
+      refute_includes out, "is DOWN"
+    end
+  end
+
+  def test_a_stage_that_already_stamped_is_not_stamped_twice_and_success_is_logged_quietly
+    Dir.mktmpdir do |dir|
+      out, status, = finish_run(dir, "write_stamp brgen failed; exit 1")
+      assert_equal 1, status
+      assert_equal 1, out.scan("stamp brgen failed").size
+
+      out, status, log = finish_run(dir, "deploy_stage=final-check; exit 0")
+      assert_equal 0, status
+      refute_includes out, "FAILED"
+      assert_match(/exit=0 stage=final-check/, log)
+    end
+  end
+
+  def test_a_kill_or_a_dropped_session_is_a_recorded_failure_not_a_silent_end
+    Dir.mktmpdir do |dir|
+      %w[TERM HUP].each do |signal|
+        out, status, log = finish_run(dir, "deploy_stage=precompile; kill -#{signal} $$; sleep 5")
+        assert_equal({ "TERM" => 143, "HUP" => 129 }.fetch(signal), status, signal)
+        assert_includes out, 'FAILED at stage "precompile"'
+        assert_includes log, "stage=precompile"
+      end
+    end
+  end
+
+  # `all` exits from its own loop; a trap installed after that branch never ran for
+  # the parent, so every full deploy left its lock to the stale reaper.
+  def test_the_terminal_trap_is_installed_before_the_all_branch_can_exit
+    assert SOURCE.index("trap finish EXIT") < SOURCE.index("if [[ $app == all ]]; then\n  typeset"),
+           "the parent of `vps-deploy all` exits without releasing its lock"
   end
 end

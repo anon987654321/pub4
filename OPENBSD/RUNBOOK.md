@@ -277,6 +277,15 @@ sees, for every app. It has to be the union of what all backends need — a
 `geolocation=()` there silently killed brgen's `#nearby` while the Rails
 initializer said `(self)`.
 
+When `bin/vps-deploy` fails it says where. Whatever the stage (pull, ci+sync,
+migrate, precompile, restart, health, gates), an exit trap stamps
+`last_deploy_<app>.json` failed, prints `FAILED at stage "<stage>"`, says
+whether the app was stopped for the deploy and so is down (the next command is
+`doas rcctl start <app>` or a rerun), lists amber or bsdports if they are down,
+releases the lock and the deploy flag, and appends `finished ... exit=N
+stage=...` to `~/vps-deploy.log` directly, so a dropped ssh session still leaves
+the verdict. A kill or hangup counts as a failure with the stage it interrupted.
+
 ## Deploy-all disambiguation
 
 Four scripts read as “do everything”, and they do four different things. Pick
