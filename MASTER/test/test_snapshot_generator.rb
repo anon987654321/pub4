@@ -70,7 +70,7 @@ class TestSnapshotGenerator < Minitest::Test
 
     assert_includes source, '".sh" => "zsh"'
     assert_includes source, '".zsh" => "zsh"'
-    assert_includes source, '## Snapshot part complete\\n\\n'
+    assert_includes source, '## Snapshot part complete\n\n'
     assert_includes source, 'part=#{part_index}/#{part_count}'
     assert_includes source, "snapshot0: complete tree="
     assert_includes source, '"STUDIO" => "STUDIO"'
