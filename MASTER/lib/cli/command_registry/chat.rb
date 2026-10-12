@@ -8,7 +8,7 @@ module Master
     module CommandRegistry
       module_function
 
-      CHAT_VERBS = (%w[connect join part say me names topic list nick irc chat] + CHAT_SERVICE_VERBS).freeze
+      CHAT_VERBS = (%w[connect join part say msg me names topic list nick irc chat] + CHAT_SERVICE_VERBS).freeze
       CHAT_ROOM = Master::Io::Irc::ROOM
 
       CHAT_HELP = {
@@ -49,6 +49,14 @@ module Master
           detail: [
             "/say [#chan] <text> — needs /chat speak on. Published at once, cannot be taken back.",
             "MASTER never writes to a room on its own and no model tool can.",
+          ],
+        },
+
+        "msg" => {
+          summary: "send one direct message to an IRC nick, explicitly",
+          detail: [
+            "/msg <nick> <text> — IRC only; needs /chat speak on. Published at once, cannot be taken back.",
+            "A direct message is never inferred from ordinary conversation and no model tool can send it.",
           ],
         },
 
@@ -100,7 +108,7 @@ module Master
 
           detail: [
             "/chat status — each transport, nick, channels, mode.",
-            "/chat speak on|off — allow explicit /say and /me (off at every new connection).",
+            "/chat speak on|off — allow explicit /say, /me and /msg (off at every new connection).",
             "/chat quit [msg] — disconnect (/quit still exits MASTER).",
             "/chat summarize — the operator asks the model to summarize recent lines, " \
              "sent as quoted untrusted data.",
@@ -109,7 +117,7 @@ module Master
       }.merge(CHAT_SERVICE_HELP).freeze
 
       CHAT_ACTIONS = {
-        "join" => :chat_join, "part" => :chat_part, "say" => :chat_say_line, "me" => :chat_me_line,
+        "join" => :chat_join, "part" => :chat_part, "say" => :chat_say_line, "msg" => :chat_private_message, "me" => :chat_me_line,
         "names" => :chat_names, "topic" => :chat_topic_line, "list" => :chat_busy_channels, "nick" => :chat_nick,
         "speak" => :chat_speak, "quit" => :chat_quit, "disconnect" => :chat_quit, "summarize" => :chat_summary,
       }.freeze
@@ -177,6 +185,17 @@ module Master
 
       def chat_say_line(chat, args, **) = chat_say(chat, args, action: false)
       def chat_me_line(chat, args, **) = chat_say(chat, args, action: true)
+
+      def chat_private_message(chat, args, **)
+        return "chat0: /msg is available on IRC only" unless chat.is_a?(Io::Irc)
+
+        recipient, text = args.split(/\\s+/, 2)
+        raise ArgumentError, "usage: /msg <nick> <text>" if recipient.to_s.empty? || text.to_s.strip.empty?
+        raise ArgumentError, "bad nick" unless recipient.match?(Io::Irc::NICK)
+
+        chat.send_text(recipient, text)
+        "irc0: -> #{recipient} #{Io::Chat::Policy.sanitize(text)}"
+      end
 
       def chat_names(chat, args, **)
         chat.names(args.split.first)
