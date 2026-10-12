@@ -141,17 +141,23 @@ class CoverageRatchetTest < Minitest::Test
     assert_empty stale, "raise these floors in coverage_ratchet_test.rb:\n  #{stale.join("\n  ")}"
   end
 
-  # The point of recording it: most of this tree has no test naming its subject, and
-  # the string-matching contracts read as if it were covered.
-  def test_the_gap_is_stated_rather_than_implied
-    untested = APPS.to_h do |app|
-      [app, KINDS.sum { |kind| sources(app, kind).size - counted(app, kind) }]
-    end
+  # The inventory itself is part of the measurement. A glob that silently stops
+  # seeing controllers/models can make both the count and its floor look healthy.
+  # Keep every source accounted for exactly once; this test does not treat the
+  # existence of coverage gaps as a success condition.
+  def test_every_controller_and_model_is_accounted_for_once
+    APPS.each do |app|
+      KINDS.each do |kind|
+        all = sources(app, kind)
+        with_tests = all.select { |path| tested?(app, kind, path) }
+        without_tests = all - with_tests
 
-    # Not an assertion about the number — an assertion that the number is knowable
-    # from here, so a reader of the coverage contracts can find the truth.
-    untested.each_value { |count| assert_kind_of Integer, count }
-    assert_operator untested.values.sum, :>, 0,
-                    "if this ever fails, every controller and model has a test — delete this test"
+        assert_equal all.size, with_tests.size + without_tests.size,
+                     "#{app}/#{kind}: the inventory lost source files"
+        assert_equal all.uniq, all, "#{app}/#{kind}: source inventory contains duplicates"
+        assert_equal with_tests.uniq, with_tests, "#{app}/#{kind}: test matching counted a source twice"
+        assert_equal without_tests.uniq, without_tests, "#{app}/#{kind}: an uncovered source is duplicated"
+      end
+    end
   end
 end
