@@ -56,6 +56,15 @@ module Master
         id.split("-", 2).first.to_s
       end
 
+      # OpenRouter's free daily-pool refusal applies to every :free model.
+      # Other 429s can be vendor-specific, so they stay on the model's ordinary lane.
+      def quota_lane_of(model, reply)
+        text = reply.to_s
+        free_pool = model.to_s.end_with?(":free") &&
+          text.match?(/free-models-per-day|X-RateLimit-Reset/i)
+        free_pool ? "openrouter-free" : lane_of(model)
+      end
+
       # Seconds a reply says to wait; nil when it names none.
       def wait_in(reply) = LaneReply.stated_wait(reply.to_s, @clock.call)
 
@@ -69,7 +78,7 @@ module Master
         verdict = LaneReply.read(reply, now: @clock.call)
         return unless verdict
 
-        lane = lane_of(model)
+        lane = quota_lane_of(model, reply)
         deadline = @clock.call + verdict.wait
         @mutex.synchronize do
           rows = raw.merge(lane => deadline)
@@ -107,8 +116,8 @@ module Master
       # Seconds until the lane of `model` is asked again, or nil when no clock
       # revives it (a hand-kept dead entry, or a lane that is live).
       def revival_in(model)
-        deadline = @mutex.synchronize { table[lane_of(model)] }
-        deadline && [deadline - @clock.call, 1].max
+        deadline = until_for(model)
+        deadline.is_a?(Numeric) ? [deadline - @clock.call, 1].max : nil
       end
 
       def dead?(model, manual: manual_dead) = until_for(model, manual:) != nil
@@ -125,10 +134,14 @@ module Master
 
       # Epoch deadline, :manual for the hand-kept list, :run for a lane dropped for this run, or nil when the lane is live.
       def until_for(model, manual: manual_dead)
+        lane = lane_of(model)
         return :manual if manual.any? { |entry| model.to_s.start_with?(entry) }
-        return :run if @mutex.synchronize { @run_drops.key?(lane_of(model)) }
+        return :run if @mutex.synchronize { @run_drops.key?(lane) }
 
-        @mutex.synchronize { table[lane_of(model)] }
+        deadlines = @mutex.synchronize { table }
+        local = deadlines[lane]
+        shared_free = deadlines["openrouter-free"] if model.to_s.end_with?(":free")
+        [local, shared_free].compact.max
       end
 
       # lane => deadline, expired rows dropped; the file is the shared truth.
