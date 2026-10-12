@@ -62,6 +62,7 @@ class RailsStackContractTest < Minitest::Test
                       "#{root} still carries Rails 8.1 defaults"
     end
   end
+
   def test_ruby_pins_and_lockfiles_match_their_tree_owner
     root_version = File.read(File.join(REPO_ROOT, ".ruby-version")).strip
     master_version = File.read(File.join(REPO_ROOT, "MASTER", ".ruby-version")).strip
@@ -74,12 +75,12 @@ class RailsStackContractTest < Minitest::Test
       assert_equal root_version, app_version, "#{root}/.ruby-version disagrees with the root Rails runtime"
 
       lock = File.read(File.join(REPO_ROOT, root, "Gemfile.lock"))
-      locked_version = lock[/^  ruby (\\S+)$/, 1]
+      locked_version = lock[/^  ruby (\S+)$/, 1]
       assert_equal app_version, locked_version, "#{root}/Gemfile.lock was resolved under another Ruby"
     end
 
     master_lock = File.read(File.join(REPO_ROOT, "MASTER", "Gemfile.lock"))
-    master_locked_version = master_lock[/^  ruby (\\S+)$/, 1]
+    master_locked_version = master_lock[/^  ruby (\S+)$/, 1]
     assert_equal master_version, master_locked_version,
                  "MASTER/Gemfile.lock was resolved under another Ruby"
   end
