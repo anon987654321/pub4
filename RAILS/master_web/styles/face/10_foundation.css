@@ -1,0 +1,276 @@
+
+
+/* Not a generated token. generate_face_root_css.rb owns the block above, so a
+   hand-added line inside it is drift the deploy gate stops. The wordmark
+   names its face as the brand, and the brand is the one sans family the owner
+   set for every surface, so it reads --font-label rather than restating the
+   stack. Helvetica Neue Pro is licensed per seat and cannot ship as a webfont;
+   the stack names it where it is installed and falls to Helvetica Neue, then
+   Arial, which is metrically identical, and downloads nothing. */
+:root {
+  --font-brand: var(--font-mono);
+  /* The wordmark face brgen.no sets its logo in ($brgen-logo-font in
+     brgen/app/assets/stylesheets/application.scss), so ai.brgen.no reads as the
+     same logo: same stack, heavy weight, tightest tracking. Operator, 2026-10-12. */
+  --font-logo: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--face-bg);
+  color: var(--face-fg);
+  font: 16px/1.5 var(--font-mono);
+  font-feature-settings: "ss01","ss03","cv05","kern" 1;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='7' y='0' width='2' height='6' fill='%23d8d6e0'/%3E%3Crect x='7' y='10' width='2' height='6' fill='%23d8d6e0'/%3E%3Crect x='0' y='7' width='6' height='2' fill='%23d8d6e0'/%3E%3Crect x='10' y='7' width='6' height='2' fill='%23d8d6e0'/%3E%3C/svg%3E") 8 8, crosshair;
+}
+
+body.face-loading {
+  touch-action: manipulation;
+}
+
+body.font-mono {
+  font-family: var(--font-mono);
+}
+
+body[data-high-contrast="1"] {
+  --face-fg: white;
+  --face-muted: white;
+  --face-dim: white;
+  --face-soft: white;
+}
+body[data-high-contrast="1"] .msg-body { color: white; }
+
+@media (prefers-contrast: more) {
+  :root {
+    --face-muted: var(--face-fg);
+    --face-dim: color-mix(in srgb, var(--c-text) 34%, transparent);
+    --border-faint: color-mix(in srgb, var(--face-fg) 22%, transparent);
+    --border-soft: color-mix(in srgb, var(--face-fg) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  #cmd-palette { background: var(--face-bg);  }
+  #cmd-palette-panel { background: var(--face-bg); }
+  #chat-history-panel { background: var(--face-bg); }
+}
+
+/* Canvas filter tweaks encode runtime state (pixel_field systemic_emotion_mapping), not decorative glow. */
+body[data-runtime-profile="battery"] canvas { filter: none; }
+html[data-topology-flash="1"] canvas { filter: contrast(1.05); transition: filter .09s steps(2,end); }
+body[data-runtime-profile="full"] canvas { filter: none; }
+body[data-runtime-profile="calm"] canvas { filter: none; }
+body[data-runtime-profile="calm"] #cognition-ecology { opacity: 0.72; mix-blend-mode: normal; }
+body[data-runtime-profile="calm"] #ascii-star { display: none; }
+body[data-long-silence="1"] canvas { filter: none; }
+body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
+body[data-face-flash="1"] canvas {
+  filter: saturate(1.08) contrast(1.04);
+}
+
+body[data-focus-mode="1"] .top-left-logo,
+body[data-focus-mode="1"] .ui-status,
+body[data-focus-mode="1"] .face-controls,
+body[data-focus-mode="1"] #chat-log,
+body[data-focus-mode="1"] #ascii-star,
+body[data-focus-mode="1"] #spin-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Here as well as in chat_upload.css, which loads late and can miss: the
+   tap floor (LAYOUT_RULES.touch) must not wait on a deferred stylesheet. */
+#photo-button {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+#photo-button:focus-visible,
+#spin-btn:focus-visible,
+#zin:focus-visible,
+.skip-link:focus-visible {
+  outline: 2px solid var(--c-accent, var(--accent, #7c6fd6));
+  outline-offset: 2px;
+}
+
+body[data-focus-mode="1"] #zsh {
+  background: transparent;
+
+}
+
+/* WebGL layer stack (independent of the --z-* DOM chrome scale below): raw canvas(0) < face(1) < fx(2) */
+canvas#face {
+  background: #000;
+  z-index: 1;
+  transform: translateZ(0);
+}
+
+#cognition-ecology {
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.88;
+  transition: opacity 300ms var(--ease-out);
+}
+
+html[data-agent-engagement="thinking"] #cognition-ecology { opacity: 0.94; }
+html[data-agent-engagement="speaking"] #cognition-ecology { opacity: 0.82; }
+
+canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100dvw;
+  height: 100dvh;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;
+  contain: strict;
+  will-change: transform;
+  transition: filter var(--transition-fast) var(--ease-out);
+}
+
+body[data-focus-mode="1"] #cognition-ecology {
+  opacity: 0.12;
+  transition: opacity 280ms var(--ease-out);
+}
+
+body[data-runtime-visible="false"] canvas,
+body[data-hidden-tab="1"] canvas {
+  visibility: hidden;
+}
+
+body[data-runtime-visible="false"] #cognition-ecology,
+body[data-hidden-tab="1"] #cognition-ecology {
+  opacity: 0;
+  transition: opacity 280ms var(--ease-out);
+}
+
+#cmd-palette {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: none;
+  place-items: start center;
+  padding: calc(12vh + var(--safe-top)) 16px 16px;
+  background: color-mix(in srgb, var(--face-bg) 72%, transparent);
+}
+
+#cmd-palette[data-open="1"] { display: grid; }
+
+#cmd-palette-panel {
+  width: min(520px, 100%);
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--face-bg) 94%, transparent);
+  contain: layout style paint;
+}
+
+#cmd-palette-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border-faint);
+  background: transparent;
+  color: var(--face-fg);
+  font: 16px/1.5 var(--font-mono);
+  padding: 12px 12px;
+  outline: none;
+}
+
+#cmd-palette-list {
+  list-style: none;
+  max-height: 42vh;
+  overflow: auto;
+  margin: 0;
+  padding: 8px 0;
+}
+
+#cmd-palette-list li {
+  padding: 8px 12px;
+  min-height: var(--tap-min);
+  font: 16px/1.5 var(--font-mono);
+  color: color-mix(in srgb, var(--face-fg) 78%, transparent);
+  cursor: pointer;
+}
+
+#cmd-palette-list li[data-active="1"],
+#cmd-palette-list li:hover {
+  background: var(--hover-tint);
+  color: var(--face-fg);
+}
+
+#cmd-palette-list .cmd-hint {
+  display: block;
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  color: var(--face-muted);
+  margin-top: 0px;
+}
+
+body[data-face-pip="1"] canvas {
+  width: min(34vw, 320px);
+  height: min(34vw, 320px);
+  inset: auto var(--chrome-inset) calc(56px + var(--safe-bottom)) auto;
+  border-radius: 0;
+  transition: inset 180ms var(--ease-out), width 180ms var(--ease-out), height 180ms var(--ease-out), border-radius 180ms var(--ease-out), transform 180ms var(--ease-out), filter var(--transition-fast) var(--ease-out);
+}
+
+body[data-face-pip="1"][data-face-pip-corner="top-left"] canvas {
+  inset: var(--inset-t) auto auto var(--inset-l);
+}
+
+body[data-face-pip="1"][data-face-pip-corner="top-right"] canvas {
+  inset: var(--inset-t) var(--inset-r) auto auto;
+}
+
+body[data-face-pip="1"][data-face-pip-corner="bottom-left"] canvas {
+  inset: auto auto calc(56px + var(--safe-bottom)) var(--inset-l);
+}
+
+body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
+  inset: auto var(--inset-r) calc(56px + var(--safe-bottom)) auto;
+}
+
+#zsh-wave {
+  display: inline-flex;
+  align-items: end;
+  gap: 4px;
+  height: 44px;
+  margin-inline-start: 8px;
+  opacity: .4;
+}
+
+#zsh-wave span {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px; /* clamps to 1.5px on this 3x4px span — the pill idiom, on scale */
+  background: var(--c-accent);
+  transform-origin: center bottom;
+  transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
+}
+
+@keyframes faceBootPulse {
+  0%, 100% { opacity: .42; }
+  50% { opacity: .78; }
+}
+
+@keyframes ttsPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
