@@ -17,6 +17,8 @@ module Master
       DEFAULT_MAX_COST = 50.0
       DEFAULT_MAX_MINUTES = 480.0
       HEARTBEAT_SECONDS = 28
+      MACHINE_BEAT_SECONDS = 60
+      GUARD_CHECK_SECONDS = 300
       WARN_SHARE = 0.8
       UNIT = "budget0"
       DEFAULT_LAW_SHARE = 0.10 # data/limits.yml#fix_budget overrides both
@@ -42,8 +44,8 @@ module Master
           reason && Master::Result.err(reason, category: :timeout)
         end
 
-        def finish_run
-          @current&.stop!
+        def finish_run(reason: "completed")
+          @current&.finish!(reason)
           @current = nil
         end
 
@@ -60,7 +62,7 @@ module Master
 
       def initialize(root:, max_passes:, env: ENV, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
                      wall: -> { Time.now }, out: nil, say: nil, beat_seconds: HEARTBEAT_SECONDS, poll_seconds: 1,
-                     limits: nil)
+                     limits: nil, killer: nil)
         @root = root
         @costs = File.join(root, COSTS)
         @max_passes = max_passes.to_i
@@ -78,6 +80,8 @@ module Master
         @boundaries = {}
         @warned = false
         @fix_budget = limits || fix_budget_limits
+        @killer = killer || ->(_reason) { Process.kill("TERM", Process.pid) }
+        @exit_reason = nil
         @law_spend = Hash.new { |hash, law| hash[law] = [0.0, 0] }
         @laws_over = {}
         @offset = 0
@@ -89,6 +93,8 @@ module Master
         @started_wall = @wall.call.to_i
         @last_output = @started
         @last_beat = @started
+        @last_machine_beat = @started
+        @last_guard_check = @started
         @last_unit = nil
         @last_text = nil
         @pass = 0
@@ -99,6 +105,21 @@ module Master
       def stop!
         @watchdog&.kill
         @watchdog = nil
+      end
+
+      # The run's last word: why it ended, what it did, what the autofix stage
+      # and the model phase refused, and whether anything protected changed.
+      def finish!(reason)
+        stop!
+        return if @finished_said
+
+        @finished_said = true
+        reason = @exit_reason || reason
+        counts = @pulse.counts
+        elapsed = @started ? (@clock.call - @started).round : 0
+        @say.call("fix0: run ended reason=#{reason} elapsed=#{elapsed}s fixed=#{counts[:fixed]} failed=#{counts[:failed]} rejected=#{counts[:rejected]} attempts=#{counts[:attempts]}")
+        (AutofixGuard.summary_lines + RunLedger.summary_lines).each { |text| @say.call(text) }
+        @say.call(self_check_line)
       end
 
       # Time between two lines belongs to the unit that spoke first.
@@ -171,6 +192,7 @@ module Master
         limits = "budget #{show(@max_cost, "$")} / #{show(@max_minutes, "", "m")}"
         RunPulse::Banner.lines(root: @root, target: target || @root, max_passes: @max_passes, limits:).each { |text| @say.call(text) }
         @pulse.attach(bus) if bus
+        @protected_baseline = AutofixGuard.protected_changes(@root)
       end
 
       def pass_end(pass)
@@ -207,6 +229,47 @@ module Master
 
         @say.call(stalled[:line])
         Master::Review::LLMDispatcher::PassClock.cancel!("stalled") if stalled[:skippable]
+        abort_run!(stalled[:line].sub(/\Afix0: STALLED /, "stalled, ")) if stalled[:abort]
+      end
+
+      # One machine-readable heartbeat a minute, whatever the human line says.
+      def machine_beat(now)
+        guard_check(now)
+        return if now - (@last_machine_beat || 0) < MACHINE_BEAT_SECONDS
+
+        @last_machine_beat = now
+        @say.call(@pulse.machine_line(now - @started))
+      end
+
+      # Kill switch: a protected path that was clean when the run began and now
+      # shows in `git diff --name-only` ends the run. Every five minutes; the
+      # check is one git call.
+      def guard_check(now)
+        return unless @protected_baseline && now - (@last_guard_check || 0) >= GUARD_CHECK_SECONDS
+
+        @last_guard_check = now
+        fresh = new_protected_changes
+        abort_run!("protected path changed: #{fresh.first(3).join(", ")}") unless fresh.empty?
+      end
+
+      def new_protected_changes = AutofixGuard.protected_changes(@root) - @protected_baseline
+
+      def self_check_line
+        return "fix0: self-check: protected paths unchecked" unless @protected_baseline
+
+        fresh = new_protected_changes
+        fresh.empty? ? "fix0: self-check: no protected path changed by this run" : "fix0: self-check: PROTECTED PATHS CHANGED by this run: #{fresh.join(", ")}"
+      end
+
+      # Says why, prints the summary, then ends the process. MASTER_FIX_ABORT_ON_STALL=0
+      # keeps the run going and only reports.
+      def abort_run!(reason)
+        return if @exit_reason
+
+        @exit_reason = reason
+        @say.call("fix0: ABORT #{reason}")
+        finish!(reason)
+        @killer.call(reason) unless ENV["MASTER_FIX_ABORT_ON_STALL"] == "0"
       end
 
       private
@@ -236,6 +299,7 @@ module Master
         loop do
           sleep @poll
           beat
+          machine_beat(@clock.call)
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Fix::RunBudget.watch")

@@ -115,7 +115,8 @@ class TestFixRunBudget < Minitest::Test
     @now = 2412.0
     line = run.beat
 
-    assert_equal [line], @said
+    # forty minutes after its only finished file, the run is also reported stalled
+    assert_equal [line, "fix0: STALLED pass 2 phase scan for 40m, 0 files finished in 5m"], @said
     assert_match(/\Afix0: pass 2\/8 scan0 phase scan files 812\/2638 \(31%\) run_pulse\.rb fixes 1 ok 1 failed /, line)
     assert_includes line, "lane claude-cli:claude-opus-5-5 last call 2412s ago"
     assert_includes line, "tokens = 342191 (342K) elapsed = 2412s (40m12s)"

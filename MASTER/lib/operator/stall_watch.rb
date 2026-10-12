@@ -9,6 +9,7 @@ module Operator
   # that launched the run reads the same line and ends the run past a limit.
   module StallWatch
     LINE = /STALLED .* for (\d+)m, 0 files attempted/
+    NO_YIELD = /STALLED no yield: 0 fixed after \d+m, \d+ attempts/
     DEFAULT_ABORT_SECONDS = 600
 
     module_function
@@ -22,7 +23,10 @@ module Operator
       Integer(env.fetch("MASTER_FIX_ABORT_S", DEFAULT_ABORT_SECONDS.to_s), exception: false) || DEFAULT_ABORT_SECONDS
     end
 
+    # The run itself decides a no-yield stall (RunPulse); the wrapper only ends it.
     def abort?(text, env: ENV)
+      return true if NO_YIELD.match?(text)
+
       seconds = stalled_seconds(text)
       !seconds.nil? && seconds >= limit(env)
     end

@@ -256,6 +256,19 @@ proposals. The pass summary prints the rejects by reason. `--max-files=N` (or
 first, which means scanning everything before repairing the first; without it
 the run repairs files as they are scanned. `Fix::RunLedger` holds this state.
 
+A run says where it is and stops when it is going nowhere. Every minute it prints
+`fix0 phase=<name> fixed=a failed=b rejected=c lane=<id> elapsed=s`, a line a
+script can split on spaces and equals signs; the longer human line prints every
+half minute as before. A pass is reported stalled when no file finished (fixed,
+failed or rejected) in five minutes, and the run ends on its own when it has
+made at least five attempts (`MASTER_FIX_NOYIELD_ATTEMPTS`) and fixed nothing
+after twenty minutes (`MASTER_FIX_NOYIELD_S`), unless `MASTER_FIX_ABORT_ON_STALL=0`
+asks it only to report. Every five minutes it also compares `git diff
+--name-only` with the start of the run and ends the run if a protected path
+appeared. On exit, normal or not, it prints one summary: the exit reason, the
+counts, the autofix and reject accounts, and a self-check naming any protected
+path the run changed. `bin/fix-here` stops a run that prints the no-yield line.
+
 **A red gate that names no finding is usually a gate that cannot load.**
 `rails_runtime` failed at `require` time for months and read as a normal
 failure. Check the gate before chasing its verdict.

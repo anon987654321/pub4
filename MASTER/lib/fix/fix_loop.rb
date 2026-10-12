@@ -220,7 +220,7 @@ module Master
       end
 
       def finish_run(result, target, run_id, mission: nil, requested: false)
-        RunBudget.finish_run
+        RunBudget.finish_run(reason: result.respond_to?(:ok?) && result.ok? ? "completed" : "failed: #{result.to_s[0, 80]}")
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
         evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)

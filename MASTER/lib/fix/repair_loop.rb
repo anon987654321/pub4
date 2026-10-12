@@ -365,7 +365,7 @@ end) if source.to_s.strip.empty?
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        RunLedger.reject(reason, file: path, law: @law.id)
+        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus)
         @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false

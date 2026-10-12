@@ -15,6 +15,12 @@ module Master
       FILE_CHARS = 24
       BUS_PATTERNS = %w[llm:* fix_loop:* repair_loop:* scan:* council:*].freeze
       STALL_SECONDS = 600
+      # No file finished (fixed, failed or rejected) in this long is a stall.
+      FINISH_WINDOW_SECONDS = 300
+      # A run with this many attempts and nothing fixed after this long has no yield worth waiting for.
+      NOYIELD_SECONDS = 1200
+      NOYIELD_ATTEMPTS = 5
+      ERROR_EVENTS = %w[repair_loop:file_timeout repair_loop:fix_error repair_loop:error repair_loop:fail_fast repair_loop:write_error].freeze
       # The stages that name themselves with a "fix_loop:phase" event, as the log words them.
       PHASES = {
         "fast_fixes" => "fast fixes", "structure" => "structure", "council" => "council", "council_improve" => "council",
@@ -60,6 +66,12 @@ module Master
         @council = nil
         @model = nil
         @fixes = { ok: 0, failed: 0 }
+        @run_started = clock.call
+        @finished = []
+        @rejected = 0
+        @errored = 0
+        @model_ok = 0
+        @first_attempt_at = nil
         reset_pass
       end
 
@@ -87,17 +99,29 @@ module Master
         end
       end
 
-      # Set when a pass has run past MASTER_FIX_STALL_S with no fix attempted:
-      # { line:, skippable: } to print every heartbeat, else nil. A skippable
-      # phase is advisory, so the caller ends it rather than wait.
+      # Set when the run is stalled: { line:, skippable:, abort: } to print every
+      # heartbeat, else nil. Three kinds, most serious first:
+      #   no yield   NOYIELD_ATTEMPTS attempts and nothing fixed after NOYIELD_SECONDS
+      #              (MASTER_FIX_NOYIELD_S, MASTER_FIX_NOYIELD_ATTEMPTS); the run ends.
+      #   none ever  a pass past MASTER_FIX_STALL_S with no file attempted.
+      #   none lately  the same pass has attempted files, but none finished in the last
+      #              five minutes.
+      # A skippable phase is advisory, so the caller ends it rather than wait.
       def stall(now = @clock.call)
         @lock.synchronize do
-          seconds = Integer(ENV.fetch("MASTER_FIX_STALL_S", STALL_SECONDS.to_s), exception: false) || STALL_SECONDS
-          waited = now - @pass_started_at
-          next unless @pass.positive? && waited > seconds && (@pass_ok + @pass_failed).zero?
+          no_yield(now) || pass_stall(now)
+        end
+      end
 
-          { line: "fix0: STALLED pass #{@pass} phase #{phase_name} for #{(waited / 60).floor}m, 0 files attempted",
-            skippable: SKIPPABLE.include?(@stage) }
+      # Fixed + failed + rejected, for the machine heartbeat and the exit summary.
+      def counts
+        @lock.synchronize { { fixed: @fixes[:ok], failed: @errored, rejected: @rejected, attempts: @model_ok + @rejected + @errored } }
+      end
+
+      # The one-line heartbeat a script can split on whitespace and `=`.
+      def machine_line(elapsed)
+        @lock.synchronize do
+          "fix0 phase=#{@stage || "start"} fixed=#{@fixes[:ok]} failed=#{@errored} rejected=#{@rejected} lane=#{lane_id} elapsed=#{elapsed.round}"
         end
       end
 
@@ -118,6 +142,46 @@ module Master
       end
 
       private
+
+      # One model attempt reached an end: stamped for the finish window, and the
+      # first one starts the no-yield clock.
+      def attempted
+        yield
+        @first_attempt_at ||= @clock.call
+        @finished << @clock.call
+        @finished.shift while @finished.size > 500
+      end
+
+      def no_yield(now)
+        attempts = @model_ok + @rejected + @errored
+        minimum = Integer(ENV.fetch("MASTER_FIX_NOYIELD_ATTEMPTS", NOYIELD_ATTEMPTS.to_s), exception: false) || NOYIELD_ATTEMPTS
+        limit = Integer(ENV.fetch("MASTER_FIX_NOYIELD_S", NOYIELD_SECONDS.to_s), exception: false) || NOYIELD_SECONDS
+        return unless @model_ok.zero? && attempts >= minimum && @first_attempt_at && now - @first_attempt_at >= limit
+
+        { line: "fix0: STALLED no yield: 0 fixed after #{((now - @first_attempt_at) / 60).floor}m, #{attempts} attempts",
+          skippable: false, abort: true }
+      end
+
+      def pass_stall(now)
+        seconds = Integer(ENV.fetch("MASTER_FIX_STALL_S", STALL_SECONDS.to_s), exception: false) || STALL_SECONDS
+        waited = now - @pass_started_at
+        return unless @pass.positive? && waited > seconds
+
+        pass_attempts = @pass_ok + @pass_failed + @pass_rejected + @pass_errored
+        recent = @finished.count { |at| now - at <= FINISH_WINDOW_SECONDS }
+        tail = if pass_attempts.zero? then "0 files attempted"
+               elsif recent.zero? then "0 files finished in #{FINISH_WINDOW_SECONDS / 60}m"
+               end
+        return unless tail
+
+        { line: "fix0: STALLED pass #{@pass} phase #{phase_name} for #{(waited / 60).floor}m, #{tail}",
+          skippable: SKIPPABLE.include?(@stage) }
+      end
+
+      def lane_id
+        model, = @calls.values.min_by { |_, at| at }
+        (model || @model).to_s.then { |id| id.empty? ? "none" : id }
+      end
 
       # Findings whose repair is the operator's call: listed, never attempted.
       def listed_line(pass)
@@ -144,8 +208,11 @@ module Master
         when "scan:progress" then scanned(payload)
         when "fix_loop:rule_result", "repair_loop:pass" then ruled(payload)
         when "fix_loop:skip_breakdown" then skipped(payload)
-        when "repair_loop:fix_applied", "fix_loop:ast_fixed" then count_fix(:ok)
+        when "repair_loop:fix_applied" then attempted { count_fix(:ok); @model_ok += 1 }
+        when "fix_loop:ast_fixed" then count_fix(:ok)
         when "repair_loop:fix_rejected" then count_fix(:failed)
+        when "repair_loop:proposal_rejected" then attempted { @rejected += 1; @pass_rejected += 1 }
+        when *ERROR_EVENTS then attempted { @errored += 1; @pass_errored += 1 }
         when "repair_loop:operator_gap" then @listed[payload[:law].to_s] += 1
         end
       end
@@ -174,6 +241,8 @@ module Master
         @pass_fixed = 0
         @pass_ok = 0
         @pass_failed = 0
+        @pass_rejected = 0
+        @pass_errored = 0
         @skips = Hash.new(0)
         @listed = Hash.new(0)
         @commits_at_start = 0

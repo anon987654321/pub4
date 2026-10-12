@@ -167,13 +167,19 @@ class TestCouncilDeadline < Minitest::Test
     refute pulse.stall(now)[:skippable]
   end
 
-  def test_an_attempted_fix_ends_the_stall
+  # A finished file keeps the pass alive for five minutes; silence after that is
+  # a stall again, and the line says files finished, not attempted.
+  def test_an_attempted_fix_ends_the_stall_for_five_minutes
     now = 0.0
     pulse = Master::Fix::RunPulse.new(max_passes: 8, clock: -> { now }, load: -> { 0.0 })
     pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 10 })
+    now = 650.0
     pulse.observe("repair_loop:fix_applied", {})
     now = 900.0
     assert_nil pulse.stall(now)
+
+    now = 1000.0
+    assert_equal "fix0: STALLED pass 1 phase scan for 16m, 0 files finished in 5m", pulse.stall(now)[:line]
   end
 
   def test_the_off_switch_asks_no_council_at_all
