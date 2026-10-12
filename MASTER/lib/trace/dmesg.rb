@@ -248,7 +248,7 @@ module Master
       # Child processes may inherit terminal redraws even though their output
       # is captured by a pipe. Forward them as completed lines, never as cursor
       # control sequences interleaved with the parent's dmesg.
-      NARRATED_FORWARD_LINE = /\\A(?:-\\s*)?(?:surface0:|coverage0:|flow:|Warnings:|Not checked:|Gate errors|Failures:|inconclusive:|errored:|gate\\d+(?: at |:)|gates\\d+ at |source\\d+ at |openbsd\\d+ at |rehearse\\d+:|suite\\d+:)/i.freeze
+      NARRATED_FORWARD_LINE = /\A(?:-\s*)?(?:surface0:|coverage0:|flow:|Warnings:|Not checked:|Gate errors|Failures:|inconclusive:|errored:|gate\d+(?: at |:)|gates\d+ at |source\d+ at |openbsd\d+ at |rehearse\d+:|suite\d+:)/i.freeze
       NARRATED_FORWARD_FINDING = /\A-\s+\[[A-Za-z][A-Za-z0-9_:]*\].*\b(?:fail|missing|invariant|unreachable|timeout|raised|did not run|unset|error|broken|exited|forbidden)\b/i.freeze
 
       def forward(line, io: $stdout)
