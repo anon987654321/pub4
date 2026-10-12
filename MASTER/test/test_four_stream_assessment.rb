@@ -61,7 +61,7 @@ class TestFourStreamAssessment < Minitest::Test
     assert_equal 3, calls[:semantic_violations]
     assert_equal 3, calls[:semantic_opportunities]
     assert_equal [["DRY", :lexical_opportunities, :whole_file, :opportunity_found]], repairs
-    clean_generations = assessment.history[["DRY", :lexical_violations, :whole_file"]]
+    clean_generations = assessment.history[["DRY", :lexical_violations, :whole_file]]
                               .select { |row| row.status == :assessed_clean }
                               .map(&:generation)
     assert_equal [0, 1, 1], clean_generations
