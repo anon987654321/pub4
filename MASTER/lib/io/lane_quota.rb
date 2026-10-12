@@ -60,7 +60,7 @@ module Master
       def quota_lane_of(model, reply)
         text = reply.to_s
         free_pool = model.to_s.end_with?(":free") &&
-          text.match?(/free-models-per-day|X-RateLimit-Reset/i)
+          text.match?(/free-models-per-day/i)
         free_pool ? "openrouter-free" : lane_of(model)
       end
 
