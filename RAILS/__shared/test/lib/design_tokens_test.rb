@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
+require "fileutils"
 require_relative "../../../../MASTER/tools/design_tokens"
 
 class DesignTokensTest < Minitest::Test
@@ -106,6 +107,29 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
   def test_generated_token_artifact_matches_master
     artifact = YAML.safe_load_file(File.expand_path("../../design_tokens.yml", __dir__))
     assert_equal DesignTokens.load, artifact
+  end
+
+  def test_committed_static_tokens_css_matches_master_projection
+    path = File.join(DesignTokens::ROOT, "RAILS/__shared/public/styles/tokens.css")
+
+    assert_equal DesignTokens.static_tokens_css, File.read(path),
+                 "public tokens.css drifted from MASTER tokens; run ruby MASTER/tools/rails/build_all_css.rb"
+  end
+
+  def test_all_scss_files_includes_nested_engine_sources_and_excludes_artifacts
+    Dir.mktmpdir do |root|
+      host = File.join(root, "RAILS/amber/app/assets/stylesheets/application.scss")
+      engine = File.join(root, "RAILS/brgen/engines/dating/app/assets/stylesheets/_vertical.scss")
+      vendor = File.join(root, "RAILS/brgen/engines/dating/app/assets/stylesheets/vendor/_vendor.scss")
+      build = File.join(root, "RAILS/brgen/engines/dating/app/assets/stylesheets/builds/_built.scss")
+
+      [host, engine, vendor, build].each do |path|
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, ".fixture { color: var(--text); }\n")
+      end
+
+      assert_equal [host, engine].sort, DesignTokens.all_scss_files(root)
+    end
   end
 
   def test_social_tokens_yaml_present
