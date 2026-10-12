@@ -42,12 +42,6 @@ class TestBootBanner < Minitest::Test
     assert_includes source, "CLI::BootBanner.print"
   end
 
-  def test_boot_has_no_ascii_wordmark_before_the_dmesg_lines
-    source = File.read(File.join(Master::ROOT, "lib", "boot", "master_boot.rb"))
-    refute_includes source, "CLI::BootBanner.wordmark"
-    refute_respond_to Master::CLI::BootBanner, :wordmark
-  end
-
   # `bin/cli --help` prints usage without building the runtime. The option
   # parser ran only after Master.boot, so help cost a full boot and exited 1
   # whenever that boot raised. The banner prints on the way into the boot, so

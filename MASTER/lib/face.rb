@@ -24,6 +24,10 @@ module Master
 
       # The plain-ASCII renderer's tunables; the terminal and the web face both read them.
       def ascii(root: Master::ROOT) = data(root:).fetch("ascii", {})
+      def wordmark(root: Master::ROOT) = Array(ascii(root:).fetch("wordmark", [])).map(&:to_s).freeze
+
+      # The prompt glyphs: :input, :continuation or :output.
+      def glyph(name, root: Master::ROOT) = ascii(root:).fetch("prompt", {}).fetch(name.to_s)
 
       def budget(root: Master::ROOT) = spatial(root:).fetch("budget", {})
       def camera(root: Master::ROOT) = spatial(root:).fetch("camera", {})

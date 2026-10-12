@@ -524,6 +524,14 @@ tokens:
       occlusion: 2.5
       min_rows: 8
       min_cols: 16
+      # Line art from | / \ _ - only; shown once above the boot lines on an
+      # interactive terminal. The prompt glyphs are the same drawing in small: input,
+      # a continuation line, and output. The web shell reads them from here too.
+      wordmark:
+        - "|\\  /|  /\\   __  ----- |--- |--\\"
+        - "| \\/ | /--\\ \\__    |   |--  |--/"
+        - "|    | /  \\  __/   |   |___ |  \\"
+      prompt: { input: "|-", continuation: "\\_", output: "/" }
       features:
         eye_open: "("
         eye_close: ")"
