@@ -122,6 +122,7 @@ shell_manifest:
   - face_render_policy
   - ui_presence
   - face_state
+  - face_ascii
   - visual_governor
   - topology_registry
   - particle_worker
