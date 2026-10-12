@@ -9,6 +9,7 @@ require "uri"
 require "yaml"
 require_relative "../../../lib/gap"
 require_relative "../../support/gate_result"
+require_relative "../../support/png_diff"
 require_relative "../../support/geometry_probe"
 
 module Deploy
@@ -16,9 +17,9 @@ module Deploy
   #
   # This intentionally uses the shared stdlib CDP client rather than adding a
   # second browser stack. Each declared route/viewport gets its own clean guest
-  # navigation, runtime/network record, and screenshot. Existing layout_snapshot
-  # remains the approved structural baseline; these PNGs are diagnostic evidence,
-  # not an automatically accepted visual baseline.
+  # navigation, runtime/network record, and screenshot. Committed structural
+  # snapshots remain authoritative; opted-in surfaces also compare against
+  # separately approved PNG baselines. Normal /fix and autofix never bless PNGs.
   class BrowserDiagnosticsGate
     ROOT = File.expand_path("../../../..", __dir__).freeze
     DEFAULT_OUTPUT = File.join(Dir.tmpdir, "pub4-browser-diagnostics").freeze
@@ -26,8 +27,33 @@ module Deploy
     MAX_SETTLE_MS = 5_000
     HARD_HTTP_STATUS = 500
     CRITICAL_RESOURCE_TYPES = %w[Script Stylesheet].freeze
+    VISUAL_BASELINE_DIR = File.join(ROOT, "MASTER", "gates", "data", "visual_baselines").freeze
+    DEFAULT_PIXEL_DIFF_MAX_RATIO = "0.01".freeze
 
     def self.run = new.run
+
+    def self.pixel_baseline_approval?(env = ENV)
+      %w[1 true yes on].include?(env["GATE_PIXEL_BASELINE_APPROVE"].to_s.strip.downcase)
+    end
+
+    def self.pixel_baseline_strict?(env = ENV)
+      %w[1 true yes on].include?(env["GATE_PIXEL_BASELINE_STRICT"].to_s.strip.downcase)
+    end
+
+    def self.pixel_diff_max_ratio(env = ENV)
+      raw = env.fetch("GATE_PIXEL_DIFF_MAX_RATIO", DEFAULT_PIXEL_DIFF_MAX_RATIO)
+      number = Float(raw, exception: false)
+      return number if number&.finite? && number.between?(0.0, 1.0)
+
+      raise ArgumentError, "GATE_PIXEL_DIFF_MAX_RATIO must be finite and between 0 and 1"
+    end
+
+    def self.visual_baseline_path(surface)
+      return unless surface.snapshot
+
+      slug = [surface.app, surface.label, surface.viewport].map { |part| part.to_s.gsub(/[^a-zA-Z0-9_-]+/, "_").sub(/\\A_+/, "").sub(/_+\\z/, "") }.join("-")
+      File.join(VISUAL_BASELINE_DIR, "#{slug}.png")
+    end
 
     def self.grade(surface:, status:, console_messages:, http_failures:, request_failures:, browser_error: false)
       hard = []
@@ -243,6 +269,20 @@ module Deploy
       verdict[:hard] << "screenshot failed: #{screenshot_error}" if screenshot_error
       verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
+      pixel = pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:, status_label:, hard_failures: verdict[:hard])
+      if %w[REGRESSION DIMENSION_MISMATCH APPROVAL_FAILED].include?(pixel["status"])
+        verdict[:hard] << pixel.fetch("reason")
+      elsif %w[MISSING UNSUPPORTED].include?(pixel["status"])
+        message = pixel.fetch("reason")
+        if self.class.pixel_baseline_strict?
+          verdict[:hard] << message
+        else
+          verdict[:soft] << message
+        end
+      end
+      verdict[:hard].uniq!
+      status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
+      @result.warn("browser_diagnostics: #{surface.id} — #{pixel['reason']}") if pixel["status"] == "UPDATED"
       verdict[:soft].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}", severity: :soft) }
       verdict[:hard].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}") }
 
@@ -262,7 +302,13 @@ module Deploy
         "warnings" => verdict[:soft],
         "screenshot" => screenshot_sha256 ? screenshot : nil,
         "screenshot_sha256" => screenshot_sha256,
-        "screenshot_error" => screenshot_error
+        "screenshot_error" => screenshot_error,
+        "pixel_baseline_status" => pixel["status"],
+        "pixel_baseline" => pixel["baseline"],
+        "pixel_diff_count" => pixel["pixel_diff_count"],
+        "pixel_diff_ratio" => pixel["pixel_diff_ratio"],
+        "pixel_diff_image" => pixel["pixel_diff_image"],
+        "pixel_diff_max_ratio" => pixel["max_ratio"]
       }
       print_row(surface, row)
       row
@@ -278,6 +324,54 @@ module Deploy
       }
       puts "browser0: #{surface.id} INCONCLUSIVE — #{row.fetch('reason')}"
       row
+    end
+
+    def pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:, status_label:, hard_failures:)
+      baseline = self.class.visual_baseline_path(surface)
+      return { "status" => "NOT_TRACKED" } unless baseline
+      return { "status" => "UNMEASURED", "baseline" => baseline } if screenshot_error || !File.file?(screenshot)
+
+      if self.class.pixel_baseline_approval? && status_label == "PASS" && hard_failures.empty?
+        begin
+          FileUtils.mkdir_p(File.dirname(baseline))
+          File.binwrite(baseline, File.binread(screenshot))
+          return { "status" => "UPDATED", "baseline" => baseline,
+                   "reason" => "approved PNG baseline written for #{surface.id}: #{baseline}" }
+        rescue SystemCallError => e
+          return { "status" => "APPROVAL_FAILED", "baseline" => baseline,
+                   "reason" => "could not write approved PNG baseline #{baseline}: #{e.class}: #{e.message}" }
+        end
+      end
+
+      unless File.file?(baseline)
+        return { "status" => "MISSING", "baseline" => baseline,
+                 "reason" => "pixel baseline missing for #{surface.id}; review a capture, then set GATE_PIXEL_BASELINE_APPROVE=1" }
+      end
+
+      max_ratio = self.class.pixel_diff_max_ratio
+      slug = File.basename(screenshot, ".png")
+      diff_path = File.join(screenshot_dir, "#{slug}-pixel-diff.png")
+      compared = PngDiff.compare(baseline_path: baseline, current_path: screenshot, diff_path:)
+      common = {
+        "baseline" => baseline,
+        "pixel_diff_count" => compared[:pixel_diff_count],
+        "pixel_diff_ratio" => compared[:pixel_diff_ratio],
+        "pixel_diff_image" => compared[:pixel_diff_image],
+        "max_ratio" => max_ratio
+      }
+
+      if compared[:status] == :dimension_mismatch
+        common.merge("status" => "DIMENSION_MISMATCH",
+                     "reason" => "pixel baseline dimensions changed for #{surface.id}: #{compared[:baseline_dimensions].join('x')} to #{compared[:current_dimensions].join('x')}")
+      elsif compared[:pixel_diff_ratio] > max_ratio
+        common.merge("status" => "REGRESSION",
+                     "reason" => "pixel regression for #{surface.id}: #{compared[:pixel_diff_count]} changed pixels (#{(compared[:pixel_diff_ratio] * 100).round(3)}%) exceeds #{(max_ratio * 100).round(3)}% budget; diff=#{compared[:pixel_diff_image]}")
+      else
+        common.merge("status" => "COMPARED")
+      end
+    rescue PngDiff::InvalidPng, ArgumentError => e
+      { "status" => "UNSUPPORTED", "baseline" => baseline,
+        "reason" => "pixel baseline could not be compared for #{surface.id}: #{e.class}: #{e.message}" }
     end
 
     def capture_screenshot(cdp, path)
