@@ -292,6 +292,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
               color: var(--vertical-marketplace-accent-hover);
             }
           }
+          // Historical note: --vertical-marketplace-accent-hover was used outside this block.
         SCSS
         "brgen/engines/sample/app/assets/stylesheets/engine.scss" => <<~SCSS,
           :root[data-theme="light"] {
