@@ -128,6 +128,23 @@ class TestSnapshotGenerator < Minitest::Test
       assert_includes error.message, "mixed git revisions"
     end
   end
+  def test_snapshot_extractor_rejects_path_traversal_before_writing
+    Dir.mktmpdir do |dir|
+      fence = "`" * 3
+      pack_path = File.join(dir, "malicious.md")
+      header = "Pack: tree=MASTER git=abc123 part=1/1 text_total=1 fragments_total=1 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000"
+      heading = "## `MASTER/../../escape.txt [bytes=6 newline=1]`"
+      File.write(pack_path, ["# MASTER", "", header, "", heading, "", "#{fence}text", "owned", fence, "", "## Snapshot part complete", ""].join("\n"))
+
+      pack = Operator::SnapshotExtract.parse(pack_path)
+      target = File.join(dir, "rehydrated")
+      error = assert_raises(RuntimeError) { Operator::SnapshotExtract.write([pack], target) }
+
+      assert_includes error.message, "path escapes declared tree"
+      refute File.exist?(File.join(dir, "escape.txt"))
+    end
+  end
+
   def test_snapshot_extractor_rejects_incomplete_or_inconsistent_metadata
     Dir.mktmpdir do |dir|
       fence = "`" * 3
