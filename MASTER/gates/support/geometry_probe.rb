@@ -215,10 +215,12 @@ module Deploy
 
     # Measure the page already on screen. It never navigates or clears cookies,
     # so interactive states remain part of the same page composition.
-    def self.measure_current(cdp, surface)
+    def self.measure_current(cdp, surface, font_timeout: 3)
       return { "error" => "chrome error page — nothing answered at #{surface.url}" } if browser_error_page?(cdp)
+      unless wait_for_fonts(cdp, timeout: font_timeout)
+        return { "error" => "font readiness timeout after #{font_timeout}s — layout not measured" }
+      end
 
-      wait_for_fonts(cdp)
       cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge(PaintedFonts.probe(cdp)).merge("status" => cdp.status)
     rescue CdpSession::Error => e
       { "error" => "#{e.class.name.split('::').last}: #{e.message}" }
