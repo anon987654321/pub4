@@ -31,7 +31,14 @@ module Master
 
       def browser_payload(root: Master::ROOT)
         rows = laws(root:)
-        { schema: 1, laws: rows, digest: Digest::SHA256.hexdigest(JSON.generate(rows)) }
+        settings = config(root:)
+        {
+          schema: 1,
+          laws: rows,
+          digest: Digest::SHA256.hexdigest(JSON.generate(rows)),
+          toggle_key: settings.fetch("web_toggle_key", "v"),
+          enabled: settings.fetch("web_overlay", true)
+        }
       end
 
       def catalog(root: Master::ROOT)
