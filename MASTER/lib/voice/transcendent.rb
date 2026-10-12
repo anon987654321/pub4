@@ -150,6 +150,7 @@ module Master
                          else
                            voice || Speech.default_voice
                          end
+        resolved_voice = Speech.resolve_voice(resolved_voice)
         resolved_rate = rate
         resolved_pitch = pitch
         personality = cfg["personality"].to_s
