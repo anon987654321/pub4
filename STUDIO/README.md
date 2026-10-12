@@ -4,8 +4,10 @@
 made them.** Every take carries its seed, every grade names its chain, and every paid call
 leaves a line in a ledger, so a result can be heard or seen again and a bill can be read.
 
-Four tools live here. The tool `dilla/dilla.rb` plays declared chord progressions on oscillators
-it builds itself, through a chain of effects, with no drums and no samples, live or rendered to a file. The tool
+Four tools live here. `dilla/dilla.rb` is a thin executable over `dilla/lib/dilla/`; it reads
+progressions and runtime choices from `dilla/data/dilla.json` and harmonic references from
+`dilla/data/music_theory.json`. It builds its own oscillators, voicings, arpeggios, drums and
+effects without samples, and can render WAV/MIDI or play continuously. The tool
 `postpro/postpro.rb` grades and transforms still images through film emulation. The tool
 `replicate/replicate.rb` generates images through the Replicate service from a named
 photographic vocabulary. The tool `replicate/lora/lora.rb` trains and renders a LoRA of one
