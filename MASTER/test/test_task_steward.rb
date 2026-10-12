@@ -89,11 +89,9 @@ class TaskStewardTest < Minitest::Test
       assert_equal "other-host:42", saved["lease_owner"]
     end
   end
-  def test_continuation_utterance_is_blocked_instead_of_replayed_forever
+  def test_contextless_continuation_is_blocked_instead_of_replayed_forever
     Dir.mktmpdir do |root|
-      mission = write_mission(
-        root, goal: "Let's do it!", intent: "continue_prior_plan"
-      )
+      write_mission(root, goal: "Let's do it!")
       calls = []
       steward = Master::Fix::TaskSteward.new(
         root:, bus: nil, runner: ->(**) { calls << true }
@@ -107,6 +105,22 @@ class TaskStewardTest < Minitest::Test
       saved = Master::Fix::Mission.current(root:)
       assert_equal "blocked", saved["state"]
       assert_match(/resolved objective/, saved["wake_reason"])
+    end
+  end
+
+  def test_persisted_continuation_intent_is_not_replayed_without_context
+    Dir.mktmpdir do |root|
+      write_mission(root, goal: "continue the prior plan", intent: "continue_prior_plan")
+      calls = []
+      steward = Master::Fix::TaskSteward.new(
+        root:, bus: nil, runner: ->(**) { calls << true }
+      )
+
+      result = steward.tick!
+
+      assert result.err?
+      assert_empty calls
+      assert_equal "blocked", Master::Fix::Mission.current(root:)["state"]
     end
   end
 
