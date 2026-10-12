@@ -27,6 +27,20 @@ class GeometryTypographyTest < Minitest::Test
     assert result.soft_failures.any? { |message| message.include?("geometry rag") }
   end
 
+  def test_micro_typography_failure_is_inconclusive_not_silent
+    result = Deploy::GateResult.new
+    broken_data = Class.new(Hash) do
+      def dig(*) = raise(IOError, "fixture read failed")
+    end.new
+
+    Deploy::GeometryType.check_micro_typography(result, surface, broken_data, {})
+
+    assert result.incomplete?
+    assert_equal :inconclusive, result.outcome
+    assert_match(/geometry micro_type: test could not be measured \\(IOError: fixture read failed\\)/,
+                 result.unchecked.join)
+  end
+
   def test_micro_typography_accepts_explicit_browser_contract
     result = Deploy::GateResult.new
     Deploy::GeometryType.check_micro_typography(
