@@ -856,3 +856,29 @@ test("MASTER face markup hooks have owned styling", () => {
   }
   assert.match(css, /body\[data-mode="listening"\] \.mic-indicator/);
 });
+
+
+test("constitutional ASCII face is wired as an overlay and a fallback", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const controller = readFileSync(join(root, "app", "controllers", "chat_controller.rb"), "utf8");
+  const renderer = readFileSync(join(publicDir, "face_ascii.js"), "utf8");
+  const frame = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
+  const fallback = readFileSync(join(publicDir, "face_2d_fallback.js"), "utf8");
+  const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+
+  assert.match(faceManifest, /shell_manifest:[\s\S]*?- face_ascii\s/);
+  assert.match(controller, /LawField.browser_payload/);
+  assert.match(view, /MASTER_FACE_LAW_FIELD/);
+  assert.match(renderer, /function paintLawField/);
+  assert.match(renderer, /MASTER_FACE_LAW_FIELD/);
+  assert.match(renderer, /function update\(now\)/);
+  assert.match(renderer, /function createView\(canvas, options\)/);
+  assert.doesNotMatch(renderer, /requestAnimationFrame/);
+  assert.match(frame, /MASTER_FACE_ASCII\?\.update/);
+  assert.match(fallback, /ascii\.createView\(canvas\)/);
+  assert.match(css, /\.master-face-ascii-layer/);
+  assert.match(css, /body\[data-face-ascii="1"\]/);
+  assert.match(laws, /face_ascii:[\s\S]*?source: priority_ranked_constitutional_laws/);
+  assert.match(laws, /web_file_access: forbidden/);
+});
