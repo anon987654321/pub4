@@ -13,6 +13,7 @@ class TestKeylessRouting < Minitest::Test
       XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
       MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
+      MASTER_NO_POOL_PROBES MASTER_LLM_GATEWAY_URL MASTER_LLM_GATEWAY_KEY FREELLMPOOL_PROXY_KEY
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
     # Neutralize both local subscription CLIs so these tests grade keyless and
@@ -302,6 +303,76 @@ class TestKeylessRouting < Minitest::Test
     ENV["MASTER_NO_POOL_PROBES"] = "1"
     thread&.kill
     server&.close
+  end
+
+  # A local or explicitly trusted OpenAI-compatible gateway joins the
+  # existing pool only after its URL is set. The URL's host and model ids are
+  # discovered through the same endpoint catalogue used by other hosted lanes.
+  def test_opt_in_gateway_models_join_the_existing_fallback_pool
+    rows = [{ "id" => "pool-model", "model_type" => "chat" }]
+    body = JSON.generate("data" => rows)
+    seen = []
+    server = TCPServer.new("127.0.0.1", 0)
+    thread = Thread.new do
+      2.times do
+        socket = server.accept
+        request = socket.gets.to_s.strip
+        headers = []
+        headers << socket.gets.to_s.strip until headers.last == ""
+        seen << [request, headers]
+        socket.print("HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: #{body.bytesize}\\r\\n" \\
+                     "Connection: close\\r\\n\\r\\n#{body}")
+        socket.close
+      end
+    end
+
+    ENV["MASTER_LLM_GATEWAY_URL"] = "http://127.0.0.1:#{server.addr[1]}/v1"
+    ENV.delete("MASTER_LLM_GATEWAY_KEY")
+    ENV.delete("FREELLMPOOL_PROXY_KEY")
+
+    build = lambda do
+      ENV["MASTER_NO_POOL_PROBES"] = "1"
+      router = Master::CLI::Routing::ModelRouter.new(
+        config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+      )
+      router.instance_variable_get(:@rules)["openai_compatible"] = {}
+      ENV.delete("MASTER_NO_POOL_PROBES")
+      router
+    ensure
+      ENV.delete("MASTER_NO_POOL_PROBES")
+    end
+
+    keyless = build.call
+    assert_equal ["gateway:pool-model"], keyless.hosted_models
+    assert keyless.reachable?("gateway:pool-model")
+    assert_equal "free", keyless.lane_label("gateway:pool-model")
+    assert_nil seen.first.last.find { |line| line.downcase.start_with?("authorization:") }
+
+    ENV["MASTER_LLM_GATEWAY_KEY"] = "gateway-test-key"
+    keyed = build.call
+    assert_equal ["gateway:pool-model"], keyed.hosted_models
+    assert_equal "gateway-test-key", keyed.hosted_endpoint_for("gateway:pool-model")[:key]
+    assert_equal "Authorization: Bearer gateway-test-key", seen.last.last.find { |line| line.downcase.start_with?("authorization:") }
+    assert_equal "GET /v1/models", seen.last.first
+  ensure
+    ENV.delete("MASTER_NO_POOL_PROBES")
+    thread&.kill
+    server&.close
+  end
+
+  def test_gateway_refuses_plain_http_to_a_non_loopback_host
+    ENV["MASTER_LLM_GATEWAY_URL"] = "http://example.invalid/v1"
+    ENV["MASTER_NO_POOL_PROBES"] = "1"
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.instance_variable_get(:@rules)["openai_compatible"] = {}
+    ENV.delete("MASTER_NO_POOL_PROBES")
+
+    assert_empty router.hosted_models
+    refute router.hosted_model?("gateway:must-not-appear")
+  ensure
+    ENV.delete("MASTER_NO_POOL_PROBES")
   end
 
   # Groq, Cerebras and NVIDIA wait in models.yml for a key; without one they
