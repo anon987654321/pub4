@@ -4539,7 +4539,7 @@ face_ascii:
   max_laws: 8
   law_glyphs: ["@", "#", "%", "&", "*", "+", "=", ":"]
   terminal_law_ring: true
-  # Ctrl+V avoids intercepting normal terminal text; the browser uses V outside editable fields.
+  # Ctrl+V toggles terminal law glyphs; browser L toggles laws and V toggles the ASCII overlay.
   terminal_toggle_key: ctrl-v
   web_overlay: true
   web_toggle_key: v
