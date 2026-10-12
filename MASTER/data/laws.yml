@@ -4531,3 +4531,23 @@ browser_policy:
     autonomous_message_sending: forbidden
     browser_fingerprint_spoofing: forbidden
     platform_evasion: forbidden
+
+# Law identity is sampled from the ranked constitution. Geometry and shading
+# remain in tokens.yml#face_interface.ascii; this config owns only law semantics.
+face_ascii:
+  source: priority_ranked_constitutional_laws
+  max_laws: 8
+  law_glyphs: ["@", "#", "%", "&", "*", "+", "=", ":"]
+  terminal_law_ring: true
+  web_overlay: true
+  web_toggle_key: v
+  browser_point_budget: 1100
+  reduced_motion_respected: true
+  browser_uses_existing_frame_clock: true
+  geometry_source: MASTER/lib/cli/face/head.rb
+  shading_source: MASTER/data/tokens.yml#face_interface.ascii
+  invariants:
+    law_names_from_source: true
+    colour_values_operator_owned: true
+    web_file_access: forbidden
+    no_random_geometry: true

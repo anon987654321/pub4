@@ -53,3 +53,5 @@ module Master
     end
   end
 end
+
+require_relative "face/law_field"

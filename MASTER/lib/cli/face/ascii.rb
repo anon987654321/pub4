@@ -56,13 +56,38 @@ module Master
           Digest::SHA256.hexdigest(@points.map { |p| p.first(4).map { |v| format("%.4f", v) }.join(",") }.join(";"))[0, 16]
         end
 
-        def render(look, state: :idle)
+        def render(look, state: :idle, laws: [])
           turn(look)
           buffer
           @frame = Frame.new(Array.new(@rows) { Array.new(@w, " ") }, Array.new(@rows) { Array.new(@w, 1) })
           @rows.times { |r| @w.times { |c| cell(c, r) } }
           @features.draw(self, @frame, look, state)
+          law_ring(laws)
           @frame
+        end
+
+        # Each glyph is a constitutional landmark, placed outside the face.
+        # Existing contour and feature cells own their positions.
+        def law_ring(laws)
+          return if laws.empty? || @rows < 8 || @w < 16
+
+          cx = (@w - 1) / 2.0
+          cy = (@rows - 1) / 2.0
+          rx = @w * 0.47
+          ry = @rows * 0.45
+          laws.each_with_index do |law, index|
+            angle = (-Math::PI / 2) + ((Math::PI * 2 * index) / laws.size)
+            col = (cx + (Math.cos(angle) * rx)).round
+            row = (cy + (Math.sin(angle) * ry)).round
+            next unless row.between?(0, @rows - 1) && col.between?(0, @w - 1)
+            next unless @frame.chars[row][col] == " "
+
+            glyph = law.fetch("glyph", "").to_s.chars.first
+            next if glyph.nil? || glyph.empty?
+
+            @frame.chars[row][col] = glyph
+            @frame.depth[row][col] = 1
+          end
         end
 
         # A source-space point in sub-pixels, and its depth in the same units.
