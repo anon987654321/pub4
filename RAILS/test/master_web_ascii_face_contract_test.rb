@@ -87,8 +87,12 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     assert_includes handler, "setLawField(!lawFieldVisible)"
     assert_includes handler, "Constitutional law glyphs visible"
     assert_includes handler, "Constitutional law glyphs hidden"
+    assert_includes handler, 'getElementById("ui-status")',
+                     "the shortcut must announce its change through an existing live region"
     refute_includes handler, "setGlyphMode",
                      "laws.yml's shortcut controls constitutional glyphs, not renderer style"
+    refute_includes handler, "if (overlayView) update(",
+                     "the law toggle must not create a duplicate face overlay"
   end
 
   def test_the_renderer_and_its_frames_are_plain_ascii_without_braille
