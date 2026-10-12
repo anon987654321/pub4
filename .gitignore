@@ -314,3 +314,11 @@ STUDIO/**/dilla-showcase-*/
 STUDIO/**/render-*/
 STUDIO/**/scratch-*/
 STUDIO/**/dilla-renders*/
+
+# Legacy generated-media paths from the pre-STUDIO tree. Keep old render and
+# copy-tree deployment output ignored if a recovery script recreates its path.
+/mix/
+/DEPLOY/dilla/renders/
+/DEPLOY/dilla/*.wav
+/DEPLOY/dilla/*.mp3
+/DEPLOY/rails/*/vendor/bundle/

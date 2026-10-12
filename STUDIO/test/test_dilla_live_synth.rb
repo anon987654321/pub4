@@ -976,7 +976,7 @@ class TestDillaLiveSynth < Minitest::Test
   # MASTER's main sound is the frozen liveset the operator last made the
   # default, and every take before it: all frozen inside the engine, as they
   # were heard. A pin is sha256[0, 12] of the take's unwrapped script --
-  # path-independent, so the fold's renames live outside it.
+  # path-independent, with the registry's log location normalized to the engine root.
   FROZEN = {
     "liveset_161326bb356a" => "56faac0fcfaa",
     "liveset_4abbb73e" => "a17c1cf6afb2",
@@ -997,7 +997,7 @@ class TestDillaLiveSynth < Minitest::Test
   # run def's argv returns to the ARGV the original file read.
   def take_script(stem)
     name = stem.split("_").map(&:capitalize).join
-    src = File.read(dilla("dilla.rb"))
+    src = File.read(dilla("lib/takes.rb"))
     from = src.index("\n  module #{name}\n") or abort "no module #{name}"
     region = src[(from + 1)..].lines
     to = region.index("  end\n") or abort "no end for #{name}"
@@ -1007,6 +1007,7 @@ class TestDillaLiveSynth < Minitest::Test
     idx = body.index { |line| line.start_with?("  def self.run(") } or abort "no run def for #{name}"
     last_end = body.rindex { |line| line == "  end\n" } or abort "no run end for #{name}"
     (body[0...idx] + body[(idx + 1)...last_end]).map do |line|
+      line = line.gsub('File.join(__dir__, "..", "moog_improv.log")', 'File.join(__dir__, "moog_improv.log")')
       line = line.sub(/^(\s*)def self\./) { "#{Regexp.last_match(1)}def " }
       line.gsub(/\bargv\b/, "ARGV")
     end.join

@@ -14,8 +14,9 @@ touch. The file `lib/sound.rb` holds instruments and signal: the oscillators, th
 the mixer and the outboard chains. The file `lib/harmony.rb` holds pitch, `lib/groove.rb` holds
 time and the drum presets, and `lib/listen.rb` holds measurement. The file `lib/sampling.rb`
 handles the records the engine is fed, and `lib/slskd_crate.rb` is the optional Soulseek
-source. The livesets and takes live in `dilla.rb` itself, in the modules Livesets and LiveSynth, so the
-engine has one entry and one home for the live room, with no copy elsewhere. The composer's memory is in `lib/composer_mind.rb`, and the MIDI transformation chain in `lib/midi_effects.rb`. The scene
+source. The interactive live room (`Livesets` and `LiveSynth`) stays in `dilla.rb`; the
+frozen reference takes live together in `lib/takes.rb` as one `DillaTakes` registry.
+They remain source-preserved takes, not one file and dispatch path per performance. The composer's memory is in `lib/composer_mind.rb`, and the MIDI transformation chain in `lib/midi_effects.rb`. The scene
 object that carries tension, density and material to both the sound and the picture is
 `lib/scene.rb`, and `lib/radio_video.rb` and `lib/live_audiovisual.rb` build the video side.
 The file `lib/ledger.rb` writes the knob census and the provenance sidecars. The data that

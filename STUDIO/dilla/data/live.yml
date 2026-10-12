@@ -14,7 +14,7 @@
 # rack. Explicit `live default` still plays the frozen set, the take the operator
 # froze on 2026-09-24, unchanged.
 # The approved takes are frozen inside the engine (module DillaTakes in
-# dilla.rb): soul_jazz_six is LovedMoogLoop, moog_dfam MoogDfamLoop, and
+# lib/takes.rb): soul_jazz_six is LovedMoogLoop, moog_dfam MoogDfamLoop, and
 # moog_improv LivesetDb4ddf1a, each as it was heard, before any ffmpeg console.
 # `ruby dilla.rb live take <name>` plays one. Those frozen numbers change
 # only on the operator's word.
