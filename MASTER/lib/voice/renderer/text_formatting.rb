@@ -46,7 +46,7 @@ module Master
             next rows << "" if body.empty?
 
             if (heading = body.match(/\A\s{0,3}#{1,6}\s+(.+)\z/))
-              rows << markdown_emphasis(heading[1])
+              rows.concat(measure(heading[1], width:).lines(chomp: true).map { |row| markdown_emphasis(row) })
               next
             end
 
@@ -62,9 +62,9 @@ module Master
               url = Regexp.last_match(2)
               label == url ? url : "#{label} (#{url})"
             end
-            body = body.gsub(/\*\*(.+?)\*\*/) { markdown_emphasis(Regexp.last_match(1)) }
+            body = body.gsub(/\*\*(.+?)\*\*/) { Regexp.last_match(1) }
             body = body.gsub(/(?<!\*)\*([^*\n]+)\*(?!\*)/) { Regexp.last_match(1) }
-            body = body.gsub(/__([^_\n]+)__/) { markdown_emphasis(Regexp.last_match(1)) }
+            body = body.gsub(/__([^_\n]+)__/) { Regexp.last_match(1) }
             body = body.gsub(/`([^`\n]+)`/) { Regexp.last_match(1) }
             rows.concat(measure(body, width:).lines(chomp: true))
           end
@@ -108,6 +108,14 @@ module Master
 
           words = body.split
           words.size >= 12 && words.count { |word| word.match?(%r{[\d_/]}) } * 4 <= words.size
+        end
+
+        def markdown_emphasis(text)
+          return text unless $stdout.tty?
+
+          @p.bold(text)
+        rescue StandardError
+          text
         end
 
         def wrap_line(line, width)
