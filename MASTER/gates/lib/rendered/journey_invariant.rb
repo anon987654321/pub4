@@ -69,7 +69,12 @@ module Deploy
     def walk_surface(cdp, surface, live)
       first = GeometryProbe.walk(cdp, surface)
       unless GeometryProbe.ok?(first)
-        @result.fail("journey_invariant: #{surface.id} unreachable (#{first["error"] || "HTTP #{first["status"]}"})")
+        error = first["error"] || "HTTP #{first["status"]}"
+        if GeometryProbe.timeout?(first)
+          @result.incomplete!("journey_invariant: #{surface.id} not measured — #{error}")
+        else
+          @result.fail("journey_invariant: #{surface.id} unreachable (#{error})")
+        end
         return
       end
 
@@ -120,14 +125,14 @@ module Deploy
       listed = GeometryProbe.surfaces.select { |s| s.app == "brgen" && s.label == "channels" }
       rooms = GeometryProbe.reachable(listed).first
       room = rooms && first_room_url(cdp, rooms)
-      return @result.warn("journey_invariant reconnect: brgen/channels offered no room — not measured") unless room
+      return @result.incomplete!("journey_invariant reconnect: brgen/channels offered no measurable room") unless room
 
       ROOM_JOURNEYS.each do |name, (script, verdict)|
         cdp.navigate(room)
         journey(name, verdict, "brgen/channel_room", TurboJourneys.measure(cdp, script))
       end
     rescue CdpSession::Error => e
-      @result.warn("journey_invariant reconnect: brgen/channel_room #{e.class.name.split("::").last}: #{e.message}")
+      @result.incomplete!("journey_invariant reconnect: brgen/channel_room could not be measured — #{e.class.name.split("::").last}: #{e.message}")
     end
 
     def first_room_url(cdp, rooms)
@@ -151,7 +156,13 @@ module Deploy
 
     def check_idempotence(cdp, surface, first)
       second = GeometryProbe.walk(cdp, surface)
-      return unless GeometryProbe.ok?(second)
+      unless GeometryProbe.ok?(second)
+        @result.incomplete!(
+          "journey_invariant idempotence: #{surface.id} second render was not measurable — " \
+          "#{second["error"] || "HTTP #{second["status"]}"}"
+        )
+        return
+      end
 
       diffs = structural_diff(first, second)
       return if diffs.empty?
@@ -169,13 +180,23 @@ module Deploy
       return unless other
 
       begin
-        GeometryProbe.walk(cdp, other)
+        before_back = GeometryProbe.walk(cdp, other)
+        unless GeometryProbe.ok?(before_back)
+          @result.incomplete!(
+            "journey_invariant back_button: could not load #{other.id} before history.back — " \
+            "#{before_back["error"] || "HTTP #{before_back["status"]}"}"
+          )
+          return
+        end
         cdp.evaluate("history.back()")
         sleep 0.4
-        GeometryProbe.wait_for_fonts(cdp)
+        unless GeometryProbe.wait_for_fonts(cdp)
+          @result.incomplete!("journey_invariant back_button: #{surface.id} restored page fonts did not settle")
+          return
+        end
         restored = cdp.evaluate(GeometryProbe::WALK).merge("status" => 200)
       rescue CdpSession::Error => e
-        @result.warn("journey_invariant back_button: #{surface.id} #{e.class.name.split("::").last}: #{e.message}")
+        @result.incomplete!("journey_invariant back_button: #{surface.id} could not be measured — #{e.class.name.split("::").last}: #{e.message}")
         return
       end
 
