@@ -1,0 +1,18 @@
+/* A glyph-shaded view of the canonical head points shared with the CLI. */
+.master-face-ascii-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 4;
+  opacity: .28;
+  mix-blend-mode: screen;
+  transition: opacity 180ms linear;
+}
+body[data-face-ascii="1"] .master-face-ascii-layer { opacity: .96; }
+body[data-face-ascii="1"] #face { opacity: .055; }
+@media (prefers-reduced-motion: reduce) {
+  .master-face-ascii-layer { transition: none; }
+}
