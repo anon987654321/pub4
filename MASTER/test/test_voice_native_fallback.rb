@@ -3,6 +3,10 @@
 require_relative "test_helper"
 
 class TestVoiceNativeFallback < Minitest::Test
+  def test_fix_narration_voice_has_a_native_macos_fallback
+    assert_equal "Alex", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:christopher)
+  end
+
   def test_afplay_failure_has_a_policy_native_fallback
     spoken = []
 

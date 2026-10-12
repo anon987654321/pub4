@@ -23,7 +23,7 @@ module Master
       # can select the host default voice, which is allowed to be a different
       # speaker. Keep only deliberate aliases here; an unmapped neural voice must
       # fail this engine and let the caller choose its other safe fallbacks.
-      MACOS_VOICE_FALLBACKS = { jenny: "Samantha", andrew: "Alex" }.freeze
+      MACOS_VOICE_FALLBACKS = { jenny: "Samantha", andrew: "Alex", christopher: "Alex" }.freeze
       # major*10+minor version-code encoding (e.g. Python 3.10 -> 310); MLX needs 3.10+.
       MIN_MLX_PYTHON_VERSION_CODE = 310
 
