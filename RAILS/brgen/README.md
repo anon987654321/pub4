@@ -100,7 +100,8 @@ In production-like environments, `db:seed` skips synthetic content by default. A
 seed requires both `BRGEN_DEMO_MODE=1` and `BRGEN_DEMO_NOTICE=1`; the application shows a
 persistent, translated site-wide disclosure while both flags remain set. Keep these settings off
 the public production service unless the whole deployment is intentionally a disclosed demo.
-`brgen:demo_seed` uses the same guard.
+`brgen:demo_seed` uses the same guard. In development/test, set
+`SKIP_BERGEN_DEMO=1` to omit the curated Bergen fixtures while retaining the bulk fixtures.
 
 `bin/rails brgen:demo_audit` reports likely historical seed identities and linked content without
 deleting anything. Review the candidates manually before changing existing records: username
