@@ -140,12 +140,12 @@ module Master
                  @last_ok = true
                  result.to_s
                end
-        puts @refs.renderer.render(text, mode: @last_ok ? :dim : :error) unless text.empty?
+        print_terminal_output(text, mode: @last_ok ? :dim : :error) unless text.empty?
         result
       rescue StandardError => e
         @last_ok = false
         text = "cmd0: /#{name} failed — #{e.class}: #{e.message}"
-        puts @refs.renderer.render(text, mode: :error)
+        print_terminal_output(text, mode: :error)
         nil
       end
 
