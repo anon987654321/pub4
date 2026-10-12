@@ -43,7 +43,26 @@ module Master
 
       def path = @path || ENV["MASTER_LANE_QUOTA_PATH"] || File.expand_path("../../.master/lane_quota.yml", __dir__)
 
-      def lane_of(model) = model.to_s.split(":", 2).first.to_s
+      # One cooldown lane per actual quota boundary. CLI ids use `provider:model`;
+      # API ids use `vendor/model`. OpenRouter's :free models share a daily
+      # free-pool limit, so their vendor slug is not an independent quota lane.
+      def lane_of(model)
+        id = model.to_s
+        return "ollama" if id.start_with?("ollama:", "ollama/")
+        return id.split("/", 2).first.to_s if id.include?("/")
+        return id.split(":", 2).first.to_s if id.include?(":")
+
+        id.split("-", 2).first.to_s
+      end
+
+      # OpenRouter's free daily-pool refusal applies to every :free model.
+      # Other 429s can be vendor-specific, so they stay on the model's ordinary lane.
+      def quota_lane_of(model, reply)
+        text = reply.to_s
+        free_pool = model.to_s.end_with?(":free") &&
+          text.match?(/free-models-per-day/i)
+        free_pool ? "openrouter-free" : lane_of(model)
+      end
 
       # Seconds a reply says to wait; nil when it names none.
       def wait_in(reply) = LaneReply.stated_wait(reply.to_s, @clock.call)
@@ -58,7 +77,7 @@ module Master
         verdict = LaneReply.read(reply, now: @clock.call)
         return unless verdict
 
-        lane = lane_of(model)
+        lane = quota_lane_of(model, reply)
         deadline = @clock.call + verdict.wait
         @mutex.synchronize do
           rows = raw.merge(lane => deadline)
@@ -96,8 +115,8 @@ module Master
       # Seconds until the lane of `model` is asked again, or nil when no clock
       # revives it (a hand-kept dead entry, or a lane that is live).
       def revival_in(model)
-        deadline = @mutex.synchronize { table[lane_of(model)] }
-        deadline && [deadline - @clock.call, 1].max
+        deadline = until_for(model)
+        deadline.is_a?(Numeric) ? [deadline - @clock.call, 1].max : nil
       end
 
       def dead?(model, manual: manual_dead) = until_for(model, manual:) != nil
@@ -114,14 +133,26 @@ module Master
 
       # Epoch deadline, :manual for the hand-kept list, :run for a lane dropped for this run, or nil when the lane is live.
       def until_for(model, manual: manual_dead)
+        lane = lane_of(model)
         return :manual if manual.any? { |entry| model.to_s.start_with?(entry) }
-        return :run if @mutex.synchronize { @run_drops.key?(lane_of(model)) }
+        return :run if @mutex.synchronize { @run_drops.key?(lane) }
 
-        @mutex.synchronize { table[lane_of(model)] }
+        deadlines = @mutex.synchronize { table }
+        local = deadlines[lane]
+        shared_free = deadlines["openrouter-free"] if model.to_s.end_with?(":free")
+        [local, shared_free].compact.max
       end
 
       # lane => deadline, expired rows dropped; the file is the shared truth.
       def table = raw.reject { |key, _| key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX) }
+
+      # The most specific live status row for a model. The OpenRouter daily
+      # free-pool limit covers every :free model; other failures remain vendor-scoped.
+      def report_for(model)
+        rows = report
+        shared = rows.find { |row| row.start_with?("openrouter-free: ") } if model.to_s.end_with?(":free")
+        shared || rows.find { |row| row.start_with?("#{lane_of(model)}: ") }
+      end
 
       # lane => reason for the lanes the file holds; a row with none reads as quota.
       def reasons

@@ -9,6 +9,7 @@ require "tmpdir"
 class TestLaneQuota < Minitest::Test
   Quota = Master::Io::LaneQuota
   Silence = Master::Review::LLMDispatcher::LaneSilence
+  Health = Master::Io::LaneHealth
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
 
   def setup
@@ -159,4 +160,51 @@ class TestLaneQuota < Minitest::Test
 
     assert_equal %w[claude-cli:claude-sonnet-5-5], hops
   end
+  def test_openrouter_free_pool_quota_is_shared_across_vendor_prefixed_models
+    reply = "rate_limit: Rate limit exceeded: free-models-per-day-high-balance."
+    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", reply)
+
+    assert_equal "nvidia", Quota.lane_of("nvidia/nemotron-3-super-120b-a12b:free")
+    assert_equal "google", Quota.lane_of("google/gemma-4-31b-it:free")
+    assert_equal "nvidia", Silence.lane_of("nvidia/nemotron-3-super-120b-a12b:free")
+    assert Quota.dead?("google/gemma-4-31b-it:free")
+    assert Quota.dead?("nvidia/nemotron-3.5-lightning:free")
+    refute Quota.dead?("nvidia/nemotron-paid")
+
+    Quota.revive("openrouter-free")
+    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", "HTTP 429 Retry-After: 900")
+    assert Quota.dead?("nvidia/another:free"), "same vendor's short 429 is vendor-scoped"
+    refute Quota.dead?("google/gemma-4-31b-it:free"), "a vendor 429 is not the shared free-pool limit"
+
+    Quota.revive("nvidia")
+    Quota.note(
+      "nvidia/nemotron-3-super-120b-a12b:free",
+      "HTTP 429 X-RateLimit-Reset: 1791800000000",
+    )
+    assert Quota.dead?("nvidia/another:free")
+    refute Quota.dead?("google/gemma-4-31b-it:free"),
+           "a reset timestamp without an explicit free-pool refusal stays vendor-scoped"
+  end
+
+  def test_lane_normalization_preserves_hyphenated_cli_provider_names
+    assert_equal "claude-cli", Quota.lane_of("claude-cli:claude-opus-5-5")
+    assert_equal "grok-cli", Quota.lane_of("grok-cli:auto")
+    assert_equal "deepseek", Quota.lane_of("deepseek-chat")
+    assert_equal "google", Quota.lane_of("google/gemini-2.5-flash")
+  end
+
+  def test_status_reports_global_free_pool_quota_instead_of_misleading_vendor_silence
+    reply = "rate_limit: Rate limit exceeded: free-models-per-day-high-balance."
+    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", reply)
+
+    assert_match(/\Aopenrouter-free: quota spent/, Quota.report_for("google/gemma-4-31b-it:free"))
+    assert_equal [
+      Quota.report_for("google/gemma-4-31b-it:free"),
+    ], Health.states(
+      ["nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-31b-it:free"],
+      refuses: ->(model) { Quota.dead?(model) },
+    )
+  end
+
+
 end
