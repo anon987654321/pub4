@@ -589,13 +589,14 @@ Law.define(:MASTER_PROMPT_AESTHETIC) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    Renderer prompt_line uses typographic hierarchy: quiet path and clean Git
-    state, restrained phase, and a strong terminal token. Dirty Git state may
-    carry the warning color; decoration does not.
+    Renderer prompt_line follows the OpenBSD dmesg console idiom first: a
+    compact plain-text path, Git state, phase and shell token. Keep events as
+    append-only factual unit0: lines; do not dress the prompt as Starship or
+    powerline. Status colour is never the only carrier of meaning.
   TEXT
-  fix "Renderer prompt_line uses typographic hierarchy: quiet path and clean Git state, restrained phase, and a strong terminal token."
-  bad  "recolours the prompt line"
-  good "leaves the prompt line, adds a status row"
+  fix "Keep the prompt compact, plain and factual; send detail to dmesg-style status lines rather than adding visual segments."
+  bad  "recolours the prompt line and adds badges"
+  good "keeps the one-line prompt plain and emits a factual fix0: status when work changes state"
 end
 
 # The registry (surface_rules.rb) also carries a FLAT_PIXELS, and the two are
