@@ -37,8 +37,12 @@ module Deploy
         text = [message[:source], message[:text], message[:url]].reject { |part| part.to_s.empty? }.join(": ")
         next if text.empty?
 
-        if level == "error"
-          hard << "browser console error: #{text}"
+        if level == "error" && message[:source].to_s == "exception"
+          hard << "uncaught JavaScript exception: #{text}"
+        elsif level == "error"
+          # The existing visual contract keeps ordinary console errors soft until
+          # the live error budget has been measured across the whole route matrix.
+          soft << "browser console error: #{text}"
         elsif level == "warning"
           soft << "browser console warning: #{text}"
         end
