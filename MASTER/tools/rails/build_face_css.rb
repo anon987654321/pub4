@@ -45,7 +45,10 @@ module MasterFaceStylesheet
       return false
     end
 
-    return false if actual == expected
+    if actual == expected
+      puts "face_css: already current" unless check
+      return true
+    end
 
     FileUtils.mkdir_p(File.dirname(OUTPUT))
     File.write(OUTPUT, expected)
