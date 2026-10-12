@@ -78,16 +78,26 @@ module Deploy
     end
 
     def self.owned_url?(surface, url)
-      origin_host = URI.parse(surface.url).host.to_s.downcase
       host = URI.parse(url).host.to_s.downcase
       return false if host.empty?
-      return true if host == origin_host
 
-      # Brgen verticals share one city origin. Their real hostnames are different
-      # even though Chrome resolves all of them to the same local Falcon process.
-      surface.app.to_s == "brgen" && (host == "brgen.no" || host.end_with?(".brgen.no"))
-    rescue URI::InvalidURIError
+      first_party_hosts = [URI.parse(surface.url).host.to_s.downcase]
+      first_party_hosts << app_domains.fetch(surface.app.to_s, nil)
+      if surface.app.to_s == "brgen"
+        # Read hosts from the same route inventory the browser actually visits;
+        # do not infer app ownership from a broad suffix such as *.brgen.no.
+        first_party_hosts.concat(BrgenVerticalSurfaces::SURFACES.map { |row| row[:host] })
+      end
+      first_party_hosts.compact.map { |value| value.to_s.downcase }.include?(host)
+    rescue URI::InvalidURIError, KeyError, SystemCallError
       false
+    end
+
+    def self.app_domains
+      @app_domains ||= YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml"))
+                            .fetch("apps").to_h do |name, app|
+        [name.to_s, app["domain"].to_s.downcase]
+      end
     end
 
     def run
@@ -238,7 +248,7 @@ module Deploy
       print_row(surface, row)
       row
     rescue CdpSession::Error, SystemCallError => e
-      @result.fail("browser_diagnostics: #{surface.id} probe errored — #{e.class}: #{e.message}")
+      @result.inconclusive!("browser_diagnostics: #{surface.id} CDP could not complete — #{e.class}: #{e.message}")
       row = {
         "app" => surface.app,
         "surface" => surface.label,
