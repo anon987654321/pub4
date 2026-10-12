@@ -32,7 +32,7 @@ module Master
       # source (Head by default); chars and mode replace the ramp and invert it
       # (MASTER_FACE_CHARS, MASTER_FACE_MODE=light). MASTER_CLI_QUIET=1 draws
       # the plain word only; MASTER_REDUCED_MOTION=1 holds the head still.
-      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil)
+      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil, show_laws: nil)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
         look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: 0)
@@ -40,7 +40,8 @@ module Master
 
         look = look.with(yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0) if ENV["MASTER_REDUCED_MOTION"] == "1"
         law_config = Master::Face::LawField.config
-        laws = law_config.fetch("terminal_law_ring", true) ? Master::Face::LawField.laws : []
+        visible = show_laws.nil? ? law_config.fetch("terminal_law_ring", true) : !!show_laws
+        laws = visible ? Master::Face::LawField.laws : []
         renderer(source || Head.for(rows, cols), rows, cols, chars, mode).render(look, state:, laws:).to_s(color:)
       end
 
