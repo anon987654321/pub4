@@ -1,0 +1,461 @@
+{
+  "schema_version": 1,
+  "description": "Original music-theory reference data for composition and generation. Interval sizes are semitones above a root; progressions are original examples, not transcriptions.",
+  "intervals": [
+    {
+      "name": "unison",
+      "semitones": 0
+    },
+    {
+      "name": "minor second",
+      "semitones": 1
+    },
+    {
+      "name": "major second",
+      "semitones": 2
+    },
+    {
+      "name": "minor third",
+      "semitones": 3
+    },
+    {
+      "name": "major third",
+      "semitones": 4
+    },
+    {
+      "name": "perfect fourth",
+      "semitones": 5
+    },
+    {
+      "name": "tritone",
+      "semitones": 6
+    },
+    {
+      "name": "perfect fifth",
+      "semitones": 7
+    },
+    {
+      "name": "minor sixth",
+      "semitones": 8
+    },
+    {
+      "name": "major sixth",
+      "semitones": 9
+    },
+    {
+      "name": "minor seventh",
+      "semitones": 10
+    },
+    {
+      "name": "major seventh",
+      "semitones": 11
+    },
+    {
+      "name": "octave",
+      "semitones": 12
+    }
+  ],
+  "chord_formulas": [
+    {
+      "symbol": "maj7",
+      "semitones": [
+        0,
+        4,
+        7,
+        11
+      ],
+      "colour": "warm, luminous"
+    },
+    {
+      "symbol": "maj9",
+      "semitones": [
+        0,
+        4,
+        7,
+        11,
+        14
+      ],
+      "colour": "wide, luminous"
+    },
+    {
+      "symbol": "6/9",
+      "semitones": [
+        0,
+        4,
+        7,
+        9,
+        14
+      ],
+      "colour": "open, gently unresolved"
+    },
+    {
+      "symbol": "m7",
+      "semitones": [
+        0,
+        3,
+        7,
+        10
+      ],
+      "colour": "mellow, intimate"
+    },
+    {
+      "symbol": "m9",
+      "semitones": [
+        0,
+        3,
+        7,
+        10,
+        14
+      ],
+      "colour": "deep, spacious"
+    },
+    {
+      "symbol": "m11",
+      "semitones": [
+        0,
+        3,
+        7,
+        10,
+        14,
+        17
+      ],
+      "colour": "floating, modal"
+    },
+    {
+      "symbol": "7#9",
+      "semitones": [
+        0,
+        4,
+        7,
+        10,
+        15
+      ],
+      "colour": "blues-inflected tension"
+    },
+    {
+      "symbol": "maj7#11",
+      "semitones": [
+        0,
+        4,
+        7,
+        11,
+        18
+      ],
+      "colour": "glasslike, weightless"
+    },
+    {
+      "symbol": "m7b5",
+      "semitones": [
+        0,
+        3,
+        6,
+        10
+      ],
+      "colour": "unstable, inward"
+    },
+    {
+      "symbol": "sus2",
+      "semitones": [
+        0,
+        2,
+        7
+      ],
+      "colour": "open, unresolved"
+    },
+    {
+      "symbol": "sus4",
+      "semitones": [
+        0,
+        5,
+        7
+      ],
+      "colour": "held, expectant"
+    },
+    {
+      "symbol": "add9",
+      "semitones": [
+        0,
+        4,
+        7,
+        14
+      ],
+      "colour": "clear, spacious"
+    }
+  ],
+  "harmonic_movements": [
+    {
+      "name": "common-tone drift",
+      "principle": "Keep one or two upper notes fixed while bass or inner voices move by step.",
+      "use": "Connected motion without a strong cadence."
+    },
+    {
+      "name": "descending inner voice",
+      "principle": "Move one chord tone by semitone or whole tone while other voices stay or move minimally.",
+      "use": "Bittersweet gravity from small changes."
+    },
+    {
+      "name": "bass pedal",
+      "principle": "Hold the bass while upper harmony changes.",
+      "use": "Suspension, hypnosis and ambiguity."
+    },
+    {
+      "name": "deceptive landing",
+      "principle": "Approach an expected resolution, then move to a related chord that delays closure.",
+      "use": "Keep a short loop turning over."
+    },
+    {
+      "name": "chromatic approach",
+      "principle": "Approach a target chord tone by semitone.",
+      "use": "Give bass and melody a clear destination."
+    },
+    {
+      "name": "third-related shift",
+      "principle": "Move roots by a major or minor third, often preserving common tones.",
+      "use": "Cinematic colour beyond routine fifth-based movement."
+    },
+    {
+      "name": "upper-structure colour",
+      "principle": "Vary ninths, elevenths, sixths and altered tones while preserving a clear bass.",
+      "use": "Change emotional light without clutter."
+    },
+    {
+      "name": "phrase-end suspension",
+      "principle": "End on a chord that invites continuation rather than full resolution.",
+      "use": "Make two- or three-bar loops replay naturally."
+    }
+  ],
+  "compositions": [
+    {
+      "id": "blue-hour-glass",
+      "bars": 2,
+      "key": "D minor",
+      "bpm": [
+        78,
+        94
+      ],
+      "progression": [
+        "Dm9",
+        "Gm9",
+        "Bbmaj7#11",
+        "A7sus4"
+      ],
+      "beats_per_chord": 2,
+      "voice": "rhodes_velvet",
+      "family": "rhodes",
+      "intent": "hushed, unresolved, inner-voice descent"
+    },
+    {
+      "id": "opal-rain",
+      "bars": 2,
+      "key": "F major",
+      "bpm": [
+        82,
+        98
+      ],
+      "progression": [
+        "Fmaj9",
+        "Am7",
+        "Dm9",
+        "Bbmaj7"
+      ],
+      "beats_per_chord": 2,
+      "voice": "moog_warm",
+      "family": "moog",
+      "intent": "warm common tones, gentle bass descent"
+    },
+    {
+      "id": "velvet-geometry",
+      "bars": 2,
+      "key": "C minor",
+      "bpm": [
+        76,
+        92
+      ],
+      "progression": [
+        "Cm9",
+        "Abmaj7",
+        "Fm9",
+        "G7#9"
+      ],
+      "beats_per_chord": 2,
+      "voice": "rhodes_bell",
+      "family": "rhodes",
+      "intent": "minor-third colour and blues-tinted tension"
+    },
+    {
+      "id": "silver-thread",
+      "bars": 2,
+      "key": "A minor",
+      "bpm": [
+        84,
+        102
+      ],
+      "progression": [
+        "Am9",
+        "D9sus4",
+        "Fmaj7#11",
+        "Em7"
+      ],
+      "beats_per_chord": 2,
+      "voice": "fm_glass",
+      "family": "fm",
+      "intent": "modal openness and floating cadence"
+    },
+    {
+      "id": "after-the-last-train",
+      "bars": 2,
+      "key": "Eb major",
+      "bpm": [
+        72,
+        88
+      ],
+      "progression": [
+        "Ebmaj9",
+        "Gm7",
+        "Cm9",
+        "Abmaj7"
+      ],
+      "beats_per_chord": 2,
+      "voice": "rhodes_tape",
+      "family": "rhodes",
+      "intent": "tender common tones"
+    },
+    {
+      "id": "amber-orbit",
+      "bars": 3,
+      "key": "B minor",
+      "bpm": [
+        80,
+        96
+      ],
+      "progression": [
+        "Bm9",
+        "Dmaj7#11",
+        "A6/9",
+        "F#m9",
+        "Em9",
+        "F#7sus4"
+      ],
+      "beats_per_chord": 2,
+      "voice": "moog_round",
+      "family": "moog",
+      "intent": "wide shifts and suspended turnaround"
+    },
+    {
+      "id": "soft-focus",
+      "bars": 2,
+      "key": "G major",
+      "bpm": [
+        86,
+        104
+      ],
+      "progression": [
+        "Gmaj9",
+        "Bm7",
+        "Cmaj7#11",
+        "Am9"
+      ],
+      "beats_per_chord": 2,
+      "voice": "rhodes_soft",
+      "family": "rhodes",
+      "intent": "luminous extensions and common tones"
+    },
+    {
+      "id": "night-bloom",
+      "bars": 2,
+      "key": "C# minor",
+      "bpm": [
+        74,
+        90
+      ],
+      "progression": [
+        "C#m9",
+        "Amaj7",
+        "Emaj9",
+        "G#7sus4"
+      ],
+      "beats_per_chord": 2,
+      "voice": "fm_bell",
+      "family": "fm",
+      "intent": "dark/bright contrast, delayed resolution"
+    },
+    {
+      "id": "paper-moon",
+      "bars": 2,
+      "key": "Db major",
+      "bpm": [
+        80,
+        98
+      ],
+      "progression": [
+        "Dbmaj9",
+        "Fm7",
+        "Gbmaj7#11",
+        "Ab13"
+      ],
+      "beats_per_chord": 2,
+      "voice": "rhodes_chime",
+      "family": "rhodes",
+      "intent": "close voice leading, coloured dominant"
+    },
+    {
+      "id": "slow-comet",
+      "bars": 3,
+      "key": "F# minor",
+      "bpm": [
+        78,
+        94
+      ],
+      "progression": [
+        "F#m9",
+        "Amaj7",
+        "C#m9",
+        "Dmaj7#11",
+        "Bm9",
+        "C#7#9"
+      ],
+      "beats_per_chord": 2,
+      "voice": "moog_subtle",
+      "family": "moog",
+      "intent": "wide register and tense turnaround"
+    },
+    {
+      "id": "lilac-static",
+      "bars": 2,
+      "key": "E minor",
+      "bpm": [
+        82,
+        100
+      ],
+      "progression": [
+        "Em9",
+        "Cmaj7#11",
+        "Am9",
+        "B7sus4"
+      ],
+      "beats_per_chord": 2,
+      "voice": "fm_soft",
+      "family": "fm",
+      "intent": "held upper notes against shifting bass"
+    },
+    {
+      "id": "still-water",
+      "bars": 2,
+      "key": "Ab major",
+      "bpm": [
+        76,
+        92
+      ],
+      "progression": [
+        "Abmaj9",
+        "Cm7",
+        "Dbmaj7#11",
+        "Eb13"
+      ],
+      "beats_per_chord": 2,
+      "voice": "rhodes_warm",
+      "family": "rhodes",
+      "intent": "open extensions, soft non-final cadence"
+    }
+  ]
+}

@@ -1,0 +1,5089 @@
+{
+  "progressions": [
+    [
+      "F7",
+      "Dm7",
+      "Gm7"
+    ],
+    [
+      "Dm9",
+      "Gm9",
+      "Bbmaj7",
+      "A7sus4"
+    ],
+    [
+      "Dm7",
+      "G7",
+      "Cmaj7",
+      "Fmaj7"
+    ],
+    [
+      "Abmaj7",
+      "Fm9",
+      "Dbmaj7",
+      "Eb7"
+    ],
+    [
+      "Ebmaj7",
+      "Cm7",
+      "Fm7",
+      "Bb7"
+    ],
+    [
+      "Fmaj9",
+      "Dm9",
+      "Gm9",
+      "C13"
+    ],
+    [
+      "Fmaj7",
+      "Dm7",
+      "Gm7",
+      "C7"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bbm9",
+      "Ebmaj7"
+    ],
+    [
+      "Bbm9",
+      "C7",
+      "Fm9",
+      "Bbm9"
+    ],
+    [
+      "Fm9",
+      "Bbm9",
+      "Eb13",
+      "Abmaj9",
+      "Dbmaj7#11",
+      "C7alt"
+    ],
+    [
+      "Bb7",
+      "Cm9",
+      "Dm9",
+      "Ebmaj9",
+      "F13",
+      "Gm9",
+      "Cm9",
+      "Bb7"
+    ],
+    [
+      "Cm9",
+      "Bb13",
+      "Abmaj9",
+      "Fm9",
+      "Ebmaj7",
+      "Abm9",
+      "G7alt",
+      "Cm9"
+    ],
+    [
+      "Cm9",
+      "Fm11",
+      "Bb13",
+      "Ebmaj9",
+      "Abm9",
+      "Dbmaj7#11",
+      "G7alt",
+      "Cm9"
+    ],
+    [
+      "Cmaj9",
+      "Am9",
+      "Dm11",
+      "G13",
+      "Fmaj9",
+      "Bb7",
+      "Dbmaj7#11",
+      "Cmaj9"
+    ],
+    [
+      "Cm9",
+      "Abmaj7#11",
+      "Fm9",
+      "Bb13",
+      "Ebmaj9",
+      "Db7alt",
+      "Cm9",
+      "Fm9"
+    ],
+    [
+      "Fmaj9",
+      "Dm9",
+      "Gm9",
+      "Am9",
+      "Gm7",
+      "C7#9",
+      "Dm9",
+      "Gm9"
+    ],
+    [
+      "Dbmaj9",
+      "Cm9",
+      "Fm9",
+      "Bbm9"
+    ],
+    [
+      "Bmaj7",
+      "D7",
+      "Gmaj7",
+      "Bb7",
+      "Ebmaj7",
+      "Am7",
+      "D7",
+      "Gmaj7",
+      "Bb7",
+      "Ebmaj7",
+      "F#7",
+      "Bmaj7",
+      "Fm7",
+      "Bb7",
+      "Ebmaj7",
+      "Am7",
+      "D7",
+      "Gmaj7",
+      "C#m7",
+      "F#7",
+      "Bmaj7",
+      "Fm7",
+      "Bb7",
+      "Ebmaj7",
+      "C#m7",
+      "F#7"
+    ],
+    [
+      "Dm7",
+      "Ebm7",
+      "Dm7"
+    ],
+    [
+      "Bbmaj7#11",
+      "A7#9",
+      "Dm9",
+      "C#7",
+      "Cm9",
+      "F7b9",
+      "Bbmaj7",
+      "A7#5#9",
+      "Dm6/9",
+      "E7#5#9",
+      "Am9",
+      "Dm9",
+      "Bbmaj7#11",
+      "A7#9",
+      "A7b9",
+      "Dm6/9"
+    ],
+    [
+      "D7sus4",
+      "F7sus4",
+      "Eb7sus4",
+      "Db7sus4"
+    ],
+    [
+      "Dbmaj7/Eb",
+      "Ebm9",
+      "Amaj7/Eb",
+      "Gmaj7/Eb",
+      "Abmaj7",
+      "Bmaj7/Bb",
+      "Bb13b9",
+      "Bmaj7/Bb",
+      "Bb13b9",
+      "Dmaj7/Bb",
+      "Bmaj7/Bb",
+      "Abmaj7/Bb",
+      "Emaj7/Bb"
+    ],
+    [
+      "Cm7",
+      "F7",
+      "Bbmaj7",
+      "Ebmaj7",
+      "Am7b5",
+      "D7b9",
+      "Gm6"
+    ],
+    [
+      "Ebmaj7",
+      "Bbm7",
+      "Eb7",
+      "Abmaj7",
+      "Abm7",
+      "Db7",
+      "Ebmaj7",
+      "Cm7",
+      "Fm7",
+      "Bb7",
+      "Gm7",
+      "C7",
+      "Fm7",
+      "Bb7",
+      "Ebmaj7"
+    ],
+    [
+      "Eb",
+      "Gm",
+      "Ab",
+      "Bb"
+    ],
+    [
+      "Emaj7",
+      "C#m7",
+      "F#m7",
+      "Am6",
+      "B11",
+      "A",
+      "Emaj7",
+      "C#m7"
+    ],
+    [
+      "Ebmaj7",
+      "Cm7",
+      "Fm7",
+      "Bb7",
+      "Ebmaj7",
+      "Abmaj7",
+      "Fm7/Ab",
+      "Eb6/9",
+      "Fm7",
+      "Bb7"
+    ],
+    [
+      "Am",
+      "Em",
+      "G",
+      "Am",
+      "G"
+    ],
+    [
+      "C#m7",
+      "F#9",
+      "E"
+    ],
+    [
+      "C",
+      "G/B",
+      "Am",
+      "F"
+    ],
+    [
+      "F#m",
+      "D",
+      "A",
+      "C#m",
+      "Bm"
+    ],
+    [
+      "G",
+      "Em",
+      "C",
+      "Am",
+      "D",
+      "G",
+      "C"
+    ],
+    [
+      "Bm",
+      "Em",
+      "D",
+      "Bm",
+      "G"
+    ],
+    [
+      "Bm",
+      "D",
+      "Bm",
+      "F#m"
+    ],
+    [
+      "A",
+      "D",
+      "E"
+    ],
+    [
+      "Bbm7",
+      "Eb7"
+    ],
+    [
+      "F7",
+      "Bb7",
+      "F7",
+      "C7",
+      "Bb7"
+    ],
+    [
+      "Em",
+      "D",
+      "Bm",
+      "C"
+    ],
+    [
+      "Bm7/D",
+      "D/F#",
+      "C/G",
+      "Am",
+      "G9"
+    ],
+    [
+      "B7#5",
+      "Em11"
+    ],
+    [
+      "B",
+      "D#m",
+      "G#m7",
+      "Eadd9",
+      "F#"
+    ],
+    [
+      "Dm7",
+      "Am7",
+      "Gm7",
+      "Am7"
+    ],
+    [
+      "Ebm7",
+      "Fm"
+    ],
+    [
+      "Dbmaj7",
+      "Cm7",
+      "Fm7",
+      "Bbm7sus4",
+      "Eb"
+    ],
+    [
+      "Ebm(add11)",
+      "Fm"
+    ],
+    [
+      "Dm9",
+      "Am7"
+    ],
+    [
+      "C#m",
+      "F#m",
+      "G#",
+      "A9",
+      "G#sus4"
+    ],
+    [
+      "B9",
+      "D#m6/9",
+      "G#m7",
+      "A#m7/E",
+      "D#m9sus4"
+    ],
+    [
+      "Dm",
+      "Cm",
+      "Bb/Ab",
+      "Bbm7",
+      "A7",
+      "Dmaj7/G"
+    ],
+    [
+      "C9(add13,b5)",
+      "Bb7(add11)",
+      "C9(add13,b5)",
+      "Em(add11)",
+      "F(add6)"
+    ],
+    [
+      "Dm7",
+      "G7",
+      "Cmaj7"
+    ],
+    [
+      "Dm7b5",
+      "G7b9",
+      "Cm7"
+    ],
+    [
+      "Dm7",
+      "Db7",
+      "Cmaj7"
+    ],
+    [
+      "Bmaj7",
+      "D7",
+      "Gmaj7",
+      "Bb7",
+      "Ebmaj7",
+      "F#7",
+      "Bmaj7"
+    ],
+    [
+      "Bbmaj7",
+      "G7",
+      "Cm7",
+      "F7",
+      "Dm7",
+      "G7",
+      "Cm7",
+      "F7"
+    ],
+    [
+      "Dm7",
+      "Ebm7"
+    ],
+    [
+      "Cmaj7",
+      "Abmaj7",
+      "Bb7",
+      "Cmaj7"
+    ],
+    [
+      "Cmaj9",
+      "Am11",
+      "Fmaj13",
+      "G13sus4"
+    ],
+    [
+      "Ebmaj9",
+      "Cm9",
+      "Abmaj13",
+      "Bb13sus4"
+    ],
+    [
+      "Dmaj9",
+      "Bm11",
+      "Gmaj9#11",
+      "A13sus4"
+    ],
+    [
+      "Fmaj9",
+      "Dm11",
+      "Bbmaj13",
+      "C13"
+    ],
+    [
+      "Amaj9",
+      "F#m11",
+      "Dmaj9",
+      "E13sus4"
+    ],
+    [
+      "Gmaj9",
+      "Em11",
+      "Cmaj13",
+      "D13sus4"
+    ],
+    [
+      "Dm9b5",
+      "Gm11",
+      "Ebmaj7#11",
+      "Am7b13"
+    ],
+    [
+      "Emaj7",
+      "G#m7",
+      "C#m7",
+      "F#9"
+    ],
+    [
+      "Gbmaj9",
+      "Ebm11",
+      "Abm9",
+      "Db13"
+    ],
+    [
+      "Cm7",
+      "F7",
+      "Bbmaj7",
+      "Gm7"
+    ],
+    [
+      "Fmaj7",
+      "Dm7",
+      "Gm7",
+      "C9"
+    ],
+    [
+      "C#m11",
+      "F#7#9",
+      "Amaj9",
+      "E7sus4"
+    ],
+    [
+      "Csus2",
+      "Bbsus4",
+      "Absus2",
+      "Gbmaj7"
+    ],
+    [
+      "Gm7",
+      "Dm7",
+      "Ebmaj7",
+      "F7"
+    ],
+    [
+      "Cmaj7",
+      "Am7",
+      "Fmaj7",
+      "G7"
+    ],
+    [
+      "E",
+      "F#m",
+      "A",
+      "B"
+    ],
+    [
+      "Dmaj9",
+      "Bm11",
+      "Gmaj7#11",
+      "A13"
+    ],
+    [
+      "Am9",
+      "Dm7b5",
+      "Em7",
+      "Fmaj7#11"
+    ],
+    [
+      "Ebmaj7#5",
+      "Fm11",
+      "Dbmaj9",
+      "Cm7"
+    ],
+    [
+      "Bm7",
+      "Gmaj7",
+      "Bm7",
+      "Gmaj7"
+    ],
+    [
+      "Gm9",
+      "C13",
+      "Fmaj9",
+      "Bb13"
+    ],
+    [
+      "Cmaj7",
+      "Am7",
+      "Fmaj7",
+      "Fm7",
+      "Em7",
+      "Ebmaj7",
+      "Dm7",
+      "Db7",
+      "Cmaj9",
+      "Abmaj7",
+      "Gm7",
+      "C7",
+      "Fmaj9",
+      "Bbmaj7",
+      "Em11",
+      "A7#9"
+    ],
+    [
+      "Bmaj7",
+      "D7",
+      "Gmaj7",
+      "Bb7",
+      "Ebmaj9",
+      "F#7#9",
+      "Bmaj9",
+      "Fm7",
+      "Bb7",
+      "Ebmaj7",
+      "Am7",
+      "D7"
+    ],
+    [
+      "Em11",
+      "A13sus4",
+      "Dmaj9",
+      "Gmaj13",
+      "F#m11",
+      "Bm9",
+      "Em9",
+      "A7#9",
+      "Dmaj7",
+      "Cmaj9",
+      "Bm11",
+      "E7b9",
+      "Am9",
+      "D13",
+      "Gmaj7",
+      "C#m7b5"
+    ],
+    [
+      "Am",
+      "Dm",
+      "Em",
+      "Am"
+    ],
+    [
+      "Cmaj9",
+      "B7#9",
+      "Bbmaj7#11",
+      "A7b13",
+      "Abmaj9",
+      "G7#9",
+      "Gbmaj7",
+      "Fmaj13",
+      "Em11",
+      "Ebm11",
+      "Dm9",
+      "Dbmaj7#11",
+      "Cmaj9",
+      "G7sus4"
+    ],
+    [
+      "Dm",
+      "Bbmaj7",
+      "C",
+      "Gm7",
+      "Am7",
+      "Dm9",
+      "F",
+      "Gm9",
+      "A7",
+      "Dm11",
+      "Csus2"
+    ],
+    [
+      "Fsus2",
+      "Gsus2",
+      "Am11",
+      "Bbmaj7",
+      "Csus4",
+      "Dm9",
+      "Ebmaj9",
+      "Dm9",
+      "Csus2",
+      "Fsus2"
+    ],
+    [
+      "Fm7",
+      "Bb7",
+      "Ebmaj7",
+      "Abmaj7"
+    ],
+    [
+      "Ebm7",
+      "Bb7#9"
+    ],
+    [
+      "Bbm7",
+      "Eb7",
+      "Bbm7",
+      "Eb7"
+    ],
+    [
+      "Em9",
+      "Am9",
+      "Em9",
+      "Am9"
+    ],
+    [
+      "Dm7b5",
+      "G7b9",
+      "Cmin7"
+    ],
+    [
+      "Cmaj9",
+      "Am11",
+      "Fmaj13",
+      "G13sus"
+    ],
+    [
+      "Ebmaj9",
+      "Cm9",
+      "Abmaj13",
+      "Bb13sus"
+    ],
+    [
+      "Dmaj9",
+      "Bm11",
+      "Gmaj9#11",
+      "A13sus"
+    ],
+    [
+      "Amaj9",
+      "F#m11",
+      "Dmaj9",
+      "E13sus"
+    ],
+    [
+      "Gmaj9",
+      "Em11",
+      "Cmaj13",
+      "D13sus"
+    ],
+    [
+      "Dm9(b5)",
+      "Gm11",
+      "Ebmaj7#11",
+      "Am7b13"
+    ],
+    [
+      "Em11",
+      "A13sus",
+      "Dmaj9",
+      "Gmaj13",
+      "F#m11",
+      "Bm9",
+      "Em9",
+      "A7#9",
+      "Dmaj7",
+      "Cmaj9",
+      "Bm11",
+      "E7b9",
+      "Am9",
+      "D13",
+      "Gmaj7",
+      "C#m7b5"
+    ],
+    [
+      "Cmaj9",
+      "B7#9",
+      "Bbmaj7#11",
+      "A7b13",
+      "Abmaj9",
+      "G7#9",
+      "Gbmaj7",
+      "Fmaj13",
+      "Em11",
+      "Ebm11",
+      "Dm9",
+      "Dbmaj7#11",
+      "Cmaj9",
+      "G7sus"
+    ],
+    [
+      "Fmin7",
+      "Bb7",
+      "Ebmaj7",
+      "Abmaj7"
+    ],
+    [
+      "E9sus4",
+      "Db/E",
+      "C/E",
+      "Bm/E",
+      "Bbm/E",
+      "Am/E"
+    ],
+    [
+      "B7b9",
+      "F7#11",
+      "E9sus4"
+    ],
+    [
+      "Dm11",
+      "G7",
+      "Cmaj9",
+      "Am11"
+    ],
+    [
+      "Em",
+      "A",
+      "Bb7"
+    ],
+    [
+      "Am",
+      "G",
+      "Bbm",
+      "Bb",
+      "F"
+    ],
+    [
+      "Bbm",
+      "Em",
+      "Am",
+      "F"
+    ],
+    [
+      "Dbmaj7",
+      "Cm7",
+      "Fm7",
+      "Bbm7"
+    ],
+    [
+      "Ebm7",
+      "Bbm7",
+      "Ebm7",
+      "Bbm7"
+    ],
+    [
+      "D/E",
+      "Db/E",
+      "C/E",
+      "Bm/E",
+      "Bbm/E",
+      "Am/E"
+    ],
+    [
+      "E9sus4/D",
+      "Db/E",
+      "C/E",
+      "Bm/E",
+      "Bbm/E",
+      "Am/E",
+      "E9sus4"
+    ],
+    [
+      "Dadd9",
+      "A7sus4",
+      "G6",
+      "C9",
+      "F#m9",
+      "B9",
+      "Em9",
+      "Asus9"
+    ],
+    [
+      "Dm7",
+      "Dm7",
+      "Ebm7",
+      "Dm7"
+    ],
+    [
+      "Bm9/D",
+      "D6/9/F#",
+      "Cadd9/G",
+      "Am7",
+      "G13"
+    ],
+    [
+      "Em9",
+      "A13",
+      "Bm9",
+      "F13"
+    ],
+    [
+      "Dm9",
+      "Am9",
+      "Dm9",
+      "Gm7",
+      "Bbmaj7",
+      "Am7",
+      "D7b9",
+      "Gm7"
+    ],
+    [
+      "Am7",
+      "D9",
+      "Gmaj7",
+      "B7#9",
+      "Em7"
+    ],
+    [
+      "Cm7",
+      "Cm7",
+      "Fm9",
+      "Fm9",
+      "Cm7",
+      "Cm7",
+      "Cmmaj9",
+      "G7alt"
+    ],
+    [
+      "Cmaj7",
+      "Am7",
+      "Gm7",
+      "C7sus4",
+      "Fmaj7"
+    ],
+    [
+      "Ebdim7/C",
+      "Dm/C",
+      "C",
+      "Bbmaj7/C",
+      "Fmaj7/A",
+      "Abdim7",
+      "Gm7",
+      "C7sus4",
+      "C7b9"
+    ],
+    [
+      "G7",
+      "F#7",
+      "E7",
+      "F7"
+    ],
+    [
+      "Fm9",
+      "Am7b5",
+      "Bbm7"
+    ],
+    [
+      "D",
+      "D/F#",
+      "G",
+      "Abdim7",
+      "D/A"
+    ],
+    [
+      "Dm11",
+      "Gm11",
+      "Dm11",
+      "Gm11"
+    ],
+    [
+      "Fm9",
+      "Bbm9",
+      "Ebmaj9",
+      "Dbmaj9"
+    ],
+    [
+      "Dm7",
+      "Eb7",
+      "Gm7",
+      "D7",
+      "Eb7",
+      "Gm7",
+      "Am7"
+    ],
+    [
+      "Fm9",
+      "Fmmaj7",
+      "Dbmaj13#11",
+      "Cm11",
+      "Bbm9",
+      "Abmaj13",
+      "Gm7b5",
+      "C7alt"
+    ],
+    [
+      "Dm9",
+      "Gm9",
+      "C7b9",
+      "Fmaj9"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "G7",
+      "Cmaj9",
+      "Fmaj9",
+      "Bm7b5",
+      "E7b9",
+      "Am9"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bbmaj9",
+      "Ebmaj9"
+    ],
+    [
+      "Cm9",
+      "Bbm9",
+      "Abmaj9",
+      "G7b9"
+    ],
+    [
+      "Cm9",
+      "Dm7b5",
+      "G7b9",
+      "Cm9"
+    ],
+    [
+      "Cm9",
+      "Fm11"
+    ],
+    [
+      "Gm9",
+      "Cm9",
+      "Ebmaj9",
+      "F13"
+    ],
+    [
+      "Gm9",
+      "Am7b5",
+      "D7b9",
+      "Gm9"
+    ],
+    [
+      "Gm11",
+      "Fmaj9",
+      "Ebmaj13",
+      "Dm9"
+    ],
+    [
+      "Dmaj9",
+      "Bm9",
+      "Em11",
+      "A13"
+    ],
+    [
+      "Dmaj9",
+      "F#m9",
+      "Bm9",
+      "Gmaj13"
+    ],
+    [
+      "Cm9",
+      "F#maj9",
+      "Bbm9",
+      "Fm9"
+    ],
+    [
+      "Fm9",
+      "Bbm9",
+      "Fm9",
+      "Bbm9"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "Gm9",
+      "Cm9"
+    ],
+    [
+      "Bbm9",
+      "Ebmaj9",
+      "Abmaj9",
+      "Fm9"
+    ],
+    [
+      "Dm9",
+      "Gm9",
+      "Cm9",
+      "Fmaj9"
+    ],
+    [
+      "Fmaj9",
+      "Em9",
+      "Am9",
+      "Dm9"
+    ],
+    [
+      "Em9",
+      "Am9",
+      "Dm9",
+      "G7"
+    ],
+    [
+      "E9sus4/D",
+      "C/E",
+      "Bbm/E",
+      "Am/E",
+      "Db/E",
+      "Bm/E",
+      "E9sus4"
+    ],
+    [
+      "Gm9",
+      "Cm9",
+      "Fm9",
+      "Bbm9"
+    ],
+    [
+      "Fm9",
+      "Bbm9",
+      "Ebmaj9",
+      "Abmaj9"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bbm9",
+      "Ebmaj9"
+    ],
+    [
+      "Cm9",
+      "Fmaj9",
+      "Bbmaj9",
+      "Ebmaj9",
+      "Abmaj7",
+      "Dm9",
+      "Bb7sus",
+      "Cm9"
+    ],
+    [
+      "Dm9",
+      "Gm9",
+      "C7b9",
+      "Fmaj9",
+      "Bbm9",
+      "Eb9",
+      "Abmaj9",
+      "Dm9"
+    ],
+    [
+      "Dm9",
+      "Dm/C",
+      "Bbmaj9",
+      "A7",
+      "Dm9",
+      "Gm9",
+      "Cmaj9",
+      "Fmaj9"
+    ],
+    [
+      "Fmaj9",
+      "Am9",
+      "Gmaj9",
+      "Em9",
+      "Fmaj9",
+      "Dm9",
+      "Cmaj9",
+      "G7"
+    ],
+    [
+      "Cm9",
+      "C7sus",
+      "Ab/C",
+      "F/C",
+      "Bbmaj9/C",
+      "Gm7/C",
+      "Dbmaj9/C",
+      "Cm9"
+    ],
+    [
+      "Fmaj9",
+      "Em7b5",
+      "A7b9",
+      "Dm9",
+      "Gm9",
+      "C7sus",
+      "Fmaj9",
+      "D7"
+    ],
+    [
+      "Em9",
+      "Fmaj9",
+      "Gmaj9",
+      "Am9",
+      "Fmaj7",
+      "G7sus",
+      "Bm7b5",
+      "Em9"
+    ],
+    [
+      "Dbmaj9",
+      "Fm9"
+    ],
+    [
+      "Dmaj9",
+      "Cmaj9",
+      "Gmaj9",
+      "Dmaj9",
+      "F#m9",
+      "Em9",
+      "A7sus",
+      "Dmaj9"
+    ],
+    [
+      "Em9",
+      "Cmaj9",
+      "Am9",
+      "Fmaj9",
+      "Em9",
+      "Gmaj9",
+      "Bm9",
+      "Em9"
+    ],
+    [
+      "Fm9",
+      "Abmaj9",
+      "Bmaj9",
+      "Fm9",
+      "Dbmaj9",
+      "Emaj9",
+      "Abmaj9",
+      "Fm9"
+    ],
+    [
+      "Dm9",
+      "G/D",
+      "C/D",
+      "Am9",
+      "Dm9",
+      "Fmaj9/D",
+      "G/D",
+      "Dm9"
+    ],
+    [
+      "Cm9",
+      "Abmaj9",
+      "Bb7",
+      "Ebmaj9",
+      "Fm9",
+      "Bb7",
+      "Ebmaj9",
+      "G7"
+    ],
+    [
+      "Bbmaj9",
+      "Ebmaj9",
+      "Abmaj9",
+      "F7sus",
+      "Bbmaj9",
+      "Ebmaj9",
+      "F7sus",
+      "Bbmaj9"
+    ],
+    [
+      "Em9",
+      "Am9",
+      "D7",
+      "Gmaj9",
+      "Em9",
+      "Am9",
+      "D7",
+      "Gmaj9"
+    ],
+    [
+      "C7",
+      "D7",
+      "E7",
+      "F#7",
+      "Fm9",
+      "Dbmaj9",
+      "Ebmaj9",
+      "Fm9"
+    ],
+    [
+      "Bbmaj9",
+      "D/Bb",
+      "F/Bb",
+      "G/Bb",
+      "Bbmaj9",
+      "Eb/Bb",
+      "F/Bb",
+      "Bbmaj9"
+    ],
+    [
+      "Gm9",
+      "Ebmaj9",
+      "Cm9",
+      "D7sus",
+      "Gm9",
+      "Ebmaj9",
+      "Fmaj9",
+      "Gm9"
+    ],
+    [
+      "C7",
+      "F7",
+      "Bb7",
+      "Eb7",
+      "Abmaj9",
+      "Dbmaj9",
+      "Cm9",
+      "F7"
+    ],
+    [
+      "Dbmaj9",
+      "Fm9",
+      "F#maj9",
+      "Bmaj9",
+      "Dbmaj9",
+      "Abmaj9",
+      "Bbm9",
+      "Eb7"
+    ],
+    [
+      "Dbmaj9",
+      "Fm9",
+      "F#maj9",
+      "B7sus",
+      "Dbmaj9",
+      "Abmaj9",
+      "F#maj9",
+      "Dbmaj9"
+    ],
+    [
+      "Dbmaj9",
+      "Emaj7",
+      "Bmaj9",
+      "Dbmaj9",
+      "Fm9",
+      "Abmaj9",
+      "Dbmaj9"
+    ],
+    [
+      "Fm9",
+      "Dbmaj9",
+      "Fm9",
+      "Dbmaj9",
+      "Fm9",
+      "Bbm9",
+      "Fm9",
+      "Dbmaj9"
+    ],
+    [
+      "Fm9",
+      "Dbmaj9",
+      "Cm9",
+      "Fm9",
+      "F#maj9",
+      "Dbmaj9",
+      "Bbm9",
+      "Eb7"
+    ],
+    [
+      "Fm9",
+      "Dbmaj9",
+      "Abmaj9",
+      "Ebmaj9"
+    ],
+    [
+      "Fm9",
+      "Bbm9",
+      "Cmaj9",
+      "Am9"
+    ],
+    [
+      "Cm9/Bb",
+      "Fm7/Ab",
+      "Bbm7/F#",
+      "Ebmaj9"
+    ],
+    [
+      "Fm9",
+      "Bb7sus",
+      "Ebmaj9",
+      "A7b9"
+    ],
+    [
+      "Fm/C",
+      "Bbm/C",
+      "Abmaj7/C",
+      "G7sus/C"
+    ],
+    [
+      "Fm9",
+      "Bbm9",
+      "Ebmaj9",
+      "Abmaj9",
+      "Dbmaj9",
+      "Cm7",
+      "Bb7sus",
+      "Fm9"
+    ],
+    [
+      "Cm9",
+      "Bbm9",
+      "Abmaj9",
+      "Gm7"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "Gm9",
+      "Cmaj9"
+    ],
+    [
+      "Dm9",
+      "Gm9",
+      "Dm9",
+      "Am9"
+    ],
+    [
+      "Fm9",
+      "Fm6",
+      "Bbm9",
+      "Ebmaj9"
+    ],
+    [
+      "Dm9",
+      "G13",
+      "Dm9",
+      "G13"
+    ],
+    [
+      "Am9",
+      "Gmaj9",
+      "Fmaj9",
+      "Em9"
+    ],
+    [
+      "Fm9",
+      "Abmaj9",
+      "Bbm9",
+      "Dbmaj9"
+    ],
+    [
+      "Cm9",
+      "F#maj9",
+      "Fm9",
+      "Bbm9"
+    ],
+    [
+      "Bbm9",
+      "Am9",
+      "Abmaj9",
+      "Gm7"
+    ],
+    [
+      "Ebmaj9",
+      "Bb7",
+      "Ebmaj9",
+      "Fm9"
+    ],
+    [
+      "Cmaj9",
+      "Dm9",
+      "Em9",
+      "Fmaj9"
+    ],
+    [
+      "Fmaj9",
+      "Bb7",
+      "Fmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "G13",
+      "Cmaj9"
+    ],
+    [
+      "Fmaj9",
+      "Ebmaj9",
+      "Fmaj9",
+      "Bb7"
+    ],
+    [
+      "Gm9",
+      "Cmaj9",
+      "Gm9",
+      "Cmaj9"
+    ],
+    [
+      "Em9",
+      "Fmaj9",
+      "Em9",
+      "Fmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Dmaj9",
+      "Cmaj9",
+      "Gmaj9"
+    ],
+    [
+      "Gmaj9",
+      "Fmaj9",
+      "Cmaj9",
+      "Gmaj9"
+    ],
+    [
+      "Cm9",
+      "Bb7",
+      "Abmaj9",
+      "Gm7"
+    ],
+    [
+      "Bm7b5",
+      "Em9",
+      "Am9",
+      "Dm9"
+    ],
+    [
+      "Dm9",
+      "Gm11",
+      "Cm9",
+      "Fm11"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "Am9",
+      "Em9"
+    ],
+    [
+      "Em9",
+      "Am9",
+      "Dm9",
+      "Gm11"
+    ],
+    [
+      "Cmaj9",
+      "Cmaj9/B",
+      "Am9",
+      "Am9/G"
+    ],
+    [
+      "Dm9",
+      "Dm9/C",
+      "Bb7",
+      "Am9"
+    ],
+    [
+      "Fmaj9",
+      "Fmaj9/E",
+      "Dm9",
+      "Dm9/C"
+    ],
+    [
+      "Ebmaj9",
+      "Ebmaj9/D",
+      "Cm9",
+      "Cm9/Bb"
+    ],
+    [
+      "Cm9",
+      "Cm9/B",
+      "Cm9/Bb",
+      "Cm9/A"
+    ],
+    [
+      "Cmaj9",
+      "Fmaj9/C",
+      "Bbmaj9/C",
+      "Cmaj9"
+    ],
+    [
+      "Gm9/G",
+      "C9/G",
+      "Fmaj9/G",
+      "Gm9/G"
+    ],
+    [
+      "Am9",
+      "Dm9/A",
+      "Gmaj9/A",
+      "Am9"
+    ],
+    [
+      "Fmaj9/C",
+      "Ebmaj9/C",
+      "Dbmaj9/C",
+      "Cm9"
+    ],
+    [
+      "E7",
+      "A7",
+      "D7",
+      "G13"
+    ],
+    [
+      "Dm9",
+      "G13",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Dm7b5",
+      "G7b9",
+      "Cm9",
+      "Cm9"
+    ],
+    [
+      "Fm9",
+      "Bb7",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Dm9",
+      "Db9",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Gm9",
+      "C7alt",
+      "Fmaj9",
+      "Fmaj9"
+    ],
+    [
+      "Bb7",
+      "Gm9",
+      "Cm9",
+      "F13"
+    ],
+    [
+      "G7",
+      "G13",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Fm9",
+      "Bb7b9",
+      "Ebmaj9",
+      "Ebmaj9"
+    ],
+    [
+      "Dmaj9",
+      "Bm9",
+      "Em9",
+      "A9"
+    ],
+    [
+      "Gmaj9",
+      "F#maj9",
+      "Fmaj9",
+      "Emaj9"
+    ],
+    [
+      "Cmaj9",
+      "Emaj9",
+      "Abmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Cm9",
+      "Ebm9",
+      "F#m9",
+      "Am9"
+    ],
+    [
+      "Cmaj9",
+      "Abmaj9",
+      "Cmaj9",
+      "Emaj9"
+    ],
+    [
+      "Cmaj9",
+      "Abmaj9",
+      "Fm9",
+      "Cmaj9"
+    ],
+    [
+      "Fmaj9",
+      "Fm9",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Cm9",
+      "Dbmaj9",
+      "G7b9",
+      "Cm9"
+    ],
+    [
+      "Fm9",
+      "Bbm9"
+    ],
+    [
+      "Cmaj9",
+      "Fmaj9"
+    ],
+    [
+      "Am9",
+      "D7"
+    ],
+    [
+      "Ebmaj9",
+      "Gm9"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Cm9",
+      "G7b9"
+    ],
+    [
+      "F13",
+      "Bb9",
+      "F13",
+      "C9"
+    ],
+    [
+      "Bb9",
+      "Eb7",
+      "Bb9",
+      "F13"
+    ],
+    [
+      "Fmaj9",
+      "Dm9",
+      "Gm9",
+      "C9"
+    ],
+    [
+      "Cm9",
+      "Abmaj9",
+      "Fm9",
+      "G7b9"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "E7b9",
+      "Am9"
+    ],
+    [
+      "Dmaj9",
+      "Amaj9",
+      "Emaj9",
+      "Bmaj9"
+    ],
+    [
+      "Em9",
+      "Bm9",
+      "Gmaj9",
+      "Dmaj9"
+    ],
+    [
+      "C7",
+      "F7",
+      "Bb7sus",
+      "Eb7"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bbm9",
+      "Ebmaj9",
+      "Abmaj9",
+      "Dm7b5",
+      "G7b9",
+      "Cm9"
+    ],
+    [
+      "Fmaj9",
+      "Bb7",
+      "Em7b5",
+      "A7b9",
+      "Dm9",
+      "Gm9",
+      "C9",
+      "Fmaj9"
+    ],
+    [
+      "Dm9",
+      "Em9",
+      "Fmaj9",
+      "Gm9",
+      "Am9",
+      "Bb7",
+      "Cmaj9",
+      "Dm9"
+    ],
+    [
+      "Am9",
+      "Dm9/A",
+      "Fmaj9/A",
+      "Em9/A",
+      "Am9",
+      "Gmaj9/A",
+      "Fmaj9/A",
+      "Am9"
+    ],
+    [
+      "Cmaj9",
+      "Cmaj9/B",
+      "Am9",
+      "Am9/G",
+      "Fmaj9",
+      "Fmaj9/E",
+      "Dm9",
+      "G13"
+    ],
+    [
+      "Am9",
+      "Gmaj9",
+      "Fmaj9",
+      "E7b9"
+    ],
+    [
+      "Dm9",
+      "G13",
+      "Am9",
+      "Fmaj9"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "E7b9",
+      "Amaj9"
+    ],
+    [
+      "Cmaj9",
+      "Am9",
+      "Dm9",
+      "G7"
+    ],
+    [
+      "Cmaj9",
+      "Fm9",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Cmaj9",
+      "A7b9",
+      "Dm9",
+      "G13"
+    ],
+    [
+      "Cmaj9",
+      "C7",
+      "Fmaj9",
+      "Fm9"
+    ],
+    [
+      "Cmaj9",
+      "E7b9",
+      "Am9",
+      "Dm9"
+    ],
+    [
+      "E7",
+      "A7",
+      "D7",
+      "G7"
+    ],
+    [
+      "Dm7b5",
+      "Cm7b5",
+      "Bm7b5",
+      "Bbm7b5"
+    ],
+    [
+      "Bm7b5",
+      "E7b9",
+      "Am9",
+      "Am9"
+    ],
+    [
+      "Em7b5",
+      "A7alt",
+      "Dm9",
+      "Gm9"
+    ],
+    [
+      "Cmaj9",
+      "Dmaj9",
+      "Ebmaj9",
+      "Fmaj9"
+    ],
+    [
+      "Cm9",
+      "Dm9",
+      "Ebm9",
+      "Fm9"
+    ],
+    [
+      "C7",
+      "D7",
+      "Eb7",
+      "F7"
+    ],
+    [
+      "C9",
+      "D9",
+      "E9",
+      "F#9"
+    ],
+    [
+      "Cmaj9",
+      "Dmaj9/C",
+      "Ebmaj9/C",
+      "Fmaj9/C"
+    ],
+    [
+      "Fmaj9",
+      "Gmaj9/F",
+      "Abmaj9/F",
+      "Bbmaj9/F"
+    ],
+    [
+      "Am9",
+      "Bbmaj9/A",
+      "Cmaj9/A",
+      "Dm9/A"
+    ],
+    [
+      "Cm9",
+      "Cm9",
+      "Cmaj9",
+      "C9"
+    ],
+    [
+      "Fmaj9",
+      "Fmaj7",
+      "F6",
+      "Fm6"
+    ],
+    [
+      "Cmaj9",
+      "Am9",
+      "Fmaj9",
+      "Dm9"
+    ],
+    [
+      "Fmaj9",
+      "Bb7",
+      "C9",
+      "Fmaj9"
+    ],
+    [
+      "Am9",
+      "Fmaj9",
+      "Cmaj9",
+      "Gmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Gmaj9",
+      "Am9",
+      "Fmaj9"
+    ],
+    [
+      "Dm9",
+      "Gm9",
+      "Bb7",
+      "Cmaj9"
+    ],
+    [
+      "Am9",
+      "D7",
+      "Gmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Gm9",
+      "Gm11"
+    ],
+    [
+      "Em9",
+      "Am9"
+    ],
+    [
+      "Cm9",
+      "Abmaj9"
+    ],
+    [
+      "Dm9",
+      "Gm9"
+    ],
+    [
+      "Fm9",
+      "Bmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Fmaj9",
+      "Bm7b5",
+      "E7b9",
+      "Am9",
+      "Dm9",
+      "G13",
+      "Cmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Eb7",
+      "Dm9",
+      "Db7"
+    ],
+    [
+      "Cmaj9",
+      "Eb7",
+      "Abmaj9",
+      "B7",
+      "Emaj9",
+      "G7",
+      "Cmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Am9",
+      "Am9/G",
+      "Fmaj9",
+      "Fmaj9/E",
+      "Dm9",
+      "Dm9/C",
+      "Bm7b5",
+      "E7b9"
+    ],
+    [
+      "Dm7",
+      "Em7",
+      "Fmaj7",
+      "Gm7"
+    ],
+    [
+      "Gm9",
+      "C7",
+      "Fmaj9",
+      "Fmaj9"
+    ],
+    [
+      "Ebmaj9",
+      "Cm9",
+      "Fm9",
+      "Bb9"
+    ],
+    [
+      "Bbm9",
+      "Ebm9",
+      "Abmaj9",
+      "Dbmaj9"
+    ],
+    [
+      "Abmaj9",
+      "Dbmaj9",
+      "Ebmaj9",
+      "Abmaj9"
+    ],
+    [
+      "Gm9",
+      "Cm9",
+      "Gm9",
+      "D7b9"
+    ],
+    [
+      "Ebmaj9",
+      "Abmaj9",
+      "Ebmaj9",
+      "Bb9"
+    ],
+    [
+      "Bbm9",
+      "Ebmaj9"
+    ],
+    [
+      "Fm9",
+      "Dbmaj9",
+      "Ebmaj9"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bb9",
+      "Ebmaj9"
+    ],
+    [
+      "C7",
+      "Eb7",
+      "F7",
+      "Ab7"
+    ],
+    [
+      "Am9",
+      "Dm9"
+    ],
+    [
+      "Cmaj9",
+      "Gmaj9",
+      "Dmaj9",
+      "Amaj9"
+    ],
+    [
+      "Cm9",
+      "F7alt",
+      "Bbm9",
+      "Eb7alt"
+    ],
+    [
+      "Cmaj9",
+      "Dm9",
+      "Ebm9",
+      "Em9"
+    ],
+    [
+      "G13",
+      "F#13",
+      "F13",
+      "E9"
+    ],
+    [
+      "Cm9",
+      "Cmaj7",
+      "Fm9",
+      "Bb9"
+    ],
+    [
+      "Ebmaj9",
+      "Cm9",
+      "Fm9",
+      "Bb9",
+      "Ebmaj9",
+      "Abmaj9",
+      "Fm9",
+      "Bb9"
+    ],
+    [
+      "Gm9",
+      "C9",
+      "Gm9",
+      "C9",
+      "Ebmaj9",
+      "Fmaj9",
+      "Gm9",
+      "Gm9"
+    ],
+    [
+      "Fm9",
+      "Gm7b5",
+      "Abmaj9",
+      "Bbm9",
+      "Cm9",
+      "Dbmaj9",
+      "Eb7",
+      "Fm9"
+    ],
+    [
+      "Am9",
+      "D7b9",
+      "Gm9",
+      "C9",
+      "Fmaj9",
+      "Bm7b5",
+      "E7b9",
+      "Am9"
+    ],
+    [
+      "Cm9",
+      "Dbmaj9/C",
+      "Ebmaj9/C",
+      "Fm9/C",
+      "Cm9",
+      "Abmaj9/C",
+      "Bbmaj9/C",
+      "Cm9"
+    ],
+    [
+      "Dmaj9",
+      "Bm9",
+      "Gmaj9",
+      "Amaj9",
+      "Dmaj9",
+      "Em9",
+      "Amaj9",
+      "Dmaj9"
+    ],
+    [
+      "Cm9",
+      "Ebmaj9",
+      "Fm9",
+      "G7b9"
+    ],
+    [
+      "Dm7b5",
+      "G7#5",
+      "Cm9",
+      "Cm6"
+    ],
+    [
+      "Cmaj13",
+      "Abmaj13",
+      "Emaj13",
+      "Cmaj13",
+      "F7sus",
+      "Bb13",
+      "Ebmaj13",
+      "Cmaj13"
+    ],
+    [
+      "Dm7b5",
+      "Em7b5",
+      "F#m7b5",
+      "Am7b5"
+    ],
+    [
+      "Am11",
+      "Dm11",
+      "Gm11",
+      "Cmaj13",
+      "Am11",
+      "Dm11",
+      "F7sus",
+      "C6"
+    ],
+    [
+      "Cmaj9",
+      "Ebmaj13",
+      "Abmaj9",
+      "G7#5",
+      "Cmaj9",
+      "Fm6",
+      "Cmaj9",
+      "G7alt"
+    ],
+    [
+      "Cm9",
+      "Cm9/Bb",
+      "Abmaj13",
+      "G7#5",
+      "Cm9",
+      "Fm6",
+      "Dm7b5",
+      "Cm6"
+    ],
+    [
+      "F7sus",
+      "Ebmaj13"
+    ],
+    [
+      "Am9",
+      "Gmaj9",
+      "Fmaj9",
+      "E7b9",
+      "Am9",
+      "Fmaj9",
+      "Bbmaj9",
+      "E7b9"
+    ],
+    [
+      "Dm9",
+      "Dm9/Db",
+      "Dm9/C",
+      "Dm9/B",
+      "Bbmaj9",
+      "Gm9",
+      "A7b9",
+      "Dm9"
+    ],
+    [
+      "Cmaj9",
+      "Abm9",
+      "Cmaj9",
+      "Abm9"
+    ],
+    [
+      "Cmaj9",
+      "Cm9",
+      "Abmaj9",
+      "Abm9",
+      "Emaj9",
+      "Em9",
+      "Cmaj9",
+      "Cm9"
+    ],
+    [
+      "Cm7b5",
+      "Cm9",
+      "Cm11",
+      "C7sus",
+      "C7",
+      "Cmaj9",
+      "Cmaj7#11"
+    ],
+    [
+      "Cmaj9",
+      "Dbdim7",
+      "Dm9",
+      "G13"
+    ],
+    [
+      "C6",
+      "Bdim7",
+      "C6",
+      "Fmaj9",
+      "C6",
+      "Bdim7",
+      "Dm9",
+      "G13"
+    ],
+    [
+      "Cmaj9",
+      "Caug",
+      "Fmaj9",
+      "Fm9",
+      "Cmaj9",
+      "Abmaj9",
+      "Caug",
+      "Cmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Cmaj7#5",
+      "Fmaj7#11",
+      "Dm9",
+      "Gmaj9",
+      "Cmaj7#5",
+      "Am9",
+      "Cmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Eb7",
+      "Ebmaj9",
+      "F#7",
+      "F#maj9",
+      "A7",
+      "Amaj9",
+      "G7"
+    ],
+    [
+      "Fm7b5",
+      "E7b9",
+      "Am9",
+      "Fm7b5",
+      "E7b9",
+      "Am9",
+      "Dm9",
+      "E7b9"
+    ],
+    [
+      "Cm9",
+      "Dbmaj9",
+      "Abmaj9",
+      "G7alt",
+      "Cm9",
+      "Fm9",
+      "Db13",
+      "Cm9"
+    ],
+    [
+      "Dm9",
+      "Db9",
+      "Cmaj9",
+      "B9",
+      "Bbmaj9",
+      "A7alt",
+      "Abmaj9",
+      "G13"
+    ],
+    [
+      "Ebmaj9",
+      "Fmaj9",
+      "F#maj9",
+      "Abmaj9",
+      "F#maj9",
+      "Fmaj9",
+      "Ebmaj9",
+      "Dbmaj9"
+    ],
+    [
+      "Gmaj9",
+      "Dmaj9",
+      "Gmaj9",
+      "Bm9",
+      "Em9",
+      "Am9",
+      "Dmaj9",
+      "Gmaj9"
+    ],
+    [
+      "Cmaj9",
+      "G7sus/C",
+      "Cmaj9",
+      "Dm9/C",
+      "Cmaj9",
+      "Fmaj9/C",
+      "Cmaj9",
+      "G7sus/C"
+    ],
+    [
+      "Cm9",
+      "F#maj9/C",
+      "Cm9",
+      "Abmaj9/C",
+      "Cm9",
+      "Ebmaj9/C",
+      "Cm9",
+      "F#maj9/C"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "Fmaj9",
+      "Em9",
+      "Am9",
+      "Dm9",
+      "E7b9",
+      "Amaj9"
+    ],
+    [
+      "Am9",
+      "D7sus",
+      "Gmaj9",
+      "C7sus",
+      "Fmaj9",
+      "Bb7sus",
+      "Ebmaj9",
+      "Ab7sus"
+    ],
+    [
+      "Bb7",
+      "Fmaj9",
+      "Cmaj9",
+      "Cmaj9",
+      "Bb7",
+      "Fmaj9",
+      "Gmaj9",
+      "Cmaj9"
+    ],
+    [
+      "Dm9",
+      "G13",
+      "Cmaj9",
+      "Am9",
+      "Dm9",
+      "Em9",
+      "G13",
+      "Dm9"
+    ],
+    [
+      "C",
+      "Db",
+      "D",
+      "Eb",
+      "E",
+      "F",
+      "F#",
+      "G",
+      "Ab",
+      "A",
+      "Bb",
+      "B"
+    ],
+    [
+      "Bb",
+      "C",
+      "Db",
+      "D",
+      "Eb",
+      "F",
+      "F#",
+      "G",
+      "Ab"
+    ],
+    [
+      "Dbmaj7",
+      "Ab",
+      "Bbm7",
+      "Fm7",
+      "Fm9",
+      "Ebmaj7",
+      "Cm7"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "Fmaj9",
+      "G13",
+      "Ebmaj7",
+      "Bm7"
+    ],
+    [
+      "Am7",
+      "Bbmaj7",
+      "Cmaj9",
+      "Fmaj9",
+      "Eb7",
+      "Gm7"
+    ],
+    [
+      "Cm9",
+      "Fm7",
+      "Bb7",
+      "Abmaj9",
+      "Gm7"
+    ],
+    [
+      "Em9",
+      "Am9",
+      "Cmaj9",
+      "D13",
+      "Bm7"
+    ],
+    [
+      "Fm7",
+      "Bbm7",
+      "Ebmaj7",
+      "Cm9",
+      "Dbmaj7"
+    ],
+    [
+      "Ebm7",
+      "Bbm7"
+    ],
+    [
+      "Bbm",
+      "Ab",
+      "Fm7",
+      "Fm"
+    ],
+    [
+      "Emaj7",
+      "Abm7",
+      "Abm7",
+      "Abmaj7"
+    ],
+    [
+      "Dbm9",
+      "Abm9",
+      "Bb7",
+      "Dbmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Bm7",
+      "Am7",
+      "D7"
+    ],
+    [
+      "Bm7",
+      "Bm7",
+      "Cmaj9",
+      "Em7"
+    ],
+    [
+      "Dm7",
+      "Cm7",
+      "Fmaj9",
+      "Gm7"
+    ],
+    [
+      "Cmaj9",
+      "Am9",
+      "Fmaj9",
+      "G6"
+    ],
+    [
+      "G6",
+      "Em9",
+      "Cmaj9",
+      "Dmaj9"
+    ],
+    [
+      "Dm",
+      "Gm",
+      "Am"
+    ],
+    [
+      "Dm7",
+      "Eb7",
+      "Gm7",
+      "Am7"
+    ],
+    [
+      "Gm9",
+      "Cmaj9",
+      "Fmaj9",
+      "Bbmaj7"
+    ],
+    [
+      "Am9",
+      "Dm9",
+      "Fmaj9",
+      "Em7"
+    ],
+    [
+      "Em7",
+      "Cmaj7",
+      "Dmaj7",
+      "Em7"
+    ],
+    [
+      "Cm9",
+      "F7",
+      "Bbmaj9",
+      "Gm7"
+    ],
+    [
+      "Gm7",
+      "A7",
+      "Dm9",
+      "Cm7"
+    ],
+    [
+      "Fmaj9",
+      "Abmaj7",
+      "Bbmaj7",
+      "Fmaj9"
+    ],
+    [
+      "Cmaj9",
+      "Bbmaj7",
+      "Fmaj9",
+      "G6"
+    ],
+    [
+      "F#m9",
+      "Bm7",
+      "Emaj7",
+      "Dbm7"
+    ],
+    [
+      "Ebmaj9",
+      "Cm9",
+      "Abmaj9",
+      "Bb6"
+    ],
+    [
+      "Gm9",
+      "Cm7",
+      "Fmaj9",
+      "Bbmaj7"
+    ],
+    [
+      "Dbmaj9",
+      "F#maj7",
+      "Ab6",
+      "Dbmaj9"
+    ],
+    [
+      "Cm7",
+      "Abmaj7",
+      "G7",
+      "Ebmaj7"
+    ],
+    [
+      "Am9",
+      "D7",
+      "Gmaj7",
+      "E7"
+    ],
+    [
+      "Em9",
+      "B7",
+      "Cmaj9",
+      "Am9"
+    ],
+    [
+      "Fmaj9",
+      "Bbmaj7",
+      "Cmaj9",
+      "Fmaj9"
+    ],
+    [
+      "Dm7/F",
+      "Fmaj9/A",
+      "Gm7/Bb",
+      "Cmaj9/E"
+    ],
+    [
+      "Dmaj9",
+      "Am9",
+      "Gmaj9"
+    ],
+    [
+      "Am",
+      "Am/G",
+      "Fmaj7",
+      "E7"
+    ],
+    [
+      "Fm7",
+      "Abmaj7",
+      "Bbm7",
+      "Fm7"
+    ],
+    [
+      "Ebmaj9",
+      "Cm9",
+      "Fm7",
+      "Bb7"
+    ],
+    [
+      "Abmaj9",
+      "Fm7",
+      "Bbm7",
+      "Eb7"
+    ],
+    [
+      "Am7",
+      "D7",
+      "Gmaj9",
+      "Bm7"
+    ],
+    [
+      "Dmaj9",
+      "Cmaj9",
+      "Gmaj9",
+      "A7"
+    ],
+    [
+      "Cm9",
+      "Fm7",
+      "Bbmaj7",
+      "Ebmaj9"
+    ],
+    [
+      "Fm9",
+      "Dbmaj9",
+      "Eb9",
+      "Bbm9",
+      "Cm7b5",
+      "Fm9",
+      "C7alt",
+      "Fm9"
+    ],
+    [
+      "Fm7",
+      "Dbmaj7",
+      "Eb7",
+      "Bbm7",
+      "Cm7b5",
+      "Fm7",
+      "C7",
+      "Fm7"
+    ],
+    [
+      "Eb",
+      "F",
+      "G",
+      "Bb"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bb13",
+      "Ebmaj7",
+      "Abmaj7",
+      "Dm7b5",
+      "G7alt",
+      "Cm9"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bb13",
+      "Ebmaj7"
+    ],
+    [
+      "Dm9",
+      "G13",
+      "Cmaj9",
+      "Fmaj7"
+    ],
+    [
+      "Dm9",
+      "G13",
+      "Cmaj9",
+      "Fmaj7#11"
+    ],
+    [
+      "Gm7",
+      "Cm",
+      "Bb",
+      "Cm7"
+    ],
+    [
+      "Fm",
+      "Dbmaj7",
+      "Csus4",
+      "Bb9",
+      "Abmaj7",
+      "G7",
+      "C",
+      "Fm9"
+    ],
+    [
+      "Gm11",
+      "Cmaj7",
+      "Dm9",
+      "C"
+    ],
+    [
+      "Abm9",
+      "F#9",
+      "Ebm9"
+    ],
+    [
+      "Bm7",
+      "Em7",
+      "Gm7"
+    ],
+    [
+      "Bbm11",
+      "A7"
+    ],
+    [
+      "Dbm9",
+      "Bbm11"
+    ],
+    [
+      "A",
+      "Dbm"
+    ],
+    [
+      "Gm",
+      "F",
+      "Ab",
+      "Eb",
+      "Bb"
+    ],
+    [
+      "Fm9",
+      "Ebm9",
+      "Ab9",
+      "Dbmaj9",
+      "C7#9",
+      "Fm9",
+      "Bbm9",
+      "Dbmaj7"
+    ],
+    [
+      "Am",
+      "C",
+      "Am7/E",
+      "Cmaj7/G",
+      "Cmaj7/E",
+      "Cmaj7/B",
+      "G6",
+      "Em7"
+    ],
+    [
+      "Gm7/F",
+      "Gm",
+      "Eb",
+      "Gm/D",
+      "Gm",
+      "Cm7",
+      "Bb/F",
+      "Ebmaj7"
+    ],
+    [
+      "Bbm/Db",
+      "F#maj7/Db",
+      "Ab7/Eb"
+    ],
+    [
+      "F#",
+      "Absus4/Db",
+      "Ebsus4/Ab"
+    ],
+    [
+      "Gmaj7",
+      "Em7",
+      "F#m7",
+      "Bm7"
+    ],
+    [
+      "Esus9",
+      "F#m/A",
+      "Asus9",
+      "Bm",
+      "Asus9",
+      "Gmaj9/F#",
+      "Em/B",
+      "Bsus4/D"
+    ],
+    [
+      "Bm7",
+      "Am7"
+    ],
+    [
+      "Fmaj7/E",
+      "Esus4/F"
+    ],
+    [
+      "Dm",
+      "C",
+      "Dm",
+      "C",
+      "Dm",
+      "C",
+      "Dm",
+      "Asus4/D"
+    ],
+    [
+      "Em",
+      "F",
+      "Dsus4/G",
+      "G/B",
+      "Abmaj7",
+      "Dbmaj7",
+      "Abmaj7",
+      "Dbmaj7/F"
+    ],
+    [
+      "F#",
+      "Abm",
+      "F#m",
+      "Bm7"
+    ],
+    [
+      "Gsus4/C",
+      "Dsus4/G"
+    ],
+    [
+      "Dm",
+      "Em7",
+      "Cmaj7",
+      "Fmaj7"
+    ],
+    [
+      "Dm",
+      "G",
+      "C"
+    ],
+    [
+      "Cm9",
+      "Fm9",
+      "Bb13",
+      "Abmaj9"
+    ]
+  ],
+  "essential": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    12,
+    13,
+    22,
+    26,
+    32,
+    34,
+    36,
+    46,
+    50,
+    51,
+    54,
+    56,
+    65,
+    66,
+    67,
+    74,
+    77,
+    80,
+    81,
+    83,
+    85,
+    88,
+    89,
+    96,
+    98,
+    101,
+    112,
+    114,
+    121,
+    122,
+    125,
+    126,
+    127,
+    129,
+    130,
+    131,
+    132,
+    134,
+    137,
+    138,
+    140,
+    142,
+    144,
+    145,
+    146,
+    147,
+    148,
+    159,
+    161,
+    165,
+    172,
+    173,
+    174,
+    175,
+    176,
+    178,
+    179,
+    188,
+    189,
+    197,
+    198,
+    199,
+    206,
+    207,
+    209,
+    210,
+    211,
+    212,
+    214,
+    215,
+    217,
+    218,
+    226,
+    230,
+    231,
+    232,
+    233,
+    235,
+    238,
+    239,
+    242,
+    245,
+    246,
+    247,
+    249,
+    252,
+    254,
+    255,
+    266,
+    269,
+    270,
+    272,
+    274,
+    281,
+    282,
+    283,
+    284,
+    285,
+    286,
+    288,
+    289,
+    291,
+    297,
+    300,
+    304,
+    307,
+    316,
+    328,
+    329,
+    331,
+    335,
+    337,
+    338,
+    339,
+    349,
+    352,
+    353,
+    354,
+    355,
+    358,
+    360,
+    361,
+    363,
+    365,
+    370,
+    371,
+    372,
+    374,
+    375,
+    376,
+    378,
+    379,
+    380,
+    381,
+    382,
+    384,
+    386,
+    394,
+    406
+  ],
+  "arp": {
+    "default_pattern": "updown",
+    "patterns": [
+      "up",
+      "down",
+      "updown",
+      "converge",
+      "random_seeded",
+      "broken_pairs",
+      "thumb_pattern",
+      "pedal_arp",
+      "spread_roll"
+    ],
+    "rate": 2,
+    "gate": 0.8,
+    "octaves": 1,
+    "accent": [
+      1,
+      0.6,
+      0.8,
+      0.6
+    ],
+    "pad": 0.3,
+    "play_styles": [
+      "slow_up",
+      "dotted_updown",
+      "half_note_converge",
+      "broken_pairs",
+      "thumb_pattern",
+      "spread_roll",
+      "pedal_arp",
+      "eighth_updown"
+    ],
+    "modifiers": [],
+    "euclidean": {
+      "steps": 8,
+      "pulses": 5
+    },
+    "probability": {
+      "probability": 0.9
+    },
+    "note_repeat": {
+      "count": 3
+    },
+    "ratchet": {
+      "max": 3,
+      "chance": 0.5
+    },
+    "humanize": {
+      "ms": 4,
+      "gain": 0.06
+    },
+    "grace": {
+      "interval": -1,
+      "gain": 0.3
+    },
+    "styles": {
+      "slow_up": {
+        "pattern": "up",
+        "rate": 4,
+        "gate": 0.9,
+        "octaves": 2
+      },
+      "dotted_updown": {
+        "pattern": "updown",
+        "rate": 3,
+        "gate": 0.85,
+        "octaves": 2
+      },
+      "half_note_converge": {
+        "pattern": "converge",
+        "rate": 8,
+        "gate": 0.95,
+        "octaves": 2
+      },
+      "broken_pairs": {
+        "pattern": "broken_pairs",
+        "rate": 4,
+        "gate": 0.7,
+        "octaves": 1
+      },
+      "thumb_pattern": {
+        "pattern": "thumb_pattern",
+        "rate": 3,
+        "gate": 0.6,
+        "octaves": 2
+      },
+      "spread_roll": {
+        "pattern": "spread_roll",
+        "rate": 1,
+        "gate": 12,
+        "octaves": 1
+      },
+      "pedal_arp": {
+        "pattern": "pedal_arp",
+        "rate": 6,
+        "gate": 0.8,
+        "octaves": 2
+      },
+      "eighth_updown": {
+        "pattern": "updown",
+        "rate": 2,
+        "gate": 0.7,
+        "octaves": 1
+      },
+      "arp_fast": {
+        "pattern": "updown",
+        "rate": 1,
+        "gate": 0.5,
+        "octaves": 2,
+        "accent": [
+          1,
+          0.45,
+          0.75,
+          0.4
+        ]
+      }
+    }
+  },
+  "strum": {
+    "ms": 18
+  },
+  "echo": {
+    "modes": [
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        1,
+        2,
+        3
+      ]
+    ],
+    "heads": [
+      1,
+      2
+    ],
+    "time_beats": 0.75,
+    "intensity": 0.5,
+    "echo_volume": 0.45,
+    "lowpass": 3200,
+    "saturation": 0.35,
+    "reverb": 0.12
+  },
+  "play_profiles": [
+    "arp_echo",
+    "arp_echo_soft",
+    "rhodes_sonitex",
+    "chord_repeat",
+    "sampler_glue"
+  ],
+  "comp": {
+    "default_style": "eighth_stabs",
+    "gate": 0.5,
+    "accent": [
+      1,
+      0.7,
+      0.85,
+      0.7
+    ],
+    "modifiers": [],
+    "probability": {
+      "probability": 0.9
+    },
+    "humanize": {
+      "ms": 4,
+      "gain": 0.06
+    },
+    "ratchet": {
+      "max": 3,
+      "chance": 0.5
+    },
+    "note_repeat": {
+      "count": 2
+    },
+    "euclidean": {
+      "steps": 8,
+      "pulses": 5
+    },
+    "styles": {
+      "quarter_stabs": {
+        "pattern": "x...x...x...x..."
+      },
+      "eighth_stabs": {
+        "pattern": "x.x.x.x.x.x.x.x."
+      },
+      "offbeat_skank": {
+        "pattern": "..x...x...x...x."
+      },
+      "dotted_eighth_push": {
+        "pattern": "x..x..x.x..x..x."
+      },
+      "syncopated_sixteenth": {
+        "pattern": "x..x..x.x...x.x."
+      },
+      "long_short": {
+        "pattern": "x.....x.x.....x."
+      },
+      "half_note_pulse": {
+        "pattern": "x.......x......."
+      }
+    }
+  },
+  "voices": {
+    "sine": {
+      "family": "sine"
+    },
+    "moog_pluck": {
+      "family": "moog",
+      "gain": 14,
+      "waves": [
+        "saw",
+        "saw",
+        "pulse"
+      ],
+      "detune": [
+        0,
+        -7,
+        5
+      ],
+      "octaves": [
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 260,
+      "env_amount": 3400,
+      "resonance": 0.55,
+      "drive": 1.2,
+      "amp": [
+        0.003,
+        0.14,
+        0,
+        0.06
+      ],
+      "filter_env": [
+        0.001,
+        0.11,
+        0,
+        0.05
+      ]
+    },
+    "moog_lead": {
+      "family": "moog",
+      "gain": 14,
+      "waves": [
+        "saw",
+        "saw"
+      ],
+      "detune": [
+        0,
+        7
+      ],
+      "octaves": [
+        0,
+        0
+      ],
+      "cutoff": 900,
+      "env_amount": 2200,
+      "resonance": 0.35,
+      "drive": 1.1,
+      "amp": [
+        0.01,
+        0.3,
+        0.8,
+        0.2
+      ],
+      "filter_env": [
+        0.01,
+        0.4,
+        0.5,
+        0.2
+      ]
+    },
+    "moog_pad": {
+      "family": "moog",
+      "gain": 14,
+      "waves": [
+        "saw",
+        "saw",
+        "triangle"
+      ],
+      "detune": [
+        -6,
+        6,
+        0
+      ],
+      "octaves": [
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 700,
+      "env_amount": 1800,
+      "resonance": 0.22,
+      "drive": 1,
+      "amp": [
+        0.28,
+        0.6,
+        0.78,
+        0.9
+      ],
+      "filter_env": [
+        0.55,
+        1.2,
+        0.55,
+        0.8
+      ]
+    },
+    "moog_bass": {
+      "family": "moog",
+      "gain": 14,
+      "waves": [
+        "saw",
+        "saw",
+        "saw"
+      ],
+      "detune": [
+        0,
+        -7,
+        5
+      ],
+      "octaves": [
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 220,
+      "env_amount": 2400,
+      "resonance": 0.62,
+      "drive": 1.25,
+      "amp": [
+        0.004,
+        0.3,
+        0.55,
+        0.2
+      ],
+      "filter_env": [
+        0.002,
+        0.18,
+        0.12,
+        0.15
+      ]
+    },
+    "rhodes_mark1": {
+      "family": "rhodes",
+      "body_index": 1.3,
+      "bell_index": 2.8,
+      "bell_ratio": 14,
+      "bell_decay": 0.25,
+      "body_decay": 0.9,
+      "decay": 1.6,
+      "release": 0.35,
+      "click": 0.05,
+      "velocity_bright": 0.5
+    },
+    "rhodes_stage73": {
+      "family": "rhodes",
+      "body_index": 1.9,
+      "bell_index": 3.4,
+      "bell_ratio": 14,
+      "bell_decay": 0.3,
+      "body_decay": 0.7,
+      "decay": 1.2,
+      "release": 0.3,
+      "click": 0.08,
+      "velocity_bright": 0.7
+    },
+    "rhodes_tine_wurli": {
+      "family": "rhodes",
+      "body_index": 2.4,
+      "bell_index": 1.6,
+      "bell_ratio": 7,
+      "bell_decay": 0.18,
+      "body_decay": 0.5,
+      "decay": 0.9,
+      "release": 0.25,
+      "click": 0.1,
+      "velocity_bright": 0.8
+    },
+    "dx_ep_glass": {
+      "family": "rhodes",
+      "body_index": 1.1,
+      "bell_index": 4.2,
+      "bell_ratio": 14,
+      "bell_decay": 0.6,
+      "body_decay": 1.4,
+      "decay": 2.2,
+      "release": 0.45,
+      "click": 0.02,
+      "velocity_bright": 0.4
+    },
+    "dfam": {
+      "family": "dfam",
+      "gain": 8,
+      "level": 0.34,
+      "decay": 0.12,
+      "base_hz": 40,
+      "pitch_env": {
+        "depth": 2.2,
+        "seconds": 0.045
+      },
+      "vco2_ratio": 1.5,
+      "fm": 0.45,
+      "mix": {
+        "triangle": 0.55,
+        "square": 0.3,
+        "noise": 0.18
+      },
+      "cutoff_floor": 120,
+      "cutoff": 2200,
+      "resonance": 0.55,
+      "vcf_decay": 0.1,
+      "steps": [
+        {
+          "semi": 0,
+          "vel": 100,
+          "decay": 0.12
+        },
+        {
+          "semi": 0,
+          "vel": 70,
+          "decay": 0.09
+        },
+        {
+          "semi": 7,
+          "vel": 85,
+          "decay": 0.12
+        },
+        {
+          "semi": 0,
+          "vel": 60,
+          "decay": 0.09
+        },
+        {
+          "semi": 12,
+          "vel": 90,
+          "decay": 0.15
+        },
+        {
+          "semi": 0,
+          "vel": 0,
+          "decay": 0.09
+        },
+        {
+          "semi": 7,
+          "vel": 75,
+          "decay": 0.12
+        },
+        {
+          "semi": 5,
+          "vel": 65,
+          "decay": 0.1
+        }
+      ]
+    }
+  },
+  "sonitex": {
+    "default": "classic",
+    "instances": 1,
+    "presets": {
+      "classic": {
+        "dist_pre_lp": 4800,
+        "dist_drive": 1.55,
+        "dist_mix": 0.68,
+        "dist_dc": 0.025,
+        "head_bump_hz": 64,
+        "head_bump_db": 3,
+        "hf_rolloff": 13800,
+        "lf_rolloff": 34,
+        "hiss_amp": 0.0028,
+        "pop_rate": 0.00035,
+        "pop_amp": 0.14,
+        "crush_bits": 12,
+        "crush_sr": 1.69,
+        "crush_mix": 0.32,
+        "crush_post_lp": 3600,
+        "out_comp_threshold": -19,
+        "out_comp_ratio": 2.6,
+        "out_comp_makeup": 1.8,
+        "limit": 0.92,
+        "level_out": 0.9
+      },
+      "subtle": {
+        "dist_pre_lp": 4800,
+        "dist_drive": 1.25,
+        "dist_mix": 0.52,
+        "dist_dc": 0.025,
+        "head_bump_hz": 64,
+        "head_bump_db": 3,
+        "hf_rolloff": 13800,
+        "lf_rolloff": 34,
+        "hiss_amp": 0.003,
+        "pop_rate": 0.00025,
+        "pop_amp": 0.12,
+        "crush_bits": 14,
+        "crush_sr": 1.69,
+        "crush_mix": 0.18,
+        "crush_post_lp": 3600,
+        "out_comp_threshold": -19,
+        "out_comp_ratio": 2.6,
+        "out_comp_makeup": 1.8,
+        "limit": 0.92,
+        "level_out": 0.9
+      },
+      "scuzz": {
+        "dist_pre_lp": 4800,
+        "dist_drive": 2.1,
+        "dist_mix": 0.68,
+        "dist_dc": 0.025,
+        "head_bump_hz": 64,
+        "head_bump_db": 3,
+        "hf_rolloff": 11200,
+        "lf_rolloff": 34,
+        "hiss_amp": 0.009,
+        "pop_rate": 0.0012,
+        "pop_amp": 0.32,
+        "crush_bits": 10,
+        "crush_sr": 1.69,
+        "crush_mix": 0.48,
+        "crush_post_lp": 3600,
+        "out_comp_threshold": -19,
+        "out_comp_ratio": 2.6,
+        "out_comp_makeup": 1.8,
+        "limit": 0.92,
+        "level_out": 0.9
+      },
+      "sp1200": {
+        "dist_pre_lp": 4800,
+        "dist_drive": 1.45,
+        "dist_mix": 0.68,
+        "dist_dc": 0.025,
+        "head_bump_hz": 58,
+        "head_bump_db": 3.8,
+        "hf_rolloff": 12600,
+        "lf_rolloff": 34,
+        "hiss_amp": 0.0028,
+        "pop_rate": 0.00035,
+        "pop_amp": 0.14,
+        "crush_bits": 12,
+        "crush_sr": 1.69,
+        "crush_mix": 0.52,
+        "crush_post_lp": 3000,
+        "out_comp_threshold": -19,
+        "out_comp_ratio": 2.6,
+        "out_comp_makeup": 1.8,
+        "limit": 0.92,
+        "level_out": 0.9
+      },
+      "cassette": {
+        "dist_pre_lp": 4800,
+        "dist_drive": 1.55,
+        "dist_mix": 0.68,
+        "dist_dc": 0.025,
+        "head_bump_hz": 88,
+        "head_bump_db": 4.2,
+        "hf_rolloff": 10800,
+        "lf_rolloff": 34,
+        "hiss_amp": 0.008,
+        "pop_rate": 0.00035,
+        "pop_amp": 0.14,
+        "crush_bits": 12,
+        "crush_sr": 1.69,
+        "crush_mix": 0.22,
+        "crush_post_lp": 3600,
+        "out_comp_threshold": -19,
+        "out_comp_ratio": 2.6,
+        "out_comp_makeup": 1.8,
+        "limit": 0.92,
+        "level_out": 0.9
+      },
+      "dusty_warm": {
+        "dist_pre_lp": 4800,
+        "dist_drive": 1.48,
+        "dist_mix": 0.62,
+        "dist_dc": 0.025,
+        "head_bump_hz": 58,
+        "head_bump_db": 5.2,
+        "hf_rolloff": 7000,
+        "lf_rolloff": 38,
+        "hiss_amp": 0.0022,
+        "pop_rate": 0.00035,
+        "pop_amp": 0.14,
+        "crush_bits": 12,
+        "crush_sr": 1.85,
+        "crush_mix": 0.42,
+        "crush_post_lp": 6000,
+        "out_comp_threshold": -17,
+        "out_comp_ratio": 3.2,
+        "out_comp_makeup": 2.4,
+        "limit": 0.86,
+        "level_out": 0.88
+      },
+      "heavy": {
+        "dist_pre_lp": 3600,
+        "dist_drive": 3.6,
+        "dist_mix": 0.88,
+        "dist_dc": 0.09,
+        "head_bump_hz": 58,
+        "head_bump_db": 6,
+        "hf_rolloff": 9600,
+        "lf_rolloff": 45,
+        "hiss_amp": 0.006,
+        "pop_rate": 0.0009,
+        "pop_amp": 0.24,
+        "crush_bits": 8,
+        "crush_sr": 2.05,
+        "crush_mix": 0.58,
+        "crush_post_lp": 2400,
+        "out_comp_threshold": -15,
+        "out_comp_ratio": 4,
+        "out_comp_makeup": 3,
+        "limit": 0.84,
+        "level_out": 0.86
+      }
+    }
+  },
+  "nasty_vcs": {
+    "amount": 0.5
+  },
+  "mix": {
+    "kick": 6,
+    "snare": 10,
+    "clap": 10,
+    "hat": 0,
+    "perc": 0,
+    "chords": -3,
+    "echo": 0
+  },
+  "default_profile": "straight_hats_snare_ahead",
+  "groove_profiles": {
+    "soft_swing": {
+      "swing": 0.542,
+      "texture": {
+        "detune": 0.005,
+        "reverb": 0.25,
+        "lowpass": 8000
+      }
+    },
+    "lush": {
+      "swing": 0.54,
+      "texture": {
+        "detune": 0.008,
+        "reverb": 0.45,
+        "lowpass": 6000
+      }
+    },
+    "dry": {
+      "swing": 0.5,
+      "texture": {
+        "detune": 0,
+        "reverb": 0,
+        "lowpass": 12000
+      }
+    },
+    "early_snare_late_hats": {
+      "swing": 0.542,
+      "drum_swing": {
+        "kick": 0.5,
+        "snare": 0.5,
+        "hat": 0.55
+      },
+      "offsets": {
+        "kick": 0.012,
+        "snare": -0.01,
+        "hat": 0.015,
+        "kick_first": 0
+      },
+      "pd_amount": 1,
+      "texture": {
+        "detune": 0.005,
+        "reverb": 0.25,
+        "lowpass": 8000
+      }
+    },
+    "behind_the_beat": {
+      "swing": 0.54,
+      "drum_swing": {
+        "kick": 0.5,
+        "snare": 0.5,
+        "hat": 0.54
+      },
+      "offsets": {
+        "kick": 0.008,
+        "snare": 0.014,
+        "hat": 0.018,
+        "kick_first": 0
+      },
+      "drunk_amount": 0.3,
+      "pd_amount": 1,
+      "texture": {
+        "detune": 0.006,
+        "reverb": 0.3,
+        "lowpass": 7000
+      }
+    },
+    "late_snare": {
+      "swing": 0.54,
+      "drum_swing": {
+        "kick": 0.5,
+        "snare": 0.5,
+        "hat": 0.56
+      },
+      "offsets": {
+        "kick": 0,
+        "snare": 0.02,
+        "hat": 0.008,
+        "kick_first": 0
+      },
+      "pd_amount": 1,
+      "texture": {
+        "detune": 0.005,
+        "reverb": 0.25,
+        "lowpass": 8000
+      }
+    },
+    "loose_pocket": {
+      "swing": 0.545,
+      "drum_swing": {
+        "kick": 0.5,
+        "snare": 0.5,
+        "hat": 0.56
+      },
+      "offsets": {
+        "kick": 0.01,
+        "snare": -0.008,
+        "hat": 0.012,
+        "kick_first": 0
+      },
+      "drunk_amount": 0.5,
+      "pd_amount": 1,
+      "texture": {
+        "detune": 0.007,
+        "reverb": 0.35,
+        "lowpass": 7000
+      }
+    },
+    "pump": {
+      "swing": 0.54,
+      "sidechain": {
+        "amount": 0.55,
+        "release": 0.18
+      },
+      "offsets": {
+        "kick": 0,
+        "snare": -0.006,
+        "hat": 0.01,
+        "kick_first": 0
+      },
+      "pd_amount": 1,
+      "texture": {
+        "detune": 0.006,
+        "reverb": 0.3,
+        "lowpass": 7000
+      }
+    },
+    "arp_echo": {
+      "bpm": 78,
+      "swing": 0.542,
+      "voice": "moog_pluck",
+      "arp": {
+        "style": "dotted_updown",
+        "modifiers": [
+          "probability",
+          "humanize"
+        ],
+        "probability": {
+          "probability": 0.92
+        }
+      },
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.75,
+        "echo_volume": 0.68,
+        "time_beats": 0.75,
+        "tail": 12
+      },
+      "texture": {
+        "detune": 0.004,
+        "reverb": 0.1,
+        "lowpass": 9000
+      }
+    },
+    "arp_fast": {
+      "bpm": 88,
+      "swing": 0.542,
+      "arp": {
+        "pattern": "updown",
+        "rate": 1,
+        "gate": 0.5,
+        "octaves": 2,
+        "accent": [
+          1,
+          0.45,
+          0.75,
+          0.4
+        ],
+        "modifiers": [
+          "ratchet",
+          "probability",
+          "humanize"
+        ],
+        "probability": {
+          "probability": 0.9
+        }
+      },
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.85,
+        "echo_volume": 0.9,
+        "time_beats": 0.75,
+        "tail": 12
+      },
+      "texture": {
+        "detune": 0.004,
+        "reverb": 0.1,
+        "lowpass": 9000
+      }
+    },
+    "rhodes_sonitex": {
+      "bpm": 84,
+      "swing": 0.542,
+      "voice": "rhodes_mark1",
+      "arp": {
+        "style": "dotted_updown"
+      },
+      "sonitex": {
+        "preset": "heavy",
+        "instances": 3
+      },
+      "vcs": 0.4,
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.6,
+        "echo_volume": 0.45,
+        "time_beats": 0.75,
+        "tail": 8
+      },
+      "texture": {
+        "detune": 0,
+        "reverb": 0.1,
+        "lowpass": 12000
+      }
+    },
+    "sampler_glue": {
+      "swing": 0.542,
+      "sonitex": {
+        "preset": "dusty_warm",
+        "instances": 1
+      },
+      "vcs": 0.5,
+      "texture": {
+        "detune": 0.005,
+        "reverb": 0.15,
+        "lowpass": 12000
+      }
+    },
+    "chord_repeat": {
+      "bpm": 84,
+      "swing": 0.542,
+      "voice": "rhodes_mark1",
+      "repeat": {
+        "style": "dotted_eighth_push",
+        "modifiers": [
+          "probability",
+          "humanize"
+        ],
+        "probability": {
+          "probability": 0.92
+        }
+      },
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.6,
+        "echo_volume": 0.45,
+        "time_beats": 0.75,
+        "tail": 8
+      },
+      "texture": {
+        "detune": 0,
+        "reverb": 0.1,
+        "lowpass": 12000
+      }
+    },
+    "arp_echo_soft": {
+      "swing": 0.542,
+      "arp": {
+        "style": "slow_up"
+      },
+      "echo": {
+        "heads": [
+          1,
+          2
+        ]
+      },
+      "texture": {
+        "detune": 0.004,
+        "reverb": 0.1,
+        "lowpass": 9000
+      }
+    },
+    "straight_hats_snare_ahead": {
+      "swing": 0.542,
+      "pocket": {
+        "backbeat": [
+          4,
+          12
+        ],
+        "hat": {
+          "shift_steps": 0
+        },
+        "snare": {
+          "shift_steps": -0.3,
+          "drift_steps": 0.02
+        },
+        "kick": {
+          "shift_steps": 0.125,
+          "anchor": [
+            0
+          ],
+          "drift_steps": 0.025
+        },
+        "ghost": {
+          "shift_steps": 0.2,
+          "drift_steps": 0.03
+        }
+      },
+      "texture": {
+        "detune": 0.005,
+        "reverb": 0.25,
+        "lowpass": 8000
+      }
+    }
+  },
+  "drum_patterns": {
+    "boom_bap": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    "syncopated_swing": {
+      "kick": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "sparse": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "offbeat_inversion": {
+      "kick": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "drunk_16ths": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "drunk": 1
+    },
+    "swung_classic": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "broken_beat": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    "dusty_laid_back": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "boom_bap_straight": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "trap_rolls": {
+      "kick": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "one_drop": {
+      "kick": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "rockers": {
+      "kick": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "steppers": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "techno_four_floor": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "house_four_floor": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "dub_techno": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "two_step_garage": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "jazz_swing": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "bossa": {
+      "kick": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    }
+  }
+}

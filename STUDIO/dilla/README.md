@@ -2,7 +2,7 @@
 
 **A small room that plays a chord progression soft and a little late, with a drum kit that leans on the beat the way a person would, and a rack of old analogue colour to dirty it all up.** Dilla is one Ruby file and one data file. It reads a progression as a list of chord names, works out the voicing itself, plays the chords or an arpeggio or a rhythm of stabs through a chosen voice, adds drums and effects, and writes a wav, or plays forever.
 
-The engine is `dilla.rb`, plain Ruby with nothing beyond the standard library, and the data is `dilla.json`, which sits beside it. Run `ruby dilla.rb --list` to see the numbered progressions, the drum patterns and the groove profiles. Run `ruby dilla.rb --progression 3 --drums offbeat_inversion --out out/three.wav` to render one, add `--midi out/three.mid` to write the chords and drums as a Standard MIDI File, and run `ruby dilla.rb --random` to let the seed choose the progression and the drums. The same seed always makes the same render, and the seed is printed. Renders are sixteen-bit mono at 44.1 kilohertz. The folder `out/` is ignored by git, because audio is not tracked, and a render that matters belongs outside the repository, in the dilla-renders folder under your documents.
+The engine is `dilla.rb`, plain Ruby with nothing beyond the standard library, and the data is `data/data/dilla.json`, which sits beside it. Run `ruby dilla.rb --list` to see the numbered progressions, the drum patterns and the groove profiles. Run `ruby dilla.rb --progression 3 --drums offbeat_inversion --out out/three.wav` to render one, add `--midi out/three.mid` to write the chords and drums as a Standard MIDI File, and run `ruby dilla.rb --random` to let the seed choose the progression and the drums. The same seed always makes the same render, and the seed is printed. Renders are sixteen-bit mono at 44.1 kilohertz. The folder `out/` is ignored by git, because audio is not tracked, and a render that matters belongs outside the repository, in the dilla-renders folder under your documents.
 
 The data holds a flat list of progressions, each a list of chord names such as Fm9, Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies. The first hundred and five were picked by hand. The rest were read as plain text out of the old engine's progression table, its sourced reference file and its set files, parsed with the voicer, respelled with flats and deduped by spelling, which brings the list to four hundred and seven. An essential list marks the staples by their root motion, such as the minor two-five-one, the one-six-two-five, the one-four-five and the one-flat-six-flat-seven, and `--play` draws only from those unless `--pool all` says otherwise.
 
@@ -27,3 +27,14 @@ Sonitex and nasty_vcs are two colour chains on the voice bus. Sonitex is the twe
 `--play`, also spelled `--endless`, never stops. It renders the next progression while the current one plays through the system player. Every kind of choice comes out of its own shuffle bag: the progression, the mode, the arp or repeat style, the voice family, a patch of that family and the profile. A bag plays everything once before anything repeats and never opens with the last item of the one before. The bags are saved in `out/play/` between runs, so a restart goes on with the cycle. Each pass prints its progression and position in the bag, mode, style, voice and profile.
 
 The engine is small on purpose, and its limits are plain. The moog and dfam waves are naive and alias at very high pitch. A render takes about a fifth to a third of its own length to compute, more with the echo and the colour chains on. The old engine, which was far larger, is not lost. The tag `dilla-engine-final` marks the last commit that carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and `git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it.
+
+
+## Library layout
+
+- `dilla.rb` is the executable shell.
+- `lib/dilla.rb` loads the engine's cohesive modules.
+- `lib/dilla/` contains chord voicing, synthesis, voices, drums, effects, sequencing, MIDI and playlist logic.
+- `data/dilla.json` is the runtime pool of progressions, patches, groove profiles and patterns.
+- `data/music_theory.json` is the interval/chord/harmonic-motion reference and curated original two- and three-bar progression collection.
+
+The theory catalogue is explanatory source material; runtime choices still come from the engine's validated data pools. Curated compositions list suggested voice patches and intent so they can be auditioned as distinct arrangements.

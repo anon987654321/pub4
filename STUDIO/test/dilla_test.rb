@@ -941,4 +941,15 @@ class DillaTest < Minitest::Test
       end
     end
   end
+
+  def test_synthesized_drums_are_finite_and_have_distinct_transients
+    drums = Drums.new(123)
+    [drums.kick, drums.snare, drums.hat].each do |hit|
+      assert_operator hit.length, :>, 100
+      assert(hit.all? { |sample| sample.finite? })
+      assert_operator hit.map(&:abs).max, :>, 0.05
+    end
+  end
+
+
 end
