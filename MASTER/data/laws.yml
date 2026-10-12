@@ -495,114 +495,22 @@ veto_patterns:
     apply: move_to_env
     violates_law: ROBUSTNESS
   sql_injection:
-    # Was `execute|query.*#\{`. The alternation binds as `(execute)|(query.*#\{)`,
-    # so the bare word `execute` anywhere on a line was an unconditional merge
-    # blocker. 87 findings in lib/, every one read and classified, 0 real:
-    #
-    #   `def execute_resync`, `execute_job`, `pre_execute?`, `phase: "post_execute"`
-    #   `@db.execute(sql, [args])` — the parameterized form this Law prescribes
-    #   `@db.execute(<<~SQL, args)` — likewise, via heredoc
-    #   `"context: gathering for query=#{query[0, 60]}"` — a log line
-    #   `# Unsafe shell never executes.` — a comment
-    #
-    # The one candidate that looked real was `WHERE #{where.join(" AND ")}` in
-    # ground/knowledge_store/feedback_events.rb. Checked: provider_errors_query
-    # builds `where` from the literals "event_type = ?" and "dimension = ?" and
-    # puts every value in `args`. Parameterized. Also a false positive.
-    #
-    # Now: execute/query called with a quoted string that carries an
-    # interpolation. Backreferenced quoting, `(["'])(?:(?!\1).)*`, so that
-    # `query("... name='#{name}'")` — a single quote inside a double-quoted SQL
-    # string, which is the classic injection shape — is not skipped.
-    #
-    # KNOWN GAP, and it is the important one: this cannot see interpolation
-    # inside a heredoc, because scan_lines is per line and the `<<~SQL` line
-    # carries no `#{`. Catching SQL built across lines needs an AST rule, not a
-    # lexical veto. Tracked in TODO.md rather than pretended away here.
+    # Lexical detection must target interpolated SQL string arguments, not parameterized calls or log text.
+    # Heredoc-built SQL spans lines and remains an AST-level detection gap.
     detect: (?:execute|query)\w*\s*\(\s*(["'])(?:(?!\1).)*#\{
     apply: parameterize
     violates_law: ROBUSTNESS
   unfinished:
-    # Was "\\.\\.\\.|TODO|FIXME|pending", which fired 119 times in lib/ and was
-    # wrong 119 times. Measured 2026-08-12, every finding read and classified:
-    #
-    #   49  the word "pending" — @pending, the "pending" order state in
-    #       VALID_STATES, and the substring inside depending / spending
-    #   41  an ellipsis in prose or in documented syntax — "\n... [truncated]",
-    #       %i[...], for...of, require(...).permit(...)
-    #   26  Ruby's exclusive range operator — lines[0...-1], (1...lines.length)
-    #    3  the source of the Laws that detect TODO/FIXME, quoting it
-    #
-    # Zero real unfinished work, at :veto — the strongest severity there is.
-    # 119 false vetoes do not gate anything; they teach the reader that a veto is
-    # noise, which costs more than the rule was ever worth.
-    #
-    # Narrowed rather than deleted — the intent is right, only the reach was
-    # wrong. Three clauses, each doing one thing:
-    #
-    #   #[^\n]*\b(TODO|FIXME)\b   a marker in a comment, which is what a marker
-    #                             is. The last three false vetoes were TODO
-    #                             inside the regex literals of the Laws that
-    #                             detect TODO; none has a `#` before it.
-    #   ^\s*\.\.\.\s*$            a stubbed body — `...` alone on its line. This
-    #                             is the shape lexical TODO_FIXME does not have,
-    #                             and the reason to keep a veto here at all.
-    #   (pending removed)         a legitimate order state in this codebase
-    #                             (VALID_STATES) and a substring of depending
-    #                             and spending. No narrowing rescues a word.
-    #
-    # The comment clause deliberately does not carry TODO_FIXME's hardcoded
-    # `path.include?("/review/scan/laws/")` exemption. Copying an exemption into
-    # a second file is how the two drift; being precise about what a marker looks
-    # like needs no exemption at all.
-    #
-    # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
-    # that file's own rule: a narrowing has to prove what it still catches.
-
-    # Narrowed a third time, by the same measurement. `\b` holds between the O and
-    # the dot, so `TODO.md` — the backlog CLAUDE.md tells every agent to cite — read
-    # as a work marker. Every veto it raised across lib/ and law/ was that filename,
-    # none was unfinished work, so the Law punished the house Law that sends a
-    # reader there. The lookahead sits on the marker rather than on the line, so
-    # `# TODO: fix, and see TODO.md` still vetoes on the marker.
+    # Only explicit TODO/FIXME markers in comments or a standalone ellipsis body count as unfinished.
+    # Ordinary ellipses, ranges, "pending" states, and a bare TODO.md filename are not violations.
     detect: "#[^\\n]*\\b(TODO|FIXME)\\b(?!\\.md)|^\\s*\\.\\.\\.\\s*$"
-    # The only veto pattern that means to read comments — a marker lives in one.
-    # Every other pattern is about code, and a comment describing shell safety or
-    # SQL injection is documentation, not the thing. See VetoPatternRule.
+    # This is the only veto whose subject is comment text; the other patterns inspect code.
     reads_comments: true
     apply: complete_or_track
     violates_law: ROBUSTNESS
   unsafe_calls:
-    # Interpolation is the arbitrary-code-execution risk. `system("cmd", arg, arg)`
-    # is the safe arg-array form style.yml prescribes as the FIX for this, so
-    # vetoing it too was a contradiction and the source's biggest false positive.
-    # Every clause requires a `#{...}` reaching a shell.
-    #
-    # Narrowed again 2026-08-12, 23 findings in lib/ -> 3, all 20 removed ones
-    # read and classified first:
-    #
-    #    9  a markdown fence inside a Ruby string — "```#{lang}", "```\n#{code}"
-    #    6  a markdown code span in prose — "task `#{topic}`", "- `#{path}` (…)"
-    #    2  backticks whose content is Shellwords.escape'd, which is the fix
-    #    2  Open3 in the arg-array form, which is also the fix
-    #    1  "`#{body}`", a string being wrapped in backticks for display
-    #
-    # Three changes. The backtick clause now needs a SINGLE backtick — `(?<!`)`(?!`)`
-    # — which drops every triple-fence; it needs a space inside the backticks, so a
-    # bare `#{path}` code span is not a command; and it refuses Shellwords.escape.
-    # Open3 now only fires when the FIRST argument is one quoted string holding both
-    # a space and an interpolation, which is the shape that reaches a shell — the
-    # old `\([^)]*#\{` matched interpolation in any argument of the safe form.
-    #
-    # The quoted-string clauses use a backreference, `(["'])(?:(?!\1).)*`, instead
-    # of `["'][^"']*`. The old class stopped at the first quote of EITHER kind, so
-    # `system("rm -rf '#{dir}'")` — a shell string quoting an interpolated path,
-    # which is exactly the dangerous case — did not match at all.
-    #
-    # What survives in lib/, and should: ps with an interpolated $USER
-    # (ground/host_budget.rb), a wholly interpolated command
-    # (trace/snapshot_collector.rb), and an interpolated interpreter path
-    # (voice/engines.rb). Two take their value from ENV.
+    # Reject interpolation that reaches shell command text; argument-array calls and Shellwords.escape are safe forms.
+    # This lexical pattern is not a substitute for AST analysis of multiline command construction.
     detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
     apply: add_safe_nav
     violates_law: ROBUSTNESS
@@ -692,11 +600,8 @@ runtime_policy:
 
 law_deps:
 
-  # Fix-ordering policy, declared 2026-07-12 in the five-file fold and
-  # collateral-deleted by a later laws.yml rewrite. The LawOrder reader consumes
-  # this dependency graph and tolerates optional cold-start priors when no priors
-  # section is present; the topological sort ignores ids absent from the live
-  # Law catalogue.
+  # LawOrder consumes this dependency graph. Priors are optional during cold start,
+  # and topological ordering ignores ids absent from the live Law catalogue.
 
   # Structural operations: flatten nesting before decoupling (flattening
   # exposes the hidden coupling that DECOUPLE then targets).
