@@ -923,7 +923,7 @@ tokens:
   # Like `viewport:`, this is a declared set that a lint asserts the sheets obey,
   # not a variable the sheets consume.
   scale:
-    space_px: [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
+    space_px: &eight_px_rhythm [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
     letter_spacing_em: [-0.03, -0.02, -0.01, 0, 0.05, 0.08, 0.14]
     line_height: [1, 1.25, 1.4, 1.5, 1.6]
     radius_px: [0, 2, 4, 8, 12, 16]
@@ -950,6 +950,418 @@ tokens:
         off_scale_opacity: 29
         off_scale_duration: 30
 
+
+  layout_rules:
+    grid:
+      columns: 12
+      base_unit_px: 8
+      # Canonical membership. pixel_perfection.eight_px_rhythm aliases this
+      # list; they drifted on 0 and 44 when they were two copies. Source:
+      # MASTER/data/tokens.yml#tokens.scale.space_px.
+      source: MASTER/data/tokens.yml#tokens.scale.space_px
+      # The rule is "a hairline at or below 3px, or a multiple of 4", and it is
+      # stated and tested at RAILS/test/scale_lint_test.rb:119 as
+      # `reject { |px| px <= 3 || (px % 4).zero? }`. This enumeration is that
+      # rule written out, and it drifted from it twice: on 0 and 44 when it was
+      # two copies, and again by 2026-09-08, when it held thirteen values and
+      # omitted 1, 2 and 3 as well as 28, 36, 56, 72, 80 and 128 — every one of
+      # those a multiple of 4 the rule admits.
+      #
+      # The second drift cost six days of deploys. `--space-0-5: 0.125rem` (2px)
+      # is used in ten places across five stylesheets, rhythm_lint reads this
+      # list, and brgen's CI has been red on it since 2026-09-02 — so no brgen
+      # deploy has landed since 2026-08-27. A number that disagrees with the
+      # rule beside it stops a release rather than catching a defect.
+      allowed_spacing_px: *eight_px_rhythm
+      action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments. Full scale in design_tokens.
+    proportion:
+      golden_ratio: 1.618
+      split_main_ratio: 0.618
+      split_sidebar_ratio: 0.382
+      action: Use proportional splits for major panels instead of arbitrary widths.
+    whitespace:
+      internal_not_greater_than_external: true
+      gap_over_margin: true
+      paragraph_margin_em: 1.5
+      section_padding_min_rem: 4
+      section_padding_max_rem: 8
+      action: Padding should not exceed separation between unrelated groups; use gap before margin hacks.
+    reading_patterns:
+      text_heavy: f_pattern
+      landing_page: z_pattern
+      primary_area: top_left
+      terminal_area: bottom_right
+      weak_area: bottom_left
+      action: Place critical information along the dominant scan path.
+    alignment:
+      avoid_default_center_alignment: true
+      center_text_max_lines: 3
+      body_text_alignment: left
+      rag: right
+      action: Use asymmetry and alignment before decoration.
+    touch:
+      target_min_px: &touch_min_px 44
+      target_recommended_px: &touch_recommended_px 48
+      thumb_zone_primary_actions: bottom_center
+      action: Flag critical mobile interactions in unreachable top corners.
+
+  kinetic_depth:
+    technique: point_cloud
+    principle: >-
+      Depth is implied by coherent motion, never by shaded surfaces. Flat 2D
+      points that move together read as one solid volume; this is the kinetic
+      depth effect and it is the house way of drawing dimension.
+    depth_cues:
+      - parallax_under_rotation
+      - point_size_attenuation_with_distance
+      - brightness_and_alpha_falloff
+      - density
+    forbidden:
+      - lit_meshes
+      - material_systems
+      - per_surface_shading
+    renderer: raw_webgl_points
+    action: >-
+      Draw dimension as a field of projected points. Reach for gl.POINTS and two
+      short shaders before reaching for a 3D library, and never introduce a
+      scene graph to solve a problem a point cloud already solves.
+    exceptions: >-
+      MASTER's face still uses THREE for its wireframe mesh. That is history
+      rather than intent, and the migration path is already open --
+      web/public/particle_kernel.js calls itself the Pixel Field kernel and says
+      it exists to replace ad-hoc particle loops in face, codebase and ecology one
+      at a time. It is 2D today: its cells carry x, y, vx, vy and no z, and it
+      draws through getContext("2d"). Adding a depth axis and a gl.POINTS
+      renderer is the work; rewriting a mesh by hand is not.
+    already_correct: >-
+      brgen's radio tunnel (app/javascript/radio_brgen_tunnel.js) is raw WebGL
+      with a 2D fallback and no library at all. It is the reference
+      implementation, not the exception.
+    constraint_that_still_holds: >-
+      Deferred WebGL boot is sacred (DECISIONS.md). A point cloud is cheaper than
+      a mesh, which makes the primer gate easier to honour, not optional.
+
+  visual_design:
+    semantics:
+      reject_arbitrary_decoration: true
+      action: Every ornament must communicate state, hierarchy, affordance, or tone.
+    syntactics:
+      enforce_visual_grammar: true
+      action: Reuse spacing, color, radius, and type tokens consistently.
+    pragmatics:
+      must_be_understandable: true
+      action: Prefer self-explanatory affordances over clever ambiguity.
+    rams:
+      useful: true
+      understandable: true
+      unobtrusive: true
+      honest: true
+      thorough: true
+      action: Score design changes against Dieter Rams-style usefulness and honesty.
+    font_personality:
+      traditional_trustworthy: serif
+      modern_innovative: geometric_sans
+      accessible_interface: humanist_sans
+      impact: bold_display
+      action: Match typography mood to content rather than trend.
+    screen_legibility:
+      prefer_high_x_height: true
+      prefer_open_apertures: true
+      disambiguate_characters:
+      - 1/l/I
+      - 0/O
+      - B/8
+      action: Design for degraded conditions and small sizes first.
+
+  motion_and_sound:
+    timing:
+      avoid_quantized_feel: true
+      preserve_silence: true
+      action: Treat pauses, decay, and negative space as first-class design elements.
+    audio_accessibility:
+      no_autoplay_without_intent: true
+      mute_path_required: true
+      must_not_mask_speech: true
+      must_not_conflict_with_screen_readers: true
+      graceful_failure_required: true
+      action: Sound is feedback, not surprise; silence must always be available.
+    sonic_hierarchy:
+      foreground: critical_state_change
+      midground: interaction_confirmation
+      background: ambience_or_texture
+      action: Layer sounds like UI depth; avoid frequency and attention masking.
+
+  data_visualization:
+    data_ink_ratio_target: 1.0
+    lie_factor_target: 1.0
+    reject_chartjunk: true
+    small_multiples_require_identical_scales: true
+    sparklines_no_frames_or_ticks: true
+    action: Remove non-data ink unless it adds comprehension.
+
+  automated_css_analysis:
+    # Each flag should name an enforcer. Flags without enforce: are guidance only.
+    checks:
+    - id: off_scale_line_height
+      enforce: [LINE_HEIGHT_ON_SCALE, Operator::ScaleLint]
+    - id: absolute_line_height
+      enforce: [LINE_HEIGHT_ON_SCALE, Operator::ScaleLint]
+    - id: measure_bounds
+      enforce: [geometry_type worn_type.profiles]
+    - id: hanging_list_markers
+      enforce: [geometry_type check_hanging]
+    - id: micro_typography
+      enforce: [Design::Thresholds.micro_typography]
+    - id: touch_target
+      enforce: [TOUCH_TARGET_MIN]
+    - id: eight_px_rhythm
+      enforce: [surface_rules spacing scan, Operator::ScaleLint]
+    - id: chrome_i18n
+      enforce: [Operator::ChromeI18nLint]
+    flag:
+    - line length outside typography.line_length bounds
+    - line height below typography.line_height.body_min for prose
+    - off-scale unitless line-height not in typography.line_height.allowed
+    - absolute px line-height on prose (prefer unitless; ScaleLint absolute_line_height)
+    - continuous prose without max-width measure (66ch / var(--measure))
+    - all caps without letter spacing
+    - body text below 16px
+    - contrast below WCAG AAA thresholds (7:1 body, 4.5:1 large)
+    - more than two font families
+    - more than three font weights
+    - spacing off the 4px or 8px grid
+    - touch targets below 44px
+    - centered prose longer than three lines
+    - justified text without hyphenation
+    - prose missing orphans/widows 3
+    - hyphenation without hyphenate-limit-chars 6 3 2
+    - prose missing default OpenType kern/liga/clig/onum/pnum
+    - body numerals not oldstyle-nums
+    - tables missing tabular/lining numerals
+    - heading hierarchy ratios below 1.2
+    - font weight differences below 200
+    - decorative chart ink that does not encode data
+    - decorative UI elements that do not encode state, hierarchy, affordance, or tone
+    - non-token spacing, radius, color, or typography values in generated UI
+
+  ux_laws:
+    fitts:
+      target_min_px: *touch_min_px
+      target_recommended_px: *touch_recommended_px
+      primary_action_min_px: *touch_recommended_px
+      action: Flag interactive controls smaller than 44px; prefer 48px for primary actions.
+    hick:
+      max_visible_choices: 7
+      nav_items_warn: 9
+      action: Flag navigation or action groups with more than 7 peer choices without progressive disclosure.
+    chunking:
+      max_items_per_group: 7
+      action: Group long lists; flag flat menus over 7±2 items.
+    progressive_disclosure:
+      require_advanced_hidden: true
+      action: Advanced/secondary controls should start collapsed or on secondary surfaces.
+
+  worn_type:
+    type_scale_ratio: 1.25
+    type_scale_tolerance_px: 1.5
+    baseline_module_px: 4
+    hanging_marker_max_inset_px: 0
+    golden_split:
+      min: 0.55
+      max: 0.70
+    profiles:
+      feed:
+        measure_min_ch: 35
+        measure_max_ch: 55
+        mobile_min_ch: 30
+        mobile_max_ch: 50
+        rhythm_off_max_pct: 25
+        empty_min_pct: 20
+        empty_max_pct: 75
+        accents_max: 2
+      catalog:
+        measure_min_ch: 20
+        measure_max_ch: 50
+        rhythm_off_max_pct: 15
+        empty_min_pct: 15
+        empty_max_pct: 70
+        accents_max: 2
+        require_tabular_nums: true
+      chat:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        rhythm_off_max_pct: 45
+        empty_min_pct: 10
+        empty_max_pct: 85
+        accents_max: 2
+      immersive:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        rhythm_off_max_pct: 40
+        empty_min_pct: 8
+        empty_max_pct: 90
+        accents_max: 2
+      map:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        label_min_px: 12
+        rhythm_off_max_pct: 40
+        empty_min_pct: 0
+        empty_max_pct: 100
+        accents_max: 2
+      legal:
+        measure_min_ch: 55
+        measure_max_ch: 75
+        rhythm_off_max_pct: 20
+        empty_min_pct: 25
+        empty_max_pct: 70
+        accents_max: 1
+      auth:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        rhythm_off_max_pct: 30
+        empty_min_pct: 20
+        empty_max_pct: 80
+        accents_max: 2
+    rag:
+      inspect_from_lines: 5
+      extreme_last_line_ratio: 0.12
+    action: >
+      Judge each surface under its profile. Count worn characters, computed
+      sizes, baselines, tabular figures, accent hues, empty ratio, and
+      main/aside split. Do not grep stylesheets for these.
+
+  pixel_perfection:
+    forbidden_css:
+    - box-shadow
+    - text-shadow
+    - 'filter: blur'
+    - backdrop-filter
+    - glassmorphism
+    - soft glow
+    # The last two are the WebGL spellings of "soft glow". They belong in this
+    # key because it is read into the design prompt, so the model is told the ban
+    # rather than only scanned for it; FACE_POINT_IS_ONE_PIXEL and
+    # NO_WEBGL_GLOW_PASS in law/javascript.rb are what enforce them.
+    - additive second pass behind a point cloud
+    - gl_PointSize above 1.0
+    forbidden_patterns:
+    - 'box-shadow\s*:'
+    - 'text-shadow\s*:'
+    - filter\s*:\s*[^;]*blur\s*\(
+    - 'backdrop-filter\s*:'
+    forbid_arbitrary_radius_px_above: 16
+    # Same list as layout_rules.grid.allowed_spacing_px — one axis, one
+    # spelling. 44 is tap_min; the name says eight, but 4, 12, 20 and 44
+    # are on the 4px grid too.
+    eight_px_rhythm: *eight_px_rhythm
+    magic_color_hex_ban_inline: true
+    image_smoothing_enabled: false
+    exception_policy:
+      allowed: true
+      scope: single named component, not a blanket relaxation
+      must_document_at_point_of_use: true
+      must_state_reason: true
+      action: A forbidden pattern may be used for one specific, named element when flatness
+        would remove its only legible depth or affordance cue -- document the reason in
+        a comment where the exception lives, the same way a one-off structural exception
+        gets documented, rather than relaxing the rule generally or leaving it unexplained.
+    action: 'Pixel-perfect flat UI: no blur/glow/shadow ornament; spacing on 8px rhythm; tokens over magic
+      colors. Exceptions follow exception_policy -- scoped and documented, not silent.'
+
+  rams_checklist:
+    useful: Does this control or surface serve a concrete user goal?
+    understandable: Is hierarchy and affordance obvious without decoration?
+    unobtrusive: Does chrome recede so content leads?
+    honest: Does UI state match system state without fake progress?
+    thorough: Are empty, loading, error, and reduced-motion states designed?
+    action: Score UI diffs against Rams criteria in council and aesthetic scan tags.
+
+  ui_polish:
+    default_locale: nb
+    available_locales: [nb, en]
+    chrome_i18n:
+      action: >
+        Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
+        nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
+        are debt. Ratchet: RAILS/shared/lib/operator/chrome_i18n_lint.rb (CI).
+        Opt-out: <%# chrome_i18n: ok %> above the line.
+      empty_partial: shared/empty_state
+      empty_requires_action: true
+      empty_cta_lint: RAILS/shared/lib/operator/empty_state_lint.rb
+      adhoc_empty_lint: RAILS/shared/lib/operator/adhoc_empty_lint.rb
+    space_not_lines:
+      action: >
+        List/grid cards separate with gap + surface elevation, not hairline
+        box borders. Forms and CRT dialect (bsdports) may keep 1px borders.
+        Prefer border: 0; background: var(--surface-elevated).
+    type_tokens:
+      action: >
+        Page titles use var(--text-title, 1.25rem) and var(--font). Do not hardcode
+        font-size: 20px for headers. Dialect fonts (Caprasimo luxury, JetBrains
+        mono CRT) only on named brand surfaces.
+      tokens:
+        text_title: 1.25rem
+        text_display: 1.75rem
+        page_header_min_height: 48px
+    flat_ui:
+      action: >
+        No ornamental box-shadow/text-shadow/backdrop-filter/filter blur.
+        Floating chrome uses 1px border + elevated surface. GATE_AUTOFIX strips
+        shadows. Exception policy under pixel_perfection.exception_policy.
+    btn_aliases:
+      action: >
+        Family supports both btn-primary and btn--primary (and btn-ghost /
+        btn--ghost). Empty-state CTAs should emit both class names.
+    playbook_order:
+      - strip_flat_ui_shadows
+      - wire_empty_search_to_t
+      - align_page_header_type_tokens
+      - space_not_lines_list_cards
+      - verify_empty_state_cta_lint
+      - verify_chrome_i18n_lint
+    action: >
+      When polishing RAILS or MASTER/web UI, run this playbook. Prefer mechanical
+      autofix + CI ratchets over one-off manual style. Never raise lint baselines
+      to silence new debt.
+
+  pwa:
+    philosophy:
+      performance_is_the_design: true
+      offline_is_a_designed_state: true
+      radical_lightness: true
+      action: Treat speed, the offline state, and data cost as design surfaces, not
+        engineering afterthoughts. The apps already ship a manifest, a service worker
+        and offline controllers; the budget is what is missing.
+    weight:
+      ceiling_lives_in: MASTER/gates/data/, in the css_budget.yml ratchet shape —
+        a number measured from a real run that only ever ratchets down.
+      baseline_source: generated application.css is deliberately untracked and rebuilt
+        from the checked-in SCSS before asset gates or deployment. JS builds are also
+        ignored, so budgets are measured only after an explicit source-to-build pass.
+      action: Set a ceiling from a run of this tree, never from another product's
+        published figure — Pinterest's 150KB and Tinder's 20KB CSS describe their
+        trees, not this one, and a ceiling nothing measured is a wish. A budget
+        nothing enforces is a comment.
+    offline_first:
+      queue_writes_for_background_sync: true
+      cache_read_paths: true
+      design_the_disconnected_screen: true
+      action: The network-loss state earns the same care as the happy path. Starbucks
+        fills a cart offline and sends it on reconnect; Trivago answers a dropped
+        connection with a branded playable maze rather than an error.
+    user_agency_over_data:
+      honour_save_data_header: true
+      placeholder_before_full_asset: true
+      state_the_cost_before_the_download: true
+      action: Let the reader decide when to spend data, and say what it costs first.
+        Twitter Lite renders 1KB blurred thumbnails and fetches the full asset on tap.
+    native_grade_motion:
+      target_fps: 60
+      virtualize_long_feeds: true
+      optimistic_render_from_cache: true
+      action: Render only the visible slice of a feed, and paint a detail view from
+        cached data before the fetch returns, so navigation never shows a spinner.
 
   ultraminimalism:
     philosophy:
