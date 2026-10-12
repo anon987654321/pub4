@@ -585,8 +585,8 @@ class TestLawsPhysicalOrder < Minitest::Test
     architecture runtime_policy law_deps plugins law_ratchets law_map browser_policy
   ].freeze
   TRANSFORMATION_ORDER = %w[
-    defragment decouple flatten merge split relocate rename reorder remove reflow
-    simplify recommend
+    remove defragment flatten decouple split hoist merge relocate rename reorder
+    reflow simplify recommend
   ].freeze
 
   def test_laws_follow_constitutional_reading_order
