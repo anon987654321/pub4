@@ -36,3 +36,15 @@ mirror of the NSD configuration templates and nothing more. The live signed zone
 sit on vm23 under `/var/nsd/` and are deliberately not in git, because a signed zone
 in a shared checkout is a key in a shared checkout. Secrets live in `/etc/*.env` on
 the box and never in this tree.
+
+## Backups, alerts and what the public sees
+
+Nothing on the box backs itself up off the box. `bin/dr-pull` runs nightly on the
+operator's Mac, brings back a checksummed snapshot of every production database and
+the uploaded files, and `bin/dr-pull --drill` restores the newest pull into a
+scratch directory and reads it back. A healed symptom must not stay quiet, so
+`usr/local/bin/pub4-alert` records a recurring fault once per six hours in
+`/var/log/pub4-alerts.log`, and `bin/vps-state` prints the last few next to each
+deploy stamp. `bin/domain_watch.rb` asks the registries which domains are still
+ours, and with `--tls` it asks every public host for its certificate and a
+health answer, the way a visitor would.
