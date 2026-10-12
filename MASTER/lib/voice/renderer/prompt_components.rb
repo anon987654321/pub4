@@ -82,14 +82,8 @@ module Master
           d(bits.join(", "))
         end
 
-        def phase_tinted(text, phase)
-          label = "[#{text}]"
-          color = case phase.to_s.downcase
-                  when /error|fail|blocked/ then :red
-                  when /fix|review|critique|plan/ then :yellow
-                  else :magenta
-                  end
-          prompt_color(label, color)
+        def phase_tinted(text, _phase)
+          d(text)
         end
 
         def prompt_token
@@ -97,29 +91,7 @@ module Master
         end
 
         def phase_prompt(last_ok, _phase)
-          prompt_color(last_ok ? prompt_token : "!", last_ok ? :green : :red, bold: true)
-        end
-
-        # Semantic prompt color is opt-in at the terminal boundary. Pipes,
-        # NO_COLOR and dumb/serial terminals remain plain and deterministic.
-        def prompt_color(text, color, bold: false)
-          return text.to_s unless prompt_colors?
-
-          styled = @p.public_send(color, text.to_s)
-          bold ? @p.bold(styled) : styled
-        rescue StandardError
-          text.to_s
-        end
-
-        def prompt_colors?
-          return false unless $stdout.tty?
-          return false if ENV.key?("NO_COLOR")
-          return false if ENV["TERM"].to_s == "dumb"
-          return false if Aesthetic.wscons?
-
-          true
-        rescue StandardError
-          false
+          last_ok ? d(prompt_token) : d("!")
         end
 
         def token_label(tokens)
@@ -147,7 +119,6 @@ module Master
           cursor = phase_prompt(last_ok, phase)
           suffix = [git, phase_text, cursor].reject(&:empty?).join(" ")
           path = prompt_path(suffix_length: visible_length(suffix) + 1)
-          path = prompt_color(path, :cyan, bold: true)
 
           [path, suffix].reject(&:empty?).join(" ") + " "
         end
@@ -283,9 +254,7 @@ module Master
           state = prompt_git_state
           return "" unless state
 
-          label = branch_status(**state)
-          color = state[:dirty] || state[:behind].positive? ? :yellow : :green
-          "on #{prompt_color(label, color)}"
+          d(branch_status(**state))
         end
 
         def branch_status(branch:, ahead:, behind:, dirty:)
