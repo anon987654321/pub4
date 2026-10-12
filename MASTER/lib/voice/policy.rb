@@ -23,7 +23,6 @@ module Master
         "rotation" => %w[christopher],
         "language_voices" => { "en" => "christopher", "nb" => "pernille", "ms" => "yasmin" },
         "language_voice_families" => {
-          "en" => { "female" => "jenny", "male" => "christopher" },
           "nb" => { "female" => "pernille", "male" => "finn" },
           "ms" => { "female" => "yasmin", "male" => "osman" },
         },
