@@ -87,12 +87,14 @@
             <% end %>
           <% end %>
         </div>
+        <%= render "shared/photo_credit", blob: post.images.first&.blob %>
       <% elsif post.image.attached? %>
         <div class="post-images" data-controller="post-gallery" data-action="click->post-gallery#open">
           <%= link_to rails_blob_path(post.image, disposition: "inline"), data: { gallery_item: true }, aria: { label: post.title } do %>
             <%= responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image") %>
           <% end %>
         </div>
+        <%= render "shared/photo_credit", blob: post.image.blob %>
       <% end %>
       <% if (embed = post.link_embed_record) %>
         <%= render "shared/link_embed", embed: embed %>
