@@ -29,8 +29,8 @@ class TestModelHealth < Minitest::Test
     )
 
     assert_includes result, "model health: 2 models, 9 calls, success=66.7%, failures=3"
-    assert_includes result, "gateway:unstable  calls=5 ok=2 fail=3 success=40.0% avg=1200ms"
-    assert_includes result, "local:small  calls=4 ok=4 fail=0 success=100.0% avg=850ms"
+    assert_includes result, "gateway:unstable  calls=5 ok=2 fail=3 success=40.0% avg_ok=1200ms"
+    assert_includes result, "local:small  calls=4 ok=4 fail=0 success=100.0% avg_ok=850ms"
     refute_includes result, "must-never-be-rendered"
   end
 
