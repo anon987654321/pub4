@@ -45,11 +45,13 @@ module Master
           list.empty? ? ["chat0: no transport connected"] : list.map(&:status)
         end
 
+        # A failed redraw must not end the reader thread; the cause is logged.
         def print_line(line)
           Trace::Dmesg.emit(line, io: Margin.new, force: true)
+
           Reline.redisplay if defined?(Reline) && Reline.respond_to?(:redisplay) && $stdout.tty?
-        rescue StandardError
-          nil
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Io::Chat.print_line")
         end
       end
     end

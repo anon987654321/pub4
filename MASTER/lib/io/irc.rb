@@ -8,6 +8,7 @@ require "fileutils"
 require_relative "chat"
 require_relative "irc/wire"
 require_relative "irc/events"
+require_relative "irc/commands"
 
 module Master
   module Io
@@ -16,37 +17,49 @@ module Master
     # automatic reply is PONG. Incoming text is sanitized by Chat::Policy.
     class Irc < Chat::Transport
       include Events
+      include Commands
 
       DEFAULT_PORT = 6697
       CONNECT_TIMEOUT = 10
       NICK_TRIES = 5
       LIST_SHOWN = 20
+
+      # A channel name: # or &, then up to 49 characters that are not space, comma or BEL.
       ROOM = /\A[#&][^\s,\a]{1,49}\z/
+
+      # A nick: a letter or one of the IRC specials, then up to 29 word or special characters.
       NICK = /\A[A-Za-z\[\]\\`_^{|}][\w\[\]\\`^{|}-]{0,29}\z/
+
+      # LIST filter: users above or below a count, or a short channel-name wildcard.
+      LIST_FILTER = /\A(?:[<>]\d{1,6}|[#*?\w.-]{1,50})\z/
+
       IP_NOTE = "your IP address is visible to the network; use a cloak/VPN if that matters"
 
       attr_reader :nick, :host, :channels
 
-      # Verification flags live here so a test can read them without a socket.
-      def self.tls_context
-        OpenSSL::SSL::SSLContext.new.tap do |ctx|
-          ctx.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER, verify_hostname: true)
-          ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
-          ctx.cert_store = OpenSSL::X509::Store.new.tap(&:set_default_paths)
+      class << self
+        # Verification flags live here so a test can read them without a socket.
+        def tls_context
+          OpenSSL::SSL::SSLContext.new.tap do |context|
+            context.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER, verify_hostname: true)
+            context.min_version = OpenSSL::SSL::TLS1_2_VERSION
+            context.cert_store = OpenSSL::X509::Store.new.tap(&:set_default_paths)
+          end
         end
-      end
 
-      def self.parse_target(arg)
-        host, port = arg.to_s.strip.split(":", 2)
-        raise ArgumentError, "host required" if host.to_s.empty? || host !~ /\A[\w.-]+\z/
-        raise ArgumentError, "bad port" if port && port !~ /\A\d{1,5}\z/
+        def parse_target(arg)
+          host, port = arg.to_s.strip.split(":", 2)
+          raise ArgumentError, "host required" if host.to_s.empty? || host !~ /\A[\w.-]+\z/
+          raise ArgumentError, "bad port" if port && port !~ /\A\d{1,5}\z/
 
-        [host, (port || DEFAULT_PORT).to_i]
+          [host, (port || DEFAULT_PORT).to_i]
+        end
       end
 
       # connector: ->(host, port, tls:) returning an IO-like (tests pass a duplex).
       def initialize(connector: nil, env: ENV, **opts)
         super(**opts)
+
         @connector = connector
         @env = env
         @channels = {}
@@ -71,10 +84,13 @@ module Master
         @host = host
         @base_nick = @nick = nick
         @plain = plain
+
         show("irc0: WARNING plain-text connection, nothing is encrypted") if plain
         @io = (@connector || method(:open_socket)).call(host, port, tls: !plain)
-        show("irc0 at net0: connected to #{host} (#{plain ? 'plain-text, unverified' : 'tls, cert ok'}), nick #{nick}")
+        security = plain ? "plain-text, unverified" : "tls, cert ok"
+        show("irc0 at net0: connected to #{host} (#{security}), nick #{nick}")
         show("irc0: #{IP_NOTE}")
+
         register
         @reader = Thread.new { read_loop }
         self
@@ -85,51 +101,12 @@ module Master
 
         begin
           raw(Wire.line("QUIT", message.to_s.empty? ? "bye" : Chat::Policy.sanitize(message, max: 200)))
-        rescue IOError, SystemCallError, OpenSSL::SSL::SSLError
-          nil
+        rescue IOError, SystemCallError, OpenSSL::SSL::SSLError => e
+          Master::Ground::Swallow.log(e, context: "Io::Irc#disconnect")
         end
         close_io
         @reader&.join(1)
         show("irc0: disconnected from #{@host}")
-      end
-
-      def join(rooms)
-        rooms.each do |room|
-          raise ArgumentError, "bad channel #{room.inspect}" unless room.match?(ROOM)
-
-          user_line(Wire.line("JOIN", room))
-        end
-      end
-
-      def part(room, reason = nil)
-        raise ArgumentError, "not in a channel" unless room&.match?(ROOM)
-
-        user_line(Wire.line(*["PART", room, (Chat::Policy.sanitize(reason, max: 200) if reason)].compact))
-      end
-
-      def change_nick(new_nick)
-        raise ArgumentError, "bad nick" unless new_nick.to_s.match?(NICK)
-
-        user_line(Wire.line("NICK", new_nick))
-      end
-
-      def names(room) = user_line(Wire.line("NAMES", room_arg(room)))
-
-      def topic(room, text = nil)
-        room = room_arg(room)
-        return user_line(Wire.line("TOPIC", room)) unless text
-
-        policy.authorize_send!
-        user_line(Wire.line("TOPIC", room, Chat::Policy.sanitize(text, max: 300)))
-      end
-
-      # Limited: channels over 100 users, or a wildcard the operator names.
-      def list(pattern = nil)
-        arg = pattern.to_s.empty? ? ">100" : pattern
-        raise ArgumentError, "bad list filter" unless arg.match?(/\A(?:[<>]\d{1,6}|[#*?\w.-]{1,50})\z/)
-
-        @listed = 0
-        user_line(Wire.line("LIST", arg))
       end
 
       def status
@@ -156,6 +133,7 @@ module Master
         ssl = OpenSSL::SSL::SSLSocket.new(tcp, self.class.tls_context)
         ssl.hostname = host
         ssl.sync_close = true
+
         Timeout.timeout(CONNECT_TIMEOUT) { ssl.connect }
         ssl.post_connection_check(host)
         ssl
@@ -178,20 +156,6 @@ module Master
         end
       end
 
-      def user_line(line)
-        raise "not connected" unless live?
-
-        policy.throttle
-        raw(line)
-      end
-
-      def room_arg(room)
-        room ||= last_room
-        raise ArgumentError, "no channel" unless room.to_s.match?(ROOM)
-
-        room
-      end
-
       def deliver(room, text, action: false)
         raise ArgumentError, "bad target" unless room.to_s.match?(ROOM) || room.to_s.match?(NICK)
 
@@ -209,12 +173,13 @@ module Master
 
       def close_io
         @io&.close
-      rescue IOError, SystemCallError, OpenSSL::SSL::SSLError
-        nil
+      rescue IOError, SystemCallError, OpenSSL::SSL::SSLError => e
+        Master::Ground::Swallow.log(e, context: "Io::Irc#close_io")
       end
 
       def read_loop
         buffer = String.new(encoding: Encoding::BINARY)
+
         loop do
           buffer << @io.readpartial(4096)
           Wire.drain(buffer).each { |l| dispatch_line(l) }
@@ -234,8 +199,8 @@ module Master
 
         dir = File.join(Master::ROOT, ".master", "irc")
         FileUtils.mkdir_p(dir, mode: 0o700)
-        File.open(File.join(dir, "#{@host}-#{Time.now.strftime('%Y%m%d')}.log"), "a", 0o600) do |f|
-          f.puts("#{Time.now.strftime('%H:%M:%S')} #{line}")
+        File.open(File.join(dir, "#{@host}-#{Time.now.strftime('%Y%m%d')}.log"), "a", 0o600) do |file|
+          file.puts("#{Time.now.strftime('%H:%M:%S')} #{line}")
         end
       end
     end

@@ -5,6 +5,7 @@ require_relative "policy"
 module Master
   module Io
     module Chat
+
       # The interface a chat service implements (IRC first; Telegram, slskd and
       # WhatsApp plug in the same way). A transport supplies:
       #   name, capabilities, connect(target, **opts), disconnect(msg = nil),
@@ -14,7 +15,19 @@ module Master
       # incoming event. Everything else -- sanitizing, the read-only gate, the
       # bucket, the event ring, bus metadata, display -- is here and shared.
       class Transport
-        Event = Struct.new(:kind, :room, :nick, :text, keyword_init: true)
+
+        Event = Struct.new(:kind, :room, :nick, :text, keyword_init: true) do
+
+          # The line shown when a transport supplies none of its own.
+          def summary
+            case kind
+            when :message then "#{room} <#{nick}> #{text}"
+            when :action then "#{room} * #{nick} #{text}"
+            else [room, nick, kind, text].compact.join(" ")
+            end
+          end
+        end
+
         RING = 200
         QUIET_KINDS = %i[join part quit nick mode].freeze
 
@@ -59,26 +72,27 @@ module Master
         def split_text(_room, text, action: false) = text.strip.empty? ? [] : [text.strip]
         def deliver(_room, _text, action: false) = raise(NotImplementedError)
 
-        def emit(kind, room: nil, nick: nil, text: nil, line: nil)
-          event = Event.new(kind:, room: room && Policy.sanitize(room, max: 80),
-                            nick: nick && Policy.sanitize(nick, max: 40), text: text && Policy.sanitize(text))
+        # Subclasses call emit(kind, room:, nick:, text:, line:); line is shown
+        # in place of the default rendering.
+        def emit(kind, line: nil, **fields)
+          event = build_event(kind, **fields)
           @lock.synchronize do
             @events << event
             @events.shift while @events.size > RING
           end
+
           # Metadata only: the bus persists events, and channel text stays off disk.
           @bus&.publish("#{name}:message", kind:, room: event.room, nick: event.nick, bytes: event.text.to_s.bytesize)
           show(line || default_line(event)) unless @quiet && QUIET_KINDS.include?(kind)
           event
         end
 
-        def default_line(event)
-          case event.kind
-          when :message then "#{event.room} <#{event.nick}> #{event.text}"
-          when :action then "#{event.room} * #{event.nick} #{event.text}"
-          else [event.room, event.nick, event.kind, event.text].compact.join(" ")
-          end
+        def build_event(kind, room: nil, nick: nil, text: nil)
+          Event.new(kind:, room: room && Policy.sanitize(room, max: 80),
+                    nick: nick && Policy.sanitize(nick, max: 40), text: text && Policy.sanitize(text))
         end
+
+        def default_line(event) = event.summary
 
         def show(line) = @out ? @out.call(line) : Chat.print_line(line)
       end

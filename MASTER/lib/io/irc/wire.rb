@@ -13,7 +13,8 @@ module Master
         end
 
         MAX_LINE = 510
-        RELAY_RESERVE = 100 # the server prepends :nick!user@host to what it relays
+        # The server prepends :nick!user@host to what it relays.
+        RELAY_RESERVE = 100
         MAX_BUFFER = 8192
 
         module_function
@@ -84,10 +85,12 @@ module Master
         # MAX_BUFFER is dropped, not kept, so a hostile peer cannot grow it.
         def drain(buffer)
           lines = []
+
           while (idx = buffer.index("\n"))
             lines << buffer.slice!(0, idx + 1)
           end
           buffer.clear if buffer.bytesize > MAX_BUFFER
+
           lines
         end
       end

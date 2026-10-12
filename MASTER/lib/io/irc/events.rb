@@ -7,15 +7,22 @@ module Master
     class Irc < Chat::Transport
       # What the reader thread does with each parsed server line. The only
       # reply it ever writes is PONG (and the CAP/SASL/NICK registration steps).
-      module Events
+module Events
         DISPATCH = {
-          "PING" => :on_ping, "CAP" => :handle_auth, "AUTHENTICATE" => :handle_auth,
+          "PING" => :on_ping,
+
+          # Registration and SASL.
+          "CAP" => :handle_auth, "AUTHENTICATE" => :handle_auth,
           "903" => :handle_auth, "904" => :handle_auth, "905" => :handle_auth,
           "906" => :handle_auth, "907" => :handle_auth, "001" => :welcome,
           "432" => :retry_nick, "433" => :retry_nick, "436" => :retry_nick,
+
+          # Membership, topics, names and listings.
           "JOIN" => :on_join, "PART" => :on_part, "KICK" => :kicked, "QUIT" => :on_quit,
           "NICK" => :renamed, "MODE" => :on_mode, "TOPIC" => :on_topic, "332" => :on_topic,
           "353" => :on_names, "366" => :on_names_end, "322" => :list_entry, "323" => :on_list_end,
+
+          # Talk and server errors.
           "PRIVMSG" => :message, "NOTICE" => :message, "ERROR" => :on_error
         }.freeze
 
@@ -28,7 +35,7 @@ module Master
 
         def on_ping(msg) = raw(Wire.line("PONG", msg.params.last.to_s))
         def on_join(msg) = joined(msg.nick, msg.params.first.to_s)
-        def on_part(msg) = parted(msg.nick, msg.params.first.to_s, msg.params[1])
+        def on_part(msg) = parted(msg)
         def on_names(msg) = (@names[msg.params[2]] ||= []).concat(msg.params.last.split)
         def on_names_end(msg) = names_done(msg.params[1])
         def on_error(msg) = emit(:info, text: msg.params.last, line: "irc0: server error: #{clean(msg.params.last)}")
@@ -72,37 +79,44 @@ module Master
           emit(:info, text: "registered", line: "irc0: registered as #{clean(@nick)}")
         end
 
-        def retry_nick(_msg = nil)
-          return if @registered
+# A refused nick is retried with a counter suffix, then the link is closed.
+def retry_nick(_msg = nil)
+  return if @registered
 
-          @nick_try += 1
-          return close_io if @nick_try > NICK_TRIES
+  @nick_try += 1
+  if @nick_try > NICK_TRIES
+    close_io
+  else
+    @nick = "#{@base_nick}#{@nick_try}"
+    raw(Wire.line("NICK", @nick))
+  end
+end
 
-          @nick = "#{@base_nick}#{@nick_try}"
-          raw(Wire.line("NICK", @nick))
-        end
+def joined(who, room)
+  @channels[room] ||= Set.new if who == @nick
+  @channels[room]&.add(who)
+  emit(:join, room:, nick: who, line: "#{clean(room)} join #{clean(who)}")
+end
 
-        def joined(who, room)
-          @channels[room] ||= Set.new if who == @nick
-          @channels[room]&.add(who)
-          emit(:join, room:, nick: who, line: "#{clean(room)} join #{clean(who)}")
-        end
+def parted(msg)
+  who = msg.nick
+  room = msg.params.first.to_s
+  who == @nick ? @channels.delete(room) : @channels[room]&.delete(who)
+  emit(:part, room:, nick: who, text: msg.params[1], line: "#{clean(room)} part #{clean(who)}")
+end
 
-        def parted(who, room, why)
-          who == @nick ? @channels.delete(room) : @channels[room]&.delete(who)
-          emit(:part, room:, nick: who, text: why, line: "#{clean(room)} part #{clean(who)}")
-        end
+def kicked(msg)
+  room, who = msg.params
+  @channels.delete(room) if who == @nick
+  line = "#{clean(room)} kick #{clean(who)} by #{clean(msg.nick)}"
+  emit(:part, room:, nick: who, text: msg.params[2], line:)
+end
 
-        def kicked(msg)
-          room, who = msg.params
-          @channels.delete(room) if who == @nick
-          emit(:part, room:, nick: who, text: msg.params[2], line: "#{clean(room)} kick #{clean(who)} by #{clean(msg.nick)}")
-        end
-
-        def renamed(msg)
-          @nick = msg.params.last if msg.nick == @nick
-          emit(:nick, nick: msg.nick, text: msg.params.last, line: "irc0: #{clean(msg.nick)} is now #{clean(msg.params.last)}")
-        end
+def renamed(msg)
+  @nick = msg.params.last if msg.nick == @nick
+  line = "irc0: #{clean(msg.nick)} is now #{clean(msg.params.last)}"
+  emit(:nick, nick: msg.nick, text: msg.params.last, line:)
+end
 
         def names_done(room)
           list = @names.delete(room) || []
@@ -115,21 +129,29 @@ module Master
           @listed += 1
           return if @listed > LIST_SHOWN
 
-          emit(:info, text: msg.params[1], line: "irc0: #{clean(msg.params[1])} #{clean(msg.params[2])} users #{clean(msg.params.last)}")
+name = msg.params[1]
+line = "irc0: #{clean(name)} #{clean(msg.params[2])} users #{clean(msg.params.last)}"
+emit(:info, text: name, line:)
         end
 
-        # Answers nothing: a CTCP request is shown as a line and ignored.
-        def message(msg)
-          room = msg.params.first
-          room = msg.nick if room == @nick
-          text = msg.params.last.to_s
-          if (ctcp = text.match(/\A\x01(\w+) ?(.*?)\x01?\z/m))
-            return emit(:action, room:, nick: msg.nick, text: ctcp[2]) if ctcp[1] == "ACTION"
+# Answers nothing: a CTCP request is shown as a line and ignored.
+def message(msg)
+  nick = msg.nick
+  params = msg.params
+  room = params.first
+  room = nick if room == @nick
+  text = params.last.to_s
+  ctcp = text.match(/\A\x01(\w+) ?(.*?)\x01?\z/m)
+  return ctcp_event(ctcp, room:, nick:) if ctcp
 
-            return emit(:info, nick: msg.nick, text: ctcp[1], line: "irc0: ctcp #{clean(ctcp[1])} from #{clean(msg.nick)} ignored")
-          end
-          emit(msg.command == "NOTICE" ? :notice : :message, room: room || @host, nick: msg.nick || @host, text:)
-        end
+  emit(msg.command == "NOTICE" ? :notice : :message, room: room || @host, nick: nick || @host, text:)
+end
+
+def ctcp_event(ctcp, room:, nick:)
+  return emit(:action, room:, nick:, text: ctcp[2]) if ctcp[1] == "ACTION"
+
+  emit(:info, nick:, text: ctcp[1], line: "irc0: ctcp #{clean(ctcp[1])} from #{clean(nick)} ignored")
+end
 
         def numeric_notice(msg)
           return unless msg.command.match?(/\A[45]\d\d\z/)
