@@ -187,7 +187,7 @@ class TestLawMapRuntime < Minitest::Test
     end
   end
 
-  def test_integrity_rejects_invalid_status_and_confidence
+  def test_integrity_rejects_invalid_status_severity_confidence_and_empty_metadata
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(File.join(dir, "data", "laws.yml"), <<~YAML)
@@ -195,11 +195,11 @@ class TestLawMapRuntime < Minitest::Test
           schema: 1
           laws:
             sample:
-              meaning: a mapped concept
-              detects: sample_detector
-              severity: medium
-              confidence: 1.5
-              operation: fix
+              meaning:
+              detects:
+              severity: urgent
+              confidence: "high"
+              operation:
               law_ids: []
               status: maybe
               tags: [code]
@@ -207,7 +207,79 @@ class TestLawMapRuntime < Minitest::Test
       findings = Master::Ground::Map::LawMap.load(root: dir).integrity
 
       assert_includes findings, 'law sample has invalid status "maybe"'
-      assert_includes findings, "law sample has invalid confidence 1.5"
+      assert_includes findings, 'law sample has invalid severity "urgent"'
+      assert_includes findings, 'law sample has invalid confidence "high"'
+      assert_includes findings, "law sample has no meaning"
+      assert_includes findings, "law sample has no detector description"
+      assert_includes findings, "law sample has no repair operation"
+    end
+  end
+
+  def test_integrity_enforces_the_coverage_status_and_reference_relationship
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), <<~YAML)
+        law_map:
+          schema: 1
+          laws:
+            covered_without_id:
+              meaning: missing implementation
+              detects: missing_detector
+              severity: high
+              confidence: 0.8
+              operation: fix
+              law_ids: []
+              status: covered
+              tags: [code]
+            gap_with_id:
+              meaning: unimplemented concept
+              detects: future_detector
+              severity: medium
+              confidence: 0.6
+              operation: implement
+              law_ids: [GAP_RULE]
+              status: gap
+              tags: [code]
+            unmapped_with_id:
+              meaning: unmapped concept
+              detects: unknown_detector
+              severity: low
+              confidence: 0.5
+              operation: investigate
+              law_ids: [UNMAPPED_RULE]
+              status: unmapped
+              tags: [code]
+      YAML
+
+      findings = Master::Ground::Map::LawMap.load(root: dir).integrity
+
+      assert_includes findings, "covered law covered_without_id has no law_ids"
+      assert_includes findings, "gap law gap_with_id must not claim law_ids"
+      assert_includes findings, "unmapped law unmapped_with_id must not claim law_ids"
+    end
+  end
+
+  def test_integrity_rejects_duplicate_law_ids
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), <<~YAML)
+        law_map:
+          schema: 1
+          laws:
+            duplicated:
+              meaning: one mapping, one reference per rule
+              detects: duplicate_detector
+              severity: medium
+              confidence: 0.7
+              operation: fix
+              law_ids: [SAME_RULE, SAME_RULE]
+              status: covered
+              tags: [code]
+      YAML
+
+      findings = Master::Ground::Map::LawMap.load(root: dir).integrity
+
+      assert_includes findings, "law duplicated repeats law_ids: SAME_RULE"
     end
   end
 end
