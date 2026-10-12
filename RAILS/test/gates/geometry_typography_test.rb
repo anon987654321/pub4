@@ -29,6 +29,7 @@ class GeometryTypographyTest < Minitest::Test
   end
 
   def test_unavailable_glyph_probe_is_inconclusive_not_a_clean_glyph_result
+    previous_strict = ENV.delete("GATE_STRICT_INCONCLUSIVE")
     cdp = Object.new
     def cdp.evaluate(*, **)
       nil
@@ -42,6 +43,8 @@ class GeometryTypographyTest < Minitest::Test
     assert result.incomplete?
     assert_equal :inconclusive, result.outcome
     assert_match(/geometry glyphs: test coverage not measured/, result.unchecked.join)
+  ensure
+    previous_strict.nil? ? ENV.delete("GATE_STRICT_INCONCLUSIVE") : ENV["GATE_STRICT_INCONCLUSIVE"] = previous_strict
   end
 
   def test_micro_typography_failure_is_inconclusive_not_silent
