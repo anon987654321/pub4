@@ -435,7 +435,7 @@ module Master
         log_timing("synthesis_total", started_at, text_length: text.to_s.length) if started_at
       end
 
-            def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
+      def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
         use_mode = (mode || synthesis_mode).to_s
         return [false, nil] unless use_mode == "transcendent" && Transcendent.enabled?
 
@@ -558,7 +558,7 @@ module Master
         log_timing("stream_total", started_at, text_length: text_str.to_s.length) if started_at
       end
 
-            def transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
+      def transcendent_stream_written?(text_str, voice, opts, output_path, on_chunk)
         return false unless transcendent_streaming_enabled?(opts)
 
         transcendent_path = synthesize_transcendent_stream(text_str, voice:, opts:)
@@ -731,8 +731,7 @@ module Master
         log_timing("edge_total", started_at, text_length: text.to_s.length) if started_at
       end
 
-
-            # data/voice.yml tts.post_chain, applied.
+      # data/voice.yml tts.post_chain, applied.
       #
       # Edge returns a bare neural voice with no shaping of its own, so every
       # decision about how MASTER sounds past the choice of mouth lives in that
@@ -759,8 +758,7 @@ module Master
         log_timing("postprocess", started_at) if started_at
       end
 
-
-            # A profile that declares layers needs a second input, so it goes through
+      # A profile that declares layers needs a second input, so it goes through
       # Layers; every other voice keeps the plain -af chain.
       def render_shaped(path, out, chain)
         return Layers.apply(path, out) if Layers.active?
