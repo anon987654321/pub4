@@ -38,7 +38,7 @@ class TurnRouterTest < Minitest::Test
   # block in chat_controller#message). Visitors must land on casual_reply only.
 # /fix is the verb that writes, and the words that mean "go through the tree
 # and change it" are spellings of it. The reading words argue and change
-# nothing. There is no /scan: a reading nobody acts on is what /fix absorbed.
+# nothing. /scan is only a spelling of /fix: a reading nobody acts on is what /fix absorbed.
 def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
   router = Master::CLI::TurnRouter
 
@@ -51,13 +51,11 @@ def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
   assert_equal "/review master", router.rewrite_slash("/review master")
 end
 
-def test_scan_is_not_a_command_any_more
+def test_scan_is_a_spelling_of_fix_not_a_command
   router = Master::CLI::TurnRouter
 
-  refute_includes router::PIPELINE_SLASH, "scan"
   refute_includes router::PIPELINE_COMMANDS, "scan"
-  # An unknown slash is left alone; the registry answers it, and it has no scan.
-  assert_equal "/scan lib/io", router.rewrite_slash("/scan lib/io")
+  assert_equal "/fix lib/io", router.rewrite_slash("/scan lib/io")
 end
 
 # The RAILS constitutional gate asks for a reading it can grep and no writes.

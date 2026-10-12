@@ -60,7 +60,8 @@ module Master
         return false if value.empty?
         return false if value.match?(/\?\s*\z/) && value.match?(/\b(?:#{DEPLOY_NEGATIVE_WORDS.join("|")})\b/i)
         return false if value.match?(/\b(?:#{DEPLOY_NEGATIVE_WORDS.join("|")})\b.*\bdeploy(?:ment)?\b|\bdeploy(?:ment)?\b.*\b(?:#{DEPLOY_NEGATIVE_WORDS.join("|")})\b/i)
-        action = value.match?(/\b(?:#{DEPLOY_ACTION_WORDS.join("|")})\b/i)
+        action = value.match?(/\b(?:#{DEPLOY_ACTION_WORDS.join("|")})\b/i) ||
+                 value.match?(/\bput\b.*\b(?:#{DEPLOY_DESTINATION_WORDS.join("|")})\b/i)
         return false unless action
         return true if value.match?(/\bdeploy\b/i)
         value.match?(/\b(?:#{DEPLOY_DESTINATION_WORDS.join("|")})\b/i) ||
@@ -172,8 +173,8 @@ module Master
       # command.
       def normalize_inferred_command(command, text)
         return "review" if text.match?(/--dry-run|--no-autofix|\bpreview\b/i) && !WRITING_SLASH.include?(command)
-        return command if WRITING_SLASH.include?(command)
         return "fix" if command == "scan"
+        return command if WRITING_SLASH.include?(command)
         return "review" if PIPELINE_WORDS.include?(command)
 
         command
