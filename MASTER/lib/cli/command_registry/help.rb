@@ -135,9 +135,13 @@ module Master
                    "/doctor device location [gps|network|passive] — explicitly request location; never sampled at boot."],
         },
         "voice" => {
-          summary: "CLI voice status and an explicit speaker test",
-          detail: ["/voice — player, synthesis mode and on/off state.",
-                   "/voice test — synthesize and play “MASTER voice test.” synchronously; the result reports the speaker outcome."],
+          summary: "speech uses sensible defaults; optional voice styles are easy to discover",
+          detail: ["/voice — current voice, mode, profile, speaking rate and recent latency.",
+                   "/voice natural — restore clean, fast, everyday speech (the default).",
+                   "/voice expressive — use the expressive synthesis pipeline.",
+                   "/voice dilla — enable Dilla's effects rack and room.",
+                   "/voice timing — show measured synthesis and first-audio timings; no launch flags needed.",
+                   "/voice test — synthesize and play “MASTER voice test.” synchronously."],
         },
         "narrate" => {
           summary: "story narration of what MASTER is doing, on by default",
