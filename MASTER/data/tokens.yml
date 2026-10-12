@@ -450,7 +450,7 @@ tokens:
     #    the largest hypot(x, z) of the points, so turning never resizes it.
     #  2 turn each point by yaw (look.yaw + look.turn), then pitch, then roll;
     #    k = scale * look.scale * c / (c - rz) with c = camera / look.dolly;
-    #    px = floor(cols/2 + x*k), py = floor(rows*0.96 - y*k - bob*scale);
+    #    px = floor(cols/2 + x*k), py = floor(rows - y*k - bob*scale);
     #    the z-buffer keeps the largest rz*scale at each splat offset.
     #  3 smooth the z-buffer with a 3x3 mean of valid neighbours; occupancy is
     #    a 5x5 mean of valid pixels.
@@ -470,7 +470,16 @@ tokens:
     #    like points and drawn only where the z-buffer does not hide them.
     #  7 depth class: rz*scale as a fraction of the visible range, at least `near` bold,
     #    at most `far` dim.
-    #  Pose.at(state, t, seed) gives the Look for a still frame: turn = spin * t in
+#  A port keeps three habits of the Ruby that plain arithmetic would not: a
+#  mean is Ruby's Array#sum, which compensates (Kahan-Babuska), so the
+#  anchors land on the same points; min_by and max_by keep the first of equal
+#  elements; and Float#% is fmod moved into the divisor's sign. sin and cos
+#  may differ in the last bit between runtimes (the fixtures allow 0.01 on the
+#  Look and nothing on a character). The web port, RAILS/master_web/public/
+#  face_ascii.js, rebuilds the head from the depth map and morphology here
+#  rather than receiving it, and test/face_ascii.test.mjs holds it to
+#  test/fixtures/face_ascii_frames.json.
+#  Pose.at(state, t, seed) gives the Look for a still frame: turn = spin * t in
     #  the spin states, else 0; scale = 1 + breath*sin(breath_rate*t); pitch =
     #  pitch_sway*sin(pitch_rate*t); roll and bob likewise; the eyes shut while
     #  (t + (seed mod 7) * 0.37) mod blink_period >= blink_period - blink_length;
@@ -492,6 +501,10 @@ tokens:
       dither_gain: 0.55
       dither: [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
       depth: { near: 0.62, far: 0.30 }
+      # Read by the web view only (face_ascii.js): the rows a viewport is divided
+      # into, the font size bounds in px, and the alpha of far, mid and near ink.
+      # The terminal has the window it is given and needs none of it.
+      web: { rows: 44, font: [9, 20], tone: [0.45, 0.75, 1.0] }
       # Read by Face::Motion (live, springs and noise) and by Face::Pose, the
       # pure function of (state, t, seed) a port can match to the float.
       motion:

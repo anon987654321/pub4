@@ -60,7 +60,6 @@ nb:
       breakers_none: "ingen"
   face:
     title: "ai.brgen.no"
-    prompt_user: "bruker"
     face_aria: "MASTER-ansiktet — visuelt speil av tilstanden"
     chat_aria: "MASTER-samtale"
     prompt_aria: "MASTER-skrivefelt"

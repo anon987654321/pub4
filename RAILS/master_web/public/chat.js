@@ -5,10 +5,11 @@ function chatT(key, fallback, vars) {
   return window.MASTER_T ? window.MASTER_T(key, fallback, vars) : fallback;
 }
 
-// The name the prompt bar prints from face.prompt_user, so the log and the bar
-// use one word for the visitor (CONSISTENCY). master is the runtime's own name.
-function promptUserName() {
-  return document.querySelector('#zsh .pp')?.textContent.trim() || 'user';
+// The prompt glyphs are the terminal's own, read from the face contract
+// (tokens.yml, face_interface.ascii.prompt): |- for what the visitor types,
+// / for what master answers, so the log, the bar and the CLI say it one way.
+function promptGlyph(name) {
+  return window.MASTER_FACE_CONTRACT?.ascii?.prompt?.[name] || '';
 }
 
 function escapeHtml(str) {
@@ -153,7 +154,7 @@ function appendMsg(role, text = '') {
   d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   const prompt = document.createElement('span');
   prompt.className = 'msg-prompt';
-  prompt.textContent = role === 'user' ? `${promptUserName()}$ ` : 'master$ ';
+  prompt.textContent = `${promptGlyph(role === 'user' ? 'input' : 'output')} `;
   d.appendChild(prompt);
   if (role === 'user') {
     d.appendChild(document.createTextNode(text));
@@ -717,7 +718,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       li.dataset.index = String(index);
       const role = document.createElement('span');
       role.className = 'history-role';
-      role.textContent = entry.role === 'assistant' ? 'master' : promptUserName();
+      role.textContent = promptGlyph(entry.role === 'assistant' ? 'output' : 'input');
       const body = document.createElement('span');
       body.className = 'history-body';
       body.textContent = (entry.content || '').slice(0, 240);

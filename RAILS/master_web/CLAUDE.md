@@ -137,8 +137,27 @@ Its sources are six files in load order, and two of them are **not** part files:
 There is no `face.part4.txt` — the two speech files sit in its place, and that is
 where TTS, the browser-voice default and the STT duck live. Reading this list as
 `face.part*.txt` sends you looking for that code in a part file that does not
-contain it. `test_face_runtime_matches_its_sources` rebuilds the concatenation
-and fails on any drift, naming the task to run.
+contain it. `RAILS/test/master_web_ascii_face_contract_test.rb` checks that
+`face.runtime.js` names each of the six by its current digest and fails on any
+drift, naming the task to run.
+
+## The face is plain ASCII, the terminal's renderer ported
+
+`public/face_ascii.js` is a classic deferred shell script (`shell_early`, ahead
+of `face_2d_fallback.js`) that defines `window.MASTER_FACE_ASCII`. It ports
+`MASTER/lib/cli/face/` step for step, reads every number from the face contract
+the page already inlines (`MASTER_FACE_CONTRACT`, `face_interface` in
+`MASTER/data/tokens.yml`, algorithm written there), rebuilds the head from the
+depth map and morphology rather than receiving it, and draws characters on `#face`
+with a 2D context. `test/face_ascii.test.mjs` holds it to
+`MASTER/test/fixtures/face_ascii_frames.json`, character for character.
+
+With ASCII on (the default) no WebGL context and no THREE are created, so the
+invariant that a canvas keeps the first context it is given still holds;
+`?face_mode=3d` (or `raster`) is the way back to the particle head. The page
+state maps onto the terminal's `Pose` in `drawAsciiFace()` (face.part3.txt).
+`face_2d_fallback.js` draws the same head at rest on its own canvas until the
+runtime takes over.
 
 The face's slow transitions are its timing, not debt. `face.css` fades a reveal
 over 1.2s, and `chat_upload.css` steps

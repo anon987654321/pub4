@@ -803,8 +803,8 @@ body #zsh.live:focus-within {
   opacity: 1;
   background: black;
 }
-#zsh .pp { color: var(--face-alert); font-weight: 700; }
-#zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-inline-end: 0.4ch; }
+#zsh .pp { color: var(--face-alert); font-weight: 700; margin-inline-end: 0.6ch; }
+#zsh .sep { color: var(--face-muted); margin-inline-end: 0.4ch; }
 #zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 0px 0; resize: none; line-height: 1.5; max-height: 120px; }
 #zsh input::placeholder, #zsh textarea::placeholder { color: var(--face-muted); }
 html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var(--face-fg) 28%, transparent); transition: border-top-width .2s var(--ease-out); }
@@ -1027,7 +1027,7 @@ body[data-network-stall="1"] canvas { filter: none; }
 body[data-council-persona]::after { content:attr(data-council-persona); position:fixed; top:calc(10px + var(--safe-top)); right:calc(10px + var(--safe-right)); font: var(--text-meta)/1.4 var(--font-mono); text-transform:uppercase; letter-spacing:.14em; color:var(--face-muted); opacity:.6; z-index:var(--z-ui); pointer-events:none; }
 
 /* Prompt typography */
-#zsh input,#zsh .pp,#zsh .sep,#zsh .sep2 { font-feature-settings:'liga' 0; }
+#zsh input,#zsh .pp,#zsh .sep { font-feature-settings:'liga' 0; }
 
 /* #65 Line-height breathe during speaking */
 body[data-mode="speaking"] .msg-body { line-height:1.6; transition:line-height .6s var(--ease-out); }
@@ -1479,7 +1479,6 @@ body.wscons-mode #face-phosphor-trail {
 #zsh,
 #zsh #zin,
 #zsh .pp,
-#zsh .sep2,
 #zsh #zsh-status {
   font-family: var(--font-mono);
 }
@@ -1756,10 +1755,21 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   inset-block-end: calc(82px + var(--safe-bottom));
   pointer-events: none;
 }
+/* The terminal's line-art MASTER (tokens.yml, face_interface.ascii.wordmark), shown
+   above an empty log and gone once the first message is in it. */
+.wordmark {
+  inline-size: fit-content;
+  margin: 0 auto 6px;
+  color: var(--face-muted);
+  font: var(--text-meta)/1.2 var(--font-mono);
+  white-space: pre;
+  pointer-events: none;
+}
+#chat-shell:has(#chat-log > .message) .wordmark { display: none; }
 #chat-log {
   max-height: min(37dvh, 440px);
   padding: 10px 22px 18px;
-  font-family: var(--font-brand);
+  font-family: var(--font-mono);
   line-height: 1.72;
   scroll-snap-type: none;
   scrollbar-width: thin;
@@ -1768,27 +1778,26 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
 .message {
   max-inline-size: 68ch;
   margin-block-end: 20px;
-  font-family: var(--font-brand);
+  font-family: var(--font-mono);
   font-size: clamp(0.98rem, 1.12vw, 1.08rem);
   line-height: 1.72;
-  letter-spacing: -0.012em;
   animation: msgIn 240ms cubic-bezier(.2,.75,.25,1) both;
 }
 .message.user .msg-prompt {
   color: #94deef;
-  font: 650 0.72rem/1.5 var(--font-brand);
+  font: 650 0.72rem/1.5 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .message.assistant .msg-prompt {
   color: #aab8db;
-  font: 650 0.72rem/1.5 var(--font-brand);
+  font: 650 0.72rem/1.5 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .msg-body {
   color: rgb(226 233 250 / 92%);
-  font-family: var(--font-brand);
+  font-family: var(--font-mono);
   text-wrap: pretty;
 }
 .compaction-note, .message.system {
@@ -1810,7 +1819,7 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   border-radius: 17px;
   background: rgb(9 13 27 / 88%);
   color: #e7eeff;
-  font: 400 1rem/1.5 var(--font-brand);
+  font: 400 1rem/1.5 var(--font-mono);
   backdrop-filter: blur(18px) saturate(120%);
   transition: opacity 180ms ease, border-color 180ms ease, background 180ms ease;
   touch-action: auto;
@@ -1833,12 +1842,10 @@ body.zen.zen-hidden #zsh,
 body.zen[data-edge-hover="1"] #zsh { opacity: 0.96; pointer-events: auto; }
 body.zen #zsh.revealed { transform: translate(-50%, 0); }
 #zsh .pp { color: #8ce5ef; font-weight: 650; }
-#zsh .sep2 { color: rgb(151 180 232 / 72%); margin-inline-end: 0.15ch; }
 #zsh input, #zsh textarea {
   min-height: 42px;
   padding: 8px 0;
-  font: 400 1rem/1.5 var(--font-brand);
-  letter-spacing: -0.01em;
+  font: 400 1rem/1.5 var(--font-mono);
   color: #edf2ff;
   caret-color: #8ce5ef;
   user-select: text;
@@ -1874,7 +1881,6 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
   .message { margin-block-end: 16px; font-size: 0.98rem; }
   #zsh { width: calc(100dvw - 22px - var(--safe-left) - var(--safe-right)); min-height: 58px; padding: 7px; gap: 5px; border-radius: 15px; }
   #zsh .pp { display: none; }
-  #zsh .sep2 { display: none; }
   #zsh input, #zsh textarea { font-size: 16px; }
   #photo-button, #music-btn, #spin-btn { min-inline-size: 40px; min-block-size: 40px; }
 }

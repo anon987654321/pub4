@@ -93,12 +93,15 @@ shell_blocking:
 shell_boot:
   - boot_fsm.js
 
-# Plain <script defer> tags in the shell. These stay written out literally in
+# Plain <script defer> tags in the shell. face_ascii.js leads: it defines
+# window.MASTER_FACE_ASCII, which the fallback below and the face runtime both draw
+# with, and a deferred script runs in document order. These stay written out literally in
 # index.html.erb rather than rendered from here: their positions differ and
 # are load-bearing — face_2d_fallback sits after the inline boot script so it
 # cannot delay tap wiring, and a test pins that ordering. Listed here so the set
 # is still enumerable; a contract test asserts the view and this file agree.
 shell_early:
+  - face_ascii.js
   - face_2d_fallback.js
   - container_gate.js
   - face_deferred_loader.js

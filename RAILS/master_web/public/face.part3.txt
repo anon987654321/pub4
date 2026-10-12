@@ -266,6 +266,19 @@ function faceAwareness() {
   return out;
 }
 
+// The ASCII face: the page's state mapped onto the terminal's Pose (face_ascii.js lookFor).
+// While speaking, the analyser's level opens the mouth, scaled as the WebGL jaw scaled it
+// (voiceRMS * 2.5); without an envelope the Pose's timed level stands in, as in the terminal.
+function drawAsciiFace(now) {
+  asciiView.draw(now, {
+    state: State.sleeping ? 'sleeping' : State.mode,
+    level: tts.playing && State.voiceRMS > 0.005 ? Math.min(1, State.voiceRMS * 2.5) : null,
+    viseme: State.viseme,
+    shapes: window.MASTER_VOICE_POLICY?.mouth?.shapes,
+    reduced: State.reducedMotion,
+  });
+}
+
 function frame(t) {
   if (State.hidden || document.hidden) {
     frameLoopActive = false;
@@ -303,7 +316,7 @@ function frame(t) {
     fpsLastSample = t;
     fpsSampleFrames = 0;
   }
-  if (!renderer) {
+  if (!renderer && !asciiView) {
     lastT = t;
     if (!State.hidden) requestAnimationFrame(frame);
     else frameLoopActive = false;
@@ -345,9 +358,11 @@ function frame(t) {
     State.audioHighs = highs / (48  * 255);
     State.audioBeat = 0;
     const curBass = State.audioBass || 0;
-    if (!faceMat._prevBass) faceMat._prevBass = 0;
-    if (curBass - faceMat._prevBass > 0.15) State.audioBeat = 1.0;
-    faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
+    if (faceMat) {
+      if (!faceMat._prevBass) faceMat._prevBass = 0;
+      if (curBass - faceMat._prevBass > 0.15) State.audioBeat = 1.0;
+      faceMat._prevBass = curBass * 0.7 + faceMat._prevBass * 0.3;
+    }
     const wave = document.getElementById('zsh-wave');
     if (wave) {
       const bars = wave.querySelectorAll('span');
@@ -602,6 +617,13 @@ function frame(t) {
   State.flash *= 0.9;
   if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
   else delete rootBody.dataset.faceFlash;
+  if (asciiView) {
+    drawAsciiFace(t);
+    markFaceReady();
+    if (!State.hidden) requestAnimationFrame(frame);
+    else frameLoopActive = false;
+    return;
+  }
   const renderMode = rootBody.dataset.faceRenderMode || 'auto';
   // No wireframe branch. `wireframe` is a triangle-rasterisation flag and this
   // material is on a THREE.Points, so setting it did nothing in either

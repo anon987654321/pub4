@@ -1,12 +1,27 @@
 "use strict";
 
+// The face is drawn in plain ASCII, as the terminal draws it (face_ascii.js, one renderer
+// and one set of tunables from the face contract). WebGL and THREE are not loaded for it;
+// ?face_mode=3d (or raster) is the explicit way back to the particle head.
+const _faceModeParam = (new URLSearchParams(window.location.search).get('face_mode') || 'auto').toLowerCase();
+const _wantsAscii = _faceModeParam !== '3d' && _faceModeParam !== 'raster';
+// face_ascii.js is a deferred shell script: usually ready long before this runs, but the
+// primer can fire first, so wait for it, and take the particle head if it never arrives.
+if (_wantsAscii && !window.MASTER_FACE_ASCII) {
+  await new Promise((resolve) => {
+    window.addEventListener('master:face-ascii-ready', resolve, { once: true });
+    setTimeout(resolve, 4000);
+  });
+}
+const _asciiEngine = _wantsAscii && window.MASTER_FACE_CONTRACT?.ascii ? (window.MASTER_FACE_ASCII || null) : null;
+
 // Check WebGL before paying THREE's 1.3MB parse cost
 const _wglCv = document.createElement('canvas');
 const _hasCanvas = typeof _wglCv.getContext === 'function';
-const _hasWebGL = _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
+const _hasWebGL = !_asciiEngine && _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
 
 const _dbgEl = document.getElementById('_dbg');
-if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
+if (_dbgEl) _dbgEl.textContent = _asciiEngine ? 'ascii' : (_hasWebGL ? 'loading three...' : '2d mode');
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
 // Absolutize the specifier: this module runs from a blob: URL, where a
@@ -685,7 +700,22 @@ if (_hasWebGL && THREE) {
   phosphorFadeMesh = new THREE.Mesh(fadeGeom, fadeMat);
   phosphorFadeScene.add(phosphorFadeMesh);
 }
-if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode');
+// The ASCII face takes a 2D context on #face, which only a canvas with no WebGL context can
+// give; renderer and asciiView are never both set.
+let asciiView = null;
+if (_asciiEngine && cv && !renderer) {
+  try {
+    asciiView = _asciiEngine.createView(cv);
+  } catch (e) {
+    console.error('MASTER face: ascii view construction failed', e);
+  }
+  if (!asciiView) {
+    window.__MASTER_RENDERER_FAILED__ = true;
+    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'asciiView' });
+  }
+}
+rootBody.dataset.faceRenderer = renderer ? 'webgl' : (asciiView ? 'ascii' : '2d');
+if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (asciiView ? 'ascii ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode'));
 
 let W = 0, H = 0, DPR = 1;
 function resize() {
