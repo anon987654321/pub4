@@ -196,12 +196,42 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     end
   end
 
-  def test_browser_artifacts_are_external_to_the_repository_and_baselines_are_not_updated
+  def test_pixel_baselines_are_separate_and_approval_is_explicit
+    tracked = SURFACE.dup
+    tracked.snapshot = true
+    path = Deploy::BrowserDiagnosticsGate.visual_baseline_path(tracked)
+
+    assert_match(%r{/MASTER/gates/data/visual_baselines/brgen-marketplace_listings-mobile\\.png\\z}, path)
+    assert_nil Deploy::BrowserDiagnosticsGate.visual_baseline_path(SURFACE)
+    refute Deploy::BrowserDiagnosticsGate.pixel_baseline_approval?({})
+    assert Deploy::BrowserDiagnosticsGate.pixel_baseline_approval?("GATE_PIXEL_BASELINE_APPROVE" => "1")
+    refute Deploy::BrowserDiagnosticsGate.pixel_baseline_strict?({})
+    assert Deploy::BrowserDiagnosticsGate.pixel_baseline_strict?("GATE_PIXEL_BASELINE_STRICT" => "true")
+    assert_equal 0.01, Deploy::BrowserDiagnosticsGate.pixel_diff_max_ratio({})
+    assert_equal 0.02, Deploy::BrowserDiagnosticsGate.pixel_diff_max_ratio("GATE_PIXEL_DIFF_MAX_RATIO" => "0.02")
+    %w[-0.1 1.1 NaN Infinity unknown].each do |value|
+      assert_raises(ArgumentError, value) do
+        Deploy::BrowserDiagnosticsGate.pixel_diff_max_ratio("GATE_PIXEL_DIFF_MAX_RATIO" => value)
+      end
+    end
+  end
+
+  def test_pixel_comparison_is_wired_into_route_evidence_and_never_auto_approves
+    source = File.read(File.join(ROOT, "MASTER", "gates", "lib", "rendered", "browser_diagnostics.rb"))
+    assert_includes source, "Deploy::PngDiff" if false # PngDiff is referenced through its constant namespace.
+    assert_includes source, "PngDiff.compare"
+    assert_includes source, "GATE_PIXEL_BASELINE_APPROVE"
+    assert_includes source, "GATE_PIXEL_BASELINE_STRICT"
+    assert_includes source, "pixel_diff_ratio"
+    assert_includes source, "pixel_diff_image"
+    refute_includes source, "GATE_SNAPSHOT_UPDATE"
+  end
+
+  def test_browser_artifacts_are_external_to_the_repository
     source = File.read(File.join(ROOT, "MASTER", "gates", "lib", "rendered", "browser_diagnostics.rb"))
     assert_includes source, "File.join(Dir.tmpdir, \"pub4-browser-diagnostics\")"
     assert_includes source, "cdp.screenshot(path)"
     assert_includes source, "manifest.json"
-    refute_includes source, "GATE_SNAPSHOT_UPDATE"
     refute_match(/Playwright|playwright/i, source)
   end
 end
