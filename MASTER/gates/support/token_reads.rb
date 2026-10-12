@@ -19,11 +19,11 @@ module Deploy
       "typography.line_height.body_min" =>
         "DesignMetricsGate holds every line-height in its sample to it, headings included, and the scale allows 1 and 1.25",
       "typography.line_height.body_accessibility_min" => "no reader, test or sibling constant states a value",
-      "typography.rag" => "GeometryType reads worn_type for the profile and falls back to its own two numbers here",
+      "typography.rag" => "GeometryType.check_rag otherwise falls back to 5 lines and a 0.12 final-line ratio",
     }.freeze
 
-    # Hash#dig on a nested value returns a plain Hash, so only a read that
-    # starts at the map is seen. Every gate reads that way.
+    # Wrap nested hashes as well as the root so direct bracket, fetch, and dig
+    # access all retain the full path the gate asked for.
     class Map < Hash
       def initialize(values = {}, path = [])
         super()
@@ -46,6 +46,16 @@ module Deploy
         value = super
         TokenReads.note(@path + path, found: !value.nil?)
         value
+      end
+
+      def fetch(key, *defaults, &block)
+        present = key?(key)
+        value = super(key, *defaults, &block)
+        TokenReads.note(@path + [key], found: present && !value.nil?)
+        value
+      rescue KeyError
+        TokenReads.note(@path + [key], found: false)
+        raise
       end
 
       private
