@@ -4,13 +4,10 @@
 require "open3"
 require_relative "../lib/trace/dmesg"
 
-# SWEEP_ROOT, not ROOT. This file is required by test/test_security_sweep.rb,
-# and 25 files in this repo define a bare top-level ROOT, each pointing at a
-# different tree. In one `rake test` process MASTER/tools/dilla/dilla.rb also defines
-# one, so the two collided: Ruby warned and let the second assignment win, which
-# means whichever loaded last silently gave the other the wrong repo root.
-# The warning was the only thing standing between that and a sweep of the wrong
-# tree reporting clean. See TODO.md, "Top-level ROOT".
+# SWEEP_ROOT, not ROOT. This file is required by test/test_security_sweep.rb.
+# The former MASTER/tools/dilla/dilla.rb also declared a top-level ROOT, so load
+# order could silently change the scope of a secret scan. That old path is gone;
+# keep this purpose-specific name rather than reintroducing a generic global.
 SWEEP_ROOT = File.expand_path("../..", __dir__)
 
 SECRET_PATTERNS = [
