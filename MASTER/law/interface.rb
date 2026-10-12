@@ -76,8 +76,8 @@ Law.define(:OPENBSD_DMESG_CONSOLE_STYLE) do
   mode :opportunity
   languages %i[ruby]
   path "MASTER/lib/voice/"
-  ask "Does CLI output follow the native console idiom: append-only, one factual event per line, a stable subsystem0: or unit0 at parent: prefix, truthful status, and useful scrollback? Look for banners, decorative panels, ASCII art outside the face, badge-like status, repeated progress chatter, and information hidden behind color alone. Return CLEAN when plain text remains clear in a pipe, serial terminal and saved transcript."
-  fix "Use Master::Trace::Dmesg's existing unit0: grammar; emit one concise factual line per event, order events by occurrence, keep state and recovery explicit, and preserve plain-text meaning without ANSI or animation. Do not create a second logging/presentation format."
+  ask "For startup, status, progress and operational events, does CLI output follow the native console idiom: append-only, one factual event per line, a stable subsystem0: or unit0 at parent: prefix, truthful status, and useful scrollback? Look for banners, decorative panels, ASCII art outside the face, badge-like status, repeated progress chatter, and information hidden behind color alone. Conversational replies may retain plain Markdown when structure serves the content. Return CLEAN when operational output remains clear in a pipe, serial terminal and saved transcript."
+  fix "Use Master::Trace::Dmesg's existing unit0: grammar for operational events; emit one concise factual line per event, order events by occurrence, keep state and recovery explicit, and preserve plain-text meaning without relying on ANSI or animation. Conversational replies may use restrained, width-aware Markdown. Do not create a second event logging format."
   bad <<~'X'
     ╭─ MASTER ───────────────────────────╮
     │  ◉ ONLINE  MODEL: ready  TOKENS 5k │
