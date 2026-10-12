@@ -1,0 +1,31 @@
+<% metadata = blob&.metadata.to_h %>
+<% photographer = metadata["demo_media_photographer"] %>
+<% photographer_url = metadata["demo_media_photographer_url"] %>
+<% source_url = metadata["demo_media_source_url"] %>
+<% source_name = metadata["demo_media_source_name"] %>
+<% credit = metadata["demo_media_credit"] %>
+
+<% if photographer.present? || credit.present? %>
+  <p class="demo-media-credit">
+    <% if photographer.present? %>
+      <%= t("demo_media.photo_by") %>
+      <% if photographer_url.present? %>
+        <%= link_to photographer, photographer_url, rel: "noopener noreferrer" %>
+      <% else %>
+        <%= photographer %>
+      <% end %>
+      <% if source_name.present? %>
+        <%= t("demo_media.on_source") %>
+        <% if source_url.present? %>
+          <%= link_to source_name, source_url, rel: "noopener noreferrer" %>
+        <% else %>
+          <%= source_name %>
+        <% end %>
+      <% end %>
+    <% elsif source_url.present? %>
+      <%= link_to credit, source_url, rel: "noopener noreferrer" %>
+    <% else %>
+      <%= credit %>
+    <% end %>
+  </p>
+<% end %>
