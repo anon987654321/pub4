@@ -37,12 +37,26 @@ rendered suite bundles most of them. When no browser exists, a gate that needs
 one reports itself inconclusive and does not pass.
 
 `browser_diagnostics` adds runtime evidence to that same CDP path. For each reachable
-route in `data/geometry_surfaces.yml`, at its declared mobile/desktop viewport, it
-records console messages, uncaught JavaScript exceptions, failed HTTP responses,
-failed resource requests, and a PNG screenshot. It writes a run-scoped
-`manifest.json` and screenshots under the system temporary directory
-(`pub4-browser-diagnostics/<run-id>/`); these are diagnostic captures, not accepted
-visual baselines. The committed structural baseline remains `layout_snapshot`.
+route in `data/geometry_surfaces.yml`, at its declared viewport, it records console
+messages, uncaught JavaScript exceptions, failed HTTP responses, failed resource
+requests, and a PNG screenshot. It writes a run-scoped `manifest.json` and
+screenshots under the system temporary directory
+(`pub4-browser-diagnostics/<run-id>/`).
+
+For surfaces opted into the committed layout inventory, the gate also compares the
+PNG against `data/visual_baselines/<app>-<surface>-<viewport>.png` using the
+dependency-free `support/png_diff.rb` decoder. The manifest records exact changed
+pixel counts, ratio, and a red/transparent heatmap. The default threshold is 1%
+of pixels; `GATE_PIXEL_DIFF_MAX_RATIO=0` requests exact equality. Dimension
+changes always fail. Missing baselines are clearly reported as soft findings
+until `GATE_PIXEL_BASELINE_STRICT=1` is enabled; corrupt or unsupported images
+are never treated as equal.
+
+PNG approval is separate from autofix. After reviewing the screenshots, run
+`GATE_PIXEL_BASELINE_APPROVE=1 ruby MASTER/gates/runner.rb browser_diagnostics`
+and inspect `MASTER/gates/data/visual_baselines` before committing. Only
+successfully rendered surfaces without blocking runtime defects are written.
+See `data/visual_baselines/README.md` for the baseline workflow.
 
 Uncaught JavaScript exceptions, document HTTP errors, first-party server errors,
 failed first-party scripts/stylesheets, and missing screenshot evidence fail the
