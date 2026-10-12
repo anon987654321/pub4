@@ -105,7 +105,7 @@ class CritiqueImplementationTest < Minitest::Test
     rooms = read("brgen/app/views/conversations/_rooms_rail.html.erb")
     window = read("brgen/app/views/conversations/show.html.erb")
     channel = read("brgen/app/views/channels/show.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_messenger.scss")
     artifact = read("__shared/app/views/shared/_messenger_artifacts.html.erb")
 
     assert_includes rooms, 'class="messenger-rail"'
