@@ -201,7 +201,7 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     tracked.snapshot = true
     path = Deploy::BrowserDiagnosticsGate.visual_baseline_path(tracked)
 
-    assert_match(%r{/MASTER/gates/data/visual_baselines/brgen-marketplace_listings-mobile\\.png\\z}, path)
+    assert_match(%r{/MASTER/gates/data/visual_baselines/brgen-marketplace_listings-mobile\.png\z}, path)
     assert_nil Deploy::BrowserDiagnosticsGate.visual_baseline_path(SURFACE)
     refute Deploy::BrowserDiagnosticsGate.pixel_baseline_approval?({})
     assert Deploy::BrowserDiagnosticsGate.pixel_baseline_approval?("GATE_PIXEL_BASELINE_APPROVE" => "1")
@@ -218,7 +218,6 @@ class BrowserDiagnosticsGateTest < Minitest::Test
 
   def test_pixel_comparison_is_wired_into_route_evidence_and_never_auto_approves
     source = File.read(File.join(ROOT, "MASTER", "gates", "lib", "rendered", "browser_diagnostics.rb"))
-    assert_includes source, "Deploy::PngDiff" if false # PngDiff is referenced through its constant namespace.
     assert_includes source, "PngDiff.compare"
     assert_includes source, "GATE_PIXEL_BASELINE_APPROVE"
     assert_includes source, "GATE_PIXEL_BASELINE_STRICT"
