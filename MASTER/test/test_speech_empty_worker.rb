@@ -40,7 +40,7 @@ class TestSpeechEmptyWorker < Minitest::Test
     with_empty_worker do |path|
       Sup.stub(:next_socket, path) do
         Sup.stub(:retire_socket, ->(p, **) { retired << p }) do
-          result = Speech.stream_edge_to_io(text: "Good, thanks.", voice_name: "en-US-JennyNeural",
+          result = Speech.stream_edge_to_io(text: "Good, thanks.", voice_name: "en-US-ChristopherNeural",
                                             style_config: { rate: "+0%", pitch: "+0Hz" }, io: StringIO.new)
 
           refute result.ok, "zero bytes must not read as a spoken utterance"
