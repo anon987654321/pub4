@@ -75,6 +75,35 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal 80, seen.last
   end
 
+  def test_ctrl_v_toggles_constitutional_law_glyphs_without_entering_the_prompt
+    face = window
+    assert_equal true, face.instance_variable_get(:@law_field_visible)
+
+    face.send(:react, "\\u0016")
+    assert_equal false, face.instance_variable_get(:@law_field_visible)
+    assert_empty face.instance_variable_get(:@draft)
+    assert_includes face.instance_variable_get(:@words).join(" "), "hidden"
+
+    face.send(:react, "\\u0016")
+    assert_equal true, face.instance_variable_get(:@law_field_visible)
+    assert_empty face.instance_variable_get(:@draft)
+    assert_includes face.instance_variable_get(:@words).join(" "), "visible"
+  end
+
+  def test_terminal_law_toggle_is_passed_to_the_shared_face_renderer
+    face = window
+    seen = []
+    renderer = lambda do |**kwargs|
+      seen << kwargs.fetch(:show_laws)
+      Array.new(kwargs.fetch(:rows), " " * kwargs.fetch(:cols)).join("\\n")
+    end
+    face.send(:react, "\\u0016")
+
+    Master::CLI::Face.stub(:frame, renderer) { face.screen(30, 80, 2.0) }
+
+    assert_equal [false], seen
+  end
+
   def test_motion_has_a_camera_dolly
     motion = Master::CLI::Face::Motion.new(seed: 7)
     motion.step(state: :idle, t: 1.0)
