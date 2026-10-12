@@ -41,7 +41,7 @@ class WebVitalsBudgetGateTest < Minitest::Test
 
   def surface
     PROBE::Surface.new(app: "brgen", label: "core", host: nil, path: "/", viewport: "mobile",
-                       width: 390, height: 844, snapshot: false, port: 38_182)
+                       width: 390, height: 844, snapshot: false, pixel_snapshot: true, port: 38_182)
   end
 
   # lcp in ms, cls unitless; nil for "the page reported no entry".
@@ -62,9 +62,9 @@ class WebVitalsBudgetGateTest < Minitest::Test
   def test_default_surface_matrix_covers_each_product_first_screen
     rows = [
       surface,
-      PROBE::Surface.new(app: "amber", label: "home", path: "/", viewport: "mobile", port: 61_352),
-      PROBE::Surface.new(app: "bsdports", label: "home", path: "/", viewport: "mobile", port: 47_312),
-      PROBE::Surface.new(app: "master", label: "chat", path: "/", viewport: "mobile", port: 42_001),
+      PROBE::Surface.new(app: "amber", label: "home", path: "/", viewport: "mobile", pixel_snapshot: true, port: 61_352),
+      PROBE::Surface.new(app: "bsdports", label: "home", path: "/", viewport: "mobile", pixel_snapshot: true, port: 47_312),
+      PROBE::Surface.new(app: "master", label: "chat", path: "/", viewport: "mobile", pixel_snapshot: true, port: 42_001),
     ]
     previous = ENV.delete("GATE_SURFACES")
     with_methods(PROBE, surfaces: proc { |*, **| rows }) do
