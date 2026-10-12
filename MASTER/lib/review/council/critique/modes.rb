@@ -84,21 +84,25 @@ module Master
                 "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer",
                 "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
               ],
-# The executable is thin; critique the engine modules and canonical data too.
-files: %w[
-  ../STUDIO/dilla/dilla.rb
-  ../STUDIO/dilla/data/dilla.json
-  ../STUDIO/dilla/data/music_theory.json
-  ../STUDIO/dilla/lib/dilla/engine.rb
-  ../STUDIO/dilla/lib/dilla/sequencer.rb
-  ../STUDIO/dilla/lib/dilla/chords.rb
-  ../STUDIO/dilla/lib/dilla/synthesis.rb
-  ../STUDIO/dilla/lib/dilla/voices.rb
-  ../STUDIO/dilla/lib/dilla/drums.rb
-  ../STUDIO/dilla/lib/dilla/effects.rb
-  lib/voice/dilla.rb lib/voice/production_dna.rb
-  lib/io/analog_capabilities.rb
-],
+              # The executable is thin; critique the engine modules and canonical data too.
+              files: %w[
+                ../STUDIO/dilla/dilla.rb
+                ../STUDIO/dilla/data/dilla.json
+                ../STUDIO/dilla/data/music_theory.json
+                ../STUDIO/dilla/data/showcase.json
+                ../STUDIO/dilla/lib/dilla/engine.rb
+                ../STUDIO/dilla/lib/dilla/sequencer.rb
+                ../STUDIO/dilla/lib/dilla/chords.rb
+                ../STUDIO/dilla/lib/dilla/arp.rb
+                ../STUDIO/dilla/lib/dilla/colour.rb
+                ../STUDIO/dilla/lib/dilla/echo.rb
+                ../STUDIO/dilla/lib/dilla/synthesis.rb
+                ../STUDIO/dilla/lib/dilla/voices.rb
+                ../STUDIO/dilla/lib/dilla/drums.rb
+                ../STUDIO/dilla/lib/dilla/effects.rb
+                lib/voice/dilla.rb lib/voice/production_dna.rb
+                lib/io/analog_capabilities.rb
+              ],
               quality_kind: :sound,
               ideation_prompt: "Review the Dilla engine and measured mix. For EACH problem the panel " \
                                "raises, generate 3 distinct solutions (ENV knobs, bus EQ, groove density, " \
