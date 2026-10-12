@@ -12,6 +12,15 @@ class VpsAdminTest < Minitest::Test
     assert_equal [["doas", "sysupgrade", "-n"]], OpenBSDAdmin.commands_for(["upgrade", "stage"])
   end
 
+  def test_upgrade_check_cannot_arm_an_upgrade
+    [["upgrade"], ["upgrade", "check"]].each do |argv|
+      commands = OpenBSDAdmin.commands_for(argv)
+
+      refute commands.any? { |c| c.include?("sysupgrade") }, "#{argv.join(' ')} must not run sysupgrade, which -n arms for the next boot"
+      refute commands.any? { |c| c.first == "doas" }, "a check needs no root"
+    end
+  end
+
   def test_service_actions_are_allowlisted
     assert_equal [["doas", "rcctl", "restart", "master"]],
                  OpenBSDAdmin.commands_for(["service", "master", "restart"])

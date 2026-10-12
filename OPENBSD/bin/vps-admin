@@ -25,7 +25,7 @@ module OpenBSDAdmin
       dmesg
       packages
       updates [check|apply]
-      upgrade [check|stage]
+      upgrade [check|stage]   check reads the release and the mirror; stage arms the next boot
       reboot
 
       Mutating operations are limited to explicit service actions, pf reload,
@@ -57,8 +57,13 @@ module OpenBSDAdmin
       [["doas", "syspatch", "-c"]]
     when ["updates", "apply"]
       [["doas", "syspatch"]]
+    # sysupgrade has no dry run. `-n` is not one: sysupgrade(8) says it fetches the
+    # sets and creates /bsd.upgrade, and the bootloader runs that one-shot upgrade at
+    # the next boot, so a check that ran it armed an OS upgrade for any reboot.
+    # check therefore only reads the running release and the mirror; stage is the
+    # deliberate act and is named as such.
     when ["upgrade"], ["upgrade", "check"]
-      [["doas", "sysupgrade", "-n"]]
+      [["sysctl", "kern.osrelease"], ["cat", "/etc/installurl"]]
     when ["upgrade", "stage"]
       [["doas", "sysupgrade", "-n"]]
     when ["pf", "status"]

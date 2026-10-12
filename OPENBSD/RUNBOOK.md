@@ -539,6 +539,51 @@ on every run so "nothing to do" and "never ran" stop being the same silence.
 `health_check.rb` asserts all three: the suspended title, `rcctl ls failed`, and
 the heartbeat's age.
 
+## Updates: syspatch, packages, release upgrades
+
+There is no staging box (CLAUDE.md, "Refused, and why"), so staging an update
+means recording the box's state and a way back before touching it. Observed on
+vm23 on 2026-10-12: OpenBSD 7.8 GENERIC#54, `syspatch -c` lists 69 patches
+(`002_xserver` to `070_wsdisplay`) and `/var/syspatch` holds only `78-001_syspatch`,
+so none is applied. Among the 69 are services this box runs: `004_libssl` and
+`060_libressl`, `005_smtpd`, `026_smtpd`, `038_smtpd`, `051_smtpd`, `013_httpd`,
+`058_nsd`, `010_unbound`, `059_unbound`, `057_ldapd`, and kernel patches
+(`040_elf`, `048_kernproc`, `049_ttyioctl`, `054_shmat`, `061_procargs`) that
+take effect only after a reboot. `pkg_add -un` reports only `quirks`, so packages
+(ruby 3.4.9p0, sqlite3 3.50.7p0, openssl 3.5.6v0, ffmpeg 6.1.3p0v1) are current
+for the 7.8 package set. `/bsd.upgrade` and `/home/_sysupgrade` do not exist, so
+no release upgrade is armed.
+
+Patches are cumulative; `syspatch` applies all of them and cannot apply a subset.
+The way back is `doas syspatch -r`, which reverts only the newest patch from
+`/var/syspatch/<patch>/rollback.tgz`, so reverting a bad run is one patch at a
+time and kernel patches need another reboot. Plan the window as a reboot.
+
+Before the window:
+
+1. `ruby OPENBSD/bin/dr-pull` on the Mac and `ruby OPENBSD/bin/dr-pull --drill`;
+   a patched box is one failed boot from needing the pull.
+2. `zsh OPENBSD/bin/deploy-diff.sh` and `ruby OPENBSD/bin/domain_watch.rb --tls`,
+   saved, as the "before" for relayd, certificates and ports.
+3. Note libvips: vm23 runs a locally built libvips (daily.local explains why
+   `pkg_add -u` would replace it with a build that has no SVG loader); do not run
+   `pkg_add -u` in the same window, and keep the console reachable.
+4. Have the `server4` console session ready (`vmctl console vm23`, manual).
+
+In the window: `ruby OPENBSD/bin/vps-admin updates apply` (`doas syspatch`), then
+`doas reboot`. After a reboot the apps cold-boot together and starve each other on
+one vCPU (the 2026-08-24 boot storm): start them one at a time, master and
+`brgen_jobs` last, and wait for each to answer on its own port before the next.
+Then `ruby OPENBSD/bin/domain_watch.rb --tls` against the saved "before". No
+deploy is needed afterwards, because syspatch does not touch `/home`.
+
+`vps-admin upgrade check` only reads the running release and the mirror. Do not
+call `sysupgrade -n` a check: it downloads the sets and creates `/bsd.upgrade`,
+which the bootloader runs at the next boot, whatever the reason for that boot.
+Release upgrades go through `vps-admin upgrade stage` in a console-attended
+window of their own, after 7.9 is out and the Ruby, Chromium and ffmpeg packages
+exist for it.
+
 ## Repair playbooks
 
 - Integrity failure: run `ruby OPENBSD/gates/integrity_gate.rb` and fix the first
