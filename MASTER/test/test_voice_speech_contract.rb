@@ -52,7 +52,7 @@ class SpeechContractSpec < Minitest::Test
   end
 
   def test_native_say_fallback_has_no_host_default_voice_path
-    assert_equal "Samantha", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:jenny)
+    refute Master::Voice::Engines::MACOS_VOICE_FALLBACKS.key?(:jenny)
     assert_equal "Alex", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:andrew)
     refute Master::Voice::Engines::MACOS_VOICE_FALLBACKS.key?(:pernille)
     refute Master::Voice::Engines::MACOS_VOICE_FALLBACKS.key?(:finn)
