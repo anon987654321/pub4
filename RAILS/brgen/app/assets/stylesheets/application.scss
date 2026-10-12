@@ -347,7 +347,7 @@ html, body {
  *
  * Set with the `font` shorthand, which is invisible to the obvious search: grep
  * for `font-size:` on html and brgen appears to set no root size at all. This
- * line is the 18px that comments across the tree, MASTER/data/laws.yml#design_system and
+ * line is the 18px that comments across the tree, MASTER/data/tokens.yml and
  * ScaleLint all refer to. */
 html {
   font: var(--font-size)/var(--line-height) var(--font);
@@ -2886,7 +2886,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 /* Six categorical avatar backgrounds, each carrying white ink. A palette, not
    a usage: there is no prior token for these to cite. Local to brgen — unlike
-   x.$vertical-accents they are not in MASTER/data/laws.yml#design_system. */
+   x.$vertical-accents they are declared by MASTER/data/tokens.yml#tokens.vertical_accents. */
 .monogram--0 { background: #4b2e83; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--1 { background: #7a3e12; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--2 { background: #075e54; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
