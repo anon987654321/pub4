@@ -72,7 +72,7 @@ module Deploy
             # The rule styling the CTA has to carry the floor itself. A sheet that
             # merely mentions the class, or declares 44px for something else,
             # satisfied the file-scoped version of this contract.
-            paths: %w[brgen/app/assets/stylesheets/application.scss],
+            paths: %w[brgen/app/assets/stylesheets/_brgen_vertical_surfaces.scss],
             required_rule: [/\.listing-buy-bar-cta\b/, /min-height:\s*(?:44px|var\(--tap-min\))/],
           },
         ]
