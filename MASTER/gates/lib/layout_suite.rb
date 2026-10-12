@@ -3,6 +3,7 @@
 require_relative "../support/gate_result"
 require_relative "../support/gate_autofix"
 require_relative "source/css_constitution"
+require_relative "source/scale_ratchet"
 require_relative "source/css_brace_balance"
 require_relative "source/css_minify_integrity"
 require_relative "live/first_screen"
@@ -29,6 +30,7 @@ module Deploy
     LEAVES = [
       CssBraceBalanceGate,
       CssConstitutionGate,
+      ScaleRatchetGate,
       CssMinifyIntegrityGate,
       DialectPurityGate,
       FirstScreenGate,
