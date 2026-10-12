@@ -503,16 +503,16 @@ presets:
     cycles: 2
     cherry_pick: true
     files:
-      - STUDIO/dilla/dilla.rb
-      - STUDIO/dilla/data/dilla.json
-      - STUDIO/dilla/data/music_theory.json
-      - STUDIO/dilla/lib/dilla/engine.rb
-      - STUDIO/dilla/lib/dilla/sequencer.rb
-      - STUDIO/dilla/lib/dilla/chords.rb
-      - STUDIO/dilla/lib/dilla/synthesis.rb
-      - STUDIO/dilla/lib/dilla/voices.rb
-      - STUDIO/dilla/lib/dilla/drums.rb
-      - STUDIO/dilla/lib/dilla/effects.rb
+      - ../STUDIO/dilla/dilla.rb
+      - ../STUDIO/dilla/data/dilla.json
+      - ../STUDIO/dilla/data/music_theory.json
+      - ../STUDIO/dilla/lib/dilla/engine.rb
+      - ../STUDIO/dilla/lib/dilla/sequencer.rb
+      - ../STUDIO/dilla/lib/dilla/chords.rb
+      - ../STUDIO/dilla/lib/dilla/synthesis.rb
+      - ../STUDIO/dilla/lib/dilla/voices.rb
+      - ../STUDIO/dilla/lib/dilla/drums.rb
+      - ../STUDIO/dilla/lib/dilla/effects.rb
       - lib/voice/dilla.rb
       - lib/voice/production_dna.rb
       - lib/io/analog_capabilities.rb
