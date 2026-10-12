@@ -32,6 +32,23 @@ class TestTokenReads < Minitest::Test
     assert_match(/typography\.letter_spacing\.all_caps_min_em/, result.failures.join)
   end
 
+  def test_nested_bracket_reads_report_the_complete_missing_path
+    @map["typography"]["hierarchy"]["missing_floor"]
+    result = TR.result
+
+    assert_equal ["typography.hierarchy.missing_floor"], TR.missed
+    assert_equal :failed, result.outcome
+    assert_match(/typography\\.hierarchy\\.missing_floor/, result.failures.join)
+  end
+
+  def test_hashes_inside_arrays_keep_their_path
+    map = TR.wrap("typography" => { "ladders" => [{ "minimum" => 3 }] })
+
+    assert_equal 3, map["typography"]["ladders"][0]["minimum"]
+    assert_empty TR.undeclared
+  end
+
+
   def test_a_declared_miss_warns_with_its_reason_and_does_not_fail
     key = TR::UNSET.keys.first
     assert_nil @map.dig(*key.split("."))
