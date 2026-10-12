@@ -205,7 +205,7 @@ class TestLawContract < Minitest::Test
 
     error = assert_raises(ArgumentError) { rule.prove! }
 
-    assert_match(/fixture\.scss/, error.message)
+    assert_match(/not on \.scss/, error.message)
   end
 
   def test_symbol_language_declarations_match_string_file_languages

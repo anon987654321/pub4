@@ -569,45 +569,59 @@ module Law
     def define(id, &block)
       b = Builder.new(id)
       b.instance_eval(&block)
-      raise ArgumentError, "duplicate law #{id}" if @definitions.key?(id)
-      @definitions[id] = b.build
+      # A reload in progress defines into its own copy, so no reader sees the old registry half replaced.
+      registry = Thread.current[:law_staging] || @definitions
+      raise ArgumentError, "duplicate law #{id}" if registry.key?(id)
+
+      registry[id] = b.build
     end
 
+    # Loads every law file in dir and publishes the result in one assignment. The live registry
+    # is never edited in place: a reader during the reload sees the complete old set, and a
+    # reload that raises leaves it untouched.
     def load_all(dir = __dir__)
+      LOAD_MUTEX.synchronize { reload(dir) }
+    end
+
+    def reload(dir)
       files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
       files.reject! { |file| file == File.expand_path(__FILE__) }
 
-      definitions_before = @definitions.dup
-      sources_before = @law_sources.dup
-      stamps_before = @law_stamps.dup
+      staged = @definitions.dup
+      sources = @law_sources.dup
+      stamps = @law_stamps.dup
 
-      removed_sources = @law_sources.keys - files
-      removed_sources.each { |source| @law_sources[source].each { |id| @definitions.delete(id) } }
-      removed_sources.each do |source|
-        @law_sources.delete(source)
-        @law_stamps.delete(source)
+      changed = false
+      (sources.keys - files).each do |source|
+        changed = true
+        sources.delete(source).each { |id| staged.delete(id) }
+        stamps.delete(source)
       end
 
+      Thread.current[:law_staging] = staged
       files.each do |source|
         stat = File.stat(source)
         stamp = [stat.size, stat.ino, stat.mtime.to_r]
         # A stamp says the file is unchanged, not that its laws are still registered:
         # a cleared registry must reload them, or every caller after the clear sees none.
-        next if @law_stamps[source] == stamp && @law_sources[source].to_a.all? { |id| @definitions.key?(id) }
+        next if stamps[source] == stamp && sources[source].to_a.all? { |id| staged.key?(id) }
 
-        @law_sources[source].to_a.each { |id| @definitions.delete(id) }
-        @law_sources[source] = []
-        before_ids = @definitions.keys
+        changed = true
+        sources[source].to_a.each { |id| staged.delete(id) }
+        before_ids = staged.keys
         load source
-        @law_sources[source] = @definitions.keys - before_ids
-        @law_stamps[source] = stamp
+        sources[source] = staged.keys - before_ids
+        stamps[source] = stamp
       end
-      @definitions
-    rescue StandardError
-      @definitions = definitions_before if defined?(definitions_before)
-      @law_sources = sources_before if defined?(sources_before)
-      @law_stamps = stamps_before if defined?(stamps_before)
-      raise
+
+      return @definitions unless changed
+
+      @definitions = staged
+      @law_sources = sources
+      @law_stamps = stamps
+      staged
+    ensure
+      Thread.current[:law_staging] = nil
     end
 
     def scan(file, language: nil)

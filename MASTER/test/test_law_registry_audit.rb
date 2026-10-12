@@ -61,7 +61,7 @@ class TestLawRegistryAudit < Minitest::Test
 
     assert_includes report.mechanical, "FAIL_VISIBLY"
     refute_includes report.semantic_only, "FAIL_VISIBLY"
-    assert_includes law.send(:load_semantic_rules).keys, "FAIL_VISIBLY"
+    assert_includes law.send(:load_semantic_laws).keys, "FAIL_VISIBLY"
   end
 
   def test_ungraphed_laws_is_enumerable

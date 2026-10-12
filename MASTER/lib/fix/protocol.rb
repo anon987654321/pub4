@@ -254,11 +254,19 @@ end
       end
 
       def relative(path, root)
-        full = File.expand_path(path)
-        root = File.expand_path(root)
+        full = resolved(path)
+        root = resolved(root)
         return path.to_s unless full == root || full.start_with?(root + File::SEPARATOR)
 
         full.delete_prefix(root + File::SEPARATOR)
+      end
+
+      # Symlinks resolve on both sides: macOS names its temp directory /var and answers /private/var,
+      # and a target resolved against an unresolved root is never found under it.
+      def resolved(path)
+        File.realpath(path)
+      rescue Errno::ENOENT
+        File.expand_path(path)
       end
 
       def render(root:, target:, files: nil, skipped: nil, full: false)

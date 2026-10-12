@@ -53,7 +53,7 @@ class TestFixProtocol < Minitest::Test
       assert_includes context, "feature_truth=RAILS/apps.yml"
       assert_includes context, "deploy_identity=OPENBSD/deploy_inventory.json"
       assert_includes context, "evidence_ladder: source authority → executable proof → live evidence"
-      assert_includes context, "cross-tree proof rule: identify the authority"
+      assert_includes context, "cross-tree proof law: identify the authority"
       assert_includes context, '"target": "OPENBSD"'
     end
   end
@@ -141,7 +141,7 @@ class TestFixProtocol < Minitest::Test
       assert_kind_of Hash, payload.fetch("detector_matrix")
       assert_kind_of Hash, payload.fetch("detector_summary")
       assert_equal payload.fetch("detector_matrix").size,
-                   payload.dig("detector_summary", "total_rules")
+                   payload.dig("detector_summary", "total_laws")
     end
   end
 
