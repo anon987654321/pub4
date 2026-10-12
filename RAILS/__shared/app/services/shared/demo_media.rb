@@ -3,6 +3,7 @@
 require "open-uri"
 require "pathname"
 require "stringio"
+require "digest"
 require_relative "demo_media/catalog"
 
 module Shared
@@ -25,11 +26,31 @@ catalog: nil)
 
     def attach_remote_postpro!(record, attachment_name, seed:, preset:, width: 800, height: 600, catalog: nil)
       return false unless attach_remote!(record, attachment_name, seed:, width:, height:, catalog:)
-      # A catalogue frame marked graded left STUDIO already through postpro, and
-      # a second pass stacks a second grain field and curve on the first.
-      return true if Catalog.resolve(seed, catalog:)&.dig("graded")
 
-      Shared::PostproProcessor.apply_to_record!(record, attachment_name, preset:, replace: true)
+      entry = Catalog.resolve(seed, catalog:)
+      # A catalogue frame marked graded already passed through postpro. Retain
+      # its attribution, but never stack a second grain field or curve.
+      if entry&.dig("graded")
+        annotate_attachment!(record, attachment_name, entry)
+        return true
+      end
+
+      result = Shared::PostproProcessor.apply_to_record!(
+        record, attachment_name, preset: preset_for(preset, seed:), replace: true
+      )
+      # Postpro may replace the blob, so annotate the final attachment as well.
+      annotate_attachment!(record, attachment_name, entry)
+      result
+    end
+
+    # "random" is deterministic per seed key. Retries and repeated seed runs
+    # choose the same real Postpro preset rather than changing the grade.
+    def preset_for(preset, seed:)
+      return preset.to_s unless preset.to_s == "random"
+
+      presets = Shared::PostproProcessor::VALID_PRESETS
+      index = Digest::SHA256.hexdigest(seed.to_s).to_i(16) % presets.length
+      presets.fetch(index)
     end
 
     # The catalogue alone, with no picsum fallback: for bulk seeds that would
@@ -48,7 +69,7 @@ catalog: nil)
       entry = Catalog.resolve(seed, catalog:)
       return false unless entry
 
-      if entry["url"].present?
+      attached = if entry["url"].present?
         attach_from_url!(record, attachment_name, url: entry["url"], seed:, content_type:)
       elsif entry["file"].present?
         path = Catalog.file_path(entry["file"], catalog:)
@@ -65,6 +86,9 @@ catalog: nil)
       else
         false
       end
+
+      annotate_attachment!(record, attachment_name, entry) if attached
+      attached
     end
 
     def skip_attach?
@@ -89,6 +113,30 @@ catalog: nil)
         content_type:,
       )
       true
+    end
+
+    def annotate_attachment!(record, attachment_name, entry)
+      return unless entry
+
+      values = {
+        "demo_media_credit" => entry["credit"],
+        "demo_media_source_url" => entry["source_url"] || entry["url"],
+        "demo_media_source_name" => entry["source_name"],
+        "demo_media_photographer" => entry["photographer"],
+        "demo_media_photographer_url" => entry["photographer_url"],
+        "demo_media_license" => entry["license"]
+      }.reject { |_key, value| value.nil? || value.to_s.empty? }
+      return if values.empty?
+
+      attachment = record.public_send(attachment_name)
+      return unless attachment.attached?
+
+      blobs = attachment.respond_to?(:blobs) ? attachment.blobs.to_a : [attachment.blob]
+      blobs.compact.each do |blob|
+        blob.update!(metadata: blob.metadata.to_h.merge(values))
+      end
+    rescue StandardError => error
+      log("DemoMedia attribution failed: #{error.class}: #{error.message}")
     end
 
     def user_agent
