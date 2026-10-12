@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
 namespace :brgen do
-  desc "Seed credible Bergen demo content (idempotent; safe on production)"
+  desc "Seed simulated Bergen content in development/test or a disclosed demo host"
   task demo_seed: :environment do
+    unless Brgen::DemoMode.seed_allowed?
+      abort "Refusing synthetic seed: use development/test or an explicitly disclosed demo deployment"
+    end
+
     bergen = City.find_by(domain: "brgen.no") or abort("brgen.no city missing")
     Brgen::BergenDemoSeeder.new(bergen).seed!
     ActsAsTenant.with_tenant(bergen) do
@@ -12,6 +16,35 @@ namespace :brgen do
            "restaurants=#{Takeaway::Restaurant.count} tv_channels=#{Tv::Channel.count} " \
            "playlist_tracks=#{playlist&.tracks&.count}"
     end
+  end
+
+  desc "Read-only audit of historical synthetic seed accounts and linked content"
+  task demo_audit: :environment do
+    handles = Brgen::BergenDemoSeeder::USERS.map(&:last)
+    candidates = User.where(username: handles)
+                     .or(User.where("LOWER(email_address) LIKE ?", "seed%@%"))
+    user_ids = candidates.distinct.pluck(:id)
+
+    puts "candidate synthetic identities: #{user_ids.size}"
+    puts "candidate usernames: #{candidates.order(:username).distinct.pluck(:username).join(', ')}"
+    puts "posts: #{Post.where(user_id: user_ids).count}"
+    puts "comments: #{Comment.where(user_id: user_ids).count}"
+
+    if defined?(Marketplace::Listing) && Marketplace::Listing.table_exists?
+      listings = Marketplace::Listing.where(user_id: user_ids)
+      puts "listings: #{listings.count}"
+      if listings.column_names.include?("views_count")
+        puts "listings with nonzero view counts: #{listings.where.not(views_count: 0).count}"
+      end
+    end
+
+    if defined?(Playlist::Playlist) && Playlist::Playlist.table_exists?
+      playlists = Playlist::Playlist.where(user_id: user_ids)
+      puts "playlists: #{playlists.count}"
+      puts "playlists with historical 428 play count: #{playlists.where(plays_count: 428).count}"
+    end
+
+    puts "READ ONLY: matches are candidates, not proof. No records were changed."
   end
 
   namespace :demo_media do
