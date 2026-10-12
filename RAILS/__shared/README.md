@@ -9,9 +9,10 @@ vendored set of Stimulus components. The apps mount it by local path.
 The design values do not start here. They are declared in `MASTER/data/tokens.yml`,
 and the `design_tokens.yml` beside this README is a file generated from it by
 `MASTER/tools/rails/sync_dialect_tokens.rb`. Edit the source and regenerate, and
-never hand-edit the projection. The face's `:root` block in
-`RAILS/master_web/public/face.css` is generated the same way, by
-`MASTER/tools/rails/generate_face_root_css.rb`.
+never hand-edit the projection. MASTER's browser face is assembled from ordered
+source modules in `RAILS/master_web/styles/face/` by
+`MASTER/tools/rails/build_face_css.rb`; edit those modules rather than the public
+bundle. Its `:root` block is still generated from the canonical tokens.
 
 Every HTML document in every surface shares one chrome contract. The viewport
 covers the safe area, the first focusable element is a skip link to the main
@@ -76,6 +77,7 @@ contracts.
 ruby RAILS/test/layout_contract_test.rb
 ruby RAILS/test/design_contract_test.rb
 ruby MASTER/tools/rails/build_all_css.rb --check
+ruby MASTER/tools/rails/build_face_css.rb --check
 ruby MASTER/gates/runner.rb stimulus_components
 ruby MASTER/gates/runner.rb frontend_auditor
 ```
