@@ -37,7 +37,7 @@ class GeometryTypographyTest < Minitest::Test
 
     assert result.incomplete?
     assert_equal :inconclusive, result.outcome
-    assert_match(/geometry micro_type: test could not be measured \(IOError: fixture read failed\\)/,
+    assert_match(/geometry micro_type: test could not be measured \(IOError: fixture read failed\)/,
                  result.unchecked.join)
   end
 
