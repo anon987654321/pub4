@@ -35,6 +35,15 @@ a {
   text-underline-offset: 0.0925em;
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (forced-colors: active) {
+  :focus-visible { outline-color: Highlight; }
+}
+
 b, strong { font-weight: 700; }
 i, em { font-style: italic; }
 
