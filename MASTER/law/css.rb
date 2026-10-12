@@ -305,3 +305,139 @@ Law.define(:GESTURE_OWNERSHIP) do
   bad ".card-stack { touch-action: auto; }"
   good ".card-stack { touch-action: pan-y; }"
 end
+
+# Five decorative devices a model reaches for by habit. Each is judged by what
+# the mark does for the reader, not by its look, and each carries the
+# constitutional law it serves: DENSITY (a mark that carries no information is
+# noise) or LINEARITY (structure belongs to the element tree, not to glyphs
+# between words). Rendered values stay operator-owned (RENDERED_VALUES), so none
+# of these names a replacement colour, face or size. Detection lives once, here,
+# so the laws and the false-positive census in test_design_marks.rb read the
+# same patterns.
+module DesignMarks
+  module_function
+
+  # Guarded: Law.load_all re-evaluates a changed law file in the same process.
+  ARROW_GLYPH = "(?:→|&rarr;|&#8594;|&#x2192;|->|&gt;&gt;|>>|▸|&#9656;|&#x25b8;)" unless const_defined?(:ARROW_GLYPH)
+  DOT_GLYPH = "(?:·|&middot;|&#183;|&#xb7;)" unless const_defined?(:DOT_GLYPH)
+
+  # The innermost { … } blocks of a stylesheet, with their selector.
+  def blocks(text)
+    text.scan(/([^{};]*)\{([^{}]*)\}/m).map { |selector, body| [selector.strip, body] }
+  end
+
+  # px / rem / em value under the body size, or a named small step.
+  def small_size?(body)
+    value = body[/font-size\s*:\s*([^;}\n]+)/i, 1].to_s.strip
+    return false if value.empty?
+    return true if value.match?(/(?:--|\$)(?:font-?(?:size-?)?)?(?:2?xs|sm|small|caption|label|micro|tiny)\b/i)
+
+    number = value[/\A([\d.]+)(rem|em|px)\b/i, 1]
+    return false unless number
+
+    value.match?(/px\b/i) ? number.to_f < 16 : number.to_f < 1
+  end
+
+  # Tracked all-caps eyebrows: uppercase and non-zero tracking together, on text
+  # that is small or that the author named an eyebrow, kicker or overline.
+  def eyebrow_blocks(text)
+    blocks(text).select do |selector, body|
+      next false unless body.match?(/text-transform\s*:\s*uppercase/i)
+      next false unless body.match?(/letter-spacing\s*:\s*+(?!0(?:\.0+)?(?:px|r?em)?\s*[;}\n]|normal|inherit|initial|unset)[^;}\n]+/i)
+
+      selector.match?(/eyebrow|kicker|overline/i) || small_size?(body)
+    end
+  end
+
+  def eyebrow_class?(line) = line.match?(/class\s*[:=]\s*["'][^"']*\b(?:eyebrow|kicker|overline)\b/i)
+
+  # A glyph that points at the next step, appended to the label of a link or button.
+  def arrow_label?(line)
+    return true if line.match?(%r{<(?:a|button)\b[^>]*>[^<]*?\s#{ARROW_GLYPH}\s*</(?:a|button)>}i)
+    return true if line.match?(%r{<span\b[^>]*>\s*#{ARROW_GLYPH}\s*</span>}i)
+
+    line.match?(/\b(?:link_to|button_to|submit|link_to_if)\b\s*\(?\s*(["'])[^"']*?\S\s*#{ARROW_GLYPH}\s*\1/)
+  end
+
+  # `A · B · C`: two or more dot separators between words, or a join(" · ").
+  def dotted_meta?(line)
+    return false if line.match?(/<title\b|<meta\b/i)
+    return true if line.match?(/\.join\(\s*["'] ?#{DOT_GLYPH} ?["']\s*\)/)
+
+    line.scan(/\S\s+#{DOT_GLYPH}\s+\S/).length >= 2
+  end
+
+  # A gradient painted as a surface. A fade to transparent is a functional edge
+  # (a scroll hint, a scrim under text), so it is spared, as is a mask, a solid
+  # fill and a hard-stop data bar.
+  def gradient_wash?(line)
+    return false unless line.match?(/(?:background(?:-image)?|--[\w-]+)\s*:[^;]*(?:linear|radial|conic)-gradient\(/i)
+
+    return false if line.match?(/transparent|\bmask/i)
+
+    # A colour used twice is a hard stop or a solid fill: a hairline or a data bar.
+    !line.scan(/var\(--[\w-]+\)|#\h{3,8}\b/).tally.value?(2)
+  end
+
+  # Leading-zero counters and literal 0N labels: ornament on items that need no order.
+  def ordinal_ornament?(line)
+    return true if line.match?(/counter\([^)]*decimal-leading-zero/i)
+    return true if line.match?(/content\s*:\s*["']0\d\b/)
+    return true if line.match?(/>\s*0[1-9]\s*[\/.]?\s*</)
+
+    line.match?(/(?:["']0<%=|["']%02d["']\s*%\s*\(?\s*\w*(?:index|idx|\bi\b)\b?|<%=\s*["']%02d["']\s*%\s*\(?[^%]*(?:index|idx|\+\s*1))/)
+  end
+end
+
+Law.define(:NO_EYEBROW_LABEL) do
+  source "DENSITY — a small tracked all-caps line above a heading restates the heading's role; Strunk, omit needless words"
+  severity :info
+  languages %i[css scss html]
+  scope :file
+  detect do |text|
+    DesignMarks.eyebrow_blocks(text).any? || text.each_line.any? { |line| DesignMarks.eyebrow_class?(line) }
+  end
+  fix "Drop the eyebrow; let the heading and the page structure say where the reader is. A label that names a field stays."
+  bad  ".kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }"
+  good ".field-label { font-size: 0.875rem; font-weight: 600; }"
+end
+
+Law.define(:NO_TRAILING_ARROW) do
+  source "DENSITY — a link already says it can be followed; an arrow glyph in its text adds no information"
+  severity :info
+  languages %i[html]
+  detect { |line| DesignMarks.arrow_label?(line) }
+  fix "Write the verb and the object (\"Les saken\"); the link styling carries the affordance."
+  bad  '<a href="/news">Les mer →</a>'
+  good '<a href="/news">Les saken</a>'
+end
+
+Law.define(:NO_DOT_SEPARATED_META) do
+  source "LINEARITY — structure belongs to the element tree; glyphs between words make a flat string the reader must parse"
+  severity :info
+  languages %i[html]
+  detect { |line| DesignMarks.dotted_meta?(line) }
+  fix "Put each fact in its own element (a list item or a span) and let spacing or a border separate them."
+  bad  "<p>Bergen · 3 timer siden · 12 svar</p>"
+  good "<ul class=\"meta\"><li>Bergen</li><li>3 timer siden</li><li>12 svar</li></ul>"
+end
+
+Law.define(:NO_DECORATIVE_GRADIENT) do
+  source "RENDERED_VALUES and flat design — a gradient wash is a colour the operator did not choose; surfaces are flat tokens"
+  severity :info
+  languages %i[css scss]
+  detect { |line| DesignMarks.gradient_wash?(line) }
+  fix "Paint the surface with its token colour. A fade to transparent over an edge or a scrim under text is allowed."
+  bad  ".hero { background: linear-gradient(135deg, var(--a), var(--b)); }"
+  good ".hero { background: var(--surface); }"
+end
+
+Law.define(:NO_ORDINAL_ORNAMENT) do
+  source "LINEARITY — a 01, 02, 03 marker promises a sequence; on items with no order it is decoration"
+  severity :info
+  languages %i[css scss html]
+  detect { |line| DesignMarks.ordinal_ornament?(line) }
+  fix "Drop the number, or make the items an ordered list when the order is real."
+  bad  ".card::before { content: counter(card, decimal-leading-zero); }"
+  good "ol.steps li::marker { content: counter(list-item) \". \"; }"
+end

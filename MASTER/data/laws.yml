@@ -2047,6 +2047,66 @@ law_map:
       root: bounded_load
       tags:
       - aesthetic
+    decorative_eyebrow:
+      meaning: a small tracked all-caps line above a heading restates what the heading already says
+      detects: eyebrow_label
+      severity: low
+      confidence: 0.7
+      operation: drop_label
+      law_ids:
+      - NO_EYEBROW_LABEL
+      status: covered
+      root: no_surplus
+      tags:
+      - aesthetic
+    trailing_arrow:
+      meaning: a link says it can be followed; an arrow glyph in its text adds no information
+      detects: arrow_glyph_in_link
+      severity: low
+      confidence: 0.7
+      operation: rewrite_label
+      law_ids:
+      - NO_TRAILING_ARROW
+      status: covered
+      root: no_surplus
+      tags:
+      - aesthetic
+    dot_separated_meta:
+      meaning: facts in their own elements, not joined by glyphs into one string
+      detects: middle_dot_string
+      severity: low
+      confidence: 0.7
+      operation: split_elements
+      law_ids:
+      - NO_DOT_SEPARATED_META
+      status: covered
+      root: one_responsibility
+      tags:
+      - aesthetic
+    decorative_gradient:
+      meaning: surfaces are flat token colours; a gradient wash is a colour nobody chose
+      detects: gradient_wash
+      severity: low
+      confidence: 0.7
+      operation: flatten_ui
+      law_ids:
+      - NO_DECORATIVE_GRADIENT
+      status: covered
+      root: no_surplus
+      tags:
+      - aesthetic
+    ordinal_ornament:
+      meaning: a 01, 02, 03 marker promises an order; without one it is decoration
+      detects: ordinal_marker
+      severity: low
+      confidence: 0.7
+      operation: drop_label
+      law_ids:
+      - NO_ORDINAL_ORNAMENT
+      status: covered
+      root: no_surplus
+      tags:
+      - aesthetic
     flexibility_and_adaptability:
       meaning: 'Design for change over time  '
       detects: rigid_structure
