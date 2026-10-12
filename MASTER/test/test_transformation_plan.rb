@@ -12,13 +12,13 @@ class TestTransformationPlan < Minitest::Test
     assert_equal %w[inventory classify], @plan.preflight
     assert_equal ["prove"], @plan.postflight
     assert_equal %w[
-      defragment decouple flatten merge split relocate rename reorder remove
+      remove defragment flatten decouple split hoist merge relocate rename reorder
       reflow simplify recommend
     ], @plan.operations.map(&:name)
   end
 
-  def test_structural_order_is_monotonic
-    assert @plan.ordered?(%w[defragment flatten merge split relocate rename reorder reflow])
+  def test_declared_dependency_order_is_monotonic
+    assert @plan.ordered?(%w[remove defragment flatten decouple split hoist merge relocate rename reorder reflow simplify recommend])
     refute @plan.ordered?(%w[rename merge])
   end
 
