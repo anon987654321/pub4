@@ -246,10 +246,10 @@ finding_members:
   - WHY_NOT_WHAT MASTER/lib/fix/visual_ghost_stack.rb:19
   - WHY_NOT_WHAT RAILS/__shared/app/controllers/concerns/shared/findable_by_slug.rb:15
   - WHY_NOT_WHAT RAILS/brgen/app/jobs/listing_expiry_job.rb:26
-registry_findings: 49
+registry_findings: 31
 registry_by_rule:
-  NO_GOD_CLASS: 26
-  SILENT_RESCUE: 21
+  NO_GOD_CLASS: 24
+  SILENT_RESCUE: 5
 registry_finding_members:
   - NO_GOD_CLASS RAILS/master_web/app/services/chat_service.rb:7
   - NO_GOD_CLASS RAILS/master_web/app/services/tts_job.rb:7
@@ -275,26 +275,8 @@ registry_finding_members:
   - NO_GOD_CLASS MASTER/gates/lib/research/design_metrics.rb:17
   - NO_GOD_CLASS MASTER/gates/support/cdp_session.rb:31
   - NO_GOD_CLASS MASTER/gates/support/geometry_probe.rb:20
-  - NO_GOD_CLASS MASTER/tools/dilla/lib/harmony.rb:1657
-  - NO_GOD_CLASS MASTER/tools/dilla/lib/sound.rb:4185
   - SILENT_RESCUE MASTER/lib/core/routing/model_catalog.rb:30
-  - SILENT_RESCUE MASTER/tools/dilla/lib/ledger.rb:1360
-  - SILENT_RESCUE MASTER/tools/dilla/lib/ledger.rb:1394
-  - SILENT_RESCUE MASTER/tools/dilla/lib/ledger.rb:1478
-  - SILENT_RESCUE MASTER/tools/dilla/lib/ledger.rb:1489
-  - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:1049
-  - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:118
-  - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:134
-  - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:29
-  - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:918
-  - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:929
-  - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:155
-  - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:177
-  - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:209
-  - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:240
-  - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:249
   - SILENT_RESCUE MASTER/tools/gate.rb:474
   - SILENT_RESCUE MASTER/tools/lora/_toolkit/curate.rb:163
   - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:291
   - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:302
-  - SILENT_RESCUE MASTER/tools/test/test_dilla_engine_probes.rb:1299

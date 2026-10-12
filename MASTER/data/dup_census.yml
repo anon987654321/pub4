@@ -1,5 +1,5 @@
 ---
-duplicate_sets: 28
+duplicate_sets: 25
 duplicate_members:
 - MASTER/gates/data/layout_snapshots/brgen-conversations-desktop.json | MASTER/gates/data/layout_snapshots/brgen-messenger-desktop.json
 - MASTER/gates/data/layout_snapshots/bsdports-home-desktop.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
@@ -25,7 +25,4 @@ duplicate_members:
 - RAILS/brgen/app/javascript/controllers/application.js | RAILS/bsdports/app/javascript/controllers/application.js
 - RAILS/brgen/db/cable_schema.rb | RAILS/bsdports/db/cable_schema.rb
 - RAILS/brgen/db/cache_schema.rb | RAILS/bsdports/db/cache_schema.rb
-- STUDIO/dilla/livesets_midi/burzum Project_slamdunk.mid | STUDIO/dilla/livesets_midi/burzum Project_slamdunk_hakim.mid
-- STUDIO/dilla/livesets_midi/dnb Project_Untitled(1).mid | STUDIO/dilla/livesets_midi/dnb Project_Untitled.mid
-- STUDIO/dilla/project/learnings/last_learn.json | STUDIO/dilla/project/learnings/learn_20260727_151757.json
 - STUDIO/replicate/lora/johann/lora | STUDIO/replicate/lora/ragnhild/lora

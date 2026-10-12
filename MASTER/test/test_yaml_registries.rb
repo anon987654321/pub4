@@ -26,18 +26,6 @@ DELETED_FILES = %w[
   sweep_prompts.yml zsh_patterns.yml council_patterns.yml
 ].freeze
 
-# The bed is dilla's: voice.yml keeps the level under the voice and points at
-# the declaration dilla renders from, so the bed tests read that file.
-module BedDeclaration
-  def bed_declaration
-    pointer = Master::Voice::Policy.bed
-    return unless pointer && pointer["source"]
-
-    file = File.expand_path("../../#{pointer["source"]}", __dir__)
-    File.file?(file) ? YAML.load_file(file, aliases: true) : nil
-  end
-end
-
 class TestYamlRegistries < Minitest::Test
   YAML_SPECS.each do |filename, spec|
     define_method(:"test_#{filename.tr('.', '_')}_parses") do
@@ -88,7 +76,6 @@ class TestDeletedFilesAbsent < Minitest::Test
 end
 
 class TestLawsYamlRegistry < Minitest::Test
-  include BedDeclaration
   REQUIRED_LAW_FIELDS = %w[id priority principle].freeze
 
   def test_laws_yml_has_no_duplicate_rule_ids
@@ -209,170 +196,6 @@ def shape_with_recorded_ffmpeg
 ensure
   exec.define_singleton_method(:capture3, original) if original
 end
-
-  # The bed is declared here and rendered by whoever plays it, so what this can
-  # hold is the shape of the declaration: that it points at dillas table rather
-  # than copying it, that every chord has a patch to reach for, and that the
-  # drums are not routed through the pad chain.
-  def test_the_bed_reads_dillas_progression_table
-    pointer = Master::Voice::Policy.bed
-    skip "no bed declared" unless pointer
-
-    assert_operator pointer["gain_db"].to_i, :<, 0, "the bed must sit under the voice"
-    bed = bed_declaration
-    assert bed, "voice.yml names #{pointer["source"]}, which is not a bed declaration"
-    assert_equal "artist_verified", bed["progressions"],
-                 "the theory half of the table sounds like an exercise under speech"
-    dilla = File.join(File.dirname(File.expand_path("../../#{pointer["source"]}", __dir__), 2), "dilla.rb")
-    assert_match(/^module Bed$/, File.read(dilla), "dilla renders the bed; #{dilla} holds no module Bed")
-  end
-
-  # One instrument per progression, and more than one instrument per pass. A
-  # band does not change keyboards every chord, and one timbre all pass is
-  # wallpaper. Every oscillator family keeps presets to move between, and no
-  # preset detunes past five cents, where a chord stops reading as chorus and
-  # starts reading as out of tune.
-  def test_every_bed_family_has_an_instrument_to_play
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    families = bed["families"] || {}
-    assert_operator families.size, :>=, 3, "one family all pass is one instrument playing one long piece"
-    patches = Array(bed["patches"])
-    assert_equal patches.size, patches.map { |patch| patch["name"] }.uniq.size, "two patches share a name"
-    families.each do |name, spec|
-      assert_equal "oscillator", spec["source"], "#{name}: dilla synthesises every sound it plays"
-      next unless spec["source"] == "oscillator" || spec["struck"]
-
-      assert_operator patches.count { |patch| patch["family"] == name }, :>=, 2,
-                      "#{name}: a family with one preset cannot move inside itself"
-    end
-    patches.each do |patch|
-      assert_includes %w[saw square pulse triangle sine fm_bell fm_wood fm_glass], patch["wave"],
-                      "#{patch["name"]}: unknown oscillator"
-      assert_operator patch["cutoff"].to_i, :>, 0, "#{patch["name"]}: no ladder cutoff"
-      assert Array(patch["detune_cents"]).all? { |cents| cents.to_f.abs <= 5.0 },
-             "#{patch["name"]}: detune past five cents reads as out of tune"
-    end
-  end
-
-  # The voicing rules a render can undo without anyone hearing the edit: the
-  # upper structure inside two octaves, and the harmonic rhythm carried by the
-  # transcription itself, one length per chord.
-  def test_the_bed_voices_chords_the_way_a_player_does
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    voicing = bed["voicing"] || {}
-    assert_operator voicing["max_span"].to_i, :<=, 24, "a spread past two octaves is a synth patch, not a hand"
-    assert_operator voicing["drop_fifth_from"].to_i, :>=, 5, "the fifth goes only where a ninth needs its room"
-    assert bed["bars_per_chord"], "the rows carry their rhythm as repetition; a meter laid over them scrambles it"
-    assert_nil bed["meter"], "a meter over the transcriptions rewrites their harmonic rhythm"
-  end
-
-  # The bed is measured, not guessed: a loudness target every pass is set to, a
-  # true-peak ceiling under which nothing clips between samples, and a reference
-  # curve of nine bands that `bed.rb --check` compares against.
-  def test_the_bed_is_measured_against_a_record
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    assert_operator bed.dig("loudness", "true_peak_db").to_f, :<=, -1.0, "a sample-peak limiter still clips between samples"
-    bands = Array(bed["reference_bands"])
-    assert_equal 9, bands.size, "nine octave bands, sub to top"
-    assert_equal 0.0, bands.first.to_f, "the curve is relative to its own sub, so level cannot confuse it"
-  end
-
-  # The bed exists to sit under talking, so it moves for the talking.
-  def test_the_bed_gets_out_of_the_voices_way
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    speech = bed["speech"] || {}
-    assert_operator speech["duck_db"].to_f, :<, 0, "a bed that does not move for a sentence competes with it"
-    assert_includes 2000..4000, speech.dig("carve", "hz").to_i, "speech intelligibility lives between 2 and 4 kHz"
-    assert_operator speech["release_ms"].to_i, :>, speech["attack_ms"].to_i,
-                    "fast in, slow out, or the bed swells back between words"
-  end
-
-# Dilla time is a juxtaposition, not a wobble: some elements rigid on the
-# grid while others are pulled off it. Two ways to lose it  swing everything,
-# or swing nothing  and both read as "fixed the drums" in a diff.
-def test_the_bed_drums_keep_conflicting_time_feels
-  bed = bed_declaration
-  skip "no bed declared" unless bed
-  drums = bed["drums"]
-  skip "no drums declared" unless drums
-
-  feels = drums["feels"]
-  assert_equal 0.0, feels.dig("hat", "swing").to_f,
-               "the hats are the rigid reference; swing them and there is no friction"
-  assert_operator feels.dig("kick", "swing").to_f, :>, 0, "the kick carries the swing"
-  assert_operator feels.dig("snare", "shift").to_f, :<, 0, "the snare is rushed, not laid back"
-  assert_operator feels.dig("kick", "shift").to_f, :>, 0, "the kick lags"
-  assert_equal "sonitex_sp1200", drums["finish"],
-               "the kit is finished on dillas sampler, not left raw"
-end
-
-  # The bed is a band now, and the two relationships that make it one are the
-  # ones an edit breaks silently: the bass reading the kicks own placement, and
-  # the harmony ducking under the kit. Lose either and it is two records played
-  # at once.
-  def test_the_bed_is_locked_to_its_drummer
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    assert_equal "samples/drums", bed.dig("drums", "crate"),
-                 "a drum is a recording; you cannot filter your way to one from a sine"
-    assert bed.dig("drums", "samples", "kick"), "the kit must name its files"
-    assert_equal "bar_shape", bed.dig("lead", "rhythm_from"),
-                 "Ringtone Tools decouple rhythm from pitch; the rhythm is the bars"
-    assert_equal "chord_bag", bed.dig("lead", "pitch_from"),
-                 "the lead reads the chord back and cannot play outside it"
-    assert bed.dig("sidechain", "pads"), "the pads must duck under the kick"
-    assert_equal "sonitex_sp1200", bed.dig("drums", "finish"),
-                 "the kit is finished on dillas sampler, not left as a synthesiser"
-  end
-
-  # The grids are dillas, read from its own MIDI library rather than guessed
-  # at from a description of how Dilla programmed. Its own import-midi reads
-  # the same directory, so the path is a contract between two readers.
-  def test_the_bed_reads_dillas_grid_library
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    assert_equal "samples/midi", bed.dig("drums", "grids"),
-                 "dillas export-midi and import-midi are built around this directory"
-    banks = bed.dig("drums", "grid_banks")
-    assert_operator banks.keys.size, :>=, 3, "one bank is one pocket all session"
-    assert banks["dilla"], "the bank the whole bed is named for"
-  end
-
-  # A shape holds for a block of whole phrases before the next bank takes over,
-  # and every bank the order names is one the grid library declares.
-  def test_the_bed_arrangement_holds_its_groove
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    arrangement = bed.dig("drums", "arrangement") || {}
-    bars = arrangement["bars_per_shape"].to_i
-    assert_operator bars, :>=, 4, "re-rolling the shape every bar sounds busy and reads as indecision"
-    assert_equal 0, bars % 4, "a block that ends mid-phrase breaks the groove where nobody chose to"
-    banks = (bed.dig("drums", "grid_banks") || {}).keys
-    Array(arrangement["bank_order"]).each do |bank|
-      assert_includes banks, bank, "the arrangement names a bank the grid library does not declare"
-    end
-  end
-
-  # A synthesis bug that was audible before it was visible, and the spectrogram
-  # named it. It is not a preference, so it is pinned.
-  def test_the_bed_does_not_alias
-    bed = bed_declaration
-    skip "no bed declared" unless bed
-
-    assert_operator bed["oversample"].to_i, :>=, 2,
-                    "a modulo saw has a vertical edge; at 1x its harmonics fold back as bleeps"
-  end
 
   def test_voice_rotation_is_additive
     tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
@@ -522,7 +345,6 @@ class TestClusterConsistency < Minitest::Test
 end
 
 class TestConstitutionYamlLoading < Minitest::Test
-  include BedDeclaration
   ALLOWED_DIRECT_LOADS = %w[
     lib/master.rb
     spec/static_syntax_spec.rb
@@ -544,34 +366,6 @@ class TestConstitutionYamlLoading < Minitest::Test
 
     assert_empty offenders, "constitutional YAML must load through Master.load_yaml: #{offenders.join(', ')}"
   end
-# The tilt is the one thing here that was measured rather than chosen, and
-# both facts about it are load-bearing: where it sits in the chain, and that
-# only part of the delta is applied.
-def test_the_bed_tilt_sits_after_the_compressor
-  bed = bed_declaration
-  skip "no bed declared" unless bed
-  tilt = bed["tilt"]
-  skip "no tilt declared" unless tilt
-
-  assert_equal "after_compressor", tilt["position"],
-               "a compressors makeup gain simply puts a cut midrange back"
-  assert_operator tilt["applied_fraction"].to_f, :<, 1.0,
-                  "a full correction chases the reference into its own arrangement"
-  assert_operator Array(tilt["bells"]).size, :>=, 5, "a tilt is a curve, not a bell"
-end
-
-# A synth is silent between the notes and a record never is.
-def test_the_bed_carries_surface_noise
-  bed = bed_declaration
-  skip "no bed declared" unless bed
-
-  assert bed["dust"], "the imperfection is the sound, not a garnish on it"
-  assert_operator bed.dig("dust", "hiss_db").to_i, :<, -20,
-                  "audible hiss is a fault; inaudible hiss is the absence of digital silence"
-  assert_in_delta 1.8, bed.dig("dust", "rotation_s").to_f, 0.05,
-                  "a record's crackle comes round once a turn, and a turn at 33 rpm is 1.8 s"
-end
-
 end
 
 class TestLawsPhysicalOrder < Minitest::Test

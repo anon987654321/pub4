@@ -254,7 +254,7 @@ module Master
         def mix_metrics_block
           require_relative "../../voice/mix_metrics"
           path = @audio_path || Master::Voice::MixMetrics.first_existing_demo
-          return "mix metrics: no demo.wav found (render with /dilla generate first)" unless path
+          return "mix metrics: no demo.wav found (render one with /play first)" unless path
 
           Master::Voice::MixMetrics.brief(path)
         rescue StandardError => e

@@ -74,7 +74,7 @@ module Master
                 "preserve existing visual identity",
                 "use Ruby QualityFramework sound rules from Deliberation",
                 "when proposing Dilla-style timing, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-                "do not invent a second critique system inside MASTER/tools/dilla — perfect via MASTER commands",
+                "do not invent a second critique system inside STUDIO/dilla — perfect via MASTER commands",
               ],
             },
             dilla: {
@@ -84,22 +84,14 @@ module Master
                 "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer",
                 "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
               ],
-              # dilla.rb is the entry script and little else since the engine was
-              # split into lib/engine/. It stays because the panel needs to see
-              # what the CLI offers, but max_bytes means a list is a budget: name
-              # the parts that decide how a render SOUNDS, or the panel critiques
-              # the boot sequence. Before the split this read the first 36 KB of a
-              # 1.37 MB file — the patch catalogue, and nothing downstream of it.
-              files: %w[
-                tools/dilla/lib/sound.rb
-                tools/dilla/lib/groove.rb
-                tools/dilla/lib/harmony.rb
-                tools/dilla/lib/sampling.rb
-                tools/dilla/dilla.rb
-                tools/dilla/lib/listen.rb
-                lib/voice/dilla.rb lib/voice/production_dna.rb
-                lib/io/analog_capabilities.rb
-              ],
+# dilla.rb is the whole engine and dilla.json its data; the panel
+# reads both, and the voice tables MASTER keeps for timing.
+files: %w[
+  ../STUDIO/dilla/dilla.rb
+  ../STUDIO/dilla/dilla.json
+  lib/voice/dilla.rb lib/voice/production_dna.rb
+  lib/io/analog_capabilities.rb
+],
               quality_kind: :sound,
               ideation_prompt: "Review the Dilla engine and measured mix. For EACH problem the panel " \
                                "raises, generate 3 distinct solutions (ENV knobs, bus EQ, groove density, " \
@@ -110,13 +102,13 @@ module Master
               done_event: :sound_critique_done,
               include_mix_metrics: true,
               constraints: [
-                "single style only (RENDER_MODE=dilla); no multi-producer mode tables",
+                "single style only; no multi-producer mode tables",
                 "do not name producers in code or ENV keys",
                 "pad bed must remain readable; kit air may open but no noise-wall vinyl fix",
-                "prefer existing FLAG_ENV / DILLA_STYLE_DEFAULTS knobs over new files",
+                "prefer a field in dilla.json over a new file",
                 "use Master::Voice::Dilla and ProductionDna for timing/DNA; use MixMetrics for evidence",
                 "multi-solution then cherry-pick is mandatory (QualityFramework general rule)",
-                "surgical ENV/mix changes only — no second crit engine inside MASTER/tools/dilla",
+                "surgical changes only — no second crit engine inside STUDIO/dilla",
               ],
             },
             # General: whatever MASTER is currently processing (usually the

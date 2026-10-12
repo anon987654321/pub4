@@ -58,18 +58,19 @@ class TestMusicSynthIntent < Minitest::Test
   end
 
   def test_cant_hear_is_a_live_audio_diagnostic_not_a_chat_claim
-    sent = nil
-    Master::Io::ScriptDispatch.stub(:run, ->(root:, tool:, arg:) {
-      sent = [tool, arg]
-      Master::Result.ok("live0: playing royksopp live (pid 64893, since 07:20:00)")
-    }) do
-      assert INTENT.handles?("i cant hear anything")
-      result = INTENT.dispatch("i cant hear anything")
-      assert result.ok?
-      assert_equal :dilla_audio_diagnostic, result.value[:media]
-      assert_match(/Dilla can verify the live player process/, result.value[:output])
-    end
-    assert_equal ["dilla", "live status"], sent
+    assert INTENT.handles?("i can't hear anything")
+    INTENT.instance_variable_set(:@player_pid, nil)
+    result = INTENT.dispatch("i can't hear anything")
+    assert result.ok?
+    assert_equal :dilla_audio_diagnostic, result.value[:media]
+    assert_match(/nothing is playing/, result.value[:output])
+
+    INTENT.instance_variable_set(:@player_pid, Process.pid)
+    playing = INTENT.dispatch("i can't hear anything")
+    assert_match(/playing \(pid #{Process.pid}\)/, playing.value[:output])
+    assert_match(/MASTER can verify the player process/, playing.value[:output])
+  ensure
+    INTENT.instance_variable_set(:@player_pid, nil)
   end
 
   # "play it" after a render plays that render, whatever else the sentence says.
@@ -89,7 +90,7 @@ class TestMusicSynthIntent < Minitest::Test
   def test_last_media_is_the_newest_render
     Dir.mktmpdir do |dir|
       old = File.join(dir, "master-sine-20260101T000000Z.wav")
-      new = File.join(dir, "dilla-20260924T120000Z.mp3")
+      new = File.join(dir, "dilla-20260924T120000Z.wav")
       File.write(old, "")
       File.write(new, "")
       File.write(File.join(dir, "notes.txt"), "")
@@ -98,35 +99,56 @@ class TestMusicSynthIntent < Minitest::Test
     end
   end
 
-  # The live synthesiser is dilla's: MASTER recognises the sentence and hands
-  # it over whole.
-  def test_live_synth_sentences_go_to_dilla_live_say
+  # A sentence addressed to the music renders a progression and plays it.
+  def test_music_sentences_render_a_progression_and_play_it
     sentences = ["play", "play some music", "improvise", "keep playing", "play me something with moog patches", "play a moog bass",
-                 "play a lofi pad morphing through dilla_love", "slowly open the filter", "morph to a prophet pad",
-                 "play me a chord progression with a few different moog patches", "can we switch style",
-                 "play some chords from melody a.m.", "stop"]
-    sentences.each do |sentence|
-      sent = nil
-      Master::Io::ScriptDispatch.stub(:run, ->(root:, tool:, arg:) { (sent = [tool, arg]) && Master::Result.ok("live0: ok") }) do
-        assert INTENT.handles?(sentence), sentence
-        assert INTENT.dispatch(sentence).ok?, sentence
+                 "play me a chord progression with a few different moog patches"]
+    listing = "Progressions:\n   0  Cm9 Fm9\n   1  Dm7 G7\n\nDrum patterns: a, b\nGroove profiles: x, y\n"
+    Dir.mktmpdir do |home|
+      saved = ENV.fetch("XDG_DATA_HOME", nil)
+      ENV["XDG_DATA_HOME"] = home
+      sentences.each do |sentence|
+        sent = []
+        runner = lambda do |root:, tool:, arg:, env: {}|
+          sent << [tool, arg]
+          arg == "--list" ? Master::Result.ok(listing) : Master::Result.ok("wrote")
+        end
+        Master::Io::ScriptDispatch.stub(:run, runner) do
+          Master::Music::Synth.stub(:play, 4242) do
+            assert INTENT.handles?(sentence), sentence
+            result = INTENT.dispatch(sentence)
+            assert result.ok?, sentence
+            assert_equal :dilla_live, result.value[:media], sentence
+          end
+        end
+        assert_equal "--list", sent.first.last, sentence
+        assert_includes sent.last.last, "--progression", sentence
+        INTENT.instance_variable_set(:@player_pid, nil)
       end
-      assert_equal ["dilla", "live say #{Shellwords.escape(sentence)}"], sent, sentence
+    ensure
+      saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
     end
   end
 
   def test_explicit_dilla_files_and_soundcard_mean_live_music
-    sent = nil
-    sentence = "play music dilla.rb royksopp.rb liveset.rb on my local sound card"
-    Master::Io::ScriptDispatch.stub(:run, ->(root:, tool:, arg:, env: {}) { sent = [tool, arg, env]; Master::Result.ok("live0: playing") }) do
-      assert INTENT.handles?(sentence)
-      result = INTENT.dispatch(sentence)
-      assert result.ok?
-      assert_equal :dilla_background, result.value[:media]
+    sentence = "play music dilla.rb on my local sound card"
+    listing = "Progressions:\n   0  Cm9 Fm9\n\nDrum patterns: a\nGroove profiles: x\n"
+    Dir.mktmpdir do |home|
+      saved = ENV.fetch("XDG_DATA_HOME", nil)
+      ENV["XDG_DATA_HOME"] = home
+      runner = ->(root:, tool:, arg:, env: {}) { arg == "--list" ? Master::Result.ok(listing) : Master::Result.ok("wrote") }
+      Master::Io::ScriptDispatch.stub(:run, runner) do
+        Master::Music::Synth.stub(:play, 4242) do
+          assert INTENT.handles?(sentence)
+          result = INTENT.dispatch(sentence)
+          assert result.ok?
+          assert_equal :dilla_live, result.value[:media]
+        end
+      end
+    ensure
+      INTENT.instance_variable_set(:@player_pid, nil)
+      saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
     end
-    assert_equal "dilla", sent[0]
-    assert_equal "live default", sent[1]
-    assert_equal "0", sent[2]["DILLA_COLTRANE"]
   end
 
   def test_code_talk_is_not_music

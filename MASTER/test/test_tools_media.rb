@@ -28,31 +28,6 @@ class TestToolsMedia < Minitest::Test
     end
   end
 
-  # DillaSources, not a hand-spelled path: lib/engine/grade_analog.rb and
-  # lib/engine/tape_master.rb stopped existing when the engine collapsed back
-  # into dilla.rb plus lib/*.rb, and this test failed for the layout rather
-  # than for the claim it makes.
-  def test_sonitex_sections_cover_the_stx1260_and_default_to_the_preset
-    engine = dilla_engine_source
-    assert_includes engine, "SONITEX_SECTIONS"
-    assert_includes engine, "sonitex_section_amount"
-    %w[mix distortion vinyl tone noise sampling].each do |section|
-      assert_match(/^\s+#{section}:/, engine)
-    end
-    assert_includes engine, "def params_for_bias"
-    assert_includes engine, "TAPE_BIAS"
-    assert_includes engine, "TAPE_LOSS_HZ"
-  end
-
-  # Every file the engine is made of, concatenated — the same corpus the
-  # engine's own parse check and provenance manifest read.
-  def dilla_engine_source
-    @dilla_engine_source ||= begin
-      require File.join(ROOT, "MASTER/tools", "dilla", "lib", "engine_sources")
-      DillaSources.all.map { |path| File.read(path) }.join("\n")
-    end
-  end
-
   def test_postpro_rejects_unknown_presets_instead_of_silently_returning_the_input
     source = File.read(POSTPRO)
     body = source[/^def preset\(image, name, stock: nil\).*?^end$/m]

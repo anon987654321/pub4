@@ -4,8 +4,30 @@ require_relative "test_helper"
 require "tmpdir"
 require "shellwords"
 require_relative "../lib/io/media_intent"
+require_relative "../lib/music/synth"
 
 class MediaIntentTest < Minitest::Test
+  LISTING = "Progressions:\n   0  Cm9 Fm9\n\nDrum patterns: boom_bap, sparse\nGroove profiles: dry\n"
+
+  # dilla.rb answers --list with its menu; anything else is a render.
+  def dilla_stub(calls)
+    lambda do |root:, tool:, arg:, env: {}|
+      calls << { root:, tool:, arg:, env: }
+      arg == "--list" ? Master::Result.ok(LISTING) : Master::Result.ok("Wrote a render")
+    end
+  end
+
+  # Renders land in a temporary XDG_DATA_HOME and the player is not started.
+  def without_sound
+    Dir.mktmpdir do |home|
+      saved = ENV.fetch("XDG_DATA_HOME", nil)
+      ENV["XDG_DATA_HOME"] = home
+      Master::Music::Synth.stub(:play, 4242) { yield }
+    ensure
+      saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+    end
+  end
+
   def test_literal_postpro_command_accepts_a_directory
     Dir.mktmpdir do |root|
       source = File.join(root, "new photos")
@@ -79,45 +101,38 @@ class MediaIntentTest < Minitest::Test
     end
   end
 
-  def test_plain_live_music_language_routes_to_dilla
-    assert Master::Io::MediaIntent.handles?("play some music in real time")
-    assert Master::Io::MediaIntent.handles?("play some music locally")
-    calls = []
+def test_plain_live_music_language_routes_to_dilla
+  assert Master::Io::MediaIntent.handles?("play some music in real time")
+  assert Master::Io::MediaIntent.handles?("play some music locally")
+  calls = []
 
-    Master::Io::ScriptDispatch.stub(
-      :run,
-      lambda do |root:, tool:, arg:, env: {}|
-        calls << { root:, tool:, arg:, env: }
-        Master::Result.ok("playing Dilla")
-      end,
-    ) do
+  without_sound do
+    Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
       result = Master::Io::MediaIntent.dispatch("play some music locally", root: MasterPaths.root)
       assert result.ok?, -> { result.message.to_s }
     end
-
-    assert_equal "dilla", calls.fetch(0).fetch(:tool)
   end
 
-  def test_bare_live_music_pins_the_canonical_dillatime_kit
-    calls = []
+  assert_equal %w[dilla dilla], calls.map { |call| call[:tool] }
+  assert_equal "--list", calls.first[:arg]
+end
 
-    Master::Io::ScriptDispatch.stub(
-      :run,
-      lambda do |root:, tool:, arg:, env: {}|
-        calls << { root:, tool:, arg:, env: }
-        Master::Result.ok("playing Dilla")
-      end,
-    ) do
+def test_bare_play_renders_a_random_progression_with_drums_and_plays_the_wav
+  calls = []
+
+  without_sound do
+    Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
       result = Master::Io::MediaIntent.play_live_music("", root: MasterPaths.root)
       assert result.ok?, -> { result.message.to_s }
+      assert_match(/\.wav\z/, result.value![:path])
     end
-
-    call = calls.fetch(0)
-    assert_equal "dilla", call[:tool]
-    assert_equal "live showcase", call[:arg]
-    assert_equal "dillatime", call[:env]["DILLA_LIVE_KIT"]
-    assert_equal "0", call[:env]["DILLA_COLTRANE"]
   end
+
+  words = Shellwords.split(calls.fetch(1)[:arg])
+  assert_equal "0", words[words.index("--progression") + 1]
+  assert_includes %w[boom_bap sparse], words[words.index("--drums") + 1]
+  assert_match(/\.wav\z/, words[words.index("--out") + 1])
+end
 
   def test_postpro_capability_question_does_not_require_source_path
     result = Master::Io::MediaIntent.dispatch("can you use postpro.rb?", root: MasterPaths.root)
@@ -126,23 +141,18 @@ class MediaIntentTest < Minitest::Test
     assert_match(/provide an existing image file or directory path/, result.value!.fetch(:rendered))
   end
 
-  def test_background_music_is_a_media_intent
-    assert Master::Io::MediaIntent.handles?("play your music in the background")
-    calls = []
-    Master::Io::ScriptDispatch.stub(
-      :run,
-      lambda do |root:, tool:, arg:, env: {}|
-        calls << { root:, tool:, arg:, env: }
-        Master::Result.ok("playing Dilla background")
-      end,
-    ) do
+def test_background_music_is_a_media_intent
+  assert Master::Io::MediaIntent.handles?("play your music in the background")
+  calls = []
+  without_sound do
+    Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
       result = Master::Io::MediaIntent.dispatch("play your music in the background", root: MasterPaths.root)
       assert result.ok?
     end
-    assert_equal "dilla", calls.first[:tool]
-    assert_equal "live default", calls.first[:arg]
-    assert_equal "0", calls.first[:env]["DILLA_COLTRANE"]
   end
+  assert_equal "dilla", calls.first[:tool]
+  assert_equal "--list", calls.first[:arg]
+end
 
   def test_desktop_postpro_variations_keep_the_desktop_source
     Dir.mktmpdir("master-home") do |home|

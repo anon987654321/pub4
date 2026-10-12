@@ -35,7 +35,6 @@ module Master
           },
           "pitch_reference_hz" => 180,
         },
-        "bed" => nil,
       }.freeze
 
       module_function
@@ -339,14 +338,6 @@ module Master
         shapes.fetch(name.to_s, shapes.fetch("neutral", { "open" => 0.0, "wide" => 0.0 }))
       end
 
-      # The musical bed, as declared. Nil when absent; the renderer is the
-      # caller's, because MASTER's web face and a terminal narrator mix audio
-      # in entirely different ways.
-      def bed
-        row = data["bed"]
-        row.is_a?(Hash) && !row.empty? ? row : nil
-      end
-
       def persona_affects_text_only?
         data["persona_affects_text_only"] != false
       end
@@ -406,7 +397,6 @@ module Master
           awareness:,
           mouth:,
           prosody:,
-          bed:,
           profile: profile_name,
           layers:,
           persona_affects_text_only: persona_affects_text_only?,

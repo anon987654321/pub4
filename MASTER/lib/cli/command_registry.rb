@@ -152,9 +152,10 @@ module Master
         "plugin0: #{e.message}"
       end
 
-      # /play is the MASTER front door to Dilla. With no argument it is exactly
-      # the same showcase as bare `ruby dilla.rb`; an artist argument keeps the
-      # named source lane. Nothing falls through to the shell or a web-search guess.
+      # /play is the MASTER front door to Dilla. With no argument it renders a
+      # random progression under a random drum pattern and plays the wav; a name
+      # picks the progression or the pattern. Nothing falls through to the shell or
+      # a web-search guess.
       def dispatch_play(root, ctx: nil)
         arg = arg_for(ctx).to_s.strip
         result = Master::Io::MediaIntent.play_live_music(arg, root:)

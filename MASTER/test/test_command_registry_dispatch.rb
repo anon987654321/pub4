@@ -96,24 +96,24 @@ class TestCommandRegistryDispatch < Minitest::Test
                  "a new command table has to be merged by build, or it is a verb with no route"
   end
 
-  def test_bare_play_command_starts_the_dilla_showcase
+  def test_bare_play_command_renders_and_plays_a_random_progression
     captured = nil
     media = Master::Io::MediaIntent
     original = media.method(:play_live_music)
     media.define_singleton_method(:play_live_music) do |arg, root: MasterPaths.root, **_kwargs|
       captured = [arg, root]
-      Master::Result.ok(output: "showcase started", rendered: "showcase started")
+      Master::Result.ok(output: "progression started", rendered: "progression started")
     end
 
     result = built.fetch("play").call(Master::CLI::PipelineContext.new(user_message: "/play", args: ""))
 
-    assert_equal "showcase started", result
+    assert_equal "progression started", result
     assert_equal "", captured.first
   ensure
     media.define_singleton_method(:play_live_music, original) if original
   end
 
-  def test_play_command_passes_the_requested_artist_to_media_intent
+  def test_play_command_passes_the_request_to_media_intent
     captured = nil
     media = Master::Io::MediaIntent
     original = media.method(:play_live_music)

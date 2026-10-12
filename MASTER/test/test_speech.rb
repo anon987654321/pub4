@@ -722,14 +722,13 @@ class TestSpeech < Minitest::Test
     end
   end
 
-  def test_the_asmr_profile_overlays_rate_pitch_chain_bed_and_layers
+  def test_the_asmr_profile_overlays_rate_pitch_chain_and_layers
     with_profile("asmr") do
       policy = Master::Voice::Policy
       assert_equal "asmr", policy.profile_name
       assert_equal "-11%", policy.default_rate
       assert_equal "-18Hz", policy.default_pitch
       assert_includes policy.post_chain, "deesser"
-      assert_equal(-17, policy.bed.fetch("gain_db"))
       assert Master::Voice::Layers.active?
       assert_equal "asmr", policy.browser_payload.fetch(:profile)
     end

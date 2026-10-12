@@ -6,11 +6,11 @@ require "json"
 require "minitest/mock"
 
 # The default English voice is Christopher; everyday speech is clean, and the
-# named dilla profile restores the sound-design rack and room. These tests hold
-# every filter to dilla's own source and run it through ffmpeg before it ships.
+# named dilla profile restores the sound-design rack and room. The rack is data
+# (voice.yml tts.dilla_fx), that file is its single source, and these tests run
+# every filter through ffmpeg before it ships.
 class TestDillaFx < Minitest::Test
   Policy = Master::Voice::Policy
-  SOUND = File.expand_path("../../STUDIO/dilla/lib/sound.rb", __dir__)
   FFMPEG = system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
 
   def with_env(pairs)
@@ -70,55 +70,17 @@ class TestDillaFx < Minitest::Test
     refute_includes face, "|| 'en-US-JennyNeural'"
   end
 
-  # Every effect dilla owns has an entry, or the list below says why not.
-  def dilla_effect_ids
-    source = File.read(SOUND)
-    outboard = source[/^module Outboard\n(.*?)^end\n/m, 1]
-    units = outboard.scan(/^  def (\w+)/).flatten - %w[chain postpro_translation postpro_chain]
-    stages = source[/STAGE_ORDER = %i\[([^\]]+)\]/, 1].split.map { |stage| "spacefx_#{stage}" }
-    units + stages + %w[console_strip tape_hysteresis copy_machine low_pass_gate]
-  end
-
-  def test_every_dilla_effect_has_an_entry_with_a_status
-    ids = Policy.data.fetch("dilla_fx").fetch("units").map { |unit| unit["id"] }
-    missing = dilla_effect_ids.reject { |id| ids.include?(id) }
-    # The Outboard methods dilla spells differently from their unit ids.
-    assert_empty missing, "dilla effects with no entry in voice.yml dilla_fx: #{missing.join(', ')}"
-    Policy.data.fetch("dilla_fx").fetch("units").each do |unit|
+  # Every unit names its stage and its status, and an approximation says why.
+  def test_every_unit_has_a_unique_id_a_stage_and_a_status
+    units = Policy.data.fetch("dilla_fx").fetch("units")
+    ids = units.map { |unit| unit["id"] }
+    assert_equal ids.uniq, ids, "a unit id is used twice"
+    units.each do |unit|
       assert_includes %w[exact approximated unavailable], unit["status"], unit["id"]
+      refute_empty unit["stage"].to_s, unit["id"]
       refute_empty unit["note"].to_s, "#{unit['id']} is #{unit['status']} and must say why" unless unit["status"] == "exact"
       assert unit["filter"].to_s.empty?, "#{unit['id']} is unavailable yet carries a filter" if unit["status"] == "unavailable"
       refute unit["enabled"], "#{unit['id']} is unavailable and must stay off" if unit["status"] == "unavailable"
-    end
-  end
-
-  def test_exact_outboard_units_are_dillas_own_defaults
-    skip "dilla source missing" unless File.file?(SOUND)
-
-    script = <<~RUBY
-      require #{SOUND.inspect}
-      require "json"
-      out = {}
-      Outboard.methods(false).each { |m| nil }
-      %i[#{Policy.fx_units.filter_map { |u| u['source'][/Outboard\.(\w+)/, 1] if u['status'] == 'exact' }.uniq.join(' ')}].each do |unit|
-        out[unit.to_s] = case unit
-                         when :stc8 then Outboard.stc8(bpm: 0)
-                         when :console_stack then Outboard.console_stack(instances: 3)
-                         else Outboard.public_send(unit)
-                         end
-      end
-      puts JSON.generate(out)
-    RUBY
-    out, status = Open3.capture2e(RbConfig.ruby, "-e", script)
-    assert status.success?, out
-    expected = JSON.parse(out.lines.last)
-    Policy.fx_units.each do |unit|
-      name = unit["source"][/Outboard\.(\w+)/, 1]
-      next unless unit["status"] == "exact" && name
-
-      defaults = unit.merge("level" => unit["level"])
-      filter = Policy.fx_units.find { |row| row["id"] == unit["id"] }["filter"]
-      assert_equal expected.fetch(name).gsub(/(\d)\.0\b/, "\\1"), filter.gsub(/(\d)\.0\b/, "\\1"), "#{unit['id']} drifted from dilla's default (#{defaults['level_name']})"
     end
   end
 

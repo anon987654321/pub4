@@ -18,7 +18,6 @@ class TestReadmeEnvNames < Minitest::Test
 
   # tree => the files that count as "read somewhere in that tree".
   TREES = {
-    "MASTER/tools/dilla" => ["dilla.rb", "lib/**/*.rb"],
     "MASTER" => ["lib/**/*.rb", "bin/*", "law/*.rb", "Rakefile", "data/*.yml"],
     "OPENBSD" => ["**/*.rb", "**/*.sh", "bin/*"],
   }.freeze
@@ -45,10 +44,11 @@ class TestReadmeEnvNames < Minitest::Test
   # The harness must fail when a README goes stale, so it has to be seeing
   # names at all: a regex that matched nothing would pass forever.
   def test_the_harness_still_finds_names
-    dilla = File.join(REPO, "MASTER", "tools", "dilla", "README.md")
-    skip "MASTER/tools/dilla/README.md is absent" unless File.file?(dilla)
-
-    assert_operator names(File.read(dilla)).size, :>, 5,
+    found = TREES.keys.sum do |tree|
+      readme = File.join(REPO, tree, "README.md")
+      File.file?(readme) ? names(File.read(readme)).size : 0
+    end
+    assert_operator found, :>, 5,
                     "the name regex stopped matching — this test passes having read nothing"
   end
 

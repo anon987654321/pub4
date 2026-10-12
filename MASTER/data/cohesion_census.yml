@@ -1,5 +1,5 @@
 ---
-families: 30
+families: 27
 family_members:
 - MASTER/lib/cli#context
 - MASTER/lib/fix#loop
@@ -27,6 +27,3 @@ family_members:
 - RAILS/__shared/app/models/shared#affiliate
 - MASTER/tools/rails/operator#lint
 - RAILS/__shared/lib/shared#examples
-- STUDIO/dilla/lib#engine
-- STUDIO/dilla/lib#harmony
-- STUDIO/dilla/lib#score

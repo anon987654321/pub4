@@ -40,7 +40,7 @@ module Master
       # are history the database has already run; MASTER/tools data and LoRA sets are
       # read by name and trained on.
       OFF_LIMITS = %r{\A(?:OPENBSD/(?:etc|var|usr|home|dotfiles)/|RAILS/.+/db/(?:migrate|schema)|
-                     STUDIO/(?:lora|dilla/data)/)}x
+                     STUDIO/lora/)}x
 
       # Master and the directory modules open nearly every file, so a search for
       # what names a moved file leaves them out or finds the whole tree.

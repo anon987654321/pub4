@@ -52,16 +52,12 @@ module Master
           ],
         },
         "play" => {
-          summary: "play a named Dilla music lane on the local sound card",
-          detail: [
-            "/play bach — the BWV 565 Fugue from the original Mutopia MIDI, through Dilla's Memorymoog organ.",
-            "/play j dilla — J Dilla source harmony (Flowers), rendered through the good live improviser.",
-            "/play flying lotus — Flying Lotus source harmony (Camel), rendered through the good live improviser.",
-            "/play madlib — Madlib source harmony (Accordion), rendered through the good live improviser.",
-            "/play royksopp — Röyksopp source harmony (What Else Is There?), rendered through the good live improviser.",
-            "/play showcase — the three livesets in turn (dilla.rb live showcase); bare /play is the dilla.rb showcase.",
-            "Aliases accept Röyksopp and .rb; unknown names are refused locally.",
-          ],
+summary: "render a Dilla progression with a drum pattern and play it on the local sound card",
+detail: [
+  "/play — a random progression and a random drum pattern, rendered to a wav and played.",
+  "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
+  "A render lands in the dilla-renders folder under your documents, dated, and is never written over.",
+],
         },
         "plugin" => {
           summary: "list and invoke governed plugins",

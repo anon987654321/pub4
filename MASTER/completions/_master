@@ -17,7 +17,7 @@ _master() {
     'ios:start iOS/PWA onboarding'
     'model:show or switch the active model, and connect its subscriptions'
     'orders:the objective ledger'
-    'play:play a named Dilla music lane on the local sound card'
+    'play:render a Dilla progression with a drum pattern and play it'
     'plugin:list and invoke governed plugins'
     'quit:leave MASTER'
     'review:read-only compatibility view over the /fix pipeline'

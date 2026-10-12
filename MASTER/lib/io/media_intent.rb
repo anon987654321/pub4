@@ -29,14 +29,9 @@ module Master
       FILE_RE = /\b(?:make|render|generate|create|save|write|export)\b/i.freeze
       # "play it", "play that on my sound card": the last thing rendered.
       PLAY_LAST_RE = /\A\s*(?:please\s+)?(?:re)?play\s+(?:it|that|this|the\s+(?:last|file|wav|render|track|beat))\b/i.freeze
-      # The live synthesiser is dilla's instrument, and so is its vocabulary:
-      # these only recognise a sentence addressed to it and hand the sentence
-      # over whole (`dilla.rb live say`), where the patches, progressions and
-      # knobs it names are read.
-      # An instrument needs a musical verb and a knob needs a knob verb, so
+      # A sentence addressed to the music: an instrument needs a musical verb, so
       # "open the patch" and "turn the lead into a test" stay chat.
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
-      LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music|dilla(?:\.rb)?|royksopp(?:\.rb)?|madlib(?:\.rb)?|fly(?:ing)?\s+lotus|flylo|sound\s*card|speakers?)\b/i.freeze
       LIVE_MUSIC_PLAIN_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:some\s+|the\s+|your\s+|my\s+)?music\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
@@ -242,24 +237,36 @@ module Master
         bus&.publish("client_action", { action: "dilla_bg" }.merge(payload))
       end
 
+      # The player a /play started. dilla.rb renders a file and ends; the sound
+      # card is MASTER's, so MASTER holds the pid and is the one that stops it.
+      def player_pid
+        pid = @player_pid
+        return nil unless pid
+
+        Process.kill(0, pid)
+        pid
+      rescue Errno::ESRCH, Errno::EPERM
+        @player_pid = nil
+      end
+
       def stop_live_audio(root: MasterPaths.root, bus: nil)
         Voice::Playback.interrupt!("operator requested audio stop") if defined?(Voice::Playback)
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live stop", env: { "DILLA_COLTRANE" => "0" })
-        return result unless result.ok?
-
+        pid = player_pid
+        Process.kill("TERM", pid) if pid
+        @player_pid = nil
         publish_face_music(bus, stop: true)
-        Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_stop })
+        line = pid ? "stopped the Dilla player (pid #{pid})" : "nothing is playing"
+        Result.ok({ output: line, rendered: line, media: :dilla_stop })
+      rescue Errno::ESRCH
+        Result.ok({ output: "nothing is playing", rendered: "nothing is playing", media: :dilla_stop })
       end
 
       def diagnose_live_audio(root: MasterPaths.root)
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live status")
-        return result unless result.ok?
-
-        status = result.value!.to_s.strip
-        rendered = if status.match?(/\bnothing is playing\b/i)
-                     "audio0: #{status}; the Dilla player is not running."
+        pid = player_pid
+        rendered = if pid
+                     "audio0: playing (pid #{pid}); MASTER can verify the player process, but not whether the operating-system output route is physically audible."
                    else
-                     "audio0: #{status}; Dilla can verify the live player process, but not whether the operating-system output route is physically audible."
+                     "audio0: nothing is playing; the Dilla player is not running."
                    end
         Result.ok({ output: rendered, rendered:, media: :dilla_audio_diagnostic })
       end
@@ -342,7 +349,7 @@ module Master
       end
 
       def live_synth?(text)
-        [LIVE_MUSIC_RE, LIVE_MUSIC_PLAIN_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_QUERY_RE, LIVE_STYLE_ALONE_RE].any? { |pattern| text.match?(pattern) } ||
+        [LIVE_MUSIC_RE, LIVE_MUSIC_PLAIN_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_STYLE_QUERY_RE, LIVE_STYLE_ALONE_RE].any? { |pattern| text.match?(pattern) } ||
           (text.match?(LIVE_STYLE_RE) && text.match?(LIVE_STYLE_VERB_RE))
       end
 
@@ -353,70 +360,93 @@ module Master
           live_synth?(text) && text.match?(LIVE_RE)
       end
 
-      # dilla answers at once: a sentence that starts music leaves a player of
-      # its own running and returns, one that steers or stops it sends the
-      # word to that player.
       def postpro_capability
         line = "postpro0: ready — provide an existing image file or directory path; default selection is the five newest images"
         Result.ok(output: line, rendered: line, media: :postpro_help)
       end
 
+      # Where /play renders go: a dated folder outside the repository, never over
+      # a take that matters (every file is named by its second).
+      def dilla_renders_dir
+        base = ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents"))
+        File.join(base, "dilla-renders", Time.now.utc.strftime("%Y-%m-%d"))
+      end
+
+      # What dilla.rb can render, read from its own --list rather than from its
+      # data file, so MASTER names no progression or drum pattern of its own.
+      def dilla_menu(root)
+        listing = ScriptDispatch.run(root:, tool: "dilla", arg: "--list")
+        return listing unless listing.ok?
+
+        lines = listing.value!.to_s.lines.map(&:chomp)
+        progressions = lines.drop_while { |l| !l.start_with?("Progressions:") }.drop(1).take_while { |l| !l.strip.empty? }.filter_map { |l| l[/\A\s+(\d+)\s/, 1] }
+        drums = lines.find { |l| l.start_with?("Drum patterns:") }.to_s.delete_prefix("Drum patterns:").split(",").map(&:strip).reject(&:empty?)
+        return Result.err("dilla: --list named no progressions", category: :infrastructure) if progressions.empty?
+
+        Result.ok({ progressions:, drums: })
+      end
+
+      # A progression and a drum pattern: the ones the sentence names, else any.
+      def render_dilla(text, root:, output: nil)
+        menu = dilla_menu(root)
+        return menu unless menu.ok?
+
+        choices = menu.value!
+        named = text[/\b(?:progression\s+)?(\d+)\b/, 1]
+        progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
+        pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) } || choices[:drums].sample
+        output ||= File.join(dilla_renders_dir, "#{progression}-#{pattern}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        FileUtils.mkdir_p(File.dirname(output))
+        argv = ["--progression", progression, "--out", output]
+        argv.concat(["--drums", pattern]) if pattern
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
+        return result unless result.ok?
+
+        Result.ok({ log: result.value!, path: output, progression:, drums: pattern })
+      end
+
+      def play_live_music(arg, root: MasterPaths.root, bus: nil)
+        rendered = render_dilla(arg.to_s, root:)
+        return rendered unless rendered.ok?
+
+        info = rendered.value!
+        stop_player
+        @player_pid = Master::Music::Synth.play(info[:path])
+        line = "playing #{info[:progression]}#{" with #{info[:drums]}" if info[:drums]} (pid #{@player_pid}): #{info[:path]}"
+        Result.ok(output: line, rendered: line, media: :dilla_live, style: info[:progression], path: info[:path])
+      rescue RuntimeError, ArgumentError => e
+        Result.err("#{e.message}: install sox (brew install sox) or ffmpeg, whose ffplay also plays", category: :infrastructure)
+      end
+
+      def stop_player
+        pid = player_pid
+        Process.kill("TERM", pid) if pid
+        @player_pid = nil
+      rescue Errno::ESRCH
+        @player_pid = nil
+      end
+
       def play_background_music(text, root: MasterPaths.root, bus: nil)
-        result = ScriptDispatch.run(
-          root:, tool: "dilla", arg: "live default", env: { "DILLA_COLTRANE" => "0" },
-        )
+        result = play_live_music(text, root:, bus:)
         return result unless result.ok?
 
         artist = face_music_artist(text)
         publish_face_music(bus, artist ? { artist: } : {})
-        Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_background })
-      end
-
-      def play_live_music(arg, root: MasterPaths.root, bus: nil)
-        requested = arg.to_s.strip
-        # Typing a script name should select the canonical showcase, not ask the
-        # improviser to play an instrument literally called "dilla.rb".
-        showcase = requested.empty? || requested.match?(/\A(?:dilla\.rb|live|dilla\s+(?:live|showcase))\z/i)
-        # `/play showcase` is the three livesets in turn (dilla.rb live showcase), the mix;
-        # bare /play stays the dilla.rb showcase.
-        liveset = requested.match?(/\A(?:showcase|livesets?(?:\.rb)?)\z/i)
-        name = showcase || liveset ? "" : requested.sub(/\.rb\z/i, "")
-        command = if liveset then "live broadcast"
-                  elsif showcase then "live showcase"
-                  else "live play #{Shellwords.escape(name)}"
-                  end
-        env = { "DILLA_COLTRANE" => "0" }
-        # /play, /play dilla.rb and its showcase aliases pin the same Dillatime
-        # kit, so stale inherited DILLA_LIVE_KIT state cannot resurrect an older groove.
-        env["DILLA_LIVE_KIT"] = "dillatime" if showcase
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: command, env:)
-        return result unless result.ok?
-
-        Result.ok(output: result.value!, rendered: result.value!, media: :dilla_live, style: name)
+        result
       end
 
       def live_synth(text, root: MasterPaths.root, bus: nil)
-        if (artist = face_music_artist(text)) && text.match?(/\A\s*(?:play|start|resume|put on|queue)\b/i)
-          return play_live_music(artist, root:, bus:)
-        end
+        result = play_live_music(text, root:, bus:)
+        return result unless result.ok?
 
-        result = ScriptDispatch.run(
-          root:, tool: "dilla", arg: "live say #{Shellwords.escape(text)}",
-          env: { "DILLA_COLTRANE" => "0" }
-        )
-        unless result.ok?
-          return result
-        end
-
-        if (artist = face_music_artist(text))
-          publish_face_music(bus, artist:)
-        end
-        Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_live })
+        artist = face_music_artist(text)
+        publish_face_music(bus, artist:) if artist
+        result
       end
 
       # What this surface writes: tones and kicks as master-*.wav, beats as
-      # <style>-<UTC stamp>.mp3.
-      RENDERED_MEDIA = %w[master-*.wav *-2???????T??????Z.mp3].freeze
+      # <progression>-<UTC stamp>.wav.
+      RENDERED_MEDIA = %w[master-*.wav *-2???????T??????Z.wav].freeze
 
       def last_media(dir = MEDIA_OUTPUT_DIR)
         RENDERED_MEDIA.flat_map { |pattern| Dir.glob(File.join(dir, pattern)) }.max_by { |path| File.mtime(path) }
@@ -443,42 +473,14 @@ module Master
         NaturalIntent.resolve(text)&.entities&.fetch(:preset, nil) || "cinematic"
       end
 
-      DEFAULT_BEAT_BARS = 12
-
-      BEAT_STYLES = [
-        [/\bbach|baroque\b/i, "baroque"],
-        [/\bneo[ -]?soul\b/i, "neo-soul"],
-        [/\bjazz\b/i, "jazz"],
-        [/fly(?:ing)?\s+lotus/i, "flylo"],
-      ].freeze
-
-      def beat_style_for(text)
-        BEAT_STYLES.find { |pattern, _style| text.match?(pattern) }&.last || "dilla"
-      end
-
       def generate_beat(text, root:)
-        # Use ConstraintDSL to resolve intent before rendering
-        constraints = ConstraintDSL.parse_intent(text)
-        resolved_params = ConstraintDSL.resolve(constraints)
-        style = beat_style_for(text)
+        FileUtils.mkdir_p(MEDIA_OUTPUT_DIR)
+        output = File.join(MEDIA_OUTPUT_DIR, "dilla-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        rendered = render_dilla(text, root:, output:)
+        return rendered unless rendered.ok?
 
-        output_dir = MEDIA_OUTPUT_DIR
-        FileUtils.mkdir_p(output_dir)
-        output = File.join(output_dir, "#{style}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.mp3")
-
-        # Mirror Shared::DillaProcessor#run_script: the engine's CLI is
-        # `dilla.rb dilla <output> <bars>` — style/track selection happens via
-        # TRACK/PROGRESSION ENV, and resolved constraints now drive the renders.
-        track = style.tr("-", "_")
-        env = { "RENDER_MODE" => "dilla", "SPEAK" => "0" }
-
-        # Merge resolved constraints into the environment for the dilla engine
-        resolved_params.each { |k, v| env[k.to_s.upcase] = v.to_s }
-        env.merge!("TRACK" => track, "PROGRESSION" => track) unless track == "dilla"
-
-        args = ["dilla", output, DEFAULT_BEAT_BARS.to_s]
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |v| Shellwords.escape(v) }.join(" "), env:)
-        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :dilla, path: output }) : result
+        info = rendered.value!
+        Result.ok({ output: info[:log], rendered: info[:log], media: :dilla, path: output, progression: info[:progression], drums: info[:drums] })
       end
     end
   end

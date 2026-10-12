@@ -504,11 +504,7 @@ presets:
     cherry_pick: true
     files:
       - STUDIO/dilla/dilla.rb
-      - STUDIO/dilla/lib/sound.rb
-      - STUDIO/dilla/lib/groove.rb
-      - STUDIO/dilla/lib/harmony.rb
-      - STUDIO/dilla/lib/sampling.rb
-      - STUDIO/dilla/lib/listen.rb
+      - STUDIO/dilla/dilla.json
       - lib/voice/dilla.rb
       - lib/voice/production_dna.rb
       - lib/io/analog_capabilities.rb

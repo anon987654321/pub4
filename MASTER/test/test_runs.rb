@@ -72,7 +72,7 @@ class TestRuns < Minitest::Test
       "MASTER/" => 250,
       "RAILS/" => 100,
       "OPENBSD/" => 20,
-      "STUDIO/" => 30,
+      "STUDIO/" => 15,
     }
 
     minimums.each do |prefix, floor|
@@ -82,7 +82,7 @@ class TestRuns < Minitest::Test
     end
 
     assert_includes Operator::Runs.globs.keys, "STUDIO/Rakefile",
-                    "the Dilla and tool suites must be part of the runner census"
+                    "the dilla and tool suites must be part of the runner census"
   end
 
   def test_node_and_shell_test_files_are_in_the_same_reachability_census
@@ -111,7 +111,7 @@ class TestRuns < Minitest::Test
 
     assert_operator studio.size, :>, 15, "STUDIO's suite is not being read"
     assert_includes Operator::Runs.who_runs("STUDIO/test/test_studio_gate.rb"), "STUDIO/Rakefile"
-    assert_includes Operator::Runs.who_runs("STUDIO/test/test_dilla_radio_bergen_study.rb"), "STUDIO/Rakefile"
+    assert_includes Operator::Runs.who_runs("STUDIO/test/dilla_test.rb"), "STUDIO/Rakefile"
   end
 
   # What makes a file a test is the directory, not the name — three source files

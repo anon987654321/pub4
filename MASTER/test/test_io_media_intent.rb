@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 require_relative "../lib/boot/paths"
 require_relative "../lib/io/media_intent"
+require_relative "../lib/music/synth"
 
 class MediaIntentSpec < Minitest::Test
   MediaIntent = Master::Io::MediaIntent
@@ -17,6 +18,44 @@ class MediaIntentSpec < Minitest::Test
     yield
   ensure
     klass.define_singleton_method(:run, orig)
+  end
+
+  LISTING = <<~TEXT
+      Progressions:
+         0  Cm9 Fm9 Bbm9 Ebmaj9
+         1  Dm7 G7 Cmaj7 Fmaj7
+
+      Drum patterns: boom_bap, offbeat_inversion, sparse
+      Groove profiles: late_snare, behind_the_beat, dry
+  TEXT
+
+  # Answers --list with the menu and records every other call; a render "writes" its --out.
+  def dilla_runner(calls)
+    lambda do |**kwargs|
+      calls << kwargs
+      next Master::Result.ok(LISTING) if kwargs[:arg] == "--list"
+
+      out = Shellwords.split(kwargs[:arg].to_s).each_cons(2).find { |flag, _| flag == "--out" }&.last
+      File.write(out, "RIFF") if out
+      Master::Result.ok("Wrote #{out}")
+    end
+  end
+
+  def with_player(pid: 4242)
+    played = []
+    synth = Master::Music::Synth
+    original = synth.method(:play)
+    synth.define_singleton_method(:play) { |path, **| played << path; pid }
+    yield played
+  ensure
+    synth.define_singleton_method(:play, original)
+  end
+
+  def with_clean_player
+    MediaIntent.instance_variable_set(:@player_pid, nil)
+    yield
+  ensure
+    MediaIntent.instance_variable_set(:@player_pid, nil)
   end
 
   def test_recognizes_explicit_image_requests
@@ -57,36 +96,42 @@ class MediaIntentSpec < Minitest::Test
     end
   end
 
-  def test_routes_bach_and_flylo_to_distinct_full_track_styles
+def test_a_beat_request_renders_a_progression_with_a_drum_pattern_to_a_wav
+  Dir.mktmpdir do |home|
     calls = []
-    runner = lambda do |**kwargs|
-      calls << kwargs
-      Master::Result.ok("rendered")
+    with_dispatch_stub(dilla_runner(calls)) do
+      stub = MediaIntent.method(:render_dilla)
+      MediaIntent.define_singleton_method(:render_dilla) { |text, root:, output: nil| stub.call(text, root:, output: output && File.join(home, File.basename(output))) }
+      begin
+        result = MediaIntent.dispatch("make me a Flying Lotus beat")
+        assert result.ok?
+        assert_equal :dilla, result.value![:media]
+      ensure
+        MediaIntent.define_singleton_method(:render_dilla, stub)
+      end
     end
-    with_dispatch_stub(runner) do
-      assert MediaIntent.dispatch("create a Bach-inspired instrumental").ok?
-      assert MediaIntent.dispatch("make a Flying Lotus beat").ok?
-    end
-    assert(calls.any? { |c| c[:env]&.fetch("TRACK", nil) == "baroque" })
-    assert(calls.any? { |c| c[:env]&.fetch("TRACK", nil) == "flylo" })
+    assert_equal ["--list"], [calls.first[:arg]]
+    render = calls.last
+    assert_equal "dilla", render[:tool]
+    words = Shellwords.split(render[:arg])
+    assert_includes %w[0 1], words[words.index("--progression") + 1]
+    assert_includes %w[boom_bap offbeat_inversion sparse], words[words.index("--drums") + 1]
+    assert_match(/\.wav\z/, words[words.index("--out") + 1])
   end
+end
 
-  def test_generate_beat_invokes_the_dilla_cli_verb_not_the_removed_wrapper_flags
-    captured = nil
-    runner = lambda do |**kwargs|
-      captured = kwargs
-      Master::Result.ok("rendered")
-    end
-    with_dispatch_stub(runner) do
-      result = MediaIntent.dispatch("make me a beat")
+def test_a_beat_request_that_names_a_progression_and_a_pattern_gets_them
+  Dir.mktmpdir do |dir|
+    calls = []
+    with_dispatch_stub(dilla_runner(calls)) do
+      result = MediaIntent.render_dilla("make a progression 1 beat on offbeat_inversion", root: dir, output: File.join(dir, "x.wav"))
       assert result.ok?
     end
-    assert_equal "dilla", captured[:tool]
-    # engine CLI is `dilla.rb dilla <output> <bars>` -- no --style/--output/generate flags
-    assert_match(/\Adilla\s+\S+\s+\d+\z/, captured[:arg])
-    assert_equal "dilla", captured[:env]["RENDER_MODE"]
-    refute captured[:env].key?("TRACK"), "plain 'dilla' style should not force TRACK, letting the engine pick its own default progression"
+    words = Shellwords.split(calls.last[:arg])
+    assert_equal %w[--progression 1 --out], [words[0], words[1], words[2]]
+    assert_equal "offbeat_inversion", words[words.index("--drums") + 1]
   end
+end
 
   def test_routes_explicit_image_requests_to_replicate
     captured = nil
@@ -112,109 +157,103 @@ class MediaIntentSpec < Minitest::Test
     [bus, events]
   end
 
-  def test_play_live_music_defaults_to_the_dilla_showcase
-    captured = nil
-    runner = lambda do |**kwargs|
-      captured = kwargs
-      Master::Result.ok("live showcase started")
+def test_play_live_music_renders_then_plays_the_wav
+  Dir.mktmpdir do |dir|
+    with_clean_player do
+      calls = []
+      ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
+      begin
+        with_player do |played|
+          with_dispatch_stub(dilla_runner(calls)) do
+            result = MediaIntent.play_live_music("")
+            assert result.ok?, result.inspect
+            assert_equal :dilla_live, result.value![:media]
+            assert_equal [result.value![:path]], played
+            assert_match(%r{/dilla-renders/\d{4}-\d{2}-\d{2}/.+\.wav\z}, played.first)
+          end
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      assert_equal "--list", calls.first[:arg]
+      assert_equal "dilla", calls.last[:tool]
+      assert_includes calls.last[:arg], "--progression"
     end
-
-    with_dispatch_stub(runner) do
-      result = MediaIntent.play_live_music("")
-      assert result.ok?
-    end
-
-    assert_equal "dilla", captured[:tool]
-    assert_equal "live showcase", captured[:arg]
   end
+end
 
-  def test_play_showcase_broadcasts_the_livesets
-    captured = nil
-    runner = lambda do |**kwargs|
-      captured = kwargs
-      Master::Result.ok("broadcast started")
+def test_play_live_music_honours_a_named_progression_and_pattern
+  Dir.mktmpdir do |dir|
+    with_clean_player do
+      calls = []
+      ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
+      begin
+        with_player do
+          with_dispatch_stub(dilla_runner(calls)) { assert MediaIntent.play_live_music("progression 1 sparse").ok? }
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      words = Shellwords.split(calls.last[:arg])
+      assert_equal "1", words[words.index("--progression") + 1]
+      assert_equal "sparse", words[words.index("--drums") + 1]
     end
-
-    with_dispatch_stub(runner) { assert MediaIntent.play_live_music("showcase").ok? }
-
-    assert_equal "live broadcast", captured[:arg]
   end
+end
 
-  def test_dilla_rb_alias_starts_the_canonical_showcase
-    captured = nil
-    runner = lambda do |**kwargs|
-      captured = kwargs
-      Master::Result.ok("live showcase started")
+def test_play_live_music_reports_a_failed_render_without_playing
+  with_clean_player do
+    with_player do |played|
+      failing = lambda do |**kwargs|
+        kwargs[:arg] == "--list" ? Master::Result.ok(LISTING) : Master::Result.err("dilla: exit=1")
+      end
+      with_dispatch_stub(failing) { refute MediaIntent.play_live_music("").ok? }
+      assert_empty played
     end
-
-    with_dispatch_stub(runner) do
-      result = MediaIntent.play_live_music("dilla.rb")
-      assert result.ok?
-    end
-
-    assert_equal "live showcase", captured[:arg]
-    assert_equal "dillatime", captured[:env]["DILLA_LIVE_KIT"]
-    assert_equal "0", captured[:env]["DILLA_COLTRANE"]
   end
+end
 
-  def test_script_suffix_is_removed_from_named_artist_lanes
-    captured = nil
-    with_dispatch_stub(->(**kwargs) { captured = kwargs; Master::Result.ok("live artist started") }) do
-      assert MediaIntent.play_live_music("royksopp.rb").ok?
-    end
-
-    assert_equal "live play royksopp", captured[:arg]
-  end
-
-  def test_play_live_music_normalizes_the_five_named_artist_lanes
-    calls = []
-    runner = lambda do |**kwargs|
-      calls << kwargs
-      Master::Result.ok("live artist started")
-    end
-
-    with_dispatch_stub(runner) do
-      %w[bach dilla madlib flylo royksopp].each do |artist|
-        assert MediaIntent.play_live_music(artist).ok?, artist
+def test_background_music_publishes_the_named_artist_to_the_bus
+  bus, events = with_fake_bus
+  with_clean_player do
+    with_player do
+      with_dispatch_stub(dilla_runner([])) do
+        assert MediaIntent.play_background_music("play some royksopp in the background", bus:).ok?
       end
     end
-
-    assert_equal 5, calls.size
-    assert_equal %w[live play bach live play dilla live play madlib live play flylo live play royksopp],
-                 calls.map { |call| call[:arg].split(" ") }.flatten
   end
+  assert_equal [["client_action", { action: "dilla_bg", artist: "royksopp" }]], events
+end
 
-  def test_background_music_publishes_the_named_artist_to_the_bus
-    bus, events = with_fake_bus
-    runner = ->(**_kwargs) { Master::Result.ok("live default started") }
-
-    with_dispatch_stub(runner) do
-      result = MediaIntent.play_background_music("play some royksopp in the background", bus:)
-      assert result.ok?
+def test_background_music_publishes_a_bare_toggle_without_an_artist
+  bus, events = with_fake_bus
+  with_clean_player do
+    with_player do
+      with_dispatch_stub(dilla_runner([])) { assert MediaIntent.play_background_music("play some background music", bus:).ok? }
     end
-    assert_equal [["client_action", { action: "dilla_bg", artist: "royksopp" }]], events
   end
+  assert_equal [["client_action", { action: "dilla_bg" }]], events
+end
 
-  def test_background_music_publishes_a_bare_toggle_without_an_artist
+  def test_live_stop_publishes_the_browser_stop_and_says_when_nothing_plays
     bus, events = with_fake_bus
-    runner = ->(**_kwargs) { Master::Result.ok("live default started") }
-
-    with_dispatch_stub(runner) do
-      assert MediaIntent.play_background_music("play some background music", bus:).ok?
-    end
-    assert_equal [["client_action", { action: "dilla_bg" }]], events
-  end
-
-  def test_live_stop_publishes_the_browser_stop
-    bus, events = with_fake_bus
-    # Voice::Playback may be undefined in this test process; stop_live_audio
-    # guards it with defined?. The stub only has to answer ScriptDispatch.run.
-    runner = ->(**_kwargs) { Master::Result.ok("stopped") }
-
-    with_dispatch_stub(runner) do
+    with_clean_player do
       result = MediaIntent.stop_live_audio(bus:)
       assert result.ok?
+      assert_equal "nothing is playing", result.value![:rendered]
     end
     assert_equal [["client_action", { action: "dilla_bg", stop: true }]], events
+  end
+
+  def test_live_stop_ends_the_player_it_started
+    bus, = with_fake_bus
+    child = Process.spawn(RbConfig.ruby, "-e", "sleep 30")
+    with_clean_player do
+      MediaIntent.instance_variable_set(:@player_pid, child)
+      assert_equal child, MediaIntent.player_pid
+      assert_match(/stopped the Dilla player/, MediaIntent.stop_live_audio(bus:).value![:rendered])
+      assert_nil MediaIntent.player_pid
+    end
+    Process.wait(child)
   end
 end

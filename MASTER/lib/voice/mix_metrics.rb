@@ -19,8 +19,8 @@ module Master
       }.freeze
 
       # Capped, and the cap is reported (analysed_sec, and in the brief) rather
-      # than applied silently. One ffmpeg per band over STUDIO/dilla/demo.wav —
-      # 47 minutes, 496 MB — was 29s of CPU per critique line, and timed out
+      # than applied silently. One ffmpeg per band over a 47-minute, 496 MB render
+      # was 29s of CPU per critique line, and timed out
       # test_mix_metrics_from_demo_when_present against the suite's 30s budget.
       # One filter_complex pass takes it to 22s; three minutes of it, to 1.3s.
       # A whole set is not a truer sample of band balance, only a costlier one.
@@ -78,7 +78,6 @@ module Master
 
       def default_demo_paths(root = Master::ROOT)
         [
-          File.join(Master::REPO_ROOT, "STUDIO/dilla/demo.wav"),
           File.join(root, ".master/media/dilla_beat.mp3"),
           File.join(Dir.pwd, "demo.wav"),
         ]
