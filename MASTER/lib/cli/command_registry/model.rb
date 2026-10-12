@@ -13,6 +13,7 @@ module Master
         return dispatch_auth(ctx: rest) if word == "auth"
         return trajectory_lab(root:) if word == "lab"
         return list_models(root:, metrics:, agent:) if arg == "list"
+        return model_health(agent:) if arg == "health"
         return compute_models(agent:, root:) if arg == "compute"
         if arg == "benchmark" || arg.start_with?("benchmark ")
           benchmark_args = arg.delete_prefix("benchmark").strip
@@ -73,6 +74,60 @@ module Master
         footer = growth.empty? ? [] : ["", "more with:"] + growth.map { |fix| "  #{fix}" }
         footer += ["", "this session:"] + quality unless quality.empty?
         footer.empty? ? "" : "\n#{footer.join("\n")}"
+      end
+
+
+      # Summarize measured provider outcomes without printing raw provider
+      # errors, response bodies or credentials. Detailed diagnostic events remain
+      # available through /diag; this surface answers whether the pool is healthy.
+      def model_health(agent:)
+        router = model_router_of(agent)
+        return "model health: router unavailable" unless router
+
+        pool = router.compute_pool if router.respond_to?(:compute_pool)
+        return "model health: telemetry unavailable" unless pool&.respond_to?(:snapshot)
+
+        stats = pool.snapshot
+        measured = stats.filter_map do |id, raw|
+          next unless raw.is_a?(Hash)
+
+          calls = raw.fetch(:calls, 0).to_i
+          next unless calls.positive?
+
+          successes = raw.fetch(:successes, 0).to_i
+          failures = raw.fetch(:failures, 0).to_i
+          latency = raw.fetch(:latency_ms, 0).to_f
+          latency = nil unless latency.finite? && latency.positive? && successes.positive?
+          {
+            id: id.to_s,
+            calls:,
+            successes:,
+            failures:,
+            rate: successes.fdiv(calls),
+            latency_ms: latency,
+          }
+        end
+        return "model health: no recorded calls yet; /model compute lists reachable lanes" if measured.empty?
+
+        total_calls = measured.sum { |row| row[:calls] }
+        total_successes = measured.sum { |row| row[:successes] }
+        total_failures = measured.sum { |row| row[:failures] }
+        total_rate = total_successes.fdiv(total_calls)
+        lines = [
+          "model health: #{measured.size} models, #{total_calls} calls, " \\
+          "success=#{(total_rate * 100).round(1)}%, failures=#{total_failures}",
+        ]
+        measured.sort_by { |row| [-row[:failures], -row[:calls], row[:id]] }.first(30).each do |row|
+          average = row[:latency_ms] ? "#{row[:latency_ms].round}ms" : "n/a"
+          lines << "  #{row[:id]}  calls=#{row[:calls]} ok=#{row[:successes]} " \\
+                   "fail=#{row[:failures]} success=#{(row[:rate] * 100).round(1)}% avg=#{average}"
+        end
+        hidden = measured.size - 30
+        lines << "  ... #{hidden} more models" if hidden.positive?
+        lines.join("\\n")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "command_registry.model_health")
+        "model health: unavailable (#{e.class})"
       end
 
       def trajectory_lab(root:)
