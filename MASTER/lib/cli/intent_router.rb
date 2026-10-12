@@ -11,6 +11,7 @@ module Master
         delete_redundant_config: %w[delete remove kill purge drop],
         verify_patch_landed: %w[verify check confirm did it land],
         run_sound_review: %w[sound review audio critique listen],
+        design_frontend: %w[frontend stylesheet stylesheets css scss landing homepage hero typography palette markup],
         run_ui_review: %w[ui critique design visual look review],
         generate_rails_pwa: %w[generate create new rails pwa app scaffold blank],
         refactor_rails_app: %w[refactor upgrade migrate modernize rails hotwire turbo stimulus],
@@ -75,7 +76,7 @@ module Master
           inspect_repo diagnose_behaviour run_relevant_tests
         ],
         medium: %i[
-          wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app
+          design_frontend wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app
           run_full_workflow run_rails_through run_master_through
         ],
         high: %i[write_repo_changes delete_redundant_config],

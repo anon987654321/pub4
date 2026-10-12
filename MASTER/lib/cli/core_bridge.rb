@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../design/authoring"
+
 module Master
   module CLI
     # CoreBridge — run one coding goal through the core Fold from the CLI and web
@@ -29,6 +31,7 @@ module Master
           intent: Master::CLI::IntentRouter.new.classify(goal),
         )
         seed_continuation(memory, mission.record)
+        seed_design_brief(memory, goal, mission.record, root:)
         begin
           mission.transition!(
             :plan,
@@ -101,6 +104,14 @@ module Master
         mission.fail!("#{error.class}: #{error.message}")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CoreBridge.defer_mission_on_error")
+      end
+
+      # A frontend mission starts from the design brief the fixer is held to, so the
+      # fold plans against the house direction instead of its own habits.
+      def seed_design_brief(memory, goal, record, root:)
+        return unless record.dig("operator", "intent").to_s == "design_frontend"
+
+        memory.note(:design, Master::Design::Authoring.mission_context(goal:, root:))
       end
 
       def seed_continuation(memory, record)

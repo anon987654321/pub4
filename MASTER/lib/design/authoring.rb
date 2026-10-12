@@ -15,6 +15,7 @@ module Master
       end
 
       EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
+      APPS = %w[brgen amber bsdports master_web __shared].freeze
       GENERATED = /(\.min\.|face\.runtime\.js\z|\/vendor\/|\/node_modules\/|\/public\/assets\/)/
 
       # The four steps a designer takes before the first line, and the tells
@@ -26,6 +27,19 @@ module Master
         - Review: if the plan is what you would write for any similar page, change the part that is generic.
         - Complete: a surface is finished when its empty, loading, error and worst-case states exist, not when its happy path renders.
         - Critique: before returning, remove one decoration that serves nothing.
+      TEXT
+
+      # The fold has tools and turns, so it plans in the open and leaves the
+      # file edits to the work itself; the file-only fixer cannot.
+      MISSION_PROTOCOL = <<~TEXT.chomp
+        DESIGN MISSION
+        You are creating, editing or completing a frontend surface.
+        - Read first: the app's tokens and shared stylesheet, and one finished sibling surface, before writing a new rule.
+        - Plan in your first turn: palette, type roles, layout and the one memorable element, taken from the direction below.
+        - Review the plan: replace any part you would write for any similar page.
+        - Build with the app's existing primitives and partials; add a token only when no existing one fits.
+        - Complete: add the missing states and responsive behavior before you call it done.
+        - Critique: render it if you can, and remove one decoration that serves nothing.
       TEXT
 
       TELLS = <<~TEXT.chomp
@@ -55,6 +69,19 @@ module Master
           TELLS,
           format(COMPLETION, touch: Thresholds.touch_min_px(root:), measure: Thresholds.measure_ideal_ch(root:)),
         ].compact.join("\n\n")
+      end
+
+      # The brief for a whole mission, before any file is chosen. The app is read
+      # from the goal; without one, only the app-independent half applies.
+      def mission_context(goal:, root: Master::ROOT)
+        app = APPS.find { |name| goal.to_s.match?(/\b#{Regexp.escape(name)}\b/i) }
+        surface = Surface.new(app.to_s, "mission", nil, "/")
+        parts = [MISSION_PROTOCOL]
+        parts << VisualLanguage.direction_lines(surface, VisualLanguage.direction_for(surface)).strip if app
+        parts << Typeface::HOUSE_RULE if app.nil? || house_typeface?(surface)
+        parts << TELLS
+        parts << format(COMPLETION, touch: Thresholds.touch_min_px(root:), measure: Thresholds.measure_ideal_ch(root:))
+        parts.join("\n\n")
       end
 
       def surface_for(path)
