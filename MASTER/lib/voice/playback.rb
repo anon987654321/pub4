@@ -233,17 +233,20 @@ end
         end
       end
 
+      # Returns the new generation, which Voice::Session adopts as its own token,
+      # or false when the interruption itself failed.
       def interrupt!(_reason = nil)
-        @lock.synchronize do
+        token = @lock.synchronize do
           @generation += 1
           @queue&.clear
           @job_generations.clear
           @pending&.clear
           @last_said = nil
           terminate_player_locked if @playing_pid
+          @generation
         end
         Device::Audio.stop if Device::Audio.media_player_available?
-        true
+        token
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.interrupt")
         false

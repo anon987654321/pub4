@@ -51,7 +51,7 @@ class TestVoiceSupport < Minitest::Test
     PB.stub(:enabled?, true) do
       PB.stub(:available?, true) do
         PB.stub(:synthesize, nil) do
-          PB.stub(:native_say, ->(text) { spoken << text; true }) do
+          PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
             assert PB.speak_now("hello")
           end
         end
@@ -66,7 +66,7 @@ class TestVoiceSupport < Minitest::Test
     queue = Queue.new
     queue << ["hello", "hello", true, :jenny, :warm]
     PB.instance_variable_set(:@queue, queue)
-    PB.stub(:native_say, ->(text) { spoken << text; true }) do
+    PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
       PB.stub(:synthesize, nil) do
         worker = Thread.new { PB.send(:drain) }
         worker.join
@@ -128,7 +128,7 @@ class TestVoiceSupport < Minitest::Test
     spoken = []
 
     PB.stub(:player, [player, []]) do
-      PB.stub(:native_say, ->(text) { spoken << text; true }) do
+      PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
         PB.stub(:generation_active?, true) do
           assert PB.send(:play_or_fallback, audio, "same reply", generation: 0)
         end
@@ -143,7 +143,7 @@ class TestVoiceSupport < Minitest::Test
   def test_failed_audio_playback_does_not_fall_through_to_native_voice
     spoken = []
     PB.stub(:player, ["/tmp/missing-player", []]) do
-      PB.stub(:native_say, ->(text) { spoken << text; true }) do
+      PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
         PB.stub(:generation_active?, true) do
           refute PB.play("/tmp/missing-audio")
         end
@@ -450,7 +450,7 @@ end
     PB.instance_variable_set(:@job_generations, { job.object_id => 0 })
 
     PB.stub(:play, false) do
-      PB.stub(:native_say, ->(text) { spoken << text; true }) do
+      PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
         PB.send(:drain)
       end
     end
