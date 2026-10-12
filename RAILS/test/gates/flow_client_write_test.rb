@@ -123,6 +123,7 @@ class FlowClientWriteTest < Minitest::Test
 
     assert_includes line, "brgen/brgen_guest_marketplace_browse PASS"
     assert_includes line, "markedsplass.brgen.no"
+    assert_includes line, "markedsplass.brgen.no [/]"
   end
 
   def test_a_flow_with_no_credential_requirement_runs_as_before
