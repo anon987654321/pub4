@@ -253,8 +253,8 @@ module Deploy
       }
     end
 
-    def self.font_timeout?(payload)
-      payload.is_a?(Hash) && payload["error"].to_s.start_with?("font readiness timeout")
+    def self.timeout?(payload)
+      payload.is_a?(Hash) && payload["error"].to_s.match?(/timeout/i)
     end
 
     def self.ok?(payload)
