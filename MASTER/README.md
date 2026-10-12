@@ -241,3 +241,8 @@ def run(goal)
   Done.new(reason: :max_turns, turns: @max_turns, summary: nil)
 end
 ```
+
+
+### Audio-analysis boundary
+
+MASTER governs whether an audio-analysis request is allowed, its limits, and the truthful reporting of capability and stage status. The canonical `hear_drums` contract is documented in [`docs/hear_drums_skill_contract.md`](docs/hear_drums_skill_contract.md). MASTER dispatches one STUDIO entrypoint; it must not embed Demucs/FFmpeg recipes or reimplement signal processing. Missing tools, failed separation, or absent evidence are explicit failures, never success-shaped uncertainty.
