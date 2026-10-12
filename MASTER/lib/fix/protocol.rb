@@ -157,7 +157,38 @@ module Master
           "semantic_laws_without_deterministic_detector" => values.select do |entry|
             entry["semantic"] && !entry["scannable"]
           end.map { |entry| entry["id"] },
+          "four_stream_law_coverage" => four_stream_law_coverage(eligible),
           "verification_runtime" => "not_measured",
+        }
+      end
+
+      # Reports declaration reach, not runtime assessment. A law's current
+      # single mode does not automatically provide both lexical streams, and a
+      # semantic prompt being declared is not proof that a model call succeeded.
+      def four_stream_law_coverage(laws)
+        rows = Array(laws).select { |law| !law.respond_to?(:enforceable?) || law.enforceable? }
+        stream_reach = {
+          "lexical_violations" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation },
+          "lexical_opportunities" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity },
+          "semantic_violations" => ->(law) { law.respond_to?(:semantic?) && law.semantic? },
+          "semantic_opportunities" => ->(law) { law.respond_to?(:semantic?) && law.semantic? },
+        }
+        streams = stream_reach.to_h do |stream, reachable|
+          reached, missing = rows.partition(&reachable)
+          [stream, {
+            declared_reach: reached.size,
+            missing_count: missing.size,
+            missing_law_sample: missing.first(20).map { |law| law.id.to_s },
+          }]
+        end
+        missing_cells = streams.values.sum { |entry| entry[:missing_count] }
+        {
+          law_population: rows.size,
+          streams: streams,
+          declaration_status: missing_cells.zero? ? "declared_reach_complete" : "incomplete",
+          missing_law_stream_pairs: missing_cells,
+          runtime_status: "not_measured",
+          note: "Declaration reach only. Per-surface assessors and actual evidence are required before this can become runtime coverage.",
         }
       end
 
@@ -256,6 +287,7 @@ end
           "detector_matrix" => detector_matrix,
           "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix),
           "assessment_contract" => FourStreamAssessment.contract,
+          "four_stream_law_coverage" => four_stream_law_coverage(laws),
         }
         JSON.pretty_generate(payload)
       end
