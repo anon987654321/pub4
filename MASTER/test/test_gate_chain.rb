@@ -294,4 +294,17 @@ class TestGateChain < Minitest::Test
     assert_includes out, "sprawl"
     refute_includes out, "lexical"
   end
+
+  # /fix measures the failing ladder before it repairs anything, and that run costs minutes.
+  # The record is reused only for the same commit, target and working-tree content.
+  def test_baseline_record_is_reused_only_for_the_same_key
+    saved = File.file?(G::BASELINE_FILE) ? File.read(G::BASELINE_FILE) : nil
+    G.write_baseline("k1", { "suites" => ["x fail"] })
+
+    assert_equal({ "suites" => ["x fail"] }, G.read_baseline("k1"))
+    assert_nil G.read_baseline("k2")
+    refute_equal G.baseline_key("MASTER/lib/a"), G.baseline_key("MASTER/lib/b")
+  ensure
+    saved ? File.write(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
+  end
 end

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
+require "fileutils"
+require "json"
 require "open3"
 require "rbconfig"
 require "operator/ruby_runner"
@@ -88,13 +91,43 @@ module Operator
     end
 
     # What already fails before /fix touches anything: stage name => failing lines.
-    # One scan-only ladder, remembered by commit so a second run reuses it.
+    # One scan-only ladder, remembered by commit and working-tree content so a second run
+    # reuses it. A passing or failing ladder is stored alike: the baseline is what failed.
     def baseline(target:)
       selected = verification_stages(target)
       return {} if selected.empty?
 
+      key = baseline_key(target)
+      cached = read_baseline(key)
+      if cached
+        Master::Trace::Dmesg.status("gate0", "baseline reused for #{key[0, 12]}, ladder not re-run")
+        return cached
+      end
+
       report(selected, scan_only: true, trees: trees_for_target(target), return_results: true)
-      GateRegression.snapshot(@last_results)
+      snapshot = GateRegression.snapshot(@last_results)
+      write_baseline(key, snapshot)
+      snapshot
+    end
+
+    BASELINE_FILE = File.join(MASTER, ".master", "gate_baseline.json")
+
+    def baseline_key(target)
+      head, = Open3.capture2("git", "rev-parse", "HEAD", chdir: ROOT)
+      diff, = Open3.capture2("git", "diff", "HEAD", "--binary", chdir: ROOT)
+      Digest::SHA256.hexdigest([head.strip, target.to_s, diff].join("\0"))
+    end
+
+    def read_baseline(key)
+      stored = JSON.parse(File.read(BASELINE_FILE))
+      stored["snapshot"] if stored["key"] == key
+    rescue Errno::ENOENT, JSON::ParserError
+      nil
+    end
+
+    def write_baseline(key, snapshot)
+      FileUtils.mkdir_p(File.dirname(BASELINE_FILE))
+      File.write(BASELINE_FILE, JSON.generate("key" => key, "snapshot" => snapshot))
     end
 
     def verification_stages(target)
