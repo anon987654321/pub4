@@ -1,8 +1,12 @@
 # ---------------------------------------------------------------------- CLI
 def run(argv)
+  live_argument = argv.first == 'live'
+  argv = argv.drop(1) if live_argument
   options = {}
   OptionParser.new do |o|
     o.banner = 'Usage: ruby dilla.rb [options]'
+    o.on('--showcase', 'Render the four-part Blue Hour composition to dilla.wav') { options[:showcase] = true }
+    o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
     o.on('--random', 'Random progression and drum pattern (the default groove profile)') { options[:random] = true }
@@ -43,18 +47,23 @@ def run(argv)
     o.on('--pool POOL', %w[essential all], 'With --play: essential progressions (default) or all') { |v| options[:pool] = v }
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
+  options[:live] = true if live_argument
 
   data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
   progressions = data.fetch('progressions')
 
   if options[:play]
     play_forever(data, options)
-  elsif options[:list] || (options[:prog].nil? && !options[:random] && !options[:quick])
+  elsif options[:live]
+    play_showcase(data, options)
+  elsif options[:list]
     puts 'Progressions:'
     progressions.each_with_index { |chords, i| puts format('%4d  %s', i, chords.join(' ')) }
     puts
     puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
+  elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick])
+    render_showcase(data, options)
   else
     render(data, options)
   end
@@ -81,8 +90,8 @@ def render(data, options)
   progressions = data.fetch('progressions')
   seed = options[:seed] || Random.new_seed % 1_000_000
   pick = Random.new(seed)
-  index = options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size))
-  names = progressions.fetch(index) { abort "No progression: #{index}" }
+  index = options[:section_index] || (options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size)))
+  names = options[:names] || progressions.fetch(index) { abort "No progression: #{index}" }
   drums = options[:drums] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
   profile = options[:profile] || data.fetch('default_profile')
 
@@ -104,9 +113,17 @@ def render(data, options)
     else
       seq.render_chords(names, bpm, beats, search:, strum: seq.strum(options[:strum]))
     end
+  if options[:melody]
+    beat_seconds = 60.0 / bpm
+    plucks = options[:melody].map do |beat, midi, length, gain|
+      Pluck.new(beat.to_f * beat_seconds, 0.0, midi.to_i, length.to_f * beat_seconds, gain.to_f)
+    end
+    seq.sound(buf, plucks, seq.voice_spec(options[:melody_voice] || 'rhodes_mark1'))
+  end
   vcs = seq.vcs_amount(options[:vcs])
   buf = seq.colour(buf, seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances]), vcs)
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
+  echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
   seconds = buf.size / SAMPLE_RATE.to_f
   hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
@@ -115,6 +132,7 @@ def render(data, options)
   buf = seq.duck(buf, hits)
   buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
   buf = seq.overlay_drums(buf, hits, levels, vcs) if drums
+  return buf if options[:buffer_only]
 
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
@@ -126,6 +144,95 @@ def render(data, options)
   puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
   puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} seed=#{seed}"
   out
+end
+
+# Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
+# and drum synthesiser used by ordinary progression renders.
+def render_showcase(data, options)
+  arrangement = JSON.parse(File.read(File.expand_path('../../data/showcase.json', __dir__)))
+  sections = arrangement.fetch('sections')
+  seed = options[:seed] || 261_013
+  crossfade = (arrangement.fetch('crossfade_seconds', 0.18) * SAMPLE_RATE).round
+  combined = []
+
+  sections.each_with_index do |section, index|
+    section_options = {
+      names: section.fetch('progression'),
+      section_index: index,
+      bpm: section.fetch('bpm'),
+      beats: section.fetch('beats_per_chord', 2.0),
+      voice: section.fetch('voice'),
+      mode: section.fetch('mode', 'repeat'),
+      repeat: section.fetch('repeat', 'half_note_pulse'),
+      profile: section.fetch('profile', 'soft_swing'),
+      drums: section.fetch('drums'),
+      echo: section.fetch('echo', false),
+      echo_mix: section['echo_mix'],
+      echo_feedback: section['echo_feedback'],
+      echo_time: section['echo_time_ms'],
+      echo_tail: section['echo_tail_seconds'],
+      mix: section.fetch('mix', {}),
+      melody: section['melody'],
+      melody_voice: section['melody_voice'],
+      seed: seed + (index * 97),
+      groove: options[:groove],
+      transpose: options[:transpose],
+      wrap: options[:wrap],
+      plain: options[:plain],
+      sonitex: options[:sonitex],
+      sonitex_instances: options[:sonitex_instances],
+      vcs: options[:vcs],
+      buffer_only: true
+    }.reject { |_key, value| value.nil? }
+
+    part = render(data, section_options)
+    if combined.empty?
+      combined = part
+    else
+      overlap = [crossfade, combined.size, part.size].min
+      left = combined.pop(overlap)
+      overlap.times do |i|
+        phase = overlap <= 1 ? 1.0 : i.to_f / (overlap - 1)
+        combined << (left[i] * (1.0 - phase)) + (part[i] * phase)
+      end
+      combined.concat(part.drop(overlap))
+    end
+    puts format('section %d/%d: %s — %d BPM, %s', index + 1, sections.size,
+                section.fetch('name'), section.fetch('bpm'), section.fetch('voice'))
+  end
+
+  fade = [SAMPLE_RATE / 25, combined.size / 2].min
+  fade.times do |i|
+    combined[i] *= i.to_f / [fade, 1].max
+    combined[-fade + i] *= (fade - i - 1).to_f / [fade, 1].max
+  end
+  peak = combined.map(&:abs).max || 0.0
+  combined.map! { |sample| sample * (0.92 / peak) } if peak > 0.92
+
+  out = options[:out] || File.expand_path('../../dilla.wav', __dir__)
+  FileUtils.mkdir_p(File.dirname(out))
+  WAV.write(out, combined)
+  puts format('Wrote %s (%.2fs, 44.1 kHz mono) — %s', out, combined.size / SAMPLE_RATE.to_f,
+              arrangement.fetch('title'))
+  puts "  seed=#{seed}; sections=#{sections.size}; peak=#{format('%.3f', combined.map(&:abs).max || 0.0)}"
+  out
+end
+
+# Live mode loops the same approved arrangement instead of switching to unrelated progressions.
+def play_showcase(data, options)
+  path = render_showcase(data, options)
+  command = player_command(options)
+  passes = 0
+  loop do
+    pid = Process.spawn(*command, path)
+    _waited, status = Process.wait2(pid)
+    unless status.success?
+      warn "player exited with status #{status.exitstatus}"
+      break
+    end
+    passes += 1
+    break if options[:passes] && passes >= options[:passes]
+  end
 end
 
 # A transposed note above the sample rate's limit cannot be played; say so rather than fake it.
