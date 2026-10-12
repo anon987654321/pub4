@@ -100,9 +100,10 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
   `browser_diagnostics` also compares approved PNG references in
   `MASTER/gates/data/visual_baselines/` for opted-in surfaces and writes diff
   heatmaps with pixel counts. Missing pixel baselines are soft until
-  `GATE_PIXEL_BASELINE_STRICT=1`; accept/re-record them only with the explicit
-  `GATE_PIXEL_BASELINE_APPROVE=1` switch after reviewing captures. Structural
-  baselines still require `GATE_SNAPSHOT_UPDATE=1`.
+  `GATE_PIXEL_BASELINE_STRICT=1`. Approval is a separate operator action using
+  `MASTER/tools/approve_visual_baselines.rb`, which promotes the exact reviewed
+  artifact and protects existing references unless `--replace` is explicit.
+  Structural baselines still require `GATE_SNAPSHOT_UPDATE=1`.
 - **Deploy sheds amber and bsdports**, and TLS keeps answering, so the outage
   looks like `curl 000` rather than a 5xx. Check ports 61352 and 47312 directly.
 - **In a worktree, live gates measure main.** The local fleet serves the main
