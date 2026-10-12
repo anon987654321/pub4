@@ -430,7 +430,10 @@ when "laws"
     case node
     when Hash
       found << node if node["id"].is_a?(String)
-      node.each_value { |value| declarations_in(value, found) }
+      node.each do |key, value|
+        found << value.merge("id" => key) if key.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) && value.is_a?(Hash) && !value.key?("id")
+        declarations_in(value, found)
+      end
     when Array
       node.each { |value| declarations_in(value, found) }
     end
@@ -440,17 +443,17 @@ when "laws"
   declared = declarations_in(YAML.safe_load_file(File.join(master_root, "data/laws.yml"), aliases: true))
              .find { |row| row["id"].to_s.casecmp?(id) }
 
-  require File.join(master_root, "law", "law")
+  require File.join(master_root, "law", "definition")
   Law.load_all(File.join(master_root, "law")) if Law.definitions.empty?
   executable_law = Law.definitions[id.to_sym]
 
   # Where it is written. Every ruby file under law/ and the scan registry is
   # searched for the id, and the enclosing block plus its leading comment is the
   # answer — that comment is where the exemption's reason lives.
-  def definition_at(root, id)
+  def definition_at(root, id, bare: true)
     Dir.glob(File.join(root, "{law/*.rb,lib/review/scan/laws/*.rb}")).sort.each do |path|
       lines = File.readlines(path)
-      index = rule_anchor(lines, id)
+      index = rule_anchor(lines, id, bare:)
       next unless index
 
       span = enclosing_span(lines, index)
@@ -460,9 +463,9 @@ when "laws"
   end
 
   # The declaration first; a bare mention of the id only when nothing declares it.
-  def rule_anchor(lines, id)
+  def rule_anchor(lines, id, bare: true)
     declaration = /(?:Law\.define\(:|declare\s+id:\s*["']|declare\s+:)#{Regexp.escape(id)}\b/i
-    lines.index { |line| line.match?(declaration) } || lines.index { |line| line.include?(id) }
+    lines.index { |line| line.match?(declaration) } || (lines.index { |line| line.include?(id) } if bare)
   end
 
   # The block is the enclosing definition, so back up past the comment that
@@ -491,14 +494,14 @@ when "laws"
 
   scanner = Master::Fix::Scanner.build(root: master_root, agent: nil)
   rule = scanner.laws.find { |item| item.id.to_s.casecmp?(id) }
-  if rule.nil? && declared.nil?
+  if rule.nil? && declared.nil? && executable_law.nil?
     abort("rule: nothing named #{id.inspect} — neither a declaration in data/laws.yml " \
           "nor one of the #{scanner.laws.size} rules the scanner loaded")
   end
 
-  where = definition_at(master_root, rule&.id.to_s.empty? ? id : rule.id.to_s)
+  where = definition_at(master_root, rule&.id.to_s.empty? ? id : rule.id.to_s, bare: !rule.nil?)
   card = {
-    id: (rule&.id || declared&.dig("id")).to_s,
+    id: (rule&.id || declared&.dig("id") || executable_law&.id).to_s,
     declared: declared,
     detector: rule ? rule.class.name || "anonymous scan rule" : nil,
     severity: rule&.severity&.to_s || declared&.dig("severity"),
@@ -519,10 +522,11 @@ when "laws"
     lines << "law #{card[:id]}, #{reach}" if reach
     lines << "law #{card[:id]}" unless reach
     if declared
-      %w[name source tier severity autofix fix detect detect_semantic detect_structural].each do |key|
+      %w[name statement priority source tier severity autofix fix detect detect_semantic detect_structural].each do |key|
         lines << "#{key}, #{declared[key]}" if declared[key]
       end
     end
+    lines << "constitution, #{Law::Contract.digest[0, 12]}"
     if executable_law
       surfaces = [("detector" if executable_law.detect), ("semantic" if executable_law.ask), ("practice" if executable_law.practice)].compact
       lines << "enforcement, #{surfaces.join(", ")}" unless surfaces.empty?

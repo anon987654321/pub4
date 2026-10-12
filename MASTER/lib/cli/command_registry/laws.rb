@@ -34,7 +34,7 @@ module Master
 
         lines = rows.map do |law|
           kind = law_enforcement(::Law.definitions[law["id"].to_s.to_sym])
-          format("%-28s %-10s %-8s %s", law["id"], rule["tier"], rule["severity"], kind)
+          format("%-28s %-10s %-8s %s", law["id"], law["tier"], law["severity"], kind)
         end
         ["#{rows.size} of #{laws.size} laws — bin/operator laws <ID> for one in full", *lines].join("\n")
       end
@@ -71,8 +71,7 @@ module Master
           *drift[:law_only].map { |id| "    #{id}" },
           "  registry_only: #{drift[:registry_only].size}",
           *drift[:registry_only].map { |id| "    #{id}" },
-        ].join("
-")
+        ].join("\n")
       rescue StandardError => e
         "laws0: source audit failed — #{e.class}: #{e.message}"
       end
@@ -90,7 +89,7 @@ module Master
       # model only when nothing local matches.
       def dispatch_why(agent:, root:, memory: nil, ctx: nil)
         law = arg_for(ctx)
-        return "usage: /why <law|path|scan_rule|anti_pattern|style.key>" if rule.empty?
+        return "usage: /why <law|path|scan_rule|anti_pattern|style.key>" if law.empty?
 
         local = Trace::WhyExplainer.new(root:).explain(law)
         answer = local || agent.ask_once(Voice::Personality.why_prompt(law))
