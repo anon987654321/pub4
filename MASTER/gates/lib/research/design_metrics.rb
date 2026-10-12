@@ -228,10 +228,8 @@ module Deploy
     def sample_css(app, selector = nil)
       body = read_css(File.join(RAILS, app, "app/assets/stylesheets/application.scss"))
       if app == "brgen"
-        partials = %w[_brgen_marketplace.scss _brgen_vertical_surfaces.scss].map do |name|
-          File.join(RAILS, "brgen/app/assets/stylesheets", name)
-        end
-        partials.each { |path| body = "#{body}\n#{read_css(path)}" if File.file?(path) }
+        partials = Dir.glob(File.join(RAILS, "brgen/app/assets/stylesheets/_brgen_*.scss")).sort
+        partials.each { |path| body = "#{body}\n#{read_css(path)}" }
       end
       return body if selector.nil?
 
