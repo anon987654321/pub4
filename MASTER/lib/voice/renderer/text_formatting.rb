@@ -45,7 +45,7 @@ module Master
 
             next rows << "" if body.empty?
 
-            if (heading = body.match(/\A\s{0,3}#{1,6}\s+(.+)\z/))
+            if (heading = body.match(/\A\s{0,3}\#{1,6}\s+(.+)\z/))
               rows.concat(measure(heading[1], width:).lines(chomp: true).map { |row| markdown_emphasis(row) })
               next
             end
