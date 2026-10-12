@@ -281,25 +281,36 @@ class Sequencer
   # The drums laid over the chords, each role at its mix level; the kick is added after the
   # duck, so the pump never touches it. With a summing colour the drums are a bus of their
   # own and the sum is coloured again; the sum never exceeds full scale.
-  def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0)
-    sounds = Drums.new(@seed).sounds
-    drum_bus = vcs.positive? ? Array.new(chord_buf.size, 0.0) : nil
-    out = drum_bus ? drum_bus : chord_buf.dup
-    hits.each do |role, time|
-      start = (time * SAMPLE_RATE).to_i
+  def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0, sonitex: nil)
+    drum_bus = (vcs.positive? || sonitex) ? Array.new(chord_buf.size, 0.0) : nil
+    out = drum_bus || chord_buf.dup
+    hits.each_with_index do |(role, time), hit_index|
+      # Re-seed per hit so the transient/noise details vary, not a single cloned sample repeated.
+      sample = Drums.new(@seed + ((hit_index + 1) * 104_729)).sounds.fetch(role)
       gain = 0.8 * (10.0**(levels.fetch(role, 0.0) / 20.0))
-      sounds.fetch(role).each_with_index do |s, j|
-        idx = start + j
+      variation = case role
+                  when 'hat' then [0.68, 0.92, 0.76, 0.84][hit_index % 4]
+                  when 'snare' then hit_index.odd? ? 0.92 : 1.0
+                  else hit_index.odd? ? 0.94 : 1.0
+                  end
+      sample.each_with_index do |value, j|
+        idx = (time * SAMPLE_RATE).to_i + j
         break if idx >= out.size
-        out[idx] += s * gain
+        out[idx] += value * gain * variation
       end
     end
     if drum_bus
-      drums = Colour.vcs(drum_bus, vcs)
+      drums = if sonitex
+                Colour.sonitex(drum_bus, sonitex.fetch('preset'), sonitex.fetch('instances'), @seed + 1)
+              else
+                drum_bus
+              end
+      drums = Colour.vcs(drums, vcs) if vcs.positive?
       out = chord_buf.each_index.map { |i| chord_buf[i] + drums[i] }
-      out = Colour.vcs(out, vcs * 0.5)
+      out = Colour.vcs(out, vcs * 0.5) if vcs.positive?
     end
-    out.map(&:abs).max > 1.0 ? out.map { |v| Colour.soft_limit(v) } : out
+    peak = out.map(&:abs).max || 0.0
+    peak > 1.0 ? out.map { |v| Colour.soft_limit(v) } : out
   end
 
   # The chords duck on every kick: a gain envelope keyed to the hits, not an oscillator.
