@@ -145,27 +145,42 @@ class DesignContractTest < Minitest::Test
     assert_includes css, ".composer[open]::backdrop"
   end
 
-  def test_brgen_marketplace_rules_are_loaded_from_one_feature_partial
+  def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
     app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    marketplace_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
-    verticals_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_surfaces.scss")
-    overrides_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_overrides.scss")
-    marketplace = File.read(marketplace_path)
-    verticals = File.read(verticals_path)
-    overrides = File.read(overrides_path)
+    feature_paths = Dir.glob(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_*.scss")).sort
 
-    assert_includes app, '@include meta.load-css("brgen_marketplace");'
-    assert_includes app, '@include meta.load-css("brgen_vertical_surfaces");'
-    assert_includes app, '@include meta.load-css("brgen_shared_overrides");'
-    assert_includes app, '@include meta.load-css("brgen_messenger");'
-    messenger = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_messenger.scss"))
-    assert_includes messenger, ".messenger-artifact-pane"
-    assert_includes marketplace, ".deal-card"
-    assert_includes marketplace, ".deal-cat"
-    assert_includes verticals, ".listing-buy-bar-cta"
-    assert_includes overrides, ".store-promo-art-cta"
-    refute_includes app, ".listing-buy-bar-cta"
-    refute_includes app, ".store-promo-art-cta"
+    refute_empty feature_paths, "Brgen must have feature-owned stylesheet modules"
+    feature_paths.each do |path|
+      module_name = File.basename(path).delete_prefix("_").delete_suffix(".scss")
+      assert_includes app, %(@include meta.load-css("#{module_name}");), "#{module_name} is not loaded by the host entrypoint"
+      refute_empty File.read(path), "#{module_name} is empty"
+    end
+
+    expected_rules = {
+      "_brgen_marketplace.scss" => ".deal-card",
+      "_brgen_vertical_surfaces.scss" => ".listing-buy-bar-cta",
+      "_brgen_shared_overrides.scss" => ".store-promo-art-cta",
+      "_brgen_messenger.scss" => ".messenger-artifact-pane",
+      "_brgen_composer.scss" => ".composer[open]::backdrop",
+      "_brgen_feed_posts.scss" => ".feed-action",
+      "_brgen_nearby_channels.scss" => ".nearby-alert",
+      "_brgen_share_media.scss" => ".media-actions",
+      "_brgen_dating.scss" => ".swipe-card",
+      "_brgen_vertical_shell.scss" => "body[class*=\"vertical-\"] .feed-header",
+      "_brgen_city_surfaces.scss" => ".profile-header"
+    }
+    expected_rules.each do |name, selector|
+      path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", name)
+      assert_includes feature_paths, path
+      assert_includes File.read(path), selector, "#{name} lost its representative feature rule"
+    end
+
+    [".deal-card", ".listing-buy-bar-cta", ".store-promo-art-cta", ".messenger-artifact-pane",
+     ".composer[open]::backdrop", ".feed-action", ".nearby-alert", ".media-actions",
+     ".swipe-card", ".profile-header"].each do |selector|
+      refute Operator::ScssRules.matching(app, /#{Regexp.escape(selector)}/).any?,
+             "#{selector} should live in a feature partial, not application.scss"
+    end
   end
 
   def test_brgen_mounts_theme_bootstrap_once_in_head
