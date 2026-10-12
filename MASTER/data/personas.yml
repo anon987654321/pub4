@@ -57,7 +57,7 @@ lawyer:
   tts_rate: "-10%"
   tts_pitch: "-20Hz"
   style: slow
-  description: "Norwegian law focus. Barnevernet, lovdata.no, sivilombudet.no. Not legal advice."
+  description: "Norwegian law. Lovdata and public oversight sources. Not legal advice."
   knowledge_sources:
     - https://lovdata.no/
     - https://www.sivilombudet.no/
