@@ -77,24 +77,30 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     refute_match(/getElementById\(["']face["']\)\s*\.getContext/, read(PUBLIC, "face_2d_fallback.js"))
   end
 
-  def test_the_configured_face_hotkey_toggles_constitutional_law_glyphs
+  def test_the_configured_face_shortcuts_control_laws_and_overlay_separately
     source = read(PUBLIC, "face_ascii.js")
     handler = source[/function onKeydown\(event\) \{.*?^  \}/m]
-    refute_nil handler, "the configured law shortcut must have a testable handler"
+    refute_nil handler, "the configured face shortcuts must have a testable handler"
+    law_handler = handler[/if \(pressed === lawKey\) \{.*?^    \}/m]
+    refute_nil law_handler, "the law shortcut must have its own branch"
 
     assert_includes view, "window.MASTER_FACE_LAW_FIELD"
     assert_includes source, "lawFieldVisible = lawFieldConfig.enabled !== false"
-    assert_includes handler, "setLawField(!lawFieldVisible)"
-    assert_includes handler, "Constitutional law glyphs visible"
-    assert_includes handler, "Constitutional law glyphs hidden"
-    assert_includes handler, "field.laws"
-    assert_includes handler, "in priority order"
-    assert_includes handler, 'getElementById("ui-status")',
-                     "the shortcut must announce its change through an existing live region"
-    refute_includes handler, "setGlyphMode",
-                     "laws.yml's shortcut controls constitutional glyphs, not renderer style"
-    refute_includes handler, "if (overlayView) update(",
-                     "the law toggle must not create a duplicate face overlay"
+    assert_includes law_handler, "setLawField(!lawFieldVisible)"
+    assert_includes law_handler, "Constitutional law glyphs visible"
+    assert_includes law_handler, "Constitutional law glyphs hidden"
+    assert_includes law_handler, "field.laws"
+    assert_includes law_handler, "in priority order"
+    assert_includes law_handler, 'getElementById("ui-status")',
+                     "the law shortcut must announce its change through an existing live region"
+    refute_includes law_handler, "setGlyphMode",
+                     "the law key must not change the whole ASCII overlay mode"
+    refute_includes law_handler, "update(",
+                     "the law key must not create a second overlay canvas"
+    assert_includes handler, "field.overlay_toggle_key"
+    assert_includes handler, "setGlyphMode(!glyphMode)"
+    assert_includes handler, "ASCII face mode enabled"
+    assert_includes handler, "ASCII face overlay enabled"
   end
 
   def test_the_renderer_and_its_frames_are_plain_ascii_without_braille
