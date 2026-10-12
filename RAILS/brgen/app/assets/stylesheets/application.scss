@@ -142,13 +142,13 @@
 
 // ============================================================ base
 
-a { color: var(--text); text-decoration: no// ============================================================ base
+a { color: var(--text); text-decoration: none; }
 @include meta.load-css("brgen_core_shell");
 
 // ============================================================ chrome: nav
 @include meta.load-css("brgen_navigation");
 
-en_messenger");
+@include meta.load-css("brgen_messenger");
 
 // ============================================================ chrome: composer and tabs
 @include meta.load-css("brgen_composer");
