@@ -157,10 +157,10 @@ class TestCliAsciiFace < Minitest::Test
   def test_pose_carries_the_mask_only_when_asked
     assert_nil Face::Pose.at(:thinking, 2.0, 1).mask
     assert_equal 0.0, Face::Pose.at(:thinking, 2.0, 1).mix
-    look = Face::Pose.at(:thinking, 2.0, 1, session: "abc", since: 0.0)
+    look = Face::Pose.at(:thinking, 2.0, 1, schedule: { session: "abc", since: 0.0 })
     assert_equal "iatmul_mei", look.mask
     assert_equal 1.0, look.mix
-    assert_equal 0.0, Face::Pose.at(:idle, 2.0, 1, session: "abc", since: 0.0).mix
+    assert_equal 0.0, Face::Pose.at(:idle, 2.0, 1, schedule: { session: "abc", since: 0.0 }).mix
   end
 
   def test_motion_eases_in_while_thinking_and_back_out_after

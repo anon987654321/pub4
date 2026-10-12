@@ -90,7 +90,8 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     assert_includes law_handler, "Constitutional law glyphs hidden"
     assert_includes law_handler, "field.laws"
     assert_includes law_handler, "in priority order"
-    assert_includes law_handler, 'getElementById("ui-status")',
+    assert_includes law_handler, "status.textContent"
+    assert_includes source, 'getElementById("ui-status")',
                      "the law shortcut must announce its change through an existing live region"
     refute_includes law_handler, "setGlyphMode",
                      "the law key must not change the whole ASCII overlay mode"

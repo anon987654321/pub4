@@ -79,6 +79,13 @@ module Master
           ORDER.fetch(h % ORDER.size)
         end
 
+        # The Look's mask and mix for a schedule, or no mask without one.
+        def worn(state, t, schedule)
+          return { mask: nil, mix: 0.0 } unless schedule
+
+          { mask: pick(schedule[:session]), mix: mix(state, t, since: schedule.fetch(:since), from: schedule.fetch(:from, 0.0)) }
+        end
+
         # The point source for a mask at a mix: the head itself at 0.
         def source(head, name, amount)
           return head if name.nil? || amount <= 0.0
