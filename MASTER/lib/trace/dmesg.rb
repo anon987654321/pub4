@@ -233,6 +233,9 @@ module Master
         emit_mutex.synchronize do
           io.puts(text)
           io.flush if io.respond_to?(:flush)
+          # Interactive adapters redraw the prompt before another writer may
+          # append a line. Pipes and ordinary log writers use no callback.
+          yield if block_given?
         end
         narrate(text)
         speak_log_line(text) if log_voice_active?
