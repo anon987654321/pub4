@@ -42,8 +42,7 @@ critical_items:
     # So the gate below cannot be met by restoring a generator that never
     # existed. What is left is a decision the owner has to make and an agent
     # must not: the content is personal and some of it is explicitly sensitive
-    # (consolidated/archived/sensitive_content_archive.md, barnevernet.html,
-    # the __letters/ correspondence), and pub4 is public.
+    # (some archived personal documents and correspondence), and pub4 is public.
     expected_target: owner decision — import the pages, or record them as archived in pub
     current_state: source_measured_no_generator
     gate: owner_decision
