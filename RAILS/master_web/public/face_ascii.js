@@ -1359,18 +1359,22 @@
       const rows = options.rows;
       const cols = options.cols;
       if (rows < MIN_ROWS || cols < MIN_COLS) return { word: true, lines: word(options.state, rows, cols), depth: null };
-      const key = `${rows}x${cols}`;
+      const headKey = `${rows}x${cols}`;
+      const key = `${headKey}|${String(options.mode || "")}|${String(options.chars || "")}`;
       let renderer = cache.get(key);
       if (!renderer) {
         if (cache.size >= 6) { cache.clear(); heads.clear(); }
-        const built = head(rows, cols);
-        heads.set(key, built);
+        let built = heads.get(headKey);
+        if (!built) {
+          built = head(rows, cols);
+          heads.set(headKey, built);
+        }
         renderer = new Renderer(built, rows, cols, { chars: options.chars, mode: options.mode });
         cache.set(key, renderer);
       }
       // A morphed head is new every frame, so it is not kept.
       if (options.look.mix > 0) {
-        renderer = new Renderer(maskSource(heads.get(key), options.look.mask, options.look.mix), rows, cols, { chars: options.chars, mode: options.mode });
+        renderer = new Renderer(maskSource(heads.get(headKey), options.look.mask, options.look.mix), rows, cols, { chars: options.chars, mode: options.mode });
       }
       const out = renderer.render(options.look, options.state);
       return { word: false, lines: out.chars.map((row) => row.join("")), depth: out.depth };
@@ -1429,6 +1433,7 @@
     const opts = options || {};
     const env = opts.env || root;
     const contract = opts.contract || env.MASTER_FACE_CONTRACT;
+    activeContract = contract;
     const engine = build(contract);
     const laws = Array.isArray(opts.laws) ? opts.laws
       : (env.MASTER_FACE_LAW_FIELD && Array.isArray(env.MASTER_FACE_LAW_FIELD.laws) ? env.MASTER_FACE_LAW_FIELD.laws : []);
@@ -1526,8 +1531,9 @@
       // The mask's mix is remembered from the moment the state last changed.
       if (state !== view.maskState) { view.maskState = state; view.maskSince = t; view.maskFrom = view.maskMix || 0.0; }
       const look = engine.lookFor({ state, t, level: input.level, viseme: input.viseme, shapes: input.shapes, reduced: input.reduced, session: input.session, since: view.maskSince, from: view.maskFrom });
+      if (!rotationEnabled) look.turn = 0.0;
       view.maskMix = look.mix;
-      const out = engine.frame({ rows: view.rows, cols: view.cols, state, look, mode: contract.ascii.mode });
+      const out = engine.frame({ rows: view.rows, cols: view.cols, state, look, chars: activeChars(contract), mode: activeInkMode(contract) });
       const field = lawFieldVisible ? paintLawField(out.lines, out.depth, laws) : { lines: out.lines, depth: out.depth };
       const text = field.lines.join("\n");
       if (text === view.lastText) return false;
@@ -1542,9 +1548,99 @@
     return view;
   }
 
+  const faceQuery = new URLSearchParams(root.location?.search || "");
+  function cleanCustomChars(value) {
+    const chars = Array.from(String(value || ""))
+      .filter((char) => char.charCodeAt(0) >= 32 && char.charCodeAt(0) <= 126)
+      .slice(0, 32)
+      .join("");
+    return chars.length >= 2 ? chars : null;
+  }
+  let activeContract = root.MASTER_FACE_CONTRACT || null;
+  let selectedRamp = faceQuery.get("face_ramp") || "";
+  let customChars = cleanCustomChars(faceQuery.get("face_chars"));
+  const requestedInk = faceQuery.get("face_ink");
+  let selectedMode = requestedInk === "dark" || requestedInk === "light" ? requestedInk : null;
+  let rotationEnabled = faceQuery.get("face_rotate") !== "0";
   let overlayCanvas = null;
   let overlayView = null;
   let glyphMode = false;
+
+  function rampsFor(contract = activeContract) {
+    const ascii = contract?.ascii || {};
+    return ascii.ramps && Object.keys(ascii.ramps).length
+      ? ascii.ramps
+      : { sculpt: ascii.chars || " .:;=*%#@" };
+  }
+
+  function activeRampName(contract = activeContract) {
+    const ramps = rampsFor(contract);
+    const names = Object.keys(ramps);
+    if (names.includes(selectedRamp)) return selectedRamp;
+    return names.includes("sculpt") ? "sculpt" : (names[0] || "sculpt");
+  }
+
+  function activeChars(contract = activeContract) {
+    const ascii = contract?.ascii || {};
+    return customChars || rampsFor(contract)[activeRampName(contract)] || ascii.chars || " .:;=*%#@";
+  }
+
+  function activeInkMode(contract = activeContract) {
+    const ascii = contract?.ascii || {};
+    return selectedMode || (ascii.mode === "light" ? "light" : "dark");
+  }
+
+  function applyInkMode() {
+    const doc = root.document;
+    if (!doc) return;
+    const light = activeInkMode() === "light";
+    const filter = light ? "grayscale(1) invert(1)" : "";
+    for (const canvas of [doc.getElementById("face"), overlayCanvas]) {
+      if (canvas && canvas.style) canvas.style.filter = filter;
+    }
+    if (doc.documentElement?.dataset) doc.documentElement.dataset.faceInk = light ? "light" : "dark";
+    if (overlayView) overlayView.lastText = "";
+  }
+
+  function refreshControls() {
+    const doc = root.document;
+    if (doc?.documentElement?.dataset) {
+      doc.documentElement.dataset.faceRamp = customChars ? "custom" : activeRampName();
+      doc.documentElement.dataset.faceRotation = rotationEnabled ? "running" : "paused";
+    }
+    applyInkMode();
+    if (overlayView) overlayView.lastText = "";
+    update(root.performance ? root.performance.now() : Date.now());
+  }
+
+  function setRamp(name) {
+    if (!Object.prototype.hasOwnProperty.call(rampsFor(), name)) return false;
+    selectedRamp = name;
+    customChars = null;
+    refreshControls();
+    return true;
+  }
+
+  function cycleRamp() {
+    const names = Object.keys(rampsFor());
+    if (!names.length) return false;
+    const current = activeRampName();
+    const index = names.indexOf(current);
+    return setRamp(names[(index + 1 + names.length) % names.length]);
+  }
+
+  function setInkMode(mode) {
+    if (mode !== "dark" && mode !== "light") return false;
+    selectedMode = mode;
+    refreshControls();
+    return true;
+  }
+
+  function setRotation(enabled) {
+    rotationEnabled = !!enabled;
+    refreshControls();
+    return rotationEnabled;
+  }
 
   function activeState() {
     if (!root.document || !root.document.body) return "idle";
@@ -1576,6 +1672,7 @@
         doc.body.appendChild(overlayCanvas);
       }
       overlayView = createView(overlayCanvas, { env:root, contract:root.MASTER_FACE_CONTRACT });
+      applyInkMode();
     }
     if (!overlayView) return false;
     overlayCanvas.style.display = "";
@@ -1632,13 +1729,30 @@
       return;
     }
 
+    if (pressed === "r") {
+      setRotation(!rotationEnabled);
+      if (status) status.textContent = rotationEnabled ? "3D face rotation resumed" : "3D face rotation paused";
+      return;
+    }
+    if (pressed === "m") {
+      setInkMode(activeInkMode() === "light" ? "dark" : "light");
+      if (status) status.textContent = activeInkMode() === "light" ? "Light ink mode" : "Dark ink mode";
+      return;
+    }
+    if (pressed === "c") {
+      if (cycleRamp() && status) {
+        status.textContent = `3D ASCII ramp: ${customChars ? "custom" : activeRampName()}`;
+      }
+      return;
+    }
+
     const overlayKey = String(field.overlay_toggle_key || "v").toLowerCase();
     if (pressed !== overlayKey) return;
     setGlyphMode(!glyphMode);
     if (status) status.textContent = glyphMode ? "ASCII face mode enabled" : "ASCII face overlay enabled";
     update(root.performance ? root.performance.now() : Date.now());
   }
-  const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode };
+  const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode, setRamp, setInkMode, setRotation };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) {
     root.MASTER_FACE_ASCII = Object.freeze(api);
