@@ -12,7 +12,15 @@ class SshVm23ContractTest < Minitest::Test
     refute_match(/tmux new-session -d -s \$\{session\}/, SOURCE)
   end
 
-  def test_remote_command_payload_remains_quoted
+def test_a_long_session_sends_keepalives
+  assert_includes SOURCE, "ServerAliveInterval=15"
+  assert_includes SOURCE, "ServerAliveCountMax=8"
+  operator = File.read(File.expand_path("../../MASTER/bin/operator", __dir__), encoding: "UTF-8")
+  assert_includes operator, "ServerAliveInterval=15"
+  assert_includes operator, "ServerAliveCountMax=8"
+end
+
+def test_remote_command_payload_remains_quoted
     assert_includes SOURCE, "${(q)cmd}"
   end
 end

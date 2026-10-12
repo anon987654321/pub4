@@ -93,7 +93,8 @@ def remote_ruby(*argv)
 end
 
 def ssh_run(remote_cmd)
-  cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "-i", ssh_key, ssh_host, remote_cmd]
+  cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15",
+         "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=8", "-i", ssh_key, ssh_host, remote_cmd]
   exec(*cmd)
 end
 

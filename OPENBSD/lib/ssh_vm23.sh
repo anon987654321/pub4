@@ -38,6 +38,10 @@ typeset -ga VM23_SSH_OPTS=(
   -o BatchMode=yes
   -o StrictHostKeyChecking=accept-new
   -o ConnectTimeout=15
+  # A deploy holds one session for an hour or more while vm23 swaps; without
+  # keepalives the laptop's idle-timeout dropped it mid brgen rails_test.
+  -o ServerAliveInterval=15
+  -o ServerAliveCountMax=8
 )
 [[ -f $SSH_KEY ]] && VM23_SSH_OPTS+=(-i "$SSH_KEY")
 
