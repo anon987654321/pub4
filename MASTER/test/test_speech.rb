@@ -49,6 +49,22 @@ class TestSpeech < Minitest::Test
     assert_equal message, speech.instance_variable_get(:@last_error)
   end
 
+  def test_tts_timing_is_opt_in
+    speech = Master::Voice::Speech
+    original = ENV.fetch("MASTER_TTS_TIMING", nil)
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) - 0.01
+
+    ENV.delete("MASTER_TTS_TIMING")
+    output, = capture_io { speech.log_timing("probe", started_at, text_length: 4) }
+    assert_empty output
+
+    ENV["MASTER_TTS_TIMING"] = "1"
+    output, err = capture_io { speech.log_timing("probe", started_at, text_length: 4) }
+    assert_match(/timing stage=probe elapsed_ms=\\d+ chars=4/, output + err)
+  ensure
+    original ? ENV["MASTER_TTS_TIMING"] = original : ENV.delete("MASTER_TTS_TIMING")
+  end
+
   # Entrypoint has already made the parent's bundle MASTER's own, so the daemon
   # inherits that context; only the Gemfile is pinned to the daemon's root.
   def test_daemon_env_carries_the_prepared_bundle_and_pins_the_gemfile
@@ -639,7 +655,7 @@ class TestSpeech < Minitest::Test
   def test_no_profile_leaves_the_voice_exactly_as_declared
     with_profile(nil) do
       assert_equal "", Master::Voice::Policy.profile_name
-      assert_equal "+0%", Master::Voice::Policy.default_rate
+      assert_equal "+4%", Master::Voice::Policy.default_rate
       assert_empty Master::Voice::Policy.layers
       refute Master::Voice::Layers.active?
       refute Master::Voice::Policy.fx_enabled?
