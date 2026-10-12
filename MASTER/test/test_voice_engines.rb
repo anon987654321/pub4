@@ -41,11 +41,11 @@ class TestVoiceEngines < Minitest::Test
       true
     }) do
       Engines.stub(:copy_single_part, ->(_parts, _out_path) { true }) do
-        Engines.synthesize_phrase_parts(plan, "/tmp", :jenny, "-5%", "+0Hz")
+        Engines.synthesize_phrase_parts(plan, "/tmp", :christopher, "-5%", "+0Hz")
       end
     end
 
-    assert_equal :jenny, observed[:voice]
+    assert_equal :christopher, observed[:voice]
     assert_equal "+2%", observed[:rate]
     assert_equal "+6Hz", observed[:pitch]
   end
