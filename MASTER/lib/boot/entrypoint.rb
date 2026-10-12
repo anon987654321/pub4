@@ -2,17 +2,38 @@
 
 require "fileutils"
 require "rubygems"
-require "time"
 
-# Ground::Swallow and others require json before Bundler.setup runs. With a
-# newer json gem installed, RubyGems activates that one and Bundler then
-# refuses the Gemfile's pin. Activating the pin first keeps boot on it.
-json_pin = File.read(File.expand_path("../../Gemfile", __dir__))[/^gem "json", "= ([\d.]+)"/, 1]
-begin
-  gem "json", json_pin if json_pin
-rescue Gem::LoadError
-  nil
+# Ruby activates its default gems the moment a stdlib file asks for them, and
+# Bundler then refuses a lockfile that pins a newer one ("already activated date
+# 3.4.1, but your Gemfile requires date 3.5.1"). The lock is written for Ruby
+# 4.0, where json 2.18.0 and date 3.5.1 are the defaults; vm23 runs 3.4, where
+# they are older and the newer copies live only in the deploy bundle. So the
+# deploy bundle joins the gem path first, and each pinned default is activated
+# at its locked version before `require "time"` pulls in date. This runs at load
+# time, not in prepare!, because reexec_mismatched_bundler! starts a fresh
+# process that loads this file again.
+boot_root = File.expand_path("../..", __dir__)
+bundle_config = File.join(boot_root, ".bundle", "config")
+deploy_bundle = File.file?(bundle_config) ? File.binread(bundle_config)[/^BUNDLE_PATH:\s*"?([^"\s]+)"?\s*$/, 1] : nil
+if deploy_bundle
+  gem_dirs = Dir.glob(File.join(deploy_bundle, "ruby", "*")).select { |dir| File.directory?(File.join(dir, "gems")) }
+  unless gem_dirs.empty?
+    Gem.paths = { "GEM_HOME" => Gem.paths.home, "GEM_PATH" => [*gem_dirs, *Gem.path].join(File::PATH_SEPARATOR) }
+  end
 end
+boot_lockfile = File.join(boot_root, "Gemfile.lock")
+boot_lock = File.file?(boot_lockfile) ? File.binread(boot_lockfile) : ""
+%w[json date].each do |name|
+  pin = boot_lock[/^    #{name} \(([\d.]+)\)$/, 1]
+  next unless pin
+
+  begin
+    gem name, pin
+  rescue Gem::LoadError
+    nil
+  end
+end
+require "time"
 
 require_relative "dependency_manager"
 require_relative "../trace/dmesg"
