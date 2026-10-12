@@ -227,7 +227,7 @@ module Deploy
         html = begin
           fetch_raw(surface)
         rescue StandardError => e
-          @result.warn("journey_invariant no_js: #{app} fetch failed — #{e.class}")
+          @result.incomplete!("journey_invariant no_js: #{app} parity not measured — fetch failed (#{e.class}: #{e.message})")
           next
         end
 
