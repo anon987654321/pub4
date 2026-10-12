@@ -138,10 +138,10 @@ module Master
         end
 
         require_relative "../finding"
-        # LLM review for rules whose violations resist lexical detection.
-        # Each executable Law with an ask surface is folded into one LLM call per
-        # file. A law may also have a deterministic detector; that is layered
-        # evidence for one rule, not a second semantic definition.
+        # LLM review for meaning that resists deterministic detection.
+        # Each eligible file receives independent violation and opportunity
+        # requests; the same law can therefore yield two distinct findings. A
+        # deterministic detector remains layered evidence for that one law.
         class SemanticLaw < Law
           CODE_SNIPPET_LIMIT = 2000
 
@@ -279,7 +279,7 @@ module Master
             else
               raise ArgumentError, "unknown semantic assessment mode: #{mode.inspect}"
             end
-            rules = scoped.map { |id, axiom| "#{id}: #{axiom[:prompt]}" }.join("\\n")
+            rules = scoped.map { |id, axiom| "#{id}: #{axiom[:prompt]}" }.join("\n")
             <<~PROMPT
             #{heading}: review #{File.basename(path)}.
 
@@ -335,7 +335,7 @@ module Master
               stripped = line.strip
               next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
 
-              match = stripped.match(/\\A([A-Z_][A-Z0-9_]*):(\\d+):(.+)\\z/)
+              match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
               next unless match && scoped.key?(match[1])
 
               axiom = scoped[match[1]]
