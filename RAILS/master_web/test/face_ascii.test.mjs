@@ -111,6 +111,28 @@ test("the dither is fixed in screen space and the line glyphs follow the cell as
   assert.deepEqual(g.ramp(" .:-=+*#%@", "light"), "@%#*+=-:. ".split(""));
 });
 
+test("configured ink ramps are ordered subsets of the calibrated glyph ramp", () => {
+  const calibrated = Array.from(contract.ascii.chars);
+  const ramps = contract.ascii.ramps;
+  assert.ok(ramps && ramps.sculpt && ramps.high_contrast && ramps.fine_detail);
+  for (const [name, ramp] of Object.entries(ramps)) {
+    const positions = Array.from(ramp, (glyph) => calibrated.indexOf(glyph));
+    assert.ok(positions.every((index) => index >= 0), `${name}: every ramp glyph has calibrated ink`);
+    assert.deepEqual(positions, positions.slice().sort((a, b) => a - b), `${name}: glyph density stays ordered`);
+  }
+});
+
+test("renderer cache separates ramp and dark/light relief choices", () => {
+  const state = "idle";
+  const look = engine.pose(state, 1.1, 1);
+  const base = engine.frame({ rows: 28, cols: 64, state, look, chars: contract.ascii.ramps.sculpt, mode: "dark" });
+  const contrast = engine.frame({ rows: 28, cols: 64, state, look, chars: contract.ascii.ramps.high_contrast, mode: "dark" });
+  const light = engine.frame({ rows: 28, cols: 64, state, look, chars: contract.ascii.ramps.sculpt, mode: "light" });
+  assert.notDeepEqual(contrast.lines, base.lines, "the high-contrast ramp changes surface ink");
+  assert.notDeepEqual(light.lines, base.lines, "light mode reverses the tone ramp");
+  for (const lines of [base.lines, contrast.lines, light.lines]) assert.match(lines.join("\n"), PRINTABLE);
+});
+
 test("Ruby's compensated sum is used where the anchors are means", () => {
   assert.equal(ascii.kbSum([0.1, 0.2, 0.3]), 0.6);
   assert.notEqual(0.1 + 0.2 + 0.3, 0.6);
