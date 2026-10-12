@@ -265,6 +265,29 @@ class TestRenderer < Minitest::Test
     ENV.delete("MASTER_BOOT_STATUS")
   end
 
+  def test_terminal_markdown_renders_headings_links_inline_code_and_fences
+    renderer = FakeRenderer.new(config: {})
+    source = "# Reply\n\nUse **bold**, `Ruby`, and [docs](https://example.com).\n\n```ruby\nputs \"hello\"\n```\n"
+    rendered = $stdout.stub(:tty?, false) { renderer.terminal_markdown(source) }
+
+    assert_includes rendered, "Reply"
+    refute_includes rendered, "# Reply"
+    assert_includes rendered, "Use bold, Ruby, and docs (https://example.com)."
+    assert_includes rendered, "    puts \"hello\""
+    refute_includes rendered, "```"
+  end
+
+  def test_terminal_markdown_keeps_table_rows_and_record_lines_intact
+    renderer = FakeRenderer.new(config: {})
+    source = "# Data\n| name | value |\nkey=value\n```ruby\nanswer = 42\n```"
+
+    rendered = $stdout.stub(:tty?, false) { renderer.terminal_markdown(source) }
+
+    assert_includes rendered, "| name | value |"
+    assert_includes rendered, "key=value"
+    assert_includes rendered, "    answer = 42"
+  end
+
   def strip_ansi(text)
     text.to_s.gsub(/\e\[[0-9;]*m/, "")
   end
