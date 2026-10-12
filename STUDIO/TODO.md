@@ -10,8 +10,8 @@ Updated: 2026-10-12. Delete an entry when it is done. Cross-tree coordination li
 
 ## Dilla
 
-- [ ] Listen to a full run of `ruby dilla.rb` and keep or change the patch pool and the effects chain in `default_liveset.yml`; the operator's ear decides, and nothing here has been heard by an agent.
-- [ ] Merge the researched progressions into `dilla/chords.yml` and name the ones the liveset plays.
+- [ ] Check the ten progressions in `dilla/dilla.json` against transcriptions or the records; the chord names and their attributions came from an outside AI and are unverified.
+- [ ] Decide which of the engine's limits to lift, if any: the drums overlay only the first bar, the chords play one pass with no loop, every note is four sine partials, and the noise in the drums is unseeded. The old engine is restorable from the tag `dilla-engine-final`.
 
 ## Replicate, LoRA and postpro
 
