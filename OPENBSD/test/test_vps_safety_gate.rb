@@ -21,6 +21,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.mkdir_p(File.join(openbsd, "etc"))
       FileUtils.cp_r(File.join(ROOT, "etc", "rc.d"), File.join(openbsd, "etc"))
       FileUtils.cp(File.join(ROOT, "etc", "doas.conf"), File.join(openbsd, "etc"))
+      FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
@@ -58,6 +59,30 @@ class VpsSafetyGateTest < Minitest::Test
       out, status = run_gate(dir)
       refute status.success?
       assert_includes out, "setenv-allowlist MAIL_IMG_FMT"
+    end
+  end
+
+  def test_fast_deploy_ack_is_allowlisted
+    with_fixture do |dir, doas|
+      text = File.read(doas).sub(" I_UNDERSTAND_FAST_DEPLOY", "")
+      File.write(doas, text)
+      out, status = run_gate(dir)
+      refute status.success?
+      assert_includes out, "setenv-allowlist I_UNDERSTAND_FAST_DEPLOY"
+    end
+  end
+
+  def test_master_scan_skip_requires_explicit_fast_deploy_ack
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "OPERATOR.sh")
+      text = File.read(path).sub(
+        '[[ ${SKIP_MASTER_SCAN} != 1 || ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]',
+        '[[ -n ${SKIP_MASTER_SCAN:-} ]]'
+      )
+      File.write(path, text)
+      out, status = run_gate(dir)
+      refute status.success?
+      assert_includes out, "MASTER scan bypass requires SKIP_MASTER_SCAN=1 plus I_UNDERSTAND_FAST_DEPLOY=1"
     end
   end
 

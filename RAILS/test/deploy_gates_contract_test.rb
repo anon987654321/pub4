@@ -210,6 +210,27 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes body, "var/db/pub4"
   end
 
+  def test_rails_master_scan_skip_requires_explicit_acknowledgement
+    source = File.read(File.join(ROOT, "_runtime_gate.sh"))
+    start = source.index("master_scan_dep()")
+    body = source[start, source.index("\n}\n", start) - start + 3]
+
+    assert_includes body, '[[ ${SKIP_MASTER_SCAN:-0} != 0 ]]'
+    assert_includes body, '[[ ${SKIP_MASTER_SCAN} != 1 || ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]'
+    assert_includes body, "SKIP_MASTER_SCAN=1 requires I_UNDERSTAND_FAST_DEPLOY=1"
+    refute_includes body, '[[ -n ${SKIP_MASTER_SCAN:-} ]]'
+  end
+
+  def test_database_secret_reader_uses_zsh_native_parsing
+    source = File.read(File.join(ROOT, "_database.sh"))
+    start = source.index("app_secret_for()")
+    body = source[start, source.index("\n}\n", start) - start + 3]
+
+    refute_match(/\|\s*(?:head|cut)\b/, body)
+    assert_includes body, 'for line in "${(@f)contents}"'
+    assert_includes body, 'secret=${line#SECRET_KEY_BASE=}'
+  end
+
   def test_rails_runtime_gate_runs_production_in_process
     assert File.file?(File.join(MASTER_GATES, "lib", "production.rb"))
     source = File.read(File.join(MASTER_GATES, "rails_runtime.rb"))

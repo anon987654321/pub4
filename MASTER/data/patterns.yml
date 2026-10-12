@@ -999,7 +999,7 @@ operator_playbook:
     - id: post_sync_vps_proof
       area: deploy
       signal: "Code pushed but services stale or untested on vm23"
-      action: "After git pull: SKIP_MASTER_SCAN=1 zsh OPENBSD/bin/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/gates/health_check.rb; curl https://ai.brgen.no/up"
+      action: "After git pull: SKIP_MASTER_SCAN=1 I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/gates/health_check.rb; curl https://ai.brgen.no/up"
       proof: "doas rcctl check master brgen amber bsdports; browser smoke on ai.brgen.no face"
 
     - id: rails_rcd_canonical_names

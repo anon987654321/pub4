@@ -10,10 +10,17 @@ master_scan_dep() {
   local master=${MASTER_ROOT:-/home/dev/pub4/MASTER}
   local log_dir=/var/db/pub4
   local log=${log_dir}/master_${app_name}_scan.log
+  if [[ ${SKIP_MASTER_SCAN:-0} != 0 ]]; then
+    if [[ ${SKIP_MASTER_SCAN} != 1 || ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
+      log_err "SKIP_MASTER_SCAN=1 requires I_UNDERSTAND_FAST_DEPLOY=1"
+      return 1
+    fi
+    log_warn "MASTER scan skipped by explicit fast-deploy acknowledgement"
+    return 0
+  fi
   [[ -x ${master}/bin/cli ]] || { log_err "MASTER scan unavailable at ${master}"; return 1; }
   mkdir -p "$log_dir" || { log_err "cannot create ${log_dir} for MASTER scan log"; return 1; }
   chmod 700 "$log_dir"
-  [[ -n ${SKIP_MASTER_SCAN:-} ]] && { log "MASTER scan skipped (SKIP_MASTER_SCAN)"; return 0; }
   log "MASTER rules scan (OPERATOR) pre-bundle"
   if ! (cd "$master" && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/gate --scan-only --tree=RAILS) \
     </dev/null >"$log" 2>&1; then
