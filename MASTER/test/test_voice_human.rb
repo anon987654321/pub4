@@ -267,7 +267,7 @@ class TestVoiceHuman < Minitest::Test
 
   def test_human_clause_jobs_keep_order_and_mark_only_the_last
     with_profile("human") do
-      jobs = Master::Voice::Playback.human_jobs(LONG, :jenny, :warm, 1)
+      jobs = Master::Voice::Playback.human_jobs(LONG, :christopher, :warm, 1)
       assert_equal Shaping.plan(LONG, seed: nil).map(&:text), jobs.map { |j| j[:text] }
       assert_equal [false] * (jobs.size - 1) + [true], jobs.map { |j| j[:last] }
       assert jobs.all? { |j| j.key?(:pause_ms) && j[:generation] == 1 }
