@@ -2,13 +2,11 @@
 
 # No two files that can be loaded together define the same top-level constant.
 #
-# `already initialized constant ROOT` in bin/check's output looked cosmetic. It
-# was the only thing standing between the security sweep and scanning a music
-# directory: `rake test` requires MASTER/tools/security_sweep.rb and loads
-# MASTER/tools/dilla/dilla.rb, both defined a bare top-level ROOT pointing at different
-# trees, and Ruby resolves that by warning and letting the SECOND assignment win.
-# Load order decided whether `git ls-files` ran against pub4 or against
-# MASTER/tools/dilla, and the sweep printed "0 tracked secrets" either way.
+# Historically, MASTER/tools/security_sweep.rb and MASTER/tools/dilla/dilla.rb
+# both defined a top-level ROOT, so whichever loaded last silently changed the
+# repository scope used by the security scan. The old MASTER/tools/dilla path is
+# gone; security_sweep now owns the explicit SWEEP_ROOT name. Keep this detector
+# and its regression test so a broad top-level constant cannot silently return.
 #
 # 24 files still define a bare top-level ROOT and that is fine: a standalone
 # script run as `ruby thing.rb` never shares an interpreter with another. What is
