@@ -133,7 +133,12 @@ module Deploy
       base = File.expand_path(ENV.fetch("GATE_BROWSER_DIAGNOSTICS_OUTPUT", DEFAULT_OUTPUT))
       output = File.join(base, run_id)
       screenshot_dir = File.join(output, "screenshots")
-      FileUtils.mkdir_p(screenshot_dir)
+      begin
+        FileUtils.mkdir_p(screenshot_dir)
+      rescue SystemCallError => e
+        @result.fail("browser_diagnostics: evidence delivery failed to create #{screenshot_dir} — #{e.class}: #{e.message}")
+        return @result
+      end
       settle_ms = Integer(ENV.fetch("GATE_BROWSER_DIAGNOSTICS_SETTLE_MS", DEFAULT_SETTLE_MS.to_s)).clamp(0, MAX_SETTLE_MS)
       rows = []
 
@@ -159,7 +164,12 @@ module Deploy
         results: rows,
         summary: rows.group_by { |row| row.fetch("status") }.transform_values(&:length)
       }
-      File.write(manifest, JSON.pretty_generate(payload) + "\n")
+      begin
+        File.write(manifest, JSON.pretty_generate(payload) + "\n")
+      rescue SystemCallError => e
+        @result.fail("browser_diagnostics: evidence delivery failed to write #{manifest} — #{e.class}: #{e.message}")
+        return @result
+      end
 
       measured = rows.count { |row| %w[PASS FAIL].include?(row.fetch("status")) }
       @result.checked!(measured)
