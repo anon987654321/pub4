@@ -49,9 +49,18 @@ class TestSkills < Minitest::Test
   # The three design skills live in the real registry, not a fixture: the
   # routing and the house prohibitions are properties of the shipped text.
   DESIGN_SKILLS = {
-    "algorithmic-art" => ["make a flow field from the git log", "generative art for the cover"],
-    "brand" => ["is this on-brand", "update the visual identity"],
-    "canvas" => ["design a poster for the release", "an og image for the post"],
+    "algorithmic-art" => [
+      "make a flow field from the git log", "generative art for the cover",
+      "create a procedural sketch", "show me a particle system",
+    ],
+    "brand" => [
+      "is this on-brand", "update the visual identity", "apply our branding",
+      "follow the brand guidelines",
+    ],
+    "canvas" => [
+      "design a poster for the release", "an og image for the post",
+      "make album cover art", "prepare a print design",
+    ],
   }.freeze
 
   def registry = Master.load_yaml(File.join(Master::ROOT, "data", "patterns.yml")).fetch("skills_registry")
