@@ -239,10 +239,16 @@ module Deploy
     # A glyph probe that breaks costs its own answer, not the surface's walk.
     def self.glyph_coverage(cdp)
       coverage = cdp.evaluate(GLYPHS, await_promise: true)
-      coverage.is_a?(Hash) ? coverage : {}
+      unless coverage.is_a?(Hash) && coverage["glyphs"].is_a?(Array)
+        return { "glyphs_status" => "unverified: invalid glyph probe response (expected a glyphs array)" }
+      end
+
+      coverage.merge("glyphs_status" => "ok")
     rescue CdpSession::Error => e
-      warn "geometry_probe: glyph coverage failed (#{e.class.name.split('::').last}) — fallback faces not measured"
-      {}
+      {
+        "glyphs_status" =>
+          "unverified: #{e.class.name.split("::").last} #{e.message.to_s[0, 80]} — fallback faces not measured"
+      }
     end
 
     def self.ok?(payload)
