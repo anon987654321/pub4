@@ -85,6 +85,10 @@ class PublicErrorPagesTest < Minitest::Test
     end
     assert_includes source, "background: var(--bg);"
     assert_includes source, "color: var(--text);"
+    assert_includes source, ":focus-visible"
+    assert_includes source, "outline: 2px solid var(--accent);"
+    assert_includes source, "@media (forced-colors: active)"
+    assert_includes source, "outline-color: Highlight;"
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 
