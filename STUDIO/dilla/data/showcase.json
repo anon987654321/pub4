@@ -1,0 +1,238 @@
+{
+  "title": "Blue Hour",
+  "crossfade_seconds": 0.18,
+  "sections": [
+    {
+      "name": "Blue Hour Glass",
+      "progression": [
+        "Dm9",
+        "Gm9",
+        "Bbmaj7#11",
+        "A7sus4"
+      ],
+      "bpm": 88,
+      "beats_per_chord": 2,
+      "voice": "rhodes_tine_wurli",
+      "mode": "repeat",
+      "repeat": "half_note_pulse",
+      "profile": "soft_swing",
+      "drums": "dusty_laid_back",
+      "echo": true,
+      "echo_mix": 0.1,
+      "echo_feedback": 0.22,
+      "echo_time_ms": 340,
+      "echo_tail_seconds": 0.65,
+      "mix": {
+        "kick": -3,
+        "snare": -10,
+        "clap": -13,
+        "hat": -12,
+        "chords": -4
+      },
+      "melody_voice": "moog_pluck",
+      "melody": [
+        [
+          0.5,
+          69,
+          0.22,
+          0.09
+        ],
+        [
+          1.25,
+          72,
+          0.18,
+          0.085
+        ],
+        [
+          2.75,
+          74,
+          0.22,
+          0.09
+        ],
+        [
+          4.5,
+          72,
+          0.24,
+          0.08
+        ],
+        [
+          6.5,
+          69,
+          0.3,
+          0.09
+        ]
+      ]
+    },
+    {
+      "name": "Opal Rain",
+      "progression": [
+        "Fmaj9",
+        "Am7",
+        "Dm9",
+        "Bbmaj7"
+      ],
+      "bpm": 92,
+      "beats_per_chord": 2,
+      "voice": "moog_pad",
+      "mode": "repeat",
+      "repeat": "half_note_pulse",
+      "profile": "lush",
+      "drums": "sparse",
+      "echo": true,
+      "echo_mix": 0.08,
+      "echo_feedback": 0.2,
+      "echo_time_ms": 326,
+      "echo_tail_seconds": 0.65,
+      "mix": {
+        "kick": -4,
+        "snare": -11,
+        "clap": -14,
+        "hat": -14,
+        "chords": -5
+      },
+      "melody_voice": "moog_pluck",
+      "melody": [
+        [
+          0.75,
+          76,
+          0.2,
+          0.08
+        ],
+        [
+          2.5,
+          72,
+          0.25,
+          0.075
+        ],
+        [
+          4.5,
+          69,
+          0.25,
+          0.08
+        ],
+        [
+          6.5,
+          72,
+          0.3,
+          0.075
+        ]
+      ]
+    },
+    {
+      "name": "Velvet Geometry",
+      "progression": [
+        "Cm9",
+        "Abmaj7",
+        "Fm9",
+        "G7#9"
+      ],
+      "bpm": 84,
+      "beats_per_chord": 2,
+      "voice": "rhodes_mark1",
+      "mode": "repeat",
+      "repeat": "half_note_pulse",
+      "profile": "soft_swing",
+      "drums": "syncopated_swing",
+      "echo": true,
+      "echo_mix": 0.09,
+      "echo_feedback": 0.2,
+      "echo_time_ms": 358,
+      "echo_tail_seconds": 0.65,
+      "mix": {
+        "kick": -3,
+        "snare": -10,
+        "clap": -14,
+        "hat": -13,
+        "chords": -4
+      },
+      "melody_voice": "rhodes_tine_wurli",
+      "melody": [
+        [
+          0.5,
+          67,
+          0.2,
+          0.1
+        ],
+        [
+          1.75,
+          70,
+          0.2,
+          0.09
+        ],
+        [
+          3.25,
+          72,
+          0.25,
+          0.095
+        ],
+        [
+          5.25,
+          70,
+          0.22,
+          0.085
+        ],
+        [
+          7,
+          67,
+          0.25,
+          0.09
+        ]
+      ]
+    },
+    {
+      "name": "Silver Thread",
+      "progression": [
+        "Am9",
+        "D9sus4",
+        "Fmaj7#11",
+        "Em7"
+      ],
+      "bpm": 94,
+      "beats_per_chord": 2,
+      "voice": "moog_pad",
+      "mode": "repeat",
+      "repeat": "half_note_pulse",
+      "profile": "soft_swing",
+      "drums": "sparse",
+      "echo": true,
+      "echo_mix": 0.08,
+      "echo_feedback": 0.18,
+      "echo_time_ms": 318,
+      "echo_tail_seconds": 0.7,
+      "mix": {
+        "kick": -4,
+        "snare": -11,
+        "clap": -14,
+        "hat": -14,
+        "chords": -5
+      },
+      "melody_voice": "moog_pluck",
+      "melody": [
+        [
+          0.75,
+          69,
+          0.2,
+          0.08
+        ],
+        [
+          2.25,
+          74,
+          0.2,
+          0.075
+        ],
+        [
+          4.25,
+          76,
+          0.24,
+          0.08
+        ],
+        [
+          6.5,
+          71,
+          0.28,
+          0.075
+        ]
+      ]
+    }
+  ]
+}
