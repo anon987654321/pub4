@@ -39,23 +39,36 @@ class Drums
     end
   end
 
+  # A cymbal lives in noisy, inharmonic upper partials. Low pitched ringing here
+  # made the old hat sound like a little gong, so keep the body out of the midrange.
   def hat(dur = 0.075)
     n = [(dur * SAMPLE_RATE).to_i, 1].max
     previous = 0.0
-    partials = [401.0, 557.0, 733.0, 997.0, 1321.0, 1709.0]
+    partials = [3477.0, 4789.0, 6121.0, 7919.0, 10_103.0, 12_791.0]
     phases = partials.map { @rng.rand * 2.0 * Math::PI }
+    weights = partials.map { 0.45 + (@rng.rand * 0.55) }
     Array.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
       noise = (@rng.rand * 2.0) - 1.0
       high = noise - previous
       previous = noise
-      metal = partials.each_with_index.sum { |f, j| Math.sin(2.0 * Math::PI * f * t + phases[j]) } / partials.size
-      envelope = Math.exp(-t * 58.0)
-      soft_clip((high * 0.24 + metal * 0.19) * envelope)
+      metal = partials.each_with_index.sum do |f, j|
+        Math.sin(2.0 * Math::PI * f * t + phases[j]) * weights[j]
+      end / weights.sum
+      envelope = Math.exp(-t * 72.0)
+      soft_clip((high * 0.39 + metal * 0.07) * envelope)
     end
   end
 
-  def sounds = { 'kick' => kick, 'snare' => snare, 'hat' => hat }
+  # The pattern grid supplies timing; the seeded hit renderer supplies modest human variation
+  # in pitch, decay and noise, so a bar does not sound like one sample copied on every beat.
+  def sounds
+    {
+      'kick' => kick(0.24 + (@rng.rand * 0.05)),
+      'snare' => snare(0.18 + (@rng.rand * 0.08)),
+      'hat' => hat(0.045 + (@rng.rand * 0.04))
+    }
+  end
 
   private
 
