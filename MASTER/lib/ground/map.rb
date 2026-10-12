@@ -106,6 +106,9 @@ module Master
 
         include Queries
 
+        VALID_STATUSES = %w[covered gap unmapped].freeze
+        VALID_SEVERITIES = %w[critical high medium low].freeze
+
         Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :law_ids, :status, :tags, :immutable, :source)
 
         def self.load(root: Master::ROOT)
@@ -129,15 +132,52 @@ module Master
           @data["version"].to_s
         end
 
-        # Integrity: covered entries must resolve to registered LawDSL ids when registry loaded.
+        # Validate the map's claims before its findings guide a repair.
+        # An omitted registry skips reference checks; an explicitly empty
+        # registry is different and must reject every claimed id.
         def integrity(registered_law_ids: nil)
+          verify_references = !registered_law_ids.nil?
           registered = Array(registered_law_ids).map { |id| id.to_s.upcase }.to_set
           findings = []
           laws.each_value do |entry|
-            if entry.status == "covered" && entry.law_ids.empty?
-              findings << "covered law #{entry.id} has no law_ids"
+            unless VALID_STATUSES.include?(entry.status)
+              findings << "law #{entry.id} has invalid status #{entry.status.inspect}"
             end
-            next if registered.empty?
+            unless VALID_SEVERITIES.include?(entry.severity)
+              findings << "law #{entry.id} has invalid severity #{entry.severity.inspect}"
+            end
+
+            confidence = entry.confidence
+            unless confidence.is_a?(Numeric) && confidence.respond_to?(:finite?) &&
+                   confidence.finite? && (0.0..1.0).cover?(confidence)
+              findings << "law #{entry.id} has invalid confidence #{confidence.inspect}"
+            end
+
+            if entry.meaning.strip.empty?
+              findings << "law #{entry.id} has no meaning"
+            end
+            if entry.detects.to_s.strip.empty?
+              findings << "law #{entry.id} has no detector description"
+            end
+            if entry.operation.to_s.strip.empty?
+              findings << "law #{entry.id} has no repair operation"
+            end
+
+            case entry.status
+            when "covered"
+              findings << "covered law #{entry.id} has no law_ids" if entry.law_ids.empty?
+            when "gap", "unmapped"
+              if entry.law_ids.any?
+                findings << "#{entry.status} law #{entry.id} must not claim law_ids"
+              end
+            end
+
+            duplicates = entry.law_ids.map { |id| id.to_s.upcase }.tally.select { |_, count| count > 1 }.keys
+            unless duplicates.empty?
+              findings << "law #{entry.id} repeats law_ids: #{duplicates.join(', ')}"
+            end
+
+            next unless verify_references
 
             entry.law_ids.each do |rid|
               next if registered.include?(rid.to_s.upcase)
@@ -145,7 +185,7 @@ module Master
               findings << "law #{entry.id} maps to unknown law #{rid}"
             end
           end
-          findings
+          findings.uniq
         end
 
         # The reverse of #integrity. laws.yml declares that every registered rule
@@ -192,7 +232,7 @@ module Master
               meaning: body["meaning"].to_s,
               detects: body["detects"],
               severity: body["severity"].to_s,
-              confidence: body["confidence"].to_f,
+              confidence: body["confidence"],
               operation: body["operation"],
               law_ids: Array(body["law_ids"]).map(&:to_s),
               status: body["status"].to_s,
