@@ -6,8 +6,8 @@ instrument in it is synthesised on the spot. The records it samples and the rap 
 are material and not instruments. Nothing is uploaded, nothing is fetched at render time, and
 every take can be asked how it was made.
 
-The entry point is `dilla.rb`, a single large file that loads the helpers under `lib/` and
-declares every command in one dispatch table. Run `ruby dilla.rb help` and the command list is
+The entry point is `dilla.rb`. It loads helpers under `lib/` and declares every command in
+one dispatch table. Run `ruby dilla.rb help` and the command list is
 printed from that table, so it cannot drift from what the code answers to; `help render`,
 `help play` and the other topic names print one section. The helpers are grouped by what they
 touch. The file `lib/sound.rb` holds instruments and signal: the oscillators, the device rack,

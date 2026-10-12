@@ -9,7 +9,6 @@ class TestDillaEntrypoint < Minitest::Test
   def test_live_entrypoint_contains_the_engine_and_live_router
     source = File.read(ENTRY)
 
-    assert_operator source.bytesize, :>, 100_000
     assert_includes source, "def live!(argv)"
     assert_includes source, "LIVE_SYNTH_VERBS"
     assert_match(/DILLA_PHYSICS/, source) if source.include?("SHOWCASE_DEFAULTS")
@@ -21,6 +20,7 @@ class TestDillaEntrypoint < Minitest::Test
     assert_includes source, 'DILLA_LIVE_VISUAL'
     assert_includes source, 'DILLA_SHOWCASE_LOOP'
   end
+
   def test_film_command_is_admitted_by_the_dilla_entrypoint
     source = File.read(ENTRY)
     assert_includes source, '"film" => lambda'
@@ -32,5 +32,4 @@ class TestDillaEntrypoint < Minitest::Test
     assert_includes source, '"video" => lambda'
     assert_includes source, 'require_relative "lib/radio_video"'
   end
-
 end
