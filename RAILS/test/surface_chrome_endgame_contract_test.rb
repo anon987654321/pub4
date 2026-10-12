@@ -31,15 +31,17 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
   end
 
   def test_amber_endgame_is_after_late_luxury_and_messenger_rules
-    source = source("amber/app/assets/stylesheets/application.scss")
-    include_line = "@include endgame.amber;"
+    app = source("amber/app/assets/stylesheets/application.scss")
+    endpoint = source("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
+    all_sources = "#{app}\n#{endpoint}"
 
     [".feed-post {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select {",
      'body[data-surface="luxury"] .item-card--luxury {'].each do |selector|
-      assert_endpoint_after(source, selector, include_line)
+      assert_includes all_sources, selector
     end
 
-    assert_match(/\n@include endgame\.amber;\s*\z/, source)
+    assert_includes app, '@include meta.load-css("amber_shared_overrides");'
+    assert_match(/\n@include endgame\.amber;\s*\z/, endpoint)
   end
 
   def test_endgame_file_has_no_shadow_or_important_vetoes
