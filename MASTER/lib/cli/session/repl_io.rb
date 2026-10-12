@@ -23,14 +23,14 @@ module Master
         return if rendered.empty?
         return if pageable_output?(rendered) && page_terminal_output(rendered)
 
-        puts rendered
+        terminal_puts(rendered)
       end
 
       def display_prepared_terminal_output(text)
         return if text.to_s.empty?
         return if pageable_output?(text) && page_terminal_output(text)
 
-        puts text
+        terminal_puts(text)
       end
 
       def pageable_output?(text)
@@ -186,7 +186,7 @@ module Master
       def exit_cli
         @running = false
         line = @refs.renderer.closing
-        puts line if line
+        terminal_puts(line) if line
         close_session
       end
 
