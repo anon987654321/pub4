@@ -591,6 +591,18 @@ tts:
     end_fall_hz: -6
     question_rise_hz: 8
 
+  # Speech-only delivery texture. These light false starts and hesitations do
+  # not alter the transcript; technical instructions, paths, lists and code are
+  # excluded. One event at most per synthesized chunk. MASTER_TTS_DISFLUENCIES=0
+  # disables the layer without changing the voice or synthesis engine.
+  disfluencies:
+    enabled: true
+    probability: 0.20
+    min_words: 6
+    stutter_probability: 0.35
+    fillers: [um, uh]
+    seed: master-vocal-character-v1
+
   # Latency. The first packet of a reply is cut at a clause boundary near
   # this many characters, so the first words are synthesised from a short
   # clause while the rest is prepared behind it. 0 turns it off.
