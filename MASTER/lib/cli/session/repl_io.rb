@@ -26,6 +26,13 @@ module Master
         puts rendered
       end
 
+      def display_prepared_terminal_output(text)
+        return if text.to_s.empty?
+        return if pageable_output?(text) && page_terminal_output(text)
+
+        puts text
+      end
+
       def pageable_output?(text)
         return false unless $stdout.tty?
         return false if %w[0 off no false].include?(ENV["MASTER_PAGER"].to_s.downcase)
