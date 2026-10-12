@@ -44,7 +44,7 @@ module Master
       @queue = nil
       @worker = nil
       @lock = Mutex.new
-      @warned = false
+      @warned = Set.new
       @pending = nil
       @last_said = nil
       @last_at = 0.0
@@ -447,6 +447,7 @@ end
         generation = values[:generation]
         outcome = StreamOutcome.new(ok: false, played_bytes: 0)
         Open3.popen3(*cmd, **spawn_opts) do |stdin, _o, _e, wait_thr|
+          stdin.binmode
           active = generation_active?(generation)
           @lock.synchronize { @playing_pid = wait_thr.pid if active }
           begin
@@ -705,7 +706,7 @@ def decode_job(job)
           style_locked: !dynamic || locked_style || rate || pitch,
         )
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Voice::Playback.synthesize")
+        warn_once("speech synthesis error — #{e.class}: #{e.message}")
         nil
       end
 
@@ -769,7 +770,7 @@ def decode_job(job)
         end
         false
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Voice::Playback.play")
+        warn_once("audio player error — #{e.class}: #{e.message}")
         false
       end
 
@@ -810,16 +811,22 @@ def decode_job(job)
       # A missing player is a real condition the operator can fix, so it is said
       # once. Saying it after every reply would be its own kind of noise.
       def warn_once(message)
-        @lock.synchronize do
-          next if @warned
+        message = message.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace, replace: "�")
+        emit = @lock.synchronize do
+          @warned ||= Set.new
+          next false if @warned.include?(message)
 
-          @warned = true
-          if defined?(Master::Trace::Dmesg)
-            Master::Trace::Dmesg.once("voice0", message)
-          else
-            warn "voice0: #{message}"
-          end
+          @warned.add(message)
+          true
         end
+        return false unless emit
+
+        if defined?(Master::Trace::Dmesg)
+          Master::Trace::Dmesg.status("voice0", message)
+        else
+          warn "voice0: #{message}"
+        end
+        true
       end
     end
   end
