@@ -49,7 +49,7 @@ class TestSpeech < Minitest::Test
     assert_equal message, speech.instance_variable_get(:@last_error)
   end
 
-  def test_tts_timing_is_opt_in
+  def test_tts_timing_is_always_available_and_detailed_logs_are_opt_in
     speech = Master::Voice::Speech
     original = ENV.fetch("MASTER_TTS_TIMING", nil)
     started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) - 0.01
