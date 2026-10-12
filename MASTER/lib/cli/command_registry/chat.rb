@@ -108,8 +108,11 @@ module Master
 
           detail: [
             "/chat status — each transport, nick, channels, mode.",
-            "/chat speak on|off — allow explicit /say, /me and /msg (off at every new connection).",
-            "/chat quit [msg] — disconnect (/quit still exits MASTER).",
+            "/chat use llm — send ordinary text to MASTER again.",
+            "/chat use irc:#help or irc:friend — select an IRC channel or direct message.",
+            "/chat use telegram:12345 or slskd:room:indie or slskd:pm:user — select a supported chat.",
+            "After selecting a destination, ordinary text goes there; /chat speak on is still required to send.",
+            "/chat quit [msg] — disconnect (/quit still exits MASTER)."
             "/chat summarize — the operator asks the model to summarize recent lines, " \
              "sent as quoted untrusted data.",
           ],
@@ -122,7 +125,7 @@ module Master
         "speak" => :chat_speak, "quit" => :chat_quit, "disconnect" => :chat_quit, "summarize" => :chat_summary,
       }.freeze
 
-      CHAT_USAGE = "usage: /chat status | speak on|off | quit [msg] | summarize"
+      CHAT_USAGE = "usage: /chat status | use llm|<service>:<target> | speak on|off | quit [msg] | summarize"
 
       def chat_verbs(dependencies)
         deps = dependencies.slice(:bus, :agent, :config)
@@ -147,6 +150,7 @@ module Master
         end
         verb = "status" if verb.empty?
         return Io::Chat.status_lines.join("\n") if verb == "status"
+        return chat_use(args) if verb == "use"
 
         chat = Io::Chat.current
         return "chat0: not connected; /connect <host> <nick>" unless chat
@@ -171,6 +175,55 @@ module Master
         return "#{chat.name}0: /#{verb} is not available on this transport" if CHAT_IRC_ONLY[verb] && !chat.respond_to?(CHAT_IRC_ONLY[verb])
 
         send(handler, chat, args, agent:)
+      end
+
+      def chat_use(args)
+        value = args.to_s.strip
+        return CHAT_USAGE if value.empty?
+        if value.casecmp("llm").zero?
+          Io::Chat.use_llm!
+          return "chat0: destination llm"
+        end
+
+        service_names = (Io::Chat::FACTORIES.keys + Io::Chat::RESERVED).map(&:to_s)
+        candidate, rest = value.split(":", 2)
+        explicit = rest && service_names.include?(candidate.to_s.downcase)
+        if explicit
+          service = candidate.downcase
+          target = rest
+          return "#{service}0: not available yet" unless Io::Chat.available?(service)
+
+          transport = Io::Chat.find(service)
+        else
+          transport = Io::Chat.current
+          return "chat0: no connected transport; /connect first" unless transport
+
+          service = transport.name
+          target = value
+        end
+        return "#{service}0: not connected" unless transport&.live?
+
+        target = validate_chat_destination(transport, target)
+        selected = Io::Chat.select_destination(service:, target:)
+        "chat0: destination #{selected.label}; #{transport.policy.mode}"
+      end
+
+      def validate_chat_destination(transport, target)
+        raw = target.to_s.strip
+        safe = Io::Chat::Policy.sanitize(raw, max: 80)
+        raise ArgumentError, "bad chat destination" if raw.empty? || safe != raw || raw.match?(/\s/)
+
+        case transport.name
+        when "irc"
+          raise ArgumentError, "target must be an IRC channel or nick" unless raw.match?(Io::Irc::ROOM) || raw.match?(Io::Irc::NICK)
+        when "telegram"
+          raise ArgumentError, "Telegram target must be a chat id or @username" unless raw.match?(/\A(?:-?\d+|@[A-Za-z0-9_]+)\z/)
+        when "slskd"
+          raise ArgumentError, "Soulseek target must be room:NAME or pm:USER" unless raw.match?(/\A(?:room|pm):\S+\z/)
+        else
+          raise ArgumentError, "#{transport.name} has no supported destination contract"
+        end
+        raw
       end
 
       def chat_join(chat, args, **)
@@ -244,7 +297,7 @@ module Master
         raise ArgumentError, "usage: /chat speak on|off" unless %w[on off].include?(args)
 
         Io::Chat.live.each { |transport| transport.policy.speak = (args == "on") }
-        reminder = "; every line still needs an explicit /say" if chat.policy.speak?
+        reminder = "; ordinary text goes only to the selected destination" if chat.policy.speak?
 
         "#{chat.name}0: #{chat.policy.mode}#{reminder}"
       end

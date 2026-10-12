@@ -71,9 +71,7 @@ module Master
         @focus_mode ? focus_prompt : normal_prompt
       end
 
-      def focus_prompt
-        @refs.renderer.render("#{@refs.renderer.prompt_token} ", mode: :dim)
-      end
+
 
       # The ordinary shell keeps Reline in charge of the prompt. /face opens the
       # dedicated alternate-screen stage when the operator wants the full face.
@@ -81,7 +79,20 @@ module Master
         _state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
-          tokens: @refs.session.token_est, cost: @refs.session.cost
+          tokens: @refs.session.token_est, cost: @refs.session.cost,
+          destination: Master::Io::Chat.destination_label
+        )
+        prompt
+      end
+
+      # Focus mode reduces context noise, never hides the working location or
+      # the destination that receives the next line of text.
+      def focus_prompt
+        _state, prompt = @refs.renderer.prompt_line(
+          @refs.agent.model, @refs.session.phase,
+          last_ok: @last_ok, violations: violations_count,
+          tokens: @refs.session.token_est, cost: @refs.session.cost,
+          destination: Master::Io::Chat.destination_label, focused: true
         )
         prompt
       end
@@ -91,6 +102,14 @@ module Master
       def handle_repl_line(line)
         stripped = line.strip
         return if stripped.empty?
+
+        # With a selected external conversation, every ordinary line is a chat
+        # message. Slash commands, governed shell lines and multiline input
+        # retain their explicit local meaning.
+        unless stripped.start_with?("/") || stripped.match?(BANG) || stripped == "<<"
+          return if route_active_chat(line)
+        end
+
         case Master::CLI::OperatorGrammar.parse(stripped)&.kind
         when :chitchat then return run_chitchat
         when :repeat then return repeat_last
@@ -207,12 +226,44 @@ module Master
       end
 
       def run_agent_turn(line)
+        return if route_active_chat(line)
         if (refusal = host_refusal_for(line))
           Master::Trace::Dmesg.status("host0", refusal)
           return
         end
 
         run_input(line.strip)
+      end
+
+      # The composer changes destination only after an explicit /chat use.
+      # A disconnected target never silently falls back to the LLM.
+      def route_active_chat(line)
+        destination = Master::Io::Chat.destination
+        return false unless destination
+
+        if line.to_s.lstrip.start_with?("/")
+          print_terminal_output("chat0: unknown slash command not sent; use /chat use llm to return to MASTER", mode: :warning)
+          return true
+        end
+
+        transport = Master::Io::Chat.find(destination.service)
+        unless transport&.live?
+          print_terminal_output("chat0: #{destination.label} disconnected; use /chat use llm to return to MASTER", mode: :error)
+          return true
+        end
+
+        text = line.to_s.strip
+        return true if text.empty?
+
+        transport.send_text(destination.target, text)
+        body = Master::Io::Chat::Policy.sanitize(text)
+        sender = transport.respond_to?(:nick) && !transport.nick.to_s.empty? ? transport.nick : "me"
+        prefix = destination.service == "irc" ? "#{destination.target} <#{sender}>" : "#{destination.label} <me>"
+        print_terminal_output("#{prefix} #{body}", mode: :dim)
+        true
+      rescue Master::Io::Chat::ReadOnly, ArgumentError, RuntimeError, SystemCallError, IOError, OpenSSL::OpenSSLError => e
+        print_terminal_output("chat0: #{Master::Io::Chat::Policy.sanitize(e.message, max: 200)}", mode: :error)
+        true
       end
 
       def host_refusal_for(line)

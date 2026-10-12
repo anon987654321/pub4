@@ -45,6 +45,10 @@ class TestChatIrc < Minitest::Test
     @irc
   end
 
+  def teardown
+    Master::Io::Chat.use_llm!
+  end
+
   def eventually
     50.times do
       return true if yield
@@ -174,6 +178,81 @@ class TestChatIrc < Minitest::Test
 
       assert_match(/bad nick/, registry.dispatch_chat("msg", ctx: { args: "#help hello" }))
       assert_match(/usage/, registry.dispatch_chat("msg", ctx: { args: "friend" }))
+    end
+  end
+
+  def test_chat_use_selects_an_explicit_destination_and_can_return_to_llm
+    build
+    registry = Master::CLI::CommandRegistry
+
+    Master::Io::Chat.stub(:find, ->(service) { service == "irc" ? @irc : nil }) do
+      selected = registry.dispatch_chat("chat", ctx: { args: "use irc:#help" })
+      assert_equal "read-only:irc:#help", Master::Io::Chat.destination_label
+      assert_match(/destination irc:#help/, selected)
+      assert_match(/read-only/, selected)
+
+      assert_equal "chat0: destination llm", registry.dispatch_chat("chat", ctx: { args: "use llm" })
+      assert_equal "llm", Master::Io::Chat.destination_label
+    end
+  end
+
+  def test_unavailable_whatsapp_is_not_selectable
+    result = Master::CLI::CommandRegistry.dispatch_chat("chat", ctx: { args: "use whatsapp:#family" })
+
+    assert_match(/whatsapp0: not available yet/, result)
+    assert_equal "llm", Master::Io::Chat.destination_label
+  end
+
+  def test_repl_routes_plain_messages_before_chitchat_classification
+    build
+    @irc.policy.speak = true
+    Master::Io::Chat.select_destination(service: "irc", target: "#help")
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| text }
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@refs, Struct.new(:renderer, :bus).new(renderer, nil))
+
+    Master::Io::Chat.stub(:find, ->(service) { service == "irc" ? @irc : nil }) do
+      Master::CLI::OperatorGrammar.stub(:parse, ->(_text) { flunk("selected chat must receive plain text before LLM/chitchat classification") }) do
+        output = capture_io { session.send(:handle_repl_line, "hello there") }.first
+        assert_includes output, "#help <heyhey123> hello there"
+        assert_equal "PRIVMSG #help :hello there", @io.written.last
+      end
+    end
+  end
+
+  def test_plain_composer_text_uses_the_selected_irc_channel_and_keeps_send_gate
+    build
+    Master::Io::Chat.select_destination(service: "irc", target: "#help")
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| text }
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@refs, Struct.new(:renderer, :bus).new(renderer, nil))
+
+    Master::Io::Chat.stub(:find, ->(service) { service == "irc" ? @irc : nil }) do
+      denied = capture_io { assert session.send(:route_active_chat, "hello there") }.first
+      assert_match(/read-only/, denied)
+      refute @io.written.any? { |line| line.start_with?("PRIVMSG #help") }
+
+      @irc.policy.speak = true
+      output = capture_io { assert session.send(:route_active_chat, "hello there") }.first
+      assert_includes output, "#help <heyhey123> hello there"
+      assert_equal "PRIVMSG #help :hello there", @io.written.last
+    end
+  end
+
+  def test_unknown_slash_command_is_never_sent_to_the_selected_chat
+    build
+    Master::Io::Chat.select_destination(service: "irc", target: "#help")
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| text }
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@refs, Struct.new(:renderer, :bus).new(renderer, nil))
+
+    Master::Io::Chat.stub(:find, ->(service) { service == "irc" ? @irc : nil }) do
+      output = capture_io { assert session.send(:route_active_chat, "/unknown hello") }.first
+      assert_match(/not sent/, output)
+      refute @io.written.any? { |line| line.start_with?("PRIVMSG #help") }
     end
   end
 

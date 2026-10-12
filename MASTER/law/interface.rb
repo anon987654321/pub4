@@ -52,8 +52,8 @@ Law.define(:CLI_PROMPT_COMPOSITION) do
   mode :opportunity
   languages %i[ruby]
   path "MASTER/lib/voice/renderer/"
-  ask "Does the interactive prompt remain a restrained OpenBSD-console line: useful location, repository state, meaningful phase/error state, and input token, with no Starship/powerline-style segments or decorative emphasis? Is it bounded, single-line, plain in scrollback and cheap to redraw? Return CLEAN when it follows the dmesg-first house style."
-  fix "Keep one compact text line with path, plain Git state, plain phase and shell token. Prefer ASCII and stable spacing; avoid badges, icon glyphs, color-coded segments, boxes and duplicated status. Cache or bound Git probes and move detail to /status, /doctor or /help."
+  ask "Does the interactive prompt remain a restrained OpenBSD-console line that shows the checkout/tree, current directory, active conversation destination, Git state, meaningful phase/error state and input token, with no Starship/powerline-style segments or decorative emphasis? Is it bounded, single-line, plain in scrollback and cheap to redraw? Return CLEAN when it follows the dmesg-first house style."
+  fix "Keep one compact text line with checkout/tree-relative path, active destination, plain Git state, phase and shell token. Prefer ASCII and stable spacing; avoid badges, icon glyphs, color-coded segments, boxes and duplicated status. Cache or bound Git probes and move detail to /status, /doctor or /help."
   # Quoted heredocs: the examples quote instance and local variables, and an
   # interpolating heredoc evaluates them against the Builder at load time —
   # one #{e.class} here once made every law definition crash the registry.

@@ -147,7 +147,7 @@ class TestFixProtocol < Minitest::Test
 
   def test_render_exposes_four_stream_contract_without_claiming_it_was_measured
     Dir.mktmpdir("fix-protocol-four-streams") do |root|
-      File.write(File.join(root, "thing.rb"), "puts :ok\\n")
+      File.write(File.join(root, "thing.rb"), "puts :ok\n")
       payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
       contract = payload.fetch("assessment_contract")
 

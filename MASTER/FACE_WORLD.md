@@ -264,15 +264,16 @@ browser keeps the existing single frame loop and offers the same practical contr
 as the STL-to-ASCII reference:
 
 - `c`: cycle the contract's sculpt, high-contrast and fine-detail character ramps.
-- `m`: switch between dark relief and light relief. Light mode inverts only the face
-  canvases, leaving the operator controls untouched.
-- `r`: pause or resume the continuous turn.
+- `m`: reverse or restore the ASCII tone ramp. This does not invert the page or
+  recolour the underlying WebGL scene.
+- `r`: pause or resume automatic rotation; dragging horizontally on the face
+  canvas manually changes the ASCII head's viewing angle.
 - `?face_ramp=high_contrast`, `?face_ink=light` and `?face_rotate=0`: set those
   preferences directly; `?face_chars=MASTER` supplies a custom printable-ASCII ramp.
 
 In the terminal, `MASTER_FACE_RAMP=high_contrast`, `MASTER_FACE_CHARS=MASTER`,
-`MASTER_FACE_MODE=light`, `MASTER_FACE_ROTATE=0`, and `MASTER_REDUCED_MOTION=1`
-select the equivalent appearance options. Named ramps live in `MASTER/data/tokens.yml`; the browser and
+`MASTER_FACE_MODE=light` (reverse the tone ramp), `MASTER_FACE_ROTATE=0`, and
+`MASTER_REDUCED_MOTION=1` select the equivalent appearance options. Named ramps live in `MASTER/data/tokens.yml`; the browser and
 Ruby renderer do not carry separate copies of the ramp definitions. The ordinary
 ramp, default ink and pose remain unchanged so the existing golden frames stay valid.
 

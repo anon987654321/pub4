@@ -138,6 +138,18 @@ test("Ruby's compensated sum is used where the anchors are means", () => {
   assert.notEqual(0.1 + 0.2 + 0.3, 0.6);
 });
 
+test("a manual turn offset rotates the ASCII mesh independently of the auto-spin state", () => {
+  const { canvas } = stubCanvas(900, 900);
+  const view = ascii.createView(canvas, { contract, env: pageWindow() });
+  view.draw(1000, { state: "listening" });
+  const front = view.lastText;
+  view.turnOffset = Math.PI / 2;
+  view.lastText = "";
+  view.lastAt = -Infinity;
+  view.draw(1000, { state: "listening" });
+  assert.notEqual(view.lastText, front);
+});
+
 test("the page's state is mapped onto the pose the way the terminal maps it", () => {
   const shapes = { A: { open: 1.0, wide: 0.2 }, O: { open: 0.9, wide: -0.7 } };
   const speaking = engine.lookFor({ state: "speaking", t: 1.35, level: 0.8, viseme: "O", shapes });

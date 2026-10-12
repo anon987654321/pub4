@@ -1453,6 +1453,8 @@
       rowH: 0,
       lastText: "",
       lastAt: -Infinity,
+      // Pointer drag adds a stable pose offset without creating another frame loop.
+      turnOffset: 0.0,
     };
 
     const style = () => (env.getComputedStyle ? env.getComputedStyle(env.document.documentElement) : null);
@@ -1531,7 +1533,7 @@
       // The mask's mix is remembered from the moment the state last changed.
       if (state !== view.maskState) { view.maskState = state; view.maskSince = t; view.maskFrom = view.maskMix || 0.0; }
       const look = engine.lookFor({ state, t, level: input.level, viseme: input.viseme, shapes: input.shapes, reduced: input.reduced, session: input.session, since: view.maskSince, from: view.maskFrom });
-      if (!rotationEnabled) look.turn = 0.0;
+      look.turn = (rotationEnabled ? look.turn : 0.0) + view.turnOffset;
       view.maskMix = look.mix;
       const out = engine.frame({ rows: view.rows, cols: view.cols, state, look, chars: activeChars(contract), mode: activeInkMode(contract) });
       const field = lawFieldVisible ? paintLawField(out.lines, out.depth, laws) : { lines: out.lines, depth: out.depth };
@@ -1562,6 +1564,9 @@
   const requestedInk = faceQuery.get("face_ink");
   let selectedMode = requestedInk === "dark" || requestedInk === "light" ? requestedInk : null;
   let rotationEnabled = faceQuery.get("face_rotate") !== "0";
+  let orbitTarget = null;
+  let orbitPointerId = null;
+  let orbitLastX = 0;
   let overlayCanvas = null;
   let overlayView = null;
   let glyphMode = false;
@@ -1594,10 +1599,9 @@
     const doc = root.document;
     if (!doc) return;
     const light = activeInkMode() === "light";
-    const filter = light ? "grayscale(1) invert(1)" : "";
-    for (const canvas of [doc.getElementById("face"), overlayCanvas]) {
-      if (canvas && canvas.style) canvas.style.filter = filter;
-    }
+    // "light" reverses the ASCII tone ramp. Filtering the canvas as well would
+    // invert it twice and recolour the unrelated WebGL face and particle field.
+    if (overlayCanvas?.style) overlayCanvas.style.filter = "";
     if (doc.documentElement?.dataset) doc.documentElement.dataset.faceInk = light ? "light" : "dark";
     if (overlayView) overlayView.lastText = "";
   }
@@ -1642,6 +1646,51 @@
     return rotationEnabled;
   }
 
+  // The ASCII layer ignores pointer input visually, so orbit attaches to the
+  // real face canvas underneath it. Pointer capture keeps a drag continuous
+  // when the pointer leaves the canvas; ending a drag never sends a chat action.
+  function bindOrbitTarget(target) {
+    if (orbitTarget === target) return;
+    if (orbitTarget) {
+      orbitTarget.removeEventListener("pointerdown", orbitStart);
+      orbitTarget.removeEventListener("pointermove", orbitMove);
+      orbitTarget.removeEventListener("pointerup", orbitEnd);
+      orbitTarget.removeEventListener("pointercancel", orbitEnd);
+      orbitTarget.removeEventListener("lostpointercapture", orbitEnd);
+    }
+    orbitTarget = target || null;
+    orbitPointerId = null;
+    if (!orbitTarget?.addEventListener) return;
+    orbitTarget.addEventListener("pointerdown", orbitStart);
+    orbitTarget.addEventListener("pointermove", orbitMove);
+    orbitTarget.addEventListener("pointerup", orbitEnd);
+    orbitTarget.addEventListener("pointercancel", orbitEnd);
+    orbitTarget.addEventListener("lostpointercapture", orbitEnd);
+  }
+
+  function orbitStart(event) {
+    if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
+    orbitPointerId = event.pointerId;
+    orbitLastX = Number(event.clientX) || 0;
+    try { orbitTarget?.setPointerCapture?.(event.pointerId); } catch (_) { /* capture is optional */ }
+  }
+
+  function orbitMove(event) {
+    if (orbitPointerId === null || event.pointerId !== orbitPointerId || !overlayView) return;
+    const x = Number(event.clientX) || 0;
+    const delta = x - orbitLastX;
+    orbitLastX = x;
+    if (!delta) return;
+    overlayView.turnOffset += delta * 0.01;
+    overlayView.lastText = "";
+    // The existing face clock will render the changed pose on its next tick.
+  }
+
+  function orbitEnd(event) {
+    if (orbitPointerId === null || (event.pointerId !== undefined && event.pointerId !== orbitPointerId)) return;
+    orbitPointerId = null;
+  }
+
   function activeState() {
     if (!root.document || !root.document.body) return "idle";
     const body = root.document.body;
@@ -1658,7 +1707,9 @@
       if (overlayCanvas) overlayCanvas.style.display = "none";
       return false;
     }
-    if (!doc.getElementById("face")) return false;
+    const faceCanvas = doc.getElementById("face");
+    if (!faceCanvas) return false;
+    bindOrbitTarget(faceCanvas);
 
     if (!overlayCanvas || !overlayCanvas.isConnected) {
       overlayCanvas = doc.getElementById("master-face-ascii");
@@ -1736,7 +1787,7 @@
     }
     if (pressed === "m") {
       setInkMode(activeInkMode() === "light" ? "dark" : "light");
-      if (status) status.textContent = activeInkMode() === "light" ? "Light ink mode" : "Dark ink mode";
+      if (status) status.textContent = activeInkMode() === "light" ? "Reverse ASCII relief" : "Standard ASCII relief";
       return;
     }
     if (pressed === "c") {

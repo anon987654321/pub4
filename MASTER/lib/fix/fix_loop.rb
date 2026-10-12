@@ -121,6 +121,9 @@ module Master
         return halted_result if halted? && !requested
 
         @pass_runner&.reset_gaps!
+        # An operator-requested /fix cannot finish on sampled semantic coverage.
+        # It must ask both semantic streams across the eligible corpus.
+        @pass_runner&.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
         guidance = outcome_guidance(target:, incremental:)
         incremental = guidance.fetch(:incremental)
         @outcome_prior = guidance[:prediction]
@@ -195,6 +198,8 @@ module Master
           end
         end
         result
+      ensure
+        @pass_runner&.cleanup_visual_runtime
       end
 
       # A run that reaches DONE after skipping files it could not scan, or

@@ -12,11 +12,10 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     # Views live in the brgen_marketplace engine, a sibling of brgen. The
-    # styles live in brgen's one application.scss, and the card's CSS is the
-    # rules there whose selectors name .deal-card.
+    # marketplace component styles live in the host entrypoint's feature partial.
     ENGINE = File.join(RAILS, "brgen_marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
-    CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
+    BRGEN_FEATURE_STYLES = File.join(RAILS, "brgen/app/assets/stylesheets")
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "__shared/app/assets/stylesheets/_search_yep.scss")
@@ -41,13 +40,15 @@ module Deploy
     private
 
     def load_ctx
-      missing = [CARD, CARDS_CSS, NAV, SEARCH].reject { |p| File.file?(p) }
+      feature_styles = Dir.glob(File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss")).sort
+      missing = [CARD, NAV, SEARCH].reject { |p| File.file?(p) }
+      missing << File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss") if feature_styles.empty?
       if missing.any?
         missing.each { |p| @result.fail("layout_search: missing #{p.sub(RAILS + '/', '')}") }
         return
       end
       if cards_css.empty?
-        @result.fail("layout_search: #{CARDS_CSS.sub(RAILS + '/', '')} has no .deal-card rule")
+        @result.fail("layout_search: Brgen feature styles have no .deal-card rule")
         return
       end
 
@@ -60,8 +61,13 @@ module Deploy
     end
 
     def cards_css
-      @cards_css ||= Operator::ScssRules.matching(File.read(CARDS_CSS), /\.deal-card\b/)
+      @cards_css ||= Operator::ScssRules.matching(feature_css_source, /\.deal-card\b/)
                                         .map { |rule| "#{rule.selector} { #{rule.body} }" }.join("\n")
+    end
+
+    def feature_css_source
+      Dir.glob(File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss")).sort
+         .map { |path| File.read(path) }.join("\n")
     end
 
     # The card's media slot lives in marketplace/_card_media.html.erb since the

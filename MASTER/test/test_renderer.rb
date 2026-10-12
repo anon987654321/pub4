@@ -159,7 +159,7 @@ class TestRenderer < Minitest::Test
     assert_match(/\A(?:~|\.\.\.|\/|[A-Za-z0-9_])/, lines.first)
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_match(/discover [%$] \z/, lines.first)
+    assert_match(/llm discover [%$] \z/, lines.first)
     refute_match(/\e\[/, prompt, "the OpenBSD-console prompt does not need ANSI segment styling")
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
@@ -171,10 +171,36 @@ class TestRenderer < Minitest::Test
         _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
         clean = strip_ansi(prompt)
 
-        assert_match(/\A.+ main \+2 discover [%$] \z/, clean)
+        assert_match(/\A.+ main \+2 llm discover [%$] \z/, clean)
         refute_match(/\e\[/, prompt)
         assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       end
+    end
+  end
+
+  def test_shell_prompt_names_the_active_chat_destination
+    renderer = FakeRenderer.new(config: {})
+    _state, prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
+
+    assert_match(/read-only:irc:#help discover [%$] \z/, strip_ansi(prompt))
+    assert_operator strip_ansi(prompt).length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+  end
+
+  def test_shell_prompt_bounds_long_branch_destination_and_phase
+    renderer = FakeRenderer.new(config: {})
+    renderer.stub(:git_prompt_state, branch: "feature/this/is/a/very/long/branch/name", ahead: 1234, behind: 987, dirty: true) do
+      _state, prompt = renderer.prompt_line(
+        "model",
+        "a-phase-name-that-is-far-too-long",
+        tokens: 10,
+        destination: "read-only:irc:#a-very-long-channel-name"
+      )
+      clean = strip_ansi(prompt)
+
+      assert_no_match(/\n|\r/, clean)
+      assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+      assert_includes clean, "read-only:irc:#a-ve..."
+      assert_match(/[%$] \z/, clean)
     end
   end
 
@@ -231,7 +257,7 @@ class TestRenderer < Minitest::Test
       clean = strip_ansi(prompt)
       assert_no_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes strip_ansi(prompt), "feature/with/a/very/long..."
+      assert_includes strip_ansi(prompt), "feature..."
     end
   end
 

@@ -79,15 +79,15 @@ module Master
               pass:,
               lexical: "mechanical+structural-full-eligible-corpus",
               structural: "full-eligible-corpus",
-              lexical_violations: "mechanical/structural",
-              lexical_opportunities:,
-              semantic_violations: semantic,
-              semantic_opportunities: semantic,
+              lexical_violations: "fixture-backed deterministic detectors; universal tree coverage not measured",
+              lexical_opportunities: "declared opportunity-mode detectors plus bounded tree heuristics; universal per-law coverage not measured",
+              semantic_violations: semantic == "full" ? "separate violation request per applicable recognized-language file; surface matrix not measured" : semantic,
+              semantic_opportunities: semantic == "full" ? "separate opportunity request per applicable recognized-language file; surface matrix not measured" : semantic,
               semantic:,
               abstract:,
               opportunity: lexical_opportunities,
               visual:,
-              assessment_matrix: "not-measured",
+              assessment_matrix: "contract_only_not_measurement",
             )
             Master::Trace::Dmesg.status(
               "fix0",
@@ -125,6 +125,12 @@ module Master
           @skip_guard.reset!
           @stage_failures = nil
           self
+        end
+
+        # A visual pass owns screenshots per iteration, while any app servers
+        # it had to boot are leased until the complete /fix run ends.
+        def cleanup_visual_runtime
+          @visual_pass&.stop_runtime!
         end
 
         def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })

@@ -15,7 +15,25 @@ require "review/scan/law_dsl"
 class TestSemanticLawScope < Minitest::Test
   def rule = @rule ||= Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
 
-  def scoped(language) = rule.send(:rules_for, language).keys
+  def scoped(language) = rule.send(:laws_for, language).keys
+
+  def test_missing_model_agent_is_inconclusive_not_clean
+    semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
+
+    error = assert_raises(RuntimeError) { semantic.check("def foo; end", path: "foo.rb") }
+    assert_match(/INCONCLUSIVE.*no model agent configured/, error.message)
+  end
+
+  def test_provider_configuration_failure_is_inconclusive_not_clean
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, operation:|
+      raise "missing configuration: API key"
+    end
+    semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
+
+    error = assert_raises(RuntimeError) { semantic.check("def foo; end", path: "foo.rb") }
+    assert_match(/INCONCLUSIVE.*provider capability/, error.message)
+  end
 
   def test_missing_model_agent_is_inconclusive_not_clean
     semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
@@ -64,13 +82,13 @@ class TestSemanticLawScope < Minitest::Test
     agent.define_singleton_method(:ask) do |prompt, operation:|
       observations << [operation, prompt]
       if operation == :scan_semantic_violations
-        "RAILS_THIN_CONTROLLER_SEMANTIC:2:unhandled breach\\n"
+        "RAILS_THIN_CONTROLLER_SEMANTIC:2:unhandled breach\n"
       else
-        "RAILS_THIN_CONTROLLER_SEMANTIC:3:possible simplification\\n"
+        "RAILS_THIN_CONTROLLER_SEMANTIC:3:possible simplification\n"
       end
     end
     semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
-    findings = semantic.check("class PostsController; end\\n", path: "posts_controller.rb")
+    findings = semantic.check("class PostsController; end\n", path: "posts_controller.rb")
 
     assert_equal %i[scan_semantic_violations scan_semantic_opportunities], observations.map(&:first)
     assert_includes observations[0][1], "SEMANTIC VIOLATIONS"
@@ -92,7 +110,7 @@ class TestSemanticLawScope < Minitest::Test
   # The counterweight. Most rules declare no language and the scope must leave
   # them alone; a filter that dropped them would silently retire the corpus.
   def test_a_rule_declaring_no_language_reaches_every_language
-    unscoped = rule.send(:load_semantic_rules).select { |_, a| a[:languages].empty? }
+    unscoped = rule.send(:load_semantic_laws).select { |_, a| a[:languages].empty? }
     refute_empty unscoped, "most of the corpus declares no language"
 
     %w[ruby css markdown html javascript yaml zsh json scss].each do |language|
@@ -103,7 +121,7 @@ class TestSemanticLawScope < Minitest::Test
   # A model handed the css frame that answers with a ruby rule has invented one
   # for this file. Accepting it would put the scope back where it was.
   def test_a_finding_outside_the_scope_asked_is_discarded
-    css = rule.send(:rules_for, "css")
+    css = rule.send(:laws_for, "css")
     response = "RAILS_THIN_CONTROLLER_SEMANTIC:3:fat controller\nAESTHETIC_FLAT_SEMANTIC:4:gradient\n"
     ids = rule.send(:parse_findings, response, css).map { |f| f[:law] }
 
@@ -111,8 +129,8 @@ class TestSemanticLawScope < Minitest::Test
   end
 
   def test_the_prompt_frame_differs_by_language
-    ruby = rule.send(:prompt_frame_for, rule.send(:rules_for, "ruby"), "ruby")
-    css = rule.send(:prompt_frame_for, rule.send(:rules_for, "css"), "css")
+    ruby = rule.send(:prompt_frame_for, rule.send(:laws_for, "ruby"), "ruby")
+    css = rule.send(:prompt_frame_for, rule.send(:laws_for, "css"), "css")
 
     assert_includes ruby, "RAILS_THIN_CONTROLLER_SEMANTIC"
     refute_includes css, "RAILS_THIN_CONTROLLER_SEMANTIC"

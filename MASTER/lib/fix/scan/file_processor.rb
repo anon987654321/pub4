@@ -154,16 +154,10 @@ module Master
           findings = []
           findings.concat(run_law_pass(pass: :lexical, laws: lexical, code:, ast:, path:))
           findings.concat(run_law_pass(pass: :structural, laws: structural, code:, ast:, path:))
-          if lexical_error?(findings)
-            @bus&.publish(
-              "scan:semantic_skipped",
-              path:,
-              law_count: semantic.size,
-              reason: "fatal lexical finding short-circuited semantic streams",
-              streams: %i[semantic_violations semantic_opportunities],
-            )
-            return findings
-          end
+          # Keep semantic violations/opportunities independent from lexical
+          # findings. A fatal deterministic hit must not suppress meaning-based
+          # assessment of the same file; otherwise one early result can hide the
+          # other streams.
           return skip_semantic(path:, laws: semantic, findings:) unless semantic_due?(findings, path)
 
           findings.concat(run_law_pass(pass: :semantic, laws: semantic, code:, ast:, path:))

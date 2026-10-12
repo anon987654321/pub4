@@ -143,6 +143,21 @@ class DesignContractTest < Minitest::Test
     assert_includes css, ".composer[open]::backdrop"
   end
 
+  def test_brgen_marketplace_rules_are_loaded_from_one_feature_partial
+    app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    marketplace_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
+    verticals_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_surfaces.scss")
+    marketplace = File.read(marketplace_path)
+    verticals = File.read(verticals_path)
+
+    assert_includes app, '@include meta.load-css("brgen_marketplace");'
+    assert_includes app, '@include meta.load-css("brgen_vertical_surfaces");'
+    assert_includes marketplace, ".deal-card"
+    assert_includes marketplace, ".deal-cat"
+    assert_includes verticals, ".listing-buy-bar-cta"
+    refute_includes app, ".listing-buy-bar-cta"
+  end
+
   def test_brgen_mounts_theme_bootstrap_once_in_head
     layout = File.read(File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"))
     copies = layout.scan(/render "shared\/theme_bootstrap"/).size
