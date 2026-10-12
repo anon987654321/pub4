@@ -271,8 +271,8 @@ as the STL-to-ASCII reference:
   preferences directly; `?face_chars=MASTER` supplies a custom printable-ASCII ramp.
 
 In the terminal, `MASTER_FACE_RAMP=high_contrast`, `MASTER_FACE_CHARS=MASTER`,
-`MASTER_FACE_MODE=light`, and `MASTER_REDUCED_MOTION=1` select the equivalent
-appearance options. Named ramps live in `MASTER/data/tokens.yml`; the browser and
+`MASTER_FACE_MODE=light`, `MASTER_FACE_ROTATE=0`, and `MASTER_REDUCED_MOTION=1`
+select the equivalent appearance options. Named ramps live in `MASTER/data/tokens.yml`; the browser and
 Ruby renderer do not carry separate copies of the ramp definitions. The ordinary
 ramp, default ink and pose remain unchanged so the existing golden frames stay valid.
 
