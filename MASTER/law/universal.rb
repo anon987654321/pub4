@@ -1773,6 +1773,26 @@ Law.define(:SYSTEM_STATUS) do
   X
 end
 
+Law.define(:VISUAL_HIERARCHY) do
+  source "Visual hierarchy — information scent, typographic scale, Gestalt grouping"
+  severity :warning
+  mode :opportunity
+  ask "On the rendered surface, can a first-time reader distinguish the primary task/content, supporting information, and tertiary controls at a glance? Does visual emphasis follow the user's current goal rather than decoration or implementation convenience?"
+  fix "Name the primary, secondary and tertiary elements for the task; use the existing type, spacing and contrast tokens to establish their order; verify the result in rendered screenshots at mobile and desktop widths without hiding required actions."
+  bad "A product card gives its seller metadata, badge, price, title and purchase action equal size and contrast."
+  good "A product title and price lead; seller metadata supports the choice; the purchase action is unmistakable and secondary actions remain quieter."
+end
+
+Law.define(:CONTEXTUAL_STATUS_CUES) do
+  source "Visibility of system status — contextual, persistent, actionable feedback"
+  severity :warning
+  mode :opportunity
+  ask "At the point a user must decide or wait, does the interface explain the relevant state, what changed, and what action is available next? Is essential meaning retained after transient motion or color feedback ends?"
+  fix "Show truthful status beside the affected task; use persistent text or semantics for success and failure, announce important asynchronous updates accessibly, and provide a concrete recovery action when one exists."
+  bad "A save button spins briefly, returns to its idle appearance, and leaves the user unsure whether the save succeeded."
+  good "The save action reports progress, then a persistent saved state; a failure explains the problem and offers a relevant retry path."
+end
+
 Law.define(:USER_CONTROL) do
   source "Nielsen Heuristic #3 — User control and freedom"
   severity :info
