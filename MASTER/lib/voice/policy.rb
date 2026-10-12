@@ -167,8 +167,8 @@ module Master
         voice_for_language(Language.detect(text))
       end
 
-      # A voice for one utterance. Round-robin for reading paragraphs:
-      # alternates between available voices to create a dual-narrator effect.
+      # Return the configured voice for one utterance. Rotations remain
+      # available for explicit multi-voice setups; the default policy is single-voice.
       def voice_for_utterance
         return single_voice_key unless rotating?
 
