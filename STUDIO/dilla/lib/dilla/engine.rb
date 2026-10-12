@@ -15,6 +15,7 @@ def run(argv)
     o.on('--groove N', Float, 'pd_amount, 0 to 1.5: how far the profile pulls from the grid') { |v| options[:groove] = v }
     o.on('--bpm N', Float, 'Tempo (default 88)') { |v| options[:bpm] = v }
     o.on('--beats N', Float, 'Beats per chord (default 4)') { |v| options[:beats] = v }
+    o.on('--gate N', Float, 'Note gate as a share of its step, 0.05 to 1.5') { |v| options[:gate] = v.clamp(0.05, 1.5) }
     o.on('--seed N', Integer, 'Seed: the same seed plays the same render') { |v| options[:seed] = v }
     o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
     o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
@@ -107,9 +108,12 @@ def render(data, options)
     case mode
     when 'arp'
       arp = seq.arp_settings(options[:arp], style: options[:arp_style], rate: parse_rate(options[:arp_rate]))
+      arp['gate'] = options[:gate] if options[:gate]
       seq.render_arp(names, bpm, beats, arp, search:, pad: options[:pad], voice:)
     when 'repeat'
-      seq.render_repeat(names, bpm, beats, seq.comp_settings(options[:repeat] || true), search:, voice:)
+      comp = seq.comp_settings(options[:repeat] || true)
+      comp['gate'] = options[:gate] if options[:gate]
+      seq.render_repeat(names, bpm, beats, comp, search:, voice:)
     else
       seq.render_chords(names, bpm, beats, search:, strum: seq.strum(options[:strum]))
     end
@@ -156,12 +160,13 @@ def render_showcase(data, options)
   combined = []
 
   sections.each_with_index do |section, index|
-    mode = options[:mode] || (options[:arp] ? 'arp' : (options[:repeat] ? 'repeat' : section.fetch('mode', 'repeat')))
+    mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section.fetch('mode', 'repeat')))
     section_options = {
       names: section.fetch('progression'),
       section_index: index,
       bpm: options[:bpm] || section.fetch('bpm'),
       beats: options[:beats] || section.fetch('beats_per_chord', 2.0),
+      gate: options[:gate] || section.fetch('gate', 0.88),
       voice: options[:voice] || section.fetch('voice'),
       mode:,
       repeat: options[:repeat].is_a?(String) ? options[:repeat] : section.fetch('repeat', 'half_note_pulse'),
