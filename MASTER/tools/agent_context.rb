@@ -76,7 +76,7 @@ module Operator
     def lessons(query)
       return [] unless query
 
-      path = File.join(MASTER_DIR, "data", "pub_archive_restore.yml")
+      path = File.join(MASTER_DIR, "data", "recovery", "pub_archive_restore.yml")
       return [] unless File.file?(path)
 
       words = query.downcase.scan(/[a-z]{4,}/).uniq

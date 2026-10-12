@@ -21,7 +21,7 @@ class TestRecoveryPubManifest < Minitest::Test
     required = [
       "MASTER/data/recovery/legacy_manifest.yml",
       "MASTER/data/recovery/plugin_schema_v1.json",
-      "MASTER/data/recovery_pub.yml",
+      "MASTER/data/recovery/pub_restore.yml",
     ]
 
     missing = required.reject { |path| ROOT.join(path).file? }

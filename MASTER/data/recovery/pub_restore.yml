@@ -56,7 +56,7 @@ checks:
   file_presence:
     - MASTER/data/recovery/legacy_manifest.yml
     - MASTER/data/recovery/plugin_schema_v1.json
-    - MASTER/data/recovery_pub.yml
+    - MASTER/data/recovery/pub_restore.yml
 
   # Only genuinely absent paths stay here. Historical DEPLOY/bp paths belonged
   # to the old layout and the bplans pipeline never had the generator/templates

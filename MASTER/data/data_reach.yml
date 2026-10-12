@@ -5,8 +5,8 @@ unnamed_members:
 - personas.yml#british
 - radio_bergen_track_dossiers.yml#cross_track_learnings
 - radio_bergen_track_dossiers.yml#tracks
-- recovery_pub.yml#agent_prompt
-- recovery_pub.yml#layout_note
+- recovery/pub_restore.yml#agent_prompt
+- recovery/pub_restore.yml#layout_note
 - runtime.yml#cognitive_spine
 - runtime.yml#collaboration
 - runtime.yml#performance_runtime

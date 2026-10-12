@@ -112,6 +112,10 @@ ownership:
       carry their own, higher risk
     risk: high
     check: bin/check --profile=agent
+  data/recovery/:
+    purpose: recovery contracts and preserved archive provenance, separate from live runtime configuration
+    risk: medium
+    check: ruby -Ilib:test test/test_recovery_pub_manifest.rb
   data/soul.yml:
     purpose: constitutional identity
     risk: critical

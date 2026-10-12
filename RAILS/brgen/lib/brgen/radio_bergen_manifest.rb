@@ -30,7 +30,7 @@ module Brgen
       def lessons_candidates
         [
           rails_root.join("config/radio_bergen/archive_lessons.yml"),
-          Pathname.new(File.join(Shared::Contracts.root, "MASTER", "data", "pub_archive_restore.yml"))
+          Pathname.new(File.join(Shared::Contracts.root, "MASTER", "data", "recovery", "pub_archive_restore.yml"))
         ]
       end
 
