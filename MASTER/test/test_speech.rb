@@ -187,34 +187,43 @@ class TestSpeech < Minitest::Test
     refute options.fetch(:style_locked)
   end
 
-  def test_transcendent_tts_is_the_default_but_classic_can_be_requested
+  def test_classic_tts_is_the_default_but_transcendent_can_be_requested
     speech = Master::Voice::Speech
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
 
-    Master::Voice::Transcendent.stub(:enabled?, true) do
-      Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => false, "default_mode" => "transcendent" }) do
-        assert_equal "transcendent", speech.synthesis_mode
-        ENV["MASTER_TTS_MODE"] = "classic"
-        assert_equal "classic", speech.synthesis_mode
-      end
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "classic", "enabled" => true }) do
+      assert_equal "classic", speech.synthesis_mode
+      ENV["MASTER_TTS_MODE"] = "transcendent"
+      assert_equal "transcendent", speech.synthesis_mode
+      ENV["MASTER_TTS_MODE"] = "classic"
+      assert_equal "classic", speech.synthesis_mode
     end
   ensure
-    ENV["MASTER_TTS_MODE"] = original
+    original ? ENV["MASTER_TTS_MODE"] = original : ENV.delete("MASTER_TTS_MODE")
   end
 
-  def test_transcendent_streaming_is_default
+  def test_transcendent_streaming_is_opt_in
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
 
-    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => false, "default_mode" => "transcendent", "enabled" => true }) do
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "classic", "enabled" => true }) do
+      assert_equal false, Master::Voice::Speech.send(:transcendent_streaming_enabled?, {})
+      ENV["MASTER_TTS_MODE"] = "transcendent"
       assert_equal true, Master::Voice::Speech.send(:transcendent_streaming_enabled?, {})
     end
   ensure
-    ENV["MASTER_TTS_MODE"] = original
+    original ? ENV["MASTER_TTS_MODE"] = original : ENV.delete("MASTER_TTS_MODE")
   end
 
-  def test_fast_mode_remains_available_as_an_explicit_override
+  def test_default_tts_config_selects_fast_classic_speech
+    cfg = Master::Voice::Transcendent.load_config
+    assert_equal true, cfg.fetch("enabled")
+    assert_equal true, cfg.fetch("fast_mode")
+    assert_equal "classic", cfg.fetch("default_mode")
+  end
+
+  def test_fast_mode_keeps_classic_synthesis_available
     Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
       assert_equal "classic", Master::Voice::Speech.synthesis_mode
     end
@@ -633,12 +642,15 @@ class TestSpeech < Minitest::Test
       assert_equal "+0%", Master::Voice::Policy.default_rate
       assert_empty Master::Voice::Policy.layers
       refute Master::Voice::Layers.active?
+      refute Master::Voice::Policy.fx_enabled?
+      assert_empty Master::Voice::Policy.room
     end
   end
 
-  def test_the_default_voice_speaks_in_a_room
-    with_profile(nil) do
+  def test_the_dilla_profile_restores_the_effects_and_room
+    with_profile("dilla") do
       policy = Master::Voice::Policy
+      assert policy.fx_enabled?
       refute_empty policy.room
       chain = policy.shaped_chain
       assert chain.start_with?(policy.post_chain)
@@ -683,7 +695,7 @@ class TestSpeech < Minitest::Test
       # The room alone, which is what this holds to the dry voice; the dilla rack
       # is measured in test_dilla_fx.rb.
       ENV["MASTER_TTS_FX"] = "0"
-      with_profile(nil) do
+      with_profile("dilla") do
         wet = loudness.call(Master::Voice::Policy.shaped_chain)
         dry = loudness.call(Master::Voice::Policy.post_chain)
         assert_in_delta dry, wet, 1.0
