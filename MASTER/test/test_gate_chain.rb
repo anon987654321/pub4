@@ -296,7 +296,7 @@ class TestGateChain < Minitest::Test
   end
 
   # /fix measures the failing ladder before it repairs anything, and that run costs minutes.
-  # The record is reused only for the same commit, target and working-tree content.
+  # The record is reused only for the same commit, target and complete scanned inputs.
   def test_baseline_record_is_reused_only_for_the_same_key
     saved = File.file?(G::BASELINE_FILE) ? File.read(G::BASELINE_FILE) : nil
     G.write_baseline("k1", { "suites" => ["x fail"] })
@@ -306,5 +306,34 @@ class TestGateChain < Minitest::Test
     refute_equal G.baseline_key("MASTER/lib/a"), G.baseline_key("MASTER/lib/b")
   ensure
     saved ? File.write(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
+  end
+
+  def test_untracked_scanned_source_content_invalidates_the_baseline_key
+    Dir.mktmpdir("gate-baseline") do |root|
+      system("git", "-C", root, "init", "--quiet") || flunk("git init failed")
+      FileUtils.mkdir_p(File.join(root, "app"))
+      tracked = File.join(root, "app", "tracked.rb")
+      File.write(tracked, "A = 1\n")
+      system("git", "-C", root, "add", "app/tracked.rb") || flunk("git add failed")
+      committed = system(
+        "git", "-C", root, "-c", "user.name=MASTER", "-c", "user.email=master@example.invalid",
+        "commit", "--quiet", "-m", "baseline",
+      )
+      flunk("git commit failed") unless committed
+
+      File.write(File.join(root, "app", "new.rb"), "B = 1\n")
+      first = G.baseline_key("app", root:, trees: ["app"])
+      File.write(File.join(root, "app", "new.rb"), "B = 2\n")
+      second = G.baseline_key("app", root:, trees: ["app"])
+
+      refute_equal first, second, "untracked source content must participate in the fingerprint"
+    end
+  end
+
+  def test_baseline_fingerprint_refuses_git_command_failure
+    Dir.mktmpdir("not-a-repo") do |root|
+      error = assert_raises(RuntimeError) { G.baseline_key("app", root:, trees: ["app"]) }
+      assert_match(/git rev-parse failed/, error.message)
+    end
   end
 end
