@@ -276,15 +276,9 @@ module Master
         false
       end
 
-      # The voice for one utterance.
-      #
-      # MASTER_TTS_VOICE still wins outright: an operator naming a voice by hand is
-      # asking for that voice, not for a lottery. Absent it, Policy decides — one
-      # name while `rotation` holds fewer than two, a random pick from it otherwise.
-      #
-      # Per utterance rather than per process, so a long reply can change speaker
-      # between sentences. That is the intent: two people narrating one piece of
-      # work, rather than one person who occasionally sounds different.
+      # The voice for one utterance. An explicit, supported MASTER_TTS_VOICE
+      # wins; otherwise the policy supplies the configured voice. The default is
+      # Christopher and has no English rotation, so a reply stays with one speaker.
       def default_voice
         named = ENV["MASTER_TTS_VOICE"].to_s.strip
         unless named.empty?
