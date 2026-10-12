@@ -588,6 +588,7 @@ end
 Law.define(:MASTER_PROMPT_AESTHETIC) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
+  ask "Does the interactive CLI prompt follow the OpenBSD dmesg console idiom first, keeping location, Git state, phase and input token plain, compact and useful in scrollback?"
   practice <<~TEXT
     Renderer prompt_line follows the OpenBSD dmesg console idiom first: a
     compact plain-text path, Git state, phase and shell token. Keep events as
