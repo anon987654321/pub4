@@ -69,7 +69,9 @@ class WebVitalsBudgetGateTest < Minitest::Test
     previous = ENV.delete("GATE_SURFACES")
     with_methods(PROBE, surfaces: proc { |*, **| rows }) do
       selected = GATE.new.send(:selected_surfaces)
-      assert_equal GATE::SURFACE_IDS, selected.map(&:id)
+      assert_equal %w[amber brgen bsdports master], selected.map(&:app)
+      assert_equal %w[amber/home/mobile brgen/core/mobile bsdports/home/mobile master/chat/mobile],
+                   selected.map(&:id)
     end
   ensure
     ENV["GATE_SURFACES"] = previous if previous
