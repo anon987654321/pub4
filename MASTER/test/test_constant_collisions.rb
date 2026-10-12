@@ -1,16 +1,11 @@
 # frozen_string_literal: true
 
-# `already initialized constant ROOT` read as cosmetic noise in bin/check's
-# output for as long as it had been there.
-#
-# It was the only thing standing between the security sweep and scanning the
-# wrong tree. `rake test` requires MASTER/tools/security_sweep.rb and loads
-# STUDIO/dilla/dilla.rb; both defined a bare top-level ROOT pointing at
-# different directories, and Ruby resolves that by warning and letting the second
-# assignment win. Load order decided whether `git ls-files` ran against pub4 or
-# against a music folder, and the sweep printed "0 tracked secrets" either way.
+# The former Dilla/secret-sweep ROOT collision is fixed. Keep a regression for
+# the detector itself and for the live security-sweep boundary, not a test that
+# expects the deleted engine file to keep defining a colliding constant.
 
 require "minitest/autorun"
+require "tmpdir"
 require_relative "../tools/constant_collisions"
 
 class TestConstantCollisions < Minitest::Test
@@ -37,27 +32,31 @@ class TestConstantCollisions < Minitest::Test
                     "only #{@report['requirable']} requirable files — the require_relative walk broke"
   end
 
-  # The two files from the real incident must both still be in the set the gate
-  # looks at, or it is green for the wrong reason.
-  def test_both_files_from_the_original_collision_are_still_watched
+  def test_the_security_sweep_remains_in_the_requirable_set
     watched = Operator::ConstantCollisions.files.select { |path| Operator::ConstantCollisions.requirable[path] }
 
     assert watched.any? { |path| path.end_with?("MASTER/tools/security_sweep.rb") },
            "security_sweep.rb is no longer seen as requirable"
-    assert watched.any? { |path| path.end_with?("STUDIO/dilla/dilla.rb") },
-           "dilla.rb is no longer seen as requirable"
   end
 
-  # And the detector must still call that pair a collision if it returns.
-  def test_the_historical_collision_would_still_be_caught
-    pair = Operator::ConstantCollisions.files.select do |path|
-      path.end_with?("MASTER/tools/security_sweep.rb", "STUDIO/dilla/dilla.rb")
-    end
-    defined_in = Operator::ConstantCollisions.definitions(pair)
+  def test_the_live_security_sweep_uses_its_scoped_constant
+    path = File.join(Operator::ConstantCollisions::ROOT, "MASTER/tools/security_sweep.rb")
+    source = File.read(path)
 
-    assert_equal 1, defined_in["ROOT"].to_a.size,
-                 "ROOT is back in more than one of the two files that collided"
-    refute_empty defined_in["SWEEP_ROOT"],
-                 "SWEEP_ROOT is gone — security_sweep.rb went back to a bare ROOT"
+    assert_match(/^SWEEP_ROOT\s*=/, source)
+    refute_match(/^ROOT\s*=/, source)
+  end
+
+  def test_the_detector_reports_duplicate_top_level_constants
+    Dir.mktmpdir("constant-collisions") do |dir|
+      first = File.join(dir, "first.rb")
+      second = File.join(dir, "second.rb")
+      File.write(first, "ROOT = :first\n")
+      File.write(second, "ROOT = :second\n")
+
+      defined_in = Operator::ConstantCollisions.definitions([first, second])
+
+      assert_equal 2, defined_in["ROOT"].size
+    end
   end
 end
