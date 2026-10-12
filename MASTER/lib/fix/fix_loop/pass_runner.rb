@@ -70,23 +70,28 @@ module Master
           @discipline = discipline
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
-            semantic = @scan_phase.semantic_full? ? "full" : "sampled clean-files"
+            semantic = @scan_phase.semantic_full? ? "full" : "conditional/sampled"
             abstract = @council ? "bounded clean-streak review" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
-            opportunity = @opportunity_pass&.applicable?(target) ? "bounded" : "not-applicable"
+            lexical_opportunities = @opportunity_pass&.applicable?(target) ? "bounded-tree-heuristics" : "no-universal-adapter"
             @bus&.publish(
               "fix_loop:coverage",
               pass:,
-              lexical: "full",
-              structural: "full",
+              lexical: "mechanical+structural-full-eligible-corpus",
+              structural: "full-eligible-corpus",
+              lexical_violations: "mechanical/structural",
+              lexical_opportunities:,
+              semantic_violations: semantic,
+              semantic_opportunities: semantic,
               semantic:,
               abstract:,
-              opportunity:,
+              opportunity: lexical_opportunities,
               visual:,
+              assessment_matrix: "not-measured",
             )
             Master::Trace::Dmesg.status(
               "fix0",
-              "pass #{pass}, coverage lexical=full structural=full semantic=#{semantic} abstract=#{abstract} opportunity=#{opportunity} visual=#{visual}",
+              "pass #{pass}, coverage lexical-violations=mechanical+structural lexical-opportunities=#{lexical_opportunities} semantic-violations=#{semantic} semantic-opportunities=#{semantic} visual=#{visual} law-stream-surface-matrix=NOT_MEASURED",
             )
           end
           @coverage_reporter = emit_coverage
