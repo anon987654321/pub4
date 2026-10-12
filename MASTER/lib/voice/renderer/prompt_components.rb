@@ -320,11 +320,17 @@ module Master
 
         def branch_status(branch:, ahead:, behind:, dirty:)
           branch = branch.to_s
-          branch = "#{branch[0, 24]}..." if branch.length > 27
+          # Keep the identity and dirty marker even on a narrow prompt. If a
+          # branch name is long, ahead/behind detail yields to the location,
+          # active chat and phase.
+          if branch.length > 7
+            return "#{branch[0, 4]}...#{'*' if dirty}"
+          end
+
           parts = [dirty ? "#{branch}*" : branch]
           parts << "+#{ahead}" if ahead.positive?
           parts << "-#{behind}" if behind.positive?
-          parts.join(" ")
+          bounded_prompt_segment(parts.join(" "), 10)
         end
 
         def prompt_git_state
