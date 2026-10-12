@@ -64,8 +64,9 @@ module Master
           pid_path = manager.pid_file(app)
           current_pid = read_pid(pid_path)
           next unless current_pid && current_pid != prior_pids[name]
-          next unless manager.listening?(app.fetch(:port))
 
+          # Register ownership even when /up never turns healthy; otherwise the
+          # failed boot can leak a server process that no later fix pass owns.
           @owned[name] = { app:, pid: current_pid, pid_path: }
           @started << name unless @started.include?(name)
         end
@@ -90,6 +91,8 @@ module Master
       # screenshot directory may be deleted per pass while servers stay warm for
       # the next measure/repair/remeasure cycle.
       def stop_owned!
+        return [] if @owned.empty?
+
         manager = triangle
         stopped = []
         @owned.each do |name, lease|
