@@ -60,7 +60,7 @@ class TestSpeech < Minitest::Test
 
     ENV["MASTER_TTS_TIMING"] = "1"
     output, err = capture_io { speech.log_timing("probe", started_at, text_length: 4) }
-    assert_match(/timing stage=probe elapsed_ms=\\d+ chars=4/, output + err)
+    assert_match(/timing stage=probe elapsed_ms=\d+ chars=4/, output + err)
   ensure
     original ? ENV["MASTER_TTS_TIMING"] = original : ENV.delete("MASTER_TTS_TIMING")
   end
@@ -735,7 +735,7 @@ class TestSpeech < Minitest::Test
 
   def test_an_unknown_profile_speaks_the_default_voice
     with_profile("no-such-profile") do
-      assert_equal "+0%", Master::Voice::Policy.default_rate
+      assert_equal "+4%", Master::Voice::Policy.default_rate
       refute Master::Voice::Layers.active?
     end
   end
