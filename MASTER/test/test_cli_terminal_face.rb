@@ -95,13 +95,37 @@ class TestCliTerminalFace < Minitest::Test
     seen = []
     renderer = lambda do |**kwargs|
       seen << kwargs.fetch(:show_laws)
-      Array.new(kwargs.fetch(:rows), " " * kwargs.fetch(:cols)).join("\\n")
+      Array.new(kwargs.fetch(:rows), " " * kwargs.fetch(:cols)).join("\n")
     end
     face.send(:react, "\u0016")
 
     Master::CLI::Face.stub(:frame, renderer) { face.screen(30, 80, 2.0) }
 
     assert_equal [false], seen
+  end
+
+  def test_terminal_law_ring_cannot_be_enabled_when_laws_disable_it
+    face = window
+    face.instance_variable_set(:@law_field_visible, false)
+
+    Master::Face::LawField.stub(:config, { "terminal_law_ring" => false }) do
+      face.send(:react, "\u0016")
+    end
+
+    refute face.instance_variable_get(:@law_field_visible)
+    assert_includes face.instance_variable_get(:@words).join(" "), "disabled by laws.yml"
+  end
+
+  def test_law_toggle_remains_available_while_microphone_is_armed
+    face = window
+    hearing = Object.new
+    hearing.define_singleton_method(:alive?) { true }
+    face.instance_variable_set(:@hearing, hearing)
+
+    face.send(:react, "\u0016")
+
+    assert_equal false, face.instance_variable_get(:@law_field_visible)
+    refute face.instance_variable_get(:@halt_ear), "display toggles should not stop a listening turn"
   end
 
   def test_motion_has_a_camera_dolly
