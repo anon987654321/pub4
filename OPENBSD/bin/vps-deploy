@@ -303,6 +303,24 @@ deploy_stage=pull
 print "vps-deploy: $app (git pull --ff-only)"
 git -C "$repo" pull --ff-only origin main
 
+# Free space, before anything is stopped. A bundle install, an asset precompile or
+# a CI mirror that runs out of disk dies halfway, after the app was stopped for the
+# migrate; refusing here costs nothing and leaves the previous release serving.
+# /home holds the checkout, the app trees, bundles and storage (3.9 GB free of
+# 17 GB on 2026-10-12), so it is the filesystem that fills. The floor is a
+# variable because it is a measurement of this box, not a law.
+deploy_stage=preflight-disk
+min_free_kb=${VPS_DEPLOY_MIN_FREE_KB:-1048576}
+for mount_point in /home /var; do
+  free_kb=${${(z)${${(f)"$(${VPS_DEPLOY_DF:-df} -Pk $mount_point 2>/dev/null)"}[2]}}[4]:-}
+  if [[ $free_kb == <-> ]] && (( free_kb < min_free_kb )); then
+    print -u2 "vps-deploy: $app refused - $mount_point has $(( free_kb / 1024 )) MB free, the floor is $(( min_free_kb / 1024 )) MB."
+    print -u2 "            Nothing was stopped. Find the growth with: doas du -xk $mount_point ; clear old"
+    print -u2 "            logs or bundles, then rerun: zsh OPENBSD/bin/vps-deploy $app"
+    exit 1
+  fi
+done
+
 deploy_stage=preflight
 print "vps-deploy: $app (preflight load)"
 if [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then

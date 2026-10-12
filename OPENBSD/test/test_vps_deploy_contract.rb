@@ -298,4 +298,39 @@ class VpsDeployContractTest < Minitest::Test
     assert SOURCE.index("trap finish EXIT") < SOURCE.index("if [[ $app == all ]]; then\n  typeset"),
            "the parent of `vps-deploy all` exits without releasing its lock"
   end
+
+  def disk_block
+    SOURCE[/^deploy_stage=preflight-disk$.*?^done$/m]
+  end
+
+  def disk_run(dir, free_kb:)
+    File.write(File.join(dir, "df"), "#!/bin/sh\nprintf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/sd0k 17000000 1000 #{free_kb} 80%% %s\\n' \"$2\"\n")
+    File.chmod(0o755, File.join(dir, "df"))
+    File.write(File.join(dir, "df"), "#!/bin/sh\nfor last; do :; done\nprintf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/x 17000000 1000 #{free_kb} 80%% %s\\n' \"$last\"\n")
+    script = "app=brgen; VPS_DEPLOY_DF=#{dir}/df\n#{disk_block}\nprint passed\n"
+    out = IO.popen(["zsh", "-c", script, { err: %i[child out] }], &:read)
+    [out, $?.exitstatus]
+  end
+
+  def test_a_nearly_full_filesystem_refuses_the_deploy_before_anything_is_stopped
+    refute_nil disk_block, "the disk preflight is gone - the scan broke, or the check did"
+    Dir.mktmpdir do |dir|
+      out, status = disk_run(dir, free_kb: 200_000)
+
+      assert_equal 1, status
+      assert_includes out, "/home has 195 MB free, the floor is 1024 MB"
+      assert_includes out, "Nothing was stopped"
+      assert_includes out, "zsh OPENBSD/bin/vps-deploy brgen"
+      refute_includes out, "passed"
+    end
+  end
+
+  def test_enough_free_space_lets_the_deploy_continue
+    Dir.mktmpdir do |dir|
+      out, status = disk_run(dir, free_kb: 4_000_000)
+
+      assert_equal 0, status, out
+      assert_includes out, "passed"
+    end
+  end
 end
