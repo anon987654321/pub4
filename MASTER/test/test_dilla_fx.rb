@@ -37,7 +37,6 @@ class TestDillaFx < Minitest::Test
     status.success?
   end
 
-
   def test_christopher_is_the_default_english_voice
     assert_equal :christopher, Policy.single_voice_key
     assert_equal "en-US-ChristopherNeural", Policy.neural_voice
@@ -49,7 +48,6 @@ class TestDillaFx < Minitest::Test
     %w[single_voice neural].each { |key| refute_match(/jenny/i, Policy::FALLBACK.fetch(key)) }
     refute_includes Policy::FALLBACK.fetch("rotation"), "jenny"
   end
-
 
   def test_gender_and_language_locks_stay_coherent
     with_env("MASTER_TTS_GENDER" => nil) do
@@ -63,7 +61,6 @@ class TestDillaFx < Minitest::Test
       assert_equal :finn, Policy.voice_for_language(:nb)
     end
   end
-
 
   def test_no_data_file_reader_still_names_jenny_as_the_default
     voice = File.read(File.expand_path("../data/voice.yml", __dir__))
@@ -82,7 +79,6 @@ class TestDillaFx < Minitest::Test
     units + stages + %w[console_strip tape_hysteresis copy_machine low_pass_gate]
   end
 
-
   def test_every_dilla_effect_has_an_entry_with_a_status
     ids = Policy.data.fetch("dilla_fx").fetch("units").map { |unit| unit["id"] }
     missing = dilla_effect_ids.reject { |id| ids.include?(id) }
@@ -95,7 +91,6 @@ class TestDillaFx < Minitest::Test
       refute unit["enabled"], "#{unit['id']} is unavailable and must stay off" if unit["status"] == "unavailable"
     end
   end
-
 
   def test_exact_outboard_units_are_dillas_own_defaults
     skip "dilla source missing" unless File.file?(SOUND)
@@ -126,7 +121,6 @@ class TestDillaFx < Minitest::Test
       assert_equal expected.fetch(name).gsub(/(\d)\.0\b/, "\\1"), filter.gsub(/(\d)\.0\b/, "\\1"), "#{unit['id']} drifted from dilla's default (#{defaults['level_name']})"
     end
   end
-
 
   def test_the_rack_is_on_and_ordered_and_switchable
     with_profile("dilla") do
@@ -162,7 +156,6 @@ class TestDillaFx < Minitest::Test
     with_env("MASTER_TTS_PROFILE" => nil) { Policy.reload! }
   end
 
-
   def test_the_payload_carries_the_rack_and_the_character_list
     with_profile("dilla") do
       payload = Policy.browser_payload
@@ -178,7 +171,7 @@ class TestDillaFx < Minitest::Test
   def test_the_whole_chain_runs_in_ffmpeg
     with_profile("dilla") do
       skip "ffmpeg missing" unless FFMPEG
-  
+
       assert ffmpeg_ok?(Policy.shaped_chain, seconds: 2), "shaped_chain rejected by ffmpeg"
       Policy.fx_units.each do |unit|
         chain = unit["region"] == "stereo" ? "pan=stereo|c0=c0|c1=c0,#{unit['filter']}" : unit["filter"]
@@ -190,7 +183,7 @@ class TestDillaFx < Minitest::Test
   def test_peaks_stay_under_minus_one_dbtp_and_the_level_is_stable
     with_profile("dilla") do
       skip "ffmpeg missing" unless FFMPEG
-  
+
       out, = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-f", "lavfi", "-i",
                              "sine=f=220:d=3:r=24000,tremolo=f=3:d=0.6", "-af", "#{Policy.shaped_chain},ebur128=peak=sample+true",
                              "-f", "null", "-")
