@@ -506,9 +506,13 @@ presets:
       - ../STUDIO/dilla/dilla.rb
       - ../STUDIO/dilla/data/dilla.json
       - ../STUDIO/dilla/data/music_theory.json
+      - ../STUDIO/dilla/data/showcase.json
       - ../STUDIO/dilla/lib/dilla/engine.rb
       - ../STUDIO/dilla/lib/dilla/sequencer.rb
       - ../STUDIO/dilla/lib/dilla/chords.rb
+      - ../STUDIO/dilla/lib/dilla/arp.rb
+      - ../STUDIO/dilla/lib/dilla/colour.rb
+      - ../STUDIO/dilla/lib/dilla/echo.rb
       - ../STUDIO/dilla/lib/dilla/synthesis.rb
       - ../STUDIO/dilla/lib/dilla/voices.rb
       - ../STUDIO/dilla/lib/dilla/drums.rb
