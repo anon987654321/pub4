@@ -220,7 +220,7 @@ module Deploy
 
     # Did this gate check everything it exists to check?
     def conclusive?
-      @unchecked.empty?
+      @unchecked.empty? && @live_skips.zero?
     end
 
     # The one place the three states are ranked. Callers that aggregate gates
@@ -307,7 +307,10 @@ module Deploy
         # A pass that skipped something says so, instead of printing a clean
         # success line over a "Not checked:" block.
         if success_message
-          puts conclusive? ? success_message : "#{success_message} (#{@checks_ran} check(s) ran, #{@unchecked.size} skipped)"
+          detail = ["#{@checks_ran} check(s) ran"]
+          detail << "#{@unchecked.size} check(s) not checked" unless @unchecked.empty?
+          detail << "#{@live_skips} live check(s) skipped" if @live_skips.positive?
+          puts conclusive? ? success_message : "#{success_message} (#{detail.join(', ')})"
         end
         :passed
       end
