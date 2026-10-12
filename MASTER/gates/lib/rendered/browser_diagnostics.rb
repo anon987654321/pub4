@@ -369,7 +369,7 @@ module Deploy
       else
         common.merge("status" => "COMPARED")
       end
-    rescue PngDiff::InvalidPng, ArgumentError => e
+    rescue PngDiff::InvalidPng => e
       { "status" => "UNSUPPORTED", "baseline" => baseline,
         "reason" => "pixel baseline could not be compared for #{surface.id}: #{e.class}: #{e.message}" }
     end
