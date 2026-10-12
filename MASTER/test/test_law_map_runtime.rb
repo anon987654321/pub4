@@ -14,6 +14,13 @@ class TestLawMapRuntime < Minitest::Test
     assert map.aesthetic.any?, "aesthetic/ui cluster should be non-empty"
   end
 
+  def test_law_map_reports_unmapped_concepts_instead_of_hiding_them
+    map = Master::Ground::Map::LawMap.load(root: @root)
+
+    assert_equal ["no_privilege_escalation"], map.unmapped.keys
+    assert_match(/1 unmapped/, map.summary_line)
+  end
+
   def test_mode_posture_defaults_and_set
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
