@@ -268,6 +268,30 @@ module Master
         self
       end
 
+      # A background steward may decide that a continuation is not durable
+      # work, but its snapshot can race with a manual runner claiming the same
+      # mission. Block only the same still-unleased objective.
+      def block_if_unleased!(id:, reason:)
+        blocked = false
+        with_lock do
+          load_current_unlocked!
+          return false unless @record && @record["id"] == id.to_s
+          return false unless RESUMABLE_STATES.include?(@record["state"].to_s)
+          return false if @record["state"].to_s == "running" && !lease_expired?(@record)
+
+          @record["state"] = "blocked"
+          @record["wake_reason"] = reason.to_s[0, 240]
+          @record["next_wake_at"] = nil
+          @record["lease_owner"] = nil
+          @record["lease_until"] = nil
+          @record["last_seen_at"] = now
+          persist!
+          blocked = true
+        end
+        emit("mission:block", id: @id, reason:) if blocked
+        blocked
+      end
+
       def finish!(state: "completed", summary: nil)
         state = state.to_s
         raise ArgumentError, "unknown mission state: #{state}" unless STATES.include?(state)
