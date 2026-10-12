@@ -24,6 +24,7 @@ project/learnings/vocals/**/*.wav
 # command is typed from the repo root. Audio is never tracked wherever it lands,
 # and neither is the sidecar of an untracked render.
 *.wav
+!/dilla.wav
 *.mp3
 # Anchored to this directory. The vocal-fit sidecars under project/learnings are
 # tracked on purpose -- they are the record of which take was fitted to what --
