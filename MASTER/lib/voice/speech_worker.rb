@@ -151,11 +151,19 @@ module Master
       # Returns StreamResult so playback can distinguish a clean stream from a
       # failed stream that already emitted audio.
       def stream_edge_to_io(text:, voice_name:, style_config:, io:, stale_test: nil)
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        first_chunk = false
         sock_path = resolve_socket_path
         return StreamResult.new(ok: false, bytes: 0) unless sock_path
 
         req = build_socket_request(voice_name, style_config, text)
-        target = StreamTarget.build(io:, stale_test:)
+        progress = lambda do |_written|
+          next if first_chunk
+
+          log_timing("first_audio_chunk", started_at, text_length: text.to_s.length)
+          first_chunk = true
+        end
+        target = StreamTarget.build(io:, on_chunk: progress, stale_test:)
         result = stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
         return result unless result.bytes.zero?
 
@@ -166,7 +174,10 @@ module Master
       rescue Timeout::Error, StandardError => e
         warn_tts("edge stream error: #{e.class}: #{e.message}")
         StreamResult.new(ok: false, bytes: 0)
+      ensure
+        log_timing("live_stream_total", started_at, text_length: text.to_s.length) if started_at
       end
+
 
       # Wire v2 ("stream":true) is the default; MASTER_TTS_WIRE=raw restores
       # the v1 contract save_sync-and-copy against a daemon that predates it.
