@@ -41,6 +41,7 @@ module Master
       end
 
       def trigger_for(input)
+        input = input.to_s
         matches = @loaded.select do |skill|
           Array(skill[:triggers]).any? do |trigger|
             begin
