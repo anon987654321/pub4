@@ -103,14 +103,19 @@ class TestTraceSupport < Minitest::Test
               "- surface0: brgen/guest_marketplace_browse PASS — 1 step(s) on markedsplass.brgen.no",
               io: StringIO.new,
             )
+            Master::Trace::Dmesg.forward(
+              "gate0: rails gates gate 15/25 rendered_suite running 4m43s, elapsed 6m08s",
+              io: StringIO.new,
+            )
             Master::Trace::Dmesg.forward("debug0: selenium protocol frame", io: StringIO.new)
           end
         end
       end
     end
 
-    assert_equal 1, spoken.size
+    assert_equal 2, spoken.size
     assert_includes spoken.first.first, "brgen/guest_marketplace_browse PASS"
+    assert_includes spoken.last.first, "rendered_suite running 4m43s"
   end
 
   def test_trace_includes_redacted_payload_context
