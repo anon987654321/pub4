@@ -25,6 +25,7 @@ module Deploy
     DEFAULT_SETTLE_MS = 500
     MAX_SETTLE_MS = 5_000
     HARD_HTTP_STATUS = 500
+    CRITICAL_RESOURCE_TYPES = %w[Script Stylesheet].freeze
 
     def self.run = new.run
 
@@ -62,7 +63,8 @@ module Deploy
         next unless status_code >= 400
 
         message = "HTTP #{status_code} #{url} (#{failure[:resource_type]})"
-        if owned_url?(surface, url) && status_code >= HARD_HTTP_STATUS
+        critical_asset = CRITICAL_RESOURCE_TYPES.include?(failure[:resource_type].to_s)
+        if owned_url?(surface, url) && (status_code >= HARD_HTTP_STATUS || critical_asset)
           hard << "first-party resource failed: #{message}"
         else
           soft << "resource returned an error: #{message}"
@@ -72,7 +74,9 @@ module Deploy
       Array(request_failures).each do |failure|
         url = failure[:url].to_s
         message = "#{url} — #{failure[:error]}"
-        if owned_url?(surface, url)
+        if owned_url?(surface, url) && CRITICAL_RESOURCE_TYPES.include?(failure[:resource_type].to_s)
+          hard << "first-party executable request failed: #{message}"
+        elsif owned_url?(surface, url)
           soft << "first-party request failed: #{message}"
         else
           soft << "external request failed: #{message}"
