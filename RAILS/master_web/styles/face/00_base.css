@@ -1,0 +1,4 @@
+/* scan: intentional-colors — the face is one-theme black by design
+   (SURFACES.md): its #000 grounds and print inversion follow no palette. */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
