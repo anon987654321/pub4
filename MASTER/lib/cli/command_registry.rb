@@ -7,6 +7,7 @@ require "shellwords"
 require_relative "../io/media_intent"
 
 require_relative "command_registry/command"
+require_relative "command_registry/chat"
 require_relative "command_registry/help"
 require_relative "command_registry/review"
 require_relative "command_registry/observe"
@@ -57,7 +58,7 @@ module Master
           "events" => command(:dispatch_events, d[:root]),
           "face" => Command.new { |_ctx| dispatch_face },
           "help" => command(:help_text, nil),
-        ).merge(control_commands(ai[:standing], ai[:soul]))
+        ).merge(chat_verbs(d)).merge(control_commands(ai[:standing], ai[:soul]))
       end
 
       # The verbs that read or rewind the conversation: which one is active,
