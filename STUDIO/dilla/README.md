@@ -241,3 +241,10 @@ ruby dilla.rb ears a.wav b.wav stems
 ruby dilla.rb replay direction_v4.wav.provenance.json
 ruby dilla.rb knobs
 ```
+
+
+## Learning drum feel from sources
+
+The `hear_drums` skill contract is owned at the MASTER/STUDIO boundary: MASTER governs and dispatches; this tree performs ingest, stem separation, analysis, hashing, and groove-hint generation. See [`../../../MASTER/docs/hear_drums_skill_contract.md`](../../../MASTER/docs/hear_drums_skill_contract.md) for the structured dossier and fail-closed requirements.
+
+The implementation guide [`docs/dilla-time.md`](docs/dilla-time.md) maps publicly described themes of Dan Charnas's *Dilla Time* onto the existing role-aware microtiming, sampling, phrase development, provenance, and A/B workflow. Prefer extending existing timing primitives and source-learning paths over adding a second groove engine. The guide distinguishes sourced book framing from engineering interpretation; it is not a claim that the book's full text was consulted.
