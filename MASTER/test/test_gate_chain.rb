@@ -2,6 +2,8 @@
 
 require_relative "test_helper"
 require "fileutils"
+require "open3"
+require "rbconfig"
 require "tmpdir"
 require_relative "../lib/operator/gate_chain"
 require_relative "../lib/review/council/harvest"
@@ -57,6 +59,28 @@ class TestGateChain < Minitest::Test
     assert_includes jobs.map(&:first), "tools"
     assert_includes jobs.map(&:first), "STUDIO media"
     assert_equal 8, jobs.size
+  end
+
+  def test_openbsd_suite_discovers_nested_tests
+    Dir.mktmpdir do |root|
+      nested = File.join(root, "test", "nested")
+      FileUtils.mkdir_p(nested)
+      File.write(File.join(nested, "test_marker.rb"), 'File.write("nested-ran", "ok")')
+
+      output, status = Open3.capture2e(RbConfig.ruby, "-e", G::OPENBSD_SUITE, chdir: root)
+
+      assert status.success?, output
+      assert_equal "ok", File.read(File.join(root, "nested-ran"))
+    end
+  end
+
+  def test_openbsd_suite_refuses_to_pass_with_zero_tests
+    Dir.mktmpdir do |root|
+      output, status = Open3.capture2e(RbConfig.ruby, "-e", G::OPENBSD_SUITE, chdir: root)
+
+      refute status.success?, "an empty test discovery must not report green"
+      assert_includes output, "no test files discovered"
+    end
   end
 
   def test_suite_stage_has_a_human_readable_purpose

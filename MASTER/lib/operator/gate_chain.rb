@@ -416,12 +416,12 @@ end
               chdir: ROOT, env: strict_env)
     end
 
-    # Every file runs, then the run fails once with all of them named. Aborting
-    # on the first non-zero status leaves the other nine files and their 280
-    # assertions unmeasured behind whichever name sorts first, and reports the
-    # tree as having one broken suite rather than an unknown number.
+    # Keep this inventory aligned with OPENBSD/test/run_all.rb. It is recursive
+    # so a test moved beneath test/ stays measured, and empty discovery must fail
+    # rather than claim a green suite that ran nothing.
     OPENBSD_SUITE = <<~SUITE
-      files = Dir["test/test_*.rb"].sort
+      files = Dir["test/**/test_*.rb"].sort
+      abort("openbsd: no test files discovered") if files.empty?
       failed = files.reject { |f| system(RbConfig.ruby, f) }
       abort("openbsd: \#{failed.size} of \#{files.size} file(s) failed — \#{failed.join(", ")}") if failed.any?
     SUITE
