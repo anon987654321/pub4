@@ -107,11 +107,15 @@ module Operator
     def write(packs, root)
       raise "snapshot extract: no packs" if packs.empty?
 
+      FileUtils.mkdir_p(root)
+      root = File.realpath(root)
       revisions = packs.map { |pack| pack.fetch(:git) }.uniq
       raise "snapshot extract: mixed git revisions" unless revisions.size == 1
 
       total = 0
       packs.group_by { |pack| pack.fetch(:tree) }.each do |tree, tree_packs|
+        raise "snapshot extract: unknown tree #{tree.inspect}" unless VALID_TREES.include?(tree)
+
         counts = tree_packs.map { |pack| pack.fetch(:parts) }.uniq
         indices = tree_packs.map { |pack| pack.fetch(:part) }.sort
         text_totals = tree_packs.map { |pack| pack.fetch(:text_total) }.uniq
@@ -170,8 +174,16 @@ module Operator
           declared = pieces.sum { |piece| piece.fetch(2) }
           raise "snapshot extract: byte count mismatch for #{relative}" unless content.bytesize == declared
 
-          target = File.join(root, relative)
-          FileUtils.mkdir_p(File.dirname(target))
+          target = File.expand_path(relative, root)
+          directory = root
+          segments[0...-1].each do |segment|
+            directory = File.join(directory, segment)
+            raise "snapshot extract: refuses symlink directory #{directory}" if File.symlink?(directory)
+
+            FileUtils.mkdir_p(directory)
+          end
+          raise "snapshot extract: refuses symlink file #{target}" if File.symlink?(target)
+
           File.write(target, content, encoding: "UTF-8")
         end
         expected_text_total = text_totals.fetch(0)
