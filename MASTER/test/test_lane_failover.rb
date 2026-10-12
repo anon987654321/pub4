@@ -240,4 +240,49 @@ class TestLaneFailover < Minitest::Test
     Health.instance_variable_set(:@failed_at, nil)
     Health.clock = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
   end
+  def test_local_model_runner_crash_quarantines_the_whole_ollama_lane
+    door = Master::Review::LLMDispatcher.allocate
+    door.instance_variable_set(:@bus, nil)
+    error = Master::Result.err(
+      "ollama 500: llama-server process has terminated: error: failed to create library",
+      category: :provider_error,
+    )
+
+    door.send(:note_lane_silence, error, "ollama:gemma3:4b")
+
+    assert Silence.refuses?("ollama:qwen2.5-coder:3b")
+    assert Silence.refuses?("ollama:granite4.2:3b")
+  ensure
+    Silence.record(true, "ollama")
+  end
+
+  def test_single_call_failover_skips_a_recently_failed_model
+    skip_cache = Master::Io::ModelSkipCache
+    skip_cache.clear!
+    skip_cache.skip!("openrouter/dead", reason: "recent timeout", category: :timeout)
+    calls = []
+    agent = Master::Review::Agent.allocate
+    agent.instance_variable_set(:@dispatcher, Object.new.tap do |door|
+      door.define_singleton_method(:send_with_cache) do |model, *_args, **_kwargs|
+        calls << model
+        Master::Result.ok("answer")
+      end
+    end)
+    agent.instance_variable_set(:@bus, nil)
+    agent.define_singleton_method(:single_call_fallback_models) { %w[openrouter/dead claude-cli:live] }
+    agent.define_singleton_method(:record_single_call_substitution) { |_from, _to, result, **| result }
+
+    result = agent.send(
+      :retry_on_broke_lane,
+      Master::Result.err("primary failed", category: :provider_error),
+      "primary",
+      [{ role: "user", content: "hi" }],
+    )
+
+    assert result.ok?
+    assert_equal ["claude-cli:live"], calls
+  ensure
+    skip_cache&.clear!
+  end
+
 end
