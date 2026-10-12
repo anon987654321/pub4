@@ -198,11 +198,11 @@ module Master
         end
       end
 
-      # The full source of each governed tree as exact parts of the default size, verified against the
+      # The full source of each governed tree as one untruncated exact file, verified against the
       # tracked files; bin/operator snapshot takes the other options (--code, --part-bytes, --verify).
       def dispatch_snapshot(_root, ctx: nil)
         arg = arg_for(ctx)
-        return "usage: /snapshot [no arguments]  (exact parts; bin/operator snapshot has --code, --part-bytes, --verify)" unless arg.empty?
+        return "usage: /snapshot [no arguments]  (one exact file per tree; bin/operator snapshot has --code, --part-bytes, --verify)" unless arg.empty?
 
         log = StringIO.new
         paths = ::Operator::Snapshot::TREES.flat_map { |tree| Array(::Operator::Snapshot.write(tree, full: true, io: log)) }

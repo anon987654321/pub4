@@ -14,7 +14,9 @@ module Operator
   #
   # Two variants: the exact source, and the code variant that SnapshotMinify has stripped of comments.
   module SnapshotParts
-    DEFAULT_PART_BYTES = 1_000_000
+    # One file per tree unless --part-bytes or MASTER_SNAPSHOT_PART_BYTES asks for parts: a pack is never
+    # truncated, and 64 MB holds every governed tree whole.
+    DEFAULT_PART_BYTES = 64_000_000
     # Heading, fences and markers around a block's body.
     BLOCK_OVERHEAD = 400
     # A part this small has no room for source once the Map is paid for.

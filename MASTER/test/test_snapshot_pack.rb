@@ -6,6 +6,7 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 require_relative "../lib/operator/snapshot_pack"
+require_relative "../tools/snapshot"
 
 # The snapshot is the copy of a tree that fits another model's context. It may drop what a
 # reader does not need, and must never change what Ruby means.

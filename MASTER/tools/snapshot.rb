@@ -4,7 +4,7 @@
 # snapshot_<TREE>.partKK-of-NN.md, each the full source of the tree (and snapshot_<TREE>.code... for the
 # comment-free variant).
 #
-# The default (lib/operator/snapshot_pack.rb, snapshot_parts.rb) is parts of --part-bytes each, verified
+# The default (lib/operator/snapshot_pack.rb, snapshot_parts.rb) is one untruncated file per tree, or parts of --part-bytes each when asked, verified
 # against the tracked files after writing, deleting the tree's old snapshot files first. --budget writes
 # the one-file reading copy instead. --mirror writes the byte-exact, rehydratable
 # multipart transport instead: every included tracked text file inlined exactly once,

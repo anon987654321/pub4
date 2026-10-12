@@ -183,7 +183,7 @@ module Operator
       methods = original.scan(/^\s{2,}(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^\n;]*?\)\s*\{/)
                        .flatten.uniq - %w[if for while switch catch function constructor]
 
-      return nil if targets.empty? && values.empty? && !values_declared
+      return nil if targets.empty? && values.empty?
 
       parts = []
       parts << "targets: #{listed_names(targets)}" unless targets.empty?
