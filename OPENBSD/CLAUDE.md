@@ -252,5 +252,18 @@ file sits in a comment on that file; these have no single file to sit on.
 - **No per-component screenshot baselines, density tests or control-distance
   rules.** `layout_snapshot` commits reviewable geometry for the surfaces, and how
   dense a screen is stays the operator's call about how it looks.
+- **Keep four hand-run scripts that nothing calls, and delete orphans that
+  nothing names.** `bin/manual_master_deploy.ksh` (the fallback when
+  `vps_deploy_master.sh` stalls), `bin/vps_production_push.sh` (the acknowledged
+  hotfix path), `ptr_openbsd_amsterdam.rb` (the only door to the PTR record) and
+  `bin/amber_queue_sweep.sh` (the backlog sweep `RAILS/amber/README.md` names)
+  have no cron or script caller because their caller is a person, and RUNBOOK,
+  "Occasional operator tools", lists each. A zero-caller census measures the
+  wrong thing for them. `dr-restore-check` and `uptime-probe` had neither a caller
+  nor a name anywhere, and `dr-pull --drill` and `domain_watch.rb --tls` now do
+  what they were for, so they were deleted. `bin/vps-deploy` stays the one serial
+  deploy entrypoint. `entrypoints.openbsd` was 46 against a ceiling of 34 on
+  2026-10-12; the ceiling does not move, and the number falls by folding a script
+  into `bin/check` or `bin/vps-deploy`, never by deleting a recovery door.
 - **No sweep of `|| true`.** Most are idempotence on `rcctl`, `pkill`, `chmod`,
   `install` and `rm -f`. Read the exit path before removing one.
