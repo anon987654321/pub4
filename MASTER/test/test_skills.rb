@@ -41,9 +41,42 @@ class TestSkills < Minitest::Test
 
       assert_equal %w[alpha beta], loaded.map { |skill| skill[:name] }
       assert_equal "alpha body", skills.body_for("alpha")
-      assert_match(/A[0-9a-f]{64}z/, skills.find("alpha")[:revision])
+      assert_match(/\A[0-9a-f]{64}\z/, skills.find("alpha")[:revision])
       refute_equal skills.find("alpha")[:revision], skills.find("beta")[:revision]
     end
+  end
+
+  # The three design skills live in the real registry, not a fixture: the
+  # routing and the house prohibitions are properties of the shipped text.
+  DESIGN_SKILLS = {
+    "algorithmic-art" => ["make a flow field from the git log", "generative art for the cover"],
+    "brand" => ["is this on-brand", "update the visual identity"],
+    "canvas" => ["design a poster for the release", "an og image for the post"],
+  }.freeze
+
+  def registry = Master.load_yaml(File.join(Master::ROOT, "data", "patterns.yml")).fetch("skills_registry")
+
+  def shipped_skills = @shipped_skills ||= Master::CLI::Skills.new(root: Master::ROOT).tap(&:discover!)
+
+  def test_design_skills_route_from_plain_requests
+    DESIGN_SKILLS.each do |name, requests|
+      requests.each do |request|
+        assert_includes shipped_skills.trigger_for(request).map { |skill| skill[:name] }, name, request
+      end
+    end
+  end
+
+  # body_for cuts at 4000 characters, so the registry text is what must fit.
+  def test_design_skill_bodies_fit_the_injection_and_keep_the_house_prohibitions
+    DESIGN_SKILLS.each_key do |name|
+      body = registry.fetch("skills").find { |skill| skill["name"] == name }.fetch("body")
+      assert_operator body.length, :<=, 4000, "#{name} is cut by the injection"
+      refute_match(/poppins|lora|georgia|times/i, body, "#{name} names a face the house forbids")
+    end
+  end
+
+  def test_registry_count_matches_the_skills_it_lists
+    assert_equal registry.dig("meta", "count"), registry.fetch("skills").size
   end
 
   # data/ holds no markdown but SOUL, CANON, IDENTITY and principles/, and

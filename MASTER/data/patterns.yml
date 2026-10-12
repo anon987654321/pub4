@@ -1095,8 +1095,19 @@ operator_playbook:
 skills_registry:
   meta:
     source: runtime authority — edit this file directly; do not add data/skills/*.md
-    count: 18
+    count: 21
   skills:
+  - name: algorithmic-art
+    description: Make generative art from one seeded algorithm, reproducible and tunable.
+    triggers:
+    - "\\b(?:generative|algorithmic|procedural)\\s+art\\b"
+    - "\\b(?:flow\\s+field|particle\\s+system|p5(?:\\.?js)?)\\b"
+    body: |-
+      The algorithmic-art skill makes generative art in three steps, in this order. First write the philosophy: a short paragraph naming the process the piece enacts (growth, flow, erosion, drift), what varies and what holds still. Then write one algorithm that expresses it. Then refine, which means removing parameters before adding any.
+
+      Run on lane g2 of data/artwork.yml, procedural data art: deterministic, drawn from real local data where the piece has a subject. One seed drives every random choice, so the same seed gives the same image and a changed seed gives a sibling. Prove it by rendering twice from one seed and comparing the hashes; a piece that fails this is not finished. Keep the seed, the parameters and the hash beside the output as its provenance.
+
+      Colour and type come from the tokens and the house directives, never from taste. Do not render over a take that matters; write beside it. Name the seam when a value the piece needs has no token.
   - name: axioms
     description: Summarize constitutional rules and invariant checks.
     triggers:
@@ -1105,6 +1116,26 @@ skills_registry:
       The axioms skill summarizes constitutional rules and invariant checks for the current context. It answers when the operator asks about axioms or when MASTER needs a compact statement of what must hold.
 
       Use the smallest rule set that proves the point, not a lecture. Prefer rules that are verifiable from the repository or session state rather than restating generic principles.
+  - name: brand
+    description: Apply the house identity from tokens, never from remembered values.
+    triggers:
+    - "\\b(?:brand|on-brand|visual\\s+identity|style\\s+guide|house\\s+style)\\b"
+    body: |-
+      The brand skill applies pub4's identity to a surface. The identity is data: colour roles, type roles and spacing live in data/tokens.yml, the type pairing in its font_pairings registry (swiss_house is the house default), and the standing prohibitions in data/visual_directives.yml. Read those files first and bind every colour and every typeface on the surface to a named role. Do not carry values over from another brand, from a skill written for one, or from memory.
+
+      The house sets sans-serif only. A serif face is refused by name in the directives, so a request for one is answered with the sans pairing and one sentence of reason. Rendered values (a colour, a font, a graded look) belong to the operator; when a role the surface needs has no token, stop and name the seam instead of choosing a value.
+
+      Render the result and look at it. End with the list of tokens used, each beside the element it styles, so an off-brand value is a visible gap rather than a judgement.
+  - name: canvas
+    description: Design a still piece, poster or card, from a written philosophy to a subtracted render.
+    triggers:
+    - "\\b(?:poster|flyer|cover\\s+art|social\\s+card|og\\s+image|canvas)\\b"
+    body: |-
+      The canvas skill makes one still piece in three passes. First write the philosophy: what the piece says, its one focal point, the order the eye should take. Then render it on lane g1 of data/artwork.yml, the deterministic HTML/SVG renderer, at the sizes the exports list names for the destination (social 1200x630, 1080x1350 or 1080x1080; print a4). Text is set in the renderer, never in a diffusion model.
+
+      Judge the render against the rubric in data/artwork.yml before anything else: at most three accent zones, a grade applied, provenance recorded, rights stated for any human asset. Look at the picture itself, not the source that made it, and name each flaw by what it does to the eye.
+
+      The last pass only subtracts. Remove an element, align an edge, loosen a margin; add nothing. Stop when the next removal would lose meaning. Colours and type come from data/tokens.yml and the house directives, and a missing value is a seam to name, not to fill.
   - name: ecology
     description: Inspect the repository ecology and connected file relationships.
     triggers:
