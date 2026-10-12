@@ -351,6 +351,7 @@ Tracked mirror: `OPENBSD/etc/crontab.vm23` (installed idempotently by
 | `config-drift-check` | `*/15 * * * *` | `/var/log/config_drift.log` — relayd Host routes vs acme SANs vs NSD zones vs DNSSEC paths |
 | `resource_guard.sh` | `*/5 * * * *` | sheds bsdports then amber under sustained pressure; `/var/log/resource_guard_history.log` |
 | `uptime-check.sh` | `*/5 * * * *` | `/var/log/uptime-check.log`, with `ALLOW_BSDPORTS_DOWN=1` |
+| `pub4-alert watch` | `*/15 * * * *` | `/var/log/pub4-alerts.log`, shown by `vps-state` — disk 90%, swap 92%, any `rcctl ls failed` service except `brgen_jobs`, no `dr-pull` report in 48 h. Each key alerts once per six hours |
 | `drain-jobs.sh` | `5 * * * *` | `/var/log/drain-jobs.log` |
 | `core-reclaim.sh` | `40 * * * *` | `/var/log/core-reclaim.log` — returns a core app's grown resident set |
 | `keep-warm.sh` | `*/10 * * * *` | `/var/log/keep-warm.log` — brgen and amber only |
@@ -358,9 +359,17 @@ Tracked mirror: `OPENBSD/etc/crontab.vm23` (installed idempotently by
 | `renew-certs.sh` | `0 2 * * 1` | `/var/log/cert-renewal.log` |
 | `vps_weekly_integrity.sh` | `30 3 * * 0` | **tracked and never installed** — absent from root's live crontab and from `/usr/local/bin`, measured 2026-09-12. See TODO 1060. |
 
-Ten rows because `etc/crontab.vm23` schedules ten jobs. This table listed four
+Eleven rows because `etc/crontab.vm23` schedules eleven jobs. This table listed four
 for long enough that six self-healing jobs existed only in the file nobody
 reads next to the one they do.
+
+A healer that works hides the fault that makes it run. `relayd-watchdog` stamps
+each restart in `/var/db/pub4/relayd-watchdog.restarts` and raises a
+`relayd-restarts` alert on the third inside an hour; `uptime-check.sh` raises
+`uptime-down` when an endpoint is down for three ticks running (fifteen minutes,
+longer than a deploy restart); `pub4-alert show` and `vps-state` print the
+record. The dr-pull job reports to the box by writing `~dev/.dr_pull_ok` after
+each pull, which is what the stale-backup alert reads.
 
 `nsd-resign` is **not** in root crontab — it runs from `etc/daily.local` (daily
 DNSSEC re-sign + backup pass). Failures surface in syslog (`daily.local` tag)

@@ -98,6 +98,11 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 0 6 * * * /usr/local/bin/declutter-hygiene.sh >> /var/log/declutter-hygiene.log 2>&1
 0 3 * * * /usr/local/bin/ports-import.sh >> /var/log/ports-import.log 2>&1
 
+# pub4-alert watch - disk, swap, failed services and a stale backup report, each
+# recorded once per six hours in /var/log/pub4-alerts.log and shown by vps-state.
+# relayd-watchdog and uptime-check raise their own alerts when a symptom recurs.
+*/15 * * * * /usr/local/bin/pub4-alert watch
+
 # weekly-integrity — integrity_gate plus a public health pass, once a week.
 #
 # No redirect: the script writes /var/log/pub4/weekly_integrity.log itself, so

@@ -10,7 +10,9 @@ require_relative "../lib/dmesg"
 ROOT = File.expand_path("../..", __dir__)
 require_relative "../lib/environment"
 
-STAMP_DIR = "/var/db/pub4"
+STAMP_DIR = ENV.fetch("PUB4_STAMP_DIR", "/var/db/pub4")
+# pub4-alert's record: what a healed or noted symptom left behind when it recurred.
+ALERT_LOG = ENV.fetch("PUB4_ALERT_LOG", "/var/log/pub4-alerts.log")
 
 def git_short(path)
   return "missing" unless File.directory?(path)
@@ -116,6 +118,16 @@ def app_row(name, port)
   }
 end
 
+# Newest first, at most `limit`. An unreadable log is reported as a line of its own:
+# silence here would read as "no alerts", the one thing it cannot be sure of.
+def recent_alerts(limit = 5)
+  return [] unless File.file?(ALERT_LOG)
+
+  File.readlines(ALERT_LOG, chomp: true, encoding: "UTF-8").last(limit).reverse
+rescue SystemCallError => e
+  ["alert log unreadable (#{e.class}): #{ALERT_LOG}"]
+end
+
 def print_deploy_in_progress(status)
   return unless status
 
@@ -158,6 +170,7 @@ payload = {
     deploy_in_progress: deploy_in_progress("master"),
   },
   apps: apps.map { |name| app_row(name, ports.fetch(name)) },
+  alerts: recent_alerts,
 }
 
 if ARGV.include?("--json")
@@ -171,8 +184,12 @@ else
     "master",
     "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}",
   )
+  if m[:last_deploy]
+    puts Deploy::Dmesg.line("deploy0", "master", "sha=#{m[:last_deploy]['sha']} at=#{m[:last_deploy]['at']} status=#{m[:last_deploy]['status']}")
+  end
   if m[:deploy_in_progress]
     status = m[:deploy_in_progress]
+
     state = status["stale"] ? "stale" : "running"
     puts Deploy::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
   end
@@ -187,7 +204,7 @@ else
       puts Deploy::Dmesg.line(
         "deploy0",
         row[:app],
-        "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']}",
+        "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']} status=#{row[:last_deploy]['status']}",
       )
     end
     if row[:deploy_in_progress]
@@ -200,4 +217,5 @@ else
       )
     end
   end
+  payload[:alerts].each { |line| puts Deploy::Dmesg.line("alert0", "pub4", line) }
 end

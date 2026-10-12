@@ -274,6 +274,11 @@ end
 Dir[File.join(DEST, "*")].select { |d| File.directory?(d) && File.basename(d).match?(/\A\d{8}-\d{4}\z/) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) } # scan: intentional — retention: this script's own pulls past KEEP
 puts "dr-pull: #{pulled.size} database(s) -> #{target}, all integrity_check ok " \
      "(#{pulled.sum { |f| File.size(f) } / 1024 / 1024}MB; keeping last #{KEEP})"
+# Tell the box a pull landed. pub4-alert watch on vm23 cannot see the Mac, so the
+# Mac says so: epoch seconds in the ssh user's home, which needs no root. If this
+# line fails the box alerts about a stale backup in two days, which is the point.
+_, marker_status = ssh("date +%s > \"$HOME/.dr_pull_ok\"")
+warn "dr-pull: could not write the report marker on vm23; its stale-backup alert will fire" unless marker_status.success?
 puts "dr-pull: blobs -> #{File.join(DEST, 'blobs')}: #{blob_summary.empty? ? 'none' : blob_summary.join(', ')}"
 unless blob_problems.empty?
   warn "dr-pull: blobs NOT fully pulled\n  #{blob_problems.join("\n  ")}"

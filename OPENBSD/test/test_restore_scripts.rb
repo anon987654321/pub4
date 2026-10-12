@@ -132,6 +132,8 @@ class RestoreScriptsTest < Minitest::Test
         system("sqlite3", db, "CREATE TABLE IF NOT EXISTS schema_migrations(version); INSERT INTO schema_migrations VALUES ('20260928090000'); CREATE TABLE users(id integer); INSERT INTO users VALUES (1);")
       end
       puts "total 0"
+    when /dr_pull_ok/
+      File.write(File.join(ENV.fetch("FAKE_VM23_BLOBS"), "dr_pull_ok"), Time.now.to_i.to_s)
     when /sha256 -r/
       Dir[File.join(remote, "*.sqlite3")].sort.each { |p| puts "#{Digest::SHA256.file(p).hexdigest} #{File.basename(p)}" }
     when %r{/home/(\w+)/app/storage}
@@ -173,6 +175,7 @@ class RestoreScriptsTest < Minitest::Test
       assert_match(/\A\h{64}  amber-production\.sqlite3$/, sums.lines.first)
 
       assert File.file?(File.join(dir, "dr", "blobs", "brgen", "ab", "blob")), "uploaded files were not pulled"
+      assert_match(/\A\d+\z/, File.read(File.join(dir, "vm23blobs", "dr_pull_ok")), "the box was not told a pull landed")
       refute Dir.exist?(File.join(dir, "dr", "blobs", "amber")), "an app with no uploads gets no blob directory"
 
       out, err, status = dr_pull(env, "--drill")

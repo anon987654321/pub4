@@ -79,6 +79,7 @@ VERBATIM = {
   "usr/local/bin/drain-jobs.sh" => "/usr/local/bin/drain-jobs.sh",
   "usr/local/bin/keep-warm.sh" => "/usr/local/bin/keep-warm.sh",
   "usr/local/bin/nsd-resign" => "/usr/local/bin/nsd-resign",
+  "usr/local/bin/pub4-alert" => "/usr/local/bin/pub4-alert",
   "usr/local/bin/prune-guests.sh" => "/usr/local/bin/prune-guests.sh",
   "usr/local/bin/prune_guests.rb" => "/usr/local/bin/prune_guests.rb",
   "usr/local/bin/relayd-watchdog" => "/usr/local/bin/relayd-watchdog",

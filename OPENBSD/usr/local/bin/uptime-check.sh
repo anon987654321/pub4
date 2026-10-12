@@ -15,12 +15,14 @@
 #
 # Optional apps can be waived the same way deploy-smoke does:
 #   ALLOW_AMBER_DOWN=1 ALLOW_BSDPORTS_DOWN=1
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+# UPTIME_PATH_PREFIX lets the test put fake curl, ruby34 and logger first.
+PATH=${UPTIME_PATH_PREFIX:+$UPTIME_PATH_PREFIX:}/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # Strict on purpose: every fallible command below already carries its own
 # fallback (curl || print 000), so set -e only guards the plumbing.
 set -eo pipefail
 
 fail=0
+down=
 PUB4_ROOT=${PUB4_ROOT:-/home/dev/pub4}
 FALLBACK='brgen,https://brgen.no/up
 master,https://ai.brgen.no/up
@@ -52,6 +54,7 @@ check() {
   *)
     print -u2 "DOWN $url ($code)"
     fail=1
+    down="$down $url"
     ;;
   esac
 }
@@ -83,8 +86,26 @@ done
 
 # cron sends this job's output to /var/log/uptime-check.log, which nothing reads
 # unprompted; one syslog line puts a failure where an operator will see it.
+#
+# One failed tick can be a deploy restarting an app. A failure that survives
+# UPTIME_ALERT_AFTER consecutive ticks (three, fifteen minutes) is not, and gets a
+# durable pub4-alert record that says which URLs and what to read. A passing tick
+# resets the count. The count lives in /var/db/pub4, root's.
+failstate=${UPTIME_FAIL_STATE:-/var/db/pub4/uptime_fail_count}
+alert=${PUB4_ALERT:-/usr/local/bin/pub4-alert}
+n=0
+after=${UPTIME_ALERT_AFTER:-3}
 if [[ $fail != 0 ]]; then
 	logger -t uptime-check "a public endpoint is down - see /var/log/uptime-check.log"
+	[[ -f $failstate ]] && { read n < "$failstate" || n=0; }
+	case $n in *[!0-9]*|'') n=0 ;; esac
+	n=$(( n + 1 ))
+	print -r -- "$n" > "$failstate" 2>/dev/null || true
+	if (( n >= after )) && [[ -x $alert ]]; then
+		"$alert" raise uptime-down "down for $n consecutive checks:$down - on the box: doas rcctl check brgen amber bsdports master relayd; ls /home/dev/pub4/.deploying-* (a deploy in flight); /var/log/uptime-check.log"
+	fi
+else
+	print -r -- 0 > "$failstate" 2>/dev/null || true
 fi
 
 exit "$fail"

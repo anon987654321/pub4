@@ -34,9 +34,40 @@ def relayd_running?
   ok && out.include?("(ok)")
 end
 
+# A restart that works is the symptom healed, and a symptom that keeps coming back
+# is a fault the heal is hiding. Every restart is stamped; when RESTART_ALERT_AT of
+# them fall inside RESTART_WINDOW seconds, pub4-alert records one durable line that
+# says what to read. Alert failures never stop the restart itself.
+RESTART_STATE = ENV.fetch("PUB4_WATCHDOG_STATE", "/var/db/pub4/relayd-watchdog.restarts")
+RESTART_WINDOW = Integer(ENV.fetch("PUB4_WATCHDOG_WINDOW", "3600"))
+RESTART_ALERT_AT = Integer(ENV.fetch("PUB4_WATCHDOG_ALERT_AT", "3"))
+ALERT = ENV.fetch("PUB4_ALERT", "/usr/local/bin/pub4-alert")
+
+def recent_restarts(now: Time.now.to_i)
+  File.readlines(RESTART_STATE, chomp: true).filter_map { |l| Integer(l, exception: false) }.select { |t| now - t < RESTART_WINDOW }
+rescue SystemCallError
+  []
+end
+
+def record_restart(reason, now: Time.now.to_i)
+  stamps = recent_restarts(now: now) + [now]
+  File.write(RESTART_STATE, stamps.join("\n") + "\n")
+  return stamps.size if stamps.size < RESTART_ALERT_AT
+
+  run(ALERT, "raise", "relayd-restarts",
+      "relayd restarted #{stamps.size} times in #{RESTART_WINDOW / 60} minutes (last: #{reason}) - " \
+      "the watchdog is hiding a recurring fault; read /var/log/messages and /var/log/daemon, " \
+      "then: doas relayctl show hosts; doas relayd -n")
+  stamps.size
+rescue SystemCallError => e
+  log("restart counter unwritable (#{e.class}) - the repeated-restart alert is blind")
+  0
+end
+
 def restart_relayd(reason)
   log("#{reason} — restarting relayd")
   run("/usr/sbin/rcctl", "restart", "relayd")
+  record_restart(reason)
 end
 
 def backend_live?(port)
@@ -65,18 +96,20 @@ def stale_backends
   stale.uniq { |entry| entry[:name] }
 end
 
-unless relayd_running?
-  restart_relayd("relayd check failed")
-  exit 0
+def main
+  unless relayd_running?
+    restart_relayd("relayd check failed")
+    exit 0
+  end
+
+  stale = stale_backends
+  if stale.any?
+    names = stale.map { |entry| entry[:name] }.join(", ")
+    restart_relayd("stale relayd tables (#{names}) with live /up backends")
+    sleep 3
+    _, hosts = run("/usr/sbin/relayctl", "show", "hosts")
+    log(hosts) unless hosts.empty?
+  end
 end
 
-stale = stale_backends
-if stale.any?
-  names = stale.map { |entry| entry[:name] }.join(", ")
-  restart_relayd("stale relayd tables (#{names}) with live /up backends")
-  sleep 3
-  _, hosts = run("/usr/sbin/relayctl", "show", "hosts")
-  log(hosts) unless hosts.empty?
-end
-
-exit 0
+main if $PROGRAM_NAME == __FILE__

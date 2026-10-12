@@ -1,0 +1,160 @@
+#!/bin/ksh
+# pub4-alert - the one place a recurring symptom becomes a durable, actionable line.
+#
+#   pub4-alert raise KEY MESSAGE...   record an alert, once per quiet window per KEY
+#   pub4-alert watch                  disk, swap, failed services, stale backup
+#   pub4-alert show [N]               the last N alerts (default 20)
+#
+# Why it exists. relayd-watchdog restarts relayd, resource_guard sheds apps and
+# uptime-check logs DOWN lines, and each healed or noted its symptom into a log
+# nobody reads: config-drift-check wrote the same three amber.brgen.no lines every
+# fifteen minutes into a 30 KB file, and the root mailbox was last written in
+# October 2025. A healer that succeeds quietly hides the fault that makes it run
+# again, so the repeat is what gets recorded, here, and `vps-state` prints it.
+#
+# raise is rate-limited per KEY (PUB4_ALERT_QUIET seconds, six hours by default),
+# so a fault that persists for a week is a handful of lines, not ten thousand, and
+# each line still says what to do. The record is /var/log/pub4-alerts.log
+# (rotated by newsyslog) plus one daemon.crit syslog line.
+#
+# watch is bounded: it runs four reads (df, swapctl, rcctl, one marker file) and
+# changes nothing. Run it from root's crontab.
+# PUB4_ALERT_PATH_PREFIX lets the test put fake df, swapctl and rcctl first.
+PATH=${PUB4_ALERT_PATH_PREFIX:+$PUB4_ALERT_PATH_PREFIX:}/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+
+LOG=${PUB4_ALERT_LOG:-/var/log/pub4-alerts.log}
+STATE=${PUB4_ALERT_STATE:-/var/db/pub4/alerts}
+QUIET=${PUB4_ALERT_QUIET:-21600}
+DISK_MAX=${PUB4_ALERT_DISK_MAX:-90}
+SWAP_MAX=${PUB4_ALERT_SWAP_MAX:-92}
+BACKUP_MARKER=${PUB4_DR_MARKER:-/home/dev/.dr_pull_ok}
+BACKUP_MAX_AGE=${PUB4_ALERT_BACKUP_MAX_AGE:-172800}
+# brgen_jobs is failed by design: no resident Solid Queue worker fits in 1 GB, and
+# drain-jobs.sh runs the queue from cron (etc/crontab.vm23 says so).
+ALLOW_FAILED=${PUB4_ALERT_ALLOW_FAILED:-brgen_jobs}
+
+now() { date +%s; }
+
+raise() {
+  key=$1
+  shift
+  case $key in
+  *[!A-Za-z0-9._-]*|'') print -u2 "pub4-alert: key must be letters, digits, . _ -"; return 2 ;;
+  esac
+  mkdir -p "$STATE" 2>/dev/null
+  stamp=$STATE/$key
+  t=$(now)
+  last=0
+  [[ -f $stamp ]] && read last < "$stamp"
+  case $last in *[!0-9]*|'') last=0 ;; esac
+  if (( t - last < QUIET )); then
+    return 0
+  fi
+  print -r -- "$t" > "$stamp"
+  line="$(date -u +%Y-%m-%dT%H:%M:%SZ) $key $*"
+  print -r -- "$line" >> "$LOG"
+  ${PUB4_ALERT_LOGGER:-logger} -p daemon.crit -t pub4-alert "$key: $*" 2>/dev/null
+  return 0
+}
+
+# "/home" -> home, "/usr/local" -> usr_local, "/" -> root; pdksh has no ${var//a/b}.
+slug() {
+  s=${1#/}
+  out=
+  while [[ $s == */* ]]; do
+    out=$out${s%%/*}_
+    s=${s#*/}
+  done
+  out=$out$s
+  [[ -n $out ]] || out=root
+  print -r -- "$out"
+}
+
+watch_disk() {
+  df -P 2>/dev/null | while read -r fs blocks used avail cap mount; do
+    case $cap in
+    [0-9]*%) ;;
+    *) continue ;;
+    esac
+    pct=${cap%\%}
+    if (( pct >= DISK_MAX )); then
+      raise "disk-$(slug "$mount")" "$mount is ${pct}% full (limit ${DISK_MAX}%) - find the growth with: doas du -xk $mount; logs rotate in /etc/newsyslog.conf"
+    fi
+  done
+}
+
+watch_swap() {
+  # OpenBSD 7.8, as observed on vm23: "total: 2588672 512-blocks allocated, 2003000 used, 585672 available"
+  out=$(swapctl -s 2>/dev/null) || return 0
+  set -- $out
+  alloc= used=
+  while (( $# )); do
+    case $1 in
+    allocated|allocated,) alloc=$prev2 ;;
+    used|used,) used=$prev ;;
+    esac
+    prev2=$prev
+    prev=$1
+    shift
+  done
+  alloc=${alloc%k}
+  used=${used%k}
+  case $alloc$used in *[!0-9]*|'') return 0 ;; esac
+  (( alloc > 0 )) || return 0
+  pct=$(( used * 100 / alloc ))
+  if (( pct >= SWAP_MAX )); then
+    raise swap "swap is ${pct}% used (limit ${SWAP_MAX}%) - the box is paging; run: doas ksh /usr/local/bin/resource_guard.sh and read /var/log/resource_guard_history.log"
+  fi
+}
+
+watch_services() {
+  rcctl ls failed 2>/dev/null | while read -r svc; do
+    [[ -n $svc ]] || continue
+    case " $ALLOW_FAILED " in *" $svc "*) continue ;; esac
+    raise "failed-$svc" "$svc is in rcctl failed - read /var/log/daemon, then: doas rcctl restart $svc (an amber or bsdports failure may be resource_guard shedding: check /var/db/resource_guard_shed)"
+  done
+}
+
+watch_backup() {
+  t=$(now)
+  if [[ ! -f $BACKUP_MARKER ]]; then
+    raise backup-unreported "no pull has reported to $BACKUP_MARKER - run ruby OPENBSD/bin/dr-pull on the operator Mac and check ~/pub4-dr/dr-pull.log"
+    return 0
+  fi
+  read last < "$BACKUP_MARKER"
+  case $last in *[!0-9]*|'') last=0 ;; esac
+  age=$(( t - last ))
+  if (( age > BACKUP_MAX_AGE )); then
+    raise backup-stale "the newest dr-pull reported $(( age / 3600 )) hours ago (limit $(( BACKUP_MAX_AGE / 3600 ))) - on the operator Mac: ruby OPENBSD/bin/dr-pull, then read ~/pub4-dr/dr-pull.log; launchd job no.brgen.pub4-dr"
+  fi
+}
+
+case ${1:-} in
+raise)
+  shift
+  (( $# >= 2 )) || { print -u2 "usage: pub4-alert raise KEY MESSAGE..."; exit 2; }
+  raise "$@"
+  ;;
+watch)
+  watch_disk
+  watch_swap
+  watch_services
+  watch_backup
+  ;;
+show)
+  n=${2:-20}
+  [[ -f $LOG ]] || { print "pub4-alert: no alerts recorded ($LOG)"; exit 0; }
+  total=0
+  while read -r _; do total=$(( total + 1 )); done < "$LOG"
+  skip=$(( total - n ))
+  i=0
+  while read -r line; do
+    i=$(( i + 1 ))
+    (( i > skip )) && print -r -- "$line"
+  done < "$LOG"
+  ;;
+*)
+  print -u2 "usage: pub4-alert raise KEY MESSAGE... | watch | show [N]"
+  exit 2
+  ;;
+esac
