@@ -10,7 +10,7 @@ Updated: 2026-10-12. Delete an entry when it is done. Cross-tree coordination li
 
 ## Dilla
 
-- [ ] Check the spellings in `dilla/dilla.json` against transcriptions or the records, and the timing offsets in its groove profiles by ear. The progressions were gathered from several lists nobody here has verified, and the offsets come from a pasted summary.
+- [ ] Check the spellings in `dilla/data/dilla.json` against transcriptions or the records, and the timing offsets in its groove profiles by ear. The progressions were gathered from several lists nobody here has verified, and the offsets come from a pasted summary.
 - [ ] Decide which limits to lift, if any: the chords play one pass with no loop, every note is four sine partials, and the drums are three short synthesised sounds. The old engine is restorable from the tag `dilla-engine-final`.
 
 ## Replicate, LoRA and postpro
