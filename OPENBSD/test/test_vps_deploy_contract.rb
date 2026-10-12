@@ -150,6 +150,25 @@ class VpsDeployContractTest < Minitest::Test
     end
   end
 
+  def test_stale_lock_recovery_does_not_touch_a_lock_claimed_by_another_reaper
+    Dir.mktmpdir do |dir|
+      lock = File.join(dir, "deploy.lock")
+      Dir.mkdir(lock)
+      owner = "999999 #{Socket.gethostname.split(".").first} #{Time.now.to_i}\n"
+      File.write(File.join(lock, "owner"), owner)
+      Dir.mkdir(File.join(lock, "reaping"))
+
+      out, status = lock_run(dir)
+
+      assert_equal 75, status
+      assert_includes out, "another deploy owns"
+      assert_equal owner, File.read(File.join(lock, "owner")),
+                   "a competing reaper must not remove the original owner's record"
+      assert Dir.exist?(File.join(lock, "reaping")),
+             "the first reaper's claim must remain untouched"
+    end
+  end
+
   def test_a_live_local_owner_is_not_reaped_just_because_the_ttl_elapsed
     Dir.mktmpdir do |dir|
       lock = File.join(dir, "deploy.lock")

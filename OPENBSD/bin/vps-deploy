@@ -108,8 +108,60 @@ release_deploy_lock() {
   rmdir "$lock_dir" 2>/dev/null || true
 }
 
+reap_stale_lock() {
+  local reason before_identity after_identity retired_lock
+
+  # Do not enter recovery for a live lock. The second check below closes the
+  # race between this observation and claiming the recovery marker.
+  reason=$(lock_stale_reason) || return 1
+  before_identity=$(stat -f '%d:%i' "$lock_dir" 2>/dev/null) || return 1
+
+  # The marker is inside the exact directory observed above, so mkdir is an
+  # atomic claim. Inode identity catches a stale directory being replaced by a
+  # fresh lock between the first observation and this claim.
+  if ! mkdir "$lock_dir/reaping" 2>/dev/null; then
+    return 1
+  fi
+  after_identity=$(stat -f '%d:%i' "$lock_dir" 2>/dev/null) || {
+    rmdir "$lock_dir/reaping" 2>/dev/null || true
+    return 1
+  }
+  if [[ $after_identity != $before_identity ]]; then
+    rmdir "$lock_dir/reaping" 2>/dev/null || true
+    return 1
+  fi
+
+  # Creating the marker updates the parent directory's mtime. Recheck owners,
+  # but retain the pre-marker age decision for a directory that was already
+  # ownerless; no other process can write its owner file while it exists.
+  if [[ -r "$lock_dir/owner" ]]; then
+    reason=$(lock_stale_reason) || {
+      rmdir "$lock_dir/reaping" 2>/dev/null || true
+      return 1
+    }
+  fi
+
+  retired_lock="${lock_dir}.stale.$$"
+  if [[ -e "$retired_lock" ]]; then
+    print -u2 "vps-deploy: stale-lock quarantine exists at $retired_lock"
+    rmdir "$lock_dir/reaping" 2>/dev/null || true
+    return 1
+  fi
+
+  print -u2 "vps-deploy: reaping stale lock $lock_dir — $reason"
+  # Rename the whole claimed directory, marker included. The old lock path
+  # becomes free atomically; cleanup touches only this unique retired path.
+  if ! mv "$lock_dir" "$retired_lock" 2>/dev/null; then
+    rmdir "$lock_dir/reaping" 2>/dev/null || true
+    return 1
+  fi
+  rm -f -- "$retired_lock/owner"
+  rmdir "$retired_lock/reaping" 2>/dev/null || true
+  rmdir "$retired_lock" 2>/dev/null || true
+  return 0
+}
+
 acquire_deploy_lock() {
-  local reason
   local -i attempt
   for attempt in 1 2; do
     if mkdir "$lock_dir" 2>/dev/null; then
@@ -118,10 +170,10 @@ acquire_deploy_lock() {
       lock_owner=1
       return 0
     fi
-    reason=$(lock_stale_reason) || break
-    print -u2 "vps-deploy: reaping stale lock $lock_dir — $reason"
-    rm -f -- "$lock_dir/owner"
-    rmdir "$lock_dir" 2>/dev/null || true
+    if reap_stale_lock; then
+      continue
+    fi
+    break
   done
   if lock_read_owner; then
     print -u2 "vps-deploy: refused — another deploy owns $lock_dir (pid $lock_pid on $lock_host since $(date -r $lock_epoch '+%Y-%m-%d %H:%M:%S'))"
