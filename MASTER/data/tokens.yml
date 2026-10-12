@@ -805,3 +805,505 @@ tokens:
         off_scale_opacity: 29
         off_scale_duration: 30
 
+
+  ultraminimalism:
+    philosophy:
+      typography_is_design: true
+      absence_is_material: true
+      remove_until_nothing_left_to_remove: true
+      less_but_better: true
+      action: Prefer absence, typography, alignment, and whitespace over ornamental UI.
+    authoritative_design:
+      priority: 1
+      role: meta_doctrine
+      purpose: Make every visual decision feel deliberate, credible, legible, and specific to its product and task.
+      order:
+      - purpose
+      - agency
+      - clarity
+      - hierarchy
+      - trust
+      - consistency
+      - craft
+      - delight
+      style_never_overrides:
+      - user_agency
+      - readable_information
+      - recognizable_platform_patterns
+      - accessibility
+      - truthful_content
+      - responsive_continuity
+      require:
+      - one_primary_focal_point
+      - explicit_action_hierarchy
+      - stable_alignment_system
+      - typographic_intent
+      - content_before_chrome
+      - coherent_spacing_rhythm
+      - rendered_evidence
+      - reversible_refinement
+      reject:
+      - decoration_without_a_job
+      - generic_ai_aesthetic
+      - competing_focal_points
+      - arbitrary_type_pairings
+      - novelty_that_hides_status_or_action
+      - style_borrowed_without_context
+      action: Establish authority through purpose, hierarchy, consistency, precision, and craft before selecting an aesthetic school.
+
+      sources:
+      - "https://designsystem.digital.gov/design-principles/"
+      - "https://www.w3.org/WAI/WCAG2/supplemental/patterns/o1p02-familiar-design/"
+      - "https://www.w3.org/WAI/WCAG2/supplemental/patterns/o1p03-consistent-design/"
+      - "https://design-system.w3.org/styles/typography.html"
+      - "https://techlab.bol.com/en/blog/shaping-the-future-of-bol-our-design-system-helps-speed-up-innovation/"
+      - "https://over.bol.com/en/news/why-do-i-see-these-specific-products-when-i-search-on-bol/"
+      - "https://www.kaufland.de/"
+      - "https://pangrampangram.com/blogs/journal/pairing-fonts"
+    design_schools:
+      swiss:
+        inherits_authoritative_design: true
+        layout: modular_grid_asymmetric
+        typography: grotesk_flush_left_ragged_right
+        imagery: objective_photography
+        color: restrained_one_accent
+        shape: geometric
+        motion: quiet
+        signatures:
+        - mathematical_grid
+        - asymmetric_balance
+        - type_as_structure
+        - active_whitespace
+        avoid:
+        - centered_hero_as_default
+        - ornamental_effects
+        - arbitrary_font_pairing
+      social:
+        inherits_authoritative_design: true
+        layout: identity_content_action_stream
+        typography: humanist_or_neutral_sans
+        imagery: people_identity_and_media
+        color: restrained_identity_accents
+        shape: conversational_containers
+        motion: responsive_micro_feedback
+        signatures:
+        - avatar_or_identity_anchor
+        - content_first_post
+        - compact_action_row
+        - reaction_and_reply_affordance
+        - time_or_freshness_signal
+        avoid:
+        - campaign_like_banner_everywhere
+        - hidden_identity
+        - actionless_decoration
+      cute:
+        inherits_authoritative_design: true
+        layout: friendly_modular_play_space
+        typography: rounded_display_plus_sturdy_text
+        imagery: characters_objects_and_play
+        color: cheerful_bounded_palette
+        shape: soft_geometric_forms
+        motion: playful_but_optional
+        signatures:
+        - friendly_expression
+        - tactile_shape_language
+        - surprising_scale
+        - clear_emotional_cue
+        - joyful_microcopy
+        avoid:
+        - unreadable_display_type
+        - unlimited_colors
+        - mascot_competition
+        - motion_without_reduced_motion_path
+      editorial:
+        inherits_authoritative_design: true
+        layout: publication_grid
+        typography: high_contrast_reading_hierarchy
+        imagery: content_led
+        color: restrained
+        shape: quiet
+        motion: subtle
+        signatures:
+        - strong_headline
+        - readable_measure
+        - deliberate_captioning
+        - image_text_relationship
+        avoid:
+        - novelty_for_its_own_sake
+        - decorative_type_in_body_copy
+      commerce_editorial:
+        inherits_authoritative_design: true
+        references:
+        - kaufland
+        - bol
+        reference_mission: "Kaufland catalogue breadth and campaign entry points; bol cleanliness, service clarity, recommendation rails, product-first imagery, and restrained product chrome."
+        sources:
+        - "https://www.kaufland.de/"
+        - "https://retailmedia.bol.com/en/onsite-display/"
+        - "https://techlab.bol.com/en/blog/shaping-the-future-of-bol-our-design-system-helps-speed-up-innovation/"
+        layout: product_image_plus_typographic_offer
+        typography: display_contrast_plus_neutral_utility
+        imagery: product_first
+        color: quiet_base_plus_campaign_accent
+        shape: restrained_storefront_geometry
+        motion: functional
+        signatures:
+        - immediate_price
+        - product_as_hero
+        - display_headline
+        - compact_proof
+        - direct_action
+        avoid:
+        - fake_urgency
+        - fake_reviews
+        - embedded_image_text
+      industrial:
+        inherits_authoritative_design: true
+        layout: explicit_system_grid
+        typography: mono_or_technical_sans
+        imagery: diagrams_and_state
+        color: high_contrast_restrained
+        shape: flat
+        motion: quiet_state_change
+        signatures:
+        - status_visibility
+        - stable_columns
+        - numerical_precision
+        - obvious_failure_state
+        avoid:
+        - ornamental_depth
+        - ambiguous_controls
+      luxury:
+        inherits_authoritative_design: true
+        layout: spacious_editorial_product
+        typography: restrained_high_contrast
+        imagery: material_and_detail
+        color: low_chroma
+        shape: quiet
+        motion: subtle
+        signatures:
+        - generous_measure
+        - deliberate_materiality
+        - sparse_chrome
+        avoid:
+        - discount_carnival
+        - excessive_badges
+
+    typeface_rules:
+      role_specific: true
+      prefer_one_family_first: true
+      max_families_per_surface: 2
+      max_display_faces: 1
+      require_role_definition: true
+      require_deployable_assets: true
+      avoid_same_voice_pairing: true
+      inspect:
+      - classification
+      - x_height
+      - width
+      - contrast
+      - weight_range
+      - optical_sizing
+      - glyph_coverage
+      - licence
+      action: Pair by function and measured characteristics, then verify in the rendered surface; never pair by popularity alone.
+
+    typefaces:
+      house_sans:
+        family: house_sans
+        css: "var(--font)"
+        classification: neo_grotesk
+        x_height: high
+        width: normal
+        contrast: low
+        weight_range: [400, 800]
+        optical_sizing: inherited
+        glyph_coverage: site_default
+        roles:
+        - body
+        - ui
+        - price
+        - metadata
+        - swiss_display
+        availability: shipped
+      ibm_plex_sans:
+        family: IBM Plex Sans
+        css: '"IBM Plex Sans", sans-serif'
+        classification: grotesk
+        x_height: high
+        width: normal
+        contrast: low
+        weight_range: [100, 700]
+        optical_sizing: variable
+
+        roles:
+        - body
+        - ui
+        - technical_display
+        availability: optional_webfont
+      source_sans_3:
+        family: Source Sans 3
+        css: '"Source Sans 3", sans-serif'
+        classification: humanist_sans
+        x_height: high
+        width: normal
+        contrast: low
+        weight_range: [200, 900]
+        optical_sizing: variable
+
+        roles:
+        - body
+        - ui
+        availability: optional_webfont
+      mona_sans:
+        family: Mona Sans
+        css: '"Mona Sans", sans-serif'
+        classification: industrial_grotesk_variable
+        x_height: high
+        width: variable
+        contrast: low
+        weight_range: [100, 900]
+        optical_sizing: variable
+        roles:
+        - body
+        - display
+        - ui
+        availability: optional_webfont
+      hubot_sans:
+        family: Hubot Sans
+        css: '"Hubot Sans", sans-serif'
+        classification: geometric_variable
+        x_height: high
+        width: variable
+        contrast: low
+        weight_range: [100, 900]
+        optical_sizing: variable
+        roles:
+        - display
+        - playful_accent
+        availability: optional_webfont
+      pp_neue_montreal:
+        family: PP Neue Montreal
+        css: '"PP Neue Montreal", var(--font)'
+        classification: contemporary_neo_grotesk
+        x_height: high
+        width: variable
+        contrast: low
+        weight_range: [100, 900]
+        optical_sizing: variable
+        roles:
+        - display
+        - body
+        - ui
+        availability: licensed_external
+        licence: "Pangram Pangram Foundry commercial licence required"
+
+      jetbrains_mono:
+        family: JetBrains Mono
+        css: 'var(--font-mono)'
+        classification: monospace
+        roles:
+        - terminal
+        - code
+        - technical
+        availability: shipped
+
+    font_pairings:
+      swiss_house:
+        school: swiss
+        strategy: single_family_contrast
+        display: house_sans
+        body: house_sans
+        price: house_sans
+        metadata: house_sans
+        rationale: Use scale, weight, width, alignment, and whitespace for contrast before adding a second family.
+      marketplace_sale:
+        school: commerce_editorial
+        reference: pangram
+        typographic_intent: contemporary_grotesk_neutral_with_character
+        strategy: single_family_contrast
+        display: house_sans
+        body: house_sans
+        price: house_sans
+        metadata: house_sans
+        rationale: Marketplace authority comes from product, price, hierarchy, alignment and trust; borrow the character of contemporary grotesk branding without importing a decorative display face.
+      playful_mona_hubot:
+        school: cute
+        strategy: related_variable_family_pair
+        display: hubot_sans
+        body: mona_sans
+        price: mona_sans
+        metadata: mona_sans
+        rationale: Related variable sans families create play through shape and scale without sacrificing utility.
+      terminal_mono:
+        school: industrial
+        strategy: single_family
+        display: jetbrains_mono
+        body: jetbrains_mono
+        price: jetbrains_mono
+        metadata: jetbrains_mono
+
+    compositions:
+      marketplace_sale:
+        school: commerce_editorial
+        pairing: marketplace_sale
+        grid: storefront_columns
+        focal_order:
+        - product
+        - price
+        - headline
+        - proof
+        - action
+        mobile: stack_image_then_offer_without_changing_priority
+        signatures:
+        - product_identity_preserved
+        - price_visible_without_interaction
+        - display_headline
+        - neutral_transaction_text
+        variants:
+          kaufland_catalogue:
+            reference: kaufland
+            structure: campaign_plus_category_panel
+            grid: wide_promo_and_catalogue_navigation
+            focal_order: [campaign, categories, products]
+            signature: broad_discovery
+          bol_clean:
+            reference: bol
+            structure: full_width_promo_then_category_and_product_rail
+            grid: single_clean_storefront_column
+            focal_order: [search, campaign, product, service_proof]
+            signature: clean_product_first
+          brgen_hybrid:
+            references: [kaufland, bol]
+            structure: asymmetric_campaign_plus_local_discovery
+            grid: seven_five_split
+            focal_order: [local_context, product, price, categories, action]
+            signature: local_marketplace_identity
+      swiss_poster:
+        school: swiss
+        pairing: swiss_house
+        grid: twelve_column_modular
+        focal_order:
+        - primary_message
+        - image_or_number
+        - supporting_information
+        mobile: collapse_columns_but_preserve_anchor_relationships
+      social_feed:
+        school: social
+        pairing: swiss_house
+        grid: feed_stream
+        focal_order:
+        - identity
+        - content
+        - action
+        - freshness
+        mobile: one_content_column
+      cute_retail:
+        school: cute
+        pairing: playful_mona_hubot
+        grid: friendly_modular
+        focal_order:
+        - product_or_character
+        - playful_headline
+        - benefit
+        - action
+        mobile: preserve_character_and_action_anchor
+      editorial_commerce:
+        school: commerce_editorial
+        pairing: marketplace_sale
+        grid: asymmetric_product_editorial
+        focal_order:
+        - image
+        - display_headline
+        - offer
+        - proof
+        mobile: image_then_copy
+      industrial_system:
+        school: industrial
+        pairing: terminal_mono
+        grid: explicit_system_columns
+        focal_order:
+        - state
+        - primary_value
+        - action
+        - detail
+        mobile: collapse_secondary_columns
+    swiss_style:
+      left_aligned_ragged_right: true
+      sans_serif_default: Inter
+      alternative_faces:
+      - Helvetica
+      - Akzidenz-Grotesk
+      - IBM Plex Sans
+      visible_grid_optional: false
+      font_feature_settings:
+        Inter: '"ss03" 1'
+      action: Use an invisible mathematical grid with type-led hierarchy.
+    negative_space:
+      primary_design_material: true
+      chunk_forms_by_proximity: true
+      avoid_tunnel_vision_distance: true
+      card_padding_px: 24
+      section_gap_px: 48
+      hero_breathing_room_px: 96
+      content_width: min(66ch, 100% - 3rem)  # aligned with typography.line_length.ideal_ch / --measure
+      action: Space communicates grouping; whitespace must clarify relationships.
+    color:
+      max_palette_roles: 4
+      roles:
+      - primary
+      - secondary
+      - accent
+      - highlight
+      prefer_monochrome_with_one_accent: true
+      action: Reject color variety when value, spacing, and type can do the work.
+    interaction:
+      minimal_js_default: Stimulus
+      no_build_options:
+      - Stimulus
+      - PetiteVue
+      - Alpine
+      - VanJS
+      - HTMX
+      progressive_enhancement_required: true
+      data_attributes_bridge_behavior: true
+      action: Keep behavior small, recoverable, and legible in HTML.
+    design_tokens:
+      required_for_generation: true
+      exact_token_use: true
+      token_categories:
+      - color
+      - spacing
+      - radius
+      - typography
+      - motion
+      action: Inject tokens before generation; flag new ad-hoc values.
+    prompting:
+      constitutional_rules: true
+      positive_constraints_over_negative: true
+      self_refine_loop: true
+      designer_personas:
+      - Dieter Rams
+      - Massimo Vignelli
+      - Josef Mueller-Brockmann
+      require_design_rationale_before_code: true
+      action: Force design decisions before code; iterate by critique then revision.
+    automated_iteration:
+      screenshot_first: true
+      ferrum_capture: true
+      visual_regression: BackstopJS
+      max_iterations: 5
+      target_score: 95
+      action: Capture, compare, critique, patch, and repeat until differences are intentional.
+    mcp:
+      enabled_targets:
+      - filesystem
+      - puppeteer
+      - git
+      - figma
+      - accessibility
+      primitives:
+      - tools
+      - resources
+      - prompts
+      action: Prefer standard tool bridges over bespoke glue when integrating design automation.
