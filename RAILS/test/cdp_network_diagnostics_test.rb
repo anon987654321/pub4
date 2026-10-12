@@ -10,6 +10,14 @@ class CdpNetworkDiagnosticsTest < Minitest::Test
     end
   end
 
+  def test_shared_cdp_session_installs_the_network_event_reader
+    root = File.expand_path("../..", __dir__)
+    source = File.read(File.join(root, "MASTER", "gates", "support", "cdp_session.rb"))
+
+    assert_includes source, 'require_relative "cdp_network"'
+    assert_includes source, "include CdpNetwork"
+  end
+
   def test_http_failures_include_the_response_status_url_and_resource_kind
     probe = client([
       { "method" => "Network.responseReceived",
