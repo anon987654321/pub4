@@ -33,6 +33,22 @@ class TraceDmesgTest < Minitest::Test
     assert_equal "route0 at fix0: model\n", io.string
   end
 
+  def test_prompt_redraw_finishes_before_another_terminal_writer
+    io = StringIO.new
+    worker = nil
+
+    Master::Trace::Dmesg.emit("irc0: incoming", io:, force: true) do
+      worker = Thread.new do
+        Master::Trace::Dmesg.emit("worker0: concurrent", io:, force: true)
+      end
+      Thread.pass
+      io.write("prompt\n")
+    end
+    worker.join
+
+    assert_equal "irc0: incoming\nprompt\nworker0: concurrent\n", io.string
+  end
+
   def test_zsh_law_is_available_before_shell_class_loads
     banned = Master::Io::Shell::BANNED_IN_ZSH
     law_banned = Master.load_laws.fetch("zsh").fetch("banned_commands").map(&:to_s)
