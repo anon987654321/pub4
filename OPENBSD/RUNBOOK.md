@@ -234,9 +234,9 @@ makes the Mac the only copy off vm23.
 no script in this repository copies the following off the box. After a rebuild
 they come from the operator's own records: `/etc/master.env` and
 `/etc/<app>.env` for brgen, amber and bsdports; the DNSSEC keys
-`K<zone>.+013+ksk.*` and `K<zone>.+013+zsk.*` in `/var/nsd/zones/master` (lose
-the KSK and every signed zone fails validation until new DS records are
-published at the registrars); the DKIM key `/etc/mail/dkim/private.rsa.key`; the
+`K<zone>.+013+ksk.*` and `K<zone>.+013+zsk.*` in `/var/nsd/zones/master` (no DS is published at any registry today,
+so the signatures validate nothing yet; once DS records are published, losing
+the KSK makes every signed zone fail validation); the DKIM key `/etc/mail/dkim/private.rsa.key`; the
 ssh host keys; and the acme-client account key. Certificates and their domain
 keys under `/etc/ssl` are reissued by `acme-client`, once DNS answers.
 

@@ -16,6 +16,7 @@
 #   ruby OPENBSD/bin/domain_watch.rb            # report against the snapshot
 #   ruby OPENBSD/bin/domain_watch.rb --update   # rewrite the snapshot (OpenBSD/Linux)
 #   ruby OPENBSD/bin/domain_watch.rb --json
+#   ruby OPENBSD/bin/domain_watch.rb --tls      # what the public sees at every relayd host
 #
 # Every lookup is bounded in Ruby rather than by /usr/bin/timeout, which does
 # not exist on macOS — so --update ran only on vm23, and the snapshot went
@@ -29,7 +30,11 @@
 
 require "date"
 require "json"
+require "net/http"
 require "open3"
+require "openssl"
+require "resolv"
+require "socket"
 require "yaml"
 require_relative "render_dns"
 
@@ -218,6 +223,67 @@ module Deploy
     }.compact
   end
 
+    # What a visitor sees, per host relayd holds a keypair for (plus the brgen
+    # verticals): nameservers and DS from the public resolver, the A/AAAA
+    # answers, the certificate dates and whether its names cover the host, and the
+    # HTTPS status. Reads only; every external call is bounded. A host that does not
+    # answer is reported as that, never as healthy.
+    TLS_VERTICALS = %w[markedsplass dating radio takeaway tv messenger maps].freeze
+    RELAYD_CONF = File.join(ROOT, "OPENBSD/etc/relayd.conf")
+
+    def tls_hosts
+      keypairs = File.read(RELAYD_CONF, encoding: "UTF-8").scan(/tls keypair "([^"]+)"/).flatten.uniq
+      (keypairs + TLS_VERTICALS.map { |v| "#{v}.brgen.no" }).uniq
+    end
+
+    def dig(*args)
+      capture_bounded("dig", "+short", "+time=3", "+tries=1", *args, seconds: 10).lines.map(&:strip).reject(&:empty?)
+    end
+
+    def certificate_of(host)
+      socket = Socket.tcp(host, 443, connect_timeout: 8)
+      ssl = OpenSSL::SSL::SSLSocket.new(socket, OpenSSL::SSL::SSLContext.new.tap { |c| c.verify_mode = OpenSSL::SSL::VERIFY_NONE })
+      ssl.hostname = host
+      ssl.connect
+      cert = ssl.peer_cert
+      ssl.close
+      socket.close
+      cert
+    rescue StandardError => e
+      "#{e.class}: #{e.message[0, 60]}"
+    end
+
+    def https_status(host)
+      http = Net::HTTP.new(host, 443)
+      http.use_ssl = true
+      http.open_timeout = 8
+      http.read_timeout = 15
+      http.request(Net::HTTP::Get.new("/up")).code
+    rescue StandardError => e
+      "#{e.class}"
+    end
+
+    def covers?(cert, host)
+      names = cert.extensions.find { |e| e.oid == "subjectAltName" }&.value.to_s.scan(/DNS:([^,\s]+)/).flatten
+      names.any? { |n| n == host || (n.start_with?("*.") && host.split(".", 2).last == n[2..]) }
+    end
+
+    def tls_report(hosts = tls_hosts)
+      hosts.map do |host|
+        apex = host.split(".").last(2).join(".")
+        cert = certificate_of(host)
+        row = { "host" => host, "ns" => dig("NS", apex).sort, "ds" => dig("DS", apex).size,
+                "a" => dig("A", host), "aaaa" => dig("AAAA", host) }
+        if cert.is_a?(OpenSSL::X509::Certificate)
+          row.merge!("not_after" => cert.not_after.utc.to_date.to_s, "days_left" => (cert.not_after.utc.to_date - Date.today).to_i,
+                     "covers_host" => covers?(cert, host), "http" => https_status(host))
+        else
+          row["tls"] = cert
+        end
+        row
+      end
+    end
+
     # Subdomains of a zone we already hold are not separately registrable.
     def registrable?(domain)
       domain.count(".") == 1
@@ -314,6 +380,20 @@ if $PROGRAM_NAME == __FILE__
     puts "usage: ruby OPENBSD/bin/domain_watch.rb [--update|--json]"
     puts "  whois every served or owned domain and diff the answers against data/domain_inventory.yml"
     exit 0
+  end
+
+  if ARGV.include?("--tls")
+    rows = Deploy::DomainWatch.tls_report
+    bad = 0
+    rows.each do |r|
+      healthy = r["http"].to_s.match?(/\A[23]/) && r["covers_host"] && r["days_left"].to_i > 14
+      bad += 1 unless healthy
+      puts format("%-26s %-8s ns=%s ds=%d a=%s aaaa=%s %s", r["host"], healthy ? "ok" : "PROBLEM", r["ns"].join(","), r["ds"],
+                  r["a"].join(","), r["aaaa"].join(",").then { |v| v.empty? ? "-" : v },
+                  r["tls"] ? "tls=#{r['tls']}" : "cert_to=#{r['not_after']} (#{r['days_left']}d) covers=#{r['covers_host']} /up=#{r['http']}")
+    end
+    puts "\n#{rows.size - bad} of #{rows.size} hosts answer /up with a chain-and-name verified certificate more than 14 days from expiry"
+    exit(bad.zero? ? 0 : 1)
   end
 
   current = Deploy::DomainWatch.scan
