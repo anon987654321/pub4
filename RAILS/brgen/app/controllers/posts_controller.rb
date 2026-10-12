@@ -167,9 +167,9 @@ class PostsController < ApplicationController
 
   def set_post
     @post = find_by_slug_or_id(
-      Post.includes(:user, :community).with_attached_image.with_attached_video.with_attached_audio,
+      Post.includes(:user, :community).with_attached_image.with_attached_video.with_attached_audio.with_attached_images,
       params[:id]
-    ).with_attached_images
+    )
     # A moderator-removed post is gone for everyone, including via direct link.
     raise ActiveRecord::RecordNotFound if @post&.removed_at?
   end
