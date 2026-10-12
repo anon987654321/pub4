@@ -34,6 +34,20 @@ class TestModelHealth < Minitest::Test
     refute_includes result, "must-never-be-rendered"
   end
 
+  def test_model_health_is_reachable_through_the_model_subcommand
+    result = Registry.dispatch_model(
+      agent: Agent.new(Router.new(Pool.new(
+        "provider:model" => { calls: 2, successes: 1, failures: 1, latency_ms: 400.0 },
+      ))),
+      config: nil,
+      metrics: nil,
+      root: Master::ROOT,
+      arg: "health",
+    )
+
+    assert_includes result, "model health: 1 models, 2 calls, success=50.0%, failures=1"
+  end
+
   def test_health_report_states_when_no_calls_have_been_recorded
     assert_equal(
       "model health: no recorded calls yet; /model compute lists reachable lanes",
