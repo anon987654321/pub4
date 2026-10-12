@@ -265,7 +265,7 @@ module Deploy
       verdict[:hard] << "screenshot failed: #{screenshot_error}" if screenshot_error
       verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
-      pixel = pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:, status_label:, hard_failures: verdict[:hard])
+      pixel = pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:)
       if %w[REGRESSION DIMENSION_MISMATCH].include?(pixel["status"])
         verdict[:hard] << pixel.fetch("reason")
       elsif %w[MISSING UNSUPPORTED].include?(pixel["status"])
@@ -321,7 +321,7 @@ module Deploy
       row
     end
 
-    def pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:, status_label:, hard_failures:)
+    def pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:)
       baseline = self.class.visual_baseline_path(surface)
       return { "status" => "NOT_TRACKED" } unless baseline
       return { "status" => "UNMEASURED", "baseline" => baseline } if screenshot_error || !File.file?(screenshot)
