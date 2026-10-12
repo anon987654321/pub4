@@ -201,6 +201,7 @@ is the reference.
 
 **Ruby and zsh, not GNU text tools.** `sed`, `awk`, `find`, `head`, `tail`, `wc`,
 Before targeted reading on an unfamiliar or broad task, run `ruby MASTER/tools/agent_context.rb --tree`. Treat the result as the map; then read relevant source systematically rather than sampling arbitrary files.
+Search with `git grep`: zsh aborts a command whose glob matches nothing, and `--include=*.rb` is one.
 Keep shell commands readable: prefer zsh globs and builtins, one meaningful operation per line, and `&&` only for a real dependency. In Ruby, use argv execution through `Master::Io::Exec` rather than backticks or interpolated shell strings.
 `perl` and `python` are banned in agent shell calls and committed scripts: BSD
 variants break GNU idioms and this repo deploys to OpenBSD. Use `ruby -e`, zsh

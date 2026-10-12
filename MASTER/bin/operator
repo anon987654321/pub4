@@ -51,6 +51,7 @@ def usage
       bin/operator measure --since <ref>  which recorded ceilings moved since <ref>
       bin/operator lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
+      bin/operator branches               every branch against main: merged, active, conflicts, deletes_heavily or ready
       bin/operator land -m <msg> <path>...  commit, rebase, re-check, push
       bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
       bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live gates probe
@@ -377,6 +378,10 @@ when "law:twin"
 when "law:matrix"
   output = Operator::LawInventory.render_collection(:matrix, json: ARGV.include?("--json"))
   Master::Trace::Dmesg::Report.print(command.to_s, output) if output
+  exit 0
+when "branches"
+  require "operator/branches"
+  Master::Trace::Dmesg::Report.print("branches", Operator::Branches.render(Operator::Branches.rows(root: ROOT)))
   exit 0
 when "memory"
   exit Operator::MemoryReview.run(ARGV, root: ROOT)
