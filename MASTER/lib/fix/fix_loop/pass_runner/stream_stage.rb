@@ -36,7 +36,7 @@ module Master
             queue = Queue.new
             @stream_stopped_at = nil
             workers = start_workers(queue, streamed, pass, [Time.now + PASS_BUDGET_SECONDS, deadline].min)
-            found = stream_violations(files, queue)
+            found = stream_violations(files, queue, streamed)
             WORKERS.times { queue << :done }
             finish_stream(workers.sum(&:value), found, files, pass)
             found = refresh_streamed_findings(found, streamed)
@@ -47,16 +47,39 @@ module Master
             stop_workers(queue, workers)
           end
 
-          def stream_violations(files, queue)
+          def stream_violations(files, queue, streamed = Set.new)
             raw = []
+            ranked = []
+            rank = rank_worklist?
             files.each do |path|
               rows = violations_for(path)
               raw.concat(rows)
               next if rows.empty?
 
-              queue << [path, resolve_violations(rows)]
+              item = [path, resolve_violations(rows)]
+              rank ? ranked << item : queue << item
             end
+            enqueue_ranked(ranked, queue, streamed) if rank
             resolve_violations(raw)
+          end
+
+          # Ranking waits for the whole scan, which streaming exists to avoid, so
+          # it is on when a run is limited (--max-files) or MASTER_FIX_RANK=1.
+          def rank_worklist? = ENV["MASTER_FIX_RANK"] == "1" || !RunLedger.max_files.nil?
+
+          # Fewest deterministic findings first: the files a model is most likely
+          # to finish in one call go before the ones that need a rewrite. With
+          # --max-files N only the first N are taken; the rest count as handled
+          # so the rule stage after the scan does not send them anyway.
+          def enqueue_ranked(ranked, queue, streamed)
+            ordered = ranked.sort_by { |path, rows| [rows.size, path] }
+            limit = RunLedger.max_files
+            taken, left = limit ? ordered.partition.with_index { |_, index| index < limit } : [ordered, []]
+            taken.each { |item| queue << item }
+            left.each { |path, rows| rows.each { |row| streamed << [path.delete_prefix("#{@root}/"), row[:law].to_s] } }
+            return if left.empty?
+
+            Master::Trace::Dmesg.status("fix0", "worklist ranked by finding count, easiest first: #{taken.size} file(s) taken, #{left.size} left (--max-files #{limit})")
           end
 
           def start_workers(queue, streamed, pass, budget)

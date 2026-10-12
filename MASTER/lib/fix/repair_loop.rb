@@ -22,6 +22,8 @@ require_relative "best_of_n"
 require_relative "tool_breaker"
 require_relative "../review/scan/law_health"
 require_relative "repair_loop/autofix_policy"
+require_relative "run_ledger"
+require_relative "repair_loop/file_budget"
 
 module Master
   module Fix
@@ -95,6 +97,7 @@ module Master
       include FixVerification
       include OutcomeTracking
       include AutofixPolicy
+      include FileBudget
 
       def initialize(law:, agent:, scanner:, root:, **options)
         @law = law
@@ -176,13 +179,16 @@ module Master
         end
         return :skip_confidence unless autofix_allowed?(violation)
         return :skip_fingerprint unless fingerprint_matches?(violation)
+        return :skip_rejected_twice if RunLedger.file_done?(violation[:file])
 
         note_unverified_fix(violation)
         FixTrace.begin_attempt(@law.id, violation[:file])
         @model_failed = false
         @model_unavailable = false
         return :model_unavailable unless @agent
-        source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
+        start_file_budget
+        source = within_file_budget(violation) { violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation) }
+        return :file_timeout if @file_timed_out
         return (if @model_unavailable
 :model_unavailable
 else
@@ -193,9 +199,21 @@ end) if source.to_s.strip.empty?
         return :no_proposal if source.to_s.strip.empty?
 
         FixTrace.proposed(@law.id, violation[:file], source)
-        verified = reflexion_verify(violation, source)
-        return (FixTrace.rejected(@law.id, violation[:file], "reflexion verifier refused") && :reflexion_rejected) unless verified
-        return (FixTrace.rejected(@law.id, violation[:file], "consensus refused") && :consensus_rejected) unless consensus_approves?(violation, verified)
+        if (outside = outside_finding_range(violation, source))
+          RunLedger.reject("out_of_scope", file: violation[:file], law: @law.id, bus: @bus)
+          FixTrace.rejected(@law.id, violation[:file], outside)
+          return :out_of_scope
+        end
+        verified = within_file_budget(violation) { reflexion_verify(violation, source) }
+        return :file_timeout if @file_timed_out
+        unless verified
+          RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus)
+          return (FixTrace.rejected(@law.id, violation[:file], "reflexion verifier refused") && :reflexion_rejected)
+        end
+        unless consensus_approves?(violation, verified)
+          RunLedger.reject("consensus_refused", file: violation[:file], law: @law.id, bus: @bus)
+          return (FixTrace.rejected(@law.id, violation[:file], "consensus refused") && :consensus_rejected)
+        end
 
         applied = apply(violation[:file], verified, violation)
         return :skip_fingerprint if applied == :stale
@@ -347,6 +365,7 @@ end) if source.to_s.strip.empty?
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
+        RunLedger.reject(reason, file: path, law: @law.id)
         @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false
@@ -470,6 +489,7 @@ end) if source.to_s.strip.empty?
         message = error.message.to_s
         info = (@failure_taxonomy || Ground::FailureTaxonomy.new).handle(error)
         @model_failed = true
+        RunLedger.lane_failed(@agent.model) if @agent.respond_to?(:model)
         publish_fix_failure(info[:category], event, violation, message)
         Master::Trace::Dmesg.status(
           "fix0",

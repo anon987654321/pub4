@@ -37,6 +37,7 @@ module Master
       @mutex = Mutex.new
       @clock = -> { Time.now.to_f }
       @path = nil
+      @run_drops = {}
 
       attr_writer :clock, :path
 
@@ -101,9 +102,20 @@ module Master
 
       def dead?(model, manual: manual_dead) = until_for(model, manual:) != nil
 
-      # Epoch deadline, :manual for the hand-kept list, or nil when the lane is live.
+      # A lane this run gave up on (slow or dead at the probe, or failing file after file).
+      # Memory only: the next run asks again, and nothing here claims the provider's quota is spent.
+      def drop_for_run!(lane, reason)
+        @mutex.synchronize { @run_drops[lane.to_s] = reason.to_s }
+      end
+
+      def run_drops = @mutex.synchronize { @run_drops.dup }
+
+      def clear_run_drops! = @mutex.synchronize { @run_drops.clear }
+
+      # Epoch deadline, :manual for the hand-kept list, :run for a lane dropped for this run, or nil when the lane is live.
       def until_for(model, manual: manual_dead)
         return :manual if manual.any? { |entry| model.to_s.start_with?(entry) }
+        return :run if @mutex.synchronize { @run_drops.key?(lane_of(model)) }
 
         @mutex.synchronize { table[lane_of(model)] }
       end

@@ -19,7 +19,7 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
-        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint skip_fused skip_law_budget needs_person].freeze
+        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected out_of_scope file_timeout skip_rejected_twice skip_confidence skip_fingerprint skip_fused skip_law_budget needs_person].freeze
 
         def fix_batch(violations)
           results = []

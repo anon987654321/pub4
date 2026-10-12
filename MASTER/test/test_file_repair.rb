@@ -45,7 +45,7 @@ class TestFileRepair < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, (["x = :bad"] + (["y = 1"] * 250)).join("\n") + "\n")
-      agent = Agent.new("```ruby\nx = :good\n#{(["y = 1"] * 250).join("\n")}\n```")
+      agent = Agent.new("```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,2 +1,2 @@\n-x = :bad\n+x = :good\n y = 1\n```")
 
       subject = repair(root, path, agent)
       result = subject.run(path)
@@ -55,7 +55,8 @@ class TestFileRepair < Minitest::Test
       assert_includes fixes.first, "FEW_ARGUMENTS"
       assert_includes fixes.first, "CQS"
       refute_includes fixes.first, "SMALL_FILES", "a split waits for a person"
-      assert_operator fixes.first.bytesize, :<, 12_000, "the rules named, not the 30 KB constitution"
+      assert_operator fixes.first.bytesize, :<, 4_000, "the rules and a window of the file, not the 30 KB constitution or all 250 lines"
+      assert_includes fixes.first, "minimal unified diff"
       assert_equal 1, result[:fixed]
       assert_equal "x = :good\n", File.readlines(path).first
       assert_equal %w[FEW_ARGUMENTS CQS], subject.asked_rules, "a split filtered out is not asked"

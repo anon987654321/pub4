@@ -34,8 +34,10 @@ if (i = args.index("--model"))
   args.delete_at(i)
   model_flag = args.delete_at(i)
 end
+passthrough = args.select { |arg| arg.match?(/\A--(?:autofix|max-files)=/) }
+args -= passthrough
 tree = args.shift
-abort "usage: MASTER/bin/fix-here <#{TREES.join('|')}|path> [--model ID|none] [--no-probe] [--dry]" if tree.to_s.empty? || args.any?
+abort "usage: MASTER/bin/fix-here <#{TREES.join('|')}|path> [--model ID|none] [--no-probe] [--dry] [--autofix=off|dry|on] [--max-files=N]" if tree.to_s.empty? || args.any?
 abort "fix-here: #{tree} is not one of #{TREES.join(', ')} and not a path in this checkout" unless TREES.include?(tree) || File.exist?(File.join(ROOT, tree))
 
 # 1. A worktree, not the shared checkout: .git is a file in a worktree.
@@ -120,7 +122,7 @@ end
 
 status = nil
 begin
-  pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, chdir: ROOT, out: [log, "w"], err: [:child, :out])
+  pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, *passthrough, chdir: ROOT, out: [log, "w"], err: [:child, :out])
 # Ends the run when the pulse reports a stall past the limit, instead of waiting out hours.
 stalled = false
 watcher = Thread.new do

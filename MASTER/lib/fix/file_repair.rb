@@ -51,19 +51,51 @@ module Master
           message: @findings.map { |finding| "#{finding[:law]} line #{finding[:line]}" }.join("; ") }
       end
 
-      # Straight to the file: no architecture plan, and one candidate.
+      # Straight to the finding: no architecture plan, one request. The model sees
+      # each failing line with CONTEXT_LINES around it, not the file, and answers
+      # with a minimal unified diff; a whole-file rewrite is what the verifier
+      # kept refusing on 2026-10-12.
       def request_fix(violation)
         path = violation[:file]
         src = File.read(path, encoding: "UTF-8")
-        return diff_fix(violation:, src:, path:) if src.bytesize > PatchApplier::DIFF_THRESHOLD
-
-        genetic_fix(violation:, src:, path:)
+        excerpt_fix(src:, path:)
       end
 
-      def genetic_autofix_candidates = 1
+      def scope_lines(_violation) = @findings.map { |finding| finding[:line].to_i }
 
-      def build_prompt_for(violation:, src:, path:, style: :file)
-        ctx = prompt_context_for(violation:, path:, style:)
+      CONTEXT_LINES = 40
+
+      def excerpt_fix(src:, path:)
+        prompt = excerpt_prompt(src, path)
+        MAX_FIX_RETRIES.times do |attempt|
+          wait_before_retry(attempt, rule: @law.id, file: path, mode: :excerpt)
+          response = ask_agent(prompt, image: @visual_image).to_s
+          return if response.strip == "UNCHANGED" || response.strip.empty?
+
+          result = PatchApplier.apply(src, diff_of(response))
+          return result.source if result.is_a?(PatchApplier::Success)
+
+          @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: result.reason.to_s[0, 160])
+        rescue StandardError => e
+          return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
+        end
+        nil
+      end
+
+      # The diff inside a fence when the reply is fenced, else the reply.
+      def diff_of(response)
+        response[/^```(?:diff|patch)?[ \t]*\n(.*?)^```/m, 1] || response
+      end
+
+      # Each finding's line window, overlapping windows merged, numbered by the
+      # file's own line numbers in the heading only so the diff's context stays exact.
+      def excerpt_prompt(src, path)
+        lines = src.lines
+        windows = merged_windows(lines.size)
+        ctx = prompt_context_for(violation: {}, path:, style: :diff)
+        parts = windows.map do |first, last|
+          "Lines #{first}-#{last} of #{lines.size}:\n```#{ctx[:lang]}\n#{lines[(first - 1)..(last - 1)].join}```"
+        end
         <<~PROMPT
           #{GOLDEN}
           #{rule_notes}
@@ -72,12 +104,22 @@ module Master
           Findings. Repair each one that is real; leave any you judge a false positive as it is:
           #{finding_lines}
 
-          #{ctx[:action]}
+          #{parts.join("\n\n")}
 
-          ```#{ctx[:lang]}
-          #{src}
-          ```
+          Reply with ONLY a minimal unified diff for this one file (`--- a/#{File.basename(path)}` / `+++ b/#{File.basename(path)}`, @@ hunks).
+          Copy context lines exactly. Change only lines a finding names; do not reformat, reorder or rename anything else.
+          If no finding is real, reply exactly: UNCHANGED
         PROMPT
+      end
+
+      def merged_windows(total)
+        spans = @findings.map { |finding| finding[:line].to_i }.select(&:positive?).sort.map do |line|
+          [[line - CONTEXT_LINES, 1].max, [line + CONTEXT_LINES, total].min]
+        end
+        spans = [[1, [total, 2 * CONTEXT_LINES].min]] if spans.empty?
+        spans.each_with_object([]) do |span, merged|
+          merged.last && span.first <= merged.last.last + 1 ? merged.last[1] = [merged.last.last, span.last].max : merged << span
+        end
       end
 
       def rule_notes

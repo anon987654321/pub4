@@ -356,10 +356,26 @@ module Master
         def observe_pass(files, target, pass, deadline)
           @scan_total = files.size
           guarded(:fast_fixes, pass) { run_fast_stage(files, pass) }
+          guarded(:lane_probe, pass) { probe_lanes_once }
           enter_phase(:stream, pass)
           found, streamed = streaming_observation(files, target, pass, deadline)
           structure = files.empty? ? [] : guarded(:structure, pass, []) { structural_findings(files:) }
           [found + structure, streamed]
+        end
+
+        # Once per run, before any file is sent to a model: lanes that are dead
+        # or too slow to repair anything are dropped for the run (LaneProbe).
+        # The suite is the proof and makes no live call, so it skips this.
+        def probe_lanes_once
+          return if @lanes_probed
+
+          @lanes_probed = true
+          return unless LaneProbe.enabled? && ENV["MASTER_IN_PROOF"] != "1" && @agent.respond_to?(:ask_once)
+
+          models = Array(@agent.respond_to?(:candidate_models) ? @agent.candidate_models : nil)
+          models = Master::Io::LaneSelection.catalogue if models.empty?
+          models = models.select { |model| Master::Io::LaneSelection.alive?(model) }
+          LaneProbe.run(models:, ask: LaneProbe.ask_with(@agent))
         end
 
         def run_observation_stage(files, target)

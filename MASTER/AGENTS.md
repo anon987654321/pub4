@@ -242,6 +242,20 @@ files (`MASTER_AUTOFIX_MAX_FILES`); the rest are named in the pass summary.
 writes nothing, dry writes the diff to `.master/autofix-<time>.patch` and leaves
 every file as it was.
 
+The model phase is bounded the same way. Before the first file it sends each
+live lane one tiny request (`Fix::LaneProbe`, 20 s, `MASTER_FIX_PROBE_S`;
+`MASTER_FIX_PROBE=0` skips it) and drops any lane that errors or answers late
+for the rest of the run. Each file gets 90 s of model time
+(`MASTER_FIX_FILE_BUDGET_S`); a file that spends it is skipped and named in the
+summary, and a lane that fails twice is dropped for the run. A repair sends the
+failing finding with forty lines around it and asks for a minimal unified diff;
+a proposal that changes lines more than twenty-five from every finding is
+refused before the verifier is asked, and a file stops after two rejected
+proposals. The pass summary prints the rejects by reason. `--max-files=N` (or
+`MASTER_FIX_MAX_FILES`) takes only the N files with the fewest findings, easiest
+first, which means scanning everything before repairing the first; without it
+the run repairs files as they are scanned. `Fix::RunLedger` holds this state.
+
 **A red gate that names no finding is usually a gate that cannot load.**
 `rails_runtime` failed at `require` time for months and read as a normal
 failure. Check the gate before chasing its verdict.

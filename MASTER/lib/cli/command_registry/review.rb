@@ -267,6 +267,9 @@ module Master
       # off, dry or on: what the deterministic autofix stage may do (Fix::AutofixGuard).
       AUTOFIX_FLAG = /\A--autofix=(off|dry|on)\z/i
 
+      # How many files the model phase takes, easiest first (Fix::RunLedger.max_files).
+      MAX_FILES_FLAG = /\A--max-files=(\d+)\z/i
+
       def parse_pass_flags(raw)
         flags = { apply: nil, critique: nil, aesthetic: true, only: nil }
         path_bits = []
@@ -277,6 +280,8 @@ module Master
             next
           elsif token =~ AUTOFIX_FLAG
             Master::Fix::AutofixGuard.mode = Regexp.last_match(1)
+          elsif token =~ MAX_FILES_FLAG
+            Master::Fix::RunLedger.max_files = Regexp.last_match(1)
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)
           else
