@@ -113,7 +113,12 @@ module Master
         return Result.new(ok: true, changed: false, bundler: nil, bundle: nil, system: nil,
                           message: "no Gemfile", output: nil) unless gemfile?
 
+        deployed = adopt_deploy_bundle
+        return deployed if deployed && !deployed.ok
+
         activate_environment!
+        return deployed if deployed
+
         with_lock do
           bundler = ensure_bundler
           return bundler unless bundler.ok
@@ -265,6 +270,48 @@ module Master
         return "" unless File.file?(lock)
 
         File.read(lock)[/^RUBY VERSION\n\s+ruby\s+(.+)$/m, 1].to_s.strip
+      end
+
+      # The bundle the deploy installed. vps_deploy_master.sh runs `bundle install`
+      # as the deploy user with the path recorded in MASTER/.bundle/config, and
+      # the daemon runs as another user whose HOME holds no private store: asking
+      # it to build one means a 177-gem install under a probe timeout, with the
+      # real bundle sitting next door. A bundle that already satisfies the lock
+      # is read as it stands (frozen, no install, no lock write); one that does
+      # not is refused loudly when this user cannot write it, and left to the
+      # private store when it can, which is the behaviour before the deploy
+      # bundle existed.
+      def adopt_deploy_bundle
+        path = deploy_bundle_path
+        return unless path
+
+        @deploy_bundle = path
+        ok, stdout, stderr = run_bundle("check")
+        output = join_output(stdout, stderr)
+        native_ok, native_stdout, native_stderr = ok ? probe_native_bundle : [true, "", ""]
+        return ok_result("deploy bundle clean", changed: false, bundle: true, output:) if ok && native_ok
+
+        output = join_output(output, native_stdout, native_stderr)
+        unless File.writable?(path)
+          return fail_result(
+            "deploy bundle at #{path} does not satisfy #{File.join(@root, 'Gemfile.lock')} " \
+            "and uid #{Process.uid} cannot write it; run vps-deploy as the deploy user",
+            output:,
+          )
+        end
+
+        @deploy_bundle = nil
+        nil
+      end
+
+      def deploy_bundle_path
+        config = File.join(@root, ".bundle", "config")
+        return unless File.file?(config)
+
+        path = File.read(config)[/^BUNDLE_PATH:\s*"?([^"\s]+)"?\s*$/, 1]
+        path if path && File.directory?(path)
+      rescue SystemCallError
+        nil
       end
 
       def ensure_bundler
@@ -542,7 +589,7 @@ module Master
         # A parent that ran bundler/setup leaves RUBYOPT and RUBYLIB pointing at
         # its own Bundler; the pinned `bundle` then loads a second copy beside it
         # and Bundler::Thor dies with a superclass mismatch.
-        (BUNDLE_CONTEXT_KEYS + %w[RUBYOPT RUBYLIB]).each { |key| env[key] = nil }
+        (BUNDLE_CONTEXT_KEYS + %w[RUBYOPT RUBYLIB BUNDLE_BIN_PATH BUNDLER_SETUP BUNDLER_VERSION]).each { |key| env[key] = nil }
         env.merge!(
           "BUNDLE_GEMFILE" => File.join(@root, "Gemfile"),
           "BUNDLE_RETRY" => "3",
@@ -555,6 +602,22 @@ module Master
         without = @env["BUNDLE_WITHOUT"].to_s
         without = "tts" if without.empty? && @env["MASTER_SKIP_TTS"] == "1"
         env["BUNDLE_WITHOUT"] = without unless without.empty?
+        deploy_bundle_env(env)
+      end
+
+      # The deploy bundle is installed without the development and test groups
+      # and is only ever read.
+      def deploy_bundle_env(env)
+        return env unless @deploy_bundle
+
+        env.merge!(
+          "BUNDLE_PATH" => @deploy_bundle,
+          "BUNDLE_FROZEN" => "true",
+          "BUNDLE_APP_CONFIG" => nil,
+          "GEM_HOME" => nil,
+          "GEM_PATH" => nil,
+        )
+        env["BUNDLE_WITHOUT"] ||= "development:test"
         env
       end
 

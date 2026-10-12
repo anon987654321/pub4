@@ -117,7 +117,21 @@ rcctl check master
 
 echo "==> smoke"
 curl -fsS http://127.0.0.1:53187/up
-curl -fsS http://127.0.0.1:53187/health | ruby -rjson -e 'h=JSON.parse(STDIN.read); d=h["deploy"]||{}; abort("tts_socket false") if d["tts_socket"]==false; abort("checks.tts false") if h.dig("checks","tts")==false; puts "health ok sha=#{d["git_sha"]} tts_socket=#{d["tts_socket"]}"'
+# /health runs the TTS worker's --selftest on its first call and keeps a failed
+# answer for a minute, so one early miss under the restart's load is not a
+# verdict. Poll for two minutes; the last attempt's reason (the "blocked" field
+# /health prints on a 503) is what the operator reads.
+_health_ok=0
+_try=0
+while [ "$_try" -lt 8 ]; do
+  if curl -sS http://127.0.0.1:53187/health | ruby -rjson -e 'h=JSON.parse(STDIN.read); d=h["deploy"]||{}; abort("tts_socket false: #{h["blocked"].inspect}") if d["tts_socket"]==false; abort("checks.tts false: #{h["blocked"].inspect}") if h.dig("checks","tts")==false; puts "health ok sha=#{d["git_sha"]} tts_socket=#{d["tts_socket"]}"'; then
+    _health_ok=1
+    break
+  fi
+  _try=$((_try + 1))
+  sleep 15
+done
+[ "$_health_ok" = 1 ] || exit 1
 ruby "$WEB/script/probe_http"
 
 echo "==> master deploy ok"

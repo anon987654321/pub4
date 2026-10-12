@@ -359,6 +359,62 @@ class TestDependencyManager < Minitest::Test
     assert_equal File.dirname(RbConfig.ruby), env["PATH"].split(File::PATH_SEPARATOR).first
   end
 
+  # vps_deploy_master.sh installs MASTER's bundle as the deploy user at the path
+  # in MASTER/.bundle/config. The daemon runs as `master`, whose HOME has no
+  # private store, so without this it tried a 177-gem install inside a probe
+  # timeout (2026-10-12: TTS down, /health 503).
+  def with_deploy_bundle(path_dir = Dir.mktmpdir("deploy-bundle-"))
+    FileUtils.mkdir_p(File.join(@root, ".bundle"))
+    File.write(File.join(@root, ".bundle", "config"), %(---\nBUNDLE_PATH: "#{path_dir}"\n))
+    yield path_dir
+  ensure
+    FileUtils.rm_rf(path_dir)
+  end
+
+  def test_a_satisfied_deploy_bundle_is_used_read_only_without_a_private_store
+    with_deploy_bundle do |dir|
+      manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
+      result = manager.ensure!
+
+      assert result.success?, result.output.to_s
+      refute(@commands.any? { |argv, *| argv.include?("install") }, "must not install")
+      env = @commands.first[2]
+      assert_equal dir, env["BUNDLE_PATH"]
+      assert_equal "true", env["BUNDLE_FROZEN"]
+      assert_equal "development:test", env["BUNDLE_WITHOUT"]
+      assert_nil env["GEM_HOME"]
+      assert env.key?("BUNDLE_APP_CONFIG"), "named with nil so the private app config is unset"
+      assert_nil env["BUNDLE_APP_CONFIG"]
+      refute(Dir.exist?(File.join(@root, ".master", "bundler")), "no private store may be created")
+    end
+  end
+
+  def test_an_unsatisfied_deploy_bundle_the_user_cannot_write_fails_loudly_without_installing
+    with_deploy_bundle do |dir|
+      manager = fake_manager([[false, "", "Could not find ferrum-0.17.1 in locally installed gems"]])
+      File.stub(:writable?, false) do
+        result = manager.ensure!
+
+        refute result.success?
+        assert_includes result.message, dir
+        assert_includes result.message, "run vps-deploy"
+        assert_includes result.output, "Could not find ferrum"
+        refute(@commands.any? { |argv, *| argv.include?("install") }, "must not install")
+      end
+    end
+  end
+
+  def test_bundle_commands_drop_the_parents_bundler_preload
+    manager = fake_manager([[true, "ok", ""]])
+    manager.instance_variable_get(:@env).merge!("BUNDLER_SETUP" => "/web/bundler/setup", "BUNDLE_BIN_PATH" => "/web/bundle")
+    manager.ensure!
+
+    env = @commands.first[2]
+    %w[BUNDLER_SETUP BUNDLE_BIN_PATH BUNDLER_VERSION].each do |key|
+      assert env.key?(key) && env[key].nil?, "#{key} must be unset for the child bundle"
+    end
+  end
+
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))

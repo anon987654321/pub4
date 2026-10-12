@@ -118,6 +118,51 @@ class TestSpeechSelftestProbe < Minitest::Test
     end
   end
 
+  # The worker narrates before it fails ("deps0: installing bundle"), so the
+  # first line named the step and hid the reason. 2026-10-12: /health said only
+  # "worker selftest exited : deps0: installing bundle for MASTER".
+  def test_a_failing_worker_surfaces_the_reason_at_the_end_of_stderr_not_the_narration
+    failed = Struct.new(:success?, :exitstatus).new(false, 78)
+    stderr = "deps0: installing bundle for MASTER\nderr: bundle install failed\nderr: Errno::EACCES /root/.master\n"
+    Master::Io::Exec.stub(:capture3, ["", stderr, failed]) do
+      reset_memo!
+
+      blocker = Speech.edge_tts_blocker.to_s
+      assert_includes blocker, "EACCES /root/.master"
+      assert_includes blocker, "installing bundle"
+    end
+  end
+
+  def test_a_killed_probe_says_it_was_killed_rather_than_exited_blank
+    killed = Struct.new(:success?, :exitstatus, :termsig).new(false, nil, 9)
+    Master::Io::Exec.stub(:capture3, ["", "deps0: installing bundle for MASTER\n", killed]) do
+      reset_memo!
+
+      blocker = Speech.edge_tts_blocker.to_s
+      assert_includes blocker, "killed"
+      assert_includes blocker, "signal 9"
+      refute_includes blocker, "exited"
+    end
+  end
+
+  # A failure that is memoised for good outlives the cause: the deploy's load
+  # that made one probe lose is gone in a minute, the 503 would not be.
+  def test_a_failed_probe_is_retried_after_the_retry_window
+    failed = Struct.new(:success?, :exitstatus).new(false, 1)
+    calls = 0
+    Master::Io::Exec.stub(:capture3, ->(*_a, **_o) { calls += 1; ["", "boom\n", failed] }) do
+      reset_memo!
+
+      Speech.edge_tts_blocker
+      Speech.edge_tts_blocker
+      assert_equal 1, calls, "a fresh failure must be memoised"
+
+      Speech.instance_variable_set(:@selftest_at, Process.clock_gettime(Process::CLOCK_MONOTONIC) - Speech::SELFTEST_RETRY_S - 1)
+      Speech.edge_tts_blocker
+      assert_equal 2, calls, "a stale failure must be probed again"
+    end
+  end
+
   # The cheap probe keeps its job. It gates the synthesis path, which runs per
   # utterance, and a subprocess there would cost more than the failed attempt
   # it avoids.
@@ -132,6 +177,7 @@ class TestSpeechSelftestProbe < Minitest::Test
   def reset_memo!
     Speech.instance_variable_set(:@selftest_stamp, nil)
     Speech.instance_variable_set(:@selftest_blocker, nil)
+    Speech.instance_variable_set(:@selftest_at, nil)
   end
 
   def count_selftest_spawns

@@ -29,9 +29,14 @@ module Master
       WORKER_TIMEOUT_PER_CHAR = 0.05
       WORKER_TIMEOUT_MAX = 180
       # The selftest only boots bundler and requires: 0.26s warm on a dev Mac,
-      # measured over three runs. Generous enough for a cold 1-vCPU vm23 under
-      # swap, and it is paid once per process because the answer is memoised.
-      SELFTEST_TIMEOUT_S = 15
+      # measured over three runs. On a cold 1-vCPU vm23 under swap it also runs
+      # `bundle check` and a native probe first, so the budget is 45s; it is paid
+      # once per process because the answer is memoised.
+      SELFTEST_TIMEOUT_S = 45
+      # A failed probe is retried after this long. Memoised forever, one probe
+      # that lost to a deploy's load kept /health at 503 until the next restart.
+      SELFTEST_RETRY_S = 60
+      SELFTEST_DETAIL_CHARS = 400
       @last_error = nil
       @selftest_mutex = Mutex.new
       @selftest_stamp = nil
@@ -169,10 +174,14 @@ module Master
       def edge_tts_blocker
         @selftest_mutex.synchronize do
           stamp = selftest_stamp
-          next @selftest_blocker if @selftest_stamp == stamp
+          now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          fresh = @selftest_blocker.nil? || (now - @selftest_at.to_f) < SELFTEST_RETRY_S
+          next @selftest_blocker if @selftest_stamp == stamp && fresh
 
           @selftest_stamp = stamp
           @selftest_blocker = probe_worker_selftest
+          @selftest_at = now
+          @selftest_blocker
         end
       end
 
@@ -201,10 +210,20 @@ module Master
         )
         return if status.success?
 
-        detail = err.to_s.lines.map(&:strip).reject(&:empty?).first
-        "worker selftest exited #{status.exitstatus}#{": #{detail}" if detail}"
+        # The tail, not the head: the worker narrates ("installing bundle") before
+        # it fails, and the first line alone named the step without the reason.
+        detail = err.to_s.lines.map(&:strip).reject(&:empty?).last(3).join(" | ")[0, SELFTEST_DETAIL_CHARS]
+        "worker selftest #{selftest_outcome(status)}#{": #{detail}" unless detail.empty?}"
       rescue StandardError => e
         "worker selftest could not run: #{e.class}: #{e.message}"
+      end
+
+      # A killed probe has no exit status; "exited " with nothing after it hid a
+      # timeout behind what read as an exit.
+      def selftest_outcome(status)
+        return "exited #{status.exitstatus}" if status.exitstatus
+
+        "was killed (#{status.termsig ? "signal #{status.termsig}" : "no exit status"}) after #{SELFTEST_TIMEOUT_S}s at most"
       end
 
       def espeak_path

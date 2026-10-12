@@ -34,6 +34,10 @@ module Master
       ].freeze
 
       SPAWN_ENV_KEYS = %w[HOME USER PATH LANG LC_ALL].freeze
+      INHERITED_BUNDLER_KEYS = %w[
+        RUBYOPT RUBYLIB BUNDLE_LOCKFILE BUNDLE_BIN_PATH BUNDLE_DEPLOYMENT
+        BUNDLER_SETUP BUNDLER_VERSION
+      ].freeze
 
       @pool_rr = 0
       @spawn_failures = {}
@@ -330,6 +334,12 @@ module Master
           env[key] = ENV[key] if ENV[key]
         end
         env["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
+        # Process.spawn merges this hash onto the parent's environment, so a key
+        # that is merely absent here is inherited. Falcon runs under `bundle
+        # exec`, and its RUBYOPT, BUNDLER_SETUP and BUNDLE_BIN_PATH made the
+        # worker's own `bundle install` preload the web bundle's setup and die
+        # with GemNotFound (vm23, 2026-10-12). Naming a key with nil unsets it.
+        INHERITED_BUNDLER_KEYS.each { |key| env[key] = nil }
         env
       end
 

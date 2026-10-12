@@ -86,6 +86,17 @@ class TestSpeech < Minitest::Test
     ENV.delete("BUNDLE_LOCKFILE")
   end
 
+  # The assertions above read the hash, but Process.spawn merges the hash onto
+  # the parent's environment: an absent key is inherited, only a key named with
+  # nil is unset. Falcon's bundle-exec variables reached the worker that way.
+  def test_daemon_env_names_the_parents_bundler_keys_with_nil_so_spawn_unsets_them
+    env = Master::Voice::TtsSupervisor.daemon_env(Master::ROOT)
+    %w[RUBYOPT RUBYLIB BUNDLE_LOCKFILE BUNDLE_BIN_PATH BUNDLER_SETUP BUNDLER_VERSION BUNDLE_DEPLOYMENT].each do |key|
+      assert env.key?(key), "#{key} must be named so Process.spawn unsets the inherited value"
+      assert_nil env[key]
+    end
+  end
+
   def test_daemon_env_path_is_not_inherited_from_caller
     original_path = ENV["PATH"]
     ENV["PATH"] = "/wrong/web/vendor/bundle/ruby/3.4/bin:/usr/local/bin"
