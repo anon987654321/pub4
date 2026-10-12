@@ -43,7 +43,16 @@ module Master
 
       def path = @path || ENV["MASTER_LANE_QUOTA_PATH"] || File.expand_path("../../.master/lane_quota.yml", __dir__)
 
-      def lane_of(model) = model.to_s.split(":", 2).first.to_s
+      # One cooldown lane per actual quota boundary. CLI ids use `provider:model`;
+      # API ids use `vendor/model`. OpenRouter's :free models share a daily
+      # free-pool limit, so their vendor slug is not an independent quota lane.
+      def lane_of(model)
+        id = model.to_s
+        return "openrouter-free" if id.end_with?(":free")
+        return "ollama" if id.start_with?("ollama:", "ollama/")
+
+        id.include?("/") ? id.split("/", 2).first.to_s : id.split(/[:-]/, 2).first.to_s
+      end
 
       # Seconds a reply says to wait; nil when it names none.
       def wait_in(reply) = LaneReply.stated_wait(reply.to_s, @clock.call)
