@@ -40,7 +40,8 @@ module Master
 
         look = look.with(yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0) if ENV["MASTER_REDUCED_MOTION"] == "1"
         law_config = Master::Face::LawField.config
-        visible = show_laws.nil? ? law_config.fetch("terminal_law_ring", true) : !!show_laws
+        enabled = law_config.fetch("terminal_law_ring", true) != false
+        visible = enabled && (show_laws.nil? || !!show_laws)
         laws = visible ? Master::Face::LawField.laws : []
         renderer(source || Head.for(rows, cols), rows, cols, chars, mode).render(look, state:, laws:).to_s(color:)
       end
