@@ -175,6 +175,15 @@ class TestLaneQuota < Minitest::Test
     Quota.note("nvidia/nemotron-3-super-120b-a12b:free", "HTTP 429 Retry-After: 900")
     assert Quota.dead?("nvidia/another:free"), "same vendor's short 429 is vendor-scoped"
     refute Quota.dead?("google/gemma-4-31b-it:free"), "a vendor 429 is not the shared free-pool limit"
+
+    Quota.revive("nvidia")
+    Quota.note(
+      "nvidia/nemotron-3-super-120b-a12b:free",
+      "HTTP 429 X-RateLimit-Reset: 1791800000000",
+    )
+    assert Quota.dead?("nvidia/another:free")
+    refute Quota.dead?("google/gemma-4-31b-it:free"),
+           "a reset timestamp without an explicit free-pool refusal stays vendor-scoped"
   end
 
   def test_lane_normalization_preserves_hyphenated_cli_provider_names
