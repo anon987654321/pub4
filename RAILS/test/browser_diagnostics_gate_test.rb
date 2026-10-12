@@ -35,7 +35,7 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     assert surfaces.any? { |surface| surface.app == "brgen" && surface.label == "core" && surface.viewport == "desktop" }
   end
 
-  def test_uncaught_exceptions_and_console_errors_are_blocking
+  def test_uncaught_javascript_exceptions_are_blocking
     verdict = Deploy::BrowserDiagnosticsGate.grade(
       surface: SURFACE, status: 200,
       console_messages: [{ level: "error", source: "exception", text: "Uncaught TypeError", url: "/app.js" }],
@@ -45,6 +45,22 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     assert_equal 1, verdict[:hard].length
     assert_match(/Uncaught TypeError/, verdict[:hard].first)
     assert_empty verdict[:soft]
+  end
+
+  def test_console_errors_and_warnings_are_retained_as_soft_findings_until_strict
+    verdict = Deploy::BrowserDiagnosticsGate.grade(
+      surface: SURFACE, status: 200,
+      console_messages: [
+        { level: "error", source: "console", text: "handled API fallback", url: "/app.js" },
+        { level: "warning", source: "console", text: "deprecated option", url: "/app.js" }
+      ],
+      http_failures: [], request_failures: []
+    )
+
+    assert_empty verdict[:hard]
+    assert_equal 2, verdict[:soft].length
+    assert_match(/console error/, verdict[:soft].first)
+    assert_match(/console warning/, verdict[:soft].last)
   end
 
   def test_document_errors_and_first_party_server_failures_are_blocking
