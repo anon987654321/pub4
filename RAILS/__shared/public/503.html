@@ -2,7 +2,7 @@
 <html lang="nb">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex">
   <title>Midlertidig utilgjengelig</title>
   <style>
@@ -10,16 +10,26 @@
       color-scheme: light dark;
       font-family: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
     }
+    *, *::before, *::after { box-sizing: border-box; }
     body {
       display: grid;
       min-height: 100dvh;
       margin: 0;
-      padding: env(safe-area-inset-top, 0px) 1.25rem env(safe-area-inset-bottom, 0px);
+      padding:
+        max(1rem, env(safe-area-inset-top, 0px))
+        max(1.25rem, env(safe-area-inset-right, 0px))
+        max(1rem, env(safe-area-inset-bottom, 0px))
+        max(1.25rem, env(safe-area-inset-left, 0px));
       place-items: center;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    main { width: 100%; max-width: 36rem; padding-block: 3rem; }
-    p { max-width: 34rem; line-height: 1.5; }
-    a { color: inherit; }
+    main { width: min(100%, 36rem); padding-block: 3rem; }
+    h1 { max-width: 20ch; font-size: clamp(1.5rem, 5vw, 2.25rem); line-height: 1.25; letter-spacing: -0.02em; }
+    p { max-width: 34rem; }
+    a { color: inherit; text-underline-offset: 0.15em; }
+    a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
     .code { font: 700 0.8rem/1.25 ui-monospace, monospace; letter-spacing: .08em; }
   </style>
 </head>
