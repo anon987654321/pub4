@@ -1106,29 +1106,36 @@
 
   function onKeydown(event) {
     if (!root.document || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-    const field = root.MASTER_FACE_LAW_FIELD || {};
-    const key = String(field.toggle_key || "v").toLowerCase();
-    if (String(event.key).toLowerCase() !== key) return;
     const target = event.target;
     if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
-    setLawField(!lawFieldVisible);
+
+    const field = root.MASTER_FACE_LAW_FIELD || {};
+    const pressed = String(event.key).toLowerCase();
     const status = root.document.getElementById("master-face-ascii-status")
       || root.document.getElementById("ui-status");
-    const legend = Array.isArray(field.laws)
-      ? field.laws.map((law) => {
-        const glyph = String(law.glyph || "").slice(0, 1);
-        const name = String(law.id || "").toLowerCase().split("_")[0];
-        return glyph && name ? `${glyph} ${name}` : "";
-      }).filter(Boolean).join(", ")
-      : "";
-    if (status) status.textContent = lawFieldVisible
-      ? `Constitutional law glyphs visible${legend ? ` in priority order: ${legend}` : ""}`
-      : "Constitutional law glyphs hidden";
-    // The regular face loop observes lawFieldVisible and repaints only changed
-    // glyph cells. Calling update() here would create a second canvas on the
-    // primary ASCII face instead of merely revealing its law field.
-  }
+    const lawKey = String(field.toggle_key || "l").toLowerCase();
+    if (pressed === lawKey) {
+      setLawField(!lawFieldVisible);
+      const legend = Array.isArray(field.laws)
+        ? field.laws.map((law) => {
+          const glyph = String(law.glyph || "").slice(0, 1);
+          const name = String(law.id || "").toLowerCase().split("_")[0];
+          return glyph && name ? `${glyph} ${name}` : "";
+        }).filter(Boolean).join(", ")
+        : "";
+      if (status) status.textContent = lawFieldVisible
+        ? `Constitutional law glyphs visible${legend ? ` in priority order: ${legend}` : ""}`
+        : "Constitutional law glyphs hidden";
+      // The regular face loop repaints changed law glyphs without creating another canvas.
+      return;
+    }
 
+    const overlayKey = String(field.overlay_toggle_key || "v").toLowerCase();
+    if (pressed !== overlayKey) return;
+    setGlyphMode(!glyphMode);
+    if (status) status.textContent = glyphMode ? "ASCII face mode enabled" : "ASCII face overlay enabled";
+    update(root.performance ? root.performance.now() : Date.now());
+  }
   const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) {
