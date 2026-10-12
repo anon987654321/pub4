@@ -30,12 +30,14 @@ module Deploy
       {
         label: "core",
         host: APEX,
+        pixel_snapshot: true,
         path: "/",
         expect_body: [/main-content|<main\b/i, /brgen|feed|Home|Skip to main/i],
       },
       {
         label: "marketplace",
         host: "markedsplass.#{APEX}",
+        pixel_snapshot: true,
         path: "/",
         expect_body: [/navBar|Markedsplass|deal-grid|deal-card|search/i],
       },
@@ -49,6 +51,7 @@ module Deploy
       {
         label: "dating",
         host: "dating.#{APEX}",
+        pixel_snapshot: true,
         path: "/",
         expect_body: [/dating|swipe|Oppdag|profile|main|swipe-action/i],
       },
@@ -79,12 +82,14 @@ module Deploy
       {
         label: "maps",
         host: "maps.#{APEX}",
+        pixel_snapshot: true,
         path: "/",
         expect_body: [/map|place|nearby|main/i],
       },
       {
         label: "messenger",
         host: "messenger.#{APEX}",
+        pixel_snapshot: true,
         path: "/",
         # Guest-open messenger — inbox chrome without signup wall
         expect_body: [/conversation|Messages|messenger-compose|message/i],
