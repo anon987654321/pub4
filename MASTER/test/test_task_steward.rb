@@ -124,4 +124,23 @@ class TaskStewardTest < Minitest::Test
     end
   end
 
+
+  def test_continuation_guard_does_not_block_a_mission_claimed_after_its_snapshot
+    Dir.mktmpdir do |root|
+      write_mission(root, goal: "Let's do it!")
+      snapshot = Master::Fix::Mission.current(root:)
+      claimant = Master::Fix::Mission.new(root:)
+      claimant.start_or_resume!(goal: snapshot["goal"], scope: root, origin: "fold")
+
+      blocked = Master::Fix::Mission.new(root:).block_if_unleased!(
+        id: snapshot["id"], reason: "contextless continuation"
+      )
+
+      refute blocked
+      saved = Master::Fix::Mission.current(root:)
+      assert_equal "running", saved["state"]
+      assert_equal Master::Fix::Mission.instance_id, saved["lease_owner"]
+    end
+  end
+
 end
