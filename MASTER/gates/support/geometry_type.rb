@@ -334,8 +334,10 @@ module Deploy
         "geometry micro_type: #{surface.id} rendered prose lacks #{missing.join(", ")} contract",
         severity: :soft,
       )
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      result.incomplete!(
+        "geometry micro_type: #{surface.id} could not be measured (#{e.class}: #{e.message})"
+      )
     end
   end
 end
