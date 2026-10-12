@@ -267,3 +267,10 @@ file sits in a comment on that file; these have no single file to sit on.
   into `bin/check` or `bin/vps-deploy`, never by deleting a recovery door.
 - **No sweep of `|| true`.** Most are idempotence on `rcctl`, `pkill`, `chmod`,
   `install` and `rm -f`. Read the exit path before removing one.
+- **No deleting the four documented fallback scripts.** `manual_master_deploy.ksh`,
+  `vps_production_push.sh`, `ptr_openbsd_amsterdam.rb` and `amber_queue_sweep.sh`
+  look unused because `vps-deploy` and cron cover the ordinary case. Each is the
+  documented answer to a failure that case cannot reach: a stalled MASTER deploy,
+  a push from the box, a changed IP needing a new PTR, a stale Solid Queue
+  backlog. `RUNBOOK.md` lists them, so removing one removes a recovery step an
+  operator reads at the worst time.

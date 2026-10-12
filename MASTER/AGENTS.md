@@ -649,3 +649,9 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
   each change a rendered value, which is the operator's; Venturi argues against
   Rams and Ando, who are already law. A book imported as YAML needs a reader the
   same day.
+- **No second memory-review surface until a caller needs it.** `bin/operator memory
+  review` (`Operator::MemoryReview`) is the one evidence-backed review: artifact
+  digest plus an explicit `--confirm`. The extra pieces in draft PR #735 and its
+  branches (`feat/operator-memory-review-*`, `recover/memory-governance-*`) have
+  no caller, and a learning or governance layer nothing reads is the inert config
+  this tree keeps deleting. Reopen with the caller that needs one.
