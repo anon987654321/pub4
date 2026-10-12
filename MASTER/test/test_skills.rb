@@ -18,6 +18,27 @@ class TestSkills < Minitest::Test
     assert_equal "body", parsed[:body]
   end
 
+  def test_trigger_for_non_string_input_returns_no_match
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: alpha
+              description: first skill
+              triggers: ["alpha"]
+              body: alpha body
+      YAML
+
+      skills = Master::CLI::Skills.new(root:)
+      skills.discover!
+
+      assert_empty skills.trigger_for(nil)
+      assert_empty skills.trigger_for(Object.new)
+    end
+  end
+
   def test_discover_loads_registry_skills
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
