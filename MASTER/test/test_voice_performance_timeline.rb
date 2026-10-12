@@ -11,7 +11,7 @@ class TestVoicePerformanceTimeline < Minitest::Test
       style: :warm,
       rate: "-5%",
       pitch: "-12Hz",
-      voice: :jenny,
+      voice: :christopher,
     )
 
     assert_equal 1, timeline[:schema]
@@ -30,7 +30,7 @@ class TestVoicePerformanceTimeline < Minitest::Test
       style: :warm,
       rate: "-5%",
       pitch: "-12Hz",
-      voice: :jenny,
+      voice: :christopher,
     )
     changed = Master::Voice::Performance.timeline(
       "Ready.",
