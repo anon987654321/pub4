@@ -8,6 +8,7 @@ require "socket"
 require "json"
 require "timeout"
 require_relative "policy"
+require_relative "disfluency"
 require_relative "strunk_pass"
 require_relative "lexicon"
 require_relative "shaping"
@@ -410,13 +411,15 @@ module Master
 
       def synthesize(text, voice: nil, style: default_style, rate: nil, pitch: nil, mode: nil, voice_locked: false, style_locked: false)
         started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        if Human.active?
-          human = Human.synthesize(text.to_s, voice: voice_locked ? voice : nil, rate:, pitch:)
-          return shaped(human) if human
-        end
-
         text_str = clean_text(text)
         return if text_str.empty?
+
+        text_str = Disfluency.apply(text_str, source: text)
+        voice = resolve_voice(voice) if voice
+        if Human.active?
+          human = Human.synthesize(text_str, voice: voice_locked ? voice : nil, rate:, pitch:)
+          return shaped(human) if human
+        end
 
         voice ||= voice_for_text(text_str)
         attempted, result = try_transcendent_synthesis(
