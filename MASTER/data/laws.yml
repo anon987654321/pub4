@@ -1036,7 +1036,6 @@ law_map:
     - cross_platform_consistency
     - direct_manipulation
     - input_responsiveness
-    - fittss_law
     - intuitive_navigation
     - learnability
     - mental_models
@@ -1184,8 +1183,8 @@ law_map:
       source: master.yml@30dad7ead
     avoid_feature_envy:
       confidence: 0.75
-      detects: long_function
-      meaning: 'Methods shouldn''t access other object''s data excessively  '
+      detects: feature_envy
+      meaning: "Methods should focus on their own data instead of reaching into other objects."
       operation: simplify
       severity: medium
       law_ids:
@@ -2028,18 +2027,6 @@ law_map:
       root: reach
       tags:
       - ui
-    fittss_law:
-      confidence: 0.75
-      detects: long_function
-      meaning: 'Larger, closer targets are faster to acquire  '
-      operation: simplify
-      severity: medium
-      law_ids: []
-      status: gap
-      root: reach
-      tags:
-      - ux_laws
-      source: master.yml@30dad7ead
     flat_ui:
       meaning: Uniform size at rest; depth only when pixels collectively resemble a
         3D model
@@ -3716,17 +3703,19 @@ law_map:
       - code
       - linked-2026-08-07
     security:
-      meaning:
-      detects:
-      severity: medium
-      confidence: 0.7
-      operation:
+      meaning: credentials and secrets must stay out of source code and logs
+      detects: plaintext_secrets
+      severity: critical
+      confidence: 0.9
+      operation: harden
       law_ids:
       - SECRET_PROXIMITY
       status: covered
       root: least_authority
       tags:
       - code
+      - security
+      source: MASTER/law/universal.rb#SECRET_PROXIMITY
     seijaku:
       meaning: tranquility, energized calm
       detects: noisy_code
