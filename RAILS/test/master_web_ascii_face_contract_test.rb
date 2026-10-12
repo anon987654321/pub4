@@ -77,6 +77,20 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     refute_match(/getElementById\(["']face["']\)\s*\.getContext/, read(PUBLIC, "face_2d_fallback.js"))
   end
 
+  def test_the_configured_face_hotkey_toggles_constitutional_law_glyphs
+    source = read(PUBLIC, "face_ascii.js")
+    handler = source[/function onKeydown\(event\) \{.*?^  \}/m]
+    refute_nil handler, "the configured law shortcut must have a testable handler"
+
+    assert_includes view, "window.MASTER_FACE_LAW_FIELD"
+    assert_includes source, "lawFieldVisible = lawFieldConfig.enabled !== false"
+    assert_includes handler, "setLawField(!lawFieldVisible)"
+    assert_includes handler, "Constitutional law glyphs visible"
+    assert_includes handler, "Constitutional law glyphs hidden"
+    refute_includes handler, "setGlyphMode",
+                     "laws.yml's shortcut controls constitutional glyphs, not renderer style"
+  end
+
   def test_the_renderer_and_its_frames_are_plain_ascii_without_braille
     source = read(PUBLIC, "face_ascii.js")
 
