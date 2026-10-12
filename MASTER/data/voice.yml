@@ -59,7 +59,7 @@ tts:
   #
   # Christopher became the default voice on 2026-10-12. Everyday speech runs
   # slightly brisker (+4%) with neutral pitch; the prior values (-5%, -12Hz)
-  # were set against Jenny. Christopher's operator_log below is unchanged.
+  # were tuned for the former voice. Christopher's operator_log below is unchanged.
   # operator_log line below was tuned by ear and is untouched.
   default_rate: "+4%"
   default_pitch: "+0Hz"
