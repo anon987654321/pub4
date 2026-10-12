@@ -120,7 +120,7 @@ module Master
         measured.sort_by { |row| [-row[:failures], -row[:calls], row[:id]] }.first(30).each do |row|
           average = row[:latency_ms] ? "#{row[:latency_ms].round}ms" : "n/a"
           lines << "  #{row[:id]}  calls=#{row[:calls]} ok=#{row[:successes]} " \\
-                   "fail=#{row[:failures]} success=#{(row[:rate] * 100).round(1)}% avg=#{average}"
+                   "fail=#{row[:failures]} success=#{(row[:rate] * 100).round(1)}% avg_ok=#{average}"
         end
         hidden = measured.size - 30
         lines << "  ... #{hidden} more models" if hidden.positive?
