@@ -159,17 +159,21 @@ class TestLaneQuota < Minitest::Test
 
     assert_equal %w[claude-cli:claude-sonnet-5-5], hops
   end
-  def test_openrouter_free_quota_is_shared_across_vendor_prefixed_models
+  def test_openrouter_free_pool_quota_is_shared_across_vendor_prefixed_models
     reply = "rate_limit: Rate limit exceeded: free-models-per-day-high-balance."
     Quota.note("nvidia/nemotron-3-super-120b-a12b:free", reply)
 
-    assert_equal "openrouter-free", Quota.lane_of("nvidia/nemotron-3-super-120b-a12b:free")
-    assert_equal "openrouter-free", Quota.lane_of("google/gemma-4-31b-it:free")
+    assert_equal "nvidia", Quota.lane_of("nvidia/nemotron-3-super-120b-a12b:free")
+    assert_equal "google", Quota.lane_of("google/gemma-4-31b-it:free")
+    assert_equal "nvidia", Silence.lane_of("nvidia/nemotron-3-super-120b-a12b:free")
     assert Quota.dead?("google/gemma-4-31b-it:free")
     assert Quota.dead?("nvidia/nemotron-3.5-lightning:free")
     refute Quota.dead?("nvidia/nemotron-paid")
-    assert_equal "nvidia", Quota.lane_of("nvidia/nemotron-paid")
-    assert_equal "openrouter-free", Silence.lane_of("google/gemma-4-31b-it:free")
+
+    Quota.revive("openrouter-free")
+    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", "rate limited: try again in 15 minutes")
+    assert Quota.dead?("nvidia/another:free"), "same vendor's short 429 is vendor-scoped"
+    refute Quota.dead?("google/gemma-4-31b-it:free"), "a vendor 429 is not the shared free-pool limit"
   end
 
   def test_lane_normalization_preserves_hyphenated_cli_provider_names
