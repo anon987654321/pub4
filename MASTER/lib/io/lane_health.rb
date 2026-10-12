@@ -87,11 +87,10 @@ module Master
 
       # "claude-cli: quota spent, back in 2h3m (..); ollama: live" for each lane once.
       def states(models, refuses: ->(model) { dead?(model) })
-        lanes = Array(models).uniq { |model| LaneQuota.lane_of(model) }
-        report = LaneQuota.report
+        lanes = Array(models).uniq { |model| LaneQuota.report_for(model) || LaneQuota.lane_of(model) }
         lanes.map do |model|
           lane = LaneQuota.lane_of(model)
-          report.find { |row| row.start_with?("#{lane}: ") } || (refuses.call(model) ? "#{lane}: silent (no answer lately)" : "#{lane}: live")
+          LaneQuota.report_for(model) || (refuses.call(model) ? "#{lane}: silent (no answer lately)" : "#{lane}: live")
         end
       end
 
