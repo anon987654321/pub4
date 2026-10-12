@@ -244,15 +244,3 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
   overscroll-behavior: contain;
 }
 
-@media (max-width: 767px) {
-  .compose-launcher {
-    margin-inline-start: max(var(--space-4), env(safe-area-inset-left));
-    margin-inline-end: max(var(--space-4), env(safe-area-inset-right));
-  }
-
-  .post-feed .feed-card {
-    padding-inline-start: max(var(--space-3), env(safe-area-inset-left));
-    padding-inline-end: max(var(--space-3), env(safe-area-inset-right));
-  }
-
-  

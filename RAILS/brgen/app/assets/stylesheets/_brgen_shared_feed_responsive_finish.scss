@@ -1,4 +1,15 @@
-/* Four tiny columns are a catalogue view, not a usable phone media wall. */
+@media (max-width: 767px) {
+  .compose-launcher {
+    margin-inline-start: max(var(--space-4), env(safe-area-inset-left));
+    margin-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  }
+
+  .post-feed .feed-card {
+    padding-inline-start: max(var(--space-3), env(safe-area-inset-left));
+    padding-inline-end: max(var(--space-3), env(safe-area-inset-right));
+  }
+
+  /* Four tiny columns are a catalogue view, not a usable phone media wall. */
   .brgen-media-wall {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: minmax(7rem, 34vw);

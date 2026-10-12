@@ -1,4 +1,5 @@
-/* The immersive dark-glass idiom: near-black panes with white-alpha
+body.vertical-playlist {
+  /* The immersive dark-glass idiom: near-black panes with white-alpha
      hairlines, worn regardless of theme — the player is a stage, not a page.
      Values defined once here; every pane and edge cites them. */
   --glass: rgba(18, 18, 18, 0.94);
@@ -342,6 +343,3 @@ body.vertical-playlist .playlist-details {
   margin: 0;
 }
 
-.playlist-transport-bar {
-  position: fixed;
-  

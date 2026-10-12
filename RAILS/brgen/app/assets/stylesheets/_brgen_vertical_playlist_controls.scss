@@ -1,4 +1,6 @@
-/* Floats free above the footer: a gap on every side lifts it off all four
+.playlist-transport-bar {
+  position: fixed;
+  /* Floats free above the footer: a gap on every side lifts it off all four
      viewport edges, so it reads as a rounded rectangle rather than a bar welded
      to the bottom. The safe-area inset rides on the bottom gap. */
   inset-inline: var(--space-4);

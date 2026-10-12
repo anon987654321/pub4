@@ -39,7 +39,14 @@ module Deploy
     private
 
     def check(result, path)
-      structure, = Operator::ScssRules.lex(File.read(path))
+      source = File.read(path)
+      open_comment = unterminated_comment(source)
+      if open_comment
+        return result.fail("css_brace_balance: #{relative(path)} comment opened on line #{open_comment} never closes — " \
+                           "the file ends inside it, and a module loaded after it does not compile")
+      end
+
+      structure, = Operator::ScssRules.lex(source)
       opens = []
       extra = nil
       line = 1
@@ -62,6 +69,38 @@ module Deploy
         result.fail("css_brace_balance: #{relative(path)} line #{extra} closes a block that was never opened — " \
                     "every rule before it read as nested")
       end
+    end
+
+    # The line a block comment opens on when the file ends before it closes. The
+    # brace count cannot see this: the lexer drops comment text, so a file cut in
+    # the middle of a comment balances. A `//` line and a quoted string are
+    # skipped, because either may hold the two characters without opening one.
+    def unterminated_comment(source)
+      opened = nil
+      quote = nil
+      line = 1
+      index = 0
+      while index < source.size
+        char = source[index]
+        pair = source[index, 2]
+        line += 1 if char == "\n"
+        if opened
+          (opened = nil; index += 1) if pair == "*/"
+        elsif quote
+          index += 1 if char == "\\"
+          quote = nil if char == quote || char == "\n"
+        elsif pair == "/*"
+          opened = line
+          index += 1
+        elsif pair == "//" && source[index - 1] != ":"
+          index = source.index("\n", index) || source.size
+          next
+        elsif char == "\"" || char == "'"
+          quote = char
+        end
+        index += 1
+      end
+      opened
     end
 
     # Same corpus shape CssConstitutionGate scans: every app and engine

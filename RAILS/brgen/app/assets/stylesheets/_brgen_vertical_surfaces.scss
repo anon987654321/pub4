@@ -2,6 +2,8 @@
 
 // ============================================================ pages: verticals
 
+/* .layout caps every surface at --feed-max (600px). A storefront is a grid, not
+   a timeline, so it opens up; main takes Kaufland's container from the
    vertical shell rules. */
 :is(body.vertical-marketplace, body.vertical-takeaway) .layout {
   max-width: 100%;
