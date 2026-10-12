@@ -154,6 +154,21 @@ independent of any model vendor, so the same record can score or filter any
 small model. Training happens outside MASTER, and only verified behavior comes
 back.
 
+## Model pool
+
+The router discovers reachable models from the configured tiers, local Ollama installations, hosted OpenAI-compatible endpoints and provider catalogs. All requests still pass through MASTER's existing fallback, budget and provider-health policies; adding a gateway does not bypass those controls.
+
+An OpenAI-compatible gateway such as a local freellmpool instance is opt-in:
+
+```zsh
+export MASTER_LLM_GATEWAY_URL=http://127.0.0.1:PORT/v1
+# Only when the gateway requires authentication:
+export MASTER_LLM_GATEWAY_KEY=...
+bin/master
+```
+
+FREELLMPOOL_PROXY_KEY is also accepted. The URL must be absolute HTTP(S), contain no embedded credentials, query or fragment, and use HTTPS unless its host is loopback. The gateway's /v1/models response becomes the discovered pool, and chat calls use /v1/chat/completions. MASTER does not install or launch the gateway, treat free-tier capacity as guaranteed, or claim offline operation when only a remote route is available. Provider environment values belong in the operator's protected environment file, not in source control or command history.
+
 ## Runtime
 
 MASTER pins Ruby 4.0.5. Isolated execution through `Ruby::Box` is available only
