@@ -147,15 +147,20 @@ class DesignContractTest < Minitest::Test
     app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
     marketplace_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
     verticals_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_surfaces.scss")
+    overrides_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_overrides.scss")
     marketplace = File.read(marketplace_path)
     verticals = File.read(verticals_path)
+    overrides = File.read(overrides_path)
 
     assert_includes app, '@include meta.load-css("brgen_marketplace");'
     assert_includes app, '@include meta.load-css("brgen_vertical_surfaces");'
+    assert_includes app, '@include meta.load-css("brgen_shared_overrides");'
     assert_includes marketplace, ".deal-card"
     assert_includes marketplace, ".deal-cat"
     assert_includes verticals, ".listing-buy-bar-cta"
+    assert_includes overrides, ".store-promo-art-cta"
     refute_includes app, ".listing-buy-bar-cta"
+    refute_includes app, ".store-promo-art-cta"
   end
 
   def test_brgen_mounts_theme_bootstrap_once_in_head
