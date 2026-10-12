@@ -5,6 +5,15 @@ require "tmpdir"
 require_relative "../../MASTER/gates/support/png_diff"
 
 class PngDiffTest < Minitest::Test
+  def test_paeth(left, above, upper_left)
+    p = left + above - upper_left
+    distances = [(p - left).abs, (p - above).abs, (p - upper_left).abs]
+    return left if distances[0] <= distances[1] && distances[0] <= distances[2]
+    return above if distances[1] <= distances[2]
+
+    upper_left
+  end
+
   def write_png(dir, name, width, height, pixels)
     path = File.join(dir, name)
     File.binwrite(path, Deploy::PngDiff.encode_rgba(width, height, pixels.pack("C*")))
@@ -61,6 +70,30 @@ class PngDiffTest < Minitest::Test
       assert_equal [2, 2], result[:baseline_dimensions]
       assert_equal [3, 2], result[:current_dimensions]
       assert_nil result[:pixel_diff_count]
+    end
+  end
+
+  def test_all_png_scanline_filters_restore_the_same_pixels
+    source = [10, 20, 30, 40, 50, 60, 70, 80]
+    previous = [4, 8, 12, 16, 20, 24, 28, 32]
+
+    (0..4).each do |filter|
+      filtered = source.each_with_index.map do |value, i|
+        left = i >= 4 ? source[i - 4] : 0
+        above = previous[i]
+        upper_left = i >= 4 ? previous[i - 4] : 0
+        predictor = case filter
+                    when 0 then 0
+                    when 1 then left
+                    when 2 then above
+                    when 3 then (left + above) / 2
+                    when 4 then test_paeth(left, above, upper_left)
+                    end
+        (value - predictor) & 0xff
+      end.pack("C*")
+
+      restored = Deploy::PngDiff.send(:unfilter, filter, filtered, previous, 4)
+      assert_equal source, restored, "filter #{filter}"
     end
   end
 
