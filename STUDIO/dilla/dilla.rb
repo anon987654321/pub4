@@ -220,7 +220,7 @@ module Synth
   end
 
   # One note = sum of four harmonics with optional per-note detune.
-  def self.note(freq, dur, detune: 0.0, amp: 0.2)
+  def self.note(freq, dur, detune: 0.0, amp: 0.2, release: 0.3)
     n = (dur * SAMPLE_RATE).to_i
     out = Array.new(n, 0.0)
     partials = [[1.0, 1.0], [2.0, 0.35], [3.0, 0.15], [4.0, 0.08]]
@@ -231,7 +231,7 @@ module Synth
       step = 2 * Math::PI * f / SAMPLE_RATE
       n.times do |i|
         t = i.to_f / SAMPLE_RATE
-        out[i] += Math.sin(phase) * pamp * env(t, dur)
+        out[i] += Math.sin(phase) * pamp * env(t, dur, release:)
         phase += step
       end
     end
@@ -322,6 +322,62 @@ module FX
   end
 end
 
+# --------------------------------------------------------------------- arp
+# A chord's voicing played one note at a time, lowest voice first. Pure ordering: the
+# patterns say which voice sounds on which step, the sequencer says when.
+module Arp
+  # The voices to cycle through: the voicing, repeated an octave up for each extra octave.
+  def self.pool(voices, octaves)
+    (0...octaves.clamp(1, 2)).flat_map { |o| voices.map { |n| n + 12 * o } }.uniq.sort
+  end
+
+  # `count` notes in the named pattern. random_seeded draws from the seed, so a seed repeats.
+  def self.sequence(pattern, pool, count, seed)
+    cycle =
+      case pattern
+      when 'up' then pool
+      when 'down' then pool.reverse
+      when 'updown' then pool + pool[1...-1].to_a.reverse
+      when 'converge' then (0...pool.size).map { |i| i.even? ? pool[i / 2] : pool[-1 - i / 2] }
+      when 'random_seeded' then nil
+      else raise ArgumentError, "no arp pattern #{pattern.inspect}"
+      end
+    return Array.new(count) { |k| cycle[k % cycle.size] } if cycle
+
+    rng = Random.new(seed)
+    Array.new(count) { pool[rng.rand(pool.size)] }
+  end
+end
+
+# -------------------------------------------------------------- tape echo
+# A space echo: three playback heads read one loop at 1x, 2x and 3x the base delay. The
+# heads in use are summed, darkened by a lowpass and a mild saturation, and fed back, so each
+# repeat is quieter and duller than the last. No modulation: the tape runs true.
+module Echo
+  MAX_INTENSITY = 0.9 # feedback never reaches one, so the loop cannot run away
+
+  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0)
+    intensity = intensity.to_f.clamp(0.0, MAX_INTENSITY)
+    d = [(delay * SAMPLE_RATE).round, 1].max
+    ring = Array.new((heads.max * d) + 1, 0.0)
+    tail = [heads.max * d * 6, SAMPLE_RATE * 4].min
+    cutoff = lowpass ? 1.0 / ((2 * Math::PI * lowpass * (1.0 / SAMPLE_RATE)) + 1.0) : 0.0
+    drive = 1.0 + (2.0 * saturation)
+    share = 1.0 / heads.size
+    y = 0.0
+    wet = Array.new(buf.size + tail, 0.0)
+    wet.each_index do |n|
+      taps = 0.0
+      heads.each { |h| taps += ring[(n - (h * d)) % ring.size] }
+      y += (1.0 - cutoff) * ((Math.tanh(taps * share * drive) / drive) - y)
+      wet[n] = y
+      ring[n % ring.size] = (n < buf.size ? buf[n] : 0.0) + (intensity * y)
+    end
+    wet = FX.reverb(wet, reverb) if reverb.to_f.positive?
+    Array.new(wet.size) { |n| (n < buf.size ? buf[n] : 0.0) + (volume * wet[n]) }
+  end
+end
+
 # ---------------------------------------------------------------- sequencer
 # One groove profile says how the render is played. Everything is in seconds or in
 # fractions, all of it scaled by pd_amount (0 is the grid, 1 is the profile, up to 1.5).
@@ -336,6 +392,7 @@ end
 #   drunk_amount  0..1, a seeded random nudge on every hit, never past MAX_OFFSET
 #   sidechain     { amount, release }: the chords dip on every kick (default: none)
 #   texture       { detune, lowpass, reverb }
+#   arp, echo     present means on; each overrides the defaults of the same name in the data
 class Sequencer
   attr_reader :seed, :pd_amount
 
@@ -360,6 +417,75 @@ class Sequencer
       buf.concat(Synth.chord(freqs, beats * beat, detune: detune))
     end
     buf
+  end
+
+  # The arp settings, or nil when neither the flag nor the profile asks for one.
+  def arp_settings(flag)
+    spec = @profile['arp']
+    return nil unless flag || spec
+
+    settings = (@data['arp'] || {}).merge(spec || {})
+    settings['pattern'] = flag if flag.is_a?(String)
+    settings['pattern'] ||= settings.fetch('default_pattern')
+    abort "No arp pattern: #{settings['pattern']}" unless settings.fetch('patterns').include?(settings['pattern'])
+    settings
+  end
+
+  # The echo settings with the flags laid over them, or nil when nothing asks for one.
+  def echo_settings(flag: nil, mix: nil, feedback: nil, time_ms: nil)
+    spec = @profile['echo']
+    return nil unless flag || spec
+
+    settings = (@data['echo'] || {}).merge(spec || {})
+    settings['heads'] = flag.split(',').map(&:to_i) if flag.is_a?(String)
+    abort "No echo heads: #{settings['heads']}" unless settings.fetch('modes').include?(settings['heads'])
+    settings['echo_volume'] = mix if mix
+    settings['intensity'] = feedback if feedback
+    settings['time_ms'] = time_ms if time_ms
+    settings
+  end
+
+  # The chords one note at a time. Each note starts on its step, late by the profile's swing
+  # on the off-beat steps, never moved past MAX_OFFSET; an optional soft pad plays beneath.
+  def render_arp(names, bpm, beats, arp, search: true, pad: false)
+    beat = 60.0 / bpm
+    step = beat / 4.0
+    rate = arp.fetch('rate', 2)
+    gate = arp.fetch('gate', 0.8)
+    accent = arp.fetch('accent', [1.0])
+    swing = @profile.fetch('swing', 0.5)
+    chord_steps = (beats * 4).round
+    total = names.size * chord_steps * step
+    buf = Array.new(((total + 1.0) * SAMPLE_RATE).to_i, 0.0)
+    Chords.midi_notes(names, search:).each_with_index do |voices, idx|
+      pool = Arp.pool(voices, arp.fetch('octaves', 1))
+      count = chord_steps / rate
+      notes = Arp.sequence(arp.fetch('pattern'), pool, count, Zlib.crc32("#{@seed}:#{idx}"))
+      notes.each_with_index do |midi, k|
+        s = (idx * chord_steps) + (k * rate)
+        pair = s % 4 == 2 ? 2 * step : (s.odd? ? step : 0.0)
+        late = (((swing - 0.5) * 2 * pair) * @pd_amount).clamp(-MAX_OFFSET, MAX_OFFSET)
+        dur = rate * step * gate
+        samples = Synth.note(Chords.hz(midi), dur, detune: detune, amp: 0.22 * accent[k % accent.size], release: dur * 0.5)
+        start = (((s * step) + late) * SAMPLE_RATE).to_i
+        samples.each_with_index { |v, j| buf[start + j] += v if start + j < buf.size }
+      end
+    end
+    if pad
+      under = render_chords(names, bpm, beats, search:)
+      under.each_with_index { |v, i| buf[i] += v * arp.fetch('pad', 0.3) if i < buf.size }
+    end
+    buf
+  end
+
+  # Echo on a buffer, the delay from the settings: milliseconds if given, else a number of beats.
+  def echo(buf, settings, bpm)
+    delay = settings['time_ms'] ? settings['time_ms'] / 1000.0 : settings.fetch('time_beats') * 60.0 / bpm
+    out = Echo.process(buf, delay:, heads: settings.fetch('heads'), intensity: settings.fetch('intensity'),
+                            volume: settings.fetch('echo_volume'), lowpass: settings['lowpass'],
+                            saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0))
+    peak = out.map(&:abs).max
+    peak > 1.0 ? out.map { |v| v / peak } : out
   end
 
   # Where every hit lands, in seconds: the 16-step pattern repeats bar after bar until
@@ -508,6 +634,12 @@ def run(argv)
     o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
     o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
     o.on('--no-voice-search', 'Voice each chord by nearest tones only, without the octave search') { options[:plain] = true }
+    o.on('--arp [PATTERN]', 'Play each chord one note at a time: up, down, updown, converge, random_seeded') { |v| options[:arp] = v || true }
+    o.on('--pad', 'A soft sustained pad under the arpeggio') { options[:pad] = true }
+    o.on('--echo [HEADS]', 'Tape space echo; heads such as 1 or 1,2 or 1,2,3') { |v| options[:echo] = v || true }
+    o.on('--echo-mix N', Float, 'Echo volume against the dry sound') { |v| options[:echo_mix] = v }
+    o.on('--echo-feedback N', Float, 'Echo intensity, 0 to 0.9: how much of each repeat comes round again') { |v| options[:echo_feedback] = v }
+    o.on('--echo-time MS', Float, 'Echo base delay in milliseconds (default a dotted eighth)') { |v| options[:echo_time] = v }
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
 
@@ -533,7 +665,10 @@ def run(argv)
   beats = options[:beats] || 4.0
 
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed)
-  buf = seq.render_chords(names, bpm, beats, search: !options[:plain])
+  arp = seq.arp_settings(options[:arp])
+  buf = arp ? seq.render_arp(names, bpm, beats, arp, search: !options[:plain], pad: options[:pad]) : seq.render_chords(names, bpm, beats, search: !options[:plain])
+  echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
+  buf = seq.echo(buf, echo, bpm) if echo
   seconds = buf.size / SAMPLE_RATE.to_f
   hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
   buf = seq.duck(buf, hits)

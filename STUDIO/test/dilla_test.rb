@@ -46,7 +46,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[default_profile drum_patterns groove_profiles progressions], DATA.keys.sort
+    assert_equal %w[arp default_profile drum_patterns echo groove_profiles progressions], DATA.keys.sort
   end
 
   # ------------------------------------------------------------- progressions
@@ -386,6 +386,106 @@ class DillaTest < Minitest::Test
     hits = sequencer("probe", data:).drum_hits("boom_bap", 88.0, 8.0)
     step = 60.0 / 88 / 4
     assert(offsets_from_grid(hits, "hat", step).all? { |o| (o - 0.01).abs < 1e-9 })
+  end
+
+  # ------------------------------------------------------------- arp and echo
+
+  def test_each_arp_pattern_orders_the_voices_and_fills_the_chord
+    pool = [40, 52, 60, 67]
+    assert_equal [40, 52, 60, 67, 40, 52, 60, 67], Arp.sequence("up", pool, 8, 1)
+    assert_equal [67, 60, 52, 40, 67, 60, 52, 40], Arp.sequence("down", pool, 8, 1)
+    assert_equal [40, 52, 60, 67, 60, 52, 40, 52], Arp.sequence("updown", pool, 8, 1)
+    assert_equal [40, 67, 52, 60, 40, 67, 52, 60], Arp.sequence("converge", pool, 8, 1)
+    random = Arp.sequence("random_seeded", pool, 8, 3)
+    assert_equal random, Arp.sequence("random_seeded", pool, 8, 3)
+    refute_equal random, Arp.sequence("random_seeded", pool, 8, 4)
+    assert_equal 8, random.size
+    assert(random.all? { |n| pool.include?(n) })
+    assert_equal [40, 52, 64], Arp.pool([40, 52], 2)
+    assert_raises(ArgumentError) { Arp.sequence("sideways", pool, 4, 1) }
+  end
+
+  def test_the_arp_plays_one_note_per_rate_and_each_chord_fills_its_bars
+    seq = sequencer("arp_echo_soft")
+    arp = seq.arp_settings(nil)
+    assert_equal "updown", arp["pattern"]
+    buf = seq.render_arp(%w[Cm9 Fm9], 120.0, 4.0, arp.merge("octaves" => 1))
+    assert_in_delta 2 * 2.0 + 1.0, buf.size / SAMPLE_RATE.to_f, 0.01
+    refute(buf.first(2000).all?(&:zero?), "the first note sounds on the downbeat")
+    assert_equal 8, arp.fetch("rate") ? 16 / arp.fetch("rate") : 0, "an eighth-note rate gives eight notes a bar of beats 4"
+    assert_operator buf.map(&:abs).max, :<=, 1.0
+  end
+
+  def test_the_arp_flag_chooses_the_pattern_and_unknown_ones_are_refused
+    assert_equal "down", sequencer("dry").arp_settings("down")["pattern"]
+    assert_nil sequencer("dry").arp_settings(nil)
+    assert_equal "updown", sequencer("dry").arp_settings(true)["pattern"]
+  end
+
+  def impulse(length, at = 0)
+    Array.new(length, 0.0).tap { |b| b[at] = 1.0 }
+  end
+
+  def test_the_echo_has_three_taps_at_one_two_and_three_times_the_delay
+    delay = 0.05
+    d = (delay * SAMPLE_RATE).round
+    out = Echo.process(impulse(d * 4), delay:, heads: [1, 2, 3], intensity: 0.0, volume: 1.0, lowpass: nil, saturation: 0.0)
+    assert_in_delta 1.0, out[0], 1e-9, "the dry sound stays"
+    taps = [1, 2, 3].map { |h| out[h * d] }
+    assert(taps.all? { |v| v > 0.2 }, "a tap at each head: #{taps}")
+    assert_in_delta 0.0, out[d / 2], 1e-9
+    assert_in_delta 0.0, out[(2.5 * d).to_i], 1e-9
+    only = Echo.process(impulse(d * 4), delay:, heads: [2], intensity: 0.0, volume: 1.0, lowpass: nil, saturation: 0.0)
+    assert_operator only[2 * d], :>, 0.2
+    assert_in_delta 0.0, only[d], 1e-9
+  end
+
+  def test_each_repeat_is_quieter_and_the_tail_is_darker
+    delay = 0.05
+    d = (delay * SAMPLE_RATE).round
+    out = Echo.process(impulse(d * 8), delay:, heads: [1], intensity: 0.6, volume: 1.0, lowpass: 3000, saturation: 0.3)
+    peaks = (1..5).map { |k| out[k * d] }
+    peaks.each_cons(2) { |a, b| assert_operator b, :<, a }
+    assert_operator peaks.first, :>, 0.05
+    # darker: the lowpass spreads a repeat into the samples after it
+    assert_operator out[d + 3], :>, 0.0
+  end
+
+  def test_the_echo_is_stable_at_the_top_intensity_and_silence_stays_silent
+    rng = Random.new(1)
+    loud = Array.new(SAMPLE_RATE) { (rng.rand * 2) - 1 }
+    out = Echo.process(loud, delay: 0.03, heads: [1, 2, 3], intensity: 5.0, volume: 1.0, lowpass: 4000, saturation: 1.0)
+    assert(out.all?(&:finite?))
+    assert_operator out.map(&:abs).max, :<, 6.0
+    assert_in_delta 0.0, out.last(2000).map(&:abs).max, 0.5, "the tail dies away"
+    silent = Echo.process(Array.new(5000, 0.0), delay: 0.01, heads: [1, 2], intensity: 0.9, volume: 1.0, lowpass: 3000, saturation: 0.5, reverb: 0.2)
+    assert(silent.all?(&:zero?))
+  end
+
+  def test_echo_flags_choose_heads_and_refuse_unknown_modes
+    seq = sequencer("dry")
+    assert_nil seq.echo_settings
+    assert_equal [1, 2, 3], seq.echo_settings(flag: "1,2,3")["heads"]
+    assert_equal [1, 2], seq.echo_settings(flag: true)["heads"]
+    settings = seq.echo_settings(flag: true, mix: 0.3, feedback: 0.7, time_ms: 250.0)
+    assert_equal [0.3, 0.7, 250.0], settings.values_at("echo_volume", "intensity", "time_ms")
+    assert_equal [1, 2], sequencer("arp_echo_soft").echo_settings["heads"]
+    assert_equal [[1, 2, 3], 0.75, 1], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
+  end
+
+  def test_arp_and_echo_render_a_wav_and_the_plain_render_is_untouched_by_them
+    Dir.mktmpdir do |dir|
+      plain = File.join(dir, "p.wav")
+      other = File.join(dir, "q.wav")
+      arp = File.join(dir, "a.wav")
+      run_dilla("--progression", "3", "--beats", "2", "--seed", "2", "--out", plain, chdir: dir)
+      _o, err, status = run_dilla("--progression", "3", "--beats", "2", "--seed", "2", "--profile", "arp_echo", "--pad", "--out", arp, chdir: dir)
+      assert status.success?, err
+      run_dilla("--progression", "3", "--beats", "2", "--seed", "2", "--out", other, chdir: dir)
+      assert_equal File.binread(plain), File.binread(other)
+      assert_operator File.size(arp), :>, File.size(plain), "the echo tail makes it longer"
+      assert_operator File.binread(arp).byteslice(44..).unpack("s<*").map(&:abs).max, :>, 1000
+    end
   end
 
   # ------------------------------------------------------------- the sidechain

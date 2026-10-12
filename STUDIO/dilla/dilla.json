@@ -107,6 +107,10 @@
     ["Bbm","Em","Am","F"]
   ],
 
+  "arp": {"default_pattern":"updown","patterns":["up","down","updown","converge","random_seeded"],"rate":2,"gate":0.8,"octaves":1,"accent":[1.0,0.6,0.8,0.6],"pad":0.3},
+
+  "echo": {"modes":[[1],[2],[1,2],[2,3],[1,2,3]],"heads":[1,2],"time_beats":0.75,"intensity":0.5,"echo_volume":0.45,"lowpass":3200,"saturation":0.35,"reverb":0.12},
+
   "default_profile": "straight_hats_snare_ahead",
 
   "groove_profiles": {
@@ -118,6 +122,8 @@
     "late_snare": {"swing":0.54,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.56},"offsets":{"kick":0.0,"snare":0.02,"hat":0.008,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}},
     "loose_pocket": {"swing":0.545,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.56},"offsets":{"kick":0.01,"snare":-0.008,"hat":0.012,"kick_first":0.0},"drunk_amount":0.5,"pd_amount":1.0,"texture":{"detune":0.007,"reverb":0.35,"lowpass":7000}},
     "pump": {"swing":0.54,"sidechain":{"amount":0.55,"release":0.18},"offsets":{"kick":0.0,"snare":-0.006,"hat":0.01,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.006,"reverb":0.3,"lowpass":7000}},
+    "arp_echo": {"swing":0.542,"arp":{"pattern":"updown","rate":1,"gate":0.5,"octaves":2,"accent":[1.0,0.45,0.75,0.4]},"echo":{"heads":[1,2,3],"intensity":0.75,"echo_volume":0.5,"time_beats":0.75},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
+    "arp_echo_soft": {"swing":0.542,"arp":{"pattern":"updown","octaves":2},"echo":{"heads":[1,2]},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
     "straight_hats_snare_ahead": {"swing":0.542,"pocket":{"backbeat":[4,12],"hat":{"shift_steps":0.0},"snare":{"shift_steps":-0.3,"drift_steps":0.02},"kick":{"shift_steps":0.125,"anchor":[0],"drift_steps":0.025},"ghost":{"shift_steps":0.2,"drift_steps":0.03}},"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}}
   },
 
