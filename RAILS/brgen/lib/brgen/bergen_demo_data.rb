@@ -220,7 +220,7 @@ module Brgen
       }
     ].freeze
 
-    POSTS = [  # Curated for realism; in full seed use SEED_SCALE for volume + Faker for "millions" feel via counters (e.g. 10k+ views)
+    POSTS = [  # Curated fictional conversation starters for disclosed demos.
       {
         user: "emilie_floyen", community: "bergen", hours_ago: 1, votes: 14,
         title: "Hva skjer i Bergen i helgen?",
