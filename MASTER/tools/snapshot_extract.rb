@@ -109,6 +109,15 @@ module Operator
 
       FileUtils.mkdir_p(root)
       root = File.realpath(root)
+      packs.each do |pack|
+        valid_header = VALID_TREES.include?(pack[:tree]) &&
+                       pack[:part].is_a?(Integer) && pack[:parts].is_a?(Integer) &&
+                       pack[:parts].positive? && pack[:part].between?(1, pack[:parts]) &&
+                       %i[text_total fragments_total binary omitted files_in_part fragments_in_part max_bytes].all? do |key|
+                         pack[key].is_a?(Integer) && pack[key] >= 0
+                       end && pack[:max_bytes].positive? && pack[:omitted].zero?
+        raise "snapshot extract: invalid or incomplete Pack header" unless valid_header
+      end
       revisions = packs.map { |pack| pack.fetch(:git) }.uniq
       raise "snapshot extract: mixed git revisions" unless revisions.size == 1
 
