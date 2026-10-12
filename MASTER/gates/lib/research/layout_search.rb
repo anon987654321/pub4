@@ -16,6 +16,7 @@ module Deploy
     ENGINE = File.join(RAILS, "brgen_marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
     CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_brgen_marketplace.scss")
+    VERTICAL_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_brgen_vertical_surfaces.scss")
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "__shared/app/assets/stylesheets/_search_yep.scss")
@@ -40,7 +41,7 @@ module Deploy
     private
 
     def load_ctx
-      missing = [CARD, CARDS_CSS, NAV, SEARCH].reject { |p| File.file?(p) }
+      missing = [CARD, CARDS_CSS, VERTICAL_CSS, NAV, SEARCH].reject { |p| File.file?(p) }
       if missing.any?
         missing.each { |p| @result.fail("layout_search: missing #{p.sub(RAILS + '/', '')}") }
         return
@@ -59,7 +60,7 @@ module Deploy
     end
 
     def cards_css
-      @cards_css ||= Operator::ScssRules.matching(File.read(CARDS_CSS), /\.deal-card\b/)
+      @cards_css ||= Operator::ScssRules.matching("#{File.read(CARDS_CSS)}\n#{File.read(VERTICAL_CSS)}", /\.deal-card\b/)
                                         .map { |rule| "#{rule.selector} { #{rule.body} }" }.join("\n")
     end
 
