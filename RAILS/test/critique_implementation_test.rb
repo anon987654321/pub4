@@ -11,11 +11,8 @@ class CritiqueImplementationTest < Minitest::Test
 
   def brgen_css_source
     host = read("brgen/app/assets/stylesheets/application.scss")
-    features = %w[
-      _brgen_marketplace.scss
-      _brgen_vertical_surfaces.scss
-      _brgen_shared_overrides.scss
-    ].map { |name| read("brgen/app/assets/stylesheets/#{name}") }
+    features = Dir.glob(File.join(ROOT, "brgen/app/assets/stylesheets/_brgen_*.scss")).sort
+                 .map { |path| File.read(path, encoding: "UTF-8") }
 
     ([host] + features).join("\n")
   end
@@ -41,7 +38,7 @@ class CritiqueImplementationTest < Minitest::Test
     home = read("brgen/app/views/home/index.html.erb")
     post = read("brgen/app/views/posts/_post.html.erb")
     compose = read("brgen/app/views/shared/_feed_compose.html.erb")
-    feed_actions = Operator::ScssRules.matching(read("brgen/app/assets/stylesheets/application.scss"), /\A\.feed-action\z/)
+    feed_actions = Operator::ScssRules.matching(brgen_css_source, /\A\.feed-action\z/)
 
     # The single ranking control lives in posts/index, not the layout — the
     # layout's feed tabs are subapp navigation (subapp_nav_items), a different
@@ -330,7 +327,7 @@ class CritiqueImplementationTest < Minitest::Test
     controller = read("__shared/frontend/post_progressive_controller.js")
     boot = read("__shared/frontend/stimulus_boot_social.js")
     importmap = read("__shared/config/importmap_baseline.rb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
 
     assert_includes form, 'post-progressive'
     assert_includes form, 'post_progressive_target: "mediaInput"'
@@ -393,7 +390,7 @@ class CritiqueImplementationTest < Minitest::Test
     controller = read("brgen/app/controllers/home_controller.rb")
     feed = read("brgen/app/views/home/_live_search_results.html.erb")
     card = read("brgen/app/views/home/_media_card.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
 
     assert_includes home, "home.feed_view"
     assert_includes home, "home.media_wall_view"
