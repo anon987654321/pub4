@@ -30,6 +30,10 @@ namespace :brgen do
     puts "posts: #{Post.where(user_id: user_ids).count}"
     puts "comments: #{Comment.where(user_id: user_ids).count}"
 
+    if defined?(Dating::Profile) && Dating::Profile.table_exists?
+      puts "dating profiles: #{Dating::Profile.where(user_id: user_ids).count}"
+    end
+
     if defined?(Marketplace::Listing) && Marketplace::Listing.table_exists?
       listings = Marketplace::Listing.where(user_id: user_ids)
       puts "listings: #{listings.count}"
