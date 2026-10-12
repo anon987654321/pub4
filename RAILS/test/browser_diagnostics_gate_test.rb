@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "yaml"
 require "tmpdir"
 require "digest"
+require "minitest/mock"
 require_relative "../../MASTER/gates/lib/rendered/browser_diagnostics"
 require_relative "../../MASTER/gates/lib/rendered_suite"
 
@@ -238,6 +239,114 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     assert_includes source, "pixel_diff_ratio"
     assert_includes source, "pixel_diff_image"
     refute_includes source, "GATE_SNAPSHOT_UPDATE"
+  end
+
+  def write_rgba(path, width:, height:, changed_pixels: [])
+    changed = changed_pixels.to_set
+    rgba = (0...(width * height)).flat_map do |index|
+      changed.include?(index) ? [255, 255, 255, 255] : [0, 0, 0, 255]
+    end
+    File.binwrite(path, Deploy::PngDiff.encode_rgba(width, height, rgba.pack("C*")))
+  end
+
+  def with_gate_env(values)
+    previous = values.to_h { |key, _| [key, ENV.key?(key) ? ENV[key] : nil] }
+    values.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    previous.each do |key, value|
+      value.nil? ? ENV.delete(key) : ENV[key] = value
+    end
+  end
+
+  def pixel_evidence(gate, baseline:, current:, dir:, surface: SURFACE, status_label: "PASS", hard_failures: [])
+    Deploy::BrowserDiagnosticsGate.stub(:visual_baseline_path, ->(_surface) { baseline }) do
+      gate.send(:pixel_evidence, surface:, screenshot: current, screenshot_dir: dir,
+                screenshot_error: nil, status_label:, hard_failures:)
+    end
+  end
+
+  def test_pixel_evidence_blocks_a_change_over_budget_and_preserves_heatmap
+    Dir.mktmpdir("pixel-evidence") do |dir|
+      baseline = File.join(dir, "approved.png")
+      current = File.join(dir, "current.png")
+      write_rgba(baseline, width: 10, height: 10)
+      write_rgba(current, width: 10, height: 10, changed_pixels: [0, 1, 2])
+
+      evidence = with_gate_env("GATE_PIXEL_DIFF_MAX_RATIO" => "0.01") do
+        pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:)
+      end
+
+      assert_equal "REGRESSION", evidence.fetch("status")
+      assert_equal 3, evidence.fetch("pixel_diff_count")
+      assert_equal 0.03, evidence.fetch("pixel_diff_ratio")
+      assert File.file?(evidence.fetch("pixel_diff_image"))
+      assert_match(/exceeds 1.0% budget/, evidence.fetch("reason"))
+    end
+  end
+
+  def test_pixel_evidence_accepts_a_change_within_budget
+    Dir.mktmpdir("pixel-evidence") do |dir|
+      baseline = File.join(dir, "approved.png")
+      current = File.join(dir, "current.png")
+      write_rgba(baseline, width: 100, height: 100)
+      write_rgba(current, width: 100, height: 100, changed_pixels: [0])
+
+      evidence = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:)
+
+      assert_equal "COMPARED", evidence.fetch("status")
+      assert_equal 1, evidence.fetch("pixel_diff_count")
+      assert_equal 0.0001, evidence.fetch("pixel_diff_ratio")
+    end
+  end
+
+  def test_pixel_evidence_reports_dimension_mismatch_as_failure
+    Dir.mktmpdir("pixel-evidence") do |dir|
+      baseline = File.join(dir, "approved.png")
+      current = File.join(dir, "current.png")
+      write_rgba(baseline, width: 2, height: 2)
+      write_rgba(current, width: 3, height: 2)
+
+      evidence = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:)
+
+      assert_equal "DIMENSION_MISMATCH", evidence.fetch("status")
+      assert_nil evidence["pixel_diff_count"]
+      assert_match(/dimensions changed/, evidence.fetch("reason"))
+    end
+  end
+
+  def test_pixel_evidence_never_treats_a_missing_or_corrupt_reference_as_equal
+    Dir.mktmpdir("pixel-evidence") do |dir|
+      current = File.join(dir, "current.png")
+      missing = File.join(dir, "missing.png")
+      corrupt = File.join(dir, "corrupt.png")
+      write_rgba(current, width: 2, height: 2)
+      File.write(corrupt, "not a PNG")
+
+      assert_equal "MISSING", pixel_evidence(Deploy::BrowserDiagnosticsGate.new,
+        baseline: missing, current:, dir:).fetch("status")
+      assert_equal "UNSUPPORTED", pixel_evidence(Deploy::BrowserDiagnosticsGate.new,
+        baseline: corrupt, current:, dir:).fetch("status")
+    end
+  end
+
+  def test_only_successful_captures_can_write_approved_references
+    Dir.mktmpdir("pixel-evidence") do |dir|
+      baseline = File.join(dir, "approved.png")
+      current = File.join(dir, "current.png")
+      write_rgba(current, width: 2, height: 2, changed_pixels: [0])
+
+      with_gate_env("GATE_PIXEL_BASELINE_APPROVE" => "1") do
+        evidence = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:,
+                                  status_label: "FAIL", hard_failures: ["uncaught exception"])
+        assert_equal "MISSING", evidence.fetch("status")
+        refute File.exist?(baseline)
+
+        approved = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:)
+        assert_equal "UPDATED", approved.fetch("status")
+        assert_equal File.binread(current), File.binread(baseline)
+      end
+    end
   end
 
   def test_browser_artifacts_are_external_to_the_repository
