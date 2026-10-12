@@ -38,7 +38,7 @@ class TestTokenReads < Minitest::Test
 
     assert_equal ["typography.hierarchy.missing_floor"], TR.missed
     assert_equal :failed, result.outcome
-    assert_match(/typography\\.hierarchy\\.missing_floor/, result.failures.join)
+    assert_match(/typography\.hierarchy\.missing_floor/, result.failures.join)
   end
 
   def test_hashes_inside_arrays_keep_their_path
@@ -46,6 +46,13 @@ class TestTokenReads < Minitest::Test
 
     assert_equal 3, map["typography"]["ladders"][0]["minimum"]
     assert_empty TR.undeclared
+  end
+
+  def test_nested_fetch_defaults_are_audited
+    map = TR.wrap("typography" => { "rag" => {} })
+
+    assert_equal 5, map["typography"]["rag"].fetch("inspect_from_lines", 5)
+    assert_equal ["typography.rag.inspect_from_lines"], TR.missed
   end
 
 
