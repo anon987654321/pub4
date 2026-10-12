@@ -159,8 +159,21 @@ class TestRenderer < Minitest::Test
     assert_match(/\A(?:~|…|\/|[A-Za-z0-9_])/, lines.first)
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_match(/discover [%$] \z/, lines.first)
+    assert_match(/\[discover\] [%$] \z/, lines.first)
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+  end
+
+  def test_shell_prompt_has_distinct_path_git_phase_and_exit_segments
+    renderer = FakeRenderer.new(config: {})
+    renderer.stub(:git_prompt_state, branch: "main", ahead: 2, behind: 0, dirty: false) do
+      $stdout.stub(:tty?, false) do
+        _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+        clean = strip_ansi(prompt)
+
+        assert_match(/\A.+ on main \+2 \[discover\] [%$] \z/, clean)
+        assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+      end
+    end
   end
 
   def test_shell_prompt_home_path_uses_path_operations
