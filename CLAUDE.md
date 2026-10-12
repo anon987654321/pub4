@@ -38,12 +38,11 @@ is a governed product tree. There is no `TREE.md` on current main; the tree
 contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media
 tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
-never sits at the root whatever the tool's default: dilla writes to `$PWD`
-unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
-root for weeks because of it. Renders belong outside the repo, under
-`${XDG_DATA_HOME:-~/Documents}/dilla-renders/<date>`, which is where dilla and
-postpro fall back; only `dilla.wav` and `dilla.mp4` may sit in `STUDIO/dilla`
-(the operator's call, 2026-10-11).
+never sits at the root whatever the tool's default: a renderer that writes to
+`$PWD` once left a session's renders at the root for weeks. Renders belong outside
+the repo, under `${XDG_DATA_HOME:-~/Documents}/dilla-renders/<date>`, which is where
+/play and postpro put them; `dilla.rb` writes to `out/` beside itself, which is
+git-ignored, unless `--out` says otherwise.
 
 ## Commands
 
@@ -105,12 +104,10 @@ surface. Two runtime surfaces; STUDIO is a governed production tree.
    literals, and a hardcoded English string is a defect rather than a placeholder.
 5. **MASTER speaks, and the settings are data.** `MASTER/data/voice.yml` carries
 the whole of it: `rotation` (the voices, chosen per utterance), `post_chain`
-(the ffmpeg chain applied after synthesis) and `bed` (the level under the
-speech, and a pointer). `Voice::Policy` reads them, `Speech#shaped` applies the
-chain, `browser_payload` hands them to the face so it sounds like the server.
-The chain borrows dillas vocabulary; the bed is dillas own render, module `Bed`
-in `STUDIO/dilla/dilla.rb`, declared in `STUDIO/dilla/data/bed.yml` and played
-by `ruby STUDIO/dilla/dilla.rb bed` (the operator's call, 2026-09-14).
+(the ffmpeg chain applied after synthesis) and `dilla_fx` (the effects rack, which
+borrows the vocabulary of the old Dilla engine and is now its own single source).
+`Voice::Policy` reads them, `Speech#shaped` applies the chain, `browser_payload`
+hands them to the face so it sounds like the server.
 
 **Renders are irreplaceable.** dilla and postpro write real output with rotating
    seeds. Never render over a take that matters, and never change a rendered-sound
