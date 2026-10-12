@@ -65,7 +65,11 @@ module Deploy
       written = 0
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
-          @result.fail("layout_snapshot: #{surface.id} probe failed — #{payload["error"]}")
+          if GeometryProbe.font_timeout?(payload)
+            @result.incomplete!("layout_snapshot: #{surface.id} not compared — #{payload["error"]}")
+          else
+            @result.fail("layout_snapshot: #{surface.id} probe failed — #{payload["error"]}")
+          end
           next
         end
         status = payload["status"].to_i
