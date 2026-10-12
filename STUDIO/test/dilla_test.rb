@@ -52,13 +52,18 @@ class DillaTest < Minitest::Test
 
   def test_showcase_uses_only_real_chords_voices_profiles_and_drum_patterns
     sections = SHOWCASE.fetch("sections")
-    assert_equal 4, sections.size
+    assert_equal 8, sections.size
     sections.each do |section|
       assert(section.fetch("progression").all? { |name| Chords.parse(name) })
       assert_includes DATA.fetch("voices").keys, section.fetch("voice")
       assert_includes DATA.fetch("groove_profiles").keys, section.fetch("profile")
       assert_includes DATA.fetch("drum_patterns").keys, section.fetch("drums")
       assert_includes DATA.fetch("comp").fetch("styles").keys, section.fetch("repeat")
+      assert_includes DATA.fetch("sonitex").fetch("presets").keys, section.fetch("sonitex")
+      assert_operator section.fetch("sonitex_instances"), :>=, 2
+      assert_operator section.fetch("sonitex_instances"), :<=, 3
+      assert_operator section.fetch("vcs"), :>=, 0.4
+      assert_operator section.fetch("vcs"), :<=, 0.7
       section.fetch("melody").each do |beat, midi, length, gain|
         assert_operator beat, :>=, 0
         assert_operator midi, :>, 0
@@ -984,6 +989,23 @@ class DillaTest < Minitest::Test
       assert(hit.all? { |sample| sample.finite? })
       assert_operator hit.map(&:abs).max, :>, 0.05
     end
+  end
+
+  def test_each_drum_hit_varies_and_the_drum_bus_receives_sonitex_and_vcs
+    seq = sequencer("dry", seed: 31)
+    hits = [["snare", 0.1], ["snare", 0.5]]
+    plain = seq.overlay_drums(Array.new(SAMPLE_RATE, 0.0), hits, {"snare" => -3.0})
+    coloured = seq.overlay_drums(
+      Array.new(SAMPLE_RATE, 0.0), hits, {"snare" => -3.0}, 0.55,
+      sonitex: {"preset" => DATA.dig("sonitex", "presets", "dusty_warm"), "instances" => 2}
+    )
+    assert(plain.all?(&:finite?))
+    assert(coloured.all?(&:finite?))
+    refute_equal plain, coloured
+    assert_operator coloured.map(&:abs).max, :<=, 1.0
+    first = plain[(0.1 * SAMPLE_RATE).to_i, 4000]
+    second = plain[(0.5 * SAMPLE_RATE).to_i, 4000]
+    refute_equal first, second, "each snare should get its own deterministic noise/transient"
   end
 
 
