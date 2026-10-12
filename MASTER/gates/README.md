@@ -34,7 +34,10 @@ DevTools protocol, then measure geometry, reflow, occlusion, viewport spill,
 keyboard order, phone-sized tap targets, WebGL surfaces and web vitals, and they
 compare layout against snapshots committed under `data/layout_snapshots`. The
 rendered suite bundles most of them. When no browser exists, a gate that needs
-one reports itself inconclusive and does not pass.
+one reports itself inconclusive and does not pass. `web_vitals_budget` measures
+LCP and CLS on one mobile first screen per app, using the canonical
+`pixel_snapshot` inventory; it source-checks INP collection rather than inventing
+an INP value from a scripted load with no real user interaction.
 
 `browser_diagnostics` adds runtime evidence to that same CDP path. For each reachable
 route in `data/geometry_surfaces.yml`, at its declared viewport, it records console
