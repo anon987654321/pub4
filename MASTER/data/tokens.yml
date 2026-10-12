@@ -439,68 +439,122 @@ tokens:
       complete: ready
       converged: ready
       settled: idle
-    # The plain-ASCII face. Two readers: lib/cli/face/ascii.rb (the terminal)
-    # and the web face (RAILS/master_web), which ports the same steps, so every
-    # tunable lives here and nowhere else. Braille is retired. Rounding is
-    # floor(x + 0.5), half up, and every cell index is a floor; the dither is
-    # an integer matrix; the renderer uses no randomness. Steps, in order, for
-    # a frame of rows x cols cells (the buffer is cols wide and 2 * rows high:
-    # two square sub-rows per cell, a cell being twice as tall as wide):
+    # The plain-ASCII face: a lit triangle mesh rasterised in software and
+    # sampled onto a ramp of characters. Two readers: lib/cli/face/ascii.rb (the
+    # terminal) and the web face (RAILS/master_web), which ports the same steps
+    # with no WebGL, so every tunable lives here and nowhere else. Braille is
+    # retired. Rounding is floor(x + 0.5), half up, and every cell index is a
+    # floor; the dither is an integer matrix; the renderer uses no randomness.
+    # A frame of rows x cols cells is a buffer of cols*samples by 2*rows*samples
+    # square samples: a cell is `samples` wide and 2*samples tall, being twice as
+    # tall as wide. Steps, in order:
+    #  0 the mesh (Face::Head, built once per window size and kept): `mesh.rows`
+    #    rings of `mesh.around` vertices, each an ellipse at angle theta from the
+    #    front (x = A sin, z = D cos), A the ring's half width times the face scale
+    #    and cranial width, D its half width times the depth ratio. The half width
+    #    at height y is the painting's face ellipse (DepthMap's first layer: x
+    #    radius 0.255 of the canvas, centred at its CX, CY): sqrt(1 - t^2) of its
+    #    widest, with t running to 0 at `mesh.skull` half widths above the widest
+    #    row, and below it (1 - t^2)^mesh.jaw at `mesh.chin` half widths down. The
+    #    front half is lifted by the painted relief (brightness blurred over a
+    #    cross of `mesh.blur`, minus 0.5) and by the mask's ridges and sockets, in
+    #    proportion to cos theta. Two pole vertices at the apexes close the top and
+    #    bottom, so every edge has two triangles and the winding is outward. A mask
+    #    is the same grid under other numbers (Face::Masks), so a morph is plain
+    #    vertex interpolation. Vertex normals are the area-weighted mean of the
+    #    faces round the vertex; a vertex's cavity is how far its neighbours' mean
+    #    stands out along the normal, over the squared edge length.
     #  1 fit: scale = min((cols/2 - 1) / R, (2*rows - 2) / spanY) * fit, with R
-    #    the largest hypot(x, z) of the points, so turning never resizes it.
-    #  2 turn each point by yaw (look.yaw + look.turn), then pitch, then roll;
-    #    k = scale * look.scale * c / (c - rz) with c = camera / look.dolly;
-    #    px = floor(cols/2 + x*k), py = floor(rows - y*k - bob*scale);
-    #    the z-buffer keeps the largest rz*scale at each splat offset.
-    #  3 smooth the z-buffer with a 3x3 mean of valid neighbours; occupancy is
-    #    a 5x5 mean of valid pixels.
-    #  4 per cell (a pair of sub-rows): empty is a space. A silhouette cell (an
-    #    invalid sub-pixel beside it) takes its glyph from the occupancy
-    #    gradient. A crease cell (largest |Hessian eigenvalue| of the smoothed
-    #    z at least crease) takes it from the ridge direction. Otherwise shade:
-    #    normal (-dz/dx, dz/dy_down, 1) normalised, lum = max(n.light, 0),
-    #    tone = min((base + gain*lum) * (1 - paint + paint*brightness), ceiling),
-    #    index = floor(tone*(n-1) + 0.5 + ((bayer[row%4][col%4] + 0.5)/16 - 0.5) * dither_gain), the dither
+    #    the largest hypot(x, z) of the vertices, so turning never resizes it.
+    #  2 turn each vertex and normal by yaw (look.yaw + look.turn), then pitch,
+    #    then roll; k = scale * look.scale * c / (c - rz) with c = camera /
+    #    look.dolly; x = samples * (cols/2 + x*k), y = samples * (rows - y*k -
+    #    bob*scale), depth rz*scale. The camera distance c is the field of view:
+    #    the half angle is atan(1/camera) of the head radius.
+    #  3 rasterise every triangle whose screen area is front facing: edge
+    #    functions at sample centres (i + 0.5, j + 0.5), barycentric weights
+    #    that are all >= 0, a z-buffer that keeps the largest depth and, on a
+    #    tie, the first triangle drawn. Each sample keeps its triangle and two
+    #    weights; shading waits until the last triangle is in.
+    #  4 light each covered sample, in view space. Key: unit vector (sin a cos e,
+    #    sin e, cos a cos e) with a = light.start + light.orbit * look time (the
+    #    Look's `light`) and e = light.elevation; fill: the fixed light.fill_dir;
+    #    rim: (-sin a, 0.4, -cos a), behind the head and opposite the key. lum =
+    #    ambient + key*max(n.K, 0) + fill*max(n.F, 0) + rim*max(n.R, 0), times
+    #    (1 - paint + paint*brightness) and (1 - cavity.gain*ao); a specular term
+    #    spec * max(n.H, 0)^shininess (H = unit(K + (0, 0, 1)), shininess an
+    #    integer power of two, by squaring) is added where n.K > 0. n is the
+    #    barycentric mix of vertex normals, renormalised. A mesh read from a file
+    #    has vertices of its own for every triangle, so its normals are its faces'
+    #    and it is shaded flat; smooth shading was chosen for the head because flat
+    #    shows the facets as creases at 28 by 64.
+    #  5 per cell: coverage is covered samples over samples*2*samples, below
+    #    `cover` the cell is a space. A silhouette cell (a 4-neighbour below
+    #    `cover`) takes its glyph from the gradient of coverage over the 3x3
+    #    cells, if it is at least edge_gradient. Otherwise a crease cell (the
+    #    larger |eigenvalue| of the change of surface slope between the cell's
+    #    halves, at least crease) takes it from the ridge direction. Otherwise
+    #    shade: tone = mean lum of covered samples * (1 - edge_fade + edge_fade *
+    #    coverage), gain times it, the part above `knee` scaled by `shoulder` and the
+    #    whole capped at `ceiling`, plus depth.tone * (depth fraction - 0.5), index = floor(tone*(n-1)
+    #    + 0.5 + ((bayer[row%4][col%4] + 0.5)/16 - 0.5) * dither_gain), the dither
     #    fixed in screen space. Light mode reverses the ramp.
-    #  5 a line direction (dx, dy_up) in square sub-pixels picks "-", "/", "|"
+    #  6 a line direction (dx, dy_up) in square samples picks "-", "/", "|"
     #    or "\" by the glyph's own slope on a cell: "/" is atan(aspect) from
     #    horizontal. A horizontal edge picks by sub-row: boundary at the cell
     #    top "'", middle "-", bottom "_".
-    #  6 features over the shading (eyes, brows, nose line, mouth), projected
-    #    like points and drawn only where the z-buffer does not hide them.
-    #  7 depth class: rz*scale as a fraction of the visible range, at least `near` bold,
+    #  7 features over the shading (eyes, brows, nose line, mouth), placed from
+    #    the mesh's landmarks, projected like vertices and drawn only where the
+    #    z-buffer does not hide them.
+    #  8 depth class: rz*scale as a fraction of the visible range, at least `near` bold,
     #    at most `far` dim.
-#  A port keeps three habits of the Ruby that plain arithmetic would not: a
-#  mean is Ruby's Array#sum, which compensates (Kahan-Babuska), so the
-#  anchors land on the same points; min_by and max_by keep the first of equal
-#  elements; and Float#% is fmod moved into the divisor's sign. sin and cos
-#  may differ in the last bit between runtimes (the fixtures allow 0.01 on the
-#  Look and nothing on a character). The web port, RAILS/master_web/public/
-#  face_ascii.js, rebuilds the head from the depth map and morphology here
-#  rather than receiving it, and test/face_ascii.test.mjs holds it to
-#  test/fixtures/face_ascii_frames.json.
-#  Pose.at(state, t, seed) gives the Look for a still frame: turn = spin * t in
+    #  The ramp is ordered by ink: `ink` holds each glyph's measured share of a
+    #  character cell (`ruby tools/face_ascii_fixtures.rb ink`, Menlo at 72 px), and a test holds
+    #  `chars` ascending in it. MASTER_FACE_CHARS replaces the ramp.
+    #  A port keeps three habits of the Ruby that plain arithmetic would not: a
+    #  sum is a plain left-to-right loop (never Array#sum, which compensates); min_by
+    #  and max_by keep the first of equal elements; and Float#% is fmod moved into
+    #  the divisor's sign. sin, cos, asin, atan2 and exp may differ in the last
+    #  bit between runtimes (the fixtures allow 0.01 on the Look and nothing on a
+    #  character). The web port, RAILS/master_web/public/face_ascii.js, rebuilds
+    #  the mesh from the depth map and morphology here rather than receiving it,
+    #  and test/face_ascii.test.mjs holds it to test/fixtures/face_ascii_frames.json.
+    #  Pose.at(state, t, seed) gives the Look for a still frame: turn = spin * t in
     #  the spin states, else 0; scale = 1 + breath*sin(breath_rate*t); pitch =
-    #  pitch_sway*sin(pitch_rate*t); roll and bob likewise; the eyes shut while
+    #  pitch_sway*sin(pitch_rate*t); roll and bob likewise; light = light.start +
+    #  light.orbit * t; the eyes shut while
     #  (t + (seed mod 7) * 0.37) mod blink_period >= blink_period - blink_length;
     #  speaking opens the mouth by 0.7*|sin(1.1*k)| + 0.15*(k mod 3), k = floor(20*t).
     ascii:
-      chars: " .:-=+*#%@"
+      chars: " .:;=*%#@"
+      # Ink: each ramp glyph's share of one character cell, measured.
+      ink: { " ": 0.0, ".": 0.0362, ":": 0.0576, ";": 0.0753, "=": 0.0910, "*": 0.1103, "%": 0.1456, "#": 0.1797, "@": 0.2099 }
       mode: dark
       fit: 0.92
       camera: 3.2
       aspect: 2.0
-      light: [-0.4, 0.5, 0.75]
-      splat: [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1]]
-      crease: 0.8
-      shade: { base: 0.18, gain: 0.75, paint: 0.8, ceiling: 0.97 }
-      edge_gradient: 0.02
-      hollow: 0.5
-      gap: 3
-      see_through: 2.5
+      samples: 2
+      mesh: { rows: [40, 90], per_row: 1.6, around: [48, 120], per_col: 0.9, skull: 1.45, chin: 1.2, jaw: 0.6, blur: 0.02, back: 0.72 }
+      light:
+        start: -0.6
+        orbit: 0.6
+        elevation: 0.5
+        fill_dir: [-0.4, 0.25, 0.9]
+        ambient: 0.16
+        key: 0.62
+        fill: 0.16
+        rim: 0.3
+        spec: 0.22
+        shininess: 16
+      shade: { paint: 0.6, gain: 1.3, knee: 0.7, shoulder: 0.5, ceiling: 0.97 }
+      cavity: { gain: 0.15 }
+      cover: 0.2
+      edge_fade: 0.4
+      edge_gradient: 0.5
+      crease: 0.3
       dither_gain: 0.55
       dither: [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
-      depth: { near: 0.62, far: 0.30 }
+      depth: { near: 0.62, far: 0.30, tone: 0.08 }
       # Read by the web view only (face_ascii.js): the rows a viewport is divided
       # into, the font size bounds in px, and the alpha of far, mid and near ink.
       # The terminal has the window it is given and needs none of it.
@@ -522,6 +576,7 @@ tokens:
         dolly: { idle: 1.0, listening: 1.018, thinking: 1.045, speaking: 1.032 }
         spin_states: [idle, thinking, working, sleeping, ready]
       occlusion: 2.5
+      facing: 0.1
       min_rows: 8
       min_cols: 16
       features:
@@ -547,8 +602,10 @@ tokens:
       # geometry keys are the morphology block, so a key there is not repeated);
       # Face::Masks.morph(from, to, s) blends every key by smoothstep(s) =
       # s*s*(3-2s), clamped, and returns `from` at s <= 0 and `to` at s >= 1
-      # exactly. The lattice is the human head's, point for point; only where
-      # each point sits changes, so the count never does. Keys:
+      # exactly. The mesh is the human head's grid, vertex for vertex; only where
+      # each vertex sits changes, so the count and the triangles never do. A mesh
+      # at a mix is the neutral and the target's vertices (and landmarks) blended
+      # by the same smoothstep, and the extras below follow the blended numbers. Keys:
       #  width, face_length, depth_scale: scales of x, y and z on the head.
       #  upper_face_scale, lower_face_scale, cranial_width, cranium_scale,
       #    facial_verticalization, jaw_projection, jaw_softening,

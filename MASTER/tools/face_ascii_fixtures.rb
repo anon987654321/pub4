@@ -1,17 +1,44 @@
 # frozen_string_literal: true
 
 # Writes test/fixtures/face_ascii_frames.json: the exact frames the Ruby ASCII
-# face draws for fixed (rows, cols, state, t, seed), with the points' digest and
+# face draws for fixed (rows, cols, state, t, seed), with the vertices' digest and
 # the Look each came from. The Ruby test asserts them; the web face's port
 # asserts the same file under node (cell differences up to "tolerance" are
 # allowed, since libm's sin and cos may differ in the last bit between
 # runtimes). Run after any change to data/tokens.yml face_interface.ascii or to
 # the renderer, and commit the result: `ruby tools/face_ascii_fixtures.rb`.
+#
+# `ruby tools/face_ascii_fixtures.rb ink [font-file] [points]` writes nothing: it
+# prints the ink density of every printable ASCII glyph in a monospace face (the
+# share of one character cell the glyph blackens, drawn black on white in a cell
+# of the face's own advance and line height, read back as the cell's mean) and
+# the ramp in data/tokens.yml (face_interface.ascii.chars and .ink) is chosen
+# from it. Needs ImageMagick (`magick`) and a monospace font file, by default
+# macOS Menlo (advance 0.602 em, line height 1.17 em).
 
 require "json"
 require_relative "../lib/master"
 
 include Master::CLI
+
+def ink_table(font, points)
+  width = (points * 0.602).round
+  height = (points * 1.17).round
+  table = (33..126).to_h do |code|
+    char = code.chr
+    # -annotate reads a backslash as an escape, so a literal one is doubled.
+    out, = Master::Io::Exec.capture2("magick", "-size", "#{width}x#{height}", "xc:white", "-font", font, "-pointsize", points.to_s, "-gravity", "center",
+                                     "-fill", "black", "-annotate", "0", char == "\\" ? "\\\\" : char, "-format", "%[fx:1-mean]", "info:")
+    [char, out.to_f]
+  end
+  puts "font #{File.basename(font)} at #{points} px, cell #{width}x#{height}"
+  table.sort_by { |glyph, density| [density, glyph] }.each { |glyph, density| puts format("%-2s %.4f", glyph, density) }
+end
+
+if ARGV.first == "ink"
+  ink_table(ARGV[1] || "/System/Library/Fonts/Menlo.ttc", (ARGV[2] || 72).to_i)
+  exit
+end
 
 CUBE = <<~OBJ
   v -1 -1 -1
@@ -38,6 +65,8 @@ CASES = [
   ["head speaking", :head, 28, 64, :speaking, 1.35, 1],
   ["head listening", :head, 28, 64, :listening, 0.5, 1],
   ["head blink", :head, 28, 64, :idle, 3.3, 0],
+  ["head light orbit", :head, 28, 64, :idle, 8.0, 1],
+  ["head close-up", :head, 44, 140, :speaking, 1.9, 2],
   ["cube", :cube, 16, 40, :idle, 2.0, 0]
 ].freeze
 

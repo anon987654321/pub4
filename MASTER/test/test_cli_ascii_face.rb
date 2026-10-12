@@ -11,18 +11,18 @@ class TestCliAsciiFace < Minitest::Test
   PRINTABLE = /\A[\x20-\x7e\n]*\z/
   # A front frame at 12 rows by 24 columns with the head at rest.
   GOLDEN = <<-'FRAME'
-      //''''''''\\
-     /:-=+*++==-:.\
-     |:-=++++=--:.|
-     |-=++*+|==-:.|
-     |------|-----|
-    |:-( o )|( o ):|
-    |-=++***|+==--:|
-    |:==****.+=--:.|
-    \\:--      :..//
-      \\:.----..//
-        \      /
-           ---
+
+        //''''\\
+       /%###%*=;\
+      /----------\
+     -------|-------
+     (  o  )|(  o  )
+     |\-----|----/|
+     |\*%%%%.-;::/|
+      \==       -/
+       \\;-----//
+
+
   FRAME
 
   def head_frame(rows, cols, look, state: :idle)
@@ -96,28 +96,80 @@ class TestCliAsciiFace < Minitest::Test
     assert_in_delta 0.15625, Face::Masks.smoothstep(0.25), 1e-15
   end
 
-  def test_the_human_parameters_rebuild_the_head_point_for_point
+  def test_the_human_parameters_are_the_head_and_a_tiny_mix_is_almost_it
     head = Face::Head.for(20, 40)
-    shape = Face::Masks::Shape.new(head, Face::Masks.params(nil))
-    mine = []
-    shape.each_point { |x, y, z, b, zone, *| mine << [x, y, z, b, zone] }
-    theirs = []
-    head.each_point { |x, y, z, b, zone, *| theirs << [x, y, z, b, zone] }
-    assert_equal theirs, mine
-    assert_same head, Face::Masks.source(head, "baining", 0.0)
+    assert_same head.mesh, Face::Masks.source(head, "baining", 0.0)
+    assert_same head.mesh("baining"), Face::Masks.source(head, "baining", 1.0)
+    near = Face::Masks.source(head, "baining", 1.0e-6)
+    near.pos.each_with_index { |v, i| assert_in_delta head.mesh.pos[i], v, 1.0e-6 }
+    refute_equal head.mesh.pos, head.mesh("baining").pos
   end
 
-  def test_every_target_sits_on_the_same_lattice
-    [[20, 40], [28, 64], [14, 30]].each do |rows, cols|
+  # Every undirected edge with the number of triangles that use it.
+  def edge_counts(mesh) = mesh.tris.each_slice(3).flat_map { |a, b, c| [[a, b], [b, c], [c, a]].map(&:minmax) }.tally
+
+  def test_the_head_is_a_closed_mesh_wound_outward_with_the_same_topology_under_every_mask
+    [[20, 40], [28, 64], [44, 140]].each do |rows, cols|
       head = Face::Head.for(rows, cols)
-      Face::Masks::ORDER.each do |mask|
-        [0.3, 1.0].each do |mix|
-          count = 0
-          Face::Masks.source(head, mask, mix).each_point { |*| count += 1 }
-          assert_equal head.count, count, "#{mask} at #{rows}x#{cols}, mix #{mix}"
-        end
+      assert_operator head.mesh.triangle_count, :>=, 3000
+      [nil, *Face::Masks::ORDER].each do |mask|
+        mesh = head.mesh(mask)
+        assert_equal [2], edge_counts(mesh).values.uniq, "#{mask.inspect} at #{rows}x#{cols}: every edge has two triangles"
+        assert_operator mesh.volume, :>, 0.0, "#{mask.inspect} at #{rows}x#{cols}: outward"
+        assert_same head.mesh.tris, mesh.tris, "one topology"
+        assert_equal head.mesh.vertex_count, mesh.vertex_count
+        mesh.pos.each { |v| assert_predicate v, :finite? }
       end
+      [0.3, 0.7].each { |mix| Face::Masks::ORDER.each { |m| assert_equal head.mesh.vertex_count, Face::Masks.source(head, m, mix).vertex_count } }
     end
+  end
+
+  def test_the_mesh_is_deterministic_and_the_landmarks_stand_on_the_face
+    a = Face::Head.new(28, 64).mesh
+    b = Face::Head.new(28, 64).mesh
+    assert_equal a.pos, b.pos
+    assert_equal a.landmarks, b.landmarks
+    lm = a.landmarks
+    assert_operator lm[:tip][2], :>, lm[:bridge][2], "the nose stands out of the brow"
+    assert_operator lm[:tip][2], :>, lm[:mouth][:centre][2]
+    lm[:eyes].each { |e| assert_operator e[:pupil][0].abs, :>, 0.05 }
+    assert_operator lm[:eyes][0][:pupil][0], :<, 0.0
+    assert_operator lm[:eyes][1][:pupil][0], :>, 0.0
+  end
+
+  CUBE_OBJ = FIXTURES.dig("meshes", "cube")
+
+  # The cube faces the camera: the front face, wound inward in the file, is turned
+  # outward and hides every other face, so it alone covers samples, and covers
+  # exactly the square the camera maths puts there. Flat light means one luminance.
+  def test_the_rasteriser_covers_a_unit_cube_by_the_square_the_camera_gives_it
+    mesh = Face::Mesh.parse(CUBE_OBJ)
+    assert_operator mesh.volume, :>, 0.0, "an inward wound file is turned outward"
+    ascii = Face::Ascii.new(mesh, 30, 40)
+    ascii.render(Face::Motion.rest)
+    covered = ascii.instance_variable_get(:@tri).count { |t| t >= 0 }
+    k = ascii.scale * Face::Ascii::CAMERA / (Face::Ascii::CAMERA - 1.0)
+    side = 2 * k * Face::Ascii::SAMPLES
+    assert_in_delta side * side, covered, side * side * 0.03
+    lums = ascii.instance_variable_get(:@lum).each_index.select { |i| ascii.instance_variable_get(:@tri)[i] >= 0 }.map { |i| ascii.instance_variable_get(:@lum)[i] }
+    assert_in_delta lums.min, lums.max, 1.0e-9, "a flat face is lit evenly"
+  end
+
+  def test_a_triangle_covers_its_area_and_back_faces_are_culled
+    tri = "v -1 -1 0\nv 1 -1 0\nv 0 1 0\nf 1 2 3\n"
+    mesh = Face::Mesh.parse(tri)
+    ascii = Face::Ascii.new(mesh, 20, 40)
+    covered = lambda do |m|
+      a = Face::Ascii.new(m, 20, 40)
+      a.render(Face::Motion.rest)
+      a.instance_variable_get(:@tri).count { |t| t >= 0 }
+    end
+    n = covered.call(mesh)
+    # An open triangle has no inside, so its volume is zero and it stays as read.
+    expected = 0.5 * 2 * 2 * ((ascii.scale * Face::Ascii::SAMPLES)**2)
+    assert_in_delta expected, n, expected * 0.06
+    flipped = Face::Mesh.new(mesh.pos, [0, 2, 1], mesh.bright)
+    assert_equal 0, covered.call(flipped), "seen from behind it is culled"
   end
 
   def test_the_five_masks_differ_from_each_other_and_from_the_head
@@ -132,7 +184,8 @@ class TestCliAsciiFace < Minitest::Test
   def test_each_extra_feature_reads_in_plain_ascii
     maprik = mask_frame(28, 64, "maprik_yam", 1.0).lines.join("\n")
     assert_match(/OO+/, maprik, "ring eyes")
-    assert_match(/-----'+-----/, maprik, "the halo")
+    assert_match(/-{10,}/, maprik, "the halo")
+    assert_match(/'{8,}/, maprik, "the halo's second row")
     assert_includes maprik, "\\_/", "the beak's tip"
     assert_match(/=====/, mask_frame(28, 64, "iatmul_mei", 1.0).lines.join("\n"), "heavy brow")
     sepik = mask_frame(28, 64, "sepik_woven", 1.0).lines
@@ -216,11 +269,38 @@ class TestCliAsciiFace < Minitest::Test
   end
 
   def test_the_ramp_is_replaceable_and_inverts_in_light_mode
-    assert_equal " .:-=+*#%@".chars, Face::Glyphs.ramp
-    assert_equal "@%#*+=-:. ".chars, Face::Glyphs.ramp(" .:-=+*#%@", "light")
+    assert_equal " .:;=*%#@".chars, Face::Glyphs.ramp
+    assert_equal "@#%*=;:. ".chars, Face::Glyphs.ramp(" .:;=*%#@", "light")
     assert_equal %w[M A S T E R], Face::Glyphs.ramp("MASTER")
     frame = Face::Ascii.new(Face::Head.for(14, 30), 14, 30, chars: "MASTER").render(Face::Motion.rest)
-    assert_empty frame.lines.join.delete("MASTER|/\x27_o() ").delete("\\").delete("-")
+    assert_empty frame.lines.join.delete("MASTER|/\x27_o().() ").delete("\\").delete("-")
+  end
+
+  def test_the_ramp_is_ordered_by_measured_ink
+    ascii = Master::Face::Contract.ascii
+    ink = ascii.fetch("ink")
+    glyphs = ascii.fetch("chars").chars
+    assert_equal glyphs.sort, ink.keys.sort
+    glyphs.each_cons(2) { |a, b| assert_operator ink.fetch(b), :>, ink.fetch(a), "#{b.inspect} is inkier than #{a.inspect}" }
+    assert_equal 0.0, ink.fetch(" ")
+  end
+
+  def test_the_key_light_orbits_and_is_part_of_the_pose
+    light = Master::Face::Contract.ascii.fetch("light")
+    assert_equal light.fetch("start"), Face::Pose.at(:idle, 0.0, 1).light
+    assert_in_delta light.fetch("start") + (light.fetch("orbit") * 4.0), Face::Pose.at(:idle, 4.0, 1).light, 1e-12
+    assert_equal Face::Pose.at(:speaking, 2.5, 3), Face::Pose.at(:speaking, 2.5, 3)
+    a = head_frame(28, 64, Face::Motion.rest(turn: 0.5, light: 0.0)).lines
+    b = head_frame(28, 64, Face::Motion.rest(turn: 0.5, light: 2.5)).lines
+    refute_equal a, b
+    assert_equal a, head_frame(28, 64, Face::Motion.rest(turn: 0.5, light: 0.0)).lines
+  end
+
+  def test_reduced_motion_holds_the_light_too
+    with_env(MASTER_REDUCED_MOTION: "1") do
+      motion = Face::Motion.new
+      assert_equal Face.frame(state: :idle, rows: 20, cols: 40, t: 0.1, motion:), Face.frame(state: :idle, rows: 20, cols: 40, t: 9.0, motion:)
+    end
   end
 
   def test_dither_is_fixed_in_screen_space
@@ -246,6 +326,14 @@ class TestCliAsciiFace < Minitest::Test
     refute_equal idle[mouth], listening[mouth]
     assert_match(%r{\\_+/}, listening[mouth].join("\n"))
     assert_match(/\.-+\./, speaking[mouth].join("\n"))
+  end
+
+  def test_features_on_the_far_side_of_the_head_are_not_drawn
+    back = head_frame(28, 64, Face::Motion.rest(turn: Math::PI)).lines
+    text = back.join("\n")
+    refute_includes text, "(", "no eyes on the back of the head"
+    refute_includes text, "o"
+    assert_operator back.join.delete(" ").size, :>, 200, "the back is still a lit solid"
   end
 
   def test_blinking_closes_the_lids
@@ -290,8 +378,8 @@ class TestCliAsciiFace < Minitest::Test
 
   def test_ascii_stl_reader_turns_a_tiny_cube_into_a_picture
     mesh = Face::Mesh.parse(STL_CUBE)
-    assert_equal 12, mesh.triangles.size
-    xs = mesh.triangles.flatten(1).map(&:first)
+    assert_equal 12, mesh.triangle_count
+    xs = mesh.pos.each_slice(3).map(&:first)
     assert_in_delta 0.0, xs.minmax.sum, 1e-9, "centred"
     frame = Face::Ascii.new(mesh, 14, 30).render(Face::Motion.rest(turn: 0.6, pitch: 0.3))
     assert_operator frame.lines.join.delete(" ").size, :>, 60
@@ -300,7 +388,7 @@ class TestCliAsciiFace < Minitest::Test
 
   def test_obj_quads_are_split_into_triangles
     mesh = Face::Mesh.parse(FIXTURES.dig("meshes", "cube"))
-    assert_equal 12, mesh.triangles.size
+    assert_equal 12, mesh.triangle_count
   end
 
   def test_the_pose_is_a_pure_function

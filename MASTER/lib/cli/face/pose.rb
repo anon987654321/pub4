@@ -26,6 +26,7 @@ module Master
             pitch: m.fetch("pitch_sway") * Math.sin(m.fetch("pitch_rate") * t),
             roll: m.fetch("roll") * Math.sin(m.fetch("roll_rate") * t),
             bob: m.fetch("bob") * Math.sin(m.fetch("bob_rate") * t),
+            light: Motion::LIGHT.fetch("start") + (Motion::LIGHT.fetch("orbit") * t),
             dolly: m.fetch("dolly").fetch(state.to_s, 1.0),
             eye_open: shut ? 0.0 : 1.0,
             mouth: state.to_sym == :speaking ? Face.timed_level(k) : 0.0,

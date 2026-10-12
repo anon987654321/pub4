@@ -7,7 +7,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The web face draws the terminal's ASCII face. MASTER/test/fixtures/face_ascii_frames.json
-// holds what the Ruby renderer drew for eight fixed inputs; the port must draw the same
+// holds what the Ruby renderer drew for ten fixed inputs; the port must draw the same
 // characters from the same contract (MASTER/data/tokens.yml, face_interface), which the
 // page receives as MASTER_FACE_CONTRACT. The contract is read here the way the view gives
 // it to the browser: the face_interface block of tokens.yml, as JSON.
@@ -49,10 +49,10 @@ function render(c, look = engine.pose(c.state, c.t, c.seed)) {
 }
 
 test("every fixture frame is reproduced character for character", () => {
-  assert.equal(fixtures.cases.length, 8);
+  assert.equal(fixtures.cases.length, 10);
   for (const c of fixtures.cases) {
     const { renderer, frame } = render(c);
-    assert.equal(rubyDigest(renderer.fitted()), c.digest, `${c.name}: the points differ from the Ruby head`);
+    assert.equal(rubyDigest(renderer.fitted()), c.digest, `${c.name}: the vertices differ from the Ruby head`);
     const expected = c.lines.map((l) => l.replace(/ +$/, ""));
     assert.deepEqual(frame.lines, expected, c.name);
   }
@@ -292,7 +292,7 @@ test("the trigger section is reproduced: the session's mask, the mix, and the pa
   }
 });
 
-test("morph ends are exact, and every target sits on the head's own lattice", () => {
+test("morph ends are exact, and every target is the head's own mesh under other numbers", () => {
   const human = engine.Masks.params(null);
   for (const mask of engine.Masks.ORDER) {
     const target = engine.Masks.params(mask);
@@ -302,21 +302,91 @@ test("morph ends are exact, and every target sits on the head's own lattice", ()
     for (const [rows, cols] of [[20, 40], [28, 64]]) {
       const head = engine.head(rows, cols);
       for (const mix of [0.3, 1.0]) {
-        assert.equal(engine.Masks.source(head, mask, mix).points.length, head.points.length, `${mask} ${rows}x${cols} ${mix}`);
+        const shaped = engine.Masks.source(head, mask, mix);
+        assert.equal(shaped.vertexCount, head.mesh().vertexCount, `${mask} ${rows}x${cols} ${mix}`);
+        assert.equal(shaped.tris, head.mesh().tris, "the same triangles");
       }
     }
   }
   const head = engine.head(20, 40);
-  assert.equal(engine.Masks.source(head, "baining", 0), head);
+  assert.equal(engine.Masks.source(head, "baining", 0), head.mesh());
+  assert.equal(engine.Masks.source(head, "baining", 1), head.mesh("baining"));
   assert.equal(engine.Masks.smoothstep(0.25), 0.15625);
 });
 
-test("the human parameters rebuild the head point for point", () => {
+test("the human parameters are the head's own mesh, and the ends of a morph are exact", () => {
   const head = engine.head(20, 40);
-  const shaped = engine.Masks.source(head, "maprik_yam", 1e-300);
-  assert.equal(shaped.points.length, head.points.length);
-  const plain = engine.Masks.source(head, "maprik_yam", 0);
-  assert.deepEqual(plain.points, head.points);
+  const plain = head.mesh();
+  const target = head.mesh("maprik_yam");
+  const near = engine.Masks.source(head, "maprik_yam", 1e-300);
+  assert.deepEqual(near.pos, plain.pos);
+  assert.notDeepEqual(target.pos, plain.pos);
+});
+
+// Every undirected edge with the number of triangles that use it.
+function edgeCounts(m) {
+  const counts = new Map();
+  for (let i = 0; i < m.tris.length; i += 3) {
+    for (let k = 0; k < 3; k += 1) {
+      const a = m.tris[i + k];
+      const b = m.tris[i + ((k + 1) % 3)];
+      const key = a < b ? `${a},${b}` : `${b},${a}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+test("the head is a closed mesh: every edge is shared by two triangles, wound outward", () => {
+  for (const [rows, cols] of [[20, 40], [28, 64], [44, 140]]) {
+    for (const mask of [null, ...engine.Masks.ORDER]) {
+      const m = engine.head(rows, cols).mesh(mask);
+      for (const [edge, n] of edgeCounts(m)) assert.equal(n, 2, `${mask} ${rows}x${cols} edge ${edge}`);
+      assert.ok(m.volume() > 0, `${mask} ${rows}x${cols}: outward`);
+    }
+    assert.ok(engine.head(rows, cols).triangleCount >= 3000);
+  }
+});
+
+test("the rasteriser covers a unit cube by the square the camera gives it, and culls a back face", () => {
+  const cube = engine.mesh(fixtures.meshes.cube);
+  assert.equal(cube.triangleCount, 12);
+  assert.ok(cube.volume() > 0, "an inward-wound file is turned outward");
+  const r = new engine.Renderer(cube, 30, 40, { chars: fixtures.chars, mode: "dark" });
+  r.render(engine.pose("idle", 0, 0), "idle");
+  const hit = r.tri.filter((t) => t >= 0).length;
+  const k = r.scale * contract.ascii.camera / (contract.ascii.camera - 1.0);
+  const side = 2 * k * contract.ascii.samples;
+  assert.ok(Math.abs(hit - (side * side)) <= side * side * 0.03, `cube covers ${hit} samples, wanted ${side * side}`);
+
+  const tri = engine.mesh("v -1 -1 0\nv 1 -1 0\nv 0 1 0\nf 1 2 3\n");
+  const area = (m) => {
+    const q = new engine.Renderer(m, 20, 40, {});
+    q.render(engine.pose("idle", 0, 0), "idle");
+    return [q, q.tri.filter((t) => t >= 0).length];
+  };
+  const [q, n] = area(tri);
+  const expected = 0.5 * 2 * 2 * ((q.scale * contract.ascii.samples) ** 2);
+  assert.ok(Math.abs(n - expected) <= expected * 0.06, `${n} vs ${expected}`);
+  const back = new engine.Mesh(tri.pos, [0, 2, 1], tri.bright);
+  assert.equal(area(back)[1], 0, "seen from behind it is culled");
+});
+
+test("the ramp is ordered by measured ink", () => {
+  const ink = contract.ascii.ink;
+  const glyphs = Array.from(contract.ascii.chars);
+  glyphs.forEach((g, i) => { if (i > 0) assert.ok(ink[g] > ink[glyphs[i - 1]], `${g} is inkier than ${glyphs[i - 1]}`); });
+  assert.ok(glyphs.every((g) => g in ink));
+});
+
+test("the key light orbits with the pose, and the light is part of the look", () => {
+  const a = engine.pose("idle", 0, 1);
+  const b = engine.pose("idle", 4, 1);
+  assert.ok(b.light > a.light);
+  assert.equal(a.light, contract.ascii.light.start);
+  assert.equal(engine.lookFor({ state: "idle", t: 4, reduced: true }).light, contract.ascii.light.start);
+  const lit = (look) => new engine.Renderer(engine.head(28, 64), 28, 64, {}).render(look, "idle").lines;
+  assert.notDeepEqual(lit({ ...a, turn: 0.5 }), lit({ ...b, turn: 0.5, light: a.light + 2.5 }));
 });
 
 test("the mask follows thinking only, and reduced motion or a small window shows none", () => {

@@ -147,9 +147,10 @@ drift, naming the task to run.
 of `face_2d_fallback.js`) that defines `window.MASTER_FACE_ASCII`. It ports
 `MASTER/lib/cli/face/` step for step, reads every number from the face contract
 the page already inlines (`MASTER_FACE_CONTRACT`, `face_interface` in
-`MASTER/data/tokens.yml`, algorithm written there), rebuilds the head from the
-depth map and morphology rather than receiving it, and draws characters on `#face`
-with a 2D context. `test/face_ascii.test.mjs` holds it to
+`MASTER/data/tokens.yml`, algorithm written there), rebuilds the head mesh from the
+depth map and morphology rather than receiving it, rasterises and lights it on the
+CPU (a z-buffered triangle fill, the same arithmetic as Ruby, no WebGL), and draws
+characters on `#face` with a 2D context. `test/face_ascii.test.mjs` holds it to
 `MASTER/test/fixtures/face_ascii_frames.json`, character for character.
 
 With ASCII on (the default) no WebGL context and no THREE are created, so the

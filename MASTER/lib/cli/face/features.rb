@@ -5,25 +5,22 @@ module Master
   module CLI
     module Face
       # The eyes, brows, nose line and mouth, drawn as explicit glyphs over the
-      # shading rather than left to it. Anchors are found in the points
-      # themselves by their zone (Head marks the sockets, pupils and mouth), so
-      # the terminal and the browser keep one morphology; a source with no
-      # zones, a mesh, has no features. Each anchor is projected like a point
-      # and drawn only where nothing nearer hides it.
+      # shading rather than left to it. Their anchors are the mesh's landmarks
+      # (Head#landmarks puts them on the surface, so the terminal and the
+      # browser keep one morphology); a mesh read from a file has none and so no
+      # features. Each anchor is projected like a vertex and drawn only where
+      # nothing nearer hides it.
       class Features
         GLYPHS = Glyphs::CONFIG.fetch("features").freeze
         SHUT = 0.5
-        MOUTH_ZONE = 3
 
-        def initialize(points, source)
-          @anchors = source.respond_to?(:eyes) ? anchors(points) : nil
+        def initialize(mesh)
+          @anchors = mesh.landmarks
+          @mask = mesh.params
+          xlo, xhi, _, @top = mesh.bounds
+          @side = [-xlo, xhi].max
           @mouth_slack = 0.0
-          @mask = source.respond_to?(:params) ? source.params : nil
-          return unless @mask && @anchors
-
-          @top = points.map { |p| p[1] }.max
           @slack = 0.0
-          @side = points.map { |p| p[0].abs }.max
         end
 
         def draw(ascii, frame, look, state)
@@ -46,35 +43,9 @@ module Master
 
         private
 
-        def anchors(points)
-          eyes = [-1, 1].map do |side|
-            zone = points.select { |p| p[4].between?(1, 2) && (p[0] <=> 0) == side }
-            next if zone.empty?
-
-            eye = mean_point(zone.select { |p| p[4] == 2 }) || mean_point(zone)
-            reach = ((zone.map(&:first).max_by { |x| (x - eye[0]).abs } - eye[0]).abs * 0.8)
-            { left: nearest(zone, eye[0] - reach, eye[1]), right: nearest(zone, eye[0] + reach, eye[1]), pupil: eye }
-          end.compact
-          mouth = points.select { |p| p[4] == MOUTH_ZONE }
-          return nil if eyes.size < 2 || mouth.empty?
-
-          mx = mouth.map(&:first).minmax
-          my = mean(mouth, 1)
-          skin = points.select { |p| p[4].zero? && p[0].abs < 0.05 && p[2] > 0 }
-          eye_y = eyes.sum { |e| e[:pupil][1] } / 2.0
-          between = skin.select { |p| p[1] < eye_y && p[1] > my + 0.05 }
-          tip = between.max_by { |p| p[2] }
-          { eyes:, mouth: { left: nearest(mouth, mx[0], my), right: nearest(mouth, mx[1], my), centre: mean_point(mouth) },
-            bridge: nearest(skin, 0.0, eye_y), tip: }
-        end
-
-        def mean(list, axis) = list.sum { |p| p[axis] } / list.size.to_f
-        def mean_point(list) = list.empty? ? nil : [0, 1, 2].map { |a| mean(list, a) }
-        def nearest(list, x, y) = list.min_by { |p| ((p[0] - x)**2) + ((p[1] - y)**2) }
-
         def cell(point, slack = 0.0)
           px, py, depth = @ascii.project(point[0], point[1], point[2])
-          [px, py, depth, @ascii.hidden?(px, py, depth, slack)]
+          [px, py, depth, @ascii.hidden?(px, py, depth, slack) || !@ascii.covered?(px, py) || !@ascii.facing?(point[0], point[2])]
         end
 
         def put(col, row, glyph)
@@ -91,9 +62,9 @@ module Master
         def eyebrow_and_eye(eye)
           lx, _, _, lh = cell(eye[:left])
           rx, _, _, rh = cell(eye[:right])
-          return if lh && rh
+          px, py, _, ph = cell(eye[:pupil])
+          return if ph || (lh && rh)
 
-          px, py, = cell(eye[:pupil])
           span = (rx - lx).abs.floor
           width = [(span.even? ? span + 1 : span), 9].min
           col = Glyphs.half_up(px)
@@ -149,9 +120,8 @@ module Master
         # Eyes as concentric rings of the eye's own plane, outermost glyph
         # first, with the pupil (or the lid, shut) at the centre.
         def ring_eye(eye)
-          return if cell(eye[:left])[3] && cell(eye[:right])[3]
-
-          px, py, = cell(eye[:pupil])
+          px, py, _, ph = cell(eye[:pupil])
+          return if ph || (cell(eye[:left])[3] && cell(eye[:right])[3])
 
           count = Glyphs.half_up(@mask["ring_count"])
           radius = @mask["ring_radius"] * @mask["ring"]

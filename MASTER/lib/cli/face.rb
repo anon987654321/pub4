@@ -38,7 +38,7 @@ module Master
         look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: 0)
         return word(state.to_s, rows, cols) unless rows >= MIN_ROWS && cols >= MIN_COLS && ENV["MASTER_CLI_QUIET"] != "1"
 
-        look = look.with(yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0, mix: 0.0) if ENV["MASTER_REDUCED_MOTION"] == "1"
+        look = look.with(yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0, mix: 0.0, light: Motion::LIGHT.fetch("start")) if ENV["MASTER_REDUCED_MOTION"] == "1"
         law_config = Master::Face::LawField.config
         enabled = law_config.fetch("terminal_law_ring", true) != false
         visible = enabled && (show_laws.nil? || !!show_laws)

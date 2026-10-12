@@ -24,6 +24,8 @@ module Master
         SPIN = ASCII.fetch("spin").to_f
         SPINNING = ASCII.fetch("spin_states").map(&:to_sym).freeze
         BREATH = ASCII.fetch("breath").to_f
+        # The key light's start and orbit, in radians and radians a second.
+        LIGHT = Master::Face::Contract.ascii.fetch("light").freeze
         EVENTS = %i[key listen nod thinking phantom council anticipate].freeze
         # How the face attends, from the contract the browser face reads too.
         AWARE = Master::Voice::Policy.awareness.freeze
@@ -240,6 +242,7 @@ module Master
             bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
             mouth_open: @mouth_open.x.clamp(0.0, 1.0), mouth_wide: @mouth_wide.x.clamp(-1.0, 1.0),
+            light: LIGHT.fetch("start") + (LIGHT.fetch("orbit") * t),
             particles: @particles.map { |p| place(p, t) }, mask: @mask, mix: @mix
           )
         end
@@ -252,12 +255,12 @@ module Master
         end
 
         # One frame's worth of motion, in model units and radians.
-        Look = Data.define(:yaw, :turn, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles, :mask, :mix)
+        Look = Data.define(:yaw, :turn, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :light, :particles, :mask, :mix)
 
         # A Look at rest, for a still frame or a test: front, eyes open, mouth shut.
         def self.rest(**over)
           Look.new(**{ yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0, eye_open: 1.0, gaze: [0.0, 0.0],
-                       mouth: 0.0, mouth_open: 1.0, mouth_wide: 0.0, particles: [], mask: nil, mix: 0.0 }.merge(over))
+                       mouth: 0.0, mouth_open: 1.0, mouth_wide: 0.0, light: LIGHT.fetch("start").to_f, particles: [], mask: nil, mix: 0.0 }.merge(over))
         end
 
         # Smooth value noise in [-1, 1]: lattice values from an integer hash,

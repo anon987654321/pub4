@@ -239,7 +239,6 @@
     }
 
     // ---- Face::Head ---------------------------------------------------------
-    const THRESHOLD = 0.08;
     const SPREAD = 0.62;
     const m = (key, fallback) => num(morphology[key], fallback);
     const CRANIUM_SCALE = m("cranium_scale", 1.18);
@@ -258,9 +257,6 @@
     const ASYMMETRY = m("asymmetry", 0.010);
     const ASYMMETRY_SEED = Math.trunc(m("asymmetry_seed", 73421));
     const GENERATION = m("generation", 0);
-    const DEPTH_RATIO = 1.10 * JAW_PROJECTION * JAW_SOFTENING * MASTICATORY_SCALE;
-    const RELIEF = 0.20 * NASAL_PROJECTION;
-    const BACK_LIGHT = 0.28;
     const EYES = [-1, 1].map((side) => {
       const bias = Math.sin((ASYMMETRY_SEED * 0.0001) + (side * 17.17) + GENERATION * 0.71);
       const ex = (0.118 * ORBITAL_SCALE * side) + (side * ASYMMETRY * bias * 0.12);
@@ -285,64 +281,6 @@
       }
       if (!eye) return SKIN_ZONE;
       return hypot(x - eye[0], y - eye[1]) < PUPIL ? PUPIL_ZONE : EYE_ZONE;
-    }
-
-    // The head for a window of rows x cols cells: [x, y, z, brightness, zone] points.
-    function head(rows, cols) {
-      const dotsWide = cols * 2;
-      const dotsHigh = rows * 4;
-      const faceDots = Math.min(dotsWide, dotsHigh * 0.62) * 0.55;
-      const density = clamp(Math.round(faceDots * 2.0), 40, 160);
-      const latticeRows = Math.round(density * 66 / 52.0);
-      const mask = [];
-      for (let row = 0; row < latticeRows; row += 1) {
-        const shift = row % 2 === 1 ? 0.5 : 0.0;
-        const v = (row + 0.5) / latticeRows;
-        const points = [];
-        for (let col = 0; col < density; col += 1) {
-          const u = (col + shift + 0.5) / density;
-          const l = lum(u, v);
-          if (l >= THRESHOLD) points.push([((u * 2) - 1) * SPREAD, l]);
-        }
-        if (points.length) mask.push([-((v * 2) - 1) * SPREAD, points]);
-      }
-      let xmin = Infinity, xmax = -Infinity;
-      mask.forEach((r) => r[1].forEach((p) => { if (p[0] < xmin) xmin = p[0]; if (p[0] > xmax) xmax = p[0]; }));
-      const ys = mask.map((r) => r[0]);
-      const centre = [(xmax + xmin) / 2, (Math.max(...ys) + Math.min(...ys)) / 2];
-      const spacing = mask.length > 1 ? Math.abs(mask[0][0] - mask[1][0]) : 0.05;
-      const out = [];
-      const cells = [];
-      mask.forEach((r) => {
-        const y = r[0];
-        const pts = r[1];
-        let reach = 0;
-        pts.forEach((p) => { const d = Math.abs(p[0] - centre[0]); if (d > reach) reach = d; });
-        const hw = reach + (spacing / 2);
-        const depth = hw * DEPTH_RATIO * CRANIUM_SCALE;
-        const count = Math.max(Math.round(Math.PI * (hw + depth) / 2 / spacing), 2);
-        const fronts = [];
-        pts.forEach((p) => {
-          const x = p[0];
-          const l = p[1];
-          const localY = (y - centre[1]) * FACIAL_VERTICALIZATION;
-          const upper = clamp((localY + 0.38) / 0.80, 0.0, 1.0);
-          const widthScale = LOWER_FACE_SCALE + ((UPPER_FACE_SCALE - LOWER_FACE_SCALE) * upper);
-          const localX = (x - centre[0]) * widthScale;
-          const across = clamp(localX / (hw * CRANIAL_WIDTH), -1.0, 1.0);
-          const z = (hw * DEPTH_RATIO * CRANIUM_SCALE * Math.sqrt(1 - (across * across))) + ((l - 0.5) * RELIEF);
-          const zone = zoneAt(x, y);
-          out.push([localX, localY, z, l, zone]);
-          fronts.push([x, l, zone]);
-        });
-        // Kept for maskSource, which places these same lattice points again.
-        cells.push([y, hw, count, fronts]);
-        for (let i = 1; i < count; i += 1) {
-          const angle = (Math.PI / 2) + (Math.PI * i / count);
-          out.push([hw * Math.sin(angle), y - centre[1], depth * Math.cos(angle), BACK_LIGHT, SKIN_ZONE]);
-        }
-      });
-      return { points: out, features: true, cells, centre };
     }
 
     // ---- Face::Masks --------------------------------------------------------
@@ -413,61 +351,142 @@
       return MASK_ORDER[h % MASK_ORDER.length];
     }
 
-    // The head's lattice under a mask at a mix: the head itself at 0.
-    function maskSource(headObj, name, amount) {
-      if (name === null || name === undefined || !(amount > 0.0)) return headObj;
-      const p = morph(NEUTRAL, maskParams(name), amount);
-      const depthRatio = 1.10 * p.jaw_projection * p.jaw_softening * p.masticatory_scale;
-      const relief = 0.20 * p.nasal_projection;
-      const cy = headObj.centre[1];
-      const cx = headObj.centre[0];
-      const beak = (x, y) => {
-        const t = (p.beak_top - y) / p.beak_length;
-        if (t < 0) return 0.0;
-        const past = (t - 1.0) * p.beak_length / 0.04;
-        const taper = t <= 1.0 ? smoothstep(t) : Math.exp(-(past * past));
-        const side = x / p.beak_width;
-        return p.beak_projection * taper * Math.exp(-(side * side));
-      };
-      const bumps = (x, y, zone) => {
-        let lift = 0.0;
-        if (p.beak_projection > 0) lift += beak(x, y);
-        if (p.brow_ridge > 0) {
-          const up = (y - p.brow_y) / p.brow_height;
-          const across = x / p.brow_width;
-          lift += p.brow_ridge * Math.exp(-(up * up)) * Math.exp(-(across * across * across * across));
-        }
-        if (p.socket_depth > 0 && zone >= 1 && zone <= 2) lift -= p.socket_depth * (zone === 1 ? 1.0 : 0.4);
-        return lift;
-      };
-      const points = [];
-      headObj.cells.forEach(([y, hw, count, fronts]) => {
-        fronts.forEach(([x, l, zone]) => {
-          const baseY = (y - cy) * p.facial_verticalization;
-          const upper = clamp((baseY + 0.38) / 0.80, 0.0, 1.0);
-          const localX = (x - cx) * (p.lower_face_scale + ((p.upper_face_scale - p.lower_face_scale) * upper));
-          const across = clamp(localX / (hw * p.cranial_width), -1.0, 1.0);
-          let z = ((hw * depthRatio * p.cranium_scale * Math.sqrt(1 - (across * across))) * p.depth_scale) + ((l - 0.5) * relief * p.relief);
-          z += bumps(localX, baseY, zone);
-          points.push([localX * p.width, baseY * p.face_length, z, l + ((p.flat_brightness - l) * p.flatten), zone]);
-        });
-        const depth = hw * depthRatio * p.cranium_scale;
-        for (let i = 1; i < count; i += 1) {
-          const angle = (Math.PI / 2) + (Math.PI * i / count);
-          points.push([hw * Math.sin(angle) * p.width, (y - cy) * p.face_length, depth * Math.cos(angle) * p.depth_scale, BACK_LIGHT, 0]);
-        }
-      });
-      let reach = 0;
-      headObj.cells.forEach((cell) => { if (cell[1] > reach) reach = cell[1]; });
-      reach *= p.width;
-      const above = p.halo > 0 ? (p.halo_rise * p.halo) + ((halfUp(p.halo_rows) - 1) * p.halo_gap) : 0.0;
-      const aside = p.disc > 0 ? reach + (p.disc_offset * p.disc) + (p.disc_radius * p.disc) : 0.0;
-      return { points, features: true, params: p, margins: [above, aside] };
-    }
 
     // ---- Face::Mesh ---------------------------------------------------------
+    // An indexed triangle mesh, outward wound: flat arrays of positions, vertex brightness
+    // and triangle corners, with the landmarks and mask numbers a head carries.
+    const CAVITY_GAIN = ascii.cavity.gain;
     const MESH_BRIGHTNESS = 0.8;
-    const MESH_ACROSS = 90;
+
+    function blend(a, b, e) {
+      if (Array.isArray(a)) return a.map((v, i) => blend(v, b[i], e));
+      if (a !== null && typeof a === "object") {
+        const out = {};
+        Object.keys(a).forEach((k) => { out[k] = blend(a[k], b[k], e); });
+        return out;
+      }
+      return a + ((b - a) * e);
+    }
+
+    class Mesh {
+      constructor(pos, tris, bright, opts) {
+        const o = opts || {};
+        this.pos = pos;
+        this.tris = tris;
+        this.bright = bright;
+        this.landmarks = o.landmarks || null;
+        this.params = o.params || null;
+        this.margins = o.margins || [0.0, 0.0];
+        this.cachedBounds = null;
+        this.cachedNormals = null;
+        this.cachedCavity = null;
+      }
+
+      mesh() { return this; }
+
+      get vertexCount() { return this.pos.length / 3; }
+
+      get triangleCount() { return this.tris.length / 3; }
+
+      // The vertices of a and b blended by e, on a's triangles; the landmarks and margins
+      // follow, the numbers are the caller's.
+      static morph(a, b, e, params) {
+        const pos = a.pos.map((v, i) => v + ((b.pos[i] - v) * e));
+        const bright = a.bright.map((v, i) => v + ((b.bright[i] - v) * e));
+        return new Mesh(pos, a.tris, bright, { landmarks: blend(a.landmarks, b.landmarks, e), params, margins: blend(a.margins, b.margins, e) });
+      }
+
+      // [xmin, xmax, ymin, ymax, reach]: the box in x and y and the largest hypot(x, z).
+      bounds() {
+        if (this.cachedBounds) return this.cachedBounds;
+        const pos = this.pos;
+        let xlo = Infinity; let xhi = -Infinity; let ylo = Infinity; let yhi = -Infinity; let reach = 0.0;
+        for (let i = 0; i < pos.length; i += 3) {
+          const x = pos[i]; const y = pos[i + 1];
+          if (x < xlo) xlo = x;
+          if (x > xhi) xhi = x;
+          if (y < ylo) ylo = y;
+          if (y > yhi) yhi = y;
+          const d = Math.sqrt((x * x) + (pos[i + 2] * pos[i + 2]));
+          if (d > reach) reach = d;
+        }
+        this.cachedBounds = [xlo, xhi, ylo, yhi, reach];
+        return this.cachedBounds;
+      }
+
+      // The face normal (unnormalised, twice the area) of a corner triple.
+      face(a, b, c) {
+        const p = this.pos;
+        const ux = p[b] - p[a]; const uy = p[b + 1] - p[a + 1]; const uz = p[b + 2] - p[a + 2];
+        const vx = p[c] - p[a]; const vy = p[c + 1] - p[a + 1]; const vz = p[c + 2] - p[a + 2];
+        return [(uy * vz) - (uz * vy), (uz * vx) - (ux * vz), (ux * vy) - (uy * vx)];
+      }
+
+      // Unit vertex normals: the area-weighted mean of the faces round each.
+      normals() {
+        if (this.cachedNormals) return this.cachedNormals;
+        const n = new Array(this.pos.length).fill(0.0);
+        const t = this.tris;
+        for (let i = 0; i < t.length; i += 3) {
+          const a = t[i] * 3; const b = t[i + 1] * 3; const c = t[i + 2] * 3;
+          const f = this.face(a, b, c);
+          [a, b, c].forEach((v) => { n[v] += f[0]; n[v + 1] += f[1]; n[v + 2] += f[2]; });
+        }
+        for (let i = 0; i < n.length; i += 3) {
+          let len = Math.sqrt((n[i] * n[i]) + (n[i + 1] * n[i + 1]) + (n[i + 2] * n[i + 2]));
+          if (len === 0) len = 1.0;
+          n[i] /= len; n[i + 1] /= len; n[i + 2] /= len;
+        }
+        this.cachedNormals = n;
+        return n;
+      }
+
+      // 0..1 per vertex: how far the neighbours' mean stands out along the normal, over the
+      // squared edge length, times the contract's gain.
+      cavity() {
+        if (this.cachedCavity) return this.cachedCavity;
+        const count = this.vertexCount;
+        const p = this.pos;
+        const sums = new Array(p.length).fill(0.0);
+        const deg = new Array(count).fill(0);
+        const edge2 = new Array(count).fill(0.0);
+        const dist2 = (a, b) => ((p[a] - p[b]) * (p[a] - p[b])) + ((p[a + 1] - p[b + 1]) * (p[a + 1] - p[b + 1])) + ((p[a + 2] - p[b + 2]) * (p[a + 2] - p[b + 2]));
+        const t = this.tris;
+        for (let i = 0; i < t.length; i += 3) {
+          const a = t[i] * 3; const b = t[i + 1] * 3; const c = t[i + 2] * 3;
+          [[a, b, c], [b, c, a], [c, a, b]].forEach(([v, u, w]) => {
+            for (let k = 0; k < 3; k += 1) sums[v + k] += p[u + k] + p[w + k];
+            deg[v / 3] += 2;
+            edge2[v / 3] += dist2(v, u) + dist2(v, w);
+          });
+        }
+        const n = this.normals();
+        const out = new Array(count);
+        for (let v = 0; v < count; v += 1) {
+          const d = deg[v];
+          if (d === 0) { out[v] = 0.0; continue; }
+          let o = 0.0;
+          for (let k = 0; k < 3; k += 1) o += ((sums[(3 * v) + k] / d) - p[(3 * v) + k]) * n[(3 * v) + k];
+          out[v] = clamp(CAVITY_GAIN * o / (edge2[v] / d), 0.0, 1.0);
+        }
+        this.cachedCavity = out;
+        return out;
+      }
+
+      // Six times the enclosed volume; positive when the winding is outward.
+      volume() {
+        const p = this.pos;
+        const t = this.tris;
+        let sum = 0.0;
+        for (let i = 0; i < t.length; i += 3) {
+          const a = t[i] * 3; const b = t[i + 1] * 3; const c = t[i + 2] * 3;
+          sum += (p[a] * ((p[b + 1] * p[c + 2]) - (p[b + 2] * p[c + 1])))
+            - (p[a + 1] * ((p[b] * p[c + 2]) - (p[b + 2] * p[c])))
+            + (p[a + 2] * ((p[b] * p[c + 1]) - (p[b + 1] * p[c])));
+        }
+        return sum;
+      }
+    }
 
     function meshStl(text) {
       const re = /^\s*vertex\s+(\S+)\s+(\S+)\s+(\S+)/gim;
@@ -496,8 +515,9 @@
       return triangles;
     }
 
-    // An ASCII STL or an OBJ read into triangles and sampled into points, centred on its
-    // bounding box; y is up (pass up: "z" for the CAD convention).
+    // An ASCII STL or an OBJ read into a flat-shaded mesh, centred on its bounding box; y is
+    // up (pass up: "z" for the CAD convention). Its winding is made outward by the sign of
+    // its volume.
     function mesh(text, up) {
       const solid = /^\s*solid\b/im.test(text) && /^\s*vertex\b/im.test(text);
       let triangles = solid ? meshStl(text) : meshObj(text);
@@ -505,82 +525,266 @@
       if (up === "z") triangles = triangles.map((t) => t.map((p) => [p[0], p[2], -p[1]]));
       const flat = triangles.flat();
       const mid = [0, 1, 2].map((a) => { const [lo, hi] = minMax(flat.map((p) => p[a])); return (lo + hi) / 2.0; });
-      const centred = triangles.map((t) => t.map((p) => [p[0] - mid[0], p[1] - mid[1], p[2] - mid[2]]));
-      const longest = Math.max(...[0, 1, 2].map((a) => { const [lo, hi] = minMax(flat.map((p) => p[a])); return hi - lo; }));
-      const step = longest / MESH_ACROSS;
-      const points = [];
-      centred.forEach(([a, b, c]) => {
-        const longestEdge = Math.max(...[[a, b], [b, c], [c, a]].map(([p, q]) =>
-          Math.sqrt(kbSum([0, 1, 2].map((k) => (p[k] - q[k]) * (p[k] - q[k]))))));
-        const n = clamp(Math.ceil(longestEdge / step), 1, 400);
-        for (let i = 0; i <= n; i += 1) {
-          for (let j = 0; j <= n - i; j += 1) {
-            const u = i / n;
-            const v = j / n;
-            const w = 1.0 - u - v;
-            const p = [0, 1, 2].map((k) => (a[k] * w) + (b[k] * u) + (c[k] * v));
-            points.push([p[0], p[1], p[2], MESH_BRIGHTNESS, 0]);
+      const pos = [];
+      flat.forEach((v) => { pos.push(v[0] - mid[0], v[1] - mid[1], v[2] - mid[2]); });
+      const tris = flat.map((_, i) => i);
+      const bright = flat.map(() => MESH_BRIGHTNESS);
+      const made = new Mesh(pos, tris, bright);
+      if (made.volume() >= 0) return made;
+      const turned = [];
+      for (let i = 0; i < tris.length; i += 3) turned.push(tris[i], tris[i + 2], tris[i + 1]);
+      return new Mesh(pos, turned, bright);
+    }
+
+    // ---- Face::Head (the mesh) ----------------------------------------------
+    const MESHCFG = ascii.mesh;
+    const BLUR = MESHCFG.blur;
+    // The painting's face ellipse (DepthMap's first layer, x radius 0.255 of the canvas) in the
+    // same space as the eyes: its centre and half width, and where the skull and the jaw end.
+    const CENTRE = ((CX * 2) - 1) * SPREAD;
+    const MIDDLE = -((CY * 2) - 1) * SPREAD;
+    const WIDEST = 0.255 * 2 * SPREAD;
+    const TOP = MIDDLE + (WIDEST * MESHCFG.skull);
+    const BOTTOM = MIDDLE - (WIDEST * MESHCFG.chin);
+    const CENTRE_Y = (TOP + BOTTOM) / 2;
+    const JAW = MESHCFG.jaw;
+    const BACK = MESHCFG.back;
+    const TIP_STEPS = 32;
+    const CACHE_LIMIT = 8;
+
+    const lumAt = (x, y) => lum(((x / SPREAD) + 1) / 2, (1 - (y / SPREAD)) / 2);
+
+    // The painting's brightness blurred over a cross of radius BLUR: the relief.
+    function height(x, y, centre) {
+      return ((4 * (centre === undefined ? lumAt(x, y) : centre)) + (2 * (lumAt(x - BLUR, y) + lumAt(x + BLUR, y) + lumAt(x, y - BLUR) + lumAt(x, y + BLUR)))) / 12.0;
+    }
+
+    // Where the ridges and grooves lift or sink the surface, in the human head's own frame.
+    function bumps(p, x, y, zone) {
+      let lift = 0.0;
+      if (p.beak_projection > 0) lift += beak(p, x, y);
+      if (p.brow_ridge > 0) {
+        const up = (y - p.brow_y) / p.brow_height;
+        const across = x / p.brow_width;
+        lift += p.brow_ridge * Math.exp(-(up * up)) * Math.exp(-(across * across * across * across));
+      }
+      if (p.socket_depth > 0 && zone >= 1 && zone <= 2) lift -= p.socket_depth * (zone === 1 ? 1.0 : 0.4);
+      return lift;
+    }
+
+    // A ridge down the middle that grows toward its tip and ends there.
+    function beak(p, x, y) {
+      const t = (p.beak_top - y) / p.beak_length;
+      if (t < 0) return 0.0;
+      const past = (t - 1.0) * p.beak_length / 0.04;
+      const taper = t <= 1.0 ? smoothstep(t) : Math.exp(-(past * past));
+      const side = x / p.beak_width;
+      return p.beak_projection * taper * Math.exp(-(side * side));
+    }
+
+    class Head {
+      constructor(rows, cols) {
+        this.rings = clamp(halfUp(rows * MESHCFG.per_row), MESHCFG.rows[0], MESHCFG.rows[1]);
+        const around = clamp(halfUp(cols * MESHCFG.per_col), MESHCFG.around[0], MESHCFG.around[1]);
+        this.around = around % 2 === 1 ? around + 1 : around;
+        this.meshes = new Map();
+        this.grid();
+      }
+
+      // The human head, or the named mask's, on the same grid.
+      mesh(name) {
+        const key = name === undefined || name === null ? "" : name;
+        if (!this.meshes.has(key)) this.meshes.set(key, this.build(maskParams(name === undefined ? null : name), name === undefined ? null : name));
+        return this.meshes.get(key);
+      }
+
+      get triangleCount() { return this.tris.length / 3; }
+
+      // Half the head's width at height y: the skull an ellipse, the jaw the same ellipse under
+      // mesh.jaw.
+      halfAt(y) {
+        const up = y > MIDDLE;
+        const t = (y - MIDDLE) / (up ? TOP - MIDDLE : MIDDLE - BOTTOM);
+        const shape = Math.max(1.0 - (t * t), 0.0);
+        return WIDEST * (up ? Math.sqrt(shape) : Math.pow(shape, JAW));
+      }
+
+      // Where a point of the painting (x about the centre, y as painted) sits on the surface
+      // under params p: x is clamped to the head's width at y.
+      surface(p, xc, y) {
+        const half = this.halfAt(y);
+        const s = clamp(xc / half, -1.0, 1.0);
+        const xa = xc + CENTRE;
+        return this.vertex(p, half, y, s, Math.sqrt(1.0 - (s * s)), height(xa, y), zoneAt(xa, y));
+      }
+
+      grid() {
+        const n = this.around;
+        const rings = this.rings;
+        this.ringY = []; this.ringHalf = [];
+        for (let j = 0; j < rings; j += 1) {
+          this.ringY.push(TOP - (((TOP - BOTTOM) * (j + 1)) / (rings + 1)));
+          this.ringHalf.push(this.halfAt(this.ringY[j]));
+        }
+        this.sin = []; this.cos = [];
+        for (let i = 0; i < n; i += 1) { this.sin.push(Math.sin(2 * Math.PI * i / n)); this.cos.push(Math.cos(2 * Math.PI * i / n)); }
+        this.lum = []; this.paint = []; this.zone = [];
+        this.ringY.forEach((y, j) => {
+          for (let i = 0; i < n; i += 1) {
+            const xa = (this.ringHalf[j] * this.sin[i]) + CENTRE;
+            const front = this.cos[i] > 0;
+            const painted = front ? lumAt(xa, y) : 0.5;
+            this.paint.push(painted);
+            this.lum.push(front ? height(xa, y, painted) : 0.5);
+            this.zone.push(front ? zoneAt(xa, y) : SKIN_ZONE);
+          }
+        });
+        this.tris = this.triangles();
+      }
+
+      // Outward winding, front at ring column 0, rings running down.
+      triangles() {
+        const n = this.around;
+        const top = this.rings * n;
+        const tris = [];
+        for (let i = 0; i < n; i += 1) tris.push(top, i, (i + 1) % n);
+        for (let j = 0; j < this.rings - 1; j += 1) {
+          for (let i = 0; i < n; i += 1) {
+            const a = (j * n) + i;
+            const b = (j * n) + ((i + 1) % n);
+            const c = ((j + 1) * n) + i;
+            const d = ((j + 1) * n) + ((i + 1) % n);
+            tris.push(a, c, b, b, c, d);
           }
         }
-      });
-      return { points, features: false, triangles: centred };
+        const last = (this.rings - 1) * n;
+        for (let i = 0; i < n; i += 1) tris.push(top + 1, last + ((i + 1) % n), last + i);
+        return tris;
+      }
+
+      build(p, name) {
+        const pos = [];
+        const bright = [];
+        let reach = 0.0;
+        for (let j = 0; j < this.rings; j += 1) {
+          for (let i = 0; i < this.around; i += 1) {
+            const k = (j * this.around) + i;
+            const v = this.vertex(p, this.ringHalf[j], this.ringY[j], this.sin[i], this.cos[i], this.lum[k], this.zone[k]);
+            pos.push(v[0], v[1], v[2]);
+            if (Math.abs(v[0]) > reach) reach = Math.abs(v[0]);
+            bright.push(this.shade(p, this.paint[k], this.cos[i]));
+          }
+        }
+        [TOP, BOTTOM].forEach((y) => {
+          pos.push(0.0, (y - CENTRE_Y) * p.facial_verticalization * p.face_length, 0.0);
+          bright.push(BACK);
+        });
+        const named = name !== null && name !== undefined;
+        return new Mesh(pos, this.tris, bright, { landmarks: this.landmarks(p), params: named ? p : null, margins: named ? maskMargins(p, reach) : [0.0, 0.0] });
+      }
+
+      // A vertex under params p: the ring's half width, its height y as painted, the angle's
+      // sine and cosine, the painting's relief there and its zone.
+      vertex(p, half, y, sin, cos, relief, zone) {
+        const baseY = (y - CENTRE_Y) * p.facial_verticalization;
+        const upper = clamp((baseY + 0.38) / 0.80, 0.0, 1.0);
+        const scale = p.lower_face_scale + ((p.upper_face_scale - p.lower_face_scale) * upper);
+        const across = half * sin * scale;
+        const depth = half * 1.10 * p.jaw_projection * p.jaw_softening * p.masticatory_scale * p.cranium_scale * p.depth_scale;
+        const front = cos > 0 ? cos : 0.0;
+        const lift = ((relief - 0.5) * 0.20 * p.nasal_projection * p.relief) + bumps(p, across, baseY, zone);
+        return [across * p.cranial_width * p.width, baseY * p.face_length, (depth * cos) + (front * lift)];
+      }
+
+      // The vertex's painted brightness: the painting at the front, fading to the back's flat
+      // tone round the side, pulled toward flat by a mask.
+      shade(p, painted, cos) {
+        const w = Math.min((cos > 0 ? cos : 0.0) * 2.0, 1.0);
+        const b = BACK + ((painted - BACK) * w);
+        return b + ((p.flat_brightness - b) * p.flatten);
+      }
+
+      // Where the face's parts stand on the surface under p, for the features.
+      landmarks(p) {
+        const eyeY = EYES[0][1];
+        const reach = 0.8 * SOCKET[0];
+        const eyes = EYES.map(([ex, ey]) => ({
+          left: this.surface(p, ex - CENTRE - reach, ey),
+          right: this.surface(p, ex - CENTRE + reach, ey),
+          pupil: this.surface(p, ex - CENTRE, ey),
+        }));
+        const mouth = {
+          left: this.surface(p, MOUTH[0] - CENTRE - MOUTH_REACH, MOUTH[1]),
+          right: this.surface(p, MOUTH[0] - CENTRE + MOUTH_REACH, MOUTH[1]),
+          centre: this.surface(p, MOUTH[0] - CENTRE, MOUTH[1]),
+        };
+        const low = MOUTH[1] + 0.05;
+        let tip = null;
+        for (let k = 0; k < TIP_STEPS; k += 1) {
+          const point = this.surface(p, 0.0, eyeY + ((low - eyeY) * (k + 0.5) / TIP_STEPS));
+          if (tip === null || point[2] > tip[2]) tip = point;
+        }
+        return { eyes, mouth, bridge: this.surface(p, 0.0, eyeY), tip };
+      }
+    }
+
+    function head(rows, cols) { return new Head(rows, cols); }
+
+    // How far past the head the extras reach, as [above, to the side].
+    function maskMargins(p, reach) {
+      const above = p.halo > 0 ? (p.halo_rise * p.halo) + ((halfUp(p.halo_rows) - 1) * p.halo_gap) : 0.0;
+      return [above, p.disc > 0 ? reach + (p.disc_offset * p.disc) + (p.disc_radius * p.disc) : 0.0];
+    }
+
+    // The mesh for a mask at a mix: the head's at 0, the mask's at 1, and between them every
+    // vertex blended by the same smoothstep as the numbers.
+    function maskSource(headObj, name, amount) {
+      if (name === null || name === undefined || !(amount > 0.0)) return headObj.mesh();
+      const target = headObj.mesh(name);
+      if (amount >= 1.0) return target;
+      return Mesh.morph(headObj.mesh(), target, smoothstep(amount), morph(NEUTRAL, maskParams(name), amount));
     }
 
     // ---- Face::Ascii --------------------------------------------------------
-    const lightRaw = ascii.light;
-    const lightLen = Math.sqrt((lightRaw[0] * lightRaw[0]) + (lightRaw[1] * lightRaw[1]) + (lightRaw[2] * lightRaw[2]));
-    const LIGHT = [lightRaw[0] / lightLen, lightRaw[1] / lightLen, lightRaw[2] / lightLen];
     const CAMERA = ascii.camera;
     const FIT = ascii.fit;
-    const SPLAT = ascii.splat;
-    const CREASE = ascii.crease;
+    const SAMPLES = Math.trunc(ascii.samples);
+    const PER_CELL = SAMPLES * 2 * SAMPLES;
+    const COVER = ascii.cover;
+    const EDGE_FADE = ascii.edge_fade;
     const EDGE = ascii.edge_gradient;
-    const HOLLOW = ascii.hollow;
-    const GAP = Math.trunc(ascii.gap);
-    const SEE_THROUGH = ascii.see_through;
-    const BASE = ascii.shade.base;
-    const GAIN = ascii.shade.gain;
+    const CREASE = ascii.crease;
     const PAINT = ascii.shade.paint;
+    const GAIN = ascii.shade.gain;
+    const KNEE = ascii.shade.knee;
+    const SHOULDER = ascii.shade.shoulder;
     const CEILING = ascii.shade.ceiling;
     const NEAR = ascii.depth.near;
     const FAR = ascii.depth.far;
+    const DEPTH_TONE = ascii.depth.tone;
     const OCCLUSION = ascii.occlusion;
+    const FACING = ascii.facing;
+    const LIGHT = ascii.light;
+    const ELEVATION = LIGHT.elevation;
+    const AMBIENT = LIGHT.ambient;
+    const KEY = LIGHT.key;
+    const FILL = LIGHT.fill;
+    const RIM = LIGHT.rim;
+    const SPEC = LIGHT.spec;
+    // Shininess is a power of two, taken by squaring this many times.
+    let SQUARINGS = 0;
+    for (let s = Math.trunc(LIGHT.shininess); s > 1; s = Math.floor(s / 2)) SQUARINGS += 1;
     const FEATURE = ascii.features;
     const MIN_ROWS = ascii.min_rows;
     const MIN_COLS = ascii.min_cols;
     const SHUT = 0.5;
 
-    const mean = (list, axis) => kbSum(list.map((p) => p[axis])) / list.length;
-    const meanPoint = (list) => (list.length ? [0, 1, 2].map((a) => mean(list, a)) : null);
-    const nearest = (list, x, y) => minBy(list, (p) => ((p[0] - x) * (p[0] - x)) + ((p[1] - y) * (p[1] - y)));
-
-    // The eyes, brows, nose and mouth anchors, found in the points by their zone.
-    function findAnchors(points) {
-      const eyes = [];
-      [-1, 1].forEach((side) => {
-        const zone = points.filter((p) => p[4] >= 1 && p[4] <= 2 && Math.sign(p[0]) === side);
-        if (!zone.length) return;
-        const eye = meanPoint(zone.filter((p) => p[4] === 2)) || meanPoint(zone);
-        const far = maxBy(zone.map((p) => p[0]), (x) => Math.abs(x - eye[0]));
-        const reach = Math.abs(far - eye[0]) * 0.8;
-        eyes.push({ left: nearest(zone, eye[0] - reach, eye[1]), right: nearest(zone, eye[0] + reach, eye[1]), pupil: eye });
-      });
-      const mouth = points.filter((p) => p[4] === MOUTH_ZONE);
-      if (eyes.length < 2 || !mouth.length) return null;
-      const mx = minMax(mouth.map((p) => p[0]));
-      const my = mean(mouth, 1);
-      const skin = points.filter((p) => p[4] === 0 && Math.abs(p[0]) < 0.05 && p[2] > 0);
-      const eyeY = kbSum(eyes.map((e) => e.pupil[1])) / 2.0;
-      const between = skin.filter((p) => p[1] < eyeY && p[1] > my + 0.05);
-      const tip = maxBy(between, (p) => p[2]);
-      if (!tip || !skin.length) return null;
-      return {
-        eyes,
-        mouth: { left: nearest(mouth, mx[0], my), right: nearest(mouth, mx[1], my), centre: meanPoint(mouth) },
-        bridge: nearest(skin, 0.0, eyeY),
-        tip,
-      };
+    function unit(x, y, z) {
+      const length = Math.sqrt((x * x) + (y * y) + (z * z));
+      return [x / length, y / length, z / length];
     }
+
+    const FILL_DIR = unit(LIGHT.fill_dir[0], LIGHT.fill_dir[1], LIGHT.fill_dir[2]);
 
     class Frame {
       constructor(chars, depth) {
@@ -595,67 +799,73 @@
     }
 
     class Renderer {
+      // The source answers mesh(): a Head or a Mesh does.
       constructor(source, rows, cols, options) {
         const opts = options || {};
+        this.m = source.mesh();
         this.rows = rows;
         this.cols = cols;
-        this.w = cols;
-        this.h = rows * 2;
+        this.sw = cols * SAMPLES;
+        this.sh = rows * 2 * SAMPLES;
         this.ramp = ramp(opts.chars, opts.mode);
-        this.points = source.points.map((p) => [p[0], p[1], p[2], p[3], p[4]]);
-        const ysRaw = this.points.map((p) => p[1]);
-        const [ylo, yhi] = minMax(ysRaw);
-        const margins = source.margins || [0.0, 0.0];
-        const above = margins[0];
-        const lift = (ylo + yhi + above) / 2.0;
-        this.points.forEach((p) => { p[1] -= lift; });
-        let reach = 0;
-        this.points.forEach((p) => { const d = hypot(p[0], p[2]); if (d > reach) reach = d; });
-        reach = Math.max(reach, margins[1]);
-        const [slo, shi] = minMax(this.points.map((p) => p[1]));
-        const span = shi - slo + above;
-        this.scale = Math.min(((this.w / 2.0) - 1) / reach, (this.h - 2) / span) * FIT;
-        this.anchors = source.features ? findAnchors(this.points) : null;
-        this.mask = source.params || null;
-        if (this.mask && this.anchors) {
-          this.top = maxBy(this.points.map((p) => p[1]), (v) => v);
-          this.side = maxBy(this.points.map((p) => Math.abs(p[0])), (v) => v);
-        }
+        const [above, aside] = this.m.margins;
+        const [xlo, xhi, ylo, yhi, reach] = this.m.bounds();
+        this.lift = (ylo + yhi + above) / 2.0;
+        this.scale = Math.min(((cols / 2.0) - 1) / Math.max(reach, aside), ((rows * 2) - 2) / (yhi - ylo + above)) * FIT;
+        this.anchors = this.m.landmarks;
+        this.mask = this.m.params;
+        this.top = yhi;
+        this.side = Math.max(-xlo, xhi);
       }
 
-      // The points as fitted (x, y, z, brightness), which the fixtures fingerprint: the
+      // The vertices as fitted (x, y, z, brightness), which the fixtures fingerprint: the
       // digest is a sha256 of them formatted by Ruby, whose %.4f rounds near-ties its own way.
       fitted() {
-        return this.points.map((p) => p.slice(0, 4));
+        const out = [];
+        for (let v = 0; v < this.m.vertexCount; v += 1) out.push([this.m.pos[3 * v], this.m.pos[(3 * v) + 1] - this.lift, this.m.pos[(3 * v) + 2], this.m.bright[v]]);
+        return out;
       }
 
       render(look, state) {
         this.turn(look);
-        this.buffer();
+        this.transform();
+        this.raster();
+        this.light();
+        this.measure();
         this.frame = new Frame(
-          Array.from({ length: this.rows }, () => new Array(this.w).fill(" ")),
-          Array.from({ length: this.rows }, () => new Array(this.w).fill(1)),
+          Array.from({ length: this.rows }, () => new Array(this.cols).fill(" ")),
+          Array.from({ length: this.rows }, () => new Array(this.cols).fill(1)),
         );
-        for (let r = 0; r < this.rows; r += 1) for (let c = 0; c < this.w; c += 1) this.cell(c, r);
+        for (let r = 0; r < this.rows; r += 1) for (let c = 0; c < this.cols; c += 1) this.cell(c, r);
         if (this.anchors) this.drawFeatures(look, state || "idle");
         return this.frame;
       }
 
-      // A source-space point in sub-pixels, and its depth in the same units.
+      // A source-space point in sub-pixels (a cell is one wide and two tall), and its depth.
       project(x, y, z) {
-        const rx = (x * this.cy) + (z * this.sy);
-        let rz = (-x * this.sy) + (z * this.cy);
-        const ry = (y * this.cp) - (rz * this.sp);
-        rz = (y * this.sp) + (rz * this.cp);
+        const [rx, ry, rz] = this.rotate(x, y - this.lift, z);
         const k = this.gain * this.camera / (this.camera - rz);
-        return [this.w / 2.0 + (((rx * this.cr) - (ry * this.sr)) * k), this.rows - (((rx * this.sr) + (ry * this.cr)) * k) - this.bob, rz * this.scale];
+        return [(this.cols / 2.0) + (rx * k), this.rows - (ry * k) - this.bob, rz * this.scale];
+      }
+
+      covered(px, py) {
+        const x = Math.floor(px * SAMPLES);
+        const y = Math.floor(py * SAMPLES);
+        return x >= 0 && x <= this.sw - 1 && y >= 0 && y <= this.sh - 1 && this.tri[(y * this.sw) + x] >= 0;
+      }
+
+      // Whether a landmark's side of the head, from the axis out through it, is turned toward
+      // the viewer: a feature at the limb is not seen.
+      facing(x, z) {
+        const reach = Math.sqrt((x * x) + (z * z));
+        return reach === 0 || this.rotate(x, 0.0, z)[2] / reach >= FACING;
       }
 
       hidden(px, py, depth, slack) {
-        const x = Math.floor(px);
-        const y = Math.floor(py);
-        if (!(x >= 0 && x <= this.w - 1 && y >= 0 && y <= this.h - 1)) return true;
-        return this.zb[(y * this.w) + x] > depth + OCCLUSION + (slack || 0.0);
+        const x = Math.floor(px * SAMPLES);
+        const y = Math.floor(py * SAMPLES);
+        if (!(x >= 0 && x <= this.sw - 1 && y >= 0 && y <= this.sh - 1)) return true;
+        return this.zb[(y * this.sw) + x] > depth + OCCLUSION + (slack || 0.0);
       }
 
       turn(look) {
@@ -666,187 +876,222 @@
         this.camera = CAMERA / look.dolly;
         this.gain = this.scale * look.scale;
         this.bob = look.bob * this.scale;
+        this.key = unit(Math.sin(look.light) * Math.cos(ELEVATION), Math.sin(ELEVATION), Math.cos(look.light) * Math.cos(ELEVATION));
+        this.rim = unit(-Math.sin(look.light), 0.4, -Math.cos(look.light));
+        this.halfway = unit(this.key[0], this.key[1], this.key[2] + 1.0);
       }
 
-      buffer() {
-        const n = this.w * this.h;
-        this.zb = new Float64Array(n).fill(NONE);
-        this.bb = new Float64Array(n);
-        for (let i = 0; i < this.points.length; i += 1) {
-          const pt = this.points[i];
-          const [px, py, depth] = this.project(pt[0], pt[1], pt[2]);
-          const ix = Math.floor(px);
-          const iy = Math.floor(py);
-          for (let s = 0; s < SPLAT.length; s += 1) {
-            const qx = ix + SPLAT[s][0];
-            const qy = iy + SPLAT[s][1];
-            if (!(qx >= 0 && qx < this.w && qy >= 0 && qy < this.h)) continue;
-            const at = (qy * this.w) + qx;
-            if (!(depth > this.zb[at])) continue;
-            this.zb[at] = depth;
-            this.bb[at] = pt[3];
+      // Yaw, then pitch, then roll: x right, y up, z toward the viewer.
+      rotate(x, y, z) {
+        const a = (x * this.cy) + (z * this.sy);
+        const b = (-x * this.sy) + (z * this.cy);
+        const y2 = (y * this.cp) - (b * this.sp);
+        return [(a * this.cr) - (y2 * this.sr), (a * this.sr) + (y2 * this.cr), (y * this.sp) + (b * this.cp)];
+      }
+
+      // Every vertex and normal turned, and the vertices in the sample grid.
+      transform() {
+        const pos = this.m.pos;
+        const norm = this.m.normals();
+        const n = this.m.vertexCount;
+        this.sx = new Array(n); this.sy_ = new Array(n); this.sd = new Array(n);
+        this.nx = new Array(n); this.ny = new Array(n); this.nz = new Array(n);
+        for (let v = 0; v < n; v += 1) {
+          const [x, y, z] = this.rotate(pos[3 * v], pos[(3 * v) + 1] - this.lift, pos[(3 * v) + 2]);
+          const k = this.gain * this.camera / (this.camera - z);
+          this.sx[v] = SAMPLES * ((this.cols / 2.0) + (x * k));
+          this.sy_[v] = SAMPLES * (this.rows - (y * k) - this.bob);
+          this.sd[v] = z * this.scale;
+          const r = this.rotate(norm[3 * v], norm[(3 * v) + 1], norm[(3 * v) + 2]);
+          this.nx[v] = r[0]; this.ny[v] = r[1]; this.nz[v] = r[2];
+        }
+      }
+
+      // Edge functions at sample centres, largest depth wins and the first triangle keeps a
+      // tie. A sample keeps its triangle and two weights.
+      raster() {
+        const total = this.sw * this.sh;
+        this.zb = new Float64Array(total).fill(NONE);
+        this.tri = new Int32Array(total).fill(-1);
+        this.bu = new Float64Array(total);
+        this.bv = new Float64Array(total);
+        const tris = this.m.tris;
+        const sx = this.sx; const sy = this.sy_; const sd = this.sd; const zb = this.zb; const sw = this.sw;
+        const count = this.m.triangleCount;
+        for (let t = 0; t < count; t += 1) {
+          const i0 = tris[3 * t]; const i1 = tris[(3 * t) + 1]; const i2 = tris[(3 * t) + 2];
+          const x0 = sx[i0]; const y0 = sy[i0]; const x1 = sx[i1]; const y1 = sy[i1]; const x2 = sx[i2]; const y2 = sy[i2];
+          const area = ((x1 - x0) * (y2 - y0)) - ((x2 - x0) * (y1 - y0));
+          if (!(area < -1.0e-9)) continue;
+          const inv = 1.0 / area;
+          const ix0 = Math.max(Math.ceil(Math.min(x0, x1, x2) - 0.5), 0);
+          const ix1 = Math.min(Math.floor(Math.max(x0, x1, x2) - 0.5), sw - 1);
+          const iy0 = Math.max(Math.ceil(Math.min(y0, y1, y2) - 0.5), 0);
+          const iy1 = Math.min(Math.floor(Math.max(y0, y1, y2) - 0.5), this.sh - 1);
+          if (!(ix0 <= ix1 && iy0 <= iy1)) continue;
+          const z0 = sd[i0]; const z1 = sd[i1]; const z2 = sd[i2];
+          const step0 = y1 - y2; const step1 = y2 - y0; const step2 = y0 - y1;
+          for (let j = iy0; j <= iy1; j += 1) {
+            const py = j + 0.5;
+            const px = ix0 + 0.5;
+            let e0 = ((x2 - x1) * (py - y1)) - ((y2 - y1) * (px - x1));
+            let e1 = ((x0 - x2) * (py - y2)) - ((y0 - y2) * (px - x2));
+            let e2 = ((x1 - x0) * (py - y0)) - ((y1 - y0) * (px - x0));
+            let idx = (j * sw) + ix0;
+            for (let i = ix0; i <= ix1; i += 1) {
+              const b0 = e0 * inv; const b1 = e1 * inv; const b2 = e2 * inv;
+              if (b0 >= 0.0 && b1 >= 0.0 && b2 >= 0.0) {
+                const z = (b0 * z0) + (b1 * z1) + (b2 * z2);
+                if (z > zb[idx]) { zb[idx] = z; this.tri[idx] = t; this.bu[idx] = b1; this.bv[idx] = b2; }
+              }
+              e0 += step0; e1 += step1; e2 += step2; idx += 1;
+            }
           }
         }
-        this.close();
-        let lo = Infinity, hi = -Infinity;
-        for (let i = 0; i < n; i += 1) {
-          if (this.zb[i] > LIVE) { if (this.zb[i] < lo) lo = this.zb[i]; if (this.zb[i] > hi) hi = this.zb[i]; }
-        }
-        if (lo === Infinity) { lo = 0.0; hi = 0.0; }
-        this.nearLo = lo;
-        this.nearSpan = Math.max(hi - lo, 1.0);
-        this.zs = this.smoothed(this.smoothed(this.zb));
       }
 
-      // Seen near edge-on a surface is sampled sparsely, and the far side shows through
-      // the gaps. A pixel with a nearer pixel on both sides within GAP pixels, along a
-      // row or a column, takes the mean of the two nearest of them.
-      close() {
-        const fills = [];
-        for (let y = 0; y < this.h; y += 1) {
-          for (let x = 0; x < this.w; x += 1) {
-            const i = (y * this.w) + x;
-            const own = this.zb[i] + SEE_THROUGH;
-            const pair = this.gap(i, 1, x, this.w, own) || this.gap(i, this.w, y, this.h, own);
-            if (pair) fills.push([i, pair]);
+      // Light every covered sample and keep its luminance and the slope of its surface.
+      light() {
+        const total = this.sw * this.sh;
+        this.lum = new Float64Array(total);
+        this.slopeX = new Float64Array(total);
+        this.slopeY = new Float64Array(total);
+        const tris = this.m.tris; const bright = this.m.bright; const cavity = this.m.cavity();
+        for (let idx = 0; idx < total; idx += 1) {
+          const t = this.tri[idx];
+          if (t < 0) continue;
+          const b1 = this.bu[idx]; const b2 = this.bv[idx]; const b0 = 1.0 - b1 - b2;
+          const i0 = tris[3 * t]; const i1 = tris[(3 * t) + 1]; const i2 = tris[(3 * t) + 2];
+          const n = unit((b0 * this.nx[i0]) + (b1 * this.nx[i1]) + (b2 * this.nx[i2]), (b0 * this.ny[i0]) + (b1 * this.ny[i1]) + (b2 * this.ny[i2]),
+            (b0 * this.nz[i0]) + (b1 * this.nz[i1]) + (b2 * this.nz[i2]));
+          this.lum[idx] = this.radiance(n[0], n[1], n[2], (b0 * bright[i0]) + (b1 * bright[i1]) + (b2 * bright[i2]), (b0 * cavity[i0]) + (b1 * cavity[i1]) + (b2 * cavity[i2]));
+          const flat = n[2] > 0.25 ? n[2] : 0.25;
+          this.slopeX[idx] = -n[0] / flat;
+          this.slopeY[idx] = n[1] / flat;
+        }
+      }
+
+      radiance(nx, ny, nz, brightness, ao) {
+        const k = (nx * this.key[0]) + (ny * this.key[1]) + (nz * this.key[2]);
+        const f = (nx * FILL_DIR[0]) + (ny * FILL_DIR[1]) + (nz * FILL_DIR[2]);
+        const r = (nx * this.rim[0]) + (ny * this.rim[1]) + (nz * this.rim[2]);
+        let lumen = (AMBIENT + (KEY * (k > 0.0 ? k : 0.0)) + (FILL * (f > 0.0 ? f : 0.0)) + (RIM * (r > 0.0 ? r : 0.0))) * (1.0 - PAINT + (PAINT * brightness));
+        if (k > 0.0) {
+          let h = (nx * this.halfway[0]) + (ny * this.halfway[1]) + (nz * this.halfway[2]);
+          if (h > 0.0) {
+            for (let s = 0; s < SQUARINGS; s += 1) h *= h;
+            lumen += SPEC * h;
           }
         }
-        fills.forEach(([i, pair]) => {
-          this.zb[i] = (this.zb[pair[0]] + this.zb[pair[1]]) / 2.0;
-          this.bb[i] = (this.bb[pair[0]] + this.bb[pair[1]]) / 2.0;
-        });
+        return lumen * (1.0 - ao);
       }
 
-      gap(i, stride, at, limit, own) {
-        let lo = -1;
-        let hi = -1;
-        for (let d = 1; d <= GAP; d += 1) {
-          const j = i - (stride * d);
-          if (at - d >= 0 && this.zb[j] > own && (lo < 0 || this.zb[j] > this.zb[lo])) lo = j;
-          const k = i + (stride * d);
-          if (at + d < limit && this.zb[k] > own && (hi < 0 || this.zb[k] > this.zb[hi])) hi = k;
-        }
-        return lo >= 0 && hi >= 0 ? [lo, hi] : null;
-      }
-
-      // A 3x3 mean of the live neighbours, as a row sum then a column sum.
-      smoothed(src) {
-        const n = this.w * this.h;
-        const sums = new Float64Array(n);
-        const counts = new Int32Array(n);
-        for (let i = 0; i < n; i += 1) {
-          const x = i % this.w;
-          for (let dx = -1; dx <= 1; dx += 1) {
-            if (x + dx < 0 || x + dx >= this.w || src[i + dx] <= LIVE) continue;
-            sums[i] += src[i + dx];
-            counts[i] += 1;
+      // Per cell: covered samples, their luminance and depth summed; and the depth range.
+      measure() {
+        const cells = this.rows * this.cols;
+        this.count = new Array(cells).fill(0);
+        this.lumSum = new Array(cells).fill(0.0);
+        this.depthSum = new Array(cells).fill(0.0);
+        let lo = Infinity; let hi = -Infinity;
+        for (let r = 0; r < this.rows; r += 1) {
+          for (let c = 0; c < this.cols; c += 1) {
+            const cell = (r * this.cols) + c;
+            for (let dy = 0; dy < 2 * SAMPLES; dy += 1) {
+              const base = (((r * 2 * SAMPLES) + dy) * this.sw) + (c * SAMPLES);
+              for (let dx = 0; dx < SAMPLES; dx += 1) {
+                if (this.tri[base + dx] < 0) continue;
+                const d = this.zb[base + dx];
+                this.count[cell] += 1;
+                this.lumSum[cell] += this.lum[base + dx];
+                this.depthSum[cell] += d;
+                if (d < lo) lo = d;
+                if (d > hi) hi = d;
+              }
+            }
           }
         }
-        const out = new Float64Array(n).fill(NONE);
-        for (let i = 0; i < n; i += 1) {
-          if (!(src[i] > LIVE)) continue;
-          const y = Math.floor(i / this.w);
-          let sum = 0.0;
-          let count = 0;
-          for (let dy = -1; dy <= 1; dy += 1) {
-            if (y + dy < 0 || y + dy >= this.h) continue;
-            sum += sums[i + (dy * this.w)];
-            count += counts[i + (dy * this.w)];
-          }
-          out[i] = sum / count;
-        }
-        return out;
+        this.nearLo = lo === Infinity ? 0.0 : lo;
+        this.nearSpan = Math.max((hi === -Infinity ? 0.0 : hi) - this.nearLo, 1.0);
       }
 
-      live(x, y) { return x >= 0 && x < this.w && y >= 0 && y < this.h && this.zb[(y * this.w) + x] > LIVE; }
-
-      // Smoothed depth with the pixel's own as stand-in off the head.
-      z(x, y, own) { return this.live(x, y) ? this.zs[(y * this.w) + x] : own; }
-
-      occupancy(x, y) {
-        let n = 0;
-        for (let dy = -2; dy <= 2; dy += 1) for (let dx = -2; dx <= 2; dx += 1) if (this.live(x + dx, y + dy)) n += 1;
-        return n / 25.0;
+      coverage(c, r) {
+        return c >= 0 && c < this.cols && r >= 0 && r < this.rows ? this.count[(r * this.cols) + c] / PER_CELL : 0.0;
       }
 
       cell(c, r) {
-        const top = this.live(c, 2 * r);
-        const bottom = this.live(c, (2 * r) + 1);
-        if (!(top || bottom)) return;
-        const ys = [];
-        if (top) ys.push(2 * r);
-        if (bottom) ys.push((2 * r) + 1);
-        const edge = !(top && bottom)
-          || !(this.live(c, (2 * r) - 1) && this.live(c, (2 * r) + 2))
-          || [c - 1, c + 1].some((x) => !this.live(x, 2 * r) && !this.live(x, (2 * r) + 1));
-        const glyph = edge ? this.silhouette(c, ys, top, bottom) : this.crease(c, ys);
-        this.frame.chars[r][c] = glyph || this.shade(c, r, ys);
-        this.frame.depth[r][c] = this.band(this.zb[(ys[ys.length - 1] * this.w) + c]);
+        const i = (r * this.cols) + c;
+        const cover = this.count[i] / PER_CELL;
+        if (cover < COVER) return;
+        const edge = [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].some(([x, y]) => x >= 0 && x < this.cols && y >= 0 && y < this.rows && this.coverage(x, y) < COVER);
+        const glyph = edge ? this.silhouette(c, r) : this.crease(c, r);
+        const fraction = ((this.depthSum[i] / this.count[i]) - this.nearLo) / this.nearSpan;
+        this.frame.chars[r][c] = glyph || this.shade(c, r, i, cover, fraction);
+        this.frame.depth[r][c] = fraction >= NEAR ? 2 : (fraction <= FAR ? 0 : 1);
       }
 
-      band(depth) {
-        const fraction = (depth - this.nearLo) / this.nearSpan;
-        if (fraction >= NEAR) return 2;
-        if (fraction <= FAR) return 0;
-        return 1;
-      }
-
-      silhouette(c, ys, top, bottom) {
-        let gx = 0.0;
-        let gy = 0.0;
-        ys.forEach((y) => {
-          gx += this.occupancy(c + 1, y) - this.occupancy(c - 1, y);
-          gy += this.occupancy(c, y + 1) - this.occupancy(c, y - 1);
+      // The glyph for the cell's boundary, from the gradient of coverage over the 3x3 cells.
+      silhouette(c, r) {
+        let gx = 0.0; let gy = 0.0;
+        [-1, 0, 1].forEach((d) => {
+          const weight = d === 0 ? 2.0 : 1.0;
+          gx += weight * (this.coverage(c + 1, r + d) - this.coverage(c - 1, r + d));
+          gy += weight * (this.coverage(c + d, r + 1) - this.coverage(c + d, r - 1));
         });
+        gy /= 2.0;
         if (hypot(gx, gy) < EDGE) return null;
         const glyph = line(gy, gx);
-        return glyph === "-" ? level(top, bottom, gy < 0) : glyph;
+        if (glyph !== "-") return glyph;
+        const covered = [0, 0];
+        for (let dy = 0; dy < 2 * SAMPLES; dy += 1) {
+          const base = (((r * 2 * SAMPLES) + dy) * this.sw) + (c * SAMPLES);
+          for (let dx = 0; dx < SAMPLES; dx += 1) if (this.tri[base + dx] >= 0) covered[Math.floor(dy / SAMPLES)] += 1;
+        }
+        return level(covered[0] >= SAMPLES * SAMPLES / 2.0, covered[1] >= SAMPLES * SAMPLES / 2.0, gy < 0);
       }
 
-      crease(c, ys) {
-        let xx = 0.0, yy = 0.0, xy = 0.0;
-        ys.forEach((y) => {
-          const own = this.zs[(y * this.w) + c];
-          const here = own * 2;
-          xx += (this.z(c + 2, y, own) + this.z(c - 2, y, own) - here) / 4.0;
-          yy += (this.z(c, y + 2, own) + this.z(c, y - 2, own) - here) / 4.0;
-          xy += (this.z(c + 2, y + 2, own) - this.z(c - 2, y + 2, own) - this.z(c + 2, y - 2, own) + this.z(c - 2, y - 2, own)) / 16.0;
-        });
-        xx /= ys.length;
-        yy /= ys.length;
-        xy /= ys.length;
-        const dd = (xx - yy) / 2;
-        const halfSpread = Math.sqrt((dd * dd) + (xy * xy));
+      // Where the surface's slope changes across the cell: the ridge's direction from the
+      // larger |eigenvalue| of that change.
+      crease(c, r) {
+        if (SAMPLES < 2) return null;
+        const sums = [0, 1, 2, 3].map(() => [0, 0.0, 0.0]);
+        for (let dy = 0; dy < 2 * SAMPLES; dy += 1) {
+          const base = (((r * 2 * SAMPLES) + dy) * this.sw) + (c * SAMPLES);
+          for (let dx = 0; dx < SAMPLES; dx += 1) {
+            if (this.tri[base + dx] < 0) continue;
+            const sum = sums[Math.floor(dx * 2 / SAMPLES) + (2 * Math.floor(dy / SAMPLES))];
+            sum[0] += 1;
+            sum[1] += this.slopeX[base + dx];
+            sum[2] += this.slopeY[base + dx];
+          }
+        }
+        if (sums.some((s) => s[0] === 0)) return null;
+        const [lt, rt, lb, rb] = sums;
+        const mean = (u, v, k) => (u[k] + v[k]) / (u[0] + v[0]);
+        const pl = mean(lt, lb, 1); const ql = mean(lt, lb, 2); const pr = mean(rt, rb, 1); const qr = mean(rt, rb, 2);
+        const pt = mean(lt, rt, 1); const pb = mean(lb, rb, 1);
+        const qt = mean(lt, rt, 2); const qb = mean(lb, rb, 2);
+        const xx = pr - pl;
+        const yy = qb - qt;
+        const xy = ((qr - ql) + (pb - pt)) / 2.0;
+        const hf = Math.sqrt(((((xx - yy) / 2)) * (((xx - yy) / 2))) + (xy * xy));
         const mid = (xx + yy) / 2;
-        if (Math.abs(mid) + halfSpread < CREASE) return null;
+        if (Math.abs(mid) + hf < CREASE) return null;
         const angle = 0.5 * Math.atan2(2 * xy, xx - yy);
-        if (Math.abs(mid + halfSpread) >= Math.abs(mid - halfSpread)) return line(-Math.sin(angle), -Math.cos(angle));
+        if (Math.abs(mid + hf) >= Math.abs(mid - hf)) return line(-Math.sin(angle), -Math.cos(angle));
         return line(-Math.cos(angle), Math.sin(angle));
       }
 
-      shade(c, r, ys) {
-        let nx = 0.0, ny = 0.0, bright = 0.0, hollow = 0.0;
-        ys.forEach((y) => {
-          const own = this.zs[(y * this.w) + c];
-          nx -= (this.z(c + 2, y, own) - this.z(c - 2, y, own)) / 4.0;
-          ny += (this.z(c, y + 2, own) - this.z(c, y - 2, own)) / 4.0;
-          hollow += (this.z(c + 2, y, own) + this.z(c - 2, y, own) + this.z(c, y + 2, own) + this.z(c, y - 2, own) - (4 * own)) / 16.0;
-          bright += this.bb[(y * this.w) + c];
-        });
-        nx /= ys.length;
-        ny /= ys.length;
-        bright /= ys.length;
-        hollow /= ys.length;
-        const length = Math.sqrt((nx * nx) + (ny * ny) + 1.0);
-        const lumen = Math.max(((nx * LIGHT[0]) + (ny * LIGHT[1]) + LIGHT[2]) / length, 0.0);
-        const tone = clamp(Math.min(((BASE + (GAIN * lumen)) * (1.0 - PAINT + (PAINT * bright))) - (HOLLOW * clamp(hollow, -0.4, 0.4)), CEILING), 0.0, 1.0);
-        return this.ramp[index(tone, this.ramp.length, c, r)];
+      shade(c, r, i, cover, fraction) {
+        let tone = GAIN * (this.lumSum[i] / this.count[i]) * (1.0 - EDGE_FADE + (EDGE_FADE * cover));
+        if (tone > KNEE) tone = KNEE + ((tone - KNEE) * SHOULDER);
+        tone = Math.min(tone, CEILING) + (DEPTH_TONE * (fraction - 0.5));
+        return this.ramp[index(clamp(tone, 0.0, 1.0), this.ramp.length, c, r)];
       }
 
       // ---- Face::Features ---------------------------------------------------
       cellOf(point, slack) {
         const [px, py, depth] = this.project(point[0], point[1], point[2]);
-        return [px, py, depth, this.hidden(px, py, depth, slack)];
+        return [px, py, depth, this.hidden(px, py, depth, slack) || !this.covered(px, py) || !this.facing(point[0], point[2])];
       }
 
       put(col, row, glyph) {
@@ -877,7 +1122,8 @@
         const [lx, , , lh] = this.cellOf(eye.left);
         const [rx, , , rh] = this.cellOf(eye.right);
         if (lh && rh) return;
-        const [px, py] = this.cellOf(eye.pupil);
+        const [px, py, , ph] = this.cellOf(eye.pupil);
+        if (ph) return;
         const span = Math.floor(Math.abs(rx - lx));
         const width = Math.min(span % 2 === 0 ? span + 1 : span, 9);
         const col = halfUp(px);
@@ -932,8 +1178,8 @@
 
       // Eyes as concentric rings of the eye's own plane, outermost glyph first.
       ringEye(eye) {
-        if (this.cellOf(eye.left)[3] && this.cellOf(eye.right)[3]) return;
-        const [px, py] = this.cellOf(eye.pupil);
+        const [px, py, , ph] = this.cellOf(eye.pupil);
+        if (ph || (this.cellOf(eye.left)[3] && this.cellOf(eye.right)[3])) return;
         const count = halfUp(this.mask.ring_count);
         const radius = this.mask.ring_radius * this.mask.ring;
         this.clear(eye.pupil, radius);
@@ -1064,6 +1310,7 @@
         scale: 1.0 + (MOTION.breath * Math.sin(MOTION.breath_rate * t)),
         dolly: num(MOTION.dolly[state], 1.0),
         bob: MOTION.bob * Math.sin(MOTION.bob_rate * t),
+        light: LIGHT.start + (LIGHT.orbit * t),
         eye_open: shut ? 0.0 : 1.0,
         gaze: [0.0, 0.0],
         mouth: state === "speaking" ? timedLevel(k) : 0.0,
@@ -1090,7 +1337,7 @@
         }
       }
       if (input.reduced) {
-        look.turn = 0.0; look.pitch = 0.0; look.roll = 0.0; look.scale = 1.0; look.dolly = 1.0; look.bob = 0.0; look.mix = 0.0;
+        look.turn = 0.0; look.pitch = 0.0; look.roll = 0.0; look.scale = 1.0; look.dolly = 1.0; look.bob = 0.0; look.mix = 0.0; look.light = LIGHT.start;
       }
       return look;
     }
@@ -1135,6 +1382,7 @@
       DepthMap: { lum },
       head,
       mesh,
+      Mesh,
       Renderer,
       pose,
       Masks: { ORDER: MASK_ORDER, params: maskParams, morph, mix: maskMix, pick: pickMask, source: maskSource, smoothstep },

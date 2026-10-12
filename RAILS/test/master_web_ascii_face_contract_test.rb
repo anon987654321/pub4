@@ -108,7 +108,8 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
 
     refute_match(/[\u2800-\u28ff]/, source)
     assert_match(/\A[\t\n\x20-\x7e]*\z/, source, "face_ascii.js holds only printable ASCII")
-    assert_equal " .:-=+*#%@", ascii.fetch("chars")
+    assert_match(/\A[\x20-\x7e]{2,}\z/, ascii.fetch("chars"), "the ramp is printable ASCII")
+    assert_equal ascii.fetch("chars").chars.sort, ascii.fetch("ink").keys.sort, "every ramp glyph has a measured ink density"
   end
 
   def test_every_number_the_view_needs_is_in_the_contract_the_page_receives
