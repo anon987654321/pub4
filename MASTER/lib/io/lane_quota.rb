@@ -49,8 +49,8 @@ module Master
       def lane_of(model)
         id = model.to_s
         return "ollama" if id.start_with?("ollama:", "ollama/")
-        return id.split(":", 2).first.to_s if id.include?(":")
         return id.split("/", 2).first.to_s if id.include?("/")
+        return id.split(":", 2).first.to_s if id.include?(":")
 
         id.split("-", 2).first.to_s
       end
