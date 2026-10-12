@@ -159,7 +159,7 @@ class LayoutContractTest < Minitest::Test
     %w[stack stack_brgen].each do |stack_name|
       stack = File.read(File.join(SHARED, "app/assets/stylesheets/_#{stack_name}.scss"))
       assert_includes stack, '@forward "typography";', "#{stack_name} dropped the shared reading grammar"
-      assert_includes stack, '@forward "tokens";', "#{stack_name} dropped the shared type scale"
+      assert_match(/@forward "tokens"(?:\s+with\s+\([^;]+\))?;/, stack, "#{stack_name} dropped the shared type scale")
     end
 
     typography = File.read(File.join(SHARED, "app/assets/stylesheets/_typography.scss"))
