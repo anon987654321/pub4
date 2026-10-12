@@ -96,6 +96,21 @@ else
 
   puts "Using #{ports.size} ports for activity seeding."
 
+  # Faker rows do not guarantee a stable search term. The live guest journey uses
+  # q=git, so provide a deterministic searchable row only for demo catalogues.
+  # Real imported trees must stand on their own; never fabricate a missing port
+  # when this database contains imported records rather than demo/ fixtures.
+  if Port.where(platform: platform).where("pkgpath LIKE ?", "demo/%").exists?
+    git_port = Port.find_or_create_by!(platform: platform, pkgpath: "devel/git") do |port|
+      port.name = "git"
+      port.version = "2.50.1"
+      port.category = cat
+      port.comment = "Distributed version control system"
+      port.description = "Git source control and repository management"
+    end
+    ports << git_port unless ports.any? { |port| port.id == git_port.id }
+  end
+
   # Watches (users following ports)
   ports.each do |port|
     rand(1..(8 * scale).clamp(2, 50)).times do
