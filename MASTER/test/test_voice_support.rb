@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "stringio"
+require "rbconfig"
 
 # Enrich adds paralinguistic tags, Playback speaks a reply at a terminal and
 # nowhere else, and ProductionDna is the reference table Voice::Dilla reads.
@@ -460,6 +461,46 @@ end
     PB.instance_variable_set(:@queue, nil)
     PB.instance_variable_set(:@job_generations, {})
     PB.instance_variable_set(:@generation, 0)
+  end
+
+
+  def test_playback_warning_deduplicates_repeats_but_preserves_distinct_causes
+    warned = PB.instance_variable_get(:@warned)
+    PB.instance_variable_set(:@warned, Set.new)
+    events = []
+    reporter = ->(unit, message) { events << [unit, message] }
+
+    Master::Trace::Dmesg.stub(:status, reporter) do
+      2.times { PB.send(:warn_once, "audio player error — IOError: socket timed out") }
+      PB.send(:warn_once, "audio player error — Errno::EPIPE: broken pipe")
+    end
+
+    assert_equal [
+      ["voice0", "audio player error — IOError: socket timed out"],
+      ["voice0", "audio player error — Errno::EPIPE: broken pipe"],
+    ], events
+  ensure
+    PB.instance_variable_set(:@warned, warned || Set.new)
+  end
+
+  def test_live_stream_pipe_is_binary_before_mp3_bytes_are_written
+    observed_encoding = nil
+    outcome = nil
+    stub_stream = lambda do |text:, voice_name:, style_config:, io:, stale_test:|
+      observed_encoding = io.external_encoding
+      io.write("\xFF".b)
+      Struct.new(:ok, :bytes).new(true, 1)
+    end
+
+    PB.stub(:generation_active?, true) do
+      Master::Voice::Speech.stub(:stream_edge_to_io, stub_stream) do
+        outcome = PB.send(:pump_stream_pipe, [RbConfig.ruby, "-e", "STDIN.read"], {},
+                          { generation: 0, part: "probe" }, "en-US-JennyNeural", {})
+      end
+    end
+
+    assert_equal Encoding::BINARY, observed_encoding
+    assert outcome.ok
   end
 
 end
