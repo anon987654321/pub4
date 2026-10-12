@@ -39,7 +39,16 @@ input, button, textarea, select {
 }
 
 textarea {
-  field-sizing: content;
+  max-inline-size: 100%;
+}
+
+/* Use content-based sizing where supported; the browser's ordinary textarea
+   sizing remains the fallback. Bound inline size so long input cannot widen a
+   narrow layout. */
+@supports (field-sizing: content) {
+  textarea {
+    field-sizing: content;
+  }
 }
 
 /* `font: inherit` above hands every field its container's size, which is how a

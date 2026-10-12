@@ -99,6 +99,14 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes source, 'if (!raw) return "#"'
   end
 
+  def test_shared_base_uses_field_sizing_only_as_progressive_enhancement
+    source = read(SHARED_ROOT, "app/assets/stylesheets/_base.scss")
+
+    assert_includes source, "max-inline-size: 100%"
+    assert_match(/@supports \(field-sizing:\s*content\)\s*\{\s*textarea\s*\{\s*field-sizing:\s*content;/m, source)
+    refute_match(/^\s*field-sizing:\s*content;/, source)
+  end
+
   def test_pwa_runtime_test_is_wired_to_the_root_package
     package = JSON.parse(File.read(File.join(ROOT, "package.json")))
 

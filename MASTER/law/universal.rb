@@ -19,11 +19,12 @@ Law.define(:BASELINE_COMPATIBILITY) do
     supported browser/device matrix, fallback behavior, accessibility, and security contract?
   ASK
   fix <<~'FIX'.strip
-    Check current Baseline status when reviewing. Prefer widely available semantics for core paths; progressively
-    enhance newer APIs such as field-sizing, container style queries, contrast-color(), CSS anchor positioning,
-    Trusted Types, and the Navigation API. Verify the target browser matrix, feature detection, keyboard and
-    assistive-technology behavior, and a usable fallback. Baseline is compatibility evidence, not proof of
-    accessibility or security.
+    Check current Baseline status and consult Google's Modern Web Guidance for feature-specific patterns when
+    available. Prefer Baseline Widely available semantics for core paths; progressively enhance newer APIs such as
+    field-sizing, container style queries, contrast-color(), CSS anchor positioning, Trusted Types, and the
+    Navigation API. Verify the target browser matrix, feature detection, keyboard and assistive-technology
+    behavior, and a usable fallback. Do not make network access or a new package a build/test prerequisite.
+    Baseline is compatibility evidence, not proof of accessibility or security.
   FIX
 end
 
@@ -39,6 +40,75 @@ Law.define(:CORE_WEB_VITALS) do
     Use field data such as CrUX or first-party RUM at the 75th percentile; use lab traces and feature-detected
     Long Animation Frames as diagnostics, not substitutes for field evidence.
   FIX
+end
+
+Law.define(:WEB_PLATFORM_DEFAULTS) do
+  source "GoogleChrome Modern Web Guidance and MDN Web Platform Baseline"
+  severity :warning
+  mode :opportunity
+  ask <<~'ASK'.strip
+    Does new HTML, CSS, or browser JavaScript recreate native platform behavior, add a dependency before checking native capabilities, or
+    treat a Baseline Newly available feature as universal without a fallback?
+  ASK
+  practice "Prefer accessible browser primitives and interoperable CSS over bespoke JavaScript and avoidable dependencies."
+  fix <<~'FIX'.strip
+    Prefer semantic HTML, native form controls and browser APIs, CSS Grid/Flexbox, intrinsic sizing, and logical properties before
+    custom JavaScript or a new dependency. Default core paths to Baseline Widely available features. Use @supports or runtime feature
+    detection for newer capabilities, preserving a usable accessible fallback. At feature start, check current Baseline data and,
+    when available, consult GoogleChrome Modern Web Guidance for a focused implementation pattern. Do not make network access or
+    a guidance CLI a build/test prerequisite.
+  FIX
+  bad <<~'X'
+    A click handler on a generic div emulates a native disclosure, with no keyboard path or state exposed.
+  X
+  good <<~'X'
+    Use a semantic button or native details/summary, expose expanded state where needed, and preserve keyboard operation.
+  X
+end
+
+Law.define(:MOBILE_ACCESSIBILITY_DEFAULTS) do
+  source "WCAG 2.2 and W3C mobile guidance"
+  severity :warning
+  mode :opportunity
+  ask <<~'ASK'.strip
+    Does a mobile-first web change fail to reflow at 320 CSS pixels, hide keyboard focus, rely on pointer-only interaction, or ignore reduced motion?
+  ASK
+  practice "Mobile-first means content and interaction survive narrow viewports, zoom, keyboard navigation, assistive technology, and touch."
+  fix <<~'FIX'.strip
+    Require reflow without loss at 320 CSS pixels except for genuinely two-dimensional content. Meet WCAG 2.2's 24 by 24 CSS pixel
+    pointer-target criterion and its exceptions; prefer 44 CSS px for primary touch controls where the layout allows. Keep focus visible
+    and unobscured, labels and accessible names present, keyboard paths complete, and nonessential motion responsive to
+    prefers-reduced-motion. Use logical properties and intrinsic layouts; use safe-area insets and dynamic viewport units with sensible fallbacks.
+  FIX
+  bad <<~'X'
+    width: 100vw; height: 100vh; outline: none; animation: entrance 600ms;
+  X
+  good <<~'X'
+    max-inline-size: 100%; min-height: 100vh; min-height: 100dvh; :focus-visible has an outline; reduced motion has a fallback.
+  X
+end
+
+Law.define(:PWA_RESILIENCE_DEFAULTS) do
+  source "MDN Progressive Web Apps and service-worker caching guidance"
+  severity :warning
+  mode :opportunity
+  ask <<~'ASK'.strip
+    Does a PWA assume optional APIs exist, offer no honest offline state, or cache or replay data without explicit freshness and safety rules?
+  ASK
+  practice "An installable PWA is still a web application: navigation, online failure, user data, and updates need explicit semantics."
+  fix <<~'FIX'.strip
+    Feature-detect optional install, sharing, storage, background, and navigation APIs and leave the primary task usable without them.
+    Keep deep links and a useful offline fallback. Prefer cache-first for versioned immutable assets and network-first with a bounded timeout
+    for mutable navigation/data; cache GET requests only under an explicit scope and freshness policy, never blindly cache personalized responses
+    in a shared cache. Queue writes only when necessary, with visible pending state, bounded storage, same-origin validation, and idempotent replay.
+    Treat a manifest, service worker, and install prompt as separate capabilities; test each supported path.
+  FIX
+  bad <<~'X'
+    Cache every request and assume Background Sync, install prompts, and file sharing exist on all devices.
+  X
+  good <<~'X'
+    Detect optional capabilities, cache by request type and freshness, offer an offline route, and retry only safe queued writes.
+  X
 end
 
 Law.define(:FAIL_VISIBLY) do

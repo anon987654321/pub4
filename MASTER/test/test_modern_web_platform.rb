@@ -83,7 +83,8 @@ class TestModernWebPlatformEvidence < Minitest::Test
   MODERN_LAWS = %w[
     INTRINSIC_LAYOUT CONTAINER_RESPONSIVENESS MODERN_FORMS NATIVE_DISCLOSURE ANCHOR_RELATIONSHIPS
     SCOPED_CSS MOBILE_VIEWPORT SCROLL_INTEGRITY MOTION_ACCESSIBILITY NAVIGATION_CONTINUITY
-    BASELINE_COMPATIBILITY CORE_WEB_VITALS
+    BASELINE_COMPATIBILITY CORE_WEB_VITALS WEB_PLATFORM_DEFAULTS
+    MOBILE_ACCESSIBILITY_DEFAULTS PWA_RESILIENCE_DEFAULTS
   ].freeze
 
   def test_modern_web_laws_are_part_of_visual_constitution
@@ -123,5 +124,27 @@ class TestModernWebPlatformEvidence < Minitest::Test
     %w[2.5 200 0.1 75th percentile].each { |threshold| assert_includes "#{law.ask} #{law.fix}", threshold }
     assert_includes law.fix, "field data"
   end
+
+  def test_web_defaults_prefer_native_features_and_safe_fallbacks
+    platform = Law.definitions.fetch(:WEB_PLATFORM_DEFAULTS)
+    assert_includes platform.fix, "Baseline Widely available"
+    assert_includes platform.fix, "@supports"
+    assert_includes platform.fix, "feature detection"
+    assert_includes platform.fix, "Modern Web Guidance"
+    assert_includes platform.fix, "network access"
+
+    mobile = Law.definitions.fetch(:MOBILE_ACCESSIBILITY_DEFAULTS)
+    %w[320 24 44 prefers-reduced-motion].each do |expectation|
+      assert_includes "#{mobile.ask} #{mobile.fix}", expectation
+    end
+    assert_includes mobile.fix, "unobscured"
+
+    pwa = Law.definitions.fetch(:PWA_RESILIENCE_DEFAULTS)
+    %w[GET network-first cache-first same-origin idempotent].each do |expectation|
+      assert_includes pwa.fix, expectation
+    end
+    assert_includes pwa.fix, "personalized responses"
+  end
+
 
 end
