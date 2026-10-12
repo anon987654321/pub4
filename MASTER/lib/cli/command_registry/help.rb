@@ -97,7 +97,12 @@ module Master
         },
         "model" => {
           summary: "show or switch the active model, inspect laboratory outcomes, and connect its subscriptions",
-          detail: ["/model", "/model <name> — routing from data/models.yml.", "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane.",
+          detail: ["/model",
+                   "/model <name> — choose a reachable lane from data/models.yml and the live pool.",
+                   "/model list — list the reachable pool and the next steps to grow it.",
+                   "Optional gateway: set MASTER_LLM_GATEWAY_URL to a local OpenAI-compatible /v1 URL; remote gateways require HTTPS.",
+                   "Set MASTER_LLM_GATEWAY_KEY or FREELLMPOOL_PROXY_KEY when the gateway requires a bearer key.",
+                   "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane.",
                    "/model lab — summarize recorded trajectory quality by model.",
                    "/model auth — show subscription lanes and their authentication state.",
                    "/model auth login claude|chatgpt|grok — run the provider's official browser sign-in flow.",
