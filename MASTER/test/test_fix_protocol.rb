@@ -28,7 +28,9 @@ class TestFixProtocol < Minitest::Test
     text = Master::Fix::Protocol.instruction
 
     assert_includes text, "/fix and --dry-run are distinct"
-    assert_includes text, "Semantic ask Laws are executable"
+    assert_includes text, "lexical_violations"
+    assert_includes text, "semantic_opportunities"
+    assert_includes text, "two consecutive evidence-backed clean readings"
     assert_includes text, "No deterministic fixer exists"
   end
 
@@ -140,6 +142,19 @@ class TestFixProtocol < Minitest::Test
       assert_kind_of Hash, payload.fetch("detector_summary")
       assert_equal payload.fetch("detector_matrix").size,
                    payload.dig("detector_summary", "total_rules")
+    end
+  end
+
+  def test_render_exposes_four_stream_contract_without_claiming_it_was_measured
+    Dir.mktmpdir("fix-protocol-four-streams") do |root|
+      File.write(File.join(root, "thing.rb"), "puts :ok\\n")
+      payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
+      contract = payload.fetch("assessment_contract")
+
+      assert_equal Master::Fix::FourStreamAssessment::STREAMS.map(&:to_s), contract.fetch("streams")
+      assert_equal Master::Fix::FourStreamAssessment::SURFACES.map(&:to_s), contract.fetch("surfaces")
+      assert_equal "contract_only_not_measurement", contract.fetch("runtime_status")
+      assert_equal 2, contract.fetch("clean_passes_required")
     end
   end
 

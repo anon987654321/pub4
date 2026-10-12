@@ -22,6 +22,15 @@ class TestLawBridgeLaw < Minitest::Test
     assert_match(/NO_VAR/, findings.map(&:message).join)
   end
 
+  def test_deterministic_findings_are_tagged_with_their_own_stream
+    finding = law.check("var x = 1;\\n", path: "app/thing.js")
+                 .find { |row| row[:law].to_s == "NO_VAR" }
+
+    refute_nil finding
+    assert_includes finding[:tags], :lexical_violations
+    assert_includes finding[:tags], :violation
+  end
+
   # The language filter is the difference between a law and a nuisance: a JS
   # law must not fire on Ruby that happens to contain the same characters.
   def test_language_scoping_is_honoured

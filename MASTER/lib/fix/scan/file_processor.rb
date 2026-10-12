@@ -154,7 +154,16 @@ module Master
           findings = []
           findings.concat(run_law_pass(pass: :lexical, laws: lexical, code:, ast:, path:))
           findings.concat(run_law_pass(pass: :structural, laws: structural, code:, ast:, path:))
-          return findings if lexical_error?(findings)
+          if lexical_error?(findings)
+            @bus&.publish(
+              "scan:semantic_skipped",
+              path:,
+              law_count: semantic.size,
+              reason: "fatal lexical finding short-circuited semantic streams",
+              streams: %i[semantic_violations semantic_opportunities],
+            )
+            return findings
+          end
           return skip_semantic(path:, laws: semantic, findings:) unless semantic_due?(findings, path)
 
           findings.concat(run_law_pass(pass: :semantic, laws: semantic, code:, ast:, path:))

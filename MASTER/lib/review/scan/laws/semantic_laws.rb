@@ -115,9 +115,12 @@ module Master
             # non-results. Unexpected model/parser faults are measurement failures:
             # log them and raise so FileProcessor returns a failed scan rather than
             # silently turning an unevaluated semantic tier into CLEAN.
-            offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
+            offline = e.message.to_s.match?(OFFLINE_ERRORS_PATTERN)
             limited = note_model_failure(e)
-            return [] if offline || limited
+            if offline || limited
+              detail = offline ? "provider capability/configuration unavailable" : "provider spend/quota limit reached"
+              raise "semantic assessment INCONCLUSIVE: #{detail} for #{path} (#{e.class}: #{e.message})"
+            end
 
             Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             raise
@@ -138,10 +141,10 @@ module Master
         end
 
         require_relative "../finding"
-        # LLM review for rules whose violations resist lexical detection.
-        # Each executable Law with an ask surface is folded into one LLM call per
-        # file. A law may also have a deterministic detector; that is layered
-        # evidence for one rule, not a second semantic definition.
+        # LLM review for meaning that resists deterministic detection.
+        # Each eligible file receives independent violation and opportunity
+        # requests; the same law can therefore yield two distinct findings. A
+        # deterministic detector remains layered evidence for that one law.
         class SemanticLaw < Law
           CODE_SNIPPET_LIMIT = 2000
 
@@ -161,20 +164,28 @@ module Master
 
           def check(code, path:)
             lang = language(path)
-            return [] unless lang && @agent
-            return [] if quota_paused?
+            return [] unless lang
+            raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}" unless @agent
+            if quota_paused?
+              raise "semantic assessment INCONCLUSIVE: quota gate paused model assessment for #{path}"
+            end
 
             reload_semantic_laws_if_stale
             scoped = laws_for(lang)
             return [] if scoped.empty?
 
-            cache_key = semantic_cache_key(path, code)
-            return @cache[cache_key] if @cache.key?(cache_key)
+            base_key = semantic_cache_key(path, code)
+            # Keep violation detection and improvement discovery as distinct
+            # model calls, cache entries, operations, prompts and verdicts. A
+            # combined CLEAN reply previously hid whether both questions ran.
+            %i[violation opportunity].flat_map do |stream|
+              cache_key = "#{base_key}:#{stream}"
+              next @cache[cache_key] if @cache.key?(cache_key)
 
-            response = ask_without_tools(build_prompt(code, path, scoped), operation: :scan_semantic)
-            findings = parse_findings(response, scoped)
-            @cache[cache_key] = findings
-            findings
+              operation = stream == :violation ? :scan_semantic_violations : :scan_semantic_opportunities
+              response = ask_without_tools(build_prompt(code, path, scoped, mode: stream), operation:)
+              @cache[cache_key] = parse_findings(response, scoped, mode: stream)
+            end
           rescue StandardError => e
             offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
             limited = note_model_failure(e)
@@ -263,11 +274,27 @@ module Master
             raise
           end
 
-          def build_prompt(code, path, scoped)
+          def build_prompt(code, path, scoped, mode:)
+            heading, empty_response, instruction = case mode.to_sym
+            when :violation
+              ["SEMANTIC VIOLATIONS", "CLEAN",
+               "Find only clear breaches of the stated laws. Do not list improvements."]
+            when :opportunity
+              ["SEMANTIC OPPORTUNITIES", "NONE",
+               "Independently find specific improvements that better satisfy the stated laws, even when the current code is not in violation. Do not relabel existing violations as opportunities."]
+            else
+              raise ArgumentError, "unknown semantic assessment mode: #{mode.inspect}"
+            end
+            rules = scoped.map { |id, axiom| "#{id}: #{axiom[:prompt]}" }.join("\n")
             <<~PROMPT
-            Review #{File.basename(path)}.
+            #{heading}: review #{File.basename(path)}.
 
-            #{prompt_frame_for(scoped, language(path))}
+            #{instruction}
+            Return only LAW_ID:LINE:description records for the rules listed below.
+            If no result exists for this stream, return exactly #{empty_response}.
+            Do not return the other stream's verdict in this response.
+
+            #{rules}
 
             Code (first #{CODE_SNIPPET_LIMIT} chars):
             #{code[0, CODE_SNIPPET_LIMIT]}
@@ -309,7 +336,7 @@ module Master
           # of them: a model handed a css frame that answers RAILS_VIEW_PURITY has
           # invented a rule for this file, and accepting it would put the scope
           # back where it was.
-          def parse_findings(response, scoped)
+          def parse_findings(response, scoped, mode: nil)
             response.lines.filter_map do |line|
               stripped = line.strip
               next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
@@ -324,13 +351,12 @@ module Master
                 line: match[2].to_i,
                 severity: axiom[:severity],
                 fix: nil,
-                tags: [match[1].to_sym, axiom[:mode]],
+                tags: [match[1].to_sym, (mode || axiom[:mode])],
                 reversibility: axiom[:reversibility],
                 blast_radius: axiom[:blast_radius],
               )
             end
           end
-
         end
 
         # Comments above method defs that no longer describe what the code does.
