@@ -282,10 +282,10 @@ class TestLawMapRuntime < Minitest::Test
       assert_includes findings, "law duplicated repeats law_ids: SAME_RULE"
     end
   end
+
   def test_superseded_barnevern_law_stays_removed
     obsolete_file = File.join(@root, "law", "barnevernloven_4_12.rb")
     refute File.exist?(obsolete_file), "the superseded 1992 barnevern law must not return"
     refute_includes File.read(File.join(@root, "data", "laws.yml")), "BARNEVERNLOVEN_4_12_HANDLING"
   end
-
 end
