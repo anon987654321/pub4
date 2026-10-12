@@ -263,8 +263,8 @@ module Deploy
 
       verdict[:hard] << "navigation failed: #{navigation_error}" if navigation_error
       verdict[:hard] << "screenshot failed: #{screenshot_error}" if screenshot_error
-      verdict[:hard].uniq!
-      status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
+      runtime_failures = verdict[:hard].uniq
+      runtime_status = runtime_failures.empty? ? "PASS" : "FAIL"
       pixel = pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:)
       if %w[REGRESSION DIMENSION_MISMATCH].include?(pixel["status"])
         verdict[:hard] << pixel.fetch("reason")
@@ -288,6 +288,8 @@ module Deploy
         "dimensions" => [surface.width, surface.height],
         "url" => surface.url,
         "status" => status_label,
+        "runtime_status" => runtime_status,
+        "runtime_failure_reasons" => runtime_failures,
         "http_status" => status,
         "title" => title,
         "console_messages" => messages,
