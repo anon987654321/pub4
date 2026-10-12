@@ -127,7 +127,7 @@ module Law
       return false if path && !(path.is_a?(Regexp) ? file.match?(path) : file.include?(path))
       return false if path_exclude && file.match?(path_exclude)
 
-      languages.empty? || (language && languages.include?(language))
+      languages.empty? || (language && languages.include?(language.to_s))
     end
 
     # A semantic rule has no detector to run here. It is carried to the model by
@@ -400,6 +400,8 @@ module Law
       missing = %i[bad good fix].reject { |k| @h.key?(k) }
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
 
+      # Strings, because the files a law is judged on arrive as "ruby" and a symbol list never matched them.
+      @h[:languages] = Array(@h[:languages]).map(&:to_s)
       @h[:law_scope] ||= @h[:languages].empty? ? :universal : :domain
       @h[:lifecycle] ||= :active
       @h[:autofix] ||= :review
@@ -589,7 +591,9 @@ module Law
       files.each do |source|
         stat = File.stat(source)
         stamp = [stat.size, stat.ino, stat.mtime.to_r]
-        next if @law_stamps[source] == stamp
+        # A stamp says the file is unchanged, not that its laws are still registered:
+        # a cleared registry must reload them, or every caller after the clear sees none.
+        next if @law_stamps[source] == stamp && @law_sources[source].to_a.all? { |id| @definitions.key?(id) }
 
         @law_sources[source].to_a.each { |id| @definitions.delete(id) }
         @law_sources[source] = []

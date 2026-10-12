@@ -58,7 +58,7 @@ class TestLawContract < Minitest::Test
         raise "broken law shard"
       RUBY
 
-      assert_raises RuntimeError { Law.load_all(dir) }
+      assert_raises(RuntimeError) { Law.load_all(dir) }
       assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
     ensure
       Law.load_all(File.join(Master::ROOT, "law"))
@@ -80,10 +80,10 @@ class TestLawContract < Minitest::Test
         end
       RUBY
 
-      original = Law.rules.dup
-      original[:ATOMIC_RELOAD_PROBE] = Law::Rule.new(
+      original = Law.definitions.dup
+      original[:ATOMIC_RELOAD_PROBE] = Law::Definition.new(
         id: :ATOMIC_RELOAD_PROBE, source: "test", severity: :info, mode: :violation,
-        languages: [], scope: :line, principle_scope: :universal, lifecycle: :active,
+        languages: [], scope: :line, law_scope: :universal, lifecycle: :active,
         autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil,
         ask: nil, practice: "old", fix: "keep it", bad: "bad", good: "good",
         reads_comments: false
@@ -93,11 +93,11 @@ class TestLawContract < Minitest::Test
       loaded = Thread.new { Law.load_all(dir) }
       sleep 0.05
 
-      assert_equal :trusted, Law.rules.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION).lifecycle
-      refute Law.rules.key?(:ATOMIC_RELOAD_PROBE)
+      assert_equal :trusted, Law.definitions.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION).lifecycle
+      refute Law.definitions.key?(:ATOMIC_RELOAD_PROBE)
 
       loaded.join
-      assert_equal "new", Law.rules.fetch(:ATOMIC_RELOAD_PROBE).practice
+      assert_equal "new", Law.definitions.fetch(:ATOMIC_RELOAD_PROBE).practice
     ensure
       loaded&.join
       Law.load_all(File.join(Master::ROOT, "law"))
@@ -176,12 +176,12 @@ class TestLawContract < Minitest::Test
     assert_operator rows.count { |row| row["law_scope"] == "universal" }, :>, 0
 
     rendered = JSON.parse(Law::Index.render)
-    assert_equal rows.length, rendered.fetch("rule_count")
+    assert_equal rows.length, rendered.fetch("law_count")
     assert_equal rows.count { |row| row["law_scope"] == "universal" }, rendered.fetch("universal_count")
   end
 
   def test_deterministic_law_proof_checks_each_declared_language
-    rule = Law::Rule.new(
+    rule = Law::Definition.new(
       id: :MULTI_LANGUAGE_PROOF,
       source: "test",
       severity: :warn,
@@ -209,7 +209,7 @@ class TestLawContract < Minitest::Test
   end
 
   def test_symbol_language_declarations_match_string_file_languages
-    rule = Law.rules.fetch(:EACH_WITH_OBJECT)
+    rule = Law.definitions.fetch(:EACH_WITH_OBJECT)
 
     assert_equal ["ruby"], rule.languages
     assert rule.applies?("fixture.rb", "ruby")
@@ -217,7 +217,7 @@ class TestLawContract < Minitest::Test
   end
 
   def test_lifecycle_transitions_are_published_on_rule
-    assert Law::Rule.const_defined?(:LIFECYCLE_TRANSITIONS, false)
+    assert Law::Definition.const_defined?(:LIFECYCLE_TRANSITIONS, false)
     assert_equal %i[proposed proven active observed trusted advisory retired],
                  Law::Definition::LIFECYCLE_TRANSITIONS.keys
   end

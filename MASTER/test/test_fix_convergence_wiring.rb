@@ -11,7 +11,7 @@ class FixConvergenceWiringTest < Minitest::Test
     llm_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/llm_stage.rb", __dir__))
     wishlist_source = File.read(File.expand_path("../lib/fix/wishlist.rb", __dir__))
     journal_source = File.read(File.expand_path("../lib/fix/run_journal.rb", __dir__))
-    rule_source = File.read(File.expand_path("../lib/fix/repair_loop.rb", __dir__))
+    repair_source = File.read(File.expand_path("../lib/fix/repair_loop.rb", __dir__))
 
     assert_includes loop_source, 'require_relative "visual_pass"'
     assert_includes loop_source, 'require_relative "opportunity_pass"'
@@ -33,11 +33,11 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes journal_source, "def remaining_seconds(run_id)"
     assert_includes runner_source, "OpportunityPass::LAW_ID"
 
-    assert_includes rule_source, "external_violations:"
-    assert_includes rule_source, "image:"
-    assert_includes rule_source, "@stage_commit"
-    assert_includes rule_source, 'require_relative "../review/scan/rule_health"'
-    refute_includes rule_source, 'require_relative "rule_health"'
+    assert_includes repair_source, "external_violations:"
+    assert_includes repair_source, "image:"
+    assert_includes repair_source, "@stage_commit"
+    assert_includes repair_source, 'require_relative "../review/scan/law_health"'
+    refute_includes repair_source, 'require_relative "law_health"'
   end
 
   def test_rendered_geometry_consumes_the_visual_measurement_payload

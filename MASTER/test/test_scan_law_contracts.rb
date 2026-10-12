@@ -3,9 +3,10 @@
 require_relative "test_helper"
 require "review/scan/law_dsl"
 require "review/scan/laws/structural_laws"
+require_relative "../lib/fix/ast_fixer"
 
-class TestScanRuleContracts < Minitest::Test
-  Rules = Master::Review::Scan::Laws
+class TestScanLawContracts < Minitest::Test
+  Laws = Master::Review::Scan::Laws
 
   def test_small_files_rule_flags_files_over_limit
     code = Array.new(Laws::SmallFilesLaw::LIMIT + 1, "puts :x").join("\n")
@@ -167,12 +168,12 @@ class TestScanRuleContracts < Minitest::Test
     law = Law.definitions.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
-    assert_empty bridge.check("if a; b; else; c; end\n", path: "example.rb"),
-                 "advisory doctrine must not become an enforcement finding"
+    findings = bridge.check("# frozen_string_literal: true\n\nif a; b; else; c; end\n", path: "example.rb")
+    refute_includes findings.map(&:law), "BEAUTIFUL_CODE", "advisory doctrine must not become an enforcement finding"
   end
 
   def test_trusted_transformation_law_remains_in_semantic_population
-    law = Law.rules.fetch(:TRANSFORMATIONS)
+    law = Law.definitions.fetch(:TRANSFORMATIONS)
 
     assert_equal :trusted, law.lifecycle
     assert law.semantic?
@@ -210,7 +211,7 @@ class TestScanRuleContracts < Minitest::Test
   def test_every_retired_twin_reaches_findings_through_the_bridge
     bridge = Laws::LawBridgeLaw.new
     RETIRED_TWINS.each do |id|
-      law = Law.rules[id.to_sym]
+      law = Law.definitions[id.to_sym]
       refute_nil law, "#{id} must exist in law/ — its registry twin is gone"
       ext = TWIN_EXT.fetch(law.languages.first&.to_s, ".rb")
       path = "#{law.path || "/lib/"}example#{ext}"
@@ -424,7 +425,7 @@ class TestScanRuleContracts < Minitest::Test
   # have.
   def test_no_id_lives_in_both_law_and_registry
     Laws::LawBridgeLaw.new
-    law_ids = Law.rules.values.select(&:scannable?).map { |rule| rule.id.to_s }
+    law_ids = Law.definitions.values.select(&:scannable?).map { |rule| rule.id.to_s }
     registry_ids = Master::Review::Scan::Law.registry.filter_map do |klass|
       Master::Review::Scan::LawFactory.registry_id(klass, root: Master::ROOT)&.upcase
     end
@@ -454,7 +455,8 @@ class TestScanRuleContracts < Minitest::Test
   def test_every_rule_is_stable_across_runs_line_endings_and_duplicates
     scanner = Master::Fix::Scanner.build(root: Master::ROOT)
     path = File.join(Master::ROOT, "lib", "example_input_shapes.rb")
-    rules = scanner.laws.select { |rule| rule.respond_to?(:check) }
+    # A semantic law asks a model, and with none configured it raises INCONCLUSIVE by design.
+    rules = scanner.laws.select { |rule| rule.respond_to?(:check) && !rule.is_a?(Laws::SemanticLaw) }
     defects = rules.flat_map { |rule| input_shape_defects(rule, path) }
 
     assert_operator rules.size, :>, 100, "the registry is not being read"
