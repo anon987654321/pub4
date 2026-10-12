@@ -32,10 +32,6 @@ module Deploy
 
     def self.run = new.run
 
-    def self.pixel_baseline_approval?(env = ENV)
-      %w[1 true yes on].include?(env["GATE_PIXEL_BASELINE_APPROVE"].to_s.strip.downcase)
-    end
-
     def self.pixel_baseline_strict?(env = ENV)
       %w[1 true yes on].include?(env["GATE_PIXEL_BASELINE_STRICT"].to_s.strip.downcase)
     end
@@ -270,7 +266,7 @@ module Deploy
       verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
       pixel = pixel_evidence(surface:, screenshot:, screenshot_dir:, screenshot_error:, status_label:, hard_failures: verdict[:hard])
-      if %w[REGRESSION DIMENSION_MISMATCH APPROVAL_FAILED].include?(pixel["status"])
+      if %w[REGRESSION DIMENSION_MISMATCH].include?(pixel["status"])
         verdict[:hard] << pixel.fetch("reason")
       elsif %w[MISSING UNSUPPORTED].include?(pixel["status"])
         message = pixel.fetch("reason")
@@ -282,7 +278,6 @@ module Deploy
       end
       verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
-      @result.warn("browser_diagnostics: #{surface.id} — #{pixel['reason']}") if pixel["status"] == "UPDATED"
       verdict[:soft].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}", severity: :soft) }
       verdict[:hard].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}") }
 
@@ -330,18 +325,6 @@ module Deploy
       baseline = self.class.visual_baseline_path(surface)
       return { "status" => "NOT_TRACKED" } unless baseline
       return { "status" => "UNMEASURED", "baseline" => baseline } if screenshot_error || !File.file?(screenshot)
-
-      if self.class.pixel_baseline_approval? && status_label == "PASS" && hard_failures.empty?
-        begin
-          FileUtils.mkdir_p(File.dirname(baseline))
-          File.binwrite(baseline, File.binread(screenshot))
-          return { "status" => "UPDATED", "baseline" => baseline,
-                   "reason" => "approved PNG baseline written for #{surface.id}: #{baseline}" }
-        rescue SystemCallError => e
-          return { "status" => "APPROVAL_FAILED", "baseline" => baseline,
-                   "reason" => "could not write approved PNG baseline #{baseline}: #{e.class}: #{e.message}" }
-        end
-      end
 
       unless File.file?(baseline)
         return { "status" => "MISSING", "baseline" => baseline,
@@ -400,7 +383,7 @@ module Deploy
       ]
       detail = row["failure_reasons"].empty? ? counts.join(" ") : row["failure_reasons"].join("; ")
       pixel_status = row["pixel_baseline_status"]
-      if %w[COMPARED REGRESSION DIMENSION_MISMATCH MISSING UNSUPPORTED UPDATED].include?(pixel_status)
+      if %w[COMPARED REGRESSION DIMENSION_MISMATCH MISSING UNSUPPORTED].include?(pixel_status)
         detail += " pixel=#{pixel_status}"
         if row["pixel_diff_ratio"]
           detail += " changed_pixels=#{row['pixel_diff_count']} drift=#{(row['pixel_diff_ratio'] * 100).round(4)}%"
