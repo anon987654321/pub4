@@ -112,7 +112,7 @@ module Master
             "/chat use irc:#help or irc:friend — select an IRC channel or direct message.",
             "/chat use telegram:12345 or slskd:room:indie or slskd:pm:user — select a supported chat.",
             "After selecting a destination, ordinary text goes there; /chat speak on is still required to send.",
-            "/chat quit [msg] — disconnect (/quit still exits MASTER)."
+            "/chat quit [msg] — disconnect (/quit still exits MASTER).",
             "/chat summarize — the operator asks the model to summarize recent lines, " \
              "sent as quoted untrusted data.",
           ],
