@@ -5,7 +5,7 @@ require "tmpdir"
 require_relative "../../MASTER/gates/support/png_diff"
 
 class PngDiffTest < Minitest::Test
-  def test_paeth(left, above, upper_left)
+  def paeth_for_test(left, above, upper_left)
     p = left + above - upper_left
     distances = [(p - left).abs, (p - above).abs, (p - upper_left).abs]
     return left if distances[0] <= distances[1] && distances[0] <= distances[2]
@@ -87,7 +87,7 @@ class PngDiffTest < Minitest::Test
                     when 1 then left
                     when 2 then above
                     when 3 then (left + above) / 2
-                    when 4 then test_paeth(left, above, upper_left)
+                    when 4 then paeth_for_test(left, above, upper_left)
                     end
         (value - predictor) & 0xff
       end.pack("C*")
