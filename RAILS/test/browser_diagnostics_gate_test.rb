@@ -2,8 +2,45 @@
 
 require "minitest/autorun"
 require "yaml"
+require "tmpdir"
+require "digest"
 require_relative "../../MASTER/gates/lib/rendered/browser_diagnostics"
 require_relative "../../MASTER/gates/lib/rendered_suite"
+
+class BrowserDiagnosticsFakeCdp
+  attr_reader :visited_url
+
+  def initialize(status: 200, messages: [], http_errors: [], request_errors: [], screenshot_fails: false)
+    @status = status
+    @messages = messages
+    @http_errors = http_errors
+    @request_errors = request_errors
+    @screenshot_fails = screenshot_fails
+  end
+
+  def viewport(_width, _height, mobile: false); end
+  def headers(_headers); end
+  def clear_cookies; end
+  def clear_events; end
+  def navigate(url, settle:); @visited_url = url; end
+  def status = @status
+  def evaluate(script)
+    return "Fixture page" if script == "document.title"
+    return false if script == "location.protocol === 'chrome-error:'"
+
+    nil
+  end
+  def console_messages = @messages
+  def http_failures = @http_errors
+  def request_failures = @request_errors
+
+  def screenshot(path)
+    raise Deploy::CdpSession::Error, "fixture screenshot failure" if @screenshot_fails
+
+    File.binwrite(path, "fixture PNG bytes")
+    path
+  end
+end
 
 class BrowserDiagnosticsGateTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
@@ -126,6 +163,37 @@ class BrowserDiagnosticsGateTest < Minitest::Test
 
     assert_empty verdict[:hard]
     assert_match(/HTTP 404/, verdict[:soft].first)
+  end
+
+  def test_route_capture_writes_a_screenshot_and_manifest_ready_evidence
+    Dir.mktmpdir("browser-diagnostics-test") do |dir|
+      gate = Deploy::BrowserDiagnosticsGate.new
+      gate.instance_variable_set(:@result, Deploy::GateResult.new)
+      cdp = BrowserDiagnosticsFakeCdp.new
+
+      row = gate.send(:capture_surface, cdp, SURFACE, dir, 0)
+
+      assert_equal "PASS", row.fetch("status")
+      assert_equal SURFACE.url, cdp.visited_url
+      assert_equal "Fixture page", row.fetch("title")
+      assert File.file?(row.fetch("screenshot"))
+      assert_equal Digest::SHA256.file(row.fetch("screenshot")).hexdigest, row.fetch("screenshot_sha256")
+      assert_equal [], row.fetch("failure_reasons")
+    end
+  end
+
+  def test_route_capture_fails_when_screenshot_delivery_fails
+    Dir.mktmpdir("browser-diagnostics-test") do |dir|
+      gate = Deploy::BrowserDiagnosticsGate.new
+      gate.instance_variable_set(:@result, Deploy::GateResult.new)
+      cdp = BrowserDiagnosticsFakeCdp.new(screenshot_fails: true)
+
+      row = gate.send(:capture_surface, cdp, SURFACE, dir, 0)
+
+      assert_equal "FAIL", row.fetch("status")
+      assert_match(/screenshot failed/, row.fetch("failure_reasons").join(" "))
+      assert_nil row.fetch("screenshot")
+    end
   end
 
   def test_browser_artifacts_are_external_to_the_repository_and_baselines_are_not_updated
