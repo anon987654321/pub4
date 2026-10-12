@@ -11,6 +11,8 @@ require_relative "../lib/trace/dmesg"
 # the snapshot contains.
 module Operator
   module SnapshotExtract
+    VALID_TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+
     module_function
 
     def parse(path)
@@ -37,6 +39,9 @@ module Operator
       end
       raise "snapshot extract: missing or malformed Pack header in #{path}" unless headers.one?
       pack = headers.fetch(0)
+      unless VALID_TREES.include?(pack[:tree])
+        raise "snapshot extract: unknown tree #{pack[:tree].inspect} in #{path}"
+      end
       unless pack[:parts].positive? && pack[:part].between?(1, pack[:parts]) && pack[:omitted].zero?
         raise "snapshot extract: invalid or incomplete Pack header in #{path}"
       end
@@ -46,19 +51,19 @@ module Operator
       fence = nil
       fragment = nil
       total_fragments = nil
-      @bytes = nil
-      @newline = nil
+      bytes = nil
+      newline = nil
       body = []
 
       flush = lambda do
         return unless current && fence
-        files << { path: current, body: body.join, fragment:, total_fragments:, bytes: @bytes, newline: @newline }
+        files << { path: current, body: body.join, fragment:, total_fragments:, bytes:, newline: }
         current = nil
         fence = nil
         fragment = nil
         total_fragments = nil
-        @bytes = nil
-        @newline = nil
+        bytes = nil
+        newline = nil
         body = []
       end
 
@@ -76,8 +81,8 @@ module Operator
           current = match[1]
           fragment = nil
           total_fragments = nil
-          @bytes = Integer(match[2])
-          @newline = Integer(match[3])
+          bytes = Integer(match[2])
+          newline = Integer(match[3])
           next
         end
 
@@ -85,8 +90,8 @@ module Operator
           current = match[1]
           fragment = Integer(match[2])
           total_fragments = Integer(match[3])
-          @bytes = Integer(match[4])
-          @newline = Integer(match[5])
+          bytes = Integer(match[4])
+          newline = Integer(match[5])
           next
         end
 
@@ -140,8 +145,14 @@ module Operator
         end
 
         fragments.each do |relative, pieces|
-          expected_prefix = "#{tree}/"
-          raise "snapshot extract: path escapes declared tree #{relative}" unless relative.start_with?(expected_prefix)
+          segments = relative.split("/", -1)
+          safe_path = segments.first == tree &&
+                      segments.none? { |segment| segment.empty? || segment == "." || segment == ".." } &&
+                      !relative.include?("\\")
+          target_root = File.expand_path(root)
+          target_path = File.expand_path(relative, target_root)
+          safe_path &&= target_path.start_with?(target_root + File::SEPARATOR)
+          raise "snapshot extract: path escapes declared tree #{relative}" unless safe_path
           fragment_numbers = pieces.filter_map(&:first)
           if fragment_numbers.empty?
             raise "snapshot extract: duplicate source file #{relative}" unless pieces.size == 1
