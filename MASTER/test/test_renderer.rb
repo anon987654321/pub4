@@ -156,10 +156,11 @@ class TestRenderer < Minitest::Test
     lines = clean.lines.map(&:chomp)
 
     assert_equal 1, lines.size
-    assert_match(/\A(?:~|…|\/|[A-Za-z0-9_])/, lines.first)
+    assert_match(/\A(?:~|\.\.\.|\/|[A-Za-z0-9_])/, lines.first)
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_match(/\[discover\] [%$] \z/, lines.first)
+    assert_match(/discover [%$] \z/, lines.first)
+    refute_match(/\e\[/, prompt, "the OpenBSD-console prompt does not need ANSI segment styling")
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
@@ -170,7 +171,8 @@ class TestRenderer < Minitest::Test
         _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
         clean = strip_ansi(prompt)
 
-        assert_match(/\A.+ on main \+2 \[discover\] [%$] \z/, clean)
+        assert_match(/\A.+ main \+2 discover [%$] \z/, clean)
+        refute_match(/\e\[/, prompt)
         assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       end
     end
@@ -206,7 +208,7 @@ class TestRenderer < Minitest::Test
       clean = strip_ansi(prompt)
       assert_no_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes strip_ansi(prompt), "feature/with/a/very/long/o…"
+      assert_includes strip_ansi(prompt), "feature/with/a/very/long..."
     end
   end
 
