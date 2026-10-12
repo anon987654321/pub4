@@ -106,20 +106,14 @@ class TestDependencyManager < Minitest::Test
     end
   end
 
-  def test_dilla_music_dependencies_stay_inside_the_dilla_group
+  def test_dilla_takes_no_gems
     source = File.read(File.join(Master::ROOT, "Gemfile"))
-    group = source[/group :dilla do\n(.*?)^end/m, 1].to_s
     lock = File.read(File.join(Master::ROOT, "Gemfile.lock"))
 
-    assert_includes group, 'gem "coltrane", "~> 2.1"'
-    assert_includes group, 'gem "midilib", "~> 4.0"'
-    assert_includes group, 'gem "wavefile", "~> 1.1"'
-    assert_includes group, 'gem "ostruct", "~> 0.6"'
-    refute_includes group, "head_music"
-    refute_match(/^    head_music /, lock)
-    refute_match(/^    activesupport /, lock)
-    refute_match(/^    humanize /, lock)
-    assert_match(/group :dilla do/, source)
+    refute_match(/group :dilla/, source)
+    %w[coltrane midilib wavefile head_music].each do |gem_name|
+      refute_match(/^    #{gem_name} /, lock, "#{gem_name} is a gem dilla.rb no longer reads")
+    end
   end
 
   def test_edge_tts_isolated_to_tts_group_in_both_master_bundles

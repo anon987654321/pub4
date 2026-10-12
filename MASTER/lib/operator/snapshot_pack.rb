@@ -40,7 +40,6 @@ module Operator
       [%r{/public/assets/|/app/assets/builds/}, "built assets"],
       [/\.map\z/, "source map"],
       [%r{/gates/data/layout_snapshots/}, "stored layout snapshots"],
-      [%r{/dilla/project/}, "session state"],
       [/\.(ipynb|jsonl)\z/, "notebook or log data"],
     ].freeze
 

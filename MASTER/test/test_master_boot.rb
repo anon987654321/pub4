@@ -36,38 +36,6 @@ class MasterBootTest < Minitest::Test
     assert Master.respond_to?(:validate_data!)
   end
 
-  # In a child process, because the install prepends onto Hash for good and
-  # this suite must keep MRI's dig. The child plants coltrane 2.1.5's
-  # replacement, shows it raising, then installs the compat twice.
-  COLTRANE_DIG_PROBE = <<~RUBY
-    require #{File.expand_path("../lib/boot/hash_dig_compat", __dir__).inspect}
-    class Hash
-      def dig(*args) = args.size > 1 ? self[args.shift].dig(*args) : self[args[0]]
-    end
-    broken = begin
-      {}.dig(:missing, :nested)
-      "no-raise"
-    rescue NoMethodError
-      "raised"
-    end
-    Master.install_hash_dig_compat!
-    Master.install_hash_dig_compat!
-    puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :missing, :nested).inspect,
-          { outer: { inner: "value" } }.dig(:outer, :inner),
-          Hash.ancestors.count { |a| a == Master::HashDigCompat }].join(" ")
-  RUBY
-
-  def test_hash_dig_compat_repairs_coltrane_dig_and_installs_once
-    out, status = Open3.capture2e(RbConfig.ruby, "-e", COLTRANE_DIG_PROBE)
-
-    assert status.success?, out
-    assert_equal "raised nil nil value 1", out.strip
-  end
-
-  def test_the_suite_runs_on_mris_dig
-    refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
-  end
-
   def test_data_validation_detects_rapid_file_edits
     Dir.mktmpdir do |dir|
       data = File.join(dir, "data")

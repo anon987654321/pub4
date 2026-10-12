@@ -7,7 +7,7 @@
 # three are one thing", so no scan proposes a merge, and one concept spread over
 # three files that reference each other in both directions stays that way.
 #
-#   ruby MASTER/tools/cohesion.rb STUDIO/dilla/lib/engine
+#   ruby MASTER/tools/cohesion.rb STUDIO/postpro
 #   ruby MASTER/tools/cohesion.rb --json RAILS/__shared/lib
 #
 # It emits a plan rather than a patch. Moving code between files is not a

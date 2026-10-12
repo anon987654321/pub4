@@ -426,8 +426,7 @@ in `OPENBSD/CLAUDE.md`.
   models adds calls to a loop whose value agent is already the council.
 - **No golden traces or golden renders.** A model call's output and timing, and
   a dilla render, are not deterministic to the byte, so a golden file fails on
-  noise or overwrites a take. A/B in dilla is `DILLA_FROZEN` and interleaved
-  listening.
+  noise or overwrites a take. A/B is interleaved listening.
 - **No telemetry, score or gate without a reader.** The face's audio clock
   closes the gap a TTS state enum, a timestamped event stream or a sync budget
   measures, and frame-time, thermal and soak data have no consumer. dilla's

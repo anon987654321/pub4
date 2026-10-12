@@ -6,11 +6,6 @@ GEM
     ast (2.4.3)
     base64 (0.3.0)
     bigdecimal (4.0.1)
-    color (1.8)
-    coltrane (2.1.5)
-      color (~> 1.8)
-      paint (~> 2.0)
-      pedrozath-mercenary (~> 0.3)
     concurrent-ruby (1.3.6)
     date (3.5.1)
     diffy (3.4.4)
@@ -89,7 +84,6 @@ GEM
     marcel (1.1.0)
     mcp (1.6.0)
       json_schemer (>= 2.4)
-    midilib (4.0.2)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
     minitest (5.27.0)
@@ -119,15 +113,12 @@ GEM
       opentelemetry-semantic_conventions
     opentelemetry-semantic_conventions (1.37.0)
       opentelemetry-api (~> 1.0)
-    ostruct (0.6.3)
-    paint (2.3.0)
     parallel (1.27.0)
     parser (3.3.10.2)
       ast (~> 2.4.1)
       racc
     pastel (0.8.0)
       tty-color (~> 0.5)
-    pedrozath-mercenary (0.3.8)
     prism (1.9.0)
     psych (5.4.0)
       date
@@ -218,7 +209,6 @@ GEM
     tty-screen (0.8.2)
     unicode-display_width (2.6.0)
     uri (1.1.1)
-    wavefile (1.1.2)
     webrick (1.9.2)
     websocket-driver (0.8.0)
       base64
@@ -235,7 +225,6 @@ PLATFORMS
   x86_64-openbsd
 
 DEPENDENCIES
-  coltrane (~> 2.1)
   diffy (~> 3.4)
   event_stream_parser (>= 1.0)
   faraday (>= 2.0)
@@ -244,10 +233,8 @@ DEPENDENCIES
   json (= 2.18.0)
   mail (~> 2.9)
   mcp (~> 1.6)
-  midilib (~> 4.0)
   minitest (~> 5.25)
   opentelemetry-sdk (~> 1.11)
-  ostruct (~> 0.6)
   pastel (~> 0.8)
   psych
   rack-test (~> 2.1)
@@ -266,7 +253,6 @@ DEPENDENCIES
   tty-prompt (~> 0.23)
   tty-reader (~> 0.9)
   tty-screen (~> 0.8)
-  wavefile (~> 1.1)
   wisper (~> 2.0)
   yaml
   zeitwerk (~> 2.7)
@@ -276,9 +262,6 @@ CHECKSUMS
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
-  bundler (4.0.22) sha256=d8d5ec84c8555e0af71db63ed7aee4d1a8fb839ec46d84212d61979242a5d75a
-  color (1.8) sha256=0a8512ecf6a8fe14928707f7d2766680c955b3a2224de198c1e25c837cd36f82
-  coltrane (2.1.5) sha256=dde5c071fac815a85414967c51ef90341e06a29dceb6b697788b9056c98d109e
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
   date (3.5.1) sha256=750d06384d7b9c15d562c76291407d89e368dda4d4fff957eb94962d325a0dc0
   diffy (3.4.4) sha256=79384ab5ca82d0e115b2771f0961e27c164c456074bd2ec46b637ebf7b6e47e3
@@ -312,7 +295,6 @@ CHECKSUMS
   mail (2.9.1) sha256=06574eca475253d6c18145dd70af80d0eb970182d55053497c5f4d797ea160e8
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
   mcp (1.6.0) sha256=73fe3be93df68cffd6e73c852e7a1182a0a5eacdaff586b864bfeac22ae6f7be
-  midilib (4.0.2) sha256=2eb9a981c792f647298bc8945fbb01f48007d35ac609cdaa8169adee3d81749e
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
@@ -327,12 +309,9 @@ CHECKSUMS
   opentelemetry-registry (0.5.0) sha256=726ca58ada93a23efaa5f7bb81b8ab7a8a1e14602935c9c65dfa2e597a19fb4f
   opentelemetry-sdk (1.11.0) sha256=427c6708f4732105ffa46c11afecb91807085c59e92538eaa6cf46b97b1850c6
   opentelemetry-semantic_conventions (1.37.0) sha256=1e2dc5ad649e19ba2fb0fa7c6f9303e5cdd8d3952511415cb07efe28a0f8f4c3
-  ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
-  paint (2.3.0) sha256=327d623e4038619d5bd99ae5db07973859cd78400c7f0329eea283cef8e83be5
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.2) sha256=6f60c84aa4bdcedb6d1a2434b738fe8a8136807b6adc8f7f53b97da9bc4e9357
   pastel (0.8.0) sha256=481da9fb7d2f6e6b1a08faf11fa10363172dc40fd47848f096ae21209f805a75
-  pedrozath-mercenary (0.3.8) sha256=3187dc36994c9fc660142ebdc005de94b33734c93754cf64e71703ba4f2d6022
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   psych (5.4.0) sha256=14f72d69a611af663d7d70e4a7b67d9eb1f3ae9f8d916b478961d5a0075ba5b7
   public_suffix (7.0.5) sha256=1a8bb08f1bbea19228d3bed6e5ed908d1cb4f7c2726d18bd9cadf60bc676f623
@@ -373,7 +352,6 @@ CHECKSUMS
   tty-screen (0.8.2) sha256=c090652115beae764336c28802d633f204fb84da93c6a968aa5d8e319e819b50
   unicode-display_width (2.6.0) sha256=12279874bba6d5e4d2728cef814b19197dbb10d7a7837a869bab65da943b7f5a
   uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
-  wavefile (1.1.2) sha256=0b1ea029702454d39f64450bc55a9d99d650d3d95a5d5f46e2dd9a4501574199
   webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
   websocket-driver (0.8.0) sha256=ed0dba4b943c22f17f9a734817e808bc84cdce6a7e22045f5315aa57676d4962
   websocket-extensions (0.1.5) sha256=1c6ba63092cda343eb53fc657110c71c754c56484aad42578495227d717a8241
@@ -385,4 +363,4 @@ RUBY VERSION
   ruby 4.0.7
 
 BUNDLED WITH
-  4.0.22
+  4.0.11
