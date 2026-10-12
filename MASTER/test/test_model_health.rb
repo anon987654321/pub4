@@ -35,7 +35,9 @@ class TestModelHealth < Minitest::Test
     refute_includes result, "must-never-be-rendered"
   end
 
-  def test_model_health_is_reachable_through_the_model_subcommand
+  def test_model_health_is_documented_and_reachable_through_the_model_subcommand
+    assert_includes Registry.help_text("model"), "/model health"
+
     result = Registry.dispatch_model(
       agent: Agent.new(Router.new(Pool.new(
         "provider:model" => { calls: 2, successes: 1, failures: 1, latency_ms: 400.0 },
