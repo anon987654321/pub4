@@ -61,6 +61,17 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     assert_match(/first-party resource failed/, asset[:hard].first)
   end
 
+  def test_owned_resources_follow_the_canonical_app_and_vertical_inventories
+    amber = Deploy::GeometryProbe::Surface.new(
+      app: "amber", label: "home", host: nil, path: "/", viewport: "desktop",
+      width: 1440, height: 900, port: 61_352, snapshot: false, profile: nil
+    )
+
+    assert Deploy::BrowserDiagnosticsGate.owned_url?(amber, "https://amberapp.art/assets/application.js")
+    assert Deploy::BrowserDiagnosticsGate.owned_url?(SURFACE, "https://dating.brgen.no/assets/application.js")
+    refute Deploy::BrowserDiagnosticsGate.owned_url?(amber, "https://third-party.invalid/script.js")
+  end
+
   def test_resource_404_is_preserved_as_a_warning_not_silently_dropped
     verdict = Deploy::BrowserDiagnosticsGate.grade(
       surface: SURFACE, status: 200, console_messages: [],
