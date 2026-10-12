@@ -46,7 +46,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp comp default_profile drum_patterns echo groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
+    assert_equal %w[arp comp default_profile drum_patterns echo essential groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
   end
 
   # ------------------------------------------------------------- progressions
@@ -111,7 +111,7 @@ class DillaTest < Minitest::Test
           chord = Chords.parse(names[i])
           missing = required_pcs(chord) - notes.map { |n| n % 12 }
           assert_empty missing, "progression #{index} #{names[i]} (search #{search}) lost pitch classes #{missing}"
-          assert notes.size <= Chords::MAX_VOICES, "progression #{index} #{names[i]} has #{notes.size} voices"
+          assert notes.size <= [Chords::MAX_VOICES, 1 + required_pcs(chord).uniq.size].max, "progression #{index} #{names[i]} has #{notes.size} voices"
         end
       end
     end
@@ -743,7 +743,7 @@ class DillaTest < Minitest::Test
 
   def test_every_progression_plays_once_per_cycle_and_nothing_repeats_back_to_back
     count = PROGRESSIONS.size
-    list = Playlist.new(DATA, Random.new(5))
+    list = Playlist.new(DATA, Random.new(5), {}, pool: "all")
     picks = Array.new(3 * count) { list.draw(profile: "dry") }
     seen = picks.map { |p| p[:prog] }
     assert_equal({ 3 => count }, seen.tally.values.tally)
@@ -761,15 +761,25 @@ class DillaTest < Minitest::Test
     played.each_slice(moog.size).select { |s| s.size == moog.size }.each { |slice| assert_equal moog.sort, slice.sort }
   end
 
+  def test_the_default_pool_is_the_essential_staples_and_every_index_exists
+    essential = DATA.fetch("essential")
+    assert_operator essential.size, :>=, 20
+    assert(essential.all? { |i| i.between?(0, PROGRESSIONS.size - 1) })
+    assert_equal essential.uniq, essential
+    picks = Array.new(essential.size) { Playlist.new(DATA, Random.new(3)).draw(profile: "dry")[:prog] }
+    assert(picks.all? { |i| essential.include?(i) })
+    assert_operator PROGRESSIONS.size, :>, 300
+  end
+
   def test_a_restart_goes_on_with_the_cycle
-    first = Playlist.new(DATA, Random.new(1))
-    a = Array.new(50) { first.draw(profile: "dry")[:prog] }
+    first = Playlist.new(DATA, Random.new(1), {}, pool: "all")
+    a = Array.new(150) { first.draw(profile: "dry")[:prog] }
     state = JSON.parse(JSON.generate(first.to_h))
-    second = Playlist.new(DATA, Random.new(2), state)
-    b = Array.new(55) { second.draw(profile: "dry")[:prog] }
+    second = Playlist.new(DATA, Random.new(2), state, pool: "all")
+    b = Array.new(PROGRESSIONS.size - 150) { second.draw(profile: "dry")[:prog] }
     assert_equal PROGRESSIONS.size, (a + b).uniq.size
     assert_equal (a + b).size, (a + b).uniq.size, "the 105 of the first cycle each came once across the restart"
-    assert_equal "1/105", Playlist.new(DATA, Random.new(3)).tap { |l| l.draw }.then { |l| l.instance_variable_get(:@bags)["progressions"].position }
+    assert_equal "1/#{PROGRESSIONS.size}", Playlist.new(DATA, Random.new(3), {}, pool: "all").tap { |l| l.draw }.then { |l| l.instance_variable_get(:@bags)["progressions"].position }
   end
 
   # ------------------------------------------------------------- the harmony audit

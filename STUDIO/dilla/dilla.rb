@@ -1148,6 +1148,7 @@ def run(argv)
     o.on('--snare-db N', Float, 'Snare and clap level in dB') { |v| (options[:mix] ||= {}).merge!('snare' => v, 'clap' => v) }
     o.on('--hat-db N', Float, 'Hat level in dB') { |v| (options[:mix] ||= {})['hat'] = v }
     o.on('--chords-db N', Float, 'Chord and arp level in dB when drums play') { |v| (options[:mix] ||= {})['chords'] = v }
+    o.on('--pool POOL', %w[essential all], 'With --play: essential progressions (default) or all') { |v| options[:pool] = v }
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
 
@@ -1282,8 +1283,9 @@ end
 class Playlist
   MODES = %w[arp repeat pad].freeze
 
-  def initialize(data, rng, state = {})
+  def initialize(data, rng, state = {}, pool: 'essential')
     @data = data
+    @pool = pool
     @rng = rng
     @state = state
     @bags = {}
@@ -1293,10 +1295,15 @@ class Playlist
     @bags[key] ||= Bag.new(items, @rng, @state[key])
   end
 
+  # The progressions --play draws from: the essential staples, or the whole array.
+  def progression_pool
+    @pool == 'all' ? (0...@data.fetch('progressions').size).to_a : @data.fetch('essential')
+  end
+
   def voices_by_family = @data.fetch('voices').group_by { |_, v| v.fetch('family') }.transform_values { |rows| rows.map(&:first) }
 
   def draw(fixed = {})
-    index = bag('progressions', (0...@data.fetch('progressions').size).to_a).draw
+    index = bag('progressions', progression_pool).draw
     position = @bags['progressions'].position
     mode = fixed[:mode] || bag('modes', MODES).draw
     style = case mode
@@ -1324,7 +1331,7 @@ def play_forever(data, options)
   FileUtils.mkdir_p(dir)
   state_path = File.join(dir, 'play_state.json')
   state = (JSON.parse(File.read(state_path)) rescue {})
-  playlist = Playlist.new(data, rng, state)
+  playlist = Playlist.new(data, rng, state, pool: options[:pool] || 'essential')
   command = player_command(options)
   pid = nil
   trap('INT') { pid && Process.kill('TERM', pid); exit }
