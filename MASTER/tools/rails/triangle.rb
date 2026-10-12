@@ -187,15 +187,17 @@ module Deploy
   end
 end
 
-case ARGV[0]
-when nil, "up"
-  failed = Deploy::Triangle.up(ARGV.drop(1))
-  exit(failed.empty? ? 0 : 1)
-when "status"
-  exit(Deploy::Triangle.status.all? ? 0 : 1)
-when "down"
-  Deploy::Triangle.down(ARGV.drop(1))
-else
-  warn "usage: bin/operator triangle [up|status|down] [surface ...]"
-  exit 2
+if File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
+  case ARGV[0]
+  when nil, "up"
+    failed = Deploy::Triangle.up(ARGV.drop(1))
+    exit(failed.empty? ? 0 : 1)
+  when "status"
+    exit(Deploy::Triangle.status.all? ? 0 : 1)
+  when "down"
+    Deploy::Triangle.down(ARGV.drop(1))
+  else
+    warn "usage: bin/operator triangle [up|status|down] [surface ...]"
+    exit 2
+  end
 end
