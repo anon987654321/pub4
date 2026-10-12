@@ -234,6 +234,11 @@ module Master
         end
 
         def toggle_law_field
+          if Master::Face::LawField.config.fetch("terminal_law_ring", true) == false
+            show(["constitutional law glyphs disabled by laws.yml"])
+            return
+          end
+
           @law_field_visible = !@law_field_visible
           nudge(:key)
           state = "constitutional law glyphs #{@law_field_visible ? "visible" : "hidden"}"
