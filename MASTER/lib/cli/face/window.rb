@@ -62,6 +62,11 @@ module Master
           @size = size
           @lock = Mutex.new
           @state = :idle
+          law_config = Master::Face::LawField.config
+          @law_field_visible = law_config.fetch("terminal_law_ring", true) != false
+          toggle = law_config.fetch("terminal_toggle_key", "ctrl-v").to_s
+          @law_toggle_key = toggle.casecmp("ctrl-v").zero? ? "\u0016" : toggle
+          @law_toggle_label = toggle.casecmp("ctrl-v").zero? ? "Ctrl+V" : toggle
           @level = nil
           @words = [ear.missing, mouth.missing].compact
           @draft = +""
@@ -107,6 +112,7 @@ module Master
             heard: user_speaking?(state),
             viseme: current_viseme,
             color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1",
+            show_laws: @law_field_visible,
           ).split("\n")
 
           transcript = tail(column(jobs, words), transcript_rows, cols).map do |line|
@@ -213,6 +219,7 @@ module Master
         def react(key)
           return @closing = true if key == :eof || LEAVE.include?(key)
           return interrupt_ear(key) if hearing?
+          return toggle_law_field if key == @law_toggle_key
 
           nudge(:key)
           return submit if ENTER.include?(key)
@@ -222,6 +229,12 @@ module Master
           return change { @draft.chop! } if ERASE.include?(key)
 
           change { @draft << key } if key.match?(/\A[[:print:]]\z/)
+        end
+
+        def toggle_law_field
+          @law_field_visible = !@law_field_visible
+          nudge(:key)
+          show(["constitutional law glyphs #{@law_field_visible ? "visible" : "hidden"}"])
         end
 
         def hearing? = @hearing&.alive?
@@ -442,7 +455,7 @@ module Master
 
         def status(state)
           mic = @ear.available? ? "mic on" : "mic off"
-          "#{state}, #{mic}, Enter sends, Ctrl-C interrupts, Ctrl-D quits"
+          "#{state}, #{mic}, #{@law_toggle_label} laws, Enter sends, Ctrl-C interrupts, Ctrl-D quits"
         end
 
         def prompt_line(draft, cols, color:)
