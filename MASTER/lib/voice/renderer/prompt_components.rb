@@ -9,11 +9,9 @@ module Master
       # Splash and prompt rendering — separate from Renderer's own
       # render/output-guard responsibility.
       #
-      # The splash is a dmesg: a version line, the builder line, memory, then
-      # one attach line per device, and "root on" last. The prompt is a zsh
-      # prompt: where you are, what branch, and the percent sign. Both are plain
-      # Splash text is plain ASCII; the interactive prompt may use one Unicode
-      # ellipsis where a long path needs it, while the wscons path stays ASCII.
+      # The splash and operational status use the OpenBSD dmesg idiom: plain,
+      # factual lines with stable unit names. The prompt is deliberately smaller:
+      # location, Git state, phase and input token without decorative segments.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
@@ -124,8 +122,8 @@ module Master
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
-        # the tail you are actually in stays readable. Use a typographic
-        # ellipsis: it is quieter than three full stops and reads as one mark.
+        # the tail you are actually in stays readable. Use an ASCII truncation
+        # marker to preserve console output and copy/paste across old terminals.
         def prompt_path(suffix_length: 0)
           path = home_path(Dir.pwd)
           budget = prompt_path_budget(suffix_length:)
