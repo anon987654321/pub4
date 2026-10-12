@@ -12,7 +12,15 @@ class PublicErrorPagesTest < Minitest::Test
   %w[brgen amber bsdports].each do |app|
     define_method("test_#{app}_has_every_page_rails_renders_for_a_status") do
       %w[404 406-unsupported-browser 422 500].each do |name|
-        assert File.file?(File.join(ROOT, app, "public", "#{name}.html")), "#{app}/public/#{name}.html is missing"
+        path = File.join(ROOT, app, "public", "#{name}.html")
+        assert File.file?(path), "#{app}/public/#{name}.html is missing"
+        source = File.read(path)
+
+        assert_includes source, 'lang="nb"', "#{app}/#{name}: public copy must declare Norwegian"
+        assert_match(/name="viewport" content="[^"]*viewport-fit=cover/, source,
+                     "#{app}/#{name}: safe-area viewport was lost")
+        assert_includes source, %(<link rel="stylesheet" href="/styles/errors.css">),
+                        "#{app}/#{name}: error pages must use the shared typographic treatment"
       end
     end
   end
@@ -28,6 +36,18 @@ class PublicErrorPagesTest < Minitest::Test
       assert_includes source, "line-height: 1.4;", "#{status}: error-page reading rhythm drifted"
       assert_includes source, "viewport-fit=cover", "#{status}: safe-area viewport was lost"
     end
+  end
+
+  def test_master_unsupported_browser_page_keeps_the_terminal_dialect
+    source = File.read(File.join(ROOT, "master_web", "public", "406-unsupported-browser.html"))
+
+    assert_includes source, 'lang="nb"'
+    assert_match(/name="viewport" content="[^"]*viewport-fit=cover/, source)
+    assert_includes source, 'font: 400 15px/1.5 ui-monospace, "JetBrains Mono", Menlo, monospace;'
+    assert_includes source, "min-height: 100dvh;"
+    assert_includes source, "min-height: 44px;"
+    assert_includes source, "border-radius: 0;"
+    refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\\s*:\\s*(?!none\\b)/, source)
   end
 
   def test_shared_503_fallback_uses_brand_typography_and_safe_area
