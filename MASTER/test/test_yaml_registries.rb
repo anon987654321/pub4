@@ -575,15 +575,35 @@ end
 end
 
 class TestLawsPhysicalOrder < Minitest::Test
+  # Root-key order is a reading contract: constitutional laws first, operational
+  # flow next, then adapters/topology, the derived map, and the separate browser
+  # authority boundary. Tokens live in tokens.yml and must not re-enter this file.
   ORDER = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES prose transformation_policy
-    self_test veto_patterns anti_patterns architecture runtime_policy law_deps
-    plugins tokens law_ratchets
+    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES prose zsh detection_calibration
+    phantom_recovery transformation_policy self_test veto_patterns anti_patterns
+    architecture runtime_policy law_deps plugins law_ratchets law_map browser_policy
+  ].freeze
+  TRANSFORMATION_ORDER = %w[
+    defragment decouple flatten merge split relocate rename reorder remove reflow
+    simplify recommend
   ].freeze
 
   def test_laws_follow_constitutional_reading_order
     data = Master.load_yaml(File.join(DATA, "laws.yml"))
     assert_equal ORDER, data.keys.reject { |key| key == "schema" }
+  end
+
+  def test_transformation_flow_matches_its_implementation_contract
+    policy = Master.load_yaml(File.join(DATA, "laws.yml")).fetch("transformation_policy")
+
+    assert_equal %w[inventory classify], policy.fetch("preflight")
+    assert_equal TRANSFORMATION_ORDER, policy.fetch("order")
+    assert_equal TRANSFORMATION_ORDER, policy.fetch("operations").keys
+    assert_equal ["prove"], policy.fetch("postflight")
+    %w[semantic_meaning public_contracts reference_graph side_effect_order rendered_output].each do |invariant|
+      assert_equal "required", policy.fetch("preservation").fetch(invariant),
+                   "transformation flow must preserve #{invariant}"
+    end
   end
 end
