@@ -882,3 +882,14 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
   assert.match(laws, /face_ascii:[\s\S]*?source: priority_ranked_constitutional_laws/);
   assert.match(laws, /web_file_access: forbidden/);
 });
+
+
+test("shell chrome contains no ASCII wordmark and restores the native prompt", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+
+  assert.doesNotMatch(view, /id="wordmark"|Contract\.wordmark|Contract\.glyph/);
+  assert.match(view, /class="pp"[^>]*><%= t\("face\.prompt_user"\) %><\/span>/);
+  assert.match(view, /class="sep2"[^>]*>\$ <\/span>/);
+  assert.doesNotMatch(css, /\.wordmark\s*\{/);
+});

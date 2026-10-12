@@ -177,27 +177,12 @@ class TestCliAsciiFace < Minitest::Test
     assert_equal ascii.fetch("chars"), Face::Glyphs::DEFAULT_CHARS
     assert_equal ascii.fetch("aspect"), Face::Glyphs::ASPECT
   end
-  def test_wordmark_is_line_art_and_prompt_glyphs_are_shared
-    art = Master::Face::Contract.wordmark
-    assert_equal 3, art.size
-    assert_empty art.join.delete(" |/_-").delete("\\")
-    assert_equal "|-", Master::Face::Contract.glyph(:input)
-    assert_equal "\\_", Master::Face::Contract.glyph(:continuation)
-    assert_equal "/", Master::Face::Contract.glyph(:output)
-  end
-
-  def test_wordmark_shows_only_on_an_interactive_terminal
-    io = StringIO.new
-    refute Master::CLI::BootBanner.wordmark(io:)
-    assert_empty io.string
-    tty = StringIO.new.tap { |o| o.define_singleton_method(:tty?) { true } }
-    $stdin.stub(:tty?, true) do
-      Master::CLI::BootBanner.instance_variable_set(:@wordmark_shown, false)
-      assert Master::CLI::BootBanner.wordmark(io: tty)
-      refute Master::CLI::BootBanner.wordmark(io: tty), "once only"
-    end
-    assert_includes tty.string, Master::Face::Contract.wordmark.first
-  ensure
-    Master::CLI::BootBanner.instance_variable_set(:@wordmark_shown, false)
+  def test_ascii_art_contract_is_limited_to_the_face_renderer
+    ascii = Master::Face::Contract.ascii
+    refute ascii.key?("wordmark")
+    refute ascii.key?("prompt")
+    refute_respond_to Master::Face::Contract, :wordmark
+    refute_respond_to Master::Face::Contract, :glyph
+    refute_respond_to Master::CLI::BootBanner, :wordmark
   end
 end

@@ -375,6 +375,52 @@ module Master
     end
   end
 
+
+  # ASCII art is reserved for the face's own renderer. The boot, prompt,
+  # source prose and UI chrome remain text; a logo made from punctuation is
+  # still a logo even when every character is printable ASCII.
+  FACE_ASCII_EXCEPTIONS = %r{(?:^|/)(?:MASTER/lib/cli/face(?:/|\.rb\z)|RAILS/master_web/public/(?:face_ascii|face_2d_fallback)\.js\z|RAILS/master_web/test/face_ascii\.test\.mjs\z|MASTER/test/test_cli_ascii_face\.rb\z|MASTER/test/fixtures/face_ascii_frames\.json\z|MASTER/tools/face_ascii_fixtures\.rb\z|MASTER/law/interface\.rb\z)}
+
+  LawDSL.law :NO_ASCII_ART_OUTSIDE_FACE,
+    severity: :error, tags: %i[BE_CONCISE],
+    fires: "ascii_art: true\n",
+    does_not_fire: "prompt = \"~/repo main %\"\n",
+    description: "ASCII art outside the face renderer" do |src, path:|
+    next [] if path.to_s.include?("/review/scan/laws/")
+    next [] if path.to_s.match?(FACE_ASCII_EXCEPTIONS)
+
+    lines = src.lines
+    findings = []
+    art_row = lambda do |line|
+      visual = line.to_s.strip.sub(/\A(?:#|\/\/)\s*/, "").delete(" \t'\",")
+      symbols = visual.scan(/[|\/\\_+=*#~^<>-]/).length
+      visual.length >= 8 && symbols >= 4 && symbols.fdiv(visual.length) >= 0.33
+    end
+
+    lines.each_with_index do |line, index|
+      next if line.match?(/scan:\s*intentional\b/)
+      next unless line.match?(/^\s*(?:ascii_art|ascii_logo|banner_art)\s*:/)
+
+      findings << finding(line: index + 1, message: "remove ASCII art; only the face renderer may draw it")
+    end
+
+    lines.each_with_index do |line, index|
+      next unless line.match?(/^\s*wordmark\s*:/)
+      next unless lines[(index + 1), 5].to_a.any? { |candidate| art_row.call(candidate) }
+
+      findings << finding(line: index + 1, message: "remove ASCII art; only the face renderer may draw it")
+    end
+
+    art_lines = lines.each_with_index.filter_map { |line, index| index if art_row.call(line) }
+    art_lines.each_with_index do |index, position|
+      next if position.positive? && index == art_lines[position - 1] + 1
+      next unless art_lines[position + 1] == index + 1
+
+      findings << finding(line: index + 1, message: "remove ASCII art; only the face renderer may draw it")
+    end
+    findings.uniq { |item| item[:line] }
+  end
+
   module SilentRescue
     module_function
 

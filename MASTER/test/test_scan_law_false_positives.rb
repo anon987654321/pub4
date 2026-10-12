@@ -813,6 +813,13 @@ end
     assert_empty findings(:NO_ASCII_LINE_ART, "yaml = \"---\\nkey: 1\\n\"\n", path: "test/example.rb")
   end
 
+  def test_ascii_art_is_forbidden_except_in_the_face_renderer
+    art = "wordmark:\n  - \"|\\\\  /|  /\\\\\"\n  - \"| \\\\/ | /--\\\\\"\n"
+    refute_empty findings(:NO_ASCII_ART_OUTSIDE_FACE, art, path: "config/tokens.yml")
+    assert_empty findings(:NO_ASCII_ART_OUTSIDE_FACE, art, path: "MASTER/lib/cli/face/ascii.rb")
+    assert_empty findings(:NO_ASCII_ART_OUTSIDE_FACE, "prompt = \"~/repo main %\"\n", path: "lib/cli/prompt.rb")
+  end
+
   # A divider is NO_ASCII_LINE_ART's; TYPOGRAPHY_DISCIPLINE reads box-drawing
   # glyphs, so one line is one finding and a Markdown table stays a table.
   def test_typography_discipline_reads_box_drawing_and_leaves_dividers_to_line_art

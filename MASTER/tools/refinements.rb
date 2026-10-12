@@ -53,6 +53,7 @@ module Operator
       "TRAILING_COMMENT" => "move the comment above the line it explains",
       "NO_COLUMN_ALIGN" => "collapse the aligned columns to single spaces",
       "NO_ASCII_LINE_ART" => "delete the box drawing, keep the words",
+      "NO_ASCII_ART_OUTSIDE_FACE" => "delete ASCII art; only the face itself may draw it",
       "RAILS_TAG_HELPER" => "replace the raw HTML string with tag or content_tag",
       "PREFER_TAG_HELPERS" => "same edit as RAILS_TAG_HELPER, in the view layer",
       "NO_LOGIC_IN_VIEW" => "move the condition into a helper or the presenter",

@@ -1755,17 +1755,6 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   inset-block-end: calc(82px + var(--safe-bottom));
   pointer-events: none;
 }
-/* The terminal's line-art MASTER (tokens.yml, face_interface.ascii.wordmark), shown
-   above an empty log and gone once the first message is in it. */
-.wordmark {
-  inline-size: fit-content;
-  margin: 0 auto 6px;
-  color: var(--face-muted);
-  font: var(--text-meta)/1.2 var(--font-mono);
-  white-space: pre;
-  pointer-events: none;
-}
-#chat-shell:has(#chat-log > .message) .wordmark { display: none; }
 #chat-log {
   max-height: min(37dvh, 440px);
   padding: 10px 22px 18px;
