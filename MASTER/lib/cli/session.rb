@@ -57,14 +57,14 @@ module Master
         start_background_loop
         # One vertical rhythm: the dmesg, a blank line, the ready block, then
         # a blank line before each block that follows and before the prompt.
-        puts @refs.renderer.splash(@refs.agent.model)
+        terminal_puts(@refs.renderer.splash(@refs.agent.model))
         start_boot_scan unless skip_boot_scan?
         # One line for a resumed session. Replaying its last turns printed an old
         # reply above the prompt, which read as a canned answer to a message not
         # yet typed.
-        puts @refs.renderer.session_line(@refs.session.name, @refs.session.messages.size) if @refs.session.name
+        terminal_puts(@refs.renderer.session_line(@refs.session.name, @refs.session.messages.size)) if @refs.session.name
         print_repo_tree unless booted_before?
-        puts
+        terminal_puts
         run_input(initial_message) if initial_message
         @running = true
         repl_loop
@@ -101,6 +101,20 @@ module Master
       end
 
       private
+
+      # All operator-facing writes share Dmesg's mutex, coordinating normal
+      # output with IRC notices and progress events from worker threads.
+      def terminal_write(io: $stdout, &block)
+        Master::Trace::Dmesg.terminal_write(io:, &block)
+      end
+
+      def terminal_puts(text = "", io: $stdout)
+        terminal_write(io:) { |target| target.puts(text); target.flush if target.respond_to?(:flush) }
+      end
+
+      def terminal_print(text, io: $stdout)
+        terminal_write(io:) { |target| target.print(text); target.flush if target.respond_to?(:flush) }
+      end
 
       def init_session_state!
         @running = false
@@ -202,11 +216,10 @@ module Master
       def handle_stream_text(text, state)
         if state[:thinking_shown] && $stdout.isatty
           stop_thinking_indicator
-          print "\r\e[K"
+          terminal_print("\r\e[K")
           state[:thinking_shown] = false
         end
-        print wrap_stream(text, state)
-        $stdout.flush
+        terminal_print(wrap_stream(text, state))
         state[:streamed] = true
       end
 
