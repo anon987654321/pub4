@@ -6,7 +6,7 @@
 schema: 1
 version: "2.9.0"
 persona: anchor
-voice: en-US-JennyNeural
+voice: en-US-ChristopherNeural
 language:
   primary: english
   secondary: norwegian
