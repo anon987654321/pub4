@@ -46,7 +46,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[drum_patterns groove_profiles progressions], DATA.keys.sort
+    assert_equal %w[default_profile drum_patterns groove_profiles progressions], DATA.keys.sort
   end
 
   # ------------------------------------------------------------- progressions
@@ -75,38 +75,122 @@ class DillaTest < Minitest::Test
     assert_raises(ArgumentError) { Chords.parse("Cfoo") }
   end
 
+  # What a chord must keep: the third or sus tone, the sixth or seventh and every named
+  # extension, as pitch classes. The root or the slash bass is the lowest note.
+  def required_pcs(chord)
+    chord[:tones].select { |t| [2, 3, 4, 5, 9, 10, 11].include?(t) || t >= 13 }.map { |t| (chord[:pc] + t) % 12 }
+  end
+
   # Maps each voicing's pitch classes back to the chord spelling: nothing outside the chord and
-  # its slash bass sounds, the lowest note is the root or the bass, and the third and the seventh
-  # (the notes that make a chord what it is) are there when the chord has them.
+  # its slash bass sounds, the lowest note is the root or the bass, and the third, the sus tone,
+  # the seventh and the named extension are there. Run with and without the search.
   def test_every_voicing_maps_back_to_its_chord_spelling
+    previous_chords = [nil, [40, 60, 64, 67], [46, 64, 70, 73, 77], [38, 57, 74, 77]]
     CHORDS.each do |name|
       chord = Chords.parse(name)
       bass_pc = chord[:bass] || chord[:pc]
       chord_pcs = chord[:tones].map { |t| (chord[:pc] + t) % 12 }
-      [60, 64, 70].each do |centre|
-        notes, = Chords.voice(name, centre)
+      previous_chords.product([true, false]).each do |previous, search|
+        notes = Chords.voice(name, previous, search:)
         upper = notes.drop(1)
         assert_equal bass_pc, notes.first % 12, "#{name}: the lowest note is the root or the slash bass"
         assert_operator notes.first, :<, 48, "#{name}: the bass is in the low octave"
         assert(notes.all? { |n| (chord_pcs + [bass_pc]).include?(n % 12) }, "#{name}: #{notes} has a note the spelling does not")
-        chord[:tones].select { |t| [2, 3, 4, 5, 10, 11].include?(t) }.each do |semi|
-          assert_includes upper.map { |n| n % 12 }, (chord[:pc] + semi) % 12, "#{name}: no tone #{semi} above the root"
-        end
-        assert(upper.all? { |n| n.between?(52, 91) }, "#{name}: upper structure out of range #{notes}")
-        assert(upper.each_cons(2).none? { |a, b| b - a == 1 }, "#{name}: a minor second rubs")
+        assert_operator notes.size, :<=, [Chords::MAX_VOICES, 1 + required_pcs(chord).uniq.size].max, "#{name}: too many voices"
+        assert(upper.all? { |n| n.between?(52, 84) }, "#{name}: upper structure out of range #{notes}")
+        assert(upper.each_cons(2).none? { |a, b| b - a <= 1 }, "#{name}: a duplicate or a minor second rubs")
       end
     end
   end
 
+  # (a) Every chord of all 105 progressions keeps its essential tones, however it is led to.
+  def test_no_voicing_loses_a_chord_tone_in_any_progression
+    PROGRESSIONS.each_with_index do |names, index|
+      [true, false].each do |search|
+        Chords.midi_notes(names, search:).each_with_index do |notes, i|
+          chord = Chords.parse(names[i])
+          missing = required_pcs(chord) - notes.map { |n| n % 12 }
+          assert_empty missing, "progression #{index} #{names[i]} (search #{search}) lost pitch classes #{missing}"
+          assert notes.size <= Chords::MAX_VOICES, "progression #{index} #{names[i]} has #{notes.size} voices"
+        end
+      end
+    end
+  end
+
+  def test_a_slash_chord_keeps_its_root_when_the_bass_is_another_note
+    notes = Chords.voice("Dbmaj7/Eb")
+    assert_equal 3, notes.first % 12
+    assert_equal [0, 1, 5, 8], notes.drop(1).map { |n| n % 12 }.uniq.sort, "Db F Ab C all sound over the Eb bass"
+  end
+
   def test_slash_chords_put_the_bass_note_in_the_low_octave
-    notes, = Chords.voice("Db/E")
+    notes = Chords.voice("Db/E")
     assert_equal 4, notes.first % 12
     assert_equal [1, 5, 8], notes.drop(1).map { |n| n % 12 }.sort
+  end
+
+  def test_over_the_voice_cap_the_fifth_goes_and_the_third_seventh_and_extension_stay
+    chord = Chords.parse("C13")
+    assert_equal [4, 10, 2, 9], Chords.upper_pcs(chord).sort_by { |pc| [4, 10, 2, 9].index(pc) }
+    refute_includes Chords.upper_pcs(chord), 7
+    assert_includes Chords.upper_pcs(Chords.parse("C7b5")), 6, "an altered fifth stays when the chord fits"
   end
 
   def test_voice_leading_moves_each_chord_close_to_the_last
     centres = Chords.midi_notes(%w[Cm9 Fm9 Bbm9 Ebmaj9]).map { |n| n.drop(1).sum / (n.size - 1) }
     centres.each_cons(2) { |a, b| assert_operator (a - b).abs, :<=, 7 }
+  end
+
+  # The top line's leaps over a major third, as a share of all chord changes in all progressions.
+  def top_leap_share(search)
+    leaps = 0
+    changes = 0
+    PROGRESSIONS.each do |names|
+      Chords.midi_notes(names, search:).each_cons(2) do |a, b|
+        changes += 1
+        leaps += 1 if (a.max - b.max).abs > 4
+      end
+    end
+    leaps.to_f / changes
+  end
+
+  def mean_movement(search)
+    total = 0.0
+    count = 0
+    PROGRESSIONS.each do |names|
+      Chords.midi_notes(names, search:).each_cons(2) do |a, b|
+        b.drop(1).each do |n|
+          total += a.drop(1).map { |m| (n - m).abs }.min
+          count += 1
+        end
+      end
+    end
+    total / count
+  end
+
+  # (b) The search keeps the top line smooth, and switching it off gives a measurably larger share.
+  def test_the_search_keeps_top_line_leaps_under_sixteen_percent_and_the_switch_shows_it
+    with = top_leap_share(true)
+    without = top_leap_share(false)
+    assert_operator with, :<, 0.16
+    assert_operator without, :>, with + 0.05, "plain nearest-tone voicing leaps #{without}, searched #{with}"
+  end
+
+  # (c) Same names, same notes, every time; the command's switch changes the render.
+  def test_voicing_is_deterministic
+    names = PROGRESSIONS.fetch(7)
+    assert_equal Chords.midi_notes(names), Chords.midi_notes(names)
+    assert_equal Chords.freqs(names), Chords.freqs(names)
+    refute_equal Chords.midi_notes(PROGRESSIONS.flatten.first(12)), Chords.midi_notes(PROGRESSIONS.flatten.first(12), search: false)
+  end
+
+  def test_no_voice_search_switch_changes_the_midi_file
+    Dir.mktmpdir do |dir|
+      args = ["--progression", "5", "--seed", "1"]
+      run_dilla(*args, "--midi", File.join(dir, "a.mid"), "--out", File.join(dir, "a.wav"), chdir: dir)
+      run_dilla(*args, "--no-voice-search", "--midi", File.join(dir, "b.mid"), "--out", File.join(dir, "b.wav"), chdir: dir)
+      refute_equal File.binread(File.join(dir, "a.mid")), File.binread(File.join(dir, "b.mid"))
+    end
   end
 
   # ------------------------------------------------------------- profiles and patterns
@@ -201,6 +285,107 @@ class DillaTest < Minitest::Test
     late = hits.select { |r, t| r == "hat" && ((t / step).round % 4) == 2 }.map { |_, t| t - ((t / step).round * step) }
     refute_empty late
     late.each { |o| assert_in_delta 0.05 * 2 * 2 * step, o, 1e-4 }
+  end
+
+  # ------------------------------------------------------------- the pocket
+
+  POCKET = "straight_hats_snare_ahead"
+
+  def lean_steps(hits, role, bpm)
+    step = 60.0 / bpm / 4
+    offsets_from_grid(hits, role, step).map { |o| o / step }
+  end
+
+  def test_the_pocket_is_the_default_profile_and_the_random_one
+    assert_equal POCKET, DATA.fetch("default_profile")
+    assert_includes DATA.fetch("groove_profiles"), POCKET
+    Dir.mktmpdir do |dir|
+      %w[--progression\ 2 --random].each do |flag|
+        _o, err, status = run_dilla(*flag.split, "--drums", "boom_bap", "--seed", "4", "--out", File.join(dir, "x.wav"), chdir: dir)
+        assert status.success?, err
+        assert_match(/profile=#{POCKET}/, _o)
+      end
+    end
+  end
+
+  def test_the_hats_hold_the_grid_the_snare_leads_and_the_kick_lags_after_its_anchor
+    hits = sequencer(POCKET).drum_hits("syncopated_swing", 128.0, 60.0)
+    assert(lean_steps(hits, "hat", 128.0).all? { |l| l.abs < 1e-6 }, "the hats hold the grid")
+    backbeats = sequencer(POCKET).drum_hits("boom_bap", 128.0, 60.0)
+    snare = lean_steps(backbeats, "snare", 128.0)
+    refute_empty snare
+    assert_operator snare.sum / snare.size, :<, -0.2
+    kick = hits.select { |r, _| r == "kick" }
+    anchors = kick.select { |_, t| ((t / (60.0 / 128 / 4)).round % 16).zero? }
+    others = kick - anchors
+    assert(anchors.all? { |_, t| (t / (60.0 / 128 / 4) - (t / (60.0 / 128 / 4)).round).abs < 1e-6 }, "the downbeat kick holds")
+    assert(others.all? { |_, t| (t / (60.0 / 128 / 4) - (t / (60.0 / 128 / 4)).round) > 0.05 }, "the other kicks lag")
+  end
+
+  def test_ghost_snares_lag_further_than_the_kick
+    hits = sequencer(POCKET).drum_hits("syncopated_swing", 128.0, 60.0)
+    step = 60.0 / 128 / 4
+    ghosts = hits.select { |r, t| r == "snare" && ![4, 12].include?((t / step).round % 16) }
+    refute_empty ghosts
+    ghost_lean = ghosts.map { |_, t| t / step - (t / step).round }
+    kick_lean = hits.select { |r, t| r == "kick" && ((t / step).round % 16).positive? }.map { |_, t| t / step - (t / step).round }
+    assert_operator ghost_lean.sum / ghost_lean.size, :>, kick_lean.sum / kick_lean.size
+  end
+
+  def test_every_bar_leans_as_the_first_did_and_the_seed_alone_changes_the_drift
+    bar = 60.0 / 100 * 4
+    hits = sequencer(POCKET, seed: 9).drum_hits("broken_beat", 100.0, bar * 4)
+    first = hits.select { |_, t| t < bar }.sort
+    (1..3).each do |n|
+      again = hits.select { |_, t| t >= n * bar && t < (n + 1) * bar }.map { |r, t| [r, t - n * bar] }.sort
+      assert_equal first.size, again.size
+      first.zip(again).each { |(r, a), (r2, b)| assert_equal r, r2; assert_in_delta a, b, 1e-9 }
+    end
+    other = sequencer(POCKET, seed: 10).drum_hits("broken_beat", 100.0, bar * 4)
+    refute_equal hits, other
+  end
+
+  # The same share of a sixteenth is a different number of milliseconds at each tempo.
+  def test_the_same_share_gives_different_milliseconds_at_70_88_and_104_bpm
+    ms = [70.0, 88.0, 104.0].map do |bpm|
+      hits = sequencer(POCKET, seed: 1).drum_hits("boom_bap", bpm, 60.0 / bpm * 8)
+      step = 60.0 / bpm / 4
+      later = hits.select { |r, t| r == "kick" && t > step }.first.last
+      [(later - (later / step).round * step) * 1000, (later - (later / step).round * step) / step]
+    end
+    shares = ms.map(&:last)
+    assert_in_delta shares[0], shares[1], 1e-6, "the share is one number"
+    assert_in_delta shares[1], shares[2], 1e-6
+    assert_operator ms[0].first, :>, ms[1].first
+    assert_operator ms[1].first, :>, ms[2].first
+  end
+
+  def test_the_pocket_never_moves_a_hit_past_the_window_and_groove_scales_it
+    [50.0, 70.0, 88.0, 104.0, 140.0].each do |bpm|
+      hits = sequencer(POCKET).drum_hits("syncopated_swing", bpm, 60.0)
+      step = 60.0 / bpm / 4
+      assert(%w[kick snare hat].all? { |role| offsets_from_grid(hits, role, step).all? { |o| o.abs <= MAX_OFFSET + 1e-9 } }, bpm.to_s)
+    end
+    half = lean_steps(sequencer(POCKET, pd_amount: 0.5).drum_hits("boom_bap", 140.0, 30.0), "snare", 140.0)
+    full = lean_steps(sequencer(POCKET, pd_amount: 1.0).drum_hits("boom_bap", 140.0, 30.0), "snare", 140.0)
+    assert_operator full.sum / full.size, :<, half.sum / half.size
+    grid = sequencer(POCKET, pd_amount: 0.0).drum_hits("syncopated_swing", 88.0, 8.0)
+    assert(lean_steps(grid, "kick", 88.0).all? { |l| l.abs < 1e-6 })
+  end
+
+  def test_every_pocket_role_is_a_pattern_role_with_leans_in_steps
+    pocket = DATA.fetch("groove_profiles").fetch(POCKET).fetch("pocket")
+    roles = pocket.keys - %w[backbeat ghost]
+    assert_equal %w[hat kick snare], roles.sort
+    pocket.each_value { |s| next unless s.is_a?(Hash); assert_operator s.fetch("shift_steps", 0.0).abs + s.fetch("drift_steps", 0.0), :<, 1.0 }
+  end
+
+  def test_a_role_the_pocket_does_not_own_keeps_its_offsets
+    data = JSON.parse(JSON.generate(DATA))
+    data["groove_profiles"]["probe"] = { "pocket" => { "kick" => { "shift_steps" => 0.1 } }, "offsets" => { "hat" => 0.01 } }
+    hits = sequencer("probe", data:).drum_hits("boom_bap", 88.0, 8.0)
+    step = 60.0 / 88 / 4
+    assert(offsets_from_grid(hits, "hat", step).all? { |o| (o - 0.01).abs < 1e-9 })
   end
 
   # ------------------------------------------------------------- the sidechain

@@ -17,6 +17,7 @@
 require 'json'
 require 'optparse'
 require 'fileutils'
+require 'zlib'
 
 SAMPLE_RATE = 44_100
 MAX_OFFSET = 0.035 # seconds: no role is ever moved further than this from its place
@@ -45,9 +46,11 @@ module WAV
 end
 
 # ------------------------------------------------------------------- chords
-# A chord name becomes notes here and nowhere else: the root and slash bass in the low
-# octave, then the upper structure without the root, each note placed as close as it can
-# be to the last chord so the voices move by the smallest step.
+# A chord name becomes notes here and nowhere else: the root or slash bass in the low octave,
+# then the upper structure. Each upper note starts as near as it can be to the last chord, and
+# a search over octave shifts then picks the voicing that moves least, keeps the top line
+# smooth and leaves no neighbours closer than a whole tone. No chord tone is ever dropped
+# for spacing; only the fifth, then the root when the bass plays it, give way to the voice cap.
 module Chords
   NOTE_PC = { 'C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, 'B' => 11 }.freeze
   ACCIDENTAL = { 'b' => -1, '#' => 1, '' => 0 }.freeze
@@ -118,42 +121,90 @@ module Chords
     ([0, third, fifth, sixth, seventh] + extensions).compact.uniq.sort
   end
 
-  # MIDI notes, lowest first, and the centre the next chord is voiced around.
-  def self.voice(name, centre = 64)
-    chord = parse(name)
+  MAX_VOICES = 5   # the bass and four above it
+  LOW = 52         # the upper structure sits between these two notes
+  HIGH = 84
+  MIN_GAP = 2      # neighbours are at least a whole tone apart: no minor second rubs
+  CENTRE = 66      # the middle of that register, which the search is gently pulled toward
+  PULL = 0.1       # semitones of cost per semitone the voicing sits from the centre
+
+  # The tones above the bass, as pitch classes. The root stays out when the bass already
+  # plays it and the chord has more than a triad; when the chord is over the voice cap the
+  # perfect fifth goes first, then an altered fifth, then the root. The third or sus tone,
+  # the sixth or seventh and every named extension are never dropped.
+  def self.upper_pcs(chord)
     bass_pc = chord[:bass] || chord[:pc]
-    bass = 36 + ((bass_pc - 36) % 12)
-    semis = chord[:tones].size > 3 ? chord[:tones].drop(1) : chord[:tones]
-    semis -= [6, 7, 8] if semis.size > 4 # a pad can do without the fifth
-    upper = semis.map { |semi| (chord[:pc] + semi) % 12 }.uniq.map do |pc|
-      base = 12 * (centre / 12) + pc
-      [base - 12, base, base + 12].min_by { |n| (n - centre).abs }
-    end.sort
-    upper = upper.map { |n| n - 12 } while upper.max > 79
-    upper = upper.map { |n| n + 12 } while upper.min < 52
-    notes = [bass] + apart(upper)
-    [notes, upper.sum / upper.size]
+    tones = chord[:tones].dup
+    tones -= [0] if tones.size > 3 && bass_pc == chord[:pc]
+    [[7], [6, 8], [0]].each do |drop|
+      tones -= drop if tones.size > MAX_VOICES - 1
+    end
+    tones.map { |semi| (chord[:pc] + semi) % 12 }.uniq
   end
 
-  # A minor second between neighbours is a rub: the upper one goes up an octave.
+  # The note for a pitch class nearest any of the reference notes, inside the register.
+  def self.nearest(pc, reference)
+    options = (LOW..HIGH).select { |n| n % 12 == pc }
+    options.min_by { |n| [reference.map { |r| (n - r).abs }.min, n] }
+  end
+
+  def self.valid?(upper)
+    upper.first >= LOW && upper.last <= HIGH && upper.each_cons(2).all? { |a, b| b - a >= MIN_GAP }
+  end
+
+  # Mean distance each new note moves from its nearest old one, plus the top line's own
+  # movement at full weight, plus a small pull toward the middle of the register.
+  def self.cost(upper, before)
+    pull = PULL * (upper.sum.to_f / upper.size - CENTRE).abs
+    return pull if before.empty?
+
+    mean = upper.sum { |n| before.map { |b| (n - b).abs }.min }.to_f / upper.size
+    mean + (upper.last - before.last).abs + pull
+  end
+
+  # One voicing as MIDI notes, lowest first. Each upper note starts at the one nearest the
+  # last chord, then the search tries every octave shift (down, none, up) on every voice and
+  # keeps the cheapest set that has no duplicate pitch and no neighbours closer than MIN_GAP.
+  def self.voice(name, previous = nil, search: true)
+    chord = parse(name)
+    bass = 36 + (((chord[:bass] || chord[:pc]) - 36) % 12)
+    before = previous ? previous.drop(1) : []
+    reference = before.empty? ? [CENTRE] : before
+    start = upper_pcs(chord).map { |pc| nearest(pc, reference) }.sort
+    return [bass] + apart(start) unless search
+
+    best = nil
+    [-12, 0, 12].repeated_permutation(start.size) do |shifts|
+      upper = start.zip(shifts).map { |n, s| n + s }.sort
+      next unless valid?(upper)
+
+      score = cost(upper, before)
+      best = [score, upper] if best.nil? || score < best.first - 1e-9
+    end
+    [bass] + (best ? best.last : apart(start))
+  end
+
+  # A minor second between neighbours is a rub: the upper one goes up an octave, or when
+  # that leaves the register the lower one goes down.
   def self.apart(notes)
-    out = notes.dup
-    out.each_index { |i| out[i] += 12 if i.positive? && out[i] - out[i - 1] == 1 }
-    out.sort
+    out = notes.sort
+    12.times do
+      i = (1...out.size).find { |k| out[k] - out[k - 1] < MIN_GAP } or break
+      out[i] + 12 <= HIGH ? out[i] += 12 : out[i - 1] -= 12
+      out.sort!
+    end
+    out
   end
 
   def self.hz(midi) = 440.0 * (2.0**((midi - 69) / 12.0))
 
-  # One voicing per chord of a progression, as MIDI notes.
-  def self.midi_notes(names)
-    centre = 64
-    names.map do |name|
-      notes, centre = voice(name, centre)
-      notes
-    end
+  # One voicing per chord of a progression, as MIDI notes; each leads from the one before.
+  def self.midi_notes(names, search: true)
+    previous = nil
+    names.map { |name| previous = voice(name, previous, search:) }
   end
 
-  def self.freqs(names) = midi_notes(names).map { |notes| notes.map { |n| hz(n) } }
+  def self.freqs(names, search: true) = midi_notes(names, search:).map { |notes| notes.map { |n| hz(n) } }
 end
 
 # --------------------------------------------------------------- synthesis
@@ -278,6 +329,10 @@ end
 #   swing         where the second chord of a pair lands (0.5 straight, 0.54 a little late)
 #   drum_swing    the same for the off-beat sixteenths, per role: kick, snare, hat
 #   offsets       seconds a role sits from the grid: kick, snare, hat, and kick_first
+#   pocket        leans in fractions of a sixteenth step, so they follow the tempo: per role
+#                 { shift_steps, anchor (steps that lean 0), drift_steps (seeded, per voice and
+#                 step in the bar, so every bar leans as the first did) }; a snare off the
+#                 backbeat steps takes the ghost entry. A role with no entry keeps its offsets.
 #   drunk_amount  0..1, a seeded random nudge on every hit, never past MAX_OFFSET
 #   sidechain     { amount, release }: the chords dip on every kick (default: none)
 #   texture       { detune, lowpass, reverb }
@@ -294,11 +349,11 @@ class Sequencer
   def detune = (@profile['texture'] || {}).fetch('detune', 0.0)
 
   # Chords, each the same length, the odd ones swung late.
-  def render_chords(names, bpm, beats)
+  def render_chords(names, bpm, beats, search: true)
     beat = 60.0 / bpm
     swing = @profile.fetch('swing', 0.5)
     buf = []
-    Chords.freqs(names).each_with_index do |freqs, idx|
+    Chords.freqs(names, search:).each_with_index do |freqs, idx|
       delay = idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount
       pad = (delay * SAMPLE_RATE).to_i
       buf.concat(Array.new(pad, 0.0)) if pad > 0
@@ -314,6 +369,7 @@ class Sequencer
     rng = Random.new(@seed)
     step = 60.0 / bpm / 4.0
     offsets = @profile['offsets'] || {}
+    pocket = @profile['pocket']
     swings = @profile['drum_swing'] || {}
     drunk = pattern.fetch('drunk', @profile.fetch('drunk_amount', 0.0)).to_f
     hits = []
@@ -324,8 +380,9 @@ class Sequencer
           next unless row.is_a?(Array) && row[i].to_i.positive?
 
           nudge = offsets.fetch(role, 0.0)
+          nudge = pocket_lean(pocket, role, i) * step if pocket&.key?(role)
           if role == 'kick' && first_kick
-            nudge = offsets.fetch('kick_first', nudge)
+            nudge = offsets.fetch('kick_first', nudge) unless pocket&.key?(role)
             first_kick = false
           end
           nudge += (rng.rand * 2 - 1) * MAX_OFFSET * drunk
@@ -340,6 +397,18 @@ class Sequencer
       end
     end
     hits.sort_by(&:last)
+  end
+
+  # How far a hit leans from its step, in sixteenths (before --groove). The draw belongs to
+  # the render seed, the voice and the step in the bar, never the bar, so bars repeat.
+  def pocket_lean(pocket, role, step_in_bar)
+    spec = pocket.fetch(role)
+    ghost = pocket['ghost']
+    spec = ghost if ghost && role == 'snare' && !pocket.fetch('backbeat', []).include?(step_in_bar)
+    return 0.0 if spec.fetch('anchor', []).include?(step_in_bar)
+
+    draw = Random.new(Zlib.crc32("#{@seed}:#{role}:#{step_in_bar}")).rand * 2 - 1
+    spec.fetch('shift_steps', 0.0) + spec.fetch('drift_steps', 0.0) * draw
   end
 
   def overlay_drums(chord_buf, hits)
@@ -395,11 +464,11 @@ module MIDI
     bytes.pack('C*')
   end
 
-  def self.write(path, names, bpm, beats, hits)
+  def self.write(path, names, bpm, beats, hits, search: true)
     ticks = ->(seconds) { (seconds * bpm / 60.0 * PPQN).round }
     chord_len = (beats * PPQN).round
     events = []
-    Chords.midi_notes(names).each_with_index do |notes, idx|
+    Chords.midi_notes(names, search:).each_with_index do |notes, idx|
       notes.each do |n|
         events << [idx * chord_len, 0x90, n, 80]
         events << [(idx + 1) * chord_len, 0x80, n, 0]
@@ -429,7 +498,7 @@ def run(argv)
     o.banner = 'Usage: ruby dilla.rb [options]'
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
-    o.on('--random', 'Random progression, drum pattern and groove profile') { options[:random] = true }
+    o.on('--random', 'Random progression and drum pattern (the default groove profile)') { options[:random] = true }
     o.on('--drums NAME', 'Drum pattern name') { |v| options[:drums] = v }
     o.on('--profile NAME', 'Groove profile name') { |v| options[:profile] = v }
     o.on('--groove N', Float, 'pd_amount, 0 to 1.5: how far the profile pulls from the grid') { |v| options[:groove] = v }
@@ -438,6 +507,7 @@ def run(argv)
     o.on('--seed N', Integer, 'Seed: the same seed plays the same render') { |v| options[:seed] = v }
     o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
     o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
+    o.on('--no-voice-search', 'Voice each chord by nearest tones only, without the octave search') { options[:plain] = true }
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
 
@@ -458,12 +528,12 @@ def run(argv)
   index = options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size))
   names = progressions.fetch(index) { abort "No progression: #{index}" }
   drums = options[:drums] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
-  profile = options[:profile] || (options[:random] ? data['groove_profiles'].keys.sample(random: pick) : 'soft_swing')
+  profile = options[:profile] || data.fetch('default_profile')
   bpm = options[:bpm] || 88.0
   beats = options[:beats] || 4.0
 
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed)
-  buf = seq.render_chords(names, bpm, beats)
+  buf = seq.render_chords(names, bpm, beats, search: !options[:plain])
   seconds = buf.size / SAMPLE_RATE.to_f
   hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
   buf = seq.duck(buf, hits)
@@ -475,7 +545,7 @@ def run(argv)
   WAV.write(out, buf)
   if options[:midi]
     FileUtils.mkdir_p(File.dirname(options[:midi]))
-    MIDI.write(options[:midi], names, bpm, beats, hits)
+    MIDI.write(options[:midi], names, bpm, beats, hits, search: !options[:plain])
   end
   puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
   puts "  drums=#{drums || 'none'} profile=#{profile} groove=#{seq.pd_amount} bpm=#{bpm} seed=#{seed}"
