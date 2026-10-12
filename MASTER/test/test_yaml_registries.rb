@@ -142,6 +142,16 @@ class TestLawsYamlRegistry < Minitest::Test
     assert_equal "christopher", tts.fetch("single_voice")
   end
 
+  def test_english_tts_never_selects_the_retired_second_voice
+    tts = Master.load_yaml(File.join(DATA, "voice.yml")).fetch("tts")
+
+    refute tts.fetch("language_voice_families").key?("en")
+    refute_includes tts.fetch("rotation"), "jenny"
+    refute Master::Voice::Speech::VOICES.key?(:jenny)
+    assert_equal :christopher, Master::Voice::Speech.resolve_voice("en-US-JennyNeural")
+    assert_equal :christopher, Master::Voice::Policy.voice_for_language(:en, gender: "female")
+  end
+
   def test_voice_yml_loads_strunk
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     strunk = voice.dig("voice", "strunk")
