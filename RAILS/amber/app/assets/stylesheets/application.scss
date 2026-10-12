@@ -483,7 +483,9 @@ main#main-content header > nav form {
   list-style: none;
 }
 .wardrobe-more-tools > summary::-webkit-details-marker { display: none; }
-.wardrobe-more-tools[open] > summary { margin-block-end: var(// ============================================================ components: guest compose
+.wardrobe-more-tools[open] > summary { margin-block-end: var(--space-3); }
+
+// ============================================================ components: guest compose
 @include meta.load-css("amber_guest_compose");
 
 .item-detail {
