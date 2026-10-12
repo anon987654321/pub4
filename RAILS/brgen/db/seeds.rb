@@ -581,7 +581,7 @@ puts "Users: #{total_users}, Posts: #{Post.count} (Live: #{Post.live.count}), Ma
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
 place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count : 0
 puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"
-puts 'Ready for demo / development. Use SEED_SCALE=20 for more "millions" impression via volume + counters.'
+puts "Ready for development/demo fixtures. Set SEED_SCALE=20 for a larger local dataset."
 
 if (bergen = City.find_by(domain: 'brgen.no')) && !ENV['SKIP_BERGEN_DEMO']
   puts "\nSeeding Bergen demo content (Norwegian posts, users, media)..."
