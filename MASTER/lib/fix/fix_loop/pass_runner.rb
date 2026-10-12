@@ -127,6 +127,12 @@ module Master
           self
         end
 
+        # A visual pass owns screenshots per iteration, while any app servers
+        # it had to boot are leased until the complete /fix run ends.
+        def cleanup_visual_runtime
+          @visual_pass&.stop_runtime!
+        end
+
         def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
 
         def violations_for(path)
