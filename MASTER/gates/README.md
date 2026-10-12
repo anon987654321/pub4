@@ -8,8 +8,8 @@ The gates judge the three Rails apps, brgen, amber and bsdports, together with
 the MASTER web face. One runner, `runner.rb`, executes them. The registry,
 `gates.yml`, declares them, and the runner adds no knowledge of its own. A
 registry row names a class to run, or a script, and the line to print when the
-gate passes. Sixty-one gates are declared. Some are marked as covered by a larger gate and run inside it, so `--all` skips
-them to avoid doing the same work twice.
+gate passes. The registry also records which gates are covered by a composite,
+so `--all` skips those leaves rather than running the same work twice.
 
 ## What they check
 
