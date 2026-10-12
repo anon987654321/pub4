@@ -113,7 +113,7 @@ class CritiqueImplementationTest < Minitest::Test
     rooms = read("brgen/app/views/conversations/_rooms_rail.html.erb")
     window = read("brgen/app/views/conversations/show.html.erb")
     channel = read("brgen/app/views/channels/show.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_messenger.scss")
+    css = brgen_css_source
     artifact = read("__shared/app/views/shared/_messenger_artifacts.html.erb")
 
     assert_includes rooms, 'class="messenger-rail"'
@@ -376,7 +376,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_brgen_post_detail_renders_all_attached_media
     controller = read("brgen/app/controllers/posts_controller.rb")
     show = read("brgen/app/views/posts/show.html.erb")
-    css = read("brgen/app/assets/stylesheets/application.scss")
+    css = brgen_css_source
 
     assert_includes controller, "with_attached_image.with_attached_video.with_attached_audio"
     assert_includes show, 'video_tag @post.video, controls: true'
