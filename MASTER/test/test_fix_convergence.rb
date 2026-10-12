@@ -50,6 +50,8 @@ class TestFixConvergence < Minitest::Test
     ENV["MASTER_FIX_DEEP_TRACE"] = "0"
     @root = Dir.mktmpdir("fix_convergence")
     File.write(File.join(@root, "dummy.yml"), "---\n")
+    # The collector fails closed without a Git inventory, so the fixture is a checkout.
+    system("git", "-C", @root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL) || raise("git init failed")
     @bus = FakeBus.new
     # The real baseline runs every gate stage; this file asserts what /fix does
     # with a baseline, not how one is measured (test_gate_chain.rb owns that).
