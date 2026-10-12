@@ -46,6 +46,11 @@ nb:
     site_id_label: TradeDoubler nettsted-ID
   app:
     name: Brgen
+  demo_mode:
+    notice: "DEMOSIDE — kontoer, innlegg, kommentarer, profiler, annonser og aktivitet er simulerte eksempler, ikke ekte aktivitet fra lokalmiljøet."
+  demo_media:
+    photo_by: "Foto av"
+    on_source: "på"
   feed:
     compose_prompt: Del noe spennende nå
     compose_blank: Skriv noe først.
