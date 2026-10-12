@@ -18,12 +18,13 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    before adding machinery, run the universal transformation plan from
-    data/laws.yml. inventory and classify first; then defragment, decouple,
-    flatten, merge, split, relocate, rename, reorder, remove, reflow and
-    simplify. recommend instead of guessing when proof is insufficient.
-    adding is the last resort and its reason belongs in git history. Every
-    kept transformation refreshes the corpus before repair resumes.
+    before adding machinery, run the universal transformation plan in
+    data/laws.yml#transformation_policy. inventory and classify first, then
+    follow its declared order and operation descriptions without maintaining
+    a second sequence here. recommend rather than mutate when proof is
+    insufficient. adding is the last resort and its reason belongs in git
+    history. Every kept transformation refreshes the corpus before repair
+    resumes.
   TEXT
   fix "before writing a new file, class, or dependency, try nine moves first and in this order."
   bad  "adds a second gate script"
