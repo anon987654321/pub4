@@ -349,10 +349,25 @@ module Master
         outcome = Result.wrap(result)
         Io::LaneQuota.note(model, outcome.message) unless outcome.ok?
         lane = LaneSilence.lane_of(model)
+        if !outcome.ok? && local_runtime_failure?(model, outcome.message)
+          LaneSilence.silence(lane, reason: outcome.message)
+          Master::Trace::Dmesg.once("llm0-#{lane}",
+            "#{lane} local runtime failed; skipped for #{LaneSilence::SILENCE_COOLOFF_S / 60} minutes " \
+            "(last: #{outcome.message.lines.first.to_s.strip[0, 160]})")
+          @bus&.publish("llm:lanes_silent", lane:, after: LaneSilence::SILENCE_COOLOFF_S, reason: :local_runtime_failure)
+          return
+        end
         return unless LaneSilence.record(outcome.ok?, lane, reason: outcome.ok? ? nil : outcome.message)
 
         Master::Trace::Dmesg.once("llm0-#{lane}", LaneSilence.message(lane))
         @bus&.publish("llm:lanes_silent", lane:, after: LaneSilence::SILENT_AFTER)
+      end
+
+      # One local runner crash affects every model using its daemon until it recovers.
+      def local_runtime_failure?(model, message)
+        return false unless model.to_s.start_with?("ollama:", "ollama/", "local:")
+
+        message.to_s.match?(/llama-server process has terminated|failed to create (?:shared )?library|model runner.*(?:terminated|crashed|exited)|runner process.*(?:terminated|crashed|exited)/i)
       end
 
       def key_refusal(err)
