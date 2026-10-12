@@ -87,6 +87,8 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     assert_includes handler, "setLawField(!lawFieldVisible)"
     assert_includes handler, "Constitutional law glyphs visible"
     assert_includes handler, "Constitutional law glyphs hidden"
+    assert_includes handler, "field.laws"
+    assert_includes handler, "in priority order"
     assert_includes handler, 'getElementById("ui-status")',
                      "the shortcut must announce its change through an existing live region"
     refute_includes handler, "setGlyphMode",
