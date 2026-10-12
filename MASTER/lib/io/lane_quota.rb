@@ -50,8 +50,10 @@ module Master
         id = model.to_s
         return "openrouter-free" if id.end_with?(":free")
         return "ollama" if id.start_with?("ollama:", "ollama/")
+        return id.split(":", 2).first.to_s if id.include?(":")
+        return id.split("/", 2).first.to_s if id.include?("/")
 
-        id.include?("/") ? id.split("/", 2).first.to_s : id.split(/[:-]/, 2).first.to_s
+        id.split("-", 2).first.to_s
       end
 
       # Seconds a reply says to wait; nil when it names none.
