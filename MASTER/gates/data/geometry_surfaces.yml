@@ -7,7 +7,9 @@
 # Only brgen needs a real Host: its vertical routing is driven by subdomain.
 #
 # viewports: named [width, height]. `snapshot: true` opts a surface into the
-# committed layout-snapshot baseline (gates/data/layout_snapshots/).
+# committed structural baseline (gates/data/layout_snapshots/); `pixel_snapshot:
+# true` separately opts a deliberately small set of key surfaces into approved
+# PNG comparisons (gates/data/visual_baselines/).
 
 viewports:
   mobile: [390, 844]
@@ -26,16 +28,20 @@ surfaces:
     path: /
     viewports: [mobile, desktop]
     snapshot: false
+    pixel_snapshot: true
   - app: amber
     label: home
     path: /
     viewports: [mobile, compact, desktop]
     snapshot: true
+    pixel_snapshot: true
+    pixel_snapshot: true
   - app: amber
     label: wardrobe
     path: /items
     viewports: [mobile, desktop]
     snapshot: true
+    pixel_snapshot: true
   - app: amber
     label: upload
     path: /items/new
@@ -69,6 +75,7 @@ surfaces:
     path: /ports
     viewports: [mobile, desktop]
     snapshot: true
+    pixel_snapshot: true
   - app: bsdports
     label: search_results
     path: /ports?q=git
