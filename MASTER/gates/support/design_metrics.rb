@@ -80,7 +80,7 @@ module Deploy
           theme_scopes = []
 
           source.each_line do |raw_line|
-            line = raw_line.sub(/\A\s*\/\/.*\z/, "")
+            line = raw_line.sub(/\A\s*\/\/.*(?=\n|\z)/, "")
             theme_match = line.match(/:root\s*\[\s*data-theme\s*=\s*["']?(light|dark)["']?\s*\]/i)
             delta = line.count("{") - line.count("}")
 
