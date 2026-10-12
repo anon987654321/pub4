@@ -114,7 +114,7 @@ module Master
         total_failures = measured.sum { |row| row[:failures] }
         total_rate = total_successes.fdiv(total_calls)
         lines = [
-          "model health: #{measured.size} models, #{total_calls} calls, " \\
+          "model health: #{measured.size} models, #{total_calls} calls, " \
           "success=#{(total_rate * 100).round(1)}%, failures=#{total_failures}",
         ]
         measured.sort_by { |row| [-row[:failures], -row[:calls], row[:id]] }.first(30).each do |row|
