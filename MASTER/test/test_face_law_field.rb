@@ -21,7 +21,8 @@ class TestFaceLawField < Minitest::Test
     assert_equal 1, payload.fetch(:schema)
     assert_equal 8, payload.fetch(:laws).size
     assert_match(/\A[0-9a-f]{64}\z/, payload.fetch(:digest))
-    assert_equal "v", payload.fetch(:toggle_key)
+    assert_equal "l", payload.fetch(:toggle_key)
+    assert_equal "v", payload.fetch(:overlay_toggle_key)
     assert_equal true, payload.fetch(:enabled)
     assert_equal "ctrl-v", Master::Face::LawField.config.fetch("terminal_toggle_key")
     assert_equal payload.fetch(:laws), Master::Face::LawField.laws
