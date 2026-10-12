@@ -320,8 +320,8 @@ class TestKeylessRouting < Minitest::Test
         headers = []
         headers << socket.gets.to_s.strip until headers.last == ""
         seen << [request, headers]
-        socket.print("HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: #{body.bytesize}\\r\\n" \\
-                     "Connection: close\\r\\n\\r\\n#{body}")
+        socket.print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: #{body.bytesize}\r\n" \\
+                     "Connection: close\r\n\r\n#{body}")
         socket.close
       end
     end
@@ -353,7 +353,7 @@ class TestKeylessRouting < Minitest::Test
     assert_equal ["gateway:pool-model"], keyed.hosted_models
     assert_equal "gateway-test-key", keyed.hosted_endpoint_for("gateway:pool-model")[:key]
     assert_equal "Authorization: Bearer gateway-test-key", seen.last.last.find { |line| line.downcase.start_with?("authorization:") }
-    assert_equal "GET /v1/models", seen.last.first
+    assert_match(/\AGET \/v1\/models HTTP\/1\.1\z/, seen.last.first)
   ensure
     ENV.delete("MASTER_NO_POOL_PROBES")
     thread&.kill
