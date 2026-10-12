@@ -46,6 +46,8 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
 
     playlist = Playlist::Playlist.strict_loading(false).find_by!(city: @city, name: Brgen::BergenDemoSeeder::RADIO_BERGEN_PLAYLIST)
     assert playlist.public_access
+    assert_equal 0, playlist.plays_count,
+                 "a fresh demo playlist must not start with an invented play count"
     assert_operator playlist.tracks.count, :>=, 20
 
     dilla = playlist.tracks.find_by(title: "Microphone Master", artist: "J Dilla")
@@ -55,6 +57,16 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
 
     assert playlist.tracks.all? { |track| track.source_type == "youtube" },
            "retired local audio must not re-enter the seeded playlist"
+  end
+
+  test "random postpro preset is deterministic and valid" do
+    first = Shared::DemoMedia.preset_for("random", seed: "bergen-bryggen-rain")
+    second = Shared::DemoMedia.preset_for("random", seed: "bergen-bryggen-rain")
+
+    assert_equal first, second
+    assert_includes Shared::PostproProcessor::VALID_PRESETS, first
+    assert_equal "landscape",
+                 Shared::DemoMedia.preset_for("landscape", seed: "other")
   end
 
   test "seeds credible dating profiles and mutual matches" do
