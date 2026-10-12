@@ -142,6 +142,26 @@ test("a window too small for a face names the state, as the terminal does", () =
   assert.equal(narrow.lines.map((l) => l.trim()).filter(Boolean)[0], "idle");
 });
 
+test("constitutional law glyphs form a deterministic perimeter without overwriting occupied cells", () => {
+  const blank = Array.from({ length: 16 }, () => " ".repeat(40));
+  const before = blank.slice();
+  const laws = ["@", "#", "%", "&", "*", "+", "=", ":"].map((glyph) => ({ glyph }));
+  const first = ascii.paintLawField(blank, null, laws);
+  const second = ascii.paintLawField(blank, null, laws);
+
+  assert.deepEqual(first, second, "the law field must not shimmer between equivalent frames");
+  for (const law of laws) {
+    assert.ok(first.lines.some((line) => line.includes(law.glyph)), `missing constitutional glyph ${law.glyph}`);
+  }
+  assert.deepEqual(blank, before, "painting the law field does not mutate the face frame");
+  assert.match(first.lines.join("\n"), PRINTABLE);
+
+  const occupied = blank.slice();
+  occupied[0] = `${occupied[0].slice(0, 20)}X${occupied[0].slice(21)}`;
+  const protectedCell = ascii.paintLawField(occupied, null, [{ glyph: "@" }]);
+  assert.equal(protectedCell.lines[0][20], "X", "a facial contour already occupying a cell keeps ownership");
+});
+
 // A canvas that records what it is asked to draw.
 function stubCanvas(width, height) {
   const calls = [];
