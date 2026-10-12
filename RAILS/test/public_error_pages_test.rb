@@ -25,6 +25,16 @@ class PublicErrorPagesTest < Minitest::Test
     end
   end
 
+  def test_public_error_pages_do_not_depend_on_javascript_urls
+    paths = Dir.glob(File.join(ROOT, "{__shared,brgen,amber,bsdports,master_web}", "public", "{400,404,406-unsupported-browser,422,500,503}.html"))
+
+    refute_empty paths, "no public error pages found — the inventory stopped matching"
+    paths.each do |path|
+      assert_no_match(/href\\s*=\\s*["']\\s*javascript:/i, File.read(path),
+                      "#{path.delete_prefix("#{ROOT}/")}: use a real destination, not a javascript: URL")
+    end
+  end
+
   def test_master_web_error_pages_share_the_application_typographic_stack
     MASTER_WEB_PAGES.each do |status|
       path = File.join(ROOT, "master_web", "public", "#{status}.html")
