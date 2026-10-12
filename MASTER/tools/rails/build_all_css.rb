@@ -95,9 +95,6 @@ def ensure_fonts!
 end
 
 def sync_static_tokens!
-  tokens_yml = DesignTokens.load
-  social = tokens_yml.fetch("social")
-  family = tokens_yml.fetch("shared_chrome").fetch("font")
   tokens = File.join(shared_public_dir, "styles", "tokens.css")
   FileUtils.mkdir_p(File.dirname(tokens))
   unless File.writable?(File.dirname(tokens))
@@ -105,64 +102,7 @@ def sync_static_tokens!
 
     abort "css: cannot write tokens to #{File.dirname(tokens)}"
   end
-  File.write(tokens, <<~CSS)
-    /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
-    :root {
-      color-scheme: dark;
-      --bg: #{social.fetch("bg")};
-      --surface: #{social.fetch("surface")};
-      --surface-elevated: #{social.fetch("surface_elevated")};
-      --search-bg: #{social.fetch("search_bg")};
-      --text: #{social.fetch("text")};
-      --text-secondary: #{social.fetch("text_secondary")};
-      --border: #{social.fetch("border")};
-      --hover: color-mix(in srgb, var(--text) 10%, transparent);
-      --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
-      --accent: #{social.fetch("accent")};
-      --danger: #{social.fetch("danger")};
-      --font: #{family};
-      --weight-normal: 400;
-      --weight-medium: 500;
-      --weight-bold: 700;
-      --weight-heavy: 800;
-      --radius-xs: 4px;
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-card: 16px;
-      --radius-lg: 16px;
-      --radius-pill: 9999px;
-      --transition-fast: 180ms;
-      --transition-normal: 300ms;
-      --z-chrome: 10;
-      --z-ui: 90;
-      --z-overlay: 100;
-      --z-modal: 1000;
-      --z-toast: 1100;
-      --z-skip: 2000;
-      --color-background: var(--bg);
-      --color-midtone: var(--text-secondary);
-      --color-highlight: var(--surface);
-      --color-accent: var(--accent);
-      --color-border: var(--border);
-      --text-primary: var(--text);
-      --text-secondary: var(--text-secondary);
-    }
-    @media (prefers-color-scheme: light) {
-      :root {
-        color-scheme: light;
-        --bg: #ffffff;
-        --text: #0f1419;
-        --text-secondary: #536471;
-        --border: #eff3f4;
-        --hover: color-mix(in srgb, var(--text) 10%, transparent);
-        --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
-        --color-background: var(--bg);
-        --color-highlight: var(--bg);
-        --text-primary: var(--text);
-        --text-secondary: var(--text-secondary);
-      }
-    }
-  CSS
+  File.write(tokens, DesignTokens.static_tokens_css)
 end
 
 # Every stylesheet a build reads: the app's one application.scss and the shared
