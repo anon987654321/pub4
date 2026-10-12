@@ -47,7 +47,7 @@ class PublicErrorPagesTest < Minitest::Test
     assert_includes source, "min-height: 100dvh;"
     assert_includes source, "min-height: 44px;"
     assert_includes source, "border-radius: 0;"
-    refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\\s*:\\s*(?!none\\b)/, source)
+    refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
   end
 
   def test_shared_503_fallback_uses_brand_typography_and_safe_area
