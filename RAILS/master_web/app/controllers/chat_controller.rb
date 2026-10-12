@@ -3,7 +3,7 @@
 require "digest"
 require "json"
 require_relative "../../../../MASTER/lib/io/exec"
-require_relative "../../../../MASTER/lib/face/ascii_scene"
+require_relative "../../../../MASTER/lib/face/law_field"
 
 class ChatController < ApplicationController
   include ActionController::Live
@@ -27,7 +27,7 @@ class ChatController < ApplicationController
     @tier = request.env["master.tier"].to_s
     @profile = face_profile
     @container_ready = !c.nil?
-    @face_ascii_scene = Master::Face::AsciiScene.browser_payload
+    @face_law_field = Master::Face::LawField.browser_payload
     render layout: false
   end
 
