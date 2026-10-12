@@ -10,8 +10,72 @@ module Master
       def run_help(command = nil)
         arg = command.to_s.strip
         text = arg.empty? ? Master::CLI::CommandRegistry.help_summary : Master::CLI::CommandRegistry.help_text(arg)
-        puts @refs.renderer.render(text, mode: :dim)
-        puts @refs.renderer.render("<< for multiline, !command runs zsh. anything else is a prompt.", mode: :dim) if arg.empty?
+        text = [text, "<< for multiline, !command runs zsh. anything else is a prompt."].join("\n") if arg.empty?
+        print_terminal_output(text, mode: :dim)
+      end
+
+      # Long command results are easier to inspect in a pager, but piping MASTER
+      # or running it on a phone must stay plain and non-interactive. Only the
+      # two known pager binaries are accepted; arbitrary PAGER shell commands
+      # would turn a display convenience into command execution.
+      def print_terminal_output(text, mode: :dim)
+        rendered = @refs.renderer.render(text.to_s, mode:)
+        return if rendered.empty?
+        return if pageable_output?(rendered) && page_terminal_output(rendered)
+
+        puts rendered
+      end
+
+      def pageable_output?(text)
+        return false unless $stdout.tty?
+        return false if %w[0 off no false].include?(ENV["MASTER_PAGER"].to_s.downcase)
+
+        height = TTY::Screen.height.to_i
+        text.to_s.lines.count >= [height - 2, 12].max
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.pager.height", event_bus: @refs.bus)
+        false
+      end
+
+      def page_terminal_output(text)
+        command = terminal_pager_command
+        return false unless command
+
+        IO.popen(command, "w") do |pager|
+          begin
+            pager.write(text)
+            pager.flush
+          rescue Errno::EPIPE
+            # The operator quit before reading all of the buffer. Do not dump it
+            # again to the terminal after returning from the pager.
+          end
+        end
+        true
+      rescue Errno::ENOENT, Errno::EACCES => e
+        Master::Ground::Swallow.log(e, context: "cli.pager.start", event_bus: @refs.bus)
+        false
+      end
+
+      def terminal_pager_command
+        selected = ENV.fetch("MASTER_PAGER", "auto").strip.downcase
+        return if %w[0 off no false].include?(selected)
+
+        candidates = case selected
+                     when "auto" then %w[less more]
+                     when "less", "more" then [selected]
+                     else
+                       Master::Trace::Dmesg.status("pager0", "unsupported MASTER_PAGER value; use auto, less, more or 0")
+                       return
+                     end
+
+        candidates.each do |name|
+          executable = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).map { |dir| File.join(dir, name) }
+            .find { |candidate| File.file?(candidate) && File.executable?(candidate) }
+          next unless executable
+
+          return name == "less" ? [executable, "-FRX"] : [executable]
+        end
+        nil
       end
 
       # Reline asks the terminal where the cursor is, and a reply that arrives
