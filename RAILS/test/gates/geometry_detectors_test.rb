@@ -117,6 +117,7 @@ class GeometryDetectorsTest < Minitest::Test
     payload = Deploy::GeometryProbe.measure_current(cdp, surface, font_timeout: 0)
 
     assert_match(/font readiness timeout/, payload.fetch("error"))
+    assert Deploy::GeometryProbe.timeout?(payload)
     refute payload.key?("elements"), "unsettled fonts must not produce layout measurements"
   end
 
