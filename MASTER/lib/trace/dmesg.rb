@@ -232,11 +232,11 @@ module Master
 
         # Normal mode keeps conversational turns quiet. Explicit command reports
         # force their already-rendered lines through the same presenter.
-        if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \\w+0|llm\\d+:/)
+        if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
           return
         end
 
-        text = line.to_s.gsub(/\\s+/, " ").strip
+        text = line.to_s.gsub(/\s+/, " ").strip
         terminal_write(io:) do |target|
           target.puts(text)
           target.flush if target.respond_to?(:flush)
