@@ -187,9 +187,12 @@ module Master
               @cache[cache_key] = parse_findings(response, scoped, mode: stream)
             end
           rescue StandardError => e
-            offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
+            offline = e.message.to_s.match?(OFFLINE_ERRORS_PATTERN)
             limited = note_model_failure(e)
-            return [] if offline || limited
+            if offline || limited
+              detail = offline ? "provider capability/configuration unavailable" : "provider spend/quota limit reached"
+              raise "semantic assessment INCONCLUSIVE: #{detail} for #{path} (#{e.class}: #{e.message})"
+            end
 
             Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             raise
@@ -219,8 +222,19 @@ module Master
           # produces (Law#prove!); test_semantic_rule_scope asks the same of
           # this population, because a declared language nothing emits aims a rule
           # at no file at all — which is how `rails`, `prose` and `erb` sat here.
-          def laws_for(language)
-            @laws.select { |_, a| a[:languages].empty? || a[:languages].include?(language) }
+          def laws_for(language, path: nil)
+            @laws.select do |_, rule|
+              language_matches = rule[:languages].empty? || rule[:languages].include?(language)
+              next false unless language_matches
+              next false if path && rule[:path] && !path_matches?(path, rule[:path])
+              next false if path && rule[:path_exclude] && path_matches?(path, rule[:path_exclude])
+
+              true
+            end
+          end
+
+          def path_matches?(path, pattern)
+            pattern.is_a?(Regexp) ? path.match?(pattern) : path.include?(pattern.to_s)
           end
 
           def reload_semantic_laws_if_stale
@@ -251,22 +265,25 @@ module Master
             from_law
           end
 
-          # A law's bad/good are its worked examples. Carrying them into the
-          # prompt is the whole reason the fixtures are required for `ask` rules:
-          # the model gets the same two cases the author had to write down, so a
-          # prompt that drifts from its examples is visible rather than implied.
+          # The same executable law population seeds both semantic streams.
+          # Laws with an authored ask keep it; deterministic-only laws use their
+          # repair contract and worked examples to stay visible to semantic review.
           def from_law
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
-            ::Law.definitions.values.select { |law| law.semantic? && law.enforceable? }.each_with_object({}) do |law, h|
+            ::Law.definitions.values.select(&:enforceable?).each_with_object({}) do |law, h|
+              question = law.ask.to_s.strip
+              question = "Does this artifact breach #{law.id} or miss an improvement implied by its repair contract?" if question.empty?
               h[law.id.to_s] = {
-                prompt: "#{law.ask}\nViolates: #{law.bad.strip}\nSatisfies: #{law.good.strip}",
+                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\\n"),
                 severity: law.severity,
                 mode: law.mode,
                 reversibility: nil,
                 blast_radius: nil,
                 languages: law.languages.map(&:to_s),
+                path: law.path,
+                path_exclude: law.path_exclude,
               }
             end
           rescue StandardError => e
