@@ -32,6 +32,7 @@
           <a href="<%= url_for(@post.image) %>" data-lg-size="1600-1200">
             <%= responsive_image_tag @post.image, alt: @post.title, class: "post-image" %>
           </a>
+          <%= render "shared/photo_credit", blob: @post.image.blob %>
         </div>
       <% elsif @post.video.attached? %>
         <%= video_tag @post.video, controls: true, playsinline: true, preload: "metadata",
