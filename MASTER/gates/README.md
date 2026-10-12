@@ -8,9 +8,8 @@ The gates judge the three Rails apps, brgen, amber and bsdports, together with
 the MASTER web face. One runner, `runner.rb`, executes them. The registry,
 `gates.yml`, declares them, and the runner adds no knowledge of its own. A
 registry row names a class to run, or a script, and the line to print when the
-gate passes. Sixty-one gates are declared. Thirty-seven of them are marked as
-covered by a larger gate and run inside it, so `--all` skips them to avoid
-doing the same work twice.
+gate passes. Sixty-one gates are declared. Some are marked as covered by a larger gate and run inside it, so `--all` skips
+them to avoid doing the same work twice.
 
 ## What they check
 
@@ -36,6 +35,37 @@ keyboard order, phone-sized tap targets, WebGL surfaces and web vitals, and they
 compare layout against snapshots committed under `data/layout_snapshots`. The
 rendered suite bundles most of them. When no browser exists, a gate that needs
 one reports itself inconclusive and does not pass.
+
+`browser_diagnostics` adds runtime evidence to that same CDP path. For each reachable
+route in `data/geometry_surfaces.yml`, at its declared mobile/desktop viewport, it
+records console messages, uncaught JavaScript exceptions, failed HTTP responses,
+failed resource requests, and a PNG screenshot. It writes a run-scoped
+`manifest.json` and screenshots under the system temporary directory
+(`pub4-browser-diagnostics/<run-id>/`); these are diagnostic captures, not accepted
+visual baselines. The committed structural baseline remains `layout_snapshot`.
+
+Uncaught JavaScript exceptions, document HTTP errors, first-party server errors,
+and missing screenshot evidence fail the gate. Ordinary console errors/warnings
+and other resource failures remain soft until `GATE_STRICT_SOFT=1`, preserving the
+existing severity calibration. Each route/viewport prints PASS, FAIL, SKIPPED or
+INCONCLUSIVE and the manifest links its screenshot and detailed browser evidence.
+Closed app ports are explicitly skipped; absent Chromium or no reachable apps is
+inconclusive rather than green.
+
+Run a focused inventory slice while diagnosing one surface, or run the entire
+declared set:
+
+```zsh
+ruby MASTER/gates/runner.rb browser_diagnostics
+GATE_SURFACES=brgen/marketplace,amber ruby MASTER/gates/runner.rb browser_diagnostics
+GATE_BROWSER_DIAGNOSTICS_SETTLE_MS=800 ruby MASTER/gates/runner.rb browser_diagnostics
+```
+
+`GATE_BROWSER_DIAGNOSTICS_OUTPUT` overrides the artifact root, and
+`GATE_BROWSER_DIAGNOSTICS_SETTLE_MS` bounds the post-load settling window
+(0–5000 ms). The gate is also a leaf of `rendered_suite`, so the standard
+composite and `--all` paths include it once, with no separate browser framework
+or new runtime dependency.
 
 A last group checks the checkers. The mutation gate plants known defects and
 requires the other gates to catch them. The calibration gate keeps the design
