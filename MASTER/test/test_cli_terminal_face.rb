@@ -88,7 +88,8 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal true, face.instance_variable_get(:@law_field_visible)
     assert_empty face.instance_variable_get(:@draft)
     assert_includes face.instance_variable_get(:@words).join(" "), "visible"
-    assert_match(/@ capability # robustness/, face.instance_variable_get(:@words).join(" "))
+    glyph = Master::Face::LawField.laws.first.fetch("glyph")
+    assert_includes face.instance_variable_get(:@words).join(" "), glyph
   end
 
   def test_terminal_law_toggle_is_passed_to_the_shared_face_renderer
