@@ -59,7 +59,7 @@ module Master
           end
 
           def loopback_gateway_host?(host)
-            %w[localhost 127.0.0.1 ::1].include?(host.to_s.downcase)
+            %w[localhost 127.0.0.1 ::1 [::1]].include?(host.to_s.downcase)
           end
 
           def hosted_index
