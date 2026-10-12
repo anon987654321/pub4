@@ -92,10 +92,33 @@ retired solidus_marketplace gem is not to be installed.
 
 ## Seeding
 
-Seeds draw curated Bergen content from Brgen::BergenDemoSeeder and bulk volume from
-Brgen::PlausibleContent, which writes Norwegian copy with real Bergen streets and districts
-rather than raw Faker. SEED_SCALE defaults to 10 outside production and to 1 in production, and
-SKIP_BERGEN_DEMO=1 leaves the curated set out. Users in each city get names in that city's
+Seeds draw curated fictional Bergen content from Brgen::BergenDemoSeeder and localized bulk
+content from Brgen::PlausibleContent. Rich synthetic data belongs in development/test or an
+explicitly disclosed demonstration deployment; it must not imply a genuine public audience.
+
+In production-like environments, `db:seed` skips synthetic content by default. An explicit demo
+seed requires both `BRGEN_DEMO_MODE=1` and `BRGEN_DEMO_NOTICE=1`; the application shows a
+persistent, translated site-wide disclosure while both flags remain set. Keep these settings off
+the public production service unless the whole deployment is intentionally a disclosed demo.
+`brgen:demo_seed` uses the same guard.
+
+`bin/rails brgen:demo_audit` reports likely historical seed identities and linked content without
+deleting anything. Review the candidates manually before changing existing records: username
+and email patterns are clues, not proof. Seed runs no longer invent listing view counts or
+playlist play counts.
+
+The image catalog attaches tracked local media and explicitly credited remote sources. Unprocessed
+images selected by the curated Bergen seeder pass through `Shared::PostproProcessor` at seed
+time. Rows marked `graded: true` are not processed twice. The `random` preset selector is
+deterministic per seed key, so repeated seed runs produce repeatable grading.
+
+Do not scrape or bulk-download Unsplash to populate Brgen. Unsplash's license excludes compiling
+images to replicate a similar or competing service, and its API requires hotlinking plus attribution.
+Brgen is a social platform, so use generated assets, appropriately licensed local photography, or
+sources whose licenses permit the particular use. Keep source and photographer credits in the
+catalog whenever supplied.
+
+Users in each city get names in that city's
 language through Brgen::CityContent.with_faker_locale. Setting Faker::Config.locale alone gives
 English, because Faker's data is tagged nb-NO while the app declares only bare locales. The
 photographs the seeds attach are described in config/demo_media/README.md.
