@@ -15,16 +15,16 @@ class TestFaceLawField < Minitest::Test
     assert laws.all? { |row| row.fetch("priority").is_a?(Numeric) && !row.fetch("statement").empty? }
   end
 
-  def test_browser_scene_uses_bounded_head_points_and_laws
-    scene = Master::Face::AsciiScene.browser_payload
+  def test_browser_payload_exposes_laws_without_duplicating_face_geometry
+    payload = Master::Face::LawField.browser_payload
 
-    assert_equal 1, scene.fetch(:schema)
-    assert_equal true, scene.fetch(:available)
-    assert_operator scene.fetch(:points).size, :>, 300
-    assert_operator scene.fetch(:points).size, :<=, Master::Face::AsciiScene::MAX_POINTS
-    assert_equal 8, scene.fetch(:laws).size
-    assert_match(/\A[0-9a-f]{64}\z/, scene.fetch(:point_digest))
-    assert_equal scene.fetch(:laws), Master::Face::LawField.laws
+    assert_equal 1, payload.fetch(:schema)
+    assert_equal 8, payload.fetch(:laws).size
+    assert_match(/\A[0-9a-f]{64}\z/, payload.fetch(:digest))
+    assert_equal "v", payload.fetch(:toggle_key)
+    assert_equal true, payload.fetch(:enabled)
+    assert_equal payload.fetch(:laws), Master::Face::LawField.laws
+    refute payload.key?(:points), "the browser renderer owns the shared contract-driven geometry"
   end
 
   def test_terminal_law_ring_is_plain_ascii
