@@ -5,11 +5,13 @@ require "fix/task_steward"
 require "tmpdir"
 
 class TaskStewardTest < Minitest::Test
-  def write_mission(root, next_wake_at: Time.now.utc.iso8601, auto_continue: true, origin: "fold")
+  def write_mission(root, next_wake_at: Time.now.utc.iso8601, auto_continue: true, origin: "fold",
+                   goal: "finish the task", intent: nil)
     mission = Master::Fix::Mission.new(root:)
-    mission.start!(goal: "finish the task", scope: root, origin:, auto_continue:)
+    mission.start!(goal:, scope: root, origin:, auto_continue:)
     mission.send(:with_lock) do
       record = mission.instance_variable_get(:@record)
+      record["operator"]["intent"] = intent if intent
       record["state"] = "waiting"
       record["next_wake_at"] = next_wake_at
       record["lease_owner"] = nil
@@ -87,4 +89,25 @@ class TaskStewardTest < Minitest::Test
       assert_equal "other-host:42", saved["lease_owner"]
     end
   end
+  def test_continuation_utterance_is_blocked_instead_of_replayed_forever
+    Dir.mktmpdir do |root|
+      mission = write_mission(
+        root, goal: "Let's do it!", intent: "continue_prior_plan"
+      )
+      calls = []
+      steward = Master::Fix::TaskSteward.new(
+        root:, bus: nil, runner: ->(**) { calls << true }
+      )
+
+      result = steward.tick!
+
+      assert result.err?
+      assert_match(/continuation, not a durable task/, result.message)
+      assert_empty calls
+      saved = Master::Fix::Mission.current(root:)
+      assert_equal "blocked", saved["state"]
+      assert_match(/resolved objective/, saved["wake_reason"])
+    end
+  end
+
 end
