@@ -197,7 +197,11 @@ task "test:all_trees" do
     File.directory?(path) && !name.start_with?(".") && !ignored.include?(name)
   end.sort
   failures = []
+  inconclusive = []
   inventory = {}
+  node_bin = %w[node nodejs].find do |candidate|
+    system(candidate, "--version", out: File::NULL, err: File::NULL)
+  end
 
   trees.each do |tree|
     path = File.join(root, tree)
@@ -205,11 +209,14 @@ task "test:all_trees" do
     test_files = Dir.glob(File.join(path, "**", "*_test.rb")).reject { |file| ignored_path.call(file) }
     test_files.concat(Dir.glob(File.join(path, "**", "test_*.rb")).reject { |file| ignored_path.call(file) })
     test_files.uniq!
+    javascript_files = Dir.glob(File.join(path, "**", "*.{js,mjs}")).reject { |file| ignored_path.call(file) }
+    javascript_tests = Dir.glob(File.join(path, "**", "*.test.mjs")).reject { |file| ignored_path.call(file) }
     inventory[tree] = {
       ruby: ruby_files.size,
       tests: test_files.size,
       shell: Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).count { |file| !ignored_path.call(file) },
-      javascript: Dir.glob(File.join(path, "**", "*.{js,mjs}")).count { |file| !ignored_path.call(file) }
+      javascript: javascript_files.size,
+      javascript_tests: javascript_tests.size
     }
 
     ruby_files.each do |file|
@@ -236,6 +243,25 @@ task "test:all_trees" do
       load_paths = [lib, test_dir].select { |dir| File.directory?(dir) }
       args = load_paths.map { |dir| "-I#{dir}" } + [test]
       failures << "#{test}: test process" unless system(RbConfig.ruby, *args)
+    end
+
+    if javascript_tests.any?
+      if node_bin
+        groups = javascript_tests.group_by do |file|
+          if file.start_with?(File.join(root, "RAILS", "master_web") + File::SEPARATOR)
+            File.join(root, "MASTER")
+          elsif file.start_with?(File.join(root, "RAILS") + File::SEPARATOR)
+            File.join(root, "RAILS")
+          else
+            path
+          end
+        end
+        groups.each do |working_dir, tests|
+          failures << "#{tree}: Node runtime tests" unless system(node_bin, "--test", *tests, chdir: working_dir)
+        end
+      else
+        inconclusive << "#{tree}: #{javascript_tests.size} JavaScript runtime test(s) not measured (Node.js unavailable)"
+      end
     end
 
     Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).reject { |file| ignored_path.call(file) }.each do |file|
@@ -273,7 +299,14 @@ task "test:all_trees" do
   end
 
   abort "test:all_trees: #{failures.size} failure(s)\n#{failures.join("\n")}" unless failures.empty?
-  inventory.each { |tree, counts| puts "test:all_trees: #{tree}: ruby=#{counts[:ruby]} tests=#{counts[:tests]} shell=#{counts[:shell]} javascript=#{counts[:javascript]}" }
+  inventory.each do |tree, counts|
+    puts "test:all_trees: #{tree}: ruby=#{counts[:ruby]} tests=#{counts[:tests]} shell=#{counts[:shell]} " \
+         "javascript=#{counts[:javascript]} javascript_tests=#{counts[:javascript_tests]}"
+  end
+  unless inconclusive.empty?
+    inconclusive.each { |finding| warn "test:all_trees: inconclusive: #{finding}" }
+    exit 3
+  end
   puts "test:all_trees: #{trees.join(", ")} clean"
 end
 
