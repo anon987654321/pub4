@@ -302,6 +302,15 @@ constitutional_scan:
   pass: "Constitutional scan preflight completed."
   covered_by: release
 
+# One Chromium pass records console/runtime failures, resource errors, and a screenshot
+# for each declared route/viewport. It is also included in rendered_suite below.
+browser_diagnostics:
+  needs: [browser]
+  require: lib/rendered/browser_diagnostics
+  class: Deploy::BrowserDiagnosticsGate
+  pass: "ok: Chromium diagnostics recorded for the RAILS route inventory"
+  covered_by: rendered_suite
+
 # Owns every browser-backed gate below it. Each leaf launches Chrome, so running
 # one twice in a single invocation is pure wall-clock waste.
 rendered_suite:
