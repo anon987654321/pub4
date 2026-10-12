@@ -49,6 +49,24 @@ class TestRuns < Minitest::Test
   # outside every question this gate asks. A runner that names one file outright
   # runs it, which a glob-only extractor could not see — STUDIO's Rakefile lists
   # test_studio_gate.rb by name on purpose.
+  def test_every_governed_tree_contributes_tests_to_the_census
+    minimums = {
+      "MASTER/" => 250,
+      "RAILS/" => 100,
+      "OPENBSD/" => 20,
+      "STUDIO/" => 30,
+    }
+
+    minimums.each do |prefix, floor|
+      found = Operator::Runs.test_files.count { |path| path.start_with?(prefix) }
+      assert_operator found, :>=, floor,
+                      "#{prefix} contributed only #{found} test files; test discovery likely stopped matching"
+    end
+
+    assert_includes Operator::Runs.globs.keys, "STUDIO/Rakefile",
+                    "the Dilla and tool suites must be part of the runner census"
+  end
+
   def test_studio_is_in_the_census_and_its_named_runner_counts
     studio = Operator::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
 
