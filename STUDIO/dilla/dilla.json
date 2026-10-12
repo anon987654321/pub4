@@ -107,14 +107,64 @@
     ["Bbm","Em","Am","F"]
   ],
 
-  "arp": {"default_pattern":"updown","patterns":["up","down","updown","converge","random_seeded"],"rate":2,"gate":0.8,"octaves":1,"accent":[1.0,0.6,0.8,0.6],"pad":0.3,"modifiers":[],
-         "euclidean":{"steps":8,"pulses":5},"probability":{"probability":0.9},"note_repeat":{"count":3},"ratchet":{"max":3,"chance":0.5},"humanize":{"ms":4.0,"gain":0.06},"grace":{"interval":-1,"gain":0.3}},
+  "arp": {"default_pattern":"updown","patterns":["up","down","updown","converge","random_seeded","broken_pairs","thumb_pattern","pedal_arp","spread_roll"],"rate":2,"gate":0.8,"octaves":1,"accent":[1.0,0.6,0.8,0.6],"pad":0.3,"play_styles":["slow_up","dotted_updown","half_note_converge","broken_pairs","thumb_pattern","spread_roll","pedal_arp","eighth_updown"],"modifiers":[],
+         "euclidean":{"steps":8,"pulses":5},"probability":{"probability":0.9},"note_repeat":{"count":3},"ratchet":{"max":3,"chance":0.5},"humanize":{"ms":4.0,"gain":0.06},"grace":{"interval":-1,"gain":0.3},
+    "styles": {
+      "slow_up": {"pattern":"up","rate":4,"gate":0.9,"octaves":2},
+      "dotted_updown": {"pattern":"updown","rate":3,"gate":0.85,"octaves":2},
+      "half_note_converge": {"pattern":"converge","rate":8,"gate":0.95,"octaves":2},
+      "broken_pairs": {"pattern":"broken_pairs","rate":4,"gate":0.7,"octaves":1},
+      "thumb_pattern": {"pattern":"thumb_pattern","rate":3,"gate":0.6,"octaves":2},
+      "spread_roll": {"pattern":"spread_roll","rate":1,"gate":12,"octaves":1},
+      "pedal_arp": {"pattern":"pedal_arp","rate":6,"gate":0.8,"octaves":2},
+      "eighth_updown": {"pattern":"updown","rate":2,"gate":0.7,"octaves":1},
+      "arp_fast": {"pattern":"updown","rate":1,"gate":0.5,"octaves":2,"accent":[1.0,0.45,0.75,0.4]}
+    }},
 
   "strum": {"ms":18},
 
   "echo": {"modes":[[1],[2],[1,2],[2,3],[1,2,3]],"heads":[1,2],"time_beats":0.75,"intensity":0.5,"echo_volume":0.45,"lowpass":3200,"saturation":0.35,"reverb":0.12},
 
-  "play_profiles": ["arp_echo", "arp_echo_soft", "straight_hats_snare_ahead"],
+  "play_profiles": ["arp_echo", "arp_echo_soft", "rhodes_sonitex", "chord_repeat", "sampler_glue"],
+
+  "comp": {"default_style":"eighth_stabs","gate":0.5,"accent":[1.0,0.7,0.85,0.7],"modifiers":[],
+    "probability":{"probability":0.9},"humanize":{"ms":4.0,"gain":0.06},"ratchet":{"max":3,"chance":0.5},"note_repeat":{"count":2},"euclidean":{"steps":8,"pulses":5},
+    "styles": {
+      "quarter_stabs": {"pattern":"x...x...x...x..."},
+      "eighth_stabs": {"pattern":"x.x.x.x.x.x.x.x."},
+      "offbeat_skank": {"pattern":"..x...x...x...x."},
+      "dotted_eighth_push": {"pattern":"x..x..x.x..x..x."},
+      "syncopated_sixteenth": {"pattern":"x..x..x.x...x.x."},
+      "long_short": {"pattern":"x.....x.x.....x."},
+      "half_note_pulse": {"pattern":"x.......x......."}
+    }},
+
+  "voices": {
+    "sine": {"family":"sine"},
+    "moog_pluck": {"family":"moog","gain":14,"waves":["saw","saw","pulse"],"detune":[0,-7,5],"octaves":[0,0,-1],"cutoff":260,"env_amount":3400,"resonance":0.55,"drive":1.2,"amp":[0.003,0.14,0.0,0.06],"filter_env":[0.001,0.11,0.0,0.05]},
+    "moog_lead": {"family":"moog","gain":14,"waves":["saw","saw"],"detune":[0,7],"octaves":[0,0],"cutoff":900,"env_amount":2200,"resonance":0.35,"drive":1.1,"amp":[0.01,0.3,0.8,0.2],"filter_env":[0.01,0.4,0.5,0.2]},
+    "moog_pad": {"family":"moog","gain":14,"waves":["saw","saw","triangle"],"detune":[-6,6,0],"octaves":[0,0,-1],"cutoff":700,"env_amount":1800,"resonance":0.22,"drive":1.0,"amp":[0.28,0.6,0.78,0.9],"filter_env":[0.55,1.2,0.55,0.8]},
+    "moog_bass": {"family":"moog","gain":14,"waves":["saw","saw","saw"],"detune":[0,-7,5],"octaves":[0,0,-1],"cutoff":220,"env_amount":2400,"resonance":0.62,"drive":1.25,"amp":[0.004,0.3,0.55,0.2],"filter_env":[0.002,0.18,0.12,0.15]},
+    "rhodes_mark1": {"family":"rhodes","body_index":1.3,"bell_index":2.8,"bell_ratio":14.0,"bell_decay":0.25,"body_decay":0.9,"decay":1.6,"release":0.35,"click":0.05,"velocity_bright":0.5},
+    "rhodes_stage73": {"family":"rhodes","body_index":1.9,"bell_index":3.4,"bell_ratio":14.0,"bell_decay":0.3,"body_decay":0.7,"decay":1.2,"release":0.3,"click":0.08,"velocity_bright":0.7},
+    "rhodes_tine_wurli": {"family":"rhodes","body_index":2.4,"bell_index":1.6,"bell_ratio":7.0,"bell_decay":0.18,"body_decay":0.5,"decay":0.9,"release":0.25,"click":0.1,"velocity_bright":0.8},
+    "dx_ep_glass": {"family":"rhodes","body_index":1.1,"bell_index":4.2,"bell_ratio":14.0,"bell_decay":0.6,"body_decay":1.4,"decay":2.2,"release":0.45,"click":0.02,"velocity_bright":0.4},
+    "dfam": {"family":"dfam","gain":8,"level":0.34,"decay":0.12,"base_hz":40.0,"pitch_env":{"depth":2.2,"seconds":0.045},"vco2_ratio":1.5,"fm":0.45,"mix":{"triangle":0.55,"square":0.3,"noise":0.18},"cutoff_floor":120.0,"cutoff":2200.0,"resonance":0.55,"vcf_decay":0.1,"steps":[{"semi":0,"vel":100,"decay":0.12},{"semi":0,"vel":70,"decay":0.09},{"semi":7,"vel":85,"decay":0.12},{"semi":0,"vel":60,"decay":0.09},{"semi":12,"vel":90,"decay":0.15},{"semi":0,"vel":0,"decay":0.09},{"semi":7,"vel":75,"decay":0.12},{"semi":5,"vel":65,"decay":0.1}]}
+  },
+
+  "sonitex": {"default":"classic","instances":1,"presets": {
+      "classic": {"dist_pre_lp":4800,"dist_drive":1.55,"dist_mix":0.68,"dist_dc":0.025,"head_bump_hz":64,"head_bump_db":3.0,"hf_rolloff":13800,"lf_rolloff":34,"hiss_amp":0.0028,"pop_rate":0.00035,"pop_amp":0.14,"crush_bits":12,"crush_sr":1.69,"crush_mix":0.32,"crush_post_lp":3600,"out_comp_threshold":-19,"out_comp_ratio":2.6,"out_comp_makeup":1.8,"limit":0.92,"level_out":0.9},
+      "subtle": {"dist_pre_lp":4800,"dist_drive":1.25,"dist_mix":0.52,"dist_dc":0.025,"head_bump_hz":64,"head_bump_db":3.0,"hf_rolloff":13800,"lf_rolloff":34,"hiss_amp":0.003,"pop_rate":0.00025,"pop_amp":0.12,"crush_bits":14,"crush_sr":1.69,"crush_mix":0.18,"crush_post_lp":3600,"out_comp_threshold":-19,"out_comp_ratio":2.6,"out_comp_makeup":1.8,"limit":0.92,"level_out":0.9},
+      "scuzz": {"dist_pre_lp":4800,"dist_drive":2.1,"dist_mix":0.68,"dist_dc":0.025,"head_bump_hz":64,"head_bump_db":3.0,"hf_rolloff":11200,"lf_rolloff":34,"hiss_amp":0.009,"pop_rate":0.0012,"pop_amp":0.32,"crush_bits":10,"crush_sr":1.69,"crush_mix":0.48,"crush_post_lp":3600,"out_comp_threshold":-19,"out_comp_ratio":2.6,"out_comp_makeup":1.8,"limit":0.92,"level_out":0.9},
+      "sp1200": {"dist_pre_lp":4800,"dist_drive":1.45,"dist_mix":0.68,"dist_dc":0.025,"head_bump_hz":58,"head_bump_db":3.8,"hf_rolloff":12600,"lf_rolloff":34,"hiss_amp":0.0028,"pop_rate":0.00035,"pop_amp":0.14,"crush_bits":12,"crush_sr":1.69,"crush_mix":0.52,"crush_post_lp":3000,"out_comp_threshold":-19,"out_comp_ratio":2.6,"out_comp_makeup":1.8,"limit":0.92,"level_out":0.9},
+      "cassette": {"dist_pre_lp":4800,"dist_drive":1.55,"dist_mix":0.68,"dist_dc":0.025,"head_bump_hz":88,"head_bump_db":4.2,"hf_rolloff":10800,"lf_rolloff":34,"hiss_amp":0.008,"pop_rate":0.00035,"pop_amp":0.14,"crush_bits":12,"crush_sr":1.69,"crush_mix":0.22,"crush_post_lp":3600,"out_comp_threshold":-19,"out_comp_ratio":2.6,"out_comp_makeup":1.8,"limit":0.92,"level_out":0.9},
+      "dusty_warm": {"dist_pre_lp":4800,"dist_drive":1.48,"dist_mix":0.62,"dist_dc":0.025,"head_bump_hz":58,"head_bump_db":5.2,"hf_rolloff":7000,"lf_rolloff":38,"hiss_amp":0.0022,"pop_rate":0.00035,"pop_amp":0.14,"crush_bits":12,"crush_sr":1.85,"crush_mix":0.42,"crush_post_lp":6000,"out_comp_threshold":-17,"out_comp_ratio":3.2,"out_comp_makeup":2.4,"limit":0.86,"level_out":0.88},
+      "heavy": {"dist_pre_lp":3600,"dist_drive":3.6,"dist_mix":0.88,"dist_dc":0.09,"head_bump_hz":58,"head_bump_db":6.0,"hf_rolloff":9600,"lf_rolloff":45,"hiss_amp":0.006,"pop_rate":0.0009,"pop_amp":0.24,"crush_bits":8,"crush_sr":2.05,"crush_mix":0.58,"crush_post_lp":2400,"out_comp_threshold":-15,"out_comp_ratio":4.0,"out_comp_makeup":3.0,"limit":0.84,"level_out":0.86}
+  }},
+
+  "nasty_vcs": {"amount":0.5},
+
+  "mix": {"kick":6.0,"snare":10.0,"clap":10.0,"hat":0.0,"perc":0.0,"chords":-3.0,"echo":0.0},
 
   "default_profile": "straight_hats_snare_ahead",
 
@@ -127,8 +177,12 @@
     "late_snare": {"swing":0.54,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.56},"offsets":{"kick":0.0,"snare":0.02,"hat":0.008,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}},
     "loose_pocket": {"swing":0.545,"drum_swing":{"kick":0.5,"snare":0.5,"hat":0.56},"offsets":{"kick":0.01,"snare":-0.008,"hat":0.012,"kick_first":0.0},"drunk_amount":0.5,"pd_amount":1.0,"texture":{"detune":0.007,"reverb":0.35,"lowpass":7000}},
     "pump": {"swing":0.54,"sidechain":{"amount":0.55,"release":0.18},"offsets":{"kick":0.0,"snare":-0.006,"hat":0.01,"kick_first":0.0},"pd_amount":1.0,"texture":{"detune":0.006,"reverb":0.3,"lowpass":7000}},
-    "arp_echo": {"bpm":78,"swing":0.542,"arp":{"pattern":"updown","rate":1,"gate":0.5,"octaves":2,"accent":[1.0,0.45,0.75,0.4],"modifiers":["ratchet","probability","humanize"],"probability":{"probability":0.9}},"echo":{"heads":[1,2,3],"intensity":0.85,"echo_volume":0.9,"time_beats":0.75,"tail":12},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
-    "arp_echo_soft": {"swing":0.542,"arp":{"pattern":"updown","octaves":2},"echo":{"heads":[1,2]},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
+    "arp_echo": {"bpm":78,"swing":0.542,"voice":"moog_pluck","arp":{"style":"dotted_updown","modifiers":["probability","humanize"],"probability":{"probability":0.92}},"echo":{"heads":[1,2,3],"intensity":0.85,"echo_volume":0.9,"time_beats":0.75,"tail":12},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
+    "arp_fast": {"bpm":88,"swing":0.542,"arp":{"pattern":"updown","rate":1,"gate":0.5,"octaves":2,"accent":[1.0,0.45,0.75,0.4],"modifiers":["ratchet","probability","humanize"],"probability":{"probability":0.9}},"echo":{"heads":[1,2,3],"intensity":0.85,"echo_volume":0.9,"time_beats":0.75,"tail":12},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
+    "rhodes_sonitex": {"bpm":84,"swing":0.542,"voice":"rhodes_mark1","arp":{"style":"dotted_updown"},"sonitex":{"preset":"heavy","instances":3},"vcs":0.4,"echo":{"heads":[1,2,3],"intensity":0.7,"echo_volume":0.6,"time_beats":0.75,"tail":8},"texture":{"detune":0.0,"reverb":0.1,"lowpass":12000}},
+    "sampler_glue": {"swing":0.542,"sonitex":{"preset":"dusty_warm","instances":1},"vcs":0.5,"texture":{"detune":0.005,"reverb":0.15,"lowpass":12000}},
+    "chord_repeat": {"bpm":84,"swing":0.542,"voice":"rhodes_mark1","repeat":{"style":"dotted_eighth_push","modifiers":["probability","humanize"],"probability":{"probability":0.92}},"echo":{"heads":[1,2,3],"intensity":0.7,"echo_volume":0.6,"time_beats":0.75,"tail":8},"texture":{"detune":0.0,"reverb":0.1,"lowpass":12000}},
+    "arp_echo_soft": {"swing":0.542,"arp":{"style":"slow_up"},"echo":{"heads":[1,2]},"texture":{"detune":0.004,"reverb":0.1,"lowpass":9000}},
     "straight_hats_snare_ahead": {"swing":0.542,"pocket":{"backbeat":[4,12],"hat":{"shift_steps":0.0},"snare":{"shift_steps":-0.3,"drift_steps":0.02},"kick":{"shift_steps":0.125,"anchor":[0],"drift_steps":0.025},"ghost":{"shift_steps":0.2,"drift_steps":0.03}},"texture":{"detune":0.005,"reverb":0.25,"lowpass":8000}}
   },
 

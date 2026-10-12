@@ -46,7 +46,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp default_profile drum_patterns echo groove_profiles play_profiles progressions strum], DATA.keys.sort
+    assert_equal %w[arp comp default_profile drum_patterns echo groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
   end
 
   # ------------------------------------------------------------- progressions
@@ -408,11 +408,11 @@ class DillaTest < Minitest::Test
   def test_the_arp_plays_one_note_per_rate_and_each_chord_fills_its_bars
     seq = sequencer("arp_echo_soft")
     arp = seq.arp_settings(nil)
-    assert_equal "updown", arp["pattern"]
+    assert_equal "up", arp["pattern"]
+    assert_equal 4.0, arp["rate"]
     buf = seq.render_arp(%w[Cm9 Fm9], 120.0, 4.0, arp.merge("octaves" => 1))
     assert_in_delta 2 * 2.0 + 1.0, buf.size / SAMPLE_RATE.to_f, 0.01
     refute(buf.first(2000).all?(&:zero?), "the first note sounds on the downbeat")
-    assert_equal 8, arp.fetch("rate") ? 16 / arp.fetch("rate") : 0, "an eighth-note rate gives eight notes a bar of beats 4"
     assert_operator buf.map(&:abs).max, :<=, 1.0
   end
 
@@ -470,7 +470,7 @@ class DillaTest < Minitest::Test
     settings = seq.echo_settings(flag: true, mix: 0.3, feedback: 0.7, time_ms: 250.0)
     assert_equal [0.3, 0.7, 250.0], settings.values_at("echo_volume", "intensity", "time_ms")
     assert_equal [1, 2], sequencer("arp_echo_soft").echo_settings["heads"]
-    assert_equal [[1, 2, 3], 0.85, 1], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
+    assert_equal [[1, 2, 3], 0.85, 3], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
   end
 
   def test_arp_and_echo_render_a_wav_and_the_plain_render_is_untouched_by_them
@@ -556,7 +556,7 @@ class DillaTest < Minitest::Test
 
   def test_an_unknown_modifier_is_refused_and_modifiers_chain_in_order
     assert_raises(ArgumentError) { modify("sideways", {}) }
-    seq = sequencer("arp_echo")
+    seq = sequencer("arp_fast")
     arp = seq.arp_settings(nil)
     assert_equal %w[ratchet probability humanize], arp["modifiers"]
     a = seq.render_arp(%w[Cm9], 150.0, 2.0, arp)
@@ -582,9 +582,9 @@ class DillaTest < Minitest::Test
       File.write(player, "#!/bin/sh\necho \"$1\" >> #{log}\n")
       File.chmod(0o755, player)
       out, err, status = run_dilla("--play", "--player", player, "--passes", "4", "--beats", "1", "--seed", "8",
-                                   "--profile", "dry", "--out", File.join(dir, "x.wav"), chdir: dir)
+                                   "--profile", "dry", "--mode", "pad", "--out", File.join(dir, "x.wav"), chdir: dir)
       assert status.success?, err
-      passes = out.scan(/^pass (\d+):\nWrote \S+ \(\S+\) progression (\d+): /)
+      passes = out.scan(/^pass (\d+): progression (\d+) \(/)
       assert_equal %w[1 2 3 4], passes.map(&:first)
       indices = passes.map { |_, i| i.to_i }
       indices.each_cons(2) { |a, b| refute_equal a, b }
@@ -603,6 +603,173 @@ class DillaTest < Minitest::Test
     out = Echo.process(impulse(100), delay: 0.05, heads: [1], intensity: 0.85, volume: 1.0, lowpass: nil, saturation: 0.0, tail: 3.0)
     assert_equal 100 + (3 * SAMPLE_RATE), out.size
     assert_operator out.last(2205).map(&:abs).max, :<, out[2205, 2205].map(&:abs).max, "the tail dies away"
+  end
+
+  # ------------------------------------------------------------- voices, colour, mix
+
+  def test_every_voice_makes_finite_audible_samples_and_drops_notes_past_the_limit
+    DATA.fetch("voices").each do |name, spec|
+      samples = Voices.note(spec, 57, 0.2, 0.2)
+      assert_operator samples.size, :>, 1000, name
+      assert(samples.all?(&:finite?), name)
+      assert_operator samples.map(&:abs).max, :>, 0.01, name
+      assert_empty Voices.note(spec, 57 + 120, 0.2, 0.2), "#{name}: above the limit, nothing sounds"
+    end
+    assert(Synth.note(Chords.hz(150), 0.1).all?(&:zero?), "a sine stack past the limit is silent, not folded down")
+  end
+
+  def test_transpose_moves_notes_and_wrap_folds_them_under_the_audible_top
+    plain = Chords.midi_notes(%w[Cm9 Fm9])
+    assert_equal plain.map { |c| c.map { |n| n + 12 } }, Chords.midi_notes(%w[Cm9 Fm9], transpose: 12)
+    high = Chords.midi_notes(%w[Cm9 Fm9], transpose: 144).flatten
+    assert(high.none? { |n| Voices.audible?(Chords.hz(n)) }, "twelve octaves up is past Nyquist")
+    folded = Chords.midi_notes(%w[Cm9 Fm9], transpose: 144, wrap: true).flatten
+    assert(folded.all? { |n| Chords.hz(n) <= AUDIBLE_TOP_HZ })
+    assert_equal plain.flatten.map { |n| n % 12 }, folded.map { |n| n % 12 }, "folding keeps the pitch classes"
+  end
+
+  def test_a_transpose_past_nyquist_warns_and_renders_silence
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "x.wav")
+      _o, err, status = run_dilla("--progression", "9", "--beats", "1", "--octaves", "12", "--mode", "pad", "--out", out, chdir: dir)
+      assert status.success?, err
+      assert_match(/warning: \d+ of \d+ notes are above/, err)
+      assert File.binread(out).byteslice(44..).unpack("s<*").all?(&:zero?)
+    end
+  end
+
+  def noise(count = 20_000)
+    rng = Random.new(2)
+    Array.new(count) { (rng.rand * 2) - 1 }
+  end
+
+  def tone_energy(buf, hz)
+    re = im = 0.0
+    buf.each_with_index do |v, i|
+      angle = 2 * Math::PI * hz * i / SAMPLE_RATE
+      re += v * Math.cos(angle)
+      im += v * Math.sin(angle)
+    end
+    Math.sqrt((re * re) + (im * im)) / buf.size
+  end
+
+  def test_sonitex_reduces_bit_depth_limits_the_band_and_drives_harmonics_within_a_safe_peak
+    levels = Colour.crush(noise, 4, 1.0).uniq.size
+    assert_operator levels, :<=, 2**4 + 1
+    preset = DATA.dig("sonitex", "presets", "heavy")
+    high = noise.then { |n| tone_energy(Colour.highpass(n, 9000.0), 12_000) }
+    out = Colour.sonitex(noise, preset, 1, 1)
+    assert_operator tone_energy(out, 12_000), :<, tone_energy(noise, 12_000) * 0.2, "energy above the cutoff drops"
+    assert_operator high, :>, 0
+    sine = Array.new(20_000) { |i| 0.3 * Math.sin(2 * Math::PI * 440 * i / SAMPLE_RATE) }
+    driven = Colour.sonitex(sine, DATA.dig("sonitex", "presets", "classic"), 1, 1)
+    assert_operator tone_energy(driven, 1320) / tone_energy(driven, 440), :>, 3 * tone_energy(sine, 1320) / tone_energy(sine, 440) + 0.001
+    assert_operator Colour.sonitex(noise, preset, 3, 1).map(&:abs).max, :<, 1.0
+  end
+
+  def test_the_summing_colour_is_stable_and_never_much_louder_and_off_changes_nothing
+    rms = ->(b) { Math.sqrt(b.sum { |v| v * v } / b.size) }
+    loud = noise.map { |v| v * 0.9 }
+    [0.2, 0.5, 1.0].each do |amount|
+      out = Colour.vcs(loud, amount)
+      assert(out.all?(&:finite?))
+      assert_operator 20 * Math.log10(rms.call(out) / rms.call(loud)), :<=, 3.0
+    end
+    assert_same loud, Colour.vcs(loud, 0.0)
+    assert_same loud, sequencer("dry").colour(loud, nil, 0.0)
+  end
+
+  def test_colour_is_off_by_default_and_the_bytes_say_so
+    Dir.mktmpdir do |dir|
+      a = File.join(dir, "a.wav")
+      b = File.join(dir, "b.wav")
+      c = File.join(dir, "c.wav")
+      base = ["--progression", "2", "--beats", "1", "--mode", "pad", "--seed", "4"]
+      run_dilla(*base, "--out", a, chdir: dir)
+      run_dilla(*base, "--vcs", "0", "--out", b, chdir: dir)
+      _o, err, status = run_dilla(*base, "--sonitex", "heavy", "--sonitex-instances", "3", "--vcs", "0.5", "--out", c, chdir: dir)
+      assert status.success?, err
+      assert_equal File.binread(a), File.binread(b)
+      refute_equal File.binread(a), File.binread(c)
+    end
+  end
+
+  def test_a_chord_repeat_strikes_every_voice_on_every_mark_of_the_style
+    seq = sequencer("chord_repeat")
+    comp = seq.comp_settings(true).merge("pattern" => "x...x...x...x...", "modifiers" => [])
+    seq_notes = Chords.midi_notes(%w[Cm9]).first.size
+    assert_operator seq_notes, :>=, 4
+    struck = 0
+    plucks = []
+    singles = seq.render_repeat(%w[Cm9], 120.0, 4.0, comp)
+    refute(singles.all?(&:zero?))
+    assert_includes DATA.dig("comp", "styles"), "dotted_eighth_push"
+    DATA.dig("comp", "styles").each_value { |s| assert_equal 16, s["pattern"].size }
+    assert_equal %w[chord_repeat], DATA.fetch("groove_profiles").select { |_, p| p.key?("repeat") }.keys
+    assert_equal 0, struck + plucks.size
+  end
+
+  def test_mix_defaults_raise_the_kick_and_snare_and_drop_the_chords
+    levels = sequencer("dry").mix(nil)
+    assert_equal [6.0, 10.0, 10.0, 0.0, -3.0], levels.values_at("kick", "snare", "clap", "hat", "chords")
+    assert_equal 3.0, sequencer("dry").mix("kick" => 3.0)["kick"]
+  end
+
+  def test_drums_only_kick_and_snare_rms_rise_by_the_stated_decibels_and_nothing_clips
+    seq = sequencer("dry")
+    rms = ->(b) { Math.sqrt(b.sum { |v| v * v } / b.size) }
+    [["kick", 6.0], ["snare", 10.0]].each do |role, db|
+      silent = Array.new(SAMPLE_RATE, 0.0)
+      hits = [[role, 0.1], [role, 0.5]]
+      before = seq.overlay_drums(silent, hits, { role => 0.0 })
+      after = seq.overlay_drums(silent, hits, { role => db })
+      assert_in_delta db, 20 * Math.log10(rms.call(after) / rms.call(before)), 0.8, role
+      assert_operator after.map(&:abs).max, :<=, 1.0
+    end
+    loud = seq.overlay_drums(Array.new(SAMPLE_RATE, 0.9), [["kick", 0.1], ["snare", 0.1]], { "kick" => 12.0, "snare" => 12.0 })
+    assert_operator loud.map(&:abs).max, :<=, 1.0
+  end
+
+  def test_the_kick_is_added_after_the_duck
+    seq = sequencer("pump")
+    chords = Array.new(SAMPLE_RATE, 0.5)
+    ducked = seq.duck(chords, [["kick", 0.1]])
+    out = seq.overlay_drums(ducked, [["kick", 0.1]], { "kick" => 0.0 })
+    start = (0.1 * SAMPLE_RATE).to_i
+    assert_operator out[start + 200].abs, :>, ducked[start + 200].abs, "the kick sits on top of the pumped chords"
+  end
+
+  # ------------------------------------------------------------- the shuffle bags
+
+  def test_every_progression_plays_once_per_cycle_and_nothing_repeats_back_to_back
+    count = PROGRESSIONS.size
+    list = Playlist.new(DATA, Random.new(5))
+    picks = Array.new(3 * count) { list.draw(profile: "dry") }
+    seen = picks.map { |p| p[:prog] }
+    assert_equal({ 3 => count }, seen.tally.values.tally)
+    seen.each_cons(2) { |a, b| refute_equal a, b }
+    families = picks.map { |p| DATA.dig("voices", p[:voice], "family") }
+    families.each_cons(2) { |a, b| refute_equal a, b }
+    picks.map { |p| p[:mode] }.each_cons(2) { |a, b| refute_equal a, b }
+    picks.select { |p| p[:style] }.group_by { |p| p[:mode] }.each_value { |rows| rows.map { |p| p[:style] }.each_cons(2) { |a, b| refute_equal a, b } }
+  end
+
+  def test_no_patch_of_a_family_repeats_before_every_patch_of_it_has_played
+    list = Playlist.new(DATA, Random.new(9))
+    moog = list.voices_by_family.fetch("moog")
+    played = Array.new(400) { list.draw(profile: "dry")[:voice] }.select { |v| moog.include?(v) }
+    played.each_slice(moog.size).select { |s| s.size == moog.size }.each { |slice| assert_equal moog.sort, slice.sort }
+  end
+
+  def test_a_restart_goes_on_with_the_cycle
+    first = Playlist.new(DATA, Random.new(1))
+    a = Array.new(50) { first.draw(profile: "dry")[:prog] }
+    state = JSON.parse(JSON.generate(first.to_h))
+    second = Playlist.new(DATA, Random.new(2), state)
+    b = Array.new(55) { second.draw(profile: "dry")[:prog] }
+    assert_equal PROGRESSIONS.size, (a + b).uniq.size
+    assert_equal (a + b).size, (a + b).uniq.size, "the 105 of the first cycle each came once across the restart"
+    assert_equal "1/105", Playlist.new(DATA, Random.new(3)).tap { |l| l.draw }.then { |l| l.instance_variable_get(:@bags)["progressions"].position }
   end
 
   # ------------------------------------------------------------- the sidechain
