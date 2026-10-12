@@ -61,6 +61,7 @@ module DesignTokens
   # these four properties in that one stylesheet alone, so a sync never repaints it.
   APP_OWNED_PALETTE = {
     "RAILS/amber/app/assets/stylesheets/application.scss" => %w[luxury-bg luxury-text luxury-muted luxury-border].freeze,
+    "RAILS/amber/app/assets/stylesheets/_amber_late_product_finish.scss" => %w[luxury-bg luxury-text luxury-muted luxury-border].freeze,
   }.freeze
 
   module_function
