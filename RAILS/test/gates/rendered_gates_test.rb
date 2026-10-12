@@ -17,6 +17,18 @@ require_relative "../../../OPENBSD/lib/gate_result"
 class RenderedGatesTest < Minitest::Test
   M = Deploy::DesignMetrics
 
+  def test_mobile_flow_emits_an_individual_vertical_coverage_record
+    gate = Deploy::MobileFlowGate.new
+    result = Deploy::GateResult.new
+    gate.instance_variable_set(:@result, result)
+
+    gate.send(:report_surface, "brgen/marketplace", :pass)
+
+    assert_equal 1, result.warnings.size
+    assert_match(/surface0: mobile brgen\/marketplace PASS/, result.warnings.first)
+    assert_match(/390×844/, result.warnings.first)
+  end
+
   # --- token contrast cross-product ---------------------------------------
 
   def test_token_pairs_matches_light_and_dark_modes_separately

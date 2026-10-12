@@ -412,6 +412,17 @@ module Deploy
         "source_total" => @report["pages"].count { |e| e["mode"] == "source" },
       }
       File.write(REPORT_PATH, @report.to_yaml)
+      @report["pages"].group_by { |entry| entry["app"].to_s }.sort.each do |app, rows|
+        source = rows.select { |entry| entry["mode"] == "source" }
+        live = rows.select { |entry| entry["mode"] == "live" }
+        source_ok = source.count { |entry| entry["ok"] == true }
+        hard_findings = rows.count { |entry| entry["ok"] == false }
+        unresolved = Array(unprobed).count { |page| page[:app].to_s == app }
+        @result.warn(
+          "coverage0: pages/#{app} source=#{source_ok}/#{source.size} live=#{live.size} " \
+          "hard_findings=#{hard_findings} unresolved_ids=#{unresolved}",
+        )
+      end
       @result.warn("page_simulation: report → #{REPORT_PATH.sub("#{ROOT}/", "")}")
     end
   end

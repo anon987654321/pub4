@@ -103,6 +103,28 @@ class FlowClientWriteTest < Minitest::Test
     assert_empty result.failures, "a missing credential is not a verdict about the tree"
   end
 
+  def test_run_flow_does_not_count_a_missing_credential_journey_as_measured
+    @gate.instance_variable_set(:@result, Deploy::GateResult.new)
+    flow = { "id" => "signed_in_write", "requires_credentials" => %w[FLOW_NOT_SET_ANYWHERE] }
+
+    assert_equal :skipped, @gate.send(:run_flow, flow, 38_182, "brgen")
+    result = @gate.instance_variable_get(:@result)
+    assert_equal 0, result.checks_ran
+    assert_equal 1, result.unchecked.size
+  end
+
+  def test_surface_coverage_line_names_the_brgen_vertical_host
+    flow = {
+      "id" => "brgen_guest_marketplace_browse",
+      "steps" => [{ "host" => "markedsplass.brgen.no", "get" => "/" }],
+    }
+
+    line = @gate.send(:surface_coverage_line, flow, "brgen", :pass)
+
+    assert_includes line, "brgen/brgen_guest_marketplace_browse PASS"
+    assert_includes line, "markedsplass.brgen.no"
+  end
+
   def test_a_flow_with_no_credential_requirement_runs_as_before
     @gate.instance_variable_set(:@result, Deploy::GateResult.new)
 

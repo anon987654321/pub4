@@ -104,14 +104,22 @@ module Deploy
       @result = GateResult.new
       unless GeometryProbe.available?
         @result.inconclusive!("mobile_flow: no Chrome/Chromium — phone viewport not measured", gap: Master::Gap::NO_BROWSER)
+        PREFERRED.each { |label| report_surface(label, :inconclusive, "Chrome/Chromium unavailable") }
         return @result
       end
 
       surfaces = pick_surfaces
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("mobile_flow: #{app} port closed — skipped") }
+      unreachable = GeometryProbe.unreachable_apps(surfaces)
+      unreachable.each do |app|
+        @result.skipped_live("mobile_flow: #{app} port closed — skipped")
+        surfaces.select { |surface| surface.app == app }.each do |surface|
+          report_surface("#{surface.app}/#{surface.label}", :skipped, "app port closed")
+        end
+      end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("mobile_flow: no app reachable")
+        PREFERRED.each { |label| report_surface(label, :skipped, "no target app reachable") }
         return @result
       end
 
@@ -183,8 +191,10 @@ module Deploy
         # CDP timeout under load is environment flake, not a design defect.
         if err.to_s.match?(/timeout|Timeout/i)
           @result.warn("mobile_flow: #{label} skipped (#{err})")
+          report_surface(label, :inconclusive, err)
         else
           @result.fail("mobile_flow: #{label} unreachable (#{err})")
+          report_surface(label, :fail, err)
         end
         return false
       end
@@ -193,11 +203,28 @@ module Deploy
         cdp.evaluate(MEASURE)
       rescue StandardError => e
         @result.fail("mobile_flow: #{label} measure failed: #{e.class}: #{e.message}")
+        report_surface(label, :fail, "measure failed: #{e.class}")
         return false
       end
 
+      hard_before = @result.failures.size
+      soft_before = @result.soft_failures.size
       judge(@result, surface.app, surface.label, m, face_in_payload: payload.to_s.include?("face"))
+      state = if @result.failures.size > hard_before
+                :fail
+              elsif @result.soft_failures.size > soft_before
+                :warning
+              else
+                :pass
+              end
+      report_surface(label, state)
       true
+    end
+
+    def report_surface(label, outcome, detail = nil)
+      line = "surface0: mobile #{label} #{outcome.to_s.upcase} at #{PHONE.join('×')}"
+      line += " — #{detail}" if detail && !detail.to_s.empty?
+      @result.warn(line)
     end
 
     public

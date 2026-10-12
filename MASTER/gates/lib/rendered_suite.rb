@@ -50,6 +50,16 @@ module Deploy
       run_leaves
     end
 
+    def coverage_line(name, leaf)
+      details = ["#{leaf.checks_ran} check(s)"]
+      details << "#{leaf.failures.size} failure(s)" unless leaf.failures.empty?
+      details << "#{leaf.soft_failures.size} soft finding(s)" unless leaf.soft_failures.empty?
+      details << "#{leaf.unchecked.size} inconclusive item(s)" unless leaf.unchecked.empty?
+      details << "#{leaf.live_skips} live skip(s)" if leaf.live_skips.positive?
+      details << "#{leaf.errors.size} error(s)" unless leaf.errors.empty?
+      "coverage0: rendered/#{name} #{leaf.outcome.to_s.upcase} — #{details.join(', ')}"
+    end
+
     # No checked! of its own — merge! carries each leaf's count up, and this
     # class measures nothing itself.
     def run_leaves
@@ -59,10 +69,9 @@ module Deploy
         leaf = begin
           klass.run
         rescue StandardError => e
-          failed = GateResult.new
-          failed.fail("#{name} raised #{e.class}: #{e.message}")
-          failed
+          GateResult.from_error(e, gate: name)
         end
+        result.warn(coverage_line(name, leaf))
         result.merge!(leaf, label: name)
       end
       result

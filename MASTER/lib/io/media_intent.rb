@@ -362,12 +362,16 @@ module Master
       end
 
       def play_live_music(arg, root: MasterPaths.root, bus: nil)
-        name = arg.to_s.strip
-        command = name.empty? ? "live showcase" : "live play #{Shellwords.escape(name)}"
+        requested = arg.to_s.strip
+        # Typing a script name should select the canonical showcase, not ask the
+        # improviser to play an instrument literally called "dilla.rb".
+        showcase = requested.empty? || requested.match?(/\A(?:dilla\.rb|showcase|live|dilla\s+(?:live|showcase))\z/i)
+        name = showcase ? "" : requested.sub(/\.rb\z/i, "")
+        command = showcase ? "live showcase" : "live play #{Shellwords.escape(name)}"
         env = { "DILLA_COLTRANE" => "0" }
-        # Bare /play is the operator's canonical Dilla showcase. Pin its kit so
-        # stale inherited DILLA_LIVE_KIT state cannot resurrect an older groove.
-        env["DILLA_LIVE_KIT"] = "dillatime" if name.empty?
+        # /play, /play dilla.rb and its showcase aliases pin the same Dillatime
+        # kit, so stale inherited DILLA_LIVE_KIT state cannot resurrect an older groove.
+        env["DILLA_LIVE_KIT"] = "dillatime" if showcase
         result = ScriptDispatch.run(root:, tool: "dilla", arg: command, env:)
         return result unless result.ok?
 

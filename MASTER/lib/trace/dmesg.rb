@@ -248,6 +248,9 @@ module Master
       # Child processes may inherit terminal redraws even though their output
       # is captured by a pipe. Forward them as completed lines, never as cursor
       # control sequences interleaved with the parent's dmesg.
+      NARRATED_FORWARD_LINE = /\A(?:-\s*)?(?:surface0:|coverage0:|flow:|Warnings:|Not checked:|Gate errors|Failures:|inconclusive:|errored:)/i.freeze
+      NARRATED_FORWARD_FINDING = /\A-\s+\[[A-Za-z][A-Za-z0-9_:]*\].*\b(?:fail|missing|invariant|unreachable|timeout|raised|did not run|unset|error|broken|exited|forbidden)\b/i.freeze
+
       def forward(line, io: $stdout)
         text = line.to_s.scrub.gsub(ANSI, "").delete("\r").chomp
         return if text.strip.empty?
@@ -255,6 +258,9 @@ module Master
         emit_mutex.synchronize do
           io.puts(text)
           io.flush if io.respond_to?(:flush)
+        end
+        if log_voice_active? && (NARRATED_FORWARD_LINE.match?(text) || NARRATED_FORWARD_FINDING.match?(text))
+          speak_log_line(text)
         end
         text
       rescue StandardError => e

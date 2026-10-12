@@ -33,29 +33,74 @@ module Deploy
       # MASTER web is not a RAILS/apps.yml row — face + mission control.
       ports["master"] ||= 53_187
 
+      counts = Hash.new(0)
       ran = 0
       flows.each do |flow|
         app = flow["app"]
         port = ports[app]
         unless port
           @result.fail("flow:#{flow["id"]} unknown app #{app.inspect}")
+          @result.warn(surface_coverage_line(flow, app, :error, "unknown app"))
+          counts[:error] += 1
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", port)
           @result.skipped_live("flow:#{flow["id"]} skipped — #{app} port #{port} closed")
+          @result.warn(surface_coverage_line(flow, app, :skipped, "app port #{port} closed"))
+          counts[:skipped] += 1
           next
         end
-        ran += 1
-        # A journey that ran is a check that ran. Without this the gate could
-        # never report PASSED: `measured_nothing?` reads checks_ran, nothing here
-        # ever raised it, and one skipped precondition then spoke for the whole
-        # run — 25 journeys green and the verdict line said "checked nothing".
-        # That is the same defect checked! was added for in human_walkthrough.
-        @result.checked!
-        run_flow(flow, port, app)
+
+        state = run_flow(flow, port, app)
+        case state
+        when :skipped
+          # Missing credentials mean no request was made. Do not increment
+          # checks_ran: that would turn an unmeasured account journey into green.
+          counts[:inconclusive] += 1
+          @result.warn(surface_coverage_line(flow, app, :inconclusive, "credentials unavailable"))
+        when :failed
+          ran += 1
+          counts[:failed] += 1
+          @result.checked!
+          @result.warn(surface_coverage_line(flow, app, :fail))
+        when :inconclusive
+          # The guest flow ran, but its data invariant could not be evaluated.
+          ran += 1
+          counts[:inconclusive] += 1
+          @result.checked!
+          @result.warn(surface_coverage_line(flow, app, :inconclusive, "journey ran; invariant unmeasured"))
+        else
+          ran += 1
+          counts[:passed] += 1
+          @result.checked!
+          @result.warn(surface_coverage_line(flow, app, :pass))
+        end
       end
-      @result.warn("flow_journey: ran #{ran}/#{flows.size} journeys") if ran.positive?
+      @result.warn(
+        "flow_journey: ran #{ran}/#{flows.size}; pass=#{counts[:passed]} fail=#{counts[:failed]} " \
+        "inconclusive=#{counts[:inconclusive]} skipped=#{counts[:skipped]} error=#{counts[:error]}",
+      )
       @result
+    end
+
+    # A readable per-journey record. Host names make Brgen's verticals visible
+    # in the same report as the city apex rather than disappearing inside app=brgen.
+    def surface_coverage_line(flow, app, state, detail = nil)
+      steps = Array(flow["steps"])
+      hosts = steps.map { |step| surface_host(step, app) }.reject(&:empty?).uniq
+      description = "#{steps.size} step(s)"
+      description += " on #{hosts.join(', ')}" unless hosts.empty?
+      description += " — #{detail}" if detail && !detail.to_s.empty?
+      "surface0: #{app}/#{flow["id"]} #{state.to_s.upcase} — #{description}"
+    end
+
+    def surface_host(step, app)
+      explicit = step["host"].to_s.strip
+      return explicit unless explicit.empty?
+
+      Fleet.public_host(app).to_s
+    rescue StandardError
+      app.to_s
     end
 
     private
@@ -94,9 +139,11 @@ module Deploy
     def run_flow(flow, port, app)
       id = flow["id"]
       captures = {}
+      failures_before = @result.failures.size
+      unchecked_before = @result.unchecked.size
       client = FlowClient.new(port:, default_host: Fleet.public_host(app))
       credentials = credentials_for(flow)
-      return if credentials.nil?
+      return :skipped if credentials.nil?
 
       Array(flow["steps"]).each do |step|
         name = step["name"] || step["get"] || step["post"]
@@ -109,13 +156,17 @@ module Deploy
           end
         rescue StandardError => e
           @result.fail("#{label}: #{e.class}: #{e.message}")
-          return
+          return :failed
         end
 
-        return unless check_step(label, step, response, captures)
+        return :failed unless check_step(label, step, response, captures)
       end
 
       check_assertions(flow, captures)
+      return :failed if @result.failures.size > failures_before
+      return :inconclusive if @result.unchecked.size > unchecked_before
+
+      :passed
     end
 
     # A journey over a catalogue cannot distinguish "search is broken" from

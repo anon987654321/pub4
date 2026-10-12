@@ -128,6 +128,32 @@ class MediaIntentSpec < Minitest::Test
     assert_equal "live showcase", captured[:arg]
   end
 
+  def test_dilla_rb_alias_starts_the_canonical_showcase
+    captured = nil
+    runner = lambda do |**kwargs|
+      captured = kwargs
+      Master::Result.ok("live showcase started")
+    end
+
+    with_dispatch_stub(runner) do
+      result = MediaIntent.play_live_music("dilla.rb")
+      assert result.ok?
+    end
+
+    assert_equal "live showcase", captured[:arg]
+    assert_equal "dillatime", captured[:env]["DILLA_LIVE_KIT"]
+    assert_equal "0", captured[:env]["DILLA_COLTRANE"]
+  end
+
+  def test_script_suffix_is_removed_from_named_artist_lanes
+    captured = nil
+    with_dispatch_stub(->(**kwargs) { captured = kwargs; Master::Result.ok("live artist started") }) do
+      assert MediaIntent.play_live_music("royksopp.rb").ok?
+    end
+
+    assert_equal "live play royksopp", captured[:arg]
+  end
+
   def test_play_live_music_normalizes_the_five_named_artist_lanes
     calls = []
     runner = lambda do |**kwargs|

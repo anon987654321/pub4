@@ -223,7 +223,9 @@ names.each_with_index do |name, index|
   results[name] = result
   outcome = result.outcome
   if outcome == :passed
-    result.render if %w[css_constitution design_metrics].include?(name)
+    result.render(row["pass"]) if %w[
+      css_constitution design_metrics rendered_suite layout_suite flow_journey page_simulation mobile_flow
+    ].include?(name)
     log_retired("#{GATE_UNIT} at #{GATE_PARENT}: #{name} passed")
   else
     result.render
