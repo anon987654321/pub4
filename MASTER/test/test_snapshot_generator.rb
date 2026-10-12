@@ -70,7 +70,7 @@ class TestSnapshotGenerator < Minitest::Test
 
     assert_includes source, '".sh" => "zsh"'
     assert_includes source, '".zsh" => "zsh"'
-    assert_includes source, '"## Snapshot part complete"'
+    assert_includes source, '## Snapshot part complete\\n\\n'
     assert_includes source, 'part=#{part_index}/#{part_count}'
     assert_includes source, "snapshot0: complete tree="
     assert_includes source, '"STUDIO" => "STUDIO"'
@@ -222,7 +222,7 @@ class TestSnapshotGenerator < Minitest::Test
   def test_operator_snapshot_runs_the_full_root_snapshot_pack
     source = File.read(File.expand_path("../bin/operator", __dir__))
     assert_equal 1, source.scan('when "snapshot"').size
-    assert_includes source, "MASTER/tools/snapshot.rb"
+    assert_includes source, 'File.join(ROOT, "MASTER", "tools", "snapshot.rb")'
   end
 
   def test_snapshot_preserves_large_files_without_truncation
