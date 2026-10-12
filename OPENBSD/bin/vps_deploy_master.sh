@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env zsh
+# Run with zsh, as vps-deploy does: the runtime-dirs step uses zsh globs (tmp/**/*(/N)),
+# which a POSIX sh refuses to parse.
 # Deploy MASTER web + lib to vm23 after git pull.
 #
 # This is the body of `bin/vps-deploy master`, which also writes the deploy
