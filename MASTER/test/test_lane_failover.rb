@@ -283,4 +283,37 @@ class TestLaneFailover < Minitest::Test
     skip_cache&.clear!
   end
 
+
+  def test_failed_one_shot_model_is_parked_for_the_next_request
+    skip_cache = Master::Io::ModelSkipCache
+    skip_cache.clear!
+    calls = []
+    agent = Master::Review::Agent.allocate
+    agent.instance_variable_set(:@dispatcher, Object.new.tap do |door|
+      door.define_singleton_method(:send_with_cache) do |model, *_args, **_kwargs|
+        calls << model
+        model == "openrouter/flaky" ?
+          Master::Result.err("upstream unavailable", category: :provider_error) :
+          Master::Result.ok("answer")
+      end
+    end)
+    agent.instance_variable_set(:@bus, nil)
+    agent.define_singleton_method(:single_call_fallback_models) { %w[openrouter/flaky claude-cli:live] }
+    agent.define_singleton_method(:record_single_call_substitution) { |_from, _to, result, **| result }
+
+    first = agent.send(:retry_on_broke_lane,
+      Master::Result.err("primary failed", category: :provider_error),
+      "primary", [{ role: "user", content: "first" }])
+    second = agent.send(:retry_on_broke_lane,
+      Master::Result.err("primary failed again", category: :provider_error),
+      "primary2", [{ role: "user", content: "second" }])
+
+    assert first.ok?
+    assert second.ok?
+    assert skip_cache.skipped?("openrouter/flaky")
+    assert_equal ["openrouter/flaky", "claude-cli:live", "claude-cli:live"], calls
+  ensure
+    skip_cache&.clear!
+  end
+
 end
