@@ -40,6 +40,7 @@ module Operator
       OPENBSD/bin/check-vps
       OPENBSD/test/run_all.rb
       RAILS/test/run_all.rb
+      STUDIO/Rakefile
       MASTER/gates/runner.rb
       MASTER/gates/release.rb
       package.json
@@ -107,7 +108,10 @@ module Operator
     TEST_DIR = %r{(?:\A|/)test/}
 
     def self.test_files
-      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD}/**/*.rb")]
+      # All four governed trees are in the contract. Omitting STUDIO here made
+      # its tests invisible to the reachability census even though STUDIO/Rakefile
+      # runs them; the dedicated assertion then passed only if the census lied.
+      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD,STUDIO}/**/*.rb")]
                       .map { |path| path.sub("#{ROOT}/", "") }
                       .reject { |path| path =~ %r{/(node_modules|vendor|tmp|\.master|knowledge|output)/} }
                       .select { |path| path =~ TEST_DIR }
