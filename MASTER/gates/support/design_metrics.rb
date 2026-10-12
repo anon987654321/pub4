@@ -65,7 +65,7 @@ module Deploy
     def light_only_vertical_keys(rails_root)
       globs = %w[
         {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
-        brgen/engines/*/app/assets/stylesheets/*.scss,
+        brgen/engines/*/app/assets/stylesheets/*.scss
       ]
       light_only = {}
       globs.each do |pattern|
@@ -73,17 +73,34 @@ module Deploy
           next if path.include?("/builds/") || path.include?("/public/assets/") ||
                   path.include?("/vendor/") || path.include?("/node_modules/")
 
-          theme = nil
-          File.readlines(path).each do |line|
-            theme = "light" if line.include?('data-theme="light"')
-            theme = "dark" if line.include?('data-theme="dark"')
-            theme = nil if line.strip == "}"
+          # Remove block comments before counting braces: examples and old
+          # selectors in comments are not part of the stylesheet's scope.
+          source = File.read(path).gsub(%r{/\*.*?\*/}m, "")
+          depth = 0
+          theme_scopes = []
+
+          source.each_line do |raw_line|
+            line = raw_line.sub(/\A\s*\/\/.*\z/, "")
+            theme_match = line.match(/:root\s*\[\s*data-theme\s*=\s*["']?(light|dark)["']?\s*\]/i)
+            delta = line.count("{") - line.count("}")
+
+            # Keep the theme until its own block closes. A nested selector's
+            # closing brace must not turn the rest of the theme into "outside".
+            if theme_match && line.include?("{")
+              theme_scopes << [depth + delta, theme_match[1].downcase]
+            end
+            active_theme = theme_match&.[](1)&.downcase ||
+                           theme_scopes.reverse.find { |scope_depth, _| depth >= scope_depth }&.last
+
             line.scan(/--vertical-(\w+)-accent-(\w+)/) do |vertical, key|
               token = "#{vertical}_#{key}"
               # Any use outside a light block disqualifies it for good.
-              light_only[token] = false unless theme == "light"
+              light_only[token] = false unless active_theme == "light"
               light_only[token] = true unless light_only.key?(token)
             end
+
+            depth += delta
+            theme_scopes.reject! { |scope_depth, _| depth < scope_depth }
           end
         rescue StandardError => e
           raise "design_metrics: unreadable stylesheet #{path}: #{e.class}: #{e.message}"
