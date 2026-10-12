@@ -15,7 +15,7 @@ require "review/scan/law_dsl"
 class TestSemanticLawScope < Minitest::Test
   def rule = @rule ||= Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
 
-  def scoped(language) = rule.send(:rules_for, language).keys
+  def scoped(language) = rule.send(:laws_for, language).keys
 
   def test_missing_model_agent_is_inconclusive_not_clean
     semantic = Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
@@ -92,7 +92,7 @@ class TestSemanticLawScope < Minitest::Test
   # The counterweight. Most rules declare no language and the scope must leave
   # them alone; a filter that dropped them would silently retire the corpus.
   def test_a_rule_declaring_no_language_reaches_every_language
-    unscoped = rule.send(:load_semantic_rules).select { |_, a| a[:languages].empty? }
+    unscoped = rule.send(:load_semantic_laws).select { |_, a| a[:languages].empty? }
     refute_empty unscoped, "most of the corpus declares no language"
 
     %w[ruby css markdown html javascript yaml zsh json scss].each do |language|
@@ -103,7 +103,7 @@ class TestSemanticLawScope < Minitest::Test
   # A model handed the css frame that answers with a ruby rule has invented one
   # for this file. Accepting it would put the scope back where it was.
   def test_a_finding_outside_the_scope_asked_is_discarded
-    css = rule.send(:rules_for, "css")
+    css = rule.send(:laws_for, "css")
     response = "RAILS_THIN_CONTROLLER_SEMANTIC:3:fat controller\nAESTHETIC_FLAT_SEMANTIC:4:gradient\n"
     ids = rule.send(:parse_findings, response, css).map { |f| f[:law] }
 
@@ -111,8 +111,8 @@ class TestSemanticLawScope < Minitest::Test
   end
 
   def test_the_prompt_frame_differs_by_language
-    ruby = rule.send(:prompt_frame_for, rule.send(:rules_for, "ruby"), "ruby")
-    css = rule.send(:prompt_frame_for, rule.send(:rules_for, "css"), "css")
+    ruby = rule.send(:prompt_frame_for, rule.send(:laws_for, "ruby"), "ruby")
+    css = rule.send(:prompt_frame_for, rule.send(:laws_for, "css"), "css")
 
     assert_includes ruby, "RAILS_THIN_CONTROLLER_SEMANTIC"
     refute_includes css, "RAILS_THIN_CONTROLLER_SEMANTIC"
