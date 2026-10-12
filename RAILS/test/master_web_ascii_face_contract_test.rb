@@ -128,6 +128,8 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     refute ascii.key?("prompt")
     refute_match(/<pre id="wordmark"/, view)
     assert_includes view, '<span class="pp" aria-hidden="true"><%= t("face.prompt_user") %></span><span class="sep2" aria-hidden="true">$ </span>'
+    assert_includes read(WEB, "config", "locales", "en.yml"), 'prompt_user: "user"'
+    assert_includes read(WEB, "config", "locales", "nb.yml"), 'prompt_user: "bruker"'
     chat = read(PUBLIC, "chat.js")
 
     assert_includes chat, "shellPromptLabel(role)"

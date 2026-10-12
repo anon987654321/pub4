@@ -46,6 +46,7 @@ en:
       breakers_none: "none"
   face:
     title: "ai.brgen.no"
+    prompt_user: "user"
     face_aria: "MASTER face — visual state mirror"
     chat_aria: "MASTER chat"
     prompt_aria: "MASTER prompt"
