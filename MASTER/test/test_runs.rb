@@ -21,6 +21,15 @@ class TestRuns < Minitest::Test
     @report = self.class.report
   end
 
+  def test_all_tree_survey_runs_javascript_tests_and_reports_missing_runtime
+    source = File.read(File.join(Operator::Runs::ROOT, "MASTER", "Rakefile"))
+
+    assert_includes source, 'Dir.glob(File.join(path, "**", "*.test.mjs"))'
+    assert_includes source, 'system(node_bin, "--test", *tests, chdir: working_dir)'
+    assert_includes source, "inconclusive <<"
+    assert_includes source, "exit 3"
+  end
+
   def test_every_declared_runner_is_a_tracked_file
     missing = Operator::Runs::RUNNERS.reject do |runner|
       File.file?(File.join(Operator::Runs::ROOT, runner))
