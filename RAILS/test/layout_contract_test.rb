@@ -328,7 +328,12 @@ class LayoutContractTest < Minitest::Test
   end
 
   def app_rules(app, selector)
-    Operator::ScssRules.matching(File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss")), selector)
+    source = File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss"))
+    if app == "brgen"
+      features = Dir.glob(File.join(ROOT, app, "app/assets/stylesheets/_brgen_*.scss")).sort
+      features.each { |path| source = "#{source}\n#{File.read(path)}" }
+    end
+    Operator::ScssRules.matching(source, selector)
   end
 
   def test_theme_root_uses_dynamic_viewport_height
