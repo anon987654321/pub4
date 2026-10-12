@@ -119,7 +119,7 @@ tts:
   # each stage, `trim_db` is the final makeup and `ceiling` the final limiter (linear; 0.8 is
   # -1.9 dBFS, which keeps true peak under -1 dBTP on speech).
   dilla_fx:
-    enabled: true
+    enabled: false
     in_db: -8.3
     stage_trim_db: { dynamics: 4.4, tone: -1.6, saturation: 8.2, modulation: 0.4, time: 5.7, stereo: 4.6 }
     trim_db: 8.2
@@ -557,7 +557,7 @@ tts:
   # gain_db is that makeup. The dry voice is one line away:
   # MASTER_TTS_PROFILE=dry, or `profile: dry` in this file.
   room:
-    enabled: true
+    enabled: false
     reflections_ms: [19, 31, 47, 73, 109, 151]
     decays: [0.30, 0.22, 0.17, 0.12, 0.08, 0.05]
     out_gain: 0.9
@@ -635,6 +635,13 @@ tts:
   # the file path and the live streaming lane stays off while a profile
   # declares them.
   profiles:
+    # Optional sound-design path. The everyday voice stays clean; selecting
+    # MASTER_TTS_PROFILE=dilla restores the Dilla rack and room as a single profile.
+    dilla:
+      dilla_fx:
+        enabled: true
+      room:
+        enabled: true
     dry:
       dilla_fx:
         enabled: false
