@@ -171,7 +171,7 @@ module Master
             end
 
             reload_semantic_laws_if_stale
-            scoped = laws_for(lang)
+            scoped = laws_for(lang, path:)
             return [] if scoped.empty?
 
             base_key = semantic_cache_key(path, code)
