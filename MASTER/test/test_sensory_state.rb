@@ -17,7 +17,7 @@ class TestSensoryState < Minitest::Test
   end
 
   def test_projects_speech_and_fix_state_without_transcript_data
-    @bus.publish("tts:playback:start", text: "secret sentence", voice: "jenny")
+    @bus.publish("tts:playback:start", text: "secret sentence", voice: "christopher")
     state = Master::Trace::SensoryState.snapshot(root: @dir)
 
     assert_equal "speaking", state["voice"]
