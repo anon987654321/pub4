@@ -25,7 +25,7 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes evidence_source, "run_opportunity_stage"
     assert_includes runner_source, "Wishlist.findings"
     assert_includes llm_source, "run_wishlist_stage"
-    assert_includes llm_source, "Wishlist::RULE_ID"
+    assert_includes llm_source, "Wishlist::LAW_ID"
     assert_includes loop_source, "continue_with_wishlist"
     assert_includes loop_source, "WISHLIST_MAX_ROUNDS"
     assert_includes wishlist_source, 'LEDGER_PATH = ".master/fix_wishlist.json"'
@@ -48,6 +48,6 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes walk, "first_screen"
     assert_includes walk, "typography"
     assert_includes geometry, "check_visual_composition"
-    assert_includes geometry, "principle=hierarchy"
+    assert_includes geometry, "geometry hierarchy:"
   end
 end
