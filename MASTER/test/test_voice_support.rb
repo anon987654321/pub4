@@ -65,7 +65,7 @@ class TestVoiceSupport < Minitest::Test
   def test_playback_background_speech_does_not_repeat_a_failed_reply_through_native_voice
     spoken = []
     queue = Queue.new
-    queue << ["hello", "hello", true, :jenny, :warm]
+    queue << ["hello", "hello", true, :christopher, :warm]
     PB.instance_variable_set(:@queue, queue)
     PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
       PB.stub(:synthesize, nil) do
@@ -318,9 +318,9 @@ end
   end
 
   def test_prefetch_returns_prepared_audio_after_background_synthesis
-    job = ["second", "second", true, :jenny, :neutral, "+0%", "+0Hz", 0]
+    job = ["second", "second", true, :christopher, :neutral, "+0%", "+0Hz", 0]
     prepared = PB::PreparedAudio.new(
-      job:, text: "second", part: "second", last: true, voice: :jenny,
+      job:, text: "second", part: "second", last: true, voice: :christopher,
       style: :neutral, rate: "+0%", pitch: "+0Hz", generation: 0,
       path: "/tmp/m_tts_prefetch_test.mp3"
     )
@@ -436,7 +436,7 @@ end
 
   def test_background_playback_falls_back_to_policy_native_voice_when_player_fails
     spoken = []
-    job = ["hello", "hello", true, :jenny, :warm]
+    job = ["hello", "hello", true, :christopher, :warm]
     delivered = false
     queue = Object.new
     queue.define_singleton_method(:pop) do
@@ -495,7 +495,7 @@ end
     PB.stub(:generation_active?, true) do
       Master::Voice::Speech.stub(:stream_edge_to_io, stub_stream) do
         outcome = PB.send(:pump_stream_pipe, [RbConfig.ruby, "-e", "STDIN.read"], {},
-                          { generation: 0, part: "probe" }, "en-US-JennyNeural", {})
+                          { generation: 0, part: "probe" }, "en-US-ChristopherNeural", {})
       end
     end
 
