@@ -1092,13 +1092,13 @@ article mark { background: var(--hover); color: var(--text-secondary); padding: 
 @include meta.load-css("brgen_dating");
 
 // ============================================================ layout: vertical shell
-@include meta.load-css("vertical_shell");
+@include meta.load-css("brgen_vertical_shell");
 
 // ============================================================ pages: verticals
 @include meta.load-css("brgen_vertical_surfaces");
 
 // ============================================================ pages: city home and surfaces
-@include meta.load-css("city_surfaces");
+@include meta.load-css("brgen_city_surfaces");
 
 // ============================================================ shared modules and overrides
 @include meta.load-css("brgen_shared_overrides");
