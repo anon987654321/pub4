@@ -274,6 +274,16 @@ when "land"
     die("land", "green before rebase, off after it, origin/main moved under you")
   end
 
+  # Booting reaches only the files the boot requires; a file that does not parse
+  # anywhere else waits for whoever loads it next. Prism answers for all of them.
+  require "operator/parse_sweep"
+  broken = Operator::ParseSweep.failures(ROOT)
+  unless broken.empty?
+    Master::Trace::Dmesg::Report.print("parse", Operator::ParseSweep.render(broken.first(10)), io: $stderr)
+    die("land", "#{broken.size} tracked Ruby file(s) do not parse; nothing pushed")
+  end
+  Master::Trace::Dmesg.status("land0", "every Ruby file parses")
+
   # And the runtime itself. Green ratchets say nothing about a require that the
   # rebase left dangling (core/capabilities, twice in one day): only booting does.
   smoke_out, smoke_ok = run!(File.join(__dir__, "ruby"), File.join(ROOT, "MASTER", "tools", "boot_smoke.rb"))

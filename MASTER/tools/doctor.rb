@@ -68,6 +68,23 @@ def boot
   end
 end
 
+# --- parse: a file that does not parse stops the runtime before any check can say why ---
+def parse
+  require File.join(MASTER, "lib", "operator", "parse_sweep")
+  broken = Operator::ParseSweep.failures(ROOT)
+  return say(:ok, "parse", "every tracked Ruby file parses") if broken.empty?
+
+  say(:FAIL, "parse", "#{broken.size} file(s) do not parse, first #{Operator::ParseSweep.render(broken.first(1))}")
+end
+
+# --- hooks: the commit guards only exist where core.hooksPath points at them -------------
+def hooks
+  path, = run("git", "-C", ROOT, "config", "core.hooksPath")
+  return say(:ok, "hooks", "commit guards installed (#{path.strip})") if path.strip.end_with?("githooks")
+
+  say(:warn, "hooks", "no commit guards in this checkout, so a Ruby file that does not parse can be committed: bin/operator hooks")
+end
+
 # --- worktrees: each is a full checkout; merged ones are dead weight ----------------
 def worktrees
   out, = run("git", "-C", ROOT, "worktree", "list", "--porcelain")
@@ -135,6 +152,8 @@ end
 disk
 rubies
 boot
+parse
+hooks
 worktrees
 git_state
 lanes
