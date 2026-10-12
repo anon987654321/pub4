@@ -23,6 +23,7 @@ require 'shellwords'
 SAMPLE_RATE = 44_100
 MAX_OFFSET = 0.035 # seconds: no role is ever moved further than this from its place
 NYQUIST_SHARE = 0.45 # a partial above this share of the sample rate is skipped, never folded back
+MAX_DETUNE = 0.0035
 AUDIBLE_TOP_HZ = 14_000.0 # --transpose-wrap folds a note down by octaves until it is under this
 
 # ---------------------------------------------------------------- WAV writer
@@ -681,9 +682,10 @@ module Arp
         p.gain = (p.gain + rng.rand(-g..g)).clamp(0.0, 1.0)
       end
     when 'grace'
-      interval = params.fetch('interval', -1)
+      tones = params.fetch('tones', []).sort # a grace note is the next chord tone below, never a chromatic neighbour
       plucks.flat_map do |p|
-        grace = Pluck.new(p.base - [p.dur * 0.18, 0.035].max, p.off, Array(p.midi).map { |m| m + interval }.then { |m| p.midi.is_a?(Array) ? m : m.first }, [p.dur * 0.12, 0.018].max, p.gain * params.fetch('gain', 0.3))
+        below = Array(p.midi).map { |m| tones.reverse.find { |t| t < m } || m }
+        grace = Pluck.new(p.base - [p.dur * 0.18, 0.035].max, p.off, p.midi.is_a?(Array) ? below : below.first, [p.dur * 0.12, 0.018].max, p.gain * params.fetch('gain', 0.3))
         [grace, p]
       end
     else raise ArgumentError, "no arp modifier #{name.inspect}"
@@ -708,7 +710,7 @@ end
 module Echo
   MAX_INTENSITY = 0.9 # feedback never reaches one, so the loop cannot run away
 
-  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0, tail: 4.0)
+  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0, tail: 4.0, resets: [])
     intensity = intensity.to_f.clamp(0.0, MAX_INTENSITY)
     d = [(delay * SAMPLE_RATE).round, 1].max
     ring = Array.new((heads.max * d) + 1, 0.0)
@@ -718,7 +720,12 @@ module Echo
     share = 1.0 / heads.size
     y = 0.0
     wet = Array.new(buf.size + tail, 0.0)
+    cuts = resets.to_h { |at| [at, true] }
     wet.each_index do |n|
+      if cuts[n] # a chord changes: what the heads still hold belongs to the old chord and goes quiet
+        ring.fill(0.0)
+        y = 0.0
+      end
       taps = 0.0
       heads.each { |h| taps += ring[(n - (h * d)) % ring.size] }
       y += (1.0 - cutoff) * ((Math.tanh(taps * share * drive) / drive) - y)
@@ -757,7 +764,8 @@ class Sequencer
     @pd_amount = (pd_amount || @profile.fetch('pd_amount', 1.0)).to_f.clamp(0.0, 1.5)
   end
 
-  def detune = (@profile['texture'] || {}).fetch('detune', 0.0)
+  # Unison detune, kept to six cents (a frequency ratio of 0.0035) so the layers stay in tune.
+  def detune = [(@profile['texture'] || {}).fetch('detune', 0.0), MAX_DETUNE].min
 
   # The tempo the profile plays at unless --bpm says otherwise.
   def bpm = @profile.fetch('bpm', 88.0)
@@ -861,23 +869,41 @@ class Sequencer
 
   # The chords one note at a time. Each note starts on its step, late by the profile's swing
   # on the off-beat steps, never moved past MAX_OFFSET; an optional soft pad plays beneath.
-  def render_arp(names, bpm, beats, arp, search: true, pad: false, voice: nil)
-    voice ||= voice_spec(nil)
+  # The notes of every chord as events, before any audio: the arp's one-note steps, or the
+  # whole voicing struck on each 'x' of a 16-step pattern. Returns one pluck list per chord.
+  def note_events(names, bpm, beats, settings, mode, search: true)
     step = 60.0 / bpm / 4.0
-    rate = arp.fetch('rate', 2).to_f
-    accent = arp.fetch('accent', [1.0])
+    accent = settings.fetch('accent', [1.0])
     chord_steps = (beats * 4).round
-    buf = Array.new((((names.size * chord_steps * step) + 1.0) * SAMPLE_RATE).to_i, 0.0)
-    Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |voices, idx|
-      pool = Arp.pool(voices, arp.fetch('octaves', 1))
-      notes = Arp.sequence(arp.fetch('pattern'), pool, (chord_steps / rate).floor, Zlib.crc32("#{@seed}:#{idx}"))
-      plucks = notes.each_with_index.filter_map do |midi, k|
-        next unless midi
+    Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index.map do |voices, idx|
+      if mode == 'arp'
+        rate = settings.fetch('rate', 2).to_f
+        pool = Arp.pool(voices, settings.fetch('octaves', 1))
+        notes = Arp.sequence(settings.fetch('pattern'), pool, (chord_steps / rate).floor, Zlib.crc32("#{@seed}:#{idx}"))
+        plucks = notes.each_with_index.filter_map do |midi, k|
+          place((idx * chord_steps) + (k * rate), step, midi, rate * step * settings.fetch('gate', 0.8), accent[k % accent.size]) if midi
+        end
+        modify(plucks, settings, idx, rate * step, accent.max, pool)
+      else
+        pattern = settings.fetch('pattern')
+        marks = (0...pattern.size).select { |i| pattern[i] == 'x' }
+        plucks = []
+        (0...chord_steps).step(pattern.size) do |bar|
+          marks.each_with_index do |m, j|
+            next if bar + m >= chord_steps
 
-        place(idx * chord_steps + (k * rate), step, midi, rate * step * arp.fetch('gate', 0.8), accent[k % accent.size])
+            gap = (marks[j + 1] || (pattern.size + marks[0])) - m
+            plucks << place((idx * chord_steps) + bar + m, step, voices, gap * step * settings.fetch('gate', 0.5), accent[plucks.size % accent.size])
+          end
+        end
+        modify(plucks, settings, idx, step * 2, accent.max, voices)
       end
-      sound(buf, modify(plucks, arp, idx, rate * step, accent.max), voice)
     end
+  end
+
+  def render_arp(names, bpm, beats, arp, search: true, pad: false, voice: nil)
+    buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
+    note_events(names, bpm, beats, arp, 'arp', search:).each { |plucks| sound(buf, plucks, voice || voice_spec(nil)) }
     if pad
       under = render_chords(names, bpm, beats, search:)
       under.each_with_index { |v, i| buf[i] += v * arp.fetch('pad', 0.3) if i < buf.size }
@@ -885,28 +911,11 @@ class Sequencer
     buf
   end
 
-  # The whole voicing struck on each 'x' of a 16-step pattern, again in every bar of the chord.
-  # A hit lasts the gate share of the distance to the next one.
+  # The whole voicing struck again on the steps of a style; a hit lasts the gate share of the
+  # distance to the next one.
   def render_repeat(names, bpm, beats, comp, search: true, voice: nil)
-    voice ||= voice_spec(nil)
-    step = 60.0 / bpm / 4.0
-    accent = comp.fetch('accent', [1.0])
-    chord_steps = (beats * 4).round
-    pattern = comp.fetch('pattern')
-    marks = (0...pattern.size).select { |i| pattern[i] == 'x' }
-    buf = Array.new((((names.size * chord_steps * step) + 1.0) * SAMPLE_RATE).to_i, 0.0)
-    Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |voices, idx|
-      plucks = []
-      (0...chord_steps).step(pattern.size) do |bar|
-        marks.each_with_index do |m, j|
-          next if bar + m >= chord_steps
-
-          gap = (marks[j + 1] || (pattern.size + marks[0])) - m
-          plucks << place((idx * chord_steps) + bar + m, step, voices, gap * step * comp.fetch('gate', 0.5), accent[plucks.size % accent.size])
-        end
-      end
-      sound(buf, modify(plucks, comp, idx, step * 2, accent.max), voice)
-    end
+    buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
+    note_events(names, bpm, beats, comp, 'repeat', search:).each { |plucks| sound(buf, plucks, voice || voice_spec(nil)) }
     buf
   end
 
@@ -916,10 +925,10 @@ class Sequencer
     Pluck.new(s * step, (@profile.fetch('swing', 0.5) - 0.5) * 2 * pair * @pd_amount, midi, dur, gain)
   end
 
-  def modify(plucks, settings, idx, slot, peak)
+  def modify(plucks, settings, idx, slot, peak, tones)
     rng = Random.new(Zlib.crc32("#{@seed}:modifiers:#{idx}"))
     settings.fetch('modifiers', []).each do |name|
-      plucks = Arp.modify(plucks, name, settings.fetch(name, {}), rng, slot:, peak:)
+      plucks = Arp.modify(plucks, name, settings.fetch(name, {}).merge('tones' => tones), rng, slot:, peak:)
     end
     plucks
   end
@@ -937,12 +946,12 @@ class Sequencer
   end
 
   # Echo on a buffer, the delay from the settings: milliseconds if given, else a number of beats.
-  def echo(buf, settings, bpm)
+  def echo(buf, settings, bpm, resets: [])
     delay = settings['time_ms'] ? settings['time_ms'] / 1000.0 : settings.fetch('time_beats') * 60.0 / bpm
     out = Echo.process(buf, delay:, heads: settings.fetch('heads'), intensity: settings.fetch('intensity'),
                             volume: settings.fetch('echo_volume'), lowpass: settings['lowpass'],
                             saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0),
-                            tail: settings.fetch('tail', 4.0))
+                            tail: settings.fetch('tail', 4.0), resets:)
     peak = out.map(&:abs).max
     peak > 1.0 ? out.map { |v| v / peak } : out
   end
@@ -1205,7 +1214,7 @@ def render(data, options)
   vcs = seq.vcs_amount(options[:vcs])
   buf = seq.colour(buf, seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances]), vcs)
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
-  buf = seq.echo(buf, echo, bpm) if echo
+  buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
   seconds = buf.size / SAMPLE_RATE.to_f
   hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
   levels = seq.mix(options[:mix])

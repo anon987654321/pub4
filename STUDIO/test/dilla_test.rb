@@ -547,9 +547,9 @@ class DillaTest < Minitest::Test
   end
 
   def test_grace_notes_come_before_the_note_and_softer
-    out = modify("grace", { "interval" => -1, "gain" => 0.3 }, count: 2)
+    out = modify("grace", { "tones" => [57, 58, 60], "gain" => 0.3 }, count: 2)
     assert_equal 4, out.size
-    assert_equal [59, 60], out.first(2).map(&:midi)
+    assert_equal [58, 60], out.first(2).map(&:midi), "the next chord tone below, not a chromatic neighbour"
     assert_operator out[0].base, :<, out[1].base
     assert_in_delta 0.3, out[0].gain, 1e-9
   end
@@ -770,6 +770,55 @@ class DillaTest < Minitest::Test
     assert_equal PROGRESSIONS.size, (a + b).uniq.size
     assert_equal (a + b).size, (a + b).uniq.size, "the 105 of the first cycle each came once across the restart"
     assert_equal "1/105", Playlist.new(DATA, Random.new(3)).tap { |l| l.draw }.then { |l| l.instance_variable_get(:@bags)["progressions"].position }
+  end
+
+  # ------------------------------------------------------------- the harmony audit
+
+  # Every note event any arp or repeat style plays, for every progression, is a tone of the
+  # chord it sits in (so also of its scale); the events are read before any audio is made.
+  def test_every_note_event_is_a_chord_tone_across_all_progressions_and_styles
+    played = 0
+    outside = []
+    styles = [["arp", DATA.dig("arp", "styles").keys], ["repeat", DATA.dig("comp", "styles").keys]]
+    PROGRESSIONS.each_with_index do |names, index|
+      voicings = Chords.midi_notes(names)
+      styles.each do |mode, keys|
+        keys.each do |style|
+          seq = sequencer("dry", seed: index)
+          settings = mode == "arp" ? seq.arp_settings(nil, style:) : seq.comp_settings(style)
+          settings = settings.merge("modifiers" => [])
+          streams = seq.note_events(names, 88.0, 4.0, settings, mode)
+          streams.each_with_index do |plucks, i|
+            chord = Chords.parse(names[i])
+            allowed = (chord[:tones].map { |t| (chord[:pc] + t) % 12 } + [chord[:bass] || chord[:pc]]).uniq
+            plucks.flat_map { |p| Array(p.midi) }.each do |n|
+              played += 1
+              outside << [index, names[i], style, n] unless allowed.include?(n % 12)
+            end
+            assert_equal voicings[i].size >= 3, true
+          end
+        end
+      end
+    end
+    assert_operator played, :>, 10_000
+    assert_empty outside.first(5), "#{outside.size} of #{played} note events fall outside their chord"
+  end
+
+  def test_the_echo_forgets_the_old_chord_at_a_chord_change
+    d = 2000
+    input = Array.new(d * 20, 0.0)
+    input[10] = 1.0
+    plain = Echo.process(input, delay: d.to_f / SAMPLE_RATE, heads: [1], intensity: 0.8, volume: 1.0, lowpass: nil, saturation: 0.0, tail: 0.1)
+    cut = Echo.process(input, delay: d.to_f / SAMPLE_RATE, heads: [1], intensity: 0.8, volume: 1.0, lowpass: nil, saturation: 0.0, tail: 0.1, resets: [d * 10])
+    assert_operator plain[(d * 10) + 100, d * 5].map(&:abs).max, :>, 0.05, "without the reset the repeats go on over the next chord"
+    assert_in_delta 0.0, cut[(d * 10) + 10, d * 5].map(&:abs).max, 1e-9
+    assert_equal plain.first(d * 10), cut.first(d * 10)
+  end
+
+  def test_unison_detune_stays_within_six_cents
+    DATA.fetch("groove_profiles").each_key do |name|
+      assert_operator 1200 * Math.log2(1 + sequencer(name).detune), :<=, 6.1, name
+    end
   end
 
   # ------------------------------------------------------------- the sidechain
