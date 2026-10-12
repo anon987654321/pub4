@@ -168,6 +168,12 @@ css_constitution:
   pass: "CSS constitution gate passed (all stylesheets)."
   covered_by: layout_suite
 
+css_brace_balance:
+  require: lib/source/css_brace_balance
+  class: Deploy::CssBraceBalanceGate
+  pass: "CSS brace balance gate passed (all source stylesheets)."
+  covered_by: layout_suite
+
 scale_ratchet:
   require: lib/source/scale_ratchet
   class: Deploy::ScaleRatchetGate
