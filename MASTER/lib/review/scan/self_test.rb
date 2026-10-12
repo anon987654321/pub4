@@ -411,12 +411,20 @@ module Master
           registered = Master::Review::Scan::Law.registry.filter_map do |klass|
             Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
           end
-          # A rule declared in laws.yml with no Ruby class is still a rule — 126
-          # of the 227 are semantic-only. Checking a principle's law_ids against
-          # the registry alone calls those unknown and reads as a broken map.
+          # A mapped id can be implemented by the scanner registry, an executable
+          # Law.define definition, or the eight constitutional entries in laws.yml.
+          # Checking only one population turns valid cross-layer mappings into
+          # false unknown-reference findings.
           declared = Master.law_entries(root: @root)
                            .map { |rule| rule["id"].to_s.upcase }
-          map.integrity(registered_law_ids: registered | declared).map do |msg|
+          executable = []
+          law_dir = File.join(@root, "law")
+          if @root == Master::ROOT && File.file?(File.join(law_dir, "definition.rb"))
+            require File.join(law_dir, "definition")
+            ::Law.load_all(law_dir) if ::Law.definitions.empty?
+            executable = ::Law.definitions.keys.map { |id| id.to_s.upcase }
+          end
+          map.integrity(registered_law_ids: registered | declared | executable).map do |msg|
             finding(path:, line: 1, message: msg)
           end
         rescue StandardError => e
