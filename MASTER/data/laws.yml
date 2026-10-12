@@ -4543,6 +4543,7 @@ face_ascii:
   terminal_toggle_key: ctrl-v
   web_overlay: true
   web_toggle_key: v
+  web_law_toggle_key: l
   browser_point_budget: 1100
   reduced_motion_respected: true
   browser_uses_existing_frame_clock: true
