@@ -150,9 +150,9 @@ class TestLawsYamlRegistry < Minitest::Test
 
   def test_voice_yml_declares_language_specific_voices
     tts = Master.load_yaml(File.join(DATA, "voice.yml")).fetch("tts")
-    assert_equal "jenny", tts.fetch("language_voices").fetch("en")
+    assert_equal "christopher", tts.fetch("language_voices").fetch("en")
     assert_equal "pernille", tts.fetch("language_voices").fetch("nb")
-    assert_equal "jenny", tts.fetch("single_voice")
+    assert_equal "christopher", tts.fetch("single_voice")
   end
 
   def test_voice_yml_loads_strunk

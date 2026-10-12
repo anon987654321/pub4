@@ -221,8 +221,10 @@ end
 
       VOICE_IDLE_SIGNATURES = {
         # The policy voice needs its own tuning here or the face idles on the
-        # generic fallback while the voice speaks. Jenny is the English policy
-        # voice, so her face signature is part of the same contract.
+        # generic fallback while the voice speaks. Christopher is the English policy
+        # voice, so his face signature is part of the same contract. It carries
+        # Andrew's values until the operator tunes one by ear.
+        christopher: { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
         jenny: { breath: 0.98, saccade: 0.14, pulse_floor: 0.07, blink_ms: 3400 },
         ezinne: { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
         osman: { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },

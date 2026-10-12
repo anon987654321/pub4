@@ -273,6 +273,7 @@ const VOICE_IDLE_SIGNATURES = {
   'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
+  'en-US-ChristopherNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
   'en-US-JennyNeural': { breath: 0.98, saccade: 0.14, pulse_floor: 0.07, blink_ms: 3400 },
   'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 },
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3000 },
@@ -300,8 +301,8 @@ function setVoiceName(voice, opts = {}) {
   // back onto the Norwegian voice, which is the opposite of the policy whatever
   // the policy voice happens to be: a voice asked for is the voice used. The
   // single-voice lock lives in guardVoice, which reads MASTER_VOICE_POLICY, not
-  // in a hardcoded rewrite here. (Policy voice is en-US-JennyNeural as of
-  // 2026-09-12; nothing in this function should need to know that.)
+  // in a hardcoded rewrite here. (The policy voice is data/voice.yml's;
+  // nothing in this function should need to know that.)
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -434,7 +435,7 @@ function speechVoiceForText(text) {
     const alias = String(configured).toLowerCase();
     return VOICE_ALIASES[alias] || String(configured);
   }
-  return window.MASTER_VOICE_POLICY?.neural || 'en-US-JennyNeural';
+  return window.MASTER_VOICE_POLICY?.neural || 'en-US-ChristopherNeural';
 }
 
 const State = {

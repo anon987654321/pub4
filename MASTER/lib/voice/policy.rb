@@ -13,17 +13,17 @@ module Master
       # the exact voice/neural mismatch the file's comment describes. post_chain
       # is nil so an unreadable voice.yml speaks dry rather than failing.
       FALLBACK = {
-        "single_voice" => "jenny",
-        "neural" => "en-US-JennyNeural",
+        "single_voice" => "christopher",
+        "neural" => "en-US-ChristopherNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => true,
-        "default_rate" => "-5%",
+        "default_rate" => "+0%",
         "default_pitch" => "+0Hz",
         "operator_log" => { "voice" => "christopher", "rate" => "-10%", "pitch" => "+0Hz" },
-        "rotation" => %w[jenny],
-        "language_voices" => { "en" => "jenny", "nb" => "pernille", "ms" => "yasmin" },
+        "rotation" => %w[christopher],
+        "language_voices" => { "en" => "christopher", "nb" => "pernille", "ms" => "yasmin" },
         "language_voice_families" => {
-          "en" => { "female" => "jenny", "male" => "andrew" },
+          "en" => { "female" => "jenny", "male" => "christopher" },
           "nb" => { "female" => "pernille", "male" => "finn" },
           "ms" => { "female" => "yasmin", "male" => "osman" },
         },
@@ -153,7 +153,9 @@ module Master
         lang = language.to_s.strip.downcase
         family = language_voice_families[lang]
         requested_gender = gender.to_s.strip.downcase
-        requested_gender = ENV.fetch("MASTER_TTS_GENDER", "female").to_s.strip.downcase if requested_gender.empty?
+        requested_gender = ENV.fetch("MASTER_TTS_GENDER", "").to_s.strip.downcase if requested_gender.empty?
+        # No gender asked for anywhere: the declared language voice is the default.
+        family = nil if requested_gender.empty? && language_voices.key?(lang)
         if family
           chosen = family[requested_gender] || family["female"] || family.values.first
           return chosen if Speech::VOICES.key?(chosen)
@@ -207,11 +209,78 @@ module Master
         value.is_a?(Hash) && value["enabled"] != false && !value.empty? ? value : {}
       end
 
-      # post_chain plus the room, as ffmpeg runs it. The browser is handed the
-      # two apart (browser_payload) because it builds the room from WebAudio.
+      # post_chain, the dilla rack, the room, the rack's stereo units and the
+      # final ceiling, as ffmpeg runs it. The browser is handed the parts apart
+      # (browser_payload) because it builds the room and the rack from WebAudio.
+      # With the rack off this is post_chain plus the room, as it always was.
       def shaped_chain
         wet = room_chain
-        wet ? [post_chain, wet].compact.join(",") : post_chain
+        return [post_chain, character_chain, wet].compact.join(",") if !fx_enabled? || fx_units.empty?
+
+        stereo = fx_chain("stereo")
+        widen = "pan=stereo|c0=c0|c1=c0" if stereo && wet.nil?
+        [post_chain, "volume=#{format('%g', fx_config.fetch('in_db', 0))}dB", fx_chain("mono"), character_chain, wet, widen, stereo,
+         "volume=#{format('%g', fx_config.fetch('trim_db', 0))}dB",
+         "alimiter=limit=#{format('%g', fx_config.fetch('ceiling', 0.8))}:level=disabled:attack=2:release=50"].compact.join(",")
+      end
+
+      # dilla's effects as a rack, voice.yml `dilla_fx`. Off when the section is
+      # absent or disabled, when the profile switches it off, or when
+      # MASTER_TTS_FX is 0, off, false or no.
+      def fx_config
+        value = data["dilla_fx"]
+        value.is_a?(Hash) ? value : {}
+      end
+
+      def fx_enabled?
+        return false if %w[0 off false no].include?(ENV["MASTER_TTS_FX"].to_s.strip.downcase)
+
+        fx_config["enabled"] == true
+      end
+
+      # The enabled units, each with its %{level} filled in, in rack order.
+      def fx_units
+        Array(fx_config["units"]).select { |unit| unit.is_a?(Hash) && unit["enabled"] != false && !unit["filter"].to_s.strip.empty? }
+                                 .map { |unit| unit.merge("filter" => unit["filter"].to_s.gsub("%{level}", format("%g", unit["level"].to_f))) }
+      end
+
+      # One region's units as a single -af chain, nil when it has none. After the
+      # last unit of each stage comes that stage's makeup (`stage_trim_db`), so
+      # the next stage sees the level dilla's racks are gain-matched at.
+      def fx_chain(region)
+        return unless fx_enabled?
+
+        units = fx_units.select { |unit| unit.fetch("region", "mono") == region }
+        trims = fx_config["stage_trim_db"].is_a?(Hash) ? fx_config["stage_trim_db"] : {}
+        parts = units.each_with_index.flat_map do |unit, i|
+          trim = trims.fetch(unit["stage"], 0).to_f
+          last = units[i + 1].nil? || units[i + 1]["stage"] != unit["stage"]
+          last && trim != 0 ? [unit["filter"], "volume=#{format('%g', trim)}dB"] : [unit["filter"]]
+        end
+        parts.empty? ? nil : parts.join(",")
+      end
+
+      # Character presets (voice.yml `character`), all off unless switched on in
+      # the file or named by MASTER_TTS_CHARACTER; "none" and "0" force them off.
+      def character_names
+        presets = data["character"].is_a?(Hash) ? data["character"] : {}
+        named = ENV["MASTER_TTS_CHARACTER"].to_s.strip.downcase
+        return [] if %w[none 0 off].include?(named)
+        return presets.key?(named) ? [named] : [] unless named.empty?
+
+        presets.select { |_name, row| row.is_a?(Hash) && row["enabled"] == true }.keys
+      end
+
+      def character_chain
+        parts = character_names.map { |name| data["character"][name]["filter"].to_s.strip }.reject(&:empty?)
+        parts.empty? ? nil : parts.join(",")
+      end
+
+      def fx_payload
+        return { enabled: false, units: [] } unless fx_enabled?
+
+        { enabled: true, in_db: fx_config.fetch("in_db", 0), trim_db: fx_config.fetch("trim_db", 0), stage_trim_db: fx_config.fetch("stage_trim_db", {}), ceiling: fx_config.fetch("ceiling", 0.8),
+          units: fx_units.map { |unit| unit.slice("id", "stage", "region", "status", "filter") } }
       end
 
       # Mono to stereo, a short delay on one side for width, reflections as
@@ -332,6 +401,8 @@ module Master
           voices: voice_aliases,
           post_chain:,
           room:,
+          dilla_fx: fx_payload,
+          character: character_names.map { |name| { id: name, filter: data["character"][name]["filter"] } },
           awareness:,
           mouth:,
           prosody:,

@@ -69,8 +69,7 @@ module Master
         ezinne: "en-NG-EzinneNeural",
         jenny: "en-US-JennyNeural",
         # One-off read-out mouths for the operator's asks. The rotation never
-        # picks these: single_voice stays jenny and rotation is her and
-        # christopher, so an alias only speaks when a caller names it and
+        # picks these: single_voice and rotation are christopher, so an alias only speaks when a caller names it and
         # locks it.
         elsa: "it-IT-ElsaNeural",
         prabhat: "en-IN-PrabhatNeural",

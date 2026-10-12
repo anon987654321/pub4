@@ -270,7 +270,7 @@ class TestSpeech < Minitest::Test
 
   def test_norwegian_text_resolves_to_pernille
     assert_equal :pernille, Master::Voice::Speech.voice_for_text("Det ser faktisk riktig ut.")
-    assert_equal :jenny, Master::Voice::Speech.voice_for_text("The system is ready.")
+    assert_equal :christopher, Master::Voice::Speech.voice_for_text("The system is ready.")
   end
 
   def test_language_voice_families_keep_male_counterparts
@@ -630,7 +630,7 @@ class TestSpeech < Minitest::Test
   def test_no_profile_leaves_the_voice_exactly_as_declared
     with_profile(nil) do
       assert_equal "", Master::Voice::Policy.profile_name
-      assert_equal "-5%", Master::Voice::Policy.default_rate
+      assert_equal "+0%", Master::Voice::Policy.default_rate
       assert_empty Master::Voice::Policy.layers
       refute Master::Voice::Layers.active?
     end
@@ -680,11 +680,15 @@ class TestSpeech < Minitest::Test
                         "-f", "null", "-"], err: %i[child out], &:read)
         out.scan(/I:\s+(-?[\d.]+) LUFS/).last.first.to_f
       end
+      # The room alone, which is what this holds to the dry voice; the dilla rack
+      # is measured in test_dilla_fx.rb.
+      ENV["MASTER_TTS_FX"] = "0"
       with_profile(nil) do
         wet = loudness.call(Master::Voice::Policy.shaped_chain)
         dry = loudness.call(Master::Voice::Policy.post_chain)
         assert_in_delta dry, wet, 1.0
       end
+      ENV.delete("MASTER_TTS_FX")
     end
   end
 
@@ -703,7 +707,7 @@ class TestSpeech < Minitest::Test
 
   def test_an_unknown_profile_speaks_the_default_voice
     with_profile("no-such-profile") do
-      assert_equal "-5%", Master::Voice::Policy.default_rate
+      assert_equal "+0%", Master::Voice::Policy.default_rate
       refute Master::Voice::Layers.active?
     end
   end

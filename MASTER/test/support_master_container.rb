@@ -39,8 +39,8 @@ module Master
         YML
         "voice.yml" => <<~YML,
           tts:
-            single_voice: jenny
-            neural: en-US-JennyNeural
+            single_voice: christopher
+            neural: en-US-ChristopherNeural
             persona_affects_text_only: true
           voice:
             strunk:

@@ -3,8 +3,9 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  # English defaults to en-US-JennyNeural. Norwegian speech is a separate
-  # declared language route and MUST use nb-NO-PernilleNeural.
+  # English defaults to en-US-ChristopherNeural (operator order 2026-10-12).
+  # Norwegian speech is a separate declared language route and MUST use
+  # nb-NO-PernilleNeural.
   #
   # language_voices is the source of truth for text-to-voice selection. The
   # Policy fallback, CLI Speech, web controller and face all read it instead of
@@ -12,19 +13,21 @@ tts:
   # English is the default voice. Norwegian is always spoken by Pernille.
   # The language map takes precedence over single_voice; single_voice is the
   # fallback for text whose language cannot be determined.
-  single_voice: jenny
-  neural: en-US-JennyNeural
+  single_voice: christopher
+  neural: en-US-ChristopherNeural
   rotation:
-    - jenny
-  # Language locks are families, not a stylistic lottery. Female is the default;
-  # MASTER_TTS_GENDER=male selects the declared male counterpart for that
-  # language. English remains Jenny unless an explicit operator policy changes it.
+    - christopher
+  # Language locks are families, not a stylistic lottery. With no gender asked
+  # for, language_voices decides (English: Christopher). MASTER_TTS_GENDER=female
+  # selects the declared female counterpart for that language (English: Jenny)
+  # and =male the male one (English: Christopher; Andrew stays reachable by
+  # name). Norwegian stays Pernille, Malay Yasmin, whichever way it is asked.
   language_voices:
-    en: jenny
+    en: christopher
     nb: pernille
     ms: yasmin
   language_voice_families:
-    en: { female: jenny, male: andrew }
+    en: { female: jenny, male: christopher }
     nb: { female: pernille, male: finn }
     ms: { female: yasmin, male: osman }
   persona_affects_text_only: true
@@ -58,11 +61,12 @@ tts:
   # from neutral and is retuned by ear. Roughly ±15% rate and ±50Hz is where
   # Azure neural voices stay natural.
   #
-  # Small negative rate gives the neural voice room for sentence rhythm without
-  # stretching vowels into an artificial drawl. Pitch stays neutral; sentence
-  # roles add only a few hertz where useful.
-  default_rate: "-5%"
-  default_pitch: "-12Hz"
+  # Christopher became the default voice on 2026-10-12, so rate and pitch are
+  # back at neutral until the operator retunes them by ear. The values this
+  # file carried before (-5%, -12Hz) were set against Jenny. Christopher's
+  # operator_log line below was tuned by ear and is untouched.
+  default_rate: "+0%"
+  default_pitch: "+0Hz"
   operator_log:
     voice: christopher
     rate: "-10%"
@@ -93,6 +97,456 @@ tts:
   # processing should reveal articulation, control peaks, and leave the melody
   # alone rather than imposing a synthetic character.
   post_chain: "highpass=f=65,equalizer=f=145:t=q:w=0.8:g=0.8,equalizer=f=700:t=q:w=1.0:g=0.6,equalizer=f=2800:t=q:w=1.1:g=1.2,lowpass=f=13500,acompressor=threshold=-19dB:ratio=1.5:attack=10:release=120:makeup=1,volume=12dB,alimiter=limit=0.98"
+
+  # Every effect dilla.rb and its lib/ own, as ffmpeg filters, run after
+  # post_chain (mono) and before the room; `region: stereo` units run after the
+  # room. Each unit carries dilla's own default parameters (the test in
+  # test_dilla_fx.rb rebuilds them from STUDIO/dilla/lib/sound.rb and fails on
+  # drift), a `level` where dilla has one primary amount (substituted for
+  # %{level} in the filter), and a status: exact, approximated (the nearest
+  # ffmpeg filter, named in `note`), or unavailable (no ffmpeg equivalent).
+  # Operator order 2026-10-12: all of them, on.
+  #
+  # Switches: `enabled: false` on one unit, `dilla_fx.enabled: false` for the
+  # whole rack, or MASTER_TTS_FX=0 in the environment. Retune a unit by editing
+  # its `level`, or its filter. The asmr and human profiles switch the rack off
+  # because their chains are declared complete.
+  #
+  # Gain staging: the units are ordered dynamics, tone, saturation, modulation,
+  # time, crackle, then (after the room) stereo. `in_db` brings the chain's
+  # output to the -18 LUFS dilla's racks are gain-matched at (sound.rb, dub
+  # rack notes), because drive_db units assume that level; `stage_trim_db` restores it after
+  # each stage, `trim_db` is the final makeup and `ceiling` the final limiter (linear; 0.8 is
+  # -1.9 dBFS, which keeps true peak under -1 dBTP on speech).
+  dilla_fx:
+    enabled: true
+    in_db: -8.3
+    stage_trim_db: { dynamics: 4.4, tone: -1.6, saturation: 8.2, modulation: 0.4, time: 5.7, stereo: 4.6 }
+    trim_db: 8.2
+    ceiling: 0.8
+    units:
+      - id: program_memory
+        stage: dynamics
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.program_memory"
+        filter: "acompressor=threshold=%{level}dB:ratio=1.2:attack=12:release=420:knee=4:detection=rms:makeup=1.0"
+        level: -18
+        level_name: threshold_db
+      - id: fairchild670
+        stage: dynamics
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.fairchild670"
+        filter: "acompressor=threshold=%{level}dB:ratio=1.8:attack=25:release=400:knee=8:detection=rms:makeup=1.1"
+        level: -20
+        level_name: threshold_db
+      - id: la2a
+        stage: dynamics
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.la2a"
+        filter: "acompressor=threshold=%{level}dB:ratio=3.0:attack=10:release=600:knee=8:detection=rms:makeup=1.15"
+        level: -18
+        level_name: threshold_db
+      - id: stc8
+        stage: dynamics
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.stc8"
+        filter: "acompressor=threshold=%{level}dB:ratio=2.0:attack=15:release=300:makeup=1.08:detection=rms"
+        level: -14
+        level_name: threshold_db
+        note: "release is the 300 ms dilla uses when no tempo is given (speech has none)"
+      - id: fet1176
+        stage: dynamics
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.fet1176"
+        filter: "acompressor=threshold=%{level}dB:ratio=12.0:attack=0.4:release=90:knee=2:detection=peak:makeup=1.25"
+        level: -16
+        level_name: threshold_db
+      - id: pultec_low
+        stage: tone
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.pultec_low"
+        filter: "equalizer=f=100:t=q:w=0.7:g=%{level},equalizer=f=280:t=q:w=1.1:g=-3.0"
+        level: 4.0
+        level_name: boost_db
+      - id: pultec_low_dub
+        stage: tone
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.pultec_low_dub"
+        filter: "equalizer=f=80:t=q:w=0.7:g=7.5,equalizer=f=224:t=q:w=1.1:g=-1.5"
+      - id: pultec_air
+        stage: tone
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.pultec_air"
+        filter: "equalizer=f=12000:t=h:w=0.6:g=%{level},equalizer=f=4200:t=q:w=1.4:g=-1.0"
+        level: 2.5
+        level_name: boost_db
+      - id: gml_matte
+        stage: tone
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.gml_matte"
+        filter: "equalizer=f=11000:t=h:w=0.5:g=%{level}"
+        level: 2.0
+        level_name: gain_db
+      - id: harshness_notch
+        stage: tone
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/listen.rb harshness_notch_parts"
+        filter: "equalizer=f=4200:t=h:w=800:g=-2.5,equalizer=f=6800:t=h:w=1200:g=-1.8"
+      - id: dub_darken
+        stage: tone
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.dub_darken"
+        filter: "equalizer=f=6000:t=h:w=0.7:g=-%{level},lowpass=f=11000"
+        level: 9.0
+        level_name: cut_db
+      - id: hedd_triode
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.hedd_triode"
+        filter: "volume=%{level}dB,dcshift=shift=0.35,asoftclip=type=tanh:param=2.4:oversample=4,dcshift=shift=-0.35,highpass=f=20,volume=-%{level}dB"
+        level: 12
+        level_name: drive_db
+      - id: hedd_pentode
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.hedd_pentode"
+        filter: "volume=%{level}dB,asoftclip=type=tanh:param=2.4:oversample=4,volume=-%{level}dB"
+        level: 24
+        level_name: drive_db
+      - id: hedd_tape
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.hedd_tape"
+        filter: "volume=%{level}dB,asoftclip=type=atan:param=2.2:oversample=4,volume=-%{level}dB,acompressor=threshold=-16dB:ratio=2.5:attack=8:release=180:makeup=1.1"
+        level: 14
+        level_name: drive_db
+      - id: neve_80
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.neve_80"
+        filter: "equalizer=f=55:t=q:w=0.8:g=0.8,volume=%{level}dB,dcshift=shift=0.12,asoftclip=type=tanh:param=1.4:oversample=4,dcshift=shift=-0.12,highpass=f=20,volume=-%{level}dB,lowpass=f=18500"
+        level: 3.2
+        level_name: drive_db
+      - id: api_console
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.api_console"
+        filter: "equalizer=f=75:t=q:w=1.0:g=1.0,equalizer=f=3200:t=q:w=1.4:g=1.4,volume=%{level}dB,asoftclip=type=tanh:param=2.4:oversample=4,volume=-%{level}dB,lowpass=f=19500"
+        level: 12
+        level_name: drive_db
+      - id: console_sum
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.console_sum"
+        filter: "allpass=f=90:width_type=q:w=0.6:order=2,allpass=f=1800:width_type=q:w=0.5:order=2,aphaser=in_gain=0.5:out_gain=1.9:delay=3.2:decay=0.15:speed=0.1:type=t,volume=%{level}dB,dcshift=shift=0.1,asoftclip=type=tanh:param=1.2:oversample=4,dcshift=shift=-0.1,highpass=f=18,volume=-1.0dB"
+        level: 5
+        level_name: drive_db
+      - id: console_stack
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.console_stack"
+        filter: "allpass=f=90:width_type=q:w=0.6:order=2,allpass=f=1800:width_type=q:w=0.5:order=2,aphaser=in_gain=0.5:out_gain=1.9:delay=3.2:decay=0.15:speed=0.1:type=t,volume=2.5dB,dcshift=shift=0.1,asoftclip=type=tanh:param=1.2:oversample=4,dcshift=shift=-0.1,highpass=f=18,volume=0.0dB,allpass=f=90:width_type=q:w=0.6:order=2,allpass=f=1800:width_type=q:w=0.5:order=2,volume=2.5dB,dcshift=shift=0.1,asoftclip=type=tanh:param=1.2:oversample=4,dcshift=shift=-0.1,highpass=f=18,allpass=f=90:width_type=q:w=0.6:order=2,allpass=f=1800:width_type=q:w=0.5:order=2,volume=2.5dB,dcshift=shift=0.1,asoftclip=type=tanh:param=1.2:oversample=4,dcshift=shift=-0.1,highpass=f=18,volume=5.4dB"
+        note: "three instances, the default dilla racks use (CONSOLE_STACK=3)"
+      - id: console_strip
+        stage: saturation
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb ConsoleStrip.process (seed 1)"
+        filter: "asplit=2[cs_a][cs_b];[cs_a]lowpass=f=115.582[cs_lo];[cs_b]highpass=f=115.582,dcshift=shift=-0.2608,asoftclip=type=tanh:param=1.3377:oversample=4,dcshift=shift=0.3354,lowpass=f=9880.54,volume=0.9155[cs_hi];[cs_lo][cs_hi]amix=inputs=2:weights=1 1:normalize=0,acompressor=threshold=0.3292:ratio=1.6:attack=12:release=160:makeup=1"
+        note: "per-sample Ruby shaper rebuilt from the same seed-1 drive/bias/crossover/hf/threshold; ffmpeg crossover is a 2-pole split, not dilla's one-pole subtraction"
+      - id: spacefx_fold
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.fold"
+        filter: "aeval=exprs='(val(0)*(1-%{level}))+(%{level}*if(gt(abs(val(0)*1.8)\\,1)\\,abs(val(0)*1.8-4*floor(val(0)*1.8/4+0.5))*2-1\\,val(0)*1.8))'"
+        level: 0.5
+        level_name: mix
+        note: "dilla's wavefolder written as an aeval expression, amount 1.8"
+      - id: spacefx_crush
+        stage: saturation
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.crush"
+        filter: "acrusher=bits=10:mode=lin:samples=3:mix=%{level}"
+        level: 0.6
+        level_name: mix
+        note: "bits 10, hold 3; acrusher rounds and holds like dilla's loop, with its own dither and aliasing"
+      - id: cassette
+        stage: saturation
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/listen.rb cassette_wow_parts"
+        filter: "vibrato=f=0.25:d=0.003,acrusher=bits=11:samples=2:mix=%{level}"
+        level: 0.12
+        level_name: mix
+        note: "dilla's cassette parts; acrusher mode is ffmpeg's default (lin)"
+      - id: tape_machine
+        stage: saturation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.tape_machine"
+        filter: "equalizer=f=50:t=q:w=1.2:g=1.5,vibrato=f=0.7:d=%{level},vibrato=f=6.3:d=0.03,lowpass=f=16500"
+        level: 0.08
+        level_name: wow_pct
+      - id: spacefx_tremolo
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.tremolo"
+        filter: "tremolo=f=4.2:d=%{level}"
+        level: 0.4
+        level_name: depth
+        note: "ffmpeg tremolo gain is 1-d*0.5*(1-lfo), the same law as dilla's"
+      - id: liquid_wobble
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.liquid_wobble"
+        filter: "vibrato=f=0.6:d=0.06"
+      - id: spacefx_chorus
+        stage: modulation
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.chorus"
+        filter: "chorus=in_gain=1:out_gain=1:delays=12:decays=%{level}:speeds=0.6:depths=4.5"
+        level: 0.35
+        level_name: mix
+        note: "centre 12 ms, depth 4.5 ms, 0.6 Hz; ffmpeg's interpolation and LFO shape differ from dilla's linear read"
+      - id: liquid_surface
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.liquid_surface"
+        filter: "chorus=0.85:0.9:22|34|48:0.4|0.34|0.28:3.2|2.24|4.16:0.35|0.6|0.21"
+      - id: spacefx_phaser
+        stage: modulation
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.phaser"
+        filter: "aphaser=in_gain=0.6:out_gain=0.9:delay=3.4:decay=0.4:speed=0.35:type=s"
+        note: "rate 0.35 Hz and feedback 0.4 are dilla's; aphaser has fixed stage count (not 6) and uses Outboard.dub_phaser's gains and delay"
+      - id: dub_phaser
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.dub_phaser"
+        filter: "aphaser=in_gain=0.6:out_gain=0.9:delay=3.4:decay=%{level}:speed=0.12:type=t"
+        level: 0.55
+        level_name: decay
+      - id: liquid_flow
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.liquid_flow"
+        filter: "aphaser=in_gain=0.55:out_gain=0.95:delay=4.2:decay=%{level}:speed=0.18:type=t"
+        level: 0.6
+        level_name: decay
+      - id: liquid_submerge
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.liquid_submerge"
+        filter: "asplit=2[lq_open][lq_deep];[lq_deep]lowpass=f=2600:width_type=q:width=0.7,volume=0.55[lq_d];[lq_open]apulsator=hz=0.07:amount=0.28:mode=sine[lq_o];[lq_o][lq_d]amix=inputs=2:weights=1 1:duration=first:normalize=0"
+      - id: freq_shift
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.freq_shift"
+        filter: "afreqshift=shift=%{level}:level=1.0"
+        level: 12
+        level_name: hz
+      - id: phase_rotate
+        stage: modulation
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.phase_rotate"
+        filter: "asplit=2[prdry][prwet];[prwet]aphaseshift=shift=0.35[prsh];[prdry][prsh]amix=inputs=2:weights=0.5 0.5:normalize=0"
+      - id: space_echo
+        stage: time
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.space_echo"
+        filter: "asplit=2[se_dry][se_wet];[se_wet]aecho=0.9:0.55:240|456|672:0.6|0.45|0.3,lowpass=f=3200,vibrato=f=0.9:d=0.12,aecho=0.85:0.44:864|1224:0.4|0.25,lowpass=f=2200,highpass=f=180,volume=%{level}[se_verb];[se_dry][se_verb]amix=inputs=2:weights=1 1:normalize=0"
+        level: 0.4
+        level_name: mix
+      - id: spacefx_space_echo
+        stage: time
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.space_echo"
+        filter: "asplit=2[sx_dry][sx_wet];[sx_wet]aecho=0:1:280|560|840:0.42|0.18|0.07,lowpass=f=8900,vibrato=f=0.7:d=0.7,volume=%{level}[sx_echo];[sx_dry][sx_echo]amix=inputs=2:weights=1 1:normalize=0"
+        level: 0.32
+        level_name: mix
+        note: "time 0.28 s, feedback 0.42 as three feed-forward taps (feedback powers 1, 2, 3), damping 0.28 as a 8.9 kHz one-pole equivalent, wow 0.7 Hz x 1.6 ms as vibrato depth 0.7; no tanh in the loop"
+      - id: delay_throw
+        stage: time
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.delay_throw"
+        filter: "asplit=2[dt_dry][dt_wet];[dt_wet]aecho=0.9:%{level}:320|640|960:0.7|0.5|0.35,lowpass=f=2600,highpass=f=200,volume=0:enable='gte(mod(t\\,25.263)\\,2.0)'[dt_throw];[dt_dry][dt_throw]amix=inputs=2:weights=1 1:normalize=0"
+        level: 0.62
+        level_name: feedback
+        note: "dilla's throw is open for the first 2 s of each 21.3 s bar window, so on speech the echo covers the first two seconds of an utterance"
+      - id: spring_reverb
+        stage: time
+        region: mono
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.spring_reverb"
+        filter: "asplit=2[sp_dry][sp_wet];[sp_wet]highpass=f=150,lowpass=f=4000,allpass=f=380:width_type=q:w=0.6,allpass=f=1250:width_type=q:w=0.5,allpass=f=2600:width_type=q:w=0.4,aecho=0.9:0.55:29|37|53|71:0.7|0.55|0.4|0.3,equalizer=f=1800:t=q:w=2.2:g=4,equalizer=f=3400:t=q:w=3.0:g=2.5,lowpass=f=3600,volume=%{level}[sp_verb];[sp_dry][sp_verb]amix=inputs=2:weights=1 1:normalize=0"
+        level: 0.42
+        level_name: mix
+      - id: spacefx_reverb
+        stage: time
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb SpaceFx.reverb"
+        filter: "asplit=2[rv_dry][rv_wet];[rv_wet]aecho=0:1:35.3|36.7|33.8|32.2|70.6|73.4|67.6|64.4:0.554|0.554|0.554|0.554|0.307|0.307|0.307|0.307[rv_tail];[rv_dry][rv_tail]amix=inputs=2:weights=0.7 %{level}:normalize=0"
+        level: 0.3
+        level_name: mix
+        note: "four comb delays 1557/1617/1491/1422 samples at 44.1 kHz as feed-forward taps at 1x and 2x with decay*(1-damping) per pass; dilla's recirculating combs and two Schroeder allpasses (225, 556 samples) have no ffmpeg filter; mix weights fixed at 0.7 dry"
+      - id: crackle
+        stage: time
+        region: mono
+        status: approximated
+        enabled: true
+        source: "STUDIO/dilla/lib/livesets.rb crackle (anoisesrc pink a=0.006, highpass 2200, volume 0.9, weight 0.30)"
+        filter: "asplit=2[ck_dry][ck_src];[ck_src]aeval=exprs='(random(0)*2-1)*0.006',highpass=f=2200,volume=0.9[ck_noise];[ck_dry][ck_noise]amix=inputs=2:weights=1 %{level}:normalize=0"
+        level: 0.3
+        level_name: weight
+        note: "white noise from aeval instead of pink anoisesrc (a source filter cannot sit in an -af chain); same amplitude, highpass, gain and mix weight"
+      - id: mono_bass
+        stage: stereo
+        region: stereo
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/sound.rb Outboard.mono_bass"
+        filter: "asplit=2[mb_lo][mb_hi];[mb_lo]lowpass=f=%{level},pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[mb_mono];[mb_hi]highpass=f=%{level}[mb_wide];[mb_mono][mb_wide]amix=inputs=2:weights=1 1:normalize=0"
+        level: 120
+        level_name: hz
+      - id: extrastereo
+        stage: stereo
+        region: stereo
+        status: exact
+        enabled: true
+        source: "STUDIO/dilla/lib/livesets.rb extrastereo"
+        filter: "extrastereo=m=%{level}"
+        level: 1.5
+        level_name: m
+        note: "the width dilla's chord_based_beats phrase uses"
+      - id: tape_hysteresis
+        stage: unavailable
+        region: mono
+        status: unavailable
+        enabled: false
+        source: "STUDIO/dilla/lib/sound.rb TapeHysteresis.process"
+        note: "Jiles-Atherton magnetisation solved per sample in Ruby; no ffmpeg filter. Nearest running equivalent is hedd_tape. Routing speech through the Ruby loop costs seconds per sentence on this box."
+      - id: copy_machine
+        stage: unavailable
+        region: mono
+        status: unavailable
+        enabled: false
+        source: "STUDIO/dilla/lib/sound.rb CopyMachine.build!"
+        note: "builds pitched and reversed copies of a file by speed ratio; pitch-shifting speech is refused (never pitch-shift vocals) and it needs a whole file, not a stream."
+      - id: low_pass_gate
+        stage: unavailable
+        region: mono
+        status: unavailable
+        enabled: false
+        source: "STUDIO/dilla/lib/sound.rb LowPassGate.process"
+        note: "a vactrol gate driven by note envelopes; speech has no note events and the Ruby loop is per sample."
+
+  # Optional character presets: ways to make MASTER sound less like itself,
+  # taken from the vocal-effects thread the operator pointed at (vocoding, ring
+  # modulation, formant shifting, doubling, glitch slicing, shimmer). All are OFF.
+  # A preset applies only when its `enabled` is true here, or when
+  # MASTER_TTS_CHARACTER=<name> names it (=none switches every preset off).
+  # They run after the dilla rack and before the room. The thread gives no
+  # numbers, so every value is the author's own judgement: retune by ear. This
+  # ffmpeg build has no vocoder and no rubberband, so none is exact. Vocoding and
+  # pitch correction are not offered: both need a second signal or a pitch tracker.
+  character:
+    robot:
+      enabled: false
+      status: approximated
+      filter: "aeval=exprs='val(0)*(0.3+0.7*sin(2*PI*t*50))',aecho=1:0.7:7:0.4"
+      note: "ring modulation written as aeval (ffmpeg's amultiply needs a second input, which an -af chain cannot have): 50 Hz sine, 70% depth, plus a 7 ms comb from aecho. Values are the author's judgement."
+    formant:
+      enabled: false
+      status: approximated
+      filter: "aformat=sample_rates=24000,asetrate=28800,aresample=24000,atempo=0.833333"
+      note: "this ffmpeg build has no rubberband, so formants cannot move alone: asetrate x1.2 shifts pitch and formants together and atempo 0.8333 restores the duration. Values are the author's judgement."
+    doubler:
+      enabled: false
+      status: approximated
+      filter: "asplit=2[dbl_a][dbl_b];[dbl_b]aformat=sample_rates=24000,asetrate=24168,aresample=24000,atempo=0.99304,adelay=24,chorus=0.6:0.9:30:0.3:0.25:2,volume=0.7[dbl_c];[dbl_a][dbl_c]amix=inputs=2:weights=1 1:normalize=0"
+      note: "a 24 ms delayed copy, +12 cents by asetrate x1.007 with atempo to restore duration, chorus on the copy, mixed at 0.7. Values are the author's judgement."
+    glitch:
+      enabled: false
+      status: approximated
+      filter: "volume=0:enable='lt(mod(t\\,0.6)\\,0.05)',acrusher=bits=8:samples=3:mix=0.6:enable='gt(mod(t\\,0.6)\\,0.5)'"
+      note: "aloop and areverse cannot slice a stream on a rate, so the slice is a 50 ms dropout every 0.6 s and a bit-crush (8 bits, hold 3, mix 0.6) over the last 100 ms before it, both through the timeline. Values are the author's judgement."
+    shimmer:
+      enabled: false
+      status: approximated
+      filter: "asplit=2[shm_a][shm_b];[shm_b]aformat=sample_rates=24000,asetrate=48000,aresample=24000,atempo=0.5,highpass=f=500,aecho=0.8:0.6:180|360:0.5|0.3,volume=0.35[shm_c];[shm_a][shm_c]amix=inputs=2:weights=1 1:normalize=0"
+      note: "a copy one octave up (asetrate x2, atempo 0.5), highpassed at 500 Hz, through aecho 180/360 ms, mixed at 0.35. The tail lengthens the clip by about 0.3 s. Values are the author's judgement."
 
   # The room MASTER speaks in (operator decision 2026-10-09: the default voice).
   # Polished chain above stays dry; Policy.shaped_chain appends this for ffmpeg
@@ -182,9 +636,13 @@ tts:
   # declares them.
   profiles:
     dry:
+      dilla_fx:
+        enabled: false
       room:
         enabled: false
     asmr:
+      dilla_fx:
+        enabled: false
       room:
         enabled: false
       default_rate: "-11%"
@@ -229,6 +687,8 @@ tts:
     # local_engines gain_db brings each model's raw level to Edge's -21.8 LUFS so
     # the chain sees the same input whichever engine spoke.
     human:
+      dilla_fx:
+        enabled: false
       human_pipeline: true
       variation:
         enabled: true

@@ -91,7 +91,7 @@ topics:
       - data/personas.yml
       - lib/voice/personality.rb
       - RAILS/master_web/app/views/chat/index.html.erb
-    note: TTS voice is whatever data/voice.yml tts.single_voice names (jenny since 2026-09-12); persona changes LLM style only.
+    note: TTS voice is whatever data/voice.yml tts.single_voice names (christopher since 2026-10-12); persona changes LLM style only.
 
 patch_briefs:
   data/soul.yml:

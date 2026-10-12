@@ -129,7 +129,7 @@ const TTS_STORE = 'blobs';
 // with nothing said. This literal has been wrong in both directions — Pernille
 // here while the policy said Osman, then Osman here while the policy said
 // Pernille — which is the two-halves bug voice.yml's own header documents.
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-JennyNeural';
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-ChristopherNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -617,8 +617,9 @@ function dbToGain(text) {
 // writes the voices as parallel lists: delays, decays, speeds and depths, one
 // entry each per voice, in milliseconds, gain, hertz and milliseconds.
 function buildChorus(ctx, args) {
-  const [inGain, outGain] = [parseFloat(args._[0]) || 1, parseFloat(args._[1]) || 1];
-  const lists = args._.slice(2).map((list) => list.split('|').map(parseFloat));
+  const named = args.delays !== undefined;
+  const [inGain, outGain] = named ? [parseFloat(args.in_gain) || 1, parseFloat(args.out_gain) || 1] : [parseFloat(args._[0]) || 1, parseFloat(args._[1]) || 1];
+  const lists = (named ? [args.delays, args.decays, args.speeds, args.depths] : args._.slice(2)).map((list) => String(list).split('|').map(parseFloat));
   const [delays = [20], decays = [0.3], speeds = [0.25], depths = [1]] = lists;
   const input = ctx.createGain();
   const output = ctx.createGain();
@@ -679,13 +680,97 @@ function buildPhaser(ctx, args) {
 }
 
 function buildChainNode(ctx, name, args) {
+  // A filter with a timeline (enable=) has no honest node; the whole unit is
+  // skipped by the caller.
+  if (args.enable !== undefined) return null;
   if (name === 'equalizer') {
     const node = ctx.createBiquadFilter();
-    node.type = 'peaking';
+    node.type = args.t === 'h' ? 'highshelf' : 'peaking';
     node.frequency.value = parseFloat(args.f) || 1000;
     node.Q.value = parseFloat(args.w) || 1;
     node.gain.value = parseFloat(args.g) || 0;
     return { input: node, output: node };
+  }
+  if (name === 'allpass') {
+    const node = ctx.createBiquadFilter();
+    node.type = 'allpass';
+    node.frequency.value = parseFloat(args.f) || 1000;
+    node.Q.value = parseFloat(args.w) || 0.7;
+    return { input: node, output: node };
+  }
+  if (name === 'tremolo' || name === 'apulsator') {
+    // Gain swings between 1 - depth and 1, the law ffmpeg and dilla share.
+    const depth = parseFloat(name === 'tremolo' ? args.d : args.amount) || 0.5;
+    const node = ctx.createGain();
+    node.gain.value = 1 - depth / 2;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = parseFloat(name === 'tremolo' ? args.f : args.hz) || 5;
+    const swing = ctx.createGain();
+    swing.gain.value = depth / 2;
+    lfo.connect(swing);
+    swing.connect(node.gain);
+    lfo.start();
+    return { input: node, output: node };
+  }
+  if (name === 'vibrato') {
+    // Pitch deviation d percent at f hertz is a delay swept by d/100/(2*pi*f) seconds.
+    const f = parseFloat(args.f) || 5;
+    const swing = (parseFloat(args.d) || 0.5) / 100 / (2 * Math.PI * f);
+    const delay = ctx.createDelay(0.1);
+    delay.delayTime.value = swing * 2 + 0.001;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = f;
+    const depth = ctx.createGain();
+    depth.gain.value = swing;
+    lfo.connect(depth);
+    depth.connect(delay.delayTime);
+    lfo.start();
+    return { input: delay, output: delay };
+  }
+  if (name === 'aecho') {
+    // Feed-forward taps, which is what aecho is: in_gain dry, out_gain overall.
+    const [inGain, outGain] = [parseFloat(args._[0]), parseFloat(args._[1])];
+    const delays = String(args._[2] || '').split('|').map(parseFloat);
+    const decays = String(args._[3] || '').split('|').map(parseFloat);
+    const input = ctx.createGain();
+    const output = ctx.createGain();
+    output.gain.value = Number.isFinite(outGain) ? outGain : 1;
+    const dry = ctx.createGain();
+    dry.gain.value = Number.isFinite(inGain) ? inGain : 1;
+    input.connect(dry);
+    dry.connect(output);
+    delays.forEach((ms, i) => {
+      const tap = ctx.createDelay(4);
+      tap.delayTime.value = (ms || 0) / 1000;
+      const level = ctx.createGain();
+      level.gain.value = Number.isFinite(decays[i]) ? decays[i] : 0.5;
+      input.connect(tap);
+      tap.connect(level);
+      level.connect(output);
+    });
+    return { input, output };
+  }
+  if (name === 'asoftclip') {
+    const kind = args.type || 'tanh';
+    const param = parseFloat(args.param) || 1;
+    if (kind !== 'tanh' && kind !== 'atan') return null;
+    const curve = new Float32Array(2049);
+    for (let i = 0; i < curve.length; i++) {
+      const x = (i / 1024) - 1;
+      curve[i] = kind === 'tanh' ? Math.tanh(x * param) : (2 / Math.PI) * Math.atan(x * param);
+    }
+    const node = ctx.createWaveShaper();
+    node.curve = curve;
+    node.oversample = '4x';
+    return { input: node, output: node };
+  }
+  if (name === 'dcshift') {
+    const input = ctx.createGain();
+    const source = ctx.createConstantSource();
+    source.offset.value = parseFloat(args.shift) || 0;
+    source.connect(input);
+    source.start();
+    return { input, output: input };
   }
   if (name === 'highpass' || name === 'lowpass') {
     const node = ctx.createBiquadFilter();
@@ -747,6 +832,140 @@ function buildVoiceChain(ctx, chainText) {
   if (!stages.length) return null;
   stages.forEach((stage, i) => { if (i) stages[i - 1].output.connect(stage.input); });
   return { input: stages[0].input, output: stages[stages.length - 1].output, stages: stages.length, skipped };
+}
+
+// dilla's rack and the character presets (voice.yml dilla_fx, character), from
+// the same filter strings the server hands ffmpeg. A unit is built only when
+// every filter in it has a node: a unit with one filter missing would sound
+// like neither the server nor the unit, so it is skipped whole and named once.
+// What the page cannot build: aeval (fold, crackle, robot), acrusher, pan and
+// extrastereo (the stereo units), afreqshift, aphaseshift, volume with a
+// timeline (delay_throw), asetrate/atempo (formant, doubler, shimmer) and the
+// glitch's enable=. Those only the server chain applies.
+function splitTop(text, sep) {
+  const parts = [];
+  let current = '';
+  let quote = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\\') { current += ch + (text[i + 1] || ''); i++; continue; }
+    if (ch === "'") quote = !quote;
+    if (ch === sep && !quote) { parts.push(current); current = ''; } else current += ch;
+  }
+  if (current.length) parts.push(current);
+  return parts;
+}
+
+function buildFilterRun(ctx, filters) {
+  const nodes = [];
+  for (const filter of filters) {
+    const eq = filter.indexOf('=');
+    const name = eq > 0 ? filter.slice(0, eq) : filter;
+    const built = buildChainNode(ctx, name, parseFilterArgs(eq > 0 ? filter.slice(eq + 1) : ''));
+    if (!built) return null;
+    nodes.push(built);
+  }
+  nodes.forEach((node, i) => { if (i) nodes[i - 1].output.connect(node.input); });
+  return nodes;
+}
+
+function buildFxUnit(ctx, filterText) {
+  const input = ctx.createGain();
+  const labels = {};
+  let previous = input;
+  for (const segment of splitTop(String(filterText), ';')) {
+    const match = segment.match(/^((?:\[[^\]]+\])*)(.*?)((?:\[[^\]]+\])*)$/);
+    const ins = (match[1].match(/\[([^\]]+)\]/g) || []).map((label) => label.slice(1, -1));
+    const outs = (match[3].match(/\[([^\]]+)\]/g) || []).map((label) => label.slice(1, -1));
+    const filters = splitTop(match[2], ',');
+    const head = filters[0].split('=')[0];
+    let current;
+    if (head === 'asplit') {
+      const source = ins.length ? labels[ins[0]] : previous;
+      if (!source) return null;
+      outs.forEach((label) => { const tap = ctx.createGain(); source.connect(tap); labels[label] = tap; });
+      previous = null;
+      continue;
+    } else if (head === 'amix') {
+      const weights = (parseFilterArgs(filters[0].slice(5)).weights || '').split(' ').map(parseFloat);
+      current = ctx.createGain();
+      for (let i = 0; i < ins.length; i++) {
+        const source = labels[ins[i]];
+        if (!source) return null;
+        const weight = ctx.createGain();
+        weight.gain.value = Number.isFinite(weights[i]) ? weights[i] : 1;
+        source.connect(weight);
+        weight.connect(current);
+      }
+      const rest = filters.slice(1);
+      if (rest.length) {
+        const run = buildFilterRun(ctx, rest);
+        if (!run) return null;
+        current.connect(run[0].input);
+        current = run[run.length - 1].output;
+      }
+    } else {
+      const source = ins.length ? labels[ins[0]] : previous;
+      const run = buildFilterRun(ctx, filters);
+      if (!source || !run) return null;
+      source.connect(run[0].input);
+      current = run[run.length - 1].output;
+    }
+    if (outs.length) labels[outs[0]] = current;
+    previous = current;
+  }
+  return previous ? { input, output: previous } : null;
+}
+
+function gainNode(ctx, db) {
+  const node = ctx.createGain();
+  node.gain.value = Math.pow(10, (Number(db) || 0) / 20);
+  return { input: node, output: node };
+}
+
+// Returns { head, tail, built, skipped }. head is input trim, character
+// presets and the mono units with their stage trims; tail is the stereo units'
+// slot (none are buildable), the final trim and the ceiling limiter. Null when
+// the server declares no rack.
+function buildFxRack(ctx, fx, characters) {
+  const wanted = [];
+  if (fx && fx.enabled) {
+    wanted.push({ id: 'in_db', node: gainNode(ctx, fx.in_db) });
+  }
+  const built = [];
+  const skipped = [];
+  const place = (id, filter) => {
+    const unit = buildFxUnit(ctx, filter);
+    if (unit) { wanted.push({ id, node: unit }); built.push(id); } else skipped.push(id);
+  };
+  if (fx && fx.enabled) {
+    const mono = (fx.units || []).filter((unit) => (unit.region || 'mono') === 'mono');
+    mono.forEach((unit, i) => {
+      place(unit.id, unit.filter);
+      const next = mono[i + 1];
+      const trim = (fx.stage_trim_db || {})[unit.stage];
+      if ((!next || next.stage !== unit.stage) && trim) wanted.push({ id: `trim:${unit.stage}`, node: gainNode(ctx, trim) });
+    });
+    (fx.units || []).filter((unit) => unit.region === 'stereo').forEach((unit) => skipped.push(unit.id));
+  }
+  (characters || []).forEach((row) => place(`character:${row.id}`, row.filter));
+  if (!wanted.length) return null;
+  const nodes = wanted.map((item) => item.node);
+  nodes.forEach((node, i) => { if (i) nodes[i - 1].output.connect(node.input); });
+  const tail = [];
+  if (fx && fx.enabled) {
+    tail.push(gainNode(ctx, fx.trim_db));
+    const limiter = buildChainNode(ctx, 'alimiter', { limit: String(fx.ceiling || 0.85), _: [] });
+    if (limiter) tail.push(limiter);
+  }
+  tail.forEach((node, i) => { if (i) tail[i - 1].output.connect(node.input); });
+  if (skipped.length) console.info('voice rack: server only:', skipped.join(', '));
+  return {
+    head: { input: nodes[0].input, output: nodes[nodes.length - 1].output },
+    tail: tail.length ? { input: tail[0].input, output: tail[tail.length - 1].output } : null,
+    built,
+    skipped,
+  };
 }
 
 // The room from data/voice.yml's tts.room, as WebAudio: the dry voice plus one
@@ -828,19 +1047,24 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   analyser.fftSize = 256;
   analyser.smoothingTimeConstant = 0.72;
   const room = chain ? buildRoom(actx, window.MASTER_VOICE_POLICY?.room) : null;
+  const rack = chain ? buildFxRack(actx, window.MASTER_VOICE_POLICY?.dilla_fx, window.MASTER_VOICE_POLICY?.character) : null;
   if (tts.panTimer) { clearInterval(tts.panTimer); tts.panTimer = null; }
   if (chain) {
+    // source -> post_chain -> rack (dilla units, character) -> room -> rack tail -> master
     msrc.connect(chain.input);
+    let tailOf = chain.output;
+    if (rack) { tailOf.connect(rack.head.input); tailOf = rack.head.output; }
     if (room) {
-      chain.output.connect(room.input);
-      room.output.connect(masterGain);
+      tailOf.connect(room.input);
+      tailOf = room.output;
       room.update();
       tts.panTimer = setInterval(room.update, 60);
-    } else {
-      chain.output.connect(masterGain);
     }
+    if (rack && rack.tail) { tailOf.connect(rack.tail.input); tailOf = rack.tail.output; }
+    tailOf.connect(masterGain);
   } else {
     const boost = actx.createGain();
+
     boost.gain.value = boostValue;
     msrc.connect(boost);
     boost.connect(masterGain);

@@ -45,7 +45,7 @@ class TestPhraseLanguage < Minitest::Test
 
     assert_equal 2, plan[:phrases].length
     assert_equal :pernille, plan[:phrases][0][:voice]
-    assert_equal :jenny, plan[:phrases][1][:voice]
+    assert_equal :christopher, plan[:phrases][1][:voice]
   end
 
   def test_no_language_map_means_no_voice_on_any_phrase
@@ -58,7 +58,7 @@ class TestPhraseLanguage < Minitest::Test
 
   def test_language_switching_is_on_by_default_and_uses_registered_voices
     assert T::DEFAULTS["phrase_language_switching"]
-    assert_equal({ en: :jenny, nb: :pernille, ms: :yasmin }, T.phrase_languages(T::DEFAULTS))
+    assert_equal({ en: :christopher, nb: :pernille, ms: :yasmin }, T.phrase_languages(T::DEFAULTS))
   end
 
   def test_turning_language_switching_off_removes_phrase_voice_overrides
