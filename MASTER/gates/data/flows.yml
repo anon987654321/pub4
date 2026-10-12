@@ -599,8 +599,8 @@ flows:
           user:
             email_address: "flow-$unique@example.test"
             username: "flow$unique"
-            password: "Passord-123456"
-            password_confirmation: "Passord-123456"
+            password: "$flow_password"
+            password_confirmation: "$flow_password"
           accept_terms: "1"
           accept_age: "1"
         expect_status: [200]
@@ -658,8 +658,8 @@ flows:
           user:
             email_address: "flow-$unique@example.test"
             username: "flow$unique"
-            password: "Passord-123456"
-            password_confirmation: "Passord-123456"
+            password: "$flow_password"
+            password_confirmation: "$flow_password"
           accept_terms: "1"
           accept_age: "1"
         expect_status: [200]
@@ -676,12 +676,12 @@ flows:
         expect_final_path: /session/new
       - name: wrong_password_is_refused
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "feil-passord-000" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_wrong_password" }
         expect_status: [200]
         expect_final_path: /session/new
       - name: right_password_signs_in
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "Passord-123456" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_password" }
         expect_status: [200]
         expect_final_path: { not: /session/new }
       - name: account_again
@@ -743,8 +743,8 @@ flows:
           user:
             email_address: "flow-$unique@example.test"
             username: "flow$unique"
-            password: "Passord-123456"
-            password_confirmation: "Passord-123456"
+            password: "$flow_password"
+            password_confirmation: "$flow_password"
           accept_terms: "1"
           accept_age: "1"
         expect_status: [200]
@@ -772,17 +772,17 @@ flows:
         expect_any: ['name="password"']
       - name: choose_new_password
         post: /passwords/$reset_token
-        params: { _method: patch, password: "Nytt-passord-789", password_confirmation: "Nytt-passord-789" }
+        params: { _method: patch, password: "$flow_new_password", password_confirmation: "$flow_new_password" }
         expect_status: [200]
         expect_final_path: /session/new
       - name: old_password_no_longer_works
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "Passord-123456" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_password" }
         expect_status: [200]
         expect_final_path: /session/new
       - name: new_password_signs_in
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "Nytt-passord-789" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_new_password" }
         expect_status: [200]
         expect_final_path: { not: /session/new }
 
@@ -1168,8 +1168,8 @@ flows:
         params:
           user:
             email_address: "flow-$unique@example.test"
-            password: "Passord-123456"
-            password_confirmation: "Passord-123456"
+            password: "$flow_password"
+            password_confirmation: "$flow_password"
           accept_terms: "1"
           accept_age: "1"
         expect_status: [200]
@@ -1185,12 +1185,12 @@ flows:
         expect_final_path: /session/new
       - name: wrong_password_is_refused
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "feil-passord-000" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_wrong_password" }
         expect_status: [200]
         expect_final_path: /session/new
       - name: right_password_signs_in
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "Passord-123456" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_password" }
         expect_status: [200]
         expect_final_path: { not: /session/new }
       - name: notifications
@@ -1211,8 +1211,8 @@ flows:
         params:
           user:
             email_address: "flow-$unique@example.test"
-            password: "Passord-123456"
-            password_confirmation: "Passord-123456"
+            password: "$flow_password"
+            password_confirmation: "$flow_password"
           accept_terms: "1"
           accept_age: "1"
         expect_status: [200]
@@ -1240,12 +1240,12 @@ flows:
         expect_any: ['name="password"']
       - name: choose_new_password
         post: /passwords/$reset_token
-        params: { _method: patch, password: "Nytt-passord-789", password_confirmation: "Nytt-passord-789" }
+        params: { _method: patch, password: "$flow_new_password", password_confirmation: "$flow_new_password" }
         expect_status: [200]
         expect_final_path: /session/new
       - name: new_password_signs_in
         post: /session
-        params: { email_address: "flow-$unique@example.test", password: "Nytt-passord-789" }
+        params: { email_address: "flow-$unique@example.test", password: "$flow_new_password" }
         expect_status: [200]
         expect_final_path: { not: /session/new }
 
@@ -1328,8 +1328,8 @@ flows:
         params:
           user:
             email_address: "flow-$unique@example.test"
-            password: "Passord-123456"
-            password_confirmation: "Passord-123456"
+            password: "$flow_password"
+            password_confirmation: "$flow_password"
           accept_terms: "1"
           accept_age: "1"
         expect_status: [200]

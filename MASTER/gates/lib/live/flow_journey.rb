@@ -180,7 +180,12 @@ module Deploy
 
       # $unique is one token per flow run, so a sign-up or a post title can be
       # told apart from every earlier run's rows; strings a step captured join it.
-      vars = credentials.merge("unique" => unique_token)
+      token = unique_token
+      # The throwaway account a sign-up creates gets a password of its own for this run, so no
+      # committed file carries one; flow_wrong_password is the same shape and never the right one.
+      vars = credentials.merge("unique" => token, "flow_password" => "Passord-#{token}",
+                               "flow_wrong_password" => "feil-passord-#{token}",
+                               "flow_new_password" => "Nytt-passord-#{token}")
       Array(flow["steps"]).each do |step|
         name = step["name"] || step["get"] || step["post"]
         label = "flow:#{id}/#{name}"
