@@ -150,16 +150,30 @@ class DesignContractTest < Minitest::Test
     feature_paths = Dir.glob(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_*.scss")).sort
 
     refute_empty feature_paths, "Brgen must have feature-owned stylesheet modules"
+    reachable = []
+    pending = [app]
+    until pending.empty?
+      source = pending.shift
+      source.scan(/@include meta\.load-css\(["']([^"']+)["']\)/).flatten.each do |module_name|
+        candidate = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_#{module_name}.scss")
+        next unless File.file?(candidate)
+        next if reachable.include?(candidate)
+
+        reachable << candidate
+        pending << File.read(candidate)
+      end
+    end
+
     feature_paths.each do |path|
       module_name = File.basename(path).delete_prefix("_").delete_suffix(".scss")
-      assert_includes app, %(@include meta.load-css("#{module_name}");), "#{module_name} is not loaded by the host entrypoint"
+      assert_includes reachable, path, "#{module_name} is not reachable from the host stylesheet"
       refute_empty File.read(path), "#{module_name} is empty"
     end
 
     expected_rules = {
       "_brgen_marketplace.scss" => ".deal-card",
       "_brgen_vertical_surfaces.scss" => ".listing-buy-bar-cta",
-      "_brgen_shared_overrides.scss" => ".store-promo-art-cta",
+      "_brgen_shared_city_campaigns.scss" => ".store-promo-art-cta",
       "_brgen_messenger.scss" => ".messenger-artifact-pane",
       "_brgen_composer.scss" => ".composer[open]::backdrop",
       "_brgen_feed_posts.scss" => ".feed-action",
