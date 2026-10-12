@@ -41,7 +41,11 @@ i, em { font-style: italic; }
 main {
   display: grid;
   gap: 1em;
-  padding: 2em;
+  padding:
+    max(2em, env(safe-area-inset-top, 0px))
+    max(2em, env(safe-area-inset-right, 0px))
+    max(2em, env(safe-area-inset-bottom, 0px))
+    max(2em, env(safe-area-inset-left, 0px));
   place-items: center;
   text-align: center;
 }
