@@ -898,11 +898,41 @@
   // ---- The page: a canvas of characters ------------------------------------
   // A monospace font at a cell twice as tall as it is wide, the head drawn by tone
   // (near bold, far dim) in the face's own colour, one fillText per row per tone.
+  // The constitution's ranked law glyphs are applied after the head is rendered.
+  // Occupied facial cells win; a glyph never overwrites an eye, contour, or mouth.
+  let lawFieldVisible = true;
+  function paintLawField(lines, depth, laws) {
+    const cells = lines.map((line) => (Array.isArray(line) ? line.slice() : Array.from(String(line))));
+    const tones = (depth || cells.map((row) => row.map(() => 1))).map((row) => row.slice());
+    if (!cells.length || !cells[0].length || !Array.isArray(laws) || laws.length === 0) {
+      return { lines: cells.map((row) => row.join("")), depth: tones };
+    }
+
+    const height = cells.length;
+    const width = cells[0].length;
+    const cx = (width - 1) / 2;
+    const cy = (height - 1) / 2;
+    laws.forEach((law, index) => {
+      const glyph = String((law && law.glyph) || "").charAt(0);
+      if (!/^[\x20-\x7e]$/.test(glyph)) return;
+      const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / laws.length);
+      const col = halfUp(cx + (Math.cos(angle) * width * 0.47));
+      const row = halfUp(cy + (Math.sin(angle) * height * 0.45));
+      if (row < 0 || row >= height || col < 0 || col >= cells[row].length) return;
+      if (cells[row][col] !== " ") return;
+      cells[row][col] = glyph;
+      if (tones[row] && col < tones[row].length) tones[row][col] = 1;
+    });
+    return { lines: cells.map((row) => row.join("")), depth: tones };
+  }
+
   function createView(canvas, options) {
     const opts = options || {};
     const env = opts.env || root;
     const contract = opts.contract || env.MASTER_FACE_CONTRACT;
     const engine = build(contract);
+    const laws = Array.isArray(opts.laws) ? opts.laws
+      : (env.MASTER_FACE_LAW_FIELD && Array.isArray(env.MASTER_FACE_LAW_FIELD.laws) ? env.MASTER_FACE_LAW_FIELD.laws : []);
     const web = (contract.ascii && contract.ascii.web) || {};
     const budget = (contract.spatial && contract.spatial.budget) || {};
     const ROWS = num(web.rows, 44);
@@ -995,10 +1025,11 @@
       view.lastAt = now;
       const look = engine.lookFor({ state, t: now / 1000, level: input.level, viseme: input.viseme, shapes: input.shapes, reduced: input.reduced });
       const out = engine.frame({ rows: view.rows, cols: view.cols, state, look, mode: contract.ascii.mode });
-      const text = out.lines.join("\n");
+      const field = lawFieldVisible ? paintLawField(out.lines, out.depth, laws) : { lines: out.lines, depth: out.depth };
+      const text = field.lines.join("\n");
       if (text === view.lastText) return false;
       view.lastText = text;
-      paintLines(out.lines, out.depth, env.matchMedia && env.matchMedia("(forced-colors: active)").matches);
+      paintLines(field.lines, field.depth, env.matchMedia && env.matchMedia("(forced-colors: active)").matches);
       return true;
     };
 
@@ -1007,10 +1038,86 @@
     return view;
   }
 
-  const api = { build, createView, kbSum };
+  let overlayCanvas = null;
+  let overlayView = null;
+  let glyphMode = false;
+
+  function activeState() {
+    if (!root.document || !root.document.body) return "idle";
+    const body = root.document.body;
+    const raw = String(body.dataset.mode || body.dataset.state || "idle").toLowerCase();
+    const contract = root.MASTER_FACE_CONTRACT || {};
+    const aliases = (contract.state && contract.state.mode_aliases) || contract.mode_aliases || {};
+    return aliases[raw] || raw;
+  }
+
+  function update(now) {
+    if (!root.document || !root.document.body) return false;
+    const doc = root.document;
+    if (doc.getElementById("face-2d-fallback")) {
+      if (overlayCanvas) overlayCanvas.style.display = "none";
+      return false;
+    }
+    if (!doc.getElementById("face")) return false;
+
+    if (!overlayCanvas || !overlayCanvas.isConnected) {
+      overlayCanvas = doc.getElementById("master-face-ascii");
+      if (!overlayCanvas) {
+        overlayCanvas = doc.createElement("canvas");
+        overlayCanvas.id = "master-face-ascii";
+        overlayCanvas.className = "master-face-ascii-layer";
+        overlayCanvas.setAttribute("aria-hidden", "true");
+        overlayCanvas.setAttribute("role", "presentation");
+        overlayCanvas.style.pointerEvents = "none";
+        doc.body.appendChild(overlayCanvas);
+      }
+      overlayView = createView(overlayCanvas, { env:root, contract:root.MASTER_FACE_CONTRACT });
+    }
+    if (!overlayView) return false;
+    overlayCanvas.style.display = "";
+    const reduced = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      || doc.body.dataset.reducedMotion === "1";
+    return overlayView.draw(Number.isFinite(now) ? now : (root.performance ? root.performance.now() : Date.now()),
+      { state:activeState(), reduced });
+  }
+
+  function resize() {
+    if (overlayView) overlayView.resize();
+  }
+
+  function setLawField(enabled) {
+    lawFieldVisible = !!enabled;
+    if (overlayView) overlayView.lastText = "";
+  }
+
+  function setGlyphMode(enabled) {
+    glyphMode = !!enabled;
+    if (root.document && root.document.body) {
+      if (glyphMode) root.document.body.dataset.faceAscii = "1";
+      else delete root.document.body.dataset.faceAscii;
+    }
+    if (overlayCanvas) overlayCanvas.style.opacity = glyphMode ? "0.96" : "";
+    if (overlayView) overlayView.lastText = "";
+  }
+
+  function onKeydown(event) {
+    if (!root.document || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+    const field = root.MASTER_FACE_LAW_FIELD || {};
+    const key = String(field.toggle_key || "v").toLowerCase();
+    if (String(event.key).toLowerCase() !== key) return;
+    const target = event.target;
+    if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+    setGlyphMode(!glyphMode);
+    const status = root.document.getElementById("master-face-ascii-status");
+    if (status) status.textContent = glyphMode ? "ASCII face mode enabled" : "ASCII face overlay enabled";
+    update(root.performance ? root.performance.now() : Date.now());
+  }
+
+  const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) {
     root.MASTER_FACE_ASCII = Object.freeze(api);
+    root.addEventListener("keydown", onKeydown);
     root.dispatchEvent(new root.CustomEvent("master:face-ascii-ready"));
   }
 })(typeof window !== "undefined" ? window : globalThis);
