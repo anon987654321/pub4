@@ -115,11 +115,10 @@ module Master
             # non-results. Unexpected model/parser faults are measurement failures:
             # log them and raise so FileProcessor returns a failed scan rather than
             # silently turning an unevaluated semantic tier into CLEAN.
-            offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
+            offline = e.message.to_s.match?(OFFLINE_ERRORS_PATTERN)
             limited = note_model_failure(e)
-            reason = offline ? "provider capability/configuration unavailable" : "provider spend/quota limit reached" if limited
             if offline || limited
-              detail = reason || e.message
+              detail = offline ? "provider capability/configuration unavailable" : "provider spend/quota limit reached"
               raise "semantic assessment INCONCLUSIVE: #{detail} for #{path} (#{e.class}: #{e.message})"
             end
 
