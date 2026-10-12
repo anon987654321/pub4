@@ -43,9 +43,11 @@ requests, and a PNG screenshot. It writes a run-scoped `manifest.json` and
 screenshots under the system temporary directory
 (`pub4-browser-diagnostics/<run-id>/`).
 
-For surfaces opted into the committed layout inventory, the gate also compares the
-PNG against `data/visual_baselines/<app>-<surface>-<viewport>.png` using the
-dependency-free `support/png_diff.rb` decoder. The manifest records exact changed
+For the deliberately small set of surfaces marked `pixel_snapshot: true` in the
+canonical geometry inventory (including selected Brgen verticals), the gate also
+compares the PNG against `data/visual_baselines/<app>-<surface>-<viewport>.png`
+using the dependency-free `support/png_diff.rb` decoder. Structural
+`snapshot: true` alone does not opt every route into PNG references. The manifest records exact changed
 pixel counts, ratio, and a red/transparent heatmap. The default threshold is 1%
 of pixels; `GATE_PIXEL_DIFF_MAX_RATIO=0` requests exact equality. Dimension
 changes always fail. Missing baselines are clearly reported as soft findings
