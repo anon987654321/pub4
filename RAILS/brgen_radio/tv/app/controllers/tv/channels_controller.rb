@@ -37,12 +37,12 @@ class Tv::ChannelsController < Tv::BaseController
   def destroy = (@channel.destroy and redirect_to channels_path)
 
   def subscribe
-    Tv::Subscription.find_or_create_by!(user: Current.user, tv_channel: @channel)
+    Tv::Subscription.find_or_create_by!(user_id: Current.user.id, tv_channel_id: @channel.id)
     redirect_back fallback_location: channel_path(@channel)
   end
 
   def unsubscribe
-    Tv::Subscription.find_by(user: Current.user, tv_channel: @channel)&.destroy
+    Tv::Subscription.find_by(user_id: Current.user.id, tv_channel_id: @channel.id)&.destroy
     redirect_back fallback_location: channel_path(@channel)
   end
 

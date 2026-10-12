@@ -1,7 +1,7 @@
 <div class="auth-form">
   <%= tag.h1 t("auth.update_password") %>
   <p class="auth-form-lead"><%= t("auth.update_password_lead") %></p>
-  <%= form_with model: @user, url: password_path(params[:token]), method: :put do |f| %>
+  <%= form_with url: password_path(params[:token]), method: :put do |f| %>
     <div class="field">
       <%= f.label :password, t("auth.new_password") %>
       <%= password_visibility_field f, :password, autocomplete: "new-password" %>

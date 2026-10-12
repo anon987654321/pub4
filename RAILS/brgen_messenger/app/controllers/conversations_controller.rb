@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ConversationsController < ApplicationController
+  # #new is the people picker: apply_live_search and finish_live_search come from here.
+  include Shared::LiveSearchable
   before_action :require_user_session
   # The rail is part of the window, not part of the inbox, so it loads for the
   # room you are reading as well as for the list. Arriving straight at a
