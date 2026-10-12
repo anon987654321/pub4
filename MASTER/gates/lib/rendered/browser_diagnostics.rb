@@ -399,6 +399,15 @@ module Deploy
         "request_failures=#{row['request_failures'].size}"
       ]
       detail = row["failure_reasons"].empty? ? counts.join(" ") : row["failure_reasons"].join("; ")
+      pixel_status = row["pixel_baseline_status"]
+      if %w[COMPARED REGRESSION DIMENSION_MISMATCH MISSING UNSUPPORTED UPDATED].include?(pixel_status)
+        detail += " pixel=#{pixel_status}"
+        if row["pixel_diff_ratio"]
+          detail += " changed_pixels=#{row['pixel_diff_count']} drift=#{(row['pixel_diff_ratio'] * 100).round(4)}%"
+          detail += " budget=#{(row['pixel_diff_max_ratio'] * 100).round(3)}%" if row["pixel_diff_max_ratio"]
+        end
+        detail += " diff=#{row['pixel_diff_image']}" if row["pixel_diff_image"]
+      end
       detail += " screenshot=#{row['screenshot']}" if row["screenshot"]
       puts "browser0: #{surface.id} #{row['status']} — #{detail}"
     end
