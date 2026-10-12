@@ -180,11 +180,11 @@ class VpsDeployContractTest < Minitest::Test
       barrier_step = <<~'ZSH'
         print -r -- "$$" >> "$VPS_DEPLOY_TEST_BARRIER"
         local -i waited=0
-        while [[ $(<"$VPS_DEPLOY_TEST_BARRIER") != *$'\n'* ]] && (( waited < 200 )); do
+        while [[ $(<"$VPS_DEPLOY_TEST_BARRIER") != *$'\n'*$'\n'* ]] && (( waited < 200 )); do
           sleep 0.01
           (( waited += 1 ))
         done
-        [[ $(<"$VPS_DEPLOY_TEST_BARRIER") == *$'\n'* ]] || return 1
+        [[ $(<"$VPS_DEPLOY_TEST_BARRIER") == *$'\n'*$'\n'* ]] || return 1
         OBSERVED_LOCK
       ZSH
       barrier_step = barrier_step.sub("OBSERVED_LOCK", observed_lock).strip
