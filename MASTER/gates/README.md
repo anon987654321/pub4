@@ -104,6 +104,22 @@ on a failure. The environment variables `GATE_STRICT_INCONCLUSIVE` and
 promotes soft findings to failures. Every run is appended to a ledger, and
 `--ledger` prints what the ledger holds.
 
+The two flow gates, `user_flow` and `flow_journey`, say what happened to each
+app. An app whose port is closed is reported as skipped because the app is down,
+by name, with the flows it took with it, and the gate is inconclusive however
+many source checks ran beside it. A skipped app is never a pass. The variable
+`GATE_SOURCE_ONLY` says a run is meant to be source-only and keeps the gate green;
+on the deploy host `GATE_REQUIRE_LIVE` turns the same skip into a failure.
+`FLOW_BRGEN_PORT`, and the same name for each other app, points one app's flows at
+a copy booted on a spare port.
+
+Journeys marked as mutating create accounts, posts, listings and orders, and read
+them back. They run against a development database and are refused on the deploy
+host, where the port they would write to serves production, unless
+`GATE_ALLOW_WRITES` says the copy is disposable. They sign up with an address made
+unique for each run, and they read confirmation and reset mail from the app's
+`tmp/mails` directory, where the development mailer writes it.
+
 Gates that can repair what they find do so by default and measure again.
 `--scan-only`, `--no-autofix` or `GATE_AUTOFIX=0` makes a run read-only.
 

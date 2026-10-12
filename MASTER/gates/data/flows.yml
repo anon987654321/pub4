@@ -445,9 +445,13 @@ flows:
   #
   #   FLOW_BSDPORTS_EMAIL=you@example.no FLOW_BSDPORTS_PASSWORD=... \
   #     ruby MASTER/gates/runner.rb user_flow
-  - id: bsdports_signed_in_comment_lands
+  # bsdports has no comment form: the route and the controller exist (a POST to
+  # /ports/:id/comments lands), but ports/show renders no field to write in, so a
+  # journey that "comments" would invent a request no visitor can make. The
+  # signed-in write a visitor can make is watching a port.
+  - id: bsdports_signed_in_watch_lands
     app: bsdports
-    description: A signed-in visitor comments on a port and the comment is on the page afterwards.
+    description: A signed-in visitor watches a port and the page offers to unwatch it, then unwatches and it offers to watch again.
     requires_credentials: [FLOW_BSDPORTS_EMAIL, FLOW_BSDPORTS_PASSWORD]
     steps:
       - name: sign_in_form
@@ -461,6 +465,57 @@ flows:
         # every step after this would test a guest while claiming to test an
         # account — the exact confusion this journey exists to end.
         expect_final_path: { not: /session/new }
+      - name: ports
+        get: /ports
+        expect_status: [200]
+        capture: [{ pattern: 'href="(/ports/\d+)"', as: port_path, optional: true }]
+      - name: start_unwatched
+        post: $port_path/unwatch
+        needs: [port_path]
+        params: { _method: delete }
+        expect_status: [200]
+      - name: a_port
+        get: $port_path
+        expect_status: [200]
+        expect_body: ['action="$port_path/watch"']
+      - name: watch
+        post: $port_path/watch
+        expect_status: [200]
+        expect_final_path: $port_path
+        expect_body: ['action="$port_path/unwatch"']
+        forbid_body: ['action="$port_path/watch"']
+      - name: unwatch
+        post: $port_path/unwatch
+        params: { _method: delete }
+        expect_status: [200]
+        expect_final_path: $port_path
+        expect_body: ['action="$port_path/watch"']
+
+  - id: bsdports_magic_link_signs_in
+    app: bsdports
+    description: Ask for a sign-in link by email, open it from the mail, and be signed in (the page offers watching).
+    requires_credentials: [FLOW_BSDPORTS_EMAIL]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: request_link
+        post: /session/magic
+        params: { email_address: "$FLOW_BSDPORTS_EMAIL" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: the_mail
+        mail:
+          to: "$FLOW_BSDPORTS_EMAIL"
+          capture: [{ pattern: 'session/magic\?token=([A-Za-z0-9_-]{16,})', as: magic }]
+      - name: open_the_link
+        get: /session/magic?token=$magic
+        expect_status: [200]
+        expect_final_path: { not_matches: '^/session' }
+      - name: the_link_is_single_use
+        get: /session/magic?token=$magic
+        expect_status: [200]
+        expect_final_path: /session/new
 
   - id: brgen_signed_in_community_lands
     app: brgen
@@ -497,3 +552,920 @@ flows:
         get: /items/new
         expect_status: [200]
         expect_final_path: /items/new
+
+  # ---------------------------------------------------------------------------
+  # Write journeys. Everything above reads; these change state and read the
+  # change back on a later page.
+  #
+  # They need no seeded account and no credentials: brgen lets a guest post,
+  # vote, comment and order (a guest is a real, saved user), and the journeys
+  # that need a registered account create one with $unique in its address, so a
+  # run never collides with an earlier run's rows. The confirmation and reset
+  # mails are read from the app's tmp/mails (RAILS/__shared development.rb
+  # writes them there); FLOW_<APP>_PORT points a flow at a copy booted on a
+  # spare port. Sign-up is rate limited to 10 per 10 minutes per address, and
+  # these journeys use three of them.
+  #
+  # mutates: true marks a journey that creates accounts, posts, listings or orders
+  # in whatever database the app under test uses. The gate runs it on a laptop's
+  # development triangle and refuses it on the deploy host, where the app it would
+  # write to is production (GATE_ALLOW_WRITES=1 overrides, for a throwaway copy).
+  #
+  # Vocabulary beyond the first half of this file:
+  #   $name           a string captured earlier, an env credential, or $unique
+  #   capture:        first group of a pattern, kept as a string ($name later)
+  #   number:         first group as an integer, comparable in assert[] (delta: shifts right)
+  #   needs: [name]   inconclusive, not failed, when an earlier capture found nothing
+  #   mail:           open the message sent to `to` and capture from the link in it
+  #   capture_final_path: name   keep the path a redirect ended on
+  #   expect_final_path: { matches: re } | { not_matches: re }
+  # ---------------------------------------------------------------------------
+
+  - id: brgen_signup_confirm_email_then_post
+    app: brgen
+    mutates: true
+    description: >
+      Sign up, find the account refused a post until the emailed link is opened,
+      open it, and see the post land. Confirmation is the only gate between a
+      registered account and the feed.
+    steps:
+      - name: sign_up_form
+        get: /users/new
+        expect_status: [200]
+        expect_any: ['name="user\[email_address\]"']
+      - name: sign_up
+        post: /users
+        params:
+          user:
+            email_address: "flow-$unique@example.test"
+            username: "flow$unique"
+            password: "Passord-123456"
+            password_confirmation: "Passord-123456"
+          accept_terms: "1"
+          accept_age: "1"
+        expect_status: [200]
+        expect_final_path: /
+      - name: signed_in_now
+        get: /account
+        expect_status: [200]
+        expect_final_path: /account
+      - name: compose_form
+        get: /posts/new
+        expect_status: [200]
+      - name: post_before_confirming_is_refused
+        post: /posts
+        params: { post: { title: "Ubekreftet $unique", content: "skal ikke lande" } }
+        expect_status: [200]
+        expect_final_path: /posts/new
+      - name: confirmation_mail
+        mail:
+          to: "flow-$unique@example.test"
+          capture: [{ pattern: 'verify/([A-Za-z0-9_-]{16,})', as: token }]
+      - name: open_the_emailed_link
+        get: /verify/$token
+        expect_status: [200]
+        expect_final_path: /
+      - name: compose_form_again
+        get: /posts/new
+        expect_status: [200]
+      - name: post_after_confirming_lands
+        post: /posts
+        params: { post: { title: "Bekreftet $unique", content: "dette lander" } }
+        expect_status: [200]
+        expect_final_path: { matches: '^/posts/' }
+        expect_body: ['Bekreftet $unique']
+        capture_final_path: post_path
+      - name: it_is_in_the_feed
+        get: /posts?sort=fresh
+        expect_status: [200]
+        expect_body: ['Bekreftet $unique']
+        forbid_body: ['Ubekreftet $unique']
+
+  - id: brgen_sign_out_in_profile_bookmark_report
+    app: brgen
+    mutates: true
+    description: >
+      A registered account signs out, is turned away with a wrong password, signs
+      back in, edits its profile, bookmarks a post and reports it. Each write is
+      read back on the page that shows it.
+    steps:
+      - name: sign_up_form
+        get: /users/new
+        expect_status: [200]
+      - name: sign_up
+        post: /users
+        params:
+          user:
+            email_address: "flow-$unique@example.test"
+            username: "flow$unique"
+            password: "Passord-123456"
+            password_confirmation: "Passord-123456"
+          accept_terms: "1"
+          accept_age: "1"
+        expect_status: [200]
+        capture: [{ pattern: 'x^', as: nothing, optional: true }]
+      - name: account
+        get: /account
+        expect_status: [200]
+        expect_final_path: /account
+        capture: [{ pattern: 'href="/users/(\d+)"', as: uid }]
+      - name: sign_out
+        post: /session
+        params: { _method: delete }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: wrong_password_is_refused
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "feil-passord-000" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: right_password_signs_in
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "Passord-123456" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+      - name: account_again
+        get: /account
+        expect_status: [200]
+        expect_final_path: /account
+      - name: profile_form
+        get: /users/$uid/edit
+        expect_status: [200]
+        expect_any: ['name="user\[display_name\]"']
+      - name: profile_edit
+        post: /users/$uid
+        params: { _method: patch, user: { display_name: "Flowny $unique", username: "flow$unique" } }
+        expect_status: [200]
+        expect_body: ['Flowny $unique']
+      - name: notifications_open
+        get: /notifications
+        expect_status: [200]
+        expect_final_path: /notifications
+      - name: a_post_to_act_on
+        get: /posts
+        expect_status: [200]
+        capture:
+          - { pattern: 'action="(/posts/[a-z0-9-]+)/repost"', as: target_post, optional: true }
+      - name: the_post_page
+        get: $target_post
+        needs: [target_post]
+        expect_status: [200]
+        capture:
+          - { pattern: 'target_gid" value="([^"]+)"', as: gid }
+          - { pattern: '<title>([^<]*)', as: page_title, optional: true }
+      - name: bookmark
+        post: $target_post/bookmark
+        expect_status: [200]
+      - name: saved_lists_it
+        get: /saved
+        expect_status: [200]
+        expect_body: ['href="$target_post"']
+      - name: the_post_page_for_report
+        get: $target_post
+        expect_status: [200]
+      - name: report
+        post: /reports
+        params: { target_gid: "$gid", reason: "other" }
+        expect_status: [200]
+        expect_final_path: $target_post
+
+  - id: brgen_password_reset_by_email
+    app: brgen
+    mutates: true
+    description: Ask for a reset, open the emailed link, choose a new password and sign in with it.
+    steps:
+      - name: sign_up
+        get: /users/new
+        expect_status: [200]
+      - name: create_account
+        post: /users
+        params:
+          user:
+            email_address: "flow-$unique@example.test"
+            username: "flow$unique"
+            password: "Passord-123456"
+            password_confirmation: "Passord-123456"
+          accept_terms: "1"
+          accept_age: "1"
+        expect_status: [200]
+        expect_final_path: /
+      - name: sign_out
+        post: /session
+        params: { _method: delete }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: reset_form
+        get: /passwords/new
+        expect_status: [200]
+      - name: request_reset
+        post: /passwords
+        params: { email_address: "flow-$unique@example.test" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: reset_mail
+        mail:
+          to: "flow-$unique@example.test"
+          capture: [{ pattern: 'passwords/([A-Za-z0-9_=-]{16,})/edit', as: reset_token }]
+      - name: open_reset_link
+        get: /passwords/$reset_token/edit
+        expect_status: [200]
+        expect_any: ['name="password"']
+      - name: choose_new_password
+        post: /passwords/$reset_token
+        params: { _method: patch, password: "Nytt-passord-789", password_confirmation: "Nytt-passord-789" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: old_password_no_longer_works
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "Passord-123456" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: new_password_signs_in
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "Nytt-passord-789" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+
+  - id: brgen_guest_post_appears_in_feed
+    app: brgen
+    mutates: true
+    description: A guest writes a post and finds it in the feed, on its own page and on the front page of its host.
+    steps:
+      - name: compose_form
+        get: /posts/new
+        expect_status: [200]
+        expect_any: ['name="post\[title\]"']
+      - name: publish
+        post: /posts
+        params: { post: { title: "Gjesteinnlegg $unique", content: "skrevet av en gjest" } }
+        expect_status: [200]
+        expect_final_path: { matches: '^/posts/' }
+        expect_body: ['Gjesteinnlegg $unique']
+        capture_final_path: post_path
+      - name: in_the_feed
+        get: /posts?sort=fresh
+        expect_status: [200]
+        expect_body: ['Gjesteinnlegg $unique']
+      - name: own_page
+        get: $post_path
+        expect_status: [200]
+        expect_body: ['skrevet av en gjest']
+      - name: blank_title_is_refused
+        post: /posts
+        params: { post: { title: "", content: "" } }
+        expect_status: [200, 422]
+        expect_final_path: { not_matches: '^/posts/[a-z0-9-]+$' }
+
+  - id: brgen_vote_up_down_toggles
+    app: brgen
+    mutates: true
+    description: >
+      Upvote, upvote again (undo), downvote, downvote again (undo), upvote then
+      flip to a downvote. The score on the post page moves by exactly what the
+      controller promises: a repeated vote withdraws, a changed vote replaces.
+    steps:
+      - name: compose_form
+        get: /posts/new
+        expect_status: [200]
+      - name: publish
+        post: /posts
+        params: { post: { title: "Stemmetest $unique", content: "stem her" } }
+        expect_status: [200]
+        capture_final_path: post_path
+      - name: score_start
+        get: $post_path
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s0 }]
+      - name: upvote
+        post: $post_path/vote
+        params: { vote: { value: 1 } }
+        expect_status: [200]
+      - name: score_after_up
+        get: $post_path
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_up }]
+      - name: upvote_again_withdraws
+        post: $post_path/vote
+        params: { vote: { value: 1 } }
+        expect_status: [200]
+      - name: score_after_undo
+        get: $post_path
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_undo_up }]
+      - name: downvote
+        post: $post_path/vote
+        params: { vote: { value: -1 } }
+        expect_status: [200]
+      - name: score_after_down
+        get: $post_path
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_down }]
+      - name: downvote_again_withdraws
+        post: $post_path/vote
+        params: { vote: { value: -1 } }
+        expect_status: [200]
+      - name: score_after_undo_down
+        get: $post_path
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_undo_down }]
+      - name: upvote_then_flip
+        post: $post_path/vote
+        params: { vote: { value: 1 } }
+        expect_status: [200]
+      - name: flip_to_down
+        post: $post_path/vote
+        params: { vote: { value: -1 } }
+        expect_status: [200]
+      - name: score_after_flip
+        get: $post_path
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_flip }]
+    assert:
+      - { left: s0, op: "==", right: 0, why: "a new post starts at zero" }
+      - { left: s_up, op: "==", right: s0, delta: 1, why: "an upvote adds one" }
+      - { left: s_undo_up, op: "==", right: s0, why: "voting the same way twice withdraws the vote" }
+      - { left: s_down, op: "==", right: s0, delta: -1, why: "a downvote subtracts one" }
+      - { left: s_undo_down, op: "==", right: s0, why: "downvoting twice withdraws the vote" }
+      - { left: s_flip, op: "==", right: s0, delta: -1, why: "a changed vote replaces the old one, it does not stack (up then down is -1, not -2 or 0)" }
+
+  - id: brgen_comment_and_reply
+    app: brgen
+    mutates: true
+    description: Comment on a post, reply to that comment, and read both back on the post page.
+    steps:
+      - name: compose_form
+        get: /posts/new
+        expect_status: [200]
+      - name: publish
+        post: /posts
+        params: { post: { title: "Kommentartest $unique", content: "kommenter her" } }
+        expect_status: [200]
+        capture_final_path: post_path
+      - name: comment
+        post: $post_path/comments
+        params: { comment: { content: "Rotkommentar $unique" } }
+        expect_status: [200]
+        expect_body: ['Rotkommentar $unique']
+        capture: [{ pattern: 'turbo-frame id="comment_(\d+)"', as: comment_id }]
+      - name: reply
+        post: $post_path/comments
+        params: { comment: { content: "Svar $unique", parent_id: "$comment_id" } }
+        expect_status: [200]
+      - name: both_on_the_page
+        get: $post_path
+        expect_status: [200]
+        expect_body: ['Rotkommentar $unique', 'Svar $unique']
+
+  - id: brgen_search_then_open_result
+    app: brgen
+    mutates: true
+    description: Search for a word only one fresh post contains, open the result and land on that post.
+    steps:
+      - name: compose_form
+        get: /posts/new
+        expect_status: [200]
+      - name: publish
+        post: /posts
+        params: { post: { title: "Sokeflow $unique", content: "finn meg" } }
+        expect_status: [200]
+        capture_final_path: post_path
+      - name: search
+        get: /search?q=$unique
+        expect_status: [200]
+        expect_body: ['Sokeflow $unique']
+        capture: [{ pattern: 'href="(/posts/[a-z0-9-]*$unique[a-z0-9-]*)"', as: result_path }]
+      - name: open_the_result
+        get: $result_path
+        expect_status: [200]
+        expect_final_path: $post_path
+        expect_body: ['finn meg']
+      - name: nonsense_search_is_an_honest_dead_end
+        get: /search?q=zzqxv-ingenting-slikt
+        expect_status: [200]
+        forbid_body: ['Sokeflow']
+
+  - id: brgen_messenger_send_and_read
+    app: brgen
+    mutates: true
+    description: Open a conversation with someone from the people picker, send a message and find it in the thread.
+    steps:
+      - name: people_picker
+        get: /conversations/new
+        expect_status: [200]
+        capture: [{ pattern: 'action="/users/(\d+)/conversations"', as: person, optional: true }]
+      - name: open_conversation
+        post: /users/$person/conversations
+        needs: [person]
+        expect_status: [200]
+        expect_final_path: { matches: '^/conversations/\d+$' }
+        capture_final_path: thread
+      - name: send
+        post: $thread/messages
+        params: { message: { content: "Hei fra flyten $unique", message_type: "text" } }
+        expect_status: [200]
+      - name: it_is_in_the_thread
+        get: $thread
+        expect_status: [200]
+        expect_body: ['Hei fra flyten $unique']
+      - name: it_is_in_the_inbox
+        get: /conversations
+        expect_status: [200]
+        expect_final_path: /conversations
+
+  - id: brgen_marketplace_list_then_buy
+    app: brgen
+    mutates: true
+    host: markedsplass.brgen.no
+    description: List an item for sale, find it on the marketplace, then put someone else's listing in the cart and find it there.
+    steps:
+      - name: sell_form
+        get: /listings/new
+        expect_status: [200]
+        capture:
+          - { pattern: '(?m)name="listing\[category_id\]".*?<option value="(\d+)"', as: category }
+      - name: list_it
+        post: /listings
+        params:
+          listing:
+            title: "Flowsofa $unique"
+            price_cents: "1500"
+            condition: "good"
+            description: "Selges av gjesteflyten"
+            category_id: "$category"
+            location: "Bergen"
+            delivery_promise: "1"
+            fulfilment_method: "0"
+            source: "person"
+            kind: "goods"
+        expect_status: [200]
+        expect_final_path: { matches: '^/listings/flowsofa' }
+        expect_body: ['Flowsofa $unique']
+      - name: it_is_on_the_marketplace
+        get: /
+        expect_status: [200]
+        expect_body: ['Flowsofa $unique']
+        capture:
+          - { pattern: 'href="/listings/(?!new")(?!flowsofa)([a-z0-9-]+)"', as: other, optional: true }
+      - name: cart_starts_without_it
+        get: /cart
+        needs: [other]
+        expect_status: [200]
+        count: { pattern: 'href="/listings/$other"', as: before }
+      - name: add_to_cart
+        post: /listings/$other/orders
+        params: { order: { message: "Er den ledig? $unique" } }
+        expect_status: [200]
+      - name: cart_has_it
+        get: /cart
+        expect_status: [200]
+        count: { pattern: 'href="/listings/$other"', as: after }
+    assert:
+      - { left: after, op: ">", right: before, why: "adding a listing puts it in the cart" }
+
+  - id: brgen_takeaway_order_lands
+    app: brgen
+    mutates: true
+    host: takeaway.brgen.no
+    description: Pick a restaurant, order two of its first dish and find the order in the order list.
+    steps:
+      - name: restaurants
+        get: /
+        expect_status: [200]
+        capture: [{ pattern: 'href="/restaurants/([a-z0-9-]+)"', as: restaurant, optional: true }]
+      - name: menu
+        get: /restaurants/$restaurant
+        needs: [restaurant]
+        expect_status: [200]
+        capture: [{ pattern: 'name="takeaway_order\[items\]\[(\d+)\]"', as: dish, optional: true }]
+      - name: order
+        post: /restaurants/$restaurant/orders
+        needs: [dish]
+        params:
+          takeaway_order:
+            items: { "$dish": "2" }
+            delivery_address: "Torgallmenningen 1 $unique"
+            special_instructions: "ingen sjalottløk"
+        expect_status: [200]
+        expect_final_path: { matches: '^/orders/\d+$' }
+        expect_body: ['Torgallmenningen 1 $unique']
+      - name: in_the_order_list
+        get: /orders
+        expect_status: [200]
+        expect_any: ['href="/orders/\d+"']
+
+  - id: brgen_dating_like_leaves_the_deck
+    app: brgen
+    mutates: true
+    host: dating.brgen.no
+    description: Like a profile from the deck and see that profile leave the deck.
+    steps:
+      - name: deck
+        get: /next
+        expect_status: [200]
+        capture: [{ pattern: '/users/(\d+)/block', as: person, optional: true }]
+      - name: like
+        post: /likes?user_id=$person
+        needs: [person]
+        expect_status: [200]
+      - name: deck_again
+        get: /next
+        expect_status: [200]
+        forbid_body: ['/users/$person/block']
+
+  - id: brgen_playlist_create_lists_it
+    app: brgen
+    mutates: true
+    host: radio.brgen.no
+    description: Create a playlist and find it on its page and in the library.
+    steps:
+      - name: new_playlist
+        get: /playlists/new
+        expect_status: [200]
+        expect_any: ['name="playlist\[name\]"']
+      - name: create
+        post: /playlists
+        params: { playlist: { name: "Flowliste $unique", description: "fra flyten", public_access: "1" } }
+        expect_status: [200]
+        expect_final_path: { matches: '^/playlists/flowliste' }
+        expect_body: ['Flowliste $unique']
+      - name: in_the_library
+        get: /playlists
+        expect_status: [200]
+        expect_body: ['Flowliste $unique']
+
+  - id: brgen_tv_subscribe_and_leave
+    app: brgen
+    mutates: true
+    host: tv.brgen.no
+    description: Subscribe to a channel and unsubscribe again; neither may error (subscribe 500d on a column name until it was fixed).
+    steps:
+      - name: channels
+        get: /channels
+        expect_status: [200]
+        capture: [{ pattern: 'href="/channels/([a-z0-9-]+)"', as: channel, optional: true }]
+      - name: channel_page
+        get: /channels/$channel
+        needs: [channel]
+        expect_status: [200]
+      - name: subscribe
+        post: /channels/$channel/subscribe
+        expect_status: [200]
+        expect_final_path: /channels/$channel
+      - name: unsubscribe
+        post: /channels/$channel/unsubscribe
+        params: { _method: delete }
+        expect_status: [200]
+        expect_final_path: /channels/$channel
+
+  - id: brgen_locale_follows_the_host
+    app: brgen
+    description: The same sign-in page speaks Norwegian on brgen.no and English on lsangeles.com, with no stray string of the other.
+    steps:
+      - name: norwegian
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+        expect_body: ['Logg inn']
+        forbid_body: ['value="Sign in"']
+      - name: english
+        get: /session/new
+        host: lsangeles.com
+        expect_status: [200]
+        expect_body: ['value="Sign in"']
+        forbid_body: ['value="Logg inn"']
+
+  - id: brgen_pwa_manifest_and_service_worker
+    app: brgen
+    description: The install manifest, the service worker and the offline page all answer, so the app stays installable.
+    steps:
+      - name: manifest
+        get: /manifest.json
+        expect_status: [200]
+        asset: true
+        expect_body: ['"start_url"', '"name"']
+      - name: service_worker
+        get: /service-worker.js
+        asset: true
+        expect_status: [200]
+        expect_body: ['(?i)workbox|self\.addEventListener|precache']
+      - name: offline
+        get: /offline
+        expect_status: [200]
+
+  # --- amber -----------------------------------------------------------------
+
+  - id: amber_signup_sign_out_in
+    app: amber
+    mutates: true
+    description: Register, sign out, be refused with a wrong password, sign back in; open the pages only an account has.
+    steps:
+      - name: registration_form
+        get: /registration/new
+        expect_status: [200]
+        expect_any: ['name="user\[email_address\]"']
+      - name: register
+        post: /registration
+        params:
+          user:
+            email_address: "flow-$unique@example.test"
+            password: "Passord-123456"
+            password_confirmation: "Passord-123456"
+          accept_terms: "1"
+          accept_age: "1"
+        expect_status: [200]
+        expect_final_path: /
+      - name: account
+        get: /account
+        expect_status: [200]
+        expect_final_path: /account
+      - name: sign_out
+        post: /session
+        params: { _method: delete }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: wrong_password_is_refused
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "feil-passord-000" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: right_password_signs_in
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "Passord-123456" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+      - name: notifications
+        get: /notifications
+        expect_status: [200]
+        expect_final_path: /notifications
+
+  - id: amber_password_reset_by_email
+    app: amber
+    mutates: true
+    description: Ask for a reset, open the emailed link, choose a new password and sign in with it.
+    steps:
+      - name: registration_form
+        get: /registration/new
+        expect_status: [200]
+      - name: register
+        post: /registration
+        params:
+          user:
+            email_address: "flow-$unique@example.test"
+            password: "Passord-123456"
+            password_confirmation: "Passord-123456"
+          accept_terms: "1"
+          accept_age: "1"
+        expect_status: [200]
+        expect_final_path: /
+      - name: sign_out
+        post: /session
+        params: { _method: delete }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: reset_form
+        get: /passwords/new
+        expect_status: [200]
+      - name: request_reset
+        post: /passwords
+        params: { email_address: "flow-$unique@example.test" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: reset_mail
+        mail:
+          to: "flow-$unique@example.test"
+          capture: [{ pattern: 'passwords/([A-Za-z0-9_=-]{16,})/edit', as: reset_token }]
+      - name: open_reset_link
+        get: /passwords/$reset_token/edit
+        expect_status: [200]
+        expect_any: ['name="password"']
+      - name: choose_new_password
+        post: /passwords/$reset_token
+        params: { _method: patch, password: "Nytt-passord-789", password_confirmation: "Nytt-passord-789" }
+        expect_status: [200]
+        expect_final_path: /session/new
+      - name: new_password_signs_in
+        post: /session
+        params: { email_address: "flow-$unique@example.test", password: "Nytt-passord-789" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+
+  - id: amber_post_vote_like_comment
+    app: amber
+    mutates: true
+    description: >
+      A guest posts to the social feed, upvotes and downvotes it with the same
+      toggle rule brgen has, likes it and comments; the score and the comment are
+      read back on the post's page.
+    steps:
+      - name: feed
+        get: /posts
+        expect_status: [200]
+      - name: publish
+        post: /posts
+        params: { post: { body: "Amberinnlegg $unique" } }
+        expect_status: [200]
+      - name: find_it_in_the_feed
+        get: /posts
+        expect_status: [200]
+        expect_body: ['Amberinnlegg $unique']
+        capture: [{ pattern: '(?m)/posts/(\d+)(?:(?!/posts/\d).){0,6000}?Amberinnlegg $unique', as: post_id }]
+      - name: its_page
+        get: /posts/$post_id
+        expect_status: [200]
+        expect_body: ['Amberinnlegg $unique']
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s0 }]
+      - name: upvote
+        post: /posts/$post_id/vote
+        params: { vote: { value: 1 } }
+        expect_status: [200]
+      - name: score_after_up
+        get: /posts/$post_id
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_up }]
+      - name: upvote_again_withdraws
+        post: /posts/$post_id/vote
+        params: { vote: { value: 1 } }
+        expect_status: [200]
+      - name: score_after_undo
+        get: /posts/$post_id
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_undo }]
+      - name: downvote
+        post: /posts/$post_id/vote
+        params: { vote: { value: -1 } }
+        expect_status: [200]
+      - name: score_after_down
+        get: /posts/$post_id
+        expect_status: [200]
+        number: [{ pattern: 'post-vote-score">\s*(-?\d+)', as: s_down }]
+      - name: like
+        post: /posts/$post_id/like
+        expect_status: [200]
+      - name: comment
+        post: /posts/$post_id/comments
+        params: { comment: { content: "Amberkommentar $unique" } }
+        expect_status: [200]
+      - name: comment_is_on_the_page
+        get: /posts/$post_id
+        expect_status: [200]
+        expect_body: ['Amberkommentar $unique']
+    assert:
+      - { left: s0, op: "==", right: 0, why: "a new post starts at zero" }
+      - { left: s_up, op: "==", right: s0, delta: 1, why: "an upvote adds one" }
+      - { left: s_undo, op: "==", right: s0, why: "voting the same way twice withdraws the vote" }
+      - { left: s_down, op: "==", right: s0, delta: -1, why: "a downvote subtracts one" }
+
+  - id: amber_item_create_lands
+    app: amber
+    mutates: true
+    description: A registered account adds a wardrobe item and finds it in the wardrobe list and on its own page.
+    steps:
+      - name: registration_form
+        get: /registration/new
+        expect_status: [200]
+      - name: register
+        post: /registration
+        params:
+          user:
+            email_address: "flow-$unique@example.test"
+            password: "Passord-123456"
+            password_confirmation: "Passord-123456"
+          accept_terms: "1"
+          accept_age: "1"
+        expect_status: [200]
+      - name: item_form
+        get: /items/new
+        expect_status: [200]
+        expect_final_path: /items/new
+      - name: add_item
+        post: /items
+        params: { item: { title: "Flowkjole $unique", category: "dress", color: "black" } }
+        expect_status: [200]
+        expect_final_path: { matches: '^/items/\d+$' }
+        expect_body: ['Flowkjole $unique']
+        capture_final_path: item_path
+      - name: in_the_wardrobe
+        get: /items
+        expect_status: [200]
+        expect_body: ['Flowkjole $unique']
+      - name: a_guest_cannot_open_the_form
+        post: /session
+        params: { _method: delete }
+        expect_status: [200]
+      - name: guest_is_refused
+        get: /items/new
+        expect_status: [200]
+        expect_final_path: { not: /items/new }
+
+  - id: amber_pwa_manifest_and_service_worker
+    app: amber
+    description: The install manifest, the service worker and the offline page all answer.
+    steps:
+      - name: manifest
+        get: /manifest.json
+        asset: true
+        expect_status: [200]
+        expect_body: ['"start_url"', '"name"']
+      - name: service_worker
+        get: /service-worker.js
+        asset: true
+        expect_status: [200]
+      - name: offline
+        get: /offline
+        expect_status: [200]
+
+  # --- bsdports --------------------------------------------------------------
+
+  - id: bsdports_search_then_open_port
+    app: bsdports
+    description: Search the catalogue, open the first hit, and land on that port's page.
+    steps:
+      - name: search
+        get: /ports?q=git
+        expect_status: [200]
+        capture: [{ pattern: 'href="(/ports/\d+)"', as: hit, optional: true }]
+      - name: open_the_hit
+        get: $hit
+        needs: [hit]
+        expect_status: [200]
+        expect_final_path: $hit
+        expect_any: ['(?i)<h1']
+
+  - id: bsdports_category_to_port
+    app: bsdports
+    description: Browse the categories, open one and open a port inside it.
+    steps:
+      - name: categories
+        get: /categories
+        expect_status: [200]
+        capture: [{ pattern: 'href="(/categories/[^"]+)"', as: category, optional: true }]
+      - name: open_category
+        get: $category
+        needs: [category]
+        expect_status: [200]
+        capture: [{ pattern: 'href="(/ports/\d+)"', as: port_path, optional: true }]
+      - name: open_port
+        get: $port_path
+        needs: [port_path]
+        expect_status: [200]
+        expect_final_path: $port_path
+
+  - id: bsdports_pwa_manifest_and_service_worker
+    app: bsdports
+    description: The install manifest and the service worker answer.
+    steps:
+      - name: manifest
+        get: /manifest
+        asset: true
+        expect_status: [200]
+        expect_body: ['"start_url"']
+      - name: service_worker
+        get: /service-worker
+        asset: true
+        expect_status: [200]
+
+  # --- master ----------------------------------------------------------------
+  # Master's one write is a chat turn, which calls a model and costs credits, so
+  # no journey sends one. What can be exercised for free is the runtime a face
+  # boots from and the one command that must refuse a stranger.
+
+  - id: master_runtime_endpoints_answer
+    app: master
+    description: The runtime the face boots from answers with JSON — config, status, skills — and the manifest installs.
+    steps:
+      - name: config
+        get: /runtime/config
+        accept: "application/json"
+        asset: true
+        expect_status: [200]
+        expect_body: ['^\s*[\{\[]']
+      - name: status
+        get: /runtime/status
+        accept: "application/json"
+        asset: true
+        expect_status: [200]
+        expect_body: ['^\s*[\{\[]']
+      - name: skills
+        get: /chat/skills
+        asset: true
+        expect_status: [200]
+      - name: manifest
+        get: /manifest
+        accept: "application/manifest+json,*/*"
+        asset: true
+        expect_status: [200]
+        expect_body: ['"start_url"|"name"']
+
+  - id: master_unlock_refuses_a_wrong_token
+    app: master
+    description: A visitor cannot unlock tool access with a guess, and the refusal is a 401, not a 500 or a silent success.
+    steps:
+      - name: face
+        get: /
+        expect_status: [200]
+      - name: wrong_unlock
+        post: /chat/command
+        params: { command: "/unlock not-the-token-$unique" }
+        asset: true
+        expect_status: [401]
+        expect_body: ['unlock denied']

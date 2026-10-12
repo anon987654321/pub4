@@ -24,6 +24,7 @@ SUBPROCESS_INCONCLUSIVE = 3
 $LOAD_PATH.unshift(ROOT, GATES_DIR)
 require File.join(ROOT, "MASTER", "gates", "support", "gate_result")
 require File.join(ROOT, "MASTER", "gates", "support", "gate_ledger")
+require File.join(ROOT, "MASTER", "gates", "support", "flow_coverage")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
 require File.join(ROOT, "MASTER", "lib", "gap")
 
@@ -230,7 +231,9 @@ names.each_with_index do |name, index|
   else
     result.render
     verdict = outcome == :errored ? 'errored, blocked nothing' : outcome
-    say(["#{name} #{verdict}", (result.gaps.values.first&.clause if outcome == :inconclusive)].compact.join(", "))
+    down = outcome == :inconclusive ? Deploy::FlowCoverage.down_apps(result) : []
+    say(["#{name} #{verdict}", ("skipped:app-down #{down.join(',')}" unless down.empty?),
+         (result.gaps.values.first&.clause if outcome == :inconclusive)].compact.join(", "))
   end
 end
 

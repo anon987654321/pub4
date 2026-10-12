@@ -3,6 +3,7 @@
 require "yaml"
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
+require_relative "../../support/flow_coverage"
 require_relative "../../support/crawl_support"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/brgen_vertical_surfaces"
@@ -164,20 +165,27 @@ module Deploy
     end
 
     def live_flow_checks(app)
-      unless CrawlSupport.port_open?("127.0.0.1", app.port)
-        @result.skipped_live("#{app.name}: live user flows skipped; port #{app.port} closed")
+      steps = FLOW_PATHS.fetch(app.name)
+      port = FlowCoverage.port_for(app.name, app.port)
+      unless CrawlSupport.port_open?("127.0.0.1", port)
+        FlowCoverage.record_app_down(@result, gate: "user_flow", app: app.name, port:,
+                                              flows: steps.map { |step| step[:label] || step[:path] })
         return
       end
 
-      FLOW_PATHS.fetch(app.name).each do |step|
+      outcomes = {}
+      steps.each do |step|
         @result.checked!
-        run_live_step(app, step)
+        before = @result.failures.size
+        run_live_step(app, step, port)
+        outcomes[step[:label] || step[:path]] = @result.failures.size > before ? :failed : :passed
       end
+      @result.warn(FlowCoverage.summary_line("user_flow", app.name, port, outcomes))
     end
 
-    def run_live_step(app, step)
+    def run_live_step(app, step, port = app.port)
       label = step[:label] || step[:path]
-      url = "http://127.0.0.1:#{app.port}#{step[:path]}"
+      url = "http://127.0.0.1:#{port}#{step[:path]}"
       response = CrawlSupport.fetch(url, host: step[:host])
       code = response.code.to_i
       range = step[:expect_status]
@@ -217,8 +225,12 @@ module Deploy
       brgen = inventory.apps.find { |a| a.name == "brgen" }
       return unless brgen
 
-      open = CrawlSupport.port_open?("127.0.0.1", brgen.port)
-      GuestFlowPersona.new(port: brgen.port).run_brgen_probes!(@result, port_open: open)
+      # A closed port was already recorded by live_flow_checks as skipped:app-down;
+      # asking again would file the same app twice.
+      port = FlowCoverage.port_for(brgen.name, brgen.port)
+      return unless CrawlSupport.port_open?("127.0.0.1", port)
+
+      GuestFlowPersona.new(port:).run_brgen_probes!(@result, port_open: true)
     end
   end
 end

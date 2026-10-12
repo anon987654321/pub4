@@ -68,6 +68,7 @@ module Deploy
       @errors = []
       @checks_ran = 0
       @live_skips = 0
+      @incomplete = false
     end
 
     # The gate itself broke — an exception escaped its own run, not a finding
@@ -153,6 +154,20 @@ module Deploy
     # reason => gap, for the reasons that came with one.
     attr_reader :gaps
 
+    # A gate that measured something and could not measure everything it
+    # declares. inconclusive! alone leaves the outcome :passed whenever one
+    # check ran, so a flow gate whose apps were mostly down read as green over
+    # a "Not checked" block nobody opened. This is the stronger statement: the
+    # gate's verdict is :inconclusive, never :passed, while it stands. It does
+    # not block by itself (GATE_REQUIRE_LIVE does that, through skipped_live,
+    # on the host where the apps must be up) -- it only refuses to be green.
+    def incomplete!(reason, gap: nil)
+      @incomplete = true
+      inconclusive!(reason, gap:)
+    end
+
+    def incomplete? = @incomplete
+
     # Count a check that actually ran, so a gate can say how much it measured.
     #
     # Without this the two states are indistinguishable: a passing check records
@@ -227,7 +242,7 @@ module Deploy
       return :errored if errored?
       return :failed if measured_nothing? && self.class.strict_inconclusive?
 
-      measured_nothing? ? :inconclusive : :passed
+      measured_nothing? || incomplete? ? :inconclusive : :passed
     end
 
     # label: prefixes every merged message, so a composite's output still names
@@ -248,6 +263,7 @@ module Deploy
       # Chrome would speak for the whole suite the way one app used to speak for
       # a whole gate.
       @checks_ran += other.checks_ran if other.respond_to?(:checks_ran)
+      @incomplete ||= other.incomplete? if other.respond_to?(:incomplete?)
       # Same reason as checks_ran: without this a composite whose every leaf
       # live-skipped would look like a composite that had nothing to skip.
       @live_skips += other.live_skips if other.respond_to?(:live_skips)
@@ -279,8 +295,13 @@ module Deploy
       when :inconclusive
         # Deliberately not the success message: the point of the third state is
         # that this gate has nothing to report success about.
-        puts "inconclusive: nothing measured — #{nothing_measured_reason} " \
-             "(set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
+        if measured_nothing?
+          puts "inconclusive: nothing measured — #{nothing_measured_reason} " \
+               "(set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
+        else
+          puts "inconclusive: #{@checks_ran} check(s) ran, #{@unchecked.size} declared check(s) could not " \
+               "(see Not checked above; this is not a pass)"
+        end
         :inconclusive
       else
         # A pass that skipped something says so, instead of printing a clean

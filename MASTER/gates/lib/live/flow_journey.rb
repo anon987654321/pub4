@@ -2,10 +2,12 @@
 
 require "yaml"
 require "net/http"
+require "cgi"
 require "uri"
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
 require_relative "../../support/crawl_support"
+require_relative "../../support/flow_coverage"
 require_relative "../../support/fleet"
 
 module Deploy
@@ -18,6 +20,8 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     DATA = File.join(File.expand_path("../..", __dir__), "data", "flows.yml")
     MAX_REDIRECTS = 5
+    # shared.flash.rate_limited, nb and en.
+    RATE_LIMITED = /Prøv igjen senere|Try again later/
 
     def self.run = new.run
 
@@ -36,8 +40,11 @@ module Deploy
       ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
       # MASTER web is not a RAILS/apps.yml row — face + mission control.
       ports["master"] ||= 53_187
+      # FLOW_<APP>_PORT points one app's flows at a copy booted on a spare port.
+      ports.each { |name, port| ports[name] = FlowCoverage.port_for(name, port) }
 
       counts = Hash.new(0)
+      outcomes = Hash.new { |hash, key| hash[key] = {} }
       ran = 0
       flows.each do |flow|
         app = flow["app"]
@@ -49,13 +56,25 @@ module Deploy
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", port)
-          @result.skipped_live("flow:#{flow["id"]} skipped — #{app} port #{port} closed")
-          @result.warn(surface_coverage_line(flow, app, :skipped, "app port #{port} closed"))
+          @result.warn(surface_coverage_line(flow, app, :skipped, "skipped:app-down, port #{port} closed"))
+          outcomes[app][flow["id"]] = :skipped
           counts[:skipped] += 1
           next
         end
 
+        if flow["mutates"] && !FlowCoverage.writes_allowed?
+          @result.inconclusive!(
+            "flow:#{flow["id"]} did not run -- it writes accounts, posts or orders and this host serves production " \
+            "(GATE_ALLOW_WRITES=1 runs it against a throwaway copy of the app)",
+          )
+          @result.warn(surface_coverage_line(flow, app, :inconclusive, "writes refused on the deploy host"))
+          outcomes[app][flow["id"]] = :inconclusive
+          counts[:inconclusive] += 1
+          next
+        end
+
         state = run_flow(flow, port, app)
+        outcomes[app][flow["id"]] = state == :skipped ? :inconclusive : state
         case state
         when :skipped
           # Missing credentials mean no request was made. Do not increment
@@ -80,9 +99,16 @@ module Deploy
           @result.warn(surface_coverage_line(flow, app, :pass))
         end
       end
+      outcomes.each do |app, states|
+        @result.warn(FlowCoverage.summary_line("flow_journey", app, ports[app], states))
+        down = states.select { |_id, state| state == :skipped }.keys
+        next if down.empty?
+
+        FlowCoverage.record_app_down(@result, gate: "flow_journey", app:, port: ports[app], flows: down)
+      end
       @result.warn(
         "flow_journey: ran #{ran}/#{flows.size}; pass=#{counts[:passed]} fail=#{counts[:failed]} " \
-        "inconclusive=#{counts[:inconclusive]} skipped=#{counts[:skipped]} error=#{counts[:error]}",
+        "inconclusive=#{counts[:inconclusive]} skipped:app-down=#{counts[:skipped]} error=#{counts[:error]}",
       )
       @result
     end
@@ -152,21 +178,38 @@ module Deploy
       credentials = credentials_for(flow)
       return :skipped if credentials.nil?
 
+      # $unique is one token per flow run, so a sign-up or a post title can be
+      # told apart from every earlier run's rows; strings a step captured join it.
+      vars = credentials.merge("unique" => unique_token)
       Array(flow["steps"]).each do |step|
         name = step["name"] || step["get"] || step["post"]
         label = "flow:#{id}/#{name}"
+        host = step["host"] || flow["host"]
+        client.accept = step["accept"]
+        # A value an optional capture could not find means the dataset has nothing
+        # for this journey to act on: the app is unseeded, not broken.
+        if (missing = Array(step["needs"]).reject { |key| vars.key?(key.to_s) }).any?
+          @result.inconclusive!("#{label}: needs #{missing.join(', ')} from the page before it and found none -- the dataset is empty (seed the app)")
+          return :inconclusive
+        end
+        if step["mail"]
+          outcome = read_mail(label, step["mail"], app, vars)
+          return outcome unless outcome == :read
+
+          next
+        end
         response = begin
           if (path = step["post"])
-            client.post(path, resolve_params(step["params"], credentials), host: step["host"])
+            client.post(interpolate(path, vars), resolve_params(step["params"], vars), host:)
           else
-            client.get(step.fetch("get"), host: step["host"])
+            client.get(interpolate(step.fetch("get"), vars), host:)
           end
         rescue StandardError => e
           @result.fail("#{label}: #{e.class}: #{e.message}")
           return :failed
         end
 
-        return :failed unless check_step(label, step, response, captures)
+        return :failed unless check_step(label, step, response, captures, vars)
       end
 
       check_assertions(flow, captures)
@@ -187,22 +230,71 @@ module Deploy
       names.all? { |n| captures[n].to_i.zero? }
     end
 
-    # `$NAME` in a param takes the value the flow asked the environment for.
-    # Substitution rather than interpolation of the whole string, so a password
-    # containing a dollar sign is a password and not a template.
-    def resolve_params(params, credentials)
+    # A step that opens a message the app sent, with no request of its own: the
+    # development mailer writes tmp/mails/<recipient> (RAILS/__shared
+    # development.rb), and the link inside is what a person would click. An app
+    # that writes no file leaves the journey inconclusive, never failed -- it is
+    # the environment that cannot be read, not the product that is wrong.
+    def read_mail(label, spec, app, vars)
+      dir = ENV["FLOW_#{app.upcase}_MAIL_DIR"] || File.join(@root, "RAILS", app == "master" ? "master_web" : app, "tmp", "mails")
+      path = File.join(dir, interpolate(spec.fetch("to"), vars))
+      deadline = Time.now + spec.fetch("within", 10).to_f
+      sleep 0.25 until File.file?(path) || Time.now > deadline
+      unless File.file?(path)
+        @result.inconclusive!("#{label}: no mail at #{path.sub("#{@root}/", '')} -- the app's mailer writes no file here, so the confirmation link went unfollowed")
+        return :inconclusive
+      end
+
+      # The newest message in the file, and the first match in it: the plain-text
+      # part comes before the HTML one, whose link can be re-encoded.
+      text = mail_text(File.read(path).split(/^(?=Date: )/).last.to_s)
+      Array(spec["capture"]).each do |capture|
+        found = text.scan(Regexp.new(capture.fetch("pattern"))).flatten.first
+        unless found
+          @result.fail("#{label}: mail to #{spec["to"]} held nothing for #{capture["pattern"].inspect}")
+          return :failed
+        end
+        vars[capture.fetch("as").to_s] = found
+      end
+      :read
+    end
+
+    # The file holds raw MIME. Quoted-printable would split a long link across
+    # lines, and base64 would hide it; a 7bit part is left alone, because a
+    # signed token may contain =XX that is not an escape.
+    def mail_text(raw)
+      decoded = raw.gsub(/^([A-Za-z0-9+\/=]{40,})$/) { Regexp.last_match(1).unpack1("m").force_encoding(Encoding::UTF_8).scrub } if raw.match?(/Content-Transfer-Encoding: base64/i)
+      decoded ||= raw
+      return decoded.scrub unless raw.match?(/Content-Transfer-Encoding: quoted-printable/i)
+
+      decoded.gsub(/=\r?\n/, "").gsub(/=([0-9A-F]{2})/) { Regexp.last_match(1).hex.chr }.scrub
+    end
+
+    def unique_token = "#{Time.now.to_i.to_s(36)}#{rand(36**3).to_s(36)}"
+
+    # `$name` takes the value a flow asked the environment for, a string an
+    # earlier step captured, or $unique. Only names that exist are replaced, and
+    # a value is inserted once and never rescanned, so a password containing a
+    # dollar sign is a password and not a template.
+    def interpolate(text, vars)
+      text.to_s.gsub(/\$([A-Za-z_][A-Za-z0-9_]*)/) { vars.key?(Regexp.last_match(1)) ? vars[Regexp.last_match(1)] : Regexp.last_match(0) }
+    end
+
+    def resolve_params(params, vars)
       return params unless params.is_a?(Hash)
 
-      params.transform_values do |value|
-        case value
-        when Hash then resolve_params(value, credentials)
-        when String then value.start_with?("$") ? credentials.fetch(value[1..], value) : value
-        else value
-        end
+      params.to_h do |key, value|
+        resolved = case value
+                   when Hash then resolve_params(value, vars)
+                   when String then interpolate(value, vars)
+                   else value
+                   end
+        [interpolate(key, vars), resolved]
       end
     end
 
-    def check_step(label, step, response, captures)
+    def check_step(label, step, response, captures, vars = {})
+
       expected = Array(step["expect_status"]).map(&:to_i)
       expected = [200] if expected.empty?
       unless expected.include?(response.code)
@@ -219,7 +311,18 @@ module Deploy
         # Equality cannot say that, and without it a refused sign-in renders 200
         # from the sign-in page and every later step tests a guest while the
         # journey's name says account.
-        if want.is_a?(Hash) && want.key?("not")
+        want = interpolate(want, vars) if want.is_a?(String)
+        if want.is_a?(Hash) && want.key?("matches")
+          unless Regexp.new(interpolate(want["matches"], vars)).match?(actual)
+            @result.fail("#{label}: landed on #{actual}#{hops}, not on a path matching #{want["matches"].inspect}")
+            return false
+          end
+        elsif want.is_a?(Hash) && want.key?("not_matches")
+          if Regexp.new(interpolate(want["not_matches"], vars)).match?(actual)
+            @result.fail("#{label}: landed on #{actual}#{hops}, a path matching #{want["not_matches"].inspect} that this step must not reach")
+            return false
+          end
+        elsif want.is_a?(Hash) && want.key?("not")
           if actual == want["not"]
             @result.fail("#{label}: landed back on #{actual}#{hops} — refused, not signed in")
             return false
@@ -234,32 +337,74 @@ module Deploy
       body = response.body.to_s.dup.force_encoding(Encoding::UTF_8)
       body = body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace) unless body.valid_encoding?
       Array(step["expect_body"]).each do |pattern|
+        pattern = interpolate(pattern, vars)
         next if Regexp.new(pattern).match?(body)
 
         @result.fail("#{label}: body missing #{pattern.inspect}")
       end
 
-      any = Array(step["expect_any"])
+      any = Array(step["expect_any"]).map { |pattern| interpolate(pattern, vars) }
       if any.any? && any.none? { |pattern| Regexp.new(pattern).match?(body) }
         @result.fail("#{label}: body matched none of #{any.map(&:inspect).join(', ')}")
       end
 
+      # The app's own rate limiter answers with a redirect and a flash, which looks
+      # like success to a status check. Name it, or a rerun inside the window
+      # reads as a product defect three steps later.
+      if !step["asset"] && body.match?(RATE_LIMITED)
+        @result.fail("#{label}: the app rate limited this request (\"try again later\") -- a rerun inside the limit window will fail here; wait it out or restart the app under test")
+        return false
+      end
+
       Array(step["forbid_body"]).each do |pattern|
+        pattern = interpolate(pattern, vars)
         next unless Regexp.new(pattern).match?(body)
 
         @result.fail("#{label}: body contains forbidden #{pattern.inspect}", severity: :hard)
       end
 
-      %w[Exception].each do |bad|
-        @result.fail("#{label}: response contains #{bad}") if body.include?(bad)
+      # asset: true marks a file rather than a page (a service worker is
+      # JavaScript that says "Exception" legitimately), which an error-page
+      # heuristic would misread.
+      unless step["asset"]
+        %w[Exception].each do |bad|
+          @result.fail("#{label}: response contains #{bad}") if body.include?(bad)
+        end
+        @result.fail("#{label}: response contains Routing Error") if body.include?("Routing Error")
       end
-      @result.fail("#{label}: response contains Routing Error") if body.include?("Routing Error")
 
       if (spec = step["count"])
-        value = body.scan(Regexp.new(spec.fetch("pattern"))).size
+        value = body.scan(Regexp.new(interpolate(spec.fetch("pattern"), vars))).size
         captures[spec.fetch("as").to_s] = value
       end
-      true
+      vars[step["capture_final_path"].to_s] = response.final_path if step["capture_final_path"]
+      capture_values(label, step, body, captures, vars)
+    end
+
+    # capture: the first group of a pattern, kept as a string for later steps
+    # ($name in a path, a param or a pattern). number: the same, as an integer
+    # an assertion can compare. A pattern that finds nothing fails the step: a
+    # journey that carries on without the value would test a different page.
+    def capture_values(label, step, body, captures, vars)
+      ok = true
+      %w[capture number].each do |kind|
+        Array(step[kind]).each do |spec|
+          match = Regexp.new(interpolate(spec.fetch("pattern"), vars)).match(body)
+          next if match.nil? && spec["optional"]
+
+          unless match && match[1]
+            @result.fail("#{label}: #{kind} #{spec["as"].inspect} found nothing for #{spec["pattern"].inspect}")
+            ok = false
+            next
+          end
+          if kind == "number"
+            captures[spec.fetch("as").to_s] = match[1].to_i
+          else
+            vars[spec.fetch("as").to_s] = CGI.unescapeHTML(match[1])
+          end
+        end
+      end
+      ok
     end
 
     OPS = {
@@ -292,6 +437,7 @@ module Deploy
         left = captures.fetch(left_name)
         right_raw = rule.fetch("right")
         right = right_raw.is_a?(Integer) ? right_raw : captures[right_raw.to_s]
+        right += rule["delta"].to_i if right && rule["delta"]
         if right.nil?
           @result.fail("flow:#{flow["id"]} assertion references unknown capture #{right_raw.inspect}")
           next
@@ -332,12 +478,22 @@ module Deploy
       # permissive, and could never pass against the deployed app, which is the
       # only place they measure anything.
       def initialize(port:, host: "127.0.0.1", default_host: nil)
+        # One browser per journey. brgen's guest post quota is keyed on the user
+        # agent, language and address and never resets, so journeys that all
+        # presented as "Ruby" spent one shared allowance of 15 posts and every
+        # later run was sent to the sign-in wall.
+        @agent = "pub4-flow-journey/#{Time.now.to_i.to_s(36)}#{rand(36**4).to_s(36)}"
         @port = port
         @host = host
         @default_host = default_host
         @cookies = {}
         @csrf = nil
+        @last_page = nil
       end
+
+      # What this request asks for; nil is what a browser navigating sends. A step
+      # naming a manifest or a JSON endpoint says so, as the browser fetching it would.
+      attr_writer :accept
 
       def get(path, host: nil) = run(:get, path, nil, host)
 
@@ -368,8 +524,9 @@ module Deploy
             verb, params = :get, nil if code != 307 && code != 308
             next
           end
-          return Response.new(code:, body: response.body.to_s,
-                              final_url: display_url(url, header_host), redirects:)
+          final = display_url(url, header_host)
+          @last_page = final if verb == :get
+          return Response.new(code:, body: response.body.to_s, final_url: final, redirects:)
         end
         raise "too many redirects (#{redirects.join(' → ')})"
       end
@@ -413,6 +570,13 @@ module Deploy
         Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
           req = build_request(uri, verb, params)
           req["Host"] = header_host if header_host
+          # What a browser sends: HTML first, and the page the form sat on. Without
+          # the first a content-negotiating route (search) answers JSON; without the
+          # second redirect_back lands on its fallback and a "stay on the page"
+          # action looks like a jump to the root.
+          req["Accept"] = @accept || "text/html,application/xhtml+xml"
+          req["User-Agent"] = @agent
+          req["Referer"] = @last_page if @last_page && verb != :get
           req["Cookie"] = @cookies.map { |k, v| "#{k}=#{v}" }.join("; ") unless @cookies.empty?
           http.request(req)
         end

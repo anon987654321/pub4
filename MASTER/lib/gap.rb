@@ -50,6 +50,8 @@ module Master
     NO_BROWSER = new(horizon: :never, cost_to_check: :minutes, decidability: :fact)
     DEPLOY_HOST_ONLY = new(horizon: :never, cost_to_check: :deploy_host, decidability: :fact)
     NEEDS_CAPTURE = new(horizon: :operator, cost_to_check: :minutes, decidability: :fact)
+    # A live check whose app was not listening: booting it settles the question.
+    APP_DOWN = new(horizon: :operator, cost_to_check: :minutes, decidability: :fact)
     OPERATOR_DECISION = new(horizon: :operator, cost_to_check: :operator, decidability: :decision_for_operator)
   end
 end
