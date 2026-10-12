@@ -22,7 +22,12 @@ class CiMirrorContractTest < Minitest::Test
   def mirrored_files
     list = SYNC[/local -a lib_files=\(([^)]*)\)/m, 1]
     refute_nil list, "lib_files not found in vps_ci.sh -- the scan broke, not the sync"
-    list.split + ["MASTER/data/laws.yml"]
+    list.split + SYNC.scan(%r{archive HEAD (MASTER/data/\S+)}).flatten
+  end
+
+  # MasterDesign reads data/tokens.yml from the mirror; the app user cannot reach the repo copy.
+  def test_the_design_tokens_are_mirrored
+    assert_includes mirrored_files, "MASTER/data/tokens.yml"
   end
 
   def mirrored?(rel)

@@ -91,7 +91,8 @@ class VpsDeployContractTest < Minitest::Test
   # and gone when the script exits.
   def test_the_deploy_flag_is_held_for_the_whole_deploy_and_released_on_exit
     refute_nil flag_block, "the deploy flag block is gone — the scan broke, or the flag did"
-    guard_glob = GUARD[%r{for _flag in (/home/dev/pub4/\.deploying\S*); do}, 1]
+    guard_glob = GUARD[%r{^DEPLOY_FLAGS="(/home/dev/pub4/\.deploying\S*)"$}, 1]
+    assert_includes GUARD, "for _flag in $DEPLOY_FLAGS; do", "the guard no longer loops over DEPLOY_FLAGS"
     refute_nil guard_glob, "resource_guard no longer reads a deploy flag glob"
 
     Dir.mktmpdir do |repo|

@@ -81,6 +81,8 @@ sed -e "s#^export PATH=.*#export PATH=$BIN:/usr/bin:/bin#" \
     -e "s#^ALL_APPS_FLAG=.*#ALL_APPS_FLAG=$DB/all_apps#" \
     -e "s#>> /var/log/resource_guard_history.log#>> $SANDBOX/log/history#" \
     -e "s#GUARD_HELPER=.*#GUARD_HELPER=$DB/nonexistent#" \
+    -e "s#^EMERGENCY=.*#EMERGENCY=$DB/emergency#" \
+    -e "s#^DEPLOY_FLAGS=.*#DEPLOY_FLAGS=\"$DB/flag/.deploying*\"#" \
     "$GUARD" > "$SANDBOX/guard_under_test.sh"
 
 fail=0
@@ -135,6 +137,23 @@ got=""
 for field in $last; do [[ $field == rss_* ]] && got="$got $field"; done
 check "history names each app's rss, summed over its processes" \
   "rss_master=512M rss_brgen=512M rss_bsdports=512M rss_amber=512M" "${got# }"
+
+print "7. a deploy raises the emergency line: load 6 runs emergency_cpu without a flag, not with one"
+reset
+mkdir -p "$DB/flag"
+cat > "$DB/emergency" <<EOF_
+#!/bin/ksh
+print ran >> "$DB/emergency_ran"
+EOF_
+chmod +x "$DB/emergency"
+FAKE_LOAD=6.0 FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&1 || true
+check "no deploy flag, load 6: emergency ran" "ran" "$(cat "$DB/emergency_ran" 2>/dev/null)"
+rm -f "$DB/emergency_ran"
+: > "$DB/flag/.deploying-test"
+FAKE_LOAD=6.0 FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&1 || true
+check "deploy flag, load 6: emergency did not run" "" "$(cat "$DB/emergency_ran" 2>/dev/null)"
+FAKE_LOAD=13.0 FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&1 || true
+check "deploy flag, load 13: emergency ran" "ran" "$(cat "$DB/emergency_ran" 2>/dev/null)"
 
 rm -rf "$SANDBOX"
 [[ $fail -eq 0 ]] && print "\nALL PASS" || { print "\nFAILURES"; exit 1; }

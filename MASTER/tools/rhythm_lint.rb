@@ -83,7 +83,7 @@ module Operator
           next unless value.is_a?(String) && value =~ /\A([\d.]+)(rem|px)\z/
 
           px = to_px(Regexp.last_match(1), Regexp.last_match(2))
-          violations << Violation.new("MASTER/data/laws.yml:tokens.#{dialect}", key, px) unless allowed.include?(px)
+          violations << Violation.new("MASTER/data/tokens.yml:tokens.#{dialect}", key, px) unless allowed.include?(px)
         end
       end
       violations

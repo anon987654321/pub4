@@ -50,13 +50,13 @@ sync_ci_rails_root() {
     doas rm -rf "$mirror/MASTER/tools"
     git -C "$repo" archive HEAD MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
   fi
-  # MASTER is the design authority: MASTER/tools/rails/build_all_css.rb and the lints
-  # read design_system from MASTER/data/laws.yml through
-  # Operator::MasterDesign, whose first candidate is this mirror's copy. The
-  # app user cannot read /home/dev/pub4, so without it css_build died on
-  # KeyError "social" (2026-09-24).
-  doas rm -f "$mirror/MASTER/data/laws.yml"
-  git -C "$repo" archive HEAD MASTER/data/laws.yml | doas sh -c "cd ${mirror} && tar xf -"
+  # MASTER/data/tokens.yml is the design authority: build_all_css.rb, rhythm_lint
+  # and the drift lints read it through Operator::MasterDesign, whose first
+  # candidate is this mirror's copy. The app user cannot read /home/dev/pub4, so
+  # without it css_build dies on KeyError "social" and rhythm_lint on a missing
+  # tokens.scale.space_px. laws.yml is not mirrored: no CI tool reads it.
+  doas rm -f "$mirror/MASTER/data/tokens.yml" "$mirror/MASTER/data/laws.yml"
+  git -C "$repo" archive HEAD MASTER/data/tokens.yml | doas sh -c "cd ${mirror} && tar xf -"
   # build_all_css.rb picks its Ruby through MASTER/lib/operator/ruby_runner,
   # which requires its siblings. Without the directory css_build dies on a
   # LoadError before it compiles anything.

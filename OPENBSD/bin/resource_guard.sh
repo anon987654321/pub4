@@ -47,6 +47,14 @@ OPTIONAL="bsdports amber"
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
 LOAD_WARN=2.5
 LOAD_CRIT=5.0
+# A deploy raises its own load: brgen CI on 2026-10-12 crossed LOAD_CRIT at
+# 09:30, and emergency_cpu stopped amber and bsdports and pkilled the suite the
+# operator had asked for, 22 minutes in. Over 17137 history ticks, the 1111
+# taken with a deploy flag up peaked at 9.5 (p99 5.0); the 16026 without one
+# reached 24.9. A deploy gets the higher line, so a runaway still trips it.
+DEPLOY_LOAD_CRIT=${GUARD_DEPLOY_LOAD_CRIT:-12.0}
+EMERGENCY=/usr/local/bin/emergency_cpu.sh
+DEPLOY_FLAGS="/home/dev/pub4/.deploying*"
 # Recalibrated 2026-07-29 from the 916 ticks the history log had accumulated
 # (2026-07-25..29), which is the dataset the note further down asked for.
 # Observed: load p50=1.01 p75=1.69 p90=2.57; mem_avail p50=13 p75=24 p90=28.
@@ -210,7 +218,7 @@ if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 DEPLOY_FLAG_MAX_AGE=${GUARD_DEPLOY_FLAG_MAX_AGE:-1800}
 deploying=0
 _now=$(date +%s)
-for _flag in /home/dev/pub4/.deploying*; do
+for _flag in $DEPLOY_FLAGS; do
   [ -e "$_flag" ] || continue
   _mtime=$(stat -f %m "$_flag" 2>/dev/null || echo 0)
   if [ $((_now - _mtime)) -le "$DEPLOY_FLAG_MAX_AGE" ]; then
@@ -329,12 +337,14 @@ if [[ $shed -eq 0 && -s $SHED_STATE && $mem_avail_pct -ge $MEM_RESTORE ]]; then
   fi
 fi
 
-if awk -v l="$load" -v c="$LOAD_CRIT" 'BEGIN{exit !(l>=c)}'; then
+crit=$LOAD_CRIT
+[[ $deploying -eq 1 ]] && crit=$DEPLOY_LOAD_CRIT
+if awk -v l="$load" -v c="$crit" 'BEGIN{exit !(l>=c)}'; then
   logger -t resource-guard "crit load=$load — running emergency_cpu"
-  if [[ -x /usr/local/bin/emergency_cpu.sh ]]; then
-    ksh /usr/local/bin/emergency_cpu.sh 2>&1 | logger -t resource-guard
+  if [[ -x $EMERGENCY ]]; then
+    ksh $EMERGENCY 2>&1 | logger -t resource-guard
   else
-    logger -t resource-guard "emergency_cpu not installed under /usr/local/bin"
+    logger -t resource-guard "emergency_cpu not installed under $EMERGENCY"
   fi
 fi
 
