@@ -145,12 +145,17 @@ class DesignContractTest < Minitest::Test
 
   def test_brgen_marketplace_rules_are_loaded_from_one_feature_partial
     app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    partial_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
-    partial = File.read(partial_path)
+    marketplace_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
+    verticals_path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_surfaces.scss")
+    marketplace = File.read(marketplace_path)
+    verticals = File.read(verticals_path)
 
     assert_includes app, '@include meta.load-css("brgen_marketplace");'
-    assert_includes partial, ".deal-card"
-    assert_includes partial, ".deal-cat"
+    assert_includes app, '@include meta.load-css("brgen_vertical_surfaces");'
+    assert_includes marketplace, ".deal-card"
+    assert_includes marketplace, ".deal-cat"
+    assert_includes verticals, ".listing-buy-bar-cta"
+    refute_includes app, ".listing-buy-bar-cta"
   end
 
   def test_brgen_mounts_theme_bootstrap_once_in_head
