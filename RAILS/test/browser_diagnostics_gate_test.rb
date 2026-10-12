@@ -5,6 +5,7 @@ require "yaml"
 require "tmpdir"
 require "digest"
 require "minitest/mock"
+require "set"
 require_relative "../../MASTER/gates/lib/rendered/browser_diagnostics"
 require_relative "../../MASTER/gates/lib/rendered_suite"
 
