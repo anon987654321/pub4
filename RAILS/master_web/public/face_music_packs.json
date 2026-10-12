@@ -139,7 +139,7 @@
             [53, 57, 60, 64]
           ],
           "bass": [38, 43, 48, 41],
-          "sources": ["STUDIO/dilla/data/dilla_reference.yml documented_progressions flylo_beginners_falafel_documented"]
+          "sources": ["dilla-engine-final:STUDIO/dilla/data/dilla_reference.yml documented_progressions flylo_beginners_falafel_documented"]
         },
         {
           "name": "computer_face",
@@ -189,7 +189,7 @@
             [47, 54, 59, 63]
           ],
           "bass": [37, 41, 39, 35],
-          "sources": ["STUDIO/dilla/royksopp.rb SOURCES eple (Hooktheory/ChordU transcription)"]
+          "sources": ["dilla-engine-final:STUDIO/dilla/dilla.rb Royksopp SOURCES eple (Hooktheory/ChordU transcription)"]
         },
         {
           "name": "remind_me",
@@ -201,7 +201,7 @@
             [46, 53, 58, 62]
           ],
           "bass": [38, 45, 51, 46],
-          "sources": ["STUDIO/dilla/royksopp.rb SOURCES remind_me — Dm7 Am7 Ebmaj7 Bb (Musicnotes/Cifra Club)"]
+          "sources": ["dilla-engine-final:STUDIO/dilla/dilla.rb Royksopp SOURCES remind_me — Dm7 Am7 Ebmaj7 Bb (Musicnotes/Cifra Club)"]
         },
         {
           "name": "what_else_is_there",

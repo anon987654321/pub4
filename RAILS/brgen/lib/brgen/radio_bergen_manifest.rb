@@ -39,12 +39,10 @@ module Brgen
       # and the surviving three paths were lowercase `MASTER/tools/` after 2d4551597
       # renamed the directory to STUDIO. So sonic_learnings returned {} on every
       # call, and radio_bergen_study_test.rb skipped itself rather than failing.
-      # The learnings live in the dilla engine's own reference file now.
+      # The learnings lived in the dilla engine's own reference file, which left
+      # the tree with the engine (tag dilla-engine-final); this app's file is the one.
       def sonic_learnings_candidates
-        [
-          rails_root.join("config/radio_bergen/sonic.yml"),
-          Pathname.new(Contracts::Studio.sonic_reference.to_s)
-        ]
+        [rails_root.join("config/radio_bergen/sonic.yml")]
       end
 
       def sonic_learnings_path
@@ -104,7 +102,6 @@ module Brgen
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
           "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
-          "learnings: STUDIO/dilla/data/reference_sonic.yml",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "catalogue: #{youtube_count} external references · no local source files",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",

@@ -13,10 +13,7 @@ class DillaRenderJob < ApplicationJob
       return
     end
 
-    style = sketch.style.presence || sketch.state.to_h.dig("mix_", "style") || "dilla"
-    bars = sketch.bars.presence || sketch.state.to_h.dig("mix_", "bars") || Shared::DillaProcessor::DEFAULT_BARS
-
-    ok = Shared::DillaProcessor.attach_to_record!(sketch, attachment_name: :render, style: style, bars: bars)
+    ok = Shared::DillaProcessor.attach_to_record!(sketch, attachment_name: :render)
     unless ok
       sketch.update!(render_status: "failed", render_error: "render failed or empty output")
       return
@@ -26,9 +23,7 @@ class DillaRenderJob < ApplicationJob
     sketch.update!(
       render_status: "ready",
       rendered_at: Time.current,
-      track: track,
-      style: style.to_s,
-      bars: bars.to_i
+      track: track
     )
   rescue StandardError => e
     sketch&.update(render_status: "failed", render_error: "#{e.class}: #{e.message}")

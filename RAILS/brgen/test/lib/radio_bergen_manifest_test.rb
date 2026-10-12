@@ -32,7 +32,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
     paths = Brgen::RadioBergenManifest.archaeology_lines.join("\n")
                                       .scan(%r{\b(?:RAILS|STUDIO|MASTER|OPENBSD)/[\w./-]+\.\w+})
 
-    assert_operator paths.size, :>=, 2, "expected the lines to still cite repo paths"
+    assert_operator paths.size, :>=, 1, "expected the lines to still cite repo paths"
     paths.each { |rel| assert_path_exists root.join(rel).to_s }
   end
 end
