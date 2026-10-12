@@ -1,0 +1,2707 @@
+@use "sass:meta";
+@use "surface_chrome_endgame" as endgame;
+
+// ============================================================ shared modules and overrides
+
+@include meta.load-css("auth_form");
+
+@include meta.load-css("chat_reactions");
+
+@media (prefers-contrast: high) {
+  .radio-tunnel canvas { filter: contrast(150%); }
+}
+
+/* High contrast */
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
+  }
+  a { text-decoration: underline; }
+}
+
+/* Reduced motion — keep identity, kill ambient */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none !important;
+  }
+  .feed-action:active { transform: none; }
+}
+
+@include meta.load-css("focus_ring");
+
+// Classes the markup uses that no component defines, shared and then brgen's
+// own, as Operator::CssCoverageLint finds them. They load last so they
+// complement the components above rather than compete with them.
+
+@include meta.load-css("promotional_art");
+@include meta.load-css("shared_coverage_fills");
+
+// brgen's own: token-only, no hex, no !important. A class whose element already
+// carries a styled sibling (`.channel-guest-hint dim`, `.affiliate-placeholder
+// dim`, `.conversation-log` beside `.channel-log`) inherits, so it is not here.
+
+// Profile activity feed.
+.profile-activity {
+  margin-block-start: var(--space-6);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-vertical {
+  color: var(--text-secondary);
+}
+
+// Hashtag cloud on the front page.
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Partner programme pages.
+.partner-programs,
+.partner-program,
+.partner-membership {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: var(--measure);
+}
+
+// Media gallery thumbnail link. The anchor is the hit target, so it carries the tap
+// floor rather than the image inside it.
+.media-gallery-item {
+  display: block;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+// Place hero image on the maps surface.
+.place-hero {
+  margin: 0 0 var(--space-3);
+}
+
+.place-hero__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+// Validation errors. role="alert" is already on the element; this gives the list the
+// shape of an error block without inventing a colour — --danger is the token the
+// dialects already define for it.
+.form-errors {
+  margin: 0 0 var(--space-3);
+  padding-inline-start: var(--space-6);
+  color: var(--danger);
+}
+
+.messenger-compose-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
+// Event, Story, community governance and quote-posts. Token-only,
+// space-not-lines, no hex.
+
+/* Admin rosters are indexes, not feeds: hairline rows, tabular density,
+   no card padding — the moderation surfaces share one list pattern. */
+.ban-list > li,
+.member-list > li,
+.attendee-list > li,
+.viewer-list > li {
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border);
+}
+
+.event-list,
+.attendee-list,
+.viewer-list,
+.ban-list,
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-card);
+}
+
+.event-card-media {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.event-card-media img,
+.event-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The hero is a cover, not a figure: a fixed 16/9 band that crops rather
+   than reflows, so the page cannot jump when the image lands. */
+.event-hero img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.event-card-body h3 {
+  margin: 0;
+  font-size: var(--text-title);
+  font-family: var(--font);
+}
+
+.event-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: var(--measure);
+}
+
+.event-hero {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.rsvp-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rsvp-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.story-rings {
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-2) 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.story-rings > li {
+  flex: 0 0 var(--space-16);
+  scroll-snap-align: start;
+}
+
+.story-rings a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  text-decoration: none;
+  color: inherit;
+}
+
+.story-rings img {
+  display: block;
+  width: var(--space-16);
+  height: var(--space-16);
+  object-fit: cover;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+}
+
+/* The ring is the state: unseen wears the accent, seen fades to the border
+   grey — the one place the hue means "new here" on a grayscale surface. */
+.story-ring img {
+  border: 2px solid var(--accent);
+}
+.story-ring--seen img {
+  border-color: var(--border);
+}
+.story-ring--seen .story-ring-name {
+  color: var(--text-secondary);
+}
+
+.story-ring-name {
+  max-width: var(--space-16);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.story-ring-count {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.story-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: var(--measure);
+}
+
+.story-viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.story-media img {
+  display: block;
+  width: 100%;
+  max-height: 100dvh;
+  height: auto;
+  object-fit: contain;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+}
+
+.story-caption {
+  margin: 0;
+  max-width: var(--measure);
+}
+
+.story-ring-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.community-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: var(--measure);
+}
+
+.community-rules ol {
+  margin: 0;
+  padding-inline-start: var(--space-6);
+}
+
+.mod-queue {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mod-queue th,
+.mod-queue td {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  vertical-align: top;
+}
+
+.mod-queue th {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-secondary);
+}
+
+.post-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block-start: var(--space-6);
+}
+
+.post-quotes ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// button_to wraps the feed repost control. Without this the form breaks
+// the action row into a stacked block.
+.feed-action-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.chip--live {
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+}
+
+.chip--cancelled {
+  color: var(--danger);
+}
+
+// The map's no-JS-map fallback: when the tile layer cannot load, map_controller
+// lists the points as cards instead.
+//
+// Structural and token-only, like the rest of these fills: geometry so the
+// fallback is legible, and no colour, because what it should look like is a
+// design decision and this is a floor.
+.map-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+// The cards are the anchors, selected by position rather than by a class the
+// controller has to keep writing.
+.map-fallback a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-card);
+  min-height: var(--tap-min);
+}
+
+// lazy_image_tag ships a transparent placeholder pixel and lazy_image_controller
+// (AN506) swaps in the real photo once IntersectionObserver fires: .lazy-loaded
+// lands the instant the fetch starts, .lazy-fade-in lands on the image's own
+// onload. Nothing styled either state, so every lazy image in messages and
+// media galleries popped in at full opacity with no transition armed. The
+// 240ms duration is not invented here -- it is the same figure the controller
+// already writes inline for its blurhash-canvas case.
+img[data-controller="lazy-image"][data-lazy-image-src-value] {
+  opacity: 0;
+}
+
+img[data-controller="lazy-image"].lazy-loaded {
+  transition: opacity 240ms var(--ease-out);
+}
+
+img[data-controller="lazy-image"].lazy-fade-in {
+  opacity: 1;
+}
+
+
+/* Bol-derived marketplace composition. Geometry and interaction are modeled from
+   the current bol.com storefront; all imagery, copy, logo treatment and assets
+   remain brgen-owned. This block is intentionally scoped to one vertical so
+   the rest of brgen keeps its own visual language. */
+
+body.vertical-marketplace {
+  /* The blue is the vertical accent, not bol's navy (operator, 2026-09-25). */
+  --bol-blue: var(--accent);
+  --bol-blue-dark: var(--vertical-marketplace-accent-hover);
+  --bol-blue-soft: #eef5ff;
+  --bol-ink: #111111;
+  background: unset;
+  color: var(--bol-ink);
+  --bol-muted: #666666;
+  --bol-rule: #d9d9d9;
+  --bol-price: #c91f2c;
+  --bol-max: 1248px;
+  --bol-gutter: 16px;
+  --bol-header-height: 56px;
+  --font-ad: var(--font);
+  color-scheme: light;
+}
+
+body.vertical-marketplace .app-shell {
+  inset: 0;
+}
+
+body.vertical-marketplace .nav_swiper,
+body.vertical-marketplace .search_palette_trigger,
+body.vertical-marketplace .tab-bar-coach,
+body.vertical-marketplace .tab-bar-peel,
+body.vertical-marketplace #app-tab-bar,
+body.vertical-marketplace .brgen-logo-mark {
+  display: none !important;
+}
+
+body.vertical-marketplace .layout {
+  max-width: none;
+}
+
+body.vertical-marketplace #main-content {
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 var(--bol-gutter) 64px;
+  background: unset;
+}
+
+body.vertical-marketplace #navBar.storefront-nav--bol {
+  position: relative;
+  z-index: var(--z-nav);
+  margin-inline: calc(50% - 50vw);
+  color: #fff;
+  border: 0;
+  box-shadow: none;
+}
+
+body.vertical-marketplace .storefront-utility--bol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 0 var(--bol-gutter);
+  border-bottom: 1px solid var(--bol-rule);
+  background: unset;
+  color: var(--bol-muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+body.vertical-marketplace .storefront-bol-brand {
+  z-index: 2;
+  inset-block-start: 0;
+  inset-inline-start: max(var(--bol-gutter), calc((100vw - var(--bol-max)) / 2));
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .storefront-bol-brand .brand-text {
+  color: inherit;
+  font: inherit;
+}
+
+body.vertical-marketplace .bol-market-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 42%);
+  min-height: 360px;
+  max-width: var(--bol-max);
+  margin: 24px auto 20px;
+  background: var(--bol-blue-soft);
+}
+
+body.vertical-marketplace .bol-market-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+}
+
+body.vertical-marketplace .bol-market-kicker {
+  margin: 0;
+  color: var(--bol-blue);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .bol-market-hero-copy h2 {
+  margin: 0;
+  max-width: 16ch;
+  color: var(--bol-ink);
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+body.vertical-marketplace .bol-market-hero-copy > p:not(.bol-market-kicker) {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--bol-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body.vertical-marketplace .bol-market-hero-price {
+  color: var(--bol-price);
+  font-size: 32px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+body.vertical-marketplace .bol-market-hero-media {
+  min-width: 0;
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #f6f6f6;
+}
+
+body.vertical-marketplace .bol-market-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+body.vertical-marketplace .bol-market-hero-media > span {
+  font-size: 96px;
+  font-weight: 800;
+  color: var(--bol-blue);
+}
+
+body.vertical-marketplace .bol-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  min-width: 180px;
+  padding: 0 24px;
+  border-radius: 4px;
+  background: var(--bol-blue);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .bol-primary:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .bol-kind-tabs {
+  display: flex;
+  gap: 0;
+  max-width: var(--bol-max);
+  margin: 0 auto 28px;
+  border-bottom: 1px solid var(--bol-rule);
+  overflow-x: auto;
+}
+
+body.vertical-marketplace .bol-kind-tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 24px;
+  color: var(--bol-ink);
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .bol-kind-tabs a:hover,
+body.vertical-marketplace .bol-kind-tabs a.active {
+  color: var(--bol-blue);
+  border-bottom-color: var(--bol-blue);
+}
+
+body.vertical-marketplace .bol-catalog-layout {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 32px;
+  max-width: var(--bol-max);
+  margin-inline: auto;
+}
+
+body.vertical-marketplace .bol-filter-column {
+  min-width: 0;
+}
+
+body.vertical-marketplace .bol-filter-column .listing-filters {
+  border: 0;
+}
+
+body.vertical-marketplace .bol-filter-column .listing-filters > summary {
+  display: none;
+}
+
+body.vertical-marketplace .bol-filter-column .listing-filters-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0;
+}
+
+body.vertical-marketplace .listing-filter-group {
+  margin: 0;
+  padding: 0 0 20px;
+  border: 0;
+  border-bottom: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace .listing-filter-group legend,
+body.vertical-marketplace .listing-facet-name {
+  margin: 0 0 12px;
+  color: var(--bol-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .listing-filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body.vertical-marketplace .listing-filter-controls .deal-cat {
+  justify-content: flex-start;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--bol-ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .listing-filter-controls .deal-cat:hover,
+body.vertical-marketplace .listing-filter-controls .deal-cat.active {
+  background: transparent;
+  color: var(--bol-blue);
+}
+
+body.vertical-marketplace .listing-filter-controls select,
+body.vertical-marketplace .listing-filter-controls input {
+  width: 100%;
+  min-height: var(--tap-min);
+  border: 1px solid var(--bol-rule);
+  border-radius: var(--radius-md);
+  background: #fff;
+  padding: 0 12px;
+  color: var(--bol-ink);
+  /* 16px: below it iOS Safari zooms the page on focus. */
+  font-size: 16px;
+}
+
+body.vertical-marketplace .bol-results-column {
+  min-width: 0;
+}
+
+body.vertical-marketplace .deal-grid {
+  --store-cols: 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 20px;
+}
+
+body.vertical-marketplace a.deal-card,
+body.vertical-marketplace .deal-card {
+  gap: 12px;
+  color: var(--bol-ink);
+  background: transparent;
+}
+
+body.vertical-marketplace .deal-card-img {
+  aspect-ratio: 1 / 1;
+  padding: 16px;
+  border: 0;
+  border-radius: 0;
+  background: #f5f5f5;
+}
+
+/* The commercial layer (operator, 2026-09-25), bol's roles in the house face.
+   White ink on the blue accent. A sale red of its own, never --danger, and
+   gated: only a badge that marks a real discount or an active deal wears it,
+   so "sold" and a seller's own label stay neutral. The Kaufland store chrome
+   takes the accent, and its red points at the sale red. :root[data-theme]
+   matches the accent loop's light rule, which sets a dark --accent-ink here.
+   White on #F91906 is 4.06:1, AA for large text only; the hover is 5.17:1. */
+:root[data-theme] body.vertical-marketplace {
+  --accent-ink: #fff;
+  --sale: #F91906;
+  --sale-hover: #D91505;
+  --sale-ink: #fff;
+  --store-green: var(--accent);
+  --store-focus: var(--accent);
+  --store-red: var(--sale);
+}
+
+body.vertical-marketplace .deal-card-img .deal-badge {
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  background: var(--bol-ink);
+  color: unset;
+  border-radius: 2px;
+}
+
+body.vertical-marketplace .deal-card-img .deal-badge--sale {
+  background: var(--sale);
+  color: var(--sale-ink);
+}
+
+/* One button style in the marketplace: pills, in the accent. The buy box's
+   primary read --store-red, which is the sale red now, and a buy button is
+   not a discount. */
+body.vertical-marketplace :is(.deal-card-buy, .listing-buy-bar-cta, .chip, .store-buybox .btn) {
+  border-radius: var(--radius-pill);
+}
+
+body.vertical-marketplace .store-buybox .btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+body.vertical-marketplace .store-buybox .btn-primary:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace .search-form input[type="search"] {
+  border-radius: var(--radius-md);
+}
+
+body.vertical-marketplace .deal-fav svg {
+  padding: 7px;
+  background: #fff;
+}
+
+body.vertical-marketplace .deal-card-body {
+  gap: 8px;
+  padding: 0;
+}
+
+body.vertical-marketplace .deal-price {
+  order: -1;
+  color: var(--bol-price);
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+body.vertical-marketplace .deal-card-title {
+  color: var(--bol-ink);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+body.vertical-marketplace .deal-meta {
+  color: var(--bol-muted);
+  font-size: 13px;
+}
+
+body.vertical-marketplace .store-stars {
+  gap: 6px;
+  color: var(--bol-muted);
+}
+
+body.vertical-marketplace .store-stars [role="img"]::before {
+  font-size: 15px;
+}
+
+body.vertical-marketplace .store-badge {
+  min-height: 22px;
+  padding-inline: 7px;
+  border-radius: 2px;
+  background: var(--bol-blue-soft);
+  color: var(--bol-blue);
+  font-size: 12px;
+}
+
+body.vertical-marketplace .store-terms {
+  max-width: var(--bol-max);
+  margin: 32px auto 0;
+  border-top: 1px solid var(--bol-rule);
+  border-radius: 0;
+  background: transparent;
+}
+
+body.vertical-marketplace .store-pdp {
+  max-width: var(--bol-max);
+  margin: 24px auto 48px;
+  grid-template-columns: minmax(0, 7fr) minmax(360px, 5fr);
+  gap: 40px;
+  align-items: start;
+}
+
+body.vertical-marketplace .store-pdp-media {
+  min-width: 0;
+  background: #f5f5f5;
+}
+
+body.vertical-marketplace .store-pdp-info {
+  min-width: 0;
+}
+
+body.vertical-marketplace .marketplace-listing-header h1,
+body.vertical-marketplace .store-pdp-info h1 {
+  color: var(--bol-ink);
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .store-buybox {
+  border: 1px solid var(--bol-rule);
+  border-radius: 4px;
+  background: #fff;
+  padding: 24px;
+}
+
+body.vertical-marketplace .store-buybox .deal-price,
+body.vertical-marketplace .store-buybox .listing-price,
+body.vertical-marketplace .store-buybox .price {
+  color: var(--bol-price);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+@media (min-width: 768px) {
+  body.vertical-marketplace .deal-grid {
+    --store-cols: 3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  body.vertical-marketplace .deal-grid {
+    --store-cols: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  body.vertical-marketplace .deal-grid {
+    --store-cols: 5;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace .storefront-utility--bol {
+    justify-content: flex-start;
+    gap: 20px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol #topHalf {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 58px;
+  }
+
+  body.vertical-marketplace .storefront-bol-brand {
+    grid-column: 1;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol #accountStuff {
+    grid-column: 2;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol #sections .section {
+    display: none;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol #bottomHalf {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 62px;
+    padding-block: 9px;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol .nav-deliver {
+    display: none;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol .marketplace-nav-search {
+    width: 100%;
+  }
+
+  body.vertical-marketplace .bol-market-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    margin-top: 16px;
+  }
+
+  body.vertical-marketplace .bol-market-hero-copy {
+    padding: 28px 20px;
+  }
+
+  body.vertical-marketplace .bol-market-hero-copy h2 {
+    font-size: 30px;
+  }
+
+  body.vertical-marketplace .bol-market-hero-media {
+    min-height: min(78vw, 420px);
+  }
+
+  body.vertical-marketplace .bol-catalog-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  body.vertical-marketplace .bol-filter-column .listing-filters > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--tap-min);
+    padding: 0 12px;
+    border: 1px solid var(--bol-rule);
+    border-radius: 4px;
+    color: var(--bol-ink);
+    background: #fff;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  body.vertical-marketplace .bol-filter-column .listing-filters:not([open]) .listing-filters-panel {
+    display: none;
+  }
+
+  body.vertical-marketplace .bol-filter-column .listing-filters[open] > summary {
+    margin-bottom: 16px;
+  }
+
+  body.vertical-marketplace .deal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 12px;
+  }
+
+  body.vertical-marketplace .store-pdp {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 16px;
+  }
+
+  body.vertical-marketplace .store-buybox {
+    padding: 20px 16px;
+  }
+
+  body.vertical-marketplace #navBar.storefront-nav--bol #accountStuff .nav-block-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    clip-path: inset(50%);
+    overflow: hidden;
+  }
+}
+
+
+/* Bol search-result rows: image, descriptive content, then price/purchase context.
+   The promotional cards above keep the catalogue's campaign rail; the main result
+   set switches to the denser comparison anatomy visible on bol category pages. */
+
+@media (min-width: 768px) {
+  body.vertical-marketplace #marketplace-listings.deal-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card {
+    display: grid;
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--bol-rule);
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-hit {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-fav-slot {
+    inset-block-start: 20px;
+    inset-inline-start: 196px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-img {
+    grid-row: 1;
+    width: 220px;
+    height: 220px;
+    padding: 12px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-body {
+    align-self: start;
+    padding: 4px 0;
+    gap: 10px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-price {
+    color: var(--bol-price);
+    font-size: 28px;
+    order: 5;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-title {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace #marketplace-listings .deal-card {
+    padding-block: 16px;
+    border-bottom: 1px solid var(--bol-rule);
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-body {
+    gap: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-marketplace .bol-primary,
+  body.vertical-marketplace .deal-card,
+  body.vertical-marketplace .nav-block,
+  body.vertical-marketplace .nav-search-submit {
+    transition: none;
+  }
+}
+
+
+/* Final bol header geometry for the dedicated variant markup. */
+
+body.vertical-marketplace .storefront-utility--bol {
+  min-height: 28px;
+}
+
+body.vertical-marketplace #navBar.storefront-nav--bol {
+  background: var(--bol-blue);
+}
+
+body.vertical-marketplace .storefront-bol-header {
+  display: grid;
+  grid-template-columns: 176px 168px minmax(320px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  max-width: var(--bol-max);
+  margin-inline: auto;
+  padding: 12px var(--bol-gutter);
+}
+
+body.vertical-marketplace .storefront-bol-brand {
+  position: static;
+  min-height: 48px;
+  min-width: 0;
+  color: #fff;
+  font-size: 30px;
+}
+
+body.vertical-marketplace .storefront-bol-deliver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap-min);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.vertical-marketplace .storefront-bol-deliver:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+body.vertical-marketplace .storefront-bol-search {
+  min-width: 0;
+}
+
+body.vertical-marketplace .storefront-bol-search form {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+}
+
+body.vertical-marketplace .storefront-bol-search .nav-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  background: #fff;
+  color: var(--bol-ink);
+  padding-inline: 16px;
+  font-size: 16px;
+}
+
+body.vertical-marketplace .storefront-bol-search .nav-search-submit {
+  flex: 0 0 52px;
+  width: 52px;
+  border: 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: var(--bol-blue-dark);
+  color: #fff;
+}
+
+body.vertical-marketplace .storefront-bol-account {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+body.vertical-marketplace .storefront-bol-account .nav-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.vertical-marketplace .storefront-bol-account .nav-block-label {
+  position: static;
+  inline-size: auto;
+  block-size: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
+body.vertical-marketplace .storefront-bol-account .nav-hover:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+body.vertical-marketplace .storefront-bol-mainnav {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 48px;
+  max-width: var(--bol-max);
+  margin-inline: auto;
+  padding-inline: var(--bol-gutter);
+  background: #fff;
+  color: var(--bol-ink);
+}
+
+body.vertical-marketplace .storefront-bol-mainnav > a,
+body.vertical-marketplace .storefront-bol-mainnav > .section,
+body.vertical-marketplace .storefront-bol-categories > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding-inline: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--bol-ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+body.vertical-marketplace .storefront-bol-mainnav > a:hover,
+body.vertical-marketplace .storefront-bol-mainnav > .section:hover,
+body.vertical-marketplace .storefront-bol-categories > summary:hover {
+  color: var(--bol-blue);
+}
+
+body.vertical-marketplace .storefront-bol-mainnav > .section--active {
+  color: var(--bol-blue);
+  box-shadow: inset 0 -3px 0 var(--bol-blue);
+}
+
+body.vertical-marketplace .storefront-bol-categories {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+body.vertical-marketplace .storefront-bol-categories > summary {
+  list-style: none;
+}
+
+body.vertical-marketplace .storefront-bol-categories > summary::-webkit-details-marker {
+  display: none;
+}
+
+body.vertical-marketplace .storefront-bol-categories > summary::after {
+  content: "⌄";
+  margin-inline-start: 7px;
+  font-size: 12px;
+}
+
+body.vertical-marketplace .storefront-bol-categories[open] > summary {
+  color: var(--bol-blue);
+  box-shadow: inset 0 -3px 0 var(--bol-blue);
+}
+
+body.vertical-marketplace .storefront-bol-mega {
+  position: absolute;
+  z-index: var(--z-modal);
+  inset-block-start: 48px;
+  inset-inline-start: 0;
+  display: none;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 24px;
+  width: min(980px, calc(100vw - 32px));
+  max-height: min(70vh, 680px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+}
+
+body.vertical-marketplace .storefront-bol-categories[open] .storefront-bol-mega {
+  display: grid;
+}
+
+body.vertical-marketplace .storefront-bol-mega section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+body.vertical-marketplace .storefront-bol-mega h3 {
+  margin: 0 0 3px;
+  color: var(--bol-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+body.vertical-marketplace .storefront-bol-mega h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .storefront-bol-mega section > a {
+  color: var(--bol-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+body.vertical-marketplace .storefront-bol-mega section > a:hover,
+body.vertical-marketplace .storefront-bol-mega h3 a:hover {
+  color: var(--bol-blue);
+  text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace .storefront-bol-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 8px;
+    min-height: 64px;
+    padding: 8px var(--bol-gutter);
+  }
+
+  body.vertical-marketplace .storefront-bol-brand {
+    font-size: 26px;
+  }
+
+  body.vertical-marketplace .storefront-bol-deliver {
+    display: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding-top: 8px;
+  }
+
+  body.vertical-marketplace .storefront-bol-account {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body.vertical-marketplace .storefront-bol-account .nav-block-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav > a,
+  body.vertical-marketplace .storefront-bol-mainnav > .section,
+  body.vertical-marketplace .storefront-bol-categories > summary {
+    padding-inline: 14px;
+    font-size: 13px;
+  }
+
+  body.vertical-marketplace .storefront-bol-mega {
+    position: fixed;
+    inset-inline: 16px;
+    inset-block-start: 150px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: auto;
+    max-height: 65vh;
+  }
+}
+
+
+/* The listing row's two actions at every width; the md block below sets
+   their type and the offer's taller target. */
+body.vertical-marketplace #marketplace-listings .deal-card-buy {
+  width: 100%;
+  min-height: var(--tap-min);
+  background: var(--bol-blue);
+  color: var(--accent-ink);
+}
+
+body.vertical-marketplace #marketplace-listings .deal-card-buy:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace #marketplace-listings .deal-card-offer {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bol-blue);
+  text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+  body.vertical-marketplace #marketplace-listings .deal-card {
+    grid-template-columns: 220px minmax(0, 1fr) 190px;
+    align-items: start;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-hit {
+    grid-column: 1 / 3;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-actions {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-buy {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  body.vertical-marketplace #marketplace-listings .deal-card-offer {
+    min-height: var(--tap-min);
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace #marketplace-listings .deal-card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 0;
+  }
+
+}
+
+/* Marketplace listing creation: photo-first, progressive on small screens,
+   one long form on desktop. */
+body.vertical-marketplace .marketplace-listing-form-wrap {
+  max-width: 760px;
+}
+
+body.vertical-marketplace .listing-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 24px;
+}
+
+body.vertical-marketplace .listing-step-link {
+  min-height: var(--tap-min);
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+  color: var(--bol-muted);
+  padding: 8px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+body.vertical-marketplace .listing-step-link span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  margin-inline-end: 6px;
+  place-items: center;
+  border-radius: 50%;
+  background: unset;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .listing-step-link.is-active {
+  border-color: var(--bol-blue);
+  color: var(--bol-blue);
+  font-weight: 700;
+}
+
+body.vertical-marketplace .listing-step {
+  margin: 0 0 28px;
+  padding: 0;
+  border: 0;
+}
+
+body.vertical-marketplace .listing-step legend {
+  margin: 0 0 16px;
+  padding: 0;
+  color: var(--bol-ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .listing-step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+body.vertical-marketplace .listing-photo-entry {
+  display: grid;
+  gap: 18px;
+}
+
+body.vertical-marketplace .listing-photo-camera {
+  display: grid;
+  min-height: 132px;
+  width: 100%;
+  place-items: center;
+  gap: 6px;
+  border: 2px dashed var(--bol-blue);
+  cursor: pointer;
+}
+
+body.vertical-marketplace .listing-photo-camera small {
+  color: var(--bol-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+body.vertical-marketplace .listing-photo-gallery {
+  min-height: var(--tap-min);
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+  color: var(--bol-blue);
+  font: inherit;
+  cursor: pointer;
+}
+
+body.vertical-marketplace .listing-photo-guidance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-inline-start: 3px solid var(--bol-blue);
+  background: unset;
+  color: var(--bol-ink);
+  font-size: 13px;
+}
+
+body.vertical-marketplace .listing-photo-guidance[hidden] {
+  display: none;
+}
+
+body.vertical-marketplace .listing-photo-guidance-dismiss {
+  flex: 0 0 auto;
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--bol-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+body.vertical-marketplace .listing-media-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+body.vertical-marketplace .media-thumb {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+  cursor: grab;
+}
+
+body.vertical-marketplace .media-thumb:active {
+  cursor: grabbing;
+}
+
+body.vertical-marketplace .media-picker-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+body.vertical-marketplace .media-thumb-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 4px;
+}
+
+body.vertical-marketplace .media-thumb-cover {
+  margin-inline-end: auto;
+  padding: 3px 6px;
+  background: var(--bol-blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .media-thumb-move,
+body.vertical-marketplace .media-thumb-rm {
+  min-width: 32px;
+  min-height: 32px;
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+  color: var(--bol-ink);
+  cursor: pointer;
+}
+
+body.vertical-marketplace .listing-video-field {
+  border-top: 1px solid var(--bol-rule);
+  padding-top: 16px;
+}
+
+body.vertical-marketplace .listing-video-preview,
+body.vertical-marketplace .listing-video {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  margin-top: 12px;
+  background: #000;
+}
+
+body.vertical-marketplace .listing-source-choice {
+  display: grid;
+  gap: 8px;
+}
+
+body.vertical-marketplace .listing-source-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap-min);
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--bol-rule);
+  color: var(--bol-ink);
+  cursor: pointer;
+}
+
+body.vertical-marketplace .listing-source-option input {
+  margin: 0;
+}
+
+body.vertical-marketplace .listing-location-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+body.vertical-marketplace .listing-review-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+}
+
+body.vertical-marketplace .listing-review-cover {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  background: unset;
+  color: var(--bol-muted);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .listing-review-title {
+  margin: 0;
+  color: var(--bol-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+body.vertical-marketplace .listing-draft-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+body.vertical-marketplace .listing-published-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: var(--bol-max);
+  margin: 16px auto;
+  padding: 12px 16px;
+  border: 1px solid var(--bol-rule);
+  background: #fff;
+  color: var(--bol-ink);
+}
+
+body.vertical-marketplace .listing-source-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+body.vertical-marketplace .listing-source-badge {
+  background: unset;
+  color: var(--bol-muted);
+}
+
+body.vertical-marketplace .listing-source-badge--shop {
+  background: var(--bol-blue-soft);
+  color: var(--bol-blue);
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  body.vertical-marketplace .listing-step {
+    display: block;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--bol-rule);
+  }
+
+  body.vertical-marketplace .listing-step-link {
+    pointer-events: none;
+  }
+
+  body.vertical-marketplace .listing-step-actions .btn-ghost {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace .listing-steps {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    overflow-x: auto;
+    display: flex;
+    background: #fff;
+  }
+
+  body.vertical-marketplace .listing-step-link {
+    flex: 1 0 96px;
+    white-space: nowrap;
+  }
+
+  body.vertical-marketplace .listing-location-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.vertical-marketplace .listing-review-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-marketplace .listing-step-link,
+  body.vertical-marketplace .media-thumb {
+    transition: none;
+  }
+}
+
+body.vertical-marketplace .listing-review-cover-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* BRGEN sketch: the media wall is a picture index, not a second article feed. */
+.home-feed-views {
+  display: inline-flex;
+  align-items: center;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  margin-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.home-feed-view {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-feed-view + .home-feed-view {
+  border-inline-start: 1px solid var(--border);
+}
+
+.home-feed-view.is-active {
+  color: var(--text);
+  font-weight: var(--weight-heavy);
+  border-block-end: 2px solid var(--text);
+}
+
+.brgen-media-wall {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(6rem, 14vw);
+  grid-auto-flow: dense;
+  gap: var(--space-2);
+}
+
+.brgen-media-card {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+}
+
+.brgen-media-card--wide {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.brgen-media-card--tall {
+  grid-row: span 2;
+}
+
+.brgen-media-link,
+.brgen-media-lightbox-link,
+.brgen-media-caption-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brgen-media-lightbox-link {
+  width: 100%;
+  height: 100%;
+}
+
+.brgen-media-image {
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-elevated);
+}
+
+.brgen-media-image-tag {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brgen-media-caption {
+  display: grid;
+  gap: 2px;
+  padding-block: var(--space-1);
+}
+
+.brgen-media-caption strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  line-height: 1.3;
+}
+
+.brgen-media-caption span {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .brgen-media-wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.brgen-media-wall > li {
+  min-width: 0;
+}
+
+.brgen-media-add {
+  list-style: none;
+}
+
+.brgen-media-add-link {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 100%;
+  aspect-ratio: 1;
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+}
+
+.brgen-media-add-link:hover,
+.brgen-media-add-link:focus-visible {
+  background: var(--hover-subtle);
+  text-decoration: none;
+}
+
+.brgen-media-add-link > span:first-child {
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: var(--weight-normal);
+  line-height: 1;
+}
+
+.brgen-media-add-link small {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.brgen-media-image {
+  position: relative;
+}
+
+.brgen-media-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 479px) {
+  .brgen-media-video::-webkit-media-controls-panel {
+    min-height: 2.5rem;
+  }
+}
+
+
+/* BRGEN sketch: progressive posting is one writing flow with a clear media-first entry. */
+.post-progressive-nav {
+  display: flex;
+  gap: var(--space-1);
+  margin-block-end: var(--space-4);
+  border-block-end: 1px solid var(--border);
+}
+
+.post-progressive-indicator {
+  padding: 0 var(--space-2) var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.post-progressive-indicator.is-active {
+  color: var(--text);
+  font-weight: var(--weight-heavy);
+  border-block-end: 2px solid var(--text);
+}
+
+.post-progressive-step > h2 {
+  margin-block-end: var(--space-1);
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  line-height: 1.2;
+}
+
+.post-progressive-step > h2:focus {
+  outline: none;
+}
+
+.post-publishing {
+  min-height: 8rem;
+  display: grid;
+  place-items: center;
+  margin-block: var(--space-6);
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+form[data-publishing="true"] .post-progressive-nav {
+  display: none;
+}
+
+.post-photo-entry {
+  margin-block-start: var(--space-4);
+}
+
+.post-photo-camera {
+  width: 100%;
+  min-height: 180px;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  border-style: dashed;
+  text-align: center;
+}
+
+.post-photo-camera small {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.post-media-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.post-media-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.post-media-choice:hover,
+.post-media-choice:focus-within {
+  background: var(--hover-subtle);
+}
+
+.post-media-choice > svg {
+  flex: none;
+}
+
+.post-media-choice > span {
+  min-width: 0;
+}
+
+.post-media-choice strong,
+.post-media-choice small {
+  display: block;
+}
+
+.post-media-choice small {
+  margin-block-start: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.post-progressive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.post-progressive-actions .btn-primary {
+  min-width: 8rem;
+}
+
+@media (max-width: 479px) {
+  .post-progressive-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .post-photo-camera {
+    min-height: 160px;
+  }
+
+  .post-media-secondary {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* City navigation is secondary chrome: compact, keyboard reachable, and flat.
+   The same partial feeds the search palette, More sheet, and footer. */
+.city-network-heading {
+  margin: 0 0 var(--space-2);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.city-network-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-1);
+}
+
+.city-network-item {
+  display: flex;
+  min-block-size: var(--tap-min);
+  align-items: center;
+  padding-inline: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.city-network-item:hover,
+.city-network-item:focus-visible {
+  border-color: var(--border);
+}
+
+.city-network-item[aria-current="page"] {
+  border-color: var(--border);
+  font-weight: 600;
+}
+
+.search_palette_cities {
+  margin-block: var(--space-4);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.mobile-sheet-cities {
+  margin-block-end: var(--space-3);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.mobile-sheet-cities .city-network-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+
+/* marketplace commerce finish
+   Keep the existing bol-derived anatomy, but make the storefront feel lighter,
+   friendlier and more product-led: white paper, clear blue actions, soft wells,
+   rounded product imagery and restrained red only for price/deal signals. */
+body.vertical-marketplace {
+  --bol-mint: #e9f8f0;
+  --bol-peach: #fff2e8;
+  --bol-ink: #20242a;
+  --bol-muted: #667085;
+  --bol-rule: #dfe5ec;
+  --bol-price: #c82435;
+  --store-page: #ffffff;
+  --store-ink: #20242a;
+  --store-ink-soft: #667085;
+  --store-rule: #ccd4de;
+  --store-hairline: #dfe5ec;
+  --store-well: #f4f7fb;
+  --store-green: var(--accent);
+  --store-red: #c82435;
+  --store-focus: var(--accent);
+}
+
+body.vertical-marketplace #navBar.storefront-nav--bol {
+  background: #fff;
+  color: var(--bol-ink);
+  border-block-end: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace .storefront-utility--bol {
+  min-height: 36px;
+  border-block-end: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace #topHalf {
+  min-height: 64px;
+  padding-block: 8px;
+}
+
+body.vertical-marketplace #navBar .section {
+  color: var(--bol-ink);
+  border: 0;
+  border-radius: 10px 10px 0 0;
+}
+
+body.vertical-marketplace #navBar .section--active,
+body.vertical-marketplace #navBar .section:hover {
+  color: var(--bol-blue);
+  background: var(--bol-blue-soft);
+}
+
+body.vertical-marketplace #bottomHalf {
+  min-height: 72px;
+  background: #f4f7fb;
+  border-block-start: 1px solid var(--bol-rule);
+}
+
+body.vertical-marketplace #navBar .nav-search-input {
+  border-color: #cbd5e1;
+  border-radius: 999px 0 0 999px;
+  background: #fff;
+}
+
+body.vertical-marketplace #navBar .nav-search-submit {
+  width: 52px;
+  border-radius: 0 999px 999px 0;
+  background: var(--bol-blue);
+}
+
+body.vertical-marketplace #navBar .nav-search-submit:hover {
+  background: var(--bol-blue-dark);
+}
+
+body.vertical-marketplace .bol-market-hero {
+  min-height: 340px;
+  margin-block: 24px 32px;
+  border: 1px solid #e3eafa;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+body.vertical-marketplace .bol-market-hero-media {
+  background: #f8fafc;
+}
+
+body.vertical-marketplace .bol-primary {
+  border-radius: 999px;
+}
+
+body.vertical-marketplace .bol-primary:hover {
+  background: var(--bol-blue-dark);
+}
+
+/* The owner's marketplace pen used a small, white campaign card with a
+   crisp blue shopping action. Keep those micro-cues in the campaign layer only:
+   no global button restyle, no second commerce dialect. */
+body.vertical-marketplace .store-promo-art {
+  border-radius: 6px;
+}
+
+body.vertical-marketplace .store-promo-art-copy h2 {
+  text-transform: lowercase;
+}
+
+body.vertical-marketplace .store-promo-art-cta {
+  min-height: var(--tap-min);
+  margin-top: var(--space-2);
+  padding: 10px 20px 12px;
+  border-radius: 30px;
+  background: var(--bol-blue);
+  color: #000;
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+}
+
+body.vertical-marketplace .store-promo-art-cta:hover {
+  background: var(--bol-blue-dark);
+  color: #fff;
+}
+
+/* First-party campaign micro-details from the owner's marketplace pen.
+   Keep them scoped to campaign art; the catalogue itself keeps its established
+   commerce grammar. */
+
+body.vertical-marketplace .bol-kind-tabs {
+  margin-block-end: 32px;
+  border-color: var(--bol-rule);
+}
+
+body.vertical-marketplace .bol-kind-tabs a {
+}
+
+body.vertical-marketplace .bol-filter-column .listing-filter-group {
+  border-color: var(--bol-rule);
+}
+
+body.vertical-marketplace .listing-filter-controls select,
+body.vertical-marketplace .listing-filter-controls input {
+  border-color: #d3dbe5;
+  border-radius: 12px;
+}
+
+body.vertical-marketplace .deal-grid {
+  gap: 28px 18px;
+}
+
+body.vertical-marketplace a.deal-card:hover .deal-card-title,
+body.vertical-marketplace .deal-card:hover .deal-card-title {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+body.vertical-marketplace .deal-card-img {
+  padding: 18px;
+  border: 1px solid #e7ecf2;
+  border-radius: 14px;
+  background: #f7f9fc;
+}
+
+body.vertical-marketplace .deal-card:nth-child(3n) .deal-card-img {
+  background: var(--bol-mint);
+}
+
+body.vertical-marketplace .deal-card:nth-child(4n) .deal-card-img {
+  background: var(--bol-peach);
+}
+
+body.vertical-marketplace .deal-card-img .deal-badge--sale {
+  border-radius: 999px;
+  background: var(--bol-price);
+}
+
+body.vertical-marketplace .store-badge {
+  border-radius: 999px;
+}
+
+body.vertical-marketplace .store-buybox {
+  border-color: var(--bol-rule);
+  border-radius: 16px;
+}
+
+body.vertical-marketplace .store-buybox .btn-primary {
+  border-radius: 999px;
+  background: var(--bol-blue);
+}
+
+
+@media (max-width: 767px) {
+  body.vertical-marketplace #bottomHalf {
+    min-height: 64px;
+  }
+
+  body.vertical-marketplace .bol-market-hero {
+    border-radius: 16px;
+  }
+
+  body.vertical-marketplace .bol-market-hero-media {
+    min-height: 240px;
+    order: -1;
+  }
+
+  body.vertical-marketplace .bol-market-hero-copy {
+    padding: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-marketplace .deal-card:hover .deal-card-title {
+    transition: none;
+  }
+}
+
+/* Commerce typography
+   Shopping UI and campaign moments share the one Swiss sans stack; contrast
+   comes from scale and weight. */
+body.vertical-marketplace {
+  --font-commerce-sans: "Helvetica Neue", "Helvetica Neue Pro", Arial, sans-serif;
+}
+
+body.vertical-marketplace .bol-market-hero-copy h2,
+body.vertical-marketplace .store-promo-art :is(h1, h2, h3),
+body.vertical-marketplace .store-heading {
+  font-family: var(--font);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+
+body.vertical-marketplace .bol-market-hero-copy h2 {
+  font-size: clamp(2.25rem, 4.4vw, 4.25rem);
+  line-height: 0.98;
+}
+
+body.vertical-marketplace :is(
+  .deal-card-title,
+  .deal-price,
+  .deal-meta,
+  .store-badge,
+  .listing-filter-group,
+  .bol-kind-tabs,
+  .bol-primary,
+  #navBar
+) {
+  font-family: var(--font-commerce-sans);
+  font-optical-sizing: auto;
+}
+
+body.vertical-marketplace .store-pdp-info h1,
+body.vertical-marketplace .marketplace-listing-header h1 {
+  font-family: var(--font);
+  font-size: clamp(2rem, 3.4vw, 3.5rem);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+body.vertical-marketplace .store-pdp-description > div {
+  max-inline-size: 66ch;
+  font-family: var(--font-commerce-sans);
+  line-height: 1.5;
+}
+
+body.vertical-marketplace .deal-card-title {
+  letter-spacing: 0;
+}
+
+body.vertical-marketplace .deal-price {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace .bol-market-hero-copy h2 {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  body.vertical-marketplace .store-pdp-info h1,
+  body.vertical-marketplace .marketplace-listing-header h1 {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}
+
+
+/* BRGEN core + vertical typography pass
+   The shared Helvetica stack is the one face for navigation, utility,
+   transactions, conversation and editorial surfaces alike. */
+
+body:not([data-surface="luxury"]) {
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+}
+
+body:not([data-surface="luxury"]) :is(
+  .feed-header h1,
+  .feed-post-show h1,
+  .post-reading-title,
+  .page-header h1
+) {
+  font-family: var(--font);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+body:not([data-surface="luxury"]) :is(
+  .feed-post-prose,
+  .post-reading-body-preview,
+  .feed-post-body,
+  main article > p
+) {
+  max-inline-size: 66ch;
+  line-height: var(--leading-normal);
+}
+
+body:not([data-surface="luxury"]) :is(
+  .nav_link,
+  .nav-block,
+  button,
+  input,
+  select,
+  textarea
+) {
+  font-family: var(--font);
+  font-kerning: normal;
+}
+
+body.vertical-tv :is(
+  .radio-section-header h2,
+  .channel-card h2,
+  .show-card h2,
+  .tv-show-title
+) {
+  font-family: var(--font);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+body.vertical-maps .place-card h2,
+body.vertical-maps article.place h1 {
+  font-family: var(--font);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* Keep interaction-heavy verticals deliberately sans: the content is scanned,
+   compared or acted upon rather than read as a continuous editorial column. */
+body.vertical-dating,
+body.vertical-takeaway,
+body.vertical-messenger,
+body.vertical-playlist {
+  font-family: var(--font);
+}
+
+body.vertical-dating :is(h1, h2, h3),
+body.vertical-takeaway :is(h1, h2, h3),
+body.vertical-messenger :is(h1, h2, h3),
+body.vertical-playlist :is(h1, h2, h3) {
+  font-family: var(--font);
+  text-wrap: balance;
+}
+
+/* Bringhurst's measure is a reading constraint, not a grid width. */
+body:not([data-surface="luxury"]) :is(
+  .feed-post-prose,
+  .post-reading-body-preview,
+  .feed-post-body,
+  main article > p
+) {
+  max-width: 66ch;
+}
+
+@media (max-width: 767px) {
+  body:not([data-surface="luxury"]) :is(
+    .feed-header h1,
+    .feed-post-show h1,
+    .post-reading-title
+  ) {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-surface="luxury"]) :is(
+    .feed-header h1,
+    .feed-post-show h1,
+    .post-reading-title
+  ) {
+    transition: none;
+  }
+}
+/* BRGEN_OLD-inspired top header: retain the current feed anatomy, but
+   restore the dark-blue utility/header band from the legacy visual language. */
+.brgen-top-chrome {
+  display: none;
+}
+
+body:not([class*="vertical-"]) .brgen-top-chrome {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto;
+  block-size: var(--nav-swiper-h);
+  z-index: calc(var(--z-nav) - 1);
+  background: var(--brgen-header-bg);
+  pointer-events: none;
+}
+
+body:not([class*="vertical-"]) :is(.brand-mark.brgen-logo-mark,
+.search_palette_trigger,
+.chrome-corner .chrome-auth,
+.chrome-corner .theme-toggle) {
+  color: var(--brgen-header-ink);
+}
+
+body:not([class*="vertical-"]) .nav_swiper_bar {
+  background: var(--brgen-header-bg);
+  color: var(--brgen-header-ink);
+  mask-image: linear-gradient(to right, transparent 0, var(--brgen-header-bg) var(--nav-fade-lead), var(--brgen-header-bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
+}
+
+body:not([class*="vertical-"]) .nav_link {
+  color: var(--brgen-header-muted);
+}
+
+body:not([class*="vertical-"]) .nav_link:hover {
+  color: var(--brgen-header-ink);
+}
+
+body:not([class*="vertical-"]) .nav_link.active {
+  color: var(--brgen-header-ink);
+}
+
+body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  body:not([class*="vertical-"]) .brgen-top-chrome {
+    block-size: calc(var(--top-band-block) + var(--nav-swiper-h));
+  }
+}
+
+@media (min-width: 1265px) {
+  body:not([class*="vertical-"]) .chrome-corner .chrome-auth {
+    background: var(--brgen-header-ink);
+    color: var(--brgen-header-bg);
+  }
+}
+
+@include endgame.brgen_precision;
+@include endgame.brgen;
+
+/* Interaction polish: feed controls use the live home-template classes, and
+   the composer remains usable as the visual viewport changes on a phone. */
+.home-feed-view:focus-visible,
+.feed-card a:focus-visible,
+.feed-card button:focus-visible,
+.messenger-window a:focus-visible,
+.messenger-window button:focus-visible,
+.messenger-window input:focus-visible,
+.messenger-window textarea:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The three home destinations must remain reachable at narrow widths and when
+   labels are translated. Wrap rather than silently hiding the final control. */
+.home-feed-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-1);
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.home-feed-view {
+  flex: 0 1 auto;
+  justify-content: center;
+  min-inline-size: var(--tap-min);
+  max-inline-size: 100%;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.home-feed-view + .home-feed-view {
+  border-inline-start: 0;
+}
+
+.home-feed-view:not(.is-active):hover {
+  background: var(--hover-subtle, var(--hover));
+  color: var(--text);
+  text-decoration: none;
+}
+
+.home-feed-view.is-active {
+  border-block-end-color: var(--accent);
+}
+
+#feed-panel,
+#home-feed,
+#home-feed > li {
+  min-inline-size: 0;
+}
+
+.post-feed .feed-card {
+  border-radius: 0;
+  scroll-margin-block-start: 7rem;
+}
+
+.feed-card-content,
+.messenger-room-copy,
+.messenger-inbox-main {
+  overflow-wrap: anywhere;
+}
+
+.messenger-pane .conversation-log {
+  scrollbar-gutter: stable;
+}
+
+.messenger-composer-field textarea {
+  max-block-size: min(35dvh, 12rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 767px) {
+  .compose-launcher {
+    margin-inline-start: max(var(--space-4), env(safe-area-inset-left));
+    margin-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  }
+
+  .post-feed .feed-card {
+    padding-inline-start: max(var(--space-3), env(safe-area-inset-left));
+    padding-inline-end: max(var(--space-3), env(safe-area-inset-right));
+  }
+
+  /* Four tiny columns are a catalogue view, not a usable phone media wall. */
+  .brgen-media-wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(7rem, 34vw);
+  }
+
+  .messenger-window {
+    min-inline-size: 0;
+  }
+
+  .messenger-pane,
+  .messenger-rail,
+  .messenger-inbox {
+    min-inline-size: 0;
+  }
+
+  .messenger-composer-area {
+    padding-inline-end: max(var(--space-3), env(safe-area-inset-right));
+    padding-inline-start: max(var(--space-3), env(safe-area-inset-left));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-feed-view,
+  .feed-card {
+    transition: none;
+  }
+}
+
+
+.demo-mode-notice {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1000;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-block-end: 1px solid var(--border);
+  border-inline-start: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.demo-media-credit {
+  margin-block: var(--space-1, 0.25rem) 0;
+  color: var(--muted, var(--text));
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
