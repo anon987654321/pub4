@@ -38,6 +38,8 @@ module Master
       SELFTEST_RETRY_S = 60
       SELFTEST_DETAIL_CHARS = 400
       @last_error = nil
+      @timing_mutex = Mutex.new
+      @last_timings = {}
       @selftest_mutex = Mutex.new
       @selftest_stamp = nil
       @selftest_blocker = nil
@@ -141,12 +143,20 @@ module Master
 
       def clear_last_error! = (@last_error = nil)
 
-      # Opt-in wall-clock timings for separating model/engine delay from audio
-      # post-processing. Telemetry must never prevent a reply from being spoken.
+      # Timings stay available to /voice status without requiring debug flags.
+      # Detailed per-stage log lines remain quiet unless an operator opts in.
+      def last_timings
+        @timing_mutex.synchronize { @last_timings.transform_values(&:dup) }
+      end
+
       def log_timing(stage, started_at, text_length: nil)
-        return unless ENV["MASTER_TTS_TIMING"] == "1" && started_at
+        return unless started_at
 
         elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
+        timing = { elapsed_ms:, chars: text_length }.compact
+        @timing_mutex.synchronize { @last_timings[stage.to_s] = timing }
+        return unless ENV["MASTER_TTS_TIMING"] == "1"
+
         fields = ["timing", "stage=#{stage}", "elapsed_ms=#{elapsed_ms}"]
         fields << "chars=#{text_length}" unless text_length.nil?
         message = fields.join(" ")
