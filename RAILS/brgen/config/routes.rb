@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "brgen/domain_registry"
+require "brgen/demo_mode"
 
 Rails.application.routes.draw do
   get "changelog" => "shared/changelog#show", as: :changelog
