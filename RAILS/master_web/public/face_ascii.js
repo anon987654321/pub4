@@ -1033,6 +1033,7 @@
       return true;
     };
 
+    view.resize = resize;
     if (env.ResizeObserver) new env.ResizeObserver(() => resize()).observe(canvas);
     else env.addEventListener("resize", resize, { passive: true });
     return view;
