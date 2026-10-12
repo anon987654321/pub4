@@ -140,7 +140,7 @@ class TestLawMapRuntime < Minitest::Test
     security = map["security"]
     assert_equal "plaintext_secrets", security.detects
     assert_equal "critical", security.severity
-    refute_empty security.meaning
+    assert_includes security.meaning, "source literals"
     refute_empty security.operation
 
     refute map.laws.key?("fittss_law"), "a misspelled duplicate Fitts entry must not survive"
