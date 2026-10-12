@@ -61,14 +61,17 @@ class WalkthroughGatesTest < Minitest::Test
     .feed-tab, .deal-cat { min-height: var(--tap-min); }
     .btn { min-height: var(--tap-min); }
     .deal-card { --font: 1rem; }
+    main#main-content :is(button, input[type="submit"], .btn) { min-height: var(--tap-min); }
     .search { color: red; }
   SCSS
 
   def first_screen_tree(tap_min: "44px")
     sheets = %w[
       brgen/app/assets/stylesheets/application.scss
+      brgen/app/assets/stylesheets/_brgen_navigation.scss
+      brgen/app/assets/stylesheets/_brgen_marketplace.scss
       amber/app/assets/stylesheets/application.scss
-      bsdports/app/assets/stylesheets/application.scss
+      bsdports/app/assets/stylesheets/_bsdports_layout.scss
       shared/app/assets/stylesheets/_search_yep.scss
     ].to_h { |rel| [rel, FIRST_SCREEN_SHEET] }
     sheets.merge("shared/app/assets/stylesheets/_dialect_tokens.scss" => ":root { --tap-min: #{tap_min}; }\n")
@@ -184,9 +187,9 @@ class WalkthroughGatesTest < Minitest::Test
 
   def test_first_screen_fails_when_the_named_rule_is_gone
     tree = first_screen_tree
-    tree["brgen/app/assets/stylesheets/application.scss"] = FIRST_SCREEN_SHEET.sub(".deal-card", ".deal-tile")
+    tree["brgen/app/assets/stylesheets/_brgen_marketplace.scss"] = FIRST_SCREEN_SHEET.sub(".deal-card", ".deal-tile")
 
-    assert_names gate(Deploy::FirstScreenGate, tree), %r{brgen/app/assets/stylesheets/application\.scss has no /\\\.deal-card\\b/ rule}
+    assert_names gate(Deploy::FirstScreenGate, tree), %r{brgen/app/assets/stylesheets/_brgen_marketplace\.scss has no /\\\.deal-card\\b/ rule}
   end
 
   def test_first_screen_fails_when_the_token_file_is_deleted
