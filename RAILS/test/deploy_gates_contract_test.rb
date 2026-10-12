@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "open3"
 require "yaml"
+require_relative "../../MASTER/gates/lib/layout_suite"
 
 class DeployGatesContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -256,6 +257,18 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes source, "severity:"
     assert_includes source, "soft_failures"
     assert_includes source, "GATE_STRICT_SOFT"
+  end
+
+  # A covered_by edge is a promise, not a label: --all omits child gates only
+  # because the named composite runs them. Keep the registry and its actual leaf
+  # list identical so a registered check cannot silently disappear from coverage.
+  def test_layout_suite_runs_exactly_its_registered_leaves
+    expected = GATES.select { |_, row| row["covered_by"] == "layout_suite" }
+                   .values.map { |row| row.fetch("class") }.sort
+    actual = Deploy::LayoutSuiteGate::LEAVES.map(&:name).sort
+
+    assert_equal expected, actual,
+                 "layout_suite membership must match gates.yml covered_by entries exactly"
   end
 
   def test_composites_own_their_leaves
