@@ -195,6 +195,8 @@ module Master
           end
         end
         result
+      ensure
+        @pass_runner&.cleanup_visual_runtime
       end
 
       # A run that reaches DONE after skipping files it could not scan, or
