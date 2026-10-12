@@ -125,4 +125,4 @@ one, and leave `PROTECTED` sections alone unless the task names them.
 Scanners hold the parts of this that one file can show: `NO_JQUERY`,
 `NO_INLINE_ASSETS_IN_SHELL`, `NO_MULTIPLE_LANGUAGES`, `NO_INLINE_STYLES`,
 `MAGIC_COLOR`. The rest are properties of a diff, so they are checked by reading
-one. Design values come from `MASTER/data/laws.yml`, section `design_system`, never from a second token authority.
+one. The laws in `MASTER/data/laws.yml` govern visual decisions; rendered token values come from `MASTER/data/tokens.yml` through `Operator::MasterDesign`. Do not duplicate palettes, rhythm scales, or viewport values in app code.
