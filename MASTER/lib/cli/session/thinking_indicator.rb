@@ -29,12 +29,19 @@ module Master
         @spin_thread = Thread.new do
           frame = 0
 
-          until @think_paused
-            stage = @think_stage.to_s
-            stage = "working" if stage.empty?
-            line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
-            $stdout.print("\r\e[K#{line}")
-            $stdout.flush
+          loop do
+            paused = false
+            Master::Trace::Dmesg.terminal_write do |target|
+              paused, stage = @think_mutex.synchronize { [@think_paused, @think_stage.to_s] }
+              unless paused
+                stage = "working" if stage.empty?
+                line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
+                target.print("\r\e[K#{line}")
+                target.flush
+              end
+            end
+            break if paused
+
             frame += 1
             sleep TICK_SECONDS
           end
@@ -77,40 +84,37 @@ module Master
       # y/N, with the spinner held still so the question is not painted over.
       # Anything but a yes is a no, which Core::Fold decides.
       def answer_at_terminal(prompt, options: nil)
-        @think_mutex&.synchronize do
-          @think_paused = true
-          print "\r\e[K"
-        end
+        @think_mutex&.synchronize { @think_paused = true }
+        terminal_print("\r\e[K")
         return answer_choice_at_terminal(prompt, options) if options&.any?
 
-        print "#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} "
-        $stdout.flush
+        terminal_print("#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} ")
         $stdin.gets.to_s.strip
       ensure
-        @think_paused = false
+        @think_mutex&.synchronize { @think_paused = false }
       end
 
       def answer_choice_at_terminal(prompt, options)
         choices = options.each_with_index.map { |option, index| "#{index + 1}) #{option[:name] || option["name"]}" }
-        print @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
-        print "\n  #{choices.join("\n  ")}\n> "
-        $stdout.flush
+        terminal_write do |target|
+          target.print @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
+          target.print "\n  #{choices.join("\n  ")}\n> "
+          target.flush
+        end
         selected = $stdin.gets.to_s.strip
         index = Integer(selected, exception: false)
         option = index && options[index - 1]
         option ? (option[:value] || option["value"]).to_s : ""
       end
 
-      # The spinner stops when a reply starts streaming; the units keep printing
-      # until the turn ends, because a tool call can follow the first words.
+      # The spinner stops when a reply streams; detailed events still print.
       def stop_thinking_indicator
-        @think_paused = true
-        @spin_thread&.join(0.3)
+        @think_mutex&.synchronize { @think_paused = true }
+        @spin_thread&.join
         @spin_thread = nil
         @think_sub&.call
         @think_sub = nil
-        print "\r\e[K" if $stdout.isatty
-        $stdout.flush
+        terminal_print("\r\e[K") if $stdout.tty?
       end
 
       # Detailed dmesg is the default; MASTER_CLI_QUIET=1 is the opt-out.
@@ -130,7 +134,8 @@ module Master
       def update_think_stage(payload)
         event = payload[:event].to_s
         @activity&.record(event, payload)
-        @think_stage = stage_for(event, payload) || @think_stage
+        stage = stage_for(event, payload)
+        @think_mutex&.synchronize { @think_stage = stage } if stage
       end
 
       def stage_for(event, payload)
@@ -156,10 +161,11 @@ module Master
         return unless verbose_output?
 
         io = $stdout.isatty ? $stdout : $stderr
-        @think_mutex&.synchronize do
-          @think_stage = line[/\A[^\s:]+/]
-          io.print "\r\e[K" if io.isatty
-          io.puts @refs.renderer.render(line, mode: :dim)
+        @think_mutex&.synchronize { @think_stage = line[/\A[^\s:]+/] }
+        Master::Trace::Dmesg.terminal_write(io:) do |target|
+          target.print "\r\e[K" if target.tty?
+          target.puts @refs.renderer.render(line, mode: :dim)
+          target.flush
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)

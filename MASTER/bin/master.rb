@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "rbconfig"
 require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
@@ -13,7 +14,7 @@ if ARGV.first == "--fix-context"
   target = ARGV[1] && !ARGV[1].start_with?("-") ? ARGV[1] : ROOT
   full = ARGV.include?("--full")
   exec(
-    File.join(MASTER, "bin", "ruby"),
+    RbConfig.ruby,
     File.join(MASTER, "tools", "agent_context.rb"),
     "--fix-context",
     target,
@@ -88,4 +89,4 @@ args = ARGV.dup
 args = ["-m", args.first] if args.length == 1 && !args.first.start_with?("-")
 
 Dir.chdir(MASTER)
-exec(File.join(MASTER, "bin", "ruby"), CLI, *args)
+exec(RbConfig.ruby, CLI, *args)

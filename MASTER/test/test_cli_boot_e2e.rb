@@ -176,6 +176,16 @@ class TestCliBootE2e < Minitest::Test
   end
 end
 
+class TestMasterRubyHandoff < Minitest::Test
+  def test_master_reuses_the_selected_interpreter_for_child_execs
+    source = File.read(File.expand_path("../bin/master.rb", __dir__))
+
+    assert_includes source, 'require "rbconfig"'
+    assert_includes source, "exec(RbConfig.ruby, CLI, *args)"
+    refute_match(/File\.join\(MASTER,\s*"bin",\s*"ruby"\)/, source)
+  end
+end
+
 # The REPL on a real terminal, because the exit path only exists there: Reline
 # owns the line, ^C arrives as SIGINT through the terminal driver, and ^D as an
 # end of file. Every ^C in the 2026-09-13 sessions was the operator trying to
