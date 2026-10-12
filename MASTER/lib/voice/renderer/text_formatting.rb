@@ -23,6 +23,55 @@ module Master
           end.join
         end
 
+        # Render the common Markdown used in model replies without adding a
+        # second parser dependency. Fences, tables, indented examples and record
+        # lines keep their data shape; ordinary prose is wrapped to terminal width.
+        def terminal_markdown(text, width: MEASURE)
+          rows = []
+          fenced = false
+
+          text.to_s.lines.each do |line|
+            body = line.chomp
+            if body.lstrip.start_with?("```")
+              fenced = !fenced
+              rows << "" if rows.any? && !rows.last.empty?
+              next
+            end
+
+            if fenced
+              rows << (body.empty? ? "" : "    #{body}")
+              next
+            end
+
+            next rows << "" if body.empty?
+
+            if (heading = body.match(/\A\s{0,3}#{1,6}\s+(.+)\z/))
+              rows << markdown_emphasis(heading[1])
+              next
+            end
+
+            if body.match?(/\A\s{0,3}(?:---+|\*\*\*+|___+)\s*\z/)
+              rows << "----"
+              next
+            end
+
+            body = body.sub(/\A\s{0,3}>\s?/, "  ")
+            body = body.sub(/\A\s{0,3}\*\s+/, "- ")
+            body = body.gsub(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/) do
+              label = Regexp.last_match(1)
+              url = Regexp.last_match(2)
+              label == url ? url : "#{label} (#{url})"
+            end
+            body = body.gsub(/\*\*(.+?)\*\*/) { markdown_emphasis(Regexp.last_match(1)) }
+            body = body.gsub(/(?<!\*)\*([^*\n]+)\*(?!\*)/) { Regexp.last_match(1) }
+            body = body.gsub(/__([^_\n]+)__/) { markdown_emphasis(Regexp.last_match(1)) }
+            body = body.gsub(/`([^`\n]+)`/) { Regexp.last_match(1) }
+            rows.concat(measure(body, width:).lines(chomp: true))
+          end
+
+          rows.join("\n") + (text.to_s.end_with?("\n") ? "\n" : "")
+        end
+
         def format_dmesg(line) = @p.dim(line.to_s)
 
         # Only a standalone numeric range earns an en dash. Firing on any
