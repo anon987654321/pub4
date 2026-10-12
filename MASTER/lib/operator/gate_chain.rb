@@ -420,6 +420,7 @@ end
     # so a test moved beneath test/ stays measured, and empty discovery must fail
     # rather than claim a green suite that ran nothing.
     OPENBSD_SUITE = <<~SUITE
+      # encoding: UTF-8
       files = Dir["test/**/test_*.rb"].sort
       abort("openbsd: no test files discovered") if files.empty?
       failed = files.reject { |f| system(RbConfig.ruby, f) }
