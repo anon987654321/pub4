@@ -79,12 +79,12 @@ class TestCliTerminalFace < Minitest::Test
     face = window
     assert_equal true, face.instance_variable_get(:@law_field_visible)
 
-    face.send(:react, "\\u0016")
+    face.send(:react, "\u0016")
     assert_equal false, face.instance_variable_get(:@law_field_visible)
     assert_empty face.instance_variable_get(:@draft)
     assert_includes face.instance_variable_get(:@words).join(" "), "hidden"
 
-    face.send(:react, "\\u0016")
+    face.send(:react, "\u0016")
     assert_equal true, face.instance_variable_get(:@law_field_visible)
     assert_empty face.instance_variable_get(:@draft)
     assert_includes face.instance_variable_get(:@words).join(" "), "visible"
@@ -97,7 +97,7 @@ class TestCliTerminalFace < Minitest::Test
       seen << kwargs.fetch(:show_laws)
       Array.new(kwargs.fetch(:rows), " " * kwargs.fetch(:cols)).join("\\n")
     end
-    face.send(:react, "\\u0016")
+    face.send(:react, "\u0016")
 
     Master::CLI::Face.stub(:frame, renderer) { face.screen(30, 80, 2.0) }
 
