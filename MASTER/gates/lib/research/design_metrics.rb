@@ -227,11 +227,14 @@ module Deploy
     # text, or the whole file when the selector is nil.
     def sample_css(app, selector = nil)
       body = read_css(File.join(RAILS, app, "app/assets/stylesheets/application.scss"))
+      if app == "brgen"
+        partial = File.join(RAILS, "brgen/app/assets/stylesheets/_brgen_marketplace.scss")
+        body = "#{body}\n#{read_css(partial)}" if File.file?(partial)
+      end
       return body if selector.nil?
 
       Operator::ScssRules.matching(body, selector).map { |rule| "#{rule.selector} { #{rule.body} }\n" }.join
     end
-
     def check_touch_targets
       min_px = @rules.dig("layout_rules", "touch", "target_min_px").to_f
       css_map = TOUCH_FOCUS.to_h { |app, selector| ["#{app}/app/assets/stylesheets/application.scss", sample_css(app, selector)] }
