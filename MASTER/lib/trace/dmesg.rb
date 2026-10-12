@@ -20,6 +20,7 @@ module Master
       module_function
 
       LEVELS = %w[quiet normal verbose trace].freeze
+      TERMINAL_WRITE_MUTEX = Mutex.new
 
       def enabled?
         return false if @verbosity_override == "quiet"
@@ -252,9 +253,7 @@ module Master
         nil
       end
 
-      def emit_mutex
-        @emit_mutex ||= Mutex.new
-      end
+      def emit_mutex = TERMINAL_WRITE_MUTEX
 
       # Child processes may inherit terminal redraws even though their output
       # is captured by a pipe. Forward them as completed lines, never as cursor
