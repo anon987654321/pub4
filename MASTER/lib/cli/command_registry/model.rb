@@ -147,7 +147,10 @@ module Master
         rows.map do |row|
           quota = row[:quota_remaining].nil? ? row[:quota_state] : "quota=#{row[:quota_remaining]}"
           rate = row[:success_rate].nil? ? "unmeasured" : "success=#{(row[:success_rate] * 100).round}%"
-          "#{row[:rank]}. #{row[:id]}  #{row[:lane]}  #{quota}  #{rate}"
+          calls = row[:calls].to_i
+          latency = row[:latency_ms].to_f
+          average = latency.finite? && latency.positive? ? "avg_ok=#{latency.round}ms" : "avg_ok=n/a"
+          "#{row[:rank]}. #{row[:id]}  #{row[:lane]}  #{quota}  #{rate} calls=#{calls} #{average}"
         end.join("\n")
       end
 
