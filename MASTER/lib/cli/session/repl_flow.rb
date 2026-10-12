@@ -30,7 +30,7 @@ module Master
           handle_repl_line(line) unless line == :interrupted
         end
       rescue Interrupt
-        puts
+        terminal_puts
       ensure
         trap("INT") { exit!(130) }
         close_session
@@ -38,10 +38,10 @@ module Master
 
       def read_prompt_line
         line = safe_read_line(prompt_for_mode)
-        puts if line.nil?
+        terminal_puts if line.nil?
         line
       rescue Interrupt
-        puts
+        terminal_puts
         return if close_requested?
 
         Master::Trace::Dmesg.status("cli0", "^C again to exit")
@@ -153,14 +153,14 @@ module Master
         was_running = @running
         stop_background_loop
         result = CommandRegistry.dispatch_face
-        puts result if result && result != "face0: closed"
+        terminal_puts(result) if result && result != "face0: closed"
         nil
       ensure
         start_background_loop if was_running && @running
       end
 
       def run_chitchat
-        puts @refs.renderer.render("hello — goal?", mode: :dim)
+        terminal_puts(@refs.renderer.render("hello — goal?", mode: :dim))
       end
 
       # !command runs one zsh line through the Io::Shell the model's zsh tool
@@ -173,7 +173,7 @@ module Master
 
         result = shell.call(command:)
         text = result.ok? ? result.value!.to_s : result.message.to_s
-        puts @refs.renderer.render(text, mode: result.ok? ? :dim : :error)
+        terminal_puts(@refs.renderer.render(text, mode: result.ok? ? :dim : :error))
         @refs.session.add_message(
           role: :user,
           content: "$ #{command}\n#{text}",
