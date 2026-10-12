@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "cdp_console"
+require_relative "cdp_network"
 require "socket"
 require "base64"
 require "digest/sha1"
@@ -31,6 +32,7 @@ module Deploy
   #   end
   class CdpSession
     include CdpConsole
+    include CdpNetwork
 
     include CdpFraming
     include CdpBudget
