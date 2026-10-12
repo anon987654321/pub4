@@ -12,11 +12,10 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     # Views live in the brgen_marketplace engine, a sibling of brgen. The
-    # styles live in brgen's one application.scss, and the card's CSS is the
-    # rules there whose selectors name .deal-card.
+    # marketplace component styles live in the host entrypoint's feature partial.
     ENGINE = File.join(RAILS, "brgen_marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
-    CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
+    CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_brgen_marketplace.scss")
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "__shared/app/assets/stylesheets/_search_yep.scss")
