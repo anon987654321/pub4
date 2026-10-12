@@ -272,7 +272,7 @@ module Master
           "          /wake /review /critique /fix /face /wishlist /explain /prove",
           "          /session /clear /undo /commit /snapshot",
           "          /android /ios /orders",
-          "chat:     /connect /connect:irc /connect:slsk /connect:telegram /slsk /join /part /say /me /names /topic /list /nick /irc /chat",
+          "chat:     /connect /connect:irc /connect:slsk /connect:telegram /slsk /join /part /say /msg /me /names /topic /list /nick /irc /chat",
           "          /soul /laws /why /plugin /help /exit /quit",
           "input:    !cmd governed shell, << multiline, /help X details",
           "write:    /fix is the write path; everything else is read, route or chat",

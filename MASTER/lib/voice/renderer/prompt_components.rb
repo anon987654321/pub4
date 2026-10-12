@@ -70,7 +70,15 @@ module Master
         # [state line or nil, prompt]. The state line carries what a status bar
         # used to: the caller prints it only when one of its values moves.
         def prompt_line(model, phase, **options)
-          [state_line(model, **options), shell_prompt(phase, options.fetch(:last_ok, true))]
+          [
+            state_line(model, **options),
+            shell_prompt(
+              phase,
+              options.fetch(:last_ok, true),
+              destination: options.fetch(:destination, "llm"),
+              focused: options.fetch(:focused, false)
+            )
+          ]
         end
 
         def state_line(model, **options)
@@ -111,14 +119,31 @@ module Master
 
         # The prompt is one physical command line, not a dashboard: path, Git,
         # phase, cursor. Reline owns editing; never embed a second prompt line.
-        def shell_prompt(phase, last_ok)
-          git = git_prompt_text
-          phase_text = phase_label(phase)
+        def shell_prompt(phase, last_ok, destination: "llm", focused: false)
+          git = bounded_prompt_segment(git_prompt_text, 10)
+          route = prompt_destination(destination)
+          phase_text = focused ? "" : bounded_prompt_segment(phase_label(phase), 6)
           cursor = phase_prompt(last_ok, phase)
-          suffix = [git, phase_text, cursor].reject(&:empty?).join(" ")
+          suffix = [git, route, phase_text, cursor].reject(&:empty?).join(" ")
           path = prompt_path(suffix_length: visible_length(suffix) + 1)
 
           [path, suffix].reject(&:empty?).join(" ") + " "
+        end
+
+        def prompt_destination(value)
+          destination = value.to_s.scrub.gsub(ANSI_ESCAPE, "").gsub(/[[:cntrl:]]/, "").gsub(/\s+/, " ").strip
+          destination = "llm" if destination.empty?
+          bounded_prompt_segment(destination, 22)
+        rescue StandardError
+          "llm"
+        end
+
+        def bounded_prompt_segment(value, width)
+          text = value.to_s
+          return text if text.length <= width
+          return text[0, width] if width <= 3
+
+          "#{text[0, width - 3]}..."
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so

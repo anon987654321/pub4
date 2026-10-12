@@ -589,7 +589,7 @@ end
 Law.define(:MASTER_PROMPT_AESTHETIC) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
-  ask "Does the interactive CLI prompt make the current working location unambiguous while preserving Git state, phase and input token in the OpenBSD dmesg console style?"
+  ask "Does the interactive CLI prompt make the current working location and active conversation destination unambiguous while preserving Git state, phase and input token in the OpenBSD dmesg console style?"
   practice <<~TEXT
     The prompt names the checkout and governed tree when the working directory
     is inside pub4, then shows the current subdirectory, Git state, phase and
@@ -599,7 +599,7 @@ Law.define(:MASTER_PROMPT_AESTHETIC) do
     append-only factual unit0: events carry detail. Never depend on colour,
     badges or Starship/powerline segments to explain state.
   TEXT
-  fix "Keep the current checkout/tree and working directory legible in the one-line prompt; preserve that location under truncation and leave detail to dmesg-style events."
+  fix "Keep the checkout/tree, working directory and active destination legible in the one-line prompt; preserve location under truncation and leave detail to dmesg-style events."
   bad  "recolours the prompt line and adds badges"
   good "keeps the one-line prompt plain and emits a factual fix0: status when work changes state"
 end

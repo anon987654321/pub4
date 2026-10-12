@@ -12,6 +12,15 @@ module Master
       RESERVED = %w[telegram slskd whatsapp].freeze
       FACTORIES = { "irc" => -> { Irc }, "telegram" => -> { Telegram }, "slskd" => -> { Slskd } }.freeze
 
+      Destination = Struct.new(:service, :target, keyword_init: true) do
+        def initialize(service:, target:)
+          super(service: service.to_s.freeze, target: target.to_s.freeze)
+          freeze
+        end
+
+        def label = "#{service}:#{target}"
+      end
+
       # Writes to the terminal without tearing a half-typed input line.
       class Margin
         def initialize(io = $stdout) = @io = io
@@ -20,6 +29,7 @@ module Master
       end
 
       @transports = {}
+      @destination = nil
       @lock = Mutex.new
 
       class << self
@@ -41,6 +51,42 @@ module Master
         def live = @lock.synchronize { @transports.values.select(&:live?) }
         def current = live.last
         def forget(service) = @lock.synchronize { @transports.delete(service) }
+
+        def destination = @lock.synchronize { @destination }
+        def destination_label
+          selected = destination
+          return "llm" unless selected
+
+          transport = find(selected.service)
+          state = if !transport&.live?
+                    "offline"
+                  elsif transport.policy.speak?
+                    "can-send"
+                  else
+                    "read-only"
+                  end
+          "#{state}:#{selected.label}"
+        rescue StandardError
+          "status-unknown:#{selected&.label || 'llm'}"
+        end
+
+        def select_destination(service:, target:)
+          name = service.to_s.downcase
+          raise ArgumentError, "unknown chat service #{name}" unless FACTORIES.key?(name)
+
+          raw = target.to_s
+          safe = Policy.sanitize(raw, max: 80)
+          raise ArgumentError, "bad chat destination" if safe.empty? || safe != raw || safe.match?(/\s/)
+
+          selection = Destination.new(service: name, target: safe)
+          @lock.synchronize { @destination = selection }
+          selection
+        end
+
+        def use_llm!
+          @lock.synchronize { @destination = nil }
+          nil
+        end
 
         def status_lines
           list = @lock.synchronize { @transports.values }
