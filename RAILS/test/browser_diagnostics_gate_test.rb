@@ -88,6 +88,35 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     refute Deploy::BrowserDiagnosticsGate.owned_url?(amber, "https://third-party.invalid/script.js")
   end
 
+  def test_missing_first_party_script_is_blocking_but_missing_image_is_soft
+    script = Deploy::BrowserDiagnosticsGate.grade(
+      surface: SURFACE, status: 200, console_messages: [],
+      http_failures: [{ status: 404, url: "http://markedsplass.brgen.no/assets/app.js", resource_type: "Script" }],
+      request_failures: []
+    )
+
+    image = Deploy::BrowserDiagnosticsGate.grade(
+      surface: SURFACE, status: 200, console_messages: [],
+      http_failures: [{ status: 404, url: "http://markedsplass.brgen.no/missing.png", resource_type: "Image" }],
+      request_failures: []
+    )
+
+    assert_match(/first-party resource failed/, script[:hard].first)
+    assert_empty script[:soft]
+    assert_empty image[:hard]
+    assert_match(/HTTP 404/, image[:soft].first)
+  end
+
+  def test_failed_first_party_stylesheet_request_is_blocking
+    verdict = Deploy::BrowserDiagnosticsGate.grade(
+      surface: SURFACE, status: 200, console_messages: [], http_failures: [],
+      request_failures: [{ url: "http://markedsplass.brgen.no/assets/application.css",
+                           resource_type: "Stylesheet", error: "net::ERR_CONNECTION_RESET" }]
+    )
+
+    assert_match(/first-party executable request failed/, verdict[:hard].first)
+  end
+
   def test_resource_404_is_preserved_as_a_warning_not_silently_dropped
     verdict = Deploy::BrowserDiagnosticsGate.grade(
       surface: SURFACE, status: 200, console_messages: [],
