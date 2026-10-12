@@ -34,12 +34,13 @@ module Operator
       MASTER/bin/gate
       RAILS/master_web/bin/ci
       OPENBSD/bin/check
-      OPENBSD/bin/check-full
       OPENBSD/bin/check-rails
       OPENBSD/bin/check-openbsd
       OPENBSD/bin/check-vps
       OPENBSD/test/run_all.rb
       RAILS/test/run_all.rb
+      RAILS/package.json
+      MASTER/tools/rails/premerge.rb
       STUDIO/Rakefile
       MASTER/gates/runner.rb
       MASTER/gates/release.rb
@@ -55,6 +56,13 @@ module Operator
       "RAILS/brgen/bin/ci" => ["RAILS/brgen/test/**/*_test.rb", "RAILS/brgen/engines/*/test/**/*_test.rb"],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],
       "RAILS/master_web/bin/ci" => ["RAILS/master_web/test/**/*_test.rb"],
+      # These runners construct their Node inventory from a runtime path variable
+      # or invoke npm script names; the complete target glob is therefore explicit.
+      "MASTER/bin/check" => ["RAILS/master_web/test/**/*.test.mjs"],
+      "MASTER/tools/rails/premerge.rb" => [
+        "RAILS/test/pwa_offline_store.test.mjs",
+        "RAILS/test/stimulus_components_runtime_contract.test.mjs",
+      ],
     }.freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.
@@ -68,7 +76,7 @@ module Operator
     # the glob beside it would pull in the dilla and tool suites — and a
     # glob-only extractor read that as a test nothing runs. A path literal that
     # matches no test file matches nothing here, so this cannot invent coverage.
-    EXACT = %r{["']((?:[A-Za-z0-9_.\-]+/)*(?:test|spec)/[A-Za-z0-9_.\-]+\.rb)["']}
+    EXACT = %r{["']((?:[A-Za-z0-9_.\-]+/)*(?:test|spec)/[A-Za-z0-9_.\-]+\.(?:rb|mjs|sh))["']}
 
     def self.globs
       @globs ||= begin
@@ -108,16 +116,21 @@ module Operator
     TEST_DIR = %r{(?:\A|/)test/}
 
     def self.test_files
-      # All four governed trees are in the contract. Omitting STUDIO here made
-      # its tests invisible to the reachability census even though STUDIO/Rakefile
-      # runs them; the dedicated assertion then passed only if the census lied.
-      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD,STUDIO}/**/*.rb")]
-                      .map { |path| path.sub("#{ROOT}/", "") }
-                      .reject { |path| path =~ %r{/(node_modules|vendor|tmp|\.master|knowledge|output)/} }
-                      .select { |path| path =~ TEST_DIR }
-                      .select { |path| File.basename(path) =~ /\Atest_.*\.rb\z|_test\.rb\z|_spec\.rb\z/ }
-                      .reject { |path| HELPERS.include?(File.basename(path)) }
-                      .sort
+      # The census covers language-neutral test inventories, not just Ruby.
+      # The prior .rb-only glob omitted 23 Node runtime tests and OpenBSD's
+      # resource-guard shell test; those can be orphaned while the count stays green.
+      patterns = %w[**/*.rb **/*.test.mjs **/test_*.sh **/*_test.sh]
+      @test_files ||= %w[MASTER RAILS OPENBSD STUDIO].flat_map do |tree|
+        patterns.flat_map { |pattern| Dir[File.join(ROOT, tree, pattern)] }
+      end.uniq
+       .map { |path| path.sub("#{ROOT}/", "") }
+       .reject { |path| path =~ %r{/(node_modules|vendor|tmp|\.master|knowledge|output)/} }
+       .select { |path| path =~ TEST_DIR }
+       .select do |path|
+         File.basename(path).match?(/\Atest_.*\.rb\z|_test\.rb\z|_spec\.rb\z|\A.*\.test\.mjs\z|\A(?:test_.*|.*_test)\.sh\z/)
+       end
+       .reject { |path| HELPERS.include?(File.basename(path)) }
+       .sort
     end
 
     def self.who_runs(file)
