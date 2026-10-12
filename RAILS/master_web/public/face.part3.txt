@@ -654,6 +654,7 @@ function frame(t) {
   }
   window.MASTER_FACE_WORLD?.update?.(performance.now());
   window.MASTER_FACE_SPARSE?.update?.(performance.now());
+  window.MASTER_FACE_ASCII?.update?.(performance.now());
   renderer.render(scene, camera);
   markFaceReady();
 
