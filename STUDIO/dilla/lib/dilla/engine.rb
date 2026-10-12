@@ -125,7 +125,8 @@ def render(data, options)
     seq.sound(buf, plucks, seq.voice_spec(options[:melody_voice] || 'rhodes_mark1'))
   end
   vcs = seq.vcs_amount(options[:vcs])
-  buf = seq.colour(buf, seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances]), vcs)
+  sonitex = seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances])
+  buf = seq.colour(buf, sonitex, vcs)
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
   echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
@@ -135,7 +136,7 @@ def render(data, options)
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
   buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
-  buf = seq.overlay_drums(buf, hits, levels, vcs) if drums
+  buf = seq.overlay_drums(buf, hits, levels, vcs, sonitex:) if drums
   return buf if options[:buffer_only]
 
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
@@ -190,9 +191,9 @@ def render_showcase(data, options)
       transpose: options[:transpose],
       wrap: options[:wrap],
       plain: options[:plain],
-      sonitex: options[:sonitex],
-      sonitex_instances: options[:sonitex_instances],
-      vcs: options[:vcs],
+      sonitex: options[:sonitex] || section['sonitex'],
+      sonitex_instances: options[:sonitex_instances] || section['sonitex_instances'],
+      vcs: options[:vcs].nil? ? section['vcs'] : options[:vcs],
       buffer_only: true
     }.reject { |_key, value| value.nil? }
 
