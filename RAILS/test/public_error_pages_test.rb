@@ -58,6 +58,10 @@ class PublicErrorPagesTest < Minitest::Test
     assert_includes source, "line-height: 1.5;"
     assert_includes source, "min-height: 100dvh;"
     assert_includes source, "min-height: 44px;"
+    %w[top right bottom left].each do |edge|
+      assert_includes source, "env(safe-area-inset-#{edge}, 0px)",
+                      "shared error-page padding must respect the #{edge} safe area"
+    end
     assert_includes source, "background: var(--bg);"
     assert_includes source, "color: var(--text);"
     refute_match(/(?:box-shadow|text-shadow|backdrop-filter)\s*:\s*(?!none\b)/, source)
