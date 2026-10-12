@@ -27,6 +27,7 @@ module Master::Core
 
     def run(goal)
       @memory.note(:goal, goal)
+      blocked_effects = Hash.new(0)
 
       @max_turns.times do |turn|
         effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
@@ -36,6 +37,12 @@ module Master::Core
           observation = Observation.no("refused by #{by}: #{reason}")
           @memory.record(effect, observation)
           emit(turn, effect, observation)
+          signature = [effect.verb, by.to_s, reason.to_s]
+          blocked_effects[signature] += 1
+          if blocked_effects[signature] >= 2
+            summary = "stopped after repeated #{effect.verb} refusal by #{by}: #{reason}"
+            return Done.new(reason: :blocked, turns: turn + 1, summary:)
+          end
         in Verdict::Request(effect: asked, prompt:, reason:, by:)
           done = approve(turn, asked, prompt:, reason:, by:)
           return done if done

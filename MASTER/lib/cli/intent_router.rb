@@ -4,12 +4,12 @@ module Master
   module CLI
     class IntentRouter
       INTENTS = {
-        codify_policy: %w[codify policy make it ruby turn into],
+        codify_policy: %w[codify policy make ruby turn into],
         refactor_to_ruby: %w[refactor move ruby extract simplify],
         wire_existing_module: %w[wire connect hook up route plug],
         create_facade: %w[facade wrap adapter interface],
         delete_redundant_config: %w[delete remove kill purge drop],
-        verify_patch_landed: %w[verify check confirm did it land],
+        verify_patch_landed: %w[verify check confirm did land],
         run_sound_review: %w[sound review audio critique listen],
         design_frontend: %w[frontend stylesheet stylesheets css scss landing homepage hero typography palette markup],
         run_ui_review: %w[ui critique design visual look review],
@@ -18,7 +18,7 @@ module Master
         redesign_mobile_pwa: %w[redesign mobile touch layout responsive accessibility],
         audit_rails_pwa: %w[audit scan check pwa manifest service worker rails],
         apply_user_style_rules: %w[style format lint clean],
-        continue_prior_plan: %w[go ahead continue land it proceed ship],
+        # Continuation depends on the live conversation; only exact phrases may route it.
         write_repo_changes: %w[land write commit save push apply],
         prefer_ruby: %w[ruby not markdown no yaml keep ruby],
         run_full_workflow: %w[
@@ -62,6 +62,7 @@ module Master
         "yes" => :continue_prior_plan,
         "ship" => :write_repo_changes,
         "proceed" => :continue_prior_plan,
+        "continue prior plan" => :continue_prior_plan,
         "through master" => :run_full_workflow,
         "run through master" => :run_full_workflow,
         "through itself" => :run_master_through,

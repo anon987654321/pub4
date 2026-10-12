@@ -261,6 +261,26 @@ class CoreBridgeTest < Minitest::Test
     assert_match(/needs approval.*no surface to ask/, push_transcript(nil))
   end
 
+  def test_repeated_capability_refusal_stops_and_blocks_the_mission
+    Dir.mktmpdir do |root|
+      model = ScriptedModel.new(
+        Master::Core::Effect.exec(%w[git status --short]),
+        Master::Core::Effect.read("README.md"),
+        Master::Core::Effect.exec(%w[git status --short]),
+        Master::Core::Effect.done("must not complete"),
+      )
+
+      result = Master::CLI::CoreBridge.run(
+        "inspect the tree", root:, model:, mode: :observe, max_turns: 8
+      )
+
+      assert_equal :blocked, result[:reason]
+      assert_equal 3, result[:turns]
+      assert_match(/repeated exec refusal/, result[:summary])
+      assert_equal "blocked", result[:mission]["state"]
+    end
+  end
+
   def test_on_turn_callback_fires_per_turn
     Dir.mktmpdir do |root|
       lines = []

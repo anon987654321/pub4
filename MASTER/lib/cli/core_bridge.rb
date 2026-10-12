@@ -129,7 +129,7 @@ module Master
       def settle_mission(mission, done)
         if done.reason == :complete
           mission.finish!(state: "completed", summary: done.summary)
-        elsif done.reason == :needs_user
+        elsif %i[needs_user blocked].include?(done.reason)
           mission.block!(reason: done.summary.to_s)
         else
           mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
