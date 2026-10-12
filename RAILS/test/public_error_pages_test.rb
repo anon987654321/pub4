@@ -35,6 +35,17 @@ class PublicErrorPagesTest < Minitest::Test
     end
   end
 
+  def test_422_copy_matches_the_safe_home_destination
+    { "brgen" => "Hjem", "amber" => "Hjem", "bsdports" => "Porter" }.each do |app, home|
+      source = File.read(File.join(ROOT, app, "public", "422.html"))
+
+      assert_includes source, %(href="/">#{home}</a>)
+      assert_includes source, "Gå til forsiden"
+      assert_includes source, "Return to the home page"
+      refute_match(/Gå tilbake|Go back/i, source)
+    end
+  end
+
   def test_master_web_error_pages_share_the_application_typographic_stack
     MASTER_WEB_PAGES.each do |status|
       path = File.join(ROOT, "master_web", "public", "#{status}.html")
