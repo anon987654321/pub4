@@ -114,12 +114,16 @@ module Master
 
       # A continuation utterance depends on the live conversation. It is not a
       # durable objective a background thread can replay without that context.
-      CONTINUATION_ONLY = /\\A(?:yes|y|yeah|yep|ok|okay|go ahead|continue(?: prior plan)?|proceed|do it|let'?s do it|ship it|land it)[.!?…\\s]*\\z/i
+      CONTEXTLESS_GOALS = ["do it", "lets do it"].freeze
 
       def continuation_only?(record)
-        goal = record["goal"].to_s.strip.gsub(/\\s+/, " ")
+        goal = record["goal"].to_s.downcase.strip.split.join(" ")
+        goal = goal[0...-1] while %w[! . ? …].include?(goal[-1])
+        normalized = goal.delete("'")
         intent = record.dig("operator", "intent").to_s
-        intent == "continue_prior_plan" || goal.match?(CONTINUATION_ONLY)
+        return true if intent == "continue_prior_plan"
+
+        CONTEXTLESS_GOALS.include?(normalized)
       end
 
       def eligible?(record)
