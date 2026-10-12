@@ -205,8 +205,6 @@ class BrowserDiagnosticsGateTest < Minitest::Test
 
     assert_match(%r{/MASTER/gates/data/visual_baselines/brgen-marketplace_listings-mobile\.png\z}, path)
     assert_nil Deploy::BrowserDiagnosticsGate.visual_baseline_path(SURFACE)
-    refute Deploy::BrowserDiagnosticsGate.pixel_baseline_approval?({})
-    assert Deploy::BrowserDiagnosticsGate.pixel_baseline_approval?("GATE_PIXEL_BASELINE_APPROVE" => "1")
     refute Deploy::BrowserDiagnosticsGate.pixel_baseline_strict?({})
     assert Deploy::BrowserDiagnosticsGate.pixel_baseline_strict?("GATE_PIXEL_BASELINE_STRICT" => "true")
     assert_equal 0.01, Deploy::BrowserDiagnosticsGate.pixel_diff_max_ratio({})
@@ -235,7 +233,7 @@ class BrowserDiagnosticsGateTest < Minitest::Test
   def test_pixel_comparison_is_wired_into_route_evidence_and_never_auto_approves
     source = File.read(File.join(ROOT, "MASTER", "gates", "lib", "rendered", "browser_diagnostics.rb"))
     assert_includes source, "PngDiff.compare"
-    assert_includes source, "GATE_PIXEL_BASELINE_APPROVE"
+    refute_includes source, "GATE_PIXEL_BASELINE_APPROVE"
     assert_includes source, "GATE_PIXEL_BASELINE_STRICT"
     assert_includes source, "pixel_diff_ratio"
     assert_includes source, "pixel_diff_image"
@@ -260,10 +258,10 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     end
   end
 
-  def pixel_evidence(gate, baseline:, current:, dir:, surface: SURFACE, status_label: "PASS", hard_failures: [])
+  def pixel_evidence(gate, baseline:, current:, dir:, surface: SURFACE)
     Deploy::BrowserDiagnosticsGate.stub(:visual_baseline_path, ->(_surface) { baseline }) do
       gate.send(:pixel_evidence, surface:, screenshot: current, screenshot_dir: dir,
-                screenshot_error: nil, status_label:, hard_failures:)
+                screenshot_error: nil)
     end
   end
 
@@ -331,22 +329,19 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     end
   end
 
-  def test_only_successful_captures_can_write_approved_references
+  def test_browser_diagnostics_never_writes_or_approves_pixel_baselines
     Dir.mktmpdir("pixel-evidence") do |dir|
       baseline = File.join(dir, "approved.png")
       current = File.join(dir, "current.png")
       write_rgba(current, width: 2, height: 2, changed_pixels: [0])
 
-      with_gate_env("GATE_PIXEL_BASELINE_APPROVE" => "1") do
-        evidence = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:,
-                                  status_label: "FAIL", hard_failures: ["uncaught exception"])
-        assert_equal "MISSING", evidence.fetch("status")
-        refute File.exist?(baseline)
+      evidence = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:)
 
-        approved = pixel_evidence(Deploy::BrowserDiagnosticsGate.new, baseline:, current:, dir:)
-        assert_equal "UPDATED", approved.fetch("status")
-        assert_equal File.binread(current), File.binread(baseline)
-      end
+      assert_equal "MISSING", evidence.fetch("status")
+      refute File.exist?(baseline)
+      source = File.read(File.join(ROOT, "MASTER", "gates", "lib", "rendered", "browser_diagnostics.rb"))
+      refute_includes source, "GATE_PIXEL_BASELINE_APPROVE"
+      assert File.file?(File.join(ROOT, "MASTER", "tools", "approve_visual_baselines.rb"))
     end
   end
 
