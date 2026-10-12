@@ -31,21 +31,27 @@ continue to run. Set `GATE_PIXEL_BASELINE_STRICT=1` to make missing or
 unsupported pixel baselines blocking. This lets the inventory be seeded
 gradually without claiming that un-compared pixels passed.
 
-## Approve
+## Approve the reviewed capture
 
-Only after visually reviewing a clean, stable capture, explicitly approve the
-current PNGs for every passing surface selected by the inventory:
+First run the diagnostics without approval and inspect the screenshots and manifest
+path printed by the gate. Then promote the exact files you reviewed; this does not
+navigate again or silently replace your inspection with a new capture.
 
 ```zsh
-GATE_PIXEL_BASELINE_APPROVE=1 ruby MASTER/gates/runner.rb browser_diagnostics
+ruby MASTER/gates/runner.rb browser_diagnostics
+ruby MASTER/tools/approve_visual_baselines.rb --manifest /tmp/pub4-browser-diagnostics/<run-id>/manifest.json
 git diff -- MASTER/gates/data/visual_baselines
 ```
 
-Approval only writes PNGs for surfaces whose runtime checks passed and whose
-screenshots were successfully delivered. Inspect the diff images and current
-screenshots before committing the generated files. Do not set the approval
-variable as part of `/fix`, autofix, deployment or routine verification.
+The tool verifies that each source PNG is inside that run's screenshots directory,
+matches its recorded SHA-256 and dimensions, belongs to a declared `pixel_snapshot`
+surface, and has no runtime failures. Failed/inconclusive captures cannot be
+approved. Existing baselines are protected from accidental overwrite: review the
+diff and explicitly pass `--replace` when accepting a deliberate design change.
+Use `--surface app/label/viewport` (repeatable) to approve a chosen subset.
 
+This tool is never part of `/fix` or `GATE_AUTOFIX`; baseline approval is a
+separate operator action.
 PNG comparisons use a dependency-free Ruby decoder for Chromium's non-interlaced
 8-bit RGB/RGBA screenshots. Unsupported/corrupt images are reported rather than
 silently treated as equal. Keep the browser, operating system, device scale,
