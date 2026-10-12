@@ -47,13 +47,13 @@ Law.define(:CLI_TREE_TARGET_RESOLUTION) do
 end
 
 Law.define(:CLI_PROMPT_COMPOSITION) do
-  source "OpenBSD ksh/ash restraint; fish/zsh line editing; Starship bounded prompt composition"
-  severity :info
+  source "OpenBSD dmesg console discipline; shell line editing remains the input transport"
+  severity :warning
   mode :opportunity
   languages %i[ruby]
   path "MASTER/lib/voice/renderer/"
-  ask "Does this prompt renderer keep one compact, single-line grammar of location, repository state, meaningful transient phase/error state, and the shell prompt token? Look for decorative chrome, embedded newlines, duplicated state, expensive work on every redraw, or information that belongs behind /status, /doctor or /help. Return CLEAN when the prompt is already compact, single-line and bounded."
-  fix "Keep one physical interactive line: location + repository state + meaningful transient phase/error + prompt token; cache or bound external probes; move detail to explicit status/help surfaces."
+  ask "Does the interactive prompt remain a restrained OpenBSD-console line: useful location, repository state, meaningful phase/error state, and input token, with no Starship/powerline-style segments or decorative emphasis? Is it bounded, single-line, plain in scrollback and cheap to redraw? Return CLEAN when it follows the dmesg-first house style."
+  fix "Keep one compact text line with path, plain Git state, plain phase and shell token. Prefer ASCII and stable spacing; avoid badges, icon glyphs, color-coded segments, boxes and duplicated status. Cache or bound Git probes and move detail to /status, /doctor or /help."
   # Quoted heredocs: the examples quote instance and local variables, and an
   # interpolating heredoc evaluates them against the Builder at load time —
   # one #{e.class} here once made every law definition crash the registry.
@@ -67,6 +67,26 @@ Law.define(:CLI_PROMPT_COMPOSITION) do
     def prompt
       [path, branch, phase, token].compact.join(" ") + " "
     end
+  X
+end
+
+Law.define(:OPENBSD_DMESG_CONSOLE_STYLE) do
+  source "OpenBSD dmesg — xsa/openbsd-dmesgs and Master::Trace::Dmesg"
+  severity :warning
+  mode :opportunity
+  languages %i[ruby]
+  path "MASTER/lib/voice/"
+  ask "Does CLI output follow the native console idiom: append-only, one factual event per line, a stable subsystem0: or unit0 at parent: prefix, truthful status, and useful scrollback? Look for banners, decorative panels, ASCII art outside the face, badge-like status, repeated progress chatter, and information hidden behind color alone. Return CLEAN when plain text remains clear in a pipe, serial terminal and saved transcript."
+  fix "Use Master::Trace::Dmesg's existing unit0: grammar; emit one concise factual line per event, order events by occurrence, keep state and recovery explicit, and preserve plain-text meaning without ANSI or animation. Do not create a second logging/presentation format."
+  bad <<~'X'
+    ╭─ MASTER ───────────────────────────╮
+    │  ◉ ONLINE  MODEL: ready  TOKENS 5k │
+    ╰───────────────────────────────────╯
+  X
+  good <<~'X'
+    model0: ready
+    context0: 5k/128k
+    fix0 at scan0: 3 files changed
   X
 end
 
