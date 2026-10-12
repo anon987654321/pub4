@@ -616,3 +616,49 @@ paid_tail:
   max_completion_usd_per_m: 3.0
   run_cap_usd: 5.0
   max_models: 12
+
+# Image and video generation lanes (Io::MediaLanes). Each kind lists its lanes;
+# the selector keeps the live ones (key present, not parked by Io::LaneQuota, not
+# silent), drops those whose estimate exceeds the call cap or the run budget that
+# is left, and asks the free ones first, then the cheapest; ties keep this order,
+# so a direct provider precedes the same model through OpenRouter. A lane is
+# "media-<provider>" to LaneQuota. Price per call is the catalog's price_id row
+# (prompt tokens, plus image_tokens at image_output) when the catalog has it, else
+# usd_per_call, else usd_per_second x seconds. The flat figures are estimates
+# written from the operator's 2026-10-12 brief and the catalog's token prices;
+# check them against the provider's price page before trusting a cap to them.
+# MASTER_MEDIA_BUDGET_USD overrides both run budgets; MASTER_MEDIA_PAID=0 turns
+# every paid lane off. There is no direct xAI image or video endpoint in this
+# repo (the xai block of data/providers.yml is chat only), so none is listed.
+media_lanes:
+  budget_usd: { image: 2.0, video: 5.0 }
+  call_cap_usd: { image: 1.0, video: 4.0 }
+  image_tokens: 1290
+  video_seconds: 8
+  timeouts: { call_s: 120, video_total_s: 600, poll_s: 10, max_polls: 90 }
+  catalog_merge: { max_prompt_usd_per_m: 3.0, max_models: 4 }
+  providers:
+    gemini: { env: [GEMINI_API_KEY, GOOGLE_API_KEY], base: "https://generativelanguage.googleapis.com/v1beta" }
+    openrouter: { env: [OPENROUTER_API_KEY], base: "https://openrouter.ai/api/v1" }
+    replicate: { env: [REPLICATE_API_TOKEN, REPLICATE_API_KEY] }
+  image:
+    - { provider: gemini, model: gemini-2.5-flash-image, price_id: google/gemini-2.5-flash-image, usd_per_call: 0.039 }
+    - { provider: gemini, model: gemini-3.1-flash-lite-image, price_id: google/gemini-3.1-flash-lite-image, usd_per_call: 0.039 }
+    - { provider: gemini, model: gemini-nano-banana-2.1, price_id: google/gemini-nano-banana-2.1, usd_per_call: 0.039 }
+    - { provider: gemini, model: gemini-3.1-flash-image, price_id: google/gemini-3.1-flash-image, usd_per_call: 0.077 }
+    - { provider: gemini, model: nano-banana-pro-preview, price_id: google/gemini-3-pro-image-preview, usd_per_call: 0.155 }
+    - { provider: gemini, model: gemini-3-pro-image, price_id: google/gemini-3-pro-image, usd_per_call: 0.155 }
+    - { provider: openrouter, model: google/gemini-2.5-flash-image, usd_per_call: 0.039 }
+    - { provider: openrouter, model: google/gemini-3.1-flash-lite-image, usd_per_call: 0.039 }
+    - { provider: openrouter, model: google/gemini-nano-banana-2.1, usd_per_call: 0.039 }
+    - { provider: openrouter, model: google/gemini-3.1-flash-image, usd_per_call: 0.077 }
+    - { provider: openrouter, model: google/gemini-3-pro-image, usd_per_call: 0.155 }
+    - { provider: openrouter, model: openai/gpt-5-image-mini, image_tokens: 4160, usd_per_call: 0.05 }
+    - { provider: openrouter, model: openai/gpt-5.4-image-2, image_tokens: 4160, usd_per_call: 0.13 }
+    - { provider: openrouter, model: openai/gpt-5-image, image_tokens: 4160, usd_per_call: 0.17 }
+    - { provider: replicate, model: black-forest-labs/flux-2-pro, usd_per_call: 0.05 }
+  video:
+    - { provider: gemini, model: veo-3.1-lite-generate-preview, usd_per_second: 0.05 }
+    - { provider: gemini, model: veo-3.1-fast-generate-preview, usd_per_second: 0.15 }
+    - { provider: gemini, model: veo-3.1-generate-preview, usd_per_second: 0.40 }
+    - { provider: replicate, model: google/veo-3.1-fast, usd_per_second: 0.15 }
