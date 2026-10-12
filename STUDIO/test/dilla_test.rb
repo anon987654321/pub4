@@ -69,6 +69,21 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_default_run_renders_the_showcase_as_a_wav
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "blue-hour.wav")
+      stdout, stderr, status = run_dilla("--out", out, chdir: dir)
+      assert status.success?, "render failed\n#{stdout}\n#{stderr}"
+      assert_includes stdout, "Blue Hour"
+      assert File.file?(out), "renderer did not create the WAV"
+      header = File.binread(out, 44)
+      assert_equal "RIFF", header.byteslice(0, 4)
+      assert_equal "WAVE", header.byteslice(8, 4)
+      assert_equal 44_100, header.byteslice(24, 4).unpack1("V")
+      assert_operator File.size(out), :>, 44
+    end
+  end
+
   # ------------------------------------------------------------- progressions
 
   def test_progressions_are_a_flat_array_of_chord_name_arrays_without_duplicates
