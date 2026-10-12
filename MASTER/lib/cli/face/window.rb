@@ -121,6 +121,9 @@ module Master
             "#{DIM}#{status(state)[0, cols]}#{PLAIN}",
             prompt_line(draft, cols, color:),
           ]
+          # The cursor goes where the prompt was drawn; the body is a line short of
+          # the window, so the prompt is not on the last row.
+          prompt_row = [body.length, rows].min
           body = body.first(rows)
           body += Array.new(rows - body.length, "") if body.length < rows
 
@@ -128,7 +131,7 @@ module Master
             "\e[#{i + 1};1H#{line}\e[K"
           end.join
           cursor_column = [draft.length + Master::Face::Contract.user_token.length + 2, cols].min
-          "\e[?25l#{painted}\e[#{rows};#{cursor_column}H\e[?25h"
+          "\e[?25l#{painted}\e[#{prompt_row};#{cursor_column}H\e[?25h"
         end
 
         private

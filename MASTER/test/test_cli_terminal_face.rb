@@ -48,6 +48,18 @@ class TestCliTerminalFace < Minitest::Test
     refute_includes frame.to_s, "\e"
   end
 
+  def test_the_cursor_sits_on_the_prompt_line_after_the_draft
+    face = window
+    [[30, 80], [24, 60], [12, 40]].each do |rows, cols|
+      screen = face.screen(rows, cols, 1.0)
+      row, col = screen.scan(/\e\[(\d+);(\d+)H\e\[\?25h\z/).first.map(&:to_i)
+      prompt = rows_of(screen).fetch(row)
+
+      assert prompt.start_with?("#{Master::Face::Contract.user_token} "), "row #{row} of #{rows} is not the prompt: #{prompt.inspect}"
+      assert_equal prompt.length + 1, col, "the cursor follows the draft"
+    end
+  end
+
   def test_every_row_of_the_window_is_painted
     assert_equal (1..30).to_a, rows_of(window.screen(30, 80, 2.0)).keys.sort
   end
