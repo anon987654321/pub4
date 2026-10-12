@@ -46,7 +46,7 @@ module VisualBaselineApproval
     by_id = surfaces.to_h { |surface| [surface.id, surface] }
     candidates = selected.empty? ? rows.select do |row|
       surface = by_id[surface_id(row)]
-      surface&.pixel_snapshot && row["status"] == "PASS"
+      surface&.pixel_snapshot && row.fetch("runtime_status", row["status"]) == "PASS"
     end : selected.map { |id| rows.find { |row| surface_id(row) == id } }
 
     raise ApprovalError, "no passing pixel_snapshot captures selected" if candidates.empty?
@@ -55,7 +55,14 @@ module VisualBaselineApproval
       id = surface_id(row)
       surface = by_id[id]
       raise ApprovalError, "#{id} is not a declared pixel_snapshot surface" unless surface&.pixel_snapshot
-      raise ApprovalError, "#{id} is not PASS; failed or inconclusive captures cannot be approved" unless row["status"] == "PASS"
+      runtime_status = row.fetch("runtime_status", row["status"])
+      runtime_failures = Array(row["runtime_failure_reasons"])
+      unless runtime_status == "PASS" && runtime_failures.empty?
+        raise ApprovalError, "#{id} has runtime failures; failed or inconclusive captures cannot be approved"
+      end
+      unless row["status"] == "PASS" || %w[REGRESSION DIMENSION_MISMATCH MISSING UNSUPPORTED].include?(row["pixel_baseline_status"])
+        raise ApprovalError, "#{id} is not eligible for baseline approval"
+      end
 
       screenshot = File.realpath(row.fetch("screenshot"))
       unless screenshot.start_with?(screenshots_dir + File::SEPARATOR)
