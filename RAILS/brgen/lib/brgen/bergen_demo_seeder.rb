@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "brgen/demo_mode"
 
 module Brgen
   # Realistic Bergen / r/bergen-inspired demo content for brgen.no (TradeDoubler, demos).
@@ -15,6 +16,11 @@ module Brgen
     end
 
     def seed!
+      unless Brgen::DemoMode.seed_allowed?
+        raise "Refusing synthetic Brgen seed in this environment. " \
+              "Use development/test or a disclosed demo deployment."
+      end
+
       ActsAsTenant.with_tenant(@city) do
         neighborhoods = ensure_neighborhoods
         communities = ensure_communities
@@ -99,7 +105,7 @@ module Brgen
         post.record_activity!("BergenDemoSeed") if post.respond_to?(:record_activity!)
 
         if @attach_media && row[:image]
-          DemoMedia.attach_remote_postpro!(post, :image, seed: row[:image], preset: "landscape")
+          DemoMedia.attach_remote_postpro!(post, :image, seed: row[:image], preset: "random")
         end
 
         seed_comments!(post, row[:comments])
@@ -135,7 +141,7 @@ module Brgen
           created_at: rand(2..21).days.ago
         )
         if @attach_media
-          DemoMedia.attach_remote_postpro!(listing, :photos, seed: row[:image], preset: "portrait")
+          DemoMedia.attach_remote_postpro!(listing, :photos, seed: row[:image], preset: "random")
         end
       end
     end
@@ -185,7 +191,8 @@ module Brgen
         description: "Beat-referanser fra Radio Bergen-manifestet. Nattbuss, tunnel og regnby.",
         public_access: true,
         collaborative: false,
-        plays_count: playlist.plays_count.to_i.positive? ? playlist.plays_count : 428
+        # Seed fixtures must not invent playback. Preserve an existing event-backed count.
+        plays_count: playlist.plays_count.to_i
       )
       playlist.save!
 
@@ -213,7 +220,7 @@ module Brgen
           visible: false
         )
         if @attach_media && !profile.photos.attached?
-          DemoMedia.attach_remote_postpro!(profile, :photos, seed: row[:image], preset: "portrait", width: 600, height: 900)
+          DemoMedia.attach_remote_postpro!(profile, :photos, seed: row[:image], preset: "random", width: 600, height: 900)
         end
         profile.visible = profile.photos.attached?
         profile.save!
@@ -303,7 +310,7 @@ module Brgen
         )
         next unless @attach_media && row[:image]
 
-        DemoMedia.attach_remote_postpro!(place, :photo, seed: row[:image], preset: "landscape")
+        DemoMedia.attach_remote_postpro!(place, :photo, seed: row[:image], preset: "random")
       end
     end
 
@@ -336,7 +343,7 @@ module Brgen
           )
           next unless @attach_media && item_row[:image]
 
-          DemoMedia.attach_remote_postpro!(menu_item, :photo, seed: item_row[:image], preset: "portrait", width: 720, height: 540)
+          DemoMedia.attach_remote_postpro!(menu_item, :photo, seed: item_row[:image], preset: "random", width: 720, height: 540)
         end
       end
     end
@@ -354,8 +361,8 @@ module Brgen
         channel.save!
 
         if @attach_media
-          DemoMedia.attach_remote_postpro!(channel, :avatar, seed: row[:avatar], preset: "portrait", width: 480, height: 480) unless channel.avatar.attached?
-          DemoMedia.attach_remote_postpro!(channel, :banner, seed: row[:banner], preset: "landscape", width: 1280, height: 480) unless channel.banner.attached?
+          DemoMedia.attach_remote_postpro!(channel, :avatar, seed: row[:avatar], preset: "random", width: 480, height: 480) unless channel.avatar.attached?
+          DemoMedia.attach_remote_postpro!(channel, :banner, seed: row[:banner], preset: "random", width: 1280, height: 480) unless channel.banner.attached?
         end
 
         Array(row[:videos]).each do |video_row|
@@ -373,7 +380,7 @@ module Brgen
           )
           next unless @attach_media && video_row[:thumbnail]
 
-          DemoMedia.attach_remote_postpro!(video, :thumbnail, seed: video_row[:thumbnail], preset: "landscape", width: 1280, height: 720)
+          DemoMedia.attach_remote_postpro!(video, :thumbnail, seed: video_row[:thumbnail], preset: "random", width: 1280, height: 720)
         end
       end
     end
