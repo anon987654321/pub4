@@ -92,8 +92,9 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
   gates.** It records console/runtime exceptions, HTTP/resource failures and a
   screenshot for every reachable route/viewport in `geometry_surfaces.yml`;
   artifacts live outside the repo under the system temp directory. Console
-  warnings/errors remain soft until `GATE_STRICT_SOFT=1`; uncaught exceptions
-  and document/server errors fail. It is part of `rendered_suite`.
+  warnings/errors remain soft until `GATE_STRICT_SOFT=1`; uncaught exceptions,
+  document/server errors, and missing first-party scripts/stylesheets fail. It
+  is part of `rendered_suite`.
 - **`visual_contract` is a compatibility route matrix over the canonical CDP
   browser session.** `layout_snapshot` is the durable committed visual baseline;
   accept new structural baselines only under `GATE_SNAPSHOT_UPDATE=1`.
