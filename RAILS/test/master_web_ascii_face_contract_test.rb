@@ -7,9 +7,8 @@ require "yaml"
 # The web face draws the terminal's ASCII face. The renderer itself is held to the
 # Ruby frames by RAILS/master_web/test/face_ascii.test.mjs; this reads the source as text
 # and holds what surrounds it: the generated runtime still matches its parts, the boot
-# manifest keeps its order with the new script in it, the shell reads the terminal's
-# wordmark and prompt glyphs from the one token block, and the type is mono for the face
-# and the shell with no serif anywhere.
+# manifest keeps its order with the new script in it, shell chrome stays conventional
+# text without an ASCII-art logo, and the type is mono for the face and shell.
 class MasterWebAsciiFaceContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   WEB = File.join(ROOT, "RAILS", "master_web")
@@ -124,17 +123,17 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     %w[active_fps idle_fps reduced_motion_fps].each { |key| assert_includes budget.keys, key }
   end
 
-  def test_the_shell_wears_the_terminals_wordmark_and_prompt_glyphs
-    assert_equal 3, ascii.fetch("wordmark").size
-    assert_match(/<pre id="wordmark" class="wordmark" aria-hidden="true"><%= Master::Face::Contract\.wordmark\.join\("\\n"\) %><\/pre>/, view)
-    assert_match(/<span class="pp" aria-hidden="true"><%= Master::Face::Contract\.glyph\(:input\) %><\/span>/, view)
+  def test_the_shell_uses_plain_prompt_text_without_ascii_art
+    refute ascii.key?("wordmark")
+    refute ascii.key?("prompt")
+    refute_match(/<pre id="wordmark"/, view)
+    assert_includes view, '<span class="pp" aria-hidden="true"><%= t("face.prompt_user") %></span><span class="sep2" aria-hidden="true">$ </span>'
     chat = read(PUBLIC, "chat.js")
 
-    assert_includes chat, "MASTER_FACE_CONTRACT?.ascii?.prompt?.[name]"
-    assert_includes chat, "promptGlyph(role === 'user' ? 'input' : 'output')"
-    refute_match(/master\$|\$ /, chat[/function appendMsg.*?\n\}\n/m].to_s)
-    %w[en nb].each { |loc| refute_match(/prompt_user/, read(WEB, "config", "locales", "#{loc}.yml")) }
-    assert_equal({ "input" => "|-", "continuation" => "\\_", "output" => "/" }, ascii.fetch("prompt"))
+    assert_includes chat, "shellPromptLabel(role)"
+    assert_includes chat, "master$ "
+    refute_includes chat, "promptGlyph"
+    refute_includes read(PUBLIC, "face.css"), ".wordmark {"
   end
 
   def test_the_brand_mark_is_left_to_its_own_font
