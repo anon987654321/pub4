@@ -38,6 +38,13 @@ module Master
         return display_empty_success(ok) if text.to_s.strip.empty?
         routine = !streamed && routine_success?(text)
         command = diagnostic_command(@last_input)
+        markdown_rendered = false
+
+        if !streamed && command.nil? && !structured_payload?(text) &&
+           @refs.renderer.respond_to?(:terminal_markdown)
+          text = @refs.renderer.terminal_markdown(text, width: reply_measure)
+          markdown_rendered = true
+        end
 
         if streamed
           puts unless text.end_with?("\n")
@@ -55,7 +62,10 @@ module Master
         else
           print "\r\e[K" if $stdout.isatty
           puts(text) if routine
-          puts @refs.renderer.measure(text.chomp, width: reply_measure) unless routine
+          unless routine
+            output = markdown_rendered ? text.chomp : @refs.renderer.measure(text.chomp, width: reply_measure)
+            puts output
+          end
         end
 
         spoken = spoken_form(text)
