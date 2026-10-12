@@ -146,6 +146,14 @@ module Master
       # lane => deadline, expired rows dropped; the file is the shared truth.
       def table = raw.reject { |key, _| key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX) }
 
+      # The most specific live status row for a model. The OpenRouter daily
+      # free-pool limit covers every :free model; other failures remain vendor-scoped.
+      def report_for(model)
+        rows = report
+        shared = rows.find { |row| row.start_with?("openrouter-free: ") } if model.to_s.end_with?(":free")
+        shared || rows.find { |row| row.start_with?("#{lane_of(model)}: ") }
+      end
+
       # lane => reason for the lanes the file holds; a row with none reads as quota.
       def reasons
         raw.select { |key, _| key.start_with?(REASON_PREFIX) }.transform_keys { |key| key.delete_prefix(REASON_PREFIX) }
