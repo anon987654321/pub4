@@ -175,6 +175,7 @@ end
 
         last = result
         attempted = [chosen]
+        park_failed_single_call(chosen, last)
         loop do
           # A silent lane refuses every hop, so walking it would only publish
           # one failover event per catalogue model for each call.
@@ -190,10 +191,20 @@ end
           return record_single_call_substitution(chosen, fallback, hopped, promote:) if hopped.is_a?(Master::Result::Ok)
 
           last = hopped
+          park_failed_single_call(fallback, last)
           break unless last.is_a?(Master::Result::Err)
         end
 
         offline_when_exhausted(last, chosen)
+      end
+
+      # A failed one-shot call parks that model for the bounded cache TTL, so
+      # the next request does not repeat the same known failure immediately.
+      def park_failed_single_call(model, result)
+        return unless result.is_a?(Master::Result::Err)
+
+        category = { budget: :quota_exceeded, exhausted: :quota_exceeded, offline: :timeout }.fetch(result.category, result.category)
+        Io::ModelSkipCache.skip!(model, reason: result.message, category:)
       end
 
       # No lane answers: a typed Offline, which every rescue StandardError around a
