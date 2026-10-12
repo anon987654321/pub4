@@ -26,12 +26,22 @@ class TestDillaRecoveredMusic < Minitest::Test
       "11" => [0, 4, 7, 10, 14, 17],
       "9b5" => [0, 4, 6, 10, 14],
       "9#5" => [0, 4, 8, 10, 14],
-      "6add9" => [0, 4, 7, 9, 14]
+      "6add9" => [0, 4, 7, 9, 14],
+      "m7b13" => [0, 3, 7, 10, 20]
     }
     expected.each do |quality, intervals|
       assert_equal intervals, DillaLofiMachine::CHORD_TEMPLATES.fetch(quality), quality
       assert_includes DillaLofiMachine::CHORD_SUFFIXES, quality
     end
+  end
+
+  def test_every_recovered_progression_chord_resolves
+    symbols = DillaLofiMachine::HARMONY_PROFILES
+      .select { |key, _profile| key.to_s.start_with?("legacy_") }
+      .values.flat_map { |profile| profile.fetch(:chords) }
+      .uniq
+    unresolved = symbols.reject { |symbol| DillaLofiMachine.chord_from_symbol(symbol) }
+    assert_empty unresolved, "legacy chords were silently dropped: #{unresolved.inspect}"
   end
 
   def test_recovered_catalog_marks_sample_links_as_unverified

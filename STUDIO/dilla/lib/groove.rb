@@ -199,6 +199,9 @@ module DillaLofiMachine
     # into a semitone cluster against the root.
     "7#9" => [0, 4, 7, 10, 3],
     "7b13" => [0, 4, 7, 10, 8],
+    # Minor seventh with a flattened thirteenth, recovered from the old
+    # Ethiojazz Nights study; without this suffix Am7b13 was silently dropped.
+    "m7b13" => [0, 3, 7, 10, 20],
     # Two tensions on a dominant means five notes plus a fifth, and
     # build_voicing only carries five: its trim keeps the root and then the
     # HIGHEST four, so the sixth-note versions of these came out
@@ -341,7 +344,7 @@ module DillaLofiMachine
     *CHORD_CATALOG_SUFFIXES,
     "maj9low", "mmaj7", "m9b5", "m11b5", "7#9b13", "7#9#11",
     "13b9", "13#11", "9sus4", "13sus4", "9sus", "69", "maj7#11", "sus9",
-    "maj11", "11", "9b5", "9#5", "6add9"
+    "maj11", "11", "9b5", "9#5", "6add9", "m7b13"
   ]).uniq.freeze + [""].freeze
 
 # Compiled once. The interpolated form was rebuilt on every iteration of every
