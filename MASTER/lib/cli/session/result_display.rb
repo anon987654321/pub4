@@ -61,10 +61,10 @@ module Master
           end
         else
           print "\r\e[K" if $stdout.isatty
-          puts(text) if routine
+          display_prepared_terminal_output(text) if routine
           unless routine
             output = markdown_rendered ? text.chomp : @refs.renderer.measure(text.chomp, width: reply_measure)
-            puts output
+            display_prepared_terminal_output(output)
           end
         end
 
