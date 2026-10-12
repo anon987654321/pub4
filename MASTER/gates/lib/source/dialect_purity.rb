@@ -123,7 +123,7 @@ module Deploy
 
       # bsdports wears the wscons dialect's square corners on a light ground, so
       # the proof is a plain :root rule zeroing the card and pill radii.
-      bsd = app_stylesheet("bsdports")
+      bsd = app_feature_stylesheet("bsdports", "_bsdports_tokens.scss")
       if bsd
         roots = Operator::ScssRules.rules(File.read(bsd)).select { |rule| rule.selector == ":root" && rule.parents.empty? }
         square = roots.any? { |rule| rule.body.match?(/--radius-card:\s*0\s*;/) && rule.body.match?(/--radius-pill:\s*0\s*;/) }
@@ -139,6 +139,11 @@ module Deploy
 
     def app_stylesheet(app)
       path = File.join(@rails, app, "app/assets/stylesheets/application.scss")
+      File.file?(path) ? path : nil
+    end
+
+    def app_feature_stylesheet(app, name)
+      path = File.join(@rails, app, "app/assets/stylesheets", name)
       File.file?(path) ? path : nil
     end
   end
