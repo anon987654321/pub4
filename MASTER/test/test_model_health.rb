@@ -49,6 +49,6 @@ class TestModelHealth < Minitest::Test
     result = report(stats)
 
     assert_includes result, "... 5 more models"
-    assert_equal 31, result.lines.size
+    assert_equal 32, result.lines.size
   end
 end
