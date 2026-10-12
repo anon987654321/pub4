@@ -58,10 +58,10 @@ class TestDillaMidiEffects < Minitest::Test
   end
 
   def test_live_improviser_routes_through_the_midi_rack_and_scene_state
-    livesets = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
-    assert_includes livesets, 'require_relative "midi_effects"'
+    livesets = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
+    assert_includes livesets, 'require_relative "lib/midi_effects"'
     assert_includes livesets, "DillaMidiEffects.apply"
-    assert_includes livesets, 'require_relative "scene"'
+    assert_includes livesets, 'require_relative "lib/scene"'
     assert_includes livesets, "DillaScene.profile"
     assert_includes livesets, "world_event"
   end

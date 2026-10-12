@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
-require_relative "../dilla/lib/livesets"
 require "open3"
 require "fileutils"
 
@@ -35,7 +34,7 @@ class TestDillaLivesets < Minitest::Test
   # row is what recall reads, so the seed has to reach the set it names with
   # the kit and the progression it played, not whatever is exported today.
   def test_live_players_close_inherited_master_descriptors
-    source = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
+    source = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
     assert_includes source, "ProcessSpawn.options"
     assert_includes source, "pgroup: true"
   end
@@ -343,7 +342,7 @@ class TestDillaLivesets < Minitest::Test
 
   # A knob a set reads and nobody documented is a knob nobody can steer by.
   def test_every_knob_a_set_reads_is_documented_and_recalled_knobs_are_among_them
-    source = File.read(File.join(__dir__, "..", "dilla", "lib", "livesets.rb"))
+    source = File.read(File.join(__dir__, "..", "dilla", "dilla.rb"))
     read = source.scan(/ENV(?:\.fetch)?[\[(]\s*"(LIVE_[A-Z_]+)"|knob_int\("(LIVE_[A-Z_]+)"/).flatten.compact.uniq
 
     assert_includes read, "LIVE_HOCKET", "the scan has to see a knob read through knob_int"
@@ -399,7 +398,7 @@ class TestDillaLivesets < Minitest::Test
       skip "ffmpeg is not installed" unless File.file?(bed)
       # 5.2 seconds is 46, 92 or 185 bpm at one, two or four bars.
       assert_equal 2, with_env("LIVE_BPM" => nil) { Livesets.grid(bed, 1.0) }[:bars_in_loop]
-      source = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
+      source = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
       assert_includes source, "FfmpegProbe.duration(bed).to_f"
       refute_match(/`#\{FFPROBE\}/, source)
       assert_equal 1, with_env("LIVE_BPM" => "46") { Livesets.grid(bed, 1.0) }[:bars_in_loop]

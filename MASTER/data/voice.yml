@@ -466,7 +466,7 @@ tts:
         region: mono
         status: approximated
         enabled: true
-        source: "STUDIO/dilla/lib/livesets.rb crackle (anoisesrc pink a=0.006, highpass 2200, volume 0.9, weight 0.30)"
+        source: "STUDIO/dilla/dilla.rb Livesets crackle (anoisesrc pink a=0.006, highpass 2200, volume 0.9, weight 0.30)"
         filter: "asplit=2[ck_dry][ck_src];[ck_src]aeval=exprs='(random(0)*2-1)*0.006',highpass=f=2200,volume=0.9[ck_noise];[ck_dry][ck_noise]amix=inputs=2:weights=1 %{level}:normalize=0"
         level: 0.3
         level_name: weight
@@ -485,7 +485,7 @@ tts:
         region: stereo
         status: exact
         enabled: true
-        source: "STUDIO/dilla/lib/livesets.rb extrastereo"
+        source: "STUDIO/dilla/dilla.rb Livesets extrastereo"
         filter: "extrastereo=m=%{level}"
         level: 1.5
         level_name: m

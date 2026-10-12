@@ -24,11 +24,11 @@ module DillaSources
     # exactly as dead as one in the entry does.
     def support = Dir[File.join(root, "lib", "*.rb")].sort - live
 
-    # The live side lives in lib/ too and is not the engine: the livesets and the
-    # sine stream are run by `dilla live` and `dilla sines`, never required by
-    # dilla.rb, and they carry their own helpers under names the engine's census
-    # would read as its own uncalled methods and unguarded filters.
-    def live = %w[livesets sine_stream].map { |name| File.join(root, "lib", "#{name}.rb") }
+    # The live side lives in lib/ too and is not the engine: the sine stream is run
+    # by `dilla sines`, never required by dilla.rb, and it carries its own
+    # helpers under names the engine's census would read as its own uncalled
+    # methods and unguarded filters.
+    def live = %w[sine_stream].map { |name| File.join(root, "lib", "#{name}.rb") }
 
     # Every file the engine is made of.
     def all = ([entry] + support).freeze

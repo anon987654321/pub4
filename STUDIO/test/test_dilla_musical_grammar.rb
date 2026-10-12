@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
-require_relative "../dilla/lib/livesets"
 
 class TestDillaMusicalGrammar < Minitest::Test
   def with_env(pairs)

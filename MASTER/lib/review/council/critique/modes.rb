@@ -91,12 +91,11 @@ module Master
               # the boot sequence. Before the split this read the first 36 KB of a
               # 1.37 MB file — the patch catalogue, and nothing downstream of it.
               files: %w[
-                tools/dilla/dilla.rb
                 tools/dilla/lib/sound.rb
                 tools/dilla/lib/groove.rb
                 tools/dilla/lib/harmony.rb
                 tools/dilla/lib/sampling.rb
-                tools/dilla/lib/livesets.rb
+                tools/dilla/dilla.rb
                 tools/dilla/lib/listen.rb
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb

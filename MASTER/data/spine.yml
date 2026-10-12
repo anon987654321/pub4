@@ -1013,7 +1013,7 @@ pub4_source_ceilings:
   # files slack -- room the next change grows into without an argument, which is
   # the other way a ratchet dies.
   # dilla/bin, dilla/live and dilla/scripts are gone. The three livesets, recall,
-  # the broadcast loop and the bed digger are lib/livesets.rb behind
+  # the broadcast loop and the bed digger are dilla.rb (module Livesets) behind
   # `dilla.rb live`; the sine stream and its player are lib/sine_stream.rb;
   # bin/crate, bin/demo_full.rb, scripts/generate_tts.rb and the librosa script
   # left with nothing reading them. MASTER/tools/gate.rb fails if any of the three

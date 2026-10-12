@@ -377,7 +377,7 @@ module Master
         # Typing a script name should select the canonical showcase, not ask the
         # improviser to play an instrument literally called "dilla.rb".
         showcase = requested.empty? || requested.match?(/\A(?:dilla\.rb|live|dilla\s+(?:live|showcase))\z/i)
-        # `/play showcase` is the three livesets in turn (livesets.rb), the mix;
+        # `/play showcase` is the three livesets in turn (dilla.rb live showcase), the mix;
         # bare /play stays the dilla.rb showcase.
         liveset = requested.match?(/\A(?:showcase|livesets?(?:\.rb)?)\z/i)
         name = showcase || liveset ? "" : requested.sub(/\.rb\z/i, "")

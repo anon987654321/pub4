@@ -1,5 +1,5 @@
 ---
-findings: 220
+findings: 218
 by_rule:
   BARE_DIV_WRAPPER: 4
   BEM_IN_VIEWS: 12
@@ -249,7 +249,7 @@ finding_members:
 registry_findings: 49
 registry_by_rule:
   NO_GOD_CLASS: 26
-  SILENT_RESCUE: 23
+  SILENT_RESCUE: 21
 registry_finding_members:
   - NO_GOD_CLASS RAILS/master_web/app/services/chat_service.rb:7
   - NO_GOD_CLASS RAILS/master_web/app/services/tts_job.rb:7
@@ -288,8 +288,6 @@ registry_finding_members:
   - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:29
   - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:918
   - SILENT_RESCUE MASTER/tools/dilla/lib/listen.rb:929
-  - SILENT_RESCUE MASTER/tools/dilla/lib/livesets.rb:331
-  - SILENT_RESCUE MASTER/tools/dilla/lib/livesets.rb:402
   - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:155
   - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:177
   - SILENT_RESCUE MASTER/tools/dilla/lib/music_gems.rb:209

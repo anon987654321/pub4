@@ -220,7 +220,7 @@ master_bus:
   compressors:
     - { threshold_db: -16, ratio: 1.8, attack_ms: 28, release_ms: 240, makeup: 1.3 }
     - { threshold_db: -11, ratio: 1.4, attack_ms: 40, release_ms: 300, makeup: 1.1 }
-# The console a bus may leave through. lib/livesets.rb writes Sonitex STX-1260
+# The console a bus may leave through. dilla.rb (Livesets) writes Sonitex STX-1260
 # and Nasty VCS as chains and measures both; these are the stacks, named, so a
 # piece picks its colour with a word. One instance is a colour and three are a
 # sound, which is why glue is three.
@@ -239,7 +239,7 @@ master_bus:
 # summed material glues is that every channel went through the same iron on the
 # way in. One instance is a colour and three are a sound, so the longest path
 # here -- a stem, the sum, the master -- is three, which is the warm side of the
-# line lib/livesets.rb measured. `none` for dust, because a record's surface is
+# line dilla.rb (Livesets) measured. `none` for dust, because a record's surface is
 # already the colour and a second 1260 only raises its noise floor.
 stem_consoles:
   # Every stem through the console, by the operator's decision of 2026-09-16:

@@ -1,4 +1,4 @@
-# reader: LiveSynth (lib/livesets.rb)
+# reader: LiveSynth (dilla.rb)
 #
 # The live synthesiser: AnalogSynth's patches and the Model D panels in
 # model_d.yml, played straight to the sound card as they are generated.

@@ -116,7 +116,7 @@ class TestDillaToolRun < Minitest::Test
   # exceptions are streams, which last as long as the Ruby feeding them: the
   # live player and the sine stream feed a speaker, and write_stereo_chunks
   # hands ffmpeg a bus four seconds at a time as the synth computes it.
-  UNBOUNDED_FILES = %w[lib/livesets.rb lib/sine_stream.rb].freeze
+  UNBOUNDED_FILES = %w[lib/sine_stream.rb].freeze
   STREAMS = %w[write_stereo_chunks].freeze
   BYPASS = /(?:Open3\.\w+|IO\.popen|(?<![.\w])system)\(\s*\[?\s*"(?:ffmpeg|ffprobe)"/
 

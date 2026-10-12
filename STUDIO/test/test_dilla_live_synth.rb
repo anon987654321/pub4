@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
-require_relative "../dilla/lib/livesets"
 require_relative "../dilla/lib/radio_video"
 require "stringio"
 require "digest"
@@ -187,7 +186,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_uses_only_moog_or_prophet_instruments
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     start = source.index("SHOWCASE_SCENES")
     finish = source.index("def showcase_score", start)
     showcase = source[start...finish]
@@ -473,7 +472,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_dangelo_showcase_uses_rich_artist_references
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     block = source[source.index('when "dangelo_root"')...source.index('when "flylo"')]
     assert_includes block, 'reference: "the_root_modal_vamp"'
     assert_includes block, '"patch" => "e_piano"'
@@ -490,7 +489,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_audio_room_is_dark_pitch_shifted_and_heavily_summed
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'speed: :ips7, wow: 0.44, flutter: 0.14'
     assert_includes source, 'SHOWCASE_PITCH_RATIO'
     assert_includes source, 'SHOWCASE_TEMPO_SCALE = Float(ENV.fetch("DILLA_SHOWCASE_TEMPO_SCALE", "0.74"))'
@@ -502,7 +501,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_dub_removes_the_full_feedback_send
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'aecho=0.85:0.18:375:0.06,volume=0.20'
     refute_includes source, '/<(d+)>/'
     assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.07 0.50" : "1 1 1"'
@@ -517,7 +516,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_bass_is_quiet_and_sparse
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, "gain = @bass_gain || LiveSynth::SHOWCASE_BASS_GAIN"
     assert_includes source, "if @rng.rand < 0.06"
     assert_includes source, "0.10 * @beat"
@@ -616,7 +615,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_low_end_is_sparse_and_pushed_into_the_kick
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, "SHOWCASE_BASS_GAIN = Float(ENV.fetch(\"DILLA_SHOWCASE_BASS_GAIN\", \"0.00003\"))"
     assert_includes source, "SHOWCASE_BASS_EVERY = 5"
     assert_includes source, "SHOWCASE_PAD_FLOOR = 53"
@@ -676,7 +675,7 @@ class TestDillaLiveSynth < Minitest::Test
       memorymoog_organ minimoog_lead moog_flute prophet_pad
     ].each { |name| assert_includes scenes, name }
     refute_includes scenes, "dangelo_ballad"
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'reference: "dilla_life"'
     assert_includes source, 'reference: "slum_village_players_documented"'
     assert_includes source, 'reference: "dilla_so_far_to_go_documented"'
@@ -696,7 +695,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_includes_a_real_tape_floor
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, "class ShowcaseTapeTexture"
     assert_includes source, "hiss_gain ="
     assert_includes source, "@crackle_left"
@@ -704,7 +703,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_effects_are_on_by_default_and_can_be_disabled
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "0")) == "1"'
     assert_equal "0", begin
       saved = ENV["DILLA_EFFECTS"]
@@ -740,7 +739,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_dub_showcase_tail_assignment_is_outside_string_continuation
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_match(/send = post\.fetch\("dub"\).*\n\s+showcase_tail = LiveSynth\.showcase\?/, source)
     refute_match(/\] \\\n\s+showcase_tail =/, source)
   end
@@ -884,7 +883,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_segment_admits_space_as_next_scene_control
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'File.open("/dev/tty", "r+")'
     assert_includes source, 'in: tty'
     assert_includes source, 'err: File::NULL'
@@ -901,7 +900,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_recording_uses_one_pcm_stream_and_finalizes_wav
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'tee = "[f=wav]#{dest}|[f=s16le]pipe:1"'
     assert_includes source, '"-f", "tee"'
     assert_includes source, '[f=wav]'
@@ -1121,14 +1120,14 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_carves_music_low_end_without_carving_the_kick_bus
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, "[dry]highpass=f=58,equalizer=f=105:t=q:w=1.0:g=-3.0,equalizer=f=180:t=q:w=1.0:g=-2.5"
     assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.10 0.60" : "1 1 1"'
     assert_includes source, "ratio=4.8:attack=2:release=150"
   end
 
   def test_showcase_terminal_controls_use_the_real_tty
-    source = File.read(dilla("lib/livesets.rb"))
+    source = File.read(dilla("dilla.rb"))
     assert_includes source, 'File.open("/dev/tty", "r+")'
     assert_includes source, 'in: tty'
     refute_includes source, 'if STDIN.tty?'

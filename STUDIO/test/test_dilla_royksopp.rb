@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
-require_relative "../dilla/lib/livesets"
 
 # The Röyksopp chord source rides inside the engine now: module Royksopp in
 # dilla.rb, reached as the `royksopp_live` progression. These pin the verified
