@@ -28,6 +28,7 @@ class GeometryTypographyTest < Minitest::Test
   end
 
   def test_micro_typography_failure_is_inconclusive_not_silent
+    previous_strict = ENV.delete("GATE_STRICT_INCONCLUSIVE")
     result = Deploy::GateResult.new
     broken_data = Class.new(Hash) do
       def dig(*) = raise(IOError, "fixture read failed")
@@ -39,6 +40,8 @@ class GeometryTypographyTest < Minitest::Test
     assert_equal :inconclusive, result.outcome
     assert_match(/geometry micro_type: test could not be measured \(IOError: fixture read failed\)/,
                  result.unchecked.join)
+  ensure
+    previous_strict.nil? ? ENV.delete("GATE_STRICT_INCONCLUSIVE") : ENV["GATE_STRICT_INCONCLUSIVE"] = previous_strict
   end
 
   def test_micro_typography_accepts_explicit_browser_contract
