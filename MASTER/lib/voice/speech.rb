@@ -69,10 +69,7 @@ module Master
         davis: "en-US-DavisNeural",
         wayne: "en-SG-WayneNeural",
         ezinne: "en-NG-EzinneNeural",
-        jenny: "en-US-JennyNeural",
-        # One-off read-out mouths for the operator's asks. The rotation never
-        # picks these: single_voice and rotation are christopher, so an alias only speaks when a caller names it and
-        # locks it.
+        # One-off read-out aliases are not used for ordinary voice selection.
         elsa: "it-IT-ElsaNeural",
         prabhat: "en-IN-PrabhatNeural",
         # The 1001 Nights mouth: an Egyptian accent for an Arabic story.
@@ -131,6 +128,10 @@ module Master
         energetic:    { rate: "+10%", pitch: "+18Hz" },
       }.freeze
 
+      # Jenny is deliberately retired from MASTER speech. Map stale environment
+      # values and old persisted jobs to Christopher instead of silently reviving
+      # a second English narrator.
+      RETIRED_VOICE_NAMES = %w[jenny en-us-jennyneural].freeze
       DEFAULT_VOICE = Policy.single_voice_key
       DEFAULT_STYLE = :warm
       CHUNK_CHARS = 220
@@ -286,13 +287,10 @@ module Master
       def default_voice
         named = ENV["MASTER_TTS_VOICE"].to_s.strip
         unless named.empty?
+          return DEFAULT_VOICE if RETIRED_VOICE_NAMES.include?(named.downcase)
+
           sym = named.to_sym
           return VOICES.key?(sym) ? sym : DEFAULT_VOICE
-        end
-
-        if ENV.key?("MASTER_TTS_GENDER")
-          chosen = Policy.voice_for_language(:en)
-          return chosen if VOICES.key?(chosen)
         end
 
         chosen = Policy.voice_for_utterance
@@ -486,10 +484,13 @@ module Master
       end
 
       def resolve_voice(voice)
-        key = voice.to_s.strip.to_sym
+        name = voice.to_s.strip
+        return DEFAULT_VOICE if RETIRED_VOICE_NAMES.include?(name.downcase)
+
+        key = name.to_sym
         return key if VOICES.key?(key)
 
-        VOICES.find { |_sym, name| name == voice.to_s }&.first || default_voice
+        VOICES.find { |_sym, known_name| known_name == name }&.first || default_voice
       end
 
       def synthesize_bytes(text, **opts)
