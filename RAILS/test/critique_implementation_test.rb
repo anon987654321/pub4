@@ -9,6 +9,17 @@ class CritiqueImplementationTest < Minitest::Test
 
   def read(path) = File.read(File.join(ROOT, path))
 
+  def brgen_css_source
+    host = read("brgen/app/assets/stylesheets/application.scss")
+    features = %w[
+      _brgen_marketplace.scss
+      _brgen_vertical_surfaces.scss
+      _brgen_shared_overrides.scss
+    ].map { |name| read("brgen/app/assets/stylesheets/#{name}") }
+
+    ([host] + features).join("\n")
+  end
+
   # These pages render through I18n, so a literal English string stopped being
   # in the template the moment the page was localised — the assertion failed on
   # a view that had got better. Pin the key in the template and the copy in that
@@ -143,7 +154,7 @@ class CritiqueImplementationTest < Minitest::Test
     search = read("__shared/app/assets/stylesheets/_search_yep.scss")
     affiliate = read("__shared/app/views/shared/_affiliate_feed_unit.html.erb")
     affiliate_css = read("__shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+    brgen_css = brgen_css_source
 
     assert_includes search, "width: 480px;"
     assert_includes search, "box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;"
@@ -188,7 +199,7 @@ class CritiqueImplementationTest < Minitest::Test
     search = read("shared/app/assets/stylesheets/_search_yep.scss")
     affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
     affiliate_css = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+    brgen_css = brgen_css_source
 
     assert_includes search, "width: 480px;"
     assert_includes search, "box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;"
@@ -295,7 +306,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
-    brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+    brgen_css = brgen_css_source
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
     amber_css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     amber_polish = read("amber/app/assets/stylesheets/_commerce_polish.scss")
