@@ -12,6 +12,7 @@ module Master::Core
   # a constraint, add a rule. The spine never grows.
   class Fold
     Done = Data.define(:reason, :turns, :summary)
+    BLOCK_LIMIT = 3
 
     # observer, if given, is called once per turn with (turn:, effect:, observation:)
     # after the outcome is recorded. It only watches — it cannot change the fold —
@@ -23,6 +24,7 @@ module Master::Core
       @memory = memory
       @max_turns = max_turns
       @observer = observer
+      @blocked_by = Hash.new(0)
     end
 
     def run(goal)
@@ -33,9 +35,8 @@ module Master::Core
 
         case @law.admit(effect, @memory)
         in Verdict::Block(reason:, by:)
-          observation = Observation.no("refused by #{by}: #{reason}")
-          @memory.record(effect, observation)
-          emit(turn, effect, observation)
+          done = record_block(turn, effect, reason:, by:)
+          return done if done
         in Verdict::Request(effect: asked, prompt:, reason:, by:)
           done = approve(turn, asked, prompt:, reason:, by:)
           return done if done
@@ -49,6 +50,20 @@ module Master::Core
     end
 
 private
+
+    # One constitutional rule refusing repeatedly is a dead end for this run.
+    # A few distinct refusals can be normal; the same gate firing three times
+    # means another model turn is not new authority or evidence.
+    def record_block(turn, effect, reason:, by:)
+      observation = Observation.no("refused by #{by}: #{reason}")
+      @memory.record(effect, observation)
+      emit(turn, effect, observation)
+      @blocked_by[by.to_s] += 1
+      return unless @blocked_by[by.to_s] >= BLOCK_LIMIT
+
+      Done.new(reason: :blocked, turns: turn + 1,
+               summary: "stopped after #{BLOCK_LIMIT} constitutional blocks by #{by}: #{reason}")
+    end
 
     # A rule wants a person to decide. The question goes through the World like
     # any other effect, so a surface that cannot ask -- a daemon, a test --
