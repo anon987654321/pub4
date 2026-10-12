@@ -136,7 +136,9 @@ class DesignContractTest < Minitest::Test
   end
 
   def test_brgen_composer_uses_starting_style_entry
-    css = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    composer = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_composer.scss"))
+    css = "#{app}\n#{composer}"
     refute_includes css, "composer-drop-in"
     refute_includes css, "composer-backdrop-in"
     assert_includes css, "@starting-style"
