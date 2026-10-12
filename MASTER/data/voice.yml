@@ -57,15 +57,15 @@ tts:
   # every utterance (Personality#browser_profile substitutes them for the
   # persona's own).
   #
-  # Rate and pitch tuning does not survive a voice change, so a new voice starts
-  # from neutral and is retuned by ear. Roughly ±15% rate and ±50Hz is where
+  # The everyday voice starts slightly brisker than neutral (+4%) with neutral
+  # pitch. Roughly ±15% rate and ±50Hz is where
   # Azure neural voices stay natural.
   #
   # Christopher became the default voice on 2026-10-12, so rate and pitch are
   # back at neutral until the operator retunes them by ear. The values this
   # file carried before (-5%, -12Hz) were set against Jenny. Christopher's
   # operator_log line below was tuned by ear and is untouched.
-  default_rate: "+0%"
+  default_rate: "+4%"
   default_pitch: "+0Hz"
   operator_log:
     voice: christopher
@@ -105,7 +105,8 @@ tts:
   # drift), a `level` where dilla has one primary amount (substituted for
   # %{level} in the filter), and a status: exact, approximated (the nearest
   # ffmpeg filter, named in `note`), or unavailable (no ffmpeg equivalent).
-  # Operator order 2026-10-12: all of them, on.
+  # The effects stay available but are off for everyday speech. Select
+  # MASTER_TTS_PROFILE=dilla to enable the rack and room together.
   #
   # Switches: `enabled: false` on one unit, `dilla_fx.enabled: false` for the
   # whole rack, or MASTER_TTS_FX=0 in the environment. Retune a unit by editing
