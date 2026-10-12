@@ -1100,8 +1100,7 @@ skills_registry:
   - name: algorithmic-art
     description: Make generative art from one seeded algorithm, reproducible and tunable.
     triggers:
-    - "\\b(?:generative|algorithmic|procedural)\\s+art\\b"
-    - "\\b(?:flow\\s+field|particle\\s+system|p5(?:\\.?js)?)\\b"
+    - "\\b(?:(?:generative|algorithmic|procedural)\\s+(?:art|artwork|sketch(?:es)?|visuals?)|flow\\s*fields?|particle\\s+systems?|p5(?:\\.?js)?|creative\\s+coding)\\b"
     body: |-
       The algorithmic-art skill makes generative art in three steps, in this order. First write the philosophy: a short paragraph naming the process the piece enacts (growth, flow, erosion, drift), what varies and what holds still. Then write one algorithm that expresses it. Then refine, which means removing parameters before adding any.
 
@@ -1119,7 +1118,7 @@ skills_registry:
   - name: brand
     description: Apply the house identity from tokens, never from remembered values.
     triggers:
-    - "\\b(?:brand|on-brand|visual\\s+identity|style\\s+guide|house\\s+style)\\b"
+    - "\\b(?:brand(?:ing|ed)?|on-brand|visual\\s+identity|style\\s+guide|house\\s+style|brand\\s+guidelines)\\b"
     body: |-
       The brand skill applies pub4's identity to a surface. The identity is data: colour roles, type roles and spacing live in data/tokens.yml, the type pairing in its font_pairings registry (swiss_house is the house default), and the standing prohibitions in data/visual_directives.yml. Read those files first and bind every colour and every typeface on the surface to a named role. Do not carry values over from another brand, from a skill written for one, or from memory.
 
@@ -1129,7 +1128,7 @@ skills_registry:
   - name: canvas
     description: Design a still piece, poster or card, from a written philosophy to a subtracted render.
     triggers:
-    - "\\b(?:poster|flyer|cover\\s+art|social\\s+card|og\\s+image|canvas)\\b"
+    - "\\b(?:posters?|flyers?|cover\\s+art|album\\s+covers?|canvas\\s+design|print\\s+design|social\\s+cards?|og\\s+images?)\\b"
     body: |-
       The canvas skill makes one still piece in three passes. First write the philosophy: what the piece says, its one focal point, the order the eye should take. Then render it on lane g1 of data/artwork.yml, the deterministic HTML/SVG renderer, at the sizes the exports list names for the destination (social 1200x630, 1080x1350 or 1080x1080; print a4). Text is set in the renderer, never in a diffusion model.
 
