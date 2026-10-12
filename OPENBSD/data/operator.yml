@@ -57,7 +57,7 @@ recipes:
     run: OPENBSD/bin/check-vps
     expect: run on vm23, or with SSH and operator intent — never casually
   - want: Everything local, then integrity
-    run: OPENBSD/bin/check-full
+    run: OPENBSD/bin/check --profile=full
     expect: OPENBSD/bin/check, then RAILS/test/run_all.rb, then the integrity gate
   - want: Deployed tree vs dev tree on vm23
     run: OPENBSD/bin/vps-state
