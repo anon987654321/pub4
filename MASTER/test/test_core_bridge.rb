@@ -343,4 +343,24 @@ class CoreBridgeSandboxTest < Minitest::Test
       assert_equal "observe", result[:mission].dig("operator", "mode")
     end
   end
+  def test_run_string_leaves_keyless_local_and_cli_fallbacks_to_the_router
+    Dir.mktmpdir do |root|
+      called = false
+      runner = lambda do |goal, root:, bus: nil, model: nil, model_id: nil|
+        called = true
+        { reason: :complete, turns: 1, summary: "keyless lane answered", transcript: ["routed #{goal}"], risk: :low }
+      end
+
+      Master.stub(:any_api_key_present?, false) do
+        Master::CLI::CoreBridge.stub(:run, runner) do
+          output = Master::CLI::CoreBridge.run_string("status", root:)
+          assert called
+          assert_match(/core: complete turns=1/, output)
+          assert_match(/keyless lane answered/, output)
+        end
+      end
+    end
+  end
+
+
 end
