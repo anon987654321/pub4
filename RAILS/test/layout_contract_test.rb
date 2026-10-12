@@ -140,6 +140,51 @@ class LayoutContractTest < Minitest::Test
                  "_shell_widgets must not redefine the shared page-header")
   end
 
+  # Every Rails dialect gets its reading grammar from the shared stack. A page
+  # may have a distinct palette and display mark, but measure, body rhythm,
+  # numerals and prose behavior must not fork across the three apps.
+  def test_each_rails_dialect_mounts_the_shared_typographic_grammar
+    stacks = {
+      "amber" => "stack",
+      "brgen" => "stack_brgen",
+      "bsdports" => "stack",
+    }
+
+    stacks.each do |app, stack_name|
+      source = File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss"))
+      assert_includes source, %(@use "#{stack_name}" as *;),
+                      "#{app} must load its declared shared stack before dialect overrides"
+    end
+
+    %w[stack stack_brgen].each do |stack_name|
+      stack = File.read(File.join(SHARED, "app/assets/stylesheets/_#{stack_name}.scss"))
+      assert_includes stack, '@forward "typography";', "#{stack_name} dropped the shared reading grammar"
+      assert_includes stack, '@forward "tokens";', "#{stack_name} dropped the shared type scale"
+    end
+
+    typography = File.read(File.join(SHARED, "app/assets/stylesheets/_typography.scss"))
+    required_contracts = [
+      "--measure: 66ch;",
+      "--measure-narrow: 45ch;",
+      "--measure-wide: 75ch;",
+      "line-height: var(--leading-normal);",
+      'font-feature-settings: "kern", "liga", "clig", "onum", "pnum";',
+      "font-kerning: normal;",
+      "font-optical-sizing: auto;",
+      "font-synthesis: none;",
+      "font-variant-numeric: oldstyle-nums proportional-nums;",
+      "hanging-punctuation: first allow-end last;",
+      "text-wrap: pretty;",
+      "hyphenate-limit-chars: 6 3 2;",
+      "orphans: 3;",
+      "widows: 3;",
+    ]
+
+    required_contracts.each do |contract|
+      assert_includes typography, contract, "shared typography contract drifted: #{contract}"
+    end
+  end
+
   def test_app_surfaces_use_explicit_type_and_rhythm_tokens
     brgen = File.read(File.join(ROOT, "brgen", "app/assets/stylesheets/application.scss"))
     amber = File.read(File.join(ROOT, "amber", "app/assets/stylesheets/application.scss"))
