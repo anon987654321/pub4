@@ -123,18 +123,81 @@ class TestLawMapRuntime < Minitest::Test
     end
   end
 
-  def test_law_map_integrity_against_registry
+  def test_law_map_metadata_and_detector_names_are_coherent
+    map = Master::Ground::Map::LawMap.load(root: @root)
+
+    feature_envy = map["avoid_feature_envy"]
+    assert_equal "feature_envy", feature_envy.detects
+    assert_equal ["FEATURE_ENVY"], feature_envy.law_ids
+
+    security = map["security"]
+    assert_equal "plaintext_secrets", security.detects
+    assert_equal "critical", security.severity
+    refute_empty security.meaning
+    refute_empty security.operation
+
+    refute map.laws.key?("fittss_law"), "a misspelled duplicate Fitts entry must not survive"
+    assert_empty map.integrity, "invalid map metadata must not be treated as a clean mapping"
+  end
+
+  def test_law_map_integrity_checks_the_combined_executable_and_scanner_population
     require_relative "../lib/review/scan/law_dsl"
     map = Master::Ground::Map::LawMap.load(root: @root)
     registered = Master::Review::Scan::Law.registry.filter_map do |klass|
-      begin
-        klass.auto_build? ? klass.new.id.to_s : nil
-      rescue StandardError # scan: intentional — non-buildable laws have no id; nil is the census answer
-        nil
-      end
+      Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
     end
-    findings = map.integrity(registered_law_ids: registered)
+    declared = Master.law_entries(root: @root).map { |rule| rule["id"].to_s.upcase }
+
+    findings = map.integrity(registered_law_ids: registered | declared)
     assert map.covered.any?
-    assert_operator findings.size, :<, map.laws.size
+    assert_empty findings, "law-map integrity findings: #{findings.join('; ')}"
+  end
+
+  def test_integrity_skips_reference_checks_only_when_registry_is_omitted
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), <<~YAML)
+        law_map:
+          schema: 1
+          laws:
+            sample:
+              meaning: a mapped concept
+              detects: sample_detector
+              severity: medium
+              confidence: 0.8
+              operation: fix
+              law_ids: [KNOWN_RULE]
+              status: covered
+              tags: [code]
+      YAML
+      map = Master::Ground::Map::LawMap.load(root: dir)
+
+      assert_empty map.integrity
+      assert_includes map.integrity(registered_law_ids: []), "law sample maps to unknown law KNOWN_RULE"
+    end
+  end
+
+  def test_integrity_rejects_invalid_status_and_confidence
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), <<~YAML)
+        law_map:
+          schema: 1
+          laws:
+            sample:
+              meaning: a mapped concept
+              detects: sample_detector
+              severity: medium
+              confidence: 1.5
+              operation: fix
+              law_ids: []
+              status: maybe
+              tags: [code]
+      YAML
+      findings = Master::Ground::Map::LawMap.load(root: dir).integrity
+
+      assert_includes findings, 'law sample has invalid status "maybe"'
+      assert_includes findings, "law sample has invalid confidence 1.5"
+    end
   end
 end
