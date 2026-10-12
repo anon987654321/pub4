@@ -31,7 +31,7 @@ FaceState
      -> speech timing
 ```
 
-The source of truth is `MASTER/data/laws.yml#design_system.face_interface`.
+The source of truth is `MASTER/data/tokens.yml#tokens.face_interface`.
 Ruby reads it through `MASTER/lib/face.rb`. Browser code receives
 the same block as `MASTER_FACE_CONTRACT` and keeps dynamic state in
 `MASTER_FACE_STATE`.
@@ -255,6 +255,26 @@ These are implementation directions that all preserve the same state contract.
 
 The numbered catalogue is deliberately additive. Selection is renderer-budget
 and device dependent; the semantic contract remains singular.
+
+## ASCII sculpt controls
+
+The terminal and browser render the same perspective-correct, lit triangle mesh as
+ASCII, with the contract's character ramps ordered by measured ink density. The
+browser keeps the existing single frame loop and offers the same practical controls
+as the STL-to-ASCII reference:
+
+- `c`: cycle the contract's sculpt, high-contrast and fine-detail character ramps.
+- `m`: switch between dark relief and light relief. Light mode inverts only the face
+  canvases, leaving the operator controls untouched.
+- `r`: pause or resume the continuous turn.
+- `?face_ramp=high_contrast`, `?face_ink=light` and `?face_rotate=0`: set those
+  preferences directly; `?face_chars=MASTER` supplies a custom printable-ASCII ramp.
+
+In the terminal, `MASTER_FACE_RAMP=high_contrast`, `MASTER_FACE_CHARS=MASTER`,
+`MASTER_FACE_MODE=light`, and `MASTER_REDUCED_MOTION=1` select the equivalent
+appearance options. Named ramps live in `MASTER/data/tokens.yml`; the browser and
+Ruby renderer do not carry separate copies of the ramp definitions. The ordinary
+ramp, default ink and pose remain unchanged so the existing golden frames stay valid.
 
 ## Sparse gravitational field
 
