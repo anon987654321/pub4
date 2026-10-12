@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "tempfile"
 require "open3"
 require "rbconfig"
 require "operator/ruby_runner"
@@ -112,22 +113,51 @@ module Operator
 
     BASELINE_FILE = File.join(MASTER, ".master", "gate_baseline.json")
 
-    def baseline_key(target)
-      head, = Open3.capture2("git", "rev-parse", "HEAD", chdir: ROOT)
-      diff, = Open3.capture2("git", "diff", "HEAD", "--binary", chdir: ROOT)
-      Digest::SHA256.hexdigest([head.strip, target.to_s, diff].join("\0"))
+    def baseline_key(target, root: ROOT, trees: trees_for_target(target))
+      head, head_status = Open3.capture2("git", "rev-parse", "HEAD", chdir: root)
+      raise "gate baseline fingerprint: git rev-parse failed" unless head_status.success?
+
+      diff, diff_status = Open3.capture2("git", "diff", "HEAD", "--binary", chdir: root)
+      raise "gate baseline fingerprint: git diff failed" unless diff_status.success?
+
+      untracked, untracked_status = Open3.capture2(
+        "git", "ls-files", "--others", "--exclude-standard", "-z", chdir: root
+      )
+      raise "gate baseline fingerprint: git ls-files failed" unless untracked_status.success?
+
+      tree_names = Array(trees).map(&:to_s).reject(&:empty?)
+      paths = untracked.split("\0").reject(&:empty?).select do |relative|
+        tree_names.any? { |tree| relative == tree || relative.start_with?("#{tree}/") }
+      end
+      untracked_fingerprint = paths.sort.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
+      Digest::SHA256.hexdigest([head.strip, target.to_s, diff, untracked_fingerprint].join("\0"))
+    end
+
+    def fingerprint_untracked(root, relative)
+      path = File.join(root, relative)
+      return "#{relative}\0symlink\0#{File.readlink(path)}" if File.symlink?(path)
+      return "#{relative}\0missing" unless File.file?(path)
+
+      "#{relative}\0file\0#{File.stat(path).mode & 0o7777}\0#{Digest::SHA256.file(path).hexdigest}"
     end
 
     def read_baseline(key)
       stored = JSON.parse(File.read(BASELINE_FILE))
-      stored["snapshot"] if stored["key"] == key
-    rescue Errno::ENOENT, JSON::ParserError
+      return unless stored.is_a?(Hash) && stored["key"] == key && stored["snapshot"].is_a?(Hash)
+
+      stored["snapshot"]
+    rescue Errno::ENOENT, JSON::ParserError, TypeError
       nil
     end
 
     def write_baseline(key, snapshot)
       FileUtils.mkdir_p(File.dirname(BASELINE_FILE))
-      File.write(BASELINE_FILE, JSON.generate("key" => key, "snapshot" => snapshot))
+      Tempfile.create(["gate-baseline", ".json"], File.dirname(BASELINE_FILE)) do |file|
+        file.write(JSON.generate("key" => key, "snapshot" => snapshot))
+        file.flush
+        file.fsync
+        File.rename(file.path, BASELINE_FILE)
+      end
     end
 
     def verification_stages(target)
