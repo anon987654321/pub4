@@ -462,4 +462,23 @@ end
     PB.instance_variable_set(:@generation, 0)
   end
 
+  def test_playback_warning_deduplicates_repeats_but_preserves_distinct_causes
+    warned = PB.instance_variable_get(:@warned)
+    PB.instance_variable_set(:@warned, Set.new)
+    events = []
+    reporter = ->(unit, message) { events << [unit, message] }
+
+    Master::Trace::Dmesg.stub(:status, reporter) do
+      2.times { PB.send(:warn_once, "audio player error — IOError: socket timed out") }
+      PB.send(:warn_once, "audio player error — Errno::EPIPE: broken pipe")
+    end
+
+    assert_equal [
+      ["voice0", "audio player error — IOError: socket timed out"],
+      ["voice0", "audio player error — Errno::EPIPE: broken pipe"],
+    ], events
+  ensure
+    PB.instance_variable_set(:@warned, warned || Set.new)
+  end
+
 end
