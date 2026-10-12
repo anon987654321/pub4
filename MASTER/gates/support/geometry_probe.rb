@@ -22,7 +22,7 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     DATA = File.join(File.expand_path("..", __dir__), "data", "geometry_surfaces.yml")
 
-    Surface = Struct.new(:app, :label, :host, :path, :viewport, :width, :height, :snapshot, :port, :profile, keyword_init: true) do
+    Surface = Struct.new(:app, :label, :host, :path, :viewport, :width, :height, :snapshot, :pixel_snapshot, :port, :profile, keyword_init: true) do
       def id = "#{app}/#{label}/#{viewport}"
 
       # A surface without a declared host is probed over loopback. Only brgen
@@ -56,7 +56,7 @@ module Deploy
             wanted.each do |vp|
               w, h = vps.fetch(vp)
               rows << Surface.new(app: "brgen", label: s[:label], host: s[:host], path: s[:path],
-                                  viewport: vp, width: w, height: h, snapshot: true,
+                                  viewport: vp, width: w, height: h, snapshot: true, pixel_snapshot: !!s[:pixel_snapshot],
                                   port: ports["brgen"], profile: s[:profile])
             end
           end
@@ -68,7 +68,7 @@ module Deploy
             app = s.fetch("app")
             rows << Surface.new(app:, label: s.fetch("label"), host: s["host"],
                                 path: s.fetch("path"), viewport: vp, width: w, height: h,
-                                snapshot: !!s["snapshot"], port: ports[app],
+                                snapshot: !!s["snapshot"], pixel_snapshot: !!s["pixel_snapshot"], port: ports[app],
                                 profile: s["profile"])
           end
         end
