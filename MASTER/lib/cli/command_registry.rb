@@ -254,39 +254,70 @@ module Master
       end
 
       def dispatch_voice(ctx: nil)
-        arg = arg_for(ctx)
+        arg = arg_for(ctx).downcase
         case arg
         when "", "status"
-          player = Voice::Playback.player
-          enabled = Voice::Playback.enabled?
-          engine = Voice::Speech.synthesis_mode
-          last = Voice::Transcendent.last_pick
-          detail = if last
-            "last=#{last[:engine] || "none"} voice=#{last[:voice] || "none"} primary=#{last[:primary] || "none"}"
-          else
-            "last=none"
+          voice_status
+        when "natural", "normal", "classic", "fast"
+          ENV["MASTER_TTS_MODE"] = "classic"
+          ENV.delete("MASTER_TTS_PROFILE")
+          Voice::Policy.reload!
+          "voice0 at mainbus0: natural speech selected; clean voice, normal prosody, fast streaming"
+        when "expressive", "transcendent"
+          ENV["MASTER_TTS_MODE"] = "transcendent"
+          "voice0 at mainbus0: expressive speech selected; heavyweight engines and phrase performance enabled"
+        when "dilla"
+          ENV["MASTER_TTS_MODE"] = "classic"
+          ENV["MASTER_TTS_PROFILE"] = "dilla"
+          Voice::Policy.reload!
+          "voice0 at mainbus0: Dilla profile selected; classic streaming speech with the effects rack and room"
+        when "timing", "diagnostics"
+          timings = Voice::Speech.last_timings
+          return "voice0 at mainbus0: no timing recorded yet; use /voice test or speak normally" if timings.empty?
+
+          details = timings.sort_by { |stage, _| stage }.map do |stage, values|
+            "#{stage}=#{values.fetch(:elapsed_ms)}ms"
           end
-          error = Voice::Speech.last_error
-          "#{[
-            "voice0 at mainbus0: #{enabled ? "on" : "off"}",
-            "player=#{player ? player.first : "none"} engine=#{engine}",
-            detail,
-            ("error=#{error}" if error && !error.empty?),
-          ].compact.join("\n")}"
+          "voice0 timing: #{details.join(' ')}"
         when "test"
           ok = Voice::Playback.speak_now("MASTER voice test.")
           player = Voice::Playback.player
           if ok
             "voice0 at mainbus0: test passed, player #{player ? player.first : "none"}"
           else
-            "voice0 at mainbus0: test failed, see voice/tts diagnostics"
+            "voice0 at mainbus0: test failed, see /voice status for the last error"
           end
         else
-          "voice  voice status  voice test"
+          "voice  voice natural  voice expressive  voice dilla  voice status  voice timing  voice test"
         end
       rescue StandardError => e
         "voice0 at mainbus0: failed, #{e.class}: #{e.message}"
       end
+
+      def voice_status
+        player = Voice::Playback.player
+        enabled = Voice::Playback.enabled?
+        engine = Voice::Speech.synthesis_mode
+        policy = Voice::Policy
+        profile = policy.profile_name.empty? ? "natural" : policy.profile_name
+        last = Voice::Transcendent.last_pick
+        detail = if last
+          "last=#{last[:engine] || "none"} voice=#{last[:voice] || "none"} primary=#{last[:primary] || "none"}"
+        else
+          "last=none"
+        end
+        error = Voice::Speech.last_error
+        timings = Voice::Speech.last_timings
+        timing = timings.empty? ? "timing=not-recorded" : "timing=#{timings.map { |stage, values| "#{stage}:#{values.fetch(:elapsed_ms)}ms" }.join(",")}"
+        [
+          "voice0 at mainbus0: #{enabled ? "on" : "off"}",
+          "player=#{player ? player.first : "none"} engine=#{engine} profile=#{profile} rate=#{policy.default_rate} pitch=#{policy.default_pitch}",
+          detail,
+          timing,
+          ("error=#{error}" if error && !error.empty?),
+        ].compact.join("\n")
+      end
+
 
       def dispatch_narrate(ctx: nil)
         narrator = Voice::Narrator.instance
