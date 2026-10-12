@@ -219,9 +219,11 @@ MASTER/tools/dilla/samples/dug/**/*.wav
 # travels with any file the operator names that way.
 #
 # None of the three had ever been committed when this went in, so ignoring them
-# is sufficient. If one ever is, ignoring will not remove it — that needs a
-# history rewrite, and the entry to read first is
-# home_partition_full_from_git_history in TODO.md (OPENBSD operator debt).
+# is sufficient. If one ever is, ignoring will not remove it. The current
+# historical-secret and private-media review lives in STUDIO/TODO.md and
+# RAILS/test/tracked_secrets_test.rb. Deleting from HEAD never purges public Git
+# history; any purge requires a separate filter-repo plan coordinated across
+# reachable refs and clones before rewriting and force-pushing.
 *ikke-dele*
 *ikke_dele*
 
