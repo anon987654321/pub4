@@ -744,6 +744,49 @@ face:
       U: { open: 0.45, wide: -1.0 }
       M: { open: 0.0, wide: -0.2 }
 
+narration:
+  # Story narration is the default way MASTER speaks about its own work
+  # (operator order 2026-10-12: "the TTS will narrate continuously, as if telling
+  # an engaging captivating story"). Opt-outs only: enabled: false here,
+  # MASTER_NARRATE=0 in the environment, or /narrate off for the session.
+  # Off falls back to the plain one-line style (Dmesg speaks the line itself).
+  # Prose and patterns live in data/narration.yml.
+  enabled: true
+  # Lane tier asked for the text (Io::LaneSelection, data/models.yml). Fast and
+  # tightly capped: a spoken sentence is short. With no live lane, or once the
+  # budget below is spent, a deterministic template narrator takes over.
+  lane_tier: fast
+  max_tokens: 90
+  model_timeout_s: 20
+  # Pacing, tuned by ear. A beat is told once events have gathered for
+  # batch_window_s (a closing event ends the wait at once). While work runs and
+  # nothing new happens, a short "still at it" line follows after max_gap_s;
+  # a task with no event for task_idle_s is treated as over, silently.
+  batch_window_s: 3.0
+  max_gap_s: 14.0
+  task_idle_s: 90.0
+  poll_s: 0.4
+  # The next beat is composed while the current one plays: compose when the
+  # speaker holds at most this many segments (the one playing counts).
+  max_backlog: 1
+  max_sentences_per_beat: 3
+  max_words_per_sentence: 28
+  max_events_per_beat: 12
+  context_sentences: 8
+  # Caps. The sentence cap is a rolling minute; the cost cap is the session.
+  # A subscription lane bills nothing per call, so est_cost_per_call_usd is a
+  # deliberately pessimistic stand-in that keeps the cap meaningful on any lane.
+  max_sentences_per_minute: 9
+  max_cost_usd: 0.05
+  est_cost_per_call_usd: 0.001
+  # Silence after the user takes the floor (barge-in, new input), so narration
+  # never talks over a microphone still hearing the speaker.
+  hold_after_interrupt_s: 4.0
+  # Voice settings: empty means the policy default, which is Christopher with
+  # the same chain as every other utterance. Set only to retune by ear.
+  rate: ""
+  pitch: ""
+
 voice:
   style: openbsd_dmesg
   # anti_simulation lives once, in soul.yml absolute.anti_simulation. The

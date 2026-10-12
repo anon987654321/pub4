@@ -48,6 +48,7 @@ module Master
           "wake" => command(:dispatch_wake, root),
           "doctor" => command(:dispatch_doctor, root),
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
+          "narrate" => Command.new { |ctx| dispatch_narrate(ctx:) },
           "laws" => command(:dispatch_laws, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
@@ -285,6 +286,33 @@ module Master
         end
       rescue StandardError => e
         "voice0 at mainbus0: failed, #{e.class}: #{e.message}"
+      end
+
+      def dispatch_narrate(ctx: nil)
+        narrator = Voice::Narrator.instance
+        case arg_for(ctx).downcase
+        when "on"
+          narrator.enable!
+          "narr0 at voice0: on, MASTER tells what it does as one running story"
+        when "off"
+          narrator.disable!
+          Voice::Playback.interrupt!("narration off")
+          "narr0 at voice0: off, plain one-line speech"
+        when "", "status"
+          narration_status(narrator.status)
+        else
+          "narrate  narrate on  narrate off  narrate status"
+        end
+      rescue StandardError => e
+        "narr0 at voice0: failed, #{e.class}: #{e.message}"
+      end
+
+      def narration_status(state)
+        [
+          "narr0 at voice0: #{state[:enabled] ? "on" : "off"}",
+          "beats=#{state[:beats]} told=#{state[:told]} pending=#{state[:pending]} sentences/min=#{state[:sentences_last_minute]}",
+          "model=#{state[:model] ? "live" : "template"} calls=#{state[:calls]} cost=$#{state[:cost_usd]} of $#{state[:max_cost_usd]}",
+        ].join("\n")
       end
 
       def device_command(arg)

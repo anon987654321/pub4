@@ -139,6 +139,12 @@ module Master
           detail: ["/voice — player, synthesis mode and on/off state.",
                    "/voice test — synthesize and play “MASTER voice test.” synchronously; the result reports the speaker outcome."],
         },
+        "narrate" => {
+          summary: "story narration of what MASTER is doing, on by default",
+          detail: ["/narrate — state, beats told, model or template, cost against the cap.",
+                   "/narrate on|off — tell the work as one running story, or fall back to plain one-line speech.",
+                   "Pacing, caps and the model lane are in data/voice.yml under narration; MASTER_NARRATE=0 turns it off for a run."],
+        },
         "help" => {
           summary: "this list",
           detail: ["/help", "/help <command>"],
@@ -262,7 +268,7 @@ module Master
 
       def help_summary
         [
-          "commands: /status /doctor /voice /model /deploy /play /size /events",
+          "commands: /status /doctor /voice /narrate /model /deploy /play /size /events",
           "          /wake /review /critique /fix /face /wishlist /explain /prove",
           "          /session /clear /undo /commit /snapshot",
           "          /android /ios /orders",

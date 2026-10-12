@@ -224,18 +224,21 @@ end
       # process boundary, but preserve the echo memory so the same reply cannot
       # immediately be re-enqueued by another presentation path.
       def begin_reply_generation!
-        @lock.synchronize do
+        token = @lock.synchronize do
           @generation += 1
           @queue&.clear
           @job_generations.clear
           terminate_player_locked if @playing_pid
           @generation
         end
+        Narrator.reply_started!
+        token
       end
 
       # Returns the new generation, which Voice::Session adopts as its own token,
       # or false when the interruption itself failed.
       def interrupt!(_reason = nil)
+        Narrator.interrupted!
         token = @lock.synchronize do
           @generation += 1
           @queue&.clear
@@ -250,6 +253,13 @@ end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.interrupt")
         false
+      end
+
+      # Segments waiting to be heard, the one playing included. The narrator
+      # composes its next beat while this is at most one, so synthesis of the
+      # next overlaps playback of the current.
+      def backlog
+        @lock.synchronize { @queue&.size.to_i + (@playing_pid ? 1 : 0) }
       end
 
       def echo?(str)

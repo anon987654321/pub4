@@ -234,6 +234,7 @@ module Master
           io.puts(text)
           io.flush if io.respond_to?(:flush)
         end
+        narrate(text)
         speak_log_line(text) if log_voice_active?
         text
       rescue StandardError => e
@@ -259,8 +260,9 @@ module Master
           io.puts(text)
           io.flush if io.respond_to?(:flush)
         end
-        if log_voice_active? && (NARRATED_FORWARD_LINE.match?(text) || NARRATED_FORWARD_FINDING.match?(text))
-          speak_log_line(text)
+        if NARRATED_FORWARD_LINE.match?(text) || NARRATED_FORWARD_FINDING.match?(text)
+          narrate(text)
+          speak_log_line(text) if log_voice_active?
         end
         text
       rescue StandardError => e
@@ -268,8 +270,23 @@ module Master
         nil
       end
 
+      # Story narration is the default voice for what the runtime prints; the
+      # Narrator decides what is worth telling and when (voice.yml narration).
+      def narrate(text)
+        defined?(Master::Voice::Narrator) && Master::Voice::Narrator.observe(text)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Trace::Dmesg.narrate")
+      end
+
+      # With narration on, a printed line is an event for the story and is not
+      # also read out on its own; MASTER_NARRATE=0 restores the one-line style.
+      def narration_owns_voice?
+        defined?(Master::Voice::Narrator) && Master::Voice::Narrator.narrating?
+      end
+
       def speak_log_line(text)
         return if Thread.current[:master_dmesg_tts]
+        return if narration_owns_voice?
 
         return if text.match?(/\A(?:voice|tts)\d+(?: at [^:]+)?:/i)
 
