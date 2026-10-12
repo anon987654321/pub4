@@ -109,7 +109,7 @@ tokens:
     tile_gap_col: "8px"
     control_pad_inline: "16px"
     control_gap: "8px"
-    radius_card: "12px"
+    radius_card: "16px"
   storefront_art:
     name: "matte_product_promotion"
     family: "marketplace_takeaway"
@@ -963,7 +963,7 @@ tokens:
   # column, not just the one you need — the `hover` column is the one that has
   # been missed twice.
   vertical_accents:
-    marketplace: { accent: "#98876e", hover: "#8d7e66", light: "#98876e" }
+    marketplace: { accent: "#2563EB", hover: "#1D4ED8", light: "#1E40AF" }
     tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }
     dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }
     takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }
