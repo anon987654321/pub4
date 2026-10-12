@@ -155,6 +155,9 @@ class DesignContractTest < Minitest::Test
     assert_includes app, '@include meta.load-css("brgen_marketplace");'
     assert_includes app, '@include meta.load-css("brgen_vertical_surfaces");'
     assert_includes app, '@include meta.load-css("brgen_shared_overrides");'
+    assert_includes app, '@include meta.load-css("brgen_messenger");'
+    messenger = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_messenger.scss"))
+    assert_includes messenger, ".messenger-artifact-pane"
     assert_includes marketplace, ".deal-card"
     assert_includes marketplace, ".deal-cat"
     assert_includes verticals, ".listing-buy-bar-cta"
