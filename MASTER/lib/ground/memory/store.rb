@@ -384,7 +384,7 @@ module Master
 
         def prune_stale!
           cutoff = Time.now.to_i - TTL_DAYS * SECONDS_PER_DAY
-          @store.each do |key, value|
+          @store.to_a.each do |key, value|
             next if archived_or_summary?(key)
             next unless stale_entry?(value, cutoff)
 

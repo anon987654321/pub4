@@ -127,4 +127,19 @@ class TestMemoryReview < Minitest::Test
       @memory.review("fact", verdict: :guess, evidence: evidence("review"), reviewer: "operator")
     end
   end
+
+  # Retention: an entry untouched for longer than TTL_DAYS leaves the live
+  # store for archive/, keeping its value; a fresh entry stays where it is.
+  def test_entries_past_retention_move_to_the_archive_and_fresh_ones_stay
+    @memory.remember("old_fact", "kept for the audit trail")
+    @memory.remember("fresh_fact", "still current")
+    store = @memory.instance_variable_get(:@store)
+    store["old_fact"]["ts"] = Time.now.to_i - ((Master::Ground::Memory::TTL_DAYS + 1) * 86_400)
+
+    @memory.send(:prune_stale!)
+
+    refute store.key?("old_fact")
+    assert_equal "kept for the audit trail", store.fetch("archive/old_fact").fetch("value")
+    assert store.key?("fresh_fact")
+  end
 end

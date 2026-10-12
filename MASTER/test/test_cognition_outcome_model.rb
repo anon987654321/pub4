@@ -169,4 +169,17 @@ class TestCognitionOutcomeModel < Minitest::Test
       assert_equal "ablation_no_learning", JSON.parse(out).fetch("mode")
     end
   end
+
+  def test_learned_records_are_bounded_and_the_oldest_are_dropped
+    state = { "records" => {} }
+    limit = Master::Cognition::OutcomeModel::MAX_RECORDS
+    (limit + 3).times do |index|
+      model.observe!(state, context: "ctx", action: "action-#{index}",
+                     outcome: "success", evidence: evidence("test:#{index}", "body-#{index}"))
+    end
+
+    assert_equal limit, state.fetch("records").size
+    assert_equal :insufficient_data, model.predict(state, context: "ctx", action: "action-0")[:status]
+    assert_equal 1, model.predict(state, context: "ctx", action: "action-#{limit + 2}")[:successes]
+  end
 end
