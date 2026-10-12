@@ -131,7 +131,8 @@ class TestFallbackChain < Minitest::Test
     )
 
     assert_equal "fallback ok", response.value!
-    assert_equal "fallback-model", agent.model
+    assert_equal "fallback-model", agent.instance_variable_get(:@runtime_model)
+    assert_equal "cheap-model", agent.model, "the persistent preference does not move"
     assert_nil agent.instance_variable_get(:@pinned_model)
   ensure
     Master::Io::ModelSkipCache.clear!
@@ -185,7 +186,7 @@ class TestFallbackChain < Minitest::Test
     router = FakeRouter.new
     router.define_singleton_method(:fallback_chain) do |task_type:|
       calls += 1
-      calls == 1 ? ["first-model"] : %w[first-model new-model]
+      %w[first-model new-model]
     end
     agent.instance_variable_set(:@model_router, router)
 

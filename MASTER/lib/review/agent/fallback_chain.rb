@@ -25,7 +25,7 @@ module Master
             attempted_models << attempt.fetch(:model)
             response = try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)
             next unless response
-            return accepted_fallback_response(response, attempt, stage_warnings) if response.is_a?(Master::Result::Ok)
+            return accepted_fallback_response(response, attempt, stage_warnings, head: candidate_models.first) if response.is_a?(Master::Result::Ok)
 
             last_response = response
             queue = refresh_fallback_queue(queue, attempted_models)
@@ -35,9 +35,11 @@ module Master
           exhausted_result(last_response, stage_warnings)
         end
 
-        def accepted_fallback_response(response, attempt, stage_warnings)
+        # head is the model the turn chose; promoting from the attempt itself would
+        # compare the answering model with itself and never switch.
+        def accepted_fallback_response(response, attempt, stage_warnings, head:)
           answered = response.model || attempt.fetch(:model)
-          promote_runtime_model(from: attempt.fetch(:model), to: answered)
+          promote_runtime_model(from: head, to: answered)
           publish_llm_success(answered, response)
           @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
           response.with_model(answered)
@@ -145,6 +147,10 @@ module Master
           task_type = @config.task_type.to_s.empty? ? :exploration : @config.task_type.to_sym
           live = @model_router.fallback_chain(task_type:)
           fresh = Array(live).reject { |model| attempted_models.include?(model) }
+          # mode_chain_for falls back to the configured model on an empty list, which
+          # would ask a lane the live route no longer offers.
+          return queue if fresh.empty?
+
           current = queue.map { |attempt| [attempt[:model], attempt[:mode]] }.to_set
           queue + mode_chain_for(fresh).reject { |attempt| current.include?([attempt[:model], attempt[:mode]]) }
         rescue StandardError => e
