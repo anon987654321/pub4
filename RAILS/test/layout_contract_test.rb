@@ -329,7 +329,7 @@ class LayoutContractTest < Minitest::Test
 
   def app_rules(app, selector)
     source = File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss"))
-    if %w[brgen amber].include?(app)
+    if %w[brgen amber bsdports].include?(app)
       features = Dir.glob(File.join(ROOT, app, "app/assets/stylesheets/_#{app}_*.scss")).sort
       features.each { |path| source = "#{source}\n#{File.read(path)}" }
     end
