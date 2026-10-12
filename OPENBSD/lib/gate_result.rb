@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The deploy tree owns the gate kernel. Every gate in the repo returns this
+# Carried copy of MASTER/gates/support/gate_result.rb, which owns the gate kernel; OPENBSD does not reach into MASTER, so everything below this line is kept identical to it. Every gate in the repo returns this
 # type: RAILS/gates, MASTER/gates, OPENBSD/gates and MASTER/tools/gate.rb require it
 # across the tree boundary and add nothing to it, so adding an outcome is a
 # change with four consumers. A repo-level lib/ means a fifth top-level tree
@@ -64,9 +64,11 @@ module Deploy
       @warnings = []
       @soft_failures = []
       @unchecked = []
+      @gaps = {}
       @errors = []
       @checks_ran = 0
       @live_skips = 0
+      @incomplete = false
     end
 
     # The gate itself broke — an exception escaped its own run, not a finding
@@ -100,7 +102,7 @@ module Deploy
     def self.from_error(exception, gate:, backtrace_lines: 3)
       trace = Array(exception.backtrace).first(backtrace_lines).join(" | ")
       new.errored!(
-        "#{gate} raised #{exception.class}: #{exception.message}#{trace.empty? ? '' : " @ #{trace}"}"
+        "#{gate} raised #{exception.class}: #{exception.message}#{trace.empty? ? '' : " @ #{trace}"}",
       )
     end
 
@@ -139,10 +141,32 @@ module Deploy
     # A check that could not run. Name the missing precondition, not the check:
     # "no Chrome/Chromium" reads as a fixable environment fact, "geometry not
     # measured" reads as a mystery.
-    def inconclusive!(reason)
+    #
+    # gap: is a Master::Gap (duck-typed: anything with #clause) saying whether
+    # the check resolves alone, what it costs, and whose call it is. This file
+    # does not load it: OPENBSD/lib carries a copy and must not reach into MASTER.
+    def inconclusive!(reason, gap: nil)
       @unchecked << reason
+      @gaps[reason] = gap if gap
       self
     end
+
+    # reason => gap, for the reasons that came with one.
+    attr_reader :gaps
+
+    # A gate that measured something and could not measure everything it
+    # declares. inconclusive! alone leaves the outcome :passed whenever one
+    # check ran, so a flow gate whose apps were mostly down read as green over
+    # a "Not checked" block nobody opened. This is the stronger statement: the
+    # gate's verdict is :inconclusive, never :passed, while it stands. It does
+    # not block by itself (GATE_REQUIRE_LIVE does that, through skipped_live,
+    # on the host where the apps must be up) -- it only refuses to be green.
+    def incomplete!(reason, gap: nil)
+      @incomplete = true
+      inconclusive!(reason, gap:)
+    end
+
+    def incomplete? = @incomplete
 
     # Count a check that actually ran, so a gate can say how much it measured.
     #
@@ -218,7 +242,7 @@ module Deploy
       return :errored if errored?
       return :failed if measured_nothing? && self.class.strict_inconclusive?
 
-      measured_nothing? ? :inconclusive : :passed
+      measured_nothing? || incomplete? ? :inconclusive : :passed
     end
 
     # label: prefixes every merged message, so a composite's output still names
@@ -229,6 +253,7 @@ module Deploy
       Array(other.warnings).each { |w| @warnings << "#{tag}#{w}" }
       Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" }
       Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" }
+      other.gaps.each { |m, gap| @gaps["#{tag}#{m}"] = gap } if other.respond_to?(:gaps)
       # Without this a composite swallows a leaf that crashed: the leaf's errors
       # would be neither failures nor unchecked, so the composite would report
       # PASSED for a leaf that never ran. That is the same false green the third
@@ -238,6 +263,7 @@ module Deploy
       # Chrome would speak for the whole suite the way one app used to speak for
       # a whole gate.
       @checks_ran += other.checks_ran if other.respond_to?(:checks_ran)
+      @incomplete ||= other.incomplete? if other.respond_to?(:incomplete?)
       # Same reason as checks_ran: without this a composite whose every leaf
       # live-skipped would look like a composite that had nothing to skip.
       @live_skips += other.live_skips if other.respond_to?(:live_skips)
@@ -248,7 +274,7 @@ module Deploy
     # same rendering. Pass no success_message when the caller prints its own.
     def render(success_message = nil)
       emit("Warnings:", @warnings)
-      emit("Not checked:", @unchecked)
+      emit("Not checked:", @unchecked.map { |reason| @gaps[reason] ? "#{reason} (#{@gaps[reason].clause})" : reason })
       emit("Gate errors (fail-open — nothing was blocked by these):", @errors)
       emit("Failures:", @failures)
 
@@ -269,8 +295,13 @@ module Deploy
       when :inconclusive
         # Deliberately not the success message: the point of the third state is
         # that this gate has nothing to report success about.
-        puts "inconclusive: nothing measured — #{nothing_measured_reason} " \
-             "(set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
+        if measured_nothing?
+          puts "inconclusive: nothing measured — #{nothing_measured_reason} " \
+               "(set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
+        else
+          puts "inconclusive: #{@checks_ran} check(s) ran, #{@unchecked.size} declared check(s) could not " \
+               "(see Not checked above; this is not a pass)"
+        end
         :inconclusive
       else
         # A pass that skipped something says so, instead of printing a clean

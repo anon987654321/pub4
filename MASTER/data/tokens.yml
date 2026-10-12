@@ -988,7 +988,7 @@ tokens:
   scale:
     space_px: &eight_px_rhythm [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
     letter_spacing_em: [-0.03, -0.02, -0.01, 0, 0.05, 0.08, 0.14]
-    line_height: [1, 1.25, 1.4, 1.5, 1.6]
+    line_height: &line_height_scale [1, 1.25, 1.4, 1.5, 1.6]
     radius_px: [0, 2, 4, 8, 12, 16]
     font_weight: [400, 500, 600, 700, 800]
     opacity: [0.03, 0.05, 0.08, 0.1, 0.12, 0.2, 0.4, 0.6, 0.8]
@@ -1223,6 +1223,43 @@ tokens:
     progressive_disclosure:
       require_advanced_hidden: true
       action: Advanced/secondary controls should start collapsed or on secondary surfaces.
+
+  # The type thresholds that Design::Thresholds, DesignMetricsGate, CssConstitutionGate,
+  # the rendered geometry checks and visual_contract_lint read as typography.*. Without
+  # them every reader returned early on a zero threshold and reported "body>=0px". Each
+  # value is one a reader's own fallback or Design::Typography.bringhurst already states.
+  # Operator-owned under RENDERED_VALUES: correct a number here and every gate follows.
+  typography:
+    accessibility:
+      body_min_px: 16
+      mobile_input_min_px: 16
+      normal_text_contrast: 7.0
+      large_text_contrast: 4.5
+    line_length:
+      min_ch: 45
+      max_ch: 75
+      ideal_ch: 66
+    line_height:
+      allowed: *line_height_scale
+      body_preferred: 1.5
+    hierarchy:
+      max_font_families: 2
+      max_font_weights: 3
+      max_font_sizes: 8
+      min_weight_delta: 200
+      min_size_ratio_between_levels: 1.2
+    letter_spacing:
+      all_caps_min_em: 0.05
+      all_caps_max_em: 0.15
+      lowercase_body_should_letterspace: false
+    micro:
+      default_features: [kern]
+      body_numerals: oldstyle-nums
+      table_numerals: tabular-nums
+      hyphenate_limit_chars: [6, 3, 2]
+      orphans: 3
+      widows: 3
+      void_target: 0.7
 
   worn_type:
     type_scale_ratio: 1.25

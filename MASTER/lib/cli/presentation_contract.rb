@@ -7,7 +7,7 @@ module Master
     # only the diagnostic facts an operator can act on.
     module PresentationContract
       LAYERS = %i[conversation result state diagnostic].freeze
-      INTERNAL_EVENT = /\A(?:trace|retry|cache|failover|llm|error)\d*[:#]/i
+      INTERNAL_EVENT = /\A(?:trace|retry|cache|failover|llm|error)\w*?\d*[:#]/i
 
       module_function
 

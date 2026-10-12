@@ -13,7 +13,7 @@ class TestDesignRulesWornType < Minitest::Test
     # gates/support/, not gates/lib/. A reader path that stops resolving errors
     # on ENOENT rather than failing, which reports a missing file where this
     # test's subject is "every profile has a reader".
-    @reader = File.join(Master::ROOT, "..", "RAILS", "gates", "support", "geometry_type.rb")
+    @reader = File.join(Master::ROOT, "gates", "support", "geometry_type.rb")
   end
 
   def test_worn_type_profiles_exist
@@ -115,7 +115,7 @@ class TestDesignRulesWornType < Minitest::Test
     host = Class.new do
       include Master::Voice::PersonalityPromptBuilder
 
-      def initialize = @rules = Struct.new(:none) { def data(_) = {} }.new
+      def initialize = @laws = Struct.new(:none) { def data(_) = {} }.new
       def style = {}.tap { |sections| add_design_rules(sections) }.fetch("master_style", "")
     end
 

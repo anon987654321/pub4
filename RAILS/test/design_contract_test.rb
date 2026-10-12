@@ -157,7 +157,7 @@ class DesignContractTest < Minitest::Test
       assert_includes File.read(File.join(styles_dir, name)), selector, "#{name} lost its feature rule"
     end
 
-    refute_match(/min-height:\\s*v\\s*\\/\\/|font-siz\\s*\\/\\//, app,
+    refute_match(%r{min-height:\s*v\s*//|font-siz\s*//}, app,
                  "entrypoint contains a stylesheet fragment split across an import")
   end
 

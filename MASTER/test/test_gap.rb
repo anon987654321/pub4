@@ -133,4 +133,17 @@ class TestGap < Minitest::Test
     assert_equal :inconclusive, missing.category
     assert_equal Master::Gap::OPERATOR_DECISION, missing.gap
   end
+
+  # OPENBSD carries the gate kernel and does not reach into MASTER for it. The
+  # runner loads both files into one class, so the later load redefines every
+  # method the first one set: a copy two commits behind turned
+  # inconclusive!(reason, gap:) into an ArgumentError and ended the ladder at the
+  # first gate with no browser. Only the ownership line differs.
+  def test_openbsd_carries_the_gate_kernel_unchanged
+    kernel = File.readlines(File.join(Master::ROOT, "gates", "support", "gate_result.rb"))
+    carried = File.readlines(File.join(Master::ROOT, "..", "OPENBSD", "lib", "gate_result.rb"))
+    differing = (0...[kernel.size, carried.size].max).reject { |index| kernel[index] == carried[index] }
+
+    assert_equal [2], differing, "OPENBSD/lib/gate_result.rb drifted from MASTER/gates/support/gate_result.rb"
+  end
 end
