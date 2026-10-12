@@ -9,6 +9,7 @@ require "tmpdir"
 class TestLaneQuota < Minitest::Test
   Quota = Master::Io::LaneQuota
   Silence = Master::Review::LLMDispatcher::LaneSilence
+  Health = Master::Io::LaneHealth
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
 
   def setup
@@ -182,5 +183,19 @@ class TestLaneQuota < Minitest::Test
     assert_equal "deepseek", Quota.lane_of("deepseek-chat")
     assert_equal "google", Quota.lane_of("google/gemini-2.5-flash")
   end
+
+  def test_status_reports_global_free_pool_quota_instead_of_misleading_vendor_silence
+    reply = "rate_limit: Rate limit exceeded: free-models-per-day-high-balance."
+    Quota.note("nvidia/nemotron-3-super-120b-a12b:free", reply)
+
+    assert_match(/\Aopenrouter-free: quota spent/, Quota.report_for("google/gemma-4-31b-it:free"))
+    assert_equal [
+      Quota.report_for("google/gemma-4-31b-it:free"),
+    ], Health.states(
+      ["nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-31b-it:free"],
+      refuses: ->(model) { Quota.dead?(model) },
+    )
+  end
+
 
 end
