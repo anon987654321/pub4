@@ -220,19 +220,26 @@ module Master
         emit(line, io:)
       end
 
+      # The one terminal write coordinator. Plain output, IRC notices, unit
+      # events and transient status lines all take this lock; the lock is never
+      # held while waiting for user input.
+      def terminal_write(io: $stdout)
+        emit_mutex.synchronize { yield io }
+      end
+
       def emit(line, io: $stdout, force: false)
         return unless enabled? || force
 
         # Normal mode keeps conversational turns quiet. Explicit command reports
         # force their already-rendered lines through the same presenter.
-        if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
+        if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \\w+0|llm\\d+:/)
           return
         end
 
-        text = line.to_s.gsub(/\s+/, " ").strip
-        emit_mutex.synchronize do
-          io.puts(text)
-          io.flush if io.respond_to?(:flush)
+        text = line.to_s.gsub(/\\s+/, " ").strip
+        terminal_write(io:) do |target|
+          target.puts(text)
+          target.flush if target.respond_to?(:flush)
           # Interactive adapters redraw the prompt before another writer may
           # append a line. Pipes and ordinary log writers use no callback.
           yield if block_given?
@@ -259,9 +266,9 @@ module Master
         text = line.to_s.scrub.gsub(ANSI, "").delete("\r").chomp
         return if text.strip.empty?
 
-        emit_mutex.synchronize do
-          io.puts(text)
-          io.flush if io.respond_to?(:flush)
+        terminal_write(io:) do |target|
+          target.puts(text)
+          target.flush if target.respond_to?(:flush)
         end
         if NARRATED_FORWARD_LINE.match?(text) || NARRATED_FORWARD_FINDING.match?(text)
           narrate(text)
