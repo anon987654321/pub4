@@ -8,8 +8,9 @@ module Master
     # The chat services MASTER can sit in. One live transport per service;
     # the slash commands in cli/command_registry/chat.rb are the only caller.
     module Chat
+      # Names the /connect command recognises; only those in FACTORIES are built.
       RESERVED = %w[telegram slskd whatsapp].freeze
-      FACTORIES = { "irc" => -> { Irc } }.freeze
+      FACTORIES = { "irc" => -> { Irc }, "telegram" => -> { Telegram }, "slskd" => -> { Slskd } }.freeze
 
       # Writes to the terminal without tearing a half-typed input line.
       class Margin
@@ -36,6 +37,7 @@ module Master
           @lock.synchronize { @transports[service] ||= FACTORIES.fetch(service).call.new(**opts) }
         end
 
+        def find(service) = @lock.synchronize { @transports[service] }
         def live = @lock.synchronize { @transports.values.select(&:live?) }
         def current = live.last
         def forget(service) = @lock.synchronize { @transports.delete(service) }

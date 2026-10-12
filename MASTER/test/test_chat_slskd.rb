@@ -65,7 +65,7 @@ class ChatSlskdTest < Minitest::Test
   def transport(extra = {})
     t = Chat::Slskd.new(env: env(extra), out: ->(l) { @lines << l }, sleeper: ->(_) {},
                         policy: Chat::Policy.new(bucket: Chat::Policy::Bucket.new(interval: 0.0001, burst: 100), sleeper: ->(_) {}))
-    t.connect
+    t.connect(poll: false)
     @lines.clear
     t
   end
@@ -80,7 +80,7 @@ class ChatSlskdTest < Minitest::Test
 
   def test_api_key_auth_and_status_hides_secrets
     t = Chat::Slskd.new(env: env, out: ->(l) { @lines << l })
-    t.connect
+    t.connect(poll: false)
     text = (@lines + [t.status]).join("\n")
     refute_includes text, KEY
     assert_includes text, "auth api-key"
@@ -97,7 +97,7 @@ class ChatSlskdTest < Minitest::Test
 
   def test_session_login_uses_jwt
     t = Chat::Slskd.new(env: env("MASTER_SLSKD_API_KEY" => nil, "MASTER_SLSKD_USERNAME" => "me", "MASTER_SLSKD_PASSWORD" => PASS), out: ->(l) { @lines << l })
-    t.connect
+    t.connect(poll: false)
     assert(@server.requests.any? { |r| r.headers["authorization"] == "Bearer jwt-SECRET-token" })
     refute_includes @lines.join, "jwt-SECRET"
     refute_includes t.status, PASS

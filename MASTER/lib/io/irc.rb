@@ -73,7 +73,7 @@ module Master
       def live? = !@io.nil? && !@io.closed?
       def last_room = @channels.keys.last
 
-      def connect(target, nick:, plain: false)
+      def connect(target, nick:, plain: false, join: [])
         raise "already connected to #{@host}" if live?
 
         host, port = self.class.parse_target(target)
@@ -81,6 +81,7 @@ module Master
 
         reset
         policy.speak = false
+        @autojoin = Array(join)
         @host = host
         @base_nick = @nick = nick
         @plain = plain

@@ -77,6 +77,8 @@ module Events
           @nick = msg.params.first
           @registered = true
           emit(:info, text: "registered", line: "irc0: registered as #{clean(@nick)}")
+          join(@autojoin) if @autojoin&.any?
+          @autojoin = nil
         end
 
 # A refused nick is retried with a counter suffix, then the link is closed.

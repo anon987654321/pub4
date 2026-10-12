@@ -19,9 +19,9 @@ module Master
         UPDATE_KEYS = %w[message edited_message channel_post edited_channel_post].freeze
         MAX_RETRY_WAIT = 60
 
-        class Unavailable < StandardError; end
+        class Unavailable < RuntimeError; end
 
-        attr_reader :offset, :bot
+        attr_reader :offset, :bot, :last_room
 
         def initialize(token: ENV["MASTER_TELEGRAM_TOKEN"], base: API, http: nil, limiter: nil,
                        sleeper: Kernel.method(:sleep), **opts)
@@ -55,6 +55,16 @@ module Master
           @thread&.join(1)
           @thread = nil
           show("tg0: detached")
+        end
+
+        def nick = "@#{Policy.sanitize(@bot&.fetch("username", nil) || "bot", max: 40)}"
+
+        # `/say <chat id or @name> <text>`; a bare text goes to the last chat heard from.
+        def parse_say(args)
+          first, rest = args.split(/\s+/, 2)
+          return [first, rest.to_s] if first.to_s.match?(/\A(-?\d+|@\w{4,})\z/)
+
+          [@last_room, args]
         end
 
         def join(_room) = raise(Unavailable, "a bot cannot join chats; add it from Telegram")
@@ -150,9 +160,10 @@ module Master
           msg = update[key]
           chat = msg["chat"] || {}
           @groups[chat["id"]] = chat["type"]
+          @last_room = chat["id"].to_s
           body = msg["text"] || msg["caption"] || "[#{media_kind(msg)}]"
           mark = key.start_with?("edited") ? "(edited) " : ""
-          emit(:message, room: room_label(chat), nick: nick(msg), text: "#{mark}#{body}",
+          emit(:message, room: room_label(chat), nick: sender_name(msg), text: "#{mark}#{body}",
                          line: nil)
         end
 
@@ -163,7 +174,7 @@ module Master
           "#{label}/#{chat["id"]}"
         end
 
-        def nick(msg)
+        def sender_name(msg)
           from = msg["from"] || msg["sender_chat"] || {}
           from["username"] || from["first_name"] || from["title"] || "?"
         end

@@ -14,7 +14,7 @@ module Master
         # visible in those files and are read defensively (case-insensitive,
         # missing fields tolerated).
         class Client
-          class Refused < StandardError; end
+          class Refused < RuntimeError; end
 
           LOCAL = %w[localhost 127.0.0.1 ::1 [::1]].freeze
           DEFAULT_URL = "http://localhost:5030"

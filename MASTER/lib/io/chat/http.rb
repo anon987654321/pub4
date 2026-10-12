@@ -13,7 +13,7 @@ module Master
       # string it raises carries a secret -- a Telegram token lives in the URL
       # path, so a bare Net::HTTP message would print it.
       class Http
-        class Error < StandardError; end
+        class Error < RuntimeError; end
 
         Response = Struct.new(:status, :body, :json, keyword_init: true) do
           def ok? = status.between?(200, 299)

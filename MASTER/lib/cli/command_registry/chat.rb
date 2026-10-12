@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "../../io/irc"
+require_relative "chat_services"
 
 module Master
   module CLI
     module CommandRegistry
       module_function
 
-      CHAT_VERBS = %w[connect join part say me names topic list nick irc chat].freeze
+      CHAT_VERBS = (%w[connect join part say me names topic list nick irc chat] + CHAT_SERVICE_VERBS).freeze
       CHAT_ROOM = Master::Io::Irc::ROOM
 
       CHAT_HELP = {
@@ -19,7 +20,10 @@ module Master
              "nick defaults to MASTER_IRC_NICK, then the saved one.",
 
             "/connect <host> <nick> --plain — plain text, only when asked for by name.",
-            "/connect telegram|slskd|whatsapp — reserved; not available yet.",
+            "/connect telegram — Telegram Bot API, read-only; token from MASTER_TELEGRAM_TOKEN, never shown. " \
+             "/say <chat id or @name> <text> after /chat speak on.",
+            "/connect slskd — your own slskd (MASTER_SLSKD_URL, MASTER_SLSKD_API_KEY); then /slsk. " \
+             "/connect whatsapp is reserved; not available yet.",
             "MASTER_IRC_PASSWORD, when set, logs in with SASL PLAIN and is never shown.",
             "Your IP address is visible to the network. " \
              "MASTER_IRC_LOG=1 logs under .master/irc/ (0600); off by default.",
@@ -102,7 +106,7 @@ module Master
              "sent as quoted untrusted data.",
           ],
         },
-      }.freeze
+      }.merge(CHAT_SERVICE_HELP).freeze
 
       CHAT_ACTIONS = {
         "join" => :chat_join, "part" => :chat_part, "say" => :chat_say_line, "me" => :chat_me_line,
@@ -122,6 +126,11 @@ module Master
       def dispatch_chat(verb, ctx: nil, **deps)
         args = arg_for(ctx)
         return chat_connect(args, bus: deps[:bus], config: deps[:config]) if verb == "connect"
+        return chat_slsk(args) if verb == "slsk"
+
+        if verb.start_with?("connect:")
+          return chat_connect_form(verb.delete_prefix("connect:"), args, bus: deps[:bus], config: deps[:config])
+        end
 
         if %w[irc chat].include?(verb)
           word, rest = args.split(/\s+/, 2)
@@ -142,24 +151,16 @@ module Master
       def chat_connect(args, bus:, config:)
         service = Io::Chat.service_for(args)
         return "#{service}0: not available yet" unless Io::Chat.available?(service)
+        return chat_connect_service(service, bus:) unless service == "irc"
 
-        words = args.split
-        plain = !words.delete("--plain").nil?
-        host, nick = words
-        nick ||= ENV["MASTER_IRC_NICK"] || config&.[]("irc_nick")
-        if nick.to_s.empty? || host.nil?
-          return "irc0: which nick? /connect #{host || '<host>'} <nick>, or set MASTER_IRC_NICK"
-        end
-
-        Io::Chat.transport("irc", bus:).connect(host, nick:, plain:)
-        (config["irc_nick"] = nick; config.save!) if config
-        Io::Chat.status_lines.join("\n")
+        chat_connect_irc(args.split, bus:, config:)
       end
 
       # Each verb is a named handler; the table above says which.
       def chat_act(chat, verb, args, agent:)
         handler = CHAT_ACTIONS[verb]
         return CHAT_USAGE unless handler
+        return "#{chat.name}0: /#{verb} is not available on this transport" if CHAT_IRC_ONLY[verb] && !chat.respond_to?(CHAT_IRC_ONLY[verb])
 
         send(handler, chat, args, agent:)
       end
@@ -200,6 +201,8 @@ module Master
       end
 
       def chat_room_and_text(chat, args)
+        return chat.parse_say(args) if chat.respond_to?(:parse_say)
+
         first, rest = args.split(/\s+/, 2)
         first.to_s.match?(CHAT_ROOM) ? [first, rest.to_s] : [chat.last_room, args]
       end

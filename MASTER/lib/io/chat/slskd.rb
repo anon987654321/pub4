@@ -14,13 +14,13 @@ module Master
       # talks only to an instance the operator runs, never changes its share
       # configuration, and never downloads without `get <n>` for one file.
       class Slskd < Transport
-        class Unavailable < StandardError; end
+        class Unavailable < RuntimeError; end
 
         include Commands
 
         SEEN_MAX = 2000
 
-        attr_reader :client, :quarantine, :results
+        attr_reader :client, :quarantine, :results, :last_room
 
         def initialize(client: nil, quarantine: nil, sleeper: Kernel.method(:sleep), env: ENV, **opts)
           super(**opts)
@@ -37,13 +37,16 @@ module Master
         def capabilities = %i[read send search browse download]
         def live? = @live
 
-        def connect(_target = nil, **)
+        def connect(_target = nil, poll: true, label: nil, rooms: [], **)
           @client ||= Client.new(env: @env)
           @quarantine ||= Quarantine.new(env: @env)
           state = @client.application
           @live = true
+          @label = label && Policy.sanitize(label, max: 40)
           show("slsk0: attached #{describe(state)} auth #{@client.auth_mode} #{policy.mode}")
           show("slsk0: downloads confirm one file at a time, quarantine #{@quarantine.dir}")
+          join_rooms(rooms)
+          start_poll if poll
           self
         rescue Client::Refused, Http::Error, Quarantine::Refused => e
           @live = false
@@ -52,11 +55,34 @@ module Master
 
         def disconnect(_message = nil)
           @live = false
+          @thread&.join(1)
+          @thread = nil
           show("slsk0: detached")
         end
 
-        def join(room) = (@client.room_join(Policy.sanitize(room, max: 80)) && "joined #{room}")
-        def part(room) = (@client.room_leave(Policy.sanitize(room, max: 80)) && "left #{room}")
+        # slskd owns the Soulseek login in its own config; a nick given to
+        # /connect:slsk is only a label for this session.
+        def nick = @label || "slskd"
+
+        def join(room)
+          name = Policy.sanitize(Array(room).first, max: 80)
+          @client.room_join(name)
+          "joined #{name}"
+        end
+
+        def part(room)
+          name = Policy.sanitize(Array(room).first, max: 80)
+          @client.room_leave(name)
+          "left #{name}"
+        end
+
+        # `/say room:NAME <text>` or `/say pm:USER <text>`; bare text goes to the last room heard.
+        def parse_say(args)
+          first, rest = args.split(/\s+/, 2)
+          return [first, rest.to_s] if first.to_s.match?(/\A(room|pm):\S+\z/)
+
+          [@last_room, args]
+        end
 
         def status
           "slsk0: slskd #{@live ? "attached" : "detached"} #{policy.mode} " \
@@ -79,6 +105,28 @@ module Master
 
         private
 
+        def join_rooms(rooms)
+          show("slsk0: slskd owns the Soulseek login; #{@label} is a label only") if @label
+          rooms.each do |room|
+            show("slsk0: #{join(room)}")
+          rescue Http::Error, ArgumentError => e
+            show("slsk0: join #{Policy.sanitize(room, max: 40)} failed: #{scrub(e)}")
+          end
+        end
+
+        def start_poll
+          @thread = Thread.new do
+            while @live
+              begin
+                poll_once
+              rescue StandardError => e
+                show("slsk0: poll error #{scrub(e)}")
+              end
+              @sleeper.call(5)
+            end
+          end
+        end
+
         # room is "room:NAME" or "pm:USER".
         def deliver(room, text, action: false)
           kind, _, target = room.to_s.partition(":")
@@ -97,6 +145,7 @@ module Master
           messages.each { |m| seen[sig(m)] = true }
           seen.shift while seen.size > SEEN_MAX
           fresh = fresh.last(5) if first
+          @last_room = key
           fresh.each do |m|
             emit(:message, room:, nick: field(m, :username), text: field(m, :message),
                            line: "slsk0: #{Policy.sanitize(room, max: 80)} <#{Policy.sanitize(field(m, :username), max: 40)}> " \

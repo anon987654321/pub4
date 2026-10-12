@@ -182,7 +182,7 @@ class TestChatIrc < Minitest::Test
     assert_equal "irc", Master::Io::Chat.service_for("irc.libera.chat heyhey123")
     assert_equal "telegram", Master::Io::Chat.service_for("telegram")
     reg = Master::CLI::CommandRegistry
-    assert_equal "slskd0: not available yet", reg.dispatch_chat("connect", ctx: { args: "slskd" })
+    assert_equal "whatsapp0: not available yet", reg.dispatch_chat("connect", ctx: { args: "whatsapp" })
     build
     reg.chat_act(@irc, "join", "#a,#b #c", agent: nil)
     assert_equal ["JOIN #a", "JOIN #b", "JOIN #c"], @io.written.last(3)
@@ -224,5 +224,22 @@ class TestChatIrc < Minitest::Test
     irc.disconnect
   ensure
     server.close
+  end
+end
+
+class TestChatIrcAutojoin < Minitest::Test
+  # The channels named on /connect:irc are joined after 001, never before.
+  def test_autojoin_after_welcome
+    io = TestChatIrc::Duplex.new
+    irc = Master::Io::Irc.new(connector: ->(_h, _p, tls:) { io }, env: {}, out: ->(_) {},
+                              policy: Master::Io::Chat::Policy.new(bucket: Master::Io::Chat::Policy::Bucket.new(interval: 0.001, burst: 9), sleeper: ->(_) {}))
+    irc.connect("irc.example.test", nick: "heyhey123", join: %w[#help #ruby])
+    sleep 0.05
+    refute(io.written.any? { |l| l.start_with?("JOIN") })
+    io.feed(":srv 001 heyhey123 :welcome\r\n")
+    20.times { break if io.written.count { |l| l.start_with?("JOIN") } >= 2; sleep 0.05 }
+    assert_equal ["JOIN #help", "JOIN #ruby"], io.written.select { |l| l.start_with?("JOIN") }
+    refute irc.policy.speak?
+    irc.disconnect
   end
 end

@@ -11,7 +11,7 @@ module Master
         # yes or no and prepares the directory; slskd does the transfer, and
         # nothing here opens, plays, indexes or executes what arrives.
         class Quarantine
-          class Refused < StandardError; end
+          class Refused < RuntimeError; end
 
           EXTENSIONS = %w[wav flac aiff mp3 ogg m4a opus].freeze
           DEFAULT_MAX_MB = 300

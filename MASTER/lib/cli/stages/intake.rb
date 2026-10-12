@@ -8,7 +8,7 @@ module Master
       # Plain text -> intent :llm.
       class Intake
         # m[1] = command name, m[2] = args string (may be empty)
-        COMMAND_RE = /\A\s*\/([\w-]+)\s*(.*)/m.freeze
+        COMMAND_RE = /\A\s*\/([\w-]+(?::[\w-]+)?)\s*(.*)/m.freeze
 
         def initialize(root: Master::ROOT)
           @root = File.realpath(root)
