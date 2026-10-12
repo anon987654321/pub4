@@ -64,7 +64,7 @@ class VpsSafetyGateTest < Minitest::Test
 
   def test_fast_deploy_ack_is_allowlisted
     with_fixture do |dir, doas|
-      text = File.read(doas).sub(" I_UNDERSTAND_FAST_DEPLOY", "")
+      text = File.read(doas).sub(" I_UNDERSTAND_FAST_DEPLOY RUN_PRODUCTION_SEEDS", " RUN_PRODUCTION_SEEDS")
       File.write(doas, text)
       out, status = run_gate(dir)
       refute status.success?
