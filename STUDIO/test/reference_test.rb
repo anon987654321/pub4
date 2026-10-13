@@ -41,13 +41,32 @@ class DillaReferenceTest < Minitest::Test
         "mid_500_4000_hz" => -20.0, "high_4000_plus_hz" => -6.0
       }
     }
-    profile = Dilla::Reference.profile_for(mix)
+    profile = Dilla::Reference.profile_for(mix, style: "industrial techno")
     assert_equal "industrial_techno", profile.fetch("genre")
+    assert_equal "industrial_techno", profile.fetch("style_key")
     assert_equal 142, profile.fetch("target_bpm")
     params = profile.fetch("parameters")
     assert_operator params.fetch("rumble_level"), :between?, 0.05, 0.35
     assert_operator params.fetch("hat_probability"), :between?, 0.1, 0.98
     assert_operator params.fetch("distortion_drive"), :between?, 1.0, 4.0
+  end
+
+  def test_j_dilla_reference_creates_a_hip_hop_profile_not_a_techno_profile
+    mix = { "tempo" => { "bpm" => 92.0, "confidence" => 0.8 }, "spectral_bands_db" => {} }
+    profile = Dilla::Reference.profile_for(mix, style: "J Dilla")
+    assert_equal "hip_hop", profile.fetch("genre")
+    assert_equal "j_dilla", profile.fetch("style_key")
+    assert_equal 92, profile.fetch("target_bpm")
+    assert_equal "behind_the_beat", profile.fetch("groove_profile")
+    refute profile.key?("rumble_level")
+  end
+
+  def test_unlabelled_reference_stays_general_instead_of_becoming_techno
+    mix = { "tempo" => { "bpm" => 124.0 }, "spectral_bands_db" => {} }
+    profile = Dilla::Reference.profile_for(mix)
+    assert_equal "general", profile.fetch("genre")
+    assert_equal "general", profile.fetch("style_key")
+    assert_equal 124, profile.fetch("target_bpm")
   end
 
   def test_automatic_generation_plan_uses_reference_duration_and_internal_seed
