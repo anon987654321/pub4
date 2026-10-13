@@ -40,11 +40,10 @@ module Master::Core
   # A label is not proof of reversibility: only named, implemented compensation
   # mechanisms count, and unknown operations fail closed.
   Reversibility = Data.define(:kind, :scope, :compensation, :reason) do
-    KINDS = %i[non_mutating session_state reversible compensatable approval_required policy_gated unknown].freeze
-
     def initialize(kind:, scope: nil, compensation: nil, reason: nil)
       kind = kind.to_sym
-      raise ArgumentError, "unknown reversibility kind: #{kind}" unless KINDS.include?(kind)
+      allowed = %i[non_mutating session_state reversible compensatable approval_required policy_gated unknown]
+      raise ArgumentError, "unknown reversibility kind: #{kind}" unless allowed.include?(kind)
 
       super(kind:, scope: scope&.to_s&.freeze, compensation:, reason: reason.to_s.freeze)
     end
