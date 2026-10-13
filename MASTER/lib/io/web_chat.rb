@@ -2,6 +2,7 @@
 
 require "timeout"
 require "fileutils"
+require "digest"
 
 module Master
   module Io
@@ -12,6 +13,7 @@ module Master
       ENABLE_ENV = "MASTER_WEB_CHAT"
       KEYLESS_ENV = "MASTER_KEYLESS"
       POLL_INTERVAL_S = 0.5
+      PNG_SIGNATURE = "\x89PNG\r\n\x1a\n".b.freeze
 
       DisabledError = Class.new(StandardError)
       ProviderError = Class.new(StandardError)
@@ -27,9 +29,15 @@ module Master
 
       def ask(prompt:, system: nil)
         raise DisabledError, disabled_message unless enabled?
+
+        @screenshot_evidence = []
         full_prompt = [system, prompt].compact.join("\n\n")
         with_browser { |page| converse(page, full_prompt) }
       end
+
+      # Metadata proves which visible states were captured without retaining chat
+      # images in memory after the request or writing private screenshots by default.
+      def screenshot_evidence = Array(@screenshot_evidence).map(&:dup)
 
       private
 
@@ -75,8 +83,13 @@ module Master
       def converse(page, text)
         Timeout.timeout(timeout_seconds) do
           page.go_to(@config.fetch("url"))
+          capture_screenshot(page, stage: "loaded")
+          previous = reply_state(page)
           fill_prompt(page, text)
-          read_reply(page)
+          capture_screenshot(page, stage: "submitted")
+          reply = read_reply(page, previous:)
+          capture_screenshot(page, stage: "answered")
+          reply
         end
       rescue Timeout::Error
         raise ProviderError, "#{@provider}: timed out after #{timeout_seconds}s"
@@ -88,11 +101,19 @@ module Master
         field.focus.type(text, :Enter)
       end
 
-      def read_reply(page)
-        wait_for_reply(page)
-        node = find_element(page, @config.fetch("reply_selector"))
-        raise ProviderError, "#{@provider}: no reply at configured selector" unless node
-        extract_text(node)
+      def read_reply(page, previous: nil)
+        reply = wait_for_reply(page, previous:)
+        return reply unless reply.to_s.strip.empty?
+
+        raise ProviderError, "#{@provider}: no new assistant reply appeared after submission"
+      end
+
+      # A page can contain earlier assistant turns. Read the last matching node
+      # and its count so a repeated, text-identical answer still counts as new.
+      def reply_state(page)
+        nodes = page.css(@config.fetch("reply_selector"))
+        node = nodes.last
+        [nodes.size, node ? extract_text(node) : ""]
       end
 
       def find_element(page, selector)
@@ -109,20 +130,52 @@ module Master
         node.inner_html.to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip
       end
 
-      def wait_for_reply(page)
+      def wait_for_reply(page, previous: nil)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout_seconds
-        last_len = 0
+        last_state = nil
         stable = 0
         loop do
           wait_idle(page)
-          node = find_element(page, @config.fetch("reply_selector"))
-          len = node ? extract_text(node).length : 0
-          stable = len.positive? && len == last_len ? stable + 1 : 0
-          last_len = len
-          return if stable >= 2
+          state = reply_state(page)
+          changed = previous.nil? || state[0] > previous[0] || state[1] != previous[1]
+          if changed && !state[1].strip.empty? && state == last_state
+            stable += 1
+          elsif changed && !state[1].strip.empty?
+            stable = 1
+          else
+            stable = 0
+          end
+          return state[1] if stable >= 2
+
+          last_state = state
           break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
           sleep POLL_INTERVAL_S
         end
+        nil
+      end
+
+      # Ferrum returns the PNG bytes directly when :binary is requested. Images
+      # stay in memory unless the operator explicitly sets a capture directory.
+      def capture_screenshot(page, stage:)
+        bytes = page.screenshot(encoding: :binary, format: "png")
+        return unless bytes.is_a?(String) && bytes.start_with?(PNG_SIGNATURE)
+
+        evidence = { stage:, bytes: bytes.bytesize, sha256: Digest::SHA256.hexdigest(bytes) }
+        directory = ENV["MASTER_WEB_CHAT_SCREENSHOT_DIR"].to_s.strip
+        unless directory.empty?
+          FileUtils.mkdir_p(File.expand_path(directory))
+          provider = @provider.gsub(/[^a-z0-9_-]/i, "_")
+          stamp = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
+          path = File.join(File.expand_path(directory), "#{provider}-#{Process.pid}-#{stamp}-#{stage}-#{evidence[:sha256][0, 10]}.png")
+          File.binwrite(path, bytes)
+          evidence[:path] = path
+        end
+        (@screenshot_evidence ||= []) << evidence.freeze
+        evidence
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "WebChat.screenshot", provider: @provider)
+        nil
       end
 
       def wait_idle(page)
