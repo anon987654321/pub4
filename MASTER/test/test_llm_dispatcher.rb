@@ -467,6 +467,30 @@ end
     assert_equal({ query: "NRK" }, dispatcher.send(:heal_args, wrapper, { q: "NRK" }))
   end
 
+  def test_react_wrappers_receive_keyword_arguments
+    dispatcher, = build_dispatcher
+    observed = {}
+    cases = {
+      Master::Io::WebFetch => { url: "https://nrk.no" },
+      Master::Io::WebBrowse => { url: "https://nrk.no" },
+      Master::Io::Shell => { command: "printf ok" },
+    }
+
+    cases.each do |tool_class, args|
+      tool = tool_class.allocate
+      tool.define_singleton_method(:call) do |**received|
+        observed[tool_class] = received
+        Master::Result.ok("called")
+      end
+
+      assert_equal "called", dispatcher.send(:invoke_react_tool, tool, args)
+    end
+
+    assert_equal "https://nrk.no", observed.fetch(Master::Io::WebFetch).fetch(:url)
+    assert_equal "https://nrk.no", observed.fetch(Master::Io::WebBrowse).fetch(:url)
+    assert_equal "printf ok", observed.fetch(Master::Io::Shell).fetch(:command)
+  end
+
   # A :free id is absent from the registry, so it is zero only where the
   # provider catalog row itself says zero both ways.
   def test_a_free_model_costs_nothing_only_when_the_catalog_says_so
