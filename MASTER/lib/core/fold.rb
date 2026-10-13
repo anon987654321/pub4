@@ -105,12 +105,12 @@ private
       end
 
       contract = admitted.reversibility
-      rollbackable = contract.kind == :reversible
+      rollbackable = contract.restorable?
       checkpoint = @world.checkpoint if rollbackable
       observation = @world.perform(admitted)
       if observation.err?
         observation = undo(checkpoint, admitted, observation) if rollbackable
-        observation = compensate(turn, admitted, observation, contract) if contract.kind == :compensatable
+        observation = compensate(admitted, observation, contract) if contract.compensatable?
       end
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
@@ -132,10 +132,10 @@ private
     # Run only a declared compensation, only after the original command failed,
     # and only after the same Constitution has admitted it and the operator says
     # yes. The compensation is a new exec effect; no inverse bypasses the gate.
-    def compensate(_turn, original, failure, contract)
+    def compensate(effect, failure, contract)
       action = contract.compensation
       inverse = Effect.exec(action.argv)
-      case (verdict = @law.admit(inverse, @memory))
+      case @law.admit(inverse, @memory)
       in Verdict::Block(reason:, by:)
         return Observation.no("#{failure.message} [compensation blocked by #{by}: #{reason}]")
       in Verdict::Request(prompt:, reason:, by:)
