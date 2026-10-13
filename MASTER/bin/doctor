@@ -2,14 +2,15 @@
 # frozen_string_literal: true
 
 require_relative "../lib/boot/entrypoint"
-Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+ROOT = File.expand_path("..", __dir__)
+Master::Boot::Entrypoint.prepare!(root: ROOT)
 
 require "open3"
 require "socket"
 require "yaml"
 require_relative "../lib/trace/dmesg"
 
-ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
 $LOAD_PATH.unshift File.join(ROOT, "lib")
 require "ground/env_loader"
