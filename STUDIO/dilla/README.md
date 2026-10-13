@@ -62,22 +62,25 @@ To hear it, `ruby dilla.rb --play` streams without end, `ruby dilla.rb --progres
 The theory catalogue is explanatory source material; runtime choices still come from the engine's validated data pools. Curated compositions list suggested voice patches and intent so they can be auditioned as distinct arrangements.
 
 
-## Audio-reference analysis and industrial techno
+## Audio-reference analysis and style learning
 
 The reference workflow analyzes the **music only**; it never inspects or downloads video frames. It imports a YouTube audio stream with yt-dlp, measures duration, format, loudness, coarse spectral bands and an estimated tempo with FFmpeg, then optionally runs Demucs and Essentia when their command-line tools are installed.
 
+MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla / boom-bap reference and an industrial-techno reference stay separate. A pasted YouTube link by itself is also treated as a reference. Direct CLI use can name the style explicitly:
+
 ~~~sh
-ruby dilla.rb reference 'https://youtu.be/VIDEO_ID'
+ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --style j_dilla
+ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --style industrial_techno
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --no-stems
 ruby dilla.rb reference /absolute/path/to/audio.wav
 ruby dilla.rb industrial-techno
 ~~~
 
-Dilla chooses the arrangement length from the measured reference duration, within its safe render limit, and creates an internal seed automatically. The chosen seed is written to the render log for traceability; `--bars` and `--seed` are optional expert overrides, not required inputs.
+A J Dilla profile supplies a target tempo and a behind-the-beat groove preference to later Dilla beat renders; a matching industrial-techno profile steers the separate techno renderer. General references remain general and do not silently become techno. Profiles are saved per style as well as marking the latest reference, so learning one style does not overwrite the other style's settings. Dilla chooses arrangement length and an internal seed itself; `--bars` and `--seed` remain optional expert overrides.
 
 Install yt-dlp and FFmpeg for URL import and measurement. To use source separation, install Demucs in a dedicated environment and make its demucs executable available on PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unavailable tools are reported as such and do not become required just to render Dilla's existing showcase.
 
-Reference output, reports, JSON profiles and stems are stored under the user's Documents/dilla-references directory by default, or under XDG_DATA_HOME/dilla-references when XDG_DATA_HOME is set. The latest measured profile steers the separate industrial-techno renderer; the normal Dilla hip-hop renderer and showcase retain their own sound and behaviour.
+Reference output, reports, JSON profiles and stems are stored under the user's Documents/dilla-references directory by default, or under XDG_DATA_HOME/dilla-references when XDG_DATA_HOME is set. Each profile records the user's style hint separately from measured traits: tempo estimates and spectral bands are measurements, while an artist/genre label comes from the request, not an automatic genre classifier.
 
 The industrial-techno command makes a new four-on-the-floor composition with distorted sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It uses broad audio characteristics and never loads reference audio or separated stems into the generated composition. Tempo estimates can be ambiguous between half-time and double-time, and Demucs stems can contain bleed and artifacts.
 
