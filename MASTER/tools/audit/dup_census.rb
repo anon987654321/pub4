@@ -17,7 +17,7 @@
 
 require "digest"
 require "yaml"
-require_relative "../../lib/trace/dmesg
+require_relative "../../lib/trace/dmesg"
 
 module Operator
   module DupCensus
