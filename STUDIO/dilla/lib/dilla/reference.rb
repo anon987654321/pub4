@@ -235,24 +235,24 @@ module Dilla
       File.join(REFERENCE_ROOT, "profiles", key, "latest_profile.json")
     end
 
-    def active_style_path
-      File.join(REFERENCE_ROOT, "active_style.json")
+    def active_style_path(root: REFERENCE_ROOT)
+      File.join(root, "active_style.json")
     end
 
-    def active_style
-      value = JSON.parse(File.read(active_style_path))
+    def active_style(root: REFERENCE_ROOT)
+      value = JSON.parse(File.read(active_style_path(root:)))
       key = style_key(value["style_key"])
       %w[j_dilla industrial_techno].include?(key) ? key : "general"
     rescue Errno::ENOENT, JSON::ParserError, TypeError, NoMethodError
       "general"
     end
 
-    def write_active_style(style)
+    def write_active_style(style, root: REFERENCE_ROOT)
       key = style_key(style)
       return key unless %w[j_dilla industrial_techno].include?(key)
 
-      FileUtils.mkdir_p(REFERENCE_ROOT)
-      File.write(active_style_path, JSON.pretty_generate({ "style_key" => key }) + "\n")
+      FileUtils.mkdir_p(root)
+      File.write(active_style_path(root:), JSON.pretty_generate({ "style_key" => key }) + "\n")
       key
     end
 
