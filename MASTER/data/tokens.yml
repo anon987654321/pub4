@@ -360,8 +360,8 @@ tokens:
       measure_ch: 66
       max_ch: 72
       line_height: 1.5
-      user_token: "$"
-      master_token: "master$"
+      user_token: "user"
+      master_token: "master"
     state:
       modes: [idle, listening, thinking, working, speaking, warning, error, sleeping, ready]
       default_mode: idle
