@@ -106,7 +106,9 @@ module Dilla
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
       profile = profile_for(mix, style: options[:style])
-      profile.fetch("features").merge!(stem_energy_features(tracks))
+      stem_features = stem_energy_features(tracks)
+      profile.fetch("features").merge!(stem_features)
+      apply_stem_balance(profile, stem_features)
       profile.merge!(
         "source_duration_seconds" => mix["duration_seconds"],
         "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16]
@@ -309,6 +311,21 @@ module Dilla
       number.finite? ? number : nil
     rescue ArgumentError, TypeError
       nil
+    end
+
+    # Let the separated bass and drum energy gently steer industrial rumble.
+    # These are bounded mix decisions, not claims that stems are clean multitracks.
+    def apply_stem_balance(profile, features)
+      parameters = profile["parameters"]
+      return profile unless parameters.is_a?(Hash)
+
+      bass_share = numeric_value(features["bass_energy_share"])
+      drum_share = numeric_value(features["drums_energy_share"])
+      rumble = numeric_value(parameters["rumble_level"])
+      duck = numeric_value(parameters["rumble_duck_depth"])
+      parameters["rumble_level"] = (rumble + (bass_share - 0.25) * 0.12).clamp(0.05, 0.35).round(3) if bass_share && rumble
+      parameters["rumble_duck_depth"] = (duck + (drum_share - 0.25) * 0.22).clamp(0.3, 0.95).round(3) if drum_share && duck
+      profile
     end
 
     # Demucs gives broad source roles rather than isolated kick/snare/hats.
