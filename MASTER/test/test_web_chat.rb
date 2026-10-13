@@ -112,6 +112,32 @@ class TestWebChat < Minitest::Test
     assert_equal %w[loaded submitted answered], chat.screenshot_evidence.map { |row| row.fetch(:stage) }
   end
 
+  def test_broad_container_with_the_prompt_and_answer_is_not_an_assistant_reply
+    chat = build_chat
+    chat.instance_variable_set(:@submitted_text, "What is new?")
+    container = FakeNode.new(nil, "What is new? Fresh answer.")
+
+    refute chat.send(:reply_candidate?, container)
+  end
+
+  def test_screenshot_files_and_directory_are_private
+    require "tmpdir"
+    old = ENV["MASTER_WEB_CHAT_SCREENSHOT_DIR"]
+    Dir.mktmpdir("master-web-chat-test") do |root|
+      target = File.join(root, "captures")
+      ENV["MASTER_WEB_CHAT_SCREENSHOT_DIR"] = target
+      chat = build_chat
+      chat.instance_variable_set(:@screenshot_evidence, [])
+      chat.send(:capture_screenshot, FakePage.new, stage: "loaded")
+      path = chat.screenshot_evidence.fetch(0).fetch(:path)
+
+      assert_equal 0o700, File.stat(target).mode & 0o777
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  ensure
+    old.nil? ? ENV.delete("MASTER_WEB_CHAT_SCREENSHOT_DIR") : ENV["MASTER_WEB_CHAT_SCREENSHOT_DIR"] = old
+  end
+
   def test_screenshots_are_not_saved_without_an_explicit_directory
     old = ENV.delete("MASTER_WEB_CHAT_SCREENSHOT_DIR")
     chat = build_chat
