@@ -89,7 +89,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -177,7 +177,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -271,7 +271,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -359,7 +359,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -453,7 +453,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -561,7 +561,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -655,7 +655,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
@@ -749,7 +749,7 @@
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -16,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
           "gate": 0.64
         }
