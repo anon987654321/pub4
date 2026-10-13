@@ -71,7 +71,7 @@ module Master
       # Browser writes are never approved by unattended mode or a remembered
       # "always allow" choice. Consent covers one concrete interaction only.
       def human_consent_required?(tool_name, description)
-        tool_name.to_s == "browser_agent" && description.to_s.start_with?("interact ")
+        tool_name.to_s == "browser" && description.to_s.start_with?("interact ")
       end
 
       def check_rate_limit!(tier)
