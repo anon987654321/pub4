@@ -37,6 +37,7 @@ module Master
         end
 
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
+        return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if public_research_request?(text)
 
         intercepted = deterministic_intercept(text, container:)
         return intercepted if intercepted
@@ -228,6 +229,20 @@ module Master
       # entirely and talks straight to the agent, which already carries the
       # persona system prompt, model routing, and visitor-scoped tools
       # (AskLlm/WebSearch — see Fiber[:master_visitor] in tool_registry.rb).
+      # Public-site reading belongs to the tool-capable chat agent, not the
+      # coding Fold. A news request must reach Browser/WebBrowse instead of
+      # proposing an HTTP effect under the plan profile, which has no network.
+      PUBLIC_RESEARCH_ACTION = /\b(?:go to|open|visit|browse|crawl|read|fetch|check|look at|search|summari[sz]e|give me|tell me|latest|current|today(?:['’]s)?|headlines?|news)\b/i.freeze
+      PUBLIC_SITE = %r{(?:\bhttps?://|\bwww\.)[a-z0-9.-]+\.[a-z]{2,}}i.freeze
+      PUBLIC_RESEARCH_MUTATION = /\b(?:commit|deploy|delete|edit|modify|update|change|purchase|buy|pay|book|send|post|publish|submit|comment)\b/i.freeze
+
+      def public_research_request?(text)
+        value = text.to_s.strip
+        return false if value.empty? || value.match?(PUBLIC_RESEARCH_MUTATION)
+
+        value.match?(PUBLIC_SITE) && value.match?(PUBLIC_RESEARCH_ACTION)
+      end
+
       def casual?(text)
         return false if text.match?(FoldRisk::HIGH_PATTERNS) || text.match?(FoldRisk::MEDIUM_PATTERNS)
 
