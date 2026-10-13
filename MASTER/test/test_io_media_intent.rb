@@ -312,7 +312,9 @@ end
         "https://www.youtube.com/embed/mx9NU4LmDwM"
       ]
       begin
-        with_dispatch_stub(lambda { |**| Master::Result.ok("reference0: analyzed audio") }) do
+        with_dispatch_stub(lambda do |**kwargs|
+          Master::Result.ok("reference0: analyzed audio")
+        end) do
           urls.each do |url|
             result = MediaIntent.dispatch(url, root: "/tmp/pub4")
             assert result.ok?, "#{url}: #{result.inspect}"
