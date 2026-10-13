@@ -191,7 +191,8 @@ module Master
           return true if model.to_s.end_with?(":free", ":cloud", "-cloud")
           return false unless hosted_model?(model)
 
-          hosted_endpoint_for(model)&.fetch(:key, nil).nil?
+          endpoint = hosted_endpoint_for(model)
+          endpoint && endpoint.fetch(:key, nil).nil?
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "model_router.free_api_model", model:)
           false
