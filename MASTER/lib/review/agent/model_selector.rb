@@ -47,9 +47,16 @@ module Master
           task = @model_router.classify_intent(message) if task == :general && message
           chain = @model_router.fallback_chain(task_type: task)
           bias = @homeostat&.model_tier_bias
-          return cheap_first(chain) if bias == :cheap
-          return strong_first(chain) if bias == :strong
-          chain
+          chain = cheap_first(chain) if bias == :cheap
+          chain = strong_first(chain) if bias == :strong
+
+          # Cost/quality bias may reorder within the available pool, but never
+          # move browser chat or local compute ahead of the declared fallback ladder.
+          if @model_router.respond_to?(:priority_fallback_order, true)
+            @model_router.send(:priority_fallback_order, chain)
+          else
+            chain
+          end
         rescue StandardError => e
           @bus&.publish("llm:route_error", error: e.message)
           [@config.model]
