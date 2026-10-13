@@ -6,10 +6,13 @@ class TestWebChat < Minitest::Test
   class FakeNode
     attr_reader :text
 
-    def initialize(page, text = "")
+    def initialize(page, text = "", attributes = {})
       @page = page
       @text = text
+      @attributes = attributes
     end
+
+    def attribute(name) = @attributes[name]
 
     def focus = self
 
@@ -45,11 +48,14 @@ class TestWebChat < Minitest::Test
 
     def css(_selector)
       @reply_reads += 1
-      old = FakeNode.new(self, "Earlier answer.")
+      old = FakeNode.new(self, "Earlier answer.", "data-message-author-role" => "assistant")
       return [old] unless @submitted
-      return [old] if @reply_reads < 3
 
-      [old, FakeNode.new(self, @repeated ? "Earlier answer." : @answer)]
+      user = FakeNode.new(self, @prompt, "class" => "message user")
+      return [old, user] if @reply_reads < 3
+
+      answer = @repeated ? "Earlier answer." : @answer
+      [old, user, FakeNode.new(self, answer, "data-message-author-role" => "assistant")]
     end
 
     def submit(text)
