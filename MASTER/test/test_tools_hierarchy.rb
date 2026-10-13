@@ -200,13 +200,13 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes source, 'bundle exec ruby tools/audit/design_baseline.rb'
   end
 
-  def test_path_ownership_declares_the_design_tools_family
+  def test_design_baseline_is_owned_by_the_audit_family
     ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
     row = ownership.fetch("tools/audit/")
 
-    assert_includes row.fetch("purpose"), "design baseline"
+    assert_includes row.fetch("purpose"), "design baseline measurements"
     assert_equal "medium", row.fetch("risk")
-    assert_includes row.fetch("check"), "test_tools_hierarchy.rb"
+    assert_includes row.fetch("check"), "test_capability_inventory.rb"
   end
 
   def test_speech_regression_tests_live_under_the_voice_test_family
