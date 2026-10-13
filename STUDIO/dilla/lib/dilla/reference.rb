@@ -355,7 +355,7 @@ module Dilla
           }, "production" => "straight four-on-the-floor; distorted rumble; metallic hits; evolving industrial textures; no hip-hop swing")
       when "j_dilla"
         common.merge("genre" => "hip_hop", "target_bpm" => bpm ? bpm.clamp(70, 110).round : 88,
-          "groove_profile" => "behind_the_beat",
+          "groove_profile" => "dilla_shadow",
           "production" => "sample-led hip-hop reference; laid-back pocket; syncopated boom-bap drums; warm, slightly imperfect texture")
       else
         common.merge("genre" => "general", "target_bpm" => bpm&.round,
