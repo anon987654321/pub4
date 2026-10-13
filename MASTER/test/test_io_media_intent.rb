@@ -392,6 +392,33 @@ end
     end
   end
 
+  def test_explicit_general_reference_does_not_inherit_the_active_style
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      root = File.join(dir, "dilla-references")
+      FileUtils.mkdir_p(root)
+      File.write(File.join(root, "active_style.json"), JSON.generate("style_key" => "j_dilla"))
+      File.write(File.join(root, "latest_profile.json"), JSON.generate("style_key" => "j_dilla"))
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          Master::Result.ok("reference0: analyzed audio")
+        end) do
+          url = "https://youtu.be/mx9NU4LmDwM?si=general"
+          result = MediaIntent.dispatch("analyze this as a neutral reference: #{url}", root: dir)
+          assert result.ok?, result.inspect
+          assert_equal "general", result.value!.fetch(:style)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+      assert_equal ["reference", "https://youtu.be/mx9NU4LmDwM?si=general"], argv
+    end
+  end
+
   def test_active_style_survives_a_general_latest_reference
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
