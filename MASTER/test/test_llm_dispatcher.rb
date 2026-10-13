@@ -49,7 +49,7 @@ class TestLLMDispatcher < Minitest::Test
     assert door.record(false, "any-model", reason: "agy: quota reached"), "the last failure must report the trip"
     assert door.silent?("any-model")
 
-    refused = dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
+    refused = dispatcher.send_with_cache("any-model:x", [{ role: "user", content: "hi" }])
     assert_predicate refused, :err?
     assert_equal :no_api_key, refused.category
     assert_match(/no any-model answer.*last: agy: quota reached/, refused.message)

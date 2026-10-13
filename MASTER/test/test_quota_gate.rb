@@ -36,7 +36,9 @@ class TestQuotaGate < Minitest::Test
 
     rule = Master::Review::Scan::Laws::AdversarialLaw.new.set_agent(agent)
 
-    assert_empty rule.check("def a = 1\n", path: "x.rb")
+    error = assert_raises(RuntimeError) { rule.check("def a = 1\n", path: "x.rb") }
+
+    assert_match(/semantic assessment INCONCLUSIVE/, error.message, "an unmeasured tier is not a clean file")
     assert_equal ["semantic Laws"], Gate.skipped_tiers
   end
 
@@ -171,7 +173,9 @@ class TestQuotaGate < Minitest::Test
     end.new
     rule = Master::Review::Scan::Laws::AdversarialLaw.new.set_agent(broke)
 
-    assert_empty rule.check("def a = 1\n", path: "x.rb")
+    error = assert_raises(RuntimeError) { rule.check("def a = 1\n", path: "x.rb") }
+
+    assert_match(/semantic assessment INCONCLUSIVE/, error.message)
     assert Gate.blocked?, "the first refusal closes the gate for the whole tier"
     assert_equal :exhausted, Gate.state
   end
