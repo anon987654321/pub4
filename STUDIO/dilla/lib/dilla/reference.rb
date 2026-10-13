@@ -109,6 +109,7 @@ module Dilla
       rhythm = rhythm_features(drum_source, ffmpeg:, max_duration: options[:max_duration], bpm: mix.dig("tempo", "bpm"))
       profile = profile_for(mix, style: options[:style])
       profile.fetch("features").merge!(rhythm)
+      apply_rhythm_balance(profile, rhythm)
       stem_features = stem_energy_features(tracks)
       profile.fetch("features").merge!(stem_features)
       apply_stem_balance(profile, stem_features)
@@ -314,6 +315,24 @@ module Dilla
       number.finite? ? number : nil
     rescue ArgumentError, TypeError
       nil
+    end
+
+    # Use observed rhythmic density to make small bounded changes to techno
+    # ornament density. The renderer remains straight 4/4; this never imports notes.
+    def apply_rhythm_balance(profile, features)
+      return profile unless profile["style_key"] == "industrial_techno"
+
+      parameters = profile["parameters"]
+      return profile unless parameters.is_a?(Hash)
+
+      density = numeric_value(features["onset_density_per_bar"])
+      return profile unless density
+
+      hat = numeric_value(parameters["hat_probability"])
+      metal = numeric_value(parameters["metal_probability"])
+      parameters["hat_probability"] = (hat + ((density - 16.0) / 16.0) * 0.08).clamp(0.1, 0.98).round(3) if hat
+      parameters["metal_probability"] = (metal + ((density - 16.0) / 16.0) * 0.06).clamp(0.02, 0.45).round(3) if metal
+      profile
     end
 
     # Let the separated bass and drum energy gently steer industrial rumble.
