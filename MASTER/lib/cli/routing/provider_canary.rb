@@ -61,14 +61,29 @@ module Master
 
         private
 
-        # A lane marked dead on a guessed wait is asked again here: revived, then
-        # probed, and a lane still spent marks itself dead again from that reply.
+        # Timed/unknown quota deaths are revived and tested. Manual exclusions get
+        # one real canary probe per run; a successful answer retires the stale
+        # exclusion in the effective state, without editing operator-owned data/.
         def retest_dead_lanes
           Master::Io::LaneQuota.due_probes.each do |lane|
             model = Master::Io::LaneHealth.model_for_lane(lane)
+            next unless model
+
             Master::Io::LaneQuota.revive(lane)
-            probe(model) if model
+            probe(model)
           end
+
+          return unless defined?(Master::Review::Agent) && @agent.is_a?(Master::Review::Agent)
+
+          manual_models = Master::Io::LaneQuota.manual_dead.filter_map do |lane|
+            model = Master::Io::LaneHealth.model_for_lane(lane)
+            [lane, model] if model
+          end.to_h
+          lane = Master::Io::LaneQuota.due_manual_probes(known: manual_models.keys, limit: 1).first
+          return unless lane
+
+          result = Master::Io::LaneQuota.with_manual_probe(lane) { probe(manual_models.fetch(lane)) }
+          Master::Io::LaneQuota.revive_manual(lane) if result[:ok]
         end
 
         def probe(model)
