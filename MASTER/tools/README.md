@@ -16,7 +16,9 @@ judge files by the laws with no model, and `bin/operator doctor` to check the
 environment's known traps. `sweep.rb` runs the census instruments in one pass
 and reports them in dmesg form. It measures and proposes, and it never edits.
 
-Voice tooling is grouped in `voice/`: `voice_benchmark.rb`, `voice_measure.rb` and `voice_quality.rb` are canonical there. Their former `tools/` root paths remain thin command-compatible entrypoints while callers migrate. Runtime speech and TTS implementations remain in `lib/voice/`.
+Research and benchmarking tools live in `research/`: cognition outcome benchmarking, mutation-oriented challenge checks, and LLM trajectory reporting. Their former `tools/` root paths remain compatibility entrypoints for existing invocations.
+
+Voice tooling is grouped in `voice/`: `voice_benchmark.rb`, `voice_measure.rb` and `voice_quality.rb` are canonical there. Their former `tools/` root paths remain thin command-compatible entrypoints for existing invocations. Runtime speech and TTS implementations remain in `lib/voice/`.
 
 The Rails tooling lives in `rails/`. The operator reaches it as `triangle` to
 boot brgen, amber, bsdports and the MASTER face, as `premerge`, as `ci` and as
