@@ -26,6 +26,10 @@ module Master
       PROBE_EVERY_S = 600
       UNKNOWN_PREFIX = "unknown:"
       REASON_PREFIX = "reason:"
+      MANUAL_PROBE_PREFIX = "manual-probe:"
+      MANUAL_REVIVED_PREFIX = "manual-revived:"
+      MANUAL_PROBE_EVERY_S = 3600
+      MANUAL_PROBE_KEY = :master_lane_quota_manual_probe
       REASON_TEXT = {
         "quota" => "quota spent",
         "unreachable" => "unreachable",
@@ -112,6 +116,53 @@ module Master
         end
       end
 
+      # Manual exclusions describe lanes that previously failed, not eternal bans.
+      # A canary can recheck one known model per run; failed probes cool down,
+      # while a verified answer becomes a durable runtime override of the stale row.
+      def due_manual_probes(every: MANUAL_PROBE_EVERY_S, known: nil, limit: 1)
+        now = @clock.call
+        allowed = known && Array(known).map(&:to_s)
+        manual_dead.filter_map do |lane|
+          next if allowed && !allowed.include?(lane)
+
+          due = @mutex.synchronize do
+            rows = raw
+            active = rows.any? do |key, deadline|
+              next false if key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX, MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX)
+              next false unless deadline.is_a?(Numeric) && deadline > now
+
+              lane.start_with?(key) || key.start_with?(lane)
+            end
+            next false if active
+
+            key = MANUAL_PROBE_PREFIX + lane
+            last = rows[key]
+            next false if last.is_a?(Numeric) && now - last < every
+
+            write(rows.merge(key => now))
+            true
+          end
+          lane if due
+        end.first([limit.to_i, 1].max)
+      end
+
+      # Bypass one configured exclusion only for the current synchronous canary.
+      def with_manual_probe(lane)
+        previous = Thread.current[MANUAL_PROBE_KEY]
+        Thread.current[MANUAL_PROBE_KEY] = lane.to_s
+        yield
+      ensure
+        Thread.current[MANUAL_PROBE_KEY] = previous
+      end
+
+      # Evidence that a manual exclusion has recovered. The source data remains
+      # operator-owned; its effective view drops the prefix after a successful probe.
+      def revive_manual(lane)
+        @mutex.synchronize do
+          write(raw.merge(MANUAL_REVIVED_PREFIX + lane.to_s => true))
+        end
+      end
+
       # Clears a lane so the next call asks it; a lane still spent is marked again by that call.
       def revive(lane)
         @mutex.synchronize { write(raw.reject { |key, _| [lane, UNKNOWN_PREFIX + lane, REASON_PREFIX + lane].include?(key) }) }
@@ -139,7 +190,8 @@ module Master
       # Epoch deadline, :manual for the hand-kept list, :run for a lane dropped for this run, or nil when the lane is live.
       def until_for(model, manual: manual_dead)
         lane = lane_of(model)
-        return :manual if manual.any? { |entry| model.to_s.start_with?(entry) }
+        excluded = manual.find { |entry| model.to_s.start_with?(entry) }
+        return :manual if excluded && Thread.current[MANUAL_PROBE_KEY].to_s != excluded
         return :run if @mutex.synchronize { @run_drops.key?(lane) }
 
         deadlines = @mutex.synchronize { table }
@@ -149,7 +201,9 @@ module Master
       end
 
       # lane => deadline, expired rows dropped; the file is the shared truth.
-      def table = raw.reject { |key, _| key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX) }
+      def table = raw.reject do |key, _|
+        key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX, MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX)
+      end
 
       # The most specific live status row for a model. The OpenRouter daily
       # free-pool limit covers every :free model; other failures remain vendor-scoped.
@@ -166,9 +220,14 @@ module Master
 
       def raw
         rows = YAML.safe_load_file(path) || {}
-        live = rows.select { |_lane, deadline| deadline.is_a?(Numeric) && deadline > @clock.call }
+        live = rows.select { |key, deadline| !key.start_with?(MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX) &&
+                                                   deadline.is_a?(Numeric) && deadline > @clock.call }
         why = rows.select { |key, reason| key.start_with?(REASON_PREFIX) && reason.is_a?(String) && live.key?(key.delete_prefix(REASON_PREFIX)) }
-        live.merge(why)
+        metadata = rows.select do |key, value|
+          (key.start_with?(MANUAL_PROBE_PREFIX) && value.is_a?(Numeric)) ||
+            (key.start_with?(MANUAL_REVIVED_PREFIX) && value == true)
+        end
+        live.merge(why).merge(metadata)
       rescue Errno::ENOENT
         {}
       rescue StandardError => e
@@ -193,7 +252,14 @@ module Master
       # Entries are plain strings or "agy:" which YAML reads as a one-key map.
       def manual_dead(source = DATA)
         list = source.is_a?(Hash) ? source["dead"] : YAML.safe_load_file(source)&.fetch("dead", nil)
-        Array(list).flat_map { |e| e.is_a?(Hash) ? e.keys : [e] }.map { |e| e.to_s.strip.chomp(":") }.reject(&:empty?)
+        entries = Array(list).flat_map { |e| e.is_a?(Hash) ? e.keys : [e] }
+                          .map { |e| e.to_s.strip.chomp(":") }.reject(&:empty?)
+        return entries unless source == DATA
+
+        revived = raw.filter_map do |key, value|
+          key.delete_prefix(MANUAL_REVIVED_PREFIX) if key.start_with?(MANUAL_REVIVED_PREFIX) && value == true
+        end
+        entries.reject { |entry| revived.include?(entry) }
       rescue StandardError => e
         swallow(e, "Io::LaneQuota.manual_dead")
         []
