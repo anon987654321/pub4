@@ -28,12 +28,16 @@ class MediaIntentSpec < Minitest::Test
       Drum patterns: boom_bap, offbeat_inversion, sparse
       Groove profiles: late_snare, behind_the_beat, dry
   TEXT
+  DILLA_LISTING = LISTING.sub(
+    "Drum patterns: boom_bap, offbeat_inversion, sparse",
+    "Drum patterns: dilla_shadow, dilla_broken, dusty_laid_back, boom_bap, offbeat_inversion, sparse"
+  )
 
   # Answers --list with the menu and records every other call; a render "writes" its --out.
-  def dilla_runner(calls)
+  def dilla_runner(calls, listing: LISTING)
     lambda do |**kwargs|
       calls << kwargs
-      next Master::Result.ok(LISTING) if kwargs[:arg] == "--list"
+      next Master::Result.ok(listing) if kwargs[:arg] == "--list"
 
       out = Shellwords.split(kwargs[:arg].to_s).each_cons(2).find { |flag, _| flag == "--out" }&.last
       File.write(out, "RIFF") if out
@@ -537,7 +541,7 @@ end
       begin
         with_dispatch_stub(lambda do |**kwargs|
           calls << kwargs
-          next Master::Result.ok(LISTING) if kwargs[:arg] == "--list"
+          next Master::Result.ok(DILLA_LISTING) if kwargs[:arg] == "--list"
 
           Master::Result.ok(kwargs[:arg].start_with?("reference ") ? "reference0: analyzed audio" : "dilla0: rendered")
         end) do
@@ -558,7 +562,7 @@ end
       assert_equal "dilla", calls.last.fetch(:tool)
       assert_equal "kit_dust", render[render.index("--kit") + 1]
       assert_equal "rhodes_mark1", render[render.index("--voice") + 1]
-      assert_includes %w[boom_bap], render[render.index("--drums") + 1]
+      assert_equal "dilla_shadow", render[render.index("--drums") + 1]
     end
   end
 
@@ -662,18 +666,23 @@ end
       FileUtils.mkdir_p(File.join(reference_root, "profiles", "j_dilla"))
       profile = JSON.generate(
         "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "behind_the_beat",
-        "features" => { "drums_energy_share" => 0.5, "other_energy_share" => 0.375 }
+        "features" => {
+          "drums_energy_share" => 0.5, "other_energy_share" => 0.375,
+          "timing_spread_ms" => 20.0, "onset_density_per_bar" => 15.0, "offbeat_onset_share" => 0.7
+        }
       )
       File.write(File.join(reference_root, "latest_profile.json"), profile)
       File.write(File.join(reference_root, "profiles", "j_dilla", "latest_profile.json"), profile)
       File.write(File.join(reference_root, "active_style.json"), JSON.generate("style_key" => "j_dilla"))
       calls = []
       begin
-        with_dispatch_stub(dilla_runner(calls)) do
+        with_dispatch_stub(dilla_runner(calls, listing: DILLA_LISTING)) do
           result = MediaIntent.render_dilla("make a beat", root: dir)
           assert result.ok?, result.inspect
           assert_equal "behind_the_beat", result.value!.fetch(:groove)
           assert_equal 92, result.value!.fetch(:bpm)
+          assert_equal "dilla_broken", result.value!.fetch(:drums)
+          assert_equal 1.14, result.value!.fetch(:groove_scale)
         end
       ensure
         saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
@@ -681,7 +690,8 @@ end
       words = Shellwords.split(calls.last.fetch(:arg))
       assert_equal "behind_the_beat", words[words.index("--profile") + 1]
       assert_equal "92", words[words.index("--bpm") + 1]
-      assert_equal "dilla_shadow", words[words.index("--drums") + 1]
+      assert_equal "dilla_broken", words[words.index("--drums") + 1]
+      assert_equal "1.14", words[words.index("--groove") + 1]
       assert_equal "kit_dust", words[words.index("--kit") + 1]
       assert_equal "rhodes_mark1", words[words.index("--voice") + 1]
       assert_equal "cassette", words[words.index("--sonitex") + 1]
