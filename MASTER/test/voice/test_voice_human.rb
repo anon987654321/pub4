@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../test_helper"
 
 # Text shaping, the human profile, its engine fallback, seeded variation and
 # clause streaming order. Nothing here synthesises audio or plays anything.

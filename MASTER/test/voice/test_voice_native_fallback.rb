@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../test_helper"
 
 class TestVoiceNativeFallback < Minitest::Test
   def test_fix_narration_voice_has_a_native_macos_fallback

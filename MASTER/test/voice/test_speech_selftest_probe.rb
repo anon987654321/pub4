@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../test_helper"
 require "digest"
 
 # Pins the gap that made `edge_tts_available?` a false positive. It answers with

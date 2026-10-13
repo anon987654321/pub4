@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "test_helper"
+require_relative "../test_helper"
 
 class TtsMlxTest < Minitest::Test
   def test_chatterbox_mlx_script_uses_expression_controls_and_english_language
