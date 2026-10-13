@@ -123,8 +123,10 @@ module Dilla
       FileUtils.mkdir_p(File.dirname(scoped_profile))
       File.write(scoped_profile, JSON.pretty_generate(profile) + "\n")
       write_report(File.join(directory, "report.md"), tracks, separation, profile)
-      puts "reference0: style=#{profile.fetch('style_key')}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
+      puts "reference0: style_hint=#{profile.fetch('style_key')}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
+      puts "reference0: profile target_bpm=#{profile['target_bpm'] || 'unknown'} groove=#{profile['groove_profile'] || 'unspecified'} features=#{JSON.generate(profile.fetch('features', {}))}"
+      puts "reference0: parameters=#{JSON.generate(profile.fetch('parameters', {}))}" unless profile.fetch("parameters", {}).empty?
       puts "reference0: report=#{File.join(directory, 'report.md')}"
       0
     end
