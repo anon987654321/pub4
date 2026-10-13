@@ -75,7 +75,7 @@ module Master
           return analyze_and_generate_reference(text, root:) if reference_generation_request?(text)
           return analyze_reference(text, root:)
         end
-        if reference_followup_request?(text) && !text.match?(INDUSTRIAL_TECHNO_RE) && !text.match?(TECHNO_TRACK_RE)
+        if reference_followup_request?(text) && !text.match?(INDUSTRIAL_TECHNO_RE) && !text.match?(TECHNO_TRACK_RE) && !text.match?(LIVE_STYLE_RE)
           return generate_from_reference(text, root:)
         end
         return generate_kick(text, root:) if text.match?(KICK_RE)
