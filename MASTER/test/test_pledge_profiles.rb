@@ -54,6 +54,27 @@ class PledgeProfileTest < Minitest::Test
     )
   end
 
+  def test_boot_stages_set_execpromises_for_all_descendants
+    pledge = Master::Ground::Pledge
+    calls = []
+
+    pledge.stub(:pledge, ->(promises, execpromises = nil) { calls << [promises, execpromises] }) do
+      pledge.stub(:unveil, ->(*) {}) do
+        pledge.stub(:lock_unveil!, -> {}) do
+          pledge.stage1_boot!(Dir.pwd)
+          pledge.stage2_lock!
+        end
+      end
+    end
+
+    assert_equal [
+      [pledge::STAGE1_PROMISES, pledge::EXEC_PROMISES],
+      [pledge::STAGE2_PROMISES, pledge::EXEC_PROMISES],
+    ], calls
+    refute_includes pledge::EXEC_PROMISES.split, "unveil"
+    assert_includes pledge::EXEC_PROMISES.split, "exec"
+  end
+
   def test_unknown_profile_is_rejected
     assert_raises(KeyError) { Master::Ground::Pledge.profile(:unknown) }
   end

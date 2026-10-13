@@ -49,8 +49,14 @@ module Master
       end
 
       GEM_DIRS = [".local/share/gem", ".gem"].freeze
-      STAGE1_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error"
       STAGE2_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty prot_exec error"
+      STAGE1_PROMISES = "#{STAGE2_PROMISES} unveil"
+
+      # Always set execpromises before the first child can spawn. OpenBSD otherwise
+      # starts exec'd children without pledge; a wheel/doas caller could then execute
+      # a setuid helper outside this process's promise restrictions. With execpromises
+      # set, OpenBSD refuses setuid/setgid execs and descendants inherit this profile.
+      EXEC_PROMISES = STAGE2_PROMISES
 
       Profile = Data.define(:name, :capabilities, :promises) do
         def initialize(name:, capabilities:, promises:)
@@ -81,7 +87,7 @@ module Master
       end
 
       def stage1_boot!(root)
-        pledge(STAGE1_PROMISES)
+        pledge(STAGE1_PROMISES, EXEC_PROMISES)
         unveil("/", "")
         unveil(root, "rwc")
         unveil(Dir.home, "rwc")
@@ -103,7 +109,7 @@ module Master
 
       def stage2_lock!
         lock_unveil!
-        pledge(STAGE2_PROMISES)
+        pledge(STAGE2_PROMISES, EXEC_PROMISES)
       end
     end
   end
