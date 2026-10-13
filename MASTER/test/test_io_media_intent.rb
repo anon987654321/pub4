@@ -316,6 +316,40 @@ end
     end
   end
 
+  def test_multiple_youtube_links_in_one_message_share_the_style_hint
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      urls = [
+        "https://youtu.be/mx9NU4LmDwM?si=first",
+        "https://youtu.be/abcdefghijk?si=second"
+      ]
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          Master::Result.ok("reference0: analyzed audio")
+        end) do
+          request = "learn the J Dilla sound from these tracks: #{urls.join(' and ')}"
+          result = MediaIntent.dispatch(request, root: "/tmp/pub4")
+          assert result.ok?, result.inspect
+          assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+          assert_equal "j_dilla", result.value!.fetch(:style)
+          assert_equal 2, result.value!.fetch(:source_count)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      assert_equal 2, calls.size
+      calls.each_with_index do |call, index|
+        argv = Shellwords.split(call.fetch(:arg))
+        assert_equal "reference", argv.first
+        assert_equal urls[index], argv[1]
+        assert_equal "j_dilla", argv[argv.index("--style") + 1]
+      end
+    end
+  end
+
   def test_short_and_embedded_youtube_links_are_audio_references
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
