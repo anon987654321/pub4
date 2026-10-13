@@ -13,7 +13,7 @@ class TestFixKernel < Minitest::Test
     Dir.mktmpdir("pub4-kernel") do |root|
       File.write(File.join(root, ".pub4"), <<~YAML)
         schema: 1
-        tree: master
+        tree: #{File.basename(root).downcase}
         allows:
           master: #{access}
         adapters: []

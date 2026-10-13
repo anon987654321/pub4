@@ -34,6 +34,8 @@ module Master
         def modified = modified_paths
 
         def sacred_path?(path)
+          return true if sacred_paths.include?("*")
+
           candidate = path.to_s.tr("\\", "/").sub(%r{\A\./}, "")
           sacred_paths.any? do |prefix|
             value = prefix.to_s.tr("\\", "/").sub(%r{\A\./}, "")
@@ -162,7 +164,7 @@ module Master
         files_ok
       end
 
-      def fix(path = @root, max_iterations: 100)
+      def fix(path = @root, max_iterations: 100, laws: @laws)
         target = resolve_path(path)
         run_id = SecureRandom.hex(12)
         append_event("run_started", {
@@ -171,12 +173,12 @@ module Master
         last_observation = nil
         last_repair = nil
         iterations = 0
-        laws = @laws || default_laws
+        selected_laws = laws || default_laws
 
         while iterations < Integer(max_iterations)
           iterations += 1
           last_observation = observe(target, run_id:)
-          firing_law = laws.find do |law|
+          firing_law = selected_laws.find do |law|
             result = law.check.call(last_observation)
             raise "law #{law.name} returned a non-boolean result" unless result == true || result == false
 
@@ -492,7 +494,7 @@ module Master
       rescue StandardError
         # Failure to load the constitutional path list is fail-closed: a sentinel
         # matches every path in the tree, so the sacred law escalates.
-        ["."]
+        ["*"]
       end
 
       def tracked_soul(path)
