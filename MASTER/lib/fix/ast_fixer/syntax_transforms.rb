@@ -125,8 +125,8 @@ module Master
 
           # CONST << / CONST.push later in the file means the empty literal is
           # an accumulator, and freezing it arms a FrozenError that only fires
-          # on the first append — RAILS/gates/release.rb's FAILURES crashed
-          # exactly when it had a failure to report (2026-08-18).
+          # on the first append — a failure list crashes exactly when it has a
+          # failure to report.
           MUTATING_SENDS = /\s*(?:<<|\[[^\]]*\]\s*=|\.(?:push|append|unshift|prepend|concat|pop|shift|clear|delete|delete_if|store|update|merge!|replace|insert)\b)/
 
           def freeze_mutable_constants(src)
