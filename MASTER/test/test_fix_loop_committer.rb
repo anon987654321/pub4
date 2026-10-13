@@ -342,6 +342,29 @@ end
     assert_match(/cannot establish fix transaction baseline: .*git status unavailable/, error.message)
   end
 
+  # The lint step builds its command from Operator::RubyRunner. An unqualified constant inside
+  # the Master namespace raised NameError, which the lint tests above read as 'rubocop
+  # unavailable' and so passed for the wrong reason. With rubocop answering success the commit
+  # has to go through, and the command has to be a real bundle exec.
+  def test_a_passing_lint_lets_the_commit_through_and_builds_a_bundle_command
+    write_file("Gemfile", "source 'https://rubygems.org'\n")
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new([], ["lib/ok.rb"])
+    bus = FakeBus.new
+    passed = Struct.new(:success?).new(true)
+    seen = nil
+
+    out, = capture_io do
+      Master::Io::Exec.stub(:capture3, ->(*cmd, **) { seen = cmd; ["", "", passed] }) { run_committer(git, bus, "fix: ok") }
+    end
+
+    refute_includes out, "rubocop_unavailable"
+    refute blocked?(bus)
+    assert_equal 1, git.commits.size
+    assert_includes seen, "rubocop"
+    assert_includes seen, "exec"
+  end
+
   def test_lint_command_exception_blocks_the_commit
     write_file("Gemfile", "source 'https://rubygems.org'\n")
     write_file("lib/ok.rb", "OK = 1\n")
