@@ -477,6 +477,7 @@ end
       assert_equal "92", words[words.index("--bpm") + 1]
       assert_equal "boom_bap", words[words.index("--drums") + 1]
       assert_equal "kit_dust", words[words.index("--kit") + 1]
+      assert_equal "rhodes_mark1", words[words.index("--voice") + 1]
       assert_equal "cassette", words[words.index("--sonitex") + 1]
       assert_equal "3", words[words.index("--sonitex-instances") + 1]
       assert_equal "heavy", words[words.index("--drum-tape") + 1]
