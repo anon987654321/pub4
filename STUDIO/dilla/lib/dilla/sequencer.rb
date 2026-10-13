@@ -281,7 +281,7 @@ class Sequencer
   # The drums laid over the chords, each role at its mix level; the kick is added after the
   # duck, so the pump never touches it. With a summing colour the drums are a bus of their
   # own and the sum is coloured again; the sum never exceeds full scale.
-  def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0, sonitex: nil)
+  def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0, sonitex: nil, tape: nil)
     drum_bus = (vcs.positive? || sonitex) ? Array.new(chord_buf.size, 0.0) : nil
     out = drum_bus || chord_buf.dup
     hits.each_with_index do |(role, time), hit_index|
@@ -305,6 +305,13 @@ class Sequencer
               else
                 drum_bus
               end
+      tape_amount = case tape
+                    when 'heavy' then 1.0
+                    when 'medium' then 0.65
+                    when 'light' then 0.35
+                    else tape.to_f
+                    end
+      drums = Colour.tape(drums, amount: tape_amount) if tape_amount.positive?
       drums = Colour.vcs(drums, vcs) if vcs.positive?
       out = chord_buf.each_index.map { |i| chord_buf[i] + drums[i] }
       out = Colour.vcs(out, vcs * 0.5) if vcs.positive?
