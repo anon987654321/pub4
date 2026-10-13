@@ -48,8 +48,9 @@ module Master::Core
       super(kind:, scope: scope&.to_s&.freeze, compensation:, reason: reason.to_s.freeze)
     end
 
+    def restorable? = kind == :reversible
+    def compensatable? = kind == :compensatable
     def approval_required? = kind == :approval_required
-    def reversible? = %i[reversible compensatable].include?(kind)
   end
 
   Effect = Data.define(:verb, :args, :capability) do
