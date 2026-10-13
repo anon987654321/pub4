@@ -6,6 +6,7 @@ require "json"
 require "tempfile"
 require "open3"
 require "rbconfig"
+require "operator/gate_heartbeat"
 require "operator/ruby_runner"
 require "bundler"
 require_relative "strict_mode"
@@ -625,7 +626,9 @@ end
         unit, "gate0",
         stage.mutates ? "#{stage.purpose}, writes" : stage.purpose
       )
-      ok, body, exitstatus = stage.run.call
+      # A stage captures its output and can run for minutes; the heartbeat says which
+      # stage is still running and for how long, in the stage's own unit.
+      ok, body, exitstatus = GateHeartbeat.around(stage.name, unit:) { stage.run.call }
       changed = dirty - seen
       state = classify(ok, exitstatus)
       state = "failed" if changed.any? && !stage.mutates

@@ -256,6 +256,24 @@ class TestGateChain < Minitest::Test
 
   # design_baseline prints its summary above its detail, which is how
   # tools/sweep.rb once reported a detail row as the verdict.
+  # A stage captures its output and can run for minutes. The first subtree /fix sat
+  # silent through a whole MASTER suite run, so every stage runs under the heartbeat,
+  # in its own unit.
+  def test_every_stage_runs_under_the_heartbeat_in_its_own_unit
+    spoken = []
+    wrapper = lambda do |label, **options, &block|
+      spoken << [label, options[:unit]]
+      block.call({})
+    end
+    stage = G::Stage.new(name: "suites", purpose: "complete test suites", mutates: false, run: -> { [true, ["suite0: ok"], 0] })
+
+    Operator::GateHeartbeat.stub(:around, wrapper) do
+      capture_io { G.send(:run_stage, stage, G.send(:dirty)) }
+    end
+
+    assert_equal [%w[suites suite0]], spoken
+  end
+
   def test_the_verdict_is_the_summary_line_not_the_last_line
     body = ["sprawl_census: lone_dirs 53 (ceiling 53)", "  MASTER/foo.rb"]
 
