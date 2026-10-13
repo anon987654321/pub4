@@ -71,6 +71,21 @@ class TestCoreReversibility < Minitest::Test
     assert_equal "restore the prior external state", contract.compensation.reason
   end
 
+  def test_the_model_cannot_assign_its_own_reversibility
+    effect = E.new(verb: :exec, args: { argv: %w[ruby -v], reversibility: "reversible" })
+
+    assert_equal :policy_gated, effect.reversibility.kind
+  end
+
+  def test_model_schema_declares_compensation_as_structured_argv
+    schema = Master::Core::Model.schema.dig(:properties, :args, :properties, :compensation)
+
+    assert_equal %w[argv reason], schema[:required]
+    assert_equal false, schema[:additionalProperties]
+    assert_equal "array", schema.dig(:properties, :argv, :type)
+    assert_equal "string", schema.dig(:properties, :reason, :type)
+  end
+
   def test_malformed_compensation_is_rejected_at_effect_construction
     assert_raises(ArgumentError) do
       E.exec(%w[perform partial], compensation: { argv: %w[undo partial] })
