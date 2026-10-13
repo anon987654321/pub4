@@ -51,21 +51,30 @@ module Master
             raw = []
             ranked = []
             rank = rank_worklist?
+            limit = rank ? nil : RunLedger.max_files
+            taken = 0
             files.each do |path|
+              # A limited run stops reading once it holds its files: the semantic scan
+              # costs a model call or more per file, and reading all of a 1,666-file
+              # tree first kept the first repair hours away.
+              break if limit && taken >= limit
+
               rows = violations_for(path)
               raw.concat(rows)
               next if rows.empty?
 
               item = [path, resolve_violations(rows)]
               rank ? ranked << item : queue << item
+              taken += 1
             end
             enqueue_ranked(ranked, queue, streamed) if rank
             resolve_violations(raw)
           end
 
           # Ranking waits for the whole scan, which streaming exists to avoid, so
-          # it is on when a run is limited (--max-files) or MASTER_FIX_RANK=1.
-          def rank_worklist? = ENV["MASTER_FIX_RANK"] == "1" || !RunLedger.max_files.nil?
+          # it is on only when asked for (MASTER_FIX_RANK=1). A run limited by
+          # --max-files takes the first N files that have findings, as they scan.
+          def rank_worklist? = ENV["MASTER_FIX_RANK"] == "1"
 
           # Fewest deterministic findings first: the files a model is most likely
           # to finish in one call go before the ones that need a rewrite. With

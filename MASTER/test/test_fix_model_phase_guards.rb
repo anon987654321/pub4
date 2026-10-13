@@ -129,4 +129,37 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal %w[/r/small.rb /r/mid.rb], taken
     assert_equal [["big.rb", "CQS"]].to_set, streamed.map { |file, law| [File.basename(file), law] }.to_set
   end
+
+  class Scanning < Stream
+    attr_reader :scanned
+
+    def initialize
+      super
+      @scanned = []
+    end
+
+    def violations_for(path)
+      @scanned << path
+      [{ law: "CQS", file: path }]
+    end
+
+    def resolve_violations(rows) = rows
+  end
+
+  def test_a_limited_run_stops_scanning_once_it_holds_its_files
+    Ledger.max_files = 2
+    scan = Scanning.new
+    queue = Queue.new
+
+    scan.send(:stream_violations, %w[/r/a.rb /r/b.rb /r/c.rb /r/d.rb], queue)
+
+    assert_equal %w[/r/a.rb /r/b.rb], scan.scanned
+    assert_equal 2, queue.size
+  end
+
+  def test_a_limited_run_does_not_wait_for_a_ranked_scan
+    Ledger.max_files = 2
+
+    refute Scanning.new.send(:rank_worklist?)
+  end
 end
