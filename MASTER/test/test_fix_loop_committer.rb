@@ -100,6 +100,19 @@ class TestFixLoopCommitter < Minitest::Test
     assert blocked?(bus)
   end
 
+  # A fix that passed every gate and was still not committed has to say why in the log, not only
+  # on the bus.
+  def test_a_blocked_commit_says_why_in_the_log
+    write_file("lib/bad2.rb", "def x\n  1\n")
+    git = FakeGit.new([], ["lib/bad2.rb"])
+    bus = FakeBus.new
+
+    out, = capture_io { run_committer(git, bus, "fix: bad") }
+
+    assert blocked?(bus)
+    assert_includes out, "deliver0: commit blocked, syntax, files lib/bad2.rb"
+  end
+
   def test_ignores_non_ruby_changes
     write_file("README.md", "# hi\n")
     git = FakeGit.new([], ["README.md"])

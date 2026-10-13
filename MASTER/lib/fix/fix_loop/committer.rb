@@ -390,27 +390,36 @@ def stage_commit_mode?
           false
         end
 
+        # The bus event for subscribers, and one dmesg line so the log says why a fix that passed
+        # every gate was still not committed.
+        def refuse_commit(**payload)
+          published = @bus&.publish("fix_loop:commit_blocked", **payload)
+          detail = payload.except(:reason).map { |key, value| "#{key} #{Array(value).map { |item| item.to_s.delete_prefix("#{@root}/") }.join(",")[0, 120]}" }
+          Master::Trace::Dmesg.status("deliver0", (["commit blocked, #{payload[:reason]}"] + detail).join(", "))
+          published
+        end
+
         def ratchet_sponsorship_ok?(paths)
           ::Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
           true
         rescue StandardError => e
-          @bus&.publish("fix_loop:commit_blocked", reason: "ratchet_sponsorship", error: e.message)
+          refuse_commit(reason: "ratchet_sponsorship", error: e.message)
           Master::Trace::Dmesg.status("fix0", e.message)
           false
         end
 
         def block_commit(files)
-          @bus&.publish("fix_loop:commit_blocked", reason: "syntax", files:)
+          refuse_commit(reason: "syntax", files:)
           nil
         end
 
         def block_commit_intent(message)
-          @bus&.publish("fix_loop:commit_blocked", reason: "preserve_user_intent", message: message.to_s[0, 120])
+          refuse_commit(reason: "preserve_user_intent", message: message.to_s[0, 120])
           nil
         end
 
         def block_commit_ground_truth
-          @bus&.publish("fix_loop:commit_blocked", reason: "ground_truth")
+          refuse_commit(reason: "ground_truth")
           nil
         end
 
@@ -452,11 +461,11 @@ def stage_commit_mode?
           if status.success?
             true
           else
-            @bus&.publish("fix_loop:commit_blocked", reason: "rubocop", files:)
+            refuse_commit(reason: "rubocop", files:)
             false
           end
         rescue Errno::ENOENT, StandardError => e
-          @bus&.publish("fix_loop:commit_blocked", reason: "rubocop_unavailable", error: e.message)
+          refuse_commit(reason: "rubocop_unavailable", error: e.message)
           false
         end
 
