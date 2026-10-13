@@ -415,6 +415,32 @@ end
     assert_equal "industrial-techno", Shellwords.split(calls.last.fetch(:arg)).first
   end
 
+  def test_explicit_j_dilla_followup_overrides_an_active_techno_reference
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      reference_root = File.join(dir, "dilla-references")
+      FileUtils.mkdir_p(reference_root)
+      File.write(File.join(reference_root, "latest_profile.json"), JSON.generate("style_key" => "industrial_techno"))
+      File.write(File.join(reference_root, "active_style.json"), JSON.generate("style_key" => "industrial_techno"))
+      calls = []
+      begin
+        with_dispatch_stub(dilla_runner(calls)) do
+          result = MediaIntent.dispatch("make a J Dilla beat like that", root: dir)
+          assert result.ok?, result.inspect
+          assert_equal :dilla, result.value!.fetch(:media)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      render = calls.find { |call| call[:arg] != "--list" }
+      assert render
+      words = Shellwords.split(render.fetch(:arg))
+      assert_equal "kit_dust", words[words.index("--kit") + 1]
+      assert_equal "dilla", render.fetch(:tool)
+    end
+  end
+
   def test_explicit_techno_followup_overrides_a_general_reference
     calls = []
     with_dispatch_stub(lambda do |**kwargs|
