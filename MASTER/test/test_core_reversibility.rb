@@ -46,6 +46,88 @@ class TestCoreReversibility < Minitest::Test
     end
   end
 
+  def test_every_effect_verb_has_an_explicit_capability_and_recovery_classification
+    effects = [
+      E.read("a.rb"),
+      E.write("a.rb", "A = 1"),
+      E.exec(%w[ruby -v]),
+      E.git(:diff),
+      E.http("https://example.com"),
+      E.ask("continue?"),
+      E.note(:idea, "inspect first"),
+      E.critique,
+      E.done("answer"),
+    ]
+    by_verb = effects.to_h { |effect| [effect.verb, effect] }
+
+    assert_equal Master::Core::VERBS.sort, by_verb.keys.sort
+    assert_equal(
+      {
+        read: :read, write: :write, exec: :execute, git: :read, http: :network,
+        ask: :stdio, note: :stdio, critique: :stdio, done: :stdio,
+      },
+      by_verb.transform_values(&:capability),
+    )
+    assert_equal(
+      {
+        read: :non_mutating, write: :reversible, exec: :policy_gated, git: :non_mutating,
+        http: :policy_gated, ask: :non_mutating, note: :session_state,
+        critique: :non_mutating, done: :non_mutating,
+      },
+      by_verb.transform_values { |effect| effect.reversibility.kind },
+    )
+    assert_equal :write, E.git(:status).capability
+    assert_equal :unknown, E.git(:status).reversibility.kind
+    assert_equal :unknown, E.git(:reset).reversibility.kind
+  end
+
+  def test_an_approval_request_cannot_skip_a_later_constitutional_block
+    effect = E.exec(%w[ruby -v])
+    request = C::Law.new(id: :needs_approval, verbs: [:exec], judge: lambda { |candidate, _memory|
+      Master::Core::Verdict::Request.new(
+        effect: candidate, prompt: "approve command?", reason: "test request", by: :needs_approval,
+      )
+    })
+    blocker = C::Law.new(id: :hostile_condition, verbs: [:exec], judge: lambda { |_candidate, _memory|
+      Master::Core::Verdict::Block.new(reason: "hostile fixture refused", by: :hostile_condition)
+    })
+    world = RecordingWorld.new(answer: "yes")
+    fold = Master::Core::Fold.new(
+      model: ScriptedModel.new(effect, effect, effect),
+      constitution: C.new(laws: [request, blocker]),
+      world:,
+      memory: Master::Core::Memory.new,
+      max_turns: 3,
+    )
+
+    result = fold.run("exercise the approval boundary")
+
+    assert_equal :blocked, result.reason
+    assert_empty world.performed, "neither the approval prompt nor the blocked effect may reach World"
+  end
+
+  def test_all_approval_requirements_are_carried_through_the_full_law_chain
+    first = C::Law.new(id: :first_check, verbs: [:exec], judge: lambda { |effect, _memory|
+      Master::Core::Verdict::Request.new(
+        effect:, prompt: "first check required", reason: "first reason", by: :first_check,
+      )
+    })
+    second = C::Law.new(id: :second_check, verbs: [:exec], judge: lambda { |effect, _memory|
+      Master::Core::Verdict::Request.new(
+        effect:, prompt: "second check required", reason: "second reason", by: :second_check,
+      )
+    })
+
+    verdict = C.new(laws: [first, second]).admit(E.exec(%w[ruby -v]), Master::Core::Memory.new)
+
+    assert_instance_of Master::Core::Verdict::Request, verdict
+    assert_equal :multiple_constitutional_checks, verdict.by
+    assert_includes verdict.prompt, "first check required"
+    assert_includes verdict.prompt, "second check required"
+    assert_includes verdict.reason, "first reason"
+    assert_includes verdict.reason, "second reason"
+  end
+
   def test_contract_is_derived_from_effect_type_and_operation
     assert_equal :non_mutating, E.read("a.rb").reversibility.kind
     assert_equal :reversible, E.write("a.rb", "A = 1").reversibility.kind
