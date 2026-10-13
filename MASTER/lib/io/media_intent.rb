@@ -387,7 +387,8 @@ module Master
         return false unless source
         return true if text.match?(REFERENCE_AUDIO_RE) || text.match?(REFERENCE_STYLE_RE)
         # A pasted YouTube URL by itself is an audio reference in MASTER's music workflow.
-        text.gsub(REFERENCE_URL_RE, "").strip.empty? && text.match?(REFERENCE_URL_RE)
+        remainder = text.gsub(REFERENCE_URL_RE, "").strip
+        remainder.match?(/\A[.,!?;:]*\z/) && text.match?(REFERENCE_URL_RE)
       end
 
       def reference_style_for(text)
