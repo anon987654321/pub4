@@ -549,8 +549,14 @@ module Master
         dilla_pocket = !named_other_style && (reference || explicit_dilla)
         named_pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) }
         dilla_patterns = %w[dilla_shadow dilla_broken dusty_laid_back boom_bap]
+        density = reference_feature(reference, "onset_density_per_bar") if dilla_pocket
+        offbeat = reference_feature(reference, "offbeat_onset_share") if dilla_pocket
+        ranked_patterns = []
+        ranked_patterns << "dusty_laid_back" if density && density < 7.5
+        ranked_patterns << "dilla_broken" if offbeat && offbeat > 0.60
+        ranked_patterns.concat(dilla_patterns)
         pattern = named_pattern || if dilla_pocket
-                                     dilla_patterns.find { |id| choices[:drums].include?(id) } || choices[:drums].sample
+                                     ranked_patterns.uniq.find { |id| choices[:drums].include?(id) } || choices[:drums].sample
                                    else
                                      choices[:drums].sample
                                    end
@@ -558,6 +564,7 @@ module Master
                    preferred = reference&.fetch("groove_profile", nil)
                    [preferred, "dilla_shadow", "behind_the_beat", "late_snare"].compact.find { |name| choices[:profiles].include?(name) }
                  end
+        groove_scale = reference_groove_scale(reference) if dilla_pocket
         explicit_bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
         bpm = explicit_bpm ? explicit_bpm.to_f : reference&.fetch("target_bpm", nil)
         drum_balance = reference_balance_adjustment(reference, "drums_energy_share") if dilla_pocket
@@ -567,6 +574,7 @@ module Master
         argv = ["--progression", progression, "--out", output]
         argv.concat(["--drums", pattern]) if pattern
         argv.concat(["--profile", groove]) if groove
+        argv.concat(["--groove", groove_scale.to_s]) unless groove_scale.nil?
         argv.concat(["--bpm", bpm.to_s]) if bpm
         argv.concat(["--drum-balance", drum_balance.to_s]) unless drum_balance.nil?
         argv.concat(["--chord-balance", chord_balance.to_s]) unless chord_balance.nil?
@@ -577,8 +585,27 @@ module Master
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
         return result unless result.ok?
 
-        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, bpm:,
+        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, groove_scale:, bpm:,
                     drum_balance:, chord_balance:, kit: dilla_pocket ? "kit_dust" : nil })
+      end
+
+      def reference_feature(profile, feature)
+        features = profile&.fetch("features", nil)
+        return nil unless features.is_a?(Hash)
+
+        value = Float(features.fetch(feature))
+        value if value.finite?
+      rescue ArgumentError, TypeError, KeyError
+        nil
+      end
+
+      # Grid spread only modulates Dilla's existing pocket; it never replaces its
+      # musical profile. Keep the learned move close to unity and strictly bounded.
+      def reference_groove_scale(profile)
+        spread = reference_feature(profile, "timing_spread_ms")
+        return nil unless spread
+
+        (1.0 + (spread - 8.0) * 0.012).clamp(0.85, 1.25).round(2)
       end
 
       # Translate measured relative stem power into small dB moves around
