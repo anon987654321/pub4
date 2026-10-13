@@ -247,9 +247,9 @@ class TestLaneSelection < Minitest::Test
     end
   end
 
-  def test_a_free_route_keeps_its_free_models_in_front
+  def test_a_free_route_still_falls_back_from_premium_before_free
     router = router_over([NEMOTRON, OPUS], [NEMOTRON, OPUS])
-    assert_equal [NEMOTRON, OPUS], router.fallback_chain(task_type: :exploration)
+    assert_equal [OPUS, NEMOTRON], router.fallback_chain(task_type: :exploration)
     assert_equal NEMOTRON, router.preferred(task_type: :exploration)
   end
   Config = Struct.new(:task_type, :model, :reasoning_mode, keyword_init: true)
