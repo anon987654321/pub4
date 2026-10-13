@@ -340,6 +340,7 @@ class TestRenderer < Minitest::Test
 
     assert_equal "News\n\n#{prose}\n", rendered
   end
+
   def test_terminal_markdown_renders_headings_links_inline_code_and_fences
     renderer = FakeRenderer.new(config: {})
     source = "# Reply\n\nUse **bold**, `Ruby`, and [docs](https://example.com).\n\n```ruby\nputs \"hello\"\n```\n"
