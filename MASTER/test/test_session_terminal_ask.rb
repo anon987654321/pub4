@@ -54,6 +54,33 @@ class SessionTerminalAskTest < Minitest::Test
     end
   end
 
+  def test_hash_approval_choices_do_not_raise_symbol_to_integer_type_error
+    with_terminal("2\n") do |out|
+      asker = session.send(:terminal_ask, Thread.current)
+      answer = asker.call(
+        prompt: "Choose the browser action",
+        options: { approve: "approve", deny: "deny" },
+      )
+
+      assert_equal "deny", answer
+      assert_match(/1\) approve/, out.string)
+      assert_match(/2\) deny/, out.string)
+    end
+  end
+
+  def test_single_hash_choice_is_normalized
+    with_terminal("1\n") do |out|
+      asker = session.send(:terminal_ask, Thread.current)
+      answer = asker.call(
+        prompt: "Choose an action",
+        options: { name: "approve once", value: "approve" },
+      )
+
+      assert_equal "approve", answer
+      assert_match(/1\) approve once/, out.string)
+    end
+  end
+
   def test_a_thread_the_turn_spawned_is_not_answered
     with_terminal("y\n") do
       asker = session.send(:terminal_ask, Thread.current)
