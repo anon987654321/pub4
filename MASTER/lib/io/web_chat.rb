@@ -276,13 +276,6 @@ module Master
         nil
       end
 
-      def wait_idle(page)
-        page.network.wait_for_idle(timeout: 5)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "WebChat.wait_idle")
-        nil
-      end
-
       def timeout_seconds = (@config["timeout"] || DEFAULT_TIMEOUT).to_i
     end
   end
