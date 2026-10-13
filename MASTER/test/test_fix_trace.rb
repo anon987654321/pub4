@@ -135,4 +135,67 @@ class FixTraceTest < Minitest::Test
     assert_includes out.string, "attempt L a.rb accepted"
     assert_includes out.string, "attempt M b.rb rejected: x"
   end
+  # The transcript is the run's audit record, so an edit, a deletion or a reorder
+  # has to show when it is read back.
+  def ledger_path(transcript, name) = File.join(transcript.dir, "#{name}.ndjson")
+
+  def test_a_transcript_chain_verifies_and_links_each_line_to_the_one_before
+    transcript = Transcript.new(root: @root, run_id: "chain")
+    3.times { |n| transcript.append("fixes", { n: }) }
+
+    rows = File.readlines(ledger_path(transcript, "fixes")).map { |line| JSON.parse(line) }
+
+    assert_equal Transcript::GENESIS, rows.first["prev"]
+    assert_equal rows[0]["hash"], rows[1]["prev"]
+    assert_equal rows[1]["hash"], rows[2]["prev"]
+    verdict = Transcript.verify(ledger_path(transcript, "fixes"))
+    assert verdict.ok, verdict.reason
+    assert_equal 3, verdict.lines
+  end
+
+  def test_an_edited_line_breaks_the_chain_at_that_line
+    transcript = Transcript.new(root: @root, run_id: "edit")
+    3.times { |n| transcript.append("fixes", { n: }) }
+    path = ledger_path(transcript, "fixes")
+    lines = File.readlines(path)
+    lines[1] = lines[1].sub('"n":1', '"n":9')
+    File.write(path, lines.join)
+
+    verdict = Transcript.verify(path)
+
+    refute verdict.ok
+    assert_equal 2, verdict.broken_at
+    assert_match(/hash does not match/, verdict.reason)
+  end
+
+  def test_a_dropped_line_breaks_the_chain_at_the_next_line
+    transcript = Transcript.new(root: @root, run_id: "drop")
+    3.times { |n| transcript.append("fixes", { n: }) }
+    path = ledger_path(transcript, "fixes")
+    lines = File.readlines(path)
+    File.write(path, [lines[0], lines[2]].join)
+
+    verdict = Transcript.verify(path)
+
+    refute verdict.ok
+    assert_equal 2, verdict.broken_at
+    assert_match(/prev does not match/, verdict.reason)
+  end
+
+  def test_a_resumed_run_continues_the_chain_from_the_files_last_line
+    Transcript.new(root: @root, run_id: "resume").append("fixes", { n: 1 })
+    resumed = Transcript.new(root: @root, run_id: "resume")
+    resumed.append("fixes", { n: 2 })
+
+    assert Transcript.verify(ledger_path(resumed, "fixes")).ok
+  end
+
+  def test_a_truncation_marker_stays_on_the_chain
+    transcript = Transcript.new(root: @root, run_id: "cap", max_bytes: 700)
+    20.times { |n| transcript.append("critique", { n:, text: "x" * 40 }) }
+    path = ledger_path(transcript, "critique")
+
+    assert_includes File.read(path), "truncated"
+    assert Transcript.verify(path).ok
+  end
 end
