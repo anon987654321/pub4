@@ -14,6 +14,7 @@ class TestKeylessRouting < Minitest::Test
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
       MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
       MASTER_NO_POOL_PROBES MASTER_LLM_GATEWAY_URL MASTER_LLM_GATEWAY_KEY FREELLMPOOL_PROXY_KEY
+      KILO_API_KEY MASTER_NO_KILO_GATEWAY
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
     # Neutralize both local subscription CLIs so these tests grade keyless and
@@ -240,6 +241,36 @@ class TestKeylessRouting < Minitest::Test
 
     assert router.reachable?("nvidia/nemotron-3-super-120b-a12b:free")
     assert_match(/credit is spent/, router.unreachable_reason("anthropic/claude-opus-4.1"))
+  end
+
+  def test_kilo_gateway_discovers_only_explicitly_free_chat_models
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    spec = router.send(:hosted_endpoints).fetch("kilo")
+    assert_equal "https://api.kilo.ai/api/gateway", spec.fetch("base")
+    assert spec.fetch("free_only")
+    assert_equal({}, spec.fetch("keyless"))
+
+    router.define_singleton_method(:get_json) do |_url, headers:, timeout:|
+      JSON.generate("data" => [
+        { "id" => "z-ai/glm-free:free", "model_type" => "chat",
+          "pricing" => { "prompt" => "0", "completion" => "0" } },
+        { "id" => "vendor/paid", "model_type" => "chat",
+          "pricing" => { "prompt" => "0.000001", "completion" => "0.000002" } },
+        { "id" => "vendor/unknown", "model_type" => "chat" },
+        { "id" => "vendor/image", "model_type" => "image",
+          "pricing" => { "prompt" => "0", "completion" => "0" } },
+      ])
+    end
+    assert_equal ["z-ai/glm-free:free"], router.send(:hosted_ids, spec, nil)
+  end
+
+  def test_kilo_models_share_one_free_gateway_quota_and_rank_as_free
+    id = "kilo:z-ai/glm-free:free"
+    assert_equal "kilo", Master::Io::LaneQuota.lane_of(id)
+    assert_equal "kilo", Master::Io::LaneSelection.provider(id)
+    assert_equal :free, Master::Io::LaneSelection.kind(id)
   end
 
   def test_a_cli_lane_joins_when_signed_in_and_names_its_login_when_not
