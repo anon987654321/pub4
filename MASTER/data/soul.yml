@@ -37,6 +37,7 @@ absolute:
 prompt_ordering:
   - master_identity
   - master_output_format
+  - master_dialogue_rubric
   - master_meta_instruction
   - master_constitution_absolute
   - master_priority

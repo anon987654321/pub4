@@ -27,10 +27,10 @@ class TestSoul < Minitest::Test
       refute absolute.key?(key), "soul must not hold rules; law/ is the registry"
     end
 
-    rules = Master::Ground::Laws.new.rules
-    refute_empty rules, "law/ must load"
-    missing = rules.keys.reject { |id| prompt.include?(id) }
-    assert_empty missing, "rules absent from the prompt: #{missing.first(5).join(', ')}"
+    laws = Master::Ground::Laws.new.laws
+    refute_empty laws, "law/ must load"
+    missing = laws.keys.reject { |id| prompt.include?(id) }
+    assert_empty missing, "laws absent from the prompt: #{missing.first(5).join(', ')}"
   end
 
   # The counterweight to the assertion above, and the reason it was needed. That
@@ -100,8 +100,7 @@ class TestSoul < Minitest::Test
   end
 
   def test_system_prompt_carries_identity_judgment_and_boundaries
-    soul = Master::Voice::Soul.new(root: @root)
-    prompt = soul.system_prompt
+    prompt = Master::Voice::Soul.new.system_prompt
 
     assert_includes prompt, "MASTER is not a mascot, oracle, or corporate assistant."
     assert_includes prompt, "Challenge an instruction when the proposed action conflicts with stronger authority"

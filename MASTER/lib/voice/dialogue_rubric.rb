@@ -52,7 +52,7 @@ module Master
 
         failures = []
         Array(data(root:).dig("bench", "forbidden_openers")).each do |phrase|
-          failures << "no_ai_isms: #{phrase}" if text.match?(/A#{Regexp.escape(phrase)}/i)
+          failures << "no_ai_isms: #{phrase}" if text.match?(/\A#{Regexp.escape(phrase)}/i)
         end
         failures
       end
