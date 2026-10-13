@@ -47,12 +47,13 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp comp default_profile drum_patterns echo essential groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
   end
 
-  def test_showcase_uses_scale_clean_layers_dry_space_and_taped_fast_drums
+  def test_showcase_uses_dark_scale_clean_harmony_pure_tones_and_dubbed_dilla_drums
     sections = SHOWCASE.fetch("sections")
     assert_equal 8, sections.size
+    assert_equal "Blue Hour — Dilla Minor Dub Cut", SHOWCASE.fetch("title")
     sections.each do |section|
       assert_equal 92, section.fetch("bpm")
       allowed = section.fetch("scale_pcs")
@@ -61,7 +62,7 @@ class DillaTest < Minitest::Test
         chord = Chords.parse(name)
         pitch_classes = chord.fetch(:tones).map { |tone| (chord.fetch(:pc) + tone) % 12 }
         pitch_classes.concat([chord.fetch(:bass)]) if chord.fetch(:bass)
-        assert_empty pitch_classes.uniq - allowed, "#{section.fetch('name')} #{name} leaves its scale"
+        assert_empty pitch_classes.uniq - allowed, "#{section.fetch('name')} #{name} leaves its named scale"
       end
       section.fetch("melody").each do |beat, midi, length, gain|
         assert_operator beat, :>=, 0
@@ -73,25 +74,16 @@ class DillaTest < Minitest::Test
       assert_includes DATA.fetch("voices").keys, section.fetch("voice")
       assert_includes DATA.fetch("voices").keys, section.fetch("melody_voice")
       assert_includes DATA.fetch("groove_profiles").keys, section.fetch("profile")
+      assert_equal "dilla_shadow", section.fetch("profile")
       assert_includes DATA.fetch("drum_patterns").keys, section.fetch("drums")
       assert_includes DATA.fetch("comp").fetch("styles").keys, section.fetch("repeat")
       assert_includes DATA.fetch("sonitex").fetch("presets").keys, section.fetch("sonitex")
       assert_operator section.fetch("sonitex_instances"), :>=, 2
       assert_operator section.fetch("sonitex_instances"), :<=, 3
-      assert_equal "cassette", section.fetch("drum_sonitex")
-      assert_equal 3, section.fetch("drum_sonitex_instances")
-      assert_equal "heavy", section.fetch("drum_tape")
       assert_equal "pure_tone", section.fetch("voice")
-      assert_equal false, section.fetch("echo")
-      assert_equal 0, section.fetch("echo_mix")
-      assert_equal 0, section.fetch("echo_feedback")
-      assert_operator section.fetch("vcs"), :>=, 0.4
-      assert_operator section.fetch("vcs"), :<=, 0.7
-      assert_operator section.fetch("echo_mix"), :<=, 0.03
-      assert_operator section.fetch("echo_feedback"), :<=, 0.1
-      assert_operator section.fetch("echo_tail_seconds"), :<=, 0.2
-      assert_equal 0, section.fetch("echo_reverb")
       assert_equal "pure_tone", section.fetch("melody_voice")
+      assert_equal false, section.fetch("echo")
+      assert_equal 0, section.fetch("echo_reverb")
       assert_equal 4, section.fetch("layers").size
       section.fetch("layers").each do |layer|
         assert_equal "pure_tone", layer.fetch("voice")
@@ -103,8 +95,27 @@ class DillaTest < Minitest::Test
       assert_equal 0, texture.fetch("reverb")
       hats = DATA.fetch("drum_patterns").fetch(section.fetch("drums")).fetch("hat")
       assert_equal 16, hats.size
-      assert_equal 16, hats.sum, "the fast hat must play steady sixteenths"
+      assert_equal 16, hats.count { |velocity| velocity.to_f.positive? }, "the fast hat keeps its sixteenth-note pulse"
+      assert_operator hats.uniq.size, :>, 2, "hat velocities create accents instead of a flat machine-gun"
+      rig = DATA.fetch("bus_effects").fetch(section.fetch("effect_rig"))
+      assert_equal "cassette", rig.fetch("drum_sonitex")
+      assert_equal 3, rig.fetch("drum_sonitex_instances")
+      assert_equal "heavy", rig.fetch("drum_tape")
+      assert_operator rig.fetch("drum_vcs"), :>=, 0.7
+      dub = rig.fetch("drum_dub_echo")
+      assert_equal [1, 2, 3], dub.fetch("heads")
+      assert_operator dub.fetch("intensity"), :>=, 0.7
+      assert_operator dub.fetch("volume"), :>=, 0.75
+      assert_operator dub.fetch("saturation"), :>=, 0.9
+      assert_equal 0, dub.fetch("reverb")
+      crystal = rig.fetch("drum_crystallizer")
+      assert_equal 12, crystal.fetch("semitones")
+      assert_operator crystal.fetch("mix"), :>=, 0.5
+      assert_operator crystal.fetch("repeats"), :>=, 3
+      assert_equal 0, rig.dig("instrument_dub_echo", "reverb")
     end
+    refute_equal SHOWCASE.fetch("sections").first.fetch("progression"),
+                 SHOWCASE.fetch("sections").last.fetch("progression")
   end
 
   def test_default_run_renders_the_showcase_as_a_wav
@@ -522,6 +533,31 @@ class DillaTest < Minitest::Test
     assert_operator peaks.first, :>, 0.05
     # darker: the lowpass spreads a repeat into the samples after it
     assert_operator out[d + 3], :>, 0.0
+  end
+
+  def test_dub_echo_and_crystallizer_create_finite_non_reverb_tails
+    input = Array.new(SAMPLE_RATE / 3) do |i|
+      0.22 * Math.sin(2.0 * Math::PI * 80.0 * i / SAMPLE_RATE) +
+        0.08 * Math.sin(2.0 * Math::PI * 2400.0 * i / SAMPLE_RATE)
+    end
+    dub = FX.dub_echo(input, {
+      "delay_ms" => 120, "heads" => [1, 2, 3], "intensity" => 0.65,
+      "volume" => 0.72, "lowpass" => 4200, "saturation" => 0.9,
+      "reverb" => 0.0, "tail" => 0.2
+    })
+    assert_equal input.size + (0.2 * SAMPLE_RATE).to_i, dub.size
+    assert(dub.all?(&:finite?))
+    refute_equal input, dub
+
+    crystal = FX.crystallizer(input, {
+      "delay_ms" => 90, "semitones" => 12, "feedback" => 0.4,
+      "mix" => 0.5, "repeats" => 3, "tail" => 0.3, "grain_ms" => 60
+    })
+    assert_operator crystal.size, :>, input.size
+    assert(crystal.all?(&:finite?))
+    refute_equal input, crystal
+    assert_operator crystal.map(&:abs).max, :<, 1.0
+    assert_same input, FX.crystallizer(input, nil)
   end
 
   def test_the_echo_is_stable_at_the_top_intensity_and_silence_stays_silent
