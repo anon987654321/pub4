@@ -90,6 +90,30 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_a_run_that_ignores_term_is_killed_after_the_grace_period
+    with_worktree do |_main, worker, tools_bin|
+      pidfile = File.join(worker, "child.pid")
+      env = { "PATH" => "#{tools_bin}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}", "FAKE_PIDFILE" => pidfile,
+              "FAKE_IGNORE_TERM" => "1", "FIX_HERE_KILL_AFTER_S" => "2" }
+      wrapper = Process.spawn(env, RbConfig.ruby, File.join(worker, "MASTER/bin/fix-here"), "MASTER", "--model", "none", "--no-probe",
+                              chdir: worker, out: File::NULL, err: File::NULL)
+      30.times { break if File.exist?(pidfile) && !File.read(pidfile).empty?; sleep 0.2 }
+      child = File.read(pidfile).to_i
+      Process.kill("TERM", wrapper)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      Process.wait(wrapper)
+      sleep 0.3
+      gone = begin
+        Process.kill(0, child) && false
+      rescue Errno::ESRCH
+        true
+      end
+      Process.kill("KILL", child) unless gone
+      assert gone, "a run that ignores TERM outlived the wrapper"
+      assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 15
+    end
+  end
+
   def test_a_failed_lane_check_shows_what_the_call_printed
     with_worktree do |main, worker, tools_bin|
       write_main_model(main)
@@ -134,7 +158,7 @@ class TestFixHere < Minitest::Test
       %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
         File.join(main, "MASTER/bin/master"),
-        "#!/usr/bin/env ruby\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
+        "#!/usr/bin/env ruby\ntrap('TERM', 'IGNORE') if ENV['FAKE_IGNORE_TERM']\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
       )
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/fix-here"))
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/master"))

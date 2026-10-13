@@ -64,21 +64,26 @@ module Master
 
         def trap_soft(sig, holder)
           previous = Signal.trap(sig) do
-            dump = holder[:text].to_s
-            if dump.empty?
-              emit("interrupted, no partial report yet")
-            else
-              if holder[:snapshot]
-                emit("interrupted, writing partial snapshot")
-                snapshot!(dump, root: holder[:root], note: "partial after #{sig}")
+            # The exit sits in ensure: a trap handler that raises (a Mutex taken in trap
+            # context is a ThreadError) otherwise hands the error to the scan loop, which
+            # rescues it, and the process outlives the signal.
+            begin
+              dump = holder[:text].to_s
+              if dump.empty?
+                emit("interrupted, no partial report yet")
               else
-                emit("interrupted, no snapshot, dry run")
+                if holder[:snapshot]
+                  emit("interrupted, writing partial snapshot")
+                  snapshot!(dump, root: holder[:root], note: "partial after #{sig}")
+                else
+                  emit("interrupted, no snapshot, dry run")
+                end
+                $stdout.puts dump
+                $stdout.flush
               end
-              $stdout.puts dump
-              $stdout.flush
+            ensure
+              exit!(sig == "INT" ? 130 : 143)
             end
-            exit!(130) if sig == "INT"
-            exit!(143)
           end
           previous
         rescue ArgumentError

@@ -126,9 +126,17 @@ end
 
 status = nil
 begin
-  pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, *passthrough, chdir: ROOT, out: [log, "w"], err: [:child, :out])
-# A TERM or INT aimed at the wrapper must reach the run; otherwise it keeps the quota and the worktree.
-%w[TERM INT HUP].each { |sig| trap(sig) { Process.kill("TERM", pid) rescue nil } }
+  pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, *passthrough, chdir: ROOT, out: [log, "w"], err: [:child, :out], pgroup: true)
+# A TERM or INT aimed at the wrapper must reach the whole run, grandchildren and their MCP
+# servers included; otherwise it keeps the quota and the worktree. A run that is still alive
+# KILL_AFTER_S seconds after TERM is killed, because a handler can be stuck inside a model call.
+KILL_AFTER_S = Integer(ENV.fetch("FIX_HERE_KILL_AFTER_S", "20"))
+term_sent_at = nil
+stop_run = lambda do
+  term_sent_at ||= Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  Process.kill("TERM", -pid) rescue nil
+end
+%w[TERM INT HUP].each { |sig| trap(sig) { stop_run.call } }
 # Ends the run when the pulse reports a stall past the limit, instead of waiting out hours.
 stalled = false
 watcher = Thread.new do
@@ -137,11 +145,20 @@ watcher = Thread.new do
     next unless Operator::StallWatch.abort?(Operator::StallWatch.tail(log))
 
     stalled = true
-    Process.kill("TERM", pid)
+    stop_run.call
     break
   end
 end
-status = Process.wait2(pid).last
+loop do
+  status = Process.wait2(pid, Process::WNOHANG)&.last
+  break if status
+
+  if term_sent_at && Process.clock_gettime(Process::CLOCK_MONOTONIC) - term_sent_at > KILL_AFTER_S
+    Process.kill("KILL", -pid) rescue nil
+    term_sent_at = nil
+  end
+  sleep 1
+end
 watcher.kill
 if stalled
   warn "fix-here: stopped, the run reported no file attempted for over #{Operator::StallWatch.limit / 60} minutes (MASTER_FIX_ABORT_S). Log: #{log}"
