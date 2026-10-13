@@ -264,6 +264,15 @@ class TestKeylessRouting < Minitest::Test
       ])
     end
     assert_equal ["z-ai/glm-free:free"], router.send(:hosted_ids, spec, nil)
+    assert_equal ["z-ai/glm-free:free"], router.send(:hosted_ids, spec, "test-key")
+  end
+
+  def test_kilo_gateway_can_be_disabled_explicitly
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    ENV["MASTER_NO_KILO_GATEWAY"] = "1"
+    refute router.send(:hosted_endpoints).key?("kilo")
   end
 
   def test_kilo_models_share_one_free_gateway_quota_and_rank_as_free
