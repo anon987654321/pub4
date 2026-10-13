@@ -81,7 +81,10 @@ class TestCoreReversibility < Minitest::Test
   end
 
   def test_model_parse_preserves_structured_compensation
-    reply = %({"verb":"exec","args":{"argv":["perform","partial"],"compensation":{"argv":["undo","partial"],"reason":"restore prior state"}}})
+    reply = <<~JSON
+      {"verb":"exec","args":{"argv":["perform","partial"],
+       "compensation":{"argv":["undo","partial"],"reason":"restore prior state"}}}
+    JSON
     effect = Master::Core::Model.parse(reply, verbs: Master::Core::VERBS)
 
     assert_equal :exec, effect.verb
