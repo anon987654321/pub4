@@ -50,27 +50,52 @@ class DillaTest < Minitest::Test
     assert_equal %w[arp comp default_profile drum_patterns echo essential groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
   end
 
-  def test_showcase_uses_only_real_chords_voices_profiles_and_drum_patterns
+  def test_showcase_uses_scale_clean_layers_dry_space_and_taped_fast_drums
     sections = SHOWCASE.fetch("sections")
     assert_equal 8, sections.size
     sections.each do |section|
+      assert_equal 92, section.fetch("bpm")
+      allowed = section.fetch("scale_pcs")
       assert(section.fetch("progression").all? { |name| Chords.parse(name) })
+      section.fetch("progression").each do |name|
+        chord = Chords.parse(name)
+        pitch_classes = chord.fetch(:tones).map { |tone| (chord.fetch(:pc) + tone) % 12 }
+        pitch_classes.concat([chord.fetch(:bass)]) if chord.fetch(:bass)
+        assert_empty pitch_classes.uniq - allowed, "#{section.fetch('name')} #{name} leaves its scale"
+      end
+      section.fetch("melody").each do |beat, midi, length, gain|
+        assert_operator beat, :>=, 0
+        assert_includes allowed, midi % 12, "#{section.fetch('name')} melody leaves its scale"
+        assert_operator length, :>, 0
+        assert_operator gain, :>, 0
+        assert_operator gain, :<=, 1
+      end
       assert_includes DATA.fetch("voices").keys, section.fetch("voice")
+      assert_includes DATA.fetch("voices").keys, section.fetch("melody_voice")
       assert_includes DATA.fetch("groove_profiles").keys, section.fetch("profile")
       assert_includes DATA.fetch("drum_patterns").keys, section.fetch("drums")
       assert_includes DATA.fetch("comp").fetch("styles").keys, section.fetch("repeat")
       assert_includes DATA.fetch("sonitex").fetch("presets").keys, section.fetch("sonitex")
       assert_operator section.fetch("sonitex_instances"), :>=, 2
       assert_operator section.fetch("sonitex_instances"), :<=, 3
+      assert_equal "cassette", section.fetch("drum_sonitex")
+      assert_equal 3, section.fetch("drum_sonitex_instances")
       assert_operator section.fetch("vcs"), :>=, 0.4
       assert_operator section.fetch("vcs"), :<=, 0.7
-      section.fetch("melody").each do |beat, midi, length, gain|
-        assert_operator beat, :>=, 0
-        assert_operator midi, :>, 0
-        assert_operator length, :>, 0
-        assert_operator gain, :>, 0
-        assert_operator gain, :<=, 1
+      assert_operator section.fetch("echo_mix"), :<=, 0.03
+      assert_operator section.fetch("echo_feedback"), :<=, 0.1
+      assert_operator section.fetch("echo_tail_seconds"), :<=, 0.2
+      assert_equal "pure_tone", section.fetch("melody_voice")
+      assert_equal 2, section.fetch("layers").size
+      section.fetch("layers").each do |layer|
+        assert_includes DATA.fetch("voices").keys, layer.fetch("voice")
       end
+      texture = DATA.fetch("groove_profiles").fetch(section.fetch("profile")).fetch("texture")
+      assert_equal 0, texture.fetch("detune")
+      assert_operator texture.fetch("reverb"), :<=, 0.03
+      hats = DATA.fetch("drum_patterns").fetch(section.fetch("drums")).fetch("hat")
+      assert_equal 16, hats.size
+      assert_equal 16, hats.sum, "the fast hat must play steady sixteenths"
     end
   end
 
@@ -989,6 +1014,14 @@ class DillaTest < Minitest::Test
       assert(hit.all? { |sample| sample.finite? })
       assert_operator hit.map(&:abs).max, :>, 0.05
     end
+  end
+
+  def test_pure_tone_has_no_significant_upper_harmonics
+    tone = Synth.pure_note(440.0, 0.6, amp: 0.5, release: 0.12)
+    fundamental = tone_energy(tone, 440.0)
+    assert_operator fundamental, :>, 0.1
+    assert_operator tone_energy(tone, 880.0), :<, fundamental * 0.01
+    assert_operator tone_energy(tone, 1320.0), :<, fundamental * 0.01
   end
 
   def test_each_drum_hit_varies_and_the_drum_bus_receives_sonitex_and_vcs
