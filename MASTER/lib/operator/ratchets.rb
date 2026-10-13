@@ -615,7 +615,7 @@ end
       # ceilings all live in one file, which is what made them look like one
       # gate's business.
       output = %w[css_constitution design_metrics].map do |gate|
-        Open3.capture2e(RUBY, "gates/runner.rb", gate, chdir: RAILS).first
+        Open3.capture2e(RUBY, File.join(MASTER, "gates", "runner.rb"), gate, chdir: ROOT).first
       end.join("\n")
 
       ceilings.map { |rule, ceiling| css_budget_row(rule, ceiling, output) }
