@@ -759,9 +759,12 @@ def decode_job(job)
 
           @lock.synchronize { @last_player_attempted = true }
           pid = Process.spawn(name, *args, path, **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL))
-          @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
+          # Compare the generation while holding the lock, without calling
+          # generation_active? (which takes the same non-reentrant mutex).
+          @lock.synchronize { @playing_pid = pid if generation == @generation }
           begin
-            return true if Process.wait(pid).success?
+            _waited_pid, status = Process.wait2(pid)
+            return true if status.success?
           rescue Errno::ESRCH, Errno::ECHILD
             next
           ensure
