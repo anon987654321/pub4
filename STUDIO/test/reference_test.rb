@@ -69,6 +69,32 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 124, profile.fetch("target_bpm")
   end
 
+  def test_learned_profile_averages_multiple_references_of_the_same_style
+    first = {
+      "style_key" => "industrial_techno", "genre" => "industrial_techno",
+      "target_bpm" => 120, "measured_bpm" => 121.0, "source_duration_seconds" => 24.0,
+      "reference_fingerprint" => "1111111111111111",
+      "features" => { "brightness" => 0.2, "low_frequency_weight" => 0.4 },
+      "parameters" => { "rumble_level" => 0.1, "distortion_drive" => 1.5 }
+    }
+    second = {
+      "style_key" => "industrial_techno", "genre" => "industrial_techno",
+      "target_bpm" => 140, "measured_bpm" => 139.0, "source_duration_seconds" => 30.0,
+      "reference_fingerprint" => "2222222222222222",
+      "features" => { "brightness" => 0.8, "low_frequency_weight" => 0.6 },
+      "parameters" => { "rumble_level" => 0.2, "distortion_drive" => 2.5 }
+    }
+
+    learned = Dilla::Reference.aggregate_profiles("industrial_techno", [first, second])
+    assert_equal 2, learned.fetch("reference_count")
+    assert_equal 130, learned.fetch("target_bpm")
+    assert_equal 130.0, learned.fetch("measured_bpm")
+    assert_equal 30.0, learned.fetch("source_duration_seconds")
+    assert_in_delta 0.5, learned.fetch("features").fetch("brightness"), 0.0001
+    assert_in_delta 0.15, learned.fetch("parameters").fetch("rumble_level"), 0.0001
+    assert_equal %w[1111111111111111 2222222222222222], learned.fetch("reference_fingerprints")
+  end
+
   def test_general_reference_does_not_erase_the_active_style
     Dir.mktmpdir do |dir|
       assert_equal "j_dilla", Dilla::Reference.write_active_style("J Dilla", root: dir)
