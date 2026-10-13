@@ -540,7 +540,7 @@ module Master
             result
           ensure
             held_slots.delete_at(held_slots.rindex(slot))
-            Thread.current[SYNTHESIS_SLOTS_KEY] = nil if held_slots.empty?
+            Thread.current.thread_variable_set(SYNTHESIS_SLOTS_KEY, nil) if held_slots.empty?
           end
         end
       end
