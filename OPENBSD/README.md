@@ -23,7 +23,9 @@ reaches the box with `MASTER/bin/operator vps state` and `MASTER/bin/operator vp
 deploy`. In this tree `bin/check` is the local gate, `bin/check-vps` checks vm23,
 and `bin/vps-deploy` deploys. It deploys master, brgen, amber and bsdports in that
 order, because every deploy sheds amber and bsdports and deploying them last
-restores them in the same pass. The gates that guard the pipeline sit in `gates/`,
+restores them in the same pass. `bin/vps_ci.sh` separately allowlists its three Rails
+app targets before constructing any per-app path; it cannot be used with an arbitrary
+name as a filesystem selector. The gates that guard the pipeline sit in `gates/`,
 and the registry that runs them is `MASTER/gates/gates.yml`. Before a risky deploy,
 `bin/rehearse` shows how the repository layout will map onto the box, which has a
 different copy-tree layout.
