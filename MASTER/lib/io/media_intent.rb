@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 require "shellwords"
 require "time"
 require_relative "../boot/paths"
@@ -476,12 +477,14 @@ module Master
         lines = listing.value!.to_s.lines.map(&:chomp)
         progressions = lines.drop_while { |l| !l.start_with?("Progressions:") }.drop(1).take_while { |l| !l.strip.empty? }.filter_map { |l| l[/\A\s+(\d+)\s/, 1] }
         drums = lines.find { |l| l.start_with?("Drum patterns:") }.to_s.delete_prefix("Drum patterns:").split(",").map(&:strip).reject(&:empty?)
+        profiles = lines.find { |l| l.start_with?("Groove profiles:") }.to_s.delete_prefix("Groove profiles:").split(",").map(&:strip).reject(&:empty?)
         return Result.err("dilla: --list named no progressions", category: :infrastructure) if progressions.empty?
 
-        Result.ok({ progressions:, drums: })
+        Result.ok({ progressions:, drums:, profiles: })
       end
 
-      # A progression and a drum pattern: the ones the sentence names, else any.
+      # A progression and a drum pattern: explicit choices win; a learned J Dilla
+      # reference then steers tempo and pocket. Dilla itself owns all menu values.
       def render_dilla(text, root:, output: nil)
         menu = dilla_menu(root)
         return menu unless menu.ok?
@@ -490,14 +493,29 @@ module Master
         named = text[/\b(?:progression\s+)?(\d+)\b/, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
         pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) } || choices[:drums].sample
+        named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i)
+        reference = named_other_style ? nil : dilla_reference_profile
+        dilla_pocket = !named_other_style && (reference || text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i))
+        groove = if dilla_pocket
+                   preferred = reference&.fetch("groove_profile", nil)
+                   [preferred, "behind_the_beat", "late_snare"].compact.find { |name| choices[:profiles].include?(name) }
+                 end
+        bpm = reference&.fetch("target_bpm", nil) unless text.match?(/\b\d{2,3}(?:\.\d+)?\s*bpm\b/i)
         output ||= File.join(dilla_renders_dir, "#{progression}-#{pattern}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
         FileUtils.mkdir_p(File.dirname(output))
         argv = ["--progression", progression, "--out", output]
         argv.concat(["--drums", pattern]) if pattern
+        argv.concat(["--profile", groove]) if groove
+        argv.concat(["--bpm", bpm.to_s]) if bpm
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
         return result unless result.ok?
 
-        Result.ok({ log: result.value!, path: output, progression:, drums: pattern })
+        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, bpm: })
+      end
+
+      def dilla_reference_profile
+        profile = latest_reference_profile
+        profile if profile && profile["style_key"] == "j_dilla"
       end
 
       def play_live_music(arg, root: MasterPaths.root, bus: nil)
