@@ -28,7 +28,7 @@ module Master
 
             wrapper = LLM_TOOL_MAP[tool.class]
             next unless wrapper
-            name = tool.class.name.split("::").last
+            name = tool_registry_name(tool)
             meta = @tool_registry.fetch(name, {})
             # A tool data/tools.yml never classified is withheld until elevation:
             # what nobody has judged is not safe by omission.
@@ -51,6 +51,18 @@ module Master
           return if allowed || !Fiber[:master_elevated] || tier == "cheap"
 
           tool
+        end
+
+        # Internal adapter classes may expose a shorter operator-facing tool
+        # name through NAME (BrowserAgent -> Browser). Use that registered name
+        # for policy lookup instead of accidentally treating the tool as elevated.
+        def tool_registry_name(tool)
+          short = tool.class.name.to_s.split("::").last
+          return short if @tool_registry.key?(short)
+
+          runtime = tool.class.const_defined?(:NAME) ? tool.class::NAME.to_s : ""
+          candidate = runtime.split("_").map { |part| part[0].to_s.upcase + part[1..].to_s }.join
+          @tool_registry.key?(candidate) ? candidate : short
         end
 
         def load_tool_registry
