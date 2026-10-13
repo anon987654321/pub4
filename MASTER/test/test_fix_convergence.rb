@@ -624,8 +624,7 @@ end
     result = loop.preview(@root)
 
     assert_equal [%w[split simplify]], result.value!.fetch(:structure).map { |row| row.fetch(:candidate_operations) }
-    assert_equal %w[defragment decouple flatten merge split relocate rename reorder remove reflow simplify recommend],
-                 result.value!.fetch(:transformation_order)
+    assert_equal Master.law("transformation_policy").fetch("order"), result.value!.fetch(:transformation_order)
   end
 
   # Every byte of the checkout, .git included (HEAD, refs, index). mtimes are

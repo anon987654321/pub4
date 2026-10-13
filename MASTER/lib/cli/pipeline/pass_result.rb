@@ -55,7 +55,7 @@ module Master
                     end
             base = "#{base}, #{counts}" if counts
             skipped = Master::Io::QuotaGate.report
-            skipped ? "#{base}\n\n#{skipped}" : base
+            skipped ? "#{base}\n\n#{unit}: #{skipped}" : base
           end
         end
       end

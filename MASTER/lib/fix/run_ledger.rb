@@ -71,12 +71,12 @@ module Master
 
         def declined_reasons = @mutex.synchronize { @declined.dup }
 
-        # "patch_rejected:3,model_unchanged:2" for the heartbeat; nil when there is nothing to say.
+        # "patch_rejected 3, model_said_unchanged 2" for the heartbeat; nil when there is nothing to say.
         def why_line
           tally = reasons.merge(declined_reasons) { |_, a, b| a + b }
           return if tally.empty?
 
-          tally.sort_by { |_, count| -count }.first(4).map { |reason, count| "#{reason}:#{count}" }.join(",")
+          tally.sort_by { |_, count| -count }.first(4).map { |reason, count| "#{reason} #{count}" }.join(", ")
         end
 
         def rejects_for(file) = @mutex.synchronize { @file_rejects[file.to_s] }

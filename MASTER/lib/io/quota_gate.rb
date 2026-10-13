@@ -187,7 +187,7 @@ module Master
           next nil if @confirmations.zero?
 
           tiers = @skipped.empty? ? "paid model calls" : @skipped.join(", ")
-          "SKIPPED #{tiers} — #{cause_now} on #{@model.to_s.empty? ? "the routed model" : @model} " \
+          "SKIPPED #{tiers}, #{cause_now} on #{@model.to_s.empty? ? "the routed model" : @model} " \
             "via #{@source} (#{@message}); #{recovery_now}"
         end
       end

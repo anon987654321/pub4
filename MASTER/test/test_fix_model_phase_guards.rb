@@ -83,7 +83,7 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal({ "patch_rejected" => 2, "model_said_unchanged" => 1 }, Ledger.declined_reasons)
     refute Ledger.file_done?("lib/a.rb")
     assert_includes Ledger.summary_lines, "fix0: no proposal 3: patch_rejected 2, model_said_unchanged 1"
-    assert_equal "patch_rejected:2,model_said_unchanged:1", Ledger.why_line
+    assert_equal "patch_rejected 2, model_said_unchanged 1", Ledger.why_line
   end
 
   def test_the_why_line_merges_rejections_and_declined_calls_and_is_nil_when_empty
@@ -92,7 +92,7 @@ class TestFixModelPhaseGuards < Minitest::Test
     Ledger.reject("new_violations", file: "lib/a.rb")
     Ledger.declined("empty_reply", file: "lib/b.rb")
 
-    assert_equal %w[empty_reply:1 new_violations:1], Ledger.why_line.split(",").sort
+    assert_equal ["empty_reply 1", "new_violations 1"], Ledger.why_line.split(", ").sort
   end
 
   def test_a_file_that_outlasts_its_budget_is_skipped_and_recorded

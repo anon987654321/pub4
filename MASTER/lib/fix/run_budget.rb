@@ -239,6 +239,8 @@ module Master
 
         @last_machine_beat = now
         @say.call(@pulse.machine_line(now - @started))
+        reasons = RunLedger.why_line
+        @say.call("fix0: no proposals so far, #{reasons}") if reasons
       end
 
       # Kill switch: a protected path that was clean when the run began and now

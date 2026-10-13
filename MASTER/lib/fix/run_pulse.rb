@@ -121,8 +121,7 @@ module Master
       # The one-line heartbeat a script can split on whitespace and `=`.
       def machine_line(elapsed)
         @lock.synchronize do
-          why = RunLedger.why_line
-          "fix0 phase=#{@stage || "start"} fixed=#{@fixes[:ok]} failed=#{@errored} rejected=#{@rejected} lane=#{lane_id} elapsed=#{elapsed.round}#{why ? " why=#{why}" : ""}"
+          "fix0 phase=#{@stage || "start"} fixed=#{@fixes[:ok]} failed=#{@errored} rejected=#{@rejected} lane=#{lane_id} elapsed=#{elapsed.round}"
         end
       end
 
