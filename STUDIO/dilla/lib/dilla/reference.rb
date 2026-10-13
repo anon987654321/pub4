@@ -20,12 +20,13 @@ module Dilla
     module_function
 
     def run(argv)
-      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION }
+      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION, style: "general" }
       OptionParser.new do |parser|
         parser.banner = "Usage: ruby dilla.rb reference YOUTUBE_URL_OR_AUDIO [options]"
         parser.on("--out DIR") { |value| options[:out] = value }
         parser.on("--no-stems") { options[:stems] = false }
         parser.on("--model NAME") { |value| options[:model] = value }
+        parser.on("--style NAME") { |value| options[:style] = style_key(value) }
         parser.on("--max-duration SECONDS", Integer) do |value|
           raise OptionParser::InvalidArgument, "duration must be 1..#{MAX_DURATION}" unless value.between?(1, MAX_DURATION)
           options[:max_duration] = value
@@ -72,7 +73,8 @@ module Dilla
       File.write(File.join(dir, "metadata.json"), JSON.pretty_generate({
         "source_type" => "youtube_audio", "id" => video[:id], "title" => metadata["title"],
         "channel" => metadata["channel"] || metadata["uploader"], "url" => video[:url],
-        "duration_seconds" => seconds, "license" => metadata["license"]
+        "duration_seconds" => seconds, "license" => metadata["license"],
+        "style_key" => style_key(options[:style])
       }.compact) + "\n")
       capture!("yt-dlp audio-only download", ytdlp, "--no-playlist", "--no-overwrites", "-f", "bestaudio/best",
                "-x", "--audio-format", "wav", "-o", File.join(dir, "source.%(ext)s"), video[:url],
@@ -84,7 +86,7 @@ module Dilla
 
     def analyze(audio, directory = nil, options = {})
       raise Error, "audio file does not exist: #{audio}" unless File.file?(audio) && File.readable?(audio)
-      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION }.merge(options)
+      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION, style: "general" }.merge(options)
       ffmpeg = executable("FFMPEG_BIN", "ffmpeg") or raise Error, "ffmpeg unavailable"
       ffprobe = executable("FFPROBE_BIN", "ffprobe") or raise Error, "ffprobe unavailable"
       duration = probe_duration(audio, ffprobe)
@@ -103,7 +105,7 @@ module Dilla
         tracks[File.basename(path, ".wav")] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: false)
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
-      profile = profile_for(mix).merge(
+      profile = profile_for(mix, style: options[:style]).merge(
         "source_duration_seconds" => mix["duration_seconds"],
         "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16]
       ).compact
@@ -117,8 +119,11 @@ module Dilla
       File.write(File.join(directory, "profile.json"), JSON.pretty_generate(profile) + "\n")
       FileUtils.mkdir_p(REFERENCE_ROOT)
       File.write(File.join(REFERENCE_ROOT, "latest_profile.json"), JSON.pretty_generate(profile) + "\n")
+      scoped_profile = profile_path(profile.fetch("style_key"))
+      FileUtils.mkdir_p(File.dirname(scoped_profile))
+      File.write(scoped_profile, JSON.pretty_generate(profile) + "\n")
       write_report(File.join(directory, "report.md"), tracks, separation, profile)
-      puts "reference0: separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
+      puts "reference0: style=#{profile.fetch('style_key')}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
       puts "reference0: report=#{File.join(directory, 'report.md')}"
       0
@@ -213,18 +218,45 @@ module Dilla
       { "status" => "failed", "message" => error.message }
     end
 
-    def profile_for(mix)
+    # Normalize only the broad styles MASTER explicitly identifies. The acoustic
+    # measurements remain measurements; the style hint is not claimed as detected.
+    def style_key(value)
+      hint = value.to_s.downcase.tr("_", " ").gsub(/[^a-z0-9]+/, " ").strip
+      return "industrial_techno" if hint.match?(/\bindustrial techno\b|\btechno\b/)
+      return "j_dilla" if hint.match?(/\bj dilla\b|\bdilla\b|\bboom bap\b|\bhip hop\b/)
+      "general"
+    end
+
+    def profile_path(style)
+      key = style_key(style)
+      File.join(REFERENCE_ROOT, "profiles", key, "latest_profile.json")
+    end
+
+    def profile_for(mix, style: "general")
       bands = mix.fetch("spectral_bands_db", {})
       low = ((bands.fetch("sub_25_120_hz", -36.0) - bands.fetch("low_mid_120_500_hz", -36.0) + 8.0) / 24.0).clamp(0.0, 1.0)
       bright = ((bands.fetch("high_4000_plus_hz", -36.0) - bands.fetch("mid_500_4000_hz", -36.0) + 10.0) / 24.0).clamp(0.0, 1.0)
-      bpm = mix.dig("tempo", "bpm")
-      { "genre" => "industrial_techno", "measured_bpm" => bpm,
-        "tempo_confidence" => mix.dig("tempo", "confidence"), "target_bpm" => bpm ? bpm.to_f.clamp(118, 160).round : 138,
-        "meter" => "4/4", "parameters" => {
-          "rumble_level" => (0.09 + 0.10 * low).round(3), "rumble_duck_depth" => (0.70 + 0.20 * low).round(3),
-          "hat_probability" => (0.46 + 0.30 * bright).round(3), "metal_probability" => (0.07 + 0.13 * bright).round(3),
-          "distortion_drive" => (1.6 + 0.9 * bright).round(2)
-        }, "production" => "straight four-on-the-floor; distorted rumble; metallic hits; evolving industrial textures; no hip-hop swing" }
+      bpm = mix.dig("tempo", "bpm")&.to_f
+      key = style_key(style)
+      common = { "style_key" => key, "measured_bpm" => bpm,
+                 "tempo_confidence" => mix.dig("tempo", "confidence"), "meter" => "4/4",
+                 "features" => { "low_frequency_weight" => low.round(3), "brightness" => bright.round(3) } }
+      case key
+      when "industrial_techno"
+        common.merge("genre" => key, "target_bpm" => bpm ? bpm.clamp(118, 160).round : 138,
+          "parameters" => {
+            "rumble_level" => (0.09 + 0.10 * low).round(3), "rumble_duck_depth" => (0.70 + 0.20 * low).round(3),
+            "hat_probability" => (0.46 + 0.30 * bright).round(3), "metal_probability" => (0.07 + 0.13 * bright).round(3),
+            "distortion_drive" => (1.6 + 0.9 * bright).round(2)
+          }, "production" => "straight four-on-the-floor; distorted rumble; metallic hits; evolving industrial textures; no hip-hop swing")
+      when "j_dilla"
+        common.merge("genre" => "hip_hop", "target_bpm" => bpm ? bpm.clamp(70, 110).round : 88,
+          "groove_profile" => "behind_the_beat",
+          "production" => "sample-led hip-hop reference; laid-back pocket; syncopated boom-bap drums; warm, slightly imperfect texture")
+      else
+        common.merge("genre" => "general", "target_bpm" => bpm&.round,
+          "production" => "use measured tempo, spectral balance, loudness and duration as broad reference cues; do not infer unmeasured groove or instrumentation")
+      end
     end
 
     def write_report(path, tracks, separation, profile)
