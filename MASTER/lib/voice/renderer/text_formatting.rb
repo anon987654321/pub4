@@ -12,7 +12,7 @@ module Master
         # callers that used the old signature.
         MEASURE = 72
 
-        def measure(text, width: MEASURE)
+        def measure(text, **_options)
           text.to_s
         end
 
