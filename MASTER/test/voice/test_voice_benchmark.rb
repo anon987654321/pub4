@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
-require_relative "../lib/voice/benchmark"
+require_relative "../test_helper"
+require_relative "../../lib/voice/benchmark"
 
 class TestVoiceBenchmark < Minitest::Test
   def test_torture_suite_has_varied_delivery_intents

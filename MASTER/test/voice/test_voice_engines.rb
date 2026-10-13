@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
-require_relative "../lib/voice/engines"
+require_relative "../test_helper"
+require_relative "../../lib/voice/engines"
 
 class TestVoiceEngines < Minitest::Test
   Engines = Master::Voice::Engines

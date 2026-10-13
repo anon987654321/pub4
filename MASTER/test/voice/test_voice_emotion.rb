@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
-require_relative "../lib/voice/emotion"
+require_relative "../test_helper"
+require_relative "../../lib/voice/emotion"
 
 class TestVoiceEmotion < Minitest::Test
   def test_analysis_is_deterministic

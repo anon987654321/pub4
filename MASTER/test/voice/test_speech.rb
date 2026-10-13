@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../test_helper"
 require "socket"
 require "tmpdir"
 
@@ -144,9 +144,9 @@ class TestSpeech < Minitest::Test
   end
 
   def test_audio_children_close_the_master_control_lock
-    source = File.read(File.expand_path("../lib/voice/playback.rb", __dir__))
+    source = File.read(File.expand_path("../../lib/voice/playback.rb", __dir__))
     assert_includes source, "ProcessSpawn.options"
-    source = File.read(File.expand_path("../lib/voice/tts_supervisor.rb", __dir__))
+    source = File.read(File.expand_path("../../lib/voice/tts_supervisor.rb", __dir__))
     assert_includes source, "ProcessSpawn.options"
   end
 
