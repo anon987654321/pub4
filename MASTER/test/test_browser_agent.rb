@@ -51,7 +51,7 @@ class TestBrowserAgent < Minitest::Test
     assert governor.permit?("browser", :dangerous, description).err?,
            "a remembered allow response must not count as fresh consent"
     2.times do
-      assert governor.permit?("browser_agent", :dangerous, description).ok?
+      assert governor.permit?("browser", :dangerous, description).ok?
     end
 
     assert_equal 3, prompts.length
