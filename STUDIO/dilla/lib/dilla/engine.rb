@@ -34,7 +34,10 @@ def run(argv)
     o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
     o.on('--repeat [STYLE]', '--comp [STYLE]', 'Strike the whole chord again on the steps of a style instead of arpeggiating') { |v| options[:repeat] = v || true }
     o.on('--patch-per-chord', 'In pad mode, give every chord its own patch, drawn from the one bag of all patches') { options[:patch_per_chord] = true }
-    o.on('--mode MODE', 'arp, repeat or pad: force how the chords are played') { |v| options[:mode] = v }
+    o.on('--mode MODE', 'arp, repeat, pad or organ: force how the chords are played') { |v| options[:mode] = v }
+    o.on('--key NAME', 'With --mode organ: the tonic, such as D or Bb (else drawn from the seed)') { |v| options[:key] = v }
+    o.on('--scale NAME', 'With --mode organ: harmonic_minor, natural_minor, major or dorian (else drawn from the seed)') { |v| options[:scale] = v }
+    o.on('--bars N', Integer, 'With --mode organ: bars of improvisation, one chord a bar (default from the data)') { |v| options[:bars] = v }
     o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
     o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
     o.on('--tape N', Integer, 'Tape machines in series as the last stage, 0 to 8; 0 leaves the sound untouched (default from the data)') { |v| options[:tape] = v.clamp(0, 8) }
@@ -68,7 +71,7 @@ def run(argv)
     puts
     puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
-  elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick])
+  elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != 'organ')
     render_showcase(data, options)
   else
     render(data, options)
@@ -105,19 +108,25 @@ def render(data, options)
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed,
                             transpose: options[:transpose] || 0, wrap: options[:wrap], kit: options[:kit])
   bpm = options[:bpm] || seq.bpm
+  seq.tempo = bpm
   beats = options[:beats] || seq.beats
   voice = seq.voice_spec(options[:voice])
   search = !options[:plain]
   mode = play_mode(options, seq)
   validate_scale!(names, options[:melody], options[:scale_pcs]) if options[:scale_pcs]
   warn_past_nyquist(names, search, options)
-  chord_voices = nil
+  chord_voices = piece = nil
   buf =
     case mode
     when 'arp'
-      arp = seq.arp_settings(options[:arp], style: options[:arp_style], rate: parse_rate(options[:arp_rate]))
+      arp = seq.arp_settings(options[:arp] || true, style: options[:arp_style], rate: parse_rate(options[:arp_rate]))
       arp['gate'] = options[:gate] if options[:gate]
       seq.render_arp(names, bpm, beats, arp, search:, pad: options[:pad], voice:)
+    when 'organ'
+      piece = Organ.compose(seed:, config: data.fetch('organ'), bars: options[:bars], key: options[:key], scale: options[:scale])
+      names = piece.names
+      beats = 4.0
+      seq.render_organ(piece, bpm, seq.voice_spec('organ'))
     when 'repeat'
       comp = seq.comp_settings(options[:repeat] || true)
       comp['gate'] = options[:gate] if options[:gate]
@@ -170,15 +179,16 @@ def render(data, options)
   return buf if options[:buffer_only]
 
   buf = tape_stage(buf, data, options, seed)
-  out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
+  out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{Array(drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write(out, buf)
   if options[:midi]
     FileUtils.mkdir_p(File.dirname(options[:midi]))
     MIDI.write(options[:midi], names, bpm, beats, hits, search:)
   end
-  puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
-  puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{chord_voices&.join('>') || voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} tape=#{options.fetch(:tape, data.dig('tape', 'instances'))} seed=#{seed}"
+  label = piece ? "organ in #{piece.key} #{piece.scale}, #{piece.phrases.size} phrases, #{piece.suspensions} suspensions" : "progression #{index}"
+  puts "Wrote #{out} (#{seconds.round(2)}s) #{label}: #{names.join(' ')}"
+  puts "  drums=#{drums ? Array(drums).join(',') : 'none'} profile=#{profile} mode=#{mode} voice=#{piece ? 'organ' : (chord_voices&.join('>') || voice['name'])} groove=#{seq.pd_amount} bpm=#{bpm} tape=#{options.fetch(:tape, data.dig('tape', 'instances'))} seed=#{seed}"
   out
 end
 
@@ -209,7 +219,7 @@ end
 # Add deliberate layers behind and above the main instrument part without modulation effects.
 # Held layers use the very same chord voicings; patterned layers share the same tempo and groove.
 def render_layers(buf, seq, names, bpm, beats, options, search:)
-  Array(options[:layers]).each do |layer|
+  Array(options.fetch(:layers) { seq.profile_layers }).each do |layer|
     voice = seq.voice_spec(layer.fetch('voice'))
     gate = layer.fetch('gate', 0.9).to_f.clamp(0.05, 1.5)
     mode = layer.fetch('mode', 'held')
@@ -219,6 +229,7 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
         layer_buffer = Array.new(buf.size, 0.0)
         beat_seconds = 60.0 / bpm
         chords = Chords.midi_notes(names, search:, transpose: (options[:transpose] || 0) + layer.fetch('transpose', 0).to_i, wrap: options[:wrap])
+        chords = chords.map { |notes| notes.first(1) } if layer['notes'] == 'bass'
         plucks = chords.each_with_index.map do |notes, index|
           Pluck.new(index * beats * beat_seconds, 0.0, notes, beats * beat_seconds * gate,
                     layer.fetch('velocity', 0.55).to_f.clamp(0.0, 1.0))

@@ -5,7 +5,9 @@
 module Echo
   MAX_INTENSITY = 0.9 # feedback never reaches one, so the loop cannot run away
 
-  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0, tail: 4.0, resets: [])
+  # `send`, when given, is a proc from a sample index to how much of the input reaches the tape
+  # at that moment: the hand on the send knob, which a throw turns up for a bar.
+  def self.process(buf, delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0, tail: 4.0, resets: [], send: nil)
     intensity = intensity.to_f.clamp(0.0, MAX_INTENSITY)
     d = [(delay * SAMPLE_RATE).round, 1].max
     ring = Array.new((heads.max * d) + 1, 0.0)
@@ -25,7 +27,9 @@ module Echo
       heads.each { |h| taps += ring[(n - (h * d)) % ring.size] }
       y += (1.0 - cutoff) * ((Math.tanh(taps * share * drive) / drive) - y)
       wet[n] = y
-      ring[n % ring.size] = (n < buf.size ? buf[n] : 0.0) + (intensity * y)
+      fed = n < buf.size ? buf[n] : 0.0
+      fed *= send.call(n) if send
+      ring[n % ring.size] = fed + (intensity * y)
     end
     wet = FX.reverb(wet, reverb) if reverb.to_f.positive?
     Array.new(wet.size) { |n| (n < buf.size ? buf[n] : 0.0) + (volume * wet[n]) }

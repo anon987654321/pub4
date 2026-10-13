@@ -3548,6 +3548,172 @@
       "c": 0.17
     }
   },
+  "organ": {
+    "bars": 16,
+    "scales": {
+      "harmonic_minor": [
+        0,
+        2,
+        3,
+        5,
+        7,
+        8,
+        11
+      ],
+      "natural_minor": [
+        0,
+        2,
+        3,
+        5,
+        7,
+        8,
+        10
+      ],
+      "major": [
+        0,
+        2,
+        4,
+        5,
+        7,
+        9,
+        11
+      ],
+      "dorian": [
+        0,
+        2,
+        3,
+        5,
+        7,
+        9,
+        10
+      ]
+    },
+    "scale_weights": {
+      "harmonic_minor": 4,
+      "natural_minor": 2,
+      "major": 3,
+      "dorian": 1
+    },
+    "phrase_bars": [
+      2,
+      3,
+      4
+    ],
+    "cadences": {
+      "half": 4,
+      "authentic": 4,
+      "deceptive": 1,
+      "plagal": 1
+    },
+    "ranges": {
+      "pedal": [
+        36,
+        48
+      ],
+      "left": [
+        50,
+        67
+      ],
+      "right": [
+        60,
+        84
+      ]
+    },
+    "rotation": [
+      "principal",
+      "octave",
+      "plenum",
+      "nazard",
+      "mixture",
+      "full"
+    ],
+    "lines": {
+      "pedal": "pedal",
+      "left": "octave"
+    },
+    "levels": {
+      "pedal": 0.9,
+      "left": 0.7,
+      "right": 1.0
+    },
+    "gates": {
+      "pedal": 0.97,
+      "left": 0.95,
+      "right": 0.9
+    },
+    "pedal_point_chance": 0.2,
+    "pedal_styles": {
+      "half": 3,
+      "walk": 4
+    },
+    "suspensions": {
+      "chance": 0.3,
+      "cadence_chance": 0.7,
+      "types": [
+        "4-3",
+        "7-6",
+        "9-8"
+      ]
+    },
+    "motifs": {
+      "rhythms": [
+        [
+          3,
+          1,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          1,
+          1,
+          2,
+          2
+        ],
+        [
+          4,
+          2,
+          2
+        ],
+        [
+          3,
+          1,
+          4
+        ],
+        [
+          1,
+          1,
+          2,
+          2,
+          2
+        ]
+      ],
+      "steps": [
+        -2,
+        -1,
+        1,
+        2
+      ]
+    },
+    "figures": {
+      "run16": 4,
+      "run8": 3,
+      "dotted": 2,
+      "neighbor": 2,
+      "turn": 2,
+      "appoggiatura": 2,
+      "motif": 4,
+      "sequence": 3,
+      "held": 1
+    },
+    "rubato_ms": 30
+  },
   "echo": {
     "modes": [
       [
@@ -3589,7 +3755,8 @@
     "sampler_glue",
     "techno_arp",
     "industrial_arp",
-    "eclectic"
+    "eclectic",
+    "dub_dark"
   ],
   "comp": {
     "default_style": "eighth_stabs",
@@ -3645,10 +3812,12 @@
   },
   "voices": {
     "sine": {
-      "family": "sine"
+      "family": "sine",
+      "group": "sine"
     },
     "moog_pluck": {
       "family": "moog",
+      "group": "moog",
       "gain": 14,
       "waves": [
         "saw",
@@ -3684,6 +3853,7 @@
     },
     "moog_lead": {
       "family": "moog",
+      "group": "moog",
       "gain": 14,
       "waves": [
         "saw",
@@ -3716,6 +3886,7 @@
     },
     "moog_pad": {
       "family": "moog",
+      "group": "moog",
       "gain": 14,
       "waves": [
         "saw",
@@ -3751,6 +3922,7 @@
     },
     "moog_bass": {
       "family": "moog",
+      "group": "moog",
       "gain": 14,
       "waves": [
         "saw",
@@ -3786,6 +3958,7 @@
     },
     "rhodes_mark1": {
       "family": "rhodes",
+      "group": "rhodes",
       "body_index": 1.3,
       "bell_index": 2.8,
       "bell_ratio": 14,
@@ -3798,6 +3971,7 @@
     },
     "rhodes_stage73": {
       "family": "rhodes",
+      "group": "rhodes",
       "body_index": 1.9,
       "bell_index": 3.4,
       "bell_ratio": 14,
@@ -3810,6 +3984,7 @@
     },
     "rhodes_tine_wurli": {
       "family": "rhodes",
+      "group": "rhodes",
       "body_index": 2.4,
       "bell_index": 1.6,
       "bell_ratio": 7,
@@ -3822,6 +3997,7 @@
     },
     "dx_ep_glass": {
       "family": "rhodes",
+      "group": "rhodes",
       "body_index": 1.1,
       "bell_index": 4.2,
       "bell_ratio": 14,
@@ -3834,6 +4010,7 @@
     },
     "dfam": {
       "family": "dfam",
+      "group": "dfam",
       "gain": 8,
       "level": 0.34,
       "decay": 0.12,
@@ -3898,9 +4075,547 @@
     },
     "pure_tone": {
       "family": "pure",
+      "group": "pure",
       "gain": 0,
       "attack": 0.008,
       "release": 0.12
+    },
+    "prophet_pad": {
+      "family": "moog",
+      "group": "polypad",
+      "gain": 12.5,
+      "waves": [
+        "saw",
+        "saw",
+        "pulse",
+        "saw"
+      ],
+      "detune": [
+        0,
+        -5,
+        4,
+        6
+      ],
+      "octaves": [
+        0,
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 1500,
+      "env_amount": 2600,
+      "resonance": 0.18,
+      "drive": 1.1,
+      "amp": [
+        0.12,
+        0.5,
+        0.8,
+        0.7
+      ],
+      "filter_env": [
+        0.25,
+        0.9,
+        0.35,
+        0.7
+      ]
+    },
+    "prophet_warm": {
+      "family": "moog",
+      "group": "polypad",
+      "gain": 12.5,
+      "waves": [
+        "saw",
+        "triangle",
+        "saw"
+      ],
+      "detune": [
+        -4,
+        0,
+        5
+      ],
+      "octaves": [
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 1100,
+      "env_amount": 1800,
+      "resonance": 0.12,
+      "drive": 1.0,
+      "amp": [
+        0.2,
+        0.7,
+        0.8,
+        0.9
+      ],
+      "filter_env": [
+        0.4,
+        1.1,
+        0.4,
+        0.8
+      ]
+    },
+    "oberheim_pad": {
+      "family": "moog",
+      "group": "polypad",
+      "gain": 13,
+      "waves": [
+        "saw",
+        "saw",
+        "saw",
+        "pulse"
+      ],
+      "detune": [
+        -6,
+        -2,
+        3,
+        6
+      ],
+      "octaves": [
+        0,
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 900,
+      "env_amount": 1500,
+      "resonance": 0.25,
+      "drive": 1.15,
+      "amp": [
+        0.35,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "filter_env": [
+        0.6,
+        1.5,
+        0.5,
+        1.0
+      ]
+    },
+    "juno_strings": {
+      "family": "moog",
+      "group": "strings",
+      "gain": 16.5,
+      "waves": [
+        "saw",
+        "saw",
+        "saw",
+        "saw",
+        "saw",
+        "saw"
+      ],
+      "detune": [
+        -6,
+        -3.6,
+        -1.2,
+        1.2,
+        3.6,
+        6
+      ],
+      "octaves": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "cutoff": 2200,
+      "env_amount": 600,
+      "resonance": 0.05,
+      "drive": 1.0,
+      "amp": [
+        0.18,
+        0.4,
+        0.85,
+        0.55
+      ],
+      "filter_env": [
+        0.2,
+        0.5,
+        0.6,
+        0.4
+      ]
+    },
+    "solina_ensemble": {
+      "family": "moog",
+      "group": "strings",
+      "gain": 12.8,
+      "waves": [
+        "saw",
+        "saw",
+        "saw",
+        "saw"
+      ],
+      "detune": [
+        3,
+        -5,
+        5,
+        -3
+      ],
+      "octaves": [
+        -1,
+        0,
+        0,
+        1
+      ],
+      "cutoff": 2600,
+      "env_amount": 400,
+      "resonance": 0.04,
+      "drive": 1.0,
+      "amp": [
+        0.28,
+        0.5,
+        0.9,
+        0.7
+      ],
+      "filter_env": [
+        0.3,
+        0.6,
+        0.7,
+        0.5
+      ]
+    },
+    "cs80_ensemble": {
+      "family": "moog",
+      "group": "polypad",
+      "gain": 13,
+      "waves": [
+        "saw",
+        "pulse",
+        "saw",
+        "saw"
+      ],
+      "detune": [
+        0,
+        4,
+        -4,
+        6
+      ],
+      "octaves": [
+        0,
+        0,
+        0,
+        -1
+      ],
+      "cutoff": 700,
+      "env_amount": 3200,
+      "resonance": 0.32,
+      "drive": 1.2,
+      "amp": [
+        0.22,
+        0.7,
+        0.8,
+        0.8
+      ],
+      "filter_env": [
+        0.35,
+        1.0,
+        0.3,
+        0.6
+      ]
+    },
+    "ruby_strings": {
+      "family": "moog",
+      "group": "strings",
+      "gain": 15.5,
+      "waves": [
+        "saw",
+        "saw",
+        "saw",
+        "saw",
+        "saw"
+      ],
+      "detune": [
+        -6,
+        -3,
+        0,
+        3,
+        6
+      ],
+      "octaves": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "cutoff": 1800,
+      "env_amount": 700,
+      "resonance": 0.06,
+      "drive": 1.0,
+      "amp": [
+        0.35,
+        0.5,
+        0.9,
+        0.8
+      ],
+      "filter_env": [
+        0.3,
+        0.6,
+        0.6,
+        0.5
+      ]
+    },
+    "dub_stab": {
+      "family": "moog",
+      "group": "dub",
+      "gain": 14,
+      "waves": [
+        "pulse",
+        "saw"
+      ],
+      "detune": [
+        0,
+        3
+      ],
+      "octaves": [
+        0,
+        0
+      ],
+      "cutoff": 500,
+      "env_amount": 2800,
+      "resonance": 0.3,
+      "drive": 1.1,
+      "amp": [
+        0.002,
+        0.16,
+        0.0,
+        0.1
+      ],
+      "filter_env": [
+        0.001,
+        0.12,
+        0.0,
+        0.08
+      ]
+    },
+    "dub_pad": {
+      "family": "moog",
+      "group": "dub",
+      "gain": 12.3,
+      "waves": [
+        "triangle",
+        "sine",
+        "saw"
+      ],
+      "detune": [
+        0,
+        0,
+        4
+      ],
+      "octaves": [
+        0,
+        -1,
+        0
+      ],
+      "cutoff": 600,
+      "env_amount": 500,
+      "resonance": 0.1,
+      "drive": 1.0,
+      "amp": [
+        0.5,
+        0.9,
+        0.8,
+        1.2
+      ],
+      "filter_env": [
+        0.6,
+        1.2,
+        0.5,
+        0.9
+      ]
+    },
+    "dub_bass": {
+      "family": "moog",
+      "group": "dub",
+      "gain": 11,
+      "waves": [
+        "sine",
+        "triangle"
+      ],
+      "detune": [
+        0,
+        0
+      ],
+      "octaves": [
+        0,
+        -1
+      ],
+      "cutoff": 380,
+      "env_amount": 300,
+      "resonance": 0.1,
+      "drive": 1.3,
+      "amp": [
+        0.012,
+        0.25,
+        0.85,
+        0.2
+      ],
+      "filter_env": [
+        0.01,
+        0.3,
+        0.3,
+        0.2
+      ]
+    },
+    "dub_bubble": {
+      "family": "gated",
+      "group": "dub",
+      "gain": 7,
+      "partials": [
+        [
+          1,
+          1.0
+        ],
+        [
+          2,
+          0.5
+        ],
+        [
+          3,
+          0.3
+        ],
+        [
+          4,
+          0.2
+        ]
+      ],
+      "pattern": "x.xx.xx.x.xx.x.x",
+      "cell_steps": 1,
+      "slew": 0.004,
+      "amp": [
+        0.004,
+        0.2,
+        0.85,
+        0.06
+      ]
+    },
+    "organ": {
+      "family": "organ",
+      "group": "organ",
+      "gain": -1.2,
+      "ratios": [
+        0.5,
+        1,
+        2,
+        3,
+        4,
+        6,
+        8
+      ],
+      "registrations": {
+        "principal": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "octave": [
+          0,
+          1,
+          0.7,
+          0,
+          0,
+          0,
+          0
+        ],
+        "plenum": [
+          0,
+          1,
+          0.8,
+          0,
+          0.6,
+          0,
+          0
+        ],
+        "nazard": [
+          0,
+          1,
+          0.6,
+          0.5,
+          0.4,
+          0,
+          0
+        ],
+        "mixture": [
+          0,
+          0.8,
+          0.5,
+          0,
+          0.5,
+          0.45,
+          0.3
+        ],
+        "full": [
+          0.4,
+          1,
+          0.8,
+          0.6,
+          0.7,
+          0.5,
+          0.35
+        ],
+        "pedal": [
+          1,
+          0.8,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "chiff": {
+        "seconds": 0.015,
+        "level": 0.35
+      },
+      "amp": [
+        0.006,
+        0.05,
+        1.0,
+        0.045
+      ]
+    },
+    "fluid_strings": {
+      "family": "fluid",
+      "group": "strings",
+      "program": 48,
+      "gain": 10,
+      "fallback": "ruby_strings"
+    },
+    "fluid_strings_slow": {
+      "family": "fluid",
+      "group": "strings",
+      "program": 49,
+      "gain": 10,
+      "fallback": "ruby_strings"
+    },
+    "fluid_synth_strings": {
+      "family": "fluid",
+      "group": "strings",
+      "program": 50,
+      "gain": 10,
+      "fallback": "ruby_strings"
+    },
+    "fluid_choir": {
+      "family": "fluid",
+      "group": "strings",
+      "program": 52,
+      "gain": 11,
+      "fallback": "ruby_strings"
+    },
+    "fluid_warm_pad": {
+      "family": "fluid",
+      "group": "strings",
+      "program": 89,
+      "gain": 10,
+      "fallback": "ruby_strings"
     }
   },
   "sonitex": {
@@ -4578,6 +5293,98 @@
         "detune": 0.0,
         "reverb": 0.0,
         "lowpass": 12000
+      }
+    },
+    "dub_dark": {
+      "bpm": 76,
+      "swing": 0.52,
+      "voice": "dub_stab",
+      "repeat": {
+        "style": "offbeat_skank",
+        "modifiers": [
+          "probability",
+          "humanize"
+        ],
+        "probability": {
+          "probability": 0.95
+        }
+      },
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.8,
+        "echo_volume": 0.72,
+        "time_beats": 0.75,
+        "lowpass": 2600,
+        "saturation": 0.5,
+        "tail": 10,
+        "throws": {
+          "every_bars": 4,
+          "gain": 2.6,
+          "base": 0.3
+        }
+      },
+      "layers": [
+        {
+          "voice": "dub_bass",
+          "mode": "held",
+          "notes": "bass",
+          "gate": 0.95,
+          "velocity": 0.8,
+          "gain_db": -8
+        },
+        {
+          "voice": "dub_pad",
+          "mode": "held",
+          "gate": 0.98,
+          "velocity": 0.5,
+          "gain_db": -19
+        },
+        {
+          "voice": "dub_bubble",
+          "mode": "held",
+          "gate": 0.9,
+          "velocity": 0.5,
+          "gain_db": -21
+        }
+      ],
+      "kit": "kit_dust",
+      "drums": [
+        "one_drop",
+        "steppers",
+        "rockers"
+      ],
+      "drum_swing": {
+        "kick": 0.5,
+        "snare": 0.5,
+        "hat": 0.53
+      },
+      "offsets": {
+        "kick": 0.004,
+        "snare": 0.012,
+        "hat": 0.014,
+        "kick_first": 0
+      },
+      "drunk_amount": 0.2,
+      "mix": {
+        "kick": -4.0,
+        "snare": -3.0,
+        "clap": -3.0,
+        "hat": -9.0,
+        "chords": 0.0
+      },
+      "drum_crush": {
+        "bits": 12,
+        "rate": 0.75
+      },
+      "texture": {
+        "detune": 0.0,
+        "reverb": 0.0,
+        "spring": 0.35,
+        "lowpass": 7500
       }
     }
   },

@@ -15,6 +15,7 @@
 #   arp, echo     present means on; each overrides the defaults of the same name in the data
 class Sequencer
   attr_reader :seed, :pd_amount
+  attr_writer :tempo # beats a minute; voices that play on the grid need it
 
   def initialize(data, profile_name:, pd_amount: nil, seed: nil, transpose: 0, wrap: false, kit: nil)
     @kit = kit
@@ -67,6 +68,36 @@ class Sequencer
     buf
   end
 
+  # An organ piece played by the organ voice: each line has its registration (the right hand's
+  # changes with the phrase), its level and its gate, and every note leans from the grid by the
+  # phrase's rubato, which pushes ahead through a phrase and relaxes into its cadence, never
+  # past the clamp.
+  def render_organ(piece, bpm, voice)
+    config = @data.fetch('organ')
+    step = 60.0 / bpm / 4.0
+    buf = Array.new((((piece.steps * step) + 3.0) * SAMPLE_RATE).to_i, 0.0)
+    piece.lines.each do |line, notes|
+      notes.group_by(&:phrase).each do |index, group|
+        phrase = piece.phrases.fetch(index)
+        registration = voice.fetch('registrations').fetch(line == 'right' ? phrase.registration : config.fetch('lines').fetch(line))
+        plucks = group.map do |n|
+          held = n.length * step * (n.length == 1 ? 0.8 : config.fetch('gates').fetch(line))
+          Pluck.new(n.step * step, rubato(n.step, phrase, config), n.midi, held, n.gain * config.fetch('levels').fetch(line))
+        end
+        sound(buf, plucks, voice.merge('registration' => registration))
+      end
+    end
+    buf
+  end
+
+  # How far a note at a step leans from the grid in seconds: early through the body of the
+  # phrase, late as it closes.
+  def rubato(step, phrase, config)
+    limit = config.fetch('rubato_ms') / 1000.0
+    u = ((step.to_f / Organ::BAR) - phrase.first_bar) / phrase.bars
+    ((-0.4 * limit * Math.sin(Math::PI * u.clamp(0.0, 1.0))) + (u > 0.75 ? limit * (((u - 0.75) / 0.25)**2) : 0.0)).clamp(-MAX_OFFSET, MAX_OFFSET)
+  end
+
   # The voice specs for a list of voice names, as the sequencer plays them.
   def voice_specs(flags) = flags.map { |flag| voice_spec(flag) }
 
@@ -101,10 +132,20 @@ class Sequencer
     base.merge(row).merge((spec || {}).reject { |k, _| k == 'style' }).merge('style' => name)
   end
 
+  # The layers the profile plays beneath the part: nil when it names none.
+  def profile_layers = @profile['layers']
+
   # The voice that plays the notes: the flag's, else the profile's, else the plain sine stack.
   def voice_spec(flag)
     name = flag || @profile['voice'] || 'sine'
-    @data.fetch('voices').fetch(name) { abort "No voice: #{name}" }.merge('name' => name)
+    row = @data.fetch('voices').fetch(name) { abort "No voice: #{name}" }
+    return row.merge('name' => name) unless row['family'] == 'fluid' && !Fluid.available?(row)
+
+    fallback = row.fetch('fallback')
+    @warned ||= {}
+    warn "#{name}: #{Fluid.missing(row)}; playing #{fallback} instead" unless @warned[name]
+    @warned[name] = true
+    @data.fetch('voices').fetch(fallback).merge('name' => fallback)
   end
 
   # The Sonitex preset and instance count, or nil when neither a flag nor the profile asks.
@@ -189,7 +230,7 @@ class Sequencer
 
   def render_arp(names, bpm, beats, arp, search: true, pad: false, voice: nil)
     buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
-    note_events(names, bpm, beats, arp, 'arp', search:).each { |plucks| sound(buf, plucks, voice || voice_spec(nil)) }
+    sound(buf, note_events(names, bpm, beats, arp, 'arp', search:).flatten(1), voice || voice_spec(nil))
     if pad
       under = render_chords(names, bpm, beats, search:)
       under.each_with_index { |v, i| buf[i] += v * arp.fetch('pad', 0.3) if i < buf.size }
@@ -201,7 +242,7 @@ class Sequencer
   # distance to the next one.
   def render_repeat(names, bpm, beats, comp, search: true, voice: nil)
     buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
-    note_events(names, bpm, beats, comp, 'repeat', search:).each { |plucks| sound(buf, plucks, voice || voice_spec(nil)) }
+    sound(buf, note_events(names, bpm, beats, comp, 'repeat', search:).flatten(1), voice || voice_spec(nil))
     buf
   end
 
@@ -221,14 +262,24 @@ class Sequencer
 
   # Mix each pluck into the buffer through the voice; a chord's level is shared among its notes.
   def sound(buf, plucks, voice)
+    return sound_soundfont(buf, plucks, voice) if voice['family'] == 'fluid'
+
+    step = @tempo && 15.0 / @tempo
     plucks.each do |p|
       notes = Array(p.midi)
       notes.each do |midi|
-        samples = Voices.note(voice, midi, p.dur, 0.22 * p.gain / Math.sqrt(notes.size), velocity: p.gain, detune: detune)
+        samples = Voices.note(voice, midi, p.dur, 0.22 * p.gain / Math.sqrt(notes.size), velocity: p.gain, detune: detune,
+                                                                                         step:, registration: voice['registration'])
         start = [((p.base + p.off.clamp(-MAX_OFFSET, MAX_OFFSET)) * SAMPLE_RATE).to_i, 0].max
         samples.each_with_index { |v, j| buf[start + j] += v if start + j < buf.size }
       end
     end
+  end
+
+  # The plucks played by a soundfont in one pass, its level set by the voice's gain.
+  def sound_soundfont(buf, plucks, voice)
+    level = 10.0**(voice.fetch('gain', 0.0) / 20.0)
+    Fluid.render(plucks, voice).each_with_index { |v, i| buf[i] += v * level if i < buf.size }
   end
 
   # Echo on a buffer, the delay from the settings: milliseconds if given, else a number of beats.
@@ -237,9 +288,23 @@ class Sequencer
     out = Echo.process(buf, delay:, heads: settings.fetch('heads'), intensity: settings.fetch('intensity'),
                             volume: settings.fetch('echo_volume'), lowpass: settings['lowpass'],
                             saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0),
-                            tail: settings.fetch('tail', 4.0), resets:)
+                            tail: settings.fetch('tail', 4.0), resets:, send: throws(settings['throws'], bpm))
     peak = out.map(&:abs).max
     peak > 1.0 ? out.map { |v| v / peak } : out
+  end
+
+  # The send knob of a dub echo: a low `base` level, and in each phrase of `every_bars` bars one
+  # bar (never the first, which the seed picks) turned up to `gain`, so a few stabs are thrown into
+  # the tape and ring on over the quiet that follows. nil when the profile throws nothing.
+  def throws(spec, bpm)
+    return nil unless spec
+
+    bar = (4 * 60.0 / bpm * SAMPLE_RATE).round
+    every = spec.fetch('every_bars', 4)
+    picked = Hash.new do |hash, phrase|
+      hash[phrase] = (phrase * every) + 1 + Random.new(Zlib.crc32("#{@seed}:throw:#{phrase}")).rand([every - 1, 1].max)
+    end
+    ->(n) { picked[(n / bar) / every] == n / bar ? spec.fetch('gain', 2.0) : spec.fetch('base', 0.4) }
   end
 
   # Pattern names for each 4-bar phrase: one name, or a rotation that never plays the same

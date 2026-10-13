@@ -64,9 +64,9 @@ class SpacedBag < Bag
 end
 
 # What each pass draws, every kind from its own bag: the progression from the whole array, the
-# mode, the arp or repeat style, the voice family, a patch of that family, the treatment.
+# mode, the arp or repeat style, the patch, the treatment.
 class Playlist
-  MODES = %w[arp repeat pad].freeze
+  MODES = %w[arp repeat pad organ].freeze
 
   def initialize(data, rng, state = {}, pool: 'essential')
     @data = data
@@ -85,13 +85,18 @@ class Playlist
     @pool == 'all' ? (0...@data.fetch('progressions').size).to_a : @data.fetch('essential')
   end
 
-  def voices_by_family = @data.fetch('voices').group_by { |_, v| v.fetch('family') }.transform_values { |rows| rows.map(&:first) }
+  # The voices the rotation may play: every row, except a soundfont voice on a machine that
+  # has no soundfont, which would only be its fallback sounding under another name.
+  def voice_names = @data.fetch('voices').reject { |_, row| row['family'] == 'fluid' && !Fluid.available?(row) }.keys.sort
 
-  def family_of(voice) = @data.fetch('voices').fetch(voice).fetch('family')
+  def voices_by_group = voice_names.group_by { |name| group_of(name) }
 
-  # The next voice from the one bag that holds every patch of every family: a patch comes back only
-  # after all the others have played, and a family never follows itself.
-  def next_voice = bag('voices', @data.fetch('voices').keys.sort, spaced_by: method(:family_of)).draw
+  # The group of a patch is what the ear calls its kind: the moogs, the polysynth pads, the strings.
+  def group_of(voice) = @data.fetch('voices').fetch(voice).fetch('group')
+
+  # The next voice from the one bag that holds every patch: a patch comes back only after all the
+  # others have played, and a group never follows itself.
+  def next_voice = bag('voices', voice_names, spaced_by: method(:group_of)).draw
 
   # `count` voices in a row, one for each chord of a pad, from the same bag.
   def voices_for(count) = Array.new(count) { next_voice }
@@ -105,11 +110,12 @@ class Playlist
             when 'repeat' then bag('styles:repeat', @data.fetch('comp').fetch('styles').keys).draw
             end
     voices = fixed[:patch_per_chord] && mode == 'pad' && !fixed[:voice] ? voices_for(@data.fetch('progressions').fetch(index).size) : nil
-    voice = fixed[:voice] || voices&.first || next_voice
+    organ = mode == 'organ' && !fixed[:voice]
+    voice = fixed[:voice] || voices&.first || (organ ? 'organ' : next_voice)
     profile = fixed[:profile] || bag('profiles', @data.fetch('play_profiles')).draw
     kit = bag('kits', @data.fetch('kits').keys).draw
     drums = bag('drums', @data.fetch('drum_patterns').keys).draw
-    { prog: index, position:, mode:, style:, voice:, voices:, bag: bag_position('voices'), profile:, kit:, drums: }
+    { prog: index, position:, mode:, style:, voice:, voices:, bag: (organ || fixed[:voice] ? nil : bag_position('voices')), profile:, kit:, drums: }
   end
 
   def bag_position(key) = @bags[key]&.position

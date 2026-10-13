@@ -17,6 +17,7 @@ class DillaTest < Minitest::Test
   SHOWCASE = JSON.parse(File.read(File.join(DIR, "data", "showcase.json")))
   PROGRESSIONS = DATA.fetch("progressions")
   CHORDS = PROGRESSIONS.flatten.uniq
+  PLAYABLE = Playlist.new(DATA, Random.new(0)).voice_names # the rotation leaves out a soundfont voice with no soundfont
 
   def run_dilla(*args, chdir:)
     Open3.capture3(RbConfig.ruby, SCRIPT, *args, chdir:)
@@ -35,7 +36,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/midi.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -47,7 +48,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs play_profiles progressions sonitex strum tape voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs organ play_profiles progressions sonitex strum tape voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_scale_clean_harmony_pure_tones_and_dubbed_dilla_drums
@@ -739,6 +740,8 @@ class DillaTest < Minitest::Test
 
   def test_every_voice_makes_finite_audible_samples_and_drops_notes_past_the_limit
     DATA.fetch("voices").each do |name, spec|
+      next if spec["family"] == "fluid" # a soundfont voice is mixed by the sequencer, never note by note
+
       samples = Voices.note(spec, 57, 0.2, 0.2)
       assert_operator samples.size, :>, 1000, name
       assert(samples.all?(&:finite?), name)
@@ -835,7 +838,7 @@ class DillaTest < Minitest::Test
     refute(singles.all?(&:zero?))
     assert_includes DATA.dig("comp", "styles"), "dotted_eighth_push"
     DATA.dig("comp", "styles").each_value { |s| assert_equal 16, s["pattern"].size }
-    assert_equal %w[chord_repeat], DATA.fetch("groove_profiles").select { |_, p| p.key?("repeat") }.keys
+    assert_equal %w[chord_repeat dub_dark], DATA.fetch("groove_profiles").select { |_, p| p.key?("repeat") }.keys
     assert_equal 0, struck + plucks.size
   end
 
@@ -880,34 +883,34 @@ class DillaTest < Minitest::Test
     seen = picks.map { |p| p[:prog] }
     assert_equal({ 3 => count }, seen.tally.values.tally)
     seen.each_cons(2) { |a, b| refute_equal a, b }
-    families = picks.map { |p| DATA.dig("voices", p[:voice], "family") }
+    families = picks.map { |p| DATA.dig("voices", p[:voice], "group") }
     families.each_cons(2) { |a, b| refute_equal a, b }
     picks.map { |p| p[:mode] }.each_cons(2) { |a, b| refute_equal a, b }
     picks.select { |p| p[:style] }.group_by { |p| p[:mode] }.each_value { |rows| rows.map { |p| p[:style] }.each_cons(2) { |a, b| refute_equal a, b } }
   end
 
   def test_one_bag_holds_every_patch_and_no_patch_or_family_repeats_inside_three_cycles
-    names = DATA.fetch("voices").keys
+    names = PLAYABLE
     [1, 9, 40].each do |seed|
       list = Playlist.new(DATA, Random.new(seed))
-      played = Array.new(3 * names.size) { list.draw(profile: "dry")[:voice] }
+      played = Array.new(3 * names.size) { list.draw(mode: "pad", profile: "dry")[:voice] }
       played.each_slice(names.size) { |cycle| assert_equal names.sort, cycle.sort, "every patch once before any comes back" }
       played.each_cons(2) do |a, b|
         refute_equal a, b
-        refute_equal DATA.dig("voices", a, "family"), DATA.dig("voices", b, "family"), "#{a} then #{b}"
+        refute_equal DATA.dig("voices", a, "group"), DATA.dig("voices", b, "group"), "#{a} then #{b}"
       end
     end
   end
 
   def test_the_patch_bag_is_saved_with_the_others_and_a_restart_goes_on_with_it
     first = Playlist.new(DATA, Random.new(3))
-    a = Array.new(7) { first.draw(profile: "dry")[:voice] }
+    a = Array.new(7) { first.draw(mode: "pad", profile: "dry")[:voice] }
     state = JSON.parse(JSON.generate(first.to_h))
     assert_includes state.keys, "voices"
     second = Playlist.new(DATA, Random.new(4), state)
-    b = Array.new(DATA.fetch("voices").size - 7) { second.draw(profile: "dry")[:voice] }
-    assert_equal DATA.fetch("voices").keys.sort, (a + b).sort
-    refute_equal DATA.dig("voices", a.last, "family"), DATA.dig("voices", b.first, "family")
+    b = Array.new(PLAYABLE.size - 7) { second.draw(mode: "pad", profile: "dry")[:voice] }
+    assert_equal PLAYABLE.sort, (a + b).sort
+    refute_equal DATA.dig("voices", a.last, "group"), DATA.dig("voices", b.first, "group")
   end
 
   def test_a_fixed_voice_never_touches_the_bag
@@ -921,9 +924,9 @@ class DillaTest < Minitest::Test
     picks = Array.new(30) { list.draw(mode: "pad", profile: "dry", patch_per_chord: true) }
     picks.each { |pick| assert_equal PROGRESSIONS.fetch(pick[:prog]).size, pick[:voices].size }
     flat = picks.flat_map { |pick| pick[:voices] }
-    names = DATA.fetch("voices").keys
+    names = PLAYABLE
     flat.each_slice(names.size).select { |cycle| cycle.size == names.size }.each { |cycle| assert_equal names.sort, cycle.sort }
-    flat.each_cons(2) { |a, b| refute_equal DATA.dig("voices", a, "family"), DATA.dig("voices", b, "family") }
+    flat.each_cons(2) { |a, b| refute_equal DATA.dig("voices", a, "group"), DATA.dig("voices", b, "group") }
     assert_nil Playlist.new(DATA, Random.new(6)).draw(mode: "arp", profile: "dry", patch_per_chord: true)[:voices]
   end
 
@@ -1460,10 +1463,366 @@ class DillaTest < Minitest::Test
       assert status.success?, err
       voices = out.scan(/^pass \d+: .* voice=(\S+) \(patch (\d+)\/(\d+)\)/)
       assert_equal 3, voices.size
-      voices.each { |list, _, size| assert_equal DATA.fetch("voices").size, size.to_i, list }
+      voices.each { |list, _, size| assert_equal PLAYABLE.size, size.to_i, list }
       assert(voices.all? { |list, *| list.split(">").all? { |name| DATA.fetch("voices").key?(name) } })
       assert_includes JSON.parse(File.read(File.join(dir, "play_state.json"))).keys, "voices"
     end
+  end
+
+  # ------------------------------------------------------------- polysynth, dub and organ voices
+
+  NEW_VOICES = %w[prophet_pad prophet_warm oberheim_pad juno_strings solina_ensemble cs80_ensemble ruby_strings
+                  dub_stab dub_pad dub_bass dub_bubble organ fluid_strings fluid_strings_slow fluid_synth_strings fluid_choir fluid_warm_pad].freeze
+
+  def test_the_named_voices_exist_and_every_voice_has_a_group
+    NEW_VOICES.each { |name| assert_includes DATA.fetch("voices"), name }
+    DATA.fetch("voices").each { |name, spec| assert_kind_of String, spec["group"], name }
+  end
+
+  def test_no_voice_row_names_a_modulation_and_unison_detune_stays_within_six_cents
+    assert_nil DATA.fetch("voices").to_json[/lfo|tremolo|vibrato|chorus|wow|flutter/i]
+    DATA.fetch("voices").each do |name, spec|
+      next unless spec["family"] == "moog"
+
+      assert_operator spec.fetch("detune").map(&:abs).max, :<=, 6.0, name if NEW_VOICES.include?(name)
+    end
+  end
+
+  def test_a_pad_voice_makes_the_notes_of_a_chord_at_a_sane_level
+    seq = sequencer("dry")
+    seq.tempo = 88.0
+    reference = Tape.rms(seq.render_chords(%w[Abmaj7], 88.0, 2.0, voice: seq.voice_spec("moog_pad")))
+    %w[prophet_pad prophet_warm oberheim_pad juno_strings solina_ensemble cs80_ensemble ruby_strings dub_pad dub_bubble organ].each do |name|
+      level = Tape.rms(seq.render_chords(%w[Abmaj7], 88.0, 2.0, voice: seq.voice_spec(name)))
+      assert_in_delta 0.0, Tape.db(level / reference), 4.0, name
+    end
+  end
+
+  def test_the_bubble_is_gated_by_its_pattern_and_not_by_an_oscillator
+    spec = DATA.fetch("voices").fetch("dub_bubble").merge("pattern" => "x.", "cell_steps" => 1, "slew" => 0.002)
+    step = 0.02
+    samples = Voices.note(spec, 57, 0.4, 0.2, step:)
+    cell = (step * SAMPLE_RATE).round
+    open = Tape.rms(samples[(cell * 4) + 500, 250])
+    shut = Tape.rms(samples[(cell * 5) + 500, 250])
+    assert_operator open, :>, 0.02
+    assert_operator Tape.db(open / [shut, 1e-9].max), :>, 40.0, "a shut cell is silent"
+    assert_in_delta open, Tape.rms(samples[(cell * 8) + 500, 250]), open * 0.1, "the pattern comes round again"
+    assert_operator Tape.db(Tape.rms(samples[(cell * 9) + 500, 250]) / open), :<, -40.0
+  end
+
+  def test_the_organ_sounds_the_ranks_of_its_registration_and_a_chiff_that_dies_in_fifteen_milliseconds
+    spec = DATA.fetch("voices").fetch("organ")
+    window = ->(samples) { samples[SAMPLE_RATE / 5, SAMPLE_RATE / 5] }
+    heard = ->(name, ratio) { Tape.goertzel(window.call(Voices.note(spec, 57, 0.6, 0.2, registration: spec["registrations"][name])), 220.0 * ratio) }
+    assert_operator Tape.db(heard.call("principal", 2) / heard.call("principal", 1)), :<, -60.0, "an eight foot alone"
+    assert_operator Tape.db(heard.call("octave", 2) / heard.call("octave", 1)), :>, -6.0, "and with the four foot"
+    assert_operator heard.call("mixture", 6), :>, 0.01
+    assert_operator heard.call("mixture", 8), :>, 0.005
+    assert_operator heard.call("full", 0.5), :>, 0.01, "sixteen foot"
+    loud = Voices.note(spec, 57, 0.6, 0.2)
+    quiet = Voices.note(spec.merge("chiff" => spec["chiff"].merge("level" => 0.0)), 57, 0.6, 0.2)
+    chiff = loud.zip(quiet).map { |a, b| a - b }
+    early = Tape.rms(chiff.first(SAMPLE_RATE * 15 / 1000))
+    late = Tape.rms(chiff[SAMPLE_RATE * 80 / 1000, SAMPLE_RATE * 40 / 1000])
+    assert_operator Tape.db(early / [late, 1e-9].max), :>, 20.0
+    assert_operator early, :>, 0.001
+  end
+
+  def test_the_organ_has_no_tremulant_a_held_note_is_periodic
+    spec = DATA.fetch("voices").fetch("organ")
+    note = Voices.note(spec, 69, 1.0, 0.2, registration: spec["registrations"]["octave"]) # 440 Hz: 100.227 samples a cycle
+    cycle = (SAMPLE_RATE / 440.0)
+    peaks = (0..8).map { |k| note[(SAMPLE_RATE * 0.3).round + (cycle * k).round, 50].map(&:abs).max }
+    assert_in_delta 0.0, peaks.max - peaks.min, 0.002
+  end
+
+  def test_a_soundfont_voice_writes_a_midi_file_and_reads_a_wav_back
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "n.mid")
+      MIDI.write_notes(path, [[0.0, 0.5, 60, 90], [0.25, 0.5, 64, 80]], program: 52)
+      bytes = File.binread(path)
+      assert_equal "MThd", bytes.byteslice(0, 4)
+      assert_includes bytes, "\xC0\x34".b, "program change to 52"
+      assert_includes bytes, "\x90\x3C\x5A".b, "middle C on at velocity 90"
+      assert_includes bytes, "\x90\x40\x50".b, "and the E above it"
+      assert bytes.end_with?("\xFF\x2F\x00".b), "ends the track"
+      wav = File.join(dir, "s.wav")
+      pcm = [1000, -1000, 2000, 0].pack("s<*")
+      File.binwrite(wav, "RIFF".b + [36 + pcm.bytesize].pack("V") + "WAVEfmt ".b + [16, 1, 2, SAMPLE_RATE, SAMPLE_RATE * 4, 4, 16].pack("VvvVVvv") + "data".b + [pcm.bytesize].pack("V") + pcm)
+      assert_equal [0.0, 1000 / 32_768.0], Fluid.read(wav)
+    end
+  end
+
+  def test_a_truncated_soundfont_is_not_whole
+    Dir.mktmpdir do |dir|
+      cut = File.join(dir, "cut.sf2")
+      File.binwrite(cut, "RIFF".b + [5000].pack("V") + "sfbk".b + ("x" * 100))
+      refute Fluid.whole?(cut)
+      whole = File.join(dir, "whole.sf2")
+      File.binwrite(whole, "RIFF".b + [20].pack("V") + "sfbk".b + ("x" * 16))
+      assert Fluid.whole?(whole)
+      refute Fluid.whole?(File.join(dir, "absent.sf2"))
+    end
+  end
+
+  def test_without_a_soundfont_the_rotation_leaves_soundfont_voices_out_and_a_named_one_falls_back_aloud
+    saved = ENV.fetch("DILLA_SOUNDFONT", nil)
+    ENV["DILLA_SOUNDFONT"] = "/nonexistent/none.sf2"
+    refute Fluid.available?(DATA["voices"]["fluid_choir"])
+    assert_includes Fluid.missing(DATA["voices"]["fluid_choir"]).to_s, "soundfont"
+    names = Playlist.new(DATA, Random.new(1)).voice_names
+    assert(names.none? { |name| DATA["voices"][name]["family"] == "fluid" })
+    assert_includes names, "ruby_strings"
+    _out, err = capture_io { @spec = sequencer("dry").voice_spec("fluid_choir") }
+    assert_equal "ruby_strings", @spec["name"]
+    assert_includes err, "fluid_choir"
+    assert_includes err, "ruby_strings"
+  ensure
+    saved ? ENV["DILLA_SOUNDFONT"] = saved : ENV.delete("DILLA_SOUNDFONT")
+  end
+
+  def test_a_soundfont_voice_renders_through_fluidsynth_when_it_is_there
+    skip "fluidsynth or a whole soundfont is missing: #{Fluid.missing(DATA['voices']['fluid_strings'])}" unless Fluid.available?(DATA["voices"]["fluid_strings"])
+
+    seq = sequencer("dry")
+    spec = seq.voice_spec("fluid_strings")
+    assert_equal "fluid", spec["family"]
+    plucks = [Pluck.new(0.1, 0.0, [57, 64], 0.8, 0.8)]
+    out = Fluid.render(plucks, spec)
+    assert_operator out.size, :>, SAMPLE_RATE
+    assert_operator out.first((0.08 * SAMPLE_RATE).to_i).map(&:abs).max, :<, 0.001, "nothing before the note"
+    assert_operator out[(0.5 * SAMPLE_RATE).to_i, 2000].map(&:abs).max, :>, 0.01
+    buf = Array.new(2 * SAMPLE_RATE, 0.0)
+    seq.sound(buf, plucks, spec)
+    assert_operator buf.map(&:abs).max, :>, 0.01
+  end
+
+  # ------------------------------------------------------------- the dub profile
+
+  def test_the_dub_profile_skanks_on_the_upbeats_with_bass_pad_and_bubble_under_it
+    profile = DATA.fetch("groove_profiles").fetch("dub_dark")
+    assert_includes DATA.fetch("play_profiles"), "dub_dark"
+    assert_includes 72..80, profile.fetch("bpm")
+    assert_equal "..x...x...x...x.", DATA.dig("comp", "styles", profile.dig("repeat", "style"), "pattern")
+    assert_equal %w[dub_bass dub_pad dub_bubble], profile.fetch("layers").map { |l| l["voice"] }
+    assert((profile.fetch("drums") & %w[one_drop steppers]).size == 2)
+    assert_operator profile.dig("echo", "intensity"), :>=, 0.75
+    assert_operator profile.dig("texture", "spring"), :>, 0.0
+    buf = render(DATA, prog: 7, seed: 4, profile: "dub_dark", beats: 2.0, tape: 0, buffer_only: true)
+    assert_operator buf.map(&:abs).max, :<=, 1.0
+    assert_operator Tape.rms(buf), :>, 0.02
+  end
+
+  def test_a_layer_can_play_only_the_bass_of_each_chord
+    seq = sequencer("dry")
+    layers = [{ "voice" => "dub_bass", "mode" => "held", "notes" => "bass", "gain_db" => 0 }]
+    options = { layers:, transpose: 0 }
+    all = [{ "voice" => "dub_bass", "mode" => "held", "gain_db" => 0 }]
+    bass = render_layers(Array.new(SAMPLE_RATE * 4, 0.0), seq, %w[Cm9], 120.0, 4.0, options, search: true)
+    full = render_layers(Array.new(SAMPLE_RATE * 4, 0.0), seq, %w[Cm9], 120.0, 4.0, options.merge(layers: all), search: true)
+    upper = Chords.hz(Chords.midi_notes(%w[Cm9]).first[3])
+    heard = ->(buf) { Tape.goertzel(buf[SAMPLE_RATE, SAMPLE_RATE], upper) }
+    assert_operator heard.call(full), :>, 10 * heard.call(bass), "the upper tones belong to the full chord, not to the bass"
+    assert_operator Tape.rms(bass), :>, 0.0
+  end
+
+  def test_the_echo_throws_one_bar_in_each_phrase_and_never_the_first
+    seq = sequencer("dub_dark", seed: 11)
+    send = seq.throws({ "every_bars" => 4, "gain" => 2.6, "base" => 0.3 }, 76.0)
+    bar = (4 * 60.0 / 76.0 * SAMPLE_RATE).round
+    levels = (0...16).map { |b| send.call((b * bar) + 100) }
+    levels.each_slice(4) do |phrase|
+      assert_equal 1, phrase.count(2.6)
+      assert_equal 3, phrase.count(0.3)
+      assert_equal 0.3, phrase.first
+    end
+    assert_equal levels, (0...16).map { |b| sequencer("dub_dark", seed: 11).throws({ "every_bars" => 4, "gain" => 2.6, "base" => 0.3 }, 76.0).call((b * bar) + 100) }
+    assert_nil seq.throws(nil, 76.0)
+  end
+
+  def test_a_send_turns_up_what_reaches_the_tape_and_no_send_is_the_old_echo
+    input = impulse(10).map { |x| x * 0.01 } # small, so the tape's tanh is a straight line
+    args = { delay: 0.05, heads: [1], intensity: 0.5, volume: 1.0, lowpass: nil, saturation: 0.0, tail: 1.0 }
+    plain = Echo.process(input, **args)
+    assert_equal plain, Echo.process(input, **args, send: ->(_n) { 1.0 })
+    louder = Echo.process(input, **args, send: ->(_n) { 3.0 })
+    d = (0.05 * SAMPLE_RATE).round
+    assert_operator plain[d].abs, :>, 0.001
+    assert_in_delta 3.0 * plain[d], louder[d], 1e-4
+    assert_equal plain.first(10), louder.first(10)
+  end
+
+  def test_the_spring_adds_a_tail_that_dies_away_and_changes_nothing_when_off
+    input = impulse(100) + Array.new(SAMPLE_RATE * 2, 0.0)
+    assert_same input, FX.spring(input, 0.0)
+    wet = FX.spring(input, 0.5)
+    assert_equal input.size, wet.size
+    assert(wet.all?(&:finite?))
+    assert_operator wet[1000, 4000].map(&:abs).max, :>, 0.001, "a tail after the hit"
+    assert_operator wet.last(2000).map(&:abs).max, :<, wet[1000, 4000].map(&:abs).max * 0.1, "which dies away"
+  end
+
+  # ------------------------------------------------------------- the organ improvisation
+
+  ORGAN = DATA.fetch("organ")
+
+  def organ_pieces(seeds = 1..30)
+    ORGAN.fetch("scales").keys.flat_map { |scale| seeds.map { |seed| Organ.compose(seed:, config: ORGAN, bars: 12, scale:) } }
+  end
+
+  def test_every_organ_note_is_in_the_declared_scale_and_its_lines_keep_their_ranges
+    ranges = ORGAN.fetch("ranges")
+    organ_pieces.each do |piece|
+      piece.lines.each do |line, notes|
+        lo, hi = ranges.fetch(line)
+        assert(notes.all? { |n| piece.pcs.include?(n.midi % 12) }, "#{piece.key} #{piece.scale} #{line}")
+        assert(notes.all? { |n| n.midi.between?(lo, hi) }, "#{line} stays between #{lo} and #{hi}")
+      end
+      piece.names.each { |name| Chords.parse(name) }
+    end
+    assert_equal [36, 48], ranges["pedal"]
+    assert_equal [50, 67], ranges["left"]
+    assert_equal [60, 84], ranges["right"]
+  end
+
+  def test_an_organ_piece_is_deterministic_by_seed_and_the_seed_changes_it
+    a = Organ.compose(seed: 7, config: ORGAN)
+    assert_equal a.lines.transform_values { |ns| ns.map(&:to_a) }, Organ.compose(seed: 7, config: ORGAN).lines.transform_values { |ns| ns.map(&:to_a) }
+    refute_equal a.lines["right"].map(&:to_a), Organ.compose(seed: 8, config: ORGAN).lines["right"].map(&:to_a)
+    assert_equal "D", Organ.compose(seed: 1, config: ORGAN, key: "D", scale: "dorian").key
+    assert_equal "Bb", Organ.compose(seed: 1, config: ORGAN, key: "A#", scale: "major").key
+    assert_raises(ArgumentError) { Organ.compose(seed: 1, config: ORGAN, scale: "lydian") }
+  end
+
+  def test_phrases_run_two_to_four_bars_fill_the_piece_and_close_on_cadences
+    organ_pieces(1..15).each do |piece|
+      assert(piece.phrases.all? { |ph| ph.bars.between?(2, 4) })
+      assert_equal piece.names.size, piece.phrases.sum(&:bars)
+      assert_equal "authentic", piece.phrases.last.cadence
+      piece.phrases.each_cons(2) { |a, b| assert_equal a.first_bar + a.bars, b.first_bar }
+    end
+  end
+
+  def test_the_last_chord_is_the_tonic_and_the_pedal_has_the_root_on_the_strong_beats
+    organ_pieces(1..15).each do |piece|
+      tonic_pc = piece.pcs.first
+      assert_equal tonic_pc, Chords.parse(piece.names.last)[:pc]
+      pedal = piece.lines.fetch("pedal")
+      assert_equal tonic_pc, pedal.last.midi % 12, "it ends on the tonic"
+      piece.names.each_index { |bar| assert(pedal.any? { |n| n.step <= bar * 16 && bar * 16 < n.step + n.length }, "the pedal sounds on the downbeat of bar #{bar}") }
+      strong = pedal.select { |n| (n.step % 16).zero? }
+      roots = strong.count { |n| n.midi % 12 == Chords.parse(piece.names[n.step / 16])[:pc] }
+      assert_operator roots, :>=, strong.size * 0.6, "mostly the chord's root; some bars hold the third under a suspension"
+    end
+  end
+
+  def test_suspensions_tie_the_note_over_and_fall_a_step_on_the_third_beat
+    found = 0
+    organ_pieces(1..20).each do |piece|
+      left = piece.lines.fetch("left")
+      piece.suspensions.times { found += 1 }
+      next if piece.suspensions.zero?
+
+      # a note that crosses a barline and then drops by a scale step on the third beat
+      ties = left.select { |n| ((n.step % 16) + n.length) > 16 && n.step % 16 >= 2 }
+      ties.each do |n|
+        bar_end = ((n.step / 16) + 1) * 16
+        fall = left.any? { |m| m.step == bar_end + 8 && (m.midi - n.midi).between?(-3, -1) } # three semitones where the scale has its augmented second
+        assert fall, "a tie at step #{n.step} resolves down a step at #{bar_end + 8}"
+      end
+    end
+    assert_operator found, :>, 20, "suspensions occur across the pieces"
+  end
+
+  def test_the_suspension_types_are_four_three_seven_six_and_nine_eight
+    organ_pieces(1..25).each { |piece| assert_operator piece.suspensions, :<=, piece.names.size }
+    assert_equal %w[4-3 7-6 9-8], Organ::SUSPENSION.keys.sort
+    assert_equal %w[4-3 7-6 9-8], ORGAN.dig("suspensions", "types").sort
+    Organ::SUSPENSION.each_value { |row| assert_equal 1, row[:held] - row[:resolved], "the held note falls a scale step" }
+    assert_equal({ "4-3" => 0, "9-8" => 0, "7-6" => 2 }, Organ::SUSPENSION.transform_values { |row| row[:bass] }, "the first two sit over the root, the last over the third")
+  end
+
+  def test_the_right_hand_runs_in_stepwise_eighths_and_sixteenths_with_trills_and_dotted_rhythms
+    runs = trills = dotted = 0
+    organ_pieces(1..20).each do |piece|
+      right = piece.lines.fetch("right")
+      right.each_cons(2) do |a, b|
+        next unless a.step + a.length == b.step && a.length <= 2 && b.length <= 2
+
+        interval = (b.midi - a.midi).abs
+        runs += 1 if interval.between?(1, 3)
+      end
+      right.each_cons(3) { |a, b, c| trills += 1 if a.length == 1 && b.length == 1 && a.midi == c.midi && (b.midi - a.midi).between?(1, 2) }
+      dotted += right.each_cons(2).count { |a, b| a.length == 3 && b.length == 1 && a.step + 3 == b.step }
+    end
+    assert_operator runs, :>, 1000
+    assert_operator trills, :>, 100
+    assert_operator dotted, :>, 50
+  end
+
+  def test_the_right_hand_never_sounds_two_notes_at_once_and_breathes_at_a_phrase_end
+    organ_pieces(1..8).each do |piece|
+      right = piece.lines.fetch("right").sort_by(&:step)
+      right.each_cons(2) { |a, b| assert_operator a.step + a.length, :<=, b.step }
+      piece.phrases[0...-1].each do |phrase|
+        landing = right.find { |n| n.step == phrase.last_bar * 16 }
+        assert_equal 12, landing.length, "the last note lets go four sixteenths early"
+      end
+    end
+  end
+
+  def test_the_right_hand_registration_rotates_each_phrase_and_the_other_lines_keep_theirs
+    piece = Organ.compose(seed: 4, config: ORGAN, bars: 24)
+    names = piece.phrases.map(&:registration)
+    assert_equal ORGAN.fetch("rotation").first(names.size), names.first(ORGAN.fetch("rotation").size)
+    names.each_cons(2) { |a, b| refute_equal a, b }
+    registrations = DATA.dig("voices", "organ", "registrations")
+    ORGAN.fetch("rotation").each { |name| assert_includes registrations, name }
+    ORGAN.fetch("lines").each_value { |name| assert_includes registrations, name }
+  end
+
+  def test_a_phrase_motif_comes_back_later_in_the_piece
+    piece = Organ.compose(seed: 5, config: ORGAN, bars: 32)
+    right = piece.lines.fetch("right")
+    shapes = right.each_cons(4).map { |four| four.map(&:length) }
+    repeats = shapes.tally.select { |shape, n| n >= 3 && shape.sum >= 6 }
+    refute_empty repeats, "a rhythm of four notes returns"
+  end
+
+  def test_rubato_leans_the_notes_inside_the_clamp_and_into_the_cadence
+    seq = sequencer("dry")
+    piece = Organ.compose(seed: 3, config: ORGAN, bars: 8)
+    phrase = piece.phrases.first
+    leans = (0...(phrase.bars * 16)).map { |s| seq.rubato(s, phrase, ORGAN) }
+    assert(leans.all? { |lean| lean.abs <= MAX_OFFSET })
+    assert_operator leans.min, :<, 0.0, "ahead of the beat through the phrase"
+    assert_operator leans.last, :>, 0.01, "behind it as the cadence closes"
+    assert_operator leans.max, :<=, ORGAN.fetch("rubato_ms") / 1000.0
+  end
+
+  def test_the_organ_mode_renders_a_piece_of_the_asked_length
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "organ.wav")
+      stdout, err, status = run_dilla("--mode", "organ", "--bars", "4", "--key", "D", "--scale", "harmonic_minor", "--seed", "2",
+                                      "--profile", "dry", "--tape", "0", "--midi", File.join(dir, "o.mid"), "--out", out, chdir: dir)
+      assert status.success?, err
+      assert_includes stdout, "organ in D harmonic_minor"
+      seconds = (File.size(out) - 44) / 2.0 / SAMPLE_RATE
+      assert_operator seconds, :>, 4 * 4 * 60.0 / 88
+      assert_operator seconds, :<, (4 * 4 * 60.0 / 88) + 4.0
+      assert_operator File.binread(out).byteslice(44..).unpack("s<*").map(&:abs).max, :>, 3000
+      assert File.file?(File.join(dir, "o.mid"))
+    end
+  end
+
+  def test_organ_is_one_of_the_play_modes_and_needs_no_patch_from_the_bag
+    list = Playlist.new(DATA, Random.new(2))
+    picks = Array.new(40) { list.draw(profile: "dry") }
+    organ = picks.select { |pick| pick[:mode] == "organ" }
+    refute_empty organ
+    assert(organ.all? { |pick| pick[:voice] == "organ" && pick[:bag].nil? })
+    assert_includes Playlist::MODES, "organ"
   end
 
 end

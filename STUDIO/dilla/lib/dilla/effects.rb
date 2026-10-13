@@ -25,6 +25,33 @@ module FX
     peak > 1.0 ? out.map { |s| s / peak } : out
   end
 
+  # A spring tank: the signal, band limited to what a spring passes, goes round a short loop
+  # through a chain of allpass sections. The sections delay the highs more than the lows, which is
+  # the chirp of a spring, and the loop turns it into a splashing tail. Static: no modulation.
+  def self.spring(buf, amount)
+    return buf if amount.nil? || amount <= 0 || buf.empty?
+
+    loop_len = (0.037 * SAMPLE_RATE).round
+    ring = Array.new(loop_len, 0.0)
+    coeff = 0.62
+    states = Array.new(12, 0.0)
+    band = Colour.highpass(lowpass(buf, 3800), 160.0)
+    smooth = 0.0
+    wet = Array.new(buf.size, 0.0)
+    buf.each_index do |n|
+      v = band[n] + (0.6 * ring[n % loop_len])
+      states.each_index do |k|
+        y = (coeff * v) + states[k]
+        states[k] = v - (coeff * y)
+        v = y
+      end
+      smooth += 0.45 * (v - smooth)
+      ring[n % loop_len] = smooth
+      wet[n] = smooth
+    end
+    Array.new(buf.size) { |n| buf[n] + (amount * wet[n]) }
+  end
+
   # A dub send built on the existing multi-head echo: saturated, band-limited repeats
   # with feedback, but deliberately no reverb or time-varying modulation.
   def self.dub_echo(buf, settings)
@@ -109,6 +136,6 @@ module FX
   # The profile's texture: lowpass, then reverb.
   def self.apply(buf, profile)
     t = profile['texture'] || {}
-    reverb(lowpass(buf, t['lowpass']), t['reverb'])
+    spring(reverb(lowpass(buf, t['lowpass']), t['reverb']), t['spring'])
   end
 end

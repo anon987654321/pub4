@@ -5,6 +5,8 @@ require 'optparse'
 require 'fileutils'
 require 'zlib'
 require 'shellwords'
+require 'tmpdir'
+require 'timeout'
 
 SAMPLE_RATE = 44_100
 MAX_OFFSET = 0.035
@@ -23,7 +25,9 @@ require_relative 'dilla/percussion'
 require_relative 'dilla/effects'
 require_relative 'dilla/echo'
 require_relative 'dilla/arp'
+require_relative 'dilla/organ'
 require_relative 'dilla/sequencer'
 require_relative 'dilla/midi'
+require_relative 'dilla/fluid'
 require_relative 'dilla/playlist'
 require_relative 'dilla/engine'

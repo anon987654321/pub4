@@ -25,7 +25,8 @@ module Voices
   WAVES = {
     'saw' => ->(p) { (2.0 * p) - 1.0 },
     'pulse' => ->(p) { p < 0.5 ? 1.0 : -1.0 },
-    'triangle' => ->(p) { p < 0.5 ? (4.0 * p) - 1.0 : 3.0 - (4.0 * p) }
+    'triangle' => ->(p) { p < 0.5 ? (4.0 * p) - 1.0 : 3.0 - (4.0 * p) },
+    'sine' => ->(p) { Math.sin(TAU * p) }
   }.freeze
 
   # A four-pole ladder lowpass: each pole moves toward the one before, the last feeds back.
@@ -52,8 +53,12 @@ module Voices
   def self.moog(patch, freq, dur, amp)
     return [] unless audible?(freq)
 
-    release = patch.fetch('amp')[3]
-    n = ((dur + release) * SAMPLE_RATE).to_i
+    amp_env = patch.fetch('amp')
+    filter_env = patch.fetch('filter_env')
+    base = patch.fetch('cutoff')
+    sweep = patch.fetch('env_amount')
+    resonance = patch.fetch('resonance')
+    n = ((dur + amp_env[3]) * SAMPLE_RATE).to_i
     waves = patch.fetch('waves').map { |w| WAVES.fetch(w) }
     incs = patch.fetch('waves').each_index.map do |k|
       freq * (2.0**(patch.fetch('octaves')[k] + (patch.fetch('detune')[k] / 1200.0))) / SAMPLE_RATE
@@ -69,8 +74,7 @@ module Voices
         sum += waves[k].call(phases[k])
         phases[k] = (phases[k] + incs[k]) % 1.0
       end
-      cutoff = patch.fetch('cutoff') + (patch.fetch('env_amount') * adsr(patch.fetch('filter_env'), t, dur))
-      ladder.process(sum * drive * 0.5, cutoff, patch.fetch('resonance')) * adsr(patch.fetch('amp'), t, dur) * scale
+      ladder.process(sum * drive * 0.5, base + (sweep * adsr(filter_env, t, dur)), resonance) * adsr(amp_env, t, dur) * scale
     end
   end
 
@@ -148,8 +152,71 @@ module Voices
     end
   end
 
-  # The samples for one note of the named voice. `decay` is the drum voice's own, per step.
-  def self.note(spec, midi, dur, amp, velocity: 1.0, detune: 0.0, decay: nil)
+  # A bank of sine partials on a pattern gate, the bubbling organ of dub. The gate is a row of
+  # steps, each one cell long, switched by the grid and not by an oscillator: a cell is `x` for
+  # open and anything else for shut, and a one-pole slew of a few milliseconds keeps the
+  # edges from clicking. `step` is a sixteenth of the tempo in seconds.
+  def self.gated(patch, freq, dur, amp, step)
+    return [] unless audible?(freq)
+
+    envelope = patch.fetch('amp')
+    pattern = patch.fetch('pattern')
+    cell = (step || 0.125) * patch.fetch('cell_steps', 1)
+    slew = 1.0 - Math.exp(-1.0 / (patch.fetch('slew', 0.004) * SAMPLE_RATE))
+    parts = patch.fetch('partials').filter_map { |ratio, weight| [freq * ratio / SAMPLE_RATE, weight] if audible?(freq * ratio) }
+    phases = Array.new(parts.size, 0.0)
+    total = parts.sum { |_, weight| weight }
+    n = ((dur + envelope[3]) * SAMPLE_RATE).to_i
+    open = 0.0
+    Array.new(n) do |i|
+      t = i.to_f / SAMPLE_RATE
+      open += slew * ((pattern[(t / cell).floor % pattern.size] == 'x' ? 1.0 : 0.0) - open)
+      sum = 0.0
+      parts.each_index do |k|
+        sum += parts[k][1] * Math.sin(TAU * phases[k])
+        phases[k] = (phases[k] + parts[k][0]) % 1.0
+      end
+      sum / total * open * adsr(envelope, t, dur) * amp
+    end
+  end
+
+  # A pipe organ by addition: one sine for each rank of the registration, at the rank's ratio to
+  # the played pitch (sixteen foot 0.5, eight foot 1, four foot 2, two and two thirds 3, two 4,
+  # the mixture's ranks 6 and 8), and a chiff of about fifteen milliseconds, a burst of noise
+  # that dies away as the pipe speaks. Nothing moves afterwards: there is no tremulant. The
+  # `registration` is a row of weights for the ratios, else the voice's first.
+  def self.organ(patch, freq, dur, amp, registration)
+    return [] unless audible?(freq)
+
+    ratios = patch.fetch('ratios')
+    weights = registration || patch.fetch('registrations').values.first
+    ranks = ratios.each_index.filter_map { |k| [freq * ratios[k] / SAMPLE_RATE, weights[k]] if weights[k].to_f.positive? && audible?(freq * ratios[k]) }
+    envelope = patch.fetch('amp')
+    total = ranks.sum { |_, weight| weight }
+    phases = Array.new(ranks.size, 0.0)
+    n = ((dur + envelope[3]) * SAMPLE_RATE).to_i
+    chiff = patch.fetch('chiff')
+    chiff_k = Math.exp(-1.0 / (chiff.fetch('seconds') * SAMPLE_RATE / 3.0))
+    chiff_env = chiff.fetch('level')
+    rng = Random.new(freq.to_i)
+    soft = 0.0
+    Array.new(n) do |i|
+      t = i.to_f / SAMPLE_RATE
+      sum = 0.0
+      ranks.each_index do |k|
+        sum += ranks[k][1] * Math.sin(TAU * phases[k])
+        phases[k] = (phases[k] + ranks[k][0]) % 1.0
+      end
+      soft += 0.35 * (((rng.rand * 2) - 1) - soft)
+      sample = ((sum / total) + (soft * chiff_env)) * adsr(envelope, t, dur) * amp
+      chiff_env *= chiff_k
+      sample
+    end
+  end
+
+  # The samples for one note of the named voice. `decay` is the drum voice's own, per step;
+  # `step` is a sixteenth of the tempo in seconds and `registration` the organ's weights.
+  def self.note(spec, midi, dur, amp, velocity: 1.0, detune: 0.0, decay: nil, step: nil, registration: nil)
     freq = Chords.hz(midi)
     amp *= 10.0**(spec.fetch('gain', 0.0) / 20.0)
     case spec.fetch('family')
@@ -158,6 +225,9 @@ module Voices
     when 'moog' then moog(spec, freq, dur, amp)
     when 'rhodes' then rhodes(spec, freq, dur, amp, velocity)
     when 'dfam' then dfam(spec, freq, dur, amp, decay || spec.fetch('decay', 0.12))
+    when 'gated' then gated(spec, freq, dur, amp, step)
+    when 'organ' then organ(spec, freq, dur, amp, registration)
+    when 'fluid' then raise ArgumentError, "voice #{spec['name'].inspect} is a soundfont voice: the sequencer mixes it, a single note cannot"
     else raise ArgumentError, "no voice family #{spec['family'].inspect}"
     end
   end
