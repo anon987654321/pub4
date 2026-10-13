@@ -45,5 +45,10 @@ class SharedScrapeTest < ActiveSupport::TestCase
     assert Shared::Scrape.safe_request_url?("data:image/png;base64,AA==", resolver:)
     refute Shared::Scrape.safe_request_url?("http://127.0.0.1/latest/meta-data", resolver:)
     refute Shared::Scrape.safe_request_url?("file:///etc/passwd", resolver:)
+
+    source = File.read(Rails.root.join("../__shared/app/services/shared/scrape.rb"), encoding: "UTF-8")
+    assert_includes source, "browser.network.intercept"
+    assert_includes source, "browser.on(:request)"
+    assert_includes source, "safe_request_url?(request.url)"
   end
 end
