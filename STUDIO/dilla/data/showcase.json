@@ -94,7 +94,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "Opal Rain",
@@ -182,7 +183,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "Velvet Geometry",
@@ -276,7 +278,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "Silver Thread",
@@ -364,7 +367,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "After the Last Train",
@@ -458,7 +462,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "Amber Orbit",
@@ -566,7 +571,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "Soft Focus",
@@ -660,7 +666,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     },
     {
       "name": "Night Bloom",
@@ -754,7 +761,8 @@
           "gate": 0.64
         }
       ],
-      "echo_reverb": 0
+      "echo_reverb": 0,
+      "gate": 0.5
     }
   ]
 }
