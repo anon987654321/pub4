@@ -141,6 +141,8 @@ def render(data, options)
   echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
   echo['reverb'] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
+  buf = FX.dub_echo(buf, options[:instrument_dub_echo]) if options[:instrument_dub_echo]
+  buf = FX.crystallizer(buf, options[:instrument_crystallizer]) if options[:instrument_crystallizer]
   seconds = buf.size / SAMPLE_RATE.to_f
   drum_seconds = options[:buffer_only] ? names.size * beats * 60.0 / bpm : seconds
   hits = drums ? seq.drum_hits(drums, bpm, drum_seconds) : []
@@ -148,7 +150,14 @@ def render(data, options)
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
   buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
-  buf = seq.overlay_drums(buf, hits, levels, vcs, sonitex: drum_sonitex, tape: options[:drum_tape]) if drums
+  buf = seq.overlay_drums(
+    buf, hits, levels, vcs,
+    sonitex: drum_sonitex,
+    tape: options[:drum_tape],
+    dub_echo: options[:drum_dub_echo],
+    crystallizer: options[:drum_crystallizer],
+    drum_vcs: options[:drum_vcs]
+  ) if drums
   return buf if options[:buffer_only]
 
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
@@ -246,6 +255,7 @@ def render_showcase(data, options)
   combined = []
 
   sections.each_with_index do |section, index|
+    effect_rig = data.fetch('bus_effects').fetch(section.fetch('effect_rig'))
     mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section.fetch('mode', 'repeat')))
     section_options = {
       names: section.fetch('progression'),
@@ -274,9 +284,14 @@ def render_showcase(data, options)
       melody: section['melody'],
       melody_voice: section['melody_voice'],
       layers: section['layers'],
-      drum_sonitex: options[:drum_sonitex] || section['drum_sonitex'],
-      drum_sonitex_instances: options[:drum_sonitex_instances] || section['drum_sonitex_instances'],
-      drum_tape: options[:drum_tape] || section['drum_tape'],
+      drum_sonitex: options[:drum_sonitex] || effect_rig.fetch('drum_sonitex'),
+      drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch('drum_sonitex_instances'),
+      drum_tape: options[:drum_tape] || effect_rig.fetch('drum_tape'),
+      drum_vcs: effect_rig.fetch('drum_vcs'),
+      drum_dub_echo: effect_rig.fetch('drum_dub_echo'),
+      drum_crystallizer: effect_rig.fetch('drum_crystallizer'),
+      instrument_dub_echo: effect_rig.fetch('instrument_dub_echo'),
+      instrument_crystallizer: effect_rig.fetch('instrument_crystallizer'),
       seed: seed + (index * 97),
       groove: options[:groove],
       transpose: options[:transpose],
