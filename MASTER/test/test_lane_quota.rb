@@ -224,6 +224,14 @@ class TestLaneQuota < Minitest::Test
     assert_equal "google", Quota.lane_of("google/gemini-2.5-flash")
   end
 
+  def test_browser_chat_failures_are_scoped_to_the_website
+    assert_equal "web-chat:grok", Quota.lane_of("web-chat:grok")
+    assert_equal "web-chat:chatgpt", Quota.lane_of("web-chat:chatgpt")
+    refute_equal Quota.lane_of("web-chat:grok"), Quota.lane_of("web-chat:chatgpt")
+    assert_equal "web-chat:grok", Silence.lane_of("web-chat:grok")
+    refute Silence.silent?("web-chat:chatgpt")
+  end
+
   def test_status_reports_global_free_pool_quota_instead_of_misleading_vendor_silence
     reply = "rate_limit: Rate limit exceeded: free-models-per-day-high-balance."
     Quota.note("nvidia/nemotron-3-super-120b-a12b:free", reply)
