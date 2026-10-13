@@ -519,18 +519,14 @@ module Master
           held_slots = []
           Thread.current.thread_variable_set(SYNTHESIS_SLOTS_KEY, held_slots)
         end
-        size = [TtsSupervisor.pool_size, 1].max
-        slot = next_synthesis_slot
-        if held_slots.include?(slot)
-          # A callback can re-enter synthesis on the same thread. Use a free slot
-          # if one exists; when every slot is already owned by this thread, refuse
-          # the nested call cleanly instead of raising Mutex's recursive-lock error.
-          slot = (0...size).find { |candidate| !held_slots.include?(candidate) }
-          unless slot
-            @last_error = "recursive streaming synthesis refused: all pool slots are already held by this thread"
-            return false
-          end
+        # Re-entrant synthesis from a chunk callback must not take a second
+        # slot: two callbacks can otherwise hold opposite slots and deadlock.
+        # Refuse any nested call on this thread without reacquiring a Mutex.
+        unless held_slots.empty?
+          @last_error = "recursive streaming synthesis refused: synthesis already active on this thread"
+          return false
         end
+        slot = next_synthesis_slot
 
         @synthesis_mutexes[slot].synchronize do
           held_slots << slot
