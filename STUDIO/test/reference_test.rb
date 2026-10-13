@@ -196,6 +196,27 @@ class DillaReferenceTest < Minitest::Test
     assert_operator plan.fetch(:seed), :<=, 0xffff_ffff
   end
 
+  def test_reference_mix_balance_moves_relative_to_dillas_own_defaults
+    original = { "kick" => 6.0, "snare" => 10.0, "clap" => 8.0, "hat" => 0.0, "perc" => -4.0, "chords" => -3.0 }
+
+    adjusted = apply_reference_mix_balance(original, drum_balance: 1.5, chord_balance: -0.5)
+
+    assert_equal 7.5, adjusted.fetch("kick")
+    assert_equal 11.5, adjusted.fetch("snare")
+    assert_equal 9.5, adjusted.fetch("clap")
+    assert_equal 1.5, adjusted.fetch("hat")
+    assert_equal -2.5, adjusted.fetch("perc")
+    assert_equal -3.5, adjusted.fetch("chords")
+    assert_equal({ "kick" => 6.0, "snare" => 10.0, "clap" => 8.0, "hat" => 0.0, "perc" => -4.0, "chords" => -3.0 }, original)
+  end
+
+  def test_reference_mix_balance_clamps_untrusted_offsets
+    levels = { "kick" => 6.0, "chords" => -3.0 }
+    adjusted = apply_reference_mix_balance(levels, drum_balance: 50.0, chord_balance: -50.0)
+    assert_equal 8.0, adjusted.fetch("kick")
+    assert_equal -5.0, adjusted.fetch("chords")
+  end
+
   def test_streamed_wav_header_and_lengths_are_valid
     Dir.mktmpdir do |dir|
       path = File.join(dir, "small.wav")
