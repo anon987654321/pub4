@@ -300,6 +300,7 @@ end
           Master::Result.ok("reference0: analyzed audio")
         end) do
           urls.each do |candidate|
+            assert MediaIntent.handles?(candidate)
             result = MediaIntent.dispatch(candidate, root: "/tmp/pub4")
             assert result.ok?, result.inspect
             assert_equal :audio_reference_analysis, result.value!.fetch(:media)
@@ -331,6 +332,7 @@ end
           Master::Result.ok("reference0: analyzed audio")
         end) do
           request = "learn the J Dilla sound from these tracks: #{urls.join(' and ')}"
+          assert MediaIntent.handles?(request)
           result = MediaIntent.dispatch(request, root: "/tmp/pub4")
           assert result.ok?, result.inspect
           assert_equal :audio_reference_analysis, result.value!.fetch(:media)
