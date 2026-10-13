@@ -37,6 +37,16 @@ module Deploy
       methods = Array(policy["allowed_network_methods"]).map { |method| method.to_s.upcase }
       return failure("browser policy must allow only GET/HEAD browser requests") unless methods.sort == %w[GET HEAD]
       return failure("browser session limit must be four") unless policy["max_sessions"] == 4
+      read_actions = Array(policy["read_actions"]).map(&:to_s)
+      required_read_actions = %w[status navigate login extract look follow paginate close]
+      missing_read_actions = required_read_actions - read_actions
+      return failure("browser policy missing read actions: #{missing_read_actions.join(", ")}") unless missing_read_actions.empty?
+      return failure("browser sessions must be host-bound") unless policy["session_host_bound"] == true
+      return failure("browser screenshots must be evidence") unless policy["screenshot_evidence_required"] == true
+      return failure("browser capture cap must be 500") unless policy["max_capture_files"] == 500
+      return failure("browser page limit must be 50") unless policy["max_pagination_pages"] == 50
+      return failure("browser pagination output budget must be 128 KiB") unless policy["max_pagination_output_bytes"] == 131_072
+      return failure("browser anchor navigation must use hrefs") unless policy["follow_anchors_by_href_only"] == true
 
       source = File.join(root, "lib", "io", "browser_agent.rb")
       return failure("BrowserAgent tool missing") unless File.file?(source)
@@ -48,12 +58,23 @@ module Deploy
       if sources.any? { |text| text.match?(evasion_patterns) }
         return failure("BrowserAgent must not disguise automation or simulate random browsing")
       end
-      %w[SsrfGuard.pinned_address secure_page :dangerous].each do |guard|
-        return failure("BrowserAgent security guard missing: #{guard}") unless content.include?(guard)
+      %w[SsrfGuard.pinned_address secure_page :dangerous ensure_session_host! target_from_anchor! save_screenshot(state) MAX_PAGINATION_OUTPUT_BYTES].each do |guard|
+        return failure("BrowserAgent security or capability guard missing: #{guard}") unless content.include?(guard)
       end
       return failure("BrowserAgent interaction consent boundary missing") unless content.include?('interact #{op}')
+      return failure("BrowserAgent capture limit disagrees with policy") unless content.include?("MAX_CAPTURES = #{policy["max_capture_files"]}")
+      return failure("BrowserAgent page limit disagrees with policy") unless content.include?("clamp(1, #{policy["max_pagination_pages"]})")
+      return failure("BrowserAgent output limit disagrees with policy") unless content.include?("MAX_PAGINATION_OUTPUT_BYTES = #{policy["max_pagination_output_bytes"] / 1024} * 1024")
+      required_transport = File.join(root, "lib", "io", "web_browse.rb")
+      transport = File.read(required_transport)
+      %w[request_allowed_for_host? allowed_host reset_page_budget].each do |guard|
+        return failure("WebBrowse host-bound transport missing: #{guard}") unless transport.include?(guard)
+      end
 
       llm_tool = File.read(File.join(root, "lib", "io", "llm.rb"))
+      %w[status navigate login extract look follow paginate close].each do |action|
+        return failure("BrowserAgent model-facing action missing: #{action}") unless llm_tool.include?(action)
+      end
       unless llm_tool.include?("fresh human approval") && llm_tool.include?("recipient consent") && llm_tool.include?("Do not disguise automation")
         return failure("BrowserAgent model-facing consent policy missing")
       end
