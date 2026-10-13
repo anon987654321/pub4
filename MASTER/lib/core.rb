@@ -86,7 +86,9 @@ module Master::Core
     def initialize(verb:, args:, capability: nil)
       verb = verb.to_sym
       raise ArgumentError, "unknown effect verb: #{verb}" unless VERBS.include?(verb)
+      raise ArgumentError, "effect args must be a Hash" unless args.is_a?(Hash)
 
+      args = freeze_payload(args)
       expected = if verb == :git && args[:operation].to_s.to_sym == :diff
                    :read
                  else
@@ -96,8 +98,27 @@ module Master::Core
       raise ArgumentError, "effect capability mismatch: #{verb} requires #{expected}, got #{supplied}" if supplied && supplied != expected
 
       super(verb:, args:, capability: expected)
-      compensation_action if args.is_a?(Hash) && (args.key?(:compensation) || args.key?("compensation"))
+      compensation_action if args.key?(:compensation) || args.key?("compensation")
     end
+
+    # An admitted effect must not change underneath the Constitution or the
+    # operator's approval prompt. Copy and freeze the JSON-shaped payload so
+    # later code cannot mutate nested argv, paths, or write content in place.
+    def freeze_payload(value)
+      case value
+      when Hash
+        value.each_with_object({}) do |(key, item), copy|
+          copy[freeze_payload(key)] = freeze_payload(item)
+        end.freeze
+      when Array
+        value.map { |item| freeze_payload(item) }.freeze
+      when String
+        value.dup.freeze
+      else
+        value
+      end
+    end
+    private :freeze_payload
 
     # Policy derives from the operation's actual capabilities. policy_gated
     # means the existing command/network guard decides; it does NOT mean safe or
