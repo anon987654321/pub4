@@ -25,7 +25,7 @@ module Master
       KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
       REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand|teach|model|use as (?:a )?reference|reference(?: (?:track|song|audio))?|listen to|here(?:'s| is)|this is how|use this|sound|sound like|track|song|link|video|inspired by|learn the sound of)\b/i.freeze
       REFERENCE_STYLE_RE = /\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop|industrial[ -]?techno|techno)\b/i.freeze
-      REFERENCE_URL_RE = /https?:\/\/(?:(?:www|m|music)\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/|v\/)[A-Za-z0-9_-]{11})[^\s<>"'\]\)]*/i.freeze
+      REFERENCE_URL_RE = /https?:\/\/(?:(?:www|m|music)\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/(?:watch\?(?:[^&#\s]*&)*v=[A-Za-z0-9_-]{11}|shorts\/[A-Za-z0-9_-]{11}|embed\/[A-Za-z0-9_-]{11}|live\/[A-Za-z0-9_-]{11}|v\/[A-Za-z0-9_-]{11}))[^\s<>"'\]\)]*/i.freeze
       REFERENCE_SOURCE_LIMIT = 5
       AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
       REFERENCE_GENERATION_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
