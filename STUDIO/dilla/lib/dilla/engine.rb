@@ -33,6 +33,7 @@ def run(argv)
     o.on('--passes N', Integer, 'With --play, stop after N progressions') { |v| options[:passes] = v }
     o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
     o.on('--repeat [STYLE]', '--comp [STYLE]', 'Strike the whole chord again on the steps of a style instead of arpeggiating') { |v| options[:repeat] = v || true }
+    o.on('--patch-per-chord', 'In pad mode, give every chord its own patch, drawn from the one bag of all patches') { options[:patch_per_chord] = true }
     o.on('--mode MODE', 'arp, repeat or pad: force how the chords are played') { |v| options[:mode] = v }
     o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
     o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
@@ -110,6 +111,7 @@ def render(data, options)
   mode = play_mode(options, seq)
   validate_scale!(names, options[:melody], options[:scale_pcs]) if options[:scale_pcs]
   warn_past_nyquist(names, search, options)
+  chord_voices = nil
   buf =
     case mode
     when 'arp'
@@ -121,7 +123,9 @@ def render(data, options)
       comp['gate'] = options[:gate] if options[:gate]
       seq.render_repeat(names, bpm, beats, comp, search:, voice:)
     else
-      seq.render_chords(names, bpm, beats, search:, strum: seq.strum(options[:strum]))
+      chord_voices = options[:chord_voices] || (options[:patch_per_chord] ? Playlist.new(data, Random.new(seed)).voices_for(names.size) : nil)
+      seq.render_chords(names, bpm, beats, search:, strum: seq.strum(options[:strum]), voice:,
+                        voices: chord_voices && seq.voice_specs(chord_voices))
     end
   if options[:melody]
     beat_seconds = 60.0 / bpm
@@ -174,7 +178,7 @@ def render(data, options)
     MIDI.write(options[:midi], names, bpm, beats, hits, search:)
   end
   puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
-  puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} tape=#{options.fetch(:tape, data.dig('tape', 'instances'))} seed=#{seed}"
+  puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{chord_voices&.join('>') || voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} tape=#{options.fetch(:tape, data.dig('tape', 'instances'))} seed=#{seed}"
   out
 end
 
@@ -399,16 +403,17 @@ def play_forever(data, options)
   trap('INT') { pid && Process.kill('TERM', pid); exit }
   trap('TERM') { pid && Process.kill('TERM', pid); exit }
   (1..(options[:passes] || Float::INFINITY)).each do |pass|
-    pick = playlist.draw(mode: options[:mode], voice: options[:voice], profile: options[:profile])
+    pick = playlist.draw(mode: options[:mode], voice: options[:voice], profile: options[:profile], patch_per_chord: options[:patch_per_chord])
     pass_options = options.merge(prog: pick[:prog], seed: rng.rand(1_000_000), profile: pick[:profile], voice: pick[:voice],
                                  mode: pick[:mode], random: false, quick: false, play: false,
                                  out: File.join(dir, "play_#{pass.odd? ? 'a' : 'b'}.wav"))
+    pass_options[:chord_voices] = pick[:voices] if pick[:voices]
     pass_options[:arp_style] = options[:arp_style] || pick[:style] if pick[:mode] == 'arp'
     pass_options[:repeat] = options[:repeat] || pick[:style] if pick[:mode] == 'repeat'
     profile_drums = data['groove_profiles'].fetch(pick[:profile])['drums']
     pass_options[:drums] = options[:drums] == 'rotate' ? pick[:drums] : (options[:drums] || profile_drums)
     pass_options[:kit] = options[:kit] || (options[:drums] == 'rotate' ? pick[:kit] : nil)
-    puts "pass #{pass}: progression #{pick[:prog]} (#{pick[:position]}) mode=#{pick[:mode]} style=#{pick[:style] || '-'} voice=#{pick[:voice]} profile=#{pick[:profile]} drums=#{pass_options[:drums] || '-'} kit=#{pass_options[:kit] || '-'}"
+    puts "pass #{pass}: progression #{pick[:prog]} (#{pick[:position]}) mode=#{pick[:mode]} style=#{pick[:style] || '-'} voice=#{pick[:voices]&.join('>') || pick[:voice]} (patch #{pick[:bag] || 'fixed'}) profile=#{pick[:profile]} drums=#{pass_options[:drums] || '-'} kit=#{pass_options[:kit] || '-'}"
     path = render(data, pass_options)
     File.write(state_path, JSON.generate(playlist.to_h))
     Process.wait(pid) if pid

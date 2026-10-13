@@ -886,11 +886,59 @@ class DillaTest < Minitest::Test
     picks.select { |p| p[:style] }.group_by { |p| p[:mode] }.each_value { |rows| rows.map { |p| p[:style] }.each_cons(2) { |a, b| refute_equal a, b } }
   end
 
-  def test_no_patch_of_a_family_repeats_before_every_patch_of_it_has_played
-    list = Playlist.new(DATA, Random.new(9))
-    moog = list.voices_by_family.fetch("moog")
-    played = Array.new(400) { list.draw(profile: "dry")[:voice] }.select { |v| moog.include?(v) }
-    played.each_slice(moog.size).select { |s| s.size == moog.size }.each { |slice| assert_equal moog.sort, slice.sort }
+  def test_one_bag_holds_every_patch_and_no_patch_or_family_repeats_inside_three_cycles
+    names = DATA.fetch("voices").keys
+    [1, 9, 40].each do |seed|
+      list = Playlist.new(DATA, Random.new(seed))
+      played = Array.new(3 * names.size) { list.draw(profile: "dry")[:voice] }
+      played.each_slice(names.size) { |cycle| assert_equal names.sort, cycle.sort, "every patch once before any comes back" }
+      played.each_cons(2) do |a, b|
+        refute_equal a, b
+        refute_equal DATA.dig("voices", a, "family"), DATA.dig("voices", b, "family"), "#{a} then #{b}"
+      end
+    end
+  end
+
+  def test_the_patch_bag_is_saved_with_the_others_and_a_restart_goes_on_with_it
+    first = Playlist.new(DATA, Random.new(3))
+    a = Array.new(7) { first.draw(profile: "dry")[:voice] }
+    state = JSON.parse(JSON.generate(first.to_h))
+    assert_includes state.keys, "voices"
+    second = Playlist.new(DATA, Random.new(4), state)
+    b = Array.new(DATA.fetch("voices").size - 7) { second.draw(profile: "dry")[:voice] }
+    assert_equal DATA.fetch("voices").keys.sort, (a + b).sort
+    refute_equal DATA.dig("voices", a.last, "family"), DATA.dig("voices", b.first, "family")
+  end
+
+  def test_a_fixed_voice_never_touches_the_bag
+    list = Playlist.new(DATA, Random.new(2))
+    assert_equal "rhodes_mark1", list.draw(voice: "rhodes_mark1", profile: "dry")[:voice]
+    assert_nil list.to_h["voices"]
+  end
+
+  def test_patch_per_chord_draws_one_patch_for_each_chord_of_a_pad_from_the_same_bag
+    list = Playlist.new(DATA, Random.new(6), {}, pool: "all")
+    picks = Array.new(30) { list.draw(mode: "pad", profile: "dry", patch_per_chord: true) }
+    picks.each { |pick| assert_equal PROGRESSIONS.fetch(pick[:prog]).size, pick[:voices].size }
+    flat = picks.flat_map { |pick| pick[:voices] }
+    names = DATA.fetch("voices").keys
+    flat.each_slice(names.size).select { |cycle| cycle.size == names.size }.each { |cycle| assert_equal names.sort, cycle.sort }
+    flat.each_cons(2) { |a, b| refute_equal DATA.dig("voices", a, "family"), DATA.dig("voices", b, "family") }
+    assert_nil Playlist.new(DATA, Random.new(6)).draw(mode: "arp", profile: "dry", patch_per_chord: true)[:voices]
+  end
+
+  def test_a_pad_plays_its_voice_and_each_chord_of_a_morph_has_its_own
+    seq = sequencer("dry")
+    names = %w[Cmaj7 Fmaj7]
+    plain = seq.render_chords(names, 120.0, 4.0)
+    sine = seq.render_chords(names, 120.0, 4.0, voice: seq.voice_spec("sine"))
+    assert_equal plain, sine, "the sine pad is the old pad"
+    held = seq.render_chords(names, 120.0, 4.0, voice: seq.voice_spec("moog_pad"))
+    refute_equal plain, held
+    morph = seq.render_chords(names, 120.0, 4.0, voices: seq.voice_specs(%w[moog_pad rhodes_mark1]))
+    chord = (4.0 * 0.5 * SAMPLE_RATE).to_i
+    assert_equal held.first(chord - 2000), morph.first(chord - 2000), "the first chord keeps its patch"
+    refute_equal held[chord + 5000, 8000], morph[chord + 5000, 8000], "and the second takes another"
   end
 
   def test_the_default_pool_is_the_essential_staples_and_every_index_exists
@@ -1397,6 +1445,24 @@ class DillaTest < Minitest::Test
       assert_equal a.size, b.size
       assert_in_delta 0.0, Tape.db(Tape.rms(b) / Tape.rms(a)), 1.0
       assert_operator b.map(&:abs).max, :<, 0.97
+    end
+  end
+
+  # ------------------------------------------------------------- the patch bag in play
+
+  def test_play_prints_the_patch_of_every_pass_and_saves_the_bag
+    Dir.mktmpdir do |dir|
+      player = File.join(dir, "fake.sh")
+      File.write(player, "#!/bin/sh\nexit 0\n")
+      File.chmod(0o755, player)
+      out, err, status = run_dilla("--play", "--player", "sh #{player}", "--passes", "3", "--beats", "1", "--seed", "12",
+                                   "--profile", "dry", "--mode", "pad", "--patch-per-chord", "--out", File.join(dir, "x.wav"), chdir: dir)
+      assert status.success?, err
+      voices = out.scan(/^pass \d+: .* voice=(\S+) \(patch (\d+)\/(\d+)\)/)
+      assert_equal 3, voices.size
+      voices.each { |list, _, size| assert_equal DATA.fetch("voices").size, size.to_i, list }
+      assert(voices.all? { |list, *| list.split(">").all? { |name| DATA.fetch("voices").key?(name) } })
+      assert_includes JSON.parse(File.read(File.join(dir, "play_state.json"))).keys, "voices"
     end
   end
 

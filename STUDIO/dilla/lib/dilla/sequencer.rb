@@ -35,8 +35,12 @@ class Sequencer
   # Beats each chord holds unless --beats says otherwise: two bars of four.
   def beats = @profile.fetch('beats', 8.0)
 
-  # Chords, each the same length, the odd ones swung late.
-  def render_chords(names, bpm, beats, search: true, strum: 0.0)
+  # Chords, each the same length, the odd ones swung late. A voice other than the plain sine, or
+  # a list of voices (one for each chord, round and round), plays them through Voices instead.
+  def render_chords(names, bpm, beats, search: true, strum: 0.0, voice: nil, voices: nil)
+    voices ||= [voice] if voice && voice['family'] != 'sine'
+    return render_voiced_chords(names, bpm, beats, search:, strum:, voices:) if voices
+
     beat = 60.0 / bpm
     swing = @profile.fetch('swing', 0.5)
     buf = []
@@ -48,6 +52,23 @@ class Sequencer
     end
     buf
   end
+
+  # Held chords played by named voices: each note starts on its chord, the odd chords late by the
+  # swing, and rings its full length with the voice's own release after it.
+  def render_voiced_chords(names, bpm, beats, search:, strum:, voices:)
+    beat = 60.0 / bpm
+    swing = @profile.fetch('swing', 0.5)
+    buf = Array.new((((names.size * beats * beat) + 1.5) * SAMPLE_RATE).to_i, 0.0)
+    Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |notes, idx|
+      start = (idx * beats * beat) + (idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount)
+      plucks = notes.each_with_index.map { |midi, k| Pluck.new(start + (k * strum), 0.0, midi, beats * beat, 1.0 / Math.sqrt(notes.size)) }
+      sound(buf, plucks, voices[idx % voices.size])
+    end
+    buf
+  end
+
+  # The voice specs for a list of voice names, as the sequencer plays them.
+  def voice_specs(flags) = flags.map { |flag| voice_spec(flag) }
 
   # The arp settings, or nil when neither a flag nor the profile asks for one. A style names a
   # row of arp.styles (a pattern, a rate in sixteenths, a gate, an octave span); the profile's
