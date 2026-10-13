@@ -295,6 +295,21 @@ class DillaTest < Minitest::Test
     assert_equal [2, 6, 10, 14], on.("hat")
   end
 
+  def test_dilla_pattern_keeps_fast_accented_hats_and_quiet_ghost_hits
+    pattern = DATA.fetch("drum_patterns").fetch("dilla_shadow")
+    assert_equal 16, pattern.fetch("hat").size
+    assert(pattern.fetch("hat").all? { |velocity| velocity.to_f.positive? })
+    assert_operator pattern.fetch("hat").uniq.size, :>, 2
+    assert_includes pattern.fetch("kick"), 0.72
+    assert_includes pattern.fetch("kick"), 0.56
+    assert_includes pattern.fetch("snare"), 0.28
+
+    hits = sequencer("dilla_shadow", seed: 7).drum_hits("dilla_shadow", 92.0, 60.0 / 92 * 4)
+    ghost = hits.find { |role, _, strength| role == "snare" && strength == 0.28 }
+    refute_nil ghost
+    assert_equal 3, ghost.size
+  end
+
   def test_every_profile_offset_is_inside_the_window
     DATA.fetch("groove_profiles").each do |id, profile|
       (profile["offsets"] || {}).each_value { |v| assert_operator v.abs, :<=, MAX_OFFSET, id }
