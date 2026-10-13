@@ -47,8 +47,10 @@ module Deploy
       return failure("browser page limit must be 50") unless policy["max_pagination_pages"] == 50
       return failure("browser pagination output budget must be 128 KiB") unless policy["max_pagination_output_bytes"] == 131_072
       return failure("browser anchor navigation must use hrefs") unless policy["follow_anchors_by_href_only"] == true
+      return failure("visible login must preserve the read-only boundary") unless policy["visible_login_submission"] == "blocked"
 
       source = File.join(root, "lib", "io", "browser_agent.rb")
+      return failure("visible login must disclose blocked POST submissions") unless File.read(source).include?("ordinary POST-based login submissions are blocked")
       return failure("BrowserAgent tool missing") unless File.file?(source)
 
       content = File.read(source)
