@@ -283,22 +283,24 @@ module Master
         expected_seq = 1
         events = []
         File.foreach(path).with_index(1) do |line, line_number|
-          next if line.strip.empty?
+          begin
+            next if line.strip.empty?
 
-          row = JSON.parse(line)
-          hash = row.fetch("hash")
-          body = row.reject { |key, _| key == "hash" }
-          raise LedgerCorruption, "line #{line_number}: sequence gap" unless row.fetch("seq") == expected_seq
-          raise LedgerCorruption, "line #{line_number}: previous hash mismatch" unless row.fetch("prev") == previous
+            row = JSON.parse(line)
+            hash = row.fetch("hash")
+            body = row.reject { |key, _| key == "hash" }
+            raise LedgerCorruption, "line #{line_number}: sequence gap" unless row.fetch("seq") == expected_seq
+            raise LedgerCorruption, "line #{line_number}: previous hash mismatch" unless row.fetch("prev") == previous
 
-          actual = Digest::SHA256.hexdigest(JSON.generate(body))
-          raise LedgerCorruption, "line #{line_number}: event hash mismatch" unless actual == hash
+            actual = Digest::SHA256.hexdigest(JSON.generate(body))
+            raise LedgerCorruption, "line #{line_number}: event hash mismatch" unless actual == hash
 
-          events << row
-          previous = hash
-          expected_seq += 1
-        rescue JSON::ParserError, KeyError => error
-          raise LedgerCorruption, "line #{line_number}: #{error.message}"
+            events << row
+            previous = hash
+            expected_seq += 1
+          rescue JSON::ParserError, KeyError => error
+            raise LedgerCorruption, "line #{line_number}: #{error.message}"
+          end
         end
         events
       end
@@ -620,20 +622,22 @@ module Master
         events = []
         file.rewind
         file.each_line.with_index(1) do |line, line_number|
-          next if line.strip.empty?
+          begin
+            next if line.strip.empty?
 
-          row = JSON.parse(line)
-          body = row.reject { |key, _| key == "hash" }
-          raise LedgerCorruption, "line #{line_number}: sequence gap" unless row.fetch("seq") == expected_seq
-          raise LedgerCorruption, "line #{line_number}: previous hash mismatch" unless row.fetch("prev") == previous
-          actual = Digest::SHA256.hexdigest(JSON.generate(body))
-          raise LedgerCorruption, "line #{line_number}: event hash mismatch" unless actual == row.fetch("hash")
+            row = JSON.parse(line)
+            body = row.reject { |key, _| key == "hash" }
+            raise LedgerCorruption, "line #{line_number}: sequence gap" unless row.fetch("seq") == expected_seq
+            raise LedgerCorruption, "line #{line_number}: previous hash mismatch" unless row.fetch("prev") == previous
+            actual = Digest::SHA256.hexdigest(JSON.generate(body))
+            raise LedgerCorruption, "line #{line_number}: event hash mismatch" unless actual == row.fetch("hash")
 
-          events << row
-          previous = row.fetch("hash")
-          expected_seq += 1
-        rescue JSON::ParserError, KeyError => error
-          raise LedgerCorruption, "line #{line_number}: #{error.message}"
+            events << row
+            previous = row.fetch("hash")
+            expected_seq += 1
+          rescue JSON::ParserError, KeyError => error
+            raise LedgerCorruption, "line #{line_number}: #{error.message}"
+          end
         end
         events
       end
