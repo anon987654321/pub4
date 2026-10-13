@@ -352,6 +352,20 @@ end
     end
   end
 
+  def test_reference_batch_limit_fails_closed_before_running_tools
+    ids = %w[aaaaaaaaaaa bbbbbbbbbbb ccccccccccc ddddddddddd eeeeeeeeeee fffffffffff]
+    request = "study these techno tracks: #{ids.map { |id| "https://youtu.be/#{id}" }.join(' and ')}"
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("unexpected reference analysis")
+    end) do
+      result = MediaIntent.dispatch(request, root: "/tmp/pub4")
+      refute result.ok?
+    end
+    assert_empty calls
+  end
+
   def test_short_and_embedded_youtube_links_are_audio_references
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
@@ -538,7 +552,7 @@ end
       words = Shellwords.split(calls.last.fetch(:arg))
       assert_equal "behind_the_beat", words[words.index("--profile") + 1]
       assert_equal "92", words[words.index("--bpm") + 1]
-      assert_equal "boom_bap", words[words.index("--drums") + 1]
+      assert_equal "dilla_shadow", words[words.index("--drums") + 1]
       assert_equal "kit_dust", words[words.index("--kit") + 1]
       assert_equal "rhodes_mark1", words[words.index("--voice") + 1]
       assert_equal "cassette", words[words.index("--sonitex") + 1]
