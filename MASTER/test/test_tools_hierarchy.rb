@@ -225,7 +225,9 @@ class TestToolsHierarchy < Minitest::Test
 
     assert_operator voice_tests.size, :>=, 8
     voice_tests.each do |path|
-      assert_includes File.read(path), 'require_relative "../test_helper"', path
+      source = File.read(path)
+      helper_loaded = source.include?('require_relative "../test_helper"') || source.include?('require "test_helper"')
+      assert helper_loaded, "#{path} must load the shared test helper"
     end
   end
 
