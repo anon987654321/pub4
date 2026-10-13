@@ -153,8 +153,11 @@ module Master
 
         def git_directory_escape?(argv, root:)
           argv.each_with_index.any? do |arg, index|
-            next false unless arg == "-C" || arg == "--git-dir" || arg == "--work-tree"
-            value = argv[index + 1]
+            value = case arg
+                    when "-C", "--git-dir", "--work-tree" then argv[index + 1]
+                    when /\A-C(.+)\z/ then Regexp.last_match(1)
+                    when /\A--(?:git-dir|work-tree)=(.+)\z/ then Regexp.last_match(1)
+                    end
             value && !path_inside_root?(value, root:)
           end
         end
