@@ -279,6 +279,102 @@ end
     assert_equal "https://youtu.be/mx9NU4LmDwM?si=example12345", argv[1]
   end
 
+  def test_a_bare_youtube_link_is_treated_as_an_audio_reference
+    url = "https://youtu.be/mx9NU4LmDwM?si=barelink"
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("reference0: analyzed audio")
+    end) do
+      result = MediaIntent.dispatch(url, root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+    end
+    argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+    assert_equal ["reference", url], argv
+  end
+
+  def test_a_j_dilla_reference_is_explicitly_tagged_for_the_analyzer
+    url = "https://youtu.be/mx9NU4LmDwM?si=dilla"
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("reference0: analyzed audio")
+    end) do
+      result = MediaIntent.dispatch("study this J Dilla track so you learn its sound: #{url}", root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal "j_dilla", result.value!.fetch(:style)
+    end
+    argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+    assert_equal "reference", argv.first
+    assert_equal "j_dilla", argv[argv.index("--style") + 1]
+  end
+
+  def test_a_reference_and_generation_request_analyzes_then_renders
+    url = "https://youtu.be/mx9NU4LmDwM?si=techno"
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok(kwargs[:arg].start_with?("reference ") ? "reference0: analyzed audio" : "dilla0: rendered")
+    end) do
+      result = MediaIntent.dispatch("create an industrial techno track like this #{url}", root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :industrial_techno, result.value!.fetch(:media)
+    end
+    assert_equal 2, calls.size
+    analysis = Shellwords.split(calls.first.fetch(:arg))
+    assert_equal "industrial_techno", analysis[analysis.index("--style") + 1]
+    assert_equal "industrial-techno", Shellwords.split(calls.last.fetch(:arg)).first
+  end
+
+  def test_followup_generation_uses_the_most_recent_industrial_reference
+    Dir.mktmpdir do |dir|
+      home, saved = ENV["XDG_DATA_HOME"], ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      FileUtils.mkdir_p(File.join(dir, "dilla-references"))
+      File.write(File.join(dir, "dilla-references", "latest_profile.json"), JSON.generate("style_key" => "industrial_techno"))
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          Master::Result.ok("dilla0: rendered")
+        end) do
+          result = MediaIntent.dispatch("make a track like that", root: "/tmp/pub4")
+          assert result.ok?, result.inspect
+          assert_equal :industrial_techno, result.value!.fetch(:media)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      assert_equal "industrial-techno", Shellwords.split(calls.fetch(0).fetch(:arg)).first
+    end
+  end
+
+  def test_a_saved_j_dilla_reference_steers_tempo_and_groove
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      FileUtils.mkdir_p(File.join(dir, "dilla-references"))
+      File.write(File.join(dir, "dilla-references", "latest_profile.json"), JSON.generate(
+        "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "behind_the_beat"
+      ))
+      calls = []
+      begin
+        with_dispatch_stub(dilla_runner(calls)) do
+          result = MediaIntent.render_dilla("make a beat", root: dir)
+          assert result.ok?, result.inspect
+          assert_equal "behind_the_beat", result.value!.fetch(:groove)
+          assert_equal 92, result.value!.fetch(:bpm)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      words = Shellwords.split(calls.last.fetch(:arg))
+      assert_equal "behind_the_beat", words[words.index("--profile") + 1]
+      assert_equal "92", words[words.index("--bpm") + 1]
+    end
+  end
+
   def test_industrial_techno_request_leaves_arrangement_and_seed_to_dilla
     calls = []
     with_dispatch_stub(lambda do |**kwargs|
