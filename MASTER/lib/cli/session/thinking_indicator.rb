@@ -86,7 +86,8 @@ module Master
       def answer_at_terminal(prompt, options: nil)
         @think_mutex&.synchronize { @think_paused = true }
         terminal_print("\r\e[K")
-        return answer_choice_at_terminal(prompt, options) if options&.any?
+        choices = normalize_ask_options(options)
+        return answer_choice_at_terminal(prompt, choices) unless choices.empty?
 
         terminal_print("#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} ")
         $stdin.gets.to_s.strip
@@ -94,8 +95,38 @@ module Master
         @think_mutex&.synchronize { @think_paused = false }
       end
 
+      # LLMs may serialize approval choices as an array, a single choice object,
+      # or a name => value map. Normalize those shapes before indexing; an
+      # unnormalized Hash was enumerated as key/value pairs and raised a
+      # Symbol-to-Integer TypeError when the renderer treated an Array as a Hash.
+      def normalize_ask_options(options)
+        entries = case options
+                  when Array then options
+                  when Hash
+                    if %i[name label value].any? { |key| options.key?(key) || options.key?(key.to_s) }
+                      [options]
+                    else
+                      options.map { |name, value| { name:, value: } }
+                    end
+                  else []
+                  end
+
+        entries.filter_map do |entry|
+          case entry
+          when Hash
+            name = entry[:name] || entry["name"] || entry[:label] || entry["label"]
+            value = entry[:value] || entry["value"] || name
+            next if name.nil?
+
+            { name: name.to_s, value: value.to_s }
+          when String, Symbol
+            { name: entry.to_s, value: entry.to_s }
+          end
+        end
+      end
+
       def answer_choice_at_terminal(prompt, options)
-        choices = options.each_with_index.map { |option, index| "#{index + 1}) #{option[:name] || option["name"]}" }
+        choices = options.each_with_index.map { |option, index| "#{index + 1}) #{option.fetch(:name)}" }
         terminal_write do |target|
           target.print @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
           target.print "\n  #{choices.join("\n  ")}\n> "
@@ -104,7 +135,7 @@ module Master
         selected = $stdin.gets.to_s.strip
         index = Integer(selected, exception: false)
         option = index && options[index - 1]
-        option ? (option[:value] || option["value"]).to_s : ""
+        option ? option.fetch(:value).to_s : ""
       end
 
       # The spinner stops when a reply streams; detailed events still print.
