@@ -41,6 +41,7 @@ class Streamer
     build_source
     build_chain
     build_drums
+    build_noise
     @total = @source_end + (play_tail ? @tail : 0)
     @total = [@total, @source_end + (1.5 * SAMPLE_RATE).round].max if ring # the longest release of a voice
   end
@@ -91,7 +92,7 @@ class Streamer
 
     from = @position
     dry = fade(@bank.block(from, count, @channels), from)
-    wet = chain(dry, from)
+    wet = add_noise(chain(dry, from), from)
     @position += count
     wet
   end
@@ -188,6 +189,9 @@ class Streamer
     @texture = [pair { Stream::Lowpass.new(texture['lowpass']) },
                 pair { |c| Stream::Reverb.new(texture['reverb'], side: c.zero? ? :left : :right) },
                 pair { |c| Stream::Spring.new(texture['spring'], side: c.zero? ? :left : :right) }]
+    @stages = Array(@plan.profile_row['chain']).map do |row|
+      Stages.build(row, @data.fetch('stages'), channels: @channels, seed:, end_sample: @source_end, bar_samples: @beat * 4)
+    end
   end
 
   def echo_line(settings)
@@ -202,6 +206,7 @@ class Streamer
   def chain(dry, from)
     out = @sonitex ? @sonitex.process(dry) : dry
     out = @colour_vcs.process(out)
+    out = @stages.inject(out) { |frame, stage| stage.process(frame, from) }
     out = echoed(out) if @echo
     out = out.map { |channel| channel.map { |v| v * @chords_gain } } if @chords_gain
     out = out.map { |channel| @duck.apply(channel, from) } if @duck
@@ -210,6 +215,59 @@ class Streamer
   end
 
   def echoed(frame) = @channels == 1 ? [@echo.process(frame.first)] : @echo.process(frame)
+
+  # ------------------------------------------------------------- noise and sparkle
+  # The layers a profile names under `noise`, over the defaults in the data: air, the bed, dust,
+  # and the sparkle with its own echo, ducked by the kick.
+  def build_noise
+    rows = @plan.profile_row['noise'] || {}
+    defaults = @data.fetch('noise')
+    seed = @plan.seed
+    wanted = lambda do |name|
+      row = rows[name]
+      row ? defaults.fetch(name).merge(row.is_a?(Hash) ? row : {}) : nil
+    end
+    seconds = (@source_end + @tail) / SAMPLE_RATE.to_f
+    air = wanted.call('air')
+    bed = wanted.call('bed')
+    @air = air && Array.new(@channels) { |c| Noise::Air.new(air, Zlib.crc32("#{seed}:air:#{c}")) }
+    @bed = bed && Array.new(@channels) { |c| Noise::Bed.new(bed, Zlib.crc32("#{seed}:bed:#{c}")) }
+    dust = wanted.call('dust')
+    @dust_bank = dust && Stream::Bank.new(Noise.dust(dust, Zlib.crc32("#{seed}:dust"), seconds))
+    sparkle = wanted.call('sparkle')
+    return unless sparkle
+
+    pcs = Chords.midi_notes(@plan.names, search: @plan.search).map { |notes| notes.map { |n| n % 12 }.uniq }
+    chord_seconds = @plan.beats * 60.0 / @bpm
+    chord_at = ->(t) { pcs[[(t / chord_seconds).floor, pcs.size - 1].min] }
+    @sparkle_bank = Stream::Bank.new(Noise.sparkle(sparkle, Zlib.crc32("#{seed}:sparkle"), seconds, chord_at))
+    kicks = @hits.select { |r, _| r == 'kick' }.map { |_, t| t }
+    @sparkle_duck = kicks.empty? ? nil : Stream::Duck.new(kicks, sparkle.fetch('duck', 0.85), 0.12)
+    echo = sparkle['echo']
+    return unless echo
+
+    args = { delay: echo.fetch('beats', 0.75) * 60.0 / @bpm, heads: echo.fetch('heads', [1, 2]), intensity: echo.fetch('intensity', 0.55), volume: echo.fetch('volume', 0.7),
+             lowpass: echo.fetch('lowpass', 5000), saturation: 0.1 }
+    @sparkle_echo = @channels == 1 ? Stream::EchoLine.new(**args) : Stream::PingPongEcho.new(**args)
+  end
+
+  def add_noise(frame, from)
+    return frame unless @air || @bed || @dust_bank || @sparkle_bank
+
+    count = frame.first.size
+    layers = []
+    layers << Array.new(@channels) { |c| @air[c].block(count) } if @air
+    layers << Array.new(@channels) { |c| @bed[c].block(count) } if @bed
+    layers << @dust_bank.block(from, count, @channels) if @dust_bank
+    if @sparkle_bank
+      glints = @sparkle_bank.block(from, count, @channels)
+      glints = glints.map { |channel| @sparkle_duck.apply(channel, from) } if @sparkle_duck
+      glints = @channels == 1 ? [@sparkle_echo.process(glints.first)] : @sparkle_echo.process(glints) if @sparkle_echo
+      layers << glints
+    end
+    layers.each { |layer| Stereo.add!(frame, layer) }
+    frame
+  end
 
   # ------------------------------------------------------------- the drums
   def build_drums
@@ -220,7 +278,8 @@ class Streamer
     @hits = drums ? seq.drum_hits(rotation, @bpm, @source_end / SAMPLE_RATE.to_f) : []
     @levels = seq.mix(options[:mix])
     @chords_gain = @hits.empty? ? nil : 10.0**(@levels.fetch('chords') / 20.0)
-    sidechain = @plan.profile_row['sidechain']
+    # a profile's own pump, else the master's light duck: the instruments give way to the kick
+    sidechain = @plan.profile_row['sidechain'] || (options[:master] == false ? nil : @data.dig('master', 'duck'))
     amount = sidechain ? sidechain.fetch('amount', 0.0) * seq.pd_amount : 0.0
     @duck = sidechain && !amount.zero? ? Stream::Duck.new(@hits.select { |r, _| r == 'kick' }.map { |_, t| t }, amount, sidechain.fetch('release', 0.15)) : nil
     return if @hits.empty?

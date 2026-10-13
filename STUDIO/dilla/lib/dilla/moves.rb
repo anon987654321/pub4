@@ -18,18 +18,29 @@ module Moves
   ROOM_LEVEL = 0.5
 
   # The master stage after the decks are summed. A frame is [mono] or [left, right]. In order:
-  # the sweep, the Sonitex, the room, the stereo imager (the low end centred, the highs
-  # widened, the mid untouched), then the tape stack on the mid and a light one on the side, and the
-  # ceiling. Nothing is in the path unless a move asks for it, except the imager and the tape.
+  # the moves (sweep, Sonitex, room), the stereo imager (the low end centred, the highs widened, the
+  # mid untouched), the mastering chain (EQ, multiband, parallel, glue, level, soft clip), the tape
+  # stack on the mid with a light one on the side, and last the true-peak limiter. Nothing of the
+  # moves is in the path unless a move asks for it. With no chain the old ceiling stands in for the
+  # limiter. `tape` is a stack, or a proc that makes one from a stretch of the programme.
   class Master
-    def initialize(tape:, ceiling:, preset:, seed:, instances: 0, tape_args: {}, imager: {})
+    attr_reader :chain
+
+    def initialize(tape:, ceiling:, preset:, seed:, instances: 0, tape_args: {}, imager: {}, chain: nil)
       @tape = tape
-      @side_tape = instances.positive? && tape ? Tape::Stack.new(instances: 1, seed: seed + 1, cheap: true, **tape_args) : nil
+      @tape_args = tape_args
+      @instances = instances
+      @side_tape = nil
       @ceiling = ceiling
       @preset = preset
       @seed = seed
       @imager = imager
+      @chain = chain
       @built = nil
+    end
+
+    def bpm=(bpm)
+      @chain&.bpm = bpm
     end
 
     # `params`: cutoff [from, to], sonitex n, room [from, to], tape factor.
@@ -47,7 +58,16 @@ module Moves
         @rooms = nil
       end
       frame = @imaging.process(frame) if @imaging
-      colour(frame, params.fetch(:tape, 1.0))
+      frame = @chain.process(frame) if @chain
+      frame = colour(frame, params.fetch(:tape, 1.0))
+      @chain ? @chain.limit(frame) : frame.map { |channel| Tape.ceiling(channel, top: @ceiling) }
+    end
+
+    # What the limiter is still holding when the signal ends.
+    def flush
+      return nil unless @chain && @built
+
+      @chain.limit(Stereo.zeros(@built, @chain.latency + 2))
     end
 
     private
@@ -62,16 +82,19 @@ module Moves
     end
 
     def colour(frame, factor)
-      return frame unless @tape
+      return frame unless @tape || @instances.positive?
 
+      if @tape.respond_to?(:call)
+        @tape = @tape.call(Tape.excerpt(Stereo.fold(frame)))
+      end
       @tape.drive_scale = factor
       if frame.size == 1
-        [Tape.ceiling(@tape.process(frame.first), top: @ceiling)]
+        [@tape.process(frame.first)]
       else
+        @side_tape ||= Tape::Stack.new(instances: 1, seed: @seed + 1, cheap: true, **@tape_args)
         mid, side = Stereo.mid_side(frame)
         @side_tape.drive_scale = factor
-        left, right = Stereo.left_right(@tape.process(mid), @side_tape.process(side))
-        [Tape.ceiling(left, top: @ceiling), Tape.ceiling(right, top: @ceiling)]
+        Stereo.left_right(@tape.process(mid), @side_tape.process(side))
       end
     end
   end

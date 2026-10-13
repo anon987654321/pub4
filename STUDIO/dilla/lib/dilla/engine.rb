@@ -42,6 +42,9 @@ def run(argv)
     o.on('--bars N', Integer, 'With --mode organ: bars of improvisation, one chord a bar (default from the data)') { |v| options[:bars] = v }
     o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
     o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
+    o.on('--lufs N', Float, 'Integrated loudness the master brings the sound to (default -14)') { |v| options[:lufs] = v.clamp(-40.0, -3.0) }
+    o.on('--no-master', 'Leave out the mixing and mastering chain: no EQ, multiband, glue, loudness or true-peak limiter') { options[:master] = false }
+    o.on('--bits N', Integer, 'Bit depth of a written wav, 16 (dithered) or 24') { |v| options[:bits] = v == 24 ? 24 : 16 }
     o.on('--mono', 'One channel, with no panning, no ping-pong echo and no stereo imager (the default is stereo)') { options[:mono] = true }
     o.on('--tape N', Integer, 'Tape machines in series as the last stage, 0 to 8; 0 leaves the sound untouched (default from the data)') { |v| options[:tape] = v.clamp(0, 8) }
     o.on('--tape-drive X', Float, 'How hard the first tape machine is driven, 0.1 to 4; later machines step up from it') { |v| options[:tape_drive] = v.clamp(0.1, 4.0) }
@@ -213,13 +216,21 @@ def render_stream(data, options)
   instances = options.fetch(:tape, tape.fetch('instances'))
   args = { drive: options[:tape_drive] || tape.fetch('drive'), config: tape }
   # the stack is level matched against the programme itself, which a whole render has to hand
-  stack = instances.positive? ? Tape::Stack.new(instances:, seed: plan.seed, sample: Tape.excerpt(Stereo.fold(frame)), **args) : nil
+  stack = instances.positive? ? ->(sample) { Tape::Stack.new(instances:, seed: plan.seed, sample:, **args) } : nil
+  chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch('master'), channels: streamer.channels, bpm: plan.bpm, whole: true)
+  chain&.target = options[:lufs] if options[:lufs]
   master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset: nil, seed: plan.seed, instances:, tape_args: args,
-                             imager: options[:mono] ? nil : data.dig('stereo', 'imager'))
+                             imager: options[:mono] ? nil : data.dig('stereo', 'imager'), chain:)
   frame = master.process(frame)
+  if (tail = master.flush)
+    frame = frame.each_with_index.map { |channel, c| channel.drop(chain.latency) + tail[c].first(chain.latency) } # the limiter's delay taken out
+  end
+  bits = options.fetch(:bits, 16)
+  frame = Mastering::Dither.new(plan.seed).process(frame) if chain && bits == 16
+  report = Mastering.report(frame) if chain
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
-  WAV.write(out, streamer.channels == 1 ? frame.first : frame)
+  WAV.write(out, streamer.channels == 1 ? frame.first : frame, bits:)
   if options[:midi]
     FileUtils.mkdir_p(File.dirname(options[:midi]))
     MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, streamer.hits, search: plan.search)
@@ -229,6 +240,7 @@ def render_stream(data, options)
   puts "Wrote #{out} (#{(frame.first.size / SAMPLE_RATE.to_f).round(2)}s, #{streamer.channels == 1 ? 'mono' : 'stereo'}) #{label}: #{plan.names.join(' ')}"
   puts "  drums=#{plan.drums ? Array(plan.drums).join(',') : 'none'} profile=#{plan.profile} mode=#{plan.mode} " \
        "voice=#{piece ? 'organ' : (plan.chord_voices&.join('>') || plan.voice['name'])} groove=#{plan.seq.pd_amount} bpm=#{plan.bpm} tape=#{instances} seed=#{plan.seed}"
+  puts Mastering.report_line(report) if report
   out
 end
 

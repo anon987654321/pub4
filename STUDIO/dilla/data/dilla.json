@@ -3633,6 +3633,110 @@
       "air_hz": 4000.0
     }
   },
+  "stages": {
+    "plate": {
+      "decay": 0.84,
+      "damp": 0.35,
+      "mix": 0.25,
+      "gain": 30.0
+    },
+    "shimmer": {
+      "decay": 0.88,
+      "damp": 0.45,
+      "ratio": 2.0,
+      "feedback": 0.45,
+      "mix": 0.3,
+      "gain": 30.0
+    },
+    "granular": {
+      "density": 9.0,
+      "min_ms": 60,
+      "max_ms": 200,
+      "spray": 1.4,
+      "up": 0.18,
+      "down": 0.1,
+      "reverse": 0.25,
+      "mix": 0.35
+    },
+    "crush": {
+      "bits": 10,
+      "factor": 2.0,
+      "mix": 0.5
+    },
+    "folder": {
+      "gain": 2.4,
+      "mix": 0.3
+    },
+    "ringmod": {
+      "hz": 140.0,
+      "mix": 0.2
+    },
+    "freqshift": {
+      "hz": 7.0,
+      "mix": 0.5
+    },
+    "reverse_echo": {
+      "seconds": 1.0,
+      "mix": 0.4
+    },
+    "tapestop": {
+      "seconds": 0.8
+    },
+    "sweep": {
+      "every_bars": 8,
+      "bars": 2,
+      "low_hz": 500.0,
+      "top_hz": 16000.0
+    },
+    "transient": {
+      "attack_db": 4.0,
+      "sustain_db": -2.0
+    },
+    "exciter": {
+      "hz": 6000.0,
+      "drive": 3.0,
+      "mix": 0.25
+    },
+    "comb_bank": {
+      "hz": 220.0,
+      "q": 18.0,
+      "mix": 0.35
+    }
+  },
+  "noise": {
+    "air": {
+      "hz": 8000.0,
+      "db": -54.0
+    },
+    "bed": {
+      "hz": 200.0,
+      "db": -48.0
+    },
+    "dust": {
+      "rate": 3.0,
+      "db": -42.0
+    },
+    "sparkle": {
+      "rate": 1.6,
+      "db": -30.0,
+      "midi": [
+        108,
+        119
+      ],
+      "width": 0.8,
+      "duck": 0.85,
+      "echo": {
+        "beats": 0.75,
+        "heads": [
+          1,
+          2
+        ],
+        "intensity": 0.55,
+        "volume": 0.7,
+        "lowpass": 5000
+      }
+    }
+  },
   "tape": {
     "instances": 4,
     "drive": 1.0,
@@ -3652,6 +3756,80 @@
       "alpha": 0.0016,
       "k": 0.47,
       "c": 0.17
+    }
+  },
+  "master": {
+    "target_lufs": -14.0,
+    "ceiling_dbtp": -1.0,
+    "eq": {
+      "low_mid": {
+        "hz": 320.0,
+        "q": 1.0,
+        "db": -1.5
+      },
+      "air": {
+        "hz": 10000.0,
+        "db": 1.5
+      },
+      "dynamic": {
+        "threshold_db": -30.0,
+        "range": 0.35
+      }
+    },
+    "multiband": {
+      "crossovers": [
+        200.0,
+        2500.0
+      ],
+      "bands": [
+        {
+          "threshold_db": -22.0,
+          "ratio": 2.5,
+          "attack_ms": 30.0,
+          "release_ms": 150.0,
+          "makeup_db": 0.5
+        },
+        {
+          "threshold_db": -22.0,
+          "ratio": 2.0,
+          "attack_ms": 15.0,
+          "release_ms": 100.0,
+          "makeup_db": 0.5
+        },
+        {
+          "threshold_db": -24.0,
+          "ratio": 2.0,
+          "attack_ms": 5.0,
+          "release_ms": 60.0,
+          "makeup_db": 0.5
+        }
+      ]
+    },
+    "parallel": {
+      "threshold_db": -34.0,
+      "ratio": 6.0,
+      "attack_ms": 3.0,
+      "release_ms": 80.0,
+      "makeup_db": 10.0,
+      "mix": 0.2
+    },
+    "glue": {
+      "threshold_db": -16.0,
+      "ratio": 2.0,
+      "attack_ms": 20.0,
+      "release_beats": 0.5,
+      "makeup_db": 0.5
+    },
+    "clip": {
+      "knee": 0.7
+    },
+    "limiter": {
+      "lookahead": 64,
+      "release_ms": 120.0
+    },
+    "duck": {
+      "amount": 0.12,
+      "release": 0.12
     }
   },
   "organ": {
@@ -3862,7 +4040,10 @@
     "techno_arp",
     "industrial_arp",
     "eclectic",
-    "dub_dark"
+    "dub_dark",
+    "new_age",
+    "tape_dust",
+    "broken_radio"
   ],
   "comp": {
     "default_style": "eighth_stabs",
@@ -5493,6 +5674,148 @@
         "reverb": 0.0,
         "spring": 0.35,
         "lowpass": 7500
+      }
+    },
+    "new_age": {
+      "bpm": 62,
+      "swing": 0.5,
+      "voice": "prophet_pad",
+      "beats": 8,
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.6,
+        "echo_volume": 0.5,
+        "time_beats": 1.5,
+        "lowpass": 3000,
+        "saturation": 0.2,
+        "tail": 10
+      },
+      "chain": [
+        "exciter",
+        {
+          "stage": "granular",
+          "mix": 0.22
+        },
+        "shimmer",
+        "plate"
+      ],
+      "noise": {
+        "air": true,
+        "bed": true,
+        "sparkle": {
+          "rate": 2.2
+        }
+      },
+      "texture": {
+        "detune": 0.0,
+        "reverb": 0.0,
+        "lowpass": 12000
+      }
+    },
+    "tape_dust": {
+      "bpm": 78,
+      "swing": 0.54,
+      "voice": "rhodes_mark1",
+      "beats": 8,
+      "repeat": {
+        "style": "long_short",
+        "modifiers": [
+          "probability",
+          "humanize"
+        ],
+        "probability": {
+          "probability": 0.94
+        }
+      },
+      "echo": {
+        "heads": [
+          1,
+          2
+        ],
+        "intensity": 0.5,
+        "echo_volume": 0.4,
+        "time_beats": 0.75,
+        "lowpass": 2800,
+        "saturation": 0.4,
+        "tail": 6
+      },
+      "chain": [
+        "transient",
+        {
+          "stage": "crush",
+          "bits": 11,
+          "mix": 0.35
+        },
+        "reverse_echo",
+        "tapestop"
+      ],
+      "noise": {
+        "bed": true,
+        "dust": {
+          "rate": 5.0
+        }
+      },
+      "kit": "kit_dust",
+      "drums": "dusty_laid_back",
+      "mix": {
+        "kick": 0.0,
+        "snare": 1.0,
+        "clap": 1.0,
+        "hat": -6.0,
+        "chords": -1.0
+      },
+      "texture": {
+        "detune": 0.0,
+        "reverb": 0.1,
+        "lowpass": 9000
+      }
+    },
+    "broken_radio": {
+      "bpm": 84,
+      "swing": 0.52,
+      "voice": "moog_pluck",
+      "beats": 8,
+      "arp": {
+        "style": "pendulum"
+      },
+      "echo": {
+        "heads": [
+          1,
+          2,
+          3
+        ],
+        "intensity": 0.55,
+        "echo_volume": 0.45,
+        "time_beats": 0.75,
+        "lowpass": 3500,
+        "saturation": 0.3,
+        "tail": 6
+      },
+      "chain": [
+        {
+          "stage": "ringmod",
+          "mix": 0.12
+        },
+        "freqshift",
+        {
+          "stage": "folder",
+          "mix": 0.2
+        },
+        "comb_bank",
+        "sweep"
+      ],
+      "noise": {
+        "air": true,
+        "dust": true
+      },
+      "texture": {
+        "detune": 0.0,
+        "reverb": 0.05,
+        "lowpass": 14000
       }
     }
   },

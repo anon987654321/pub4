@@ -47,6 +47,25 @@ module Tape
       new([(1 - cos) / 2, 1 - cos, (1 - cos) / 2], [1 + alpha, -2 * cos, 1 - alpha])
     end
 
+    # A shelf that lifts everything above `hz` by `gain_db` (RBJ, slope 1).
+    def self.highshelf(hz, gain_db, slope = 1.0)
+      a = 10.0**(gain_db / 40.0)
+      w = TAU * hz / SAMPLE_RATE
+      cos = Math.cos(w)
+      alpha = Math.sin(w) / 2.0 * Math.sqrt(((a + (1.0 / a)) * ((1.0 / slope) - 1.0)) + 2.0)
+      root = 2.0 * Math.sqrt(a) * alpha
+      new([a * ((a + 1) + ((a - 1) * cos) + root), -2.0 * a * ((a - 1) + ((a + 1) * cos)), a * ((a + 1) + ((a - 1) * cos) - root)],
+          [(a + 1) - ((a - 1) * cos) + root, 2.0 * ((a - 1) - ((a + 1) * cos)), (a + 1) - ((a - 1) * cos) - root])
+    end
+
+    # A resonator with unity gain at its centre (the constant peak form).
+    def self.bandpass(hz, q)
+      w = TAU * hz / SAMPLE_RATE
+      alpha = Math.sin(w) / (2.0 * q)
+      cos = Math.cos(w)
+      new([alpha, 0.0, -alpha], [1 + alpha, -2 * cos, 1 - alpha])
+    end
+
     def self.highpass(hz, q = Math.sqrt(0.5))
       w = TAU * hz / SAMPLE_RATE
       alpha = Math.sin(w) / (2.0 * q)

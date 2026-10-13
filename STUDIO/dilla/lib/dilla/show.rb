@@ -47,9 +47,13 @@ class Show
     instances = options.fetch(:tape, tape.fetch('instances'))
     stack = instances.positive? ? Tape::Stack.new(instances:, drive: options[:tape_drive] || tape.fetch('drive'), seed: options[:seed] || 0, config: tape) : nil
     preset = data.dig('sonitex', 'presets').fetch(data.dig('sonitex', 'default'))
+    channels = options[:mono] ? 1 : 2
+    chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch('master'), channels:)
+    chain&.target = options[:lufs] if options[:lufs]
     @master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset:, seed: options[:seed] || 0, instances:,
                                 tape_args: { drive: options[:tape_drive] || tape.fetch('drive'), config: tape },
-                                imager: options[:mono] ? nil : data.dig('stereo', 'imager'))
+                                imager: options[:mono] ? nil : data.dig('stereo', 'imager'), chain:)
+    @dither = Mastering::Dither.new(options[:seed] || 0)
     per_minute = options.fetch(:moves, @decks > 1 ? MOVES_PER_MINUTE : 0.0)
     @hand = Moves::Hand.new(options[:seed] || 0, per_minute:, out:)
   end
@@ -174,10 +178,13 @@ class Show
         part = slot.streamer.next_block(size - offset)
         Stereo.add!(mixed, channels == 1 ? [part] : part, offset)
       end
+      @master.bpm = slots.last.streamer.plan.bpm
       slots.reject! { |slot| slot.streamer.finished? }
-      mixed = @master.process(mixed, params)
+      mixed = @dither.process(@master.process(mixed, params))
       mixed = mixed.first if channels == 1
-      @stats[:render] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      spent = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      @stats[:render] += spent
+      keep_up(spent / (size.to_f / SAMPLE_RATE))
       @stats[:audio] += size.to_f / SAMPLE_RATE
       @stats[:blocks] += 1
       queue << mixed
@@ -188,6 +195,16 @@ class Show
   rescue StandardError => e
     @out.puts "show: #{e.class}: #{e.message}"
     queue << :done
+  end
+
+  # The cost of a block against its length, smoothed: past nine tenths the master's dear stages go and the show says so.
+  def keep_up(ratio)
+    @pace = @pace ? (@pace * 0.8) + (ratio * 0.2) : ratio
+    chain = @master.chain
+    return unless chain && !chain.light? && @pace > @options.fetch(:pace, 0.9) && @stats[:blocks] > 4
+
+    chain.lighten!
+    @out.puts format('master: lightened, the show was rendering at %.2fx real time', @pace)
   end
 
   # Build the next pass on a thread while this one plays, its first bars rendered ahead so that a

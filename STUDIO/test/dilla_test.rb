@@ -37,7 +37,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/moves.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stereo.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/mastering.rb lib/dilla/midi.rb lib/dilla/moves.rb lib/dilla/noise.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stages.rb lib/dilla/stereo.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -49,7 +49,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs organ play_profiles progressions sonitex stereo strum tape voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits master mix modal_patches nasty_vcs noise organ play_profiles progressions sonitex stages stereo strum tape voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_scale_clean_harmony_pure_tones_and_dubbed_dilla_drums
@@ -770,7 +770,7 @@ class DillaTest < Minitest::Test
   def test_a_transpose_past_nyquist_warns_and_renders_silence
     Dir.mktmpdir do |dir|
       out = File.join(dir, "x.wav")
-      _o, err, status = run_dilla("--progression", "9", "--beats", "1", "--octaves", "12", "--mode", "pad", "--out", out, chdir: dir)
+      _o, err, status = run_dilla("--progression", "9", "--beats", "1", "--octaves", "12", "--mode", "pad", "--no-master", "--out", out, chdir: dir)
       assert status.success?, err
       assert_match(/warning: \d+ of \d+ notes are above/, err)
       assert File.binread(out).byteslice(44..).unpack("s<*").all?(&:zero?)
@@ -844,7 +844,7 @@ class DillaTest < Minitest::Test
     refute(singles.all?(&:zero?))
     assert_includes DATA.dig("comp", "styles"), "dotted_eighth_push"
     DATA.dig("comp", "styles").each_value { |s| assert_equal 16, s["pattern"].size }
-    assert_equal %w[chord_repeat dub_dark], DATA.fetch("groove_profiles").select { |_, p| p.key?("repeat") }.keys
+    assert_equal %w[chord_repeat dub_dark tape_dust], DATA.fetch("groove_profiles").select { |_, p| p.key?("repeat") }.keys
     assert_equal 0, struck + plucks.size
   end
 
@@ -2414,6 +2414,383 @@ class DillaTest < Minitest::Test
     out = master.process(loud)
     assert_equal 2, out.size
     assert_operator out.flatten.map(&:abs).max, :<=, 0.97 + 1e-9
+  end
+
+  # ------------------------------------------------------------- effect stages, noise and sparkle
+
+  def tone(hz, seconds = 1.0, amp = 0.3, phase = 0.0) = Array.new((seconds * SAMPLE_RATE).round) { |i| amp * Math.sin((2 * Math::PI * hz * i / SAMPLE_RATE) + phase) }
+
+  def stage(name, **over) = Stages.build({ "stage" => name }.merge(over.transform_keys(&:to_s)), DATA.fetch("stages"), channels: 1, seed: 7, end_sample: 40_000, bar_samples: 30_000)
+
+  def test_every_stage_in_the_data_builds_and_every_profile_chain_names_real_stages
+    DATA.fetch("stages").each_key { |name| assert_kind_of Stages::Chained, stage(name) }
+    assert_equal DATA.fetch("stages").keys.sort, Stages::KINDS.keys.sort
+    DATA.fetch("groove_profiles").each do |profile, row|
+      Array(row["chain"]).each { |item| assert_includes DATA.fetch("stages"), item.is_a?(String) ? item : item.fetch("stage"), profile }
+      (row["noise"] || {}).each_key { |layer| assert_includes DATA.fetch("noise"), layer, profile }
+    end
+    assert_raises(ArgumentError) { Stages.build("nonesuch", DATA.fetch("stages"), channels: 1, seed: 1) }
+  end
+
+  def test_every_stage_gives_the_same_samples_in_blocks_as_in_one_call_and_stays_finite
+    rng = Random.new(3)
+    signal = Array.new(60_000) { |i| (Math.sin(i / 9.0) * 0.2) + ((rng.rand - 0.5) * 0.05) }
+    DATA.fetch("stages").each_key do |name|
+      whole = stage(name).process([signal], 0).first
+      cut = stage(name)
+      parts = signal.each_slice(7001).with_index.flat_map { |chunk, k| cut.process([chunk], k * 7001).first }
+      assert(whole.all?(&:finite?), name)
+      assert_in_delta 0.0, whole.zip(parts).map { |a, b| (a - b).abs }.max, 1e-9, "#{name}: blocks change the sound"
+      assert_operator whole.map(&:abs).max, :<, 4.0, name
+    end
+  end
+
+  def test_the_pitch_shifter_takes_a_tone_up_an_octave
+    pitch = Stages::Pitch.new(2.0)
+    out = tone(440.0, 1.0).map { |x| pitch.step(x) }.last(20_000)
+    crossings = out.each_cons(2).count { |a, b| a.negative? != b.negative? }
+    assert_in_delta 880.0, crossings / 2.0 / (out.size.to_f / SAMPLE_RATE), 40.0
+    assert_operator Tape.rms(out), :>, 0.1
+  end
+
+  def test_the_shimmer_rings_on_an_octave_above_the_note_and_the_plate_is_a_room
+    burst = tone(440.0, 0.3) + Array.new(SAMPLE_RATE * 2, 0.0)
+    shimmer = stage("shimmer", mix: 1.0, feedback: 0.5).process([burst]).first
+    tail = shimmer[SAMPLE_RATE, SAMPLE_RATE]
+    assert_operator Tape.rms(tail), :>, 0.004, "it rings after the note"
+    plate = stage("plate", mix: 1.0).process([burst]).first
+    assert_operator Tape.rms(plate[SAMPLE_RATE, SAMPLE_RATE]), :>, 0.001
+    left = Stages.build({ "stage" => "plate" }, DATA.fetch("stages"), channels: 2, seed: 7).process([burst, burst])
+    refute_equal left[0], left[1], "the right room is another room"
+  end
+
+  def test_the_granular_cloud_goes_on_after_the_input_stops_and_follows_its_seed
+    burst = tone(300.0, 0.5) + Array.new(SAMPLE_RATE * 2, 0.0)
+    cloud = stage("granular", mix: 1.0).process([burst]).first
+    assert_operator Tape.rms(cloud[SAMPLE_RATE, SAMPLE_RATE / 2]), :>, 0.001
+    assert_equal cloud, stage("granular", mix: 1.0).process([burst]).first
+    other = Stages.build({ "stage" => "granular", "mix" => 1.0 }, DATA.fetch("stages"), channels: 1, seed: 8).process([burst]).first
+    refute_equal cloud, other
+    assert_equal burst, stage("granular", mix: 0.0).process([burst]).first.each_with_index.map { |v, i| v - 0.0 + 0.0 * i }
+  end
+
+  def test_the_frequency_shifter_moves_a_partial_by_a_number_of_hertz_and_the_ring_modulator_makes_sidebands
+    shifted = stage("freqshift", hz: 100.0, mix: 1.0).process([tone(1000.0)], 0).first.last(22_050)
+    assert_operator Tape.goertzel(shifted, 1100.0), :>, 0.25
+    assert_operator Tape.goertzel(shifted, 900.0), :<, 0.01
+    assert_operator Tape.goertzel(shifted, 1000.0), :<, 0.01
+    ring = stage("ringmod", hz: 200.0, mix: 1.0).process([tone(1000.0)], 0).first.last(22_050)
+    assert_operator Tape.goertzel(ring, 800.0), :>, 0.05
+    assert_operator Tape.goertzel(ring, 1200.0), :>, 0.05
+    assert_operator Tape.goertzel(ring, 1000.0), :<, 0.02
+  end
+
+  def test_the_crusher_the_folder_and_the_exciter_make_what_they_say
+    ramp = Array.new(2000) { |i| (i / 1000.0) - 1.0 }
+    assert_operator stage("crush", bits: 4, factor: 1.0, mix: 1.0).process([ramp]).first.uniq.size, :<=, 17, "four bits: sixteen steps and the zero"
+    folded = stage("folder", gain: 3.0, mix: 1.0).process([tone(200.0, 1.0, 0.9)]).first
+    assert_operator folded.map(&:abs).max, :<=, 1.0 / 3.0 * 1.0001 + 1e-6
+    assert_operator Tape.goertzel(folded.last(22_050), 600.0), :>, 0.01, "a fold makes a third harmonic"
+    dull = tone(5000.0, 1.0, 0.3)
+    bright = stage("exciter", mix: 1.0, hz: 4000.0, drive: 4.0).process([dull]).first
+    assert_operator Tape.goertzel(bright.last(22_050), 15_000.0), :>, 0.003, "a third harmonic at 15 kHz that was not there"
+    assert_operator Tape.goertzel(dull.last(22_050), 15_000.0), :<, 0.0005
+  end
+
+  def test_the_comb_bank_rings_at_inharmonic_partials
+    gain = ->(hz) { Tape.rms(stage("comb_bank", hz: 300.0, mix: 1.0).process([tone(hz, 1.0)]).first.last(22_050)) / Tape.rms(tone(hz, 1.0)) }
+    assert_operator gain.call(300.0 * 2.76), :>, 1.3, "a resonance at 2.76 times the base"
+    assert_operator gain.call(300.0 * 2.0), :<, 1.1, "and none at the octave"
+  end
+
+  def test_the_reverse_echo_plays_the_last_segment_backwards_and_swelling
+    segment = (SAMPLE_RATE * 0.2).round
+    ramp_up = Array.new(segment) { |i| i.to_f / segment } # rising in
+    stage_ = Stages.build({ "stage" => "reverse_echo", "seconds" => 0.2, "mix" => 1.0 }, DATA.fetch("stages"), channels: 1, seed: 1)
+    out = stage_.process([ramp_up + Array.new(segment, 0.0)]).first
+    second = out[segment, segment]
+    assert_operator second.first(segment / 4).map(&:abs).max, :<, second.last(segment / 4).map(&:abs).max + 1e-9, "it swells in"
+    heard = second.each_with_index.map { |v, i| v / ((i.to_f / segment)**2 + 1e-9) }[(segment * 0.2)...(segment * 0.8)]
+    assert_operator heard.first, :>, heard.last, "and what it plays is the segment backwards: it falls"
+  end
+
+  def test_the_tape_stop_slows_the_read_to_nothing_before_the_pass_ends
+    pass_end = 4 * SAMPLE_RATE
+    stopper = Stages.build({ "stage" => "tapestop", "seconds" => 0.8 }, DATA.fetch("stages"), channels: 1, seed: 1, end_sample: pass_end)
+    out = stopper.process([tone(440.0, 5.0)], 0).first
+    assert_equal tone(440.0, 5.0).first(pass_end - 40_000), out.first(pass_end - 40_000), "untouched until the stop begins"
+    early = out[pass_end - 35_000, 4000]
+    late = out[pass_end - 6000, 4000]
+    zc = ->(buf) { buf.each_cons(2).count { |a, b| a.negative? != b.negative? } }
+    assert_operator zc.call(late), :<, zc.call(early) * 0.7, "the pitch falls"
+    assert_in_delta 0.0, out[pass_end - 200, 200].map(&:abs).max, 0.01, "and it is gone"
+  end
+
+  def test_the_sweep_is_an_event_every_so_many_bars_and_the_transient_shaper_lifts_the_front_of_a_note
+    sweep = Stages::Sweep.new({ "every_bars" => 4, "bars" => 1, "low_hz" => 400.0, "top_hz" => 16_000.0 }, 1, 0, bar_samples: 1000)
+    cutoffs = [0, 500, 1000, 1500, 2000, 3000, 4000, 5000].map { |at| sweep.send(:cutoff, at) }
+    assert_in_delta 16_000.0, cutoffs[0], 1
+    assert_in_delta 400.0, cutoffs[2], 1
+    assert_in_delta 16_000.0, cutoffs[4], 1
+    assert_in_delta 16_000.0, cutoffs[5], 1, "held open between sweeps"
+    note = Array.new(8000) { |i| (i < 4000 ? Math.sin(i / 5.0) : 0.0) * [1.0, 0.0].max }
+    shaped = stage("transient", attack_db: 6.0, sustain_db: -6.0).process([note.each_with_index.map { |v, i| i < 4000 ? v * Math.exp(-i / 1500.0) : 0.0 }]).first
+    plain = note.each_with_index.map { |v, i| i < 4000 ? v * Math.exp(-i / 1500.0) : 0.0 }
+    assert_operator shaped.first(300).map(&:abs).max, :>=, plain.first(300).map(&:abs).max * 0.999
+  end
+
+  def test_the_noise_layers_are_filtered_noise_kept_far_down_and_the_same_every_time
+    air = Noise::Air.new(DATA.dig("noise", "air"), 4).block(44_100)
+    assert_equal air, Noise::Air.new(DATA.dig("noise", "air"), 4).block(44_100)
+    assert_operator Tape.rms(Colour.highpass(air, 8000.0)), :>, Tape.rms(air) * 0.5
+    assert_operator Tape.db(Tape.rms(air)), :<, -45.0
+    bed = Noise::Bed.new(DATA.dig("noise", "bed"), 4).block(88_200)
+    assert_operator Tape.db(Tape.rms(bed)), :<, -42.0
+    assert_operator Tape.rms(FX.lowpass(bed, 400.0)), :>, Tape.rms(bed) * 0.8, "under 200 hertz"
+    assert_operator bed.map(&:abs).max, :<=, 0.05, "no spike"
+    blocks = Noise::Bed.new(DATA.dig("noise", "bed"), 4)
+    assert_equal bed, [blocks.block(30_000), blocks.block(58_200)].flatten
+    assert_equal(-24.0, 20 * Math.log10(Noise.gain(0.0)).round(1))
+  end
+
+  def test_dust_is_a_sparse_poisson_scatter_and_sparkle_sits_on_the_chord_between_four_and_eight_kilohertz
+    dust = Noise.dust({ "rate" => 6.0, "db" => -40.0 }, 11, 100.0)
+    assert_in_delta 600, dust.size, 90
+    assert_equal dust.map(&:start), Noise.dust({ "rate" => 6.0, "db" => -40.0 }, 11, 100.0).map(&:start)
+    pcs = [0, 4, 7]
+    glints = Noise.sparkle({ "rate" => 4.0, "db" => -30.0 }, 5, 60.0, ->(_t) { pcs })
+    assert_in_delta 240, glints.size, 50
+    sample = glints.first(40).map { |entry| entry.make.call.drain }
+    sample.each do |samples|
+      assert_operator samples.map(&:abs).max, :<=, Noise.gain(-30.0) * 1.001
+      spectrum = (4000..8000).step(250).map { |hz| Tape.goertzel(samples, hz) }
+      assert_operator spectrum.max, :>, 0
+    end
+    frequencies = pcs.flat_map { |pc| (108..119).select { |n| n % 12 == pc }.map { |n| Chords.hz(n) } }
+    assert(frequencies.all? { |f| f.between?(4000, 8000) })
+    assert_operator Noise.pop(Random.new(1), -10.0).map(&:abs).max, :<=, Noise.gain(-10.0) * 1.31
+  end
+
+  def test_the_new_profiles_render_stereo_in_blocks_the_same_as_whole
+    %w[new_age tape_dust broken_radio].each do |profile|
+      options = { prog: 3, seed: 5, beats: 1.0, profile: }
+      whole, = stereo_pass(options, 10_000_000)
+      cut, = stereo_pass(options, 11_111)
+      assert_in_delta 0.0, whole.flatten.zip(cut.flatten).map { |a, b| (a - b).abs }.max, 1e-9, profile
+      assert_operator Tape.rms(whole[0]), :>, 0.003, profile
+    end
+  end
+
+  # ------------------------------------------------------------- mixing and mastering
+
+  MASTER = DATA.fetch("master")
+
+  def test_a_997_hz_sine_at_minus_20_dbfs_in_both_channels_is_minus_20_lufs
+    sine = Array.new(SAMPLE_RATE * 6) { |i| 0.1 * Math.sin(2 * Math::PI * 997 * i / SAMPLE_RATE) }
+    assert_in_delta(-20.0, Mastering::Loudness.integrated([sine, sine]), 0.2)
+    assert_in_delta(-23.0, Mastering::Loudness.integrated([sine]), 0.2, "one channel alone is three decibels lower")
+    quiet = sine.map { |v| v * 0.1 }
+    assert_in_delta(-40.0, Mastering::Loudness.integrated([quiet, quiet]), 0.2)
+  end
+
+  def test_gating_ignores_silence_and_loudness_is_the_same_in_blocks
+    sine = Array.new(SAMPLE_RATE * 4) { |i| 0.1 * Math.sin(2 * Math::PI * 997 * i / SAMPLE_RATE) }
+    padded = [sine + Array.new(SAMPLE_RATE * 4, 0.0)] * 2
+    assert_in_delta(-20.0, Mastering::Loudness.integrated(padded), 0.3, "the silence is gated out")
+    meter = Mastering::Loudness::Meter.new(1)
+    sine.each_slice(5003) { |part| meter.feed([part]) }
+    assert_in_delta Mastering::Loudness.integrated([sine]), meter.integrated, 0.05
+    assert_equal(-Float::INFINITY, Mastering::Loudness::Meter.new(1).integrated)
+  end
+
+  def reference_true_peak(samples)
+    up = 16
+    half = 24
+    best = 0.0
+    (half...(samples.size - half)).each do |i|
+      (0...up).each do |k|
+        offset = k.to_f / up
+        sum = (-half + 1..half).sum do |j|
+          at = i + j
+          x = j - offset
+          sinc = x.zero? ? 1.0 : Math.sin(Math::PI * x) / (Math::PI * x)
+          samples[at] * sinc * (0.5 + (0.5 * Math.cos(Math::PI * x / (half + 1))))
+        end
+        best = sum.abs if sum.abs > best
+      end
+    end
+    best
+  end
+
+  def test_the_true_peak_limiter_holds_its_ceiling_on_an_inter_sample_peak_fixture
+    # a sine at a quarter of the sample rate and 45 degrees: every sample is 0.707 of the real peak
+    fixture = Array.new(SAMPLE_RATE) { |i| 1.4 * Math.sin((Math::PI / 2 * i) + (Math::PI / 4)) }
+    assert_operator fixture.map(&:abs).max, :<, 1.0, "the samples stay under one"
+    assert_operator Mastering::TruePeak.peak(fixture), :>, 1.35, "the meter finds the peak between them"
+    limiter = Mastering::Limiter.new(ceiling_db: -1.0, channels: 1)
+    out = limiter.process([fixture + Array.new(2000, 0.0)]).first
+    settled = out[2000, 40_000]
+    ceiling = 10**(-1.0 / 20)
+    assert_operator reference_true_peak(settled.first(300)), :<=, ceiling + 0.002, "-1 dBTP on a sinc reconstruction"
+    assert_operator Mastering::TruePeak.peak(settled), :<=, ceiling + 0.002
+    assert_operator Tape.rms(settled), :>, 0.5, "and it is not squashed beyond need"
+  end
+
+  def test_the_limiter_leaves_a_quiet_signal_alone_apart_from_its_delay_and_is_the_same_in_blocks
+    quiet = [tone(300.0, 1.0, 0.2)]
+    limiter = Mastering::Limiter.new(channels: 1)
+    out = limiter.process(quiet).first
+    d = limiter.latency
+    assert_in_delta 0.0, out[d + 100, 2000].zip(quiet.first[100, 2000]).map { |a, b| (a - b).abs }.max, 1e-9
+    loud = [tone(200.0, 1.0, 1.6), tone(300.0, 1.0, 1.2)]
+    whole = Mastering::Limiter.new(channels: 2).process(loud)
+    cut = Mastering::Limiter.new(channels: 2)
+    parts = loud[0].each_slice(3001).zip(loud[1].each_slice(3001)).map { |l, r| cut.process([l, r]) }
+    assert_equal whole, [parts.flat_map(&:first), parts.flat_map(&:last)]
+    assert_operator whole.flatten.map(&:abs).max, :<=, 10**(-1.0 / 20) + 1e-6
+  end
+
+  def test_the_equalizer_cuts_the_low_mids_lifts_the_air_and_the_dynamic_cut_deepens_with_level
+    spec = MASTER.fetch("eq")
+    gain = lambda do |hz, amp|
+      x = tone(hz, 1.5, amp)
+      out = Mastering::Equalizer.new(spec, 1).process([x]).first
+      Tape.rms(out.last(30_000)) / Tape.rms(x.last(30_000))
+    end
+    assert_operator gain.call(spec.dig("low_mid", "hz"), 0.01), :<, 0.95
+    assert_operator gain.call(14_000.0, 0.01), :>, 1.05
+    assert_in_delta 1.0, gain.call(2000.0, 0.01), 0.05
+    assert_operator gain.call(spec.dig("low_mid", "hz"), 0.5), :<, gain.call(spec.dig("low_mid", "hz"), 0.01), "louder, deeper"
+  end
+
+  def test_the_three_bands_add_back_flat_and_each_is_compressed_on_its_own
+    flat = MASTER.fetch("multiband").merge("bands" => MASTER.dig("multiband", "bands").map { |b| b.merge("ratio" => 1.0, "makeup_db" => 0.0) })
+    [100.0, 1000.0, 6000.0].each do |hz|
+      x = tone(hz, 1.5, 0.2)
+      out = Mastering::Multiband.new(flat, 1).process([x]).first
+      assert_in_delta 0.0, Tape.db(Tape.rms(out.last(30_000)) / Tape.rms(x.last(30_000))), 0.4, "#{hz} Hz comes through"
+    end
+    loud_low = tone(100.0, 2.0, 0.9)
+    squeezed = Mastering::Multiband.new(MASTER.fetch("multiband"), 1).process([loud_low]).first
+    assert_operator Tape.rms(squeezed.last(30_000)), :<, Tape.rms(loud_low.last(30_000)) * 0.9, "the low band is compressed"
+    quiet_high = tone(6000.0, 1.0, 0.01)
+    untouched = Mastering::Multiband.new(MASTER.fetch("multiband"), 1).process([quiet_high]).first
+    assert_in_delta 1.0, Tape.rms(untouched.last(20_000)) / Tape.rms(quiet_high.last(20_000)), 0.15, "a quiet band is left alone"
+  end
+
+  def test_the_chain_brings_a_whole_signal_to_the_target_and_a_stream_creeps_toward_it
+    music = tone(220.0, 8.0, 0.03).each_with_index.map { |v, i| v + (0.02 * Math.sin(i / 11.0)) }
+    chain = Mastering::Chain.new(MASTER, channels: 2, whole: true)
+    out = chain.process([music, music])
+    assert_in_delta MASTER.fetch("target_lufs"), Mastering::Loudness.integrated(out), 1.5
+    streamed = Mastering::Chain.new(MASTER, channels: 2)
+    half = SAMPLE_RATE / 2
+    gains = music.each_slice(half).map { |part| streamed.process([part, part]); streamed.gain_db }
+    assert_operator gains.last, :>, gains.first, "it goes up toward the target"
+    gains.each_cons(2) { |a, b| assert_operator (b - a).abs, :<=, 1.01, "by no more than two decibels a second" }
+    chain.target = -20.0
+    assert_in_delta(-20.0, chain.instance_variable_get(:@target), 0)
+  end
+
+  def test_the_glue_release_follows_the_tempo
+    chain = Mastering::Chain.new(MASTER, channels: 1, bpm: 60.0)
+    slow = chain.instance_variable_get(:@glue).instance_variable_get(:@down)
+    chain.bpm = 120.0
+    fast = chain.instance_variable_get(:@glue).instance_variable_get(:@down)
+    assert_operator fast, :>, slow
+    assert_in_delta 1.0 - Math.exp(-1.0 / (0.25 * SAMPLE_RATE)), fast, 1e-9, "half a beat at 120 is 250 ms"
+  end
+
+  def test_widening_keeps_the_mono_sum_within_half_a_decibel
+    rng = Random.new(8)
+    left = Array.new(40_000) { (Math.sin(rng.rand * 7) * 0.2) + (tone(900.0, 1.0)[rng.rand(1000)] * 0.1) }
+    right = left.each_with_index.map { |v, i| (v * 0.6) + (Math.sin(i / 3.0) * 0.1) }
+    wide = Stream::Imager.new(widen: 0.9, width: 1.4).process([left, right])
+    before = left.zip(right).map { |a, b| (a + b) / 2 }
+    after = wide[0].zip(wide[1]).map { |a, b| (a + b) / 2 }
+    assert_in_delta 0.0, Tape.db(Tape.rms(after) / Tape.rms(before)), 0.5
+  end
+
+  def test_dither_is_tpdf_of_one_lsb_and_seeded
+    silence = [Array.new(20_000, 0.0)]
+    dithered = Mastering::Dither.new(5).process(silence).first
+    assert_equal dithered, Mastering::Dither.new(5).process(silence).first
+    assert_operator dithered.map(&:abs).max, :<=, 1.0 / 32_768 * 1.0001
+    assert_in_delta 0.0, dithered.sum / dithered.size * 32_768, 0.05
+    assert_in_delta 1.0 / 6.0, (dithered.sum { |v| (v * 32_768)**2 } / dithered.size), 0.03, "triangular: variance a sixth of a bit squared"
+  end
+
+  def test_a_24_bit_wav_has_three_bytes_a_sample
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "w.wav")
+      WAV.write(path, [[0.5, -0.5]], bits: 24)
+      bytes = File.binread(path)
+      assert_equal 24, bytes.byteslice(34, 2).unpack1("v")
+      assert_equal 3, bytes.byteslice(32, 2).unpack1("v")
+      assert_equal 6, bytes.bytesize - 44
+      assert_equal "\x00\x00\x40".b, bytes.byteslice(44, 3)
+      assert_equal "\x00\x00\xC0".b, bytes.byteslice(47, 3)
+    end
+  end
+
+  def test_the_report_names_loudness_peak_crest_and_correlation
+    sine = Array.new(SAMPLE_RATE * 4) { |i| 0.1 * Math.sin(2 * Math::PI * 997 * i / SAMPLE_RATE) }
+    report = Mastering.report([sine, sine])
+    assert_in_delta(-20.0, report[:lufs], 0.3)
+    assert_in_delta(-20.0, report[:true_peak_db], 0.1)
+    assert_in_delta 3.0, report[:crest_db], 0.2
+    assert_in_delta 1.0, report[:correlation], 1e-6
+    anti = Mastering.report([sine, sine.map(&:-@)])
+    assert_in_delta(-1.0, anti[:correlation], 1e-6)
+    assert_includes Mastering.report_line(report), "LUFS-I"
+  end
+
+  def test_a_render_is_mastered_to_the_target_under_the_ceiling_and_no_master_bypasses_it
+    Dir.mktmpdir do |dir|
+      args = ["--progression", "2", "--profile", "arp_echo", "--beats", "2", "--seed", "3", "--tape", "1"]
+      out, err, status = run_dilla(*args, "--lufs", "-24", "--out", File.join(dir, "m.wav"), chdir: dir, stereo: true)
+      assert status.success?, err
+      assert_match(/loudness: -?\d+\.\d LUFS-I, true peak -?\d+\.\d+ dBTP/, out)
+      lufs = out[/loudness: (-?\d+\.\d) LUFS-I/, 1].to_f
+      peak = out[/true peak (-?\d+\.\d+) dBTP/, 1].to_f
+      assert_in_delta(-24.0, lufs, 1.5)
+      assert_operator peak, :<=, -0.9
+      raw, err, status = run_dilla(*args, "--no-master", "--out", File.join(dir, "n.wav"), chdir: dir, stereo: true)
+      assert status.success?, err
+      refute_includes raw, "loudness:"
+      assert_equal 16, File.binread(File.join(dir, "m.wav")).byteslice(34, 2).unpack1("v")
+      _o, err, status = run_dilla(*args, "--bits", "24", "--out", File.join(dir, "b.wav"), chdir: dir, stereo: true)
+      assert status.success?, err
+      assert_equal 24, File.binread(File.join(dir, "b.wav")).byteslice(34, 2).unpack1("v")
+    end
+  end
+
+  def test_a_show_that_cannot_keep_up_drops_the_dear_stages_and_says_so
+    log = StringIO.new
+    player = FakePlayer.new([])
+    options = { passes: 1, seed: 5, beats: 8.0, profile: "dry", mode: "pad", voice: "pure_tone", tape: 0, decks: 1, pace: 0.0001, mono: true,
+                out: File.join(Dir.mktmpdir, "x.wav") }
+    show = Show.new(DATA, options, player:, out: log)
+    show.run
+    assert_includes log.string, "master: lightened"
+    assert(show.instance_variable_get(:@master).chain.light?)
+    chain = Mastering::Chain.new(MASTER, channels: 1)
+    signal = [tone(300.0, 1.0, 0.3)]
+    full = Mastering::Chain.new(MASTER, channels: 1).process(signal)
+    chain.lighten!
+    refute_equal full, chain.process(signal)
+  end
+
+  def test_mastering_is_deterministic
+    options = { prog: 2, seed: 3, beats: 1.0, profile: "arp_echo" }
+    a = master_whole(stereo_pass(options, 10_000_000).first)
+    b = master_whole(stereo_pass(options, 10_000_000).first)
+    assert_equal a, b
+  end
+
+  def master_whole(frame)
+    chain = Mastering::Chain.new(MASTER, channels: 2, whole: true)
+    chain.limit(chain.process(frame))
   end
 
 end
