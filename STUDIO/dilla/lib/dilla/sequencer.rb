@@ -232,7 +232,8 @@ class Sequencer
     (seconds / (step * 16)).ceil.times do |bar|
       16.times do |i|
         pattern.each do |role, row|
-          next unless row.is_a?(Array) && row[i].to_i.positive?
+          strength = row.is_a?(Array) ? row[i].to_f : 0.0
+          next unless strength.positive?
 
           nudge = offsets.fetch(role, 0.0)
           nudge = pocket_lean(pocket, role, i) * step if pocket&.key?(role)
@@ -247,7 +248,11 @@ class Sequencer
           # offset, swing and drunk together never move a hit more than MAX_OFFSET
           moved = ((nudge + late) * @pd_amount).clamp(-MAX_OFFSET, MAX_OFFSET)
           t = ((bar * 16 + i) * step) + moved
-          hits << [role, [t, 0.0].max] if t < seconds
+          if t < seconds
+            hit = [role, [t, 0.0].max]
+            hit << strength.clamp(0.0, 1.0) if strength < 1.0
+            hits << hit
+          end
         end
       end
     end
@@ -281,13 +286,17 @@ class Sequencer
   # The drums laid over the chords, each role at its mix level; the kick is added after the
   # duck, so the pump never touches it. With a summing colour the drums are a bus of their
   # own and the sum is coloured again; the sum never exceeds full scale.
-  def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0, sonitex: nil, tape: nil)
-    drum_bus = (vcs.positive? || sonitex || tape) ? Array.new(chord_buf.size, 0.0) : nil
+  def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0, sonitex: nil, tape: nil,
+                    dub_echo: nil, crystallizer: nil, drum_vcs: nil)
+    drum_vcs_amount = drum_vcs.nil? ? vcs : drum_vcs.to_f.clamp(0.0, 1.0)
+    effects_on = sonitex || tape || dub_echo || crystallizer || drum_vcs_amount.positive? || vcs.positive?
+    drum_bus = effects_on ? Array.new(chord_buf.size, 0.0) : nil
     out = drum_bus || chord_buf.dup
-    hits.each_with_index do |(role, time), hit_index|
-      # Re-seed per hit so the transient/noise details vary, not a single cloned sample repeated.
+    hits.each_with_index do |(role, time, strength), hit_index|
+      # A fresh seeded voice per strike gives ghost notes and hats their own transient/noise.
       sample = Drums.new(@seed + ((hit_index + 1) * 104_729)).sounds.fetch(role)
-      gain = 0.8 * (10.0**(levels.fetch(role, 0.0) / 20.0))
+      accent = strength.nil? ? 1.0 : strength.to_f.clamp(0.0, 1.0)
+      gain = 0.8 * (10.0**(levels.fetch(role, 0.0) / 20.0)) * accent
       variation = case role
                   when 'hat' then [0.68, 0.92, 0.76, 0.84][hit_index % 4]
                   when 'snare' then hit_index.odd? ? 0.92 : 1.0
@@ -312,8 +321,15 @@ class Sequencer
                     else tape.nil? ? 0.0 : tape.to_f
                     end
       drums = Colour.tape(drums, amount: tape_amount) if tape_amount.positive?
-      drums = Colour.vcs(drums, vcs) if vcs.positive?
-      out = chord_buf.each_index.map { |i| chord_buf[i] + drums[i] }
+      drums = FX.dub_echo(drums, dub_echo) if dub_echo
+      drums = FX.crystallizer(drums, crystallizer) if crystallizer
+      drums = Colour.vcs(drums, drum_vcs_amount) if drum_vcs_amount.positive?
+
+      # Wet buses can outlive the chord buffer; retain the full dub/crystal tail in the mix.
+      length = [chord_buf.size, drums.size].max
+      out = Array.new(length, 0.0)
+      chord_buf.each_with_index { |sample, i| out[i] += sample }
+      drums.each_with_index { |sample, i| out[i] += sample }
       out = Colour.vcs(out, vcs * 0.5) if vcs.positive?
     end
     peak = out.map(&:abs).max || 0.0
