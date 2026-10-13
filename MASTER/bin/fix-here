@@ -1,4 +1,7 @@
-#!/usr/bin/env ruby
+#!/bin/sh
+# bin/ruby picks an installed Ruby; a rbenv shim would refuse MASTER/.ruby-version when it names one this machine lacks.
+exec "$(dirname "$0")/ruby" -x "$0" "$@"
+#!ruby
 # frozen_string_literal: true
 
 # Runs MASTER's /fix over one tree from a worktree, the way that works here.

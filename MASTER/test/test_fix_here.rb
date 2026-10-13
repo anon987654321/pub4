@@ -104,6 +104,20 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_the_launchers_run_when_the_ruby_on_path_refuses_the_pinned_version
+    Dir.mktmpdir("shim") do |dir|
+      File.write(File.join(dir, "ruby"), "#!/bin/sh\necho \"rbenv: version 9.9.9 is not installed\" >&2\nexit 1\n")
+      FileUtils.chmod(0o755, File.join(dir, "ruby"))
+      env = { "PATH" => "#{dir}:/usr/bin:/bin" }
+      %w[fix-here].each do |name|
+        out, status = Open3.capture2e(env, File.expand_path("../bin/#{name}", __dir__), "--help")
+
+        refute_includes out, "is not installed", "#{name}: #{out}"
+        assert status.exitstatus.is_a?(Integer), name
+      end
+    end
+  end
+
   private
 
   def with_worktree
@@ -114,6 +128,8 @@ class TestFixHere < Minitest::Test
       FileUtils.mkdir_p(File.join(main, "MASTER/bin"))
       FileUtils.mkdir_p(tools_bin)
       FileUtils.cp(SCRIPT, File.join(main, "MASTER/bin/fix-here"))
+      FileUtils.cp(File.expand_path("../bin/ruby", __dir__), File.join(main, "MASTER/bin/ruby"))
+      FileUtils.chmod(0o755, File.join(main, "MASTER/bin/ruby"))
       FileUtils.mkdir_p(File.join(main, "MASTER/lib/operator"))
       %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
