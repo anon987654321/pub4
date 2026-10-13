@@ -63,7 +63,7 @@ class TestChitchatRouting < Minitest::Test
     assert_equal chain, router.send(:priority_fallback_order, chain)
 
     browser = chain.index { |id| id.start_with?("web-chat:") }
-    local = chain.index { |id| SelectionKind.local?(id) }
+    local = chain.index { |id| Master::Io::LaneSelection.kind(id) == :local }
     free = chain.each_index.select { |index| router.send(:free_api_model?, chain[index]) }
     assert_operator free.max, :<, browser if browser && free.any?
     assert_operator browser, :<, local if browser && local
