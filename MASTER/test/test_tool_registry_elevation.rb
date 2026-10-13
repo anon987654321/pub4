@@ -90,6 +90,25 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_no_tools] = nil
   end
 
+  def test_browser_uses_its_registered_public_name_for_tool_policy
+    harness = RegistryHarness.new
+    browser = Master::Io::BrowserAgent.new(root: Master::ROOT, governor: Object.new)
+    harness.tools << browser
+    harness.tool_registry["Browser"] = { "elevated" => false }
+    Fiber[:master_visitor] = false
+    Fiber[:master_elevated] = false
+
+    names = harness.send(:build_llm_tools).map(&:class)
+
+    assert_includes names, Master::Io::LLM::Browser,
+                    "BrowserAgent's internal adapter name must not hide the public Browser tool"
+    assert_equal "Browser", harness.send(:tool_registry_name, browser)
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
+    Fiber[:master_paired] = nil
+  end
+
   def test_an_unclassified_tool_is_withheld_until_elevated
     harness = RegistryHarness.new
     harness.tools << Master::Io::WebFetch.allocate
