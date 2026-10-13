@@ -137,7 +137,12 @@ module Master
             cli_lane_model?(id) ? :cli_lane : :api
           end
 
-          def tier_ids = Array(@rules["models"]&.values).flatten.filter_map { |row| row["id"] if row.is_a?(Hash) }
+          def tier_ids
+            Array(@rules["models"]&.values).flatten.filter_map do |row|
+              id = row["id"] if row.is_a?(Hash)
+              id unless id.to_s.start_with?("web-chat:")
+            end
+          end
 
           def cli_lanes = @rules.fetch("cli_lanes", {})
 
