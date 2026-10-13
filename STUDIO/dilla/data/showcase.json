@@ -108,7 +108,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -215,7 +216,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -328,7 +330,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -435,7 +438,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -548,7 +552,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -675,7 +680,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -788,7 +794,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
@@ -901,7 +908,8 @@
           "pattern": "updown",
           "rate": 4,
           "gate": 0.52,
-          "octaves": 2
+          "octaves": 2,
+          "transpose": 12
         }
       ],
       "echo_reverb": 0,
