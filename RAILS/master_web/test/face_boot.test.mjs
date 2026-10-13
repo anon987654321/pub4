@@ -892,5 +892,16 @@ test("shell chrome uses plain CLI prompt words and the monospace source font", (
   assert.match(view, /class="pp"[^>]*><%= Master::Face::Contract\.user_token %><\/span>/);
   assert.doesNotMatch(view, /class="sep2"|\$ <\/span>/);
   assert.match(css, /--font-mono:\s*"Source Code Pro"/);
+  assert.match(css, /font-family:\s*"Source Sans 3"/);
+  assert.match(css, /url\("\/fonts\/SourceSans3-Regular\.woff2"\)/);
+  assert.match(css, /url\("\/fonts\/SourceCodePro-Regular\.woff2"\)/);
+  for (const file of [
+    "SourceSans3-Regular.woff2",
+    "SourceSans3-Bold.woff2",
+    "SourceCodePro-Regular.woff2",
+    "SourceCodePro-Bold.woff2"
+  ]) {
+    assert.ok(existsSync(join(railsRoot, "__shared/public/fonts", file)), `missing bundled font: ${file}`);
+  }
   assert.doesNotMatch(css, /\.wordmark\s*\{/);
 });
