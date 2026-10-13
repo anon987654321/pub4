@@ -4055,10 +4055,7 @@
         "snare": {
           "shift_steps": -0.13,
           "drift_steps": 0.018,
-          "anchor": [
-            4,
-            12
-          ]
+          "anchor": []
         },
         "hat": {
           "shift_steps": 0,
@@ -4071,7 +4068,7 @@
           ]
         },
         "ghost": {
-          "shift_steps": 0.075,
+          "shift_steps": 0.18,
           "drift_steps": 0.02,
           "anchor": []
         }
