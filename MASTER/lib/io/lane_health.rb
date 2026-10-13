@@ -73,7 +73,11 @@ module Master
       end
 
       # The first catalogue model on a lane, for a probe of that lane.
-      def model_for_lane(lane) = LaneSelection.catalogue.find { |model| LaneQuota.lane_of(model) == lane }
+      def model_for_lane(lane)
+        LaneSelection.catalogue.find do |model|
+          LaneQuota.lane_of(model) == lane || model.start_with?(lane.to_s)
+        end
+      end
 
       def online_via(models, refuses: ->(model) { dead?(model) })
         Array(models).find { |model| !refuses.call(model) }
