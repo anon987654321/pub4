@@ -9,10 +9,9 @@ module Master::Core
   # old council, scan, judge, biases, veto, evidence, sharp_edges, and the Guard
   # all live now: not as subsystems, but as rules over effects. One `admit`.
   #
-  # A rule watches a verb, judges an effect against the live data/*.yml (the one
-  # source), and returns Allow (pass), Revise (rewrite for the rules after it),
-  # or Block (stop). admit folds them: the first Block wins; Revises carry
-  # forward; what comes out the end is the effect the World will perform.
+  # A rule watches a verb and returns no finding, Revise, Block, or Request.
+  # admit runs the full applicable chain before honoring requests: any Block
+  # wins, and revisions after a pending request fail closed and require re-admission.
   class Constitution
     Law = Data.define(:id, :verbs, :judge) do
       def watches?(verb) = verbs.include?(verb)
@@ -59,7 +58,7 @@ module Master::Core
 
     attr_reader :capabilities
 
-    # Fold the effect through every applicable rule. Total: returns Allow or Block.
+    # Run every applicable law before returning Allow, Block, or deferred Request.
     def admit(effect, memory)
       allowed = begin
         @capabilities.allow?(effect.capability)
