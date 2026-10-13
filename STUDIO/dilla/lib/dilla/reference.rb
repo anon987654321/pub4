@@ -390,8 +390,7 @@ module Dilla
       end
 
       errors = peaks.map { |position| position - (phase_best + ((position - phase_best) / subdivision).round * subdivision) }
-      sorted_errors = errors.map(&:abs).sort
-      timing_spread_ms = sorted_errors[sorted_errors.size / 2] * 1000.0 / sample_rate
+      timing_spread_ms = errors.sum(&:abs).to_f / errors.size * 1000.0 / sample_rate
       total_strength = peaks.sum { |index| novelty[index] }
       offbeat_strength = peaks.each_with_index.sum do |position, index|
         grid_step = ((position - phase_best) / subdivision).round
