@@ -43,7 +43,8 @@ module Master
 
         def react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
           img = (step.zero? ? image : nil)
-          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, image: img, &(step.zero? ? blk : nil))
+          result = react_completion(selected_model, history, react_sys:, stream: step.zero? ? stream : false,
+                                    image: img, &(step.zero? ? blk : nil))
           return [result, true] if result.err?
 
           text = result.to_s
@@ -55,6 +56,18 @@ module Master
           tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
           history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
           [result, false]
+        end
+
+        # Resolve each ReAct step through the configured provider adapter. The
+        # text-only Claude CLI has no native tools, so calling send_ruby_llm here
+        # loses its authenticated lane and bypasses the subscription transport.
+        # Suppress a nested ReAct loop while retaining that lane's normal sender.
+        def react_completion(selected_model, messages, react_sys:, stream:, image:, &blk)
+          previous = Fiber[:master_no_tools]
+          Fiber[:master_no_tools] = true
+          send_llm_request(selected_model, messages, system: react_sys, stream:, image:, &blk)
+        ensure
+          Fiber[:master_no_tools] = previous
         end
 
         def empty_tool_round?(tool_results)
