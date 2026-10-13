@@ -83,6 +83,30 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 124, profile.fetch("target_bpm")
   end
 
+  def test_demucs_stem_energy_shares_capture_relative_part_balance
+    tracks = {
+      "mix" => { "rms_db" => -6.0 },
+      "drums" => { "rms_db" => -10.0 },
+      "bass" => { "rms_db" => -13.0 },
+      "other" => { "rms_db" => -13.0 },
+      "vocals" => { "rms_db" => nil }
+    }
+
+    features = Dilla::Reference.stem_energy_features(tracks)
+    assert_in_delta 1.0, features.values.sum, 0.002
+    assert_in_delta 0.5, features.fetch("drums_energy_share"), 0.002
+    assert_in_delta 0.25, features.fetch("bass_energy_share"), 0.002
+    assert_in_delta 0.25, features.fetch("other_energy_share"), 0.002
+    refute features.key?("vocals_energy_share")
+  end
+
+  def test_stem_energy_features_omit_unavailable_or_silent_roles
+    assert_empty Dilla::Reference.stem_energy_features("mix" => { "rms_db" => -6.0 })
+    assert_empty Dilla::Reference.stem_energy_features(
+      "drums" => { "rms_db" => nil }, "bass" => { "rms_db" => "-inf" }
+    )
+  end
+
   def test_learned_profile_averages_multiple_references_of_the_same_style
     first = {
       "style_key" => "industrial_techno", "genre" => "industrial_techno",
