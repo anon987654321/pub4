@@ -15,8 +15,10 @@ exec "$(dirname "$0")/ruby" -x "$0" "$@"
 # session with agents running /fix and suites side by side. Each of these cost an
 # agent a rediscovery; this does them once.
 #
-# It never pushes. Review `git diff` afterwards, keep what you can verify, and land
-# it with bin/operator land or worktree finish.
+# /fix delivers its own verified commits: at the end of a run it pushes them to the
+# branch's upstream, and a worktree from bin/operator worktree tracks origin/main. Edits
+# the run left uncommitted stay in the worktree; review `git diff`, keep what you can
+# verify, and land it with bin/operator land or worktree finish.
 
 require "open3"
 require "fileutils"
