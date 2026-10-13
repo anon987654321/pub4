@@ -109,25 +109,29 @@ module Dilla
         "source_duration_seconds" => mix["duration_seconds"],
         "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16]
       ).compact
+      File.write(File.join(directory, "profile.json"), JSON.pretty_generate(profile) + "\n")
+      FileUtils.mkdir_p(REFERENCE_ROOT)
+      File.write(catalog_path(profile), JSON.pretty_generate(profile) + "\n")
+      learned = aggregate_saved_profiles(profile.fetch("style_key"), including: profile)
       report = { "schema_version" => 1, "tracks" => tracks, "separation" => separation,
                  "essentia" => essentia(audio, directory), "production_profile" => profile,
+                 "learned_profile" => learned,
                  "limitations" => ["Tempo is estimated; half-time and double-time can both fit.",
                                    "Demucs stems can bleed and are not discrete kick/snare/hat multitracks.",
                                    "Spectral levels describe the mix, not isolated instruments.",
+                                   "The style label is the user-provided hint, not an automatic genre classification.",
                                    "Only broad production traits guide new music; source audio and composition are not copied."] }
       File.write(File.join(directory, "analysis.json"), JSON.pretty_generate(report) + "\n")
-      File.write(File.join(directory, "profile.json"), JSON.pretty_generate(profile) + "\n")
-      FileUtils.mkdir_p(REFERENCE_ROOT)
-      File.write(File.join(REFERENCE_ROOT, "latest_profile.json"), JSON.pretty_generate(profile) + "\n")
+      File.write(File.join(REFERENCE_ROOT, "latest_profile.json"), JSON.pretty_generate(learned) + "\n")
       scoped_profile = profile_path(profile.fetch("style_key"))
       FileUtils.mkdir_p(File.dirname(scoped_profile))
-      File.write(scoped_profile, JSON.pretty_generate(profile) + "\n")
+      File.write(scoped_profile, JSON.pretty_generate(learned) + "\n")
       write_active_style(profile.fetch("style_key"))
-      write_report(File.join(directory, "report.md"), tracks, separation, profile)
-      puts "reference0: style_hint=#{profile.fetch('style_key')}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
+      write_report(File.join(directory, "report.md"), tracks, separation, profile, learned)
+      puts "reference0: style_hint=#{profile.fetch('style_key')}; learned references=#{learned.fetch('reference_count', 1)}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
-      puts "reference0: profile target_bpm=#{profile['target_bpm'] || 'unknown'} groove=#{profile['groove_profile'] || 'unspecified'} features=#{JSON.generate(profile.fetch('features', {}))}"
-      puts "reference0: parameters=#{JSON.generate(profile.fetch('parameters', {}))}" unless profile.fetch("parameters", {}).empty?
+      puts "reference0: learned target_bpm=#{learned['target_bpm'] || 'unknown'} groove=#{learned['groove_profile'] || 'unspecified'} features=#{JSON.generate(learned.fetch('features', {}))}"
+      puts "reference0: parameters=#{JSON.generate(learned.fetch('parameters', {}))}" unless learned.fetch("parameters", {}).empty?
       puts "reference0: report=#{File.join(directory, 'report.md')}"
       0
     end
@@ -235,6 +239,79 @@ module Dilla
       File.join(REFERENCE_ROOT, "profiles", key, "latest_profile.json")
     end
 
+    def catalog_path(profile)
+      key = style_key(profile.fetch("style_key"))
+      fingerprint = profile.fetch("reference_fingerprint").to_s
+      raise Error, "reference fingerprint must be hexadecimal" unless fingerprint.match?(/\\A[0-9a-f]{16}\\z/i)
+
+      File.join(REFERENCE_ROOT, "records", "#{key}-#{fingerprint.downcase}.json")
+    end
+
+    # Keep one compact measurement record per audio source and style. Learned
+    # profiles average measurements across references, retaining the newest
+    # source duration for planning a take of a suitable length.
+    def aggregate_saved_profiles(style, including: nil)
+      key = style_key(style)
+      paths = Dir.glob(File.join(REFERENCE_ROOT, "records", "#{key}-*.json")).sort
+      rows = paths.filter_map { |path| read_profile_record(path, key) }
+      if including
+        rows.reject! { |row| row["reference_fingerprint"] == including["reference_fingerprint"] }
+        rows << including
+      end
+      aggregate_profiles(key, rows)
+    end
+
+    def read_profile_record(path, style)
+      value = JSON.parse(File.read(path))
+      value if value.is_a?(Hash) && style_key(value["style_key"]) == style
+    rescue Errno::ENOENT, JSON::ParserError, TypeError
+      nil
+    end
+
+    def aggregate_profiles(style, profiles)
+      key = style_key(style)
+      rows = profiles.select { |row| row.is_a?(Hash) && style_key(row["style_key"]) == key }
+                     .uniq { |row| row["reference_fingerprint"] || row.object_id }
+      return { "style_key" => key, "genre" => key == "j_dilla" ? "hip_hop" : key,
+               "reference_count" => 0 } if rows.empty?
+
+      learned = rows.last.dup
+      learned["reference_count"] = rows.size
+      learned["reference_fingerprints"] = rows.filter_map { |row| row["reference_fingerprint"] }.uniq
+      %w[target_bpm measured_bpm].each do |field|
+        average = numeric_mean(rows.filter_map { |row| numeric_value(row[field]) })
+        next unless average
+
+        learned[field] = field == "target_bpm" ? average.round : average.round(1)
+      end
+      %w[features parameters].each do |section|
+        keys = rows.flat_map { |row| row.fetch(section, {}).is_a?(Hash) ? row.fetch(section, {}).keys : [] }.uniq
+        merged = {}
+        keys.each do |field|
+          average = numeric_mean(rows.filter_map do |row|
+            values = row.fetch(section, {})
+            numeric_value(values[field]) if values.is_a?(Hash)
+          end)
+          merged[field] = average.round(3) if average
+        end
+        learned[section] = merged unless merged.empty?
+      end
+      learned
+    end
+
+    def numeric_value(value)
+      number = Float(value)
+      number.finite? ? number : nil
+    rescue ArgumentError, TypeError
+      nil
+    end
+
+    def numeric_mean(values)
+      return if values.empty?
+
+      values.sum / values.size
+    end
+
     def active_style_path(root: REFERENCE_ROOT)
       File.join(root, "active_style.json")
     end
@@ -283,13 +360,16 @@ module Dilla
       end
     end
 
-    def write_report(path, tracks, separation, profile)
+    def write_report(path, tracks, separation, profile, learned = profile)
       lines = ["# Audio reference analysis", "", "Estimated tempo: #{tracks.dig('mix', 'tempo', 'bpm') || 'unknown'} BPM",
+               "Style hint: #{profile['style_key']} (provided by the user, not automatically classified)",
+               "References in learned profile: #{learned['reference_count'] || 1}",
                "Stem separation: #{separation['status']}", "", "## Parts"]
       tracks.each { |name, row| lines << "- #{name}: #{row['duration_seconds'] || '?'} s; RMS #{row['rms_db'] || 'unknown'} dB" }
       lines.concat(["", "## Frequency bands"])
       tracks.fetch("mix").fetch("spectral_bands_db", {}).each { |name, value| lines << "- #{name}: #{value || 'not measured'} dB" }
-      lines.concat(["", "## Production profile", JSON.pretty_generate(profile),
+      lines.concat(["", "## This reference", JSON.pretty_generate(profile),
+                    "", "## Learned style profile", JSON.pretty_generate(learned),
                     "", "Audio only was analyzed. The renderer creates new material and does not use source audio or stems.", ""])
       File.write(path, lines.join("\n"))
     end
