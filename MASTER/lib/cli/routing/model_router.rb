@@ -174,16 +174,27 @@ module Master
           Array(models).map(&:to_s).reject(&:empty?).uniq.each_with_index.sort_by do |model, index|
             rank = if web_chat_model?(model)
                      3
+                   elsif free_api_model?(model)
+                     2
                    else
                      case Io::LaneSelection.kind(model)
                      when :local then 4
-                     when :free then 2
                      when :paid_tail then 1
                      else 0
                      end
                    end
             [rank, index]
           end.map(&:first)
+        end
+
+        def free_api_model?(model)
+          return true if model.to_s.end_with?(":free", ":cloud", "-cloud")
+          return false unless hosted_model?(model)
+
+          hosted_endpoint_for(model)&.fetch(:key, nil).nil?
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "model_router.free_api_model", model:)
+          false
         end
 
         def chitchat_head(chain, task_type)
