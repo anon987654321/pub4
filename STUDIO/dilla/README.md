@@ -70,8 +70,10 @@ The reference workflow analyzes the **music only**; it never inspects or downloa
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID'
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --no-stems
 ruby dilla.rb reference /absolute/path/to/audio.wav
-ruby dilla.rb industrial-techno --bars 16 --seed 42
+ruby dilla.rb industrial-techno
 ~~~
+
+Dilla chooses the arrangement length from the measured reference duration, within its safe render limit, and creates an internal seed automatically. The chosen seed is written to the render log for traceability; `--bars` and `--seed` are optional expert overrides, not required inputs.
 
 Install yt-dlp and FFmpeg for URL import and measurement. To use source separation, install Demucs in a dedicated environment and make its demucs executable available on PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unavailable tools are reported as such and do not become required just to render Dilla's existing showcase.
 
