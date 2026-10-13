@@ -375,6 +375,19 @@ end
     end
   end
 
+  def test_plain_techno_request_uses_the_techno_renderer
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("dilla0: wrote original industrial techno")
+    end) do
+      result = MediaIntent.dispatch("make a techno track", root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :industrial_techno, result.value!.fetch(:media)
+    end
+    assert_equal "industrial-techno", Shellwords.split(calls.fetch(0).fetch(:arg)).first
+  end
+
   def test_industrial_techno_request_leaves_arrangement_and_seed_to_dilla
     calls = []
     with_dispatch_stub(lambda do |**kwargs|
