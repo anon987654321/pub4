@@ -135,6 +135,52 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_wav_writer_preserves_an_existing_take_unless_replace_is_explicit
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "take.wav")
+      WAV.write(path, [0.25, -0.25])
+      original = File.binread(path)
+
+      error = assert_raises(ArgumentError) { WAV.write(path, [-0.5, 0.5]) }
+      assert_match(/refusing to overwrite existing take/, error.message)
+      assert_equal original, File.binread(path), "a failed replacement must leave the take byte-for-byte intact"
+
+      WAV.write(path, [-0.5, 0.5], replace: true)
+      refute_equal original, File.binread(path)
+    end
+  end
+
+  def test_midi_writer_uses_the_same_no_overwrite_contract
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "take.mid")
+      MIDI.write(path, %w[Cm9 Fm9], 92, 8, [])
+      original = File.binread(path)
+
+      assert_raises(ArgumentError) { MIDI.write(path, %w[Cm9 Fm9], 96, 8, []) }
+      assert_equal original, File.binread(path)
+
+      MIDI.write(path, %w[Cm9 Fm9], 96, 8, [], replace: true)
+      refute_equal original, File.binread(path)
+    end
+  end
+
+  def test_render_preflight_refuses_an_existing_output_unless_replace_is_explicit
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "protected.wav")
+      original = "keep this take intact"
+      File.binwrite(path, original)
+
+      _stdout, stderr, status = run_dilla("--quick", "--out", path, chdir: dir)
+      refute status.success?
+      assert_match(/refusing to overwrite existing take/, stderr)
+      assert_equal original, File.binread(path)
+
+      stdout, err, status = run_dilla("--quick", "--out", path, "--replace", chdir: dir)
+      assert status.success?, "explicit replacement failed\n#{stdout}\n#{err}"
+      refute_equal original, File.binread(path)
+    end
+  end
+
   # ------------------------------------------------------------- progressions
 
   def test_progressions_are_a_flat_array_of_chord_name_arrays_without_duplicates
