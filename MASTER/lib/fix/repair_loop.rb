@@ -302,7 +302,8 @@ end) if source.to_s.strip.empty?
         after = scan_all(path)
         return reject_fix(path, old_src, "new_violations", before:, after:) if after.size > before.size
         if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
-          return reject_fix(path, old_src, "boyscout_violation", violations: scouts.size)
+          grown = scouts.first(3).map { |violation| "#{violation[:law]} line #{violation[:line]}" }.join(", ")
+          return reject_fix(path, old_src, "boyscout_violation", introduced: "#{scouts.size} more: #{grown}")
         end
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
           blocker = @conflicts.last_blocker

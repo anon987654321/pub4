@@ -192,6 +192,7 @@ class TestRepairLoopPerFixCommit < Minitest::Test
       assert_equal "violation\n", File.read(path)
       rejected = bus.events.find { |event, _| event == "repair_loop:fix_rejected" }
       assert_equal "boyscout_violation", rejected&.last&.fetch(:reason)
+      assert_equal "1 more: NEW_RULE line 1", rejected.last.fetch(:introduced)
     end
   end
 
