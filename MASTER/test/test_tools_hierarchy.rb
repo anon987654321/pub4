@@ -12,6 +12,7 @@ class TestToolsHierarchy < Minitest::Test
   VOICE_TOOLS = %w[voice_benchmark.rb voice_measure.rb voice_quality.rb].freeze
   RESEARCH_TOOLS = %w[cognition_benchmark.rb llm_challenges.rb llm_trajectory.rb].freeze
   REPO_TOOLS = %w[repo_inventory.rb runs.rb sprawl_plan.rb].freeze
+  AUDIT_TOOLS = %w[capability_inventory.rb data_reach.rb dup_census.rb law_hygiene.rb].freeze
 
   def test_voice_implementations_live_in_their_canonical_family
     VOICE_TOOLS.each do |name|
@@ -112,6 +113,42 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes plan, 'ROOT = File.expand_path("../../..", __dir__)'
   end
 
+  def test_audit_implementations_live_in_their_canonical_family
+    AUDIT_TOOLS.each do |name|
+      assert File.file?(File.join(TOOLS_ROOT, "audit", name)), "missing tools/audit/#{name}"
+      assert File.file?(File.join(TOOLS_ROOT, name)), "legacy entrypoint disappeared: tools/#{name}"
+    end
+  end
+
+  def test_legacy_audit_entrypoints_delegate_to_canonical_sources
+    AUDIT_TOOLS.each do |name|
+      source = File.read(File.join(TOOLS_ROOT, name))
+      assert_includes source, "File.expand_path(\"audit/#{name}\", __dir__)"
+      assert_includes source, "load target"
+      assert_includes source, "require_relative \"audit/#{name.delete_suffix('.rb')}\""
+    end
+  end
+
+  def test_audit_sources_keep_their_master_or_repository_root
+    capability = File.read(File.join(TOOLS_ROOT, "audit", "capability_inventory.rb"))
+    data_reach = File.read(File.join(TOOLS_ROOT, "audit", "data_reach.rb"))
+    duplicates = File.read(File.join(TOOLS_ROOT, "audit", "dup_census.rb"))
+    law_hygiene = File.read(File.join(TOOLS_ROOT, "audit", "law_hygiene.rb"))
+
+    assert_includes capability, 'MASTER = File.expand_path("../..", __dir__)'
+    assert_includes data_reach, 'MASTER_DIR = File.expand_path("../..", __dir__)'
+    assert_includes duplicates, 'ROOT = File.expand_path("../../..", __dir__)'
+    assert_includes law_hygiene, 'MASTER = File.expand_path("../..", __dir__)'
+  end
+
+  def test_path_ownership_declares_the_audit_tools_family
+    ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
+    row = ownership.fetch("tools/audit/")
+
+    assert_includes row.fetch("purpose"), "substantive repository audits"
+    assert_equal "medium", row.fetch("risk")
+    assert_includes row.fetch("check"), "test_capability_inventory.rb"
+  end
   def test_path_ownership_declares_the_repository_tools_family
     ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
     row = ownership.fetch("tools/repo/")
