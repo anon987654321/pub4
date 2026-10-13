@@ -335,7 +335,7 @@ module Master
       # The model is stamped after MASTER_MODEL and the vision swap, so it names
       # the model that was actually asked rather than the one the caller passed.
       def settle(result, selected_model, started)
-        result = reclassify_provider_error(result)
+        result = reclassify_provider_error(result, model: selected_model)
         note_lane_silence(result, selected_model)
         record_provider_result(model: selected_model, result:, started:)
         result.is_a?(Master::Result::Ok) ? result.with_model(selected_model) : result
@@ -376,8 +376,12 @@ module Master
         "key refused: #{redact_secrets(err.message.to_s)}"
       end
 
-      def reclassify_provider_error(result)
+      def reclassify_provider_error(result, model: nil)
         return result unless result.is_a?(Master::Result::Err) && result.category == :provider_error
+        # A crashed local model runner is not a transient 5xx: retrying the
+        # same runner cannot create its missing native library. Classify it as
+        # offline so failover skips the lane instead of spending retry delays.
+        return Master::Result.err(result.message, category: :offline) if model && local_runtime_failure?(model, result.message)
         return Master::Result.err(result.message, category: :offline) if offline_error?(result)
         return Master::Result.err(result.message, category: :budget) if billing_error?(result)
         return Master::Result.err(result.message, category: :rate_limit) if rate_limit_error?(result)
