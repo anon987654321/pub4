@@ -35,7 +35,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/midi.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/midi.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -47,7 +47,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs play_profiles progressions sonitex strum tape voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_scale_clean_harmony_pure_tones_and_dubbed_dilla_drums
@@ -1121,7 +1121,6 @@ class DillaTest < Minitest::Test
     assert_same input, Colour.tape(input, amount: 0.0)
   end
 
-
   # ------------------------------------------------------------- kits and the new drum engine
 
   ROLES = %w[kick snare clap hat open rim tom perc].freeze
@@ -1303,5 +1302,102 @@ class DillaTest < Minitest::Test
     assert_equal 2 * 4 * 60.0 / 88, 8 * 60.0 / 88
   end
 
+  # ------------------------------------------------------------- the tape stack
+
+  def programme(seconds = 3.0, rms: 0.1)
+    raw = Synth.chord([110.0, 164.8, 220.0, 277.2, 329.6], seconds)
+    scale = rms / Tape.rms(raw)
+    raw.map { |x| x * scale }
+  end
+
+  def test_zero_tape_machines_hand_back_the_very_same_signal
+    buf = programme(0.5)
+    assert_same buf, Tape.apply(buf, instances: 0)
+    assert_same buf, Tape.apply(buf, instances: -2)
+  end
+
+  def test_a_stack_keeps_the_programme_within_one_decibel_of_its_input_level
+    [[1, 1.0], [4, 1.0], [4, 2.5], [8, 1.0]].each do |instances, drive|
+      [0.03, 0.1, 0.25].each do |level|
+        buf = programme(3.0, rms: level)
+        out = Tape.apply(buf, instances:, drive:, seed: 4, config: DATA.fetch("tape"))
+        assert_in_delta 0.0, Tape.db(Tape.rms(out) / Tape.rms(buf)), 1.0, "#{instances} machines, drive #{drive}, rms #{level}"
+      end
+    end
+  end
+
+  def test_the_loop_remembers_the_way_the_signal_came_so_the_curve_is_not_a_waveshaper
+    loop_model = Tape::Hysteresis.new
+    rising = loop_model.step(0.5)
+    loop_model.step(1.0)
+    falling = loop_model.step(0.5)
+    refute_in_delta rising, falling, 0.01
+  end
+
+  def test_tape_adds_odd_harmonics_to_a_sine_and_keeps_it_exactly_periodic
+    sine = Array.new(SAMPLE_RATE) { |i| 0.2 * Math.sin(2 * Math::PI * 441 * i / SAMPLE_RATE) } # 100 samples a cycle
+    out = Tape.apply(sine, instances: 4, seed: 1, config: DATA.fetch("tape")).last(10_000)
+    fundamental = Tape.goertzel(out, 441)
+    third = Tape.goertzel(out, 1323)
+    assert_operator Tape.db(third / fundamental), :>, -45.0, "the medium is heard"
+    assert_operator Tape.db(third / fundamental), :<, -15.0, "and stays a colour"
+    drift = (0...9_000).map { |i| (out[i] - out[i + 100]).abs }.max
+    assert_operator drift, :<, 2e-4, "a cycle repeats the one before: no wow, no flutter"
+  end
+
+  def test_more_drive_makes_more_third_harmonic_and_the_stack_has_the_machines_asked_for
+    sine = Array.new(SAMPLE_RATE) { |i| 0.2 * Math.sin(2 * Math::PI * 441 * i / SAMPLE_RATE) }
+    shares = [0.5, 1.0, 2.0].map do |drive|
+      out = Tape.apply(sine, instances: 2, drive:, seed: 1, config: DATA.fetch("tape")).last(10_000)
+      Tape.goertzel(out, 1323) / Tape.goertzel(out, 441)
+    end
+    assert_equal shares.sort, shares
+    assert_equal 4, Tape::Stack.new(instances: 4, drive: 1.0, seed: 1, config: DATA.fetch("tape")).machines.size
+  end
+
+  def test_the_same_seed_gives_the_same_tape_and_another_seed_a_different_machine
+    buf = programme(1.0)
+    config = DATA.fetch("tape")
+    a = Tape.apply(buf, instances: 3, seed: 8, config:)
+    assert_equal a, Tape.apply(buf, instances: 3, seed: 8, config:)
+    refute_equal a, Tape.apply(buf, instances: 3, seed: 9, config:)
+  end
+
+  def test_a_signal_cut_into_chunks_leaves_the_stack_as_one_call_does
+    buf = programme(1.5)
+    config = DATA.fetch("tape")
+    whole = Tape::Stack.new(instances: 3, seed: 2, config:).process(buf)
+    stack = Tape::Stack.new(instances: 3, seed: 2, config:)
+    parts = buf.each_slice(4410 + 17).flat_map { |chunk| stack.process(chunk) }
+    assert_equal whole.size, parts.size
+    assert_in_delta 0.0, whole.zip(parts).map { |x, y| (x - y).abs }.max, 1e-12
+  end
+
+  def test_the_ceiling_is_the_last_stage_and_bends_only_the_peaks
+    quiet = [0.1, -0.5, 0.79]
+    assert_equal quiet, Tape.ceiling(quiet)
+    loud = Tape.ceiling([0.9, -1.4, 5.0, -80.0])
+    assert(loud.all? { |v| v.abs < 0.97 + 1e-9 })
+    assert_operator loud[0], :<, 0.9
+  end
+
+  def test_the_render_ends_on_the_tape_and_the_flag_reaches_it
+    Dir.mktmpdir do |dir|
+      args = ["--progression", "2", "--profile", "dry", "--mode", "pad", "--beats", "2", "--seed", "6"]
+      off = File.join(dir, "off.wav")
+      on = File.join(dir, "on.wav")
+      out, err, status = run_dilla(*args, "--tape", "0", "--out", off, chdir: dir)
+      assert status.success?, err
+      assert_includes out, "tape=0"
+      out, err, status = run_dilla(*args, "--tape", "2", "--tape-drive", "1.5", "--out", on, chdir: dir)
+      assert status.success?, err
+      assert_includes out, "tape=2"
+      refute_equal File.binread(off), File.binread(on)
+      a, b = [off, on].map { |path| File.binread(path).byteslice(44..).unpack("s<*").map { |s| s / 32_768.0 } }
+      assert_equal a.size, b.size
+      assert_in_delta 0.0, Tape.db(Tape.rms(b) / Tape.rms(a)), 1.0
+      assert_operator b.map(&:abs).max, :<, 0.97
+    end
+  end
 
 end

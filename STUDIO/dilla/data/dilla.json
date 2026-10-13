@@ -3527,6 +3527,27 @@
   "strum": {
     "ms": 18
   },
+  "tape": {
+    "instances": 4,
+    "drive": 1.0,
+    "drive_step": 0.15,
+    "reference": 0.12,
+    "field_scale": 0.4,
+    "cheap_field": 1.2,
+    "bump_hz": 50,
+    "bump_q": 1.1,
+    "bump_db": 1.5,
+    "hf_hz": 16500,
+    "block_hz": 18,
+    "ceiling": 0.97,
+    "hysteresis": {
+      "ms": 1.0,
+      "a": 0.22,
+      "alpha": 0.0016,
+      "k": 0.47,
+      "c": 0.17
+    }
+  },
   "echo": {
     "modes": [
       [

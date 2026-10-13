@@ -36,6 +36,8 @@ def run(argv)
     o.on('--mode MODE', 'arp, repeat or pad: force how the chords are played') { |v| options[:mode] = v }
     o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
     o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
+    o.on('--tape N', Integer, 'Tape machines in series as the last stage, 0 to 8; 0 leaves the sound untouched (default from the data)') { |v| options[:tape] = v.clamp(0, 8) }
+    o.on('--tape-drive X', Float, 'How hard the first tape machine is driven, 0.1 to 4; later machines step up from it') { |v| options[:tape_drive] = v.clamp(0.1, 4.0) }
     o.on('--sonitex [PRESET]', 'The 12-bit sampler colour chain on the voice bus') { |v| options[:sonitex] = v || true }
     o.on('--sonitex-instances N', Integer, 'Run it 1 to 3 times: one is a colour, three are a sound') { |v| options[:sonitex_instances] = v }
     o.on('--drum-tape LEVEL', %w[light medium heavy], 'Analogue tape saturation on the drum bus') { |v| options[:drum_tape] = v }
@@ -163,6 +165,7 @@ def render(data, options)
   ) if drums
   return buf if options[:buffer_only]
 
+  buf = tape_stage(buf, data, options, seed)
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write(out, buf)
@@ -171,8 +174,14 @@ def render(data, options)
     MIDI.write(options[:midi], names, bpm, beats, hits, search:)
   end
   puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
-  puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} seed=#{seed}"
+  puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} tape=#{options.fetch(:tape, data.dig('tape', 'instances'))} seed=#{seed}"
   out
+end
+
+# The last colour before the file: the tape stack, and the ceiling that follows it.
+def tape_stage(buf, data, options, seed)
+  config = data.fetch('tape')
+  Tape.apply(buf, instances: options.fetch(:tape, config.fetch('instances')), drive: options[:tape_drive] || config.fetch('drive'), seed:, config:)
 end
 
 # Reject a line whose notes drift out of the arrangement's named scale.
@@ -322,6 +331,7 @@ def render_showcase(data, options)
                 section.fetch('name'), section.fetch('bpm'), section.fetch('voice'))
   end
 
+  combined = tape_stage(combined, data, options, seed)
   fade = [SAMPLE_RATE / 25, combined.size / 2].min
   fade.times do |i|
     combined[i] *= i.to_f / [fade, 1].max
