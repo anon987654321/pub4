@@ -97,7 +97,7 @@ module Master
         end
 
         def phase_prompt(last_ok, _phase)
-          last_ok ? prompt_token : "!"
+          last_ok ? "input" : "error input"
         end
 
         def token_label(tokens)
@@ -120,30 +120,41 @@ module Master
         # The prompt is one physical command line, not a dashboard: path, Git,
         # phase, cursor. Reline owns editing; never embed a second prompt line.
         def shell_prompt(phase, last_ok, destination: "llm", focused: false)
-          git = bounded_prompt_segment(git_prompt_text, 10)
+          host = bounded_prompt_segment(safe_hostname.to_s.split(".").first, 8)
+          host = "openbsd" if host.empty?
+          git = bounded_prompt_segment(git_prompt_text, 16)
           route = prompt_destination(destination)
-          phase_text = focused ? "" : bounded_prompt_segment(phase_label(phase), 6)
+          phase_text = focused ? "" : bounded_prompt_segment(phase_label(phase), 10)
           cursor = phase_prompt(last_ok, phase)
-          suffix = [git, route, phase_text, cursor].reject(&:empty?).join(" ")
-          path = prompt_path(suffix_length: visible_length(suffix) + 1)
+          suffix = [git, route, phase_text, cursor].reject(&:empty?)
+          path = plain_prompt_segment(
+            prompt_path(suffix_length: visible_length(([host] + suffix).join(" ")) + 1)
+          )
+          path = "root" if path.empty?
 
-          [path, suffix].reject(&:empty?).join(" ") + " "
+          [host, path, *suffix].reject(&:empty?).join(" ") + " "
         end
 
         def prompt_destination(value)
-          destination = value.to_s.scrub.gsub(ANSI_ESCAPE, "").gsub(/[[:cntrl:]]/, "").gsub(/\s+/, " ").strip
+          destination = plain_prompt_segment(value)
           destination = "llm" if destination.empty?
           bounded_prompt_segment(destination, 22)
         rescue StandardError
           "llm"
         end
 
-        def bounded_prompt_segment(value, width)
-          text = value.to_s
-          return text if text.length <= width
-          return text[0, width] if width <= 3
+        def plain_prompt_segment(value)
+          value.to_s.scrub.gsub(ANSI_ESCAPE, "").unicode_normalize(:nfc)
+            .gsub(/[^\p{L}\p{N}\p{M}]+/u, " ").strip.gsub(/\s+/, " ")
+        rescue StandardError
+          ""
+        end
 
-          "#{text[0, width - 3]}..."
+        def bounded_prompt_segment(value, width)
+          text = plain_prompt_segment(value)
+          return text if text.length <= width
+
+          text[0, width].strip
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
@@ -319,18 +330,17 @@ module Master
         end
 
         def branch_status(branch:, ahead:, behind:, dirty:)
-          branch = branch.to_s
-          # Keep the identity and dirty marker even on a narrow prompt. If a
-          # branch name is long, ahead/behind detail yields to the location,
-          # active chat and phase.
-          if branch.length > 7
-            return "#{branch[0, 4]}...#{'*' if dirty}"
-          end
+          branch_name = plain_prompt_segment(branch).split.first.to_s
+          branch_name = bounded_prompt_segment(branch_name, 8)
+          parts = [branch_name]
+          parts << "dirty" if dirty
+          [["ahead", ahead], ["behind", behind]].each do |label, count|
+            next unless count.positive?
 
-          parts = [dirty ? "#{branch}*" : branch]
-          parts << "+#{ahead}" if ahead.positive?
-          parts << "-#{behind}" if behind.positive?
-          bounded_prompt_segment(parts.join(" "), 10)
+            detail = "#{label} #{count}"
+            parts << detail if parts.join(" ").length + detail.length + 1 <= 16
+          end
+          parts.reject(&:empty?).join(" ")
         end
 
         def prompt_git_state
