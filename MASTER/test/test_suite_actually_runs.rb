@@ -45,9 +45,15 @@ class SuiteActuallyRunsTest < Minitest::Test
   # A file whose standalone count is zero is loaded and never executed; that is
   # the shape test_dilla had inside the aggregate.
   def test_no_test_file_reports_zero_runs_on_its_own
-    files = Dir.glob(File.join(Master::ROOT, "test", "test_*.rb"))
-                .reject { |f| File.basename(f) == File.basename(__FILE__) }
-                .reject { |f| %w[test_browser.rb test_web_http.rb test_web_ui.rb test_helper.rb].include?(File.basename(f)) }
+    test_root = File.join(Master::ROOT, "test")
+    fixtures = File.join(test_root, "fixtures") + File::SEPARATOR
+    files = (Dir.glob(File.join(test_root, "**", "test_*.rb")) +
+             Dir.glob(File.join(test_root, "**", "*_test.rb"))).uniq
+    files.reject! { |path| path.start_with?(fixtures) }
+    files.reject! { |path| File.basename(path) == File.basename(__FILE__) }
+    files.reject! do |path|
+      %w[test_browser.rb test_web_http.rb test_web_ui.rb test_helper.rb].include?(File.basename(path))
+    end
     refute_empty files, "the glob that finds nothing is the failure this test exists to prevent"
 
     silent = in_parallel(files) { |f| standalone_runs(f).to_i.positive? ? nil : f }
