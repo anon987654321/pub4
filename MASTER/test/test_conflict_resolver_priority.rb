@@ -23,6 +23,33 @@ class TestConflictResolverPriority < Minitest::Test
     end
   end
 
+  # An edit above a standing finding moves it to another line and restamps the file's
+  # fingerprint. That finding is not new, so it must not block a repair.
+  def test_a_standing_finding_that_moved_is_not_introduced
+    Dir.mktmpdir do |dir|
+      resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
+      before = [{ "law" => "SAFETY_RULE", "severity" => "critical", "line" => 40, "fingerprint" => "aaa", "message" => "unsafe call" }]
+      after = [{ "law" => "SAFETY_RULE", "severity" => "critical", "line" => 25, "fingerprint" => "bbb", "message" => "unsafe call" }]
+      original = { law: "STYLE_RULE", severity: "warning" }
+
+      refute resolver.reject_higher_priority?(original_violation: original, before:, after:, path: "f.rb")
+      assert_empty resolver.send(:findings_introduced, before:, after:, path: "f.rb")
+    end
+  end
+
+  def test_a_second_copy_of_a_standing_finding_is_introduced
+    Dir.mktmpdir do |dir|
+      resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
+      row = { "law" => "SAFETY_RULE", "severity" => "critical", "message" => "unsafe call" }
+      before = [row.merge("line" => 40)]
+      after = [row.merge("line" => 41), row.merge("line" => 7)]
+      original = { law: "STYLE_RULE", severity: "warning" }
+
+      assert_equal 1, resolver.send(:findings_introduced, before:, after:, path: "f.rb").size
+      assert resolver.reject_higher_priority?(original_violation: original, before:, after:, path: "f.rb")
+    end
+  end
+
   def test_conflict_policy_uses_the_active_root_when_not_injected
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))

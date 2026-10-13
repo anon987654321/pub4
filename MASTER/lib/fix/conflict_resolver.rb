@@ -71,13 +71,28 @@ module Master
         }
       end
 
-      # Findings present after the fix that were not present before it.
-      # Both sides are normalized and file-stamped first so the set difference
-      # compares like with like.
+      # What an edit moves or restamps without changing the finding: its line, and the
+      # fingerprint of the file's content, which every finding carries and every edit changes.
+      # Compared with them, an edit above a standing finding made it look new, and one
+      # outranking the fixed law refused a correct repair.
+      MOVES_WITH_AN_EDIT = %w[line fingerprint].freeze
+
+      # Findings present after the fix that were not present before it, counted one
+      # for one: a finding that stood before is matched by its law, severity and message
+      # wherever it now sits, and only the surplus is new.
       def findings_introduced(before:, after:, path:)
         stamped = ->(rows) { rows.map { |finding| normalize(finding).merge("file" => path) } }
-        stamped.call(after) - stamped.call(before)
+        standing = stamped.call(before).map { |finding| identity(finding) }.tally
+        stamped.call(after).reject do |finding|
+          key = identity(finding)
+          next false unless standing[key].to_i.positive?
+
+          standing[key] -= 1
+          true
+        end
       end
+
+      def identity(finding) = finding.except(*MOVES_WITH_AN_EDIT)
 
       attr_reader :root, :bus, :config
 
