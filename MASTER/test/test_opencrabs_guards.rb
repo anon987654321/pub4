@@ -120,13 +120,13 @@ class TestOpenCrabsGuards < Minitest::Test
     chunks.map { |chunk| cli.send(:wrap_stream, chunk, state) }.join
   end
 
-  def test_a_streamed_reply_wraps_at_words_and_keeps_every_word
-    out = stream(["the quick brown fox jumps over the lazy dog"])
-    assert(out.lines.all? { |line| line.chomp.rstrip.length <= 20 }, out)
-    assert_equal "the quick brown fox jumps over the lazy dog", out.delete("\n")
+  def test_a_streamed_reply_preserves_authored_paragraph_lines
+    source = "the quick brown fox jumps over the lazy dog\nand the next line stays next\n"
+    assert_equal source, stream([source], width: 20)
   end
 
-  def test_a_word_split_across_chunks_is_not_broken
+  def test_stream_chunks_add_no_hard_breaks
+    assert_equal "hello world", stream(["hello wor", "ld"])
     assert_equal "a" * 30, stream(["a" * 15, "a" * 15])
   end
 
