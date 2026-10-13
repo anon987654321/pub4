@@ -87,6 +87,13 @@ class TestBrowserAgent < Minitest::Test
     )
     sessions["default"] = state
 
+    assert_equal false, agent.send(:headless_for_navigation, "default"),
+                 "navigation after visible login must keep the visible browser"
+    sessions.delete("default")
+    assert_equal true, agent.send(:headless_for_navigation, "default"),
+                 "new navigation sessions should remain headless by default"
+    sessions["default"] = state
+
     assert agent.send(:ensure_session_host!, state, URI("https://EXAMPLE.com/next"))
     assert_raises(ArgumentError) do
       agent.send(:ensure_session_host!, state, URI("https://other.example/"))
@@ -97,6 +104,10 @@ class TestBrowserAgent < Minitest::Test
     assert_raises(ArgumentError) do
       agent.send(:open_session, "default", host: "example.com", headless: false)
     end
+  end
+
+  def test_pagination_output_has_a_hard_byte_budget
+    assert_equal 128 * 1024, Master::Io::BrowserAgent::MAX_PAGINATION_OUTPUT_BYTES
   end
 
   def test_shared_transport_can_enforce_a_session_host
