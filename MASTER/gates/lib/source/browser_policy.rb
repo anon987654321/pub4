@@ -50,10 +50,10 @@ module Deploy
       return failure("visible login must preserve the read-only boundary") unless policy["visible_login_submission"] == "blocked"
 
       source = File.join(root, "lib", "io", "browser_agent.rb")
-      return failure("visible login must disclose blocked POST submissions") unless File.read(source).include?("ordinary POST-based login submissions are blocked")
       return failure("BrowserAgent tool missing") unless File.file?(source)
 
       content = File.read(source)
+      return failure("visible login must disclose blocked POST submissions") unless content.include?("ordinary POST-based login submissions are blocked")
       evasion_patterns = /navigator\.webdriver|AutomationControlled|browse_randomly|humanize_mouse|stealth_script|user_agents\s*:/i
       browser_config = File.join(root, "data", "browser_agents.yml")
       sources = [content, (File.read(browser_config) if File.file?(browser_config))].compact
