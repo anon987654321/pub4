@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
-require_relative "../lib/voice/session"
+require_relative "../test_helper"
+require_relative "../../lib/voice/session"
 
 class TestVoiceSession < Minitest::Test
   def setup

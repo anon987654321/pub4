@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
-require_relative "../tools/voice_quality"
+require_relative "../test_helper"
+require_relative "../../tools/voice/voice_quality"
 
 class TestVoiceQualityHarness < Minitest::Test
   def test_probe_set_is_stable
