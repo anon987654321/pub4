@@ -105,7 +105,10 @@ module Dilla
         tracks[File.basename(path, ".wav")] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: false)
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
+      drum_source = stems.find { |path| File.basename(path, ".wav") == "drums" } || audio
+      rhythm = rhythm_features(drum_source, ffmpeg:, max_duration: options[:max_duration], bpm: mix.dig("tempo", "bpm"))
       profile = profile_for(mix, style: options[:style])
+      profile.fetch("features").merge!(rhythm)
       stem_features = stem_energy_features(tracks)
       profile.fetch("features").merge!(stem_features)
       apply_stem_balance(profile, stem_features)
@@ -326,6 +329,82 @@ module Dilla
       parameters["rumble_level"] = (rumble + (bass_share - 0.25) * 0.12).clamp(0.05, 0.35).round(3) if bass_share && rumble
       parameters["rumble_duck_depth"] = (duck + (drum_share - 0.25) * 0.22).clamp(0.3, 0.95).round(3) if drum_share && duck
       profile
+    end
+
+    # Measure broad rhythmic traits from a low-rate energy envelope. When Demucs
+    # supplies a drums stem we prefer it; otherwise this is explicitly a mix-level
+    # estimate. No claims are made about individual kick/snare timing.
+    def rhythm_features(path, ffmpeg:, max_duration:, bpm:, sample_rate: 100)
+      tempo = numeric_value(bpm)
+      return {} unless tempo&.between?(50.0, 200.0)
+
+      bytes, = capture!("rhythm energy envelope", ffmpeg, "-hide_banner", "-v", "error", "-i", path,
+                        "-t", max_duration.to_s, "-vn", "-ac", "1", "-af",
+                        "aeval=exprs=val(0)*val(0),lowpass=f=18", "-ar", sample_rate.to_s,
+                        "-f", "f32le", "pipe:1", timeout: [[max_duration.to_f.ceil / 3, 120].max, 900].min)
+      samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
+      summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:)
+    rescue Error
+      {}
+    end
+
+    def summarize_rhythm_envelope(samples, bpm:, sample_rate: 100)
+      return {} if samples.size < sample_rate * 4 || !bpm.to_f.between?(50.0, 200.0)
+
+      novelty = Array.new(samples.size, 0.0)
+      (1...samples.size).each do |index|
+        rise = samples[index] - samples[index - 1]
+        novelty[index] = rise if rise.positive? && rise.finite?
+      end
+      positive = novelty.select(&:positive?)
+      return {} if positive.size < 8
+
+      positive.sort!
+      threshold = [positive[(positive.size * 0.80).floor.clamp(0, positive.size - 1)], positive[-1] * 0.08].max
+      refractory = [(sample_rate * 0.06).round, 1].max
+      peaks = []
+      (1...(novelty.size - 1)).each do |index|
+        next unless novelty[index] >= threshold && novelty[index] >= novelty[index - 1] && novelty[index] > novelty[index + 1]
+
+        if peaks.empty? || index - peaks[-1] >= refractory
+          peaks << index
+        elsif novelty[index] > novelty[peaks[-1]]
+          peaks[-1] = index
+        end
+      end
+      return {} if peaks.size < 8
+
+      subdivision = sample_rate * 60.0 / bpm.to_f / 4.0
+      phase_best = 0
+      matches_best = -1
+      error_best = Float::MAX
+      (0...[subdivision.ceil, 1].max).each do |phase|
+        errors = peaks.map { |position| position - (phase + ((position - phase) / subdivision).round * subdivision) }
+        matches = errors.count { |error| error.abs <= sample_rate * 0.045 }
+        mean_error = errors.sum(&:abs) / errors.size
+        if matches > matches_best || (matches == matches_best && mean_error < error_best)
+          phase_best = phase
+          matches_best = matches
+          error_best = mean_error
+        end
+      end
+
+      errors = peaks.map { |position| position - (phase_best + ((position - phase_best) / subdivision).round * subdivision) }
+      sorted_errors = errors.map(&:abs).sort
+      timing_spread_ms = sorted_errors[sorted_errors.size / 2] * 1000.0 / sample_rate
+      total_strength = peaks.sum { |index| novelty[index] }
+      offbeat_strength = peaks.each_with_index.sum do |position, index|
+        grid_step = ((position - phase_best) / subdivision).round
+        grid_step % 4 == 0 ? 0.0 : novelty[position]
+      end
+      duration = samples.size.to_f / sample_rate
+      bars = duration * bpm.to_f / 240.0
+      features = {
+        "timing_spread_ms" => timing_spread_ms.round(1),
+        "onset_density_per_bar" => (peaks.size / [bars, 0.001].max).round(2)
+      }
+      features["offbeat_onset_share"] = (offbeat_strength / total_strength).round(3) if total_strength.positive?
+      features
     end
 
     # Demucs gives broad source roles rather than isolated kick/snare/hats.
