@@ -14,7 +14,10 @@ class Player
     return Shellwords.split(options[:player]) if options[:player]
 
     ffplay = FFPLAY.find { |path| File.executable?(path) } || which('ffplay')
-    return [ffplay, '-nodisp', '-autoexit', '-loglevel', 'quiet', '-f', 's16le', '-ar', rate.to_s, '-ac', channels.to_s, '-i', '-'] if ffplay
+    # -ch_layout, not -ac: ffplay 8 refuses -ac on raw input ("Option not found"), the
+    # player exits at launch, and -loglevel quiet leaves the show ending with no reason.
+    layout = channels == 1 ? 'mono' : 'stereo'
+    return [ffplay, '-nodisp', '-autoexit', '-loglevel', 'quiet', '-f', 's16le', '-ar', rate.to_s, '-ch_layout', layout, '-i', '-'] if ffplay
 
     play = SOX.find { |path| File.executable?(path) } || which('play')
     return [play, '-q', '-t', 'raw', '-r', rate.to_s, '-e', 'signed', '-b', '16', '-c', channels.to_s, '-'] if play
