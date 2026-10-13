@@ -66,6 +66,8 @@ def run(argv)
     o.on('--snare-db N', Float, 'Snare and clap level in dB') { |v| (options[:mix] ||= {}).merge!('snare' => v, 'clap' => v) }
     o.on('--hat-db N', Float, 'Hat level in dB') { |v| (options[:mix] ||= {})['hat'] = v }
     o.on('--chords-db N', Float, 'Chord and arp level in dB when drums play') { |v| (options[:mix] ||= {})['chords'] = v }
+    o.on('--drum-balance DB', Float, 'Reference-derived dB shift to all drum roles, bounded to +/-2 dB') { |v| options[:drum_balance] = v.clamp(-2.0, 2.0) }
+    o.on('--chord-balance DB', Float, 'Reference-derived dB shift to chords, bounded to +/-2 dB') { |v| options[:chord_balance] = v.clamp(-2.0, 2.0) }
     o.on('--pool POOL', %w[essential all], 'With --play: essential progressions (default) or all') { |v| options[:pool] = v }
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
@@ -93,6 +95,23 @@ elsif options[:play]
   else
     render(data, options)
   end
+end
+
+# Apply bounded, relative dB moves after loading Dilla's own mix defaults. MASTER
+# passes these only when a separated reference supplies usable stem-energy evidence.
+def apply_reference_mix_balance(levels, drum_balance: nil, chord_balance: nil)
+  adjusted = levels.dup
+  unless drum_balance.nil?
+    offset = Float(drum_balance).clamp(-2.0, 2.0)
+    %w[kick snare clap hat perc].each do |role|
+      adjusted[role] = adjusted.fetch(role, 0.0).to_f + offset
+    end
+  end
+  unless chord_balance.nil?
+    offset = Float(chord_balance).clamp(-2.0, 2.0)
+    adjusted['chords'] = adjusted.fetch('chords', 0.0).to_f + offset
+  end
+  adjusted
 end
 
 # How the chords are played: the flags, else what the profile carries, else a held pad.
@@ -194,6 +213,7 @@ def render_section(data, options)
   rotation = drums == 'rotate' ? data.fetch('drum_patterns').keys : drums
   hits = drums ? seq.drum_hits(rotation, bpm, drum_seconds) : []
   levels = seq.mix(options[:mix])
+  levels = apply_reference_mix_balance(levels, drum_balance: options[:drum_balance], chord_balance: options[:chord_balance])
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
   buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
