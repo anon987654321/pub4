@@ -475,6 +475,12 @@ end
       words = Shellwords.split(calls.last.fetch(:arg))
       assert_equal "behind_the_beat", words[words.index("--profile") + 1]
       assert_equal "92", words[words.index("--bpm") + 1]
+      assert_equal "boom_bap", words[words.index("--drums") + 1]
+      assert_equal "kit_dust", words[words.index("--kit") + 1]
+      assert_equal "cassette", words[words.index("--sonitex") + 1]
+      assert_equal "3", words[words.index("--sonitex-instances") + 1]
+      assert_equal "heavy", words[words.index("--drum-tape") + 1]
+      assert_equal "0.78", words[words.index("--vcs") + 1]
     end
   end
 
