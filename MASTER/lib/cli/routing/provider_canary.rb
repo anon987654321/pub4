@@ -44,6 +44,7 @@ module Master
           return "claude-cli" if id.start_with?("claude-cli:")
           return "agy" if id.start_with?("agy:")
           return "web-chat" if id.start_with?("web-chat:")
+          return "kilo" if id.start_with?("kilo:")
           return "ollama" if id.start_with?("ollama:")
           return "local-server" if id.start_with?("local:")
           return "replicate" if id.start_with?("replicate:")
