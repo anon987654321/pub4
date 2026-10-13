@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "yaml"
 require_relative "../gates/support/gate_result"
 
 module Master
@@ -23,5 +24,19 @@ class TestBrowserPolicyGate < Minitest::Test
     source = File.read(File.join(ROOT, "gates/lib/source/browser_policy.rb"))
 
     refute_match(/\bGateResult\.(?:fail|pass)\s*\(/, source)
+  end
+
+  def test_gate_enforces_session_browser_capabilities
+    policy = YAML.safe_load_file(File.join(ROOT, "data/laws.yml"), aliases: true).fetch("browser_policy")
+    assert_equal %w[status navigate login extract look follow paginate close], policy.fetch("read_actions")
+    assert_equal true, policy.fetch("session_host_bound")
+    assert_equal true, policy.fetch("screenshot_evidence_required")
+    assert_equal 500, policy.fetch("max_capture_files")
+    assert_equal 50, policy.fetch("max_pagination_pages")
+    assert_equal 131_072, policy.fetch("max_pagination_output_bytes")
+    assert_equal true, policy.fetch("follow_anchors_by_href_only")
+
+    result = Deploy::BrowserPolicyGate.run
+    assert_equal :passed, result.outcome, result.inspect
   end
 end
