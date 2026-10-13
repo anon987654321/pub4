@@ -39,6 +39,35 @@ class TestBootModelPin < Minitest::Test
     public :routed_models, :model_for
   end
 
+  def test_homeostat_cheap_bias_does_not_break_the_fallback_ladder
+    router = Master::CLI::Routing::ModelRouter.allocate
+    router.instance_variable_set(:@rules, { "openai_compatible" => {} })
+    chain = [
+      "claude-cli:claude-sonnet-5-5",
+      "openrouter/free-model:free",
+      "web-chat:grok",
+      "ollama:gemma3:4b",
+    ]
+    router.define_singleton_method(:fallback_chain) { |task_type:| chain }
+    router.define_singleton_method(:tier_for_model) do |model|
+      %w[openrouter/free-model:free ollama:gemma3:4b].include?(model) ? "cheap" : "strong"
+    end
+    homeostat = Struct.new(:model_tier_bias).new(:cheap)
+    probe = Class.new do
+      include Master::Review::Agent::ModelSelector
+
+      def initialize(router:, homeostat:)
+        @model_router = router
+        @homeostat = homeostat
+        @config = { "model" => "claude-cli:claude-sonnet-5-5" }
+      end
+
+      public :routed_chain
+    end.new(router:, homeostat:)
+
+    assert_equal chain, probe.routed_chain(nil, task_type: :exploration)
+  end
+
   def test_a_saved_model_leads_the_chain_without_the_session
     agent = FakeAgent.new(saved: "claude-cli:claude-sonnet-5-5", router: FakeRouter.new(reachable: true))
 
