@@ -124,6 +124,23 @@ class TestLaneQuota < Minitest::Test
 
   # The dispatcher learns from one settled reply, then neither the door, the
   # council's pinned critic, nor failover reaches agy; claude still answers.
+  def test_manual_lane_exclusions_are_reprobed_and_recovered_from_evidence
+    assert Quota.dead?("gemini-2.5-flash")
+
+    assert_equal ["gemini"], Quota.due_manual_probes(known: ["gemini"], every: 600)
+    assert_empty Quota.due_manual_probes(known: ["gemini"], every: 600)
+    @now += 601
+    assert_equal ["gemini"], Quota.due_manual_probes(known: ["gemini"], every: 600)
+
+    Quota.with_manual_probe("gemini") do
+      refute Quota.dead?("gemini-2.5-flash"), "the canary alone can bypass the manual exclusion"
+    end
+    assert Quota.dead?("gemini-2.5-flash"), "outside the canary, it remains excluded until proof"
+    Quota.revive_manual("gemini")
+    refute Quota.dead?("gemini-2.5-flash"), "a verified answer retires the stale exclusion"
+    refute_includes Quota.manual_dead, "gemini"
+  end
+
   def test_dispatcher_door_pin_and_failover_honour_it
     dispatcher = Master::Review::LLMDispatcher.allocate
     dispatcher.instance_variable_set(:@bus, nil)
