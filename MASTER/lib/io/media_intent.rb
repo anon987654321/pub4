@@ -520,13 +520,20 @@ module Master
         choices = menu.value!
         named = text[/\b(?:progression\s+)?(\d+)\b/, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
-        pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) } || choices[:drums].sample
-        named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i)
+        explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
+        named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i) && !explicit_dilla
         reference = named_other_style ? nil : dilla_reference_profile
-        dilla_pocket = !named_other_style && (reference || text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i))
+        dilla_pocket = !named_other_style && (reference || explicit_dilla)
+        named_pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) }
+        dilla_patterns = %w[dilla_shadow_pattern dilla_broken dusty_laid_back boom_bap]
+        pattern = named_pattern || if dilla_pocket
+                                     dilla_patterns.find { |id| choices[:drums].include?(id) } || choices[:drums].sample
+                                   else
+                                     choices[:drums].sample
+                                   end
         groove = if dilla_pocket
                    preferred = reference&.fetch("groove_profile", nil)
-                   [preferred, "behind_the_beat", "late_snare"].compact.find { |name| choices[:profiles].include?(name) }
+                   [preferred, "dilla_shadow", "behind_the_beat", "late_snare"].compact.find { |name| choices[:profiles].include?(name) }
                  end
         explicit_bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
         bpm = explicit_bpm ? explicit_bpm.to_f : reference&.fetch("target_bpm", nil)
@@ -536,10 +543,14 @@ module Master
         argv.concat(["--drums", pattern]) if pattern
         argv.concat(["--profile", groove]) if groove
         argv.concat(["--bpm", bpm.to_s]) if bpm
+        if dilla_pocket
+          argv.concat(["--kit", "kit_dust", "--sonitex", "cassette", "--sonitex-instances", "3",
+                       "--drum-tape", "heavy", "--vcs", "0.78"])
+        end
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
         return result unless result.ok?
 
-        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, bpm: })
+        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, bpm:, kit: dilla_pocket ? "kit_dust" : nil })
       end
 
       def dilla_reference_profile
