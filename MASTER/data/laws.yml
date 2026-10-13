@@ -4487,7 +4487,22 @@ browser_policy:
   allowed_network_methods:
     - GET
     - HEAD
+  read_actions:
+    - status
+    - navigate
+    - login
+    - extract
+    - look
+    - follow
+    - paginate
+    - close
+  session_host_bound: true
+  screenshot_evidence_required: true
+  max_capture_files: 500
   max_sessions: 4
+  max_pagination_pages: 50
+  max_pagination_output_bytes: 131072
+  follow_anchors_by_href_only: true
   external_interactions:
     ai_identity_disclosure_required: true
     recipient_consent_required: true
