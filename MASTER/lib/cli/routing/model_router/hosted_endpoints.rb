@@ -42,8 +42,8 @@ module Master
           # catalogued providers. No extra Ruby routing gem is required.
           def hosted_endpoints
             configured = PUBLIC_FREE_ENDPOINTS.dup
-            configured.delete("kilo") if ENV["MASTER_NO_KILO_GATEWAY"] == "1"
             configured.merge!(@rules.fetch("openai_compatible", {}) || {})
+            configured.delete("kilo") if ENV["MASTER_NO_KILO_GATEWAY"] == "1"
             base = ENV["MASTER_LLM_GATEWAY_URL"].to_s.strip
             return configured if base.empty?
 
