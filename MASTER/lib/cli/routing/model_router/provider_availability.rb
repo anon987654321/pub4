@@ -94,11 +94,14 @@ module Master
             Array(@rules.dig("ferrum_web_chat", "free_latest"))
           end
 
+          # Browser chat is the final remote fallback even when an API key
+          # exists but its provider is out of quota. Operators can disable this
+          # capability explicitly; it is not gated on having zero API keys.
           def web_chat_enabled?
             return false if ENV["MASTER_NO_WEB_CHAT"] == "1"
-            return true if keyless_mode?
-            gate = @rules.dig("ferrum_web_chat", "enabled_when_env").to_s
-            gate.empty? ? false : ENV[gate].to_s != ""
+            return false if ENV["MASTER_WEB_CHAT"].to_s == "0"
+
+            true
           end
 
           def auto_keyless?
