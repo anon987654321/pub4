@@ -51,6 +51,20 @@ class DillaReferenceTest < Minitest::Test
     assert_operator params.fetch("distortion_drive"), :between?, 1.0, 4.0
   end
 
+  def test_missing_spectral_measurements_fall_back_without_crashing
+    mix = {
+      "tempo" => { "bpm" => nil },
+      "spectral_bands_db" => {
+        "sub_25_120_hz" => nil, "low_mid_120_500_hz" => nil,
+        "mid_500_4000_hz" => nil, "high_4000_plus_hz" => nil
+      }
+    }
+    profile = Dilla::Reference.profile_for(mix, style: "industrial_techno")
+    assert_equal 138, profile.fetch("target_bpm")
+    assert_operator profile.fetch("parameters").fetch("rumble_level"), :>=, 0.05
+    assert_operator profile.fetch("parameters").fetch("distortion_drive"), :>=, 1.0
+  end
+
   def test_j_dilla_reference_creates_a_hip_hop_profile_not_a_techno_profile
     mix = { "tempo" => { "bpm" => 92.0, "confidence" => 0.8 }, "spectral_bands_db" => {} }
     profile = Dilla::Reference.profile_for(mix, style: "J Dilla")
