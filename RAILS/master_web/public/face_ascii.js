@@ -87,6 +87,7 @@
     const ASPECT = num(ascii.aspect, 2.0);
     const DITHER = ascii.dither;
     const DITHER_GAIN = ascii.dither_gain;
+    const INK = ascii.ink || {};
     const DEFAULT_CHARS = ascii.chars || " .:-=+*#%@";
     const SLASH = Math.atan(ASPECT);
     const FLAT = SLASH / 2;
@@ -116,10 +117,30 @@
       return String(mode || ascii.mode) === "light" ? glyphs.reverse() : glyphs;
     }
 
-    // The ramp index for a tone, nudged by the integer dither matrix fixed in screen space.
-    function index(tone, size, col, row) {
+    // Each ramp glyph's place in ink space, 0 to 1, in the order the ramp is drawn; a glyph
+    // without a measurement takes an even step. Light mode mirrors the scale.
+    function levels(glyphs, mode) {
+      const light = String(mode || ascii.mode) === "light";
+      const dark = light ? glyphs.slice().reverse() : glyphs;
+      let top = 0.0;
+      dark.forEach((g) => { const v = Object.prototype.hasOwnProperty.call(INK, g) ? INK[g] : 0.0; if (v > top) top = v; });
+      if (!(top > 0.0)) top = 1.0;
+      const step = 1.0 / Math.max(dark.length - 1, 1);
+      const scale = dark.map((g, i) => (Object.prototype.hasOwnProperty.call(INK, g) ? INK[g] / top : i * step));
+      return light ? scale.reverse().map((v) => 1.0 - v) : scale;
+    }
+
+    // The ramp index for a tone in ink space: of the two glyphs whose ink brackets the tone, the
+    // denser when the tone's share of the gap beats the integer Bayer threshold fixed in screen space.
+    function index(tone, lv, col, row) {
+      const last = lv.length - 1;
+      if (tone <= lv[0]) return 0;
+      if (tone >= lv[last]) return last;
+      let lo = 0;
+      while (lv[lo + 1] <= tone) lo += 1;
+      const share = (tone - lv[lo]) / (lv[lo + 1] - lv[lo]);
       const threshold = 0.5 + ((((DITHER[row % 4][col % 4] + 0.5) / 16.0) - 0.5) * DITHER_GAIN);
-      return clamp(Math.floor((tone * (size - 1)) + threshold), 0, size - 1);
+      return share > threshold ? lo + 1 : lo;
     }
 
     // ---- Face::DepthMap -----------------------------------------------------
@@ -749,15 +770,18 @@
     const CAMERA = ascii.camera;
     const FIT = ascii.fit;
     const SAMPLES = Math.trunc(ascii.samples);
-    const PER_CELL = SAMPLES * 2 * SAMPLES;
+    const LARGE = ascii.samples_large;
+    // Samples a side: the full count, fewer on a window big enough that the cells carry the detail.
+    function samplesFor(rows, cols) { return rows * cols >= LARGE.cells ? Math.trunc(LARGE.samples) : SAMPLES; }
     const COVER = ascii.cover;
     const EDGE_FADE = ascii.edge_fade;
     const EDGE = ascii.edge_gradient;
     const CREASE = ascii.crease;
     const PAINT = ascii.shade.paint;
     const GAIN = ascii.shade.gain;
-    const KNEE = ascii.shade.knee;
-    const SHOULDER = ascii.shade.shoulder;
+    const GAMMA = ascii.shade.gamma;
+    const DEPTH_EDGE = ascii.depth_edge;
+    const VOTE = ascii.vote;
     const CEILING = ascii.shade.ceiling;
     const NEAR = ascii.depth.near;
     const FAR = ascii.depth.far;
@@ -805,9 +829,12 @@
         this.m = source.mesh();
         this.rows = rows;
         this.cols = cols;
-        this.sw = cols * SAMPLES;
-        this.sh = rows * 2 * SAMPLES;
+        this.samples = samplesFor(rows, cols);
+        this.perCell = this.samples * 2 * this.samples;
+        this.sw = cols * this.samples;
+        this.sh = rows * 2 * this.samples;
         this.ramp = ramp(opts.chars, opts.mode);
+        this.levels = levels(this.ramp, opts.mode);
         const [above, aside] = this.m.margins;
         const [xlo, xhi, ylo, yhi, reach] = this.m.bounds();
         this.lift = (ylo + yhi + above) / 2.0;
@@ -849,8 +876,8 @@
       }
 
       covered(px, py) {
-        const x = Math.floor(px * SAMPLES);
-        const y = Math.floor(py * SAMPLES);
+        const x = Math.floor(px * this.samples);
+        const y = Math.floor(py * this.samples);
         return x >= 0 && x <= this.sw - 1 && y >= 0 && y <= this.sh - 1 && this.tri[(y * this.sw) + x] >= 0;
       }
 
@@ -862,8 +889,8 @@
       }
 
       hidden(px, py, depth, slack) {
-        const x = Math.floor(px * SAMPLES);
-        const y = Math.floor(py * SAMPLES);
+        const x = Math.floor(px * this.samples);
+        const y = Math.floor(py * this.samples);
         if (!(x >= 0 && x <= this.sw - 1 && y >= 0 && y <= this.sh - 1)) return true;
         return this.zb[(y * this.sw) + x] > depth + OCCLUSION + (slack || 0.0);
       }
@@ -899,8 +926,8 @@
         for (let v = 0; v < n; v += 1) {
           const [x, y, z] = this.rotate(pos[3 * v], pos[(3 * v) + 1] - this.lift, pos[(3 * v) + 2]);
           const k = this.gain * this.camera / (this.camera - z);
-          this.sx[v] = SAMPLES * ((this.cols / 2.0) + (x * k));
-          this.sy_[v] = SAMPLES * (this.rows - (y * k) - this.bob);
+          this.sx[v] = this.samples * ((this.cols / 2.0) + (x * k));
+          this.sy_[v] = this.samples * (this.rows - (y * k) - this.bob);
           this.sd[v] = z * this.scale;
           const r = this.rotate(norm[3 * v], norm[(3 * v) + 1], norm[(3 * v) + 2]);
           this.nx[v] = r[0]; this.ny[v] = r[1]; this.nz[v] = r[2];
@@ -996,9 +1023,9 @@
         for (let r = 0; r < this.rows; r += 1) {
           for (let c = 0; c < this.cols; c += 1) {
             const cell = (r * this.cols) + c;
-            for (let dy = 0; dy < 2 * SAMPLES; dy += 1) {
-              const base = (((r * 2 * SAMPLES) + dy) * this.sw) + (c * SAMPLES);
-              for (let dx = 0; dx < SAMPLES; dx += 1) {
+            for (let dy = 0; dy < 2 * this.samples; dy += 1) {
+              const base = (((r * 2 * this.samples) + dy) * this.sw) + (c * this.samples);
+              for (let dx = 0; dx < this.samples; dx += 1) {
                 if (this.tri[base + dx] < 0) continue;
                 const d = this.zb[base + dx];
                 this.count[cell] += 1;
@@ -1015,16 +1042,17 @@
       }
 
       coverage(c, r) {
-        return c >= 0 && c < this.cols && r >= 0 && r < this.rows ? this.count[(r * this.cols) + c] / PER_CELL : 0.0;
+        return c >= 0 && c < this.cols && r >= 0 && r < this.rows ? this.count[(r * this.cols) + c] / this.perCell : 0.0;
       }
 
       cell(c, r) {
         const i = (r * this.cols) + c;
-        const cover = this.count[i] / PER_CELL;
+        const cover = this.count[i] / this.perCell;
         if (cover < COVER) return;
-        const edge = [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].some(([x, y]) => x >= 0 && x < this.cols && y >= 0 && y < this.rows && this.coverage(x, y) < COVER);
-        const glyph = edge ? this.silhouette(c, r) : this.crease(c, r);
-        const fraction = ((this.depthSum[i] / this.count[i]) - this.nearLo) / this.nearSpan;
+        const edge = (c > 0 && this.coverage(c - 1, r) < COVER) || (c < this.cols - 1 && this.coverage(c + 1, r) < COVER)
+          || (r > 0 && this.coverage(c, r - 1) < COVER) || (r < this.rows - 1 && this.coverage(c, r + 1) < COVER);
+        const fraction = this.depthAt(i);
+        const glyph = edge ? this.silhouette(c, r) : (this.step(c, r, fraction) || this.crease(c, r));
         this.frame.chars[r][c] = glyph || this.shade(c, r, i, cover, fraction);
         this.frame.depth[r][c] = fraction >= NEAR ? 2 : (fraction <= FAR ? 0 : 1);
       }
@@ -1042,50 +1070,87 @@
         const glyph = line(gy, gx);
         if (glyph !== "-") return glyph;
         const covered = [0, 0];
-        for (let dy = 0; dy < 2 * SAMPLES; dy += 1) {
-          const base = (((r * 2 * SAMPLES) + dy) * this.sw) + (c * SAMPLES);
-          for (let dx = 0; dx < SAMPLES; dx += 1) if (this.tri[base + dx] >= 0) covered[Math.floor(dy / SAMPLES)] += 1;
+        for (let dy = 0; dy < 2 * this.samples; dy += 1) {
+          const base = (((r * 2 * this.samples) + dy) * this.sw) + (c * this.samples);
+          for (let dx = 0; dx < this.samples; dx += 1) if (this.tri[base + dx] >= 0) covered[Math.floor(dy / this.samples)] += 1;
         }
-        return level(covered[0] >= SAMPLES * SAMPLES / 2.0, covered[1] >= SAMPLES * SAMPLES / 2.0, gy < 0);
+        return level(covered[0] >= this.samples * this.samples / 2.0, covered[1] >= this.samples * this.samples / 2.0, gy < 0);
       }
 
-      // Where the surface's slope changes across the cell: the ridge's direction from the
-      // larger |eigenvalue| of that change.
+      // A cell's mean depth as a fraction of the visible range.
+      depthAt(i) { return ((this.depthSum[i] / this.count[i]) - this.nearLo) / this.nearSpan; }
+
+      // An occluding step inside the surface: the depth jumps by more than depth_edge to a
+      // neighbouring cell; the line runs across the depth gradient.
+      step(c, r, fraction) {
+        let jump = 0.0;
+        const here = (r * this.cols) + c;
+        if (c > 0 && this.count[here - 1] > 0) jump = Math.max(jump, Math.abs(this.depthAt(here - 1) - fraction));
+        if (c < this.cols - 1 && this.count[here + 1] > 0) jump = Math.max(jump, Math.abs(this.depthAt(here + 1) - fraction));
+        if (r > 0 && this.count[here - this.cols] > 0) jump = Math.max(jump, Math.abs(this.depthAt(here - this.cols) - fraction));
+        if (r < this.rows - 1 && this.count[here + this.cols] > 0) jump = Math.max(jump, Math.abs(this.depthAt(here + this.cols) - fraction));
+        if (jump < DEPTH_EDGE) return null;
+        const gx = this.depthGradient(c - 1, r, c + 1, r, fraction);
+        const gy = this.depthGradient(c, r - 1, c, r + 1, fraction) / 2.0;
+        if (gx === 0 && gy === 0) return null;
+        return line(gy, gx);
+      }
+
+      depthGradient(c0, r0, c1, r1, fraction) {
+        const has = (c, r) => c >= 0 && c < this.cols && r >= 0 && r < this.rows && this.count[(r * this.cols) + c] > 0;
+        const lo = has(c0, r0) ? this.depthAt((r0 * this.cols) + c0) : fraction;
+        const hi = has(c1, r1) ? this.depthAt((r1 * this.cols) + c1) : fraction;
+        return hi - lo;
+      }
+
+      // Where the surface's slope changes: each covered sample with four covered neighbours
+      // reads the change of slope across itself and, if the larger |eigenvalue| (scaled to a
+      // cell's width) reaches crease, votes for the glyph of the ridge's direction. The cell
+      // takes the glyph with most votes when they are at least vote of its covered samples.
       crease(c, r) {
-        if (SAMPLES < 2) return null;
-        const sums = [0, 1, 2, 3].map(() => [0, 0.0, 0.0]);
-        for (let dy = 0; dy < 2 * SAMPLES; dy += 1) {
-          const base = (((r * 2 * SAMPLES) + dy) * this.sw) + (c * SAMPLES);
-          for (let dx = 0; dx < SAMPLES; dx += 1) {
-            if (this.tri[base + dx] < 0) continue;
-            const sum = sums[Math.floor(dx * 2 / SAMPLES) + (2 * Math.floor(dy / SAMPLES))];
-            sum[0] += 1;
-            sum[1] += this.slopeX[base + dx];
-            sum[2] += this.slopeY[base + dx];
+        let horizontal = 0; let diagonalUp = 0; let vertical = 0; let diagonalDown = 0;
+        let seen = 0;
+        for (let dy = 0; dy < 2 * this.samples; dy += 1) {
+          const y = (r * 2 * this.samples) + dy;
+          if (y === 0 || y >= this.sh - 1) continue;
+          for (let dx = 0; dx < this.samples; dx += 1) {
+            const x = (c * this.samples) + dx;
+            const idx = (y * this.sw) + x;
+            if (this.tri[idx] < 0) continue;
+            seen += 1;
+            if (x === 0 || x >= this.sw - 1) continue;
+            const l = idx - 1; const rt = idx + 1; const u = idx - this.sw; const d = idx + this.sw;
+            if (this.tri[l] < 0 || this.tri[rt] < 0 || this.tri[u] < 0 || this.tri[d] < 0) continue;
+            const xx = (this.slopeX[rt] - this.slopeX[l]) / 2.0;
+            const yy = (this.slopeY[d] - this.slopeY[u]) / 2.0;
+            const xy = ((this.slopeY[rt] - this.slopeY[l]) + (this.slopeX[d] - this.slopeX[u])) / 4.0;
+            const spread = (xx - yy) / 2;
+            const hf = Math.sqrt((spread * spread) + (xy * xy));
+            const mid = (xx + yy) / 2;
+            const major = mid + hf;
+            const minor = mid - hf;
+            if (this.samples * Math.max(Math.abs(major), Math.abs(minor)) < CREASE) continue;
+            const angle = 0.5 * Math.atan2(2 * xy, xx - yy);
+            const g = Math.abs(major) >= Math.abs(minor) ? line(-Math.sin(angle), -Math.cos(angle)) : line(-Math.cos(angle), Math.sin(angle));
+            if (g === "-") horizontal += 1;
+            else if (g === "/") diagonalUp += 1;
+            else if (g === "|") vertical += 1;
+            else diagonalDown += 1;
           }
         }
-        if (sums.some((s) => s[0] === 0)) return null;
-        const [lt, rt, lb, rb] = sums;
-        const mean = (u, v, k) => (u[k] + v[k]) / (u[0] + v[0]);
-        const pl = mean(lt, lb, 1); const ql = mean(lt, lb, 2); const pr = mean(rt, rb, 1); const qr = mean(rt, rb, 2);
-        const pt = mean(lt, rt, 1); const pb = mean(lb, rb, 1);
-        const qt = mean(lt, rt, 2); const qb = mean(lb, rb, 2);
-        const xx = pr - pl;
-        const yy = qb - qt;
-        const xy = ((qr - ql) + (pb - pt)) / 2.0;
-        const hf = Math.sqrt(((((xx - yy) / 2)) * (((xx - yy) / 2))) + (xy * xy));
-        const mid = (xx + yy) / 2;
-        if (Math.abs(mid) + hf < CREASE) return null;
-        const angle = 0.5 * Math.atan2(2 * xy, xx - yy);
-        if (Math.abs(mid + hf) >= Math.abs(mid - hf)) return line(-Math.sin(angle), -Math.cos(angle));
-        return line(-Math.cos(angle), Math.sin(angle));
+        if (seen === 0) return null;
+        // Ties go to the glyph later in character order.
+        let votes = horizontal; let glyph = "-";
+        if (diagonalUp >= votes) { votes = diagonalUp; glyph = "/"; }
+        if (diagonalDown >= votes) { votes = diagonalDown; glyph = "\\"; }
+        if (vertical >= votes) { votes = vertical; glyph = "|"; }
+        return votes >= VOTE * seen && votes > 0 ? glyph : null;
       }
 
       shade(c, r, i, cover, fraction) {
         let tone = GAIN * (this.lumSum[i] / this.count[i]) * (1.0 - EDGE_FADE + (EDGE_FADE * cover));
-        if (tone > KNEE) tone = KNEE + ((tone - KNEE) * SHOULDER);
-        tone = Math.min(tone, CEILING) + (DEPTH_TONE * (fraction - 0.5));
-        return this.ramp[index(clamp(tone, 0.0, 1.0), this.ramp.length, c, r)];
+        tone = Math.pow(clamp(tone, 0.0, CEILING), GAMMA) + (DEPTH_TONE * (fraction - 0.5));
+        return this.ramp[index(clamp(tone, 0.0, 1.0), this.levels, c, r)];
       }
 
       // ---- Face::Features ---------------------------------------------------
@@ -1125,7 +1190,7 @@
         const [px, py, , ph] = this.cellOf(eye.pupil);
         if (ph) return;
         const span = Math.floor(Math.abs(rx - lx));
-        const width = Math.min(span % 2 === 0 ? span + 1 : span, 9);
+        const width = Math.min(span % 2 === 0 ? span + 1 : span, Math.max(FEATURE.eye_floor, Math.floor(this.frame.chars[0].length * FEATURE.eye_share)));
         const col = halfUp(px);
         const row = Math.floor(py / 2);
         if (width < 3) {
@@ -1133,6 +1198,8 @@
           return;
         }
         const left = col - half(width);
+        const tall = width >= FEATURE.eye_tall_at;
+        const lift = tall ? 2 : 0;
         if (this.look.eye_open < SHUT) {
           this.run(left, row, FEATURE.lid.repeat(width));
         } else {
@@ -1140,10 +1207,19 @@
           const reach = half(inner);
           const glance = clamp(halfUp(this.look.gaze[0] * 14), -reach, reach);
           this.run(left, row, FEATURE.eye_open + " ".repeat(inner) + FEATURE.eye_close);
-          this.put(col + glance, row, FEATURE.pupil);
+          if (tall) this.almond(left, row, width);
+          this.put(col + glance, row, tall ? FEATURE.pupil_large : FEATURE.pupil);
         }
-        if (!this.mask || this.mask.brow_line >= 0.5) this.run(left, row - 1, FEATURE.brow.repeat(width));
-        if (this.mask && this.mask.brow_ridge >= BROW_MIN) this.run(left, row - 2, MASK_GLYPHS.brow_heavy.repeat(width));
+        if (!this.mask || this.mask.brow_line >= 0.5) this.run(left, row - 1 - lift, FEATURE.brow.repeat(width));
+        if (this.mask && this.mask.brow_ridge >= BROW_MIN) this.run(left, row - 2 - lift, MASK_GLYPHS.brow_heavy.repeat(width));
+      }
+
+      // An eye wide enough to have lids: one a row above the line of the eye, one below.
+      almond(left, row, width) {
+        const top = FEATURE.eye_lid_top;
+        const bottom = FEATURE.eye_lid_bottom;
+        this.run(left, row - 1, top[0] + top[1].repeat(width - 2) + top[2]);
+        this.run(left, row + 1, bottom[0] + bottom[1].repeat(width - 2) + bottom[2]);
       }
 
       nose() {
@@ -1159,6 +1235,15 @@
           this.put(halfUp(bx + ((tx - bx) * f)), Math.floor((by + ((ty - by) * f)) / 2), glyph);
         }
         this.put(halfUp(tx), Math.floor(ty / 2), FEATURE.nose_tip);
+        this.nostrils(tx, ty, Math.abs(ty - by) / 2);
+      }
+
+      // A nose long enough to show its nostrils: a pair flanking the tip.
+      nostrils(tx, ty, length) {
+        if (length < FEATURE.nostril_at) return;
+        const wing = Math.min(Math.floor(length / FEATURE.nostril_at) + 1, 3);
+        this.put(halfUp(tx) - wing, Math.floor(ty / 2), FEATURE.nostril[0]);
+        this.put(halfUp(tx) + wing, Math.floor(ty / 2), FEATURE.nostril[1]);
       }
 
       // The nose as a ridge: two rails that part from the bridge toward the tip.
@@ -1382,7 +1467,7 @@
 
     return {
       FPS, STATES, MIN_ROWS, MIN_COLS, ASPECT, DEFAULT_CHARS, MOTION,
-      Glyphs: { line, level, ramp, index, halfUp },
+      Glyphs: { line, level, ramp, levels, index, halfUp },
       DepthMap: { lum },
       head,
       mesh,

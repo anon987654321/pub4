@@ -49,7 +49,7 @@ function render(c, look = engine.pose(c.state, c.t, c.seed)) {
 }
 
 test("every fixture frame is reproduced character for character", () => {
-  assert.equal(fixtures.cases.length, 10);
+  assert.equal(fixtures.cases.length, 13);
   for (const c of fixtures.cases) {
     const { renderer, frame } = render(c);
     assert.equal(rubyDigest(renderer.fitted()), c.digest, `${c.name}: the vertices differ from the Ruby head`);
