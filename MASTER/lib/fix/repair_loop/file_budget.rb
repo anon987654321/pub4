@@ -21,8 +21,9 @@ module Master
         end
 
         # Runs the block inside what is left of the file's budget. A timeout
-        # returns nil with @file_timed_out set; the file is recorded and the
-        # lane that was in use counts a failure.
+        # returns nil with @file_timed_out set and the file is recorded. The lane
+        # is not charged: a slow call on a large file says nothing about the lane, and
+        # two of them used to drop the pinned model for a free one.
         def within_file_budget(violation)
           remaining = @file_deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
           raise Timeout::Error, "file budget spent" if remaining <= 0
@@ -31,7 +32,6 @@ module Master
         rescue Timeout::Error
           @file_timed_out = true
           RunLedger.timeout(violation[:file], RunLedger.file_budget_s)
-          RunLedger.lane_failed(@agent.model) if @agent.respond_to?(:model)
           @bus&.publish("repair_loop:file_timeout", law: @law.id, file: violation[:file], seconds: RunLedger.file_budget_s)
           Master::Trace::Dmesg.status("fix0", "#{violation[:file].to_s.delete_prefix("#{@root}/")} skipped, #{RunLedger.file_budget_s}s file budget spent")
           nil

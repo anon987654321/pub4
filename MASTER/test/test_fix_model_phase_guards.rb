@@ -69,6 +69,7 @@ class TestFixModelPhaseGuards < Minitest::Test
     loop = Master::Fix::RepairLoop.allocate
     loop.instance_variable_set(:@law, Struct.new(:id).new("FEW_ARGUMENTS"))
     loop.instance_variable_set(:@root, "/r")
+    loop.instance_variable_set(:@agent, Struct.new(:model).new("claude-cli:claude-sonnet-5-5"))
     loop
   end
 
@@ -78,10 +79,13 @@ class TestFixModelPhaseGuards < Minitest::Test
     loop.send(:start_file_budget)
 
     result = loop.send(:within_file_budget, { file: "/r/slow.rb" }) { sleep 3 }
+    loop.send(:start_file_budget)
+    loop.send(:within_file_budget, { file: "/r/slow2.rb" }) { sleep 3 }
 
     assert_nil result
     assert loop.instance_variable_get(:@file_timed_out)
-    assert_equal [["/r/slow.rb", 1]], Ledger.timeouts
+    assert_equal [["/r/slow.rb", 1], ["/r/slow2.rb", 1]], Ledger.timeouts
+    refute Master::Io::LaneQuota.run_drops.key?("claude-cli"), "a slow file must not drop the lane"
   ensure
     ENV.delete("MASTER_FIX_FILE_BUDGET_S")
   end
