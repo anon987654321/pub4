@@ -417,7 +417,7 @@ class TestSpeech < Minitest::Test
     nested_errors = []
     unlocked = lambda do |text, output_path:, _on_chunk: nil, **_opts|
       if text == "outer"
-        nested_results << speech.synthesize_streaming_to_file("nested", output_path:)
+        nested_results << Fiber.new { speech.synthesize_streaming_to_file("nested", output_path:) }.resume
         nested_errors << speech.last_error
         "outer-result"
       else
