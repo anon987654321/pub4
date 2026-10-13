@@ -132,11 +132,13 @@ end
   # One machine: the medium, then the playback head's bump and the loss at the top.
   class Machine
     attr_reader :makeup
+    attr_accessor :scale # a live move on the drive, 1.0 when at rest
 
     # `curve` is :loop for the hysteresis model or :atan for the cheap curve; `reference` is the
     # RMS of the signal the makeup gain is measured at.
     def initialize(drive:, curve:, config:, rng:, reference:, sample: nil)
       @drive = drive
+      @scale = 1.0
       @curve = curve
       jitter = ->(share) { 1.0 + (share * ((rng.rand * 2) - 1)) } # each instance is a slightly different machine
       loop_params = (config['hysteresis'] || {}).dup
@@ -158,7 +160,7 @@ end
     end
 
     def process(buf)
-      gain = @drive * @field
+      gain = @drive * @scale * @field
       if @curve == :loop
         buf.map { |x| @block.step(@top.step(@bump.step(@loop.step(x * gain)))) * @makeup }
       else
@@ -211,6 +213,11 @@ end
     end
 
     def process(buf) = @machines.reduce(buf) { |signal, machine| machine.process(signal) }
+
+    # Push every machine's drive by a factor (a live move), 1.0 putting it back.
+    def drive_scale=(factor)
+      @machines.each { |machine| machine.scale = factor }
+    end
   end
 
   # A soft ceiling, the last thing the signal meets: below the knee nothing changes, above it

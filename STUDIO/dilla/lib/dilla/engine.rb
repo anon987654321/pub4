@@ -30,6 +30,8 @@ def run(argv)
     o.on('--echo-time MS', Float, 'Echo base delay in milliseconds (default a dotted eighth)') { |v| options[:echo_time] = v }
     o.on('--play', '--endless', 'Never stop: stream pass after pass into the player, each beginning under the last beat of the one before') { options[:play] = true }
     o.on('--player CMD', 'The player: for live it is given the wav path (default afplay, else ffplay); for --play it reads raw 16-bit mono PCM on stdin (default ffplay, else sox play)') { |v| options[:player] = v }
+    o.on('--decks N', Integer, 'With --play: 2 decks cross over eight to sixteen bars (the default), 1 plays pass after pass under a one-beat crossfade') { |v| options[:decks] = v.clamp(1, 2) }
+    o.on('--moves N', Float, 'With --play: live moves a minute on average, 0 for none (default 3 with two decks)') { |v| options[:moves] = v }
     o.on('--passes N', Integer, 'With --play, stop after N progressions') { |v| options[:passes] = v }
     o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
     o.on('--repeat [STYLE]', '--comp [STYLE]', 'Strike the whole chord again on the steps of a style instead of arpeggiating') { |v| options[:repeat] = v || true }

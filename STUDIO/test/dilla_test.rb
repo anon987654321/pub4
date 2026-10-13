@@ -36,7 +36,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/moves.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -718,7 +718,7 @@ class DillaTest < Minitest::Test
     Dir.mktmpdir do |dir|
       player, sink = fake_player(dir)
       out, err, status = run_dilla("--play", "--player", player, "--passes", "4", "--beats", "1", "--seed", "8",
-                                   "--profile", "dry", "--mode", "pad", "--tape", "0", "--out", File.join(dir, "x.wav"), chdir: dir)
+                                   "--profile", "dry", "--mode", "pad", "--tape", "0", "--decks", "1", "--out", File.join(dir, "x.wav"), chdir: dir)
       assert status.success?, err
       passes = out.scan(/^pass (\d+): progression (\d+) \(/)
       assert_equal %w[1 2 3 4], passes.map(&:first)
@@ -1462,7 +1462,7 @@ class DillaTest < Minitest::Test
     Dir.mktmpdir do |dir|
       player, = fake_player(dir)
       out, err, status = run_dilla("--play", "--player", player, "--passes", "3", "--beats", "1", "--seed", "12",
-                                   "--profile", "dry", "--mode", "pad", "--patch-per-chord", "--tape", "0", "--out", File.join(dir, "x.wav"), chdir: dir)
+                                   "--profile", "dry", "--mode", "pad", "--patch-per-chord", "--tape", "0", "--decks", "1", "--out", File.join(dir, "x.wav"), chdir: dir)
       assert status.success?, err
       voices = out.scan(/^pass \d+: .* voice=(\S+) \(patch (\d+)\/(\d+)\)/)
       assert_equal 3, voices.size
@@ -2030,17 +2030,18 @@ class DillaTest < Minitest::Test
 
   def show_with(passes, seed, **extra)
     player = FakePlayer.new([])
-    options = { passes:, seed:, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
+    options = { passes:, seed:, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, decks: 1, out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
     show = Show.new(DATA, options, player:, out: StringIO.new)
     show.run
     [show, player]
   end
 
   def test_the_show_starts_with_one_beat_then_plays_a_bar_at_a_time_and_joins_under_the_last_beat
-    show, player = show_with(3, 6)
+    show, player = show_with(3, 6, beats: 4.0)
     first = show.streamers.first
     assert_equal first.beat, player.blocks.first.size, "one beat first"
-    assert_equal 4 * first.beat, player.blocks[1].size, "then a bar"
+    assert_equal 3 * first.beat, player.blocks[1].size, "the rest of the bar"
+    assert_equal 4 * first.beat, player.blocks[2].size, "then a bar at a time"
     assert_equal 3, show.streamers.size
     assert_equal first.source_end - first.beat, show.joins[1], "the next pass begins one beat before the last ends"
     second = show.streamers[1]
@@ -2068,7 +2069,7 @@ class DillaTest < Minitest::Test
 
   def test_a_player_that_has_gone_ends_the_show_quietly
     player = FakePlayer.new([], false)
-    show = Show.new(DATA, { passes: 5, seed: 1, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, out: File.join(Dir.mktmpdir, "x.wav") },
+    show = Show.new(DATA, { passes: 5, seed: 1, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, decks: 1, out: File.join(Dir.mktmpdir, "x.wav") },
                     player:, out: StringIO.new)
     Timeout.timeout(60) { show.run }
     assert_empty player.blocks
@@ -2090,7 +2091,7 @@ class DillaTest < Minitest::Test
     Dir.mktmpdir do |dir|
       marker = "sleep 97.#{Process.pid % 1000}"
       pid = Process.spawn(RbConfig.ruby, SCRIPT, "--play", "--player", marker, "--seed", "4", "--beats", "1", "--profile", "dry",
-                          "--mode", "pad", "--tape", "0", "--out", File.join(dir, "x.wav"), chdir: dir, out: File.join(dir, "out.txt"), err: File::NULL)
+                          "--mode", "pad", "--tape", "0", "--decks", "1", "--out", File.join(dir, "x.wav"), chdir: dir, out: File.join(dir, "out.txt"), err: File::NULL)
       sleep 6
       Process.kill("TERM", pid)
       status = Timeout.timeout(30) { Process.wait2(pid).last }
@@ -2098,6 +2099,157 @@ class DillaTest < Minitest::Test
       sleep 0.5
       assert_empty Open3.capture2("pgrep", "-f", marker).first.strip, "the player did not outlive the show"
     end
+  end
+
+  # ------------------------------------------------------------- the two-deck mixer and the live moves
+
+  FakeDeck = Struct.new(:echo_boost, :drums_gain)
+
+  def fresh_decks = [FakeDeck.new(1.0, 1.0), FakeDeck.new(1.0, 1.0)]
+
+  # Walk a hand through `minutes` of bars at 88 beats a minute and return what it did.
+  def walk_hand(seed, per_minute, minutes, overlap: ->(_bar) { false })
+    hand = Moves::Hand.new(seed, per_minute:)
+    decks = fresh_decks
+    bar = (4 * 60.0 / 88 * SAMPLE_RATE).round
+    seen = []
+    ((minutes * 60.0 * SAMPLE_RATE) / bar).to_i.times do |i|
+      params = hand.advance(i * bar, bar, bar, decks, overlap: overlap.call(i))
+      seen << [i, hand.current&.fetch(:name), params, decks.map(&:to_a)]
+    end
+    hand.stop(decks)
+    [hand, decks, seen]
+  end
+
+  def test_moves_come_a_few_a_minute_all_six_kinds_none_twice_running_and_are_logged
+    hand, decks, = walk_hand(7, 3.0, 40)
+    names = hand.log.map(&:first)
+    assert_equal Moves::NAMES.sort, names.uniq.sort
+    names.each_cons(2) { |a, b| refute_equal a, b }
+    rate = names.size / 40.0
+    assert_operator rate, :>=, 1.0
+    assert_operator rate, :<=, 4.0
+    assert_equal [[1.0, 1.0]] * 2, decks.map(&:to_a), "every moved parameter is put back"
+    hand.log.each_cons(2) do |(_, start, bars), (_, next_start, _)|
+      assert_operator next_start - (start + (bars * 4 * 60.0 / 88 * SAMPLE_RATE)), :>=, Moves::GAP_SECONDS * SAMPLE_RATE - 4, "a gap between moves"
+    end
+  end
+
+  def test_moves_are_seeded_start_on_bar_lines_and_never_while_two_decks_cross
+    a, = walk_hand(3, 4.0, 20)
+    b, = walk_hand(3, 4.0, 20)
+    c, = walk_hand(4, 4.0, 20)
+    assert_equal a.log, b.log
+    refute_equal a.log, c.log
+    bar = (4 * 60.0 / 88 * SAMPLE_RATE).round
+    assert(a.log.all? { |_, start, _| (start % bar).zero? })
+    crossing = ->(i) { (i % 10) >= 6 }
+    hand, = walk_hand(5, 30.0, 10, overlap: crossing)
+    assert(hand.log.none? { |_, start, _| crossing.call(start / bar) }, "no move begins inside a crossfade")
+    quiet, = walk_hand(5, 0.0, 10)
+    assert_empty quiet.log
+  end
+
+  def test_each_move_changes_its_parameter_and_gives_it_back
+    hand = Moves::Hand.new(1, per_minute: 0.0)
+    cut = ->(name, bars) { hand.instance_variable_set(:@current, { name:, start: 0, length: bars * 1000, bars: }) }
+    cut.call("filter_sweep", 3)
+    first, = hand.send(:params, 0.0, 0.01, [])[:cutoff]
+    mid = hand.send(:params, 0.45, 0.5, [])[:cutoff].first
+    last = hand.send(:params, 0.99, 1.0, [])[:cutoff].last
+    assert_in_delta Moves::TOP_HZ, first, 200
+    assert_in_delta Moves::LOW_HZ, mid, 1
+    assert_in_delta Moves::TOP_HZ, last, 200
+    cut.call("tape_ramp", 3)
+    assert_in_delta 2.0, hand.send(:params, 0.45, 0.55, [])[:tape], 1e-9
+    assert_operator hand.send(:params, 0.0, 0.02, [])[:tape], :<, 1.1
+    cut.call("sonitex_climb", 5)
+    assert_equal [1, 2, 3, 2, 1], [0.0, 0.2, 0.4, 0.6, 0.8].map { |p| hand.send(:params, p, p + 0.1, [])[:sonitex] }
+    cut.call("reverb_swell", 3)
+    assert_equal [0.0, 0.0], hand.send(:params, 0.0, 0.0, [])[:room].map { |v| v.round(6) }
+    assert_in_delta Moves::ROOM_LEVEL, hand.send(:params, 0.4, 0.5, [])[:room].last, 1e-9
+    assert_in_delta 0.0, hand.send(:params, 1.0, 1.0, [])[:room].last, 1e-9
+  end
+
+  def test_the_master_stage_does_nothing_unless_asked_and_a_sweep_darkens_it
+    rng = Random.new(2)
+    noise = Array.new(20_000) { ((rng.rand * 2) - 1) * 0.3 }
+    master = Moves::Master.new(tape: nil, ceiling: 0.97, preset: DATA.dig("sonitex", "presets").values.first, seed: 1)
+    assert_equal noise, master.process(noise)
+    dark = master.process(noise, cutoff: [700.0, 700.0])
+    high = ->(buf) { Tape.rms(Colour.highpass(buf, 6000.0)) }
+    assert_operator Tape.db(high.call(dark) / high.call(noise)), :<, -20.0
+    wet = Moves::Master.new(tape: nil, ceiling: 0.97, preset: DATA.dig("sonitex", "presets").values.first, seed: 1)
+    refute_equal noise, wet.process(noise, sonitex: 3)
+    refute_equal noise, wet.process(noise, room: [0.4, 0.4])
+    stack = Tape::Stack.new(instances: 2, seed: 1, config: DATA.fetch("tape"))
+    taped = Moves::Master.new(tape: stack, ceiling: 0.97, preset: DATA.dig("sonitex", "presets").values.first, seed: 1)
+    taped.process(noise, tape: 2.0)
+    assert_equal [2.0, 2.0], stack.machines.map(&:scale)
+    taped.process(noise)
+    assert_equal [1.0, 1.0], stack.machines.map(&:scale), "the drive goes back when the move ends"
+  end
+
+  def test_a_prefetched_deck_gives_the_same_samples_and_the_live_controls_act
+    options = { prog: 3, seed: 5, beats: 1.0, profile: "eclectic", tape: 0 }
+    plain, = stream_pass(options, 20_000)
+    ahead = Streamer.new(DATA, options)
+    ahead.prefetch(50_000)
+    out = []
+    out.concat(ahead.next_block(20_000)) until ahead.finished?
+    assert_equal plain, out
+    muted = Streamer.new(DATA, options)
+    muted.drums_gain = 0.0
+    quiet = []
+    quiet.concat(muted.next_block(20_000)) until muted.finished?
+    assert_operator Tape.rms(quiet), :<, Tape.rms(plain) * 0.7, "a dropout takes the drums out"
+    thrown = Streamer.new(DATA, options.merge(profile: "arp_echo"))
+    thrown.echo_boost = 3.0
+    base, = stream_pass(options.merge(profile: "arp_echo"), 20_000)
+    loud = []
+    loud.concat(thrown.next_block(20_000)) until thrown.finished?
+    assert_operator Tape.rms(loud), :>, Tape.rms(base), "a throw turns the echo up"
+    assert_equal 1.0, Streamer.new(DATA, options).echo_boost
+  end
+
+  def two_deck_show(passes, seed, **extra)
+    player = FakePlayer.new([])
+    options = { passes:, seed:, profile: "eclectic", mode: "pad", voice: "pure_tone", tape: 0, decks: 2, moves: 0,
+                out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
+    show = Show.new(DATA, options, player:, out: StringIO.new)
+    show.run
+    [show, player]
+  end
+
+  def test_two_decks_play_eight_to_sixteen_bars_and_cross_over_two_to_four_on_the_bar_line
+    show, player = two_deck_show(3, 9)
+    assert_equal 3, show.streamers.size
+    show.streamers.each do |deck|
+      bars = deck.source_end.to_f / (4 * deck.beat)
+      assert_operator bars, :>=, 7.9
+      assert_operator bars, :<=, 16.1
+    end
+    assert_equal 3, show.crossfades.size
+    assert(show.crossfades.all? { |beats| [8, 12, 16].include?(beats) }, "two to four bars: #{show.crossfades}")
+    show.streamers.each_cons(2).with_index do |(a, b), i|
+      assert_equal show.joins[i] + a.source_end - a.fade_out, show.joins[i + 1]
+      assert_operator ((a.source_end - a.fade_out) % (4 * a.beat)).then { |r| [r, 4 * a.beat - r].min }, :<=, 1, "on A's bar line"
+      assert_operator (a.plan.bpm - b.plan.bpm).abs, :<=, Show::TEMPO_WINDOW + 1e-9, "tempo within six beats a minute"
+      assert_equal a.fade_out, b.instance_variable_get(:@fade_in), "the same length out and in"
+    end
+    samples = player.blocks.flatten
+    assert_operator samples.size, :>=, show.joins.last + show.streamers.last.source_end
+    quiet = (0...((show.joins.last + show.streamers.last.source_end) / 22_050 - 1)).count { |i| Tape.rms(samples[i * 22_050, 22_050]) < 0.003 }
+    assert_equal 0, quiet, "the music never drops out, the drums run on through every join"
+  end
+
+  def test_live_moves_run_inside_a_show_are_logged_and_leave_every_deck_as_it_was
+    show, = two_deck_show(2, 13, moves: 40.0)
+    refute_empty show.hand.log
+    assert_equal [1.0], show.streamers.map(&:echo_boost).uniq
+    assert_equal [1.0], show.streamers.map(&:drums_gain).uniq
+    again, = two_deck_show(2, 13, moves: 40.0)
+    assert_equal show.hand.log, again.hand.log
   end
 
 end

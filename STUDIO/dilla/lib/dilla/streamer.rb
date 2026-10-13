@@ -13,6 +13,8 @@
 # the echo's tail.
 class Streamer
   attr_reader :plan, :position, :total, :source_end, :fade_out, :beat
+  # Live moves: the drums' level (0 for a dropout) and the echo's send boost.
+  attr_accessor :drums_gain
 
   # `fade_in` is a number of samples, `fade_out_beats` a number of this pass's beats.
   def initialize(data, options, fade_in: 0, fade_out_beats: 0, play_tail: true)
@@ -22,8 +24,10 @@ class Streamer
     @seq = @plan.seq
     @bpm = @plan.bpm
     @position = 0
+    @drums_gain = 1.0
+    @ahead = []
     @beat = (60.0 / @bpm * SAMPLE_RATE).round
-    @source_end = (@plan.names.size * @plan.beats * 60.0 / @bpm * SAMPLE_RATE).round
+    @source_end = (@plan.names.size * @plan.beats * @beat).round # whole beats of whole samples, so a join falls on a bar line
     @fade_in = fade_in
     @fade_out = (fade_out_beats * @beat).round
     build_source
@@ -32,8 +36,6 @@ class Streamer
     @total = @source_end + (play_tail ? @tail : 0)
   end
 
-  def finished? = @position >= @total
-
   def silent_after_source? = @position >= @source_end
 
   # Seconds the pass plays before its tail.
@@ -41,6 +43,33 @@ class Streamer
 
   # The next `count` samples, fewer at the end of the pass.
   def next_block(count)
+    return @ahead.shift(count) if @ahead.size >= count
+
+    taken = @ahead.shift(@ahead.size)
+    count -= taken.size
+    return taken if count <= 0 || finished?
+
+    taken + render_block(count)
+  end
+
+  # Render the first `count` samples now and hand them out when asked: a deck prepared while
+  # the other one plays.
+  def prefetch(count)
+    @ahead.concat(render_block([count, @total - @position].min)) unless finished?
+  end
+
+  def echo_boost=(factor)
+    @echo&.boost = factor
+  end
+
+  def echo_boost = @echo ? @echo.boost : 1.0
+
+  # Whether anything of the pass is rendered and not yet handed out.
+  def finished? = @position >= @total && @ahead.empty?
+
+  private
+
+  def render_block(count)
     count = [count, @total - @position].min
     return [] if count <= 0
 
@@ -50,8 +79,6 @@ class Streamer
     @position += count
     wet
   end
-
-  private
 
   # ------------------------------------------------------------- the source
   def build_source
@@ -197,6 +224,23 @@ class Streamer
     end
   end
 
+  # The drums enter at equal power over the crossfade, and a dropout holds them at nothing, with
+  # ten milliseconds to get there and back so it does not click.
+  def drum_level(drums, from)
+    ramp = (0.01 * SAMPLE_RATE).round
+    target = @drums_gain
+    previous = @drums_applied || target
+    @drums_applied = target
+    return drums if @fade_in.zero? && target == 1.0 && previous == 1.0 && from >= @fade_in
+
+    drums.each_with_index.map do |v, i|
+      at = from + i
+      gain = at < @fade_in ? Math.sin(Math::PI / 2 * at / @fade_in) : 1.0
+      level = i < ramp ? previous + ((target - previous) * i / ramp) : target
+      v * gain * level
+    end
+  end
+
   # The low end grown from the kicks: a room, a lowpass, drive, two more lowpasses, scaled by a
   # fixed gain found once from a single kick, where a whole render scales by its own peak.
   def rumble_chain(kit)
@@ -215,7 +259,7 @@ class Streamer
   end
 
   def mix_drums(chords, from)
-    drums = @drum_bank.block(from, chords.size)
+    drums = drum_level(@drum_bank.block(from, chords.size), from)
     if @separate_bus
       if @rumble
         grown = @rumble_run.call(@rumble_stages, @kick_bank.block(from, chords.size))

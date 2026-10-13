@@ -169,7 +169,11 @@ module Stream
   class EchoLine
     MAX_INTENSITY = 0.9
 
+    # How much of the input reaches the tape, on top of `send`: a throw turns it up for a bar.
+    attr_accessor :boost
+
     def initialize(delay:, heads: [1, 2], intensity: 0.5, volume: 0.45, lowpass: 3200, saturation: 0.35, reverb: 0.0, resets: [], send: nil)
+      @boost = 1.0
       @intensity = intensity.to_f.clamp(0.0, MAX_INTENSITY)
       @d = [(delay * SAMPLE_RATE).round, 1].max
       @heads = heads
@@ -197,6 +201,7 @@ module Stream
         @y += (1.0 - @cutoff) * ((Math.tanh(taps * @share * @drive) / @drive) - @y)
         fed = block[i]
         fed *= @send.call(@n) if @send
+        fed *= @boost unless @boost == 1.0
         @ring[@n % @ring.size] = fed + (@intensity * @y)
         @n += 1
         @y
@@ -333,6 +338,38 @@ module Stream
         reader.done?
       end
       out
+    end
+  end
+  # A one pole whose cutoff moves in a straight line across each block, so a sweep driven by
+  # an event steps no faster than the block and clicks nowhere.
+  class SweepLowpass
+    def initialize = @y = 0.0
+
+    def process(buf, from_hz, to_hz)
+      last = [buf.size - 1, 1].max
+      buf.each_with_index.map do |x, i|
+        hz = from_hz + ((to_hz - from_hz) * i / last)
+        a = 1.0 - Math.exp(-TAU * hz / SAMPLE_RATE)
+        @y += a * (x - @y)
+      end
+    end
+  end
+
+  # Sonitex passes of which only the first `active` run.
+  class SonitexClimb
+    def initialize(preset, seed) = @stack = Array.new(3) { |k| Sonitex.new(preset, Random.new(seed + (k * 104_729))) }
+
+    def process(buf, active) = @stack.first(active.clamp(1, 3)).inject(buf) { |out, pass| pass.process(out) }
+  end
+
+  # The room of a reverb swell: the wet signal added at a level that moves across the block.
+  class RoomSend
+    def initialize(amount = 0.8) = @room = Reverb.new(amount)
+
+    def process(buf, from, to)
+      wet = @room.process(buf)
+      last = [buf.size - 1, 1].max
+      buf.each_with_index.map { |x, i| x + (wet[i] * (from + ((to - from) * i / last))) }
     end
   end
 end
