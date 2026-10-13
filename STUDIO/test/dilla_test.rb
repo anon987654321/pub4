@@ -883,7 +883,7 @@ class DillaTest < Minitest::Test
     seen = picks.map { |p| p[:prog] }
     assert_equal({ 3 => count }, seen.tally.values.tally)
     seen.each_cons(2) { |a, b| refute_equal a, b }
-    families = picks.map { |p| DATA.dig("voices", p[:voice], "group") }
+    families = picks.reject { |p| p[:mode] == "organ" }.map { |p| DATA.dig("voices", p[:voice], "group") } # the organ mode draws no patch
     families.each_cons(2) { |a, b| refute_equal a, b }
     picks.map { |p| p[:mode] }.each_cons(2) { |a, b| refute_equal a, b }
     picks.select { |p| p[:style] }.group_by { |p| p[:mode] }.each_value { |rows| rows.map { |p| p[:style] }.each_cons(2) { |a, b| refute_equal a, b } }
