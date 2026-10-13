@@ -8,6 +8,14 @@ module Master
     module Pledge
       module_function
 
+      # OpenBSD returns -1 and sets errno when a security restriction fails.
+      # Keep the result check portable so refusal behavior can be unit-tested off-host.
+      def checked_syscall!(operation, result, error = nil)
+        raise SystemCallError.new(operation, error) if result == -1
+
+        result
+      end
+
       if RUBY_PLATFORM.include?("openbsd")
         require "fiddle"
         require "fiddle/import"
@@ -20,16 +28,18 @@ module Master
         end
 
         def pledge(promises, execpromises = nil)
-          r = LibC.pledge(promises, execpromises || Fiddle::NULL)
-          raise SystemCallError.new("pledge", Fiddle.last_error) if r == -1
+          checked_syscall!("pledge", LibC.pledge(promises, execpromises || Fiddle::NULL), Fiddle.last_error)
         end
 
         def unveil(path, permissions)
-          r = LibC.unveil(path, permissions)
-          raise SystemCallError.new("unveil", Fiddle.last_error) if r == -1
+          checked_syscall!("unveil", LibC.unveil(path, permissions), Fiddle.last_error)
         end
 
-        def lock_unveil! = LibC.unveil(Fiddle::NULL, Fiddle::NULL)
+        # Locking is the last filesystem boundary in boot. A rejected syscall
+        # must abort boot instead of claiming the process has a fixed view.
+        def lock_unveil!
+          checked_syscall!("unveil", LibC.unveil(Fiddle::NULL, Fiddle::NULL), Fiddle.last_error)
+        end
         def openbsd? = true
       else
         def pledge(*) = nil

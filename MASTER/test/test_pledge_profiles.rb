@@ -34,6 +34,26 @@ class PledgeProfileTest < Minitest::Test
     assert profile.promises.frozen?
   end
 
+  def test_security_syscall_failures_are_not_reported_as_success
+    pledge = Master::Ground::Pledge
+
+    assert_equal 0, pledge.checked_syscall!("unveil", 0)
+    error = assert_raises(SystemCallError) do
+      pledge.checked_syscall!("unveil", -1, Errno::EPERM::Errno)
+    end
+    assert_equal Errno::EPERM::Errno, error.errno
+    assert_match(/unveil/, error.message)
+  end
+
+  def test_unveil_lock_checks_the_kernel_result
+    source = File.read(File.expand_path("../lib/ground/pledge.rb", __dir__))
+
+    assert_match(
+      /def lock_unveil!\s+checked_syscall!\("unveil", LibC\.unveil\(Fiddle::NULL, Fiddle::NULL\), Fiddle\.last_error\)/,
+      source
+    )
+  end
+
   def test_unknown_profile_is_rejected
     assert_raises(KeyError) { Master::Ground::Pledge.profile(:unknown) }
   end
