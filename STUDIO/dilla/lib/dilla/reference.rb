@@ -122,6 +122,7 @@ module Dilla
       scoped_profile = profile_path(profile.fetch("style_key"))
       FileUtils.mkdir_p(File.dirname(scoped_profile))
       File.write(scoped_profile, JSON.pretty_generate(profile) + "\n")
+      write_active_style(profile.fetch("style_key"))
       write_report(File.join(directory, "report.md"), tracks, separation, profile)
       puts "reference0: style_hint=#{profile.fetch('style_key')}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
@@ -232,6 +233,27 @@ module Dilla
     def profile_path(style)
       key = style_key(style)
       File.join(REFERENCE_ROOT, "profiles", key, "latest_profile.json")
+    end
+
+    def active_style_path
+      File.join(REFERENCE_ROOT, "active_style.json")
+    end
+
+    def active_style
+      value = JSON.parse(File.read(active_style_path))
+      key = style_key(value["style_key"])
+      %w[j_dilla industrial_techno].include?(key) ? key : "general"
+    rescue Errno::ENOENT, JSON::ParserError, TypeError, NoMethodError
+      "general"
+    end
+
+    def write_active_style(style)
+      key = style_key(style)
+      return key unless %w[j_dilla industrial_techno].include?(key)
+
+      FileUtils.mkdir_p(REFERENCE_ROOT)
+      File.write(active_style_path, JSON.pretty_generate({ "style_key" => key }) + "\n")
+      key
     end
 
     def profile_for(mix, style: "general")
