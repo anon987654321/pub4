@@ -55,13 +55,17 @@ class TestChitchatRouting < Minitest::Test
     assert_includes(free_ids + keyless_ids, model)
   end
 
-  def test_chitchat_fallback_chain_prefers_free_or_keyless_head
+  def test_chitchat_fallback_chain_obeys_premium_free_browser_local_order
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
-    free_ids = Array(router.send(:load_laws).dig("models", "free")).filter_map { |row| row["id"] }
-    keyless_ids = Array(router.send(:load_laws).dig("ferrum_web_chat", "free_latest"))
-    allowed = free_ids + keyless_ids
     chain = router.fallback_chain(task_type: :chitchat)
+
     assert chain.any?, "expected non-empty fallback chain"
-    assert_includes allowed, chain.first
+    assert_equal chain, router.send(:priority_fallback_order, chain)
+
+    browser = chain.index { |id| id.start_with?("web-chat:") }
+    local = chain.index { |id| SelectionKind.local?(id) }
+    free = chain.each_index.select { |index| router.send(:free_api_model?, chain[index]) }
+    assert_operator free.max, :<, browser if browser && free.any?
+    assert_operator browser, :<, local if browser && local
   end
 end
