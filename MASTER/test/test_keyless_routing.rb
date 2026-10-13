@@ -265,6 +265,11 @@ class TestKeylessRouting < Minitest::Test
     end
     assert_equal ["z-ai/glm-free:free"], router.send(:hosted_ids, spec, nil)
     assert_equal ["z-ai/glm-free:free"], router.send(:hosted_ids, spec, "test-key")
+
+    index = router.send(:hosted_index)
+    endpoint = index.fetch("kilo:z-ai/glm-free:free")
+    assert_equal "https://api.kilo.ai/api/gateway", endpoint[:base]
+    assert_nil endpoint[:key], "keyless inference must not invent an API credential"
   end
 
   def test_kilo_gateway_can_be_disabled_explicitly
