@@ -97,7 +97,7 @@ module Master
         end
 
         def phase_prompt(last_ok, _phase)
-          last_ok ? "input" : "error input"
+          last_ok ? prompt_token : "!"
         end
 
         def token_label(tokens)
@@ -117,8 +117,8 @@ module Master
           text.to_s.gsub(ANSI_ESCAPE, "")
         end
 
-        # One physical command line: host, location, Git, destination, phase and input.
-        # Keep every visible character to letters, numbers and spaces. Reline owns editing.
+        # One physical command line: host, checkout/path, Git, destination, phase and
+        # shell token. Preserve path and shell punctuation; Reline owns editing.
         def shell_prompt(phase, last_ok, destination: "llm", focused: false)
           host = bounded_prompt_segment(safe_hostname.to_s.split(".").first, 8)
           host = "openbsd" if host.empty?
@@ -145,7 +145,7 @@ module Master
 
         def plain_prompt_segment(value)
           value.to_s.scrub.gsub(ANSI_ESCAPE, "").unicode_normalize(:nfc)
-            .gsub(/[^\p{L}\p{N}]+/u, " ").strip.gsub(/\s+/, " ")
+            .gsub(/[\p{Cc}\p{Cf}]+/u, " ").strip.gsub(/\s+/, " ")
         rescue StandardError
           ""
         end
@@ -157,8 +157,8 @@ module Master
           text[0, width].strip
         end
 
-        # Keep path lookup filesystem-aware and bounded. The final prompt turns
-        # path punctuation into spaces so names stay readable without shell glyphs.
+        # Keep path lookup filesystem-aware and bounded. Path separators remain
+        # visible so the checkout and current directory read as a real location.
         def prompt_path(suffix_length: 0)
           current = File.expand_path(Dir.pwd)
           location = repository_location(current) || home_path(current)
