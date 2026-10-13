@@ -17,7 +17,7 @@ module MIDI
   # [start seconds, length seconds, midi note, velocity]. The file runs at 120 beats a minute,
   # so a second is 960 ticks, and ends `tail` seconds after the last note so the soundfont's
   # releases are rendered before it stops.
-  def self.write_notes(path, notes, program:, bank: 0, tail: 2.5)
+  def self.write_notes(path, notes, program:, bank: 0, tail: 2.5, replace: false)
     ticks = ->(seconds) { (seconds * 2 * PPQN).round }
     events = notes.flat_map do |start, length, midi, velocity|
       [[ticks.call(start), 0x90, midi, velocity.clamp(1, 127)], [ticks.call(start + length), 0x80, midi, 0]]
@@ -31,10 +31,10 @@ module MIDI
       last = tick
     end
     track << vlq(ending - last) << "\xFF\x2F\x00".b
-    File.binwrite(path, 'MThd'.b + [6, 0, 1, PPQN].pack('Nnnn') + 'MTrk'.b + [track.bytesize].pack('N') + track)
+    WAV.write_bytes(path, 'MThd'.b + [6, 0, 1, PPQN].pack('Nnnn') + 'MTrk'.b + [track.bytesize].pack('N') + track, replace:)
   end
 
-  def self.write(path, names, bpm, beats, hits, search: true)
+  def self.write(path, names, bpm, beats, hits, search: true, replace: false)
     ticks = ->(seconds) { (seconds * bpm / 60.0 * PPQN).round }
     chord_len = (beats * PPQN).round
     events = []
@@ -57,7 +57,7 @@ module MIDI
     end
     track << "\x00\xFF\x2F\x00".b
     header = 'MThd'.b + [6, 0, 1, PPQN].pack('Nnnn')
-    File.binwrite(path, header + 'MTrk'.b + [track.bytesize].pack('N') + track)
+    WAV.write_bytes(path, header + 'MTrk'.b + [track.bytesize].pack('N') + track, replace:)
   end
 end
 
