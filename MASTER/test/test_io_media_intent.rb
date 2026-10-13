@@ -258,25 +258,33 @@ end
   end
 
   def test_reference_audio_request_dispatches_audio_only_to_dilla
-    request = "use yt-dlp and demucs to grab, split up, and analyze https://youtu.be/mx9NU4LmDwM?si=example12345"
-    assert MediaIntent.handles?(request)
-    refute MediaIntent.handles?("I liked the music inside that YouTube video")
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      request = "use yt-dlp and demucs to grab, split up, and analyze https://youtu.be/mx9NU4LmDwM?si=example12345"
+      assert MediaIntent.handles?(request)
+      refute MediaIntent.handles?("I liked the music inside that YouTube video")
 
-    calls = []
-    with_dispatch_stub(lambda do |**kwargs|
-      calls << kwargs
-      Master::Result.ok("reference0: analyzed audio")
-    end) do
-      result = MediaIntent.dispatch(request, root: "/tmp/pub4")
-      assert result.ok?, result.inspect
-      assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          Master::Result.ok("reference0: analyzed audio")
+        end) do
+          result = MediaIntent.dispatch(request, root: "/tmp/pub4")
+          assert result.ok?, result.inspect
+          assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+
+      assert_equal 1, calls.size
+      assert_equal "dilla", calls.first.fetch(:tool)
+      argv = Shellwords.split(calls.first.fetch(:arg))
+      assert_equal "reference", argv.first
+      assert_equal "https://youtu.be/mx9NU4LmDwM?si=example12345", argv[1]
     end
-
-    assert_equal 1, calls.size
-    assert_equal "dilla", calls.first.fetch(:tool)
-    argv = Shellwords.split(calls.first.fetch(:arg))
-    assert_equal "reference", argv.first
-    assert_equal "https://youtu.be/mx9NU4LmDwM?si=example12345", argv[1]
   end
 
   def test_a_bare_youtube_link_is_treated_as_an_audio_reference
@@ -321,6 +329,23 @@ end
             assert_equal :audio_reference_analysis, result.value!.fetch(:media)
           end
         end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+    end
+  end
+
+  def test_active_style_survives_a_general_latest_reference
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      root = File.join(dir, "dilla-references")
+      FileUtils.mkdir_p(root)
+      File.write(File.join(root, "active_style.json"), JSON.generate("style_key" => "j_dilla"))
+      File.write(File.join(root, "latest_profile.json"), JSON.generate("style_key" => "general"))
+      begin
+        assert_equal "j_dilla", MediaIntent.active_reference_style
+        assert_equal "j_dilla", MediaIntent.reference_style_for("here is another song https://youtu.be/mx9NU4LmDwM")
       ensure
         saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
       end
@@ -424,10 +449,12 @@ end
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
       ENV["XDG_DATA_HOME"] = dir
-      FileUtils.mkdir_p(File.join(dir, "dilla-references"))
-      File.write(File.join(dir, "dilla-references", "latest_profile.json"), JSON.generate(
-        "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "behind_the_beat"
-      ))
+      reference_root = File.join(dir, "dilla-references")
+      FileUtils.mkdir_p(File.join(reference_root, "profiles", "j_dilla"))
+      profile = JSON.generate("style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "behind_the_beat")
+      File.write(File.join(reference_root, "latest_profile.json"), profile)
+      File.write(File.join(reference_root, "profiles", "j_dilla", "latest_profile.json"), profile)
+      File.write(File.join(reference_root, "active_style.json"), JSON.generate("style_key" => "j_dilla"))
       calls = []
       begin
         with_dispatch_stub(dilla_runner(calls)) do
