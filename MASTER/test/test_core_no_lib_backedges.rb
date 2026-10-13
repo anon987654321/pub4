@@ -44,6 +44,55 @@ class NoLibBackedgesTest < Minitest::Test
     assert_empty offenders, "lib/core (the fold spine) must not require the rest of lib/:\n#{offenders.join("\n")}"
   end
 
+  def test_effect_fold_keeps_policy_io_memory_and_proof_responsibilities_separate
+    fold = LIB.join("core/fold.rb").read
+    constitution = LIB.join("core/constitution.rb").read
+    world = LIB.join("core/world.rb").read
+    memory = LIB.join("core/memory.rb").read
+    proof = LIB.join("core/proof.rb").read
+
+    assert_includes fold, "@law.admit(effect, @memory)"
+    assert_includes fold, "@world.perform"
+    assert_includes fold, "@memory.record(effect, observation)"
+    assert_includes fold, "@world.checkpoint"
+    assert_includes fold, "@world.rollback"
+
+    assert_includes constitution, "def admit(effect, memory)"
+    assert_includes constitution, "Verdict::Block"
+    assert_includes world, "def perform(effect)"
+    assert_includes world, "@capabilities.require!(effect.capability)"
+    assert_includes memory, "def record(effect, observation)"
+    assert_includes memory, "@proof.record_evidence(effect, observation)"
+    assert_includes proof, "PRODUCERS ="
+    assert_includes proof, "PASS_THRESHOLD = 80"
+  end
+
+  def test_repository_repair_loop_remains_distinct_from_the_effect_fold
+    fix_loop = ROOT.join("lib/fix/fix_loop.rb").read
+    protocol = ROOT.join("lib/fix/protocol.rb").read
+
+    assert_includes fix_loop, "class FixLoop"
+    assert_includes fix_loop, 'require_relative "run_journal"'
+    assert_includes fix_loop, 'require_relative "protocol"'
+    assert_includes protocol, "TERMINAL_STATES ="
+    %w[DONE PLATEAU HUMAN_DECISION BLOCKED VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED].each do |state|
+      assert_includes protocol, state
+    end
+  end
+
+  def test_canonical_constitutional_sources_remain_required
+    soul_path = ROOT.join("data/soul.yml")
+    laws_path = ROOT.join("data/laws.yml")
+    contract_path = ROOT.join("lib/operator/constitution_contract.rb")
+
+    assert soul_path.file?, "the canonical soul data must remain present"
+    assert laws_path.file?, "the canonical law catalogue must remain present"
+    assert_includes soul_path.read, "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+    contract = contract_path.read
+    assert_includes contract, "MASTER/data/soul.yml"
+    assert_includes contract, "MASTER/data/laws.yml"
+  end
+
   def test_the_fold_spine_is_actually_being_looked_at
     refute_empty CORE, "no fold-spine files found — this test would pass having measured nothing"
     assert_includes CORE.map { |p| p.basename.to_s }, "fold.rb"
