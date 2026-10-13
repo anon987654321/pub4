@@ -69,6 +69,27 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_term_to_the_wrapper_reaches_the_run
+    with_worktree do |_main, worker, tools_bin|
+      pidfile = File.join(worker, "child.pid")
+      env = { "PATH" => "#{tools_bin}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}", "FAKE_PIDFILE" => pidfile }
+      wrapper = Process.spawn(env, RbConfig.ruby, File.join(worker, "MASTER/bin/fix-here"), "MASTER", "--model", "none", "--no-probe",
+                              chdir: worker, out: File::NULL, err: File::NULL)
+      30.times { break if File.exist?(pidfile) && !File.read(pidfile).empty?; sleep 0.2 }
+      child = File.read(pidfile).to_i
+      Process.kill("TERM", wrapper)
+      Process.wait(wrapper)
+      sleep 0.3
+      gone = begin
+        Process.kill(0, child) && false
+      rescue Errno::ESRCH
+        true
+      end
+      Process.kill("KILL", child) unless gone
+      assert gone, "the run kept going after the wrapper was terminated"
+    end
+  end
+
   private
 
   def with_worktree
@@ -83,7 +104,7 @@ class TestFixHere < Minitest::Test
       %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
         File.join(main, "MASTER/bin/master"),
-        "#!/usr/bin/env ruby\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
+        "#!/usr/bin/env ruby\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
       )
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/fix-here"))
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/master"))

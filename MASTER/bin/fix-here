@@ -123,6 +123,8 @@ end
 status = nil
 begin
   pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, *passthrough, chdir: ROOT, out: [log, "w"], err: [:child, :out])
+# A TERM or INT aimed at the wrapper must reach the run; otherwise it keeps the quota and the worktree.
+%w[TERM INT HUP].each { |sig| trap(sig) { Process.kill("TERM", pid) rescue nil } }
 # Ends the run when the pulse reports a stall past the limit, instead of waiting out hours.
 stalled = false
 watcher = Thread.new do
