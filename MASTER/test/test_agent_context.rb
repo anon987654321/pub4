@@ -33,7 +33,7 @@ class TestAgentContext < Minitest::Test
       assert_includes output, "src/"
       assert_includes output, "main.rb"
       assert_includes output, "deep.rb"
-      refute_includes output, "node_modules"
+      refute_includes output.lines.grep_v(/\Askips:/).join, "node_modules"
     end
   end
 

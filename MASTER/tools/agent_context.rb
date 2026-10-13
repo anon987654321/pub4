@@ -22,9 +22,9 @@ module Operator
     MASTER_DIR = File.expand_path("..", __dir__)
     REPO_ROOT = File.expand_path("..", MASTER_DIR)
     BLOCKING = %i[veto critical error].freeze
-    TREE_DEFAULT_DEPTH = 4
+    TREE_DEFAULT_DEPTH = 2
     TREE_DEFAULT_MAX_ENTRIES = 2_000
-    TREE_SKIP = %w[.git .bundle vendor node_modules tmp log coverage storage .master knowledge output sockets pids cache].freeze
+    TREE_SKIP = %w[.git .bundle vendor node_modules tmp log coverage storage .master .constitutional_locks knowledge output sockets pids cache].freeze
 
     module_function
 
