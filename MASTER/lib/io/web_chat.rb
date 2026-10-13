@@ -12,7 +12,9 @@ module Master
       DEFAULT_TIMEOUT = 120
       ENABLE_ENV = "MASTER_WEB_CHAT"
       KEYLESS_ENV = "MASTER_KEYLESS"
+      HEADFUL_ENV = "MASTER_WEB_CHAT_HEADFUL"
       POLL_INTERVAL_S = 0.5
+      LOGIN_POLL_INTERVAL_S = 1.0
       PNG_SIGNATURE = "\x89PNG\r\n\x1a\n".b.freeze
 
       DisabledError = Class.new(StandardError)
@@ -31,6 +33,7 @@ module Master
         raise DisabledError, disabled_message unless enabled?
 
         @screenshot_evidence = []
+        @screenshot_capture_failure_reported = false
         full_prompt = [system, prompt].compact.join("\n\n")
         with_browser { |page| converse(page, full_prompt) }
       end
@@ -70,7 +73,7 @@ module Master
         require "ferrum"
         FileUtils.mkdir_p(profile_path)
         browser = Ferrum::Browser.new(
-          headless: true,
+          headless: ENV[HEADFUL_ENV] != "1",
           timeout: timeout_seconds,
           process_timeout: timeout_seconds,
           browser_options: { "user-data-dir" => profile_path },
@@ -96,9 +99,28 @@ module Master
       end
 
       def fill_prompt(page, text)
-        field = find_element(page, @config.fetch("input_selector"))
-        raise ProviderError, "#{@provider}: input not found (login required?)" unless field
+        selector = @config.fetch("input_selector")
+        field = find_element(page, selector)
+        field ||= wait_for_login(page, selector) if ENV[HEADFUL_ENV] == "1"
+        unless field
+          detail = ENV[HEADFUL_ENV] == "1" ? "sign-in did not expose the chat input" : "login required? set #{HEADFUL_ENV}=1 to sign in once"
+          raise ProviderError, "#{@provider}: input not found (#{detail})"
+        end
         field.focus.type(text, :Enter)
+      end
+
+      # A dedicated Ferrum profile has its own cookies. In explicit headful mode,
+      # let the operator sign in on the real provider page before sending a prompt.
+      def wait_for_login(page, selector)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [timeout_seconds - 5, 1].max
+        loop do
+          field = find_element(page, selector)
+          return field if field
+          break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+          sleep LOGIN_POLL_INTERVAL_S
+        end
+        nil
       end
 
       def read_reply(page, previous: nil)
@@ -174,7 +196,10 @@ module Master
         (@screenshot_evidence ||= []) << evidence.freeze
         evidence
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "WebChat.screenshot", provider: @provider)
+        unless @screenshot_capture_failure_reported
+          @screenshot_capture_failure_reported = true
+          Master::Ground::Swallow.log(e, context: "WebChat.screenshot", provider: @provider)
+        end
         nil
       end
 
