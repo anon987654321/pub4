@@ -430,6 +430,34 @@ class TestKeylessRouting < Minitest::Test
     refute_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
   end
 
+  def test_browser_chat_follows_free_apis_and_precedes_local_fallbacks
+    router = Master::CLI::Routing::ModelRouter.allocate
+    router.instance_variable_set(:@rules, { "models" => {} })
+    router.instance_variable_set(:@config, FakeConfig.new(model: "configured:model"))
+    router.define_singleton_method(:local_only?) { false }
+    router.define_singleton_method(:preferred) { |task_type:| "preferred:model" }
+    router.define_singleton_method(:tier_ids) { ["free-api:model"] }
+    router.define_singleton_method(:primary_models) { ["premium:subscription"] }
+    router.define_singleton_method(:agy_catalog_models) { [] }
+    router.define_singleton_method(:cli_lane_models) { |wait: false| [] }
+    router.define_singleton_method(:continuity_models) { ["openrouter/free-model:free"] }
+    router.define_singleton_method(:ollama_cloud_models) { [] }
+    router.define_singleton_method(:hosted_models) { ["llm7:free-model"] }
+    router.define_singleton_method(:browser_chat_models) { ["web-chat:grok"] }
+    router.define_singleton_method(:local_server_models) { ["local:qwen"] }
+    router.define_singleton_method(:replicate_models) { [] }
+    router.define_singleton_method(:local_models) { ["ollama:gemma3:4b"] }
+
+    chain = router.send(:chain_for, :exploration)
+    positions = %w[
+      premium:subscription free-api:model openrouter/free-model:free
+      llm7:free-model web-chat:grok local:qwen ollama:gemma3:4b
+    ].map { |model| chain.index(model) }
+
+    refute_includes positions, nil, "every lane in the fallback policy must be present"
+    assert_equal positions.sort, positions, "fallback order must be premium, free API, browser, then local"
+  end
+
   def test_web_chat_enabled_with_master_web_chat_even_when_keys_present
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     ENV["MASTER_WEB_CHAT"] = "1"
