@@ -99,9 +99,11 @@ module Master::Core
         write  {"path","content"}                create or replace a file (full contents)
         http   {"url"}                           fetch a public HTTP(S) URL through MASTER's guarded network
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}",
-                "compensation":{"argv":["inverse","arg"...],"reason":"why this inverse is safe"}} (optional; only when a real inverse is known)
+                "compensation":{"argv":["inverse","arg"...],"reason":"why this inverse is safe"}}
+                (optional; only when a real inverse is known)
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
-        ask      {"prompt","options":[...]}      ask the operator for approval or a decision; never answer your own question
+        ask      {"prompt","options":[...]}      ask the operator for approval or a decision;
+                                                     never answer your own question
         note     {"kind","text"}                 record a thought when no action fits
         critique {"scope":"diff"}                run council tribunal on git diff (high-risk)
         done     {"summary"}                      finish; the summary is your answer to the operator
@@ -122,9 +124,12 @@ module Master::Core
           evidence so far, and whether `done` is allowed yet. Act on it.
 
       Effect reversibility is derived by MASTER, not declared by you:
-        - failed writes use a path-scoped checkpoint restore; a failed write whose restore fails is still a failure
-        - exec has no generic rollback. Add compensation only when you know a concrete argv inverse and can explain why it is safe; after failure it is re-checked by the Constitution and needs operator approval
-        - git stage and git commit need explicit operator approval because the shared index and commit history have no automatic inverse
+        - failed writes use a path-scoped checkpoint restore; a failed restore remains a failure
+        - exec has no generic rollback. Add compensation only when a concrete argv inverse is
+          known and its safety can be explained; after failure the Constitution re-checks it
+          and asks the operator for approval.
+        - git stage and git commit need explicit operator approval because the shared index
+          and commit history have no automatic inverse.
         - unknown effect contracts are refused; policy_gated does not mean reversible
       Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note
