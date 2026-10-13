@@ -163,7 +163,23 @@ module Master
       # the log saying whether proposals never arrived, died in reflexion, or
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
+      #
+      # One repair, and when the verifier refuses it for a reason the model can act on, one
+      # more with that reason in the prompt. The two-rejects-per-file limit still ends it, and
+      # MASTER_FIX_RETRY=0 switches the second try off.
+      RETRYABLE = %i[out_of_scope reflexion_rejected consensus_rejected rejected].freeze
+
       def fix_violation(violation)
+        RunLedger.take_refusal
+        outcome = attempt_fix(violation)
+        note = RunLedger.take_refusal
+        return outcome unless ENV["MASTER_FIX_RETRY"] != "0" && RETRYABLE.include?(outcome) && note
+
+        Master::Trace::Dmesg.status("fix0", "retrying #{File.basename(violation[:file].to_s)} #{@law.id} once, told: #{note[0, 140]}")
+        RunLedger.retrying(note) { attempt_fix(violation) }
+      end
+
+      def attempt_fix(violation)
         if (gap = VisualCustodyBlocking.gap_for(violation[:law]))
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
@@ -200,7 +216,8 @@ end) if source.to_s.strip.empty?
 
         FixTrace.proposed(@law.id, violation[:file], source)
         if (outside = outside_finding_range(violation, source))
-          RunLedger.reject("out_of_scope", file: violation[:file], law: @law.id, bus: @bus)
+          RunLedger.reject("out_of_scope", file: violation[:file], law: @law.id, bus: @bus, detail: outside)
+          RunLedger.refused_because(outside)
           FixTrace.rejected(@law.id, violation[:file], outside)
           return :out_of_scope
         end
@@ -208,10 +225,12 @@ end) if source.to_s.strip.empty?
         return :file_timeout if @file_timed_out
         unless verified
           RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus, detail: Thread.current[:reflexion_reason])
+          RunLedger.refused_because("the reviewer called it unsafe: #{Thread.current[:reflexion_reason]}")
           return (FixTrace.rejected(@law.id, violation[:file], ["reflexion verifier refused", Thread.current[:reflexion_reason]].compact.join(": ")) && :reflexion_rejected)
         end
         unless consensus_approves?(violation, verified)
           RunLedger.reject("consensus_refused", file: violation[:file], law: @law.id, bus: @bus)
+          RunLedger.refused_because("the consensus panel refused it")
           return (FixTrace.rejected(@law.id, violation[:file], "consensus refused") && :consensus_rejected)
         end
 
@@ -366,7 +385,9 @@ end) if source.to_s.strip.empty?
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus, detail: details.except(:before, :after).values.map { |value| value.to_s[0, 120] }.join(" "))
+        detail = details.except(:before, :after).values.map { |value| value.to_s[0, 120] }.join(" ")
+        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus, detail:)
+        RunLedger.refused_because([reason, detail].reject(&:empty?).join(": "))
         @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false
@@ -387,6 +408,8 @@ end) if source.to_s.strip.empty?
         #{Protocol.law_prompt(@law)}
 
         #{SEMANTIC_PASS_CHECKLIST}
+
+        #{RunLedger.retry_note}
 
         #{ctx[:action]}
 

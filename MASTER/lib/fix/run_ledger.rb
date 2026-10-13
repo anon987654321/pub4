@@ -71,6 +71,33 @@ module Master
 
         def declined_reasons = @mutex.synchronize { @declined.dup }
 
+        # The reason the last proposal on this thread was refused, kept so one retry can show
+        # it to the model. Read once: a refusal feeds the next attempt only.
+        def refused_because(text)
+          Thread.current[:fix_refusal] = text.to_s.strip[0, 300]
+          nil
+        end
+
+        def take_refusal
+          Thread.current[:fix_refusal].tap { Thread.current[:fix_refusal] = nil }
+        end
+
+        # Runs the block with the refusal in the prompts built inside it.
+        def retrying(note)
+          Thread.current[:fix_retry_note] = note
+          yield
+        ensure
+          Thread.current[:fix_retry_note] = nil
+        end
+
+        # The paragraph a prompt adds on a retry; empty on a first attempt.
+        def retry_note
+          note = Thread.current[:fix_retry_note]
+          return "" if note.to_s.empty?
+
+          "Your previous proposal was refused: #{note}\nMake a smaller change that avoids exactly that, touching only the lines the finding names."
+        end
+
         # "patch_rejected 3, model_said_unchanged 2" for the heartbeat; nil when there is nothing to say.
         def why_line
           tally = reasons.merge(declined_reasons) { |_, a, b| a + b }

@@ -95,6 +95,64 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal ["empty_reply 1", "new_violations 1"], Ledger.why_line.split(", ").sort
   end
 
+  # A refusal feeds the next attempt once: it is kept per thread, read once, and shows in the
+  # prompt only inside the retry.
+  def test_a_refusal_note_reaches_only_the_retry_prompt
+    assert_equal "", Ledger.retry_note
+    Ledger.refused_because("changes lines 26-80, finding range is 20-40")
+
+    assert_equal "changes lines 26-80, finding range is 20-40", Ledger.take_refusal
+    assert_nil Ledger.take_refusal
+    Ledger.retrying("too wide") { assert_includes Ledger.retry_note, "Your previous proposal was refused: too wide" }
+    assert_equal "", Ledger.retry_note
+  end
+
+  def retry_loop(outcomes)
+    loop = Master::Fix::RepairLoop.allocate
+    loop.instance_variable_set(:@law, Struct.new(:id).new("TEST_LAW"))
+    seen = []
+    loop.define_singleton_method(:attempt_fix) do |_violation|
+      seen << Master::Fix::RunLedger.retry_note
+      Master::Fix::RunLedger.refused_because("lines 1-9 are outside 4-6") if seen.size == 1
+      outcomes.shift
+    end
+    [loop, seen]
+  end
+
+  def test_a_refused_repair_is_retried_once_with_the_reason
+    loop, seen = retry_loop(%i[out_of_scope applied])
+
+    out, = capture_io { assert_equal :applied, loop.send(:fix_violation, { file: "lib/a.rb", law: "X" }) }
+
+    assert_equal 2, seen.size
+    assert_equal "", seen.first
+    assert_includes seen.last, "lines 1-9 are outside 4-6"
+    assert_includes out, "fix0: retrying a.rb TEST_LAW once, told: lines 1-9 are outside 4-6"
+  end
+
+  def test_a_second_refusal_is_final_and_a_non_refusal_is_never_retried
+    loop, seen = retry_loop(%i[out_of_scope out_of_scope])
+    capture_io { assert_equal :out_of_scope, loop.send(:fix_violation, { file: "lib/a.rb" }) }
+    assert_equal 2, seen.size
+
+    loop, seen = retry_loop(%i[no_proposal])
+    assert_equal :no_proposal, loop.send(:fix_violation, { file: "lib/a.rb" })
+    assert_equal 1, seen.size
+  end
+
+  def test_the_retry_switch_turns_the_second_try_off
+    loop, seen = retry_loop(%i[out_of_scope applied])
+    previous = ENV["MASTER_FIX_RETRY"]
+    ENV["MASTER_FIX_RETRY"] = "0"
+    begin
+      assert_equal :out_of_scope, loop.send(:fix_violation, { file: "lib/a.rb" })
+    ensure
+      previous ? ENV["MASTER_FIX_RETRY"] = previous : ENV.delete("MASTER_FIX_RETRY")
+    end
+
+    assert_equal 1, seen.size
+  end
+
   # A pass cut short by a hot reload attempted nothing; calling the run completed was a pass
   # reported over work that never ran.
   def test_a_run_cut_by_a_reload_does_not_report_completed

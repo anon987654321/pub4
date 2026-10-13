@@ -108,6 +108,8 @@ module Master
 
           #{parts.join("\n\n")}
 
+          #{RunLedger.retry_note}
+
           Reply with ONLY a minimal unified diff for this one file (`--- a/#{File.basename(path)}` / `+++ b/#{File.basename(path)}`, @@ hunks).
           Copy context lines exactly. Change only lines a finding names; do not reformat, reorder or rename anything else.
           If no finding is real, reply exactly: UNCHANGED
