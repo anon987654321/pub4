@@ -434,7 +434,8 @@ class TestSpeech < Minitest::Test
     end
 
     assert_equal [false], nested_results
-    assert_match(/recursive streaming synthesis refused/, speech.last_error)
+    assert_match(/recursive streaming synthesis refused/, nested_errors.fetch(0))
+    assert_nil speech.last_error, "the successful outer synthesis clears nested failure state"
   end
 
   def test_streaming_falls_back_to_say_when_edge_and_espeak_miss
