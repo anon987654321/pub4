@@ -126,6 +126,12 @@ def render(data, options)
     seq.sound(buf, plucks, seq.voice_spec(options[:melody_voice] || 'rhodes_mark1'))
   end
   render_layers(buf, seq, names, bpm, beats, options, search:)
+  if options[:buffer_only]
+    # Progression buffers reserve a full second for arbitrary note tails. A curated section
+    # has a known gate and a short echo, so discard that unused second before rendering drums.
+    musical_samples = (names.size * beats * 60.0 / bpm * SAMPLE_RATE).round
+    buf = buf.first([musical_samples + (0.36 * SAMPLE_RATE).round, buf.size].min)
+  end
   vcs = seq.vcs_amount(options[:vcs])
   sonitex = seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances])
   drum_sonitex = seq.sonitex_settings(options[:drum_sonitex], instances: options[:drum_sonitex_instances]) || sonitex
@@ -135,7 +141,8 @@ def render(data, options)
   echo['reverb'] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
   seconds = buf.size / SAMPLE_RATE.to_f
-  hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
+  drum_seconds = options[:buffer_only] ? names.size * beats * 60.0 / bpm : seconds
+  hits = drums ? seq.drum_hits(drums, bpm, drum_seconds) : []
   levels = seq.mix(options[:mix])
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
