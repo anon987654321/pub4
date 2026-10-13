@@ -66,7 +66,7 @@ class VpsDeployContractTest < Minitest::Test
 
     out = IO.popen(
       ["zsh", "-c", "app='../outside'; #{guard}; print accepted", { err: %i[child out] }],
-      &:read,
+      &:read
     )
 
     assert_equal 2, $?.exitstatus
