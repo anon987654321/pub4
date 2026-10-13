@@ -268,6 +268,8 @@ end
       request = "use yt-dlp and demucs to grab, split up, and analyze https://youtu.be/mx9NU4LmDwM?si=example12345"
       assert MediaIntent.handles?(request)
       refute MediaIntent.handles?("I liked the music inside that YouTube video")
+      refute MediaIntent.handles?("this music video looks interesting https://youtu.be/mx9NU4LmDwM")
+      refute MediaIntent.handles?("nice track: https://youtu.be/mx9NU4LmDwM")
 
       calls = []
       begin
