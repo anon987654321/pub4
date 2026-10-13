@@ -224,7 +224,8 @@ detail: [
         "face" => {
           summary: "the live terminal face with one clean stage and control strip",
           detail: [
-            "/face — open the MASTER face in the alternate terminal screen.",
+            "/face — open the MASTER face in the alternate terminal screen, as large as the terminal allows.",
+            "/face size auto|small|large|WxH — choose the face's size (WxH is columns by rows) and open it; the choice holds for the session.",
             "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",
             "The face keeps a clean full-width stage; the latest exchange and controls stay in the bottom strip.",
             "Type a line, press enter, or speak while idle. Ctrl-C interrupts; Ctrl-D leaves.",

@@ -53,13 +53,14 @@ module Master
         end
 
         def initialize(turn:, ear: Ear.new, mouth: Mouth.new, input: $stdin, output: $stdout,
-                       size: -> { IO.console&.winsize || [24, 80] }, event_bus: nil)
+                       size: -> { Sizing.winsize }, event_bus: nil, size_mode: nil)
           @turn = turn
           @ear = ear
           @mouth = mouth
           @input = input
           @output = output
           @size = size
+          @size_mode = size_mode
           @lock = Mutex.new
           @state = :idle
           law_config = Master::Face::LawField.config
@@ -101,10 +102,11 @@ module Master
 
           transcript_rows = rows >= 20 ? 3 : 2
           content_rows = [rows - transcript_rows - 4, 1].max
+          face_rows, face_cols = Sizing.fit(content_rows, cols, mode: @size_mode || Sizing.mode)
           face = Face.frame(
             state:,
-            rows: content_rows,
-            cols:,
+            rows: face_rows,
+            cols: face_cols,
             t:,
             level:,
             events:,
@@ -122,7 +124,7 @@ module Master
 
           body = [
             heading(state, color:),
-            *face.first(content_rows).map { |line| center_line(line, cols) },
+            *stage(face, content_rows).map { |line| center_line(line, cols) },
             *transcript,
             "#{DIM}#{status(state)[0, cols]}#{PLAIN}",
             prompt_line(draft, cols, color:),
@@ -484,6 +486,14 @@ module Master
         def typed(draft, cols)
           line = "#{Master::Face::Contract.user_token} #{draft}"
           line.length > cols ? line[-cols..] : line
+        end
+
+        # The face centred in the rows the window gives it, when it is smaller
+        # (a chosen size), so the strip below keeps its place.
+        def stage(face, rows)
+          lines = face.first(rows)
+          gap = rows - lines.size
+          [""] * (gap / 2) + lines + [""] * (gap - (gap / 2))
         end
 
         def center_line(line, cols)

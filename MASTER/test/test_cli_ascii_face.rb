@@ -13,14 +13,14 @@ class TestCliAsciiFace < Minitest::Test
   GOLDEN = <<-'FRAME'
 
         //''''\\
-       /%###%*=;\
-      /----------\
+       ///----\\\
+      ///ya/\;:\\\
      -------|-------
      (  o  )|(  o  )
-     |\-----|----/|
-     |\*%%%%.-;::/|
-      \==       -/
-       \\;-----//
+     ||ee///|\\-~||
+     |\\\\\-./////|
+      \\\       //
+       \\\-----//
 
 
   FRAME
@@ -269,8 +269,8 @@ class TestCliAsciiFace < Minitest::Test
   end
 
   def test_the_ramp_is_replaceable_and_inverts_in_light_mode
-    assert_equal " .:;=*%#@".chars, Face::Glyphs.ramp
-    assert_equal "@#%*=;:. ".chars, Face::Glyphs.ramp(" .:;=*%#@", "light")
+    assert_equal Face::Glyphs::DEFAULT_CHARS.chars, Face::Glyphs.ramp
+    assert_equal " .:;=*%#@".reverse.chars, Face::Glyphs.ramp(" .:;=*%#@", "light")
     assert_equal %w[M A S T E R], Face::Glyphs.ramp("MASTER")
     frame = Face::Ascii.new(Face::Head.for(14, 30), 14, 30, chars: "MASTER").render(Face::Motion.rest)
     assert_empty frame.lines.join.delete("MASTER|/\x27_o().() ").delete("\\").delete("-")
@@ -304,9 +304,11 @@ class TestCliAsciiFace < Minitest::Test
   end
 
   def test_dither_is_fixed_in_screen_space
-    assert_equal Face::Glyphs.index(0.5, 10, 3, 2), Face::Glyphs.index(0.5, 10, 3 + 4, 2 + 4)
-    picks = (0..3).flat_map { |r| (0..3).map { |c| Face::Glyphs.index(0.5, 10, c, r) } }
-    assert_operator picks.uniq.size, :>=, 2
+    levels = Face::Glyphs.levels(Face::Glyphs::DEFAULT_CHARS.chars)
+    tone = (levels[10] + levels[11]) / 2
+    assert_equal Face::Glyphs.index(tone, levels, 3, 2), Face::Glyphs.index(tone, levels, 3 + 4, 2 + 4)
+    picks = (0..3).flat_map { |r| (0..3).map { |c| Face::Glyphs.index(tone, levels, c, r) } }
+    assert_equal [10, 11], picks.uniq.sort, "a tone between two glyphs is dithered between exactly those two"
   end
 
   def test_turning_does_not_shimmer

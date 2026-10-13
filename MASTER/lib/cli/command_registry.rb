@@ -57,7 +57,7 @@ module Master
           "explain" => command(:dispatch_explain, d[:root]),
           "prove" => command(:dispatch_prove, d[:root]),
           "events" => command(:dispatch_events, d[:root]),
-          "face" => Command.new { |_ctx| dispatch_face },
+          "face" => Command.new { |ctx| dispatch_face(ctx) },
           "help" => command(:help_text, nil),
         ).merge(chat_verbs(d)).merge(control_commands(ai[:standing], ai[:soul]))
       end
@@ -220,7 +220,12 @@ module Master
       end
 
       # Open the full-screen terminal face without inventing a second model route.
-      def dispatch_face(_ctx = nil)
+      # `/face size auto|small|large|WxH` chooses how big the face is drawn and
+      # opens it; the choice holds for the session. WxH is columns by rows.
+      def dispatch_face(ctx = nil)
+        chosen = face_size(arg_for(ctx))
+        return chosen if chosen.is_a?(String) && chosen.start_with?("face0:")
+
         return "face0: needs a terminal" unless $stdin.tty? && $stdout.tty?
 
         container = Fiber[:master_cli_container]
@@ -246,6 +251,17 @@ module Master
         "face0: failed — #{e.class}: #{e.message}"
       ensure
         terminal&.close
+      end
+
+      def face_size(arg)
+        words = arg.to_s.split
+        return nil unless words.first == "size"
+
+        mode = Face::Sizing.parse(words[1..].join)
+        return "face0: size is auto, small, large or WxH (columns by rows); now #{Face::Sizing.mode}" unless mode
+
+        Face::Sizing.mode = mode
+        nil
       end
 
       def dispatch_device(_root, ctx: nil)

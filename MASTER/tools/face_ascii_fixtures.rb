@@ -67,7 +67,10 @@ CASES = [
   ["head blink", :head, 28, 64, :idle, 3.3, 0],
   ["head light orbit", :head, 28, 64, :idle, 8.0, 1],
   ["head close-up", :head, 44, 140, :speaking, 1.9, 2],
-  ["cube", :cube, 16, 40, :idle, 2.0, 0]
+  ["cube", :cube, 16, 40, :idle, 2.0, 0],
+  ["head mid", :head, 44, 110, :idle, 0.7, 1],
+  ["head large", :head, 60, 160, :speaking, 1.35, 1],
+  ["head extra large", :head, 100, 240, :idle, 2.6, 2]
 ].freeze
 
 # Each mask at mix 0, 0.5 and 1.0 on the front, and at 1.0 turned three-quarters.

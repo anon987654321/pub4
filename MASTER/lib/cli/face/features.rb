@@ -66,12 +66,14 @@ module Master
           return if ph || (lh && rh)
 
           span = (rx - lx).abs.floor
-          width = [(span.even? ? span + 1 : span), 9].min
+          width = [(span.even? ? span + 1 : span), eye_limit].min
           col = Glyphs.half_up(px)
           row = (py / 2).floor
           return put(col, row, @look.eye_open < SHUT ? GLYPHS["lid"] : GLYPHS["pupil"]) if width < 3
 
           left = col - (width / 2)
+          tall = width >= GLYPHS.fetch("eye_tall_at")
+          lift = tall ? 2 : 0
           if @look.eye_open < SHUT
             run(left, row, GLYPHS["lid"] * width)
           else
@@ -79,11 +81,25 @@ module Master
             reach = inner / 2
             glance = Glyphs.half_up(@look.gaze[0] * 14).clamp(-reach, reach)
             run(left, row, GLYPHS["eye_open"] + (" " * inner) + GLYPHS["eye_close"])
-            put(col + glance, row, GLYPHS["pupil"])
+            almond(left, row, width) if tall
+            put(col + glance, row, tall ? GLYPHS["pupil_large"] : GLYPHS["pupil"])
           end
-          run(left, row - 1, GLYPHS["brow"] * width) if @mask.nil? || @mask["brow_line"] >= 0.5
-          run(left, row - 2, Masks::GLYPHS["brow_heavy"] * width) if @mask && @mask["brow_ridge"] >= Masks::BROW_MIN
+          run(left, row - 1 - lift, GLYPHS["brow"] * width) if @mask.nil? || @mask["brow_line"] >= 0.5
+          run(left, row - 2 - lift, Masks::GLYPHS["brow_heavy"] * width) if @mask && @mask["brow_ridge"] >= Masks::BROW_MIN
         end
+
+        # An eye wide enough to have lids: the upper one a row above the line of
+        # the eye, the lower one a row below, their corners ' and ..
+        def almond(left, row, width)
+          top = GLYPHS.fetch("eye_lid_top")
+          bottom = GLYPHS.fetch("eye_lid_bottom")
+          run(left, row - 1, top[0] + (top[1] * (width - 2)) + top[2])
+          run(left, row + 1, bottom[0] + (bottom[1] * (width - 2)) + bottom[2])
+        end
+
+        # An eye is at most eye_floor wide, or eye_share of the window's columns
+        # if that is more, so a big face has big eyes and a small one the same as ever.
+        def eye_limit = [GLYPHS.fetch("eye_floor"), (@frame.chars[0].size * GLYPHS.fetch("eye_share")).floor].max
 
         def nose
           return if @mask && @mask["nose_line"] < 0.5
@@ -100,6 +116,16 @@ module Master
             put(Glyphs.half_up(bx + ((tx - bx) * f)), ((by + ((ty - by) * f)) / 2).floor, glyph)
           end
           put(Glyphs.half_up(tx), (ty / 2).floor, GLYPHS["nose_tip"])
+          nostrils(tx, ty, (ty - by).abs / 2)
+        end
+
+        # A nose long enough to show its nostrils: a pair flanking the tip.
+        def nostrils(tx, ty, length)
+          return if length < GLYPHS.fetch("nostril_at")
+
+          wing = [(length / GLYPHS.fetch("nostril_at")).floor + 1, 3].min
+          put(Glyphs.half_up(tx) - wing, (ty / 2).floor, GLYPHS["nostril"][0])
+          put(Glyphs.half_up(tx) + wing, (ty / 2).floor, GLYPHS["nostril"][1])
         end
 
         # The nose as a ridge: two rails that part from the bridge toward the

@@ -491,14 +491,25 @@ tokens:
     #  5 per cell: coverage is covered samples over samples*2*samples, below
     #    `cover` the cell is a space. A silhouette cell (a 4-neighbour below
     #    `cover`) takes its glyph from the gradient of coverage over the 3x3
-    #    cells, if it is at least edge_gradient. Otherwise a crease cell (the
-    #    larger |eigenvalue| of the change of surface slope between the cell's
-    #    halves, at least crease) takes it from the ridge direction. Otherwise
-    #    shade: tone = mean lum of covered samples * (1 - edge_fade + edge_fade *
-    #    coverage), gain times it, the part above `knee` scaled by `shoulder` and the
-    #    whole capped at `ceiling`, plus depth.tone * (depth fraction - 0.5), index = floor(tone*(n-1)
-    #    + 0.5 + ((bayer[row%4][col%4] + 0.5)/16 - 0.5) * dither_gain), the dither
-    #    fixed in screen space. Light mode reverses the ramp.
+    #    cells, if it is at least edge_gradient. Otherwise a step cell (the mean
+    #    depth, as a fraction of the visible range, differs from a 4-neighbour's by
+    #    at least depth_edge) takes the line across the depth gradient. Otherwise a
+    #    crease cell: every covered sample whose four neighbours are covered reads
+    #    the change of the surface slope across itself (central differences, a
+    #    sample being square), and if the larger |eigenvalue| times `samples`
+    #    reaches `crease` it votes for the glyph of the ridge's direction; the
+    #    cell takes the glyph with most votes (a tie to the later in character
+    #    order) if they are at least `vote` of its covered samples. Otherwise
+    #    shade: tone = mean lum of covered samples * gain * (1 - edge_fade +
+    #    edge_fade * coverage), capped at `ceiling`, raised to `gamma`, plus
+    #    depth.tone * (depth fraction - 0.5), clamped to 0..1. The tone is a place
+    #    in ink space: ramp glyph k sits at ink[k] / ink[densest] (light mode
+    #    mirrors that), and the cell takes the glyph below the tone or the one
+    #    above it, the upper when the tone's share of the gap exceeds
+    #    0.5 + ((bayer[row%4][col%4] + 0.5)/16 - 0.5) * dither_gain, the dither
+    #    fixed in screen space. A glyph with no measured ink takes an even step.
+    #    The samples a side are `samples`, or samples_large.samples from
+    #    samples_large.cells cells (rows * cols), where the cells carry the detail.
     #  6 a line direction (dx, dy_up) in square samples picks "-", "/", "|"
     #    or "\" by the glyph's own slope on a cell: "/" is atan(aspect) from
     #    horizontal. A horizontal edge picks by sub-row: boundary at the cell
@@ -526,21 +537,35 @@ tokens:
     #  (t + (seed mod 7) * 0.37) mod blink_period >= blink_period - blink_length;
     #  speaking opens the mouth by 0.7*|sin(1.1*k)| + 0.15*(k mod 3), k = floor(20*t).
     ascii:
-      chars: " .:;=*%#@"
+      chars: " .,:~;r+=civ*YnyeaXPq&#8W@"
       # Named alternatives remain ordered subsets of the calibrated ink ramp.
       # Web keyboard controls and MASTER_FACE_RAMP use this same catalogue.
       ramps:
-        sculpt: " .:;=*%#@"
+        sculpt: " .,:~;r+=civ*YnyeaXPq&#8W@"
+        classic: " .:;=*#@"
         high_contrast: " .;=#@"
         fine_detail: " .:;=*#@"
-      # Ink: each ramp glyph's share of one character cell, measured.
-      ink: { " ": 0.0, ".": 0.0362, ":": 0.0576, ";": 0.0753, "=": 0.0910, "*": 0.1103, "%": 0.1456, "#": 0.1797, "@": 0.2099 }
+      # Ink: each ramp glyph's share of one character cell, measured (Menlo at 72 px).
+      # A tone is quantised in this space (step 5). Glyphs the
+      # contours and features use (| - / \ ' _ ( ) o) stay out of the ramp.
+      ink: { " ": 0.0, ".": 0.0362, ",": 0.0492, ":": 0.0576, "~": 0.0646, ";": 0.0753, "r": 0.0802, "+": 0.0834, "=": 0.0910, "c": 0.0967, "i": 0.1003, "v": 0.1030, "*": 0.1103, "Y": 0.1161, "n": 0.1222, "y": 0.1288, "e": 0.1379, "a": 0.1442, "X": 0.1499, "P": 0.1574, "q": 0.1633, "&": 0.1718, "#": 0.1797, "8": 0.1871, "W": 0.2010, "@": 0.2099 }
       mode: dark
       fit: 0.92
       camera: 3.2
       aspect: 2.0
       samples: 2
-      mesh: { rows: [40, 90], per_row: 1.6, around: [48, 120], per_col: 0.9, skull: 1.45, chin: 1.2, jaw: 0.6, blur: 0.02, back: 0.72 }
+      # The cheaper path: from this many cells a side is one sample wide (a cell
+      # is samples x 2*samples), since the cells themselves carry the detail.
+      samples_large: { cells: 6000, samples: 1 }
+      # How the window is sized (Face::Sizing; the terminal only). The face takes
+      # the terminal less `margin` cells a side, at least `floor` (rows, cols) if
+      # the terminal has it, at most `cap`. The head keeps its proportions at
+      # any size, and a window wider than rows * aspect * span is cut to that
+      # width since the extra is empty. aspect is the cell height over its
+      # width. mode: auto, small, large, or WxH (columns by rows); `small` is
+      # the floor.
+      size: { mode: auto, margin: { cols: 2, rows: 0 }, floor: [28, 64], cap: [120, 300], span: 1.25 }
+      mesh: { rows: [40, 96], per_row: 1.6, around: [48, 150], per_col: 0.9, skull: 1.45, chin: 1.2, jaw: 0.6, blur: 0.02, back: 0.72 }
       light:
         start: -0.6
         orbit: 0.6
@@ -552,12 +577,14 @@ tokens:
         rim: 0.3
         spec: 0.22
         shininess: 16
-      shade: { paint: 0.6, gain: 1.3, knee: 0.7, shoulder: 0.5, ceiling: 0.97 }
+      shade: { paint: 0.6, gain: 1.0, gamma: 1.2, ceiling: 0.97 }
       cavity: { gain: 0.15 }
       cover: 0.2
       edge_fade: 0.4
       edge_gradient: 0.5
-      crease: 0.3
+      crease: 0.6
+      vote: 0.35
+      depth_edge: 0.15
       dither_gain: 0.55
       dither: [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
       depth: { near: 0.62, far: 0.30, tone: 0.08 }
@@ -589,6 +616,17 @@ tokens:
         eye_open: "("
         eye_close: ")"
         pupil: "o"
+        # From eye_tall_at columns wide an eye has lids (three rows), a larger
+        # pupil and its brow a row higher; an eye is at most eye_floor columns wide or eye_share of the window's columns. A nose
+        # nostril_at rows long shows nostrils flanking its tip.
+        pupil_large: "O"
+        eye_floor: 9
+        eye_share: 0.1
+        eye_tall_at: 13
+        eye_lid_top: [".", "-", "."]
+        eye_lid_bottom: ["'", "-", "'"]
+        nostril_at: 7
+        nostril: ["(", ")"]
         lid: "-"
         brow: "-"
         nose: "|"

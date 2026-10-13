@@ -64,15 +64,16 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal (1..30).to_a, rows_of(window.screen(30, 80, 2.0)).keys.sort
   end
 
-  def test_the_renderer_receives_the_controlled_height_and_full_width
+  def test_the_renderer_receives_the_controlled_height_and_the_width_sizing_gives
     seen = nil
     renderer = ->(**kwargs) do
       seen = [kwargs.fetch(:rows), kwargs.fetch(:cols)]
       Array.new(seen.first, " " * seen.last).join("\n")
     end
     Master::CLI::Face.stub(:frame, renderer) { window.screen(30, 80, 2.0) }
+    assert_equal Master::CLI::Face::Sizing.fit(23, 80), seen
     assert_equal 23, seen.first
-    assert_equal 80, seen.last
+    assert_operator seen.last, :<=, 76, "two columns of margin a side"
   end
 
   def test_ctrl_v_toggles_constitutional_law_glyphs_without_entering_the_prompt

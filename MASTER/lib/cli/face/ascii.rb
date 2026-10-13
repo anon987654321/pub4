@@ -20,7 +20,7 @@ module Master
         CAMERA = CONFIG.fetch("camera").to_f
         FIT = CONFIG.fetch("fit").to_f
         SAMPLES = CONFIG.fetch("samples").to_i
-        PER_CELL = (SAMPLES * 2 * SAMPLES).to_f
+        LARGE = CONFIG.fetch("samples_large")
         COVER = CONFIG.fetch("cover").to_f
         EDGE_FADE = CONFIG.fetch("edge_fade").to_f
         EDGE = CONFIG.fetch("edge_gradient").to_f
@@ -28,8 +28,9 @@ module Master
         PAINT = CONFIG.fetch("shade").fetch("paint").to_f
         CEILING = CONFIG.fetch("shade").fetch("ceiling").to_f
         GAIN = CONFIG.fetch("shade").fetch("gain").to_f
-        KNEE = CONFIG.fetch("shade").fetch("knee").to_f
-        SHOULDER = CONFIG.fetch("shade").fetch("shoulder").to_f
+        GAMMA = CONFIG.fetch("shade").fetch("gamma").to_f
+        DEPTH_EDGE = CONFIG.fetch("depth_edge").to_f
+        VOTE = CONFIG.fetch("vote").to_f
         NEAR, FAR, DEPTH_TONE = CONFIG.fetch("depth").values_at("near", "far", "tone").map(&:to_f)
         OCCLUSION = CONFIG.fetch("occlusion").to_f
         FACING = CONFIG.fetch("facing").to_f
@@ -40,6 +41,12 @@ module Master
         SQUARINGS = LIGHT.fetch("shininess").to_i.bit_length - 1
         NONE = -1.0e9
         LIVE = NONE / 2
+
+        # Samples a side: the full count, fewer on a window big enough that the
+        # cells themselves carry the detail (the cheaper path).
+        def self.samples_for(rows, cols)
+          rows * cols >= LARGE.fetch("cells").to_i ? LARGE.fetch("samples").to_i : SAMPLES
+        end
 
         def self.unit(x, y, z)
           length = Math.sqrt((x * x) + (y * y) + (z * z))
@@ -53,11 +60,15 @@ module Master
           @mesh = source.mesh
           @rows = rows
           @cols = cols
-          @sw = cols * SAMPLES
-          @sh = rows * 2 * SAMPLES
+          @samples = Ascii.samples_for(rows, cols)
+          @per_cell = (@samples * 2 * @samples).to_f
+          @sw = cols * @samples
+          @sh = rows * 2 * @samples
           named_ramp = Glyphs::CONFIG.fetch("ramps", {}).fetch(ENV.fetch("MASTER_FACE_RAMP", "").to_s, Glyphs::DEFAULT_CHARS)
           chosen_chars = chars || ENV["MASTER_FACE_CHARS"] || named_ramp
-          @ramp = Glyphs.ramp(chosen_chars, mode || ENV["MASTER_FACE_MODE"] || CONFIG.fetch("mode"))
+          chosen_mode = mode || ENV["MASTER_FACE_MODE"] || CONFIG.fetch("mode")
+          @ramp = Glyphs.ramp(chosen_chars, chosen_mode)
+          @levels = Glyphs.levels(@ramp, chosen_mode)
           above, aside = @mesh.margins
           _, _, ylo, yhi, reach = @mesh.bounds
           @lift = (ylo + yhi + above) / 2.0
@@ -130,14 +141,14 @@ module Master
         # slack lets a feature that stands off the surface (a ring round a raised
         # beak) count as seen where the surface is a little nearer.
         def covered?(px, py)
-          x = (px * SAMPLES).floor
-          y = (py * SAMPLES).floor
+          x = (px * @samples).floor
+          y = (py * @samples).floor
           x.between?(0, @sw - 1) && y.between?(0, @sh - 1) && @tri[(y * @sw) + x] >= 0
         end
 
         def hidden?(px, py, depth, slack = 0.0)
-          x = (px * SAMPLES).floor
-          y = (py * SAMPLES).floor
+          x = (px * @samples).floor
+          y = (py * @samples).floor
           return true unless x.between?(0, @sw - 1) && y.between?(0, @sh - 1)
 
           @zb[(y * @sw) + x] > depth + OCCLUSION + slack
@@ -172,8 +183,8 @@ module Master
           @mesh.vertex_count.times do |v|
             x, y, z = rotate(pos[3 * v], pos[(3 * v) + 1] - @lift, pos[(3 * v) + 2])
             k = @gain * @camera / (@camera - z)
-            @sx[v] = SAMPLES * ((@cols / 2.0) + (x * k))
-            @sy_[v] = SAMPLES * (@rows - (y * k) - @bob)
+            @sx[v] = @samples * ((@cols / 2.0) + (x * k))
+            @sy_[v] = @samples * (@rows - (y * k) - @bob)
             @sd[v] = z * @scale
             @nx[v], @ny[v], @nz[v] = rotate(norm[3 * v], norm[(3 * v) + 1], norm[(3 * v) + 2])
           end
@@ -269,9 +280,9 @@ module Master
           @rows.times do |r|
             @cols.times do |c|
               cell = (r * @cols) + c
-              (0...(2 * SAMPLES)).each do |dy|
-                base = (((r * 2 * SAMPLES) + dy) * @sw) + (c * SAMPLES)
-                SAMPLES.times do |dx|
+              (0...(2 * @samples)).each do |dy|
+                base = (((r * 2 * @samples) + dy) * @sw) + (c * @samples)
+                @samples.times do |dx|
                   next if @tri[base + dx].negative?
 
                   d = @zb[base + dx]
@@ -288,16 +299,17 @@ module Master
           @near_span = [(hi == -Float::INFINITY ? 0.0 : hi) - @near_lo, 1.0].max
         end
 
-        def coverage(c, r) = c >= 0 && c < @cols && r >= 0 && r < @rows ? @count[(r * @cols) + c] / PER_CELL : 0.0
+        def coverage(c, r) = c >= 0 && c < @cols && r >= 0 && r < @rows ? @count[(r * @cols) + c] / @per_cell : 0.0
 
         def cell(c, r)
           i = (r * @cols) + c
-          cover = @count[i] / PER_CELL
+          cover = @count[i] / @per_cell
           return if cover < COVER
 
-          edge = [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].any? { |x, y| x >= 0 && x < @cols && y >= 0 && y < @rows && coverage(x, y) < COVER }
-          glyph = edge ? silhouette(c, r) : crease(c, r)
-          fraction = ((@depth_sum[i] / @count[i]) - @near_lo) / @near_span
+          edge = (c > 0 && coverage(c - 1, r) < COVER) || (c < @cols - 1 && coverage(c + 1, r) < COVER) ||
+                 (r > 0 && coverage(c, r - 1) < COVER) || (r < @rows - 1 && coverage(c, r + 1) < COVER)
+          fraction = depth_at(i)
+          glyph = edge ? silhouette(c, r) : (step(c, r, fraction) || crease(c, r))
           @frame.chars[r][c] = glyph || shade(c, r, i, cover, fraction)
           @frame.depth[r][c] = fraction >= NEAR ? 2 : (fraction <= FAR ? 0 : 1)
         end
@@ -325,56 +337,101 @@ module Master
         # Whether the cell's upper and lower halves are mostly covered.
         def halves(c, r)
           covered = [0, 0]
-          (0...(2 * SAMPLES)).each do |dy|
-            base = (((r * 2 * SAMPLES) + dy) * @sw) + (c * SAMPLES)
-            SAMPLES.times { |dx| covered[dy / SAMPLES] += 1 unless @tri[base + dx].negative? }
+          (0...(2 * @samples)).each do |dy|
+            base = (((r * 2 * @samples) + dy) * @sw) + (c * @samples)
+            @samples.times { |dx| covered[dy / @samples] += 1 unless @tri[base + dx].negative? }
           end
-          covered.map { |n| n >= SAMPLES * SAMPLES / 2.0 }
+          covered.map { |n| n >= @samples * @samples / 2.0 }
         end
 
-        # Where the surface's slope changes across the cell: the ridge's
-        # direction from the larger |eigenvalue| of that change.
+        # A cell's mean depth as a fraction of the visible range.
+        def depth_at(i) = ((@depth_sum[i] / @count[i]) - @near_lo) / @near_span
+
+        # An occluding step inside the surface (a nose against the cheek behind
+        # it, the jaw against the neck): the depth jumps by more than depth_edge
+        # to a neighbouring cell. The line runs across the depth gradient, found
+        # as the silhouette's is, a row being two square sub-pixels tall.
+        def step(c, r, fraction)
+          jump = 0.0
+          here = (r * @cols) + c
+          jump = [jump, (depth_at(here - 1) - fraction).abs].max if c > 0 && @count[here - 1].positive?
+          jump = [jump, (depth_at(here + 1) - fraction).abs].max if c < @cols - 1 && @count[here + 1].positive?
+          jump = [jump, (depth_at(here - @cols) - fraction).abs].max if r > 0 && @count[here - @cols].positive?
+          jump = [jump, (depth_at(here + @cols) - fraction).abs].max if r < @rows - 1 && @count[here + @cols].positive?
+          return nil if jump < DEPTH_EDGE
+
+          gx = depth_gradient(c - 1, r, c + 1, r, fraction)
+          gy = depth_gradient(c, r - 1, c, r + 1, fraction) / 2.0
+          return nil if gx.zero? && gy.zero?
+
+          Glyphs.line(gy, gx)
+        end
+
+        # The depth difference across a pair of cells, a missing one standing in
+        # as the cell itself.
+        def depth_gradient(c0, r0, c1, r1, fraction)
+          lo = c0 >= 0 && c0 < @cols && r0 >= 0 && r0 < @rows && @count[(r0 * @cols) + c0].positive? ? depth_at((r0 * @cols) + c0) : fraction
+          hi = c1 >= 0 && c1 < @cols && r1 >= 0 && r1 < @rows && @count[(r1 * @cols) + c1].positive? ? depth_at((r1 * @cols) + c1) : fraction
+          hi - lo
+        end
+
+        # Where the surface's slope changes: every covered sample whose four
+        # neighbours are covered too reads the change of slope across itself
+        # (its tensor, central differences, a sample being square) and, if the
+        # larger |eigenvalue| (scaled to a cell's width) reaches `crease`, votes
+        # for the glyph of the ridge's direction. The cell takes the glyph with
+        # most votes when they are at least `vote` of its covered samples.
         def crease(c, r)
-          return nil if SAMPLES < 2
+          horizontal = diagonal_up = vertical = diagonal_down = 0
+          seen = 0
+          (0...(2 * @samples)).each do |dy|
+            y = (r * 2 * @samples) + dy
+            next if y.zero? || y >= @sh - 1
 
-          sums = Array.new(4) { [0, 0.0, 0.0] }
-          (0...(2 * SAMPLES)).each do |dy|
-            base = (((r * 2 * SAMPLES) + dy) * @sw) + (c * SAMPLES)
-            SAMPLES.times do |dx|
-              next if @tri[base + dx].negative?
+            (0...@samples).each do |dx|
+              x = (c * @samples) + dx
+              idx = (y * @sw) + x
+              next if @tri[idx].negative?
 
-              sum = sums[(dx * 2 / SAMPLES) + (2 * (dy / SAMPLES))]
-              sum[0] += 1
-              sum[1] += @slope_x[base + dx]
-              sum[2] += @slope_y[base + dx]
+              seen += 1
+              next if x.zero? || x >= @sw - 1
+
+              l = idx - 1
+              rt = idx + 1
+              u = idx - @sw
+              d = idx + @sw
+              next if @tri[l].negative? || @tri[rt].negative? || @tri[u].negative? || @tri[d].negative?
+
+              xx = (@slope_x[rt] - @slope_x[l]) / 2.0
+              yy = (@slope_y[d] - @slope_y[u]) / 2.0
+              xy = (((@slope_y[rt] - @slope_y[l]) + (@slope_x[d] - @slope_x[u])) / 4.0)
+              spread = (xx - yy) / 2
+              half = Math.sqrt((spread * spread) + (xy * xy))
+              mid = (xx + yy) / 2
+              major = mid + half
+              minor = mid - half
+              next if @samples * [major.abs, minor.abs].max < CREASE
+
+              angle = 0.5 * Math.atan2(2 * xy, xx - yy)
+              case major.abs >= minor.abs ? Glyphs.line(-Math.sin(angle), -Math.cos(angle)) : Glyphs.line(-Math.cos(angle), Math.sin(angle))
+              when "-" then horizontal += 1
+              when "/" then diagonal_up += 1
+              when "|" then vertical += 1
+              else diagonal_down += 1
+              end
             end
           end
-          return nil if sums.any? { |n, *| n.zero? }
+          return nil if seen.zero?
 
-          lt, rt, lb, rb = sums
-          mean = ->(u, v, k) { (u[k] + v[k]) / (u[0] + v[0]) }
-          pl, ql, pr, qr = mean[lt, lb, 1], mean[lt, lb, 2], mean[rt, rb, 1], mean[rt, rb, 2]
-          pt, pb = mean[lt, rt, 1], mean[lb, rb, 1]
-          qt, qb = mean[lt, rt, 2], mean[lb, rb, 2]
-          xx = pr - pl
-          yy = qb - qt
-          xy = ((qr - ql) + (pb - pt)) / 2.0
-          spread = (xx - yy) / 2
-          half = Math.sqrt((spread * spread) + (xy * xy))
-          mid = (xx + yy) / 2
-          return nil if mid.abs + half < CREASE
-
-          angle = 0.5 * Math.atan2(2 * xy, xx - yy)
-          return Glyphs.line(-Math.sin(angle), -Math.cos(angle)) if (mid + half).abs >= (mid - half).abs
-
-          Glyphs.line(-Math.cos(angle), Math.sin(angle))
+          # Ties go to the glyph later in character order, as a port's sort would.
+          votes, glyph = [[horizontal, "-"], [diagonal_up, "/"], [diagonal_down, "\\"],[vertical, "|"]].max
+          votes >= VOTE * seen && votes.positive? ? glyph : nil
         end
 
         def shade(c, r, i, cover, fraction)
           tone = GAIN * (@lum_sum[i] / @count[i]) * (1.0 - EDGE_FADE + (EDGE_FADE * cover))
-          tone = KNEE + ((tone - KNEE) * SHOULDER) if tone > KNEE
-          tone = [tone, CEILING].min + (DEPTH_TONE * (fraction - 0.5))
-          @ramp[Glyphs.index(tone.clamp(0.0, 1.0), @ramp.size, c, r)]
+          tone = (tone.clamp(0.0, CEILING)**GAMMA) + (DEPTH_TONE * (fraction - 0.5))
+          @ramp[Glyphs.index(tone.clamp(0.0, 1.0), @levels, c, r)]
         end
       end
     end
