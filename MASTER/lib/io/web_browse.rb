@@ -121,7 +121,7 @@ module Master
         Result.err("web_browse: #{e.class}: #{e.message.lines.first.to_s.strip[0, 200]}", category: :infrastructure)
       end
 
-      # Public, shared security setup: BrowserAgent uses the same fenced
+      # Public, shared security setup: Browser uses the same fenced
       # request path rather than letting a second Ferrum instance access the net.
       def secure_page(page, allowed_host: nil)
         page.command("Page.addScriptToEvaluateOnNewDocument", source: NETWORK_SANDBOX_SCRIPT)
