@@ -157,9 +157,8 @@ module Master
           text[0, width].strip
         end
 
-        # zsh's own %~: home as a tilde, and a long path cut from the left so
-        # the tail you are actually in stays readable. Use an ASCII truncation
-        # marker to preserve console output and copy/paste across old terminals.
+        # Keep path lookup filesystem-aware and bounded. The final prompt turns
+        # path punctuation into spaces so names stay readable without shell glyphs.
         def prompt_path(suffix_length: 0)
           current = File.expand_path(Dir.pwd)
           location = repository_location(current) || home_path(current)
