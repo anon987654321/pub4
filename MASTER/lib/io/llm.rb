@@ -236,22 +236,22 @@ module Master
 
       class BrowserAgent < RubyLLM::Tool
         include ToolForwarding
-        description "Use a sessionful, SSRF-guarded browser. Navigation/extraction are read-oriented; every click, set, or type operation requires fresh human approval. Do not disguise automation or conceal AI identity. External communication requires recipient consent and per-action human approval."
-        parameter :action, description: "navigate, extract, interact, or close", required: true
+        description "Use a sessionful, SSRF-guarded browser. Actions: status, navigate, login, extract, look, follow, paginate, interact, close. Navigate opens a headless session; login opens a visible window for the operator to sign in manually. Sessions stay bound to their first host and use the pinned-IP GET/HEAD-only transport. Every snapshot saves an owner-only screenshot; look captures the current viewport without re-reading the DOM, for a vision lane to describe. Captions never drive navigation. Follow uses a literal same-host anchor href rather than firing page click handlers. Paginate is bounded to 1-50 pages. Every click, set, or type interaction requires fresh human approval. Do not disguise automation or conceal AI identity. External communication requires recipient consent and per-action human approval."
+        parameter :action, description: "status, navigate, login, extract, look, follow, paginate, interact, or close", required: true
         parameter :session, description: "Session id (letters, digits, underscore, hyphen; default default)", required: false
-        parameter :url, description: "Public http(s) URL for action=navigate", required: false
+        parameter :url, description: "Public http(s) URL for action=navigate or login", required: false
         parameter :operation, description: "For action=interact: click, set, or type", required: false
-        parameter :selector, description: "CSS selector for an interaction", required: false
+        parameter :selector, description: "CSS selector for follow, paginate, or interact; follow requires an anchor with href", required: false
         parameter :value, description: "Text to set/type; never supply secrets unless the user explicitly asked", required: false
         parameter :wait, description: "Seconds to let the page settle (0-12)", type: "number", required: false
         parameter :links, description: "Include links in extracted output", type: "boolean", required: false
-        parameter :screenshot, description: "Save a local screenshot (default false)", type: "boolean", required: false
+        parameter :max_pages, description: "Maximum pages for paginate (1-50, default 10)", type: "integer", required: false
 
         def execute(action:, session: "default", url: nil, operation: nil, selector: nil,
-                    value: nil, wait: 1, links: true, screenshot: false)
+                    value: nil, wait: 1, links: true, max_pages: 10)
           forward(action: action.to_s, session: session.to_s, url: url&.to_s,
                   operation: operation&.to_s, selector: selector&.to_s, value: value&.to_s,
-                  wait: wait.to_f, links: links == true, screenshot: screenshot == true)
+                  wait: wait.to_f, links: links == true, max_pages: max_pages.to_i)
         end
       end
 
