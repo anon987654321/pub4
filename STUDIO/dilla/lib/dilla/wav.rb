@@ -1,8 +1,11 @@
 # ---------------------------------------------------------------- WAV writer
+require "fileutils"
+require "tempfile"
+
 module WAV
-  # `samples` is a flat array for a mono file, or [left, right] for a stereo one. Sixteen bits by
-  # default, or twenty-four; floats past full scale are clipped.
-  def self.write(path, samples, bits: 16)
+  # Samples are mono or channel arrays; generated takes are immutable unless the
+  # caller explicitly opts in to replacement.
+  def self.write(path, samples, bits: 16, replace: false)
     channels = samples.first.is_a?(Array) ? samples.size : 1
     flat = samples.first.is_a?(Array) ? Stereo.interleave(samples) : samples
     data = bits == 24 ? pack24(flat) : flat.map { |s| (s * 32767).round.clamp(-32_768, 32_767) }.pack('s<*')
@@ -22,7 +25,29 @@ module WAV
     header << "data"
     header << [data.bytesize].pack('V')
 
-    File.binwrite(path, header + data)
+    write_bytes(path, header + data, replace:)
+  end
+
+  # Stage in the destination directory and publish atomically. A hard link is
+  # create-if-absent, unlike File.binwrite's silent truncation; rename is used
+  # only for an explicit replace request. Failed writes leave the prior take intact.
+  def self.write_bytes(path, bytes, replace: false)
+    directory = File.dirname(path)
+    FileUtils.mkdir_p(directory)
+    previous_mode = File.file?(path) ? File.stat(path).mode & 0o7777 : nil
+    mode = replace && previous_mode ? previous_mode : 0o666 & ~File.umask
+
+    Tempfile.create(["studio-output-", ".tmp"], directory, binmode: true) do |tmp|
+      tmp.write(bytes)
+      tmp.flush
+      tmp.fsync
+      File.chmod(mode, tmp.path)
+      tmp.close
+      replace ? File.rename(tmp.path, path) : File.link(tmp.path, path)
+    end
+    path
+  rescue Errno::EEXIST
+    raise ArgumentError, "refusing to overwrite existing take: #{path}; choose a new path or pass --replace"
   end
 
   # Bounded-memory output for long renders; never overwrites an existing take.
