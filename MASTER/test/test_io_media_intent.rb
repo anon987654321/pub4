@@ -476,6 +476,37 @@ end
     assert_equal "j_dilla", argv[argv.index("--style") + 1]
   end
 
+  def test_generic_make_a_beat_like_this_analyzes_the_link_before_rendering
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      url = "https://youtu.be/mx9NU4LmDwM?si=generic"
+      calls = []
+      render_stub = MediaIntent.method(:render_dilla)
+      MediaIntent.define_singleton_method(:render_dilla) do |text, root:, output: nil|
+        render_stub.call(text, root:, output: output && File.join(dir, File.basename(output)))
+      end
+      begin
+        with_dispatch_stub(dilla_runner(calls)) do
+          result = MediaIntent.dispatch("make a beat like this #{url}", root: dir)
+          assert result.ok?, result.inspect
+          assert_equal :dilla, result.value!.fetch(:media)
+        end
+      ensure
+        MediaIntent.define_singleton_method(:render_dilla, render_stub)
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+
+      assert_equal "dilla", calls.first.fetch(:tool)
+      first_argv = Shellwords.split(calls.first.fetch(:arg))
+      assert_equal "reference", first_argv.first
+      assert_equal url, first_argv[1]
+      assert_equal "--list", calls[1].fetch(:arg)
+      assert_equal "dilla", calls.last.fetch(:tool)
+      assert_match(/--out/, calls.last.fetch(:arg))
+    end
+  end
+
   def test_a_reference_and_generation_request_analyzes_then_renders
     url = "https://youtu.be/mx9NU4LmDwM?si=techno"
     calls = []
