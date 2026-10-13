@@ -38,7 +38,9 @@ module Master
         @screenshot_capture_failure_reported = false
         @submitted_text = nil
         full_prompt = [system, prompt].compact.join("\n\n")
-        with_browser { |page| converse(page, full_prompt) }
+        Timeout.timeout(timeout_seconds) { with_browser { |page| converse(page, full_prompt) } }
+      rescue Timeout::Error
+        raise ProviderError, "#{@provider}: timed out after #{timeout_seconds}s"
       end
 
       # Metadata proves which visible states were captured without retaining chat
@@ -86,25 +88,25 @@ module Master
             )
             yield browser.create_page
           ensure
-            browser&.quit
+            begin
+              browser&.quit
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "WebChat.browser_cleanup", provider: @provider)
+            end
           end
         end
       end
 
       def converse(page, text)
-        Timeout.timeout(timeout_seconds) do
-          page.go_to(@config.fetch("url"))
-          capture_screenshot(page, stage: "loaded")
-          previous = reply_state(page)
-          @submitted_text = text.to_s
-          fill_prompt(page, text)
-          capture_screenshot(page, stage: "submitted")
-          reply = read_reply(page, previous:)
-          capture_screenshot(page, stage: "answered")
-          reply
-        end
-      rescue Timeout::Error
-        raise ProviderError, "#{@provider}: timed out after #{timeout_seconds}s"
+        page.go_to(@config.fetch("url"))
+        capture_screenshot(page, stage: "loaded")
+        previous = reply_state(page)
+        @submitted_text = text.to_s
+        fill_prompt(page, text)
+        capture_screenshot(page, stage: "submitted")
+        reply = read_reply(page, previous:)
+        capture_screenshot(page, stage: "answered")
+        reply
       end
 
       def fill_prompt(page, text)
