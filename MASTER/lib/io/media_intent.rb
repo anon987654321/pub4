@@ -23,7 +23,7 @@ module Master
       IMAGE_RE = /\b(?:make|create|generate|render|photograph|photo|portrait|image|picture)\b/i.freeze
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
       KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
-      REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand|teach|model|use as (?:a )?reference|sound like|inspired by|learn the sound of)\b/i.freeze
+      REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand|teach|model|use as (?:a )?reference|reference(?: (?:track|song|audio))?|listen to|here(?:'s| is)|this is how|use this|sound like|inspired by|learn the sound of)\b/i.freeze
       REFERENCE_STYLE_RE = /\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop|industrial[ -]?techno|techno)\b/i.freeze
       REFERENCE_URL_RE = /https?:\/\/(?:www\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/watch\?v=[A-Za-z0-9_-]{11})[^\s<>"'\]\)]*/i.freeze
       AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
