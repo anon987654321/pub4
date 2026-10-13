@@ -47,7 +47,12 @@ class TestEverySuiteFileDefinesTestsItRuns < Minitest::Test
   end
 
   def suite_files
-    (Dir.glob(File.join(ROOT, "test", "test_*.rb")) + Dir.glob(File.join(ROOT, "spec", "**", "*_spec.rb")))
+    test_root = File.join(ROOT, "test")
+    fixtures = File.join(test_root, "fixtures") + File::SEPARATOR
+    tests = Dir.glob(File.join(test_root, "**", "test_*.rb")) +
+            Dir.glob(File.join(test_root, "**", "*_test.rb"))
+    (tests + Dir.glob(File.join(ROOT, "spec", "**", "*_spec.rb"))).uniq
+      .reject { |path| path.start_with?(fixtures) }
       .reject { |path| path.end_with?("test_helper.rb") }
   end
 
