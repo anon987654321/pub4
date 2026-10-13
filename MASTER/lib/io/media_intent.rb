@@ -528,7 +528,8 @@ module Master
                    preferred = reference&.fetch("groove_profile", nil)
                    [preferred, "behind_the_beat", "late_snare"].compact.find { |name| choices[:profiles].include?(name) }
                  end
-        bpm = reference&.fetch("target_bpm", nil) unless text.match?(/\b\d{2,3}(?:\.\d+)?\s*bpm\b/i)
+        explicit_bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
+        bpm = explicit_bpm ? explicit_bpm.to_f : reference&.fetch("target_bpm", nil)
         output ||= File.join(dilla_renders_dir, "#{progression}-#{pattern}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
         FileUtils.mkdir_p(File.dirname(output))
         argv = ["--progression", progression, "--out", output]
