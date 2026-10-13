@@ -107,6 +107,14 @@ class TestFixModelPhaseGuards < Minitest::Test
     end
   end
 
+  def test_a_rejection_names_what_it_introduced
+    out, = capture_io { Ledger.reject("higher_priority_violation", file: "lib/a.rb", law: "X", detail: "DENSITY line 12") }
+
+    assert_includes out, "fix0: proposal rejected, lib/a.rb X: higher_priority_violation (DENSITY line 12)"
+    capture_io { Ledger.reject("new_violations", file: "lib/b.rb") }
+    assert_equal 2, Ledger.reasons.values.sum
+  end
+
   def test_a_file_that_outlasts_its_budget_is_skipped_and_recorded
     ENV["MASTER_FIX_FILE_BUDGET_S"] = "1"
     loop = budget_loop

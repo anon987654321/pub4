@@ -286,7 +286,8 @@ end) if source.to_s.strip.empty?
           return reject_fix(path, old_src, "boyscout_violation", violations: scouts.size)
         end
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
-          return reject_fix(path, old_src, "higher_priority_violation")
+          blocker = @conflicts.last_blocker
+          return reject_fix(path, old_src, "higher_priority_violation", introduced: "#{blocker["law"]} line #{blocker["line"]}")
         end
         if (failure = failing_test_for(path))
           return reject_fix(path, old_src, "test_failed", test: failure)
@@ -365,7 +366,7 @@ end) if source.to_s.strip.empty?
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus)
+        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus, detail: details.except(:before, :after).values.map { |value| value.to_s[0, 120] }.join(" "))
         @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false

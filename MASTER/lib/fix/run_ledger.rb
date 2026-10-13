@@ -49,12 +49,12 @@ module Master
         end
 
         # One proposal turned down: the reason, counted overall and against the file.
-        def reject(reason, file:, law: nil, bus: nil)
+        def reject(reason, file:, law: nil, bus: nil, detail: nil)
           @mutex.synchronize do
             @reasons[reason.to_s] += 1
             @file_rejects[file.to_s] += 1
           end
-          Master::Trace::Dmesg.status("fix0", "proposal rejected, #{file.to_s.split("/").last(2).join("/")}#{law ? " #{law}" : ""}: #{reason}")
+          Master::Trace::Dmesg.status("fix0", "proposal rejected, #{file.to_s.split("/").last(2).join("/")}#{law ? " #{law}" : ""}: #{reason}#{detail.to_s.empty? ? "" : " (#{detail})"}")
           bus&.publish("repair_loop:proposal_rejected", law:, file:, reason: reason.to_s)
         end
 

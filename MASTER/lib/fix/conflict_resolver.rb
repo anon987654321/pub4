@@ -36,11 +36,15 @@ module Master
       end
 
       # Would applying this fix trade the original violation for a worse one?
+      # The finding that made the last reject_higher_priority? answer true, for the log line.
+      attr_reader :last_blocker
+
       def reject_higher_priority?(original_violation:, before:, after:, path:)
         baseline = priority_of(original_violation)
         blocker = findings_introduced(before:, after:, path:).find do |finding|
           Priority.higher?(priority_of(finding), baseline)
         end
+        @last_blocker = blocker
         return false unless blocker
 
         log_conflict(
