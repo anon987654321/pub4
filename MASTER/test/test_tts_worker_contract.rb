@@ -65,6 +65,31 @@ class TtsWorkerContractTest < Minitest::Test
     assert_equal 30, @speech.worker_timeout(2000)
   end
 
+  def test_stream_timeout_allows_the_audio_duration_in_fast_mode
+    ENV.delete("MASTER_TTS_STREAM_TIMEOUT")
+    @speech.define_singleton_method(:fast_tts_mode?) { true }
+
+    assert_equal 20, @speech.stream_timeout(100)
+    assert_equal 36, @speech.stream_timeout(300)
+    assert_equal 90, @speech.stream_timeout(2000)
+  ensure
+    ENV.delete("MASTER_TTS_STREAM_TIMEOUT")
+  end
+
+  def test_stream_timeout_respects_explicit_override
+    ENV["MASTER_TTS_STREAM_TIMEOUT"] = "123"
+
+    assert_equal 123, @speech.stream_timeout(300)
+  ensure
+    ENV.delete("MASTER_TTS_STREAM_TIMEOUT")
+  end
+
+  def test_normal_stream_timeout_preserves_the_worker_budget
+    @speech.define_singleton_method(:fast_tts_mode?) { false }
+
+    assert_equal @speech.worker_timeout(300), @speech.stream_timeout(300)
+  end
+
   def test_stream_wire_enabled_defaults_to_true
     ENV.delete("MASTER_TTS_WIRE")
     assert @speech.stream_wire_enabled?
