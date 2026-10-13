@@ -127,6 +127,7 @@ def publish_pending!
   @commit_mutex.synchronize do
     ahead, = @git.ahead_behind
     return :nothing_to_publish if ahead.zero?
+    return held(ahead) if no_publish?
 
     @git.log_between("@{u}").each { |line| Master::Trace::Dmesg.status("deliver0", "publishing #{line}") }
     @git.push
@@ -139,7 +140,17 @@ end
 private
 
 def push_each?
-  ENV["MASTER_FIX_PUSH"] == "each"
+  ENV["MASTER_FIX_PUSH"] == "each" && !no_publish?
+end
+
+# fix-here --no-publish: the run commits locally and leaves the push to its operator.
+def no_publish?
+  ENV["MASTER_FIX_NO_PUBLISH"] == "1"
+end
+
+def held(ahead)
+  Master::Trace::Dmesg.status("deliver0", "held, #{ahead} commit(s) left local (MASTER_FIX_NO_PUBLISH=1)")
+  :held
 end
 
 def push_commit!(paths)

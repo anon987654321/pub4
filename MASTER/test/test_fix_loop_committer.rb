@@ -212,6 +212,27 @@ class TestFixLoopCommitter < Minitest::Test
     refute(bus.events.any? { |event, _| event == "ops:commit" })
   end
 
+# fix-here --no-publish: the commits stay local and the operator pushes.
+def test_no_publish_holds_the_commits_instead_of_pushing
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+  committer.baseline!
+  with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
+  git.ahead = 1
+
+  previous = ENV["MASTER_FIX_NO_PUBLISH"]
+  ENV["MASTER_FIX_NO_PUBLISH"] = "1"
+  begin
+    out, = capture_io { assert_equal :held, committer.publish_pending! }
+  ensure
+    previous ? ENV["MASTER_FIX_NO_PUBLISH"] = previous : ENV.delete("MASTER_FIX_NO_PUBLISH")
+  end
+
+  assert_equal 0, git.pushes
+  assert_includes out, "deliver0: held, 1 commit(s) left local"
+end
+
 # The default is one push at the end of the run, not one per commit.
 def test_commits_do_not_push_until_the_run_publishes
   write_file("lib/ok.rb", "OK = 1\n")

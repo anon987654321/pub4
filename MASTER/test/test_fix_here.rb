@@ -35,6 +35,18 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_no_publish_reaches_the_run_and_is_absent_without_the_flag
+    with_worktree do |_main, worker, tools_bin|
+      _, held = run_fix_here(worker, tools_bin, "MASTER", "--model", "none", "--no-probe", "--no-publish")
+      assert held.success?
+      assert_includes File.read(File.join(worker, "MASTER/.master/fix-MASTER.log")), "no-publish=1"
+
+      _, normal = run_fix_here(worker, tools_bin, "MASTER", "--model", "none", "--no-probe")
+      assert normal.success?
+      assert_includes File.read(File.join(worker, "MASTER/.master/fix-MASTER.log")), "no-publish=UNSET"
+    end
+  end
+
   def test_model_flag_requires_a_value
     with_worktree do |_main, worker, tools_bin|
       output, status = run_fix_here(worker, tools_bin, "MASTER", "--model")
@@ -158,7 +170,7 @@ class TestFixHere < Minitest::Test
       %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
         File.join(main, "MASTER/bin/master"),
-        "#!/usr/bin/env ruby\ntrap('TERM', 'IGNORE') if ENV['FAKE_IGNORE_TERM']\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
+        "#!/usr/bin/env ruby\ntrap('TERM', 'IGNORE') if ENV['FAKE_IGNORE_TERM']\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\n\"\nputs 'no-publish=' + ENV.fetch('MASTER_FIX_NO_PUBLISH', 'UNSET') + \"\n\"\n",
       )
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/fix-here"))
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/master"))
