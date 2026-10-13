@@ -35,6 +35,7 @@ class TestBrowserPolicyGate < Minitest::Test
     assert_equal 50, policy.fetch("max_pagination_pages")
     assert_equal 131_072, policy.fetch("max_pagination_output_bytes")
     assert_equal true, policy.fetch("follow_anchors_by_href_only")
+    assert_equal "blocked", policy.fetch("visible_login_submission")
 
     result = Deploy::BrowserPolicyGate.run
     assert_equal :passed, result.outcome, result.inspect
