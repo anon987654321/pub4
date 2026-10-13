@@ -280,18 +280,50 @@ end
   end
 
   def test_a_bare_youtube_link_is_treated_as_an_audio_reference
-    url = "https://youtu.be/mx9NU4LmDwM?si=barelink"
-    calls = []
-    with_dispatch_stub(lambda do |**kwargs|
-      calls << kwargs
-      Master::Result.ok("reference0: analyzed audio")
-    end) do
-      result = MediaIntent.dispatch(url, root: "/tmp/pub4")
-      assert result.ok?, result.inspect
-      assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      url = "https://youtu.be/mx9NU4LmDwM?si=barelink"
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          Master::Result.ok("reference0: analyzed audio")
+        end) do
+          result = MediaIntent.dispatch(url, root: "/tmp/pub4")
+          assert result.ok?, result.inspect
+          assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+      assert_equal ["reference", url], argv
     end
-    argv = Shellwords.split(calls.fetch(0).fetch(:arg))
-    assert_equal ["reference", url], argv
+  end
+
+  def test_consecutive_reference_links_inherit_the_last_explicit_style
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      FileUtils.mkdir_p(File.join(dir, "dilla-references"))
+      File.write(File.join(dir, "dilla-references", "latest_profile.json"), JSON.generate("style_key" => "j_dilla"))
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          Master::Result.ok("reference0: analyzed audio")
+        end) do
+          result = MediaIntent.dispatch("here's another track: https://youtu.be/mx9NU4LmDwM?si=next", root: "/tmp/pub4")
+          assert result.ok?, result.inspect
+          assert_equal "j_dilla", result.value!.fetch(:style)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+      assert_equal "j_dilla", argv[argv.index("--style") + 1]
+    end
   end
 
   def test_a_j_dilla_reference_is_explicitly_tagged_for_the_analyzer
