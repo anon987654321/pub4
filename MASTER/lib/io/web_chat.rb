@@ -16,6 +16,7 @@ module Master
       POLL_INTERVAL_S = 0.5
       LOGIN_POLL_INTERVAL_S = 1.0
       PNG_SIGNATURE = "\x89PNG\r\n\x1a\n".b.freeze
+      PROFILE_MUTEX = Mutex.new
 
       DisabledError = Class.new(StandardError)
       ProviderError = Class.new(StandardError)
@@ -71,16 +72,22 @@ module Master
 
       def with_browser
         require "ferrum"
-        FileUtils.mkdir_p(profile_path)
-        browser = Ferrum::Browser.new(
-          headless: ENV[HEADFUL_ENV] != "1",
-          timeout: timeout_seconds,
-          process_timeout: timeout_seconds,
-          browser_options: { "user-data-dir" => profile_path },
-        )
-        yield browser.create_page
-      ensure
-        browser&.quit
+        PROFILE_MUTEX.synchronize do
+          browser = nil
+          begin
+            FileUtils.mkdir_p(profile_path, mode: 0o700)
+            File.chmod(0o700, profile_path)
+            browser = Ferrum::Browser.new(
+              headless: ENV[HEADFUL_ENV] != "1",
+              timeout: timeout_seconds,
+              process_timeout: timeout_seconds,
+              browser_options: { "user-data-dir" => profile_path },
+            )
+            yield browser.create_page
+          ensure
+            browser&.quit
+          end
+        end
       end
 
       def converse(page, text)
@@ -161,16 +168,27 @@ module Master
         return false if metadata.match?(/(?:\A|[\s_-])(user|human|prompt|question|query)(?:\z|[\s_-])/)
         return true if metadata.match?(/assistant|response|bot|model|markdown-body|message-content/)
 
-        !submitted_prompt_echo?(extract_text(node))
+        text = extract_text(node)
+        !submitted_prompt_echo?(text) && !submitted_prompt_in_container?(text)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "WebChat.reply_candidate", provider: @provider)
         false
       end
 
       def submitted_prompt_echo?(value)
-        prompt = @submitted_text.to_s.gsub(/\s+/, " ").strip
-        text = value.to_s.gsub(/\s+/, " ").strip
+        prompt = normalized_text(@submitted_text)
+        text = normalized_text(value)
         !prompt.empty? && text == prompt
+      end
+
+      def submitted_prompt_in_container?(value)
+        prompt = normalized_text(@submitted_text)
+        text = normalized_text(value)
+        !prompt.empty? && text.include?(prompt)
+      end
+
+      def normalized_text(value)
+        value.to_s.gsub(/\s+/, " ").strip.downcase
       end
 
       def find_element(page, selector)
@@ -221,11 +239,13 @@ module Master
         evidence = { stage:, bytes: bytes.bytesize, sha256: Digest::SHA256.hexdigest(bytes) }
         directory = ENV["MASTER_WEB_CHAT_SCREENSHOT_DIR"].to_s.strip
         unless directory.empty?
-          FileUtils.mkdir_p(File.expand_path(directory))
+          capture_dir = File.expand_path(directory)
+          FileUtils.mkdir_p(capture_dir, mode: 0o700)
+          File.chmod(0o700, capture_dir)
           provider = @provider.gsub(/[^a-z0-9_-]/i, "_")
           stamp = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
-          path = File.join(File.expand_path(directory), "#{provider}-#{Process.pid}-#{stamp}-#{stage}-#{evidence[:sha256][0, 10]}.png")
-          File.binwrite(path, bytes)
+          path = File.join(capture_dir, "#{provider}-#{Process.pid}-#{stamp}-#{stage}-#{evidence[:sha256][0, 10]}.png")
+          File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) { |file| file.write(bytes) }
           evidence[:path] = path
         end
         (@screenshot_evidence ||= []) << evidence.freeze
