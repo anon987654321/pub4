@@ -4503,6 +4503,7 @@ browser_policy:
   max_pagination_pages: 50
   max_pagination_output_bytes: 131072
   follow_anchors_by_href_only: true
+  visible_login_submission: blocked
   external_interactions:
     ai_identity_disclosure_required: true
     recipient_consent_required: true
