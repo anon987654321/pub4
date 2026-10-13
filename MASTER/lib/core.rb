@@ -129,11 +129,23 @@ module Master::Core
         when :diff
           Reversibility.new(kind: :non_mutating)
         when :stage
-          Reversibility.new(kind: :approval_required, scope: Array(args[:paths]).join(", "),
-                            reason: "git stage mutates the shared index and MASTER has no scoped index rollback")
+          paths = Array(args[:paths]).map(&:to_s).reject { |path| path.strip.empty? }
+          if paths.empty?
+            Reversibility.new(kind: :unknown, scope: :stage,
+                              reason: "git stage requires explicit paths; unscoped index changes are refused")
+          else
+            Reversibility.new(kind: :approval_required, scope: paths.join(", "),
+                              reason: "git stage mutates the shared index and MASTER has no scoped index rollback")
+          end
         when :commit
-          Reversibility.new(kind: :approval_required, scope: Array(args[:paths]).join(", "),
-                            reason: "git commit creates durable repository history and is not automatically undone")
+          paths = Array(args[:paths]).map(&:to_s).reject { |path| path.strip.empty? }
+          if paths.empty?
+            Reversibility.new(kind: :unknown, scope: :commit,
+                              reason: "git commit requires explicit paths; the shared index is never an implicit scope")
+          else
+            Reversibility.new(kind: :approval_required, scope: paths.join(", "),
+                              reason: "git commit creates durable repository history and is not automatically undone")
+          end
         else
           Reversibility.new(kind: :unknown, scope: args[:operation],
                             reason: "no reversibility contract or World handler exists for this git operation")
