@@ -177,7 +177,9 @@ module Master
         end
 
         def heal_args(llm_tool, args)
-          declared = llm_tool.parameters.keys
+          # RubyLLM's #parameters is a schema-declaration setter, not a reader.
+          # Read the declaration already stored on the wrapper class.
+          declared = llm_tool.class.declared_parameters.keys
           args.to_h do |key, value|
             target = ARG_ALIASES[key]
             next [key, value] unless target && !declared.include?(key) && declared.include?(target) && !args.key?(target)
@@ -191,7 +193,7 @@ module Master
           wrapper = LLM_TOOL_MAP[tool.class]
           return "" unless wrapper
 
-          "(#{wrapper.parameters.values.map { |param| "#{param.name}#{'*' if param.required}" }.join(', ')})"
+          "(#{wrapper.declared_parameters.values.map { |param| "#{param.name}#{'*' if param.required}" }.join(', ')})"
         end
 
         def text_prompt_for(messages)
