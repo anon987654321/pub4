@@ -623,9 +623,9 @@ body[data-mode="speaking"] #mic-dot {
 .message.user,
 .message.assistant { border: 0; border-radius: 0; background: transparent; }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
-.msg-prompt { font-weight: 700; margin-inline-end: 0.35em; }
-.message.user .msg-prompt { color: var(--c-accent, var(--face-fg)); }
-.message.assistant .msg-prompt { color: var(--face-muted); }
+.msg-prompt { color: var(--face-fg); font-weight: 400; margin-inline-end: 0.35em; }
+.message.user .msg-prompt,
+.message.assistant .msg-prompt { color: var(--face-fg); }
 .msg-body { color: color-mix(in srgb, var(--c-text) 88%, transparent); font-feature-settings:'liga' 1,'kern' 1; text-wrap: pretty; }
 .cursor { display:inline-block; width:2px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-inline-start:1px; }
 .message.msg-error-flash .msg-body { outline: 1px solid color-mix(in srgb, var(--c-danger) 55%, transparent); outline-offset: 2px; }
@@ -1772,17 +1772,12 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   line-height: 1.72;
   animation: msgIn 240ms cubic-bezier(.2,.75,.25,1) both;
 }
-.message.user .msg-prompt {
-  color: #94deef;
-  font: 650 0.72rem/1.5 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+.message.user .msg-prompt,
 .message.assistant .msg-prompt {
-  color: #aab8db;
-  font: 650 0.72rem/1.5 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--face-fg);
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
 }
 .msg-body {
   color: rgb(226 233 250 / 92%);
