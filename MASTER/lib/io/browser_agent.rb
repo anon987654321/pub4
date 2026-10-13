@@ -326,7 +326,7 @@ module Master
       end
 
       def save_screenshot(state)
-        directory = File.join(@root, ".master", "browser_screenshots")
+        directory = File.join(Dir.home, ".master", "plugins", "session_browser", "captures")
         @capture_mutex.synchronize do
           FileUtils.mkdir_p(directory, mode: 0o700)
           File.chmod(0o700, directory)
