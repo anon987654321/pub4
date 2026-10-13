@@ -66,7 +66,7 @@ class TestErrClassification < Minitest::Test
   end
 
   def test_a_rejected_request_is_permanent
-    %i[validation axiom_violation policy].each do |category|
+    %i[validation invalid_request axiom_violation policy].each do |category|
       assert err(category).permanent?, "#{category} reproduces on every retry"
     end
   end
