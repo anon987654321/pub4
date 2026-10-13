@@ -31,6 +31,8 @@ class TestElegantKernel < Minitest::Test
       assert_equal "snapshot sample.txt", observation.command
       assert_equal Digest::SHA256.hexdigest(observation.output), observation.hash
       assert_equal "before\n", observation.file("sample.txt")
+      assert_nil observation.deleted, "deletion coverage is unknown outside a Git worktree"
+      refute observation.deletions_known?
       assert_equal "observation", kernel.log.records.first.fetch("event")
     end
   end

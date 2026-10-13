@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "open3"
 require "tempfile"
 require "yaml"
 
@@ -33,7 +34,7 @@ module Master
         end
       end
 
-      Observation = Data.define(:command, :output, :hash, :path, :root, :files, :excluded) do
+      Observation = Data.define(:command, :output, :hash, :path, :root, :files, :excluded, :deleted) do
         def file(name)
           text = name.to_s
           absolute = File.expand_path(text, root)
@@ -51,7 +52,7 @@ module Master
           text && Digest::SHA256.hexdigest(text)
         end
 
-        def deleted = []
+        def deletions_known? = !deleted.nil?
       end
 
       Repair = Data.define(:path, :before_hash, :after_hash, :diff, :content) do
@@ -287,8 +288,8 @@ module Master
                 next
               end
               next if %w[. ..].include?(File.basename(candidate))
-              if File.symlink?(candidate)
-                excluded << { "path" => rel, "reason" => "symlink" }
+              if symlink_ancestor?(candidate, absolute)
+                excluded << { "path" => rel, "reason" => "symlink_ancestor" }
                 next
               end
               next unless File.file?(candidate)
@@ -303,14 +304,19 @@ module Master
             raise Error, "observation target does not exist: #{relative}"
           end
 
+          deleted = git_deleted(relative)
           output = JSON.generate({
             "path" => relative,
             "files" => contents.map { |key, value| { "path" => key, "sha256" => Digest::SHA256.hexdigest(value), "bytes" => value.bytesize } },
-            "excluded" => excluded
+            "excluded" => excluded,
+            "deleted" => deleted,
+            "deletions_known" => !deleted.nil?
           })
+          command = "snapshot #{relative}"
+          command = "#{command}; git diff --name-only --diff-filter=D HEAD" unless deleted.nil?
           observation = Observation.new(
-            command: "snapshot #{relative}", output:, hash: Digest::SHA256.hexdigest(output),
-            path: relative, root:, files: contents.freeze, excluded: excluded.freeze
+            command:, output:, hash: Digest::SHA256.hexdigest(output),
+            path: relative, root:, files: contents.freeze, excluded: excluded.freeze, deleted: deleted&.freeze
           )
           log.append(event: "observation", data: { command: observation.command, output: observation.output, hash: observation.hash, path: relative })
           observation
@@ -419,6 +425,34 @@ module Master
         end
 
         private
+
+        def git_deleted(relative)
+          argv = ["git", "-C", root, "diff", "--name-only", "--diff-filter=D", "HEAD", "--"]
+          argv << relative unless relative.empty?
+          output, _error, status = Open3.capture3(*argv)
+          return unless status.success?
+
+          prefix = relative.end_with?(File::SEPARATOR) ? relative : "#{relative}#{File::SEPARATOR}"
+          output.lines.map(&:strip).reject(&:empty?).select do |path|
+            relative.empty? || path == relative || path.start_with?(prefix)
+          end.uniq.sort
+        rescue SystemCallError
+          nil
+        end
+
+        def symlink_ancestor?(path, target_root)
+          cursor = File.expand_path(path)
+          boundary = File.expand_path(target_root)
+          loop do
+            return true if File.symlink?(cursor)
+            return false if cursor == boundary
+            return true unless cursor.start_with?("#{boundary}#{File::SEPARATOR}")
+
+            parent = File.dirname(cursor)
+            return true if parent == cursor
+            cursor = parent
+          end
+        end
 
         def read_observed_file(absolute, relative, contents)
           size = File.size(absolute)
