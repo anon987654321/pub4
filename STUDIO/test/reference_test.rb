@@ -58,7 +58,7 @@ class DillaReferenceTest < Minitest::Test
     assert_equal "j_dilla", profile.fetch("style_key")
     assert_equal 92, profile.fetch("target_bpm")
     assert_equal "behind_the_beat", profile.fetch("groove_profile")
-    refute profile.key?("rumble_level")
+    refute profile.fetch("parameters", {}).key?("rumble_level")
   end
 
   def test_unlabelled_reference_stays_general_instead_of_becoming_techno
@@ -67,6 +67,24 @@ class DillaReferenceTest < Minitest::Test
     assert_equal "general", profile.fetch("genre")
     assert_equal "general", profile.fetch("style_key")
     assert_equal 124, profile.fetch("target_bpm")
+  end
+
+  def test_profiles_are_scoped_to_a_style
+    dilla = Dilla::Reference.profile_path("j_dilla")
+    techno = Dilla::Reference.profile_path("industrial_techno")
+    assert_includes dilla, File.join("profiles", "j_dilla")
+    assert_includes techno, File.join("profiles", "industrial_techno")
+    refute_equal dilla, techno
+  end
+
+  def test_industrial_renderer_does_not_mistake_hip_hop_profiles_for_techno
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "profile.json")
+      File.write(path, JSON.generate("genre" => "hip_hop", "style_key" => "j_dilla"))
+      refute Dilla::IndustrialTechno.profile_matches_industrial_techno?(path)
+      File.write(path, JSON.generate("genre" => "industrial_techno", "style_key" => "industrial_techno"))
+      assert Dilla::IndustrialTechno.profile_matches_industrial_techno?(path)
+    end
   end
 
   def test_automatic_generation_plan_uses_reference_duration_and_internal_seed
