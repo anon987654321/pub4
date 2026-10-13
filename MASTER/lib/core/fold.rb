@@ -104,13 +104,14 @@ private
         return Done.new(reason: :complete, turns: turn, summary: admitted.args[:summary])
       end
 
-      # Only a write has a path to roll back to; World#rollback skips exec and git
-      # for want of one. A checkpoint is a `git diff` per turn, so it is taken for
-      # writes alone rather than paid for by effects that cannot use it.
-      write = admitted.verb == :write
-      checkpoint = @world.checkpoint if write
+      contract = admitted.reversibility
+      rollbackable = contract.kind == :reversible
+      checkpoint = @world.checkpoint if rollbackable
       observation = @world.perform(admitted)
-      observation = undo(checkpoint, admitted, observation) if write && observation.err?
+      if observation.err?
+        observation = undo(checkpoint, admitted, observation) if rollbackable
+        observation = compensate(turn, admitted, observation, contract) if contract.kind == :compensatable
+      end
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
       nil
@@ -126,6 +127,41 @@ private
     def undo(checkpoint, effect, observation)
       undone = @world.rollback(checkpoint, effect)
       Observation.no("#{observation.message} [#{undone.message}]")
+    end
+
+    # Run only a declared compensation, only after the original command failed,
+    # and only after the same Constitution has admitted it and the operator says
+    # yes. The compensation is a new exec effect; no inverse bypasses the gate.
+    def compensate(_turn, original, failure, contract)
+      action = contract.compensation
+      inverse = Effect.exec(action.argv)
+      case (verdict = @law.admit(inverse, @memory))
+      in Verdict::Block(reason:, by:)
+        return Observation.no("#{failure.message} [compensation blocked by #{by}: #{reason}]")
+      in Verdict::Request(prompt:, reason:, by:)
+        approval_context = "#{by} requested approval: #{reason}. "
+        gate_prompt = prompt
+      in Verdict::Allow
+        approval_context = ""
+        gate_prompt = "The original command failed. Approve compensation #{action.argv.inspect}? #{action.reason}"
+      end
+
+      prompt = "#{approval_context}#{gate_prompt} Compensation: #{action.argv.inspect}. Reason: #{action.reason}"
+      answer = @world.perform(Effect.ask(prompt))
+      unless answer.ok? && affirmative?(answer.detail)
+        detail = answer.ok? ? "operator declined" : answer.message
+        return Observation.no("#{failure.message} [compensation not run: #{detail}]")
+      end
+
+      result = @world.perform(inverse)
+      @memory.record(inverse, result)
+      if result.ok?
+        Observation.no("#{failure.message} [compensation completed: #{action.argv.join(" ")} — #{result.message}]")
+      else
+        Observation.no("#{failure.message} [compensation failed: #{action.argv.join(" ")} — #{result.message}]")
+      end
+    rescue StandardError => e
+      Observation.no("#{failure.message} [compensation failed: #{e.class}: #{e.message}]")
     end
 
     def emit(turn, effect, observation)
