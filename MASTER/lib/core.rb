@@ -63,7 +63,7 @@ module Master::Core
       new(verb: :exec, args:)
     end
     def self.git(operation, **args)
-      capability = %i[diff status log show branch].include?(operation.to_sym) ? :read : :write
+      capability = operation.to_s.to_sym == :diff ? :read : :write
       new(verb: :git, args: { operation:, **args }, capability:)
     end
     def self.ask(prompt, options: nil) = new(verb: :ask, args: { prompt:, options: })
@@ -87,7 +87,7 @@ module Master::Core
       verb = verb.to_sym
       raise ArgumentError, "unknown effect verb: #{verb}" unless VERBS.include?(verb)
 
-      expected = if verb == :git && %i[diff status log show branch].include?(args[:operation].to_s.to_sym)
+      expected = if verb == :git && args[:operation].to_s.to_sym == :diff
                    :read
                  else
                    CAPABILITIES.fetch(verb)
