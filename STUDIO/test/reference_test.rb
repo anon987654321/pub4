@@ -105,6 +105,30 @@ class DillaReferenceTest < Minitest::Test
     assert_operator profile.fetch("parameters").fetch("rumble_duck_depth"), :between?, 0.3, 0.95
   end
 
+  def test_rhythm_summary_measures_onset_density_and_grid_looseness
+    sample_rate = 100
+    bpm = 100.0
+    subdivision = sample_rate * 60.0 / bpm / 4.0
+    samples = Array.new(sample_rate * 30, 0.0)
+    (0...(samples.size / subdivision).floor).each do |step|
+      position = (step * subdivision).round + (step.odd? ? 2 : 0)
+      samples[position] = 1.0 if position < samples.size
+      samples[position + 1] = 0.5 if position + 1 < samples.size
+    end
+
+    features = Dilla::Reference.summarize_rhythm_envelope(samples, bpm:, sample_rate:)
+    assert_operator features.fetch("onset_density_per_bar"), :>, 14.0
+    assert_operator features.fetch("timing_spread_ms"), :>=, 5.0
+    assert_operator features.fetch("timing_spread_ms"), :<=, 20.0
+    assert_operator features.fetch("offbeat_onset_share"), :>, 0.5
+    assert_operator features.fetch("offbeat_onset_share"), :<=, 1.0
+  end
+
+  def test_rhythm_summary_declines_when_the_envelope_has_too_little_evidence
+    assert_empty Dilla::Reference.summarize_rhythm_envelope(Array.new(100, 0.0), bpm: 100.0, sample_rate: 100)
+    assert_empty Dilla::Reference.summarize_rhythm_envelope(Array.new(1_000, 0.0), bpm: 100.0, sample_rate: 100)
+  end
+
   def test_demucs_stem_energy_shares_capture_relative_part_balance
     tracks = {
       "mix" => { "rms_db" => -6.0 },
