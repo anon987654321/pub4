@@ -50,7 +50,7 @@ module Deploy
       return failure("visible login must preserve the read-only boundary") unless policy["visible_login_submission"] == "blocked"
 
       source = File.join(root, "lib", "io", "browser_agent.rb")
-      return failure("BrowserAgent tool missing") unless File.file?(source)
+      return failure("Browser implementation missing") unless File.file?(source)
 
       content = File.read(source)
       return failure("visible login must disclose blocked POST submissions") unless content.include?("ordinary POST-based login submissions are blocked")
@@ -58,15 +58,15 @@ module Deploy
       browser_config = File.join(root, "data", "browser_agents.yml")
       sources = [content, (File.read(browser_config) if File.file?(browser_config))].compact
       if sources.any? { |text| text.match?(evasion_patterns) }
-        return failure("BrowserAgent must not disguise automation or simulate random browsing")
+        return failure("Browser must not disguise automation or simulate random browsing")
       end
       %w[SsrfGuard.pinned_address secure_page :dangerous ensure_session_host! target_from_anchor! save_screenshot(state) MAX_PAGINATION_OUTPUT_BYTES].each do |guard|
-        return failure("BrowserAgent security or capability guard missing: #{guard}") unless content.include?(guard)
+        return failure("Browser security or capability guard missing: #{guard}") unless content.include?(guard)
       end
-      return failure("BrowserAgent interaction consent boundary missing") unless content.include?('interact #{op}')
-      return failure("BrowserAgent capture limit disagrees with policy") unless content.include?("MAX_CAPTURES = #{policy["max_capture_files"]}")
-      return failure("BrowserAgent page limit disagrees with policy") unless content.include?("clamp(1, #{policy["max_pagination_pages"]})")
-      return failure("BrowserAgent output limit disagrees with policy") unless content.include?("MAX_PAGINATION_OUTPUT_BYTES = #{policy["max_pagination_output_bytes"] / 1024} * 1024")
+      return failure("Browser interaction consent boundary missing") unless content.include?('interact #{op}')
+      return failure("Browser capture limit disagrees with policy") unless content.include?("MAX_CAPTURES = #{policy["max_capture_files"]}")
+      return failure("Browser page limit disagrees with policy") unless content.include?("clamp(1, #{policy["max_pagination_pages"]})")
+      return failure("Browser output limit disagrees with policy") unless content.include?("MAX_PAGINATION_OUTPUT_BYTES = #{policy["max_pagination_output_bytes"] / 1024} * 1024")
       required_transport = File.join(root, "lib", "io", "web_browse.rb")
       transport = File.read(required_transport)
       %w[request_allowed_for_host? allowed_host reset_page_budget].each do |guard|
@@ -75,12 +75,12 @@ module Deploy
 
       llm_tool = File.read(File.join(root, "lib", "io", "llm.rb"))
       %w[status navigate login extract look follow paginate close].each do |action|
-        return failure("BrowserAgent model-facing action missing: #{action}") unless llm_tool.include?(action)
+        return failure("Browser model-facing action missing: #{action}") unless llm_tool.include?(action)
       end
       unless llm_tool.include?("fresh human approval") && llm_tool.include?("recipient consent") && llm_tool.include?("Do not disguise automation")
-        return failure("BrowserAgent model-facing consent policy missing")
+        return failure("Browser model-facing consent policy missing")
       end
-      return failure("BrowserAgent session limit disagrees with policy") unless content.include?("MAX_SESSIONS = #{policy["max_sessions"]}")
+      return failure("Browser session limit disagrees with policy") unless content.include?("MAX_SESSIONS = #{policy["max_sessions"]}")
 
       governor = File.read(File.join(root, "lib", "fix", "governor.rb"))
       %w[human_consent_required? consent_required @auto].each do |guard|
