@@ -602,7 +602,10 @@ end
       ENV["XDG_DATA_HOME"] = dir
       reference_root = File.join(dir, "dilla-references")
       FileUtils.mkdir_p(File.join(reference_root, "profiles", "j_dilla"))
-      profile = JSON.generate("style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "behind_the_beat")
+      profile = JSON.generate(
+        "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "behind_the_beat",
+        "features" => { "drums_energy_share" => 0.5, "other_energy_share" => 0.375 }
+      )
       File.write(File.join(reference_root, "latest_profile.json"), profile)
       File.write(File.join(reference_root, "profiles", "j_dilla", "latest_profile.json"), profile)
       File.write(File.join(reference_root, "active_style.json"), JSON.generate("style_key" => "j_dilla"))
@@ -627,6 +630,8 @@ end
       assert_equal "3", words[words.index("--sonitex-instances") + 1]
       assert_equal "heavy", words[words.index("--drum-tape") + 1]
       assert_equal "0.78", words[words.index("--vcs") + 1]
+      assert_equal "2.0", words[words.index("--drum-balance") + 1]
+      assert_equal "1.0", words[words.index("--chord-balance") + 1]
     end
   end
 
