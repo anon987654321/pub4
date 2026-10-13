@@ -50,6 +50,21 @@ class DillaReferenceTest < Minitest::Test
     assert_operator params.fetch("distortion_drive"), :between?, 1.0, 4.0
   end
 
+  def test_automatic_generation_plan_uses_reference_duration_and_internal_seed
+    profile = { "source_duration_seconds" => 24.0, "reference_fingerprint" => "fixture" }
+    plan = Dilla::IndustrialTechno.generation_plan(profile:, bpm: 120)
+    assert_equal 12, plan.fetch(:bars)
+    assert_operator plan.fetch(:seed), :>=, 0
+    assert_operator plan.fetch(:seed), :<=, 0xffff_ffff
+  end
+
+  def test_automatic_generation_plan_uses_safe_defaults_without_reference_duration
+    plan = Dilla::IndustrialTechno.generation_plan(profile: nil, bpm: 138)
+    assert_equal 16, plan.fetch(:bars)
+    assert_operator plan.fetch(:seed), :>=, 0
+    assert_operator plan.fetch(:seed), :<=, 0xffff_ffff
+  end
+
   def test_streamed_wav_header_and_lengths_are_valid
     Dir.mktmpdir do |dir|
       path = File.join(dir, "small.wav")
