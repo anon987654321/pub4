@@ -26,6 +26,7 @@ module Master
       REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand|teach|model|use as (?:a )?reference|reference(?: (?:track|song|audio))?|listen to|here(?:'s| is)|this is how|use this|sound|sound like|track|song|link|video|inspired by|learn the sound of)\b/i.freeze
       REFERENCE_STYLE_RE = /\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop|industrial[ -]?techno|techno)\b/i.freeze
       REFERENCE_URL_RE = /https?:\/\/(?:(?:www|m|music)\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/|v\/)[A-Za-z0-9_-]{11})[^\s<>"'\]\)]*/i.freeze
+      REFERENCE_SOURCE_LIMIT = 5
       AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
       REFERENCE_GENERATION_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
       REFERENCE_FOLLOWUP_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
@@ -387,8 +388,8 @@ module Master
         return false unless source
         return true if text.match?(REFERENCE_AUDIO_RE) || text.match?(REFERENCE_STYLE_RE)
         # A pasted YouTube URL by itself is an audio reference in MASTER's music workflow.
-        remainder = text.gsub(REFERENCE_URL_RE, "").strip
-        remainder.match?(/\A[.,!?;:]*\z/) && text.match?(REFERENCE_URL_RE)
+        remainder = text.gsub(REFERENCE_URL_RE, "").gsub(/\b(?:and|or)\b|&/i, "").strip
+        remainder.match?(/\A[.,!?;:\s]*\z/) && text.match?(REFERENCE_URL_RE)
       end
 
       def reference_style_for(text)
@@ -441,17 +442,32 @@ module Master
         nil
       end
 
+      def reference_sources(text)
+        urls = text.to_s.scan(REFERENCE_URL_RE).map { |url| url.sub(/[.,!?;:]+\z/, "") }.reject(&:empty?).uniq
+        return urls unless urls.empty?
+
+        source = text.to_s.match(AUDIO_FILE_RE)&.to_s
+        source ? [source] : []
+      end
+
       def analyze_reference(text, root:)
-        source = text.match(REFERENCE_URL_RE)&.to_s&.sub(/[.,!?;:]+\z/, "") || text.match(AUDIO_FILE_RE)&.to_s
-        return Result.err("dilla reference: provide a YouTube URL or local audio file", category: :validation) unless source
-        args = ["reference", source]
+        sources = reference_sources(text)
+        return Result.err("dilla reference: provide a YouTube URL or local audio file", category: :validation) if sources.empty?
+        return Result.err("dilla reference: analyze at most #{REFERENCE_SOURCE_LIMIT} links per request", category: :validation) if sources.size > REFERENCE_SOURCE_LIMIT
+
         style = reference_style_for(text)
-        args.concat(["--style", style]) unless style == "general"
-        args << "--no-stems" if text.match?(/\bwithout stems\b|\bskip (?:the )?stem separation\b/i)
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
-        return result unless result.ok?
-        output = result.value!.to_s
-        Result.ok({ output:, rendered: output, media: :audio_reference_analysis, style: reference_style_for(text) })
+        outputs = []
+        sources.each_with_index do |source, index|
+          args = ["reference", source]
+          args.concat(["--style", style]) unless style == "general"
+          args << "--no-stems" if text.match?(/\bwithout stems\b|\bskip (?:the )?stem separation\b/i)
+          result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
+          return result unless result.ok?
+
+          outputs << "reference #{index + 1}/#{sources.size}: #{result.value!}"
+        end
+        output = outputs.join("\n")
+        Result.ok({ output:, rendered: output, media: :audio_reference_analysis, style:, source_count: sources.size })
       end
 
       def analyze_and_generate_reference(text, root:)
