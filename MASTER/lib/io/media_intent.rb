@@ -393,8 +393,8 @@ module Master
       def reference_style_for(text)
         return "industrial_techno" if text.match?(/\bindustrial[ -]?techno\b|\btechno\b/i)
         return "j_dilla" if text.match?(/\bj\s*dilla\b|\bdilla\b|\bboom[ -]?bap\b|\bhip[ -]?hop\b/i)
-        remembered = latest_reference_profile&.fetch("style_key", nil)
-        %w[j_dilla industrial_techno].include?(remembered) ? remembered : "general"
+
+        active_reference_style
       end
 
       def reference_generation_request?(text)
@@ -405,13 +405,36 @@ module Master
         text.match?(REFERENCE_FOLLOWUP_RE)
       end
 
-      def reference_profile_path
-        base = ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents"))
-        File.join(base, "dilla-references", "latest_profile.json")
+      def reference_root
+        File.join(ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents")), "dilla-references")
       end
 
-      def latest_reference_profile
-        profile = JSON.parse(File.read(reference_profile_path))
+      def reference_profile_path(style = nil)
+        return File.join(reference_root, "latest_profile.json") unless %w[j_dilla industrial_techno].include?(style.to_s)
+
+        File.join(reference_root, "profiles", style.to_s, "latest_profile.json")
+      end
+
+      def active_reference_style_path
+        File.join(reference_root, "active_style.json")
+      end
+
+      def active_reference_style
+        value = JSON.parse(File.read(active_reference_style_path))
+        style = value["style_key"] if value.is_a?(Hash)
+        return style if %w[j_dilla industrial_techno].include?(style)
+
+        latest = latest_reference_profile
+        remembered = latest&.fetch("style_key", nil)
+        %w[j_dilla industrial_techno].include?(remembered) ? remembered : "general"
+      rescue Errno::ENOENT, JSON::ParserError, TypeError, NoMethodError
+        latest = latest_reference_profile
+        remembered = latest&.fetch("style_key", nil)
+        %w[j_dilla industrial_techno].include?(remembered) ? remembered : "general"
+      end
+
+      def latest_reference_profile(style: nil)
+        profile = JSON.parse(File.read(reference_profile_path(style)))
         profile if profile.is_a?(Hash)
       rescue Errno::ENOENT, JSON::ParserError, TypeError
         nil
@@ -444,9 +467,7 @@ module Master
       end
 
       def generate_from_reference(text, root:)
-        profile = latest_reference_profile
-        return generate_beat(text, root:) unless profile
-        case profile["style_key"]
+        case active_reference_style
         when "industrial_techno"
           generate_industrial_techno(text, root:)
         else
@@ -520,8 +541,7 @@ module Master
       end
 
       def dilla_reference_profile
-        profile = latest_reference_profile
-        profile if profile && profile["style_key"] == "j_dilla"
+        latest_reference_profile(style: "j_dilla")
       end
 
       def play_live_music(arg, root: MasterPaths.root, bus: nil)
