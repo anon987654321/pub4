@@ -13,6 +13,26 @@ The repository is not rebuilt by copying old structure into a new name. The exis
 
 ## MASTER
 
+The small control kernel is a boundary rule, not a command to delete working subsystems or force every responsibility into one file. The live execution fold has four separate roles:
+
+```
+Model proposes Effect
+        |
+Constitution admits, revises, requests approval, or blocks
+        |
+World performs only an admitted Effect
+        |
+Memory records the observation; Proof tracks whether completion is earned
+        |
+Fold decides whether to continue or stop
+```
+
+`Master::Core::Fold` owns this turn-by-turn sequence. `Constitution` owns policy decisions, `World` owns external effects, `Memory` records the conversation and outcomes, and `Proof` tracks evidence. These responsibilities may be refactored internally, but their authority boundaries must remain executable.
+
+The repository repair loop, `Master::Fix::FixLoop`, is a different loop. It coordinates repository inventory, scanning, repair, verification, convergence and delivery. Do not collapse it into the core effect fold: its terminal states and delivery semantics are part of the safety contract.
+
+A four-method sketch such as `observe`, `apply`, `verify`, `fix` is a useful vocabulary for describing work, not a mandate to replace the current implementation with those exact method names. Keep orchestration small by keeping decisions, effects, proof and repair policy behind explicit boundaries.
+
 Canonical layers:
 
 ```
