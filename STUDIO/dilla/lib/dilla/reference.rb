@@ -111,7 +111,9 @@ module Dilla
       ).compact
       File.write(File.join(directory, "profile.json"), JSON.pretty_generate(profile) + "\n")
       FileUtils.mkdir_p(REFERENCE_ROOT)
-      File.write(catalog_path(profile), JSON.pretty_generate(profile) + "\n")
+      catalog = catalog_path(profile)
+      FileUtils.mkdir_p(File.dirname(catalog))
+      File.write(catalog, JSON.pretty_generate(profile) + "\n")
       learned = aggregate_saved_profiles(profile.fetch("style_key"), including: profile)
       report = { "schema_version" => 1, "tracks" => tracks, "separation" => separation,
                  "essentia" => essentia(audio, directory), "production_profile" => profile,
@@ -242,7 +244,7 @@ module Dilla
     def catalog_path(profile)
       key = style_key(profile.fetch("style_key"))
       fingerprint = profile.fetch("reference_fingerprint").to_s
-      raise Error, "reference fingerprint must be hexadecimal" unless fingerprint.match?(/\\A[0-9a-f]{16}\\z/i)
+      raise Error, "reference fingerprint must be hexadecimal" unless fingerprint.match?(/\A[0-9a-f]{16}\z/i)
 
       File.join(REFERENCE_ROOT, "records", "#{key}-#{fingerprint.downcase}.json")
     end
