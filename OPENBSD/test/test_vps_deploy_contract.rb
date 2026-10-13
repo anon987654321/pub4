@@ -15,6 +15,7 @@ require "yaml"
 class VpsDeployContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   SOURCE = File.read(File.join(ROOT, "OPENBSD", "bin", "vps-deploy"), encoding: "UTF-8")
+  CI_SOURCE = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
   APPS = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map(&:to_s)
   MASTER_DEPLOY = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_deploy_master.sh"), encoding: "UTF-8")
 
@@ -56,6 +57,21 @@ class VpsDeployContractTest < Minitest::Test
       SOURCE,
       "an arbitrary app name must not reach filesystem, service or deploy-stamp paths"
     )
+  end
+
+  def test_ci_rejects_unknown_target_before_interpolating_a_path
+    guard = CI_SOURCE[/^case \$app in\n.*?^esac$/m]
+    refute_nil guard, "vps_ci app allowlist missing — arbitrary strings may reach path construction"
+    assert_operator CI_SOURCE.index("case $app in"), :<, CI_SOURCE.index("app_dir=/home/${app}/app")
+
+    out = IO.popen(
+      ["zsh", "-c", "app='../outside'; #{guard}; print accepted", { err: %i[child out] }],
+      &:read,
+    )
+
+    assert_equal 2, $?.exitstatus
+    assert_includes out, "unknown app"
+    refute_includes out, "accepted"
   end
 
   def test_it_refuses_to_run_as_root
