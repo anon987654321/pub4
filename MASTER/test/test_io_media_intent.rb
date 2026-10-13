@@ -279,6 +279,23 @@ end
     assert_equal "https://youtu.be/mx9NU4LmDwM?si=example12345", argv[1]
   end
 
+  def test_industrial_techno_request_leaves_arrangement_and_seed_to_dilla
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("dilla0: wrote original industrial techno")
+    end) do
+      result = MediaIntent.dispatch("make an industrial techno track", root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+    end
+
+    assert_equal "dilla", calls.first.fetch(:tool)
+    argv = Shellwords.split(calls.first.fetch(:arg))
+    assert_equal "industrial-techno", argv.first
+    refute_includes argv, "--bars"
+    refute_includes argv, "--seed"
+  end
+
   def test_industrial_techno_request_routes_with_explicit_tempo_and_bars
     request = "create an industrial techno track at 142 BPM for 12 bars"
     assert MediaIntent.handles?(request)
