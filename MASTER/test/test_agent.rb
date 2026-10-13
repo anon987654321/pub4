@@ -256,7 +256,7 @@ class TestAgent < Minitest::Test
     router = LocalRouter.new(%w[ollama:phi4:mini])
     router.define_singleton_method(:fallback_chain) { |task_type:| %w[agy:auto ollama:phi4:mini] }
     router.define_singleton_method(:unreachable_reason) do |id, wait: false|
-      "browser chat is off; MASTER_WEB_CHAT=1 turns it on" if id == "web-chat:chatgpt"
+      "browser chat explicitly disabled via MASTER_NO_WEB_CHAT" if id == "web-chat:chatgpt"
     end
     agent = agent_routed_by(router)
     agent.instance_variable_get(:@config).model = "web-chat:chatgpt"
