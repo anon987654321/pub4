@@ -410,6 +410,14 @@ module Master
       def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, format: nil,
                            &blk)
         sys = system || system_prompt
+        # Claude CLI is deliberately text-only (--tools "" and strict MCP config),
+        # even when its underlying model supports native tools. Give it MASTER's
+        # guarded ReAct loop before the provider-specific early return.
+        if format.nil? && !Fiber[:master_no_tools] && @tools.any? &&
+           (claude_cli_model?(selected_model) || !tool_capable?(selected_model))
+          return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
+        end
+
         return send_agy_cli(selected_model.delete_prefix("agy:"), messages, sys:, stream:, &blk) if agy_model?(selected_model)
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
@@ -418,12 +426,8 @@ module Master
         return send_hosted(selected_model, messages, sys:, temperature:) if hosted_lane?(selected_model)
         return send_replicate_chat(selected_model, messages, sys:) if replicate_chat_model?(selected_model)
         return send_ollama(selected_model, messages, sys:, stream:, temperature:, format:, &blk) if ollama_model?(selected_model)
-        # A schema-bound call wants one object back, not a tool conversation,
-        # which is also all the local tier ever sends. A call made under
-        # Fiber[:master_no_tools] wants the same: an answer about the text it sent.
-        if format.nil? && !Fiber[:master_no_tools] && !tool_capable?(selected_model) && @tools.any?
-          return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
-        end
+        # A schema-bound call wants one object back, not a tool conversation.
+        # The ReAct completion sets master_no_tools while it asks for each step.
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, format:, &blk)
       end
 
