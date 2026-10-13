@@ -210,7 +210,20 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
         arp['gate'] = gate
         arp['octaves'] = layer.fetch('octaves', 1).to_i.clamp(1, 2)
         arp['modifiers'] = []
-        seq.render_arp(names, bpm, beats, arp, search:, voice:)
+        shift = layer.fetch('transpose', 0).to_i
+        if shift.zero?
+          seq.render_arp(names, bpm, beats, arp, search:, voice:)
+        else
+          chord_events = seq.note_events(names, bpm, beats, arp, 'arp', search:)
+          chord_events.each do |plucks|
+            plucks.each do |pluck|
+              pluck.midi = Array(pluck.midi).map { |midi| midi + shift }.then { |notes| pluck.midi.is_a?(Array) ? notes : notes.first }
+            end
+          end
+          layer_buffer = Array.new(buf.size, 0.0)
+          chord_events.each { |plucks| seq.sound(layer_buffer, plucks, voice) }
+          layer_buffer
+        end
       else
         abort "Unknown synth layer mode: #{mode}"
       end
