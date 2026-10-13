@@ -445,6 +445,15 @@ class TestKeylessRouting < Minitest::Test
     refute_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
   end
 
+  def test_undiscovered_hosted_model_is_not_classified_as_keyless_free
+    router = Master::CLI::Routing::ModelRouter.allocate
+    router.instance_variable_set(:@rules, { "openai_compatible" => {} })
+    router.define_singleton_method(:hosted_model?) { |_model| true }
+    router.define_singleton_method(:hosted_endpoint_for) { |_model| nil }
+
+    refute router.send(:free_api_model?, "llm7:stale-model")
+  end
+
   def test_browser_chat_follows_free_apis_and_precedes_local_fallbacks
     router = Master::CLI::Routing::ModelRouter.allocate
     router.instance_variable_set(:@rules, { "models" => {} })
