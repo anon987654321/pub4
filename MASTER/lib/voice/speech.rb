@@ -511,9 +511,31 @@ module Master
       # whole utterance first, so the choice is progressive playback or
       # emotion/melody/multi-engine, not a missing call. Measure phrase fan-out (one
       # Edge round trip per phrase, on one vCPU) before making it.
+      SYNTHESIS_SLOTS_KEY = :master_tts_synthesis_slots
+
       def synthesize_streaming_to_file(text, output_path:, on_chunk: nil, **opts)
-        @synthesis_mutexes[next_synthesis_slot].synchronize do
-          synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)
+        held_slots = Thread.current[SYNTHESIS_SLOTS_KEY] ||= []
+        size = [TtsSupervisor.pool_size, 1].max
+        slot = next_synthesis_slot
+        if held_slots.include?(slot)
+          # A callback can re-enter synthesis on the same thread. Use a free slot
+          # if one exists; when every slot is already owned by this thread, refuse
+          # the nested call cleanly instead of raising Mutex's recursive-lock error.
+          slot = (0...size).find { |candidate| !held_slots.include?(candidate) }
+          unless slot
+            @last_error = "recursive streaming synthesis refused: all pool slots are already held by this thread"
+            return false
+          end
+        end
+
+        @synthesis_mutexes[slot].synchronize do
+          held_slots << slot
+          begin
+            synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)
+          ensure
+            held_slots.delete_at(held_slots.rindex(slot))
+            Thread.current[SYNTHESIS_SLOTS_KEY] = nil if held_slots.empty?
+          end
         end
       end
 
