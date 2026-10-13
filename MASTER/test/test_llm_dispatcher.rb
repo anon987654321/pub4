@@ -196,6 +196,19 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal :offline, dispatcher.send(:classified_call_failure, SocketError.new("Network is unreachable")).category
   end
 
+  def test_a_crashed_local_runner_is_classified_for_immediate_failover
+    dispatcher, = build_dispatcher
+    error = Master::Result.err(
+      "ollama 500: {\\"error\\":\\"llama-server process has terminated: failed to create library\\"}",
+      category: :provider_error,
+    )
+
+    assert_equal :provider_error, dispatcher.send(:reclassify_provider_error, error).category
+    assert_equal :offline, dispatcher.send(
+      :reclassify_provider_error, error, model: "ollama:gemma3:4b",
+    ).category
+  end
+
   def test_timeout_pipe_readers_are_silent_when_the_child_closes_first
     dispatcher, = build_dispatcher
 
