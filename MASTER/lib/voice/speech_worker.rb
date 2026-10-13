@@ -60,7 +60,7 @@ module Master
         return unless sock_path
 
         req = build_socket_request(voice_name, style_config, text)
-        timeout = worker_timeout(text.to_s.length)
+        timeout = stream_timeout(text.to_s.length)
         stream_socket_response(sock_path, req, audio_path, timeout, on_chunk)
         return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
 
@@ -164,7 +164,7 @@ module Master
           first_chunk = true
         end
         target = StreamTarget.build(io:, on_chunk: progress, stale_test:)
-        result = stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
+        result = stream_socket_to_io(sock_path, req, stream_timeout(text.to_s.length), target)
         return result unless result.bytes.zero?
 
         # Zero audio bytes is a failure however clean the end frame was: reporting it ok
@@ -294,6 +294,22 @@ module Master
         [Speech::WORKER_TIMEOUT + (text_length * Speech::WORKER_TIMEOUT_PER_CHAR).ceil, Speech::WORKER_TIMEOUT_MAX].min
       rescue ArgumentError
         Speech::WORKER_TIMEOUT
+      end
+
+      # A socket timeout covers the whole utterance, unlike the one-shot worker
+      # deadline. Give streamed speech a length-aware budget so fast mode cannot
+      # cut a normal sentence off at the six-second worker cap.
+      FAST_STREAM_TIMEOUT_S = Integer(ENV.fetch("MASTER_TTS_FAST_STREAM_TIMEOUT", "12"))
+      FAST_STREAM_TIMEOUT_PER_CHAR = Float(ENV.fetch("MASTER_TTS_FAST_STREAM_TIMEOUT_PER_CHAR", "0.08"))
+      FAST_STREAM_TIMEOUT_MAX = Integer(ENV.fetch("MASTER_TTS_FAST_STREAM_TIMEOUT_MAX", "90"))
+
+      def stream_timeout(text_length = 0)
+        return Integer(ENV.fetch("MASTER_TTS_STREAM_TIMEOUT")) if ENV.key?("MASTER_TTS_STREAM_TIMEOUT")
+        return worker_timeout(text_length) unless respond_to?(:fast_tts_mode?) && fast_tts_mode?
+
+        [FAST_STREAM_TIMEOUT_S + (text_length * FAST_STREAM_TIMEOUT_PER_CHAR).ceil, FAST_STREAM_TIMEOUT_MAX].min
+      rescue ArgumentError, TypeError
+        worker_timeout(text_length)
       end
     end
   end
