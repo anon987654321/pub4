@@ -332,7 +332,13 @@ module Master
       def resolve_path(path)
         value = path.to_s
         absolute = File.expand_path(value.empty? ? @root : value, @workspace_root)
-        ensure_within!(absolute, @workspace_root)
+        root_real = File.realpath(@workspace_root)
+        if File.exist?(absolute) || File.symlink?(absolute)
+          ensure_within!(File.realpath(absolute), root_real)
+        else
+          parent_real = File.realpath(File.dirname(absolute))
+          ensure_within!(parent_real, root_real)
+        end
         absolute
       end
 
@@ -394,7 +400,7 @@ module Master
         changes = git_changes(target, manifest.root)
         sacred_paths = load_sacred_paths(manifest.tree)
         entries = files.values.sort_by(&:path).map do |file|
-          { path: file.path, hash: file.hash, bytes: file.bytes, kind: file.kind }
+          { path: file.path, hash: file.hash, bytes: file.bytes, kind: file.kind, mode: file.mode }
         end
         payload = {
           tree: manifest.tree, scope:, files: entries,
@@ -411,11 +417,18 @@ module Master
       def collect_files(target, manifest_root)
         files = {}
         add_file = lambda do |path|
-          return if File.symlink?(path)
+          rel = relative(manifest_root, path)
+          if File.symlink?(path)
+            link = File.readlink(path)
+            stat = File.lstat(path)
+            digest = Digest::SHA256.hexdigest("symlink:" + link)
+            files[rel] = FileState.new(path: rel, content: nil, hash: digest, bytes: link.bytesize,
+                                       kind: "symlink", mode: stat.mode & 0o777)
+            next
+          end
+
           stat = File.stat(path)
           return unless stat.file?
-
-          rel = relative(manifest_root, path)
           bytes = stat.size
           digest = Digest::SHA256.file(path).hexdigest
           content = nil
@@ -442,11 +455,13 @@ module Master
             directory = stack.pop
             Dir.children(directory).sort.reverse_each do |name|
               path = File.join(directory, name)
-              if File.directory?(path) && !File.symlink?(path)
+              if File.symlink?(path)
+                add_file.call(path)
+              elsif File.directory?(path)
                 next if IGNORED_DIRECTORIES.include?(name)
 
                 stack << path
-              elsif File.file?(path) && !File.symlink?(path)
+              elsif File.file?(path)
                 add_file.call(path)
               end
             end
