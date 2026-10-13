@@ -466,6 +466,39 @@ end
     assert_equal "industrial-techno", Shellwords.split(calls.last.fetch(:arg)).first
   end
 
+  def test_a_j_dilla_reference_can_be_analyzed_and_rendered_in_one_request
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      url = "https://youtu.be/mx9NU4LmDwM?si=dilla"
+      calls = []
+      begin
+        with_dispatch_stub(lambda do |**kwargs|
+          calls << kwargs
+          next Master::Result.ok(LISTING) if kwargs[:arg] == "--list"
+
+          Master::Result.ok(kwargs[:arg].start_with?("reference ") ? "reference0: analyzed audio" : "dilla0: rendered")
+        end) do
+          result = MediaIntent.dispatch("make a J Dilla beat like this #{url}", root: dir)
+          assert result.ok?, result.inspect
+          assert_equal :dilla, result.value!.fetch(:media)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+
+      assert_equal 3, calls.size
+      analysis = Shellwords.split(calls.first.fetch(:arg))
+      assert_equal "reference", analysis.first
+      assert_equal "j_dilla", analysis[analysis.index("--style") + 1]
+      render = Shellwords.split(calls.last.fetch(:arg))
+      assert_equal "dilla", calls.last.fetch(:tool)
+      assert_equal "kit_dust", render[render.index("--kit") + 1]
+      assert_equal "rhodes_mark1", render[render.index("--voice") + 1]
+      assert_includes %w[boom_bap], render[render.index("--drums") + 1]
+    end
+  end
+
   def test_explicit_j_dilla_followup_overrides_an_active_techno_reference
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
