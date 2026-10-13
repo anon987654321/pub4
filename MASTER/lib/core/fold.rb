@@ -110,7 +110,7 @@ private
       observation = @world.perform(admitted)
       if observation.err?
         observation = undo(checkpoint, admitted, observation) if rollbackable
-        observation = compensate(admitted, observation, contract) if contract.compensatable?
+        observation = compensate(observation, contract) if contract.compensatable?
       end
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
@@ -132,7 +132,7 @@ private
     # Run only a declared compensation, only after the original command failed,
     # and only after the same Constitution has admitted it and the operator says
     # yes. The compensation is a new exec effect; no inverse bypasses the gate.
-    def compensate(effect, failure, contract)
+    def compensate(failure, contract)
       action = contract.compensation
       inverse = Effect.exec(action.argv)
       case @law.admit(inverse, @memory)
