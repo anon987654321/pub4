@@ -528,6 +528,36 @@ end
     end
   end
 
+  def test_inactive_j_dilla_profile_does_not_steer_a_generic_beat
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      root = File.join(dir, "dilla-references")
+      FileUtils.mkdir_p(File.join(root, "profiles", "j_dilla"))
+      File.write(File.join(root, "active_style.json"), JSON.generate("style_key" => "industrial_techno"))
+      File.write(File.join(root, "latest_profile.json"), JSON.generate("style_key" => "industrial_techno"))
+      File.write(File.join(root, "profiles", "j_dilla", "latest_profile.json"), JSON.generate(
+        "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "dilla_shadow"
+      ))
+      calls = []
+      begin
+        with_dispatch_stub(dilla_runner(calls)) do
+          result = MediaIntent.render_dilla("make a beat", root: dir)
+          assert result.ok?, result.inspect
+          assert_nil result.value!.fetch(:kit)
+          assert_nil result.value!.fetch(:groove)
+          assert_nil result.value!.fetch(:bpm)
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      words = Shellwords.split(calls.last.fetch(:arg))
+      refute_includes words, "--kit"
+      refute_includes words, "--profile"
+      refute_includes words, "--bpm"
+    end
+  end
+
   def test_a_saved_j_dilla_reference_steers_tempo_and_groove
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
