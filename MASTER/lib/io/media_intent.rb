@@ -544,7 +544,7 @@ module Master
         argv.concat(["--profile", groove]) if groove
         argv.concat(["--bpm", bpm.to_s]) if bpm
         if dilla_pocket
-          argv.concat(["--kit", "kit_dust", "--sonitex", "cassette", "--sonitex-instances", "3",
+          argv.concat(["--kit", "kit_dust", "--voice", "rhodes_mark1", "--sonitex", "cassette", "--sonitex-instances", "3",
                        "--drum-tape", "heavy", "--vcs", "0.78"])
         end
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
