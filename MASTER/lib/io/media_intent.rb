@@ -22,6 +22,10 @@ module Master
       IMAGE_RE = /\b(?:make|create|generate|render|photograph|photo|portrait|image|picture)\b/i.freeze
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
       KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
+      REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand)\b/i.freeze
+      REFERENCE_URL_RE = /https?:\/\/(?:www\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/watch\?v=[A-Za-z0-9_-]{11})[^\s<>"'\]\)]*/i.freeze
+      AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
+      INDUSTRIAL_TECHNO_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\bindustrial[ -]techno\b|\bindustrial[ -]techno\b.*\b(?:track|music|beat|loop|instrumental)\b/i.freeze
       SYNTH_RE = /\b(?:play|generate|create|make|render)\b.*\b(?:sine|square|triangle|saw|white|brown)\b.*\b(?:wave|noise|tone)\b/i.freeze
       # "Play" means the speakers and "make" means a file. A sentence that says
       # both ("make and play") gets the file, which it can then play.
@@ -55,13 +59,15 @@ module Master
       POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
       def handles?(text)
-        LoraIntent.handles?(text) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
+        LoraIntent.handles?(text) || reference_audio_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root, bus: nil)
         return LoraIntent.dispatch(text, root:) if LoraIntent.handles?(text)
+        return analyze_reference(text, root:) if reference_audio_request?(text)
+        return generate_industrial_techno(text, root:) if text.match?(INDUSTRIAL_TECHNO_RE)
         return postpro_capability if POSTPRO_CAPABILITY_RE.match?(text)
         return generate_kick(text, root:) if text.match?(KICK_RE)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
@@ -363,6 +369,34 @@ module Master
       def postpro_capability
         line = "postpro0: ready — provide an existing image file or directory path; default selection is the five newest images"
         Result.ok(output: line, rendered: line, media: :postpro_help)
+      end
+
+      def reference_audio_request?(text)
+        text.match?(REFERENCE_AUDIO_RE) && (text.match?(REFERENCE_URL_RE) || text.match?(AUDIO_FILE_RE))
+      end
+
+      def analyze_reference(text, root:)
+        source = text.match(REFERENCE_URL_RE)&.to_s || text.match(AUDIO_FILE_RE)&.to_s
+        return Result.err("dilla reference: provide a YouTube URL or local audio file", category: :validation) unless source
+        args = ["reference", source]
+        args << "--no-stems" if text.match?(/\bwithout stems\b|\bskip (?:the )?stem separation\b/i)
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
+        return result unless result.ok?
+        output = result.value!.to_s
+        Result.ok({ output:, rendered: output, media: :audio_reference_analysis })
+      end
+
+      def generate_industrial_techno(text, root:)
+        output_path = File.join(dilla_renders_dir, "industrial-techno-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        args = ["industrial-techno", "--out", output_path]
+        bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
+        args.concat(["--bpm", bpm]) if bpm
+        bars = text.match(/\b(\d{1,2})\s+bars?\b/i)&.captures&.first
+        args.concat(["--bars", bars]) if bars
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
+        return result unless result.ok?
+        output = result.value!.to_s
+        Result.ok({ output:, rendered: output, media: :industrial_techno, path: output_path })
       end
 
       # Where /play renders go: a dated folder outside the repository, never over

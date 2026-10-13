@@ -25,6 +25,49 @@ module WAV
     File.binwrite(path, header + data)
   end
 
+  # Bounded-memory output for long renders; never overwrites an existing take.
+  def self.write_stream(path, frames:, channels:, bits: 16, block_size: 8192)
+    raise ArgumentError, "frames must be positive" unless frames.is_a?(Integer) && frames.positive?
+    raise ArgumentError, "channels must be one or two" unless [1, 2].include?(channels)
+    raise ArgumentError, "bits must be 16 or 24" unless [16, 24].include?(bits)
+    raise ArgumentError, "block size must be positive" unless block_size.is_a?(Integer) && block_size.positive?
+
+    width = bits / 8
+    header = +"RIFF" + [0].pack("V") + "WAVEfmt " + [16].pack("V") + [1].pack("v")
+    header << [channels, SAMPLE_RATE, SAMPLE_RATE * width * channels, width * channels, bits].pack("vVVvv")
+    header << "data" << [0].pack("V")
+    created = false
+    complete = false
+    File.open(path, "wx+") do |file|
+      created = true
+      file.write(header)
+      offset = 0
+      while offset < frames
+        count = [block_size, frames - offset].min
+        channel_data = yield(offset, count)
+        unless channel_data.is_a?(Array) && channel_data.length == channels &&
+               channel_data.all? { |values| values.is_a?(Array) && values.length == count }
+          raise ArgumentError, "audio block must contain #{channels} channels by #{count} frames"
+        end
+        flat = channels == 1 ? channel_data.fetch(0) : Stereo.interleave(channel_data)
+        bytes = bits == 24 ? pack24(flat) : flat.map { |sample| (sample * 32_767).round.clamp(-32_768, 32_767) }.pack("s<*")
+        file.write(bytes)
+        offset += count
+      end
+      data_size = file.size - 44
+      raise ArgumentError, "WAV exceeds RIFF size limit" if data_size > 0xffff_ffff - 36
+      file.seek(4)
+      file.write([36 + data_size].pack("V"))
+      file.seek(40)
+      file.write([data_size].pack("V"))
+      complete = true
+    end
+    path
+  rescue StandardError
+    File.delete(path) if created && !complete && File.file?(path)
+    raise
+  end
+
   # Three bytes a sample, least significant first.
   def self.pack24(flat)
     flat.map do |s|
