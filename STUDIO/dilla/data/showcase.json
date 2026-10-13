@@ -1,13 +1,13 @@
 {
-  "title": "Blue Hour — Pure Tone Extended Cut",
-  "crossfade_seconds": 0.12,
+  "title": "Blue Hour — Dilla Minor Dub Cut",
+  "crossfade_seconds": 0.16,
   "sections": [
     {
       "name": "Blue Hour Glass",
       "progression": [
         "Dm9",
+        "Bbmaj7",
         "Gm9",
-        "Bbmaj7#11",
         "A7sus4"
       ],
       "bpm": 92,
@@ -15,57 +15,58 @@
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_boom_bap",
+      "profile": "dilla_shadow",
+      "drums": "dilla_shadow",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
       "echo_time_ms": 260,
       "echo_tail_seconds": 0,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.5,
           69,
-          0.22,
-          0.252
-        ],
-        [
-          1.25,
-          72,
-          0.18,
-          0.238
-        ],
-        [
-          2.75,
-          74,
-          0.22,
-          0.252
-        ],
-        [
-          4.5,
-          72,
           0.24,
-          0.22399999999999998
+          0.24
+        ],
+        [
+          1.75,
+          70,
+          0.22,
+          0.22
+        ],
+        [
+          3,
+          72,
+          0.25,
+          0.23
+        ],
+        [
+          4.75,
+          69,
+          0.24,
+          0.22
         ],
         [
           6.5,
-          69,
-          0.3,
-          0.252
+          65,
+          0.32,
+          0.24
         ]
       ],
       "sonitex": "subtle",
       "sonitex_instances": 2,
       "vcs": 0.54,
-      "key": "D minor",
+      "key": "D natural minor",
       "scale_pcs": [
         0,
         2,
@@ -75,105 +76,110 @@
         9,
         10
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
-      "name": "Opal Rain",
+      "name": "Opal in Shadow",
       "progression": [
-        "Fmaj9",
-        "Am7",
+        "Em7b5",
+        "A7sus4",
         "Dm9",
-        "Bbmaj7"
+        "Gm9"
       ],
       "bpm": 92,
       "beats_per_chord": 2,
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_broken",
+      "profile": "dilla_shadow",
+      "drums": "dilla_broken",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
       "echo_time_ms": 260,
       "echo_tail_seconds": 0,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
-          0.75,
-          76,
-          0.2,
-          0.22399999999999998
+          0.5,
+          74,
+          0.22,
+          0.22
         ],
         [
-          2.5,
+          2,
           72,
-          0.25,
-          0.21
+          0.24,
+          0.22
         ],
         [
-          4.5,
+          3.25,
+          70,
+          0.25,
+          0.23
+        ],
+        [
+          5,
           69,
-          0.25,
-          0.22399999999999998
+          0.22,
+          0.22
         ],
         [
-          6.5,
-          72,
+          6.75,
+          67,
           0.3,
-          0.21
+          0.22
         ]
       ],
       "sonitex": "dusty_warm",
       "sonitex_instances": 2,
       "vcs": 0.52,
-      "key": "F major",
+      "key": "D natural minor",
       "scale_pcs": [
         0,
         2,
@@ -183,111 +189,110 @@
         9,
         10
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
       "name": "Velvet Geometry",
       "progression": [
-        "Cm9",
+        "CmMaj7",
         "Abmaj7",
         "Fm9",
-        "Gm7"
+        "G7b9"
       ],
       "bpm": 92,
       "beats_per_chord": 2,
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_boom_bap",
+      "profile": "dilla_shadow",
+      "drums": "dilla_shadow",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
       "echo_time_ms": 260,
       "echo_tail_seconds": 0,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.5,
           67,
-          0.2,
-          0.27999999999999997
+          0.23,
+          0.23
         ],
         [
           1.75,
-          70,
-          0.2,
-          0.252
-        ],
-        [
-          3.25,
-          72,
-          0.25,
-          0.26599999999999996
-        ],
-        [
-          5.25,
-          70,
+          68,
           0.22,
-          0.238
+          0.22
         ],
         [
-          7,
-          67,
+          3,
+          71,
           0.25,
-          0.252
+          0.24
+        ],
+        [
+          4.75,
+          68,
+          0.23,
+          0.22
+        ],
+        [
+          6.5,
+          65,
+          0.31,
+          0.23
         ]
       ],
       "sonitex": "subtle",
       "sonitex_instances": 2,
-      "vcs": 0.5,
-      "key": "C natural minor",
+      "vcs": 0.56,
+      "key": "C harmonic minor",
       "scale_pcs": [
         0,
         2,
@@ -295,172 +300,175 @@
         5,
         7,
         8,
-        10
+        11
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
       "name": "Silver Thread",
       "progression": [
-        "Am9",
-        "D9sus4",
-        "Fmaj7#11",
-        "Em7"
+        "AmMaj7",
+        "Dm9",
+        "Fmaj7",
+        "E7b9"
       ],
       "bpm": 92,
       "beats_per_chord": 2,
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_broken",
+      "profile": "dilla_shadow",
+      "drums": "dilla_broken",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
       "echo_time_ms": 260,
       "echo_tail_seconds": 0,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.75,
           69,
-          0.2,
-          0.22399999999999998
-        ],
-        [
-          2.25,
-          74,
-          0.2,
-          0.21
-        ],
-        [
-          4.25,
-          76,
           0.24,
-          0.22399999999999998
+          0.22
         ],
         [
-          6.5,
-          71,
-          0.28,
+          2,
+          68,
+          0.23,
+          0.22
+        ],
+        [
+          3.5,
+          65,
+          0.25,
+          0.23
+        ],
+        [
+          5.25,
+          64,
+          0.22,
           0.21
+        ],
+        [
+          7,
+          60,
+          0.3,
+          0.22
         ]
       ],
       "sonitex": "dusty_warm",
       "sonitex_instances": 2,
       "vcs": 0.54,
-      "key": "A natural minor",
+      "key": "A harmonic minor",
       "scale_pcs": [
         0,
         2,
         4,
         5,
-        7,
+        8,
         9,
         11
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
       "name": "After the Last Train",
       "progression": [
-        "Ebmaj9",
-        "Gm7",
-        "Cm9",
-        "Abmaj7"
+        "Ebm9",
+        "Abm9",
+        "Bmaj7",
+        "Bb7sus4"
       ],
       "bpm": 92,
       "beats_per_chord": 2,
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_boom_bap",
+      "profile": "dilla_shadow",
+      "drums": "dilla_shadow",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
@@ -468,106 +476,103 @@
       "echo_tail_seconds": 0,
       "sonitex": "subtle",
       "sonitex_instances": 2,
-      "vcs": 0.52,
+      "vcs": 0.54,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.5,
-          65,
-          0.23,
-          0.238
+          70,
+          0.24,
+          0.22
         ],
         [
           1.75,
-          67,
-          0.18,
-          0.22399999999999998
+          68,
+          0.22,
+          0.22
         ],
         [
           3,
-          70,
-          0.24,
-          0.252
+          66,
+          0.25,
+          0.23
         ],
         [
           4.75,
-          67,
-          0.2,
-          0.22399999999999998
+          65,
+          0.23,
+          0.21
         ],
         [
           6.5,
-          65,
-          0.27,
-          0.238
+          63,
+          0.31,
+          0.22
         ]
       ],
-      "key": "E-flat major",
+      "key": "E-flat natural minor",
       "scale_pcs": [
-        0,
-        2,
+        1,
         3,
         5,
-        7,
+        6,
         8,
-        10
+        10,
+        11
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
       "name": "Amber Orbit",
       "progression": [
         "Bm9",
-        "Dmaj7",
-        "A6/9",
-        "F#m7",
         "Em9",
+        "Gmaj7",
         "F#7sus4"
       ],
       "bpm": 92,
@@ -575,8 +580,8 @@
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_broken",
+      "profile": "dilla_shadow",
+      "drums": "dilla_broken",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
@@ -584,57 +589,58 @@
       "echo_tail_seconds": 0,
       "sonitex": "dusty_warm",
       "sonitex_instances": 2,
-      "vcs": 0.56,
+      "vcs": 0.58,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.5,
-          73,
-          0.2,
-          0.22399999999999998
+          71,
+          0.23,
+          0.22
         ],
         [
           2,
-          71,
-          0.22,
-          0.22399999999999998
-        ],
-        [
-          3.5,
           69,
-          0.2,
+          0.22,
           0.21
         ],
         [
-          5.5,
+          3.5,
           66,
           0.24,
-          0.22399999999999998
+          0.22
         ],
         [
-          7.5,
+          5,
           64,
-          0.2,
+          0.23,
+          0.21
+        ],
+        [
+          6.5,
+          62,
+          0.27,
+          0.22
+        ],
+        [
+          8,
+          61,
+          0.22,
           0.21
         ],
         [
           9.5,
           66,
-          0.26,
-          0.22399999999999998
-        ],
-        [
-          11,
-          69,
-          0.22,
-          0.21
+          0.27,
+          0.22
         ]
       ],
       "key": "B natural minor",
@@ -647,62 +653,60 @@
         9,
         11
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
-      "name": "Soft Focus",
+      "name": "Soft Focus After Midnight",
       "progression": [
-        "Gmaj9",
-        "Bm7",
-        "Cmaj7#11",
-        "Am9"
+        "Gm9",
+        "Cm9",
+        "Ebmaj7",
+        "D7b9"
       ],
       "bpm": 92,
       "beats_per_chord": 2,
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_boom_bap",
+      "profile": "dilla_shadow",
+      "drums": "dilla_shadow",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
@@ -710,113 +714,113 @@
       "echo_tail_seconds": 0,
       "sonitex": "subtle",
       "sonitex_instances": 2,
-      "vcs": 0.5,
+      "vcs": 0.52,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.75,
-          71,
-          0.2,
-          0.252
+          70,
+          0.23,
+          0.23
         ],
         [
-          2.25,
+          2,
           69,
           0.22,
-          0.238
+          0.22
         ],
         [
-          4,
+          3.75,
           67,
           0.25,
-          0.252
+          0.23
         ],
         [
-          5.5,
-          74,
+          5.25,
+          66,
           0.22,
-          0.22399999999999998
+          0.21
         ],
         [
           7,
-          71,
+          63,
           0.28,
-          0.238
+          0.22
         ]
       ],
-      "key": "G major",
+      "key": "G harmonic minor",
       "scale_pcs": [
         0,
         2,
-        4,
+        3,
+        5,
         6,
         7,
         9,
-        11
+        10
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     },
     {
       "name": "Night Bloom",
       "progression": [
-        "C#m9",
+        "C#mMaj7",
+        "F#m9",
         "Amaj7",
-        "Emaj9",
-        "G#7sus4"
+        "G#7b9"
       ],
       "bpm": 92,
       "beats_per_chord": 2,
       "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "pure_tone_dry",
-      "drums": "fast_hat_broken",
+      "profile": "dilla_shadow",
+      "drums": "dilla_broken",
       "echo": false,
       "echo_mix": 0,
       "echo_feedback": 0,
@@ -826,95 +830,94 @@
       "sonitex_instances": 2,
       "vcs": 0.56,
       "mix": {
-        "kick": -1,
-        "snare": -5,
-        "clap": -12,
-        "hat": -7,
-        "chords": -6
+        "kick": -2,
+        "snare": -7,
+        "clap": -13,
+        "hat": -9,
+        "chords": -7,
+        "perc": -12
       },
       "melody_voice": "pure_tone",
       "melody": [
         [
           0.5,
           73,
-          0.2,
-          0.238
+          0.23,
+          0.22
         ],
         [
-          2.25,
-          71,
+          1.75,
+          72,
           0.22,
-          0.22399999999999998
+          0.21
         ],
         [
-          4,
-          69,
-          0.22,
-          0.238
-        ],
-        [
-          5.75,
-          66,
-          0.26,
-          0.22399999999999998
-        ],
-        [
-          7,
+          3.25,
           68,
-          0.25,
-          0.22399999999999998
+          0.24,
+          0.22
+        ],
+        [
+          5,
+          66,
+          0.23,
+          0.21
+        ],
+        [
+          6.75,
+          64,
+          0.3,
+          0.22
         ]
       ],
-      "key": "C-sharp natural minor",
+      "key": "C-sharp harmonic minor",
       "scale_pcs": [
+        0,
         1,
         3,
         4,
         6,
         8,
-        9,
-        11
+        9
       ],
-      "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
       "layers": [
         {
           "mode": "held",
           "voice": "pure_tone",
-          "gain_db": -8,
+          "gain_db": -9,
           "gate": 0.96,
-          "velocity": 0.62
+          "velocity": 0.58
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
-          "gain_db": -16,
+          "gain_db": -17,
           "pattern": "down",
-          "rate": 2,
-          "gate": 0.64
+          "rate": 3,
+          "gate": 0.62
         },
         {
           "mode": "held",
           "voice": "pure_tone",
           "gain_db": -14,
           "gate": 1.08,
-          "velocity": 0.5,
+          "velocity": 0.48,
           "transpose": -12
         },
         {
           "mode": "arp",
           "voice": "pure_tone",
           "gain_db": -20,
-          "pattern": "updown",
+          "pattern": "down",
           "rate": 4,
-          "gate": 0.52,
+          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "drum_tape": "heavy"
+      "effect_rig": "dilla_night"
     }
   ]
 }
