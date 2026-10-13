@@ -331,6 +331,15 @@ class TestRenderer < Minitest::Test
     ENV.delete("MASTER_BOOT_STATUS")
   end
 
+  def test_terminal_markdown_preserves_long_paragraph_lines
+    renderer = FakeRenderer.new(config: {})
+    prose = ("This paragraph must remain one authored line " * 4).strip
+    source = "# News\n\n#{prose}\n"
+
+    rendered = $stdout.stub(:tty?, false) { renderer.terminal_markdown(source) }
+
+    assert_equal "News\n\n#{prose}\n", rendered
+  end
   def test_terminal_markdown_renders_headings_links_inline_code_and_fences
     renderer = FakeRenderer.new(config: {})
     source = "# Reply\n\nUse **bold**, `Ruby`, and [docs](https://example.com).\n\n```ruby\nputs \"hello\"\n```\n"
