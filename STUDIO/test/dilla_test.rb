@@ -80,6 +80,11 @@ class DillaTest < Minitest::Test
       assert_operator section.fetch("sonitex_instances"), :<=, 3
       assert_equal "cassette", section.fetch("drum_sonitex")
       assert_equal 3, section.fetch("drum_sonitex_instances")
+      assert_equal "heavy", section.fetch("drum_tape")
+      assert_equal "pure_tone", section.fetch("voice")
+      assert_equal false, section.fetch("echo")
+      assert_equal 0, section.fetch("echo_mix")
+      assert_equal 0, section.fetch("echo_feedback")
       assert_operator section.fetch("vcs"), :>=, 0.4
       assert_operator section.fetch("vcs"), :<=, 0.7
       assert_operator section.fetch("echo_mix"), :<=, 0.03
@@ -87,13 +92,15 @@ class DillaTest < Minitest::Test
       assert_operator section.fetch("echo_tail_seconds"), :<=, 0.2
       assert_equal 0, section.fetch("echo_reverb")
       assert_equal "pure_tone", section.fetch("melody_voice")
-      assert_equal 2, section.fetch("layers").size
+      assert_equal 4, section.fetch("layers").size
       section.fetch("layers").each do |layer|
+        assert_equal "pure_tone", layer.fetch("voice")
         assert_includes DATA.fetch("voices").keys, layer.fetch("voice")
+        assert_equal 0, layer.fetch("transpose", 0) % 12
       end
       texture = DATA.fetch("groove_profiles").fetch(section.fetch("profile")).fetch("texture")
       assert_equal 0, texture.fetch("detune")
-      assert_operator texture.fetch("reverb"), :<=, 0.03
+      assert_equal 0, texture.fetch("reverb")
       hats = DATA.fetch("drum_patterns").fetch(section.fetch("drums")).fetch("hat")
       assert_equal 16, hats.size
       assert_equal 16, hats.sum, "the fast hat must play steady sixteenths"
@@ -1031,7 +1038,8 @@ class DillaTest < Minitest::Test
     plain = seq.overlay_drums(Array.new(SAMPLE_RATE, 0.0), hits, {"snare" => -3.0})
     coloured = seq.overlay_drums(
       Array.new(SAMPLE_RATE, 0.0), hits, {"snare" => -3.0}, 0.55,
-      sonitex: {"preset" => DATA.dig("sonitex", "presets", "dusty_warm"), "instances" => 2}
+      sonitex: {"preset" => DATA.dig("sonitex", "presets", "dusty_warm"), "instances" => 2},
+      tape: "heavy"
     )
     assert(plain.all?(&:finite?))
     assert(coloured.all?(&:finite?))
@@ -1040,6 +1048,18 @@ class DillaTest < Minitest::Test
     first = plain[(0.1 * SAMPLE_RATE).to_i, 4000]
     second = plain[(0.5 * SAMPLE_RATE).to_i, 4000]
     refute_equal first, second, "each snare should get its own deterministic noise/transient"
+  end
+
+  def test_analogue_tape_is_static_bounded_and_changes_the_drum_bus
+    input = Array.new(SAMPLE_RATE) do |i|
+      0.5 * Math.sin(2.0 * Math::PI * 65.0 * i / SAMPLE_RATE) +
+        0.2 * Math.sin(2.0 * Math::PI * 6800.0 * i / SAMPLE_RATE)
+    end
+    output = Colour.tape(input, amount: 1.0)
+    assert(output.all?(&:finite?))
+    refute_equal input, output
+    assert_operator output.map(&:abs).max, :<, 1.0
+    assert_same input, Colour.tape(input, amount: 0.0)
   end
 
 
