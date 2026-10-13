@@ -120,4 +120,20 @@ class TestPlugins < Minitest::Test
     refute result.ok?
     assert_equal :validation, result.category
   end
+  # login used to quit the browser right after its screenshot, so there was nothing to log
+  # into. It now holds the window until the operator closes it or the hold runs out.
+  def test_login_holds_until_the_window_is_closed_and_a_zero_hold_returns_at_once
+    require "ferrum"
+    plugin = Master::Plugin.load("social_browser")
+    untouched = Object.new
+    untouched.define_singleton_method(:current_url) { raise "a zero hold must not poll the page" }
+    closed = Object.new
+    closed.define_singleton_method(:current_url) { raise Ferrum::Error, "window closed" }
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    plugin.send(:wait_for_operator, untouched, 0)
+    plugin.send(:wait_for_operator, closed, 60)
+
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 10
+  end
 end

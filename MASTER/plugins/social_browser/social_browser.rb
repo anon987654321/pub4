@@ -100,19 +100,38 @@ module Master
         end
       end
 
-      def login(site:, account:, url: nil, headless: false, runtime: "auto", **)
+      # The window stays open while the operator logs in, up to hold_s seconds or until they
+      # close it. It used to quit straight after its screenshot, so there was nothing to log
+      # into. MASTER only watches whether the window is alive; it reads no field and no cookie.
+      LOGIN_HOLD_S = 900
+      LOGIN_POLL_S = 2
+
+      def login(site:, account:, url: nil, headless: false, runtime: "auto", hold_s: LOGIN_HOLD_S, **)
         target = url || site!(site).start_url
         with_browser(site:, account:, url: target, headless:, runtime:) do |page, run_dir|
           shot = screenshot(page, run_dir, "login")
+          wait_for_operator(page, hold_s) unless headless
           {
             action: "login",
             site: site.to_s,
             runtime: runtime(),
             account: account.to_s,
-            url: page.url.to_s,
+            url: target,
             screenshot: shot,
             note: "Complete login in the visible browser. MASTER never receives passwords, OTPs, cookies or session credentials.",
           }
+        end
+      end
+
+      def wait_for_operator(page, hold_s)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + Integer(hold_s).clamp(0, 3_600)
+        while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+          sleep LOGIN_POLL_S
+          begin
+            page.current_url
+          rescue Ferrum::Error
+            break
+          end
         end
       end
 
