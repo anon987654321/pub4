@@ -19,7 +19,7 @@ module Deploy
           status_text: response["statusText"].to_s,
           url: response["url"].to_s,
           resource_type: params["type"].to_s,
-          mime_type: response["mimeType"].to_s
+          mime_type: response["mimeType"].to_s,
         }
       end.uniq { |row| [row[:status], row[:url], row[:resource_type]] }
     end

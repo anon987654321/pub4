@@ -34,7 +34,7 @@ module Master
         "disable-gpu" => nil,
         "disable-background-networking" => nil,
         "disable-quic" => nil,
-        "host-resolver-rules" => "MAP * ~NOTFOUND"
+        "host-resolver-rules" => "MAP * ~NOTFOUND",
       }.freeze
       ResourceLimit = Class.new(StandardError)
 

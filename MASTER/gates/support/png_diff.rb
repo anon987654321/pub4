@@ -23,7 +23,7 @@ module Deploy
           current_dimensions: [current[:width], current[:height]],
           pixel_diff_count: nil,
           pixel_diff_ratio: nil,
-          pixel_diff_image: nil
+          pixel_diff_image: nil,
         }
       end
 
@@ -83,7 +83,7 @@ module Deploy
         height:,
         pixel_diff_count: changed,
         pixel_diff_ratio: ratio.round(8),
-        pixel_diff_image: image_path
+        pixel_diff_image: image_path,
       }
     rescue Errno::ENOENT, Errno::EACCES
       raise

@@ -67,7 +67,6 @@ module Operator
       counts.sum unless counts.empty?
     end
 
-
     # The first figure after the name: the current value of an OVER row.
     def number(line) = line[/\s(\d+)\s*\//, 1]&.to_i
   end

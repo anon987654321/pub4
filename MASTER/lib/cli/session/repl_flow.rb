@@ -71,8 +71,6 @@ module Master
         @focus_mode ? focus_prompt : normal_prompt
       end
 
-
-
       # The ordinary shell keeps Reline in charge of the prompt. /face opens the
       # dedicated alternate-screen stage when the operator wants the full face.
       def normal_prompt

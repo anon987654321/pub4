@@ -76,7 +76,6 @@ module Master
         footer.empty? ? "" : "\n#{footer.join("\n")}"
       end
 
-
       # Summarize measured provider outcomes without printing raw provider
       # errors, response bodies or credentials. Detailed diagnostic events remain
       # available through /diag; this surface answers whether the pool is healthy.

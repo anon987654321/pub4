@@ -335,7 +335,6 @@ module Master
         ].compact.join("\n")
       end
 
-
       def dispatch_narrate(ctx: nil)
         narrator = Voice::Narrator.instance
         case arg_for(ctx).downcase
