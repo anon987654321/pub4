@@ -11,7 +11,7 @@ class TestAgentContext < Minitest::Test
 
     assert_includes text, "zsh"
     assert_includes text, "Master::Io::Exec"
-    assert_includes text, "first pass on an unfamiliar or broad tree"
+    assert_includes text, "establish the source tree before selecting files"
   end
 
   def test_fix_context_is_explicitly_executable
