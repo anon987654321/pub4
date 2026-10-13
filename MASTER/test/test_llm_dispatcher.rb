@@ -199,7 +199,7 @@ class TestLLMDispatcher < Minitest::Test
   def test_a_crashed_local_runner_is_classified_for_immediate_failover
     dispatcher, = build_dispatcher
     error = Master::Result.err(
-      "ollama 500: {\\"error\\":\\"llama-server process has terminated: failed to create library\\"}",
+      'ollama 500: {"error":"llama-server process has terminated: failed to create library"}',
       category: :provider_error,
     )
 
