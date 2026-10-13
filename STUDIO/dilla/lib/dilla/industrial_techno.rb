@@ -60,8 +60,10 @@ module Dilla
       { bars: (bars || inferred_bars).to_i, seed: seed.nil? ? (Random.new_seed & 0xffff_ffff) : seed.to_i }
     end
 
-    def render(path, bpm: 138, bars: 16, seed: 42, profile: nil)
-      raise ArgumentError, "bars must be 1..#{MAX_BARS}" unless bars.to_i.between?(1, MAX_BARS)
+    def render(path, bpm: 138, bars: nil, seed: nil, profile: nil)
+      plan = generation_plan(profile:, bpm:, bars:, seed:)
+      bars, seed = plan.values_at(:bars, :seed)
+      raise ArgumentError, "bars must be 1..#{MAX_BARS}" unless bars.between?(1, MAX_BARS)
       beat = 60.0 / bpm.to_f
       step = beat / 4.0
       frames = (bars * 4 * beat * SAMPLE_RATE).round
