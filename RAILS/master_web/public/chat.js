@@ -5,9 +5,17 @@ function chatT(key, fallback, vars) {
   return window.MASTER_T ? window.MASTER_T(key, fallback, vars) : fallback;
 }
 
-// Ordinary shell labels, without an ASCII-art prompt.
+// Transcript labels share the canonical CLI face vocabulary.
 function shellPromptLabel(role) {
-  return role === 'user' ? `${promptUserName()}$ ` : 'master$ ';
+  const prompt = window.MASTER_FACE_CONTRACT?.prompt || {};
+  const fallback = role === 'user' ? 'user' : 'master';
+  const configured = role === 'user' ? prompt.user_token : prompt.master_token;
+  const label = String(configured || fallback)
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N} ]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return `${label} `;
 }
 
 function escapeHtml(str) {
