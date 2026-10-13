@@ -393,8 +393,9 @@ module Master
       end
 
       def reference_style_for(text)
-        return "industrial_techno" if text.match?(/\bindustrial[ -]?techno\b|\btechno\b/i)
+        return "industrial_techno" if text.match?(/\bindustrial[ -]?techno\b/i)
         return "j_dilla" if text.match?(/\bj\s*dilla\b|\bdilla\b|\bboom[ -]?bap\b|\bhip[ -]?hop\b/i)
+        return "industrial_techno" if text.match?(/\btechno\b/i)
 
         active_reference_style
       end
@@ -534,14 +535,14 @@ module Master
         return menu unless menu.ok?
 
         choices = menu.value!
-        named = text[/\b(?:progression\s+)?(\d+)\b/, 1]
+        named = text[/\bprogression\s+(\d+)\b/i, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
         explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
         named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i) && !explicit_dilla
         reference = named_other_style ? nil : dilla_reference_profile
         dilla_pocket = !named_other_style && (reference || explicit_dilla)
         named_pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) }
-        dilla_patterns = %w[dilla_shadow_pattern dilla_broken dusty_laid_back boom_bap]
+        dilla_patterns = %w[dilla_shadow dilla_broken dusty_laid_back boom_bap]
         pattern = named_pattern || if dilla_pocket
                                      dilla_patterns.find { |id| choices[:drums].include?(id) } || choices[:drums].sample
                                    else
