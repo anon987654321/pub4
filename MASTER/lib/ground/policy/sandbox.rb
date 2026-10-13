@@ -102,7 +102,7 @@ module Master
           return "git -C target escapes the workspace" if git_directory_escape?(values, root:)
 
           outside = values.drop(1).find do |arg|
-            path_argument?(arg) && !inside_root?(File.expand_path(arg, root), File.realpath(root))
+            path_argument?(arg) && !path_inside_root?(arg, root:)
           end
           outside ? "execution path escapes workspace: #{outside}" : nil
         rescue StandardError => e
@@ -155,7 +155,7 @@ module Master
           argv.each_with_index.any? do |arg, index|
             next false unless arg == "-C" || arg == "--git-dir" || arg == "--work-tree"
             value = argv[index + 1]
-            value && !inside_root?(File.expand_path(value, root), File.realpath(root))
+            value && !path_inside_root?(value, root:)
           end
         end
 
@@ -164,6 +164,25 @@ module Master
           return false if value.empty? || value.start_with?("-")
           return false if value.match?(%r{\A[a-z][a-z0-9+.-]*://}i)
           value.start_with?("/", "~", "$HOME", "./", "../") || value.include?("/")
+        end
+
+        # Lexical containment is not enough: a workspace symlink can route a
+        # command to a file or Git directory outside the tree. Resolve the target,
+        # or its nearest existing ancestor for a new output path, before admission.
+        def path_inside_root?(path, root:)
+          expanded_root = File.expand_path(root)
+          target = File.expand_path(path, expanded_root)
+          return false unless inside_root?(target, expanded_root)
+
+          real_root = File.realpath(expanded_root)
+          existing = target
+          until File.exist?(existing) || File.symlink?(existing)
+            parent = File.dirname(existing)
+            break if parent == existing
+
+            existing = parent
+          end
+          inside_root?(File.realpath(existing), real_root)
         end
 
         def inside_root?(path, root)
