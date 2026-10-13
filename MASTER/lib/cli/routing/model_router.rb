@@ -102,7 +102,16 @@ module Master
           chain = prefer_floor(chain, fresh, operation: task_type)
           ranked = @provider_health.rank(chain)
           ranked = @compute_pool.rank(ranked, task_type:)
-          Io::ModelSkipCache.filter(chitchat_head(Io::LaneSelection.order_or_all(ranked, free_last: !free_route?(task_type), latency: method(:latency_s), lead: Io::LaneSelection.route_lead(@rules, task_type)), task_type))
+          selected = chitchat_head(
+            Io::LaneSelection.order_or_all(
+              ranked,
+              free_last: !free_route?(task_type),
+              latency: method(:latency_s),
+              lead: Io::LaneSelection.route_lead(@rules, task_type),
+            ),
+            task_type,
+          )
+          priority_fallback_order(Io::ModelSkipCache.filter(selected))
         end
 
         # Greetings are explicitly routed to the free tier. A locally installed
@@ -158,6 +167,25 @@ module Master
         # with a subscription CLI that put the strongest lane ahead of the free
         # tier for "hello", which chain_for exists to prevent. For chitchat the
         # free and keyless lanes stay in front, in the pool's order.
+        # The terminal fallback order is independent of preference/ranking:
+        # premium and paid API lanes first, free API lanes next, browser chat next,
+        # and local compute last. A preferred local model must never jump the queue.
+        def priority_fallback_order(models)
+          Array(models).map(&:to_s).reject(&:empty?).uniq.each_with_index.sort_by do |model, index|
+            rank = if web_chat_model?(model)
+                     3
+                   else
+                     case Io::LaneSelection.kind(model)
+                     when :local then 4
+                     when :free then 2
+                     when :paid_tail then 1
+                     else 0
+                     end
+                   end
+            [rank, index]
+          end.map(&:first)
+        end
+
         def chitchat_head(chain, task_type)
           return chain unless task_type.to_sym == :chitchat
 
