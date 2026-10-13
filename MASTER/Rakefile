@@ -24,10 +24,10 @@ end
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
-  # One flat directory, so one glob reaches every test. The suite was split
-  # across nine subdirectories this glob did not match, and thirty tests went
-  # unasked while `rake test` reported a full run.
-  t.test_files = FileList["test/test_*.rb"].exclude(
+  # Test names follow both test_*.rb and *_test.rb. Keep discovery recursive
+  # before moving tests by subsystem, and never run fixture Ruby as a test.
+  t.test_files = FileList["test/**/test_*.rb", "test/**/*_test.rb"].exclude(
+    "test/fixtures/**/*",
     "test/test_browser.rb",
     "test/test_web_http.rb",
     # rack/test lives in the web bundle, which is not installable on a
