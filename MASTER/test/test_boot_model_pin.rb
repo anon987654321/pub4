@@ -52,6 +52,21 @@ class TestBootModelPin < Minitest::Test
     router.define_singleton_method(:tier_for_model) do |model|
       %w[openrouter/free-model:free ollama:gemma3:4b].include?(model) ? "cheap" : "strong"
     end
+    router.define_singleton_method(:priority_fallback_order) do |models|
+      models.each_with_index.sort_by do |model, index|
+        rank = if model.start_with?("web-chat:")
+                 3
+               else
+                 case Master::Io::LaneSelection.kind(model)
+                 when :local then 4
+                 when :paid_tail then 1
+                 when :free then 2
+                 else 0
+                 end
+               end
+        [rank, index]
+      end.map(&:first)
+    end
     homeostat = Struct.new(:model_tier_bias).new(:cheap)
     probe = Class.new do
       include Master::Review::Agent::ModelSelector
