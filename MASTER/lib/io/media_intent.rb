@@ -441,7 +441,7 @@ module Master
       end
 
       def analyze_reference(text, root:)
-        source = text.match(REFERENCE_URL_RE)&.to_s || text.match(AUDIO_FILE_RE)&.to_s
+        source = text.match(REFERENCE_URL_RE)&.to_s&.sub(/[.,!?;:]+\\z/, "") || text.match(AUDIO_FILE_RE)&.to_s
         return Result.err("dilla reference: provide a YouTube URL or local audio file", category: :validation) unless source
         args = ["reference", source]
         style = reference_style_for(text)
