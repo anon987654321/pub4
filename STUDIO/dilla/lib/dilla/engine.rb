@@ -42,6 +42,7 @@ def run(argv)
     o.on('--bars N', Integer, 'With --mode organ: bars of improvisation, one chord a bar (default from the data)') { |v| options[:bars] = v }
     o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
     o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
+    o.on('--mono', 'One channel, with no panning, no ping-pong echo and no stereo imager (the default is stereo)') { options[:mono] = true }
     o.on('--tape N', Integer, 'Tape machines in series as the last stage, 0 to 8; 0 leaves the sound untouched (default from the data)') { |v| options[:tape] = v.clamp(0, 8) }
     o.on('--tape-drive X', Float, 'How hard the first tape machine is driven, 0.1 to 4; later machines step up from it') { |v| options[:tape_drive] = v.clamp(0.1, 4.0) }
     o.on('--sonitex [PRESET]', 'The 12-bit sampler colour chain on the voice bus') { |v| options[:sonitex] = v || true }
@@ -160,17 +161,15 @@ def plan_pass(data, options, capture: false)
            parts: seq.capture, pick:)
 end
 
-# One render: the options name a progression or let the seed choose one. Returns the output path.
-def render(data, options)
+# A section of the showcase: one pass rendered whole and mono by the functional effects, kept
+# in memory for the arrangement to join. Every other render is streamed (see render_stream).
+def render_section(data, options)
   plan = plan_pass(data, options)
-  index, names, profile, drums, seq, bpm, beats, voice, mode, search, piece, chord_voices, seed, buf =
-    plan.to_h.values_at(:index, :names, :profile, :drums, :seq, :bpm, :beats, :voice, :mode, :search, :piece, :chord_voices, :seed, :buf)
-  if options[:buffer_only]
-    # Progression buffers reserve a full second for arbitrary note tails. A curated section
-    # has a known gate and a short echo, so discard that unused second before rendering drums.
-    musical_samples = (names.size * beats * 60.0 / bpm * SAMPLE_RATE).round
-    buf = buf.first([musical_samples + (0.36 * SAMPLE_RATE).round, buf.size].min)
-  end
+  names, profile, drums, seq, bpm, beats, buf = plan.to_h.values_at(:names, :profile, :drums, :seq, :bpm, :beats, :buf)
+  # Progression buffers reserve a full second for arbitrary note tails. A curated section
+  # has a known gate and a short echo, so discard that unused second before rendering drums.
+  musical_samples = (names.size * beats * 60.0 / bpm * SAMPLE_RATE).round
+  buf = buf.first([musical_samples + (0.36 * SAMPLE_RATE).round, buf.size].min)
   vcs = seq.vcs_amount(options[:vcs])
   sonitex = seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances])
   drum_sonitex = seq.sonitex_settings(options[:drum_sonitex], instances: options[:drum_sonitex_instances]) || sonitex
@@ -181,8 +180,7 @@ def render(data, options)
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
   buf = FX.dub_echo(buf, options[:instrument_dub_echo]) if options[:instrument_dub_echo]
   buf = FX.crystallizer(buf, options[:instrument_crystallizer]) if options[:instrument_crystallizer]
-  seconds = buf.size / SAMPLE_RATE.to_f
-  drum_seconds = options[:buffer_only] ? names.size * beats * 60.0 / bpm : seconds
+  drum_seconds = names.size * beats * 60.0 / bpm
   rotation = drums == 'rotate' ? data.fetch('drum_patterns').keys : drums
   hits = drums ? seq.drum_hits(rotation, bpm, drum_seconds) : []
   levels = seq.mix(options[:mix])
@@ -197,21 +195,45 @@ def render(data, options)
     crystallizer: options[:drum_crystallizer],
     drum_vcs: options[:drum_vcs]
   ) if drums
-  return buf if options[:buffer_only]
+  buf
+end
 
-  buf = tape_stage(buf, data, options, seed)
-  out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{Array(drums).join('+')}" : ''}.wav")
+# One render, streamed whole: the pass is run through the same streamer as --play, a bar at a
+# time, then the master stage, and written as a stereo wav (or mono with --mono). Returns the path.
+def render_stream(data, options)
+  streamer = Streamer.new(data, options, ring: true)
+  plan = streamer.plan
+  frame = Stereo.zeros(streamer.channels, 0)
+  bar = streamer.beat * 4
+  until streamer.finished?
+    part = streamer.next_block(bar)
+    Stereo.concat!(frame, streamer.channels == 1 ? [part] : part)
+  end
+  tape = data.fetch('tape')
+  instances = options.fetch(:tape, tape.fetch('instances'))
+  args = { drive: options[:tape_drive] || tape.fetch('drive'), config: tape }
+  # the stack is level matched against the programme itself, which a whole render has to hand
+  stack = instances.positive? ? Tape::Stack.new(instances:, seed: plan.seed, sample: Tape.excerpt(Stereo.fold(frame)), **args) : nil
+  master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset: nil, seed: plan.seed, instances:, tape_args: args,
+                             imager: options[:mono] ? nil : data.dig('stereo', 'imager'))
+  frame = master.process(frame)
+  out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
-  WAV.write(out, buf)
+  WAV.write(out, streamer.channels == 1 ? frame.first : frame)
   if options[:midi]
     FileUtils.mkdir_p(File.dirname(options[:midi]))
-    MIDI.write(options[:midi], names, bpm, beats, hits, search:)
+    MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, streamer.hits, search: plan.search)
   end
-  label = piece ? "organ in #{piece.key} #{piece.scale}, #{piece.phrases.size} phrases, #{piece.suspensions} suspensions" : "progression #{index}"
-  puts "Wrote #{out} (#{seconds.round(2)}s) #{label}: #{names.join(' ')}"
-  puts "  drums=#{drums ? Array(drums).join(',') : 'none'} profile=#{profile} mode=#{mode} voice=#{piece ? 'organ' : (chord_voices&.join('>') || voice['name'])} groove=#{seq.pd_amount} bpm=#{bpm} tape=#{options.fetch(:tape, data.dig('tape', 'instances'))} seed=#{seed}"
+  piece = plan.piece
+  label = piece ? "organ in #{piece.key} #{piece.scale}, #{piece.phrases.size} phrases, #{piece.suspensions} suspensions" : "progression #{plan.index}"
+  puts "Wrote #{out} (#{(frame.first.size / SAMPLE_RATE.to_f).round(2)}s, #{streamer.channels == 1 ? 'mono' : 'stereo'}) #{label}: #{plan.names.join(' ')}"
+  puts "  drums=#{plan.drums ? Array(plan.drums).join(',') : 'none'} profile=#{plan.profile} mode=#{plan.mode} " \
+       "voice=#{piece ? 'organ' : (plan.chord_voices&.join('>') || plan.voice['name'])} groove=#{plan.seq.pd_amount} bpm=#{plan.bpm} tape=#{instances} seed=#{plan.seed}"
   out
 end
+
+# A render: a showcase section stays whole and mono in memory, anything else is streamed.
+def render(data, options) = options[:buffer_only] ? render_section(data, options) : render_stream(data, options)
 
 # The last colour before the file: the tape stack, and the ceiling that follows it.
 def tape_stage(buf, data, options, seed)
@@ -237,6 +259,14 @@ def validate_scale!(names, melody, scale_pcs)
   abort "Scale mismatch: chord pitch classes #{chord_outside.inspect}, melody pitch classes #{melody_outside.inspect}, allowed #{allowed.inspect}"
 end
 
+# `count` notes of a chord, the lowest and the highest and the ones between spaced evenly: a thin
+# layer that still spans the voicing.
+def spread(notes, count)
+  return notes if count >= notes.size
+
+  Array.new(count) { |i| notes[(i * (notes.size - 1) / [count - 1, 1].max.to_f).round] }.uniq
+end
+
 # Add deliberate layers behind and above the main instrument part without modulation effects.
 # Held layers use the very same chord voicings; patterned layers share the same tempo and groove.
 def render_layers(buf, seq, names, bpm, beats, options, search:)
@@ -253,6 +283,7 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
         beat_seconds = 60.0 / bpm
         chords = Chords.midi_notes(names, search:, transpose: (options[:transpose] || 0) + layer.fetch('transpose', 0).to_i, wrap: options[:wrap])
         chords = chords.map { |notes| notes.first(1) } if layer['notes'] == 'bass'
+        chords = chords.map { |notes| spread(notes, layer['count']) } if layer['count']
         plucks = chords.each_with_index.map do |notes, index|
           Pluck.new(index * beats * beat_seconds, 0.0, notes, beats * beat_seconds * gate,
                     layer.fetch('velocity', 0.55).to_f.clamp(0.0, 1.0))

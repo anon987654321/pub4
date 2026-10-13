@@ -3599,6 +3599,40 @@
   "strum": {
     "ms": 18
   },
+  "stereo": {
+    "groups": {
+      "sine": 0.0,
+      "pure": 0.2,
+      "dfam": -0.2,
+      "moog": -0.25,
+      "rhodes": 0.25,
+      "polypad": -0.1,
+      "strings": 0.1,
+      "dub": 0.0,
+      "organ": 0.0
+    },
+    "spread": 0.5,
+    "low_below": 52,
+    "low_reach": 0.1,
+    "drums": {
+      "kick": 0.0,
+      "snare": 0.04,
+      "clap": -0.1,
+      "hat": 0.3,
+      "open": 0.36,
+      "perc": -0.3,
+      "rim": -0.24,
+      "tom": 0.2,
+      "shaker": 0.34,
+      "metal": 0.4
+    },
+    "imager": {
+      "centre_hz": 120.0,
+      "widen": 0.35,
+      "width": 1.0,
+      "air_hz": 4000.0
+    }
+  },
   "tape": {
     "instances": 4,
     "drive": 1.0,
@@ -5413,14 +5447,16 @@
           "mode": "held",
           "gate": 0.98,
           "velocity": 0.5,
-          "gain_db": -19
+          "gain_db": -19,
+          "count": 3
         },
         {
           "voice": "dub_bubble",
           "mode": "held",
           "gate": 0.9,
           "velocity": 0.5,
-          "gain_db": -21
+          "gain_db": -21,
+          "count": 2
         }
       ],
       "kit": "kit_dust",

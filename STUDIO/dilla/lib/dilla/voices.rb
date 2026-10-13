@@ -11,15 +11,16 @@ module Voices
   # A held level 0..1 for an [attack, decay, sustain, release] envelope, linear segments.
   def self.adsr(env, t, gate)
     a, d, s, r = env
-    level = lambda do |x|
-      if x < a then x / [a, 1e-4].max
-      elsif x < a + d then 1.0 - ((1.0 - s) * (x - a) / [d, 1e-4].max)
-      else s
-      end
-    end
-    return level.call(t) if t <= gate
+    return adsr_level(a, d, s, t) if t <= gate
 
-    [level.call(gate) * (1.0 - ((t - gate) / [r, 1e-4].max)), 0.0].max
+    [adsr_level(a, d, s, gate) * (1.0 - ((t - gate) / (r > 1e-4 ? r : 1e-4))), 0.0].max
+  end
+
+  def self.adsr_level(a, d, s, x)
+    if x < a then x / (a > 1e-4 ? a : 1e-4)
+    elsif x < a + d then 1.0 - ((1.0 - s) * (x - a) / (d > 1e-4 ? d : 1e-4))
+    else s
+    end
   end
 
   # A note read a block at a time. The block makes sample i from state it closes over, so a note
@@ -44,7 +45,14 @@ module Voices
     # Up to `count` of the next samples; fewer at the end, none after it.
     def read(count)
       take = [count, remaining].min
-      Array.new(take) { @sample.call(@at).tap { @at += 1 } }
+      i = @at
+      out = Array.new(take) do
+        v = @sample.call(i)
+        i += 1
+        v
+      end
+      @at = i
+      out
     end
   
     def drain = read(@size)
@@ -61,19 +69,23 @@ module Voices
   # A four-pole ladder lowpass: each pole moves toward the one before, the last feeds back.
   # The pole coefficient is x / (1 + x), which needs no exponential in the sample loop.
   class Ladder
+    LIMIT = SAMPLE_RATE * 0.45
+
     def initialize
-      @z = [0.0, 0.0, 0.0, 0.0]
+      @z0 = @z1 = @z2 = @z3 = 0.0
     end
 
     def process(sample, cutoff, resonance)
-      x = TAU * cutoff.clamp(20.0, SAMPLE_RATE * 0.45) / SAMPLE_RATE
+      cutoff = 20.0 if cutoff < 20.0
+      cutoff = LIMIT if cutoff > LIMIT
+      x = TAU * cutoff / SAMPLE_RATE
       g = x / (1.0 + x)
-      input = sample - (resonance * 4.0 * @z[3])
+      input = sample - (resonance * 4.0 * @z3)
       input /= (1.0 + (input.abs * 0.5)) # soft limit on the way in, so the resonance rounds off
-      @z[0] += g * (input - @z[0])
-      @z[1] += g * (@z[0] - @z[1])
-      @z[2] += g * (@z[1] - @z[2])
-      @z[3] += g * (@z[2] - @z[3])
+      @z0 += g * (input - @z0)
+      @z1 += g * (@z0 - @z1)
+      @z2 += g * (@z1 - @z2)
+      @z3 += g * (@z2 - @z3)
     end
   end
 
@@ -88,20 +100,29 @@ module Voices
     sweep = patch.fetch('env_amount')
     resonance = patch.fetch('resonance')
     n = ((dur + amp_env[3]) * SAMPLE_RATE).to_i
-    waves = patch.fetch('waves').map { |w| WAVES.fetch(w) }
+    waves = patch.fetch('waves').map { |w| WAVES.keys.index(w) or raise KeyError, "no wave #{w}" } # an index into WAVES, whose shapes the loop below writes out
     incs = patch.fetch('waves').each_index.map do |k|
       freq * (2.0**(patch.fetch('octaves')[k] + (patch.fetch('detune')[k] / 1200.0))) / SAMPLE_RATE
     end
     phases = Array.new(waves.size) { |k| k * 0.13 }
+    wave_count = waves.size
     ladder = Ladder.new
     drive = patch.fetch('drive', 1.0)
     scale = amp * 2.0 / waves.size
     Reader.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
       sum = 0.0
-      waves.each_index do |k|
-        sum += waves[k].call(phases[k])
-        phases[k] = (phases[k] + incs[k]) % 1.0
+      k = 0
+      while k < wave_count
+        p = phases[k]
+        sum += case waves[k]
+               when 0 then (2.0 * p) - 1.0
+               when 1 then p < 0.5 ? 1.0 : -1.0
+               when 2 then p < 0.5 ? (4.0 * p) - 1.0 : 3.0 - (4.0 * p)
+               else Math.sin(TAU * p)
+               end
+        phases[k] = (p + incs[k]) % 1.0
+        k += 1
       end
       ladder.process(sum * drive * 0.5, base + (sweep * adsr(filter_env, t, dur)), resonance) * adsr(amp_env, t, dur) * scale
     end
@@ -265,4 +286,22 @@ module Voices
 
   # The samples for one note, whole.
   def self.note(spec, midi, dur, amp, **) = reader(spec, midi, dur, amp, **).drain
+
+  CACHE_BELOW = 0.9 # seconds: a short note is made once and handed out again
+  CACHE_LIMIT = 600
+  @cache = {}
+
+  # A note as a Reader, from the cache when the same note has sounded before. An arpeggio or a
+  # chord repeated strikes the same few notes over and over, and a voice is deterministic, so the
+  # samples are the same each time; a long note is read as it goes and not kept.
+  def self.cached_reader(spec, midi, dur, amp, **options)
+    return reader(spec, midi, dur, amp, **options) if dur >= CACHE_BELOW
+
+    key = [spec, midi, dur, amp, options]
+    samples = @cache[key] ||= begin
+      @cache.shift if @cache.size >= CACHE_LIMIT
+      reader(spec, midi, dur, amp, **options).drain
+    end
+    Reader.of(samples)
+  end
 end

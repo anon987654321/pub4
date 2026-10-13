@@ -47,7 +47,9 @@ class Show
     instances = options.fetch(:tape, tape.fetch('instances'))
     stack = instances.positive? ? Tape::Stack.new(instances:, drive: options[:tape_drive] || tape.fetch('drive'), seed: options[:seed] || 0, config: tape) : nil
     preset = data.dig('sonitex', 'presets').fetch(data.dig('sonitex', 'default'))
-    @master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset:, seed: options[:seed] || 0)
+    @master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset:, seed: options[:seed] || 0, instances:,
+                                tape_args: { drive: options[:tape_drive] || tape.fetch('drive'), config: tape },
+                                imager: options[:mono] ? nil : data.dig('stereo', 'imager'))
     per_minute = options.fetch(:moves, @decks > 1 ? MOVES_PER_MINUTE : 0.0)
     @hand = Moves::Hand.new(options[:seed] || 0, per_minute:, out:)
   end
@@ -148,6 +150,7 @@ class Show
   def crossfade_beats = @decks > 1 ? @mix_rng.rand(CROSSFADE_BARS) * 4 : 1
 
   def produce(queue)
+    channels = @options[:mono] ? 1 : 2
     first_fade = crossfade_beats
     slots = [Slot.new(build_pass(0, first_fade), 0)]
     @crossfades << first_fade
@@ -163,16 +166,17 @@ class Show
       size = [size, due - global].min if upcoming && due > global
 
       params = @hand.advance(global, size, bar, slots.map(&:streamer), overlap: slots.size > 1)
-      mixed = Array.new(size, 0.0)
+      mixed = Stereo.zeros(channels, size)
       slots.each do |slot|
         offset = [slot.start - global, 0].max
         next if offset >= size
 
         part = slot.streamer.next_block(size - offset)
-        part.each_with_index { |v, i| mixed[offset + i] += v }
+        Stereo.add!(mixed, channels == 1 ? [part] : part, offset)
       end
       slots.reject! { |slot| slot.streamer.finished? }
       mixed = @master.process(mixed, params)
+      mixed = mixed.first if channels == 1
       @stats[:render] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
       @stats[:audio] += size.to_f / SAMPLE_RATE
       @stats[:blocks] += 1

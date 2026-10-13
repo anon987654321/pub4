@@ -16,6 +16,7 @@ AUDIBLE_TOP_HZ = 14_000.0
 
 require_relative 'dilla/wav'
 require_relative 'dilla/stream'
+require_relative 'dilla/stereo'
 require_relative 'dilla/chords'
 require_relative 'dilla/synthesis'
 require_relative 'dilla/voices'

@@ -10,21 +10,25 @@ class Player
 
   # The player: --player's command split into words, else ffplay, else sox's play.
   def self.command(options, rate = SAMPLE_RATE)
+    channels = options[:mono] ? 1 : 2
     return Shellwords.split(options[:player]) if options[:player]
 
     ffplay = FFPLAY.find { |path| File.executable?(path) } || which('ffplay')
-    return [ffplay, '-nodisp', '-autoexit', '-loglevel', 'quiet', '-f', 's16le', '-ar', rate.to_s, '-ac', '1', '-i', '-'] if ffplay
+    return [ffplay, '-nodisp', '-autoexit', '-loglevel', 'quiet', '-f', 's16le', '-ar', rate.to_s, '-ac', channels.to_s, '-i', '-'] if ffplay
 
     play = SOX.find { |path| File.executable?(path) } || which('play')
-    return [play, '-q', '-t', 'raw', '-r', rate.to_s, '-e', 'signed', '-b', '16', '-c', '1', '-'] if play
+    return [play, '-q', '-t', 'raw', '-r', rate.to_s, '-e', 'signed', '-b', '16', '-c', channels.to_s, '-'] if play
 
     abort 'No player: install ffplay or sox, or name one with --player (it reads raw 16-bit mono PCM on stdin)'
   end
 
   def self.which(name) = ENV.fetch('PATH', '').split(File::PATH_SEPARATOR).map { |dir| File.join(dir, name) }.find { |path| File.executable?(path) }
 
-  # 16-bit little-endian samples, clipped.
-  def self.pcm(samples) = samples.map { |s| (s * 32_767).round.clamp(-32_768, 32_767) }.pack('s<*')
+  # 16-bit little-endian samples, clipped; a stereo frame ([left, right]) is interleaved.
+  def self.pcm(samples)
+    samples = Stereo.interleave(samples) if samples.first.is_a?(Array)
+    samples.map { |s| (s * 32_767).round.clamp(-32_768, 32_767) }.pack('s<*')
+  end
 
   attr_reader :bytes
 

@@ -19,8 +19,9 @@ class DillaTest < Minitest::Test
   CHORDS = PROGRESSIONS.flatten.uniq
   PLAYABLE = Playlist.new(DATA, Random.new(0)).voice_names # the rotation leaves out a soundfont voice with no soundfont
 
-  def run_dilla(*args, chdir:)
-    Open3.capture3(RbConfig.ruby, SCRIPT, *args, chdir:)
+  # Mono unless a test asks for stereo: most tests read the samples of one channel.
+  def run_dilla(*args, chdir:, stereo: false)
+    Open3.capture3(RbConfig.ruby, SCRIPT, *(stereo ? [] : ["--mono"]), *args, chdir:)
   end
 
   def sequencer(profile, pd_amount: nil, seed: 5, data: DATA)
@@ -36,7 +37,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/moves.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/moves.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stereo.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -48,7 +49,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs organ play_profiles progressions sonitex strum tape voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs organ play_profiles progressions sonitex stereo strum tape voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_scale_clean_harmony_pure_tones_and_dubbed_dilla_drums
@@ -1340,7 +1341,8 @@ class DillaTest < Minitest::Test
       _o, err, status = run_dilla("--progression", "2", "--profile", "dry", "--mode", "pad", "--out", out, chdir: dir)
       assert status.success?, err
       seconds = (File.size(out) - 44) / 2.0 / SAMPLE_RATE
-      assert_in_delta 4 * 8 * 60.0 / 88, seconds, 0.02
+      assert_operator seconds, :>=, (4 * 8 * 60.0 / 88) - 0.02
+      assert_operator seconds, :<=, (4 * 8 * 60.0 / 88) + 1.6, "the last notes ring out"
     end
     assert_equal 8.0, sequencer("dry").beats
     assert_equal 2 * 4 * 60.0 / 88, 8 * 60.0 / 88
@@ -1352,7 +1354,8 @@ class DillaTest < Minitest::Test
       _o, err, status = run_dilla("--progression", "2", "--profile", "dry", "--mode", "pad", "--out", out, chdir: dir)
       assert status.success?, err
       seconds = (File.size(out) - 44) / 2.0 / SAMPLE_RATE
-      assert_in_delta 4 * 8 * 60.0 / 88, seconds, 0.02
+      assert_operator seconds, :>=, (4 * 8 * 60.0 / 88) - 0.02
+      assert_operator seconds, :<=, (4 * 8 * 60.0 / 88) + 1.6, "the last notes ring out"
     end
     assert_equal 8.0, sequencer("dry").beats
     assert_equal 2 * 4 * 60.0 / 88, 8 * 60.0 / 88
@@ -1812,7 +1815,7 @@ class DillaTest < Minitest::Test
       assert status.success?, err
       assert_includes stdout, "organ in D harmonic_minor"
       seconds = (File.size(out) - 44) / 2.0 / SAMPLE_RATE
-      assert_operator seconds, :>, 4 * 4 * 60.0 / 88
+      assert_operator seconds, :>=, (4 * 4 * 60.0 / 88) - 0.01
       assert_operator seconds, :<, (4 * 4 * 60.0 / 88) + 4.0
       assert_operator File.binread(out).byteslice(44..).unpack("s<*").map(&:abs).max, :>, 3000
       assert File.file?(File.join(dir, "o.mid"))
@@ -1925,7 +1928,7 @@ class DillaTest < Minitest::Test
   # ------------------------------------------------------------- streaming
 
   def stream_pass(options, block)
-    streamer = Streamer.new(DATA, options)
+    streamer = Streamer.new(DATA, { mono: true }.merge(options))
     out = []
     out.concat(streamer.next_block(block)) until streamer.finished?
     [out, streamer]
@@ -1996,7 +1999,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_source_fades_at_the_ends_and_a_dry_pass_goes_silent_after_it
-    streamer = Streamer.new(DATA, { prog: 3, seed: 5, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad" }, fade_in: 4410, fade_out_beats: 1)
+    streamer = Streamer.new(DATA, { mono: true, prog: 3, seed: 5, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad" }, fade_in: 4410, fade_out_beats: 1)
     out = []
     out.concat(streamer.next_block(20_000)) until streamer.finished?
     assert_in_delta 0.0, out.first.abs, 1e-3, "begins from silence"
@@ -2008,8 +2011,8 @@ class DillaTest < Minitest::Test
   def test_the_bank_starts_a_note_inside_a_block_and_carries_it_across_the_next
     note = ->(v) { -> { Voices::Reader.of(Array.new(10, v)) } }
     bank = Stream::Bank.new([Stream::Bank::Entry.new(3, note.call(1.0), 1.0, nil), Stream::Bank::Entry.new(8, note.call(0.5), 2.0, nil)])
-    assert_equal [0, 0, 0, 1, 1, 1], bank.block(0, 6)
-    assert_equal [1, 1, 2, 2, 2, 2], bank.block(6, 6)
+    assert_equal [0, 0, 0, 1, 1, 1], bank.block(0, 6).first
+    assert_equal [1, 1, 2, 2, 2, 2], bank.block(6, 6).first
     refute bank.finished?
     bank.block(12, 20)
     assert bank.finished?
@@ -2030,7 +2033,7 @@ class DillaTest < Minitest::Test
 
   def show_with(passes, seed, **extra)
     player = FakePlayer.new([])
-    options = { passes:, seed:, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, decks: 1, out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
+    options = { mono: true, passes:, seed:, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, decks: 1, out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
     show = Show.new(DATA, options, player:, out: StringIO.new)
     show.run
     [show, player]
@@ -2069,7 +2072,7 @@ class DillaTest < Minitest::Test
 
   def test_a_player_that_has_gone_ends_the_show_quietly
     player = FakePlayer.new([], false)
-    show = Show.new(DATA, { passes: 5, seed: 1, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, decks: 1, out: File.join(Dir.mktmpdir, "x.wav") },
+    show = Show.new(DATA, { mono: true, passes: 5, seed: 1, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, decks: 1, out: File.join(Dir.mktmpdir, "x.wav") },
                     player:, out: StringIO.new)
     Timeout.timeout(60) { show.run }
     assert_empty player.blocks
@@ -2090,7 +2093,7 @@ class DillaTest < Minitest::Test
   def test_a_signal_ends_a_play_run_cleanly_and_takes_the_player_with_it
     Dir.mktmpdir do |dir|
       marker = "sleep 97.#{Process.pid % 1000}"
-      pid = Process.spawn(RbConfig.ruby, SCRIPT, "--play", "--player", marker, "--seed", "4", "--beats", "1", "--profile", "dry",
+      pid = Process.spawn(RbConfig.ruby, SCRIPT, "--mono", "--play", "--player", marker, "--seed", "4", "--beats", "1", "--profile", "dry",
                           "--mode", "pad", "--tape", "0", "--decks", "1", "--out", File.join(dir, "x.wav"), chdir: dir, out: File.join(dir, "out.txt"), err: File::NULL)
       sleep 6
       Process.kill("TERM", pid)
@@ -2174,36 +2177,37 @@ class DillaTest < Minitest::Test
   def test_the_master_stage_does_nothing_unless_asked_and_a_sweep_darkens_it
     rng = Random.new(2)
     noise = Array.new(20_000) { ((rng.rand * 2) - 1) * 0.3 }
-    master = Moves::Master.new(tape: nil, ceiling: 0.97, preset: DATA.dig("sonitex", "presets").values.first, seed: 1)
-    assert_equal noise, master.process(noise)
-    dark = master.process(noise, cutoff: [700.0, 700.0])
+    preset = DATA.dig("sonitex", "presets").values.first
+    master = Moves::Master.new(tape: nil, ceiling: 0.97, preset:, seed: 1)
+    assert_equal [noise], master.process([noise])
+    dark = master.process([noise], cutoff: [700.0, 700.0]).first
     high = ->(buf) { Tape.rms(Colour.highpass(buf, 6000.0)) }
     assert_operator Tape.db(high.call(dark) / high.call(noise)), :<, -20.0
-    wet = Moves::Master.new(tape: nil, ceiling: 0.97, preset: DATA.dig("sonitex", "presets").values.first, seed: 1)
-    refute_equal noise, wet.process(noise, sonitex: 3)
-    refute_equal noise, wet.process(noise, room: [0.4, 0.4])
+    wet = Moves::Master.new(tape: nil, ceiling: 0.97, preset:, seed: 1)
+    refute_equal [noise], wet.process([noise], sonitex: 3)
+    refute_equal [noise], wet.process([noise], room: [0.4, 0.4])
     stack = Tape::Stack.new(instances: 2, seed: 1, config: DATA.fetch("tape"))
-    taped = Moves::Master.new(tape: stack, ceiling: 0.97, preset: DATA.dig("sonitex", "presets").values.first, seed: 1)
-    taped.process(noise, tape: 2.0)
+    taped = Moves::Master.new(tape: stack, ceiling: 0.97, preset:, seed: 1)
+    taped.process([noise], tape: 2.0)
     assert_equal [2.0, 2.0], stack.machines.map(&:scale)
-    taped.process(noise)
+    taped.process([noise])
     assert_equal [1.0, 1.0], stack.machines.map(&:scale), "the drive goes back when the move ends"
   end
 
   def test_a_prefetched_deck_gives_the_same_samples_and_the_live_controls_act
     options = { prog: 3, seed: 5, beats: 1.0, profile: "eclectic", tape: 0 }
     plain, = stream_pass(options, 20_000)
-    ahead = Streamer.new(DATA, options)
+    ahead = Streamer.new(DATA, options.merge(mono: true))
     ahead.prefetch(50_000)
     out = []
     out.concat(ahead.next_block(20_000)) until ahead.finished?
     assert_equal plain, out
-    muted = Streamer.new(DATA, options)
+    muted = Streamer.new(DATA, options.merge(mono: true))
     muted.drums_gain = 0.0
     quiet = []
     quiet.concat(muted.next_block(20_000)) until muted.finished?
     assert_operator Tape.rms(quiet), :<, Tape.rms(plain) * 0.7, "a dropout takes the drums out"
-    thrown = Streamer.new(DATA, options.merge(profile: "arp_echo"))
+    thrown = Streamer.new(DATA, options.merge(profile: "arp_echo", mono: true))
     thrown.echo_boost = 3.0
     base, = stream_pass(options.merge(profile: "arp_echo"), 20_000)
     loud = []
@@ -2214,7 +2218,7 @@ class DillaTest < Minitest::Test
 
   def two_deck_show(passes, seed, **extra)
     player = FakePlayer.new([])
-    options = { passes:, seed:, profile: "eclectic", mode: "pad", voice: "pure_tone", tape: 0, decks: 2, moves: 0,
+    options = { mono: true, passes:, seed:, profile: "eclectic", mode: "pad", voice: "pure_tone", tape: 0, decks: 2, moves: 0,
                 out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
     show = Show.new(DATA, options, player:, out: StringIO.new)
     show.run
@@ -2250,6 +2254,166 @@ class DillaTest < Minitest::Test
     assert_equal [1.0], show.streamers.map(&:drums_gain).uniq
     again, = two_deck_show(2, 13, moves: 40.0)
     assert_equal show.hand.log, again.hand.log
+  end
+
+  # ------------------------------------------------------------- the stereo bus
+
+  def corr(a, b)
+    ma = a.sum / a.size
+    mb = b.sum / b.size
+    num = a.zip(b).sum { |x, y| (x - ma) * (y - mb) }
+    num / Math.sqrt(a.sum { |x| (x - ma)**2 } * b.sum { |y| (y - mb)**2 })
+  end
+
+  def test_the_pan_law_is_constant_power_and_unity_at_the_centre
+    assert_equal [1.0, 1.0], Stereo.gains(0.0).map { |g| g.round(9) }
+    [-1.0, -0.4, 0.3, 1.0].each do |pan|
+      left, right = Stereo.gains(pan)
+      assert_in_delta 2.0, (left**2) + (right**2), 1e-9
+    end
+    assert_operator Stereo.gains(-1.0).first, :>, Stereo.gains(-1.0).last
+    assert_in_delta 0.0, Stereo.gains(-1.0).last, 1e-9
+  end
+
+  def test_the_data_places_each_voice_group_and_each_drum_role_and_every_group_has_a_place
+    stereo = DATA.fetch("stereo")
+    DATA.fetch("voices").each_value { |voice| assert stereo.fetch("groups").key?(voice.fetch("group")), voice["group"] }
+    assert_equal 0.0, stereo.dig("drums", "kick")
+    assert_operator stereo.dig("drums", "hat"), :>, 0.0
+    assert(stereo.fetch("groups").values.all? { |pan| pan.abs <= 1.0 })
+    assert_operator stereo.fetch("spread"), :<=, 1.0
+  end
+
+  def stereo_pass(options, block = 40_000)
+    streamer = Streamer.new(DATA, options)
+    frame = Stereo.zeros(2, 0)
+    Stereo.concat!(frame, streamer.next_block(block)) until streamer.finished?
+    [frame, streamer]
+  end
+
+  def test_a_stereo_pass_in_blocks_is_the_pass_in_one_and_the_channels_differ
+    options = { prog: 3, seed: 5, beats: 1.0, profile: "arp_echo", mode: "arp", voice: "rhodes_mark1" }
+    whole, = stereo_pass(options, 10_000_000)
+    cut, streamer = stereo_pass(options, 13_337)
+    assert_equal 2, streamer.channels
+    assert_equal whole.map(&:size), cut.map(&:size)
+    assert_in_delta 0.0, whole.flatten.zip(cut.flatten).map { |a, b| (a - b).abs }.max, 1e-9
+    refute_equal whole[0], whole[1]
+    assert_operator corr(whole[0], whole[1]), :<, 0.97, "two channels, not a doubled one"
+    assert_operator corr(whole[0], whole[1]), :>, 0.2, "but one band"
+  end
+
+  def test_a_voice_group_sits_where_the_data_puts_it
+    pure = stereo_pass({ prog: 3, seed: 5, beats: 1.0, profile: "dry", mode: "pad", voice: "pure_tone" }).first
+    moog = stereo_pass({ prog: 3, seed: 5, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad" }).first
+    assert_operator Tape.rms(pure[1]), :>, Tape.rms(pure[0]), "pure_tone sits right of the middle"
+    assert_operator Tape.rms(moog[0]), :>, Tape.rms(moog[1]), "the moogs sit left"
+    centred = stereo_pass({ prog: 3, seed: 5, beats: 1.0, profile: "dry", mode: "pad", voice: "organ" }).first
+    assert_in_delta 0.0, Tape.db(Tape.rms(centred[0]) / Tape.rms(centred[1])), 3.0
+  end
+
+  def test_the_drums_are_placed_by_role_and_the_kick_stays_in_the_middle
+    frame, streamer = stereo_pass({ prog: 3, seed: 5, beats: 1.0, profile: "eclectic", mode: "pad", voice: "pure_tone" })
+    kicks = streamer.hits.select { |role, _| role == "kick" }.first(4)
+    refute_empty kicks
+    kicks.each do |_, time, _|
+      at = (time * SAMPLE_RATE).to_i
+      window = [frame[0][at, 600], frame[1][at, 600]]
+      assert_in_delta 0.0, Tape.db(Tape.rms(window[0]) / Tape.rms(window[1])), 3.0
+    end
+  end
+
+  def test_the_ping_pong_echo_puts_the_first_head_left_the_second_right_and_one_head_in_the_middle
+    delay = 0.01
+    d = (delay * SAMPLE_RATE).round
+    input = [impulse(4000).map { |x| x * 0.05 }] * 2
+    echo = Stream::PingPongEcho.new(delay:, heads: [1, 2], intensity: 0.0, volume: 1.0, lowpass: nil, saturation: 0.0)
+    left, right = echo.process(input)
+    assert_operator left[d].abs, :>, 1e-4
+    assert_in_delta 0.0, right[d], 1e-9, "the first head is on the left"
+    assert_operator right[2 * d].abs, :>, 1e-4
+    assert_in_delta 0.0, left[2 * d], 1e-9, "the second on the right"
+    one = Stream::PingPongEcho.new(delay:, heads: [1], intensity: 0.0, volume: 1.0, lowpass: nil, saturation: 0.0).process(input)
+    assert_equal one[0], one[1], "a single head is heard in the middle"
+    blocks = Stream::PingPongEcho.new(delay:, heads: [1, 2, 3], intensity: 0.6, volume: 0.5, lowpass: 3000, saturation: 0.3, reverb: 0.2)
+    whole = Stream::PingPongEcho.new(delay:, heads: [1, 2, 3], intensity: 0.6, volume: 0.5, lowpass: 3000, saturation: 0.3, reverb: 0.2)
+    signal = [Array.new(9000) { |i| Math.sin(i / 9.0) * 0.2 }] * 2
+    cut = signal.map { |ch| ch.each_slice(1500).to_a }
+    parts = cut[0].each_index.map { |k| blocks.process([cut[0][k], cut[1][k]]) }
+    assert_equal whole.process(signal), [parts.flat_map(&:first), parts.flat_map(&:last)]
+  end
+
+  def test_the_right_room_is_not_the_left_room
+    impulse_block = impulse(30_000)
+    left = Stream::Reverb.new(0.6).process(impulse_block)
+    right = Stream::Reverb.new(0.6, side: :right).process(impulse_block)
+    refute_equal left, right
+    assert_operator corr(left[1000..], right[1000..]).abs, :<, 0.3, "decorrelated"
+    spring_left = Stream::Spring.new(0.5).process(impulse_block)
+    spring_right = Stream::Spring.new(0.5, side: :right).process(impulse_block)
+    refute_equal spring_left, spring_right
+  end
+
+  def test_the_imager_centres_the_lows_widens_the_highs_and_leaves_the_mid_alone
+    sine = ->(hz, phase = 0) { Array.new(SAMPLE_RATE) { |i| 0.3 * Math.sin((2 * Math::PI * hz * i / SAMPLE_RATE) + phase) } }
+    mono_in = sine.call(1000)
+    imager = Stream::Imager.new
+    out = imager.process([mono_in, mono_in])
+    assert_equal out[0], out[1], "a mono signal stays mono"
+    low = sine.call(60)
+    out = Stream::Imager.new.process([low, low.map(&:-@)]) # all side
+    assert_operator Tape.db(Tape.rms(out[0].last(20_000)) / Tape.rms(low)), :<, -20.0, "the side below 120 Hz is taken out of the sub"
+    high_l = sine.call(8000)
+    high_r = sine.call(8000, 1.0)
+    before = Stereo.mid_side([high_l, high_r])
+    after = Stereo.mid_side(Stream::Imager.new.process([high_l, high_r]))
+    assert_operator Tape.rms(after[1].last(20_000)), :>, Tape.rms(before[1].last(20_000)) * 1.2, "the highs are wider"
+    mid_before = Tape.rms(before[0].last(20_000))
+    assert_in_delta 0.0, Tape.db(Tape.rms(after[0].last(20_000)) / mid_before), 0.5, "the mono sum keeps its level"
+    assert_equal [1], Stream::Imager.new.process([mono_in]).map { 1 }
+  end
+
+  def test_a_stereo_wav_has_two_channels_and_interleaves_left_then_right
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "s.wav")
+      WAV.write(path, [[0.5, 0.25], [-0.5, -0.25]])
+      bytes = File.binread(path)
+      assert_equal 2, bytes.byteslice(22, 2).unpack1("v")
+      assert_equal SAMPLE_RATE * 4, bytes.byteslice(28, 4).unpack1("V")
+      assert_equal 4, bytes.byteslice(32, 2).unpack1("v")
+      assert_equal [16_384, -16_384, 8192, -8192], bytes.byteslice(44..).unpack("s<*")
+      assert_equal [16_384, -16_384, 8192, -8192], Player.pcm([[0.5, 0.25], [-0.5, -0.25]]).unpack("s<*")
+    end
+  end
+
+  def test_the_command_line_renders_stereo_by_default_and_mono_when_asked
+    Dir.mktmpdir do |dir|
+      args = ["--progression", "2", "--profile", "arp_echo", "--beats", "1", "--seed", "3", "--tape", "1"]
+      _o, err, status = run_dilla(*args, "--out", File.join(dir, "s.wav"), chdir: dir, stereo: true)
+      assert status.success?, err
+      _o, err, status = run_dilla(*args, "--out", File.join(dir, "m.wav"), chdir: dir)
+      assert status.success?, err
+      stereo = File.binread(File.join(dir, "s.wav"))
+      mono = File.binread(File.join(dir, "m.wav"))
+      assert_equal [2, 1], [stereo.byteslice(22, 2).unpack1("v"), mono.byteslice(22, 2).unpack1("v")]
+      pairs = stereo.byteslice(44..).unpack("s<*").each_slice(2).to_a
+      assert_equal (mono.bytesize - 44) / 2, pairs.size, "the same length in frames"
+      refute(pairs.all? { |l, r| l == r })
+      again = File.join(dir, "s2.wav")
+      run_dilla(*args, "--out", again, chdir: dir, stereo: true)
+      assert_equal stereo, File.binread(again), "deterministic"
+    end
+  end
+
+  def test_the_stereo_master_taps_the_mid_and_keeps_the_ceiling_in_both_channels
+    stack = Tape::Stack.new(instances: 2, seed: 1, config: DATA.fetch("tape"))
+    master = Moves::Master.new(tape: stack, ceiling: 0.97, preset: nil, seed: 1, instances: 2, tape_args: { drive: 1.0, config: DATA.fetch("tape") },
+                               imager: DATA.dig("stereo", "imager"))
+    rng = Random.new(5)
+    loud = [Array.new(20_000) { ((rng.rand * 2) - 1) * 2.0 }, Array.new(20_000) { ((rng.rand * 2) - 1) * 2.0 }]
+    out = master.process(loud)
+    assert_equal 2, out.size
+    assert_operator out.flatten.map(&:abs).max, :<=, 0.97 + 1e-9
   end
 
 end

@@ -17,31 +17,62 @@ module Moves
   TAPE_PUSH = 1.0
   ROOM_LEVEL = 0.5
 
-  # The master stage after the decks are summed: the sweep, the Sonitex, the room, then the
-  # tape stack and the ceiling. Nothing is in the path unless a move asks for it.
+  # The master stage after the decks are summed. A frame is [mono] or [left, right]. In order:
+  # the sweep, the Sonitex, the room, the stereo imager (the low end centred, the highs
+  # widened, the mid untouched), then the tape stack on the mid and a light one on the side, and the
+  # ceiling. Nothing is in the path unless a move asks for it, except the imager and the tape.
   class Master
-    def initialize(tape:, ceiling:, preset:, seed:)
+    def initialize(tape:, ceiling:, preset:, seed:, instances: 0, tape_args: {}, imager: {})
       @tape = tape
+      @side_tape = instances.positive? && tape ? Tape::Stack.new(instances: 1, seed: seed + 1, cheap: true, **tape_args) : nil
       @ceiling = ceiling
-      @sweep = Stream::SweepLowpass.new
-      @climb = Stream::SonitexClimb.new(preset, seed)
-      @room = nil
+      @preset = preset
+      @seed = seed
+      @imager = imager
+      @built = nil
     end
 
     # `params`: cutoff [from, to], sonitex n, room [from, to], tape factor.
-    def process(block, params = {})
-      block = @sweep.process(block, *params[:cutoff]) if params[:cutoff]
-      block = @climb.process(block, params[:sonitex]) if params[:sonitex]
-      if params[:room]
-        @room ||= Stream::RoomSend.new
-        block = @room.process(block, *params[:room])
-      else
-        @room = nil
+    def process(frame, params = {})
+      build(frame.size)
+      frame = frame.each_with_index.map { |channel, c| @sweeps[c].process(channel, *params[:cutoff]) } if params[:cutoff]
+      if params[:sonitex]
+        @climbs ||= Array.new(frame.size) { |c| Stream::SonitexClimb.new(@preset, @seed + (c * 7)) }
+        frame = frame.each_with_index.map { |channel, c| @climbs[c].process(channel, params[:sonitex]) }
       end
-      return block unless @tape
+      if params[:room]
+        @rooms ||= Array.new(frame.size) { |c| Stream::RoomSend.new(0.8, side: c.zero? ? :left : :right) }
+        frame = frame.each_with_index.map { |channel, c| @rooms[c].process(channel, *params[:room]) }
+      else
+        @rooms = nil
+      end
+      frame = @imaging.process(frame) if @imaging
+      colour(frame, params.fetch(:tape, 1.0))
+    end
 
-      @tape.drive_scale = params.fetch(:tape, 1.0)
-      Tape.ceiling(@tape.process(block), top: @ceiling)
+    private
+
+    def build(channels)
+      return if @built == channels
+
+      @built = channels
+      @sweeps = Array.new(channels) { Stream::SweepLowpass.new }
+      @climbs = nil
+      @imaging = channels == 2 && @imager ? Stream::Imager.new(**@imager.transform_keys(&:to_sym)) : nil
+    end
+
+    def colour(frame, factor)
+      return frame unless @tape
+
+      @tape.drive_scale = factor
+      if frame.size == 1
+        [Tape.ceiling(@tape.process(frame.first), top: @ceiling)]
+      else
+        mid, side = Stereo.mid_side(frame)
+        @side_tape.drive_scale = factor
+        left, right = Stereo.left_right(@tape.process(mid), @side_tape.process(side))
+        [Tape.ceiling(left, top: @ceiling), Tape.ceiling(right, top: @ceiling)]
+      end
     end
   end
 

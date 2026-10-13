@@ -103,11 +103,12 @@ module Stream
   # does not depend on how much of the signal has arrived.
   class Reverb
     DELAYS = [0.0297, 0.0371, 0.0411, 0.0437].freeze
+    RIGHT_DELAYS = [0.0317, 0.0383, 0.0429, 0.0463].freeze # other primes of milliseconds, so the right is not the left
     GAINS = [0.70, 0.65, 0.60, 0.55].freeze
 
-    def initialize(amount)
+    def initialize(amount, side: :left)
       @amount = amount
-      @lines = DELAYS.map { |d| Array.new((d * SAMPLE_RATE).to_i, 0.0) }
+      @lines = (side == :right ? RIGHT_DELAYS : DELAYS).map { |d| Array.new((d * SAMPLE_RATE).to_i, 0.0) }
       @at = 0
     end
 
@@ -132,14 +133,16 @@ module Stream
   # the chirp of a spring, and the loop turns it into a splashing tail. Static: no modulation.
   class Spring
     LOOP = (0.037 * SAMPLE_RATE).round
+    RIGHT_LOOP = (0.041 * SAMPLE_RATE).round
     COEFF = 0.62
 
-    def initialize(amount)
+    def initialize(amount, side: :left)
       @amount = amount
+      @loop = side == :right ? RIGHT_LOOP : LOOP
       @low = Lowpass.new(3800)
       @high = Highpass.new(160.0)
-      @ring = Array.new(LOOP, 0.0)
-      @states = Array.new(12, 0.0)
+      @ring = Array.new(@loop, 0.0)
+      @states = Array.new(8, 0.0)
       @smooth = 0.0
       @at = 0
     end
@@ -148,14 +151,14 @@ module Stream
       return buf if @amount.nil? || @amount <= 0 || buf.empty?
 
       buf.map do |x|
-        v = @high.step(@low.step(x)) + (0.6 * @ring[@at % LOOP])
+        v = @high.step(@low.step(x)) + (0.6 * @ring[@at % @loop])
         @states.each_index do |k|
           y = (COEFF * v) + @states[k]
           @states[k] = v - (COEFF * y)
           v = y
         end
         @smooth += 0.45 * (v - @smooth)
-        @ring[@at % LOOP] = @smooth
+        @ring[@at % @loop] = @smooth
         @at += 1
         x + (@amount * @smooth)
       end
@@ -306,40 +309,6 @@ module Stream
     end
   end
 
-  # Notes and hits that start at absolute samples, read out a block at a time. An entry is
-  # [start, make, gain, swell]: `make` gives a Reader when its sample comes up, `gain` scales it and
-  # `swell` (or nil) is a proc from an absolute sample to a further gain.
-  class Bank
-    Entry = Struct.new(:start, :make, :gain, :swell)
-
-    def initialize(entries)
-      @pending = entries.sort_by(&:start)
-      @active = []
-    end
-
-    def finished? = @pending.empty? && @active.empty?
-
-    # The sample at which the last pending note will have started.
-    def last_start = @pending.last&.start || 0
-
-    def block(from, count)
-      out = Array.new(count, 0.0)
-      stop = from + count
-      @active.concat(@pending.shift(@pending.index { |e| e.start >= stop } || @pending.size).map { |e| [e, e.make.call] })
-      @active.reject! do |entry, reader|
-        offset = [entry.start - from, 0].max
-        samples = reader.read(count - offset)
-        gain = entry.gain
-        if entry.swell
-          samples.each_with_index { |v, j| out[offset + j] += v * gain * entry.swell.call(from + offset + j) }
-        else
-          samples.each_with_index { |v, j| out[offset + j] += v * gain }
-        end
-        reader.done?
-      end
-      out
-    end
-  end
   # A one pole whose cutoff moves in a straight line across each block, so a sweep driven by
   # an event steps no faster than the block and clicks nowhere.
   class SweepLowpass
@@ -364,12 +333,48 @@ module Stream
 
   # The room of a reverb swell: the wet signal added at a level that moves across the block.
   class RoomSend
-    def initialize(amount = 0.8) = @room = Reverb.new(amount)
+    def initialize(amount = 0.8, side: :left) = @room = Reverb.new(amount, side:)
 
     def process(buf, from, to)
       wet = @room.process(buf)
       last = [buf.size - 1, 1].max
       buf.each_with_index.map { |x, i| x + (wet[i] * (from + ((to - from) * i / last))) }
+    end
+  end
+
+  # Notes and hits that start at absolute samples, read out a block at a time. An entry is
+  # [start, make, gain, swell, pan]: `make` gives a Reader when its sample comes up, `gain` scales it,
+  # `swell` (or nil) is a proc from an absolute sample to a further gain, and `pan` (or nil for the
+  # middle) places it between the channels of a stereo block.
+  class Bank
+    Entry = Struct.new(:start, :make, :gain, :swell, :pan)
+
+    def initialize(entries)
+      @pending = entries.sort_by(&:start)
+      @active = []
+    end
+
+    def finished? = @pending.empty? && @active.empty?
+
+    # The sample at which the last pending note will have started.
+    def last_start = @pending.last&.start || 0
+
+    # A frame of `channels` channels: one, or [left, right] with each entry at its pan.
+    def block(from, count, channels = 1)
+      out = Stereo.zeros(channels, count)
+      stop = from + count
+      @active.concat(@pending.shift(@pending.index { |e| e.start >= stop } || @pending.size).map { |e| [e, e.make.call] })
+      @active.reject! do |entry, reader|
+        offset = [entry.start - from, 0].max
+        samples = reader.read(count - offset)
+        gains = channels == 1 ? [entry.gain] : Stereo.gains(entry.pan || 0.0).map { |g| g * entry.gain }
+        samples.each_with_index do |v, j|
+          v *= entry.swell.call(from + offset + j) if entry.swell
+          gains.each_with_index { |g, c| out[c][offset + j] += v * g }
+        end
+        reader.done?
+      end
+      out
     end
   end
 end

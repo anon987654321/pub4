@@ -200,11 +200,11 @@ end
 
     # `sample` is a stretch of the programme to level match against; without one the stack is
     # matched on three reference tones at `config['reference']` RMS.
-    def initialize(instances:, drive: 1.0, seed: 0, config: {}, sample: nil)
+    def initialize(instances:, drive: 1.0, seed: 0, config: {}, sample: nil, cheap: false)
       heard = sample
       @machines = Array.new(instances) do |i|
         step = 1.0 + (config.fetch('drive_step', 0.15) * i)
-        machine = Machine.new(drive: drive * step, curve: i.zero? ? :loop : :atan, config:, sample: heard,
+        machine = Machine.new(drive: drive * step, curve: i.zero? && !cheap ? :loop : :atan, config:, sample: heard,
                               rng: Random.new(Zlib.crc32("#{seed}:tape:#{i}")), reference: config.fetch('reference', 0.12))
         heard = machine.process(heard) if heard
         machine.reset
