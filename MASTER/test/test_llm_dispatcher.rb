@@ -196,6 +196,16 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal :offline, dispatcher.send(:classified_call_failure, SocketError.new("Network is unreachable")).category
   end
 
+  def test_invalid_request_uses_a_declared_non_retriable_category
+    dispatcher, = build_dispatcher
+
+    result = dispatcher.send(:classified_call_failure, StandardError.new("invalid request: unsupported parameter"))
+
+    assert_equal :invalid_request, result.category
+    assert result.permanent?
+    refute result.retriable?
+  end
+
   def test_a_crashed_local_runner_is_classified_for_immediate_failover
     dispatcher, = build_dispatcher
     error = Master::Result.err(
