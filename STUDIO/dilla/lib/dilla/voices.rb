@@ -153,6 +153,7 @@ module Voices
     freq = Chords.hz(midi)
     amp *= 10.0**(spec.fetch('gain', 0.0) / 20.0)
     case spec.fetch('family')
+    when 'pure' then Synth.pure_note(freq, dur, amp:, release: spec.fetch('release', 0.12), attack: spec.fetch('attack', 0.008))
     when 'sine' then audible?(freq) ? Synth.note(freq, dur, detune:, amp:, release: dur * 0.5) : []
     when 'moog' then moog(spec, freq, dur, amp)
     when 'rhodes' then rhodes(spec, freq, dur, amp, velocity)
