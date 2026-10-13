@@ -107,6 +107,16 @@ class TestCoreReversibility < Minitest::Test
     assert_match(/no World handler/, verdict.reason)
   end
 
+  def test_unscoped_stage_is_blocked_instead_of_prompting_for_approval
+    effect = E.git(:stage)
+    verdict = C.load(data_dir: DATA_DIR).admit(effect, Master::Core::Memory.new)
+
+    assert_equal :unknown, effect.reversibility.kind
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :effect_reversibility, verdict.by
+    assert_match(/requires explicit paths/, verdict.reason)
+  end
+
   def test_commit_requests_approval_only_after_its_evidence_gate_passes
     memory = Master::Core::Memory.new
     [
