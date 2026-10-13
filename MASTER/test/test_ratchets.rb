@@ -105,7 +105,7 @@ class TestRatchets < Minitest::Test
   end
 
   def test_missing_css_budget_is_not_silently_omitted
-    fast, deep = with_rails(Dir.mktmpdir) do
+    fast, deep = with_master(Dir.mktmpdir) do
       [Operator::Ratchets.css_budget_rows, Operator::Ratchets.css_constitution_rows]
     end
 
@@ -113,6 +113,17 @@ class TestRatchets < Minitest::Test
                  fast.map { |row| [row.name, row.current, row.ceiling, row.note] }
     assert_equal [["css_budget", "unreadable: no CSS ceilings available"]],
                  deep.map { |row| [row.name, row.note] }
+  end
+
+  def with_master(dir)
+    original = Operator::Ratchets::MASTER
+    Operator::Ratchets.send(:remove_const, :MASTER)
+    Operator::Ratchets.const_set(:MASTER, dir)
+    yield
+  ensure
+    Operator::Ratchets.send(:remove_const, :MASTER)
+    Operator::Ratchets.const_set(:MASTER, original)
+    FileUtils.remove_entry(dir) if dir != original && File.directory?(dir)
   end
 
   def with_rails(dir)
