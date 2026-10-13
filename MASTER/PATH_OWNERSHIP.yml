@@ -170,10 +170,6 @@ ownership:
       and bin/'s runtime entry points
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
-  tools/design/:
-    purpose: design baseline measurements against the declared design laws and CSS baseline
-    risk: medium
-    check: cd MASTER && ruby -Ilib:test test/test_tools_hierarchy.rb
   tools/voice/:
     purpose: voice measurement, benchmark and quality commands; implementation remains in lib/voice/
     risk: medium
@@ -187,7 +183,7 @@ ownership:
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
   tools/audit/:
-    purpose: substantive repository audits for capability inventory, data reachability, duplication and Law metadata
+    purpose: repository audits for capability inventory, data reachability, duplication, Law metadata and design baseline measurements
     risk: medium
     check: cd MASTER && ruby -Ilib:test test/test_capability_inventory.rb
   script/:

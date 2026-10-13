@@ -10,8 +10,8 @@
 # this is the reader (see css_coverage_lint for the same argument about the
 # register's unused-selector count).
 #
-#   cd MASTER && bundle exec ruby tools/design/design_baseline.rb            # measure
-#   cd MASTER && bundle exec ruby tools/design/design_baseline.rb --ratchet  # record new low
+#   cd MASTER && bundle exec ruby tools/audit/design_baseline.rb            # measure
+#   cd MASTER && bundle exec ruby tools/audit/design_baseline.rb --ratchet  # record new low
 #
 # Wired into Operator::Ratchets#deep_rows, so `bin/check --profile=full` holds it.
 require "yaml"
