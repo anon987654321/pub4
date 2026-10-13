@@ -101,6 +101,25 @@ class TestFixConvergence < Minitest::Test
     refute discipline.improving?
   end
 
+  def test_fix_refuses_to_treat_an_uninspectable_file_as_a_clean_corpus
+    oversized = File.join(@root, "oversized.rb")
+    File.write(oversized, "x" * (Master::Fix::Scan::FileProcessor::MAX_FILE_BYTES + 1))
+    loop = build_loop([])
+
+    result = loop.send(
+      :run_unlocked,
+      @root,
+      max_passes: 1,
+      budget_seconds: 60,
+      incremental: false,
+      requested: true,
+    )
+
+    refute result.ok?, "a corpus with a blocking skip must not be reported as clean"
+    assert_match(/uninspectable inputs remain: too_large=1/, result.to_s)
+    refute File.exist?(File.join(@root, ".master")), "preflight must refuse before opening a repair transaction"
+  end
+
   def test_fix_extends_pass_budget_while_measured_state_improves
     loop = Master::Fix::FixLoop.allocate
     calls = []
