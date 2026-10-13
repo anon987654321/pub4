@@ -384,6 +384,19 @@ end
     assert_equal "industrial-techno", Shellwords.split(calls.last.fetch(:arg)).first
   end
 
+  def test_explicit_techno_followup_overrides_a_general_reference
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("dilla0: rendered")
+    end) do
+      result = MediaIntent.dispatch("make a techno track like that", root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :industrial_techno, result.value!.fetch(:media)
+    end
+    assert_equal "industrial-techno", Shellwords.split(calls.fetch(0).fetch(:arg)).first
+  end
+
   def test_followup_generation_uses_the_most_recent_industrial_reference
     Dir.mktmpdir do |dir|
       home, saved = ENV["XDG_DATA_HOME"], ENV["XDG_DATA_HOME"]
