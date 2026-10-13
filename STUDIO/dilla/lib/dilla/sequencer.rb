@@ -16,7 +16,8 @@
 class Sequencer
   attr_reader :seed, :pd_amount
 
-  def initialize(data, profile_name:, pd_amount: nil, seed: nil, transpose: 0, wrap: false)
+  def initialize(data, profile_name:, pd_amount: nil, seed: nil, transpose: 0, wrap: false, kit: nil)
+    @kit = kit
     @data = data
     @transpose = transpose
     @wrap = wrap
@@ -30,6 +31,9 @@ class Sequencer
 
   # The tempo the profile plays at unless --bpm says otherwise.
   def bpm = @profile.fetch('bpm', 88.0)
+
+  # Beats each chord holds unless --beats says otherwise: two bars of four.
+  def beats = @profile.fetch('beats', 8.0)
 
   # Chords, each the same length, the odd ones swung late.
   def render_chords(names, bpm, beats, search: true, strum: 0.0)
@@ -217,46 +221,146 @@ class Sequencer
     peak > 1.0 ? out.map { |v| v / peak } : out
   end
 
-  # Where every hit lands, in seconds: the 16-step pattern repeats bar after bar until
-  # the chords end. Returns [[role, time]], earliest first.
+  # Pattern names for each 4-bar phrase: one name, or a rotation that never plays the same
+  # pattern twice running, drawn from the seed.
+  def phrase_patterns(names, phrases)
+    names = Array(names)
+    rng = Random.new(Zlib.crc32("#{@seed}:phrases"))
+    last = nil
+    Array.new(phrases) do
+      pick = names.size == 1 ? names.first : (names - [last]).sample(random: rng)
+      last = pick
+    end
+  end
+
+  # The rows of one bar: the pattern's, the phrase's variant over them, a fill on the last bar
+  # of every fourth and eighth bar, then the seeded mutations and the snare density.
+  def bar_rows(pattern, phrase, bar)
+    rows = pattern.select { |k, v| v.is_a?(Array) && !%w[variants layers].include?(k) }.transform_values(&:dup)
+    variants = pattern['variants']
+    if variants && !variants.empty?
+      pick = Zlib.crc32("#{@seed}:variant:#{phrase}") % (variants.size + 1)
+      rows.merge!(variants[pick - 1].transform_values(&:dup)) if pick.positive?
+    end
+    rows.merge!(pattern['fill'].transform_values(&:dup)) if pattern['fill'] && bar % 4 == 3
+    rows.merge!(pattern['fill8'].transform_values(&:dup)) if pattern['fill8'] && bar % 8 == 7
+    rng = Random.new(Zlib.crc32("#{@seed}:bar:#{bar}"))
+    mutate(rows, rng) if bar.positive? && rng.rand < @profile.fetch('mutate', pattern.fetch('mutate', 0.0))
+    thin(rows, pattern['odds'], rng) if pattern['odds']
+    kick_one = pattern['kick_on_one']
+    rows['kick'][0] = (rng.rand < kick_one ? 1.0 : 0.0) if kick_one && rows['kick']
+    add_snares(rows, @profile.fetch('snare_density', pattern.fetch('snare_density', 1.0)), rng)
+    rows
+  end
+
+  # One change to a bar: swap two hits, shift one a sixteenth, add or drop a ghost, double a
+  # kick, or rotate the hats. The kick on the downbeat stays where it is.
+  def mutate(rows, rng)
+    role = rows.keys.sample(random: rng)
+    row = rows[role]
+    hits = row.each_index.select { |i| hit?(row[i]) && !(role == 'kick' && i.zero?) }
+    case rng.rand(6)
+    when 0
+      a, b = hits.sample(2, random: rng)
+      row[a], row[b] = row[b], row[a] if a && b && !(role == 'kick' && (a.zero? || b.zero?))
+    when 1
+      i = hits.sample(random: rng)
+      j = (i + (rng.rand < 0.5 ? 1 : -1)) % row.size if i
+      (row[j] = row[i]; row[i] = 0) if i && !hit?(row[j]) && !(role == 'kick' && j.zero?)
+    when 2
+      snare = rows['snare'] or return
+      i = (0...snare.size).select { |k| !hit?(snare[k]) && k.odd? }.sample(random: rng)
+      snare[i] = 0.4 if i
+    when 3
+      snare = rows['snare'] or return
+      i = (0...snare.size).select { |k| hit?(snare[k]) && vel(snare[k]) < 0.7 }.sample(random: rng)
+      snare[i] = 0 if i
+    when 4
+      kick = rows['kick'] or return
+      i = (0...kick.size).select { |k| hit?(kick[k]) && !hit?(kick[(k + 1) % kick.size]) }.sample(random: rng)
+      kick[(i + 1) % kick.size] = 0.6 if i
+    else
+      hat = rows['hat'] or return
+      hat.rotate!(rng.rand < 0.5 ? 1 : 2)
+    end
+  end
+
+  def hit?(cell) = vel(cell).positive?
+
+  def vel(cell) = (cell.is_a?(Array) ? cell[0] : cell).to_f
+
+  # Keep each hit of a role with the chance the pattern gives it.
+  def thin(rows, odds, rng)
+    odds.each do |role, chance|
+      row = rows[role] or next
+      row.each_index { |i| row[i] = 0 if hit?(row[i]) && rng.rand >= chance }
+    end
+  end
+
+  # More back-beat snare: a density above one adds ghosts on steps nothing else uses.
+  def add_snares(rows, density, rng)
+    return unless density > 1.0 && rows['snare']
+
+    snare = rows['snare']
+    size = snare.size
+    taken = rows.slice('kick', 'snare', 'clap').values.flat_map { |row| row.each_index.select { |i| hit?(row[i]) } }.uniq
+    free = [3, 7, 10, 11, 14, 15, 2, 6].map { |i| i * size / 16 }.reject { |i| taken.include?(i) }.shuffle(random: rng)
+    free.first(((density - 1.0) * 4).round).each { |i| snare[i] = 0.6 }
+  end
+
+  # Where every hit lands, in seconds: each 4-bar phrase plays a pattern (or the next of a
+  # rotation), bar after bar until the chords end. Returns [[role, time, velocity]], earliest
+  # first. A cell is a velocity from 0 to 1, or [velocity, count] for a ratchet; a layer is a
+  # row of its own length that runs across the bars, so its alignment drifts against the grid.
   def drum_hits(pattern_name, bpm, seconds)
-    pattern = @data['drum_patterns'].fetch(pattern_name) { abort "No drum pattern: #{pattern_name}" }
+    names = Array(pattern_name)
+    patterns = names.to_h { |n| [n, @data['drum_patterns'].fetch(n) { abort "No drum pattern: #{n}" }] }
     rng = Random.new(@seed)
     step = 60.0 / bpm / 4.0
     offsets = @profile['offsets'] || {}
     pocket = @profile['pocket']
     swings = @profile['drum_swing'] || {}
-    drunk = pattern.fetch('drunk', @profile.fetch('drunk_amount', 0.0)).to_f
     hits = []
     first_kick = true
-    (seconds / (step * 16)).ceil.times do |bar|
-      16.times do |i|
-        pattern.each do |role, row|
-          strength = row.is_a?(Array) ? row[i].to_f : 0.0
-          next unless strength.positive?
-
+    chosen = phrase_patterns(names, (seconds / (step * 64)).ceil)
+    chosen.each_with_index do |name, phrase|
+      pattern = patterns.fetch(name)
+      size = pattern.fetch('steps', 16)
+      drunk = pattern.fetch('drunk', @profile.fetch('drunk_amount', 0.0))
+      cache = {}
+      64.times do |g|
+        abs = (phrase * 64) + g
+        bar = abs / 16
+        i = g % 16
+        rows = (cache[bar] ||= bar_rows(pattern, phrase, bar))
+        cells = rows.filter_map { |role, row| [role, row[g % size]] if hit?(row[g % size]) }
+        (pattern['layers'] || []).each do |layer|
+          cell = layer['hits'][abs % layer['length']]
+          cells << [layer['role'], cell] if hit?(cell)
+        end
+        cells.each do |role, cell|
+          vel, count = cell.is_a?(Array) ? cell : [cell.to_f, 1]
           nudge = offsets.fetch(role, 0.0)
           nudge = pocket_lean(pocket, role, i) * step if pocket&.key?(role)
           if role == 'kick' && first_kick
             nudge = offsets.fetch('kick_first', nudge) unless pocket&.key?(role)
             first_kick = false
           end
-          nudge += (rng.rand * 2 - 1) * MAX_OFFSET * drunk
+          amount = drunk.is_a?(Hash) ? drunk.fetch(role, 0.0) : drunk.to_f
+          nudge += (rng.rand * 2 - 1) * MAX_OFFSET * amount
           # the off-beat eighth (step 2 of 4) and the odd sixteenths take the swing
           pair = i % 4 == 2 ? 2 * step : (i.odd? ? step : 0.0)
           late = (swings.fetch(role, 0.5) - 0.5) * 2 * pair
           # offset, swing and drunk together never move a hit more than MAX_OFFSET
           moved = ((nudge + late) * @pd_amount).clamp(-MAX_OFFSET, MAX_OFFSET)
-          t = ((bar * 16 + i) * step) + moved
-          if t < seconds
-            hit = [role, [t, 0.0].max]
-            hit << strength.clamp(0.0, 1.0) if strength < 1.0
-            hits << hit
+          count.to_i.clamp(1, 6).times do |k|
+            t = (abs * step) + moved + (k * step / count)
+            hits << [role, [t, 0.0].max, vel * (1.0 - (0.12 * k))] if t < seconds
           end
         end
       end
     end
-    hits.sort_by(&:last)
+    hits.sort_by { |h| h[1] }
   end
 
   # How far a hit leans from its step, in sixteenths (before --groove). The draw belongs to
@@ -286,15 +390,34 @@ class Sequencer
   # The drums laid over the chords, each role at its mix level; the kick is added after the
   # duck, so the pump never touches it. With a summing colour the drums are a bus of their
   # own and the sum is coloured again; the sum never exceeds full scale.
+  # The voices of the kit in use: the --kit flag's, else the profile's, else nil, which keeps
+  # the three plain seeded voices.
+  def kit_sounds
+    name = @kit || @profile['kit']
+    name ? Percussion.kit(name, @data, @seed) : nil
+  end
+
   def overlay_drums(chord_buf, hits, levels = {}, vcs = 0.0, sonitex: nil, tape: nil,
                     dub_echo: nil, crystallizer: nil, drum_vcs: nil)
     drum_vcs_amount = drum_vcs.nil? ? vcs : drum_vcs.to_f.clamp(0.0, 1.0)
-    effects_on = sonitex || tape || dub_echo || crystallizer || drum_vcs_amount.positive? || vcs.positive?
+    effects_on = sonitex || tape || dub_echo || crystallizer || drum_vcs_amount.positive? || vcs.positive? ||
+                 @profile['drum_crush'] || @profile.dig('rumble', 'amount')
     drum_bus = effects_on ? Array.new(chord_buf.size, 0.0) : nil
     out = drum_bus || chord_buf.dup
+    kit = kit_sounds
+    closers = hits.select { |r, *| r == 'hat' }.map { |_, t, *| t }
     hits.each_with_index do |(role, time, strength), hit_index|
-      # A fresh seeded voice per strike gives ghost notes and hats their own transient/noise.
-      sample = Drums.new(@seed + ((hit_index + 1) * 104_729)).sounds.fetch(role)
+      # A fresh seeded voice per strike gives ghost notes and hats their own transient/noise;
+      # a kit builds each role once.
+      sample = kit ? kit[role] : Drums.new(@seed + ((hit_index + 1) * 104_729)).sounds.fetch(role)
+      next unless sample
+
+      # An open hat is choked by the next closed one.
+      if kit && role == 'open' && (nxt = closers.find { |t| t > time })
+        sample = sample.first(((nxt - time) * SAMPLE_RATE).to_i)
+        fade = [130, sample.size].min
+        fade.times { |k| sample[sample.size - 1 - k] *= k / fade.to_f }
+      end
       accent = strength.nil? ? 1.0 : strength.to_f.clamp(0.0, 1.0)
       gain = 0.8 * (10.0**(levels.fetch(role, 0.0) / 20.0)) * accent
       variation = case role
@@ -307,6 +430,22 @@ class Sequencer
         break if idx >= out.size
         out[idx] += value * gain * variation
       end
+    end
+    if drum_bus && kit && @profile.dig('rumble', 'amount')
+      kicks = Array.new(out.size, 0.0)
+      hits.each do |r, t, v|
+        next unless r == 'kick'
+
+        kit['kick'].each_with_index do |x, j|
+          i = (t * SAMPLE_RATE).to_i + j
+          kicks[i] += x * (v || 1.0) if i < kicks.size
+        end
+      end
+      Percussion.rumble(kicks).each_with_index { |x, i| out[i] += x * @profile.dig('rumble', 'amount') }
+    end
+    if drum_bus && (crush = @profile['drum_crush'])
+      out = Colour.crush(out, crush.fetch('bits'), 1.0 / crush.fetch('rate'))
+      drum_bus = out
     end
     if drum_bus
       drums = if sonitex

@@ -10,11 +10,12 @@ def run(argv)
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
     o.on('--random', 'Random progression and drum pattern (the default groove profile)') { options[:random] = true }
-    o.on('--drums NAME', 'Drum pattern name') { |v| options[:drums] = v }
+    o.on('--drums NAME', 'Drum pattern name, or rotate to change the pattern every phrase') { |v| options[:drums] = v }
+    o.on('--kit NAME', 'The drum kit (see kits in dilla.json)') { |v| options[:kit] = v }
     o.on('--profile NAME', 'Groove profile name') { |v| options[:profile] = v }
     o.on('--groove N', Float, 'pd_amount, 0 to 1.5: how far the profile pulls from the grid') { |v| options[:groove] = v }
     o.on('--bpm N', Float, 'Tempo (default 88)') { |v| options[:bpm] = v }
-    o.on('--beats N', Float, 'Beats per chord (default 4)') { |v| options[:beats] = v }
+    o.on('--beats N', Float, 'Beats per chord (default 8, two bars)') { |v| options[:beats] = v }
     o.on('--gate N', Float, 'Note gate as a share of its step, 0.05 to 1.5') { |v| options[:gate] = v.clamp(0.05, 1.5) }
     o.on('--seed N', Integer, 'Seed: the same seed plays the same render') { |v| options[:seed] = v }
     o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
@@ -94,13 +95,14 @@ def render(data, options)
   pick = Random.new(seed)
   index = options[:section_index] || (options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size)))
   names = options[:names] || progressions.fetch(index) { abort "No progression: #{index}" }
-  drums = options[:drums] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
   profile = options[:profile] || data.fetch('default_profile')
+  profile_row = data['groove_profiles'].fetch(profile) { abort "No groove profile: #{profile}" }
+  drums = options[:drums] || profile_row['drums'] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
 
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed,
-                            transpose: options[:transpose] || 0, wrap: options[:wrap])
+                            transpose: options[:transpose] || 0, wrap: options[:wrap], kit: options[:kit])
   bpm = options[:bpm] || seq.bpm
-  beats = options[:beats] || 4.0
+  beats = options[:beats] || seq.beats
   voice = seq.voice_spec(options[:voice])
   search = !options[:plain]
   mode = play_mode(options, seq)
@@ -145,7 +147,8 @@ def render(data, options)
   buf = FX.crystallizer(buf, options[:instrument_crystallizer]) if options[:instrument_crystallizer]
   seconds = buf.size / SAMPLE_RATE.to_f
   drum_seconds = options[:buffer_only] ? names.size * beats * 60.0 / bpm : seconds
-  hits = drums ? seq.drum_hits(drums, bpm, drum_seconds) : []
+  rotation = drums == 'rotate' ? data.fetch('drum_patterns').keys : drums
+  hits = drums ? seq.drum_hits(rotation, bpm, drum_seconds) : []
   levels = seq.mix(options[:mix])
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
@@ -393,8 +396,9 @@ def play_forever(data, options)
     pass_options[:arp_style] = options[:arp_style] || pick[:style] if pick[:mode] == 'arp'
     pass_options[:repeat] = options[:repeat] || pick[:style] if pick[:mode] == 'repeat'
     profile_drums = data['groove_profiles'].fetch(pick[:profile])['drums']
-    pass_options[:drums] = options[:drums] || profile_drums
-    puts "pass #{pass}: progression #{pick[:prog]} (#{pick[:position]}) mode=#{pick[:mode]} style=#{pick[:style] || '-'} voice=#{pick[:voice]} profile=#{pick[:profile]}"
+    pass_options[:drums] = options[:drums] == 'rotate' ? pick[:drums] : (options[:drums] || profile_drums)
+    pass_options[:kit] = options[:kit] || (options[:drums] == 'rotate' ? pick[:kit] : nil)
+    puts "pass #{pass}: progression #{pick[:prog]} (#{pick[:position]}) mode=#{pick[:mode]} style=#{pick[:style] || '-'} voice=#{pick[:voice]} profile=#{pick[:profile]} drums=#{pass_options[:drums] || '-'} kit=#{pass_options[:kit] || '-'}"
     path = render(data, pass_options)
     File.write(state_path, JSON.generate(playlist.to_h))
     Process.wait(pid) if pid

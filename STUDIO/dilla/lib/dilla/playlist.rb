@@ -57,7 +57,9 @@ class Playlist
       bag("patches:#{family}", families.fetch(family).sort).draw
     end
     profile = fixed[:profile] || bag('profiles', @data.fetch('play_profiles')).draw
-    { prog: index, position:, mode:, style:, voice:, profile: }
+    kit = bag('kits', @data.fetch('kits').keys).draw
+    drums = bag('drums', @data.fetch('drum_patterns').keys).draw
+    { prog: index, position:, mode:, style:, voice:, profile:, kit:, drums: }
   end
 
   def to_h = @bags.transform_values(&:to_h)

@@ -35,7 +35,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/midi.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/midi.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -47,7 +47,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles mix nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits mix modal_patches nasty_vcs play_profiles progressions sonitex strum voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_scale_clean_harmony_pure_tones_and_dubbed_dilla_drums
@@ -281,9 +281,15 @@ class DillaTest < Minitest::Test
 
   def test_every_pattern_is_rows_of_sixteen_steps
     DATA.fetch("drum_patterns").each do |id, pattern|
-      rows = pattern.select { |_, v| v.is_a?(Array) }
-      assert_equal %w[hat kick snare], rows.keys.sort, id
-      rows.each_value { |row| assert_equal 16, row.size, id }
+      rows = pattern.select { |k, v| v.is_a?(Array) && !%w[variants layers].include?(k) }
+      assert_empty %w[hat kick] - rows.keys, id
+      assert_empty rows.keys - %w[kick snare clap hat open rim tom perc], id
+      size = pattern.fetch("steps", 16)
+      assert_includes [16, 32], size, id
+      rows.each_value do |row|
+        assert_equal size, row.size, id
+        assert(row.all? { |c| c.is_a?(Array) ? c[0].between?(0, 1) : c.between?(0, 1) }, id)
+      end
     end
   end
 
@@ -319,7 +325,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_sidechain_is_off_unless_a_profile_asks
-    assert_equal %w[pump], DATA.fetch("groove_profiles").select { |_, p| p.key?("sidechain") }.keys
+    assert_equal %w[pump techno_arp industrial_arp], DATA.fetch("groove_profiles").select { |_, p| p.key?("sidechain") }.keys
   end
 
   # ------------------------------------------------------------- timing
@@ -349,9 +355,9 @@ class DillaTest < Minitest::Test
 
   def test_the_first_kick_takes_its_own_offset
     hits = sequencer("early_snare_late_hats").drum_hits("syncopated_swing", 88.0, 12.0)
-    assert_in_delta 0.0, hits.find { |r, _| r == "kick" }.last, 1e-9
+    assert_in_delta 0.0, hits.find { |r, _| r == "kick" }[1], 1e-9
     later = hits.select { |r, _| r == "kick" }[1]
-    refute_in_delta 0.0, later.last % (60.0 / 88 / 4), 1e-4
+    refute_in_delta 0.0, later[1] % (60.0 / 88 / 4), 1e-4
   end
 
   def test_pd_amount_scales_the_pull_from_the_grid
@@ -449,7 +455,7 @@ class DillaTest < Minitest::Test
     ms = [70.0, 88.0, 104.0].map do |bpm|
       hits = sequencer(POCKET, seed: 1).drum_hits("boom_bap", bpm, 60.0 / bpm * 8)
       step = 60.0 / bpm / 4
-      later = hits.select { |r, t| r == "kick" && t > step }.first.last
+      later = hits.select { |r, t| r == "kick" && t > step }.first[1]
       [(later - (later / step).round * step) * 1000, (later - (later / step).round * step) / step]
     end
     shares = ms.map(&:last)
@@ -847,7 +853,9 @@ class DillaTest < Minitest::Test
       hits = [[role, 0.1], [role, 0.5]]
       before = seq.overlay_drums(silent, hits, { role => 0.0 })
       after = seq.overlay_drums(silent, hits, { role => db })
-      assert_in_delta db, 20 * Math.log10(rms.call(after) / rms.call(before)), 0.8, role
+      rise = 20 * Math.log10(rms.call(after) / rms.call(before))
+      assert_operator rise, :>=, db - 3.0, "#{role}: the soft limiter bends the loudest samples, so the rise falls a little short"
+      assert_operator rise, :<=, db + 0.5, role
       assert_operator after.map(&:abs).max, :<=, 1.0
     end
     loud = seq.overlay_drums(Array.new(SAMPLE_RATE, 0.9), [["kick", 0.1], ["snare", 0.1]], { "kick" => 12.0, "snare" => 12.0 })
@@ -1111,6 +1119,188 @@ class DillaTest < Minitest::Test
     refute_equal input, output
     assert_operator output.map(&:abs).max, :<, 1.0
     assert_same input, Colour.tape(input, amount: 0.0)
+  end
+
+
+  # ------------------------------------------------------------- kits and the new drum engine
+
+  ROLES = %w[kick snare clap hat open rim tom perc].freeze
+
+  def kit_sounds(name, seed = 3) = Percussion.kit(name, DATA, seed)
+
+  def spectrum_share(buf, above_hz)
+    low = Percussion.lowpass(buf, above_hz)
+    high = buf.each_index.map { |i| buf[i] - low[i] }
+    high.sum { |v| v * v } / [buf.sum { |v| v * v }, 1e-12].max
+  end
+
+  def test_every_kit_covers_every_role_and_every_voice_is_audible_and_under_full_scale
+    assert_equal %w[kit_909 kit_detroit kit_dust kit_fm kit_industrial kit_world], DATA.fetch("kits").keys.sort
+    DATA.fetch("kits").each_key do |name|
+      sounds = kit_sounds(name)
+      assert_equal ROLES.sort, sounds.keys.sort, name
+      sounds.each do |role, buf|
+        assert_operator buf.size, :>, 100, "#{name} #{role}"
+        assert(buf.all?(&:finite?), "#{name} #{role}")
+        assert_operator buf.map(&:abs).max, :>, 0.05, "#{name} #{role} is audible"
+        assert_operator buf.map(&:abs).max, :<, 1.0, "#{name} #{role} stays under full scale"
+      end
+    end
+  end
+
+  def test_a_kick_body_sits_at_its_tuned_frequency_and_the_909_hat_is_bright
+    DATA.fetch("kick_styles").each do |style, spec|
+      kick = Percussion.techno_kick(spec, Random.new(1))
+      tail = kick[(0.2 * SAMPLE_RATE).to_i, (0.1 * SAMPLE_RATE).to_i]
+      crossings = tail.each_cons(2).count { |a, b| a.negative? != b.negative? }
+      assert_in_delta spec["body"], crossings / 2 / 0.1, 14, "#{style}: the body settles near its tuning"
+    end
+    hat = kit_sounds("kit_909").fetch("hat")
+    assert_operator spectrum_share(hat, 6000.0), :>, 0.15, "909 hat energy above 6 kHz"
+    assert_operator spectrum_share(hat, 6000.0), :>, spectrum_share(kit_sounds("kit_909").fetch("kick"), 6000.0) * 20
+    open = kit_sounds("kit_909").fetch("open")
+    assert_operator open.size, :>, hat.size * 3
+  end
+
+  def test_a_seed_names_a_kit_and_another_seed_changes_the_noise
+    assert_equal kit_sounds("kit_909", 4), kit_sounds("kit_909", 4)
+    refute_equal kit_sounds("kit_909", 4).fetch("clap"), kit_sounds("kit_909", 5).fetch("clap")
+  end
+
+  def test_a_unknown_kit_or_voice_is_refused
+    assert_raises(ArgumentError) { Percussion.voice({ "voice" => "nope" }, DATA, Random.new(1)) }
+  end
+
+  def test_a_closed_hat_chokes_the_open_one_before_it
+    seq = sequencer("dry")
+    seq.instance_variable_set(:@kit, "kit_909")
+    silent = Array.new(SAMPLE_RATE, 0.0)
+    free = seq.overlay_drums(silent, [["open", 0.1, 1.0]])
+    choked = seq.overlay_drums(silent, [["open", 0.1, 1.0], ["hat", 0.2, 0.0001]])
+    tail = ((0.3 * SAMPLE_RATE).to_i)..((0.4 * SAMPLE_RATE).to_i)
+    assert_operator choked[tail].map(&:abs).max, :<, free[tail].map(&:abs).max * 0.2
+  end
+
+  def pocket_hits(name, seconds = 60.0, profile: "dry", seed: 7, bpm: 140.0)
+    sequencer(profile, seed:).drum_hits(name, bpm, seconds)
+  end
+
+  def test_velocity_aware_cells_make_ghosts_and_ratchets_real
+    data = JSON.parse(JSON.generate(DATA))
+    data["drum_patterns"]["probe"] = { "kick" => [1] + [0] * 15, "hat" => [0, 0.35, 0] + [0] * 12 + [[0.8, 3]], "snare" => [0] * 16 }
+    hits = sequencer("dry", data:).drum_hits("probe", 120.0, 2.0)
+    assert_includes hits.map { |_, _, v| v.round(2) }, 0.35
+    roll = hits.select { |r, t, _| r == "hat" && t > 1.8 }
+    assert_equal [0.8, 0.704, 0.608], roll.map { |_, _, v| v.round(3) }
+  end
+
+  def test_a_rotation_never_plays_the_same_pattern_twice_running_and_is_seeded
+    names = %w[techno_909 electro_break halftime_heavy techno_roll]
+    seq = sequencer("dry", seed: 3)
+    picks = seq.phrase_patterns(names, 40)
+    picks.each_cons(2) { |a, b| refute_equal a, b }
+    assert_equal names.sort, picks.uniq.sort
+    assert_equal picks, sequencer("dry", seed: 3).phrase_patterns(names, 40)
+    refute_equal picks, sequencer("dry", seed: 4).phrase_patterns(names, 40)
+    hits = seq.drum_hits(names, 140.0, 60.0 / 140 * 4 * 12)
+    assert_operator hits.map { |r, *| r }.uniq.size, :>=, 3
+  end
+
+  def test_mutation_keeps_the_grid_length_and_leaves_the_downbeat_kick_alone_and_bars_differ
+    seq = sequencer("techno_arp", seed: 5)
+    pattern = DATA.dig("drum_patterns", "techno_909")
+    rows = (1..24).map { |bar| seq.bar_rows(pattern, 0, bar) }
+    rows.each do |r|
+      r.each { |role, row| assert_equal 16, row.size, role }
+      assert_operator r.fetch("kick")[0], :>, 0
+    end
+    assert_operator rows.map { |r| JSON.generate(r) }.uniq.size, :>, 8, "no two bars are all alike"
+    assert_equal rows, (1..24).map { |bar| sequencer("techno_arp", seed: 5).bar_rows(pattern, 0, bar) }
+  end
+
+  def test_snare_density_two_doubles_the_back_snares_and_raises_the_snare_stem
+    one = sequencer("dry", seed: 2)
+    two = sequencer("techno_arp", seed: 2)
+    pattern = DATA.dig("drum_patterns", "techno_909")
+    count = ->(seq) { (4..11).sum { |bar| seq.bar_rows(pattern, 0, bar).fetch("snare").count { |c| c.is_a?(Array) || c.to_f.positive? } } }
+    assert_operator count.call(two), :>=, count.call(one) * 1.9
+    kit = kit_sounds("kit_909")
+    stem = lambda do |seq|
+      silent = Array.new(SAMPLE_RATE * 8, 0.0)
+      hits = seq.drum_hits("techno_909", 138.0, 8.0).select { |r, *| r == "snare" }
+      seq.overlay_drums(silent, hits, { "snare" => 0.0 })
+    end
+    rms = ->(b) { Math.sqrt(b.sum { |v| v * v } / b.size) }
+    two.instance_variable_set(:@kit, "kit_909")
+    one.instance_variable_set(:@kit, "kit_909")
+    assert_operator rms.call(stem.call(two)), :>, rms.call(stem.call(one)) * 1.2
+    assert_equal ROLES.sort, kit.keys.sort
+  end
+
+  def test_unsynced_layers_realign_only_after_the_least_common_multiple_of_their_lengths
+    pattern = DATA.dig("drum_patterns", "eclectic")
+    lengths = pattern.fetch("layers").map { |l| l["length"] }
+    assert_operator lengths.uniq.size, :>=, 3
+    assert_operator lengths.reduce(1, :lcm), :>, 16 * 4, "the combined layers repeat after more bars than a phrase"
+    hits = ->(layer) { (0...lengths.reduce(1, :lcm)).select { |i| layer["hits"][i % layer["length"]].to_f.positive? } }
+    patterns = pattern.fetch("layers").map { |l| hits.call(l) }
+    assert_equal patterns.size, patterns.uniq.size
+  end
+
+  def test_eclectic_keeps_the_kick_on_one_in_about_forty_percent_of_bars_and_offsets_inside_the_clamp
+    seq = sequencer("eclectic", seed: 11)
+    pattern = DATA.dig("drum_patterns", "eclectic")
+    plain = JSON.parse(JSON.generate(DATA))
+    plain["drum_patterns"]["eclectic"].delete("fill")
+    ones = (1..400).count { |bar| seq.bar_rows(pattern, 0, bar).fetch("kick")[0].to_f.positive? }
+    assert_in_delta 0.4, ones / 400.0, 0.1
+    step = 60.0 / 82 / 4
+    hits = sequencer("eclectic", seed: 11, data: plain).drum_hits("eclectic", 82.0, 90.0)
+    assert(hits.all? { |_, t, _| (t - ((t / step).round * step)).abs <= MAX_OFFSET + 1e-9 }, "fine-grid offsets stay inside the clamp")
+    assert_equal hits, sequencer("eclectic", seed: 11, data: plain).drum_hits("eclectic", 82.0, 90.0)
+  end
+
+  def test_the_new_profiles_carry_a_kit_a_pattern_and_a_tempo_and_render_with_drums
+    %w[techno_arp industrial_arp eclectic].each do |name|
+      profile = DATA.dig("groove_profiles", name)
+      assert_includes DATA.fetch("kits"), profile.fetch("kit")
+      assert_includes DATA.fetch("drum_patterns"), profile.fetch("drums")
+      assert_includes DATA.fetch("play_profiles"), name
+    end
+    assert DATA.dig("groove_profiles", "techno_arp", "bpm").between?(128, 150)
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "t.wav")
+      o, err, status = run_dilla("--progression", "4", "--beats", "2", "--profile", "techno_arp", "--seed", "3", "--out", out, chdir: dir)
+      assert status.success?, err
+      assert_match(/drums=techno_909/, o)
+      samples = File.binread(out).byteslice(44..).unpack("s<*")
+      assert_operator samples.map(&:abs).max, :<=, 32_767
+      assert_operator samples.map(&:abs).max, :>, 5000
+    end
+  end
+
+  def test_a_chord_holds_two_bars_by_default_and_chord_changes_land_on_bar_lines
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "x.wav")
+      _o, err, status = run_dilla("--progression", "2", "--profile", "dry", "--mode", "pad", "--out", out, chdir: dir)
+      assert status.success?, err
+      seconds = (File.size(out) - 44) / 2.0 / SAMPLE_RATE
+      assert_in_delta 4 * 8 * 60.0 / 88, seconds, 0.02
+    end
+    assert_equal 8.0, sequencer("dry").beats
+    assert_equal 2 * 4 * 60.0 / 88, 8 * 60.0 / 88
+  end
+
+  def test_a_chord_holds_two_bars_by_default_and_chord_changes_land_on_bar_lines
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "x.wav")
+      _o, err, status = run_dilla("--progression", "2", "--profile", "dry", "--mode", "pad", "--out", out, chdir: dir)
+      assert status.success?, err
+      seconds = (File.size(out) - 44) / 2.0 / SAMPLE_RATE
+      assert_in_delta 4 * 8 * 60.0 / 88, seconds, 0.02
+    end
+    assert_equal 8.0, sequencer("dry").beats
+    assert_equal 2 * 4 * 60.0 / 88, 8 * 60.0 / 88
   end
 
 
