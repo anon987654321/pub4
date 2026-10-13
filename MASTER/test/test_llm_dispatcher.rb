@@ -457,6 +457,16 @@ end
     assert_equal "status", tool_calls.first[:args]["action"]
   end
 
+  def test_react_tool_metadata_uses_ruby_llm_declared_parameters
+    dispatcher, = build_dispatcher
+
+    signature = dispatcher.send(:param_signature, Master::Io::BrowserAgent.allocate)
+    assert_equal "(action*, session, url, operation, selector, value, wait, links, max_pages)", signature
+
+    wrapper = Master::Io::LLM::SearchKnowledge.new(Object.new)
+    assert_equal({ query: "NRK" }, dispatcher.send(:heal_args, wrapper, { q: "NRK" }))
+  end
+
   # A :free id is absent from the registry, so it is zero only where the
   # provider catalog row itself says zero both ways.
   def test_a_free_model_costs_nothing_only_when_the_catalog_says_so
