@@ -6,26 +6,18 @@ module Master
       # Text transformation/formatting helpers — separate from Renderer's
       # own render/output-guard responsibility.
       module TextFormatting
-        # Bringhurst's measure for a terminal: prose wraps near 66 to 72 columns.
+        # Preserve authored line and paragraph boundaries. Terminals soft-wrap at
+        # the viewport edge; inserting newline characters here corrupts copied
+        # text, streamed paragraphs and transcripts. width remains accepted for
+        # callers that used the old signature.
         MEASURE = 72
-        LIST_LEAD = /\A\s*(?:[-*•]\s+|\d+[.)]\s+)?/
 
-        # Wraps prose to the measure at a space, never inside a word, with a
-        # list item's continuation hung under its text. Code fences, indented
-        # lines, table rows and key=value lines keep their shape, because their
-        # columns mean something.
         def measure(text, width: MEASURE)
-          fenced = false
-          text.to_s.lines.map do |line|
-            fence = line.lstrip.start_with?("```")
-            fenced = !fenced if fence
-            fence || fenced || !prose_line?(line, width) ? line : wrap_line(line, width)
-          end.join
+          text.to_s
         end
 
-        # Render the common Markdown used in model replies without adding a
-        # second parser dependency. Fences, tables, indented examples and record
-        # lines keep their data shape; ordinary prose is wrapped to terminal width.
+        # Render common Markdown without changing authored line lengths or
+        # paragraph boundaries. Fences, tables and record lines keep their shape.
         def terminal_markdown(text, width: MEASURE)
           # The CLI's presentation path must retain the same evidence guard as
           # Renderer#render; Markdown cleanup is not a second trust boundary.
@@ -103,16 +95,6 @@ module Master
           lines.join
         end
 
-        # A sentence, not a record: long, a dozen words or more, and mostly
-        # words rather than numbers, paths and identifiers.
-        def prose_line?(line, width)
-          body = line.chomp
-          return false if body.length <= width || body.match?(/\A(?: {4}|\t|\|)/) || body.include?("=")
-
-          words = body.split
-          words.size >= 12 && words.count { |word| word.match?(%r{[\d_/]}) } * 4 <= words.size
-        end
-
         def markdown_emphasis(text)
           return text unless $stdout.tty?
 
@@ -121,17 +103,6 @@ module Master
           text
         end
 
-        def wrap_line(line, width)
-          lead = line[LIST_LEAD]
-          rows = [lead.dup]
-          line.chomp.delete_prefix(lead).split(/ +/).each do |word|
-            if rows.last.length > lead.length && rows.last.length + 1 + word.length > width
-              rows << (" " * lead.length) + word
-            else
-              rows.last << (rows.last.length > lead.length ? " " : "") << word
-            end
-          end
-          rows.join("\n") + (line.end_with?("\n") ? "\n" : "")
         end
       end
     end
