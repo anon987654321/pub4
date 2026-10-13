@@ -9,7 +9,7 @@
   --c-accent: oklch(78% 0.10 300);
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
-  --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --font-mono: "Source Code Pro", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -803,7 +803,7 @@ body #zsh.live:focus-within {
   opacity: 1;
   background: black;
 }
-#zsh .pp { color: var(--face-alert); font-weight: 700; margin-inline-end: 0.6ch; }
+#zsh .pp { color: var(--face-fg); font-weight: 400; margin-inline-end: 0.6ch; }
 #zsh .sep { color: var(--face-muted); margin-inline-end: 0.4ch; }
 #zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 0px 0; resize: none; line-height: 1.5; max-height: 120px; }
 #zsh input::placeholder, #zsh textarea::placeholder { color: var(--face-muted); }
@@ -1830,7 +1830,7 @@ body.zen #zsh {
 body.zen.zen-hidden #zsh,
 body.zen[data-edge-hover="1"] #zsh { opacity: 0.96; pointer-events: auto; }
 body.zen #zsh.revealed { transform: translate(-50%, 0); }
-#zsh .pp { color: #8ce5ef; font-weight: 650; }
+#zsh .pp { color: var(--face-fg); font-weight: 400; }
 #zsh input, #zsh textarea {
   min-height: 42px;
   padding: 8px 0;
