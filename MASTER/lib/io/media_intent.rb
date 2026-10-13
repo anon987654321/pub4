@@ -558,12 +558,16 @@ module Master
                  end
         explicit_bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
         bpm = explicit_bpm ? explicit_bpm.to_f : reference&.fetch("target_bpm", nil)
+        drum_balance = reference_balance_adjustment(reference, "drums_energy_share") if dilla_pocket
+        chord_balance = reference_balance_adjustment(reference, "other_energy_share") if dilla_pocket
         output ||= File.join(dilla_renders_dir, "#{progression}-#{pattern}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
         FileUtils.mkdir_p(File.dirname(output))
         argv = ["--progression", progression, "--out", output]
         argv.concat(["--drums", pattern]) if pattern
         argv.concat(["--profile", groove]) if groove
         argv.concat(["--bpm", bpm.to_s]) if bpm
+        argv.concat(["--drum-balance", drum_balance.to_s]) unless drum_balance.nil?
+        argv.concat(["--chord-balance", chord_balance.to_s]) unless chord_balance.nil?
         if dilla_pocket
           argv.concat(["--kit", "kit_dust", "--voice", "rhodes_mark1", "--sonitex", "cassette", "--sonitex-instances", "3",
                        "--drum-tape", "heavy", "--vcs", "0.78"])
@@ -571,7 +575,22 @@ module Master
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
         return result unless result.ok?
 
-        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, bpm:, kit: dilla_pocket ? "kit_dust" : nil })
+        Result.ok({ log: result.value!, path: output, progression:, drums: pattern, groove:, bpm:,
+                    drum_balance:, chord_balance:, kit: dilla_pocket ? "kit_dust" : nil })
+      end
+
+      # Translate measured relative stem power into small dB moves around
+      # Dilla's own mix defaults. Missing or invalid stem data means no override.
+      def reference_balance_adjustment(profile, feature)
+        features = profile&.fetch("features", nil)
+        return nil unless features.is_a?(Hash)
+
+        share = Float(features.fetch(feature))
+        return nil unless share.finite?
+
+        ((share.clamp(0.0, 1.0) - 0.25) * 8.0).clamp(-2.0, 2.0).round(1)
+      rescue ArgumentError, TypeError, KeyError
+        nil
       end
 
       def dilla_reference_profile
