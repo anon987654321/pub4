@@ -15,6 +15,7 @@ module Master
       HEADFUL_ENV = "MASTER_WEB_CHAT_HEADFUL"
       POLL_INTERVAL_S = 0.5
       LOGIN_POLL_INTERVAL_S = 1.0
+      COMPOSER_TIMEOUT_S = 20
       PNG_SIGNATURE = "\x89PNG\r\n\x1a\n".b.freeze
       PROFILE_MUTEX = Mutex.new
 
@@ -108,7 +109,7 @@ module Master
 
       def fill_prompt(page, text)
         selector = @config.fetch("input_selector")
-        field = find_element(page, selector)
+        field = wait_for_element(page, selector, timeout: [COMPOSER_TIMEOUT_S, timeout_seconds - 5].min)
         field ||= wait_for_login(page, selector) if ENV[HEADFUL_ENV] == "1"
         unless field
           detail = ENV[HEADFUL_ENV] == "1" ? "sign-in did not expose the chat input" : "login required? set #{HEADFUL_ENV}=1 to sign in once"
@@ -117,10 +118,22 @@ module Master
         field.focus.type(text, :Enter)
       end
 
+      def wait_for_element(page, selector, timeout:)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [timeout.to_f, 0].max
+        loop do
+          field = find_element(page, selector)
+          return field if field
+          break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+          sleep POLL_INTERVAL_S
+        end
+        nil
+      end
+
       # A dedicated Ferrum profile has its own cookies. In explicit headful mode,
       # let the operator sign in on the real provider page before sending a prompt.
       def wait_for_login(page, selector)
-        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [timeout_seconds - 5, 1].max
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [timeout_seconds - COMPOSER_TIMEOUT_S - 5, 1].max
         loop do
           field = find_element(page, selector)
           return field if field
@@ -194,9 +207,15 @@ module Master
       def find_element(page, selector)
         selector.to_s.split(",").map(&:strip).each do |css|
           node = page.at_css(css)
-          return node if node
+          return node if node && element_visible?(node)
         end
         nil
+      end
+
+      def element_visible?(node)
+        !node.respond_to?(:visible?) || node.visible?
+      rescue StandardError
+        false
       end
 
       def extract_text(node)
@@ -210,7 +229,6 @@ module Master
         last_state = nil
         stable = 0
         loop do
-          wait_idle(page)
           state = reply_state(page)
           changed = previous.nil? || state[0] > previous[0] || state[1] != previous[1]
           if changed && !state[1].strip.empty? && state == last_state
