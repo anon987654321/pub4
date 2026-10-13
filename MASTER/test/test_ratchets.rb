@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "minitest/mock"
 require "tmpdir"
 require "fileutils"
 require "yaml"
@@ -80,6 +81,26 @@ class TestRatchets < Minitest::Test
       assert_equal "unreadable: Errno::ENOENT", row.note
     ensure
       YAML.define_singleton_method(:safe_load_file, real)
+    end
+  end
+
+  def test_css_budget_invokes_the_canonical_gate_runner_from_repo_root
+    invocations = []
+    fake_capture = lambda do |*args, chdir:|
+      invocations << [args, chdir]
+      ["", nil]
+    end
+
+    Open3.stub(:capture2e, fake_capture) do
+      Operator::Ratchets.css_constitution_rows
+    end
+
+    assert_equal 2, invocations.size, "both CSS gates contribute to the shared budget"
+    invocations.each do |args, working_dir|
+      assert_equal RbConfig.ruby, args.fetch(0)
+      assert_equal File.join(Operator::Ratchets::MASTER, "gates", "runner.rb"), args.fetch(1)
+      assert_includes %w[css_constitution design_metrics], args.fetch(2)
+      assert_equal Operator::Ratchets::ROOT, working_dir
     end
   end
 
