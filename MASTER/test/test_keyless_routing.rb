@@ -448,7 +448,7 @@ class TestKeylessRouting < Minitest::Test
     router.define_singleton_method(:replicate_models) { [] }
     router.define_singleton_method(:local_models) { ["ollama:gemma3:4b"] }
 
-    chain = router.send(:chain_for, :exploration)
+    chain = router.send(:priority_fallback_order, router.send(:chain_for, :exploration))
     positions = %w[
       premium:subscription free-api:model openrouter/free-model:free
       llm7:free-model web-chat:grok local:qwen ollama:gemma3:4b
