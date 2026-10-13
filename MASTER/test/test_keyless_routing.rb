@@ -12,7 +12,7 @@ class TestKeylessRouting < Minitest::Test
     @saved_env = %w[
       XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
-      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
+      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_WEB_CHAT MASTER_LOCAL_ONLY MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
       MASTER_NO_POOL_PROBES MASTER_LLM_GATEWAY_URL MASTER_LLM_GATEWAY_KEY FREELLMPOOL_PROXY_KEY
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
@@ -439,6 +439,16 @@ class TestKeylessRouting < Minitest::Test
     ENV["MASTER_NO_WEB_CHAT"] = "1"
     router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+
+    refute router.web_chat_enabled?
+    refute_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
+  end
+
+  def test_local_only_mode_excludes_browser_chat
+    ENV["MASTER_LOCAL_ONLY"] = "1"
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: "ollama:gemma3:4b"), root: Master::ROOT,
     )
 
     refute router.web_chat_enabled?
