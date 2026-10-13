@@ -16,6 +16,8 @@ judge files by the laws with no model, and `bin/operator doctor` to check the
 environment's known traps. `sweep.rb` runs the census instruments in one pass
 and reports them in dmesg form. It measures and proposes, and it never edits.
 
+Repository maintenance tools live in `repo/`: tracked-tree inventory, entrypoint reachability and structural migration planning. Their former `tools/` root paths remain compatibility entrypoints. `snapshot.rb` stays a top-level operator command until its reader/writer contracts are verified independently.
+
 Research and benchmarking tools live in `research/`: cognition outcome benchmarking, mutation-oriented challenge checks, and LLM trajectory reporting. Their former `tools/` root paths remain compatibility entrypoints for existing invocations.
 
 Voice tooling is grouped in `voice/`: `voice_benchmark.rb`, `voice_measure.rb` and `voice_quality.rb` are canonical there. Their former `tools/` root paths remain thin command-compatible entrypoints for existing invocations. Runtime speech and TTS implementations remain in `lib/voice/`.
