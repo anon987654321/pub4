@@ -5,7 +5,7 @@ def run(argv)
   options = {}
   OptionParser.new do |o|
     o.banner = 'Usage: ruby dilla.rb [options]'
-    o.on('--showcase', 'Render the four-part Blue Hour composition to dilla.wav') { options[:showcase] = true }
+    o.on('--showcase', 'Render the eight-part Blue Hour pure-tone composition to dilla.wav') { options[:showcase] = true }
     o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
@@ -30,7 +30,7 @@ def run(argv)
     o.on('--play', '--endless', 'Never stop: render the next progression while this one plays') { options[:play] = true }
     o.on('--player CMD', 'The command that plays a wav (default afplay, else ffplay)') { |v| options[:player] = v }
     o.on('--passes N', Integer, 'With --play, stop after N progressions') { |v| options[:passes] = v }
-    o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
+    o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
     o.on('--repeat [STYLE]', '--comp [STYLE]', 'Strike the whole chord again on the steps of a style instead of arpeggiating') { |v| options[:repeat] = v || true }
     o.on('--mode MODE', 'arp, repeat or pad: force how the chords are played') { |v| options[:mode] = v }
     o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
