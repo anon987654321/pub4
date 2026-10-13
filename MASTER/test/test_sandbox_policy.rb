@@ -70,6 +70,12 @@ class TestSandboxPolicy < Minitest::Test
                  POLICY.scope_violation(%w[cat escape/secret], root:)
     assert_equal "git -C target escapes the workspace",
                  POLICY.scope_violation(%w[git -C escape status], root:)
+    assert_equal "git -C target escapes the workspace",
+                 POLICY.scope_violation(%w[git -Cescape status], root:)
+    assert_equal "git -C target escapes the workspace",
+                 POLICY.scope_violation(["git", "--git-dir=#{outside}/.git", "status"], root:)
+    assert_equal "git -C target escapes the workspace",
+                 POLICY.scope_violation(["git", "--work-tree=#{outside}", "status"], root:)
   ensure
     FileUtils.rm_rf(root) if root
     FileUtils.rm_rf(outside) if outside
