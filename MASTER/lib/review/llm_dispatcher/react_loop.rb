@@ -68,7 +68,7 @@ module Master
 
         def build_react_system(base_sys)
           schema = @tools.filter_map do |t|
-            name = t.class.name.split("::").last
+            name = tool_registry_name(t)
             meta = @tool_registry.fetch(name, {})
             next unless tool_available_for_context?(meta)
             desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
@@ -101,7 +101,7 @@ module Master
           tool = find_react_tool(requested)
           return unknown_tool_result(requested) unless tool
 
-          name = tool.class.name.split("::").last
+          name = tool_registry_name(tool)
           @bus&.publish("tool:healed", tool: name, from: requested, to: name) unless name == requested
           runtime = tool.class.const_defined?(:NAME) ? tool.class::NAME : name
           unless CLI::SubagentContext.permits?(name) && CLI::SubagentContext.permits?(runtime)
@@ -132,13 +132,15 @@ module Master
 
         def react_tool_names(tool)
           short = tool.class.name.to_s.split("::").last
-          tool.class.const_defined?(:NAME) ? [short, tool.class::NAME] : [short]
+          public_name = tool_registry_name(tool)
+          runtime = tool.class.const_defined?(:NAME) ? tool.class::NAME.to_s : nil
+          [short, public_name, runtime].compact.uniq
         end
 
         def fold_tool_name(name) = name.to_s.downcase.delete("_-")
 
         def unknown_tool_result(requested)
-          names = @tools.map { |tool| tool.class.name.to_s.split("::").last }.uniq
+          names = @tools.map { |tool| tool_registry_name(tool) }.uniq
           near = DidYouMean::SpellChecker.new(dictionary: names).correct(requested.to_s).first(3)
           hint = near.empty? ? "" : "; nearest: #{near.join(", ")}"
           "<tool_result name=\"#{requested}\">error: tool not found#{hint}</tool_result>"
