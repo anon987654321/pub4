@@ -145,7 +145,7 @@ module Master
 
         def plain_prompt_segment(value)
           value.to_s.scrub.gsub(ANSI_ESCAPE, "").unicode_normalize(:nfc)
-            .gsub(/[^\p{L}\p{N}\p{M}]+/u, " ").strip.gsub(/\s+/, " ")
+            .gsub(/[^\p{L}\p{N}]+/u, " ").strip.gsub(/\s+/, " ")
         rescue StandardError
           ""
         end
