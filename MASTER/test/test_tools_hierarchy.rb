@@ -11,6 +11,7 @@ class TestToolsHierarchy < Minitest::Test
   TOOLS_ROOT = File.join(MASTER_ROOT, "tools")
   VOICE_TOOLS = %w[voice_benchmark.rb voice_measure.rb voice_quality.rb].freeze
   RESEARCH_TOOLS = %w[cognition_benchmark.rb llm_challenges.rb llm_trajectory.rb].freeze
+  REPO_TOOLS = %w[repo_inventory.rb runs.rb sprawl_plan.rb].freeze
 
   def test_voice_implementations_live_in_their_canonical_family
     VOICE_TOOLS.each do |name|
@@ -85,6 +86,40 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes trajectory, 'MASTER/tools/research/llm_trajectory.rb contract'
   end
 
+  def test_repository_maintenance_implementations_live_in_their_canonical_family
+    REPO_TOOLS.each do |name|
+      assert File.file?(File.join(TOOLS_ROOT, "repo", name)), "missing tools/repo/#{name}"
+      assert File.file?(File.join(TOOLS_ROOT, name)), "legacy entrypoint disappeared: tools/#{name}"
+    end
+  end
+
+  def test_legacy_repository_entrypoints_delegate_to_canonical_sources
+    REPO_TOOLS.each do |name|
+      source = File.read(File.join(TOOLS_ROOT, name))
+      assert_includes source, "File.expand_path(\"repo/#{name}\", __dir__)"
+      assert_includes source, "load target"
+      assert_includes source, "require_relative \"repo/#{name.delete_suffix('.rb')}\""
+    end
+  end
+
+  def test_repository_tools_keep_the_repo_root_when_moved
+    inventory = File.read(File.join(TOOLS_ROOT, "repo", "repo_inventory.rb"))
+    runs = File.read(File.join(TOOLS_ROOT, "repo", "runs.rb"))
+    plan = File.read(File.join(TOOLS_ROOT, "repo", "sprawl_plan.rb"))
+
+    assert_includes inventory, 'INVENTORY_ROOT = File.expand_path("../../..", __dir__)'
+    assert_includes runs, 'ROOT = File.expand_path("../../..", __dir__)'
+    assert_includes plan, 'ROOT = File.expand_path("../../..", __dir__)'
+  end
+
+  def test_path_ownership_declares_the_repository_tools_family
+    ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
+    row = ownership.fetch("tools/repo/")
+
+    assert_includes row.fetch("purpose"), "tracked-tree inventory"
+    assert_equal "medium", row.fetch("risk")
+    assert_includes row.fetch("check"), "test_lifecycle_tools.rb"
+  end
   def test_path_ownership_declares_the_research_tools_family
     ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
     row = ownership.fetch("tools/research/")
