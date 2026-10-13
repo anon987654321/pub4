@@ -85,6 +85,7 @@ class DillaTest < Minitest::Test
       assert_operator section.fetch("echo_mix"), :<=, 0.03
       assert_operator section.fetch("echo_feedback"), :<=, 0.1
       assert_operator section.fetch("echo_tail_seconds"), :<=, 0.2
+      assert_equal 0, section.fetch("echo_reverb")
       assert_equal "pure_tone", section.fetch("melody_voice")
       assert_equal 2, section.fetch("layers").size
       section.fetch("layers").each do |layer|
