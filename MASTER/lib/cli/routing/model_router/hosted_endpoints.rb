@@ -99,9 +99,11 @@ module Master
 
             %w[prompt completion].all? do |kind|
               value = pricing[kind]
-              !value.nil? && Float(value).zero?
-            rescue ArgumentError, TypeError
-              false
+              begin
+                !value.nil? && Float(value).zero?
+              rescue ArgumentError, TypeError
+                false
+              end
             end
           end
 
