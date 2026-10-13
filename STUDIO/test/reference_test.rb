@@ -83,6 +83,28 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 124, profile.fetch("target_bpm")
   end
 
+  def test_rhythm_density_steers_techno_hat_and_metal_density
+    mix = {
+      "tempo" => { "bpm" => 140.0 },
+      "spectral_bands_db" => {
+        "sub_25_120_hz" => -14.0, "low_mid_120_500_hz" => -24.0,
+        "mid_500_4000_hz" => -20.0, "high_4000_plus_hz" => -10.0
+      }
+    }
+    dense = Dilla::Reference.profile_for(mix, style: "industrial_techno")
+    sparse = Dilla::Reference.profile_for(mix, style: "industrial_techno")
+    dense_base = dense.fetch("parameters")
+    sparse_base = sparse.fetch("parameters")
+
+    Dilla::Reference.apply_rhythm_balance(dense, "onset_density_per_bar" => 24.0)
+    Dilla::Reference.apply_rhythm_balance(sparse, "onset_density_per_bar" => 8.0)
+
+    assert_in_delta dense_base.fetch("hat_probability") + 0.04, dense.fetch("parameters").fetch("hat_probability"), 0.001
+    assert_in_delta dense_base.fetch("metal_probability") + 0.03, dense.fetch("parameters").fetch("metal_probability"), 0.001
+    assert_in_delta sparse_base.fetch("hat_probability") - 0.04, sparse.fetch("parameters").fetch("hat_probability"), 0.001
+    assert_in_delta sparse_base.fetch("metal_probability") - 0.03, sparse.fetch("parameters").fetch("metal_probability"), 0.001
+  end
+
   def test_stem_balance_steers_techno_rumble_and_duck_with_bounded_adjustments
     mix = {
       "tempo" => { "bpm" => 140.0 },
