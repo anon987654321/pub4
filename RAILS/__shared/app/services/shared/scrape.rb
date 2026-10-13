@@ -3,6 +3,7 @@
 require "json"
 require "ipaddr"
 require "resolv"
+require "socket"
 require "uri"
 
 begin
