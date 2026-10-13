@@ -130,7 +130,9 @@ class CoreSmokeTest < Minitest::Test
     options = {
       model:,
       constitution: Master::Core::Constitution.load(data_dir: DATA),
-      world: Master::Core::World.new(root:),
+      # This test harness explicitly approves the irreversible Git effects
+      # that the real operator would be asked to approve.
+      world: Master::Core::World.new(root:, ask: ->(**) { Master::Core::Observation.ok("yes") }),
       memory: Master::Core::Memory.new,
     }
     options[:max_turns] = max_turns if max_turns
