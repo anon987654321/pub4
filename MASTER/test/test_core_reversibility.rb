@@ -107,6 +107,25 @@ class TestCoreReversibility < Minitest::Test
     assert_match(/no World handler/, verdict.reason)
   end
 
+  def test_commit_requests_approval_only_after_its_evidence_gate_passes
+    memory = Master::Core::Memory.new
+    [
+      E.exec(%w[rake test], evidence: :test_pass),
+      E.exec(%w[bin/check], evidence: :scan_clean),
+      E.exec(%w[bin/review], evidence: :code_review),
+    ].each { |effect| memory.record(effect, Master::Core::Observation.ok("verified")) }
+    assert memory.proof.proved?, "fixture evidence must satisfy the commit precondition"
+
+    verdict = C.load(data_dir: DATA_DIR).admit(
+      E.git(:commit, message: "add verified work", paths: ["a.rb"]),
+      memory,
+    )
+
+    assert_instance_of Master::Core::Verdict::Request, verdict
+    assert_equal :effect_reversibility, verdict.by
+    assert_match(/durable repository history/, verdict.reason)
+  end
+
   def test_irreversible_git_mutation_does_not_reach_world_without_operator
     Dir.mktmpdir do |root|
       world = Class.new(Master::Core::World) do
