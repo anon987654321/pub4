@@ -103,7 +103,10 @@ module Dilla
         tracks[File.basename(path, ".wav")] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: false)
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
-      profile = profile_for(mix)
+      profile = profile_for(mix).merge(
+        "source_duration_seconds" => mix["duration_seconds"],
+        "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16]
+      ).compact
       report = { "schema_version" => 1, "tracks" => tracks, "separation" => separation,
                  "essentia" => essentia(audio, directory), "production_profile" => profile,
                  "limitations" => ["Tempo is estimated; half-time and double-time can both fit.",
