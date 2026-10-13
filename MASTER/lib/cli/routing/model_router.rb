@@ -89,10 +89,10 @@ module Master
             live_config_model(task_type:)
         end
 
-        # Only models the pool can reach, the dead lanes dropped and free models
-        # last (Io::LaneSelection). Free cloud lanes follow the tiers and
-        # paid Replicate follows those. A discovered local model may join the
-        # same live chain; local availability is not an offline contract.
+        # Only reachable, non-silent lanes enter the chain. Empirical health and
+        # cost ranking order candidates within the final policy: premium/API,
+        # free API, browser chat, then local compute. Local availability is not
+        # an offline contract.
         def fallback_chain(task_type: :exploration)
           return [@config.model] unless enabled?
 
