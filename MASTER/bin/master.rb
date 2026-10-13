@@ -15,6 +15,23 @@ if ARGV.first == "replay"
   exit Master::Fix::Kernel.replay_cli(root: ROOT, seq: ARGV[1])
 end
 
+if ARGV.first == "replay"
+  require_relative "../lib/core/elegant_kernel"
+  begin
+    sequence = ARGV[1] && Integer(ARGV[1], 10)
+    abort "usage: bin/master replay [sequence]" if ARGV.length > 2 || (ARGV[1] && sequence < 1)
+    log = Master::Core::ElegantKernel::AuditLog.new(root: ROOT)
+    log.replay(sequence).each { |record| puts JSON.generate(record) }
+    exit 0
+  rescue ArgumentError => e
+    warn "replay0: #{e.message}"
+    exit 2
+  rescue StandardError => e
+    warn "replay0: #{e.class}: #{e.message}"
+    exit 1
+  end
+end
+
 if ARGV.first == "--fix-context"
   target = ARGV[1] && !ARGV[1].start_with?("-") ? ARGV[1] : ROOT
   full = ARGV.include?("--full")
@@ -37,6 +54,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
       bin/master "<instruction>"
       bin/master --fold "<goal>"
       bin/master --fix-context [target] [--full]
+      bin/master replay [sequence]
       bin/master replay <sequence>
       bin/master --daemon
       bin/master --fast
