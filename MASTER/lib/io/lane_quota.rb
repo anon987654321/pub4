@@ -147,6 +147,11 @@ module Master
       end
 
       # Bypass one configured exclusion only for the current synchronous canary.
+      def manual_probe?(model)
+        lane = Thread.current[MANUAL_PROBE_KEY].to_s
+        !lane.empty? && model.to_s.start_with?(lane)
+      end
+
       def with_manual_probe(lane)
         previous = Thread.current[MANUAL_PROBE_KEY]
         Thread.current[MANUAL_PROBE_KEY] = lane.to_s
