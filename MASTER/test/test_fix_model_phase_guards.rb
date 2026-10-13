@@ -73,6 +73,28 @@ class TestFixModelPhaseGuards < Minitest::Test
     loop
   end
 
+  # "no_proposal" alone hid three different causes. Each is named, counted apart from
+  # rejected proposals, and kept off the file's two-reject limit.
+  def test_a_declined_call_names_its_reason_and_returns_nil
+    assert_nil Ledger.declined("patch_rejected", file: "lib/a.rb", law: "X", detail: "1 out of 1 hunks failed")
+    Ledger.declined("patch_rejected", file: "lib/b.rb")
+    Ledger.declined("model_said_unchanged", file: "lib/c.rb")
+
+    assert_equal({ "patch_rejected" => 2, "model_said_unchanged" => 1 }, Ledger.declined_reasons)
+    refute Ledger.file_done?("lib/a.rb")
+    assert_includes Ledger.summary_lines, "fix0: no proposal 3: patch_rejected 2, model_said_unchanged 1"
+    assert_equal "patch_rejected:2,model_said_unchanged:1", Ledger.why_line
+  end
+
+  def test_the_why_line_merges_rejections_and_declined_calls_and_is_nil_when_empty
+    assert_nil Ledger.why_line
+
+    Ledger.reject("new_violations", file: "lib/a.rb")
+    Ledger.declined("empty_reply", file: "lib/b.rb")
+
+    assert_equal %w[empty_reply:1 new_violations:1], Ledger.why_line.split(",").sort
+  end
+
   def test_a_file_that_outlasts_its_budget_is_skipped_and_recorded
     ENV["MASTER_FIX_FILE_BUDGET_S"] = "1"
     loop = budget_loop

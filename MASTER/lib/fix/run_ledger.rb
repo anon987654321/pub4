@@ -16,6 +16,7 @@ module Master
 
       @mutex = Mutex.new
       @reasons = Hash.new(0)
+      @declined = Hash.new(0)
       @file_rejects = Hash.new(0)
       @timeouts = []
       @lane_failures = Hash.new(0)
@@ -25,6 +26,7 @@ module Master
         def reset!
           @mutex.synchronize do
             @reasons = Hash.new(0)
+            @declined = Hash.new(0)
             @file_rejects = Hash.new(0)
             @timeouts = []
             @lane_failures = Hash.new(0)
@@ -54,6 +56,27 @@ module Master
           end
           Master::Trace::Dmesg.status("fix0", "proposal rejected, #{file.to_s.split("/").last(2).join("/")}#{law ? " #{law}" : ""}: #{reason}")
           bus&.publish("repair_loop:proposal_rejected", law:, file:, reason: reason.to_s)
+        end
+
+        # A model call that produced nothing to judge: the model said UNCHANGED, sent an
+        # empty reply, or sent a diff patch(1) refused. Counted apart from rejected
+        # proposals and never against the file's two-reject limit, but named in the log,
+        # because "no_proposal" alone said none of this.
+        def declined(key, file:, law: nil, detail: nil)
+          @mutex.synchronize { @declined[key.to_s] += 1 }
+          where = file.to_s.split("/").last(2).join("/")
+          Master::Trace::Dmesg.status("fix0", "no proposal, #{where}#{law ? " #{law}" : ""}: #{key}#{detail ? " (#{detail.to_s[0, 120]})" : ""}")
+          nil
+        end
+
+        def declined_reasons = @mutex.synchronize { @declined.dup }
+
+        # "patch_rejected:3,model_unchanged:2" for the heartbeat; nil when there is nothing to say.
+        def why_line
+          tally = reasons.merge(declined_reasons) { |_, a, b| a + b }
+          return if tally.empty?
+
+          tally.sort_by { |_, count| -count }.first(4).map { |reason, count| "#{reason}:#{count}" }.join(",")
         end
 
         def rejects_for(file) = @mutex.synchronize { @file_rejects[file.to_s] }
@@ -91,6 +114,11 @@ module Master
           unless total.zero?
             parts = reasons.sort_by { |_, count| -count }.map { |reason, count| "#{reason} #{count}" }
             lines << "fix0: proposals rejected #{total}: #{parts.join(", ")}"
+          end
+          declined_total = declined_reasons.values.sum
+          unless declined_total.zero?
+            parts = declined_reasons.sort_by { |_, count| -count }.map { |reason, count| "#{reason} #{count}" }
+            lines << "fix0: no proposal #{declined_total}: #{parts.join(", ")}"
           end
           lines << "fix0: file budget spent on #{timeouts.size} file(s): #{timeouts.first(5).map { |file, _| file.split("/").last }.join(", ")}" if timeouts.any?
           drops = Master::Io::LaneQuota.run_drops

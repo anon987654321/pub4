@@ -70,11 +70,13 @@ module Master
         MAX_FIX_RETRIES.times do |attempt|
           wait_before_retry(attempt, rule: @law.id, file: path, mode: :excerpt)
           response = ask_agent(prompt, image: @visual_image).to_s
-          return if response.strip == "UNCHANGED" || response.strip.empty?
+          return RunLedger.declined("model_said_unchanged", file: path, law: @law.id) if response.strip == "UNCHANGED"
+          return RunLedger.declined("empty_reply", file: path, law: @law.id) if response.strip.empty?
 
           result = PatchApplier.apply(src, diff_of(response))
           return result.source if result.is_a?(PatchApplier::Success)
 
+          RunLedger.declined("patch_rejected", file: path, law: @law.id, detail: result.reason)
           @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: result.reason.to_s[0, 160])
         rescue StandardError => e
           return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
