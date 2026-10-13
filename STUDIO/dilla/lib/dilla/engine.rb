@@ -26,6 +26,7 @@ def run(argv)
     o.on('--gate N', Float, 'Note gate as a share of its step, 0.05 to 1.5') { |v| options[:gate] = v.clamp(0.05, 1.5) }
     o.on('--seed N', Integer, 'Seed: the same seed plays the same render') { |v| options[:seed] = v }
     o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
+    o.on('--replace', 'Explicitly replace an existing WAV or MIDI take') { options[:replace] = true }
     o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
     o.on('--no-voice-search', 'Voice each chord by nearest tones only, without the octave search') { options[:plain] = true }
     o.on('--arp [PATTERN]', 'Play each chord one note at a time: up, down, updown, converge, spiral, pendulum, flow and more; --arp list names them') { |v| options[:arp] = v || true }
@@ -72,6 +73,20 @@ def run(argv)
     o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
   end.parse!(argv)
   options[:live] = true if live_argument
+
+  unless options[:replace] || options[:play] || options[:live] || options[:list] || options[:arp] == 'list'
+    outputs = []
+    if options[:out]
+      outputs << options[:out]
+    elsif options[:quick]
+      outputs << 'out/quick.wav'
+    elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != 'organ')
+      outputs << File.expand_path('../../dilla.wav', __dir__)
+    end
+    outputs << options[:midi] if options[:midi]
+    existing = outputs.find { |path| File.exist?(path) || File.symlink?(path) }
+    abort "studio0: refusing to overwrite existing take #{existing.inspect}; choose a new path or pass --replace" if existing
+  end
 
   data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
 progressions = data.fetch('progressions')
@@ -257,10 +272,10 @@ def render_stream(data, options)
   report = Mastering.report(frame) if chain
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
-  WAV.write(out, streamer.channels == 1 ? frame.first : frame, bits:)
+  WAV.write(out, streamer.channels == 1 ? frame.first : frame, bits:, replace: options[:replace])
   if options[:midi]
     FileUtils.mkdir_p(File.dirname(options[:midi]))
-    MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, streamer.hits, search: plan.search)
+    MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, streamer.hits, search: plan.search, replace: options[:replace])
   end
   piece = plan.piece
   label = piece ? "organ in #{piece.key} #{piece.scale}, #{piece.phrases.size} phrases, #{piece.suspensions} suspensions" : "progression #{plan.index}"
@@ -453,7 +468,7 @@ def render_showcase(data, options)
 
   out = options[:out] || File.expand_path('../../dilla.wav', __dir__)
   FileUtils.mkdir_p(File.dirname(out))
-  WAV.write(out, combined)
+  WAV.write(out, combined, replace: options[:replace])
   puts format('Wrote %s (%.2fs, 44.1 kHz mono) — %s', out, combined.size / SAMPLE_RATE.to_f,
               arrangement.fetch('title'))
   puts "  seed=#{seed}; sections=#{sections.size}; peak=#{format('%.3f', combined.map(&:abs).max || 0.0)}"
