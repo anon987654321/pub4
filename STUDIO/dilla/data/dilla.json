@@ -4023,6 +4023,14 @@
         "reverb": 0.25,
         "lowpass": 8000
       }
+    },
+    "pure_tone_dry": {
+      "swing": 0.542,
+      "texture": {
+        "detune": 0,
+        "reverb": 0,
+        "lowpass": 16000
+      }
     }
   },
   "drum_patterns": {
