@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
-require_relative "../lib/voice/enrich"
+require_relative "../test_helper"
+require_relative "../../lib/voice/enrich"
 
 class TestVoiceEnrich < Minitest::Test
   def test_disabled_is_identity

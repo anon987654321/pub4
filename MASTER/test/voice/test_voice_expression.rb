@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../test_helper"
 
 class TestExpression < Minitest::Test
   def test_blendshapes_for_returns_normalized_fields
@@ -59,7 +59,7 @@ class TestExpression < Minitest::Test
   end
 
   def test_voice_idle_signature_source_has_no_duplicate_keys
-    source = File.read(File.expand_path("../lib/voice/expression.rb", __dir__))
+    source = File.read(File.expand_path("../../lib/voice/expression.rb", __dir__))
     body = source[/VOICE_IDLE_SIGNATURES = \{(.*?)\n\s*\}\.freeze/m, 1]
     keys = body.to_s.scan(/^\s*(\w+): \{/).flatten
 
