@@ -88,8 +88,8 @@ module Deploy
       end
 
       tools = YAML.safe_load_file(File.join(root, "data", "tools.yml"), aliases: true)
-      registered = Array(tools).any? { |tool| tool["name"] == "BrowserAgent" && tool["default"] == true }
-      return failure("BrowserAgent must be registered and enabled") unless registered
+      registered = Array(tools).any? { |tool| tool["name"] == "Browser" && tool["default"] == true }
+      return failure("Browser must be registered and enabled") unless registered
 
       GateResult.new.checked!
     rescue StandardError => e
