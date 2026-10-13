@@ -1,5 +1,5 @@
 {
-  "title": "Blue Hour — Pure Tone Edition",
+  "title": "Blue Hour — Pure Tone Extended Cut",
   "crossfade_seconds": 0.12,
   "sections": [
     {
@@ -12,16 +12,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_tine_wurli",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "soft_swing",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_boom_bap",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "mix": {
         "kick": -1,
         "snare": -5,
@@ -90,12 +90,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "Opal Rain",
@@ -107,16 +125,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_mark1",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "lush",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_broken",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "mix": {
         "kick": -1,
         "snare": -5,
@@ -179,12 +197,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "Velvet Geometry",
@@ -196,16 +232,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_stage73",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "soft_swing",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_boom_bap",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "mix": {
         "kick": -1,
         "snare": -5,
@@ -274,12 +310,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "Silver Thread",
@@ -291,16 +345,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_tine_wurli",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "soft_swing",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_broken",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "mix": {
         "kick": -1,
         "snare": -5,
@@ -363,12 +417,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "After the Last Train",
@@ -380,16 +452,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_mark1",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "soft_swing",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_boom_bap",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "sonitex": "subtle",
       "sonitex_instances": 2,
       "vcs": 0.52,
@@ -458,12 +530,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "Amber Orbit",
@@ -477,16 +567,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_stage73",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "arp_echo_soft",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_broken",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "sonitex": "dusty_warm",
       "sonitex_instances": 2,
       "vcs": 0.56,
@@ -567,12 +657,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "Soft Focus",
@@ -584,16 +692,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_mark1",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "soft_swing",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_boom_bap",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "sonitex": "subtle",
       "sonitex_instances": 2,
       "vcs": 0.5,
@@ -662,12 +770,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     },
     {
       "name": "Night Bloom",
@@ -679,16 +805,16 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "rhodes_tine_wurli",
+      "voice": "pure_tone",
       "mode": "repeat",
       "repeat": "half_note_pulse",
-      "profile": "sampler_glue",
+      "profile": "pure_tone_dry",
       "drums": "fast_hat_broken",
-      "echo": true,
-      "echo_mix": 0.025,
-      "echo_feedback": 0.08,
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
       "echo_time_ms": 260,
-      "echo_tail_seconds": 0.14,
+      "echo_tail_seconds": 0,
       "sonitex": "dusty_warm",
       "sonitex_instances": 2,
       "vcs": 0.56,
@@ -757,12 +883,30 @@
           "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "down",
-          "rate": 4,
+          "rate": 2,
           "gate": 0.64
+        },
+        {
+          "mode": "held",
+          "voice": "pure_tone",
+          "gain_db": -14,
+          "gate": 1.08,
+          "velocity": 0.5,
+          "transpose": -12
+        },
+        {
+          "mode": "arp",
+          "voice": "pure_tone",
+          "gain_db": -20,
+          "pattern": "updown",
+          "rate": 4,
+          "gate": 0.52,
+          "octaves": 2
         }
       ],
       "echo_reverb": 0,
-      "gate": 0.5
+      "gate": 0.82,
+      "drum_tape": "heavy"
     }
   ]
 }
