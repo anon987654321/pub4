@@ -40,8 +40,8 @@ module Master
         prompt(root:).fetch("max_ch", 72)
       end
 
-      def user_token(root: Master::ROOT) = prompt(root:).fetch("user_token", "$")
-      def master_token(root: Master::ROOT) = prompt(root:).fetch("master_token", "master$")
+      def user_token(root: Master::ROOT) = prompt(root:).fetch("user_token", "user")
+      def master_token(root: Master::ROOT) = prompt(root:).fetch("master_token", "master")
 
       def modes(root: Master::ROOT)
         Array(state(root:).fetch("modes", [])).map(&:to_s).freeze
