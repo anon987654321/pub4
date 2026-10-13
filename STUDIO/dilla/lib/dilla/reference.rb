@@ -105,10 +105,13 @@ module Dilla
         tracks[File.basename(path, ".wav")] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: false)
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
-      profile = profile_for(mix, style: options[:style]).merge(
+      profile = profile_for(mix, style: options[:style])
+      profile.fetch("features").merge!(stem_energy_features(tracks))
+      profile.merge!(
         "source_duration_seconds" => mix["duration_seconds"],
         "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16]
-      ).compact
+      )
+      profile.compact!
       File.write(File.join(directory, "profile.json"), JSON.pretty_generate(profile) + "\n")
       FileUtils.mkdir_p(REFERENCE_ROOT)
       catalog = catalog_path(profile)
@@ -306,6 +309,21 @@ module Dilla
       number.finite? ? number : nil
     rescue ArgumentError, TypeError
       nil
+    end
+
+    # Demucs gives broad source roles rather than isolated kick/snare/hats.
+    # Compare their measured RMS powers, but omit roles without usable evidence.
+    def stem_energy_features(tracks)
+      roles = %w[drums bass vocals other]
+      energies = roles.to_h do |role|
+        metrics = tracks[role]
+        rms = numeric_value(metrics["rms_db"]) if metrics.is_a?(Hash)
+        [role, rms && (10.0**(rms / 10.0))]
+      end.compact
+      total = energies.values.sum
+      return {} unless total.positive? && total.finite?
+
+      energies.to_h { |role, energy| ["#{role}_energy_share", (energy / total).round(3)] }
     end
 
     def numeric_mean(values)
