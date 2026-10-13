@@ -116,7 +116,7 @@ module Master
             present, fix = case lane_of(id)
                            when :claude_cli then [claude_cli_available?, "install Claude Code"]
                            when :agy then [agy_cli_available?, "install the Antigravity CLI"]
-                           when :web_chat then [web_chat_enabled?, "browser chat is disabled; unset MASTER_NO_WEB_CHAT and MASTER_WEB_CHAT=0"]
+                           when :web_chat then [web_chat_enabled?, "browser chat is excluded by local-only mode or explicit browser opt-out"]
                            when :local_server
                              [local_server_for(id), "no local server lists #{id.delete_prefix('local:')}"]
                            when :hosted then [hosted_endpoint_for(id), "no hosted endpoint lists #{id}"]
