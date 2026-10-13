@@ -12,6 +12,7 @@ require "minitest/autorun"
 require "master"
 require "open3"
 require "tmpdir"
+require "fileutils"
 
 class CoreSmokeTest < Minitest::Test
   DATA = File.expand_path("../data", __dir__)
@@ -20,6 +21,20 @@ class CoreSmokeTest < Minitest::Test
   class ScriptedModel
     def initialize(script) = @script = script
     def propose(_context, verbs:, **) = @script.shift || Master::Core::Effect.done("script empty")
+  end
+
+  class RecordingWorld < Master::Core::World
+    attr_reader :performed
+
+    def initialize(**options)
+      super
+      @performed = []
+    end
+
+    def perform(effect)
+      @performed << effect
+      super
+    end
   end
 
   def test_a_session_admits_safe_effects_blocks_dangerous_ones_and_commits_on_evidence
@@ -51,6 +66,42 @@ class CoreSmokeTest < Minitest::Test
       model = ScriptedModel.new([Master::Core::Effect.done("claiming done with no work")])
 
       assert_equal :max_turns, fold(root, nil, model:, max_turns: 1).run("x").reason
+    end
+  end
+
+  def test_failed_verification_cannot_authorize_done
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "test"))
+      File.write(File.join(root, "test", "fail_test.rb"), "abort 'verification deliberately failed'\n")
+      model = ScriptedModel.new([
+        Master::Core::Effect.exec(%w[ruby test/fail_test.rb], evidence: :test_pass),
+        Master::Core::Effect.done("verification passed"),
+      ])
+
+      result = fold(root, nil, model:).run("verify a change")
+
+      assert_equal :blocked, result.reason
+      refute_equal :complete, result.reason
+    end
+  end
+
+  def test_repeated_constitutional_blocks_never_reach_the_world
+    Dir.mktmpdir do |root|
+      protected_write = Master::Core::Effect.write("data/soul.yml", "golden_law: changed\n")
+      model = ScriptedModel.new([protected_write, protected_write])
+      world = RecordingWorld.new(root:)
+      fold = Master::Core::Fold.new(
+        model:,
+        constitution: Master::Core::Constitution.load(data_dir: DATA),
+        world:,
+        memory: Master::Core::Memory.new,
+      )
+
+      result = fold.run("rewrite the constitution")
+
+      assert_equal :blocked, result.reason
+      assert_equal 2, result.turns
+      assert_empty world.performed, "a constitutionally denied effect must never reach World#perform"
     end
   end
 

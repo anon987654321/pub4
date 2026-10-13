@@ -172,4 +172,20 @@ class TestFixProtocol < Minitest::Test
     end
   end
 
+  def test_incremental_done_requires_full_scope_verification
+    source = File.read(File.join(Master::ROOT, "lib/fix/fix_loop.rb"), encoding: "UTF-8")
+    start = source.index("def verify_incremental_scope")
+    finish = source.index("def mission_for", start)
+    refute_nil start
+    refute_nil finish
+    gate = source[start...finish]
+
+    assert_includes gate, "terminal_state_for(result) == :done"
+    assert_includes gate, "@file_collector.collect(target)"
+    assert_includes gate, "blocking_skips"
+    assert_includes gate, "@reachability.verify!(target, files: full_files)"
+    assert_includes gate, "@convergence_discipline.begin_run(full_files, preserve_run_baseline: true)"
+    assert_includes gate, "CLEAN_RUNS"
+  end
+
 end
