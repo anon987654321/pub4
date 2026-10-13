@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------- CLI
 def run(argv)
+  RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && !ENV.key?('DILLA_NO_YJIT') # about a third off every render
   live_argument = argv.first == 'live'
   argv = argv.drop(1) if live_argument
   options = {}
@@ -473,7 +474,6 @@ end
 # the last beat of the one before. The bags are saved beside the output folder, so a restart
 # goes on with the cycle. The player reads raw 16-bit mono PCM on stdin.
 def play_forever(data, options)
-  RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled?
   player = Player.new(Player.command(options))
   show = Show.new(data, options, player:)
   %w[INT TERM].each { |signal| trap(signal) { show.stop! } }

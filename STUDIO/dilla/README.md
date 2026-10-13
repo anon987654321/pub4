@@ -55,10 +55,8 @@ A kit gives the roles a pattern uses their voices, and six are in the data: kit_
 
 ## Library layout
 
-- `dilla.rb` is the executable shell.
-- `lib/dilla.rb` loads the engine's cohesive modules.
-- `lib/dilla/` contains chord voicing, synthesis, voices, drums, kits, effects, sequencing, MIDI and playlist logic.
-- `data/dilla.json` is the runtime pool of progressions, patches, groove profiles, drum patterns and shared bus-effect rigs.
-- `data/music_theory.json` is the interval/chord/harmonic-motion reference and curated original two- and three-bar progression collection.
+The executable `dilla.rb` is a thin shell. The file `lib/dilla.rb` loads the modules of `lib/dilla/`, which hold chord voicing, synthesis, voices, drums and kits, the sequencer, the arpeggios and the flow arpeggio, the organ, the soundfont bridge, MIDI, the playlist bags, and then the sound path: `stream.rb` has every filter and effect as a processor with memory, `stereo.rb` the pan law, the ping-pong echo and the imager, `stages.rb` the optional effect stages, `noise.rb` the noise and sparkle layers, `tape.rb` the tape stack, `mastering.rb` the mixing and mastering chain, `moves.rb` the master stage and the hand that makes live moves, `streamer.rb` one pass rendered a block at a time, `show.rb` the passes and decks, and `player.rb` the pipe to the player. The file `data/dilla.json` is the runtime pool of progressions, patches, groove profiles, drum patterns, stages, noise layers, the stereo places, the master and the shared bus-effect rigs. The file `data/music_theory.json` is the interval, chord and harmonic-motion reference with the curated original two- and three-bar progressions, and `data/showcase.json` is the Blue Hour arrangement.
+
+To hear it, `ruby dilla.rb --play` streams without end, `ruby dilla.rb --progression 3 --seed 5 --out take.wav` renders one pass, `ruby dilla.rb --mode organ --seed 3 --out organ.wav` improvises for the organ, and `ruby dilla.rb --arp list` names the arpeggios.
 
 The theory catalogue is explanatory source material; runtime choices still come from the engine's validated data pools. Curated compositions list suggested voice patches and intent so they can be auditioned as distinct arrangements.
