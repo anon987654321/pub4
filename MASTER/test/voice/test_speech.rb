@@ -411,6 +411,30 @@ class TestSpeech < Minitest::Test
     [output, wav, output&.sub(/\.mp3\z/, ".wav")].compact.uniq.each { |path| File.delete(path) if File.exist?(path) }
   end
 
+  def test_recursive_streaming_synthesis_refuses_cleanly_when_pool_is_full
+    speech = Master::Voice::Speech
+    nested_results = []
+    unlocked = lambda do |text, output_path:, on_chunk: nil, **opts|
+      if text == "outer"
+        nested_results << speech.synthesize_streaming_to_file("nested", output_path:)
+        "outer-result"
+      else
+        flunk "nested synthesis must be refused before reaching the locked worker slot"
+      end
+    end
+
+    Master::Voice::TtsSupervisor.stub(:pool_size, 1) do
+      speech.stub(:synthesize_streaming_to_file_unlocked, unlocked) do
+        assert_equal "outer-result", speech.synthesize_streaming_to_file(
+          "outer", output_path: File.join(Dir.tmpdir, "unused-recursive-test.mp3"),
+        )
+      end
+    end
+
+    assert_equal [false], nested_results
+    assert_match(/recursive streaming synthesis refused/, speech.last_error)
+  end
+
   def test_streaming_falls_back_to_say_when_edge_and_espeak_miss
     path = File.join(Dir.tmpdir, "m3_stream_say_fallback_test.mp3")
     Master::Voice::Speech.stub(:attempt_espeak_synthesis, false) do
