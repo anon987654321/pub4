@@ -74,9 +74,20 @@ module Master
 
       # The first catalogue model on a lane, for a probe of that lane.
       def model_for_lane(lane)
-        LaneSelection.catalogue.find do |model|
+        cfg = LaneSelection.config
+        models = cfg.fetch("models", {}).values.flatten.filter_map do |row|
+          row["id"] if row.is_a?(Hash)
+        end
+        models.concat(cfg.fetch("model_defs", {}).values.filter_map { |row| row["id"] if row.is_a?(Hash) })
+        cfg.fetch("cli_lanes", {}).each do |name, spec|
+          models.concat(Array(spec["models"]).map { |model| "#{name}:#{model}" })
+        end
+        models.uniq.find do |model|
           LaneQuota.lane_of(model) == lane || model.start_with?(lane.to_s)
         end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "LaneHealth.model_for_lane", lane:)
+        nil
       end
 
       def online_via(models, refuses: ->(model) { dead?(model) })
