@@ -884,12 +884,13 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
 });
 
 
-test("shell chrome contains no ASCII wordmark and restores the native prompt", () => {
+test("shell chrome uses plain CLI prompt words and the monospace source font", () => {
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
   assert.doesNotMatch(view, /id="wordmark"|Contract\.wordmark|Contract\.glyph/);
-  assert.match(view, /class="pp"[^>]*><%= t\("face\.prompt_user"\) %><\/span>/);
-  assert.match(view, /class="sep2"[^>]*>\$ <\/span>/);
+  assert.match(view, /class="pp"[^>]*><%= Master::Face::Contract\.user_token %><\/span>/);
+  assert.doesNotMatch(view, /class="sep2"|\$ <\/span>/);
+  assert.match(css, /--font-mono:\s*"Source Code Pro"/);
   assert.doesNotMatch(css, /\.wordmark\s*\{/);
 });
