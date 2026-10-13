@@ -414,9 +414,11 @@ class TestSpeech < Minitest::Test
   def test_recursive_streaming_synthesis_refuses_cleanly_when_pool_is_full
     speech = Master::Voice::Speech
     nested_results = []
-    unlocked = lambda do |text, output_path:, on_chunk: nil, **opts|
+    nested_errors = []
+    unlocked = lambda do |text, output_path:, _on_chunk: nil, **_opts|
       if text == "outer"
         nested_results << speech.synthesize_streaming_to_file("nested", output_path:)
+        nested_errors << speech.last_error
         "outer-result"
       else
         flunk "nested synthesis must be refused before reaching the locked worker slot"
