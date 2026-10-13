@@ -79,6 +79,12 @@ class TestLaneSelection < Minitest::Test
     assert_equal [OPUS, GROK, AGY, DEEPSEEK, LOCAL, NEMOTRON], Selection.order([NEMOTRON, DEEPSEEK, AGY, GROK, LOCAL, OPUS])
   end
 
+  def test_browser_websites_have_independent_provider_identity
+    assert_equal "web-chat:grok", Selection.provider("web-chat:grok")
+    assert_equal "web-chat:chatgpt", Selection.provider("web-chat:chatgpt")
+    refute_equal Selection.provider("web-chat:grok"), Selection.provider("web-chat:chatgpt")
+  end
+
   def test_the_boot_choice_is_the_first_live_lane_and_names_its_source
     assert_equal [OPUS, "availability"], Selection.boot_choice(env: {}, saved: nil, alive: ALL)
     assert_equal [AGY, "MASTER_MODEL"], Selection.boot_choice(env: { "MASTER_MODEL" => AGY }, saved: nil, alive: ALL)
