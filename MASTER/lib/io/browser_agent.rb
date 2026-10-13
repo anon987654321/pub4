@@ -26,6 +26,7 @@ module Master
       MAX_SELECTOR = 300
       MAX_VALUE = 4_000
       MAX_CAPTURES = 500
+      MAX_PAGINATION_OUTPUT_BYTES = 128 * 1024
       SESSION_ID = /\A[A-Za-z0-9_-]{1,40}\z/.freeze
       OPERATIONS = %w[click set type].freeze
       DEFAULT_NEXT_SELECTORS = [
@@ -94,7 +95,7 @@ module Master
         permission = @governor.permit?(NAME, TIER, "navigate #{uri}")
         return permission if permission.err?
 
-        state = open_session(key, host: uri.host, headless: true)
+        state = open_session(key, host: uri.host, headless: headless_for_navigation(key))
         state.mutex.synchronize do
           ensure_session_host!(state, uri)
           @transport.reset_page_budget(state.page)
@@ -179,12 +180,20 @@ module Master
         return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
 
         pages = []
+        output_bytes = 0
+        output_limited = false
         state.mutex.synchronize do
           limit.times do
             result = render(state, links:)
             return result unless result.ok?
 
-            pages << result.value!
+            page_text = result.value!.to_s
+            if output_bytes + page_text.bytesize > MAX_PAGINATION_OUTPUT_BYTES
+              output_limited = true
+              break
+            end
+            pages << page_text
+            output_bytes += page_text.bytesize
             break if pages.size >= limit
 
             node = state.page.at_css(selector)
@@ -199,7 +208,9 @@ module Master
             settle(wait)
           end
         end
-        Result.ok("paginated #{pages.size} page(s)\n\n#{pages.each_with_index.map { |page, index| "Page #{index + 1}\n#{page}" }.join("\n\n---\n\n")}")
+        note = output_limited ? " (stopped at #{MAX_PAGINATION_OUTPUT_BYTES} byte output limit)" : ""
+        body = pages.each_with_index.map { |page, index| "Page #{index + 1}\n#{page}" }.join("\n\n---\n\n")
+        Result.ok("paginated #{pages.size} page(s)#{note}\n\n#{body}")
       end
 
       def interact(key, raw_selector, value, operation, wait:, links:)
@@ -306,6 +317,14 @@ module Master
 
       def lookup_session(key)
         @mutex.synchronize { @sessions[key] }
+      end
+
+      # Once the operator has signed in through a visible window, explicit
+      # navigation reuses that window rather than silently trying to replace it
+      # with a headless session. A new session remains headless by default.
+      def headless_for_navigation(key)
+        state = lookup_session(key)
+        state.nil? ? true : state.headless
       end
 
       def close(key)
