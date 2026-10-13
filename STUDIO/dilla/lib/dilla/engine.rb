@@ -37,6 +37,7 @@ def run(argv)
     o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
     o.on('--sonitex [PRESET]', 'The 12-bit sampler colour chain on the voice bus') { |v| options[:sonitex] = v || true }
     o.on('--sonitex-instances N', Integer, 'Run it 1 to 3 times: one is a colour, three are a sound') { |v| options[:sonitex_instances] = v }
+    o.on('--drum-tape LEVEL', %w[light medium heavy], 'Analogue tape saturation on the drum bus') { |v| options[:drum_tape] = v }
     o.on('--vcs [AMOUNT]', Float, 'The summing colour, 0 to 1, on each bus and the master') { |v| options[:vcs] = v || true }
     o.on('--transpose N', Integer, 'Move every note N semitones before synthesis; tempo and echo timing stay') { |v| options[:transpose] = v }
     o.on('--octaves N', Integer, 'Sugar for --transpose 12*N') { |v| options[:transpose] = 12 * v }
@@ -147,7 +148,7 @@ def render(data, options)
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
   buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
-  buf = seq.overlay_drums(buf, hits, levels, vcs, sonitex: drum_sonitex) if drums
+  buf = seq.overlay_drums(buf, hits, levels, vcs, sonitex: drum_sonitex, tape: options[:drum_tape]) if drums
   return buf if options[:buffer_only]
 
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
@@ -192,7 +193,7 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
       when 'held'
         layer_buffer = Array.new(buf.size, 0.0)
         beat_seconds = 60.0 / bpm
-        chords = Chords.midi_notes(names, search:, transpose: options[:transpose] || 0, wrap: options[:wrap])
+        chords = Chords.midi_notes(names, search:, transpose: (options[:transpose] || 0) + layer.fetch('transpose', 0).to_i, wrap: options[:wrap])
         plucks = chords.each_with_index.map do |notes, index|
           Pluck.new(index * beats * beat_seconds, 0.0, notes, beats * beat_seconds * gate,
                     layer.fetch('velocity', 0.55).to_f.clamp(0.0, 1.0))
@@ -262,6 +263,7 @@ def render_showcase(data, options)
       layers: section['layers'],
       drum_sonitex: options[:drum_sonitex] || section['drum_sonitex'],
       drum_sonitex_instances: options[:drum_sonitex_instances] || section['drum_sonitex_instances'],
+      drum_tape: options[:drum_tape] || section['drum_tape'],
       seed: seed + (index * 97),
       groove: options[:groove],
       transpose: options[:transpose],
