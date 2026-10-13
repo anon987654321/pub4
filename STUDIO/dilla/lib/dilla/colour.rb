@@ -95,6 +95,26 @@ module Colour
     out
   end
 
+  # A heavy but static tape stage for drum buses: input bandwidth, a restrained head bump,
+  # saturation and compression. No wow, flutter, tremolo, chorus or other pitch modulation.
+  def self.tape(buf, amount: 1.0)
+    amount = amount.to_f.clamp(0.0, 1.0)
+    return buf if amount.zero? || buf.empty?
+
+    pre = FX.lowpass(buf, 14_000.0)
+    low = FX.lowpass(pre, 82.0)
+    drive = 1.0 + (3.2 * amount)
+    wet_share = 0.72 * amount
+    curve = Math.tanh(drive)
+    out = pre.each_index.map do |i|
+      pushed = pre[i] + (low[i] * 0.10 * amount)
+      saturated = Math.tanh(pushed * drive) / curve
+      (pre[i] * (1.0 - wet_share)) + (saturated * wet_share)
+    end
+    out = highpass(out, 26.0)
+    compress(out, -15.0, 2.8, 7.0, 85.0, 0.0)
+  end
+
   # The summing colour: a soft knee that bends only the peaks, a touch of low warmth, and
   # unity gain for small signals, so summed material glues without getting louder.
   def self.vcs(buf, amount)
