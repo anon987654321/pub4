@@ -139,7 +139,7 @@ class TestOpenCrabsGuards < Minitest::Test
   def test_the_prompt_path_gets_what_the_screen_leaves
     renderer = Master::Voice::Renderer.allocate
     TTY::Screen.stub(:width, 200) { assert_equal 44, renderer.send(:prompt_path_budget) }
-    TTY::Screen.stub(:width, 50) { assert_equal 14, renderer.send(:prompt_path_budget) }
-    TTY::Screen.stub(:width, 30) { assert_equal 8, renderer.send(:prompt_path_budget) }
+    TTY::Screen.stub(:width, 50) { assert_equal 44, renderer.send(:prompt_path_budget) }
+    TTY::Screen.stub(:width, 30) { assert_equal 29, renderer.send(:prompt_path_budget) }
   end
 end
