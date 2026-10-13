@@ -98,6 +98,7 @@ module Master
           # exists but its provider is out of quota. Operators can disable this
           # capability explicitly; it is not gated on having zero API keys.
           def web_chat_enabled?
+            return false if ENV["MASTER_LOCAL_ONLY"] == "1"
             return false if ENV["MASTER_NO_WEB_CHAT"] == "1"
             return false if ENV["MASTER_WEB_CHAT"].to_s == "0"
 
