@@ -51,7 +51,7 @@ module Master
       end
 
       def disabled_message
-        "web chat disabled; unset #{ENABLE_ENV}=0 and #{'MASTER_NO_WEB_CHAT'}"
+        "web chat disabled; unset MASTER_WEB_CHAT=0 and MASTER_NO_WEB_CHAT=1"
       end
 
       def provider_config(name)
@@ -158,7 +158,7 @@ module Master
         rescue StandardError
           nil
         end.join(" ")
-        return false if metadata.match?(/(?:\A|[\s_-])(user|human|prompt|question|query)(?:\z|[\s_-])/) 
+        return false if metadata.match?(/(?:\A|[\s_-])(user|human|prompt|question|query)(?:\z|[\s_-])/)
         return true if metadata.match?(/assistant|response|bot|model|markdown-body|message-content/)
 
         !submitted_prompt_echo?(extract_text(node))
