@@ -10,6 +10,7 @@ class TestToolsHierarchy < Minitest::Test
   MASTER_ROOT = File.join(REPO_ROOT, "MASTER")
   TOOLS_ROOT = File.join(MASTER_ROOT, "tools")
   VOICE_TOOLS = %w[voice_benchmark.rb voice_measure.rb voice_quality.rb].freeze
+  RESEARCH_TOOLS = %w[cognition_benchmark.rb llm_challenges.rb llm_trajectory.rb].freeze
 
   def test_voice_implementations_live_in_their_canonical_family
     VOICE_TOOLS.each do |name|
@@ -58,6 +59,40 @@ class TestToolsHierarchy < Minitest::Test
     end
   end
 
+  def test_research_implementations_live_in_their_canonical_family
+    RESEARCH_TOOLS.each do |name|
+      assert File.file?(File.join(TOOLS_ROOT, "research", name)), "missing tools/research/#{name}"
+      assert File.file?(File.join(TOOLS_ROOT, name)), "legacy entrypoint disappeared: tools/#{name}"
+    end
+  end
+
+  def test_legacy_research_entrypoints_delegate_to_canonical_sources
+    RESEARCH_TOOLS.each do |name|
+      source = File.read(File.join(TOOLS_ROOT, name))
+      assert_includes source, "File.expand_path(\"research/#{name}\", __dir__)"
+      assert_includes source, "load target"
+      assert_includes source, "require_relative \"research/#{name.delete_suffix('.rb')}\""
+    end
+  end
+
+  def test_research_source_paths_and_invocation_examples_use_the_new_directory
+    cognition = File.read(File.join(TOOLS_ROOT, "research", "cognition_benchmark.rb"))
+    challenges = File.read(File.join(TOOLS_ROOT, "research", "llm_challenges.rb"))
+    trajectory = File.read(File.join(TOOLS_ROOT, "research", "llm_trajectory.rb"))
+
+    assert_includes cognition, 'require_relative "../../lib/cognition/benchmark"'
+    assert_includes challenges, 'ROOT = File.expand_path("../../..", __dir__)'
+    assert_includes trajectory, 'MASTER/tools/research/llm_trajectory.rb contract'
+  end
+
+  def test_path_ownership_declares_the_research_tools_family
+    ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
+    row = ownership.fetch("tools/research/")
+
+    assert_includes row.fetch("purpose"), "cognition benchmarks"
+    assert_equal "medium", row.fetch("risk")
+    assert_includes row.fetch("check"), "test_cognition_outcome_model.rb"
+  end
   def test_path_ownership_declares_the_voice_tools_family
     ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
     row = ownership.fetch("tools/voice/")
