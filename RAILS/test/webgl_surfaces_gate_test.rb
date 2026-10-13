@@ -15,7 +15,7 @@ class WebglSurfacesGateTest < Minitest::Test
   REPO = File.expand_path("../..", __dir__)
 
   def test_the_manifest_registers_it_under_the_rendered_suite
-    row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("webgl_surfaces")
+    row = YAML.safe_load_file(File.join(REPO, "MASTER", "gates", "gates.yml")).fetch("webgl_surfaces")
 
     assert_equal "lib/rendered/webgl_surfaces", row.fetch("require")
     assert_equal "Deploy::WebglSurfacesGate", row.fetch("class")
@@ -23,7 +23,7 @@ class WebglSurfacesGateTest < Minitest::Test
   end
 
   def test_the_suite_runs_it
-    source = File.read(File.join(ROOT, "gates/lib/rendered_suite.rb"))
+    source = File.read(File.join(REPO, "MASTER", "gates", "lib", "rendered_suite.rb"))
 
     assert_includes source, "rendered/webgl_surfaces"
     assert_includes source, "WebglSurfacesGate"
@@ -35,8 +35,8 @@ class WebglSurfacesGateTest < Minitest::Test
   def test_swiftshader_is_opt_in_and_disable_gpu_is_the_default
     # Two files since the split: the flags are built where Chrome is launched,
     # the session still takes the keyword that selects between them.
-    flags = File.read(File.join(ROOT, "gates/support/chrome_process.rb"))
-    session = File.read(File.join(ROOT, "gates/support/cdp_session.rb"))
+    flags = File.read(File.join(REPO, "MASTER", "gates", "support", "chrome_process.rb"))
+    session = File.read(File.join(REPO, "MASTER", "gates", "support", "cdp_session.rb"))
 
     assert_match(/@webgl \?.*swiftshader.*disable-gpu/m, flags,
                  "the flag has to be a branch, not a replacement")
