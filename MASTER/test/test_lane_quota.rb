@@ -225,11 +225,18 @@ class TestLaneQuota < Minitest::Test
   end
 
   def test_browser_chat_failures_are_scoped_to_the_website
+    Silence.record(true, "web-chat:grok")
+    Silence.record(true, "web-chat:chatgpt")
     assert_equal "web-chat:grok", Quota.lane_of("web-chat:grok")
     assert_equal "web-chat:chatgpt", Quota.lane_of("web-chat:chatgpt")
     refute_equal Quota.lane_of("web-chat:grok"), Quota.lane_of("web-chat:chatgpt")
     assert_equal "web-chat:grok", Silence.lane_of("web-chat:grok")
-    refute Silence.silent?("web-chat:chatgpt")
+    Silence::SILENT_AFTER.times { Silence.record(false, "web-chat:grok", reason: "website failure") }
+    assert Silence.silent?("web-chat:grok")
+    refute Silence.silent?("web-chat:chatgpt"), "Grok's failures must not silence ChatGPT"
+  ensure
+    Silence.record(true, "web-chat:grok")
+    Silence.record(true, "web-chat:chatgpt")
   end
 
   def test_status_reports_global_free_pool_quota_instead_of_misleading_vendor_silence
