@@ -15,7 +15,7 @@ class TestConflictResolverLogRotation < Minitest::Test
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, "x" * (Master::Fix::ConflictResolver::LOG_MAX_BYTES + 1))
 
-      resolver.send(:log_conflict, rule_a: "A", rule_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
+      resolver.send(:log_conflict, law_a: "A", law_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
 
       assert File.exist?("#{path}.1"), "oversized log should be rotated aside, not appended to"
       assert File.exist?(path), "a fresh log file should exist after rotation"
@@ -33,7 +33,7 @@ class TestConflictResolverLogRotation < Minitest::Test
 
       total_rotations.times do |n|
         File.write(path, "gen#{n}" + ("x" * Master::Fix::ConflictResolver::LOG_MAX_BYTES))
-        resolver.send(:log_conflict, rule_a: "A", rule_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
+        resolver.send(:log_conflict, law_a: "A", law_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
       end
 
       refute File.exist?("#{path}.#{generations + 1}"), "should never keep more than #{generations} rotated generations"
@@ -49,7 +49,7 @@ class TestConflictResolverLogRotation < Minitest::Test
       resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
       path = File.join(dir, Master::Fix::ConflictResolver::LOG_PATH)
 
-      resolver.send(:log_conflict, rule_a: "A", rule_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
+      resolver.send(:log_conflict, law_a: "A", law_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
 
       refute File.exist?("#{path}.1"), "a small log should never rotate"
       assert File.exist?(path)
