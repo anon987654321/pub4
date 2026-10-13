@@ -337,9 +337,10 @@ module Dilla
 
     def profile_for(mix, style: "general")
       bands = mix.fetch("spectral_bands_db", {})
-      low = ((bands.fetch("sub_25_120_hz", -36.0) - bands.fetch("low_mid_120_500_hz", -36.0) + 8.0) / 24.0).clamp(0.0, 1.0)
-      bright = ((bands.fetch("high_4000_plus_hz", -36.0) - bands.fetch("mid_500_4000_hz", -36.0) + 10.0) / 24.0).clamp(0.0, 1.0)
-      bpm = mix.dig("tempo", "bpm")&.to_f
+      level = ->(name, fallback) { numeric_value(bands[name]) || fallback }
+      low = ((level.call("sub_25_120_hz", -36.0) - level.call("low_mid_120_500_hz", -36.0) + 8.0) / 24.0).clamp(0.0, 1.0)
+      bright = ((level.call("high_4000_plus_hz", -36.0) - level.call("mid_500_4000_hz", -36.0) + 10.0) / 24.0).clamp(0.0, 1.0)
+      bpm = numeric_value(mix.dig("tempo", "bpm"))
       key = style_key(style)
       common = { "style_key" => key, "measured_bpm" => bpm,
                  "tempo_confidence" => mix.dig("tempo", "confidence"), "meter" => "4/4",
