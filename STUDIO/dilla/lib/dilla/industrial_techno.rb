@@ -175,8 +175,9 @@ module Dilla
     end
 
     def profile_matches_industrial_techno?(path)
-      JSON.parse(File.read(path))["genre"] == "industrial_techno"
-    rescue JSON::ParserError, Errno::ENOENT
+      profile = JSON.parse(File.read(path))
+      profile.is_a?(Hash) && profile["genre"] == "industrial_techno"
+    rescue JSON::ParserError, Errno::ENOENT, TypeError
       false
     end
   end
