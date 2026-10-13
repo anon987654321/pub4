@@ -81,11 +81,8 @@ module Master
 
         private
 
-        # A quoted string on a record line is a value, and curling it changes the
-        # value: a repair preview printed {“FEW_ARGUMENTS” => 28}, which is no
-        # longer the hash it came from and no longer pastes back into anything.
-        # The test is the one prose_line? already uses for the same reason — a
-        # line carrying an `=` is a record, and its columns mean something.
+        # Quoted strings on record lines carry data, so typography changes only
+        # prose. Keep straight quotes in hashes, values and key=value records.
         def curl_quotes(text)
           lines = text.lines.map do |line|
             next line if line.include?("=")
@@ -101,8 +98,6 @@ module Master
           @p.bold(text)
         rescue StandardError
           text
-        end
-
         end
       end
     end
