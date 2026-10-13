@@ -30,6 +30,7 @@ module Master
       REFERENCE_GENERATION_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
       REFERENCE_FOLLOWUP_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
       INDUSTRIAL_TECHNO_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\bindustrial[ -]techno\b|\bindustrial[ -]techno\b.*\b(?:track|music|beat|loop|instrumental)\b/i.freeze
+      TECHNO_TRACK_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\btechno\b|\btechno\b.*\b(?:track|music|beat|loop|instrumental)\b/i.freeze
       SYNTH_RE = /\b(?:play|generate|create|make|render)\b.*\b(?:sine|square|triangle|saw|white|brown)\b.*\b(?:wave|noise|tone)\b/i.freeze
       # "Play" means the speakers and "make" means a file. A sentence that says
       # both ("make and play") gets the file, which it can then play.
@@ -63,7 +64,7 @@ module Master
       POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
       def handles?(text)
-        LoraIntent.handles?(text) || reference_audio_request?(text) || reference_followup_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
+        LoraIntent.handles?(text) || reference_audio_request?(text) || reference_followup_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(TECHNO_TRACK_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
@@ -75,9 +76,9 @@ module Master
           return analyze_reference(text, root:)
         end
         return generate_from_reference(text, root:) if reference_followup_request?(text)
-        return generate_industrial_techno(text, root:) if text.match?(INDUSTRIAL_TECHNO_RE)
-        return postpro_capability if POSTPRO_CAPABILITY_RE.match?(text)
         return generate_kick(text, root:) if text.match?(KICK_RE)
+        return generate_industrial_techno(text, root:) if text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(TECHNO_TRACK_RE)
+        return postpro_capability if POSTPRO_CAPABILITY_RE.match?(text)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
         return stop_live_audio(root:, bus:) if text.match?(LIVE_AUDIO_STOP_RE)
