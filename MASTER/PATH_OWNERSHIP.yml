@@ -178,6 +178,10 @@ ownership:
     purpose: tracked-tree inventory, entrypoint reachability and structural migration planning
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
+  tools/audit/:
+    purpose: substantive repository audits for capability inventory, data reachability, duplication and Law metadata
+    risk: medium
+    check: cd MASTER && ruby -Ilib:test test/test_capability_inventory.rb
   script/:
     purpose: style guide sync and canon generation gates run from Rakefile
     risk: medium
