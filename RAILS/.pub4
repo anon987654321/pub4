@@ -1,0 +1,9 @@
+schema: 1
+tree: rails
+allows:
+  master: read
+  rails: read_write
+  openbsd: none
+  studio: none
+adapters:
+  - MASTER/contracts/rails.rb

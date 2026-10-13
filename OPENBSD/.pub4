@@ -1,0 +1,8 @@
+schema: 1
+tree: openbsd
+allows:
+  master: read
+  rails: none
+  openbsd: read_write
+  studio: none
+adapters: []

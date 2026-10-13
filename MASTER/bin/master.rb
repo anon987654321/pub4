@@ -10,6 +10,11 @@ CLI = File.join(MASTER, "bin", "cli").freeze
 
 ENV["PUB4_ROOT"] ||= ROOT
 
+if ARGV.first == "replay"
+  require_relative "../lib/fix/kernel"
+  exit Master::Fix::Kernel.replay_cli(root: ROOT, seq: ARGV[1])
+end
+
 if ARGV.first == "--fix-context"
   target = ARGV[1] && !ARGV[1].start_with?("-") ? ARGV[1] : ROOT
   full = ARGV.include?("--full")
@@ -32,6 +37,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
       bin/master "<instruction>"
       bin/master --fold "<goal>"
       bin/master --fix-context [target] [--full]
+      bin/master replay <sequence>
       bin/master --daemon
       bin/master --fast
       echo '/status' | bin/master
