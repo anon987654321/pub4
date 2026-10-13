@@ -71,6 +71,16 @@ The surveys of past UI work sit beside this file: the layout and surface refinem
 matrices, the social front page and the two archaeology notes. They are records, not
 contracts.
 
+## External page extraction
+
+`Shared::Scrape` is an outbound-network boundary, not just a browser helper. It accepts
+public HTTP(S) entry URLs only, refuses local/private/reserved address ranges and hostnames,
+and rechecks every browser request so redirects and embedded resources cannot point at
+loopback or cloud metadata. DNS answers containing even one blocked address are refused.
+This application guard complements host-level egress/firewall policy; it is not a substitute
+for it. The public/private target contract is tested in
+`RAILS/brgen/test/services/shared_scrape_test.rb`.
+
 ## Checking it
 
 ```zsh
