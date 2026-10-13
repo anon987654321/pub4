@@ -202,7 +202,8 @@ class TestRenderer < Minitest::Test
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       assert_includes clean, "read only irc a very"
       assert_includes clean, "feature dirty"
-      assert_match(/[%$] \z/, clean)
+      assert_match(/input \z/, clean)
+      assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
     end
   end
 
