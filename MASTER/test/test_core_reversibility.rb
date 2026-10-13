@@ -10,7 +10,6 @@ require "tmpdir"
 class TestCoreReversibility < Minitest::Test
   E = Master::Core::Effect
   C = Master::Core::Constitution
-  R = Master::Core::Reversibility
   DATA_DIR = File.expand_path("../data", __dir__)
 
   class ScriptedModel
@@ -97,6 +96,14 @@ class TestCoreReversibility < Minitest::Test
     assert_equal :effect_reversibility, verdict.by
     assert_match(/shared index/, verdict.reason)
     assert_match(/Approve git stage on new.rb/, verdict.prompt)
+  end
+
+  def test_git_operation_without_a_world_handler_is_blocked
+    verdict = C.load(data_dir: DATA_DIR).admit(E.git(:reset), Master::Core::Memory.new)
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :effect_reversibility, verdict.by
+    assert_match(/no World handler/, verdict.reason)
   end
 
   def test_irreversible_git_mutation_does_not_reach_world_without_operator
