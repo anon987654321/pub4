@@ -144,6 +144,7 @@ module Master::Core
         council_for_done_rule,
         ideation_before_write_rule,
         new_path_rule,
+        effect_reversibility_rule,
       ]
     end
 
@@ -435,6 +436,29 @@ module Master::Core
       reason_rule(:new_path_ask, %i[write]) { |effect, memory| new_path_reason(effect.args[:path], memory.proof) }
     end
 
+    # Reversibility is derived from the actual Effect, not accepted as a model
+    # assertion. Durable Git mutations require an explicit yes; an operation
+    # without a World handler is blocked rather than "approved" into a dead end.
+    # A compensating command is separately re-admitted and approved after failure.
+    def self.effect_reversibility_rule
+      Law.new(id: :effect_reversibility, verbs: VERBS, judge: lambda { |effect, _memory|
+        contract = effect.reversibility
+        case contract.kind
+        when :approval_required
+          operation = effect.verb == :git ? " git #{effect.args[:operation]}" : " #{effect.verb}"
+          scope = contract.scope.to_s.empty? ? "" : " on #{contract.scope}"
+          Verdict::Request.new(
+            effect:,
+            prompt: "Approve#{operation}#{scope}? #{contract.reason}.",
+            reason: contract.reason,
+            by: :effect_reversibility,
+          )
+        when :unknown
+          Verdict::Block.new(reason: contract.reason, by: :effect_reversibility)
+        end
+      })
+    end
+
     # Prism parses in-process and returns every syntax error, so no child
     # process, PATH lookup or timeout stands between the fold and its next write.
     def self.ruby_syntax_error(content)
@@ -466,7 +490,7 @@ module Master::Core
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :git_commit_scope_rule, :council_for_done_rule,
-                         :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx
+                         :ideation_before_write_rule, :new_path_rule, :effect_reversibility_rule, :ruby_syntax_error, :safe_rx
 
     # One source for paths that are constitutionally protected.
     #
