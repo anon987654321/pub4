@@ -83,7 +83,7 @@ class TestBrowserAgent < Minitest::Test
       page: nil,
       mutex: Mutex.new,
       host: "example.com",
-      headless: true,
+      headless: false,
     )
     sessions["default"] = state
 
@@ -102,7 +102,7 @@ class TestBrowserAgent < Minitest::Test
       agent.send(:ensure_session_host!, state, URI("file:///etc/passwd"))
     end
     assert_raises(ArgumentError) do
-      agent.send(:open_session, "default", host: "example.com", headless: false)
+      agent.send(:open_session, "default", host: "example.com", headless: true)
     end
   end
 
