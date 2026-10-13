@@ -90,6 +90,20 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_a_failed_lane_check_shows_what_the_call_printed
+    with_worktree do |main, worker, tools_bin|
+      write_main_model(main)
+      output, status = run_fix_here(
+        worker, tools_bin, "MASTER",
+        env: { "FAKE_FIRST_LINE" => "rbenv: version 4.0.7 is not installed", "FAKE_EXIT" => "3" },
+      )
+
+      refute status.success?, output
+      assert_includes output, "the lane check wrote no metrics"
+      assert_includes output, "rbenv: version 4.0.7 is not installed"
+    end
+  end
+
   private
 
   def with_worktree
@@ -104,7 +118,7 @@ class TestFixHere < Minitest::Test
       %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
         File.join(main, "MASTER/bin/master"),
-        "#!/usr/bin/env ruby\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
+        "#!/usr/bin/env ruby\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\\n\"\n",
       )
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/fix-here"))
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/master"))

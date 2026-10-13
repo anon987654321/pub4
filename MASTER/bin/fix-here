@@ -94,13 +94,14 @@ end
 if probe && model
   before = File.file?(File.join(MASTER, ".master", "metrics.jsonl")) ? File.readlines(File.join(MASTER, ".master", "metrics.jsonl"), encoding: "UTF-8", invalid: :replace).size : 0
   question = "In one sentence: what bug does def total(items) items.sum { |i| i.price * i.qty } / items.size end have when items is empty?"
-  _, probe_ok = Open3.capture2e(env, File.join(MASTER, "bin", "master"), question)
+  probe_out, probe_ok = Open3.capture2e(env, File.join(MASTER, "bin", "master"), question)
+  probe_tail = probe_out.to_s.lines.map(&:strip).reject(&:empty?).last(8).join("\n  ")
   metrics = File.join(MASTER, ".master", "metrics.jsonl")
-  abort "fix-here: the lane check wrote no metrics (call ok=#{probe_ok}); the call never reached a model. Fix the lane or run with --no-probe." unless File.file?(metrics)
+  abort "fix-here: the lane check wrote no metrics (call ok=#{probe_ok}); the call never reached a model. Fix the lane or run with --no-probe.\nlast output of the call:\n  #{probe_tail}" unless File.file?(metrics)
 
   rows = File.readlines(metrics, encoding: "UTF-8", invalid: :replace).drop(before).grep(/llm_response/)
   served = rows.filter_map { |r| JSON.parse(r).dig("llm_response", "model") rescue nil }.last
-  abort "fix-here: the lane check failed (call ok=#{probe_ok}, served by #{served.inspect}, wanted #{model}). Run with --no-probe to skip, or fix the lane first." unless probe_ok && served == model
+  abort "fix-here: the lane check failed (call ok=#{probe_ok}, served by #{served.inspect}, wanted #{model}). Run with --no-probe to skip, or fix the lane first.\nlast output of the call:\n  #{probe_tail}" unless probe_ok && served == model
   puts "fix0 at fix-here: lane proven, #{served} answered"
 end
 
