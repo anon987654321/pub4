@@ -436,13 +436,15 @@ class TestKeylessRouting < Minitest::Test
     router.instance_variable_set(:@config, FakeConfig.new(model: "configured:model"))
     router.define_singleton_method(:local_only?) { false }
     router.define_singleton_method(:preferred) { |task_type:| "preferred:model" }
-    router.define_singleton_method(:tier_ids) { ["free-api:model"] }
+    router.define_singleton_method(:tier_ids) { ["vendor/free-api:model:free"] }
     router.define_singleton_method(:primary_models) { ["premium:subscription"] }
     router.define_singleton_method(:agy_catalog_models) { [] }
     router.define_singleton_method(:cli_lane_models) { |wait: false| [] }
     router.define_singleton_method(:continuity_models) { ["openrouter/free-model:free"] }
     router.define_singleton_method(:ollama_cloud_models) { [] }
     router.define_singleton_method(:hosted_models) { ["llm7:free-model"] }
+    router.define_singleton_method(:hosted_model?) { |model| model.start_with?("llm7:") }
+    router.define_singleton_method(:hosted_endpoint_for) { |_model| { key: nil } }
     router.define_singleton_method(:browser_chat_models) { ["web-chat:grok"] }
     router.define_singleton_method(:local_server_models) { ["local:qwen"] }
     router.define_singleton_method(:replicate_models) { [] }
@@ -450,7 +452,7 @@ class TestKeylessRouting < Minitest::Test
 
     chain = router.send(:priority_fallback_order, router.send(:chain_for, :exploration))
     positions = %w[
-      premium:subscription free-api:model openrouter/free-model:free
+      premium:subscription vendor/free-api:model:free openrouter/free-model:free
       llm7:free-model web-chat:grok local:qwen ollama:gemma3:4b
     ].map { |model| chain.index(model) }
 
