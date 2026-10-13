@@ -404,6 +404,49 @@ end
     end
   end
 
+  # Claude CLI explicitly disables native tools and MCP. The dispatcher must
+  # keep the authenticated CLI transport while MASTER drives its own guarded
+  # ReAct loop; sending this lane through RubyLLM loses the subscription.
+  def test_claude_cli_uses_the_guarded_react_tool_loop
+    dispatcher, = build_dispatcher
+    dispatcher.instance_variable_set(:@tools, [Object.new])
+    replies = [
+      '<tool_call>{"name":"Browser","args":{"action":"status"}}</tool_call>',
+      "The browser returned page evidence.",
+    ]
+    turns = []
+    tool_calls = []
+
+    dispatcher.define_singleton_method(:build_react_system) do |base|
+      "#{base}\nAvailable tools: Browser"
+    end
+    dispatcher.define_singleton_method(:send_claude_cli) do |model_alias, messages, sys:|
+      turns << { model_alias:, messages: messages.map(&:dup), system: sys }
+      Master::Result.ok(replies.shift)
+    end
+    dispatcher.define_singleton_method(:execute_react_tool) do |name, args|
+      tool_calls << { name:, args: }
+      "<tool_result name=\"#{name}\">browser ready</tool_result>"
+    end
+
+    result = dispatcher.send(
+      :send_llm_request,
+      "claude-cli:claude-sonnet-5-5",
+      [{ role: "user", content: "Read the public news page." }],
+      system: "Base instructions",
+      stream: false,
+    )
+
+    assert_predicate result, :ok?
+    assert_equal "The browser returned page evidence.", result.value!
+    assert_equal 2, turns.length
+    assert_equal "claude-sonnet-5-5", turns.first[:model_alias]
+    assert_includes turns.first[:system], "Available tools: Browser"
+    assert_includes turns.last[:messages].last[:content], "<tool_result name=\"Browser\">"
+    assert_equal "Browser", tool_calls.first[:name]
+    assert_equal "status", tool_calls.first[:args]["action"]
+  end
+
   # A :free id is absent from the registry, so it is zero only where the
   # provider catalog row itself says zero both ways.
   def test_a_free_model_costs_nothing_only_when_the_catalog_says_so
