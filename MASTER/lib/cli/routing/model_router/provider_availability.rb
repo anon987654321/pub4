@@ -28,7 +28,6 @@ module Master
               agy_ids << "agy:auto" if agy_ids.empty?
               models.concat(agy_ids)
             end
-            models.concat(keyless_web_chat_models) if keyless_mode?
             if claude_cli_available?
               models.concat(
                 Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
@@ -66,11 +65,6 @@ module Master
             Master.api_key_present?("XAI_API_KEY") || Master.api_key_present?("OPENROUTER_API_KEY")
           end
 
-          def keyless_web_chat_models
-            return [] unless web_chat_enabled?
-            Array(@rules.dig("ferrum_web_chat", "free_latest"))
-          end
-
           def keyless_mode?
             return true if ENV["MASTER_KEYLESS"].to_s != ""
             return true if auto_keyless? && !Master.any_api_key_present?
@@ -86,11 +80,18 @@ module Master
             end
           end
 
+          # API-backed free models remain ahead of browser-mediated free chat.
+          # Keep the browser lane separate so one explicit order governs every task.
           def continuity_models
             return [] if @rules.dig("continuity", "enabled") == false
-            latest = [@rules.dig("openrouter", "free_latest"), live_free_models]
-            latest << @rules.dig("ferrum_web_chat", "free_latest") if web_chat_enabled?
-            latest.flatten.compact.uniq
+
+            [@rules.dig("openrouter", "free_latest"), live_free_models].flatten.compact.uniq
+          end
+
+          def browser_chat_models
+            return [] unless web_chat_enabled?
+
+            Array(@rules.dig("ferrum_web_chat", "free_latest"))
           end
 
           def web_chat_enabled?
