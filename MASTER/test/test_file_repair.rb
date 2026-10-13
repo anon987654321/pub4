@@ -62,4 +62,29 @@ class TestFileRepair < Minitest::Test
       assert_equal %w[FEW_ARGUMENTS CQS], subject.asked_rules, "a split filtered out is not asked"
     end
   end
+  # Asking again with the same prompt returned the same diff that had not applied. The second
+  # prompt carries the failure, and only the second.
+  class SequenceAgent < Agent
+    def initialize(*answers) = (@answers = answers; @prompts = [])
+    def ask(prompt, **) = (@prompts << prompt; @answers.shift || @answers.last)
+  end
+
+  def test_a_diff_that_did_not_apply_is_explained_in_the_second_prompt
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, (["x = :bad"] + (["y = 1"] * 20)).join("\n") + "\n")
+      wrong = "```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,2 +1,2 @@\n-x = :nowhere\n+x = :good\n y = 1\n```"
+      right = "```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,2 +1,2 @@\n-x = :bad\n+x = :good\n y = 1\n```"
+      agent = SequenceAgent.new(wrong, right)
+
+      capture_io { repair(root, path, agent).run(path) }
+
+      fixes = agent.prompts.reject { |prompt| prompt.include?("Verify this proposed") }
+      assert_equal 2, fixes.size
+      refute_includes fixes.first, "did not apply"
+      assert_includes fixes.last, "your diff did not apply to the file"
+      assert_includes fixes.last, "copy every context line exactly"
+      assert_equal "x = :good\n", File.readlines(path).first
+    end
+  end
 end

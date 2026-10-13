@@ -65,10 +65,13 @@ module Master
 
       CONTEXT_LINES = 40
 
+      # A diff that did not apply is shown to the model on the next try, with patch's own
+      # count of failed hunks; asking again with the same prompt returned the same bad diff.
       def excerpt_fix(src:, path:)
-        prompt = excerpt_prompt(src, path)
+        failure = nil
         MAX_FIX_RETRIES.times do |attempt|
           wait_before_retry(attempt, rule: @law.id, file: path, mode: :excerpt)
+          prompt = failure ? RunLedger.retrying(failure) { excerpt_prompt(src, path) } : excerpt_prompt(src, path)
           response = ask_agent(prompt, image: @visual_image).to_s
           return RunLedger.declined("model_said_unchanged", file: path, law: @law.id) if response.strip == "UNCHANGED"
           return RunLedger.declined("empty_reply", file: path, law: @law.id) if response.strip.empty?
@@ -77,6 +80,7 @@ module Master
           return result.source if result.is_a?(PatchApplier::Success)
 
           RunLedger.declined("patch_rejected", file: path, law: @law.id, detail: result.reason)
+          failure = "your diff did not apply to the file (#{result.reason.to_s[/\A[^-]+/].to_s.strip}); copy every context line exactly as shown in the excerpt"
           @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: result.reason.to_s[0, 160])
         rescue StandardError => e
           return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
