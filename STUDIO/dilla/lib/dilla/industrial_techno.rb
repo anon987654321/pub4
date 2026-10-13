@@ -162,16 +162,21 @@ module Dilla
     end
 
     def read_profile(path)
-      candidate = if path
-                    expanded = File.expand_path(path)
-                    File.directory?(expanded) ? File.join(expanded, "profile.json") : expanded
-                  else
-                    File.join(Reference::REFERENCE_ROOT, "latest_profile.json")
-                  end
-      return nil unless File.file?(candidate)
-      profile = JSON.parse(File.read(candidate))
-      raise ArgumentError, "profile genre must be industrial_techno" unless profile["genre"] == "industrial_techno"
-      profile
+      candidates = if path
+                     expanded = File.expand_path(path)
+                     [File.directory?(expanded) ? File.join(expanded, "profile.json") : expanded]
+                   else
+                     [Reference.profile_path("industrial_techno"), File.join(Reference::REFERENCE_ROOT, "latest_profile.json")]
+                   end
+      candidate = candidates.find { |file| File.file?(file) && profile_matches_industrial_techno?(file) }
+      return nil unless candidate
+      JSON.parse(File.read(candidate))
+    end
+
+    def profile_matches_industrial_techno?(path)
+      JSON.parse(File.read(path))["genre"] == "industrial_techno"
+    rescue JSON::ParserError, Errno::ENOENT
+      false
     end
   end
 end
