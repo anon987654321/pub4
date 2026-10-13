@@ -19,7 +19,7 @@ module Master
     # A session is bound to the host that opened it. Interactive controls remain
     # a separate authority boundary and require fresh human approval.
     class BrowserAgent
-      NAME = "browser_agent".freeze
+      NAME = "browser".freeze
       TIER = :guarded
       MAX_SESSIONS = 4
       MAX_SESSION_ID = 40
@@ -62,14 +62,14 @@ module Master
         when "paginate" then paginate(key, selector, max_pages:, wait:, links:)
         when "interact" then interact(key, selector, value, operation, wait:, links:)
         when "close"    then close(key)
-        else Result.err("browser_agent: unknown action: #{action}", category: :validation)
+        else Result.err("browser: unknown action: #{action}", category: :validation)
         end
       rescue ArgumentError => e
         Result.err("browser_agent: #{e.message}", category: :validation)
       rescue URI::InvalidURIError => e
         Result.err("browser_agent: invalid URL: #{e.message}", category: :validation)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "BrowserAgent")
+        Master::Ground::Swallow.log(e, context: "Browser")
         Result.err("browser_agent: #{e.class}: #{e.message.lines.first.to_s.strip[0, 200]}", category: :infrastructure)
       end
 
@@ -79,7 +79,7 @@ module Master
         rows = @mutex.synchronize do
           @sessions.sort.map { |key, state| "#{key}=#{state.host} (#{state.headless ? "headless" : "visible"})" }
         end
-        Result.ok("browser_agent ready; browser=#{ferrum_available? ? "ferrum" : "unavailable"}; " \
+        Result.ok("browser ready; runtime=#{ferrum_available? ? "ferrum" : "unavailable"}; " \
                    "sessions=#{rows.empty? ? "none" : rows.join(", ")}")
       end
 
