@@ -95,6 +95,18 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal ["empty_reply 1", "new_violations 1"], Ledger.why_line.split(", ").sort
   end
 
+  # A pass cut short by a hot reload attempted nothing; calling the run completed was a pass
+  # reported over work that never ran.
+  def test_a_run_cut_by_a_reload_does_not_report_completed
+    loop = Master::Fix::FixLoop.allocate
+    ok = Struct.new(:ok?).new(true)
+
+    assert_equal "completed", loop.send(:run_end_reason, ok)
+    Master::Fix::CodeWatch.stub(:requested?, true) do
+      assert_match(/\Areloading/, loop.send(:run_end_reason, ok))
+    end
+  end
+
   def test_a_file_that_outlasts_its_budget_is_skipped_and_recorded
     ENV["MASTER_FIX_FILE_BUDGET_S"] = "1"
     loop = budget_loop

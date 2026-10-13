@@ -219,8 +219,16 @@ module Master
         terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
       end
 
+      # A pass cut short by a hot reload attempted nothing and is not a completed run; the
+      # restarted process carries the work on.
+      def run_end_reason(result)
+        return "reloading: origin/main changed" if CodeWatch.requested?
+
+        result.respond_to?(:ok?) && result.ok? ? "completed" : "failed: #{result.to_s[0, 80]}"
+      end
+
       def finish_run(result, target, run_id, mission: nil, requested: false)
-        RunBudget.finish_run(reason: result.respond_to?(:ok?) && result.ok? ? "completed" : "failed: #{result.to_s[0, 80]}")
+        RunBudget.finish_run(reason: run_end_reason(result))
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
         evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
