@@ -22,9 +22,12 @@ module Master
       IMAGE_RE = /\b(?:make|create|generate|render|photograph|photo|portrait|image|picture)\b/i.freeze
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
       KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
-      REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand)\b/i.freeze
+      REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand|teach|model|use as (?:a )?reference|sound like|inspired by|learn the sound of)\b/i.freeze
+      REFERENCE_STYLE_RE = /\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop|industrial[ -]?techno|techno)\b/i.freeze
       REFERENCE_URL_RE = /https?:\/\/(?:www\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/watch\?v=[A-Za-z0-9_-]{11})[^\s<>"'\]\)]*/i.freeze
       AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
+      REFERENCE_GENERATION_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
+      REFERENCE_FOLLOWUP_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
       INDUSTRIAL_TECHNO_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\bindustrial[ -]techno\b|\bindustrial[ -]techno\b.*\b(?:track|music|beat|loop|instrumental)\b/i.freeze
       SYNTH_RE = /\b(?:play|generate|create|make|render)\b.*\b(?:sine|square|triangle|saw|white|brown)\b.*\b(?:wave|noise|tone)\b/i.freeze
       # "Play" means the speakers and "make" means a file. A sentence that says
@@ -59,14 +62,18 @@ module Master
       POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
       def handles?(text)
-        LoraIntent.handles?(text) || reference_audio_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
+        LoraIntent.handles?(text) || reference_audio_request?(text) || reference_followup_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root, bus: nil)
         return LoraIntent.dispatch(text, root:) if LoraIntent.handles?(text)
-        return analyze_reference(text, root:) if reference_audio_request?(text)
+        if reference_audio_request?(text)
+          return analyze_and_generate_reference(text, root:) if reference_generation_request?(text)
+          return analyze_reference(text, root:)
+        end
+        return generate_from_reference(text, root:) if reference_followup_request?(text)
         return generate_industrial_techno(text, root:) if text.match?(INDUSTRIAL_TECHNO_RE)
         return postpro_capability if POSTPRO_CAPABILITY_RE.match?(text)
         return generate_kick(text, root:) if text.match?(KICK_RE)
@@ -372,18 +379,72 @@ module Master
       end
 
       def reference_audio_request?(text)
-        text.match?(REFERENCE_AUDIO_RE) && (text.match?(REFERENCE_URL_RE) || text.match?(AUDIO_FILE_RE))
+        source = text.match(REFERENCE_URL_RE)&.to_s || text.match(AUDIO_FILE_RE)&.to_s
+        return false unless source
+        return true if text.match?(REFERENCE_AUDIO_RE) || text.match?(REFERENCE_STYLE_RE)
+        # A pasted YouTube URL by itself is an audio reference in MASTER's music workflow.
+        text.gsub(REFERENCE_URL_RE, "").strip.empty? && text.match?(REFERENCE_URL_RE)
+      end
+
+      def reference_style_for(text)
+        return "industrial_techno" if text.match?(/\bindustrial[ -]?techno\b|\btechno\b/i)
+        return "j_dilla" if text.match?(/\bj\s*dilla\b|\bdilla\b|\bboom[ -]?bap\b|\bhip[ -]?hop\b/i)
+        "general"
+      end
+
+      def reference_generation_request?(text)
+        text.match?(REFERENCE_URL_RE) && text.match?(REFERENCE_GENERATION_RE)
+      end
+
+      def reference_followup_request?(text)
+        text.match?(REFERENCE_FOLLOWUP_RE)
+      end
+
+      def reference_profile_path
+        base = ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents"))
+        File.join(base, "dilla-references", "latest_profile.json")
+      end
+
+      def latest_reference_profile
+        JSON.parse(File.read(reference_profile_path))
+      rescue Errno::ENOENT, JSON::ParserError, TypeError
+        nil
       end
 
       def analyze_reference(text, root:)
         source = text.match(REFERENCE_URL_RE)&.to_s || text.match(AUDIO_FILE_RE)&.to_s
         return Result.err("dilla reference: provide a YouTube URL or local audio file", category: :validation) unless source
         args = ["reference", source]
+        args.concat(["--style", reference_style_for(text)]) if text.match?(REFERENCE_STYLE_RE)
         args << "--no-stems" if text.match?(/\bwithout stems\b|\bskip (?:the )?stem separation\b/i)
         result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
         return result unless result.ok?
         output = result.value!.to_s
-        Result.ok({ output:, rendered: output, media: :audio_reference_analysis })
+        Result.ok({ output:, rendered: output, media: :audio_reference_analysis, style: reference_style_for(text) })
+      end
+
+      def analyze_and_generate_reference(text, root:)
+        analysis = analyze_reference(text, root:)
+        return analysis unless analysis.ok?
+        generated = if reference_style_for(text) == "industrial_techno"
+                      generate_industrial_techno(text, root:)
+                    else
+                      generate_beat(text, root:)
+                    end
+        return generated unless generated.ok?
+        output = [analysis.value![:rendered], generated.value![:rendered]].compact.join("\n")
+        Result.ok(generated.value!.merge(output:, rendered: output, reference_analysis: analysis.value![:rendered]))
+      end
+
+      def generate_from_reference(text, root:)
+        profile = latest_reference_profile
+        return generate_beat(text, root:) unless profile
+        case profile["style_key"]
+        when "industrial_techno"
+          generate_industrial_techno(text, root:)
+        else
+          generate_beat(text, root:)
+        end
       end
 
       def generate_industrial_techno(text, root:)
