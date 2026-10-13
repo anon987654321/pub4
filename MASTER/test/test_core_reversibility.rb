@@ -153,6 +153,23 @@ class TestCoreReversibility < Minitest::Test
     assert_equal "restore the prior external state", contract.compensation.reason
   end
 
+  def test_effect_payload_is_copied_and_frozen_before_admission
+    argv = %w[ruby -v]
+    env = { "LABEL" => "before" }
+    source = { argv:, env: }
+    effect = E.new(verb: :exec, args: source)
+
+    argv << "unapproved"
+    env["LABEL"] = "after"
+    source[:extra] = "late mutation"
+
+    assert_equal %w[ruby -v], effect.args[:argv]
+    assert_equal "before", effect.args[:env]["LABEL"]
+    refute effect.args.key?(:extra)
+    assert_raises(FrozenError) { effect.args[:argv] << "unapproved" }
+    assert_raises(FrozenError) { effect.args[:env]["LABEL"] = "after" }
+  end
+
   def test_the_model_cannot_assign_its_own_reversibility
     effect = E.new(verb: :exec, args: { argv: %w[ruby -v], reversibility: "reversible" })
 
