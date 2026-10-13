@@ -51,11 +51,28 @@ module Master
 
       SCRIPT = <<~JS
         (() => {
-          const text = (document.body && document.body.innerText) || "";
+          const candidates = ["main", "[role='main']", "article", ".content", "#content", ".post", ".article"];
+          let textRoot = null;
+          for (const selector of candidates) {
+            const node = document.querySelector(selector);
+            if (node && (node.innerText || "").trim().length > 200) {
+              textRoot = node;
+              break;
+            }
+          }
+          textRoot ||= document.body;
+          const text = (textRoot && textRoot.innerText) || "";
+          const headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+            .slice(0, 40)
+            .map(node => ({
+              level: node.tagName,
+              text: (node.innerText || "").trim().replace(/\s+/g, " ").slice(0, 120)
+            }))
+            .filter(item => item.text.length > 0);
           const links = Array.from(document.querySelectorAll("a[href]")).map(a => ({
             text: (a.innerText || a.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ").slice(0, 120),
             href: a.href
-          })).filter(l => l.text && /^https?:/.test(l.href));
+          })).filter(link => link.text && /^https?:/.test(link.href));
           const forms = Array.from(document.querySelectorAll("form")).slice(0, 20).map(form => ({
             action: form.action,
             method: (form.method || "get").toUpperCase(),
@@ -65,7 +82,22 @@ module Master
               placeholder: input.placeholder || ""
             }))
           }));
-          return JSON.stringify({ title: document.title, url: location.href, text, links, forms });
+          const counts = {
+            images: document.querySelectorAll("img").length,
+            links: document.querySelectorAll("a[href]").length,
+            interactive: document.querySelectorAll("button, input, select, textarea").length,
+            sections: document.querySelectorAll("article, section, .content, .post").length
+          };
+          return JSON.stringify({
+            title: document.title,
+            url: location.href,
+            text,
+            text_source: textRoot ? textRoot.tagName.toLowerCase() : "none",
+            headings,
+            links,
+            forms,
+            counts
+          });
         })()
       JS
 
@@ -273,6 +305,14 @@ module Master
         if text.length < 1500 && "#{snapshot["url"]} #{snapshot["title"]} #{text}".match?(WALL)
           body.prepend("NOTE: the site answered with a verification or bot wall instead of the page. " \
                        "Report that, and do not guess its contents.\n\n")
+        end
+        if (headings = snapshot["headings"]).is_a?(Array) && !headings.empty?
+          list = headings.first(40).map { |heading| "#{heading["level"]}: #{heading["text"]}" }
+          body << "\n\nHeadings:\n#{list.join("\n")}"
+        end
+        if (counts = snapshot["counts"]).is_a?(Hash) && !counts.empty?
+          summary = counts.map { |name, count| "#{name}=#{count}" }.join(", ")
+          body << "\n\nPage elements: #{summary}"
         end
         if links && snapshot["links"].is_a?(Array) && !snapshot["links"].empty?
           list = snapshot["links"].uniq { |link| link["href"] }.first(MAX_LINKS).map { |link| "- #{link["text"]} → #{link["href"]}" }
