@@ -7,45 +7,13 @@
 module Colour
   def self.db(x) = 10.0**(x / 20.0)
 
-  def self.highpass(buf, cutoff)
-    a = 1.0 / (1.0 + (2 * Math::PI * cutoff / SAMPLE_RATE))
-    y = prev = 0.0
-    buf.map do |x|
-      y = a * (y + x - prev)
-      prev = x
-      y
-    end
-  end
+  def self.highpass(buf, cutoff) = Stream::Highpass.new(cutoff).process(buf)
 
   # A feed-forward compressor: the level follows the signal, over the threshold the gain falls.
-  def self.compress(buf, threshold, ratio, attack_ms, release_ms, makeup)
-    up = 1.0 - Math.exp(-1.0 / (attack_ms / 1000.0 * SAMPLE_RATE))
-    down = 1.0 - Math.exp(-1.0 / (release_ms / 1000.0 * SAMPLE_RATE))
-    limit = db(threshold)
-    gain_up = db(makeup)
-    level = 0.0
-    buf.map do |x|
-      a = x.abs
-      level += (a > level ? up : down) * (a - level)
-      over = level > limit ? (limit / level)**(1.0 - (1.0 / ratio)) : 1.0
-      x * over * gain_up
-    end
-  end
+  def self.compress(buf, threshold, ratio, attack_ms, release_ms, makeup) = Stream::Compressor.new(threshold, ratio, attack_ms, release_ms, makeup).process(buf)
 
   # Sample-rate reduction by `factor` (hold each value) and rounding to `bits` of resolution.
-  def self.crush(buf, bits, factor)
-    levels = 2.0**(bits - 1)
-    held = 0.0
-    clock = factor
-    buf.map do |x|
-      if clock >= factor
-        held = (x * levels).round / levels
-        clock -= factor
-      end
-      clock += 1.0
-      held
-    end
-  end
+  def self.crush(buf, bits, factor) = Stream::Crush.new(bits, factor).process(buf)
 
   # Samples under 0.7 pass untouched; above it the level bends toward 1 and never reaches it,
   # so a loud kick stays loud instead of pulling the whole mix down.
@@ -56,43 +24,11 @@ module Colour
     (0.7 + (0.3 * Math.tanh((a - 0.7) / 0.3))) * (v.negative? ? -1 : 1)
   end
 
-  # One pass of the chain with one preset's numbers (see dilla.json).
-  def self.sonitex_pass(buf, p, rng)
-    drive = p.fetch('dist_drive')
-    mix = p.fetch('dist_mix')
-    dc = p.fetch('dist_dc')
-    pre = FX.lowpass(buf, p.fetch('dist_pre_lp'))
-    out = buf.each_index.map do |i|
-      wet = Math.tanh((pre[i] * drive) + dc) - Math.tanh(dc)
-      (buf[i] * (1.0 - mix)) + (wet * mix / [drive, 1.0].max * 1.2)
-    end
-    bump = db(p.fetch('head_bump_db')) - 1.0
-    low = FX.lowpass(out, p.fetch('head_bump_hz'))
-    out = out.each_index.map { |i| out[i] + (bump * low[i]) }
-    crushed = FX.lowpass(crush(out, p.fetch('crush_bits'), p.fetch('crush_sr')), p.fetch('crush_post_lp'))
-    cm = p.fetch('crush_mix')
-    out = out.each_index.map { |i| (out[i] * (1.0 - cm)) + (crushed[i] * cm) }
-    out = FX.lowpass(FX.lowpass(out, p.fetch('hf_rolloff')), p.fetch('hf_rolloff'))
-    out = highpass(out, p.fetch('lf_rolloff'))
-    hiss = p.fetch('hiss_amp')
-    pops = p.fetch('pop_rate')
-    pop = 0.0
-    pop_amp = p.fetch('pop_amp')
-    out = out.map do |x|
-      pop = (rng.rand < pops ? (rng.rand < 0.5 ? -pop_amp : pop_amp) : pop) * 0.985
-      x + (((rng.rand * 2) - 1) * hiss) + (pop * 0.4)
-    end
-    out = compress(out, p.fetch('out_comp_threshold'), p.fetch('out_comp_ratio'), 12.0, 120.0, p.fetch('out_comp_makeup') - 1.0)
-    lim = p.fetch('limit')
-    level = p.fetch('level_out')
-    out.map { |x| lim * Math.tanh(x / lim) * level }
-  end
-
+  # The passes share one random stream, one after another over the whole signal; the streamed
+  # render gives each its own so that blocks of a signal cannot change the draws.
   def self.sonitex(buf, preset, instances, seed)
     rng = Random.new(seed)
-    out = buf
-    instances.clamp(1, 3).times { out = sonitex_pass(out, preset, rng) }
-    out
+    instances.clamp(1, 3).times.inject(buf) { |out, _| Stream::Sonitex.new(preset, rng).process(out) }
   end
 
   # A heavy but static tape stage for drum buses: input bandwidth, a restrained head bump,
@@ -117,15 +53,6 @@ module Colour
 
   # The summing colour: a soft knee that bends only the peaks, a touch of low warmth, and
   # unity gain for small signals, so summed material glues without getting louder.
-  def self.vcs(buf, amount)
-    return buf if amount.to_f <= 0.0
-
-    amount = amount.clamp(0.0, 1.0)
-    drive = 1.0 + (2.0 * amount)
-    warm = FX.lowpass(buf, 180.0)
-    buf.each_index.map do |i|
-      (Math.tanh((buf[i] + (0.12 * amount * warm[i])) * drive) / drive)
-    end
-  end
+  def self.vcs(buf, amount) = amount.to_f <= 0.0 ? buf : Stream::Vcs.new(amount).process(buf)
 end
 

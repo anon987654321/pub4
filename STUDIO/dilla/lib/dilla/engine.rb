@@ -28,8 +28,8 @@ def run(argv)
     o.on('--echo-mix N', Float, 'Echo volume against the dry sound') { |v| options[:echo_mix] = v }
     o.on('--echo-feedback N', Float, 'Echo intensity, 0 to 0.9: how much of each repeat comes round again') { |v| options[:echo_feedback] = v }
     o.on('--echo-time MS', Float, 'Echo base delay in milliseconds (default a dotted eighth)') { |v| options[:echo_time] = v }
-    o.on('--play', '--endless', 'Never stop: render the next progression while this one plays') { options[:play] = true }
-    o.on('--player CMD', 'The command that plays a wav (default afplay, else ffplay)') { |v| options[:player] = v }
+    o.on('--play', '--endless', 'Never stop: stream pass after pass into the player, each beginning under the last beat of the one before') { options[:play] = true }
+    o.on('--player CMD', 'The player: for live it is given the wav path (default afplay, else ffplay); for --play it reads raw 16-bit mono PCM on stdin (default ffplay, else sox play)') { |v| options[:player] = v }
     o.on('--passes N', Integer, 'With --play, stop after N progressions') { |v| options[:passes] = v }
     o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
     o.on('--repeat [STYLE]', '--comp [STYLE]', 'Strike the whole chord again on the steps of a style instead of arpeggiating') { |v| options[:repeat] = v || true }
@@ -98,8 +98,13 @@ def parse_rate(text)
   Regexp.last_match(2).empty? ? Regexp.last_match(1).to_f : Regexp.last_match(1).to_f * 2 / 3
 end
 
-# One render: the options name a progression or let the seed choose one. Returns the output path.
-def render(data, options)
+# Everything about a pass except the processing after the parts: the progression, the sequencer,
+# the tempo, and the source part of the sound. With `capture` the parts are not synthesised but
+# kept as notes with their voices, for the streamer to play block by block.
+Plan = Struct.new(:index, :names, :profile, :profile_row, :drums, :seq, :bpm, :beats, :voice, :mode, :search, :piece,
+                  :chord_voices, :seed, :buf, :parts, :pick, keyword_init: true)
+
+def plan_pass(data, options, capture: false)
   progressions = data.fetch('progressions')
   seed = options[:seed] || Random.new_seed % 1_000_000
   pick = Random.new(seed)
@@ -111,6 +116,7 @@ def render(data, options)
 
   seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed,
                             transpose: options[:transpose] || 0, wrap: options[:wrap], kit: options[:kit])
+  seq.capture = [] if capture
   bpm = options[:bpm] || seq.bpm
   seq.tempo = bpm
   beats = options[:beats] || seq.beats
@@ -148,6 +154,15 @@ def render(data, options)
     seq.sound(buf, plucks, seq.voice_spec(options[:melody_voice] || 'rhodes_mark1'))
   end
   render_layers(buf, seq, names, bpm, beats, options, search:)
+  Plan.new(index:, names:, profile:, profile_row:, drums:, seq:, bpm:, beats:, voice:, mode:, search:, piece:, chord_voices:, seed:, buf:,
+           parts: seq.capture, pick:)
+end
+
+# One render: the options name a progression or let the seed choose one. Returns the output path.
+def render(data, options)
+  plan = plan_pass(data, options)
+  index, names, profile, drums, seq, bpm, beats, voice, mode, search, piece, chord_voices, seed, buf =
+    plan.to_h.values_at(:index, :names, :profile, :drums, :seq, :bpm, :beats, :voice, :mode, :search, :piece, :chord_voices, :seed, :buf)
   if options[:buffer_only]
     # Progression buffers reserve a full second for arbitrary note tails. A curated section
     # has a known gate and a short echo, so discard that unused second before rendering drums.
@@ -227,6 +242,8 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
     voice = seq.voice_spec(layer.fetch('voice'))
     gate = layer.fetch('gate', 0.9).to_f.clamp(0.05, 1.5)
     mode = layer.fetch('mode', 'held')
+    layer_buf = nil
+    seq.with_part(gain: 10.0**(layer.fetch('gain_db', -12.0).to_f / 20.0)) do
     layer_buf =
       case mode
       when 'held'
@@ -267,6 +284,9 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
       else
         abort "Unknown synth layer mode: #{mode}"
       end
+    end
+
+    next if seq.capture
 
     gain = 10.0**(layer.fetch('gain_db', -12.0).to_f / 20.0)
     layer_buf.each_with_index do |sample, index|
@@ -404,37 +424,18 @@ def player_command(options)
   RUBY_PLATFORM.include?('darwin') ? ['afplay'] : %w[ffplay -nodisp -autoexit -loglevel quiet]
 end
 
-# A shuffle bag: every item comes out once before any comes out again, and the first of a new
-# bag is never the last of the old one. The state is a plain hash, so a restart can go on.
+# Never stops: each pass is drawn from the bags and streamed into the player, one beginning under
+# the last beat of the one before. The bags are saved beside the output folder, so a restart
+# goes on with the cycle. The player reads raw 16-bit mono PCM on stdin.
 def play_forever(data, options)
-  rng = Random.new(options[:seed] || Random.new_seed)
-  dir = options[:out] ? File.dirname(options[:out]) : 'out/play'
-  FileUtils.mkdir_p(dir)
-  state_path = File.join(dir, 'play_state.json')
-  state = (JSON.parse(File.read(state_path)) rescue {})
-  playlist = Playlist.new(data, rng, state, pool: options[:pool] || 'essential')
-  command = player_command(options)
-  pid = nil
-  trap('INT') { pid && Process.kill('TERM', pid); exit }
-  trap('TERM') { pid && Process.kill('TERM', pid); exit }
-  (1..(options[:passes] || Float::INFINITY)).each do |pass|
-    pick = playlist.draw(mode: options[:mode], voice: options[:voice], profile: options[:profile], patch_per_chord: options[:patch_per_chord])
-    pass_options = options.merge(prog: pick[:prog], seed: rng.rand(1_000_000), profile: pick[:profile], voice: pick[:voice],
-                                 mode: pick[:mode], random: false, quick: false, play: false,
-                                 out: File.join(dir, "play_#{pass.odd? ? 'a' : 'b'}.wav"))
-    pass_options[:chord_voices] = pick[:voices] if pick[:voices]
-    pass_options[:arp_style] = options[:arp_style] || pick[:style] if pick[:mode] == 'arp'
-    pass_options[:repeat] = options[:repeat] || pick[:style] if pick[:mode] == 'repeat'
-    profile_drums = data['groove_profiles'].fetch(pick[:profile])['drums']
-    pass_options[:drums] = options[:drums] == 'rotate' ? pick[:drums] : (options[:drums] || profile_drums)
-    pass_options[:kit] = options[:kit] || (options[:drums] == 'rotate' ? pick[:kit] : nil)
-    puts "pass #{pass}: progression #{pick[:prog]} (#{pick[:position]}) mode=#{pick[:mode]} style=#{pick[:style] || '-'} voice=#{pick[:voices]&.join('>') || pick[:voice]} (patch #{pick[:bag] || 'fixed'}) profile=#{pick[:profile]} drums=#{pass_options[:drums] || '-'} kit=#{pass_options[:kit] || '-'}"
-    path = render(data, pass_options)
-    File.write(state_path, JSON.generate(playlist.to_h))
-    Process.wait(pid) if pid
-    pid = Process.spawn(*command, path)
-  end
-  Process.wait(pid) if pid
+  RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled?
+  player = Player.new(Player.command(options))
+  show = Show.new(data, options, player:)
+  %w[INT TERM].each { |signal| trap(signal) { show.stop! } }
+  show.run
+  stats = show.stats
+  puts format('played %<audio>.1fs of audio, rendered in %<render>.1fs (%<ratio>.2fx real time), %<under>d late blocks',
+              audio: stats[:audio], render: stats[:render], ratio: stats[:render] / [stats[:audio], 1e-9].max, under: stats[:underruns])
 end
 
 run(ARGV) if $PROGRAM_NAME == __FILE__

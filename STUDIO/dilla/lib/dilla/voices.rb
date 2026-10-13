@@ -22,6 +22,35 @@ module Voices
     [level.call(gate) * (1.0 - ((t - gate) / [r, 1e-4].max)), 0.0].max
   end
 
+  # A note read a block at a time. The block makes sample i from state it closes over, so a note
+  # can be begun, left, and taken up again where it stopped, as a streamed note must.
+  class Reader
+    attr_reader :size
+  
+    def self.empty = new(0) { 0.0 }
+  
+    def self.of(samples) = new(samples.size) { |i| samples[i] }
+  
+    def initialize(size, &sample)
+      @size = size
+      @sample = sample
+      @at = 0
+    end
+  
+    def done? = @at >= @size
+  
+    def remaining = @size - @at
+  
+    # Up to `count` of the next samples; fewer at the end, none after it.
+    def read(count)
+      take = [count, remaining].min
+      Array.new(take) { @sample.call(@at).tap { @at += 1 } }
+    end
+  
+    def drain = read(@size)
+  end
+  
+
   WAVES = {
     'saw' => ->(p) { (2.0 * p) - 1.0 },
     'pulse' => ->(p) { p < 0.5 ? 1.0 : -1.0 },
@@ -50,8 +79,8 @@ module Voices
 
   # Detuned saw and pulse oscillators on phase accumulators, a ladder with its own envelope
   # sweeping the cutoff, and an amplitude envelope. Detune is in cents, octaves are integers.
-  def self.moog(patch, freq, dur, amp)
-    return [] unless audible?(freq)
+  def self.moog_reader(patch, freq, dur, amp)
+    return Reader.empty unless audible?(freq)
 
     amp_env = patch.fetch('amp')
     filter_env = patch.fetch('filter_env')
@@ -67,7 +96,7 @@ module Voices
     ladder = Ladder.new
     drive = patch.fetch('drive', 1.0)
     scale = amp * 2.0 / waves.size
-    Array.new(n) do |i|
+    Reader.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
       sum = 0.0
       waves.each_index do |k|
@@ -81,8 +110,8 @@ module Voices
   # An electric piano by frequency modulation: a body pair near 1:1 for the mellow tine, a
   # bell pair at 14:1 whose index falls away in a few tenths of a second, a soft hammer click,
   # and a velocity that brightens it. No tremolo and no chorus: nothing moves but the decay.
-  def self.rhodes(patch, freq, dur, amp, velocity)
-    return [] unless audible?(freq)
+  def self.rhodes_reader(patch, freq, dur, amp, velocity)
+    return Reader.empty unless audible?(freq)
 
     release = patch.fetch('release')
     n = ((dur + release) * SAMPLE_RATE).to_i
@@ -100,7 +129,7 @@ module Voices
     body_env = bell_env = amp_env = click_env = hold = 1.0
     cinc = freq / SAMPLE_RATE
     gate_n = (dur * SAMPLE_RATE).to_i
-    Array.new(n) do |i|
+    Reader.new(n) do |i|
       m = Math.sin(TAU * modulator)
       b = Math.sin(TAU * bell_m)
       s = Math.sin(TAU * (carrier + (body * body_env * m / TAU))) * 0.8
@@ -156,8 +185,8 @@ module Voices
   # steps, each one cell long, switched by the grid and not by an oscillator: a cell is `x` for
   # open and anything else for shut, and a one-pole slew of a few milliseconds keeps the
   # edges from clicking. `step` is a sixteenth of the tempo in seconds.
-  def self.gated(patch, freq, dur, amp, step)
-    return [] unless audible?(freq)
+  def self.gated_reader(patch, freq, dur, amp, step)
+    return Reader.empty unless audible?(freq)
 
     envelope = patch.fetch('amp')
     pattern = patch.fetch('pattern')
@@ -168,7 +197,7 @@ module Voices
     total = parts.sum { |_, weight| weight }
     n = ((dur + envelope[3]) * SAMPLE_RATE).to_i
     open = 0.0
-    Array.new(n) do |i|
+    Reader.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
       open += slew * ((pattern[(t / cell).floor % pattern.size] == 'x' ? 1.0 : 0.0) - open)
       sum = 0.0
@@ -185,8 +214,8 @@ module Voices
   # the mixture's ranks 6 and 8), and a chiff of about fifteen milliseconds, a burst of noise
   # that dies away as the pipe speaks. Nothing moves afterwards: there is no tremulant. The
   # `registration` is a row of weights for the ratios, else the voice's first.
-  def self.organ(patch, freq, dur, amp, registration)
-    return [] unless audible?(freq)
+  def self.organ_reader(patch, freq, dur, amp, registration)
+    return Reader.empty unless audible?(freq)
 
     ratios = patch.fetch('ratios')
     weights = registration || patch.fetch('registrations').values.first
@@ -200,7 +229,7 @@ module Voices
     chiff_env = chiff.fetch('level')
     rng = Random.new(freq.to_i)
     soft = 0.0
-    Array.new(n) do |i|
+    Reader.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
       sum = 0.0
       ranks.each_index do |k|
@@ -214,22 +243,26 @@ module Voices
     end
   end
 
-  # The samples for one note of the named voice. `decay` is the drum voice's own, per step;
-  # `step` is a sixteenth of the tempo in seconds and `registration` the organ's weights.
-  def self.note(spec, midi, dur, amp, velocity: 1.0, detune: 0.0, decay: nil, step: nil, registration: nil)
+  # One note of the named voice as a Reader. `decay` is the drum voice's own, per step; `step` is
+  # a sixteenth of the tempo in seconds and `registration` the organ's weights. The voices that
+  # cost the most (moog, rhodes, gated, organ) are read a block at a time; the rest are cheap and
+  # are made whole and handed out in blocks.
+  def self.reader(spec, midi, dur, amp, velocity: 1.0, detune: 0.0, decay: nil, step: nil, registration: nil)
     freq = Chords.hz(midi)
     amp *= 10.0**(spec.fetch('gain', 0.0) / 20.0)
     case spec.fetch('family')
-    when 'pure' then Synth.pure_note(freq, dur, amp:, release: spec.fetch('release', 0.12), attack: spec.fetch('attack', 0.008))
-    when 'sine' then audible?(freq) ? Synth.note(freq, dur, detune:, amp:, release: dur * 0.5) : []
-    when 'moog' then moog(spec, freq, dur, amp)
-    when 'rhodes' then rhodes(spec, freq, dur, amp, velocity)
-    when 'dfam' then dfam(spec, freq, dur, amp, decay || spec.fetch('decay', 0.12))
-    when 'gated' then gated(spec, freq, dur, amp, step)
-    when 'organ' then organ(spec, freq, dur, amp, registration)
+    when 'pure' then Reader.of(Synth.pure_note(freq, dur, amp:, release: spec.fetch('release', 0.12), attack: spec.fetch('attack', 0.008)))
+    when 'sine' then Reader.of(audible?(freq) ? Synth.note(freq, dur, detune:, amp:, release: dur * 0.5) : [])
+    when 'moog' then moog_reader(spec, freq, dur, amp)
+    when 'rhodes' then rhodes_reader(spec, freq, dur, amp, velocity)
+    when 'dfam' then Reader.of(dfam(spec, freq, dur, amp, decay || spec.fetch('decay', 0.12)))
+    when 'gated' then gated_reader(spec, freq, dur, amp, step)
+    when 'organ' then organ_reader(spec, freq, dur, amp, registration)
     when 'fluid' then raise ArgumentError, "voice #{spec['name'].inspect} is a soundfont voice: the sequencer mixes it, a single note cannot"
     else raise ArgumentError, "no voice family #{spec['family'].inspect}"
     end
   end
-end
 
+  # The samples for one note, whole.
+  def self.note(spec, midi, dur, amp, **) = reader(spec, midi, dur, amp, **).drain
+end

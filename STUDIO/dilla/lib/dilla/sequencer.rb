@@ -16,6 +16,21 @@
 class Sequencer
   attr_reader :seed, :pd_amount
   attr_writer :tempo # beats a minute; voices that play on the grid need it
+  # With a list here the sequencer keeps what `sound` is asked to play, as Part rows, and makes no audio:
+  # the streamer plays the notes itself, block by block.
+  attr_accessor :capture
+
+  Part = Struct.new(:plucks, :voice, :gain, :swell)
+
+  # Parts made inside the block carry this gain and, for a pad that swells, [energies, beat_samples].
+  def with_part(gain: 1.0, swell: nil)
+    saved = [@part_gain, @part_swell]
+    @part_gain = gain
+    @part_swell = swell
+    yield
+  ensure
+    @part_gain, @part_swell = saved
+  end
 
   def initialize(data, profile_name:, pd_amount: nil, seed: nil, transpose: 0, wrap: false, kit: nil)
     @kit = kit
@@ -39,7 +54,7 @@ class Sequencer
   # Chords, each the same length, the odd ones swung late. A voice other than the plain sine, or
   # a list of voices (one for each chord, round and round), plays them through Voices instead.
   def render_chords(names, bpm, beats, search: true, strum: 0.0, voice: nil, voices: nil)
-    voices ||= [voice] if voice && voice['family'] != 'sine'
+    voices ||= [voice] if voice && (voice['family'] != 'sine' || @capture)
     return render_voiced_chords(names, bpm, beats, search:, strum:, voices:) if voices
 
     beat = 60.0 / bpm
@@ -239,7 +254,10 @@ if mode == 'arp'
   def render_arp(names, bpm, beats, arp, search: true, pad: false, voice: nil)
     buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
     sound(buf, note_events(names, bpm, beats, arp, 'arp', search:).flatten(1), voice || voice_spec(nil))
-    if pad || arp['pad_swell']
+    if (pad || arp['pad_swell']) && @capture
+      swell = arp['pattern'] == 'flow' ? [@energies, 60.0 / bpm * SAMPLE_RATE] : nil
+      with_part(gain: arp.fetch('pad', 0.3), swell:) { render_chords(names, bpm, beats, search:, voice: voice_spec('sine')) }
+    elsif pad || arp['pad_swell']
       under = render_chords(names, bpm, beats, search:)
       under = Flow.swell(under, @energies, 60.0 / bpm * SAMPLE_RATE) if arp['pattern'] == 'flow'
       under.each_with_index { |v, i| buf[i] += v * arp.fetch('pad', 0.3) if i < buf.size }
@@ -271,6 +289,7 @@ if mode == 'arp'
 
   # Mix each pluck into the buffer through the voice; a chord's level is shared among its notes.
   def sound(buf, plucks, voice)
+    return @capture << Part.new(plucks, voice, @part_gain || 1.0, @part_swell) if @capture
     return sound_soundfont(buf, plucks, voice) if voice['family'] == 'fluid'
 
     step = @tempo && 15.0 / @tempo

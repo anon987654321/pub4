@@ -36,7 +36,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/player.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/show.rb lib/dilla/stream.rb lib/dilla/streamer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -706,21 +706,26 @@ class DillaTest < Minitest::Test
 
   # ------------------------------------------------------------- endless play
 
-  def test_play_renders_ahead_and_never_repeats_the_last_progression
+  def fake_player(dir)
+    sink = File.join(dir, "heard.pcm")
+    script = File.join(dir, "fake.sh")
+    File.write(script, "#!/bin/sh\ncat > #{sink}\n")
+    File.chmod(0o755, script)
+    ["sh #{script}", sink]
+  end
+
+  def test_play_streams_passes_into_the_player_and_never_repeats_the_last_progression
     Dir.mktmpdir do |dir|
-      log = File.join(dir, "played.txt")
-      player = File.join(dir, "fake.sh")
-      File.write(player, "#!/bin/sh\necho \"$1\" >> #{log}\n")
-      File.chmod(0o755, player)
-      out, err, status = run_dilla("--play", "--player", "sh #{player}", "--passes", "4", "--beats", "1", "--seed", "8",
-                                   "--profile", "dry", "--mode", "pad", "--out", File.join(dir, "x.wav"), chdir: dir)
+      player, sink = fake_player(dir)
+      out, err, status = run_dilla("--play", "--player", player, "--passes", "4", "--beats", "1", "--seed", "8",
+                                   "--profile", "dry", "--mode", "pad", "--tape", "0", "--out", File.join(dir, "x.wav"), chdir: dir)
       assert status.success?, err
       passes = out.scan(/^pass (\d+): progression (\d+) \(/)
       assert_equal %w[1 2 3 4], passes.map(&:first)
       indices = passes.map { |_, i| i.to_i }
       indices.each_cons(2) { |a, b| refute_equal a, b }
-      assert_equal 4, File.readlines(log).size, "each render was handed to the player"
-      assert_equal 4, out.scan(/seed=\d+/).uniq.size, "a fresh seed each pass"
+      assert_operator File.size(sink), :>, 4 * 44_100 * 2, "raw 16-bit mono PCM reached the player"
+      assert_equal 0, File.size(sink) % 2
     end
   end
 
@@ -1455,11 +1460,9 @@ class DillaTest < Minitest::Test
 
   def test_play_prints_the_patch_of_every_pass_and_saves_the_bag
     Dir.mktmpdir do |dir|
-      player = File.join(dir, "fake.sh")
-      File.write(player, "#!/bin/sh\nexit 0\n")
-      File.chmod(0o755, player)
-      out, err, status = run_dilla("--play", "--player", "sh #{player}", "--passes", "3", "--beats", "1", "--seed", "12",
-                                   "--profile", "dry", "--mode", "pad", "--patch-per-chord", "--out", File.join(dir, "x.wav"), chdir: dir)
+      player, = fake_player(dir)
+      out, err, status = run_dilla("--play", "--player", player, "--passes", "3", "--beats", "1", "--seed", "12",
+                                   "--profile", "dry", "--mode", "pad", "--patch-per-chord", "--tape", "0", "--out", File.join(dir, "x.wav"), chdir: dir)
       assert status.success?, err
       voices = out.scan(/^pass \d+: .* voice=(\S+) \(patch (\d+)\/(\d+)\)/)
       assert_equal 3, voices.size
@@ -1916,6 +1919,184 @@ class DillaTest < Minitest::Test
       out, err, status = run_dilla("--arp", "list", chdir: dir)
       assert status.success?, err
       %w[spiral pendulum fibonacci prime_walk call_response pedal_point flow poly5 poly7].each { |name| assert_includes out, name }
+    end
+  end
+
+  # ------------------------------------------------------------- streaming
+
+  def stream_pass(options, block)
+    streamer = Streamer.new(DATA, options)
+    out = []
+    out.concat(streamer.next_block(block)) until streamer.finished?
+    [out, streamer]
+  end
+
+  def assert_blocks_equal_whole(options, block = 13_337, delta: 1e-9)
+    whole, = stream_pass(options, 10_000_000)
+    cut, = stream_pass(options, block)
+    assert_equal whole.size, cut.size, options[:profile]
+    assert_in_delta 0.0, whole.zip(cut).map { |a, b| (a - b).abs }.max, delta, "#{options[:profile]}: blocks change the sound"
+    assert_operator Tape.rms(whole), :>, 0.001
+  end
+
+  def test_a_pass_cut_into_blocks_is_the_pass_in_one_block
+    %w[arp_echo rhodes_sonitex techno_arp industrial_arp eclectic].each do |profile|
+      assert_blocks_equal_whole({ prog: 3, seed: 5, beats: 1.0, profile: })
+    end
+    assert_blocks_equal_whole({ prog: 2, seed: 4, beats: 1.0, profile: "dub_dark" }, 44_100)
+    assert_blocks_equal_whole({ prog: 2, seed: 4, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad" }, 5000)
+    assert_blocks_equal_whole({ seed: 3, mode: "organ", bars: 4, profile: "dry" }, 20_011)
+    assert_blocks_equal_whole({ prog: 5, seed: 4, beats: 2.0, profile: "dry", mode: "arp", arp_style: "flow", voice: "rhodes_mark1", pad: true }, 9999)
+  end
+
+  def test_a_note_read_in_blocks_is_the_note_whole
+    %w[moog_pad rhodes_mark1 dub_bubble organ pure_tone sine dfam].each do |name|
+      spec = DATA.fetch("voices").fetch(name)
+      registration = spec.dig("registrations", "full")
+      whole = Voices.note(spec, 57, 0.4, 0.2, step: 0.1, registration:)
+      reader = Voices.reader(spec, 57, 0.4, 0.2, step: 0.1, registration:)
+      cut = []
+      cut.concat(reader.read(1)) until reader.done? || cut.size > 100 # one at a time to begin, then bigger
+      cut.concat(reader.read(777)) until reader.done?
+      assert_equal whole, cut, name
+      assert_empty reader.read(10)
+    end
+  end
+
+  def test_each_processor_gives_the_same_samples_in_blocks_as_in_one_call
+    rng = Random.new(1)
+    signal = Array.new(30_000) { (rng.rand * 2) - 1 }
+    blocks = ->(proc_class, *args) { proc_class.new(*args).then { |s| signal.each_slice(1777).flat_map { |b| s.process(b) } } }
+    whole = ->(proc_class, *args) { proc_class.new(*args).process(signal) }
+    [[Stream::Lowpass, 900.0], [Stream::Highpass, 120.0], [Stream::Compressor, -18.0, 3.0, 5.0, 80.0, 0.0], [Stream::Crush, 8, 2.5],
+     [Stream::Vcs, 0.6], [Stream::Reverb, 0.5], [Stream::Spring, 0.4], [Stream::SmoothLowpass, 300.0],
+     [Stream::Sonitex, DATA.dig("sonitex", "presets").values.first, 4]].each do |klass, *args|
+      assert_equal whole.call(klass, *args), blocks.call(klass, *args), klass.name
+    end
+    echo = { delay: 0.01, heads: [1, 2, 3], intensity: 0.6, volume: 0.5, lowpass: 3000, saturation: 0.4, reverb: 0.3, resets: [9000] }
+    assert_equal Stream::EchoLine.new(**echo).process(signal), signal.each_slice(1777).flat_map { |b| (@e ||= Stream::EchoLine.new(**echo)).process(b) }
+  end
+
+  def test_the_whole_render_functions_are_the_processors_run_once
+    signal = Array.new(5000) { |i| Math.sin(i / 7.0) * 0.4 }
+    assert_equal Stream::Lowpass.new(800.0).process(signal), FX.lowpass(signal, 800.0)
+    assert_equal Stream::Highpass.new(90.0).process(signal), Colour.highpass(signal, 90.0)
+    assert_same signal, FX.spring(signal, 0.0)
+    assert_equal Stream::Spring.new(0.3).process(signal), FX.spring(signal, 0.3)
+    echo = Echo.process(signal, delay: 0.01, heads: [1, 2], intensity: 0.5, volume: 0.4, lowpass: 3000, saturation: 0.2, tail: 0.5)
+    line = Stream::EchoLine.new(delay: 0.01, heads: [1, 2], intensity: 0.5, volume: 0.4, lowpass: 3000, saturation: 0.2)
+    assert_equal echo, line.process(signal + Array.new(22_050, 0.0))
+  end
+
+  def test_the_streamed_pass_is_about_as_loud_as_the_whole_render
+    options = { prog: 3, seed: 5, beats: 2.0, profile: "arp_echo", tape: 0 }
+    streamed, streamer = stream_pass(options, 30_000)
+    whole = render(DATA, options.merge(buffer_only: true))
+    assert_in_delta 0.0, Tape.db(Tape.rms(streamed.first(streamer.source_end)) / Tape.rms(whole.first(streamer.source_end))), 1.0
+  end
+
+  def test_the_source_fades_at_the_ends_and_a_dry_pass_goes_silent_after_it
+    streamer = Streamer.new(DATA, { prog: 3, seed: 5, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad" }, fade_in: 4410, fade_out_beats: 1)
+    out = []
+    out.concat(streamer.next_block(20_000)) until streamer.finished?
+    assert_in_delta 0.0, out.first.abs, 1e-3, "begins from silence"
+    assert_equal streamer.source_end, out.size, "a dry pass has no tail"
+    assert_operator out.last(50).map(&:abs).max, :<, 1e-3, "and ends in silence"
+    assert_operator out[streamer.source_end - 2 * streamer.beat, 1000].map(&:abs).max, :>, 0.001
+  end
+
+  def test_the_bank_starts_a_note_inside_a_block_and_carries_it_across_the_next
+    note = ->(v) { -> { Voices::Reader.of(Array.new(10, v)) } }
+    bank = Stream::Bank.new([Stream::Bank::Entry.new(3, note.call(1.0), 1.0, nil), Stream::Bank::Entry.new(8, note.call(0.5), 2.0, nil)])
+    assert_equal [0, 0, 0, 1, 1, 1], bank.block(0, 6)
+    assert_equal [1, 1, 2, 2, 2, 2], bank.block(6, 6)
+    refute bank.finished?
+    bank.block(12, 20)
+    assert bank.finished?
+  end
+
+  FakePlayer = Struct.new(:blocks, :open) do
+    def write(samples)
+      return false unless open != false
+
+      blocks << samples
+      true
+    end
+
+    def finish = nil
+    def kill = nil
+    def interrupt = nil
+  end
+
+  def show_with(passes, seed, **extra)
+    player = FakePlayer.new([])
+    options = { passes:, seed:, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, out: File.join(Dir.mktmpdir, "x.wav") }.merge(extra)
+    show = Show.new(DATA, options, player:, out: StringIO.new)
+    show.run
+    [show, player]
+  end
+
+  def test_the_show_starts_with_one_beat_then_plays_a_bar_at_a_time_and_joins_under_the_last_beat
+    show, player = show_with(3, 6)
+    first = show.streamers.first
+    assert_equal first.beat, player.blocks.first.size, "one beat first"
+    assert_equal 4 * first.beat, player.blocks[1].size, "then a bar"
+    assert_equal 3, show.streamers.size
+    assert_equal first.source_end - first.beat, show.joins[1], "the next pass begins one beat before the last ends"
+    second = show.streamers[1]
+    assert_equal show.joins[1] + second.source_end - second.beat, show.joins[2]
+    assert_operator player.blocks.sum(&:size), :>=, show.joins.last + show.streamers.last.source_end
+  end
+
+  def test_there_is_no_click_at_a_join
+    show, player = show_with(2, 3)
+    samples = player.blocks.flatten
+    join = show.joins[1]
+    steps = samples.each_cons(2).map { |a, b| (b - a).abs }
+    around = steps[join - 4410, 8820].max
+    rest = steps.reject.with_index { |_, i| i.between?(join - 4410, join + 4410) }.sort[-1]
+    assert_operator around, :<=, [rest * 1.5, 0.05].max, "no step at the join is bigger than any other in the pass"
+    assert_operator Tape.rms(samples[join - 2000, 4000]), :>, 0.005, "and it does not dip to silence"
+  end
+
+  def test_the_master_stage_runs_once_over_the_sum_and_stays_under_the_ceiling
+    _show, player = show_with(2, 3, tape: 2)
+    samples = player.blocks.flatten
+    assert_operator samples.map(&:abs).max, :<=, 0.97 + 1e-9
+    assert_operator Tape.rms(samples), :>, 0.01
+  end
+
+  def test_a_player_that_has_gone_ends_the_show_quietly
+    player = FakePlayer.new([], false)
+    show = Show.new(DATA, { passes: 5, seed: 1, beats: 1.0, profile: "dry", mode: "pad", voice: "moog_pad", tape: 0, out: File.join(Dir.mktmpdir, "x.wav") },
+                    player:, out: StringIO.new)
+    Timeout.timeout(60) { show.run }
+    assert_empty player.blocks
+  end
+
+  def test_a_real_closed_pipe_is_not_an_error
+    Dir.mktmpdir do |dir|
+      player = Player.new(["sh", "-c", "exit 0"])
+      sleep 0.3
+      results = Array.new(40) { player.write(Array.new(44_100, 0.1)) }
+      refute results.last, "write reports false once the reader is gone"
+      player.finish
+      assert_equal "\x00\x00".b, Player.pcm([0.0]).b
+      assert_equal [32_767, -32_768], Player.pcm([2.0, -2.0]).unpack("s<*")
+    end
+  end
+
+  def test_a_signal_ends_a_play_run_cleanly_and_takes_the_player_with_it
+    Dir.mktmpdir do |dir|
+      marker = "sleep 97.#{Process.pid % 1000}"
+      pid = Process.spawn(RbConfig.ruby, SCRIPT, "--play", "--player", marker, "--seed", "4", "--beats", "1", "--profile", "dry",
+                          "--mode", "pad", "--tape", "0", "--out", File.join(dir, "x.wav"), chdir: dir, out: File.join(dir, "out.txt"), err: File::NULL)
+      sleep 6
+      Process.kill("TERM", pid)
+      status = Timeout.timeout(30) { Process.wait2(pid).last }
+      assert status.exited? && status.success?, "it ends by itself and well: #{status.inspect}"
+      sleep 0.5
+      assert_empty Open3.capture2("pgrep", "-f", marker).first.strip, "the player did not outlive the show"
     end
   end
 

@@ -15,6 +15,7 @@ MAX_DETUNE = 0.0035
 AUDIBLE_TOP_HZ = 14_000.0
 
 require_relative 'dilla/wav'
+require_relative 'dilla/stream'
 require_relative 'dilla/chords'
 require_relative 'dilla/synthesis'
 require_relative 'dilla/voices'
@@ -31,4 +32,7 @@ require_relative 'dilla/sequencer'
 require_relative 'dilla/midi'
 require_relative 'dilla/fluid'
 require_relative 'dilla/playlist'
+require_relative 'dilla/streamer'
+require_relative 'dilla/player'
+require_relative 'dilla/show'
 require_relative 'dilla/engine'
