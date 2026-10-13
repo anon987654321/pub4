@@ -39,9 +39,15 @@ checkpoint restore. An exec may declare a concrete compensation as argv plus a h
 reason, but that compensation is re-admitted by the Constitution and requires operator
 approval after the original command fails. A successful compensation does not rewrite the
 original failure into success. Git stage and commit require explicit approval because the
-shared index and durable history have no automatic inverse. Unknown effects are blocked;
-policy-gated means only that the existing command or network policy decides, not that an
-effect is safe or reversible.
+shared index and durable history have no automatic inverse. Approval is a deferred request,
+not a bypass: every applicable law must run first, any later block wins, and multiple checks
+are presented together. Unknown effects are blocked; policy-gated means only that the existing
+command or network policy decides, not that an effect is safe or reversible.
+
+The command boundary resolves path arguments and Git working-directory targets through real
+filesystem paths, not just strings. A workspace symlink cannot widen the admitted path into
+another directory; if the path boundary cannot be established, execution is refused. This is
+an argv/workspace guard, not a substitute for operating-system process confinement.
 
 Canonical layers:
 
