@@ -76,7 +76,7 @@ ruby dilla.rb reference /absolute/path/to/audio.wav
 ruby dilla.rb industrial-techno
 ~~~
 
-A J Dilla profile supplies a target tempo and a behind-the-beat groove preference to later Dilla beat renders; a matching industrial-techno profile steers the separate techno renderer. General references remain general and do not silently become techno. Profiles are saved per style as well as marking the latest reference, so learning one style does not overwrite the other style's settings. Dilla chooses arrangement length and an internal seed itself; `--bars` and `--seed` remain optional expert overrides.
+A J Dilla profile supplies an averaged target tempo and a behind-the-beat groove preference to later Dilla beat renders; a matching industrial-techno profile steers the separate techno renderer. Each new link adds a compact measurement record to that style's learned profile, averaging tempo and numeric production features across references of the same style. General references remain general and do not silently become techno. Style profiles and the active style are saved separately, so a general link or a techno reference does not erase the accumulated J Dilla profile, and vice versa. Dilla chooses arrangement length and an internal seed itself; `--bars` and `--seed` remain optional expert overrides.
 
 Install yt-dlp and FFmpeg for URL import and measurement. To use source separation, install Demucs in a dedicated environment and make its demucs executable available on PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unavailable tools are reported as such and do not become required just to render Dilla's existing showcase.
 
