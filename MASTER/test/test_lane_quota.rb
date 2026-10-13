@@ -124,6 +124,14 @@ class TestLaneQuota < Minitest::Test
 
   # The dispatcher learns from one settled reply, then neither the door, the
   # council's pinned critic, nor failover reaches agy; claude still answers.
+  def test_recovery_canary_resolves_manually_disabled_lanes_across_all_tiers
+    gemini = Health.model_for_lane("gemini")
+    codex = Health.model_for_lane("codex-cli")
+
+    assert_match(/\Agemini(?:-|:)/, gemini.to_s)
+    assert_equal "codex-cli:auto", codex
+  end
+
   def test_manual_lane_exclusions_are_reprobed_and_recovered_from_evidence
     assert Quota.dead?("gemini-2.5-flash")
 
