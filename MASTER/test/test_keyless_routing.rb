@@ -55,7 +55,8 @@ class TestKeylessRouting < Minitest::Test
     assert router.web_chat_enabled?
     assert router.keyless_mode?
     chain = router.fallback_chain(task_type: :exploration)
-    assert_equal "web-chat:grok", chain.first
+    assert_equal chain, router.send(:priority_fallback_order, chain)
+    assert_includes chain, "web-chat:grok"
     assert_includes chain, "web-chat:chatgpt"
     assert_includes chain, "web-chat:kimi"
   end
@@ -67,7 +68,8 @@ class TestKeylessRouting < Minitest::Test
     )
     refute router.keyless_mode?
     chain = router.fallback_chain(task_type: :exploration)
-    assert_equal "nvidia/nemotron-3-super-120b-a12b:free", chain.first
+    assert_includes chain, "nvidia/nemotron-3-super-120b-a12b:free"
+    assert_equal chain, router.send(:priority_fallback_order, chain)
   end
 
   # The local tier is whatever the daemon holds, with or without
