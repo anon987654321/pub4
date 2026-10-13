@@ -14,6 +14,18 @@ module Master
         # listing says which is which.
         module HostedEndpoints
           HOSTED_TIMEOUT_S = 5
+          # Kilo publishes an unauthenticated OpenAI-compatible model catalogue.
+          # Only explicitly zero-priced chat models enter MASTER's free pool;
+          # missing or ambiguous prices fail closed. Paid models never become
+          # a fallback merely because the gateway can list them.
+          PUBLIC_FREE_ENDPOINTS = {
+            "kilo" => {
+              "base" => "https://api.kilo.ai/api/gateway",
+              "key_env" => ["KILO_API_KEY"],
+              "keyless" => {},
+              "free_only" => true,
+            },
+          }.freeze
 
           def hosted_models = hosted_index.keys
 
@@ -29,7 +41,9 @@ module Master
           # discovered and routed through the same health/fallback chain as the
           # catalogued providers. No extra Ruby routing gem is required.
           def hosted_endpoints
-            configured = @rules.fetch("openai_compatible", {}) || {}
+            configured = PUBLIC_FREE_ENDPOINTS.dup
+            configured.delete("kilo") if ENV["MASTER_NO_KILO_GATEWAY"] == "1"
+            configured.merge!(@rules.fetch("openai_compatible", {}) || {})
             base = ENV["MASTER_LLM_GATEWAY_URL"].to_s.strip
             return configured if base.empty?
 
@@ -79,10 +93,23 @@ module Master
             Array(spec["key_env"]).map { |env| ENV[env].to_s }.find { |value| !value.empty? }
           end
 
+          def zero_priced_chat_model?(row)
+            pricing = row["pricing"]
+            return false unless pricing.is_a?(Hash)
+
+            %w[prompt completion].all? do |kind|
+              value = pricing[kind]
+              !value.nil? && Float(value).zero?
+            rescue ArgumentError, TypeError
+              false
+            end
+          end
+
           def hosted_ids(spec, key)
             headers = key ? { "Authorization" => "Bearer #{key}" } : {}
             body = get_json("#{spec["base"].chomp("/")}/models", headers:, timeout: HOSTED_TIMEOUT_S)
             rows = Array(JSON.parse(body.to_s)["data"]).select { |row| row.fetch("model_type", "chat") == "chat" }
+            rows = rows.select { |row| zero_priced_chat_model?(row) } if spec["free_only"]
             rows = rows.select { |row| Hash(spec["keyless"]).all? { |field, want| row[field] == want } } unless key
             rows.filter_map { |row| row["id"] }
           rescue StandardError => e
