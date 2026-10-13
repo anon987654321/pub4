@@ -256,4 +256,48 @@ end
     end
     Process.wait(child)
   end
+
+  def test_reference_audio_request_dispatches_audio_only_to_dilla
+    request = "use yt-dlp and demucs to grab, split up, and analyze https://youtu.be/mx9NU4LmDwM?si=example12345"
+    assert MediaIntent.handles?(request)
+    refute MediaIntent.handles?("I liked the music inside that YouTube video")
+
+    calls = []
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("reference0: analyzed audio")
+    end) do
+      result = MediaIntent.dispatch(request, root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+    end
+
+    assert_equal 1, calls.size
+    assert_equal "dilla", calls.first.fetch(:tool)
+    argv = Shellwords.split(calls.first.fetch(:arg))
+    assert_equal "reference", argv.first
+    assert_equal "https://youtu.be/mx9NU4LmDwM?si=example12345", argv[1]
+  end
+
+  def test_industrial_techno_request_routes_with_explicit_tempo_and_bars
+    request = "create an industrial techno track at 142 BPM for 12 bars"
+    assert MediaIntent.handles?(request)
+    calls = []
+
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("dilla0: wrote original industrial techno")
+    end) do
+      result = MediaIntent.dispatch(request, root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :industrial_techno, result.value!.fetch(:media)
+    end
+
+    argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+    assert_equal "dilla", calls.first.fetch(:tool)
+    assert_equal "industrial-techno", argv.first
+    assert_equal "142", argv[argv.index("--bpm") + 1]
+    assert_equal "12", argv[argv.index("--bars") + 1]
+  end
+
 end

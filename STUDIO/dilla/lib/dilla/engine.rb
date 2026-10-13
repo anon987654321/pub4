@@ -490,7 +490,6 @@ def play_forever(data, options)
               audio: stats[:audio], render: stats[:render], ratio: stats[:render] / [stats[:audio], 1e-9].max, under: stats[:underruns])
 end
 
-run(ARGV) if $PROGRAM_NAME == __FILE__
 
 
 # Import and inspect the audio stream of a reference. Video frames are never read.
@@ -671,16 +670,11 @@ module Dilla
 
     def separate(audio, directory, options, duration)
       return [[], { "status" => "not_requested", "files" => [] }] unless options[:stems]
-      cmd = executable("DEMUCS_BIN", "demucs")
-      python = executable("PYTHON_BIN", "python3") || executable("PYTHON_BIN", "python")
-      command = cmd ? [cmd] : (python && (begin
-        _out, _err, status = Open3.capture3(python, "-c", "import demucs")
-        [python, "-m", "demucs.separate"] if status.success?
-      end))
+      command = executable("DEMUCS_BIN", "demucs")
       return [[], { "status" => "unavailable", "files" => [] }] unless command
       target = File.join(directory, "stems")
       prepare_dir(target)
-      _out, logs = capture!("Demucs separation", *command, "--name", options[:model], "--out", target, audio,
+      _out, logs = capture!("Demucs separation", command, "--name", options[:model], "--out", target, audio,
                             timeout: [[duration.to_f.ceil * 8, 1800].max, 57_600].min)
       files = Dir.glob(File.join(target, "**", "*.wav")).sort
       [files, { "status" => files.empty? ? "no_stems_found" : "separated",
@@ -911,3 +905,6 @@ module Dilla
     end
   end
 end
+
+
+run(ARGV) if $PROGRAM_NAME == __FILE__

@@ -1,0 +1,98 @@
+# frozen_string_literal: true
+
+require "minitest/autorun"
+require "open3"
+require "rbconfig"
+require "tmpdir"
+require_relative "../dilla/lib/dilla"
+
+class DillaReferenceTest < Minitest::Test
+  DIR = File.expand_path("../dilla", __dir__)
+  SCRIPT = File.join(DIR, "dilla.rb")
+
+  def test_parses_the_linked_youtube_audio_source_and_ignores_tracking_parameters
+    parsed = Dilla::Reference.parse_url("https://youtu.be/mx9NU4LmDwM?si=tracking")
+    assert_equal "mx9NU4LmDwM", parsed.fetch(:id)
+    assert_equal "https://www.youtube.com/watch?v=mx9NU4LmDwM", parsed.fetch(:url)
+  end
+
+  def test_rejects_playlists_and_non_youtube_hosts
+    assert_raises(Dilla::Reference::Error) do
+      Dilla::Reference.parse_url("https://www.youtube.com/playlist?list=PL123")
+    end
+    assert_raises(Dilla::Reference::Error) do
+      Dilla::Reference.parse_url("https://example.com/watch?v=mx9NU4LmDwM")
+    end
+  end
+
+  def test_cli_defines_reference_modules_before_dispatching_subcommands
+    [["reference", "--help"], ["industrial-techno", "--help"]].each do |args|
+      out, err, status = Open3.capture3(RbConfig.ruby, SCRIPT, *args, chdir: DIR)
+      assert status.success?, "#{args.first} --help failed: #{out}\n#{err}"
+      assert_match(/Usage: ruby dilla\.rb/, out)
+    end
+  end
+
+  def test_profile_parameters_are_bounded_and_use_audio_measurements
+    mix = {
+      "tempo" => { "bpm" => 142.0, "confidence" => 0.8 },
+      "spectral_bands_db" => {
+        "sub_25_120_hz" => -10.0, "low_mid_120_500_hz" => -26.0,
+        "mid_500_4000_hz" => -20.0, "high_4000_plus_hz" => -6.0
+      }
+    }
+    profile = Dilla::Reference.profile_for(mix)
+    assert_equal "industrial_techno", profile.fetch("genre")
+    assert_equal 142, profile.fetch("target_bpm")
+    params = profile.fetch("parameters")
+    assert_operator params.fetch("rumble_level"), :between?, 0.05, 0.35
+    assert_operator params.fetch("hat_probability"), :between?, 0.1, 0.98
+    assert_operator params.fetch("distortion_drive"), :between?, 1.0, 4.0
+  end
+
+  def test_streamed_wav_header_and_lengths_are_valid
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "small.wav")
+      WAV.write_stream(path, frames: 16, channels: 2, bits: 24, block_size: 5) do |_offset, count|
+        [Array.new(count, 0.1), Array.new(count, -0.1)]
+      end
+      bytes = File.binread(path)
+      assert_equal "RIFF", bytes[0, 4]
+      assert_equal "WAVE", bytes[8, 4]
+      assert_equal 44 + 16 * 2 * 3, bytes.bytesize
+      assert_equal bytes.bytesize - 8, bytes[4, 4].unpack1("V")
+      assert_equal bytes.bytesize - 44, bytes[40, 4].unpack1("V")
+    end
+  end
+
+  def test_streamed_wav_refuses_overwrite_and_cleans_partial_files
+    Dir.mktmpdir do |dir|
+      existing = File.join(dir, "keep.wav")
+      File.write(existing, "operator-owned")
+      assert_raises(Errno::EEXIST) do
+        WAV.write_stream(existing, frames: 1, channels: 1) { |_offset, count| [Array.new(count, 0.0)] }
+      end
+      assert_equal "operator-owned", File.read(existing)
+
+      partial = File.join(dir, "partial.wav")
+      assert_raises(ArgumentError) do
+        WAV.write_stream(partial, frames: 2, channels: 1) { |_offset, _count| [[]] }
+      end
+      refute File.exist?(partial)
+    end
+  end
+
+  def test_industrial_render_writes_a_new_stereo_wav_and_refuses_overwrite
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "industrial.wav")
+      Dilla::IndustrialTechno.render(path, bpm: 100, bars: 1, seed: 7)
+      bytes = File.binread(path)
+      assert_equal "RIFF", bytes[0, 4]
+      assert_equal "WAVE", bytes[8, 4]
+      assert_equal 2, bytes[22, 2].unpack1("v")
+      assert_raises(Errno::EEXIST) do
+        Dilla::IndustrialTechno.render(path, bpm: 100, bars: 1, seed: 7)
+      end
+    end
+  end
+end
