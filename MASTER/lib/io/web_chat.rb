@@ -6,12 +6,12 @@ require "digest"
 
 module Master
   module Io
-    # Headless-browser bridge to free web chat UIs (Grok, ChatGPT, Kimi, Gemini).
-    # Auto-activates when no API keys; opt-in via MASTER_WEB_CHAT or MASTER_KEYLESS.
+    # Browser bridge to free web chat UIs (Grok, ChatGPT, Kimi, Gemini). This
+    # needs a signed-in provider website profile, not an API key; it stays in the
+    # fallback pool even when API keys exist and is disabled only by explicit opt-out.
     class WebChat
       DEFAULT_TIMEOUT = 120
       ENABLE_ENV = "MASTER_WEB_CHAT"
-      KEYLESS_ENV = "MASTER_KEYLESS"
       HEADFUL_ENV = "MASTER_WEB_CHAT_HEADFUL"
       POLL_INTERVAL_S = 0.5
       LOGIN_POLL_INTERVAL_S = 1.0
