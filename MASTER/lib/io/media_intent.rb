@@ -539,7 +539,11 @@ module Master
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
         explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
         named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i) && !explicit_dilla
-        reference = named_other_style ? nil : dilla_reference_profile
+        reference = if explicit_dilla
+                      dilla_reference_profile
+                    elsif !named_other_style && active_reference_style == "j_dilla"
+                      dilla_reference_profile
+                    end
         dilla_pocket = !named_other_style && (reference || explicit_dilla)
         named_pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) }
         dilla_patterns = %w[dilla_shadow dilla_broken dusty_laid_back boom_bap]
