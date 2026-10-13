@@ -83,6 +83,28 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 124, profile.fetch("target_bpm")
   end
 
+  def test_stem_balance_steers_techno_rumble_and_duck_with_bounded_adjustments
+    mix = {
+      "tempo" => { "bpm" => 140.0 },
+      "spectral_bands_db" => {
+        "sub_25_120_hz" => -14.0, "low_mid_120_500_hz" => -24.0,
+        "mid_500_4000_hz" => -20.0, "high_4000_plus_hz" => -10.0
+      }
+    }
+    profile = Dilla::Reference.profile_for(mix, style: "industrial_techno")
+    base_rumble = profile.fetch("parameters").fetch("rumble_level")
+    base_duck = profile.fetch("parameters").fetch("rumble_duck_depth")
+
+    Dilla::Reference.apply_stem_balance(profile, {
+      "bass_energy_share" => 0.5, "drums_energy_share" => 0.5
+    })
+
+    assert_in_delta base_rumble + 0.03, profile.fetch("parameters").fetch("rumble_level"), 0.001
+    assert_in_delta base_duck + 0.055, profile.fetch("parameters").fetch("rumble_duck_depth"), 0.001
+    assert_operator profile.fetch("parameters").fetch("rumble_level"), :between?, 0.05, 0.35
+    assert_operator profile.fetch("parameters").fetch("rumble_duck_depth"), :between?, 0.3, 0.95
+  end
+
   def test_demucs_stem_energy_shares_capture_relative_part_balance
     tracks = {
       "mix" => { "rms_db" => -6.0 },
