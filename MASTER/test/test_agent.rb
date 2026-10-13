@@ -48,6 +48,14 @@ class TestAgent < Minitest::Test
     Fiber[:master_evidence_note] = nil
   end
 
+  def test_chat_keeps_browser_evidence_routing_for_current_site_requests
+    message = "Go to www.nrk.no, give me today's news in norwegian"
+
+    assert_equal :browser, Master::Ground::EvidenceRouter.classify(message)
+    assert @agent.send(:prepare_evidence_for?, message, "chat")
+    refute @agent.send(:prepare_evidence_for?, "how are you?", "chat")
+  end
+
   def test_evidence_note_is_injected_into_dynamic_prompt
     agent = @agent
     Fiber[:master_evidence_note] = "Web research required."
