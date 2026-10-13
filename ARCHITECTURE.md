@@ -105,6 +105,19 @@ Preserve first, then improve. Move physical boundaries before deleting behavior.
 
 Generated output, vendored code, snapshots and machine state are not authored architecture.
 
+## Filesystem hierarchy
+
+Use OpenBSD's `hier(7)` as a guide to purpose and lifecycle, not as a literal directory template. A path should tell a reader whether a file is a public command, reusable implementation, canonical policy, verifier, test, generated artifact, or mutable runtime state.
+
+- `bin/` contains stable operator-facing entrypoints; implementation belongs in `lib/` or a purpose-named tool family.
+- `law/` contains executable Laws. `data/` holds versioned registries and policy, not logs, caches, or temporary results.
+- `gates/` owns verification declarations, gate code, fixtures, and measurement support. It remains the single gate registry and runner.
+- `tools/<family>/` holds canonical developer instruments by responsibility. A root-level legacy path may remain only as a thin, tested compatibility entrypoint; it must not become a second implementation.
+- `test/` may be grouped by subsystem only while recursive discovery remains proven for both supported test naming forms, fixture exclusion remains explicit, and the runner's selected-file census does not shrink.
+- Mutable state and generated results stay in their existing runtime/output locations. Do not move approved media, baselines, recovery payloads, or deployed OpenBSD targets as cosmetic cleanup.
+
+Structural changes preserve callers first, then move one family at a time, update ownership and reachability contracts, and retain a reversible path until the consumer census and relevant tests prove the new layout.
+
 ## Proof
 
 The clean architecture is not complete until:

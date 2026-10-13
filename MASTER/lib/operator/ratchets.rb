@@ -674,7 +674,7 @@ def deep_rows
                   /law_trace: (\d+)[\/ ]/, law_trace_ceiling),
         # Deep because it scans every RAILS view and stylesheet with the full
         # design rule set — the layout campaign's ratchet (2026-08-21).
-        shell_row("design_baseline", "MASTER", "bundle exec ruby tools/design_baseline.rb",
+        shell_row("design_baseline", "MASTER", "bundle exec ruby tools/design/design_baseline.rb",
                   /design_baseline: (\d+) violation/,
                   YAML.safe_load_file(File.join(MASTER, "data/design_baseline.yml")).fetch("total", nil)),
       ].compact

@@ -13,6 +13,7 @@ class TestToolsHierarchy < Minitest::Test
   RESEARCH_TOOLS = %w[cognition_benchmark.rb llm_challenges.rb llm_trajectory.rb].freeze
   REPO_TOOLS = %w[repo_inventory.rb runs.rb sprawl_plan.rb].freeze
   AUDIT_TOOLS = %w[capability_inventory.rb data_reach.rb dup_census.rb law_hygiene.rb].freeze
+  DESIGN_TOOLS = %w[design_baseline.rb].freeze
 
   def test_voice_implementations_live_in_their_canonical_family
     VOICE_TOOLS.each do |name|
@@ -180,4 +181,43 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes source, 'require_relative "../../lib/master"'
     assert_includes source, 'root = File.expand_path("../..", __dir__)'
   end
+
+  def test_design_baseline_implementation_lives_in_its_canonical_family
+    DESIGN_TOOLS.each do |name|
+      assert File.file?(File.join(TOOLS_ROOT, "design", name)), "missing tools/design/#{name}"
+      assert File.file?(File.join(TOOLS_ROOT, name)), "legacy entrypoint disappeared: tools/#{name}"
+    end
+  end
+
+  def test_legacy_design_entrypoint_delegates_to_the_canonical_source
+    source = File.read(File.join(TOOLS_ROOT, "design_baseline.rb"))
+
+    assert_includes source, 'File.expand_path("design/design_baseline.rb", __dir__)'
+    assert_includes source, "load target"
+    assert_includes source, 'require_relative "design/design_baseline"'
+  end
+
+  def test_design_baseline_keeps_master_and_rails_roots_after_the_move
+    source = File.read(File.join(TOOLS_ROOT, "design", "design_baseline.rb"))
+
+    assert_includes source, 'require_relative "../../lib/trace/dmesg"'
+    assert_includes source, 'MASTER_ROOT = File.expand_path("../..", __dir__)'
+    assert_includes source, 'RAILS_ROOT = File.expand_path("../../../RAILS", __dir__)'
+  end
+
+  def test_css_ratchet_runs_the_canonical_design_baseline
+    source = File.read(File.join(MASTER_ROOT, "lib", "operator", "ratchets.rb"))
+
+    assert_includes source, 'bundle exec ruby tools/design/design_baseline.rb'
+  end
+
+  def test_path_ownership_declares_the_design_tools_family
+    ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
+    row = ownership.fetch("tools/design/")
+
+    assert_includes row.fetch("purpose"), "design baseline"
+    assert_equal "medium", row.fetch("risk")
+    assert_includes row.fetch("check"), "test_tools_hierarchy.rb"
+  end
+
 end
