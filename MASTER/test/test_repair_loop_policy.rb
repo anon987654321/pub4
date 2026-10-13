@@ -447,6 +447,19 @@ class TestRepairLoopPolicy < Minitest::Test
     end
   end
 
+  # The verifier answers "UNSAFE: <reason>"; the reason has to reach the rejection line, not
+  # only a bus event nobody reads.
+  def test_a_reflexion_refusal_keeps_the_verifiers_reason_for_the_log
+    loop = Master::Fix::RepairLoop.allocate
+    Thread.current[:reflexion_reason] = nil
+
+    assert_nil loop.send(:handle_reflexion_response, "UNSAFE: the guard clause is dropped", "f.rb", "src")
+    assert_equal "UNSAFE: the guard clause is dropped", Thread.current[:reflexion_reason]
+    assert_equal "src", loop.send(:handle_reflexion_response, "SAFE", "f.rb", "src")
+  ensure
+    Thread.current[:reflexion_reason] = nil
+  end
+
   private
 
   class SilentAgent

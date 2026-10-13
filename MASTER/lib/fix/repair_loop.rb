@@ -207,8 +207,8 @@ end) if source.to_s.strip.empty?
         verified = within_file_budget(violation) { reflexion_verify(violation, source) }
         return :file_timeout if @file_timed_out
         unless verified
-          RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus)
-          return (FixTrace.rejected(@law.id, violation[:file], "reflexion verifier refused") && :reflexion_rejected)
+          RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus, detail: Thread.current[:reflexion_reason])
+          return (FixTrace.rejected(@law.id, violation[:file], ["reflexion verifier refused", Thread.current[:reflexion_reason]].compact.join(": ")) && :reflexion_rejected)
         end
         unless consensus_approves?(violation, verified)
           RunLedger.reject("consensus_refused", file: violation[:file], law: @law.id, bus: @bus)

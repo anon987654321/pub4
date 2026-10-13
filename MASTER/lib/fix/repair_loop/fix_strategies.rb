@@ -23,6 +23,7 @@ module Master
         private
 
         def reflexion_verify(violation, proposed_src)
+          Thread.current[:reflexion_reason] = nil
           path = violation[:file]
           return proposed_src unless File.exist?(path)
 
@@ -89,6 +90,7 @@ module Master
         # paragraph, an empty string, approved the fix before.
         def handle_reflexion_response(response, path, proposed_src)
           unless response.match?(/\ASAFE\b/)
+            Thread.current[:reflexion_reason] = response[0, 160]
             @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason: response[0, 160])
             return
           end
