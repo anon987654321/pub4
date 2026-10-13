@@ -117,8 +117,8 @@ module Master
           text.to_s.gsub(ANSI_ESCAPE, "")
         end
 
-        # The prompt is one physical command line, not a dashboard: path, Git,
-        # phase, cursor. Reline owns editing; never embed a second prompt line.
+        # One physical command line: host, location, Git, destination, phase and input.
+        # Keep every visible character to letters, numbers and spaces. Reline owns editing.
         def shell_prompt(phase, last_ok, destination: "llm", focused: false)
           host = bounded_prompt_segment(safe_hostname.to_s.split(".").first, 8)
           host = "openbsd" if host.empty?
