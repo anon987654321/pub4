@@ -36,7 +36,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore README.md data/dilla.json data/music_theory.json data/showcase.json dilla.rb dilla.wav lib/dilla.rb lib/dilla/arp.rb lib/dilla/chords.rb lib/dilla/colour.rb lib/dilla/drums.rb lib/dilla/echo.rb lib/dilla/effects.rb lib/dilla/engine.rb lib/dilla/flow.rb lib/dilla/fluid.rb lib/dilla/midi.rb lib/dilla/organ.rb lib/dilla/percussion.rb lib/dilla/playlist.rb lib/dilla/sequencer.rb lib/dilla/synthesis.rb lib/dilla/tape.rb lib/dilla/voices.rb lib/dilla/wav.rb], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -1823,6 +1823,100 @@ class DillaTest < Minitest::Test
     refute_empty organ
     assert(organ.all? { |pick| pick[:voice] == "organ" && pick[:bag].nil? })
     assert_includes Playlist::MODES, "organ"
+  end
+
+  # ------------------------------------------------------------- fluid and creative arpeggios
+
+  def flow_stream(seed: 5, names: %w[Abmaj7 Fm9 Dbmaj7 Eb7], beats: 8.0)
+    seq = sequencer("dry", seed:)
+    settings = seq.arp_settings(nil, style: "flow").merge("modifiers" => [])
+    [seq.note_events(names, 88.0, beats, settings, "arp").flatten, seq]
+  end
+
+  def test_the_flow_arp_breathes_through_quarters_eighths_triplets_and_sixteenths
+    gaps = Hash.new(0)
+    (1..12).each do |seed|
+      plucks, = flow_stream(seed:)
+      step = 60.0 / 88.0 / 4.0
+      plucks.each_cons(2) { |a, b| gaps[((b.base - a.base) / step).round(2)] += 1 if b.base > a.base }
+    end
+    [4.0, 2.0, 1.33, 1.0].each { |gap| assert_operator gaps[gap], :>, 0, "a gap of #{gap} sixteenths" }
+  end
+
+  def test_the_flow_arp_is_seeded_stays_on_the_chord_and_leans_inside_the_clamp
+    a, = flow_stream(seed: 9)
+    b, = flow_stream(seed: 9)
+    assert_equal a.map(&:to_a), b.map(&:to_a)
+    refute_equal a.map(&:midi), flow_stream(seed: 10).first.map(&:midi)
+    assert(a.all? { |p| p.off.abs <= MAX_OFFSET })
+    assert_operator a.map(&:off).min, :<, 0.0
+    assert_operator a.map(&:off).max, :>, 0.0
+    assert(a.all? { |p| p.gain.between?(0.05, 1.0) })
+  end
+
+  def test_the_flow_arp_swells_toward_its_top_notes_and_ghosts_the_notes_it_passes
+    high = low = passing = other = []
+    gains = []
+    (1..6).each do |seed|
+      plucks, = flow_stream(seed:)
+      plucks.each_cons(3) do |a, b, c|
+        (a.midi < b.midi && b.midi < c.midi) || (a.midi > b.midi && b.midi > c.midi) ? passing += [b.gain] : other += [b.gain]
+      end
+      mid = plucks.map(&:midi).minmax.sum / 2.0
+      plucks.each { |p| (p.midi > mid ? high += [p.gain] : low += [p.gain]) }
+      gains.concat(plucks.map(&:gain))
+    end
+    avg = ->(list) { list.sum / list.size }
+    assert_operator avg.call(high), :>, avg.call(low), "louder as it climbs"
+    assert_operator avg.call(passing), :<, avg.call(other) * 0.85, "passing notes are ghosted"
+    assert_operator gains.max - gains.min, :>, 0.4, "a real range of velocity"
+  end
+
+  def test_the_energy_walk_stays_between_zero_and_one_and_a_pad_swells_with_it
+    walk = Flow::Walk.new(3)
+    values = Array.new(500) { |i| walk.step(0.5 + (0.4 * Math.sin(i / 20.0))) }
+    assert(values.all? { |v| v.between?(0.0, 1.0) })
+    assert_operator values.max - values.min, :>, 0.5
+    swelled = Flow.swell(Array.new(200, 1.0), [1.0, 0.0], 100)
+    assert_operator swelled.first, :>, swelled[99] * 0.0 + 0.9
+    assert_operator swelled[99], :<, 0.35
+  end
+
+  def test_the_creative_patterns_have_their_shapes
+    pool = [40, 52, 60, 67, 72]
+    spiral = Arp.sequence("spiral", pool, 9, 1)
+    assert_equal [60, 67, 52, 72, 40], spiral.first(5), "out from the middle, one either side in turn"
+    pendulum = Arp.sequence("pendulum", pool, 8, 1)
+    assert_equal [40, 60, 52, 67, 60, 72, 67], pendulum.first(7)
+    assert_equal [52, 52, 60, 67, 40, 67, 67, 52], Arp.sequence("fibonacci", pool, 8, 1)
+    walk = Arp.sequence("prime_walk", pool, 12, 1)
+    assert_equal [60, 40, 40, 60], walk.first(4), "strides of 2, 3, 5, 7 round five notes"
+    assert_operator walk.uniq.size, :>=, 3
+    call = Arp.sequence("call_response", pool, 8, 1)
+    assert_equal [40, 52, 60, 67], call.first(4), "the call rises"
+    assert_operator call[4], :>, call[5], "the answer falls"
+    assert_nil call.last, "and rests"
+    point = Arp.sequence("pedal_point", pool, 8, 1)
+    assert(point.each_slice(2).all? { |low, _| low == 40 }, "the pedal on every other note")
+    assert_equal point.each_slice(2).map(&:last), [52, 60, 67, 72]
+  end
+
+  def test_the_polyrhythm_styles_run_five_and_seven_sixteenths_against_the_grid
+    [["poly5", 5], ["poly7", 7]].each do |style, gap|
+      seq = sequencer("dry", seed: 2)
+      plucks = seq.note_events(%w[Cm9], 88.0, 8.0, seq.arp_settings(nil, style:).merge("modifiers" => []), "arp").first
+      step = 60.0 / 88.0 / 4.0
+      assert_equal [gap], plucks.each_cons(2).map { |a, b| ((b.base - a.base) / step).round }.uniq
+      refute(plucks.all? { |p| ((p.base / step).round % 4).zero? }, "not all on the beat")
+    end
+  end
+
+  def test_arp_list_names_the_patterns_and_styles
+    Dir.mktmpdir do |dir|
+      out, err, status = run_dilla("--arp", "list", chdir: dir)
+      assert status.success?, err
+      %w[spiral pendulum fibonacci prime_walk call_response pedal_point flow poly5 poly7].each { |name| assert_includes out, name }
+    end
   end
 
 end

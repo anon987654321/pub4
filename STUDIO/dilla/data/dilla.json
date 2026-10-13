@@ -3416,7 +3416,14 @@
       "broken_pairs",
       "thumb_pattern",
       "pedal_arp",
-      "spread_roll"
+      "spread_roll",
+      "spiral",
+      "pendulum",
+      "fibonacci",
+      "prime_walk",
+      "call_response",
+      "pedal_point",
+      "flow"
     ],
     "rate": 2,
     "gate": 0.8,
@@ -3436,7 +3443,16 @@
       "thumb_pattern",
       "spread_roll",
       "pedal_arp",
-      "eighth_updown"
+      "eighth_updown",
+      "flow",
+      "spiral",
+      "pendulum",
+      "fibonacci",
+      "prime_walk",
+      "call_response",
+      "pedal_point",
+      "poly5",
+      "poly7"
     ],
     "modifiers": [],
     "euclidean": {
@@ -3521,6 +3537,62 @@
           0.75,
           0.4
         ]
+      },
+      "flow": {
+        "pattern": "flow",
+        "rate": 2,
+        "gate": 0.8,
+        "octaves": 2,
+        "pad_swell": true,
+        "pad": 0.3
+      },
+      "spiral": {
+        "pattern": "spiral",
+        "rate": 2,
+        "gate": 0.8,
+        "octaves": 2
+      },
+      "pendulum": {
+        "pattern": "pendulum",
+        "rate": 2,
+        "gate": 0.75,
+        "octaves": 2
+      },
+      "fibonacci": {
+        "pattern": "fibonacci",
+        "rate": 2,
+        "gate": 0.75,
+        "octaves": 2
+      },
+      "prime_walk": {
+        "pattern": "prime_walk",
+        "rate": 3,
+        "gate": 0.8,
+        "octaves": 2
+      },
+      "call_response": {
+        "pattern": "call_response",
+        "rate": 2,
+        "gate": 0.7,
+        "octaves": 1
+      },
+      "pedal_point": {
+        "pattern": "pedal_point",
+        "rate": 2,
+        "gate": 0.6,
+        "octaves": 2
+      },
+      "poly5": {
+        "pattern": "updown",
+        "rate": 5,
+        "gate": 0.8,
+        "octaves": 2
+      },
+      "poly7": {
+        "pattern": "updown",
+        "rate": 7,
+        "gate": 0.85,
+        "octaves": 2
       }
     }
   },

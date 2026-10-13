@@ -203,8 +203,16 @@ class Sequencer
     accent = settings.fetch('accent', [1.0])
     chord_steps = (beats * 4).round
     Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index.map do |voices, idx|
-      if mode == 'arp'
-        rate = settings.fetch('rate', 2).to_f
+if mode == 'arp' && settings['pattern'] == 'flow'
+  @walk = Flow::Walk.new(Zlib.crc32("#{@seed}:walk")) if idx.zero?
+  @energies = [] if idx.zero?
+  plucks, energies = Flow.chord_events(voices, index: idx, chord_steps:, step:, seed: @seed, walk: @walk, settings:,
+                                               gate: settings.fetch('gate', 0.8))
+  @energies.concat(energies)
+  next modify(plucks, settings, idx, step * 2, 1.0, voices)
+end
+if mode == 'arp'
+  rate = settings.fetch('rate', 2).to_f
         pool = Arp.pool(voices, settings.fetch('octaves', 1))
         notes = Arp.sequence(settings.fetch('pattern'), pool, (chord_steps / rate).floor, Zlib.crc32("#{@seed}:#{idx}"))
         plucks = notes.each_with_index.filter_map do |midi, k|
@@ -231,8 +239,9 @@ class Sequencer
   def render_arp(names, bpm, beats, arp, search: true, pad: false, voice: nil)
     buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
     sound(buf, note_events(names, bpm, beats, arp, 'arp', search:).flatten(1), voice || voice_spec(nil))
-    if pad
+    if pad || arp['pad_swell']
       under = render_chords(names, bpm, beats, search:)
+      under = Flow.swell(under, @energies, 60.0 / bpm * SAMPLE_RATE) if arp['pattern'] == 'flow'
       under.each_with_index { |v, i| buf[i] += v * arp.fetch('pad', 0.3) if i < buf.size }
     end
     buf

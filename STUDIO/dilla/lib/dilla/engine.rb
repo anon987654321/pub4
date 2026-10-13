@@ -21,7 +21,7 @@ def run(argv)
     o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
     o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
     o.on('--no-voice-search', 'Voice each chord by nearest tones only, without the octave search') { options[:plain] = true }
-    o.on('--arp [PATTERN]', 'Play each chord one note at a time: up, down, updown, converge, random_seeded') { |v| options[:arp] = v || true }
+    o.on('--arp [PATTERN]', 'Play each chord one note at a time: up, down, updown, converge, spiral, pendulum, flow and more; --arp list names them') { |v| options[:arp] = v || true }
     o.on('--strum [MS]', Float, 'Stagger the notes of each chord, lowest first, by MS milliseconds (default from the data)') { |v| options[:strum] = v || true }
     o.on('--pad', 'A soft sustained pad under the arpeggio') { options[:pad] = true }
     o.on('--echo [HEADS]', 'Tape space echo; heads such as 1 or 1,2 or 1,2,3') { |v| options[:echo] = v || true }
@@ -59,9 +59,13 @@ def run(argv)
   options[:live] = true if live_argument
 
   data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
-  progressions = data.fetch('progressions')
+progressions = data.fetch('progressions')
 
-  if options[:play]
+if options[:arp] == 'list'
+  puts "Arp patterns: #{data.dig('arp', 'patterns').join(', ')}"
+  puts "Arp styles: #{data.dig('arp', 'styles').keys.join(', ')}"
+  puts "Arp modifiers: #{(data.fetch('arp').keys & %w[euclidean probability note_repeat ratchet humanize grace]).join(', ')}"
+elsif options[:play]
     play_forever(data, options)
   elsif options[:live]
     play_showcase(data, options)
