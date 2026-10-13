@@ -276,6 +276,26 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_playback_tracks_player_without_recursive_lock_and_checks_exit_status
+    playback = Master::Voice::Playback
+    status = Struct.new(:success?).new(true)
+    Dir.mktmpdir("master-playback-lock") do |dir|
+      path = File.join(dir, "answer.mp3")
+      File.write(path, "fake-audio")
+      generation = playback.current_generation
+      playback.stub(:player_candidates, [["fake-player", []]]) do
+        Master::Device::Audio.stub(:media_player_available?, false) do
+          Process.stub(:spawn, ->(*_args, **_options) { 987_654 }) do
+            Process.stub(:wait2, ->(pid) { [pid, status] }) do
+              assert playback.play(path, generation:)
+            end
+          end
+        end
+      end
+      assert_nil playback.instance_variable_get(:@playing_pid)
+    end
+  end
+
   def test_native_audio_mime_types
     assert_equal "audio/mpeg", Master::Voice::Speech.mime_type_for("a.mp3")
     assert_equal "audio/wav", Master::Voice::Speech.mime_type_for("a.wav")
