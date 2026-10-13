@@ -65,12 +65,12 @@ module Master
         else Result.err("browser: unknown action: #{action}", category: :validation)
         end
       rescue ArgumentError => e
-        Result.err("browser_agent: #{e.message}", category: :validation)
+        Result.err("browser: #{e.message}", category: :validation)
       rescue URI::InvalidURIError => e
-        Result.err("browser_agent: invalid URL: #{e.message}", category: :validation)
+        Result.err("browser: invalid URL: #{e.message}", category: :validation)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Browser")
-        Result.err("browser_agent: #{e.class}: #{e.message.lines.first.to_s.strip[0, 200]}", category: :infrastructure)
+        Result.err("browser: #{e.class}: #{e.message.lines.first.to_s.strip[0, 200]}", category: :infrastructure)
       end
 
       private
@@ -130,7 +130,7 @@ module Master
 
       def extract(key, links:)
         state = lookup_session(key)
-        return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
+        return Result.err("browser: no open session: #{key}", category: :validation) unless state
 
         state.mutex.synchronize { render(state, links:) }
       end
@@ -140,7 +140,7 @@ module Master
       # caption never becomes a navigation command.
       def look(key)
         state = lookup_session(key)
-        return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
+        return Result.err("browser: no open session: #{key}", category: :validation) unless state
 
         state.mutex.synchronize do
           path = save_screenshot(state)
@@ -155,11 +155,11 @@ module Master
       def follow(key, raw_selector, wait:, links:)
         selector = require_selector!(raw_selector)
         state = lookup_session(key)
-        return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
+        return Result.err("browser: no open session: #{key}", category: :validation) unless state
 
         state.mutex.synchronize do
           node = state.page.at_css(selector)
-          return Result.err("browser_agent: element not found: #{selector}", category: :validation) unless node
+          return Result.err("browser: element not found: #{selector}", category: :validation) unless node
 
           target = target_from_anchor!(state, node, selector)
           permission = @governor.permit?(NAME, TIER, "follow #{target}")
@@ -178,7 +178,7 @@ module Master
         selector = require_selector!(selector)
         limit = Integer(max_pages).clamp(1, 50)
         state = lookup_session(key)
-        return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
+        return Result.err("browser: no open session: #{key}", category: :validation) unless state
 
         pages = []
         output_bytes = 0
@@ -218,17 +218,17 @@ module Master
         selector = require_selector!(raw_selector)
         op = operation.to_s
         op = value.nil? ? "click" : "set" if op.empty?
-        return Result.err("browser_agent: operation must be click, set, or type", category: :validation) unless OPERATIONS.include?(op)
+        return Result.err("browser: operation must be click, set, or type", category: :validation) unless OPERATIONS.include?(op)
         if op != "click" && (value.nil? || value.to_s.bytesize > MAX_VALUE)
-          return Result.err("browser_agent: set/type requires a value of at most #{MAX_VALUE} bytes", category: :validation)
+          return Result.err("browser: set/type requires a value of at most #{MAX_VALUE} bytes", category: :validation)
         end
 
         state = lookup_session(key)
-        return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
+        return Result.err("browser: no open session: #{key}", category: :validation) unless state
 
         state.mutex.synchronize do
           node = state.page.at_css(selector)
-          return Result.err("browser_agent: element not found: #{selector}", category: :validation) unless node
+          return Result.err("browser: element not found: #{selector}", category: :validation) unless node
 
           # Clicking an anchor is reduced to its same-host href. Other controls
           # still use Ferrum, but every such interaction gets fresh approval and
