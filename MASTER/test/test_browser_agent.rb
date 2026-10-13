@@ -47,8 +47,8 @@ class TestBrowserAgent < Minitest::Test
     end
 
     description = "interact set https://example.com selector=#search"
-    governor.allow!("browser_agent", description)
-    assert governor.permit?("browser_agent", :dangerous, description).err?,
+    governor.allow!("browser", description)
+    assert governor.permit?("browser", :dangerous, description).err?,
            "a remembered allow response must not count as fresh consent"
     2.times do
       assert governor.permit?("browser_agent", :dangerous, description).ok?
@@ -56,7 +56,7 @@ class TestBrowserAgent < Minitest::Test
 
     assert_equal 3, prompts.length
     prompts.each do |request|
-      assert_includes request[:prompt], "browser_agent: interact set"
+      assert_includes request[:prompt], "browser: interact set"
       refute request[:options].any? { |option| option[:value] == "allow" }
     end
   ensure
@@ -66,7 +66,7 @@ class TestBrowserAgent < Minitest::Test
   def test_status_works_without_opening_a_browser
     result = tool.call(action: "status")
     assert result.ok?
-    assert_includes result.value!, "browser_agent ready"
+    assert_includes result.value!, "browser ready"
   end
 
   def test_look_follow_and_paginate_fail_closed_without_a_session
@@ -139,9 +139,9 @@ class TestBrowserAgent < Minitest::Test
     assert_equal "forbidden", interactions.fetch("autonomous_message_sending")
     assert_equal "forbidden", interactions.fetch("browser_fingerprint_spoofing")
     assert_equal "forbidden", interactions.fetch("platform_evasion")
-    assert Master::Builder::DEFAULT_TOOL_MAP.key?("BrowserAgent")
-    assert_equal Master::Io::LLM::BrowserAgent, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::BrowserAgent)
+    assert Master::Builder::DEFAULT_TOOL_MAP.key?("Browser")
+    assert_equal Master::Io::LLM::Browser, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::BrowserAgent)
     tools = YAML.safe_load_file(File.join(root, "data", "tools.yml"), aliases: true)
-    assert tools.any? { |row| row["name"] == "BrowserAgent" && row["default"] == true }
+    assert tools.any? { |row| row["name"] == "Browser" && row["default"] == true }
   end
 end
