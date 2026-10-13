@@ -87,7 +87,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -174,7 +174,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -267,7 +267,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -354,7 +354,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -447,7 +447,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -554,7 +554,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -647,7 +647,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
@@ -740,7 +740,7 @@
         },
         {
           "mode": "arp",
-          "voice": "sine",
+          "voice": "pure_tone",
           "gain_db": -16,
           "pattern": "updown",
           "rate": 4,
