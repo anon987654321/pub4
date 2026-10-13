@@ -43,6 +43,8 @@ module Master
       # vendor slug of an API id.
       def provider(model)
         id = model.to_s
+        return id.split(":", 2).first(2).join(":") if id.start_with?("web-chat:")
+
         colon = id.index(":")
         slash = id.index("/")
         return id[0...colon].to_s if colon && (!slash || colon < slash)
