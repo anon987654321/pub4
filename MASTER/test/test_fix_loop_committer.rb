@@ -225,6 +225,29 @@ class TestFixLoopCommitter < Minitest::Test
     refute(bus.events.any? { |event, _| event == "ops:commit" })
   end
 
+# The freshness check wants a recorded read of what is on disk; only the ReadFile tool made
+# one, so a repair the run wrote itself was blocked as stale. Attesting its own verified write
+# clears it, and a file changed afterwards is stale again.
+def test_a_repair_the_run_wrote_itself_commits_once_attested_and_not_after_a_later_edit
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: Master::Ground::Truth.new)
+  committer.baseline!
+
+  out, = capture_io { committer.commit_if_dirty("fix: ok") }
+  assert_empty git.commits
+  assert_includes out, "commit blocked, ground_truth"
+
+  committer.attest_written!(File.join(@dir, "lib/ok.rb"))
+  committer.commit_if_dirty("fix: ok")
+  assert_equal 1, git.commits.size
+
+  write_file("lib/ok.rb", "OK = 2\n")
+  out, = capture_io { committer.commit_if_dirty("fix: again") }
+  assert_equal 1, git.commits.size
+  assert_includes out, "commit blocked, ground_truth"
+end
+
 # fix-here --no-publish: the commits stay local and the operator pushes.
 def test_no_publish_holds_the_commits_instead_of_pushing
   write_file("lib/ok.rb", "OK = 1\n")

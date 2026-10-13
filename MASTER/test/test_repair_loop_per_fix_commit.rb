@@ -66,6 +66,13 @@ class TestRepairLoopPerFixCommit < Minitest::Test
 
       @calls << [message, findings, owned_paths]
     end
+
+    # The loop attests the content it wrote before it commits it.
+    def attest_written!(*paths)
+      (@attested ||= []).concat(paths.flatten)
+    end
+
+    def attested = @attested.to_a
   end
 
   def build_loop(root:, bus:, scanner:, agent:, committer: nil)
@@ -232,6 +239,7 @@ class TestRepairLoopPerFixCommit < Minitest::Test
 
       assert_equal :applied, outcome
       assert_equal "clean\n", File.read(path)
+      assert_equal [path], committer.attested
       message, findings, owned_paths = committer.calls.first
       assert_equal "fix: TEST_RULE in sample.rb", message
       assert_equal [path], owned_paths

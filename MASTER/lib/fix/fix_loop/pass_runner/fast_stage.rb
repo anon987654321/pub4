@@ -150,6 +150,7 @@ module Master
                       end
             summary = "failed: no machine-readable report" if !status.success? && rows.empty?
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{summary}, checked #{Master::Trace::Dmesg.counted(files.size, "file")}")
+            @committer&.attest_written!(files.map { |path| File.expand_path(path, root) }) if corrected.positive?
             corrected
           rescue JSON::ParserError
             @bus&.publish("fix_loop:rubocop_report_unreadable", files: files.map { |path| path.delete_prefix("#{@root}/") })

@@ -321,6 +321,7 @@ end) if source.to_s.strip.empty?
           return reject_fix(path, old_src, "visual_regression", evidence: [custody.message, custody.gap&.clause].compact.join(", ")) unless custody.ok?
         end
 
+        @committer&.attest_written!(path)
         @bus&.publish("repair_loop:fix_applied", law: @law.id, file: path)
         FixTrace.accepted(@law.id, path)
         true

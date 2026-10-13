@@ -106,6 +106,16 @@ module Master
         # either failure. Returns [prepared, nil] to proceed or [nil, Result]
         # to stop, so the caller never re-runs validate_paths (which lints
         # and re-checks intent, not a free call to repeat).
+        # Content this run wrote itself and checked (scan, syntax, tests) is recorded as read.
+        # The commit's freshness check wants a recorded read of what is on disk, and only the
+        # ReadFile tool made one, so every commit of a /fix repair or a RuboCop autocorrect was
+        # blocked as stale. A file changed by someone else after this still fails the check.
+        def attest_written!(*paths)
+          return unless @ground_truth
+
+          paths.flatten.each { |path| @ground_truth.record_read!(path) if File.file?(path) }
+        end
+
         def commit_if_dirty(message, findings: [], owned_paths: nil)
           @commit_mutex.synchronize do
             if @transaction
