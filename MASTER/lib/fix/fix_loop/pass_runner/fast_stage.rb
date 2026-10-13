@@ -99,7 +99,7 @@ module Master
           # RuboCop wrote in place; each changed file is judged like any other
           # autofix candidate and the original bytes go back on a verdict
           # against it. dry puts every file back and keeps the diff.
-          def settle_rubocop(snapshot, root)
+          def settle_rubocop(snapshot, _root)
             snapshot.each do |path, before|
               after = File.binread(path)
               next if after == before
