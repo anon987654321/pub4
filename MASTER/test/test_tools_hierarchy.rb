@@ -220,4 +220,22 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes row.fetch("check"), "test_tools_hierarchy.rb"
   end
 
+  def test_speech_regression_tests_live_under_the_voice_test_family
+    voice_tests = Dir.glob(File.join(MASTER_ROOT, "test", "voice", "test_*.rb")).sort
+
+    assert_operator voice_tests.size, :>=, 8
+    voice_tests.each do |path|
+      assert_includes File.read(path), 'require_relative "../test_helper"', path
+    end
+  end
+
+  def test_path_ownership_declares_the_voice_test_family
+    ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
+    row = ownership.fetch("test/voice/")
+
+    assert_includes row.fetch("purpose"), "speech and TTS regression tests"
+    assert_equal "medium", row.fetch("risk")
+    assert_includes row.fetch("check"), "test/voice/test_speech_empty_worker.rb"
+  end
+
 end
