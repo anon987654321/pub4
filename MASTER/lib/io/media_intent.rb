@@ -387,7 +387,7 @@ module Master
       def reference_audio_request?(text)
         source = text.match(REFERENCE_URL_RE)&.to_s&.sub(/[.,!?;:]+\z/, "") || text.match(AUDIO_FILE_RE)&.to_s
         return false unless source
-        return true if text.match?(REFERENCE_AUDIO_RE) || text.match?(REFERENCE_STYLE_RE)
+        return true if text.match?(REFERENCE_AUDIO_RE) || text.match?(REFERENCE_STYLE_RE) || reference_generation_request?(text)
         # A pasted YouTube URL by itself is an audio reference in MASTER's music workflow.
         remainder = text.gsub(REFERENCE_URL_RE, "").gsub(/\b(?:and|or)\b|&/i, "").strip
         remainder.match?(/\A[.,!?;:\s]*\z/) && text.match?(REFERENCE_URL_RE)
