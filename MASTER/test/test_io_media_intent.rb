@@ -359,6 +359,7 @@ end
       urls = [
         "https://m.youtube.com/shorts/mx9NU4LmDwM",
         "https://music.youtube.com/watch?v=mx9NU4LmDwM",
+        "https://www.youtube.com/watch?feature=shared&v=mx9NU4LmDwM",
         "https://www.youtube.com/embed/mx9NU4LmDwM"
       ]
       begin
