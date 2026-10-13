@@ -47,8 +47,22 @@ module Master::Core
           # additionalProperties is spelled out: llama.cpp's grammar reads an
           # object that names properties and says nothing else as closed, and a
           # read then has nowhere to put its path.
-          args: { type: "object", properties: { operation: { type: "string", enum: operations } },
-                  additionalProperties: true },
+          args: {
+            type: "object",
+            properties: {
+              operation: { type: "string", enum: operations },
+              compensation: {
+                type: "object",
+                properties: {
+                  argv: { type: "array", minItems: 1, items: { type: "string" } },
+                  reason: { type: "string", minLength: 1, maxLength: 200 },
+                },
+                required: %w[argv reason],
+                additionalProperties: false,
+              },
+            },
+            additionalProperties: true,
+          },
         },
         required: %w[why verb args],
         additionalProperties: false,
@@ -84,9 +98,10 @@ module Master::Core
         read   {"path"}                          inspect a file before changing it
         write  {"path","content"}                create or replace a file (full contents)
         http   {"url"}                           fetch a public HTTP(S) URL through MASTER's guarded network
-        exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}"}
+        exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}",
+                "compensation":{"argv":["inverse","arg"...],"reason":"why this inverse is safe"}} (optional; only when a real inverse is known)
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
-        ask      {"prompt","options":[...]}      a question for the operator when blocked; never to answer
+        ask      {"prompt","options":[...]}      ask the operator for approval or a decision; never answer your own question
         note     {"kind","text"}                 record a thought when no action fits
         critique {"scope":"diff"}                run council tribunal on git diff (high-risk)
         done     {"summary"}                      finish; the summary is your answer to the operator
@@ -106,6 +121,11 @@ module Master::Core
         - The last line of every turn is STATE: the goal, what you have read, the
           evidence so far, and whether `done` is allowed yet. Act on it.
 
+      Effect reversibility is derived by MASTER, not declared by you:
+        - failed writes use a path-scoped checkpoint restore; a failed write whose restore fails is still a failure
+        - exec has no generic rollback. Add compensation only when you know a concrete argv inverse and can explain why it is safe; after failure it is re-checked by the Constitution and needs operator approval
+        - git stage and git commit need explicit operator approval because the shared index and commit history have no automatic inverse
+        - unknown effect contracts are refused; policy_gated does not mean reversible
       Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note
         - never write the constitution (data/laws.yml, data/soul.yml) or the core/ spine
