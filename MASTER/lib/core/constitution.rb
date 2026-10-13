@@ -76,6 +76,7 @@ module Master::Core
         )
       end
 
+      requests = []
       @laws.each do |law|
         watching = begin
           law.watches?(effect.verb)
@@ -104,10 +105,24 @@ module Master::Core
 
         case answer
         in Verdict::Block => b then return b
-        # Returned as it stands rather than carried on, because the rules after
-        # this one would judge an effect a person has not agreed to yet.
-        in Verdict::Request => r then return r
-        in Verdict::Revise(effect: revised) then effect = revised
+        # A request is not a safety verdict. Keep checking every later law so a
+        # yes cannot approve an effect that a subsequent law would block.
+        in Verdict::Request => request
+          unless request.effect == effect
+            return Verdict::Block.new(
+              reason: "law changed the effect while requesting approval",
+              by: :law_evaluator_error,
+            )
+          end
+          requests << request
+        in Verdict::Revise(effect: revised)
+          if requests.any?
+            return Verdict::Block.new(
+              reason: "effect revised after an approval request; re-admission is required",
+              by: :law_order,
+            )
+          end
+          effect = revised
         else
           # nil is the established "no finding" value for individual predicates.
           # Any other unrecognized return is a broken evaluator, not approval.
@@ -119,7 +134,21 @@ module Master::Core
           )
         end
       end
-      Verdict::Allow.new(effect:)
+      return Verdict::Allow.new(effect:) if requests.empty?
+
+      if requests.one?
+        request = requests.first
+        return Verdict::Request.new(effect:, prompt: request.prompt, reason: request.reason, by: request.by)
+      end
+
+      prompts = requests.map { |request| "#{request.by}: #{request.prompt}" }.join("\n")
+      reasons = requests.map { |request| "#{request.by}: #{request.reason}" }.join("; ")
+      Verdict::Request.new(
+        effect:,
+        prompt: "This effect needs approval for all checks:\n#{prompts}",
+        reason: reasons,
+        by: :multiple_constitutional_checks,
+      )
     end
 
     # The rules. Each is a few lines because the dangerous thing is expressed as
