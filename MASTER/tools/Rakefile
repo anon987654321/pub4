@@ -23,7 +23,7 @@ end
 
 desc "Run the deterministic voice quality regression harness without synthesis"
 task :voice_quality do
-  ruby File.expand_path("voice_quality.rb", __dir__)
+  ruby File.expand_path("voice/voice_quality.rb", __dir__)
 end
 
 task default: %i[gate test]
