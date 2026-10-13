@@ -53,6 +53,9 @@ module Master
       def lane_of(model)
         id = model.to_s
         return "ollama" if id.start_with?("ollama:", "ollama/")
+        # Each website has separate login, quota and failure state. A shared
+        # "web-chat" lane would let one broken site silence every browser fallback.
+        return id.split(":", 2).first(2).join(":") if id.start_with?("web-chat:")
 
         colon = id.index(":")
         slash = id.index("/")
