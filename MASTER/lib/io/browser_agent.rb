@@ -122,8 +122,9 @@ module Master
           result = render(state, links:)
           return result unless result.ok?
 
-          Result.ok("#{result.value!}\n\nComplete sign-in manually in the visible browser. " \
-                    "MASTER does not receive credentials. The session is bound to #{state.host}.")
+          Result.ok("#{result.value!}\n\nVisible browser opened for operator-controlled sign-in. " \
+                    "Credentials stay outside MASTER, but this session permits only GET/HEAD requests, " \
+                    "so ordinary POST-based login submissions are blocked. The session is bound to #{state.host}.")
         end
       end
 
