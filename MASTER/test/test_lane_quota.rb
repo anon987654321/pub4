@@ -132,10 +132,16 @@ class TestLaneQuota < Minitest::Test
     @now += 601
     assert_equal ["gemini"], Quota.due_manual_probes(known: ["gemini"], every: 600)
 
+    Silence.silence("gemini", reason: "previous failed probe")
+    assert Silence.refuses?("gemini-2.5-flash")
+
     Quota.with_manual_probe("gemini") do
       refute Quota.dead?("gemini-2.5-flash"), "the canary alone can bypass the manual exclusion"
+      refute Silence.refuses?("gemini-2.5-flash"), "the canary must reach the provider past old silence"
     end
     assert Quota.dead?("gemini-2.5-flash"), "outside the canary, it remains excluded until proof"
+    assert Silence.refuses?("gemini-2.5-flash"), "the ordinary silence remains in place"
+    Silence.record(true, "gemini")
     Quota.revive_manual("gemini")
     refute Quota.dead?("gemini-2.5-flash"), "a verified answer retires the stale exclusion"
     refute_includes Quota.manual_dead, "gemini"
