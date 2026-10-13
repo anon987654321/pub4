@@ -24,7 +24,8 @@ module Master
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
       KICK_RE = /\b(?:generate|create|make|render)\b.*\b(?:hard\s+hitting\s+)?(?:techno\s+)?kick\b/i.freeze
       REFERENCE_AUDIO_RE = /\b(?:analy[sz]e|analy[sz]ing|study|learn from|break down|separate|split|extract|inspect|understand|teach|model|use as (?:a )?reference|reference(?: (?:track|song|audio))?|listen to|here(?:'s| is)|this is how|use this|sound|sound like|track|song|link|video|inspired by|learn the sound of)\b/i.freeze
-      REFERENCE_STYLE_RE = /\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop|industrial[ -]?techno|techno)\b/i.freeze
+      REFERENCE_STYLE_RE = /\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop|industrial[ -]?techno|techno|general|generic|neutral|style[ -]?agnostic)\b/i.freeze
+      REFERENCE_GENERAL_RE = /\b(?:general|generic|neutral|unclassified|style[ -]?agnostic|without (?:a )?(?:style|genre) hint|do not infer (?:a )?(?:style|genre))\b/i.freeze
       REFERENCE_URL_RE = /https?:\/\/(?:(?:www|m|music)\.)?(?:youtu\.be\/[A-Za-z0-9_-]{11}|youtube\.com\/(?:watch\?(?:[^&#\s]*&)*v=[A-Za-z0-9_-]{11}|shorts\/[A-Za-z0-9_-]{11}|embed\/[A-Za-z0-9_-]{11}|live\/[A-Za-z0-9_-]{11}|v\/[A-Za-z0-9_-]{11}))[^\s<>"'\]\)]*/i.freeze
       REFERENCE_SOURCE_LIMIT = 5
       AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
@@ -393,6 +394,7 @@ module Master
       end
 
       def reference_style_for(text)
+        return "general" if text.match?(REFERENCE_GENERAL_RE)
         return "industrial_techno" if text.match?(/\bindustrial[ -]?techno\b/i)
         return "j_dilla" if text.match?(/\bj\s*dilla\b|\bdilla\b|\bboom[ -]?bap\b|\bhip[ -]?hop\b/i)
         return "industrial_techno" if text.match?(/\btechno\b/i)
