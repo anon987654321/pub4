@@ -33,8 +33,9 @@ The repository repair loop, `Master::Fix::FixLoop`, is a different loop. It coor
 
 A four-method sketch such as `observe`, `apply`, `verify`, `fix` is a useful vocabulary for describing work, not a mandate to replace the current implementation with those exact method names. Keep orchestration small by keeping decisions, effects, proof and repair policy behind explicit boundaries.
 
-Every Effect also derives a typed reversibility contract from its verb and arguments; the
-model cannot grant itself a reversibility label. Failed writes use the existing path-scoped
+Every Effect copies and freezes its JSON-shaped argument payload at construction, so a
+later rule or caller cannot mutate what was admitted or approved. It also derives a typed
+reversibility contract from its verb and arguments; the model cannot grant itself a label. Failed writes use the existing path-scoped
 checkpoint restore. An exec may declare a concrete compensation as argv plus a human-readable
 reason, but that compensation is re-admitted by the Constitution and requires operator
 approval after the original command fails. A successful compensation does not rewrite the
