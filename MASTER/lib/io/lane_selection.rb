@@ -43,7 +43,10 @@ module Master
       # vendor slug of an API id.
       def provider(model)
         id = model.to_s
-        return id.split("/").first.to_s if id.include?("/")
+        colon = id.index(":")
+        slash = id.index("/")
+        return id[0...colon].to_s if colon && (!slash || colon < slash)
+        return id.split("/", 2).first.to_s if slash
 
         id.split(/[:-]/).first.to_s
       end
@@ -51,7 +54,8 @@ module Master
       def kind(model)
         id = model.to_s
         return :paid_tail if Io::PaidTail.member?(id)
-        return :free if id.end_with?(":free", ":cloud", "-cloud") || id.start_with?("web-chat:")
+        return :free if id.end_with?(":free", ":cloud", "-cloud") ||
+                        id.start_with?("web-chat:", "kilo:")
         return :local if id.start_with?("ollama:", "ollama/", "local:")
 
         :remote
