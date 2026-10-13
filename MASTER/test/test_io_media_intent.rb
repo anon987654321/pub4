@@ -302,6 +302,29 @@ end
     end
   end
 
+  def test_short_and_embedded_youtube_links_are_audio_references
+    Dir.mktmpdir do |dir|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = dir
+      urls = [
+        "https://m.youtube.com/shorts/mx9NU4LmDwM",
+        "https://music.youtube.com/watch?v=mx9NU4LmDwM",
+        "https://www.youtube.com/embed/mx9NU4LmDwM"
+      ]
+      begin
+        with_dispatch_stub(lambda { |**| Master::Result.ok("reference0: analyzed audio") }) do
+          urls.each do |url|
+            result = MediaIntent.dispatch(url, root: "/tmp/pub4")
+            assert result.ok?, "#{url}: #{result.inspect}"
+            assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+          end
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+    end
+  end
+
   def test_consecutive_reference_links_inherit_the_last_explicit_style
     Dir.mktmpdir do |dir|
       saved = ENV["XDG_DATA_HOME"]
