@@ -292,21 +292,27 @@ end
       saved = ENV["XDG_DATA_HOME"]
       ENV["XDG_DATA_HOME"] = dir
       url = "https://youtu.be/mx9NU4LmDwM?si=barelink"
+      urls = [url, "#{url}."]
       calls = []
       begin
         with_dispatch_stub(lambda do |**kwargs|
           calls << kwargs
           Master::Result.ok("reference0: analyzed audio")
         end) do
-          result = MediaIntent.dispatch(url, root: "/tmp/pub4")
-          assert result.ok?, result.inspect
-          assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+          urls.each do |candidate|
+            result = MediaIntent.dispatch(candidate, root: "/tmp/pub4")
+            assert result.ok?, result.inspect
+            assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+          end
         end
       ensure
         saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
       end
-      argv = Shellwords.split(calls.fetch(0).fetch(:arg))
-      assert_equal ["reference", url], argv
+      assert_equal 2, calls.size
+      calls.each do |call|
+        argv = Shellwords.split(call.fetch(:arg))
+        assert_equal ["reference", url], argv
+      end
     end
   end
 
