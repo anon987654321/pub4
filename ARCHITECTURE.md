@@ -138,6 +138,23 @@ Use OpenBSD's `hier(7)` as a guide to purpose and lifecycle, not as a literal di
 
 Structural changes preserve callers first, then move one family at a time, update ownership and reachability contracts, and retain a reversible path until the consumer census and relevant tests prove the new layout.
 
+## Evidence, memory and constitutional change
+
+MASTER deliberately has several records with different jobs; they are not interchangeable copies of one log.
+
+- `Master::Core::Proof` tracks whether current-generation evidence is sufficient to justify completion. A write invalidates proof earned against an earlier generation.
+- `Master::Fix::RunJournal` records repair-run lifecycle metadata so interrupted runs can be identified and resumed. It is not a file-content backup.
+- Git history, transaction checkpoints and the write/undo journal preserve source changes and recovery state.
+- The event bus and dmesg surface report live progress. A console line alone is not durable proof that a command, deployment or repair succeeded.
+
+Do not replace these with a single hash-chained JSONL file until its canonical encoding, key handling, serialization lock, corruption detection, recovery procedure, retention/privacy policy and independent verifier have been specified and tested. A hash chain detects some changes; by itself, a writer who can rewrite the entire file can recompute the chain. Stronger tamper evidence needs an independent trust anchor appropriate to the threat model.
+
+Every proof report names the commit and the checks actually run. Distinguish passing, failing, inconclusive, blocked, skipped and delivery-failed outcomes. Missing tooling or a timed-out check is not a pass. Metrics such as verified convergence, regression recurrence, rollback frequency, false-clean outcomes, cost and escalation reasons are reported separately and by risk class. Escalating an unsafe action is successful governance, not an autonomy failure.
+
+Ordinary repair does not amend the constitution. Changes to absolute law use a separate, human-authorized amendment path, with the exact diff, previous and proposed content digests, reviewers, verification evidence and rollback path recorded. A remembered successful repair is a candidate, not an exemption: replay must check the current source revision, law, scope, environment and verification contract before applying it.
+
+Cross-host federation is a later capability, not a property obtained by sharing a log format. Before kernels witness each other, define authenticated identities, independent failure domains, signed observations, replay protection, quorum rules, privacy limits and recovery from divergent histories.
+
 ## Proof
 
 The clean architecture is not complete until:
