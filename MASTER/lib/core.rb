@@ -20,12 +20,48 @@ module Master::Core
   # set is closed and small; that closure is what makes the agent auditable.
   VERBS = %i[read write exec git http ask note critique done].freeze
 
+  # A compensation is a proposed inverse command, not a promise that it works.
+  # The Constitution must admit it and the operator must approve it after the
+  # original effect fails. It is deliberately limited to argv, never shell text.
+  CompensatingAction = Data.define(:argv, :reason) do
+    def initialize(argv:, reason:)
+      unless argv.is_a?(Array) && !argv.empty? && argv.all? { |arg| arg.is_a?(String) } && !argv.first.strip.empty?
+        raise ArgumentError, "compensation argv must be a non-empty array of strings"
+      end
+
+      detail = reason.to_s.strip
+      raise ArgumentError, "compensation needs a human-readable reason" if detail.empty?
+
+      super(argv: argv.map { |arg| arg.dup.freeze }.freeze, reason: detail.freeze)
+    end
+  end
+
+  # This classification is derived from the Effect, never chosen by the model.
+  # A label is not proof of reversibility: only named, implemented compensation
+  # mechanisms count, and unknown operations fail closed.
+  Reversibility = Data.define(:kind, :scope, :compensation, :reason) do
+    KINDS = %i[non_mutating session_state reversible compensatable approval_required policy_gated unknown].freeze
+
+    def initialize(kind:, scope: nil, compensation: nil, reason: nil)
+      kind = kind.to_sym
+      raise ArgumentError, "unknown reversibility kind: #{kind}" unless KINDS.include?(kind)
+
+      super(kind:, scope: scope&.to_s&.freeze, compensation:, reason: reason.to_s.freeze)
+    end
+
+    def approval_required? = kind == :approval_required
+    def reversible? = %i[reversible compensatable].include?(kind)
+  end
+
   Effect = Data.define(:verb, :args, :capability) do
     def self.read(path) = new(verb: :read, args: { path: })
     def self.write(path, content) = new(verb: :write, args: { path:, content: })
     def self.http(url) = new(verb: :http, args: { url: })
-    def self.exec(argv, timeout: 60, evidence: nil, env: {}) =
-      new(verb: :exec, args: { argv:, timeout:, evidence:, env: })
+    def self.exec(argv, timeout: 60, evidence: nil, env: {}, compensation: nil)
+      args = { argv:, timeout:, evidence:, env: }
+      args[:compensation] = compensation unless compensation.nil?
+      new(verb: :exec, args:)
+    end
     def self.git(operation, **args)
       capability = %i[diff status log show branch].include?(operation.to_sym) ? :read : :write
       new(verb: :git, args: { operation:, **args }, capability:)
@@ -60,6 +96,67 @@ module Master::Core
       raise ArgumentError, "effect capability mismatch: #{verb} requires #{expected}, got #{supplied}" if supplied && supplied != expected
 
       super(verb:, args:, capability: expected)
+      compensation_action if args.is_a?(Hash) && (args.key?(:compensation) || args.key?("compensation"))
+    end
+
+    # Policy derives from the operation's actual capabilities. policy_gated
+    # means the existing command/network guard decides; it does NOT mean safe or
+    # reversible. A failed arbitrary command has no generic rollback.
+    def reversibility
+      case verb
+      when :read, :critique, :ask, :done
+        Reversibility.new(kind: :non_mutating)
+      when :note
+        Reversibility.new(kind: :session_state, scope: "conversation memory",
+                          reason: "session memory is not a repository side effect")
+      when :write
+        Reversibility.new(kind: :reversible, scope: args[:path], compensation: :scoped_checkpoint_restore,
+                          reason: "a failed write can be restored at its own path from the pre-effect checkpoint")
+      when :exec
+        action = compensation_action
+        if action
+          Reversibility.new(kind: :compensatable, scope: Array(args[:argv]).join(" "), compensation: action,
+                            reason: action.reason)
+        else
+          Reversibility.new(kind: :policy_gated, scope: Array(args[:argv]).join(" "),
+                            reason: "the command policy must classify this command; no generic inverse exists")
+        end
+      when :http
+        Reversibility.new(kind: :policy_gated, scope: args[:url],
+                          reason: "network policy owns authorization; the remote effect has no generic inverse")
+      when :git
+        case args[:operation].to_s.to_sym
+        when :diff
+          Reversibility.new(kind: :non_mutating)
+        when :stage
+          Reversibility.new(kind: :approval_required, scope: Array(args[:paths]).join(", "),
+                            reason: "git stage mutates the shared index and MASTER has no scoped index rollback")
+        when :commit
+          Reversibility.new(kind: :approval_required, scope: Array(args[:paths]).join(", "),
+                            reason: "git commit creates durable repository history and is not automatically undone")
+        else
+          Reversibility.new(kind: :unknown, scope: args[:operation],
+                            reason: "no reversibility contract or World handler exists for this git operation")
+        end
+      else
+        Reversibility.new(kind: :unknown, scope: verb, reason: "no reversibility contract exists for this effect")
+      end
+    end
+
+    # A compensation is structured data that will be re-admitted as a new exec
+    # and explicitly approved only if the original command fails. It cannot
+    # contain another compensation, and its human-readable reason is mandatory.
+    def compensation_action
+      raw = args.key?(:compensation) ? args[:compensation] : args["compensation"]
+      return nil if raw.nil?
+      raise ArgumentError, "compensation is valid only for exec effects" unless verb == :exec
+      raise ArgumentError, "compensation must be an object with argv and reason" unless raw.is_a?(Hash)
+
+      data = raw.to_h { |key, value| [key.to_sym, value] }
+      extra = data.keys - %i[argv reason]
+      raise ArgumentError, "unknown compensation fields: #{extra.join(", ")}" unless extra.empty?
+
+      CompensatingAction.new(argv: data[:argv], reason: data[:reason])
     end
 
     def done? = verb == :done
