@@ -161,17 +161,20 @@ class TestCoreReversibility < Minitest::Test
       compensation: { argv: %w[undo partial], reason: "restore the prior external state" },
     )
     world = RecordingWorld.new(answer: "no")
+    seen = []
     fold = Master::Core::Fold.new(
       model: ScriptedModel.new(effect),
       constitution: C.new(laws: []),
       world:,
       memory: Master::Core::Memory.new,
       max_turns: 1,
+      observer: ->(turn:, effect:, observation:) { seen << observation },
     )
 
     fold.run("perform a compensatable operation")
 
     assert_equal %i[exec ask], world.performed.map(&:verb)
-    assert_match(/compensation not run: operator declined/, world.performed.empty? ? "" : world.performed.first.verb.to_s) if false
+    refute world.performed.any? { |performed| performed.args[:argv] == %w[undo partial] }
+    assert_match(/compensation not run: operator declined/, seen.fetch(0).message)
   end
 end
