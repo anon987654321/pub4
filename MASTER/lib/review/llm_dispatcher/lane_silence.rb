@@ -68,8 +68,13 @@ end
             end
           end
 
-          # Silent from failures, or dead because its provider said the quota is spent.
-          def refuses?(model) = silent?(lane_of(model)) || Master::Io::LaneQuota.dead?(model)
+          # A due manual-exclusion canary is the one bounded probe allowed through
+          # a previous silence; all ordinary requests still respect both guards.
+          def refuses?(model)
+            return false if Master::Io::LaneQuota.manual_probe?(model)
+
+            silent?(lane_of(model)) || Master::Io::LaneQuota.dead?(model)
+          end
 
           # A lane that is down says why and when it is back; otherwise the silence message.
           def refusal(model)
