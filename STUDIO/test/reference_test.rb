@@ -69,6 +69,14 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 124, profile.fetch("target_bpm")
   end
 
+  def test_general_reference_does_not_erase_the_active_style
+    Dir.mktmpdir do |dir|
+      assert_equal "j_dilla", Dilla::Reference.write_active_style("J Dilla", root: dir)
+      assert_equal "general", Dilla::Reference.write_active_style("general", root: dir)
+      assert_equal "j_dilla", Dilla::Reference.active_style(root: dir)
+    end
+  end
+
   def test_profiles_are_scoped_to_a_style
     dilla = Dilla::Reference.profile_path("j_dilla")
     techno = Dilla::Reference.profile_path("industrial_techno")
