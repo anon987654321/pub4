@@ -409,7 +409,8 @@ module Master
       end
 
       def latest_reference_profile
-        JSON.parse(File.read(reference_profile_path))
+        profile = JSON.parse(File.read(reference_profile_path))
+        profile if profile.is_a?(Hash)
       rescue Errno::ENOENT, JSON::ParserError, TypeError
         nil
       end
