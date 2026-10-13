@@ -141,6 +141,30 @@ end
     assert_equal :policy, result.category
   end
 
+  def test_public_site_news_request_uses_tool_capable_chat_not_fold
+    message = "Go to www.nrk.no, give me today's news in norwegian"
+    reached = :none
+
+    Master::CLI::TurnRouter.stub(:casual_reply, lambda { |text, **|
+      reached = :chat
+      Master::Result.ok({ rendered: text })
+    }) do
+      Master::CLI::TurnRouter.stub(:run_fold, ->(*) { reached = :fold; flunk "read-only web research must not enter the coding fold" }) do
+        result = Master::CLI::TurnRouter.call(message:, container: build_container)
+
+        assert result.ok?
+        assert_equal :chat, reached
+        assert_equal message, result.value[:rendered]
+      end
+    end
+  end
+
+  def test_public_site_request_with_mutating_intent_is_not_classified_as_research
+    refute Master::CLI::TurnRouter.public_research_request?(
+      "Go to https://example.com and publish this post",
+    )
+  end
+
   def test_authenticated_turns_still_reach_fold
     Fiber[:master_visitor] = nil
     reached = :none
