@@ -63,6 +63,49 @@ class TestBrowserAgent < Minitest::Test
     Fiber[:master_terminal_ask] = nil
   end
 
+  def test_status_works_without_opening_a_browser
+    result = tool.call(action: "status")
+    assert result.ok?
+    assert_includes result.value!, "browser_agent ready"
+  end
+
+  def test_look_follow_and_paginate_fail_closed_without_a_session
+    assert tool.call(action: "look").err?
+    assert tool.call(action: "follow", selector: "a").err?
+    assert tool.call(action: "paginate").err?
+  end
+
+  def test_navigation_session_is_locked_to_its_first_host_and_mode
+    agent = tool
+    sessions = agent.instance_variable_get(:@sessions)
+    state = Master::Io::BrowserAgent::Session.new(
+      browser: nil,
+      page: nil,
+      mutex: Mutex.new,
+      host: "example.com",
+      headless: true,
+    )
+    sessions["default"] = state
+
+    assert agent.send(:ensure_session_host!, state, URI("https://EXAMPLE.com/next"))
+    assert_raises(ArgumentError) do
+      agent.send(:ensure_session_host!, state, URI("https://other.example/"))
+    end
+    assert_raises(ArgumentError) do
+      agent.send(:ensure_session_host!, state, URI("file:///etc/passwd"))
+    end
+    assert_raises(ArgumentError) do
+      agent.send(:open_session, "default", host: "example.com", headless: false)
+    end
+  end
+
+  def test_shared_transport_can_enforce_a_session_host
+    transport = Master::Io::WebBrowse.new(governor: Governor.new)
+    assert transport.send(:request_allowed_for_host?, URI("https://example.com/page"), "example.com")
+    assert transport.send(:request_allowed_for_host?, URI("https://EXAMPLE.COM/page"), "example.com")
+    refute transport.send(:request_allowed_for_host?, URI("https://other.example/page"), "example.com")
+  end
+
   def test_policy_and_runtime_registration_agree
     root = Master::ROOT
     policy = YAML.safe_load_file(File.join(root, "data", "laws.yml"), aliases: true).fetch("browser_policy")
