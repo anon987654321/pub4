@@ -118,6 +118,56 @@ class PatchApplierTest < Minitest::Test
     assert_match(/more than one file/, result.reason)
   end
 
+  # A model estimates a hunk's line counts, and patch(1) refuses a hunk whose body
+  # disagrees with them. The counts come from the body, so a correct edit with a
+  # wrong count is applied rather than discarded as no proposal.
+  def test_applies_a_diff_whose_hunk_counts_are_wrong
+    miscounted = <<~DIFF
+      --- a
+      +++ b
+      @@ -1,22 +1,8 @@
+       line one
+      -line two
+      +line TWO
+       line three
+    DIFF
+
+    result = Applier.apply(ORIGINAL, miscounted)
+
+    assert_instance_of Applier::Success, result
+    assert_equal "line one\nline TWO\nline three\n", result.source
+  end
+
+  def test_applies_a_second_hunk_with_a_single_at_header_and_trailing_blank_lines
+    source = (1..12).map { |n| "row #{n}\n" }.join
+    two_hunks = <<~DIFF
+      --- a
+      +++ b
+      @@ -2,3 +2,3 @@
+       row 2
+      -row 3
+      +row THREE
+       row 4
+      @ -9,3 +9,3 @@
+       row 9
+      -row 10
+      +row TEN
+       row 11
+
+
+    DIFF
+
+    result = Applier.apply(source, two_hunks)
+
+    assert_instance_of Applier::Success, result
+    assert_includes result.source, "row THREE\n"
+    assert_includes result.source, "row TEN\n"
+  end
+
+  def test_recount_leaves_text_without_a_hunk_header_alone
+    assert_equal "not a diff\n", Applier.recount("not a diff\n")
+  end
+
   def test_the_diff_threshold_is_declared
     assert_equal 8_192, Applier::DIFF_THRESHOLD
   end

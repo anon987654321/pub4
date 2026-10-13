@@ -26,13 +26,56 @@ module Master
       # a second header is a model error and is refused before the shell.
       MULTI_FILE_HEADER = /^--- /
 
+      # A model writes a hunk header's line counts by estimate, and patch(1) refuses
+      # a hunk whose body disagrees with them, so a correct edit with a wrong count
+      # was discarded as no proposal. The start lines stay (patch(1) finds the
+      # offset); the counts are taken from the body. A single "@" header is the same
+      # slip and reads as a hunk.
+      HUNK_HEADER = /\A@@?[ \t]*-(\d+)(?:,\d+)?[ \t]+\+(\d+)(?:,\d+)?[ \t]*@?@?/
+
       def self.apply(original, diff_text)
         return Failure.new(reason: "empty diff") if diff_text.strip.empty?
         if diff_text.scan(MULTI_FILE_HEADER).size > 1
           return Failure.new(reason: "diff names more than one file; this applies to one source")
         end
 
-        new(original, diff_text).apply
+        new(original, recount(diff_text)).apply
+      end
+
+      # The diff with every hunk header rewritten from its own body. Text that is
+      # not a hunk, including a diff with no recognisable header, passes through.
+      def self.recount(diff_text)
+        lines = []
+        hunk = nil
+        diff_text.each_line do |raw|
+          line = raw.chomp
+          if (header = line.match(HUNK_HEADER))
+            lines.concat(hunk_lines(hunk)) if hunk
+            hunk = { old: header[1], new: header[2], body: [] }
+          elsif hunk && hunk_body_line?(line)
+            hunk[:body] << (line.empty? ? " " : line)
+          elsif hunk
+            lines.concat(hunk_lines(hunk))
+            hunk = nil
+            lines << line
+          else
+            lines << line
+          end
+        end
+        lines.concat(hunk_lines(hunk)) if hunk
+        "#{lines.join("\n")}\n"
+      end
+
+      def self.hunk_body_line?(line) = line.empty? || line.start_with?(" ", "-", "+", "\\")
+
+      # Blank lines the model left at the end of a hunk are the end of the reply,
+      # not context the file has to contain.
+      def self.hunk_lines(hunk)
+        body = hunk[:body].dup
+        body.pop while body.last == " "
+        old = body.count { |line| line.start_with?(" ", "-") }
+        new = body.count { |line| line.start_with?(" ", "+") }
+        ["@@ -#{hunk[:old]},#{old} +#{hunk[:new]},#{new} @@", *body]
       end
 
       def initialize(original, diff_text)
