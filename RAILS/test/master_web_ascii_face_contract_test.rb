@@ -129,13 +129,17 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     refute ascii.key?("wordmark")
     refute ascii.key?("prompt")
     refute_match(/<pre id="wordmark"/, view)
-    assert_includes view, '<span class="pp" aria-hidden="true"><%= t("face.prompt_user") %></span><span class="sep2" aria-hidden="true">$ </span>'
-    assert_includes read(WEB, "config", "locales", "en.yml"), 'prompt_user: "user"'
-    assert_includes read(WEB, "config", "locales", "nb.yml"), 'prompt_user: "bruker"'
+    assert_includes view, '<span class="pp" aria-hidden="true"><%= Master::Face::Contract.user_token %></span>'
+    refute_includes view, 'class="sep2"'
+    tokens = read(ROOT, "MASTER", "data", "tokens.yml")
+    assert_match(/user_token: "user"/, tokens)
+    assert_match(/master_token: "master"/, tokens)
     chat = read(PUBLIC, "chat.js")
 
     assert_includes chat, "shellPromptLabel(role)"
-    assert_includes chat, "master$ "
+    assert_includes chat, "prompt.user_token"
+    assert_includes chat, "prompt.master_token"
+    refute_includes chat, "master$ "
     refute_includes chat, "promptGlyph"
     refute_includes read(PUBLIC, "face.css"), ".wordmark {"
   end
