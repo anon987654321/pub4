@@ -132,6 +132,7 @@ def render(data, options)
   buf = seq.colour(buf, sonitex, vcs)
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
   echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
+  echo['reverb'] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
   seconds = buf.size / SAMPLE_RATE.to_f
   hits = drums ? seq.drum_hits(drums, bpm, seconds) : []
@@ -246,6 +247,7 @@ def render_showcase(data, options)
       echo_feedback: options[:echo_feedback] || section['echo_feedback'],
       echo_time: options[:echo_time] || section['echo_time_ms'],
       echo_tail: section['echo_tail_seconds'],
+      echo_reverb: section['echo_reverb'],
       mix: section.fetch('mix', {}).merge(options[:mix] || {}),
       scale_pcs: section['scale_pcs'],
       melody: section['melody'],
