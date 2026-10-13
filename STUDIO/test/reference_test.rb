@@ -93,8 +93,8 @@ class DillaReferenceTest < Minitest::Test
     }
     dense = Dilla::Reference.profile_for(mix, style: "industrial_techno")
     sparse = Dilla::Reference.profile_for(mix, style: "industrial_techno")
-    dense_base = dense.fetch("parameters")
-    sparse_base = sparse.fetch("parameters")
+    dense_base = dense.fetch("parameters").dup
+    sparse_base = sparse.fetch("parameters").dup
 
     Dilla::Reference.apply_rhythm_balance(dense, "onset_density_per_bar" => 24.0)
     Dilla::Reference.apply_rhythm_balance(sparse, "onset_density_per_bar" => 8.0)
