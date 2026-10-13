@@ -170,7 +170,10 @@ module Master
           end
 
           llm_tool = wrapper.new(tool, bus: @bus)
-          reply = llm_tool.call(heal_args(llm_tool, args))
+          # RubyLLM::Tool#call accepts declared arguments as keywords. Passing
+          # the healed hash positionally raises "given 1, expected 0" before
+          # WebFetch, WebBrowse, Shell, or any other wrapped tool can execute.
+          reply = llm_tool.call(**heal_args(llm_tool, args))
           return reply unless reply.is_a?(Hash) && reply[:error]
 
           "error: #{reply[:error]}; parameters are #{param_signature(tool)}"
