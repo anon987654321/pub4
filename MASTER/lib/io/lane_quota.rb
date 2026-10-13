@@ -49,8 +49,13 @@ module Master
       def lane_of(model)
         id = model.to_s
         return "ollama" if id.start_with?("ollama:", "ollama/")
-        return id.split("/", 2).first.to_s if id.include?("/")
-        return id.split(":", 2).first.to_s if id.include?(":")
+
+        colon = id.index(":")
+        slash = id.index("/")
+        # Hosted IDs are <gateway>:<vendor>/<model>; the gateway owns the
+        # quota, even though the upstream model ID itself contains a slash.
+        return id[0...colon].to_s if colon && (!slash || colon < slash)
+        return id.split("/", 2).first.to_s if slash
 
         id.split("-", 2).first.to_s
       end
