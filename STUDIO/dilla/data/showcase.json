@@ -231,7 +231,7 @@
     {
       "name": "Velvet Geometry",
       "progression": [
-        "CmMaj7",
+        "Cmmaj7",
         "Abmaj7",
         "Fm9",
         "G7b9"
@@ -344,7 +344,7 @@
     {
       "name": "Silver Thread",
       "progression": [
-        "AmMaj7",
+        "Ammaj7",
         "Dm9",
         "Fmaj7",
         "E7b9"
@@ -809,7 +809,7 @@
     {
       "name": "Night Bloom",
       "progression": [
-        "C#mMaj7",
+        "C#mmaj7",
         "F#m9",
         "Amaj7",
         "G#7b9"
