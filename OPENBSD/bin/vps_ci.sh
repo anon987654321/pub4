@@ -12,6 +12,13 @@ fi
 app=${1:-}
 [[ -n $app ]] || { print -u2 -r -- "$usage"; exit 2 }
 
+# Validate before using the argument in any filesystem path. This entrypoint
+# only runs Rails app CI; an arbitrary app string must never widen its reach.
+case $app in
+  brgen|amber|bsdports) ;;
+  *) print -u2 "vps_ci: unknown app \"$app\" — allowed: brgen, amber, bsdports"; exit 2 ;;
+esac
+
 repo=${PUB4_ROOT:-/home/dev/pub4}
 app_dir=/home/${app}/app
 # The Gemfiles name path gems relative to the app dir (../__shared, ../brgen_*),
