@@ -11,6 +11,8 @@ STUDIO   = sound / image / media / export
 
 The repository is not rebuilt by copying old structure into a new name. The existing rules, law, tests, gates, contracts, runbooks, provenance and working media tools are retained while implementation is moved behind smaller boundaries.
 
+The same invariant is enforced at each tree's real boundary, not by copying MASTER's constitution four times. MASTER admits effects before execution and records outcomes; RAILS binds requests to known hosts and data identity, and constrains browser-based imports to public targets; OPENBSD validates deploy targets before path construction and serializes machine-changing work under locks and health checks; STUDIO treats generated media as valuable artifacts, publishes WAV/MIDI atomically, and requires explicit consent to replace an existing take. Each tree owns its mechanisms, tests and failure vocabulary. One philosophy; no duplicate registry.
+
 ## MASTER
 
 The small control kernel is a boundary rule, not a command to delete working subsystems or force every responsibility into one file. The live execution fold has four separate roles:
