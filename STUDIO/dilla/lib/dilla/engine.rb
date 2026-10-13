@@ -103,6 +103,7 @@ def render(data, options)
   voice = seq.voice_spec(options[:voice])
   search = !options[:plain]
   mode = play_mode(options, seq)
+  validate_scale!(names, options[:melody], options[:scale_pcs]) if options[:scale_pcs]
   warn_past_nyquist(names, search, options)
   buf =
     case mode
@@ -124,8 +125,10 @@ def render(data, options)
     end
     seq.sound(buf, plucks, seq.voice_spec(options[:melody_voice] || 'rhodes_mark1'))
   end
+  render_layers(buf, seq, names, bpm, beats, options, search:)
   vcs = seq.vcs_amount(options[:vcs])
   sonitex = seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances])
+  drum_sonitex = seq.sonitex_settings(options[:drum_sonitex], instances: options[:drum_sonitex_instances]) || sonitex
   buf = seq.colour(buf, sonitex, vcs)
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
   echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
@@ -136,7 +139,7 @@ def render(data, options)
   buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
   buf = seq.duck(buf, hits)
   buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
-  buf = seq.overlay_drums(buf, hits, levels, vcs, sonitex:) if drums
+  buf = seq.overlay_drums(buf, hits, levels, vcs, sonitex: drum_sonitex) if drums
   return buf if options[:buffer_only]
 
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{index}#{drums ? "_#{drums}" : ''}.wav")
@@ -149,6 +152,66 @@ def render(data, options)
   puts "Wrote #{out} (#{seconds.round(2)}s) progression #{index}: #{names.join(' ')}"
   puts "  drums=#{drums || 'none'} profile=#{profile} mode=#{mode} voice=#{voice['name']} groove=#{seq.pd_amount} bpm=#{bpm} seed=#{seed}"
   out
+end
+
+# Reject a line whose notes drift out of the arrangement's named scale.
+# This keeps every added layer tied to the same harmonic source.
+def validate_scale!(names, melody, scale_pcs)
+  allowed = scale_pcs.map(&:to_i).uniq
+  chord_pcs = names.flat_map do |name|
+    chord = Chords.parse(name)
+    (chord[:tones].map { |tone| (chord[:pc] + tone) % 12 } + [chord[:bass]].compact).uniq
+  end.uniq
+  chord_outside = chord_pcs - allowed
+  melody_outside = Array(melody).filter_map do |event|
+    midi = event[1].to_i
+    midi % 12 unless allowed.include?(midi % 12)
+  end.uniq
+  return if chord_outside.empty? && melody_outside.empty?
+
+  abort "Scale mismatch: chord pitch classes #{chord_outside.inspect}, melody pitch classes #{melody_outside.inspect}, allowed #{allowed.inspect}"
+end
+
+# Add deliberate layers behind and above the main instrument part without modulation effects.
+# Held layers use the very same chord voicings; patterned layers share the same tempo and groove.
+def render_layers(buf, seq, names, bpm, beats, options, search:)
+  Array(options[:layers]).each do |layer|
+    voice = seq.voice_spec(layer.fetch('voice'))
+    gate = layer.fetch('gate', 0.9).to_f.clamp(0.05, 1.5)
+    mode = layer.fetch('mode', 'held')
+    layer_buf =
+      case mode
+      when 'held'
+        layer_buffer = Array.new(buf.size, 0.0)
+        beat_seconds = 60.0 / bpm
+        chords = Chords.midi_notes(names, search:, transpose: options[:transpose] || 0, wrap: options[:wrap])
+        plucks = chords.each_with_index.map do |notes, index|
+          Pluck.new(index * beats * beat_seconds, 0.0, notes, beats * beat_seconds * gate,
+                    layer.fetch('velocity', 0.55).to_f.clamp(0.0, 1.0))
+        end
+        seq.sound(layer_buffer, plucks, voice)
+        layer_buffer
+      when 'repeat'
+        style = layer.fetch('pattern', 'half_note_pulse')
+        comp = seq.comp_settings(style).merge('gate' => gate, 'modifiers' => [])
+        seq.render_repeat(names, bpm, beats, comp, search:, voice:)
+      when 'arp'
+        pattern = layer.fetch('pattern', 'updown')
+        arp = seq.arp_settings(pattern, rate: layer.fetch('rate', 4).to_f)
+        arp['gate'] = gate
+        arp['octaves'] = layer.fetch('octaves', 1).to_i.clamp(1, 2)
+        arp['modifiers'] = []
+        seq.render_arp(names, bpm, beats, arp, search:, voice:)
+      else
+        abort "Unknown synth layer mode: #{mode}"
+      end
+
+    gain = 10.0**(layer.fetch('gain_db', -12.0).to_f / 20.0)
+    layer_buf.each_with_index do |sample, index|
+      buf[index] += sample * gain if index < buf.size
+    end
+  end
+  buf
 end
 
 # Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
@@ -184,8 +247,12 @@ def render_showcase(data, options)
       echo_time: options[:echo_time] || section['echo_time_ms'],
       echo_tail: section['echo_tail_seconds'],
       mix: section.fetch('mix', {}).merge(options[:mix] || {}),
+      scale_pcs: section['scale_pcs'],
       melody: section['melody'],
       melody_voice: section['melody_voice'],
+      layers: section['layers'],
+      drum_sonitex: options[:drum_sonitex] || section['drum_sonitex'],
+      drum_sonitex_instances: options[:drum_sonitex_instances] || section['drum_sonitex_instances'],
       seed: seed + (index * 97),
       groove: options[:groove],
       transpose: options[:transpose],
