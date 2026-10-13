@@ -228,6 +228,7 @@ module Master
       def wrap_stream(text, _state)
         text.to_s
       end
+
       def cli_felt_sense
         mood = @last_ok ? "focused" : "tense"
         mood = "curious" if @refs.session.phase == :discover
