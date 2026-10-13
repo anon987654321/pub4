@@ -531,7 +531,9 @@ module Master
         @synthesis_mutexes[slot].synchronize do
           held_slots << slot
           begin
-            synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)
+            result = synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)
+            clear_last_error! if result
+            result
           ensure
             held_slots.delete_at(held_slots.rindex(slot))
             Thread.current[SYNTHESIS_SLOTS_KEY] = nil if held_slots.empty?
