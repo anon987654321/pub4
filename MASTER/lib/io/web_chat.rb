@@ -34,6 +34,7 @@ module Master
 
         @screenshot_evidence = []
         @screenshot_capture_failure_reported = false
+        @submitted_text = nil
         full_prompt = [system, prompt].compact.join("\n\n")
         with_browser { |page| converse(page, full_prompt) }
       end
@@ -87,6 +88,7 @@ module Master
           page.go_to(@config.fetch("url"))
           capture_screenshot(page, stage: "loaded")
           previous = reply_state(page)
+          @submitted_text = text.to_s
           fill_prompt(page, text)
           capture_screenshot(page, stage: "submitted")
           reply = read_reply(page, previous:)
@@ -132,9 +134,43 @@ module Master
       # A page can contain earlier assistant turns. Read the last matching node
       # and its count so a repeated, text-identical answer still counts as new.
       def reply_state(page)
-        nodes = page.css(@config.fetch("reply_selector"))
+        nodes = page.css(@config.fetch("reply_selector")).select { |node| reply_candidate?(node) }
         node = nodes.last
         [nodes.size, node ? extract_text(node) : ""]
+      end
+
+      # Some provider selectors include both sides of the conversation. Reject
+      # nodes marked as user input and the prompt echo before deciding that a
+      # visible change is a new assistant answer.
+      def reply_candidate?(node)
+        roles = %w[data-message-author-role data-role role].filter_map do |name|
+          value = node.attribute(name).to_s.strip.downcase
+          value unless value.empty?
+        rescue StandardError
+          nil
+        end
+        return false if roles.any? { |value| value.match?(/\b(user|human|prompt|question|query)\b/) }
+        return true if roles.any? { |value| value.match?(/\b(assistant|bot|model)\b/) }
+
+        metadata = %w[class data-testid aria-label].filter_map do |name|
+          value = node.attribute(name).to_s.strip.downcase
+          value unless value.empty?
+        rescue StandardError
+          nil
+        end.join(" ")
+        return false if metadata.match?(/(?:\A|[\s_-])(user|human|prompt|question|query)(?:\z|[\s_-])/) 
+        return true if metadata.match?(/assistant|response|bot|model|markdown-body|message-content/)
+
+        !submitted_prompt_echo?(extract_text(node))
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "WebChat.reply_candidate", provider: @provider)
+        false
+      end
+
+      def submitted_prompt_echo?(value)
+        prompt = @submitted_text.to_s.gsub(/\s+/, " ").strip
+        text = value.to_s.gsub(/\s+/, " ").strip
+        !prompt.empty? && text == prompt
       end
 
       def find_element(page, selector)
