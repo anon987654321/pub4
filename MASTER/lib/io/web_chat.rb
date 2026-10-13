@@ -45,13 +45,12 @@ module Master
       private
 
       def enabled?
-        return true if ENV[KEYLESS_ENV].to_s != ""
-        return true if ENV[ENABLE_ENV].to_s != ""
-        Master.keyless_llm_enabled?
+        return false if ENV["MASTER_NO_WEB_CHAT"] == "1"
+        ENV[ENABLE_ENV].to_s != "0"
       end
 
       def disabled_message
-        "web chat disabled; set #{ENABLE_ENV}=1, #{KEYLESS_ENV}=1, or configure API keys"
+        "web chat disabled; unset #{ENABLE_ENV}=0 and #{'MASTER_NO_WEB_CHAT'}"
       end
 
       def provider_config(name)
