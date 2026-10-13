@@ -14,7 +14,9 @@ module Dilla
     module_function
 
     def run(argv)
-      opts = { bpm: nil, bars: 16, seed: 42 }
+      # MASTER selects bars from reference duration and creates a fresh internal seed.
+      # Both remain overridable for repeatable, deliberate renders, but need no user input.
+      opts = { bpm: nil, bars: nil, seed: nil }
       OptionParser.new do |parser|
         parser.banner = "Usage: ruby dilla.rb industrial-techno [options]"
         parser.on("--bpm N", Float) { |v| opts[:bpm] = v }
@@ -25,14 +27,16 @@ module Dilla
         parser.on("-h", "--help") { puts parser; return 0 }
       end.parse!(argv)
       raise ArgumentError, "unexpected arguments: #{argv.join(' ')}" unless argv.empty?
-      raise ArgumentError, "bars must be 1..#{MAX_BARS}" unless opts[:bars].between?(1, MAX_BARS)
       profile = read_profile(opts[:reference])
       bpm = (opts[:bpm] || profile&.fetch("target_bpm", nil) || 138).to_f
       raise ArgumentError, "BPM must be 90..190" unless bpm.finite? && bpm.between?(90, 190)
+      plan = generation_plan(profile:, bpm:, bars: opts[:bars], seed: opts[:seed])
+      bars, seed = plan.values_at(:bars, :seed)
+      raise ArgumentError, "bars must be 1..#{MAX_BARS}" unless bars.between?(1, MAX_BARS)
       path = File.expand_path(opts[:out] || File.join(ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents")), "dilla-renders", "industrial-techno-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav"))
       raise ArgumentError, "refusing to overwrite existing output: #{path}" if File.exist?(path)
-      render(path, bpm:, bars: opts[:bars], seed: opts[:seed], profile:)
-      puts "dilla0: wrote original industrial techno #{path} (#{bpm.round(1)} BPM, #{opts[:bars]} bars)"
+      render(path, bpm:, bars:, seed:, profile:)
+      puts "dilla0: wrote original industrial techno #{path} (#{bpm.round(1)} BPM, #{bars} bars, seed #{seed})"
       puts "dilla0: reference profile applied" if profile
       0
     rescue ArgumentError, JSON::ParserError => error
@@ -41,6 +45,19 @@ module Dilla
     rescue StandardError => error
       warn "dilla0: render failed (#{error.class}: #{error.message})"
       1
+    end
+
+    # Infer arrangement length from the measured source duration. A full reference
+    # can be longer than this renderer's cap, so keep the plan within safe limits.
+    # The seed is generated inside Dilla and printed in the render log for traceability.
+    def generation_plan(profile:, bpm:, bars: nil, seed: nil)
+      duration = begin
+        Float(profile&.fetch("source_duration_seconds", nil))
+      rescue ArgumentError, TypeError
+        nil
+      end
+      inferred_bars = duration&.positive? ? (duration * bpm.to_f / 240.0).round.clamp(8, MAX_BARS) : 16
+      { bars: (bars || inferred_bars).to_i, seed: seed.nil? ? (Random.new_seed & 0xffff_ffff) : seed.to_i }
     end
 
     def render(path, bpm: 138, bars: 16, seed: 42, profile: nil)
