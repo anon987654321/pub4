@@ -63,7 +63,7 @@ module Master
         compaction = prepare_chat_turn(message)
         return compaction if compaction.is_a?(Master::Result::Err)
 
-        prepare_evidence(message) unless task_type.to_s == "chat"
+        prepare_evidence(message) if prepare_evidence_for?(message, task_type)
         dispatch = prepare_chat_dispatch(message, task_type)
 
         rate_err = check_rate_limit(dispatch[:selected_model])
@@ -278,6 +278,15 @@ end
         Fiber[:master_trajectory_events] = []
         @memory&.auto_save(message) if @memory&.respond_to?(:auto_save)
         @session.add_message(role: :user, content: message)
+      end
+
+      # Plain chat stays lightweight, but an explicit request for current facts,
+      # research, or a website still must receive its evidence route. The task_type
+      # label describes presentation; it must not turn off browser selection.
+      def prepare_evidence_for?(message, task_type)
+        return true unless task_type.to_s == "chat"
+
+        !%i[conversation unknown].include?(Ground::EvidenceRouter.classify(message))
       end
 
       def prepare_evidence(message)
