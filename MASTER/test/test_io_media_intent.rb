@@ -472,6 +472,10 @@ end
       ENV["XDG_DATA_HOME"] = dir
       url = "https://youtu.be/mx9NU4LmDwM?si=dilla"
       calls = []
+      render_stub = MediaIntent.method(:render_dilla)
+      MediaIntent.define_singleton_method(:render_dilla) do |text, root:, output: nil|
+        render_stub.call(text, root:, output: output && File.join(dir, File.basename(output)))
+      end
       begin
         with_dispatch_stub(lambda do |**kwargs|
           calls << kwargs
@@ -484,6 +488,7 @@ end
           assert_equal :dilla, result.value!.fetch(:media)
         end
       ensure
+        MediaIntent.define_singleton_method(:render_dilla, render_stub)
         saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
       end
 
