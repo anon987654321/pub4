@@ -91,12 +91,29 @@ module Master
 
       # Public, shared security setup: BrowserAgent uses the same fenced
       # request path rather than letting a second Ferrum instance access the net.
-      def secure_page(page)
+      def secure_page(page, allowed_host: nil)
         page.command("Page.addScriptToEvaluateOnNewDocument", source: NETWORK_SANDBOX_SCRIPT)
         page.command("Network.setCacheDisabled", cacheDisabled: true)
         page.command("Network.setBypassServiceWorker", bypass: true)
-        guard_requests(page, budget: new_budget)
+        budget = new_budget
+        page.instance_variable_set(:@master_web_browse_budget, budget)
+        guard_requests(page, budget:, allowed_host:)
         page
+      end
+
+      # Reuse the same request handler while giving each explicit page
+      # navigation its own bounded resource budget. The callback closes over
+      # the mutable budget object, so resetting its counters does not weaken
+      # the host or SSRF checks.
+      def reset_page_budget(page)
+        budget = page.instance_variable_get(:@master_web_browse_budget)
+        return false unless budget
+
+        budget[:mutex].synchronize do
+          budget[:requests] = 0
+          budget[:bytes] = 0
+        end
+        true
       end
 
       def deliver_snapshot(url, snapshot, links: true) = deliver(url, snapshot, links:)
@@ -123,21 +140,22 @@ module Master
 
       # Nothing is continued to Chromium's own network stack. A request is either
       # fetched directly to the address approved by SsrfGuard or aborted.
-      def guard_requests(page, budget:)
+      def guard_requests(page, budget:, allowed_host: nil)
         page.network.intercept
         page.on(:request) do |request|
-          handle_request(request, budget:)
+          handle_request(request, budget:, allowed_host:)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "WebBrowse.request") rescue nil
           request.abort rescue nil
         end
       end
 
-      def handle_request(request, budget:)
+      def handle_request(request, budget:, allowed_host: nil)
         return request.abort unless reserve_request!(budget)
 
         uri = URI(request.url.to_s)
         return request.abort unless web_uri?(uri)
+        return request.abort unless request_allowed_for_host?(uri, allowed_host)
 
         method = request.method.to_s.upcase
         return request.abort unless REQUEST_METHODS.include?(method)
@@ -166,6 +184,10 @@ module Master
 
       def web_uri?(uri)
         %w[http https].include?(uri.scheme.to_s.downcase) && !uri.host.to_s.empty? && uri.userinfo.nil?
+      end
+
+      def request_allowed_for_host?(uri, allowed_host)
+        allowed_host.nil? || uri.host.to_s.casecmp(allowed_host.to_s).zero?
       end
 
       def reserve_request!(budget)
