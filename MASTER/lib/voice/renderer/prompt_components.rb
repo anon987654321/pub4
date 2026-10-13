@@ -97,7 +97,7 @@ module Master
         end
 
         def phase_prompt(last_ok, _phase)
-          last_ok ? prompt_token : "!"
+          last_ok ? Master::Face::Contract.glyph(:input) : "!"
         end
 
         def token_label(tokens)
