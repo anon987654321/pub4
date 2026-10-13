@@ -71,7 +71,7 @@ class DillaReferenceTest < Minitest::Test
     assert_equal "hip_hop", profile.fetch("genre")
     assert_equal "j_dilla", profile.fetch("style_key")
     assert_equal 92, profile.fetch("target_bpm")
-    assert_equal "behind_the_beat", profile.fetch("groove_profile")
+    assert_equal "dilla_shadow", profile.fetch("groove_profile")
     refute profile.fetch("parameters", {}).key?("rumble_level")
   end
 
