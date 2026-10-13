@@ -514,7 +514,11 @@ module Master
       SYNTHESIS_SLOTS_KEY = :master_tts_synthesis_slots
 
       def synthesize_streaming_to_file(text, output_path:, on_chunk: nil, **opts)
-        held_slots = Thread.current[SYNTHESIS_SLOTS_KEY] ||= []
+        held_slots = Thread.current.thread_variable_get(SYNTHESIS_SLOTS_KEY)
+        unless held_slots
+          held_slots = []
+          Thread.current.thread_variable_set(SYNTHESIS_SLOTS_KEY, held_slots)
+        end
         size = [TtsSupervisor.pool_size, 1].max
         slot = next_synthesis_slot
         if held_slots.include?(slot)
