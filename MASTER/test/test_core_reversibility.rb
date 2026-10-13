@@ -54,6 +54,7 @@ class TestCoreReversibility < Minitest::Test
     assert_equal :policy_gated, E.http("https://example.com").reversibility.kind
     assert_equal :approval_required, E.git(:stage, paths: ["a.rb"]).reversibility.kind
     assert_equal :approval_required, E.git(:commit, paths: ["a.rb"]).reversibility.kind
+    assert_predicate E.git(:commit, paths: ["a.rb"]).reversibility, :approval_required?
     assert_equal :unknown, E.git(:reset).reversibility.kind
   end
 
