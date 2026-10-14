@@ -271,7 +271,7 @@ else
   doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
 fi
 # The checkout is owned by dev, so this permission repair does not cross doas.
-chmod -R a+rX "${repo}/MASTER/tools"
+chmod -R u+rX,g+rX "${repo}/MASTER/tools"
 deploy_status "$app" "sync tree"
 sync_from_repo
 deploy_status "$app" "bundle install + bin/ci"
