@@ -4546,20 +4546,18 @@ def boolean_envelope_r2(measured)
 end
 
 # Source audits need exact method spans. Regexes around `end` either stop inside
-# nested blocks or absorb comments/constants after a method; Prism supplies the AST
-# source range without making the media pipeline depend on a second parser.
+# nested blocks or absorb comments/constants after a method. Prism is a default
+# gem on the supported Ruby line, so a missing parser is a real checker failure.
 def postpro_source_methods(source)
   require "prism"
   parsed = Prism.parse(source)
-  return {} unless parsed.success?
+  raise ArgumentError, "postpro source audit could not parse its own source" unless parsed.success?
 
   parsed.value.statements.body.each_with_object({}) do |node, methods|
     next unless node.is_a?(Prism::DefNode)
 
     methods[node.name.to_s] = source.byteslice(node.location.start_offset...node.location.end_offset)
   end
-rescue LoadError
-  {}
 end
 
 def postpro_source_method(source, name)
