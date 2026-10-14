@@ -59,6 +59,17 @@ by the target app user. The shared Bundler CAS has a fixed Ruby-version namespac
 root accepts only app-owned `.gem` inputs, stores SHA-256-addressed read-only copies,
 and the app copies objects back without hard links.
 
+The MASTER web deploy has two argument-free broker verbs for the fixed
+`/home/dev/pub4/RAILS/master` tree: `master-web-assets-reset` and
+`master-web-runtime-dirs`. `vps_deploy_master.sh` refuses a `ROOT` override and
+compares the tracked `rc.d/master` with the installed root-owned service file;
+a mismatch requires a deliberate `OPERATOR.sh` sync instead of copying checkout
+code into `/etc` as root. `deploy-smoke` uses brokered service checks too.
+
+`vps_install_all.sh` is a fresh-box bootstrap: its service-control helper uses
+the broker when present, with a documented direct-`rcctl` fallback only before
+the broker has been installed. That exception must be removed or formally
+confined before the `dev` doas rule or wheel membership can be narrowed.
 `relayd-check` is read-only: it verifies the root-owned relay configuration's
 TLS keypair, Host route and app backend/port. It refuses unapproved routes rather
 than letting a deploy caller rewrite public routing policy. New hostnames must be
