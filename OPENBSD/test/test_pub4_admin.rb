@@ -158,6 +158,22 @@ class Pub4AdminTest < Minitest::Test
     refute_includes helper, 'sh -c "$script"'
   end
 
+  def test_shared_overlays_are_app_user_fixed_tasks
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    runtime = File.read(File.expand_path("../../../RAILS/_runtime_gate.sh", __dir__))
+    sync = File.read(File.expand_path("../../../RAILS/_sync.sh", __dir__))
+
+    assert_includes source, "overlay-initializers overlay-public"
+    assert_includes helper, "overlay-initializers|overlay-public"
+    assert_includes helper, 'shared=/home/dev/pub4/RAILS/__shared/config/initializers'
+    assert_includes helper, "icon.svg|icon.png|icon-192.png|apple-touch-icon.png|favicon.ico|manifest.json|manifest.webmanifest"
+    assert_includes runtime, "overlay-initializers|overlay-public"
+    assert_includes sync, 'run_rails_as_app "$app_name" "$app_dir" "overlay-initializers"'
+    assert_includes sync, 'run_rails_as_app "$app_name" "$app_dir" "overlay-public"'
+    refute_match(/^\s*\$\{_PRIV\}\s+(?:mkdir|cp)/, sync)
+  end
+
   def test_ci_sync_runs_only_as_the_selected_app
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-sync.ksh", __dir__))
