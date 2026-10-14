@@ -496,6 +496,19 @@ class TestReliabilitySecondTranche < Minitest::Test
     assert budget.critical?(budget.send(:classify, **calm, disk_free_gb: 1.5))
   end
 
+  def test_resource_budget_disk_abort_uses_the_configured_floor_and_fails_closed
+    budget = Master::Fix::ResourceBudget.new(
+      root: Dir.pwd, config: { "resources" => { "disk_free_gb" => { "crit" => 3.0 } } }
+    )
+    safe = { values: { disk_free_gb: 4.0 } }
+    low = { values: { disk_free_gb: 2.5 } }
+    unknown = { values: {} }
+
+    refute budget.disk_critical?(safe)
+    assert budget.disk_critical?(low)
+    assert budget.disk_critical?(unknown), "unknown free space must not permit more writes"
+  end
+
   def test_resource_budget_process_limits_follow_the_platform
     config = { "resources" => { "process_count" => {
       "warn" => 256, "crit" => 512, "darwin" => { "warn" => 1200, "crit" => 1600 }
