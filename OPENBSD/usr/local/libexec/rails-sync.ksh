@@ -39,6 +39,41 @@ app_dir=$app_home/app
   exit 1
 }
 
+archive_tracked_tree() {
+  source_dir=$1
+  target=$2
+  source_rel=${source_dir#"$rails_root"/}
+  case "$source_rel" in
+    "$app"|__shared|brgen_[A-Za-z0-9_]*) ;;
+    *) echo "rails-sync: refused source tree: $source_rel" >&2; return 1 ;;
+  esac
+  archive_root=$target/.archive.$
+  [ ! -e "$archive_root" ] && [ ! -L "$archive_root" ] || {
+    echo "rails-sync: refusing stale archive path: $archive_root" >&2
+    return 1
+  }
+  mkdir "$archive_root"
+  if ! git -c safe.directory="$repo" -C "$repo" archive HEAD "RAILS/$source_rel" | tar xf - -C "$archive_root"; then
+    rm -rf "$archive_root"
+    echo "rails-sync: Git archive failed for RAILS/$source_rel" >&2
+    return 1
+  fi
+  tree=$archive_root/RAILS/$source_rel
+  [ -d "$tree" ] && [ ! -L "$tree" ] || {
+    rm -rf "$archive_root"
+    echo "rails-sync: tracked source tree is missing: RAILS/$source_rel" >&2
+    return 1
+  }
+  for entry in "$tree"/* "$tree"/.[!.]*; do
+    [ -e "$entry" ] || [ -L "$entry" ] || continue
+    mv "$entry" "$target/" || {
+      rm -rf "$archive_root"
+      echo "rails-sync: could not stage tracked entry: $entry" >&2
+      return 1
+    }
+  done
+  rm -rf "$archive_root"
+}
 sync_tree_stage() {
   source_dir=$1
   target=$2
@@ -92,7 +127,7 @@ sync_tree_stage() {
   fi
 
   mkdir "$stage"
-  if ! tar cf - -C "$source_dir" . | tar xf - -C "$stage"; then
+  if ! archive_tracked_tree "$source_dir" "$stage"; then
     rm -rf "$stage"
     echo "rails-sync: source archive failed; destination left untouched" >&2
     return 1
