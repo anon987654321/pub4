@@ -112,6 +112,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   else
     failures << "missing tracked usr/local/libexec/ci-sync.ksh"
   end
+  prepare_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-prepare.ksh")
   if File.file?(prepare_path)
     prepare = File.read(prepare_path)
     group_create_at = prepare.index("/usr/sbin/groupadd _pub4ci")
@@ -121,7 +122,6 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
       failures << "ci-prepare must create _pub4ci and enroll the app before chgrp"
     end
   end
-  prepare_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-prepare.ksh")
   if File.file?(prepare_path)
     prepare = File.read(prepare_path)
     prepare_contract = prepare.include?("brgen|amber|bsdports") &&
