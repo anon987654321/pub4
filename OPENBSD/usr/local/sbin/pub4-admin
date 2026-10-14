@@ -178,6 +178,8 @@ module Pub4Admin
       stat = File.lstat(target)
       raise "#{target} must be a root-owned regular file" unless
         stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+
+      raise "#{target} already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file"
     end
     secret = SecureRandom.hex(64)
     temporary = "/etc/.#{app}.env.#{Process.pid}.#{SecureRandom.hex(6)}"
