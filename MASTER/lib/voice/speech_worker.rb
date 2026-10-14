@@ -153,11 +153,13 @@ module Master
       def stream_edge_to_io(text:, voice_name:, style_config:, io:, stale_test: nil)
         started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         first_chunk = false
+        written_bytes = 0
         sock_path = resolve_socket_path
         return StreamResult.new(ok: false, bytes: 0) unless sock_path
 
         req = build_socket_request(voice_name, style_config, text)
-        progress = lambda do |_written|
+        progress = lambda do |written|
+          written_bytes = [written_bytes, written.to_i].max
           next if first_chunk
 
           log_timing("first_audio_chunk", started_at, text_length: text.to_s.length)
@@ -165,15 +167,17 @@ module Master
         end
         target = StreamTarget.build(io:, on_chunk: progress, stale_test:)
         result = stream_socket_to_io(sock_path, req, stream_timeout(text.to_s.length), target)
-        return result unless result.bytes.zero?
+        bytes = [result.bytes.to_i, written_bytes].max
+        return result if result.ok && bytes.positive?
 
-        # Zero audio bytes is a failure however clean the end frame was: reporting it ok
-        # let the player run silent and counted the utterance as spoken.
+        # A failed or empty stream retires its worker. Keep bytes already sent to
+        # the player: playback must never restart a sentence that may be audible.
         TtsSupervisor.retire_socket(sock_path)
-        StreamResult.new(ok: false, bytes: 0)
+        StreamResult.new(ok: false, bytes:)
       rescue Timeout::Error, StandardError => e
         warn_tts("edge stream error: #{e.class}: #{e.message}")
-        StreamResult.new(ok: false, bytes: 0)
+        TtsSupervisor.retire_socket(sock_path) if sock_path
+        StreamResult.new(ok: false, bytes: written_bytes.to_i)
       ensure
         log_timing("live_stream_total", started_at, text_length: text.to_s.length) if started_at
       end
