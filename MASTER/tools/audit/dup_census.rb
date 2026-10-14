@@ -10,10 +10,10 @@
 #   ruby MASTER/tools/audit/dup_census.rb            # list sets over the ceiling
 #   ruby MASTER/tools/audit/dup_census.rb --ratchet  # record a new low
 #
-# Known-legitimate duplicates are EXPECTED and stay counted rather than
-# excluded: per-app 422/500.html (ShowExceptions reads the app public path),
-# aliased-route layout snapshots (identical JSON is a fact about the routes).
-# The ceiling prices them; the census does not pretend they are unique.
+# Known-legitimate duplicates remain visible rather than excluded: per-app
+# 422/500.html (ShowExceptions reads each app's public path). Equivalent route
+# snapshots are declared in geometry_surfaces.yml#snapshot_aliases and share one
+# canonical baseline, so they are contracts without duplicate tracked content.
 
 require "digest"
 require "yaml"
