@@ -71,6 +71,8 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     menu = mobile&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
     assert menu, "mobile menu positioning must stay inside the mobile breakpoint"
     assert_match(/inset-block-start:\s*var\(--bol-mobile-mega-top\);/, menu)
+    assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-mobile-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu,
+                 "the category menu must fit the viewport remaining below the header")
 
     # Each term must remain attached to the physical box it sizes, so a taller
     # search row cannot silently desynchronise the fixed panel's start position.
