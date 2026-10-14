@@ -70,7 +70,7 @@ restore_app() {
 
   log "stopping $app"
   if [[ $DRY_RUN != 1 ]]; then
-    doas rcctl stop "$app" 2>/dev/null || true
+    doas /usr/local/sbin/pub4-admin service stop "$app" 2>/dev/null || true
   fi
 
   local db
