@@ -123,11 +123,25 @@ module Postpro
       end
     end
 
+    def verify_distinct_source!(input_path:, output_path:)
+      input = File.expand_path(input_path)
+      output = File.expand_path(output_path)
+      same_file = input == output
+      if !same_file && File.exist?(input) && File.exist?(output)
+        source_stat = File.stat(input)
+        output_stat = File.stat(output)
+        same_file = source_stat.dev == output_stat.dev && source_stat.ino == output_stat.ino
+      end
+      raise ArgumentError, "constitutional output would overwrite the source" if same_file
+
+      true
+    end
+
     def verify_output!(input_path:, output_path:)
       verify_law_catalog!
       input = File.expand_path(input_path)
       output = File.expand_path(output_path)
-      raise ArgumentError, "constitutional output would overwrite the source" if input == output
+      verify_distinct_source!(input_path: input, output_path: output)
       unless File.dirname(output) == OUTPUT_DIR
         raise ArgumentError, "constitutional output must stay in the Postpro output directory"
       end
