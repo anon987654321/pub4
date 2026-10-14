@@ -506,6 +506,12 @@ en:
     occasion_placeholder: "Occasion"
     generate: "Generate outfit"
     season: "Season"
+    seasons:
+      spring: "Spring"
+      summer: "Summer"
+      autumn: "Autumn"
+      winter: "Winter"
+      all_season: "All-season"
     count:
       one: "%{count} outfit"
       other: "%{count} outfits"
