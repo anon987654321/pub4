@@ -59,28 +59,26 @@ class TestToolsMedia < Minitest::Test
 
   def test_method_body_reader_covers_nested_blocks_without_absorbing_neighbours
     source = File.read(POSTPRO)
-    random = method_body(source, "run_random")
-    watch = method_body(source, "run_watch")
+    methods = method_bodies(source)
+    random = methods.fetch("run_random")
+    watch = methods.fetch("run_watch")
 
     assert_includes random, "process_file("
     assert_includes watch, "grade_watched("
     refute_includes random, "def run_uplift"
-    refute_includes watch, "def main"
+    refute_includes watch, "RANDOM_CHAIN_LENGTH ="
   end
 
   def test_postpro_finishing_grain_uses_the_preset_stock
     source = File.read(POSTPRO)
+    methods = method_bodies(source)
     assert_includes source, "def apply_finishing_grain"
     assert_includes source, "GRAIN_REFERENCE_WIDTH"
     refute_match(/grain\(processed, 400, :kodak_portra, 0\.35\)/, source)
-    # Reaching the pass is the invariant; naming it is one way to reach it. Two
-    # spellings have already been asserted here and both went stale while the
-    # behaviour stayed right: the verbatim call site, which run_random replaced
-    # with process_file, then process_file itself, which run_watch replaced with
-    # grade_watched. So the assertion follows calls instead of naming the hop.
+    # Reachability, not one particular spelling, is the invariant.
     %w[process_file run_random run_uplift run_one_shot run_watch].each do |name|
-      assert source.match?(/^def #{name}\b/), "#{name} must still exist"
-      assert reaches?(source, name, "apply_finishing_grain"),
+      assert methods.key?(name), "#{name} must still exist"
+      assert reaches?(source, name, "apply_finishing_grain", methods:),
              "#{name} must reach apply_finishing_grain, through however many helpers it calls"
     end
   end
@@ -88,8 +86,9 @@ class TestToolsMedia < Minitest::Test
   # Prism supplies exact source spans, so nested blocks cannot truncate a
   # method and comments/constants beside it cannot be mistaken for its body.
   def method_bodies(source)
+    require "prism"
     parsed = Prism.parse(source)
-    return {} unless parsed.success?
+    raise ArgumentError, "Postpro source failed to parse" unless parsed.success?
 
     parsed.value.statements.body.each_with_object({}) do |node, methods|
       next unless node.is_a?(Prism::DefNode)
@@ -102,8 +101,8 @@ class TestToolsMedia < Minitest::Test
     method_bodies(source)[name.to_s]
   end
 
-  # Follow calls between top-level methods in one script. The method inventory
-  # is built once per proof, rather than reparsing the entire file at each hop.
+  # Follow calls between top-level methods in one script using exact method
+  # spans. The AST inventory is passed through recursion rather than rebuilt.
   def reaches?(source, from, target, seen = [], methods: nil)
     return false if seen.include?(from)
 
