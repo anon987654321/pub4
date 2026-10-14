@@ -57,21 +57,21 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_match(/--bol-brand-row-block:\s*48px;/, header)
     assert_match(/--bol-search-control-block:\s*44px;/, header)
     assert_match(/--bol-search-row-gap:\s*8px;/, header)
-    assert_match(/--bol-mobile-header-padding:\s*8px;/, header)
+    assert_match(/--bol-compact-header-padding:\s*8px;/, header)
     assert_match(
-      /--bol-mobile-header-block:\s*calc\(\s*var\(--bol-brand-row-block\)\s*\+\s*var\(--bol-search-control-block\)\s*\+\s*var\(--bol-search-row-gap\)\s*\+\s*var\(--bol-mobile-header-padding\)\s*\+\s*var\(--bol-mobile-header-padding\)\s*\);/m,
+      /--bol-compact-header-block:\s*calc\(\s*var\(--bol-brand-row-block\)\s*\+\s*var\(--bol-search-control-block\)\s*\+\s*var\(--bol-search-row-gap\)\s*\+\s*var\(--bol-compact-header-padding\)\s*\+\s*var\(--bol-compact-header-padding\)\s*\);/m,
       header
     )
     assert_match(
-      /--bol-mobile-mega-top:\s*calc\(\s*var\(--bol-utility-block\)\s*\+\s*var\(--bol-mobile-header-block\)\s*\+\s*var\(--bol-mainnav-block\)\s*\);/m,
+      /--bol-compact-mega-top:\s*calc\(\s*var\(--bol-utility-block\)\s*\+\s*var\(--bol-compact-header-block\)\s*\+\s*var\(--bol-mainnav-block\)\s*\);/m,
       header
     )
 
     mobile = header.split("@media (max-width: 767px)", 2).last
     menu = mobile&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
     assert menu, "mobile menu positioning must stay inside the mobile breakpoint"
-    assert_match(/inset-block-start:\s*var\(--bol-mobile-mega-top\);/, menu)
-    assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-mobile-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu,
+    assert_match(/inset-block-start:\s*var\(--bol-compact-mega-top\);/, menu)
+    assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-compact-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu,
                  "the category menu must fit the viewport remaining below the header")
 
     # Each term must remain attached to the physical box it sizes, so a taller
@@ -81,7 +81,23 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes header, "min-height: var(--bol-brand-row-block);"
     assert_includes header, "height: var(--bol-search-control-block);"
     assert_includes header, "padding-top: var(--bol-search-row-gap);"
-    assert_includes header, "padding: var(--bol-mobile-header-padding) var(--bol-gutter);"
+    assert_includes header, "padding: var(--bol-compact-header-padding) var(--bol-gutter);"
+  end
+
+  def test_tablet_storefront_header_stacks_until_the_canonical_desktop_edge
+    header = File.read(HEADER_CSS)
+    tablet = header.split("@media (min-width: 768px)", 2).last&.split("@media (min-width: 1024px)", 2)&.first
+    assert tablet, "tablet header layout must sit between existing viewport edges"
+
+    assert_match(/storefront-bol-header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)\s+auto;/m, tablet)
+    assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*none;/m, tablet)
+    assert_match(/storefront-bol-search\s*\{[^}]*grid-column:\s*1\s*\/\s*-1;[^}]*grid-row:\s*2;/m, tablet)
+    assert_match(/storefront-bol-mainnav\s*\{[^}]*overflow-x:\s*auto;/m, tablet)
+    assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*fixed;[^}]*inset-block-start:\s*var\(--bol-compact-mega-top\);/m, tablet)
+
+    desktop = header.split("@media (min-width: 1024px)", 2).last
+    assert_match(/grid-template-columns:\s*176px 168px minmax\(320px, 1fr\) auto;/, desktop)
+    assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*absolute;/m, desktop)
   end
 
   def test_bol_geometry_tokens_are_explicit
