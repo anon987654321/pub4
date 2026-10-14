@@ -39,6 +39,7 @@ module Master
           @bus = event_bus
           @skip_semantic = skip_semantic
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
+          @progress_writer_id = "#{Process.pid}-#{object_id}"
           @progress_mutex = Mutex.new
           @active_law_checks = {}
           @progress_previous_callbacks = {}
@@ -378,7 +379,7 @@ module Master
         end
 
         def write_progress_snapshot(row)
-          temporary = "#{@progress_path}.scan-#{Process.pid}"
+          temporary = "#{@progress_path}.scan-#{@progress_writer_id}"
           File.open(temporary, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |io|
             io.write(JSON.generate(row))
             io.flush
