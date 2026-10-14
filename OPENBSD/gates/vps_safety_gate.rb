@@ -160,6 +160,9 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?('[ ! -L "$app_dir/db" ]') &&
                           rails_task.include?('[ ! -L "$app_dir/storage" ]') &&
                           rails_task.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
+                          rails_task.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\\n") &&
+                          rails_task.scan('exec /usr/bin/su -m "$app" -c "$script"').length == 1 &&
+                          !rails_task.include?("EOF_KEY") &&
                           rails_task.include?('unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT')
     failures << "rails-task helper must expose only fixed task names and execute as the app user" unless rails_task_contract
   else
