@@ -5,12 +5,13 @@
 # their migration out of the catalogue. This adapter turns the applicable laws
 # into image-generation invariants rather than trying to lint aesthetics with regex.
 require "fileutils"
+require_relative "../output_paths"
 
 module Postpro
   module Constitution
-    # Scratch renders stay beside postpro.rb in the ignored output area.
-    # POSTPRO_OUTPUT_DIR redirects this for managed environments and callers.
-    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR") { __dir__ }).freeze
+    # All default renders share STUDIO's dated, external output contract.
+    # POSTPRO_OUTPUT_DIR remains the explicit override for managed callers.
+    OUTPUT_DIR = Studio::OutputPaths.render_directory.freeze
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
