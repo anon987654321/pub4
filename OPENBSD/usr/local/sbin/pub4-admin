@@ -298,6 +298,66 @@ module Pub4Admin
   rescue ArgumentError
     raise "account or group #{app} is missing; cannot establish app secret"
   end
+  def write_deploy_status(app, step, state)
+    raise "unknown app: #{app}" unless APPS.include?(app)
+    raise "invalid deploy status" unless %w[running done failed].include?(state)
+    unless step.bytesize.between?(1, 160) && step.match?(/\A[A-Za-z0-9_ .:+(),\/-]+\z/)
+      raise "invalid deploy step"
+    end
+
+    if File.exist?(STAMP_DIR) || File.symlink?(STAMP_DIR)
+      root_stat = File.lstat(STAMP_DIR)
+      raise "#{STAMP_DIR} is a symlink; refusing status write" if root_stat.symlink?
+    end
+    FileUtils.mkdir_p(STAMP_DIR, mode: 0o755)
+    root_stat = File.lstat(STAMP_DIR)
+    raise "#{STAMP_DIR} must be root-owned" unless root_stat.directory? && root_stat.uid.zero?
+    File.chmod(0o755, STAMP_DIR) unless (root_stat.mode & 0o777) == 0o755
+
+    directory = File.join(STAMP_DIR, "deploy_status")
+    raise "#{directory} is a symlink; refusing status write" if File.symlink?(directory)
+    FileUtils.mkdir_p(directory, mode: 0o700)
+    directory_stat = File.lstat(directory)
+    raise "#{directory} must be a root-owned directory" unless
+      directory_stat.directory? && directory_stat.uid.zero? && !directory_stat.symlink?
+    File.chmod(0o700, directory) unless (directory_stat.mode & 0o777) == 0o700
+
+    target = File.join(directory, "#{app}.json")
+    raise "#{target} is a symlink; refusing status write" if File.symlink?(target)
+    if File.exist?(target)
+      target_stat = File.lstat(target)
+      raise "#{target} must be a root-owned regular file" unless
+        target_stat.file? && target_stat.uid.zero? && !target_stat.symlink?
+    end
+
+    now = Time.now.utc.iso8601
+    started_at = now
+    if File.file?(target)
+      begin
+        previous = JSON.parse(File.read(target))
+        value = previous["started_at"]
+        started_at = value if value.is_a?(String) && value.match?(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/)
+      rescue JSON::ParserError, SystemCallError
+        nil
+      end
+    end
+    payload = { app: app, step: step, state: state, pid: Process.ppid,
+                started_at: started_at, updated_at: now }
+    temporary = File.join(directory, ".#{app}.#{Process.pid}.#{SecureRandom.hex(6)}")
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+        file.write(JSON.generate(payload) + "\n")
+        file.flush
+        file.fsync
+      end
+      File.rename(temporary, target)
+      puts "deploy_status0: #{app} #{state} step=#{step}"
+      0
+    ensure
+      File.unlink(temporary) if File.exist?(temporary)
+    end
+  end
+
   def valid_ci_timeout?(value)
     value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
   end
@@ -463,6 +523,10 @@ module Pub4Admin
         stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
 
       exec(RCCTL, "disable", service)
+    end
+
+    if args.length == 4 && args[0] == "deploy-status"
+      return write_deploy_status(*args.drop(1))
     end
 
     if args.length == 4 && args[0] == "stamp"
