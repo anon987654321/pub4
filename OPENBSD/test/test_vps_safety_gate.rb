@@ -128,11 +128,10 @@ class VpsSafetyGateTest < Minitest::Test
   def test_relayd_broker_must_not_modify_root_routing_policy
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
-      text = File.read(path).sub("def relayd_check(app, domain, requested_port)", "def relayd_add(app, domain, requested_port)")
-      text = text.sub('args[0] == "relayd-check"', 'args[0] == "relayd-add"')
-      text = text.sub('no operator-approved Host route for #{domain}', "route auto-added")
-      text = text.sub('requested port does not match the root-configured backend', "port accepted")
-      text = text.sub('!admin.include?("File.rename(temporary, RELAYD_CONFIG)")', 'admin.include?("File.rename(temporary, RELAYD_CONFIG)")')
+      text = File.read(path).sub(
+        '    puts "relayd0: verified root-approved route #{domain} -> #{app}:#{requested_port}"',
+        "    File.rename(temporary, RELAYD_CONFIG)"
+      )
       File.write(path, text)
       out, status = run_gate(dir)
 
