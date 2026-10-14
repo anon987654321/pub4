@@ -90,6 +90,14 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
+  def test_rails_app_deploy_wrappers_refuse_root_execution
+    %w[brgen amber bsdports].each do |app|
+      source = File.read(File.join(ROOT, "RAILS", app, "#{app}.sh"), encoding: "UTF-8")
+      assert_includes source, 'if [[ $(id -u) -eq 0 ]]', "#{app} wrapper must refuse root"
+      assert_includes source, 'refusing to run checkout code as root', "#{app} refusal should be explicit"
+    end
+  end
+
   def test_legacy_rails_entrypoint_never_escalates_checkout_code
     legacy = File.read(File.join(ROOT, "RAILS", "deploy.sh"), encoding: "UTF-8")
 
