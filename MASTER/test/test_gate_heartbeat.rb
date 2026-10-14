@@ -32,6 +32,56 @@ class TestGateHeartbeat < Minitest::Test
     end
   end
 
+  def test_scanner_progress_names_the_pass_law_file_and_active_work
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "p.json")
+      File.write(path, JSON.generate(
+        "kind" => "scan", "state" => "running", "pass" => "structural",
+        "law" => "NO_GOD_CLASS", "file" => "MASTER/lib/master.rb",
+        "checks" => 184, "active" => 8, "n" => 5, "total" => 43,
+        "at" => 990.0, "updated_at" => 1000.0
+      ))
+      now = [0.0]
+      lines = []
+      beat = heartbeat(path, lines, now:, wall: 1000.0)
+
+      now[0] = 4.9
+      assert_nil beat.beat
+      now[0] = 5.0
+      line = beat.beat
+
+      assert_includes line, "pass=structural"
+      assert_includes line, "law=NO_GOD_CLASS"
+      assert_includes line, "file=MASTER/lib/master.rb"
+      assert_includes line, "checks=184"
+      assert_includes line, "active=8"
+      assert_includes line, "laws=5/43"
+      assert_includes line, "check elapsed 10s"
+      assert_includes line, "stage elapsed 5s"
+    end
+  end
+
+  def test_stale_scanner_progress_is_reported_as_stale_not_running
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "p.json")
+      File.write(path, JSON.generate(
+        "kind" => "scan", "state" => "running", "pass" => "semantic",
+        "law" => "MEANINGFUL_NAMES", "file" => "MASTER/lib/master.rb",
+        "checks" => 9, "active" => 1, "n" => 1, "total" => 20,
+        "at" => 990.0, "updated_at" => 1000.0
+      ))
+      now = [0.0]
+      lines = []
+      beat = heartbeat(path, lines, now:, wall: 1010.0)
+      now[0] = 5.0
+
+      line = beat.beat
+      assert_includes line, "scan progress stale"
+      assert_includes line, "last update 10s ago"
+      assert_includes line, "stage elapsed 5s"
+    end
+  end
+
   def test_without_progress_it_still_speaks
     Dir.mktmpdir do |dir|
       now = [0.0]
