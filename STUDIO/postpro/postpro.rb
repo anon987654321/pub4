@@ -1555,10 +1555,9 @@ end
 # The other half of a film stock, and until now the half nobody used.
 #
 # Every STOCKS entry carries a 3x3 matrix -- the table's own header calls it
-# "3x3 colour matrix" in its first line -- and grep found exactly zero readers
-# of [:matrix] in the whole file. Nine stocks' worth of hand-tuned dye crosstalk
-# sat there as decoration while film_curve applied the H&D curves alone, which
-# is why the stocks differed in contrast and density and barely in hue.
+# "3x3 colour matrix" in its first line. Before this effect existed, nine then-
+# defined stock matrices had no readers, so film_curve applied the H&D curves
+# alone: stocks differed in contrast and density and barely in hue.
 #
 # Deliberately NOT folded into film_curve: that would repaint all 73 presets
 # that call it in one move. It is its own step, added to the presets
