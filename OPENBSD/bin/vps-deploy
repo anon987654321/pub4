@@ -352,7 +352,7 @@ restore_started() {
     restored+=($svc)
   done
   (( $#restored )) && print "vps-deploy: restored ${restored}"
-  (( $#failed )) && print -u2 "vps-deploy: STILL DOWN after restore: ${failed}  (doas rcctl restart <name>, one at a time)"
+  (( $#failed )) && print -u2 "vps-deploy: STILL DOWN after restore: ${failed}  (doas /usr/local/sbin/pub4-admin service restart <app>, one at a time)"
   (( $#failed == 0 ))
 }
 
@@ -370,7 +370,7 @@ finish() {
     print -u2 "vps-deploy: $app FAILED at stage \"$deploy_stage\" (exit $rc)"
     if (( app_stopped )); then
       print -u2 "vps-deploy: $app was stopped for this deploy and is DOWN — read /var/log/daemon, then"
-      print -u2 "            doas rcctl start $app   (or rerun: zsh OPENBSD/bin/vps-deploy $app)"
+      print -u2 "            doas /usr/local/sbin/pub4-admin service start $app   (or rerun: zsh OPENBSD/bin/vps-deploy $app)"
     else
       print -u2 "vps-deploy: $app was not stopped; the previous release is still serving. Fix the cause and rerun:"
       print -u2 "            zsh OPENBSD/bin/vps-deploy $app"
@@ -380,7 +380,7 @@ finish() {
       [[ $other == "$app" ]] && continue
       admin_service get "$other" >/dev/null 2>&1 || continue
       admin_service check "$other" >/dev/null 2>&1 \
-        || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — doas rcctl restart $other"
+        || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — doas /usr/local/sbin/pub4-admin service restart $other"
     done
   fi
   # Only the process that owns the lock restores: the children of `all` fail into
