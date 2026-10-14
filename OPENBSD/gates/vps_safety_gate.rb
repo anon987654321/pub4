@@ -161,7 +161,10 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('supervised_helper(CI_SYNC, app, 900)') &&
                            admin.include?('args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])') &&
                            admin.include?('run_rails_task(args[1], args[2])') &&
-                           admin.include?('supervised_helper(RAILS_TASK, app, 7200, arguments)')
+                           admin.include?('supervised_helper(RAILS_TASK, app, 7200, arguments)') &&
+                           admin.include?('args[0] == "retire-legacy"') &&
+                           admin.include?('def legacy_service_name(app)') &&
+                           admin.include?('File.lstat(path)')
   failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
 
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
