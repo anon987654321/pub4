@@ -32,6 +32,19 @@ class Pub4AdminTest < Minitest::Test
     assert_nil ADMIN.command_for(%w[stamp brgen abc1234 ok])
   end
 
+  def test_deploy_status_is_a_fixed_atomic_app_record
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    core = File.read(File.expand_path("../../RAILS/_core.sh", __dir__))
+
+    assert_includes source, 'args.length == 4 && args[0] == "deploy-status"'
+    assert_includes source, "def write_deploy_status(app, step, state)"
+    assert_includes source, 'File.join(directory, "#{app}.json")'
+    assert_includes source, "File::CREAT | File::EXCL"
+    assert_includes source, "File.rename(temporary, target)"
+    assert_includes source, 'raise "#{target} is a symlink; refusing status write"'
+    assert_includes core, 'pub4-admin deploy-status "$app" "$step" "$state"'
+  end
+
   def test_ci_lock_is_a_fixed_broker_verb
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
