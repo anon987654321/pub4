@@ -61,7 +61,7 @@ ownership:
     check: ruby OPENBSD/gates/shell_syntax_gate.rb
   bin/resource_guard.sh:
     purpose: load shedding on vm23; skips shedding while /var/db/pub4_all_apps
-      exists, which bin/start_all_apps.sh writes
+      exists, which the fixed pub4-admin start-all-apps verb writes
     risk: high
     check: ksh OPENBSD/test/resource_guard_test.sh OPENBSD/bin/resource_guard.sh
   "bin/*.ksh":
