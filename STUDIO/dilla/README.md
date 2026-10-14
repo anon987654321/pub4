@@ -6,12 +6,32 @@ shell over the modules in `lib/dilla/`. Instrument patches and grooves live in
 `data/dilla.json`; the eight-part Blue Hour Dilla Minor Dub Cut lives in
 `data/showcase.json`; harmonic references live in `data/music_theory.json`.
 
-A bare `ruby dilla.rb` renders the finite eight-part Blue Hour composition to a WAV and a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a repeatable seed, while retaining the dark minor harmony, full drum patterns, layered synths and shared tape/dub/crystallizer rig. If the tracked `dilla.wav` audition reference already exists, the default exporter preserves it and writes to `out/dilla.wav` and `out/dilla.mp4`; if that pair is occupied, it chooses a fresh timestamped pair. Set `DILLA_OUTPUT_DIR` to choose another default output directory.
+A bare `ruby dilla.rb` renders the finite eight-part Blue Hour composition to a WAV and
+a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a repeatable
+seed, while retaining the dark minor harmony, full drum patterns, layered synths and
+shared tape/dub/crystallizer rig.
 
-The MP4 is made offline by FFmpeg from the rendered audio, an architectural grid/waveform scene, and the selected recipe in `STUDIO/postpro/video.yml` (default `dilla_heavy`). FFmpeg with the `libx264` encoder is required for video. If it is unavailable or export fails, the WAV remains intact and the command reports an explicit MP4 failure. Use `--no-video` for an audio-only render, `--video PATH` to choose the MP4 path, or `--video-preset NAME` to choose a recipe. `DILLA_VIDEO_POSTPRO=0` bypasses the video-grade filters.
+If the tracked `dilla.wav` audition reference already exists, the default exporter
+preserves it and writes to `out/dilla.wav` and `out/dilla.mp4`; if that pair is
+occupied, it chooses a fresh timestamped pair. Set `DILLA_OUTPUT_DIR` to choose another
+default output directory.
 
-`ruby dilla.rb live` loops the same curated arrangement through the system player, rendered into a disposable temporary WAV so it never overwrites the tracked reference. Endless random playback remains available with `--play`; a random finite take remains explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or `--drums` continue to choose exactly what they name.
+The MP4 is made offline by FFmpeg from the rendered audio, an architectural
+grid/waveform scene, and the selected recipe in `STUDIO/postpro/video.yml` (default
+`dilla_heavy`). FFmpeg with the `libx264` encoder is required for video. If it is
+unavailable or export fails, the WAV remains intact and the command reports an explicit
+MP4 failure. Use `--no-video` for an audio-only render, `--video PATH` to choose the MP4
+path, or `--video-preset NAME` to choose a recipe. `DILLA_VIDEO_POSTPRO=0` bypasses the
+video-grade filters.
 
+`ruby dilla.rb live` loops the same curated arrangement through the system player,
+rendered into a disposable temporary WAV so it never overwrites the tracked reference.
+Endless random playback remains available with `--play`; a random finite take remains
+explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or
+`--drums` continue to choose exactly what they name.
+
+
+## Composition and groove
 
 The data holds a flat list of progressions, each a list of chord names such as Fm9,
 Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies.
