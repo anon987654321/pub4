@@ -1,3 +1,4 @@
-# Renders land beside postpro.rb and are never tracked.
+# Renders and daily-rotated diagnostic logs land beside postpro.rb; never track them.
 postpro_*
+postpro.log*
 *.tif
