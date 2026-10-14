@@ -332,11 +332,23 @@ module Pub4Admin
 
     now = Time.now.utc.iso8601
     started_at = now
-    if File.file?(target)
+    if state != "running" && File.file?(target)
       begin
         previous = JSON.parse(File.read(target))
         value = previous["started_at"]
-        started_at = value if value.is_a?(String) && value.match?(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/)
+        started_at = value if previous["state"] == "running" &&
+                              value.is_a?(String) &&
+                              value.match?(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/)
+      rescue JSON::ParserError, SystemCallError
+        nil
+      end
+    elsif state == "running" && File.file?(target)
+      begin
+        previous = JSON.parse(File.read(target))
+        value = previous["started_at"]
+        started_at = value if previous["state"] == "running" &&
+                              value.is_a?(String) &&
+                              value.match?(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/)
       rescue JSON::ParserError, SystemCallError
         nil
       end
