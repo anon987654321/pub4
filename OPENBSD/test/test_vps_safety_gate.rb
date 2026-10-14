@@ -35,6 +35,10 @@ class VpsSafetyGateTest < Minitest::Test
                    File.join(openbsd, "usr", "local", "libexec", "rails-task.ksh"))
       FileUtils.cp(File.join(ROOT, "usr", "local", "libexec", "rails-sync.ksh"),
                    File.join(openbsd, "usr", "local", "libexec", "rails-sync.ksh"))
+      FileUtils.mkdir_p(File.join(openbsd, "usr", "local", "bin"))
+      FileUtils.cp(File.join(ROOT, "usr", "local", "bin", "emergency_cpu.sh"),
+                   File.join(openbsd, "usr", "local", "bin", "emergency_cpu.sh"))
+      FileUtils.cp(File.join(ROOT, "emergency_cpu.sh"), File.join(openbsd, "emergency_cpu.sh"))
       FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
       FileUtils.mkdir_p(File.join(dir, "RAILS"))
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_runtime_gate.sh"),
@@ -123,6 +127,42 @@ class VpsSafetyGateTest < Minitest::Test
       assert_includes out, "master-web helper must be fixed-path and symlink-safe"
     end
   end
+  def test_checkout_emergency_cpu_refuses_root_and_uses_installed_runner
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "emergency_cpu.sh")
+      text = File.read(path).sub('if [ "$(id -u)" -eq 0 ]; then', 'if [ "$(id -u)" -eq 1 ]; then')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "checkout emergency CPU entrypoint must refuse root and delegate to installed runner"
+    end
+  end
+
+  def test_emergency_cpu_runner_must_not_source_checkout_helper
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "bin", "emergency_cpu.sh")
+      text = File.read(path) + "\nGUARD_REPO=/home/dev/pub4\n"
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "emergency CPU runner must not source stale cleanup from checkout"
+    end
+  end
+
+  def test_operator_preflights_and_installs_emergency_cpu_runner
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "OPERATOR.sh")
+      text = File.read(path).sub("usr/local/bin/emergency_cpu.sh", "usr/local/bin/removed-emergency.sh")
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "OPERATOR.sh must preflight, install, and verify the root-owned emergency runner"
+    end
+  end
+
   def test_start_all_apps_refuses_root_and_delegates_to_broker
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "bin", "start_all_apps.sh")
