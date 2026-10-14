@@ -25,14 +25,41 @@ module Master
         Digest::SHA256.hexdigest(conversation.to_s)[0, SESSION_DIGEST_CHARS]
       end
 
-      # Renames a log past max_bytes to .1 and starts it fresh. Renaming, not
-      # truncating, means no multi-gigabyte read to keep a tail.
+      # A full log is renamed, then compacted in place to its newest bounded tail.
+      # Renaming alone does not free disk blocks when an old multi-GB log exists.
       def self.rotate(path, max_bytes)
         return unless File.exist?(path) && File.size(path) > max_bytes
 
-        File.rename(path, "#{path}.1")
+        rotated = "#{path}.1"
+        File.rename(path, rotated)
+        compact_rotated(rotated, max_bytes)
       rescue SystemCallError => e
         Master::Ground::Swallow.log(e, context: "Trace::Log.rotate", path:)
+      end
+
+      # Release oversized rotated logs while preserving the newest max_bytes.
+      # The tail is read before truncating; the old allocation is freed before the
+      # bounded bytes are written back, so recovery still works on a full disk.
+      def self.compact_rotated(path, max_bytes)
+        return unless File.file?(path)
+
+        size = File.size(path)
+        return size if size <= max_bytes
+
+        tail = File.open(path, "rb") do |file|
+          file.seek(-max_bytes, IO::SEEK_END)
+          file.read(max_bytes)
+        end
+        File.open(path, "r+b") do |file|
+          file.truncate(0)
+          file.write(tail)
+          file.flush
+          file.fsync
+        end
+        File.size(path)
+      rescue SystemCallError => e
+        Master::Ground::Swallow.log(e, context: "Trace::Log.compact_rotated", path:)
+        nil
       end
 
       # A failing log says so once per path and error. On a full disk every
