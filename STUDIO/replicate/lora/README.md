@@ -28,7 +28,9 @@ comes the dataset. Put twelve to eighteen varied photographs of one person into
 judges each photograph for resolution, sharpness and blown highlights, spreads the pick so
 that ten frames of one moment count once, and prints a report without writing anything. Add
 `--write` and it creates `<subject>/dataset/` with 1024-pixel copies, each paired with a stub
-caption that holds only the trigger word. Completing the stubs is left to a person. A caption
+caption that holds only the trigger word. Completing the stubs is left to a person.
+
+A caption
 names what varies, such as pose, clothing, light and setting, and never the face, the natural
 hair colour, the eye colour or the age, which belong to the trigger word.
 
@@ -37,7 +39,9 @@ against those rules, zips the dataset and prints a cost estimate. It uploads not
 calls nothing. Preflight wants at least ten images, none under 512 pixels on the short edge,
 no age in a caption, a trigger that is neither `TOK` nor an English word, and no frame that
 is a near copy of another. A problem stops a real run, and `--force` overrides that when you
-have judged the problem acceptable. The estimate gives two figures because the sources
+have judged the problem acceptable.
+
+The estimate gives two figures because the sources
 disagree: Replicate's guide says a thousand steps takes about two minutes, and the one run
 logged here took fourteen. The sidecar records the seconds Replicate actually billed.
 
@@ -54,10 +58,14 @@ prompts without paying for finals. Then render the finals without `--draft`. Eac
 pinned to the trained version and saved the moment it arrives, because Replicate deletes API
 outputs after an hour. Postpro grades it into `out/<set>_postpro/` beside the ungraded
 render, since a regrade needs the render and a render costs money where a grade costs
-seconds. A different preset is drawn per sitting; `--grade portrait` fixes one look and
+seconds.
+
+A different preset is drawn per sitting; `--grade portrait` fixes one look and
 `--grade none` skips the grade. Set a spending ceiling with `--max-seconds N` or
 `LORA_MAX_SECONDS`, and the run stops when the ledger reaches it. A frame already on disk is
-skipped, so a stopped run resumes. Name a prompt set with `--set` and narrow it with `--only`.
+skipped, so a stopped run resumes.
+
+Name a prompt set with `--set` and narrow it with `--only`.
 
 Fifth comes the clip. `--video-replicate` takes one approved still as the first frame, so the
 trained adapter keeps the face and the video model only moves it. Run `--dry-run` first to see
@@ -65,7 +73,9 @@ the model, its pinned version and the exact input. The preset `draft` is a cheap
 motion from Wan 2.2, to settle the prompt and the seed. The preset `final` is Veo 3.1 Fast,
 and `kling` is Kling 2.1 for a second opinion. Presets, versions and quirks live in
 `_toolkit/video_models.yml`, and the input keys are checked against the model's live schema
-before anything is spent. Each clip's billed seconds join the same ledger as the stills. A
+before anything is spent.
+
+Each clip's billed seconds join the same ledger as the stills. A
 clip with two people needs a first frame with both in it, because two adapters do not combine
 in one render. Stills of a scene with no trained face go through
 `STUDIO/replicate/replicate.rb`, which already carries the other image models.
