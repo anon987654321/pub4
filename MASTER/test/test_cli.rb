@@ -323,6 +323,33 @@ end
     assert_equal ["follow-up"], queue
   end
 
+  def test_cancelled_pipeline_result_is_classified_as_abort
+    thread = Thread.new { sleep 60 }
+    thread.kill
+    thread.join
+    @cli.instance_variable_set(:@pipeline_thread, thread)
+    @cli.instance_variable_set(:@turn_cancel_requested, true)
+
+    result = @cli.send(:fetch_pipeline_result)
+
+    assert_equal :abort, result.category
+    assert_equal "interrupted", result.message
+  ensure
+    thread&.kill
+  end
+
+  def test_queue_overflow_reports_rejection_to_callers
+    queue = @cli.instance_variable_get(:@turn_queue)
+    @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
+      Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT.times { queue << "pending" }
+    end
+
+    capture_io do
+      refute @cli.send(:enqueue_interactive_line, "must remain a draft")
+    end
+    assert_equal Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT, queue.length
+  end
+
   def test_dispatch_turn_refuses_to_start_after_a_stop_race
     @cli.instance_variable_set(:@turn_cancel_requested, true)
 
