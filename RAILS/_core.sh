@@ -26,6 +26,26 @@ need_cmd() {
   done
 }
 
+# pub4_rcctl ACTION SERVICE — narrow service lifecycle through the fixed root broker.
+# The fallback exists only for first rollout before OPERATOR.sh installs the broker.
+pub4_rcctl() {
+  local action=${1:-} service=${2:-}
+  case "$action" in
+    check|get|start|stop|restart) ;;
+    *) log_err "pub4_rcctl: refused action: $action"; return 2 ;;
+  esac
+  case "$service" in
+    master|brgen|amber|bsdports|master_jobs|brgen_jobs|amber_jobs|bsdports_jobs) ;;
+    *) log_err "pub4_rcctl: refused service: $service"; return 2 ;;
+  esac
+
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin service "$action" "$service"
+  else
+    "${_PRIV}" rcctl "$action" "$service"
+  fi
+}
+
 # deploy_status APP_NAME STEP [STATE] — single source of truth for "is a
 # deploy running right now and what step is it on." Before this, the only way
 # to tell a live deploy apart from a hung/crashed process was ps/rcctl
