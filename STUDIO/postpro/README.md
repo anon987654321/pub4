@@ -42,10 +42,10 @@ the image unchanged while the log reported the step as done, and a colour temper
 pipelines fail by producing a picture slightly wrong beside a log that agrees with the preset.
 The last recorded run reported eighty-two presets, fourteen stocks, eleven lenses, a
 hundred and eight effects, and twenty key-reader gaps: seventeen missing temperature steps and
-two missing print-stock steps in recovered `legacy_` and `dilla_` presets, plus one missing
-lens step in `portrait`. Those chains have since been repaired to apply their declared settings.
-The live `--vocab-check` has not yet been rerun after the repairs, so the vocabulary must not be
-called clean until that command completes successfully.
+two missing print-stock steps in recovered `legacy_` and `dilla_` presets, plus one missing lens
+step. The source chains have since been repaired to apply their declared settings. The live
+`--vocab-check` has not yet been rerun after the repairs, so the vocabulary must not be called
+clean until that command completes successfully.
 
 The other introspection flags process no image and are equally cheap: `--list-presets`,
 `--list-stocks`, `--list-lenses`, `--describe-preset`, `--fit-grain`, `--export-lut` and
