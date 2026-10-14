@@ -15,6 +15,8 @@ module Pub4Admin
   SERVICES = %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].freeze
   SERVICE_ACTIONS = %w[check get start stop restart].freeze
   RCCTL = "/usr/sbin/rcctl"
+  RELAYD = "/usr/sbin/relayd"
+  RELAYD_CONFIG = "/etc/relayd.conf"
   RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
   CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
@@ -152,6 +154,85 @@ module Pub4Admin
     end
   end
 
+  # Add one host route only when a root-owned TLS keypair and app backend already
+  # exist in the installed relay configuration. Caller input never chooses a
+  # filesystem path, service command, or backend port.
+  def relayd_add(app, domain, requested_port)
+    return 64 unless RAILS_APPS.include?(app)
+    return 64 unless domain.match?(/\A[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?\z/) && !domain.include?("..")
+    return 64 unless requested_port.match?(/\A[0-9]{1,5}\z/) && (1..65_535).cover?(requested_port.to_i)
+    raise "relayd and rcctl must be trusted system executables" unless trusted_executable?(RELAYD) && trusted_executable?(RCCTL)
+
+    stat = File.lstat(RELAYD_CONFIG)
+    raise "#{RELAYD_CONFIG} must be a root-owned, non-writable regular file" unless
+      stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+    original = File.read(RELAYD_CONFIG)
+    escaped_domain = Regexp.escape(domain)
+    keypair = /^\s*tls keypair \"#{escaped_domain}\"\s*$/
+    raise "no installed TLS keypair for #{domain}; install the certificate through OPERATOR first" unless original.match?(keypair)
+    raise "no installed relayd table for #{app}" unless original.match?(/^\s*table <#{Regexp.escape(app)}>\s*\{/)
+
+    ports = original.scan(/^\s*forward to <#{Regexp.escape(app)}> port ([0-9]+) check http \"\/up\" code 200\s*$/).flatten.uniq
+    raise "no unique root-configured backend port for #{app}" unless ports.length == 1
+    raise "requested port does not match the installed backend for #{app}" unless ports.first == requested_port
+
+    protocol_start = original.index('http protocol "https_proxy" {')
+    raise "https_proxy protocol block is missing" unless protocol_start
+    protocol_end = original.index("\n}", protocol_start)
+    raise "https_proxy protocol block is unterminated" unless protocol_end
+    protocol = original[protocol_start..protocol_end]
+    route_pattern = /^\s*match request header \"Host\" value \"#{escaped_domain}\" forward to <([a-z0-9_]+)>\s*$/
+    existing_routes = protocol.lines.filter_map { |line| (match = line.match(route_pattern)) && match[1] }.uniq
+    if existing_routes.any?
+      raise "#{domain} already routes to #{existing_routes.join(', ')}, not #{app}" unless existing_routes == [app]
+      puts "relayd0: #{domain} already routes to #{app}"
+      return 0
+    end
+
+    route = %(  match request header "Host" value "#{domain}" forward to <#{app}>)
+    changed_protocol = protocol.sub(/^([ \t]*)pass[ \t]*$/) { "#{route}\n#{$1}pass" }
+    raise "could not find pass rule in https_proxy protocol" if changed_protocol == protocol
+    changed = original.dup
+    changed[protocol_start, protocol.length] = changed_protocol
+    temporary = "/etc/.relayd.conf.#{Process.pid}.#{SecureRandom.hex(8)}"
+    rollback = nil
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+        file.write(changed)
+        file.flush
+        file.fsync
+      end
+      File.chown(0, stat.gid, temporary)
+      File.chmod(stat.mode & 0o777, temporary)
+      output = IO.popen([RELAYD, "-n", "-f", temporary], err: [:child, :out], &:read)
+      status = $?
+      raise "relayd configtest failed: #{output.to_s.strip}" unless status&.success?
+      File.rename(temporary, RELAYD_CONFIG)
+
+      output = IO.popen([RCCTL, "restart", "relayd"], err: [:child, :out], &:read)
+      status = $?
+      unless status&.success?
+        rollback = "/etc/.relayd.conf.rollback.#{Process.pid}.#{SecureRandom.hex(8)}"
+        File.open(rollback, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+          file.write(original)
+          file.flush
+          file.fsync
+        end
+        File.chown(0, stat.gid, rollback)
+        File.chmod(stat.mode & 0o777, rollback)
+        File.rename(rollback, RELAYD_CONFIG)
+        rollback = nil
+        IO.popen([RCCTL, "restart", "relayd"], err: [:child, :out], &:read)
+        raise "relayd restart failed; previous configuration restored: #{output.to_s.strip}"
+      end
+
+      puts "relayd0: installed #{domain} -> #{app}:#{ports.first}"
+      0
+    ensure
+      File.unlink(temporary) if File.exist?(temporary)
+      File.unlink(rollback) if rollback && File.exist?(rollback)
+    end
+  end
   def app_secret_value(app)
     raise "unknown app: #{app}" unless APPS.include?(app)
 
@@ -354,6 +435,10 @@ module Pub4Admin
     args = Array(argv).map(&:to_s)
     if args.length == 2 && args[0] == "ensure-secret" && APPS.include?(args[1])
       return ensure_app_secret(args[1])
+    end
+
+    if args.length == 4 && args[0] == "relayd-add"
+      return relayd_add(args[1], args[2], args[3])
     end
 
     if args.length == 2 && args[0] == "retire-legacy"
