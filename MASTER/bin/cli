@@ -3,6 +3,20 @@
 
 # Core::World routes model-proposed commands here before normal boot. This file
 # is a sacred entrypoint; the worker pledges before it executes the proposed argv.
+def prepare_exec_worker_load_path
+  return unless RUBY_PLATFORM.include?("openbsd")
+
+  require "rbconfig"
+  gem_root = File.join(RbConfig::CONFIG.fetch("libdir"), "ruby", "gems",
+                       RbConfig::CONFIG.fetch("ruby_version"))
+  # RubyGems is disabled for this bootstrap, so expose Fiddle only from the system
+  # installation, never from a user-writable GEM_HOME or GEM_PATH.
+  $LOAD_PATH.unshift(
+    *Dir.glob(File.join(gem_root, "gems", "fiddle-*", "lib")),
+    *Dir.glob(File.join(gem_root, "extensions", "*", RbConfig::CONFIG.fetch("ruby_version"), "fiddle-*")),
+  )
+end
+
 def run_exec_worker
   ARGV.shift
   unless ARGV.shift == "--" && !ARGV.empty?
@@ -10,6 +24,7 @@ def run_exec_worker
     return 64
   end
 
+  prepare_exec_worker_load_path
   require_relative "../lib/ground/pledge"
   guard = Master::Ground::Pledge
   guard.pledge(guard::STAGE2_PROMISES, guard::EXEC_PROMISES)
