@@ -52,6 +52,16 @@ filesystem paths, not just strings. A workspace symlink cannot widen the admitte
 another directory; if the path boundary cannot be established, execution is refused. This is
 an argv/workspace guard, not a substitute for operating-system process confinement.
 
+On OpenBSD, model-proposed exec effects enter through the early bin/cli --exec-worker
+path. The worker sets pledge and execpromises before replacing itself with the
+requested command; descendants inherit the declared promise set, and OpenBSD refuses
+setuid/setgid executables when execpromises is active. The trusted interactive parent
+does not set child promises globally, because operator-controlled deployment functions
+still need their separately governed doas path. This blocks the model-command privilege
+transition; it does not isolate the command from files the parent already exposed with
+unveil, or remove dev's independent authority to become root outside the worker.
+
+
 Canonical layers:
 
 ```
