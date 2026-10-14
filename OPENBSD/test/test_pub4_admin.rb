@@ -122,7 +122,7 @@ class Pub4AdminTest < Minitest::Test
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
     assert_includes broker, "npm-cache"
     assert_includes helper, "npm-cache)"
-    assert_includes helper, 'for cache_dir in "$app_home/.npm" "$app_home/.cache"; do'
+    assert_includes helper, 'for cache_dir in "$app_home/.npm" "$app_home/.cache" "$app_home/.bundle"; do'
     assert_includes helper, '[ "$(stat -f %u "$cache_dir")" = "$app_uid" ]'
     assert_includes helper, 'command="mkdir -p /home/$app/.npm /home/$app/.cache"'
   end
@@ -162,7 +162,8 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, "secondary-db-check)"
     assert_includes helper, 'table=$("$ruby_path" -e '
     assert_includes source, '%w[schema-load secondary-db-check].include?(task)'
-    assert_includes helper, "SECRET_KEY_BASE=$secret"
+    assert_includes helper, "export SECRET_KEY_BASE"
+    refute_includes helper, 'command="SECRET_KEY_BASE=$secret'
     refute_includes helper, "sh -c \"$command\""
   end
   def test_ci_run_accepts_only_fixed_apps_and_bounded_timeouts
