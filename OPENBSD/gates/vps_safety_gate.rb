@@ -80,6 +80,14 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   disk_usage_contract = admin.include?('DISK_USAGE_PATHS = %w[/home /var].freeze') &&
                        admin.include?('return [DU, "-xk", args[1]] if args.length == 2 && args[0] == "disk-usage" && DISK_USAGE_PATHS.include?(args[1])')
   failures << "pub4-admin disk usage must be restricted to deploy mount roots" unless disk_usage_contract
+  master_web_contract = admin.include?('MASTER_WEB_ROOT = "/home/dev/pub4/RAILS/master"') &&
+                       admin.include?('args == ["master-web-assets-reset"]') &&
+                       admin.include?('args == ["master-web-runtime-dirs"]') &&
+                       admin.include?("def master_web_root!") &&
+                       admin.include?("def master_web_tree_paths!(root)") &&
+                       admin.include?("Find.find(root)") &&
+                       admin.include?("raise \"symlink refused in MASTER web path: #{path}\" if stat.symlink?")
+  failures << "master-web helper must be fixed-path and symlink-safe" unless master_web_contract
   broker_contract = admin.include?("def command_for(argv)") &&
                     admin.include?("exec(*command)") &&
                     admin.include?("SERVICE_ACTIONS") &&
