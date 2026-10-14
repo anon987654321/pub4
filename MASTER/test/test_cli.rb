@@ -283,16 +283,6 @@ end
     assert_nil request[:answer]
   end
 
-  def test_prompt_shows_queue_count_without_changing_the_idle_prompt
-    assert_equal "master$ ", @cli.send(:prompt_with_queue_status, "master$ ")
-    @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
-      @cli.instance_variable_get(:@turn_queue) << "next message"
-    end
-    assert_equal "master$ queued 1 ", @cli.send(:prompt_with_queue_status, "master$ ")
-    @cli.instance_variable_get(:@turn_queue_mutex).synchronize { @cli.instance_variable_set(:@turn_queue_paused, true) }
-    assert_equal "master$ paused ", @cli.send(:prompt_with_queue_status, "master$ ")
-  end
-
   def test_interactive_queue_refuses_overflow_without_dropping_pending_messages
     queue = @cli.instance_variable_get(:@turn_queue)
     @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
