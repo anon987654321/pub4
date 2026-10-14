@@ -15,7 +15,15 @@ case "$app" in
 esac
 case "$task" in
   bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate|npm-cache|bundle-cache-prepare|overlay-initializers|overlay-public) [ "$#" -eq 2 ] || exit 64 ;;
-  bundle-cas-hydrate) [ "$#" -eq 3 ] && /usr/bin/grep -Eq '^ruby([0-9]{2}|[0-9]+[.][0-9]+)
+  bundle-cas-hydrate)
+    [ "$#" -eq 3 ] || exit 64
+    printf "%s\n" "$database" | /usr/bin/grep -Eq "^ruby([0-9]{2}|[0-9]+[.][0-9]+)$" || exit 64
+    ;;
+  demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
+  schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
+  *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
+esac
+
 [ "$(id -u)" -eq 0 ] || { echo "rails-task: must run as root through pub4-admin" >&2; exit 77; }
 
 app_uid=$(/usr/bin/id -u "$app")
@@ -78,6 +86,48 @@ case "$task" in
     command="mkdir -p .bundle && printf '%s\\n' '---' 'BUNDLE_PATH: /home/$app/.bundle/gems' > .bundle/config && $bundle config set --local frozen false && $bundle config set --local deployment true && $bundle config set --local without \"development test\" && RAILS_ENV=production $bundle install" ;;
   bundle-check)
     command="$bundle check" ;;
+  bundle-cas-hydrate)
+    command='set -eu
+cache_dir="/home/$PUB4_TASK_APP/.bundle/cache"
+cas_root="/var/cache/pub4/bundle/$PUB4_TASK_CACHE_KEY/cas/sha256"
+[ -d "$cache_dir" ] && [ ! -L "$cache_dir" ] && [ "$(stat -f %u "$cache_dir")" = "$PUB4_TASK_UID" ] || {
+  echo "rails-task: refusing unsafe app cache directory" >&2
+  exit 1
+}
+for dir in /var /var/cache /var/cache/pub4 /var/cache/pub4/bundle "/var/cache/pub4/bundle/$PUB4_TASK_CACHE_KEY" "$cas_root"; do
+  [ -d "$dir" ] && [ ! -L "$dir" ] && [ "$(stat -f %u "$dir")" -eq 0 ] || {
+    echo "rails-task: refusing unsafe CAS directory: $dir" >&2
+    exit 1
+  }
+done
+for source in "$cas_root"/*/*/*.gem; do
+  [ -f "$source" ] && [ ! -L "$source" ] || continue
+  [ "$(stat -f %u "$source")" -eq 0 ] && [ ! -w "$source" ] || {
+    echo "rails-task: refusing writable or non-root CAS object: $source" >&2
+    exit 1
+  }
+  name=${source##*/}
+  digest=${name%.gem}
+  printf "%s\n" "$digest" | /usr/bin/grep -Eq "^[0-9a-f]{64}$" || exit 1
+  [ "$(sha256 -q "$source")" = "$digest" ] || {
+    echo "rails-task: CAS object digest mismatch: $source" >&2
+    exit 1
+  }
+  target="$cache_dir/$name"
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    [ -f "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$PUB4_TASK_UID" ] || {
+      echo "rails-task: refusing unsafe cache target: $target" >&2
+      exit 1
+    }
+    [ "$(sha256 -q "$target")" = "$digest" ] || {
+      echo "rails-task: existing cache object digest mismatch: $target" >&2
+      exit 1
+    }
+    continue
+  fi
+  cp "$source" "$target"
+done
+' ;;
   bundle-cache-prepare)
     command='set -eu
 home="/home/$PUB4_TASK_APP"
