@@ -20,8 +20,17 @@ class TestBrowserPolicyGate < Minitest::Test
     refute result.errored?, result.errors.join("\n")
   end
 
+  def test_gate_does_not_require_master_runtime_root
+    master_root = Master.send(:remove_const, :ROOT)
+    result = Deploy::BrowserPolicyGate.run
+
+    assert_equal :passed, result.outcome, result.inspect
+  ensure
+    Master.const_set(:ROOT, master_root) if master_root && !Master.const_defined?(:ROOT, false)
+  end
   def test_gate_uses_instance_result_methods_not_missing_class_factories
     source = File.read(File.join(ROOT, "gates/lib/source/browser_policy.rb"))
+    refute_includes source, "root = Master::ROOT"
 
     refute_match(/\bGateResult\.(?:fail|pass)\s*\(/, source)
   end
