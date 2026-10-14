@@ -599,12 +599,13 @@ ollama:
 # claiming a routing that never existed.
 
 # Free models are the floor. Among them the fastest recently-answering one goes
-# first (Io::LaneSelection); a model nobody has measured is assumed to take
-# neutral_latency_s and is cut off after unmeasured_timeout_s, so one slow free
-# model cannot cost a council 150 seconds a call.
+# first (Io::LaneSelection). A tiny probe cannot predict latency for a large repair
+# prompt, so every free-tier completion has a hard call_timeout_s ceiling; the
+# unmeasured_timeout_s remains the prior for ranking a lane with no latency data.
 free_tier:
   neutral_latency_s: 45
   unmeasured_timeout_s: 60
+  call_timeout_s: 60
 
 # The paid tail: cheap OpenRouter models from the live provider catalog, after
 # every live subscription and direct-API lane and before the free models. Io::PaidTail
