@@ -81,10 +81,10 @@ fi
 if (( run_per_app )); then
   log "Optional per-app deploy scripts (/home/<app>/app layout)..."
   for app in $APPS; do
-    typeset script="${REMOTE_PUB4}/RAILS/${app}/${app}.sh"
+    typeset script="${REMOTE_PUB4}/OPENBSD/bin/vps-deploy"
     log "  ${app}..."
     vssh "test -f ${script}" || { log "WARN: missing ${script}"; continue; }
-    vssh "doas zsh ${script} 2>&1 | tee /tmp/${app}_deploy.log" \
+    vssh "cd ${REMOTE_PUB4} && zsh OPENBSD/bin/vps-deploy ${app} 2>&1 | tee /tmp/${app}_deploy.log" \
       || log "WARN: ${app} — see /tmp/${app}_deploy.log"
   done
 fi
