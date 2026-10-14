@@ -20,7 +20,7 @@
   </div>
   <div class="field">
     <%= f.label :season, t("ai.season") %>
-    <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: t("ai.any_season") } %>
+    <%= f.select :season, amber_season_options, { selected: params[:season] }, { include_blank: t("ai.any_season") } %>
   </div>
   <div class="actions">
     <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"), class: "btn btn-primary" %>
