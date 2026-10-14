@@ -86,6 +86,8 @@ case "$task" in
     command="mkdir -p .bundle && printf '%s\\n' '---' 'BUNDLE_PATH: /home/$app/.bundle/gems' > .bundle/config && $bundle config set --local frozen false && $bundle config set --local deployment true && $bundle config set --local without \"development test\" && RAILS_ENV=production $bundle install" ;;
   bundle-check)
     command="$bundle check" ;;
+  npm-cache)
+    command="mkdir -p /home/$app/.npm /home/$app/.cache" ;;
   bundle-cas-hydrate)
     command='set -eu
 cache_dir="/home/$PUB4_TASK_APP/.bundle/cache"
