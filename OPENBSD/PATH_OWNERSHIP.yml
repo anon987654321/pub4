@@ -129,6 +129,22 @@ ownership:
     purpose: repo mirror of live /etc configs
     risk: critical
     check: OPENBSD/bin/check-openbsd
+  usr/local/sbin/pub4-admin:
+    purpose: root-owned fixed-verb service/deploy/CI broker; no shell text or arbitrary paths
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
+  usr/local/libexec/ci-prepare.ksh:
+    purpose: fixed app/account/storage preparation with path ownership and symlink validation
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
+  usr/local/libexec/ci-run.ksh:
+    purpose: bounded CI launcher; runs Bundler and tests as the allowlisted app user
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
+  usr/local/libexec/ci-sync.ksh:
+    purpose: app-owned CI copy-tree sync from the fixed repository, never root filesystem mutation
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
   usr/:
     purpose: root cron jobs installed to /usr/local/bin and helpers root sources
       from /usr/local/libexec
