@@ -346,7 +346,7 @@ class LayoutContractTest < Minitest::Test
     mobile_nav = radio.match(/\.radio-nav\s*\{([^}]*)\}/m)&.[](1)
     assert mobile_nav, "radio action links need one base positioning rule"
     assert_match(
-      /inset-block-start:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\s*\+\s*var\(--safe-top\)\s*\+\s*var\(--space-4\)\)/,
+      /inset-block-start:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\s*\+\s*var\(--space-4\)\)/,
       mobile_nav,
       "mobile radio actions must clear the brand band and primary nav"
     )
@@ -361,8 +361,7 @@ class LayoutContractTest < Minitest::Test
       "desktop radio actions must clear the single nav band"
     )
 
-    assert_includes shell,
-                    "inset: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top)) 0 0 0;"
+    assert_shell_counts_safe_area_once(shell)
     assert_includes shell, "inset: var(--nav-swiper-h) 0 0 0;"
   end
 
@@ -373,7 +372,7 @@ class LayoutContractTest < Minitest::Test
     mobile_hud = maps.match(/body\.vertical-maps \.map-hud\s*\{([^}]*)\}/m)&.[](1)
     assert mobile_hud, "map HUD must have one source positioning rule"
     assert_match(
-      /inset-block-start:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\s*\+\s*var\(--safe-top\)\)/,
+      /inset-block-start:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\)/,
       mobile_hud,
       "mobile map controls must clear both brand and primary-nav bands"
     )
@@ -385,9 +384,17 @@ class LayoutContractTest < Minitest::Test
     assert_match(/inset-block-start:\s*var\(--nav-swiper-h\)/, desktop_hud,
                  "desktop map controls must clear the single nav band")
 
-    assert_includes shell,
-                    "inset: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top)) 0 0 0;"
+    assert_shell_counts_safe_area_once(shell)
     assert_includes shell, "inset: var(--nav-swiper-h) 0 0 0;"
+  end
+
+  # The nav-height token already includes env(safe-area-inset-top); shell,
+  # map and radio offsets must not add the same inset a second time.
+  def assert_shell_counts_safe_area_once(shell)
+    chrome = File.read(LAYOUT_CHROME)
+    assert_match(/--nav-swiper-h:\s*calc\([^;]*var\(--safe-top\)\);/m, chrome)
+    assert_includes shell, "inset: calc(var(--top-band-block) + var(--nav-swiper-h)) 0 0 0;"
+    refute_match(/inset:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\s*\+\s*var\(--safe-top\)\)/, shell)
   end
 
   def test_theme_root_uses_dynamic_viewport_height
