@@ -64,6 +64,7 @@ module Master
           "Use the smallest evidenced operation; recommend rather than mutate when proof is insufficient.",
           "Evidence priority: characterization, structural, runtime, and visual evidence outrank semantic judgment; taste alone never authorizes mutation.",
           "Check the domain smell catalog and adapter before proposing a transformation; similarity is not sameness and duplication is not automatically abstraction-worthy.",
+          research_instructions,
         ].join("\n")
       end
 
@@ -116,6 +117,14 @@ module Master
         Array(@policy.fetch("research")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze
       end
 
+      def research_protocol
+        @policy.fetch("research_protocol").transform_keys(&:to_s)
+      end
+
+      def research_instructions
+        Array(research_protocol.fetch("instructions")).map(&:to_s).join("\n")
+      end
+
       def validate!
         pre = preflight
         post = postflight
@@ -152,6 +161,7 @@ module Master
         validate_adapters!
         validate_vetoes!
         validate_research!
+        validate_research_protocol!
         true
       rescue KeyError => e
         raise ArgumentError, "transformation policy missing #{e.key.inspect}"
@@ -215,6 +225,34 @@ module Master
         required = ["Fowler, Refactoring", "RuboCop Ruby Style Guide", "Clean Code", "Polished Ruby Programming"]
         missing = required - names
         raise ArgumentError, "research references missing: #{missing.join(", ")}" unless missing.empty?
+      end
+
+      def validate_research_protocol!
+        protocol = research_protocol
+        raise ArgumentError, "research protocol is disabled" unless protocol.fetch("enabled") == true
+
+        minimum = Integer(protocol.fetch("minimum_source_pages"))
+        max_queries = Integer(protocol.fetch("max_search_queries"))
+        max_sources = Integer(protocol.fetch("max_fetched_sources"))
+        raise ArgumentError, "invalid independent-source threshold" unless minimum >= 2
+        raise ArgumentError, "invalid research query budget" unless (1..5).cover?(max_queries)
+        raise ArgumentError, "invalid fetched-source budget" unless (2..6).cover?(max_sources)
+
+        domains = protocol.fetch("domains")
+        required = %w[engineering rails openbsd studio music visual]
+        missing = required - domains.keys.map(&:to_s)
+        raise ArgumentError, "research domains missing: #{missing.join(", ")}" unless missing.empty?
+        domains.each do |name, row|
+          queries = Array(row.fetch("queries")).map(&:to_s)
+          sources = Array(row.fetch("sources")).map(&:to_s)
+          raise ArgumentError, "research queries missing for #{name}" if queries.empty?
+          raise ArgumentError, "research sources missing for #{name}" if sources.size < minimum
+          invalid = sources.reject { |url| url.match?(%r{\Ahttps://[^\s]+\z}) }
+          raise ArgumentError, "invalid research URLs for #{name}: #{invalid.join(", ")}" unless invalid.empty?
+        end
+        true
+      rescue KeyError => e
+        raise ArgumentError, "research protocol missing #{e.key.inspect}"
       end
 
       def load_policy
