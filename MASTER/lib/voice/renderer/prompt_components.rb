@@ -158,8 +158,8 @@ module Master
           text[0, width].strip
         end
 
-        # Keep path lookup filesystem-aware and bounded. Path separators remain
-        # visible so the checkout and current directory read as a real location.
+        # Keep raw path lookup filesystem-aware and bounded. The rendered prompt
+        # normalizes punctuation into word spacing to keep its plain-text contract.
         def prompt_path(suffix_length: 0)
           current = File.expand_path(Dir.pwd)
           location = repository_location(current) || home_path(current)
