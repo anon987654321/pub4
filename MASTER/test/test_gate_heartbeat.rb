@@ -76,7 +76,7 @@ class TestGateHeartbeat < Minitest::Test
       now[0] = 5.0
 
       line = beat.beat
-      assert_includes line, "scan progress stale"
+      assert_includes line, "law unchanged"
       assert_includes line, "last update 10s ago"
       assert_includes line, "stage elapsed 5s"
     end
