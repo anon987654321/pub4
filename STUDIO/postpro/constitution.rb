@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../output_paths"
+
 # The creative boundary between Postpro and MASTER law. MASTER/data/laws.yml is
 # the catalogue; law/universal.rb carries the executable semantic laws after
 # their migration out of the catalogue. This adapter turns the applicable laws
@@ -8,18 +10,8 @@ require "fileutils"
 
 module Postpro
   module Constitution
-    # Bulk renders belong outside the checkout with the other Studio output.
-    # POSTPRO_OUTPUT_DIR remains the explicit override for managed environments.
-    def self.default_output_dir
-      base = ENV.fetch("XDG_DATA_HOME", "").to_s
-      base = File.expand_path("~/Documents") if base.empty?
-      File.join(base, "dilla-renders", Time.now.utc.strftime("%Y-%m-%d"))
-    end
-
-    configured_output_dir = ENV.fetch("POSTPRO_OUTPUT_DIR", "").to_s
-    OUTPUT_DIR = File.expand_path(
-      configured_output_dir.empty? ? default_output_dir : configured_output_dir
-    ).freeze
+    # The shared contract owns the fallback, XDG handling, and explicit override.
+    OUTPUT_DIR = Studio::OutputPaths.render_directory.freeze
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
