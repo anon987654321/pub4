@@ -86,8 +86,7 @@ BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails db:prepare
 
 echo "==> assets precompile"
 # rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.
-doas rm -rf public/assets
-doas chown -R dev:dev public
+doas /usr/local/sbin/pub4-admin master-web-assets-reset
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails assets:precompile
 # rc.d master runs the daemon as `master`, which writes web/tmp and web/log and
@@ -96,10 +95,7 @@ BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails assets:precompile
 # Rails.cache then dies mkdir-ing tmp/cache, so every rate-limited request 500s
 # (2026-10-12: chat and /health, while / and /up still answered).
 echo "==> runtime dirs"
-doas install -d -o dev -g master -m 2775 tmp log
-doas chown -R dev:master tmp log
-doas chmod -R ug+rwX tmp log
-doas chmod 2775 tmp log tmp/**/*(/N) log/**/*(/N)
+doas /usr/local/sbin/pub4-admin master-web-runtime-dirs
 # The asset gate, through whichever door exists. MASTER/gates/runner.rb was
 # deleted on 2026-09-16 and every deploy script still named it, so `vps-deploy
 # master` died here under set -e with the box half deployed: new assets on disk,
@@ -116,11 +112,14 @@ fi
 
 echo "==> sync rc.d master"
 if [ -f "$ROOT/OPENBSD/etc/rc.d/master" ]; then
-  doas cp "$ROOT/OPENBSD/etc/rc.d/master" /etc/rc.d/master
+  if ! cmp -s "$ROOT/OPENBSD/etc/rc.d/master" /etc/rc.d/master; then
+    echo "installed /etc/rc.d/master differs; run the reviewed OPERATOR.sh sync before deploying" >&2
+    exit 1
+  fi
 fi
 
 echo "==> restart master"
-doas rcctl restart master
+doas /usr/local/sbin/pub4-admin service restart master
 sleep 4
 rcctl check master
 
