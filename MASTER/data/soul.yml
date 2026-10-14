@@ -21,6 +21,7 @@ absolute:
     - data/SOUL.md
     - data/project_context.yml
     - lib/review/scan/
+    - lib/ground/pledge.rb
     - bin/cli
   anti_simulation:
     forbidden: [will, would, could, might]
