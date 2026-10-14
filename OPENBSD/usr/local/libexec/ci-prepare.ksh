@@ -34,9 +34,6 @@ app_dir="$app_home/app"
   echo "ci-prepare: /home/dev is not a real directory" >&2
   exit 1
 }
-/bin/chgrp _pub4ci /home/dev
-/bin/chmod 750 /home/dev
-
 storage="$app_dir/storage"
 if [ -e "$storage" ] || [ -L "$storage" ]; then
   [ -d "$storage" ] && [ ! -L "$storage" ] &&
