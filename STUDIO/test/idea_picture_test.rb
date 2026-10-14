@@ -47,6 +47,46 @@ class TestStudioOutputPaths < Minitest::Test
     end
   end
 
+  def test_render_and_reference_paths_share_the_valid_xdg_data_home
+    with_environment("POSTPRO_OUTPUT_DIR", nil) do
+      with_environment("DILLA_OUTPUT_DIR", nil) do
+        with_environment("DILLA_REFERENCE_DIR", nil) do
+          Dir.mktmpdir do |dir|
+            xdg_home = File.join(dir, "xdg")
+            with_environment("XDG_DATA_HOME", xdg_home) do
+              at = Time.utc(2026, 1, 2)
+
+              assert_equal File.join(xdg_home, "dilla-renders", "2026-01-02"),
+                           Studio::OutputPaths.render_directory(at:)
+              assert_equal File.join(xdg_home, "dilla-renders", "2026-01-02"),
+                           Studio::OutputPaths.dilla_render_directory(at:)
+              assert_equal File.join(xdg_home, "dilla-references"),
+                           Studio::OutputPaths.reference_root
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def test_dilla_override_does_not_change_postpro_or_reference_paths
+    Dir.mktmpdir do |dir|
+      dilla = File.join(dir, "dilla")
+      postpro = File.join(dir, "postpro")
+      reference = File.join(dir, "reference")
+
+      with_environment("DILLA_OUTPUT_DIR", dilla) do
+        with_environment("POSTPRO_OUTPUT_DIR", postpro) do
+          with_environment("DILLA_REFERENCE_DIR", reference) do
+            assert_equal dilla, Studio::OutputPaths.dilla_render_directory
+            assert_equal postpro, Studio::OutputPaths.render_directory
+            assert_equal reference, Studio::OutputPaths.reference_root
+          end
+        end
+      end
+    end
+  end
+
   private
 
   def with_environment(name, value)
