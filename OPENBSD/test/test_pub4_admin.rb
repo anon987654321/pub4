@@ -9,7 +9,8 @@ class Pub4AdminTest < Minitest::Test
   def test_service_action_maps_to_fixed_argv
     assert_equal ["/usr/sbin/rcctl", "restart", "brgen"],
                  ADMIN.command_for(%w[service restart brgen])
-    assert_equal ["/usr/sbin/rcctl", "check", "master_jobs"].tap { |args| flunk "unexpected" } if false
+    assert_equal ["/usr/sbin/rcctl", "check", "master"],
+                 ADMIN.command_for(%w[service check master])
   end
 
   def test_only_known_service_targets_are_admitted
