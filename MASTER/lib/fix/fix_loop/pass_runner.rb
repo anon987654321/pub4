@@ -50,6 +50,7 @@ module Master
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
+          @base_preamble = preamble
           @law_order = LawOrder.new(laws:, learnings:, bus:, root:)
           take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
         end
@@ -102,6 +103,11 @@ module Master
         def full_semantic!
           @scan_phase.full_semantic!
           self
+        end
+
+        def research_brief=(brief)
+          detail = brief.to_s.strip
+          @preamble = detail.empty? ? @base_preamble : [@base_preamble.to_s.strip, detail].join("\n\n")
         end
 
         def pass_progress? = @pass_progress == true
