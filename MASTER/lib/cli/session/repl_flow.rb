@@ -110,6 +110,12 @@ module Master
           return stop_interactive_queue if stripped.casecmp("/stop").zero?
           return resume_interactive_queue if stripped.casecmp("/resume").zero?
         end
+        if Thread.current != @turn_worker && terminal_ask_pending?
+          return if answer_pending_terminal_ask(stripped)
+          enqueue_interactive_line(line)
+          terminal_puts("ask0: approval pending; enter /approve or /deny, your message is queued")
+          return
+        end
         if @turn_worker&.alive? && Thread.current != @turn_worker
           enqueue_interactive_line(line)
           return
