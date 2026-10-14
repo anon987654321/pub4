@@ -103,7 +103,7 @@ class Pub4AdminTest < Minitest::Test
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
 
-    assert_includes source, 'args[0] == "rails-task" && RAILS_APPS.include?(args[1])'
+    assert_includes source, 'args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])'
     assert_includes source, "run_rails_task(args[1], args[2])"
     assert_includes helper, 'bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci'
     assert_includes helper, 'BUNDLE_PATH: /home/$app/.bundle/gems'
@@ -175,7 +175,7 @@ class Pub4AdminTest < Minitest::Test
     refute_match(/system\s*\(|Open3\.|%x/, source)
     assert_equal 1, source.scan("Process.spawn").length
     assert_match(/Process\.spawn\(environment, "\/bin\/ksh", helper, \*arguments, \*\*spawn_options\)/, source)
-    assert_includes source, "raise \"unknown helper\" unless [CI_RUN, CI_SYNC].include?(helper)"
+    assert_includes source, "raise \"unknown helper\" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)"
     assert_includes source, "spawn_options[:uid] = account.uid"
     assert_includes source, "spawn_options[:groups] = [account.gid, shared_gid].uniq"
     assert_includes source, "exec(*command)"
