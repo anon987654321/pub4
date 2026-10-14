@@ -13,8 +13,8 @@ require "review/scan/law_dsl"
 # needs real commits, so it wants a temporary repository fixture. What is here
 # is everything that can be pinned without one, which is everything the law
 # itself decides.
-class TestAstOmissionRule < Minitest::Test
-  Rules = Master::Review::Scan::Laws
+class TestAstOmissionLaw < Minitest::Test
+  Laws = Master::Review::Scan::Laws
   ROOT = "/repo"
 
   Omission = Struct.new(:type, :name, :last_seen_at)

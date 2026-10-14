@@ -12,8 +12,8 @@ require "review/scan/law_dsl"
 # The graph is injected. Anything answering co_change_graph is an ecology as far
 # as this rule is concerned, so the test needs no repository history and states
 # the coupling it is judging rather than hoping the tree contains one.
-class TestCoChangeCouplingRule < Minitest::Test
-  Rules = Master::Review::Scan::Laws
+class TestCoChangeCouplingLaw < Minitest::Test
+  Laws = Master::Review::Scan::Laws
   ROOT = "/repo"
 
   # Paths are relative to a module_of that treats MASTER specially: under
@@ -24,7 +24,7 @@ class TestCoChangeCouplingRule < Minitest::Test
 
   def rule(graph)
     ecology = Struct.new(:co_change_graph).new(graph)
-    Rules::CoChangeCouplingRule.new(root: ROOT, ecology:)
+    Laws::CoChangeCouplingLaw.new(root: ROOT, ecology:)
   end
 
   def messages(graph, path: SUBJECT)
