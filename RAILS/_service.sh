@@ -118,77 +118,19 @@ relayd_confirm_live() {
 # is read-only here; new Host routes must be added through OPERATOR.sh first.
 relayd_add_relay() {
   local app=$1 domain=$2 port=$3
-  local conf=/etc/relayd.conf
-  local changed=0
 
   case "$app" in brgen|amber|bsdports) ;; *) log_err "relayd: refused unknown app: $app"; return 2 ;; esac
-  [[ $domain == <->.<-> || $domain == *.* ]] || { log_err "relayd: refused invalid domain"; return 2; }
+  [[ $domain == *.* ]] || { log_err "relayd: refused invalid domain"; return 2; }
   [[ $port == <-> ]] || { log_err "relayd: refused invalid port"; return 2; }
 
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    ${_PRIV} /usr/local/sbin/pub4-admin relayd-check "$app" "$domain" "$port" \
-      || { log_err "relayd: broker refused route for ${domain}"; return 1; }
-    relayd_confirm_live "$port" || return 1
-    log_ok "relayd: ${domain} routed to ${app}:${port}"
-    return 0
-  fi
-
-  # First-rollout compatibility only. The fixed broker replaces these inline
-  # root Ruby snippets after OPERATOR.sh installs /usr/local/sbin/pub4-admin.
-  local legacy_app=$app
-  [[ -f $conf ]] || { log_warn "relayd: ${conf} missing — skipping"; return 0; }
-
-  if grep -qF "match request header \"Host\" value \"${domain}\"" "$conf" 2>/dev/null \
-    && grep -qF "forward to <${app}> port ${port}" "$conf" 2>/dev/null; then
-    log_ok "relayd: ${domain} already configured"
-    return 0
-  fi
-
-  # OpenBSD sed -i takes the next arg as a backup suffix. GNU `sed -i "1a\\"`
-  # without one is a no-op or a corrupt edit on the box. Rewrite in ruby.
-  if ! grep -q "table <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} "$RUBY" -e '
-      path, app = ARGV
-      body = File.read(path)
-      line = "table <#{app}> { 127.0.0.1 }\n"
-      File.write(path, line + body) unless body.include?("table <#{app}>")
-    ' "$conf" "$legacy_app" \
-      || { log_err "relayd: could not add table <${app}>"; return 1; }
-    log_ok "relayd: added table <${app}>"
-    changed=1
-  fi
-  if ! grep -q "forward to <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} "$RUBY" -e '
-      path, app, domain = ARGV
-      body = File.read(path)
-      line = "  match request header \"Host\" value \"#{domain}\" forward to <#{app}>\n"
-      unless body.include?(line)
-        File.write(path, body.sub(/match request header.*forward to <master>.*\n/) { |m| m + line })
-      end
-    ' "$conf" "$legacy_app" "$domain" \
-      || { log_err "relayd: could not add Host routing for ${domain}"; return 1; }
-    log_ok "relayd: added Host routing for ${domain}"
-    changed=1
-  fi
-  if ! grep -q "forward to <${app}> port" "$conf" 2>/dev/null; then
-    ${_PRIV} "$RUBY" -e '
-      path, app, port = ARGV
-      body = File.read(path)
-      line = "  forward to <#{app}> port #{port} check http \"/up\" code 200\n"
-      unless body.include?("forward to <#{app}> port")
-        File.write(path, body.sub(/forward to <master> port.*\n/) { |m| m + line })
-      end
-    ' "$conf" "$legacy_app" "$port" \
-      || { log_err "relayd: could not add forward for ${app}:${port}"; return 1; }
-    log_ok "relayd: added forward to <${app}> port ${port}"
-    changed=1
-  fi
-
-  if [[ $changed == 1 ]]; then
-    ${_PRIV} rcctl restart relayd || { log_err "relayd: restart failed after config change"; return 1; }
-    relayd_confirm_live "$port" || return 1
-    log_ok "relayd: restarted to pick up ${domain}"
-  fi
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "relayd: fixed broker is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  ${_PRIV} /usr/local/sbin/pub4-admin relayd-check "$app" "$domain" "$port" \
+    || { log_err "relayd: root-approved route check failed for ${domain}"; return 1; }
+  relayd_confirm_live "$port" || return 1
+  log_ok "relayd: ${domain} verified for ${app}:${port}"
   return 0
 }
 
