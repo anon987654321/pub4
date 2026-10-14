@@ -62,6 +62,7 @@ module Master
         return if @closed
 
         @closed = true
+        shutdown_interactive_queue! if $stdin.tty? && $stdout.tty?
         stop_background_loop
         save_cli_history
         save_session_on_exit
