@@ -151,10 +151,10 @@ class TestScanner < Minitest::Test
       eta_s: 120,
     }
 
+    previous = ENV["MASTER_SCAN_VERBOSE"]
     quiet, = capture_io { scanner.send(:log_scan_hit, **args) }
     assert_empty quiet, "broad scans use checkpoints, not one console line per dirty file"
 
-    previous = ENV["MASTER_SCAN_VERBOSE"]
     ENV["MASTER_SCAN_VERBOSE"] = "1"
     verbose, = capture_io { scanner.send(:log_scan_hit, **args) }
     assert_includes verbose, "obs0: 1/1757 lib/example.rb, 42 findings"
