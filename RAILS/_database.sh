@@ -83,24 +83,16 @@ secondary_db_initialized() {
 # migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).
 migrate_sqlite_db_to_storage_if_needed() {
   local app_name=$1 app_dir=$2
-  local db_dir="${app_dir}/db" storage_dir="${app_dir}/storage"
-  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
-    run_rails_as_app "$app_name" "$app_dir" "db-storage-migrate"
-    return $?
-  fi
-  [[ -d $db_dir ]] || return 0
-  ${_PRIV} mkdir -p "$storage_dir"
-  local moved=0 base
-  for f in ${db_dir}/production*.sqlite3(N); do
-    base=${f:t}
-    [[ -f ${storage_dir}/${base} ]] && continue
-    ${_PRIV} mv "$f" "${storage_dir}/${base}"
-    moved=1
-    log_ok "moved db/${base} → storage/${base}"
-  done
-  if [[ $moved -eq 1 ]]; then
-    ${_PRIV} chown -R "${app_name}:${app_name}" "$storage_dir"
-  fi
+  case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "storage migration: refused app: $app_name"; return 2 ;; esac
+  [[ $app_dir == "/home/${app_name}/app" ]] || {
+    log_err "storage migration: refused app path: $app_dir"
+    return 2
+  }
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "storage migration: pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  run_rails_as_app "$app_name" "$app_dir" "db-storage-migrate"
 }
 
 # db_seed_as_app APP_NAME APP_DIR
