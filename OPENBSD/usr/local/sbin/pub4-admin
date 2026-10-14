@@ -23,6 +23,7 @@ module Pub4Admin
   RAILS_TASK = "/usr/local/libexec/rails-task.ksh"
   RAILS_BUNDLE = "/usr/local/libexec/rails-bundle.ksh"
   RAILS_APPS = %w[brgen amber bsdports].freeze
+  RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
   RUBY_CANDIDATES = %w[
     /usr/local/bin/ruby4.0 /usr/local/bin/ruby40
@@ -146,6 +147,53 @@ module Pub4Admin
     end
   end
 
+  def ensure_app_secret(app)
+    return 64 unless APPS.include?(app)
+
+    candidates = ["/etc/#{app}.env", "/etc/rails/#{app}.env"]
+    candidates.each do |path|
+      next unless File.exist?(path) || File.symlink?(path)
+      stat = File.lstat(path)
+      raise "#{path} must be a root-owned regular file" unless
+        stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+
+      secret = File.foreach(path).filter_map do |line|
+        match = line.match(/\ASECRET_KEY_BASE=([0-9a-fA-F]{64,256})\s*\z/)
+        match && match[1]
+      end.first
+      if secret
+        puts secret
+        return 0
+      end
+    end
+
+    target = candidates.first
+    raise "#{target} is a symlink; refusing secret write" if File.symlink?(target)
+    if File.exist?(target)
+      stat = File.lstat(target)
+      raise "#{target} must be a root-owned regular file" unless
+        stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+    end
+    secret = SecureRandom.hex(64)
+    temporary = "/etc/.#{app}.env.#{Process.pid}.#{SecureRandom.hex(6)}"
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+        file.write("SECRET_KEY_BASE=#{secret}\n")
+        file.flush
+        file.fsync
+      end
+      group_id = Etc.getgrnam(app).gid
+      File.chown(0, group_id, temporary)
+      File.chmod(0o640, temporary)
+      File.rename(temporary, target)
+      puts secret
+      0
+    ensure
+      File.unlink(temporary) if File.exist?(temporary)
+    end
+  rescue ArgumentError
+    raise "account or group #{app} is missing; cannot establish app secret"
+  end
   def valid_ci_timeout?(value)
     value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
   end
@@ -255,7 +303,7 @@ module Pub4Admin
   end
 
   def run_rails_task(app, task, database = nil)
-    return 64 unless RAILS_APPS.include?(app)
+    return 64 unless RAILS_TASK_APPS.include?(app)
     allowed = %w[bundle-install bundle-check db-prepare db-seed demo-seed assets-precompile ci]
     if task == "schema-load"
       return 64 unless %w[cache queue cable].include?(database)
@@ -273,6 +321,10 @@ module Pub4Admin
     raise "must run as root through doas" unless Process.euid.zero?
 
     args = Array(argv).map(&:to_s)
+    if args.length == 2 && args[0] == "ensure-secret" && APPS.include?(args[1])
+      return ensure_app_secret(args[1])
+    end
+
     if args.length == 4 && args[0] == "stamp"
       return write_stamp(*args.drop(1))
     end
