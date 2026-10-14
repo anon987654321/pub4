@@ -161,9 +161,9 @@ module Master
       rescue Io::CircuitBreaker::CircuitError => err
         record_provider_outcome(selected_model, err.category, latency_ms: elapsed_ms(started), error: err.message)
         Result.err(redact_secrets(err.message), category: err.category)
-      rescue Timeout::Error => err
-        return classified_call_failure(err) unless PassClock.active?
-
+      rescue Timeout::Error
+        # Every dispatcher deadline is actionable, not just council deadlines:
+        # park the lane and record a timeout so fallback does not ask it again.
         call_deadline_exceeded(selected_model, started)
       rescue StandardError => err
         record_provider_outcome(selected_model, :llm_call_failure, latency_ms: elapsed_ms(started), error: err.message)
@@ -228,25 +228,25 @@ module Master
         VISION_RE.match?(id)
       end
 
-      # The dispatcher's deadline, tightened inside a council, and tighter again
-      # for a free model nobody has timed: it gets the short unmeasured timeout.
+      # The dispatcher's deadline is tightened inside a council and for every
+      # free-tier completion. A small probe cannot predict the cost of a large prompt.
       def call_deadline_for(model)
         deadline = PassClock.call_deadline(@availability.dispatch_deadline_s)
         return deadline unless Io::LaneSelection.kind(model) == :free
-        return deadline unless @model_router.respond_to?(:latency_s) && @model_router.latency_s(model).nil?
 
-        [deadline, Io::LaneSelection.unmeasured_timeout_s].min
+        [deadline, Io::LaneSelection.free_call_timeout_s].min
       end
 
-      # A call past its hard deadline inside a council: the lane is silent for the
-      # cool-off, so nothing else asks it this run, and the next lane answers.
+      # A call past its hard deadline is parked for the cool-off and recorded as a
+      # provider timeout. Subsequent requests can move to the next available lane.
       def call_deadline_exceeded(model, started)
         seconds = elapsed_ms(started) / 1000
         lane = LaneSilence.lane_of(model)
         LaneSilence.silence(lane, reason: "no answer in #{seconds}s")
         record_provider_outcome(model, :timeout, latency_ms: elapsed_ms(started), error: "deadline")
-        Master::Trace::Dmesg.status("council0", "#{model} gave no answer in #{seconds}s; #{lane} is skipped for #{LaneSilence::SILENCE_COOLOFF_S / 60} minutes")
-        Result.err("#{model} exceeded its #{PassClock.call_timeout_s}s call deadline", category: :timeout)
+        unit = PassClock.active? ? "council0" : "llm0"
+        Master::Trace::Dmesg.status(unit, "#{model} gave no answer in #{seconds}s; #{lane} is skipped for #{LaneSilence::SILENCE_COOLOFF_S / 60} minutes")
+        Result.err("#{model} exceeded its #{call_deadline_for(model)}s call deadline", category: :timeout)
       end
 
       # A billing or rate-limit refusal cannot succeed on an in-place retry,
