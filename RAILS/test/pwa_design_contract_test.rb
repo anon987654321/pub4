@@ -184,6 +184,19 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
+  def test_bsdports_primary_nav_label_describes_the_landmark
+    root = File.join(ROOT, "bsdports")
+    layout = read(root, "app/views/layouts/application.html.erb")
+    en = YAML.safe_load_file(File.join(root, "config/locales/en.yml")).fetch("en")
+    nb = YAML.safe_load_file(File.join(root, "config/locales/nb.yml")).fetch("nb")
+
+    assert_match(/data-pwa-primary-nav[^>]*aria-label="<%= t\("nav\.primary_nav"\) %>"/, layout)
+    refute_match(/data-pwa-primary-nav[^>]*aria-label="<%= t\("nav\.home"\) %>"/, layout,
+                 "a primary-navigation landmark must not be announced as a home link")
+    assert_equal "Primary navigation", en.dig("nav", "primary_nav")
+    assert_equal "Hovednavigasjon", nb.dig("nav", "primary_nav")
+  end
+
   def test_store_apps_publish_both_platform_association_endpoints
     each_app do |app, root|
       routes = read(root, "config/routes.rb")
