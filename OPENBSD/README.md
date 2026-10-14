@@ -32,7 +32,17 @@ different copy-tree layout.
 
 ## Privilege boundary
 
-`OPENBSD/usr/local/sbin/pub4-admin` is the staged fixed-path root broker for deploy service actions, receipts, the CI lock and two trusted helper scripts. `OPENBSD/bin/vps-deploy` uses it when the installed `root:wheel` copy exists. CI's installed copy-tree path now synchronizes as the selected app user and the runner has a wall-clock process-group deadline. The first-rollout fallback, `RAILS/_deploy.sh`, and other app install paths still contain direct `doas` calls. The runbook records the rollout boundary; do not narrow `/etc/doas.conf` or remove `dev` from `wheel` until those paths have been migrated and tested on vm23.
+`OPENBSD/usr/local/sbin/pub4-admin` is the fixed-path root broker. It exposes
+allowlisted service actions, atomic deploy receipts/secrets, a fixed CI lock, and
+bounded Rails/CI task and sync verbs. CI and production Rails tree replacement run
+with the selected app account; the CI runner has a wall-clock process-group deadline.
+The deploy adapter verifies root-owned rc.d files rather than installing from the
+checkout, and relay route verification is read-only.
+
+This is not yet the final privilege cut: CI first-rollout fallbacks and parts of
+bundle-cache/app installation still use direct `doas`. Keep the existing
+`/etc/doas.conf` rule and `wheel` membership unchanged until those operations are
+migrated, the contract suite passes in a real OpenBSD checkout, and vm23 is verified.
 
 ## Configuration ownership and secrets
 
