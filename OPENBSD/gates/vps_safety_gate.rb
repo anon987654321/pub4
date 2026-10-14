@@ -378,6 +378,8 @@ if File.file?(master_deploy_path)
   master_deploy_contract = master_deploy.include?("pub4-admin master-web-assets-reset") &&
                            master_deploy.include?("pub4-admin master-web-runtime-dirs") &&
                            master_deploy.include?("pub4-admin service restart master") &&
+                           master_deploy.include?('if [ "$ROOT" != "/home/dev/pub4" ]; then') &&
+                           admin.include?("MASTER_WEB_ROOT.split(File::SEPARATOR)") &&
                            master_deploy.include?("cmp -s \"$ROOT/OPENBSD/etc/rc.d/master\" /etc/rc.d/master") &&
                            !master_deploy.include?("doas rm -rf public/assets") &&
                            !master_deploy.include?("doas chown -R dev:dev public") &&
