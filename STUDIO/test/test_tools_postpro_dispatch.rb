@@ -39,7 +39,7 @@ class TestPostproDispatch < Minitest::Test
   end
 
   def graded_outputs(dir, name)
-    Dir[File.join(render_dir(dir), "postpro_#{File.basename(name, File.extname(name))}_*_v1_*.jpg")]
+    Dir[File.join(render_dir(dir), "postpro_#{File.basename(name, File.extname(name))}_*_v1.jpg")]
   end
 
   # The bare path grades that one image, and --count beside it is honoured
@@ -96,6 +96,27 @@ class TestPostproDispatch < Minitest::Test
     end
   end
 
+  def test_default_output_is_dated_and_outside_the_input_directory
+    Dir.mktmpdir do |dir|
+      source_dir = File.join(dir, "source")
+      FileUtils.mkdir_p(source_dir)
+      subject = frame(source_dir)
+      xdg_home = File.join(dir, "xdg")
+      date = Time.now.utc.strftime("%Y-%m-%d")
+
+      out, status = run_postpro(
+        dir, subject, "--count", "1",
+        env: { "POSTPRO_OUTPUT_DIR" => nil, "XDG_DATA_HOME" => xdg_home },
+      )
+      assert status.success?, "default output path failed:\\n#{out}"
+
+      output_dir = File.join(xdg_home, "dilla-renders", date)
+      outputs = Dir[File.join(output_dir, "postpro_frame_*_v1.jpg")]
+      assert_equal 1, outputs.size, "expected the dated render outside the source folder:\\n#{out}"
+      assert_empty Dir[File.join(source_dir, "postpro_*.jpg")]
+    end
+  end
+
   # A path that exists as neither file nor directory is named and refused; a
   # menu opened on a typo is a hang to anything scripted.
   def test_a_missing_path_is_refused_rather_than_prompted
@@ -126,7 +147,7 @@ class TestPostproDispatch < Minitest::Test
 
       out, status = run_postpro(dir, source_dir, "--count", "1")
       assert status.success?, "positional directory grade failed:\n#{out}"
-      outputs = Dir[File.join(render_dir(dir), "postpro_one_*_v1_*.jpg")]
+      outputs = Dir[File.join(render_dir(dir), "postpro_one_*_v1.jpg")]
       assert_equal 1, outputs.size,
                    "the directory's image should have been graded once:\n#{out}"
       assert_empty Dir[File.join(source_dir, "postpro_*.jpg")],
