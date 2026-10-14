@@ -360,6 +360,8 @@
       <span class="pp" aria-hidden="true"><%= Master::Face::Contract.user_token %></span>
       <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
       <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
+      <span id="turn-queue-status" class="turn-queue-status" aria-live="polite" aria-atomic="true"></span>
+      <button id="turn-control" class="turn-control" type="button" hidden aria-label="<%= t("face.stop_response", default: "Stop response") %>" aria-pressed="false">stop</button>
 
       <button id="music-btn" type="button" aria-label="<%= t("face.music_loop") %>" aria-pressed="false"></button>
       <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech") %>"></button>
