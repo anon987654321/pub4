@@ -33,9 +33,14 @@ app_secret_for() {
 # db_create_migrate_as_app APP_NAME APP_DIR
 db_create_migrate_as_app() {
   local app_name=$1 app_dir=$2 secret
-  secret=$(app_secret_for "$app_name")
-  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare'" \
-    || { log_err "db:prepare failed for ${app_name}"; return 1; }
+  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin rails-task "$app_name" db-prepare \
+      || { log_err "db:prepare failed for ${app_name}"; return 1; }
+  else
+    secret=$(app_secret_for "$app_name")
+    ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare'" \
+      || { log_err "db:prepare failed for ${app_name}"; return 1; }
+  fi
   rails_prepare_secondary_dbs_as_app "$app_name" "$app_dir" \
     || return 1
   log_ok "Database ready"
@@ -56,7 +61,9 @@ rails_prepare_secondary_dbs_as_app() {
   local app_name=$1
   local app_dir=$2
   local secret
-  secret=$(app_secret_for "$app_name")
+  if [[ ! -x /usr/local/sbin/pub4-admin || "$app_dir" != "/home/${app_name}/app" ]]; then
+    secret=$(app_secret_for "$app_name")
+  fi
   local db
   for db in cache queue cable; do
     local schema="${app_dir}/db/${db}_schema.rb"
@@ -69,9 +76,14 @@ rails_prepare_secondary_dbs_as_app() {
     fi
 
     log "db:schema:load:${db} for ${app_name}"
-    run_rails_as_app "$app_name" "$app_dir" \
-      "SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production ${BUNDLE} exec rails db:schema:load:${db}" \
-      || { log_err "db:schema:load:${db} failed for ${app_name}"; return 1; }
+    if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+      "${_PRIV}" /usr/local/sbin/pub4-admin rails-task "$app_name" schema-load "$db" \
+        || { log_err "db:schema:load:${db} failed for ${app_name}"; return 1; }
+    else
+      run_rails_as_app "$app_name" "$app_dir" \
+        "SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production ${BUNDLE} exec rails db:schema:load:${db}" \
+        || { log_err "db:schema:load:${db} failed for ${app_name}"; return 1; }
+    fi
   done
 }
 
@@ -88,6 +100,11 @@ secondary_db_initialized() {
   local app_name=$1 app_dir=$2 db=$3
   local file="${app_dir}/storage/production_${db}.sqlite3"
   local table
+
+  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin rails-task "$app_name" secondary-db-check "$db" >/dev/null 2>&1
+    return $?
+  fi
 
   whence sqlite3 >/dev/null 2>&1 || return 1
   ${_PRIV} test -s "$file" || return 1
@@ -107,6 +124,10 @@ secondary_db_initialized() {
 migrate_sqlite_db_to_storage_if_needed() {
   local app_name=$1 app_dir=$2
   local db_dir="${app_dir}/db" storage_dir="${app_dir}/storage"
+  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin rails-task "$app_name" db-storage-migrate
+    return $?
+  fi
   [[ -d $db_dir ]] || return 0
   ${_PRIV} mkdir -p "$storage_dir"
   local moved=0 base
@@ -125,9 +146,14 @@ migrate_sqlite_db_to_storage_if_needed() {
 # db_seed_as_app APP_NAME APP_DIR
 db_seed_as_app() {
   local app_name=$1 app_dir=$2 secret
-  secret=$(app_secret_for "$app_name")
-  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:seed'" \
-    || log_warn "db:seed skipped for ${app_name}"
+  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin rails-task "$app_name" db-seed \
+      || log_warn "db:seed skipped for ${app_name}"
+  else
+    secret=$(app_secret_for "$app_name")
+    ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:seed'" \
+      || log_warn "db:seed skipped for ${app_name}"
+  fi
 }
 
 # seed_demo_as_app APP_NAME APP_DIR — the guest-facing demo content each app
@@ -138,7 +164,12 @@ db_seed_as_app() {
 # deploy stopping, but not much worse.
 seed_demo_as_app() {
   local app_name=$1 app_dir=$2 secret
-  secret=$(app_secret_for "$app_name")
-  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails ${app_name}:demo_seed'" \
-    || log_warn "${app_name}:demo_seed skipped"
+  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin rails-task "$app_name" demo-seed \
+      || log_warn "${app_name}:demo_seed skipped"
+  else
+    secret=$(app_secret_for "$app_name")
+    ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails ${app_name}:demo_seed'" \
+      || log_warn "${app_name}:demo_seed skipped"
+  fi
 }
