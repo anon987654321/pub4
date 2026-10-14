@@ -161,6 +161,29 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_default_layers_and_full_dilla_drum_kit_render_on_a_normal_pass
+    Dir.mktmpdir do |dir|
+      out = File.join(dir, "dilla-full-kit.wav")
+      stdout, stderr, status = run_dilla(
+        "--progression", "2",
+        "--profile", "dilla_shadow",
+        "--beats", "1",
+        "--bpm", "92",
+        "--seed", "31",
+        "--out", out,
+        chdir: dir
+      )
+
+      assert status.success?, "enriched progression failed\n#{stdout}\n#{stderr}"
+      assert_includes stdout, "drums=dilla_shadow_full"
+      assert File.file?(out), "renderer did not create the enriched WAV"
+      header = File.binread(out, 44)
+      assert_equal "RIFF", header.byteslice(0, 4)
+      assert_equal "WAVE", header.byteslice(8, 4)
+      assert_operator File.size(out), :>, 44
+    end
+  end
+
   def test_wav_writer_preserves_an_existing_take_unless_replace_is_explicit
     Dir.mktmpdir do |dir|
       path = File.join(dir, "take.wav")
