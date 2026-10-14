@@ -84,6 +84,18 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "128 * 1024 * 1024"
     assert_includes source, "bundle cache import exceeds 500 files"
   end
+  def test_master_web_preparation_is_fixed_path_and_symlink_safe
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    assert_includes source, 'MASTER_WEB_ROOT = "/home/dev/pub4/RAILS/master"'
+    assert_includes source, 'args == ["master-web-assets-reset"]'
+    assert_includes source, 'args == ["master-web-runtime-dirs"]'
+    assert_includes source, "def master_web_root!"
+    assert_includes source, "def master_web_tree_paths!(root)"
+    assert_includes source, "File.lstat(path)"
+    assert_includes source, "Find.find(root)"
+    assert_includes source, "raise \"symlink refused in MASTER web path: #{path}\" if stat.symlink?"
+    assert_includes source, "File.chown(dev.uid, master.gid, entry)"
+  end
   def test_ci_timeout_is_a_real_process_group_deadline
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
