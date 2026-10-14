@@ -51,6 +51,18 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_broker_must_keep_ci_spawn_fixed_and_supervised
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      text = File.read(path).sub("Process.spawn(", 'Process.spawn("sh", "-c", "unsafe", ')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "pub4-admin must not evaluate shell command strings or widen its CI spawn"
+    end
+  end
+
   def test_broker_must_keep_ci_lock_fixed_and_symlink_safe
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
