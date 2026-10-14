@@ -220,8 +220,11 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   install_preflight = installer.include?("installed privileged entrypoint missing or symlinked") &&
                       installer.include?("/usr/local/libexec/pub4/solid_queue_proof.rb")
   failures << "OPERATOR.sh must verify installed privileged entrypoints" unless install_preflight
+  destination_guard_at = installer.index("Never copy privileged code through a symlinked system directory or file.")
+  copy_loop_at = installer.index("for d in etc usr var; do")
   destination_preflight = installer.include?("refusing symlinked privileged destination directory") &&
-                          installer.include?("refusing symlinked privileged destination file")
+                          installer.include?("refusing symlinked privileged destination file") &&
+                          destination_guard_at && copy_loop_at && destination_guard_at < copy_loop_at
   failures << "OPERATOR.sh must refuse symlinked privileged destinations before copying" unless destination_preflight
   installs_after_copy = installer.include?("installed Solid Queue proof is missing or symlinked") &&
                         installer.include?("installed resource guard is missing or symlinked")
