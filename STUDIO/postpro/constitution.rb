@@ -8,10 +8,18 @@ require "fileutils"
 
 module Postpro
   module Constitution
-    # Renders land beside postpro.rb and a rerun of the same source and chain
-    # overwrites its predecessor, so nothing piles up. POSTPRO_OUTPUT_DIR
-    # chooses another place.
-    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR") { __dir__ }).freeze
+    # Bulk renders belong outside the checkout with the other Studio output.
+    # POSTPRO_OUTPUT_DIR remains the explicit override for managed environments.
+    def self.default_output_dir
+      base = ENV.fetch("XDG_DATA_HOME", "").to_s
+      base = File.expand_path("~/Documents") if base.empty?
+      File.join(base, "dilla-renders", Time.now.utc.strftime("%Y-%m-%d"))
+    end
+
+    configured_output_dir = ENV.fetch("POSTPRO_OUTPUT_DIR", "").to_s
+    OUTPUT_DIR = File.expand_path(
+      configured_output_dir.empty? ? default_output_dir : configured_output_dir
+    ).freeze
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
