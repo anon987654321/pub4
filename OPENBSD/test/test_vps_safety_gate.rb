@@ -31,6 +31,8 @@ class VpsSafetyGateTest < Minitest::Test
                    File.join(openbsd, "usr", "local", "libexec", "ci-run.ksh"))
       FileUtils.cp(File.join(ROOT, "usr", "local", "libexec", "ci-sync.ksh"),
                    File.join(openbsd, "usr", "local", "libexec", "ci-sync.ksh"))
+      FileUtils.cp(File.join(ROOT, "usr", "local", "libexec", "rails-task.ksh"),
+                   File.join(openbsd, "usr", "local", "libexec", "rails-task.ksh"))
       FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh")]).each do |path|
