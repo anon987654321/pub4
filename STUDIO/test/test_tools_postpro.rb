@@ -360,7 +360,8 @@ class TestPostproFilm < Minitest::Test
     required_calls.each do |name, call|
       body = methods.fetch(name)
       assert_includes body, call, "#{name} source extraction must include #{call}"
-      refute_includes body, "def ", "#{name} source extraction must stop at its own method"
+      assert_equal 1, body.lines.count { |line| line.start_with?("def ") },
+                   "#{name} source extraction must contain only its own top-level method"
     end
     refute_includes methods.fetch("run_random"), "RANDOM_CHAIN_LENGTH ="
   end
