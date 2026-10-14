@@ -4224,6 +4224,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       output_ext = ARGV.include?("--tiff16") ? ".tif" : ext
       output = File.join(Postpro::Constitution::OUTPUT_DIR,
                          "postpro_#{safe_stem}_#{suffix}_v#{i + 1}#{output_ext}")
+      output = Postpro::Constitution.available_output_path(output)
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
       Postpro::Constitution.verify_chain!(chain: recipe_data, stage_rank: random_stage_rank) if recipe_data
 
@@ -4797,6 +4798,7 @@ def run_introspect
     if out.to_s.empty?
       safe_name = name.to_s.gsub(/[^0-9A-Za-z_-]+/, "_")
       out = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{safe_name}.cube")
+      out = Postpro::Constitution.available_output_path(out)
       Postpro::Constitution.verify_output!(input_path: __FILE__, output_path: out)
     end
     size = (argv_flag("--size") || "17").to_i
@@ -4901,6 +4903,7 @@ def run_stock_sheet
   if output.to_s.empty?
     safe_stem = File.basename(input_path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
     output = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{safe_stem}_stocks_#{preset_name}.jpg")
+    output = Postpro::Constitution.available_output_path(output)
     Postpro::Constitution.verify_output!(input_path: input_path, output_path: output)
   end
   sheet, stocks = stock_sheet(load_image(input_path), preset_name)
@@ -5015,6 +5018,7 @@ def run_uplift(dir, files)
       safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
       output = File.join(Postpro::Constitution::OUTPUT_DIR,
                          "postpro_#{safe_stem}_#{base}+#{layer}_v#{i + 1}#{ext}")
+      output = Postpro::Constitution.available_output_path(output)
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
       processed.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
       write_grade_sidecar(file, output, [base, layer], image, processed)
@@ -5054,6 +5058,7 @@ def run_watch
       ext = File.extname(path)
       base = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
       out = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{base}_#{preset_name}#{ext}")
+      out = Postpro::Constitution.available_output_path(out)
       Postpro::Constitution.verify_output!(input_path: path, output_path: out)
       PostproBootstrap.dmesg "new path=#{File.basename(path)} -> #{File.basename(out)}"
       begin
