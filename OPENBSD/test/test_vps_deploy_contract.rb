@@ -96,6 +96,18 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
+  def test_rails_deploy_service_lifecycle_uses_closed_broker_adapter
+    core = File.read(File.join(ROOT, "RAILS", "_core.sh"), encoding: "UTF-8")
+    deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
+
+    assert_includes core, "pub4_rcctl() {"
+    assert_includes core, "check|get|start|stop|restart"
+    assert_includes core, '"/usr/local/sbin/pub4-admin service "$action" "$service"'
+    assert_includes deploy, 'pub4_rcctl stop "$app_name"'
+    assert_includes deploy, 'pub4_rcctl restart "$APP_NAME" || pub4_rcctl start "$APP_NAME"'
+    refute_includes deploy, 'doas rcctl stop "$app_name"'
+  end
+
   def test_rails_app_deploy_wrappers_refuse_root_execution
     %w[brgen amber bsdports].each do |app|
       source = File.read(File.join(ROOT, "RAILS", app, "#{app}.sh"), encoding: "UTF-8")
