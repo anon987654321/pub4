@@ -283,7 +283,8 @@ install_root_configs() {
            /usr/local/libexec/ci-prepare.ksh \
            /usr/local/libexec/ci-run.ksh \
            /usr/local/libexec/ci-sync.ksh \
-           /usr/local/libexec/rails-task.ksh; do
+           /usr/local/libexec/rails-task.ksh \
+            /usr/local/libexec/rails-sync.ksh; do
     if [[ ! -f $f || -L $f ]]; then
       log ERROR "installed privileged entrypoint missing or symlinked: $f"
       return 1
@@ -295,7 +296,8 @@ install_root_configs() {
            /usr/local/libexec/ci-prepare.ksh \
            /usr/local/libexec/ci-run.ksh \
            /usr/local/libexec/ci-sync.ksh \
-           /usr/local/libexec/rails-task.ksh; do
+           /usr/local/libexec/rails-task.ksh \
+            /usr/local/libexec/rails-sync.ksh; do
     if [[ -L $f ]]; then
       log ERROR "refusing symlinked privileged entrypoint: $f"
       return 1
