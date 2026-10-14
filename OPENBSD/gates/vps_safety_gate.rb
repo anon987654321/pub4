@@ -364,6 +364,21 @@ deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${a
                       !deploy_all_source.include?('doas zsh ${script}') &&
                       !deploy_all_source.include?('RAILS/${app}/${app}.sh')
 failures << "deploy_all per-app mode must not elevate checkout Rails wrappers" unless deploy_all_contract
+master_deploy_path = File.join(OPENBSD, "bin", "vps_deploy_master.sh")
+if File.file?(master_deploy_path)
+  master_deploy = File.read(master_deploy_path)
+  master_deploy_contract = master_deploy.include?("pub4-admin master-web-assets-reset") &&
+                           master_deploy.include?("pub4-admin master-web-runtime-dirs") &&
+                           master_deploy.include?("pub4-admin service restart master") &&
+                           master_deploy.include?("cmp -s \"$ROOT/OPENBSD/etc/rc.d/master\" /etc/rc.d/master") &&
+                           !master_deploy.include?("doas rm -rf public/assets") &&
+                           !master_deploy.include?("doas chown -R dev:dev public") &&
+                           !master_deploy.include?("doas install -d -o dev -g master") &&
+                           !master_deploy.include?("doas cp \"$ROOT/OPENBSD/etc/rc.d/master\" /etc/rc.d/master")
+  failures << "MASTER web deploy must use fixed broker verbs and refuse root-installing checkout rc.d" unless master_deploy_contract
+else
+  failures << "missing OPENBSD/bin/vps_deploy_master.sh"
+end
 deploy_source = File.read(File.join(OPENBSD, "bin", "vps-deploy"))
 failures << "vps-deploy must not recommend generic privileged du" unless
   deploy_source.include?('pub4-admin disk-usage $mount_point') && !deploy_source.include?("doas du -xk $mount_point")
