@@ -77,9 +77,11 @@ module Master
       rescue Timeout::Error
         warn_tts("edge socket timed out after #{timeout}s")
         cleanup_failed_audio(audio_path)
+        TtsSupervisor.retire_socket(sock_path) if sock_path
       rescue StandardError => e
         warn_tts("edge socket failed: #{e.class}: #{e.message}")
         cleanup_failed_audio(audio_path)
+        TtsSupervisor.retire_socket(sock_path) if sock_path
       end
 
       def build_socket_request(voice_name, style_config, text)
