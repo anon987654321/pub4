@@ -5,31 +5,20 @@ set -euo pipefail
 
 # app_secret_for APP_NAME — read or create SECRET_KEY_BASE in /etc/<app>.env
 app_secret_for() {
-  local app_name=$1 env_file secret contents line
+  local app_name=${1:-} secret
+  case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "app_secret_for: refused unknown app: $app_name"; return 2 ;; esac
 
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    secret=$("${_PRIV}" /usr/local/sbin/pub4-admin ensure-secret "$app_name") || return 1
-    [[ -n $secret ]] || { log_err "empty app secret for ${app_name}"; return 1; }
-    print -r -- "$secret"
-    return 0
-  fi
-  for env_file in /etc/${app_name}.env /etc/rails/${app_name}.env; do
-    if ${_PRIV} test -r "$env_file"; then
-      contents=$(${_PRIV} cat "$env_file") || continue
-      for line in "${(@f)contents}"; do
-        [[ $line == SECRET_KEY_BASE=* ]] || continue
-        secret=${line#SECRET_KEY_BASE=}
-        [[ -n $secret ]] && { print -r -- "$secret"; return 0; }
-      done
-    fi
-  done
-
-  secret=$("$RUBY" -e "require 'securerandom'; puts SecureRandom.hex(64)")
-  ${_PRIV} sh -c "print -r 'SECRET_KEY_BASE=${secret}' > /etc/${app_name}.env && chmod 640 /etc/${app_name}.env && chown root:${app_name} /etc/${app_name}.env 2>/dev/null || chown root:wheel /etc/${app_name}.env"
-  log_ok "created /etc/${app_name}.env" >&2
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "app_secret_for: pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  secret=$("${_PRIV}" /usr/local/sbin/pub4-admin ensure-secret "$app_name") || return 1
+  [[ "$secret" == [0-9a-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || {
+    log_err "app_secret_for: broker returned an invalid secret for $app_name"
+    return 1
+  }
   print -r -- "$secret"
 }
-
 # db_create_migrate_as_app APP_NAME APP_DIR
 db_create_migrate_as_app() {
   local app_name=$1 app_dir=$2
