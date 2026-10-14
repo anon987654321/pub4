@@ -3,6 +3,7 @@
 
 # Root-owned, narrow broker for the production deploy path.
 # Never evaluate a command string or accept a filesystem path from argv.
+require "etc"
 require "fileutils"
 require "json"
 require "securerandom"
@@ -74,6 +75,33 @@ module Pub4Admin
       raise("no supported system Ruby found under /usr/local/bin")
   end
 
+  def ensure_ci_lock
+    if File.symlink?(STAMP_DIR)
+      raise "#{STAMP_DIR} is a symlink; refusing root write"
+    end
+    FileUtils.mkdir_p(STAMP_DIR, mode: 0o755)
+    directory = File.lstat(STAMP_DIR)
+    raise "#{STAMP_DIR} is not a root-owned, non-writable directory" unless
+      directory.directory? && directory.uid.zero? && (directory.mode & 0o022).zero?
+    File.chmod(0o755, STAMP_DIR) unless (directory.mode & 0o777) == 0o755
+
+    path = File.join(STAMP_DIR, "ci.lock")
+    if File.exist?(path) || File.symlink?(path)
+      lock = File.lstat(path)
+      raise "#{path} is not a regular file" unless lock.file? && !lock.symlink?
+    else
+      File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o644) {}
+    end
+
+    dev = Etc.getpwnam("dev")
+    File.chown(dev.uid, -1, path)
+    File.chmod(0o644, path)
+    puts path
+    0
+  rescue ArgumentError
+    raise "account dev is missing; cannot establish CI lock ownership"
+  end
+
   def write_stamp(app, sha, status)
     raise "unknown app: #{app}" unless APPS.include?(app)
     raise "invalid commit id" unless sha.match?(/\A(?:[0-9a-f]{7,40}|unknown)\z/i)
@@ -119,6 +147,8 @@ module Pub4Admin
     if args.length == 4 && args[0] == "stamp"
       return write_stamp(*args.drop(1))
     end
+
+    return ensure_ci_lock if args == ["ci-lock"]
 
     if args == ["resource-guard"]
       trusted_script!(RESOURCE_GUARD)
