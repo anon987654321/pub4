@@ -107,10 +107,20 @@ end
     end
 
     def run_rcctl(action, service)
-      raise SecurityError, "service #{service} is not allowlisted" unless system_service(service)
+      allowed = service == "master" && %w[stop restart].include?(action.to_s)
+      raise SecurityError, "service action is not allowlisted" unless allowed
 
-      out, status = Master::Io::Exec.capture2e("doas", "-n", "/usr/sbin/rcctl", action.to_s, service)
-      status.success? ? out.strip : raise("rcctl #{action} #{service} failed: #{out.strip}")
+      broker = "/usr/local/sbin/pub4-admin"
+      raise SecurityError, "pub4-admin is a symlink" if File.symlink?(broker)
+
+      command = if File.executable?(broker)
+                  ["doas", "-n", broker, "service", action.to_s, service]
+                else
+                  # Legacy hosts only; remove once the broker is installed everywhere.
+                  ["doas", "-n", "/usr/sbin/rcctl", action.to_s, service]
+                end
+      out, status = Master::Io::Exec.capture2e(*command)
+      status.success? ? out.strip : raise("service #{action} #{service} failed: #{out.strip}")
     end
   end
 end
