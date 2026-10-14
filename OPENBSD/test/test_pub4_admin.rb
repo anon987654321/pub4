@@ -37,6 +37,21 @@ class Pub4AdminTest < Minitest::Test
                  ADMIN.command_for(%w[service list-started])
   end
 
+  def test_started_services_are_filtered_to_the_broker_allowlist
+    output = "sshd\nrelay d\nmaster\nbrgen\ncron\nbsdports_jobs\n"
+
+    assert_equal "master\nbrgen\nbsdports_jobs",
+                 ADMIN.filter_started_services(output)
+  end
+
+  def test_privileged_action_set_excludes_service_configuration_mutation
+    refute_includes ADMIN::SERVICE_ACTIONS, "enable"
+    refute_includes ADMIN::SERVICE_ACTIONS, "disable"
+    refute_nil ADMIN.command_for(%w[service restart brgen])
+    assert_nil ADMIN.command_for(%w[service enable brgen])
+    assert_nil ADMIN.command_for(%w[service disable brgen])
+  end
+
   def test_root_script_does_not_evaluate_shell_command_strings
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
