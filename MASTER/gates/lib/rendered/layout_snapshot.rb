@@ -124,7 +124,10 @@ module Deploy
     def rel(path) = path.sub(ROOT + "/", "")
 
     def baseline_path(surface)
-      File.join(DIR, "#{surface.app}-#{surface.label}-#{surface.viewport}.json")
+      id = surface.id
+      canonical = GeometryProbe.config.dig("snapshot_aliases", id) || id
+      app, label, viewport = canonical.split("/", 3)
+      File.join(DIR, "#{app}-#{label}-#{viewport}.json")
     end
 
     # Keep only what is structural. Feed items, timestamps and seeded records
