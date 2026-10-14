@@ -96,6 +96,12 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
+  def test_tree_sync_never_interpolates_paths_into_a_root_shell
+    sync = File.read(File.join(ROOT, "RAILS", "_sync.sh"), encoding: "UTF-8")
+    refute_includes sync, %q{${_PRIV} sh -c "cd }
+    assert_includes sync, %q{tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${stage%/}"}
+    assert_includes sync, %q{tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${dst%/}"}
+  end
   def test_rails_task_runner_fails_closed_without_broker
     runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
     runner = runtime[/run_rails_as_app\(\) \{.*?^\}/m]
