@@ -70,6 +70,10 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
     assert_includes helper, "master|brgen|amber|bsdports"
     assert_includes helper, "bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci"
+    assert_includes source, "db-storage-migrate"
+    assert_includes helper, "db-storage-migrate)"
+    assert_includes helper, '[ ! -L db ]'
+    assert_includes helper, '[ ! -L storage ]'
     assert_includes helper, "case \"$database\" in cache|queue|cable)"
     assert_includes helper, "secondary-db-check)"
     assert_includes helper, 'table=$("$ruby_path" -e '
