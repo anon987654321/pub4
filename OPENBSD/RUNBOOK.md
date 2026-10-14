@@ -50,7 +50,8 @@ is installed under `/usr/local/libexec/pub4/`.
 The broker exposes allowlisted service actions, validated deploy receipts, fixed
 CI lock/preparation operations, and trusted helper verbs. CI and production Rails
 tree mutations run with the selected app's UID, primary GID and only the required
-`_pub4ci` supplementary group. The CI runner has a real wall-clock deadline and terminates
+`_pub4ci` supplementary group. Production sync stages tracked `HEAD` paths from a
+Git archive, not ignored files from the mutable working tree. The CI runner has a real wall-clock deadline and terminates
 its full process group, including `bundle install`. Rails tasks use a closed
 task vocabulary; `SECRET_KEY_BASE` crosses only in the child environment, never
 in the shell command text.
