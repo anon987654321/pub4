@@ -95,6 +95,7 @@ en:
       long_response: "response (%{n} chars)"
       filter_log: "filter visible log"
       filter_log_aria: "Filter chat log"
+      load_older_messages: "Load %{count} older messages"
       mic_unavailable: "mic unavailable in this browser"
       shortcuts_aria: "Keyboard shortcuts"
       shortcuts_title: "shortcuts"
