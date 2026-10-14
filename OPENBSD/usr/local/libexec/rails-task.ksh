@@ -14,7 +14,7 @@ case "$app" in
   *) echo "rails-task: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$task" in
-  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate|npm-cache|overlay-initializers|overlay-public) [ "$#" -eq 2 ] || exit 64 ;;
+  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate|npm-cache|bundle-cache-prepare|overlay-initializers|overlay-public) [ "$#" -eq 2 ] || exit 64 ;;
   demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
   schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
   *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
@@ -32,7 +32,7 @@ app_dir="$app_home/app"
   echo "rails-task: app directory must be a real app-owned directory: $app_dir" >&2
   exit 1
 }
-for cache_dir in "$app_home/.npm" "$app_home/.cache"; do
+for cache_dir in "$app_home/.npm" "$app_home/.cache" "$app_home/.bundle"; do
   if [ -e "$cache_dir" ] || [ -L "$cache_dir" ]; then
     [ -d "$cache_dir" ] && [ ! -L "$cache_dir" ] &&
       [ "$(stat -f %u "$cache_dir")" = "$app_uid" ] || {
@@ -95,6 +95,47 @@ case "$task" in
     command="mkdir -p .bundle && printf '%s\\n' '---' 'BUNDLE_PATH: /home/$app/.bundle/gems' > .bundle/config && $bundle config set --local frozen false && $bundle config set --local deployment true && $bundle config set --local without \"development test\" && RAILS_ENV=production $bundle install" ;;
   bundle-check)
     command="$bundle check" ;;
+  bundle-cache-prepare)
+    command='set -eu
+home="/home/$PUB4_TASK_APP"
+bundle_home="$home/.bundle"
+if [ -e "$bundle_home" ] || [ -L "$bundle_home" ]; then
+  [ -d "$bundle_home" ] && [ ! -L "$bundle_home" ] &&
+    [ "$(stat -f %u "$bundle_home")" = "$PUB4_TASK_UID" ] || {
+      echo "rails-task: .bundle must be a real app-owned directory" >&2
+      exit 1
+    }
+else
+  mkdir "$bundle_home"
+fi
+for part in gems cache; do
+  target="$bundle_home/$part"
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    [ -d "$target" ] && [ ! -L "$target" ] &&
+      [ "$(stat -f %u "$target")" = "$PUB4_TASK_UID" ] || {
+        echo "rails-task: bundle $part path must be a real app-owned directory" >&2
+        exit 1
+      }
+  else
+    mkdir "$target"
+  fi
+done
+ruby_version=$("$ruby_path" -e '\''print RUBY_VERSION.split(".").first(2).join'\'')
+shared="/var/cache/pub4/bundle/ruby$ruby_version"
+if [ -d "$shared" ] && [ ! -L "$shared" ] &&
+   [ "$(stat -f %u "$shared")" -eq 0 ] && [ -d "$shared/gems" ] &&
+   [ ! -L "$shared/gems" ] && [ -d "$shared/cache" ] && [ ! -L "$shared/cache" ]; then
+  for part in gems cache; do
+    for entry in "$shared/$part"/*; do
+      [ -e "$entry" ] || [ -L "$entry" ] || continue
+      name=${entry##*/}
+      target="$bundle_home/$part/$name"
+      [ -e "$target" ] || [ -L "$target" ] || cp -R "$entry" "$target"
+    done
+  done
+fi
+'
+    ;;
   ci-bundle-install)
     command="$bundle config unset without && $bundle install --jobs=2" ;;
   db-storage-migrate)
