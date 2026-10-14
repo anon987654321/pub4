@@ -32,9 +32,22 @@ class TestFixWatchdog < Minitest::Test
     Pulse.new(max_passes: 8, clock: -> { @now }, load: -> { 0.0 }).tap { |p| p.observe("fix_loop:pass_start", pass: 1, file_count: 100) }
   end
 
-  def budget
+  def budget(resource_budget: nil)
+    resource_budget ||= fake_resource_budget(free_gb: 100.0)
     Budget.new(root: @root, max_passes: 8, env: {}, clock: -> { @now }, wall: -> { Time.at(1000) },
-               out: ->(_) {}, say: ->(text) { @said << text }, poll_seconds: 0, killer: ->(reason) { @killed << reason }).start!
+               out: ->(_) {}, say: ->(text) { @said << text }, poll_seconds: 0,
+               killer: ->(reason) { @killed << reason }, resource_budget:).start!
+  end
+
+  def fake_resource_budget(free_gb:)
+    measurement = { state: :ok, reasons: [], values: { disk_free_gb: free_gb } }
+    probe = Object.new
+    probe.define_singleton_method(:measure) { measurement }
+    probe.define_singleton_method(:disk_critical?) do |reading|
+      free = reading.dig(:values, :disk_free_gb)
+      free.nil? || free <= 2.0
+    end
+    probe
   end
 
   def test_no_fix_after_twenty_minutes_and_five_attempts_is_a_stall_that_aborts
@@ -119,6 +132,17 @@ class TestFixWatchdog < Minitest::Test
 
     assert_equal 1, @said.size
     assert_match(/\Afix0 phase=scan fixed=0 failed=0 rejected=0 lane=none elapsed=61\z/, @said.first)
+  end
+
+  def test_disk_pressure_aborts_before_filesystem_exhaustion
+    run = budget(resource_budget: fake_resource_budget(free_gb: 1.25))
+    @now = Budget::RESOURCE_CHECK_SECONDS + 1
+
+    run.send(:guard_check, @now)
+
+    assert_equal 1, @killed.size
+    assert_match(/disk pressure at 1.25 GB free/, @killed.first)
+    assert(@said.any? { |line| line.include?("stopping before filesystem exhaustion") })
   end
 
   def test_a_no_yield_stall_ends_the_run_with_a_summary_naming_the_reason
