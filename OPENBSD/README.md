@@ -40,8 +40,10 @@ Domains and DNS come from one source. `RAILS/apps.yml` lists the owned domains, 
 the files in `data/` and the zone helpers derive from it. What is in `var/nsd/` is a
 mirror of the NSD configuration templates and nothing more. The live signed zones
 sit on vm23 under `/var/nsd/` and are deliberately not in git, because a signed zone
-in a shared checkout is a key in a shared checkout. Secrets live in `/etc/*.env` on
-the box and never in this tree.
+in a shared checkout is a key in a shared checkout. Service secrets live in `/etc/*.env` on
+the box and never in this tree. The interactive operator shell loads provider
+credentials, when configured, from the user's `~/.config/pub4/operator.env`; keep
+that file host-local with owner-only permissions, outside this checkout.
 
 ## Backups, alerts and what the public sees
 
