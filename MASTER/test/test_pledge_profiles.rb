@@ -54,6 +54,35 @@ class PledgeProfileTest < Minitest::Test
     )
   end
 
+  def test_trusted_boot_does_not_set_execpromises_globally
+    pledge = Master::Ground::Pledge
+    calls = []
+
+    pledge.stub(:pledge, ->(promises, execpromises = nil) { calls << [promises, execpromises] }) do
+      pledge.stub(:unveil, ->(*) {}) do
+        pledge.stub(:lock_unveil!, -> {}) do
+          pledge.stage1_boot!(Dir.pwd)
+          pledge.stage2_lock!
+        end
+      end
+    end
+
+    assert_equal [
+      [pledge::STAGE1_PROMISES, nil],
+      [pledge::STAGE2_PROMISES, nil],
+    ], calls
+  end
+
+  def test_exec_worker_sets_execpromises_before_the_command
+    source = File.read(File.expand_path("../bin/cli", __dir__))
+
+    assert_operator source.index('if ARGV.first == "--exec-worker"'), :<,
+                    source.index('require_relative "../lib/boot/entrypoint"')
+    assert_includes source, "guard.pledge(guard::STAGE2_PROMISES, guard::EXEC_PROMISES)"
+    assert_includes Master::Ground::Pledge::EXEC_PROMISES.split, "exec"
+    refute_includes Master::Ground::Pledge::EXEC_PROMISES.split, "unveil"
+  end
+
   def test_unknown_profile_is_rejected
     assert_raises(KeyError) { Master::Ground::Pledge.profile(:unknown) }
   end
