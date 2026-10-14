@@ -132,6 +132,14 @@ class Pub4AdminTest < Minitest::Test
     refute_includes source, "def relayd_add(app, domain, requested_port)"
     refute_includes source, "File.rename(temporary, RELAYD_CONFIG)"
   end
+  def test_first_deploy_secret_does_not_replace_a_racing_secret
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    method = source[/def ensure_app_secret\(app, emit: true\).*?^  end/m]
+    refute_nil method
+    assert_includes method, "File.link(temporary, target)"
+    refute_includes method, "File.rename(temporary, target)"
+    assert_includes method, "rescue Errno::EEXIST"
+  end
   def test_rails_task_bootstraps_missing_secret_without_printing_it
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     assert_includes source, "ensure_app_secret(app, emit: false)"
