@@ -323,7 +323,7 @@ When `bin/vps-deploy` fails it says where. Whatever the stage (pull, ci+sync,
 migrate, precompile, restart, health, gates), an exit trap stamps
 `last_deploy_<app>.json` failed, prints `FAILED at stage "<stage>"`, says
 whether the app was stopped for the deploy and so is down (the next command is
-`doas rcctl start <app>` or a rerun), lists amber or bsdports if they are down,
+`doas /usr/local/sbin/pub4-admin service start <app>` or a rerun), lists amber or bsdports if they are down,
 releases the lock and the deploy flag, and appends `finished ... exit=N
 stage=...` to `~/vps-deploy.log` directly, so a dropped ssh session still leaves
 the verdict. A kill or hangup counts as a failure with the stage it interrupted.
@@ -704,14 +704,14 @@ precisely so no bin/ file carries a fleet-wide delete. Run it BY HAND, per app,
 on launch day:
 
 1. `ruby OPENBSD/bin/dr-pull` from the Mac — a verified pre-wipe snapshot.
-2. On vm23, stop the app: `doas rcctl stop <app> <app>_jobs`.
+2. On vm23, stop the app and its optional job worker: `doas /usr/local/sbin/pub4-admin service stop <app>` and, if configured, `doas /usr/local/sbin/pub4-admin service stop <app>_jobs`.
 3. Move the primary aside (never delete): `mv
    /home/<app>/app/storage/production.sqlite3{,.pre-launch}`.
 4. As the app user: `bundle exec bin/rails db:prepare` — schema, no seeds.
    brgen demo seeds are the DEMO; a launch database starts empty. If a curated
    skeleton is wanted (cities, categories, admin), seed ONLY
    `db/seeds/launch.rb` — write it that week, review it that week.
-5. `doas rcctl start <app> <app>_jobs`, then the route-manifest probe.
+5. Start the app with `doas /usr/local/sbin/pub4-admin service start <app>` and, if configured, start its job worker with `doas /usr/local/sbin/pub4-admin service start <app>_jobs`; then run the route-manifest probe.
 6. The .pre-launch file stays until the first week survives; dr-pull keeps
    pulling nightly either way.
 
