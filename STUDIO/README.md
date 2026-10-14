@@ -23,11 +23,12 @@ the MASTER process booted, and a gate refuses any file here that requires from M
 OPENBSD. Read the README beside a tool before changing it.
 
 The tools hand work to each other by file. Replicate grades what it generates through
-postpro by default, and lora grades its renders the same way. Postpro's ordinary scratch output
-defaults beside `postpro.rb`; its local `.gitignore` keeps generated files out of history.
-Set `POSTPRO_OUTPUT_DIR` to redirect it. The `photograph.rb` workflow uses `output_paths.rb`
-to save its returned graded still under `${XDG_DATA_HOME:-~/Documents}/dilla-renders/<UTC date>`,
-in a per-job folder. Takes are irreplaceable: Dilla's WAV and MIDI writers refuse existing
+postpro by default, and lora grades its renders the same way. Postpro's bulk grades, stock
+sheets and LUT exports use the shared `output_paths.rb` contract: a dated folder under
+`${XDG_DATA_HOME:-~/Documents}/dilla-renders`, outside the checkout by default.
+`POSTPRO_OUTPUT_DIR` redirects it, and explicit `--output` paths remain operator-controlled.
+The `photograph.rb` workflow uses a per-job folder under the same dated directory for its
+returned graded still. Takes are irreplaceable: Dilla's WAV and MIDI writers refuse existing
 paths by default, stage new bytes before publish, and require the explicit `--replace` option
 to replace a take.
 
