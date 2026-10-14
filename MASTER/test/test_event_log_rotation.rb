@@ -38,6 +38,34 @@ class TestEventLogRotation < Minitest::Test
     end
   end
 
+  def test_enospc_reclaims_a_rotated_generation_and_retries_once
+    Dir.mktmpdir do |dir|
+      log = Master::Trace::Log::Event.new(root: dir, stream: "activity")
+      path = File.join(dir, "runtime", "events", "activity.jsonl")
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, %({"event":"old"}\n))
+      File.write("#{path}.1", "older events")
+      original_open = File.method(:open)
+      failed = false
+      opener = lambda do |target, *args, **kwargs, &block|
+        if target == path && args.first == "a" && !failed
+          failed = true
+          raise Errno::ENOSPC
+        end
+        original_open.call(target, *args, **kwargs, &block)
+      end
+
+      File.stub(:open, opener) do
+        record = log.append("recovered:event", value: "kept")
+        assert_equal "recovered:event", record.fetch("event")
+      end
+
+      assert failed, "the test did not simulate a full-disk append"
+      refute File.exist?("#{path}.1"), "recovery should release the rotated generation"
+      assert_equal "recovered:event", log.recent(1).first.fetch("event")
+    end
+  end
+
   def test_compact_rotated_keeps_the_newest_bounded_tail
     Dir.mktmpdir do |dir|
       path = File.join(dir, "oversized.jsonl")
