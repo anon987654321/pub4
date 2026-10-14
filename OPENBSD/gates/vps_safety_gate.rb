@@ -77,6 +77,9 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     admin.include?("File.rename(temporary, target)") &&
                     admin.include?('raise "#{target} is a symlink; refusing status write"')
   failures << "deploy-status writes must use the atomic fixed-path broker" unless status_contract
+  disk_usage_contract = admin.include?('DISK_USAGE_PATHS = %w[/home /var].freeze') &&
+                       admin.include?('return [DU, "-xk", args[1]] if args.length == 2 && args[0] == "disk-usage" && DISK_USAGE_PATHS.include?(args[1])')
+  failures << "pub4-admin disk usage must be restricted to deploy mount roots" unless disk_usage_contract
   broker_contract = admin.include?("def command_for(argv)") &&
                     admin.include?("exec(*command)") &&
                     admin.include?("SERVICE_ACTIONS") &&
