@@ -61,7 +61,7 @@ if [[ -n $BEST_RUBY ]]; then
     :
   fi
   ACTUAL=$("$BEST_RUBY" -e 'print RUBY_VERSION')
-  if [[ ${MASTER_DMESG:-} != 0 && ${MASTER_QUIET:-} != 1 ]]; then
+  if [[ ( ${MASTER_DMESG:-0} == 1 || ${MASTER_VERBOSE:-0} == 1 ) && ${MASTER_QUIET:-0} != 1 ]]; then
     print -u2 -- "ruby0: selected $ACTUAL ($BEST_RUBY), best supported Ruby available"
   fi
   exec "$BEST_RUBY" "$@"
