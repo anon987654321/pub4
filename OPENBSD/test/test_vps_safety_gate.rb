@@ -109,6 +109,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_master_web_broker_requires_exact_no_path_verbs
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      text = File.read(path).sub('args == ["master-web-assets-reset"]', 'args.first == "master-web-assets-reset"')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "master-web helper must be fixed-path and symlink-safe"
+    end
+  end
   def test_master_web_deploy_must_use_fixed_broker_verbs
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "bin", "vps_deploy_master.sh")
