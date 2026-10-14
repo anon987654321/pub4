@@ -42,7 +42,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_bundle.sh"),
                    File.join(dir, "RAILS", "_bundle.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
-      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy")]).each do |path|
+      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy"), File.join(ROOT, "bin", "vps_deploy_master.sh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
       end
       yield dir, File.join(openbsd, "etc", "doas.conf")
@@ -109,6 +109,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_master_web_deploy_must_use_fixed_broker_verbs
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "bin", "vps_deploy_master.sh")
+      text = File.read(path).sub("pub4-admin master-web-assets-reset", "doas rm -rf public/assets")
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "MASTER web deploy must use fixed broker verbs"
+    end
+  end
   def test_vps_deploy_must_not_recommend_generic_privileged_du
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "bin", "vps-deploy")
