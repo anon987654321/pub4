@@ -64,6 +64,15 @@ class Pub4AdminTest < Minitest::Test
     refute_includes helper, 'sh -c "$script"'
   end
 
+  def test_ci_sync_pins_git_safe_directory
+    helper = File.read(File.expand_path("../usr/local/libexec/ci-sync.ksh", __dir__))
+
+    assert_operator helper.scan('git -c safe.directory="$repo" -C "$repo"').length, :>=, 3
+    refute_includes helper, 'git -C "$repo"'
+    assert_includes helper, "GIT_CONFIG_NOSYSTEM"
+    assert_includes helper, 'GIT_CONFIG_GLOBAL="/dev/null"'
+  end
+
   def test_ci_sync_runs_only_as_the_selected_app
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-sync.ksh", __dir__))
