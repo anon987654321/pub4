@@ -71,11 +71,28 @@ if File.file?(admin_path)
                     admin.include?("SERVICE_ACTIONS") &&
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
-  safe_spawn = admin.match?(/Process\.spawn\(\s*environment,\s*"\/bin\/ksh", CI_RUN, app, duration\.to_s,\s*pgroup: true, unsetenv_others: true\s*\)/m)
+  safe_spawn = admin.include?('Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)') &&
+               admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC].include?(helper)') &&
+               admin.include?('arguments = helper == CI_RUN ? [app, duration.to_s] : [app]') &&
+               admin.include?("spawn_options[:uid] = account.uid") &&
+               admin.include?("spawn_options[:gid] = account.gid") &&
+               admin.include?('trusted_script!(helper)')
   unsafe_spawn = admin.include?("Process.spawn") &&
                  (admin.scan("Process.spawn").length != 1 || !safe_spawn)
   failures << "pub4-admin must not evaluate shell command strings or widen its CI spawn" if
     admin.match?(/system\s*\(|Open3\.|%x/) || unsafe_spawn
+  sync_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-sync.ksh")
+  if File.file?(sync_path)
+    sync = File.read(sync_path)
+    sync_contract = sync.include?("brgen|amber|bsdports") &&
+                    sync.include?('repo=/home/dev/pub4') &&
+                    sync.include?('[ "$(id -un)" = "$app" ]') &&
+                    sync.include?('tar xf - -C "$app_dir"') &&
+                    !sync.match?(/^\s*(?:doas|sudo|chown)\b/)
+    failures << "ci-sync helper must be app-scoped and must not perform privileged actions" unless sync_contract
+  else
+    failures << "missing tracked usr/local/libexec/ci-sync.ksh"
+  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
