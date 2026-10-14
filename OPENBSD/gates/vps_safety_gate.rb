@@ -168,6 +168,20 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   else
     failures << "missing RAILS/_service.sh relayd broker adapter"
   end
+  runtime_path = File.join(ROOT, "RAILS", "_runtime_gate.sh")
+  if File.file?(runtime_path)
+    runtime = File.read(runtime_path)
+    runner = runtime[/run_rails_as_app\(\) \{.*?^\}/m]
+    runner_contract = runner &&
+                     runner.include?('[[ -x /usr/local/sbin/pub4-admin ]]') &&
+                     runner.include?('/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"') &&
+                     runner.include?("pub4-admin is missing; run OPERATOR.sh before deploying") &&
+                     !runner.match?(/\$\{_PRIV\}\s+sh\s+-c/) &&
+                     !runner.include?("su -m")
+    failures << "rails runtime task runner must fail closed without the broker" unless runner_contract
+  else
+    failures << "missing RAILS/_runtime_gate.sh task runner"
+  end
   relayd_contract = admin.include?('args.length == 4 && args[0] == "relayd-check"') &&
                     admin.include?("def relayd_check(app, domain, requested_port)") &&
                     admin.include?("File.lstat(RELAYD_CONFIG)") &&
