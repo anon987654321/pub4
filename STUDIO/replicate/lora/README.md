@@ -90,7 +90,8 @@ The dataset and the trigger are the same on every lane; pick the one that fits t
 - `--train` runs locally on Apple silicon or, through `_toolkit/setup_runpod.sh`, on a rented
   pod with 24 GB or more of GPU memory.
 
-Neither free lane is load-bearing: checkpoints are resumable, and a run may need another lane. Anything after the lane flag goes to that lane.
+Neither free lane is load-bearing: checkpoints are resumable, and a run may need another lane.
+Anything after the lane flag goes to that lane.
 
 Local training on the Mac is a closed lane, not a slow one. The machine has 8 GB of unified
 memory shared with the display, and the FLUX.1-dev transformer, its T5 encoder, CLIP and the
@@ -154,7 +155,8 @@ on disk, so both stay operator decisions.
 
 ## Layout
 
-A directory here is either a subject or starts with an underscore and is shared. `_toolkit/` is the pipeline.
+A directory here is either a subject or starts with an underscore and is shared. `_toolkit/` is
+the pipeline.
 
 - `curate.rb` decides which photographs earn a place and prepares them, and `heal.rb` removes a
   mark from skin in the ungraded original before anything grades it.
