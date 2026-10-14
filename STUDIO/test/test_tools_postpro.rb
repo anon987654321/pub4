@@ -387,6 +387,14 @@ class TestPostproFilm < Minitest::Test
     assert_empty unknown, "these presets name an undefined lens: #{unknown.inspect}"
   end
 
+  def test_every_declared_lens_is_applied_by_its_preset
+    unused = PRESETS.filter_map do |name, data|
+      name if data[:lens] && !Array(data[:fx]).include?("vintage_lens")
+    end
+
+    assert_empty unused, "these declare a lens but do not apply vintage_lens: #{unused.inspect}"
+  end
+
   def test_every_defined_lens_and_stock_is_reachable_from_some_preset
     used_lenses = PRESETS.values.filter_map { |p| p[:lens]&.to_sym }.uniq
     used_stocks = PRESETS.values.filter_map { |p| p[:stock] }.uniq
