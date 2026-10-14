@@ -1560,8 +1560,8 @@ end
 # sat there as decoration while film_curve applied the H&D curves alone, which
 # is why the stocks differed in contrast and density and barely in hue.
 #
-# Deliberately NOT folded into film_curve: that would repaint all 46 presets
-# that call it in one move. It is its own step, added to the handful of presets
+# Deliberately NOT folded into film_curve: that would repaint all 73 presets
+# that call it in one move. It is its own step, added to the presets
 # whose entire point is colour separation, and available to any recipe.
 def stock_matrix(image, stock = :kodak_portra, intensity = 1.0)
   flat = (STOCKS[stock] || STOCKS[:kodak_portra])[:matrix]
@@ -3595,14 +3595,14 @@ end
 # Random Effects
 # A random chain, grown rather than sampled.
 #
-# A random subset of seventy-three effects is the Photoshop filter menu, and it
+# A random subset without a shared process is the Photoshop filter menu, and it
 # looks like one: tilt-shift and selenium toning and teal-orange on the same
 # frame, each at half strength, none of them agreeing about what the picture is.
 # What makes a chain read as a grade instead is that its steps belong to one
 # process — a stock, a development, a print, one way of having been damaged.
 #
-# Nobody declares those families here. They are read off the sixty-one presets,
-# which are sixty-one colourists' answers to the same question: a candidate may
+# Nobody declares those families here. They are read off the eighty-two presets,
+# each a colourist's answer to the same question: a candidate may
 # join the chain only where some preset already puts it beside everything
 # already picked. The graph is dense enough to carry it — greedy walks run five
 # to thirteen effects, median eight — so the constraint buys coherence without
@@ -3780,7 +3780,7 @@ def random_affinity
   end
 end
 
-# Where each effect belongs in a chain, measured from the sixty-one that exist.
+# Where each effect belongs in a chain, measured across all eighty-two presets.
 #
 # A chain in a random order is mush: a print stock before the film curve, a
 # vignette before the lens. Rather than declare a stage table that would drift
