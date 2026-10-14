@@ -391,6 +391,30 @@ deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${a
                       !deploy_all_source.include?('doas zsh ${script}') &&
                       !deploy_all_source.include?('RAILS/${app}/${app}.sh')
 failures << "deploy_all per-app mode must not elevate checkout Rails wrappers" unless deploy_all_contract
+vps_state_path = File.join(OPENBSD, "bin", "vps-state")
+if File.file?(vps_state_path)
+  vps_state = File.read(vps_state_path)
+  service_state = vps_state[/def service_state\(service\).*?^end/m]
+  state_contract = service_state &&
+                   service_state.include?('"doas", "-n", broker, "service", "check", service') &&
+                   service_state.include?('return "unknown (pub4-admin missing)" unless File.file?(broker)') &&
+                   !service_state.include?('"/usr/sbin/rcctl", "check", service')
+  failures << "vps-state service reads must use the root broker" unless state_contract
+else
+  failures << "missing OPENBSD/bin/vps-state"
+end
+
+restore_litestream_path = File.join(OPENBSD, "bin", "restore_litestream.sh")
+if File.file?(restore_litestream_path)
+  restore_litestream = File.read(restore_litestream_path)
+  restore_contract = restore_litestream.include?('doas /usr/local/sbin/pub4-admin service stop "$app"') &&
+                     restore_litestream.include?('doas /usr/local/sbin/pub4-admin service start "$app"') &&
+                     restore_litestream.include?('doas /usr/local/sbin/pub4-admin service check "$app"') &&
+                     !restore_litestream.match?(/doas rcctl (?:stop|start|check)/)
+  failures << "Litestream recovery must use brokered service control" unless restore_contract
+else
+  failures << "missing OPENBSD/bin/restore_litestream.sh"
+end
 manual_master_path = File.join(OPENBSD, "bin", "manual_master_deploy.ksh")
 if File.file?(manual_master_path)
   manual_master = File.read(manual_master_path)
