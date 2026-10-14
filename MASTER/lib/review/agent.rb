@@ -59,6 +59,65 @@ module Master
       # the face's Talk reach the pool through the agent that routes with it.
       def model_router = @model_router
 
+      # A bounded, source-backed research call for operator-requested /fix runs.
+      # Web tools screen external text through the injection guard; returned text
+      # remains evidence, not instructions, and repair validation stays local.
+      def research_sources(queries:, sources:, max_queries: 2, max_sources: 3)
+        records = []
+        web = evidence_tool("WebSearch")
+        Array(queries).first(max_queries.to_i.clamp(0, 5)).each do |query|
+          label = query.to_s
+          begin
+            result = web&.call(query: label)
+            if result.respond_to?(:ok?) && result.ok?
+              text = result.value!.to_s.strip
+              records << {
+                "kind" => "search", "label" => label,
+                "status" => text.empty? || text == "(no results)" ? "empty" : "ok",
+                "text" => text[0, 1_300],
+              }
+            else
+              records << {
+                "kind" => "search", "label" => label, "status" => "unavailable",
+                "text" => result.respond_to?(:message) ? result.message.to_s[0, 220] : "WebSearch unavailable",
+              }
+            end
+          rescue StandardError => e
+            records << {
+              "kind" => "search", "label" => label, "status" => "unavailable",
+              "text" => "#{e.class}: #{e.message.to_s[0, 200]}",
+            }
+          end
+        end
+
+        fetcher = evidence_tool("WebFetch")
+        Array(sources).first(max_sources.to_i.clamp(0, 6)).each do |url|
+          source_url = url.to_s
+          begin
+            result = fetcher&.call(url: source_url)
+            if result.respond_to?(:ok?) && result.ok?
+              text = result.value!.to_s.strip
+              records << {
+                "kind" => "fetch", "label" => source_url,
+                "status" => text.empty? ? "empty" : "ok",
+                "text" => text[0, 1_500],
+              }
+            else
+              records << {
+                "kind" => "fetch", "label" => source_url, "status" => "unavailable",
+                "text" => result.respond_to?(:message) ? result.message.to_s[0, 220] : "WebFetch unavailable",
+              }
+            end
+          rescue StandardError => e
+            records << {
+              "kind" => "fetch", "label" => source_url, "status" => "unavailable",
+              "text" => "#{e.class}: #{e.message.to_s[0, 200]}",
+            }
+          end
+        end
+        records
+      end
+
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
         compaction = prepare_chat_turn(message)
         return compaction if compaction.is_a?(Master::Result::Err)
