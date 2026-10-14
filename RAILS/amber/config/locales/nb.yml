@@ -435,6 +435,23 @@ nb:
     affiliate_help: "Valgfri lenke til gjenbruk eller et liknende plagg."
     brand: "Merke"
     category: "Kategori"
+    item_categories:
+      tops: "Topper"
+      bottoms: "Underdeler"
+      dresses: "Kjoler"
+      shoes: "Sko"
+      accessories: "Tilbehør"
+      outerwear: "Yttertøy"
+    mood_effects:
+      energising: "Energigivende"
+      calming: "Beroligende"
+      confident: "Selvsikker"
+      playful: "Leken"
+      neutral: "Nøytral"
+    life_phases:
+      current: "Nåværende"
+      past_self: "Tidligere meg"
+      aspirational: "Ønsket meg"
     color: "Farge"
     material: "Materiale"
     mood: "Stemning:"
