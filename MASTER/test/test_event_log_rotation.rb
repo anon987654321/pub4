@@ -20,6 +20,7 @@ class TestEventLogRotation < Minitest::Test
 
       assert File.exist?("#{path}.1"), "oversized log should be rotated aside, not appended to"
       assert File.exist?(path), "a fresh log file should exist after rotation"
+      assert_operator File.size("#{path}.1"), :<=, Master::Trace::Log::Event::MAX_BYTES
       assert_operator File.size(path), :<, Master::Trace::Log::Event::MAX_BYTES
     end
   end
@@ -34,6 +35,17 @@ class TestEventLogRotation < Minitest::Test
 
         assert_equal 1, err.lines.size, err
       end
+    end
+  end
+
+  def test_compact_rotated_keeps_the_newest_bounded_tail
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "oversized.jsonl")
+      File.write(path, "abcdefghij")
+
+      Master::Trace::Log.compact_rotated(path, 5)
+
+      assert_equal "fghij", File.read(path)
     end
   end
 
