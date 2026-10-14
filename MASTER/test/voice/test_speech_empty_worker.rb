@@ -84,16 +84,18 @@ class TestSpeechEmptyWorker < Minitest::Test
     retired = []
     Speech.stub(:resolve_socket_path, path) do
       Sup.stub(:retire_socket, ->(socket, **) { retired << socket }) do
-        Speech.stub(:stream_socket_to_io, Master::Voice::SpeechWorker::StreamResult.new(ok: false, bytes: 21)) do
-          result = Speech.stream_edge_to_io(
-            text: "Good, thanks.",
-            voice_name: "en-US-ChristopherNeural",
-            style_config: { rate: "+0%", pitch: "+0Hz" },
-            io: StringIO.new,
-          )
-          refute result.ok
-          assert_equal 21, result.bytes
-          assert_equal [path], retired
+        Speech.stub(:log_timing, nil) do
+          Speech.stub(:stream_socket_to_io, Master::Voice::SpeechWorker::StreamResult.new(ok: false, bytes: 21)) do
+            result = Speech.stream_edge_to_io(
+              text: "Good, thanks.",
+              voice_name: "en-US-ChristopherNeural",
+              style_config: { rate: "+0%", pitch: "+0Hz" },
+              io: StringIO.new,
+            )
+            refute result.ok
+            assert_equal 21, result.bytes
+            assert_equal [path], retired
+          end
         end
       end
     end
