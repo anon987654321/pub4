@@ -115,6 +115,8 @@ nb:
       message_quote: "Siter"
       message_simpler: "Enklere forklaring"
       message_deeper: "Mer detaljert"
+      message_simpler_prompt: "Forklar dette enklere:"
+      message_deeper_prompt: "Gå dypere i dette svaret:"
       mic_unavailable: "mikrofonen er ikke tilgjengelig i denne nettleseren"
       shortcuts_aria: "Tastatursnarveier"
       shortcuts_title: "snarveier"
