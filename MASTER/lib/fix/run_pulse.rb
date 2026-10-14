@@ -106,7 +106,7 @@ module Master
       #   none ever  a pass past MASTER_FIX_STALL_S with no file attempted.
       #   none lately  the same pass has attempted files, but none finished in the last
       #              five minutes.
-      # A skippable phase is advisory, so the caller ends it rather than wait.
+      # Advisory stages are cancelled; every sustained non-advisory stall aborts.
       def stall(now = @clock.call)
         @lock.synchronize do
           no_yield(now) || pass_stall(now)
