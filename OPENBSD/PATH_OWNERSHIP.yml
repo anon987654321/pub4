@@ -73,11 +73,9 @@ ownership:
     risk: critical
     check: ruby OPENBSD/gates/vps_safety_gate.rb
   emergency_cpu.sh:
-    purpose: resource_guard's crisis tier; stays at the top because vm23's
-      installed guard runs it from the checkout by this path (its header names
-      the line)
+    purpose: unprivileged manual emergency entrypoint; refuses root and delegates to the fixed installed runner
     risk: high
-    check: ruby OPENBSD/gates/shell_syntax_gate.rb
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
   backup_priv.sh:
     purpose: nightly encrypted ~/priv backup; stays at the top because vm23's
       /etc/daily.local runs it by this path (its header names the line)
@@ -129,6 +127,10 @@ ownership:
     purpose: repo mirror of live /etc configs
     risk: critical
     check: OPENBSD/bin/check-openbsd
+  usr/local/bin/emergency_cpu.sh:
+    purpose: root-owned emergency CPU recovery runner; sources only the installed stale cleanup helper, never checkout code
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
   usr/local/sbin/pub4-admin:
     purpose: root-owned fixed-verb service/deploy/CI broker; no shell text or arbitrary paths
     risk: critical
