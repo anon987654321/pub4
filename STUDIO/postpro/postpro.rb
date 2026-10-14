@@ -1080,67 +1080,67 @@ PRESETS = {
   takumar_sun: { fx: %w[optical_blur spectral_temp vintage_lens film_curve stock_matrix orange_mask warmth grain],
                  stock: :kodak_ektar100, temp: 5000, intensity: 0.85, lens: "takumar" },
 
-  legacy_polaroid: { fx: %w[film_curve faded_print polaroid_frame], stock: :polaroid_sx70,
+  legacy_polaroid: { fx: %w[spectral_temp film_curve faded_print polaroid_frame], stock: :polaroid_sx70,
                      temp: 5800, intensity: 0.82 },
 
   legacy_super8: { fx: %w[spectral_temp film_curve super8_flicker film_scratches], stock: :kodak_vision3_50d,
                    temp: 5600, intensity: 0.78 },
 
-  legacy_cinemascope: { fx: %w[spectral_temp halation film_curve cinemascope_bars], stock: :kodak_vision3_500t,
+  legacy_cinemascope: { fx: %w[spectral_temp halation film_curve print_film cinemascope_bars], stock: :kodak_vision3_500t,
                         temp: 4500, intensity: 0.78, print_stock: :kodak_2383 },
 
-  legacy_halftone: { fx: %w[film_curve halftone_print], stock: :kodak_portra,
+  legacy_halftone: { fx: %w[spectral_temp film_curve halftone_print], stock: :kodak_portra,
                      temp: 5400, intensity: 0.72 },
 
   legacy_vhs: { fx: %w[spectral_temp vhs_degrade], stock: :kodak_portra,
                 temp: 6500, intensity: 0.72 },
 
-  legacy_anamorphic: { fx: %w[spectral_temp halation film_curve anamorphic_simulation], stock: :kodak_vision3_500t,
+  legacy_anamorphic: { fx: %w[spectral_temp halation film_curve print_film anamorphic_simulation], stock: :kodak_vision3_500t,
                        temp: 4200, intensity: 0.80, print_stock: :kodak_2383 },
 
-  legacy_tape: { fx: %w[film_curve tape_degradation color_fade], stock: :kodak_portra,
+  legacy_tape: { fx: %w[spectral_temp film_curve tape_degradation color_fade], stock: :kodak_portra,
                  temp: 5200, intensity: 0.70 },
 
-  legacy_frame: { fx: %w[film_curve frame_distortion film_scratches], stock: :ilford_hp5,
+  legacy_frame: { fx: %w[spectral_temp film_curve frame_distortion film_scratches], stock: :ilford_hp5,
                   temp: 5600, intensity: 0.70 },
 
-  legacy_sprocket: { fx: %w[film_curve sprocket_holes], stock: :kodak_portra,
+  legacy_sprocket: { fx: %w[spectral_temp film_curve sprocket_holes], stock: :kodak_portra,
                      temp: 5400, intensity: 0.80 },
 
-  legacy_flare: { fx: %w[film_curve lens_flare], stock: :kodak_vision3,
+  legacy_flare: { fx: %w[spectral_temp film_curve lens_flare], stock: :kodak_vision3,
                   temp: 5400, intensity: 0.70 },
 
-  legacy_soft_focus: { fx: %w[film_curve soft_focus grain], stock: :kodak_portra,
+  legacy_soft_focus: { fx: %w[spectral_temp film_curve soft_focus grain], stock: :kodak_portra,
                        temp: 5200, intensity: 0.72 },
 
-  legacy_scratch_print: { fx: %w[film_curve film_scratches color_fade], stock: :kodachrome,
+  legacy_scratch_print: { fx: %w[spectral_temp film_curve film_scratches color_fade], stock: :kodachrome,
                           temp: 5400, intensity: 0.68 },
 
-  legacy_cross_process: { fx: %w[film_curve cross_process film_halation grain], stock: :fuji_velvia,
+  legacy_cross_process: { fx: %w[spectral_temp film_curve cross_process film_halation grain], stock: :fuji_velvia,
                           temp: 5500, intensity: 0.72 },
 
-  legacy_golden_hour: { fx: %w[film_curve golden_hour_glow], stock: :kodak_portra,
+  legacy_golden_hour: { fx: %w[spectral_temp film_curve golden_hour_glow], stock: :kodak_portra,
                         temp: 4800, intensity: 0.72 },
 
-  legacy_lomo: { fx: %w[film_curve lomo grain], stock: :fuji_pro400h,
+  legacy_lomo: { fx: %w[spectral_temp film_curve lomo grain], stock: :fuji_pro400h,
                  temp: 5000, intensity: 0.70, lens: "lomo" },
 
-  legacy_sepia: { fx: %w[film_curve sepia grain], stock: :ilford_hp5,
+  legacy_sepia: { fx: %w[spectral_temp film_curve sepia grain], stock: :ilford_hp5,
                   temp: 5400, intensity: 0.68 },
 
-  legacy_glitch: { fx: %w[glitch], stock: :kodak_portra,
+  legacy_glitch: { fx: %w[spectral_temp glitch], stock: :kodak_portra,
                    temp: 6500, intensity: 0.68 },
 
-  dilla_vinyl_hot: { fx: %w[dilla_head_bump dilla_vinyl_bandlimit dilla_phasy grain],
+  dilla_vinyl_hot: { fx: %w[spectral_temp dilla_head_bump dilla_vinyl_bandlimit dilla_phasy grain],
                      stock: :kodak_portra, temp: 5000, intensity: 0.72 },
 
-  dilla_summing_phasy: { fx: %w[dilla_head_bump dilla_phasy film_curve grain],
+  dilla_summing_phasy: { fx: %w[spectral_temp dilla_head_bump dilla_phasy film_curve grain],
                          stock: :kodak_ektar100, temp: 5200, intensity: 0.70 },
 
-  dilla_tape: { fx: %w[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit grain],
+  dilla_tape: { fx: %w[spectral_temp dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit grain],
                 stock: :kodak_vision3_500t, temp: 4700, intensity: 0.74 },
 
-  dilla_acetate: { fx: %w[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit film_curve],
+  dilla_acetate: { fx: %w[spectral_temp dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit film_curve],
                    stock: :fuji_pro400h, temp: 4900, intensity: 0.68 },
 }.freeze
 
