@@ -344,11 +344,11 @@ module Pub4Admin
       return run_ci_sync(args[1])
     end
 
-    if args.length == 3 && args[0] == "rails-task" && RAILS_APPS.include?(args[1])
+    if args.length == 3 && args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])
       return run_rails_task(args[1], args[2])
     end
 
-    if args.length == 4 && args[0] == "rails-task" && RAILS_APPS.include?(args[1])
+    if args.length == 4 && args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])
       return run_rails_task(args[1], args[2], args[3])
     end
 
