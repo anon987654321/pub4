@@ -117,8 +117,10 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   if File.file?(rails_task_path) && !File.symlink?(rails_task_path)
     rails_task = File.read(rails_task_path)
     rails_task_contract = rails_task.include?("master|brgen|amber|bsdports") &&
-                          rails_task.include?("bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci") &&
+                          rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("cache|queue|cable") &&
+                          rails_task.include?("secondary-db-check)") &&
+                          rails_task.include?('table=$("$ruby_path" -e') &&
                           rails_task.include?('[ ! -L "$app_home" ]') &&
                           rails_task.include?('[ ! -L "$app_dir" ]') &&
                           rails_task.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
