@@ -58,11 +58,25 @@ class Pub4AdminTest < Minitest::Test
 
     assert_includes source, 'args[0] == "ci-run" && RAILS_APPS.include?(args[1])'
     assert_includes source, 'trusted_script!(CI_RUN)'
-    assert_includes source, 'exec("/bin/ksh", CI_RUN, args[1], args[2])'
+    assert_includes source, "supervised_helper(CI_RUN, app, duration)"
     assert_includes helper, 'brgen|amber|bsdports'
     assert_includes helper, '[ "$timeout" -le 7200 ]'
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
     refute_includes helper, 'sh -c "$script"'
+  end
+
+  def test_ci_sync_runs_only_as_the_selected_app
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/ci-sync.ksh", __dir__))
+
+    assert_includes source, 'args[0] == "ci-sync" && RAILS_APPS.include?(args[1])'
+    assert_includes source, "supervised_helper(CI_SYNC, app, 900)"
+    assert_includes source, "spawn_options[:uid] = account.uid"
+    assert_includes source, "spawn_options[:gid] = account.gid"
+    assert_includes source, "spawn_options[:groups] = [account.gid, shared_gid].uniq"
+    assert_includes helper, 'repo=/home/dev/pub4'
+    assert_includes helper, '[ "$(id -un)" = "$app" ]'
+    refute_match(/^\s*(?:doas|sudo|chown)\b/, helper)
   end
 
   def test_ci_prepare_is_one_fixed_app_scoped_operation
