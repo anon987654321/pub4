@@ -136,6 +136,7 @@ class TestFixWatchdog < Minitest::Test
 
   def test_disk_pressure_aborts_before_filesystem_exhaustion
     run = budget(resource_budget: fake_resource_budget(free_gb: 1.25))
+    ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
     @now = Budget::RESOURCE_CHECK_SECONDS + 1
 
     run.send(:guard_check, @now)
@@ -189,6 +190,7 @@ class TestFixWatchdog < Minitest::Test
     assert_empty @killed, "an ordinary change is not a protected change"
 
     File.write(tokens, "a: 2\n")
+    ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
     @now = 700.0
     run.send(:guard_check, @now)
 
