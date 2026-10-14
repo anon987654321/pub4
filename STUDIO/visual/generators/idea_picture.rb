@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 require "open3"
 require "rbconfig"
+require_relative "../../output_paths"
 require_relative "../../replicate/client"
 
 module Studio
@@ -20,7 +21,7 @@ module Studio
 
       def write(words, film: true, duration: 5)
         FileUtils.mkdir_p(@directory)
-        stamp = Time.now.strftime("%Y%m%d-%H%M%S")
+        stamp = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
         still = render_still(words, stamp)
         return { "still" => still } unless film
 
@@ -37,7 +38,7 @@ module Studio
         path = File.join(@directory, "#{stamp}.jpg")
         output = client.predict(still_model, still_input(words), timeout: 600)
         client.download_url(first_url(output), path)
-        grade(path)
+        grade(path, stamp)
       end
 
       def render_film(words, still, stamp, duration)
@@ -102,13 +103,20 @@ module Studio
         version
       end
 
-      def grade(path)
+      def grade(path, stamp)
         script = File.join(ROOT, "postpro", "postpro.rb")
-        stdout, status = Open3.capture2e(RbConfig.ruby, script, "--rough", "--count", "1", path)
+        output_dir = File.join(Studio::OutputPaths.render_directory, "photograph-#{stamp}")
+        env = { "POSTPRO_OUTPUT_DIR" => output_dir }
+        stdout, status = Open3.capture2e(env, RbConfig.ruby, script, "--rough", "--count", "1", path)
         raise "postpro failed: #{stdout.lines.last.to_s.strip}" unless status.success?
 
-        generated = Dir[File.join(File.dirname(path), "*.jpg")].sort_by { |file| File.mtime(file) }.reverse
-        generated.find { |file| file != path } || path
+        ext = File.extname(path)
+        stem = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+        generated = Dir[File.join(output_dir, "postpro_#{stem}_*_v1#{ext}")]
+        graded = generated.max_by { |file| File.mtime(file) }
+        raise "postpro succeeded but produced no graded still under #{output_dir}" unless graded
+
+        graded
       end
 
       def first_url(output)
