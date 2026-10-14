@@ -30,6 +30,10 @@ and the registry that runs them is `MASTER/gates/gates.yml`. Before a risky depl
 `bin/rehearse` shows how the repository layout will map onto the box, which has a
 different copy-tree layout.
 
+## Privilege boundary
+
+`OPENBSD/usr/local/sbin/pub4-admin` is the staged fixed-path root broker for deploy service actions, receipts, the CI lock and two trusted helper scripts. `OPENBSD/bin/vps-deploy` uses it when the installed `root:wheel` copy exists. This does not yet mean `dev` can lose root-equivalent authority: the CI copy-tree/build pipeline and legacy Rails installer still have direct `doas` calls. The runbook records the rollout boundary; do not narrow `/etc/doas.conf` or remove `dev` from `wheel` until those paths have been migrated and tested on vm23.
+
 ## Configuration ownership and secrets
 
 Domains and DNS come from one source. `RAILS/apps.yml` lists the owned domains, and
