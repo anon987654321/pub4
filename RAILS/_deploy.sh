@@ -94,17 +94,6 @@ deploy_tracked_app() {
     doas chown -R "${app_name}:${app_name}" "$bundle_home"
   fi
 
-  # The installed broker writes .bundle/config from inside the app-user runner.
-  # Keep the legacy root write only until the broker is installed on vm23.
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    doas mkdir -p "${APP_DIR}/.bundle"
-    doas chown -R "${app_name}:${app_name}" "${APP_DIR}/.bundle"
-  else
-    doas mkdir -p "${APP_DIR}/.bundle"
-    print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
-    doas chown -R "${app_name}:${app_name}" "${APP_DIR}/.bundle"
-  fi
-
   deploy_status "$app_name" "bundle install"
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
   log_ok "production bundle installed for ${app_name}"
