@@ -85,7 +85,10 @@ namespace :replicate do
 
     token = Studio::ReplicateClient.load_token
     if token.to_s.strip.empty?
-      warn("replicate0", "schema audit skipped, no REPLICATE_API_TOKEN; run schema_audit_offline for historical evidence")
+      warn(
+        "replicate0",
+        "schema audit skipped, no REPLICATE_API_TOKEN; "         "run schema_audit_offline for historical evidence"
+      )
       next
     end
 
@@ -93,7 +96,9 @@ namespace :replicate do
     table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "replicate: MODEL_CAPABILITIES not found"
     declared = table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m)
                     .to_h { |model, keys| [ model, keys.split ] }
-    abort "replicate: parsed no models — the table's shape changed, and this would pass having read nothing" if declared.empty?
+    if declared.empty?
+      abort "replicate: parsed no models — the table's shape changed, "             "and this would pass having read nothing"
+    end
 
     client = Studio::ReplicateClient.new(token: token)
     drifted = 0
@@ -137,7 +142,10 @@ namespace :replicate do
 
     client = Studio::ReplicateClient.new(token:)
     document = Replicate::SchemaSnapshot.write(client:, models: declared)
-    warn("replicate0", "schema snapshot wrote #{document.fetch("models").length} models at #{document.fetch("captured_at")}")
+    warn(
+      "replicate0",
+      "schema snapshot wrote #{document.fetch("models").length} models "       "at #{document.fetch("captured_at")}"
+    )
   end
 
   desc "Compare MODEL_CAPABILITIES with the last recorded provider schema; never claims live freshness"
@@ -150,7 +158,10 @@ namespace :replicate do
 
     ours = File.read(File.expand_path("replicate/replicate.rb", __dir__))
                 .then { |engine| engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] }
-                .then { |table| table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m).to_h { |model, keys| [model, keys.split.sort] } }
+                .then do |table|
+                  table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m)
+                       .to_h { |model, keys| [model, keys.split.sort] }
+                end
 
     recorded = Replicate::SchemaSnapshot.by_model
     missing = recorded.keys - ours.keys
@@ -170,7 +181,12 @@ namespace :replicate do
 
     warn("replicate0", "snapshot-only models, #{missing.join(", ")}") if missing.any?
     warn("replicate0", "table-only models, #{added.join(", ")}") if added.any?
-    warn("replicate0", "baseline matches snapshot captured at #{snapshot.fetch("captured_at")}") if drifted.empty? && missing.empty? && added.empty?
+    if drifted.empty? && missing.empty? && added.empty?
+      warn(
+        "replicate0",
+        "baseline matches snapshot captured at #{snapshot.fetch("captured_at")}"
+      )
+    end
     warn("replicate0", "baseline comparison is historical evidence, not a live provider audit")
     exit(1) unless drifted.empty? && missing.empty? && added.empty?
   end
