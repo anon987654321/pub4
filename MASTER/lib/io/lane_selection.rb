@@ -118,6 +118,13 @@ module Master
 
       def unmeasured_timeout_s = Integer(free_tier.fetch("unmeasured_timeout_s", UNMEASURED_TIMEOUT_S))
 
+      # Bound every completion, not only an unmeasured lane: a short health
+      # probe says nothing about the cost of a large repair prompt.
+      def free_call_timeout_s
+        value = Integer(free_tier.fetch("call_timeout_s", UNMEASURED_TIMEOUT_S), exception: false)
+        value&.positive? ? value : UNMEASURED_TIMEOUT_S
+      end
+
       # Whether a lane reads images: the catalog row's input modalities when it
       # has one, else the dispatcher's own list of vision families.
       def vision?(model)
