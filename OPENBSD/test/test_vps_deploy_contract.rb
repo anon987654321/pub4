@@ -96,11 +96,14 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
-  def test_tree_sync_never_interpolates_paths_into_a_root_shell
+  def test_tree_sync_exposes_only_the_fixed_app_user_broker
     sync = File.read(File.join(ROOT, "RAILS", "_sync.sh"), encoding: "UTF-8")
-    refute_includes sync, %q{${_PRIV} sh -c "cd }
-    assert_includes sync, %q{tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${stage%/}"}
-    assert_includes sync, %q{tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${dst%/}"}
+    refute_includes sync, "def sync_tree("
+    refute_match(/\$\{_PRIV\}\s+(?:rm|mkdir|mv|tar|openrsync)\b/, sync)
+    assert_includes sync, 'pub4-admin rails-sync "$app_name" "$mode"'
+    assert_includes sync, 'case "$mode" in'
+    assert_includes sync, "app|shared"
+    assert_includes sync, "verticals"
   end
   def test_rails_task_runner_fails_closed_without_broker
     runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
