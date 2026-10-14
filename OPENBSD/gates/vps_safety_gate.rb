@@ -96,6 +96,13 @@ if File.file?(admin_path)
     failures << "missing tracked usr/local/libexec/ci-sync.ksh"
   end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
+  source_preflight = installer.include?("typeset -a privileged_sources=(") &&
+                     installer.include?('if [[ ! -f $src/$rel || -L $src/$rel ]]') &&
+                     installer.include?("missing or symlinked privileged source")
+  failures << "OPERATOR.sh must preflight privileged sources before copying" unless source_preflight
+  install_preflight = installer.include?("installed privileged entrypoint missing or symlinked") &&
+                      installer.include?("/usr/local/libexec/pub4/solid_queue_proof.rb")
+  failures << "OPERATOR.sh must verify installed privileged entrypoints" unless install_preflight
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin") &&
                          installer.include?("[[ -L $f ]]") &&
