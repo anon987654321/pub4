@@ -51,10 +51,10 @@ fi
 
 # The CI mirror contains the exact tracked tree, not ignored local bundles.
 rm -rf "$mirror/RAILS"
-git -C "$repo" archive HEAD RAILS | tar xf - -C "$mirror"
-if git -C "$repo" cat-file -e HEAD:MASTER/tools 2>/dev/null; then
+git -c safe.directory="$repo" -C "$repo" archive HEAD RAILS | tar xf - -C "$mirror"
+if git -c safe.directory="$repo" -C "$repo" cat-file -e HEAD:MASTER/tools 2>/dev/null; then
   rm -rf "$mirror/MASTER/tools"
-  git -C "$repo" archive HEAD MASTER/tools | tar xf - -C "$mirror"
+  git -c safe.directory="$repo" -C "$repo" archive HEAD MASTER/tools | tar xf - -C "$mirror"
 fi
 for subdir in data lib; do
   destination="$mirror/MASTER/$subdir"
@@ -69,14 +69,14 @@ for subdir in data lib; do
   }
 done
 rm -f "$mirror/MASTER/data/tokens.yml" "$mirror/MASTER/data/laws.yml"
-git -C "$repo" archive HEAD MASTER/data/tokens.yml | tar xf - -C "$mirror"
+git -c safe.directory="$repo" -C "$repo" archive HEAD MASTER/data/tokens.yml | tar xf - -C "$mirror"
 rm -rf "$mirror/MASTER/lib/operator"
-git -C "$repo" archive HEAD MASTER/lib/operator | tar xf - -C "$mirror"
+git -c safe.directory="$repo" -C "$repo" archive HEAD MASTER/lib/operator | tar xf - -C "$mirror"
 for rel in MASTER/lib/boot/paths.rb MASTER/lib/ground/swallow.rb \
            MASTER/lib/io/exec.rb MASTER/lib/ops/process_spawn.rb \
            MASTER/lib/trace/dmesg.rb MASTER/lib/trace/logging.rb \
            MASTER/lib/voice/playback.rb; do
-  git -C "$repo" archive HEAD "$rel" | tar xf - -C "$mirror"
+  git -c safe.directory="$repo" -C "$repo" archive HEAD "$rel" | tar xf - -C "$mirror"
 done
 
 # Remove each mirrored directory before re-extraction so deleted files cannot
