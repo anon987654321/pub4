@@ -334,23 +334,23 @@ class TestPostproFilm < Minitest::Test
 
   # --- presets ------------------------------------------------------------
 
-  # This source inventory must continue through nested conditionals and the
-  # effect case, stop at the AST's method end, and not absorb the next constant.
+  # The effect inventory must span the complete preset body and stop at
+  # its AST method boundary, not at a nested `end` or the next constant.
   def test_effect_inventory_includes_late_preset_case_arms
     source = File.read(POSTPRO_SOURCE)
     implemented = send(:preset_effect_names)
     body = send(:postpro_source_method, source, "preset")
 
-    assert_includes implemented, "optical_blur"
-    assert_includes implemented, "lens_flare"
-    assert_includes implemented, "cinemascope_bars"
-    assert_includes implemented, "dilla_console_sum"
-    assert_includes body, 'when "dilla_console_sum"'
+    %w[optical_blur lens_flare cinemascope_bars dilla_console_sum].each do |name|
+      assert_includes implemented, name
+      assert_includes body, %(when "#{name}")
+    end
     refute_includes body, "RANDOM_CHAIN_LENGTH ="
   end
 
   def test_source_method_reader_covers_output_dispatch_bodies
     source = File.read(POSTPRO_SOURCE)
+    methods = send(:postpro_source_methods, source)
     required_calls = {
       "process_file" => "apply_finishing_grain",
       "run_random" => "process_file(",
@@ -358,14 +358,12 @@ class TestPostproFilm < Minitest::Test
     }
 
     required_calls.each do |name, call|
-      body = send(:postpro_source_method, source, name)
-      assert_includes body.to_s, call, "#{name} source extraction must include #{call}"
-      refute_match(/^def (?:run_uplift|run_one_shot|run_watch)\b/, body) unless name == "run_watch"
+      body = methods.fetch(name)
+      assert_includes body, call, "#{name} source extraction must include #{call}"
+      refute_includes body, "def ", "#{name} source extraction must stop at its own method"
     end
-    refute_includes send(:postpro_source_method, source, "run_random"), "def run_uplift"
-    refute_includes send(:postpro_source_method, source, "run_watch"), "RANDOM_CHAIN_LENGTH ="
+    refute_includes methods.fetch("run_random"), "RANDOM_CHAIN_LENGTH ="
   end
-
   def test_every_preset_names_a_stock_that_exists
     unknown = PRESETS.filter_map { |name, data| [name, data[:stock]] if data[:stock] && !STOCKS.key?(data[:stock]) }
     assert_empty unknown, "these presets render on a film with no rows: #{unknown.inspect}"
