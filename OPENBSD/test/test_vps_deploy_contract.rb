@@ -120,6 +120,16 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes runtime, 'rails-task "$app_name" "$task" "$database"'
   end
 
+  def test_rails_deploy_never_installs_rcd_from_writable_checkout
+    service = File.read(File.join(ROOT, "RAILS", "_service.sh"), encoding: "UTF-8")
+
+    refute_includes service, '${_PRIV} install -o root -g wheel -m 0555 "$rcd_src" "$rcd_dst"'
+    assert_includes service, 'owner=$(/usr/bin/stat -f %u "$rcd_dst")'
+    assert_includes service, 'mode=$(/usr/bin/stat -f %Lp "$rcd_dst")'
+    assert_includes service, 'rc.d ${svc} must be root-owned mode 555'
+    assert_includes service, '/usr/local/sbin/pub4-admin retire-legacy "$app_name"'
+  end
+
   def test_rails_deploy_service_lifecycle_uses_closed_broker_adapter
     core = File.read(File.join(ROOT, "RAILS", "_core.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
