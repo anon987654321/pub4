@@ -3,15 +3,9 @@
     id, and the card becomes "Content missing". Vote still replaces the
     frame via turbo_stream; only <a> navigation is affected. %>
 <%= turbo_frame_tag dom_id(post), target: "_top" do %>
-<%# Keyed on the viewer's vote, not the viewer. The only user-specific output in
-    here is post.upvoted_by?(Current.user), twice — the active class and
-    aria-pressed on the vote button; everything else, shared/_post_card
-    included, derives from the post. Keying on Current.user&.id gave every
-    visitor their own copy, and brgen mints a fresh guest user for every request
-    that arrives without a session cookie, so for crawlers the fragment cache
-    never hit once and each visit wrote 25 single-use entries into the store.
-    voted_by? has three outcomes, so this collapses to at most three variants
-    per post and renders identically. %>
+<%# The viewer's vote/repost state and image-loading priority affect
+    rendered attributes, so they all belong in the fragment cache key. Only the
+    first feed card gets eager/high-priority image loading; later cards stay lazy. %>
   <%# reposted_by? is user-specific output inside a shared fragment, so it has to
       be in the key or one viewer's repost state renders for everyone. Computed
       once here and passed down rather than called three times per card. %>
@@ -19,7 +13,8 @@
   <% quote = post.quote_comment_by(Current.user) %>
   <%# The labels inside are translated, so the locale is in the key: without it
       the first visitor's language was served to every later one. %>
-  <% cache [I18n.locale, post, post.voted_by?(Current.user), reposted, quote] do %>
+  <% priority = local_assigns[:priority] == true %>
+  <% cache [I18n.locale, post, post.voted_by?(Current.user), reposted, quote, priority] do %>
     <% post_actions = capture do %>
       <%= link_to post_path(post, anchor: "comments-section"),
             class: "feed-action",
@@ -81,9 +76,13 @@
     <% post_media = capture do %>
       <% if post.images.attached? %>
         <div class="post-images" data-controller="post-gallery" data-action="click->post-gallery#open">
-          <% post.images.each do |image| %>
+          <% post.images.each_with_index do |image, image_index| %>
+            <% priority_image = priority && image_index.zero? %>
             <%= link_to rails_blob_path(image, disposition: "inline"), data: { gallery_item: true }, aria: { label: post.title } do %>
-              <%= image_tag image.variant(resize_to_limit: [800, 800]), alt: post.title, loading: "lazy", decoding: "async", class: "post-image" %>
+              <%= image_tag image.variant(resize_to_limit: [800, 800]), alt: post.title,
+                    loading: (priority_image ? "eager" : "lazy"),
+                    fetchpriority: (priority_image ? "high" : "auto"),
+                    decoding: "async", class: "post-image" %>
             <% end %>
           <% end %>
         </div>
@@ -91,7 +90,10 @@
       <% elsif post.image.attached? %>
         <div class="post-images" data-controller="post-gallery" data-action="click->post-gallery#open">
           <%= link_to rails_blob_path(post.image, disposition: "inline"), data: { gallery_item: true }, aria: { label: post.title } do %>
-            <%= responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image") %>
+            <%= responsive_image_tag(post.image, alt: post.title,
+                  loading: (priority ? "eager" : "lazy"),
+                  fetchpriority: (priority ? "high" : "auto"),
+                  class: "post-image") %>
           <% end %>
         </div>
         <%= render "shared/photo_credit", blob: post.image.blob %>
