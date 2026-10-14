@@ -198,6 +198,15 @@ class Pub4AdminTest < Minitest::Test
     assert_operator helper.index('[ ! -L "$app_dir" ]'), :<, helper.index('/bin/chmod 750 "$storage"')
   end
 
+  def test_ci_prepare_creates_group_before_changing_checkout_parent
+    helper = File.read(File.expand_path("../usr/local/libexec/ci-prepare.ksh", __dir__))
+    group_create_at = helper.index("/usr/sbin/groupadd _pub4ci")
+    usermod_at = helper.index("/usr/sbin/usermod -G _pub4ci \"$app\"")
+    chgrp_at = helper.index("/bin/chgrp _pub4ci /home/dev")
+
+    assert_operator group_create_at, :<, usermod_at
+    assert_operator usermod_at, :<, chgrp_at
+  end
   def test_ci_prepare_is_one_fixed_app_scoped_operation
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-prepare.ksh", __dir__))
