@@ -74,21 +74,7 @@ done
 [ "$found_ruby" -eq 1 ] || { echo "rails-task: no supported system Ruby found" >&2; exit 127; }
 [ -x "$bundle" ] || { echo "rails-task: no supported system Bundler found" >&2; exit 127; }
 
-secret=
-case "$task" in
-  db-prepare|db-seed|demo-seed|assets-precompile|schema-load|ci)
-    for env_file in "/etc/$app.env" "/etc/rails/$app.env"; do
-      if [ -f "$env_file" ] && [ ! -L "$env_file" ] && [ "$(stat -f %u "$env_file")" -eq 0 ]; then
-        secret=$(/usr/bin/awk -F= '$1 == "SECRET_KEY_BASE" { print substr($0, index($0, "=") + 1); exit }' "$env_file")
-        [ -n "$secret" ] && break
-      fi
-    done
-    case "$secret" in
-      ''|*[!0123456789abcdefABCDEF]*) echo "rails-task: no valid SECRET_KEY_BASE for $app" >&2; exit 1 ;;
-    esac
-    [ "${#secret}" -ge 64 ] && [ "${#secret}" -le 256 ] || { echo "rails-task: invalid SECRET_KEY_BASE length" >&2; exit 1; }
-    ;;
-esac
+export SECRET_KEY_BASE
 
 case "$task" in
   bundle-install)
