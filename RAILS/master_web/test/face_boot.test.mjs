@@ -50,6 +50,10 @@ test("web face queues follow-up turns and exposes stop/resume state", () => {
   assert.match(view, /id="turn-control"/);
   assert.match(css, /body\[data-queue-active="1"\] \.turn-queue-status/);
   assert.match(actions, /fallbackSendQueue/);
+  const runtime = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  const errorAt = runtime.indexOf("if (raw.startsWith('ERROR:'))");
+  const errorBlock = runtime.slice(errorAt, runtime.indexOf("const chunk = raw.replace", errorAt));
+  assert.match(errorBlock, /finishTurn\(false\);[\s\S]*closeChatStream/);
 });
 
 test("thinking star animates in calm mode but respects reduced motion and battery mode", () => {
