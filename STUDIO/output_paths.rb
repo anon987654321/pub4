@@ -5,7 +5,7 @@
 module Studio
   module OutputPaths
     FALLBACK_DATA_HOME = File.expand_path("~/Documents").freeze
-    REPOSITORY_ROOT = File.expand_path("..", __dir__).freeze
+    REPOSITORY_ROOT = File.realpath(File.expand_path("..", __dir__)).freeze
 
     module_function
 
@@ -14,10 +14,26 @@ module Studio
       return FALLBACK_DATA_HOME if configured.empty?
       return FALLBACK_DATA_HOME unless configured.start_with?(File::SEPARATOR)
 
-      candidate = File.expand_path(configured)
+      candidate = canonical_path(configured)
       return FALLBACK_DATA_HOME if inside_repository?(candidate)
 
       candidate
+    end
+
+    def canonical_path(path)
+      expanded = File.expand_path(path)
+      cursor = expanded
+      missing = []
+      until File.exist?(cursor) || File.symlink?(cursor)
+        parent = File.dirname(cursor)
+        break if parent == cursor
+
+        missing.unshift(File.basename(cursor))
+        cursor = parent
+      end
+      File.join(File.realpath(cursor), *missing)
+    rescue SystemCallError
+      expanded
     end
 
     def directory(name, at: nil, override: nil)
@@ -41,7 +57,9 @@ module Studio
     end
 
     def inside_repository?(path)
-      path == REPOSITORY_ROOT || path.start_with?("#{REPOSITORY_ROOT}#{File::SEPARATOR}")
+      canonical = canonical_path(path)
+      canonical == REPOSITORY_ROOT ||
+        canonical.start_with?("#{REPOSITORY_ROOT}#{File::SEPARATOR}")
     end
   end
 end
