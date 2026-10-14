@@ -40,6 +40,18 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'raise "#{path} is not a regular file" unless lock.file? && !lock.symlink?'
   end
 
+  def test_ci_timeout_is_a_real_process_group_deadline
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+
+    assert_includes source, "def valid_ci_timeout?(value)"
+    assert_includes source, "def run_ci(app, duration)"
+    assert_includes source, "Process.clock_gettime(Process::CLOCK_MONOTONIC) + duration"
+    assert_includes source, 'Process.kill("TERM", -pid)'
+    assert_includes source, 'Process.kill("KILL", -pid)'
+    assert_includes source, "return 124"
+    assert_includes source, "unsetenv_others: true"
+  end
+
   def test_ci_run_accepts_only_fixed_apps_and_bounded_timeouts
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-run.ksh", __dir__))
@@ -89,7 +101,9 @@ class Pub4AdminTest < Minitest::Test
   def test_root_script_does_not_evaluate_shell_command_strings
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
-    refute_match(/system\s*\(|Open3\.|Process\.spawn|%x/, source)
+    refute_match(/system\s*\(|Open3\.|%x/, source)
+    assert_equal 1, source.scan("Process.spawn").length
+    assert_includes source, 'Process.spawn(\n      environment, "/bin/ksh", CI_RUN, app, duration.to_s,\n      pgroup: true, unsetenv_others: true\n    )'
     assert_includes source, "exec(*command)"
     assert_includes source, 'raise "must run as root through doas" unless Process.euid.zero?'
   end
