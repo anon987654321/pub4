@@ -7,6 +7,12 @@ set -euo pipefail
 app_secret_for() {
   local app_name=$1 env_file secret contents line
 
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    secret=$("${_PRIV}" /usr/local/sbin/pub4-admin ensure-secret "$app_name") || return 1
+    [[ -n $secret ]] || { log_err "empty app secret for ${app_name}"; return 1; }
+    print -r -- "$secret"
+    return 0
+  fi
   for env_file in /etc/${app_name}.env /etc/rails/${app_name}.env; do
     if ${_PRIV} test -r "$env_file"; then
       contents=$(${_PRIV} cat "$env_file") || continue
