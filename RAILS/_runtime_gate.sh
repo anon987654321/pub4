@@ -62,34 +62,39 @@ run_rails_as_app() {
   npm_cache="/home/${app_name}/.npm"
   case "$task" in
     ci-bundle-install)
-      command="ci-bundle-install" ;;
+      command="${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" ;;
     bundle-check)
       command="${BUNDLE} check" ;;
     db-prepare)
       secret=$(app_secret_for "$app_name") || return 1
       case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
       (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      command="db-prepare" ;;
+      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare" ;;
     db-seed)
       secret=$(app_secret_for "$app_name") || return 1
-      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
+      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
       command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:seed" ;;
     demo-seed)
       secret=$(app_secret_for "$app_name") || return 1
-      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
+      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
       command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails ${app_name}:demo_seed" ;;
     assets-precompile)
       secret=$(app_secret_for "$app_name") || return 1
-      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
+      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
       command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails assets:precompile" ;;
     ci)
       secret=$(app_secret_for "$app_name") || return 1
-      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
+      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
       local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
-      command="ci" ;;
+      command="SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 ${BUNDLE} exec bin/ci" ;;
     schema-load)
       secret=$(app_secret_for "$app_name") || return 1
-      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
+      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
       command="SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production ${BUNDLE} exec rails db:schema:load:${database}" ;;
     secondary-db-check)
       return 1 ;; # The fallback path below still owns the legacy sqlite3 check.
