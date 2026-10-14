@@ -619,7 +619,7 @@ end
           stopped_for = stop_lock.synchronize { stopped_for }
           if stopped_for
             output << "#{stopped_for}\n"
-            [false, output, stopped_for.start_with?("gate child timeout") ? 124 : 1]
+            [false, output, stopped_for.include?("gate child timeout") ? 124 : 1]
           else
             [status.success?, output, status.exitstatus]
           end
