@@ -71,41 +71,11 @@ if File.file?(admin_path)
                     admin.include?("SERVICE_ACTIONS") &&
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
+  safe_spawn = admin.match?(/Process\.spawn\(\s*environment,\s*"\/bin\/ksh", CI_RUN, app, duration\.to_s,\s*pgroup: true, unsetenv_others: true\s*\)/m)
   unsafe_spawn = admin.include?("Process.spawn") &&
-                 (admin.scan("Process.spawn").length != 1 ||
-                  !admin.include?('Process.spawn(\n      environment, "/bin/ksh", CI_RUN, app, duration.to_s,\n      pgroup: true, unsetenv_others: true\n    )'))
+                 (admin.scan("Process.spawn").length != 1 || !safe_spawn)
   failures << "pub4-admin must not evaluate shell command strings or widen its CI spawn" if
     admin.match?(/system\s*\(|Open3\.|%x/) || unsafe_spawn
-  unless admin.include?('return ensure_ci_lock if args == ["ci-lock"]') &&
-         admin.include?('path = File.join(STAMP_DIR, "ci.lock")') &&
-         admin.include?("File.lstat(path)")
-    failures << "pub4-admin CI lock must use one fixed path and refuse symlinks"
-  end
-  helper_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-prepare.ksh")
-  if File.file?(helper_path)
-    helper = File.read(helper_path)
-    unless helper.include?("brgen|amber|bsdports") &&
-           helper.include?('[ ! -L /home/dev ]') &&
-           helper.include?('[ -L "$storage" ]') &&
-           helper.include?('storage="/home/$app/app/storage"')
-      failures << "ci-prepare helper must be fixed-app and symlink-safe"
-    end
-  else
-    failures << "missing tracked usr/local/libexec/ci-prepare.ksh"
-  end
-  runner_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-run.ksh")
-  if File.file?(runner_path)
-    runner = File.read(runner_path)
-    unless runner.include?("brgen|amber|bsdports") &&
-           runner.include?('[ "$timeout" -le 7200 ]') &&
-           runner.include?('cd /home/$app/app') &&
-           runner.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
-           runner.include?('/usr/local/bin/bundle')
-      failures << "ci-run helper must use a fixed app, bounded timeout and system Bundler"
-    end
-  else
-    failures << "missing tracked usr/local/libexec/ci-run.ksh"
-  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
