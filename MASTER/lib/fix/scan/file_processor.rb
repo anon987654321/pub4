@@ -362,9 +362,11 @@ module Master
           end
           Master::Trace::Dmesg.status("scan0", "progress file unavailable, #{e.class}: #{e.message}") if should_report
         ensure
-          File.delete(temporary) if temporary && File.exist?(temporary)
-        rescue SystemCallError
-          nil
+          begin
+            File.delete(temporary) if temporary && File.exist?(temporary)
+          rescue SystemCallError
+            nil
+          end
         end
 
         def relative_progress_path(path)
