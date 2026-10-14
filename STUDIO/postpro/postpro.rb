@@ -4854,16 +4854,25 @@ STOCK_SHEET_CELL = 512
 STOCK_SHEET_GAP = 12
 STOCK_SHEET_LABEL = 22
 
+def stock_sheet_label(stock, cell:)
+  label = Vips::Image.text(stock.to_s, dpi: 62)
+  label_height = STOCK_SHEET_LABEL - 4
+  scale = [cell.to_f / label.width, label_height.to_f / label.height, 1.0].min
+  label = label.resize(scale) if scale < 1.0
+  label.ifthenelse([210, 210, 210], [18, 18, 18], blend: true)
+end
+
 def stock_sheet(image, preset_name, cell: STOCK_SHEET_CELL)
   small = rgb_bands(image.thumbnail_image(cell, height: cell, size: :down))
   stocks = STOCKS.keys
   tiles = stocks.map do |stock|
     graded = rgb_bands(apply_finishing_grain(preset(small, preset_name, stock: stock), preset_name))
-    label = Vips::Image.text(stock.to_s, width: cell, dpi: 62)
-    tag = label.ifthenelse([210, 210, 210], [18, 18, 18], blend: true)
+    tag = stock_sheet_label(stock, cell:)
     tile = (Vips::Image.black(cell, cell + STOCK_SHEET_LABEL) + 18).cast(:uchar).bandjoin([18, 18])
+    label_x = (cell - tag.width) / 2
+    label_y = cell + 4 + ((STOCK_SHEET_LABEL - 4 - tag.height) / 2)
     tile.insert(graded.cast(:uchar), (cell - graded.width) / 2, (cell - graded.height) / 2)
-        .insert(tag, 0, cell + 4)
+        .insert(tag, label_x, label_y)
   end
   columns = Math.sqrt(stocks.length).ceil
   [Vips::Image.arrayjoin(tiles, across: columns, shim: STOCK_SHEET_GAP, background: [18, 18, 18]), stocks]
