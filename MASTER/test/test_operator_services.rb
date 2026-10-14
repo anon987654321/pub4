@@ -17,6 +17,11 @@ class OperatorServicesTest < Minitest::Test
     assert_equal "proposal-only", security[:model_authority]
   end
 
+  def test_os_service_control_is_closed_to_master_stop_and_restart
+    assert_raises(SecurityError) { Master::Operator.run_rcctl("enable", "master") }
+    assert_raises(SecurityError) { Master::Operator.run_rcctl("restart", "relayd") }
+    assert_raises(SecurityError) { Master::Operator.run_rcctl("stop", "brgen") }
+  end
   def test_embedded_services_cannot_be_stopped_as_if_they_were_rcctl_daemons
     assert_raises(ArgumentError) { Master::Operator.stop("cognition") }
     assert_raises(ArgumentError) { Master::Operator.restart("memory") }
