@@ -165,6 +165,23 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, 'GIT_CONFIG_GLOBAL="/dev/null"'
   end
 
+  def test_bundle_cache_preparation_is_app_owned_and_fixed
+    broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    deploy = File.read(File.expand_path("../../RAILS/_deploy.sh", __dir__))
+    runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
+
+    assert_includes broker, "bundle-cache-prepare"
+    assert_includes helper, "bundle-cache-prepare)"
+    assert_includes helper, 'bundle_home="$home/.bundle"'
+    assert_includes helper, 'target="$bundle_home/$part"'
+    assert_includes helper, 'stat -f %u "$bundle_home"'
+    assert_includes deploy, 'run_rails_as_app "$app_name" "$APP_DIR" "bundle-cache-prepare"'
+    assert_includes runtime, 'bundle-cache-prepare|db-storage-migrate'
+    refute_includes deploy, 'doas mkdir -p "$bundle_home"'
+    refute_includes deploy, 'doas chown -R "${app_name}:${app_name}" "$bundle_home"'
+  end
+
   def test_production_bundle_uses_the_fixed_rails_task
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
