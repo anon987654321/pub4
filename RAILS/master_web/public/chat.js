@@ -24,26 +24,72 @@ function escapeHtml(str) {
 
 const log = document.getElementById('chat-log');
 const CHAT_VIRTUAL_MAX = 56;
+const CHAT_ARCHIVE_BATCH = 28;
 let chatArchived = 0;
 let chatArchivedHeight = 0;
+let chatArchive = [];
 let chatSpacer = null;
+let chatSpacerButton = null;
 
 function ensureChatSpacer() {
   if (!log) return null;
   if (!chatSpacer) {
     chatSpacer = document.createElement('div');
     chatSpacer.className = 'virtual-spacer';
-    chatSpacer.setAttribute('aria-hidden', 'true');
+    chatSpacer.setAttribute('role', 'group');
+    chatSpacerButton = document.createElement('button');
+    chatSpacerButton.type = 'button';
+    chatSpacerButton.className = 'virtual-spacer-load';
+    chatSpacerButton.addEventListener('click', restoreOlderChatMessages);
+    chatSpacer.appendChild(chatSpacerButton);
     log.prepend(chatSpacer);
   }
   return chatSpacer;
 }
 
-function chatMessageHeight(message) {
+function chatMessageAdvance(message) {
   const rect = message.getBoundingClientRect();
   const style = window.getComputedStyle(message);
-  const margins = Number.parseFloat(style.marginTop || '0') + Number.parseFloat(style.marginBottom || '0');
-  return Math.max(0, rect.height + margins);
+  const logStyle = window.getComputedStyle(log);
+  const number = (value) => {
+    const parsed = Number.parseFloat(value || '0');
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const gap = number(logStyle.rowGap !== 'normal' ? logStyle.rowGap : logStyle.gap);
+  return Math.max(0, rect.height + number(style.marginTop) + number(style.marginBottom) + gap);
+}
+
+function updateChatSpacer() {
+  if (chatArchive.length === 0) {
+    chatSpacer?.remove();
+    chatSpacer = null;
+    chatSpacerButton = null;
+    chatArchived = 0;
+    chatArchivedHeight = 0;
+    return;
+  }
+
+  const spacer = ensureChatSpacer();
+  if (!spacer || !chatSpacerButton) return;
+  chatArchived = chatArchive.length;
+  chatSpacer.style.height = `${Math.ceil(chatArchivedHeight)}px`;
+  const count = Math.min(CHAT_ARCHIVE_BATCH, chatArchived);
+  const label = chatT('load_older_messages', 'Load %{count} older messages')
+    .replace('%{count}', String(count));
+  chatSpacerButton.textContent = label;
+  chatSpacerButton.setAttribute('aria-label', label);
+}
+
+function restoreOlderChatMessages() {
+  if (!log || chatArchive.length === 0) return;
+  const anchor = chatSpacer?.nextElementSibling || null;
+  const start = Math.max(0, chatArchive.length - CHAT_ARCHIVE_BATCH);
+  const restored = chatArchive.splice(start);
+  for (const entry of restored) {
+    log.insertBefore(entry.element, anchor);
+    chatArchivedHeight = Math.max(0, chatArchivedHeight - entry.advance);
+  }
+  updateChatSpacer();
 }
 
 function trimChatLogVirtual() {
@@ -51,15 +97,18 @@ function trimChatLogVirtual() {
   while (log.querySelectorAll('.message').length > CHAT_VIRTUAL_MAX) {
     const first = log.querySelector('.message');
     if (!first || first.classList.contains('virtual-spacer')) break;
-    // Preserve the real rendered height: messages can contain paragraphs,
-    // code blocks, media and wrapped text, so a fixed 68px estimate drifts.
-    chatArchivedHeight += chatMessageHeight(first);
+    // Retain the detached node so an operator can load older turns again.
+    // Measure before removal; fixed-height estimates drift on code and media.
+    const advance = chatMessageAdvance(first);
+    chatArchive.push({ element: first, advance });
+    chatArchivedHeight += advance;
     first.remove();
-    chatArchived += 1;
   }
-  const spacer = ensureChatSpacer();
-  if (spacer) spacer.style.height = `${Math.ceil(chatArchivedHeight)}px`;
+  updateChatSpacer();
 }
+
+// The initial transcript may already exceed the live DOM window.
+trimChatLogVirtual();
 const zsh = document.getElementById('zsh');
 const input = document.getElementById('zin');
 const sessionStartedAt = Date.now();
@@ -357,6 +406,7 @@ window._chatOnCompaction = (payload) => {
   note.appendChild(title);
   note.appendChild(body);
   log?.appendChild(note);
+  trimChatLogVirtual();
   log.scrollTop = log.scrollHeight;
   window._chatOnDmesg?.('compact0 at master0: compaction summary logged');
   window.MASTERVisual?.event?.('compaction:done', { topology: 'terrain', entropy: 0.35, confidence: 0.7, mode: 'compact' });
