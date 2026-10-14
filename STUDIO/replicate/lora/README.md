@@ -87,7 +87,8 @@ The dataset and the trigger are the same on every lane; pick the one that fits t
 - `--train-replicate` is the provider-billed hosted lane.
 - `--train-kaggle` is a free GPU lane that depends on Kaggle's current quota.
 - `--train-colab` is a free accelerated runtime that depends on Colab's limits.
-- `--train` runs locally on Apple silicon or, through `_toolkit/setup_runpod.sh`, on a rented pod with 24 GB or more of GPU memory.
+- `--train` runs locally on Apple silicon or, through `_toolkit/setup_runpod.sh`, on a rented
+  pod with 24 GB or more of GPU memory.
 
 Neither free lane is load-bearing: checkpoints are resumable, and a run may need another lane. Anything after the lane flag goes to that lane.
 
@@ -155,12 +156,18 @@ on disk, so both stay operator decisions.
 
 A directory here is either a subject or starts with an underscore and is shared. `_toolkit/` is the pipeline.
 
-- `curate.rb` decides which photographs earn a place and prepares them, and `heal.rb` removes a mark from skin in the ungraded original before anything grades it.
-- `preflight.rb` guards every paid run, `judge.rb` refuses a frame worse than a real photograph of the subject against `judge_thresholds.yml`, and `shoots.rb` picks the sittings.
-- `contact_sheet.rb` lays frames out as one sheet, and `postpro_samples.rb` grades generated portraits.
-- The `run_generate.sh` script is the dispatcher every `./lora` flag lands in, and `toolkit.sh` holds the shell helpers it shares.
-- The `run_train_*.rb` and `run_generate_*.rb` scripts hold the lanes, and the `*_session.rb` files are what the Kaggle and Colab notebooks run.
-- The `guides/` folder holds narrated walkthroughs and a prompting note, kept as recordings and not trusted as instructions.
+- `curate.rb` decides which photographs earn a place and prepares them, and `heal.rb` removes a
+  mark from skin in the ungraded original before anything grades it.
+- `preflight.rb` guards every paid run, `judge.rb` refuses a frame worse than a real photograph
+  of the subject against `judge_thresholds.yml`, and `shoots.rb` picks the sittings.
+- `contact_sheet.rb` lays frames out as one sheet, and `postpro_samples.rb` grades generated
+  portraits.
+- The `run_generate.sh` script is the dispatcher every `./lora` flag lands in, and `toolkit.sh`
+  holds the shell helpers it shares.
+- The `run_train_*.rb` and `run_generate_*.rb` scripts hold the lanes, and the `*_session.rb`
+  files are what the Kaggle and Colab notebooks run.
+- The `guides/` folder holds narrated walkthroughs and a prompting note, kept as recordings and
+  not trusted as instructions.
 
 The seed-media lane lives beside the subjects because it has none. `seed_media.yml` is every
 photograph the RAILS apps seed with, written as a prompt. `run_seed_media_colab.rb` makes
@@ -212,4 +219,5 @@ ragnhild/lora --generate-replicate --set selfies --draft
 ragnhild/lora --generate-replicate --set selfies --max-seconds 600
 ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns" --dry-run
 ```
+
 
