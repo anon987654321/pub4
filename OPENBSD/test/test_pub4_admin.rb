@@ -38,7 +38,7 @@ class Pub4AdminTest < Minitest::Test
   end
 
   def test_started_services_are_filtered_to_the_broker_allowlist
-    output = "sshd\nrelay d\nmaster\nbrgen\ncron\nbsdports_jobs\n"
+    output = "sshd\nrelayd\nmaster\nbrgen\ncron\nbsdports_jobs\n"
 
     assert_equal "master\nbrgen\nbsdports_jobs",
                  ADMIN.filter_started_services(output)
