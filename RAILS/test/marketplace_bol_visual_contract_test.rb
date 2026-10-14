@@ -46,16 +46,30 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_mobile_category_menu_starts_below_the_full_header_stack
-    header = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_header.scss"))
+    header = File.read(HEADER_CSS)
 
-    assert_includes header, "--bol-mobile-header-block: calc("
-    assert_includes header, "--bol-mobile-mega-top: calc("
-    assert_includes header,
-                    "var(--bol-utility-block) + var(--bol-mobile-header-block) +"
-    assert_includes header, "inset-block-start: var(--bol-mobile-mega-top);"
+    assert_match(/--bol-utility-block:\s*28px;/, header)
+    assert_match(/--bol-mainnav-block:\s*48px;/, header)
+    assert_match(/--bol-brand-row-block:\s*48px;/, header)
+    assert_match(/--bol-search-control-block:\s*44px;/, header)
+    assert_match(/--bol-search-row-gap:\s*8px;/, header)
+    assert_match(/--bol-mobile-header-padding:\s*8px;/, header)
+    assert_match(
+      /--bol-mobile-header-block:\s*calc\(\s*var\(--bol-brand-row-block\)\s*\+\s*var\(--bol-search-control-block\)\s*\+\s*var\(--bol-search-row-gap\)\s*\+\s*var\(--bol-mobile-header-padding\)\s*\+\s*var\(--bol-mobile-header-padding\)\s*\);/m,
+      header
+    )
+    assert_match(
+      /--bol-mobile-mega-top:\s*calc\(\s*var\(--bol-utility-block\)\s*\+\s*var\(--bol-mobile-header-block\)\s*\+\s*var\(--bol-mainnav-block\)\s*\);/m,
+      header
+    )
 
-    # Keep each term tied to the box it sizes; the mobile second search row
-    # must move the fixed panel instead of letting it cover the category trigger.
+    mobile = header.split("@media (max-width: 767px)", 2).last
+    menu = mobile&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
+    assert menu, "mobile menu positioning must stay inside the mobile breakpoint"
+    assert_match(/inset-block-start:\s*var\(--bol-mobile-mega-top\);/, menu)
+
+    # Each term must remain attached to the physical box it sizes, so a taller
+    # search row cannot silently desynchronise the fixed panel's start position.
     assert_includes header, "min-height: var(--bol-utility-block);"
     assert_includes header, "min-height: var(--bol-mainnav-block);"
     assert_includes header, "min-height: var(--bol-brand-row-block);"
