@@ -391,6 +391,23 @@ deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${a
                       !deploy_all_source.include?('doas zsh ${script}') &&
                       !deploy_all_source.include?('RAILS/${app}/${app}.sh')
 failures << "deploy_all per-app mode must not elevate checkout Rails wrappers" unless deploy_all_contract
+start_all_apps_path = File.join(OPENBSD, "bin", "start_all_apps.sh")
+if File.file?(start_all_apps_path)
+  start_all_apps = File.read(start_all_apps_path)
+  start_all_wrapper = start_all_apps.include?('if [ "$(id -u)" -eq 0 ]; then') &&
+                      start_all_apps.include?('doas "$broker" start-all-apps') &&
+                      start_all_apps.include?('health_check.rb" --all-ready-apps') &&
+                      !start_all_apps.match?(/^\s*(?:rcctl|install|chmod|chown)\s/m)
+  start_all_broker = admin.include?('return start_all_apps if args == ["start-all-apps"]') &&
+                     admin.include?("def start_all_apps") &&
+                     admin.include?('flag = "/var/db/pub4_all_apps"') &&
+                     admin.include?('File::CREAT | File::EXCL') &&
+                     admin.include?('services = ["master", *RAILS_APPS]') &&
+                     admin.include?('call_rcctl("restart", "relayd")')
+  failures << "start_all_apps wrapper and broker must be fixed and non-root" unless start_all_wrapper && start_all_broker
+else
+  failures << "missing OPENBSD/bin/start_all_apps.sh"
+end
 vps_state_path = File.join(OPENBSD, "bin", "vps-state")
 if File.file?(vps_state_path)
   vps_state = File.read(vps_state_path)
