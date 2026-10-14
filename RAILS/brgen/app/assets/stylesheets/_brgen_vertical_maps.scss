@@ -46,7 +46,8 @@ body.vertical-maps .map-hud {
   position: fixed;
   // The map canvas can sit under persistent chrome; its controls cannot. Match
   // .app-shell's mobile inset so the search never lands in the nav's hit area.
-  inset-block-start: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top));
+  // --nav-swiper-h includes the safe area; match the content shell exactly.
+  inset-block-start: calc(var(--top-band-block) + var(--nav-swiper-h));
 /* Clear the fixed city brand, which sits on the left edge of #map-search, so
    a tap meant for the search box does not navigate home (--brand-mark-inline
    on :root). Additive, matching the brand it clears: the brand is offset by
