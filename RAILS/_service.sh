@@ -7,7 +7,12 @@ set -euo pipefail
 retire_legacy_rails_rcd() {
   local app_name=$1 legacy="${app_name}_rails"
   [[ -f /etc/rc.d/$legacy ]] || return 0
-  ${_PRIV} rcctl disable "$legacy" 2>/dev/null || true
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin retire-legacy "$app_name" \
+      || { log_err "could not disable legacy service ${legacy}"; return 1; }
+  else
+    ${_PRIV} rcctl disable "$legacy" 2>/dev/null || true
+  fi
   log_ok "disabled legacy rc.d ${legacy} (no stop — shared port with ${app_name})"
 }
 
@@ -29,21 +34,25 @@ assert_rcd_identity() {
 }
 
 # install_rcd APP_NAME APP_DIR PORT SERVICE_NAME
-# Installs or updates the rc.d service file for a Rails app on OpenBSD.
+# Service files are installed by the reviewed operator sync, never copied from
+# the deploy account's writable checkout during an app deploy.
 install_rcd() {
   local app_name=$1 app_dir=$2 port=$3 svc=${4:-$1}
-  local openbsd_root=${PUB4_OPENBSD_ROOT:-/home/dev/pub4/OPENBSD}
-  local rcd_src="${openbsd_root}/etc/rc.d/${svc}"
   local rcd_dst="/etc/rc.d/${svc}"
-  if [[ ! -f $rcd_src ]]; then
-    log_warn "rc.d template not found: $rcd_src — skipping install_rcd"
-    return 0
+  if [[ ! -f $rcd_dst || -L $rcd_dst ]]; then
+    log_err "rc.d ${svc} is missing or symlinked — run the reviewed OPENBSD/OPERATOR.sh sync first"
+    return 1
   fi
-  ${_PRIV} install -o root -g wheel -m 0555 "$rcd_src" "$rcd_dst"
+  local owner mode
+  owner=$(/usr/bin/stat -f %u "$rcd_dst") || return 1
+  mode=$(/usr/bin/stat -f %Lp "$rcd_dst") || return 1
+  [[ $owner == 0 && $mode == 555 ]] || {
+    log_err "rc.d ${svc} must be root-owned mode 555; run the reviewed OPENBSD/OPERATOR.sh sync first"
+    return 1
+  }
   assert_rcd_identity "$svc" "$app_name" "$app_dir"
   retire_legacy_rails_rcd "$app_name"
-  ${_PRIV} rcctl enable "$svc"
-  log_ok "rc.d ${svc} installed and enabled"
+  log_ok "rc.d ${svc} verified (operator-installed, root-owned, mode 555)"
 }
 
 # relayd_confirm_live PORT
