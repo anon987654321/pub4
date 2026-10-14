@@ -63,6 +63,7 @@ module Deploy
       FileUtils.mkdir_p(DIR)
       compared = 0
       written = 0
+      accepted_updates = {}
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
           if GeometryProbe.timeout?(payload)
@@ -86,6 +87,18 @@ module Deploy
         end
 
         path = baseline_path(surface)
+        if self.class.update? && (previous = accepted_updates[path])
+          compared += 1
+          diffs = compare(previous.fetch(:current), current)
+          if diffs.any?
+            @result.fail(
+              "layout_snapshot: #{surface.id} disagrees with #{previous.fetch(:surface)} " \
+              "for shared baseline #{rel(path)} — #{tally(diffs)}",
+            )
+          end
+          next
+        end
+        accepted_updates[path] = { surface: surface.id, current: } if self.class.update?
         if !File.file?(path)
           if self.class.update?
             write(path, current)
