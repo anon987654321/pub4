@@ -733,6 +733,57 @@ module Pub4Admin
     supervised_helper(RAILS_TASK, app, 7200, arguments)
   end
 
+  def call_rcctl(action, service)
+    raise "untrusted rcctl executable" unless trusted_executable?(RCCTL)
+    output = IO.popen([RCCTL, action, service], err: [:child, :out], &:read)
+    status = $?
+    [status&.success? || false, output.to_s]
+  end
+
+  # This is the only operation allowed to pin every production service against
+  # resource_guard shedding. The service set and flag path are both constants.
+  def start_all_apps
+    flag = "/var/db/pub4_all_apps"
+    db_stat = File.lstat("/var/db")
+    raise "/var/db must be a real root-owned, non-writable directory" unless
+      db_stat.directory? && !db_stat.symlink? && db_stat.uid.zero? && (db_stat.mode & 0o022).zero?
+
+    if File.exist?(flag) || File.symlink?(flag)
+      flag_stat = File.lstat(flag)
+      raise "#{flag} must be a root-owned regular file" unless
+        flag_stat.file? && !flag_stat.symlink? && flag_stat.uid.zero? && (flag_stat.mode & 0o022).zero?
+    else
+      begin
+        File.open(flag, File::WRONLY | File::CREAT | File::EXCL, 0o644) {}
+      rescue Errno::EEXIST
+        flag_stat = File.lstat(flag)
+        raise "#{flag} appeared as an unsafe object" unless
+          flag_stat.file? && !flag_stat.symlink? && flag_stat.uid.zero? && (flag_stat.mode & 0o022).zero?
+      end
+    end
+    flag_stat = File.lstat(flag)
+    raise "#{flag} must remain root-owned and non-writable" unless
+      flag_stat.file? && !flag_stat.symlink? && flag_stat.uid.zero? && (flag_stat.mode & 0o222).zero?
+    File.chmod(0o644, flag) unless (flag_stat.mode & 0o777) == 0o644
+
+    services = ["master", *RAILS_APPS]
+    services.each do |service|
+      call_rcctl("enable", service)
+      call_rcctl("start", service)
+    end
+    sleep 5
+    ok, output = call_rcctl("restart", "relayd")
+    raise "relayd restart failed: #{output.strip}" unless ok
+
+    failures = services.filter_map do |service|
+      ok, output = call_rcctl("check", service)
+      "#{service}: #{output.strip}" unless ok
+    end
+    raise "service checks failed: #{failures.join('; ')}" unless failures.empty?
+
+    puts "start_all_apps0: services=#{services.join(',')} flag=#{flag}"
+    0
+  end
   def main(argv)
     raise "must run as root through doas" unless Process.euid.zero?
 
@@ -770,6 +821,8 @@ module Pub4Admin
     if args == ["master-web-runtime-dirs"]
       return master_web_runtime_dirs
     end
+
+    return start_all_apps if args == ["start-all-apps"]
 
     if args.length == 4 && args[0] == "deploy-status"
       return write_deploy_status(*args.drop(1))
