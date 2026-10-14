@@ -14,7 +14,7 @@ case "$app" in
   *) echo "rails-task: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$task" in
-  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate|npm-cache) [ "$#" -eq 2 ] || exit 64 ;;
+  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate|npm-cache|overlay-initializers|overlay-public) [ "$#" -eq 2 ] || exit 64 ;;
   demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
   schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
   *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
@@ -131,6 +131,64 @@ done' ;;
     command="/usr/local/bin/sqlite3 $db_file \"select 1 from $table limit 1;\"" ;;
   ci)
     command="PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 $bundle exec bin/ci" ;;
+  overlay-initializers)
+    command=$(cat <<EOF
+shared=/home/dev/pub4/RAILS/__shared/config/initializers
+target=/home/$app/app/config/initializers
+[ -d "$shared" ] && [ ! -L "$shared" ] || exit 0
+[ -d "/home/$app/app/config" ] && [ ! -L "/home/$app/app/config" ] || exit 1
+if [ -e "$target" ] || [ -L "$target" ]; then
+  [ -d "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$app_uid" ] || exit 1
+else
+  mkdir -p "$target"
+fi
+for entry in "$shared"/* "$shared"/.[!.]*; do
+  [ -e "$entry" ] || continue
+  cp -R "$entry" "$target/"
+done
+EOF
+) ;;
+  overlay-public)
+    command=$(cat <<EOF
+shared=/home/dev/pub4/RAILS/__shared/public
+target=/home/$app/app/public
+[ -d "$shared" ] && [ ! -L "$shared" ] || exit 0
+if [ -e "$target" ] || [ -L "$target" ]; then
+  [ -d "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$app_uid" ] || exit 1
+else
+  mkdir -p "$target"
+fi
+for entry in "$shared"/* "$shared"/.[!.]*; do
+  [ -e "$entry" ] || continue
+  base=${entry##*/}
+  case "$base" in
+    icon.svg|icon.png|icon-192.png|apple-touch-icon.png|favicon.ico|manifest.json|manifest.webmanifest)
+      [ -e "$target/$base" ] && continue
+      ;;
+  esac
+  cp -R "$entry" "$target/"
+done
+shared_bin=/home/dev/pub4/RAILS/__shared/bin
+target_bin=/home/$app/app/bin
+if [ -d "$shared_bin" ] && [ ! -L "$shared_bin" ]; then
+  if [ -e "$target_bin" ] || [ -L "$target_bin" ]; then
+    [ -d "$target_bin" ] && [ ! -L "$target_bin" ] && [ "$(stat -f %u "$target_bin")" = "$app_uid" ] || exit 1
+  else
+    mkdir -p "$target_bin"
+  fi
+  for tool in rubocop brakeman bundler-audit; do
+    if [ -f "$shared_bin/$tool" ] && [ ! -L "$shared_bin/$tool" ]; then
+      cp "$shared_bin/$tool" "$target_bin/$tool"
+      chmod 755 "$target_bin/$tool"
+    fi
+  done
+fi
+rubocop_config=/home/dev/pub4/RAILS/__shared/.rubocop.yml
+if [ -f "$rubocop_config" ] && [ ! -L "$rubocop_config" ]; then
+  cp "$rubocop_config" "/home/$app/app/.rubocop.yml"
+fi
+EOF
+) ;;
 esac
 
 script=$(cat <<EOF
