@@ -182,13 +182,16 @@ class TestCouncilDeadline < Minitest::Test
     assert Clock.expired?, "the stalled council was not cancelled"
   end
 
-  def test_a_stall_in_the_fix_stream_is_reported_but_not_cancelled
+  def test_a_stall_in_the_fix_stream_aborts_the_run
     now = 0.0
     pulse = Master::Fix::RunPulse.new(max_passes: 8, clock: -> { now }, load: -> { 0.0 })
     pulse.observe("fix_loop:pass_start", { pass: 1, file_count: 10 })
     pulse.observe("fix_loop:phase", { stage: :model_fixes })
     now = 700.0
-    refute pulse.stall(now)[:skippable]
+    stalled = pulse.stall(now)
+
+    refute stalled[:skippable]
+    assert stalled[:abort], "a non-advisory stream stall must stop the run"
   end
 
   # A finished file keeps the pass alive for five minutes; silence after that is
