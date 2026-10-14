@@ -90,6 +90,8 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'args == ["master-web-assets-reset"]'
     assert_includes source, 'args == ["master-web-runtime-dirs"]'
     assert_includes source, "def master_web_root!"
+    assert_includes source, "MASTER_WEB_ROOT.split(File::SEPARATOR)"
+    assert_includes source, "File.join(MASTER_WEB_ROOT, \"public\")"
     assert_includes source, "def master_web_tree_paths!(root)"
     assert_includes source, "File.lstat(path)"
     assert_includes source, "Find.find(root)"
