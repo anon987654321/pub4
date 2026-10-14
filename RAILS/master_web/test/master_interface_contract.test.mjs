@@ -8,7 +8,6 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
 const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
-const faceCss = readFileSync(join(publicDir, "face.css"), "utf8");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
 const interaction = readFileSync(join(publicDir, "master_interaction_state.js"), "utf8");
