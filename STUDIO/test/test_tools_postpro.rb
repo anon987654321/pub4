@@ -15,6 +15,20 @@ class TestPostproFilm < Minitest::Test
   POSTPRO_SOURCE = File.join(ToolTest::ROOT, "postpro", "postpro.rb")
   COLOUR_STOCKS = (STOCKS.keys - %i[tri_x ilford_hp5 ilford_delta3200]).freeze
 
+  def test_default_render_directory_is_date_scoped_outside_the_checkout
+    skip "POSTPRO_OUTPUT_DIR is explicitly configured" unless ENV.fetch("POSTPRO_OUTPUT_DIR", "").empty?
+
+    root = ENV.fetch("XDG_DATA_HOME", "").to_s
+    root = File.expand_path("~/Documents") if root.empty?
+    expected_parent = File.expand_path(File.join(root, "dilla-renders"))
+    output_dir = Postpro::Constitution::OUTPUT_DIR
+
+    assert_equal expected_parent, File.dirname(output_dir)
+    assert_match(/\\A\\d{4}-\\d{2}-\\d{2}\\z/, File.basename(output_dir))
+    refute output_dir == ToolTest::ROOT
+    refute output_dir.start_with?("#{ToolTest::ROOT}/")
+  end
+
   # --- the tables agree about which films exist ---------------------------
 
   def test_every_stock_declares_a_speed_and_a_grain_figure
