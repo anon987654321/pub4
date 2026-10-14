@@ -15,6 +15,7 @@ require_relative "gate_regression"
 require_relative "gate_heartbeat"
 require_relative "../trace/dmesg"
 require_relative "../boot/paths"
+require_relative "../fix/resource_budget"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
