@@ -106,11 +106,17 @@ module Master
         stripped = line.strip
         return if stripped.empty?
 
-        if queue_control_mode?
-          return exit_cli if %w[/exit /quit].include?(stripped.downcase)
-          return stop_interactive_queue if stripped.casecmp("/stop").zero?
-          return resume_interactive_queue if stripped.casecmp("/resume").zero?
+        if stripped.casecmp("/stop").zero?
+          return stop_interactive_queue if queue_control_mode? || @turn_worker&.alive?
+          terminal_puts("queue0: no active turn")
+          return
         end
+        if stripped.casecmp("/resume").zero?
+          return resume_interactive_queue if @turn_queue_paused
+          terminal_puts("queue0: queue is not paused")
+          return
+        end
+        return exit_cli if queue_control_mode? && %w[/exit /quit].include?(stripped.downcase)
         if Thread.current != @turn_worker && terminal_ask_pending?
           return if answer_pending_terminal_ask(stripped)
           enqueue_interactive_line(line)
@@ -266,6 +272,7 @@ module Master
         @turn_queue_mutex&.synchronize do
           @turn_queue&.clear
           @turn_queue_paused = true
+          @turn_cancel_requested = true
         end
         turn = @pipeline_thread
         if turn&.alive? && Thread.current != @turn_worker
@@ -295,32 +302,43 @@ module Master
 
       def enqueue_interactive_line(line)
         count = nil
-        busy = nil
+        busy = false
+        paused = false
         full = false
         @turn_queue_mutex.synchronize do
           if @turn_queue.length >= INTERACTIVE_QUEUE_LIMIT
             full = true
           else
-            busy = @turn_worker&.alive?
+            busy = !!@turn_worker&.alive?
             @turn_queue << line.to_s
-            start_interactive_queue_worker_locked unless busy
+            paused = @turn_queue_paused
+            start_interactive_queue_worker_locked unless busy || paused || @closed
             count = @turn_queue.length
           end
         end
-        terminal_puts("queue0: full, #{INTERACTIVE_QUEUE_LIMIT} pending; message not queued") if full
-        terminal_puts("queue0: #{count} queued") if busy && count.positive?
+        if full
+          terminal_puts("queue0: full, #{INTERACTIVE_QUEUE_LIMIT} pending; message not queued")
+        elsif paused && count&.positive?
+          terminal_puts("queue0: #{count} queued, paused")
+        elsif busy && count&.positive?
+          terminal_puts("queue0: #{count} queued")
+        end
         nil
       end
 
-      # Called with @turn_queue_mutex held. The small Thread.pass gate prevents
-      # the new worker from processing a line before @turn_worker owns its ID.
+      # Called with @turn_queue_mutex held. A startup latch replaces a busy
+      # Thread.pass loop and makes worker ownership deterministic.
       def start_interactive_queue_worker_locked
-        return if @turn_worker&.alive? && !@turn_queue_paused
+        return if @closed || @turn_queue_paused || @turn_worker&.alive?
 
-        @turn_worker = Thread.new do
-          Thread.pass until @turn_worker.equal?(Thread.current)
+        ready = Queue.new
+        worker = Thread.new do
+          ready.pop
           drain_interactive_queue
         end
+        worker.report_on_exception = false
+        @turn_worker = worker
+        ready << true
       end
 
       def drain_interactive_queue
@@ -348,7 +366,7 @@ module Master
         @turn_queue_mutex.synchronize do
           if @turn_worker.equal?(worker)
             @turn_worker = nil
-            restart = !@turn_queue_paused && !@turn_queue.empty?
+            restart = !@closed && !@turn_queue_paused && !@turn_queue.empty?
           end
         end
         if restart
@@ -357,20 +375,26 @@ module Master
       end
 
       def stop_interactive_queue
-        @turn_queue_mutex.synchronize { @turn_queue_paused = true }
+        @turn_queue_mutex.synchronize do
+          @turn_queue_paused = true
+          @turn_cancel_requested = true
+        end
         turn = @pipeline_thread
         if turn&.alive?
           canceler = Thread.new { cancel_turn(turn, @turn_children) }
           canceler.join(2)
+          turn.join(1) unless Thread.current == turn
         end
         count = interactive_queue_count
-        terminal_puts("queue0: current turn cancelled; #{count} queued, /resume to continue")
+        status = turn&.alive? ? "cancellation requested" : (turn ? "current turn cancelled" : "queue paused; pending turn will not start")
+        terminal_puts("queue0: #{status}; #{count} queued, /resume to continue")
         nil
       end
 
       def resume_interactive_queue
-        @turn_queue_mutex.synchronize { @turn_queue_paused = false }
         @turn_queue_mutex.synchronize do
+          @turn_queue_paused = false
+          @turn_cancel_requested = false
           start_interactive_queue_worker_locked if !@turn_worker&.alive? && @turn_queue.any?
         end
         count = interactive_queue_count
