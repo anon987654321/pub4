@@ -3,66 +3,9 @@ set -euo pipefail
 # _sync.sh — copy-tree sync and fixed app-user shared-file overlays.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
-# The tar copy is the default path. openrsync runs only when SYNC_USE_OPENRSYNC
-# is set, and a failure there warns and falls through to the same tar copy.
-sync_tree() {
-  local src=$1 dst=$2
-  local delete=${3:-1}
-
-  if [[ -n ${SYNC_USE_OPENRSYNC:-} && $delete != 1 ]]; then
-    ${_PRIV} openrsync -a "${src%/}/." "${dst%/}/" && return 0
-    log_warn "openrsync failed; falling back to tar overlay"
-  elif [[ -n ${SYNC_USE_OPENRSYNC:-} ]]; then
-    log_warn "openrsync disabled for destructive sync; using staged tar copy"
-  fi
-
-  if [[ $delete == 1 ]]; then
-    local parent=${dst:h}
-    local base=${dst:t}
-    local stage="${parent}/.${base}.sync.$$"
-    local old="${parent}/.${base}.previous.$$"
-
-    ${_PRIV} rm -rf "$stage" "$old"
-    ${_PRIV} mkdir -p "$stage"
-
-    if ! tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${stage%/}"; then
-      ${_PRIV} rm -rf "$stage"
-      log_err "staged tar copy failed; destination left untouched"
-      return 1
-    fi
-
-    if [[ -e "$dst" ]]; then
-      if ! ${_PRIV} mv "$dst" "$old"; then
-        ${_PRIV} rm -rf "$stage"
-        log_err "could not stage current destination"
-        return 1
-      fi
-    else
-      old=""
-    fi
-    if ! ${_PRIV} mv "$stage" "$dst"; then
-      if [[ -n "$old" ]]; then
-        ${_PRIV} mv "$old" "$dst" || log_err "CRITICAL: destination restore failed"
-      fi
-      ${_PRIV} rm -rf "$stage"
-      log_err "could not activate staged destination"
-      return 1
-    fi
-    [[ -n "$old" ]] && ${_PRIV} rm -rf "$old"
-  else
-    ${_PRIV} mkdir -p "$dst"
-    if ! tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${dst%/}"; then
-      log_err "tar overlay failed"
-      return 1
-    fi
-  fi
-
-  local entry
-  for entry in "${dst%/}"/**/._*(N) "${dst%/}"/._*(N); do
-    [[ -e $entry ]] || continue
-    ${_PRIV} rm -f "$entry"
-  done
-}
+# Production tree replacement is performed only by the fixed-mode, app-owned
+# pub4-admin rails-sync helper below. No caller-supplied source/destination
+# paths cross into a privileged copy, delete, or rename operation.
 # rails_sync_app_tree APP_NAME MODE — fixed app-user tree synchronization.
 # Source and destination paths are owned by the installed broker helper, not caller input.
 rails_sync_app_tree() {
