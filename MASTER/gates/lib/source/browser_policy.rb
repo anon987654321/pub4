@@ -4,6 +4,7 @@ require "yaml"
 
 module Deploy
   class BrowserPolicyGate
+    ROOT = File.expand_path("../../..", __dir__).freeze
     REQUIRED_HOSTS = %w[127.0.0.1 localhost 0.0.0.0 169.254.169.254].freeze
     REQUIRED_ACTIONS = %w[click set type].freeze
     REQUIRED_INTERACTION_POLICY = {
@@ -22,7 +23,7 @@ module Deploy
     end
 
     def self.run
-      root = Master::ROOT
+      root = ROOT
       policy = YAML.safe_load_file(File.join(root, "data", "laws.yml"), aliases: true).fetch("browser_policy")
       missing_hosts = REQUIRED_HOSTS - Array(policy["forbidden_hosts"]).map { |host| host.to_s.downcase }
       return failure("browser policy missing forbidden hosts: #{missing_hosts.join(", ")}") unless missing_hosts.empty?
