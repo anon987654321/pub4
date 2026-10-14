@@ -47,6 +47,24 @@ class TestStudioOutputPaths < Minitest::Test
     end
   end
 
+  def test_xdg_symlink_into_the_checkout_falls_back_outside_it
+    with_environment("POSTPRO_OUTPUT_DIR", nil) do
+      Dir.mktmpdir do |dir|
+        repo_root = File.expand_path("..", Studio::Visual::IdeaPicture::ROOT)
+        link = File.join(dir, "repository")
+        File.symlink(repo_root, link)
+
+        with_environment("XDG_DATA_HOME", File.join(link, "temporary-output")) do
+          path = Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
+          expected = File.join(File.expand_path("~/Documents"), "dilla-renders", "2026-01-02")
+
+          assert_equal expected, path
+          refute Studio::OutputPaths.inside_repository?(File.join(link, "temporary-output"))
+        end
+      end
+    end
+  end
+
   def test_render_and_reference_paths_share_the_valid_xdg_data_home
     with_environment("POSTPRO_OUTPUT_DIR", nil) do
       with_environment("DILLA_OUTPUT_DIR", nil) do
