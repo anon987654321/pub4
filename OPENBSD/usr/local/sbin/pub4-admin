@@ -196,8 +196,23 @@ module Pub4Admin
           nil
         end
         grace_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+        leader_reaped = false
         loop do
-          break if Process.waitpid(pid, Process::WNOHANG)
+          unless leader_reaped
+            begin
+              leader_reaped = !Process.waitpid(pid, Process::WNOHANG).nil?
+            rescue Errno::ECHILD
+              leader_reaped = true
+            end
+          end
+
+          group_alive = begin
+            Process.kill(0, -pid)
+            true
+          rescue Errno::ESRCH
+            false
+          end
+          break unless group_alive
 
           if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= grace_deadline
             begin
@@ -205,14 +220,16 @@ module Pub4Admin
             rescue Errno::ESRCH
               nil
             end
-            begin
-              Process.waitpid(pid)
-            rescue Errno::ECHILD
-              nil
-            end
             break
           end
           sleep 0.1
+        end
+        unless leader_reaped
+          begin
+            Process.waitpid(pid)
+          rescue Errno::ECHILD
+            nil
+          end
         end
         return 124
       end
