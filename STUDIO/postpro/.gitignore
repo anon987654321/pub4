@@ -1,4 +1,4 @@
-# Renders and daily-rotated diagnostic logs land beside postpro.rb; never track them.
+# Scratch artifacts and daily-rotated diagnostic logs beside postpro.rb; never track them.
 postpro_*
 postpro.log*
 *.tif
