@@ -109,6 +109,7 @@ module Master
       # the output rather than leaving tokens inside the draft.
       def terminal_write(io: $stdout, &block)
         Master::Trace::Dmesg.terminal_write(io:) do |target|
+          clear_reserved_activity_row(target) if io.equal?($stdout)
           block.call(target)
           redraw_active_input if io.equal?($stdout) && @reading_input
         end
@@ -151,6 +152,8 @@ module Master
         @turn_queue_paused = false
         @turn_cancel_requested = false
         @reading_input = false
+        @activity_row_reserved = false
+        @active_prompt = nil
         @terminal_ask_mutex = Mutex.new
         @terminal_ask_cv = ConditionVariable.new
         @pending_terminal_ask = nil
