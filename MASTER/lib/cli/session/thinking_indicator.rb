@@ -110,6 +110,31 @@ module Master
         @think_mutex&.synchronize { @think_paused = false }
       end
 
+      def terminal_ask_pending?
+        @terminal_ask_mutex.synchronize { !@pending_terminal_ask.nil? }
+      end
+
+      def answer_pending_terminal_ask(line)
+        text = line.to_s.strip
+        @terminal_ask_mutex.synchronize do
+          request = @pending_terminal_ask
+          return false unless request
+          answer = if text.empty?
+                     ""
+                   elsif text.match?(%r{\A/deny\z}i)
+                     "no"
+                   elsif text.match?(%r{\A/approve(?:\s+.*)?\z}i)
+                     value = text.sub(%r{\A/approve}i, "").strip
+                     value.empty? && request[:choices].empty? ? "yes" : value
+                   else
+                     return false
+                   end
+          request[:answer] = answer
+          @terminal_ask_cv.broadcast
+          true
+        end
+      end
+
       # LLMs may serialize approval choices as an array, a single choice object,
       # or a name => value map. Normalize those shapes before indexing; an
       # unnormalized Hash was enumerated as key/value pairs and raised a
