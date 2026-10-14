@@ -258,7 +258,7 @@ module Pub4Admin
   rescue ArgumentError => e
     raise "account #{app} could not be established: #{e.message}"
   end
-  def ensure_app_secret(app)
+  def ensure_app_secret(app, emit: true)
     return 64 unless APPS.include?(app)
 
     candidates = ["/etc/#{app}.env", "/etc/rails/#{app}.env"]
@@ -273,7 +273,7 @@ module Pub4Admin
         match && match[1]
       end.first
       if secret
-        puts secret
+        puts secret if emit
         return 0
       end
     end
@@ -299,7 +299,7 @@ module Pub4Admin
       File.chown(0, group_id, temporary)
       File.chmod(0o640, temporary)
       File.rename(temporary, target)
-      puts secret
+      puts secret if emit
       0
     ensure
       File.unlink(temporary) if File.exist?(temporary)
@@ -600,7 +600,16 @@ module Pub4Admin
                 end
     trusted_script!(helper)
     if helper == RAILS_TASK && %w[db-prepare db-seed demo-seed assets-precompile schema-load ci].include?(arguments[1])
-      environment_secret = app_secret_value(app)
+      begin
+        environment_secret = app_secret_value(app)
+      rescue RuntimeError => error
+        raise unless error.message == "no valid SECRET_KEY_BASE for #{app}"
+
+        # First deploy may not have an app secret yet. Create it through the same
+        # fixed, atomic broker code, but never print it into command output/logs.
+        ensure_app_secret(app, emit: false)
+        environment_secret = app_secret_value(app)
+      end
     end
     environment = if [CI_SYNC, RAILS_SYNC].include?(helper)
                     { "PATH" => "/usr/local/bin:/usr/bin:/bin",
