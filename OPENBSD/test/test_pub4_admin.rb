@@ -86,6 +86,15 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS"
     assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
   end
+  def test_npm_cache_task_is_app_owned_and_symlink_safe
+    broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    assert_includes broker, "npm-cache"
+    assert_includes helper, "npm-cache)"
+    assert_includes helper, 'for cache_dir in "$app_home/.npm" "$app_home/.cache"; do'
+    assert_includes helper, '[ "$(stat -f %u "$cache_dir")" = "$app_uid" ]'
+    assert_includes helper, 'command="mkdir -p /home/$app/.npm /home/$app/.cache"'
+  end
   def test_rails_task_refuses_symlinked_database_ancestors
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
     assert_includes helper, '[ ! -L "$app_dir/db" ]'
