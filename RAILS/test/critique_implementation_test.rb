@@ -468,6 +468,27 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".post-show-comments"
   end
 
+  def test_amber_season_selectors_localize_labels_and_keep_enum_values
+    helper = read("amber/app/helpers/application_helper.rb")
+    views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]
+    en = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/en.yml")).fetch("en").fetch("outfits").fetch("seasons")
+    nb = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/nb.yml")).fetch("nb").fetch("outfits").fetch("seasons")
+
+    assert_includes helper, "def amber_season_options"
+    assert_includes helper, 'Item::SEASONS.map do |season|'
+    assert_includes helper, '[t("outfits.seasons.#{key}"), season]'
+    views.each do |view|
+      source = read("amber/app/views/#{view}")
+      assert_includes source, "amber_season_options", "#{view} should use the canonical translated options"
+      refute_match(/f\.select :season, Item::SEASONS/, source, "#{view} must not expose enum values as UI labels")
+    end
+    { "spring" => ["Spring", "Vår"], "summer" => ["Summer", "Sommer"],
+      "autumn" => ["Autumn", "Høst"], "winter" => ["Winter", "Vinter"],
+      "all_season" => ["All-season", "Hele året"] }.each do |key, (english, norwegian)|
+      assert_equal english, en.fetch(key)
+      assert_equal norwegian, nb.fetch(key)
+    end
+  end
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
     index = read("amber/app/views/items/index.html.erb")
     show = read("amber/app/views/items/show.html.erb")
