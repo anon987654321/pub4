@@ -38,12 +38,62 @@ master_scan_dep() {
 
 # run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
 run_rails_as_app() {
-  local app_name=$1 app_dir=$2
-  shift 2
+  local app_name=$1 app_dir=$2 task=${3:-} database=${4:-}
+  local secret command npm_cache
+  case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
+  case "$task" in
+    ci-bundle-install|bundle-check|db-prepare|db-seed|demo-seed|assets-precompile|ci) [[ -z $database ]] || return 2 ;;
+    schema-load|secondary-db-check) [[ $database == cache || $database == queue || $database == cable ]] || return 2 ;;
+    *) log_err "run_rails_as_app: refused task: $task"; return 2 ;;
+  esac
+  [[ $task != demo-seed || $app_name == brgen || $app_name == amber ]] || return 2
+
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    if [[ $task == schema-load || $task == secondary-db-check ]]; then
+      ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task" "$database"
+    else
+      ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task"
+    fi
+    return $?
+  fi
+
   ensure_npm_cache "$app_name"
-  local npm_cache="/home/${app_name}/.npm"
-  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && $*'"
-}
+  npm_cache="/home/${app_name}/.npm"
+  case "$task" in
+    ci-bundle-install)
+      command="${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" ;;
+    bundle-check)
+      command="${BUNDLE} check" ;;
+    db-prepare)
+      secret=$(app_secret_for "$app_name") || return 1
+      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare" ;;
+    db-seed)
+      secret=$(app_secret_for "$app_name") || return 1
+      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:seed" ;;
+    demo-seed)
+      secret=$(app_secret_for "$app_name") || return 1
+      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails ${app_name}:demo_seed" ;;
+    assets-precompile)
+      secret=$(app_secret_for "$app_name") || return 1
+      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails assets:precompile" ;;
+    ci)
+      secret=$(app_secret_for "$app_name") || return 1
+      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
+      command="SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 ${BUNDLE} exec bin/ci" ;;
+    schema-load)
+      secret=$(app_secret_for "$app_name") || return 1
+      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
+      command="SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production ${BUNDLE} exec rails db:schema:load:${database}" ;;
+    secondary-db-check)
+      return 1 ;; # The fallback path below still owns the legacy sqlite3 check.
+  esac
+  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=/home/${app_name}/.cache; export BUNDLE_USER_HOME=/home/${app_name}/.bundle; unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT; cd ${app_dir} && ${command}'"
+
 
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
 rails_runtime_gate() {
