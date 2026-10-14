@@ -303,6 +303,36 @@ end
     assert_match(/full, #{Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT} pending; message not queued/, output)
   end
 
+  def test_stop_pauses_without_discarding_messages_and_resume_restarts_the_queue
+    queue = @cli.instance_variable_get(:@turn_queue)
+    @cli.instance_variable_get(:@turn_queue_mutex).synchronize { queue << "follow-up" }
+
+    output, = capture_io { @cli.send(:stop_interactive_queue) }
+    assert_match(/queue paused; pending turn will not start/, output)
+    assert_equal ["follow-up"], queue
+    assert @cli.instance_variable_get(:@turn_queue_paused)
+    assert @cli.instance_variable_get(:@turn_cancel_requested)
+
+    @cli.stub(:start_interactive_queue_worker_locked, -> { @cli.instance_variable_set(:@queue_worker_started_for_test, true) }) do
+      output, = capture_io { @cli.send(:resume_interactive_queue) }
+      assert_match(/resuming, 1 queued/, output)
+    end
+    refute @cli.instance_variable_get(:@turn_queue_paused)
+    refute @cli.instance_variable_get(:@turn_cancel_requested)
+    assert @cli.instance_variable_get(:@queue_worker_started_for_test)
+    assert_equal ["follow-up"], queue
+  end
+
+  def test_dispatch_turn_refuses_to_start_after_a_stop_race
+    @cli.instance_variable_set(:@turn_cancel_requested, true)
+
+    result = @cli.send(:dispatch_turn, "must not start", accumulated: +"", state: {})
+
+    refute result.ok?
+    assert_match(/cancelled before dispatch/, result.message)
+    assert_nil @cli.instance_variable_get(:@pipeline_thread)
+  end
+
   def test_interactive_queue_processes_submissions_in_order
     seen = []
     started = Queue.new
