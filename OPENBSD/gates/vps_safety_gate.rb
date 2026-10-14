@@ -90,6 +90,19 @@ if File.file?(admin_path)
   else
     failures << "missing tracked usr/local/libexec/ci-prepare.ksh"
   end
+  runner_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-run.ksh")
+  if File.file?(runner_path)
+    runner = File.read(runner_path)
+    unless runner.include?("brgen|amber|bsdports") &&
+           runner.include?('[ "$timeout" -le 7200 ]') &&
+           runner.include?('cd /home/$app/app') &&
+           runner.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
+           runner.include?('/usr/local/bin/bundle')
+      failures << "ci-run helper must use a fixed app, bounded timeout and system Bundler"
+    end
+  else
+    failures << "missing tracked usr/local/libexec/ci-run.ksh"
+  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
