@@ -64,14 +64,14 @@ class TestGateChain < Minitest::Test
   def test_gate_capture_refuses_to_start_a_child_when_disk_is_critical
     Dir.mktmpdir do |dir|
       G.stub(:disk_state, ->(*) { { free_gb: 1.0, critical: true } }) do
-        G.stub(Master::Trace::Dmesg, :status, ->(*) {}) do
+        Master::Trace::Dmesg.stub(:status, ->(*) {}) do
           ok, lines, status = G.capture(
             RbConfig.ruby, "-e", "File.write('sentinel', 'bad')", chdir: dir
           )
 
           refute ok
           assert_equal 1, status
-          assert_match(/disk preflight/, lines.join("\\n"))
+          assert_match(/disk preflight/, lines.join("\n"))
           refute File.exist?(File.join(dir, "sentinel")), "child wrote despite critical disk pressure"
         end
       end
@@ -89,7 +89,7 @@ class TestGateChain < Minitest::Test
 
         refute ok
         assert_equal 124, status
-        assert_match(/gate child timeout/, lines.join("\\n"))
+        assert_match(/gate child timeout/, lines.join("\n"))
         assert_operator elapsed, :<, 3, "the gate child was left running after its deadline"
       end
     end
@@ -113,7 +113,7 @@ class TestGateChain < Minitest::Test
 
         refute ok
         assert_equal 1, status
-        assert_match(/disk guard/, lines.join("\\n"))
+        assert_match(/disk guard/, lines.join("\n"))
         assert_operator elapsed, :<, 3, "the gate child continued writing after disk pressure"
       end
     end
