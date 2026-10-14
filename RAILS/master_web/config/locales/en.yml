@@ -101,6 +101,8 @@ en:
       message_quote: "Quote"
       message_simpler: "Simpler explanation"
       message_deeper: "More detail"
+      message_simpler_prompt: "Please explain this more simply:"
+      message_deeper_prompt: "Go deeper on this answer:"
       mic_unavailable: "mic unavailable in this browser"
       shortcuts_aria: "Keyboard shortcuts"
       shortcuts_title: "shortcuts"
