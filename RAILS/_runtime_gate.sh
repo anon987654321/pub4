@@ -42,7 +42,7 @@ run_rails_as_app() {
   case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
   [[ $app_dir == "/home/${app_name}/app" ]] || { log_err "run_rails_as_app: refused app path: $app_dir"; return 2; }
   case "$task" in
-    bundle-install|ci-bundle-install|bundle-check|db-storage-migrate|db-prepare|db-seed|demo-seed|assets-precompile|ci|overlay-initializers|overlay-public) [[ -z $database ]] || return 2 ;;
+    bundle-install|ci-bundle-install|bundle-check|bundle-cache-prepare|db-storage-migrate|db-prepare|db-seed|demo-seed|assets-precompile|ci|overlay-initializers|overlay-public) [[ -z $database ]] || return 2 ;;
     schema-load|secondary-db-check) [[ $database == cache || $database == queue || $database == cable ]] || return 2 ;;
     *) log_err "run_rails_as_app: refused task: $task"; return 2 ;;
   esac
