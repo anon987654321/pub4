@@ -12,36 +12,38 @@ class TestToolsMedia < Minitest::Test
   POSTPRO = File.join(ROOT, "MASTER/tools", "postpro", "postpro.rb")
   REPLICATE = File.join(ROOT, "MASTER/tools", "replicate", "replicate.rb")
 
-  def test_postpro_unread_temp_is_a_vocab_check_error
+  def test_postpro_key_readers_cover_every_declared_preset_knob
     source = File.read(POSTPRO)
-    assert_match(/temp:\s*%w\[spectral_temp color_temp\]/, source,
-                 "temp: must sit in key_readers next to stops:/lens:/age:, not in a NOTE")
-    refute_match(/deliberately not fatal/, source)
+    expected = {
+      "stops" => %w[push_pull],
+      "age" => %w[faded_print dye_fade expired_film],
+      "print_stock" => %w[print_film],
+      "exposure_secs" => %w[reciprocity_failure],
+      "k1" => %w[lens_distortion],
+      "f_number" => %w[diffraction_blur],
+      "tonemap_ev" => %w[tonemap],
+      "temp" => %w[spectral_temp color_temp],
+      "tonemap" => %w[tonemap],
+      "azimuth" => %w[relight],
+      "shape" => %w[relight]
+    }
 
-    # Every preset that sets temp: has to name a step that reads it. Parsed
-    # from the table rather than by booting postpro: ruby-vips is not in
-    # MASTER's bundle, and `bundle exec rake test` is how this file runs.
-    source.scan(/^  ([a-z0-9_]+): \{ fx: %w\[([^\]]+)\]([^}]*)\}/m).each do |name, fx, rest|
-      next unless rest.match?(/\btemp:/)
-      assert(fx.split.intersect?(%w[spectral_temp color_temp]),
-             "#{name} sets temp: but its chain has no spectral_temp/color_temp step")
+    reader_source = source[/key_readers = \{(.*?)^  \}/m, 1]
+    assert reader_source, "postpro must define its preset key-reader contract"
+    actual = reader_source.scan(/([a-z_][a-z0-9_]*):\s*%w\[([^\]]+)\]/)
+                          .to_h { |key, readers| [key, readers.split] }
+    assert_equal expected, actual, "every operator-set preset knob needs one declared reader"
+
+    presets = source.scan(/^  ([a-z0-9_]+): \{ fx: %w\[([^\]]+)\]([^}]*)\}/m)
+    assert_operator presets.size, :>, 0, "preset scanner must reach the source table"
+    expected.each do |key, readers|
+      matching = presets.select { |_, _, rest| rest.match?(/\b#{Regexp.escape(key)}:/) }
+      assert_operator matching.size, :>, 0, "preset scanner must see declarations of #{key}:"
+      matching.each do |name, fx, _rest|
+        assert(fx.split.intersect?(readers),
+               "#{name} declares #{key}: but its chain has no #{readers.join('/')} reader")
+      end
     end
-  end
-
-  def test_postpro_print_stock_is_applied_by_each_declaring_preset
-    source = File.read(POSTPRO)
-    assert_match(/print_stock:\s*%w\[print_film\]/, source,
-                 "print_stock: must be registered as a key read by print_film")
-
-    seen = 0
-    source.scan(/^  ([a-z0-9_]+): \{ fx: %w\[([^\]]+)\]([^}]*)\}/m).each do |name, fx, rest|
-      next unless rest.match?(/\bprint_stock:/)
-
-      seen += 1
-      assert_includes fx.split, "print_film",
-                      "#{name} declares print_stock: but never applies print_film"
-    end
-    assert_operator seen, :>, 0, "preset source scan must see print_stock declarations"
   end
 
   def test_postpro_rejects_unknown_presets_instead_of_silently_returning_the_input
