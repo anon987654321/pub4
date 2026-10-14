@@ -68,6 +68,10 @@ module Master
       # final report. Unlike load or RSS pressure, it must stop writes early.
       def disk_critical?(measurement)
         free_gb = measurement.dig(:values, :disk_free_gb)
+        # A failure in another resource probe must not be mistaken for full
+        # disk. Recheck the disk independently, then fail closed only if that
+        # specific measurement is still unavailable.
+        free_gb = disk_free_gb if free_gb.nil?
         return true if free_gb.nil?
 
         free_gb <= resource_limit("disk_free_gb", "crit")
