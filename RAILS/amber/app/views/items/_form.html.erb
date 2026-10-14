@@ -20,7 +20,7 @@
   <div class="field"><%= f.label :purchase_date %><%= f.date_field :purchase_date %></div>
   <div class="field">
     <%= f.label :season %>
-    <%= f.select :season, Item::SEASONS, include_blank: t("outfits.select_blank") %>
+    <%= f.select :season, amber_season_options, include_blank: t("outfits.select_blank") %>
   </div>
   <div class="field">
     <%= f.label :occasion_tags, t("items.occasions_label") %>
