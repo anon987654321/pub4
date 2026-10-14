@@ -46,6 +46,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_broker_must_keep_ci_lock_fixed_and_symlink_safe
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      File.write(path, File.read(path).sub('return ensure_ci_lock if args == ["ci-lock"]', "return ensure_ci_lock if args.first == \"ci-lock\""))
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "pub4-admin CI lock must use one fixed path and refuse symlinks"
+    end
+  end
+
   def test_keepenv_on_the_dev_rule_is_refused
     with_fixture do |dir, doas|
       File.write(doas, File.read(doas).sub(/permit nopass setenv \{[^}]*\} dev as root/, "permit nopass keepenv dev as root"))
