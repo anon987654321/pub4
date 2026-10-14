@@ -59,6 +59,12 @@ class VpsDeployContractTest < Minitest::Test
     )
   end
 
+  def test_workstation_per_app_mode_uses_canonical_unprivileged_supervisor
+    script = File.read(File.join(ROOT, "OPENBSD", "bin", "deploy_all.sh"), encoding: "UTF-8")
+    assert_includes script, 'zsh OPENBSD/bin/vps-deploy ${app}'
+    refute_includes script, 'doas zsh ${script}'
+    refute_includes script, 'RAILS/${app}/${app}.sh'
+  end
   def test_ci_rejects_unknown_target_before_interpolating_a_path
     guard = CI_SOURCE[/^case \$app in\n.*?^esac$/m]
     refute_nil guard, "vps_ci app allowlist missing — arbitrary strings may reach path construction"
