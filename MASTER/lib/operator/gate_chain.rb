@@ -45,8 +45,18 @@ module Operator
     MASTER = File.join(ROOT, "MASTER")
     RUBY = Operator::RubyRunner.gate_ruby
     BUNDLE = Operator::RubyRunner.bundle_cmd
-    CHILD_TIMEOUT_S = 5_400
+    CHILD_TIMEOUT_S = 1_800
     DISK_POLL_INTERVAL_S = 30
+    SUITE_TIMEOUTS = {
+      "MASTER" => 1_800,
+      "RAILS contracts" => 1_200,
+      "brgen suite" => 1_200,
+      "amber suite" => 1_200,
+      "bsdports suite" => 1_200,
+      "OPENBSD" => 600,
+      "tools" => 900,
+      "STUDIO media" => 900,
+    }.freeze
 
     # Paths nothing writes by hand. `bin/gate` has said in a comment for months
     # that scanner.rb skips `cache` but not `.cache`, so /fix descends into
@@ -516,8 +526,10 @@ end
 
     def suites(trees = TREES)
       results = suite_jobs(trees).map do |name, cmd, dir, env, _tree, unbundled|
+        timeout_s = suite_timeout_s(name)
+        Master::Trace::Dmesg.status("suite0", "#{name} starting, timeout #{timeout_s}s")
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        ok, out = capture(*cmd, chdir: dir, env:, unbundled:, label: name, heartbeat_unit: "suite0")
+        ok, out = capture(*cmd, chdir: dir, env:, unbundled:, timeout_s:, label: name, heartbeat_unit: "suite0")
         elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round
         Master::Trace::Dmesg.status("suite0", "#{name} #{ok ? "ok" : "FAIL"}, elapsed #{elapsed}s")
         [name, ok, out]
@@ -643,17 +655,22 @@ end
       value&.positive? ? value : CHILD_TIMEOUT_S
     end
 
+    def suite_timeout_s(name)
+      env_name = "PUB4_GATE_TIMEOUT_#{name.upcase.gsub(/[^A-Z0-9]+/, "_")}"
+      fallback = SUITE_TIMEOUTS.fetch(name, child_timeout_s)
+      value = Integer(ENV.fetch(env_name, fallback.to_s), exception: false)
+      value&.positive? ? value : fallback
+    end
+
     # Use the same resource budget and critical floor as /fix. Check every volume
     # that can hold source, temporary artifacts or evidence; an unknown reading
     # blocks a new child instead of allowing it to exhaust the filesystem.
     def disk_state(paths)
-      readings = Array(paths).uniq.map do |path|
-        Master::Fix::ResourceBudget.new(root: path).disk_free_gb_for
-      end
+      budget = Master::Fix::ResourceBudget.new(root: ROOT)
+      readings = Array(paths).uniq.map { |path| budget.disk_free_gb_for(path) }
       return { free_gb: nil, critical: true } if readings.empty? || readings.any?(&:nil?)
 
       free_gb = readings.min
-      budget = Master::Fix::ResourceBudget.new(root: ROOT)
       { free_gb:, critical: budget.disk_critical?({ values: { disk_free_gb: free_gb } }) }
     rescue StandardError
       { free_gb: nil, critical: true }
