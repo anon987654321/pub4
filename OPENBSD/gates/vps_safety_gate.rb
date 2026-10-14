@@ -157,6 +157,15 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
     failures << "missing tracked usr/local/libexec/ci-run.ksh"
   end
 
+  relayd_contract = admin.include?('args.length == 4 && args[0] == "relayd-check"') &&
+                    admin.include?("def relayd_check(app, domain, requested_port)") &&
+                    admin.include?("File.lstat(RELAYD_CONFIG)") &&
+                    admin.include?("no operator-approved Host route for #{domain}") &&
+                    admin.include?("requested port does not match the root-configured backend") &&
+                    !admin.include?("def relayd_add(app, domain, requested_port)") &&
+                    !admin.include?("File.rename(temporary, RELAYD_CONFIG)") &&
+                    !admin.match?(/IO\.popen\(\s*["']/)
+  failures << "relayd broker must be verification-only and reject unapproved Host routes" unless relayd_contract
   secret_dispatch = admin.include?('args[0] == "ensure-secret" && APPS.include?(args[1])') &&
                   admin.include?("def ensure_app_secret(app)") &&
                   admin.include?("File::CREAT | File::EXCL") &&
