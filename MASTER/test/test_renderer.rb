@@ -103,18 +103,18 @@ class TestRenderer < Minitest::Test
 
     assert_includes strip_ansi(state), "model: "
     assert_no_match(/\n|\r/, strip_ansi(prompt))
-    assert_match(/\|-\z/, strip_ansi(prompt))
+    assert_match(/input\z/, strip_ansi(prompt))
   end
 
-  def test_phase_prompt_uses_the_established_input_glyph_without_the_glyph_helper
+  def test_phase_prompt_uses_the_plain_openbsd_operator_words
     renderer = FakeRenderer.new(config: {})
 
     # The input glyph predates the convenience method; a missing helper must not
     # make the whole CLI fail at startup when the underlying ASCII contract exists.
     Master::Face::Contract.stub(:glyph, nil) do
-      assert_equal "|-", renderer.phase_prompt(true, "discover")
+      assert_equal "input", renderer.phase_prompt(true, "discover")
     end
-    assert_equal "!", renderer.phase_prompt(false, "discover")
+    assert_equal "error input", renderer.phase_prompt(false, "discover")
   end
 
   def test_shell_prompt_glyphs_come_from_the_shared_face_contract
@@ -139,7 +139,7 @@ class TestRenderer < Minitest::Test
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
     assert_includes strip_ansi(state), "ctx: 45.0k/128.0k"
-    assert_match(/\|-\z/, strip_ansi(prompt))
+    assert_match(/input\z/, strip_ansi(prompt))
   end
 
   # A dmesg is legible on a serial console: no box drawing, no arrows, no
@@ -174,10 +174,11 @@ class TestRenderer < Minitest::Test
 
     assert_equal 1, lines.size
     assert_match(/\A\S+ \S+/, lines.first)
-    assert_includes lines.first, "/"
+    refute_includes lines.first, "/"
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_match(/llm discover \|-\z/, lines.first)
+    assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
+    assert_match(/llm discover input\z/, lines.first)
     refute_match(/\e\[/, prompt, "the OpenBSD-console prompt does not need ANSI segment styling")
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
@@ -189,8 +190,10 @@ class TestRenderer < Minitest::Test
         _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
         clean = strip_ansi(prompt)
 
-        assert_match(/\A.+ main ahead 2 llm discover \|-\z/, clean)
-        assert_includes clean, "/"
+        assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
+        assert_includes clean, "main ahead 2"
+        assert_match(/llm discover input\z/, clean)
+        refute_includes clean, "/"
         refute_match(/\e\[/, prompt)
         assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       end
@@ -201,7 +204,7 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     _state, prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
 
-    assert_match(/read-only:irc:#help discover \|-\z/, strip_ansi(prompt))
+    assert_match(/read only irc help discover input\z/, strip_ansi(prompt))
     assert_operator strip_ansi(prompt).length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
@@ -218,10 +221,11 @@ class TestRenderer < Minitest::Test
 
       assert_no_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes clean, "read-only:irc:#a-very-"
-      assert_includes clean, "feature/ dirty"
-      assert_match(/\|-\z/, clean)
-      assert_includes clean, "/"
+      assert_includes clean, "read only irc a very"
+      assert_includes clean, "feature dirty"
+      assert_match(/input\z/, clean)
+      assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
+      refute_includes clean, "/"
     end
   end
 
