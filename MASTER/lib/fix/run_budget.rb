@@ -237,7 +237,14 @@ module Master
 
         @say.call(stalled[:line])
         Master::Review::LLMDispatcher::PassClock.cancel!("stalled") if stalled[:skippable]
-        abort_run!(stalled[:line].sub(/\Afix0: STALLED /, "stalled, ")) if stalled[:abort]
+        return unless stalled[:abort]
+
+        reason = stalled[:line].sub(/\Afix0: STALLED /, "stalled, ")
+        if ENV["MASTER_FIX_ABORT_ON_STALL"] == "0"
+          @say.call("fix0: STALL REPORT ONLY #{reason}")
+        else
+          abort_run!(reason)
+        end
       end
 
       # One machine-readable heartbeat a minute, whatever the human line says.
