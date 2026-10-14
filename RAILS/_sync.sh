@@ -68,7 +68,12 @@ overlay_shared_initializers() {
   local app_dir=$1
   local shared_init=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/config/initializers
   [[ -d $shared_init ]] || return 0
-  sync_tree "$shared_init" "${app_dir}/config/initializers" 0
+  local app_name=${app_dir:h:t}
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "shared initializer overlay refused: pub4-admin is missing"
+    return 1
+  }
+  run_rails_as_app "$app_name" "$app_dir" "overlay-initializers" || return $?
   log_ok "shared initializers overlaid (merge, app-specific files preserved)"
 }
 
@@ -77,21 +82,14 @@ overlay_shared_initializers() {
 overlay_shared_public() {
   local app_dir=$1
   local shared_public=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/public
-  local entry
   [[ -d $shared_public ]] || return 0
-  ${_PRIV} mkdir -p "${app_dir}/public"
-  for entry in "$shared_public"/*(N) "$shared_public"/.[!.]*(N); do
-    [[ -e $entry ]] || continue
-    local base=${entry:t}
-    case $base in
-      icon.svg|icon.png|icon-192.png|apple-touch-icon.png|favicon.ico|manifest.json|manifest.webmanifest)
-        [[ -e ${app_dir}/public/$base ]] && continue
-        ;;
-    esac
-    ${_PRIV} cp -R "$entry" "${app_dir}/public/"
-  done
-  log_ok "shared public assets overlaid"
-  overlay_shared_bin "$app_dir"
+  local app_name=${app_dir:h:t}
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "shared public overlay refused: pub4-admin is missing"
+    return 1
+  }
+  run_rails_as_app "$app_name" "$app_dir" "overlay-public" || return $?
+  log_ok "shared public assets and bin stubs overlaid"
 }
 
 # overlay_shared_bin APP_DIR — ci.rb expects bin/rubocop, brakeman, bundler-audit stubs
