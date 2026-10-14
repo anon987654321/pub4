@@ -193,6 +193,7 @@ install_root_configs() {
     usr/local/libexec/ci-run.ksh
     usr/local/libexec/ci-sync.ksh
     usr/local/libexec/rails-task.ksh
+    usr/local/libexec/rails-sync.ksh
     gates/solid_queue_proof.rb
     bin/resource_guard.sh
   )
