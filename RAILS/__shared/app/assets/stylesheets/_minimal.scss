@@ -122,12 +122,7 @@ nav a:hover {
   color: var(--black);
 }
 
-nav .brand {
-  font-weight: var(--weight-bold);
-  margin-inline-end: auto;
-  color: var(--black);
-  text-decoration: none;
-}
+
 
 /* .skip-nav went with shared/frontend/layouts/_nav.html.erb, the pre-engine
    layout that was its only consumer. Every live app uses .skip-link. */
@@ -361,10 +356,7 @@ footer {
   direction: rtl;
 }
 
-[dir="rtl"] nav .brand {
-  margin-inline-end: 0;
-  margin-inline-start: auto;
-}
+
 
 /* Scaled down to fit a small phone, undone from xs up. A transform rather than a
    type step is not what this would be if it were written today — scaling text
