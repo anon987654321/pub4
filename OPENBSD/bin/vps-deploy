@@ -51,6 +51,10 @@ case $app in
   all|master|brgen|amber|bsdports) ;;
   *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
 esac
+[[ -f /usr/local/sbin/pub4-admin && -x /usr/local/sbin/pub4-admin && ! -L /usr/local/sbin/pub4-admin ]] || {
+  print -u2 "vps-deploy: pub4-admin missing; run reviewed OPENBSD/OPERATOR.sh first"
+  exit 1
+}
 
 # One host, one deploy. The parent all process keeps this lock while its
 # re-entrant child processes deploy each app in order; a second top-level deploy
@@ -209,16 +213,10 @@ repo=${PUB4_ROOT:-/home/dev/pub4}
 admin_service() {
   local action=${1:-}
   shift || true
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    if [[ $action == list-started ]]; then
-      doas /usr/local/sbin/pub4-admin service list-started
-    else
-      doas /usr/local/sbin/pub4-admin service "$action" "$@"
-    fi
-  elif [[ $action == list-started ]]; then
-    doas rcctl ls started
+  if [[ $action == list-started ]]; then
+    doas /usr/local/sbin/pub4-admin service list-started
   else
-    doas rcctl "$action" "$@"
+    doas /usr/local/sbin/pub4-admin service "$action" "$@"
   fi
 }
 
@@ -546,19 +544,10 @@ fi
 
 write_stamp() {
   local name=$1 stamp_status=$2
-  local sha started file
+  local sha
   stamp_written=1
   sha=$(git -C "$repo" rev-parse --short HEAD)
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    admin_request stamp "$name" "$sha" "$stamp_status"
-    return $?
-  fi
-  started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  file=$stamp_dir/last_deploy_${name}.json
-  doas tee "$file" >/dev/null <<EOF
-{"app":"$name","sha":"$sha","at":"$started","status":"$stamp_status","host":"$(hostname)"}
-EOF
-  doas chmod 644 "$file" 2>/dev/null || true
+  admin_request stamp "$name" "$sha" "$stamp_status"
 }
 
 deploy_stage=master
@@ -620,11 +609,7 @@ done
 
 deploy_stage=preflight
 print "vps-deploy: $app (preflight load)"
-if [[ -x /usr/local/sbin/pub4-admin ]]; then
-  admin_request resource-guard || true
-elif [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then
-  doas ksh "$repo/OPENBSD/bin/resource_guard.sh" || true
-fi
+admin_request resource-guard || true
 
 hold_deploy_flag
 
@@ -791,11 +776,8 @@ deploy_stage=solid_queue
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
   print "vps-deploy: $app (solid_queue proof)"
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    admin_request solid-queue-proof "$app"
-  else
-    doas "$RUBY" "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app"
-  fi || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
+  admin_request solid-queue-proof "$app" \
+    || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 
 # Restore whatever the guard shed while we were deploying.
