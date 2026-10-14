@@ -4,8 +4,8 @@ set -eu
 PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 export PATH
 
-app=\${1:-}
-timeout=\${2:-}
+app=${1:-}
+timeout=${2:-}
 case "$app" in
   brgen|amber|bsdports) ;;
   *) echo "ci-run: refused unknown app: $app" >&2; exit 64 ;;
@@ -27,8 +27,8 @@ for ruby_path in /usr/local/bin/ruby4.0 /usr/local/bin/ruby40 \
                  /usr/local/bin/ruby; do
   if [ -x "$ruby_path" ]; then
     found_ruby=1
-    base=\${ruby_path##*/}
-    suffix=\${base#ruby}
+    base=${ruby_path##*/}
+    suffix=${base#ruby}
     candidate="/usr/local/bin/bundle$suffix"
     [ ! -x "$candidate" ] || bundle=$candidate
     break
