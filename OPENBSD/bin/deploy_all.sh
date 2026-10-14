@@ -9,7 +9,7 @@
 #
 # Usage:
 #   zsh OPENBSD/bin/deploy_all.sh
-#   zsh OPENBSD/bin/deploy_all.sh --per-app   # also run RAILS/<app>/<app>.sh (copies to /home/<app>/app)
+#   zsh OPENBSD/bin/deploy_all.sh --per-app   # also run the canonical vps-deploy once per app
 #
 # Host, login and key come from lib/ssh_vm23.sh, the one copy of them:
 # SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@…` yields
@@ -79,7 +79,7 @@ if ! vssh "cd ${REMOTE_PUB4} && doas zsh OPENBSD/OPERATOR.sh --stage-2"; then
 fi
 
 if (( run_per_app )); then
-  log "Optional per-app deploy scripts (/home/<app>/app layout)..."
+  log "Optional canonical per-app vps-deploy runs..."
   for app in $APPS; do
     typeset script="${REMOTE_PUB4}/OPENBSD/bin/vps-deploy"
     log "  ${app}..."
