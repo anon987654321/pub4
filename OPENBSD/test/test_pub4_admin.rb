@@ -42,7 +42,7 @@ class Pub4AdminTest < Minitest::Test
 
     refute_match(/system\s*\(|Open3\.|Process\.spawn|%x/, source)
     assert_includes source, "exec(*command)"
-    assert_includes source, 'raise "must run as root through doas" unless Process.uid.zero?'
+    assert_includes source, 'raise "must run as root through doas" unless Process.euid.zero?'
   end
 
   def test_privileged_helpers_must_be_root_owned_and_non_writable
