@@ -53,6 +53,18 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_operator_install_preflights_privileged_source_files
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "OPERATOR.sh")
+      text = File.read(path).sub('if [[ ! -f $src/$rel || -L $src/$rel ]]; then',
+                              'if [[ ! -f $src/$rel ]]; then')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "OPERATOR.sh must preflight privileged sources before copying"
+    end
+  end
   def test_operator_install_refuses_symlinked_broker_helpers
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
