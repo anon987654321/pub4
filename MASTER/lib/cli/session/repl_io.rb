@@ -185,6 +185,7 @@ module Master
 
       def exit_cli
         @running = false
+        shutdown_interactive_queue! if $stdin.tty? && $stdout.tty?
         line = @refs.renderer.closing
         terminal_puts(line) if line
         close_session
