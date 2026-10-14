@@ -31,7 +31,9 @@ rotating live set now inherit a low dub-bass line, a soft Prophet-style chord be
 glassy DX electric-piano arp unless a profile explicitly keeps itself sparse. The
 eight-part showcase goes further, with Rhodes chords and a tine-Wurli lead plus a quiet
 Juno string layer and a high tine arp. All layers follow the same named progression, so
-the extra colours do not add notes outside its scale. Showcase-only Dilla kit patterns
+the extra colours do not add notes outside its scale.
+
+Showcase-only Dilla kit patterns
 add restrained clap, open-hat, rim, woodblock and tom accents over the dust kit; the
 original three-role patterns remain unchanged for standalone callers. The feel stays
 half-time and syncopated rather than bright or hurried. The hi-hat keeps a fast
@@ -54,6 +56,8 @@ reference; treat it as a runtime bounce only after rendering it with this engine
 version. Temporary renders under `out/` are ignored. Keep irreplaceable recordings
 outside the checkout.
 
+## Composition and groove
+
 The data holds a flat list of progressions, each a list of chord names such as Fm9,
 Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies.
 The first hundred and five were picked by hand. The rest were read as plain text out of
@@ -67,14 +71,18 @@ and `--play` draws only from those unless `--pool all` says otherwise. A chord h
 bars of four beats unless a profile or `--beats` says otherwise.
 
 The voicer reads the name. It puts the root, or the bass of a slash chord, in the low
-octave and the other tones above. Each upper note starts as near as it can be to the one
+octave and the other tones above.
+
+Each upper note starts as near as it can be to the one
 before it. A search then tries every octave shift on every voice and keeps the voicing
 that moves least, keeps the top line smooth, and leaves no two neighbours closer than a
 whole tone. Measured over the first hundred and five progressions, leaps in the top line
 of more than a major third fell from a third of all chord changes to about a twentieth.
 Spacing never throws a chord tone away: when a chord is over the five-voice cap the
 perfect fifth goes first, then an altered fifth, then the root if the bass already plays
-it, and the third, the seventh and every named extension stay. A slash chord keeps its
+it, and the third, the seventh and every named extension stay.
+
+A slash chord keeps its
 root above the separate bass. `--no-voice-search` switches the search off.
 
 A groove profile says how a render is played. Soft_swing, lush and dry are texture and
@@ -83,7 +91,9 @@ pump move the drums by milliseconds. The default is straight_hats_snare_ahead, w
 measures its leans in shares of a sixteenth step, so they follow the tempo. The hats
 hold the grid. The snare sits ahead of them by about three tenths of a step. The kick
 holds the downbeat and lags a little after it everywhere else. A snare off the backbeat
-is a ghost and lags further than the kick. The lean of each voice on each step in the
+is a ghost and lags further than the kick.
+
+The lean of each voice on each step in the
 bar is drawn once from the seed, so every bar leans exactly as the first did. The same
 share is a different number of milliseconds at each tempo: at 88 beats a minute a tenth
 of a step is seventeen milliseconds, at 70 it is twenty-one. Nothing moves more than
@@ -96,18 +106,32 @@ moved no drum at all.
 The drum patterns are sixteen-step rows. The Dilla shadow patterns keep sixteenth hats,
 syncopate the kick, sit the backbeat just ahead and lay quieter ghost hits behind it.
 Fractional step values are hit velocities, not merely on/off markers, so the hats accent
-and ghost snares tuck back. Patterns may also be thirty-two steps long, may carry a
+and ghost snares tuck back.
+
+Patterns may also be thirty-two steps long, may carry a
 variant or two per four-bar phrase, a fill for the last bar of every fourth and eighth
 bar, and layers with lengths of their own, such as five or seven or fifteen steps, that
 run across the bars so their alignment against the grid drifts. A ratchet is a cell that
 holds a velocity and a count. A seeded mutation may swap two hits, shift one a
 sixteenth, add or drop a ghost, double a kick or rotate the hats, so no two bars run
 alike, and a snare density above one adds back snares on steps nothing else uses.
+
 `--drums rotate` plays the next pattern of the whole set every phrase and never the same
 twice running. Forty small cells from the old history sit beside the hand-made patterns
 under neutral names. The mix still supports `--kick-db`, `--snare-db`, `--hat-db` and
 `--chords-db`. The kick is added after sidechain processing, so the pump never ducks the
 transient; tape and effects then work on the drum bus without losing that front edge.
+
+A kit gives the roles a pattern uses their voices, and six are in the data: kit_909,
+kit_detroit, kit_dust, kit_fm, kit_industrial and kit_world. `--kit` picks one, and a
+profile may carry one. The techno kick is a sine whose pitch falls from a sweep to a
+body note, with a click and a drive, in five tunings. The other kits use
+frequency-modulated kicks, a layered boom, or struck sheet metal. The snare, clap, rim
+and toms are small synthesised recipes. The hats are six detuned squares crushed to
+twelve bits and highpassed, with the open hat choked by the next closed one. The
+percussion is a handful of decaying inharmonic modes. The techno_arp, industrial_arp and
+eclectic profiles choose a kit, a pattern, a tempo, and a kick-keyed pump, and the first
+two grow a rumble from their own kicks. No kit uses a low-frequency oscillator.
 
 Chords can be played three ways. A held pad is the default. `--arp` plays each chord one
 note at a time, lowest voice first, in a named pattern: up, down, updown, converge,
@@ -137,9 +161,13 @@ through eighths and triplets to sixteenths, rests thin out as the energy falls, 
 notes grow louder as it rises, and the pool of notes opens from one octave to two. The
 order of the notes is a seeded Markov chain over the chord's tones that prefers to move
 by a step and to keep its direction. A run swells toward its top note and the notes
-passed on the way are ghosted. Each chord leans a few milliseconds inside the clamp,
+passed on the way are ghosted.
+
+Each chord leans a few milliseconds inside the clamp,
 early in its body and late at its end, and a sine pad under it swells and falls with the
-same energy. Six more creative patterns are in the data as styles. The `spiral` goes out
+same energy.
+
+Six more creative patterns are in the data as styles. The `spiral` goes out
 from the middle one note either side in turn and comes back in. The `pendulum` goes up
 two and back one to the top and down again. The `fibonacci` takes the Fibonacci numbers
 round the pool, and the `prime_walk` takes strides of the first primes. The
@@ -148,6 +176,8 @@ round the pool, and the `prime_walk` takes strides of the first primes. The
 `poly7` put a note every five or seven sixteenths against the four-beat grid. Every note
 of every style is a tone of its chord, and `--arp list` prints the patterns, the styles
 and the modifiers.
+
+## Voices and instruments
 
 A voice is a row of the data. The sine voice is a stack of four sine partials. The moog
 voices are detuned saw and pulse oscillators on phase accumulators into a four-pole
@@ -228,6 +258,8 @@ missing, the voice says so on standard error and `ruby_strings` plays in its pla
 the play bag leaves the soundfont voices out. Whatever vibrato a soundfont's own patches
 carry is the soundfont's, and the engine cannot remove it.
 
+## Effects and mastering
+
 The tape space echo has three playback heads at one, two and three times a base delay,
 which is a dotted eighth unless `--echo-time` says milliseconds. The heads in use are
 summed, darkened by a lowpass and a mild saturation, and fed back, so each repeat is
@@ -242,7 +274,9 @@ limiting. The analogue tape stage adds static bandwidth shaping, head warmth, sa
 and compression without pitch modulation. The dub echo uses three differently timed
 heads with feedback and a dark low-pass. The crystallizer shifts overlapping short
 grains by a fixed musical interval and feeds delayed repeats back at a lower level; each
-repeat moves another interval higher. The shared `dilla_night` rig applies these stages
+repeat moves another interval higher.
+
+The shared `dilla_night` rig applies these stages
 to instrument and drum buses separately, then uses nasty_vcs to glue the drum bus and
 final sum. The drums receive the heavier send, cassette Sonitex x3, heavy tape,
 octave-up crystals and stronger summing saturation; the instrument echo/crystal send
@@ -255,11 +289,15 @@ head bump near fifty hertz and the loss at the top. The first machine runs the l
 which is the costly part, and the others use an arctangent curve, each driven a step
 harder than the one before. Each machine is level matched against the programme itself,
 so the stack changes colour and not loudness, and the output stays within a decibel of
-the input level. Nothing moves: there is no wow, no flutter and no hiss, and a sine
+the input level.
+
+Nothing moves: there is no wow, no flutter and no hiss, and a sine
 through the stack comes out exactly periodic. `--tape N` sets the number of machines,
 four by default, and `--tape 0` leaves the sound bit for bit as it was. `--tape-drive X`
 sets how hard the first one is pushed. Seeds come from a CRC of the render seed, so a
-take repeats on any machine. Each machine keeps its state between calls, so a signal cut
+take repeats on any machine.
+
+Each machine keeps its state between calls, so a signal cut
 into chunks leaves the stack as one long call does. On this Mac the four machines cost
 about twenty seconds for each minute of sound, nearly all of it in the loop.
 
@@ -351,13 +389,17 @@ and the next with an eight-tap windowed sinc, so the ceiling of minus one decibe
 as a true peak and not only as a sample, spreads the gain it needs over the look-ahead
 and releases in a tenth of a second. A sixteen-bit wav is dithered with one least
 significant bit of triangular noise from a seeded stream, and `--bits 24` writes
-twenty-four bits without. Each render prints its integrated loudness, true peak, crest
+twenty-four bits without.
+
+Each render prints its integrated loudness, true peak, crest
 factor and the correlation of the channels. A material too sparse to reach the target
 under the ceiling ends up quieter than it, which is the ceiling doing its work. The dear
 stages are the multiband and the parallel compressor; on this Mac, with YJIT, the whole
 chain costs about a quarter of a second of work for each second of stereo audio, the
 multiband a tenth of it. A show that finds itself rendering at more than nine tenths of
 real time drops those two, says so on the screen, and goes on.
+
+## Rendering and live playback
 
 `--transpose` moves every note by that many semitones before synthesis, and `--octaves`
 is sugar for twelve times that. Nothing is resampled, and tempo and echo timing do not
@@ -392,11 +434,15 @@ the mode, the arp or repeat style, the patch and the profile. The patch bag hold
 voice: a patch comes back only after all the others have played, and a group never
 follows itself. A bag plays everything once before anything repeats and never opens with
 the last item of the one before. The bags are saved in `out/play/` between runs, so a
-restart goes on with the cycle. Each pass prints its progression and position in the
+restart goes on with the cycle.
+
+Each pass prints its progression and position in the
 bag, mode, style, voice with its place in the patch bag, and profile. A pad plays its
 voice like any other; the plain sine pad is the old pad. `--patch-per-chord` gives every
 chord of a pad its own patch, drawn in turn from the same bag, so a progression of four
-chords uses four places in the cycle. Dub-style bus effects that only the showcase uses
+chords uses four places in the cycle.
+
+Dub-style bus effects that only the showcase uses
 are not in the stream, and the rumble under the techno profiles is scaled by a fixed
 gain found from one kick, where a whole render scales by its own peak.
 
@@ -406,11 +452,15 @@ pass alone. Each pass lasts eight to sixteen bars, whatever its progression, whi
 cycled or cut to fit. When A has played them, B comes in under it over two to four bars
 that begin on A's bar line, equal power, with B's tempo held within six beats a minute
 of A's. The drums keep running: A's go on to the end of its last bar and B's come in
-with the crossfade. A few times a minute, three on average and `--moves N` to change it,
+with the crossfade.
+
+A few times a minute, three on average and `--moves N` to change it,
 a live move is made at a bar by a hand with a seeded stream of its own: the echo is
 thrown for a bar, a filter sweeps down to 700 hertz and back, the tape is driven twice
 as hard and back, the Sonitex climbs from one pass to three and down, the room swells,
-or the drums drop out for a bar. A move is an event with a start and a length, never an
+or the drums drop out for a bar.
+
+A move is an event with a start and a length, never an
 oscillator. Moves are logged as they begin, none begins while two decks cross, no kind
 comes twice running, and each puts back exactly the parameter it moved. With one deck
 the crossfade is a single beat and nothing moves unless `--moves` asks.
@@ -421,17 +471,6 @@ length to compute, more with the echo and the colour chains on. The old engine, 
 was far larger, is not lost. The tag `dilla-engine-final` marks the last commit that
 carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and
 `git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it.
-
-A kit gives the roles a pattern uses their voices, and six are in the data: kit_909,
-kit_detroit, kit_dust, kit_fm, kit_industrial and kit_world. `--kit` picks one, and a
-profile may carry one. The techno kick is a sine whose pitch falls from a sweep to a
-body note, with a click and a drive, in five tunings. The other kits use
-frequency-modulated kicks, a layered boom, or struck sheet metal. The snare, clap, rim
-and toms are small synthesised recipes. The hats are six detuned squares crushed to
-twelve bits and highpassed, with the open hat choked by the next closed one. The
-percussion is a handful of decaying inharmonic modes. The techno_arp, industrial_arp and
-eclectic profiles choose a kit, a pattern, a tempo, and a kick-keyed pump, and the first
-two grow a rumble from their own kicks. No kit uses a low-frequency oscillator.
 
 ## Library layout
 
