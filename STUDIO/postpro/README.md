@@ -108,9 +108,10 @@ the weights everything falls back to the proxies, with one quiet log line.
 ## Random chains and heavy mode
 
 A bare path, or `--random`, renders several variations of a photograph, each through its own
-chain, written to the dated render directory with a JSON sidecar naming every effect and the
-seed. Set `POSTPRO_OUTPUT_DIR` to override that destination. Heavy mode is the standing
-default: five variations dealt from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter taste. Each run draws a fresh seed and prints
+chain, written to the configured output directory with a JSON sidecar naming every effect and
+the seed. By default this is beside `postpro.rb`, where generated media is ignored; set
+`POSTPRO_OUTPUT_DIR` to override it. Heavy mode is the standing default: five variations dealt
+from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter taste. Each run draws a fresh seed and prints
 it, and `POSTPRO_SEED` renders a family again.
 
 A chain is grown and not sampled. A random subset of the whole effect list is the Photoshop
