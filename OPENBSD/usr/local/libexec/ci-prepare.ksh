@@ -5,7 +5,7 @@ set -eu
 PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 export PATH
 
-app=\${1:-}
+app=${1:-}
 case "$app" in
   brgen|amber|bsdports) ;;
   *) echo "ci-prepare: refused unknown app: $app" >&2; exit 64 ;;
