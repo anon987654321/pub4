@@ -44,27 +44,15 @@ deploy_tracked_app() {
     return 1
   }
 
-  sync_tree "${SRC_DIR}/" "${APP_DIR}"
-  doas rm -rf "/home/${app_name}/__shared"
-  sync_tree "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared" "/home/${app_name}/__shared"
-  doas chown -R "${app_name}:${app_name}" "/home/${app_name}/__shared"
-  doas chown -R "${app_name}:${app_name}" "$APP_DIR"
+  rails_sync_app_tree "$app_name" app
+  rails_sync_app_tree "$app_name" shared
   if [[ $app_name == brgen ]]; then
-    for vertical in "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}"/brgen_*; do
-      [[ -d $vertical ]] || continue
-      local_name=${vertical:t}
-      doas rm -rf "/home/${app_name}/${local_name}"
-      sync_tree "$vertical" "/home/${app_name}/${local_name}"
-      doas chown -R "${app_name}:${app_name}" "/home/${app_name}/${local_name}"
-    done
+    rails_sync_app_tree "$app_name" verticals
   fi
   overlay_shared_initializers "$APP_DIR"
   overlay_shared_public "$APP_DIR"
-  # (removed) overlay_brgen_radio_manifest — the function was never defined and the
-  # manifest it targeted lives at config/radio_bergen, which the tree sync above
-  # already copies. The orphaned call aborted the SKIP_CI deploy path with
-  # "command not found". The full-CI path never called it. See brgen/README.md, which carries the engine recipe.
-  doas chown -R "${app_name}:${app_name}" "$APP_DIR"
+  # The app-user sync preserves log, storage and compiled public/assets in the
+  # staged replacement. No root chown of checkout-owned tree content is needed.
 
   deploy_status "$app_name" "master scan"
   if ! master_scan_dep "$app_name"; then
