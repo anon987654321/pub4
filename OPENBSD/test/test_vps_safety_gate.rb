@@ -39,6 +39,8 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.mkdir_p(File.join(dir, "RAILS"))
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_runtime_gate.sh"),
                    File.join(dir, "RAILS", "_runtime_gate.sh"))
+      FileUtils.cp(File.join(ROOT, "..", "RAILS", "_bundle.sh"),
+                   File.join(dir, "RAILS", "_bundle.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
@@ -196,6 +198,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_bundle_cache_shell_must_not_restore_root_path_operations
+    with_fixture do |dir, _|
+      path = File.join(dir, "RAILS", "_bundle.sh")
+      text = File.read(path).sub('pub4-admin bundle-cache "$app_name" capture "$RUBY_CACHE_KEY"', '${_PRIV} cp "$source" "$target"')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "Rails Bundler CAS wrappers must use the fixed broker and avoid privileged path operations"
+    end
+  end
   def test_bundle_cache_broker_requires_fixed_actions_and_ruby_keys
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
