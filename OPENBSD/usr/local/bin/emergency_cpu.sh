@@ -3,7 +3,7 @@ set -euo pipefail
 
 case ${1:-} in
 -h|--help)
-  echo "usage: doas ksh OPENBSD/emergency_cpu.sh"
+  echo "usage: /usr/local/bin/emergency_cpu.sh"
   echo "  stop amber and bsdports, kill stale workers, restart master and brgen"
   exit 0
   ;;
@@ -14,20 +14,10 @@ esac
 # only ever time out on the path that actually matters, and every crisis
 # restart logged "still down after 75s" whether or not master had come back.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
-# Emergency CPU relief for saturated VPS (vm23).
-# Run: doas ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh
-#
-# This file stays at the top of OPENBSD/ while the rest of the operator shell
-# lives in bin/, because vm23 runs it from the checkout by this path. The guard
-# installed at /usr/local/bin/resource_guard.sh is dated 2026-08-14, older than
-# the repo copy, and its line 285 reads:
-#
-#   ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh 2>&1 | logger -t resource-guard
-#
-# It moves to bin/ once `doas zsh OPENBSD/OPERATOR.sh --sync-configs` has installed
-# bin/resource_guard.sh and this script under /usr/local/bin, after which the
-# guard calls /usr/local/bin/emergency_cpu.sh and nothing reads this path.
-#
+# Root-owned installed implementation for emergency CPU relief on vm23.
+# OPERATOR.sh installs this tracked file as /usr/local/bin/emergency_cpu.sh,
+# mode 0555. The checkout entrypoint refuses root and delegates here; root
+# cron's installed resource_guard calls this path without reading the checkout.
 # Typical cause: Falcon crash-loops, hung bundle install, assets:precompile on restart.
 
 # Prefer the root-owned installed copy; this script is run as root, and
