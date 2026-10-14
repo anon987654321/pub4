@@ -50,7 +50,7 @@ class DillaTest < Minitest::Test
 
   def test_default_layers_fill_out_profiles_without_overriding_specialists
     layers = DATA.fetch("default_layers")
-    assert_equal %w[dub_bass prophet_warm dx_ep_glass], layers.map { |layer| layer.fetch("voice") }.sort
+    assert_equal %w[dub_bass dx_ep_glass prophet_warm], layers.map { |layer| layer.fetch("voice") }.sort
     assert layers.any? { |layer| layer["notes"] == "bass" }
     assert layers.any? { |layer| layer["mode"] == "arp" }
 
