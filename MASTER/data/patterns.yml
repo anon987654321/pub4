@@ -936,8 +936,8 @@ operator_playbook:
     - id: resource_guard_shedding
       area: openbsd
       signal: "Rails apps stopped after cron; only master/brgen remain"
-      action: "Create /var/db/pub4_all_apps or run OPENBSD/bin/start_all_apps.sh to pin all services against resource_guard.sh shedding."
-      proof: "test -f /var/db/pub4_all_apps; doas rcctl check brgen amber bsdports"
+      action: "Run ksh OPENBSD/bin/start_all_apps.sh as dev; it delegates fleet start/pinning to the fixed pub4-admin start-all-apps verb. Never touch /var/db/pub4_all_apps manually or execute checkout scripts as root."
+      proof: "test -f /var/db/pub4_all_apps; doas /usr/local/sbin/pub4-admin service check brgen; repeat for amber and bsdports"
 
     - id: rails_phantom_foreign_keys
       area: rails
