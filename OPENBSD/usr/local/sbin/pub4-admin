@@ -3,6 +3,7 @@
 
 # Root-owned, narrow broker for the production deploy path.
 # Never evaluate a command string or accept a filesystem path from argv.
+require "digest"
 require "etc"
 require "fileutils"
 require "json"
@@ -23,6 +24,7 @@ module Pub4Admin
   CI_SYNC = "/usr/local/libexec/ci-sync.ksh"
   RAILS_TASK = "/usr/local/libexec/rails-task.ksh"
   RAILS_SYNC = "/usr/local/libexec/rails-sync.ksh"
+  BUNDLE_CACHE_BASE = "/var/cache/pub4/bundle"
   RAILS_APPS = %w[brgen amber bsdports].freeze
   RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
@@ -370,6 +372,115 @@ module Pub4Admin
     end
   end
 
+  def valid_ruby_cache_key?(value)
+    value.match?(/\Aruby(?:[0-9]{2}|[0-9]+\.[0-9]+)\z/)
+  end
+
+  def ensure_root_directory(path, mode: 0o755)
+    parent = File.dirname(path)
+    ensure_root_directory(parent) unless parent == path
+    unless File.exist?(path) || File.symlink?(path)
+      Dir.mkdir(path, mode)
+      File.chown(0, Etc.getgrnam("wheel").gid, path)
+      File.chmod(mode, path)
+    end
+    stat = File.lstat(path)
+    raise "#{path} must be a real root-owned, non-writable directory" unless
+      stat.directory? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+    File.chmod(mode, path) unless (stat.mode & 0o777) == mode
+    path
+  end
+
+  def validate_cache_source!(path, uid: 0)
+    stat = File.lstat(path)
+    raise "#{path} must be a regular non-symlink file owned by uid #{uid}" unless
+      stat.file? && !stat.symlink? && stat.uid == uid && stat.size.between?(1, 128 * 1024 * 1024)
+    stat
+  end
+
+  def bundle_cache_store_file(source, root, owner_uid: 0)
+    validate_cache_source!(source, uid: owner_uid)
+    digest = Digest::SHA256.file(source).hexdigest
+    directory = File.join(root, digest[0, 2], digest[2, 2])
+    ensure_root_directory(directory)
+    target = File.join(directory, "#{digest}.gem")
+
+    if File.exist?(target) || File.symlink?(target)
+      target_stat = validate_cache_source!(target, uid: 0)
+      raise "bundle cache entry has wrong digest: #{target}" unless Digest::SHA256.file(target).hexdigest == digest
+      raise "bundle cache entry is writable: #{target}" unless (target_stat.mode & 0o222).zero?
+      return 0
+    end
+
+    temporary = File.join(directory, ".#{digest}.#{Process.pid}.#{SecureRandom.hex(5)}")
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+        File.open(source, "rb") { |input| IO.copy_stream(input, file) }
+        file.flush
+        file.fsync
+      end
+      raise "bundle cache source changed while copying: #{source}" unless Digest::SHA256.file(temporary).hexdigest == digest
+      File.chown(0, Etc.getgrnam("wheel").gid, temporary)
+      File.chmod(0o444, temporary)
+      begin
+        File.link(temporary, target)
+      rescue Errno::EEXIST
+        existing_stat = validate_cache_source!(target, uid: 0)
+        raise "bundle cache collision has wrong digest: #{target}" unless Digest::SHA256.file(target).hexdigest == digest
+        raise "bundle cache collision is writable: #{target}" unless (existing_stat.mode & 0o222).zero?
+      end
+    ensure
+      File.unlink(temporary) if File.exist?(temporary)
+    end
+    0
+  end
+
+  # This verb knows no caller-provided filesystem paths. It only imports from the
+  # fixed system cache or the selected app's fixed Bundler cache.
+  def bundle_cache(app, action, ruby_key)
+    return 64 unless RAILS_APPS.include?(app)
+    return 64 unless valid_ruby_cache_key?(ruby_key)
+    return 64 unless %w[prepare import capture].include?(action)
+
+    shared = File.join(BUNDLE_CACHE_BASE, ruby_key)
+    cas = File.join(shared, "cas", "sha256")
+    if action == "prepare"
+      ensure_root_directory(shared)
+      ensure_root_directory(File.join(shared, "cache"))
+      ensure_root_directory(cas)
+      return 0
+    end
+
+    ensure_root_directory(cas)
+    if action == "import"
+      source_dir = File.join(shared, "cache")
+      ensure_root_directory(source_dir)
+      source_uid = 0
+    else
+      account = Etc.getpwnam(app)
+      home = "/home/#{app}"
+      app_dir = File.join(home, "app")
+      bundle_dir = File.join(home, ".bundle")
+      source_dir = File.join(bundle_dir, "cache")
+      [["/home", 0], [home, account.uid], [app_dir, account.uid], [bundle_dir, account.uid], [source_dir, account.uid]].each do |directory, expected_uid|
+        stat = File.lstat(directory)
+        raise "#{directory} must be a real, correctly owned directory" unless
+          stat.directory? && !stat.symlink? && stat.uid == expected_uid && (stat.mode & 0o022).zero?
+      end
+      source_uid = account.uid
+    end
+
+    files = Dir.glob(File.join(source_dir, "*.gem"))
+    raise "bundle cache import exceeds 500 files" if files.length > 500
+    files.sort.each do |source|
+      next if File.symlink?(source)
+      bundle_cache_store_file(source, cas, owner_uid: source_uid)
+    end
+    puts "bundle_cache0: #{app} #{action} #{ruby_key} files=#{files.length}"
+    0
+  rescue ArgumentError
+    raise "unknown app or group; cannot prepare bundle cache"
+  end
   def valid_ci_timeout?(value)
     value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
   end
@@ -546,6 +657,10 @@ module Pub4Admin
     end
 
     return ensure_ci_lock if args == ["ci-lock"]
+
+    if args.length == 4 && args[0] == "bundle-cache"
+      return bundle_cache(args[1], args[2], args[3])
+    end
 
     if args.length == 2 && args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])
       trusted_script!(CI_PREPARE)
