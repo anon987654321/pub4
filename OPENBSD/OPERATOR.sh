@@ -196,7 +196,7 @@ install_root_configs() {
     usr/local/libexec/rails-task.ksh
     usr/local/libexec/rails-sync.ksh
     gates/solid_queue_proof.rb
-    bin/resource_guard.sh
+    usr/local/bin/resource_guard.sh
   )
   typeset rel
   for rel in ${privileged_sources[@]}; do
@@ -409,7 +409,7 @@ sync_openbsd_apply() {
     return 1
   }
 
-  if ! install -m 755 "${SCRIPT_DIR}/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
+  if ! install -o root -g wheel -m 555 "${src}/usr/local/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
     log ERROR "resource_guard.sh install failed — the load guard would be absent"
     return 1
   fi
