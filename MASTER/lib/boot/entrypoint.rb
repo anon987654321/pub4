@@ -109,7 +109,7 @@ module Master
       def reexec_best_ruby!(root:, env:, out:, argv:, program:)
         return if env["MASTER_RUBY_REEXEC_DONE"] == "1"
 
-        candidate = Operator::RubyRunner.best_available_ruby(root:)
+        candidate = ::Operator::RubyRunner.best_available_ruby(root:)
         return unless candidate
         return if same_file?(RbConfig.ruby, candidate[:path])
 

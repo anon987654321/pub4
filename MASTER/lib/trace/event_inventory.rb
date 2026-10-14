@@ -9,12 +9,12 @@ module Master
       module_function
 
       def report
-        Operator::EventBusReach.report
+        ::Operator::EventBusReach.report
       end
 
       def render(strict: false)
         io = StringIO.new
-        code = Operator::EventBusReach.print_report(strict:, io:)
+        code = ::Operator::EventBusReach.print_report(strict:, io:)
         [code, io.string]
       end
     end

@@ -101,7 +101,7 @@ module Master
       # behavior, violates a source ratchet, or was proposed from stale reads.
       def delivery_safety_failure(from, to, edited)
         paths = [from, to, *edited].uniq
-        Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
+        ::Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
         diff, status = Master::Io::Exec.capture2e("git", "-C", @root, "diff", "HEAD", "--", *paths)
         raise "git diff failed while checking rename delivery safety" unless status.success?
 

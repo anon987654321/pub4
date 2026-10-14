@@ -29,7 +29,7 @@ module Master
           plan.deletes.each do |path|
             next unless path.start_with?("RAILS/") && path.match?(%r{/app/views/.*\.erb\z})
 
-            hits = Operator::Readers.find(root: @repo_root, target: path).select { |ref| ref.kind == :render }
+            hits = ::Operator::Readers.find(root: @repo_root, target: path).select { |ref| ref.kind == :render }
             next if hits.empty?
 
             sample = hits.first(4).map { |ref| "#{ref.path}:#{ref.line}" }.join(", ")

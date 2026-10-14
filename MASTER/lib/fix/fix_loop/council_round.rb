@@ -185,7 +185,7 @@ module Master
 
         def load_runners(files)
           require_relative "../../../tools/runs"
-          Array(files).flat_map { |path| Operator::Runs.who_runs(repo_relative(path)) }.uniq.first(12)
+          Array(files).flat_map { |path| ::Operator::Runs.who_runs(repo_relative(path)) }.uniq.first(12)
         rescue StandardError
           []
         end

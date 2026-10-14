@@ -192,7 +192,7 @@ module Master
       # single-file repairs. Check the complete diff before staging, and roll
       # the files back together when any check is inconclusive.
       def delivery_safety_failure(plan, message, diff_text)
-        Operator::RatchetSponsor.validate!(root: @root, changed_paths: plan.paths)
+        ::Operator::RatchetSponsor.validate!(root: @root, changed_paths: plan.paths)
         preserved = @preserve_user_intent&.assert_preserved!(diff_text, message:)
         return preserved.message if preserved&.err?
 

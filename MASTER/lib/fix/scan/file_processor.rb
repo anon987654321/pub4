@@ -115,7 +115,7 @@ module Master
 
         # flock on a lockfile that is not deleted after use. The kernel drops the lock
         # when its holder exits, so a crashed scan frees the file at once; the files
-        # themselves are swept when a day old and not held (Operator::LockSweep).
+        # themselves are swept when a day old and not held (::Operator::LockSweep).
         def with_file_lock(path)
           lock_path = lock_path_for(path)
           FileUtils.mkdir_p(File.dirname(lock_path))
