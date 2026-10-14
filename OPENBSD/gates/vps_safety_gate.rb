@@ -74,6 +74,9 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     admin.include?("SERVICE_ACTIONS") &&
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
+  task_app_scope = admin.include?("known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS") &&
+                   admin.include?("RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze")
+  failures << "pub4-admin must validate each helper against its own app allowlist" unless task_app_scope
   safe_spawn = admin.include?('Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)') &&
                admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)') &&
                admin.include?("when RAILS_TASK then Array(helper_arguments)") &&
