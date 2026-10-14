@@ -30,11 +30,18 @@ class TestToolsMedia < Minitest::Test
 
   def test_postpro_rejects_unknown_presets_instead_of_silently_returning_the_input
     source = File.read(POSTPRO)
-    body = source[/^def preset\(image, name, stock: nil\).*?^end$/m]
+    body = method_body(source, "preset")
 
     assert body, "preset resolver must exist"
     assert_match(/raise ArgumentError, "unknown preset/, body)
     refute_match(/return image unless p/, body)
+  end
+
+  def test_method_body_reader_includes_calls_after_nested_blocks
+    source = File.read(POSTPRO)
+
+    assert_includes method_body(source, "run_random"), "process_file("
+    assert_includes method_body(source, "run_watch"), "grade_watched("
   end
 
   def test_postpro_finishing_grain_uses_the_preset_stock
@@ -54,6 +61,14 @@ class TestToolsMedia < Minitest::Test
     end
   end
 
+  # Read through the next top-level method, not the first nested `end`.
+  # These checks inspect source contracts, so truncating an inner if/loop must
+  # not turn a reachable call into a false negative.
+  def method_body(source, name)
+    pattern = Regexp.new("^def " + Regexp.escape(name) + "\\b.*?(?=^def [a-z_][a-z0-9_]*\\b|\\z)", Regexp::MULTILINE)
+    source[pattern]
+  end
+
   # Whether one top-level method of a single-file script reaches another, by
   # following the names it calls. Shallow on purpose: it reads call spellings in
   # a body, so a dynamic send is invisible to it — postpro has none on this path,
@@ -61,7 +76,7 @@ class TestToolsMedia < Minitest::Test
   def reaches?(source, from, target, seen = [])
     return false if seen.include?(from)
 
-    body = source[/^def #{from}\b.*?^end$/m]
+    body = method_body(source, from)
     return false unless body
     return true if body.include?(target)
 
