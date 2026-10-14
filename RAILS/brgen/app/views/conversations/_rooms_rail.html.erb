@@ -65,7 +65,8 @@
             </span>
             <span class="messenger-room-meta">
               <% if unread.positive? %>
-                <span class="messenger-rail-unread"><%= unread %></span>
+                <span class="messenger-rail-unread" aria-hidden="true"><%= unread %></span>
+                <span class="visually-hidden"><%= t("messages.unread_badge", count: unread) %></span>
               <% elsif last %>
                 <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
               <% end %>
