@@ -64,6 +64,8 @@ module Deploy
       compared = 0
       written = 0
       accepted_updates = {}
+      pending_updates = {}
+      alias_conflict = false
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
           if GeometryProbe.timeout?(payload)
@@ -91,6 +93,7 @@ module Deploy
           compared += 1
           diffs = compare(previous.fetch(:current), current)
           if diffs.any?
+            alias_conflict = true
             @result.fail(
               "layout_snapshot: #{surface.id} disagrees with #{previous.fetch(:surface)} " \
               "for shared baseline #{rel(path)} — #{tally(diffs)}",
@@ -101,9 +104,9 @@ module Deploy
         accepted_updates[path] = { surface: surface.id, current: } if self.class.update?
         if !File.file?(path)
           if self.class.update?
-            write(path, current)
+            pending_updates[path] = current
             written += 1
-            @result.warn("layout_snapshot: #{surface.id} baseline created (#{current["elements"].size} elements)")
+            @result.warn("layout_snapshot: #{surface.id} baseline creation proposed (#{current["elements"].size} elements)")
           else
             @result.fail("layout_snapshot: #{surface.id} has no committed baseline — " \
                          "run with GATE_SNAPSHOT_UPDATE=1 to record #{rel(path)}", severity: :soft)
@@ -117,13 +120,22 @@ module Deploy
         if diffs.empty?
           next
         elsif self.class.update?
-          write(path, current)
+          pending_updates[path] = current
           written += 1
-          @result.warn("layout_snapshot: #{surface.id} baseline updated (#{diffs.size} change(s) accepted: #{tally(diffs)})")
+          @result.warn("layout_snapshot: #{surface.id} baseline update proposed (#{diffs.size} change(s): #{tally(diffs)})")
         else
           report(surface, diffs, path)
         end
       end
+      if alias_conflict
+        # Never partially accept a multi-surface baseline update: all surfaces
+        # sharing a baseline must agree before any proposed baseline is written.
+        written = 0
+        @result.warn("layout_snapshot: baseline writes withheld because aliased surfaces disagree") if pending_updates.any?
+      else
+        pending_updates.each { |path, data| write(path, data) }
+      end
+
       # What was actually measured, so a gate that compared some surfaces and
       # skipped others is not reported as having measured nothing.
       @result.checked!(compared + written)
