@@ -79,6 +79,7 @@ module Master
 
       def run_input(input)
         return empty_input(:run_input) if input.strip.empty?
+        return Master::Result.err("turn cancelled before start", category: :cancelled) if turn_cancel_requested?
         blocked = check_budget_blocks(input)
         return blocked if blocked
 
@@ -145,6 +146,7 @@ module Master
         @turn_queue_mutex = Mutex.new
         @turn_worker = nil
         @turn_queue_paused = false
+        @turn_cancel_requested = false
         @reading_input = false
         @terminal_ask_mutex = Mutex.new
         @terminal_ask_cv = ConditionVariable.new
@@ -171,9 +173,19 @@ module Master
       end
 
       def dispatch_turn(input, accumulated:, state:)
+        return Master::Result.err("turn cancelled before dispatch", category: :cancelled) if turn_cancel_requested?
+
         on_turn = build_on_turn_handler(accumulated, state)
         @pipeline_thread = spawn_pipeline_thread(input, on_turn)
+        cancel_turn(@pipeline_thread, @turn_children) if turn_cancel_requested? && @pipeline_thread&.alive?
         fetch_pipeline_result
+      end
+
+      def turn_cancel_requested?
+        @turn_queue_mutex&.synchronize { @turn_cancel_requested == true } || false
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.queue.cancel_state", event_bus: @refs.bus)
+        true
       end
 
       def build_on_turn_handler(accumulated, state)
