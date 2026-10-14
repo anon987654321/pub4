@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
+const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
+const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
+const faceCss = readFileSync(join(publicDir, "face.css"), "utf8");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
 const interaction = readFileSync(join(publicDir, "master_interaction_state.js"), "utf8");
@@ -109,6 +112,15 @@ test("generated face runtime names current face sources", () => {
   }
 });
 
+test("virtualized chat retains recoverable older messages", () => {
+  assert.match(chat, /const CHAT_ARCHIVE_BATCH = 28;/);
+  assert.match(chat, /function restoreOlderChatMessages\(\)/);
+  assert.match(chat, /chatArchive\.splice\(start\)/);
+  assert.match(chat, /chatT\('load_older_messages'/);
+  assert.doesNotMatch(chat, /chatArchived \* 68/);
+  assert.match(faceMotion, /\.virtual-spacer-load/);
+  assert.match(faceCss, /\.virtual-spacer-load/);
+});
 test("face shell stays flat and square", () => {
   assert.doesNotMatch(faceCss, /backdrop-filter\s*:\s*(?!none\b)[^;]+;/i);
   assert.doesNotMatch(faceCss, /filter\s*:\s*[^;]*\b(?:blur|drop-shadow)\(/i);
