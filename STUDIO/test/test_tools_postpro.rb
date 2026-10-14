@@ -15,10 +15,13 @@ class TestPostproFilm < Minitest::Test
   POSTPRO_SOURCE = File.join(ToolTest::ROOT, "postpro", "postpro.rb")
   COLOUR_STOCKS = (STOCKS.keys - %i[tri_x ilford_hp5 ilford_delta3200]).freeze
 
-  def test_render_directory_defaults_to_the_tool_owner_and_honours_override
-    configured = ENV.fetch("POSTPRO_OUTPUT_DIR") { File.dirname(POSTPRO_SOURCE) }
+  def test_render_directory_uses_the_shared_dated_output_contract
+    configured = ENV.fetch("POSTPRO_OUTPUT_DIR", "").to_s
+    output_dir = Postpro::Constitution::OUTPUT_DIR
 
-    assert_equal File.expand_path(configured), Postpro::Constitution::OUTPUT_DIR
+    assert_equal Studio::OutputPaths.render_directory, output_dir
+    assert_equal File.expand_path(configured), output_dir unless configured.empty?
+    assert_match(%r{dilla-renders/\d{4}-\d{2}-\d{2}\z}, output_dir) if configured.empty?
   end
 
   # --- the tables agree about which films exist ---------------------------
