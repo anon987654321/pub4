@@ -582,13 +582,14 @@ end
         watchdog = nil
         Open3.popen2e(ENV.to_h.merge(child_env), *cmd, chdir:, pgroup: true) do |stdin, stream, wait|
           stdin.close
+          last_heartbeat = 0.0
           watchdog = Thread.new do
             loop do
               sleep [disk_poll_s.to_f, 0.01].max
               elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-              if label && elapsed >= (watchdog.instance_variable_get(:@last_heartbeat) || 0) + 28
+              if label && elapsed >= last_heartbeat + 28
                 Master::Trace::Dmesg.status(heartbeat_unit, "#{label} running, elapsed #{elapsed.round}s")
-                watchdog.instance_variable_set(:@last_heartbeat, elapsed)
+                last_heartbeat = elapsed
               end
               if timeout_s && elapsed >= timeout_s.to_f
                 stop_lock.synchronize { stopped_for ||= "#{display}gate child timeout after #{timeout_s.to_f.round(1)}s" }
