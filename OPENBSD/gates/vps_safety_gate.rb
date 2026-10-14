@@ -103,6 +103,12 @@ if File.file?(admin_path)
   install_preflight = installer.include?("installed privileged entrypoint missing or symlinked") &&
                       installer.include?("/usr/local/libexec/pub4/solid_queue_proof.rb")
   failures << "OPERATOR.sh must verify installed privileged entrypoints" unless install_preflight
+  destination_preflight = installer.include?("refusing symlinked privileged destination directory") &&
+                          installer.include?("refusing symlinked privileged destination file")
+  failures << "OPERATOR.sh must refuse symlinked privileged destinations before copying" unless destination_preflight
+  installs_after_copy = installer.include?("installed Solid Queue proof is missing or symlinked") &&
+                        installer.include?("installed resource guard is missing or symlinked")
+  failures << "OPERATOR.sh must verify installed helpers after their explicit install" unless installs_after_copy
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin") &&
                          installer.include?("[[ -L $f ]]") &&
