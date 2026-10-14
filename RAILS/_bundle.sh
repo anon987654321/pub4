@@ -40,75 +40,42 @@ ensure_npm_cache() {
 }
 
 # bundle_cas_* — immutable SHA-256 store for gem artifacts shared by pub4 applications.
-# Bundler remains authoritative for installed gems; CAS only deduplicates immutable .gem bytes.
+# The broker owns only the fixed /var/cache/pub4/bundle/<ruby-key> namespace; the
+# selected app owns extraction into its own cache. No arbitrary paths cross doas.
 bundle_cas_root() {
-  print -- "${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/${RUBY_CACHE_KEY}}/cas/sha256"
-}
-
-bundle_cas_digest() {
-  "$RUBY" -rdigest -e 'print Digest::SHA256.file(ARGV.fetch(0)).hexdigest' "$1"
-}
-
-bundle_cas_store() {
-  local source=$1
-  local digest
-  local root
-  local target
-
-  [[ -f $source ]] || return 0
-  root=$(bundle_cas_root)
-  digest=$(bundle_cas_digest "$source")
-  target="${root}/${digest[1,2]}/${digest[3,2]}/${digest}.gem"
-  ${_PRIV} mkdir -p "${target:h}"
-  [[ -f $target ]] || ${_PRIV} cp "$source" "$target"
-}
-
-bundle_cas_capture_dir() {
-  local source_dir=$1
-  local gem
-
-  [[ -d $source_dir ]] || return 0
-  while IFS= read -r gem; do
-    bundle_cas_store "$gem"
-  done < <(find "$source_dir" -type f -name "*.gem" -print)
-}
-
-bundle_cas_hydrate() {
-  local app_name=$1
-  local app_dir=$2
-  local root
-  local target
-  local source
-
-  root=$(bundle_cas_root)
-  [[ -d $root ]] || return 0
-  target="${app_dir}/.bundle/cache"
-  ${_PRIV} mkdir -p "$target"
-  while IFS= read -r source; do
-    local gem="${source:t}"
-    [[ -f "${target}/${gem}" ]] && continue
-    ${_PRIV} ln "$source" "${target}/${gem}" 2>/dev/null || ${_PRIV} cp "$source" "${target}/${gem}"
-  done < <(find "$root" -type f -name "*.gem" -print)
-  ${_PRIV} chown -R "${app_name}:${app_name}" "$target"
+  print -- "/var/cache/pub4/bundle/${RUBY_CACHE_KEY}/cas/sha256"
 }
 
 bundle_cas_prepare() {
-  local app_name=$1
-  local app_dir=$2
-  local shared="${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/${RUBY_CACHE_KEY}}"
-
-  ${_PRIV} mkdir -p "${shared}/cas/sha256"
-  bundle_cas_capture_dir "${shared}/cache"
-  bundle_cas_hydrate "$app_name" "$app_dir"
+  local app_name=$1 app_dir=$2
+  [[ $app_name == brgen || $app_name == amber || $app_name == bsdports ]] || {
+    log_err "bundle_cas_prepare: refused app: $app_name"
+    return 2
+  }
+  [[ $app_dir == "/home/${app_name}/app" ]] || {
+    log_err "bundle_cas_prepare: refused app path: $app_dir"
+    return 2
+  }
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "bundle_cas_prepare: pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  "${_PRIV}" /usr/local/sbin/pub4-admin bundle-cache "$app_name" prepare "$RUBY_CACHE_KEY" || return $?
+  "${_PRIV}" /usr/local/sbin/pub4-admin bundle-cache "$app_name" import "$RUBY_CACHE_KEY" || return $?
+  run_rails_as_app "$app_name" "$app_dir" "bundle-cas-hydrate" "$RUBY_CACHE_KEY"
 }
 
 bundle_cas_capture() {
-  local app_name=$1
-  local app_dir=$2
-  local cache_dir="${app_dir}/.bundle/cache"
-
-  bundle_cas_capture_dir "$cache_dir"
-  ${_PRIV} chown -R "${app_name}:${app_name}" "$cache_dir" 2>/dev/null || true
+  local app_name=$1 app_dir=$2
+  [[ $app_name == brgen || $app_name == amber || $app_name == bsdports ]] || {
+    log_err "bundle_cas_capture: refused app: $app_name"
+    return 2
+  }
+  [[ $app_dir == "/home/${app_name}/app" ]] || {
+    log_err "bundle_cas_capture: refused app path: $app_dir"
+    return 2
+  }
+  "${_PRIV}" /usr/local/sbin/pub4-admin bundle-cache "$app_name" capture "$RUBY_CACHE_KEY"
 }
 
 # bundle_install_as_app APP_NAME APP_DIR — production bundle as the app user.
