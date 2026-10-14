@@ -157,6 +157,17 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
     failures << "missing tracked usr/local/libexec/ci-run.ksh"
   end
 
+  relay_adapter_path = File.join(ROOT, "RAILS", "_service.sh")
+  if File.file?(relay_adapter_path)
+    relay_adapter = File.read(relay_adapter_path)[/relayd_add_relay\(\) \{.*?^\}/m]
+    relay_adapter_contract = relay_adapter &&
+                            relay_adapter.include?('pub4-admin relayd-check "$app" "$domain" "$port"') &&
+                            relay_adapter.include?("fixed broker is missing; run OPERATOR.sh") &&
+                            !relay_adapter.match?(/\$\{_PRIV\}.*\$RUBY/)
+    failures << "relayd deploy adapter must use the broker and refuse unsafe fallback" unless relay_adapter_contract
+  else
+    failures << "missing RAILS/_service.sh relayd broker adapter"
+  end
   relayd_contract = admin.include?('args.length == 4 && args[0] == "relayd-check"') &&
                     admin.include?("def relayd_check(app, domain, requested_port)") &&
                     admin.include?("File.lstat(RELAYD_CONFIG)") &&
