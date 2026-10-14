@@ -125,6 +125,18 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_broker_must_keep_legacy_retirement_fixed
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      text = File.read(path).sub('return nil unless RAILS_APPS.include?(app)', 'return nil unless APPS.include?(app)')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "pub4-admin must expose only fixed app-scoped CI helper verbs"
+    end
+  end
+
   def test_broker_must_keep_ci_spawn_fixed_and_supervised
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
