@@ -113,6 +113,11 @@ class TestRenderer < Minitest::Test
     assert_equal "!", renderer.phase_prompt(false, "discover")
   end
 
+  def test_shell_prompt_glyphs_come_from_the_shared_face_contract
+    assert_equal "|-", Master::Face::Contract.glyph(:input)
+    assert_equal "\\_", Master::Face::Contract.glyph(:continuation)
+    assert_equal "/", Master::Face::Contract.glyph(:output)
+  end
   def test_prompt_token_follows_zsh_and_posix_shell_conventions
     renderer = FakeRenderer.new(config: {})
     old_shell = ENV["SHELL"]
