@@ -109,15 +109,14 @@ class TestRenderer < Minitest::Test
   def test_phase_prompt_uses_the_plain_openbsd_operator_words
     renderer = FakeRenderer.new(config: {})
 
-    # The input glyph predates the convenience method; a missing helper must not
-    # make the whole CLI fail at startup when the underlying ASCII contract exists.
+    # The CLI prompt uses words rather than borrowing the face's ASCII glyph.
     Master::Face::Contract.stub(:glyph, nil) do
       assert_equal "input", renderer.phase_prompt(true, "discover")
     end
     assert_equal "error input", renderer.phase_prompt(false, "discover")
   end
 
-  def test_shell_prompt_glyphs_come_from_the_shared_face_contract
+  def test_face_renderer_keeps_its_shared_ascii_glyphs
     assert_equal "|-", Master::Face::Contract.glyph(:input)
     assert_equal "\\_", Master::Face::Contract.glyph(:continuation)
     assert_equal "/", Master::Face::Contract.glyph(:output)
@@ -163,6 +162,19 @@ class TestRenderer < Minitest::Test
     truncated = renderer.send(:prompt_path, suffix_length: 60)
     assert_operator truncated.length, :<=, renderer.send(:prompt_path_budget, suffix_length: 60)
     refute_empty truncated
+  end
+
+  def test_openbsd_operator_prompt_matches_the_agreed_plain_contract
+    renderer = FakeRenderer.new(config: {})
+    renderer.stub(:safe_hostname, "openbsd.localdomain") do
+      renderer.stub(:git_prompt_state, branch: "main", ahead: 0, behind: 0, dirty: true) do
+        Dir.stub(:pwd, File.join(Master.repo_root, "MASTER")) do
+          _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+          assert_equal "openbsd pub4 MASTER main dirty llm discover input ", strip_ansi(prompt)
+          assert_match(/\A[\p{L}\p{N} ]+\z/u, strip_ansi(prompt))
+        end
+      end
+    end
   end
 
   def test_shell_prompt_is_small_and_single_line
