@@ -174,6 +174,9 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, 'brgen|amber|bsdports'
     assert_includes helper, '[ "$timeout" -le 7200 ]'
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
+    assert_equal 1, helper.scan('exec /usr/bin/su -m "$app" -c "$script"').length
+    assert helper.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\\n")
+    refute_includes helper, "EOF_KEY"
     refute_includes helper, 'sh -c "$script"'
   end
 
