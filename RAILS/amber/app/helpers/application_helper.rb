@@ -19,6 +19,14 @@ module ApplicationHelper
     WardrobeAi.configured?
   end
 
+  # Display translated season names while posting the stable enum value expected by Item.
+  def amber_season_options
+    Item::SEASONS.map do |season|
+      key = season.tr("-", "_").downcase
+      [t("outfits.seasons.#{key}"), season]
+    end
+  end
+
   def studio_photograph_available?
     WardrobeAi.studio_photograph_available?
   end
