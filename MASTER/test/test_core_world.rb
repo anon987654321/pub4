@@ -148,6 +148,26 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_exec_drops_ruby_startup_hooks_before_the_model_command
+    previous = ENV["RUBYOPT"]
+
+    with_world do |world, root|
+      hook = File.join(root, "startup_hook.rb")
+      marker = File.join(root, "startup_hook_ran")
+      File.write(hook, "File.write(#{marker.dump}, 'loaded')\n")
+      ENV["RUBYOPT"] = "-r#{hook}"
+
+      obs = world.perform(E.exec([RbConfig.ruby, "-e", "print 'ok'"]))
+
+      assert obs.ok?, obs.message
+      assert_equal "ok", obs.value!
+      refute File.exist?(marker), "RUBYOPT ran before the worker could pledge"
+    end
+  ensure
+    previous.nil? ? ENV.delete("RUBYOPT") : ENV["RUBYOPT"] = previous
+  end
+
+
   def test_exec_failure_is_err_observation_not_raise
     with_world do |world|
       obs = world.perform(E.exec([RbConfig.ruby, "-e", "exit 3"]))
