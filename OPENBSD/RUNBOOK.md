@@ -45,12 +45,12 @@ The staged root boundary is `/usr/local/sbin/pub4-admin`, mirrored at
 `OPENBSD/usr/local/sbin/pub4-admin`. A deliberate `OPERATOR.sh` sync installs
 it as `root:wheel`, mode `0555`, and installs the Solid Queue proof as a
 separate root-owned helper under `/usr/local/libexec/pub4/`. The broker accepts
-only allowlisted app-service actions, validated deploy-stamp fields, the canonical
-CI lock operation, and two fixed helper invocations; it does not take shell text
+only allowlisted app-service actions, validated deploy-stamp fields, CI lock setup,
+fixed CI account/storage preparation, and two fixed helper invocations; it does not take shell text
 or arbitrary paths.
 
-`vps-deploy`, CI receipt writes, and CI lock setup use the broker when the installed copy
-exists. The broker creates the canonical `/var/db/pub4/ci.lock`; keep `PUB4_CI_LOCK` unset on vm23 until the legacy override seam is removed. Compatibility fallbacks remain for the first rollout. This is **not yet
+`vps-deploy`, CI receipt writes, CI lock setup, and CI account/storage preparation
+use the broker when the installed copy exists. The broker creates the canonical `/var/db/pub4/ci.lock`; keep `PUB4_CI_LOCK` unset on vm23 until the legacy override seam is removed. Compatibility fallbacks remain for the first rollout. This is **not yet
 the complete privilege migration**: `vps_ci.sh`, `RAILS/_deploy.sh`, and
 other copy-tree helpers still have direct `doas` operations. Keep the current
 `doas.conf` and wheel membership unchanged until those paths are migrated,
