@@ -5,6 +5,7 @@ require_relative "run_pulse"
 require_relative "autofix_guard"
 require_relative "run_ledger"
 require_relative "tool_breaker"
+require_relative "resource_budget"
 
 module Master
   module Fix
@@ -19,6 +20,7 @@ module Master
       HEARTBEAT_SECONDS = 28
       MACHINE_BEAT_SECONDS = 60
       GUARD_CHECK_SECONDS = 300
+      RESOURCE_CHECK_SECONDS = 30
       WARN_SHARE = 0.8
       UNIT = "budget0"
       DEFAULT_LAW_SHARE = 0.10 # data/limits.yml#fix_budget overrides both
@@ -62,7 +64,7 @@ module Master
 
       def initialize(root:, max_passes:, env: ENV, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
                      wall: -> { Time.now }, out: nil, say: nil, beat_seconds: HEARTBEAT_SECONDS, poll_seconds: 1,
-                     limits: nil, killer: nil)
+                     limits: nil, killer: nil, resource_budget: nil)
         @root = root
         @costs = File.join(root, COSTS)
         @max_passes = max_passes.to_i
@@ -74,6 +76,7 @@ module Master
         @say = say || ->(text) { Master::Trace::Dmesg.emit(text) }
         @beat_every = beat_seconds
         @pulse = RunPulse.new(max_passes:, clock:, commits: method(:commit_count))
+        @resource_budget = resource_budget || ResourceBudget.new(root:)
         @poll = poll_seconds
         @lock = Mutex.new
         @stages = Hash.new(0.0)
@@ -95,6 +98,7 @@ module Master
         @last_beat = @started
         @last_machine_beat = @started
         @last_guard_check = @started
+        @last_resource_check = @started
         @last_unit = nil
         @last_text = nil
         @pass = 0
@@ -247,6 +251,19 @@ module Master
       # shows in `git diff --name-only` ends the run. Every five minutes; the
       # check is one git call.
       def guard_check(now)
+        if now - (@last_resource_check || @started || now) >= RESOURCE_CHECK_SECONDS
+          @last_resource_check = now
+          measurement = @resource_budget.measure
+          free_gb = measurement.dig(:values, :disk_free_gb)
+          disk_issue = Array(measurement[:reasons]).find { |reason| reason.to_s.start_with?("disk_free_gb=") }
+          reason = if free_gb.nil?
+                     "disk space measurement unavailable"
+                   elsif disk_issue
+                     "disk pressure: #{disk_issue}"
+                   end
+          abort_run!("#{reason}; stopping before filesystem exhaustion") if reason
+        end
+
         return unless @protected_baseline && now - (@last_guard_check || 0) >= GUARD_CHECK_SECONDS
 
         @last_guard_check = now
