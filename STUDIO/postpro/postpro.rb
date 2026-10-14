@@ -1569,7 +1569,7 @@ def stock_matrix(image, stock = :kodak_portra, intensity = 1.0)
 
   # Rows normalised to sum to 1 so the matrix maps white to white.
   #
-  # A 3x3 whose rows do not sum to 1 moves neutrals, and six of the fourteen
+  # A 3x3 whose rows do not sum to 1 moves neutrals, and seven of the fourteen
   # here do: Velvia's green row sums to 1.08, an eight percent green lift on
   # every grey in the frame. That is a white-balance shift wearing a saturation
   # matrix's clothes, and it would be applied on top of the cast the H&D curves
