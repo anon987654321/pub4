@@ -66,9 +66,11 @@ end
 admin_path = File.join(OPENBSD, "usr", "local", "sbin", "pub4-admin")
 if File.file?(admin_path)
   admin = File.read(admin_path)
-  failures << "pub4-admin must be a fixed-path closed broker" unless
-    admin.include?("def command_for(argv)") && admin.include?("exec(*command)") &&
-    admin.include?("SERVICE_ACTIONS") && admin.include?("SERVICES")
+  broker_contract = admin.include?("def command_for(argv)") &&
+                    admin.include?("exec(*command)") &&
+                    admin.include?("SERVICE_ACTIONS") &&
+                    admin.include?("SERVICES")
+  failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
   failures << "pub4-admin must not evaluate shell command strings" if
     admin.match?(/system\s*\(|Open3\.|Process\.spawn|%x/)
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
