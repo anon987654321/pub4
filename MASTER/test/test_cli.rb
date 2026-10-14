@@ -266,6 +266,44 @@ def test_commit_help_names_the_paths_and_the_confirm_flag
   refute_includes detail, "git add -u"
 end
 
+  def test_prompt_shows_queue_count_without_changing_the_idle_prompt
+    assert_equal "master$ ", @cli.send(:prompt_with_queue_status, "master$ ")
+    @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
+      @cli.instance_variable_get(:@turn_queue) << "next message"
+    end
+    assert_equal "master$ *1 ", @cli.send(:prompt_with_queue_status, "master$ ")
+  end
+
+  def test_interactive_queue_processes_submissions_in_order
+    seen = []
+    started = Queue.new
+    release = Queue.new
+    handler = lambda do |line|
+      seen << line
+      if line == "first"
+        started << true
+        release.pop
+      end
+    end
+
+    @cli.stub(:handle_repl_line, handler) do
+      capture_io do
+        @cli.send(:enqueue_interactive_line, "first")
+        started.pop
+        @cli.send(:enqueue_interactive_line, "second")
+        release << true
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2
+        while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+          break if seen == ["first", "second"] && @cli.instance_variable_get(:@turn_worker).nil?
+          sleep 0.01
+        end
+      end
+    end
+
+    assert_equal ["first", "second"], seen
+    assert_nil @cli.instance_variable_get(:@turn_worker)
+  end
+
   def test_prompt_refreshes_skills_before_rendering
     skills = Minitest::Mock.new
     skills.expect(:discover!, [])
