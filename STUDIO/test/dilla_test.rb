@@ -51,15 +51,17 @@ class DillaTest < Minitest::Test
   def test_random_take_uses_the_dilla_output_override
     Dir.mktmpdir do |dir|
       previous = ENV["DILLA_OUTPUT_DIR"]
-      ENV["DILLA_OUTPUT_DIR"] = dir
-      options = { seed: 123 }
+      begin
+        ENV["DILLA_OUTPUT_DIR"] = dir
+        options = { seed: 123 }
 
-      capture_io { randomize_take!(DATA, options) }
+        capture_io { randomize_take!(DATA, options) }
 
-      assert_equal dir, File.dirname(options.fetch(:out))
-      assert_match(/\Adilla-\d{6}-123\.wav\z/, File.basename(options.fetch(:out)))
-    ensure
-      previous.nil? ? ENV.delete("DILLA_OUTPUT_DIR") : ENV["DILLA_OUTPUT_DIR"] = previous
+        assert_equal dir, File.dirname(options.fetch(:out))
+        assert_match(/\Adilla-\d{6}-123\.wav\z/, File.basename(options.fetch(:out)))
+      ensure
+        previous.nil? ? ENV.delete("DILLA_OUTPUT_DIR") : ENV["DILLA_OUTPUT_DIR"] = previous
+      end
     end
   end
 
