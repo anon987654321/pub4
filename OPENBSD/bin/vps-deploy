@@ -204,6 +204,32 @@ fi
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 
+# Transitional adapter: use the fixed root-owned broker once installed. The
+# fallback remains until the operator sync has installed it on vm23.
+admin_service() {
+  local action=${1:-}
+  shift || true
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    if [[ $action == list-started ]]; then
+      doas /usr/local/sbin/pub4-admin service list-started
+    else
+      doas /usr/local/sbin/pub4-admin service "$action" "$@"
+    fi
+  elif [[ $action == list-started ]]; then
+    doas rcctl ls started
+  else
+    doas rcctl "$action" "$@"
+  fi
+}
+
+admin_request() {
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    print -u2 "vps-deploy: pub4-admin is not installed; run the reviewed OPERATOR sync first"
+    return 127
+  }
+  doas /usr/local/sbin/pub4-admin "$@"
+}
+
 # The guard's deploy flag, held for the whole deploy and not only the restart.
 #
 # rc.d/<app> touches .deploying-<app> from rc_pre to the end of its /up wait and
@@ -276,7 +302,7 @@ settle_boots() {
   for svc in ${=VPS_DEPLOY_STARTED:-}; do
     port=${deploy_ports[$svc]:-}
     [[ -n $port ]] || continue
-    doas rcctl check "$svc" >/dev/null 2>&1 || continue
+    admin_service check "$svc" >/dev/null 2>&1 || continue
     wait_up "$port" "${VPS_DEPLOY_SETTLE_WAIT:-240}" \
       || print -u2 "vps-deploy: WARNING - $svc is running but :${port}/up did not answer within ${VPS_DEPLOY_SETTLE_WAIT:-240}s"
   done
@@ -306,21 +332,21 @@ restore_started() {
   for svc in brgen amber bsdports master; do (( ${want[(Ie)$svc]} )) && order+=($svc); done
   for svc in $want; do (( ${order[(Ie)$svc]} )) || order+=($svc); done
   for svc in $order; do
-    doas rcctl check "$svc" >/dev/null 2>&1 && continue
+    admin_service check "$svc" >/dev/null 2>&1 && continue
     origin=$(stop_origin "$svc")
     print "vps-deploy: restore $svc ($origin)"
     port=${deploy_ports[$svc]:-}
     # restart, not start: rc.d/master runs its relayd restart, TTS warmup and flag
     # removal only on restart, and restart on a stopped service is a start.
-    doas rcctl restart "$svc" >/dev/null 2>&1 || true
+    admin_service restart "$svc" >/dev/null 2>&1 || true
     if [[ -n $port ]]; then
-      wait_up "$port" || { doas rcctl restart "$svc" >/dev/null 2>&1 || true; wait_up "$port"; } || {
+      wait_up "$port" || { admin_service restart "$svc" >/dev/null 2>&1 || true; wait_up "$port"; } || {
         print -u2 "vps-deploy: restore $svc FAILED - :${port}/up not ready, read /var/log/daemon"
         failed+=($svc); continue
       }
     else
       sleep 3
-      doas rcctl check "$svc" >/dev/null 2>&1 || { print -u2 "vps-deploy: restore $svc FAILED - rcctl check"; failed+=($svc); continue }
+      admin_service check "$svc" >/dev/null 2>&1 || { print -u2 "vps-deploy: restore $svc FAILED - rcctl check"; failed+=($svc); continue }
     fi
     print "vps-deploy: restore $svc ok"
     restored+=($svc)
@@ -352,8 +378,8 @@ finish() {
     local other
     for other in amber bsdports; do
       [[ $other == "$app" ]] && continue
-      doas rcctl get "$other" >/dev/null 2>&1 || continue
-      doas rcctl check "$other" >/dev/null 2>&1 \
+      admin_service get "$other" >/dev/null 2>&1 || continue
+      admin_service check "$other" >/dev/null 2>&1 \
         || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — doas rcctl restart $other"
     done
   fi
@@ -424,7 +450,7 @@ if (( lock_owner )); then
   fi
   git -C "$repo" merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
   deploy_stage=snapshot
-  VPS_DEPLOY_STARTED="$(doas rcctl ls started 2>/dev/null)"
+  VPS_DEPLOY_STARTED="$(admin_service list-started 2>/dev/null)"
   VPS_DEPLOY_STARTED=${VPS_DEPLOY_STARTED//$'\n'/ }
   export VPS_DEPLOY_STARTED
   print "vps-deploy: started before this deploy: $VPS_DEPLOY_STARTED"
@@ -509,8 +535,10 @@ fi
 
 source "$repo/OPENBSD/lib/ruby_select.sh"
 stamp_dir=/var/db/pub4
-mkdir -p "$stamp_dir" 2>/dev/null || doas mkdir -p "$stamp_dir"
-doas chmod 755 "$stamp_dir" 2>/dev/null || true
+if [[ ! -x /usr/local/sbin/pub4-admin ]]; then
+  mkdir -p "$stamp_dir" 2>/dev/null || doas mkdir -p "$stamp_dir"
+  doas chmod 755 "$stamp_dir" 2>/dev/null || true
+fi
 
 # SHA and time are captured at write_stamp, not here. vps_deploy_master.sh
 # pulls origin/main; reading HEAD before that call stamped the pre-pull SHA
@@ -521,6 +549,10 @@ write_stamp() {
   local sha started file
   stamp_written=1
   sha=$(git -C "$repo" rev-parse --short HEAD)
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    admin_request stamp "$name" "$sha" "$stamp_status"
+    return $?
+  fi
   started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   file=$stamp_dir/last_deploy_${name}.json
   doas tee "$file" >/dev/null <<EOF
@@ -588,7 +620,9 @@ done
 
 deploy_stage=preflight
 print "vps-deploy: $app (preflight load)"
-if [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then
+if [[ -x /usr/local/sbin/pub4-admin ]]; then
+  admin_request resource-guard || true
+elif [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then
   doas ksh "$repo/OPENBSD/bin/resource_guard.sh" || true
 fi
 
@@ -644,9 +678,9 @@ else
   settle_boots
   jobs_service="${app}_jobs"
   jobs_was_up=0
-  if doas rcctl get "$jobs_service" >/dev/null 2>&1 && doas rcctl check "$jobs_service" >/dev/null 2>&1; then
+  if admin_service get "$jobs_service" >/dev/null 2>&1 && admin_service check "$jobs_service" >/dev/null 2>&1; then
     print "vps-deploy: $app (stand down $jobs_service for the CI run)"
-    doas rcctl stop "$jobs_service" >/dev/null 2>&1 && { jobs_was_up=1; own_stops+=("$jobs_service") }
+    admin_service stop "$jobs_service" >/dev/null 2>&1 && { jobs_was_up=1; own_stops+=("$jobs_service") }
   fi
 
   deploy_stage=ci+sync
@@ -661,7 +695,7 @@ else
   zsh "$repo/OPENBSD/bin/vps_ci.sh" "$app" || ci_status=$?
 
   if (( jobs_was_up )); then
-    doas rcctl start "$jobs_service" >/dev/null 2>&1 \
+    admin_service start "$jobs_service" >/dev/null 2>&1 \
       || print -u2 "vps-deploy: $jobs_service did not come back — start it"
   fi
   (( ci_status == 0 )) || exit $ci_status
@@ -686,7 +720,7 @@ print "vps-deploy: $app (primary db migrate + secondary schemas)"
 # Same reason RAILS/_deploy.sh stops first: db:prepare hangs on the write
 # lock a live Falcon worker already holds on production.sqlite3.
 print "vps-deploy: $app (stop for sqlite migrate)"
-doas rcctl stop "$app" 2>/dev/null || true
+admin_service stop "$app" 2>/dev/null || true
 app_stopped=1
 own_stops+=("$app")
 db_create_migrate_as_app "$app" "/home/${app}/app"
@@ -706,7 +740,7 @@ rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 deploy_stage=restart
 print "vps-deploy: $app (restart)"
 hold_deploy_flag
-if ! doas rcctl restart "$app" || ! doas rcctl check "$app"; then
+if ! admin_service restart "$app" || ! admin_service check "$app"; then
   write_stamp "$app" failed
   exit 1
 fi
@@ -757,8 +791,11 @@ deploy_stage=solid_queue
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
   print "vps-deploy: $app (solid_queue proof)"
-  doas "$RUBY" "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app" \
-    || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    admin_request solid-queue-proof "$app"
+  else
+    doas "$RUBY" "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app"
+  fi || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 
 # Restore whatever the guard shed while we were deploying.
@@ -825,7 +862,7 @@ deploy_stage=final-check
 # The app deployed last has to be the app still running when the deploy says ok.
 # Every check above ran minutes ago, and a deploy whose own app is down on exit
 # is the one outcome the stamp must never call ok.
-if ! doas rcctl check "$app" >/dev/null 2>&1; then
+if ! admin_service check "$app" >/dev/null 2>&1; then
   write_stamp "$app" failed
   print -u2 "vps-deploy: $app is down at the end of its own deploy — doas rcctl restart $app, then read /var/log/daemon"
   exit 1
