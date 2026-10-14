@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# The external render directory is shared by media producers and must have one
-# implementation so a consumer never guesses where another tool wrote a file.
+# Keep photograph deliverables outside the checkout. The producer and its
+# Postpro consumer share this path contract instead of guessing output locations.
 module Studio
   module OutputPaths
     module_function
