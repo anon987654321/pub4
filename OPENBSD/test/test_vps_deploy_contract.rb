@@ -142,6 +142,17 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes sync, "rails_sync_app_tree: pub4-admin is missing"
   end
 
+  def test_rails_bundle_cache_setup_is_app_owned
+    deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
+    helper = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "libexec", "rails-task.ksh"), encoding: "UTF-8")
+
+    assert_includes deploy, 'run_rails_as_app "$app_name" "$APP_DIR" "bundle-cache-prepare"'
+    refute_includes deploy, 'doas mkdir -p "$bundle_home"'
+    refute_includes deploy, 'doas chown -R "${app_name}:${app_name}" "$bundle_home"'
+    assert_includes helper, 'bundle-cache-prepare)'
+    assert_includes helper, 'target="$bundle_home/$part"'
+  end
+
   def test_rails_production_bundle_uses_bounded_broker
     core = File.read(File.join(ROOT, "RAILS", "_bundle.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
