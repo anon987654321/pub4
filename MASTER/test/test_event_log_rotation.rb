@@ -57,7 +57,7 @@ class TestEventLogRotation < Minitest::Test
 
       File.stub(:open, opener) do
         record = log.append("recovered:event", value: "kept")
-        assert_equal "recovered:event", record.fetch("event")
+        assert_equal "recovered:event", record.fetch(:event)
       end
 
       assert failed, "the test did not simulate a full-disk append"
