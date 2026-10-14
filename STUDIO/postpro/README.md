@@ -109,9 +109,9 @@ the weights everything falls back to the proxies, with one quiet log line.
 ## Random chains and heavy mode
 
 A bare path, or `--random`, renders several variations of a photograph, each through its own
-chain, written to the configured output directory with a JSON sidecar naming every effect and
-the seed. By default this is beside `postpro.rb`, where generated media is ignored; set
-`POSTPRO_OUTPUT_DIR` to override it. Heavy mode is the standing default: five variations dealt
+chain, with a JSON sidecar naming every effect and the seed. By default the media and sidecars
+go to the shared dated render directory outside the checkout. Set `POSTPRO_OUTPUT_DIR` to
+choose another output directory. Heavy mode is the standing default: five variations dealt
 from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter
 taste. Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family again.
 
@@ -126,9 +126,9 @@ the others and takes a stock no other picture used.
 Other modes grade in bulk. The `--watch` flag grades every new photo that lands in a folder,
 `--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.
 The `--stock-sheet` flag tiles one frame through every stock. Bulk grades, stock sheets and
-LUT exports use the configured output directory by default, beside `postpro.rb`; set
-`POSTPRO_OUTPUT_DIR` to redirect it, or pass `--output` where the command accepts an explicit
-destination.
+LUT exports use the shared dated render directory outside the checkout by default.
+`POSTPRO_OUTPUT_DIR` chooses another default directory; pass `--output` where the command
+accepts an explicit destination.
 
 ## Reading a frame, and a set
 
