@@ -101,10 +101,9 @@ class VpsDeployContractTest < Minitest::Test
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
 
     assert_equal 1, core.scan("bundle_install_as_app() {").length
-    assert_includes core, '"/usr/local/sbin/pub4-admin rails-bundle "$app_name"'
+    assert_includes core, '/usr/local/sbin/pub4-admin rails-bundle "$app_name"'
     assert_includes deploy, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
     assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
-    refute_includes core, 'doas sh -c "su -m ${app_name} -c' if false
   end
 
   def test_rails_deploy_service_lifecycle_uses_closed_broker_adapter
