@@ -18,6 +18,7 @@ module Pub4Admin
   RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
   CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
+  CI_RUN = "/usr/local/libexec/ci-run.ksh"
   RAILS_APPS = %w[brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
   RUBY_CANDIDATES = %w[
@@ -155,6 +156,12 @@ module Pub4Admin
     if args.length == 2 && args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])
       trusted_script!(CI_PREPARE)
       exec("/bin/ksh", CI_PREPARE, args[1])
+    end
+
+    if args.length == 3 && args[0] == "ci-run" && RAILS_APPS.include?(args[1]) &&
+       args[2].match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(args[2].to_i)
+      trusted_script!(CI_RUN)
+      exec("/bin/ksh", CI_RUN, args[1], args[2])
     end
 
     if args == ["resource-guard"]
