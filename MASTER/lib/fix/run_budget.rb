@@ -107,8 +107,12 @@ module Master
       end
 
       def stop!
-        @watchdog&.kill
+        watchdog = @watchdog
         @watchdog = nil
+        # A stall or disk abort can be discovered by the watchdog itself.
+        # Killing Thread.current here would interrupt finish!/killer before the
+        # final report or hard safety stop had a chance to run.
+        watchdog.kill if watchdog&.alive? && watchdog != Thread.current
       end
 
       # The run's last word: why it ended, what it did, what the autofix stage
@@ -322,7 +326,10 @@ module Master
         loop do
           sleep @poll
           beat
+          break if @exit_reason
+
           machine_beat(@clock.call)
+          break if @exit_reason
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Fix::RunBudget.watch")
