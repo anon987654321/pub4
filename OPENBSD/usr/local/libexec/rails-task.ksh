@@ -184,8 +184,10 @@ if [ -d "$shared_bin" ] && [ ! -L "$shared_bin" ]; then
   done
 fi
 rubocop_config=/home/dev/pub4/RAILS/__shared/.rubocop.yml
+rubocop_target="/home/$PUB4_TASK_APP/app/.rubocop.yml"
 if [ -f "$rubocop_config" ] && [ ! -L "$rubocop_config" ]; then
-  cp "$rubocop_config" "/home/$PUB4_TASK_APP/app/.rubocop.yml"
+  [ ! -L "$rubocop_target" ] || { echo "rails-task: refusing .rubocop.yml symlink" >&2; exit 1; }
+  cp "$rubocop_config" "$rubocop_target"
 fi
 EOF
 ) ;;
