@@ -61,7 +61,7 @@ shared_checks = {
   'doas mkdir -p "${APP_DIR}/.bundle"' => "shared deploy helper missing app .bundle mkdir",
   'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "shared deploy helper missing bundler install",
   'install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"' => "shared deploy helper missing standard rc.d install call",
-  'relayd_add_relay "$APP_DOMAIN" "$APP_PORT"' => "shared deploy helper missing standard relay call"
+  'relayd_add_relay "$APP_NAME" "$APP_DOMAIN" "$APP_PORT"' => "shared deploy helper missing standard relay call"
 }
 shared_checks.each do |needle, message|
   failures << message unless shared_functions.include?(needle)
