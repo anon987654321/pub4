@@ -771,6 +771,16 @@ class TestPostproFilm < Minitest::Test
     end
   end
 
+  def test_stock_sheet_labels_fit_their_cells
+    skip "libvips absent on this host" unless defined?(Vips)
+
+    STOCKS.each_key do |stock|
+      label = send(:stock_sheet_label, stock, cell: 48)
+      assert_operator label.width, :<=, 48, "#{stock} label spills into its neighbour"
+      assert_operator label.height, :<=, STOCK_SHEET_LABEL - 4, "#{stock} label leaves its strip"
+    end
+  end
+
   # One tile per stock, and the stock actually changes the grade under it.
   def test_the_stock_sheet_grades_one_frame_on_every_stock
     image = build_probe
