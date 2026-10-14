@@ -39,7 +39,9 @@ module Master
 
       def read_prompt_line
         @reading_input = true
-        line = safe_read_line(prompt_for_mode)
+        @active_prompt = prompt_for_mode
+        reserve_activity_row
+        line = safe_read_line(@active_prompt)
         terminal_puts if line.nil?
         line
       rescue Interrupt
@@ -49,7 +51,31 @@ module Master
         Master::Trace::Dmesg.status("cli0", "^C again to exit")
         :interrupted
       ensure
-        @reading_input = false
+        Master::Trace::Dmesg.terminal_write do |_target|
+          @reading_input = false
+          @activity_row_reserved = false
+          @active_prompt = nil
+        end
+      end
+
+      # Reserve one line above Reline's editable row only while a queued turn is
+      # active. The spinner may paint that row, never the line being edited.
+      def reserve_activity_row
+        return unless $stdin.tty? && $stdout.tty?
+
+        busy = @turn_queue_mutex.synchronize do
+          @turn_worker&.alive? && !@turn_queue_paused && !@closed
+        end
+        return unless busy
+
+        Master::Trace::Dmesg.terminal_write do |target|
+          target.puts
+          target.flush
+          @activity_row_reserved = true
+        end
+      rescue StandardError => e
+        @activity_row_reserved = false
+        Master::Ground::Swallow.log(e, context: "cli.activity_row.reserve", event_bus: @refs.bus)
       end
 
       def close_requested?
