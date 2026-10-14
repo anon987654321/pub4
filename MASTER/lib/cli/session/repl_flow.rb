@@ -37,6 +37,7 @@ module Master
       end
 
       def read_prompt_line
+        @reading_input = true
         line = safe_read_line(prompt_for_mode)
         terminal_puts if line.nil?
         line
@@ -46,6 +47,8 @@ module Master
 
         Master::Trace::Dmesg.status("cli0", "^C again to exit")
         :interrupted
+      ensure
+        @reading_input = false
       end
 
       def close_requested?
@@ -80,7 +83,7 @@ module Master
           tokens: @refs.session.token_est, cost: @refs.session.cost,
           destination: Master::Io::Chat.destination_label
         )
-        prompt
+        prompt_with_queue_status(prompt)
       end
 
       # Focus mode reduces context noise, never hides the working location or
@@ -92,7 +95,7 @@ module Master
           tokens: @refs.session.token_est, cost: @refs.session.cost,
           destination: Master::Io::Chat.destination_label, focused: true
         )
-        prompt
+        prompt_with_queue_status(prompt)
       end
 
       # An empty line does nothing, as in a shell: Enter never runs an action
@@ -100,6 +103,16 @@ module Master
       def handle_repl_line(line)
         stripped = line.strip
         return if stripped.empty?
+
+        if queue_control_mode?
+          return exit_cli if %w[/exit /quit].include?(stripped.downcase)
+          return stop_interactive_queue if stripped.casecmp("/stop").zero?
+          return resume_interactive_queue if stripped.casecmp("/resume").zero?
+        end
+        if @turn_worker&.alive? && Thread.current != @turn_worker
+          enqueue_interactive_line(line)
+          return
+        end
 
         # With a selected external conversation, every ordinary line is a chat
         # message. Slash commands, governed shell lines and multiline input
@@ -230,7 +243,108 @@ module Master
           return
         end
 
-        run_input(line.strip)
+        if $stdin.tty? && $stdout.tty? && Thread.current != @turn_worker
+          enqueue_interactive_line(line)
+        else
+          run_input(line.strip)
+        end
+      end
+
+      def queue_control_mode?
+        @turn_queue_paused || (@turn_worker&.alive? && Thread.current != @turn_worker)
+      end
+
+      def interactive_queue_count
+        @turn_queue_mutex.synchronize { @turn_queue.length }
+      rescue StandardError
+        0
+      end
+
+      def prompt_with_queue_status(prompt)
+        return prompt unless queue_control_mode? || interactive_queue_count.positive?
+
+        count = interactive_queue_count
+        marker = count.positive? ? "*#{count}" : "*"
+        prompt.to_s.sub(/(\\s*)\\z/) { |space| " #{marker}#{space}" }
+      end
+
+      def enqueue_interactive_line(line)
+        count = nil
+        busy = nil
+        @turn_queue_mutex.synchronize do
+          busy = @turn_worker&.alive?
+          @turn_queue << line.to_s
+          start_interactive_queue_worker_locked unless busy
+          count = @turn_queue.length
+        end
+        terminal_puts("queue0: #{count} queued") if busy && count.positive?
+        nil
+      end
+
+      # Called with @turn_queue_mutex held. The small Thread.pass gate prevents
+      # the new worker from processing a line before @turn_worker owns its ID.
+      def start_interactive_queue_worker_locked
+        return if @turn_worker&.alive? && !@turn_queue_paused
+
+        @turn_worker = Thread.new do
+          Thread.pass until @turn_worker.equal?(Thread.current)
+          drain_interactive_queue
+        end
+      end
+
+      def drain_interactive_queue
+        worker = Thread.current
+        Thread.current.report_on_exception = false
+        Fiber[:master_cli_container] = @container
+
+        loop do
+          line = @turn_queue_mutex.synchronize do
+            if @turn_queue_paused || @turn_queue.empty?
+              @turn_worker = nil if @turn_worker.equal?(worker)
+              nil
+            else
+              @turn_queue.shift
+            end
+          end
+          break if line.nil?
+
+          handle_repl_line(line)
+        end
+      rescue StandardError => e
+        terminal_puts("queue0: worker failed — #{e.class}: #{e.message}", io: $stderr)
+      ensure
+        restart = false
+        @turn_queue_mutex.synchronize do
+          if @turn_worker.equal?(worker)
+            @turn_worker = nil
+            restart = !@turn_queue_paused && !@turn_queue.empty?
+          end
+        end
+        if restart
+          @turn_queue_mutex.synchronize { start_interactive_queue_worker_locked }
+        end
+      end
+
+      def stop_interactive_queue
+        @turn_queue_mutex.synchronize { @turn_queue_paused = true }
+        turn = @pipeline_thread
+        if turn&.alive?
+          canceler = Thread.new { cancel_turn(turn, @turn_children) }
+          canceler.join(2)
+        end
+        count = interactive_queue_count
+        terminal_puts("queue0: current turn cancelled; #{count} queued, /resume to continue")
+        nil
+      end
+
+      def resume_interactive_queue
+        @turn_queue_mutex.synchronize { @turn_queue_paused = false }
+        @turn_queue_mutex.synchronize do
+          start_interactive_queue_worker_locked if !@turn_worker&.alive? && @turn_queue.any?
+        end
+        count = interactive_queue_count
+        terminal_puts(count.positive? ? "queue0: resuming, #{count} queued" : "queue0: no queued messages")
+        nil
       end
 
       # The composer changes destination only after an explicit /chat use.
