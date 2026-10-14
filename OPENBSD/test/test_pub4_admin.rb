@@ -64,6 +64,17 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file"
     assert_includes source, "File.chmod(0o640, temporary)"
   end
+  def test_bundle_cache_broker_accepts_only_fixed_actions_versions_and_paths
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    assert_includes source, 'args.length == 4 && args[0] == "bundle-cache"'
+    assert_includes source, "def bundle_cache(app, action, ruby_key)"
+    assert_includes source, 'BUNDLE_CACHE_BASE = "/var/cache/pub4/bundle"'
+    assert_includes source, "%w[prepare import capture].include?(action)"
+    assert_includes source, "File.link(temporary, target)"
+    assert_includes source, "File::CREAT | File::EXCL"
+    assert_includes source, "128 * 1024 * 1024"
+    assert_includes source, "bundle cache import exceeds 500 files"
+  end
   def test_ci_timeout_is_a_real_process_group_deadline
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
@@ -120,6 +131,20 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, '[ ! -L "$app_dir/db" ]'
     assert_includes helper, '[ ! -L "$app_dir/storage" ]'
     assert_includes helper, '[ "$(stat -f %u "$app_dir/storage")" = "$app_uid" ]'
+  end
+  def test_bundle_cas_hydration_copies_root_objects_as_the_app
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
+    bundle = File.read(File.expand_path("../../RAILS/_bundle.sh", __dir__))
+    assert_includes helper, "bundle-cas-hydrate)"
+    assert_includes helper, 'cp "$source" "$target"'
+    assert_includes helper, 'sha256 -q "$source"'
+    refute_includes helper, 'ln "$source" "$target"'
+    assert_includes runtime, "bundle-cas-hydrate"
+    assert_includes bundle, 'pub4-admin bundle-cache "$app_name" capture "$RUBY_CACHE_KEY"'
+    cas_block = bundle[/bundle_cas_prepare\(\) \{.*?^\}/m]
+    refute_nil cas_block
+    refute_match(/\$\{_PRIV\}\s+(?:mkdir|cp|ln|chown)\b/, cas_block)
   end
   def test_rails_task_accepts_only_closed_app_task_arguments
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
