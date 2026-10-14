@@ -11,7 +11,7 @@ module Master
         beat_seconds = 60.0 / bpm
         step_seconds = beat_seconds / subdivisions_per_beat
         count = bars * beats_per_bar * subdivisions_per_beat
-        rng = Random.new(seed)
+        rng = ::Random.new(seed)
 
         Array.new(count) do |step|
           at = step * step_seconds

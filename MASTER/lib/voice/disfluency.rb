@@ -38,7 +38,7 @@ module Master
 
         identity = [seed || ENV["MASTER_TTS_SEED"], cfg["seed"], spoken].compact.join("\0")
         number = Digest::SHA256.hexdigest(identity)[0, 16].to_i(16)
-        random = Random.new(number)
+        random = ::Random.new(number)
         return spoken if random.rand >= cfg.fetch("probability", 0.20).to_f.clamp(0.0, 1.0)
 
         fillers = Array(cfg["fillers"]).map(&:to_s).map(&:strip).reject(&:empty?)

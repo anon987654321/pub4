@@ -254,7 +254,7 @@ module Master
         rate0 = base_rate.to_s.delete("%").to_i
         pitch0 = base_pitch.to_s.delete("Hz").to_i
         clauses.each_with_index do |clause, index|
-          rng = Random.new(Digest::SHA256.hexdigest("#{seed}:#{index}:#{clause.text}")[0, 12].to_i(16))
+          rng = ::Random.new(Digest::SHA256.hexdigest("#{seed}:#{index}:#{clause.text}")[0, 12].to_i(16))
           rate = rate0
           pitch = pitch0
           if enabled

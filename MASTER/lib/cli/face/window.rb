@@ -72,7 +72,7 @@ module Master
           @words = [ear.missing, mouth.missing].compact
           @draft = +""
           @closing = false
-          @motion = Motion.new(seed: Random.new_seed % 1_000_003)
+          @motion = Motion.new(seed: ::Random.new_seed % 1_000_003)
           @events = []
           @jobs = []
           @event_bus = event_bus

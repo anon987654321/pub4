@@ -48,7 +48,7 @@ module Master
         Particle = Struct.new(:angle, :radius, :height, :spin, :rise, :push, :lift)
 
         def initialize(seed: 7, session: nil)
-          @rng = Random.new(seed)
+          @rng = ::Random.new(seed)
           @seed = seed
           @mask = Masks.pick(session)
           @mix_state = nil

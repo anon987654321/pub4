@@ -79,7 +79,7 @@ module Master
         end
 
         def noise(shape, frames, seed)
-          rng = Random.new(seed)
+          rng = ::Random.new(seed)
           value = 0.0
           Array.new(frames) do
             raw = rng.rand * 2.0 - 1.0
