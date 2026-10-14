@@ -55,6 +55,27 @@ class TestVisualCustody < Minitest::Test
     JSON.parse(File.read(path))
   end
 
+  def test_equivalent_routes_share_one_baseline_without_skipping_either_surface
+    surfaces = Deploy::GeometryProbe.surfaces
+    gate = Deploy::LayoutSnapshotGate.new
+    aliases = {
+      "bsdports/ports_index/mobile" => "bsdports/home/mobile",
+      "bsdports/ports_index/desktop" => "bsdports/home/desktop",
+      "brgen/conversations/desktop" => "brgen/messenger/desktop",
+    }
+
+    aliases.each do |alias_id, canonical_id|
+      aliased = surfaces.find { |row| row.id == alias_id }
+      canonical = surfaces.find { |row| row.id == canonical_id }
+
+      refute_nil aliased, "missing independently measured alias surface #{alias_id}"
+      refute_nil canonical, "missing canonical surface #{canonical_id}"
+      assert_includes surfaces, aliased
+      assert_equal gate.send(:baseline_path, canonical), gate.send(:baseline_path, aliased)
+      assert File.file?(gate.send(:baseline_path, canonical)), "canonical baseline missing: #{canonical_id}"
+    end
+  end
+
   def test_matching_snapshot_is_preserved
     payload = raw_payload
     custody = Master::Fix::VisualCustody.new(root: ROOT, surfaces: [surface])
