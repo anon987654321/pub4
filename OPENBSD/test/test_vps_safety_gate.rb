@@ -33,6 +33,8 @@ class VpsSafetyGateTest < Minitest::Test
                    File.join(openbsd, "usr", "local", "libexec", "ci-sync.ksh"))
       FileUtils.cp(File.join(ROOT, "usr", "local", "libexec", "rails-task.ksh"),
                    File.join(openbsd, "usr", "local", "libexec", "rails-task.ksh"))
+      FileUtils.cp(File.join(ROOT, "usr", "local", "libexec", "rails-sync.ksh"),
+                   File.join(openbsd, "usr", "local", "libexec", "rails-sync.ksh"))
       FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
       FileUtils.mkdir_p(File.join(dir, "RAILS"))
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_runtime_gate.sh"),
