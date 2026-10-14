@@ -592,7 +592,7 @@ workstation environment.
 
 ## Recovery
 
-Load shedding: `doas ksh OPENBSD/bin/resource_guard.sh`. Full stack: `ksh OPENBSD/bin/start_all_apps.sh` (as dev; only the fixed broker runs as root). Core health: `doas /usr/local/sbin/pub4-admin service check master` (repeat for brgen/relayd)
+Load shedding: `ksh OPENBSD/bin/resource_guard.sh` as `dev`; the wrapper refuses root and delegates to the installed root-owned runner. Full stack: `ksh OPENBSD/bin/start_all_apps.sh` (as dev; only the fixed broker runs as root). Core health: `doas /usr/local/sbin/pub4-admin service check master` (repeat for brgen/relayd)
 pf`.
 
 SSH lockout only: `ssh server4`, then `vmctl console vm23` (manual — not
