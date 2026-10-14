@@ -79,7 +79,7 @@ module Operator
                "checks=#{row["checks"]} active=#{row["active"]} laws=#{row["n"]}/#{row["total"]}"
 
       if row["state"] == "running"
-        state = updated > 6 ? "scan progress stale" : "scan"
+        state = updated > 6 ? "law unchanged" : "scan"
         return "#{@label} #{state} #{detail}, check elapsed #{human(ran)}, last update #{human(updated)} ago, stage elapsed #{human(elapsed)}"
       end
 
