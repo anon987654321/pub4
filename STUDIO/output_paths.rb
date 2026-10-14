@@ -4,23 +4,44 @@
 # this path contract instead of guessing output locations.
 module Studio
   module OutputPaths
+    FALLBACK_DATA_HOME = File.expand_path("~/Documents").freeze
+    REPOSITORY_ROOT = File.expand_path("..", __dir__).freeze
+
     module_function
 
-    def render_directory(at: Time.now.utc)
-      configured = ENV.fetch("POSTPRO_OUTPUT_DIR", "").to_s
+    def data_home
+      configured = ENV.fetch("XDG_DATA_HOME", "").to_s
+      return FALLBACK_DATA_HOME if configured.empty?
+      return FALLBACK_DATA_HOME unless configured.start_with?(File::SEPARATOR)
+
+      candidate = File.expand_path(configured)
+      return FALLBACK_DATA_HOME if inside_repository?(candidate)
+
+      candidate
+    end
+
+    def directory(name, at: nil, override: nil)
+      configured = override ? ENV.fetch(override, "").to_s : ""
       return File.expand_path(configured) unless configured.empty?
 
-      base = ENV.fetch("XDG_DATA_HOME", "").to_s
-      repo_root = File.expand_path("..", __dir__)
-      base_path = File.expand_path(base) unless base.empty?
-      inside_repo = base_path == repo_root ||
-                    (base_path && base_path.start_with?("#{repo_root}#{File::SEPARATOR}"))
-      if base.empty? || !base.start_with?(File::SEPARATOR) || inside_repo
-        base = File.expand_path("~/Documents")
-      else
-        base = base_path
-      end
-      File.join(base, "dilla-renders", at.strftime("%Y-%m-%d"))
+      path = File.join(data_home, name)
+      at ? File.join(path, at.utc.strftime("%Y-%m-%d")) : path
+    end
+
+    def render_directory(at: Time.now.utc)
+      directory("dilla-renders", at:, override: "POSTPRO_OUTPUT_DIR")
+    end
+
+    def dilla_render_directory(at: Time.now.utc)
+      directory("dilla-renders", at:, override: "DILLA_OUTPUT_DIR")
+    end
+
+    def reference_root
+      directory("dilla-references", override: "DILLA_REFERENCE_DIR")
+    end
+
+    def inside_repository?(path)
+      path == REPOSITORY_ROOT || path.start_with?("#{REPOSITORY_ROOT}#{File::SEPARATOR}")
     end
   end
 end
