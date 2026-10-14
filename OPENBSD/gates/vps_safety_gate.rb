@@ -125,6 +125,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                               !rails_task.include?('command="SECRET_KEY_BASE=$secret')
     failures << "Rails task secrets must use the child environment, never command arguments" unless rails_task_secret_contract
     rails_task_contract = rails_task.include?("master|brgen|amber|bsdports") &&
+                          rails_task.include?("overlay-initializers|overlay-public") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("db-storage-migrate)") &&
                           rails_task.include?('[ ! -L db ]') &&
