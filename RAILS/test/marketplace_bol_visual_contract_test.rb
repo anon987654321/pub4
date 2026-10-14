@@ -9,6 +9,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   INDEX = File.join(BRGEN, "engines/marketplace/app/views/marketplace/listings/index.html.erb")
   SHOW = File.join(BRGEN, "engines/marketplace/app/views/marketplace/listings/show.html.erb")
   CSS = File.join(BRGEN, "app/assets/stylesheets/application.scss")
+  HEADER_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_header.scss")
 
   def test_marketplace_uses_the_dedicated_bol_header
     nav = File.read(NAV)
@@ -42,6 +43,25 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes show, "store-pdp"
     assert_includes show, %(render "marketplace/listings/buybox")
     assert_includes buybox, "store-buybox"
+  end
+
+  def test_mobile_category_menu_starts_below_the_full_header_stack
+    header = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_header.scss"))
+
+    assert_includes header, "--bol-mobile-header-block: calc("
+    assert_includes header, "--bol-mobile-mega-top: calc("
+    assert_includes header,
+                    "var(--bol-utility-block) + var(--bol-mobile-header-block) +"
+    assert_includes header, "inset-block-start: var(--bol-mobile-mega-top);"
+
+    # Keep each term tied to the box it sizes; the mobile second search row
+    # must move the fixed panel instead of letting it cover the category trigger.
+    assert_includes header, "min-height: var(--bol-utility-block);"
+    assert_includes header, "min-height: var(--bol-mainnav-block);"
+    assert_includes header, "min-height: var(--bol-brand-row-block);"
+    assert_includes header, "height: var(--bol-search-control-block);"
+    assert_includes header, "padding-top: var(--bol-search-row-gap);"
+    assert_includes header, "padding: var(--bol-mobile-header-padding) var(--bol-gutter);"
   end
 
   def test_bol_geometry_tokens_are_explicit
