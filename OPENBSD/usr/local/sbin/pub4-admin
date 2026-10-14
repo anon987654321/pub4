@@ -97,7 +97,7 @@ module Pub4Admin
   end
 
   def main(argv)
-    raise "must run as root through doas" unless Process.uid.zero?
+    raise "must run as root through doas" unless Process.euid.zero?
 
     args = Array(argv).map(&:to_s)
     if args.length == 4 && args[0] == "stamp"
