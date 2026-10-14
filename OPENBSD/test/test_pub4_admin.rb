@@ -48,6 +48,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "SecureRandom.hex(64)"
     assert_includes source, "File::CREAT | File::EXCL"
     assert_includes source, "File.rename(temporary, target)"
+    assert_includes source, "already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file"
     assert_includes source, "File.chmod(0o640, temporary)"
   end
   def test_ci_timeout_is_a_real_process_group_deadline
@@ -62,6 +63,12 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "unsetenv_others: true"
   end
 
+  def test_rails_task_refuses_symlinked_database_ancestors
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    assert_includes helper, '[ ! -L "$app_dir/db" ]'
+    assert_includes helper, '[ ! -L "$app_dir/storage" ]'
+    assert_includes helper, '[ "$(stat -f %u "$app_dir/storage")" = "$app_uid" ]'
+  end
   def test_rails_task_accepts_only_closed_app_task_arguments
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
