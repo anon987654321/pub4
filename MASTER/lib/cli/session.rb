@@ -79,7 +79,8 @@ module Master
 
       def run_input(input)
         return empty_input(:run_input) if input.strip.empty?
-        return Master::Result.err("turn cancelled before start", category: :cancelled) if turn_cancel_requested?
+        @turn_queue_mutex.synchronize { @turn_cancel_requested = false unless @turn_queue_paused }
+        return Master::Result.err("turn cancelled before start", category: :abort) if turn_cancel_requested?
         blocked = check_budget_blocks(input)
         return blocked if blocked
 
@@ -220,7 +221,11 @@ module Master
       # only sign of a cancel. A turn that raised is a failure, named as one.
       def fetch_pipeline_result
         value = @pipeline_thread.value
-        return Result.err("turn returned no result", category: :handler_exception) if value.nil?
+        if value.nil?
+          return Result.err("interrupted", category: :abort) if turn_cancel_requested?
+
+          return Result.err("turn returned no result", category: :handler_exception)
+        end
         return value if value.is_a?(Result)
 
         Result.err("turn returned invalid result: #{value.class}", category: :handler_exception)
