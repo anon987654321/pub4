@@ -59,7 +59,7 @@ class TestStudioOutputPaths < Minitest::Test
           expected = File.join(File.expand_path("~/Documents"), "dilla-renders", "2026-01-02")
 
           assert_equal expected, path
-          refute Studio::OutputPaths.inside_repository?(File.join(link, "temporary-output"))
+          assert Studio::OutputPaths.inside_repository?(File.join(link, "temporary-output"))
         end
       end
     end
