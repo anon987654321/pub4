@@ -1122,7 +1122,7 @@ PRESETS = {
   legacy_golden_hour: { fx: %w[spectral_temp film_curve golden_hour_glow], stock: :kodak_portra,
                         temp: 4800, intensity: 0.72 },
 
-  legacy_lomo: { fx: %w[spectral_temp film_curve lomo grain], stock: :fuji_pro400h,
+  legacy_lomo: { fx: %w[spectral_temp vintage_lens film_curve lomo grain], stock: :fuji_pro400h,
                  temp: 5000, intensity: 0.70, lens: "lomo" },
 
   legacy_sepia: { fx: %w[spectral_temp film_curve sepia grain], stock: :ilford_hp5,
