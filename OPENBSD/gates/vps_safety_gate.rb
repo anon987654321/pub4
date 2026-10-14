@@ -367,6 +367,15 @@ end
   path = File.join(OPENBSD, "usr", "local", "libexec", name)
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
+install_all_source = File.read(File.join(OPENBSD, "bin", "vps_install_all.sh"))
+install_all_contract = install_all_source.include?("admin_service() {") &&
+                       install_all_source.include?('case "$action" in check|start|stop|restart)') &&
+                       install_all_source.include?('case "$service" in master|brgen|amber|bsdports)') &&
+                       install_all_source.include?('doas /usr/local/sbin/pub4-admin service "$action" "$service"') &&
+                       install_all_source.include?('doas rcctl "$action" "$service"') &&
+                       install_all_source.include?("Bootstrap fallback only") &&
+                       install_all_source.include?('case "$app" in brgen|amber|bsdports)')
+failures << "vps_install_all service control must be broker-first and app-allowlisted" unless install_all_contract
 deploy_all_source = File.read(File.join(OPENBSD, "bin", "deploy_all.sh"))
 deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${app}') &&
                       !deploy_all_source.include?('doas zsh ${script}') &&
