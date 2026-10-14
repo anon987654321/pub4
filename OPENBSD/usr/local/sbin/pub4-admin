@@ -152,6 +152,25 @@ module Pub4Admin
     end
   end
 
+  def app_secret_value(app)
+    raise "unknown app: #{app}" unless APPS.include?(app)
+
+    candidates = ["/etc/#{app}.env", "/etc/rails/#{app}.env"]
+    candidates.each do |path|
+      next unless File.exist?(path) || File.symlink?(path)
+      stat = File.lstat(path)
+      raise "#{path} must be a root-owned regular file" unless
+        stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+
+      secret = File.foreach(path).filter_map do |line|
+        match = line.match(/\ASECRET_KEY_BASE=([0-9a-fA-F]{64,256})\s*\z/)
+        match && match[1]
+      end.first
+      return secret if secret
+    end
+
+    raise "no valid SECRET_KEY_BASE for #{app}"
+  end
   def ensure_app_secret(app)
     return 64 unless APPS.include?(app)
 
@@ -219,6 +238,9 @@ module Pub4Admin
                 when RAILS_TASK then Array(helper_arguments)
                 end
     trusted_script!(helper)
+    if helper == RAILS_TASK && %w[db-prepare db-seed demo-seed assets-precompile schema-load ci].include?(arguments[1])
+      environment_secret = app_secret_value(app)
+    end
     environment = if helper == CI_SYNC
                     { "PATH" => "/usr/local/bin:/usr/bin:/bin",
                       "HOME" => "/home/#{app}",
@@ -227,6 +249,7 @@ module Pub4Admin
                   else
                     { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
                   end
+    environment["SECRET_KEY_BASE"] = environment_secret if environment_secret
     spawn_options = { pgroup: true, unsetenv_others: true }
     if helper == CI_SYNC
       account = Etc.getpwnam(app)
