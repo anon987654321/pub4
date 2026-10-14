@@ -21,6 +21,9 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.mkdir_p(File.join(openbsd, "etc"))
       FileUtils.cp_r(File.join(ROOT, "etc", "rc.d"), File.join(openbsd, "etc"))
       FileUtils.cp(File.join(ROOT, "etc", "doas.conf"), File.join(openbsd, "etc"))
+      FileUtils.mkdir_p(File.join(openbsd, "usr", "local", "sbin"))
+      FileUtils.cp(File.join(ROOT, "usr", "local", "sbin", "pub4-admin"),
+                   File.join(openbsd, "usr", "local", "sbin", "pub4-admin"))
       FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh")]).each do |path|
