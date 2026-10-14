@@ -28,6 +28,22 @@ class TestToolsMedia < Minitest::Test
     end
   end
 
+  def test_postpro_print_stock_is_applied_by_each_declaring_preset
+    source = File.read(POSTPRO)
+    assert_match(/print_stock:\s*%w\[print_film\]/, source,
+                 "print_stock: must be registered as a key read by print_film")
+
+    seen = 0
+    source.scan(/^  ([a-z0-9_]+): \{ fx: %w\[([^\]]+)\]([^}]*)\}/m).each do |name, fx, rest|
+      next unless rest.match?(/\bprint_stock:/)
+
+      seen += 1
+      assert_includes fx.split, "print_film",
+                      "#{name} declares print_stock: but never applies print_film"
+    end
+    assert_operator seen, :>, 0, "preset source scan must see print_stock declarations"
+  end
+
   def test_postpro_rejects_unknown_presets_instead_of_silently_returning_the_input
     source = File.read(POSTPRO)
     body = method_body(source, "preset")
