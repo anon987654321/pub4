@@ -257,7 +257,7 @@ module Master
           free_gb = measurement.dig(:values, :disk_free_gb)
           if @resource_budget.disk_critical?(measurement)
             reason = free_gb.nil? ? "disk space measurement unavailable" : "disk pressure at #{free_gb} GB free"
-            abort_run!("#{reason}; stopping before filesystem exhaustion")
+            abort_run!("#{reason}; stopping before filesystem exhaustion", force: true)
           end
         end
 
@@ -265,7 +265,7 @@ module Master
 
         @last_guard_check = now
         fresh = new_protected_changes
-        abort_run!("protected path changed: #{fresh.first(3).join(", ")}") unless fresh.empty?
+        abort_run!("protected path changed: #{fresh.first(3).join(", ")}", force: true) unless fresh.empty?
       end
 
       def new_protected_changes = AutofixGuard.protected_changes(@root) - @protected_baseline
@@ -279,13 +279,13 @@ module Master
 
       # Says why, prints the summary, then ends the process. MASTER_FIX_ABORT_ON_STALL=0
       # keeps the run going and only reports.
-      def abort_run!(reason)
+      def abort_run!(reason, force: false)
         return if @exit_reason
 
         @exit_reason = reason
         @say.call("fix0: ABORT #{reason}")
         finish!(reason)
-        @killer.call(reason) unless ENV["MASTER_FIX_ABORT_ON_STALL"] == "0"
+        @killer.call(reason) if force || ENV["MASTER_FIX_ABORT_ON_STALL"] != "0"
       end
 
       private
