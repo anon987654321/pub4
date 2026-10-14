@@ -19,6 +19,7 @@ module Pub4Admin
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
   CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
   CI_RUN = "/usr/local/libexec/ci-run.ksh"
+  CI_SYNC = "/usr/local/libexec/ci-sync.ksh"
   RAILS_APPS = %w[brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
   RUBY_CANDIDATES = %w[
@@ -147,16 +148,34 @@ module Pub4Admin
     value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
   end
 
-  # Supervise the full CI process group, including bundle install, rather than
-  # trusting the test runner alone to enforce its timeout. Only the fixed root-
-  # owned helper is spawned, with an allowlisted app and a numeric deadline.
-  def run_ci(app, duration)
-    trusted_script!(CI_RUN)
-    environment = { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
-    pid = Process.spawn(
-      environment, "/bin/ksh", CI_RUN, app, duration.to_s,
-      pgroup: true, unsetenv_others: true
-    )
+  # Supervise a single fixed helper with a bounded app name and wall-clock deadline.
+  # CI execution starts as root only long enough to drop to the app via su; tree sync
+  # is spawned directly with that app UID/GID and only the groups it needs.
+  def supervised_helper(helper, app, duration)
+    raise "unknown helper" unless [CI_RUN, CI_SYNC].include?(helper)
+    raise "unknown app" unless RAILS_APPS.include?(app)
+    raise "invalid helper timeout" unless duration.is_a?(Integer) && (1..7200).cover?(duration)
+
+    trusted_script!(helper)
+    arguments = helper == CI_RUN ? [app, duration.to_s] : [app]
+    environment = if helper == CI_RUN
+                    { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
+                  else
+                    { "PATH" => "/usr/local/bin:/usr/bin:/bin",
+                      "HOME" => "/home/#{app}",
+                      "GIT_CONFIG_NOSYSTEM" => "1",
+                      "GIT_CONFIG_GLOBAL" => "/dev/null" }
+                  end
+    spawn_options = { pgroup: true, unsetenv_others: true }
+    if helper == CI_SYNC
+      account = Etc.getpwnam(app)
+      shared_gid = Etc.getgrnam("_pub4ci").gid
+      spawn_options[:uid] = account.uid
+      spawn_options[:gid] = account.gid
+      spawn_options[:groups] = [account.gid, shared_gid].uniq
+    end
+
+    pid = Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + duration
 
     loop do
@@ -170,7 +189,7 @@ module Pub4Admin
       end
 
       if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-        warn "pub4-admin: CI timed out after #{duration}s; stopping process group #{pid}"
+        warn "pub4-admin: helper #{File.basename(helper)} timed out after #{duration}s; stopping process group #{pid}"
         begin
           Process.kill("TERM", -pid)
         rescue Errno::ESRCH
@@ -202,6 +221,16 @@ module Pub4Admin
     end
   end
 
+  def run_ci(app, duration)
+    return 64 unless valid_ci_timeout?(duration.to_s)
+
+    supervised_helper(CI_RUN, app, duration)
+  end
+
+  def run_ci_sync(app)
+    supervised_helper(CI_SYNC, app, 900)
+  end
+
   def main(argv)
     raise "must run as root through doas" unless Process.euid.zero?
 
@@ -220,6 +249,10 @@ module Pub4Admin
     if args.length == 3 && args[0] == "ci-run" && RAILS_APPS.include?(args[1]) &&
        valid_ci_timeout?(args[2])
       return run_ci(args[1], args[2].to_i)
+    end
+
+    if args.length == 2 && args[0] == "ci-sync" && RAILS_APPS.include?(args[1])
+      return run_ci_sync(args[1])
     end
 
     if args == ["resource-guard"]
