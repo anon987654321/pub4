@@ -48,6 +48,21 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_random_take_uses_the_dilla_output_override
+    Dir.mktmpdir do |dir|
+      previous = ENV["DILLA_OUTPUT_DIR"]
+      ENV["DILLA_OUTPUT_DIR"] = dir
+      options = { seed: 123 }
+
+      capture_io { randomize_take!(DATA, options) }
+
+      assert_equal dir, File.dirname(options.fetch(:out))
+      assert_match(/\Adilla-\d{6}-123\.wav\z/, File.basename(options.fetch(:out)))
+    ensure
+      previous.nil? ? ENV.delete("DILLA_OUTPUT_DIR") : ENV["DILLA_OUTPUT_DIR"] = previous
+    end
+  end
+
   def test_default_layers_fill_out_profiles_without_overriding_specialists
     layers = DATA.fetch("default_layers")
     assert_equal %w[dub_bass dx_ep_glass prophet_warm], layers.map { |layer| layer.fetch("voice") }.sort
