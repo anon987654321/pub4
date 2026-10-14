@@ -192,6 +192,7 @@ install_root_configs() {
     usr/local/libexec/ci-prepare.ksh
     usr/local/libexec/ci-run.ksh
     usr/local/libexec/ci-sync.ksh
+    usr/local/libexec/rails-task.ksh
     gates/solid_queue_proof.rb
     bin/resource_guard.sh
   )
@@ -278,7 +279,8 @@ install_root_configs() {
   for f in /usr/local/sbin/pub4-admin \
            /usr/local/libexec/ci-prepare.ksh \
            /usr/local/libexec/ci-run.ksh \
-           /usr/local/libexec/ci-sync.ksh; do
+           /usr/local/libexec/ci-sync.ksh \
+           /usr/local/libexec/rails-task.ksh; do
     if [[ ! -f $f || -L $f ]]; then
       log ERROR "installed privileged entrypoint missing or symlinked: $f"
       return 1
