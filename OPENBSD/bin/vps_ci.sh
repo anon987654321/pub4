@@ -288,8 +288,16 @@ chmod -R a+rX "${repo}/MASTER/tools"
 deploy_status "$app" "bundle install + bin/ci"
 # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
 # guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_CI_TIMEOUT=${PUB4_CI_TIMEOUT:-7200}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && ${BUNDLE} config unset without 2>/dev/null || true && ${BUNDLE} config unset deployment 2>/dev/null || true && ${BUNDLE} install --jobs=2 && ${BUNDLE} exec bin/ci'" \
-  || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+if [[ -x /usr/local/sbin/pub4-admin ]]; then
+  ci_timeout=${PUB4_CI_TIMEOUT:-7200}
+  doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout" \
+    || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+else
+  # First-rollout fallback only. Once the root-owned broker is installed, the
+  # checkout never constructs a root shell command for the CI runner.
+  doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_CI_TIMEOUT=${PUB4_CI_TIMEOUT:-7200}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && ${BUNDLE} config unset without 2>/dev/null || true && ${BUNDLE} config unset deployment 2>/dev/null || true && ${BUNDLE} install --jobs=2 && ${BUNDLE} exec bin/ci'" \
+    || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+fi
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
