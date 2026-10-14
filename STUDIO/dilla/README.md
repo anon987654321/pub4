@@ -482,12 +482,42 @@ ruby dilla.rb reference /absolute/path/to/audio.wav
 ruby dilla.rb industrial-techno
 ~~~
 
-A J Dilla profile supplies an averaged target tempo, the dedicated Dilla shadow pocket, a Rhodes voice, dusty kit, and cassette-coloured drums to later Dilla beat renders; a matching industrial-techno profile steers the separate techno renderer. Each new link adds a compact measurement record to that style's learned profile, averaging tempo and numeric production features across references of the same style. The audio envelope also provides broad onset density, offbeat-share, and sixteenth-grid timing-spread estimates; these can choose among Dilla's existing dusty/syncopated patterns and slightly adjust its groove amount, rather than forcing every reference through one preset. When Demucs stems are available, their relative drum/bass/vocal/other energy shares are recorded too: bass and drum balance gently steers industrial rumble and kick ducking, while J Dilla renders use a bounded (at most 2 dB) drum/chord mix adjustment. Missing stems or unusable measurements leave Dilla's normal mix defaults intact. Rhythm features describe the measured envelope and do not claim exact kick/snare note transcription. General references remain general and do not silently become techno. Style profiles and the active style are saved separately, so a general link or a techno reference does not erase the accumulated J Dilla profile, and vice versa. Dilla chooses arrangement length and an internal seed itself; `--bars` and `--seed` remain optional expert overrides.
+A J Dilla profile supplies an averaged target tempo, the dedicated Dilla shadow pocket,
+a Rhodes voice, dusty kit, and cassette-coloured drums to later Dilla beat renders; a
+matching industrial-techno profile steers the separate techno renderer. Each new link
+adds a compact measurement record to that style's learned profile, averaging tempo and
+numeric production features across references of the same style. The audio envelope also
+provides broad onset density, offbeat-share, and sixteenth-grid timing-spread estimates;
+these can choose among Dilla's existing dusty/syncopated patterns and slightly adjust
+its groove amount, rather than forcing every reference through one preset.
 
-Install yt-dlp and FFmpeg for URL import and measurement. To use source separation, install Demucs in a dedicated environment and make its demucs executable available on PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unavailable tools are reported as such and do not become required just to render Dilla's existing showcase.
+When Demucs stems are available, their relative drum/bass/vocal/other energy shares are
+recorded too: bass and drum balance gently steers industrial rumble and kick ducking,
+while J Dilla renders use a bounded (at most 2 dB) drum/chord mix adjustment. Missing
+stems or unusable measurements leave Dilla's normal mix defaults intact. Rhythm features
+describe the measured envelope and do not claim exact kick/snare note transcription.
 
-Reference output, reports, JSON profiles and stems are stored under the user's Documents/dilla-references directory by default, or under XDG_DATA_HOME/dilla-references when XDG_DATA_HOME is set. Each profile records the user's style hint separately from measured traits: tempo estimates and spectral bands are measurements, while an artist/genre label comes from the request, not an automatic genre classifier.
+General references remain general and do not silently become techno. Style profiles and
+the active style are saved separately, so a general link or a techno reference does not
+erase the accumulated J Dilla profile, and vice versa. Dilla chooses arrangement length
+and an internal seed itself; `--bars` and `--seed` remain optional expert overrides.
 
-The industrial-techno command makes a new four-on-the-floor composition with distorted sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It uses broad audio characteristics and never loads reference audio or separated stems into the generated composition. Tempo estimates can be ambiguous between half-time and double-time, and Demucs stems can contain bleed and artifacts.
+Install yt-dlp and FFmpeg for URL import and measurement. To use source separation,
+install Demucs in a dedicated environment and make its demucs executable available on
+PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unavailable
+tools are reported as such and do not become required just to render Dilla's existing
+showcase.
+
+Reference output, reports, JSON profiles and stems are stored under the user's
+Documents/dilla-references directory by default, or under XDG_DATA_HOME/dilla-references
+when XDG_DATA_HOME is set. Each profile records the user's style hint separately from
+measured traits: tempo estimates and spectral bands are measurements, while an
+artist/genre label comes from the request, not an automatic genre classifier.
+
+The industrial-techno command makes a new four-on-the-floor composition with distorted
+sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It
+uses broad audio characteristics and never loads reference audio or separated stems into
+the generated composition. Tempo estimates can be ambiguous between half-time and
+double-time, and Demucs stems can contain bleed and artifacts.
 
 
