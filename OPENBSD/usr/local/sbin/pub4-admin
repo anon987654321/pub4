@@ -442,7 +442,11 @@ module Pub4Admin
     if args.length == 2 && args[0] == "ensure-secret" && APPS.include?(args[1])
       return ensure_app_secret(args[1])
     end
-\n    if args.length == 2 && args[0] == "ensure-app" && RAILS_APPS.include?(args[1])\n      return ensure_app_layout(args[1])\n    end\n
+
+    if args.length == 2 && args[0] == "ensure-app" && RAILS_APPS.include?(args[1])
+      return ensure_app_layout(args[1])
+    end
+
     if args.length == 4 && args[0] == "relayd-check"
       return relayd_check(args[1], args[2], args[3])
     end
