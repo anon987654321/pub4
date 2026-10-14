@@ -146,6 +146,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?("overlay-initializers|overlay-public") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("bundle-cache-prepare") &&
+                          rails_task.include?("export PUB4_TASK_RUBY=$ruby_path") &&
+                          rails_task.include?('ruby_version=$("$PUB4_TASK_RUBY" -e "print RUBY_VERSION.split(46.chr).first(2).join")') &&
                           rails_task.include?('npm-cache)') &&
                           rails_task.include?('command="mkdir -p /home/$app/.npm /home/$app/.cache"') &&
                           rails_task.include?("bundle-cas-hydrate)") &&
