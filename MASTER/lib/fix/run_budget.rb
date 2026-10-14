@@ -247,9 +247,9 @@ module Master
         @say.call("fix0: not landed so far, #{reasons}") if reasons
       end
 
-      # Kill switch: a protected path that was clean when the run began and now
-      # shows in `git diff --name-only` ends the run. Every five minutes; the
-      # check is one git call.
+      # Safety monitor: measure disk pressure every 30 seconds and stop before
+      # exhaustion; compare protected paths every five minutes and stop on drift.
+      # Only stall aborts honor MASTER_FIX_ABORT_ON_STALL=0.
       def guard_check(now)
         if now - (@last_resource_check || @started || now) >= RESOURCE_CHECK_SECONDS
           @last_resource_check = now
