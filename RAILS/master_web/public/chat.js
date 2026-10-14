@@ -25,6 +25,7 @@ function escapeHtml(str) {
 const log = document.getElementById('chat-log');
 const CHAT_VIRTUAL_MAX = 56;
 let chatArchived = 0;
+let chatArchivedHeight = 0;
 let chatSpacer = null;
 
 function ensureChatSpacer() {
@@ -38,16 +39,26 @@ function ensureChatSpacer() {
   return chatSpacer;
 }
 
+function chatMessageHeight(message) {
+  const rect = message.getBoundingClientRect();
+  const style = window.getComputedStyle(message);
+  const margins = Number.parseFloat(style.marginTop || '0') + Number.parseFloat(style.marginBottom || '0');
+  return Math.max(0, rect.height + margins);
+}
+
 function trimChatLogVirtual() {
   if (!log || !window.MASTER_RUNTIME?.enhancements?.includes?.('chat_virtual_scroll')) return;
   while (log.querySelectorAll('.message').length > CHAT_VIRTUAL_MAX) {
     const first = log.querySelector('.message');
     if (!first || first.classList.contains('virtual-spacer')) break;
+    // Preserve the real rendered height: messages can contain paragraphs,
+    // code blocks, media and wrapped text, so a fixed 68px estimate drifts.
+    chatArchivedHeight += chatMessageHeight(first);
     first.remove();
     chatArchived += 1;
   }
   const spacer = ensureChatSpacer();
-  if (spacer) spacer.style.height = `${chatArchived * 68}px`;
+  if (spacer) spacer.style.height = `${Math.ceil(chatArchivedHeight)}px`;
 }
 const zsh = document.getElementById('zsh');
 const input = document.getElementById('zin');
