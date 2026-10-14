@@ -252,10 +252,6 @@ turbo-frame {
   text-align: center;
 }
 
-body > nav[aria-label="Primary navigation"] .brand {
-  flex-basis: 100%;
-}
-
 article dd + dt {
   margin-block-start: var(--space-3);
 }
@@ -275,13 +271,9 @@ article dd + dt {
     padding-block-start: 64px;
   }
 
-  body > nav[aria-label="Primary navigation"] {
+  nav[data-pwa-primary-nav] {
     flex-wrap: nowrap;
     gap: var(--space-4);
-  }
-
-  body > nav[aria-label="Primary navigation"] .brand {
-    flex-basis: auto;
   }
 
   .search-form {
