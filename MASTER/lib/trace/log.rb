@@ -140,13 +140,19 @@ module Master
         end
 
         def append(event, payload = {})
+          attempts = 0
           record = build_record(event, payload)
           FileUtils.mkdir_p(File.dirname(@path))
           Log.rotate(@path, MAX_BYTES)
           File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
           record
-        rescue SystemCallError, JSON::GeneratorError => e
+        rescue Errno::ENOSPC => e
+          attempts += 1
+          retry if attempts == 1 && Log.reclaim(@path)
           # Stderr is last resort — cannot route through bus without risking recursion.
+          Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
+          nil
+        rescue SystemCallError, JSON::GeneratorError => e
           Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
           nil
         end
