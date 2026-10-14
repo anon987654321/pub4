@@ -57,7 +57,7 @@ class Pub4AdminTest < Minitest::Test
     helper = File.read(File.expand_path("../usr/local/libexec/ci-run.ksh", __dir__))
 
     assert_includes source, 'args[0] == "ci-run" && RAILS_APPS.include?(args[1])'
-    assert_includes source, 'trusted_script!(CI_RUN)'
+    assert_includes source, "supervised_helper(CI_RUN, app, duration)"
     assert_includes source, "supervised_helper(CI_RUN, app, duration)"
     assert_includes helper, 'brgen|amber|bsdports'
     assert_includes helper, '[ "$timeout" -le 7200 ]'
