@@ -61,6 +61,64 @@ class TestGateChain < Minitest::Test
     assert_equal 8, jobs.size
   end
 
+  def test_gate_capture_refuses_to_start_a_child_when_disk_is_critical
+    Dir.mktmpdir do |dir|
+      G.stub(:disk_state, ->(*) { { free_gb: 1.0, critical: true } }) do
+        G.stub(Master::Trace::Dmesg, :status, ->(*) {}) do
+          ok, lines, status = G.capture(
+            RbConfig.ruby, "-e", "File.write('sentinel', 'bad')", chdir: dir
+          )
+
+          refute ok
+          assert_equal 1, status
+          assert_match(/disk preflight/, lines.join("\\n"))
+          refute File.exist?(File.join(dir, "sentinel")), "child wrote despite critical disk pressure"
+        end
+      end
+    end
+  end
+
+  def test_gate_capture_kills_a_child_that_exceeds_its_deadline
+    Dir.mktmpdir do |dir|
+      G.stub(:disk_state, ->(*) { { free_gb: 10.0, critical: false } }) do
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        ok, lines, status = G.capture(
+          RbConfig.ruby, "-e", "sleep 30", chdir: dir, timeout_s: 0.1, disk_poll_s: 0.01
+        )
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+        refute ok
+        assert_equal 124, status
+        assert_match(/gate child timeout/, lines.join("\\n"))
+        assert_operator elapsed, :<, 3, "the gate child was left running after its deadline"
+      end
+    end
+  end
+
+  def test_gate_capture_stops_a_running_child_when_disk_becomes_critical
+    Dir.mktmpdir do |dir|
+      reads = 0
+      lock = Mutex.new
+      state = lambda do |*|
+        count = lock.synchronize { reads += 1 }
+        count == 1 ? { free_gb: 10.0, critical: false } : { free_gb: 1.0, critical: true }
+      end
+
+      G.stub(:disk_state, state) do
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        ok, lines, status = G.capture(
+          RbConfig.ruby, "-e", "sleep 30", chdir: dir, timeout_s: 5, disk_poll_s: 0.01
+        )
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+        refute ok
+        assert_equal 1, status
+        assert_match(/disk guard/, lines.join("\\n"))
+        assert_operator elapsed, :<, 3, "the gate child continued writing after disk pressure"
+      end
+    end
+  end
+
   def test_openbsd_suite_discovers_nested_tests
     Dir.mktmpdir do |root|
       nested = File.join(root, "test", "nested")
