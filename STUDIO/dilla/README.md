@@ -106,7 +106,9 @@ transient; tape and effects then work on the drum bus without losing that front 
 
 A kit gives the roles a pattern uses their voices, and six are in the data: kit_909,
 kit_detroit, kit_dust, kit_fm, kit_industrial and kit_world. `--kit` picks one, and a
-profile may carry one. The techno kick is a sine whose pitch falls from a sweep to a
+profile may carry one.
+
+The techno kick is a sine whose pitch falls from a sweep to a
 body note, with a click and a drive, in five tunings. The other kits use
 frequency-modulated kicks, a layered boom, or struck sheet metal. The snare, clap, rim
 and toms are small synthesised recipes. The hats are six detuned squares crushed to
@@ -120,7 +122,9 @@ note at a time, lowest voice first, in a named pattern: up, down, updown, conver
 random_seeded, broken_pairs, thumb_pattern, pedal_arp or spread_roll. The pace, gate and
 octave span come from a style in the data, chosen with `--arp-style` and nudged with
 `--arp-rate`, which counts sixteenths per note, so 3 is a dotted eighth and 3T a
-triplet. `--repeat` strikes the whole voicing again on the steps of a style instead,
+triplet.
+
+`--repeat` strikes the whole voicing again on the steps of a style instead,
 such as quarter stabs, off-beat skanks, a dotted-eighth push or a long-short figure.
 Both read the groove profile's swing, and both take the same small modifiers, listed by
 name in the data: a euclidean mask, a chance of dropping a note, repeats, ratchets on
@@ -181,14 +185,21 @@ bag keeps a group from following itself.
 The polysynth pads are the moog voice with more
 oscillators: `prophet_pad` and `prophet_warm` stack saws, pulses and triangles under a
 ladder that opens on the attack and settles, `oberheim_pad` is wider and darker, and
-`cs80_ensemble` sweeps a resonant filter for a brass-like swell. The string machines,
+`cs80_ensemble` sweeps a resonant filter for a brass-like swell.
+
+The string machines,
 `juno_strings` and `solina_ensemble`, get their ensemble from a static spread of six or
 four detuned saws instead of a chorus, and no oscillator is detuned more than six cents.
-The fallback `ruby_strings` is five detuned saws behind a slow attack and a lowpass. The
+
+The fallback `ruby_strings` is five detuned saws behind a slow attack and a lowpass.
+
+The
 dub voices are `dub_stab`, a short pulse chord with a closing filter, `dub_pad`, a dark
 triangle and sine pad, `dub_bass`, a sine over a triangle an octave down, and
 `dub_bubble`, an organ-like bank of sine partials gated by a row of steps held in the
-data. The gate is the grid and not an oscillator, and a few milliseconds of slew keep
+data.
+
+The gate is the grid and not an oscillator, and a few milliseconds of slew keep
 its edges from clicking.
 
 The profile `dub_dark` plays the stab on the upbeats at 76 beats a minute over a bass
@@ -235,6 +246,7 @@ the notes of a part are written as a Standard MIDI File with the program change 
 General MIDI, fluidsynth renders it with its reverb and chorus off, and the wav is read
 back and mixed in before the effects. The voices are `fluid_strings`,
 `fluid_strings_slow`, `fluid_synth_strings`, `fluid_choir` and `fluid_warm_pad`.
+
 `DILLA_SOUNDFONT` names the soundfont, else the first whole file of `FluidR3_GM.sf2` and
 `GeneralUser-GS.sf2` in the soundfont folder of the download in `~/Downloads/pub3-main*`
 and then in `~/.cache/dilla-soundfonts`. A soundfont must be whole: the RIFF header says
@@ -292,7 +304,9 @@ and no imager. A block of audio is an array of channels. Each note is placed by 
 voice's group and then spread by its pitch, the low notes staying near the middle and
 the high ones going out, and each drum is placed by its role, with the kick in the
 middle and the hats a little right and alternating. The data holds the places under
-`stereo`. The pan law is constant power and unity at the centre, so a part in the middle
+`stereo`.
+
+The pan law is constant power and unity at the centre, so a part in the middle
 is as loud in each channel as it was in mono. The colour, the room and the spring run
 once for each channel, and the right side uses other delays than the left so the two
 rooms are not the same room.
@@ -389,10 +403,14 @@ twenty-four bits without.
 
 Each render prints its integrated loudness, true peak, crest
 factor and the correlation of the channels. A material too sparse to reach the target
-under the ceiling ends up quieter than it, which is the ceiling doing its work. The dear
+under the ceiling ends up quieter than it, which is the ceiling doing its work.
+
+The dear
 stages are the multiband and the parallel compressor; on this Mac, with YJIT, the whole
 chain costs about a quarter of a second of work for each second of stereo audio, the
-multiband a tenth of it. A show that finds itself rendering at more than nine tenths of
+multiband a tenth of it.
+
+A show that finds itself rendering at more than nine tenths of
 real time drops those two, says so on the screen, and goes on.
 
 ## Rendering and live playback
@@ -480,7 +498,9 @@ processor with memory, `stereo.rb` the pan law, the ping-pong echo and the image
 `stages.rb` the optional effect stages, `noise.rb` the noise and sparkle layers,
 `tape.rb` the tape stack, `mastering.rb` the mixing and mastering chain, `moves.rb` the
 master stage and the hand that makes live moves, `streamer.rb` one pass rendered a block
-at a time, `show.rb` the passes and decks, and `player.rb` the pipe to the player. The
+at a time, `show.rb` the passes and decks, and `player.rb` the pipe to the player.
+
+The
 file `data/dilla.json` is the runtime pool of progressions, patches, groove profiles,
 drum patterns, stages, noise layers, the stereo places, the master and the shared
 bus-effect rigs. The file `data/music_theory.json` is the interval, chord and
