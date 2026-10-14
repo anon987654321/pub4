@@ -63,6 +63,31 @@ class TestPostproFilm < Minitest::Test
     end
   end
 
+  def test_generated_path_allocator_preserves_earlier_grade_and_provenance
+    Dir.mktmpdir do |dir|
+      original = File.join(dir, "postpro_source_v1.jpg")
+      sidecar = "#{original}.json"
+      File.write(original, "earlier grade")
+
+      with_postpro_output_dir(dir) do
+        candidate = Postpro::Constitution.available_output_path(original)
+        refute_equal original, candidate
+        assert_match(/\Apostpro_source_v1_\d{8}T\d{12}Z(?:-\d+)?\.jpg\z/,
+                     File.basename(candidate))
+        refute File.exist?(candidate)
+
+        File.write("#{candidate}.json", "earlier provenance")
+        next_candidate = Postpro::Constitution.available_output_path(candidate)
+        refute_equal candidate, next_candidate
+        refute File.exist?(next_candidate)
+
+        assert_equal "earlier grade", File.read(original)
+        assert_equal "earlier provenance", File.read("#{candidate}.json")
+        assert Postpro::Constitution.verify_output!(input_path: original, output_path: next_candidate)
+      end
+    end
+  end
+
   # --- the tables agree about which films exist ---------------------------
 
   def test_every_stock_declares_a_speed_and_a_grain_figure
