@@ -114,6 +114,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes media, 'fetchpriority: (priority_image ? "high" : "auto")'
     assert_includes media, 'loading: (priority_image ? "eager" : "lazy")'
   end
+
   def test_brgen_post_detail_uses_the_shared_vote_rail_beside_the_title
     show = read("brgen/app/views/posts/show.html.erb")
     partial = read("__shared/app/views/shared/_post_vote_rail.html.erb")
