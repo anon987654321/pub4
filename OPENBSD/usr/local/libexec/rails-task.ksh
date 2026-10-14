@@ -71,6 +71,19 @@ case "$task" in
     command="$bundle check" ;;
   ci-bundle-install)
     command="$bundle config unset without && $bundle install --jobs=2" ;;
+  db-storage-migrate)
+    command='if [ ! -d db ]; then exit 0; fi
+[ ! -L db ] || { echo "rails-task: refusing db symlink" >&2; exit 1; }
+[ ! -L storage ] || { echo "rails-task: refusing storage symlink" >&2; exit 1; }
+mkdir -p storage
+for file in db/production*.sqlite3; do
+  [ -f "$file" ] && [ ! -L "$file" ] || continue
+  base=${file##*/}
+  target="storage/$base"
+  if [ -e "$target" ] || [ -L "$target" ]; then continue; fi
+  mv "$file" "$target"
+  printf "moved %s -> %s\\n" "$file" "$target"
+done' ;;
   db-prepare)
     command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails db:prepare" ;;
   db-seed)
