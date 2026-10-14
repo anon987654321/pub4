@@ -852,15 +852,12 @@ PRESETS = {
            stock: :kodak_portra, print_stock: :kodak_2383,
            temp: 5400, intensity: 0.80 },
 
-  portrait: { fx: %w[optical_blur spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
-              stock: :kodak_portra, temp: 5200, intensity: 0.85 },
+  portrait: { fx: %w[optical_blur vintage_lens spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
+              stock: :kodak_portra, temp: 5200, intensity: 0.85, lens: "helios" },
 
-  # vintage_lens was added to the five presets that declare a lens: and to the
-  # anamorphic preset (2026-07-30). It is the only effect that reads LENSES, and
-  # no preset's chain contained it, so `lens: "helios"` and its four siblings
-  # named a lens character that was never applied to anything -- the swirl, the
-  # Cooke warmth, the Leica glow, all declared and all absent. It sits directly
-  # after optical_blur because a lens acts before the emulsion does.
+  # `lens:` is not metadata: vintage_lens is the effect that reads it. Every
+  # preset declaring a lens must include this step, or the look silently loses
+  # its named optical character and falls back to an unrelated default.
   indie: { fx: %w[optical_blur spectral_temp vintage_lens film_curve orange_mask shadow_lift split_toning chromatic_aberration grain],
            stock: :kodak_portra, temp: 5400, intensity: 0.85, lens: "helios" },
 
