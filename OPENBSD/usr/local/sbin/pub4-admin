@@ -207,6 +207,47 @@ module Pub4Admin
 
     raise "no valid SECRET_KEY_BASE for #{app}"
   end
+  # Create one allowlisted Rails Unix account and its app-owned working directory.
+  # Existing paths must already have the expected owner; never chown a tree from
+  # the checkout or repair a symlinked destination as root.
+  def ensure_app_layout(app)
+    return 64 unless RAILS_APPS.include?(app)
+    useradd = "/usr/sbin/useradd"
+    raise "useradd is not a trusted system executable" unless trusted_executable?(useradd)
+
+    begin
+      account = Etc.getpwnam(app)
+    rescue ArgumentError
+      output = IO.popen([useradd, "-m", "-L", "daemon", "-s", "/bin/ksh", app], err: [:child, :out], &:read)
+      status = $?
+      raise "useradd failed for #{app}: #{output.to_s.strip}" unless status&.success?
+      account = Etc.getpwnam(app)
+    end
+
+    home = "/home/#{app}"
+    raise "account #{app} has unexpected home #{account.dir}" unless account.dir == home
+    home_stat = File.lstat(home)
+    raise "#{home} must be a real app-owned, non-writable directory" unless
+      home_stat.directory? && !home_stat.symlink? && home_stat.uid == account.uid &&
+      home_stat.gid == account.gid && (home_stat.mode & 0o022).zero?
+
+    app_dir = File.join(home, "app")
+    if File.exist?(app_dir) || File.symlink?(app_dir)
+      stat = File.lstat(app_dir)
+      raise "#{app_dir} must be a real app-owned directory" unless
+        stat.directory? && !stat.symlink? && stat.uid == account.uid && stat.gid == account.gid &&
+        (stat.mode & 0o022).zero?
+    else
+      Dir.mkdir(app_dir, 0o755)
+      File.chown(account.uid, account.gid, app_dir)
+      File.chmod(0o755, app_dir)
+    end
+
+    puts "app0: #{app} account and app directory ready"
+    0
+  rescue ArgumentError => e
+    raise "account #{app} could not be established: #{e.message}"
+  end
   def ensure_app_secret(app)
     return 64 unless APPS.include?(app)
 
@@ -391,7 +432,7 @@ module Pub4Admin
     if args.length == 2 && args[0] == "ensure-secret" && APPS.include?(args[1])
       return ensure_app_secret(args[1])
     end
-
+\n    if args.length == 2 && args[0] == "ensure-app" && RAILS_APPS.include?(args[1])\n      return ensure_app_layout(args[1])\n    end\n
     if args.length == 4 && args[0] == "relayd-check"
       return relayd_check(args[1], args[2], args[3])
     end
