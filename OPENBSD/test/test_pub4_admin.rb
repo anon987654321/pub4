@@ -64,6 +64,10 @@ class Pub4AdminTest < Minitest::Test
     refute_includes helper, 'sh -c "$script"'
   end
 
+  def test_shell_syntax_gate_covers_privileged_libexec_helpers
+    source = File.read(File.expand_path("../gates/shell_syntax_gate.rb", __dir__))
+    assert_includes source, 'Dir.glob("OPENBSD/usr/local/libexec/**/*.ksh")'
+  end
   def test_ci_sync_pins_git_safe_directory
     helper = File.read(File.expand_path("../usr/local/libexec/ci-sync.ksh", __dir__))
 
