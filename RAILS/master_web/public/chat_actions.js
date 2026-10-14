@@ -250,7 +250,7 @@ async function startChatStream(payload, handlers) {
   }
 }
 
-async function sendMessage(text) {
+async function sendMessageTurn(text) {
   const input = chatInput();
   const message = String(text ?? input?.value ?? "").trim();
   if (!message) return false;
@@ -375,6 +375,31 @@ async function sendMessage(text) {
     return false;
   }
   return true;
+}
+
+const fallbackSendQueue = [];
+let fallbackSendQueueRunning = false;
+async function drainFallbackSendQueue() {
+  if (fallbackSendQueueRunning) return;
+  fallbackSendQueueRunning = true;
+  try {
+    while (fallbackSendQueue.length) {
+      const item = fallbackSendQueue.shift();
+      try { item.resolve(await sendMessageTurn(item.text)); }
+      catch (err) { window.MASTER_LOG?.warn?.("chat:queued_send", err); item.resolve(false); }
+    }
+  } finally {
+    fallbackSendQueueRunning = false;
+    if (fallbackSendQueue.length) void drainFallbackSendQueue();
+  }
+}
+function sendMessage(text) {
+  const message = String(text ?? chatInput()?.value ?? "").trim();
+  if (!message) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    fallbackSendQueue.push({ text: message, resolve });
+    void drainFallbackSendQueue();
+  });
 }
 
 window.MASTERChat = {
