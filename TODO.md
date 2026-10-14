@@ -109,8 +109,8 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 - [ ] Cache video-grade LUTs by preset and measured point count. Keep a quality fixture; historical measurements were about three minutes for 13 points and about 35 minutes for 33 points.
 - [ ] Measure every postpro preset against a documented reference curve and preserve a subtle-default regression fixture with tool version, recipe and input hashes.
 - [ ] Run and classify test_tools_lora, test_tools_replicate, test_gate_chain, test_review_inference, test_fix_convergence and test_tree_contract. Fix source when its contract is right; update/remove a test only when its intended contract is demonstrably obsolete.
-- [ ] Check output defaults for visual/, photograph.rb and gate.rb: tools should render beside their own Ruby file, while dated/irreplaceable deliverables remain outside the repository. Add tests for relative paths and invocation from another working directory.
-- [ ] Redo the postpro and Replicate READMEs so canonical entrypoints, outputs, current pattern files, cost behavior and safe reruns match the code.
+- [ ] Run the STUDIO output-path regression suites on the pinned Ruby/libvips host. Source now keeps ordinary Postpro scratch output beside its ignored entrypoint and gives photograph.rb an external UTC-dated per-job directory; tests cover relative XDG_DATA_HOME and resolution of the Postpro script from another working directory. These suites and gate.rb still need real runtime execution.
+- [ ] Finish the Replicate README contract review for canonical entrypoints, current request patterns, cost behavior, output placement and safe reruns. The Postpro README now documents source-adjacent scratch output and stock-sheet/LUT destinations; full runtime verification remains pending.
 - [ ] Keep suite isolation by subject because top-level constants collide across tool suites. Fix order-dependent fixtures instead of loading everything into one process or adding permanent global shims.
 
 ## P1 — cross-tree operator UX and architecture
