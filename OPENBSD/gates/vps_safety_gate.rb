@@ -308,7 +308,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
     sync_contract = rails_sync.include?("app|shared") &&
                     rails_sync.include?("verticals") &&
                     rails_sync.include?('[ "$(id -un)" = "$app" ]') &&
-                    rails_sync.include?('sync_tree_stage "$source_dir" "$app_dir" yes') &&
+                    rails_sync.include?('sync_tree_stage "$rails_root/$app" "$app_dir" yes') &&
                     rails_sync.include?('git -c safe.directory="$repo" -C "$repo" archive HEAD "RAILS/$source_rel"') &&
                     rails_sync.include?('archive_tracked_tree "$source_dir" "$stage"') &&
                     !rails_sync.include?('tar cf - -C "$source_dir" .') &&
