@@ -108,6 +108,36 @@ class TestFixWatchdog < Minitest::Test
     refute stalled[:abort]
   end
 
+  def test_stream_stall_is_reported_and_terminates_the_run
+    run = budget
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    run.instance_variable_set(:@pulse, p)
+    @now = Pulse::STALL_SECONDS + 1
+
+    run.send(:watch_for_stall)
+
+    assert_equal 1, @killed.size
+    assert_match(/phase scan \\+ stream fixes/, @killed.first)
+    assert(@said.any? { |line| line.include?("0 files attempted") })
+  end
+
+  def test_advisory_stall_cancels_the_council_without_terminating_the_run
+    run = budget
+    p = pulse
+    p.observe("fix_loop:phase", stage: :council)
+    run.instance_variable_set(:@pulse, p)
+    @now = Pulse::STALL_SECONDS + 1
+
+    run.send(:watch_for_stall)
+
+    assert_empty @killed
+    assert Master::Review::LLMDispatcher::PassClock.cancelled?
+    assert(@said.any? { |line| line.include?("STALLED pass 1 phase council") })
+  ensure
+    Master::Review::LLMDispatcher::PassClock.reset_cancel!
+  end
+
   def test_stop_does_not_kill_the_current_watchdog_before_a_safety_abort_finishes
     run = budget
     run.instance_variable_set(:@watchdog, Thread.current)
