@@ -225,6 +225,12 @@ install_root_configs() {
     [[ -f /etc/rc.d/$svc ]] && chmod 555 /etc/rc.d/$svc
   done
   for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
+  # The deploy account will use this fixed-path broker for root operations.
+  # It is refreshed only by this deliberate operator sync.
+  if [[ -f /usr/local/sbin/pub4-admin ]]; then
+    chown root:wheel /usr/local/sbin/pub4-admin
+    chmod 555 /usr/local/sbin/pub4-admin
+  fi
   # libexec holds helpers root dot-sources (stale_ci_cleanup.ksh); they must be
   # root-owned and not group/world writable or the sourcing is a root RCE.
   for f in /usr/local/libexec/*(N); do [[ -f $f ]] && chown root:wheel "$f" && chmod 755 "$f"; done
@@ -307,6 +313,16 @@ sync_openbsd_apply() {
   # five minutes and it is the load-shedding guard that keeps this 1GB box up —
   # swallowing the install failure meant it could simply be absent, with no
   # error, while every log line still said the crontab was installed.
+  # The privileged broker invokes this fixed, root-owned copy, never the live checkout.
+  if ! install -d -o root -g wheel -m 755 /usr/local/libexec/pub4; then
+    log ERROR "cannot prepare /usr/local/libexec/pub4"
+    return 1
+  fi
+  if ! install -o root -g wheel -m 555 "${SCRIPT_DIR}/gates/solid_queue_proof.rb" /usr/local/libexec/pub4/solid_queue_proof.rb; then
+    log ERROR "solid_queue_proof install failed — deploy proof would run untrusted checkout code"
+    return 1
+  fi
+
   if ! install -m 755 "${SCRIPT_DIR}/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
     log ERROR "resource_guard.sh install failed — the load guard would be absent"
     return 1
