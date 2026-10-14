@@ -280,7 +280,14 @@ module Master
       # Says why, prints the summary, then ends the process. MASTER_FIX_ABORT_ON_STALL=0
       # keeps the run going and only reports.
       def abort_run!(reason, force: false)
-        return if @exit_reason
+        if @exit_reason
+          return unless force
+
+          @exit_reason = reason
+          @say.call("fix0: ABORT #{reason}")
+          @killer.call(reason)
+          return
+        end
 
         @exit_reason = reason
         @say.call("fix0: ABORT #{reason}")
