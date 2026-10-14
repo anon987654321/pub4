@@ -525,29 +525,16 @@ Rails; `rails_test` on the box is where the remaining failures live.
 
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
-cd RAILS && doas zsh deploy.sh          # brgen (default)
-doas zsh deploy.sh amber                     # or: all
+zsh OPENBSD/bin/vps-deploy brgen       # canonical serial deploy
+zsh OPENBSD/bin/vps-deploy amber       # or: all
 ruby OPENBSD/gates/health_check.rb --public --all-ready-apps
 ```
 
-Per-app: `doas zsh RAILS/<app>/<app>.sh`. New Propshaft assets need `rails
-assets:precompile` before restart.
-
-Ruby on VPS: the available Ruby (ruby40, ruby34 … resolved by `OPENBSD/lib/ruby_select.sh`). Never parallel `bin/ci` across SSH sessions.
-
-**`gc.auto` is 0 in `/home/dev/pub4`, and that is load-bearing.** git runs `gc
---auto` after a pull and detaches it, so on 2026-08-23 the pull that set up a
-deploy spawned a `pack-objects` holding 266 MB, and on a 1 GB box the Rails
-suite took SIGTERM after 18 tests and the seed step after that. The deploy log
-said only `bin/rails aborted!` — the killer leaves nothing in it, so read
-`vmstat` and `ps auxww | sort -k5 -rn` before believing any theory about the
-app. Setting it to 0 means nothing packs the repo automatically;
-`/etc/weekly.local` does it instead, as dev, and if that line is ever removed
-the checkout grows loose objects forever.
-
-Run it by hand before a deploy if a pull has just landed a lot:
-
-```zsh
+Use only `zsh OPENBSD/bin/vps-deploy <app|all>` for production deploys, as `dev`.
+The compatibility `zsh RAILS/deploy.sh` delegates to it and refuses UID 0.
+The individual `RAILS/<app>/<app>.sh` entrypoints also refuse root because they
+source code from the dev-writable checkout. Do not run them with `doas`.
+The supervisor handles asset precompile before restart.zsh
 cd /home/dev/pub4 && git gc --quiet && git count-objects -v
 ```
 
