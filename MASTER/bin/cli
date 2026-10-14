@@ -1,6 +1,26 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Core::World routes model-proposed commands here before normal boot. This file
+# is a sacred entrypoint; the worker pledges before it executes the proposed argv.
+def run_exec_worker
+  ARGV.shift
+  unless ARGV.shift == "--" && !ARGV.empty?
+    warn "exec-worker: expected -- followed by a command"
+    return 64
+  end
+
+  require_relative "../lib/ground/pledge"
+  guard = Master::Ground::Pledge
+  guard.pledge(guard::STAGE2_PROMISES, guard::EXEC_PROMISES)
+  exec(*ARGV)
+rescue StandardError => e
+  warn "exec-worker: #{e.class}: #{e.message}"
+  126
+end
+
+exit(run_exec_worker) if ARGV.first == "--exec-worker"
+
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
