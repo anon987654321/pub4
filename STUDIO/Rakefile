@@ -87,7 +87,8 @@ namespace :replicate do
     if token.to_s.strip.empty?
       warn(
         "replicate0",
-        "schema audit skipped, no REPLICATE_API_TOKEN; "         "run schema_audit_offline for historical evidence"
+        "schema audit skipped, no REPLICATE_API_TOKEN; " +
+          "run schema_audit_offline for historical evidence"
       )
       next
     end
@@ -98,7 +99,8 @@ namespace :replicate do
                     .to_h { |model, keys| [ model, keys.split ] }
     if declared.empty?
       abort(
-        "replicate: parsed no models — the table's shape changed, "         "and this would pass having read nothing"
+        "replicate: parsed no models — the table's shape changed, " +
+          "and this would pass having read nothing"
       )
     end
 
@@ -146,7 +148,8 @@ namespace :replicate do
     document = Replicate::SchemaSnapshot.write(client:, models: declared)
     warn(
       "replicate0",
-      "schema snapshot wrote #{document.fetch("models").length} models "       "at #{document.fetch("captured_at")}"
+      "schema snapshot wrote #{document.fetch("models").length} models " +
+        "at #{document.fetch("captured_at")}"
     )
   end
 
