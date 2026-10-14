@@ -168,7 +168,16 @@ module Operator
         "bsdports" => "bsdports",
       }
       mapping.transform_values do |service|
-        out, status = Open3.capture2e("doas", "-n", "/usr/sbin/rcctl", "check", service)
+        broker = "/usr/local/sbin/pub4-admin"
+        raise SecurityError, "pub4-admin is a symlink" if File.symlink?(broker)
+
+        command = if File.executable?(broker)
+                    ["doas", "-n", broker, "service", "check", service]
+                  else
+                    # Legacy installations only; remove after the broker is universal.
+                    ["doas", "-n", "/usr/sbin/rcctl", "check", service]
+                  end
+        out, status = Open3.capture2e(*command)
         if status.success? && out.include?("(ok)")
           "ok"
         else
