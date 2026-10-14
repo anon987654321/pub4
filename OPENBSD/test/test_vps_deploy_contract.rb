@@ -120,6 +120,15 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes helper, 'run_rails_as_app "$app_name" "/home/${app_name}/app" "npm-cache"'
     refute_match(/\$\{_PRIV\}.*(?:mkdir|chown)/, helper)
   end
+  def test_skip_ci_deploy_prepares_checkout_group_before_sync
+    deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
+    ensure_index = deploy.index('pub4-admin ensure-app "$app_name"')
+    access_index = deploy.index('pub4-admin ci-prepare "$app_name"')
+    sync_index = deploy.index('rails_sync_app_tree "$app_name" app')
+
+    assert_operator ensure_index, :<, access_index
+    assert_operator access_index, :<, sync_index
+  end
   def test_production_tree_sync_uses_the_bounded_app_user_helper
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
     sync = File.read(File.join(ROOT, "RAILS", "_sync.sh"), encoding: "UTF-8")
