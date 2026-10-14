@@ -101,7 +101,7 @@ class VpsDeployContractTest < Minitest::Test
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
 
     assert_equal 1, core.scan("bundle_install_as_app() {").length
-    assert_includes core, '/usr/local/sbin/pub4-admin rails-bundle "$app_name"'
+    assert_includes core, '/usr/local/sbin/pub4-admin rails-task "$app_name" bundle-install'
     assert_includes deploy, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
     assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
   end
