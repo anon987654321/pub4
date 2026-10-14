@@ -54,7 +54,8 @@ tree mutations run with the selected app's UID, primary GID and only the require
 Git archive, not ignored files from the mutable working tree. The CI runner has a real wall-clock deadline and terminates
 its full process group, including `bundle install`. Rails tasks use a closed
 task vocabulary; `SECRET_KEY_BASE` crosses only in the child environment, never
-in the shell command text.
+in the shell command text. Bundle directories and initial cache seeding are now
+created by the target app user rather than by a root `mkdir`/`chown` sequence.
 
 `relayd-check` is read-only: it verifies the root-owned relay configuration's
 TLS keypair, Host route and app backend/port. It refuses unapproved routes rather
