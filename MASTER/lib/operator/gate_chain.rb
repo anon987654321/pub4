@@ -6,6 +6,7 @@ require "json"
 require "tempfile"
 require "open3"
 require "rbconfig"
+require "tmpdir"
 require "operator/gate_heartbeat"
 require "operator/ruby_runner"
 require "bundler"
@@ -43,6 +44,8 @@ module Operator
     MASTER = File.join(ROOT, "MASTER")
     RUBY = Operator::RubyRunner.gate_ruby
     BUNDLE = Operator::RubyRunner.bundle_cmd
+    CHILD_TIMEOUT_S = 5_400
+    DISK_POLL_INTERVAL_S = 30
 
     # Paths nothing writes by hand. `bin/gate` has said in a comment for months
     # that scanner.rb skips `cache` but not `.cache`, so /fix descends into
@@ -546,7 +549,17 @@ end
     # gives a stage its own exit status, bin/gate's stage timeouts and a window
     # for attributing changed files; running stages in-process saves boot time
     # and loses all three.
-    def capture(*cmd, chdir: MASTER, env: {}, unbundled: false)
+    def capture(*cmd, chdir: MASTER, env: {}, unbundled: false, timeout_s: nil,
+                disk_poll_s: DISK_POLL_INTERVAL_S)
+      timeout_s = child_timeout_s if timeout_s.nil?
+      paths = [ROOT, chdir, Dir.tmpdir]
+      initial = disk_state(paths)
+      if initial[:critical]
+        reason = disk_stop_reason(initial, prefix: "disk preflight")
+        Master::Trace::Dmesg.status("gate0", reason)
+        return [false, [reason], 1]
+      end
+
       child_env = {
         "MASTER_INTERNAL_CHILD" => "1",
         "MASTER_CONTROL_PLANE" => "0",
@@ -557,8 +570,31 @@ end
       child_env["MASTER_PROCESS_LOCK_FD"] = nil
       runner = lambda do
         output = +""
-        Open3.popen2e(ENV.to_h.merge(child_env), *cmd, chdir:) do |stdin, stream, wait|
+        stopped_for = nil
+        stop_lock = Mutex.new
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        watchdog = nil
+        Open3.popen2e(ENV.to_h.merge(child_env), *cmd, chdir:, pgroup: true) do |stdin, stream, wait|
           stdin.close
+          watchdog = Thread.new do
+            loop do
+              sleep [disk_poll_s.to_f, 0.01].max
+              elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+              if timeout_s && elapsed >= timeout_s.to_f
+                stop_lock.synchronize { stopped_for ||= "gate child timeout after #{timeout_s.to_f.round(1)}s" }
+                terminate_child_group(wait.pid)
+                break
+              end
+
+              current = disk_state(paths)
+              next unless current[:critical]
+
+              stop_lock.synchronize { stopped_for ||= disk_stop_reason(current, prefix: "disk guard") }
+              terminate_child_group(wait.pid)
+              break
+            end
+          end
+
           stream.each_line do |line|
             output << line
             Master::Trace::Dmesg.terminal_write do |io|
@@ -566,17 +602,65 @@ end
               io.flush
             end
           end
-          [output, wait.value]
+          status = wait.value
+          watchdog.kill if watchdog&.alive?
+          watchdog&.join
+          stopped_for = stop_lock.synchronize { stopped_for }
+          if stopped_for
+            output << "#{stopped_for}\n"
+            [false, output, stopped_for.start_with?("gate child timeout") ? 124 : 1]
+          else
+            [status.success?, output, status.exitstatus]
+          end
+        ensure
+          watchdog&.kill
+          watchdog&.join
         end
       end
-      out, status = if unbundled && defined?(Bundler)
-                      Bundler.with_unbundled_env { runner.call }
-                    else
-                      runner.call
-                    end
-      [status.success?, out.lines.map(&:rstrip).reject(&:empty?), status.exitstatus]
+      ok, out, exitstatus = if unbundled && defined?(Bundler)
+                              Bundler.with_unbundled_env { runner.call }
+                            else
+                              runner.call
+                            end
+      [ok, out.lines.map(&:rstrip).reject(&:empty?), exitstatus]
     rescue StandardError => e
       [false, ["#{e.class}: #{e.message}"], 1]
+    end
+
+    def child_timeout_s
+      value = Integer(ENV.fetch("PUB4_GATE_CHILD_TIMEOUT_S", CHILD_TIMEOUT_S.to_s), exception: false)
+      value&.positive? ? value : CHILD_TIMEOUT_S
+    end
+
+    # Use the same resource budget and critical floor as /fix. Check every volume
+    # that can hold source, temporary artifacts or evidence; an unknown reading
+    # blocks a new child instead of allowing it to exhaust the filesystem.
+    def disk_state(paths)
+      readings = Array(paths).uniq.map do |path|
+        Master::Fix::ResourceBudget.new(root: path).disk_free_gb_for
+      end
+      return { free_gb: nil, critical: true } if readings.empty? || readings.any?(&:nil?)
+
+      free_gb = readings.min
+      budget = Master::Fix::ResourceBudget.new(root: ROOT)
+      { free_gb:, critical: budget.disk_critical?({ values: { disk_free_gb: free_gb } }) }
+    rescue StandardError
+      { free_gb: nil, critical: true }
+    end
+
+    def disk_stop_reason(state, prefix:)
+      free_gb = state[:free_gb]
+      return "#{prefix}: free space could not be measured; refusing to run a child" if free_gb.nil?
+
+      "#{prefix}: #{free_gb} GB free, below the configured critical disk floor"
+    end
+
+    def terminate_child_group(pid)
+      Process.kill("TERM", -pid)
+      sleep 2
+      Process.kill("KILL", -pid)
+    rescue Errno::ESRCH
+      nil
     end
 
     # Untracked files count: a stage that drops a new file in is a stage that
