@@ -303,7 +303,7 @@ module Pub4Admin
 
   def run_rails_task(app, task, database = nil)
     return 64 unless RAILS_TASK_APPS.include?(app)
-    allowed = %w[bundle-install bundle-check ci-bundle-install db-prepare db-seed demo-seed assets-precompile ci]
+    allowed = %w[bundle-install bundle-check ci-bundle-install db-storage-migrate db-prepare db-seed demo-seed assets-precompile ci]
     if %w[schema-load secondary-db-check].include?(task)
       return 64 unless %w[cache queue cable].include?(database)
     else
@@ -312,7 +312,7 @@ module Pub4Admin
     return 64 if task == "demo-seed" && !%w[brgen amber].include?(app)
 
     arguments = [app, task]
-    arguments << database if task == "schema-load"
+    arguments << database if %w[schema-load secondary-db-check].include?(task)
     supervised_helper(RAILS_TASK, app, 7200, arguments)
   end
 
