@@ -33,7 +33,7 @@ module Master
             paused = false
             Master::Trace::Dmesg.terminal_write do |target|
               paused, stage = @think_mutex.synchronize { [@think_paused, @think_stage.to_s] }
-              # Reline owns the editable row; the prompt's * marker remains visible while busy.
+              # Reline owns the editable row; the prompt's word status stays unobstructed.
               unless paused || @reading_input
                 stage = "working" if stage.empty?
                 line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
