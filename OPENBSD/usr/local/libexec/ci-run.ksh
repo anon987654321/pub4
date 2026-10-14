@@ -50,6 +50,8 @@ export PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS
 export NPM_CONFIG_CACHE=/home/$app/.npm
 export XDG_CACHE_HOME=/home/$app/.cache
 export BUNDLE_USER_HOME=/home/$app/.bundle
+unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH
+unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT
 cd /home/$app/app
 $bundle config unset without >/dev/null 2>&1 || :
 $bundle config unset deployment >/dev/null 2>&1 || :
