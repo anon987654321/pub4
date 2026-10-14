@@ -3,10 +3,10 @@
 module Operator
 
   # Reads /fix's own heartbeat for the stall it already reports. The pulse
-  # prints "STALLED pass 1 phase scan + stream fixes for 45m, 0 files attempted"
-  # every few seconds and, for a phase that is not skippable, goes on waiting.
-  # One run spent 46 minutes that way before anyone read the log. The wrapper
-  # that launched the run reads the same line and ends the run past a limit.
+  # prints "STALLED pass 1 phase scan + stream fixes for 10m, 0 files attempted".
+  # RunBudget now aborts sustained non-advisory stalls inside the process; this
+  # wrapper remains a second line of defense for direct child processes and for
+  # logs emitted by older runtimes that only report the stall.
   module StallWatch
     LINE = /STALLED .* for (\d+)m, 0 files attempted/
     NO_YIELD = /STALLED no yield: 0 fixed after \d+m, \d+ attempts/
