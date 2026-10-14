@@ -49,6 +49,33 @@ else
   failures << "missing tracked OPERATOR.sh"
 end
 
+emergency_wrapper_path = File.join(OPENBSD, "emergency_cpu.sh")
+emergency_impl_path = File.join(OPENBSD, "usr", "local", "bin", "emergency_cpu.sh")
+if File.file?(emergency_wrapper_path) && !File.symlink?(emergency_wrapper_path) &&
+   File.file?(emergency_impl_path) && !File.symlink?(emergency_impl_path)
+  emergency_wrapper = File.read(emergency_wrapper_path)
+  emergency_impl = File.read(emergency_impl_path)
+  wrapper_contract = emergency_wrapper.include?('if [ "$(id -u)" -eq 0 ]; then') &&
+                     emergency_wrapper.include?('exec doas "$runner"') &&
+                     emergency_wrapper.include?('runner=/usr/local/bin/emergency_cpu.sh') &&
+                     !emergency_wrapper.include?("stale_ci_cleanup") &&
+                     !emergency_wrapper.match?(/^\s*(?:rcctl|pkill)\b/m)
+  failures << "checkout emergency CPU entrypoint must refuse root and delegate to installed runner" unless wrapper_contract
+  runner_contract = emergency_impl.include?('GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh') &&
+                    emergency_impl.include?('[[ -f $GUARD_HELPER && ! -L $GUARD_HELPER ]]') &&
+                    !emergency_impl.include?("GUARD_REPO") &&
+                    !emergency_impl.include?("/home/dev/pub4/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh")
+  failures << "emergency CPU runner must not source stale cleanup from checkout" unless runner_contract
+  installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
+  emergency_install_contract = installer.include?("usr/local/bin/emergency_cpu.sh") &&
+                              installer.include?('install -o root -g wheel -m 555 "${src}/usr/local/bin/emergency_cpu.sh" /usr/local/bin/emergency_cpu.sh') &&
+                              installer.include?('refusing symlinked privileged destination file: $rel') &&
+                              installer.include?('installed emergency CPU runner is missing or symlinked')
+  failures << "OPERATOR.sh must preflight, install, and verify the root-owned emergency runner" unless emergency_install_contract
+else
+  failures << "missing or symlinked emergency CPU wrapper/runner source"
+end
+
 validate_doas = File.join(TOOLING, "validate_doas.ksh")
 if File.file?(validate_doas)
   # install_doas_conf_from_repo rolls /etc/doas.conf back when validation fails, so
