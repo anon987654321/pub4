@@ -357,16 +357,42 @@ module Master
 
         loop do
           line = @turn_queue_mutex.synchronize do
-            if @turn_queue_paused || @turn_queue.empty?
+            if @closed || @turn_queue_paused || @turn_queue.empty?
               @turn_worker = nil if @turn_worker.equal?(worker)
               nil
             else
-              @turn_queue.shift
+              @turn_current_line = @turn_queue.shift
+              @turn_current_started = false
+              @turn_current_line
             end
           end
           break if line.nil?
 
-          handle_repl_line(line)
+          run_line = @turn_queue_mutex.synchronize do
+            if @closed || @turn_queue_paused
+              # Stop may land after dequeue but before execution. Put this
+              # unsent line back at the front, preserving FIFO on resume.
+              @turn_queue.unshift(line) if @turn_current_line.equal?(line) && !@turn_current_started && !@closed
+              @turn_current_line = nil if @turn_current_line.equal?(line)
+              @turn_current_started = false
+              false
+            else
+              @turn_current_started = true if @turn_current_line.equal?(line)
+              true
+            end
+          end
+          break unless run_line
+
+          begin
+            handle_repl_line(line)
+          ensure
+            @turn_queue_mutex.synchronize do
+              if @turn_current_line.equal?(line)
+                @turn_current_line = nil
+                @turn_current_started = false
+              end
+            end
+          end
         end
       rescue StandardError => e
         terminal_puts("queue0: worker failed — #{e.class}: #{e.message}", io: $stderr)
@@ -375,6 +401,8 @@ module Master
         @turn_queue_mutex.synchronize do
           if @turn_worker.equal?(worker)
             @turn_worker = nil
+            @turn_current_line = nil
+            @turn_current_started = false
             restart = !@closed && !@turn_queue_paused && !@turn_queue.empty?
           end
         end
