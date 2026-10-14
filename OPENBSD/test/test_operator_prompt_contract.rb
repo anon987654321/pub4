@@ -18,7 +18,7 @@ class TestOperatorPromptContract < Minitest::Test
   def test_provider_credentials_are_loaded_only_from_a_host_local_file
     source = File.read(ZSHRC)
 
-    refute_match(/^\\s*export\\s+\\w*(?:API_KEY|ACCESS_TOKEN|SECRET|TOKEN)\\w*\\s*=/i, source)
+    refute_match(/^\s*export\s+\w*(?:API_KEY|ACCESS_TOKEN|SECRET|TOKEN)\w*\s*=/i, source)
     assert_includes source, 'typeset -g PUB4_OPERATOR_ENV="${HOME}/.config/pub4/operator.env"'
     assert_includes source, 'source "$PUB4_OPERATOR_ENV"'
   end
