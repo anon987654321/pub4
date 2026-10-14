@@ -78,19 +78,24 @@ class TestGateChain < Minitest::Test
     end
   end
 
-  def test_gate_capture_kills_a_child_that_exceeds_its_deadline
+  def test_gate_capture_kills_a_child_that_exceeds_its_deadline_and_names_it
     Dir.mktmpdir do |dir|
+      messages = []
       G.stub(:disk_state, ->(*) { { free_gb: 10.0, critical: false } }) do
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        ok, lines, status = G.capture(
-          RbConfig.ruby, "-e", "sleep 30", chdir: dir, timeout_s: 0.1, disk_poll_s: 0.01
-        )
-        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+        Master::Trace::Dmesg.stub(:status, ->(unit, message, **) { messages << "#{unit}: #{message}" }) do
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          ok, lines, status = G.capture(
+            RbConfig.ruby, "-e", "sleep 30", chdir: dir, timeout_s: 0.1, disk_poll_s: 0.01,
+            label: "regression child", heartbeat_unit: "suite0"
+          )
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
-        refute ok
-        assert_equal 124, status
-        assert_match(/gate child timeout/, lines.join("\n"))
-        assert_operator elapsed, :<, 3, "the gate child was left running after its deadline"
+          refute ok
+          assert_equal 124, status
+          assert_match(/regression child: gate child timeout/, lines.join("\n"))
+          assert_includes messages, "suite0: regression child running"
+          assert_operator elapsed, :<, 3, "the gate child was left running after its deadline"
+        end
       end
     end
   end
