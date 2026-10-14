@@ -3981,24 +3981,14 @@ RECIPE_ALLOWED = %w[
 
 # Where a recipe's single number actually belongs.
 #
-# recipe() called send(method, image, intensity) on all 81 allowed effects, on
-# the assumption that every one of them takes an intensity second. Nineteen do
-# not. Their second parameter is a film stock, an RGB triplet, a Kelvin value, a
-# pixel radius, an ISO speed, an f-number, a distortion coefficient, a 0-255
-# threshold or a lens name -- and two of them take keyword arguments only, so
-# {"tonemap": 0.6} raised ArgumentError, the per-file rescue swallowed it,
-# and the whole image was logged as "Failed" for one line of a recipe.
+# The effects do not share one call signature: their second positional argument
+# can be a film stock, an RGB triplet, Kelvin, a pixel radius, ISO, an f-number,
+# a distortion coefficient, a threshold or a lens name. Some effects require
+# keyword arguments. Passing every recipe number as an intensity can therefore
+# either raise and discard an image or silently produce the wrong grade.
 #
-# The rest were worse than the crash, because they worked. {"film_curve": 0.7}
-# looked up STOCKS[0.7]; {"color_temp": 0.5} asked for half a Kelvin;
-# {"split_toning": 0.4} handed a Float to something that indexes it as a colour;
-# {"lens_distortion": 0.5} bent the frame the opposite way from every preset,
-# which all pass a negative coefficient. A recipe is the one route in this file
-# where the user writes the numbers themselves, and it was the route that
-# ignored them.
-#
-# Each adapter maps intensity onto the parameter that effect is about,
-# and reads the rest from the recipe entry when it is written as an object:
+# Each adapter maps intensity onto the parameter the effect actually uses, and
+# reads optional controls from an object when provided:
 # {"grain": {"intensity": 0.5, "stock": "tri_x", "iso": 1600}}.
 def recipe_stock(params, default = :kodak_portra)
   name = params["stock"]&.to_sym
