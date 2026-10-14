@@ -60,6 +60,30 @@ class TestCouncilDeadline < Minitest::Test
     door
   end
 
+  def test_a_free_lane_timeout_outside_a_council_is_recorded_and_parked
+    model = "openrouter/deadline-regression:free"
+    calls = []
+    dispatcher = door(calls) { |_model| sleep 30; Master::Result.ok("late") }
+    msg = [{ role: "user", content: "large repair prompt" }]
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    result = Master::Trace::Dmesg.stub(:status, ->(*) {}) do
+      Master::Io::LaneSelection.stub(:free_call_timeout_s, 0.05) do
+        Master.stub(:llm_reachable?, true) { dispatcher.send_with_cache(model, msg) }
+      end
+    end
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+    assert_operator elapsed, :<, 2, "the request exceeded its hard timeout"
+    assert_equal :timeout, result.category
+    assert Silence.silent?(Silence.lane_of(model)), "the stalled provider was not parked"
+    assert Master::Io::ModelSkipCache.skipped?(model), "the timeout was not recorded for failover"
+    assert_equal [model], calls
+  ensure
+    Silence.record(true, Silence.lane_of(model)) if model
+    Master::Io::ModelSkipCache.clear!
+  end
+
   def test_a_slow_call_is_interrupted_and_its_lane_is_not_asked_again
     ENV["MASTER_COUNCIL_CALL_TIMEOUT_S"] = "1"
     calls = []
