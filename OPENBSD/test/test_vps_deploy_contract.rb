@@ -158,6 +158,14 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes secret_fn, '"${_PRIV}" sh -c'
     refute_includes secret_fn, '"${_PRIV}" cat "$env_file"'
   end
+  def test_secondary_database_probe_uses_the_fixed_app_task
+    database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
+    probe = database[/secondary_db_initialized\(\) \{.*?^\}/m]
+    refute_nil probe
+    assert_includes probe, '"secondary-db-check" "$db"'
+    refute_match(/\$\{_PRIV\} sh -c/, probe)
+    refute_match(/\$\{_PRIV\} cat/, probe)
+  end
   def test_rails_database_tasks_use_closed_dispatcher
     database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
     runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
