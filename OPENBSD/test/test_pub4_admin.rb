@@ -22,6 +22,11 @@ class Pub4AdminTest < Minitest::Test
                  ADMIN.command_for(%w[service check master])
   end
 
+  def test_relayd_health_check_is_read_only
+    assert_equal ["/usr/sbin/rcctl", "check", "relayd"],
+                 ADMIN.command_for(%w[service check relayd])
+    assert_nil ADMIN.command_for(%w[service restart relayd])
+  end
   def test_only_known_service_targets_are_admitted
     %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].each do |service|
       refute_nil ADMIN.command_for(["service", "check", service])
