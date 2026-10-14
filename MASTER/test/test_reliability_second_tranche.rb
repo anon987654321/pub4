@@ -503,9 +503,13 @@ class TestReliabilitySecondTranche < Minitest::Test
     safe = { values: { disk_free_gb: 4.0 } }
     low = { values: { disk_free_gb: 2.5 } }
     unknown = { values: {} }
+    budget.define_singleton_method(:disk_free_gb) { 4.0 }
 
     refute budget.disk_critical?(safe)
     assert budget.disk_critical?(low)
+    refute budget.disk_critical?(unknown), "an unrelated resource failure must not look like a full disk"
+
+    budget.define_singleton_method(:disk_free_gb) { nil }
     assert budget.disk_critical?(unknown), "unknown free space must not permit more writes"
   end
 
