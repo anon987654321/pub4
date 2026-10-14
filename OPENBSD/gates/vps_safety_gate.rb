@@ -75,8 +75,10 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
   safe_spawn = admin.include?('Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)') &&
-               admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_BUNDLE].include?(helper)') &&
-               admin.include?('arguments = [CI_RUN, RAILS_BUNDLE].include?(helper) ? [app, duration.to_s] : [app]') &&
+               admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)') &&
+               admin.include?("when RAILS_TASK then Array(helper_arguments)") &&
+               admin.include?("when CI_RUN then [app, duration.to_s]") &&
+               admin.include?("when CI_SYNC then [app]") &&
                admin.include?("spawn_options[:uid] = account.uid") &&
                admin.include?("spawn_options[:gid] = account.gid") &&
                admin.include?('trusted_script!(helper)')
