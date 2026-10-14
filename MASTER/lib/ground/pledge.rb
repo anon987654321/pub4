@@ -51,6 +51,9 @@ module Master
       GEM_DIRS = [".local/share/gem", ".gem"].freeze
       STAGE1_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error"
       STAGE2_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty prot_exec error"
+      # Used only by the model-command worker, never by the trusted parent.
+      # OpenBSD refuses setuid/setgid execs when execpromises is active.
+      EXEC_PROMISES = STAGE2_PROMISES
 
       Profile = Data.define(:name, :capabilities, :promises) do
         def initialize(name:, capabilities:, promises:)
