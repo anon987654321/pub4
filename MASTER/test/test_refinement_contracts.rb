@@ -50,6 +50,23 @@ class TestRefinementContracts < Minitest::Test
     refute lines.any? { |line| line.start_with?("trace0:") }
   end
 
+  def test_status_keeps_opportunities_and_history_in_verbose_mode
+    data = {
+      ahead_behind: [0, 0], branch: "main", head: "abc", dirty: false,
+      svc: { state: "ok" }, bg: "stopped", af: "off", stage: nil, verdict: "",
+      bndl: nil, failures: ["cli:bg_error 2m ago: first", "error:swallowed 1m ago: second"],
+      rsi: [{ dimension: "ask_llm", fail_rate: 1.0, total: 36 }], config: {}
+    }
+
+    normal = Master::CLI::PresentationContract.status_lines(data)
+    verbose = Master::CLI::PresentationContract.status_lines(data, verbose: true)
+
+    assert_equal 1, normal.count { |line| line.start_with?("recent failure:") }
+    refute normal.any? { |line| line.start_with?("opportunity:") }
+    assert_equal 2, verbose.count { |line| line.start_with?("recent failure:") }
+    assert_includes verbose, "opportunity: ask llm failed 100% of 36 calls"
+  end
+
   def test_capability_graph_does_not_call_an_unobserved_model_healthy
     root = Dir.mktmpdir("master-capabilities")
     graph = Operator::CapabilityGraph.new(root:)
