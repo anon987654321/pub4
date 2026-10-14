@@ -33,11 +33,16 @@ module Master
             paused = false
             Master::Trace::Dmesg.terminal_write do |target|
               paused, stage = @think_mutex.synchronize { [@think_paused, @think_stage.to_s] }
-              # Reline owns the editable row; the prompt's word status stays unobstructed.
-              unless paused || @reading_input
+              unless paused
                 stage = "working" if stage.empty?
                 line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
-                target.print("\r\e[K#{line}")
+                if @reading_input
+                  # A reserved row above Reline's prompt keeps the animation
+                  # visible without painting over the user's editable draft.
+                  target.print("\e[s\e[1A\r\e[K#{line}\e[u") if activity_row_safe_to_draw?
+                elsif !@turn_current_started
+                  target.print("\r\e[K#{line}")
+                end
                 target.flush
               end
             end
@@ -197,7 +202,11 @@ module Master
         @spin_thread = nil
         @think_sub&.call
         @think_sub = nil
-        terminal_print("\r\e[K") if $stdout.tty?
+        if @activity_row_reserved
+          Master::Trace::Dmesg.terminal_write { |target| clear_reserved_activity_row(target) }
+        elsif $stdout.tty?
+          terminal_print("\r\e[K")
+        end
       end
 
       # Detailed dmesg is the default; MASTER_CLI_QUIET=1 is the opt-out.
@@ -246,6 +255,7 @@ module Master
         io = $stdout.isatty ? $stdout : $stderr
         @think_mutex&.synchronize { @think_stage = line[/\A[^\s:]+/] }
         Master::Trace::Dmesg.terminal_write(io:) do |target|
+          clear_reserved_activity_row(target) if io.equal?($stdout)
           target.print "\r\e[K" if target.tty?
           target.puts @refs.renderer.render(line, mode: :dim)
           target.flush
@@ -253,6 +263,36 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
+      end
+
+      def activity_row_safe_to_draw?
+        return false unless @activity_row_reserved && @reading_input
+        return false unless $stdin.tty? && $stdout.tty?
+
+        width = TTY::Screen.width.to_i
+        buffer = Reline.line_buffer.to_s
+        prompt = @active_prompt.to_s
+        width.positive? && prompt.length + buffer.length * 2 + 2 < width
+      rescue StandardError
+        false
+      end
+
+      # Called under Dmesg's terminal mutex. If the input wraps, abandon the
+      # animation row rather than moving the cursor into the user's draft.
+      def clear_reserved_activity_row(target)
+        return false unless @activity_row_reserved
+
+        safe = activity_row_safe_to_draw? && target.respond_to?(:tty?) && target.tty?
+        if safe
+          target.print("\e[s\e[1A\r\e[K\e[u")
+          target.flush if target.respond_to?(:flush)
+        end
+        @activity_row_reserved = false
+        safe
+      rescue StandardError => e
+        @activity_row_reserved = false
+        Master::Ground::Swallow.log(e, context: "cli.activity_row.clear", event_bus: @refs.bus)
+        false
       end
 
       # The spinner repaints with \r\e[K, which clears one row. A line wider
