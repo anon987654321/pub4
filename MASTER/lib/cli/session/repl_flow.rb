@@ -7,6 +7,7 @@ module Master
     class Session
       CONTEXT_STEP = 10_000
       CLOSE_WINDOW_S = 3
+      INTERACTIVE_QUEUE_LIMIT = 32
       BANG = /\A!(?<command>\S.*)\z/m
 
       private
@@ -295,12 +296,18 @@ module Master
       def enqueue_interactive_line(line)
         count = nil
         busy = nil
+        full = false
         @turn_queue_mutex.synchronize do
-          busy = @turn_worker&.alive?
-          @turn_queue << line.to_s
-          start_interactive_queue_worker_locked unless busy
-          count = @turn_queue.length
+          if @turn_queue.length >= INTERACTIVE_QUEUE_LIMIT
+            full = true
+          else
+            busy = @turn_worker&.alive?
+            @turn_queue << line.to_s
+            start_interactive_queue_worker_locked unless busy
+            count = @turn_queue.length
+          end
         end
+        terminal_puts("queue0: full, #{INTERACTIVE_QUEUE_LIMIT} pending; message not queued") if full
         terminal_puts("queue0: #{count} queued") if busy && count.positive?
         nil
       end
