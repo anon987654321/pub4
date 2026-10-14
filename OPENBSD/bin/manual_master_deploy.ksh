@@ -24,6 +24,10 @@ set -e
 set -o pipefail
 LOG=/tmp/master_manual.log
 exec >"$LOG" 2>&1
+if [[ -L /usr/local/sbin/pub4-admin || ! -x /usr/local/sbin/pub4-admin ]]; then
+  echo "pub4-admin missing or symlinked; run the reviewed OPERATOR.sh sync first" >&2
+  exit 2
+fi
 . /home/dev/pub4/OPENBSD/lib/ruby_select.sh
 set -x
 _fail=0
@@ -32,11 +36,11 @@ echo "START $(date -u)"
 pkill -9 -f vps_deploy_master 2>/dev/null
 pkill -9 -f "rails assets:precompile" 2>/dev/null
 pkill -9 -f "bundle[0-9.]* exec rails assets" 2>/dev/null
-pkill -9 -f "rcctl restart master" 2>/dev/null
+pkill -9 -f "pub4-admin service restart master" 2>/dev/null
 pkill -9 -f "falcon.*53187" 2>/dev/null
 sleep 1
 
-doas rcctl stop master 2>/dev/null
+doas /usr/local/sbin/pub4-admin service stop master 2>/dev/null
 echo "SHA=$(git -C /home/dev/pub4 rev-parse --short HEAD)"
 
 cd /home/dev/pub4/RAILS/master || exit 1
@@ -61,7 +65,7 @@ fi
 
 echo restart_master
 # rc_pre skips face/precompile when artifacts exist (patched /etc/rc.d/master).
-doas rcctl restart master &
+doas /usr/local/sbin/pub4-admin service restart master &
 _rc_pid=$!
 _i=0
 while kill -0 "$_rc_pid" 2>/dev/null && [[ "$_i" -lt 120 ]]; do
@@ -80,7 +84,7 @@ done
 curl -sS "http://127.0.0.1:53187/up"
 echo
 
-doas rcctl restart relayd
+doas /usr/local/sbin/pub4-admin service restart relayd
 curl -sS -m 5 -o /dev/null -w "relayd_https=%{http_code}\n" -H "Host: ai.brgen.no" "https://127.0.0.1/up" -k
 "$RUBY" /home/dev/pub4/RAILS/master/script/probe_http
 echo "DONE $(date -u)"
