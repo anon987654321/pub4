@@ -395,7 +395,7 @@ class TestPostproFilm < Minitest::Test
   # the blur sat at half the grain it was filtering at every resolution.
   def test_the_scan_blur_does_not_track_the_crystal
     source = File.read(POSTPRO_SOURCE)
-    body = source[/^def grain_field\b.*?^end$/m]
+    body = send(:postpro_source_method, source, "grain_field")
     assert body, "grain_field must exist"
     assert_includes body, "gaussblur(GRAIN_SCAN_SIGMA)",
                     "the observer blur must be its own constant, not a multiple of the cell"
