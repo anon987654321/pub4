@@ -596,7 +596,7 @@ for mount_point in /home /var; do
   free_kb=${${(z)${${(f)"$(${VPS_DEPLOY_DF:-df} -Pk $mount_point 2>/dev/null)"}[2]}}[4]:-}
   if [[ $free_kb == <-> ]] && (( free_kb < min_free_kb )); then
     print -u2 "vps-deploy: $app refused - $mount_point has $(( free_kb / 1024 )) MB free, the floor is $(( min_free_kb / 1024 )) MB."
-    print -u2 "            Nothing was stopped. Find the growth with: doas du -xk $mount_point ; clear old"
+    print -u2 "            Nothing was stopped. Inspect usage with: doas /usr/local/sbin/pub4-admin disk-usage $mount_point ; clear old"
     print -u2 "            logs or bundles, then rerun: zsh OPENBSD/bin/vps-deploy $app"
     exit 1
   fi
