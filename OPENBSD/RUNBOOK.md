@@ -43,23 +43,28 @@ pull --ff-only` on vm23 → `vps_ci.sh <app>` → `OPERATOR.sh` or per-app deplo
 
 The staged root boundary is `/usr/local/sbin/pub4-admin`, mirrored at
 `OPENBSD/usr/local/sbin/pub4-admin`. A deliberate `OPERATOR.sh` sync installs
-it as `root:wheel`, mode `0555`, and installs the CI preparation helper at
-`/usr/local/libexec/ci-prepare.ksh` plus the Solid Queue proof under
-`/usr/local/libexec/pub4/`. The broker accepts
-only allowlisted app-service actions, validated deploy-stamp fields, CI lock setup,
-fixed CI account/storage preparation, and two fixed helper invocations; it does not
-take shell text or arbitrary paths.
+it as `root:wheel`, mode `0555`, and installs the fixed CI preparation, sync and
+runner helpers under `/usr/local/libexec/`; the Solid Queue proof is installed
+under `/usr/local/libexec/pub4/`.
 
-`vps-deploy`, CI receipt writes, CI lock setup, and CI account/storage preparation
-use the broker when the installed copy exists. The broker creates the canonical
+The broker exposes allowlisted service actions, validated deploy receipts, fixed
+CI lock/preparation operations, and trusted helper verbs. CI copy-tree mutations
+run with the selected app's UID, primary GID and only the required `_pub4ci`
+supplementary group. The CI runner has a real wall-clock deadline and terminates
+its full process group, including `bundle install`. The broker accepts no arbitrary
+filesystem paths or caller-provided shell command.
+
+`vps-deploy`, CI receipt writes, CI lock setup, CI preparation, CI sync and CI
+execution use the broker when the installed copy exists. It creates the canonical
 `/var/db/pub4/ci.lock`; keep `PUB4_CI_LOCK` unset on vm23 until the legacy override
-seam is removed. Compatibility fallbacks remain for the first rollout. This is **not yet
-the complete privilege migration**: `vps_ci.sh`, `RAILS/_deploy.sh`, and
-other copy-tree helpers still have direct `doas` operations. Keep the current
-`doas.conf` and wheel membership unchanged until those paths are migrated,
+seam is removed. Compatibility fallbacks remain for the first rollout.
+
+This is **not yet the complete privilege migration**: the CI fallback, `RAILS/_deploy.sh`,
+and other copy-tree/build helpers still contain direct `doas` operations. Keep the
+current `doas.conf` and wheel membership unchanged until those paths are migrated,
 the broker is installed, and the focused and full OpenBSD contract suites pass.
-Then narrow the `dev` rule and remove wheel membership in one planned change,
-with an authenticated operator recovery path established first.
+Then narrow the `dev` rule and remove wheel membership in one planned rollout, with
+an authenticated operator recovery path established first.
 
 ## SSH
 
