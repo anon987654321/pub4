@@ -108,6 +108,16 @@ class TestFixWatchdog < Minitest::Test
     refute stalled[:abort]
   end
 
+  def test_stop_does_not_kill_the_current_watchdog_before_a_safety_abort_finishes
+    run = budget
+    run.instance_variable_set(:@watchdog, Thread.current)
+
+    run.stop!
+
+    assert Thread.current.alive?, "stop! killed the thread that still had to finish the abort"
+    assert_nil run.instance_variable_get(:@watchdog)
+  end
+
   def test_the_machine_heartbeat_has_the_documented_shape
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
