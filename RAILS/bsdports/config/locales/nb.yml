@@ -20,6 +20,7 @@ nb:
     maintainers: "Maintainere"
     sign_in: "Logg inn"
     sign_out: "Logg ut"
+    primary_nav: "Hovednavigasjon"
     home: "Hjem"
   auth:
     sign_in: "Logg inn"
