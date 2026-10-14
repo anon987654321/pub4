@@ -44,6 +44,13 @@ deploy_tracked_app() {
     return 1
   }
 
+  # Group access to the checkout is needed even on SKIP_CI deployments.
+  # Ensure the app is in _pub4ci before the app-user sync traverses /home/dev/pub4.
+  ${_PRIV} /usr/local/sbin/pub4-admin ci-prepare "$app_name" || {
+    log_err "app checkout access preparation failed for $app_name"
+    return 1
+  }
+
   rails_sync_app_tree "$app_name" app
   rails_sync_app_tree "$app_name" shared
   if [[ $app_name == brgen ]]; then
