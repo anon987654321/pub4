@@ -63,6 +63,14 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "unsetenv_others: true"
   end
 
+  def test_rails_secret_is_passed_in_environment_not_command_text
+    broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    assert_includes broker, 'environment["SECRET_KEY_BASE"] = environment_secret if environment_secret'
+    assert_includes broker, "environment_secret = app_secret_value(app)"
+    assert_includes helper, "export SECRET_KEY_BASE"
+    refute_includes helper, 'command="SECRET_KEY_BASE=$secret'
+  end
   def test_rails_task_refuses_symlinked_database_ancestors
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
     assert_includes helper, '[ ! -L "$app_dir/db" ]'
