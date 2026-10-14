@@ -29,13 +29,12 @@ sheets and LUT exports use the shared `output_paths.rb` contract: a dated folder
 `POSTPRO_OUTPUT_DIR` redirects Postpro, `DILLA_OUTPUT_DIR` redirects Dilla renders, and
 `DILLA_REFERENCE_DIR` redirects reference-analysis artifacts. Explicit `--output` or
 `--out` paths remain operator-controlled. The `photograph.rb` workflow uses a per-job folder
-under the same dated directory for its returned graded still. Takes are irreplaceable: Dilla's WAV and MIDI writers refuse existing
-paths by default, stage new bytes before publish, and require the explicit `--replace` option
-to replace a take.
+under the same dated directory for its returned graded still. Takes are irreplaceable:
+Dilla's WAV and MIDI writers refuse existing paths by default, stage new bytes before publish,
+and require the explicit `--replace` option to replace a take.
 
-The folder `test/` holds every suite, one file per subject, and `Rakefile` runs them with one
-process per subject because the tools define constants at top level and would collide in a
-shared process. Running `rake` in this folder runs the gate and then every suite. The script
-`gate.rb` parses every Ruby file, checks the boundary rule above and loads each entry point
-without running it, and `isolation.rb` reruns each test file alone to find the ones that only
-pass in company. The folder `visual/` holds the generator behind `photograph.rb`.
+The folder `test/` holds every suite, one file per subject. The `Rakefile` runs the gate,
+then starts each suite in its own process because the tools define constants at top level and
+would collide in a shared process. The script `gate.rb` parses every Ruby file, checks the
+sibling-import boundary and verifies the entry points have load guards. The tests keep each
+tool isolated as they run. The folder `visual/` holds the generator behind `photograph.rb`.
