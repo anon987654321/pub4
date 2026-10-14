@@ -1417,7 +1417,23 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   100% { transform: scale(1); opacity: 0.85; }
 }
 
-.virtual-spacer { width: 100%; pointer-events: none; flex-shrink: 0; }
+.virtual-spacer { position: relative; width: 100%; pointer-events: none; flex-shrink: 0; }
+.virtual-spacer-load {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  width: 100%;
+  min-block-size: var(--tap-min);
+  pointer-events: auto;
+  border: 0;
+  background: var(--face-bg);
+  color: var(--face-muted);
+  font: inherit;
+  text-align: center;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.virtual-spacer-load:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -2px; }
 
 #face {
   position: fixed;
