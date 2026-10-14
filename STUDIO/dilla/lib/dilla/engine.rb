@@ -13,7 +13,10 @@ def run(argv)
   options = {}
   OptionParser.new do |o|
     o.banner = 'Usage: ruby dilla.rb [options] | reference URL_OR_AUDIO | industrial-techno [options]'
-    o.on('--showcase', 'Render the eight-part Blue Hour pure-tone composition to dilla.wav') { options[:showcase] = true }
+    o.on('--showcase', 'Render the eight-part Blue Hour composition') { options[:showcase] = true }
+    o.on('--video PATH', 'Write the matching MP4 visualizer at PATH') { |v| options[:video] = v }
+    o.on('--no-video', 'Render only the WAV; do not encode an MP4') { options[:video] = false }
+    o.on('--video-preset NAME', 'Postpro video preset (default dilla_heavy)') { |v| options[:video_preset] = v }
     o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
     o.on('--render', 'Write one random take to a new file under the renders folder instead of playing live') { options[:render] = true }
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
@@ -80,15 +83,17 @@ def run(argv)
   if bare_run?(options)
     if options[:render]
       randomize_take!(data, options)
-    elsif options[:out] || options[:midi]
-      # An output path alone chooses the curated Blue Hour showcase. Random takes
-      # are explicit via --render, so naming a file cannot silently change the music.
-      options[:showcase] = true
     else
-      # A bare run plays live, in real time, from every progression and style, and never stops.
-      options[:play] = true
-      options[:pool] ||= 'all'
+      # The no-argument contract is a complete, finite WAV + MP4 composition.
+      # Endless random playback stays explicit as "live" or --play.
+      options[:showcase] = true
     end
+  end
+
+  if options[:showcase]
+    defaults = Dilla::Video.default_paths(root: File.expand_path("../..", __dir__))
+    options[:out] ||= defaults.fetch(:audio)
+    options[:video] = Dilla::Video.paired_path(options[:out]) if options[:video].nil?
   end
 
   unless options[:replace] || options[:play] || options[:live] || options[:list] || options[:arp] == 'list'
@@ -101,6 +106,7 @@ def run(argv)
       outputs << File.expand_path('../../dilla.wav', __dir__)
     end
     outputs << options[:midi] if options[:midi]
+    outputs << options[:video] if options[:video].is_a?(String)
     existing = outputs.find { |path| File.exist?(path) || File.symlink?(path) }
     abort "studio0: refusing to overwrite existing take #{existing.inspect}; choose a new path or pass --replace" if existing
   end
@@ -431,22 +437,34 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
   buf
 end
 
+# Keep a broad but finite tempo palette. A seed makes section tempos repeatable, while
+# different sections avoid the "every bar at one machine tempo" demo feel.
+SHOWCASE_TEMPOS = [92, 100, 108, 96, 116, 104, 112].freeze
+
+def showcase_tempos(seed:, count:)
+  order = SHOWCASE_TEMPOS.rotate(seed.to_i.abs % SHOWCASE_TEMPOS.size)
+  order.reverse! if seed.to_i.odd?
+  Array.new(count) { |index| order[index % order.size] }
+end
+
 # Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
 # and drum synthesiser used by ordinary progression renders.
 def render_showcase(data, options)
   arrangement = JSON.parse(File.read(File.expand_path('../../data/showcase.json', __dir__)))
   sections = arrangement.fetch('sections')
   seed = options[:seed] || 261_013
+  tempos = showcase_tempos(seed:, count: sections.size)
   crossfade = (arrangement.fetch('crossfade_seconds', 0.18) * SAMPLE_RATE).round
   combined = []
 
   sections.each_with_index do |section, index|
+    section_bpm = options[:bpm] || tempos.fetch(index)
     effect_rig = data.fetch('bus_effects').fetch(section.fetch('effect_rig'))
     mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section.fetch('mode', 'repeat')))
     section_options = {
       names: section.fetch('progression'),
       section_index: index,
-      bpm: options[:bpm] || section.fetch('bpm'),
+      bpm: section_bpm,
       beats: options[:beats] || section.fetch('beats_per_chord', 2.0),
       gate: options[:gate] || section.fetch('gate', 0.88),
       voice: options[:voice] || section.fetch('voice'),
@@ -503,7 +521,7 @@ def render_showcase(data, options)
       combined.concat(part.drop(overlap))
     end
     puts format('section %d/%d: %s — %d BPM, %s', index + 1, sections.size,
-                section.fetch('name'), section.fetch('bpm'), section.fetch('voice'))
+                section.fetch('name'), section_bpm, section.fetch('voice'))
   end
 
   combined = tape_stage(combined, data, options, seed)
@@ -515,29 +533,44 @@ def render_showcase(data, options)
   peak = combined.map(&:abs).max || 0.0
   combined.map! { |sample| sample * (0.92 / peak) } if peak > 0.92
 
-  out = options[:out] || File.expand_path('../../dilla.wav', __dir__)
+  out = options[:out] || Dilla::Video.default_paths(root: File.expand_path("../..", __dir__)).fetch(:audio)
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write(out, combined, replace: options[:replace])
   puts format('Wrote %s (%.2fs, 44.1 kHz mono) — %s', out, combined.size / SAMPLE_RATE.to_f,
               arrangement.fetch('title'))
-  puts "  seed=#{seed}; sections=#{sections.size}; peak=#{format('%.3f', combined.map(&:abs).max || 0.0)}"
+  puts "  seed=#{seed}; sections=#{sections.size}; tempos=#{tempos.join(',')}; peak=#{format('%.3f', combined.map(&:abs).max || 0.0)}"
+  unless options[:video] == false
+    video_out = options[:video] || Dilla::Video.paired_path(out)
+    begin
+      Dilla::Video.render(audio: out, output: video_out, preset: options[:video_preset] || "dilla_heavy",
+                          replace: options[:replace])
+    rescue Dilla::Video::Error => e
+      abort "studio0: WAV ready at #{out}; MP4 FAILED at #{video_out}: #{e.message}"
+    end
+  end
   out
 end
 
 # Live mode loops the same approved arrangement instead of switching to unrelated progressions.
 def play_showcase(data, options)
-  path = render_showcase(data, options)
-  command = player_command(options)
-  passes = 0
-  loop do
-    pid = Process.spawn(*command, path)
-    _waited, status = Process.wait2(pid)
-    unless status.success?
-      warn "player exited with status #{status.exitstatus}"
-      break
+  # Live uses the exact curated arrangement but renders to a disposable file; it
+  # never touches the tracked audition WAV or writes an incidental MP4.
+  Dir.mktmpdir("dilla-live-") do |directory|
+    path = render_showcase(
+      data, options.merge(out: File.join(directory, "dilla.wav"), video: false, replace: false)
+    )
+    command = player_command(options)
+    passes = 0
+    loop do
+      pid = Process.spawn(*command, path)
+      _waited, status = Process.wait2(pid)
+      unless status.success?
+        warn "player exited with status #{status.exitstatus}"
+        break
+      end
+      passes += 1
+      break if options[:passes] && passes >= options[:passes]
     end
-    passes += 1
-    break if options[:passes] && passes >= options[:passes]
   end
 end
 

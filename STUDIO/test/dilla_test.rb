@@ -163,10 +163,38 @@ class DillaTest < Minitest::Test
                  SHOWCASE.fetch("sections").last.fetch("progression")
   end
 
+  def test_default_output_paths_preserve_existing_takes
+    Dir.mktmpdir do |dir|
+      fresh = Dilla::Video.default_paths(root: dir, stamp: "fixed")
+      assert_equal File.join(dir, "dilla.wav"), fresh.fetch(:audio)
+      assert_equal File.join(dir, "dilla.mp4"), fresh.fetch(:video)
+
+      File.write(fresh.fetch(:audio), "kept")
+      fallback = Dilla::Video.default_paths(root: dir, stamp: "fixed")
+      assert_equal File.join(dir, "out", "dilla.wav"), fallback.fetch(:audio)
+      refute_equal fresh.fetch(:audio), fallback.fetch(:audio)
+
+      FileUtils.mkdir_p(File.join(dir, "out"))
+      File.write(fallback.fetch(:audio), "also kept")
+      timestamped = Dilla::Video.default_paths(root: dir, stamp: "fixed")
+      assert_equal File.join(dir, "out", "dilla-fixed.wav"), timestamped.fetch(:audio)
+      assert_equal File.join(dir, "out", "dilla-fixed.mp4"), timestamped.fetch(:video)
+    end
+  end
+
+  def test_showcase_tempo_schedule_is_repeatable_and_stays_within_92_to_116_bpm
+    first = showcase_tempos(seed: 261_013, count: 8)
+    assert_equal first, showcase_tempos(seed: 261_013, count: 8)
+    assert_operator first.min, :>=, 92
+    assert_operator first.max, :<=, 116
+    assert_operator first.uniq.size, :>=, 7
+    first.each_cons(2) { |left, right| refute_equal left, right }
+  end
+
   def test_default_run_renders_the_showcase_as_a_wav
     Dir.mktmpdir do |dir|
       out = File.join(dir, "blue-hour.wav")
-      stdout, stderr, status = run_dilla("--out", out, chdir: dir)
+      stdout, stderr, status = run_dilla("--no-video", "--out", out, chdir: dir)
       assert status.success?, "render failed\n#{stdout}\n#{stderr}"
       assert_includes stdout, "Blue Hour"
       assert File.file?(out), "renderer did not create the WAV"

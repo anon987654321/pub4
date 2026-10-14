@@ -6,57 +6,12 @@ shell over the modules in `lib/dilla/`. Instrument patches and grooves live in
 `data/dilla.json`; the eight-part Blue Hour Dilla Minor Dub Cut lives in
 `data/showcase.json`; harmonic references live in `data/music_theory.json`.
 
-A bare `ruby dilla.rb` plays live, in real time and without end, drawing every pass from
-all four hundred and sixty-seven progressions and from every mode, style, patch, groove
-profile, kit and drum pattern, each from its own shuffle bag. Add `--out PATH` or
-`--render` to write one such random take to a new file instead. By default, it goes to
-`${XDG_DATA_HOME:-~/Documents}/dilla-renders/<UTC date>`, outside the checkout;
-`DILLA_OUTPUT_DIR` selects a different output directory. Dilla prints the seed so the
-take can be rebuilt.
+A bare `ruby dilla.rb` renders the finite eight-part Blue Hour composition to a WAV and a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a repeatable seed, while retaining the dark minor harmony, full drum patterns, layered synths and shared tape/dub/crystallizer rig. If the tracked `dilla.wav` audition reference already exists, the default exporter preserves it and writes to `out/dilla.wav` and `out/dilla.mp4`; if that pair is occupied, it chooses a fresh timestamped pair. Set `DILLA_OUTPUT_DIR` to choose another default output directory.
 
-Any flag that chooses content, such as `--progression`, `--arp`, `--voice` or `--drums`,
-plays exactly what it names, and `--showcase` renders the eight-part **Blue Hour — Dilla
-Minor Dub Cut** at `dilla.wav`; `ruby dilla.rb live` loops that arrangement through the
-system player. Because `dilla.wav` is the tracked audition reference, the current
-checkout refuses to replace it implicitly. Choose a new path with
-`--out ~/Documents/dilla-renders/blue-hour-new.wav` and
-`--midi ~/Documents/dilla-renders/blue-hour-new.mid`, or pass `--replace` only when
-replacement is deliberate. Existing WAV and MIDI files are never truncated implicitly:
-outputs are staged beside the destination and published atomically, so a failed write
-leaves the previous take intact.
+The MP4 is made offline by FFmpeg from the rendered audio, an architectural grid/waveform scene, and the selected recipe in `STUDIO/postpro/video.yml` (default `dilla_heavy`). FFmpeg with the `libx264` encoder is required for video. If it is unavailable or export fails, the WAV remains intact and the command reports an explicit MP4 failure. Use `--no-video` for an audio-only render, `--video PATH` to choose the MP4 path, or `--video-preset NAME` to choose a recipe. `DILLA_VIDEO_POSTPRO=0` bypasses the video-grade filters.
 
-Every section runs at 92 BPM and declares a natural- or harmonic-minor scale; the
-renderer rejects chord or lead notes outside it. Ordinary progression renders and the
-rotating live set now inherit a low dub-bass line, a soft Prophet-style chord bed and a
-glassy DX electric-piano arp unless a profile explicitly keeps itself sparse. The
-eight-part showcase goes further, with Rhodes chords and a tine-Wurli lead plus a quiet
-Juno string layer and a high tine arp. All layers follow the same named progression, so
-the extra colours do not add notes outside its scale.
+`ruby dilla.rb live` loops the same curated arrangement through the system player, rendered into a disposable temporary WAV so it never overwrites the tracked reference. Endless random playback remains available with `--play`; a random finite take remains explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or `--drums` continue to choose exactly what they name.
 
-Showcase-only Dilla kit patterns
-add restrained clap, open-hat, rim, woodblock and tom accents over the dust kit; the
-original three-role patterns remain unchanged for standalone callers. The feel stays
-half-time and syncopated rather than bright or hurried. The hi-hat keeps a fast
-sixteenth-note pulse, but hit velocity and timing vary around the kick and snare pocket.
-Reverb is off. A shared effect rig adds a restrained three-head dub send and a soft
-crystallizer send to the instruments, then hits the drum bus hard with three
-cassette-colour Sonitex passes, heavy static tape saturation, multi-head dub feedback,
-octave-up crystallized repeats and nasty_vcs bus glue. The tape/crystal path has no wow,
-flutter, tremolo or chorus.
-
-Use `ruby dilla.rb --showcase --out out/blue-hour.wav` to choose another output path,
-`ruby dilla.rb --list` to inspect the progression pool, or
-`ruby dilla.rb --progression 3 --drums offbeat_inversion --out out/three.wav` for a
-standalone progression. Add `--midi out/three.mid` for a Standard MIDI File, or
-`--random` for a random take. The showcase uses a fixed seed by default; `--seed N`
-makes a different take repeatable.
-
-The Ruby engine writes 16-bit mono at 44.1 kHz. The tracked `dilla.wav` is the audition
-reference; treat it as a runtime bounce only after rendering it with this engine
-version. Temporary renders under `out/` are ignored. Keep irreplaceable recordings
-outside the checkout.
-
-## Composition and groove
 
 The data holds a flat list of progressions, each a list of chord names such as Fm9,
 Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies.
