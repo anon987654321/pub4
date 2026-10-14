@@ -22,6 +22,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # includes MASTER alongside whatever was named.
 
 require "open3"
+$stdout.sync = true
 require_relative "../lib/operator/ruby_runner"
 require_relative "../lib/operator/strict_mode"
 
@@ -174,7 +175,9 @@ STAGE_TIMEOUT = Integer(ENV.fetch("MASTER_GATE_STAGE_TIMEOUT", "1200"))
 def run_master_line(line)
   puts "master> #{line}"
   stdout, status = capture_with_timeout(line)
-  puts stdout
+  # capture_with_timeout forwards each child line as it arrives. Keep the buffer
+  # only for the inconclusive-verdict check below; replaying it here doubled every
+  # scanner and repair message after the stage ended.
   abort "err: MASTER command failed: #{line}" unless status.success?
 
   hit = INCONCLUSIVE.find { |pattern| stdout.match?(pattern) }
@@ -211,12 +214,17 @@ def capture_with_timeout(line)
   Open3.popen2e(SAFE_ENV, File.join(ROOT, "bin", "master"), chdir: REPO) do |stdin, out, wait|
     stdin.puts(line)
     stdin.close
-    reader = Thread.new { out.each_line { |l| buffer << l } }
+    reader = Thread.new do
+      out.each_line do |line|
+        buffer << line
+        $stdout.write(line)
+        $stdout.flush
+      end
+    end
     unless wait.join(STAGE_TIMEOUT)
       Process.kill("TERM", wait.pid)
       wait.join(10) || Process.kill("KILL", wait.pid)
       reader.join(5)
-      puts buffer
       inconclusive! "#{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
                     "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
                     "Nothing was measured; raise MASTER_GATE_STAGE_TIMEOUT only if you know the stage was working."
