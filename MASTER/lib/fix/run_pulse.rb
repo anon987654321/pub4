@@ -174,8 +174,15 @@ module Master
                end
         return unless tail
 
-        { line: "fix0: STALLED pass #{@pass} phase #{phase_name} for #{(waited / 60).floor}m, #{tail}",
-          skippable: SKIPPABLE.include?(@stage) }
+        skippable = SKIPPABLE.include?(@stage)
+        {
+          line: "fix0: STALLED pass #{@pass} phase #{phase_name} for #{(waited / 60).floor}m, #{tail}",
+          skippable: skippable,
+          # A non-advisory pass that has made no progress cannot recover by
+          # waiting indefinitely for the same provider call. End it here;
+          # wrapper-only watchdogs do not cover direct CLI invocations.
+          abort: !skippable
+        }
       end
 
       def lane_id
