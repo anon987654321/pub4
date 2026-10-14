@@ -7,12 +7,10 @@ require "open3"
 require "rbconfig"
 require "json"
 
-# What the bare path does, which until 2026-09-23 was nothing: `postpro.rb
-# photo.jpg` opened the interactive menu and the path went unread, so anything
-# scripted hung on a prompt. The positional is a subject now — one image
-# through the same chains --random draws, written beside it — and these shell
-# out because ARGV dispatch cannot be exercised in-process: the load guard
-# suppresses auto_launch, and the whole point of the change is in auto_launch.
+# Exercise the actual CLI because ARGV dispatch cannot be exercised in-process:
+# the load guard suppresses auto_launch, and the positional path is resolved by
+# that entrypoint. Each subprocess gets its own render directory so output-path
+# assertions never depend on the caller's current directory.
 #
 # A fixture is generated rather than committed, and small, because a random
 # chain is the expensive path in postpro: a 160-pixel frame keeps the suite's
@@ -22,9 +20,15 @@ class TestPostproDispatch < Minitest::Test
   SEED = "4242"
 
   def run_postpro(dir, *args, env: {})
-    Open3.capture2e({ "POSTPRO_SEED" => SEED, "DILLA_QUIET" => "1" }.merge(env),
-                    RbConfig.ruby, POSTPRO, *args)
+    defaults = {
+      "POSTPRO_SEED" => SEED,
+      "DILLA_QUIET" => "1",
+      "POSTPRO_OUTPUT_DIR" => render_dir(dir),
+    }
+    Open3.capture2e(defaults.merge(env), RbConfig.ruby, POSTPRO, *args)
   end
+
+  def render_dir(dir) = File.join(dir, "renders")
 
   def frame(dir, name = "frame.jpg")
     path = File.join(dir, name)
@@ -34,7 +38,7 @@ class TestPostproDispatch < Minitest::Test
   end
 
   def graded_outputs(dir, name)
-    Dir[File.join(dir, "postpro_#{File.basename(name, File.extname(name))}_*_v1_*.jpg")]
+    Dir[File.join(render_dir(dir), "postpro_#{File.basename(name, File.extname(name))}_*_v1_*.jpg")]
   end
 
   # The bare path grades that one image, and --count beside it is honoured
@@ -72,12 +76,12 @@ class TestPostproDispatch < Minitest::Test
 #{out}"
       outputs = graded_outputs(dir, "frame.jpg")
       assert_equal 2, outputs.size
-      assert outputs.all? { |path| File.dirname(path) == dir }
+      assert outputs.all? { |path| File.dirname(path) == render_dir(dir) }
       assert outputs.all? { |path| File.basename(path).start_with?("postpro_") }
     end
   end
 
-  def test_a_bare_image_is_graded_beside_itself
+  def test_a_bare_image_is_graded_to_the_configured_render_directory
     Dir.mktmpdir do |dir|
       subject = frame(dir)
       out, status = run_postpro(dir, subject, "--count", "2")
@@ -118,8 +122,10 @@ class TestPostproDispatch < Minitest::Test
       frame(dir, "one.jpg")
       out, status = run_postpro(dir, dir, "--count", "1")
       assert status.success?, "positional directory grade failed:\n#{out}"
-      assert_equal 1, Dir[File.join(dir, "one_*_v1_*.jpg")].size,
+      outputs = Dir[File.join(render_dir(dir), "postpro_one_*_v1_*.jpg")]
+      assert_equal 1, outputs.size,
                    "the directory's image should have been graded once:\n#{out}"
+      assert outputs.none? { |path| File.dirname(path) == dir }
     end
   end
 end
