@@ -4545,11 +4545,25 @@ def boolean_envelope_r2(measured)
   (cov / Math.sqrt(var_m * var_b))**2
 end
 
-# A nested `end` closes an inner block, not its method. All source audits use
-# the next top-level method boundary so their evidence covers the whole body.
+# Source audits need exact method spans. Regexes around `end` either stop inside
+# nested blocks or absorb comments/constants after a method; Prism supplies the AST
+# source range without making the media pipeline depend on a second parser.
+def postpro_source_methods(source)
+  require "prism"
+  parsed = Prism.parse(source)
+  return {} unless parsed.success?
+
+  parsed.value.statements.body.each_with_object({}) do |node, methods|
+    next unless node.is_a?(Prism::DefNode)
+
+    methods[node.name.to_s] = source.byteslice(node.location.start_offset...node.location.end_offset)
+  end
+rescue LoadError
+  {}
+end
+
 def postpro_source_method(source, name)
-  pattern = Regexp.new("^def " + Regexp.escape(name) + "\\b.*?(?=^def [a-z_][a-z0-9_]*\\b|\\z)", Regexp::MULTILINE)
-  source[pattern]
+  postpro_source_methods(source)[name.to_s]
 end
 
 def preset_effect_names
@@ -4558,7 +4572,9 @@ def preset_effect_names
 end
 
 def vocab_check
-  implemented = preset_effect_names
+  source = File.read(__FILE__)
+  source_methods = postpro_source_methods(source)
+  implemented = Array(source_methods["preset"]).scan(/when "([a-z0-9_]+)"/).flatten.uniq
   problems = []
 
   PRESETS.each do |name, p|
@@ -4686,9 +4702,8 @@ def vocab_check
   # reach it: run_random writes through process_file, and asserting on the
   # spelling failed a path whose behaviour was right. A check that measures a
   # spelling measures a spelling.
-  source = File.read(__FILE__)
   ungrained = %w[process_file run_random run_uplift run_one_shot run_watch].reject do |name|
-    body = postpro_source_method(source, name)
+    body = source_methods[name]
     %w[apply_finishing_grain process_file( grade_watched(].any? { |reach| body&.include?(reach) }
   end
   unless ungrained.empty?
