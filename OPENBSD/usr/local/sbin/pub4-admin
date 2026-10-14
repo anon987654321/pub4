@@ -303,8 +303,8 @@ module Pub4Admin
 
   def run_rails_task(app, task, database = nil)
     return 64 unless RAILS_TASK_APPS.include?(app)
-    allowed = %w[bundle-install bundle-check db-prepare db-seed demo-seed assets-precompile ci]
-    if task == "schema-load"
+    allowed = %w[bundle-install bundle-check ci-bundle-install db-prepare db-seed demo-seed assets-precompile ci]
+    if %w[schema-load secondary-db-check].include?(task)
       return 64 unless %w[cache queue cable].include?(database)
     else
       return 64 unless allowed.include?(task) && database.nil?
