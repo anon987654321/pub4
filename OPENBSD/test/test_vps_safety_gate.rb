@@ -69,6 +69,23 @@ class VpsSafetyGateTest < Minitest::Test
       assert_includes out, "usr/local/sbin/pub4-admin must not be a symlink"
     end
   end
+  def test_operator_checks_destinations_before_copying_privileged_trees
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "OPERATOR.sh")
+      text = File.read(path)
+      guard = text.index("Never copy privileged code through a symlinked system directory or file.")
+      copy = text.index("for d in etc usr var; do")
+      refute_nil guard
+      refute_nil copy
+      text[guard...copy] = ""
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "OPERATOR.sh must refuse symlinked privileged destinations before copying"
+    end
+  end
+
   def test_operator_install_refuses_symlinked_system_destinations
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
