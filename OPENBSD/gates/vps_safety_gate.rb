@@ -274,7 +274,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                   admin.include?("def ensure_app_secret(app, emit: true)") &&
                   admin.include?("ensure_app_secret(app, emit: false)") &&
                   admin.include?("File::CREAT | File::EXCL") &&
-                  admin.include?("File.rename(temporary, target)") &&
+                  admin.include?("File.link(temporary, target)") &&
                   admin.include?("already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file")
   failures << "pub4-admin must create secrets only at fixed app paths and atomically" unless secret_dispatch
 
