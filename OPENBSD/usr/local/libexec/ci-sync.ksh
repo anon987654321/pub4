@@ -83,6 +83,10 @@ done
 # survive forever. Preserve generated public/assets across the public/ refresh.
 for dir_rel in test app lib config bin db engines public vendor/javascript; do
   [ -d "$src/$dir_rel" ] || continue
+  if [ "$dir_rel" = public ] && [ -L "$app_dir/public" ]; then
+    echo "ci-sync: refusing public directory symlink" >&2
+    exit 1
+  fi
   if [ "$dir_rel" = public ] && [ -d "$app_dir/public/assets" ]; then
     [ ! -L "$app_dir/public/assets" ] || {
       echo "ci-sync: refusing public/assets symlink" >&2
@@ -99,14 +103,19 @@ for dir_rel in test app lib config bin db engines public vendor/javascript; do
 done
 [ -d "$src/engines" ] || rm -rf "$app_dir/engines"
 
-for rel in test app lib config bin db engines public vendor/javascript \
-           Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version; do
+for rel in test app lib config bin db engines public vendor/javascript; do
   [ -e "$src/$rel" ] || continue
+  tar cf - -C "$src" "$rel" | tar xf - -C "$app_dir"
+done
+for rel in Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version; do
+  [ -f "$src/$rel" ] || continue
+  rm -f "$app_dir/$rel"
   tar cf - -C "$src" "$rel" | tar xf - -C "$app_dir"
 done
 for file in "$src"/*.sh; do
   [ -f "$file" ] || continue
   name=$(basename "$file")
+  rm -f "$app_dir/$name"
   tar cf - -C "$src" "$name" | tar xf - -C "$app_dir"
 done
 
