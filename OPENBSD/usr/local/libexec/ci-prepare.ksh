@@ -13,11 +13,6 @@ esac
 
 [ "$(id -u)" -eq 0 ] || { echo "ci-prepare: must run as root through pub4-admin" >&2; exit 77; }
 
-if ! grep -q '^_pub4ci:' /etc/group; then
-  /usr/sbin/groupadd _pub4ci
-fi
-/usr/sbin/usermod -G _pub4ci "$app"
-
 # Do not let an allowlisted app name turn a symlinked home/app path into a
 # privileged chmod target. Verify each ancestor and its ownership before touching
 # storage or the shared checkout permissions.
@@ -49,5 +44,15 @@ if [ -e "$storage" ] || [ -L "$storage" ]; then
       echo "ci-prepare: storage must be a real app-owned directory: $storage" >&2
       exit 1
     }
+fi
+
+if ! grep -q '^_pub4ci:' /etc/group; then
+  /usr/sbin/groupadd _pub4ci
+fi
+/usr/sbin/usermod -G _pub4ci "$app"
+
+/bin/chgrp _pub4ci /home/dev
+/bin/chmod 750 /home/dev
+if [ -d "$storage" ]; then
   /bin/chmod 750 "$storage"
 fi
