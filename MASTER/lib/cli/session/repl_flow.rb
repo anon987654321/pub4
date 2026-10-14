@@ -296,8 +296,11 @@ module Master
         return prompt unless queue_control_mode? || interactive_queue_count.positive?
 
         count = interactive_queue_count
-        marker = count.positive? ? "*#{count}" : "*"
-        prompt.to_s.sub(/(\s*)\z/) { |space| " #{marker}#{space}" }
+        status = count.positive? ? "queued #{count}" : "working"
+        base = prompt.to_s.sub(/\s+\z/, "")
+        suffix = "#{base} #{status} "
+        maximum = Master::Face::Contract.prompt_max
+        suffix.length <= maximum ? suffix : prompt
       end
 
       def enqueue_interactive_line(line)
