@@ -209,6 +209,25 @@ install_root_configs() {
     fi
   done
 
+  # Never copy privileged code through a symlinked system directory or file.
+  for rel in /usr /usr/local /usr/local/bin /usr/local/sbin /usr/local/libexec /usr/local/libexec/pub4; do
+    if [[ -L $rel ]]; then
+      log ERROR "refusing symlinked privileged destination directory: $rel"
+      return 1
+    fi
+  done
+  for rel in /usr/local/sbin/pub4-admin \
+             /usr/local/libexec/ci-prepare.ksh \
+             /usr/local/libexec/ci-run.ksh \
+             /usr/local/libexec/ci-sync.ksh \
+             /usr/local/libexec/pub4/solid_queue_proof.rb \
+             /usr/local/bin/resource_guard.sh; do
+    if [[ -L $rel ]]; then
+      log ERROR "refusing symlinked privileged destination file: $rel"
+      return 1
+    fi
+  done
+
   backup_directory /etc "etc-pre-sync" || return 1
 
   if [[ -f $src/etc/doas.conf ]]; then
@@ -259,9 +278,7 @@ install_root_configs() {
   for f in /usr/local/sbin/pub4-admin \
            /usr/local/libexec/ci-prepare.ksh \
            /usr/local/libexec/ci-run.ksh \
-           /usr/local/libexec/ci-sync.ksh \
-           /usr/local/libexec/pub4/solid_queue_proof.rb \
-           /usr/local/bin/resource_guard.sh; do
+           /usr/local/libexec/ci-sync.ksh; do
     if [[ ! -f $f || -L $f ]]; then
       log ERROR "installed privileged entrypoint missing or symlinked: $f"
       return 1
@@ -377,10 +394,20 @@ sync_openbsd_apply() {
     return 1
   fi
 
+  [[ -f /usr/local/libexec/pub4/solid_queue_proof.rb && ! -L /usr/local/libexec/pub4/solid_queue_proof.rb ]] || {
+    log ERROR "installed Solid Queue proof is missing or symlinked"
+    return 1
+  }
+
   if ! install -m 755 "${SCRIPT_DIR}/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
     log ERROR "resource_guard.sh install failed — the load guard would be absent"
     return 1
   fi
+
+  [[ -f /usr/local/bin/resource_guard.sh && ! -L /usr/local/bin/resource_guard.sh ]] || {
+    log ERROR "installed resource guard is missing or symlinked"
+    return 1
+  }
 
   # resource_guard.sh's crisis tier is guarded the same way and installed from
   # the same place. LOAD_CRIT runs `/usr/local/bin/emergency_cpu.sh` when it is
