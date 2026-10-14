@@ -506,7 +506,8 @@ showcase.
 Reference output, reports, JSON profiles and stems default to
 `${XDG_DATA_HOME:-~/Documents}/dilla-references`. Relative or checkout-local
 `XDG_DATA_HOME` values are ignored; `DILLA_REFERENCE_DIR` selects a different root.
-Each profile records the user's style hint separately from measured traits: tempo estimates
+Each profile records the user's style hint separately from measured traits: tempo
+estimates
 and spectral bands are measurements, while an artist/genre label comes from the request,
 not an automatic genre classifier.
 
