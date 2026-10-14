@@ -654,24 +654,17 @@ module Master
         [voice, style_config]
       end
 
+      # The socket method has one bounded empty/truncated-response retry.
+      # Keep the caller single-shot so fallback is reached at a predictable cost.
       def attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
-        attempts = fast_tts_mode? ? 1 : 2
-        attempts.times do |attempt|
-          path = synthesize_edge_socket(
-            text: text_str,
-            voice_name:,
-            style_config:,
-            audio_path: output_path,
-            on_chunk:,
-          )
-          return true if path && File.exist?(output_path) && File.size(output_path) > 0
-
-          break unless attempt.zero?
-
-          TtsSupervisor.ensure_daemon!
-          sleep 0.15
-        end
-        false
+        path = synthesize_edge_socket(
+          text: text_str,
+          voice_name:,
+          style_config:,
+          audio_path: output_path,
+          on_chunk:,
+        )
+        !!(path && File.exist?(output_path) && File.size(output_path) > 0)
       end
 
       def attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
@@ -744,16 +737,8 @@ module Master
         started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
-        attempts = fast_tts_mode? ? 1 : 2
-
-        attempts.times do |attempt|
-          sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
-          return shape ? shaped(sock_path) : sock_path if sock_path
-          break unless attempt.zero? && edge_tts_available?
-
-          TtsSupervisor.ensure_daemon!
-          sleep 0.15
-        end
+        sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
+        return shape ? shaped(sock_path) : sock_path if sock_path
 
         return if fast_tts_mode?
 
