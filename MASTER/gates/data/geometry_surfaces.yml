@@ -16,6 +16,13 @@ viewports:
   compact: [1024, 768]
   desktop: [1440, 900]
 
+# Distinct routes are still probed independently. When two aliased routes render
+# the same structure, they share one canonical baseline instead of shadow copies.
+snapshot_aliases:
+  "bsdports/ports_index/mobile": "bsdports/home/mobile"
+  "bsdports/ports_index/desktop": "bsdports/home/desktop"
+  "brgen/conversations/desktop": "brgen/messenger/desktop"
+
 # Width sweep for the reflow gate — WCAG 1.4.10 floor through desktop.
 reflow_widths: [320, 360, 390, 414, 480, 540, 600, 680, 768, 834, 900, 1024, 1180, 1280, 1440, 1600]
 
@@ -34,7 +41,6 @@ surfaces:
     path: /
     viewports: [mobile, compact, desktop]
     snapshot: true
-    pixel_snapshot: true
     pixel_snapshot: true
   - app: amber
     label: wardrobe
