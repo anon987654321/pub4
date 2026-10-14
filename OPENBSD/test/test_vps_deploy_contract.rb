@@ -124,6 +124,16 @@ class VpsDeployContractTest < Minitest::Test
     refute_nil health_probe
     refute_match(/\$\{_PRIV\}.*\$RUBY/m, health_probe)
   end
+  def test_app_secret_path_fails_closed_without_the_broker
+    database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
+    secret_fn = database[/app_secret_for\(\) \{.*?^\}/m]
+    refute_nil secret_fn
+    assert_includes secret_fn, '[[ -x /usr/local/sbin/pub4-admin ]]'
+    assert_includes secret_fn, '"app_secret_for: pub4-admin is missing; run OPERATOR.sh before deploying"'
+    assert_includes secret_fn, '"${_PRIV}" /usr/local/sbin/pub4-admin ensure-secret "$app_name"'
+    refute_includes secret_fn, '"${_PRIV}" sh -c'
+    refute_includes secret_fn, '"${_PRIV}" cat "$env_file"'
+  end
   def test_rails_database_tasks_use_closed_dispatcher
     database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
     runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
