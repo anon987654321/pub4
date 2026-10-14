@@ -14,7 +14,7 @@ case "$app" in
   *) echo "rails-task: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$task" in
-  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci) [ "$#" -eq 2 ] || exit 64 ;;
+  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate) [ "$#" -eq 2 ] || exit 64 ;;
   demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
   schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
   *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
