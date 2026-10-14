@@ -68,7 +68,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'args.length == 4 && args[0] == "relayd-check"'
     assert_includes source, "def relayd_check(app, domain, requested_port)"
     assert_includes source, "File.lstat(RELAYD_CONFIG)"
-    assert_includes source, "no operator-approved Host route for #{domain}"
+    assert_includes source, 'no operator-approved Host route for #{domain}'
     assert_includes source, "requested port does not match the root-configured backend"
     refute_includes source, "def relayd_add(app, domain, requested_port)"
     refute_includes source, "File.rename(temporary, RELAYD_CONFIG)"
