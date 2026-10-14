@@ -273,6 +273,18 @@ install_root_configs() {
     fi
   done
 
+  # Refuse symlinked privileged entrypoints before any copy can follow
+  # a pre-existing destination symlink and overwrite a path outside the install tree.
+  for rel in usr/local/sbin/pub4-admin \
+             usr/local/libexec/ci-prepare.ksh \
+             usr/local/libexec/ci-run.ksh \
+             usr/local/libexec/ci-sync.ksh; do
+    if [[ -L "$src/$rel" || -L "/$rel" ]]; then
+      log ERROR "refusing symlinked privileged entrypoint before install: $rel"
+      return 1
+    fi
+  done
+
   for d in etc usr var; do
     [[ -d $src/$d ]] || continue
     install -d "/$d" 2>/dev/null || true
