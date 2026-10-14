@@ -120,6 +120,18 @@ test("virtualized chat retains recoverable older messages", () => {
   assert.match(faceMotion, /\.virtual-spacer-load/);
   assert.match(faceCss, /\.virtual-spacer-load/);
 });
+test("message action menu is localized, safe to render, and viewport-aware", () => {
+  const start = chat.indexOf("function openActionMenu(msgEl)");
+  const end = chat.indexOf("// Per-message context-usage footer", start);
+  const menu = chat.slice(start, end);
+  assert.ok(start >= 0 && end > start, "openActionMenu function is missing");
+  for (const key of ["message_actions", "message_copy", "message_quote", "message_simpler", "message_deeper"]) {
+    assert.match(menu, new RegExp("chatT\\('" + key + "'"));
+  }
+  assert.match(menu, /visualViewport/);
+  assert.match(menu, /setAttribute\('role', 'group'\)/);
+  assert.doesNotMatch(menu, /menu\.innerHTML/);
+});
 test("face shell stays flat and square", () => {
   assert.doesNotMatch(faceCss, /backdrop-filter\s*:\s*(?!none\b)[^;]+;/i);
   assert.doesNotMatch(faceCss, /filter\s*:\s*[^;]*\b(?:blur|drop-shadow)\(/i);
