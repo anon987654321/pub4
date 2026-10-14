@@ -39,6 +39,24 @@ function partSources() {
 const faceSource = partSources().join("\n");
 
 
+test("web face queues follow-up turns and exposes stop/resume state", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
+  assert.match(faceSource, /const _pendingTurns = \[\]/);
+  assert.match(faceSource, /await runMessageTurn\(item\.text\)/);
+  assert.match(faceSource, /_turnQueuePaused/);
+  assert.match(view, /id="turn-queue-status"/);
+  assert.match(view, /id="turn-control"/);
+  assert.match(css, /body\[data-queue-active="1"\] \.turn-queue-status/);
+  assert.match(actions, /fallbackSendQueue/);
+});
+
+test("thinking star animates in calm mode but respects reduced motion and battery mode", () => {
+  const source = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
+  assert.match(source, /v === 'thinking' && !State\.reducedMotion && runtimeProfile\(\) !== 'battery'/);
+});
+
 test("face surface owns the full viewport", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
