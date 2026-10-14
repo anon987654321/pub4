@@ -96,6 +96,17 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
+  def test_rails_task_runner_fails_closed_without_broker
+    runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
+    runner = runtime[/run_rails_as_app\(\) \{.*?^\}/m]
+    refute_nil runner
+    assert_includes runner, '[[ -x /usr/local/sbin/pub4-admin ]]'
+    assert_includes runner, '"run_rails_as_app: pub4-admin is missing; run OPERATOR.sh before deploying"'
+    assert_includes runner, '/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"'
+    refute_match(/\$\{_PRIV\} sh -c/, runner)
+    refute_match(/su -m/, runner)
+    refute_includes runtime, 'secret=$(app_secret_for "$app_name")'
+  end
   def test_rails_production_bundle_uses_bounded_broker
     core = File.read(File.join(ROOT, "RAILS", "_bundle.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
