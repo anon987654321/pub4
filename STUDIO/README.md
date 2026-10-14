@@ -26,9 +26,9 @@ The tools hand work to each other by file. Replicate grades what it generates th
 postpro by default, and lora grades its renders the same way. Postpro's bulk grades, stock
 sheets and LUT exports use the shared `output_paths.rb` contract: a dated folder under
 `${XDG_DATA_HOME:-~/Documents}/dilla-renders`, outside the checkout by default.
-`POSTPRO_OUTPUT_DIR` redirects Postpro, `DILLA_OUTPUT_DIR` redirects Dilla renders, and
-`DILLA_REFERENCE_DIR` redirects reference-analysis artifacts. Explicit `--output`, `--out`
-and `--video` paths remain operator-controlled. The `photograph.rb` workflow uses a per-job
+`POSTPRO_OUTPUT_DIR` redirects Postpro, and `DILLA_OUTPUT_DIR` redirects Dilla's
+default renders. Reference-analysis artifacts share the same XDG data home as MASTER.
+Explicit `--output`, `--out` and `--video` paths remain operator-controlled. The `photograph.rb` workflow uses a per-job
 folder under the same dated directory for its returned graded still.
 
 Dilla's default showcase preserves existing takes: it tries the familiar filenames, then the
