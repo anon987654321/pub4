@@ -49,6 +49,16 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_packaged_ruby_shebang_requires_a_real_newline
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      File.write(path, File.read(path).sub("#!/usr/local/bin/ruby", "#!/usr/bin/env ruby"))
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "pub4-admin must use the fixed packaged Ruby interpreter"
+    end
+  end
   def test_gate_passes_on_the_tracked_tree
     out, status = run_gate
     assert status.success?, "expected VPS safety gate to pass, got:\n#{out}"
