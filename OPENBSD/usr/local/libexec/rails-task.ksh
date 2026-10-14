@@ -102,15 +102,15 @@ for file in db/production*.sqlite3; do
   printf "moved %s -> %s\\n" "$file" "$target"
 done' ;;
   db-prepare)
-    command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails db:prepare" ;;
+    command="RAILS_ENV=production $bundle exec rails db:prepare" ;;
   db-seed)
-    command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails db:seed" ;;
+    command="RAILS_ENV=production $bundle exec rails db:seed" ;;
   demo-seed)
-    command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails ${app}:demo_seed" ;;
+    command="RAILS_ENV=production $bundle exec rails ${app}:demo_seed" ;;
   assets-precompile)
-    command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails assets:precompile" ;;
+    command="RAILS_ENV=production $bundle exec rails assets:precompile" ;;
   schema-load)
-    command="SECRET_KEY_BASE=$secret DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production $bundle exec rails db:schema:load:${database}" ;;
+    command="DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production $bundle exec rails db:schema:load:${database}" ;;
   secondary-db-check)
     schema="/home/$app/app/db/${database}_schema.rb"
     db_file="/home/$app/app/storage/production_${database}.sqlite3"
@@ -121,7 +121,7 @@ done' ;;
     esac
     command="/usr/local/bin/sqlite3 $db_file \"select 1 from $table limit 1;\"" ;;
   ci)
-    command="SECRET_KEY_BASE=$secret PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 $bundle exec bin/ci" ;;
+    command="PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 $bundle exec bin/ci" ;;
 esac
 
 script=$(cat <<EOF
@@ -131,6 +131,7 @@ export PATH=/usr/local/bin:/usr/bin:/bin
 export NPM_CONFIG_CACHE=/home/$app/.npm
 export XDG_CACHE_HOME=/home/$app/.cache
 export BUNDLE_USER_HOME=/home/$app/.bundle
+export SECRET_KEY_BASE
 unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH
 unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT
 cd /home/$app/app
