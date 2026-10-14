@@ -4,10 +4,10 @@ duplicate_members:
 - MASTER/gates/data/layout_snapshots/brgen-conversations-desktop.json | MASTER/gates/data/layout_snapshots/brgen-messenger-desktop.json
 - MASTER/gates/data/layout_snapshots/bsdports-home-desktop.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
 - MASTER/gates/data/layout_snapshots/bsdports-home-mobile.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-mobile.json
-- RAILS/__shared/config/initializers/inflections.rb | RAILS/master_web/config/initializers/inflections.rb
+- RAILS/__shared/config/initializers/inflections.rb | RAILS/master/config/initializers/inflections.rb
 - RAILS/__shared/config/storage.yml | RAILS/amber/config/storage.yml | RAILS/brgen/config/storage.yml | RAILS/bsdports/config/storage.yml
 - RAILS/__shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb
-- RAILS/__shared/public/icon.png | RAILS/master_web/public/icon.png
+- RAILS/__shared/public/icon.png | RAILS/master/public/icon.png
 - RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
 - RAILS/amber/Rakefile | RAILS/bsdports/Rakefile
 - RAILS/amber/config.ru | RAILS/bsdports/config.ru

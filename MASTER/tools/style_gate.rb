@@ -43,7 +43,7 @@ if File.executable?(shared_rubocop)
   end
 end
 
-eslint = File.join(RAILS_ROOT, "master_web", "eslint.config.mjs")
+eslint = File.join(RAILS_ROOT, "master", "eslint.config.mjs")
 if File.file?(eslint)
   results << run(
     "MASTER web eslint",

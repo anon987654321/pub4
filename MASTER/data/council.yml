@@ -443,10 +443,10 @@ presets:
     brutal: true
     cherry_pick: true
     files:
-      - ../RAILS/master_web/public/face.css
-      - ../RAILS/master_web/public/face.js
-      - ../RAILS/master_web/public/chat.js
-      - ../RAILS/master_web/app/views/chat/index.html.erb
+      - ../RAILS/master/public/face.css
+      - ../RAILS/master/public/face.js
+      - ../RAILS/master/public/chat.js
+      - ../RAILS/master/app/views/chat/index.html.erb
 
   motion_critique:
     description: Adversarial review of generated cinematic video for motion coherence and identity consistency.
@@ -479,10 +479,10 @@ presets:
     cycles: 2
     cherry_pick: true
     files:
-      - ../RAILS/master_web/public/chat.js
-      - ../RAILS/master_web/public/face.js
-      - ../RAILS/master_web/public/visual_bridge.js
-      - ../RAILS/master_web/app/views/chat/index.html.erb
+      - ../RAILS/master/public/chat.js
+      - ../RAILS/master/public/face.js
+      - ../RAILS/master/public/visual_bridge.js
+      - ../RAILS/master/app/views/chat/index.html.erb
       - lib/voice/speech.rb
       - lib/voice/dilla.rb
       - lib/voice/production_dna.rb

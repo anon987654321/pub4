@@ -43,7 +43,7 @@ module Operator
     MASTER_DIR = File.expand_path("../..", __dir__)
     CEILING = File.join(MASTER_DIR, "data", "data_reach.yml")
 
-    CODE_GLOBS = %w[lib/**/*.rb ../RAILS/master_web/app/**/*.rb ../RAILS/master_web/config/**/*.rb
+    CODE_GLOBS = %w[lib/**/*.rb ../RAILS/master/app/**/*.rb ../RAILS/master/config/**/*.rb
                     ../RAILS/test/**/*.rb bin/* tools/**/*.rb test/**/*.rb law/*.rb Rakefile].freeze
 
     module_function

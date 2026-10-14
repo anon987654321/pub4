@@ -382,7 +382,7 @@ end) if source.to_s.strip.empty?
 
       def visual_source?(path)
         VISUAL_EXTENSIONS.include?(File.extname(path).downcase) &&
-          path.to_s.include?("/RAILS/") && !path.to_s.include?("/RAILS/master_web/")
+          path.to_s.include?("/RAILS/") && !path.to_s.include?("/RAILS/master/")
       end
 
       def reject_fix(path, original, reason, **details)

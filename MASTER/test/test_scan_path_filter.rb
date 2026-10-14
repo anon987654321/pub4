@@ -2,12 +2,12 @@
 
 require_relative "test_helper"
 
-# `/scan face` resolves to RAILS/master_web/public (CLI::Scan::Request::TARGET_ALIASES). The
+# `/scan face` resolves to RAILS/master/public (CLI::Scan::Request::TARGET_ALIASES). The
 # generated face bundles sit there, and a scan rooted at that directory must
 # skip them exactly as a scan rooted at MASTER or the repo does.
 class TestScanPathFilter < Minitest::Test
   Scanner = Master::Fix::Scanner
-  PUBLIC = File.join(Master::RAILS_ROOT, "master_web", "public")
+  PUBLIC = File.join(Master::RAILS_ROOT, "master", "public")
 
   def test_the_face_alias_points_at_the_face_sources
     assert_equal PUBLIC, Master::CLI::Scan::Request::TARGET_ALIASES.fetch("face")
@@ -16,7 +16,7 @@ class TestScanPathFilter < Minitest::Test
   def test_generated_bundles_are_skipped_from_every_root
     Master::Fix::Scan::PathFilter::GENERATED_FACE_BUNDLES.each do |bundle|
       path = File.join(Master::REPO_ROOT, bundle)
-      [PUBLIC, File.join(Master::REPO_ROOT, "RAILS", "master_web"), Master::ROOT, Master::REPO_ROOT].each do |root|
+      [PUBLIC, File.join(Master::REPO_ROOT, "RAILS", "master"), Master::ROOT, Master::REPO_ROOT].each do |root|
         assert Scanner.skip_path?(path, root:), "#{bundle} is scanned from #{root}"
       end
     end

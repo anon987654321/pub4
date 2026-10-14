@@ -24,7 +24,7 @@ class FaceStateSpec < Minitest::Test
   end
 
   def test_face_state_classifies_runtime_status
-    source = read("../RAILS/master_web/public/face_state.js")
+    source = read("../RAILS/master/public/face_state.js")
     assert_includes source, "dataset.masterState"
     assert_includes source, "MODE_BUSY"
     assert_includes source, "MODE_FAIL"
@@ -38,7 +38,7 @@ class FaceStateSpec < Minitest::Test
   # JSON config at boot) rather than papering over here — this spec pins the
   # values actually shipping today so drift is visible, not the YAML's.
   def test_visual_governor_is_quiet_and_freezes_only_on_explicit_signal
-    source = read("../RAILS/master_web/public/visual_governor.js")
+    source = read("../RAILS/master/public/visual_governor.js")
     # let, not const: the reduced-motion and battery clamps below reassign it.
     assert_includes source, "let maxFps = 24"
     assert_includes source, "let maxParticles = 200"

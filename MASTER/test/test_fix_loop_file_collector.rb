@@ -57,9 +57,9 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_generated_and_vendored_paths_are_not_collected_for_fixing
     Dir.mktmpdir do |dir|
       authored = write(dir, "lib/thing.rb")
-      write(dir, "RAILS/master_web/public/face.runtime.js", "const a = 1;\n")
-      write(dir, "RAILS/master_web/public/three.face.module.js", "var b = 2;\n")
-      write(dir, "RAILS/master_web/public/face_vision.bundle.js", "const c = 3;\n")
+      write(dir, "RAILS/master/public/face.runtime.js", "const a = 1;\n")
+      write(dir, "RAILS/master/public/three.face.module.js", "var b = 2;\n")
+      write(dir, "RAILS/master/public/face_vision.bundle.js", "const c = 3;\n")
       write(dir, "reports/run.yml", "a: 1\n")
       write(dir, "vendor/gem/lib/dep.rb")
       init_repo(dir)
@@ -75,7 +75,7 @@ class TestFixLoopFileCollector < Minitest::Test
     Dir.mktmpdir do |dir|
       bus = FakeBus.new
       write(dir, "lib/thing.rb")
-      write(dir, "RAILS/master_web/public/face.runtime.js", "const a = 1;\n")
+      write(dir, "RAILS/master/public/face.runtime.js", "const a = 1;\n")
       init_repo(dir)
 
       collected = collector(dir, bus:).collect(dir)
@@ -86,7 +86,7 @@ class TestFixLoopFileCollector < Minitest::Test
       skipped = bus.events.select { |name, _| name == "fix_loop:skipped" }
       refute_empty skipped, "narrowing the fix input must be announced"
       assert_equal 1, skipped.first.last[:count]
-      assert_includes skipped.first.last[:sample], "RAILS/master_web/public/face.runtime.js"
+      assert_includes skipped.first.last[:sample], "RAILS/master/public/face.runtime.js"
       assert_equal 2, counted.candidate_count
       assert_equal 1, bus.events.select { |name, _| name == "fix_loop:skipped" }.first.last[:count]
     end
@@ -95,8 +95,8 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_collector_and_scanner_agree_on_what_is_off_limits
     Dir.mktmpdir do |dir|
       %w[
-        RAILS/master_web/public/three.face.module.js
-        RAILS/master_web/public/face.runtime.js
+        RAILS/master/public/three.face.module.js
+        RAILS/master/public/face.runtime.js
         reports/run.yml
         vendor/gem/lib/dep.rb
         knowledge/note.md

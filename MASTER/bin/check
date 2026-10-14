@@ -49,7 +49,7 @@ web_live = ENV["MASTER_WEB_LIVE"] == "1"
 # rather than assuming the shell will.
 node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
                       .map { |dir| File.join(dir, "node") }.find { |p| File.executable?(p) }
-web_test_dir = File.join(ROOT, "..", "RAILS", "master_web", "test")
+web_test_dir = File.join(ROOT, "..", "RAILS", "master", "test")
 web_node_tests = Dir[File.join(web_test_dir, "**/*.test.mjs")].sort
 web_node_step = if node_bin && web_node_tests.any?
   ["web ui behaviour", node_bin, "--test", *web_node_tests]
@@ -100,7 +100,7 @@ ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["
 ci_steps << web_node_step
 ci_steps << rake["test:integration_web"] if ENV["MASTER_CI_WEB"] == "1"
 if ENV["MASTER_CI_BROWSER"] == "1"
-  webgl = File.join(ROOT, "..", "RAILS", "master_web", "script", "probe_webgl_guard.mjs")
+  webgl = File.join(ROOT, "..", "RAILS", "master", "script", "probe_webgl_guard.mjs")
   if node_bin && File.file?(webgl)
     # The probe reads this itself; without it a machine with no browser reports
     # a pass having launched nothing.
@@ -130,8 +130,8 @@ PROFILES = {
   "agent"       => [law_syntax, boot_smoke, rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
                     rake["lint:word_boundary"], rake["tools"]],
   # Face tests keep three runtimes: the MASTER Rack UI test, the Rails-backed
-  # RAILS/master_web suite, and every shipped JavaScript behavior test under Node.
-  # The canonical web tree moved to RAILS/master_web; the old MASTER/web glob
+  # RAILS/master suite, and every shipped JavaScript behavior test under Node.
+  # The canonical web tree moved to RAILS/master; the old MASTER/web glob
   # selected zero files without failing, so CI reported green without measuring
   # any of those JavaScript tests. An empty inventory or missing runtime is now
   # a visible non-pass rather than a silent omission.

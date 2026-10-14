@@ -113,7 +113,7 @@ class TestRepairLoopPolicy < Minitest::Test
     assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/assets/stylesheets/application.scss")
     assert loop.send(:visual_source?, "/repo/RAILS/brgen/app/views/home/index.html.erb")
     refute loop.send(:visual_source?, "/repo/RAILS/brgen/app/models/post.rb")
-    refute loop.send(:visual_source?, "/repo/RAILS/master_web/public/face.css")
+    refute loop.send(:visual_source?, "/repo/RAILS/master/public/face.css")
   end
 
   def test_an_accepted_fix_is_written

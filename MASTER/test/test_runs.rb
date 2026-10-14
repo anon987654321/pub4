@@ -87,7 +87,7 @@ class TestRuns < Minitest::Test
 
   def test_node_and_shell_test_files_are_in_the_same_reachability_census
     targets = {
-      "RAILS/master_web/test/face_boot.test.mjs" => "MASTER/bin/check",
+      "RAILS/master/test/face_boot.test.mjs" => "MASTER/bin/check",
       "RAILS/test/pwa_offline_store.test.mjs" => "MASTER/tools/rails/premerge.rb",
       "RAILS/test/stimulus_components_runtime_contract.test.mjs" => "MASTER/tools/rails/premerge.rb",
       "OPENBSD/test/resource_guard_test.sh" => "OPENBSD/bin/check-openbsd",

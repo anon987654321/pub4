@@ -42,7 +42,7 @@ finding_members:
   - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:21
   - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:22
   - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:23
-  - BLANK_LINE_RUN RAILS/master_web/app/views/chat/index.html.erb:1
+  - BLANK_LINE_RUN RAILS/master/app/views/chat/index.html.erb:1
   - CONFIGURATION_SHAPE OPENBSD/data/domain_inventory.yml:1
   - CONFIGURATION_SHAPE OPENBSD/etc/litestream.yml:1
   - CONFIGURATION_SHAPE RAILS/__shared/config/demo_link_embeds.yml:1
@@ -68,11 +68,11 @@ finding_members:
   - CONFIGURATION_SHAPE RAILS/bsdports/config/cable.yml:1
   - CONFIGURATION_SHAPE RAILS/bsdports/config/locales/en.yml:1
   - CONFIGURATION_SHAPE RAILS/bsdports/config/locales/nb.yml:1
-  - CONFIGURATION_SHAPE RAILS/master_web/config/locales/en.yml:1
-  - CONFIGURATION_SHAPE RAILS/master_web/config/locales/nb.yml:1
-  - CONFIGURATION_SHAPE RAILS/master_web/public/face_music_packs.json:1
+  - CONFIGURATION_SHAPE RAILS/master/config/locales/en.yml:1
+  - CONFIGURATION_SHAPE RAILS/master/config/locales/nb.yml:1
+  - CONFIGURATION_SHAPE RAILS/master/public/face_music_packs.json:1
   - EXPLICIT_HTTP_TIMEOUT OPENBSD/ptr_openbsd_amsterdam.rb:1
-  - FACE_POINT_IS_ONE_PIXEL RAILS/master_web/test/face_boot.test.mjs:173
+  - FACE_POINT_IS_ONE_PIXEL RAILS/master/test/face_boot.test.mjs:173
   - FIXED_HEIGHT RAILS/brgen/app/assets/stylesheets/application.scss:9847
   - GUARD_CLAUSE RAILS/__shared/app/controllers/concerns/shared/passwords_actions.rb:1
   - GUARD_CLAUSE RAILS/__shared/app/controllers/two_factor_setups_controller.rb:1
@@ -135,32 +135,32 @@ finding_members:
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:6417
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:9706
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:9870
-  - MOBILE_FIRST RAILS/master_web/public/face.css:1582
+  - MOBILE_FIRST RAILS/master/public/face.css:1582
   - NEVER_BATCH_DELETE MASTER/lib/fix/restructure.rb:152
   - NEVER_BATCH_DELETE MASTER/lib/fix/transcript.rb:82
   - NEVER_BATCH_DELETE MASTER/lib/fix/visual_ghost_stack.rb:241
   - NEVER_BATCH_DELETE MASTER/lib/voice/engines.rb:332
   - NEVER_BATCH_DELETE MASTER/lib/voice/engines.rb:480
   - NEVER_BATCH_DELETE MASTER/lib/voice/human.rb:130
-  - NEVER_BATCH_DELETE RAILS/master_web/test/controllers/tts_controller_test.rb:24
-  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:67
-  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:68
-  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:74
-  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:75
-  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:77
-  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:78
-  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:397
-  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:445
+  - NEVER_BATCH_DELETE RAILS/master/test/controllers/tts_controller_test.rb:24
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:67
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:68
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:74
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:75
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:77
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:78
+  - NO_COLUMN_ALIGN RAILS/master/public/face_semantics.js:397
+  - NO_COLUMN_ALIGN RAILS/master/public/face_semantics.js:445
   - NO_INLINE_SCRIPT_BLOCK RAILS/bsdports/public/406-unsupported-browser.html:10
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:155
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:21
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:375
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:47
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:71
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:76
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/dashboard/index.html.erb:53
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/public/406-unsupported-browser.html:9
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/public/offline.html:7
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:155
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:21
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:375
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:47
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:71
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:76
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/dashboard/index.html.erb:53
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/public/406-unsupported-browser.html:9
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master/public/offline.html:7
   - NULLISH_COALESCING RAILS/amber/app/javascript/controllers/mannequin_3d_controller.js:372
   - NULLISH_COALESCING RAILS/amber/app/javascript/controllers/mannequin_3d_controller.js:373
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:65
@@ -170,55 +170,55 @@ finding_members:
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:53
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:54
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:55
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:259
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:276
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:363
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:445
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:575
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:588
-  - NULLISH_COALESCING RAILS/master_web/public/chat.js:902
-  - NULLISH_COALESCING RAILS/master_web/public/chat_actions.js:340
-  - NULLISH_COALESCING RAILS/master_web/public/chat_actions.js:8
-  - NULLISH_COALESCING RAILS/master_web/public/face_2d_fallback.js:149
-  - NULLISH_COALESCING RAILS/master_web/public/face_council_multi.js:30
-  - NULLISH_COALESCING RAILS/master_web/public/face_micro_interactions.js:59
-  - NULLISH_COALESCING RAILS/master_web/public/face_semantics.js:250
-  - NULLISH_COALESCING RAILS/master_web/public/face_semantics.js:259
-  - NULLISH_COALESCING RAILS/master_web/public/face_semantics.js:267
-  - NULLISH_COALESCING RAILS/master_web/public/face_speech_runtime.js:1182
-  - NULLISH_COALESCING RAILS/master_web/public/face_speech_runtime.js:794
-  - NULLISH_COALESCING RAILS/master_web/public/face_speech_runtime.js:861
-  - NULLISH_COALESCING RAILS/master_web/public/face_state.js:192
-  - NULLISH_COALESCING RAILS/master_web/public/face_tts_bridge.js:8
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_a.js:129
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:271
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:272
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:309
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:310
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:311
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:320
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:511
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:63
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_core.js:157
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_d.js:268
-  - NULLISH_COALESCING RAILS/master_web/public/face_vision_d.js:320
-  - NULLISH_COALESCING RAILS/master_web/public/master_interaction_state.js:71
-  - NULLISH_COALESCING RAILS/master_web/public/mic_capture_processor.js:14
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:44
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:45
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:46
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:47
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:48
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:49
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:50
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:51
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:52
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:54
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:55
-  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:56
-  - NULLISH_COALESCING RAILS/master_web/public/visual_bridge.js:361
-  - NULLISH_COALESCING RAILS/master_web/public/visual_governor.js:16
-  - OPTIONAL_CHAINING RAILS/master_web/public/face_semantics.js:175
+  - NULLISH_COALESCING RAILS/master/public/chat.js:259
+  - NULLISH_COALESCING RAILS/master/public/chat.js:276
+  - NULLISH_COALESCING RAILS/master/public/chat.js:363
+  - NULLISH_COALESCING RAILS/master/public/chat.js:445
+  - NULLISH_COALESCING RAILS/master/public/chat.js:575
+  - NULLISH_COALESCING RAILS/master/public/chat.js:588
+  - NULLISH_COALESCING RAILS/master/public/chat.js:902
+  - NULLISH_COALESCING RAILS/master/public/chat_actions.js:340
+  - NULLISH_COALESCING RAILS/master/public/chat_actions.js:8
+  - NULLISH_COALESCING RAILS/master/public/face_2d_fallback.js:149
+  - NULLISH_COALESCING RAILS/master/public/face_council_multi.js:30
+  - NULLISH_COALESCING RAILS/master/public/face_micro_interactions.js:59
+  - NULLISH_COALESCING RAILS/master/public/face_semantics.js:250
+  - NULLISH_COALESCING RAILS/master/public/face_semantics.js:259
+  - NULLISH_COALESCING RAILS/master/public/face_semantics.js:267
+  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:1182
+  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:794
+  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:861
+  - NULLISH_COALESCING RAILS/master/public/face_state.js:192
+  - NULLISH_COALESCING RAILS/master/public/face_tts_bridge.js:8
+  - NULLISH_COALESCING RAILS/master/public/face_vision_a.js:129
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:271
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:272
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:309
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:310
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:311
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:320
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:511
+  - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:63
+  - NULLISH_COALESCING RAILS/master/public/face_vision_core.js:157
+  - NULLISH_COALESCING RAILS/master/public/face_vision_d.js:268
+  - NULLISH_COALESCING RAILS/master/public/face_vision_d.js:320
+  - NULLISH_COALESCING RAILS/master/public/master_interaction_state.js:71
+  - NULLISH_COALESCING RAILS/master/public/mic_capture_processor.js:14
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:44
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:45
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:46
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:47
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:48
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:49
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:50
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:51
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:52
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:54
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:55
+  - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:56
+  - NULLISH_COALESCING RAILS/master/public/visual_bridge.js:361
+  - NULLISH_COALESCING RAILS/master/public/visual_governor.js:16
+  - OPTIONAL_CHAINING RAILS/master/public/face_semantics.js:175
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/cli/face/ear.rb:23
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/music/audio_sink.rb:29
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/music/audio_sink.rb:30
@@ -230,7 +230,7 @@ finding_members:
   - STRICT_MODE_ZSH OPENBSD/dev/operator_usage.zsh:1
   - STRICT_MODE_ZSH OPENBSD/usr/local/bin/declutter-hygiene.sh:1
   - STRICT_MODE_ZSH OPENBSD/usr/local/bin/ports-import.sh:1
-  - TEMPLATE_LITERALS RAILS/master_web/public/voice_surface.js:76
+  - TEMPLATE_LITERALS RAILS/master/public/voice_surface.js:76
   - USE_THEN MASTER/lib/cli/command_registry.rb:1
   - USE_THEN MASTER/lib/cli/face/window.rb:1
   - USE_THEN MASTER/lib/review/council/deliberation.rb:1
@@ -241,7 +241,7 @@ finding_members:
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1
   - USE_THEN RAILS/brgen/test/controllers/wiki_controller_test.rb:1
   - USE_THEN RAILS/brgen/test/system/dating_swipe_test.rb:1
-  - USE_THEN RAILS/master_web/script/browser_probe_support.rb:1
+  - USE_THEN RAILS/master/script/browser_probe_support.rb:1
   - WHY_NOT_WHAT MASTER/lib/cli/command_registry/model.rb:49
   - WHY_NOT_WHAT MASTER/lib/fix/visual_ghost_stack.rb:19
   - WHY_NOT_WHAT RAILS/__shared/app/controllers/concerns/shared/findable_by_slug.rb:15
@@ -251,8 +251,8 @@ registry_by_rule:
   NO_GOD_CLASS: 24
   SILENT_RESCUE: 5
 registry_finding_members:
-  - NO_GOD_CLASS RAILS/master_web/app/services/chat_service.rb:7
-  - NO_GOD_CLASS RAILS/master_web/app/services/tts_job.rb:7
+  - NO_GOD_CLASS RAILS/master/app/services/chat_service.rb:7
+  - NO_GOD_CLASS RAILS/master/app/services/tts_job.rb:7
   - NO_GOD_CLASS OPENBSD/lib/gate_result.rb:33
   - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:5
   - NO_GOD_CLASS RAILS/amber/app/controllers/items_controller.rb:3

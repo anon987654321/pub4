@@ -25,7 +25,7 @@ class RequireRelativeTargetsTest < Minitest::Test
 def test_runtime_requires_stay_inside_rails
   escaping = each_require.select do |file, _line, target|
     parts = rel(file).split("/")
-    !parts.include?("test") && parts[1] != "master_web" && !rel(target).start_with?("RAILS/")
+    !parts.include?("test") && parts[1] != "master" && !rel(target).start_with?("RAILS/")
   end
   assert_empty escaping.map { |f, n, t| "#{rel(f)}:#{n} -> #{rel(t)}" }
 end

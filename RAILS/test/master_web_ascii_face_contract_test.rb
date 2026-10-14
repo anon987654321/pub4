@@ -5,13 +5,13 @@ require "digest"
 require "yaml"
 
 # The web face draws the terminal's ASCII face. The renderer itself is held to the
-# Ruby frames by RAILS/master_web/test/face_ascii.test.mjs; this reads the source as text
+# Ruby frames by RAILS/master/test/face_ascii.test.mjs; this reads the source as text
 # and holds what surrounds it: the generated runtime still matches its parts, the boot
 # manifest keeps its order with the new script in it, shell chrome stays conventional
 # text without an ASCII-art logo, and the type is mono for the face and shell.
 class MasterWebAsciiFaceContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  WEB = File.join(ROOT, "RAILS", "master_web")
+  WEB = File.join(ROOT, "RAILS", "master")
   PUBLIC = File.join(WEB, "public")
   SOURCES = %w[face.part1.txt face.part2.txt face.part3.txt face_speech_runtime.js face_speech_playback.js face.part5.txt].freeze
 

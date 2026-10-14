@@ -243,7 +243,7 @@ module Master
         end
 
         def js_silent_catch_findings
-          web = File.expand_path("../RAILS/master_web/public", @root)
+          web = File.expand_path("../RAILS/master/public", @root)
           return [] unless File.directory?(web)
           Dir.glob(File.join(web, "**", "*.js"))
             .reject { |path| Master::Fix::Scanner.skip_path?(path, root: @root) }
@@ -365,7 +365,7 @@ module Master
         end
 
         def face_pool_findings
-          semantics = File.expand_path("../RAILS/master_web/public/face_semantics.js", @root)
+          semantics = File.expand_path("../RAILS/master/public/face_semantics.js", @root)
           return [] unless File.file?(semantics)
           body = read_text(semantics)
           return [] unless body.match?(/mouthPool\.cells|eyePool\.cells/)

@@ -28,7 +28,7 @@ loads it by local path. On the box, the copy-tree deploy puts each app at
 a sibling and never a subdirectory. Syncing to the wrong one makes the asset
 precompile a silent no-op. `__shared/README.md` describes what the engine owns.
 The MASTER web face, which serves `ai.brgen.no`, is a fourth Rails surface in
-`master_web`, and its own `CLAUDE.md` governs it.
+`master`, and its own `CLAUDE.md` governs it.
 
 Everything that builds, tests or probes these apps now lives under MASTER. The
 old RAILS `bin` directory is gone, and its work moved into `MASTER/tools/rails`,

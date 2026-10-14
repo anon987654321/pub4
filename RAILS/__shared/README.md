@@ -10,7 +10,7 @@ The design values do not start here. They are declared in `MASTER/data/tokens.ym
 and the `design_tokens.yml` beside this README is a file generated from it by
 `MASTER/tools/rails/sync_dialect_tokens.rb`. Edit the source and regenerate, and
 never hand-edit the projection. MASTER's browser face is assembled from ordered
-source modules in `RAILS/master_web/styles/face/` by
+source modules in `RAILS/master/styles/face/` by
 `MASTER/tools/rails/build_face_css.rb`; edit those modules rather than the public
 bundle. Its `:root` block is still generated from the canonical tokens.
 

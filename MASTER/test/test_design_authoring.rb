@@ -25,7 +25,7 @@ class DesignAuthoringTest < Minitest::Test
 
   def test_ruby_generated_and_vendored_files_get_nothing
     assert_equal "", Authoring.context(path: "/repo/RAILS/brgen/app/models/post.rb")
-    assert_equal "", Authoring.context(path: "/repo/RAILS/master_web/public/face.runtime.js")
+    assert_equal "", Authoring.context(path: "/repo/RAILS/master/public/face.runtime.js")
     assert_equal "", Authoring.context(path: "/repo/RAILS/brgen/vendor/x.css")
     assert_equal "", Authoring.context(path: "/repo/MASTER/lib/x.js")
   end

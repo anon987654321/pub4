@@ -88,7 +88,7 @@ class FixHardeningTest < Minitest::Test
     loop = Master::Fix::RepairLoop.allocate
     finding = {
       law: "TYPE_SCALE",
-      file: File.join(Master::ROOT, "..", "RAILS", "master_web", "face.css"),
+      file: File.join(Master::ROOT, "..", "RAILS", "master", "face.css"),
       line: 1,
       severity: :warning,
       message: "type scale",

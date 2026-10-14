@@ -67,7 +67,7 @@ def check_httpd(failures)
 end
 
 MASTER_RC = File.join(ROOT, "OPENBSD", "etc", "rc.d", "master")
-AUTH_TIER = File.join(ROOT, "RAILS", "master_web", "app", "middleware", "auth_tier.rb")
+AUTH_TIER = File.join(ROOT, "RAILS", "master", "app", "middleware", "auth_tier.rb")
 
 # Every path rc.d/master's post-start block asks the local Falcon for, with the
 # line that asks.
@@ -128,23 +128,23 @@ def check_apps_production(failures)
 end
 
 def check_master_web(failures)
-  master_web = File.join(ROOT, "RAILS", "master_web", "config", "environments", "production.rb")
+  master_web = File.join(ROOT, "RAILS", "master", "config", "environments", "production.rb")
   if File.file?(master_web)
     text = File.read(master_web)
-    failures << "RAILS/master_web: missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
+    failures << "RAILS/master: missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
   end
 
-  auth_tier = File.join(ROOT, "RAILS", "master_web", "app", "middleware", "auth_tier.rb")
+  auth_tier = File.join(ROOT, "RAILS", "master", "app", "middleware", "auth_tier.rb")
   if File.file?(auth_tier)
     text = File.read(auth_tier)
-    failures << "RAILS/master_web: forbidden author URL auth bypass" if text.match?(/\bauthor_url\b|\bAUTHOR_NAME\b|\bmaster_author\b/)
-    failures << "RAILS/master_web: weak fixed token length" if text.match?(/\bTOKEN_LENGTH\s*=\s*1[0-9]\b/)
-    failures << "RAILS/master_web: missing high-entropy token generation" unless text.include?("SecureRandom.urlsafe_base64")
+    failures << "RAILS/master: forbidden author URL auth bypass" if text.match?(/\bauthor_url\b|\bAUTHOR_NAME\b|\bmaster_author\b/)
+    failures << "RAILS/master: weak fixed token length" if text.match?(/\bTOKEN_LENGTH\s*=\s*1[0-9]\b/)
+    failures << "RAILS/master: missing high-entropy token generation" unless text.include?("SecureRandom.urlsafe_base64")
   else
-    failures << "RAILS/master_web: missing AuthTier middleware"
+    failures << "RAILS/master: missing AuthTier middleware"
   end
 
-  master_web_root = File.join(ROOT, "RAILS", "master_web")
+  master_web_root = File.join(ROOT, "RAILS", "master")
   [
     File.join(master_web_root, "public/face.runtime.js"),
     File.join(master_web_root, "lib/tasks/face_runtime.rake"),
@@ -153,15 +153,15 @@ def check_master_web(failures)
     File.join(master_web_root, "script/probe_http"),
     File.join(master_web_root, "script/ci_web_probe"),
   ].each do |path|
-    failures << "RAILS/master_web: missing #{path.delete_prefix(ROOT + '/')}" unless File.file?(path)
+    failures << "RAILS/master: missing #{path.delete_prefix(ROOT + '/')}" unless File.file?(path)
   end
 
   chat_index = File.join(master_web_root, "app/views/chat/index.html.erb")
   if File.file?(chat_index)
     chat_body = File.read(chat_index)
-    failures << "RAILS/master_web: chat index missing inline lazy face boot" unless chat_body.include?("function loadFace") && chat_body.include?('asset_path("face.js")')
+    failures << "RAILS/master: chat index missing inline lazy face boot" unless chat_body.include?("function loadFace") && chat_body.include?('asset_path("face.js")')
   else
-    failures << "RAILS/master_web: missing RAILS/master_web/app/views/chat/index.html.erb"
+    failures << "RAILS/master: missing RAILS/master/app/views/chat/index.html.erb"
   end
 end
 
@@ -205,4 +205,4 @@ if failures.any?
 end
 
 apps_count = YAML.safe_load(File.read(APPS_YML)).fetch("apps", {}).size
-puts "Deploy smoke gate passed (relayd and httpd templates + #{apps_count} production configs + RAILS/master_web probes)."
+puts "Deploy smoke gate passed (relayd and httpd templates + #{apps_count} production configs + RAILS/master probes)."

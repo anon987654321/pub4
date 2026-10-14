@@ -241,7 +241,7 @@ module Deploy
     # that writes no file leaves the journey inconclusive, never failed -- it is
     # the environment that cannot be read, not the product that is wrong.
     def read_mail(label, spec, app, vars)
-      dir = ENV["FLOW_#{app.upcase}_MAIL_DIR"] || File.join(@root, "RAILS", app == "master" ? "master_web" : app, "tmp", "mails")
+      dir = ENV["FLOW_#{app.upcase}_MAIL_DIR"] || File.join(@root, "RAILS", app == "master" ? "master" : app, "tmp", "mails")
       path = File.join(dir, interpolate(spec.fetch("to"), vars))
       deadline = Time.now + spec.fetch("within", 10).to_f
       sleep 0.25 until File.file?(path) || Time.now > deadline

@@ -13,8 +13,8 @@ module Master
         TARGET_ALIASES = {
           "rails" => Master::RAILS_ROOT,
           "RAILS" => Master::RAILS_ROOT,
-          "face" => File.join(Master::RAILS_ROOT, "master_web", "public"),
-          "web" => File.join(Master::RAILS_ROOT, "master_web"),
+          "face" => File.join(Master::RAILS_ROOT, "master", "public"),
+          "web" => File.join(Master::RAILS_ROOT, "master"),
           "master" => Master::ROOT,
           "self" => File.join(Master::ROOT, "lib"),
         }.freeze

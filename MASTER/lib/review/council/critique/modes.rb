@@ -18,8 +18,8 @@ module Master
               max_bytes: 32_768,
               panel: nil,
               files: %w[
-                ../RAILS/master_web/public/face.css ../RAILS/master_web/public/face.js ../RAILS/master_web/public/chat.js
-                ../RAILS/master_web/app/views/chat/index.html.erb lib/design.rb
+                ../RAILS/master/public/face.css ../RAILS/master/public/face.js ../RAILS/master/public/chat.js
+                ../RAILS/master/app/views/chat/index.html.erb lib/design.rb
               ],
               quality_kind: :design,
               ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \
@@ -54,8 +54,8 @@ module Master
                 "User Advocate", "Accessibility", "Layperson", "Skeptic"
               ],
               files: %w[
-                ../RAILS/master_web/public/chat.js ../RAILS/master_web/public/face.js ../RAILS/master_web/public/visual_bridge.js
-                ../RAILS/master_web/app/views/chat/index.html.erb lib/voice/speech.rb lib/voice/dilla.rb
+                ../RAILS/master/public/chat.js ../RAILS/master/public/face.js ../RAILS/master/public/visual_bridge.js
+                ../RAILS/master/app/views/chat/index.html.erb lib/voice/speech.rb lib/voice/dilla.rb
                 lib/voice/production_dna.rb
               ],
               quality_kind: :sound,

@@ -441,7 +441,7 @@ tokens:
       settled: idle
     # The plain-ASCII face: a lit triangle mesh rasterised in software and
     # sampled onto a ramp of characters. Two readers: lib/cli/face/ascii.rb (the
-    # terminal) and the web face (RAILS/master_web), which ports the same steps
+    # terminal) and the web face (RAILS/master), which ports the same steps
     # with no WebGL, so every tunable lives here and nowhere else. Braille is
     # retired. Rounding is floor(x + 0.5), half up, and every cell index is a
     # floor; the dither is an integer matrix; the renderer uses no randomness.
@@ -527,7 +527,7 @@ tokens:
     #  and max_by keep the first of equal elements; and Float#% is fmod moved into
     #  the divisor's sign. sin, cos, asin, atan2 and exp may differ in the last
     #  bit between runtimes (the fixtures allow 0.01 on the Look and nothing on a
-    #  character). The web port, RAILS/master_web/public/face_ascii.js, rebuilds
+    #  character). The web port, RAILS/master/public/face_ascii.js, rebuilds
     #  the mesh from the depth map and morphology here rather than receiving it,
     #  and test/face_ascii.test.mjs holds it to test/fixtures/face_ascii_frames.json.
     #  Pose.at(state, t, seed) gives the Look for a still frame: turn = spin * t in

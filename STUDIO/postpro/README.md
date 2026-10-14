@@ -160,7 +160,7 @@ matrices are sensor calibration and not emulsion.
 ## Who calls it
 
 The Rails apps reach postpro through `Operator::DeployPaths#postpro_script`, by way of
-`Shared::NewsletterVisuals` and brgen's `PostproJob`, and `RAILS/master_web` grades web photos
+`Shared::NewsletterVisuals` and brgen's `PostproJob`, and `RAILS/master` grades web photos
 through `image_presenter.rb`. The replicate tool hands every fresh generation here by default,
 and lora grades its renders the same way. Programmatic invocation goes through
 `Master::Io::ScriptDispatch` under the tool name `postpro`, and natural-language routing goes

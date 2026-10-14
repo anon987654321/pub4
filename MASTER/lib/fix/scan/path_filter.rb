@@ -46,7 +46,7 @@ module Master
         # Spelled relative to MASTER, and matched relative to whatever root the
         # scan was given — which are the same thing only when MASTER scans
         # itself. `bin/gate` and every cross-tree run pass the repo root, where
-        # these paths arrive as `RAILS/master_web/public/face.runtime.js` and matched
+        # these paths arrive as `RAILS/master/public/face.runtime.js` and matched
         # nothing: the generated face runtime, the two bundles and the three
         # build were scanned, reported, and offered to /fix. face.runtime.js
         # opens with "do not edit by hand" and is rewritten by
@@ -58,13 +58,13 @@ module Master
         # lib/operator/self_findings.rb needs the same four and had its own copy of
         # them inside a regex. One fact, one home; the census reads this.
         GENERATED_FACE_BUNDLES = %w[
-          RAILS/master_web/public/three.face.module.js RAILS/master_web/public/face.runtime.js
-          RAILS/master_web/public/face.modules.bundle.js RAILS/master_web/public/face_vision.bundle.js
+          RAILS/master/public/three.face.module.js RAILS/master/public/face.runtime.js
+          RAILS/master/public/face.modules.bundle.js RAILS/master/public/face_vision.bundle.js
         ].freeze
         MASTER_LOCAL_PATHS = %w[.master runtime].flat_map { |path| [path, "MASTER/#{path}"] }.freeze
         SKIP_RELATIVE_PATHS = (MASTER_LOCAL_PATHS + GENERATED_FACE_BUNDLES + %w[
-          RAILS/master_web/public/assets RAILS/master_web/script/three_build
-          RAILS/master_web/node_modules RAILS/master_web/tmp RAILS/master_web/log
+          RAILS/master/public/assets RAILS/master/script/three_build
+          RAILS/master/node_modules RAILS/master/tmp RAILS/master/log
         ]).freeze
 
         # Not authored anywhere: `builds/` is what dartsass compiles the tracked
@@ -122,7 +122,7 @@ module Master
 
         def under?(rel, prefix) = rel == prefix || rel.start_with?("#{prefix}/")
 
-        # A scan rooted inside the face — `/scan face` is RAILS/master_web/public —
+        # A scan rooted inside the face — `/scan face` is RAILS/master/public —
         # sees face.runtime.js as a bare basename that no repo-relative entry
         # matches, so the generated bundles and public/assets were walked and
         # offered to /fix. Anchoring on MASTER and on the repo as well makes the

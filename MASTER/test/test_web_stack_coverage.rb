@@ -5,7 +5,7 @@ require_relative "test_helper"
 class TestWebStackCoverage < Minitest::Test
   REPO_ROOT = File.expand_path("../..", __dir__)
   MASTER_ROOT = File.expand_path("..", __dir__)
-  WEB_TEST_ROOT = File.join(REPO_ROOT, "RAILS", "master_web", "test")
+  WEB_TEST_ROOT = File.join(REPO_ROOT, "RAILS", "master", "test")
 
   def test_master_ci_runs_the_rails_web_and_rack_ui_suites
     source = File.read(File.join(MASTER_ROOT, "bin", "check"))
@@ -19,8 +19,8 @@ class TestWebStackCoverage < Minitest::Test
     source = File.read(File.join(MASTER_ROOT, "bin", "check"))
     discovered = Dir[File.join(WEB_TEST_ROOT, "**/*.test.mjs")].sort
 
-    refute_empty discovered, "RAILS/master_web has JavaScript runtime tests that must run"
-    assert_includes source, 'File.join(ROOT, "..", "RAILS", "master_web", "test")'
+    refute_empty discovered, "RAILS/master has JavaScript runtime tests that must run"
+    assert_includes source, 'File.join(ROOT, "..", "RAILS", "master", "test")'
     assert_includes source, 'Dir[File.join(web_test_dir, "**/*.test.mjs")].sort'
     refute_includes source, 'File.join(ROOT, "web/test/*.test.mjs")',
                     "the old MASTER/web path does not exist and silently selects nothing"

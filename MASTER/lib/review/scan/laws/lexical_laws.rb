@@ -379,7 +379,7 @@ module Master
   # ASCII art is reserved for the face's own renderer. The boot, prompt,
   # source prose and UI chrome remain text; a logo made from punctuation is
   # still a logo even when every character is printable ASCII.
-  FACE_ASCII_EXCEPTIONS = %r{(?:^|/)(?:MASTER/lib/cli/face(?:/|\.rb\z)|RAILS/master_web/public/(?:face_ascii|face_2d_fallback)\.js\z|RAILS/master_web/test/face_ascii\.test\.mjs\z|MASTER/test/test_cli_ascii_face\.rb\z|MASTER/test/fixtures/face_ascii_frames\.json\z|MASTER/tools/face_ascii_fixtures\.rb\z|MASTER/law/interface\.rb\z)}
+  FACE_ASCII_EXCEPTIONS = %r{(?:^|/)(?:MASTER/lib/cli/face(?:/|\.rb\z)|RAILS/master/public/(?:face_ascii|face_2d_fallback)\.js\z|RAILS/master/test/face_ascii\.test\.mjs\z|MASTER/test/test_cli_ascii_face\.rb\z|MASTER/test/fixtures/face_ascii_frames\.json\z|MASTER/tools/face_ascii_fixtures\.rb\z|MASTER/law/interface\.rb\z)}
 
   LawDSL.law :NO_ASCII_ART_OUTSIDE_FACE,
     severity: :error, tags: %i[BE_CONCISE],

@@ -7,7 +7,7 @@ require_relative "../../../../MASTER/tools/design_tokens"
 require_relative "../../../../MASTER/tools/rails/build_face_css"
 
 class DesignTokensTest < Minitest::Test
-  FACE_CSS = File.expand_path("../../../../RAILS/master_web/public/face.css", __dir__)
+  FACE_CSS = File.expand_path("../../../../RAILS/master/public/face.css", __dir__)
 
   def test_face_root_css_emits_anchors
     data = DesignTokens.load.fetch("face_root")
@@ -87,7 +87,7 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
 
     drift = DesignTokens.face_root_drift?(FACE_CSS)
 
-    assert_nil drift, "RAILS/master_web/public/face.css :root has drifted from " \
+    assert_nil drift, "RAILS/master/public/face.css :root has drifted from " \
                       "generated design projection (#{drift}) — run " \
                       "`ruby MASTER/tools/rails/generate_face_root_css.rb`"
   end

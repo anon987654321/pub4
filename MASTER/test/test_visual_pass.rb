@@ -131,7 +131,7 @@ class VisualPassContractTest < Minitest::Test
 
     assert pass.applicable?(File.join(root, "RAILS"))
     assert pass.applicable?(File.join(root, "RAILS/brgen/app"))
-    assert pass.applicable?(File.join(root, "RAILS/master_web"))
+    assert pass.applicable?(File.join(root, "RAILS/master"))
     refute pass.applicable?(File.join(root, "MASTER/lib"))
     refute pass.applicable?(File.join(root, "STUDIO"))
     refute pass.applicable?(File.join(root, "RAILSX"))

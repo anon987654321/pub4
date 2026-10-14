@@ -38,8 +38,8 @@ class TestFaceAwareness < Minitest::Test
   end
 
   def test_the_browser_feeds_awareness_only_through_the_echo_gate
-    part3 = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "public", "face.part3.txt"))
-    part5 = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "public", "face.part5.txt"))
+    part3 = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "public", "face.part3.txt"))
+    part5 = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "public", "face.part5.txt"))
     assert_includes part3, "function faceEchoSafe"
     assert_includes part5, "if (faceEchoSafe()) State.heardAt"
     refute_match(/State\.heardAt\s*=(?!.*faceEchoSafe)/, part5.lines.reject { |l| l.include?("faceEchoSafe") }.join)
@@ -80,8 +80,8 @@ class TestFaceAwareness < Minitest::Test
   end
 
   def test_the_browser_mouth_uses_the_contract_wide_gain
-    shader = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "public", "face.part2.txt"))
-    loop = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "public", "face.part3.txt"))
+    shader = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "public", "face.part2.txt"))
+    loop = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "public", "face.part3.txt"))
     assert_includes shader, "uMouthWide"
     assert_includes loop, "mouthSpec?.wide_gain"
   end

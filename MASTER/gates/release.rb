@@ -156,7 +156,7 @@ BOOTED_SHARED_TESTS, BARE_SHARED_TESTS =
 [
   "test/pwa_design_contract_test.rb",
   "test/design_contract_test.rb",
-  "master_web/test/pwa_master_contract_test.rb",
+  "master/test/pwa_master_contract_test.rb",
   "test/shared_social_routes_test.rb",
   "test/i18n_resolution_test.rb",
   ].each do |test|

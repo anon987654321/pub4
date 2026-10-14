@@ -22,7 +22,7 @@ set -eo pipefail
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ROOT="${ROOT:-/home/dev/pub4}"
 . "$ROOT/OPENBSD/lib/ruby_select.sh"
-WEB="$ROOT/RAILS/master_web"
+WEB="$ROOT/RAILS/master"
 
 # vps-deploy pins one SHA and moves the checkout to it before any step runs; this
 # script then only checks that nothing moved it. A hand run (no VPS_DEPLOY_SHA, the
@@ -45,7 +45,7 @@ export RAILS_ENV=production
 # mistaken for, or leak into, the real one.
 export SECRET_KEY_BASE_DUMMY=1
 
-# Primary database. RAILS/master_web's migrations reach ai.brgen.no's
+# Primary database. RAILS/master's migrations reach ai.brgen.no's
 # production.sqlite3 through this step and no other, so a deploy without it
 # ships code against a schema that is behind.
 #

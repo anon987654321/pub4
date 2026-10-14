@@ -26,7 +26,7 @@ class PublicErrorPagesTest < Minitest::Test
   end
 
   def test_public_error_pages_do_not_depend_on_javascript_urls
-    paths = Dir.glob(File.join(ROOT, "{__shared,brgen,amber,bsdports,master_web}", "public", "{400,404,406-unsupported-browser,422,500,503}.html"))
+    paths = Dir.glob(File.join(ROOT, "{__shared,brgen,amber,bsdports,master}", "public", "{400,404,406-unsupported-browser,422,500,503}.html"))
 
     refute_empty paths, "no public error pages found — the inventory stopped matching"
     paths.each do |path|
@@ -48,8 +48,8 @@ class PublicErrorPagesTest < Minitest::Test
 
   def test_master_web_error_pages_share_the_application_typographic_stack
     MASTER_WEB_PAGES.each do |status|
-      path = File.join(ROOT, "master_web", "public", "#{status}.html")
-      assert File.file?(path), "master_web/public/#{status}.html is missing"
+      path = File.join(ROOT, "master", "public", "#{status}.html")
+      assert File.file?(path), "master/public/#{status}.html is missing"
       source = File.read(path)
 
       assert_includes source, 'lang="nb"', "#{status}: error language must remain Norwegian"
@@ -60,7 +60,7 @@ class PublicErrorPagesTest < Minitest::Test
   end
 
   def test_master_unsupported_browser_page_keeps_the_terminal_dialect
-    source = File.read(File.join(ROOT, "master_web", "public", "406-unsupported-browser.html"))
+    source = File.read(File.join(ROOT, "master", "public", "406-unsupported-browser.html"))
 
     assert_includes source, 'lang="nb"'
     assert_match(/name="viewport" content="[^"]*viewport-fit=cover/, source)

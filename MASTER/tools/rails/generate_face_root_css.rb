@@ -4,10 +4,10 @@
 require_relative "../design_tokens"
 
 # __dir__ is <repo>/MASTER/tools/rails, so the repo root is three levels up —
-# "../../.." reaches the checkout root where RAILS/master_web/public/face.css lives. This is a
-# nonexistent <parent>/RAILS/master_web/public/face.css.
+# "../../.." reaches the checkout root where RAILS/master/public/face.css lives. This is a
+# nonexistent <parent>/RAILS/master/public/face.css.
 ROOT = File.expand_path("../../../", __dir__)
-FACE_CSS = File.join(ROOT, "RAILS", "master_web", "public", "face.css")
+FACE_CSS = File.join(ROOT, "RAILS", "master", "public", "face.css")
 
 changed = DesignTokens.sync_face_css!(FACE_CSS)
 puts changed ? "updated #{FACE_CSS}" : "face.css :root already in sync"

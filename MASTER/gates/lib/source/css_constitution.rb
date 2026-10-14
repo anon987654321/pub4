@@ -338,7 +338,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # Named files, not a glob: web/public also holds fingerprinted precompile
     # output (24 face-*.css copies at the last count), and scanning build
     # artifacts is what the "source of truth only" note above forbids.
-    MASTER_WEB = %w[RAILS/master_web/public/face.css RAILS/master_web/public/chat_upload.css].freeze
+    MASTER_WEB = %w[RAILS/master/public/face.css RAILS/master/public/chat_upload.css].freeze
 
     def master_web_files
       MASTER_WEB.map { |rel| File.join(ROOT, rel) }.select { |p| File.file?(p) }

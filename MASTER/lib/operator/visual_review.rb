@@ -90,7 +90,7 @@ module Operator
     end
 
     def pick_surfaces(pass, opts)
-      target = opts.apps == ["master"] ? "RAILS/master_web" : "RAILS"
+      target = opts.apps == ["master"] ? "RAILS/master" : "RAILS"
       rows = pass.review_surfaces(target:)
       rows = rows.select { |s| opts.apps.include?(s.app) } unless opts.apps.empty?
       unless opts.surfaces.empty?

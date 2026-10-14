@@ -248,7 +248,7 @@ task "test:all_trees" do
     if javascript_tests.any?
       if node_bin
         groups = javascript_tests.group_by do |file|
-          if file.start_with?(File.join(root, "RAILS", "master_web") + File::SEPARATOR)
+          if file.start_with?(File.join(root, "RAILS", "master") + File::SEPARATOR)
             File.join(root, "MASTER")
           elsif file.start_with?(File.join(root, "RAILS") + File::SEPARATOR)
             File.join(root, "RAILS")
@@ -343,7 +343,7 @@ namespace :test do
   #
   # The same fix was applied to tools and this task was not revisited,
   # which is how one bug survives in a file that already documents it.
-  desc "Rails web integration tests (RAILS/master_web)"
+  desc "Rails web integration tests (RAILS/master)"
   task :web do
     # Bundler.with_unbundled_env, not a hash of nils. `sh` sets a nil value to the
     # empty string rather than unsetting it, and an empty BUNDLE_GEMFILE still
@@ -358,7 +358,7 @@ namespace :test do
     # failed in a grandchild the list had supposedly freed. Both call `unbundled`
     # now, which is this method by another name.
     Bundler.with_unbundled_env do
-      Dir.chdir(File.join(__dir__, "..", "RAILS", "master_web")) { sh "bundle exec rails test" }
+      Dir.chdir(File.join(__dir__, "..", "RAILS", "master")) { sh "bundle exec rails test" }
     end
   end
 
@@ -795,7 +795,7 @@ end
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
     # recorded in TODO.md — tolerated so the gate can land, never permanent.
     known = {
-      "- RAILS/master_web/public/face.js" =>
+      "- RAILS/master/public/face.js" =>
         "shared file reference, not a fact — agent_map lists the loader as a face file and patterns.yml names it as the target of four face patterns",
       "strategy: highest_priority_wins" =>
         "coincident strings for two different facts: limits.yml rule-conflict strategy, soul.yml conflict resolution",
