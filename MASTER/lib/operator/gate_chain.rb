@@ -561,8 +561,10 @@ end
           stdin.close
           stream.each_line do |line|
             output << line
-            $stdout.write(line)
-            $stdout.flush
+            Master::Trace::Dmesg.terminal_write do |io|
+              io.write(line)
+              io.flush
+            end
           end
           [output, wait.value]
         end
