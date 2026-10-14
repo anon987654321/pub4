@@ -25,7 +25,10 @@ rescue StandardError
 end
 
 def service_state(service)
-  out, status = Open3.capture2e("doas", "-n", "/usr/sbin/rcctl", "check", service)
+  broker = "/usr/local/sbin/pub4-admin"
+  return "unknown (pub4-admin missing)" unless File.file?(broker) && !File.symlink?(broker) && File.executable?(broker)
+
+  out, status = Open3.capture2e("doas", "-n", broker, "service", "check", service)
   return "ok" if status.success? && out.include?("(ok)")
 
   out.strip.empty? ? "failed" : out.strip
