@@ -43,6 +43,7 @@ class VpsSafetyGateTest < Minitest::Test
                    File.join(dir, "RAILS", "_bundle.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       FileUtils.cp(File.join(ROOT, "bin", "vps-state"), File.join(openbsd, "bin", "vps-state"))
+      FileUtils.cp(File.join(ROOT, "bin", "restore_litestream.sh"), File.join(openbsd, "bin", "restore_litestream.sh"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy"), File.join(ROOT, "bin", "vps_deploy_master.sh"), File.join(ROOT, "bin", "vps_install_all.sh"), File.join(ROOT, "bin", "deploy-smoke.sh"), File.join(ROOT, "bin", "manual_master_deploy.ksh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
       end
@@ -119,6 +120,29 @@ class VpsSafetyGateTest < Minitest::Test
 
       refute status.success?
       assert_includes out, "master-web helper must be fixed-path and symlink-safe"
+    end
+  end
+  def test_vps_state_must_not_execute_rcctl_directly
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "bin", "vps-state")
+      text = File.read(path).sub('"doas", "-n", broker, "service", "check", service', '"doas", "-n", "/usr/sbin/rcctl", "check", service')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "vps-state service reads must use the root broker"
+    end
+  end
+
+  def test_litestream_recovery_must_not_execute_rcctl_directly
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "bin", "restore_litestream.sh")
+      text = File.read(path).sub('doas /usr/local/sbin/pub4-admin service stop "$app"', 'doas rcctl stop "$app"')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "Litestream recovery must use brokered service control"
     end
   end
   def test_manual_master_recovery_must_not_call_rcctl_directly
