@@ -53,10 +53,18 @@ pub4_ci_lock_path() {
 # never locked by anyone and the file that was locked was the world-writable one
 # this helper exists to replace.
 pub4_ensure_ci_lock() {
-  lock=$(pub4_ci_lock_path)
   if [ -x /usr/local/sbin/pub4-admin ]; then
-    doas /usr/local/sbin/pub4-admin ci-lock
+    case "${PUB4_CI_LOCK:-}" in
+      ""|"${PUB4_CI_LOCK_DIR}/${PUB4_CI_LOCK_NAME}") ;;
+      *)
+        printf 'ci_lock: refusing override while the fixed broker is installed\n' >&2
+        return 1
+        ;;
+    esac
+    lock="${PUB4_CI_LOCK_DIR}/${PUB4_CI_LOCK_NAME}"
+    doas /usr/local/sbin/pub4-admin ci-lock || return $?
   else
+    lock=$(pub4_ci_lock_path)
     doas sh -c "
       mkdir -p '${PUB4_CI_LOCK_DIR}'
       chown root:wheel '${PUB4_CI_LOCK_DIR}'
@@ -64,7 +72,7 @@ pub4_ensure_ci_lock() {
       [ -e '${lock}' ] || : > '${lock}'
       chown '${PUB4_CI_LOCK_OWNER}' '${lock}'
       chmod 644 '${lock}'
-    "
+    " || return $?
   fi
   printf '%s\n' "$lock"
 }
