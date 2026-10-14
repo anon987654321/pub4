@@ -20,12 +20,9 @@ class PublicNavigationTest < ApplicationSystemTestCase
     skip_link = find("a.skip-link[href='#main-content']", visible: :all)
     assert_equal I18n.t("skip_to_content", locale: locale), skip_link.text(:all).strip
     assert_selector "main#main-content"
-    # The nav this used to describe does not exist: its aria-label is
-    # t("nav.home"), its links are the three sections, and none of them is
-    # current on the home page — so `a[aria-current='page']` could never match
-    # here. The assertion was unreachable behind the failing h1 above, so
-    # nothing ever said so.
-    nav = find("nav[aria-label='#{I18n.t("nav.home", locale: locale)}']")
+    # The primary-navigation landmark has its own name, separate from the
+    # Home link. Keep the selector aligned with that accessible-name contract.
+    nav = find("nav[aria-label='#{I18n.t("nav.primary_nav", locale: locale)}']")
     assert nav.has_link?(I18n.t("nav.ports", locale: locale))
     assert_no_selector "meta[name='turbo-cache-control'][content='no-cache']", visible: :all
   end
@@ -34,7 +31,7 @@ class PublicNavigationTest < ApplicationSystemTestCase
     visit ports_path
 
     locale = find("html", visible: :all)[:lang]
-    assert_selector "nav[aria-label='#{I18n.t("nav.home", locale: locale)}'] a[aria-current='page']",
+    assert_selector "nav[aria-label='#{I18n.t("nav.primary_nav", locale: locale)}'] a[aria-current='page']",
                     text: I18n.t("nav.ports", locale: locale)
   end
 end
