@@ -110,7 +110,9 @@ profile may carry one.
 
 The techno kick is a sine whose pitch falls from a sweep to a
 body note, with a click and a drive, in five tunings. The other kits use
-frequency-modulated kicks, a layered boom, or struck sheet metal. The snare, clap, rim
+frequency-modulated kicks, a layered boom, or struck sheet metal.
+
+The snare, clap, rim
 and toms are small synthesised recipes. The hats are six detuned squares crushed to
 twelve bits and highpassed, with the open hat choked by the next closed one. The
 percussion is a handful of decaying inharmonic modes. The techno_arp, industrial_arp and
@@ -156,7 +158,9 @@ same energy.
 Six more creative patterns are in the data as styles. The `spiral` goes out
 from the middle one note either side in turn and comes back in. The `pendulum` goes up
 two and back one to the top and down again. The `fibonacci` takes the Fibonacci numbers
-round the pool, and the `prime_walk` takes strides of the first primes. The
+round the pool, and the `prime_walk` takes strides of the first primes.
+
+The
 `call_response` rises for four notes, answers falling for three and rests. The
 `pedal_point` returns to the lowest note between the others. The styles `poly5` and
 `poly7` put a note every five or seven sixteenths against the four-beat grid. Every note
