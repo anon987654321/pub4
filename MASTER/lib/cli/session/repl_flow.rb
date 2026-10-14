@@ -356,42 +356,14 @@ module Master
         Fiber[:master_cli_container] = @container
 
         loop do
-          line = @turn_queue_mutex.synchronize do
-            if @closed || @turn_queue_paused || @turn_queue.empty?
-              @turn_worker = nil if @turn_worker.equal?(worker)
-              nil
-            else
-              @turn_current_line = @turn_queue.shift
-              @turn_current_started = false
-              @turn_current_line
-            end
-          end
+          line = take_next_interactive_line(worker)
           break if line.nil?
-
-          run_line = @turn_queue_mutex.synchronize do
-            if @closed || @turn_queue_paused
-              # Stop may land after dequeue but before execution. Put this
-              # unsent line back at the front, preserving FIFO on resume.
-              @turn_queue.unshift(line) if @turn_current_line.equal?(line) && !@turn_current_started && !@closed
-              @turn_current_line = nil if @turn_current_line.equal?(line)
-              @turn_current_started = false
-              false
-            else
-              @turn_current_started = true if @turn_current_line.equal?(line)
-              true
-            end
-          end
-          break unless run_line
+          next unless begin_interactive_line(line)
 
           begin
             handle_repl_line(line)
           ensure
-            @turn_queue_mutex.synchronize do
-              if @turn_current_line.equal?(line)
-                @turn_current_line = nil
-                @turn_current_started = false
-              end
-            end
+            finish_interactive_line(line)
           end
         end
       rescue StandardError => e
@@ -408,6 +380,44 @@ module Master
         end
         if restart
           @turn_queue_mutex.synchronize { start_interactive_queue_worker_locked }
+        end
+      end
+
+      def take_next_interactive_line(worker)
+        @turn_queue_mutex.synchronize do
+          if @closed || @turn_queue_paused || @turn_queue.empty?
+            @turn_worker = nil if @turn_worker.equal?(worker)
+            nil
+          else
+            @turn_current_line = @turn_queue.shift
+            @turn_current_started = false
+            @turn_current_line
+          end
+        end
+      end
+
+      # Stop can land between dequeue and execution. A line that has not crossed
+      # this boundary is returned to the head of the FIFO instead of being lost.
+      def begin_interactive_line(line)
+        @turn_queue_mutex.synchronize do
+          if @closed || @turn_queue_paused
+            @turn_queue.unshift(line) if @turn_current_line.equal?(line) && !@turn_current_started && !@closed
+            @turn_current_line = nil if @turn_current_line.equal?(line)
+            @turn_current_started = false
+            false
+          else
+            @turn_current_started = true if @turn_current_line.equal?(line)
+            true
+          end
+        end
+      end
+
+      def finish_interactive_line(line)
+        @turn_queue_mutex.synchronize do
+          if @turn_current_line.equal?(line)
+            @turn_current_line = nil
+            @turn_current_started = false
+          end
         end
       end
 
