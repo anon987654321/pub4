@@ -359,6 +359,11 @@ end
   path = File.join(OPENBSD, "usr", "local", "libexec", name)
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
+deploy_all_source = File.read(File.join(OPENBSD, "bin", "deploy_all.sh"))
+deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${app}') &&
+                      !deploy_all_source.include?('doas zsh ${script}') &&
+                      !deploy_all_source.include?('RAILS/${app}/${app}.sh')
+failures << "deploy_all per-app mode must not elevate checkout Rails wrappers" unless deploy_all_contract
 deploy_source = File.read(File.join(OPENBSD, "bin", "vps-deploy"))
 failures << "vps-deploy must not recommend generic privileged du" unless
   deploy_source.include?('pub4-admin disk-usage $mount_point') && !deploy_source.include?("doas du -xk $mount_point")
