@@ -387,6 +387,18 @@ deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${a
                       !deploy_all_source.include?('doas zsh ${script}') &&
                       !deploy_all_source.include?('RAILS/${app}/${app}.sh')
 failures << "deploy_all per-app mode must not elevate checkout Rails wrappers" unless deploy_all_contract
+manual_master_path = File.join(OPENBSD, "bin", "manual_master_deploy.ksh")
+if File.file?(manual_master_path)
+  manual_master = File.read(manual_master_path)
+  manual_master_contract = manual_master.include?("pub4-admin service stop master") &&
+                           manual_master.include?("pub4-admin service restart master") &&
+                           manual_master.include?("pub4-admin service restart relayd") &&
+                           manual_master.include?("pub4-admin missing or symlinked") &&
+                           !manual_master.match?(/^\s*doas\s+rcctl\b/)
+  failures << "manual MASTER recovery must use brokered service control" unless manual_master_contract
+else
+  failures << "missing OPENBSD/bin/manual_master_deploy.ksh"
+end
 master_deploy_path = File.join(OPENBSD, "bin", "vps_deploy_master.sh")
 if File.file?(master_deploy_path)
   master_deploy = File.read(master_deploy_path)
