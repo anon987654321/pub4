@@ -223,6 +223,7 @@ install_root_configs() {
              /usr/local/libexec/ci-run.ksh \
              /usr/local/libexec/ci-sync.ksh \
              /usr/local/libexec/rails-task.ksh \
+             /usr/local/libexec/rails-sync.ksh \
              /usr/local/libexec/pub4/solid_queue_proof.rb \
              /usr/local/bin/resource_guard.sh; do
     if [[ -L $rel ]]; then
@@ -254,36 +255,6 @@ install_root_configs() {
     doas_rollback="/var/backups/openbsd_setup/doas.conf.${EPOCHSECONDS}.rollback"
     cp /etc/doas.conf "$doas_rollback"
   fi
-
-  # Preflight BEFORE copying checkout-owned files into privileged locations.
-  # Otherwise cp could follow an existing privileged symlink before we notice it.
-  for f in /usr/local /usr/local/sbin /usr/local/libexec; do
-    if [[ -L $f ]]; then
-      log ERROR "refusing symlinked privileged directory: $f"
-      return 1
-    fi
-  done
-  for f in /usr/local/sbin/pub4-admin \
-           /usr/local/libexec/ci-prepare.ksh \
-           /usr/local/libexec/ci-run.ksh \
-           /usr/local/libexec/ci-sync.ksh; do
-    if [[ -L $f ]]; then
-      log ERROR "refusing symlinked privileged entrypoint before install: $f"
-      return 1
-    fi
-  done
-
-  # Refuse symlinked privileged entrypoints before any copy can follow
-  # a pre-existing destination symlink and overwrite a path outside the install tree.
-  for rel in usr/local/sbin/pub4-admin \
-             usr/local/libexec/ci-prepare.ksh \
-             usr/local/libexec/ci-run.ksh \
-             usr/local/libexec/ci-sync.ksh; do
-    if [[ -L "$src/$rel" || -L "/$rel" ]]; then
-      log ERROR "refusing symlinked privileged entrypoint before install: $rel"
-      return 1
-    fi
-  done
 
   for d in etc usr var; do
     [[ -d $src/$d ]] || continue
