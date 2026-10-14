@@ -135,6 +135,8 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes rooms, 'class="messenger-rail"'
     assert_includes rooms, 'class="messenger-inbox"'
+    assert_includes rooms, 't("messages.unread_badge", count: unread)'
+    assert_includes rooms, 'class="messenger-rail-unread" aria-hidden="true"'
     assert_includes window, 'render "shared/messenger_artifacts"'
     assert_includes channel, 'render "shared/messenger_artifacts"'
     assert_includes css, "grid-template-columns: 56px 300px minmax(0, 1fr) 360px;"
