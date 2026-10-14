@@ -146,6 +146,8 @@ module Master
         @turn_queue = []
         @turn_queue_mutex = Mutex.new
         @turn_worker = nil
+        @turn_current_line = nil
+        @turn_current_started = false
         @turn_queue_paused = false
         @turn_cancel_requested = false
         @reading_input = false
