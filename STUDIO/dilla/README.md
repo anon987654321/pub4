@@ -30,7 +30,6 @@ Endless random playback remains available with `--play`; a random finite take re
 explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or
 `--drums` continue to choose exactly what they name.
 
-
 ## Composition and groove
 
 The data holds a flat list of progressions, each a list of chord names such as Fm9,
@@ -39,7 +38,9 @@ The first hundred and five were picked by hand. The rest were read as plain text
 the old engine's progression table, its sourced reference file and its set files, parsed
 with the voicer, respelled with flats and deduped by spelling, and sixty four- and
 five-chord windows from the old engine's history were added after them, which brings the
-list to four hundred and sixty-seven. An essential list marks the staples of four or
+list to four hundred and sixty-seven.
+
+An essential list marks the staples of four or
 five chords by their root motion, such as the minor two-five-one, the one-six-two-five,
 the one-four-five and the one-flat-six-flat-seven, along with the best-scoring windows,
 and `--play` draws only from those unless `--pool all` says otherwise. A chord holds two
@@ -58,13 +59,17 @@ perfect fifth goes first, then an altered fifth, then the root if the bass alrea
 it, and the third, the seventh and every named extension stay.
 
 A slash chord keeps its
-root above the separate bass. `--no-voice-search` switches the search off.
+root above the separate bass.
+
+`--no-voice-search` switches the search off.
 
 A groove profile says how a render is played. Soft_swing, lush and dry are texture and
 swing only, and early_snare_late_hats, late_snare, behind_the_beat, loose_pocket and
 pump move the drums by milliseconds. The default is straight_hats_snare_ahead, which
 measures its leans in shares of a sixteenth step, so they follow the tempo. The hats
-hold the grid. The snare sits ahead of them by about three tenths of a step. The kick
+hold the grid.
+
+The snare sits ahead of them by about three tenths of a step. The kick
 holds the downbeat and lags a little after it everywhere else. A snare off the backbeat
 is a ghost and lags further than the kick.
 
@@ -87,7 +92,9 @@ Patterns may also be thirty-two steps long, may carry a
 variant or two per four-bar phrase, a fill for the last bar of every fourth and eighth
 bar, and layers with lengths of their own, such as five or seven or fifteen steps, that
 run across the bars so their alignment against the grid drifts. A ratchet is a cell that
-holds a velocity and a count. A seeded mutation may swap two hits, shift one a
+holds a velocity and a count.
+
+A seeded mutation may swap two hits, shift one a
 sixteenth, add or drop a ghost, double a kick or rotate the hats, so no two bars run
 alike, and a snare density above one adds back snares on steps nothing else uses.
 
@@ -160,14 +167,18 @@ ladder lowpass with a drive, a resonance and an envelope that sweeps the cutoff,
 every note begins bright and darkens. The rhodes voices are frequency-modulated electric
 pianos: a body pair near one to one, a bell pair at fourteen to one whose index dies
 away in a few tenths of a second, a soft hammer click, and a brighter touch for a harder
-note. The dfam voice is a percussive pair of oscillators with a pitch sweep, modulation
+note.
+
+The dfam voice is a percussive pair of oscillators with a pitch sweep, modulation
 between them and a little noise, through the same ladder. Nothing moves except by
 envelope: there is no tremolo, no chorus, no wow, no flutter and no LFO anywhere.
 `--voice` picks one for any profile.
 
 Every voice carries a group, which is what the ear calls its kind: the moogs, the
 electric pianos, the polysynth pads, the strings, the dub voices, the organ. The play
-bag keeps a group from following itself. The polysynth pads are the moog voice with more
+bag keeps a group from following itself.
+
+The polysynth pads are the moog voice with more
 oscillators: `prophet_pad` and `prophet_warm` stack saws, pulses and triangles under a
 ladder that opens on the attack and settles, `oberheim_pad` is wider and darker, and
 `cs80_ensemble` sweeps a resonant filter for a brass-like swell. The string machines,
@@ -284,9 +295,13 @@ middle and the hats a little right and alternating. The data holds the places un
 `stereo`. The pan law is constant power and unity at the centre, so a part in the middle
 is as loud in each channel as it was in mono. The colour, the room and the spring run
 once for each channel, and the right side uses other delays than the left so the two
-rooms are not the same room. The echo is ping-pong: the odd heads sound on the left, the
+rooms are not the same room.
+
+The echo is ping-pong: the odd heads sound on the left, the
 even heads on the right, and what is fed back is all of them, so the repeats cross the
-room; a single head is heard in the middle. After the effects, the stereo imager works
+room; a single head is heard in the middle.
+
+After the effects, the stereo imager works
 in mid and side. It leaves the mid exactly as it is, so the mono sum of the result is
 the mono sum of what went in, takes the side out below 120 hertz with a Linkwitz-Riley
 crossover, which puts the sub in the middle, and raises the side above four kilohertz,
@@ -331,7 +346,9 @@ optional and held under minus twenty-four decibels whatever the data says. The a
 pink noise through a highpass at eight kilohertz, a long way down. The bed is brown
 noise under two hundred hertz, with a clamp so no spike climbs out of it. Dust is a
 Poisson scatter of pops a few milliseconds long, three a second unless the profile asks
-for more. The sparkle is a Poisson scatter of glints of two-operator frequency
+for more.
+
+The sparkle is a Poisson scatter of glints of two-operator frequency
 modulation, a few tenths of a second long, on the tones of the chord sounding then, put
 up to between four and eight kilohertz, each at a place of its own; the kick ducks it,
 and it has an echo of its own. The draws are in order, one for each sample or each
@@ -355,9 +372,13 @@ release of half a beat of the tempo.
 The loudness stage measures with the K-weighting of BS.1770 and its gates, which the
 tests check against a 997 hertz sine at minus twenty decibels full scale, minus twenty
 LUFS in two channels, and which agrees with ffmpeg's ebur128 to a tenth of a unit on a
-render. A whole render is brought to the target in one move, `--lufs N`, minus fourteen
+render.
+
+A whole render is brought to the target in one move, `--lufs N`, minus fourteen
 by default; a stream cannot know its integrated loudness before it has played, so it
-creeps toward the target at no more than two decibels a second from what it has heard. A
+creeps toward the target at no more than two decibels a second from what it has heard.
+
+A
 soft clip bends the peaks, the tape stack follows, and last comes the limiter: it looks
 ahead sixty-four samples, finds the peak of each sample and of three points between it
 and the next with an eight-tap windowed sinc, so the ceiling of minus one decibel holds
@@ -390,7 +411,9 @@ block at a time and written as raw 16-bit mono PCM to the standard input of the 
 PCM on its standard input.
 
 The first block is one beat, so the music starts before a bar is ready, and after that a
-bar at a time, with two blocks rendered ahead of the one playing. Every filter, effect
+bar at a time, with two blocks rendered ahead of the one playing.
+
+Every filter, effect
 and note keeps its state from one block to the next: a note is read a block at a time,
 so its oscillators and filters carry on where they stopped, and the echo, the colour,
 the room, the spring, the sidechain and the tape stack are objects with memory. A pass
@@ -470,7 +493,9 @@ To hear it, `ruby dilla.rb --play` streams without end,
 `ruby dilla.rb --arp list` names the arpeggios.
 
 The theory catalogue is explanatory source material; runtime choices still come from the
-engine's validated data pools. Curated compositions list suggested voice patches and
+engine's validated data pools.
+
+Curated compositions list suggested voice patches and
 intent so they can be auditioned as distinct arrangements.
 
 ## Audio-reference analysis and style learning
