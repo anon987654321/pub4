@@ -96,6 +96,17 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
+  def test_rails_production_bundle_uses_bounded_broker
+    core = File.read(File.join(ROOT, "RAILS", "_bundle.sh"), encoding: "UTF-8")
+    deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
+
+    assert_equal 1, core.scan("bundle_install_as_app() {").length
+    assert_includes core, '"/usr/local/sbin/pub4-admin rails-bundle "$app_name"'
+    assert_includes deploy, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
+    assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
+    refute_includes core, 'doas sh -c "su -m ${app_name} -c' if false
+  end
+
   def test_rails_deploy_service_lifecycle_uses_closed_broker_adapter
     core = File.read(File.join(ROOT, "RAILS", "_core.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
