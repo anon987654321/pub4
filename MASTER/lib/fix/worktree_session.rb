@@ -27,6 +27,7 @@ module Master
       include DirtyEdits
 
       Result = Data.define(:ok, :summary, :base, :head, :branch, :worktree)
+      MIN_FREE_DISK_GB = 2.0
 
       def self.foreign_paths(root:)
         new(root:, io: StringIO.new).foreign_paths
@@ -47,6 +48,10 @@ module Master
 
       def run(command:, foreign_paths: [], proof_trees: nil, include_dirty: false)
         validate_checkout!
+        free_gb = disk_free_gb
+        return refused("cannot measure free disk space; worktree was not created") unless free_gb
+        return refused(format("disk preflight: %.2f GB free, %.2f GB required; worktree was not created",
+                              free_gb, MIN_FREE_DISK_GB)) if free_gb < MIN_FREE_DISK_GB
 
         id = "pid#{Process.pid}-#{SecureRandom.hex(5)}"
         branch = "master/fix-#{id}"
@@ -153,6 +158,22 @@ module Master
       end
 
       private
+
+      # Check both filesystems before creating an isolated checkout: on macOS
+      # the repository and Dir.tmpdir may be mounted through different APFS paths.
+      # df -kP's fourth column is available KiB, consistent with ResourceBudget.
+      def disk_free_gb
+        [@repo_root, Dir.tmpdir].map do |path|
+          output, status = Open3.capture2e("df", "-kP", path)
+          return nil unless status.success?
+
+          fields = output.lines.last.to_s.split
+          available_kb = Integer(fields.fetch(3), 10)
+          available_kb / (1024.0 * 1024.0)
+        rescue ArgumentError, IndexError, SystemCallError
+          return nil
+        end.min
+      end
 
       def repository_root(root)
         candidate = File.expand_path(root)
