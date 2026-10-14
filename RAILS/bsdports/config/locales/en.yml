@@ -20,6 +20,7 @@ en:
     maintainers: "Maintainers"
     sign_in: "Sign in"
     sign_out: "Sign out"
+    primary_nav: "Primary navigation"
     home: "Home"
   auth:
     sign_in: "Sign in"
