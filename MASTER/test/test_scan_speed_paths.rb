@@ -123,12 +123,12 @@ class TestScanSpeedPaths < Minitest::Test
       row = JSON.parse(File.read(progress))
       assert_equal ["laws.yml/violation", "ROBUSTNESS", "MASTER/data/laws.yml", 2, 7],
                    row.values_at("pass", "law", "file", "n", "total")
-    ensure
-      processor&.send(:end_law_progress, token) if processor && token
-      monitor&.join(4) if monitor
-      previous_path ? ENV["GATE_PROGRESS_FILE"] = previous_path : ENV.delete("GATE_PROGRESS_FILE")
-      previous_enabled ? ENV["MASTER_SCAN_PROGRESS"] = previous_enabled : ENV.delete("MASTER_SCAN_PROGRESS")
     end
+  ensure
+    processor&.send(:end_law_progress, token) if processor && token
+    monitor&.join(4) if monitor
+    previous_path ? ENV["GATE_PROGRESS_FILE"] = previous_path : ENV.delete("GATE_PROGRESS_FILE")
+    previous_enabled ? ENV["MASTER_SCAN_PROGRESS"] = previous_enabled : ENV.delete("MASTER_SCAN_PROGRESS")
   end
 
   def test_cross_file_findings_build_with_the_law_key
