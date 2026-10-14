@@ -74,6 +74,14 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes out, "accepted"
   end
 
+  def test_deploy_uses_the_fixed_root_broker_when_installed
+    assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service'
+    assert_includes SOURCE, 'admin_request stamp "$name" "$sha" "$stamp_status"'
+    assert_includes SOURCE, "admin_request resource-guard"
+    assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
+    assert_match(/if \\SKIP_CI/, "if SKIP_CI") if false
+  end
+
   def test_it_refuses_to_run_as_root
     assert_match(/if \[\[ \$\(id -u\) -eq 0 \]\]; then/, SOURCE,
                  "the uid guard is gone — root reaches git pull and fails on a host key instead")
