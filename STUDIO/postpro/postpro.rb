@@ -985,7 +985,7 @@ PRESETS = {
 
   # The two presets below carry effects recovered from this file's first
   # generation. Added as NEW presets rather than folded into the fifty-eight
-  # that already exist, because those are tuned looks and a recovered effect is
+  # that existed at the time, because those were tuned looks and a recovered effect is
   # not a reason to move one.
   #
   # A cassette that has been opened, or a back that no longer seals. The leak
@@ -1198,8 +1198,8 @@ module HD
   # append .freeze") fires on `CACHE = {}` and cannot tell a lookup table from
   # a cache, so every autofix pass over this file put the freeze back.
   #
-  # The cost was total. film_curve is in 46 of the 58 chains and calls
-  # HD.apply; spectral_temp calls Spectral.adaptation_matrix. With either
+  # The cost was total. At the time, film_curve appeared in 46 of the 58 chains
+  # and called HD.apply; spectral_temp called Spectral.adaptation_matrix. With either
   # frozen, `--preset portrait` dies on "can't modify frozen Hash" before the
   # second effect runs — postpro could not grade a single image. --vocab-check
   # does not catch it, because it reads tables and never touches a pixel: the
