@@ -362,6 +362,8 @@ class DillaTest < Minitest::Test
 
   def test_dilla_pattern_keeps_fast_accented_hats_and_quiet_ghost_hits
     pattern = DATA.fetch("drum_patterns").fetch("dilla_shadow")
+    assert_equal %w[hat kick snare], pattern.keys.sort, "the legacy pattern stays safe without a kit"
+    assert_equal %w[hat kick snare], DATA.fetch("drum_patterns").fetch("dilla_broken").keys.sort
     assert_equal 16, pattern.fetch("hat").size
     assert(pattern.fetch("hat").all? { |velocity| velocity.to_f.positive? })
     assert_operator pattern.fetch("hat").uniq.size, :>, 2
