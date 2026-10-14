@@ -11,8 +11,10 @@ module Studio
       return File.expand_path(configured) unless configured.empty?
 
       base = ENV.fetch("XDG_DATA_HOME", "").to_s
-      base = File.expand_path("~/Documents") if base.empty?
-      File.expand_path(File.join(base, "dilla-renders", at.strftime("%Y-%m-%d")))
+      if base.empty? || !base.start_with?(File::SEPARATOR)
+        base = File.expand_path("~/Documents")
+      end
+      File.join(base, "dilla-renders", at.strftime("%Y-%m-%d"))
     end
   end
 end
