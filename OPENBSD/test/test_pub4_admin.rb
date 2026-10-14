@@ -156,6 +156,14 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, '[ -L "$storage" ]'
   end
 
+  def test_legacy_service_retirement_maps_only_rails_apps
+    assert_equal "brgen_rails", ADMIN.legacy_service_name("brgen")
+    assert_equal "amber_rails", ADMIN.legacy_service_name("amber")
+    assert_equal "bsdports_rails", ADMIN.legacy_service_name("bsdports")
+    assert_nil ADMIN.legacy_service_name("master")
+    assert_nil ADMIN.legacy_service_name("../root")
+  end
+
   def test_started_service_inventory_is_a_fixed_read_operation
     assert_equal ["/usr/sbin/rcctl", "ls", "started"],
                  ADMIN.command_for(%w[service list-started])
