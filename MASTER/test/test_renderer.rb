@@ -103,7 +103,7 @@ class TestRenderer < Minitest::Test
 
     assert_includes strip_ansi(state), "model: "
     assert_no_match(/\n|\r/, strip_ansi(prompt))
-    assert_match(/input\z/, strip_ansi(prompt))
+    assert_match(/input \z/, strip_ansi(prompt))
   end
 
   def test_phase_prompt_uses_the_plain_openbsd_operator_words
@@ -138,7 +138,7 @@ class TestRenderer < Minitest::Test
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
     assert_includes strip_ansi(state), "ctx: 45.0k/128.0k"
-    assert_match(/input\z/, strip_ansi(prompt))
+    assert_match(/input \z/, strip_ansi(prompt))
   end
 
   # A dmesg is legible on a serial console: no box drawing, no arrows, no
@@ -190,7 +190,7 @@ class TestRenderer < Minitest::Test
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
     assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
-    assert_match(/llm discover input\z/, lines.first)
+    assert_match(/llm discover input \z/, lines.first)
     refute_match(/\e\[/, prompt, "the OpenBSD-console prompt does not need ANSI segment styling")
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
@@ -204,7 +204,7 @@ class TestRenderer < Minitest::Test
 
         assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
         assert_includes clean, "main ahead 2"
-        assert_match(/llm discover input\z/, clean)
+        assert_match(/llm discover input \z/, clean)
         refute_includes clean, "/"
         refute_match(/\e\[/, prompt)
         assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
@@ -216,7 +216,7 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     _state, prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
 
-    assert_match(/read only irc help discover input\z/, strip_ansi(prompt))
+    assert_match(/read only irc help discover input \z/, strip_ansi(prompt))
     assert_operator strip_ansi(prompt).length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
@@ -235,7 +235,7 @@ class TestRenderer < Minitest::Test
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       assert_includes clean, "read only irc a very"
       assert_includes clean, "feature dirty"
-      assert_match(/input\z/, clean)
+      assert_match(/input \z/, clean)
       assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
       refute_includes clean, "/"
     end
