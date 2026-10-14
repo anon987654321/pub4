@@ -60,7 +60,7 @@
     the skip link, which must stay the first focusable element. %>
 <%= render "shared/brand_mark", label: "bsdports" %>
 <div class="app-shell">
-<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="<%= t("nav.home") %>">
+<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
   <%# The wordmark is shared/_brand_mark, fixed top-left above this nav. A
       second copy inside the nav was the same link twice, 9px apart. %>
   <%= link_to t("nav.ports"), ports_path, aria: { current: current_page?(ports_path) ? "page" : nil } %>
