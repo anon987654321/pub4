@@ -31,10 +31,10 @@ module Master
 
           loop do
             paused = false
-            terminal_write do |target|
+            Master::Trace::Dmesg.terminal_write do |target|
               paused, stage = @think_mutex.synchronize { [@think_paused, @think_stage.to_s] }
-              # The shared terminal writer restores Reline's draft after each frame.
-              unless paused
+              # Reline owns the editable row; the prompt's * marker remains visible while busy.
+              unless paused || @reading_input
                 stage = "working" if stage.empty?
                 line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
                 target.print("\r\e[K#{line}")
