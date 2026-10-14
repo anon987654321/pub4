@@ -77,6 +77,20 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, 'GIT_CONFIG_GLOBAL="/dev/null"'
   end
 
+  def test_production_bundle_is_app_scoped_and_bounded
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-bundle.ksh", __dir__))
+
+    assert_includes source, 'args[0] == "rails-bundle" && RAILS_APPS.include?(args[1])'
+    assert_includes source, "supervised_helper(RAILS_BUNDLE, args[1], args[2].to_i)"
+    assert_includes source, "RAILS_BUNDLE = \"/usr/local/libexec/rails-bundle.ksh\""
+    assert_includes helper, 'brgen|amber|bsdports'
+    assert_includes helper, '[ "$timeout" -le 7200 ]'
+    assert_includes helper, 'RAILS_ENV=production $bundle install'
+    assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
+    refute_includes helper, 'sh -c "$script"'
+  end
+
   def test_ci_sync_runs_only_as_the_selected_app
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-sync.ksh", __dir__))
