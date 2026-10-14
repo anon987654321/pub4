@@ -90,16 +90,16 @@ class TestLanePool < Minitest::Test
     assert_nil pool.latency_s(GEMMA)
   end
 
-  def test_an_unmeasured_free_model_gets_the_short_timeout
+  def test_every_free_model_gets_the_short_timeout_even_after_a_fast_probe
     door = Master::Review::LLMDispatcher.allocate
     door.instance_variable_set(:@availability, Struct.new(:dispatch_deadline_s).new(300))
     router = Object.new
     router.define_singleton_method(:latency_s) { |id| id == LIGHTNING ? 3.0 : nil }
     door.instance_variable_set(:@model_router, router)
 
-    assert_equal 60, door.send(:call_deadline_for, GEMMA)
-    assert_equal 300, door.send(:call_deadline_for, LIGHTNING)
-    assert_equal 300, door.send(:call_deadline_for, OPUS)
+    assert_equal 60, door.send(:call_deadline_for, GEMMA), "unmeasured free lanes get the configured ceiling"
+    assert_equal 60, door.send(:call_deadline_for, LIGHTNING), "a fast short probe does not predict large-prompt latency"
+    assert_equal 300, door.send(:call_deadline_for, OPUS), "subscription calls retain the dispatcher deadline"
   end
 
   def test_the_paid_tail_lists_cheap_catalog_models_only
