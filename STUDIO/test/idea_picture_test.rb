@@ -69,19 +69,17 @@ class TestStudioOutputPaths < Minitest::Test
     end
   end
 
-  def test_dilla_override_does_not_change_postpro_or_reference_paths
+  def test_render_overrides_do_not_change_the_reference_profile_root
     Dir.mktmpdir do |dir|
       dilla = File.join(dir, "dilla")
       postpro = File.join(dir, "postpro")
-      reference = File.join(dir, "reference")
 
       with_environment("DILLA_OUTPUT_DIR", dilla) do
         with_environment("POSTPRO_OUTPUT_DIR", postpro) do
-          with_environment("DILLA_REFERENCE_DIR", reference) do
-            assert_equal dilla, Studio::OutputPaths.dilla_render_directory
-            assert_equal postpro, Studio::OutputPaths.render_directory
-            assert_equal reference, Studio::OutputPaths.reference_root
-          end
+          assert_equal dilla, Studio::OutputPaths.dilla_render_directory
+          assert_equal postpro, Studio::OutputPaths.render_directory
+          assert_equal File.join(Studio::OutputPaths.data_home, "dilla-references"),
+                       Studio::OutputPaths.reference_root
         end
       end
     end
