@@ -1,9 +1,8 @@
-# Secrets — exported before any auto-launch.
-export OPENROUTER_API_KEY=__REDACTED__
-export REPLICATE_API_KEY=__REDACTED__
-export WEAVIATE_API_KEY=__REDACTED__
-export GEMINI_API_KEY=__REDACTED__
-export DEEPSEEK_API_KEY=__REDACTED__
+# Provider credentials are host-local and must never be committed.
+typeset -g PUB4_OPERATOR_ENV="${HOME}/.config/pub4/operator.env"
+if [[ -r $PUB4_OPERATOR_ENV ]]; then
+  source "$PUB4_OPERATOR_ENV"
+fi
 
 path=(/home/dev/.local/share/gem/ruby/*/bin(N) $path)
 
