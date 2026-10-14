@@ -204,7 +204,7 @@ install_root_configs() {
       return 1
     fi
   done
-  for rel in usr usr/local usr/local/sbin usr/local/libexec gates bin; do
+  for rel in usr usr/local usr/local/bin usr/local/sbin usr/local/libexec gates bin; do
     if [[ -L $src/$rel ]]; then
       log ERROR "refusing symlinked privileged source directory: $src/$rel"
       return 1
@@ -421,10 +421,14 @@ sync_openbsd_apply() {
   # the same place. LOAD_CRIT runs `/usr/local/bin/emergency_cpu.sh` when it is
   # executable and logs "emergency_cpu not installed" when it is not, so without
   # this line the top tier of the load guard can only ever write that line.
-  if ! install -m 755 "${SCRIPT_DIR}/emergency_cpu.sh" /usr/local/bin/emergency_cpu.sh; then
+  if ! install -o root -g wheel -m 555 "${src}/usr/local/bin/emergency_cpu.sh" /usr/local/bin/emergency_cpu.sh; then
     log ERROR "emergency_cpu.sh install failed — resource_guard's crisis tier would only log"
     return 1
   fi
+  [[ -f /usr/local/bin/emergency_cpu.sh && ! -L /usr/local/bin/emergency_cpu.sh ]] || {
+    log ERROR "installed emergency CPU runner is missing or symlinked"
+    return 1
+  }
 
   # crontab.vm23 schedules the weekly integrity run, and install_tracked_crontab
   # refuses a command that is not on the box. root runs the installed copy for
