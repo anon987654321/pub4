@@ -161,6 +161,17 @@ class TestFixWatchdog < Minitest::Test
     assert(@said.any? { |line| line.include?("self-check") })
   end
 
+  def test_hard_safety_abort_supersedes_a_report_only_stall
+    ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
+    run = budget
+    run.send(:abort_run!, "stalled, test")
+
+    run.send(:abort_run!, "disk pressure", force: true)
+
+    assert_equal ["disk pressure"], @killed
+    assert(@said.any? { |line| line == "fix0: ABORT disk pressure" })
+  end
+
   def test_abort_can_be_turned_into_a_report
     ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
     run = budget
