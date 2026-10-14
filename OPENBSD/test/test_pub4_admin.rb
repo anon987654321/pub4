@@ -63,7 +63,8 @@ class Pub4AdminTest < Minitest::Test
   def test_privileged_helpers_must_be_root_owned_and_non_writable
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
-    assert_includes source, "stat.uid.zero? && (stat.mode & 0o022).zero?"
+    assert_includes source, "stat.symlink? || !stat.uid.zero? || (stat.mode & 0o022).positive?"
+    assert_includes source, "File.lstat(current)"
     assert_includes source, "trusted_script!(RESOURCE_GUARD)"
     assert_includes source, "trusted_script!(SOLID_QUEUE_PROOF)"
   end
