@@ -108,6 +108,21 @@ class TestFixWatchdog < Minitest::Test
     refute stalled[:abort]
   end
 
+  def test_report_only_stream_stall_keeps_monitoring_without_claiming_completion
+    ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
+    run = budget
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    run.instance_variable_set(:@pulse, p)
+    @now = Pulse::STALL_SECONDS + 1
+
+    run.send(:watch_for_stall)
+
+    assert_empty @killed
+    assert_nil run.instance_variable_get(:@exit_reason)
+    assert(@said.any? { |line| line.start_with?("fix0: STALL REPORT ONLY stalled, pass 1") })
+  end
+
   def test_stream_stall_is_reported_and_terminates_the_run
     run = budget
     p = pulse
