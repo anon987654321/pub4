@@ -107,6 +107,13 @@ class VpsDeployContractTest < Minitest::Test
     refute_match(/su -m/, runner)
     refute_includes runtime, 'secret=$(app_secret_for "$app_name")'
   end
+  def test_npm_cache_setup_uses_the_app_owned_task
+    bundle = File.read(File.join(ROOT, "RAILS", "_bundle.sh"), encoding: "UTF-8")
+    helper = bundle[/ensure_npm_cache\(\) \{.*?^\}/m]
+    refute_nil helper
+    assert_includes helper, 'run_rails_as_app "$app_name" "/home/${app_name}/app" "npm-cache"'
+    refute_match(/\$\{_PRIV\}.*(?:mkdir|chown)/, helper)
+  end
   def test_rails_production_bundle_uses_bounded_broker
     core = File.read(File.join(ROOT, "RAILS", "_bundle.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
