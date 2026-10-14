@@ -17,6 +17,23 @@ exec > >(tee -a "$LOG") 2>&1
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 
+# Keep this fresh-box bootstrap usable before pub4-admin is installed, but never
+# let app names or verbs widen the root service boundary.
+admin_service() {
+  local action=${1:-} service=${2:-}
+  case "$action" in check|start|stop|restart) ;; *) log "ERR: refused service action: $action"; return 2 ;; esac
+  case "$service" in master|brgen|amber|bsdports) ;; *) log "ERR: refused service: $service"; return 2 ;; esac
+  if [[ -L /usr/local/sbin/pub4-admin ]]; then
+    log "ERR: pub4-admin is a symlink; refusing service control"
+    return 1
+  elif [[ -x /usr/local/sbin/pub4-admin ]]; then
+    doas /usr/local/sbin/pub4-admin service "$action" "$service"
+  else
+    # Bootstrap fallback only. OPERATOR.sh installs the fixed-path broker.
+    doas rcctl "$action" "$service"
+  fi
+}
+
 log "pub4 install — log: $LOG"
 # ruby, not awk, and the pattern changed with it: OpenBSD vmstat -s writes
 # "53853 pages free" and has no line matching /free memory/ at all, so the awk
@@ -45,14 +62,15 @@ bundle config set --local path vendor/bundle
 bundle install
 RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 bundle exec ruby "${PUB4}/MASTER/gates/runner.rb" master_web_assets
-doas rcctl restart master 2>/dev/null || doas rcctl start master
-doas rcctl check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
+admin_service restart master 2>/dev/null || admin_service start master
+admin_service check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
 
 typeset -a APPS
 APPS=(${(f)"$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${PUB4}/RAILS/apps.yml")"})
 (( ${#APPS} )) || { log "ERR: no apps read from ${PUB4}/RAILS/apps.yml"; exit 1 }
 
 for app in $APPS; do
+  case "$app" in brgen|amber|bsdports) ;; *) log "ERR: refused app from apps.yml: $app"; failed=$((failed + 1)); continue ;; esac
   typeset script="${PUB4}/RAILS/${app}/${app}.sh"
   log "=== Rails: ${app} ==="
   if [[ ! -f $script ]]; then
@@ -64,7 +82,7 @@ for app in $APPS; do
   if ! zsh "$script"; then
     log "WARN: ${app} deploy script failed"
     failed=$((failed + 1))
-  elif doas rcctl check "$app" 2>/dev/null; then
+  elif admin_service check "$app" 2>/dev/null; then
     log "ok: ${app}"
   else
     log "WARN: ${app} check failed"
@@ -75,9 +93,9 @@ done
 log "=== summary ==="
 for app in $APPS; do
   printf '  %s: ' "$app"
-  doas rcctl check "$app" 2>/dev/null || print "not running"
+  admin_service check "$app" 2>/dev/null || print "not running"
 done
-doas rcctl check master 2>/dev/null || true
+admin_service check master 2>/dev/null || true
 if (( failed > 0 )); then
   log "FAILED: $failed step(s) — $LOG"
   exit 1
