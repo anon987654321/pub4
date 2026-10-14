@@ -7,12 +7,12 @@ set -euo pipefail
 retire_legacy_rails_rcd() {
   local app_name=$1 legacy="${app_name}_rails"
   [[ -f /etc/rc.d/$legacy ]] || return 0
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    "${_PRIV}" /usr/local/sbin/pub4-admin retire-legacy "$app_name" \
-      || { log_err "could not disable legacy service ${legacy}"; return 1; }
-  else
-    ${_PRIV} rcctl disable "$legacy" 2>/dev/null || true
-  fi
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "retire_legacy_rails_rcd: pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  "${_PRIV}" /usr/local/sbin/pub4-admin retire-legacy "$app_name" \
+    || { log_err "could not disable legacy service ${legacy}"; return 1; }
   log_ok "disabled legacy rc.d ${legacy} (no stop — shared port with ${app_name})"
 }
 
