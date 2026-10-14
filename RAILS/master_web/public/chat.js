@@ -349,15 +349,51 @@ function openActionMenu(msgEl) {
   document.querySelectorAll('.action-menu').forEach(m => m.remove());
   const menu = document.createElement('div');
   menu.className = 'action-menu';
+  menu.setAttribute('role', 'group');
+  menu.setAttribute('aria-label', chatT('message_actions', 'Message actions'));
   const txt = getMsgText(msgEl);
   const bodyText = msgEl.querySelector('.msg-body')?.textContent || txt;
-  menu.innerHTML = '<button data-act="copy">Copy</button><button data-act="quote">Quote</button><button data-act="simpler">Simpler</button><button data-act="deeper">Deeper</button><button data-act="close">Close</button>';
-  const rect = msgEl.getBoundingClientRect();
-  menu.style.left = (rect.left + window.scrollX + 8) + 'px';
-  menu.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+  const actions = [
+    ['copy', chatT('message_copy', 'Copy')],
+    ['quote', chatT('message_quote', 'Quote')],
+    ['simpler', chatT('message_simpler', 'Simpler explanation')],
+    ['deeper', chatT('message_deeper', 'More detail')],
+    ['close', chatT('close', 'Close')],
+  ];
+  for (const [act, label] of actions) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.act = act;
+    button.textContent = label;
+    menu.appendChild(button);
+  }
   document.body.appendChild(menu);
+
+  // Keep the menu on-screen, including when the mobile keyboard shrinks the
+  // visual viewport or the selected message sits near an edge.
+  const rect = msgEl.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const viewportLeft = window.scrollX + (viewport?.offsetLeft || 0);
+  const viewportTop = window.scrollY + (viewport?.offsetTop || 0);
+  const viewportWidth = viewport?.width || document.documentElement.clientWidth;
+  const viewportHeight = viewport?.height || window.innerHeight;
+  const gutter = 8;
+  const left = Math.min(
+    Math.max(rect.left + window.scrollX + gutter, viewportLeft + gutter),
+    Math.max(viewportLeft + gutter, viewportLeft + viewportWidth - menu.offsetWidth - gutter)
+  );
+  const below = rect.bottom + window.scrollY + 2;
+  const bottom = viewportTop + viewportHeight - gutter;
+  const top = below + menu.offsetHeight <= bottom
+    ? below
+    : Math.max(viewportTop + gutter, rect.top + window.scrollY - menu.offsetHeight - 2);
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+
   const onAct = (ev) => {
-    const act = ev.target.dataset.act;
+    const button = ev.target.closest?.('button[data-act]');
+    if (!button || !menu.contains(button)) return;
+    const act = button.dataset.act;
     if (act === 'copy') {
       navigator.clipboard?.writeText(txt).catch(() => {});
       menu.remove();
@@ -365,10 +401,10 @@ function openActionMenu(msgEl) {
       if (input) { input.value = `> ${txt}\n`; input.focus(); }
       menu.remove();
     } else if (act === 'simpler') {
-      if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${bodyText}`);
+      if (window.sendMessage) window.sendMessage(`${chatT('message_simpler_prompt', 'Please explain this more simply:')}\n${bodyText}`);
       menu.remove();
     } else if (act === 'deeper') {
-      if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${bodyText}`);
+      if (window.sendMessage) window.sendMessage(`${chatT('message_deeper_prompt', 'Go deeper on this answer:')}\n${bodyText}`);
       menu.remove();
     } else if (act === 'close') {
       menu.remove();
@@ -387,7 +423,6 @@ function openActionMenu(msgEl) {
     document.addEventListener('keydown', close);
   }, 0);
 }
-
 // Per-message context-usage footer removed (idle-screen chrome); no-op kept
 // since callers use optional chaining and this file assigns it unconditionally.
 window._chatOnCtxFooter = () => {};
