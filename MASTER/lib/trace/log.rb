@@ -76,6 +76,26 @@ module Master
         end
       end
 
+      # Last resort after ENOSPC: discard one rotated generation first, or
+      # compact the active log to a recent tail. This frees blocks before another
+      # write is attempted, instead of silently losing every subsequent event.
+      def self.reclaim(path, keep_bytes: 1024 * 1024)
+        rotated = "#{path}.1"
+        if File.file?(rotated)
+          File.delete(rotated)
+          return true
+        end
+
+        return false unless File.file?(path) && File.size(path) > keep_bytes
+
+        !compact_rotated(path, keep_bytes).nil?
+      rescue Errno::ENOENT
+        false
+      rescue SystemCallError => e
+        Master::Ground::Swallow.log(e, context: "Trace::Log.reclaim", path:)
+        false
+      end
+
       # Append-only tool invocation log; subscribes to tool:before on EventBus.
       # Under .master/ because it records tool arguments, which stay out of the served event stream.
       class Audit
