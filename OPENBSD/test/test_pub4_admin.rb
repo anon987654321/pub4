@@ -87,6 +87,16 @@ class Pub4AdminTest < Minitest::Test
     refute_match(/^\s*(?:doas|sudo|chown)\b/, helper)
   end
 
+  def test_ci_prepare_validates_app_ancestors_before_storage_chmod
+    helper = File.read(File.expand_path("../usr/local/libexec/ci-prepare.ksh", __dir__))
+
+    assert_includes helper, 'app_uid=$(/usr/bin/id -u "$app")'
+    assert_includes helper, '[ ! -L "$app_home" ]'
+    assert_includes helper, '[ ! -L "$app_dir" ]'
+    assert_includes helper, '[ "$(stat -f %u "$storage")" = "$app_uid" ]'
+    assert_operator helper.index('[ ! -L "$app_dir" ]'), :<, helper.index('/bin/chmod 750 "$storage"')
+  end
+
   def test_ci_prepare_is_one_fixed_app_scoped_operation
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-prepare.ksh", __dir__))
