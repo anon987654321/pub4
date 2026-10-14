@@ -170,8 +170,11 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?("cache|queue|cable") &&
                           rails_task.include?("secondary-db-check)") &&
                           rails_task.include?('table=$("$ruby_path" -e') &&
+                          rails_task.include?('[ ! -L /home ]') &&
                           rails_task.include?('[ ! -L "$app_home" ]') &&
                           rails_task.include?('[ ! -L "$app_dir" ]') &&
+                          rails_task.include?('app_bundle="$app_dir/.bundle"') &&
+                          rails_task.include?('[ ! -L "$app_bundle" ]') &&
                           rails_task.include?('[ ! -L "$app_dir/db" ]') &&
                           rails_task.include?('[ ! -L "$app_dir/storage" ]') &&
                           rails_task.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
