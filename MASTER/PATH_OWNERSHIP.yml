@@ -5,10 +5,9 @@ ownership:
     risk: low
     check: bin/check
   ../TODO.md:
-    purpose: consolidated repo-wide backlog (per-tree DEBT.md, RAILS/TODO.md,
-      RAILS/BLOCKERS.md and OPENBSD/data/debt.yml were folded in; features live
-      in RAILS/apps.yml, horizon in RAILS/apps.horizon.yml, operator recipes in
-      ../OPENBSD/data/operator.yml)
+    purpose: the one authoritative repo-wide backlog for all unfinished work;
+      feature truth lives in RAILS/apps.yml and RAILS/apps.horizon.yml, and
+      operational recipes live in ../OPENBSD/data/operator.yml
     risk: medium
     check: MASTER/bin/operator status
   law/:
