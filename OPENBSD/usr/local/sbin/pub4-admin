@@ -20,6 +20,7 @@ module Pub4Admin
   CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
   CI_RUN = "/usr/local/libexec/ci-run.ksh"
   CI_SYNC = "/usr/local/libexec/ci-sync.ksh"
+  RAILS_BUNDLE = "/usr/local/libexec/rails-bundle.ksh"
   RAILS_APPS = %w[brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
   RUBY_CANDIDATES = %w[
@@ -152,12 +153,12 @@ module Pub4Admin
   # CI execution starts as root only long enough to drop to the app via su; tree sync
   # is spawned directly with that app UID/GID and only the groups it needs.
   def supervised_helper(helper, app, duration)
-    raise "unknown helper" unless [CI_RUN, CI_SYNC].include?(helper)
+    raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_BUNDLE].include?(helper)
     raise "unknown app" unless RAILS_APPS.include?(app)
     raise "invalid helper timeout" unless duration.is_a?(Integer) && (1..7200).cover?(duration)
 
     trusted_script!(helper)
-    arguments = helper == CI_RUN ? [app, duration.to_s] : [app]
+    arguments = [CI_RUN, RAILS_BUNDLE].include?(helper) ? [app, duration.to_s] : [app]
     environment = if helper == CI_RUN
                     { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
                   else
@@ -270,6 +271,11 @@ module Pub4Admin
 
     if args.length == 2 && args[0] == "ci-sync" && RAILS_APPS.include?(args[1])
       return run_ci_sync(args[1])
+    end
+
+    if args.length == 3 && args[0] == "rails-bundle" && RAILS_APPS.include?(args[1]) &&
+       valid_ci_timeout?(args[2])
+      return supervised_helper(RAILS_BUNDLE, args[1], args[2].to_i)
     end
 
     if args == ["resource-guard"]
