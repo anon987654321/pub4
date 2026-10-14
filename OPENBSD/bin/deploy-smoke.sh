@@ -89,7 +89,17 @@ check_rcctl() {
   if ! have_rcctl; then
     return 0
   fi
-  if doas -n rcctl check "$svc" >/dev/null 2>&1 || rcctl check "$svc" >/dev/null 2>&1; then
+  case "$svc" in master|brgen|amber|bsdports|relayd) ;; *) fail "refused service target $svc"; return 1 ;; esac
+  if [ -L /usr/local/sbin/pub4-admin ]; then
+    fail "pub4-admin is a symlink; refusing service check"
+    return 1
+  elif [ -x /usr/local/sbin/pub4-admin ]; then
+    doas /usr/local/sbin/pub4-admin service check "$svc" >/dev/null 2>&1
+  else
+    # Bootstrap fallback only; routine smoke uses the fixed broker.
+    doas -n rcctl check "$svc" >/dev/null 2>&1 || rcctl check "$svc" >/dev/null 2>&1
+  fi
+  if [ "$?" -eq 0 ]; then
     ok "rcctl $svc"
   else
     if [ "$required" = "0" ]; then
