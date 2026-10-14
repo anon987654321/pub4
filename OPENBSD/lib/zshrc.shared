@@ -1,0 +1,6 @@
+# Shared OpenBSD Operator prompt for interactive zsh sessions.
+# Keep the host:path$ grammar aligned with Master::Face::Contract.shell_prompt.
+[[ -o interactive ]] || return
+
+PROMPT='%m:%~$ '
+RPROMPT=''

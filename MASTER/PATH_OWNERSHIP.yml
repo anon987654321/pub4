@@ -10,6 +10,14 @@ ownership:
       operational recipes live in ../OPENBSD/data/operator.yml
     risk: medium
     check: MASTER/bin/operator status
+  ../FUN/zshrc.shared:
+    purpose: compatibility symlink to the canonical shared OpenBSD Operator zsh prompt
+    risk: low
+    check: ruby OPENBSD/test/test_operator_prompt_contract.rb
+  ../OPENBSD/lib/zshrc.shared:
+    purpose: canonical host:path$ prompt shared by operator zsh sessions
+    risk: low
+    check: ruby OPENBSD/test/test_operator_prompt_contract.rb
   law/:
     purpose: the constitution as code — one domain file per body of law
     risk: critical
