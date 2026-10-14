@@ -4781,7 +4781,13 @@ def run_introspect
   elsif (name = argv_flag("--css-filter"))
     puts css_filter(name.to_sym)
   elsif (name = argv_flag("--export-lut"))
-    out = argv_flag("--output") || "#{name}.cube"
+    requested_output = argv_flag("--output")
+    out = requested_output
+    if out.to_s.empty?
+      safe_name = name.to_s.gsub(/[^0-9A-Za-z_-]+/, "_")
+      out = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{safe_name}.cube")
+      Postpro::Constitution.verify_output!(input_path: __FILE__, output_path: out)
+    end
     size = (argv_flag("--size") || "17").to_i
     export_lut(name.to_sym, out, size)
   end
