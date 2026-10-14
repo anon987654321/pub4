@@ -34,6 +34,9 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.cp(File.join(ROOT, "usr", "local", "libexec", "rails-task.ksh"),
                    File.join(openbsd, "usr", "local", "libexec", "rails-task.ksh"))
       FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
+      FileUtils.mkdir_p(File.join(dir, "RAILS"))
+      FileUtils.cp(File.join(ROOT, "..", "RAILS", "_runtime_gate.sh"),
+                   File.join(dir, "RAILS", "_runtime_gate.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
@@ -137,6 +140,17 @@ class VpsSafetyGateTest < Minitest::Test
 
       refute status.success?
       assert_includes out, "relayd broker must be verification-only and reject unapproved Host routes"
+    end
+  end
+  def test_rails_runtime_runner_cannot_restore_root_shell_fallback
+    with_fixture do |dir, _|
+      path = File.join(dir, "RAILS", "_runtime_gate.sh")
+      text = File.read(path).sub('[[ -x /usr/local/sbin/pub4-admin ]]' , '[[ -x /usr/local/sbin/other-admin ]]')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "rails runtime task runner must fail closed without the broker"
     end
   end
   def test_broker_must_keep_legacy_retirement_fixed
