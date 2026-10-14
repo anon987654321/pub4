@@ -91,7 +91,7 @@ module Master
       # starting a second reader that can steal a draft.
       def answer_at_terminal(prompt, options: nil)
         choices = normalize_ask_options(options)
-        if @turn_worker&.alive? && Thread.current == @turn_worker && $stdin.tty? && $stdout.tty?
+        if @turn_worker&.alive? && Thread.current == @pipeline_thread && $stdin.tty? && $stdout.tty?
           request = { answer: nil, choices: }
           @terminal_ask_mutex.synchronize { @pending_terminal_ask = request }
           label = @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
