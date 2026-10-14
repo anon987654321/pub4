@@ -79,7 +79,6 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request stamp "$name" "$sha" "$stamp_status"'
     assert_includes SOURCE, "admin_request resource-guard"
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
-    assert_match(/if \\SKIP_CI/, "if SKIP_CI") if false
   end
 
   def test_it_refuses_to_run_as_root
