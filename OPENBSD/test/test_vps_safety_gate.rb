@@ -44,6 +44,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       FileUtils.cp(File.join(ROOT, "bin", "vps-state"), File.join(openbsd, "bin", "vps-state"))
       FileUtils.cp(File.join(ROOT, "bin", "restore_litestream.sh"), File.join(openbsd, "bin", "restore_litestream.sh"))
+      FileUtils.cp(File.join(ROOT, "bin", "start_all_apps.sh"), File.join(openbsd, "bin", "start_all_apps.sh"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy"), File.join(ROOT, "bin", "vps_deploy_master.sh"), File.join(ROOT, "bin", "vps_install_all.sh"), File.join(ROOT, "bin", "deploy-smoke.sh"), File.join(ROOT, "bin", "manual_master_deploy.ksh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
       end
@@ -120,6 +121,29 @@ class VpsSafetyGateTest < Minitest::Test
 
       refute status.success?
       assert_includes out, "master-web helper must be fixed-path and symlink-safe"
+    end
+  end
+  def test_start_all_apps_refuses_root_and_delegates_to_broker
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "bin", "start_all_apps.sh")
+      text = File.read(path).sub('if [ "$(id -u)" -eq 0 ]; then', 'if [ "$(id -u)" -eq 1 ]; then')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "start_all_apps wrapper and broker must be fixed and non-root"
+    end
+  end
+
+  def test_start_all_apps_broker_verb_requires_exact_arguments
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      text = File.read(path).sub('args == ["start-all-apps"]', 'args.first == "start-all-apps"')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "start_all_apps wrapper and broker must be fixed and non-root"
     end
   end
   def test_vps_state_must_not_execute_rcctl_directly
