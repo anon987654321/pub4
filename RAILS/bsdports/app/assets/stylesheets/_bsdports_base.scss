@@ -4,9 +4,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  // The shared nav token includes its first row and safe-area inset; on
-  // phones a wrapped second row adds one tap target and one row gap.
-  padding-block-start: calc(var(--nav-swiper-h) + var(--tap-min) + var(--space-2));
+  // The two wrapped 44px link boxes, 8px row gap and nav's vertical padding
+  // determine the mobile bar. Add one spacing step after it and include the notch.
+  padding-block-start: calc(var(--tap-min) + var(--tap-min) + var(--space-2) + 1rem + var(--safe-top) + var(--space-1));
 }
 
 kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
