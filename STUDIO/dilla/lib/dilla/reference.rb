@@ -7,12 +7,13 @@ require "open3"
 require "optparse"
 require "timeout"
 require "uri"
+require_relative "../../../output_paths"
 
 # Import and inspect the audio stream of a reference. Video frames are never read.
 module Dilla
   module Reference
     ROOT = File.expand_path("../../..", __dir__).freeze
-    REFERENCE_ROOT = File.join(ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents")), "dilla-references").freeze
+    REFERENCE_ROOT = Studio::OutputPaths.reference_root.freeze
     MAX_DURATION = 7_200
     DEFAULT_DURATION = 900
     VIDEO_ID = /\A[A-Za-z0-9_-]{11}\z/.freeze
