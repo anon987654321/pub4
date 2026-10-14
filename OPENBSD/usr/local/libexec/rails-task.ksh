@@ -66,7 +66,7 @@ esac
 
 case "$task" in
   bundle-install)
-    command="$bundle config set --local frozen false && $bundle config set --local deployment true && $bundle config set --local without \"development test\" && RAILS_ENV=production $bundle install" ;;
+    command="mkdir -p .bundle && printf '%s\\n' '---' 'BUNDLE_PATH: /home/$app/.bundle/gems' > .bundle/config && $bundle config set --local frozen false && $bundle config set --local deployment true && $bundle config set --local without \"development test\" && RAILS_ENV=production $bundle install" ;;
   bundle-check)
     command="$bundle check" ;;
   db-prepare)
