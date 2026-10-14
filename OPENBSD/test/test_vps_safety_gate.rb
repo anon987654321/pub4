@@ -42,7 +42,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_bundle.sh"),
                    File.join(dir, "RAILS", "_bundle.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
-      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy"), File.join(ROOT, "bin", "vps_deploy_master.sh")]).each do |path|
+      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy"), File.join(ROOT, "bin", "vps_deploy_master.sh"), File.join(ROOT, "bin", "vps_install_all.sh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
       end
       yield dir, File.join(openbsd, "etc", "doas.conf")
@@ -118,6 +118,17 @@ class VpsSafetyGateTest < Minitest::Test
 
       refute status.success?
       assert_includes out, "master-web helper must be fixed-path and symlink-safe"
+    end
+  end
+  def test_vps_install_all_service_control_is_broker_first
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "bin", "vps_install_all.sh")
+      text = File.read(path).sub('doas /usr/local/sbin/pub4-admin service "$action" "$service"', 'doas rcctl "$action" "$service"')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "vps_install_all service control must be broker-first and app-allowlisted"
     end
   end
   def test_master_web_deploy_must_use_fixed_broker_verbs
