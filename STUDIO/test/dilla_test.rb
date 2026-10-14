@@ -504,10 +504,12 @@ class DillaTest < Minitest::Test
     assert_equal POCKET, DATA.fetch("default_profile")
     assert_includes DATA.fetch("groove_profiles"), POCKET
     Dir.mktmpdir do |dir|
-      %w[--progression\ 2 --random].each do |flag|
-        _o, err, status = run_dilla(*flag.split, "--drums", "boom_bap", "--seed", "4", "--out", File.join(dir, "x.wav"), chdir: dir)
+      %w[--progression\ 2 --random].each_with_index do |flag, index|
+        output = File.join(dir, "take-#{index}.wav")
+        _o, err, status = run_dilla(*flag.split, "--drums", "boom_bap", "--seed", "4", "--out", output, chdir: dir)
         assert status.success?, err
         assert_match(/profile=#{POCKET}/, _o)
+        assert File.file?(output)
       end
     end
   end
