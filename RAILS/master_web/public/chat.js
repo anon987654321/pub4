@@ -47,19 +47,23 @@ function ensureChatSpacer() {
   return chatSpacer;
 }
 
+function chatLayoutGap() {
+  const style = window.getComputedStyle(log);
+  const value = style.rowGap !== 'normal' ? style.rowGap : style.gap;
+  const parsed = Number.parseFloat(value || '0');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function chatMessageAdvance(message) {
   const rect = message.getBoundingClientRect();
   const style = window.getComputedStyle(message);
-  const logStyle = window.getComputedStyle(log);
   const number = (value) => {
     const parsed = Number.parseFloat(value || '0');
     return Number.isFinite(parsed) ? parsed : 0;
   };
-  const gap = number(logStyle.rowGap !== 'normal' ? logStyle.rowGap : logStyle.gap);
   const height = Math.max(rect.height, message.scrollHeight, message.offsetHeight);
-  return Math.max(0, height + number(style.marginTop) + number(style.marginBottom) + gap);
+  return Math.max(0, height + number(style.marginTop) + number(style.marginBottom) + chatLayoutGap());
 }
-
 function updateChatSpacer() {
   if (chatArchive.length === 0) {
     chatSpacer?.remove();
@@ -73,7 +77,9 @@ function updateChatSpacer() {
   const spacer = ensureChatSpacer();
   if (!spacer || !chatSpacerButton) return;
   chatArchived = chatArchive.length;
-  chatSpacer.style.height = `${Math.ceil(chatArchivedHeight)}px`;
+  // Each archived message's advance includes its trailing gap. The combined
+  // spacer replaces N messages, so its own trailing gap must be removed once.
+  chatSpacer.style.height = `${Math.max(0, Math.ceil(chatArchivedHeight - chatLayoutGap()))}px`;
   const count = Math.min(CHAT_ARCHIVE_BATCH, chatArchived);
   const label = chatT('load_older_messages', 'Load %{count} older messages')
     .replace('%{count}', String(count));
