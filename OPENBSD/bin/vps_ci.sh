@@ -289,8 +289,12 @@ doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo};
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-doas mkdir -p /var/db/pub4 2>/dev/null || true
-doas tee "/var/db/pub4/last_deploy_${app}.json" >/dev/null <<EOF
+if [[ -x /usr/local/sbin/pub4-admin ]]; then
+  doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" ci_ok
+else
+  doas mkdir -p /var/db/pub4 2>/dev/null || true
+  doas tee "/var/db/pub4/last_deploy_${app}.json" >/dev/null <<EOF
 {"app":"${app}","sha":"${sha}","at":"${started}","status":"ci_ok","host":"$(hostname)"}
 EOF
+fi
 deploy_status "$app" "done" "done"
