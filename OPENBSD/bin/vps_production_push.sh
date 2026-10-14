@@ -35,7 +35,7 @@ zsh "$repo/OPENBSD/bin/vps-deploy" all
 
 if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
   print "==> bergen demo seed (posts, Live notes, listings)"
-  # doas only permits dev->root; the app user hop is doas sh + su -m (RAILS/_database.sh).
+  # The root broker supplies the fixed demo-seed task and runs the Rails process as brgen.
   source "${repo}/RAILS/_core.sh"
   source "${repo}/RAILS/_database.sh"
   seed_demo_as_app brgen /home/brgen/app
