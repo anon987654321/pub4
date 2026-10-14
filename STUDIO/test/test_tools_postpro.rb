@@ -24,6 +24,13 @@ class TestPostproFilm < Minitest::Test
     assert_match(%r{dilla-renders/\d{4}-\d{2}-\d{2}\z}, output_dir) if configured.empty?
   end
 
+  def test_postpro_daily_logs_and_rotations_are_ignored
+    ignore = File.read(File.join(File.dirname(POSTPRO_SOURCE), ".gitignore"))
+
+    assert_match(/^postpro\.log\*$/, ignore,
+                 "the daily logger creates postpro.log siblings that must stay out of git")
+  end
+
   def test_generated_output_preserves_existing_media_and_sidecar
     Dir.mktmpdir do |dir|
       input = File.join(dir, "source.jpg")
