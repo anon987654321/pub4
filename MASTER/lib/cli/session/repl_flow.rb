@@ -296,7 +296,13 @@ module Master
         return prompt unless queue_control_mode? || interactive_queue_count.positive?
 
         count = interactive_queue_count
-        status = count.positive? ? "queued #{count}" : "working"
+        status = if @turn_queue_paused
+                   "paused"
+                 elsif count.positive?
+                   "queued #{count}"
+                 else
+                   "working"
+                 end
         base = prompt.to_s.sub(/\s+\z/, "")
         suffix = "#{base} #{status} "
         maximum = Master::Face::Contract.prompt_max
