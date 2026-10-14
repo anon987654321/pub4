@@ -74,7 +74,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   status_contract = admin.include?('args.length == 4 && args[0] == "deploy-status"') &&
                     admin.include?("def write_deploy_status(app, step, state)") &&
                     admin.include?('File.join(directory, "#{app}.json")') &&
-                    admin.include?("File.rename(temporary, target)") &&
+                    admin.include?("File.link(temporary, target)") &&
                     admin.include?('raise "#{target} is a symlink; refusing status write"')
   failures << "deploy-status writes must use the atomic fixed-path broker" unless status_contract
   disk_usage_contract = admin.include?('DISK_USAGE_PATHS = %w[/home /var].freeze') &&
@@ -271,7 +271,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   failures << "pub4-admin CI lock must use one fixed path and refuse symlinks" unless ci_lock_contract
 
   secret_dispatch = admin.include?('args[0] == "ensure-secret" && APPS.include?(args[1])') &&
-                  admin.include?("def ensure_app_secret(app)") &&
+                  admin.include?("def ensure_app_secret(app, emit: true)") &&
+                  admin.include?("ensure_app_secret(app, emit: false)") &&
                   admin.include?("File::CREAT | File::EXCL") &&
                   admin.include?("File.rename(temporary, target)") &&
                   admin.include?("already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file")
