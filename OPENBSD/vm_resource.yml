@@ -12,8 +12,8 @@ core_services:
   - master
   - brgen
 
-# Start manually: doas ksh OPENBSD/bin/start_all_apps.sh
-# Pins all apps (creates /var/db/pub4_all_apps; resource_guard skips shedding).
+# Start manually as dev: ksh OPENBSD/bin/start_all_apps.sh
+# Pins all apps through pub4-admin (creates /var/db/pub4_all_apps; resource_guard skips shedding).
 # Mirrors resource_guard.sh's OPTIONAL, which is the live authority.
 optional_services:
   - amber
