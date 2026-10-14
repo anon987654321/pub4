@@ -101,7 +101,7 @@ module Postpro
     # they collide; on a rerun, move the new output to a timestamped sibling.
     def available_output_path(output_path)
       output = File.expand_path(output_path)
-      return output unless output_exists?(output)
+      return output unless existing_output(output)
 
       extension = File.extname(output)
       basename = File.basename(output, extension)
@@ -111,14 +111,14 @@ module Postpro
       loop do
         suffix = index.zero? ? stamp : "#{stamp}-#{index}"
         candidate = File.join(directory, "#{basename}_#{suffix}#{extension}")
-        return candidate unless output_exists?(candidate)
+        return candidate unless existing_output(candidate)
 
         index += 1
       end
     end
 
-    def output_exists?(path)
-      [path, "#{path}.json"].any? do |candidate|
+    def existing_output(path)
+      [path, "#{path}.json"].find do |candidate|
         File.exist?(candidate) || File.symlink?(candidate)
       end
     end
@@ -134,9 +134,7 @@ module Postpro
       unless File.basename(output).start_with?("postpro_")
         raise ArgumentError, "constitutional output must use postpro_ prefix"
       end
-      existing = [output, "#{output}.json"].find do |path|
-        File.exist?(path) || File.symlink?(path)
-      end
+      existing = existing_output(output)
       if existing
         raise ArgumentError, "constitutional output already exists: #{File.basename(existing)}"
       end
