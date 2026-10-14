@@ -21,7 +21,9 @@ current equivalents. The file `dilla_analog.rb` translates mechanisms from dilla
 chains into still images, so that temporal wow and flutter become spatial registration error.
 The file `uncanny.rb` measures whether a picture looks rendered, `rescue.rb` diagnoses a bad
 photograph, `frame_set.rb` reads a folder as a set, and `depth.rb` supplies a real depth map
-when its model is installed. The file `constitution.rb` is the boundary where MASTER's laws
+when its model is installed.
+
+The file `constitution.rb` is the boundary where MASTER's laws
 become image-generation invariants, `analog_capabilities.rb` backs `--capabilities`, and
 `camera_profiles.json` carries the sensor data. A log file named `postpro.log` also sits in
 the folder; it is output, and git should not carry it.
@@ -72,7 +74,9 @@ Grain is a Boolean model. Silver halide crystals are disks dropped by a Poisson 
 density follows the local grey level, and the developed picture is that binary field filtered
 by the observer. The crystal field is generated, clumped, made slightly anisotropic along the
 film transport, blurred, and then normalised by its own measured deviation, so whatever the
-filter removes the measurement puts back. Chroma grain is correlated with luma grain because
+filter removes the measurement puts back.
+
+Chroma grain is correlated with luma grain because
 one crystal layer shadows the next. The grain figure of a stock is its peak luma deviation in
 eight-bit levels at mid-grey, a quantity an instrument can check, and `--fit-grain` is that
 instrument: point it at a flat scan and it reports the deviation per tone and the crystal size
@@ -112,9 +116,13 @@ A bare path, or `--random`, renders several variations of a photograph, each thr
 chain, with a JSON sidecar naming every effect and the seed. By default the media and sidecars
 go to the shared dated render directory outside the checkout. Set `POSTPRO_OUTPUT_DIR` to
 choose another output directory. If a generated name already exists, Postpro preserves it
-and chooses a timestamped sibling. Heavy mode is the standing default: five variations dealt
+and chooses a timestamped sibling.
+
+Heavy mode is the standing default: five variations dealt
 from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter
-taste. Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family again.
+taste.
+
+Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family again.
 
 A chain is grown and not sampled. A random subset of the whole effect list is the Photoshop
 filter menu and looks like one. A step may join only where some preset already places it
