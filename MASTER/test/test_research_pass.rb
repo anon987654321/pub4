@@ -84,6 +84,16 @@ class TestResearchPass < Minitest::Test
     assert_equal 0, result.fetch(:fetched_count)
   end
 
+  def test_full_repository_target_researches_every_domain
+    pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
+
+    assert_equal %w[engineering rails openbsd studio music visual].sort,
+      pass.send(:domains_for, ".", @plan.research_protocol).sort
+    assert_equal %w[engineering rails openbsd studio music visual].sort,
+      pass.send(:domains_for, "MASTER RAILS OPENBSD STUDIO", @plan.research_protocol).sort
+    assert_equal ["music"], pass.send(:domains_for, "STUDIO/dilla", @plan.research_protocol)
+  end
+
   def test_domain_routing_does_not_confuse_full_repo_with_one_subtree
     pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
 
