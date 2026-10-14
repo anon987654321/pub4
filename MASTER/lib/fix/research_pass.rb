@@ -107,9 +107,9 @@ module Master
       private
 
       def domains_for(target, protocol)
-        value = target.to_s.tr("\\\\", "/").strip
+        value = target.to_s.tr("\\", "/").strip
         tree_names = %w[MASTER RAILS OPENBSD STUDIO]
-        target_names = value.split(/[\\s,]+/).reject(&:empty?)
+        target_names = value.split(/[\s,]+/).reject(&:empty?)
         expanded = File.expand_path(value.empty? ? "." : value, @root)
         full_tree = expanded == @root || %w[. ./].include?(value) ||
           value == File.basename(@root) || (tree_names - target_names).empty?
@@ -119,12 +119,12 @@ module Master
       end
 
       def domain_for(target)
-        value = target.to_s.tr("\\\\", "/")
-        return "music" if value.match?(%r{(?:\\A|/)STUDIO/dilla(?:/|\\z)}i)
-        return "visual" if value.match?(%r{(?:\\A|/)STUDIO/postpro(?:/|\\z)}i)
-        return "studio" if value.match?(%r{(?:\\A|/)STUDIO(?:/|\\z)}i)
-        return "rails" if value.match?(%r{(?:\\A|/)RAILS(?:/|\\z)}i)
-        return "openbsd" if value.match?(%r{(?:\\A|/)OPENBSD(?:/|\\z)}i)
+        value = target.to_s.tr("\\", "/")
+        return "music" if value.match?(%r{(?:\A|/)STUDIO/dilla(?:/|\z)}i)
+        return "visual" if value.match?(%r{(?:\A|/)STUDIO/postpro(?:/|\z)}i)
+        return "studio" if value.match?(%r{(?:\A|/)STUDIO(?:/|\z)}i)
+        return "rails" if value.match?(%r{(?:\A|/)RAILS(?:/|\z)}i)
+        return "openbsd" if value.match?(%r{(?:\A|/)OPENBSD(?:/|\z)}i)
 
         "engineering"
       end
@@ -151,8 +151,9 @@ module Master
           lines << ""
           lines << "Research result is INCONCLUSIVE: one or more domains did not meet the independent-source threshold. Treat the repair as higher uncertainty; prefer a smaller change and prove it locally."
         end
-        lines.join("\\n")[0, 8_000]
-      endd
+        lines.join("\n")[0, 8_000]
+      end
+
     end
   end
 end
