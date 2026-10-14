@@ -21,6 +21,10 @@ set -eo pipefail
 # SSH and direct invocation use a non-login shell; pin the OpenBSD package path.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ROOT="${ROOT:-/home/dev/pub4}"
+if [ "$ROOT" != "/home/dev/pub4" ]; then
+  echo "vps_deploy_master: ROOT override refused; pub4-admin mutates the fixed /home/dev/pub4/RAILS/master tree" >&2
+  exit 2
+fi
 . "$ROOT/OPENBSD/lib/ruby_select.sh"
 WEB="$ROOT/RAILS/master"
 
