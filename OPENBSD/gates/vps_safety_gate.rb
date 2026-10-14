@@ -49,6 +49,33 @@ else
   failures << "missing tracked OPERATOR.sh"
 end
 
+guard_wrapper_path = File.join(OPENBSD, "bin", "resource_guard.sh")
+guard_impl_path = File.join(OPENBSD, "usr", "local", "bin", "resource_guard.sh")
+if File.file?(guard_wrapper_path) && !File.symlink?(guard_wrapper_path) &&
+   File.file?(guard_impl_path) && !File.symlink?(guard_impl_path)
+  guard_wrapper = File.read(guard_wrapper_path)
+  guard_impl = File.read(guard_impl_path)
+  guard_wrapper_contract = guard_wrapper.include?('if [ "$(id -u)" -eq 0 ]; then') &&
+                          guard_wrapper.include?('runner=/usr/local/bin/resource_guard.sh') &&
+                          guard_wrapper.include?('exec doas "$runner"') &&
+                          !guard_wrapper.match?(/^\s*(?:rcctl|install|chmod|chown)\s/m)
+  failures << "checkout resource-guard entrypoint must refuse root and delegate to installed runner" unless guard_wrapper_contract
+  guard_impl_contract = guard_impl.include?('GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh') &&
+                        guard_impl.include?('[[ -f $GUARD_HELPER && ! -L $GUARD_HELPER ]]') &&
+                        !guard_impl.include?("GUARD_REPO") &&
+                        !guard_impl.include?("/home/dev/pub4/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh")
+  failures << "root load guard must be separate from its checkout wrapper and reject symlinked helpers" unless guard_impl_contract
+  operator = File.read(File.join(OPENBSD, "OPERATOR.sh"))
+  source_list = operator[/typeset -a privileged_sources=\(.*?^  \)/m].to_s
+  guard_install_contract = source_list.include?("usr/local/bin/resource_guard.sh") &&
+                          operator.include?('install -o root -g wheel -m 555 "${src}/usr/local/bin/resource_guard.sh" /usr/local/bin/resource_guard.sh') &&
+                          operator.include?('refusing symlinked privileged destination file: $rel') &&
+                          operator.include?('installed resource guard is missing or symlinked')
+  failures << "OPERATOR.sh must preflight, install, and verify the root-owned load guard" unless guard_install_contract
+else
+  failures << "missing or symlinked resource-guard wrapper/runner source"
+end
+
 emergency_wrapper_path = File.join(OPENBSD, "emergency_cpu.sh")
 emergency_impl_path = File.join(OPENBSD, "usr", "local", "bin", "emergency_cpu.sh")
 if File.file?(emergency_wrapper_path) && !File.symlink?(emergency_wrapper_path) &&
