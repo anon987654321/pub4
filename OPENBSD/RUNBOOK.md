@@ -43,28 +43,37 @@ pull --ff-only` on vm23 → `vps_ci.sh <app>` → `OPERATOR.sh` or per-app deplo
 
 The staged root boundary is `/usr/local/sbin/pub4-admin`, mirrored at
 `OPENBSD/usr/local/sbin/pub4-admin`. A deliberate `OPERATOR.sh` sync installs
-it as `root:wheel`, mode `0555`, and installs the fixed CI preparation, sync and
-runner helpers under `/usr/local/libexec/`; the Solid Queue proof is installed
-under `/usr/local/libexec/pub4/`.
+it as `root:wheel`, mode `0555`, and installs the fixed CI preparation, sync,
+runner and Rails task helpers under `/usr/local/libexec/`; the Solid Queue proof
+is installed under `/usr/local/libexec/pub4/`.
 
 The broker exposes allowlisted service actions, validated deploy receipts, fixed
 CI lock/preparation operations, and trusted helper verbs. CI copy-tree mutations
 run with the selected app's UID, primary GID and only the required `_pub4ci`
 supplementary group. The CI runner has a real wall-clock deadline and terminates
-its full process group, including `bundle install`. The broker accepts no arbitrary
-filesystem paths or caller-provided shell command.
+its full process group, including `bundle install`. Rails tasks use a closed
+task vocabulary; `SECRET_KEY_BASE` crosses only in the child environment, never
+in the shell command text.
 
-`vps-deploy`, CI receipt writes, CI lock setup, CI preparation, CI sync and CI
-execution use the broker when the installed copy exists. It creates the canonical
-`/var/db/pub4/ci.lock`; keep `PUB4_CI_LOCK` unset on vm23 until the legacy override
-seam is removed. Compatibility fallbacks remain for the first rollout.
+`relayd-check` is read-only: it verifies the root-owned relay configuration's
+TLS keypair, Host route and app backend/port. It refuses unapproved routes rather
+than letting a deploy caller rewrite public routing policy. New hostnames must be
+added to `OPENBSD/etc/relayd.conf` in a deliberate `OPERATOR.sh` change first.
+The loopback health probe runs as the deploy user and needs no privilege.
 
-This is **not yet the complete privilege migration**: the CI fallback, `RAILS/_deploy.sh`,
-and other copy-tree/build helpers still contain direct `doas` operations. Keep the
-current `doas.conf` and wheel membership unchanged until those paths are migrated,
-the broker is installed, and the focused and full OpenBSD contract suites pass.
-Then narrow the `dev` rule and remove wheel membership in one planned rollout, with
-an authenticated operator recovery path established first.
+`vps-deploy`, CI receipt writes, CI lock setup, CI preparation, CI sync, CI
+execution, Rails runtime tasks and relay route verification use the broker when
+the installed copy exists. It creates the canonical `/var/db/pub4/ci.lock`; keep
+`PUB4_CI_LOCK` unset on vm23 until the legacy override seam is removed.
+Compatibility fallbacks remain for the first rollout.
+
+This is **not yet the complete privilege migration**: the CI fallback, the
+`RAILS/_deploy.sh` copy/install path, and some legacy deploy helpers still contain
+direct `doas` operations. Keep the current `doas.conf` and wheel membership
+unchanged until those paths are migrated, the broker is installed, and the focused
+and full OpenBSD contract suites pass. Then narrow the `dev` rule and remove wheel
+membership in one planned rollout, with an authenticated operator recovery path
+established first.
 
 ## SSH
 
