@@ -179,13 +179,13 @@ fi
 # file root dot-sources is the exact shape of the hole this replaced. Ships from
 # OPENBSD/usr/local/libexec/ via OPERATOR.sh install_root_configs.
 GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh
-if [[ -f $GUARD_HELPER ]]; then
+if [[ -f $GUARD_HELPER && ! -L $GUARD_HELPER ]]; then
   . "$GUARD_HELPER"
   stale_ci_cleanup "$load" "$mem_avail_pct"
 else
   # Loud, not silent: the previous revision skipped quietly when the helper was
   # absent, so load-shedding cleanup could stop running unnoticed.
-  logger -t resource-guard "stale_ci_cleanup helper missing at $GUARD_HELPER — cleanup skipped"
+  logger -t resource-guard "trusted stale_ci_cleanup helper missing or symlinked at $GUARD_HELPER — cleanup skipped"
 fi
 
 shed=0
