@@ -85,8 +85,8 @@ VERBATIM = {
   "usr/local/bin/relayd-watchdog" => "/usr/local/bin/relayd-watchdog",
   "usr/local/bin/renew-certs.sh" => "/usr/local/bin/renew-certs.sh",
   "usr/local/bin/uptime-check.sh" => "/usr/local/bin/uptime-check.sh",
-  "bin/resource_guard.sh" => "/usr/local/bin/resource_guard.sh",
-  "emergency_cpu.sh" => "/usr/local/bin/emergency_cpu.sh",
+  "usr/local/bin/resource_guard.sh" => "/usr/local/bin/resource_guard.sh",
+  "usr/local/bin/emergency_cpu.sh" => "/usr/local/bin/emergency_cpu.sh",
   "gates/config_drift_gate.rb" => "/usr/local/bin/config_drift_gate.rb",
   "bin/vps_weekly_integrity.sh" => "/usr/local/bin/vps_weekly_integrity.sh",
 }.freeze
