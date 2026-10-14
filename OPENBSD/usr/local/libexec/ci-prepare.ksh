@@ -18,6 +18,23 @@ if ! grep -q '^_pub4ci:' /etc/group; then
 fi
 /usr/sbin/usermod -G _pub4ci "$app"
 
+# Do not let an allowlisted app name turn a symlinked home/app path into a
+# privileged chmod target. Verify each ancestor and its ownership before touching
+# storage or the shared checkout permissions.
+app_uid=$(/usr/bin/id -u "$app")
+app_home="/home/$app"
+app_dir="$app_home/app"
+[ -d "$app_home" ] && [ ! -L "$app_home" ] &&
+  [ "$(stat -f %u "$app_home")" = "$app_uid" ] || {
+  echo "ci-prepare: app home must be a real directory owned by $app" >&2
+  exit 1
+}
+[ -d "$app_dir" ] && [ ! -L "$app_dir" ] &&
+  [ "$(stat -f %u "$app_dir")" = "$app_uid" ] || {
+  echo "ci-prepare: app directory must be a real directory owned by $app" >&2
+  exit 1
+}
+
 [ -d /home/dev ] && [ ! -L /home/dev ] || {
   echo "ci-prepare: /home/dev is not a real directory" >&2
   exit 1
@@ -25,11 +42,12 @@ fi
 /bin/chgrp _pub4ci /home/dev
 /bin/chmod 750 /home/dev
 
-storage="/home/$app/app/storage"
-if [ -L "$storage" ]; then
-  echo "ci-prepare: refusing storage symlink: $storage" >&2
-  exit 1
-fi
-if [ -d "$storage" ]; then
+storage="$app_dir/storage"
+if [ -e "$storage" ] || [ -L "$storage" ]; then
+  [ -d "$storage" ] && [ ! -L "$storage" ] &&
+    [ "$(stat -f %u "$storage")" = "$app_uid" ] || {
+      echo "ci-prepare: storage must be a real app-owned directory: $storage" >&2
+      exit 1
+    }
   /bin/chmod 750 "$storage"
 fi
