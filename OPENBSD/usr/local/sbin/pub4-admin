@@ -21,7 +21,6 @@ module Pub4Admin
   CI_RUN = "/usr/local/libexec/ci-run.ksh"
   CI_SYNC = "/usr/local/libexec/ci-sync.ksh"
   RAILS_TASK = "/usr/local/libexec/rails-task.ksh"
-  RAILS_BUNDLE = "/usr/local/libexec/rails-bundle.ksh"
   RAILS_APPS = %w[brgen amber bsdports].freeze
   RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
@@ -351,11 +350,6 @@ module Pub4Admin
 
     if args.length == 4 && args[0] == "rails-task" && RAILS_APPS.include?(args[1])
       return run_rails_task(args[1], args[2], args[3])
-    end
-
-    if args.length == 3 && args[0] == "rails-bundle" && RAILS_APPS.include?(args[1]) &&
-       valid_ci_timeout?(args[2])
-      return supervised_helper(RAILS_BUNDLE, args[1], args[2].to_i)
     end
 
     if args == ["resource-guard"]
