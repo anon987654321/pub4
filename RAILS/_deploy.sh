@@ -22,6 +22,11 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 # deploy_tracked_app APP_NAME — copy the app tree, install bundle/db/service, then restart.
 deploy_tracked_app() {
   local app_name=${1:-$APP_NAME}
+  case "$app_name" in
+    brgen|amber|bsdports) ;;
+    *) log_err "deploy_tracked_app: refused unknown app: $app_name"; return 2 ;;
+  esac
+
 
   need_cmd "$RUBY" "$BUNDLE" doas
 
@@ -30,8 +35,14 @@ deploy_tracked_app() {
   log "${app_name} — deploying tracked tree → ${APP_DIR}"
   deploy_status "$app_name" "sync tree"
 
-  id "$app_name" >/dev/null 2>&1 || doas useradd -m -L daemon -s /bin/ksh "$app_name"
-  doas mkdir -p "$APP_DIR"
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  ${_PRIV} /usr/local/sbin/pub4-admin ensure-app "$app_name" || {
+    log_err "app account/layout preparation failed for $app_name"
+    return 1
+  }
 
   sync_tree "${SRC_DIR}/" "${APP_DIR}"
   doas rm -rf "/home/${app_name}/__shared"
