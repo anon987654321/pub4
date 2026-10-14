@@ -1,0 +1,127 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Root-owned, narrow broker for the production deploy path.
+# Never evaluate a command string or accept a filesystem path from argv.
+require "fileutils"
+require "json"
+require "securerandom"
+require "socket"
+require "time"
+
+module Pub4Admin
+  APPS = %w[master brgen amber bsdports].freeze
+  SERVICES = %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].freeze
+  SERVICE_ACTIONS = %w[check get start stop restart enable disable].freeze
+  RCCTL = "/usr/sbin/rcctl"
+  RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
+  SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
+  STAMP_DIR = "/var/db/pub4"
+  RUBY_CANDIDATES = %w[
+    /usr/local/bin/ruby4.0 /usr/local/bin/ruby40
+    /usr/local/bin/ruby3.4 /usr/local/bin/ruby34
+    /usr/local/bin/ruby3.3 /usr/local/bin/ruby33
+    /usr/local/bin/ruby
+  ].freeze
+
+  module_function
+
+  # A closed argv protocol. Unknown verbs, services and argument shapes refuse.
+  def command_for(argv)
+    args = Array(argv).map(&:to_s)
+    return [RCCTL, "ls", "started"] if args == %w[service list-started]
+
+    if args.length == 3 && args[0] == "service"
+      action, service = args.drop(1)
+      return [RCCTL, action, service] if SERVICE_ACTIONS.include?(action) && SERVICES.include?(service)
+    end
+
+    nil
+  end
+
+  def trusted_executable?(path)
+    return false if File.symlink?(path) || !File.file?(path) || !File.executable?(path)
+
+    stat = File.stat(path)
+    stat.uid.zero? && (stat.mode & 0o022).zero?
+  rescue SystemCallError
+    false
+  end
+
+  def trusted_script!(path)
+    return if trusted_executable?(path)
+
+    raise "#{path} missing or not a root-owned, non-writable executable"
+  end
+
+  def ruby_path
+    RUBY_CANDIDATES.find { |path| File.file?(path) && File.executable?(path) } ||
+      raise("no supported system Ruby found under /usr/local/bin")
+  end
+
+  def write_stamp(app, sha, status)
+    raise "unknown app: #{app}" unless APPS.include?(app)
+    raise "invalid commit id" unless sha.match?(/\A(?:[0-9a-f]{7,40}|unknown)\z/i)
+    raise "invalid deploy status" unless %w[ok failed ci_ok].include?(status)
+
+    if File.symlink?(STAMP_DIR)
+      raise "#{STAMP_DIR} is a symlink; refusing root write"
+    end
+    FileUtils.mkdir_p(STAMP_DIR, mode: 0o755)
+    stat = File.stat(STAMP_DIR)
+    raise "#{STAMP_DIR} is not a root-owned directory" unless stat.directory? && stat.uid.zero?
+    File.chmod(0o755, STAMP_DIR)
+
+    target = File.join(STAMP_DIR, "last_deploy_#{app}.json")
+    temporary = File.join(STAMP_DIR, ".last_deploy_#{app}.#{Process.pid}.#{SecureRandom.hex(6)}")
+    payload = {
+      app: app,
+      sha: sha,
+      at: Time.now.utc.iso8601,
+      status: status,
+      host: Socket.gethostname,
+    }
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+        file.write(JSON.generate(payload) + "\n")
+        file.flush
+        file.fsync
+      end
+      File.chmod(0o644, temporary)
+      File.rename(temporary, target)
+      puts "stamp0: #{target} status=#{status} sha=#{sha}"
+      0
+    ensure
+      File.unlink(temporary) if File.exist?(temporary)
+    end
+  end
+
+  def main(argv)
+    raise "must run as root through doas" unless Process.uid.zero?
+
+    args = Array(argv).map(&:to_s)
+    if args.length == 4 && args[0] == "stamp"
+      return write_stamp(*args.drop(1))
+    end
+
+    if args == ["resource-guard"]
+      trusted_script!(RESOURCE_GUARD)
+      exec("/bin/ksh", RESOURCE_GUARD)
+    end
+
+    if args.length == 2 && args[0] == "solid-queue-proof" && APPS.include?(args[1])
+      trusted_script!(SOLID_QUEUE_PROOF)
+      exec(ruby_path, SOLID_QUEUE_PROOF, args[1])
+    end
+
+    command = command_for(args)
+    raise "refused arguments: #{args.inspect}" unless command
+
+    exec(*command)
+  rescue StandardError => e
+    warn "pub4-admin: refused or failed: #{e.class}: #{e.message}"
+    126
+  end
+end
+
+exit(Pub4Admin.main(ARGV)) if $PROGRAM_NAME == __FILE__
