@@ -120,6 +120,19 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes helper, 'run_rails_as_app "$app_name" "/home/${app_name}/app" "npm-cache"'
     refute_match(/\$\{_PRIV\}.*(?:mkdir|chown)/, helper)
   end
+  def test_production_tree_sync_uses_the_bounded_app_user_helper
+    deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
+    sync = File.read(File.join(ROOT, "RAILS", "_sync.sh"), encoding: "UTF-8")
+    block = deploy[/rails_sync_app_tree "$app_name" app.*?overlay_shared_public "$APP_DIR"/m]
+
+    refute_nil block, "production deploy must use the fixed app-user sync path"
+    assert_includes block, 'rails_sync_app_tree "$app_name" shared'
+    assert_includes block, 'rails_sync_app_tree "$app_name" verticals'
+    refute_match(/doas (?:rm|chown|mkdir|mv|sh -c)/, block)
+    assert_includes sync, 'pub4-admin rails-sync "$app_name" "$mode"'
+    assert_includes sync, "rails_sync_app_tree: pub4-admin is missing"
+  end
+
   def test_rails_production_bundle_uses_bounded_broker
     core = File.read(File.join(ROOT, "RAILS", "_bundle.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
