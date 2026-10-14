@@ -78,6 +78,18 @@ if File.file?(admin_path)
          admin.include?("File.lstat(path)")
     failures << "pub4-admin CI lock must use one fixed path and refuse symlinks"
   end
+  helper_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-prepare.ksh")
+  if File.file?(helper_path)
+    helper = File.read(helper_path)
+    unless helper.include?("brgen|amber|bsdports") &&
+           helper.include?('[ ! -L /home/dev ]') &&
+           helper.include?('[ -L "$storage" ]') &&
+           helper.include?('storage="/home/$app/app/storage"')
+      failures << "ci-prepare helper must be fixed-app and symlink-safe"
+    end
+  else
+    failures << "missing tracked usr/local/libexec/ci-prepare.ksh"
+  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
