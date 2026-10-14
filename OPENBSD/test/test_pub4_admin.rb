@@ -218,7 +218,7 @@ class Pub4AdminTest < Minitest::Test
 
     assert_includes source, 'args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])'
     assert_includes source, "run_rails_task(args[1], args[2])"
-    assert_includes helper, 'bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci'
+    assert_includes helper, 'bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci'
     assert_includes helper, 'BUNDLE_PATH: /home/$app/.bundle/gems'
     assert_includes helper, 'RAILS_ENV=production $bundle install'
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
