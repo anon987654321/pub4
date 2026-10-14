@@ -169,6 +169,22 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   else
     failures << "missing RAILS/_service.sh relayd broker adapter"
   end
+  sync_file = File.join(ROOT, "RAILS", "_sync.sh")
+  if File.file?(sync_file)
+    sync_source = File.read(sync_file)
+    initializers_overlay = sync_source[/overlay_shared_initializers\(\) \{.*?^\}/m]
+    public_overlay = sync_source[/overlay_shared_public\(\) \{.*?^\}/m]
+    overlay_contract = initializers_overlay &&
+                       initializers_overlay.include?('run_rails_as_app "$app_name" "$app_dir" "overlay-initializers"') &&
+                       !initializers_overlay.match?(/\$\{_PRIV\}\s+(?:mkdir|cp|rm|mv)/) &&
+                       public_overlay &&
+                       public_overlay.include?('run_rails_as_app "$app_name" "$app_dir" "overlay-public"') &&
+                       !public_overlay.match?(/\$\{_PRIV\}\s+(?:mkdir|cp|rm|mv)/)
+    failures << "shared Rails overlays must run as the app user through fixed Rails tasks" unless overlay_contract
+  else
+    failures << "missing RAILS/_sync.sh shared overlay adapters"
+  end
+
   runtime_path = File.join(ROOT, "RAILS", "_runtime_gate.sh")
   if File.file?(runtime_path)
     runtime = File.read(runtime_path)
