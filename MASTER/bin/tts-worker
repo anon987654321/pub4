@@ -330,7 +330,12 @@ end
 # per-request isolation via a copy-on-write child that skips bundler/require
 # entirely, so it inherits the already-loaded interpreter instead of
 # re-booting one.
-def synth_forked(request, out_path)
+#
+# retry_in_subprocess is false for the one-shot entry, which is already a fresh
+# interpreter: retrying through synth_subprocess there launches another one-shot
+# that retries the same way, and an Edge that answers nothing made an unbounded
+# chain of workers.
+def synth_forked(request, out_path, retry_in_subprocess: true)
   if ENV["SSL_CERT_FILE"].to_s.empty?
     cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }
     ENV["SSL_CERT_FILE"] = cert if cert
@@ -354,10 +359,10 @@ def synth_forked(request, out_path)
 
   # Edge answered the forked child with nothing. A fresh interpreter has made the audio
   # when a child did not, so ask once that way before reporting an empty file.
-  synth_subprocess(request, out_path)
+  retry_in_subprocess && synth_subprocess(request, out_path)
 rescue NotImplementedError, StandardError => e
   Master::Trace::Dmesg.status("tts0", "fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
-  synth_subprocess(request, out_path)
+  retry_in_subprocess ? synth_subprocess(request, out_path) : false
 end
 
 def require_eventmachine_ssl!
@@ -505,7 +510,7 @@ end
 require_eventmachine_ssl!
 
 begin
-  ok = synth_forked(SynthRequest.new(voice:, rate:, pitch:, text:), out_path)
+  ok = synth_forked(SynthRequest.new(voice:, rate:, pitch:, text:), out_path, retry_in_subprocess: false)
   exit(ok ? 0 : 1)
 rescue StandardError => e
   Master::Trace::Dmesg.status("tts0", "#{e.class}: #{e.message}", io: $stderr)
