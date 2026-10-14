@@ -224,6 +224,20 @@ class LayoutContractTest < Minitest::Test
                  "the gutter arithmetic went with the hostname -- do not restore one without the other")
   end
 
+  def test_retired_brand_class_rules_stay_removed
+    partial = File.read(File.join(SHARED, "app", "views", "shared", "_brand_mark.html.erb"))
+    minimal = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_minimal.scss"))
+    shell = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_shell.scss"))
+    focus = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_focus_ring.scss"))
+
+    assert_includes partial, 'fetch(:class_name, "brand-mark")'
+    refute_match(/nav\s+\.brand\b/, minimal)
+    refute_match(/^\s*\.brand\s*\{/m, shell)
+    refute_match(/^\s*\.brand:(?:hover|focus)/m, shell)
+    refute_match(/\.brand:focus-visible/, focus)
+    assert_includes shell, ".brand-text {", "the live wordmark text styling stays intact"
+  end
+
   def test_shared_chrome_tokens_declare_layout_floor
     yml = File.read(TOKENS)
     assert_match(/chrome_inset:\s*"12px"/, yml)
