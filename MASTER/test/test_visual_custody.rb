@@ -56,6 +56,7 @@ class TestVisualCustody < Minitest::Test
   end
 
   def test_equivalent_routes_share_one_baseline_without_skipping_either_surface
+    previous = ENV.delete("GATE_SURFACES")
     surfaces = Deploy::GeometryProbe.surfaces
     gate = Deploy::LayoutSnapshotGate.new
     aliases = {
@@ -74,6 +75,17 @@ class TestVisualCustody < Minitest::Test
       assert_equal gate.send(:baseline_path, canonical), gate.send(:baseline_path, aliased)
       assert File.file?(gate.send(:baseline_path, canonical)), "canonical baseline missing: #{canonical_id}"
     end
+
+    %w[
+      bsdports-ports_index-mobile.json
+      bsdports-ports_index-desktop.json
+      brgen-conversations-desktop.json
+    ].each do |name|
+      refute File.exist?(File.join(ROOT, "gates", "data", "layout_snapshots", name)),
+             "duplicate snapshot survived canonicalization: #{name}"
+    end
+  ensure
+    ENV["GATE_SURFACES"] = previous unless previous.nil?
   end
 
   def test_matching_snapshot_is_preserved
