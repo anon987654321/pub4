@@ -253,6 +253,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                      installer.include?("missing or symlinked privileged source")
   failures << "OPERATOR.sh must preflight privileged sources before copying" unless source_preflight
   install_preflight = installer.include?("installed privileged entrypoint missing or symlinked") &&
+                      installer.include?("/usr/local/libexec/rails-sync.ksh; do") &&
                       installer.include?("/usr/local/libexec/pub4/solid_queue_proof.rb")
   failures << "OPERATOR.sh must verify installed privileged entrypoints" unless install_preflight
   destination_guard_at = installer.index("Never copy privileged code through a symlinked system directory or file.")
