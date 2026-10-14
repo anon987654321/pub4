@@ -41,6 +41,7 @@ run_rails_as_app() {
   local app_name=$1 app_dir=$2 task=${3:-} database=${4:-}
   local secret command npm_cache
   case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
+  [[ $app_dir == "/home/${app_name}/app" ]] || { log_err "run_rails_as_app: refused app path: $app_dir"; return 2; }
   case "$task" in
     ci-bundle-install|bundle-check|db-prepare|db-seed|demo-seed|assets-precompile|ci) [[ -z $database ]] || return 2 ;;
     schema-load|secondary-db-check) [[ $database == cache || $database == queue || $database == cable ]] || return 2 ;;
@@ -61,13 +62,14 @@ run_rails_as_app() {
   npm_cache="/home/${app_name}/.npm"
   case "$task" in
     ci-bundle-install)
-      command="${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" ;;
+      command="ci-bundle-install" ;;
     bundle-check)
       command="${BUNDLE} check" ;;
     db-prepare)
       secret=$(app_secret_for "$app_name") || return 1
-      [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
-      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare" ;;
+      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
+      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
+      command="db-prepare" ;;
     db-seed)
       secret=$(app_secret_for "$app_name") || return 1
       [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
@@ -84,7 +86,7 @@ run_rails_as_app() {
       secret=$(app_secret_for "$app_name") || return 1
       [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
       local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
-      command="SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 ${BUNDLE} exec bin/ci" ;;
+      command="ci" ;;
     schema-load)
       secret=$(app_secret_for "$app_name") || return 1
       [[ $secret == [0-9A-Fa-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || { log_err "invalid SECRET_KEY_BASE"; return 1; }
@@ -93,7 +95,7 @@ run_rails_as_app() {
       return 1 ;; # The fallback path below still owns the legacy sqlite3 check.
   esac
   ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=/home/${app_name}/.cache; export BUNDLE_USER_HOME=/home/${app_name}/.bundle; unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT; cd ${app_dir} && ${command}'"
-
+}
 
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
 rails_runtime_gate() {
@@ -117,14 +119,14 @@ rails_runtime_gate() {
     secret=$(app_secret_for "$app_name")
     deploy_status "$app_name" "runtime gate: bundle install"
     run_rails_as_app "$app_name" "$app_dir" \
-      "${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" \
+      "ci-bundle-install" \
       || { deploy_status "$app_name" "runtime gate: bundle install" "failed"; log_err "ci bundle install failed"; return 1; }
     deploy_status "$app_name" "runtime gate: bundle check"
-    run_rails_as_app "$app_name" "$app_dir" "$BUNDLE" check \
+    run_rails_as_app "$app_name" "$app_dir" "bundle-check" \
       || { deploy_status "$app_name" "runtime gate: bundle check" "failed"; log_err "bundle check failed"; return 1; }
     deploy_status "$app_name" "runtime gate: db:prepare"
     run_rails_as_app "$app_name" "$app_dir" \
-      "SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare" \
+      "db-prepare" \
       || { deploy_status "$app_name" "runtime gate: db:prepare" "failed"; log_err "db:prepare failed"; return 1; }
     deploy_status "$app_name" "runtime gate: secondary dbs"
     rails_prepare_secondary_dbs_as_app "$app_name" "$app_dir" \
@@ -141,7 +143,7 @@ rails_runtime_gate() {
       fi
       deploy_status "$app_name" "runtime gate: bin/ci"
       run_rails_as_app "$app_name" "$app_dir" \
-        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 ${BUNDLE} exec bin/ci" \
+        "ci" \
         || { deploy_status "$app_name" "runtime gate: bin/ci" "failed"; log_err "bin/ci failed"; return 1; }
     fi
   else
