@@ -16,6 +16,8 @@ class LayoutContractTest < Minitest::Test
   SHELL_WIDGETS = File.join(SHARED, "app", "assets", "stylesheets", "_shell_widgets.scss")
   SHELL = File.join(SHARED, "app", "assets", "stylesheets", "_shell.scss")
   DIALECT = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
+  RADIO_HOME_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_radio_home.scss")
+  BRGEN_CORE_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_core_shell.scss")
 
   LAYOUTS = {
     "brgen" => File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"),
@@ -334,6 +336,33 @@ class LayoutContractTest < Minitest::Test
       features.each { |path| source = "#{source}\n#{File.read(path)}" }
     end
     Operator::ScssRules.matching(source, selector)
+  end
+
+  def test_radio_actions_clear_the_persistent_navigation_band
+    radio = File.read(RADIO_HOME_CSS)
+    shell = File.read(BRGEN_CORE_SHELL)
+
+    mobile_nav = radio.match(/\.radio-nav\s*\{([^}]*)\}/m)&.[](1)
+    assert mobile_nav, "radio action links need one base positioning rule"
+    assert_match(
+      /inset-block-start:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\s*\+\s*var\(--safe-top\)\s*\+\s*var\(--space-4\)\)/,
+      mobile_nav,
+      "mobile radio actions must clear the brand band and primary nav"
+    )
+
+    desktop_nav = radio.match(
+      /@media\s*\(min-width:\s*768px\)\s*\{\s*\.radio-nav\s*\{([^}]*)\}/m
+    )&.[](1)
+    assert desktop_nav, "desktop radio positioning must follow the primary-nav breakpoint"
+    assert_match(
+      /inset-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--space-4\)\)/,
+      desktop_nav,
+      "desktop radio actions must clear the single nav band"
+    )
+
+    assert_includes shell,
+                    "inset: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top)) 0 0 0;"
+    assert_includes shell, "inset: var(--nav-swiper-h) 0 0 0;"
   end
 
   def test_theme_root_uses_dynamic_viewport_height
