@@ -259,16 +259,16 @@ article dd + dt {
 // From 640px the nav fits one row, the search puts its button beside the
 // field, and a port's terms sit beside their definitions.
 @media (min-width: 640px) {
-  // The primary nav fits one row at this width, so the port meta strip can
-  // stay pinned below it without covering wrapped navigation items.
+  // The primary nav fits one row at this width. Anchor its meta strip and
+  // the document clearance to the shared nav height, including safe-area insets.
   article > header {
     position: sticky;
-    top: 52px;
+    top: var(--nav-swiper-h);
     z-index: 5;
   }
 
   body {
-    padding-block-start: 64px;
+    padding-block-start: calc(var(--nav-swiper-h) + var(--space-1));
   }
 
   nav[data-pwa-primary-nav] {
