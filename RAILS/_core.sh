@@ -60,7 +60,17 @@ deploy_status() {
   local now
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   DEPLOY_STATUS_STARTED_AT=${DEPLOY_STATUS_STARTED_AT:-$now}
-  ${_PRIV} mkdir -p "$DEPLOY_STATUS_DIR" 2>/dev/null || true
-  print -- "{\"app\":\"${app}\",\"step\":\"${step}\",\"state\":\"${state}\",\"pid\":$$,\"started_at\":\"${DEPLOY_STATUS_STARTED_AT}\",\"updated_at\":\"${now}\"}" \
-    | ${_PRIV} tee "${DEPLOY_STATUS_DIR}/${app}.json" >/dev/null 2>&1 || true
+
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    @DOLLAR${_PRIV} /usr/local/sbin/pub4-admin deploy-status "$app" "$step" "$state" || {
+      log_warn "deploy_status: broker write failed for @DOLLAR${app}/@DOLLAR${step}"
+      return 0
+    }
+    return 0
+  fi
+
+  # Bootstrap-only fallback until the root-owned broker is installed.
+  @DOLLAR${_PRIV} mkdir -p "$DEPLOY_STATUS_DIR" 2>/dev/null || true
+  print -- "{\"app\":\"@DOLLAR${app}\",\"step\":\"@DOLLAR${step}\",\"state\":\"@DOLLAR${state}\",\"pid\":$$,\"started_at\":\"@DOLLAR${DEPLOY_STATUS_STARTED_AT}\",\"updated_at\":\"@DOLLAR${now}\"}" \
+    | @DOLLAR${_PRIV} tee "@DOLLAR${DEPLOY_STATUS_DIR}/@DOLLAR${app}.json" >/dev/null 2>&1 || true
 }
