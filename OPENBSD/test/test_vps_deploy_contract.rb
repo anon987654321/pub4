@@ -101,9 +101,23 @@ class VpsDeployContractTest < Minitest::Test
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
 
     assert_equal 1, core.scan("bundle_install_as_app() {").length
-    assert_includes core, '/usr/local/sbin/pub4-admin rails-task "$app_name" bundle-install'
+    assert_includes core, 'run_rails_as_app "$app_name" "$app_dir" "bundle-install"'
+    assert_includes File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh")), '/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"'
     assert_includes deploy, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
     assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
+  end
+
+  def test_rails_database_tasks_use_closed_dispatcher
+    database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
+    runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
+
+    assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "db-prepare"'
+    assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "schema-load" "$db"'
+    assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "secondary-db-check" "$db"'
+    assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "db-storage-migrate"'
+    assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "db-seed"'
+    assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "demo-seed"'
+    assert_includes runtime, 'rails-task "$app_name" "$task" "$database"'
   end
 
   def test_rails_deploy_service_lifecycle_uses_closed_broker_adapter
