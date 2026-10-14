@@ -797,7 +797,9 @@ class TestPostproFilm < Minitest::Test
     sheet, stocks = stock_sheet(image, :house, cell: 48)
     assert_equal STOCKS.keys, stocks
     columns = Math.sqrt(stocks.length).ceil
+    rows = (stocks.length.to_f / columns).ceil
     assert_equal columns * 48 + (columns - 1) * STOCK_SHEET_GAP, sheet.width
+    assert_equal rows * (48 + STOCK_SHEET_LABEL) + (rows - 1) * STOCK_SHEET_GAP, sheet.height
   end
 
   def test_dilla_analog_translations_are_reachable
