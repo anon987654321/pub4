@@ -50,13 +50,22 @@ font-family: var(--font-brand);
 
 .radio-nav {
   position: fixed;
-  inset-block-start: var(--space-8);
+  // The global nav paints above the full-screen tunnel. Keep radio actions below
+  // that published chrome band rather than letting the bar cover their hit area.
+  inset-block-start: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top) + var(--space-4));
   inset-inline-end: var(--space-8);
   z-index: 11;
   display: flex;
   gap: 12px;
   align-items: center;
   pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+  // At desktop widths the brand shares the nav row, so only the nav band clears.
+  .radio-nav {
+    inset-block-start: calc(var(--nav-swiper-h) + var(--space-4));
+  }
 }
 
 .radio-nav a,
