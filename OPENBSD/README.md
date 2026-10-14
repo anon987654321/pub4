@@ -41,9 +41,7 @@ checkout, and relay route verification is read-only.
 
 The Bundler content-addressed cache now uses fixed broker verbs, a bounded Ruby-version
 key and immutable SHA-256 objects; the app copies cache objects rather than sharing
-root-owned inodes through hard links. This is not yet the final privilege cut: `vps-deploy` retains a few service, stamp and helper fallbacks, and parts of app installation still use direct `doas`. Keep the existing
-`/etc/doas.conf` rule and `wheel` membership unchanged until those operations are
-migrated, the contract suite passes in a real OpenBSD checkout, and vm23 is verified.
+root-owned inodes through hard links. The CI and `vps-deploy` entrypoints now fail closed without the reviewed broker; direct root-shell, service-control and receipt-write fallbacks were removed from those paths. The remaining privilege cut is the wider operator/recovery surface and any installer helpers that still invoke `doas` directly. Keep the existing `/etc/doas.conf` rule and `wheel` membership unchanged until every privileged path is inventoried, migrated, and tested in a real OpenBSD checkout on vm23.
 
 ## Configuration ownership and secrets
 
