@@ -217,6 +217,14 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes legacy, 'doas zsh "$script"'
   end
 
+  def test_ci_source_permissions_do_not_grant_world_read
+    assert_includes CI_SOURCE, 'chmod -R u+rX,g+rX "${repo}/MASTER/tools"'
+    refute_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
+    runtime_gate = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
+    assert_includes runtime_gate, 'chmod -R u+rX,g+rX "$rails_tree"'
+    refute_includes runtime_gate, 'chmod -R a+rX "$rails_tree"'
+  end
+
   def test_ci_does_not_escalate_permission_changes_on_the_checkout
     refute_includes CI_SOURCE, 'doas chmod -R a+rX "${repo}/MASTER/tools"'
     assert_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
