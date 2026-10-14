@@ -118,8 +118,14 @@ install_tracked_crontab() {
   # that root wrote and then fed straight to crontab(1) — the same shape as the
   # doas.conf staging file in validate_doas.ksh, and with root's crontab as the
   # payload. A root-owned 0700 directory has no symlink for root to follow.
-  typeset cron_dir=/var/db/pub4
-  mkdir -p $cron_dir && chmod 700 $cron_dir
+  # Public deploy receipts live directly in /var/db/pub4; keep root-crontab
+  # staging in a private child directory so making receipts readable cannot expose
+  # the temporary root crontab during an operator sync.
+  typeset cron_dir=/var/db/pub4/private
+  mkdir -p /var/db/pub4 "$cron_dir" || return 1
+  chown root:wheel /var/db/pub4 "$cron_dir" || return 1
+  chmod 755 /var/db/pub4 || return 1
+  chmod 700 "$cron_dir" || return 1
   typeset root_cron
   root_cron=$(mktemp "${cron_dir}/root_crontab.XXXXXXXXXX") || return 1
   TMPFILES+=($root_cron)
