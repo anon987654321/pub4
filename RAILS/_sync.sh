@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-# _sync.sh — copy-tree sync and shared-file overlays for copy-tree deploy.
+# _sync.sh — copy-tree sync and fixed app-user shared-file overlays.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
 # The tar copy is the default path. openrsync runs only when SYNC_USE_OPENRSYNC
@@ -91,20 +91,3 @@ overlay_shared_public() {
   run_rails_as_app "$app_name" "$app_dir" "overlay-public" || return $?
   log_ok "shared public assets and bin stubs overlaid"
 }
-
-# overlay_shared_bin APP_DIR — ci.rb expects bin/rubocop, brakeman, bundler-audit stubs
-overlay_shared_bin() {
-  local app_dir=$1
-  local shared_bin=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/bin
-  [[ -d $shared_bin ]] || return 0
-  ${_PRIV} mkdir -p "${app_dir}/bin"
-  for tool in rubocop brakeman bundler-audit; do
-    [[ -f ${shared_bin}/${tool} ]] || continue
-    ${_PRIV} cp "${shared_bin}/${tool}" "${app_dir}/bin/${tool}"
-    ${_PRIV} chmod 755 "${app_dir}/bin/${tool}"
-  done
-  [[ -f ${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/.rubocop.yml ]] \
-    && ${_PRIV} cp "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
-  log_ok "shared bin stubs overlaid"
-}
-
