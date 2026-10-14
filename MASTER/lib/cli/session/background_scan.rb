@@ -60,7 +60,7 @@ module Master
 
       def boot_scan
         result = Master::Review::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus,
-          rules: mechanical_scanner_rules).call(autofix: false)
+          laws: mechanical_scanner_rules).call(autofix: false)
         return unless result.ok?
 
         summary = result.value!
@@ -114,7 +114,7 @@ module Master
 
       def background_cycle!
         lib_dir = File.join(@refs.root, "lib")
-        result = @refs.scanner.scan_dir(lib_dir, depth: :deep, rules: mechanical_scanner_rules)
+        result = @refs.scanner.scan_dir(lib_dir, depth: :deep, laws: mechanical_scanner_rules)
         return unless result.ok?
         n = count_violations(result.value!)
         prev = violations_count
