@@ -88,8 +88,10 @@ if File.file?(admin_path)
                     sync.include?('repo=/home/dev/pub4') &&
                     sync.include?('[ "$(id -un)" = "$app" ]') &&
                     sync.include?('tar xf - -C "$app_dir"') &&
+                    sync.scan('git -c safe.directory="$repo" -C "$repo"').length >= 3 &&
+                    !sync.include?('git -C "$repo"') &&
                     !sync.match?(/^\s*(?:doas|sudo|chown)\b/)
-    failures << "ci-sync helper must be app-scoped and must not perform privileged actions" unless sync_contract
+    failures << "ci-sync helper must be app-scoped, pin one Git safe.directory and avoid privileged actions" unless sync_contract
   else
     failures << "missing tracked usr/local/libexec/ci-sync.ksh"
   end
