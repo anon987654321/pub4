@@ -65,9 +65,9 @@ if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
            when "/status"
              ["status", "fast pipe", "service master/not-booted", "pipeline fast"].join("\n")
            when "/help", "/?"
-             "/status /help available in fast pipe mode"
+             "/status and /help are available in fast pipe mode; /fix is the primary repair operation in the interactive console"
            else
-             "/status /help only in fast pipe mode"
+             "/status and /help are the only fast-pipe commands; use the interactive console for /fix"
            end
     Master::Trace::Dmesg::Report.print(command.empty? ? "/help" : command, body)
   end

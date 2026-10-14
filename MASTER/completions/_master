@@ -13,7 +13,7 @@ _master() {
     'doctor:host, provider, exposure and hardware health'
     'face:open the full-screen 3D terminal face'
     'fix:observe, critique, repair, observe again until it converges'
-    'help:list commands'
+    'help:OpenBSD Operator command map; /fix is the primary repair operation'
     'ios:start iOS/PWA onboarding'
     'model:show or switch the active model, and connect its subscriptions'
     'orders:the objective ledger'

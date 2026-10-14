@@ -57,7 +57,8 @@ class TestCliBootE2e < Minitest::Test
     out, err, status = run_cli_pipe("/help\n")
     combined = "#{out}#{err}"
     assert status.success?, "cli /help failed: #{combined[0, 400]}"
-    assert_match(/help|command/i, combined)
+    assert_match(/help0 at master0:/i, combined)
+    assert_match(%r{/fix is the primary repair operation in the interactive console}, combined)
   end
 
   def test_bin_ruby_wrapper_reaches_master_boot
