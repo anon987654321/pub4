@@ -7,10 +7,11 @@ curve that spends contrast instead of adding it, and a print stock after that. I
 house grade for stills, and its entry point is `STUDIO/postpro/postpro.rb`.
 
 Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it a bare
-path and the path is the subject: an image goes through several random chains written beside
-it, a directory gives a few random picks from it, and a path that is neither is named and
-refused. Give it nothing and it asks what to grade. The command `postpro.rb --help` lists every
-flag, and `--capabilities` says what the current build can do on this machine.
+path and the path is the subject: an image goes through several random chains written to the
+dated render directory, a directory gives a few random picks from it, and a path that is
+neither is named and refused. Set `POSTPRO_OUTPUT_DIR` to choose another directory. Give it
+nothing and it asks what to grade. The command `postpro.rb --help` lists every flag, and
+`--capabilities` says what the current build can do on this machine.
 
 The code is a handful of files. The file `postpro.rb` holds the grade, the presets, the film
 tables and the command line. The file `legacy_effects.rb` holds the creative effects recovered
@@ -106,9 +107,9 @@ the weights everything falls back to the proxies, with one quiet log line.
 ## Random chains and heavy mode
 
 A bare path, or `--random`, renders several variations of a photograph, each through its own
-chain, written beside the source with a JSON sidecar naming every effect and the seed. Heavy
-mode is the standing default: five variations dealt from subtle to bleeding edge, with long
-chains. `POSTPRO_HEAVY=0` returns to the lighter taste. Each run draws a fresh seed and prints
+chain, written to the dated render directory with a JSON sidecar naming every effect and the
+seed. Set `POSTPRO_OUTPUT_DIR` to override that destination. Heavy mode is the standing
+default: five variations dealt from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter taste. Each run draws a fresh seed and prints
 it, and `POSTPRO_SEED` renders a family again.
 
 A chain is grown and not sampled. A random subset of the whole effect list is the Photoshop
