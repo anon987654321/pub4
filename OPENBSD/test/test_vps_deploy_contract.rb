@@ -150,7 +150,8 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes core, 'run_rails_as_app "$app_name" "$app_dir" "bundle-install"'
     assert_includes File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh")), '/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"'
     assert_includes deploy, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
-    assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
+    refute_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
+    refute_includes deploy, 'doas tee "${APP_DIR}/.bundle/config"'
   end
 
   def test_relayd_adapter_fails_closed_without_broker
