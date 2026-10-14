@@ -19,6 +19,7 @@ class TestConflictResolverLogRotation < Minitest::Test
 
       assert File.exist?("#{path}.1"), "oversized log should be rotated aside, not appended to"
       assert File.exist?(path), "a fresh log file should exist after rotation"
+      assert_operator File.size("#{path}.1"), :<=, Master::Fix::ConflictResolver::LOG_MAX_BYTES
       assert_operator File.size(path), :<, Master::Fix::ConflictResolver::LOG_MAX_BYTES
     end
   end
@@ -32,15 +33,20 @@ class TestConflictResolverLogRotation < Minitest::Test
       FileUtils.mkdir_p(File.dirname(path))
 
       total_rotations.times do |n|
-        File.write(path, "gen#{n}" + ("x" * Master::Fix::ConflictResolver::LOG_MAX_BYTES))
+        File.write(path, ("x" * Master::Fix::ConflictResolver::LOG_MAX_BYTES) + "\ngen#{n}")
         resolver.send(:log_conflict, law_a: "A", law_b: "B", resolution: "a_wins", file: "f.rb", line: 1)
       end
 
       refute File.exist?("#{path}.#{generations + 1}"), "should never keep more than #{generations} rotated generations"
       # .1 is the most recently rotated-out log; .#{generations} is the oldest one still kept
       # (the two oldest of the #{total_rotations} rotations, gen0 and gen1, were discarded).
-      assert_match(/\Agen#{total_rotations - 1}/, File.read("#{path}.1", 6))
-      assert_match(/\Agen#{total_rotations - generations}/, File.read("#{path}.#{generations}", 6))
+      [*1..generations].each do |index|
+        assert_operator File.size("#{path}.#{index}"), :<=, Master::Fix::ConflictResolver::LOG_MAX_BYTES
+      end
+      latest_tail = File.open("#{path}.1", "rb") { |file| file.seek(-16, IO::SEEK_END); file.read }
+      oldest_tail = File.open("#{path}.#{generations}", "rb") { |file| file.seek(-16, IO::SEEK_END); file.read }
+      assert_includes latest_tail, "gen#{total_rotations - 1}"
+      assert_includes oldest_tail, "gen#{total_rotations - generations}"
     end
   end
 
