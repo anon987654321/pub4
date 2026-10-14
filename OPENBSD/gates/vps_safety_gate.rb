@@ -126,6 +126,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?('table=$("$ruby_path" -e') &&
                           rails_task.include?('[ ! -L "$app_home" ]') &&
                           rails_task.include?('[ ! -L "$app_dir" ]') &&
+                          rails_task.include?('[ ! -L "$app_dir/db" ]') &&
+                          rails_task.include?('[ ! -L "$app_dir/storage" ]') &&
                           rails_task.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
                           rails_task.include?('unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT')
     failures << "rails-task helper must expose only fixed task names and execute as the app user" unless rails_task_contract
@@ -150,7 +152,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   secret_dispatch = admin.include?('args[0] == "ensure-secret" && APPS.include?(args[1])') &&
                   admin.include?("def ensure_app_secret(app)") &&
                   admin.include?("File::CREAT | File::EXCL") &&
-                  admin.include?("File.rename(temporary, target)")
+                  admin.include?("File.rename(temporary, target)") &&
+                  admin.include?("already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file")
   failures << "pub4-admin must create secrets only at fixed app paths and atomically" unless secret_dispatch
 
   broker_helper_dispatch = admin.include?('args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])') &&
