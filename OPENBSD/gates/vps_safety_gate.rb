@@ -95,6 +95,41 @@ if File.file?(admin_path)
   else
     failures << "missing tracked usr/local/libexec/ci-sync.ksh"
   end
+  prepare_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-prepare.ksh")
+  if File.file?(prepare_path)
+    prepare = File.read(prepare_path)
+    prepare_contract = prepare.include?("brgen|amber|bsdports") &&
+                       prepare.include?('[ ! -L "$app_home" ]') &&
+                       prepare.include?('[ ! -L "$app_dir" ]') &&
+                       prepare.include?('[ "$(stat -f %u "$storage")" = "$app_uid" ]') &&
+                       prepare.include?('storage="$app_dir/storage"')
+    failures << "ci-prepare helper must check app-owned real path components before chmod" unless prepare_contract
+  else
+    failures << "missing tracked usr/local/libexec/ci-prepare.ksh"
+  end
+
+  runner_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-run.ksh")
+  if File.file?(runner_path)
+    runner = File.read(runner_path)
+    runner_contract = runner.include?("brgen|amber|bsdports") &&
+                      runner.include?('[ "$timeout" -ge 1 ] && [ "$timeout" -le 7200 ]') &&
+                      runner.include?('cd /home/$app/app') &&
+                      runner.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
+                      runner.include?('/usr/local/bin/bundle') &&
+                      runner.include?('unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH')
+    failures << "ci-run helper must use fixed app paths, bounded timeout and sanitized Ruby environment" unless runner_contract
+  else
+    failures << "missing tracked usr/local/libexec/ci-run.ksh"
+  end
+
+  broker_helper_dispatch = admin.include?('args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])') &&
+                           admin.include?('args[0] == "ci-run" && RAILS_APPS.include?(args[1])') &&
+                           admin.include?('args[0] == "ci-sync" && RAILS_APPS.include?(args[1])') &&
+                           admin.include?('trusted_script!(CI_PREPARE)') &&
+                           admin.include?('trusted_script!(CI_RUN)') &&
+                           admin.include?('supervised_helper(CI_SYNC, app, 900)')
+  failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
+
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   source_preflight = installer.include?("typeset -a privileged_sources=(") &&
                      installer.include?('if [[ ! -f $src/$rel || -L $src/$rel ]]') &&
