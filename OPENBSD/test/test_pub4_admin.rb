@@ -161,8 +161,8 @@ class Pub4AdminTest < Minitest::Test
   def test_shared_overlays_are_app_user_fixed_tasks
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
-    runtime = File.read(File.expand_path("../../../RAILS/_runtime_gate.sh", __dir__))
-    sync = File.read(File.expand_path("../../../RAILS/_sync.sh", __dir__))
+    runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
+    sync = File.read(File.expand_path("../../RAILS/_sync.sh", __dir__))
 
     assert_includes source, "overlay-initializers overlay-public"
     assert_includes helper, "overlay-initializers|overlay-public"
