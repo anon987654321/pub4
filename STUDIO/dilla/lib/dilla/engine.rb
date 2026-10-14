@@ -14,6 +14,7 @@ def run(argv)
     o.banner = 'Usage: ruby dilla.rb [options] | reference URL_OR_AUDIO | industrial-techno [options]'
     o.on('--showcase', 'Render the eight-part Blue Hour pure-tone composition to dilla.wav') { options[:showcase] = true }
     o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
+    o.on('--render', 'Write one random take to a new file under the renders folder instead of playing live') { options[:render] = true }
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
     o.on('--random', 'Random progression and drum pattern (the default groove profile)') { options[:random] = true }
@@ -74,6 +75,17 @@ def run(argv)
   end.parse!(argv)
   options[:live] = true if live_argument
 
+  data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
+  if bare_run?(options)
+    if options[:out] || options[:midi] || options[:render]
+      randomize_take!(data, options)
+    else
+      # A bare run plays live, in real time, from every progression and style, and never stops.
+      options[:play] = true
+      options[:pool] ||= 'all'
+    end
+  end
+
   unless options[:replace] || options[:play] || options[:live] || options[:list] || options[:arp] == 'list'
     outputs = []
     if options[:out]
@@ -88,7 +100,6 @@ def run(argv)
     abort "studio0: refusing to overwrite existing take #{existing.inspect}; choose a new path or pass --replace" if existing
   end
 
-  data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
 progressions = data.fetch('progressions')
 
 if options[:arp] == 'list'
@@ -110,6 +121,34 @@ elsif options[:play]
   else
     render(data, options)
   end
+end
+
+# Flags that choose what is played. A run that names none of them is a bare run, and a bare
+# run is a new take every time; --showcase is the way to the fixed Blue Hour piece.
+CONTENT_FLAGS = %i[showcase live list prog random drums kit profile arp arp_style repeat voice mode play quick
+                   patch_per_chord].freeze
+
+def bare_run?(options) = (options.keys & CONTENT_FLAGS).empty?
+
+# A random take from the whole of the data: any progression, mode, arp or repeat style, patch,
+# groove profile, kit and drum pattern, each from its own shuffle bag so a bare run never plays
+# the same thing twice running within a cycle. It writes under the renders folder, outside the
+# repo, and never over an earlier take.
+def randomize_take!(data, options)
+  seed = options[:seed] || Random.new_seed % 1_000_000
+  playlist = Playlist.new(data, Random.new(seed), pool: 'all')
+  profile = data.fetch('groove_profiles').keys.sort.sample(random: Random.new(seed))
+  pick = playlist.draw(profile:, mode: nil)
+  options.merge!(prog: pick[:prog], seed:, profile:, voice: pick[:voice], mode: pick[:mode], random: true,
+                 kit: pick[:kit], chord_voices: pick[:voices])
+  options[:arp_style] = pick[:style] if pick[:mode] == 'arp'
+  options[:repeat] = pick[:style] if pick[:mode] == 'repeat'
+  options[:drums] = data.fetch('groove_profiles').fetch(profile)['drums'] || pick[:drums]
+  options[:out] ||= File.join(ENV['XDG_DATA_HOME'] || File.expand_path('~/Documents'), 'dilla-renders',
+                              Time.now.strftime('%Y-%m-%d'), "dilla-#{Time.now.strftime('%H%M%S')}-#{seed}.wav")
+  puts "studio0: new take, seed #{seed}, progression #{pick[:prog]}, #{pick[:mode]}#{pick[:style] ? " #{pick[:style]}" : ''}, " \
+       "voice #{pick[:voice]}, profile #{profile}, kit #{pick[:kit]}"
+  options
 end
 
 # Apply bounded, relative dB moves after loading Dilla's own mix defaults. MASTER
