@@ -303,31 +303,6 @@ main[role="main"] {
   pointer-events: none;
 }
 }
-.brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border: none !important;
-  border-radius: 0 !important;
-  outline: none !important;
-  /* autofix: removed box-shadow (flat UI) */
-  background: transparent !important;
-  color: var(--text);
-  margin: 4px 0 8px;
-  transition: opacity var(--transition-fast) var(--ease-out);
-}
-.brand:hover,
-.brand:focus,
-.brand:focus-visible {
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  /* autofix: removed box-shadow (flat UI) */
-  opacity: 0.85;
-  text-decoration: none;
-}
 .brand-text {
   font-family: var(--font);
   font-size: var(--text-lg);
