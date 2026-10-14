@@ -42,6 +42,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_bundle.sh"),
                    File.join(dir, "RAILS", "_bundle.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
+      FileUtils.cp(File.join(ROOT, "bin", "vps-state"), File.join(openbsd, "bin", "vps-state"))
       (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy"), File.join(ROOT, "bin", "vps_deploy_master.sh"), File.join(ROOT, "bin", "vps_install_all.sh"), File.join(ROOT, "bin", "deploy-smoke.sh"), File.join(ROOT, "bin", "manual_master_deploy.ksh")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
       end
