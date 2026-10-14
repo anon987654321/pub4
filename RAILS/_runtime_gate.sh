@@ -77,8 +77,6 @@ rails_runtime_gate() {
   fi
   log "runtime gate: ci bundle + db:prepare + bin/ci"
   if [[ -n $app_name ]]; then
-    local secret
-    secret=$(app_secret_for "$app_name")
     deploy_status "$app_name" "runtime gate: bundle install"
     run_rails_as_app "$app_name" "$app_dir" \
       "ci-bundle-install" \
