@@ -24,14 +24,19 @@
   white-space: nowrap;
 }
 .action-menu button {
+  display: block;
+  width: 100%;
+  min-block-size: var(--tap-min);
   background: none;
   border: 0;
   color: inherit;
   padding: 0 8px;
+  text-align: start;
   cursor: pointer;
   font: inherit;
 }
 .action-menu button:hover, .action-menu button:focus { background: var(--border-faint); }
+.action-menu button:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -2px; }
 
 .provider-chip {
   position: fixed;
