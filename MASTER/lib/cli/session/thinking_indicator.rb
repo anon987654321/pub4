@@ -86,19 +86,64 @@ module Master
       # Keep the established direct approval reader for synchronous turns. A
       # background turn must not compete with Reline for stdin, so it refuses
       # an approval-dependent operation safely while the next prompt is active.
+      # In an asynchronous interactive turn, Reline remains the sole owner
+      # of stdin. Hand approval requests back to the main input loop instead of
+      # starting a second reader that can steal a draft.
       def answer_at_terminal(prompt, options: nil)
-        if @turn_worker&.alive? || @reading_input
-          terminal_puts("ask0: terminal input is busy; this action is refused safely")
-          return ""
+        choices = normalize_ask_options(options)
+        if @turn_worker&.alive? && Thread.current == @turn_worker && $stdin.tty? && $stdout.tty?
+          request = { answer: nil, choices: }
+          @terminal_ask_mutex.synchronize { @pending_terminal_ask = request }
+          label = @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
+          rows = [label, *choices.each_with_index.map { |choice, index| "  #{index + 1}) #{choice.fetch(:name)}" }]
+          rows << (choices.empty? ? "enter /approve or /deny; other input stays queued" : "enter /approve N or /deny; other input stays queued")
+          terminal_puts(rows.join("\n"))
+          answer = @terminal_ask_mutex.synchronize do
+            @terminal_ask_cv.wait(@terminal_ask_mutex) while @pending_terminal_ask.equal?(request) && request[:answer].nil?
+            request[:answer]
+          end
+          return answer.to_s.strip if choices.empty?
+          index = Integer(answer, exception: false)
+          choice = index && choices[index - 1]
+          return choice ? choice.fetch(:value).to_s : ""
         end
+
         @think_mutex&.synchronize { @think_paused = true }
         terminal_print("\r\e[K")
-        choices = normalize_ask_options(options)
         return answer_choice_at_terminal(prompt, choices) unless choices.empty?
         terminal_print("#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} ")
         $stdin.gets.to_s.strip
       ensure
+        if defined?(request) && request
+          @terminal_ask_mutex.synchronize do
+            @pending_terminal_ask = nil if @pending_terminal_ask.equal?(request)
+            @terminal_ask_cv.broadcast
+          end
+        end
         @think_mutex&.synchronize { @think_paused = false }
+      end
+
+      def terminal_ask_pending?
+        @terminal_ask_mutex.synchronize { !@pending_terminal_ask.nil? }
+      end
+
+      def answer_pending_terminal_ask(line)
+        text = line.to_s.strip
+        @terminal_ask_mutex.synchronize do
+          request = @pending_terminal_ask
+          return false unless request
+
+          if text.match?(%r{\A/deny\z}i)
+            request[:answer] = "no"
+          elsif text.match?(%r{\A/approve(?:\s+.*)?\z}i)
+            value = text.sub(%r{\A/approve}i, "").strip
+            request[:answer] = value.empty? && request[:choices].empty? ? "yes" : value
+          else
+            return false
+          end
+          @terminal_ask_cv.broadcast
+          true
+        end
       end
 
       # LLMs may serialize approval choices as an array, a single choice object,
