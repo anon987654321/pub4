@@ -15,6 +15,13 @@ class Pub4AdminTest < Minitest::Test
     assert_nil ADMIN.command_for(["disk-usage", "/etc"])
     assert_nil ADMIN.command_for(["disk-usage", ";id"])
   end
+  def test_relayd_restart_is_the_only_brokered_relayd_mutation
+    assert_equal ["/usr/sbin/rcctl", "restart", "relayd"],
+                 ADMIN.command_for(%w[service restart relayd])
+    assert_equal ["/usr/sbin/rcctl", "check", "relayd"],
+                 ADMIN.command_for(%w[service check relayd])
+    assert_nil ADMIN.command_for(%w[service stop relayd])
+  end
   def test_service_action_maps_to_fixed_argv
     assert_equal ["/usr/sbin/rcctl", "restart", "brgen"],
                  ADMIN.command_for(%w[service restart brgen])
