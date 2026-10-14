@@ -97,7 +97,7 @@ module Master
         end
 
         def phase_prompt(last_ok, _phase)
-          last_ok ? Master::Face::Contract.ascii.fetch("prompt").fetch("input") : "!"
+          last_ok ? "input" : "error input"
         end
 
         def token_label(tokens)
@@ -117,8 +117,9 @@ module Master
           text.to_s.gsub(ANSI_ESCAPE, "")
         end
 
-        # One physical command line: host, checkout/path, Git, destination, phase and
-        # shell token. Preserve path and shell punctuation; Reline owns editing.
+        # OpenBSD Operator prompt: one plain-text line, words and digits only.
+        # Host, checkout/tree, Git state, destination, phase, then input/error input.
+        # Reline owns editing; no punctuation or ANSI decoration in the prompt.
         def shell_prompt(phase, last_ok, destination: "llm", focused: false)
           host = bounded_prompt_segment(safe_hostname.to_s.split(".").first, 8)
           host = "openbsd" if host.empty?
@@ -145,7 +146,7 @@ module Master
 
         def plain_prompt_segment(value)
           value.to_s.scrub.gsub(ANSI_ESCAPE, "").unicode_normalize(:nfc)
-            .gsub(/[\p{Cc}\p{Cf}]+/u, " ").strip.gsub(/\s+/, " ")
+            .gsub(/[^\p{L}\p{N}]+/u, " ").strip.gsub(/\s+/, " ")
         rescue StandardError
           ""
         end
