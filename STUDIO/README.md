@@ -12,8 +12,9 @@ effects without samples, and can render WAV/MIDI or play continuously. The tool
 `replicate/replicate.rb` generates images through the Replicate service from a named
 photographic vocabulary. The tool `replicate/lora/lora.rb` trains and renders a LoRA of one
 person, and animates a still into a short clip, through the same client. A small script,
-`photograph.rb`, turns a sentence into a still and, with `--film`, a short clip, written to
-`~/ideas`.
+`photograph.rb`, turns a sentence into a still and, with `--film`, a short clip. The source
+still and clip live in `~/ideas`; the returned graded still lives in the dated render directory
+owned by `output_paths.rb`.
 
 MASTER governs these tools and reaches each through its canonical path
 `MASTER/tools/<tool>/<tool>.rb`. Those paths are compatibility symlinks into this tree, and new
