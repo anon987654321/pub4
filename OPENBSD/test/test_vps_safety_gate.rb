@@ -53,6 +53,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_broker_sources_must_not_be_symlinks
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      File.unlink(path)
+      File.symlink("/tmp/pub4-admin", path)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "usr/local/sbin/pub4-admin must not be a symlink"
+    end
+  end
   def test_operator_install_refuses_symlinked_system_destinations
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
