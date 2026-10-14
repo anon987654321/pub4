@@ -78,6 +78,28 @@ class VpsSafetyGateTest < Minitest::Test
       assert_includes out, "OPERATOR.sh must preflight privileged sources before copying"
     end
   end
+  def test_ci_prepare_path_validation_is_required
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "libexec", "ci-prepare.ksh")
+      File.write(path, File.read(path).sub('[ ! -L "$app_dir" ]', '[ -d "$app_dir" ]'))
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "ci-prepare helper must check app-owned real path components before chmod"
+    end
+  end
+
+  def test_ci_runner_must_keep_its_timeout_bounded
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "libexec", "ci-run.ksh")
+      File.write(path, File.read(path).sub('[ "$timeout" -le 7200 ]', '[ "$timeout" -le 7201 ]'))
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "ci-run helper must use fixed app paths, bounded timeout and sanitized Ruby environment"
+    end
+  end
+
   def test_operator_install_refuses_symlinked_broker_helpers
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
