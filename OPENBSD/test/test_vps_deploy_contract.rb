@@ -286,12 +286,18 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_ci_copy_tree_uses_the_app_scoped_broker_helper
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-sync "$app"'
-    assert_includes CI_SOURCE, "sync_from_repo_legacy"
+    refute_includes CI_SOURCE, "sync_from_repo_legacy"
+    refute_includes CI_SOURCE, "sync_ci_rails_root_legacy"
     assert_includes CI_SOURCE, "unaccounted_tracked_files \"$app\" \"$repo\" paths kept_local"
     assert_operator CI_SOURCE.index('doas /usr/local/sbin/pub4-admin ci-prepare "$app"'),
                     :<, CI_SOURCE.index("sync_from_repo\n")
   end
 
+  def test_ci_fails_closed_without_broker_and_has_no_root_copy_fallback
+    assert_includes CI_SOURCE, '[[ -x /usr/local/sbin/pub4-admin ]] || { print -u2 "vps_ci: pub4-admin missing; run reviewed OPENBSD/OPERATOR.sh first"; exit 1 }'
+    refute_match(/doas\s+(?:sh\s+-c|(?:rm|mkdir|chown|chmod|tee|groupadd|usermod|tar)\b)/, CI_SOURCE)
+    refute_includes CI_SOURCE, "sync_from_repo_legacy"
+  end
   def test_ci_runner_uses_the_fixed_broker_and_bounded_timeout
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout"'
     assert_includes CI_SOURCE, 'ci_timeout=${PUB4_CI_TIMEOUT:-7200}'
@@ -300,7 +306,8 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_ci_uses_the_broker_for_account_and_storage_preparation
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-prepare "$app"'
-    assert_includes CI_SOURCE, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
+    assert_includes CI_SOURCE, '[[ -x /usr/local/sbin/pub4-admin ]] || { print -u2 "vps_ci: pub4-admin missing; run reviewed OPENBSD/OPERATOR.sh first"; exit 1 }'
+    refute_match(/doas\s+(?:sh\s+-c|(?:rm|mkdir|chown|chmod|tee|groupadd|usermod|tar)\b)/, CI_SOURCE)
   end
 
   def test_it_refuses_to_run_as_root
