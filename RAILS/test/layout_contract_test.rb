@@ -17,6 +17,7 @@ class LayoutContractTest < Minitest::Test
   SHELL = File.join(SHARED, "app", "assets", "stylesheets", "_shell.scss")
   DIALECT = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
   RADIO_HOME_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_radio_home.scss")
+  MAPS_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_maps.scss")
   BRGEN_CORE_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_core_shell.scss")
 
   LAYOUTS = {
@@ -359,6 +360,30 @@ class LayoutContractTest < Minitest::Test
       desktop_nav,
       "desktop radio actions must clear the single nav band"
     )
+
+    assert_includes shell,
+                    "inset: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top)) 0 0 0;"
+    assert_includes shell, "inset: var(--nav-swiper-h) 0 0 0;"
+  end
+
+  def test_map_hud_clears_the_persistent_navigation_band
+    maps = File.read(MAPS_CSS)
+    shell = File.read(BRGEN_CORE_SHELL)
+
+    mobile_hud = maps.match(/body\.vertical-maps \.map-hud\s*\{([^}]*)\}/m)&.[](1)
+    assert mobile_hud, "map HUD must have one source positioning rule"
+    assert_match(
+      /inset-block-start:\s*calc\(var\(--top-band-block\)\s*\+\s*var\(--nav-swiper-h\)\s*\+\s*var\(--safe-top\)\)/,
+      mobile_hud,
+      "mobile map controls must clear both brand and primary-nav bands"
+    )
+
+    desktop_hud = maps.match(
+      /@media\s*\(min-width:\s*768px\)\s*\{\s*body\.vertical-maps \.map-hud\s*\{([^}]*)\}/m
+    )&.[](1)
+    assert desktop_hud, "desktop map positioning must follow the primary-nav breakpoint"
+    assert_match(/inset-block-start:\s*var\(--nav-swiper-h\)/, desktop_hud,
+                 "desktop map controls must clear the single nav band")
 
     assert_includes shell,
                     "inset: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top)) 0 0 0;"
