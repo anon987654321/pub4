@@ -254,6 +254,24 @@ install_root_configs() {
     cp /etc/doas.conf "$doas_rollback"
   fi
 
+  # Preflight BEFORE copying checkout-owned files into privileged locations.
+  # Otherwise cp could follow an existing privileged symlink before we notice it.
+  for f in /usr/local /usr/local/sbin /usr/local/libexec; do
+    if [[ -L $f ]]; then
+      log ERROR "refusing symlinked privileged directory: $f"
+      return 1
+    fi
+  done
+  for f in /usr/local/sbin/pub4-admin \
+           /usr/local/libexec/ci-prepare.ksh \
+           /usr/local/libexec/ci-run.ksh \
+           /usr/local/libexec/ci-sync.ksh; do
+    if [[ -L $f ]]; then
+      log ERROR "refusing symlinked privileged entrypoint before install: $f"
+      return 1
+    fi
+  done
+
   for d in etc usr var; do
     [[ -d $src/$d ]] || continue
     install -d "/$d" 2>/dev/null || true
