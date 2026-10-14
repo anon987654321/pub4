@@ -54,13 +54,17 @@ pub4_ci_lock_path() {
 # this helper exists to replace.
 pub4_ensure_ci_lock() {
   lock=$(pub4_ci_lock_path)
-  doas sh -c "
-    mkdir -p '${PUB4_CI_LOCK_DIR}'
-    chown root:wheel '${PUB4_CI_LOCK_DIR}'
-    chmod 755 '${PUB4_CI_LOCK_DIR}'
-    [ -e '${lock}' ] || : > '${lock}'
-    chown '${PUB4_CI_LOCK_OWNER}' '${lock}'
-    chmod 644 '${lock}'
-  "
+  if [ -x /usr/local/sbin/pub4-admin ]; then
+    doas /usr/local/sbin/pub4-admin ci-lock
+  else
+    doas sh -c "
+      mkdir -p '${PUB4_CI_LOCK_DIR}'
+      chown root:wheel '${PUB4_CI_LOCK_DIR}'
+      chmod 755 '${PUB4_CI_LOCK_DIR}'
+      [ -e '${lock}' ] || : > '${lock}'
+      chown '${PUB4_CI_LOCK_OWNER}' '${lock}'
+      chmod 644 '${lock}'
+    "
+  fi
   printf '%s\n' "$lock"
 }
