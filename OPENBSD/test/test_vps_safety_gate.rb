@@ -196,6 +196,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_bundle_cache_broker_requires_fixed_actions_and_ruby_keys
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      text = File.read(path).sub("valid_ruby_cache_key?(ruby_key)", "ruby_key.to_s")
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "pub4-admin bundle cache must be immutable and fixed-path"
+    end
+  end
   def test_broker_must_keep_ci_lock_fixed_and_symlink_safe
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
