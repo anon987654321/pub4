@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# Keep photograph deliverables outside the checkout. The producer and its
-# Postpro consumer share this path contract instead of guessing output locations.
+# Keep media deliverables outside the checkout. Producers and Postpro share
+# this path contract instead of guessing output locations.
 module Studio
   module OutputPaths
     module_function
