@@ -4043,7 +4043,8 @@
     "dub_dark",
     "new_age",
     "tape_dust",
-    "broken_radio"
+    "broken_radio",
+    "dilla_shadow"
   ],
   "comp": {
     "default_style": "eighth_stabs",
@@ -5403,7 +5404,8 @@
         "detune": 0,
         "reverb": 0,
         "lowpass": 16000
-      }
+      },
+      "layers": []
     },
     "dilla_shadow": {
       "swing": 0.56,
@@ -5450,7 +5452,10 @@
         "detune": 0,
         "reverb": 0,
         "lowpass": 14500
-      }
+      },
+      "voice": "rhodes_mark1",
+      "drums": "dilla_shadow_full",
+      "kit": "kit_dust"
     },
     "techno_arp": {
       "bpm": 138,
@@ -5497,7 +5502,8 @@
         "detune": 0,
         "reverb": 0,
         "lowpass": 12000
-      }
+      },
+      "layers": []
     },
     "industrial_arp": {
       "bpm": 146,
@@ -5545,7 +5551,8 @@
         "detune": 0,
         "reverb": 0,
         "lowpass": 10000
-      }
+      },
+      "layers": []
     },
     "eclectic": {
       "bpm": 82,
@@ -5714,7 +5721,8 @@
         "detune": 0,
         "reverb": 0,
         "lowpass": 12000
-      }
+      },
+      "layers": []
     },
     "tape_dust": {
       "bpm": 78,
@@ -11182,5 +11190,33 @@
         "patch": "agogo"
       }
     }
-  }
+  },
+  "default_layers": [
+    {
+      "mode": "held",
+      "voice": "dub_bass",
+      "gain_db": -8,
+      "gate": 1.08,
+      "velocity": 0.48,
+      "transpose": -12,
+      "notes": "bass"
+    },
+    {
+      "mode": "held",
+      "voice": "prophet_warm",
+      "gain_db": -16,
+      "gate": 1.18,
+      "velocity": 0.28,
+      "count": 3
+    },
+    {
+      "mode": "arp",
+      "voice": "dx_ep_glass",
+      "gain_db": -18,
+      "gate": 0.54,
+      "pattern": "down",
+      "rate": 4,
+      "octaves": 1
+    }
+  ]
 }

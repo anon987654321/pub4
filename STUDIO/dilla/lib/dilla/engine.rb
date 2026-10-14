@@ -363,6 +363,9 @@ end
 # Add deliberate layers behind and above the main instrument part without modulation effects.
 # Held layers use the very same chord voicings; patterned layers share the same tempo and groove.
 def render_layers(buf, seq, names, bpm, beats, options, search:)
+  # An explicit organ mode is a composed solo unless the caller names layers itself.
+  return buf if options[:mode] == 'organ' && !options.key?(:layers)
+
   Array(options.fetch(:layers) { seq.profile_layers }).each do |layer|
     voice = seq.voice_spec(layer.fetch('voice'))
     gate = layer.fetch('gate', 0.9).to_f.clamp(0.05, 1.5)

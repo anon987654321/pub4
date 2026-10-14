@@ -48,8 +48,23 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_default_layers_fill_out_profiles_without_overriding_specialists
+    layers = DATA.fetch("default_layers")
+    assert_equal %w[dub_bass prophet_warm dx_ep_glass], layers.map { |layer| layer.fetch("voice") }.sort
+    assert layers.any? { |layer| layer["notes"] == "bass" }
+    assert layers.any? { |layer| layer["mode"] == "arp" }
+
+    assert_equal layers, sequencer("straight_hats_snare_ahead").profile_layers
+    %w[new_age techno_arp industrial_arp pure_tone_dry].each do |profile|
+      assert_empty sequencer(profile).profile_layers, profile
+    end
+    assert_includes DATA.fetch("play_profiles"), "dilla_shadow"
+    assert_equal "dilla_shadow_full", DATA.fetch("groove_profiles").fetch("dilla_shadow").fetch("drums")
+    assert_equal "kit_dust", DATA.fetch("groove_profiles").fetch("dilla_shadow").fetch("kit")
+  end
+
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_profile drum_patterns echo essential groove_profiles kick_styles kits master mix modal_patches nasty_vcs noise organ play_profiles progressions sonitex stages stereo strum tape voices], DATA.keys.sort
+    assert_equal %w[arp bus_effects comp default_layers default_profile drum_patterns echo essential groove_profiles kick_styles kits master mix modal_patches nasty_vcs noise organ play_profiles progressions sonitex stages stereo strum tape voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_harmony_with_richer_instrument_layers_and_dilla_drums

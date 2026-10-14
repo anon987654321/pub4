@@ -148,7 +148,9 @@ class Sequencer
   end
 
   # The layers the profile plays beneath the part: nil when it names none.
-  def profile_layers = @profile['layers']
+  # A named [] keeps a deliberately sparse/specialist patch untouched; otherwise
+  # profiles inherit the one shared accompaniment, so bare passes don't feel skeletal.
+  def profile_layers = @profile.fetch('layers', @data.fetch('default_layers', nil))
 
   # The voice that plays the notes: the flag's, else the profile's, else the plain sine stack.
   def voice_spec(flag)
