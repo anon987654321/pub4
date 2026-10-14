@@ -219,7 +219,7 @@ class TestRestructure < Minitest::Test
       === DELETE MASTER/lib/producer.rb
       === END
     TEXT
-    proof = Restructure::Proof.new(repo_root: @repo, tree: "MASTER")
+    proof = Restructure::Proof.for("MASTER", @repo)
     baseline = proof.baseline(plan)
 
     File.delete(File.join(@repo, "MASTER/lib/producer.rb"))
@@ -292,12 +292,12 @@ class TestRestructure < Minitest::Test
   end
 
   def test_each_tree_is_proved_its_own_way
-    assert_equal %w[MASTER RAILS OPENBSD STUDIO], RestructureSweep::Contracts::BY_TREE.keys
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Master::Fix::RestructureSweep::Contracts::BY_TREE.keys
     assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
     assert_instance_of Restructure::RailsProof, Restructure::Proof.for("RAILS", @repo)
     assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("OPENBSD", @repo)
     assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("STUDIO", @repo)
-    assert_includes RestructureSweep::Contracts.for("STUDIO"), "canonical media and production source tree"
+    assert_includes Master::Fix::RestructureSweep::Contracts.for("STUDIO"), "canonical media and production source tree"
   end
 
   def test_rails_proof_includes_mounted_engine_tests
