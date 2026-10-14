@@ -108,6 +108,12 @@ module Postpro
       unless File.basename(output).start_with?("postpro_")
         raise ArgumentError, "constitutional output must use postpro_ prefix"
       end
+      existing = [output, "#{output}.json"].find do |path|
+        File.exist?(path) || File.symlink?(path)
+      end
+      if existing
+        raise ArgumentError, "constitutional output already exists: #{File.basename(existing)}"
+      end
 
       announce_output_dir!
       true
