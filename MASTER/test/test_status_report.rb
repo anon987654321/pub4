@@ -10,6 +10,13 @@ require "operator/status_report"
 class TestStatusReport < Minitest::Test
   def tree_of(line) = Operator::StatusReport.allocate.send(:tree_of, line)
 
+  def test_service_status_prefers_the_fixed_broker
+    source = File.read(File.expand_path("../lib/operator/status_report.rb", __dir__))
+    assert_includes source, '["doas", "-n", broker, "service", "check", service]'
+    assert_includes source, 'raise SecurityError, "pub4-admin is a symlink" if File.symlink?(broker)'
+    assert_includes source, '["doas", "-n", "/usr/sbin/rcctl", "check", service]'
+  end
+
   # git quotes a path the moment it holds a space or a non-ASCII byte, which
   # MASTER/tools/dilla produces routinely. Unquoted, `STUDIO/dilla/før.wav` tallied
   # under the tree `"STUDIO`.
