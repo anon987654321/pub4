@@ -359,6 +359,9 @@ end
   path = File.join(OPENBSD, "usr", "local", "libexec", name)
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
+deploy_source = File.read(File.join(OPENBSD, "bin", "vps-deploy"))
+failures << "vps-deploy must not recommend generic privileged du" unless
+  deploy_source.include?('pub4-admin disk-usage $mount_point') && !deploy_source.include?("doas du -xk $mount_point")
 console_main = File.join(TOOLING, "vps_console.exp")
 if File.file?(console_main)
   text = File.read(console_main)
