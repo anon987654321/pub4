@@ -36,9 +36,7 @@ add_gem_group() {
 # ensure_npm_cache APP_NAME — sass-embedded native build must not write /root/.npm via doas.
 ensure_npm_cache() {
   local app_name=$1
-  local npm_cache="/home/${app_name}/.npm"
-  ${_PRIV} mkdir -p "$npm_cache"
-  ${_PRIV} chown "${app_name}:${app_name}" "$npm_cache"
+  run_rails_as_app "$app_name" "/home/${app_name}/app" "npm-cache"
 }
 
 # bundle_cas_* — immutable SHA-256 store for gem artifacts shared by pub4 applications.
