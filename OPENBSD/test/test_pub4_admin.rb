@@ -103,7 +103,7 @@ class Pub4AdminTest < Minitest::Test
 
     refute_match(/system\s*\(|Open3\.|%x/, source)
     assert_equal 1, source.scan("Process.spawn").length
-    assert_includes source, 'Process.spawn(\n      environment, "/bin/ksh", CI_RUN, app, duration.to_s,\n      pgroup: true, unsetenv_others: true\n    )'
+    assert_match(/Process\.spawn\(\s*environment,\s*"\/bin\/ksh", CI_RUN, app, duration\.to_s,\s*pgroup: true, unsetenv_others: true\s*\)/m, source)
     assert_includes source, "exec(*command)"
     assert_includes source, 'raise "must run as root through doas" unless Process.euid.zero?'
   end
