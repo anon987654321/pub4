@@ -63,6 +63,16 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "unsetenv_others: true"
   end
 
+  def test_relayd_broker_only_verifies_root_approved_routes
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    assert_includes source, 'args.length == 4 && args[0] == "relayd-check"'
+    assert_includes source, "def relayd_check(app, domain, requested_port)"
+    assert_includes source, "File.lstat(RELAYD_CONFIG)"
+    assert_includes source, "no operator-approved Host route for #{domain}"
+    assert_includes source, "requested port does not match the root-configured backend"
+    refute_includes source, "def relayd_add(app, domain, requested_port)"
+    refute_includes source, "File.rename(temporary, RELAYD_CONFIG)"
+  end
   def test_rails_secret_is_passed_in_environment_not_command_text
     broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
