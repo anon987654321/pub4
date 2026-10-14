@@ -352,7 +352,10 @@ window._chatCycleRecentReply = (direction) => {
   input.setSelectionRange?.(input.value.length, input.value.length);
 };
 
+let activeChatActionMenuDismiss = null;
+
 function openActionMenu(msgEl) {
+  activeChatActionMenuDismiss?.();
   document.querySelectorAll('.action-menu').forEach(m => m.remove());
   const menu = document.createElement('div');
   menu.className = 'action-menu';
@@ -404,8 +407,10 @@ function openActionMenu(msgEl) {
       document.removeEventListener('click', close, true);
       document.removeEventListener('keydown', close);
     }
+    if (activeChatActionMenuDismiss === dismiss) activeChatActionMenuDismiss = null;
     if (restoreFocus) msgEl.focus({ preventScroll: true });
   };
+  activeChatActionMenuDismiss = dismiss;
 
   const onAct = (ev) => {
     const button = ev.target.closest?.('button[data-act]');
