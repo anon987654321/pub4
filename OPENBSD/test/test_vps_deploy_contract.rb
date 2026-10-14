@@ -234,6 +234,17 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes service, '/usr/local/sbin/pub4-admin retire-legacy "$app_name"'
   end
 
+  def test_rails_service_adapter_fails_closed_without_broker
+    core = File.read(File.join(ROOT, "RAILS", "_core.sh"), encoding: "UTF-8")
+    adapter = core[/pub4_rcctl\(\) \{.*?^\}/m]
+
+    refute_nil adapter
+    assert_includes adapter, '[[ -x /usr/local/sbin/pub4-admin ]]'
+    assert_includes adapter, 'log_err "pub4_rcctl: pub4-admin is missing'
+    assert_includes adapter, '/usr/local/sbin/pub4-admin service "$action" "$service"'
+    refute_match(/\$\{_PRIV\}\s+rcctl\b/, adapter)
+  end
+
   def test_rails_deploy_service_lifecycle_uses_closed_broker_adapter
     core = File.read(File.join(ROOT, "RAILS", "_core.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
@@ -571,7 +582,7 @@ class VpsDeployContractTest < Minitest::Test
       assert_includes out, "stamp brgen failed"
       assert_includes out, 'brgen FAILED at stage "migrate" (exit 1)'
       assert_includes out, "brgen was stopped for this deploy and is DOWN"
-      assert_includes out, "doas rcctl start brgen"
+      assert_includes out, "doas /usr/local/sbin/pub4-admin service start brgen"
       assert_includes out, "amber is DOWN"
       refute_includes out, "bsdports is DOWN"
       assert_includes out, "released"
