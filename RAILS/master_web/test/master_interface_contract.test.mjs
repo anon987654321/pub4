@@ -134,6 +134,8 @@ test("message action menu is localized, safe to render, and viewport-aware", () 
   assert.match(menu, /menu\.querySelector\('button'\)\?\.focus/);
   assert.match(menu, /e\.key === 'Escape'/);
   assert.match(menu, /removeEventListener\('keydown', close\)/);
+  assert.match(menu, /activeChatActionMenuDismiss\?\.\(\)/);
+  assert.match(menu, /activeChatActionMenuDismiss === dismiss/);
   assert.doesNotMatch(menu, /menu\.innerHTML/);
   for (const css of [faceConversation, faceCss]) {
     assert.match(css, /\.action-menu button\s*\{[^}]*min-block-size:\s*var\(--tap-min\)/s);
