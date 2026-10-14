@@ -70,7 +70,7 @@ end
 if File.file?(admin_path) && !File.symlink?(admin_path)
   admin = File.read(admin_path)
   failures << "pub4-admin must use the fixed packaged Ruby interpreter" unless
-    admin.start_with?("#!/usr/local/bin/ruby\\n")
+    admin.start_with?("#!/usr/local/bin/ruby\n")
   status_contract = admin.include?('args.length == 4 && args[0] == "deploy-status"') &&
                     admin.include?("def write_deploy_status(app, step, state)") &&
                     admin.include?('File.join(directory, "#{app}.json")') &&
@@ -305,8 +305,9 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     rails_sync.include?('git -c safe.directory="$repo" -C "$repo" archive HEAD "RAILS/$source_rel"') &&
                     rails_sync.include?('archive_tracked_tree "$source_dir" "$stage"') &&
                     !rails_sync.include?('tar cf - -C "$source_dir" .') &&
-                    rails_sync.include?('state=storage') &&
-                    rails_sync.include?('state=log') &&
+                    rails_sync.include?('for state in storage log; do') &&
+                    rails_sync.include?('if [ "$state" = storage ]; then storage_carried=1; fi') &&
+                    rails_sync.include?('if [ "$state" = log ]; then log_carried=1; fi') &&
                     rails_sync.include?('public/assets') &&
                     !rails_sync.match?(/^\s*(?:doas|sudo|chown)\b/)
     failures << "rails-sync helper must be app-owned, fixed-mode and preserve runtime state" unless sync_contract
