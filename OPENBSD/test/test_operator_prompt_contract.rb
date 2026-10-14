@@ -20,6 +20,6 @@ class TestOperatorPromptContract < Minitest::Test
 
     assert_includes source, "PROMPT='%m:%~$ '"
     assert_includes source, "RPROMPT=''"
-    refute_match(/starship|powerline|\\e\\[/i, source)
+    refute_match(/starship|powerline|\e\[/i, source)
   end
 end
