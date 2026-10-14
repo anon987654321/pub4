@@ -40,7 +40,7 @@ export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 . "${repo}/OPENBSD/lib/ci_lock.sh"
 . "${repo}/OPENBSD/lib/ruby_select.sh"
 
-sync_ci_rails_root() {
+sync_ci_rails_root_legacy() {
   local mirror=/home/${app}/pub4-rails
   doas mkdir -p "$mirror"
   # tar extraction is additive-only: a file removed from the source repo
@@ -125,10 +125,10 @@ unaccounted_tracked_files() {
   print -u2 "vps_ci: $app — add each to paths (bin/ci reads the copy-tree) or to kept_local with a reason"
 }
 
-sync_from_repo() {
+sync_from_repo_legacy() {
   local src=$repo/RAILS/$app
   local shared_src=$repo/RAILS/__shared
-  sync_ci_rails_root
+  sync_ci_rails_root_legacy
   if [[ -d $src ]]; then
     # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
     # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
@@ -239,52 +239,41 @@ sync_from_repo() {
   fi
 }
 
+# Once installed, the broker runs the fixed synchronizer with the app UID,
+# app primary group, and only the _pub4ci supplementary group. The root-copy
+# code above remains only for first rollout on boxes without the broker.
+sync_from_repo() {
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    local -a paths=(test app lib config bin db engines public vendor/javascript
+                    Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version)
+    local -a kept_local=(log storage docs script domains.yml Procfile.dev)
+    unaccounted_tracked_files "$app" "$repo" paths kept_local
+    doas /usr/local/sbin/pub4-admin ci-sync "$app"
+  else
+    sync_from_repo_legacy
+  fi
+}
+
 npm_cache=/home/${app}/.npm
 cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
-deploy_status "$app" "sync tree"
-sync_from_repo
+# Establish group access and the private-storage mode before the app-owned
+# synchronizer reads the checkout and updates the CI copy-tree.
 pub4_ensure_ci_lock >/dev/null
 ci_rails_root=/home/${app}/pub4-rails/RAILS
-# App users reach /home/dev by GROUP, not other: 750 dev:_pub4ci, members
-# brgen/amber/bsdports/master. That closes the world-readable half of the
-# secrets debt entry, which is the half that mattered -- `other` gets nothing.
-# Idempotent so a fresh box converges on first CI run.
-#
-# Group read, not 710. master is the one service whose working directory is
-# under /home/dev, and getcwd(3) names each ancestor by reading it, so `--x`
-# lets it chdir and then fails Dir.pwd with EACCES. rubygems calls Dir.pwd
-# before Bundler is even loaded, so master died at bundle with no log of its
-# own and ai.brgen.no served an empty reply. 710 was verified by traversing,
-# which is a weaker claim than the one it was taken to prove.
 if [[ -x /usr/local/sbin/pub4-admin ]]; then
   doas /usr/local/sbin/pub4-admin ci-prepare "$app"
 else
-doas groupadd _pub4ci 2>/dev/null || true
-doas usermod -G _pub4ci "${app}" 2>/dev/null || true
-doas chgrp _pub4ci /home/dev 2>/dev/null || true
-doas chmod 750 /home/dev 2>/dev/null || true
-
-# The other half of that entry, which it missed: /home/dev was tightened and
-# /home/<app> was not. /home/brgen, /home/brgen/app and .../app/storage were
-# all 755 with production.sqlite3 at 644 brgen:brgen, so as dev — not brgen,
-# not in group brgen — `sqlite3 .../production.sqlite3 "select count(*) from
-# users"` returned 17756, and that table carries password_digest, otp_secret,
-# remember_token and magic_link_token. Every local account could do it,
-# including www and sshd, which are where a relayd or sshd compromise lands.
-#
-# Only storage tightens. /home/<app> and /home/<app>/app stay 755 because
-# vps-deploy tests `-d /home/<app>/app` as dev, and that needs the traversal.
-# The app itself owns the directory, so it reads and writes as before; every
-# crontab on this box is root's; and relayd declares no file root, so nothing
-# serves these from disk.
-#
-# Re-asserted here rather than done once by hand: sync_from_repo's path list
-# does not include storage today, and a line added to it later would silently
-# put this back to 755.
-doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
+  doas groupadd _pub4ci 2>/dev/null || true
+  doas usermod -G _pub4ci "${app}" 2>/dev/null || true
+  doas chgrp _pub4ci /home/dev 2>/dev/null || true
+  doas chmod 750 /home/dev 2>/dev/null || true
+  doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
 fi
+# The checkout is owned by dev, so this permission repair does not cross doas.
 chmod -R a+rX "${repo}/MASTER/tools"
+deploy_status "$app" "sync tree"
+sync_from_repo
 deploy_status "$app" "bundle install + bin/ci"
 # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
 # guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
