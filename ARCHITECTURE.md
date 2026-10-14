@@ -55,6 +55,8 @@ an argv/workspace guard, not a substitute for operating-system process confineme
 On OpenBSD, model-proposed exec effects enter through the early bin/cli --exec-worker
 path. The worker sets pledge and execpromises before replacing itself with the
 requested command; descendants inherit the declared promise set, and OpenBSD refuses
+RubyGems is disabled during bootstrap, Ruby startup hooks are removed, and Fiddle is
+loaded only from the system Ruby installation before the pledge call.
 setuid/setgid executables when execpromises is active. The trusted interactive parent
 does not set child promises globally, because operator-controlled deployment functions
 still need their separately governed doas path. This blocks the model-command privilege
