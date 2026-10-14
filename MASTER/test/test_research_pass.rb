@@ -1,0 +1,96 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require_relative "../lib/fix/transformation_plan"
+require_relative "../lib/fix/research_pass"
+
+class TestResearchPass < Minitest::Test
+  class ResearchAgent
+    attr_reader :calls
+
+    def initialize(records)
+      @records = records
+      @calls = nil
+    end
+
+    def research_sources(**arguments, &progress)
+      @calls = arguments
+      @records.each_with_index do |record, index|
+        progress&.call(
+          event: "completed", kind: record.fetch("kind"), index: index + 1,
+          total: @records.size, label: record.fetch("label"), status: record.fetch("status")
+        )
+      end
+      @records
+    end
+  end
+
+  class TraceBus
+    attr_reader :events
+
+    def initialize
+      @events = []
+    end
+
+    def publish(name, **payload)
+      @events << [name, payload]
+    end
+  end
+
+  def setup
+    @plan = Master::Fix::TransformationPlan.new(root: Master::ROOT)
+  end
+
+  def test_music_target_uses_arxiv_github_and_musictheory_research_context
+    agent = ResearchAgent.new([
+      { "kind" => "fetch", "label" => "https://arxiv.org/abs/1904.03442", "status" => "ok", "text" => "Microtiming evidence." },
+      { "kind" => "fetch", "label" => "https://github.com/JakebGutierrez/wobblemidi", "status" => "ok", "text" => "Correlated drum-clock implementation." },
+    ])
+    bus = TraceBus.new
+    pass = Master::Fix::ResearchPass.new(agent:, bus:, plan: @plan, root: Master::REPO_ROOT)
+
+    result = pass.run(target: "STUDIO/dilla", files: %w[a.rb b.rb])
+
+    assert_equal "PASS", result.fetch(:status)
+    assert_equal "music", result.fetch(:domain)
+    assert_includes agent.calls.fetch(:queries).join(" "), "musictheory"
+    assert_includes agent.calls.fetch(:sources).join(" "), "arxiv.org"
+    assert_includes agent.calls.fetch(:sources).join(" "), "github.com"
+    assert_includes result.fetch(:brief), "untrusted evidence"
+    assert_includes result.fetch(:brief), "Microtiming evidence."
+    assert_includes result.fetch(:brief), "eligible files: 2"
+    assert bus.events.any? { |name, _| name == "fix_loop:research" }
+  end
+
+  def test_research_below_independent_source_threshold_is_inconclusive
+    agent = ResearchAgent.new([
+      { "kind" => "fetch", "label" => "https://github.com/rails/rails", "status" => "ok", "text" => "Rails code." },
+    ])
+    pass = Master::Fix::ResearchPass.new(agent:, bus: nil, plan: @plan, root: Master::REPO_ROOT)
+
+    result = pass.run(target: "RAILS", files: [])
+
+    assert_equal "INCONCLUSIVE", result.fetch(:status)
+    assert_includes result.fetch(:brief), "INCONCLUSIVE"
+    assert_includes result.fetch(:brief), "higher uncertainty"
+  end
+
+  def test_agent_without_research_capability_does_not_claim_a_pass
+    pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
+
+    result = pass.run(target: "MASTER", files: [])
+
+    assert_equal "INCONCLUSIVE", result.fetch(:status)
+    assert_equal 0, result.fetch(:fetched_count)
+  end
+
+  def test_domain_routing_does_not_confuse_full_repo_with_one_subtree
+    pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
+
+    assert_equal "music", pass.send(:domain_for, "/checkout/STUDIO/dilla")
+    assert_equal "visual", pass.send(:domain_for, "STUDIO/postpro")
+    assert_equal "rails", pass.send(:domain_for, "/checkout/RAILS")
+    assert_equal "openbsd", pass.send(:domain_for, "OPENBSD")
+    assert_equal "engineering", pass.send(:domain_for, "/checkout/pub4")
+  end
+end
