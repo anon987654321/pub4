@@ -72,7 +72,16 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
-  def test_rails_task_rejects_trailing_text_after_privileged_exec\n    with_fixture do |dir, _|\n      path = File.join(dir, "OPENBSD", "usr", "local", "libexec", "rails-task.ksh")\n      File.open(path, "a") { |file| file.write("\nEOF_KEY\n") }\n      out, status = run_gate(dir)\n\n      refute status.success?\n      assert_includes out, "rails-task helper must expose only fixed task names and execute as the app user"\n    end\n  end\n  def test_broker_sources_must_not_be_symlinks
+  def test_rails_task_rejects_trailing_text_after_privileged_exec
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "libexec", "rails-task.ksh")
+      File.open(path, "a") { |file| file.write("\nEOF_KEY\n") }
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "rails-task helper must expose only fixed task names and execute as the app user"
+    end
+  end
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
       File.unlink(path)
