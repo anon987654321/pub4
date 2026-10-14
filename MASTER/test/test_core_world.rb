@@ -152,8 +152,8 @@ class WorldTest < Minitest::Test
     skip "OpenBSD pledge is unavailable on this host" unless Master::Ground::Pledge.openbsd?
 
     executable = "/usr/bin/doas"
-    skip "doas setuid binary is unavailable" unless File.file?(executable) &&
-                                                        (File.stat(executable).mode & 0o4000).positive?
+    setuid_doas = File.file?(executable) && (File.stat(executable).mode & 0o4000).positive?
+    skip "doas setuid binary is unavailable" unless setuid_doas
 
     with_world do |world|
       observation = world.perform(E.exec([executable, "-n", "id"], timeout: 3))
