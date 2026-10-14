@@ -24,7 +24,7 @@ class TestPostproFilm < Minitest::Test
     output_dir = Postpro::Constitution::OUTPUT_DIR
 
     assert_equal expected_parent, File.dirname(output_dir)
-    assert_match(/\\A\\d{4}-\\d{2}-\\d{2}\\z/, File.basename(output_dir))
+    assert_match(/\A\d{4}-\d{2}-\d{2}\z/, File.basename(output_dir))
     refute output_dir == ToolTest::ROOT
     refute output_dir.start_with?("#{ToolTest::ROOT}/")
   end
