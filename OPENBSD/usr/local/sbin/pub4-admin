@@ -17,6 +17,8 @@ module Pub4Admin
   RCCTL = "/usr/sbin/rcctl"
   RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
+  CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
+  RAILS_APPS = %w[brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
   RUBY_CANDIDATES = %w[
     /usr/local/bin/ruby4.0 /usr/local/bin/ruby40
@@ -149,6 +151,11 @@ module Pub4Admin
     end
 
     return ensure_ci_lock if args == ["ci-lock"]
+
+    if args.length == 2 && args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])
+      trusted_script!(CI_PREPARE)
+      exec("/bin/ksh", CI_PREPARE, args[1])
+    end
 
     if args == ["resource-guard"]
       trusted_script!(RESOURCE_GUARD)
