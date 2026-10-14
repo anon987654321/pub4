@@ -83,6 +83,10 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes block, "chown root:wheel /var/db/pub4"
   end
 
+  def test_disk_recovery_hint_uses_bounded_broker
+    assert_includes SOURCE, "doas /usr/local/sbin/pub4-admin disk-usage $mount_point"
+    refute_includes SOURCE, "doas du -xk $mount_point"
+  end
   def test_failure_hints_use_the_bounded_service_broker
     assert_includes SOURCE, "doas /usr/local/sbin/pub4-admin service restart <app>"
     assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service start $app'
