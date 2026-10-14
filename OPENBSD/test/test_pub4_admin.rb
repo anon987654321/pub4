@@ -62,6 +62,18 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "unsetenv_others: true"
   end
 
+  def test_rails_task_accepts_only_closed_app_task_arguments
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
+    assert_includes source, 'args[0] == "rails-task" && RAILS_APPS.include?(args[1])'
+    assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
+    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
+    assert_includes helper, "master|brgen|amber|bsdports"
+    assert_includes helper, "bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci"
+    assert_includes helper, "case \"$database\" in cache|queue|cable)"
+    assert_includes helper, "SECRET_KEY_BASE=$secret"
+    refute_includes helper, "sh -c \"$command\""
+  end
   def test_ci_run_accepts_only_fixed_apps_and_bounded_timeouts
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/ci-run.ksh", __dir__))
