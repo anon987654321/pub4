@@ -119,8 +119,8 @@ module Master
         return exit_cli if queue_control_mode? && %w[/exit /quit].include?(stripped.downcase)
         if Thread.current != @turn_worker && terminal_ask_pending?
           return if answer_pending_terminal_ask(stripped)
-          enqueue_interactive_line(line)
-          terminal_puts("ask0: approval pending; enter /approve or /deny, your message is queued")
+          accepted = enqueue_interactive_line(line)
+          terminal_puts("ask0: approval pending; enter /approve or /deny, your message is queued") if accepted
           return
         end
         if @turn_worker&.alive? && Thread.current != @turn_worker
@@ -318,12 +318,12 @@ module Master
         end
         if full
           terminal_puts("queue0: full, #{INTERACTIVE_QUEUE_LIMIT} pending; message not queued")
-        elsif paused && count&.positive?
-          terminal_puts("queue0: #{count} queued, paused")
-        elsif busy && count&.positive?
-          terminal_puts("queue0: #{count} queued")
+          false
+        else
+          terminal_puts("queue0: #{count} queued, paused") if paused && count&.positive?
+          terminal_puts("queue0: #{count} queued") if busy && count&.positive?
+          true
         end
-        nil
       end
 
       # Called with @turn_queue_mutex held. A startup latch replaces a busy
