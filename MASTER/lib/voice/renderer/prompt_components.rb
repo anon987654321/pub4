@@ -11,7 +11,7 @@ module Master
       #
       # The splash and operational status use the OpenBSD dmesg idiom: plain,
       # factual lines with stable unit names. The prompt is deliberately smaller:
-      # location, Git state, phase and input token without decorative segments.
+      # location, Git state, destination, phase and textual input state without decoration.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
@@ -221,8 +221,8 @@ module Master
         end
 
         # Use MASTER's typography contract rather than a second copy of its
-        # measure. The prompt borrows its discipline from prose, but the cursor
-        # and working path still get priority over a theoretical line length.
+        # measure. The prompt borrows its discipline from prose, while Reline owns the editing cursor
+        # and the current working path keeps priority over a theoretical line length.
         def prompt_path_budget(suffix_length: 0)
           screen = TTY::Screen.width
           contract = Master::Design.face_interface(root: @config["root"] || Master::ROOT)
