@@ -13,8 +13,14 @@ app_secret_for() {
     return 1
   }
   secret=$("${_PRIV}" /usr/local/sbin/pub4-admin ensure-secret "$app_name") || return 1
-  [[ "$secret" == [0-9a-f]## && ${#secret} -ge 64 && ${#secret} -le 256 ]] || {
-    log_err "app_secret_for: broker returned an invalid secret for $app_name"
+  case "$secret" in
+    ""|*[!0123456789abcdefABCDEF]*)
+      log_err "app_secret_for: broker returned an invalid secret for $app_name"
+      return 1
+      ;;
+  esac
+  (( ${#secret} >= 64 && ${#secret} <= 256 )) || {
+    log_err "app_secret_for: broker returned an invalid secret length for $app_name"
     return 1
   }
   print -r -- "$secret"
