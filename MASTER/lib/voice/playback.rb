@@ -491,10 +491,9 @@ end
         false
       end
 
-      # A stream truncated mid-sentence is dropped before playback, so the
-      # whole utterance is recovered the expensive way rather than half-spoken.
+      # Recover only when no bytes reached the player; partial audio must never replay.
       def stream_fallback(values)
-        warn_once("voice stream truncated, resynthesising")
+        warn_once("voice stream failed before audio, resynthesising")
         path = synthesize(
           values[:part],
           voice: values[:voice],
