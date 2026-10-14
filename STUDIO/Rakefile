@@ -97,7 +97,9 @@ namespace :replicate do
     declared = table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m)
                     .to_h { |model, keys| [ model, keys.split ] }
     if declared.empty?
-      abort "replicate: parsed no models — the table's shape changed, "             "and this would pass having read nothing"
+      abort(
+        "replicate: parsed no models — the table's shape changed, "         "and this would pass having read nothing"
+      )
     end
 
     client = Studio::ReplicateClient.new(token: token)
