@@ -80,7 +80,7 @@ body.vertical-marketplace #navBar.storefront-nav--bol {
 }
 
 body.vertical-marketplace .storefront-utility--bol {
-  min-height: 36px;
+  min-height: var(--bol-utility-block);
   border-block-end: 1px solid var(--bol-rule);
 }
 
