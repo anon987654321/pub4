@@ -1,6 +1,6 @@
 <%# Render only providers that are both configured and supported by this shared surface. %>
 <% oauth_providers = Rails.application.config.x.oauth_provider_slugs.to_a
-   known = %w[vipps google_oauth2 facebook snapchat github]
+   known = %w[vipps google_oauth2 facebook github]
    active = known.select { |slug| oauth_providers.include?(slug) } %>
 <% if active.any? %>
   <nav class="oauth-links" aria-label="<%= t("auth.options") %>">
@@ -15,10 +15,6 @@
     <% if active.include?("facebook") %>
       <%= button_to t("auth.with_facebook"), "/auth/facebook", method: :post,
             class: "btn btn-ghost oauth-button oauth-facebook", data: { turbo: false } %>
-    <% end %>
-    <% if active.include?("snapchat") %>
-      <%= button_to t("auth.with_snapchat"), "/auth/snapchat", method: :post,
-            class: "btn btn-ghost oauth-button oauth-snapchat", data: { turbo: false } %>
     <% end %>
     <% if active.include?("github") %>
       <%= button_to t("auth.with_github"), "/auth/github", method: :post,

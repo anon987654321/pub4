@@ -228,7 +228,6 @@ body.auth-surface {
 .oauth-vipps::before { content: "V"; }
 .oauth-google::before { content: "G"; }
 .oauth-facebook::before { content: "f"; text-transform: lowercase; }
-.oauth-snapchat::before { content: "S"; }
 .oauth-github::before { content: "GH"; font-size: 0.55rem; }
 
 .oauth-divider {

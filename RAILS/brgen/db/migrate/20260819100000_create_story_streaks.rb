@@ -2,7 +2,7 @@
 
 # How many days running two people have answered each other's stories.
 #
-# The Snapchat shape: a streak is mutual, not a personal posting habit. One row
+# A streak is mutual, not a personal posting habit. One row
 # per pair, with the pair stored in id order so a lookup never has to try both
 # ways round.
 class CreateStoryStreaks < ActiveRecord::Migration[8.1]

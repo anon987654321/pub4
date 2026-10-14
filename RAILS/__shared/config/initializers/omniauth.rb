@@ -26,6 +26,4 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   register_provider.call(self, :github, "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", scope: "user:email")
   register_provider.call(self, :vipps, "VIPPS_CLIENT_ID", "VIPPS_CLIENT_SECRET",
     scope: "openid email name phoneNumber")
-  register_provider.call(self, :snapchat, "SNAPCHAT_CLIENT_ID", "SNAPCHAT_CLIENT_SECRET",
-    scope: "https://auth.snapchat.com/oauth2/api/user.display_name")
 end
