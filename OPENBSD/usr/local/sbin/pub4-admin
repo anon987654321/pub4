@@ -143,6 +143,65 @@ module Pub4Admin
     end
   end
 
+  def valid_ci_timeout?(value)
+    value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
+  end
+
+  # Supervise the full CI process group, including bundle install, rather than
+  # trusting the test runner alone to enforce its timeout. Only the fixed root-
+  # owned helper is spawned, with an allowlisted app and a numeric deadline.
+  def run_ci(app, duration)
+    trusted_script!(CI_RUN)
+    environment = { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
+    pid = Process.spawn(
+      environment, "/bin/ksh", CI_RUN, app, duration.to_s,
+      pgroup: true, unsetenv_others: true
+    )
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + duration
+
+    loop do
+      waited = Process.waitpid(pid, Process::WNOHANG)
+      if waited
+        status = $?
+        return status.exitstatus if status.exited?
+        return 128 + status.termsig if status.signaled?
+
+        return 1
+      end
+
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+        warn "pub4-admin: CI timed out after #{duration}s; stopping process group #{pid}"
+        begin
+          Process.kill("TERM", -pid)
+        rescue Errno::ESRCH
+          nil
+        end
+        grace_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+        loop do
+          break if Process.waitpid(pid, Process::WNOHANG)
+
+          if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= grace_deadline
+            begin
+              Process.kill("KILL", -pid)
+            rescue Errno::ESRCH
+              nil
+            end
+            begin
+              Process.waitpid(pid)
+            rescue Errno::ECHILD
+              nil
+            end
+            break
+          end
+          sleep 0.1
+        end
+        return 124
+      end
+
+      sleep 0.25
+    end
+  end
+
   def main(argv)
     raise "must run as root through doas" unless Process.euid.zero?
 
@@ -159,9 +218,8 @@ module Pub4Admin
     end
 
     if args.length == 3 && args[0] == "ci-run" && RAILS_APPS.include?(args[1]) &&
-       args[2].match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(args[2].to_i)
-      trusted_script!(CI_RUN)
-      exec("/bin/ksh", CI_RUN, args[1], args[2])
+       valid_ci_timeout?(args[2])
+      return run_ci(args[1], args[2].to_i)
     end
 
     if args == ["resource-guard"]
