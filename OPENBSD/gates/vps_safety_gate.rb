@@ -64,7 +64,10 @@ else
 end
 
 admin_path = File.join(OPENBSD, "usr", "local", "sbin", "pub4-admin")
-if File.file?(admin_path)
+if File.symlink?(admin_path)
+  failures << "usr/local/sbin/pub4-admin must not be a symlink"
+end
+if File.file?(admin_path) && !File.symlink?(admin_path)
   admin = File.read(admin_path)
   broker_contract = admin.include?("def command_for(argv)") &&
                     admin.include?("exec(*command)") &&
@@ -153,6 +156,10 @@ else
   failures << "missing tracked usr/local/sbin/pub4-admin"
 end
 
+%w[ci-prepare.ksh ci-run.ksh ci-sync.ksh].each do |name|
+  path = File.join(OPENBSD, "usr", "local", "libexec", name)
+  failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
+end
 console_main = File.join(TOOLING, "vps_console.exp")
 if File.file?(console_main)
   text = File.read(console_main)
