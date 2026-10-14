@@ -61,7 +61,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "def write_deploy_status(app, step, state)"
     assert_includes source, 'File.join(directory, "#{app}.json")'
     assert_includes source, "File::CREAT | File::EXCL"
-    assert_includes source, "File.rename(temporary, target)"
+    assert_includes source, "File.link(temporary, target)"
     assert_includes source, 'raise "#{target} is a symlink; refusing status write"'
     assert_includes core, 'pub4-admin deploy-status "$app" "$step" "$state"'
   end
@@ -77,11 +77,11 @@ class Pub4AdminTest < Minitest::Test
   def test_ensure_secret_is_an_atomic_fixed_app_operation
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
-    assert_includes source, "def ensure_app_secret(app)"
+    assert_includes source, "def ensure_app_secret(app, emit: true)"
     assert_includes source, "File.lstat(path)"
     assert_includes source, "SecureRandom.hex(64)"
     assert_includes source, "File::CREAT | File::EXCL"
-    assert_includes source, "File.rename(temporary, target)"
+    assert_includes source, "File.link(temporary, target)"
     assert_includes source, "already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file"
     assert_includes source, "File.chmod(0o640, temporary)"
   end
@@ -131,6 +131,13 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "requested port does not match the root-configured backend"
     refute_includes source, "def relayd_add(app, domain, requested_port)"
     refute_includes source, "File.rename(temporary, RELAYD_CONFIG)"
+  end
+  def test_rails_task_bootstraps_missing_secret_without_printing_it
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    assert_includes source, "ensure_app_secret(app, emit: false)"
+    assert_includes source, 'rescue RuntimeError => error'
+    assert_includes source, 'raise unless error.message == "no valid SECRET_KEY_BASE for #{app}"'
+    assert_includes source, "puts secret if emit"
   end
   def test_rails_secret_is_passed_in_environment_not_command_text
     broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
