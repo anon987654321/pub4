@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require "minitest/autorun"
 
 class TestOperatorPromptContract < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
