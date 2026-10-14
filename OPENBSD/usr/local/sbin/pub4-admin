@@ -16,6 +16,8 @@ module Pub4Admin
   SERVICES = %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].freeze
   SERVICE_ACTIONS = %w[check get start stop restart].freeze
   RCCTL = "/usr/sbin/rcctl"
+  DU = "/usr/bin/du"
+  DISK_USAGE_PATHS = %w[/home /var].freeze
   RELAYD_CONFIG = "/etc/relayd.conf"
   RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
@@ -40,6 +42,7 @@ module Pub4Admin
   # A closed argv protocol. Unknown verbs, services and argument shapes refuse.
   def command_for(argv)
     args = Array(argv).map(&:to_s)
+    return [DU, "-xk", args[1]] if args.length == 2 && args[0] == "disk-usage" && DISK_USAGE_PATHS.include?(args[1])
     return [RCCTL, "ls", "started"] if args == %w[service list-started]
 
     if args.length == 3 && args[0] == "service"
