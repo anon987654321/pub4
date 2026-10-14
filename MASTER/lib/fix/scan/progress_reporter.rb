@@ -8,6 +8,9 @@ module Master
     module Scan
       module ProgressReporter
         SCAN_HITS_MAX_BYTES = 25 * 1024 * 1024
+        # Keep broad scans readable. Every finding still lands in scan_hits.jsonl;
+        # set MASTER_SCAN_VERBOSE=1 when per-file console detail is needed.
+        PER_FILE_DETAIL_LIMIT = 10
         # A checkpoint at least this often, so a slow stretch is never silent.
         HEARTBEAT_SECONDS = 5
 
@@ -103,6 +106,7 @@ module Master
 
         def log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
           return unless count.positive?
+          return if total.to_i > PER_FILE_DETAIL_LIMIT && ENV["MASTER_SCAN_VERBOSE"] != "1"
 
           Master::Trace::Dmesg.status(unit, "#{done}/#{total} #{rel}, #{Master::Trace::Dmesg.counted(count, "finding")}")
         end

@@ -140,6 +140,28 @@ class TestScanner < Minitest::Test
     end
   end
 
+  def test_large_scan_hit_detail_is_quiet_unless_verbose
+    scanner = Master::Fix::Scanner.new(laws: [])
+    args = {
+      unit: "obs0",
+      done: 1,
+      total: 1757,
+      rel: "lib/example.rb",
+      count: 42,
+      eta_s: 120,
+    }
+
+    quiet, = capture_io { scanner.send(:log_scan_hit, **args) }
+    assert_empty quiet, "broad scans use checkpoints, not one console line per dirty file"
+
+    previous = ENV["MASTER_SCAN_VERBOSE"]
+    ENV["MASTER_SCAN_VERBOSE"] = "1"
+    verbose, = capture_io { scanner.send(:log_scan_hit, **args) }
+    assert_includes verbose, "obs0: 1/1757 lib/example.rb, 42 findings"
+  ensure
+    previous ? ENV["MASTER_SCAN_VERBOSE"] = previous : ENV.delete("MASTER_SCAN_VERBOSE")
+  end
+
   def test_scan_dir_includes_recognized_extensionless_shebang_scripts
     Dir.mktmpdir do |dir|
       bin = File.join(dir, "bin")
