@@ -44,7 +44,7 @@ module Master
 
         safe = activity_row_safe_to_draw? && target.respond_to?(:tty?) && target.tty?
         if safe
-          target.print("\e[s\e[1A\r\e[K\e[u")
+          target.print("\e7\e[1A\r\e[K\e8")
           target.flush if target.respond_to?(:flush)
         end
         @activity_row_reserved = false
@@ -72,7 +72,7 @@ module Master
                 if @reading_input
                   # A reserved row above Reline's prompt keeps the animation
                   # visible without painting over the user's editable draft.
-                  target.print("\e[s\e[1A\r\e[K#{line}\e[u") if activity_row_safe_to_draw?
+                  target.print("\e7\e[1A\r\e[K#{line}\e8") if activity_row_safe_to_draw?
                 elsif !@turn_current_started
                   target.print("\r\e[K#{line}")
                 end
@@ -130,6 +130,8 @@ module Master
       # starting a second reader that can steal a draft.
       def answer_at_terminal(prompt, options: nil)
         choices = normalize_ask_options(options)
+        return auto_approved(prompt, choices) if auto_approve?
+
         if @turn_worker&.alive? && Thread.current == @pipeline_thread && $stdin.tty? && $stdout.tty?
           request = { answer: nil, choices: }
           @terminal_ask_mutex.synchronize { @pending_terminal_ask = request }
@@ -160,6 +162,19 @@ module Master
           end
         end
         @think_mutex&.synchronize { @think_paused = false }
+      end
+
+      # The operator decided the session approves on its own; the line stays in the log.
+      def auto_approve?
+        config = @refs.respond_to?(:config) ? @refs.config : nil
+        (config.respond_to?(:fetch) ? config.fetch("auto_approve", true) : true) != false
+      end
+
+      def auto_approved(prompt, choices)
+        terminal_puts(@refs.renderer.render("ask0 at fold0: approved, #{prompt}", mode: :dmesg))
+        return "yes" if choices.empty?
+
+        (choices.find { |choice| choice.fetch(:value) == "approve" } || choices.first).fetch(:value).to_s
       end
 
       def terminal_ask_pending?
@@ -317,7 +332,7 @@ module Master
 
         safe = activity_row_safe_to_draw? && target.respond_to?(:tty?) && target.tty?
         if safe
-          target.print("\e[s\e[1A\r\e[K\e[u")
+          target.print("\e7\e[1A\r\e[K\e8")
           target.flush if target.respond_to?(:flush)
         end
         @activity_row_reserved = false

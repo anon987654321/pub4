@@ -249,9 +249,9 @@ class TestCLI < Minitest::Test
     review = Master::CLI::CommandRegistry.help_text("review")
     fix = Master::CLI::CommandRegistry.help_text("fix")
 
-    assert_match(%r{^fix0 at master0: /fix \\[path\\] is the primary repair operation}, summary)
+    assert_match(%r{^fix0 at master0: /fix \[path\] is the primary repair operation}, summary)
     assert_match(/^write0 at master0: \/fix is the canonical repair path/, summary)
-    assert_match(/^help0 at master0: \/help \\[command\\] shows command details/, summary)
+    assert_match(/^help0 at master0: \/help \[command\] shows command details/, summary)
     refute_includes summary, "--dry-run"
     assert_includes review, "/review [path]"
     assert_includes review, "--only", "the stages are the detail, not the summary"

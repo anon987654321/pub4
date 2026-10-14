@@ -260,8 +260,11 @@ module Master::Core
     PROFILES = {
       boot: %i[stdio read execute],
       model: %i[stdio read model],
-      observe: %i[stdio read],
-      plan: %i[stdio read model],
+      # Reading the web is observing: the http verb is a guarded GET, so a
+      # question about a page runs in observe or plan mode and must be able to
+      # fetch it. Writing and executing stay out.
+      observe: %i[stdio read network],
+      plan: %i[stdio read model network],
       fix: %i[stdio read write create execute network],
       repair: %i[stdio read write create execute network],
       deploy: %i[stdio read write create execute network deploy],
