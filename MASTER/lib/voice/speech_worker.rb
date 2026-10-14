@@ -170,7 +170,7 @@ module Master
         target = StreamTarget.build(io:, on_chunk: progress, stale_test:)
         result = stream_socket_to_io(sock_path, req, stream_timeout(text.to_s.length), target)
         bytes = [result.bytes.to_i, written_bytes].max
-        return result if result.ok && bytes.positive?
+        return StreamResult.new(ok: true, bytes:) if result.ok && bytes.positive?
 
         # A failed or empty stream retires its worker. Keep bytes already sent to
         # the player: playback must never restart a sentence that may be audible.
