@@ -872,7 +872,7 @@ function handleFaceNamedEvent(event, data) {
 // also what the auto-voice bug report was describing: "the mic goes on, MASTER
 // rambles its introduction, the mic icon goes grey".
 let _firstChatSent = false;
-async function sendMessage(text) {
+async function runMessageTurn(text) {
   const trimmed = text.trim();
   // A conversation IS interaction: without this, the 60s idle drift in
   // frame() starts dissolving the face mid-chat because only pointer/focus
@@ -967,6 +967,18 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link thinking');
     State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
   }, 4000);
+  let finishTurn = () => {};
+  const turnCompletion = new Promise((resolve) => {
+    let settled = false;
+    finishTurn = (value = true) => {
+      if (settled) return;
+      settled = true;
+      if (_activeTurnFinish === finishTurn) _activeTurnFinish = null;
+      resolve(value);
+    };
+  });
+  _activeTurnFinish = finishTurn;
+
   const onMessage = (rawData) => {
     const raw = rawData || '';
     clearTimeout(stallTimer);
@@ -991,6 +1003,7 @@ async function sendMessage(text) {
       showStage("");
       if (navigator.vibrate) navigator.vibrate([60]);
       window._chatOnDone?.();
+      finishTurn(true);
       return;
     }
     if (raw.startsWith('ERROR:')) {
@@ -1021,6 +1034,7 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
+    finishTurn(false);
   };
   // chat_actions.js owns the one chat transport, POST /chat/message. When it
   // did not load, the turn fails the way a dropped stream does, so a broken
@@ -1028,7 +1042,7 @@ async function sendMessage(text) {
   if (!window.MASTERChat?.startChatStream) {
     window.MASTER_LOG?.error?.("face_runtime:chat_transport_missing", new Error("MASTERChat.startChatStream is not defined"));
     onError();
-    return;
+    return turnCompletion;
   }
   window.MASTERChat.startChatStream({
     message: text,
@@ -1038,8 +1052,87 @@ async function sendMessage(text) {
     onMessage,
     onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
     onError
-  }).catch(() => {});
+  }).then(() => finishTurn(true)).catch(() => finishTurn(false));
+  return turnCompletion;
 }
+
+let _activeTurnFinish = null;
+const _pendingTurns = [];
+let _turnQueueRunning = false;
+let _turnQueuePaused = false;
+
+function updateTurnQueueUi() {
+  const status = document.getElementById('turn-queue-status');
+  const control = document.getElementById('turn-control');
+  const active = _turnQueueRunning || _pendingTurns.length > 0 || _turnQueuePaused;
+  rootBody.dataset.queueActive = active ? '1' : '0';
+  if (control) {
+    control.hidden = !active;
+    control.textContent = _turnQueuePaused ? 'resume' : 'stop';
+    control.setAttribute('aria-label', _turnQueuePaused
+      ? 'Resume queued messages'
+      : 'Stop the current response and pause queued messages');
+    control.setAttribute('aria-pressed', _turnQueuePaused ? 'true' : 'false');
+  }
+  if (status) {
+    status.textContent = _turnQueuePaused
+      ? `${_pendingTurns.length} queued · paused`
+      : _pendingTurns.length
+        ? `queued ${_pendingTurns.length}`
+        : _turnQueueRunning ? 'working' : '';
+  }
+}
+
+async function drainTurnQueue() {
+  if (_turnQueueRunning || _turnQueuePaused) return;
+  _turnQueueRunning = true;
+  updateTurnQueueUi();
+  try {
+    while (_pendingTurns.length && !_turnQueuePaused) {
+      const item = _pendingTurns.shift();
+      updateTurnQueueUi();
+      try {
+        item.resolve(await runMessageTurn(item.text));
+      } catch (err) {
+        window.MASTER_LOG?.warn?.('face_runtime:queued_turn', err);
+        item.resolve(false);
+      }
+      updateTurnQueueUi();
+    }
+  } finally {
+    _turnQueueRunning = false;
+    updateTurnQueueUi();
+    if (_pendingTurns.length && !_turnQueuePaused) void drainTurnQueue();
+  }
+}
+
+function sendMessage(text) {
+  const message = String(text ?? '').trim();
+  if (!message) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    _pendingTurns.push({ text: message, resolve });
+    updateTurnQueueUi();
+    void drainTurnQueue();
+  });
+}
+
+document.getElementById('turn-control')?.addEventListener('click', () => {
+  if (_turnQueuePaused) {
+    _turnQueuePaused = false;
+    updateTurnQueueUi();
+    void drainTurnQueue();
+    return;
+  }
+  if (!_turnQueueRunning) return;
+  _turnQueuePaused = true;
+  window.MASTERChat?.closeChatStream?.();
+  window.MASTER_FACE?.ttsSkip?.();
+  _activeTurnFinish?.(false);
+  clearThinkingAloud();
+  showStage('');
+  State.mode = 'idle';
+  updateTurnQueueUi();
+});
 
 setInterval(() => {
   if (document.hidden) return;
