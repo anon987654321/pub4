@@ -40,6 +40,16 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'raise "#{path} is not a regular file" unless lock.file? && !lock.symlink?'
   end
 
+  def test_ensure_secret_is_an_atomic_fixed_app_operation
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
+    assert_includes source, "def ensure_app_secret(app)"
+    assert_includes source, "File.lstat(path)"
+    assert_includes source, "SecureRandom.hex(64)"
+    assert_includes source, "File::CREAT | File::EXCL"
+    assert_includes source, "File.rename(temporary, target)"
+    assert_includes source, "File.chmod(0o640, temporary)"
+  end
   def test_ci_timeout_is_a_real_process_group_deadline
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
 
