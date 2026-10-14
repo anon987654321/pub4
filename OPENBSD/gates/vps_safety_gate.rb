@@ -263,6 +263,21 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                          admin.include?("valid_ruby_cache_key?(ruby_key)") &&
                          admin.include?("bundle cache import exceeds 500 files")
   failures << "pub4-admin bundle cache must be immutable and fixed-path" unless bundle_cache_contract
+  bundle_shell_path = File.join(ROOT, "RAILS", "_bundle.sh")
+  if File.file?(bundle_shell_path)
+    bundle_shell = File.read(bundle_shell_path)
+    cas_prepare = bundle_shell[/bundle_cas_prepare\(\) \{.*?^\}/m]
+    cas_capture = bundle_shell[/bundle_cas_capture\(\) \{.*?^\}/m]
+    bundle_cas_shell_contract = cas_prepare && cas_capture &&
+                               cas_prepare.include?('pub4-admin bundle-cache "$app_name" prepare "$RUBY_CACHE_KEY"') &&
+                               cas_prepare.include?('pub4-admin bundle-cache "$app_name" import "$RUBY_CACHE_KEY"') &&
+                               cas_prepare.include?('run_rails_as_app "$app_name" "$app_dir" "bundle-cas-hydrate" "$RUBY_CACHE_KEY"') &&
+                               cas_capture.include?('pub4-admin bundle-cache "$app_name" capture "$RUBY_CACHE_KEY"') &&
+                               ![cas_prepare, cas_capture].any? { |body| body.match?(/\$\{_PRIV\}\s+(?:mkdir|cp|ln|chown)\b/) }
+    failures << "Rails Bundler CAS wrappers must use the fixed broker and avoid privileged path operations" unless bundle_cas_shell_contract
+  else
+    failures << "missing RAILS/_bundle.sh CAS adapters"
+  end
   broker_helper_dispatch = admin.include?('args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('args[0] == "ci-run" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('args[0] == "ci-sync" && RAILS_APPS.include?(args[1])') &&
