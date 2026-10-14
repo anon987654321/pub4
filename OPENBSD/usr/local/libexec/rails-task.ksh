@@ -14,9 +14,9 @@ case "$app" in
   *) echo "rails-task: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$task" in
-  bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci) [ "$#" -eq 2 ] || exit 64 ;;
+  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci) [ "$#" -eq 2 ] || exit 64 ;;
   demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
-  schema-load) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
+  schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
   *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
 esac
 [ "$(id -u)" -eq 0 ] || { echo "rails-task: must run as root through pub4-admin" >&2; exit 77; }
@@ -69,6 +69,8 @@ case "$task" in
     command="mkdir -p .bundle && printf '%s\\n' '---' 'BUNDLE_PATH: /home/$app/.bundle/gems' > .bundle/config && $bundle config set --local frozen false && $bundle config set --local deployment true && $bundle config set --local without \"development test\" && RAILS_ENV=production $bundle install" ;;
   bundle-check)
     command="$bundle check" ;;
+  ci-bundle-install)
+    command="$bundle config unset without && $bundle install --jobs=2" ;;
   db-prepare)
     command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails db:prepare" ;;
   db-seed)
@@ -79,6 +81,15 @@ case "$task" in
     command="SECRET_KEY_BASE=$secret RAILS_ENV=production $bundle exec rails assets:precompile" ;;
   schema-load)
     command="SECRET_KEY_BASE=$secret DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production $bundle exec rails db:schema:load:${database}" ;;
+  secondary-db-check)
+    schema="/home/$app/app/db/${database}_schema.rb"
+    db_file="/home/$app/app/storage/production_${database}.sqlite3"
+    [ -f "$schema" ] && [ ! -L "$schema" ] && [ -s "$db_file" ] && [ ! -L "$db_file" ] || exit 1
+    table=$("$ruby_path" -e 'm = File.read(ARGV.fetch(0), encoding: "UTF-8").match(/create_table "([A-Za-z_][A-Za-z0-9_]*)"/); print(m ? m[1] : "")' "$schema")
+    case "$table" in
+      ''|*[!A-Za-z0-9_]*|[!A-Za-z_]*) echo "rails-task: invalid schema table for $database" >&2; exit 1 ;;
+    esac
+    command="/usr/local/bin/sqlite3 $db_file \"select 1 from $table limit 1;\"" ;;
   ci)
     command="SECRET_KEY_BASE=$secret PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 $bundle exec bin/ci" ;;
 esac
