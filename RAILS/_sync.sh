@@ -63,6 +63,27 @@ sync_tree() {
     ${_PRIV} rm -f "$entry"
   done
 }
+# rails_sync_app_tree APP_NAME MODE — fixed app-user tree synchronization.
+# Source and destination paths are owned by the installed broker helper, not caller input.
+rails_sync_app_tree() {
+  local app_name=$1 mode=$2
+  case "$app_name" in
+    brgen|amber|bsdports) ;;
+    *) log_err "rails_sync_app_tree: refused app: $app_name"; return 2 ;;
+  esac
+  case "$mode" in
+    app|shared) ;;
+    verticals)
+      [[ $app_name == brgen ]] || { log_err "rails_sync_app_tree: verticals are brgen-only"; return 2; }
+      ;;
+    *) log_err "rails_sync_app_tree: refused mode: $mode"; return 2 ;;
+  esac
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "rails_sync_app_tree: pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  "${_PRIV}" /usr/local/sbin/pub4-admin rails-sync "$app_name" "$mode"
+}
 # overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1
