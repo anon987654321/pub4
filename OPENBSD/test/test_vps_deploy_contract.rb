@@ -117,6 +117,15 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
   end
 
+  def test_ci_broker_paths_are_installed_and_used_before_sync
+    operator = File.read(File.join(ROOT, "OPENBSD", "OPERATOR.sh"), encoding: "UTF-8")
+    assert_includes operator, 'cp -R "$src/$d"/. "/$d"/'
+    assert_includes operator, 'for f in /usr/local/libexec/*(N)'
+    assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-sync "$app"'
+    assert_operator CI_SOURCE.index('doas /usr/local/sbin/pub4-admin ci-prepare "$app"'),
+                    :<, CI_SOURCE.index("sync_from_repo\n")
+  end
+
   def test_ci_copy_tree_uses_the_app_scoped_broker_helper
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-sync "$app"'
     assert_includes CI_SOURCE, "sync_from_repo_legacy"
