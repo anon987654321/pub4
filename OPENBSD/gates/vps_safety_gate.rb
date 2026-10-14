@@ -367,6 +367,12 @@ end
   path = File.join(OPENBSD, "usr", "local", "libexec", name)
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
+smoke_source = File.read(File.join(OPENBSD, "bin", "deploy-smoke.sh"))
+smoke_contract = smoke_source.include?('case "$svc" in master|brgen|amber|bsdports|relayd)') &&
+                 smoke_source.include?('doas /usr/local/sbin/pub4-admin service check "$svc"') &&
+                 smoke_source.include?('if [ -L /usr/local/sbin/pub4-admin ]; then') &&
+                 smoke_source.include?("Bootstrap fallback only")
+failures << "deploy-smoke service checks must use the fixed broker and an explicit fallback" unless smoke_contract
 install_all_source = File.read(File.join(OPENBSD, "bin", "vps_install_all.sh"))
 install_all_contract = install_all_source.include?("admin_service() {") &&
                        install_all_source.include?('case "$action" in check|start|stop|restart)') &&
