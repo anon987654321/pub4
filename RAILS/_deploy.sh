@@ -70,29 +70,10 @@ deploy_tracked_app() {
 
   cd "$APP_DIR"
 
-  typeset bundle_home="/home/${app_name}/.bundle"
-  doas mkdir -p "$bundle_home"
-
-  if [[ ! -d ${bundle_home}/gems ]]; then
-  # sync_tree, not a bare openrsync: a failed bootstrap leaves an app with no
-  # gems, so it takes the same copy every tree sync takes. The trailing 0 is
-  # "do not delete the destination first": a bundle cache is merged into, never
-  # replaced.
-    if [[ -d ${SHARED_BUNDLE_CACHE}/gems ]]; then
-      log "Bootstrapping gems from ${SHARED_BUNDLE_CACHE}"
-      doas mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
-      sync_tree "${SHARED_BUNDLE_CACHE}/gems" "${bundle_home}/gems" 0
-      [[ -d ${SHARED_BUNDLE_CACHE}/cache ]] && sync_tree "${SHARED_BUNDLE_CACHE}/cache" "${bundle_home}/cache" 0 || true
-    elif [[ -d /home/amber/.bundle/gems && ${bundle_home} != /home/amber/.bundle ]]; then
-      log "Bootstrapping gems from /home/amber/.bundle"
-      doas mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
-      sync_tree /home/amber/.bundle/gems "${bundle_home}/gems" 0
-      [[ -d /home/amber/.bundle/cache ]] && sync_tree /home/amber/.bundle/cache "${bundle_home}/cache" 0 || true
-    else
-      log_warn "No shared bundle cache found; bundle install will resolve gems normally"
-    fi
-    doas chown -R "${app_name}:${app_name}" "$bundle_home"
-  fi
+  run_rails_as_app "$app_name" "$APP_DIR" "bundle-cache-prepare" || {
+    log_err "bundle cache preparation failed for $app_name"
+    return 1
+  }
 
   deploy_status "$app_name" "bundle install"
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
