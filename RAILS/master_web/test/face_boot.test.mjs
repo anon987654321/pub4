@@ -49,11 +49,20 @@ test("web face queues follow-up turns and exposes stop/resume state", () => {
   assert.match(view, /id="turn-queue-status"/);
   assert.match(view, /id="turn-control"/);
   assert.match(css, /body\[data-queue-active="1"\] \.turn-queue-status/);
-  assert.match(actions, /fallbackSendQueue/);
+  assert.match(actions, /const FALLBACK_SEND_QUEUE_LIMIT = 32/);
+  assert.match(actions, /fallbackSendQueuePaused/);
+  assert.match(actions, /if \(pending === false\) return;/);
+  assert.match(actions, /closeChatStream\(\)/);
+  assert.match(faceSource, /const TURN_QUEUE_LIMIT = 32/);
+  assert.match(faceSource, /if \(_pendingTurns.length >= TURN_QUEUE_LIMIT\)/);
+  assert.ok(faceSource.indexOf("if (accepted === false) return;") > faceSource.indexOf("const accepted = window.MASTER_FACE?.sendMessage?.(v)"));
   const runtime = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   const errorAt = runtime.indexOf("if (raw.startsWith('ERROR:'))");
   const errorBlock = runtime.slice(errorAt, runtime.indexOf("const chunk = raw.replace", errorAt));
   assert.match(errorBlock, /finishTurn\(false\);[\s\S]*closeChatStream/);
+  const onErrorAt = runtime.indexOf("const onError = () =>");
+  const onErrorBlock = runtime.slice(onErrorAt, runtime.indexOf("// chat_actions.js owns", onErrorAt));
+  assert.match(onErrorBlock, /finishTurn\(false\);[\s\S]*closeChatStream/);
 });
 
 test("thinking star animates in calm mode but respects reduced motion and battery mode", () => {
