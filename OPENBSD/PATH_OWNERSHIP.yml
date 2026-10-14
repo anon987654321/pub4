@@ -60,10 +60,9 @@ ownership:
     risk: high
     check: ruby OPENBSD/gates/shell_syntax_gate.rb
   bin/resource_guard.sh:
-    purpose: load shedding on vm23; skips shedding while /var/db/pub4_all_apps
-      exists, which the fixed pub4-admin start-all-apps verb writes
+    purpose: unprivileged manual entrypoint; refuses root and delegates to the installed runner
     risk: high
-    check: ksh OPENBSD/test/resource_guard_test.sh OPENBSD/bin/resource_guard.sh
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
   "bin/*.ksh":
     purpose: doas validation and the manual master recovery path
     risk: high
@@ -127,6 +126,10 @@ ownership:
     purpose: repo mirror of live /etc configs
     risk: critical
     check: OPENBSD/bin/check-openbsd
+  usr/local/bin/resource_guard.sh:
+    purpose: root-owned load-shedding runner; sources only the installed stale-cleanup helper, never checkout code
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
   usr/local/bin/emergency_cpu.sh:
     purpose: root-owned emergency CPU recovery runner; sources only the installed stale cleanup helper, never checkout code
     risk: critical
