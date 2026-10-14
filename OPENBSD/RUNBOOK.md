@@ -39,6 +39,24 @@ production/domain/ phantom/frontend gates → OpenBSD deploy smoke. Operator: `g
 pull --ff-only` on vm23 → `vps_ci.sh <app>` → `OPERATOR.sh` or per-app deploy →
 `rcctl restart` affected services → `health_check --public --all-ready-apps`.
 
+## Privileged deploy broker
+
+The staged root boundary is `/usr/local/sbin/pub4-admin`, mirrored at
+`OPENBSD/usr/local/sbin/pub4-admin`. A deliberate `OPERATOR.sh` sync installs
+it as `root:wheel`, mode `0555`, and installs the Solid Queue proof as a
+separate root-owned helper under `/usr/local/libexec/pub4/`. The broker accepts
+only allowlisted app-service actions, validated deploy-stamp fields, and those
+two fixed helper invocations; it does not take shell text or arbitrary paths.
+
+`vps-deploy` and the CI receipt writer use the broker when the installed copy
+exists. Compatibility fallbacks remain for the first rollout. This is **not yet
+the complete privilege migration**: `vps_ci.sh`, `RAILS/_deploy.sh`, and
+other copy-tree helpers still have direct `doas` operations. Keep the current
+`doas.conf` and wheel membership unchanged until those paths are migrated,
+the broker is installed, and the focused and full OpenBSD contract suites pass.
+Then narrow the `dev` rule and remove wheel membership in one planned change,
+with an authenticated operator recovery path established first.
+
 ## SSH
 
 One session at a time. Rapid reconnects trip pf bruteforce.
