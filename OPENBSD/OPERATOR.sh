@@ -256,6 +256,17 @@ install_root_configs() {
     [[ -f /etc/rc.d/$svc ]] && chmod 555 /etc/rc.d/$svc
   done
   for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
+  for f in /usr/local/sbin/pub4-admin \
+           /usr/local/libexec/ci-prepare.ksh \
+           /usr/local/libexec/ci-run.ksh \
+           /usr/local/libexec/ci-sync.ksh \
+           /usr/local/libexec/pub4/solid_queue_proof.rb \
+           /usr/local/bin/resource_guard.sh; do
+    if [[ ! -f $f || -L $f ]]; then
+      log ERROR "installed privileged entrypoint missing or symlinked: $f"
+      return 1
+    fi
+  done
   # These fixed broker entrypoints must be regular files. A symlink would
   # make root chown/chmod operate on a target outside the install contract.
   for f in /usr/local/sbin/pub4-admin \
