@@ -76,7 +76,11 @@ module Studio
 
       def photographic(words)
         env = subject_env
-        [env["TRIGGER"], env["DESCRIPTOR"], words, "face readable, a real lens, no text in the frame"].compact.join(", ")
+        parts = [
+          env["TRIGGER"], env["DESCRIPTOR"], words,
+          "face readable, a real lens, no text in the frame"
+        ]
+        parts.compact.join(", ")
       end
 
       def subject_env
