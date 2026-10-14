@@ -203,6 +203,7 @@ module Master
           target.print "\r\e[K" if target.tty?
           target.puts @refs.renderer.render(line, mode: :dim)
           target.flush
+          redraw_active_input if io.equal?($stdout) && @reading_input
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
