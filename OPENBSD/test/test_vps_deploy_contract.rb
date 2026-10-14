@@ -90,6 +90,14 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'admin_request solid-queue-proof "$app"'
   end
 
+  def test_legacy_rails_entrypoint_never_escalates_checkout_code
+    legacy = File.read(File.join(ROOT, "RAILS", "deploy.sh"), encoding: "UTF-8")
+
+    assert_includes legacy, 'if [[ $(id -u) -eq 0 ]]'
+    assert_includes legacy, 'exec zsh "${REPO_ROOT}/OPENBSD/bin/vps-deploy" "$app"'
+    refute_includes legacy, 'doas zsh "$script"'
+  end
+
   def test_it_refuses_to_run_as_root
     assert_match(/if \[\[ \$\(id -u\) -eq 0 \]\]; then/, SOURCE,
                  "the uid guard is gone — root reaches git pull and fails on a host key instead")
