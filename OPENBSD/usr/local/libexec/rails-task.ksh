@@ -132,13 +132,13 @@ done' ;;
   ci)
     command="PUB4_RAILS_ROOT=/home/$app/pub4-rails/RAILS RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 $bundle exec bin/ci" ;;
   overlay-initializers)
-    command=$(cat <<EOF
+    command=$(cat <<'EOF'
 shared=/home/dev/pub4/RAILS/__shared/config/initializers
-target=/home/$app/app/config/initializers
+target=/home/$PUB4_TASK_APP/app/config/initializers
 [ -d "$shared" ] && [ ! -L "$shared" ] || exit 0
-[ -d "/home/$app/app/config" ] && [ ! -L "/home/$app/app/config" ] || exit 1
+[ -d "/home/$PUB4_TASK_APP/app/config" ] && [ ! -L "/home/$PUB4_TASK_APP/app/config" ] || exit 1
 if [ -e "$target" ] || [ -L "$target" ]; then
-  [ -d "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$app_uid" ] || exit 1
+  [ -d "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$PUB4_TASK_UID" ] || exit 1
 else
   mkdir -p "$target"
 fi
@@ -149,12 +149,12 @@ done
 EOF
 ) ;;
   overlay-public)
-    command=$(cat <<EOF
+    command=$(cat <<'EOF'
 shared=/home/dev/pub4/RAILS/__shared/public
-target=/home/$app/app/public
+target=/home/$PUB4_TASK_APP/app/public
 [ -d "$shared" ] && [ ! -L "$shared" ] || exit 0
 if [ -e "$target" ] || [ -L "$target" ]; then
-  [ -d "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$app_uid" ] || exit 1
+  [ -d "$target" ] && [ ! -L "$target" ] && [ "$(stat -f %u "$target")" = "$PUB4_TASK_UID" ] || exit 1
 else
   mkdir -p "$target"
 fi
@@ -169,10 +169,10 @@ for entry in "$shared"/* "$shared"/.[!.]*; do
   cp -R "$entry" "$target/"
 done
 shared_bin=/home/dev/pub4/RAILS/__shared/bin
-target_bin=/home/$app/app/bin
+target_bin=/home/$PUB4_TASK_APP/app/bin
 if [ -d "$shared_bin" ] && [ ! -L "$shared_bin" ]; then
   if [ -e "$target_bin" ] || [ -L "$target_bin" ]; then
-    [ -d "$target_bin" ] && [ ! -L "$target_bin" ] && [ "$(stat -f %u "$target_bin")" = "$app_uid" ] || exit 1
+    [ -d "$target_bin" ] && [ ! -L "$target_bin" ] && [ "$(stat -f %u "$target_bin")" = "$PUB4_TASK_UID" ] || exit 1
   else
     mkdir -p "$target_bin"
   fi
@@ -185,7 +185,7 @@ if [ -d "$shared_bin" ] && [ ! -L "$shared_bin" ]; then
 fi
 rubocop_config=/home/dev/pub4/RAILS/__shared/.rubocop.yml
 if [ -f "$rubocop_config" ] && [ ! -L "$rubocop_config" ]; then
-  cp "$rubocop_config" "/home/$app/app/.rubocop.yml"
+  cp "$rubocop_config" "/home/$PUB4_TASK_APP/app/.rubocop.yml"
 fi
 EOF
 ) ;;
@@ -198,6 +198,8 @@ export PATH=/usr/local/bin:/usr/bin:/bin
 export NPM_CONFIG_CACHE=/home/$app/.npm
 export XDG_CACHE_HOME=/home/$app/.cache
 export BUNDLE_USER_HOME=/home/$app/.bundle
+export PUB4_TASK_APP=$app
+export PUB4_TASK_UID=$app_uid
 export SECRET_KEY_BASE
 unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH
 unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT
