@@ -58,7 +58,6 @@ class Pub4AdminTest < Minitest::Test
 
     assert_includes source, 'args[0] == "ci-run" && RAILS_APPS.include?(args[1])'
     assert_includes source, "supervised_helper(CI_RUN, app, duration)"
-    assert_includes source, "supervised_helper(CI_RUN, app, duration)"
     assert_includes helper, 'brgen|amber|bsdports'
     assert_includes helper, '[ "$timeout" -le 7200 ]'
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
@@ -117,7 +116,10 @@ class Pub4AdminTest < Minitest::Test
 
     refute_match(/system\s*\(|Open3\.|%x/, source)
     assert_equal 1, source.scan("Process.spawn").length
-    assert_match(/Process\.spawn\(\s*environment,\s*"\/bin\/ksh", CI_RUN, app, duration\.to_s,\s*pgroup: true, unsetenv_others: true\s*\)/m, source)
+    assert_match(/Process\.spawn\(environment, "\/bin\/ksh", helper, \*arguments, \*\*spawn_options\)/, source)
+    assert_includes source, "raise \"unknown helper\" unless [CI_RUN, CI_SYNC].include?(helper)"
+    assert_includes source, "spawn_options[:uid] = account.uid"
+    assert_includes source, "spawn_options[:groups] = [account.gid, shared_gid].uniq"
     assert_includes source, "exec(*command)"
     assert_includes source, 'raise "must run as root through doas" unless Process.euid.zero?'
   end
