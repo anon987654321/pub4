@@ -7,7 +7,7 @@ require "master"
 # that folds its effects. These pin that block — and that ordinary paths still
 # pass, so the guard is a scalpel, not a wall.
 class ImmutablePathsTest < Minitest::Test
-  IMMUTABLE = %w[data/laws.yml data/soul.yml lib/core.rb lib/core/].freeze
+  IMMUTABLE = %w[data/laws.yml data/soul.yml lib/core.rb lib/core/ lib/ground/pledge.rb].freeze
 
   def constitution(workspace_root: Master::ROOT)
     rules = [Master::Core::Constitution.immutable_paths_rule(
@@ -26,6 +26,22 @@ class ImmutablePathsTest < Minitest::Test
 
   def assert_allowed(effect, workspace_root: Master::ROOT)
     assert_instance_of Master::Core::Verdict::Allow, admit(effect, workspace_root:)
+  end
+
+  def test_real_manifest_protects_the_openbsd_pledge_boundary
+    sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
+    assert_includes sacred, "lib/ground/pledge.rb"
+
+    law = Master::Core::Constitution.immutable_paths_rule(
+      sacred, master_root: Master::ROOT, workspace_root: Master::ROOT
+    )
+    verdict = law.judge.call(
+      Master::Core::Effect.write("lib/ground/pledge.rb", "# bypass\n"),
+      nil,
+    )
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :immutable_paths, verdict.by
   end
 
   def test_write_to_constitution_is_blocked
