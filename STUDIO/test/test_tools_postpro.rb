@@ -24,6 +24,26 @@ class TestPostproFilm < Minitest::Test
     assert_match(%r{dilla-renders/\d{4}-\d{2}-\d{2}\z}, output_dir) if configured.empty?
   end
 
+  def test_generated_output_preserves_existing_media_and_sidecar
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "source.jpg")
+      output = File.join(dir, "postpro_source_portrait_v1.jpg")
+      sidecar = "#{output}.json"
+      File.write(input, "source")
+      File.write(output, "original media")
+      File.write(sidecar, "original sidecar")
+
+      with_postpro_output_dir(dir) do
+        error = assert_raises(ArgumentError) do
+          Postpro::Constitution.verify_output!(input_path: input, output_path: output)
+        end
+        assert_match(/constitutional output already exists/, error.message)
+        assert_equal "original media", File.read(output)
+        assert_equal "original sidecar", File.read(sidecar)
+      end
+    end
+  end
+
   # --- the tables agree about which films exist ---------------------------
 
   def test_every_stock_declares_a_speed_and_a_grain_figure
