@@ -195,7 +195,7 @@ module Master
         sink = target.io
         written = 0
         loop do
-          frame = read_frame(sock, sink)
+          frame = read_frame(sock, target)
           return StreamResult.new(ok: false, bytes: written) if frame == :eof
           return StreamResult.new(ok: true, bytes: written) if frame == :clean
 
@@ -219,13 +219,13 @@ module Master
       # up without one (a truncated stream), :raw when the bytes form a legacy
       # daemon's whole-file answer — consume_raw_response has already
       # forwarded them untouched.
-      def read_frame(sock, sink)
+      def read_frame(sock, target)
         header = read_socket_fill(sock, FRAME_HEADER_S)
         return :eof unless header
 
         size = header.unpack1("Q>")
         return :clean if size.zero?
-        return consume_raw_response(header, sock, sink) if size > FRAME_MAX_S
+        return consume_raw_response(header, sock, target) if size > FRAME_MAX_S
 
         body = read_socket_fill(sock, size)
         return :eof unless body
@@ -234,12 +234,19 @@ module Master
       end
 
       # A legacy daemon ignores "stream" and answers with raw mp3 — the length
-      # prefix misreads as an absurd header. The bytes on the wire are already
-      # the whole answer; forward them untouched.
-      def consume_raw_response(header, sock, sink)
-        sink.write(header)
-        copied = IO.copy_stream(sock, sink)
-        [:raw, header.bytesize + copied]
+      # prefix misreads as an absurd header. Forward in chunks so timeouts still
+      # preserve the byte count and never replay an already-heard sentence.
+      def consume_raw_response(header, sock, target)
+        sink = target.io
+        written = sink.write(header)
+        target.on_chunk&.call(written)
+        loop do
+          chunk = sock.readpartial(16 * 1024)
+          written += sink.write(chunk)
+          target.on_chunk&.call(written)
+        end
+      rescue EOFError
+        [:raw, written]
       end
 
       def read_socket_fill(sock, want)
