@@ -9,9 +9,10 @@ shell over the modules in `lib/dilla/`. Instrument patches and grooves live in
 A bare `ruby dilla.rb` plays live, in real time and without end, drawing every pass from
 all four hundred and sixty-seven progressions and from every mode, style, patch, groove
 profile, kit and drum pattern, each from its own shuffle bag. Add `--out PATH` or
-`--render` to write one such random take to a new file instead; with no path it goes
-under `~/Documents/dilla-renders/<date>` (or `$XDG_DATA_HOME`), outside the checkout,
-and it prints the seed so the take can be rebuilt.
+`--render` to write one such random take to a new file instead. By default, it goes to
+`${XDG_DATA_HOME:-~/Documents}/dilla-renders/<UTC date>`, outside the checkout;
+`DILLA_OUTPUT_DIR` selects a different output directory. Dilla prints the seed so the
+take can be rebuilt.
 
 Any flag that chooses content, such as `--progression`, `--arp`, `--voice` or `--drums`,
 plays exactly what it names, and `--showcase` renders the eight-part **Blue Hour — Dilla
@@ -508,11 +509,12 @@ PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unava
 tools are reported as such and do not become required just to render Dilla's existing
 showcase.
 
-Reference output, reports, JSON profiles and stems are stored under the user's
-Documents/dilla-references directory by default, or under XDG_DATA_HOME/dilla-references
-when XDG_DATA_HOME is set. Each profile records the user's style hint separately from
-measured traits: tempo estimates and spectral bands are measurements, while an
-artist/genre label comes from the request, not an automatic genre classifier.
+Reference output, reports, JSON profiles and stems default to
+`${XDG_DATA_HOME:-~/Documents}/dilla-references`. Relative or checkout-local
+`XDG_DATA_HOME` values are ignored; `DILLA_REFERENCE_DIR` selects a different root.
+Each profile records the user's style hint separately from measured traits: tempo estimates
+and spectral bands are measurements, while an artist/genre label comes from the request,
+not an automatic genre classifier.
 
 The industrial-techno command makes a new four-on-the-floor composition with distorted
 sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It
