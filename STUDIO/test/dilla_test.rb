@@ -2136,6 +2136,20 @@ class DillaTest < Minitest::Test
     [show, player]
   end
 
+  def test_live_pass_uses_and_reports_the_profile_kit_for_its_expanded_drum_pattern
+    show, = show_with(1, 19, profile: "dilla_shadow")
+    pick = {
+      prog: 2, position: "1/4", mode: "pad", style: nil,
+      voice: "rhodes_mark1", voices: nil, profile: "dilla_shadow",
+      kit: "kit_world", drums: "boom_bap", bag: nil
+    }
+
+    pass = show.send(:pass_options, pick, 1)
+
+    assert_equal "dilla_shadow_full", pass[:drums]
+    assert_equal "kit_dust", pass[:kit]
+  end
+
   def test_the_show_starts_with_one_beat_then_plays_a_bar_at_a_time_and_joins_under_the_last_beat
     show, player = show_with(3, 6, beats: 4.0)
     first = show.streamers.first

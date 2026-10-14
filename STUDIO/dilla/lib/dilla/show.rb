@@ -121,9 +121,9 @@ class Show
     pass[:chord_voices] = pick[:voices] if pick[:voices]
     pass[:arp_style] = options[:arp_style] || pick[:style] if pick[:mode] == 'arp'
     pass[:repeat] = options[:repeat] || pick[:style] if pick[:mode] == 'repeat'
-    profile_drums = data['groove_profiles'].fetch(pick[:profile])['drums']
-    pass[:drums] = options[:drums] == 'rotate' ? pick[:drums] : (options[:drums] || profile_drums)
-    pass[:kit] = options[:kit] || (options[:drums] == 'rotate' ? pick[:kit] : nil)
+    profile_row = data['groove_profiles'].fetch(pick[:profile])
+    pass[:drums] = options[:drums] == 'rotate' ? pick[:drums] : (options[:drums] || profile_row['drums'])
+    pass[:kit] = options[:kit] || (options[:drums] == 'rotate' ? pick[:kit] : profile_row['kit'])
     pass[:pass] = number
     fit_to_deck(pass, pick) if @decks > 1
     pass
