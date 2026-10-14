@@ -298,7 +298,13 @@ module Pub4Admin
       group_id = Etc.getgrnam(app).gid
       File.chown(0, group_id, temporary)
       File.chmod(0o640, temporary)
-      File.rename(temporary, target)
+      begin
+        # Publish only if the name is still absent. Concurrent first deploys may
+        # race, but neither is allowed to silently replace the other's key.
+        File.link(temporary, target)
+      rescue Errno::EEXIST
+        raise "#{target} appeared during secret creation; refusing to replace it"
+      end
       puts secret if emit
       0
     ensure
