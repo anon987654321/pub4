@@ -10,7 +10,7 @@
   <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
   <div class="field">
     <%= f.label :category %>
-    <%= f.select :category, Item::CATEGORIES, include_blank: t("outfits.select_blank") %>
+    <%= f.select :category, amber_item_category_options, include_blank: t("outfits.select_blank") %>
   </div>
   <div class="field"><%= f.label :color %><%= f.text_field :color %></div>
   <div class="field"><%= f.label :size %><%= f.text_field :size %></div>
@@ -28,11 +28,11 @@
   </div>
   <div class="field">
     <%= f.label :mood_effect, t("items.mood_effect") %>
-    <%= f.select :mood_effect, Item::MOOD_EFFECTS, include_blank: t("items.not_set") %>
+    <%= f.select :mood_effect, amber_mood_effect_options, include_blank: t("items.not_set") %>
   </div>
   <div class="field">
     <%= f.label :life_phase, t("items.life_phase") %>
-    <%= f.select :life_phase, Item::LIFE_PHASES, include_blank: t("items.not_set") %>
+    <%= f.select :life_phase, amber_life_phase_options, include_blank: t("items.not_set") %>
   </div>
   <div class="field media-picker" data-controller="media-picker direct-upload" data-action="dragover->media-picker#dragover dragleave->media-picker#dragleave drop->media-picker#drop">
     <%= f.label :photos %>
