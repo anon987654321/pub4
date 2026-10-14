@@ -14,7 +14,7 @@
    <% else %>
      <% position = index + 1 %>
      <li>
-       <%= render "posts/post", post: post %>
+       <%= render "posts/post", post: post, priority: index.zero? %>
        <% if live_search_query.blank? && Brgen::HomeFeed.promotion_slot?(position) && position < @posts.size %>
          <%= render "home/vertical_promo_unit", promotion: Brgen::HomeFeed.promotion_for(position) %>
        <% elsif ((position % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && position < @posts.size) %>
