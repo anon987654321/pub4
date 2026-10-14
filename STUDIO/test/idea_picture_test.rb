@@ -54,20 +54,26 @@ class TestIdeaPictureOutput < Minitest::Test
       render_root = File.join(dir, "renders")
       status = successful_status
 
-      runner = lambda do |env, *_args|
+      runner = lambda do |env, *args|
+        script = File.join(Studio::Visual::IdeaPicture::ROOT, "postpro", "postpro.rb")
+        assert_equal script, args.fetch(1)
         output_dir = env.fetch("POSTPRO_OUTPUT_DIR")
         FileUtils.mkdir_p(output_dir)
         File.write(File.join(output_dir, "postpro_portrait_source_test_v1.jpg"), "graded")
         ["postpro0: ok write", status]
       end
 
-      Studio::OutputPaths.stub(:render_directory, render_root) do
-        Open3.stub(:capture2e, runner) do
-          graded = picture.send(:grade, source, "stamp")
-          assert_equal File.join(render_root, "photograph-stamp",
-                                 "postpro_portrait_source_test_v1.jpg"), graded
-          refute_equal source, graded
-          assert_equal "graded", File.read(graded)
+      Dir.mktmpdir do |working_directory|
+        Dir.chdir(working_directory) do
+          Studio::OutputPaths.stub(:render_directory, render_root) do
+            Open3.stub(:capture2e, runner) do
+              graded = picture.send(:grade, source, "stamp")
+              assert_equal File.join(render_root, "photograph-stamp",
+                                     "postpro_portrait_source_test_v1.jpg"), graded
+              refute_equal source, graded
+              assert_equal "graded", File.read(graded)
+            end
+          end
         end
       end
     end
