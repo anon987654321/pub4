@@ -146,6 +146,9 @@ module Master
         @turn_worker = nil
         @turn_queue_paused = false
         @reading_input = false
+        @terminal_ask_mutex = Mutex.new
+        @terminal_ask_cv = ConditionVariable.new
+        @pending_terminal_ask = nil
         @closed = false
       end
 
