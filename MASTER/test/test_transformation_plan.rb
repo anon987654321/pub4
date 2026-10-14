@@ -60,6 +60,14 @@ class TestTransformationPlan < Minitest::Test
       refute_empty @plan.domain_adapters.fetch(domain)
     end
     assert_operator @plan.automatic_vetoes.length, :>=, 5
+    protocol = @plan.research_protocol
+    assert_equal true, protocol.fetch("enabled")
+    assert_operator protocol.fetch("minimum_source_pages"), :>=, 2
+    %w[engineering rails openbsd studio music visual].each do |domain|
+      refute_empty protocol.fetch("domains").fetch(domain).fetch("sources")
+      assert_operator protocol.fetch("domains").fetch(domain).fetch("queries").size, :>=, 1
+    end
+    assert_includes @plan.research_instructions, "untrusted"
     names = @plan.research.map { |entry| entry.fetch("name") }
     assert_includes names, "Fowler, Refactoring"
     assert_includes names, "RuboCop Ruby Style Guide"
