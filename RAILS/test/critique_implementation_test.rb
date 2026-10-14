@@ -468,26 +468,60 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".post-show-comments"
   end
 
-  def test_amber_season_selectors_localize_labels_and_keep_enum_values
+  def test_amber_enum_selectors_localize_labels_and_keep_enum_values
     helper = read("amber/app/helpers/application_helper.rb")
-    views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]
-    en = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/en.yml")).fetch("en").fetch("outfits").fetch("seasons")
-    nb = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/nb.yml")).fetch("nb").fetch("outfits").fetch("seasons")
+    season_views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]
+    item_form = read("amber/app/views/items/_form.html.erb")
+    category_filter = read("amber/app/views/items/_live_search_results.html.erb")
+    en = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/en.yml")).fetch("en")
+    nb = YAML.safe_load_file(File.join(ROOT, "amber/config/locales/nb.yml")).fetch("nb")
 
-    assert_includes helper, "def amber_season_options"
-    assert_includes helper, 'Item::SEASONS.map do |season|'
-    assert_includes helper, '[t("outfits.seasons.#{key}"), season]'
-    views.each do |view|
+    assert_includes helper, "def amber_enum_options(values, scope:)"
+    assert_includes helper, 'values.map do |value|'
+    assert_includes helper, '[t("#{scope}.#{key}"), value]'
+    {
+      "outfits.seasons" => {
+        "spring" => ["Spring", "Vår"], "summer" => ["Summer", "Sommer"],
+        "autumn" => ["Autumn", "Høst"], "winter" => ["Winter", "Vinter"],
+        "all_season" => ["All-season", "Hele året"]
+      },
+      "items.item_categories" => {
+        "tops" => ["Tops", "Topper"], "bottoms" => ["Bottoms", "Underdeler"],
+        "dresses" => ["Dresses", "Kjoler"], "shoes" => ["Shoes", "Sko"],
+        "accessories" => ["Accessories", "Tilbehør"], "outerwear" => ["Outerwear", "Yttertøy"]
+      },
+      "items.mood_effects" => {
+        "energising" => ["Energising", "Energigivende"], "calming" => ["Calming", "Beroligende"],
+        "confident" => ["Confident", "Selvsikker"], "playful" => ["Playful", "Leken"],
+        "neutral" => ["Neutral", "Nøytral"]
+      },
+      "items.life_phases" => {
+        "current" => ["Current", "Nåværende"], "past_self" => ["Past self", "Tidligere meg"],
+        "aspirational" => ["Aspirational", "Ønsket meg"]
+      }
+    }.each do |scope, translations|
+      en_values = scope.split(".").reduce(en) { |node, key| node.fetch(key) }
+      nb_values = scope.split(".").reduce(nb) { |node, key| node.fetch(key) }
+      translations.each do |key, (english, norwegian)|
+        assert_equal english, en_values.fetch(key), "en #{scope}.#{key}"
+        assert_equal norwegian, nb_values.fetch(key), "nb #{scope}.#{key}"
+      end
+    end
+
+    season_views.each do |view|
       source = read("amber/app/views/#{view}")
-      assert_includes source, "amber_season_options", "#{view} should use the canonical translated options"
-      refute_match(/f\.select :season, Item::SEASONS/, source, "#{view} must not expose enum values as UI labels")
+      assert_includes source, "amber_season_options", "#{view} should use canonical translated season options"
+      refute_match(/f\.select :season, Item::SEASONS/, source, "#{view} must not expose enum values as labels")
     end
-    { "spring" => ["Spring", "Vår"], "summer" => ["Summer", "Sommer"],
-      "autumn" => ["Autumn", "Høst"], "winter" => ["Winter", "Vinter"],
-      "all_season" => ["All-season", "Hele året"] }.each do |key, (english, norwegian)|
-      assert_equal english, en.fetch(key)
-      assert_equal norwegian, nb.fetch(key)
-    end
+    assert_includes helper, 'def amber_season_options = amber_enum_options(Item::SEASONS, scope: "outfits.seasons")'
+    assert_includes helper, 'def amber_item_category_options = amber_enum_options(Item::CATEGORIES, scope: "items.item_categories")'
+    assert_includes helper, 'def amber_mood_effect_options = amber_enum_options(Item::MOOD_EFFECTS, scope: "items.mood_effects")'
+    assert_includes helper, 'def amber_life_phase_options = amber_enum_options(Item::LIFE_PHASES, scope: "items.life_phases")'
+    assert_includes item_form, 'f.select :category, amber_item_category_options'
+    assert_includes item_form, 'f.select :mood_effect, amber_mood_effect_options'
+    assert_includes item_form, 'f.select :life_phase, amber_life_phase_options'
+    assert_includes category_filter, 'amber_item_category_options.each do |label, value|'
+    refute_includes category_filter, 'Item::CATEGORIES.each do |category|'
   end
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle
     index = read("amber/app/views/items/index.html.erb")
