@@ -150,6 +150,20 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('supervised_helper(RAILS_TASK, app, 7200, arguments)')
   failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
 
+  bundle_path = File.join(OPENBSD, "usr", "local", "libexec", "rails-bundle.ksh")
+  if File.file?(bundle_path)
+    bundle_helper = File.read(bundle_path)
+    unless bundle_helper.include?("brgen|amber|bsdports") &&
+           bundle_helper.include?('[ "$timeout" -le 7200 ]') &&
+           bundle_helper.include?('cd /home/$app/app') &&
+           bundle_helper.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
+           bundle_helper.include?('RAILS_ENV=production $bundle install') &&
+           bundle_helper.include?('unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH')
+      failures << "rails-bundle helper must run fixed production Bundler as the app user"
+    end
+  else
+    failures << "missing tracked usr/local/libexec/rails-bundle.ksh"
+  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   source_preflight = installer.include?("typeset -a privileged_sources=(") &&
                      installer.include?('if [[ ! -f $src/$rel || -L $src/$rel ]]') &&
@@ -167,7 +181,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin") &&
                          installer.include?("[[ -L $f ]]") &&
-                         installer.include?("/usr/local/libexec/ci-sync.ksh")
+                         installer.include?("/usr/local/libexec/ci-sync.ksh") &&
+                         installer.include?("/usr/local/libexec/rails-bundle.ksh")
   failures << "OPERATOR.sh must reject symlinked privileged entrypoints and install pub4-admin root-owned/non-writable" unless installer_pins_admin
 else
   failures << "missing tracked usr/local/sbin/pub4-admin"
