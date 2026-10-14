@@ -27,11 +27,14 @@ postpro by default, and lora grades its renders the same way. Postpro's bulk gra
 sheets and LUT exports use the shared `output_paths.rb` contract: a dated folder under
 `${XDG_DATA_HOME:-~/Documents}/dilla-renders`, outside the checkout by default.
 `POSTPRO_OUTPUT_DIR` redirects Postpro, `DILLA_OUTPUT_DIR` redirects Dilla renders, and
-`DILLA_REFERENCE_DIR` redirects reference-analysis artifacts. Explicit `--output` or
-`--out` paths remain operator-controlled. The `photograph.rb` workflow uses a per-job folder
-under the same dated directory for its returned graded still. Takes are irreplaceable:
-Dilla's WAV and MIDI writers refuse existing paths by default, stage new bytes before publish,
-and require the explicit `--replace` option to replace a take.
+`DILLA_REFERENCE_DIR` redirects reference-analysis artifacts. Explicit `--output`, `--out`
+and `--video` paths remain operator-controlled. The `photograph.rb` workflow uses a per-job
+folder under the same dated directory for its returned graded still.
+
+Dilla's default showcase preserves existing takes: it tries the familiar filenames, then the
+ignored `out/` directory, then a fresh timestamped WAV/MP4 pair. Its WAV and MIDI writers
+refuse existing paths by default, stage new bytes before publish, and require the explicit
+`--replace` option to replace a take.
 
 The folder `test/` holds every suite, one file per subject. The `Rakefile` runs the gate,
 then starts each suite in its own process because the tools define constants at top level and
