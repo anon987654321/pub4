@@ -255,13 +255,10 @@ module Master
           @last_resource_check = now
           measurement = @resource_budget.measure
           free_gb = measurement.dig(:values, :disk_free_gb)
-          disk_issue = Array(measurement[:reasons]).find { |reason| reason.to_s.start_with?("disk_free_gb=") }
-          reason = if free_gb.nil?
-                     "disk space measurement unavailable"
-                   elsif disk_issue
-                     "disk pressure: #{disk_issue}"
-                   end
-          abort_run!("#{reason}; stopping before filesystem exhaustion") if reason
+          if @resource_budget.disk_critical?(measurement)
+            reason = free_gb.nil? ? "disk space measurement unavailable" : "disk pressure at #{free_gb} GB free"
+            abort_run!("#{reason}; stopping before filesystem exhaustion")
+          end
         end
 
         return unless @protected_baseline && now - (@last_guard_check || 0) >= GUARD_CHECK_SECONDS
