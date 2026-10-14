@@ -89,6 +89,14 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service restart $other'
   end
 
+  def test_vps_deploy_fails_closed_without_root_fallbacks
+    assert_includes SOURCE, '[[ -f /usr/local/sbin/pub4-admin && -x /usr/local/sbin/pub4-admin && ! -L /usr/local/sbin/pub4-admin ]]'
+    refute_match(/^\s*doas\s+rcctl\b/, SOURCE)
+    refute_match(/^\s*doas\s+(?:tee|chmod|mkdir)\b/, SOURCE)
+    refute_includes SOURCE, 'doas ksh "$repo/OPENBSD/bin/resource_guard.sh"'
+    refute_includes SOURCE, 'doas "$RUBY" "$repo/OPENBSD/gates/solid_queue_proof.rb"'
+    refute_includes SOURCE, 'doas tee "$file"'
+  end
   def test_deploy_uses_the_fixed_root_broker_when_installed
     assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service'
     assert_includes SOURCE, 'admin_request stamp "$name" "$sha" "$stamp_status"'
