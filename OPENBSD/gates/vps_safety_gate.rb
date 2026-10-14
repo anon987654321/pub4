@@ -152,7 +152,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('trusted_script!(CI_PREPARE)') &&
                            admin.include?('trusted_script!(CI_RUN)') &&
                            admin.include?('supervised_helper(CI_SYNC, app, 900)') &&
-                           admin.include?('args[0] == "rails-task" && RAILS_APPS.include?(args[1])') &&
+                           admin.include?('args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])') &&
                            admin.include?('run_rails_task(args[1], args[2])') &&
                            admin.include?('supervised_helper(RAILS_TASK, app, 7200, arguments)')
   failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
