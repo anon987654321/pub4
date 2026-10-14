@@ -591,7 +591,7 @@ Object.defineProperty(State, 'mode', {
     if (micText) micText.textContent = v === 'listening' ? 'Microphone on' : 'Microphone off';
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();
+    if (v === 'thinking' && !State.reducedMotion && runtimeProfile() !== 'battery') startStar(); else stopStar();
   },
   configurable: true
 });
