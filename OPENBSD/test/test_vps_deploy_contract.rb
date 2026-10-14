@@ -107,6 +107,14 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
   end
 
+  def test_relayd_adapter_fails_closed_without_broker
+    service = File.read(File.join(ROOT, "RAILS", "_service.sh"), encoding: "UTF-8")
+    adapter = service[/relayd_add_relay\(\) \{.*?^\}/m]
+    refute_nil adapter
+    assert_includes adapter, '[[ -x /usr/local/sbin/pub4-admin ]]'
+    assert_includes adapter, '"relayd: fixed broker is missing; run OPERATOR.sh before deploying"'
+    refute_match(/\$\{_PRIV\}.*\$RUBY/, adapter)
+  end
   def test_rails_relayd_route_check_uses_the_fixed_broker
     service = File.read(File.join(ROOT, "RAILS", "_service.sh"), encoding: "UTF-8")
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
