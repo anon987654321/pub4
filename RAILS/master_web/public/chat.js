@@ -397,38 +397,51 @@ function openActionMenu(msgEl) {
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
 
+  let close;
+  const dismiss = (restoreFocus = false) => {
+    menu.remove();
+    if (close) {
+      document.removeEventListener('click', close, true);
+      document.removeEventListener('keydown', close);
+    }
+    if (restoreFocus) msgEl.focus({ preventScroll: true });
+  };
+
   const onAct = (ev) => {
     const button = ev.target.closest?.('button[data-act]');
     if (!button || !menu.contains(button)) return;
     const act = button.dataset.act;
     if (act === 'copy') {
       navigator.clipboard?.writeText(txt).catch(() => {});
-      menu.remove();
+      dismiss(true);
     } else if (act === 'quote') {
+      dismiss();
       if (input) { input.value = `> ${txt}\n`; input.focus(); }
-      menu.remove();
     } else if (act === 'simpler') {
       if (window.sendMessage) window.sendMessage(`${chatT('message_simpler_prompt', 'Please explain this more simply:')}\n${bodyText}`);
-      menu.remove();
+      dismiss();
     } else if (act === 'deeper') {
       if (window.sendMessage) window.sendMessage(`${chatT('message_deeper_prompt', 'Go deeper on this answer:')}\n${bodyText}`);
-      menu.remove();
+      dismiss();
     } else if (act === 'close') {
-      menu.remove();
+      dismiss(true);
     }
   };
   menu.addEventListener('click', onAct);
-  const close = (e) => {
-    if (!menu.contains(e.target) || (e.key && e.key === 'Escape')) {
-      menu.remove();
-      document.removeEventListener('click', close, true);
-      document.removeEventListener('keydown', close);
+  close = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      dismiss(true);
+    } else if (!menu.contains(e.target)) {
+      dismiss();
     }
   };
   setTimeout(() => {
+    if (!menu.isConnected) return;
     document.addEventListener('click', close, true);
     document.addEventListener('keydown', close);
   }, 0);
+  menu.querySelector('button')?.focus({ preventScroll: true });
 }
 // Per-message context-usage footer removed (idle-screen chrome); no-op kept
 // since callers use optional chaining and this file assigns it unconditionally.
