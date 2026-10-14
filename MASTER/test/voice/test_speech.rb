@@ -499,6 +499,27 @@ class TestSpeech < Minitest::Test
   # chunks and a zero-length frame. The file must hold exactly the payloads,
   # assembled as they arrived. A legacy daemon that ignores "stream" and
   # closes whole-file is still accepted — the eof test above covers it.
+  def test_synthesize_edge_socket_retries_once_after_a_truncated_first_response
+    calls = 0
+    wire = lambda do |client|
+      calls += 1
+      if calls == 1
+        client.write([5].pack("Q>"))
+        client.write("bad")
+      else
+        client.write([5].pack("Q>"))
+        client.write("valid")
+        client.write([0].pack("Q>"))
+      end
+    end
+
+    result, _path, bytes = with_edge_stub_server(wire)
+
+    assert result
+    assert_equal "valid", bytes
+    assert_equal 2, calls, "a socket request gets one retry, not a retry per caller layer"
+  end
+
   def test_synthesize_edge_socket_assembles_framed_stream
     wire = lambda do |client|
       client.write([5].pack("Q>"))
@@ -573,6 +594,23 @@ class TestSpeech < Minitest::Test
         end
       end
     end
+  end
+
+  def test_socket_retry_budget_is_not_restarted_by_the_streaming_caller
+    calls = 0
+    speech = Master::Voice::Speech
+    speech.stub(:synthesize_edge_socket, ->(**) { calls += 1; nil }) do
+      refute speech.send(
+        :attempt_socket_synthesis,
+        "hello",
+        "en-GB-RyanNeural",
+        { rate: "+0%", pitch: "+0Hz" },
+        File.join(Dir.tmpdir, "unused-tts-budget.mp3"),
+        nil,
+      )
+    end
+
+    assert_equal 1, calls
   end
 
   def test_synthesize_streaming_falls_back_to_oneshot_when_socket_fails
