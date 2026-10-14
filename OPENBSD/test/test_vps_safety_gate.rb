@@ -53,6 +53,18 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_operator_install_refuses_symlinked_broker_helpers
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "OPERATOR.sh")
+      text = File.read(path).sub('if [[ -L $f ]]; then', 'if [[ -L $unused ]]; then')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "OPERATOR.sh must reject symlinked privileged entrypoints"
+    end
+  end
+
   def test_broker_must_keep_ci_spawn_fixed_and_supervised
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
