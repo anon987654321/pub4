@@ -72,9 +72,9 @@ if File.file?(admin_path)
   failures << "pub4-admin must not evaluate shell command strings" if
     admin.match?(/system\s*\(|Open3\.|Process\.spawn|%x/)
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
-  failures << "OPERATOR.sh must install pub4-admin root-owned and non-writable" unless
-    installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
-    installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
+  installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
+                         installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
+  failures << "OPERATOR.sh must install pub4-admin root-owned and non-writable" unless installer_pins_admin
 else
   failures << "missing tracked usr/local/sbin/pub4-admin"
 end
