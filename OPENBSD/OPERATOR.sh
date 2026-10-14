@@ -184,6 +184,31 @@ mark_step_completed() { print -r -- "$1" >> "${STATE_FILE}.steps" }
 install_root_configs() {
   typeset src=${1:-${CONFIG_ROOT}}
   [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
+
+  # These files become root-executed entrypoints after installation.
+  # Require regular, non-symlink sources before copying anything to /.
+  typeset -a privileged_sources=(
+    usr/local/sbin/pub4-admin
+    usr/local/libexec/ci-prepare.ksh
+    usr/local/libexec/ci-run.ksh
+    usr/local/libexec/ci-sync.ksh
+    gates/solid_queue_proof.rb
+    bin/resource_guard.sh
+  )
+  typeset rel
+  for rel in ${privileged_sources[@]}; do
+    if [[ ! -f $src/$rel || -L $src/$rel ]]; then
+      log ERROR "missing or symlinked privileged source: $src/$rel"
+      return 1
+    fi
+  done
+  for rel in usr usr/local usr/local/sbin usr/local/libexec gates bin; do
+    if [[ -L $src/$rel ]]; then
+      log ERROR "refusing symlinked privileged source directory: $src/$rel"
+      return 1
+    fi
+  done
+
   backup_directory /etc "etc-pre-sync" || return 1
 
   if [[ -f $src/etc/doas.conf ]]; then
