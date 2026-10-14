@@ -78,7 +78,7 @@ watch_disk() {
     esac
     pct=${cap%\%}
     if (( pct >= DISK_MAX )); then
-      raise "disk-$(slug "$mount")" "$mount is ${pct}% full (limit ${DISK_MAX}%) - find the growth with: doas du -xk $mount; logs rotate in /etc/newsyslog.conf"
+      raise "disk-$(slug "$mount")" "$mount is ${pct}% full (limit ${DISK_MAX}%) - find the growth with: doas /usr/local/sbin/pub4-admin disk-usage $mount; logs rotate in /etc/newsyslog.conf"
     fi
   done
 }
