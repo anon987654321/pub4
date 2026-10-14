@@ -68,9 +68,10 @@ module Pub4Admin
       raise "#{STAMP_DIR} is a symlink; refusing root write"
     end
     FileUtils.mkdir_p(STAMP_DIR, mode: 0o755)
-    stat = File.stat(STAMP_DIR)
-    raise "#{STAMP_DIR} is not a root-owned directory" unless stat.directory? && stat.uid.zero?
-    File.chmod(0o755, STAMP_DIR)
+    stat = File.lstat(STAMP_DIR)
+    raise "#{STAMP_DIR} is not a real root-owned directory" unless
+      stat.directory? && stat.uid.zero? && !stat.symlink?
+    File.chmod(0o755, STAMP_DIR) unless (stat.mode & 0o777) == 0o755
 
     target = File.join(STAMP_DIR, "last_deploy_#{app}.json")
     temporary = File.join(STAMP_DIR, ".last_deploy_#{app}.#{Process.pid}.#{SecureRandom.hex(6)}")
