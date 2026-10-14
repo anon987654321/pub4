@@ -39,6 +39,15 @@ mkdir -p "$mirror"
   echo "ci-sync: mirror must be a real directory owned by $app" >&2
   exit 1
 }
+if [ -e "$mirror/MASTER" ] || [ -L "$mirror/MASTER" ]; then
+  [ -d "$mirror/MASTER" ] && [ ! -L "$mirror/MASTER" ] &&
+    [ "$(stat -f %u "$mirror/MASTER")" = "$uid" ] || {
+      echo "ci-sync: MASTER mirror root must be a real app-owned directory" >&2
+      exit 1
+    }
+else
+  mkdir "$mirror/MASTER"
+fi
 
 # The CI mirror contains the exact tracked tree, not ignored local bundles.
 rm -rf "$mirror/RAILS"
@@ -47,7 +56,18 @@ if git -C "$repo" cat-file -e HEAD:MASTER/tools 2>/dev/null; then
   rm -rf "$mirror/MASTER/tools"
   git -C "$repo" archive HEAD MASTER/tools | tar xf - -C "$mirror"
 fi
-mkdir -p "$mirror/MASTER/data" "$mirror/MASTER/lib"
+for subdir in data lib; do
+  destination="$mirror/MASTER/$subdir"
+  if [ -L "$destination" ]; then
+    echo "ci-sync: refusing mirror directory symlink: $destination" >&2
+    exit 1
+  fi
+  mkdir -p "$destination"
+  [ "$(stat -f %u "$destination")" = "$uid" ] || {
+    echo "ci-sync: mirror directory is not app-owned: $destination" >&2
+    exit 1
+  }
+done
 rm -f "$mirror/MASTER/data/tokens.yml" "$mirror/MASTER/data/laws.yml"
 git -C "$repo" archive HEAD MASTER/data/tokens.yml | tar xf - -C "$mirror"
 rm -rf "$mirror/MASTER/lib/operator"
