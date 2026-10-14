@@ -1945,3 +1945,36 @@ body[data-face-ascii="1"] #face { opacity: .055; }
 @media (prefers-reduced-motion: reduce) {
   .master-face-ascii-layer { transition: none; }
 }
+
+/* Sequential turn feedback stays separate from the mode status, whose text is
+   cleared whenever the face changes state. */
+.turn-queue-status {
+  color: var(--face-muted);
+  font: 400 0.72rem/1.2 var(--font-mono);
+  white-space: nowrap;
+  pointer-events: none;
+  margin-inline-start: 4px;
+}
+body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
+#turn-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-inline-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  padding-inline: 8px;
+  border: 1px solid var(--border-soft);
+  background: transparent;
+  color: var(--face-muted);
+  font: 400 .72rem/1 var(--font-mono);
+  text-transform: lowercase;
+  cursor: pointer;
+}
+#turn-control:hover { color: var(--face-fg); border-color: var(--border-strong); }
+#turn-control[hidden] { display: none; }
+#turn-control:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  #turn-control { transition: none; }
+}
+
