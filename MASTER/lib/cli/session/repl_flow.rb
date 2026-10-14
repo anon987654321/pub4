@@ -111,7 +111,7 @@ module Master
           tokens: @refs.session.token_est, cost: @refs.session.cost,
           destination: Master::Io::Chat.destination_label
         )
-        prompt_with_queue_status(prompt)
+        prompt
       end
 
       # Focus mode reduces context noise, never hides the working location or
@@ -123,7 +123,7 @@ module Master
           tokens: @refs.session.token_est, cost: @refs.session.cost,
           destination: Master::Io::Chat.destination_label, focused: true
         )
-        prompt_with_queue_status(prompt)
+        prompt
       end
 
       # An empty line does nothing, as in a shell: Enter never runs an action
@@ -316,23 +316,6 @@ module Master
         @turn_queue_mutex.synchronize { @turn_queue.length }
       rescue StandardError
         0
-      end
-
-      def prompt_with_queue_status(prompt)
-        return prompt unless queue_control_mode? || interactive_queue_count.positive?
-
-        count = interactive_queue_count
-        status = if @turn_queue_paused
-                   "paused"
-                 elsif count.positive?
-                   "queued #{count}"
-                 else
-                   "working"
-                 end
-        base = prompt.to_s.sub(/\s+\z/, "")
-        suffix = "#{base} #{status} "
-        maximum = Master::Face::Contract.prompt_max
-        suffix.length <= maximum ? suffix : prompt
       end
 
       def enqueue_interactive_line(line)
