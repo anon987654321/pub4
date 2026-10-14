@@ -4870,7 +4870,13 @@ def run_stock_sheet
   abort "postpro: unknown preset #{preset_name}" unless PRESETS.key?(preset_name)
 
   ext = File.extname(input_path)
-  output = argv_flag("--output") || File.join(File.dirname(input_path), "#{File.basename(input_path, ext)}_stocks_#{preset_name}.jpg")
+  requested_output = argv_flag("--output")
+  output = requested_output
+  if output.to_s.empty?
+    safe_stem = File.basename(input_path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+    output = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{safe_stem}_stocks_#{preset_name}.jpg")
+    Postpro::Constitution.verify_output!(input_path: input_path, output_path: output)
+  end
   sheet, stocks = stock_sheet(load_image(input_path), preset_name)
   sheet.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
   $cli_logger.info "ok stock sheet preset=#{preset_name} stocks=#{stocks.length} out=#{output}"
