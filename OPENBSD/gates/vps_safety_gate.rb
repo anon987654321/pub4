@@ -197,6 +197,23 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
     failures << "missing RAILS/_sync.sh shared overlay adapters"
   end
 
+  deploy_path = File.join(ROOT, "RAILS", "_deploy.sh")
+  if File.file?(deploy_path)
+    deploy = File.read(deploy_path)
+    access_at = deploy.index('pub4-admin ci-prepare "$app_name"')
+    app_sync_at = deploy.index('rails_sync_app_tree "$app_name" app')
+    shared_sync_at = deploy.index('rails_sync_app_tree "$app_name" shared')
+    overlay_at = deploy.index('overlay_shared_initializers "$APP_DIR"')
+    end_at = deploy.index('deploy_status "$app_name" "master scan"')
+    sync_block = app_sync_at && end_at ? deploy[app_sync_at...end_at] : ""
+    ordered = access_at && app_sync_at && shared_sync_at && overlay_at && end_at &&
+              access_at < app_sync_at && app_sync_at < shared_sync_at && shared_sync_at < overlay_at
+    unless ordered && !sync_block.match?(/doas (?:rm|chown|mkdir|mv|sh -c)/)
+      failures << "production Rails tree sync must use the fixed app-user broker after ci-prepare"
+    end
+  else
+    failures << "missing RAILS/_deploy.sh app-user sync path"
+  end
   runtime_path = File.join(ROOT, "RAILS", "_runtime_gate.sh")
   if File.file?(runtime_path)
     runtime = File.read(runtime_path)
