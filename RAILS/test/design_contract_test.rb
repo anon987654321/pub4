@@ -126,8 +126,8 @@ class DesignContractTest < Minitest::Test
     end
     assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*min-height:\s*var\(--nav-swiper-h\)[^}]*padding-block-start:\s*calc\(0\.5rem\s*\+\s*var\(--safe-top\)\)[^}]*flex-wrap:\s*wrap/m, layout_css,
                  "nav contents must clear the device safe area without a second viewport offset")
-    assert_match(/padding-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--tap-min\)\)/, base_css,
-                 "mobile clearance must cover two rows and the top safe area")
+    assert_match(/padding-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--tap-min\)\s*\+\s*var\(--space-2\)\)/, base_css,
+                 "mobile clearance must cover two rows, their gap and the top safe area")
     assert_match(/body\s*\{[^}]*padding-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--space-1\)\)/m, pages_css,
                  "wide clearance must cover one row and the top safe area")
     assert_match(/nav\[data-pwa-primary-nav\]\s+a\[aria-current="page"\]/, layout_css)
