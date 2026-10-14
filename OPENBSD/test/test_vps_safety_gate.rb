@@ -125,6 +125,21 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_relayd_broker_must_not_modify_root_routing_policy
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
+      text = File.read(path).sub("def relayd_check(app, domain, requested_port)", "def relayd_add(app, domain, requested_port)")
+      text = text.sub('args[0] == "relayd-check"', 'args[0] == "relayd-add"')
+      text = text.sub('no operator-approved Host route for #{domain}', "route auto-added")
+      text = text.sub('requested port does not match the root-configured backend', "port accepted")
+      text = text.sub('!admin.include?("File.rename(temporary, RELAYD_CONFIG)")', 'admin.include?("File.rename(temporary, RELAYD_CONFIG)")')
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "relayd broker must be verification-only and reject unapproved Host routes"
+    end
+  end
   def test_broker_must_keep_legacy_retirement_fixed
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
