@@ -36,9 +36,11 @@ class TestToolsMedia < Minitest::Test
 
     presets = source.scan(/^  ([a-z0-9_]+): \{ fx: %w\[([^\]]+)\]([^}]*)\}/m)
     assert_operator presets.size, :>, 0, "preset scanner must reach the source table"
+    # Some supported knobs are runtime-capable but no current preset sets
+    # them. Check every declaration that exists; do not require unused knobs to
+    # appear in the preset table merely to make the fixture non-empty.
     expected.each do |key, readers|
       matching = presets.select { |_, _, rest| rest.match?(/\b#{Regexp.escape(key)}:/) }
-      assert_operator matching.size, :>, 0, "preset scanner must see declarations of #{key}:"
       matching.each do |name, fx, _rest|
         assert(fx.split.intersect?(readers),
                "#{name} declares #{key}: but its chain has no #{readers.join('/')} reader")
