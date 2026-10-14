@@ -25,7 +25,7 @@ sync_tree() {
     ${_PRIV} rm -rf "$stage" "$old"
     ${_PRIV} mkdir -p "$stage"
 
-    if ! ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${stage%/}' && tar xf -"; then
+    if ! tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${stage%/}"; then
       ${_PRIV} rm -rf "$stage"
       log_err "staged tar copy failed; destination left untouched"
       return 1
@@ -51,7 +51,7 @@ sync_tree() {
     [[ -n "$old" ]] && ${_PRIV} rm -rf "$old"
   else
     ${_PRIV} mkdir -p "$dst"
-    if ! ${_PRIV} sh -c "cd '${src%/}' && tar cf - ." | ${_PRIV} sh -c "cd '${dst%/}' && tar xf -"; then
+    if ! tar cf - -C "${src%/}" . | ${_PRIV} tar xf - -C "${dst%/}"; then
       log_err "tar overlay failed"
       return 1
     fi
