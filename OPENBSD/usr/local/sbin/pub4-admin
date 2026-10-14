@@ -20,6 +20,7 @@ module Pub4Admin
   CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
   CI_RUN = "/usr/local/libexec/ci-run.ksh"
   CI_SYNC = "/usr/local/libexec/ci-sync.ksh"
+  RAILS_TASK = "/usr/local/libexec/rails-task.ksh"
   RAILS_BUNDLE = "/usr/local/libexec/rails-bundle.ksh"
   RAILS_APPS = %w[brgen amber bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
@@ -152,20 +153,24 @@ module Pub4Admin
   # Supervise a single fixed helper with a bounded app name and wall-clock deadline.
   # CI execution starts as root only long enough to drop to the app via su; tree sync
   # is spawned directly with that app UID/GID and only the groups it needs.
-  def supervised_helper(helper, app, duration)
-    raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_BUNDLE].include?(helper)
+  def supervised_helper(helper, app, duration, helper_arguments = nil)
+    raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)
     raise "unknown app" unless RAILS_APPS.include?(app)
     raise "invalid helper timeout" unless duration.is_a?(Integer) && (1..7200).cover?(duration)
 
+    arguments = case helper
+                when CI_RUN then [app, duration.to_s]
+                when CI_SYNC then [app]
+                when RAILS_TASK then Array(helper_arguments)
+                end
     trusted_script!(helper)
-    arguments = [CI_RUN, RAILS_BUNDLE].include?(helper) ? [app, duration.to_s] : [app]
-    environment = if helper == CI_RUN
-                    { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
-                  else
+    environment = if helper == CI_SYNC
                     { "PATH" => "/usr/local/bin:/usr/bin:/bin",
                       "HOME" => "/home/#{app}",
                       "GIT_CONFIG_NOSYSTEM" => "1",
                       "GIT_CONFIG_GLOBAL" => "/dev/null" }
+                  else
+                    { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
                   end
     spawn_options = { pgroup: true, unsetenv_others: true }
     if helper == CI_SYNC
@@ -247,6 +252,21 @@ module Pub4Admin
 
   def run_ci_sync(app)
     supervised_helper(CI_SYNC, app, 900)
+  end
+
+  def run_rails_task(app, task, database = nil)
+    return 64 unless RAILS_APPS.include?(app)
+    allowed = %w[bundle-install bundle-check db-prepare db-seed demo-seed assets-precompile ci]
+    if task == "schema-load"
+      return 64 unless %w[cache queue cable].include?(database)
+    else
+      return 64 unless allowed.include?(task) && database.nil?
+    end
+    return 64 if task == "demo-seed" && !%w[brgen amber].include?(app)
+
+    arguments = [app, task]
+    arguments << database if task == "schema-load"
+    supervised_helper(RAILS_TASK, app, 7200, arguments)
   end
 
   def main(argv)
