@@ -50,7 +50,7 @@ CI lock operation, and two fixed helper invocations; it does not take shell text
 or arbitrary paths.
 
 `vps-deploy`, CI receipt writes, and CI lock setup use the broker when the installed copy
-exists. Compatibility fallbacks remain for the first rollout. This is **not yet
+exists. The broker creates the canonical `/var/db/pub4/ci.lock`; keep `PUB4_CI_LOCK` unset on vm23 until the legacy override seam is removed. Compatibility fallbacks remain for the first rollout. This is **not yet
 the complete privilege migration**: `vps_ci.sh`, `RAILS/_deploy.sh`, and
 other copy-tree helpers still have direct `doas` operations. Keep the current
 `doas.conf` and wheel membership unchanged until those paths are migrated,
