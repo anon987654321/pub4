@@ -5,6 +5,7 @@ require "json"
 require "time"
 require_relative "severity"
 require_relative "priority"
+require_relative "../trace/log"
 
 module Master
   module Fix
@@ -176,6 +177,9 @@ module Master
           File.rename(src, "#{log_path}.#{i + 1}") if File.exist?(src)
         end
         File.rename(log_path, "#{log_path}.1")
+        (1..LOG_GENERATIONS).each do |generation|
+          Master::Trace::Log.compact_rotated("#{log_path}.#{generation}", LOG_MAX_BYTES)
+        end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ConflictResolver.rotate_log_if_oversized")
       end
