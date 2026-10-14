@@ -199,6 +199,24 @@ class Pub4AdminTest < Minitest::Test
     refute_nil cas_block
     refute_match(/\$\{_PRIV\}\s+(?:mkdir|cp|ln|chown)\b/, cas_block)
   end
+  def test_rails_task_rejects_arbitrary_tasks_and_paths
+    calls = []
+    dispatch = ->(*args) { calls << args; 0 }
+
+    ADMIN.stub(:supervised_helper, dispatch) do
+      assert_equal 64, ADMIN.run_rails_task("brgen", "shell")
+      assert_equal 64, ADMIN.run_rails_task("brgen", "schema-load", "/etc/passwd")
+      assert_equal 64, ADMIN.run_rails_task("bsdports", "demo-seed")
+      assert_equal 64, ADMIN.run_rails_task("brgen", "bundle-cas-hydrate", "../../etc")
+      assert_equal 0, ADMIN.run_rails_task("brgen", "bundle-check")
+      assert_equal 0, ADMIN.run_rails_task("master", "bundle-check")
+    end
+
+    assert_equal [
+      [Pub4Admin::RAILS_TASK, "brgen", 7200, ["brgen", "bundle-check"]],
+      [Pub4Admin::RAILS_TASK, "master", 7200, ["master", "bundle-check"]]
+    ], calls
+  end
   def test_rails_task_accepts_only_closed_app_task_arguments
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
@@ -206,6 +224,8 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
     assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
     assert_includes helper, "master|brgen|amber|bsdports"
+    assert_includes helper, "rails-task: /home must be a real root-owned directory"
+    assert_includes helper, "app .bundle must be a real app-owned directory"
     assert_includes helper, "bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci"
     assert_includes source, "db-storage-migrate"
     assert_includes helper, "db-storage-migrate)"
