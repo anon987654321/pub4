@@ -139,7 +139,6 @@ module Postpro
     end
 
     def verify_output!(input_path:, output_path:)
-      verify_law_catalog!
       input = File.expand_path(input_path)
       output = File.expand_path(output_path)
       verify_distinct_source!(input_path: input, output_path: output)
