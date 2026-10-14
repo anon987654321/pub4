@@ -291,7 +291,8 @@ install_root_configs() {
   for f in /usr/local/sbin/pub4-admin \
            /usr/local/libexec/ci-prepare.ksh \
            /usr/local/libexec/ci-run.ksh \
-           /usr/local/libexec/ci-sync.ksh; do
+           /usr/local/libexec/ci-sync.ksh \
+           /usr/local/libexec/rails-bundle.ksh; do
     if [[ -L $f ]]; then
       log ERROR "refusing symlinked privileged entrypoint: $f"
       return 1
