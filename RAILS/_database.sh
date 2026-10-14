@@ -77,26 +77,7 @@ rails_prepare_secondary_dbs_as_app() {
 # the load that makes the app boot.
 secondary_db_initialized() {
   local app_name=$1 app_dir=$2 db=$3
-  local file="${app_dir}/storage/production_${db}.sqlite3"
-  local table
-
-  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
-    run_rails_as_app "$app_name" "$app_dir" "secondary-db-check" "$db" >/dev/null 2>&1
-    return $?
-  fi
-
-  whence sqlite3 >/dev/null 2>&1 || return 1
-  ${_PRIV} test -s "$file" || return 1
-
-  table=$("$RUBY" -e 'm = File.read(ARGV[0], encoding: "UTF-8").match(/create_table "([^"]+)"/); print(m ? m[1] : "")' \
-    "${app_dir}/db/${db}_schema.rb")
-  [[ -n $table ]] || return 1
-
-  # Exit status is the whole answer: sqlite3 fails with "no such table" when the
-  # schema was never loaded, and succeeds with no output when the table is there
-  # and empty. Reading the output instead would call a freshly loaded, still
-  # empty queue "not initialised" and reload it every deploy.
-  ${_PRIV} sh -c "su -m ${app_name} -c 'sqlite3 \"${file}\" \"select 1 from ${table} limit 1;\"'" >/dev/null 2>&1
+  run_rails_as_app "$app_name" "$app_dir" "secondary-db-check" "$db" >/dev/null 2>&1
 }
 
 # migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).
