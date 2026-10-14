@@ -22,6 +22,39 @@ module Master
       # dmesg: each model call, file, command and request the turn makes, as a
       # unit attached to its parent. Routine bus events stay in the event log;
       # one /review publishes about 28,700 of them.
+      # The spinner may use the reserved row only while the prompt and draft
+      # fit on one physical terminal row. Long drafts disable row painting rather
+      # than risk cursor motion into text owned by Reline.
+      def activity_row_safe_to_draw?
+        return false unless @activity_row_reserved && @reading_input
+        return false unless $stdin.tty? && $stdout.tty?
+
+        width = TTY::Screen.width.to_i
+        buffer = Reline.line_buffer.to_s
+        prompt = @active_prompt.to_s
+        width.positive? && prompt.length + buffer.length * 2 + 2 < width
+      rescue StandardError
+        false
+      end
+
+      # Called under Dmesg's terminal mutex. Save and restore the input cursor
+      # while clearing the preceding row; if the draft wraps, abandon the row.
+      def clear_reserved_activity_row(target)
+        return false unless @activity_row_reserved
+
+        safe = activity_row_safe_to_draw? && target.respond_to?(:tty?) && target.tty?
+        if safe
+          target.print("\e[s\e[1A\r\e[K\e[u")
+          target.flush if target.respond_to?(:flush)
+        end
+        @activity_row_reserved = false
+        safe
+      rescue StandardError => e
+        @activity_row_reserved = false
+        Master::Ground::Swallow.log(e, context: "cli.activity_row.clear", event_bus: @refs.bus)
+        false
+      end
+
       def print_thinking_indicator
         init_thinking_state!
         return unless $stdout.tty?
