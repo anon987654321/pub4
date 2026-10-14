@@ -54,8 +54,10 @@ tree mutations run with the selected app's UID, primary GID and only the require
 Git archive, not ignored files from the mutable working tree. The CI runner has a real wall-clock deadline and terminates
 its full process group, including `bundle install`. Rails tasks use a closed
 task vocabulary; `SECRET_KEY_BASE` crosses only in the child environment, never
-in the shell command text. Bundle directories and initial cache seeding are now
-created by the target app user rather than by a root `mkdir`/`chown` sequence.
+in the shell command text. Bundle directories and initial cache seeding are created
+by the target app user. The shared Bundler CAS has a fixed Ruby-version namespace;
+root accepts only app-owned `.gem` inputs, stores SHA-256-addressed read-only copies,
+and the app copies objects back without hard links.
 
 `relayd-check` is read-only: it verifies the root-owned relay configuration's
 TLS keypair, Host route and app backend/port. It refuses unapproved routes rather
@@ -69,9 +71,8 @@ the installed copy exists. It creates the canonical `/var/db/pub4/ci.lock`; keep
 `PUB4_CI_LOCK` unset on vm23 until the legacy override seam is removed.
 Some CI and filesystem fallbacks remain for the first rollout; the relay adapter is stricter and refuses to deploy when the broker is absent.
 
-This is **not yet the complete privilege migration**: the CI fallback, bundle-cache
-bootstrapping, and some remaining app-install helpers still contain direct `doas`
-operations. Keep the current `doas.conf` and wheel membership
+This is **not yet the complete privilege migration**: the CI fallback and some
+remaining app-install helpers still contain direct `doas` operations. Keep the current `doas.conf` and wheel membership
 unchanged until those paths are migrated, the broker is installed, and the focused
 and full OpenBSD contract suites pass. Then narrow the `dev` rule and remove wheel
 membership in one planned rollout, with an authenticated operator recovery path
