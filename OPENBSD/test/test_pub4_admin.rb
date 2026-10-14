@@ -81,6 +81,13 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, "export SECRET_KEY_BASE"
     refute_includes helper, 'command="SECRET_KEY_BASE=$secret'
   end
+  def test_rails_sync_stages_only_git_tracked_head
+    helper = File.read(File.expand_path("../usr/local/libexec/rails-sync.ksh", __dir__))
+    assert_includes helper, 'git -c safe.directory="$repo" -C "$repo" archive HEAD "RAILS/$source_rel"'
+    assert_includes helper, 'archive_tracked_tree "$source_dir" "$stage"'
+    refute_includes helper, 'tar cf - -C "$source_dir" .'
+    assert_includes helper, 'source_rel=${source_dir#"$rails_root"/}'
+  end
   def test_rails_task_uses_its_own_app_allowlist
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     assert_includes source, "known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS"
