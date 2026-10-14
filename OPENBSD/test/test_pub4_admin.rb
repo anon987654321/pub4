@@ -137,6 +137,9 @@ class Pub4AdminTest < Minitest::Test
     runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
     bundle = File.read(File.expand_path("../../RAILS/_bundle.sh", __dir__))
     assert_includes helper, "bundle-cas-hydrate)"
+    assert_includes helper, 'export PUB4_TASK_RUBY=$ruby_path'
+    assert_includes helper, 'ruby_version=$("$PUB4_TASK_RUBY" -e "print RUBY_VERSION.split(46.chr).first(2).join")'
+    refute_includes helper, 'ruby_version=$("$ruby_path"'
     assert_includes helper, 'cp "$source" "$target"'
     assert_includes helper, 'sha256 -q "$source"'
     refute_includes helper, 'ln "$source" "$target"'
