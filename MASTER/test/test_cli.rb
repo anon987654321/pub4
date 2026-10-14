@@ -291,6 +291,18 @@ end
     assert_equal "master$ *1 ", @cli.send(:prompt_with_queue_status, "master$ ")
   end
 
+  def test_interactive_queue_refuses_overflow_without_dropping_pending_messages
+    queue = @cli.instance_variable_get(:@turn_queue)
+    @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
+      Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT.times { |index| queue << "pending #{index + 1}" }
+    end
+
+    output, = capture_io { @cli.send(:enqueue_interactive_line, "overflow") }
+
+    assert_equal Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT, queue.length
+    assert_match(/full, #{Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT} pending; message not queued/, output)
+  end
+
   def test_interactive_queue_processes_submissions_in_order
     seen = []
     started = Queue.new
