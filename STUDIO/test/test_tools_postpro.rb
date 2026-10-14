@@ -63,6 +63,26 @@ class TestPostproFilm < Minitest::Test
     end
   end
 
+  def test_explicit_output_cannot_replace_the_source_or_its_symlink
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "source.jpg")
+      alias_path = File.join(dir, "source-alias.jpg")
+      File.write(input, "original source")
+      File.symlink(input, alias_path)
+
+      error = assert_raises(ArgumentError) do
+        Postpro::Constitution.verify_distinct_source!(input_path: input, output_path: input)
+      end
+      assert_match(/constitutional output would overwrite the source/, error.message)
+
+      error = assert_raises(ArgumentError) do
+        Postpro::Constitution.verify_distinct_source!(input_path: input, output_path: alias_path)
+      end
+      assert_match(/constitutional output would overwrite the source/, error.message)
+      assert_equal "original source", File.read(input)
+    end
+  end
+
   def test_generated_path_allocator_preserves_earlier_grade_and_provenance
     Dir.mktmpdir do |dir|
       original = File.join(dir, "postpro_source_v1.jpg")
