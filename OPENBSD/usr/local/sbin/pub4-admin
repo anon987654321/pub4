@@ -605,16 +605,18 @@ module Pub4Admin
 
   def run_rails_task(app, task, database = nil)
     return 64 unless RAILS_TASK_APPS.include?(app)
-    allowed = %w[bundle-install bundle-check ci-bundle-install db-storage-migrate db-prepare db-seed demo-seed assets-precompile ci npm-cache bundle-cache-prepare overlay-initializers overlay-public]
+    allowed = %w[bundle-install bundle-check ci-bundle-install db-storage-migrate db-prepare db-seed demo-seed assets-precompile ci npm-cache bundle-cache-prepare bundle-cas-hydrate overlay-initializers overlay-public]
     if %w[schema-load secondary-db-check].include?(task)
       return 64 unless %w[cache queue cable].include?(database)
+    elsif task == "bundle-cas-hydrate"
+      return 64 unless RAILS_APPS.include?(app) && valid_ruby_cache_key?(database.to_s)
     else
       return 64 unless allowed.include?(task) && database.nil?
     end
     return 64 if task == "demo-seed" && !%w[brgen amber].include?(app)
 
     arguments = [app, task]
-    arguments << database if %w[schema-load secondary-db-check].include?(task)
+    arguments << database if %w[schema-load secondary-db-check bundle-cas-hydrate].include?(task)
     supervised_helper(RAILS_TASK, app, 7200, arguments)
   end
 
