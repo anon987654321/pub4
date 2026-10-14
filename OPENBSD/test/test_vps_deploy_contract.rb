@@ -112,6 +112,11 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes legacy, 'doas zsh "$script"'
   end
 
+  def test_ci_does_not_escalate_permission_changes_on_the_checkout
+    refute_includes CI_SOURCE, 'doas chmod -R a+rX "${repo}/MASTER/tools"'
+    assert_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
+  end
+
   def test_ci_uses_the_broker_for_account_and_storage_preparation
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-prepare "$app"'
     assert_includes CI_SOURCE, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
