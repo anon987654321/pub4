@@ -154,7 +154,7 @@ class ConfigDriftGateVerbatimTest < Minitest::Test
     box = matching_box
     box["/usr/local/bin/emergency_cpu.sh"] = nil
 
-    assert_equal ["emergency_cpu.sh"], verbatim_report(box)[:missing]
+    assert_equal ["usr/local/bin/emergency_cpu.sh"], verbatim_report(box)[:missing]
   end
 
   # The shape it must not flag: relayd.conf is installed from a template, so the
