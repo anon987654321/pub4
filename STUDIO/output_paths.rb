@@ -37,7 +37,7 @@ module Studio
     end
 
     def reference_root
-      directory("dilla-references", override: "DILLA_REFERENCE_DIR")
+      directory("dilla-references")
     end
 
     def inside_repository?(path)
