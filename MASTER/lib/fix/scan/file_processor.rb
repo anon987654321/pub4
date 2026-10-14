@@ -266,6 +266,7 @@ module Master
                 "total" => total,
                 "name" => "#{inner_pass} #{inner_law}",
                 "at" => Time.now.to_f,
+                "updated_at" => Time.now.to_f,
                 "checks" => @progress_sequence,
               )
               @progress_last_check = active
@@ -285,6 +286,7 @@ module Master
             "total" => total,
             "name" => "#{pass} #{law_id}",
             "at" => Time.now.to_f,
+            "updated_at" => Time.now.to_f,
           }
 
           @progress_mutex.synchronize do
@@ -342,7 +344,7 @@ module Master
                   snapshot = @progress_last_check.merge(
                     "state" => "idle",
                     "active" => 0,
-                    "updated_at" => Time.now.to_f,
+                    "monitor_at" => Time.now.to_f,
                   )
                 end
               else
@@ -350,9 +352,8 @@ module Master
                 snapshot = current.merge(
                   "state" => "running",
                   "active" => @active_law_checks.size,
-                  "updated_at" => Time.now.to_f,
+                  "monitor_at" => Time.now.to_f,
                 )
-                @progress_last_check = snapshot
               end
             end
             break if stop
