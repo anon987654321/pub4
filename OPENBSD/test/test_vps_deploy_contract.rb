@@ -59,6 +59,15 @@ class VpsDeployContractTest < Minitest::Test
     )
   end
 
+  def test_master_deploy_refuses_root_override
+    source = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_deploy_master.sh"), encoding: "UTF-8")
+    assert_includes source, 'if [ "$ROOT" != "/home/dev/pub4" ]; then'
+    assert_includes source, 'pub4-admin master-web-assets-reset'
+    assert_includes source, 'pub4-admin master-web-runtime-dirs'
+    refute_includes source, 'doas rm -rf public/assets'
+    refute_includes source, 'doas chown -R dev:dev public'
+    refute_includes source, 'doas cp "$ROOT/OPENBSD/etc/rc.d/master" /etc/rc.d/master'
+  end
   def test_workstation_per_app_mode_uses_canonical_unprivileged_supervisor
     script = File.read(File.join(ROOT, "OPENBSD", "bin", "deploy_all.sh"), encoding: "UTF-8")
     assert_includes script, 'zsh OPENBSD/bin/vps-deploy ${app}'
