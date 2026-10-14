@@ -12,7 +12,7 @@ require "time"
 module Pub4Admin
   APPS = %w[master brgen amber bsdports].freeze
   SERVICES = %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].freeze
-  SERVICE_ACTIONS = %w[check get start stop restart enable disable].freeze
+  SERVICE_ACTIONS = %w[check get start stop restart].freeze
   RCCTL = "/usr/sbin/rcctl"
   RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
@@ -39,11 +39,26 @@ module Pub4Admin
     nil
   end
 
-  def trusted_executable?(path)
-    return false if File.symlink?(path) || !File.file?(path) || !File.executable?(path)
+  def filter_started_services(output)
+    output.to_s.lines.map(&:strip).select { |service| SERVICES.include?(service) }.join("\n")
+  end
 
-    stat = File.stat(path)
-    stat.uid.zero? && (stat.mode & 0o022).zero?
+  def trusted_executable?(path)
+    components = File.expand_path(path).split(File::SEPARATOR).reject(&:empty?)
+    current = File::SEPARATOR
+
+    components.each_with_index do |component, index|
+      current = File.join(current, component)
+      stat = File.lstat(current)
+      return false if stat.symlink? || !stat.uid.zero? || (stat.mode & 0o022).positive?
+
+      if index == components.length - 1
+        return stat.file? && stat.executable?
+      end
+      return false unless stat.directory?
+    end
+
+    false
   rescue SystemCallError
     false
   end
@@ -113,6 +128,15 @@ module Pub4Admin
     if args.length == 2 && args[0] == "solid-queue-proof" && APPS.include?(args[1])
       trusted_script!(SOLID_QUEUE_PROOF)
       exec(ruby_path, SOLID_QUEUE_PROOF, args[1])
+    end
+
+    if args == %w[service list-started]
+      output = IO.popen([RCCTL, "ls", "started"], &:read)
+      status = $?
+      raise "rcctl ls started failed (#{status&.exitstatus || "no status"})" unless status&.success?
+
+      puts filter_started_services(output)
+      return 0
     end
 
     command = command_for(args)
