@@ -146,6 +146,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?("overlay-initializers|overlay-public") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("bundle-cache-prepare") &&
+                          rails_task.include?('npm-cache)') &&
+                          rails_task.include?('command="mkdir -p /home/$app/.npm /home/$app/.cache"') &&
                           rails_task.include?("bundle-cas-hydrate)") &&
                           rails_task.include?('cp "$source" "$target"') &&
                           rails_task.include?('export PUB4_TASK_CACHE_KEY=$database') &&
@@ -250,6 +252,11 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     !admin.include?("File.rename(temporary, RELAYD_CONFIG)") &&
                     !admin.match?(/IO\.popen\(\s*["']/)
   failures << "relayd broker must be verification-only and reject unapproved Host routes" unless relayd_contract
+  ci_lock_contract = admin.include?('return ensure_ci_lock if args == ["ci-lock"]') &&
+                    admin.include?('path = File.join(STAMP_DIR, "ci.lock")') &&
+                    admin.include?('raise "#{path} is not a regular file" unless lock.file? && !lock.symlink?')
+  failures << "pub4-admin CI lock must use one fixed path and refuse symlinks" unless ci_lock_contract
+
   secret_dispatch = admin.include?('args[0] == "ensure-secret" && APPS.include?(args[1])') &&
                   admin.include?("def ensure_app_secret(app)") &&
                   admin.include?("File::CREAT | File::EXCL") &&
@@ -343,7 +350,7 @@ else
   failures << "missing tracked usr/local/sbin/pub4-admin"
 end
 
-%w[ci-prepare.ksh ci-run.ksh ci-sync.ksh rails-task.ksh].each do |name|
+%w[ci-prepare.ksh ci-run.ksh ci-sync.ksh rails-task.ksh rails-sync.ksh].each do |name|
   path = File.join(OPENBSD, "usr", "local", "libexec", name)
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
