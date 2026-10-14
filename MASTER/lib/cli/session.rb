@@ -102,10 +102,20 @@ module Master
 
       private
 
-      # All operator-facing writes share Dmesg's mutex, coordinating normal
-      # output with IRC notices and progress events from worker threads.
+      # All operator-facing writes share Dmesg's mutex. If an async turn writes
+      # while Reline is editing the next prompt, repaint the editable line after
+      # the output rather than leaving tokens inside the draft.
       def terminal_write(io: $stdout, &block)
-        Master::Trace::Dmesg.terminal_write(io:, &block)
+        Master::Trace::Dmesg.terminal_write(io:) do |target|
+          block.call(target)
+          redraw_active_input if io.equal?($stdout) && @reading_input
+        end
+      end
+
+      def redraw_active_input
+        Reline.redisplay if Reline.respond_to?(:redisplay)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.reline.redisplay", event_bus: @refs.bus)
       end
 
       def terminal_puts(text = "", io: $stdout)
@@ -131,6 +141,11 @@ module Master
         @exit_code = 0
         @activity = Master::CLI::Activity.new
         @last_repeatable_input = nil
+        @turn_queue = []
+        @turn_queue_mutex = Mutex.new
+        @turn_worker = nil
+        @turn_queue_paused = false
+        @reading_input = false
         @closed = false
       end
 
