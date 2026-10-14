@@ -19,11 +19,15 @@ module Master
         lines << "fix: background #{data[:bg]}, autofix #{data[:af]}" if data[:bg]
         lines << "review: last stage #{data[:stage]}#{data[:verdict]}" if data[:stage]
         lines << "bundle: #{data[:bndl]}" if data[:bndl]
-        Array(data[:failures]).each { |failure| lines << "recent failure: #{human_failure(failure)}" }
-        Array(data[:rsi]).each { |row| lines << "opportunity: #{human_opportunity(row)}" }
-        if verbose && data[:failures]&.any?
-          lines << "diagnostic: raw telemetry follows"
-          Array(data[:failures]).each { |failure| lines << "  #{failure}" }
+        failures = Array(data[:failures])
+        failures = failures.last(1) unless verbose
+        failures.each { |failure| lines << "recent failure: #{human_failure(failure)}" }
+        if verbose
+          Array(data[:rsi]).each { |row| lines << "opportunity: #{human_opportunity(row)}" }
+          if data[:failures]&.any?
+            lines << "diagnostic: raw telemetry follows"
+            Array(data[:failures]).each { |failure| lines << "  #{failure}" }
+          end
         end
         lines.compact.reject(&:empty?)
       end
