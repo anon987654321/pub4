@@ -106,10 +106,14 @@ class TestRenderer < Minitest::Test
     assert_match(/\|-\z/, strip_ansi(prompt))
   end
 
-  def test_phase_prompt_uses_the_established_input_glyph
+  def test_phase_prompt_uses_the_established_input_glyph_without_the_glyph_helper
     renderer = FakeRenderer.new(config: {})
 
-    assert_equal "|-", renderer.phase_prompt(true, "discover")
+    # The input glyph predates the convenience method; a missing helper must not
+    # make the whole CLI fail at startup when the underlying ASCII contract exists.
+    Master::Face::Contract.stub(:glyph, nil) do
+      assert_equal "|-", renderer.phase_prompt(true, "discover")
+    end
     assert_equal "!", renderer.phase_prompt(false, "discover")
   end
 
