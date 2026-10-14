@@ -8,6 +8,43 @@ require "tmpdir"
 require_relative "../output_paths"
 require_relative "../visual/generators/idea_picture"
 
+class TestStudioOutputPaths < Minitest::Test
+  def test_relative_xdg_data_home_uses_an_absolute_fallback_from_any_directory
+    with_environment("POSTPRO_OUTPUT_DIR", nil) do
+      with_environment("XDG_DATA_HOME", "relative/data") do
+        Dir.mktmpdir do |working_directory|
+          Dir.chdir(working_directory) do
+            path = Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
+            expected = File.join(File.expand_path("~/Documents"),
+                                 "dilla-renders", "2026-01-02")
+            assert_equal expected, path
+            assert path.start_with?(File::SEPARATOR)
+          end
+        end
+      end
+    end
+  end
+
+  def test_explicit_output_directory_is_respected
+    Dir.mktmpdir do |dir|
+      with_environment("POSTPRO_OUTPUT_DIR", File.join(dir, "media")) do
+        assert_equal File.join(dir, "media"),
+                     Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
+      end
+    end
+  end
+
+  private
+
+  def with_environment(name, value)
+    previous = ENV[name]
+    value.nil? ? ENV.delete(name) : ENV[name] = value
+    yield
+  ensure
+    previous.nil? ? ENV.delete(name) : ENV[name] = previous
+  end
+end
+
 class TestIdeaPictureOutput < Minitest::Test
   def test_grade_returns_the_external_render_not_the_original_still
     Dir.mktmpdir do |dir|
