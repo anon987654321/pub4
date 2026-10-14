@@ -148,6 +148,21 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_openbsd_model_worker_cannot_execute_setuid_doas
+    skip "OpenBSD pledge is unavailable on this host" unless Master::Ground::Pledge.openbsd?
+
+    executable = "/usr/bin/doas"
+    skip "doas setuid binary is unavailable" unless File.file?(executable) &&
+                                                        (File.stat(executable).mode & 0o4000).positive?
+
+    with_world do |world|
+      observation = world.perform(E.exec([executable, "-n", "id"], timeout: 3))
+
+      refute observation.ok?, "a pledged model command executed setuid doas"
+      assert_match(/EACCES|Permission denied/, observation.message)
+    end
+  end
+
   def test_exec_invokes_gem_disabled_worker
     source = File.read(File.expand_path("../lib/core/world.rb", __dir__))
 
