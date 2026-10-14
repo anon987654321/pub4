@@ -3,6 +3,7 @@
 require_relative "tool_test_helper"
 require "vips"
 require "tmpdir"
+require "fileutils"
 require "open3"
 require "rbconfig"
 require "json"
@@ -119,13 +120,17 @@ class TestPostproDispatch < Minitest::Test
   # image takes, rather than falling through to the menu.
   def test_a_bare_directory_draws_from_the_folder
     Dir.mktmpdir do |dir|
-      frame(dir, "one.jpg")
-      out, status = run_postpro(dir, dir, "--count", "1")
+      source_dir = File.join(dir, "source")
+      FileUtils.mkdir_p(source_dir)
+      frame(source_dir, "one.jpg")
+
+      out, status = run_postpro(dir, source_dir, "--count", "1")
       assert status.success?, "positional directory grade failed:\n#{out}"
       outputs = Dir[File.join(render_dir(dir), "postpro_one_*_v1_*.jpg")]
       assert_equal 1, outputs.size,
                    "the directory's image should have been graded once:\n#{out}"
-      assert outputs.none? { |path| File.dirname(path) == dir }
+      assert_empty Dir[File.join(source_dir, "postpro_*.jpg")],
+                   "generated files must stay out of the input directory"
     end
   end
 end
