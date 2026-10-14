@@ -1908,7 +1908,7 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
 #spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
 #zsh-status { color: rgb(157 184 231 / 82%); font-size: 0.75rem; }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .brand-mark { inset-block-start: calc(var(--safe-top) + 7px); inset-inline-start: calc(var(--safe-left) + 15px); }
   .mic-indicator { inset-block-start: calc(var(--safe-top) + 7px); inset-inline-end: calc(var(--safe-right) + 10px); }
   #chat-shell { inset-block-end: calc(78px + var(--safe-bottom)); }
