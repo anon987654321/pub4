@@ -34,6 +34,19 @@ class TestStudioOutputPaths < Minitest::Test
     end
   end
 
+  def test_xdg_data_home_inside_the_checkout_falls_back_outside_it
+    with_environment("POSTPRO_OUTPUT_DIR", nil) do
+      repo_root = File.expand_path("..", Studio::Visual::IdeaPicture::ROOT)
+      with_environment("XDG_DATA_HOME", File.join(repo_root, "temporary-output")) do
+        path = Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
+        expected = File.join(File.expand_path("~/Documents"), "dilla-renders", "2026-01-02")
+
+        assert_equal expected, path
+        refute path.start_with?("#{repo_root}#{File::SEPARATOR}")
+      end
+    end
+  end
+
   private
 
   def with_environment(name, value)
