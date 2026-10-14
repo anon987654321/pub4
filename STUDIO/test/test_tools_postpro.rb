@@ -260,6 +260,20 @@ class TestPostproFilm < Minitest::Test
     assert_includes implemented, "cinemascope_bars"
   end
 
+  def test_source_method_reader_covers_output_dispatch_bodies
+    source = File.read(POSTPRO_SOURCE)
+    required_calls = {
+      "process_file" => "apply_finishing_grain",
+      "run_random" => "process_file(",
+      "run_watch" => "grade_watched("
+    }
+
+    required_calls.each do |name, call|
+      body = send(:postpro_source_method, source, name)
+      assert_includes body.to_s, call, "#{name} source extraction must include #{call}"
+    end
+  end
+
   def test_every_preset_names_a_stock_that_exists
     unknown = PRESETS.filter_map { |name, data| [name, data[:stock]] if data[:stock] && !STOCKS.key?(data[:stock]) }
     assert_empty unknown, "these presets render on a film with no rows: #{unknown.inspect}"
