@@ -43,7 +43,7 @@ run_rails_as_app() {
   case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
   [[ $app_dir == "/home/${app_name}/app" ]] || { log_err "run_rails_as_app: refused app path: $app_dir"; return 2; }
   case "$task" in
-    ci-bundle-install|bundle-check|db-prepare|db-seed|demo-seed|assets-precompile|ci) [[ -z $database ]] || return 2 ;;
+    bundle-install|ci-bundle-install|bundle-check|db-storage-migrate|db-prepare|db-seed|demo-seed|assets-precompile|ci) [[ -z $database ]] || return 2 ;;
     schema-load|secondary-db-check) [[ $database == cache || $database == queue || $database == cable ]] || return 2 ;;
     *) log_err "run_rails_as_app: refused task: $task"; return 2 ;;
   esac
@@ -61,8 +61,22 @@ run_rails_as_app() {
   ensure_npm_cache "$app_name"
   npm_cache="/home/${app_name}/.npm"
   case "$task" in
+    bundle-install)
+      command="${BUNDLE} config set --local frozen false && ${BUNDLE} config set --local deployment true && ${BUNDLE} config set --local without \"development test\" && RAILS_ENV=production ${BUNDLE} install" ;;
     ci-bundle-install)
       command="${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" ;;
+    db-storage-migrate)
+      command='[ -d db ] && [ ! -L db ] || exit 0
+[ ! -L storage ] || { echo "rails-task: refusing storage symlink" >&2; exit 1; }
+mkdir -p storage
+for file in db/production*.sqlite3; do
+  [ -f "$file" ] && [ ! -L "$file" ] || continue
+  base=${file##*/}
+  target="storage/$base"
+  if [ -e "$target" ] || [ -L "$target" ]; then continue; fi
+  mv "$file" "$target"
+  printf "moved %s -> %s\\n" "$file" "$target"
+done' ;;
     bundle-check)
       command="${BUNDLE} check" ;;
     db-prepare)
