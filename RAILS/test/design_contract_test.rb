@@ -108,12 +108,13 @@ class DesignContractTest < Minitest::Test
     refute_nil wide, "the wide-nav breakpoint is part of the port-header layout contract"
     refute_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky/m, mobile,
                  "a wrapped mobile nav must not be covered by the sticky port header")
-    assert_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky[^}]*top:\s*52px/m, wide,
-                 "the port meta strip stays sticky once the nav fits one row")
+    assert_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky[^}]*top:\s*var\(--nav-swiper-h\)/m, wide,
+                 "the port meta strip must follow the shared nav height and safe-area inset")
   end
 
   def test_bsdports_primary_nav_rules_target_the_rendered_landmark
     layout = File.read(File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb"))
+    base_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_base.scss"))
     layout_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_layout.scss"))
     pages_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss"))
 
@@ -123,7 +124,11 @@ class DesignContractTest < Minitest::Test
       refute_match(/body\s*>\s*nav\[aria-label="Primary navigation"\]/, source,
                    "primary-nav rules must not depend on a false body-child or English-label assumption")
     end
-    assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*min-height:\s*52px[^}]*flex-wrap:\s*wrap/m, layout_css)
+    assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*min-height:\s*var\(--nav-swiper-h\)[^}]*flex-wrap:\s*wrap/m, layout_css)
+    assert_match(/padding-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--tap-min\)\)/, base_css,
+                 "mobile clearance must cover two rows and the top safe area")
+    assert_match(/body\s*\{[^}]*padding-block-start:\s*calc\(var\(--nav-swiper-h\)\s*\+\s*var\(--space-1\)\)/m, pages_css,
+                 "wide clearance must cover one row and the top safe area")
     assert_match(/nav\[data-pwa-primary-nav\]\s+a\[aria-current="page"\]/, layout_css)
     assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*flex-wrap:\s*nowrap/m, pages_css)
     refute_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*transform:\s*translateY\(0\)/m, layout_css,
