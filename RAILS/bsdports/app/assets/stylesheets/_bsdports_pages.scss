@@ -5,14 +5,11 @@ article,
   width: 100%;
 }
 
-// The port page's meta strip stays in view under the nav.
+// Keep the port intro in normal flow while the primary nav can wrap.
 article > header {
   display: block;
   max-width: none;
   margin-block-end: var(--space-4);
-  position: sticky;
-  top: 52px;
-  z-index: 5;
   padding-block: 0.5rem;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
@@ -266,6 +263,14 @@ article dd + dt {
 // From 640px the nav fits one row, the search puts its button beside the
 // field, and a port's terms sit beside their definitions.
 @media (min-width: 640px) {
+  // The primary nav fits one row at this width, so the port meta strip can
+  // stay pinned below it without covering wrapped navigation items.
+  article > header {
+    position: sticky;
+    top: 52px;
+    z-index: 5;
+  }
+
   body {
     padding-block-start: 64px;
   }
