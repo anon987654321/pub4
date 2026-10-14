@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../output_paths"
-
 # The creative boundary between Postpro and MASTER law. MASTER/data/laws.yml is
 # the catalogue; law/universal.rb carries the executable semantic laws after
 # their migration out of the catalogue. This adapter turns the applicable laws
@@ -10,8 +8,9 @@ require "fileutils"
 
 module Postpro
   module Constitution
-    # The shared contract owns the fallback, XDG handling, and explicit override.
-    OUTPUT_DIR = Studio::OutputPaths.render_directory.freeze
+    # Scratch renders stay beside postpro.rb in the ignored output area.
+    # POSTPRO_OUTPUT_DIR redirects this for managed environments and callers.
+    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR") { __dir__ }).freeze
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
