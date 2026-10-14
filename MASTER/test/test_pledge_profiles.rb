@@ -79,6 +79,8 @@ class PledgeProfileTest < Minitest::Test
     assert_operator source.index('if ARGV.first == "--exec-worker"'), :<,
                     source.index('require_relative "../lib/boot/entrypoint"')
     assert_includes source, "guard.pledge(guard::STAGE2_PROMISES, guard::EXEC_PROMISES)"
+    assert_includes source, "def prepare_exec_worker_load_path"
+    assert_includes source, 'gem_root = File.join(RbConfig::CONFIG.fetch("libdir"), "ruby", "gems",'
     assert_includes Master::Ground::Pledge::EXEC_PROMISES.split, "exec"
     refute_includes Master::Ground::Pledge::EXEC_PROMISES.split, "unveil"
   end
