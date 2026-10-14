@@ -83,6 +83,12 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes block, "chown root:wheel /var/db/pub4"
   end
 
+  def test_failure_hints_use_the_bounded_service_broker
+    assert_includes SOURCE, "doas /usr/local/sbin/pub4-admin service restart <app>"
+    assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service start $app'
+    assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service restart $other'
+  end
+
   def test_deploy_uses_the_fixed_root_broker_when_installed
     assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service'
     assert_includes SOURCE, 'admin_request stamp "$name" "$sha" "$stamp_status"'
