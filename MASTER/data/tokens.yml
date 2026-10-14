@@ -1288,6 +1288,12 @@ tokens:
       max_font_sizes: 8
       min_weight_delta: 200
       min_size_ratio_between_levels: 1.2
+      h1_body_min_ratio: 1.75
+      h1_body_max_ratio: 5.5
+      h2_body_min_ratio: 1.5
+      h2_body_max_ratio: 3.5
+      h3_body_min_ratio: 1.25
+      h3_body_max_ratio: 2.5
     letter_spacing:
       all_caps_min_em: 0.05
       all_caps_max_em: 0.15
