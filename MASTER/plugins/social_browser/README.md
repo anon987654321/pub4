@@ -5,9 +5,8 @@ online, their own accounts, while the operator keeps every key, every consent
 and every consequence.**
 
 It drives a real browser, through the Ferrum gem, on accounts the operator owns
-or is authorized to run. Three sites are wired in today: OnlyFans, FetLife and
-Snapchat web. Each has an HTTPS start page and a short list of allowed hosts,
-and the plugin refuses any other destination. The status action reports whether
+or is authorized to run. Two sites are wired in today: OnlyFans and FetLife. Each has an HTTPS start page and a short list of
+allowed hosts, and the plugin refuses any other destination. The status action reports whether
 the browser is available and which sites are known.
 
 Logging in is the operator's work. The login action opens a visible browser and

@@ -8,7 +8,6 @@ mailbox:
 
 sender_allow:
   - mail.onlyfans.com
-  - mail.snapchat.com
 
 extractors:
   - match: 'New message from (?<handle>.+?) on (?<platform>OnlyFans)'

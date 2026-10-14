@@ -31,13 +31,6 @@ module Master
           composer: ["textarea", "[contenteditable='true']", "[role='textbox']"],
           submit: ["button[type='submit']", "[type='submit']", "button"],
         ),
-        "snapchat" => Site.new(
-          id: "snapchat",
-          hosts: %w[snapchat.com web.snapchat.com],
-          start_url: "https://web.snapchat.com",
-          composer: ["textarea", "[contenteditable='true']", "[role='textbox']"],
-          submit: ["button[type='submit']", "[type='submit']", "button"],
-        ),
       }.freeze
 
       ACTIONS = %w[status inspect login publish_owned reply_inbound].freeze

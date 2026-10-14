@@ -20,7 +20,7 @@ class TestEvidenceRouter < Minitest::Test
   end
 
   def test_routes_browser_and_device_questions_to_capabilities
-    assert_equal :browser, Router.classify("Open the Snapchat website and inspect the account page.")
+    assert_equal :browser, Router.classify("Open the FetLife website and inspect the account page.")
     assert_equal :device, Router.classify("Scan nearby Wi-Fi and Bluetooth devices on Android.")
   end
 

@@ -190,29 +190,20 @@ class TestRenderer < Minitest::Test
     renderer.stub(:git_prompt_state, { branch: "main", ahead: 2, behind: 0, dirty: false }) do
       state, prompt = renderer.prompt_line("model", "discover", tokens: 10, last_ok: false)
 
-      assert_includes strip_ansi(state), "main ahead 2 llm discover error"
+      assert_includes strip_ansi(state), "main ahead 2 discover error"
       refute_includes strip_ansi(prompt), "main"
     end
-  end
-
-  def test_state_line_names_the_active_chat_destination
-    renderer = FakeRenderer.new(config: {})
-    state, _prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
-
-    assert_includes strip_ansi(state), "read only irc help"
   end
 
   def test_state_line_bounds_long_branch_destination_and_phase
     renderer = FakeRenderer.new(config: {})
     renderer.stub(:git_prompt_state, { branch: "feature/this/is/a/very/long/branch/name", ahead: 1234, behind: 987, dirty: true }) do
       state, _prompt = renderer.prompt_line(
-        "model", "a-phase-name-that-is-far-too-long", tokens: 10,
-        destination: "read-only:irc:#a-very-long-channel-name"
+        "model", "a-phase-name-that-is-far-too-long", tokens: 10
       )
       clean = strip_ansi(state)
 
       refute_match(/\n|\r/, clean)
-      assert_includes clean, "read only irc a very"
       assert_includes clean, "feature dirty"
     end
   end

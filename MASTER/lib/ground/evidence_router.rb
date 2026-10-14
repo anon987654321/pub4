@@ -9,10 +9,10 @@ module Master
       RESEARCH = /\b(?:research|investigate|deep\s+dive|look\s+into|study|compare\s+(?:sources|options|approaches)|survey|literature|find\s+out)\b/i
       # %r{} because the path class holds a literal slash.
       REPOSITORY = %r{\b(?:repo(?:sitory)?|codebase|code|file|files|module|class|method|gemfile|rails|master|git|commit|branch|diff|source)\b|(?:^|\s)[\w./-]+\.(?:rb|yml|yaml|json|md|js|mjs|ts|tsx|erb|css|scss|sh|zsh)\b}i
-      BROWSER = /\b(?:browser|web\s+page|navigate|click|log\s+in|login|open\s+(?:the\s+)?(?:site|website|page)|inspect\s+(?:the\s+)?(?:site|page|account)|onlyfans|fetlife|snapchat\s+account|telegram\s+account|whatsapp\s+account)\b/i
+      BROWSER = /\b(?:browser|web\s+page|navigate|click|log\s+in|login|open\s+(?:the\s+)?(?:site|website|page)|inspect\s+(?:the\s+)?(?:site|page|account)|onlyfans|fetlife|whatsapp\s+account)\b/i
       # An account on one of these is the governed social_browser's work; any other site is a
       # page to render. Kept apart so a shopping request never runs a social-account preflight.
-      SOCIAL_ACCOUNTS = /\b(?:onlyfans|fetlife|snapchat\s+account|telegram\s+account|whatsapp\s+account)\b/i
+      SOCIAL_ACCOUNTS = /\b(?:onlyfans|fetlife|whatsapp\s+account)\b/i
       # A named site (a URL, or a bare domain) plus something to do there. File names such as
       # foo.rb or notes.md do not end in a registrable TLD, so they stay repository questions.
       SITE = %r{\bhttps?://\S+|\bwww\.\S+|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|co|app|shop|store|no|se|dk|de|uk|fr|nl|eu)\b}i

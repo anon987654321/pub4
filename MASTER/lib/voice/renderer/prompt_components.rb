@@ -11,7 +11,7 @@ module Master
       #
       # The splash and operational status use the OpenBSD dmesg idiom: plain,
       # factual lines with stable unit names. The prompt is deliberately smaller:
-      # location, Git state, destination, phase and textual input state without decoration.
+      # location, Git state, phase and textual input state without decoration.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
@@ -71,11 +71,10 @@ module Master
         # used to: the caller prints it only when one of its values moves.
         def prompt_line(model, phase, **options)
           [
-            state_line(model, **options.merge(operator: operator_state(phase, options.fetch(:last_ok, true), destination: options.fetch(:destination, "llm"), focused: options.fetch(:focused, false)))),
+            state_line(model, **options.merge(operator: operator_state(phase, options.fetch(:last_ok, true), focused: options.fetch(:focused, false)))),
             shell_prompt(
               phase,
               options.fetch(:last_ok, true),
-              destination: options.fetch(:destination, "llm"),
               focused: options.fetch(:focused, false)
             )
           ]
@@ -124,19 +123,11 @@ module Master
           "#{Master::Face::Contract.shell_prompt(path: Dir.pwd, host: safe_hostname.to_s, root: @config["root"] || Master::ROOT)} "
         end
 
-        def operator_state(phase, last_ok, destination:, focused:)
-          words = [bounded_prompt_segment(git_prompt_text, 16), prompt_destination(destination)]
+        def operator_state(phase, last_ok, focused:)
+          words = [bounded_prompt_segment(git_prompt_text, 16)]
           words << bounded_prompt_segment(phase_label(phase), 10) unless focused
           words << "error" unless last_ok
           words.reject(&:empty?).join(" ")
-        end
-
-        def prompt_destination(value)
-          destination = plain_prompt_segment(value)
-          destination = "llm" if destination.empty?
-          bounded_prompt_segment(destination, 22)
-        rescue StandardError
-          "llm"
         end
 
         def plain_prompt_segment(value)

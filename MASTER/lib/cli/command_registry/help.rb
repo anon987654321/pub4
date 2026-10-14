@@ -65,7 +65,7 @@ detail: [
             "/plugin — list installed plugins.",
             "/plugin info <id> — show one manifest.",
             "/plugin run <id> <action> <json> — invoke through the constitutional gate.",
-            "social_browser covers OnlyFans, FetLife and Snapchat on supported desktop or Android/Termux runtimes.",
+            "social_browser covers OnlyFans and FetLife on supported desktop or Android/Termux runtimes.",
             "It permits explicit operator-owned or authorized actions and inbound replies only; no bulk outreach, friendship farming, deception or challenge bypass.",
             "air_superiority performs defensive Wi-Fi/Bluetooth observation and keeps only a local known-device baseline.",
           ],
@@ -231,7 +231,7 @@ detail: [
             "Type a line, press enter, or speak while idle. Ctrl-C interrupts; Ctrl-D leaves.",
           ],
         },
-      }.merge(CHAT_HELP).freeze
+      }.freeze
 
       def help_text(command = nil)
         key = command.to_s.strip.sub(/\A\//, "")
@@ -273,10 +273,9 @@ detail: [
           "          /wake /review /critique /fix /face /wishlist /explain /prove",
           "          /session /clear /undo /commit /snapshot",
           "          /android /ios /orders",
-          "chat:     /connect /connect:irc /connect:slsk /connect:telegram /slsk /join /part /say /msg /me /names /topic /list /nick /irc /chat",
           "          /soul /laws /why /plugin /help /exit /quit",
           "input:    !cmd governed shell, << multiline, /help X details",
-          "write:    /fix is the write path; everything else is read, route or chat",
+          "write:    /fix is the write path; everything else is read or route",
         ].join("\n")
       end
     end

@@ -89,12 +89,12 @@ class TestAgent < Minitest::Test
     # The stub's self is the stub, not the test, so it records and the test asserts.
     observe.define_singleton_method(:call) do |plugin:, action:, args:|
       seen = [plugin, action, args]
-      Master::Result.ok("browser=ferrum sites=snapchat")
+      Master::Result.ok("browser=ferrum sites=onlyfans,fetlife")
     end
     observe.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::PluginObserve" } }
     agent.instance_variable_set(:@tools, [observe])
 
-    agent.send(:prepare_evidence, "Open my Snapchat account and inspect the page.")
+    agent.send(:prepare_evidence, "Open my OnlyFans account and inspect the page.")
 
     assert_equal ["social_browser", "status", {}], seen
     assert_equal :browser, Fiber[:master_evidence_mode]

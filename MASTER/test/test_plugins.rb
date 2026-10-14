@@ -12,7 +12,7 @@ class TestPlugins < Minitest::Test
   def test_social_sites_are_fixed_and_https_only
     plugin = Master::Plugin.load("social_browser")
     result = plugin.call(action: "status")
-    assert_equal %w[onlyfans fetlife snapchat], result[:sites].map { |site| site[:id] }
+    assert_equal %w[onlyfans fetlife], result[:sites].map { |site| site[:id] }
     assert_includes %w[ferrum unavailable], result[:browser]
   end
 
