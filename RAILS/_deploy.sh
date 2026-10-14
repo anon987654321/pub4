@@ -30,15 +30,14 @@ deploy_tracked_app() {
 
   need_cmd "$RUBY" "$BUNDLE" doas
 
-  [[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1; }
-
-  log "${app_name} — deploying tracked tree → ${APP_DIR}"
-  deploy_status "$app_name" "sync tree"
-
   [[ -x /usr/local/sbin/pub4-admin ]] || {
     log_err "pub4-admin is missing; run OPERATOR.sh before deploying"
     return 1
   }
+  [[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1; }
+
+  log "${app_name} — deploying tracked tree → ${APP_DIR}"
+  deploy_status "$app_name" "sync tree"
   ${_PRIV} /usr/local/sbin/pub4-admin ensure-app "$app_name" || {
     log_err "app account/layout preparation failed for $app_name"
     return 1
