@@ -64,6 +64,15 @@ module Master
       def critical?(measurement) = measurement[:state] == :critical
       def warning?(measurement) = measurement[:state] == :warning
 
+      # Disk exhaustion can corrupt the run's own evidence and prevent its
+      # final report. Unlike load or RSS pressure, it must stop writes early.
+      def disk_critical?(measurement)
+        free_gb = measurement.dig(:values, :disk_free_gb)
+        return true if free_gb.nil?
+
+        free_gb <= resource_limit("disk_free_gb", "crit")
+      end
+
       private
 
       # state only ever escalates within one classify call (:ok -> :warning ->
