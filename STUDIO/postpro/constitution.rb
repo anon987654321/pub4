@@ -70,8 +70,12 @@ module Postpro
       raise ArgumentError, "constitutional grade needs at least three analog substrate effects" if analog_count < 3
 
       ranks = effects.filter_map { |effect| stage_rank[effect] }
-      raise ArgumentError, "constitutional grade contains an effect with no physical stage" if ranks.length != effects.length
-      raise ArgumentError, "constitutional grade breaks physical transformation order" unless ranks.each_cons(2).all? { |left, right| left <= right }
+      unless ranks.length == effects.length
+        raise ArgumentError, "constitutional grade contains an effect with no physical stage"
+      end
+
+      ordered = ranks.each_cons(2).all? { |left, right| left <= right }
+      raise ArgumentError, "constitutional grade breaks physical transformation order" unless ordered
 
       true
     end
@@ -97,8 +101,12 @@ module Postpro
       input = File.expand_path(input_path)
       output = File.expand_path(output_path)
       raise ArgumentError, "constitutional output would overwrite the source" if input == output
-      raise ArgumentError, "constitutional output must stay in the Postpro output directory" unless File.dirname(output) == OUTPUT_DIR
-      raise ArgumentError, "constitutional output must use postpro_ prefix" unless File.basename(output).start_with?("postpro_")
+      unless File.dirname(output) == OUTPUT_DIR
+        raise ArgumentError, "constitutional output must stay in the Postpro output directory"
+      end
+      unless File.basename(output).start_with?("postpro_")
+        raise ArgumentError, "constitutional output must use postpro_ prefix"
+      end
 
       announce_output_dir!
       true
