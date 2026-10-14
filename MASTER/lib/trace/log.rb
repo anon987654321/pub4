@@ -140,19 +140,22 @@ module Master
         end
 
         def append(event, payload = {})
-          attempts = 0
           record = build_record(event, payload)
           FileUtils.mkdir_p(File.dirname(@path))
-          Log.rotate(@path, MAX_BYTES)
-          File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
+          2.times do |attempt|
+            begin
+              Log.rotate(@path, MAX_BYTES)
+              File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
+              return record
+            rescue Errno::ENOSPC
+              # One bounded recovery attempt only; a persistently full disk must
+              # not turn logging into a retry loop of its own.
+              raise unless attempt.zero? && Log.reclaim(@path)
+            end
+          end
           record
-        rescue Errno::ENOSPC => e
-          attempts += 1
-          retry if attempts == 1 && Log.reclaim(@path)
-          # Stderr is last resort — cannot route through bus without risking recursion.
-          Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
-          nil
         rescue SystemCallError, JSON::GeneratorError => e
+          # Stderr is last resort — cannot route through bus without risking recursion.
           Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
           nil
         end
