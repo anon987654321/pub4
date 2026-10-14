@@ -71,8 +71,11 @@ if File.file?(admin_path)
                     admin.include?("SERVICE_ACTIONS") &&
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
-  failures << "pub4-admin must not evaluate shell command strings" if
-    admin.match?(/system\s*\(|Open3\.|Process\.spawn|%x/)
+  unsafe_spawn = admin.include?("Process.spawn") &&
+                 (admin.scan("Process.spawn").length != 1 ||
+                  !admin.include?('Process.spawn(\n      environment, "/bin/ksh", CI_RUN, app, duration.to_s,\n      pgroup: true, unsetenv_others: true\n    )'))
+  failures << "pub4-admin must not evaluate shell command strings or widen its CI spawn" if
+    admin.match?(/system\s*\(|Open3\.|%x/) || unsafe_spawn
   unless admin.include?('return ensure_ci_lock if args == ["ci-lock"]') &&
          admin.include?('path = File.join(STAMP_DIR, "ci.lock")') &&
          admin.include?("File.lstat(path)")
