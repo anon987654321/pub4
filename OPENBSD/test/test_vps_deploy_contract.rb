@@ -74,6 +74,15 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes out, "accepted"
   end
 
+  def test_root_crontab_staging_is_private_from_deploy_receipts
+    operator = File.read(File.join(ROOT, "OPENBSD", "OPERATOR.sh"))
+    block = operator[/typeset cron_dir=\/var\/db\/pub4\/private.*?chmod 700 "\$cron_dir"/m]
+
+    refute_nil block, "root crontab temp files must not share the public deploy-receipt directory"
+    assert_includes block, "chmod 755 /var/db/pub4"
+    assert_includes block, "chown root:wheel /var/db/pub4"
+  end
+
   def test_deploy_uses_the_fixed_root_broker_when_installed
     assert_includes SOURCE, 'doas /usr/local/sbin/pub4-admin service'
     assert_includes SOURCE, 'admin_request stamp "$name" "$sha" "$stamp_status"'
