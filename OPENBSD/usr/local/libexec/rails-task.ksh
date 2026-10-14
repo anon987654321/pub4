@@ -198,7 +198,7 @@ done' ;;
     schema="/home/$app/app/db/${database}_schema.rb"
     db_file="/home/$app/app/storage/production_${database}.sqlite3"
     [ -f "$schema" ] && [ ! -L "$schema" ] && [ -s "$db_file" ] && [ ! -L "$db_file" ] || exit 1
-    table=$("$ruby_path" -e 'm = File.read(ARGV.fetch(0), encoding: "UTF-8").match(/create_table "([A-Za-z_][A-Za-z0-9_]*)"/); print(m ? m[1] : "")' "$schema")
+    table=$("$ruby_path" -e '\''m = File.read(ARGV.fetch(0), encoding: "UTF-8").match(/create_table "([A-Za-z_][A-Za-z0-9_]*)"/); print(m ? m[1] : "")'\'' "$schema")
     case "$table" in
       ''|*[!A-Za-z0-9_]*|[!A-Za-z_]*) echo "rails-task: invalid schema table for $database" >&2; exit 1 ;;
     esac
