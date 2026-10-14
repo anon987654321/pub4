@@ -430,6 +430,10 @@ the tree once; reopen one only with the measurement or the consumer it names. A
 reason tied to code lives as a comment on that code, and OPENBSD's refusals are
 in `OPENBSD/CLAUDE.md`.
 
+- **No serif typefaces.** The operator's no-serif directive stands for brgen, amber and
+  master. Instrument Serif, IBM Plex Serif and Source Serif 4, with their
+  `ibm_plex_editorial` and `source_editorial` pairings, stay out of the token set;
+  reopen only for a named surface that cannot read in the one sans and mono.
 - **No third surface.** MASTER is `bin/master` and the face. A product surface
   born in an agent session, a desktop or companion app, or an editor extension
   restates one of the two and drifts from it; a new public app waits on the
