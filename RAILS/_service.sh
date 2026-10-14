@@ -114,10 +114,8 @@ relayd_confirm_live() {
 }
 
 # relayd_add_relay APP_NAME DOMAIN PORT
-# Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app,
-# then restarts relayd if anything actually changed. Fails loudly (non-zero, caught
-# by _deploy.sh's set -euo pipefail) on a sed insert that doesn't land -- a silently
-# missing route is worse than an aborted deploy.
+# Verifies the root-owned Host route and backend for this app. The installed broker
+# is read-only here; new Host routes must be added through OPERATOR.sh first.
 relayd_add_relay() {
   local app=$1 domain=$2 port=$3
   local conf=/etc/relayd.conf
@@ -128,7 +126,7 @@ relayd_add_relay() {
   [[ $port == <-> ]] || { log_err "relayd: refused invalid port"; return 2; }
 
   if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    ${_PRIV} /usr/local/sbin/pub4-admin relayd-add "$app" "$domain" "$port" \
+    ${_PRIV} /usr/local/sbin/pub4-admin relayd-check "$app" "$domain" "$port" \
       || { log_err "relayd: broker refused route for ${domain}"; return 1; }
     relayd_confirm_live "$port" || return 1
     log_ok "relayd: ${domain} routed to ${app}:${port}"
