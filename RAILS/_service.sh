@@ -80,7 +80,7 @@ relayd_confirm_live() {
   local app_port=$1
   local deadline=20
 
-  if ${_PRIV} "$RUBY" -e '
+  if "$RUBY" -e '
     require "socket"
     port, deadline = ARGV.map(&:to_i)
     deadline.times do
@@ -97,7 +97,7 @@ relayd_confirm_live() {
     return 0
   fi
 
-  if ${_PRIV} "$RUBY" -e '
+  if "$RUBY" -e '
     require "socket"
     begin
       Socket.tcp("127.0.0.1", ARGV[0].to_i, connect_timeout: 1) { |s| s.close }
@@ -113,17 +113,31 @@ relayd_confirm_live() {
   return 1
 }
 
-# relayd_add_relay DOMAIN PORT
+# relayd_add_relay APP_NAME DOMAIN PORT
 # Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app,
 # then restarts relayd if anything actually changed. Fails loudly (non-zero, caught
 # by _deploy.sh's set -euo pipefail) on a sed insert that doesn't land -- a silently
 # missing route is worse than an aborted deploy.
 relayd_add_relay() {
-  local domain=$1 port=$2
-  local app=${domain%%.*}
+  local app=$1 domain=$2 port=$3
   local conf=/etc/relayd.conf
   local changed=0
 
+  case "$legacy_app" in brgen|amber|bsdports) ;; *) log_err "relayd: refused unknown app: $app"; return 2 ;; esac
+  [[ $domain == <->.<-> || $domain == *.* ]] || { log_err "relayd: refused invalid domain"; return 2; }
+  [[ $port == <-> ]] || { log_err "relayd: refused invalid port"; return 2; }
+
+  if [[ -x /usr/local/sbin/pub4-admin ]]; then
+    ${_PRIV} /usr/local/sbin/pub4-admin relayd-add "$app" "$domain" "$port" \
+      || { log_err "relayd: broker refused route for ${domain}"; return 1; }
+    relayd_confirm_live "$port" || return 1
+    log_ok "relayd: ${domain} routed to ${app}:${port}"
+    return 0
+  fi
+
+  # First-rollout compatibility only. The fixed broker replaces these inline
+  # root Ruby snippets after OPERATOR.sh installs /usr/local/sbin/pub4-admin.
+  local legacy_app=$app
   [[ -f $conf ]] || { log_warn "relayd: ${conf} missing — skipping"; return 0; }
 
   if grep -qF "match request header \"Host\" value \"${domain}\"" "$conf" 2>/dev/null \
@@ -140,7 +154,7 @@ relayd_add_relay() {
       body = File.read(path)
       line = "table <#{app}> { 127.0.0.1 }\n"
       File.write(path, line + body) unless body.include?("table <#{app}>")
-    ' "$conf" "$app" \
+    ' "$conf" "$legacy_app" \
       || { log_err "relayd: could not add table <${app}>"; return 1; }
     log_ok "relayd: added table <${app}>"
     changed=1
@@ -153,7 +167,7 @@ relayd_add_relay() {
       unless body.include?(line)
         File.write(path, body.sub(/match request header.*forward to <master>.*\n/) { |m| m + line })
       end
-    ' "$conf" "$app" "$domain" \
+    ' "$conf" "$legacy_app" "$domain" \
       || { log_err "relayd: could not add Host routing for ${domain}"; return 1; }
     log_ok "relayd: added Host routing for ${domain}"
     changed=1
@@ -166,7 +180,7 @@ relayd_add_relay() {
       unless body.include?("forward to <#{app}> port")
         File.write(path, body.sub(/forward to <master> port.*\n/) { |m| m + line })
       end
-    ' "$conf" "$app" "$port" \
+    ' "$conf" "$legacy_app" "$port" \
       || { log_err "relayd: could not add forward for ${app}:${port}"; return 1; }
     log_ok "relayd: added forward to <${app}> port ${port}"
     changed=1
