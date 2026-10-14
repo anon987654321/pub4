@@ -42,7 +42,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_bundle.sh"),
                    File.join(dir, "RAILS", "_bundle.sh"))
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
-      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh")]).each do |path|
+      (Dir.glob(File.join(ROOT, "bin", "*.exp")) + [File.join(ROOT, "bin", "validate_doas.ksh"), File.join(ROOT, "bin", "deploy_all.sh"), File.join(ROOT, "bin", "vps-deploy")]).each do |path|
         FileUtils.cp(path, File.join(openbsd, "bin"))
       end
       yield dir, File.join(openbsd, "etc", "doas.conf")
@@ -109,6 +109,17 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_vps_deploy_must_not_recommend_generic_privileged_du
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "bin", "vps-deploy")
+      text = File.read(path).sub("pub4-admin disk-usage $mount_point", "doas du -xk $mount_point")
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "vps-deploy must not recommend generic privileged du"
+    end
+  end
   def test_operator_install_refuses_symlinked_system_destinations
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
