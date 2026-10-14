@@ -12,7 +12,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -30,7 +30,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.5,
@@ -79,41 +79,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "Opal in Shadow",
@@ -125,7 +137,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -143,7 +155,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.5,
@@ -192,41 +204,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "Velvet Geometry",
@@ -238,7 +262,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -256,7 +280,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.5,
@@ -305,41 +329,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "Silver Thread",
@@ -351,7 +387,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -369,7 +405,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.75,
@@ -418,41 +454,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "After the Last Train",
@@ -464,7 +512,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -485,7 +533,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.5,
@@ -531,41 +579,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "Amber Orbit",
@@ -577,7 +637,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -598,7 +658,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.5,
@@ -656,41 +716,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "Soft Focus After Midnight",
@@ -702,7 +774,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -723,7 +795,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.75,
@@ -770,41 +842,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     },
     {
       "name": "Night Bloom",
@@ -816,7 +900,7 @@
       ],
       "bpm": 92,
       "beats_per_chord": 2,
-      "voice": "pure_tone",
+      "voice": "rhodes_mark1",
       "mode": "repeat",
       "repeat": "half_note_pulse",
       "profile": "dilla_shadow",
@@ -837,7 +921,7 @@
         "chords": -7,
         "perc": -12
       },
-      "melody_voice": "pure_tone",
+      "melody_voice": "rhodes_tine_wurli",
       "melody": [
         [
           0.5,
@@ -883,41 +967,53 @@
       "layers": [
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -9,
-          "gate": 0.96,
-          "velocity": 0.58
-        },
-        {
-          "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -17,
-          "pattern": "down",
-          "rate": 3,
-          "gate": 0.62
+          "voice": "prophet_warm",
+          "gain_db": -14,
+          "gate": 1.18,
+          "velocity": 0.31,
+          "count": 3
         },
         {
           "mode": "held",
-          "voice": "pure_tone",
-          "gain_db": -14,
+          "voice": "dub_bass",
+          "gain_db": -8,
           "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12
+          "velocity": 0.52,
+          "transpose": -12,
+          "notes": "bass"
         },
         {
           "mode": "arp",
-          "voice": "pure_tone",
-          "gain_db": -20,
+          "voice": "dx_ep_glass",
+          "gain_db": -14,
+          "gate": 0.56,
           "pattern": "down",
+          "rate": 3,
+          "octaves": 1
+        },
+        {
+          "mode": "arp",
+          "voice": "rhodes_tine_wurli",
+          "gain_db": -19,
+          "gate": 0.48,
+          "pattern": "updown",
           "rate": 4,
-          "gate": 0.54,
           "octaves": 2,
           "transpose": 12
+        },
+        {
+          "mode": "held",
+          "voice": "juno_strings",
+          "gain_db": -20,
+          "gate": 1.28,
+          "velocity": 0.22,
+          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.82,
-      "effect_rig": "dilla_night"
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust"
     }
   ]
 }

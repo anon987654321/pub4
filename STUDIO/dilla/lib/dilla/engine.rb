@@ -450,6 +450,7 @@ def render_showcase(data, options)
       strum: options[:strum],
       profile: options[:profile] || section.fetch('profile', 'soft_swing'),
       drums: options[:drums] || section.fetch('drums'),
+      kit: options[:kit] || section.fetch('kit', 'kit_dust'),
       echo: options[:echo] || section.fetch('echo', false),
       echo_mix: options[:echo_mix] || section['echo_mix'],
       echo_feedback: options[:echo_feedback] || section['echo_feedback'],
