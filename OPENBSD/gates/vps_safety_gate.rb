@@ -97,8 +97,10 @@ if File.file?(admin_path)
   end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
-                         installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
-  failures << "OPERATOR.sh must install pub4-admin root-owned and non-writable" unless installer_pins_admin
+                         installer.include?("chmod 555 /usr/local/sbin/pub4-admin") &&
+                         installer.include?("[[ -L $f ]]") &&
+                         installer.include?("/usr/local/libexec/ci-sync.ksh")
+  failures << "OPERATOR.sh must reject symlinked privileged entrypoints and install pub4-admin root-owned/non-writable" unless installer_pins_admin
 else
   failures << "missing tracked usr/local/sbin/pub4-admin"
 end
