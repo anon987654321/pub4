@@ -52,7 +52,8 @@ font-family: var(--font-brand);
   position: fixed;
   // The global nav paints above the full-screen tunnel. Keep radio actions below
   // that published chrome band rather than letting the bar cover their hit area.
-  inset-block-start: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top) + var(--space-4));
+  // --nav-swiper-h includes the safe area; keep one deliberate spacing step after the chrome.
+  inset-block-start: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--space-4));
   inset-inline-end: var(--space-8);
   z-index: 11;
   display: flex;
