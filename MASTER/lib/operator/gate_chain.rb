@@ -516,7 +516,10 @@ end
 
     def suites(trees = TREES)
       results = suite_jobs(trees).map do |name, cmd, dir, env, _tree, unbundled|
-        ok, out = capture(*cmd, chdir: dir, env:, unbundled:)
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        ok, out = capture(*cmd, chdir: dir, env:, unbundled:, label: name, heartbeat_unit: "suite0")
+        elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round
+        Master::Trace::Dmesg.status("suite0", "#{name} #{ok ? "ok" : "FAIL"}, elapsed #{elapsed}s")
         [name, ok, out]
       end
       failed = results.reject { |_, ok, _| ok }
@@ -551,13 +554,15 @@ end
     # for attributing changed files; running stages in-process saves boot time
     # and loses all three.
     def capture(*cmd, chdir: MASTER, env: {}, unbundled: false, timeout_s: nil,
-                disk_poll_s: DISK_POLL_INTERVAL_S)
+                disk_poll_s: DISK_POLL_INTERVAL_S, label: nil, heartbeat_unit: "gate0")
       timeout_s = child_timeout_s if timeout_s.nil?
       paths = [ROOT, chdir, Dir.tmpdir]
+      display = label.to_s.empty? ? nil : "#{label}: "
+      Master::Trace::Dmesg.status(heartbeat_unit, "#{label} running") if label
       initial = disk_state(paths)
       if initial[:critical]
-        reason = disk_stop_reason(initial, prefix: "disk preflight")
-        Master::Trace::Dmesg.status("gate0", reason)
+        reason = "#{display}#{disk_stop_reason(initial, prefix: "disk preflight")}"
+        Master::Trace::Dmesg.status(heartbeat_unit, reason)
         return [false, [reason], 1]
       end
 
@@ -581,8 +586,12 @@ end
             loop do
               sleep [disk_poll_s.to_f, 0.01].max
               elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+              if label && elapsed >= (watchdog.instance_variable_get(:@last_heartbeat) || 0) + 28
+                Master::Trace::Dmesg.status(heartbeat_unit, "#{label} running, elapsed #{elapsed.round}s")
+                watchdog.instance_variable_set(:@last_heartbeat, elapsed)
+              end
               if timeout_s && elapsed >= timeout_s.to_f
-                stop_lock.synchronize { stopped_for ||= "gate child timeout after #{timeout_s.to_f.round(1)}s" }
+                stop_lock.synchronize { stopped_for ||= "#{display}gate child timeout after #{timeout_s.to_f.round(1)}s" }
                 terminate_child_group(wait.pid)
                 break
               end
@@ -590,7 +599,7 @@ end
               current = disk_state(paths)
               next unless current[:critical]
 
-              stop_lock.synchronize { stopped_for ||= disk_stop_reason(current, prefix: "disk guard") }
+              stop_lock.synchronize { stopped_for ||= "#{display}#{disk_stop_reason(current, prefix: "disk guard")}" }
               terminate_child_group(wait.pid)
               break
             end
