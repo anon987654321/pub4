@@ -50,6 +50,12 @@ module Pub4Admin
     output.to_s.lines.map(&:strip).select { |service| SERVICES.include?(service) }.join("\n")
   end
 
+  def legacy_service_name(app)
+    return nil unless RAILS_APPS.include?(app)
+
+    "#{app}_rails"
+  end
+
   def trusted_executable?(path)
     components = File.expand_path(path).split(File::SEPARATOR).reject(&:empty?)
     current = File::SEPARATOR
@@ -322,6 +328,20 @@ module Pub4Admin
     args = Array(argv).map(&:to_s)
     if args.length == 2 && args[0] == "ensure-secret" && APPS.include?(args[1])
       return ensure_app_secret(args[1])
+    end
+
+    if args.length == 2 && args[0] == "retire-legacy"
+      service = legacy_service_name(args[1])
+      raise "unknown legacy service target" unless service
+
+      path = "/etc/rc.d/#{service}"
+      return 0 unless File.exist?(path) || File.symlink?(path)
+
+      stat = File.lstat(path)
+      raise "#{path} must be a root-owned, non-writable regular file" unless
+        stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
+
+      exec(RCCTL, "disable", service)
     end
 
     if args.length == 4 && args[0] == "stamp"
