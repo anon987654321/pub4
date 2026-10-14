@@ -192,7 +192,7 @@ class Pub4AdminTest < Minitest::Test
     assert_operator helper.scan('git -c safe.directory="$repo" -C "$repo"').length, :>=, 3
     refute_includes helper, 'git -C "$repo"'
     assert_includes helper, "GIT_CONFIG_NOSYSTEM"
-    assert_includes helper, 'GIT_CONFIG_GLOBAL="/dev/null"'
+    assert_includes helper, "GIT_CONFIG_GLOBAL=/dev/null"
   end
 
   def test_bundle_cache_preparation_is_app_owned_and_fixed
@@ -282,7 +282,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'trusted_script!(CI_PREPARE)'
     assert_includes source, 'exec("/bin/ksh", CI_PREPARE, args[1])'
     assert_includes helper, 'brgen|amber|bsdports'
-    assert_includes helper, 'storage="/home/$app/app/storage"'
+    assert_includes helper, 'storage="$app_dir/storage"'
     assert_includes helper, '[ ! -L /home/dev ]'
     assert_includes helper, '[ -L "$storage" ]'
   end
