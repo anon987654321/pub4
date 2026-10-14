@@ -257,6 +257,9 @@ ci_rails_root=/home/${app}/pub4-rails/RAILS
 # before Bundler is even loaded, so master died at bundle with no log of its
 # own and ai.brgen.no served an empty reply. 710 was verified by traversing,
 # which is a weaker claim than the one it was taken to prove.
+if [[ -x /usr/local/sbin/pub4-admin ]]; then
+  doas /usr/local/sbin/pub4-admin ci-prepare "$app"
+else
 doas groupadd _pub4ci 2>/dev/null || true
 doas usermod -G _pub4ci "${app}" 2>/dev/null || true
 doas chgrp _pub4ci /home/dev 2>/dev/null || true
@@ -280,6 +283,7 @@ doas chmod 750 /home/dev 2>/dev/null || true
 # does not include storage today, and a line added to it later would silently
 # put this back to 755.
 doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
+fi
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
 deploy_status "$app" "bundle install + bin/ci"
 # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
