@@ -1,4 +1,5 @@
 # Reference analysis and industrial-techno generation stay in their own modules.
+require_relative "../../../output_paths"
 require_relative "reference"
 require_relative "industrial_techno"
 
@@ -148,8 +149,9 @@ def randomize_take!(data, options)
   options[:arp_style] = pick[:style] if pick[:mode] == 'arp'
   options[:repeat] = pick[:style] if pick[:mode] == 'repeat'
   options[:drums] = data.fetch('groove_profiles').fetch(profile)['drums'] || pick[:drums]
-  options[:out] ||= File.join(ENV['XDG_DATA_HOME'] || File.expand_path('~/Documents'), 'dilla-renders',
-                              Time.now.strftime('%Y-%m-%d'), "dilla-#{Time.now.strftime('%H%M%S')}-#{seed}.wav")
+  now = Time.now.utc
+  options[:out] ||= File.join(Studio::OutputPaths.dilla_render_directory(at: now),
+                              "dilla-#{now.strftime('%H%M%S')}-#{seed}.wav")
   puts "studio0: new take, seed #{seed}, progression #{pick[:prog]}, #{pick[:mode]}#{pick[:style] ? " #{pick[:style]}" : ''}, " \
        "voice #{pick[:voice]}, profile #{profile}, kit #{pick[:kit]}"
   options
