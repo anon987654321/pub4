@@ -102,7 +102,7 @@ class TestRenderer < Minitest::Test
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
 
     assert_includes strip_ansi(state), "model: "
-    assert_no_match(/\n|\r/, strip_ansi(prompt))
+    refute_match(/\n|\r/, strip_ansi(prompt))
     assert_match(/input \z/, strip_ansi(prompt))
   end
 
@@ -164,15 +164,12 @@ class TestRenderer < Minitest::Test
     refute_empty truncated
   end
 
-  def test_openbsd_operator_prompt_matches_the_agreed_plain_contract
+  def test_openbsd_operator_prompt_is_host_path_dollar
     renderer = FakeRenderer.new(config: {})
-    renderer.stub(:safe_hostname, "openbsd.localdomain") do
-      renderer.stub(:git_prompt_state, branch: "main", ahead: 0, behind: 0, dirty: true) do
-        Dir.stub(:pwd, File.join(Master.repo_root, "MASTER")) do
-          _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
-          assert_equal "openbsd pub4 MASTER main dirty llm discover input ", strip_ansi(prompt)
-          assert_match(/\A[\p{L}\p{N} ]+\z/u, strip_ansi(prompt))
-        end
+    renderer.stub(:safe_hostname, "vm23.brgen.no") do
+      Dir.stub(:pwd, File.join(Dir.home, "pub4")) do
+        _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+        assert_equal "vm23:~/pub4$ ", strip_ansi(prompt)
       end
     end
   end
@@ -182,62 +179,41 @@ class TestRenderer < Minitest::Test
     _state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
 
     clean = strip_ansi(prompt)
-    lines = clean.lines.map(&:chomp)
-
-    assert_equal 1, lines.size
-    assert_match(/\A\S+ \S+/, lines.first)
-    refute_includes lines.first, "/"
-    refute_includes lines.first, "(discover)"
-    refute_includes clean, "  "
-    assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
-    assert_match(/llm discover input \z/, lines.first)
-    refute_match(/\e\[/, prompt, "the OpenBSD-console prompt does not need ANSI segment styling")
-    assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+    assert_equal 1, clean.lines.size
+    assert_match(/\A\S+:\S+\$ \z/, clean)
+    refute_match(/\e\[/, prompt)
+    assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
-  def test_shell_prompt_has_distinct_path_git_phase_and_exit_segments
+  def test_state_line_carries_git_destination_phase_and_error
     renderer = FakeRenderer.new(config: {})
-    renderer.stub(:git_prompt_state, branch: "main", ahead: 2, behind: 0, dirty: false) do
-      $stdout.stub(:tty?, false) do
-        _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
-        clean = strip_ansi(prompt)
+    renderer.stub(:git_prompt_state, { branch: "main", ahead: 2, behind: 0, dirty: false }) do
+      state, prompt = renderer.prompt_line("model", "discover", tokens: 10, last_ok: false)
 
-        assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
-        assert_includes clean, "main ahead 2"
-        assert_match(/llm discover input \z/, clean)
-        refute_includes clean, "/"
-        refute_match(/\e\[/, prompt)
-        assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      end
+      assert_includes strip_ansi(state), "main ahead 2 llm discover error"
+      refute_includes strip_ansi(prompt), "main"
     end
   end
 
-  def test_shell_prompt_names_the_active_chat_destination
+  def test_state_line_names_the_active_chat_destination
     renderer = FakeRenderer.new(config: {})
-    _state, prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
+    state, _prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
 
-    assert_match(/read only irc help discover input \z/, strip_ansi(prompt))
-    assert_operator strip_ansi(prompt).length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+    assert_includes strip_ansi(state), "read only irc help"
   end
 
-  def test_shell_prompt_bounds_long_branch_destination_and_phase
+  def test_state_line_bounds_long_branch_destination_and_phase
     renderer = FakeRenderer.new(config: {})
-    renderer.stub(:git_prompt_state, branch: "feature/this/is/a/very/long/branch/name", ahead: 1234, behind: 987, dirty: true) do
-      _state, prompt = renderer.prompt_line(
-        "model",
-        "a-phase-name-that-is-far-too-long",
-        tokens: 10,
+    renderer.stub(:git_prompt_state, { branch: "feature/this/is/a/very/long/branch/name", ahead: 1234, behind: 987, dirty: true }) do
+      state, _prompt = renderer.prompt_line(
+        "model", "a-phase-name-that-is-far-too-long", tokens: 10,
         destination: "read-only:irc:#a-very-long-channel-name"
       )
-      clean = strip_ansi(prompt)
+      clean = strip_ansi(state)
 
-      assert_no_match(/\n|\r/, clean)
-      assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+      refute_match(/\n|\r/, clean)
       assert_includes clean, "read only irc a very"
       assert_includes clean, "feature dirty"
-      assert_match(/input \z/, clean)
-      assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
-      refute_includes clean, "/"
     end
   end
 
@@ -289,12 +265,12 @@ class TestRenderer < Minitest::Test
 
   def test_long_git_branch_is_bounded_before_prompt_layout
     renderer = FakeRenderer.new(config: {})
-    renderer.stub(:git_prompt_state, branch: "feature/with/a/very/long/operator/branch/name", ahead: 0, behind: 0, dirty: false) do
-      _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+    renderer.stub(:git_prompt_state, { branch: "feature/with/a/very/long/operator/branch/name", ahead: 0, behind: 0, dirty: false }) do
+      state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
       clean = strip_ansi(prompt)
-      assert_no_match(/\n|\r/, clean)
+      refute_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes strip_ansi(prompt), "feature"
+      assert_includes strip_ansi(state), "feature"
     end
   end
 
