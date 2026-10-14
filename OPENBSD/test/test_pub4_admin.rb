@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../usr/local/sbin/pub4-admin"
+load File.expand_path("../usr/local/sbin/pub4-admin", __dir__)
 
 class Pub4AdminTest < Minitest::Test
   ADMIN = Pub4Admin
