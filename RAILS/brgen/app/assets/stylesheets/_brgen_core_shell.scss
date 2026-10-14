@@ -237,7 +237,8 @@ a:hover { text-decoration: underline; }
    and the shell clears one band. */
 .app-shell {
   position: fixed;
-  inset: calc(var(--top-band-block) + var(--nav-swiper-h) + var(--safe-top)) 0 0 0;
+  // --nav-swiper-h already includes the safe area; adding it again leaves a blank strip on notched phones.
+  inset: calc(var(--top-band-block) + var(--nav-swiper-h)) 0 0 0;
 }
 
 @media (min-width: 768px) {
