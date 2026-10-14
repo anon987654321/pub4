@@ -10,14 +10,15 @@ main#main-content :is(button, input, select, textarea, a):focus-visible {
   outline-offset: 2px;
 }
 
-body > nav[aria-label="Primary navigation"] {
-  transform: translateY(0);
+// The nav lives inside .app-shell and uses a localized accessible name.
+// Its stable identity is the shared PWA marker, not its DOM ancestry or copy.
+nav[data-pwa-primary-nav] {
   min-height: 52px;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
 }
 
-body > nav[aria-label="Primary navigation"] a[aria-current="page"] {
+nav[data-pwa-primary-nav] a[aria-current="page"] {
   color: var(--text);
   font-weight: var(--weight-bold);
   text-decoration: underline;
