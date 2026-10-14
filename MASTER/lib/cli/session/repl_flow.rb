@@ -254,6 +254,23 @@ module Master
         @turn_queue_paused || (@turn_worker&.alive? && Thread.current != @turn_worker)
       end
 
+      def shutdown_interactive_queue!
+        @turn_queue_mutex&.synchronize do
+          @turn_queue&.clear
+          @turn_queue_paused = true
+        end
+        turn = @pipeline_thread
+        if turn&.alive? && Thread.current != @turn_worker
+          canceler = Thread.new { cancel_turn(turn, @turn_children) }
+          canceler.join(1)
+          turn.join(1)
+        end
+        worker = @turn_worker
+        worker.join(1) if worker&.alive? && Thread.current != worker
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.queue.shutdown", event_bus: @refs.bus)
+      end
+
       def interactive_queue_count
         @turn_queue_mutex.synchronize { @turn_queue.length }
       rescue StandardError
@@ -265,7 +282,7 @@ module Master
 
         count = interactive_queue_count
         marker = count.positive? ? "*#{count}" : "*"
-        prompt.to_s.sub(/(\\s*)\\z/) { |space| " #{marker}#{space}" }
+        prompt.to_s.sub(/(\s*)\z/) { |space| " #{marker}#{space}" }
       end
 
       def enqueue_interactive_line(line)
