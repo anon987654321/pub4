@@ -4544,9 +4544,16 @@ def boolean_envelope_r2(measured)
   (cov / Math.sqrt(var_m * var_b))**2
 end
 
+# Read the full preset method. A nested `end` closes an inner block, so
+# it cannot delimit the method when building the effect inventory.
+def preset_effect_names
+  source = File.read(__FILE__)
+  body = source[/^def preset\b.*?(?=^def [a-z_][a-z0-9_]*\b|\z)/m]
+  Array(body).scan(/when "([a-z0-9_]+)"/).flatten.uniq
+end
+
 def vocab_check
-  implemented = File.read(__FILE__)[/^def preset\b.*?^end$/m]
-                    .scan(/when "([a-z0-9_]+)"/).flatten.uniq
+  implemented = preset_effect_names
   problems = []
 
   PRESETS.each do |name, p|
