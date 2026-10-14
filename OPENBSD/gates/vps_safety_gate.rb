@@ -116,6 +116,11 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   rails_task_path = File.join(OPENBSD, "usr", "local", "libexec", "rails-task.ksh")
   if File.file?(rails_task_path) && !File.symlink?(rails_task_path)
     rails_task = File.read(rails_task_path)
+    rails_task_secret_contract = admin.include?('environment["SECRET_KEY_BASE"] = environment_secret if environment_secret') &&
+                              admin.include?("environment_secret = app_secret_value(app)") &&
+                              rails_task.include?("export SECRET_KEY_BASE") &&
+                              !rails_task.include?('command="SECRET_KEY_BASE=$secret')
+    failures << "Rails task secrets must use the child environment, never command arguments" unless rails_task_secret_contract
     rails_task_contract = rails_task.include?("master|brgen|amber|bsdports") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("db-storage-migrate)") &&
