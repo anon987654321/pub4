@@ -72,6 +72,29 @@ class TestFixWatchdog < Minitest::Test
     assert_match(/no yield: 0 fixed after 1m, 2 attempts/, p.stall(@now)[:line])
   end
 
+  def test_a_non_advisory_pass_with_no_files_attempted_aborts_at_the_stall_limit
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    @now = Pulse::STALL_SECONDS + 1
+
+    stalled = p.stall(@now)
+
+    assert_match(/STALLED pass 1 phase scan \+ stream fixes for 10m, 0 files attempted/, stalled[:line])
+    refute stalled[:skippable]
+    assert stalled[:abort], "direct CLI runs must not rely on the outer wrapper watchdog"
+  end
+
+  def test_an_advisory_pass_stall_is_skipped_instead_of_aborting_the_run
+    p = pulse
+    p.observe("fix_loop:phase", stage: :council)
+    @now = Pulse::STALL_SECONDS + 1
+
+    stalled = p.stall(@now)
+
+    assert stalled[:skippable]
+    refute stalled[:abort]
+  end
+
   def test_the_machine_heartbeat_has_the_documented_shape
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
