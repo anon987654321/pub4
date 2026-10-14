@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "optparse"
 require "time"
+require_relative "../../../output_paths"
 
 module Dilla
   # A separate, original industrial-techno engine. The existing Dilla showcase is untouched.
@@ -33,7 +34,9 @@ module Dilla
       plan = generation_plan(profile:, bpm:, bars: opts[:bars], seed: opts[:seed])
       bars, seed = plan.values_at(:bars, :seed)
       raise ArgumentError, "bars must be 1..#{MAX_BARS}" unless bars.between?(1, MAX_BARS)
-      path = File.expand_path(opts[:out] || File.join(ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents")), "dilla-renders", "industrial-techno-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav"))
+      default_output = File.join(Studio::OutputPaths.dilla_render_directory,
+                                  "industrial-techno-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+      path = File.expand_path(opts[:out] || default_output)
       raise ArgumentError, "refusing to overwrite existing output: #{path}" if File.exist?(path)
       render(path, bpm:, bars:, seed:, profile:)
       puts "dilla0: wrote original industrial techno #{path} (#{bpm.round(1)} BPM, #{bars} bars, seed #{seed})"
