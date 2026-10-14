@@ -44,6 +44,25 @@ class TestPostproFilm < Minitest::Test
     end
   end
 
+  def test_generated_output_refuses_to_reuse_an_orphaned_sidecar
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "source.jpg")
+      output = File.join(dir, "postpro_source_portrait_v1.jpg")
+      sidecar = "#{output}.json"
+      File.write(input, "source")
+      File.write(sidecar, "existing provenance")
+
+      with_postpro_output_dir(dir) do
+        error = assert_raises(ArgumentError) do
+          Postpro::Constitution.verify_output!(input_path: input, output_path: output)
+        end
+        assert_match(/constitutional output already exists/, error.message)
+        refute File.exist?(output)
+        assert_equal "existing provenance", File.read(sidecar)
+      end
+    end
+  end
+
   # --- the tables agree about which films exist ---------------------------
 
   def test_every_stock_declares_a_speed_and_a_grain_figure
