@@ -289,6 +289,8 @@ end
       @cli.instance_variable_get(:@turn_queue) << "next message"
     end
     assert_equal "master$ queued 1 ", @cli.send(:prompt_with_queue_status, "master$ ")
+    @cli.instance_variable_get(:@turn_queue_mutex).synchronize { @cli.instance_variable_set(:@turn_queue_paused, true) }
+    assert_equal "master$ paused ", @cli.send(:prompt_with_queue_status, "master$ ")
   end
 
   def test_interactive_queue_refuses_overflow_without_dropping_pending_messages
