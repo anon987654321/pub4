@@ -6,6 +6,7 @@
 require "digest"
 require "etc"
 require "fileutils"
+require "find"
 require "json"
 require "securerandom"
 require "socket"
@@ -19,6 +20,7 @@ module Pub4Admin
   DU = "/usr/bin/du"
   DISK_USAGE_PATHS = %w[/home /var].freeze
   RELAYD_CONFIG = "/etc/relayd.conf"
+  MASTER_WEB_ROOT = "/home/dev/pub4/RAILS/master"
   RESOURCE_GUARD = "/usr/local/bin/resource_guard.sh"
   SOLID_QUEUE_PROOF = "/usr/local/libexec/pub4/solid_queue_proof.rb"
   CI_PREPARE = "/usr/local/libexec/ci-prepare.ksh"
@@ -499,6 +501,81 @@ module Pub4Admin
   rescue ArgumentError
     raise "unknown app or group; cannot prepare bundle cache"
   end
+  # These tasks touch only the fixed master_web tree; neither accepts a path from argv.
+  def master_web_root!
+    dev = Etc.getpwnam("dev")
+    components = [["/home", 0], ["/home/dev", dev.uid]]
+    current = "/home/dev"
+    %w[pub4 RAILS master public].each do |part|
+      current = File.join(current, part)
+      components << [current, dev.uid]
+    end
+    components.each do |path, expected_uid|
+      stat = File.lstat(path)
+      raise "#{path} must be a real, correctly owned directory" unless
+        stat.directory? && !stat.symlink? && stat.uid == expected_uid && (stat.mode & 0o022).zero?
+    end
+    [dev, current]
+  rescue ArgumentError
+    raise "dev account is missing; cannot prepare MASTER web paths"
+  end
+
+  def master_web_tree_paths!(root)
+    paths = []
+    Find.find(root) do |path|
+      stat = File.lstat(path)
+      raise "symlink refused in MASTER web path: #{path}" if stat.symlink?
+      raise "non-file object refused in MASTER web path: #{path}" unless stat.directory? || stat.file?
+      paths << [path, stat]
+    end
+    paths
+  end
+
+  def master_web_assets_reset
+    dev, public_dir = master_web_root!
+    assets = File.join(public_dir, "assets")
+    if File.exist?(assets) || File.symlink?(assets)
+      stat = File.lstat(assets)
+      raise "#{assets} must be a real directory" unless stat.directory? && !stat.symlink?
+      master_web_tree_paths!(assets)
+      FileUtils.rm_rf(assets)
+    end
+    master_web_tree_paths!(public_dir).each do |path, _stat|
+      File.chown(dev.uid, dev.gid, path)
+    end
+    puts "master_web0: public assets reset; public tree owned by dev"
+    0
+  end
+
+  def master_web_runtime_dirs
+    dev, public_dir = master_web_root!
+    root = File.dirname(public_dir)
+    master = Etc.getgrnam("master")
+    %w[tmp log].each do |name|
+      path = File.join(root, name)
+      if File.exist?(path) || File.symlink?(path)
+        stat = File.lstat(path)
+        raise "#{path} must be a real directory" unless stat.directory? && !stat.symlink?
+      else
+        Dir.mkdir(path, 0o2775)
+      end
+      master_web_tree_paths!(path).each do |entry, stat|
+        File.chown(dev.uid, master.gid, entry)
+        mode = stat.mode & 0o7777
+        if stat.directory?
+          mode = 0o2775
+        else
+          mode |= 0o660
+          mode |= 0o110 if (stat.mode & 0o111).positive?
+        end
+        File.chmod(mode, entry)
+      end
+    end
+    puts "master_web0: tmp/log owned by dev:master with group write"
+    0
+  rescue ArgumentError
+    raise "master account or group is missing; cannot prepare runtime directories"
+  end
   def valid_ci_timeout?(value)
     value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
   end
@@ -666,6 +743,14 @@ module Pub4Admin
         stat.file? && !stat.symlink? && stat.uid.zero? && (stat.mode & 0o022).zero?
 
       exec(RCCTL, "disable", service)
+    end
+
+    if args == ["master-web-assets-reset"]
+      return master_web_assets_reset
+    end
+
+    if args == ["master-web-runtime-dirs"]
+      return master_web_runtime_dirs
     end
 
     if args.length == 4 && args[0] == "deploy-status"
