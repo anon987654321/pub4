@@ -99,7 +99,7 @@ rails_runtime_gate() {
       if [[ -d $rails_tree ]]; then
         # traversal is group-based (710 dev:_pub4ci) — vps_ci.sh converges it;
         # this gate must not widen /home/dev to the world.
-        chmod -R a+rX "$rails_tree" 2>/dev/null || true
+        chmod -R u+rX,g+rX "$rails_tree" 2>/dev/null || true
       fi
       deploy_status "$app_name" "runtime gate: bin/ci"
       run_rails_as_app "$app_name" "$app_dir" \
