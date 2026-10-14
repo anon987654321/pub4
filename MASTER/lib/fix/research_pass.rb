@@ -25,7 +25,22 @@ module Master
                       queries:, sources: urls,
                       max_queries: protocol.fetch("max_search_queries"),
                       max_sources: protocol.fetch("max_fetched_sources"),
-                    ))
+                    ) do |event|
+                      label = event.fetch(:label).to_s
+                      state = event.fetch(:event).to_s
+                      status_note = event[:status] ? " status=#{event[:status]}" : ""
+                      Master::Trace::Dmesg.status(
+                        "research0",
+                        "#{event.fetch(:kind)} #{event.fetch(:index)}/#{event.fetch(:total)} #{state} " \
+                        "#{label[0, 110]}#{status_note}",
+                      )
+                      @bus&.publish(
+                        "fix_loop:research_source",
+                        target: target.to_s, domain:, kind: event.fetch(:kind),
+                        index: event.fetch(:index), total: event.fetch(:total),
+                        state:, status: event[:status], label: label[0, 180],
+                      )
+                    end)
                   else
                     []
                   end
