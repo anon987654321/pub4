@@ -45,6 +45,7 @@ module Pub4Admin
   def command_for(argv)
     args = Array(argv).map(&:to_s)
     return [DU, "-xk", args[1]] if args.length == 2 && args[0] == "disk-usage" && DISK_USAGE_PATHS.include?(args[1])
+    return [RCCTL, "check", "relayd"] if args == %w[service check relayd]
     return [RCCTL, "ls", "started"] if args == %w[service list-started]
 
     if args.length == 3 && args[0] == "service"
