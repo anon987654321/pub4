@@ -77,6 +77,10 @@ module Master
         free_gb <= resource_limit("disk_free_gb", "crit")
       end
 
+      # Shared by long-running operators that must stop children before disk
+      # pressure prevents their tests, journals or final reports from landing.
+      def disk_free_gb_for(path = @root) = disk_free_gb(path)
+
       private
 
       # state only ever escalates within one classify call (:ok -> :warning ->
@@ -258,8 +262,8 @@ module Master
       end
 
       # df -kP: the fourth column is the space available to this user, in KiB.
-      def disk_free_gb
-        out, status = Open3.capture2e("df", "-kP", @root)
+      def disk_free_gb(path = @root)
+        out, status = Open3.capture2e("df", "-kP", path)
         return unless status.success?
 
         (out.lines.last.to_s.split[3].to_f / (1024 * 1024)).round(1)
