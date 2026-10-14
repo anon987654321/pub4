@@ -73,6 +73,11 @@ if File.file?(admin_path)
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
   failures << "pub4-admin must not evaluate shell command strings" if
     admin.match?(/system\s*\(|Open3\.|Process\.spawn|%x/)
+  unless admin.include?('return ensure_ci_lock if args == ["ci-lock"]') &&
+         admin.include?('path = File.join(STAMP_DIR, "ci.lock")') &&
+         admin.include?("File.lstat(path)")
+    failures << "pub4-admin CI lock must use one fixed path and refuse symlinks"
+  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   installer_pins_admin = installer.include?("chown root:wheel /usr/local/sbin/pub4-admin") &&
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin")
