@@ -269,13 +269,16 @@ detail: [
 
       def help_summary
         [
-          "commands: /status /doctor /voice /narrate /model /deploy /play /size /events",
-          "          /wake /review /critique /fix /face /wishlist /explain /prove",
-          "          /session /clear /undo /commit /snapshot",
-          "          /android /ios /orders",
-          "          /soul /laws /why /plugin /help /exit /quit",
-          "input:    !cmd governed shell, << multiline, /help X details",
-          "write:    /fix is the write path; everything else is read or route",
+          "fix0 at master0: /fix [path] is the primary repair operation",
+          "fix0: observe critique repair verify repeat until convergence",
+          "help0 at master0: /help [command] shows command details",
+          "commands0 at master0: /status /doctor /voice /narrate /model /deploy /play /size /events",
+          "commands0: /wake /review /critique /fix /face /wishlist /explain /prove",
+          "commands0: /session /clear /undo /commit /snapshot /android /ios /orders",
+          "commands0: /soul /laws /why /plugin /help /exit /quit",
+          "input0 at master0: plain text is a task",
+          "input0: !command runs governed shell; << starts multiline; /help X shows details",
+          "write0 at master0: /fix is the canonical repair path",
         ].join("\n")
       end
     end
