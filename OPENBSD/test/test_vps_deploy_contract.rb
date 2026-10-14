@@ -102,7 +102,7 @@ class VpsDeployContractTest < Minitest::Test
 
     assert_includes core, "pub4_rcctl() {"
     assert_includes core, "check|get|start|stop|restart"
-    assert_includes core, '"/usr/local/sbin/pub4-admin service "$action" "$service"'
+    assert_includes core, '/usr/local/sbin/pub4-admin service "$action" "$service"'
     assert_includes deploy, 'pub4_rcctl stop "$app_name"'
     assert_includes deploy, 'pub4_rcctl restart "$APP_NAME" || pub4_rcctl start "$APP_NAME"'
     refute_includes deploy, 'doas rcctl stop "$app_name"'
