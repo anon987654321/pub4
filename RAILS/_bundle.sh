@@ -41,15 +41,6 @@ ensure_npm_cache() {
   ${_PRIV} chown "${app_name}:${app_name}" "$npm_cache"
 }
 
-# bundle_install_as_app APP_NAME APP_DIR — production bundle as app user with app-owned npm cache.
-bundle_install_as_app() {
-  local app_name=$1
-  local app_dir=$2
-  ensure_npm_cache "$app_name"
-  local npm_cache="/home/${app_name}/.npm"
-  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
-}
-
 # bundle_cas_* — immutable SHA-256 store for gem artifacts shared by pub4 applications.
 # Bundler remains authoritative for installed gems; CAS only deduplicates immutable .gem bytes.
 bundle_cas_root() {
@@ -122,13 +113,18 @@ bundle_cas_capture() {
   ${_PRIV} chown -R "${app_name}:${app_name}" "$cache_dir" 2>/dev/null || true
 }
 
-# bundle_install_as_app APP_NAME APP_DIR — production bundle as app user with app-owned npm cache.
+# bundle_install_as_app APP_NAME APP_DIR — production bundle as the app user.
 bundle_install_as_app() {
   local app_name=$1
   local app_dir=$2
   bundle_cas_prepare "$app_name" "$app_dir"
   ensure_npm_cache "$app_name"
-  local npm_cache="/home/${app_name}/.npm"
-  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
+
+  if [[ -x /usr/local/sbin/pub4-admin && "$app_dir" == "/home/${app_name}/app" ]]; then
+    "${_PRIV}" /usr/local/sbin/pub4-admin rails-bundle "$app_name" "${PUB4_BUNDLE_TIMEOUT:-7200}"
+  else
+    local npm_cache="/home/${app_name}/.npm"
+    ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; cd ${app_dir} && bundle config set --local frozen false && bundle config set --local deployment true && bundle config set --local without \"development test\" && RAILS_ENV=production bundle install'"
+  fi
   bundle_cas_capture "$app_name" "$app_dir"
 }
