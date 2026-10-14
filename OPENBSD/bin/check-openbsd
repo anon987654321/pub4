@@ -35,7 +35,7 @@ failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/gate
 # The shed ladder decides which site goes down under memory pressure.
 failures << "resource guard" unless runner.run("resource guard", "ksh",
                                                "OPENBSD/test/resource_guard_test.sh",
-                                               "OPENBSD/bin/resource_guard.sh")
+                                               "OPENBSD/usr/local/bin/resource_guard.sh")
 # shell_syntax_gate reads each script's shebang, so the set is the tree and the
 # parser is the one that file declares.
 failures << "shell syntax" unless runner.run("shell syntax", RUBY, "OPENBSD/gates/shell_syntax_gate.rb")
