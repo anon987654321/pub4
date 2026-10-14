@@ -57,11 +57,15 @@ class TestToolsMedia < Minitest::Test
     refute_match(/return image unless p/, body)
   end
 
-  def test_method_body_reader_includes_calls_after_nested_blocks
+  def test_method_body_reader_covers_nested_blocks_without_absorbing_neighbours
     source = File.read(POSTPRO)
+    random = method_body(source, "run_random")
+    watch = method_body(source, "run_watch")
 
-    assert_includes method_body(source, "run_random"), "process_file("
-    assert_includes method_body(source, "run_watch"), "grade_watched("
+    assert_includes random, "process_file("
+    assert_includes watch, "grade_watched("
+    refute_includes random, "def run_uplift"
+    refute_includes watch, "def main"
   end
 
   def test_postpro_finishing_grain_uses_the_preset_stock
@@ -81,27 +85,35 @@ class TestToolsMedia < Minitest::Test
     end
   end
 
-  # Read through the next top-level method, not the first nested `end`.
-  # These checks inspect source contracts, so truncating an inner if/loop must
-  # not turn a reachable call into a false negative.
-  def method_body(source, name)
-    pattern = Regexp.new("^def " + Regexp.escape(name) + "\\b.*?(?=^def [a-z_][a-z0-9_]*\\b|\\z)", Regexp::MULTILINE)
-    source[pattern]
+  # Prism supplies exact source spans, so nested blocks cannot truncate a
+  # method and comments/constants beside it cannot be mistaken for its body.
+  def method_bodies(source)
+    parsed = Prism.parse(source)
+    return {} unless parsed.success?
+
+    parsed.value.statements.body.each_with_object({}) do |node, methods|
+      next unless node.is_a?(Prism::DefNode)
+
+      methods[node.name.to_s] = source.byteslice(node.location.start_offset...node.location.end_offset)
+    end
   end
 
-  # Whether one top-level method of a single-file script reaches another, by
-  # following the names it calls. Shallow on purpose: it reads call spellings in
-  # a body, so a dynamic send is invisible to it — postpro has none on this path,
-  # and a reachability check that tried to be exact would be a second interpreter.
-  def reaches?(source, from, target, seen = [])
+  def method_body(source, name)
+    method_bodies(source)[name.to_s]
+  end
+
+  # Follow calls between top-level methods in one script. The method inventory
+  # is built once per proof, rather than reparsing the entire file at each hop.
+  def reaches?(source, from, target, seen = [], methods: nil)
     return false if seen.include?(from)
 
-    body = method_body(source, from)
+    methods ||= method_bodies(source)
+    body = methods[from.to_s]
     return false unless body
     return true if body.include?(target)
 
     body.scan(/\b([a-z_][a-z0-9_]*)\(/).flatten.uniq
-        .any? { |callee| reaches?(source, callee, target, seen + [from]) }
+        .any? { |callee| reaches?(source, callee, target, seen + [from], methods:) }
   end
 
   # The model string is not the invariant. This pinned flux-1.1-pro-ultra and
