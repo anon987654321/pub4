@@ -56,7 +56,8 @@ function chatMessageAdvance(message) {
     return Number.isFinite(parsed) ? parsed : 0;
   };
   const gap = number(logStyle.rowGap !== 'normal' ? logStyle.rowGap : logStyle.gap);
-  return Math.max(0, rect.height + number(style.marginTop) + number(style.marginBottom) + gap);
+  const height = Math.max(rect.height, message.scrollHeight, message.offsetHeight);
+  return Math.max(0, height + number(style.marginTop) + number(style.marginBottom) + gap);
 }
 
 function updateChatSpacer() {
