@@ -117,6 +117,12 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
   end
 
+  def test_ci_runner_uses_the_fixed_broker_and_bounded_timeout
+    assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout"'
+    assert_includes CI_SOURCE, 'ci_timeout=${PUB4_CI_TIMEOUT:-7200}'
+    assert_includes CI_SOURCE, 'exec /usr/bin/su -m "$app" -c "$script"'
+  end
+
   def test_ci_uses_the_broker_for_account_and_storage_preparation
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-prepare "$app"'
     assert_includes CI_SOURCE, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
