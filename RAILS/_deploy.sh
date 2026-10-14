@@ -100,7 +100,7 @@ deploy_tracked_app() {
   # indefinitely waiting on the write lock a live Falcon worker already holds,
   # which silently swallowed every deploy's runtime gate (precompile + bin/ci)
   # behind it -- this app_name may not have a running service yet on first deploy.
-  doas rcctl stop "$app_name" 2>/dev/null || true
+  pub4_rcctl stop "$app_name" 2>/dev/null || true
   deploy_status "$app_name" "db migrate"
   db_create_migrate_as_app "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "db migrate" "failed"; exit 1; }
   log_ok "database migrated for ${app_name}"
@@ -122,7 +122,7 @@ deploy_tracked_app() {
     fi
   fi
   deploy_status "$app_name" "restart"
-  doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
+  pub4_rcctl restart "$APP_NAME" || pub4_rcctl start "$APP_NAME"
   if [[ $app_name == brgen ]]; then
     warm_brgen_after_restart "$APP_PORT"
   fi
