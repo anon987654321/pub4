@@ -146,6 +146,9 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?("overlay-initializers|overlay-public") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("bundle-cache-prepare") &&
+                          rails_task.include?("bundle-cas-hydrate)") &&
+                          rails_task.include?('cp "$source" "$target"') &&
+                          rails_task.include?('export PUB4_TASK_CACHE_KEY=$database') &&
                           rails_task.include?("db-storage-migrate)") &&
                           rails_task.include?('[ ! -L db ]') &&
                           rails_task.include?('[ ! -L storage ]') &&
@@ -251,6 +254,15 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                   admin.include?("already exists without a valid SECRET_KEY_BASE; refusing to replace the environment file")
   failures << "pub4-admin must create secrets only at fixed app paths and atomically" unless secret_dispatch
 
+  bundle_cache_contract = admin.include?('args.length == 4 && args[0] == "bundle-cache"') &&
+                         admin.include?("def bundle_cache(app, action, ruby_key)") &&
+                         admin.include?('BUNDLE_CACHE_BASE = "/var/cache/pub4/bundle"') &&
+                         admin.include?('%w[prepare import capture].include?(action)') &&
+                         admin.include?("File.link(temporary, target)") &&
+                         admin.include?("File::CREAT | File::EXCL") &&
+                         admin.include?("valid_ruby_cache_key?(ruby_key)") &&
+                         admin.include?("bundle cache import exceeds 500 files")
+  failures << "pub4-admin bundle cache must be immutable and fixed-path" unless bundle_cache_contract
   broker_helper_dispatch = admin.include?('args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('args[0] == "ci-run" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('args[0] == "ci-sync" && RAILS_APPS.include?(args[1])') &&
