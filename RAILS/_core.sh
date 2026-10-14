@@ -26,8 +26,8 @@ need_cmd() {
   done
 }
 
-# pub4_rcctl ACTION SERVICE — narrow service lifecycle through the fixed root broker.
-# The fallback exists only for first rollout before OPERATOR.sh installs the broker.
+# pub4_rcctl ACTION SERVICE — fixed broker only. Deploy entrypoints refuse
+# to run before the reviewed root-owned broker has been installed.
 pub4_rcctl() {
   local action=${1:-} service=${2:-}
   case "$action" in
@@ -38,12 +38,11 @@ pub4_rcctl() {
     master|brgen|amber|bsdports|master_jobs|brgen_jobs|amber_jobs|bsdports_jobs) ;;
     *) log_err "pub4_rcctl: refused service: $service"; return 2 ;;
   esac
-
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    "${_PRIV}" /usr/local/sbin/pub4-admin service "$action" "$service"
-  else
-    "${_PRIV}" rcctl "$action" "$service"
-  fi
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "pub4_rcctl: pub4-admin is missing; run reviewed OPENBSD/OPERATOR.sh first"
+    return 1
+  }
+  "${_PRIV}" /usr/local/sbin/pub4-admin service "$action" "$service"
 }
 
 # deploy_status APP_NAME STEP [STATE] — single source of truth for "is a
