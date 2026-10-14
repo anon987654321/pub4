@@ -145,6 +145,10 @@ ownership:
     purpose: app-owned CI copy-tree sync from the fixed repository, never root filesystem mutation
     risk: critical
     check: ruby OPENBSD/gates/vps_safety_gate.rb
+  usr/local/libexec/rails-task.ksh:
+    purpose: closed Rails runtime task dispatcher; app code and Bundler run as the selected app user
+    risk: critical
+    check: ruby OPENBSD/gates/vps_safety_gate.rb
   usr/:
     purpose: root cron jobs installed to /usr/local/bin and helpers root sources
       from /usr/local/libexec
