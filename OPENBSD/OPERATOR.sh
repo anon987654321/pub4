@@ -221,6 +221,7 @@ install_root_configs() {
              /usr/local/libexec/ci-prepare.ksh \
              /usr/local/libexec/ci-run.ksh \
              /usr/local/libexec/ci-sync.ksh \
+             /usr/local/libexec/rails-task.ksh \
              /usr/local/libexec/pub4/solid_queue_proof.rb \
              /usr/local/bin/resource_guard.sh; do
     if [[ -L $rel ]]; then
@@ -292,7 +293,7 @@ install_root_configs() {
            /usr/local/libexec/ci-prepare.ksh \
            /usr/local/libexec/ci-run.ksh \
            /usr/local/libexec/ci-sync.ksh \
-           /usr/local/libexec/rails-bundle.ksh; do
+           /usr/local/libexec/rails-task.ksh; do
     if [[ -L $f ]]; then
       log ERROR "refusing symlinked privileged entrypoint: $f"
       return 1
