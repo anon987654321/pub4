@@ -101,6 +101,15 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes home_feed, 'surface: "brgen"'
   end
 
+  def test_brgen_first_feed_image_gets_loading_priority_without_poisoning_the_cache
+    feed = read("brgen/app/views/home/_live_search_results.html.erb")
+    post = read("brgen/app/views/posts/_post.html.erb")
+
+    assert_includes feed, 'render "posts/post", post: post, priority: index.zero?'
+    assert_includes post, 'cache [I18n.locale, post, post.voted_by?(Current.user), reposted, quote, priority]'
+    assert_includes post, 'fetchpriority: (priority_image ? "high" : "auto")'
+    assert_includes post, 'loading: (priority ? "eager" : "lazy")'
+  end
   def test_brgen_post_detail_uses_the_shared_vote_rail_beside_the_title
     show = read("brgen/app/views/posts/show.html.erb")
     partial = read("__shared/app/views/shared/_post_vote_rail.html.erb")
