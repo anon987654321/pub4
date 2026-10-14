@@ -250,6 +250,16 @@ class TestPostproFilm < Minitest::Test
 
   # --- presets ------------------------------------------------------------
 
+  # This source inventory must continue through nested conditionals and the
+  # effect case, not stop at the first inner end in preset().
+  def test_effect_inventory_includes_late_preset_case_arms
+    implemented = send(:preset_effect_names)
+
+    assert_includes implemented, "optical_blur"
+    assert_includes implemented, "lens_flare"
+    assert_includes implemented, "cinemascope_bars"
+  end
+
   def test_every_preset_names_a_stock_that_exists
     unknown = PRESETS.filter_map { |name, data| [name, data[:stock]] if data[:stock] && !STOCKS.key?(data[:stock]) }
     assert_empty unknown, "these presets render on a film with no rows: #{unknown.inspect}"
