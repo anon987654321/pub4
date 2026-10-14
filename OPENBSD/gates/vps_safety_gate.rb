@@ -145,6 +145,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
     rails_task_contract = rails_task.include?("master|brgen|amber|bsdports") &&
                           rails_task.include?("overlay-initializers|overlay-public") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
+                          rails_task.include?("bundle-cache-prepare") &&
                           rails_task.include?("db-storage-migrate)") &&
                           rails_task.include?('[ ! -L db ]') &&
                           rails_task.include?('[ ! -L storage ]') &&
