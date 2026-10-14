@@ -5,8 +5,8 @@ body {
   color: var(--text);
   font-family: var(--font);
   // The shared nav token includes its first row and safe-area inset; on
-  // phones a wrapped second row adds one more tap target to the clearance.
-  padding-block-start: calc(var(--nav-swiper-h) + var(--tap-min));
+  // phones a wrapped second row adds one tap target and one row gap.
+  padding-block-start: calc(var(--nav-swiper-h) + var(--tap-min) + var(--space-2));
 }
 
 kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
