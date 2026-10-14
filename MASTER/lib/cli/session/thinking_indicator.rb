@@ -33,7 +33,7 @@ module Master
             paused = false
             Master::Trace::Dmesg.terminal_write do |target|
               paused, stage = @think_mutex.synchronize { [@think_paused, @think_stage.to_s] }
-              unless paused
+              unless paused || @reading_input
                 stage = "working" if stage.empty?
                 line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
                 target.print("\r\e[K#{line}")
