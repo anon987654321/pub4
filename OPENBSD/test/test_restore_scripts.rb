@@ -23,6 +23,13 @@ class RestoreScriptsTest < Minitest::Test
   # in restore_litestream.sh is false and a skipping version walked all three apps,
   # restored none and exited 0. A restore that reports success having restored
   # nothing is read as evidence the backups work.
+  def test_restore_litestream_uses_brokered_service_control
+    source = File.read(File.join(ROOT, "bin", "restore_litestream.sh"))
+    assert_includes source, 'doas /usr/local/sbin/pub4-admin service stop "$app"'
+    assert_includes source, 'doas /usr/local/sbin/pub4-admin service start "$app"'
+    assert_includes source, 'doas /usr/local/sbin/pub4-admin service check "$app"'
+    refute_match(/doas rcctl (?:stop|start|check)/, source)
+  end
   def test_restore_litestream_fails_rather_than_skipping
     source = File.read(File.join(ROOT, "bin", "restore_litestream.sh"))
     assert_includes source, "require_litestream", "no check that the binary exists"
