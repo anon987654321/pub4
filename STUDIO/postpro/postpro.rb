@@ -852,8 +852,8 @@ PRESETS = {
            stock: :kodak_portra, print_stock: :kodak_2383,
            temp: 5400, intensity: 0.80 },
 
-  portrait: { fx: %w[optical_blur vintage_lens spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
-              stock: :kodak_portra, temp: 5200, intensity: 0.85, lens: "helios" },
+  portrait: { fx: %w[optical_blur spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
+              stock: :kodak_portra, temp: 5200, intensity: 0.85 },
 
   # `lens:` is not metadata: vintage_lens is the effect that reads it. Every
   # preset declaring a lens must include this step, or the look silently loses
