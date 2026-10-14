@@ -106,6 +106,13 @@ class TestRenderer < Minitest::Test
     assert_match(/\|-\z/, strip_ansi(prompt))
   end
 
+  def test_phase_prompt_uses_the_established_input_glyph
+    renderer = FakeRenderer.new(config: {})
+
+    assert_equal "|-", renderer.phase_prompt(true, "discover")
+    assert_equal "!", renderer.phase_prompt(false, "discover")
+  end
+
   def test_prompt_token_follows_zsh_and_posix_shell_conventions
     renderer = FakeRenderer.new(config: {})
     old_shell = ENV["SHELL"]
