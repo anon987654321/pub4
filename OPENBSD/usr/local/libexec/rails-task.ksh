@@ -27,6 +27,10 @@ esac
 [ "$(id -u)" -eq 0 ] || { echo "rails-task: must run as root through pub4-admin" >&2; exit 77; }
 
 app_uid=$(/usr/bin/id -u "$app")
+[ -d /home ] && [ ! -L /home ] && [ "$(stat -f %u /home)" -eq 0 ] || {
+  echo "rails-task: /home must be a real root-owned directory" >&2
+  exit 1
+}
 app_home="/home/$app"
 app_dir="$app_home/app"
 [ -d "$app_home" ] && [ ! -L "$app_home" ] && [ "$(stat -f %u "$app_home")" = "$app_uid" ] || {
@@ -37,6 +41,14 @@ app_dir="$app_home/app"
   echo "rails-task: app directory must be a real app-owned directory: $app_dir" >&2
   exit 1
 }
+app_bundle="$app_dir/.bundle"
+if [ -e "$app_bundle" ] || [ -L "$app_bundle" ]; then
+  [ -d "$app_bundle" ] && [ ! -L "$app_bundle" ] &&
+    [ "$(stat -f %u "$app_bundle")" = "$app_uid" ] || {
+      echo "rails-task: app .bundle must be a real app-owned directory" >&2
+      exit 1
+    }
+fi
 for cache_dir in "$app_home/.npm" "$app_home/.cache" "$app_home/.bundle"; do
   if [ -e "$cache_dir" ] || [ -L "$cache_dir" ]; then
     [ -d "$cache_dir" ] && [ ! -L "$cache_dir" ] &&
