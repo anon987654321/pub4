@@ -505,6 +505,12 @@ nb:
     occasion_placeholder: "Anledning"
     generate: "Generer antrekk"
     season: "Sesong"
+    seasons:
+      spring: "Vår"
+      summer: "Sommer"
+      autumn: "Høst"
+      winter: "Vinter"
+      all_season: "Hele året"
     count:
       one: "%{count} antrekk"
       other: "%{count} antrekk"
