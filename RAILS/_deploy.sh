@@ -119,7 +119,7 @@ deploy_tracked_app() {
   fi
 
   install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
-  [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
+  [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_NAME" "$APP_DOMAIN" "$APP_PORT"
 
   rails_runtime_gate "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "runtime gate" "failed"; exit 1; }
   if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
