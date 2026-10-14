@@ -203,6 +203,14 @@ class VpsDeployContractTest < Minitest::Test
     refute_match(/\$\{_PRIV\} sh -c/, probe)
     refute_match(/\$\{_PRIV\} cat/, probe)
   end
+  def test_storage_migration_has_no_privileged_path_fallback
+    database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
+    migration = database[/migrate_sqlite_db_to_storage_if_needed\(\) \{.*?^\}/m]
+    refute_nil migration
+    assert_includes migration, 'run_rails_as_app "$app_name" "$app_dir" "db-storage-migrate"'
+    assert_includes migration, '[[ -x /usr/local/sbin/pub4-admin ]]'
+    refute_match(/\$\{_PRIV\}\s+(?:mkdir|mv|chown)\b/, migration)
+  end
   def test_rails_database_tasks_use_closed_dispatcher
     database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
     runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
