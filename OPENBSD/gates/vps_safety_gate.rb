@@ -71,6 +71,12 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   admin = File.read(admin_path)
   failures << "pub4-admin must use the fixed packaged Ruby interpreter" unless
     admin.start_with?("#!/usr/local/bin/ruby\\n")
+  status_contract = admin.include?('args.length == 4 && args[0] == "deploy-status"') &&
+                    admin.include?("def write_deploy_status(app, step, state)") &&
+                    admin.include?('File.join(directory, "#{app}.json")') &&
+                    admin.include?("File.rename(temporary, target)") &&
+                    admin.include?('raise "#{target} is a symlink; refusing status write"')
+  failures << "deploy-status writes must use the atomic fixed-path broker" unless status_contract
   broker_contract = admin.include?("def command_for(argv)") &&
                     admin.include?("exec(*command)") &&
                     admin.include?("SERVICE_ACTIONS") &&
