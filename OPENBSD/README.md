@@ -39,8 +39,10 @@ with the selected app account; the CI runner has a wall-clock process-group dead
 The deploy adapter verifies root-owned rc.d files rather than installing from the
 checkout, and relay route verification is read-only.
 
-This is not yet the final privilege cut: CI first-rollout fallbacks and parts of
-bundle-cache/app installation still use direct `doas`. Keep the existing
+The Bundler content-addressed cache now uses fixed broker verbs, a bounded Ruby-version
+key and immutable SHA-256 objects; the app copies cache objects rather than sharing
+root-owned inodes through hard links. This is not yet the final privilege cut: CI
+first-rollout fallbacks and parts of app installation still use direct `doas`. Keep the existing
 `/etc/doas.conf` rule and `wheel` membership unchanged until those operations are
 migrated, the contract suite passes in a real OpenBSD checkout, and vm23 is verified.
 
