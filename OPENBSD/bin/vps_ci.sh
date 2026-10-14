@@ -284,7 +284,7 @@ doas chmod 750 /home/dev 2>/dev/null || true
 # put this back to 755.
 doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
 fi
-doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
+chmod -R a+rX "${repo}/MASTER/tools"
 deploy_status "$app" "bundle install + bin/ci"
 # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
 # guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
