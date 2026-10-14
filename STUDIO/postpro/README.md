@@ -111,7 +111,8 @@ the weights everything falls back to the proxies, with one quiet log line.
 A bare path, or `--random`, renders several variations of a photograph, each through its own
 chain, with a JSON sidecar naming every effect and the seed. By default the media and sidecars
 go to the shared dated render directory outside the checkout. Set `POSTPRO_OUTPUT_DIR` to
-choose another output directory. Heavy mode is the standing default: five variations dealt
+choose another output directory. If a generated name already exists, Postpro preserves it
+and chooses a timestamped sibling. Heavy mode is the standing default: five variations dealt
 from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter
 taste. Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family again.
 
