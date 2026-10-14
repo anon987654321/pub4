@@ -40,6 +40,19 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'raise "#{path} is not a regular file" unless lock.file? && !lock.symlink?'
   end
 
+  def test_ci_prepare_is_one_fixed_app_scoped_operation
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+    helper = File.read(File.expand_path("../usr/local/libexec/ci-prepare.ksh", __dir__))
+
+    assert_includes source, 'args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])'
+    assert_includes source, 'trusted_script!(CI_PREPARE)'
+    assert_includes source, 'exec("/bin/ksh", CI_PREPARE, args[1])'
+    assert_includes helper, 'brgen|amber|bsdports'
+    assert_includes helper, 'storage="/home/$app/app/storage"'
+    assert_includes helper, '[ ! -L /home/dev ]'
+    assert_includes helper, '[ -L "$storage" ]'
+  end
+
   def test_started_service_inventory_is_a_fixed_read_operation
     assert_equal ["/usr/sbin/rcctl", "ls", "started"],
                  ADMIN.command_for(%w[service list-started])
