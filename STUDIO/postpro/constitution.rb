@@ -97,6 +97,32 @@ module Postpro
       @announced_output_dir = true
     end
 
+    # Keep prior grades and their provenance. Generated names are stable until
+    # they collide; on a rerun, move the new output to a timestamped sibling.
+    def available_output_path(output_path)
+      output = File.expand_path(output_path)
+      return output unless output_exists?(output)
+
+      extension = File.extname(output)
+      basename = File.basename(output, extension)
+      directory = File.dirname(output)
+      stamp = Time.now.utc.strftime("%Y%m%dT%H%M%S%6NZ")
+      index = 0
+      loop do
+        suffix = index.zero? ? stamp : "#{stamp}-#{index}"
+        candidate = File.join(directory, "#{basename}_#{suffix}#{extension}")
+        return candidate unless output_exists?(candidate)
+
+        index += 1
+      end
+    end
+
+    def output_exists?(path)
+      [path, "#{path}.json"].any? do |candidate|
+        File.exist?(candidate) || File.symlink?(candidate)
+      end
+    end
+
     def verify_output!(input_path:, output_path:)
       verify_law_catalog!
       input = File.expand_path(input_path)
