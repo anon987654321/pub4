@@ -120,6 +120,7 @@ class DillaTest < Minitest::Test
       %w[clap open rim perc tom].each do |role|
         assert_equal 16, DATA.fetch("drum_patterns").fetch(section.fetch("drums")).fetch(role).size
       end
+      assert_match(/_full\\z/, section.fetch("drums"), "showcase uses the expanded kit pattern only")
       crystal = rig.fetch("drum_crystallizer")
       assert_equal 12, crystal.fetch("semitones")
       assert_operator crystal.fetch("mix"), :>=, 0.5
