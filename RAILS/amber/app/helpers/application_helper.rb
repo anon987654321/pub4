@@ -19,13 +19,21 @@ module ApplicationHelper
     WardrobeAi.configured?
   end
 
-  # Display translated season names while posting the stable enum value expected by Item.
-  def amber_season_options
-    Item::SEASONS.map do |season|
-      key = season.tr("-", "_").downcase
-      [t("outfits.seasons.#{key}"), season]
+  # Translate enum labels at the view boundary while keeping canonical values in forms.
+  def amber_enum_options(values, scope:)
+    values.map do |value|
+      key = value.tr("-", "_").downcase
+      [t("#{scope}.#{key}"), value]
     end
   end
+
+  def amber_season_options = amber_enum_options(Item::SEASONS, scope: "outfits.seasons")
+
+  def amber_item_category_options = amber_enum_options(Item::CATEGORIES, scope: "items.item_categories")
+
+  def amber_mood_effect_options = amber_enum_options(Item::MOOD_EFFECTS, scope: "items.mood_effects")
+
+  def amber_life_phase_options = amber_enum_options(Item::LIFE_PHASES, scope: "items.life_phases")
 
   def studio_photograph_available?
     WardrobeAi.studio_photograph_available?
