@@ -44,7 +44,8 @@ run_rails_as_app() {
   case "$task" in
     bundle-install|ci-bundle-install|bundle-check|bundle-cache-prepare|db-storage-migrate|db-prepare|db-seed|demo-seed|assets-precompile|ci|overlay-initializers|overlay-public) [[ -z $database ]] || return 2 ;;
     schema-load|secondary-db-check) [[ $database == cache || $database == queue || $database == cable ]] || return 2 ;;
-    bundle-cas-hydrate) [[ $database =~ '^ruby([0-9]{2}|[0-9]+[.][0-9]+)
+    bundle-cas-hydrate)
+      [[ $database == ruby[0-9][0-9] || $database == ruby[0-9].[0-9] ]] || return 2 ;;
     *) log_err "run_rails_as_app: refused task: $task"; return 2 ;;
   esac
   [[ $task != demo-seed || $app_name == brgen || $app_name == amber ]] || return 2
