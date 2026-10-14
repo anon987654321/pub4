@@ -38,11 +38,12 @@ It exists because none of those failures raise. An effect with no implementation
 the image unchanged while the log reported the step as done, and a colour temperature that
 `--describe-preset` printed but no step applied is a lie and not a look. Table-driven
 pipelines fail by producing a picture slightly wrong beside a log that agrees with the preset.
-At the last run the check reported the current vocabulary as eighty-two presets, fourteen
-stocks, eleven lenses and a hundred and eight effects, and it also reported twenty problems:
-a number of the recovered `legacy_` and `dilla_` presets declare a temperature, a print stock
-or a lens that no step in their chain reads. Those are open defects in the restore, and the
-check is doing its work by naming them.
+The last recorded run reported eighty-two presets, fourteen stocks, eleven lenses, a
+hundred and eight effects, and twenty key-reader gaps in recovered `legacy_` and `dilla_`
+presets: seventeen temperature steps, two print-stock steps, and one lens step. The preset
+chains have since been repaired to apply those declared settings. The live `--vocab-check`
+has not yet been rerun after the repairs, so the vocabulary must not be called clean until that
+command completes successfully.
 
 The other introspection flags process no image and are equally cheap: `--list-presets`,
 `--list-stocks`, `--list-lenses`, `--describe-preset`, `--fit-grain`, `--export-lut` and
