@@ -67,7 +67,9 @@ if File.file?(emergency_wrapper_path) && !File.symlink?(emergency_wrapper_path) 
                     !emergency_impl.include?("/home/dev/pub4/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh")
   failures << "emergency CPU runner must not source stale cleanup from checkout" unless runner_contract
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
-  emergency_install_contract = installer.include?("usr/local/bin/emergency_cpu.sh") &&
+  source_list = installer[/typeset -a privileged_sources=\(.*?^  \)/m].to_s
+  emergency_install_contract = source_list.include?("usr/local/bin/emergency_cpu.sh") &&
+                               installer.include?("usr/local/bin/emergency_cpu.sh") &&
                               installer.include?('install -o root -g wheel -m 555 "${src}/usr/local/bin/emergency_cpu.sh" /usr/local/bin/emergency_cpu.sh') &&
                               installer.include?('refusing symlinked privileged destination file: $rel') &&
                               installer.include?('installed emergency CPU runner is missing or symlinked')
