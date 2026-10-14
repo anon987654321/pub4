@@ -107,6 +107,15 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
   end
 
+  def test_rails_relayd_route_check_uses_the_fixed_broker
+    service = File.read(File.join(ROOT, "RAILS", "_service.sh"), encoding: "UTF-8")
+    deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
+    assert_includes service, 'pub4-admin relayd-check "$app" "$domain" "$port"'
+    assert_includes deploy, 'relayd_add_relay "$APP_NAME" "$APP_DOMAIN" "$APP_PORT"'
+    health_probe = service[/relayd_confirm_live\(\) \{.*?^\}/m]
+    refute_nil health_probe
+    refute_match(/\$\{_PRIV\}.*\$RUBY/m, health_probe)
+  end
   def test_rails_database_tasks_use_closed_dispatcher
     database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
     runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
