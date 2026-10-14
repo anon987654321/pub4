@@ -1,4 +1,10 @@
 #!/usr/bin/env zsh
+# Deployment scripts are operator-owned entrypoints, not root-executed payloads.
+# The canonical supervisor runs as dev and delegates fixed privileged actions.
+if [[ $(id -u) -eq 0 ]]; then
+  print -u2 "brgen.sh: refusing to run checkout code as root; use zsh OPENBSD/bin/vps-deploy brgen"
+  exit 2
+fi
 # brgen.sh — deploys the tracked Brgen Rails tree.
 set -euo pipefail
 
