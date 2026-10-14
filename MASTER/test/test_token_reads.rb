@@ -25,6 +25,17 @@ class TestTokenReads < Minitest::Test
     end
   end
 
+  def test_typography_hierarchy_thresholds_are_declared
+    tokens = YAML.safe_load_file(File.join(ROOT, "data", "tokens.yml"), aliases: true)
+    hierarchy = tokens.dig("typography", "hierarchy")
+
+    %w[h1 h2 h3].each do |level|
+      min = hierarchy.fetch("#{level}_body_min_ratio")
+      max = hierarchy.fetch("#{level}_body_max_ratio")
+      assert_operator min, :>, 0
+      assert_operator max, :>, min
+    end
+  end
   def test_a_read_that_resolves_passes_and_returns_the_value
     assert_equal 3, @map.dig("typography", "hierarchy", "max_font_weights")
     assert_equal false, @map.dig("flag")
