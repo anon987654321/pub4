@@ -763,7 +763,7 @@ module Pub4Admin
     end
     flag_stat = File.lstat(flag)
     raise "#{flag} must remain root-owned and non-writable" unless
-      flag_stat.file? && !flag_stat.symlink? && flag_stat.uid.zero? && (flag_stat.mode & 0o222).zero?
+      flag_stat.file? && !flag_stat.symlink? && flag_stat.uid.zero? && (flag_stat.mode & 0o022).zero?
     File.chmod(0o644, flag) unless (flag_stat.mode & 0o777) == 0o644
 
     services = ["master", *RAILS_APPS]
