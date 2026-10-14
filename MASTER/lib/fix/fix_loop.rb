@@ -23,6 +23,7 @@ require_relative "violation"
 require_relative "wishlist"
 require_relative "protocol"
 require_relative "transformation_plan"
+require_relative "research_pass"
 require_relative "convergence_discipline"
 require_relative "reflection"
 require_relative "run_budget"
@@ -121,6 +122,7 @@ module Master
         return halted_result if halted? && !requested
 
         @pass_runner&.reset_gaps!
+        @pass_runner.research_brief = nil if @pass_runner&.respond_to?(:research_brief=)
         # An operator-requested /fix cannot finish on sampled semantic coverage.
         # It must ask both semantic streams across the eligible corpus.
         @pass_runner&.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
@@ -152,6 +154,19 @@ module Master
           return Result.err(
             "fix_loop: corpus collected zero files from #{coverage[:candidates]} candidates#{suffix}",
             category: :validation,
+          )
+        end
+        if requested
+          current_phase = :research
+          research = ResearchPass.new(
+            agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
+          ).run(target:, files:)
+          @pass_runner.research_brief = research.fetch(:brief)
+          Master::Trace::Dmesg.status(
+            "research0",
+            "#{research.fetch(:status)} domain=#{research.fetch(:domain)} " \
+            "fetched=#{research.fetch(:fetched_count)} queries=#{research.fetch(:query_count)} " \
+            "hosts=#{research.fetch(:independent_hosts, 0)} target=#{target}",
           )
         end
         current_phase = :begin_run
@@ -320,7 +335,10 @@ module Master
 
       def collect_files(target) = @file_collector.collect(target)
 
-      def self.preamble_from_soul = [RepairLoop.soul_preamble, Protocol.instruction].join("\n\n")
+      def self.preamble_from_soul
+        plan = TransformationPlan.new(root: Master::ROOT)
+        [RepairLoop.soul_preamble, Protocol.instruction, plan.research_instructions].join("\n\n")
+      end
 
       private
 
