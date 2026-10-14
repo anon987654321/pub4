@@ -231,11 +231,23 @@ install_root_configs() {
     [[ -f /etc/rc.d/$svc ]] && chmod 555 /etc/rc.d/$svc
   done
   for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
+  # These fixed broker entrypoints must be regular files. A symlink would
+  # make root chown/chmod operate on a target outside the install contract.
+  for f in /usr/local/sbin/pub4-admin \
+           /usr/local/libexec/ci-prepare.ksh \
+           /usr/local/libexec/ci-run.ksh \
+           /usr/local/libexec/ci-sync.ksh; do
+    if [[ -L $f ]]; then
+      log ERROR "refusing symlinked privileged entrypoint: $f"
+      return 1
+    fi
+  done
+
   # The deploy account will use this fixed-path broker for root operations.
   # It is refreshed only by this deliberate operator sync.
   if [[ -f /usr/local/sbin/pub4-admin ]]; then
-    chown root:wheel /usr/local/sbin/pub4-admin
-    chmod 555 /usr/local/sbin/pub4-admin
+    chown root:wheel /usr/local/sbin/pub4-admin || return 1
+    chmod 555 /usr/local/sbin/pub4-admin || return 1
   fi
   # libexec holds helpers root dot-sources (stale_ci_cleanup.ksh); they must be
   # root-owned and not group/world writable or the sourcing is a root RCE.
