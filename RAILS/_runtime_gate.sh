@@ -44,6 +44,7 @@ run_rails_as_app() {
   case "$task" in
     bundle-install|ci-bundle-install|bundle-check|bundle-cache-prepare|db-storage-migrate|db-prepare|db-seed|demo-seed|assets-precompile|ci|overlay-initializers|overlay-public) [[ -z $database ]] || return 2 ;;
     schema-load|secondary-db-check) [[ $database == cache || $database == queue || $database == cable ]] || return 2 ;;
+    bundle-cas-hydrate) [[ $database == ruby[0-9][0-9] || $database == ruby[0-9]*.[0-9]* ]] || return 2 ;;
     *) log_err "run_rails_as_app: refused task: $task"; return 2 ;;
   esac
   [[ $task != demo-seed || $app_name == brgen || $app_name == amber ]] || return 2
@@ -52,7 +53,7 @@ run_rails_as_app() {
     log_err "run_rails_as_app: pub4-admin is missing; run OPERATOR.sh before deploying"
     return 1
   }
-  if [[ $task == schema-load || $task == secondary-db-check ]]; then
+  if [[ $task == schema-load || $task == secondary-db-check || $task == bundle-cas-hydrate ]]; then
     ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task" "$database"
   else
     ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task"
