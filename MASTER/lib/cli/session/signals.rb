@@ -27,7 +27,10 @@ module Master
           # In the interactive queue, Ctrl+C has the same safe semantics as
           # /stop: pause queued turns too. Do mutex work outside the signal trap.
           return Thread.new { stop_interactive_queue } if @turn_worker&.alive?
-          return Thread.new { cancel_turn(turn, @turn_children) }
+          return Thread.new do
+            @turn_queue_mutex.synchronize { @turn_cancel_requested = true }
+            cancel_turn(turn, @turn_children)
+          end
         end
 
         raise Interrupt
