@@ -77,8 +77,12 @@ def run(argv)
 
   data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
   if bare_run?(options)
-    if options[:out] || options[:midi] || options[:render]
+    if options[:render]
       randomize_take!(data, options)
+    elsif options[:out] || options[:midi]
+      # An output path alone chooses the curated Blue Hour showcase. Random takes
+      # are explicit via --render, so naming a file cannot silently change the music.
+      options[:showcase] = true
     else
       # A bare run plays live, in real time, from every progression and style, and never stops.
       options[:play] = true
