@@ -23,8 +23,8 @@ repo=${PUB4_ROOT:-/home/dev/pub4}
 app_dir=/home/${app}/app
 # The Gemfiles name path gems relative to the app dir (../__shared, ../brgen_*),
 # so the copy-tree keeps them as siblings of app/, the layout RAILS/_deploy.sh builds.
-shared_dir=/home/${app}/__shared
 [[ -d $app_dir ]] || { print -u2 "missing $app_dir"; exit 1 }
+[[ -x /usr/local/sbin/pub4-admin ]] || { print -u2 "vps_ci: pub4-admin missing; run reviewed OPENBSD/OPERATOR.sh first"; exit 1 }
 
 # deploy_status (from RAILS/_core.sh) -- same in-progress status file the
 # SKIP_CI=1 path (_deploy.sh/_runtime_gate.sh) writes, so `bin/vps-state`
@@ -38,51 +38,6 @@ export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 # Path and safe creation live in OPENBSD/lib/ci_lock.sh — the lock moved out of
 # world-writable /var/tmp, where root was chmod'ing a caller-chosen, symlinkable path.
 . "${repo}/OPENBSD/lib/ci_lock.sh"
-. "${repo}/OPENBSD/lib/ruby_select.sh"
-
-sync_ci_rails_root_legacy() {
-  local mirror=/home/${app}/pub4-rails
-  doas mkdir -p "$mirror"
-  # tar extraction is additive-only: a file removed from the source repo
-  # would otherwise linger in the mirror forever. Wipe each synced subtree
-  # before re-extracting so the mirror actually reflects deletions too --
-  # found the hard way when a controller deleted from git upstream kept
-  # passing CI on the VPS from a stale copy months after removal.
-  doas rm -rf "$mirror/RAILS"
-  # git archive is the tracked tree. tar of the working checkout also packed
-  # gitignored RAILS/*/vendor/bundle left by a local bundle, filled /home, and
-  # aborted extract with "Unable to restore mode and times" (2026-08-13).
-  git -C "$repo" archive HEAD RAILS | doas sh -c "cd ${mirror} && tar xf -"
-  if git -C "$repo" cat-file -e HEAD:MASTER/tools 2>/dev/null; then
-    doas rm -rf "$mirror/MASTER/tools"
-    git -C "$repo" archive HEAD MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
-  fi
-  # MASTER/data/tokens.yml is the design authority: build_all_css.rb, rhythm_lint
-  # and the drift lints read it through Operator::MasterDesign, whose first
-  # candidate is this mirror's copy. The app user cannot read /home/dev/pub4, so
-  # without it css_build dies on KeyError "social" and rhythm_lint on a missing
-  # tokens.scale.space_px. laws.yml is not mirrored: no CI tool reads it.
-  doas rm -f "$mirror/MASTER/data/tokens.yml" "$mirror/MASTER/data/laws.yml"
-  git -C "$repo" archive HEAD MASTER/data/tokens.yml | doas sh -c "cd ${mirror} && tar xf -"
-  # build_all_css.rb picks its Ruby through MASTER/lib/operator/ruby_runner,
-  # which requires its siblings. Without the directory css_build dies on a
-  # LoadError before it compiles anything.
-  doas rm -rf "$mirror/MASTER/lib/operator"
-  git -C "$repo" archive HEAD MASTER/lib/operator | doas sh -c "cd ${mirror} && tar xf -"
-  # The tools above require these by require_relative ("../lib/trace/dmesg" from
-  # design_tokens, rhythm_lint and adhoc_empty_lint, then its own siblings), so
-  # without them css_build, rhythm_lint and adhoc_empty_lint die on a LoadError
-  # (2026-10-09). Named files, not MASTER/lib: the box has little disk and RAM.
-  # tar overwrites each file, and the set is fixed by name, so nothing lingers.
-  # OPENBSD/test/test_ci_mirror_contract.rb resolves the require graph of every
-  # tool ci.rb runs and fails when a target is missing from this list.
-  local -a lib_files=(MASTER/lib/boot/paths.rb MASTER/lib/ground/swallow.rb
-                      MASTER/lib/io/exec.rb MASTER/lib/ops/process_spawn.rb
-                      MASTER/lib/trace/dmesg.rb MASTER/lib/trace/logging.rb
-                      MASTER/lib/voice/playback.rb)
-  git -C "$repo" archive HEAD "${lib_files[@]}" | doas sh -c "cd ${mirror} && tar xf -"
-  doas chown -R "${app}:${app}" "$mirror"
-}
 
 # Names every tracked entry at the app root that is neither synced nor kept
 # local. Warns rather than fails: this list is discovered from git at deploy
@@ -125,151 +80,22 @@ unaccounted_tracked_files() {
   print -u2 "vps_ci: $app — add each to paths (bin/ci reads the copy-tree) or to kept_local with a reason"
 }
 
-sync_from_repo_legacy() {
-  local src=$repo/RAILS/$app
-  local shared_src=$repo/RAILS/__shared
-  sync_ci_rails_root_legacy
-  if [[ -d $src ]]; then
-    # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
-    # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
-    # dir and bundle aborts. See RAILS/brgen/ENGINES.md.
-    # .rubocop.yml is here because bin/ci runs from this copy-tree, not from the
-    # repo — so the style gate reads whatever config was last left in the live
-    # dir. It was not synced, so the copy froze on 2026-08-13 while the tracked
-    # one moved on, and the two disagreed: the stale file re-enabled
-    # Layout/LineLength and Style/TrailingCommaInArguments, which the tracked one
-    # leaves to omakase. That produced 1283 offences on vm23 against 2 for the
-    # same command and the same 734 files locally.
-    #
-    # It stayed invisible until RuboCop began running on the VPS at all, and it
-    # deadlocked the pipeline the moment it did: the corrected config can only
-    # reach the live dir through a sync, and the sync is gated behind the CI run
-    # that the stale config was failing.
-    # Everything tracked at the app root is either synced or named as deliberately
-    # not synced. An allowlist that simply omits things fails silently and in the
-    # worst direction: bin/ci runs from this copy-tree, so a config that never
-    # arrives means the gate reads a stale one. .rubocop.yml did exactly that —
-    # frozen on 2026-08-13, re-enabling cops the tracked file leaves to omakase,
-    # producing 1283 offences against 2 locally and deadlocking the pipeline,
-    # because the corrected config could only arrive through the sync that the
-    # stale config was failing.
-    #
-    # KEPT_LOCAL is the other half. Without it, "not in paths" means both "we
-    # decided against it" and "nobody thought about it", and those must not look
-    # alike. sync_accounts_for_every_tracked_file below turns the second into an
-    # error at deploy time rather than a puzzle weeks later.
-    local -a paths=(test app lib config bin db engines public vendor/javascript
-                    Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version)
-    # Named as deliberately not synced, so "absent from paths" stops meaning both
-    # "decided against" and "never considered". log/ and storage/ are the running
-    # app's own state and syncing them would overwrite production data; the rest
-    # is documentation that no gate and no runtime reads.
-    # log/ and storage/ are the running app's own state — syncing them would
-    # overwrite production data. docs/ and script/ are read by no gate and no
-    # runtime. domains.yml has no reader anywhere in the repo (checked
-    # 2026-08-25; the live copy is thirteen days and half a file behind, and
-    # nothing noticed because nothing reads it). Procfile.dev is for `bin/dev`
-    # on a laptop.
-    local -a kept_local=(log storage docs script domains.yml Procfile.dev)
-    unaccounted_tracked_files "$app" "$repo" paths kept_local
-
-    local -a existing=()
-    local rel
-    for rel in "${paths[@]}"; do
-      [[ -e $src/$rel ]] && existing+=($rel)
-    done
-    for rel in ${src}/*.sh(N:t); do existing+=($rel); done
-    [[ ${#existing[@]} -eq 0 ]] && return 0
-    # Same additive-tar pitfall as sync_ci_rails_root above: prune the
-    # directory entries before re-extracting so files deleted upstream
-    # (test/app/lib/config/bin/db) actually disappear from the deployed
-    # copy instead of surviving as stale dead code indefinitely.
-    local dir_rel
-    for dir_rel in test app lib config bin db engines public vendor/javascript; do
-      [[ -d $src/$dir_rel ]] || continue
-      # public/assets is the one synced directory that is not in git: Propshaft
-      # writes it here, on this box, at the precompile step further down the
-      # deploy. Pruning public/ wholesale therefore DELETES the running site's
-      # stylesheets and scripts, and it does so before bin/ci has run — so a CI
-      # failure exits the deploy with the new code live and no assets at all.
-      # brgen served every page with a 404ing <link> that way on 2026-08-14:
-      # public/assets held zero files, `/` still answered 200, and no gate
-      # noticed because the health check never asks for a stylesheet.
-      #
-      # Held aside and put back. A failed deploy then leaves the previous
-      # assets serving the previous markup, which is stale but whole; a
-      # successful one overwrites them at precompile a few steps later.
-      if [[ $dir_rel == public && -d ${app_dir}/public/assets ]]; then
-        doas rm -rf "${app_dir}/.assets-carry"
-        doas mv "${app_dir}/public/assets" "${app_dir}/.assets-carry"
-        doas rm -rf "${app_dir}/public"
-        doas mkdir -p "${app_dir}/public"
-        doas mv "${app_dir}/.assets-carry" "${app_dir}/public/assets"
-        continue
-      fi
-      doas rm -rf "${app_dir}/${dir_rel}"
-    done
-    # engines/ moved out to the sibling brgen_* directories. The loop above prunes a
-    # directory only while the repo still has it, so the retired copy stayed on the box
-    # and bin/ci kept running its tests.
-    [[ -d $src/engines ]] || doas rm -rf "${app_dir}/engines"
-    doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
-    doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
-      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/engines" \
-      "${app_dir}/public" "${app_dir}/vendor" \
-      "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
-      "${app_dir}"/*.sh(N) 2>/dev/null || true
-  fi
-  doas mkdir -p "$shared_dir"
-  doas rm -rf "$shared_dir"
-  doas mkdir -p "$shared_dir"
-  doas tar cf - -C "$shared_src" . | doas sh -c "cd ${shared_dir} && tar xf -"
-  doas chown -R "${app}:${app}" "$shared_dir"
-  # brgen mounts its verticals as path gems at ../brgen_*; the copy-tree needs
-  # each one beside app/ or bundle aborts on a missing path.
-  if [[ $app == brgen ]]; then
-    local vertical vertical_name
-    for vertical in $repo/RAILS/brgen_*(N/); do
-      vertical_name=${vertical:t}
-      doas rm -rf "/home/${app}/${vertical_name}"
-      doas mkdir -p "/home/${app}/${vertical_name}"
-      doas tar cf - -C "$vertical" . | doas sh -c "cd /home/${app}/${vertical_name} && tar xf -"
-      doas chown -R "${app}:${app}" "/home/${app}/${vertical_name}"
-    done
-  fi
-}
-
 # Once installed, the broker runs the fixed synchronizer with the app UID,
 # app primary group, and only the _pub4ci supplementary group. The root-copy
 # code above remains only for first rollout on boxes without the broker.
 sync_from_repo() {
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    local -a paths=(test app lib config bin db engines public vendor/javascript
-                    Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version)
-    local -a kept_local=(log storage docs script domains.yml Procfile.dev)
-    unaccounted_tracked_files "$app" "$repo" paths kept_local
-    doas /usr/local/sbin/pub4-admin ci-sync "$app"
-  else
-    sync_from_repo_legacy
-  fi
+  local -a paths=(test app lib config bin db engines public vendor/javascript
+                  Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version)
+  local -a kept_local=(log storage docs script domains.yml Procfile.dev)
+  unaccounted_tracked_files "$app" "$repo" paths kept_local
+  doas /usr/local/sbin/pub4-admin ci-sync "$app"
 }
 
-npm_cache=/home/${app}/.npm
-cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
 # Establish group access and the private-storage mode before the app-owned
 # synchronizer reads the checkout and updates the CI copy-tree.
 pub4_ensure_ci_lock >/dev/null
-ci_rails_root=/home/${app}/pub4-rails/RAILS
-if [[ -x /usr/local/sbin/pub4-admin ]]; then
-  doas /usr/local/sbin/pub4-admin ci-prepare "$app"
-else
-  doas groupadd _pub4ci 2>/dev/null || true
-  doas usermod -G _pub4ci "${app}" 2>/dev/null || true
-  doas chgrp _pub4ci /home/dev 2>/dev/null || true
-  doas chmod 750 /home/dev 2>/dev/null || true
-  doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
-fi
+doas /usr/local/sbin/pub4-admin ci-prepare "$app"
 # The checkout is owned by dev, so this permission repair does not cross doas.
 chmod -R u+rX,g+rX "${repo}/MASTER/tools"
 deploy_status "$app" "sync tree"
@@ -277,25 +103,10 @@ sync_from_repo
 deploy_status "$app" "bundle install + bin/ci"
 # The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
 # guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
-if [[ -x /usr/local/sbin/pub4-admin ]]; then
-  ci_timeout=${PUB4_CI_TIMEOUT:-7200}
-  doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout" \
-    || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
-else
-  # First-rollout fallback only. Once the root-owned broker is installed, the
-  # checkout never constructs a root shell command for the CI runner.
-  doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_CI_TIMEOUT=${PUB4_CI_TIMEOUT:-7200}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && ${BUNDLE} config unset without 2>/dev/null || true && ${BUNDLE} config unset deployment 2>/dev/null || true && ${BUNDLE} install --jobs=2 && ${BUNDLE} exec bin/ci'" \
-    || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
-fi
+ci_timeout=${PUB4_CI_TIMEOUT:-7200}
+doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout" \
+  || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
-started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-if [[ -x /usr/local/sbin/pub4-admin ]]; then
-  doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" ci_ok
-else
-  doas mkdir -p /var/db/pub4 2>/dev/null || true
-  doas tee "/var/db/pub4/last_deploy_${app}.json" >/dev/null <<EOF
-{"app":"${app}","sha":"${sha}","at":"${started}","status":"ci_ok","host":"$(hostname)"}
-EOF
-fi
+doas /usr/local/sbin/pub4-admin stamp "$app" "$sha" ci_ok
 deploy_status "$app" "done" "done"
