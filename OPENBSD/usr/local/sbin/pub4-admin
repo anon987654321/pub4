@@ -229,7 +229,8 @@ module Pub4Admin
   # is spawned directly with that app UID/GID and only the groups it needs.
   def supervised_helper(helper, app, duration, helper_arguments = nil)
     raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)
-    raise "unknown app" unless RAILS_APPS.include?(app)
+    known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS
+    raise "unknown app" unless known_apps.include?(app)
     raise "invalid helper timeout" unless duration.is_a?(Integer) && (1..7200).cover?(duration)
 
     arguments = case helper
