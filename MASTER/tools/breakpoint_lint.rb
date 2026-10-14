@@ -41,41 +41,9 @@ module Operator
     # exist, so scanning it reports last month's stylesheet as today's drift.
     SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
 
-    # Measured 2026-08-11.
-    #
-    # ambiguous_edge was 26 sites over three numbers — 640, 768 and 1265 were each
-    # both a floor and a ceiling somewhere in the family, so at exactly those three
-    # widths two blocks matched and bundle order decided. Closed by moving the six
-    # colliding max-bounds down one pixel, which keeps the interpretation the
-    # min-width author had already declared. It is a ratchet at zero now, not a
-    # tolerance: the next collision is a new one.
-    #
-    # unknown_edge is 0 as of 2026-08-15, down from 3. The three that were "design
-    # decisions rather than typos" — 700px in brgen/_marketplace_nav_bar, 400px and
-    # 600px in shared/_components — are gone from the sheets, so the tolerance that
-    # existed for them is gone too. The next unrecognised width is a new one.
-    #
-    # A fourth, 769px in brgen/_root, was a genuine gap and is fixed: the compose
-    # control's tablet band started one pixel above the edge the rest of the family
-    # uses, so at exactly 768px it fell through to base styling while the shell
-    # around it was already in its tablet band.
-    # unknown_edge 0 -> 1 on 2026-08-16, and the raise is a correction rather
-    # than a tolerance for something new.
-    #
-    # The note above said all three were gone from the sheets. Two of them never
-    # were findings: `@container grid (min-width: 400px)` and `(min-width: 600px)`
-    # in shared/_components are container queries, and a container query measures
-    # the element's own container rather than the viewport, so neither number
-    # means anything on this scale. QUERY matched them because the eight
-    # characters are identical in both at-rules. See CONTAINER below.
-    #
-    # The third is real and is still there: `(max-width: 700px)` in
-    # brgen/_marketplace_nav_bar:256, the band where the marketplace search takes
-    # its own row. The family's tablet edge is 768, max-bound 767, so viewports
-    # between 701 and 767 get the wide marketplace nav while every other surface
-    # already treats them as a tablet. Moving it to 767 closes that and changes
-    # what renders at those widths, which is an operator's decision and not a
-    # lint's.
+    # Zero findings are permitted for both viewport-edge drift and collisions.
+    # Container queries are excluded because their thresholds describe component
+    # width rather than the viewport scale.
     BASELINES = { "unknown_edge" => 0, "ambiguous_edge" => 0 }.freeze
 
     Finding = Struct.new(:file, :line, :kind, :value)
