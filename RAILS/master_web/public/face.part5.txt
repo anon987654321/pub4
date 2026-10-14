@@ -1037,6 +1037,7 @@ async function runMessageTurn(text) {
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
     finishTurn(false);
+    window.MASTERChat?.closeChatStream?.();
   };
   // chat_actions.js owns the one chat transport, POST /chat/message. When it
   // did not load, the turn fails the way a dropped stream does, so a broken
@@ -1059,6 +1060,7 @@ async function runMessageTurn(text) {
 }
 
 let _activeTurnFinish = null;
+const TURN_QUEUE_LIMIT = 32;
 const _pendingTurns = [];
 let _turnQueueRunning = false;
 let _turnQueuePaused = false;
@@ -1066,6 +1068,7 @@ let _turnQueuePaused = false;
 function updateTurnQueueUi() {
   const status = document.getElementById('turn-queue-status');
   const control = document.getElementById('turn-control');
+  if (_pendingTurns.length < TURN_QUEUE_LIMIT) delete rootBody.dataset.queueFull;
   const active = _turnQueueRunning || _pendingTurns.length > 0 || _turnQueuePaused;
   rootBody.dataset.queueActive = active ? '1' : '0';
   if (control) {
@@ -1111,6 +1114,13 @@ async function drainTurnQueue() {
 function sendMessage(text) {
   const message = String(text ?? '').trim();
   if (!message) return Promise.resolve(false);
+  if (_pendingTurns.length >= TURN_QUEUE_LIMIT) {
+    rootBody.dataset.queueFull = '1';
+    const status = document.getElementById('turn-queue-status');
+    if (status) status.textContent = `queue full ${TURN_QUEUE_LIMIT}; message not sent`;
+    return false;
+  }
+  delete rootBody.dataset.queueFull;
   return new Promise((resolve) => {
     _pendingTurns.push({ text: message, resolve });
     updateTurnQueueUi();
@@ -1312,12 +1322,13 @@ zshBar.addEventListener('submit', (e) => {
   e.preventDefault();
   const v = zshIn.value.trim();
   if (!v) return;
+  const accepted = window.MASTER_FACE?.sendMessage?.(v);
+  if (accepted === false) return;
   zshIn.value = '';
   State.pulse = 0.4;
   State.ripplePhase = 0;
   beep(1320, 0.018);
   navigator.vibrate?.(30);
-  window.MASTER_FACE?.sendMessage?.(v);
 });
 zshIn.addEventListener('focus', () => {
   State.lastTouch = performance.now();
