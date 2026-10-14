@@ -5,6 +5,21 @@ require "fileutils"
 require "open3"
 
 class TestFixWorktreeSession < Minitest::Test
+  def test_disk_preflight_refuses_worktree_before_writing
+    with_repo(worker: "#!/usr/bin/env ruby\nexit 3\n") do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+      session.define_singleton_method(:disk_free_gb) { 1.25 }
+
+      result = session.run(command: "/fix test")
+
+      refute result.ok
+      assert_match(/disk preflight: 1.25 GB free, 2.00 GB required/, result.summary)
+      assert_nil result.worktree
+      assert_equal "base\n", git_output(root, "show", "origin/main:README")
+      refute_match(/checkout/, git_output(root, "worktree", "list"))
+    end
+  end
+
   def test_successful_worker_is_published_and_worktree_is_removed
     Dir.mktmpdir("master-worktree-test-") do |dir|
       remote = File.join(dir, "remote.git")
