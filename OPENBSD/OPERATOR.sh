@@ -189,6 +189,7 @@ install_root_configs() {
   # Require regular, non-symlink sources before copying anything to /.
   typeset -a privileged_sources=(
     usr/local/sbin/pub4-admin
+    usr/local/bin/emergency_cpu.sh
     usr/local/libexec/ci-prepare.ksh
     usr/local/libexec/ci-run.ksh
     usr/local/libexec/ci-sync.ksh
@@ -225,7 +226,8 @@ install_root_configs() {
              /usr/local/libexec/rails-task.ksh \
              /usr/local/libexec/rails-sync.ksh \
              /usr/local/libexec/pub4/solid_queue_proof.rb \
-             /usr/local/bin/resource_guard.sh; do
+             /usr/local/bin/resource_guard.sh \
+             /usr/local/bin/emergency_cpu.sh; do
     if [[ -L $rel ]]; then
       log ERROR "refusing symlinked privileged destination file: $rel"
       return 1
