@@ -10,6 +10,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   SHOW = File.join(BRGEN, "engines/marketplace/app/views/marketplace/listings/show.html.erb")
   CSS = File.join(BRGEN, "app/assets/stylesheets/application.scss")
   HEADER_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_header.scss")
+  CITY_CAMPAIGNS_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_city_campaigns.scss")
 
   def test_marketplace_uses_the_dedicated_bol_header
     nav = File.read(NAV)
@@ -48,7 +49,10 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   def test_mobile_category_menu_starts_below_the_full_header_stack
     header = File.read(HEADER_CSS)
 
-    assert_match(/--bol-utility-block:\s*28px;/, header)
+    assert_match(/--bol-utility-block:\s*36px;/, header)
+    campaigns = File.read(CITY_CAMPAIGNS_CSS)
+    assert_includes campaigns, "min-height: var(--bol-utility-block);",
+                    "the later campaign module must not override the header's utility-height token"
     assert_match(/--bol-mainnav-block:\s*48px;/, header)
     assert_match(/--bol-brand-row-block:\s*48px;/, header)
     assert_match(/--bol-search-control-block:\s*44px;/, header)
