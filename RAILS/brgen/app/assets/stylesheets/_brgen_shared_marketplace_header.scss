@@ -5,14 +5,14 @@ body.vertical-marketplace {
   --bol-brand-row-block: 48px;
   --bol-search-control-block: 44px;
   --bol-search-row-gap: 8px;
-  --bol-mobile-header-padding: 8px;
-  --bol-mobile-header-block: calc(
+  --bol-compact-header-padding: 8px;
+  --bol-compact-header-block: calc(
     var(--bol-brand-row-block) + var(--bol-search-control-block) +
-    var(--bol-search-row-gap) + var(--bol-mobile-header-padding) +
-    var(--bol-mobile-header-padding)
+    var(--bol-search-row-gap) + var(--bol-compact-header-padding) +
+    var(--bol-compact-header-padding)
   );
-  --bol-mobile-mega-top: calc(
-    var(--bol-utility-block) + var(--bol-mobile-header-block) +
+  --bol-compact-mega-top: calc(
+    var(--bol-utility-block) + var(--bol-compact-header-block) +
     var(--bol-mainnav-block)
   );
 }
@@ -246,7 +246,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0 8px;
     min-height: 64px;
-    padding: var(--bol-mobile-header-padding) var(--bol-gutter);
+    padding: var(--bol-compact-header-padding) var(--bol-gutter);
   }
 
   body.vertical-marketplace .storefront-bol-brand {
@@ -297,10 +297,10 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
     inset-inline: 16px;
     // The search adds a second row on phones; place the fixed menu below the
     // complete utility + two-row header + navigation stack, not over its trigger.
-    inset-block-start: var(--bol-mobile-mega-top);
+    inset-block-start: var(--bol-compact-mega-top);
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: auto;
-    max-height: min(65vh, calc(100dvh - var(--bol-mobile-mega-top) - var(--space-4)));
+    max-height: min(65vh, calc(100dvh - var(--bol-compact-mega-top) - var(--space-4)));
   }
 }
 
@@ -328,6 +328,49 @@ body.vertical-marketplace #marketplace-listings .deal-card-offer {
 }
 
 @media (min-width: 768px) {
+  // At tablet widths the desktop header's four tracks have a larger minimum
+  // width than the viewport. Keep the same two-row search geometry until the
+  // declared desktop edge; the full labels remain visible at tablet widths.
+  body.vertical-marketplace .storefront-bol-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 8px;
+    min-height: 64px;
+    padding: var(--bol-compact-header-padding) var(--bol-gutter);
+  }
+
+  body.vertical-marketplace .storefront-bol-deliver {
+    display: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding-top: var(--bol-search-row-gap);
+  }
+
+  body.vertical-marketplace .storefront-bol-account {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-mega {
+    position: fixed;
+    inset-inline: 16px;
+    inset-block-start: var(--bol-compact-mega-top);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: auto;
+    max-height: min(65vh, calc(100dvh - var(--bol-compact-mega-top) - var(--space-4)));
+  }
+
   body.vertical-marketplace #marketplace-listings .deal-card {
     grid-template-columns: 220px minmax(0, 1fr) 190px;
     align-items: start;
@@ -355,6 +398,46 @@ body.vertical-marketplace #marketplace-listings .deal-card-offer {
     min-height: var(--tap-min);
     font-size: 14px;
     font-weight: 600;
+  }
+}
+
+// The full four-track storefront header only fits at the canonical desktop edge.
+// This restores the normal dropdown geometry after the compact tablet stack.
+@media (min-width: 1024px) {
+  body.vertical-marketplace .storefront-bol-header {
+    grid-template-columns: 176px 168px minmax(320px, 1fr) auto;
+    gap: 16px;
+    min-height: 72px;
+    padding: 12px var(--bol-gutter);
+  }
+
+  body.vertical-marketplace .storefront-bol-deliver {
+    display: inline-flex;
+  }
+
+  body.vertical-marketplace .storefront-bol-search {
+    grid-column: auto;
+    grid-row: auto;
+    padding-top: 0;
+  }
+
+  body.vertical-marketplace .storefront-bol-account {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav {
+    overflow-x: visible;
+  }
+
+  body.vertical-marketplace .storefront-bol-mega {
+    position: absolute;
+    inset-inline: auto;
+    inset-inline-start: 0;
+    inset-block-start: 48px;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    width: min(980px, calc(100vw - 32px));
+    max-height: min(70vh, 680px);
   }
 }
 
