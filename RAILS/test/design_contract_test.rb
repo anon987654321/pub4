@@ -101,6 +101,17 @@ class DesignContractTest < Minitest::Test
     assert_operator app.lines.count, :<, 50, "application.scss should remain an entrypoint, not a second monolith"
   end
 
+  def test_bsdports_port_header_sticks_only_when_primary_nav_fits_one_row
+    pages = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss"))
+    mobile, wide = pages.split("@media (min-width: 640px)", 2)
+
+    refute_nil wide, "the wide-nav breakpoint is part of the port-header layout contract"
+    refute_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky/m, mobile,
+                 "a wrapped mobile nav must not be covered by the sticky port header")
+    assert_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky[^}]*top:\s*52px/m, wide,
+                 "the port meta strip stays sticky once the nav fits one row")
+  end
+
   def test_amber_feature_styles_are_loaded_at_their_original_boundaries
     app = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss"))
     styles_dir = File.join(ROOT, "amber", "app", "assets", "stylesheets")
