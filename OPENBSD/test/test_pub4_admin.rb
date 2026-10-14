@@ -177,6 +177,7 @@ class Pub4AdminTest < Minitest::Test
     assert_equal 1, helper.scan('exec /usr/bin/su -m "$app" -c "$script"').length
     assert helper.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\\n")
     refute_includes helper, "EOF_KEY"
+    assert_equal 1, helper.scan("exec /usr/bin/su -m").length
     refute_includes helper, 'sh -c "$script"'
   end
 
