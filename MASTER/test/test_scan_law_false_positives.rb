@@ -409,7 +409,7 @@ end
       next [] unless rule.respond_to?(:check)
 
       Array(rule.check(source, path: "lib/sample.rb")).map { |f| [f[:line], rule.id.to_s.downcase] }
-    rescue StandardError # scan: intentional — a raising rule has its own dedicated test (RaisingRule); here it reads as no findings
+    rescue StandardError # scan: intentional — a raising rule has its own dedicated test (RaisingLaw); here it reads as no findings
       []
     end
     long = findings.select { |line, _| line == 2 }.map(&:last).uniq
@@ -716,8 +716,8 @@ end
     end
   end
 
-  # --- a rule that raises must not read as a clean file ----------------------
-  class RaisingRule < Master::Review::Scan::Rule
+  # --- a law that raises must not read as a clean file ----------------------
+  class RaisingLaw < Master::Review::Scan::Law
     def self.auto_build? = false
 
     def initialize
@@ -733,11 +733,11 @@ end
   # A broken rule raises rather than returning [], because an empty answer is
   # indistinguishable from a clean file; it is also put on the record first.
   def test_a_rule_that_raises_reports_the_failure_it_swallows
-    before = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingRule#check_ast").size
+    before = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingLaw#check_ast").size
     error = assert_raises(RuntimeError) do
-      RaisingRule.new.check("x = 1\n", path: File.join(Master::ROOT, "lib/example.rb"))
+      RaisingLaw.new.check("x = 1\n", path: File.join(Master::ROOT, "lib/example.rb"))
     end
-    after = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingRule#check_ast")
+    after = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingLaw#check_ast")
 
     assert_includes error.message, "PROBE_RAISER", "the failure names the rule, not a clean file"
     assert_operator after.size, :>, before, "and the broken rule is on the record"

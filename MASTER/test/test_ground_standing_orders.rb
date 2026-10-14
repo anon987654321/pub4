@@ -272,7 +272,7 @@ class StandingOrdersTest < Minitest::Test
     def success? = ok
   end
 
-  test "autocommit pushes after a successful commit" do
+  def test_autocommit_pushes_after_a_successful_commit
     root = Dir.mktmpdir("master-autocommit-")
     bus = Struct.new(:events) do
       def publish(name, **payload)
@@ -307,7 +307,7 @@ class StandingOrdersTest < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
-  test "autocommit reports a push failure after the commit lands" do
+  def test_autocommit_reports_a_push_failure_after_the_commit_lands
     root = Dir.mktmpdir("master-autocommit-")
     File.write(File.join(root, "file.rb"), "puts :ok\n")
     relative = File.join(File.basename(root), "file.rb")

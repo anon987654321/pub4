@@ -6,7 +6,8 @@ ROOT = File.expand_path("..", __dir__)
 require File.join(ROOT, "law", "definition")
 # The one loader for constitutional YAML — see the read below and
 # test_yaml_registries, which asserts nothing reads those files any other way.
-require File.join(ROOT, "lib", "master")
+$LOAD_PATH.unshift(File.join(ROOT, "lib"))
+require "master"
 
 Law.load_all
 
