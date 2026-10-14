@@ -61,8 +61,8 @@ font-family: var(--font-brand);
   pointer-events: auto;
 }
 
+// At desktop widths the brand shares the nav row, so only the nav band clears.
 @media (min-width: 768px) {
-  // At desktop widths the brand shares the nav row, so only the nav band clears.
   .radio-nav {
     inset-block-start: calc(var(--nav-swiper-h) + var(--space-4));
   }
