@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 require "fileutils"
 require "open3"
+require "json"
 require File.join(Master::ROOT, "law", "definition")
 
 # The scan's per-file costs were a git subprocess and a soul.yml parse for
@@ -92,6 +93,42 @@ class TestScanSpeedPaths < Minitest::Test
     assert_match(/\ASLOW /, timing.drain.first)
   ensure
     ENV.delete("MASTER_SCAN_TIMING")
+  end
+
+  def test_scan_progress_reports_the_active_law_and_nested_laws_yml_detector
+    Dir.mktmpdir do |dir|
+      progress = File.join(dir, "progress.json")
+      previous_path = ENV["GATE_PROGRESS_FILE"]
+      previous_enabled = ENV["MASTER_SCAN_PROGRESS"]
+      ENV["GATE_PROGRESS_FILE"] = progress
+      ENV["MASTER_SCAN_PROGRESS"] = "1"
+
+      processor = Master::Fix::Scan::FileProcessor.new
+      law = Struct.new(:id).new("LAW_BRIDGE")
+      token = processor.send(
+        :begin_law_progress, pass: :lexical, law:, index: 3, total: 12,
+        path: File.join(Master::ROOT, "lib", "sample.rb")
+      )
+      monitor = processor.instance_variable_get(:@progress_thread)
+      sleep 1.2
+      row = JSON.parse(File.read(progress))
+      assert_equal ["scan", "running", "lexical", "LAW_BRIDGE", "MASTER/lib/sample.rb", 3, 12],
+                   row.values_at("kind", "state", "pass", "law", "file", "n", "total")
+
+      Thread.current.thread_variable_get(:master_scan_progress_callback).call(
+        inner_pass: "laws.yml/violation", inner_law: "ROBUSTNESS", index: 2, total: 7,
+        path: File.join(Master::ROOT, "data", "laws.yml")
+      )
+      sleep 1.2
+      row = JSON.parse(File.read(progress))
+      assert_equal ["laws.yml/violation", "ROBUSTNESS", "MASTER/data/laws.yml", 2, 7],
+                   row.values_at("pass", "law", "file", "n", "total")
+    end
+  ensure
+    processor&.send(:end_law_progress, token) if processor && token
+    monitor&.join(4) if monitor
+    previous_path ? ENV["GATE_PROGRESS_FILE"] = previous_path : ENV.delete("GATE_PROGRESS_FILE")
+    previous_enabled ? ENV["MASTER_SCAN_PROGRESS"] = previous_enabled : ENV.delete("MASTER_SCAN_PROGRESS")
   end
 
   def test_cross_file_findings_build_with_the_law_key

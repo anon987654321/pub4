@@ -2,12 +2,14 @@
 
 require "digest"
 require "fileutils"
+require "json"
 require "prism"
 require "timeout"
 require_relative "law_timing"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
 require_relative "../../operator/lock_sweep"
+require_relative "../../trace/dmesg"
 
 module Master
   module Fix
@@ -20,6 +22,9 @@ module Master
         MAX_LINES = 10_000
         STYLE_EXTENSIONS = %w[.css .scss].freeze
         STYLE_MAX_LINES = 12_000
+        PROGRESS_POLL_SECONDS = 1.0
+        PROGRESS_IDLE_GRACE_SECONDS = 3.0
+        PROGRESS_HEARTBEAT_SECONDS = 5.0
 
         # Fraction of otherwise-clean files that still get the semantic pass.
         # Keyed on the path digest rather than rand, so two scans of the same
@@ -33,6 +38,16 @@ module Master
         def initialize(event_bus: nil, skip_semantic: false)
           @bus = event_bus
           @skip_semantic = skip_semantic
+          @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
+          @progress_writer_id = "#{Process.pid}-#{object_id}"
+          @progress_mutex = Mutex.new
+          @active_law_checks = {}
+          @progress_previous_callbacks = {}
+          @progress_sequence = 0
+          @progress_thread = nil
+          @progress_idle_since = nil
+          @progress_last_check = nil
+          @progress_error_reported = false
         end
 
         def skip_semantic!
@@ -218,7 +233,189 @@ module Master
 
         def run_law_pass(pass:, laws:, code:, ast:, path:)
           @bus&.publish("scan:pass", path:, pass:, law_count: laws.size)
-          laws.flat_map { |law| run_law(law:, code:, ast:, path:) }
+          laws.each_with_index.flat_map do |law, index|
+            token = begin_law_progress(pass:, law:, index: index + 1, total: laws.size, path:)
+            begin
+              run_law(law:, code:, ast:, path:)
+            ensure
+              end_law_progress(token)
+            end
+          end
+        end
+
+        # The monitor reports the law that's actually in flight, not merely the
+        # outer scan stage. One small watcher samples this in-memory state once a
+        # second; worker threads never contend on progress-file I/O.
+        def begin_law_progress(pass:, law:, index:, total:, path:)
+          return unless ENV["MASTER_SCAN_PROGRESS"] != "0"
+
+          previous_callback = Thread.current.thread_variable_get(:master_scan_progress_callback)
+          # Object identity keeps simultaneous worker threads from collapsing
+          # into one hash key when they enter the scanner at the same time.
+          token = Object.new
+          callback = lambda do |inner_pass:, inner_law:, index:, total:, path:|
+            @progress_mutex.synchronize do
+              active = @active_law_checks[token]
+              next unless active
+
+              @progress_sequence += 1
+              active.merge!(
+                "pass" => inner_pass.to_s,
+                "law" => inner_law.to_s,
+                "file" => relative_progress_path(path),
+                "n" => index,
+                "total" => total,
+                "name" => "#{inner_pass} #{inner_law}",
+                "at" => Time.now.to_f,
+                "updated_at" => Time.now.to_f,
+                "checks" => @progress_sequence,
+              )
+              @progress_last_check = active
+            end
+          end
+          Thread.current.thread_variable_set(:master_scan_progress_callback, callback)
+
+          law_id = law.respond_to?(:id) ? law.id.to_s : law.class.name.to_s
+          relative = relative_progress_path(path)
+          row = {
+            "kind" => "scan",
+            "state" => "running",
+            "pass" => pass.to_s,
+            "law" => law_id,
+            "file" => relative,
+            "n" => index,
+            "total" => total,
+            "name" => "#{pass} #{law_id}",
+            "at" => Time.now.to_f,
+            "updated_at" => Time.now.to_f,
+          }
+
+          @progress_mutex.synchronize do
+            @progress_sequence += 1
+            row["checks"] = @progress_sequence
+            @progress_previous_callbacks[token] = previous_callback
+            @active_law_checks[token] = row
+            @progress_idle_since = nil
+            @progress_last_check = row
+            start_progress_monitor_locked
+          end
+          token
+        end
+
+        def end_law_progress(token)
+          return unless token
+
+          previous_callback = nil
+          @progress_mutex.synchronize do
+            previous_callback = @progress_previous_callbacks.delete(token)
+            finished = @active_law_checks.delete(token)
+            if finished && @active_law_checks.empty?
+              @progress_idle_since = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+              @progress_last_check = finished.merge(
+                "state" => "idle",
+                "active" => 0,
+                "updated_at" => Time.now.to_f,
+              )
+            end
+          end
+          Thread.current.thread_variable_set(:master_scan_progress_callback, previous_callback)
+        end
+
+        def start_progress_monitor_locked
+          return if @progress_thread&.alive?
+
+          @progress_thread = Thread.new { run_progress_monitor }
+          @progress_thread.name = "master-scan-progress" if @progress_thread.respond_to?(:name=)
+        end
+
+        def run_progress_monitor
+          last_console_beat = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          loop do
+            sleep PROGRESS_POLL_SECONDS
+            snapshot = nil
+            stop = false
+            @progress_mutex.synchronize do
+              now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+              if @active_law_checks.empty?
+                @progress_idle_since ||= now
+                if now - @progress_idle_since >= PROGRESS_IDLE_GRACE_SECONDS
+                  @progress_thread = nil if @progress_thread == Thread.current
+                  stop = true
+                elsif @progress_last_check
+                  snapshot = @progress_last_check.merge(
+                    "state" => "idle",
+                    "active" => 0,
+                    "monitor_at" => Time.now.to_f,
+                  )
+                end
+              else
+                current = @active_law_checks.values.max_by { |row| row.fetch("checks") }
+                snapshot = current.merge(
+                  "state" => "running",
+                  "active" => @active_law_checks.size,
+                  "monitor_at" => Time.now.to_f,
+                )
+              end
+            end
+            break if stop
+            next unless snapshot
+
+            if @progress_path.empty?
+              now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+              if snapshot["state"] == "running" && now - last_console_beat >= PROGRESS_HEARTBEAT_SECONDS
+                Master::Trace::Dmesg.status("scan0", progress_line(snapshot))
+                last_console_beat = now
+              end
+            else
+              write_progress_snapshot(snapshot)
+            end
+          end
+        rescue StandardError => e
+          Master::Trace::Dmesg.status("scan0", "progress monitor failed, #{e.class}: #{e.message.to_s[0, 140]}")
+        ensure
+          @progress_mutex.synchronize do
+            @progress_thread = nil if @progress_thread == Thread.current
+          end
+        end
+
+        def write_progress_snapshot(row)
+          temporary = "#{@progress_path}.scan-#{@progress_writer_id}"
+          File.open(temporary, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |io|
+            io.write(JSON.generate(row))
+            io.flush
+          end
+          File.rename(temporary, @progress_path)
+        rescue SystemCallError, IOError => e
+          should_report = @progress_mutex.synchronize do
+            next false if @progress_error_reported
+
+            @progress_error_reported = true
+          end
+          Master::Trace::Dmesg.status("scan0", "progress file unavailable, #{e.class}: #{e.message}") if should_report
+        ensure
+          begin
+            File.delete(temporary) if temporary && File.exist?(temporary)
+          rescue SystemCallError
+            nil
+          end
+        end
+
+        def relative_progress_path(path)
+          expanded = File.expand_path(path.to_s)
+          [Master::REPO_ROOT, Master::ROOT].compact.each do |root|
+            base = File.expand_path(root)
+            return expanded.delete_prefix("#{base}/") if expanded.start_with?("#{base}/")
+          end
+          path.to_s
+        end
+
+        def progress_line(row)
+          format(
+            "active pass=%s law=%s file=%s checks=%s law=%s/%s workers=%s for %ds",
+            row.fetch("pass"), row.fetch("law"), row.fetch("file"), row.fetch("checks"),
+            row.fetch("n"), row.fetch("total"), row.fetch("active", 1),
+            [Time.now.to_f - row.fetch("at").to_f, 0].max.round,
+          )
         end
 
         # `defined?` rather than a bare constant: this file is reachable from

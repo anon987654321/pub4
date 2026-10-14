@@ -299,7 +299,7 @@ module Operator
         name: "lexical",
         purpose: "law/ and the scan registry over #{scope}, autofixing",
         mutates: !scan_only,
-        run: -> { gate("--lexical-only", scan_only:, trees:) },
+        run: ->(progress) { gate("--lexical-only", scan_only:, trees:, env: progress) },
       )
     end
 
@@ -438,9 +438,9 @@ module Operator
       Operator::StrictMode.flags
     end
 
-    def gate(tier, scan_only:, trees: TREES)
+    def gate(tier, scan_only:, trees: TREES, env: {})
       scope = trees == TREES ? [] : ["--tree=#{trees.join(',')}"]
-      capture(RUBY, File.join(MASTER, "bin", "gate"), tier, *scope, *(scan_only ? ["--scan-only"] : []))
+      capture(RUBY, File.join(MASTER, "bin", "gate"), tier, *scope, *(scan_only ? ["--scan-only"] : []), env:)
     end
 
     # GATE_AUTOFIX defaults to on; naming it keeps scan-only honest either way.
@@ -555,7 +555,20 @@ end
       # Gate stages are internal children and never need the parent's lock. A
       # descriptor number without the descriptor is a poisoned inheritance path.
       child_env["MASTER_PROCESS_LOCK_FD"] = nil
-      runner = -> { Open3.capture2e(ENV.to_h.merge(child_env), *cmd, chdir:) }
+      runner = lambda do
+        output = +""
+        Open3.popen2e(ENV.to_h.merge(child_env), *cmd, chdir:) do |stdin, stream, wait|
+          stdin.close
+          stream.each_line do |line|
+            output << line
+            Master::Trace::Dmesg.terminal_write do |io|
+              io.write(line)
+              io.flush
+            end
+          end
+          [output, wait.value]
+        end
+      end
       out, status = if unbundled && defined?(Bundler)
                       Bundler.with_unbundled_env { runner.call }
                     else
@@ -628,7 +641,9 @@ end
       )
       # A stage captures its output and can run for minutes; the heartbeat says which
       # stage is still running and for how long, in the stage's own unit.
-      ok, body, exitstatus = GateHeartbeat.around(stage.name, unit:) { stage.run.call }
+      ok, body, exitstatus = GateHeartbeat.around(stage.name, unit:) do |progress|
+        stage.run.arity.zero? ? stage.run.call : stage.run.call(progress)
+      end
       changed = dirty - seen
       state = classify(ok, exitstatus)
       state = "failed" if changed.any? && !stage.mutates

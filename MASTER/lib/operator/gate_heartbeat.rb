@@ -51,23 +51,39 @@ module Operator
     # One line per cadence, whatever else was said. Returns the line, or nil.
     def beat
       now = @clock.call
-      return if now - @last < @cadence
+      row = progress
+      cadence = row&.fetch("kind", nil) == "scan" ? [@cadence, 5].min : @cadence
+      return if now - @last < cadence
 
       @last = now
-      line = describe(now)
+      line = describe(now, row)
       @say.call(line)
       line
     end
 
     private
 
-    def describe(now)
+    def describe(now, row = progress)
       elapsed = now - @started
-      row = progress
       return "#{@label} running, elapsed #{human(elapsed)}" unless row
 
       ran = [@wall.call - row["at"].to_f, 0].max
+      return describe_scan(row, ran:, elapsed:) if row["kind"] == "scan"
+
       "#{@label} gate #{row["n"]}/#{row["total"]} #{row["name"]} running #{human(ran)}, elapsed #{human(elapsed)}"
+    end
+
+    def describe_scan(row, ran:, elapsed:)
+      updated = [@wall.call - row.fetch("updated_at", row["at"]).to_f, 0].max
+      detail = "pass=#{row["pass"]} law=#{row["law"]} file=#{row["file"]} " \
+               "checks=#{row["checks"]} active=#{row["active"]} laws=#{row["n"]}/#{row["total"]}"
+
+      if row["state"] == "running"
+        state = updated > 6 ? "law unchanged" : "scan"
+        return "#{@label} #{state} #{detail}, check elapsed #{human(ran)}, last update #{human(updated)} ago, stage elapsed #{human(elapsed)}"
+      end
+
+      "#{@label} scanner idle; last #{detail}, no active law check, last update #{human(updated)} ago, stage elapsed #{human(elapsed)}"
     end
 
     def progress
