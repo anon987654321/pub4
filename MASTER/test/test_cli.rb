@@ -352,6 +352,23 @@ end
     assert_equal Master::CLI::Session::INTERACTIVE_QUEUE_LIMIT, queue.length
   end
 
+  def test_stop_before_execution_requeues_the_dequeued_line
+    queue = @cli.instance_variable_get(:@turn_queue)
+    line = "keep this pending"
+    @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
+      queue.clear
+      @cli.instance_variable_set(:@turn_queue_paused, true)
+      @cli.instance_variable_set(:@turn_current_line, line)
+      @cli.instance_variable_set(:@turn_current_started, false)
+    end
+
+    refute @cli.send(:begin_interactive_line, line)
+
+    assert_equal [line], queue
+    assert_nil @cli.instance_variable_get(:@turn_current_line)
+    refute @cli.instance_variable_get(:@turn_current_started)
+  end
+
   def test_dispatch_turn_refuses_to_start_after_a_stop_race
     @cli.instance_variable_set(:@turn_cancel_requested, true)
 
