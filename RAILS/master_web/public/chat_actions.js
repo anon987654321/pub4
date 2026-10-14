@@ -352,6 +352,7 @@ async function sendMessageTurn(text) {
           flushSpeech(true);
           window._chatOnChunk?.(`\n${raw}\n`);
           window._chatOnError?.("stream error");
+          closeChatStream();
           return;
         }
         const chunk = raw.replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
@@ -367,6 +368,7 @@ async function sendMessageTurn(text) {
       onError(err) {
         flushSpeech(true);
         window._chatOnError?.(err?.message || "stream interrupted");
+        closeChatStream();
       }
     });
   } catch (err) {
@@ -377,30 +379,77 @@ async function sendMessageTurn(text) {
   return true;
 }
 
+const FALLBACK_SEND_QUEUE_LIMIT = 32;
 const fallbackSendQueue = [];
 let fallbackSendQueueRunning = false;
+let fallbackSendQueuePaused = false;
+
+function updateFallbackSendQueueUi(message = "") {
+  const status = document.getElementById("turn-queue-status");
+  const control = document.getElementById("turn-control");
+  const active = fallbackSendQueueRunning || fallbackSendQueue.length > 0 || fallbackSendQueuePaused;
+  if (control) {
+    control.hidden = !active;
+    control.textContent = fallbackSendQueuePaused ? "resume" : "stop";
+    control.setAttribute("aria-label", fallbackSendQueuePaused
+      ? "Resume queued messages"
+      : "Stop the current response and pause queued messages");
+    control.setAttribute("aria-pressed", fallbackSendQueuePaused ? "true" : "false");
+  }
+  if (status) {
+    status.textContent = message || (fallbackSendQueuePaused
+      ? `${fallbackSendQueue.length} queued · paused`
+      : fallbackSendQueue.length
+        ? `queued ${fallbackSendQueue.length}`
+        : fallbackSendQueueRunning ? "working" : "");
+  }
+}
+
 async function drainFallbackSendQueue() {
-  if (fallbackSendQueueRunning) return;
+  if (fallbackSendQueueRunning || fallbackSendQueuePaused) return;
   fallbackSendQueueRunning = true;
+  updateFallbackSendQueueUi();
   try {
-    while (fallbackSendQueue.length) {
+    while (fallbackSendQueue.length && !fallbackSendQueuePaused) {
       const item = fallbackSendQueue.shift();
+      updateFallbackSendQueueUi();
       try { item.resolve(await sendMessageTurn(item.text)); }
       catch (err) { window.MASTER_LOG?.warn?.("chat:queued_send", err); item.resolve(false); }
+      updateFallbackSendQueueUi();
     }
   } finally {
     fallbackSendQueueRunning = false;
-    if (fallbackSendQueue.length) void drainFallbackSendQueue();
+    updateFallbackSendQueueUi();
+    if (fallbackSendQueue.length && !fallbackSendQueuePaused) void drainFallbackSendQueue();
   }
 }
+
 function sendMessage(text) {
   const message = String(text ?? chatInput()?.value ?? "").trim();
   if (!message) return Promise.resolve(false);
+  if (fallbackSendQueue.length >= FALLBACK_SEND_QUEUE_LIMIT) {
+    updateFallbackSendQueueUi(`queue full ${FALLBACK_SEND_QUEUE_LIMIT}; message not sent`);
+    return false;
+  }
   return new Promise((resolve) => {
     fallbackSendQueue.push({ text: message, resolve });
+    updateFallbackSendQueueUi();
     void drainFallbackSendQueue();
   });
 }
+
+document.getElementById("turn-control")?.addEventListener("click", () => {
+  if (fallbackSendQueuePaused) {
+    fallbackSendQueuePaused = false;
+    updateFallbackSendQueueUi();
+    void drainFallbackSendQueue();
+    return;
+  }
+  if (!fallbackSendQueueRunning) return;
+  fallbackSendQueuePaused = true;
+  closeChatStream();
+  updateFallbackSendQueueUi();
+});
 
 window.MASTERChat = {
   isBangCommand,
@@ -463,8 +512,10 @@ if (!window.sendMessage) window.sendMessage = sendMessage;
     event.preventDefault();
     const text = input.value.trim();
     if (!text) return;
+    const pending = sendMessage(text);
+    if (pending === false) return;
     input.value = "";
-    sendMessage(text).catch((err) => { window.MASTER_LOG?.warn?.("chat:degraded_send", err); });
+    pending.catch((err) => { window.MASTER_LOG?.warn?.("chat:degraded_send", err); });
   });
   input.addEventListener("keydown", (event) => {
     if (faceOwnsSend() || event.key !== "Enter" || event.shiftKey || event.isComposing) return;
