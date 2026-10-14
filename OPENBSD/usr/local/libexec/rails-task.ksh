@@ -14,7 +14,7 @@ case "$app" in
   *) echo "rails-task: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$task" in
-  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate) [ "$#" -eq 2 ] || exit 64 ;;
+  bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci|db-storage-migrate|npm-cache) [ "$#" -eq 2 ] || exit 64 ;;
   demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
   schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
   *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
@@ -32,6 +32,15 @@ app_dir="$app_home/app"
   echo "rails-task: app directory must be a real app-owned directory: $app_dir" >&2
   exit 1
 }
+for cache_dir in "$app_home/.npm" "$app_home/.cache"; do
+  if [ -e "$cache_dir" ] || [ -L "$cache_dir" ]; then
+    [ -d "$cache_dir" ] && [ ! -L "$cache_dir" ] &&
+      [ "$(stat -f %u "$cache_dir")" = "$app_uid" ] || {
+        echo "rails-task: cache path must be a real app-owned directory: $cache_dir" >&2
+        exit 1
+      }
+  fi
+done
 # Database tasks must not follow a symlinked db/storage path into another
 # application or a root-managed location. Missing storage is allowed only for
 # the one-time db-storage-migrate operation, which may create it as the app.
