@@ -111,6 +111,20 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
     failures << "missing tracked usr/local/libexec/ci-prepare.ksh"
   end
 
+  rails_task_path = File.join(OPENBSD, "usr", "local", "libexec", "rails-task.ksh")
+  if File.file?(rails_task_path) && !File.symlink?(rails_task_path)
+    rails_task = File.read(rails_task_path)
+    rails_task_contract = rails_task.include?("bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci") &&
+                          rails_task.include?("cache|queue|cable") &&
+                          rails_task.include?('[ ! -L "$app_home" ]') &&
+                          rails_task.include?('[ ! -L "$app_dir" ]') &&
+                          rails_task.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
+                          rails_task.include?('unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT')
+    failures << "rails-task helper must expose only fixed task names and execute as the app user" unless rails_task_contract
+  else
+    failures << "missing or symlinked tracked usr/local/libexec/rails-task.ksh"
+  end
+
   runner_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-run.ksh")
   if File.file?(runner_path)
     runner = File.read(runner_path)
@@ -130,7 +144,10 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('args[0] == "ci-sync" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('trusted_script!(CI_PREPARE)') &&
                            admin.include?('trusted_script!(CI_RUN)') &&
-                           admin.include?('supervised_helper(CI_SYNC, app, 900)')
+                           admin.include?('supervised_helper(CI_SYNC, app, 900)') &&
+                           admin.include?('args[0] == "rails-task" && RAILS_APPS.include?(args[1])') &&
+                           admin.include?('run_rails_task(args[1], args[2])') &&
+                           admin.include?('supervised_helper(RAILS_TASK, app, 7200, arguments)')
   failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
 
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
@@ -156,7 +173,7 @@ else
   failures << "missing tracked usr/local/sbin/pub4-admin"
 end
 
-%w[ci-prepare.ksh ci-run.ksh ci-sync.ksh].each do |name|
+%w[ci-prepare.ksh ci-run.ksh ci-sync.ksh rails-task.ksh].each do |name|
   path = File.join(OPENBSD, "usr", "local", "libexec", name)
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
