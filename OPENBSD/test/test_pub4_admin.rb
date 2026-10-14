@@ -32,6 +32,14 @@ class Pub4AdminTest < Minitest::Test
     assert_nil ADMIN.command_for(%w[stamp brgen abc1234 ok])
   end
 
+  def test_ci_lock_is_a_fixed_broker_verb
+    source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
+
+    assert_includes source, 'return ensure_ci_lock if args == ["ci-lock"]'
+    assert_includes source, 'path = File.join(STAMP_DIR, "ci.lock")'
+    assert_includes source, 'raise "#{path} is not a regular file" unless lock.file? && !lock.symlink?'
+  end
+
   def test_started_service_inventory_is_a_fixed_read_operation
     assert_equal ["/usr/sbin/rcctl", "ls", "started"],
                  ADMIN.command_for(%w[service list-started])
