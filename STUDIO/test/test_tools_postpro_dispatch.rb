@@ -108,7 +108,7 @@ class TestPostproDispatch < Minitest::Test
         dir, subject, "--count", "1",
         env: { "POSTPRO_OUTPUT_DIR" => nil, "XDG_DATA_HOME" => xdg_home },
       )
-      assert status.success?, "default output path failed:\\n#{out}"
+      assert status.success?, "default output path failed:\n#{out}"
 
       output_dir = File.join(xdg_home, "dilla-renders", date)
       outputs = Dir[File.join(output_dir, "postpro_frame_*_v1.jpg")]
