@@ -120,7 +120,7 @@ for part in gems cache; do
     mkdir "$target"
   fi
 done
-ruby_version=$("$ruby_path" -e '\''print RUBY_VERSION.split(".").first(2).join'\'')
+ruby_version=$("$ruby_path" -e "print RUBY_VERSION.split(34.chr).first(2).join")
 shared="/var/cache/pub4/bundle/ruby$ruby_version"
 if [ -d "$shared" ] && [ ! -L "$shared" ] &&
    [ "$(stat -f %u "$shared")" -eq 0 ] && [ -d "$shared/gems" ] &&
