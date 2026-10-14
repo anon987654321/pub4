@@ -272,7 +272,8 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_ci_does_not_escalate_permission_changes_on_the_checkout
     refute_includes CI_SOURCE, 'doas chmod -R a+rX "${repo}/MASTER/tools"'
-    assert_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
+    assert_includes CI_SOURCE, 'chmod -R u+rX,g+rX "${repo}/MASTER/tools"'
+    refute_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
   end
 
   def test_ci_broker_paths_are_installed_and_used_before_sync
@@ -299,9 +300,11 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes CI_SOURCE, "sync_from_repo_legacy"
   end
   def test_ci_runner_uses_the_fixed_broker_and_bounded_timeout
+    runner = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "libexec", "ci-run.ksh"), encoding: "UTF-8")
     assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-run "$app" "$ci_timeout"'
     assert_includes CI_SOURCE, 'ci_timeout=${PUB4_CI_TIMEOUT:-7200}'
-    assert_includes CI_SOURCE, 'exec /usr/bin/su -m "$app" -c "$script"'
+    assert_includes runner, 'exec /usr/bin/su -m "$app" -c "$script"'
+    refute_includes CI_SOURCE, 'doas sh -c "su -m'
   end
 
   def test_ci_uses_the_broker_for_account_and_storage_preparation
