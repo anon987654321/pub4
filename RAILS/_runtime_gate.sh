@@ -39,7 +39,6 @@ master_scan_dep() {
 # run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
 run_rails_as_app() {
   local app_name=$1 app_dir=$2 task=${3:-} database=${4:-}
-  local secret command npm_cache
   case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
   [[ $app_dir == "/home/${app_name}/app" ]] || { log_err "run_rails_as_app: refused app path: $app_dir"; return 2; }
   case "$task" in
@@ -49,71 +48,15 @@ run_rails_as_app() {
   esac
   [[ $task != demo-seed || $app_name == brgen || $app_name == amber ]] || return 2
 
-  if [[ -x /usr/local/sbin/pub4-admin ]]; then
-    if [[ $task == schema-load || $task == secondary-db-check ]]; then
-      ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task" "$database"
-    else
-      ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task"
-    fi
-    return $?
+  [[ -x /usr/local/sbin/pub4-admin ]] || {
+    log_err "run_rails_as_app: pub4-admin is missing; run OPERATOR.sh before deploying"
+    return 1
+  }
+  if [[ $task == schema-load || $task == secondary-db-check ]]; then
+    ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task" "$database"
+  else
+    ${_PRIV} /usr/local/sbin/pub4-admin rails-task "$app_name" "$task"
   fi
-
-  ensure_npm_cache "$app_name"
-  npm_cache="/home/${app_name}/.npm"
-  case "$task" in
-    bundle-install)
-      command="${BUNDLE} config set --local frozen false && ${BUNDLE} config set --local deployment true && ${BUNDLE} config set --local without \"development test\" && RAILS_ENV=production ${BUNDLE} install" ;;
-    ci-bundle-install)
-      command="${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" ;;
-    db-storage-migrate)
-      command='[ -d db ] && [ ! -L db ] || exit 0
-[ ! -L storage ] || { echo "rails-task: refusing storage symlink" >&2; exit 1; }
-mkdir -p storage
-for file in db/production*.sqlite3; do
-  [ -f "$file" ] && [ ! -L "$file" ] || continue
-  base=${file##*/}
-  target="storage/$base"
-  if [ -e "$target" ] || [ -L "$target" ]; then continue; fi
-  mv "$file" "$target"
-  printf "moved %s -> %s\\n" "$file" "$target"
-done' ;;
-    bundle-check)
-      command="${BUNDLE} check" ;;
-    db-prepare)
-      secret=$(app_secret_for "$app_name") || return 1
-      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
-      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare" ;;
-    db-seed)
-      secret=$(app_secret_for "$app_name") || return 1
-      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
-      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:seed" ;;
-    demo-seed)
-      secret=$(app_secret_for "$app_name") || return 1
-      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
-      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails ${app_name}:demo_seed" ;;
-    assets-precompile)
-      secret=$(app_secret_for "$app_name") || return 1
-      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
-      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      command="SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails assets:precompile" ;;
-    ci)
-      secret=$(app_secret_for "$app_name") || return 1
-      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
-      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
-      command="SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 ${BUNDLE} exec bin/ci" ;;
-    schema-load)
-      secret=$(app_secret_for "$app_name") || return 1
-      case "$secret" in ''|*[!0123456789abcdefABCDEF]*) log_err "invalid SECRET_KEY_BASE"; return 1 ;; esac
-      (( ${#secret} >= 64 && ${#secret} <= 256 )) || { log_err "invalid SECRET_KEY_BASE length"; return 1; }
-      command="SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production ${BUNDLE} exec rails db:schema:load:${database}" ;;
-    secondary-db-check)
-      return 1 ;; # The fallback path below still owns the legacy sqlite3 check.
-  esac
-  ${_PRIV} sh -c "su -m ${app_name} -c 'export HOME=/home/${app_name}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=/home/${app_name}/.cache; export BUNDLE_USER_HOME=/home/${app_name}/.bundle; unset RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT; cd ${app_dir} && ${command}'"
 }
 
 # rails_runtime_gate APP_NAME APP_DIR — bundle check + db:prepare + bin/ci + master scan before rcctl restart.
