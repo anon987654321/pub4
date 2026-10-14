@@ -114,7 +114,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   rails_task_path = File.join(OPENBSD, "usr", "local", "libexec", "rails-task.ksh")
   if File.file?(rails_task_path) && !File.symlink?(rails_task_path)
     rails_task = File.read(rails_task_path)
-    rails_task_contract = rails_task.include?("bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci") &&
+    rails_task_contract = rails_task.include?("master|brgen|amber|bsdports") &&
+                          rails_task.include?("bundle-install|bundle-check|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("cache|queue|cable") &&
                           rails_task.include?('[ ! -L "$app_home" ]') &&
                           rails_task.include?('[ ! -L "$app_dir" ]') &&
@@ -138,6 +139,12 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   else
     failures << "missing tracked usr/local/libexec/ci-run.ksh"
   end
+
+  secret_dispatch = admin.include?('args[0] == "ensure-secret" && APPS.include?(args[1])') &&
+                  admin.include?("def ensure_app_secret(app)") &&
+                  admin.include?("File::CREAT | File::EXCL") &&
+                  admin.include?("File.rename(temporary, target)")
+  failures << "pub4-admin must create secrets only at fixed app paths and atomically" unless secret_dispatch
 
   broker_helper_dispatch = admin.include?('args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('args[0] == "ci-run" && RAILS_APPS.include?(args[1])') &&
