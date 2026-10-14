@@ -4544,12 +4544,16 @@ def boolean_envelope_r2(measured)
   (cov / Math.sqrt(var_m * var_b))**2
 end
 
-# Read the full preset method. A nested `end` closes an inner block, so
-# it cannot delimit the method when building the effect inventory.
+# A nested `end` closes an inner block, not its method. All source audits use
+# the next top-level method boundary so their evidence covers the whole body.
+def postpro_source_method(source, name)
+  pattern = Regexp.new("^def " + Regexp.escape(name) + "\\b.*?(?=^def [a-z_][a-z0-9_]*\\b|\\z)", Regexp::MULTILINE)
+  source[pattern]
+end
+
 def preset_effect_names
   source = File.read(__FILE__)
-  body = source[/^def preset\b.*?(?=^def [a-z_][a-z0-9_]*\b|\z)/m]
-  Array(body).scan(/when "([a-z0-9_]+)"/).flatten.uniq
+  Array(postpro_source_method(source, "preset")).scan(/when "([a-z0-9_]+)"/).flatten.uniq
 end
 
 def vocab_check
@@ -4683,7 +4687,7 @@ def vocab_check
   # spelling measures a spelling.
   source = File.read(__FILE__)
   ungrained = %w[process_file run_random run_uplift run_one_shot run_watch].reject do |name|
-    body = source[/^def #{name}\b.*?^end$/m]
+    body = postpro_source_method(source, name)
     %w[apply_finishing_grain process_file( grade_watched(].any? { |reach| body&.include?(reach) }
   end
   unless ungrained.empty?
