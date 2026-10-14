@@ -65,7 +65,7 @@ The loopback health probe runs as the deploy user and needs no privilege.
 execution, Rails runtime tasks and relay route verification use the broker when
 the installed copy exists. It creates the canonical `/var/db/pub4/ci.lock`; keep
 `PUB4_CI_LOCK` unset on vm23 until the legacy override seam is removed.
-Compatibility fallbacks remain for the first rollout.
+Some CI and filesystem fallbacks remain for the first rollout; the relay adapter is stricter and refuses to deploy when the broker is absent.
 
 This is **not yet the complete privilege migration**: the CI fallback, the
 `RAILS/_deploy.sh` copy/install path, and some legacy deploy helpers still contain
