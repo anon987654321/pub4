@@ -78,10 +78,11 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                    admin.include?("RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze")
   failures << "pub4-admin must validate each helper against its own app allowlist" unless task_app_scope
   safe_spawn = admin.include?('Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)') &&
-               admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)') &&
+               admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK, RAILS_SYNC].include?(helper)') &&
                admin.include?("when RAILS_TASK then Array(helper_arguments)") &&
                admin.include?("when CI_RUN then [app, duration.to_s]") &&
                admin.include?("when CI_SYNC then [app]") &&
+               admin.include?("when RAILS_SYNC then [app, *Array(helper_arguments)]") &&
                admin.include?("spawn_options[:uid] = account.uid") &&
                admin.include?("spawn_options[:gid] = account.gid") &&
                admin.include?('trusted_script!(helper)')
@@ -229,6 +230,21 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('File.lstat(path)')
   failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
 
+  rails_sync_path = File.join(OPENBSD, "usr", "local", "libexec", "rails-sync.ksh")
+  if File.file?(rails_sync_path) && !File.symlink?(rails_sync_path)
+    rails_sync = File.read(rails_sync_path)
+    sync_contract = rails_sync.include?("app|shared") &&
+                    rails_sync.include?("verticals") &&
+                    rails_sync.include?('[ "$(id -un)" = "$app" ]') &&
+                    rails_sync.include?('sync_tree_stage "$source_dir" "$app_dir" yes') &&
+                    rails_sync.include?('state=storage') &&
+                    rails_sync.include?('state=log') &&
+                    rails_sync.include?('public/assets') &&
+                    !rails_sync.match?(/^\s*(?:doas|sudo|chown)\b/)
+    failures << "rails-sync helper must be app-owned, fixed-mode and preserve runtime state" unless sync_contract
+  else
+    failures << "missing or symlinked tracked usr/local/libexec/rails-sync.ksh"
+  end
   installer = File.read(File.join(OPENBSD, "OPERATOR.sh"))
   source_preflight = installer.include?("typeset -a privileged_sources=(") &&
                      installer.include?('if [[ ! -f $src/$rel || -L $src/$rel ]]') &&
@@ -250,7 +266,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                          installer.include?("chmod 555 /usr/local/sbin/pub4-admin") &&
                          installer.include?("[[ -L $f ]]") &&
                          installer.include?("/usr/local/libexec/ci-sync.ksh") &&
-                         installer.include?("/usr/local/libexec/rails-task.ksh")
+                         installer.include?("/usr/local/libexec/rails-task.ksh") &&
+                         installer.include?("/usr/local/libexec/rails-sync.ksh")
   failures << "OPERATOR.sh must reject symlinked privileged entrypoints and install pub4-admin root-owned/non-writable" unless installer_pins_admin
 else
   failures << "missing tracked usr/local/sbin/pub4-admin"
