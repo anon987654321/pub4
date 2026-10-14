@@ -247,7 +247,29 @@ module Master
         def begin_law_progress(pass:, law:, index:, total:, path:)
           return unless ENV["MASTER_SCAN_PROGRESS"] != "0"
 
-          token = Object.new
+          previous_callback = Thread.current.thread_variable_get(:master_scan_progress_callback)
+          token = { previous_callback: }
+          callback = lambda do |inner_pass:, inner_law:, index:, total:, path:|
+            @progress_mutex.synchronize do
+              active = @active_law_checks[token]
+              next unless active
+
+              @progress_sequence += 1
+              active.merge!(
+                "pass" => inner_pass.to_s,
+                "law" => inner_law.to_s,
+                "file" => relative_progress_path(path),
+                "n" => index,
+                "total" => total,
+                "name" => "#{inner_pass} #{inner_law}",
+                "at" => Time.now.to_f,
+                "checks" => @progress_sequence,
+              )
+              @progress_last_check = active
+            end
+          end
+          Thread.current.thread_variable_set(:master_scan_progress_callback, callback)
+
           law_id = law.respond_to?(:id) ? law.id.to_s : law.class.name.to_s
           relative = relative_progress_path(path)
           row = {
@@ -276,6 +298,9 @@ module Master
         def end_law_progress(token)
           return unless token
 
+          Thread.current.thread_variable_set(
+            :master_scan_progress_callback, token.fetch(:previous_callback)
+          )
           @progress_mutex.synchronize do
             finished = @active_law_checks.delete(token)
             if finished && @active_law_checks.empty?
