@@ -123,7 +123,7 @@ relayd_add_relay() {
   local conf=/etc/relayd.conf
   local changed=0
 
-  case "$legacy_app" in brgen|amber|bsdports) ;; *) log_err "relayd: refused unknown app: $app"; return 2 ;; esac
+  case "$app" in brgen|amber|bsdports) ;; *) log_err "relayd: refused unknown app: $app"; return 2 ;; esac
   [[ $domain == <->.<-> || $domain == *.* ]] || { log_err "relayd: refused invalid domain"; return 2; }
   [[ $port == <-> ]] || { log_err "relayd: refused invalid port"; return 2; }
 
