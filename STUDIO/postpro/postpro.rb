@@ -4930,9 +4930,8 @@ end
 
 # --random [DIR] [uplift] [--count N], or a bare positional IMAGE | DIR
 #
-# Three to five pictures per run, each through its own chain, written beside
-# the source — Downloads if there is one, the working directory otherwise, or
-# beside the one path the caller named.
+# Three to five pictures per run, each through its own chain, written to the
+# shared dated output directory unless POSTPRO_OUTPUT_DIR redirects it.
 #
 # The default used to be a pair of stacked presets applied to every image in
 # the folder, which for a folder of two hundred is a long afternoon and two
