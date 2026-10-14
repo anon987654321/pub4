@@ -266,6 +266,23 @@ def test_commit_help_names_the_paths_and_the_confirm_flag
   refute_includes detail, "git add -u"
 end
 
+  def test_terminal_approval_is_resolved_by_the_shared_input_loop
+    request = { answer: nil, choices: [] }
+    @cli.instance_variable_set(:@pending_terminal_ask, request)
+
+    assert @cli.send(:terminal_ask_pending?)
+    assert @cli.send(:answer_pending_terminal_ask, "/approve")
+    assert_equal "yes", request[:answer]
+  end
+
+  def test_invalid_terminal_approval_input_is_not_consumed
+    request = { answer: nil, choices: [] }
+    @cli.instance_variable_set(:@pending_terminal_ask, request)
+
+    refute @cli.send(:answer_pending_terminal_ask, "follow-up message")
+    assert_nil request[:answer]
+  end
+
   def test_prompt_shows_queue_count_without_changing_the_idle_prompt
     assert_equal "master$ ", @cli.send(:prompt_with_queue_status, "master$ ")
     @cli.instance_variable_get(:@turn_queue_mutex).synchronize do
