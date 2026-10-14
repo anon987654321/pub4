@@ -83,15 +83,30 @@ module Master
 
       # y/N, with the spinner held still so the question is not painted over.
       # Anything but a yes is a no, which Core::Fold decides.
+      # The main Reline loop owns input during queued turns. A pending approval
+      # is handed back through that loop, so it cannot race another readline.
       def answer_at_terminal(prompt, options: nil)
         @think_mutex&.synchronize { @think_paused = true }
-        terminal_print("\r\e[K")
         choices = normalize_ask_options(options)
-        return answer_choice_at_terminal(prompt, choices) unless choices.empty?
-
-        terminal_print("#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} ")
-        $stdin.gets.to_s.strip
+        request = { answer: nil, choices: }
+        @terminal_ask_mutex.synchronize { @pending_terminal_ask = request }
+        label = @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
+        lines = [label, *choices.each_with_index.map { |option, index| "  #{index + 1}) #{option.fetch(:name)}" }]
+        lines << (choices.empty? ? "enter /approve or /deny; other input stays queued" : "enter /approve N or /deny; other input stays queued")
+        terminal_puts(lines.join("\n"))
+        answer = @terminal_ask_mutex.synchronize do
+          @terminal_ask_cv.wait(@terminal_ask_mutex) while @pending_terminal_ask.equal?(request) && request[:answer].nil?
+          request[:answer]
+        end
+        return answer.to_s.strip if choices.empty?
+        index = Integer(answer, exception: false)
+        choice = index && choices[index - 1]
+        choice ? choice.fetch(:value).to_s : ""
       ensure
+        @terminal_ask_mutex&.synchronize do
+          @pending_terminal_ask = nil if request && @pending_terminal_ask.equal?(request)
+          @terminal_ask_cv&.broadcast
+        end
         @think_mutex&.synchronize { @think_paused = false }
       end
 
