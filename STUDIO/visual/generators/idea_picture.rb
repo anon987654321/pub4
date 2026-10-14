@@ -107,7 +107,9 @@ module Studio
         script = File.join(ROOT, "postpro", "postpro.rb")
         output_dir = File.join(Studio::OutputPaths.render_directory, "photograph-#{stamp}")
         env = { "POSTPRO_OUTPUT_DIR" => output_dir }
-        stdout, status = Open3.capture2e(env, RbConfig.ruby, script, "--rough", "--count", "1", path)
+        stdout, status = Open3.capture2e(
+          env, RbConfig.ruby, script, "--rough", "--count", "1", path
+        )
         raise "postpro failed: #{stdout.lines.last.to_s.strip}" unless status.success?
 
         ext = File.extname(path)
