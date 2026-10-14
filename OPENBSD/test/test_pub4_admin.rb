@@ -6,6 +6,15 @@ load File.expand_path("../usr/local/sbin/pub4-admin", __dir__)
 class Pub4AdminTest < Minitest::Test
   ADMIN = Pub4Admin
 
+  def test_disk_usage_broker_accepts_only_deploy_mount_roots
+    assert_equal ["/usr/bin/du", "-xk", "/home"],
+                 ADMIN.command_for(["disk-usage", "/home"])
+    assert_equal ["/usr/bin/du", "-xk", "/var"],
+                 ADMIN.command_for(["disk-usage", "/var"])
+    assert_nil ADMIN.command_for(["disk-usage", "/home/dev/pub4"])
+    assert_nil ADMIN.command_for(["disk-usage", "/etc"])
+    assert_nil ADMIN.command_for(["disk-usage", ";id"])
+  end
   def test_service_action_maps_to_fixed_argv
     assert_equal ["/usr/sbin/rcctl", "restart", "brgen"],
                  ADMIN.command_for(%w[service restart brgen])
