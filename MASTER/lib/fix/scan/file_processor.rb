@@ -41,6 +41,7 @@ module Master
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
           @progress_mutex = Mutex.new
           @active_law_checks = {}
+          @progress_previous_callbacks = {}
           @progress_sequence = 0
           @progress_thread = nil
           @progress_idle_since = nil
@@ -248,7 +249,9 @@ module Master
           return unless ENV["MASTER_SCAN_PROGRESS"] != "0"
 
           previous_callback = Thread.current.thread_variable_get(:master_scan_progress_callback)
-          token = { previous_callback: }
+          # Object identity keeps simultaneous worker threads from collapsing
+          # into one hash key when they enter the scanner at the same time.
+          token = Object.new
           callback = lambda do |inner_pass:, inner_law:, index:, total:, path:|
             @progress_mutex.synchronize do
               active = @active_law_checks[token]
@@ -287,6 +290,7 @@ module Master
           @progress_mutex.synchronize do
             @progress_sequence += 1
             row["checks"] = @progress_sequence
+            @progress_previous_callbacks[token] = previous_callback
             @active_law_checks[token] = row
             @progress_idle_since = nil
             @progress_last_check = row
@@ -298,10 +302,9 @@ module Master
         def end_law_progress(token)
           return unless token
 
-          Thread.current.thread_variable_set(
-            :master_scan_progress_callback, token.fetch(:previous_callback)
-          )
+          previous_callback = nil
           @progress_mutex.synchronize do
+            previous_callback = @progress_previous_callbacks.delete(token)
             finished = @active_law_checks.delete(token)
             if finished && @active_law_checks.empty?
               @progress_idle_since = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -312,6 +315,7 @@ module Master
               )
             end
           end
+          Thread.current.thread_variable_set(:master_scan_progress_callback, previous_callback)
         end
 
         def start_progress_monitor_locked
