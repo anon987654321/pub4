@@ -86,6 +86,10 @@ module Master
       # The main Reline loop owns input during queued turns. A pending approval
       # is handed back through that loop, so it cannot race another readline.
       def answer_at_terminal(prompt, options: nil)
+        if @turn_worker&.alive?
+          terminal_puts("ask0: terminal input is busy; this action is refused safely")
+          return ""
+        end
         @think_mutex&.synchronize { @think_paused = true }
         choices = normalize_ask_options(options)
         request = { answer: nil, choices: }
