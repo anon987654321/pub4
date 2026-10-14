@@ -65,7 +65,7 @@ class Pub4AdminTest < Minitest::Test
   def test_rails_task_accepts_only_closed_app_task_arguments
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
-    assert_includes source, 'args[0] == "rails-task" && RAILS_APPS.include?(args[1])'
+    assert_includes source, 'args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])'
     assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
     assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
     assert_includes helper, "master|brgen|amber|bsdports"
