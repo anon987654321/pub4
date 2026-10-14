@@ -39,12 +39,17 @@ module Master
 
           def check_stream(code, path:, mode:)
             lang = language(path)&.to_sym
-            ::Law.definitions.each_value.flat_map do |law|
-              next [] unless law.enforceable?
-              next [] unless law.scannable?
-              next [] unless law.mode.to_sym == mode
-              next [] unless law.applies?(path, lang)
-
+            applicable = ::Law.definitions.each_value.select do |law|
+              law.enforceable? && law.scannable? && law.mode.to_sym == mode && law.applies?(path, lang)
+            end
+            applicable.each_with_index.flat_map do |law, index|
+              Thread.current.thread_variable_get(:master_scan_progress_callback)&.call(
+                inner_pass: "laws.yml/#{mode}",
+                inner_law: law.id,
+                index: index + 1,
+                total: applicable.size,
+                path:,
+              )
               stream = mode == :opportunity ? :lexical_opportunities : :lexical_violations
               law.scan(code, file: path).map do |hit|
                 Finding.build(
