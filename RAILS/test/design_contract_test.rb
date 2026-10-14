@@ -112,6 +112,24 @@ class DesignContractTest < Minitest::Test
                  "the port meta strip stays sticky once the nav fits one row")
   end
 
+  def test_bsdports_primary_nav_rules_target_the_rendered_landmark
+    layout = File.read(File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb"))
+    layout_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_layout.scss"))
+    pages_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss"))
+
+    assert_match(/<nav\b[^>]*data-pwa-primary-nav/, layout,
+                 "BSDports must expose the canonical primary-navigation marker")
+    [layout_css, pages_css].each do |source|
+      refute_match(/body\s*>\s*nav\[aria-label="Primary navigation"\]/, source,
+                   "primary-nav rules must not depend on a false body-child or English-label assumption")
+    end
+    assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*min-height:\s*52px[^}]*flex-wrap:\s*wrap/m, layout_css)
+    assert_match(/nav\[data-pwa-primary-nav\]\s+a\[aria-current="page"\]/, layout_css)
+    assert_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*flex-wrap:\s*nowrap/m, pages_css)
+    refute_match(/nav\[data-pwa-primary-nav\]\s*\{[^}]*transform:\s*translateY\(0\)/m, layout_css,
+                 "shared chrome must retain ownership of scroll-away visibility")
+  end
+
   def test_amber_feature_styles_are_loaded_at_their_original_boundaries
     app = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss"))
     styles_dir = File.join(ROOT, "amber", "app", "assets", "stylesheets")
