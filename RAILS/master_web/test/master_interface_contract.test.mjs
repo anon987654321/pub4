@@ -8,6 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
 const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
+const faceConversation = readFileSync(join(root, "styles", "face", "30_conversation.css"), "utf8");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
 const interaction = readFileSync(join(publicDir, "master_interaction_state.js"), "utf8");
@@ -131,6 +132,10 @@ test("message action menu is localized, safe to render, and viewport-aware", () 
   assert.match(menu, /visualViewport/);
   assert.match(menu, /setAttribute\('role', 'group'\)/);
   assert.doesNotMatch(menu, /menu\.innerHTML/);
+  for (const css of [faceConversation, faceCss]) {
+    assert.match(css, /\.action-menu button\s*\{[^}]*min-block-size:\s*var\(--tap-min\)/s);
+    assert.match(css, /\.action-menu button:focus-visible\s*\{[^}]*outline:/s);
+  }
 });
 test("face shell stays flat and square", () => {
   assert.doesNotMatch(faceCss, /backdrop-filter\s*:\s*(?!none\b)[^;]+;/i);
