@@ -1,72 +1,478 @@
 # Dilla
 
-**A small room that plays a chord progression soft and a little late, with drums that lean on the beat and a rack of analogue colour.** The executable `dilla.rb` is a thin shell over the modules in `lib/dilla/`. Instrument patches and grooves live in `data/dilla.json`; the eight-part Blue Hour Dilla Minor Dub Cut lives in `data/showcase.json`; harmonic references live in `data/music_theory.json`.
+**A small room that plays a chord progression soft and a little late, with drums that
+lean on the beat and a rack of analogue colour.** The executable `dilla.rb` is a thin
+shell over the modules in `lib/dilla/`. Instrument patches and grooves live in
+`data/dilla.json`; the eight-part Blue Hour Dilla Minor Dub Cut lives in
+`data/showcase.json`; harmonic references live in `data/music_theory.json`.
 
-A bare `ruby dilla.rb` plays live, in real time and without end, drawing every pass from all four hundred and sixty-seven progressions and from every mode, style, patch, groove profile, kit and drum pattern, each from its own shuffle bag. Add `--out PATH` or `--render` to write one such random take to a new file instead; with no path it goes under `~/Documents/dilla-renders/<date>` (or `$XDG_DATA_HOME`), outside the checkout, and it prints the seed so the take can be rebuilt. Any flag that chooses content, such as `--progression`, `--arp`, `--voice` or `--drums`, plays exactly what it names, and `--showcase` renders the eight-part **Blue Hour — Dilla Minor Dub Cut** at `dilla.wav`; `ruby dilla.rb live` loops that arrangement through the system player. Because `dilla.wav` is the tracked audition reference, the current checkout refuses to replace it implicitly. Choose a new path with `--out ~/Documents/dilla-renders/blue-hour-new.wav` and `--midi ~/Documents/dilla-renders/blue-hour-new.mid`, or pass `--replace` only when replacement is deliberate. Existing WAV and MIDI files are never truncated implicitly: outputs are staged beside the destination and published atomically, so a failed write leaves the previous take intact. Every section runs at 92 BPM and declares a natural- or harmonic-minor scale; the renderer rejects chord or lead notes outside it. Ordinary progression renders and the rotating live set now inherit a low dub-bass line, a soft Prophet-style chord bed and a glassy DX electric-piano arp unless a profile explicitly keeps itself sparse. The eight-part showcase goes further, with Rhodes chords and a tine-Wurli lead plus a quiet Juno string layer and a high tine arp. All layers follow the same named progression, so the extra colours do not add notes outside its scale. Showcase-only Dilla kit patterns add restrained clap, open-hat, rim, woodblock and tom accents over the dust kit; the original three-role patterns remain unchanged for standalone callers. The feel stays half-time and syncopated rather than bright or hurried. The hi-hat keeps a fast sixteenth-note pulse, but hit velocity and timing vary around the kick and snare pocket. Reverb is off. A shared effect rig adds a restrained three-head dub send and a soft crystallizer send to the instruments, then hits the drum bus hard with three cassette-colour Sonitex passes, heavy static tape saturation, multi-head dub feedback, octave-up crystallized repeats and nasty_vcs bus glue. The tape/crystal path has no wow, flutter, tremolo or chorus. Use `ruby dilla.rb --showcase --out out/blue-hour.wav` to choose another output path, `ruby dilla.rb --list` to inspect the progression pool, or `ruby dilla.rb --progression 3 --drums offbeat_inversion --out out/three.wav` for a standalone progression. Add `--midi out/three.mid` for a Standard MIDI File, or `--random` for a random take. The showcase uses a fixed seed by default; `--seed N` makes a different take repeatable. The Ruby engine writes 16-bit mono at 44.1 kHz. The tracked `dilla.wav` is the audition reference; treat it as a runtime bounce only after rendering it with this engine version. Temporary renders under `out/` are ignored. Keep irreplaceable recordings outside the checkout.
+A bare `ruby dilla.rb` plays live, in real time and without end, drawing every pass from
+all four hundred and sixty-seven progressions and from every mode, style, patch, groove
+profile, kit and drum pattern, each from its own shuffle bag. Add `--out PATH` or
+`--render` to write one such random take to a new file instead; with no path it goes
+under `~/Documents/dilla-renders/<date>` (or `$XDG_DATA_HOME`), outside the checkout,
+and it prints the seed so the take can be rebuilt.
 
-The data holds a flat list of progressions, each a list of chord names such as Fm9, Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies. The first hundred and five were picked by hand. The rest were read as plain text out of the old engine's progression table, its sourced reference file and its set files, parsed with the voicer, respelled with flats and deduped by spelling, and sixty four- and five-chord windows from the old engine's history were added after them, which brings the list to four hundred and sixty-seven. An essential list marks the staples of four or five chords by their root motion, such as the minor two-five-one, the one-six-two-five, the one-four-five and the one-flat-six-flat-seven, along with the best-scoring windows, and `--play` draws only from those unless `--pool all` says otherwise. A chord holds two bars of four beats unless a profile or `--beats` says otherwise.
+Any flag that chooses content, such as `--progression`, `--arp`, `--voice` or `--drums`,
+plays exactly what it names, and `--showcase` renders the eight-part **Blue Hour — Dilla
+Minor Dub Cut** at `dilla.wav`; `ruby dilla.rb live` loops that arrangement through the
+system player. Because `dilla.wav` is the tracked audition reference, the current
+checkout refuses to replace it implicitly. Choose a new path with
+`--out ~/Documents/dilla-renders/blue-hour-new.wav` and
+`--midi ~/Documents/dilla-renders/blue-hour-new.mid`, or pass `--replace` only when
+replacement is deliberate. Existing WAV and MIDI files are never truncated implicitly:
+outputs are staged beside the destination and published atomically, so a failed write
+leaves the previous take intact.
 
-The voicer reads the name. It puts the root, or the bass of a slash chord, in the low octave and the other tones above. Each upper note starts as near as it can be to the one before it. A search then tries every octave shift on every voice and keeps the voicing that moves least, keeps the top line smooth, and leaves no two neighbours closer than a whole tone. Measured over the first hundred and five progressions, leaps in the top line of more than a major third fell from a third of all chord changes to about a twentieth. Spacing never throws a chord tone away: when a chord is over the five-voice cap the perfect fifth goes first, then an altered fifth, then the root if the bass already plays it, and the third, the seventh and every named extension stay. A slash chord keeps its root above the separate bass. `--no-voice-search` switches the search off.
+Every section runs at 92 BPM and declares a natural- or harmonic-minor scale; the
+renderer rejects chord or lead notes outside it. Ordinary progression renders and the
+rotating live set now inherit a low dub-bass line, a soft Prophet-style chord bed and a
+glassy DX electric-piano arp unless a profile explicitly keeps itself sparse. The
+eight-part showcase goes further, with Rhodes chords and a tine-Wurli lead plus a quiet
+Juno string layer and a high tine arp. All layers follow the same named progression, so
+the extra colours do not add notes outside its scale. Showcase-only Dilla kit patterns
+add restrained clap, open-hat, rim, woodblock and tom accents over the dust kit; the
+original three-role patterns remain unchanged for standalone callers. The feel stays
+half-time and syncopated rather than bright or hurried. The hi-hat keeps a fast
+sixteenth-note pulse, but hit velocity and timing vary around the kick and snare pocket.
+Reverb is off. A shared effect rig adds a restrained three-head dub send and a soft
+crystallizer send to the instruments, then hits the drum bus hard with three
+cassette-colour Sonitex passes, heavy static tape saturation, multi-head dub feedback,
+octave-up crystallized repeats and nasty_vcs bus glue. The tape/crystal path has no wow,
+flutter, tremolo or chorus.
 
-A groove profile says how a render is played. Soft_swing, lush and dry are texture and swing only, and early_snare_late_hats, late_snare, behind_the_beat, loose_pocket and pump move the drums by milliseconds. The default is straight_hats_snare_ahead, which measures its leans in shares of a sixteenth step, so they follow the tempo. The hats hold the grid. The snare sits ahead of them by about three tenths of a step. The kick holds the downbeat and lags a little after it everywhere else. A snare off the backbeat is a ghost and lags further than the kick. The lean of each voice on each step in the bar is drawn once from the seed, so every bar leans exactly as the first did. The same share is a different number of milliseconds at each tempo: at 88 beats a minute a tenth of a step is seventeen milliseconds, at 70 it is twenty-one. Nothing moves more than thirty-five milliseconds from its place, and at the usual tempos that clamp binds the snare, which would otherwise lean fifty milliseconds at 88. The single knob `--groove` scales the whole profile: nought is the grid, one is the profile as written. Voices the pocket does not own keep their placement. The previous default was soft_swing, which moved no drum at all.
+Use `ruby dilla.rb --showcase --out out/blue-hour.wav` to choose another output path,
+`ruby dilla.rb --list` to inspect the progression pool, or
+`ruby dilla.rb --progression 3 --drums offbeat_inversion --out out/three.wav` for a
+standalone progression. Add `--midi out/three.mid` for a Standard MIDI File, or
+`--random` for a random take. The showcase uses a fixed seed by default; `--seed N`
+makes a different take repeatable.
 
-The drum patterns are sixteen-step rows. The Dilla shadow patterns keep sixteenth hats, syncopate the kick, sit the backbeat just ahead and lay quieter ghost hits behind it. Fractional step values are hit velocities, not merely on/off markers, so the hats accent and ghost snares tuck back. Patterns may also be thirty-two steps long, may carry a variant or two per four-bar phrase, a fill for the last bar of every fourth and eighth bar, and layers with lengths of their own, such as five or seven or fifteen steps, that run across the bars so their alignment against the grid drifts. A ratchet is a cell that holds a velocity and a count. A seeded mutation may swap two hits, shift one a sixteenth, add or drop a ghost, double a kick or rotate the hats, so no two bars run alike, and a snare density above one adds back snares on steps nothing else uses. `--drums rotate` plays the next pattern of the whole set every phrase and never the same twice running. Forty small cells from the old history sit beside the hand-made patterns under neutral names. The mix still supports `--kick-db`, `--snare-db`, `--hat-db` and `--chords-db`. The kick is added after sidechain processing, so the pump never ducks the transient; tape and effects then work on the drum bus without losing that front edge.
+The Ruby engine writes 16-bit mono at 44.1 kHz. The tracked `dilla.wav` is the audition
+reference; treat it as a runtime bounce only after rendering it with this engine
+version. Temporary renders under `out/` are ignored. Keep irreplaceable recordings
+outside the checkout.
 
-Chords can be played three ways. A held pad is the default. `--arp` plays each chord one note at a time, lowest voice first, in a named pattern: up, down, updown, converge, random_seeded, broken_pairs, thumb_pattern, pedal_arp or spread_roll. The pace, gate and octave span come from a style in the data, chosen with `--arp-style` and nudged with `--arp-rate`, which counts sixteenths per note, so 3 is a dotted eighth and 3T a triplet. `--repeat` strikes the whole voicing again on the steps of a style instead, such as quarter stabs, off-beat skanks, a dotted-eighth push or a long-short figure. Both read the groove profile's swing, and both take the same small modifiers, listed by name in the data: a euclidean mask, a chance of dropping a note, repeats, ratchets on accented notes, a little humanize that stays inside the clamp, and grace notes that land on the next chord tone below. `--strum` staggers the voices of a plain chord, lowest first.
+The data holds a flat list of progressions, each a list of chord names such as Fm9,
+Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies.
+The first hundred and five were picked by hand. The rest were read as plain text out of
+the old engine's progression table, its sourced reference file and its set files, parsed
+with the voicer, respelled with flats and deduped by spelling, and sixty four- and
+five-chord windows from the old engine's history were added after them, which brings the
+list to four hundred and sixty-seven. An essential list marks the staples of four or
+five chords by their root motion, such as the minor two-five-one, the one-six-two-five,
+the one-four-five and the one-flat-six-flat-seven, along with the best-scoring windows,
+and `--play` draws only from those unless `--pool all` says otherwise. A chord holds two
+bars of four beats unless a profile or `--beats` says otherwise.
 
-The old arp effect was not an arpeggiator. It sorted a chord's notes by pitch, handed each event one of them in turn, and delayed it by a sixteenth of the time a note was held, so the notes started a few milliseconds apart: a strum. It had no rate, no pattern, no gate, no octave span and no direction. The new arp keeps the idea as the explicit strum option and takes the small modifiers, note repeat, euclidean mask, probability, ratchet, humanize and grace, from the same family, rewritten to act on the note stream.
+The voicer reads the name. It puts the root, or the bass of a slash chord, in the low
+octave and the other tones above. Each upper note starts as near as it can be to the one
+before it. A search then tries every octave shift on every voice and keeps the voicing
+that moves least, keeps the top line smooth, and leaves no two neighbours closer than a
+whole tone. Measured over the first hundred and five progressions, leaps in the top line
+of more than a major third fell from a third of all chord changes to about a twentieth.
+Spacing never throws a chord tone away: when a chord is over the five-voice cap the
+perfect fifth goes first, then an altered fifth, then the root if the bass already plays
+it, and the third, the seventh and every named extension stay. A slash chord keeps its
+root above the separate bass. `--no-voice-search` switches the search off.
 
-The arp style `flow` is a fluid arpeggio. A random walk called energy, between nought and one, drifts from beat to beat along an arch over each chord, and it drives the density, the velocity, the rate and the openness: the rate breathes from quarters through eighths and triplets to sixteenths, rests thin out as the energy falls, the notes grow louder as it rises, and the pool of notes opens from one octave to two. The order of the notes is a seeded Markov chain over the chord's tones that prefers to move by a step and to keep its direction. A run swells toward its top note and the notes passed on the way are ghosted. Each chord leans a few milliseconds inside the clamp, early in its body and late at its end, and a sine pad under it swells and falls with the same energy. Six more creative patterns are in the data as styles. The `spiral` goes out from the middle one note either side in turn and comes back in. The `pendulum` goes up two and back one to the top and down again. The `fibonacci` takes the Fibonacci numbers round the pool, and the `prime_walk` takes strides of the first primes. The `call_response` rises for four notes, answers falling for three and rests. The `pedal_point` returns to the lowest note between the others. The styles `poly5` and `poly7` put a note every five or seven sixteenths against the four-beat grid. Every note of every style is a tone of its chord, and `--arp list` prints the patterns, the styles and the modifiers.
+A groove profile says how a render is played. Soft_swing, lush and dry are texture and
+swing only, and early_snare_late_hats, late_snare, behind_the_beat, loose_pocket and
+pump move the drums by milliseconds. The default is straight_hats_snare_ahead, which
+measures its leans in shares of a sixteenth step, so they follow the tempo. The hats
+hold the grid. The snare sits ahead of them by about three tenths of a step. The kick
+holds the downbeat and lags a little after it everywhere else. A snare off the backbeat
+is a ghost and lags further than the kick. The lean of each voice on each step in the
+bar is drawn once from the seed, so every bar leans exactly as the first did. The same
+share is a different number of milliseconds at each tempo: at 88 beats a minute a tenth
+of a step is seventeen milliseconds, at 70 it is twenty-one. Nothing moves more than
+thirty-five milliseconds from its place, and at the usual tempos that clamp binds the
+snare, which would otherwise lean fifty milliseconds at 88. The single knob `--groove`
+scales the whole profile: nought is the grid, one is the profile as written. Voices the
+pocket does not own keep their placement. The previous default was soft_swing, which
+moved no drum at all.
 
-A voice is a row of the data. The sine voice is a stack of four sine partials. The moog voices are detuned saw and pulse oscillators on phase accumulators into a four-pole ladder lowpass with a drive, a resonance and an envelope that sweeps the cutoff, so every note begins bright and darkens. The rhodes voices are frequency-modulated electric pianos: a body pair near one to one, a bell pair at fourteen to one whose index dies away in a few tenths of a second, a soft hammer click, and a brighter touch for a harder note. The dfam voice is a percussive pair of oscillators with a pitch sweep, modulation between them and a little noise, through the same ladder. Nothing moves except by envelope: there is no tremolo, no chorus, no wow, no flutter and no LFO anywhere. `--voice` picks one for any profile.
+The drum patterns are sixteen-step rows. The Dilla shadow patterns keep sixteenth hats,
+syncopate the kick, sit the backbeat just ahead and lay quieter ghost hits behind it.
+Fractional step values are hit velocities, not merely on/off markers, so the hats accent
+and ghost snares tuck back. Patterns may also be thirty-two steps long, may carry a
+variant or two per four-bar phrase, a fill for the last bar of every fourth and eighth
+bar, and layers with lengths of their own, such as five or seven or fifteen steps, that
+run across the bars so their alignment against the grid drifts. A ratchet is a cell that
+holds a velocity and a count. A seeded mutation may swap two hits, shift one a
+sixteenth, add or drop a ghost, double a kick or rotate the hats, so no two bars run
+alike, and a snare density above one adds back snares on steps nothing else uses.
+`--drums rotate` plays the next pattern of the whole set every phrase and never the same
+twice running. Forty small cells from the old history sit beside the hand-made patterns
+under neutral names. The mix still supports `--kick-db`, `--snare-db`, `--hat-db` and
+`--chords-db`. The kick is added after sidechain processing, so the pump never ducks the
+transient; tape and effects then work on the drum bus without losing that front edge.
 
-Every voice carries a group, which is what the ear calls its kind: the moogs, the electric pianos, the polysynth pads, the strings, the dub voices, the organ. The play bag keeps a group from following itself. The polysynth pads are the moog voice with more oscillators: `prophet_pad` and `prophet_warm` stack saws, pulses and triangles under a ladder that opens on the attack and settles, `oberheim_pad` is wider and darker, and `cs80_ensemble` sweeps a resonant filter for a brass-like swell. The string machines, `juno_strings` and `solina_ensemble`, get their ensemble from a static spread of six or four detuned saws instead of a chorus, and no oscillator is detuned more than six cents. The fallback `ruby_strings` is five detuned saws behind a slow attack and a lowpass. The dub voices are `dub_stab`, a short pulse chord with a closing filter, `dub_pad`, a dark triangle and sine pad, `dub_bass`, a sine over a triangle an octave down, and `dub_bubble`, an organ-like bank of sine partials gated by a row of steps held in the data. The gate is the grid and not an oscillator, and a few milliseconds of slew keep its edges from clicking.
+Chords can be played three ways. A held pad is the default. `--arp` plays each chord one
+note at a time, lowest voice first, in a named pattern: up, down, updown, converge,
+random_seeded, broken_pairs, thumb_pattern, pedal_arp or spread_roll. The pace, gate and
+octave span come from a style in the data, chosen with `--arp-style` and nudged with
+`--arp-rate`, which counts sixteenths per note, so 3 is a dotted eighth and 3T a
+triplet. `--repeat` strikes the whole voicing again on the steps of a style instead,
+such as quarter stabs, off-beat skanks, a dotted-eighth push or a long-short figure.
+Both read the groove profile's swing, and both take the same small modifiers, listed by
+name in the data: a euclidean mask, a chance of dropping a note, repeats, ratchets on
+accented notes, a little humanize that stays inside the clamp, and grace notes that land
+on the next chord tone below. `--strum` staggers the voices of a plain chord, lowest
+first.
 
-The profile `dub_dark` plays the stab on the upbeats at 76 beats a minute over a bass that holds the root of each chord, a quiet pad and the bubble, with the one-drop, steppers and rockers patterns on the dust kit. Its echo is heavy, and it is thrown: in each phrase of four bars the send to the tape sits low, then one bar chosen by the seed, never the first, turns it up, so a few stabs run into the heads and ring on over the quiet that follows. The texture adds a spring, which is the signal band limited to what a spring passes and sent round a short loop through a chain of allpass sections, the chirp of a spring and its splash. A layer in a profile may play only the bass of each chord, and a profile may rotate through a list of drum patterns.
+The old arp effect was not an arpeggiator. It sorted a chord's notes by pitch, handed
+each event one of them in turn, and delayed it by a sixteenth of the time a note was
+held, so the notes started a few milliseconds apart: a strum. It had no rate, no
+pattern, no gate, no octave span and no direction. The new arp keeps the idea as the
+explicit strum option and takes the small modifiers, note repeat, euclidean mask,
+probability, ratchet, humanize and grace, from the same family, rewritten to act on the
+note stream.
 
-The organ voice is additive. Each rank is a sine at a ratio to the played pitch, sixteen foot at one half, eight foot at one, four foot at two, two and two thirds at three, two foot at four and the ranks of a mixture at six and eight, and a registration is the row of weights for those ranks, with six in the data from a single principal to the full organ. A pipe speaks with a chiff, about fifteen milliseconds of noise that dies away as the tone arrives, and there is no tremulant. The mode `organ` improvises for the organ in the manner of the baroque, and `--key`, `--scale` and `--bars` set the tonic, the scale and the length. The scale is declared, one of harmonic minor, natural minor, major or dorian, and every note is a step of it, so none can leave it. The chords are its own triads, one to a bar, in phrases of two to four bars that close on half, authentic, deceptive or plagal cadences, the last always authentic. The pedal plays between C2 and C3, the root on the strong beats, a walk of quarters with an approach to the next root, or a tonic held through the lead bars of a phrase. The inner voices sit between D3 and G4 and hold suspensions, 4-3 and 9-8 over the root and 7-6 over the third, tied from the chord before and falling a step on the third beat. The right hand, between C4 and C6, is built from a chord tone on each half bar along an arch through the phrase and decorates the way between them with stepwise runs in eighths and sixteenths, neighbour tones, turns, appoggiaturas, dotted figures, the motif of the piece and the motif a step along, and a short trill on the way into the cadence, and it lets go four sixteenths before a phrase ends to breathe. The registration of the right hand rotates from phrase to phrase, the pedal and the left hand keep theirs, and the whole piece leans by a rubato that runs ahead through a phrase and relaxes into its cadence, never more than thirty milliseconds. The same seed plays the same piece. In `--play` the organ is one of the modes and draws no patch from the bag.
+The arp style `flow` is a fluid arpeggio. A random walk called energy, between nought
+and one, drifts from beat to beat along an arch over each chord, and it drives the
+density, the velocity, the rate and the openness: the rate breathes from quarters
+through eighths and triplets to sixteenths, rests thin out as the energy falls, the
+notes grow louder as it rises, and the pool of notes opens from one octave to two. The
+order of the notes is a seeded Markov chain over the chord's tones that prefers to move
+by a step and to keep its direction. A run swells toward its top note and the notes
+passed on the way are ghosted. Each chord leans a few milliseconds inside the clamp,
+early in its body and late at its end, and a sine pad under it swells and falls with the
+same energy. Six more creative patterns are in the data as styles. The `spiral` goes out
+from the middle one note either side in turn and comes back in. The `pendulum` goes up
+two and back one to the top and down again. The `fibonacci` takes the Fibonacci numbers
+round the pool, and the `prime_walk` takes strides of the first primes. The
+`call_response` rises for four notes, answers falling for three and rests. The
+`pedal_point` returns to the lowest note between the others. The styles `poly5` and
+`poly7` put a note every five or seven sixteenths against the four-beat grid. Every note
+of every style is a tone of its chord, and `--arp list` prints the patterns, the styles
+and the modifiers.
 
-Strings, choir and warm pads are also played from a soundfont by the fluidsynth binary: the notes of a part are written as a Standard MIDI File with the program change of General MIDI, fluidsynth renders it with its reverb and chorus off, and the wav is read back and mixed in before the effects. The voices are `fluid_strings`, `fluid_strings_slow`, `fluid_synth_strings`, `fluid_choir` and `fluid_warm_pad`. `DILLA_SOUNDFONT` names the soundfont, else the first whole file of `FluidR3_GM.sf2` and `GeneralUser-GS.sf2` in the soundfont folder of the download in `~/Downloads/pub3-main*` and then in `~/.cache/dilla-soundfonts`. A soundfont must be whole: the RIFF header says how long the file is, and the copy of `FluidR3_GM.sf2` in that download is cut short at 3.4 of 148 megabytes, so it is passed over. Where fluidsynth or a whole soundfont is missing, the voice says so on standard error and `ruby_strings` plays in its place, and the play bag leaves the soundfont voices out. Whatever vibrato a soundfont's own patches carry is the soundfont's, and the engine cannot remove it.
+A voice is a row of the data. The sine voice is a stack of four sine partials. The moog
+voices are detuned saw and pulse oscillators on phase accumulators into a four-pole
+ladder lowpass with a drive, a resonance and an envelope that sweeps the cutoff, so
+every note begins bright and darkens. The rhodes voices are frequency-modulated electric
+pianos: a body pair near one to one, a bell pair at fourteen to one whose index dies
+away in a few tenths of a second, a soft hammer click, and a brighter touch for a harder
+note. The dfam voice is a percussive pair of oscillators with a pitch sweep, modulation
+between them and a little noise, through the same ladder. Nothing moves except by
+envelope: there is no tremolo, no chorus, no wow, no flutter and no LFO anywhere.
+`--voice` picks one for any profile.
 
-The tape space echo has three playback heads at one, two and three times a base delay, which is a dotted eighth unless `--echo-time` says milliseconds. The heads in use are summed, darkened by a lowpass and a mild saturation, and fed back, so each repeat is quieter and duller than the last. Intensity is clamped to nine tenths so the loop cannot run away. At every chord change the heads are cleared, so the repeats of one chord never sound over the next, and after the last chord the repeats ring on and die away of themselves. `--echo`, `--echo-mix`, `--echo-feedback` and `--echo-time` set it.
+Every voice carries a group, which is what the ear calls its kind: the moogs, the
+electric pianos, the polysynth pads, the strings, the dub voices, the organ. The play
+bag keeps a group from following itself. The polysynth pads are the moog voice with more
+oscillators: `prophet_pad` and `prophet_warm` stack saws, pulses and triangles under a
+ladder that opens on the attack and settles, `oberheim_pad` is wider and darker, and
+`cs80_ensemble` sweeps a resonant filter for a brass-like swell. The string machines,
+`juno_strings` and `solina_ensemble`, get their ensemble from a static spread of six or
+four detuned saws instead of a chorus, and no oscillator is detuned more than six cents.
+The fallback `ruby_strings` is five detuned saws behind a slow attack and a lowpass. The
+dub voices are `dub_stab`, a short pulse chord with a closing filter, `dub_pad`, a dark
+triangle and sine pad, `dub_bass`, a sine over a triangle an octave down, and
+`dub_bubble`, an organ-like bank of sine partials gated by a row of steps held in the
+data. The gate is the grid and not an oscillator, and a few milliseconds of slew keep
+its edges from clicking.
 
-Sonitex, tape, dub echo, crystallizer and nasty_vcs stay separate stages in the signal path. Sonitex brings driven filtering, bit/sample-rate reduction, dust, compression and limiting. The analogue tape stage adds static bandwidth shaping, head warmth, saturation and compression without pitch modulation. The dub echo uses three differently timed heads with feedback and a dark low-pass. The crystallizer shifts overlapping short grains by a fixed musical interval and feeds delayed repeats back at a lower level; each repeat moves another interval higher. The shared `dilla_night` rig applies these stages to instrument and drum buses separately, then uses nasty_vcs to glue the drum bus and final sum. The drums receive the heavier send, cassette Sonitex x3, heavy tape, octave-up crystals and stronger summing saturation; the instrument echo/crystal send stays quieter so the chord tones remain clear. Reverb is intentionally zero.
+The profile `dub_dark` plays the stab on the upbeats at 76 beats a minute over a bass
+that holds the root of each chord, a quiet pad and the bubble, with the one-drop,
+steppers and rockers patterns on the dust kit. Its echo is heavy, and it is thrown: in
+each phrase of four bars the send to the tape sits low, then one bar chosen by the seed,
+never the first, turns it up, so a few stabs run into the heads and ring on over the
+quiet that follows. The texture adds a spring, which is the signal band limited to what
+a spring passes and sent round a short loop through a chain of allpass sections, the
+chirp of a spring and its splash. A layer in a profile may play only the bass of each
+chord, and a profile may rotate through a list of drum patterns.
 
-Every render ends on a stack of tape machines, and nothing comes after them but a soft ceiling just under full scale. One machine is a Jiles-Atherton hysteresis loop for the medium, which is why a transient and a held note are squeezed differently, then a low head bump near fifty hertz and the loss at the top. The first machine runs the loop, which is the costly part, and the others use an arctangent curve, each driven a step harder than the one before. Each machine is level matched against the programme itself, so the stack changes colour and not loudness, and the output stays within a decibel of the input level. Nothing moves: there is no wow, no flutter and no hiss, and a sine through the stack comes out exactly periodic. `--tape N` sets the number of machines, four by default, and `--tape 0` leaves the sound bit for bit as it was. `--tape-drive X` sets how hard the first one is pushed. Seeds come from a CRC of the render seed, so a take repeats on any machine. Each machine keeps its state between calls, so a signal cut into chunks leaves the stack as one long call does. On this Mac the four machines cost about twenty seconds for each minute of sound, nearly all of it in the loop.
+The organ voice is additive. Each rank is a sine at a ratio to the played pitch, sixteen
+foot at one half, eight foot at one, four foot at two, two and two thirds at three, two
+foot at four and the ranks of a mixture at six and eight, and a registration is the row
+of weights for those ranks, with six in the data from a single principal to the full
+organ. A pipe speaks with a chiff, about fifteen milliseconds of noise that dies away as
+the tone arrives, and there is no tremulant. The mode `organ` improvises for the organ
+in the manner of the baroque, and `--key`, `--scale` and `--bars` set the tonic, the
+scale and the length. The scale is declared, one of harmonic minor, natural minor, major
+or dorian, and every note is a step of it, so none can leave it.
 
-The sound is stereo, and `--mono` folds it to one channel with no panning, no ping-pong and no imager. A block of audio is an array of channels. Each note is placed by its voice's group and then spread by its pitch, the low notes staying near the middle and the high ones going out, and each drum is placed by its role, with the kick in the middle and the hats a little right and alternating. The data holds the places under `stereo`. The pan law is constant power and unity at the centre, so a part in the middle is as loud in each channel as it was in mono. The colour, the room and the spring run once for each channel, and the right side uses other delays than the left so the two rooms are not the same room. The echo is ping-pong: the odd heads sound on the left, the even heads on the right, and what is fed back is all of them, so the repeats cross the room; a single head is heard in the middle. After the effects, the stereo imager works in mid and side. It leaves the mid exactly as it is, so the mono sum of the result is the mono sum of what went in, takes the side out below 120 hertz with a Linkwitz-Riley crossover, which puts the sub in the middle, and raises the side above four kilohertz, so the highs are wider. The tape stack then runs on the mid, and a light one of the cheap curve on the side. The wav is written with two channels, and a single render goes through the same streamer as `--play`, a bar at a time, so there is one chain and not two. The showcase is the exception: it keeps its sections whole and mono, so that the tracked reference stays reproducible.
+The chords are its own triads, one to a bar, in phrases of two to four bars that close
+on half, authentic, deceptive or plagal cadences, the last always authentic.
 
-A profile may list a `chain` of optional effect stages, which sit after the colour and before the echo, so that the echo throws what the stages made. Each runs once for each channel with a seed of its own, keeps its state between blocks, and gives the same samples however the pass is cut. The room is a Freeverb, four combs with damping in the loop and two allpass sections, and the shimmer is the same room with an octave-up pitch shifter in its feedback, so each round of the tail is higher and quieter. The granular cloud takes Hann-windowed grains of sixty to two hundred milliseconds from the last two seconds of the signal, with a spray in how far back each starts, eighteen in a hundred an octave up, ten an octave down and a quarter of them reversed. The others are a bit and rate crusher, a triangle wave folder, a ring modulator at one fixed frequency, a frequency shifter built from two chains of allpass sections ninety degrees apart, which moves every partial by the same number of hertz and rejects the opposite sideband by more than fifty decibels, a reverse echo that plays the last segment backwards and swelling in beneath the next, a tape stop that slows the read pointer to nothing over the last second of the pass, a filter sweep that is an event every so many bars, a transient shaper, an exciter that drives the band above six kilohertz into a soft clip and adds it back, and a bank of resonators at inharmonic partials with a Q of eighteen. None uses a low-frequency oscillator. The cost of a stage on this Mac, with YJIT, in seconds of work for each second of audio and each channel, is about 0.03 for the room, 0.06 for the shimmer, 0.03 for the cloud, 0.07 for the frequency shifter, 0.04 for the resonators, 0.01 for the transient shaper and under 0.01 for the crusher, the folder, the ring modulator, the exciter, the reverse echo and the tape stop. The profiles `new_age`, `tape_dust` and `broken_radio` use them.
+The pedal plays between C2 and C3, the root on the strong beats, a walk of quarters with
+an approach to the next root, or a tonic held through the lead bars of a phrase. The
+inner voices sit between D3 and G4 and hold suspensions, 4-3 and 9-8 over the root and
+7-6 over the third, tied from the chord before and falling a step on the third beat. The
+right hand, between C4 and C6, is built from a chord tone on each half bar along an arch
+through the phrase and decorates the way between them with stepwise runs in eighths and
+sixteenths, neighbour tones, turns, appoggiaturas, dotted figures, the motif of the
+piece and the motif a step along, and a short trill on the way into the cadence, and it
+lets go four sixteenths before a phrase ends to breathe.
 
-Noise and sparkle layers are also named by a profile, under `noise`, and every one is optional and held under minus twenty-four decibels whatever the data says. The air is pink noise through a highpass at eight kilohertz, a long way down. The bed is brown noise under two hundred hertz, with a clamp so no spike climbs out of it. Dust is a Poisson scatter of pops a few milliseconds long, three a second unless the profile asks for more. The sparkle is a Poisson scatter of glints of two-operator frequency modulation, a few tenths of a second long, on the tones of the chord sounding then, put up to between four and eight kilohertz, each at a place of its own; the kick ducks it, and it has an echo of its own. The draws are in order, one for each sample or each event, from a stream seeded by the render, so a pass is the same every time and however it is cut.
+The registration of the right hand rotates from phrase to phrase, the pedal and the left
+hand keep theirs, and the whole piece leans by a rubato that runs ahead through a phrase
+and relaxes into its cadence, never more than thirty milliseconds. The same seed plays
+the same piece. In `--play` the organ is one of the modes and draws no patch from the
+bag.
 
-The master is a mixing and mastering chain in the order a console has it, from tone to dynamics to level, with the tape stack near the end and the limiter after it. It runs on every render and every play, and `--no-master` leaves it out. The stereo imager comes first and is described above. The equalizer cuts the low mids a little, lifts a shelf of air, and has a dynamic cut that deepens when the low mids build up. The multiband compressor splits the sound into three bands with Linkwitz-Riley lowpass sections at 200 hertz and 2.5 kilohertz and takes the rest by subtraction, so the three add back to the input exactly, and each band has its own threshold, ratio, attack and release in the data, the detector linked between the channels so the image does not move. A parallel compressor, hard and fast, is mixed in under the dry signal at a fifth, and a bus compressor glues the sum with a release of half a beat of the tempo. The loudness stage measures with the K-weighting of BS.1770 and its gates, which the tests check against a 997 hertz sine at minus twenty decibels full scale, minus twenty LUFS in two channels, and which agrees with ffmpeg's ebur128 to a tenth of a unit on a render. A whole render is brought to the target in one move, `--lufs N`, minus fourteen by default; a stream cannot know its integrated loudness before it has played, so it creeps toward the target at no more than two decibels a second from what it has heard. A soft clip bends the peaks, the tape stack follows, and last comes the limiter: it looks ahead sixty-four samples, finds the peak of each sample and of three points between it and the next with an eight-tap windowed sinc, so the ceiling of minus one decibel holds as a true peak and not only as a sample, spreads the gain it needs over the look-ahead and releases in a tenth of a second. A sixteen-bit wav is dithered with one least significant bit of triangular noise from a seeded stream, and `--bits 24` writes twenty-four bits without. Each render prints its integrated loudness, true peak, crest factor and the correlation of the channels. A material too sparse to reach the target under the ceiling ends up quieter than it, which is the ceiling doing its work. The dear stages are the multiband and the parallel compressor; on this Mac, with YJIT, the whole chain costs about a quarter of a second of work for each second of stereo audio, the multiband a tenth of it. A show that finds itself rendering at more than nine tenths of real time drops those two, says so on the screen, and goes on.
+Strings, choir and warm pads are also played from a soundfont by the fluidsynth binary:
+the notes of a part are written as a Standard MIDI File with the program change of
+General MIDI, fluidsynth renders it with its reverb and chorus off, and the wav is read
+back and mixed in before the effects. The voices are `fluid_strings`,
+`fluid_strings_slow`, `fluid_synth_strings`, `fluid_choir` and `fluid_warm_pad`.
+`DILLA_SOUNDFONT` names the soundfont, else the first whole file of `FluidR3_GM.sf2` and
+`GeneralUser-GS.sf2` in the soundfont folder of the download in `~/Downloads/pub3-main*`
+and then in `~/.cache/dilla-soundfonts`. A soundfont must be whole: the RIFF header says
+how long the file is, and the copy of `FluidR3_GM.sf2` in that download is cut short at
+3.4 of 148 megabytes, so it is passed over. Where fluidsynth or a whole soundfont is
+missing, the voice says so on standard error and `ruby_strings` plays in its place, and
+the play bag leaves the soundfont voices out. Whatever vibrato a soundfont's own patches
+carry is the soundfont's, and the engine cannot remove it.
 
-`--transpose` moves every note by that many semitones before synthesis, and `--octaves` is sugar for twelve times that. Nothing is resampled, and tempo and echo timing do not change. A note whose fundamental lies above forty-five hundredths of the sample rate is dropped rather than folded back down, and a warning says how many were lost. Twelve octaves up puts every chord far past the limit, so the honest result is silence. `--transpose-wrap` instead folds each note down by octaves until it is under fourteen kilohertz, the highest audible register.
+The tape space echo has three playback heads at one, two and three times a base delay,
+which is a dotted eighth unless `--echo-time` says milliseconds. The heads in use are
+summed, darkened by a lowpass and a mild saturation, and fed back, so each repeat is
+quieter and duller than the last. Intensity is clamped to nine tenths so the loop cannot
+run away. At every chord change the heads are cleared, so the repeats of one chord never
+sound over the next, and after the last chord the repeats ring on and die away of
+themselves. `--echo`, `--echo-mix`, `--echo-feedback` and `--echo-time` set it.
 
-`--play`, also spelled `--endless`, never stops, and it streams. Each pass is rendered a block at a time and written as raw 16-bit mono PCM to the standard input of the player, `ffplay` or sox's `play` unless `--player` names another command, which then reads raw PCM on its standard input. The first block is one beat, so the music starts before a bar is ready, and after that a bar at a time, with two blocks rendered ahead of the one playing. Every filter, effect and note keeps its state from one block to the next: a note is read a block at a time, so its oscillators and filters carry on where they stopped, and the echo, the colour, the room, the spring, the sidechain and the tape stack are objects with memory. A pass cut into blocks of any size gives the same samples as the pass in one block, which the tests hold to float rounding. The next pass is built on a thread while this one plays and begins under the end of it, the source of the one fading out and the other in at equal power, while the echo and the room of the old pass ring on beneath. The tape stack and its ceiling run once over the sum, so a join does not restart them. A quit player ends the show quietly, and SIGINT or SIGTERM stops it and takes the player with it. At the end it prints how long it took to render what it played, and how many blocks arrived late. Every kind of choice comes out of its own shuffle bag: the progression, the mode, the arp or repeat style, the patch and the profile. The patch bag holds every voice: a patch comes back only after all the others have played, and a group never follows itself. A bag plays everything once before anything repeats and never opens with the last item of the one before. The bags are saved in `out/play/` between runs, so a restart goes on with the cycle. Each pass prints its progression and position in the bag, mode, style, voice with its place in the patch bag, and profile. A pad plays its voice like any other; the plain sine pad is the old pad. `--patch-per-chord` gives every chord of a pad its own patch, drawn in turn from the same bag, so a progression of four chords uses four places in the cycle. Dub-style bus effects that only the showcase uses are not in the stream, and the rumble under the techno profiles is scaled by a fixed gain found from one kick, where a whole render scales by its own peak.
+Sonitex, tape, dub echo, crystallizer and nasty_vcs stay separate stages in the signal
+path. Sonitex brings driven filtering, bit/sample-rate reduction, dust, compression and
+limiting. The analogue tape stage adds static bandwidth shaping, head warmth, saturation
+and compression without pitch modulation. The dub echo uses three differently timed
+heads with feedback and a dark low-pass. The crystallizer shifts overlapping short
+grains by a fixed musical interval and feeds delayed repeats back at a lower level; each
+repeat moves another interval higher. The shared `dilla_night` rig applies these stages
+to instrument and drum buses separately, then uses nasty_vcs to glue the drum bus and
+final sum. The drums receive the heavier send, cassette Sonitex x3, heavy tape,
+octave-up crystals and stronger summing saturation; the instrument echo/crystal send
+stays quieter so the chord tones remain clear. Reverb is intentionally zero.
 
-Play has two decks by default, and `--decks 1` gives one. Deck B is built, with its first bars already rendered, while deck A plays, so a crossfade costs no more than a pass alone. Each pass lasts eight to sixteen bars, whatever its progression, which is cycled or cut to fit. When A has played them, B comes in under it over two to four bars that begin on A's bar line, equal power, with B's tempo held within six beats a minute of A's. The drums keep running: A's go on to the end of its last bar and B's come in with the crossfade. A few times a minute, three on average and `--moves N` to change it, a live move is made at a bar by a hand with a seeded stream of its own: the echo is thrown for a bar, a filter sweeps down to 700 hertz and back, the tape is driven twice as hard and back, the Sonitex climbs from one pass to three and down, the room swells, or the drums drop out for a bar. A move is an event with a start and a length, never an oscillator. Moves are logged as they begin, none begins while two decks cross, no kind comes twice running, and each puts back exactly the parameter it moved. With one deck the crossfade is a single beat and nothing moves unless `--moves` asks.
+Every render ends on a stack of tape machines, and nothing comes after them but a soft
+ceiling just under full scale. One machine is a Jiles-Atherton hysteresis loop for the
+medium, which is why a transient and a held note are squeezed differently, then a low
+head bump near fifty hertz and the loss at the top. The first machine runs the loop,
+which is the costly part, and the others use an arctangent curve, each driven a step
+harder than the one before. Each machine is level matched against the programme itself,
+so the stack changes colour and not loudness, and the output stays within a decibel of
+the input level. Nothing moves: there is no wow, no flutter and no hiss, and a sine
+through the stack comes out exactly periodic. `--tape N` sets the number of machines,
+four by default, and `--tape 0` leaves the sound bit for bit as it was. `--tape-drive X`
+sets how hard the first one is pushed. Seeds come from a CRC of the render seed, so a
+take repeats on any machine. Each machine keeps its state between calls, so a signal cut
+into chunks leaves the stack as one long call does. On this Mac the four machines cost
+about twenty seconds for each minute of sound, nearly all of it in the loop.
 
-The engine is small on purpose, and its limits are plain. The moog and dfam waves are naive and alias at very high pitch. A render takes about a fifth to a third of its own length to compute, more with the echo and the colour chains on. The old engine, which was far larger, is not lost. The tag `dilla-engine-final` marks the last commit that carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and `git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it.
+The sound is stereo, and `--mono` folds it to one channel with no panning, no ping-pong
+and no imager. A block of audio is an array of channels. Each note is placed by its
+voice's group and then spread by its pitch, the low notes staying near the middle and
+the high ones going out, and each drum is placed by its role, with the kick in the
+middle and the hats a little right and alternating. The data holds the places under
+`stereo`. The pan law is constant power and unity at the centre, so a part in the middle
+is as loud in each channel as it was in mono. The colour, the room and the spring run
+once for each channel, and the right side uses other delays than the left so the two
+rooms are not the same room. The echo is ping-pong: the odd heads sound on the left, the
+even heads on the right, and what is fed back is all of them, so the repeats cross the
+room; a single head is heard in the middle. After the effects, the stereo imager works
+in mid and side. It leaves the mid exactly as it is, so the mono sum of the result is
+the mono sum of what went in, takes the side out below 120 hertz with a Linkwitz-Riley
+crossover, which puts the sub in the middle, and raises the side above four kilohertz,
+so the highs are wider.
 
+The tape stack then runs on the mid, and a light one of the cheap curve on the side. The
+wav is written with two channels, and a single render goes through the same streamer as
+`--play`, a bar at a time, so there is one chain and not two. The showcase is the
+exception: it keeps its sections whole and mono, so that the tracked reference stays
+reproducible.
 
-A kit gives the roles a pattern uses their voices, and six are in the data: kit_909, kit_detroit, kit_dust, kit_fm, kit_industrial and kit_world. `--kit` picks one, and a profile may carry one. The techno kick is a sine whose pitch falls from a sweep to a body note, with a click and a drive, in five tunings. The other kits use frequency-modulated kicks, a layered boom, or struck sheet metal. The snare, clap, rim and toms are small synthesised recipes. The hats are six detuned squares crushed to twelve bits and highpassed, with the open hat choked by the next closed one. The percussion is a handful of decaying inharmonic modes. The techno_arp, industrial_arp and eclectic profiles choose a kit, a pattern, a tempo, and a kick-keyed pump, and the first two grow a rumble from their own kicks. No kit uses a low-frequency oscillator.
+A profile may list a `chain` of optional effect stages, which sit after the colour and
+before the echo, so that the echo throws what the stages made. Each runs once for each
+channel with a seed of its own, keeps its state between blocks, and gives the same
+samples however the pass is cut.
+
+The room is a Freeverb, four combs with damping in the loop and two allpass sections,
+and the shimmer is the same room with an octave-up pitch shifter in its feedback, so
+each round of the tail is higher and quieter. The granular cloud takes Hann-windowed
+grains of sixty to two hundred milliseconds from the last two seconds of the signal,
+with a spray in how far back each starts, eighteen in a hundred an octave up, ten an
+octave down and a quarter of them reversed.
+
+The others are a bit and rate crusher, a triangle wave folder, a ring modulator at one
+fixed frequency, a frequency shifter built from two chains of allpass sections ninety
+degrees apart, which moves every partial by the same number of hertz and rejects the
+opposite sideband by more than fifty decibels, a reverse echo that plays the last
+segment backwards and swelling in beneath the next, a tape stop that slows the read
+pointer to nothing over the last second of the pass, a filter sweep that is an event
+every so many bars, a transient shaper, an exciter that drives the band above six
+kilohertz into a soft clip and adds it back, and a bank of resonators at inharmonic
+partials with a Q of eighteen. None uses a low-frequency oscillator.
+
+The cost of a stage on this Mac, with YJIT, in seconds of work for each second of audio
+and each channel, is about 0.03 for the room, 0.06 for the shimmer, 0.03 for the cloud,
+0.07 for the frequency shifter, 0.04 for the resonators, 0.01 for the transient shaper
+and under 0.01 for the crusher, the folder, the ring modulator, the exciter, the reverse
+echo and the tape stop. The profiles `new_age`, `tape_dust` and `broken_radio` use them.
+
+Noise and sparkle layers are also named by a profile, under `noise`, and every one is
+optional and held under minus twenty-four decibels whatever the data says. The air is
+pink noise through a highpass at eight kilohertz, a long way down. The bed is brown
+noise under two hundred hertz, with a clamp so no spike climbs out of it. Dust is a
+Poisson scatter of pops a few milliseconds long, three a second unless the profile asks
+for more. The sparkle is a Poisson scatter of glints of two-operator frequency
+modulation, a few tenths of a second long, on the tones of the chord sounding then, put
+up to between four and eight kilohertz, each at a place of its own; the kick ducks it,
+and it has an echo of its own. The draws are in order, one for each sample or each
+event, from a stream seeded by the render, so a pass is the same every time and however
+it is cut.
+
+The master is a mixing and mastering chain in the order a console has it, from tone to
+dynamics to level, with the tape stack near the end and the limiter after it. It runs on
+every render and every play, and `--no-master` leaves it out. The stereo imager comes
+first and is described above.
+
+The equalizer cuts the low mids a little, lifts a shelf of air, and has a dynamic cut
+that deepens when the low mids build up. The multiband compressor splits the sound into
+three bands with Linkwitz-Riley lowpass sections at 200 hertz and 2.5 kilohertz and
+takes the rest by subtraction, so the three add back to the input exactly, and each band
+has its own threshold, ratio, attack and release in the data, the detector linked
+between the channels so the image does not move. A parallel compressor, hard and fast,
+is mixed in under the dry signal at a fifth, and a bus compressor glues the sum with a
+release of half a beat of the tempo.
+
+The loudness stage measures with the K-weighting of BS.1770 and its gates, which the
+tests check against a 997 hertz sine at minus twenty decibels full scale, minus twenty
+LUFS in two channels, and which agrees with ffmpeg's ebur128 to a tenth of a unit on a
+render. A whole render is brought to the target in one move, `--lufs N`, minus fourteen
+by default; a stream cannot know its integrated loudness before it has played, so it
+creeps toward the target at no more than two decibels a second from what it has heard. A
+soft clip bends the peaks, the tape stack follows, and last comes the limiter: it looks
+ahead sixty-four samples, finds the peak of each sample and of three points between it
+and the next with an eight-tap windowed sinc, so the ceiling of minus one decibel holds
+as a true peak and not only as a sample, spreads the gain it needs over the look-ahead
+and releases in a tenth of a second. A sixteen-bit wav is dithered with one least
+significant bit of triangular noise from a seeded stream, and `--bits 24` writes
+twenty-four bits without. Each render prints its integrated loudness, true peak, crest
+factor and the correlation of the channels. A material too sparse to reach the target
+under the ceiling ends up quieter than it, which is the ceiling doing its work. The dear
+stages are the multiband and the parallel compressor; on this Mac, with YJIT, the whole
+chain costs about a quarter of a second of work for each second of stereo audio, the
+multiband a tenth of it. A show that finds itself rendering at more than nine tenths of
+real time drops those two, says so on the screen, and goes on.
+
+`--transpose` moves every note by that many semitones before synthesis, and `--octaves`
+is sugar for twelve times that. Nothing is resampled, and tempo and echo timing do not
+change. A note whose fundamental lies above forty-five hundredths of the sample rate is
+dropped rather than folded back down, and a warning says how many were lost. Twelve
+octaves up puts every chord far past the limit, so the honest result is silence.
+`--transpose-wrap` instead folds each note down by octaves until it is under fourteen
+kilohertz, the highest audible register.
+
+`--play`, also spelled `--endless`, never stops, and it streams. Each pass is rendered a
+block at a time and written as raw 16-bit mono PCM to the standard input of the player,
+`ffplay` or sox's `play` unless `--player` names another command, which then reads raw
+PCM on its standard input.
+
+The first block is one beat, so the music starts before a bar is ready, and after that a
+bar at a time, with two blocks rendered ahead of the one playing. Every filter, effect
+and note keeps its state from one block to the next: a note is read a block at a time,
+so its oscillators and filters carry on where they stopped, and the echo, the colour,
+the room, the spring, the sidechain and the tape stack are objects with memory. A pass
+cut into blocks of any size gives the same samples as the pass in one block, which the
+tests hold to float rounding.
+
+The next pass is built on a thread while this one plays and begins under the end of it,
+the source of the one fading out and the other in at equal power, while the echo and the
+room of the old pass ring on beneath. The tape stack and its ceiling run once over the
+sum, so a join does not restart them. A quit player ends the show quietly, and SIGINT or
+SIGTERM stops it and takes the player with it.
+
+At the end it prints how long it took to render what it played, and how many blocks
+arrived late. Every kind of choice comes out of its own shuffle bag: the progression,
+the mode, the arp or repeat style, the patch and the profile. The patch bag holds every
+voice: a patch comes back only after all the others have played, and a group never
+follows itself. A bag plays everything once before anything repeats and never opens with
+the last item of the one before. The bags are saved in `out/play/` between runs, so a
+restart goes on with the cycle. Each pass prints its progression and position in the
+bag, mode, style, voice with its place in the patch bag, and profile. A pad plays its
+voice like any other; the plain sine pad is the old pad. `--patch-per-chord` gives every
+chord of a pad its own patch, drawn in turn from the same bag, so a progression of four
+chords uses four places in the cycle. Dub-style bus effects that only the showcase uses
+are not in the stream, and the rumble under the techno profiles is scaled by a fixed
+gain found from one kick, where a whole render scales by its own peak.
+
+Play has two decks by default, and `--decks 1` gives one. Deck B is built, with its
+first bars already rendered, while deck A plays, so a crossfade costs no more than a
+pass alone. Each pass lasts eight to sixteen bars, whatever its progression, which is
+cycled or cut to fit. When A has played them, B comes in under it over two to four bars
+that begin on A's bar line, equal power, with B's tempo held within six beats a minute
+of A's. The drums keep running: A's go on to the end of its last bar and B's come in
+with the crossfade. A few times a minute, three on average and `--moves N` to change it,
+a live move is made at a bar by a hand with a seeded stream of its own: the echo is
+thrown for a bar, a filter sweeps down to 700 hertz and back, the tape is driven twice
+as hard and back, the Sonitex climbs from one pass to three and down, the room swells,
+or the drums drop out for a bar. A move is an event with a start and a length, never an
+oscillator. Moves are logged as they begin, none begins while two decks cross, no kind
+comes twice running, and each puts back exactly the parameter it moved. With one deck
+the crossfade is a single beat and nothing moves unless `--moves` asks.
+
+The engine is small on purpose, and its limits are plain. The moog and dfam waves are
+naive and alias at very high pitch. A render takes about a fifth to a third of its own
+length to compute, more with the echo and the colour chains on. The old engine, which
+was far larger, is not lost. The tag `dilla-engine-final` marks the last commit that
+carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and
+`git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it.
+
+A kit gives the roles a pattern uses their voices, and six are in the data: kit_909,
+kit_detroit, kit_dust, kit_fm, kit_industrial and kit_world. `--kit` picks one, and a
+profile may carry one. The techno kick is a sine whose pitch falls from a sweep to a
+body note, with a click and a drive, in five tunings. The other kits use
+frequency-modulated kicks, a layered boom, or struck sheet metal. The snare, clap, rim
+and toms are small synthesised recipes. The hats are six detuned squares crushed to
+twelve bits and highpassed, with the open hat choked by the next closed one. The
+percussion is a handful of decaying inharmonic modes. The techno_arp, industrial_arp and
+eclectic profiles choose a kit, a pattern, a tempo, and a kick-keyed pump, and the first
+two grow a rumble from their own kicks. No kit uses a low-frequency oscillator.
 
 ## Library layout
 
-The executable `dilla.rb` is a thin shell. The file `lib/dilla.rb` loads the modules of `lib/dilla/`, which hold chord voicing, synthesis, voices, drums and kits, the sequencer, the arpeggios and the flow arpeggio, the organ, the soundfont bridge, MIDI, the playlist bags, and then the sound path: `stream.rb` has every filter and effect as a processor with memory, `stereo.rb` the pan law, the ping-pong echo and the imager, `stages.rb` the optional effect stages, `noise.rb` the noise and sparkle layers, `tape.rb` the tape stack, `mastering.rb` the mixing and mastering chain, `moves.rb` the master stage and the hand that makes live moves, `streamer.rb` one pass rendered a block at a time, `show.rb` the passes and decks, and `player.rb` the pipe to the player. The file `data/dilla.json` is the runtime pool of progressions, patches, groove profiles, drum patterns, stages, noise layers, the stereo places, the master and the shared bus-effect rigs. The file `data/music_theory.json` is the interval, chord and harmonic-motion reference with the curated original two- and three-bar progressions, and `data/showcase.json` is the Blue Hour arrangement.
+The executable `dilla.rb` is a thin shell. The file `lib/dilla.rb` loads the modules of
+`lib/dilla/`, which hold chord voicing, synthesis, voices, drums and kits, the
+sequencer, the arpeggios and the flow arpeggio, the organ, the soundfont bridge, MIDI,
+the playlist bags, and then the sound path: `stream.rb` has every filter and effect as a
+processor with memory, `stereo.rb` the pan law, the ping-pong echo and the imager,
+`stages.rb` the optional effect stages, `noise.rb` the noise and sparkle layers,
+`tape.rb` the tape stack, `mastering.rb` the mixing and mastering chain, `moves.rb` the
+master stage and the hand that makes live moves, `streamer.rb` one pass rendered a block
+at a time, `show.rb` the passes and decks, and `player.rb` the pipe to the player. The
+file `data/dilla.json` is the runtime pool of progressions, patches, groove profiles,
+drum patterns, stages, noise layers, the stereo places, the master and the shared
+bus-effect rigs. The file `data/music_theory.json` is the interval, chord and
+harmonic-motion reference with the curated original two- and three-bar progressions, and
+`data/showcase.json` is the Blue Hour arrangement.
 
-To hear it, `ruby dilla.rb --play` streams without end, `ruby dilla.rb --progression 3 --seed 5 --out take.wav` renders one pass, `ruby dilla.rb --mode organ --seed 3 --out organ.wav` improvises for the organ, and `ruby dilla.rb --arp list` names the arpeggios.
+To hear it, `ruby dilla.rb --play` streams without end,
+`ruby dilla.rb --progression 3 --seed 5 --out take.wav` renders one pass,
+`ruby dilla.rb --mode organ --seed 3 --out organ.wav` improvises for the organ, and
+`ruby dilla.rb --arp list` names the arpeggios.
 
-The theory catalogue is explanatory source material; runtime choices still come from the engine's validated data pools. Curated compositions list suggested voice patches and intent so they can be auditioned as distinct arrangements.
-
+The theory catalogue is explanatory source material; runtime choices still come from the
+engine's validated data pools. Curated compositions list suggested voice patches and
+intent so they can be auditioned as distinct arrangements.
 
 ## Audio-reference analysis and style learning
 
-The reference workflow analyzes the **music only**; it never inspects or downloads video frames. It imports a YouTube audio stream with yt-dlp, measures duration, format, loudness, coarse spectral bands and an estimated tempo with FFmpeg, then optionally runs Demucs and Essentia when their command-line tools are installed.
+The reference workflow analyzes the **music only**; it never inspects or downloads video
+frames. It imports a YouTube audio stream with yt-dlp, measures duration, format,
+loudness, coarse spectral bands and an estimated tempo with FFmpeg, then optionally runs
+Demucs and Essentia when their command-line tools are installed.
 
-MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla / boom-bap reference and an industrial-techno reference stay separate. In chat, say something like “learn the J Dilla sound from this track” and paste the link; later, “make a beat like that” uses the learned profile. For techno, say “study this industrial-techno track” and paste the link, then ask for a track in that style. A pasted YouTube link by itself is also treated as a reference, although without any style cue MASTER cannot infer the genre from audio measurements alone. Direct CLI use can name the style explicitly:
+MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla
+/ boom-bap reference and an industrial-techno reference stay separate. In chat, say
+something like “learn the J Dilla sound from this track” and paste the link; later,
+“make a beat like that” uses the learned profile. For techno, say “study this
+industrial-techno track” and paste the link, then ask for a track in that style. A
+pasted YouTube link by itself is also treated as a reference, although without any style
+cue MASTER cannot infer the genre from audio measurements alone. Direct CLI use can name
+the style explicitly:
 
 ~~~sh
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --style j_dilla
@@ -83,4 +489,5 @@ Install yt-dlp and FFmpeg for URL import and measurement. To use source separati
 Reference output, reports, JSON profiles and stems are stored under the user's Documents/dilla-references directory by default, or under XDG_DATA_HOME/dilla-references when XDG_DATA_HOME is set. Each profile records the user's style hint separately from measured traits: tempo estimates and spectral bands are measurements, while an artist/genre label comes from the request, not an automatic genre classifier.
 
 The industrial-techno command makes a new four-on-the-floor composition with distorted sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It uses broad audio characteristics and never loads reference audio or separated stems into the generated composition. Tempo estimates can be ambiguous between half-time and double-time, and Demucs stems can contain bleed and artifacts.
+
 
