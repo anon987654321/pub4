@@ -46,7 +46,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes buybox, "store-buybox"
   end
 
-  def test_mobile_category_menu_starts_below_the_full_header_stack
+  def test_compact_category_menu_starts_below_the_full_header_stack
     header = File.read(HEADER_CSS)
 
     assert_match(/--bol-utility-block:\s*36px;/, header)
@@ -67,12 +67,16 @@ class MarketplaceBolVisualContractTest < Minitest::Test
       header
     )
 
-    mobile = header.split("@media (max-width: 767px)", 2).last
-    menu = mobile&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
-    assert menu, "mobile menu positioning must stay inside the mobile breakpoint"
+    compact = header.split("@media (max-width: 767px)", 2).first
+    menu = compact&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
+    assert menu, "compact menu geometry must exist before viewport-specific refinements"
+    assert_match(/position:\s*fixed;/, menu)
     assert_match(/inset-block-start:\s*var\(--bol-compact-mega-top\);/, menu)
     assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-compact-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu,
                  "the category menu must fit the viewport remaining below the header")
+
+    mobile = header.split("@media (max-width: 767px)", 2).last
+    assert_match(/storefront-bol-mega\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/m, mobile)
 
     # Each term must remain attached to the physical box it sizes, so a taller
     # search row cannot silently desynchronise the fixed panel's start position.
@@ -86,17 +90,17 @@ class MarketplaceBolVisualContractTest < Minitest::Test
 
   def test_tablet_storefront_header_stacks_until_the_canonical_desktop_edge
     header = File.read(HEADER_CSS)
-    tablet = header.split("@media (min-width: 768px)", 2).last&.split("@media (min-width: 1024px)", 2)&.first
-    assert tablet, "tablet header layout must sit between existing viewport edges"
-
-    assert_match(/storefront-bol-header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)\s+auto;/m, tablet)
-    assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*none;/m, tablet)
-    assert_match(/storefront-bol-search\s*\{[^}]*grid-column:\s*1\s*\/\s*-1;[^}]*grid-row:\s*2;/m, tablet)
-    assert_match(/storefront-bol-mainnav\s*\{[^}]*overflow-x:\s*auto;/m, tablet)
-    assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*fixed;[^}]*inset-block-start:\s*var\(--bol-compact-mega-top\);/m, tablet)
+    compact = header.split("@media (max-width: 767px)", 2).first
+    assert compact, "mobile-first compact header styles must exist"
+    assert_match(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/, compact)
+    assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*none;/m, compact)
+    assert_match(/storefront-bol-search\s*\{[^}]*grid-column:\s*1\s*\/\s*-1;[^}]*grid-row:\s*2;/m, compact)
+    assert_match(/storefront-bol-mainnav\s*\{[^}]*overflow-x:\s*auto;/m, compact)
+    assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*fixed;[^}]*inset-block-start:\s*var\(--bol-compact-mega-top\);/m, compact)
 
     desktop = header.split("@media (min-width: 1024px)", 2).last
     assert_match(/grid-template-columns:\s*176px 168px minmax\(320px, 1fr\) auto;/, desktop)
+    assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*inline-flex;/m, desktop)
     assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*absolute;/m, desktop)
   end
 
