@@ -9,10 +9,10 @@ house grade for stills, and its entry point is `STUDIO/postpro/postpro.rb`.
 Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it a bare
 path and the path is the subject: an image goes through several random chains written to the
 Postpro output directory, a directory gives a few random picks from it, and a path that is
-neither is named and refused. Output defaults beside `postpro.rb` in the ignored scratch area;
-set `POSTPRO_OUTPUT_DIR` to choose another directory. Give it nothing and it asks what to grade.
-The command `postpro.rb --help` lists every flag, and `--capabilities` says what the current
-build can do on this machine.
+neither is named and refused. Output defaults to the shared dated render directory outside the
+checkout; `POSTPRO_OUTPUT_DIR` chooses another directory. Give it nothing and it asks what to
+grade. The command `postpro.rb --help` lists every flag, and `--capabilities` says what the
+current build can do on this machine.
 
 The code is a handful of files. The file `postpro.rb` holds the grade, the presets, the film
 tables and the command line. The file `legacy_effects.rb` holds the creative effects recovered
