@@ -1015,6 +1015,7 @@ async function runMessageTurn(text) {
       speakFailure("Sorry, I hit a snag.");
       window._chatOnError?.();
       finishTurn(false);
+      window.MASTERChat?.closeChatStream?.();
       return;
     }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
