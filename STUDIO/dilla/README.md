@@ -160,8 +160,7 @@ from the middle one note either side in turn and comes back in. The `pendulum` g
 two and back one to the top and down again. The `fibonacci` takes the Fibonacci numbers
 round the pool, and the `prime_walk` takes strides of the first primes.
 
-The
-`call_response` rises for four notes, answers falling for three and rests. The
+The `call_response` rises for four notes, answers falling for three and rests. The
 `pedal_point` returns to the lowest note between the others. The styles `poly5` and
 `poly7` put a note every five or seven sixteenths against the four-beat grid. Every note
 of every style is a tone of its chord, and `--arp list` prints the patterns, the styles
