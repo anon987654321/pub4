@@ -109,6 +109,7 @@ nb:
       long_response: "svar (%{n} tegn)"
       filter_log: "filtrer synlig logg"
       filter_log_aria: "Filtrer samtaleloggen"
+      load_older_messages: "Last inn %{count} eldre meldinger"
       mic_unavailable: "mikrofonen er ikke tilgjengelig i denne nettleseren"
       shortcuts_aria: "Tastatursnarveier"
       shortcuts_title: "snarveier"
