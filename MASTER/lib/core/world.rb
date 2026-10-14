@@ -153,7 +153,7 @@ module Master::Core
       # These variables run code before Ruby starts the worker, ahead of pledge.
       %w[RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS].each { |name| child_env[name] = nil }
       out, status = bounded_capture2e(
-        RbConfig.ruby, worker, "--exec-worker", "--", *argv,
+        RbConfig.ruby, "--disable-gems", worker, "--exec-worker", "--", *argv,
         env: child_env,
         chdir: @root,
         timeout: seconds,
