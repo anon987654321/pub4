@@ -492,7 +492,7 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_the_flag_is_taken_before_ci_and_the_app_is_checked_before_ok
     assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
-    assert_operator SOURCE.rindex(%(doas rcctl check "$app")), :>, SOURCE.index(%(GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb"))
+    assert_operator SOURCE.rindex(%(admin_service check "$app")), :>, SOURCE.index(%(GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb"))
   end
 
   # The copy-tree on vm23 keeps path gems beside app/, so every ../X an app
