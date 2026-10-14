@@ -69,6 +69,8 @@ if File.symlink?(admin_path)
 end
 if File.file?(admin_path) && !File.symlink?(admin_path)
   admin = File.read(admin_path)
+  failures << "pub4-admin must use the fixed packaged Ruby interpreter" unless
+    admin.start_with?("#!/usr/local/bin/ruby\\n")
   broker_contract = admin.include?("def command_for(argv)") &&
                     admin.include?("exec(*command)") &&
                     admin.include?("SERVICE_ACTIONS") &&
