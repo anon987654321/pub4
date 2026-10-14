@@ -62,11 +62,13 @@ module Master
       # A bounded, source-backed research call for operator-requested /fix runs.
       # Web tools screen external text through the injection guard; returned text
       # remains evidence, not instructions, and repair validation stays local.
-      def research_sources(queries:, sources:, max_queries: 2, max_sources: 3)
+      def research_sources(queries:, sources:, max_queries: 2, max_sources: 3, &progress)
         records = []
+        query_list = Array(queries).first(max_queries.to_i.clamp(0, 5))
         web = evidence_tool("WebSearch")
-        Array(queries).first(max_queries.to_i.clamp(0, 5)).each do |query|
+        query_list.each_with_index do |query, index|
           label = query.to_s
+          progress&.call(event: "started", kind: "search", index: index + 1, total: query_list.size, label:)
           begin
             result = web&.call(query: label)
             if result.respond_to?(:ok?) && result.ok?
@@ -87,12 +89,17 @@ module Master
               "kind" => "search", "label" => label, "status" => "unavailable",
               "text" => "#{e.class}: #{e.message.to_s[0, 200]}",
             }
+          ensure
+            progress&.call(event: "completed", kind: "search", index: index + 1, total: query_list.size,
+                           label:, status: records.last&.fetch("status", "unknown"))
           end
         end
 
+        source_list = Array(sources).first(max_sources.to_i.clamp(0, 6))
         fetcher = evidence_tool("WebFetch")
-        Array(sources).first(max_sources.to_i.clamp(0, 6)).each do |url|
+        source_list.each_with_index do |url, index|
           source_url = url.to_s
+          progress&.call(event: "started", kind: "fetch", index: index + 1, total: source_list.size, label: source_url)
           begin
             result = fetcher&.call(url: source_url)
             if result.respond_to?(:ok?) && result.ok?
@@ -113,6 +120,9 @@ module Master
               "kind" => "fetch", "label" => source_url, "status" => "unavailable",
               "text" => "#{e.class}: #{e.message.to_s[0, 200]}",
             }
+          ensure
+            progress&.call(event: "completed", kind: "fetch", index: index + 1, total: source_list.size,
+                           label: source_url, status: records.last&.fetch("status", "unknown"))
           end
         end
         records
