@@ -112,6 +112,11 @@ class VpsDeployContractTest < Minitest::Test
     refute_includes legacy, 'doas zsh "$script"'
   end
 
+  def test_ci_uses_the_broker_for_account_and_storage_preparation
+    assert_includes CI_SOURCE, 'doas /usr/local/sbin/pub4-admin ci-prepare "$app"'
+    assert_match(/if \\[\\[ -x \/usr\/local\/sbin\/pub4-admin \\]\\]; then.*?ci-prepare.*?^fi/m, CI_SOURCE)
+  end
+
   def test_it_refuses_to_run_as_root
     assert_match(/if \[\[ \$\(id -u\) -eq 0 \]\]; then/, SOURCE,
                  "the uid guard is gone — root reaches git pull and fails on a host key instead")
