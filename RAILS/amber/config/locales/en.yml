@@ -436,6 +436,23 @@ en:
     affiliate_help: "Optional resale or shop-similar URL for this piece."
     brand: "Brand"
     category: "Category"
+    item_categories:
+      tops: "Tops"
+      bottoms: "Bottoms"
+      dresses: "Dresses"
+      shoes: "Shoes"
+      accessories: "Accessories"
+      outerwear: "Outerwear"
+    mood_effects:
+      energising: "Energising"
+      calming: "Calming"
+      confident: "Confident"
+      playful: "Playful"
+      neutral: "Neutral"
+    life_phases:
+      current: "Current"
+      past_self: "Past self"
+      aspirational: "Aspirational"
     color: "Color"
     material: "Material"
     mood: "Mood:"
