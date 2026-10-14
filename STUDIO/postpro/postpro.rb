@@ -4801,6 +4801,7 @@ def run_introspect
       out = Postpro::Constitution.available_output_path(out)
       Postpro::Constitution.verify_output!(input_path: __FILE__, output_path: out)
     end
+    Postpro::Constitution.verify_distinct_source!(input_path: __FILE__, output_path: out)
     size = (argv_flag("--size") || "17").to_i
     export_lut(name.to_sym, out, size)
   end
@@ -4819,6 +4820,11 @@ def run_one_shot
     $cli_logger.error "Unknown preset: #{preset_name}. Valid: #{PRESETS.keys.join(", ")}"
     exit 1
   end
+
+  if ARGV.include?("--tiff16")
+    output_path = output_path.sub(/\.(jpg|jpeg|png|webp)$/i, ".tif")
+  end
+  Postpro::Constitution.verify_distinct_source!(input_path:, output_path:)
 
   image = load_image(input_path)
   unless image
@@ -4906,6 +4912,7 @@ def run_stock_sheet
     output = Postpro::Constitution.available_output_path(output)
     Postpro::Constitution.verify_output!(input_path: input_path, output_path: output)
   end
+  Postpro::Constitution.verify_distinct_source!(input_path:, output_path: output)
   sheet, stocks = stock_sheet(load_image(input_path), preset_name)
   sheet.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
   $cli_logger.info "ok stock sheet preset=#{preset_name} stocks=#{stocks.length} out=#{output}"
