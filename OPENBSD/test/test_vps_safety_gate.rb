@@ -53,6 +53,19 @@ class VpsSafetyGateTest < Minitest::Test
     end
   end
 
+  def test_operator_install_refuses_symlinked_system_destinations
+    with_fixture do |dir, _|
+      path = File.join(dir, "OPENBSD", "OPERATOR.sh")
+      text = File.read(path).sub("refusing symlinked privileged destination file",
+                                 "symlinked target check weakened")
+      File.write(path, text)
+      out, status = run_gate(dir)
+
+      refute status.success?
+      assert_includes out, "OPERATOR.sh must refuse symlinked privileged destinations before copying"
+    end
+  end
+
   def test_operator_install_preflights_privileged_source_files
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
