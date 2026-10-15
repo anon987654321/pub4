@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require_relative "../lib/operator/ratchet_sponsor"
 require_relative "../gates/support/fleet"
+require_relative "../tools/audit/design_baseline"
 
 class TestRatchetSponsor < Minitest::Test
   def setup
@@ -74,6 +75,17 @@ class TestRatchetSponsor < Minitest::Test
     assert_equal File.join(Fleet::ROOT, "RAILS", "apps.yml"), Fleet::APPS_YML
     assert_equal %w[amber brgen bsdports], Fleet.app_names
     assert_equal %w[__shared amber brgen bsdports], Fleet.asset_roots
+  end
+
+  def test_design_baseline_measures_shared_engine_sources_and_face_css
+    files = Operator::DesignBaseline.files
+    shared = File.join(Fleet::ROOT, "RAILS", "__shared", "app/assets/stylesheets", "_tokens.scss")
+    face = File.join(Fleet::ROOT, "RAILS", "master", "public", "face.css")
+
+    assert_includes files, shared
+    assert_includes files, face
+    assert_equal "__shared", Operator::DesignBaseline.app_for(shared)
+    assert_equal "face", Operator::DesignBaseline.app_for(face)
   end
 
   private
