@@ -425,7 +425,12 @@ def cache_blob(path, cache_dir)
   digest = Studio::ReplicateClient.checksum(path)
   FileUtils.mkdir_p(cache_dir)
   blob_path = File.join(cache_dir, "#{digest}#{File.extname(path)}")
-  FileUtils.cp(path, blob_path) unless File.exist?(blob_path)
+  valid_blob = File.file?(blob_path) && !File.symlink?(blob_path) &&
+               Studio::ReplicateClient.checksum(blob_path) == digest
+  unless valid_blob
+    writer = Object.new.extend(Studio::AtomicWrite)
+    writer.copy_atomic(path, blob_path)
+  end
   [digest, blob_path]
 end
 
