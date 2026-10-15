@@ -372,6 +372,30 @@ class TestPostproFilm < Minitest::Test
     end
     refute_includes methods.fetch("run_random"), "RANDOM_CHAIN_LENGTH ="
   end
+
+  def test_preset_effect_key_readers_verify_the_actual_case_arm
+    source = File.read(POSTPRO_SOURCE)
+    preset_source = send(:postpro_source_method, source, "preset")
+    pairs = [
+      ["spectral_temp", :temp], ["color_temp", :temp],
+      ["print_film", :print_stock], ["push_pull", :stops],
+      ["faded_print", :age], ["dye_fade", :age], ["expired_film", :age],
+      ["reciprocity_failure", :exposure_secs],
+      ["lens_distortion", :k1], ["diffraction_blur", :f_number],
+      ["tonemap", :tonemap_ev], ["tonemap", :tonemap],
+      ["relight", :azimuth], ["relight", :shape]
+    ]
+
+    pairs.each do |effect, key|
+      assert send(:preset_effect_reads_key?, preset_source, effect, key),
+             "#{effect} must consume its declared #{key} key"
+    end
+
+    disconnected = preset_source.sub("target_kelvin: p[:temp]", "target_kelvin: 6504")
+    refute send(:preset_effect_reads_key?, disconnected, "spectral_temp", :temp),
+           "a matching effect name must not hide a disconnected temperature value"
+  end
+
   def test_every_preset_names_a_stock_that_exists
     unknown = PRESETS.filter_map { |name, data| [name, data[:stock]] if data[:stock] && !STOCKS.key?(data[:stock]) }
     assert_empty unknown, "these presets render on a film with no rows: #{unknown.inspect}"
