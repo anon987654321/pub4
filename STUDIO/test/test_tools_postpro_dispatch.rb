@@ -56,6 +56,26 @@ class TestPostproDispatch < Minitest::Test
     end
   end
 
+  def test_partial_one_shot_flags_fail_fast_instead_of_opening_a_menu
+    Dir.mktmpdir do |dir|
+      partial_calls = [
+        ["--input", File.join(dir, "frame.jpg")],
+        ["--output", File.join(dir, "graded.jpg")],
+        ["--input", File.join(dir, "frame.jpg"), "--output", File.join(dir, "graded.jpg")],
+      ]
+
+      partial_calls.each do |args|
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        out, status = run_postpro(dir, *args)
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+        refute status.success?, "partial one-shot arguments unexpectedly succeeded: #{args.inspect}"
+        assert_includes out, "requires --input FILE, --output FILE and --preset NAME"
+        assert_operator elapsed, :<, 5, "invalid invocation took #{elapsed.round(2)}s: #{args.inspect}"
+      end
+    end
+  end
+
   def test_random_contract_has_five_to_ten_default_variations
     assert_equal(5..10, RANDOM_VARIATIONS)
     refute_empty RANDOM_LANES
