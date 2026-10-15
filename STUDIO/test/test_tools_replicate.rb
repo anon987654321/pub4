@@ -266,6 +266,28 @@ class TestReplicate < Minitest::Test
     refute_includes input.values, nil
   end
 
+  def test_output_format_matches_the_requested_file_extension
+    { "/tmp/frame.JPG" => "jpg", "/tmp/frame.jpeg" => "jpg",
+      "/tmp/frame.png" => "png", "/tmp/frame.webp" => "webp" }.each do |path, expected|
+      input = send(:build_input, "p", { model: ULTRA, output: path },
+                   seed: 1, negative_prompt: nil)
+
+      assert_equal expected, input[:output_format], "#{path} must request matching output bytes"
+    end
+
+    default = send(:build_input, "p", { model: ULTRA }, seed: 1, negative_prompt: nil)
+    assert_equal "webp", default[:output_format]
+  end
+
+  def test_output_format_refuses_unknown_file_extensions
+    capture_io do
+      assert_raises(SystemExit) do
+        send(:build_input, "p", { model: ULTRA, output: "/tmp/frame.tif" },
+             seed: 1, negative_prompt: nil)
+      end
+    end
+  end
+
   # --- alt text and conflicts ---------------------------------------------
 
   def test_alt_text_describes_the_picture_without_the_film_stock_jargon
