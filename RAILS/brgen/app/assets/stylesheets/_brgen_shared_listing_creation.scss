@@ -30,13 +30,13 @@ body.vertical-marketplace .listing-step-link span {
   border-radius: 50%;
   background: unset;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .listing-step-link.is-active {
   border-color: var(--bol-blue);
   color: var(--bol-blue);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .listing-step {
@@ -50,7 +50,7 @@ body.vertical-marketplace .listing-step legend {
   padding: 0;
   color: var(--bol-ink);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .listing-step-actions {
@@ -102,7 +102,7 @@ body.vertical-marketplace .listing-photo-guidance {
   border-inline-start: 3px solid var(--bol-blue);
   background: unset;
   color: var(--bol-ink);
-  font-size: 13px;
+  font-size: var(--store-text-meta);
 }
 
 body.vertical-marketplace .listing-photo-guidance[hidden] {
@@ -159,8 +159,8 @@ body.vertical-marketplace .media-thumb-cover {
   padding: 3px 6px;
   background: var(--bol-blue);
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .media-thumb-move,
@@ -231,14 +231,14 @@ body.vertical-marketplace .listing-review-cover {
   background: unset;
   color: var(--bol-muted);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .listing-review-title {
   margin: 0;
   color: var(--bol-ink);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .listing-draft-row {
@@ -275,7 +275,7 @@ body.vertical-marketplace .listing-source-badge {
 body.vertical-marketplace .listing-source-badge--shop {
   background: var(--bol-blue-soft);
   color: var(--bol-blue);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 @media (min-width: 768px) {
