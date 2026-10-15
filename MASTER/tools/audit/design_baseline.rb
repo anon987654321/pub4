@@ -16,6 +16,7 @@
 # Wired into Operator::Ratchets#deep_rows, so `bin/check --profile=full` holds it.
 require "yaml"
 require_relative "../../lib/trace/dmesg"
+require_relative "../../gates/support/fleet"
 
 module Operator
   module DesignBaseline
@@ -66,11 +67,20 @@ module Operator
     end
 
     def files
-      Dir[File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/{views,assets/stylesheets}/**/*.{erb,scss}")] +
-        Dir[File.join(RAILS_ROOT, "brgen/engines/*/app/{views,assets/stylesheets}/**/*.{erb,scss}")] +
-        # The MASTER face is the fourth surface: its hand-written css and chat
-        # views are inside the same instrument (generated bundles and digested
-        # assets are outputs, not sources, and stay out).
+      # The shared engine is named __shared, not "shared", and plain .css is
+      # source too. Build this list from Fleet's source roots so the baseline
+      # cannot silently omit the chrome every app mounts.
+      surfaces = Fleet.asset_roots.flat_map do |surface|
+        Dir[File.join(RAILS_ROOT, surface, "app/views/**/*.erb")] +
+          Dir[File.join(RAILS_ROOT, surface, "app/assets/stylesheets/**/*.{scss,css}")]
+      end
+      engines = Fleet.asset_roots.flat_map do |surface|
+        Dir[File.join(RAILS_ROOT, surface, "engines/*/app/views/**/*.erb")] +
+          Dir[File.join(RAILS_ROOT, surface, "engines/*/app/assets/stylesheets/**/*.{scss,css}")]
+      end
+      # The MASTER face is the fourth public surface: its hand-written CSS and
+      # chat views belong in the same instrument; generated bundles stay out.
+      surfaces + engines +
         Dir[File.join(RAILS_ROOT, "master/app/views/**/*.erb")] +
         %w[face.css chat_upload.css].map { |name| File.join(RAILS_ROOT, "master/public", name) }.select { |f| File.file?(f) }
     end
