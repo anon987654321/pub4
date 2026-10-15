@@ -45,7 +45,7 @@ class LocaleContractTest < Minitest::Test
   # an en.yml under vendor/bundle in every app. brgen's verticals are engines,
   # and each carries its own config/locales that Rails loads beside the host's.
   def locale_files
-    @locale_files ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared,brgen/engines/*}/config/locales/**/*.yml")).sort
+    @locale_files ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared,brgen/engines/*}/config/locales/**/*.yml")).sort
   end
 
   # Each unit that owns a locale directory, so a vertical's strings are held to
@@ -260,9 +260,9 @@ class LocaleContractTest < Minitest::Test
   # brgen, and shared's keys are read by all three apps.
   def sources_for(unit)
     trees = case unit
-            when "shared" then %w[brgen amber bsdports shared]
-            when %r{\Abrgen(?:/|\z)} then %w[brgen shared]
-            else [unit, "shared"]
+            when "shared" then %w[brgen amber bsdports __shared]
+            when %r{\Abrgen(?:/|\z)} then %w[brgen __shared]
+            else [unit, "__shared"]
             end
     @sources ||= {}
     @sources[trees] ||= trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**/*.{rb,erb,js,rake,jbuilder,yml,json}")) }
