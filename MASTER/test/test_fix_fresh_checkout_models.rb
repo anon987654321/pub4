@@ -4,6 +4,7 @@ require "test_helper"
 require_relative "support_fake_config"
 require "tmpdir"
 require "fileutils"
+require_relative "../lib/fix/fix_loop"
 
 # /fix runs in a temporary checkout that holds none of the gitignored
 # MASTER/.master state: no config.yml, no lane_quota.yml. Every model call of
