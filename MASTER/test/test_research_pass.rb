@@ -124,8 +124,6 @@ class TestResearchPass < Minitest::Test
     %w[engineering rails openbsd studio music visual].each do |domain|
       assert_includes result.fetch(:brief), "Coverage #{domain}:"
       assert_includes result.fetch(:brief), "SOURCE [#{domain}]:"
-      assert_operator result.fetch(:brief).index("SOURCE [#{domain}]:"), :<, result.fetch(:brief).length
-
     end
     assert_operator result.fetch(:brief).length, :<=, 8_000
     assert_includes result.fetch(:brief), "page evidence for https://github.com/dcyoung/r3f-audio-visualizer"
