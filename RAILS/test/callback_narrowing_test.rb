@@ -29,7 +29,7 @@ require "minitest/autorun"
 class CallbackNarrowingTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  CONTROLLERS = Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared}/**/app/controllers/**/*.rb"))
+  CONTROLLERS = Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/app/controllers/**/*.rb"))
                    .reject { |f| f.include?("/vendor/") }
 
   def test_no_controller_declares_the_same_before_action_filter_twice
