@@ -5,9 +5,9 @@ require "yaml"
 require "psych"
 
 # Same two questions RAILS/test/locale_contract_test.rb asks, for this app.
-# That file's glob is RAILS/{brgen,amber,bsdports,shared} — it has never
-# seen MASTER/web. application.rb pointed at it anyway, which is how the
-# face shipped t("face.mic_state", default: "Microphone") on a page whose
+# That file covers the three apps and RAILS/__shared, but not RAILS/master/web.
+# application.rb pointed at it anyway, which is how the face shipped
+# t("face.mic_state", default: "Microphone") on a page whose
 # html lang was still hardcoded "en" after the default locale became :nb.
 #
 # The two stay separate files: a helper shared across two apps with two bundles couples
