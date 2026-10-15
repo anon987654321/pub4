@@ -104,8 +104,8 @@ body.vertical-marketplace .bol-market-hero-copy {
 body.vertical-marketplace .bol-market-kicker {
   margin: 0;
   color: var(--bol-blue);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--store-text-meta);
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .bol-market-hero-copy h2 {
@@ -128,7 +128,7 @@ body.vertical-marketplace .bol-market-hero-copy > p:not(.bol-market-kicker) {
 
 body.vertical-marketplace .bol-market-hero-price {
   color: var(--bol-price);
-  font-size: 32px;
+  font-size: var(--store-text-price);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -149,7 +149,7 @@ body.vertical-marketplace .bol-market-hero-media img {
 }
 
 body.vertical-marketplace .bol-market-hero-media > span {
-  font-size: 96px;
+  font-size: var(--store-text-glyph);
   font-weight: 800;
   color: var(--bol-blue);
 }
@@ -165,7 +165,7 @@ body.vertical-marketplace .bol-primary {
   background: var(--bol-blue);
   color: #fff;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   text-decoration: none;
 }
 
@@ -191,7 +191,7 @@ body.vertical-marketplace .bol-kind-tabs a {
   padding: 0 24px;
   color: var(--bol-ink);
   border-bottom: 3px solid transparent;
-  font-size: 15px;
+  font-size: var(--store-text-action);
   font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
@@ -241,8 +241,8 @@ body.vertical-marketplace .listing-filter-group legend,
 body.vertical-marketplace .listing-facet-name {
   margin: 0 0 12px;
   color: var(--bol-ink);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: var(--store-text-action);
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .listing-filter-controls {
