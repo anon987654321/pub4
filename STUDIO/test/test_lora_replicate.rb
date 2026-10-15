@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "minitest/mock"
 require "tmpdir"
 require "open3"
 require_relative "../replicate/client"
@@ -88,6 +89,37 @@ class TestLoraReplicate < Minitest::Test
 
     assert_raises(RuntimeError) { client.download_url("http://replicate.delivery/a", "/dev/null") }
     assert_raises(RuntimeError) { client.download_url("https://evil.example/a", "/dev/null") }
+  end
+
+  def test_failed_streamed_download_preserves_existing_output
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "existing.webp")
+      File.binwrite(path, "previous deliverable")
+      client = Client.new(token: "t")
+      response = Object.new
+      response.define_singleton_method(:code) { "200" }
+      response.define_singleton_method(:[]) { |_header| nil }
+      response.define_singleton_method(:read_body) do |&consume|
+        consume.call("123456")
+        consume.call("78901")
+      end
+      http = Object.new
+      http.define_singleton_method(:request_get) { |_uri, &consume| consume.call(response) }
+      starter = lambda do |_host, _port, **_options, &block|
+        block.call(http)
+      end
+
+      Net::HTTP.stub(:start, starter) do
+        assert_raises(RuntimeError) do
+          client.download_url("https://replicate.delivery/a", path, max_bytes: 10)
+        end
+      end
+
+      assert_equal "previous deliverable", File.binread(path),
+                   "failed download must not remove or truncate an existing output"
+      assert_empty Dir[File.join(dir, "replicate-download-*.part")],
+                   "failed download must remove its temporary file"
+    end
   end
 
   # --- preflight ------------------------------------------------------------
