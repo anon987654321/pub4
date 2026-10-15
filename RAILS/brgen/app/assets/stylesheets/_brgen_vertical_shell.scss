@@ -10,6 +10,14 @@ body[class*="vertical-"] .feed-header {
    still resolves the legacy display face. */
 body.vertical-takeaway {
   --font-ad: var(--font);
+}
+
+/* Both storefronts share the same measured shell, palette and type roles. Keep
+   these tokens on both body surfaces: marketplace's sheets consume them too.
+   The old selector named only takeaway, leaving marketplace declarations such
+   as background: var(--store-page) and font-size: var(--store-text-meta)
+   unresolved even though all its layout rules were active. */
+:is(body.vertical-marketplace, body.vertical-takeaway) {
   /* Kaufland.de's storefront system, measured from its archived home, category
      and product pages at 1440 and 400 (the owner's instruction: copy it
      exactly, then mould). The palette is its light theme; the three sizes are the
