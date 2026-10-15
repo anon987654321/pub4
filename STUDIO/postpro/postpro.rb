@@ -3569,8 +3569,9 @@ def preset(image, name, stock: nil)
                # the image untouched, and the dmesg line below then reported the
                # step as having run. A preset could be four steps short of what
                # it says it is and the log would agree with the preset.
-               PostproBootstrap.dmesg "ERROR fx=#{fx} has no implementation; preset #{name} is short a step"
-               processed
+               message = "fx=#{fx} has no implementation; preset #{name} is short a step"
+               PostproBootstrap.dmesg "ERROR #{message}"
+               raise ArgumentError, message
              end
     processed = processed.copy_memory
     GC.start(full_mark: false) if (i % 4).zero?

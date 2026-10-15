@@ -476,6 +476,37 @@ class TestPostproFilm < Minitest::Test
     newton_rings: "amplitude is below 8-bit quantisation at every intensity it is called with"
   }.freeze
 
+  def test_preset_fails_closed_when_an_effect_has_no_implementation
+    skip "libvips absent on this host" unless defined?(Vips)
+
+    owner = Object
+    original = owner.const_get(:PRESETS)
+    previous_pipeline = $postpro_float_pipeline
+    owner.send(:remove_const, :PRESETS)
+    owner.const_set(
+      :PRESETS,
+      original.merge(
+        fix_missing_effect_contract: {
+          fx: %w[missing_effect_for_contract],
+          stock: :kodak_portra,
+          intensity: 0.5,
+        },
+      ).freeze,
+    )
+
+    error = assert_raises(ArgumentError) do
+      preset(build_probe, :fix_missing_effect_contract)
+    end
+    assert_match(/fx=missing_effect_for_contract has no implementation/, error.message)
+    refute $postpro_float_pipeline, "a failed grade must reset the float pipeline"
+  ensure
+    if owner && original
+      owner.send(:remove_const, :PRESETS) if owner.const_defined?(:PRESETS, false)
+      owner.const_set(:PRESETS, original)
+    end
+    $postpro_float_pipeline = previous_pipeline
+  end
+
   def test_every_effect_changes_at_least_one_pixel
     skip "libvips absent on this host" unless defined?(Vips)
 
