@@ -84,6 +84,21 @@ class TestResearchPass < Minitest::Test
     assert_equal 0, result.fetch(:fetched_count)
   end
 
+  def test_research_exception_returns_readable_multiline_inconclusive_brief
+    agent = Object.new
+    def agent.research_sources(**)
+      raise IOError, "network unavailable"
+    end
+    pass = Master::Fix::ResearchPass.new(agent:, bus: nil, plan: @plan, root: Master::REPO_ROOT)
+
+    result = pass.run(target: "RAILS", files: [])
+
+    assert_equal "INCONCLUSIVE", result.fetch(:status)
+    assert_includes result.fetch(:brief),
+      "EXTERNAL RESEARCH PREFLIGHT: INCONCLUSIVE\nResearch could not be completed: IOError: network unavailable\nUse local laws"
+    refute_includes result.fetch(:brief), "\\nResearch could not"
+  end
+
   def test_full_repository_target_researches_every_domain
     pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
 

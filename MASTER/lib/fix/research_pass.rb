@@ -96,7 +96,7 @@ module Master
           "EXTERNAL RESEARCH PREFLIGHT: INCONCLUSIVE",
           "Research could not be completed: #{e.class}: #{e.message.to_s[0, 240]}",
           "Use local laws, source inspection and tests. Do not claim that outside evidence was checked; narrow uncertain mutations.",
-        ].join("\\n")
+        ].join("\n")
         @bus&.publish("fix_loop:research", target: target.to_s, status: :inconclusive, error: e.class.name)
         {
           status: "INCONCLUSIVE", domain: "unknown", target: target.to_s, brief:,
