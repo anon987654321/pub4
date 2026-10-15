@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "net/http"
+require "tempfile"
 require "uri"
 
 module Studio
@@ -36,30 +37,46 @@ module Studio
           raise "refusing non-https download url: #{url}" unless uri.scheme == "https"
           raise "refusing download from untrusted host: #{uri.host}" unless uri.host.to_s.match?(ALLOWED_DOWNLOAD_HOST)
 
-          Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
-            http.request_get(uri.request_uri) do |res|
-              raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
-              raise "download over #{max_bytes} bytes" if res["content-length"].to_i > max_bytes
+          target = File.expand_path(path)
+          directory = File.dirname(target)
+          FileUtils.mkdir_p(directory)
+          mode = File.file?(target) ? File.stat(target).mode & 0o7777 : 0o640
 
-              write_capped(res, path, max_bytes)
+          # Keep the old output intact until the entire response has passed its
+          # status and byte-limit checks. The temporary lives beside the target
+          # so the final rename is atomic on the same filesystem.
+          Tempfile.create(["replicate-download-", ".part"], directory, binmode: true) do |file|
+            Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
+              http.request_get(uri.request_uri) do |res|
+                raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
+                raise "download over #{max_bytes} bytes" if res["content-length"].to_i > max_bytes
+
+                write_capped(res, file, max_bytes)
+              end
             end
+            file.flush
+            file.fsync
+            File.chmod(mode, file.path)
+            file.close
+            File.rename(file.path, target)
           end
           path
-        rescue StandardError
-          FileUtils.rm_f(path)
-          raise
         end
 
         private
 
-        def write_capped(res, path, max_bytes)
+        def write_capped(res, file, max_bytes)
           written = 0
-          File.open(path, "wb") do |file|
-            res.read_body do |chunk|
-              written += chunk.bytesize
-              raise "download over #{max_bytes} bytes" if written > max_bytes
+          res.read_body do |chunk|
+            written += chunk.bytesize
+            raise "download over #{max_bytes} bytes" if written > max_bytes
 
-              file.write(chunk)
+            offset = 0
+            while offset < chunk.bytesize
+              count = file.write(chunk.byteslice(offset..))
+              raise IOError, "download wrote no bytes" unless count&.positive?
+
+              offset += count
             end
           end
         end
