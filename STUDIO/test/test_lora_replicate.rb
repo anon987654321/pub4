@@ -122,6 +122,35 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_successful_streamed_download_atomically_replaces_output_without_content_length
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "existing.webp")
+      File.binwrite(path, "previous deliverable")
+      File.chmod(0o600, path)
+      client = Client.new(token: "t")
+      response = Object.new
+      response.define_singleton_method(:code) { "200" }
+      response.define_singleton_method(:[]) { |_header| nil }
+      response.define_singleton_method(:read_body) { |&consume| consume.call("finished bytes") }
+      http = Object.new
+      http.define_singleton_method(:request_get) { |_uri, &consume| consume.call(response) }
+      starter = lambda do |_host, _port, **_options, &block|
+        block.call(http)
+      end
+
+      result = nil
+      Net::HTTP.stub(:start, starter) do
+        result = client.download_url("https://replicate.delivery/a", path, max_bytes: 100)
+      end
+
+      assert_equal path, result
+      assert_equal "finished bytes", File.binread(path)
+      assert_equal 0o600, File.stat(path).mode & 0o777
+      assert_empty Dir[File.join(dir, "replicate-download-*.part")],
+                   "successful publish must not leave its temporary file"
+    end
+  end
+
   # --- preflight ------------------------------------------------------------
 
   def png(width, height)
