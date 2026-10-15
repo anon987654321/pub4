@@ -91,6 +91,36 @@ class TestFixFreshCheckoutModels < Minitest::Test
     proof_mode.nil? ? ENV.delete("MASTER_IN_PROOF") : ENV["MASTER_IN_PROOF"] = proof_mode
   end
 
+  def test_fix_lane_probe_uses_the_live_catalogue_if_no_repair_candidate_is_usable
+    calls = []
+    agent = Object.new
+    agent.define_singleton_method(:candidate_models) do |message = nil, task_type: nil|
+      calls << [message, task_type]
+      ["unavailable-provider:model"]
+    end
+    agent.define_singleton_method(:ask_once) { |*| "OK" }
+    runner = Master::Fix::FixLoop::PassRunner.allocate
+    runner.instance_variable_set(:@agent, agent)
+    captured_models = nil
+    proof_mode = ENV.delete("MASTER_IN_PROOF")
+
+    alive = ->(model) { model == OPUS }
+    Master::Fix::LaneProbe.stub(:enabled?, true) do
+      Selection.stub(:alive?, alive) do
+        Selection.stub(:catalogue, [OPUS, GROK]) do
+          Master::Fix::LaneProbe.stub(:run, ->(models:, ask:) { captured_models = models; [] }) do
+            runner.send(:probe_lanes_once)
+          end
+        end
+      end
+    end
+
+    assert_equal [[nil, :code_generation]], calls
+    assert_equal [OPUS], captured_models
+  ensure
+    proof_mode.nil? ? ENV.delete("MASTER_IN_PROOF") : ENV["MASTER_IN_PROOF"] = proof_mode
+  end
+
   def test_every_operation_resolves_to_a_live_subscription_lane
     %i[file_write code_generation architecture scan_semantic restructure semantic_law].each do |operation|
       assert_equal OPUS, @router.constrained_for(operation:), "#{operation} left the live pool"
