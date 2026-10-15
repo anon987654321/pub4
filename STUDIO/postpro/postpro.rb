@@ -4560,15 +4560,28 @@ end
 def preset_effect_reads_key?(preset_source, effect, key)
   return false unless preset_source
 
-  arm_pattern = Regexp.new('\A[ \t]*when "' + Regexp.escape(effect.to_s) + '"[ \t]+then\b')
-  arm = preset_source.lines.find { |line| line.match?(arm_pattern) }
-  return false unless arm
+  lines = preset_source.lines
+  arm_pattern = Regexp.new('\\A[ \t]*when "' + Regexp.escape(effect.to_s) + '"[ \t]+then\b')
+  start = lines.index { |line| line.match?(arm_pattern) }
+  return false unless start
+
+  # Inspect the complete arm, not only its opening line. A harmless reflow of
+  # the call must not turn a real key reader into a false failure.
+  arm_indent = lines[start][/\\A[ \t]*/].length
+  arm = [lines[start]]
+  lines.drop(start + 1).each do |line|
+    next if line.strip.empty?
+
+    indent = line[/\\A[ \t]*/].length
+    break if indent <= arm_indent && line.lstrip.match?(/\\A(?:when\\b|else\\b|end\\b)/)
+
+    arm << line
+  end
 
   key_name = Regexp.escape(key.to_s)
-  value_pattern = Regexp.new('\bp(?:\[\s*:' + key_name + '\s*\]|\.fetch\(\s*:' + key_name + '\b)')
-  arm.match?(value_pattern)
+  value_pattern = Regexp.new('\\\\bp(?:\\\\[\\\\s*:' + key_name + '\\\\s*\\\\]|\\\\.fetch\\\\(\\\\s*:' + key_name + '\\\\b)')
+  arm.join.match?(value_pattern)
 end
-
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
