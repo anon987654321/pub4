@@ -10,6 +10,8 @@ class TestDillaOutputPathCli < Minitest::Test
   SCRIPT = File.join(ROOT, "dilla", "dilla.rb")
 
   def invoke(*arguments, environment: {})
+    environment = { "DILLA_OUTPUT_DIR" => nil, "XDG_DATA_HOME" => nil }.merge(environment)
+
     Open3.capture3(
       environment,
       RbConfig.ruby,
