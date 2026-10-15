@@ -143,18 +143,22 @@ class KeyboardReachableControlsTest < Minitest::Test
     found
   end
 
-  def controller_sources
-    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/*_controller.js"))
-       .reject { |p| p.match?(%r{/(vendor|node_modules|public|builds)/}) }
-       .to_h { |p| [File.basename(p, "_controller.js").tr("_", "-"), File.read(p)] }
+  def controller_sources(root: ROOT)
+    Dir.glob(File.join(root, "{brgen,amber,bsdports,__shared}/**/*_controller.js"))
+       .reject { |path| path.match?(%r{/(vendor|node_modules|public|builds)/}) }
+       .map { |path| [File.basename(path, "_controller.js").tr("_", "-"), File.read(path)] }
   end
 
   # Controllers that drag their own element from addEventListener, with no
-  # data-action in the markup to find them by.
+  # data-action in the markup to find them by. Keep equal basenames as separate
+  # sources: one app's controller must never overwrite another's before review.
   def listener_controllers
-    controller_sources.select do |_, source|
-      source.scan(MOVE_LISTENER).flatten.include?("this.element") && source.match?(START_LISTENER)
-    end.keys
+    controller_sources.filter_map do |name, source|
+      next unless source.scan(MOVE_LISTENER).flatten.include?("this.element")
+      next unless source.match?(START_LISTENER)
+
+      name
+    end.uniq
   end
 
   def listener_surfaces
@@ -255,6 +259,25 @@ class KeyboardReachableControlsTest < Minitest::Test
 
     assert match, "the tag matcher failed on a data-action containing ->"
     assert_match(/role="slider"/, match[2], "attributes were truncated at the > inside data-action")
+  end
+
+  def test_controller_inventory_keeps_duplicate_basenames_from_distinct_trees
+    Dir.mktmpdir("controller-census") do |root|
+      %w[brgen __shared].each do |tree|
+        path = File.join(root, tree, "app/javascript/controllers", "drag_controller.js")
+        FileUtils.mkdir_p(File.dirname(path))
+        source = tree == "brgen" ?
+          "this.element.addEventListener('pointerdown', start); this.element.addEventListener('pointermove', move);" :
+          "this.element.addEventListener('pointermove', move);"
+        File.write(path, source)
+      end
+
+      sources = controller_sources(root:)
+      matching = sources.select { |name, _| name == "drag" }
+
+      assert_equal 2, matching.size
+      assert_includes matching.map(&:last).join("\\n"), "pointerdown"
+    end
   end
 
   def test_the_glob_finds_views
