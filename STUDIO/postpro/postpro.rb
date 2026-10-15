@@ -372,9 +372,11 @@ one_shot_requested = one_shot_flags.any? { |flag| ARGV.include?(flag) }
 complete_one_shot = one_shot_flags.all? { |flag| ARGV.include?(flag) }
 dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut] & ARGV).any?
 if one_shot_requested && !complete_one_shot && !dedicated_mode
-  PostproBootstrap.dmesg(
-    "ERROR one-shot mode requires --input FILE, --output FILE and --preset NAME "     "(or use --watch/--stock-sheet/--rescue/--export-lut)",
-  )
+  message = [
+    "ERROR one-shot mode requires --input FILE, --output FILE and --preset NAME",
+    "(or use --watch/--stock-sheet/--rescue/--export-lut)",
+  ].join(" ")
+  PostproBootstrap.dmesg(message)
   exit 2
 end
 
