@@ -273,13 +273,24 @@ SINGLE_IMAGE_KEYS = (Replicate::Chain::IMAGE_INPUT_KEYS - ["input_images"]).free
 # nothing above fills, such as IC-Light's light_source, goes out as the stage
 # wrote it; a key the model does not declare was already refused by
 # Chain.problems, and the filter at the end drops it again.
+# The byte format is part of the output-path contract: downloading a WebP
+# response to a .jpg filename does not convert it into a JPEG. Let an explicit
+# extension choose the provider format; retain WebP as the no-path default.
+def output_format_for(options)
+  extension = File.extname(options[:output].to_s).downcase
+  return "webp" if extension.empty?
+
+  formats = { ".jpg" => "jpg", ".jpeg" => "jpg", ".png" => "png", ".webp" => "webp" }
+  formats[extension] || abort("warn: unsupported output extension #{extension.inspect}; use .jpg, .png, or .webp")
+end
+
 def build_input(prompt, options, seed:, negative_prompt:, passthrough: {})
   cap = capability_for(options[:model])
   image_key = (cap[:input_keys] & SINGLE_IMAGE_KEYS).first
   full = {
     prompt:,
     aspect_ratio: options[:aspect_ratio],
-    output_format: "webp",
+    output_format: output_format_for(options),
     safety_tolerance: 2,
     seed:,
     negative_prompt:,
@@ -753,6 +764,7 @@ when "chain"
   perform = lambda do |stage:, index:, total:, image:, seed:, references:|
     target = target_for.call(stage, index)
     stage_options = options.merge(stage.options).merge(model: stage.model)
+    stage_options[:output] = target
     # Uploaded, not passed as a path: the provider fetches these over HTTP and
     # a local path is resolvable only here.
     stage_options[:image] = upload_reference(client, image) if image
