@@ -65,6 +65,19 @@ class TestStudioOutputPaths < Minitest::Test
     end
   end
 
+  def test_fallback_refuses_a_documents_path_that_resolves_into_the_checkout
+    link_parent = Dir.mktmpdir
+    link = File.join(link_parent, "documents")
+    File.symlink(Studio::OutputPaths::REPOSITORY_ROOT, link)
+
+    error = assert_raises(ArgumentError) do
+      Studio::OutputPaths.fallback_data_home(link)
+    end
+    assert_match(/resolves inside the checkout/, error.message)
+  ensure
+    FileUtils.remove_entry(link_parent) if link_parent && File.directory?(link_parent)
+  end
+
   def test_render_and_reference_paths_share_the_valid_xdg_data_home
     with_environment("POSTPRO_OUTPUT_DIR", nil) do
       with_environment("DILLA_OUTPUT_DIR", nil) do
