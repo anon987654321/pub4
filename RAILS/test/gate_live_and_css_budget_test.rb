@@ -130,6 +130,20 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     assert_includes design_metrics, shared
   end
 
+  def test_css_budget_failure_reports_all_sites_up_to_the_bounded_limit
+    gate = Deploy::CssConstitutionGate.new
+    gate.instance_variable_set(:@result, Deploy::GateResult.new)
+    gate.instance_variable_set(:@tally, { "type_scale" => Array.new(102) { |i| "fixture.scss:#{i + 1} 13px" } })
+    gate.define_singleton_method(:budgets) { { "type_scale" => 0 } }
+
+    gate.send(:judge_budgets)
+
+    warnings = gate.instance_variable_get(:@result).warnings
+    assert_includes warnings, "css_constitution type_scale: fixture.scss:100 13px"
+    assert_includes warnings, "css_constitution type_scale: 2 additional finding(s) omitted"
+    refute warnings.any? { |line| line.include?("fixture.scss:101 13px") }
+  end
+
   def test_every_counted_css_rule_has_a_ceiling
     gate = Deploy::CssConstitutionGate.run_once
 
