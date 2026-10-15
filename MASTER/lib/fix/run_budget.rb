@@ -98,10 +98,17 @@ module Master
         @last_beat = @started
         @last_machine_beat = @started
         @last_guard_check = @started
-        @last_resource_check = @started
+        # Check the disk before the first model call or stream event can fill
+        # the journal. Resource pressure cannot wait for the 30-second cadence
+        # when the filesystem is already below its hard floor.
+        @last_resource_check = @started - RESOURCE_CHECK_SECONDS
         @last_unit = nil
         @last_text = nil
         @pass = 0
+        guard_check(@started)
+        return self if @exit_reason
+
+        @last_resource_check = @started
         @watchdog = Thread.new { watch } if @poll.positive?
         self
       end
