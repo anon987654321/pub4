@@ -47,6 +47,13 @@ module Fleet
     app_ports.keys.sort
   end
 
+  # Source directories that define the fleet's shipped stylesheet contracts.
+  # The shared engine is not an app in apps.yml, but its CSS is mounted by all
+  # three apps and must be measured beside their local stylesheets.
+  def asset_roots
+    (app_names + ["__shared"]).uniq.sort
+  end
+
   # The apps plus MASTER's face, which is the set the browser probes walk.
   def ports
     app_ports.merge(MASTER_NAME => MASTER_PORT)
