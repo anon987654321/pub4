@@ -33,7 +33,8 @@ class TestGateCoverageReporting < Minitest::Test
     reachability = Master::Fix::Reachability.allocate
     coverage = ["coverage0: layout/CssConstitutionGate FAILED — 4 check(s), 2 failure(s)"]
     failures = Array.new(3) { |i| "fixture failure #{i}" }
-    warnings = coverage + Array.new(26) { |i| "fixture warning #{i}" }
+    actionable = ["css_constitution type_scale: brgen/app.scss:17 15px"]
+    warnings = coverage + actionable + Array.new(26) { |i| "fixture warning #{i}" }
     result = Struct.new(:warnings, :failures, :unchecked, :errors).new(warnings, failures, ["missing Chrome"], [])
 
     lines = []
@@ -44,6 +45,7 @@ class TestGateCoverageReporting < Minitest::Test
     assert_includes lines, ["layout0", coverage.first]
     assert_includes lines, ["layout0", "failure: fixture failure 0"]
     assert_includes lines, ["layout0", "unchecked: missing Chrome"]
+    assert_includes lines, ["layout0", actionable.first]
     assert_includes lines, ["layout0", "warning: 2 additional item(s) omitted"]
   end
 end
