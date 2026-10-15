@@ -11,13 +11,24 @@ module Studio
 
     def data_home
       configured = ENV.fetch("XDG_DATA_HOME", "").to_s
-      return FALLBACK_DATA_HOME if configured.empty?
-      return FALLBACK_DATA_HOME unless configured.start_with?(File::SEPARATOR)
+      return fallback_data_home if configured.empty?
+      return fallback_data_home unless configured.start_with?(File::SEPARATOR)
 
       candidate = canonical_path(configured)
-      return FALLBACK_DATA_HOME if inside_repository?(candidate)
+      return fallback_data_home if inside_repository?(candidate)
 
       candidate
+    end
+
+    # Even the fallback must be safe: Documents can itself be a symlink into
+    # the checkout. Refuse that rare configuration rather than writing renders
+    # into the repository under the guise of a fallback.
+    def fallback_data_home(path = FALLBACK_DATA_HOME)
+      if inside_repository?(path)
+        raise ArgumentError, "fallback data home resolves inside the checkout: #{path}"
+      end
+
+      path
     end
 
     def canonical_path(path)
