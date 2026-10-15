@@ -406,7 +406,6 @@ class TestPostproFilm < Minitest::Test
            "a key read below the when line still belongs to that effect arm"
     refute send(:preset_effect_reads_key?, multiline, "spectral_temp", :age),
            "a neighbouring effect arm must not lend its key to this one"
-
   end
 
   def test_every_preset_names_a_stock_that_exists
