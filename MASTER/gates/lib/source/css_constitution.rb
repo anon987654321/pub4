@@ -4,6 +4,7 @@ require_relative "../../support/token_reads"
 require "yaml"
 require_relative "../../support/gate_result"
 require_relative "../../support/gate_autofix"
+require_relative "../../support/fleet"
 require_relative "../../../tools/master_design"
 require_relative "../../../tools/scss"
 require_relative "../../../tools/frontend_law_set"
@@ -23,7 +24,7 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "tokens.yml")
-    APPS = %w[brgen amber bsdports shared].freeze
+    APPS = Fleet.asset_roots.freeze
 
     # `: none` is how a stylesheet *complies* with flat_ui, so it cannot be the
     # thing that fails it. text-shadow and backdrop-filter had no exclusion at
