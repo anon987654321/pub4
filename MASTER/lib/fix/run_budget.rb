@@ -204,6 +204,10 @@ module Master
 
       # The dmesg banner, then the pulse listening to the bus.
       def announce(target:, bus:)
+        # A startup disk preflight may already have ended the run. Do not
+        # attach event listeners or emit a fresh-run banner after that verdict.
+        return self if @exit_reason
+
         limits = "budget #{show(@max_cost, "$")} / #{show(@max_minutes, "", "m")}"
         RunPulse::Banner.lines(root: @root, target: target || @root, max_passes: @max_passes, limits:).each { |text| @say.call(text) }
         @pulse.attach(bus) if bus
