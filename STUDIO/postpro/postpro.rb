@@ -367,11 +367,14 @@ end
 # A lone --preset falls through to the interactive chooser and can look like a
 # hung non-interactive job. Named one-shot grades are only valid with input and
 # output paths; watch and stock-sheet have their own documented preset routes.
-has_preset = ARGV.include?("--preset")
-complete_one_shot = %w[--input --output --preset].all? { |flag| ARGV.include?(flag) }
-preset_mode = ARGV.include?("--watch") || ARGV.include?("--stock-sheet")
-if has_preset && !complete_one_shot && !preset_mode
-  PostproBootstrap.dmesg("ERROR --preset needs --input FILE and --output FILE (or use --watch/--stock-sheet)")
+one_shot_flags = %w[--input --output --preset]
+one_shot_requested = one_shot_flags.any? { |flag| ARGV.include?(flag) }
+complete_one_shot = one_shot_flags.all? { |flag| ARGV.include?(flag) }
+dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut] & ARGV).any?
+if one_shot_requested && !complete_one_shot && !dedicated_mode
+  PostproBootstrap.dmesg(
+    "ERROR one-shot mode requires --input FILE, --output FILE and --preset NAME "     "(or use --watch/--stock-sheet/--rescue/--export-lut)",
+  )
   exit 2
 end
 
