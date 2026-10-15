@@ -5,6 +5,7 @@ require "json"
 require "shellwords"
 require "time"
 require_relative "../boot/paths"
+require_relative "../../contracts/studio"
 require_relative "script_dispatch"
 require_relative "constraint_dsl"
 require_relative "natural_intent"
@@ -411,7 +412,7 @@ module Master
       end
 
       def reference_root
-        File.join(ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents")), "dilla-references")
+        Contracts::Studio.output_path(kind: :reference_root)
       end
 
       def reference_profile_path(style = nil)
@@ -496,7 +497,8 @@ module Master
       end
 
       def generate_industrial_techno(text, root:)
-        output_path = File.join(dilla_renders_dir, "industrial-techno-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        now = Time.now.utc
+        output_path = File.join(dilla_renders_dir(at: now), "industrial-techno-#{now.strftime('%Y%m%dT%H%M%SZ')}.wav")
         args = ["industrial-techno", "--out", output_path]
         bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
         args.concat(["--bpm", bpm]) if bpm
@@ -508,11 +510,9 @@ module Master
         Result.ok({ output:, rendered: output, media: :industrial_techno, path: output_path })
       end
 
-      # Where /play renders go: a dated folder outside the repository, never over
-      # a take that matters (every file is named by its second).
-      def dilla_renders_dir
-        base = ENV.fetch("XDG_DATA_HOME", File.expand_path("~/Documents"))
-        File.join(base, "dilla-renders", Time.now.utc.strftime("%Y-%m-%d"))
+      # STUDIO owns the dated render directory and enforces the output-path policy.
+      def dilla_renders_dir(at: Time.now.utc)
+        Contracts::Studio.output_path(kind: :dilla_render_directory, at:)
       end
 
       # What dilla.rb can render, read from its own --list rather than from its
@@ -569,7 +569,10 @@ module Master
         bpm = explicit_bpm ? explicit_bpm.to_f : reference&.fetch("target_bpm", nil)
         drum_balance = reference_balance_adjustment(reference, "drums_energy_share") if dilla_pocket
         chord_balance = reference_balance_adjustment(reference, "other_energy_share") if dilla_pocket
-        output ||= File.join(dilla_renders_dir, "#{progression}-#{pattern}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        unless output
+          now = Time.now.utc
+          output = File.join(dilla_renders_dir(at: now), "#{progression}-#{pattern}-#{now.strftime('%Y%m%dT%H%M%SZ')}.wav")
+        end
         FileUtils.mkdir_p(File.dirname(output))
         argv = ["--progression", progression, "--out", output]
         argv.concat(["--drums", pattern]) if pattern
