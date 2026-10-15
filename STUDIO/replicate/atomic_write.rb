@@ -21,6 +21,25 @@ module Studio
       path
     end
 
+    # Stream a large artifact through a same-directory temporary before publish.
+    # This keeps content-addressed blobs safe without loading the whole image
+    # into memory, and a failed copy never replaces a previously valid artifact.
+    def copy_atomic(source, destination)
+      target = File.expand_path(destination)
+      directory = File.dirname(target)
+      FileUtils.mkdir_p(directory)
+      mode = File.file?(target) ? File.stat(target).mode & 0o7777 : 0o640
+      Tempfile.create(["studio-copy-", ".tmp"], directory, binmode: true) do |tmp|
+        File.open(source, "rb") { |input| IO.copy_stream(input, tmp) }
+        tmp.flush
+        tmp.fsync
+        tmp.close
+        File.chmod(mode, tmp.path)
+        File.rename(tmp.path, target)
+      end
+      destination
+    end
+
     # Serialize cooperating writers and publish each complete JSONL record under
     # the lock. A process that died mid-write can leave an unterminated final
     # fragment; discard that fragment before the next append instead of making
