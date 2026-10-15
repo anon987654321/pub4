@@ -386,8 +386,14 @@ module Master
                    else
                      []
                    end
-          models = Master::Io::LaneSelection.catalogue if models.empty?
           models = models.select { |model| Master::Io::LaneSelection.alive?(model) }
+          # If the preferred repair chain has no usable lane on this machine,
+          # fall back to the live catalogue instead of probing an empty chain.
+          if models.empty?
+            models = Master::Io::LaneSelection.catalogue.select do |model|
+              Master::Io::LaneSelection.alive?(model)
+            end
+          end
           LaneProbe.run(models:, ask: LaneProbe.ask_with(@agent))
         end
 
