@@ -190,6 +190,15 @@ class TestFixWatchdog < Minitest::Test
     assert_match(/\Afix0 phase=scan fixed=0 failed=0 rejected=0 lane=none elapsed=61\z/, @said.first)
   end
 
+  def test_disk_pressure_is_checked_before_the_watchdog_or_work_starts
+    run = budget(resource_budget: fake_resource_budget(free_gb: 1.25))
+
+    assert_equal 1, @killed.size
+    assert_match(/disk pressure at 1.25 GB free/, @killed.first)
+    assert(run.instance_variable_get(:@finished_said), "preflight must emit the terminal report")
+    assert(@said.any? { |line| line.include?("stopping before filesystem exhaustion") })
+  end
+
   def test_disk_pressure_aborts_before_filesystem_exhaustion
     run = budget(resource_budget: fake_resource_budget(free_gb: 1.25))
     ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
