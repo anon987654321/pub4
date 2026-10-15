@@ -203,6 +203,16 @@ class BrowserFlowGatesTest < Minitest::Test
     end
   end
 
+  def test_keyboard_flow_focus_probe_counts_visible_pseudo_element_rings
+    probe = Deploy::KeyboardFlowGate::ACTIVE
+
+    assert_includes probe, "getComputedStyle(el, pseudo)"
+    assert_includes probe, "hasPseudoOutline"
+    assert_includes probe, "hasPseudoShadow"
+    assert_includes probe, "'pseudo-outline'"
+    assert_includes probe, "'pseudo-box-shadow'"
+  end
+
   def test_keyboard_flow_names_a_skip_link_that_is_not_the_first_tab_stop
     result = keyboard_run([stop(sel: "input#email", order: 4), stop(sel: "button.send", order: 5),
                            stop(**SKIP_LINK)])
