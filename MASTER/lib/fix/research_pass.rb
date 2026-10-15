@@ -34,11 +34,9 @@ module Master
                                label = event.fetch(:label).to_s
                                state = event.fetch(:event).to_s
                                status_note = event[:status] ? " status=#{event[:status]}" : ""
-                               Master::Trace::Dmesg.status(
-                                 "research0",
-                                 "#{domain} #{event.fetch(:kind)} #{event.fetch(:index)}/#{event.fetch(:total)} " \\
-                                 "#{state} #{label[0, 100]}#{status_note}",
-                               )
+                               progress = "#{domain} #{event.fetch(:kind)} #{event.fetch(:index)}/#{event.fetch(:total)}"
+                               detail = "#{state} #{label[0, 100]}#{status_note}"
+                               Master::Trace::Dmesg.status("research0", "#{progress} #{detail}")
                                @bus&.publish(
                                  "fix_loop:research_source",
                                  target: target.to_s, domain:, kind: event.fetch(:kind),
