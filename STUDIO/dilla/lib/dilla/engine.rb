@@ -22,7 +22,7 @@ def dilla_output_path(argv)
          else
            raise ArgumentError, "unknown output path #{kind.inspect}; use reference-root or dilla-render-directory"
          end
-  raise ArgumentError, "STUDIO output path is not absolute" unless Pathname.new(path).absolute?
+  raise ArgumentError, "STUDIO output path is not absolute" unless path.start_with?(File::SEPARATOR)
 
   puts path
   0
