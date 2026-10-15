@@ -63,6 +63,15 @@ class LocaleContractTest < Minitest::Test
                     "fewer than six engine locale directories — the glob is wrong, not the tree"
   end
 
+  def test_the_glob_finds_the_shared_engine_locale_files
+    shared_root = File.join(ROOT, "__shared", "config", "locales")
+    found = locale_files.select { |path| path.start_with?("#{shared_root}/") }
+
+    assert_operator found.size, :>=, 6, "shared English/Norwegian locale files must be in the contract"
+    assert_includes found.map { |path| File.basename(path) }, "social.en.yml"
+    assert_includes found.map { |path| File.basename(path) }, "social.nb.yml"
+  end
+
   def test_no_locale_file_repeats_a_key
     duplicates = locale_files.flat_map { |path| duplicate_keys(path).map { |dup| [path, dup] } }
 
