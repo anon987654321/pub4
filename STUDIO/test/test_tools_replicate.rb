@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "tools_helper"
+require "tmpdir"
 ToolTest::Tools.load_tool("replicate/replicate.rb")
 
 # replicate builds an API request out of seven controlled vocabularies and a
@@ -489,6 +490,72 @@ class TestReplicate < Minitest::Test
       assert_equal "probe", row["chain"]
       assert_equal "Preprompt::Chain::StageFailed", row["error"]
       assert_equal ["out-01-a.jpg"], row["kept"]
+    end
+  end
+
+  # Concurrent writers must publish whole sidecars, never mixtures of two JSON
+  # documents at the same target path.
+  def test_provenance_sidecar_is_replaced_with_one_complete_document
+    Dir.mktmpdir do |dir|
+      output = File.join(dir, "frame.webp")
+      workers = 8.times.map do |index|
+        Thread.new do
+          send(
+            :write_provenance, output, "prompt-#{index}",
+            "compiled-#{index} " * 12_000, nil, { model: SCHNELL }, index, "digest-#{index}"
+          )
+        end
+      end
+      workers.each(&:value)
+
+      sidecar = JSON.parse(File.read("#{output}.json"))
+      index = Integer(sidecar.fetch("prompt").delete_prefix("prompt-"))
+      assert_equal "compiled-#{index} " * 12_000, sidecar.fetch("compiled_prompt")
+      assert_equal "digest-#{index}", sidecar.fetch("sha256")
+      assert_empty Dir[File.join(dir, "studio-*.tmp")], "temporary sidecars must not leak after publish"
+    end
+  end
+
+  def test_jsonl_appends_repair_a_torn_tail_and_serialize_concurrent_writers
+    Dir.mktmpdir do |dir|
+      manifest = File.join(dir, "gallery.jsonl")
+      File.binwrite(manifest, "{\"interrupted\":")
+
+      workers = 8.times.map do |worker|
+        Thread.new do
+          12.times do |sequence|
+            send(:append_gallery_manifest,
+                 { output: "worker-#{worker}-#{sequence}.webp" }, "frame #{worker}/#{sequence}",
+                 manifest:)
+          end
+        end
+      end
+      workers.each(&:value)
+
+      lines = File.readlines(manifest, chomp: true)
+      assert_equal 96, lines.length, "the incomplete tail must be discarded and no complete record lost"
+      rows = lines.map { |line| JSON.parse(line) }
+      coordinates = rows.map do |row|
+        match = row.fetch("output").match(/worker-(\d+)-(\d+)\.webp\\z/)
+        refute_nil match, row.inspect
+        match.captures.map(&:to_i)
+      end
+      assert_equal 96, coordinates.uniq.length
+      assert rows.all? { |row| row["alt_text"].start_with?("frame ") }
+    end
+  end
+
+  def test_failed_chain_manifest_uses_the_same_complete_jsonl_writer
+    Dir.mktmpdir do |dir|
+      manifest = File.join(dir, "failed_chains.jsonl")
+      send(:record_failed_chain, { name: "probe", sha256: "abc" },
+           Preprompt::Chain::StageFailed.new("stage b returned no output"),
+           ["out-01.webp"], manifest:)
+
+      row = JSON.parse(File.read(manifest))
+      assert_equal "probe", row.fetch("chain")
+      assert_equal "abc", row.fetch("sha256")
+      assert_equal ["out-01.webp"], row.fetch("kept")
     end
   end
 
