@@ -30,7 +30,9 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     declarations = shared.split("\n}", 2).first
 
     %w[--store-ink --store-page --store-rule --store-well --store-text-meta
-       --store-text-heading --store-text-price].each do |token|
+       --store-text-heading --store-text-price --store-text-action --store-text-brand
+       --store-text-brand-compact --store-text-hero-compact --store-text-glyph
+       --store-icon-size].each do |token|
       assert_match(/#{Regexp.escape(token)}\s*:/, declarations, "#{token} must be shared by both storefronts")
     end
 
