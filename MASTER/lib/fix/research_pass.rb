@@ -156,22 +156,26 @@ module Master
                  end
 
         # Allocate the remaining prompt budget across every excerpt instead of
-        # appending long early-domain text and truncating the later domains.
-        # Recalculate after each row so unused space from short excerpts is reused.
+        # appending long early-domain text and truncating later domains.
+        # Reserve the actual separators and headings before splitting text space.
         prefix = lines.join("\n")
         body = +""
         excerpts.each_with_index do |(heading, excerpt), index|
-          remaining_rows = excerpts.length - index
-          separator = body.empty? ? "\n\n" : "\n\n"
+          remaining = excerpts.drop(index + 1)
+          separator = body.empty? ? "" : "\n\n"
           footer_reserve = footer.empty? ? 0 : footer.length + 2
-          available = max_chars - prefix.length - body.length - footer_reserve - separator.length
-          share = [available / [remaining_rows, 1].max, 0].max
-          text_budget = [share - heading.length - 1, excerpt.length].min
-          body << separator << heading << "\n" << excerpt[0, [text_budget, 0].max]
+          used_before_text = prefix.length + 2 + body.length + separator.length + heading.length + 1
+          future_structure = remaining.sum { |future_heading, _| future_heading.length + 3 }
+          available = [max_chars - used_before_text - future_structure - footer_reserve, 0].max
+          text_budget = [available / (remaining.length + 1), excerpt.length].min
+          body << separator << heading << "\n" << excerpt[0, text_budget]
         end
 
-        result = [prefix, body, footer].reject(&:empty?).join("\n\n")
-        result[0, max_chars]
+        if body.empty?
+          [prefix, footer].reject(&:empty?).join("\n\n")
+        else
+          [prefix, body, footer].reject(&:empty?).join("\n\n")
+        end
       end
 
     end
