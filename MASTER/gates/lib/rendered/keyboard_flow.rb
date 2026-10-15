@@ -40,6 +40,20 @@ module Deploy
         const outlineWidth = parseFloat(cs.outlineWidth) || 0;
         const hasOutline = cs.outlineStyle !== 'none' && outlineWidth > 0;
         const hasShadow = cs.boxShadow && cs.boxShadow !== 'none';
+        // Some controls draw the focus indicator on their visible pseudo-element
+        // (the face upload control does this to preserve its 18px square inside a
+        // 44px hit target). Measure that painted ring too; the element's own
+        // outline is deliberately reset to none in that pattern.
+        const pseudoStyles = ['::before', '::after'].map(pseudo => getComputedStyle(el, pseudo));
+        const visiblePseudo = pseudoStyles.filter(style =>
+          style.content !== 'none' && style.content !== 'normal' &&
+          style.display !== 'none' && style.visibility !== 'hidden' &&
+          (parseFloat(style.opacity) || 0) > 0
+        );
+        const hasPseudoOutline = visiblePseudo.some(style =>
+          style.outlineStyle !== 'none' && (parseFloat(style.outlineWidth) || 0) > 0
+        );
+        const hasPseudoShadow = visiblePseudo.some(style => style.boxShadow && style.boxShadow !== 'none');
         const hasBorderChange = cs.borderStyle !== 'none' && (parseFloat(cs.borderWidth) || 0) > 0;
         return {
           sel: el.tagName.toLowerCase() + (el.id ? '#' + el.id : (cls ? '.' + cls : '')),
@@ -49,8 +63,8 @@ module Deploy
           tabindex: el.getAttribute('tabindex'),
           rect: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
           doc_order: Array.prototype.indexOf.call(document.querySelectorAll('*'), el),
-          ring: hasOutline || hasShadow,
-          ring_kind: hasOutline ? 'outline' : (hasShadow ? 'box-shadow' : (hasBorderChange ? 'border-only' : 'none')),
+          ring: hasOutline || hasShadow || hasPseudoOutline || hasPseudoShadow,
+          ring_kind: hasOutline ? 'outline' : (hasShadow ? 'box-shadow' : (hasPseudoOutline ? 'pseudo-outline' : (hasPseudoShadow ? 'pseudo-box-shadow' : (hasBorderChange ? 'border-only' : 'none')))),
           onscreen: r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight
         };
       })()
