@@ -128,11 +128,16 @@ module Master
           Master::Trace::Dmesg.status("layout0", line)
         end
 
+        warnings = result.warnings.reject { |line| line.start_with?("coverage0:") }
+        actionable, contextual = warnings.partition do |line|
+          line.match?(/\A(?:css_constitution |scale_ratchet:|design_metrics |typography_contract:|frontend_auditor:|layout_search:|visual_quality:)/)
+        end
         {
           "failure" => [result.failures, 100],
           "unchecked" => [result.unchecked, 40],
           "error" => [result.errors, 40],
-          "warning" => [result.warnings.reject { |line| line.start_with?("coverage0:") }, 24],
+          "diagnostic" => [actionable, 100],
+          "warning" => [contextual, 24],
         }.each do |kind, (rows, limit)|
           rows.first(limit).each do |line|
             Master::Trace::Dmesg.status("layout0", "#{kind}: #{line.to_s[0, 500]}")
