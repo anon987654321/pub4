@@ -240,11 +240,10 @@ module Master
         return unless stalled[:abort]
 
         reason = stalled[:line].sub(/\Afix0: STALLED /, "stalled, ")
-        if ENV["MASTER_FIX_ABORT_ON_STALL"] == "0"
-          @say.call("fix0: STALL REPORT ONLY #{reason}")
-        else
-          abort_run!(reason)
-        end
+        # A non-advisory no-progress stall is a safety stop, not a preference.
+        # The report-only escape hatch must not turn an unattended deadlock into
+        # another hour of waiting; abort_run! still supports report-only callers.
+        abort_run!(reason, force: true)
       end
 
       # One machine-readable heartbeat a minute, whatever the human line says.
