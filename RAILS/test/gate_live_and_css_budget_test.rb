@@ -123,9 +123,11 @@ class GateLiveAndCssBudgetTest < Minitest::Test
 
     constitution = Deploy::CssConstitutionGate.new.send(:css_files)
     braces = Deploy::CssBraceBalanceGate.new.send(:css_files)
+    design_metrics = Deploy::DesignMetricsGate.new.send(:source_stylesheets)
 
     assert_includes constitution, shared
     assert_includes braces, shared
+    assert_includes design_metrics, shared
   end
 
   def test_every_counted_css_rule_has_a_ceiling
