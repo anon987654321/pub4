@@ -1,12 +1,41 @@
 # Reference analysis and industrial-techno generation stay in their own modules.
+require "time"
 require_relative "../../../output_paths"
 require_relative "reference"
 require_relative "industrial_techno"
+
+# Stable machine-readable path surface for MASTER/contracts/studio.rb. The
+# path policy itself stays in STUDIO/output_paths.rb; MASTER never imports it.
+def dilla_output_path(argv)
+  kind = argv.shift
+  path = case kind
+         when "reference-root"
+           raise ArgumentError, "reference-root takes no arguments" unless argv.empty?
+
+           Studio::OutputPaths.reference_root
+         when "dilla-render-directory"
+           at_text = argv.shift
+           raise ArgumentError, "dilla-render-directory requires one ISO 8601 timestamp" if at_text.to_s.empty?
+           raise ArgumentError, "unexpected output-path arguments" unless argv.empty?
+
+           Studio::OutputPaths.dilla_render_directory(at: Time.iso8601(at_text))
+         else
+           raise ArgumentError, "unknown output path #{kind.inspect}; use reference-root or dilla-render-directory"
+         end
+  raise ArgumentError, "STUDIO output path is not absolute" unless Pathname.new(path).absolute?
+
+  puts path
+  0
+rescue ArgumentError => error
+  warn "dilla0: output-path: #{error.message}"
+  2
+end
 
 # ---------------------------------------------------------------------- CLI
 def run(argv)
   return Dilla::Reference.run(argv.drop(1)) if argv.first == "reference"
   return Dilla::IndustrialTechno.run(argv.drop(1)) if argv.first == "industrial-techno"
+  return dilla_output_path(argv.drop(1)) if argv.first == "output-path"
   RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && !ENV.key?('DILLA_NO_YJIT') # about a third off every render
   live_argument = argv.first == 'live'
   argv = argv.drop(1) if live_argument
