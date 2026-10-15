@@ -21,7 +21,7 @@ module Deploy
   class CssBraceBalanceGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    APPS = Fleet.app_names.freeze
+    APPS = Fleet.asset_roots.freeze
     MASTER_WEB = %w[RAILS/master/public/face.css RAILS/master/public/chat_upload.css].freeze
 
     def self.run = new.run
