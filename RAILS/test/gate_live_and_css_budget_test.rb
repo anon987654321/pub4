@@ -7,6 +7,7 @@ require "fileutils"
 require "stringio"
 require_relative "../../OPENBSD/lib/gate_result"
 require_relative "../../MASTER/gates/lib/source/css_constitution"
+require_relative "../../MASTER/gates/lib/source/css_brace_balance"
 require_relative "../../MASTER/gates/support/design_metrics"
 require_relative "../../MASTER/gates/lib/research/design_metrics"
 require_relative "../../MASTER/gates/support/css_weight"
@@ -114,6 +115,17 @@ class GateLiveAndCssBudgetTest < Minitest::Test
 
   def budget
     YAML.safe_load_file(File.expand_path("../../MASTER/gates/data/css_budget.yml", __dir__)).fetch("rules")
+  end
+
+  def test_css_constitution_and_brace_gates_include_the_canonical_shared_engine
+    shared = File.join(Deploy::CssConstitutionGate::RAILS, "__shared", "app/assets/stylesheets/_tokens.scss")
+    assert File.file?(shared), "the fixture is the mounted shared engine's source stylesheet"
+
+    constitution = Deploy::CssConstitutionGate.new.send(:css_files)
+    braces = Deploy::CssBraceBalanceGate.new.send(:css_files)
+
+    assert_includes constitution, shared
+    assert_includes braces, shared
   end
 
   def test_every_counted_css_rule_has_a_ceiling
