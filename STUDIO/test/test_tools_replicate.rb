@@ -536,7 +536,7 @@ class TestReplicate < Minitest::Test
       assert_equal 96, lines.length, "the incomplete tail must be discarded and no complete record lost"
       rows = lines.map { |line| JSON.parse(line) }
       coordinates = rows.map do |row|
-        match = row.fetch("output").match(/worker-(\d+)-(\d+)\.webp\\z/)
+        match = row.fetch("output").match(/worker-(\d+)-(\d+)\.webp\z/)
         refute_nil match, row.inspect
         match.captures.map(&:to_i)
       end
