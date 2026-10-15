@@ -93,8 +93,13 @@ direct answer to that. Change it per run with `--postpro PRESET`, per shell with
 `REPLICATE_POSTPRO`, and switch it off with `--no-postpro` when another tool will grade the
 file later. The look itself is postpro's to define.
 
-Generation returns provider URLs unless `--output FILE` is supplied. Each saved output gets a
-content-addressed blob, a checksum, a provenance sidecar and a line in
+Generation returns provider URLs unless `--output FILE` is supplied. When saving to a path,
+the extension controls the requested bytes: `.jpg`/`.jpeg` request `jpg`, `.png` requests
+`png`, and `.webp` requests `webp`. Without an extension, WebP remains the default; unsupported
+extensions are refused before the provider call. Chain stages derive the same setting from their
+actual stage-output path so intermediate files are not mislabeled.
+
+Each saved output gets a content-addressed blob, a checksum, a provenance sidecar and a line in
 `.master/media/gallery.jsonl`. The gallery's alt text describes the subject, the crop, the
 camera height and the background, which is what the image is of, and not the compiled prompt,
 which is how it was made. Missing credentials, missing outputs, provider failures,
