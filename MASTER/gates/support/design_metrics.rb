@@ -64,7 +64,7 @@ module Deploy
     # contrast_below_aa is 0 precisely so a real one is visible the day it lands.
     def light_only_vertical_keys(rails_root)
       globs = %w[
-        {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
+        {__shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
         brgen/engines/*/app/assets/stylesheets/*.scss
       ]
       light_only = {}
@@ -306,12 +306,12 @@ decls.compact.each { |_, v, _| values << v }
       @read_custom_properties ||= {}
       @read_custom_properties[rails_root] ||= begin
         globs = %w[
-          {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
+          {__shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
           brgen/engines/*/app/assets/stylesheets/*.scss
-          {shared,brgen,amber,bsdports}/app/**/*.erb
+          {__shared,brgen,amber,bsdports}/app/**/*.erb
           brgen/engines/*/app/**/*.erb
           __shared/frontend/**/*.js
-          {shared,brgen,amber,bsdports}/app/javascript/**/*.js
+          {__shared,brgen,amber,bsdports}/app/javascript/**/*.js
         ]
         names = Set.new
         globs.each do |pattern|
