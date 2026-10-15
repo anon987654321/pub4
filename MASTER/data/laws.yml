@@ -490,7 +490,7 @@ transformation_policy:
           - "site:ar5iv.labs.arxiv.org/html software engineering code smells refactoring systematic review"
         sources:
           - "https://github.com/rubocop/ruby-style-guide"
-          - "https://arxiv.org/abs/2004.10777"
+          - "https://ar5iv.labs.arxiv.org/html/2004.10777"
           - "https://martinfowler.com/books/refactoring.html"
       rails:
         queries:

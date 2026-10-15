@@ -67,6 +67,8 @@ class TestTransformationPlan < Minitest::Test
       refute_empty protocol.fetch("domains").fetch(domain).fetch("sources")
       assert_operator protocol.fetch("domains").fetch(domain).fetch("queries").size, :>=, 1
     end
+    assert_includes protocol.fetch("domains").fetch("engineering").fetch("sources").join(" "),
+      "ar5iv.labs.arxiv.org/html/2004.10777"
     assert_includes @plan.research_instructions, "untrusted"
     names = @plan.research.map { |entry| entry.fetch("name") }
     assert_includes names, "Fowler, Refactoring"
