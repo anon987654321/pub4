@@ -62,6 +62,9 @@ class TestPostproDispatch < Minitest::Test
         ["--input", File.join(dir, "frame.jpg")],
         ["--output", File.join(dir, "graded.jpg")],
         ["--input", File.join(dir, "frame.jpg"), "--output", File.join(dir, "graded.jpg")],
+        ["--input", "--output", "--preset"],
+        ["--input", File.join(dir, "frame.jpg"), "--output", "--preset", "portrait"],
+        ["--input", File.join(dir, "frame.jpg"), "--output", File.join(dir, "graded.jpg"), "--preset"],
       ]
 
       partial_calls.each do |args|
