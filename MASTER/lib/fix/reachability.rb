@@ -113,10 +113,33 @@ module Master
           "failures=#{result.failures.size}, warnings=#{result.warnings.size}, " \
           "unchecked=#{result.unchecked.size}",
         )
+        report_layout_diagnostics!(result)
 
         raise "layout suite gate errored: #{result.errors.first}" if result.errored?
       ensure
         saved.nil? ? ENV.delete("GATE_AUTOFIX") : ENV["GATE_AUTOFIX"] = saved
+      end
+
+      # A count tells the operator that the sweep failed, not what to repair.
+      # Keep every hard failure and unchecked precondition visible; cap only the
+      # secondary warning stream, with the exact omitted count still recorded.
+      def report_layout_diagnostics!(result)
+        result.warnings.grep(/\Acoverage0:/).each do |line|
+          Master::Trace::Dmesg.status("layout0", line)
+        end
+
+        {
+          "failure" => [result.failures, 100],
+          "unchecked" => [result.unchecked, 40],
+          "error" => [result.errors, 40],
+          "warning" => [result.warnings.reject { |line| line.start_with?("coverage0:") }, 24],
+        }.each do |kind, (rows, limit)|
+          rows.first(limit).each do |line|
+            Master::Trace::Dmesg.status("layout0", "#{kind}: #{line.to_s[0, 500]}")
+          end
+          omitted = rows.size - limit
+          Master::Trace::Dmesg.status("layout0", "#{kind}: #{omitted} additional item(s) omitted") if omitted.positive?
+        end
       end
 
       def top_level_target?(target)
