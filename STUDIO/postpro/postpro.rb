@@ -4567,12 +4567,12 @@ def preset_effect_reads_key?(preset_source, effect, key)
 
   # Inspect the complete arm, not only its opening line. A harmless reflow of
   # the call must not turn a real key reader into a false failure.
-  arm_indent = lines[start][/ \A[ \t]*/].length
+  arm_indent = lines[start][/\A[ \t]*/].length
   arm = [lines[start]]
   lines.drop(start + 1).each do |line|
     next if line.strip.empty?
 
-    indent = line[/ \A[ \t]*/].length
+    indent = line[/\A[ \t]*/].length
     break if indent <= arm_indent && line.lstrip.match?(/\A(?:when\b|else\b|end\b)/)
 
     arm << line
