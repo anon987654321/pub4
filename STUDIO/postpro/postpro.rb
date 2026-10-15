@@ -4567,21 +4567,22 @@ def preset_effect_reads_key?(preset_source, effect, key)
 
   # Inspect the complete arm, not only its opening line. A harmless reflow of
   # the call must not turn a real key reader into a false failure.
-  arm_indent = lines[start][/\\A[ \t]*/].length
+  arm_indent = lines[start][/ \A[ \t]*/].length
   arm = [lines[start]]
   lines.drop(start + 1).each do |line|
     next if line.strip.empty?
 
-    indent = line[/\\A[ \t]*/].length
-    break if indent <= arm_indent && line.lstrip.match?(/\\A(?:when\\b|else\\b|end\\b)/)
+    indent = line[/ \A[ \t]*/].length
+    break if indent <= arm_indent && line.lstrip.match?(/\A(?:when\b|else\b|end\b)/)
 
     arm << line
   end
 
   key_name = Regexp.escape(key.to_s)
-  value_pattern = Regexp.new('\\\\bp(?:\\\\[\\\\s*:' + key_name + '\\\\s*\\\\]|\\\\.fetch\\\\(\\\\s*:' + key_name + '\\\\b)')
+  value_pattern = Regexp.new('\\bp(?:\\[\\s*:' + key_name + '\\s*\\]|\\.fetch\\(\\s*:' + key_name + '\\b)')
   arm.join.match?(value_pattern)
 end
+
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
