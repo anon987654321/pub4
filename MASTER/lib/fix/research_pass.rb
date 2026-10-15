@@ -73,7 +73,7 @@ module Master
         eligible_files = Array(files).size
         domain_label = domains.size == 1 ? domains.first : "all"
         brief = format_brief(
-          status:, domain: domain_label, target:, records: successful, fetched:,
+          status:, domain: domain_label, target:, records:, fetched:,
           independent_hosts:, minimum:, eligible_files:, coverage:
         )
         report = {
@@ -139,13 +139,21 @@ module Master
         end
 
         excerpts = records.filter_map do |row|
+          status = row["status"].to_s
           text = row["text"].to_s.strip
-          next if text.empty?
+          next if status == "ok" && text.empty?
 
           label = row["label"].to_s[0, 180]
-          heading = "#{row["kind"] == "fetch" ? "SOURCE" : "SEARCH"} [#{row.fetch("_research_domain", domain)}]: #{label}"
-          text_limit = row["kind"] == "fetch" ? 750 : 400
-          [heading, text[0, text_limit]]
+          kind = row["kind"] == "fetch" ? "SOURCE" : "SEARCH"
+          source_domain = row.fetch("_research_domain", domain)
+          heading = if status == "ok"
+                      "#{kind} [#{source_domain}]: #{label}"
+                    else
+                      "#{kind} [#{source_domain}] #{status.upcase}: #{label}"
+                    end
+          text_limit = status == "ok" ? (row["kind"] == "fetch" ? 750 : 400) : 220
+          excerpt = text.empty? ? "(no text returned)" : text[0, text_limit]
+          [heading, excerpt]
         end
         footer = if status != "PASS"
                    "Research result is INCONCLUSIVE: one or more domains did not meet the independent-source threshold. Treat the repair as higher uncertainty; prefer a smaller change and prove it locally."

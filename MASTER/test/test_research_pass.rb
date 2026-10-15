@@ -84,6 +84,24 @@ class TestResearchPass < Minitest::Test
     assert_equal 0, result.fetch(:fetched_count)
   end
 
+  def test_inconclusive_brief_names_failed_and_empty_source_fetches
+    agent = ResearchAgent.new([
+      { "kind" => "fetch", "label" => "https://github.com/rails/rails",
+        "status" => "unavailable", "text" => "web_fetch: timed out" },
+      { "kind" => "fetch", "label" => "https://guides.rubyonrails.org/",
+        "status" => "empty", "text" => "" },
+    ])
+    pass = Master::Fix::ResearchPass.new(agent:, bus: nil, plan: @plan, root: Master::REPO_ROOT)
+
+    result = pass.run(target: "RAILS", files: [])
+
+    assert_equal "INCONCLUSIVE", result.fetch(:status)
+    assert_includes result.fetch(:brief), "SOURCE [rails] UNAVAILABLE: https://github.com/rails/rails"
+    assert_includes result.fetch(:brief), "web_fetch: timed out"
+    assert_includes result.fetch(:brief), "SOURCE [rails] EMPTY: https://guides.rubyonrails.org/"
+    assert_includes result.fetch(:brief), "(no text returned)"
+  end
+
   def test_research_exception_returns_readable_multiline_inconclusive_brief
     agent = Object.new
     def agent.research_sources(**)
