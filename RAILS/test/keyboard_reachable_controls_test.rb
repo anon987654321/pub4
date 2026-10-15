@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
+require "fileutils"
 
 # A control a keyboard cannot reach, and a role that promises one.
 #
@@ -276,7 +278,7 @@ class KeyboardReachableControlsTest < Minitest::Test
       matching = sources.select { |name, _| name == "drag" }
 
       assert_equal 2, matching.size
-      assert_includes matching.map(&:last).join("\\n"), "pointerdown"
+      assert_includes matching.map(&:last).join("\n"), "pointerdown"
     end
   end
 
