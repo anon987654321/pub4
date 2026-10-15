@@ -545,6 +545,31 @@ class TestReplicate < Minitest::Test
     end
   end
 
+  def test_content_addressed_cache_repairs_a_corrupt_blob_atomically
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "source.webp")
+      payload = ("not a small transfer — " * 40_000).b
+      File.binwrite(source, payload)
+      digest = Studio::ReplicateClient.checksum(source)
+      cache = File.join(dir, "blobs")
+      FileUtils.mkdir_p(cache)
+      blob = File.join(cache, "#{digest}.webp")
+      File.binwrite(blob, "truncated blob")
+
+      actual_digest, actual_path = send(:cache_blob, source, cache)
+
+      assert_equal digest, actual_digest
+      assert_equal blob, actual_path
+      assert_equal payload, File.binread(blob)
+      assert_equal digest, Studio::ReplicateClient.checksum(blob)
+      assert_empty Dir[File.join(cache, "studio-copy-*.tmp")]
+
+      File.binwrite(blob, "corrupt again")
+      send(:cache_blob, source, cache)
+      assert_equal payload, File.binread(blob), "a filename must not make a bad digest cache entry trusted"
+    end
+  end
+
   def test_failed_chain_manifest_uses_the_same_complete_jsonl_writer
     Dir.mktmpdir do |dir|
       manifest = File.join(dir, "failed_chains.jsonl")
