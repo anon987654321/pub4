@@ -99,6 +99,35 @@ class TestResearchPass < Minitest::Test
     refute_includes result.fetch(:brief), "\\nResearch could not"
   end
 
+  class WideResearchAgent
+    def research_sources(queries:, sources:, **)
+      searches = Array(queries).map do |query|
+        { "kind" => "search", "label" => query, "status" => "ok",
+          "text" => ("search evidence #{query} " * 50) }
+      end
+      pages = Array(sources).map do |url|
+        { "kind" => "fetch", "label" => url, "status" => "ok",
+          "text" => ("page evidence for #{url} " * 80) }
+      end
+      searches + pages
+    end
+  end
+
+  def test_full_repository_brief_preserves_evidence_from_late_domains
+    pass = Master::Fix::ResearchPass.new(
+      agent: WideResearchAgent.new, bus: nil, plan: @plan, root: Master::REPO_ROOT
+    )
+
+    result = pass.run(target: ".", files: %w[MASTER RAILS OPENBSD STUDIO])
+
+    assert_equal "PASS", result.fetch(:status)
+    %w[engineering rails openbsd studio music visual].each do |domain|
+      assert_includes result.fetch(:brief), "Coverage #{domain}:"
+      assert_includes result.fetch(:brief), "SOURCE [#{domain}]:"
+    end
+    assert_operator result.fetch(:brief).length, :<=, 8_000
+  end
+
   def test_full_repository_target_researches_every_domain
     pass = Master::Fix::ResearchPass.new(agent: Object.new, bus: nil, plan: @plan, root: Master::REPO_ROOT)
 

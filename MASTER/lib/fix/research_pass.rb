@@ -130,6 +130,7 @@ module Master
       end
 
       def format_brief(status:, domain:, target:, records:, fetched:, independent_hosts:, minimum:, eligible_files:, coverage:)
+        max_chars = 8_000
         lines = [
           "EXTERNAL RESEARCH PREFLIGHT: #{status}",
           "Domain: #{domain}; target: #{target}; eligible files: #{eligible_files}; fetched source pages: #{fetched.size}; independent hosts: #{independent_hosts.size}; required per domain: #{minimum}.",
@@ -138,20 +139,39 @@ module Master
         coverage.each do |name, row|
           lines << "Coverage #{name}: #{row.fetch(:pages)} pages, #{row.fetch(:hosts)} independent hosts, #{row.fetch(:pass) ? "PASS" : "INCONCLUSIVE"}."
         end
-        records.each do |row|
-          label = row["label"].to_s
+
+        excerpts = records.filter_map do |row|
           text = row["text"].to_s.strip
           next if text.empty?
 
-          lines << ""
-          lines << "#{row["kind"] == "fetch" ? "SOURCE" : "SEARCH"} [#{row.fetch("_research_domain", domain)}]: #{label}"
-          lines << text[0, row["kind"] == "fetch" ? 750 : 400]
+          label = row["label"].to_s[0, 180]
+          heading = "#{row["kind"] == "fetch" ? "SOURCE" : "SEARCH"} [#{row.fetch("_research_domain", domain)}]: #{label}"
+          text_limit = row["kind"] == "fetch" ? 750 : 400
+          [heading, text[0, text_limit]]
         end
-        if status != "PASS"
-          lines << ""
-          lines << "Research result is INCONCLUSIVE: one or more domains did not meet the independent-source threshold. Treat the repair as higher uncertainty; prefer a smaller change and prove it locally."
+        footer = if status != "PASS"
+                   "Research result is INCONCLUSIVE: one or more domains did not meet the independent-source threshold. Treat the repair as higher uncertainty; prefer a smaller change and prove it locally."
+                 else
+                   ""
+                 end
+
+        # Allocate the remaining prompt budget across every excerpt instead of
+        # appending long early-domain text and truncating the later domains.
+        # Recalculate after each row so unused space from short excerpts is reused.
+        prefix = lines.join("\n")
+        body = +""
+        excerpts.each_with_index do |(heading, excerpt), index|
+          remaining_rows = excerpts.length - index
+          separator = body.empty? ? "\n\n" : "\n\n"
+          footer_reserve = footer.empty? ? 0 : footer.length + 2
+          available = max_chars - prefix.length - body.length - footer_reserve - separator.length
+          share = [available / [remaining_rows, 1].max, 0].max
+          text_budget = [share - heading.length - 1, excerpt.length].min
+          body << separator << heading << "\n" << excerpt[0, [text_budget, 0].max]
         end
-        lines.join("\n")[0, 8_000]
+
+        result = [prefix, body, footer].reject(&:empty?).join("\n\n")
+        result[0, max_chars]
       end
 
     end
