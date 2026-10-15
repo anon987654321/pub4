@@ -40,9 +40,12 @@ class TestFixWatchdog < Minitest::Test
   end
 
   def fake_resource_budget(free_gb:)
-    measurement = { state: :ok, reasons: [], values: { disk_free_gb: free_gb } }
+    state = { free_gb: }
     probe = Object.new
-    probe.define_singleton_method(:measure) { measurement }
+    probe.define_singleton_method(:measure) do
+      { state: :ok, reasons: [], values: { disk_free_gb: state[:free_gb] } }
+    end
+    probe.define_singleton_method(:free_gb=) { |value| state[:free_gb] = value }
     probe.define_singleton_method(:disk_critical?) do |reading|
       free = reading.dig(:values, :disk_free_gb)
       free.nil? || free <= 2.0
@@ -200,7 +203,9 @@ class TestFixWatchdog < Minitest::Test
   end
 
   def test_disk_pressure_aborts_before_filesystem_exhaustion
-    run = budget(resource_budget: fake_resource_budget(free_gb: 1.25))
+    resource_budget = fake_resource_budget(free_gb: 100.0)
+    run = budget(resource_budget:)
+    resource_budget.free_gb = 1.25
     ENV["MASTER_FIX_ABORT_ON_STALL"] = "0"
     @now = Budget::RESOURCE_CHECK_SECONDS + 1
 
