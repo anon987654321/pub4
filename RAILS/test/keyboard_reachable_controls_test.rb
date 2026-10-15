@@ -105,7 +105,7 @@ class KeyboardReachableControlsTest < Minitest::Test
   Surface = Struct.new(:path, :tag, :attrs, :controller, :match)
 
   def views
-    @views ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared}/**/app/views/**/*.erb")).uniq
+    @views ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/app/views/**/*.erb")).uniq
   end
 
   # ERB is blanked to spaces first, offsets kept. An attribute like
@@ -144,7 +144,7 @@ class KeyboardReachableControlsTest < Minitest::Test
   end
 
   def controller_sources
-    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared}/**/*_controller.js"))
+    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/*_controller.js"))
        .reject { |p| p.match?(%r{/(vendor|node_modules|public|builds)/}) }
        .to_h { |p| [File.basename(p, "_controller.js").tr("_", "-"), File.read(p)] }
   end
@@ -213,7 +213,7 @@ class KeyboardReachableControlsTest < Minitest::Test
   end
 
   def restricting_tokens
-    @restricting_tokens ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared}/**/app/assets/stylesheets/**/*.scss"))
+    @restricting_tokens ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/app/assets/stylesheets/**/*.scss"))
                                .flat_map { |path| touch_action_selectors(File.read(path)) }
                                .flat_map { |selector| selector.split(/[\s>+~]+/).last.to_s.scan(/[.#][\w-]+/) }
                                .uniq
