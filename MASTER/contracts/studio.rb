@@ -3,10 +3,16 @@
 require "json"
 require "open3"
 require "rbconfig"
+require "time"
 
 module Contracts
   module Studio
     PHOTOGRAPH_TIMEOUT = Integer(ENV.fetch("STUDIO_PHOTOGRAPH_TIMEOUT", "120"))
+    OUTPUT_PATH_TIMEOUT = Integer(ENV.fetch("STUDIO_OUTPUT_PATH_TIMEOUT", "10"))
+    OUTPUT_PATH_COMMANDS = {
+      reference_root: "reference-root",
+      dilla_render_directory: "dilla-render-directory",
+    }.freeze
 
     module_function
 
@@ -25,6 +31,30 @@ module Contracts
     def first_file(relative)
       path = File.join(root, relative)
       File.file?(path) ? path : nil
+    end
+
+    # Query STUDIO's own path authority over the executable boundary. MASTER
+    # must not load STUDIO/output_paths.rb as a sibling implementation.
+    def output_path(kind:, at: Time.now.utc)
+      command = OUTPUT_PATH_COMMANDS.fetch(kind.to_sym) do
+        raise ArgumentError, "unknown STUDIO output path kind: #{kind.inspect}"
+      end
+      script = dilla_script or raise "STUDIO Dilla entrypoint is unavailable"
+      argv = [RbConfig.ruby, script, "output-path", command]
+      argv << at.utc.iso8601 if kind.to_sym == :dilla_render_directory
+      output, status = run_bounded(argv, chdir: root, timeout: OUTPUT_PATH_TIMEOUT)
+      unless status.success?
+        detail = output.lines.last(5).join.strip
+        raise "STUDIO output-path failed: #{detail.empty? ? "exit #{status.exitstatus}" : detail}"
+      end
+
+      paths = output.lines.map(&:strip).reject(&:empty?)
+      raise "STUDIO output-path returned #{paths.length} paths; expected exactly one" unless paths.one?
+
+      path = paths.fetch(0)
+      raise "STUDIO output-path returned a relative path" unless path.start_with?(File::SEPARATOR)
+
+      path
     end
 
     def photograph(prompt:, film: false, duration: 5)
