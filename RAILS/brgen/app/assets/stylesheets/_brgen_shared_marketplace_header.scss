@@ -42,7 +42,7 @@ body.vertical-marketplace .storefront-bol-brand {
   min-height: var(--bol-brand-row-block);
   min-width: 0;
   color: #fff;
-  font-size: 30px;
+  font-size: var(--store-text-brand);
 }
 
 body.vertical-marketplace .storefront-bol-deliver {
@@ -242,7 +242,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a {
 
 body.vertical-marketplace .storefront-bol-mega section > a {
   color: var(--bol-muted);
-  font-size: 13px;
+  font-size: var(--store-text-meta);
   line-height: 1.4;
   text-decoration: none;
 }
@@ -255,7 +255,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
 
 @media (max-width: 767px) {
   body.vertical-marketplace .storefront-bol-brand {
-    font-size: 26px;
+    font-size: var(--store-text-brand-compact);
   }
 
   body.vertical-marketplace .storefront-bol-account .nav-block-label {
@@ -270,7 +270,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
   body.vertical-marketplace .storefront-bol-mainnav > .section,
   body.vertical-marketplace .storefront-bol-categories > summary {
     padding-inline: 14px;
-    font-size: 13px;
+    font-size: var(--store-text-meta);
   }
 
   body.vertical-marketplace .storefront-bol-mega {
@@ -321,8 +321,8 @@ body.vertical-marketplace #marketplace-listings .deal-card-offer {
   }
 
   body.vertical-marketplace #marketplace-listings .deal-card-buy {
-    font-size: 15px;
-    font-weight: 700;
+    font-size: var(--store-text-action);
+    font-weight: var(--weight-bold);
   }
 
   body.vertical-marketplace #marketplace-listings .deal-card-offer {
