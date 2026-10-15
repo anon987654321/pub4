@@ -12,6 +12,7 @@ require "securerandom"
 # ../lib/ would resolve to MASTER/tools/lib/, which does not exist, and abort the
 # whole file on its first require.
 require_relative "client"
+require_relative "atomic_write"
 require_relative "script_dispatch"
 require_relative "../postpro/analog_capabilities"
 
@@ -447,14 +448,14 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     sha256: digest,
     generated_at: Time.now.utc.iso8601,
   ).merge(extra)
-  File.write("#{output}.json", JSON.pretty_generate(sidecar))
+  writer = Object.new.extend(Studio::AtomicWrite)
+  writer.write_atomic("#{output}.json", JSON.pretty_generate(sidecar))
   sidecar
 end
 
-def append_gallery_manifest(sidecar, alt_text)
-  manifest = File.join(Studio::Paths.repo, ".master", "media", "gallery.jsonl")
-  FileUtils.mkdir_p(File.dirname(manifest))
-  File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text:).to_json) }
+def append_gallery_manifest(sidecar, alt_text, manifest: File.join(Studio::Paths.repo, ".master", "media", "gallery.jsonl"))
+  writer = Object.new.extend(Studio::AtomicWrite)
+  writer.append_jsonl(manifest, sidecar.merge(alt_text:))
 end
 
 # Every chain that stopped, and why, beside the gallery of the ones that did not.
@@ -464,10 +465,10 @@ end
 # holds what worked; this holds the stage, the recipe's hash, the error and the
 # frames that were kept, so a failure is looked up before it is repeated.
 def record_failed_chain(chain, error, produced, manifest: File.join(Studio::Paths.repo, ".master", "media", "failed_chains.jsonl"))
-  FileUtils.mkdir_p(File.dirname(manifest))
   row = { chain: chain[:name], sha256: chain[:sha256], failed_at: Time.now.utc.iso8601,
           error: error.class.name, message: error.message, kept: produced }
-  File.open(manifest, "a") { |f| f.puts(row.to_json) }
+  writer = Object.new.extend(Studio::AtomicWrite)
+  writer.append_jsonl(manifest, row)
   row
 end
 
@@ -896,8 +897,8 @@ when "search"
   puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
 when "sync"
   rows = Studio::ReplicateClient.new.models(limit: options[:limit])
-  FileUtils.mkdir_p(File.dirname(cache))
-  File.write(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
+  writer = Object.new.extend(Studio::AtomicWrite)
+  writer.write_atomic(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
   puts "ok: replicate synced #{rows.length} models to #{cache}"
 when "stats"
   data = File.file?(cache) ? JSON.parse(File.read(cache)) : { "models" => [] }
