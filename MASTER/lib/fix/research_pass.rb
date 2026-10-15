@@ -139,19 +139,19 @@ module Master
         end
 
         excerpts = records.filter_map do |row|
-          status = row["status"].to_s
+          record_status = row["status"].to_s
           text = row["text"].to_s.strip
-          next if status == "ok" && text.empty?
+          next if record_status == "ok" && text.empty?
 
           label = row["label"].to_s[0, 180]
           kind = row["kind"] == "fetch" ? "SOURCE" : "SEARCH"
           source_domain = row.fetch("_research_domain", domain)
-          heading = if status == "ok"
+          heading = if record_status == "ok"
                       "#{kind} [#{source_domain}]: #{label}"
                     else
-                      "#{kind} [#{source_domain}] #{status.upcase}: #{label}"
+                      "#{kind} [#{source_domain}] #{record_status.upcase}: #{label}"
                     end
-          text_limit = status == "ok" ? (row["kind"] == "fetch" ? 750 : 400) : 220
+          text_limit = record_status == "ok" ? (row["kind"] == "fetch" ? 750 : 400) : 220
           excerpt = text.empty? ? "(no text returned)" : text[0, text_limit]
           [heading, excerpt]
         end
