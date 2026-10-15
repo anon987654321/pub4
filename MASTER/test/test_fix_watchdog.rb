@@ -200,6 +200,12 @@ class TestFixWatchdog < Minitest::Test
     assert_match(/disk pressure at 1.25 GB free/, @killed.first)
     assert(run.instance_variable_get(:@finished_said), "preflight must emit the terminal report")
     assert(@said.any? { |line| line.include?("stopping before filesystem exhaustion") })
+
+    before_announce = @said.size
+    bus = Object.new
+    bus.define_singleton_method(:subscribe) { |*| raise "an aborted run must not attach listeners" }
+    run.announce(target: @root, bus:)
+    assert_equal before_announce, @said.size, "an aborted preflight must not announce a new run"
   end
 
   def test_disk_pressure_aborts_before_filesystem_exhaustion
