@@ -54,7 +54,7 @@ class TestResearchPass < Minitest::Test
     assert_equal "PASS", result.fetch(:status)
     assert_equal "music", result.fetch(:domain)
     assert_includes agent.calls.fetch(:queries).join(" "), "musictheory"
-    assert_includes agent.calls.fetch(:sources).join(" "), "arxiv.org"
+    assert_includes agent.calls.fetch(:sources).join(" "), "ar5iv.labs.arxiv.org/html/1904.03442"
     assert_includes agent.calls.fetch(:sources).join(" "), "github.com"
     assert_includes result.fetch(:brief), "untrusted evidence"
     assert_includes result.fetch(:brief), "Microtiming evidence."
