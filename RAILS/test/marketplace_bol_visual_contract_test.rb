@@ -23,6 +23,22 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes nav, "storefront-bol-mega"
   end
 
+  def test_storefront_tokens_are_scoped_to_marketplace_and_takeaway
+    shell = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_vertical_shell.scss"))
+    shared = shell.split(":is(body.vertical-marketplace, body.vertical-takeaway) {", 2).last
+    refute_nil shared, "the storefront token block must apply to both verticals"
+    declarations = shared.split("\\n}", 2).first
+
+    %w[--store-ink --store-page --store-rule --store-well --store-text-meta
+       --store-text-heading --store-text-price].each do |token|
+      assert_match(/#{Regexp.escape(token)}\\s*:/, declarations, "#{token} must be shared by both storefronts")
+    end
+
+    takeaway = shell.split("body.vertical-takeaway {", 2).last.split("\\n}", 2).first
+    assert_includes takeaway, "--font-ad: var(--font);",
+                    "the legacy takeaway display face must remain scoped to takeaway"
+  end
+
   def test_catalogue_has_the_bol_discovery_anatomy
     index = File.read(INDEX)
 
