@@ -6,6 +6,7 @@ require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
 require_relative "../../support/gate_result"
 require_relative "../../support/deploy_inventory"
+require_relative "../../support/fleet"
 require_relative "../../support/crawl_support"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/design_metrics"
@@ -23,7 +24,7 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     MASTER_RULES = File.join(ROOT, "MASTER", "data", "tokens.yml")
-    APPS = %w[brgen amber bsdports shared].freeze
+    APPS = Fleet.asset_roots.freeze
 
     # The component families the sampled checks read, named by the class a
     # selector opens with: each app styles every component from one
