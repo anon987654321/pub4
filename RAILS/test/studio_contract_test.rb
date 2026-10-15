@@ -27,6 +27,7 @@ class StudioContractTest < Minitest::Test
     assert Contracts::Studio.postpro_script
     assert Contracts::Studio.replicate_script
   end
+
   def test_output_path_contract_delegates_to_studio_and_uses_utc_dates
     original = %w[PUB4_STUDIO_ROOT XDG_DATA_HOME DILLA_OUTPUT_DIR]
       .to_h { |name| [name, ENV[name]] }
