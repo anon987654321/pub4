@@ -521,7 +521,7 @@ transformation_policy:
           - "site:reddit.com/r/musictheory groove microtiming swing syncopation"
           - "site:github.com MIDI drum groove humanization correlated timing"
         sources:
-          - "https://ar5iv.labs.arxiv.org/html/1904.03442"
+          - "https://arxiv.org/html/1904.03442v1"
           - "https://github.com/JakebGutierrez/wobblemidi"
           - "https://www.reddit.com/r/musictheory/comments/1lxcgbm/"
       visual:
