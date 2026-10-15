@@ -49,7 +49,7 @@ module Studio
             Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
               http.request_get(uri.request_uri) do |res|
                 raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
-                raise "download over #{max_bytes} bytes" if res["content-length"].to_i > max_bytes
+                raise "download over #{max_bytes} bytes" if res["content-length"].to_s.to_i > max_bytes
 
                 write_capped(res, file, max_bytes)
               end
