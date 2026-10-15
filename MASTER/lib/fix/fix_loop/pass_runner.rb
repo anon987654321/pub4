@@ -378,7 +378,14 @@ module Master
           @lanes_probed = true
           return unless LaneProbe.enabled? && ENV["MASTER_IN_PROOF"] != "1" && @agent.respond_to?(:ask_once)
 
-          models = Array(@agent.respond_to?(:candidate_models) ? @agent.candidate_models : nil)
+          # Probe the same tier the repair stage will use. The agent's default
+          # task can be general/explanation and may lead with free models; that
+          # is not evidence that the code-generation repair lane can answer.
+          models = if @agent.respond_to?(:candidate_models)
+                     Array(@agent.candidate_models(task_type: :code_generation))
+                   else
+                     []
+                   end
           models = Master::Io::LaneSelection.catalogue if models.empty?
           models = models.select { |model| Master::Io::LaneSelection.alive?(model) }
           LaneProbe.run(models:, ask: LaneProbe.ask_with(@agent))
