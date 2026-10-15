@@ -394,6 +394,19 @@ class TestPostproFilm < Minitest::Test
     disconnected = preset_source.sub("target_kelvin: p[:temp]", "target_kelvin: 6504")
     refute send(:preset_effect_reads_key?, disconnected, "spectral_temp", :temp),
            "a matching effect name must not hide a disconnected temperature value"
+
+    multiline = <<~RUBY
+      case fx
+      when "spectral_temp" then
+        spectral_temp(processed, target_kelvin: p[:temp])
+      when "color_temp" then color_temp(processed, p[:temp])
+      end
+    RUBY
+    assert send(:preset_effect_reads_key?, multiline, "spectral_temp", :temp),
+           "a key read below the when line still belongs to that effect arm"
+    refute send(:preset_effect_reads_key?, multiline, "spectral_temp", :age),
+           "a neighbouring effect arm must not lend its key to this one"
+
   end
 
   def test_every_preset_names_a_stock_that_exists
