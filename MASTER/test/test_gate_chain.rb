@@ -61,6 +61,19 @@ class TestGateChain < Minitest::Test
     assert_equal 8, jobs.size
   end
 
+  def test_every_suite_has_a_bounded_timeout_and_operator_overrides_are_respected
+    assert_equal 1_800, G.suite_timeout_s("MASTER")
+    assert_equal 1_200, G.suite_timeout_s("brgen suite")
+    assert_equal 900, G.suite_timeout_s("STUDIO media")
+
+    key = "PUB4_GATE_TIMEOUT_STUDIO_MEDIA"
+    previous = ENV[key]
+    ENV[key] = "45"
+    assert_equal 45, G.suite_timeout_s("STUDIO media")
+  ensure
+    previous.nil? ? ENV.delete(key) : ENV[key] = previous
+  end
+
   def test_gate_capture_refuses_to_start_a_child_when_disk_is_critical
     Dir.mktmpdir do |dir|
       G.stub(:disk_state, ->(*) { { free_gb: 1.0, critical: true } }) do
