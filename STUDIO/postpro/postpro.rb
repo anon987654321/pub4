@@ -369,7 +369,10 @@ end
 # output paths; watch and stock-sheet have their own documented preset routes.
 one_shot_flags = %w[--input --output --preset]
 one_shot_requested = one_shot_flags.any? { |flag| ARGV.include?(flag) }
-complete_one_shot = one_shot_flags.all? { |flag| ARGV.include?(flag) }
+complete_one_shot = one_shot_flags.all? do |flag|
+  value = argv_flag(flag)
+  value && !value.start_with?("--")
+end
 dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut] & ARGV).any?
 if one_shot_requested && !complete_one_shot && !dedicated_mode
   message = [
