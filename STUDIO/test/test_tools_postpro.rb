@@ -499,6 +499,18 @@ class TestPostproFilm < Minitest::Test
     end
     assert_match(/fx=missing_effect_for_contract has no implementation/, error.message)
     refute $postpro_float_pipeline, "a failed grade must reset the float pipeline"
+
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "frame.jpg")
+      build_probe.write_to_file(input)
+      with_postpro_output_dir(dir) do
+        error = assert_raises(RuntimeError) do
+          process_file(input, 1, :fix_missing_effect_contract)
+        end
+        assert_match(/all 1\/1 variations failed.*no output was written/, error.message)
+        assert_empty Dir[File.join(dir, "postpro_*")], "a failed grade must not leave a partial output"
+      end
+    end
   ensure
     if owner && original
       owner.send(:remove_const, :PRESETS) if owner.const_defined?(:PRESETS, false)

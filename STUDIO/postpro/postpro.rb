@@ -4185,6 +4185,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
   end
 
   processed_count = 0
+  failed_variations = 0
   variations.times do |i|
     begin
       processed = if preset_name
@@ -4233,8 +4234,15 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       processed_count += 1
 
     rescue StandardError => e
+      failed_variations += 1
       $logger.error "Variation #{i + 1} failed: #{e.message}"
+      $cli_logger.error "Variation #{i + 1} failed: #{e.message}"
     end
+  end
+
+  if processed_count.zero? && failed_variations.positive?
+    raise RuntimeError,
+          "all #{failed_variations}/#{variations} variations failed for #{File.basename(file)}; no output was written"
   end
 
   processed_count
