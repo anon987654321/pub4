@@ -69,14 +69,14 @@ body.vertical-marketplace .deal-price {
 
 body.vertical-marketplace .deal-card-title {
   color: var(--bol-ink);
-  font-size: 15px;
+  font-size: var(--store-text-action);
   line-height: 1.4;
   font-weight: 600;
 }
 
 body.vertical-marketplace .deal-meta {
   color: var(--bol-muted);
-  font-size: 13px;
+  font-size: var(--store-text-meta);
 }
 
 body.vertical-marketplace .store-stars {
@@ -85,7 +85,7 @@ body.vertical-marketplace .store-stars {
 }
 
 body.vertical-marketplace .store-stars [role="img"]::before {
-  font-size: 15px;
+  font-size: var(--store-text-action);
 }
 
 body.vertical-marketplace .store-badge {
@@ -127,7 +127,7 @@ body.vertical-marketplace .store-pdp-info h1 {
   color: var(--bol-ink);
   font-size: clamp(24px, 3vw, 36px);
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-marketplace .store-buybox {
@@ -141,7 +141,7 @@ body.vertical-marketplace .store-buybox .deal-price,
 body.vertical-marketplace .store-buybox .listing-price,
 body.vertical-marketplace .store-buybox .price {
   color: var(--bol-price);
-  font-size: 32px;
+  font-size: var(--store-text-price);
   font-weight: 800;
 }
 
@@ -216,7 +216,7 @@ body.vertical-marketplace .store-buybox .price {
   }
 
   body.vertical-marketplace .bol-market-hero-copy h2 {
-    font-size: 30px;
+    font-size: var(--store-text-hero-compact);
   }
 
   body.vertical-marketplace .bol-market-hero-media {
@@ -239,7 +239,7 @@ body.vertical-marketplace .store-buybox .price {
     color: var(--bol-ink);
     background: #fff;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
   }
 
   body.vertical-marketplace .bol-filter-column .listing-filters:not([open]) .listing-filters-panel {
