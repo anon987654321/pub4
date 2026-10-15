@@ -38,7 +38,7 @@ class SharedModelCanonicalizationTest < Minitest::Test
   ].freeze
 
   def sources
-    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared}/app/**/*.rb")).sort
+    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/app/**/*.rb")).sort
   end
 
   def test_the_canonical_resolver_is_the_only_path_to_the_fallback_model
