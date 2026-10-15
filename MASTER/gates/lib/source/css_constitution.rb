@@ -155,7 +155,10 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         end
 
         if hits.size > ceiling
-          hits.first(8).each { |hit| @result.warn("css_constitution #{rule}: #{hit}") }
+          diagnostic_limit = 100
+          hits.first(diagnostic_limit).each { |hit| @result.warn("css_constitution #{rule}: #{hit}") }
+          omitted = hits.size - diagnostic_limit
+          @result.warn("css_constitution #{rule}: #{omitted} additional finding(s) omitted") if omitted.positive?
           @result.fail("css_constitution #{rule}: #{hits.size} exceeds ceiling #{ceiling} (+#{hits.size - ceiling}) — " \
                        "fix them, or record a new ceiling with a reason")
         elsif hits.size < ceiling
