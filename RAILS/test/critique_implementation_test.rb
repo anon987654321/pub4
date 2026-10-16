@@ -182,8 +182,10 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes search, "border-radius: 16px;"
     assert_includes affiliate, 'data-controller="parallax-tilt"'
     assert_includes affiliate, 'data-parallax-tilt-target="tile"'
-    assert_includes affiliate_css, "font-size: 9px;"
-    assert_includes affiliate_css, "letter-spacing: 2px;"
+    assert_match(/\.affiliate_feed_kicker\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, affiliate_css)
+    assert_match(/\.affiliate_feed_kicker\s*\{[^}]*letter-spacing:\s*var\(--tracking-wide\);/m, affiliate_css)
+    assert_match(/\.affiliate_feed_kicker\s*\{[^}]*line-height:\s*var\(--leading-tight\);/m, affiliate_css)
+    refute_match(/\.affiliate_feed_kicker\s*\{[^}]*font-size:\s*9px;/m, affiliate_css)
     assert_includes affiliate_css, "transition: transform 180ms var(--ease-out)"
     assert_includes brgen_css, ".store-promo-art-cta"
     assert_includes brgen_css, "background: var(--bol-blue);"
