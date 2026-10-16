@@ -33,7 +33,11 @@ export default class extends Controller {
       return
     }
     loadAnime().then((anime) => {
-      if (!anime || !this.hasBannerTarget) return
+      if (!this.hasBannerTarget) return
+      if (!anime) {
+        this.#staticEndState()
+        return
+      }
       this.#run(anime)
     })
   }
