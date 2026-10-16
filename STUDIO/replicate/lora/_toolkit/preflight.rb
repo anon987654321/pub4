@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "time"
+require_relative "../../atomic_write"
 
 # What a paid run checks before it spends. A dataset that is too small, too soft
 # or captioned against the caption law costs the same per second as a good one,
@@ -205,16 +206,29 @@ module Preflight
 
   # What a subject has been billed in all: a training row carries its own usd, a
   # render is its seconds at the render rate.
-  def ledger_usd(path)
-    return 0.0 unless File.file?(path)
+  # Parse the whole ledger or refuse to claim an amount. A malformed row is
+  # unknown spend, not zero spend; continuing would understate cost and may pass
+  # a ceiling that the recorded calls have already crossed.
+  def ledger_rows(path)
+    return [] unless File.file?(path)
 
-    File.readlines(path).sum do |line|
-      row = JSON.parse(line)
+    File.foreach(path).with_index.map do |line, index|
+      begin
+        row = JSON.parse(line)
+      rescue JSON::ParserError
+        raise IOError, "ledger line #{index + 1} is invalid JSON"
+      end
+      raise IOError, "ledger line #{index + 1} is not a JSON object" unless row.is_a?(Hash)
+
+      row
+    end
+  end
+
+  def ledger_usd(path)
+    ledger_rows(path).sum do |row|
       next row["usd"].to_f if row.key?("usd")
 
       row["kind"] == "render" ? row["seconds"].to_f * RENDER_USD_PER_SECOND : 0.0
-    rescue JSON::ParserError
-      0.0
     end
   end
 
@@ -223,8 +237,12 @@ module Preflight
   # One JSON line per paid call, appended where the subject's output lives, so
   # what a subject has cost is a file read.
   def ledger_append(path, row)
-    FileUtils.mkdir_p(File.dirname(path))
-    File.open(path, "a") { |file| file.puts JSON.generate({ at: Time.now.utc.iso8601 }.merge(row)) }
+    target = File.expand_path(path)
+    raise IOError, "ledger path is a symlink: #{target}" if File.symlink?(target)
+    File.chmod(0o600, target) if File.file?(target) && (File.stat(target).mode & 0o077).positive?
+
+    writer = Object.new.extend(Studio::AtomicWrite)
+    writer.append_jsonl(target, { at: Time.now.utc.iso8601 }.merge(row), mode: 0o600)
   end
 
   # Stable identity for one paid render request. A rerun with changed
@@ -237,34 +255,15 @@ module Preflight
   # Last known state for one sitting. Malformed ledger data blocks automatic
   # retries: dropping an unreadable paid receipt would risk charging twice.
   def latest_render_event(path, set:, n:)
-    return nil unless File.file?(path)
-
-    latest = nil
-    File.foreach(path).with_index do |line, index|
-      begin
-        row = JSON.parse(line)
-      rescue JSON::ParserError
-        raise IOError, "render ledger line #{index + 1} is invalid JSON; refusing to repeat paid work"
-      end
-      raise IOError, "render ledger line #{index + 1} is not an object" unless row.is_a?(Hash)
-      next unless %w[render render_attempt].include?(row["kind"])
-      next unless row["set"] == set && row["n"].to_i == n.to_i
-
-      latest = row
+    ledger_rows(path).reverse.find do |row|
+      %w[render render_attempt].include?(row["kind"]) &&
+        row["set"] == set && row["n"].to_i == n.to_i
     end
-    latest
   end
 
   # Sum of billed seconds already in a ledger, for a spend ceiling.
   def ledger_seconds(path, kind)
-    return 0.0 unless File.file?(path)
-
-    File.readlines(path).sum do |line|
-      row = JSON.parse(line)
-      row["kind"] == kind ? row["seconds"].to_f : 0.0
-    rescue JSON::ParserError
-      0.0
-    end
+    ledger_rows(path).sum { |row| row["kind"] == kind ? row["seconds"].to_f : 0.0 }
   end
 
   # Entries of a trainer tar that would land outside the target directory.
