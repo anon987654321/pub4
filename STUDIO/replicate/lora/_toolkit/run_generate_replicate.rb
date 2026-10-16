@@ -117,6 +117,23 @@ POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
 # preset prints an `fx:` line of its own, which is a chain and not a preset name. Drawn by
 # sitting number, so frame 7 grades the same way on every run and two takes of
 # it stay comparable.
+# Avoid writing a second row when a run resumes after local output delivery.
+def prompt_receipt_exists?(path, n:, prediction:)
+  return false unless File.file?(path)
+
+  File.foreach(path).with_index do |line, index|
+    row = begin
+      JSON.parse(line)
+    rescue JSON::ParserError
+      raise IOError, "prompt manifest line #{index + 1} is invalid JSON"
+    end
+    raise IOError, "prompt manifest line #{index + 1} is not an object" unless row.is_a?(Hash)
+
+    return true if row["n"].to_i == n.to_i && row["prediction"].to_s == prediction.to_s
+  end
+  false
+end
+
 def postpro_presets
   return @postpro_presets if defined?(@postpro_presets)
 
@@ -188,34 +205,79 @@ spent = Preflight.ledger_seconds(LEDGER, "render")
 
 sittings.each do |shoot, prompt|
   path = out_dir.join(format("%02d.%s", shoot["n"], extension))
-  next puts("ok: have #{path.basename}") if path.file?
-
-  if options[:max_seconds] && spent >= options[:max_seconds]
-    warn "warn: ledger shows #{spent.round} billed seconds, at the ceiling #{options[:max_seconds].round}; stopping"
-    failed += 1
-    break
-  end
+  abort "warn: refusing symlinked output path #{path}" if File.symlink?(path)
+  next puts("ok: have #{path.basename}") if File.file?(path) && File.size?(path)
+  abort "warn: output path is not a regular file: #{path}" if File.exist?(path) && !File.file?(path)
 
   seed = FIXED_SEED_SETS.include?(options[:set]) ? options[:seed] : options[:seed] + shoot["n"] - 1
   input = render_input(prompt, seed, options)
+  fingerprint = Preflight.render_fingerprint(model:, input:)
+  receipt = Preflight.latest_render_event(LEDGER, set: options[:set], n: shoot["n"])
+  action = Preflight.render_receipt_action(receipt, fingerprint:)
+  abort "warn: unresolved paid render receipt for #{path.basename}; inspect #{LEDGER} and reconcile before rerunning" if action == :blocked
+
+  if action == :new
+    if options[:max_seconds] && spent >= options[:max_seconds]
+      warn "warn: ledger shows #{spent.round} billed seconds, at the ceiling #{options[:max_seconds].round}; stopping"
+      failed += 1
+      break
+    end
+
+    # Persist the intent before the create request. If the response is lost,
+    # the next run stops rather than accidentally creating the same paid job again.
+    Preflight.ledger_append(LEDGER, kind: "render_attempt", status: "started",
+                                     set: options[:set], n: shoot["n"], model:,
+                                     fingerprint:, seed:)
+    begin
+      prediction = render(client, model, input)
+      seconds = prediction.dig("metrics", "predict_time").to_f
+      output_url = Array(prediction["output"]).first.to_s
+      spent += seconds
+      # The durable prediction receipt comes before downloading its expiring URL.
+      Preflight.ledger_append(LEDGER, kind: "render_attempt", status: "prediction_received",
+                                       set: options[:set], n: shoot["n"], model:, fingerprint:,
+                                       id: prediction["id"], output_url:, seconds:)
+      if prediction["id"].to_s.empty? || output_url.empty?
+        raise IOError, "prediction response omitted its id or output URL; receipt retained"
+      end
+    rescue StandardError => e
+      failed += 1
+      warn "warn: #{shoot['title']}: #{e.message[0, 200]}"
+      break
+    end
+  else
+    prediction = {
+      "id" => receipt["id"],
+      "output" => [receipt["output_url"]],
+      "metrics" => { "predict_time" => receipt["seconds"].to_f }
+    }
+    output_url = receipt["output_url"]
+    seconds = receipt["seconds"].to_f
+  end
+
   begin
-    prediction = render(client, model, input)
-    # Outputs are deleted from Replicate an hour after the run, so the frame is
-    # on disk before anything else happens to it.
-    client.download_url(Array(prediction["output"]).first, path.to_s)
+    # A receipt resume is a free re-download of the same prediction, never a
+    # second create request.
+    client.download_url(output_url, path.to_s)
   rescue StandardError => e
     failed += 1
     next warn("warn: #{shoot['title']}: #{e.message[0, 200]}")
   end
-  seconds = prediction.dig("metrics", "predict_time").to_f
-  spent += seconds
-  Preflight.ledger_append(LEDGER, kind: "render", set: options[:set], n: shoot["n"], id: prediction["id"], seconds:)
+
+  if action == :new || receipt["kind"] == "render_attempt"
+    Preflight.ledger_append(LEDGER, kind: "render", status: "output_ready",
+                                     set: options[:set], n: shoot["n"], model:, fingerprint:,
+                                     id: prediction["id"], output_url:, seconds:)
+  end
   preset = options[:draft] ? nil : preset_for(options[:grade], shoot["n"])
   grade(path, graded_dir, preset) if preset
-  File.open(out_dir.join("prompts.jsonl"), "a") do |log|
-    log.puts JSON.generate(n: shoot["n"], title: shoot["title"], prompt:, model:, input: input.except(:prompt),
-                           prediction: prediction["id"], predict_seconds: seconds,
-                           grade: preset, rendered_at: Time.now.utc.iso8601)
+  manifest = out_dir.join("prompts.jsonl")
+  unless prompt_receipt_exists?(manifest, n: shoot["n"], prediction: prediction["id"])
+    File.open(manifest, "a") do |log|
+      log.puts JSON.generate(n: shoot["n"], title: shoot["title"], prompt:, model:, input: input.except(:prompt),
+                             prediction: prediction["id"], predict_seconds: seconds,
+                             grade: preset, rendered_at: Time.now.utc.iso8601)
+    end
   end
   puts "ok: #{path}#{preset ? " + #{preset}" : ""} (#{seconds.round(1)} s)"
 end
