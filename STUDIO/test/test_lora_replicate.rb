@@ -151,7 +151,7 @@ class TestLoraReplicate < Minitest::Test
 
   def postpro_preset_reader_class(postpro_path)
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
-    source = File.read(script)
+    source = File.read(script, encoding: "UTF-8")
     body = source[/^def postpro_presets\b.*?^end$/m]
     assert body, "postpro preset discovery method must exist"
 
@@ -200,7 +200,7 @@ class TestLoraReplicate < Minitest::Test
 
   def renderer_class_from_source
     path = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
-    source = File.read(path)
+    source = File.read(path, encoding: "UTF-8")
     body = source[/^def render\b.*?^end$/m]
     assert body, "LoRA Replicate render wrapper must exist"
 
