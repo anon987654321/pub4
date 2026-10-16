@@ -328,6 +328,20 @@ module Preflight
     end
   end
 
+  # A paid response without a valid duration makes the spend ceiling unknowable.
+  # Never let a later invocation mistake that receipt for a zero-second render.
+  def inconclusive_render_receipts(path)
+    ledger_rows(path).select do |row|
+      next false unless %w[render render_attempt].include?(row["kind"])
+      next false unless %w[prediction_received output_ready].include?(row["status"])
+
+      seconds = Float(row["seconds"])
+      !seconds.finite? || seconds.negative?
+    rescue ArgumentError, TypeError
+      true
+    end
+  end
+
   # Entries of a trainer tar that would land outside the target directory.
   def unsafe_tar_entries(tar_path)
     out, status = Open3.capture2("tar", "-tf", tar_path)
