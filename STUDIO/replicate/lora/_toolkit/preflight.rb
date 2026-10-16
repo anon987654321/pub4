@@ -300,9 +300,13 @@ module Preflight
   end
 
   def resumable_render_receipt?(event, fingerprint:)
-    event["fingerprint"] == fingerprint &&
-      !event["id"].to_s.empty? &&
-      !event["output_url"].to_s.empty?
+    return false unless event["fingerprint"] == fingerprint
+    return false if event["id"].to_s.empty? || event["output_url"].to_s.empty?
+
+    seconds = Float(event["seconds"])
+    seconds.finite? && seconds >= 0
+  rescue ArgumentError, TypeError
+    false
   end
 
   # Last known state for one sitting. Malformed ledger data blocks automatic
