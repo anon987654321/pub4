@@ -55,7 +55,7 @@ class TestLoraReplicate < Minitest::Test
                  "a 5xx may follow a successful paid create; do not blindly replay it"
   end
 
-  def test_explicit_throttle_can_retry_post_but_not_exhausted_budget
+  def test_explicit_throttle_can_retry_post
     client = Client.new(token: "t")
     client.define_singleton_method(:sleep) { |_seconds| }
     requests = []
@@ -68,6 +68,22 @@ class TestLoraReplicate < Minitest::Test
 
     assert_equal({ "id" => "p1" }, result)
     assert_equal 2, requests.length, "a rate-limit rejection is safe to retry after backoff"
+  end
+
+  def test_exhausted_budget_refusal_is_not_retried
+    client = Client.new(token: "t")
+    requests = []
+    exhausted = Struct.new(:code, :body).new("429", '{"detail":"Insufficient credit balance"}')
+
+    error = nil
+    with_http_responses([exhausted], requests) do
+      error = assert_raises(Client::ExhaustedError) do
+        client.post(URI("https://api.replicate.com/v1/predictions"), {})
+      end
+    end
+
+    assert_match(/429/, error.message)
+    assert_equal 1, requests.length, "budget refusal cannot be fixed by a timed retry"
   end
 
   def test_get_keeps_retrying_a_transient_server_error
