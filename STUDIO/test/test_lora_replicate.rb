@@ -376,7 +376,7 @@ class TestLoraReplicate < Minitest::Test
     assert_includes estimate, "$10.25"
   end
 
-  def test_ledger_sums_billed_seconds_by_kind
+  def test_ledger_sums_billed_seconds_by_kind_and_counts_pending_receipts_once
     Dir.mktmpdir do |dir|
       path = File.join(dir, "out", "ledger.jsonl")
       Preflight.ledger_append(path, kind: "render", seconds: 3.5)
@@ -385,6 +385,17 @@ class TestLoraReplicate < Minitest::Test
 
       assert_in_delta 5.0, Preflight.ledger_seconds(path, "render")
       assert_in_delta 100.0, Preflight.ledger_seconds(path, "train")
+
+      Preflight.ledger_append(path, kind: "render_attempt", status: "prediction_received",
+                                   id: "pending-1", seconds: 4.0)
+      assert_in_delta 9.0, Preflight.ledger_seconds(path, "render")
+      assert_in_delta 9.0 * Preflight::RENDER_USD_PER_SECOND, Preflight.ledger_usd(path)
+
+      Preflight.ledger_append(path, kind: "render", status: "output_ready",
+                                   id: "pending-1", seconds: 4.0)
+      assert_in_delta 9.0, Preflight.ledger_seconds(path, "render"),
+                      "the final receipt must replace, not double-count, its prediction receipt"
+      assert_in_delta 9.0 * Preflight::RENDER_USD_PER_SECOND, Preflight.ledger_usd(path)
       assert_equal 0.0, Preflight.ledger_seconds(File.join(dir, "none"), "render")
     end
   end
@@ -409,6 +420,30 @@ class TestLoraReplicate < Minitest::Test
       error = assert_raises(IOError) { Preflight.ledger_seconds(ledger, "render") }
       assert_match(/ledger path is a symlink/, error.message)
     end
+  end
+
+  def test_render_receipt_actions_resume_known_predictions_and_block_ambiguous_requests
+    fingerprint = "request-digest"
+    assert_equal :new, Preflight.render_receipt_action(nil, fingerprint:)
+
+    started = { "kind" => "render_attempt", "status" => "started", "fingerprint" => fingerprint }
+    assert_equal :blocked, Preflight.render_receipt_action(started, fingerprint:)
+
+    received = {
+      "kind" => "render_attempt", "status" => "prediction_received",
+      "fingerprint" => fingerprint, "id" => "prediction-7",
+      "output_url" => "https://replicate.delivery/temporary-output"
+    }
+    assert_equal :resume, Preflight.render_receipt_action(received, fingerprint:)
+    assert_equal :blocked, Preflight.render_receipt_action(received, fingerprint: "different-request")
+    assert_equal :blocked,
+                 Preflight.render_receipt_action(received.merge("output_url" => ""), fingerprint:)
+
+    completed = received.merge("kind" => "render", "status" => "output_ready")
+    assert_equal :resume, Preflight.render_receipt_action(completed, fingerprint:)
+    assert_equal :new, Preflight.render_receipt_action(
+      { "kind" => "render", "id" => "legacy-prediction" }, fingerprint:
+    )
   end
 
   def test_render_fingerprint_ignores_hash_insertion_order
