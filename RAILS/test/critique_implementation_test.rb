@@ -341,7 +341,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes amber_polish, ".commerce-fit-suggestion"
     assert_includes amber_polish, ".commerce-fit-reasons"
     assert_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, amber_polish)
-    assert_match(/\.commerce-fit-source\s*\{[^}]*line-height:\s*1\.25;/m, amber_polish)
+    assert_match(/\.commerce-fit-source\s*\{[^}]*line-height:\s*var\(--leading-tight\);/m, amber_polish)
     refute_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*11px;/m, amber_polish)
     assert_includes seller, 'class="store-seller-center"'
     assert_includes item, 'class="commerce-fit-list"'
