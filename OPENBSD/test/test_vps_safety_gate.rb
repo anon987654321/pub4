@@ -92,6 +92,8 @@ class VpsSafetyGateTest < Minitest::Test
       assert_includes out, "rails-task helper must expose only fixed task names and execute as the app user"
     end
   end
+
+  def test_broker_sources_must_not_be_symlinks
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "usr", "local", "sbin", "pub4-admin")
       File.unlink(path)
@@ -102,6 +104,7 @@ class VpsSafetyGateTest < Minitest::Test
       assert_includes out, "usr/local/sbin/pub4-admin must not be a symlink"
     end
   end
+
   def test_operator_checks_destinations_before_copying_privileged_trees
     with_fixture do |dir, _|
       path = File.join(dir, "OPENBSD", "OPERATOR.sh")
