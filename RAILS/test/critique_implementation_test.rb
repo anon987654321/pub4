@@ -326,6 +326,15 @@ class CritiqueImplementationTest < Minitest::Test
     refute_includes mannequin_css, "amber-look-figure::after"
   end
 
+  def test_shared_feed_text_uses_the_existing_leading_tokens
+    minimal = read("shared/app/assets/stylesheets/_minimal.scss")
+
+    %w[feed-card-text feed-card-body feed-card-meta].each do |selector|
+      assert_match(/\.#{selector}\s*\{[^}]*line-height:\s*var\(--leading-normal\);/m, minimal)
+    end
+    refute_match(/\.feed-card-(?:text|body|meta)\s*\{[^}]*line-height:\s*1\.5;/m, minimal)
+  end
+
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
     brgen_css = brgen_css_source
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
