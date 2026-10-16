@@ -151,7 +151,7 @@ class TestLoraReplicate < Minitest::Test
   def renderer_class_from_source
     path = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(path)
-    body = source[/^def render\\b.*?^end$/m]
+    body = source[/^def render\b.*?^end$/m]
     assert body, "LoRA Replicate render wrapper must exist"
 
     klass = Class.new
