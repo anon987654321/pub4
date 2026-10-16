@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "minitest/mock"
 require "tmpdir"
 require "open3"
+require "rbconfig"
 require "openssl"
 require_relative "../replicate/client"
 require_relative "../replicate/lora/_toolkit/preflight"
@@ -146,6 +147,55 @@ class TestLoraReplicate < Minitest::Test
     assert_equal 31, delay.call("Replicate API 429: Request was throttled. Your rate limit resets in ~30s.", 0)
     assert_equal 4, delay.call("Replicate API 500: boom", 2)
     assert_equal 60, delay.call("resets in ~900s", 0)
+  end
+
+  def postpro_preset_reader_class(postpro_path)
+    script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(script)
+    body = source[/^def postpro_presets\b.*?^end$/m]
+    assert body, "postpro preset discovery method must exist"
+
+    reader = Class.new
+    reader.const_set(:POSTPRO, postpro_path)
+    reader.class_eval(body, script, 1)
+    reader
+  end
+
+  def test_postpro_preset_discovery_passes_path_as_one_argument
+    script_path = "/tmp/checkout with spaces; not-shell/postpro.rb"
+    reader = postpro_preset_reader_class(script_path)
+    calls = []
+    status = Object.new
+    status.define_singleton_method(:success?) { true }
+    status.define_singleton_method(:exitstatus) { 0 }
+    output = "cinematic: fx=film_curve\nfx: optical_blur\nnoir: fx=film_curve\n"
+
+    presets = nil
+    Open3.stub(:capture3, lambda { |*args| calls << args; [output, "", status] }) do
+      presets = reader.new.postpro_presets
+    end
+
+    assert_equal [[RbConfig.ruby, script_path, "--list-presets"]], calls
+    assert_equal %w[cinematic noir], presets
+    assert_predicate presets, :frozen?
+  end
+
+  def test_postpro_preset_discovery_reports_a_failed_command
+    reader = postpro_preset_reader_class("/tmp/postpro.rb")
+    status = Object.new
+    status.define_singleton_method(:success?) { false }
+    status.define_singleton_method(:exitstatus) { 2 }
+
+    error = nil
+    _out, err = capture_io do
+      Open3.stub(:capture3, ->(*) { ["postpro: FATAL libvips unavailable", "permission denied", status] }) do
+        error = assert_raises(SystemExit) { reader.new.postpro_presets }
+      end
+    end
+
+    assert_equal 1, error.status
+    assert_match(/postpro --list-presets failed \(2\)/, err)
+    assert_match(/permission denied/, err)
   end
 
   def renderer_class_from_source
