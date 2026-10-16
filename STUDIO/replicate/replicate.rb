@@ -458,6 +458,34 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
   sidecar
 end
 
+# A chain resume is a reuse of paid work, not just a file-exists check.
+# Require the exact chain/stage provenance and bytes before carrying its seed on.
+def verified_chain_resume(path, chain:, stage:, index:)
+  target = File.expand_path(path)
+  return nil unless File.file?(target) && !File.symlink?(target) && File.size?(target)
+
+  sidecar_path = "#{target}.json"
+  return nil unless File.file?(sidecar_path) && !File.symlink?(sidecar_path)
+
+  sidecar = JSON.parse(File.read(sidecar_path))
+  trace = sidecar["chain"]
+  return nil unless File.expand_path(sidecar["output"].to_s) == target
+  return nil unless trace.is_a?(Hash) &&
+                    trace["name"] == chain[:name] &&
+                    trace["sha256"] == chain[:sha256] &&
+                    trace["stage"] == stage.name &&
+                    trace["index"] == index + 1
+  return nil unless sidecar["seed"].is_a?(Integer)
+
+  digest = sidecar["sha256"].to_s
+  return nil unless digest.match?(/\A[0-9a-f]{64}\z/)
+  return nil unless Studio::ReplicateClient.checksum(target) == digest
+
+  { path: target, seed: sidecar["seed"] }
+rescue JSON::ParserError, SystemCallError, IOError, ArgumentError
+  nil
+end
+
 def append_gallery_manifest(sidecar, alt_text, manifest: File.join(Studio::Paths.repo, ".master", "media", "gallery.jsonl"))
   writer = Object.new.extend(Studio::AtomicWrite)
   writer.append_jsonl(manifest, sidecar.merge(alt_text:))
@@ -760,11 +788,7 @@ when "chain"
   # --from reads back what an earlier run wrote: the frame, and the seed its
   # sidecar recorded, so a stage that inherits the seed gets the one it had.
   resume = lambda do |stage:, index:|
-    path = target_for.call(stage, index)
-    next nil unless File.file?(path)
-
-    sidecar = File.file?("#{path}.json") ? JSON.parse(File.read("#{path}.json")) : {}
-    { path: path, seed: sidecar["seed"] }
+    verified_chain_resume(target_for.call(stage, index), chain:, stage:, index:)
   end
 
   perform = lambda do |stage:, index:, total:, image:, seed:, references:|
