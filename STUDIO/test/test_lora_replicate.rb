@@ -432,12 +432,16 @@ class TestLoraReplicate < Minitest::Test
     received = {
       "kind" => "render_attempt", "status" => "prediction_received",
       "fingerprint" => fingerprint, "id" => "prediction-7",
-      "output_url" => "https://replicate.delivery/temporary-output"
+      "output_url" => "https://replicate.delivery/temporary-output", "seconds" => 4.5
     }
     assert_equal :resume, Preflight.render_receipt_action(received, fingerprint:)
     assert_equal :blocked, Preflight.render_receipt_action(received, fingerprint: "different-request")
     assert_equal :blocked,
                  Preflight.render_receipt_action(received.merge("output_url" => ""), fingerprint:)
+    assert_equal :blocked,
+                 Preflight.render_receipt_action(received.reject { |key, _| key == "seconds" }, fingerprint:)
+    assert_equal :blocked,
+                 Preflight.render_receipt_action(received.merge("seconds" => Float::INFINITY), fingerprint:)
 
     completed = received.merge("kind" => "render", "status" => "output_ready")
     assert_equal :resume, Preflight.render_receipt_action(completed, fingerprint:)
