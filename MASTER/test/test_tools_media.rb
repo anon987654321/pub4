@@ -69,6 +69,18 @@ class TestToolsMedia < Minitest::Test
     refute_includes watch, "RANDOM_CHAIN_LENGTH ="
   end
 
+  def test_reachability_ignores_comment_and_string_mentions
+    source = <<~RUBY
+      def render
+        # apply_finishing_grain(image, :house)
+        label = "apply_finishing_grain(image, :house)"
+        image.call(:apply_finishing_grain)
+      end
+    RUBY
+
+    refute reaches?(source, "render", "apply_finishing_grain")
+  end
+
   def test_postpro_finishing_grain_uses_the_preset_stock
     source = File.read(POSTPRO)
     methods = method_bodies(source)
@@ -101,18 +113,42 @@ class TestToolsMedia < Minitest::Test
     method_bodies(source)[name.to_s]
   end
 
-  # Follow calls between top-level methods in one script using exact method
-  # spans. The AST inventory is passed through recursion rather than rebuilt.
-  def reaches?(source, from, target, seen = [], methods: nil)
+  # Calls are read from Prism nodes, not regexes over source text: comments and
+  # string literals must not be able to satisfy a reachability contract.
+  def method_calls(body)
+    parsed = Prism.parse(body)
+    raise ArgumentError, "method source failed to parse" unless parsed.success?
+
+    definition = parsed.value.statements.body.first
+    return [] unless definition.is_a?(Prism::DefNode)
+
+    names = []
+    pending = [definition.body].compact
+    until pending.empty?
+      node = pending.pop
+      next if node.is_a?(Prism::DefNode)
+      names << node.name.to_s if node.is_a?(Prism::CallNode) && node.receiver.nil?
+      pending.concat(node.child_nodes.compact)
+    end
+    names.uniq
+  end
+
+  # Follow unqualified calls between top-level methods. Cache the source spans
+  # and each method's call set once, so recursion is deterministic and ignores
+  # comments, strings, and calls on unrelated explicit receivers.
+  def reaches?(source, from, target, seen = [], methods: nil, calls: nil)
     return false if seen.include?(from)
 
     methods ||= method_bodies(source)
-    body = methods[from.to_s]
-    return false unless body
-    return true if body.include?(target)
+    calls ||= methods.transform_values { |body| method_calls(body) }
+    method = from.to_s
+    return false unless methods.key?(method)
+    return true if calls.fetch(method, []).include?(target.to_s)
 
-    body.scan(/\b([a-z_][a-z0-9_]*)\(/).flatten.uniq
-        .any? { |callee| reaches?(source, callee, target, seen + [from], methods:) }
+    calls.fetch(method, []).any? do |callee|
+      methods.key?(callee) &&
+        reaches?(source, callee, target, seen + [method], methods:, calls:)
+    end
   end
 
   # The model string is not the invariant. This pinned flux-1.1-pro-ultra and
