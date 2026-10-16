@@ -227,6 +227,34 @@ module Preflight
     File.open(path, "a") { |file| file.puts JSON.generate({ at: Time.now.utc.iso8601 }.merge(row)) }
   end
 
+  # Stable identity for one paid render request. A rerun with changed
+  # settings must not silently reuse an older prediction's URL.
+  def render_fingerprint(model:, input:)
+    normalized = input.sort_by { |key, _| key.to_s }.to_h.transform_keys(&:to_s)
+    Digest::SHA256.hexdigest(JSON.generate(model: model.to_s, input: normalized))
+  end
+
+  # Last known state for one sitting. Malformed ledger data blocks automatic
+  # retries: dropping an unreadable paid receipt would risk charging twice.
+  def latest_render_event(path, set:, n:)
+    return nil unless File.file?(path)
+
+    latest = nil
+    File.foreach(path).with_index do |line, index|
+      begin
+        row = JSON.parse(line)
+      rescue JSON::ParserError
+        raise IOError, "render ledger line #{index + 1} is invalid JSON; refusing to repeat paid work"
+      end
+      raise IOError, "render ledger line #{index + 1} is not an object" unless row.is_a?(Hash)
+      next unless %w[render render_attempt].include?(row["kind"])
+      next unless row["set"] == set && row["n"].to_i == n.to_i
+
+      latest = row
+    end
+    latest
+  end
+
   # Sum of billed seconds already in a ledger, for a spend ceiling.
   def ledger_seconds(path, kind)
     return 0.0 unless File.file?(path)
