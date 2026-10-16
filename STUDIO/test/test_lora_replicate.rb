@@ -339,6 +339,40 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_render_fingerprint_ignores_hash_insertion_order
+    first = Preflight.render_fingerprint(model: "owner/model", input: { seed: 7, prompt: "x" })
+    second = Preflight.render_fingerprint(model: "owner/model", input: { prompt: "x", seed: 7 })
+
+    assert_equal first, second
+    refute_equal first, Preflight.render_fingerprint(model: "owner/other", input: { seed: 7, prompt: "x" })
+  end
+
+  def test_latest_render_event_returns_the_last_state_for_one_sitting
+    Dir.mktmpdir do |dir|
+      ledger = File.join(dir, "ledger.jsonl")
+      Preflight.ledger_append(ledger, kind: "render_attempt", status: "started", set: "selfies", n: 7)
+      Preflight.ledger_append(ledger, kind: "render", status: "output_ready", set: "selfies", n: 7,
+                                       id: "prediction-7", output_url: "https://replicate.delivery/a", seconds: 7.5)
+      Preflight.ledger_append(ledger, kind: "render", status: "output_ready", set: "selfies", n: 8,
+                                       id: "prediction-8", output_url: "https://replicate.delivery/b", seconds: 8.5)
+
+      event = Preflight.latest_render_event(ledger, set: "selfies", n: 7)
+      assert_equal "output_ready", event.fetch("status")
+      assert_equal "prediction-7", event.fetch("id")
+      assert_nil Preflight.latest_render_event(ledger, set: "selfies", n: 9)
+    end
+  end
+
+  def test_latest_render_event_refuses_a_malformed_ledger
+    Dir.mktmpdir do |dir|
+      ledger = File.join(dir, "ledger.jsonl")
+      File.write(ledger, "{partial JSON\n")
+
+      assert_raises(IOError) { Preflight.latest_render_event(ledger, set: "selfies", n: 7) }
+    end
+  end
+
+
   def test_a_tar_that_reaches_outside_its_directory_is_unsafe
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "ok.txt"), "x")
