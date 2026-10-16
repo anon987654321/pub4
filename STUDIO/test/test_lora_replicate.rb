@@ -389,6 +389,28 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_ledger_reads_refuse_existing_and_dangling_symlinks
+    Dir.mktmpdir do |dir|
+      target = File.join(dir, "actual.jsonl")
+      ledger = File.join(dir, "ledger.jsonl")
+      File.write(target, JSON.generate(kind: "render", seconds: 12) + "\n")
+
+      begin
+        File.symlink(target, ledger)
+      rescue NotImplementedError, SystemCallError => e
+        skip "symlinks unavailable in this test environment: #{e.message}"
+      end
+
+      error = assert_raises(IOError) { Preflight.ledger_usd(ledger) }
+      assert_match(/ledger path is a symlink/, error.message)
+
+      File.unlink(ledger)
+      File.symlink(File.join(dir, "missing.jsonl"), ledger)
+      error = assert_raises(IOError) { Preflight.ledger_seconds(ledger, "render") }
+      assert_match(/ledger path is a symlink/, error.message)
+    end
+  end
+
   def test_render_fingerprint_ignores_hash_insertion_order
     first = Preflight.render_fingerprint(model: "owner/model", input: { seed: 7, prompt: "x" })
     second = Preflight.render_fingerprint(model: "owner/model", input: { prompt: "x", seed: 7 })
