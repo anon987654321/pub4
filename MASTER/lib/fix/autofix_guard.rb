@@ -198,7 +198,10 @@ module Master
           master = [root, File.join(root.to_s, "MASTER")].compact.find { |dir| File.file?(File.join(dir, "data", "soul.yml")) }
           return false unless master
 
-          Master::Core::Constitution::Paths.sacred?(absolute, root: master)
+          # Measured from the repo root: from MASTER/ a path in RAILS/ or STUDIO/ "escapes the
+          # root", and Paths#sacred? answers an escape with true, so every sibling tree read as sacred.
+          base = File.basename(master) == "MASTER" ? File.dirname(master) : master
+          Master::Core::Constitution::Paths.sacred?(absolute, root: base)
         rescue StandardError
           false
         end

@@ -53,6 +53,17 @@ class TestAutofixGuard < Minitest::Test
     end
   end
 
+  def test_a_sibling_tree_is_not_sacred_when_the_run_is_rooted_at_master
+    Dir.mktmpdir do |repo|
+      master = File.join(repo, "MASTER")
+      FileUtils.mkdir_p(File.join(master, "data"))
+      File.write(File.join(master, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/\n")
+
+      assert_nil Guard.protected_reason(File.join(repo, "RAILS", "brgen_dating", "app", "controllers", "dating", "base_controller.rb"), root: master)
+      refute_nil Guard.protected_reason(File.join(master, "data", "laws.yml"), root: master)
+    end
+  end
+
   def test_a_candidate_that_does_not_parse_is_refused
     assert_match(/does not parse/, Guard.candidate_reason("a.rb", "x = 1\n", "def broken(\n"))
     assert_match(/does not parse/, Guard.candidate_reason("a.yml", "a: 1\n", "a: [1,\n"))
