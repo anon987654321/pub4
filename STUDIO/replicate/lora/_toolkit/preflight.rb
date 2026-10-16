@@ -210,9 +210,11 @@ module Preflight
   # unknown spend, not zero spend; continuing would understate cost and may pass
   # a ceiling that the recorded calls have already crossed.
   def ledger_rows(path)
-    return [] unless File.file?(path)
+    target = File.expand_path(path)
+    raise IOError, "ledger path is a symlink: #{target}" if File.symlink?(target)
+    return [] unless File.file?(target)
 
-    File.foreach(path).with_index.map do |line, index|
+    File.foreach(target).with_index.map do |line, index|
       begin
         row = JSON.parse(line)
       rescue JSON::ParserError
