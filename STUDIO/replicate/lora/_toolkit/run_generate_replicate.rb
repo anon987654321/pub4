@@ -208,6 +208,13 @@ FileUtils.mkdir_p(out_dir)
 failed = 0
 start_usd = Preflight.ledger_usd(LEDGER)
 start_render_seconds = Preflight.ledger_seconds(LEDGER, "render")
+inconclusive = Preflight.inconclusive_render_receipts(LEDGER)
+unless inconclusive.empty?
+  receipts = inconclusive.map do |row|
+    "#{row["set"] || "?"}/#{row["n"] || "?"} prediction=#{row["id"] || "unknown"}"
+  end
+  abort "warn: render spend is inconclusive for #{receipts.join(", ")}; reconcile the ledger before paid work"
+end
 todo = sittings.count { |shoot, _| !out_dir.join(format("%02d.%s", shoot["n"], extension)).file? }
 puts "ok: #{Preflight.render_estimate(todo)}"
 spent = start_render_seconds
