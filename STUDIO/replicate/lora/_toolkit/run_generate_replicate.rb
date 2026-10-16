@@ -123,7 +123,8 @@ def postpro_presets
   stdout, stderr, status = Open3.capture3(RbConfig.ruby, POSTPRO.to_s, "--list-presets")
   unless status.success?
     diagnostic = [stderr.strip, stdout.lines.first(4).join(" ").strip].reject(&:empty?).join(" — ")[0, 300]
-    abort "warn: postpro --list-presets failed (#{status.exitstatus})#{": #{diagnostic}" unless diagnostic.empty?}"
+    detail = diagnostic.empty? ? "" : ": #{diagnostic}"
+    abort "warn: postpro --list-presets failed (#{status.exitstatus})#{detail}"
   end
 
   presets = stdout.scan(/^([a-z][a-z0-9_]*): /).flatten.uniq - %w[fx]
