@@ -496,6 +496,30 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_ledger_marks_missing_prediction_duration_as_inconclusive
+    Dir.mktmpdir do |dir|
+      ledger = File.join(dir, "ledger.jsonl")
+      Preflight.ledger_append(ledger, kind: "render_attempt", status: "prediction_received",
+                                       set: "selfies", n: 7, id: "missing-duration", seconds: nil)
+      Preflight.ledger_append(ledger, kind: "render", status: "output_ready",
+                                       set: "selfies", n: 8, id: "invalid-duration", seconds: "unknown")
+
+      receipts = Preflight.inconclusive_render_receipts(ledger)
+      assert_equal %w[missing-duration invalid-duration], receipts.map { |row| row["id"] }
+    end
+  end
+
+  def test_paid_render_refuses_inconclusive_ledger_before_entering_the_generation_loop
+    script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(script, encoding: "UTF-8")
+    guard = source.index("inconclusive = Preflight.inconclusive_render_receipts(LEDGER)")
+    loop_start = source.index("sittings.each do |shoot, prompt|")
+
+    assert guard && loop_start, "the paid-work guard and generation loop must exist"
+    assert_operator guard, :<, loop_start
+    assert_includes source, "reconcile the ledger before paid work"
+  end
+
   def test_render_receipt_actions_resume_known_predictions_and_block_ambiguous_requests
     fingerprint = "request-digest"
     assert_equal :new, Preflight.render_receipt_action(nil, fingerprint:)
