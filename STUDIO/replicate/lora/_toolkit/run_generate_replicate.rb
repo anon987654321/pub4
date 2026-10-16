@@ -83,11 +83,10 @@ def render_input(prompt, seed, options)
   input
 end
 
-# A throttle or a dropped connection is waited out; a safety refusal is one new
-# seed, because bare shoulders in the dataset trip the checker on prompts that
-# ask for nothing of the kind. Anything else is a failure worth reading. Three of
-# forty-eight selfies were lost to a reset and two timeouts before the network
-# half retried.
+# Only explicit refusals are safe to repeat. Replicate's throttling 429 rejects
+# the create, and an NSFW refusal creates no prediction, so the latter gets a new
+# seed. A read timeout/reset may follow a successful paid create; stop and
+# reconcile instead of creating a duplicate. A connection-open timeout is safe.
 TRANSIENT = [Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError, Errno::ECONNRESET, EOFError].freeze
 
 def render(client, model, input, attempts: 4)
@@ -95,11 +94,14 @@ def render(client, model, input, attempts: 4)
     return client.run(model, input, timeout: 900)
   rescue *TRANSIENT, RuntimeError => e
     raise if attempt == attempts - 1
-    raise if e.is_a?(RuntimeError) && !e.message.match?(/429|NSFW/)
 
-    input = input.merge(seed: input[:seed] + 1000) if e.message.include?("NSFW")
+    refused = e.is_a?(RuntimeError) && e.message.match?(/\AReplicate API 429:|NSFW/i)
+    safe_connect_failure = e.is_a?(Net::OpenTimeout)
+    raise unless refused || safe_connect_failure
+
+    input = input.merge(seed: input[:seed] + 1000) if e.message.match?(/NSFW/i)
     warn "note: #{e.class}: #{e.message[0, 80]} — retrying with seed #{input[:seed]}"
-    sleep(e.message.include?("NSFW") ? 1 : 10)
+    sleep(e.message.match?(/NSFW/i) ? 1 : 10)
   end
 end
 
