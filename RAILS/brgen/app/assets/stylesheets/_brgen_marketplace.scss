@@ -344,7 +344,7 @@ body.vertical-marketplace .search {
 .number_animate {
   position: relative;
   left: 8px;
-  top: --32px;
+  top: -32px;
   color: white;
   font-weight: normal;
   z-index: 5;
@@ -353,7 +353,7 @@ body.vertical-marketplace .search {
 #logoWrapper .number_animate {
   font-size: var(--text-2xl);
   left: 4px;
-  top: --16px;
+  top: -16px;
 }
 
 .number_animate span {
