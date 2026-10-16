@@ -318,7 +318,10 @@ module Preflight
   def ledger_seconds(path, kind)
     rows = ledger_rows(path)
     rows = billable_render_rows(rows) if kind == "render"
-    rows.sum { |row| row["kind"] == kind || kind == "render" && row["kind"] == "render_attempt" ? row["seconds"].to_f : 0.0 }
+    rows.sum do |row|
+      matching = row["kind"] == kind || (kind == "render" && row["kind"] == "render_attempt")
+      matching ? row["seconds"].to_f : 0.0
+    end
   end
 
   # Entries of a trainer tar that would land outside the target directory.
