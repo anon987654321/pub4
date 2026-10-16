@@ -118,6 +118,14 @@ POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
 # sitting number, so frame 7 grades the same way on every run and two takes of
 # it stay comparable.
 # Avoid writing a second row when a run resumes after local output delivery.
+# Missing, non-finite or negative provider timing is unknown spend, not zero.
+def measured_predict_seconds(prediction)
+  seconds = Float(prediction.dig("metrics", "predict_time"))
+  seconds if seconds.finite? && seconds >= 0
+rescue ArgumentError, TypeError
+  nil
+end
+
 def prompt_receipt_exists?(path, n:, prediction:)
   return false unless File.file?(path)
 
@@ -204,6 +212,8 @@ todo = sittings.count { |shoot, _| !out_dir.join(format("%02d.%s", shoot["n"], e
 puts "ok: #{Preflight.render_estimate(todo)}"
 spent = start_render_seconds
 observed_render_seconds = 0.0
+cost_inconclusive = false
+cost_inconclusive_reason = nil
 
 sittings.each do |shoot, prompt|
   path = out_dir.join(format("%02d.%s", shoot["n"], extension))
@@ -232,10 +242,15 @@ sittings.each do |shoot, prompt|
                                      fingerprint:, seed:)
     begin
       prediction = render(client, model, input)
-      seconds = prediction.dig("metrics", "predict_time").to_f
+      seconds = measured_predict_seconds(prediction)
       output_url = Array(prediction["output"]).first.to_s
-      spent += seconds
-      observed_render_seconds += seconds
+      if seconds
+        spent += seconds
+        observed_render_seconds += seconds
+      else
+        cost_inconclusive = true
+        cost_inconclusive_reason = "prediction #{prediction["id"]} omitted finite non-negative metrics.predict_time"
+      end
       # The durable prediction receipt comes before downloading its expiring URL.
       Preflight.ledger_append(LEDGER, kind: "render_attempt", status: "prediction_received",
                                        set: options[:set], n: shoot["n"], model:, fingerprint:,
@@ -264,7 +279,9 @@ sittings.each do |shoot, prompt|
     client.download_url(output_url, path.to_s)
   rescue StandardError => e
     failed += 1
-    next warn("warn: #{shoot['title']}: #{e.message[0, 200]}")
+    warn "warn: #{shoot['title']}: #{e.message[0, 200]}"
+    break if cost_inconclusive
+    next
   end
 
   if action == :new || receipt["kind"] == "render_attempt"
@@ -282,7 +299,9 @@ sittings.each do |shoot, prompt|
                              grade: preset, rendered_at: Time.now.utc.iso8601)
     end
   end
-  puts "ok: #{path}#{preset ? " + #{preset}" : ""} (#{seconds.round(1)} s)"
+  duration = seconds ? "#{seconds.round(1)} s" : "billed duration unavailable"
+  puts "ok: #{path}#{preset ? " + #{preset}" : ""} (#{duration})"
+  break if cost_inconclusive
 end
 
 [out_dir, graded_dir].each do |dir|
@@ -292,6 +311,8 @@ end
   system("ruby", TOOLKIT.join("contact_sheet.rb").to_s, dir.to_s, "--cols", "4", "--cell", "384",
          "--label", "--out", sheet.to_s)
 end
+abort "warn: cost total inconclusive: #{cost_inconclusive_reason}; no further paid renders were sent" if cost_inconclusive
+
 ledger_total_usd = Preflight.ledger_usd(LEDGER)
 recorded_render_delta = Preflight.ledger_seconds(LEDGER, "render") - start_render_seconds
 unrecorded_render_seconds = [observed_render_seconds - recorded_render_delta, 0.0].max
