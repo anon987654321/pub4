@@ -149,6 +149,55 @@ class TestLoraReplicate < Minitest::Test
     assert_equal 60, delay.call("resets in ~900s", 0)
   end
 
+  def prompt_receipt_reader
+    script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(script, encoding: "UTF-8")
+    body = source[/^def prompt_receipt_exists\?.*?^end$/m]
+    assert body, "prompt receipt lookup must exist"
+
+    reader = Class.new
+    reader.class_eval(body, script, 1)
+    reader
+  end
+
+  def test_prompt_receipt_lookup_is_idempotent_and_fails_closed
+    reader = prompt_receipt_reader.new
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "prompts.jsonl")
+      refute reader.prompt_receipt_exists?(path, n: 7, prediction: "prediction-7")
+
+      File.write(path, JSON.generate(n: 7, prediction: "prediction-7") + "\n")
+      assert reader.prompt_receipt_exists?(path, n: 7, prediction: "prediction-7")
+      refute reader.prompt_receipt_exists?(path, n: 7, prediction: "prediction-8")
+      refute reader.prompt_receipt_exists?(path, n: 8, prediction: "prediction-7")
+
+      File.write(path, "{partial JSON\n")
+      assert_raises(IOError) { reader.prompt_receipt_exists?(path, n: 7, prediction: "prediction-7") }
+    end
+  end
+
+  def test_paid_render_receipts_are_written_before_download
+    script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(script, encoding: "UTF-8")
+    start = source.index("sittings.each do |shoot, prompt|")
+    finish = source.index("\nend\n\n[out_dir, graded_dir].each", start)
+    assert start && finish, "the generation loop must have stable source boundaries"
+    body = source[start...finish]
+
+    intent = body.index('status: "started"')
+    create = body.index("prediction = render(client, model, input)")
+    received = body.index('status: "prediction_received"')
+    download = body.index("client.download_url(output_url, path.to_s)")
+    output_ready = body.index('status: "output_ready"')
+
+    assert [intent, create, received, download, output_ready].all?, "receipt lifecycle is incomplete"
+    assert_operator intent, :<, create
+    assert_operator create, :<, received
+    assert_operator received, :<, download
+    assert_operator download, :<, output_ready
+    assert_includes body, "Preflight.render_receipt_action(receipt, fingerprint:)"
+  end
+
   def postpro_preset_reader_class(postpro_path)
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
