@@ -29,10 +29,10 @@
 
 .affiliate_feed_kicker {
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: var(--text-xs);
   font-weight: var(--weight-heavy);
-  letter-spacing: 2px;
-  line-height: 1;
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--leading-tight);
   text-transform: uppercase;
 }
 
