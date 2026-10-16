@@ -325,6 +325,15 @@ class DesignContractTest < Minitest::Test
     end
   end
 
+  def test_brgen_marketplace_badge_offsets_are_valid_css
+    path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
+    source = File.read(path)
+
+    refute_match(/top:\s*--\d+px\s*;/, source, "a negative offset is written with one minus sign")
+    assert_match(/\.number_animate\s*\{[^}]*top:\s*-32px\s*;/m, source)
+    assert_match(/#logoWrapper\s+\.number_animate\s*\{[^}]*top:\s*-16px\s*;/m, source)
+  end
+
   def test_brgen_mounts_theme_bootstrap_once_in_head
     layout = File.read(File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"))
     copies = layout.scan(/render "shared\/theme_bootstrap"/).size
