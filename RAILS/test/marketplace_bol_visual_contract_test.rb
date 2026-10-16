@@ -137,6 +137,16 @@ class MarketplaceBolVisualContractTest < Minitest::Test
                     "the static state must retain a legible cart count"
   end
 
+  def test_logo_burst_spans_keep_their_shared_positioning_rule
+    controller = File.read(LOGO_CONTROLLER)
+    styles = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_marketplace.scss"))
+
+    assert_includes controller, 'this.bannerTarget.querySelectorAll(":scope > span")',
+                    "the burst animates every direct child span, including the starter plus"
+    assert_match(/\.marketplace \.banner\s*>\s*span\s*\{/, styles)
+    assert_match(/#logoWrapper \.marketplace \.banner\s*>\s*span\s*\{/, styles)
+  end
+
   def test_bol_geometry_tokens_are_explicit
     css = File.read(CSS)
 
