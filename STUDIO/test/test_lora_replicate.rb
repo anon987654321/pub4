@@ -27,6 +27,64 @@ class TestLoraReplicate < Minitest::Test
     [client, calls]
   end
 
+  def with_http_responses(responses, requests)
+    http = Object.new
+    http.define_singleton_method(:request) do |request|
+      requests << request
+      responses.shift || raise("unexpected HTTP request")
+    end
+    starter = lambda { |_host, _port, **_options, &block| block.call(http) }
+
+    Net::HTTP.stub(:start, starter) { yield }
+  end
+
+  def test_paid_post_is_not_retried_after_an_ambiguous_server_error
+    client = Client.new(token: "t")
+    requests = []
+    failure = Struct.new(:code, :body).new("500", '{"detail":"internal server error"}')
+
+    error = nil
+    with_http_responses([failure], requests) do
+      error = assert_raises(Client::TransientError) do
+        client.post(URI("https://api.replicate.com/v1/predictions"), {})
+      end
+    end
+
+    assert_match(/500/, error.message)
+    assert_equal ["POST"], requests.map(&:method),
+                 "a 5xx may follow a successful paid create; do not blindly replay it"
+  end
+
+  def test_explicit_throttle_can_retry_post_but_not_exhausted_budget
+    client = Client.new(token: "t")
+    client.define_singleton_method(:sleep) { |_seconds| }
+    requests = []
+    throttled = Struct.new(:code, :body).new("429", '{"detail":"Request was throttled; resets in ~1s."}')
+    accepted = Struct.new(:code, :body).new("200", '{"id":"p1"}')
+
+    result = with_http_responses([throttled, accepted], requests) do
+      client.post(URI("https://api.replicate.com/v1/predictions"), {})
+    end
+
+    assert_equal({ "id" => "p1" }, result)
+    assert_equal 2, requests.length, "a rate-limit rejection is safe to retry after backoff"
+  end
+
+  def test_get_keeps_retrying_a_transient_server_error
+    client = Client.new(token: "t")
+    client.define_singleton_method(:sleep) { |_seconds| }
+    requests = []
+    failed = Struct.new(:code, :body).new("500", '{"detail":"temporary server fault"}')
+    accepted = Struct.new(:code, :body).new("200", '{"ok":true}')
+
+    result = with_http_responses([failed, accepted], requests) do
+      client.get(URI("https://api.replicate.com/v1/account"))
+    end
+
+    assert_equal({ "ok" => true }, result)
+    assert_equal 2, requests.length
+  end
+
   def test_run_asks_for_a_sync_answer_and_a_server_side_deadline
     done = { "id" => "p1", "status" => "succeeded", "output" => ["https://replicate.delivery/a.jpg"], "metrics" => { "predict_time" => 4.2 } }
     client, calls = client_with(posts: [done])
