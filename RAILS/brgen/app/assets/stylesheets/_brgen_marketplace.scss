@@ -361,18 +361,16 @@ body.vertical-marketplace .search {
   right: -0px;
 }
 
-/* As with .number_animate: the standalone pen's 4px always loses to the
-   #logoWrapper rule below, so it is left out rather than tokenised. The 3px
-   that stays is decoration inside the logo's own geometry, well under the
-   smallest rung of the type scale (--text-xs, 12px) — a modular scale has no
-   rung there and should not grow one for it.
+/* The standalone pen's 4px loses to the #logoWrapper rule below, so it is
+   left out rather than tokenised. The 3px that stays is decoration inside the
+   logo's own geometry, below the smallest type-scale rung; do not grow a new
+   rung for it.
 
-   Worth knowing before anyone wires this up: the span it sizes is the
-   `seedPlus` target, and it is inert. marketplace_logo_controller.js names
-   seedPlus in its `static targets` list and never reads it, so nothing ever
-   lifts this opacity: 0. The visible "+" is a different element — the
-   controller builds its own span inside .number_animate (see .number_animate
-   span above). This rule styles something no visitor sees. */
+   The seedPlus span is not read as a named target, but #burst selects every
+   direct child span with `:scope > span`. That includes this initial plus and
+   the generated burst spans, so this rule gives them their hidden start state
+   and placement. The count's own plus is separate: it is created inside
+   .number_animate (see the rule above). */
 .marketplace .banner > span {
   font-weight: normal;
   position: absolute;
