@@ -25,7 +25,9 @@ class TestToolsMedia < Minitest::Test
       "temp" => %w[spectral_temp color_temp],
       "tonemap" => %w[tonemap],
       "azimuth" => %w[relight],
-      "shape" => %w[relight]
+      "shape" => %w[relight],
+      "aspect_ratio" => %w[cinemascope_bars],
+      "border_style" => %w[polaroid_frame]
     }
 
     reader_source = source[/key_readers = \{(.*?)^  \}/m, 1]
