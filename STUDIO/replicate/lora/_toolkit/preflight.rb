@@ -328,12 +328,18 @@ module Preflight
     end
   end
 
-  # A paid response without a valid duration makes the spend ceiling unknowable.
-  # Never let a later invocation mistake that receipt for a zero-second render.
+  # Unknown duration and an unresolved create intent both leave total spend
+  # unknowable. Evaluate only the latest state for each sitting, so a later
+  # provider response or final receipt can supersede an older started row.
   def inconclusive_render_receipts(path)
-    ledger_rows(path).select do |row|
-      next false unless %w[render render_attempt].include?(row["kind"])
-      next false unless %w[prediction_received output_ready].include?(row["status"])
+    latest = ledger_rows(path).each_with_object({}) do |row, states|
+      next unless %w[render render_attempt].include?(row["kind"])
+
+      states[[row["set"].to_s, row["n"].to_s]] = row
+    end
+
+    latest.values.select do |row|
+      next true if row["kind"] == "render_attempt" && row["status"] == "started"
 
       seconds = Float(row["seconds"])
       !seconds.finite? || seconds.negative?
