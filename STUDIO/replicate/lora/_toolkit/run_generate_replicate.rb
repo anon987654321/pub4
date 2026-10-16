@@ -22,8 +22,10 @@ require "fileutils"
 require "json"
 require "net/http"
 require "openssl"
+require "open3"
 require "optparse"
 require "pathname"
+require "rbconfig"
 require "time"
 
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
@@ -116,7 +118,18 @@ POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
 # sitting number, so frame 7 grades the same way on every run and two takes of
 # it stay comparable.
 def postpro_presets
-  @postpro_presets ||= `ruby #{POSTPRO} --list-presets 2>/dev/null`.scan(/^([a-z][a-z0-9_]*): /).flatten.uniq - %w[fx]
+  return @postpro_presets if defined?(@postpro_presets)
+
+  stdout, stderr, status = Open3.capture3(RbConfig.ruby, POSTPRO.to_s, "--list-presets")
+  unless status.success?
+    diagnostic = [stderr.strip, stdout.lines.first(4).join(" ").strip].reject(&:empty?).join(" — ")[0, 300]
+    abort "warn: postpro --list-presets failed (#{status.exitstatus})#{": #{diagnostic}" unless diagnostic.empty?}"
+  end
+
+  presets = stdout.scan(/^([a-z][a-z0-9_]*): /).flatten.uniq - %w[fx]
+  abort "warn: postpro listed no presets" if presets.empty?
+
+  @postpro_presets = presets.freeze
 end
 
 def preset_for(grade, number)
