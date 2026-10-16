@@ -196,6 +196,10 @@ class TestLoraReplicate < Minitest::Test
     assert_operator received, :<, download
     assert_operator download, :<, output_ready
     assert_includes body, "Preflight.render_receipt_action(receipt, fingerprint:)"
+    assert_includes body, "Preflight.ledger_append(LEDGER, kind: \"render_attempt\", status: \"started\")"
+    assert_includes body, "Preflight.ledger_append(LEDGER, kind: \"render_attempt\", status: \"prediction_received\")"
+    assert_includes body, "observed_render_seconds += seconds"
+    assert_includes source, "unrecorded_render_seconds = [observed_render_seconds - recorded_render_delta, 0.0].max"
   end
 
   def postpro_preset_reader_class(postpro_path)
