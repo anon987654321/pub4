@@ -445,7 +445,7 @@ footer {
 .feed-card-text {
   font-size: var(--text-base); /* 15px */
   font-weight: var(--weight-normal);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   letter-spacing: var(--tracking-tight);
   margin: 0 0 8px;
   color: var(--text);
@@ -458,7 +458,7 @@ footer {
 
 .feed-card-body {
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text);
   margin-bottom: 8px;
 }
@@ -466,7 +466,7 @@ footer {
   font-size: var(--text-sm);
   color: var(--text-secondary);
   margin: 4px 0;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 .price {
   font-weight: var(--weight-bold);
