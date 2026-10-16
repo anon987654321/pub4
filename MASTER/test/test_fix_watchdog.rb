@@ -100,6 +100,26 @@ class TestFixWatchdog < Minitest::Test
     assert stalled[:abort], "direct CLI runs must not rely on the outer wrapper watchdog"
   end
 
+  def test_a_scan_that_keeps_finishing_files_is_not_a_stall_even_with_no_repair_yet
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    @now = Pulse::STALL_SECONDS + 1
+    p.observe("scan:complete", path: "app/models/post.rb", count: 0)
+    @now += 60
+
+    assert_nil p.stall(@now), "one clean file a minute is a slow semantic scan, not a hang"
+  end
+
+  def test_a_scan_that_stopped_finishing_files_stalls_again
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    @now = Pulse::STALL_SECONDS + 1
+    p.observe("scan:complete", path: "app/models/post.rb", count: 0)
+    @now += Pulse::FINISH_WINDOW_SECONDS + 1
+
+    assert_match(/0 files attempted/, p.stall(@now)[:line])
+  end
+
   def test_an_advisory_pass_stall_is_skipped_instead_of_aborting_the_run
     p = pulse
     p.observe("fix_loop:phase", stage: :council)

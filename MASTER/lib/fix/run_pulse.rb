@@ -168,6 +168,10 @@ module Master
         return unless @pass.positive? && waited > seconds
 
         pass_attempts = @pass_ok + @pass_failed + @pass_rejected + @pass_errored
+        # The semantic scan reads one file at a time at a minute or so each, and a clean
+        # file queues no repair: a scan that keeps finishing files is working, not stalled.
+        return if pass_attempts.zero? && scan_advancing?(now)
+
         recent = @finished.count { |at| now - at <= FINISH_WINDOW_SECONDS }
         tail = if pass_attempts.zero? then "0 files attempted"
                elsif recent.zero? then "0 files finished in #{FINISH_WINDOW_SECONDS / 60}m"
@@ -183,6 +187,10 @@ module Master
           # wrapper-only watchdogs do not cover direct CLI invocations.
           abort: !skippable
         }
+      end
+
+      def scan_advancing?(now)
+        !@scan_completed_at.nil? && now - @scan_completed_at <= FINISH_WINDOW_SECONDS
       end
 
       def lane_id
@@ -213,6 +221,7 @@ module Master
         when "fix_loop:phase" then enter_phase(payload)
         when "council:progress" then @council = [payload[:answered].to_i, payload[:total].to_i]
         when "scan:progress" then scanned(payload)
+        when "scan:complete" then @scan_completed_at = @clock.call
         when "fix_loop:rule_result", "repair_loop:pass" then ruled(payload)
         when "fix_loop:skip_breakdown" then skipped(payload)
         when "repair_loop:fix_applied" then attempted { count_fix(:ok); @model_ok += 1 }
@@ -253,6 +262,7 @@ module Master
         @skips = Hash.new(0)
         @listed = Hash.new(0)
         @commits_at_start = 0
+        @scan_completed_at = nil
       end
 
       def scanned(payload)
