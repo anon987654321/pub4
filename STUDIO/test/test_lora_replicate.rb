@@ -149,6 +149,27 @@ class TestLoraReplicate < Minitest::Test
     assert_equal 60, delay.call("resets in ~900s", 0)
   end
 
+  def measured_predict_seconds_reader
+    script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(script, encoding: "UTF-8")
+    body = source[/^def measured_predict_seconds\(prediction\).*?^end$/m]
+    assert body, "provider timing parser must exist"
+
+    reader = Class.new
+    reader.class_eval(body, script, 1)
+    reader
+  end
+
+  def test_measured_predict_seconds_refuses_missing_or_invalid_spend
+    reader = measured_predict_seconds_reader.new
+    assert_equal 4.5, reader.measured_predict_seconds("metrics" => { "predict_time" => "4.5" })
+    assert_equal 0.0, reader.measured_predict_seconds("metrics" => { "predict_time" => 0 })
+    assert_nil reader.measured_predict_seconds("metrics" => {})
+    assert_nil reader.measured_predict_seconds("metrics" => { "predict_time" => "unknown" })
+    assert_nil reader.measured_predict_seconds("metrics" => { "predict_time" => Float::INFINITY })
+    assert_nil reader.measured_predict_seconds("metrics" => { "predict_time" => -1 })
+  end
+
   def prompt_receipt_reader
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
