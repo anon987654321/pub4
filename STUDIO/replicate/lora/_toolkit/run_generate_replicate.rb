@@ -199,9 +199,11 @@ abort "warn: #{model} does not declare #{unknown.join(', ')}; fix the input or p
 FileUtils.mkdir_p(out_dir)
 failed = 0
 start_usd = Preflight.ledger_usd(LEDGER)
+start_render_seconds = Preflight.ledger_seconds(LEDGER, "render")
 todo = sittings.count { |shoot, _| !out_dir.join(format("%02d.%s", shoot["n"], extension)).file? }
 puts "ok: #{Preflight.render_estimate(todo)}"
-spent = Preflight.ledger_seconds(LEDGER, "render")
+spent = start_render_seconds
+observed_render_seconds = 0.0
 
 sittings.each do |shoot, prompt|
   path = out_dir.join(format("%02d.%s", shoot["n"], extension))
@@ -233,6 +235,7 @@ sittings.each do |shoot, prompt|
       seconds = prediction.dig("metrics", "predict_time").to_f
       output_url = Array(prediction["output"]).first.to_s
       spent += seconds
+      observed_render_seconds += seconds
       # The durable prediction receipt comes before downloading its expiring URL.
       Preflight.ledger_append(LEDGER, kind: "render_attempt", status: "prediction_received",
                                        set: options[:set], n: shoot["n"], model:, fingerprint:,
@@ -289,6 +292,16 @@ end
   system("ruby", TOOLKIT.join("contact_sheet.rb").to_s, dir.to_s, "--cols", "4", "--cell", "384",
          "--label", "--out", sheet.to_s)
 end
-puts format("ok: cost after: this run $%<run>.3f, subject ledger total $%<all>.2f (training at its own rate, renders at $%<rate>s/s)",
-            run: Preflight.ledger_usd(LEDGER) - start_usd, all: Preflight.ledger_usd(LEDGER), rate: Preflight::RENDER_USD_PER_SECOND)
+ledger_total_usd = Preflight.ledger_usd(LEDGER)
+recorded_render_delta = Preflight.ledger_seconds(LEDGER, "render") - start_render_seconds
+unrecorded_render_seconds = [observed_render_seconds - recorded_render_delta, 0.0].max
+if unrecorded_render_seconds > 0.001
+  warn format("warn: %.1f observed paid seconds are not in the ledger; cost below includes them, but receipt reconciliation is required",
+              unrecorded_render_seconds)
+end
+known_unrecorded_usd = unrecorded_render_seconds * Preflight::RENDER_USD_PER_SECOND
+puts format("ok: cost after: this run ~$%<run>.3f; subject known spend ~$%<all>.2f (ledger $%<ledger>.2f + %.1f unrecorded observed seconds)",
+            run: ledger_total_usd - start_usd + known_unrecorded_usd,
+            all: ledger_total_usd + known_unrecorded_usd,
+            ledger: ledger_total_usd, unrecorded_render_seconds)
 abort "warn: #{failed} sitting(s) did not render" if failed.positive?
