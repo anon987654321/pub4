@@ -509,6 +509,32 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_latest_ledger_state_blocks_ambiguous_spend_but_accepts_resolution
+    Dir.mktmpdir do |dir|
+      ledger = File.join(dir, "ledger.jsonl")
+      Preflight.ledger_append(ledger, kind: "render_attempt", status: "started",
+                                       set: "selfies", n: 7, fingerprint: "request-7")
+      Preflight.ledger_append(ledger, kind: "render_attempt", status: "prediction_received",
+                                       set: "selfies", n: 7, fingerprint: "request-7",
+                                       id: "prediction-7", output_url: "https://replicate.delivery/p7",
+                                       seconds: 4.5)
+      Preflight.ledger_append(ledger, kind: "render_attempt", status: "started",
+                                       set: "selfies", n: 8, fingerprint: "request-8")
+      Preflight.ledger_append(ledger, kind: "render_attempt", status: "prediction_received",
+                                       set: "selfies", n: 9, fingerprint: "request-9",
+                                       id: "prediction-9", output_url: "https://replicate.delivery/p9",
+                                       seconds: nil)
+      Preflight.ledger_append(ledger, kind: "render", status: "output_ready",
+                                       set: "selfies", n: 9, fingerprint: "request-9",
+                                       id: "prediction-9", output_url: "https://replicate.delivery/p9",
+                                       seconds: 5.0)
+
+      unresolved = Preflight.inconclusive_render_receipts(ledger)
+      assert_equal [["selfies", 8, "started"]],
+                   unresolved.map { |row| [row["set"], row["n"], row["status"]] }
+    end
+  end
+
   def test_paid_render_refuses_inconclusive_ledger_before_entering_the_generation_loop
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
