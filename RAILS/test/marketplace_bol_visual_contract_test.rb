@@ -11,6 +11,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   CSS = File.join(BRGEN, "app/assets/stylesheets/application.scss")
   HEADER_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_header.scss")
   CITY_CAMPAIGNS_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_city_campaigns.scss")
+  LOGO_CONTROLLER = File.join(ROOT, "brgen_marketplace", "app/javascript/controllers/marketplace_logo_controller.js")
 
   def test_marketplace_uses_the_dedicated_bol_header
     nav = File.read(NAV)
@@ -120,6 +121,20 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_match(/grid-template-columns:\s*176px 168px minmax\(320px, 1fr\) auto;/, desktop)
     assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*inline-flex;/m, desktop)
     assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*absolute;/m, desktop)
+  end
+
+
+  def test_logo_falls_back_to_a_visible_static_state_when_animation_loading_fails
+    controller = File.read(LOGO_CONTROLLER)
+    connect = controller.split("  connect() {", 2).last&.split("\n  disconnect()", 2)&.first
+
+    assert connect, "marketplace logo connection lifecycle must exist"
+    assert_includes controller, ".catch(() => null)",
+                    "the optional animation CDN must remain a recoverable dependency"
+    assert_match(/if \(!anime\) \{\s*this\.#staticEndState\(\)\s*return/m, connect,
+                 "failed animation loading must reveal the cart and count instead of leaving them hidden")
+    assert_includes controller, "this.numberTarget.textContent = \"9+\"",
+                    "the static state must retain a legible cart count"
   end
 
   def test_bol_geometry_tokens_are_explicit
