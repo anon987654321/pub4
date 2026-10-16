@@ -195,6 +195,53 @@ class TestLoraReplicate < Minitest::Test
     assert_equal [7, 1007], calls.map { |input| input[:seed] }
   end
 
+  def renderer_class_from_source
+    path = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(path)
+    body = source[/^def render\\b.*?^end$/m]
+    assert body, "LoRA Replicate render wrapper must exist"
+
+    klass = Class.new
+    klass.const_set(:TRANSIENT, [Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError,
+                                Errno::ECONNRESET, EOFError].freeze)
+    klass.define_method(:sleep) { |_seconds| }
+    klass.class_eval(body, path, 1)
+    klass
+  end
+
+  def test_lora_render_does_not_replay_a_read_timeout
+    klass = renderer_class_from_source
+    calls = []
+    client = Object.new
+    client.define_singleton_method(:run) do |_model, input, timeout:|
+      calls << input
+      raise Net::ReadTimeout, "response lost after request"
+    end
+
+    assert_raises(Net::ReadTimeout) { klass.new.render(client, "owner/model", { seed: 7 }) }
+    assert_equal 1, calls.length, "an ambiguous timeout must not trigger another paid create"
+  end
+
+  def test_lora_render_retries_an_explicit_safety_refusal_with_a_new_seed
+    klass = renderer_class_from_source
+    calls = []
+    client = Object.new
+    client.define_singleton_method(:run) do |_model, input, timeout:|
+      calls << input
+      raise "NSFW" if calls.length == 1
+
+      { "id" => "prediction-2" }
+    end
+
+    result = nil
+    _out, _err = capture_io do
+      result = klass.new.render(client, "owner/model", { seed: 7 })
+    end
+
+    assert_equal({ "id" => "prediction-2" }, result)
+    assert_equal [7, 1007], calls.map { |input| input[:seed] }
+  end
+
   def test_a_pinned_trainer_version_is_the_one_in_the_url
     client, = client_with
     uri, body = client.send(:build_training_request, "https://z", "me/dest", trigger_word: "t", steps: 1, lora_rank: 16,
