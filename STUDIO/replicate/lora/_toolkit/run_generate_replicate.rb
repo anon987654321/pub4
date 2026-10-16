@@ -328,8 +328,8 @@ if unrecorded_render_seconds > 0.001
               unrecorded_render_seconds)
 end
 known_unrecorded_usd = unrecorded_render_seconds * Preflight::RENDER_USD_PER_SECOND
-puts format("ok: cost after: this run ~$%<run>.3f; subject known spend ~$%<all>.2f (ledger $%<ledger>.2f + %.1f unrecorded observed seconds)",
+puts format("ok: cost after: this run ~$%<run>.3f; subject known spend ~$%<all>.2f (ledger $%<ledger>.2f + %<unrecorded>.1f unrecorded observed seconds)",
             run: ledger_total_usd - start_usd + known_unrecorded_usd,
             all: ledger_total_usd + known_unrecorded_usd,
-            ledger: ledger_total_usd, unrecorded_render_seconds)
+            ledger: ledger_total_usd, unrecorded: unrecorded_render_seconds)
 abort "warn: #{failed} sitting(s) did not render" if failed.positive?
