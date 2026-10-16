@@ -226,11 +226,33 @@ module Preflight
     end
   end
 
-  def ledger_usd(path)
-    ledger_rows(path).sum do |row|
-      next row["usd"].to_f if row.key?("usd")
+  # A response receipt is billable even if downloading its temporary URL failed.
+  # Once a final render row with the same prediction id exists, count the final
+  # row only; otherwise the attempt receipt carries the spend.
+  def billable_render_rows(rows)
+    renders = rows.select { |row| row["kind"] == "render" }
+    rendered_ids = renders.filter_map do |row|
+      id = row["id"].to_s
+      id unless id.empty?
+    end
+    pending = rows.select do |row|
+      next false unless row["kind"] == "render_attempt" && row["status"] == "prediction_received"
 
-      row["kind"] == "render" ? row["seconds"].to_f * RENDER_USD_PER_SECOND : 0.0
+      id = row["id"].to_s
+      id.empty? || !rendered_ids.include?(id)
+    end
+    renders + pending
+  end
+
+  def ledger_usd(path)
+    rows = ledger_rows(path)
+    render_rows = billable_render_rows(rows)
+    render_row_ids = render_rows.map(&:object_id)
+    rows.sum do |row|
+      next row["usd"].to_f if row.key?("usd")
+      next row["seconds"].to_f * RENDER_USD_PER_SECOND if render_row_ids.include?(row.object_id)
+
+      0.0
     end
   end
 
@@ -254,6 +276,35 @@ module Preflight
     Digest::SHA256.hexdigest(JSON.generate(model: model.to_s, input: normalized))
   end
 
+  # A paid call without a terminal receipt must never be repeated automatically.
+  # A known prediction can be downloaded again only for the exact same request.
+  def render_receipt_action(event, fingerprint:)
+    return :new unless event
+
+    if event["kind"] == "render_attempt"
+      return :blocked if event["status"] == "started"
+      return :blocked unless event["status"] == "prediction_received"
+      return :resume if resumable_render_receipt?(event, fingerprint:)
+
+      return :blocked
+    end
+
+    if event["kind"] == "render" && event["status"] == "output_ready" &&
+       event["fingerprint"] == fingerprint
+      return :resume if resumable_render_receipt?(event, fingerprint:)
+
+      return :blocked
+    end
+
+    :new
+  end
+
+  def resumable_render_receipt?(event, fingerprint:)
+    event["fingerprint"] == fingerprint &&
+      !event["id"].to_s.empty? &&
+      !event["output_url"].to_s.empty?
+  end
+
   # Last known state for one sitting. Malformed ledger data blocks automatic
   # retries: dropping an unreadable paid receipt would risk charging twice.
   def latest_render_event(path, set:, n:)
@@ -265,7 +316,9 @@ module Preflight
 
   # Sum of billed seconds already in a ledger, for a spend ceiling.
   def ledger_seconds(path, kind)
-    ledger_rows(path).sum { |row| row["kind"] == kind ? row["seconds"].to_f : 0.0 }
+    rows = ledger_rows(path)
+    rows = billable_render_rows(rows) if kind == "render"
+    rows.sum { |row| row["kind"] == kind || kind == "render" && row["kind"] == "render_attempt" ? row["seconds"].to_f : 0.0 }
   end
 
   # Entries of a trainer tar that would land outside the target directory.
