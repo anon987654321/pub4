@@ -312,6 +312,13 @@ module Master
           Master::Io::QuotaGate.trip!(source: "replicate", message: e.message, model: uri.path)
           raise
         rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
+          # GET is safe to retry. Replicate throttling 429 explicitly rejects
+          # the request, but a POST 5xx/read-timeout/reset can hide a paid create
+          # that succeeded before its response was lost.
+          retryable = req.method == "GET" ||
+                      (e.is_a?(TransientError) && e.message.start_with?("Replicate API 429:"))
+          raise unless retryable
+
           last_error = e.message
           sleep(Master::Ground::FailureTaxonomy.backoff_seconds(attempt)) if attempt < attempts - 1
         end
