@@ -7,11 +7,16 @@ require "voice/disfluency"
 class TestVoiceDisfluency < Minitest::Test
   D = Master::Voice::Disfluency
 
-  def test_default_policy_enables_only_a_bounded_speech_layer
+  def test_default_policy_keeps_synthetic_disfluencies_off
     cfg = Master::Voice::Policy.data.fetch("disfluencies")
-    assert_equal true, cfg.fetch("enabled")
-    assert_operator cfg.fetch("probability"), :<=, 0.25
+    assert_equal false, cfg.fetch("enabled")
+    assert_equal false, D::DEFAULTS.fetch("enabled")
     assert_operator D::DEFAULTS.fetch("min_words"), :>, 0
+  end
+
+  def test_default_speech_preserves_the_words_supplied_for_synthesis
+    text = "I think we should keep this small for now."
+    assert_equal text, D.apply(text, source: text)
   end
 
   def test_hedged_first_person_speech_can_have_a_natural_hesitation
