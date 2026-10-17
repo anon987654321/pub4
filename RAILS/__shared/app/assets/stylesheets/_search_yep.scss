@@ -4,6 +4,8 @@
 .search {
   width: 480px;
   max-width: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
   background-color: #ccc;
   border: 1px solid #ccc;
   border-radius: 30px;
@@ -20,6 +22,8 @@
   outline: none;
   border: none;
   width: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
   padding: 16px 24px;
   font-size: inherit;
   color: inherit;
