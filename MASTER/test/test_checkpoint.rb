@@ -144,6 +144,58 @@ class TestCheckpoint < Minitest::Test
     end
   end
 
+  def test_create_refuses_a_symlinked_store_directory
+    Dir.mktmpdir do |root|
+      Dir.mktmpdir do |outside|
+        FileUtils.mkdir_p(File.join(root, ".master"))
+        File.write(File.join(root, "sample.rb"), "safe\n")
+        store = File.join(root, ".master", "checkpoints")
+        File.symlink(outside, store)
+        checkpoint = Master::Fix::Checkpoint.new(root:, dir: store)
+
+        assert_raises(ArgumentError) do
+          checkpoint.create(label: "escape", files: ["sample.rb"])
+        end
+        assert_empty Dir.children(outside)
+      end
+    end
+  end
+
+  def test_restore_refuses_a_symlinked_store_directory
+    Dir.mktmpdir do |root|
+      Dir.mktmpdir do |outside|
+        store = File.join(root, ".master", "checkpoints")
+        FileUtils.mkdir_p(File.join(root, ".master"))
+        File.write(File.join(root, "sample.rb"), "before\n")
+        checkpoint = Master::Fix::Checkpoint.new(root:, dir: store)
+        manifest = checkpoint.create(label: "stored", files: ["sample.rb"])
+        FileUtils.mv(store, File.join(outside, "checkpoints"))
+        File.symlink(File.join(outside, "checkpoints"), store)
+        File.write(File.join(root, "sample.rb"), "current\n")
+
+        assert_raises(ArgumentError) { checkpoint.restore(manifest[:id]) }
+        assert_equal "current\n", File.read(File.join(root, "sample.rb"))
+      end
+    end
+  end
+
+  def test_list_refuses_a_symlinked_manifest
+    Dir.mktmpdir do |root|
+      Dir.mktmpdir do |outside|
+        File.write(File.join(root, "sample.rb"), "before\n")
+        checkpoint = Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints"))
+        manifest = checkpoint.create(label: "manifest", files: ["sample.rb"])
+        directory = File.join(checkpoint.dir, manifest[:id])
+        external_manifest = File.join(outside, "manifest.json")
+        File.write(external_manifest, JSON.generate("id" => "external", "created_at" => "9999"))
+        FileUtils.rm(File.join(directory, "manifest.json"))
+        File.symlink(external_manifest, File.join(directory, "manifest.json"))
+
+        assert_raises(Master::Fix::Checkpoint::IntegrityError) { checkpoint.list }
+      end
+    end
+  end
+
   def test_restore_rejects_a_symlinked_checkpoint_directory
     Dir.mktmpdir do |root|
       Dir.mktmpdir do |outside|

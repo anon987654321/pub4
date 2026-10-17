@@ -18,17 +18,17 @@ module Master
 
       attr_reader :root, :dir
 
-      def initialize(root: Master::ROOT, dir: File.join(Master::ROOT, ".master", "checkpoints"))
-        @root = File.expand_path(root)
-        @dir = File.expand_path(dir)
+      def initialize(root: Master::ROOT, dir: nil)
+        @root = File.realpath(root)
+        @dir = File.expand_path(dir || File.join(@root, ".master", "checkpoints"), @root)
       end
 
       def create(label:, files: [])
         id = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{slug(label)}-#{SecureRandom.hex(4)}"
         normalized = Array(files).map { |path| normalize_relative(path) }
-        FileUtils.mkdir_p(dir)
-        target = File.join(dir, id)
-        staging = File.join(dir, ".#{id}.partial")
+        store = storage_directory(create: true)
+        target = File.join(store, id)
+        staging = File.join(store, ".#{id}.partial")
         if File.exist?(target) || File.symlink?(target) || File.exist?(staging) || File.symlink?(staging)
           raise IntegrityError, "checkpoint destination already exists: #{id}"
         end
@@ -54,8 +54,19 @@ module Master
       end
 
       def list
-        Dir.glob(File.join(dir, "*", "manifest.json")).filter_map do |path|
-          JSON.parse(File.read(path, encoding: "UTF-8"))
+        store = storage_directory(create: false)
+        return [] unless File.directory?(store)
+
+        Dir.children(store).filter_map do |entry|
+          checkpoint = File.join(store, entry)
+          raise IntegrityError, "checkpoint entry cannot be a symlink: #{entry}" if File.symlink?(checkpoint)
+          next unless File.directory?(checkpoint)
+
+          manifest_path = File.join(checkpoint, "manifest.json")
+          next unless File.file?(manifest_path)
+          raise IntegrityError, "checkpoint manifest cannot be a symlink: #{entry}" if File.symlink?(manifest_path)
+
+          JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
         rescue JSON::ParserError => e
           Master::Ground::Swallow.log(e, context: "Checkpoint.list")
           nil
@@ -66,6 +77,7 @@ module Master
         checkpoint_dir = safe_checkpoint_dir(id)
         manifest_path = File.join(checkpoint_dir, "manifest.json")
         raise ArgumentError, "checkpoint not found: #{id}" unless File.file?(manifest_path)
+        raise IntegrityError, "checkpoint manifest cannot be a symlink: #{id}" if File.symlink?(manifest_path)
 
         manifest = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
         files = Array(manifest["files"]).map { |path| normalize_relative(path) }
@@ -143,7 +155,7 @@ module Master
       end
 
       def safe_checkpoint_dir(id)
-        base = File.expand_path(dir)
+        base = storage_directory(create: false)
         path = File.expand_path(id.to_s, base)
         unless path.start_with?(base + File::SEPARATOR)
           raise ArgumentError, "checkpoint id escapes store: #{id}"
@@ -153,14 +165,42 @@ module Master
           raise ArgumentError, "checkpoint directory cannot be a symlink: #{id}"
         end
         if File.exist?(path)
-          real_base = File.realpath(base)
           real_path = File.realpath(path)
-          unless real_path.start_with?(real_base + File::SEPARATOR)
+          unless real_path.start_with?(base + File::SEPARATOR)
             raise ArgumentError, "checkpoint id escapes store: #{id}"
           end
         end
 
         path
+      end
+
+      # The store is part of the recovery trust boundary. A symlinked store (or
+      # a symlink in any parent component) turns a repo-local checkpoint write
+      # into an arbitrary filesystem write. Refuse it before create/list/restore.
+      def storage_directory(create:)
+        canonical_root = File.realpath(root)
+        path = File.expand_path(dir, canonical_root)
+        unless path.start_with?(canonical_root + File::SEPARATOR)
+          raise ArgumentError, "checkpoint store escapes root: #{dir}"
+        end
+
+        relative = path.delete_prefix(canonical_root + File::SEPARATOR)
+        current = canonical_root
+        relative.split(File::SEPARATOR).each do |part|
+          current = File.join(current, part)
+          raise ArgumentError, "checkpoint store traverses symlink: #{current}" if File.symlink?(current)
+        end
+
+        FileUtils.mkdir_p(path) if create
+        return path unless File.exist?(path) || File.symlink?(path)
+
+        raise ArgumentError, "checkpoint store is not a directory: #{path}" unless File.directory?(path)
+
+        real_path = File.realpath(path)
+        unless real_path.start_with?(canonical_root + File::SEPARATOR)
+          raise ArgumentError, "checkpoint store escapes root: #{path}"
+        end
+        real_path
       end
 
       def copy_files(files, from:, to:)
