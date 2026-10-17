@@ -125,7 +125,9 @@ function syncMicIndicator(reason = "idle") {
   const open = Boolean(State.sttActive && recognition);
   if (dot) {
     dot.dataset.mic = open ? "open" : "closed";
-    dot.setAttribute("aria-label", open ? "Microphone listening" : "Microphone off");
+    dot.setAttribute("aria-label", open ? "Turn microphone off" : "Turn microphone on");
+    dot.setAttribute("title", open ? "Microphone listening — tap to turn off" : "Microphone off — tap to turn on");
+    dot.setAttribute("aria-pressed", open ? "true" : "false");
     const label = dot.querySelector("[data-mic-state-text]");
     if (label) label.textContent = open ? "microphone listening" : "microphone off";
   }
@@ -1410,10 +1412,10 @@ window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 spinBtn?.addEventListener('click', () => window.MASTER_FACE?.ttsTogglePause?.());
 focusBtn?.addEventListener('click', () => toggleFocusMode());
 
-// Mic button removed: Voice Mode is hands-free by default (maybeAutoVoice),
-// so a dedicated mic control was redundant chrome. Manual mic control is
-// still available via spacebar push-to-talk and the 'm' keyboard shortcut
-// (ttsToggleMic), and via the "hey master" wake phrase when opted in.
+// One visible, touch-accessible control mirrors the real recognition state.
+document.getElementById('mic-dot')?.addEventListener('click', () => {
+  window.MASTER_FACE?.ttsToggleMic?.();
+});
 
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 
