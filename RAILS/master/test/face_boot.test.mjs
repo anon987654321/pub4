@@ -285,7 +285,7 @@ test("face_speech_runtime.js holds the TTS implementation", () => {
 test("every face part is named by the runtime loader", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   for (const name of readdirSync(publicDir).filter((f) => /^face\.part\d+\.txt$/.test(f))) {
-    assert.match(runtime, new RegExp(name.replace(".", "\\.") + "\\b"), name + " is not named by face.runtime.js");
+    assert.match(runtime, new RegExp(name.replaceAll(".", "\\.") + "\\b"), name + " is not named by face.runtime.js");
   }
   assert.match(runtime, /face_speech_runtime\.js/);
   assert.match(runtime, /face_speech_playback\.js/);
@@ -319,7 +319,7 @@ test("face.runtime.js matches the rake loader contract", () => {
   // The generator deliberately builds part 1–3 names from a range. Do not
   // require those three strings to be duplicated literally in the task.
   for (const name of sources) {
-    assert.match(runtime, new RegExp(name.replaceAll(".", "\\\\.") + "\\\\b"), name + " missing from runtime");
+    assert.match(runtime, new RegExp(name.replaceAll(".", "\\.") + "\\b"), name + " missing from runtime");
     const digest = createHash("sha256")
       .update(readFileSync(join(publicDir, name)))
       .digest("hex")
