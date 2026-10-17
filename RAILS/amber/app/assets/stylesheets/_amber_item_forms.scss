@@ -40,7 +40,7 @@
 
 .media-picker-preview {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xs), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-xs)), 1fr));
   gap: 0.5rem;
 }
 
