@@ -5,6 +5,66 @@
 // rules cannot accidentally resurrect decorative borders, pills or card chrome.
 // Functional focus, error and drag/drop signals remain outside these selectors.
 
+// Shared minimalism contract: whitespace groups content; headings use
+// one dominant page title and a consistent, normal-case supporting style.
+// Form controls and focus indicators keep their functional boundaries.
+@mixin ultra_minimal {
+  main#main-content h1,
+  main#main-content .page-title,
+  main#main-content .post-reading-title {
+    max-inline-size: 18ch;
+    margin-block: 0 var(--space-5);
+    font-family: var(--font);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: var(--weight-heavy);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    text-transform: none;
+    font-variant-caps: normal;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+    border: 0;
+  }
+
+  main#main-content :is(h1, h2, h3, h4, h5, h6, .page-title, .section-title, .empty-state-title, .luxury-title, .amber-look-title, .store-heading) {
+    font-family: var(--font);
+    text-transform: none;
+    font-variant-caps: normal;
+  }
+
+  main#main-content :is(h2, h3, h4, h5, h6, .section-title, .empty-state-title) {
+    letter-spacing: var(--tracking-normal);
+  }
+
+  main#main-content blockquote {
+    border: 0;
+    padding-inline-start: 0;
+  }
+
+  :where(
+    .card, .panel, .feed-card, .feed-post, .post-reading, .match,
+    .organize-tip, .brand, .amber-look, .port-row, .nested-field,
+    .flash, .post-show-actions, .post-show-comments, .amber-editorial-nav,
+    .amber-messenger-composer, .composer-title, .radio-track-card,
+    .radio-track-list, .radio-playlist-list, .playlist-queue,
+    .playlist-queue-item, .playlist-comments, .item-card, .item-card--luxury,
+    .wardrobe-card, .occasion-card, .style-phase-card, .listing-grid,
+    .deal-card, .store-panel, .store-buybox, .newsletter-cta,
+    .home-feed-view, .city-network-item, .page-header, .feed-header,
+    .search_palette_panel
+  ) {
+    border: 0;
+  }
+
+  main#main-content > header,
+  main#main-content article > header,
+  body.wscons article > header,
+  .page-header,
+  .feed-header {
+    border: 0;
+  }
+}
+
 @mixin brgen {
   .feed-post,
   .newsletter-cta,
@@ -275,6 +335,8 @@
   .nested-field {
     border-block-end: 0;
   }
+
+  @include ultra_minimal;
 }
 
 /* Precision pass: geometry, type and interaction states remain measurable and
@@ -356,6 +418,7 @@
       margin-block-end: var(--space-8);
     }
   }
+  @include ultra_minimal;
 }
 
 @mixin amber_precision {
@@ -439,5 +502,6 @@
       grid-template-columns: minmax(0, 1fr) auto;
     }
   }
+  @include ultra_minimal;
 }
 
