@@ -123,10 +123,6 @@ header {
   }
 }
 
-[role="search"] {
-  width: 100%;
-}
-
 .search-form {
   display: grid;
   gap: var(--space-2);
@@ -137,21 +133,7 @@ header {
 .search-form input[type="search"] {
   min-width: 0;
   width: 100%;
-  min-height: 48px;
-  // 16px absolute: iOS Safari zooms on any text field under 16px, and this
-  // dialect's root font-size is --text-xs, so every rem token lands below it.
-  font-size: 16px;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--search-bg);
-  color: var(--text);
-}
-
-.search-form input[type="search"]:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  outline-offset: 2px;
+  min-height: var(--tap-min);
 }
 
 #live_search_results,
