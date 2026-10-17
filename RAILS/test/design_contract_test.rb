@@ -337,6 +337,21 @@ class DesignContractTest < Minitest::Test
     assert_match(/@media \(min-width: 768px\) \{[\s\S]*?deal-card-actions \{[^}]*flex-direction: column/m, source)
   end
 
+  def test_promotional_art_is_mobile_first_and_restores_desktop_geometry
+    source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_promotional_art.scss"))
+    mobile, wide = source.split("@media (min-width: 768px)", 2)
+
+    refute_match(/@media\s*\(\s*max-width\b/, source)
+    assert_match(/\.store-promo-art\s*\{[^}]*grid-template-columns:\s*1fr;[^}]*min-height:\s*520px;/m, mobile)
+    assert_match(/\.store-promo-art--campaign\s*\{[^}]*grid-template-columns:\s*1fr;/m, mobile)
+    assert_match(/\.store-promo-art-copy\s*\{[^}]*justify-content:\s*flex-end;[^}]*min-height:\s*60%;[^}]*padding:\s*24px;[^}]*background:\s*var\(--promo-matte\);/m, mobile)
+    assert_match(/\.store-promo-art-media\s*\{[^}]*min-height:\s*300px;[^}]*position:\s*static;/m, mobile)
+    assert_match(/\.store-promo-art-image\s*\{[^}]*max-width:\s*82%;[^}]*max-height:\s*300px;/m, mobile)
+    assert_match(/\.store-promo-art\s*\{[^}]*grid-template-columns:\s*minmax\(0, 42%\) minmax\(0, 58%\);[^}]*min-height:\s*clamp\(320px, 42vw, 540px\);/m, wide)
+    assert_match(/\.store-promo-art--campaign\s*\{[^}]*grid-template-columns:\s*minmax\(0, 40%\) minmax\(0, 60%\);/m, wide)
+    assert_match(/\.store-promo-art--tile \.store-promo-art-media,[\s\S]*?\.store-promo-art--portrait \.store-promo-art-media\s*\{[^}]*position:\s*absolute;/m, wide)
+  end
+
   def test_shared_affiliate_feed_is_mobile_first
     source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_affiliate_feed_unit.scss"))
     mobile = source.split("@media (min-width: 480px)", 2).first
