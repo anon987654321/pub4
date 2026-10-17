@@ -16,44 +16,36 @@ class LayoutMicroRefinementContractTest < Minitest::Test
     __shared/app/assets/stylesheets/_stack_brgen.scss
   ].freeze
 
-  def test_browser_layouts_opt_into_the_micro_refinement_pass
+  EXPERIMENTAL_SHEETS = %w[
+    layout_micro_refinements
+    surface_micro_refinements
+    surface_micro_refinements_two
+  ].freeze
+
+  def test_browser_layouts_name_the_shared_layout_contract_not_an_experiment
     LAYOUTS.each do |relative|
       source = File.read(File.expand_path(relative, ROOT), encoding: "UTF-8")
-      assert_includes source, 'data-layout-pass="micro-320"'
+      assert_includes source, 'data-layout-contract="shared-layout"'
+      refute_includes source, 'data-layout-pass="micro-320"'
     end
   end
 
-  def test_both_shared_stacks_load_the_canonical_refinement_sheet
+  def test_production_stacks_do_not_load_unvalidated_refinement_sheets
     SHARED_STACKS.each do |relative|
       source = File.read(File.expand_path(relative, ROOT), encoding: "UTF-8")
-      assert_includes source, '@forward "layout_micro_refinements";'
+      EXPERIMENTAL_SHEETS.each do |sheet|
+        refute_includes source, %(@forward "#{sheet}";),
+                        "#{sheet} must stay out of production until rendered review approves it"
+      end
+      assert_includes source, '@forward "layout_primitives";'
+      assert_includes source, '@forward "typography";'
     end
   end
 
-  def test_micro_layout_refinements_are_mobile_first_and_restore_wide_measures
-    sheet = File.read(File.join(ROOT, "__shared/app/assets/stylesheets/_layout_micro_refinements.scss"), encoding: "UTF-8")
-    mobile, wide = sheet.split("@media (min-width: 768px)", 2)
-
-    refute_match(/@media\s*\(\s*max-width\b/, sheet,
-                 "compact layout rules must be the base, not a max-width override")
-    assert_includes mobile, 'body[data-layout-pass="micro-320"] {'
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*\{[^}]*text-wrap:\s*pretty;/m, mobile)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-header\s*\{[^}]*max-inline-size:\s*var\(--measure\);/m, wide)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*:where\([\s\S]*?\.page-actions,[\s\S]*?\)\s*\{[^}]*max-inline-size:\s*100%;/m, mobile)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*:where\([\s\S]*?\.page-actions,[\s\S]*?\)\s*\{[^}]*max-inline-size:\s*none;/m, wide)
-    assert_match(/body\[data-layout-pass="micro-320"\]\.vertical-marketplace\s+\.storefront-bol-mainnav\s*\{[^}]*max-inline-size:\s*var\(--bol-max\);/m, wide)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*#sections[\s\S]*?max-inline-size:\s*none;/m, wide)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*\{[^}]*text-wrap:\s*balance;/m, wide)
-  end
-
-  def test_matrix_and_sheet_keep_the_same_refinement_count
+  def test_archived_matrix_is_not_described_as_production_output
     matrix = File.read(File.join(ROOT, "__shared/LAYOUT_MICRO_REFINEMENT_MATRIX.md"), encoding: "UTF-8")
     sheet = File.read(File.join(ROOT, "__shared/app/assets/stylesheets/_layout_micro_refinements.scss"), encoding: "UTF-8")
-
-    sequence = matrix.lines.filter_map { |line| line[/\A(\d{3})\./, 1] }
-    assert_equal (1..343).map { |n| format("%03d", n) }, sequence,
-                 "the matrix must contain all 343 numbered refinements exactly once"
-    assert_includes sheet, "343 concrete property refinements"
-    refute_includes sheet, "@include micro-layout-refinements"
+    assert_includes matrix, "Archived layout micro-refinement matrix"
+    assert_includes sheet, "NOT LOADED BY PRODUCTION STACKS"
   end
 end
