@@ -4624,8 +4624,9 @@ def postpro_case_label_duplicates(body, predicate_name)
           next unless condition.is_a?(Prism::StringNode)
 
           label = condition.unescaped
-          duplicates << label if seen.key?(label)
-          seen[label] = true
+          previous_branch = seen[label]
+          duplicates << label if previous_branch && !previous_branch.equal?(branch)
+          seen[label] ||= branch
         end
       end
     end
