@@ -43,12 +43,12 @@
   padding: var(--space-4);
 }
 
-.newsletter-capture-kicker {
+.newsletter-capture-label {
   margin: 0 0 var(--space-1);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
   color: var(--text-secondary);
 }
 
