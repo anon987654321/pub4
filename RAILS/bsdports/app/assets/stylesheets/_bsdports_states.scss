@@ -15,9 +15,11 @@
 
 .empty-state-title {
   font-family: var(--font);
-  font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  text-transform: none;
+  letter-spacing: var(--tracking-normal);
 }
 
 .skeleton {
