@@ -1,7 +1,7 @@
 <%# Shared live-search form — Turbo Stream responses via pub4-shared.
     Surface: vYroQxg .search (yep.com) exact styles. %>
 <div
-  class="search"
+  class="search<%= " active" if query.to_s.strip.present? %>"
   data-controller="live-search search-focus"
   role="search"
   aria-label="<%= label %>"
@@ -26,7 +26,7 @@
               live_search_target: "input",
               action: "input->live-search#input focus->search-focus#focus blur->search-focus#blur"
             },
-            aria: { label: t("search.query"), controls: local_assigns.fetch(:results_id, "live_search_results") } %>
+            aria: { label: t("search.query"), controls: local_assigns.fetch(:results_id, "live_search_results"), expanded: query.to_s.strip.present? } %>
       <%# capture, not call. The block was written in the calling view, so it
           owns that view's output buffer: .call appends its markup there and
           returns the last expression as a plain String, which <%= then escapes.
