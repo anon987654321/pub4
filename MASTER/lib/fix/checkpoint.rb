@@ -26,16 +26,31 @@ module Master
       def create(label:, files: [])
         id = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{slug(label)}-#{SecureRandom.hex(4)}"
         normalized = Array(files).map { |path| normalize_relative(path) }
+        FileUtils.mkdir_p(dir)
         target = File.join(dir, id)
-        FileUtils.mkdir_p(target)
-        copy_files(normalized, from: root, to: target)
-        sha256 = file_checksums(normalized, from: target)
-        manifest = {
-          id:, label:, format_version: MANIFEST_VERSION,
-          files: sha256.keys, sha256:, created_at: Time.now.utc.iso8601,
-        }
-        write_atomic(File.join(target, "manifest.json"), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
-        manifest
+        staging = File.join(dir, ".#{id}.partial")
+        if File.exist?(target) || File.symlink?(target) || File.exist?(staging) || File.symlink?(staging)
+          raise IntegrityError, "checkpoint destination already exists: #{id}"
+        end
+
+        begin
+          FileUtils.mkdir_p(staging)
+          copy_files(normalized, from: root, to: staging)
+          sha256 = file_checksums(normalized, from: staging)
+          unless sha256.keys.sort == normalized.sort
+            raise IntegrityError, "checkpoint copy is incomplete: expected #{normalized.size} file(s), copied #{sha256.size}"
+          end
+
+          manifest = {
+            id:, label:, format_version: MANIFEST_VERSION,
+            files: normalized, sha256:, created_at: Time.now.utc.iso8601,
+          }
+          write_atomic(File.join(staging, "manifest.json"), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
+          File.rename(staging, target)
+          manifest
+        ensure
+          FileUtils.rm_rf(staging) if File.directory?(staging) && !File.symlink?(staging)
+        end
       end
 
       def list
@@ -151,7 +166,7 @@ module Master
       def copy_files(files, from:, to:)
         files.each do |relative|
           source = File.join(from, relative)
-          next unless File.file?(source)
+          raise ArgumentError, "checkpoint source file missing: #{relative}" unless File.file?(source)
 
           destination = File.join(to, relative)
           FileUtils.mkdir_p(File.dirname(destination))

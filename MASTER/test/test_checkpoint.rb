@@ -31,6 +31,42 @@ class TestCheckpoint < Minitest::Test
     end
   end
 
+  def test_create_refuses_missing_source_files_without_publishing_a_checkpoint
+    Dir.mktmpdir do |root|
+      checkpoint_dir = File.join(root, ".master", "checkpoints")
+      checkpoint = Master::Fix::Checkpoint.new(root:, dir: checkpoint_dir)
+
+      error = assert_raises(ArgumentError) do
+        checkpoint.create(label: "incomplete", files: ["lib/missing.rb"])
+      end
+
+      assert_match(/source file missing: lib\/missing\.rb/, error.message)
+      assert_empty Dir.children(checkpoint_dir)
+      assert_empty checkpoint.list
+    end
+  end
+
+  def test_create_removes_staged_files_after_a_copy_failure
+    Dir.mktmpdir do |root|
+      checkpoint_dir = File.join(root, ".master", "checkpoints")
+      checkpoint = Master::Fix::Checkpoint.new(root:, dir: checkpoint_dir)
+      checkpoint.define_singleton_method(:copy_files) do |_files, from:, to:|
+        FileUtils.mkdir_p(File.join(to, "lib"))
+        File.write(File.join(to, "lib", "partial.rb"), "partial\n")
+        raise IOError, "simulated copy failure"
+      end
+
+      error = assert_raises(IOError) do
+        checkpoint.create(label: "interrupted", files: ["lib/sample.rb"])
+      end
+
+      assert_equal "simulated copy failure", error.message
+      assert_empty Dir.children(checkpoint_dir)
+      assert_empty checkpoint.list
+    end
+  end
+
+
   def test_restore_refuses_tampered_checkpoint_before_overwriting_source
     Dir.mktmpdir do |root|
       path = File.join(root, "lib", "sample.rb")
