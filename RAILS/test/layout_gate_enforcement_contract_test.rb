@@ -28,7 +28,7 @@ class LayoutGateEnforcementContractTest < Minitest::Test
     source = File.read(SURFACE_LAWS, encoding: "UTF-8")
     assert Ripper.sexp(source), "surface laws must remain valid Ruby"
     assert_includes source, "LawDSL.law :GRID_STRUCTURE"
-    assert_includes source, "direct-child layout uses absolute offsets and a fixed wide width"
+    assert_includes source, "grid-like direct children use absolute offsets and a fixed wide width"
   end
 
   def test_layout_suite_requires_rendered_measurements_not_only_source_checks
