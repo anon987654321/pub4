@@ -30,6 +30,10 @@ class TestDesignMarks < Minitest::Test
     refute flagged?(:NO_EYEBROW_LABEL, ".a { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.1em; }", "a.scss")
     refute flagged?(:NO_EYEBROW_LABEL, ".a { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0; }", "a.scss")
     refute flagged?(:NO_EYEBROW_LABEL, ".a { font-size: 0.75rem; letter-spacing: 0.1em; }", "a.scss")
+    assert flagged?(:NO_EYEBROW_LABEL, "h1 { text-transform: uppercase; }", "a.scss")
+    assert flagged?(:NO_EYEBROW_LABEL, "main h2 { font-size: 1.5rem; text-transform: uppercase; }", "a.scss")
+    assert flagged?(:NO_EYEBROW_LABEL, ".section-title { text-transform: uppercase; }", "a.scss")
+    refute flagged?(:NO_EYEBROW_LABEL, ".field-label { font-size: 1rem; text-transform: uppercase; }", "a.scss")
     refute flagged?(:NO_EYEBROW_LABEL, "/* .kicker { text-transform: uppercase; letter-spacing: 1px; font-size: 10px; } */", "a.css")
   end
 
