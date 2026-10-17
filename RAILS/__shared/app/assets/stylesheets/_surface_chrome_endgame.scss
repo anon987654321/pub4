@@ -103,17 +103,31 @@
      input affordances remain usable. */
   main#main-content :where(
     section, article, aside, nav, header, footer, fieldset, details, pre,
-    .card, .panel, .tile, .feed-post, .feed-card, .item-card, .port-row,
-    .install-panel, .empty-state, .data-state, .zone-row, .today-look,
-    .affiliate_sidebar_card, .nearby-chat-widget-panel, .nearby-chat-widget-messenger,
-    .messenger-details-panel, .newsletter-cta, .subscribe-box, .search_palette_panel,
-    .commerce-fit-source, .radio-track-list, .radio-playlist-list, .playlist-queue-item,
-    .playlist-comments, .radio-home-header, .radio-featured, .radio-section-header,
-    .amber-editorial-nav, .amber-footer, .composer, .composer-header, .composer-toolbar,
-    .nearby-chat-widget-header, .nearby-chat-widget-status, .nearby-chat-widget-mode,
-    .nearby-chat-widget-log li, .viz-rows, .viz-row, .viz-column-label
+    .card, .panel, .tile, .feed-post, .feed-card, .item-card, .port-row, .match,
+    .swipe-card, .activity-event, .install-panel, .empty-state, .data-state, .zone-row,
+    .today-look, .today-look-pick, .organize-tip, .brand, .flash, .amber-look,
+    .amber-editorial-nav, .amber-footer, .newsletter-cta, .subscribe-box,
+    .search_palette_panel, .affiliate_sidebar_card, .affiliate_sidebar_card--amazon,
+    .nearby-chat-widget-panel, .nearby-chat-widget-messenger, .nearby-chat-widget-header,
+    .nearby-chat-widget-status, .nearby-chat-widget-mode, .nearby-chat-widget-log li,
+    .nearby-chat-widget-cta, .messenger-details-panel, .messenger-inbox,
+    .messenger-composer-box, .messenger-artifact-image, .composer, .composer-header,
+    .composer-toolbar, .post-show-actions, .post-show-comments, .comment_item,
+    .radio-home-header, .radio-featured, .radio-section-header, .radio-archaeology,
+    .radio-library, .radio-library-header, .radio-library-item, .radio-track-card,
+    .radio-track-list, .radio-playlist-list, .playlist-transport, .playlist-queue,
+    .playlist-queue-item, .playlist-comments, .playlist-artwork, .radio-nav-btn,
+    .storefront-utility--bol, .bol-kind-tabs, .listing-filter-group, .listing-step,
+    .listing-step-link, .listing-photo-gallery, .media-thumb, .media-thumb-rm,
+    .listing-video-field, .listing-source-option, .listing-review-card,
+    .listing-published-notice, .store-terms, .store-buybox, .deal-card,
+    .store-panel, .order-row, .cart-item, .swipe-action, .person-row,
+    .amber-messenger-composer, .composer-title, .nearby-chat-widget-log li,
+    .viz-rows, .viz-row, .viz-column-label, .zone-row, .port-list, .port-row,
+    .install-panel, .empty, .category-list .chip, .tabs, .data-state
   ) {
     border: 0;
+    border-radius: 0;
     box-shadow: none;
   }
 
