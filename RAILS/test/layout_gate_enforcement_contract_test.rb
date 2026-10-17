@@ -10,6 +10,10 @@ class LayoutGateEnforcementContractTest < Minitest::Test
   SURFACE_LAWS = File.join(ROOT, "MASTER/lib/review/scan/laws/surface_laws.rb")
   LAYOUT_SUITE = File.join(ROOT, "MASTER/gates/lib/layout_suite.rb")
   GATES = File.join(ROOT, "MASTER/gates/gates.yml")
+  MINIMAL_ENDGAME = File.join(ROOT, "RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
+  BRGEN_OVERRIDES = File.join(ROOT, "RAILS/brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
+  AMBER_OVERRIDES = File.join(ROOT, "RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss")
+  BSDPORTS_APP = File.join(ROOT, "RAILS/bsdports/app/assets/stylesheets/application.scss")
 
   def test_core_grid_and_typography_principles_resolve_to_executable_laws
     data = YAML.safe_load_file(LAWS, aliases: true)
@@ -41,6 +45,30 @@ class LayoutGateEnforcementContractTest < Minitest::Test
     assert_includes source, "inconclusive item(s)"
     assert_includes source, "unapproved visual finding(s)"
     assert_equal "layout_suite", registry.dig("rendered_suite", "covered_by")
+  end
+
+  def test_ultra_minimal_contract_is_the_last_dialect_pass
+    source = File.read(MINIMAL_ENDGAME, encoding: "UTF-8")
+
+    assert_includes source, "@mixin ultra_minimal"
+    assert_equal 3, source.scan("@include ultra_minimal;").size
+    assert_includes source, "font-size: clamp(2rem, 5vw, 3.25rem);"
+    assert_includes source, "font-weight: var(--weight-heavy);"
+    assert_includes source, "text-transform: none;"
+    assert_includes source, "main#main-content :is(h2, h3, h4, h5, h6)"
+    %w[.feed-post .match .organize-tip .brand .amber-look .amber-editorial-nav .post-show-actions .port-row].each do |selector|
+      assert_includes source, selector, "minimal chrome must cover #{selector}"
+    end
+
+    # Ultra-minimalism removes decorative rules, not functional controls or
+    # visible keyboard affordances.
+    assert_includes source, "main#main-content :is(input, select, textarea)"
+    assert_includes source, ":focus-visible { border-color: var(--accent); outline: var(--focus-ring); outline-offset: 2px; }"
+    assert_includes source, "body.wscons :is(input, select, textarea, button, .btn):focus-visible"
+
+    assert_includes File.read(BRGEN_OVERRIDES, encoding: "UTF-8"), "@include endgame.brgen;"
+    assert_includes File.read(AMBER_OVERRIDES, encoding: "UTF-8"), "@include endgame.amber;"
+    assert_includes File.read(BSDPORTS_APP, encoding: "UTF-8"), "@include endgame.bsdports;"
   end
 
   def test_auto_repeat_tile_grids_can_shrink_below_their_preferred_tile_width
