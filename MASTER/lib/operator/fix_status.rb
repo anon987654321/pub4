@@ -80,6 +80,9 @@ module Operator
       data[:runs].each do |row|
         out << "  #{row[:state].ljust(11)} #{row[:tree]} pass #{row[:pass]}/#{row[:max_passes]} " \
                "files #{row[:files]} pid #{row[:pid]}#{row[:alive] ? " alive" : ""} started #{row[:started]}"
+        out << "    result: #{row[:message]}" unless row[:message].empty?
+        out << "    receipt: #{row[:receipt]}"
+        out << "    finished: #{row[:finished]}" unless row[:finished].empty?
       end
       mission = data[:mission]
       out << "heartbeat: #{data[:heartbeat] || "none yet"}"
@@ -136,7 +139,27 @@ module Operator
         pid: run["pid"],
         alive: run["state"] == "active" && alive?(run["pid"]),
         started: run["started_at"].to_s,
+        finished: run["finished_at"].to_s,
+        message: run["message"].to_s.gsub(/\\s+/, " ").strip[0, 180],
+        receipt: receipt_summary(run["evidence"]),
       }
+    end
+
+    # The receipt is convergence evidence, not proof of deployment, playback or
+    # external-provider behavior. Keep it compact and preserve the distinction.
+    def receipt_summary(evidence)
+      return "not recorded" unless evidence.is_a?(Hash) && !evidence.empty?
+
+      fields = []
+      fields << "observations=#{evidence["observations"]}" if evidence.key?("observations")
+      fields << "files=#{evidence["files_observed"]}" if evidence.key?("files_observed")
+      fields << "findings=#{evidence["findings"]}" if evidence.key?("findings")
+      fields << "delta=#{evidence["quality_delta"]}" if evidence.key?("quality_delta")
+      %w[finding_digest snapshot_digest authority_digest].each do |key|
+        value = evidence[key]
+        fields << "#{key.delete_suffix("_digest")}=#{value[0, 12]}" if value.is_a?(String) && value.match?(/\\A[0-9a-f]{64}\\z/)
+      end
+      fields.empty? ? "recorded (no recognized fields)" : "recorded (#{fields.join(", ")})"
     end
 
     def mission_row

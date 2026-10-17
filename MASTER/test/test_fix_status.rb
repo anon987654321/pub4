@@ -76,6 +76,35 @@ class TestFixStatus < Minitest::Test
   end
 
 
+  def test_status_exposes_terminal_reason_and_bounded_convergence_receipt
+    run = run_record("RAILS", state: "validation_failed", pid: 0).merge(
+      "message" => "validation failed: rendered output differs",
+      "finished_at" => "2026-10-17T20:45:00Z",
+      "evidence" => {
+        "observations" => 3, "files_observed" => 42, "findings" => 7,
+        "quality_delta" => 0.125, "finding_digest" => "a" * 64,
+        "snapshot_digest" => "b" * 64, "authority_digest" => "c" * 64
+      }
+    )
+    write("fix_runs.json", JSON.generate("version" => 1, "runs" => [run]))
+
+    status = Operator::FixStatus.new(root: @root)
+    row = status.payload[:runs].first
+    rendered = status.render
+
+    assert_equal "validation_failed", row[:state]
+    assert_equal "validation failed: rendered output differs", row[:message]
+    assert_equal "2026-10-17T20:45:00Z", row[:finished]
+    assert_includes row[:receipt], "observations=3"
+    assert_includes row[:receipt], "files=42"
+    assert_includes row[:receipt], "finding=aaaaaaaaaaaa"
+    assert_includes row[:receipt], "snapshot=bbbbbbbbbbbb"
+    assert_includes rendered, "result: validation failed: rendered output differs"
+    assert_includes rendered, "receipt: recorded"
+    assert_includes rendered, "finished: 2026-10-17T20:45:00Z"
+    refute_match(/deployment validation passed/i, rendered)
+  end
+
   def test_trees_filter_narrows_runs_logs_and_mission
     write("fix_runs.json", JSON.generate("runs" => [run_record("RAILS"), run_record("STUDIO")]))
     write("mission.json", JSON.generate("state" => "running", "scope" => "STUDIO"))
