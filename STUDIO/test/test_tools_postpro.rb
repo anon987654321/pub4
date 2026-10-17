@@ -372,6 +372,25 @@ class TestPostproFilm < Minitest::Test
                  send(:postpro_case_labels, source, :fx).sort
   end
 
+  def test_h_and_d_curve_checker_reports_bad_channels_without_raising
+    valid = STOCKS.fetch(:kodak_portra).fetch(:hd).fetch(:r)
+    assert_empty send(:hd_curve_problems, :fixture, :r, valid)
+
+    zero_gamma = valid.dup
+    zero_gamma[3] = 0
+    problem = send(:hd_curve_problems, :fixture, :r, zero_gamma)
+    assert_equal 1, problem.length
+    assert_match(/gamma 0 is not positive/, problem.first)
+
+    malformed = send(:hd_curve_problems, :fixture, :r, [nil, 0.9, 0.2, 1.0])
+    assert_match(/four finite real numbers/, malformed.first)
+    invalid_pivot = send(:hd_curve_problems, :fixture, :r, [0.0, 2.0, 1.5, 1.0])
+    assert_match(/pivot 1.5 is outside \(0, 1\)/, invalid_pivot.first)
+
+    assert_empty send(:hd_curve_problems, :fixture, :r, valid),
+                 "a malformed channel must not poison the next independent curve check"
+  end
+
   def test_finishing_grain_probe_records_failure_and_keeps_the_checker_alive
     probe = Object.new
     issues = send(:finishing_grain_probe_problems, [:house], probe) do |_image, _name|
