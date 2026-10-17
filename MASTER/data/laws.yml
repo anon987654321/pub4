@@ -2329,8 +2329,10 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - GRID_STRUCTURE
+      - EIGHT_PX_RHYTHM
+      status: covered
       root: proportion
       tags:
       - visual_design
@@ -2341,8 +2343,10 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - GRID_STRUCTURE
+      - EIGHT_PX_RHYTHM
+      status: covered
       root: proportion
       tags:
       - visual_design
@@ -4175,8 +4179,10 @@ law_map:
       severity: low
       confidence: 0.9
       operation: improve
-      law_ids: []
-      status: gap
+      law_ids:
+      - TYPE_HIERARCHY
+      - TYPE_TITLE_TOKEN
+      status: covered
       root: proportion
       tags:
       - visual_design
