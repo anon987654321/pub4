@@ -17,6 +17,7 @@ class SurfaceMicroRefinementTwoContractTest < Minitest::Test
       value && value.split("*/", 2).first.to_i
     end
     assert_equal (1..496).to_a, ids
+    assert_includes source, "ARCHIVED EXPERIMENTAL SURFACE PASS II"
   end
 
   def test_production_stacks_do_not_load_the_secondary_experiment
