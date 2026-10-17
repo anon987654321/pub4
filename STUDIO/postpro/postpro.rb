@@ -4770,6 +4770,31 @@ rescue StandardError => e
   ["finishing-grain bypass probe raises: #{e.class}: #{e.message}"]
 end
 
+# A broken H&D table is a finding, not a reason the rest of --vocab-check dies.
+# Validate the numeric domain before asking the curve code to evaluate powers or
+# divide by the pivot; keep each channel's failure local to its own record.
+def hd_curve_problems(name, channel, parameters)
+  values = parameters.is_a?(Array) ? parameters : []
+  valid_numbers = values.length == 4 && values.all? do |value|
+    value.is_a?(Numeric) && value.real? && value.to_f.finite?
+  end
+  return ["#{name} #{channel}: curve parameters must be four finite real numbers"] unless valid_numbers
+
+  dmin, dmax, pivot, gamma = values
+  problems = []
+  problems << "#{name} #{channel}: Dmin #{dmin} is not below Dmax #{dmax}" unless dmin < dmax
+  problems << "#{name} #{channel}: pivot #{pivot} is outside (Dmin, Dmax)" unless dmin < pivot && pivot < dmax
+  problems << "#{name} #{channel}: pivot #{pivot} is outside (0, 1)" unless pivot > 0 && pivot < 1
+  problems << "#{name} #{channel}: gamma #{gamma} is not positive" unless gamma > 0
+  return problems unless problems.empty?
+
+  drops = HD.channel_curve(values).each_cons(2).count { |a, b| b < a }
+  problems << "#{name} #{channel}: curve inverts at #{drops} of 255 steps" if drops.positive?
+  problems
+rescue StandardError => e
+  ["#{name} #{channel}: curve evaluation raises #{e.class}: #{e.message}"]
+end
+
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
@@ -4896,12 +4921,19 @@ def vocab_check
   # Every H&D curve has to be a curve: monotonic, with the pivot inside the
   # range. A non-monotonic one inverts tones somewhere in the middle.
   STOCKS.merge(PRINT_STOCKS).each do |name, d|
-    d[:hd]&.each do |channel, (dmin, dmax, pivot, gamma)|
-      problems << "#{name} #{channel}: Dmin #{dmin} is not below Dmax #{dmax}" if dmin >= dmax
-      problems << "#{name} #{channel}: pivot #{pivot} is outside (Dmin, Dmax)" unless dmin < pivot && pivot < dmax
-      problems << "#{name} #{channel}: gamma #{gamma} is not positive" if gamma <= 0
-      drops = HD.channel_curve([dmin, dmax, pivot, gamma]).each_cons(2).count { |a, b| b < a }
-      problems << "#{name} #{channel}: curve inverts at #{drops} of 255 steps" if drops.positive?
+    unless d.is_a?(Hash)
+      problems << "#{name}: stock definition is not a table"
+      next
+    end
+    hd = d[:hd]
+    next if hd.nil?
+    unless hd.is_a?(Hash)
+      problems << "#{name}: hd must be a channel table"
+      next
+    end
+
+    hd.each do |channel, parameters|
+      problems.concat(hd_curve_problems(name, channel, parameters))
     end
   end
   (STOCKS.keys - STOCKS.select { |_, d| d[:speed] }.keys).each { |s| problems << "#{s} has no speed:, so grain cannot rate it" }
