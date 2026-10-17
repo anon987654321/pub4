@@ -337,6 +337,43 @@ class DesignContractTest < Minitest::Test
     assert_match(/@media \(min-width: 768px\) \{[\s\S]*?deal-card-actions \{[^}]*flex-direction: column/m, source)
   end
 
+  def test_shared_affiliate_feed_is_mobile_first
+    source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_affiliate_feed_unit.scss"))
+    mobile = source.split("@media (min-width: 480px)", 2).first
+    medium = source.split("@media (min-width: 480px)", 2).last
+
+    refute_match(/@media\s*\(\s*max-width\b/, source)
+    assert_match(/\.affiliate_feed_unit\s*\{[^}]*padding:\s*var\(--space-2\);/m, mobile)
+    assert_match(/\.affiliate_feed_grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*gap:\s*var\(--space-2\);/m, mobile)
+    assert_match(/\.affiliate_feed_unit\s*\{[^}]*padding:\s*var\(--space-3\);/m, medium)
+    assert_match(/\.affiliate_feed_grid\s*\{[^}]*gap:\s*var\(--space-3\);/m, medium)
+    assert_match(/@media \(min-width: 768px\) \{[\s\S]*?\.affiliate_feed_grid\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/m, source)
+  end
+
+  def test_newsletter_capture_is_mobile_first
+    source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_newsletter_capture.scss"))
+    mobile = source.split("@media (min-width: 640px)", 2).first
+    wide = source.split("@media (min-width: 640px)", 2).last
+
+    refute_match(/@media\s*\(\s*max-width\b/, source)
+    assert_match(/\.newsletter-capture\s*\{[^}]*inline-size:\s*calc\(100vw - 1rem\);/m, mobile)
+    assert_match(/\.newsletter-capture-art\s*\{[^}]*min-block-size:\s*8rem;/m, mobile)
+    assert_match(/\.newsletter-capture-copy\s*\{[^}]*padding:\s*var\(--space-4\);/m, mobile)
+    assert_match(/\.newsletter-capture\s*\{[^}]*inline-size:\s*min\(42rem, calc\(100vw - 2rem\)\);/m, wide)
+    assert_match(/\.newsletter-capture-art\s*\{[^}]*min-block-size:\s*11rem;/m, wide)
+    assert_match(/\.newsletter-capture-copy\s*\{[^}]*padding:\s*var\(--space-5\);/m, wide)
+  end
+
+  def test_post_voting_compact_gap_is_mobile_first
+    source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_post_voting.scss"))
+    mobile = source.split("@media (min-width: 480px)", 2).first
+    wide = source.split("@media (min-width: 480px)", 2).last
+
+    refute_match(/@media\s*\(\s*max-width\b/, source)
+    assert_match(/\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-2\);/m, mobile)
+    assert_match(/\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-3\);/m, wide)
+  end
+
   def test_brgen_marketplace_badge_offsets_are_valid_css
     path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
     source = File.read(path)
