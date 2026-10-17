@@ -57,15 +57,16 @@ body[data-surface="luxury"] .amber-editorial-nav {
 
 body[data-surface="luxury"] .amber-editorial-nav a {
   padding-inline: 12px;
-  border-radius: 999px;
+  border-radius: 0;
   text-transform: none;
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-normal);
 }
 
 body[data-surface="luxury"] .amber-editorial-nav a:hover,
 body[data-surface="luxury"] .amber-editorial-nav a:focus-visible {
-  background: var(--amber-pink);
-  text-decoration: none;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 body[data-surface="luxury"] .amber-masthead,
