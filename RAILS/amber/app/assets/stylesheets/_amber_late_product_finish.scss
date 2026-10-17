@@ -104,7 +104,7 @@ body[data-surface="luxury"] .amber-look-title {
 }
 
 body[data-surface="luxury"] .item-grid--luxury {
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
   gap: 16px;
 }
 
@@ -216,7 +216,7 @@ body[data-surface="luxury"] .commerce-handoff-note {
 
 @media (min-width: 768px) {
   body[data-surface="luxury"] .item-grid--luxury {
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
   }
 
   body[data-surface="luxury"] .amber-look {
