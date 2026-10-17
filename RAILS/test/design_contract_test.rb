@@ -340,7 +340,6 @@ class DesignContractTest < Minitest::Test
   def test_shared_affiliate_feed_is_mobile_first
     source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_affiliate_feed_unit.scss"))
     mobile = source.split("@media (min-width: 480px)", 2).first
-    medium = source.split("@media (min-width: 480px)", 2).last
 
     refute_match(/@media\s*\(\s*max-width\b/, source)
     assert_match(/\.affiliate_feed_unit\s*\{[^}]*padding:\s*var\(--space-2\);/m, mobile)
