@@ -42,10 +42,10 @@ code read.
 **Invariants:**
 - The face surface is the fullscreen UI: `#face` owns the entire dynamic viewport (`100dvw` × `100dvh`) from `inset: 0`; do not reintroduce a viewport-sized stage, card, or `vh`-limited face canvas.
 - The installed PWA uses `display: fullscreen` and the document viewport keeps `viewport-fit=cover`; preserve safe-area insets for controls without shrinking the face surface.
-- The page must render the primer before heavy face work starts.
-- No WebGL context may be created before `_primerFired` is true.
+- The primer markup and prompt shell must exist before renderer work starts.
+- No WebGL context may be created before `go()` sets `_primerFired` true.
 - `three.face.module.js` must not be compiled during initial page load.
-- `face.js` must be imported only after the primer tap.
+- `face.js` is imported only after `go()` activates the renderer. The default `data-primer="auto"` path queues `go()` after parsing; `?primer=1` and `data-primer="keep"` retain explicit primer activation.
 - The prompt must become visible even if face loading fails.
 - The boot manifest must keep `particle_kernel.js` before face/runtime consumers.
 - SSE may remain open; tests must not wait for network idle on the face page.
@@ -77,8 +77,8 @@ code read.
   served runtime does not, and a build directory would move the rake task,
   `/etc/rc.d/master`'s precompile digest, the scanner's path keys and the
   runtime-matches-sources test for no measured cost.
-- `public/three.face.module.js`: heavy WebGL module, imported only after the
-  primer tap and WebGL feature detection. **Generated, not vendored by hand**:
+- `public/three.face.module.js`: heavy WebGL module, imported after `go()`
+  activates the renderer and WebGL feature detection passes. **Generated, not vendored by hand**:
   `script/build_three_face.sh` npm-installs `three` (pinned in
   `script/three_build/package.json`, currently 0.184.0) and esbuild-bundles
   only the ~17 symbols `script/three_face_entry.js` re-exports. To change the
@@ -103,14 +103,17 @@ code read.
   CDP tools have shown false hangs in sandboxed environments in this repo's
   history, so a real browser is the trustworthy signal, not a scripted one.
 
-**Manual tap test:**
+**Manual boot test:**
 1. Start the web app on a local port.
-2. Open the chat page in a real browser — and on an iOS Safari device when boot
+2. Open the default chat URL in a real browser — and on iOS Safari when boot
    assets change materially, because nothing in CI drives a real touch event.
-3. Before tapping, confirm the primer is responsive and the prompt is hidden.
-4. Tap or press Enter.
-5. Confirm the primer dismisses, prompt appears, and the face either starts or fails visibly.
-6. Confirm console errors do not indicate eager WebGL or THREE.js boot before tap.
+3. Confirm the page autostarts without a blocking primer, the prompt becomes usable,
+   and the face starts or reports failure visibly.
+4. Confirm a first tap or typed message is accepted on the default path.
+5. Open `?primer=1`; confirm the primer responds to tap and Enter, the prompt is
+   hidden before activation, and no WebGL context starts before `go()`.
+6. Confirm the prompt remains usable if face loading fails and inspect console errors
+   for eager WebGL or THREE.js boot before `_primerFired`.
 
 ## Runtime contract (chat, face, TTS)
 Fullscreen invariant: the face surface owns the entire dynamic viewport. `canvas#face` and the face shell must remain edge-to-edge at `100dvw` × `100dvh`; the installed PWA manifest prefers `fullscreen`. Do not reintroduce a viewport-sized frame, card, inset canvas, or `min-height: 44vh` face root.
