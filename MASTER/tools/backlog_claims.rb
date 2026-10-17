@@ -2,26 +2,19 @@
 
 # Test what each backlog item asserts, rather than reading them one at a time.
 #
-# TODO.md carries 2245 numbered items. Working them individually is the honest
-# way and it is also the slow way, and roughly a third of the ones worked by hand
-# turned out to be wrong about the tree — a file since deleted, a line that moved,
-# a string that is no longer there. Those are exactly the claims a machine can
-# check, and an item whose own citation has gone stale should not cost a human
-# read.
+# TODO.md is the single checkbox backlog. Keep this reader coupled to its
+# current format: a numbered-list parser silently returned zero items after the
+# backlog was consolidated. An empty report must never masquerade as a clean
+# audit.
 #
-# Three kinds of citation are checkable:
+# Three kinds of citation are checked when an item names them:
 #
 #   path:line   the file exists and has that many lines
 #   `literal`   a backticked token that looks like a path, constant or method
 #   path        a bare path anywhere in the item
 #
-# Anything else is prose and is left alone. The output is a verdict per item, and
-# the only one worth acting on in bulk is `stale`: the item names something the
-# tree no longer has, so either the work is done or the item needs rewriting
-# against what is there now.
-#
-# This does not close anything. It sorts 2245 items into a few hundred worth
-# reading and the rest, which is the whole point.
+# Prose without a concrete citation remains for human review. This audit reports
+# stale claims; it never closes backlog work by itself.
 
 require "set"
 require_relative "../lib/trace/dmesg"
@@ -31,11 +24,8 @@ TODO = File.join(ROOT, "TODO.md")
 
 TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
-# A verdict already written into the item — these have been decided.
-DECIDED = /\*\*(?:Fixed|Done|Already|Closed|Declined|Overtaken|Measured|False|Partly|Argued|Held|Confirmed)\b/i
-
-PATH_LINE = %r{\b((?:MASTER|RAILS|OPENBSD)?/?[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|erb|md|sh|rake|json|conf|zone))[:#](\d+)\b}
-BARE_PATH = %r{\b((?:MASTER|RAILS|OPENBSD)/[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|erb|md|sh|rake|json|conf))\b}
+PATH_LINE = %r{\b((?:MASTER|RAILS|OPENBSD|STUDIO)?/?[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|html|erb|md|sh|ksh|zsh|rake|json|toml|conf|zone|txt))[:#](\d+)\b}
+BARE_PATH = %r{\b((?:MASTER|RAILS|OPENBSD|STUDIO)/[\w./-]+\.(?:rb|yml|yaml|scss|css|js|mjs|html|erb|md|sh|ksh|zsh|rake|json|toml|conf|zone|txt))\b}
 
 module BacklogClaims
   module_function
@@ -71,14 +61,20 @@ module BacklogClaims
     0
   end
 
+  # Return only open checklist items, identified by their source line. The
+  # checkbox, not wording inside the description, is authoritative for status.
+  def parse_items(body)
+    body.each_line.with_index(1).filter_map do |line, line_number|
+      match = /^\s*-\s+\[ \]\s+(.+?)\s*$/.match(line)
+      [line_number.to_s, match[1]] if match
+    end
+  end
+
   def items
-    body = File.read(TODO)
-    body.scan(/^(\d+)\. (\*\*.*?)(?=\n\d+\. \*\*|\n#{'#'}{2,} |\z)/m)
+    parse_items(File.read(TODO))
   end
 
   def verdict(text)
-    return :decided if text.match?(DECIDED)
-
     pl = text.scan(PATH_LINE)
     unless pl.empty?
       stale = pl.filter_map do |(path, line)|
@@ -170,11 +166,6 @@ def symbol_report
   working_set = []
 
   items.each do |number, text|
-    if text.match?(DECIDED)
-      tally[:decided] += 1
-      next
-    end
-
     kind = token_verdict(text)
     tally[kind] += 1
     working_set << [number, text.lines.first.strip[0, 88]] if kind == :every_name_is_ours
@@ -218,13 +209,11 @@ def partition_report
   by_tree = Hash.new { |h, k| h[k] = [] }
 
   items.each do |number, text|
-    next if text.match?(DECIDED)
-
     by_tree[tree_of(text)] << number
   end
 
   total = by_tree.values.sum(&:size)
-  Master::Trace::Dmesg.attach("claims0", "master0", "#{total} undecided items, partitioned by tree")
+  Master::Trace::Dmesg.attach("claims0", "master0", "#{total} unchecked items, partitioned by tree")
   by_tree.sort_by { |_, v| -v.size }.each do |tree, numbers|
     Master::Trace::Dmesg.status("claims0", "#{tree}, #{numbers.size}, #{numbers.first(3).join(", ")}")
   end
@@ -242,7 +231,7 @@ end
       stale << [number, v.last, text.lines.first.strip[0, 96]] if v.is_a?(Array)
     end
 
-    Master::Trace::Dmesg.attach("claims0", "master0", "#{items.size} numbered items")
+    Master::Trace::Dmesg.attach("claims0", "master0", "#{items.size} unchecked checklist items")
     tally.sort_by { |_, n| -n }.each { |k, n| Master::Trace::Dmesg.status("claims0", "#{k}, #{n}") }
 
     return if stale.empty?
