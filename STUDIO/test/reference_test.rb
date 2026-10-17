@@ -430,6 +430,18 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 4.0, summary.fetch("segment_bpm_range")
   end
 
+  def test_dilla_profile_targets_the_local_tempo_median_for_a_long_reference
+    mix = {
+      "tempo" => { "bpm" => 140.0, "segment_median_bpm" => 94.0, "confidence" => 0.4 },
+      "spectral_bands_db" => {}
+    }
+
+    profile = Dilla::Reference.profile_for(mix, style: "J Dilla")
+
+    assert_equal 140.0, profile.fetch("measured_bpm")
+    assert_equal 94, profile.fetch("target_bpm")
+  end
+
   def test_rhythm_segment_summary_uses_the_median_to_limit_transition_outliers
     windows = [
       { "timing_spread_ms" => 9.0, "onset_density_per_bar" => 14.0, "offbeat_onset_share" => 0.5 },
