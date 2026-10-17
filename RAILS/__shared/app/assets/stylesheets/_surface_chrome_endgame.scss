@@ -284,7 +284,7 @@
   main#main-content {
     min-inline-size: 0;
   }
-  .page-header, .feed-header { min-inline-size: 0; margin-block-end: var(--space-8); }
+  .page-header, .feed-header { min-inline-size: 0; }
   .page-header :is(h1, h2), .feed-header :is(h1, h2) { max-inline-size: 22ch; margin-block: 0; text-wrap: balance; }
   main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
   main#main-content :is(p, li, dd) { text-wrap: pretty; }
@@ -337,9 +337,24 @@
     .channel-card, .show-card, .tv-show-title { min-inline-size: 0; }
     .channel-card :is(h2, h3), .show-card :is(h2, h3), .tv-show-title { text-wrap: balance; overflow-wrap: anywhere; }
   }
-  @media (max-width: 767px) {
-    main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
-    .page-header, .feed-header { margin-block-end: var(--space-6); }
+  /* Compact defaults. The stronger layout-scoped selector restores the gutter
+     deliberately zeroed by the shared shell for document surfaces. */
+  body[data-layout-pass="micro-320"] .layout > main#main-content {
+    padding-inline: max(var(--space-4), var(--page-gutter));
+    padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom));
+  }
+  body[data-layout-pass="micro-320"] :is(.page-header, .feed-header) {
+    margin-block-end: var(--space-6);
+  }
+
+  @media (min-width: 768px) {
+    body[data-layout-pass="micro-320"] .layout > main#main-content {
+      padding-inline: 0;
+      padding-block-end: calc(var(--space-12) + var(--safe-bottom));
+    }
+    body[data-layout-pass="micro-320"] :is(.page-header, .feed-header) {
+      margin-block-end: var(--space-8);
+    }
   }
 }
 
@@ -362,9 +377,25 @@
   body[data-surface="luxury"] .amber-look { min-inline-size: 0; }
   body[data-surface="luxury"] .amber-look-stage { min-inline-size: 0; contain: layout paint; }
   body[data-surface="luxury"] :is(.amber-footer, .site-legal-footer) { min-inline-size: 0; overflow-wrap: anywhere; }
-  @media (max-width: 767px) {
-    body[data-surface="luxury"] main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
-    body[data-surface="luxury"] .luxury-title { max-inline-size: none; font-size: clamp(2.4rem, 12vw, 4rem); }
+  /* Compact defaults; wide luxury typography and gutters are restored below. */
+  body[data-surface="luxury"] main#main-content {
+    padding-inline: max(var(--space-4), var(--page-gutter));
+    padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom));
+  }
+  body[data-surface="luxury"] .luxury-title {
+    max-inline-size: none;
+    font-size: clamp(2.4rem, 12vw, 4rem);
+  }
+
+  @media (min-width: 768px) {
+    body[data-surface="luxury"] main#main-content {
+      padding-inline: 0;
+      padding-block-end: calc(var(--space-12) + var(--safe-bottom));
+    }
+    body[data-surface="luxury"] .luxury-title {
+      max-inline-size: 12ch;
+      font-size: clamp(2.4rem, 5vw, 5rem);
+    }
   }
 }
 
@@ -383,10 +414,25 @@
   body.wscons :is(input, select, textarea, button, .btn):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
   body.wscons article :is(pre, code) { overflow-wrap: anywhere; }
   body.wscons article pre { max-inline-size: 100%; white-space: pre-wrap; tab-size: 2; }
-  @media (max-width: 767px) {
-    body.wscons main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
-    body.wscons .port-row { grid-template-columns: minmax(0, 1fr); }
-    body.wscons .install-panel [data-controller="clipboard"] { grid-template-columns: minmax(0, 1fr); }
+  /* Compact defaults fit the port listing and copy command on a narrow screen. */
+  body.wscons main#main-content {
+    padding-inline: max(var(--space-4), var(--page-gutter));
+    padding-block: var(--space-8) calc(var(--space-16) + env(safe-area-inset-bottom));
+  }
+  body.wscons .port-row { grid-template-columns: minmax(0, 1fr); }
+  body.wscons .install-panel [data-controller="clipboard"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 768px) {
+    body.wscons main#main-content {
+      padding-inline: var(--page-gutter);
+      padding-block: var(--space-8) var(--space-16);
+    }
+    body.wscons .port-row { grid-template-columns: none; }
+    body.wscons .install-panel [data-controller="clipboard"] {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
   }
 }
 
