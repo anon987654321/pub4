@@ -86,12 +86,12 @@ class TestRatchets < Minitest::Test
 
   def test_css_budget_invokes_the_canonical_gate_runner_from_repo_root
     invocations = []
-    fake_capture = lambda do |*args, chdir:|
+    fake_capture = lambda do |*args, chdir:, **_opts|
       invocations << [args, chdir]
       ["", nil]
     end
 
-    Open3.stub(:capture2e, fake_capture) do
+    Master::Io::Exec.stub(:capture2e, fake_capture) do
       Operator::Ratchets.css_constitution_rows
     end
 
