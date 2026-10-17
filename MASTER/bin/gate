@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require_relative "../lib/boot/entrypoint"
+require_relative "../lib/io/exec"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 # The scan and critique pass over all four trees — two stages of the
@@ -139,7 +140,7 @@ ASSERT_PATHS = (SELECTED_TREES | ["MASTER"]).freeze
 
 def run_command(*argv, chdir: ROOT)
   puts "$ #{argv.join(" ")}"
-  stdout, status = Open3.capture2e(*argv, chdir: chdir)
+  stdout, status = Master::Io::Exec.capture2e(*argv, chdir: chdir)
   puts stdout
   abort "err: command failed: #{argv.join(" ")}" unless status.success?
 end
@@ -244,10 +245,10 @@ end
 # it, commits it and runs again. The message names that situation rather than
 # the git invocation behind it.
 def assert_clean(*paths)
-  _stdout, status = Open3.capture2e("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
+  _stdout, status = Master::Io::Exec.capture2e("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
   return if status.success?
 
-  changed, = Open3.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
+  changed, = Master::Io::Exec.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
   files = changed.split("\n").reject(&:empty?)
   abort <<~ERR
     err: #{paths.join(", ")} is not clean after the chain — #{files.length} file(s) modified:
