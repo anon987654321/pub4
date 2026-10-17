@@ -319,7 +319,12 @@ test("face.runtime.js matches the rake loader contract", () => {
   // The generator deliberately builds part 1–3 names from a range. Do not
   // require those three strings to be duplicated literally in the task.
   for (const name of sources) {
-    assert.match(runtime, new RegExp(name.replace(".", "\\.") + "\\b"), name + " missing from runtime");
+    assert.match(runtime, new RegExp(name.replaceAll(".", "\\\\.") + "\\\\b"), name + " missing from runtime");
+    const digest = createHash("sha256")
+      .update(readFileSync(join(publicDir, name)))
+      .digest("hex")
+      .slice(0, 10);
+    assert.ok(runtime.includes(name + "?v=" + digest), name + " URL digest is stale");
   }
   assert.match(task, /segments = \(1\.\.3\)\.map \{ \|part\| "face\.part#\{part\}\.txt" \}/, "build task must generate face parts 1–3");
   for (const name of ["face_speech_runtime.js", "face_speech_playback.js", "face.part5.txt"]) {
