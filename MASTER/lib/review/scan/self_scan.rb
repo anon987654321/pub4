@@ -46,7 +46,7 @@ module Master
 
         def scan_target(target, stream:)
           path = File.join(@root, target)
-          result = @scanner.scan_dir(path, depth: :deep, stream:, laws: @rules)
+          result = @scanner.scan_dir(path, depth: :deep, stream:, laws: @laws)
           wrapped = Result.wrap(result)
           raise "self-scan target failed: #{target}: #{wrapped.message}" unless wrapped.ok?
 

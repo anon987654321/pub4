@@ -6,14 +6,15 @@ class TestSelfScan < Minitest::Test
   Finding = Data.define(:rule, :message, :line, :severity, :fix, :tags)
 
   class FakeScanner
-    attr_reader :rules
+    attr_reader :rules, :seen_laws
 
     def initialize(findings, rules: [])
       @findings = findings
       @rules = rules.empty? ? [Object.new, Object.new] : rules
     end
 
-    def scan_dir(path, depth:, stream: false, rules: nil)
+    def scan_dir(path, depth:, stream: false, laws: nil, rules: nil)
+      @seen_laws = laws
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
     end
   end
@@ -56,6 +57,20 @@ class TestSelfScan < Minitest::Test
     assert result.ok?
     assert_equal "judge: lib/ 2 rules, 0 violations", result.value!.line
     refute_includes bus.events.map(&:first), "self_violation"
+  end
+
+  def test_self_scan_passes_the_explicit_law_scope_to_the_scanner
+    selected = [FakeRule.new("FROZEN_LITERAL", true)]
+    scanner = FakeScanner.new([], rules: selected)
+
+    result = Master::Review::Scan::SelfScan.new(
+      scanner:,
+      root: "/tmp/master",
+      laws: selected,
+    ).call
+
+    assert result.ok?
+    assert_equal selected, scanner.seen_laws
   end
 
   def test_autofix_applies_ast_fixer_to_autofixable_findings
