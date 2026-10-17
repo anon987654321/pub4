@@ -45,15 +45,8 @@ class LayoutGateEnforcementContractTest < Minitest::Test
 
   def test_auto_repeat_tile_grids_can_shrink_below_their_preferred_tile_width
     unsafe = /grid-template-columns\s*:\s*repeat\(\s*auto-(?:fill|fit)\s*,\s*minmax\(\s*(?!min\()\s*(?:var\(\s*--[\w-]+\s*\)|\d+(?:\.\d+)?(?:px|rem|em|ch))\s*,\s*1fr\s*\)/i
-    archived = %w[
-      _layout_micro_refinements.scss
-      _surface_micro_refinements.scss
-      _surface_micro_refinements_two.scss
-    ]
-
     sheets = Dir.glob(File.join(ROOT, "RAILS", "**", "app/assets/stylesheets", "**", "*.{scss,css}"))
-    violations = sheets.reject { |sheet_path| archived.include?(File.basename(sheet_path)) }
-                       .reject { |sheet_path| sheet_path.match?(%r{/(?:builds|vendor|node_modules)/}) }
+    violations = sheets.reject { |sheet_path| sheet_path.match?(%r{/(?:builds|vendor|node_modules)/}) }
                        .flat_map do |sheet_path|
       source = File.read(sheet_path, encoding: "UTF-8")
                    .gsub(%r{/\*.*?\*/}m, "")
