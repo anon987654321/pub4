@@ -343,6 +343,14 @@ module DesignMarks
   def eyebrow_blocks(text)
     blocks(text).select do |selector, body|
       next false unless body.match?(/text-transform\s*:\s*uppercase/i)
+
+      # Heading case is structural, not a decorative label treatment. A heading
+      # remains a finding even when it is large or has no tracking; proper case
+      # is consistent across the levels and the page H1 carries the hierarchy.
+      heading = selector.match?(/(?:\A|[\s,>])h[1-6](?=$|[\s,.:#\[])/i) ||
+                selector.match?(/\.(?:page-title|section-title|empty-state-title|luxury-title|amber-look-title|store-heading)\b/i)
+      next true if heading
+
       next false unless body.match?(/letter-spacing\s*:\s*+(?!0(?:\.0+)?(?:px|r?em)?\s*[;}\n]|normal|inherit|initial|unset)[^;}\n]+/i)
 
       selector.match?(/eyebrow|kicker|overline/i) || small_size?(body)
