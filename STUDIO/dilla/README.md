@@ -523,6 +523,10 @@ intent so they can be auditioned as distinct arrangements.
 
 ## Audio-reference analysis and style learning
 
+The canonical Dilla benchmark is Slum Village's *Fantastic, Vol. 2*: study the record itself for pocket, swing, microtiming, sample-to-drum relationship, phrase density, arrangement changes and broad tonal balance. An orchestral performance of Dilla's music is valuable as a tribute and evidence of his influence, but it is not the sonic target for the beat engine. Learn measurable production traits and musical principles, not the source melody or a note-for-note arrangement.
+
+Explicitly describing a source as an album (or naming *Fantastic, Vol. 2*) lets MASTER use the analyzer's existing hard two-hour ceiling. Ordinary track references retain the shorter default cap. This enables full-album uploads without silently making every pasted link an expensive long-form Demucs job.
+
 The reference workflow analyzes the **music only**; it never inspects or downloads video
 frames. It imports a YouTube audio stream with yt-dlp, measures duration, format,
 loudness, coarse spectral bands and an estimated tempo with FFmpeg, then optionally runs
@@ -539,6 +543,7 @@ the style explicitly:
 
 ~~~sh
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --style j_dilla
+ruby dilla.rb reference 'https://youtu.be/ALBUM_VIDEO_ID' --style j_dilla --max-duration 7200
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --style industrial_techno
 ruby dilla.rb reference 'https://youtu.be/VIDEO_ID' --no-stems
 ruby dilla.rb reference /absolute/path/to/audio.wav
