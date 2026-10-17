@@ -463,6 +463,7 @@ class TestPostproFilm < Minitest::Test
            "a matching vintage_lens step must actually read the preset lens"
 
     unused_decoy = <<~RUBY
+      fx = "spectral_temp"
       case fx
       when "spectral_temp" then
         p[:temp]
@@ -473,6 +474,7 @@ class TestPostproFilm < Minitest::Test
            "an unused key read elsewhere in the arm must not configure the effect"
 
     comment_decoy = <<~RUBY
+      fx = "spectral_temp"
       case fx
       when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504) # p[:temp]
       end
@@ -481,6 +483,7 @@ class TestPostproFilm < Minitest::Test
            "a comment must not satisfy the key-reader contract"
 
     string_decoy = <<~RUBY
+      fx = "spectral_temp"
       case fx
       when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504, annotation: "p[:temp]")
       end
@@ -489,6 +492,7 @@ class TestPostproFilm < Minitest::Test
            "a string literal must not satisfy the key-reader contract"
 
     multiline = <<~RUBY
+      fx = "spectral_temp"
       case fx
       when "spectral_temp" then
         spectral_temp(processed, target_kelvin: p[:temp])
@@ -503,6 +507,7 @@ class TestPostproFilm < Minitest::Test
 
   def test_duplicate_effect_labels_are_rejected_and_cannot_supply_unreachable_key_reads
     source = <<~RUBY
+      fx = "spectral_temp"
       case fx
       when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504)
       when "spectral_temp" then spectral_temp(processed, target_kelvin: p[:temp])
