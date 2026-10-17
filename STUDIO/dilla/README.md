@@ -529,8 +529,11 @@ Explicitly describing a source as an album (or naming *Fantastic, Vol. 2*) lets 
 
 The reference workflow analyzes the **music only**; it never inspects or downloads video
 frames. It imports a YouTube audio stream with yt-dlp, measures duration, format,
-loudness, coarse spectral bands and an estimated tempo with FFmpeg, then optionally runs
-Demucs and Essentia when their command-line tools are installed.
+loudness, coarse spectral bands, a low-rate temporal energy map and an estimated tempo
+with FFmpeg, then optionally runs Demucs and Essentia when their command-line tools are
+installed. When Essentia is present, the report surfaces independent BPM candidates,
+onset-rate and selected tonal/spectral summaries alongside the local tempo estimate.
+Agreement and half/double-time ambiguity are reported rather than silently blended.
 
 MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla
 / boom-bap reference and an industrial-techno reference stay separate. In chat, say
@@ -582,9 +585,11 @@ Reference output, reports, JSON profiles and stems default to
 inside the checkout. If `~/Documents` itself resolves inside the checkout, STUDIO refuses
 the fallback rather than writing media there. With an absolute data home outside the checkout,
 Dilla and MASTER share the learned-profile store.
-Each profile records the user's style hint separately from measured traits: tempo estimates
-and spectral bands are measurements, while an artist/genre label comes from the request,
-not an automatic genre classifier.
+Each profile records the user's style hint separately from measured traits: tempo estimates,
+spectral bands and 15-second energy windows are measurements, while an artist/genre label
+comes from the request, not an automatic genre classifier. The temporal map describes broad
+arrangement energy, not note transcription; independent tempo estimates may disagree or
+choose half/double time, and all conclusions retain those limitations.
 
 The industrial-techno command makes a new four-on-the-floor composition with distorted
 sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It
