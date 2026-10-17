@@ -89,7 +89,8 @@ module Studio
             id = OFFSETS.fetch(component) + index
             status = implementation_status(component, key)
             { id:, key:, component:, stage: stage_for(component, id),
-              description: key.to_s.tr("_", " "), status:, enabled: enabled_for(status) }
+              description: key.to_s.tr("_", " "), catalogued: true,
+              status:, enabled: enabled_for(status) }
           end
         end.freeze
       end
