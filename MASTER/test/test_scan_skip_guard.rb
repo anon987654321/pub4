@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../lib/fix/scan_skip_guard"
+require_relative "../lib/fix/scan/file_processor"
 
 # A scan that could not measure its files must not report them clean.
 class TestScanSkipGuard < Minitest::Test
@@ -49,7 +50,7 @@ class TestScanSkipGuard < Minitest::Test
     assert_equal a, b
   end
 
-  def test_pass_runner_aborts_instead_of_counting_the_scan_clean
+  def test_pass_runner_aborts_instead_of_counting_the_scan_clean_and_uses_the_real_total
     runner = Master::Fix::FixLoop::PassRunner.allocate
     scan_phase = Object.new
     scan_phase.define_singleton_method(:call) { |_path| Master::Result.err(NAME_ERROR, category: :infrastructure) }
@@ -59,10 +60,37 @@ class TestScanSkipGuard < Minitest::Test
     runner.instance_variable_set(:@scan_phase, scan_phase)
     runner.instance_variable_set(:@preflight, preflight)
     runner.instance_variable_set(:@skip_guard, Guard.new)
-    runner.instance_variable_set(:@scan_total, 200)
     paths = Array.new(30) { |i| "tmp-skip-#{i}" }
     File.stub(:exist?, true) do
-      assert_raises(Master::Fix::MassSkipError) { runner.violations(paths) }
+      error = assert_raises(Master::Fix::MassSkipError) { runner.violations(paths) }
+      assert_equal 30, error.total
+      assert_match(/21 of 30 file\(s\) skipped/, error.message)
     end
+  end
+
+  def test_expected_semantic_inconclusive_keeps_mechanical_findings
+    processor = Master::Fix::Scan::FileProcessor.new
+    mechanical = Object.new
+    mechanical.define_singleton_method(:id) { "TEST_MECHANICAL" }
+    mechanical.define_singleton_method(:check) do |_code, path:|
+      [{ law: "TEST_MECHANICAL", severity: :warning, line: 1, message: "mechanical finding" }]
+    end
+    semantic = Object.new
+    semantic.define_singleton_method(:id) { "semantic" }
+    semantic.define_singleton_method(:check) do |_code, path:|
+      raise "semantic assessment INCONCLUSIVE: provider spend/quota limit reached for #{path}"
+    end
+
+    findings = processor.send(
+      :apply_laws,
+      code: "value = 1\n",
+      ast: nil,
+      path: "tmp/inconclusive.rb",
+      law_set: [mechanical, semantic],
+    )
+
+    assert_equal ["TEST_MECHANICAL"], findings.map { |finding| finding[:law] }
+    assert_equal 1, processor.semantic_gaps.size
+    assert_match(/provider spend\/quota limit reached/, processor.semantic_gaps.values.first)
   end
 end

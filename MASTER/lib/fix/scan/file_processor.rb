@@ -38,6 +38,8 @@ module Master
         def initialize(event_bus: nil, skip_semantic: false)
           @bus = event_bus
           @skip_semantic = skip_semantic
+          @semantic_gap_mutex = Mutex.new
+          @semantic_gaps = {}
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
           @progress_mutex = Mutex.new
@@ -60,6 +62,18 @@ module Master
         end
 
         def semantic_full? = @semantic_sample_override.to_f >= 1.0
+
+        # Semantic outages are explicit evidence, separate from files that failed
+        # mechanical measurement. They prevent DONE without hiding deterministic
+        # findings from the same file.
+        def semantic_gaps
+          @semantic_gap_mutex.synchronize { @semantic_gaps.dup }
+        end
+
+        def reset_semantic_gaps!
+          @semantic_gap_mutex.synchronize { @semantic_gaps.clear }
+          self
+        end
 
         # The model tier off for the length of one block, then back as it was.
         # A tree-wide observation is a mechanical reading: 75% of RAILS files
@@ -237,10 +251,35 @@ module Master
             token = begin_law_progress(pass:, law:, index: index + 1, total: laws.size, path:)
             begin
               run_law(law:, code:, ast:, path:)
+            rescue StandardError => e
+              raise unless pass.to_sym == :semantic && semantic_inconclusive?(e)
+
+              record_semantic_inconclusive(path:, law:, error: e)
+              []
             ensure
               end_law_progress(token)
             end
           end
+        end
+
+        def semantic_inconclusive?(error)
+          error.message.to_s.include?("semantic assessment INCONCLUSIVE")
+        end
+
+        def record_semantic_inconclusive(path:, law:, error:)
+          relative = relative_progress_path(path)
+          law_id = law.respond_to?(:id) ? law.id.to_s : law.class.name.to_s
+          detail = "#{law_id}: #{error.message.to_s[0, 220]}"
+          first = @semantic_gap_mutex.synchronize do
+            next false if @semantic_gaps.key?(relative)
+
+            @semantic_gaps[relative] = detail
+            true
+          end
+          return unless first
+
+          @bus&.publish("scan:semantic_inconclusive", path: relative, law: law_id, message: detail)
+          Master::Trace::Dmesg.status("law0", "semantic inconclusive #{relative}: #{detail}"[0, 200])
         end
 
         # The monitor reports the law that's actually in flight, not merely the

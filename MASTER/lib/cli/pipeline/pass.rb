@@ -297,6 +297,11 @@ def default_apply?(*) = false
             end
 
             msg = result.value!.to_s
+            if msg.match?(/\A(?:PLATEAU|HUMAN_DECISION|BLOCKED|VALIDATION_FAILED|DELIVERY_FAILED|TIMEOUT|FAILED|RELOADING):/)
+              @failed_stages << "fix" unless @failed_stages.include?("fix")
+              Master::Trace::Dmesg.status("fix0", "incomplete, #{msg[0, 120]}")
+              next "fix incomplete: #{msg}"
+            end
             Master::Trace::Dmesg.status("fix0", msg[0, 120])
             msg
           end
@@ -346,8 +351,14 @@ def default_apply?(*) = false
           total = value[:total].to_i
           files = value[:files].to_h.transform_keys { |path| File.basename(path.to_s) }
           structure = Array(value[:structure])
+          gaps = (value[:gaps] || {}).to_h
+          semantic_gaps = gaps.fetch(:semantic_inconclusive, gaps.fetch("semantic_inconclusive", {})).to_h
+          semantic_note = if semantic_gaps.any?
+            "preview semantic: INCONCLUSIVE, #{semantic_gaps.size} file(s) not measured by model-backed laws"
+          end
           [
             "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
+            semantic_note,
             preview_row("rules", value[:rules]),
             preview_row("files", files),
             preview_structure_row(structure),

@@ -128,6 +128,14 @@ end
     saved.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = saved
   end
 
+  def test_incomplete_fix_report_is_not_allowed_to_reach_delivery
+    value = "review0: incomplete, 405 findings, 147s\nrepair failed"
+    assert Master::CLI::CommandRegistry.incomplete_fix_pipeline?(value)
+    result = Master::CLI::CommandRegistry.incomplete_fix_pipeline(value)
+    assert result.err?
+    assert_match(/fix pipeline incomplete/, result.message)
+  end
+
   def test_turn_router_itself_maps_to_master
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "run master through itself",

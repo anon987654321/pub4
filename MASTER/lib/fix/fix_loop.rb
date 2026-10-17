@@ -229,6 +229,11 @@ module Master
           named = gaps[:uninspected].keys.first(3).join(", ")
           parts << "#{gaps[:uninspected].size} file(s) not scanned (#{named})"
         end
+        semantic_gaps = gaps.fetch(:semantic_inconclusive, {})
+        unless semantic_gaps.empty?
+          named = semantic_gaps.keys.first(3).join(", ")
+          parts << "#{semantic_gaps.size} file(s) with inconclusive semantic assessment (#{named})"
+        end
         gaps[:stage_failures].each { |stage, rows| parts << "#{stage} stage failed #{rows.size}x, last #{rows.last}" }
         Master::Trace::Dmesg.status("fix0", "finished with gaps: #{parts.join("; ")}"[0, 220])
         terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
@@ -312,6 +317,7 @@ module Master
       end
 
       def preview(target = @root)
+        @pass_runner.reset_gaps!
         files = @file_collector.collect(target)
         violations = @pass_runner.violations(files)
         by_law = violations.group_by { |v| v[:law].to_s }.transform_values(&:size)
@@ -325,10 +331,12 @@ module Master
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
+          gaps: @pass_runner.gaps,
           coverage: {
             candidates: @file_collector.candidate_count,
             collected: files.size,
             skipped: @file_collector.skipped,
+            semantic_inconclusive: @pass_runner.semantic_inconclusive.size,
           },
         )
       end

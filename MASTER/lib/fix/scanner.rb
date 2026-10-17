@@ -148,6 +148,15 @@ module Master
           @file_processor.respond_to?(:semantic_full?) && @file_processor.semantic_full?
         end
 
+        def semantic_gaps
+          @file_processor.respond_to?(:semantic_gaps) ? @file_processor.semantic_gaps : {}
+        end
+
+        def reset_semantic_gaps!
+          @file_processor.reset_semantic_gaps! if @file_processor.respond_to?(:reset_semantic_gaps!)
+          self
+        end
+
         private
 
         def findings_for(path, depth:)

@@ -113,13 +113,21 @@ module Master
 
         def uninspected = (@uninspected ||= {})
         def stage_failures = (@stage_failures ||= Hash.new { |hash, stage| hash[stage] = [] })
-        def gaps? = !(uninspected.empty? && stage_failures.empty?)
-        def gaps = { uninspected: uninspected.dup, stage_failures: stage_failures.transform_values(&:dup) }
+        def semantic_inconclusive
+          @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
+        end
+        def gaps? = !(uninspected.empty? && stage_failures.empty? && semantic_inconclusive.empty?)
+        def gaps = {
+          uninspected: uninspected.dup,
+          stage_failures: stage_failures.transform_values(&:dup),
+          semantic_inconclusive: semantic_inconclusive.dup,
+        }
 
         def reset_gaps!
           @uninspected = nil
           @skip_guard.reset!
           @stage_failures = nil
+          @scanner.reset_semantic_gaps! if @scanner.respond_to?(:reset_semantic_gaps!)
           self
         end
 
@@ -127,7 +135,13 @@ module Master
           @visual_pass&.stop_runtime!
         end
 
-        def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
+        def violations(files)
+          paths = Array(files)
+          # Preview calls this outside observe_pass; seed the denominator here too
+          # so the systemic-skip guard has accurate evidence in both paths.
+          @scan_total = paths.size
+          resolve_violations(paths.flat_map { |path| violations_for(path) })
+        end
 
         def violations_for(path)
           return [] unless File.exist?(path)

@@ -167,6 +167,7 @@ module Master
                          target:, apply: writes_requested, critique: effective_critique,
                          aesthetic:, only:)
         return value unless writes_requested
+        return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
 
         gate_rounds = 0
         gate_status = 0
@@ -183,6 +184,7 @@ module Master
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                            target:, apply: true, critique: critique.nil? ? true : critique,
                            aesthetic:, only: "fix")
+          return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
         end
 
         if gate_status != 0
@@ -198,6 +200,19 @@ module Master
 
         Master::Trace::Dmesg.status("gate0", "#{target}: delivery verified")
         value
+      end
+
+      # run_pass returns a rendered report for compatibility. Do not allow its
+      # textual failure state to fall through into gate success and publication.
+      def incomplete_fix_pipeline?(value)
+        value.to_s.match?(/\breview\d+:\s*incomplete\b/i)
+      end
+
+      def incomplete_fix_pipeline(value)
+        detail = value.to_s.lines.find { |line| line.match?(/\breview\d+:\s*incomplete\b/i) }.to_s.strip
+        message = "fix pipeline incomplete#{detail.empty? ? "" : ": #{detail}"}"
+        Master::Trace::Dmesg.status("fix0", message[0, 200])
+        Master::Result.err(message, category: :validation)
       end
 
       def execution_trace_scopes(target)
