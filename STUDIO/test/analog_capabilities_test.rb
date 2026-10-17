@@ -61,6 +61,8 @@ class AnalogCapabilitiesTest < Minitest::Test
     refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, missing_test)
     refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, mutable_evidence)
     refute Contract.valid_implementation_record?(:postpro, :not_a_catalogued_direction, verified)
+    refute Contract.valid_implementation_record?("postpro", :red_sensitive_halation, verified)
+    refute Contract.valid_implementation_record?(:postpro, nil, verified)
   end
 
   def test_profiles_are_deterministic_without_promoting_unverified_directions
