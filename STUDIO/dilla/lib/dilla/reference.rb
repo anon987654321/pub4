@@ -111,8 +111,14 @@ module Dilla
       essentia_result = essentia(audio, directory, max_duration: options[:max_duration])
       tempo_check = tempo_crosscheck(mix["tempo"], essentia_result.fetch("summary", {}))
       drum_source, rhythm_source_kind = rhythm_source_for(stems, audio)
-      rhythm = rhythm_features(drum_source, ffmpeg:, max_duration: options[:max_duration], bpm: mix.dig("tempo", "bpm"))
-      rhythm_analysis = { "source" => rhythm_source_kind, "features" => rhythm }
+      rhythm = rhythm_features(
+        drum_source, ffmpeg:, max_duration: options[:max_duration],
+        bpm: mix.dig("tempo", "bpm"), tempo_segments: mix.dig("tempo", "segments") || []
+      )
+      rhythm_window_count = rhythm.delete("rhythm_window_count")
+      rhythm_analysis = { "source" => rhythm_source_kind,
+                          "window_count" => rhythm_window_count,
+                          "features" => rhythm }
       profile = profile_for(mix, style: options[:style])
       profile.fetch("features").merge!(rhythm)
       energy_summary = temporal_energy.fetch("summary", {})
@@ -219,33 +225,68 @@ module Dilla
       end
     end
 
-    def tempo(path, ffmpeg:, max_duration:)
+    # Estimate a global tempo and local 60-second windows from one FFmpeg pass.
+    # Keep real tempos below 80 BPM; half/double ambiguity is reported elsewhere
+    # instead of silently forcing a laid-back groove into a faster bracket.
+    def tempo(path, ffmpeg:, max_duration:, sample_rate: 40, segment_seconds: 60, min_segment_seconds: 30)
       bytes, = capture!("tempo envelope", ffmpeg, "-hide_banner", "-v", "error", "-i", path,
                         "-t", max_duration.to_s, "-vn", "-ac", "1", "-af",
-                        "aeval=exprs=val(0)*val(0),lowpass=f=12", "-ar", "40", "-f", "f32le", "pipe:1",
-                        timeout: analysis_timeout(max_duration))
+                        "aeval=exprs=val(0)*val(0),lowpass=f=12", "-ar", sample_rate.to_s,
+                        "-f", "f32le", "pipe:1", timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
-      return nil if samples.size < 480
-      mean = samples.sum / samples.size
-      samples.map! { |sample| sample - mean }
-      energy = samples.sum { |sample| sample * sample }
-      return nil if energy < 1e-12
-      score, lag = (12..[40, samples.size / 4].min).map do |candidate|
-        total = 0.0
-        limit = samples.size - candidate
-        index = 0
-        while index < limit
-          total += samples[index] * samples[index + candidate]
-          index += 1
-        end
-        [total / ([limit, 1].max * energy / samples.size), candidate]
-      end.max_by(&:first)
-      bpm = 2400.0 / lag
-      bpm *= 2 if bpm < 80
-      bpm /= 2 if bpm > 175
-      { "bpm" => bpm.round(1), "confidence" => score.round(3) }
+      overall = estimate_tempo_samples(samples, sample_rate:)
+      return nil unless overall
+
+      segment_size = sample_rate * segment_seconds
+      minimum_size = sample_rate * min_segment_seconds
+      segments = samples.each_slice(segment_size).with_index.filter_map do |slice, index|
+        next if slice.size < minimum_size
+
+        estimate = estimate_tempo_samples(slice, sample_rate:)
+        next unless estimate
+
+        start_seconds = index * segment_seconds
+        { "start_seconds" => start_seconds,
+          "end_seconds" => (start_seconds + slice.size.to_f / sample_rate).round(2) }.merge(estimate)
+      end
+      overall.merge("segments" => segments).merge(tempo_segment_summary(segments))
     rescue Error
       nil
+    end
+
+    def estimate_tempo_samples(samples, sample_rate: 40)
+      return nil if samples.size < sample_rate * 12
+
+      mean = samples.sum / samples.size
+      centred = samples.map { |sample| sample - mean }
+      energy = centred.sum { |sample| sample * sample }
+      return nil if energy < 1e-12
+
+      minimum_lag = [(sample_rate * 60.0 / 200).floor, 1].max
+      maximum_lag = (sample_rate * 60.0 / 50).ceil
+      final_lag = [maximum_lag, samples.size / 4].min
+      return nil if final_lag < minimum_lag
+
+      score, lag = (minimum_lag..final_lag).map do |candidate|
+        total = 0.0
+        limit = centred.size - candidate
+        index = 0
+        while index < limit
+          total += centred[index] * centred[index + candidate]
+          index += 1
+        end
+        [total / ([limit, 1].max * energy / centred.size), candidate]
+      end.max_by(&:first)
+      { "bpm" => (sample_rate * 60.0 / lag).round(1), "confidence" => score.round(3) }
+    end
+
+    def tempo_segment_summary(segments)
+      values = segments.filter_map { |segment| numeric_value(segment["bpm"]) }.sort
+      return {} if values.empty?
+
+      { "segment_count" => values.length,
+        "segment_median_bpm" => median_value(values).round(1),
+        "segment_bpm_range" => (values.max - values.min).round(1) }
     end
 
     def separate(audio, directory, options, duration)
@@ -309,11 +350,13 @@ module Dilla
     # independent. Report close agreement versus half/double-time ambiguity;
     # do not silently average contradictory estimators into a false precision.
     def tempo_crosscheck(tempo, essentia_summary)
-      primary = numeric_value(tempo.is_a?(Hash) ? tempo["bpm"] : nil)
+      primary = numeric_value(tempo.is_a?(Hash) ? tempo["segment_median_bpm"] : nil)
+      global = numeric_value(tempo.is_a?(Hash) ? tempo["bpm"] : nil)
+      primary ||= global
       independent = numeric_value(essentia_summary.is_a?(Hash) ? essentia_summary["bpm"] : nil)
       independent ||= numeric_value(essentia_summary["bpm_histogram_first_peak_bpm"]) if essentia_summary.is_a?(Hash)
       return { "status" => "insufficient_evidence", "ffmpeg_bpm" => primary,
-               "essentia_bpm" => independent }.compact unless primary && independent
+               "ffmpeg_global_bpm" => global, "essentia_bpm" => independent }.compact unless primary && independent
 
       direct_delta = (primary - independent).abs
       half_delta = (primary - independent * 2.0).abs
@@ -326,7 +369,8 @@ module Dilla
                  "disagreement"
                end
       { "status" => status, "ffmpeg_bpm" => primary.round(2),
-        "essentia_bpm" => independent.round(2), "absolute_delta_bpm" => direct_delta.round(2) }
+        "ffmpeg_global_bpm" => global&.round(2),
+        "essentia_bpm" => independent.round(2), "absolute_delta_bpm" => direct_delta.round(2) }.compact
     end
 
     # Summarize the mix's energy in short windows, independently of the rhythm
@@ -498,7 +542,7 @@ module Dilla
     # Measure broad rhythmic traits from a low-rate energy envelope. When Demucs
     # supplies a drums stem we prefer it; otherwise this is explicitly a mix-level
     # estimate. No claims are made about individual kick/snare timing.
-    def rhythm_features(path, ffmpeg:, max_duration:, bpm:, sample_rate: 100)
+    def rhythm_features(path, ffmpeg:, max_duration:, bpm:, sample_rate: 100, tempo_segments: [])
       tempo = numeric_value(bpm)
       return {} unless tempo&.between?(50.0, 200.0)
 
@@ -507,9 +551,51 @@ module Dilla
                         "aeval=exprs=val(0)*val(0),lowpass=f=18", "-ar", sample_rate.to_s,
                         "-f", "f32le", "pipe:1", timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
-      summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:)
+      valid_segments = tempo_segments.select do |segment|
+        numeric_value(segment["bpm"])&.between?(50.0, 200.0)
+      end
+      if valid_segments.empty?
+        summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1)
+      else
+        features = valid_segments.filter_map do |segment|
+          start_index = (numeric_value(segment["start_seconds"]).to_f * sample_rate).round
+          end_index = (numeric_value(segment["end_seconds"]).to_f * sample_rate).round
+          slice = samples[start_index, [end_index - start_index, 0].max] || []
+          local = summarize_rhythm_envelope(slice, bpm: numeric_value(segment["bpm"]), sample_rate:)
+          local unless local.empty?
+        end
+        features.empty? ? summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1) :
+          summarize_rhythm_segments(features)
+      end
     rescue Error
       {}
+    end
+
+    # Prefer local tempo windows for long references so track-to-track tempo
+    # changes do not masquerade as microtiming or swing.
+    def summarize_rhythm_segments(segments)
+      return {} if segments.empty?
+
+      summary = { "rhythm_window_count" => segments.length }
+      {
+        "timing_spread_ms" => 1,
+        "onset_density_per_bar" => 2,
+        "offbeat_onset_share" => 3
+      }.each do |field, precision|
+        values = segments.filter_map { |features| numeric_value(features[field]) }.sort
+        next if values.empty?
+
+        summary[field] = median_value(values).round(precision)
+      end
+      summary
+    end
+
+    def median_value(values)
+      sorted = values.sort
+      return if sorted.empty?
+
+      middle = sorted.length / 2
+      sorted.length.odd? ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2.0
     end
 
     def summarize_rhythm_envelope(samples, bpm:, sample_rate: 100)
@@ -618,6 +704,7 @@ module Dilla
       low = ((level.call("sub_25_120_hz", -36.0) - level.call("low_mid_120_500_hz", -36.0) + 8.0) / 24.0).clamp(0.0, 1.0)
       bright = ((level.call("high_4000_plus_hz", -36.0) - level.call("mid_500_4000_hz", -36.0) + 10.0) / 24.0).clamp(0.0, 1.0)
       bpm = numeric_value(mix.dig("tempo", "bpm"))
+      stable_bpm = numeric_value(mix.dig("tempo", "segment_median_bpm")) || bpm
       key = style_key(style)
       common = { "style_key" => key, "measured_bpm" => bpm,
                  "tempo_confidence" => mix.dig("tempo", "confidence"), "meter" => "4/4",
@@ -631,7 +718,7 @@ module Dilla
             "distortion_drive" => (1.6 + 0.9 * bright).round(2)
           }, "production" => "straight four-on-the-floor; distorted rumble; metallic hits; evolving industrial textures; no hip-hop swing")
       when "j_dilla"
-        common.merge("genre" => "hip_hop", "target_bpm" => bpm ? bpm.clamp(70, 110).round : 88,
+        common.merge("genre" => "hip_hop", "target_bpm" => stable_bpm ? stable_bpm.clamp(70, 110).round : 88,
           "groove_profile" => "dilla_shadow",
           "production" => "sample-led hip-hop reference; laid-back pocket; syncopated boom-bap drums; warm, slightly imperfect texture")
       else
@@ -651,6 +738,20 @@ module Dilla
       tracks.each { |name, row| lines << "- #{name}: #{row['duration_seconds'] || '?'} s; RMS #{row['rms_db'] || 'unknown'} dB" }
       lines.concat(["", "## Frequency bands"])
       tracks.fetch("mix").fetch("spectral_bands_db", {}).each { |name, value| lines << "- #{name}: #{value || 'not measured'} dB" }
+      tempo_data = tracks.dig("mix", "tempo") || {}
+      tempo_windows = tempo_data.fetch("segments", [])
+      lines.concat(["", "## Local tempo windows",
+                    "Window size: 60 seconds; valid windows: #{tempo_windows.size}",
+                    "Global tempo estimate: #{tempo_data['bpm'] || 'unknown'} BPM",
+                    "Window median: #{tempo_data['segment_median_bpm'] || 'unknown'} BPM",
+                    "Window range: #{tempo_data['segment_bpm_range'] || 'unknown'} BPM"])
+      tempo_windows.each do |segment|
+        first = segment.fetch("start_seconds").to_i
+        last = segment.fetch("end_seconds").to_i
+        lines << format("- %02d:%02d-%02d:%02d: %.1f BPM (confidence %.3f)",
+                        first / 60, first % 60, last / 60, last % 60,
+                        segment.fetch("bpm"), segment.fetch("confidence"))
+      end
       energy_summary = temporal_energy.fetch("summary", {})
       lines.concat(["", "## Temporal energy overview",
                     "Status: #{temporal_energy['status'] || 'not measured'}",
