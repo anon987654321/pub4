@@ -112,7 +112,7 @@
   display: block;
   margin-block-start: var(--luxury-space-xl);
   padding: var(--space-16) var(--page-gutter) var(--space-12);
-  border-block-start: 1px solid var(--border);
+  border: 0;
 }
 
 .amber-footer-cols {
@@ -179,7 +179,7 @@
 }
 
 .brand {
-  border-bottom: 1px solid var(--border, var(--color-extra-light-grey));
+  border: 0;
 }
 
 /* Editorial grid: first card larger */
