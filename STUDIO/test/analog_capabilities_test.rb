@@ -38,31 +38,42 @@ class AnalogCapabilitiesTest < Minitest::Test
     assert_nil report.fetch("capabilities").first.fetch("enabled")
   end
 
-  def test_readiness_promotion_requires_immutable_implementation_and_test_evidence
+  def test_readiness_promotion_requires_real_source_methods_and_regression_tests
     verified = {
       status: :verified,
       implementation: "STUDIO/postpro/postpro.rb#halation".freeze,
-      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation".freeze
+      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation_returns_more_red_than_blue".freeze
     }.freeze
     unavailable = {
       status: :unavailable,
-      evidence: "provider schema has no such field".freeze,
-      regression_test: "STUDIO/test/test_tools_replicate.rb#test_missing_field".freeze
+      evidence: "https://provider.example.invalid/schema/timeout-cancellation".freeze,
+      regression_test: "STUDIO/test/test_tools_replicate.rb#test_failed_chain_is_recorded_with_its_stage_error_and_kept_frames".freeze
     }.freeze
-    missing_test = { status: :verified, implementation: "STUDIO/postpro/postpro.rb#halation".freeze }.freeze
-    mutable_evidence = {
+    missing_test = {
       status: :verified,
-      implementation: "STUDIO/postpro/postpro.rb#halation",
-      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation".freeze
+      implementation: "STUDIO/postpro/postpro.rb#halation".freeze,
+      regression_test: "STUDIO/test/test_tools_postpro.rb#test_method_that_does_not_exist".freeze
+    }.freeze
+    missing_method = {
+      status: :verified,
+      implementation: "STUDIO/postpro/postpro.rb#made_up_effect".freeze,
+      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation_returns_more_red_than_blue".freeze
+    }.freeze
+    mutable_reference = {
+      status: :verified,
+      implementation: "STUDIO/postpro/postpro.rb#halation".dup,
+      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation_returns_more_red_than_blue".freeze
     }.freeze
 
     assert Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, verified)
     assert Contract.valid_implementation_record?(:replicate, :timeout_cancellation, unavailable)
     refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, missing_test)
-    refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, mutable_evidence)
+    refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, missing_method)
+    refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, mutable_reference)
     refute Contract.valid_implementation_record?(:postpro, :not_a_catalogued_direction, verified)
     refute Contract.valid_implementation_record?("postpro", :red_sensitive_halation, verified)
     refute Contract.valid_implementation_record?(:postpro, nil, verified)
+    refute Contract.evidence_reference?("provider schema has no such field".freeze)
   end
 
   def test_profiles_are_deterministic_without_promoting_unverified_directions
