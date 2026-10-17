@@ -343,6 +343,7 @@ class TestCliTerminalFace < Minitest::Test
 
       assert_equal ["First sentence."], played
       assert_equal 2, stop_checks, "the stop request stays latched and is not read again"
+      refute File.exist?(second_path), "prefetched audio for the skipped chunk is cleaned up"
     end
   end
 
