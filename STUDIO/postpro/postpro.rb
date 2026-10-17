@@ -4795,6 +4795,64 @@ rescue StandardError => e
   ["#{name} #{channel}: curve evaluation raises #{e.class}: #{e.message}"]
 end
 
+def stock_matrix_audit(name, matrix)
+  return { offset: nil, problem: nil } if matrix.nil?
+
+  valid = matrix.is_a?(Array) && matrix.length == 9 && matrix.all? do |value|
+    value.is_a?(Numeric) && value.real? && value.to_f.finite?
+  end
+  return { offset: nil, problem: "#{name}: colour matrix must contain nine finite real numbers" } unless valid
+
+  offset = matrix.each_slice(3).map { |row| (row.sum - 1.0).abs }.max
+  { offset:, problem: nil }
+rescue StandardError => e
+  { offset: nil, problem: "#{name}: colour matrix audit raises #{e.class}: #{e.message}" }
+end
+
+def grain_knot_problems(name, knots)
+  return [] if knots.nil?
+
+  valid = knots.is_a?(Array) && knots.all? do |value|
+    value.is_a?(Numeric) && value.real? && value.to_f.finite?
+  end
+  return ["#{name} grain_knots must be an array of finite real numbers"] unless valid
+
+  problems = []
+  problems << "#{name} grain_knots needs at least two knots" if knots.length < 2
+  problems << "#{name} grain_knots go negative" if knots.any?(&:negative?)
+  problems
+rescue StandardError => e
+  ["#{name} grain_knots audit raises #{e.class}: #{e.message}"]
+end
+
+def stock_grain_levels(stocks, scale)
+  levels = {}
+  problems = []
+  stocks.each do |name, data|
+    unless data.is_a?(Hash)
+      problems << "#{name}: stock definition is not a table"
+      next
+    end
+
+    grain = data[:grain]
+    next if grain.nil?
+    unless grain.is_a?(Numeric) && grain.real? && grain.to_f.finite? && grain >= 0
+      problems << "#{name}: grain must be a finite nonnegative number"
+      next
+    end
+
+    level = grain * scale
+    unless level.to_f.finite?
+      problems << "#{name}: scaled grain is not finite"
+      next
+    end
+    levels[name] = level
+  rescue StandardError => e
+    problems << "#{name}: grain measurement raises #{e.class}: #{e.message}"
+  end
+  [levels, problems]
+end
+
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
@@ -4907,10 +4965,15 @@ def vocab_check
   # normalises them at application time so this cannot reach a render, but a
   # row that drifts far from 1 usually means a cast was written into the matrix
   # that belongs in the H&D curve offsets, and that is worth knowing.
-  drifting = STOCKS.filter_map do |name, d|
-    next unless d[:matrix]
-    off = d[:matrix].each_slice(3).map { |r| (r.sum - 1.0).abs }.max
-    [name, off] if off > 0.005
+  drifting = STOCKS.filter_map do |name, data|
+    unless data.is_a?(Hash)
+      problems << "#{name}: stock definition is not a table"
+      next
+    end
+
+    audit = stock_matrix_audit(name, data[:matrix])
+    problems << audit[:problem] if audit[:problem]
+    [name, audit[:offset]] if audit[:offset] && audit[:offset] > 0.005
   end
   unless drifting.empty?
     notes << "#{drifting.length} stock matrices have rows that do not sum to 1 " \
@@ -4936,7 +4999,13 @@ def vocab_check
       problems.concat(hd_curve_problems(name, channel, parameters))
     end
   end
-  (STOCKS.keys - STOCKS.select { |_, d| d[:speed] }.keys).each { |s| problems << "#{s} has no speed:, so grain cannot rate it" }
+  STOCKS.each do |name, data|
+    unless data.is_a?(Hash)
+      problems << "#{name}: stock definition is not a table"
+      next
+    end
+    problems << "#{name} has no speed:, so grain cannot rate it" unless data[:speed]
+  end
 
   # All four output paths finish the same way, or this is two tools wearing one
   # name. Until 2026-08-12 process_file and run_random ran the finishing grain
@@ -4992,18 +5061,21 @@ def vocab_check
   stale = RANDOM_WEAR - RECIPE_ALLOWED
   problems << "RANDOM_WEAR names effects no chain can call: #{stale.join(", ")}" unless stale.empty?
   STOCKS.each do |name, data|
-    knots = data[:grain_knots]
-    next if knots.nil?
-
-    problems << "#{name} grain_knots needs at least two knots" if knots.length < 2
-    problems << "#{name} grain_knots go negative" if knots.any?(&:negative?)
+    unless data.is_a?(Hash)
+      problems << "#{name}: stock definition is not a table"
+      next
+    end
+    problems.concat(grain_knot_problems(name, data[:grain_knots]))
   end
-  quoted = STOCKS.reject { |_, d| d[:grain].nil? }.transform_values { |d| d[:grain] * GRAIN_SIGMA_SCALE }
+  quoted, grain_problems = stock_grain_levels(STOCKS, GRAIN_SIGMA_SCALE)
+  problems.concat(grain_problems)
   wild = quoted.select { |_, levels| levels < 0.5 || levels > 14.0 }
   problems << "granularity outside anything a scan measures: " \
               "#{wild.map { |n, l| "#{n} at #{l.round(1)} levels" }.join(", ")}" unless wild.empty?
-  notes << "grain is quoted in 8-bit levels at mid-grey: " \
-           "#{quoted.minmax_by { |_, l| l }.map { |n, l| "#{n} #{l.round(1)}" }.join(" to ")}"
+  unless quoted.empty?
+    notes << "grain is quoted in 8-bit levels at mid-grey: " \
+             "#{quoted.minmax_by { |_, l| l }.map { |n, l| "#{n} #{l.round(1)}" }.join(" to ")}"
+  end
 
   # CONFIG is empty unless a master.json sits beside this file, which is the
   # normal state. Saying so is the difference between a default and a setting
