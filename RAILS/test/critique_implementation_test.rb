@@ -221,7 +221,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen_stack, '@forward "search_yep";'
   end
 
-    def test_radio_restores_first_party_device_tilt_contract
+  def test_radio_restores_first_party_device_tilt_contract
     source = read("brgen/app/javascript/radio_brgen_tunnel.js")
     assert_includes source, "DeviceOrientationEvent"
     assert_includes source, "requestPermission"
