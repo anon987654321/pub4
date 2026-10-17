@@ -538,8 +538,8 @@ Agreement and half/double-time ambiguity are reported rather than silently blend
 rhythm summary also names its evidence source: a Demucs drums stem when available, or an
 explicitly labelled full-mix proxy when separation is unavailable or disabled.
 
-MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla
-/ boom-bap reference and an industrial-techno reference stay separate. In chat, say
+MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla,
+Slum Village or boom-bap reference and an industrial-techno reference stay separate. In chat, say
 something like “learn the J Dilla sound from this track” and paste the link; later,
 “make a beat like that” uses the learned profile. For techno, say “study this
 industrial-techno track” and paste the link, then ask for a track in that style. A
