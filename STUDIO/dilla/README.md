@@ -533,7 +533,9 @@ loudness, coarse spectral bands, a low-rate temporal energy map and an estimated
 with FFmpeg, then optionally runs Demucs and Essentia when their command-line tools are
 installed. When Essentia is present, the report surfaces independent BPM candidates,
 onset-rate and selected tonal/spectral summaries alongside the local tempo estimate.
-Agreement and half/double-time ambiguity are reported rather than silently blended.
+Agreement and half/double-time ambiguity are reported rather than silently blended. The
+rhythm summary also names its evidence source: a Demucs drums stem when available, or an
+explicitly labelled full-mix proxy when separation is unavailable or disabled.
 
 MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla
 / boom-bap reference and an industrial-techno reference stay separate. In chat, say
