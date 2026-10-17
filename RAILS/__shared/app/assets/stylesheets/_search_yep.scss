@@ -29,6 +29,13 @@
   color: inherit;
 }
 
+/* Keep a keyboard-visible indicator on the shared surface while the input
+   itself remains borderless, as in the original Yep field. */
+.search:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
 .search input::placeholder {
   color: #aaa;
 }
