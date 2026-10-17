@@ -97,6 +97,8 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 - [ ] Verify the audio-reference workflow using a real YouTube audio link and a local audio file. Confirm yt-dlp/ffmpeg/ffprobe extraction, metadata, audio/video separation (analyze audio only, never use video frames), style inference and generation from a reference. Have MASTER infer tempo, bar structure, seed/arrangement details and other useful musical metadata itself where evidence allows, rather than bothering the operator for details it can derive; ask only for genuinely essential missing intent. Test the two-hour limit and bounded default duration, and listen to the generated result.
 - [ ] Run the existing TurnRouterTest for MASTER's “make a video with the lora of me” route and verify the actual intent/provider path end to end.
 
+- [ ] Reconcile the 200-entry analogue-direction catalogue with actual implementation and regression evidence. `STUDIO/postpro/analog_capabilities.rb` now reports entries as `unverified` with `enabled: null` until the status registry names a concrete implementation (or unavailability evidence) and its regression test. Review postpro, Replicate and Dilla entries individually; preserve the distinction between catalogue coverage and runtime readiness, and do not mark a direction verified from its name or an adjacent implementation alone.
+
 ## P1 — STUDIO likeness, video, costs and output contracts
 
 - [ ] Collect 15–25 sharp photographs per LoRA subject, at least 1024 px on the short edge, with frontal and three-quarter angles and varied light/expression. Exclude caps, hoods, sunglasses and face paint; remove Johann's black-and-white teenage portrait.
