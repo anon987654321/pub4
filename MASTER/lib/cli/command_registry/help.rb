@@ -272,13 +272,6 @@ detail: [
 
       CATEGORY_ORDER = %w[fix health session model review change interface media constitution help].freeze
 
-      CATEGORY_LABELS = {
-        "fix" => "fix", "health" => "health", "session" => "session",
-        "model" => "model", "review" => "review", "change" => "change",
-        "interface" => "interface", "media" => "media",
-        "constitution" => "constitution", "help" => "help",
-      }.freeze
-
       def command_surface
         slash_commands.filter_map do |slash|
           key = slash.delete_prefix("/")
