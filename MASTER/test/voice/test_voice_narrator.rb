@@ -51,8 +51,32 @@ class TestVoiceNarrator < Minitest::Test
     assert_equal 3, @spoken.size
     assert_match(/begins|starts/i, @spoken.first)
     assert_match(/reading 14 files/, @spoken.first)
-    assert_match(/end|done/i, @spoken.last)
+    assert_match(/complete|done|end/i, @spoken.last)
     assert_equal 0, n.beats
+  end
+
+  def test_incomplete_is_never_narrated_as_success
+    n = build
+    n.observe("fix0: incomplete, semantic assessment unavailable")
+    assert_equal :spoken, n.tick
+    assert_match(/stopped|did not finish/i, @spoken.join)
+    refute_match(/task is done|task is complete|work is complete/i, @spoken.join)
+    assert_equal 0, n.beats
+  end
+
+  def test_routine_scan_counters_and_heartbeats_are_ignored
+    n = build
+    refute n.observe("obs0: 46/2708 files, 286 violations in 24 files, 5s, eta 293s")
+    refute n.observe("law0: lexical scan pass=lexical law=NO_DEBUG file=task.rb checks=123")
+    refute n.observe("+ route 400s")
+  end
+
+  def test_narration_uses_strunk_without_deleting_meaning
+    n = build(writer: ->(**) { "Certainly, the repair could not be verified." })
+    n.observe("review0: repair is inconclusive")
+    window(n)
+    assert_equal :spoken, n.tick
+    assert_equal "the repair could not be verified.", @spoken.first
   end
 
   def test_nothing_is_told_before_the_batch_window

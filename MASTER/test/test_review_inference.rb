@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fix/autofix_guard"
 
 class TestThroughInference < Minitest::Test
 # --only names stages, and the names have to mean the same thing everywhere.
@@ -89,6 +90,25 @@ end
 
     kept = Master::CLI::TurnRouter.infer_operator_command("fix lib/cli", container: { bus: nil, session: nil })
     assert_equal "lib/cli", kept[:args]
+  end
+
+  def test_fix_writes_by_default_and_keeps_review_stages_read_only
+    registry = Master::CLI::CommandRegistry
+    assert registry.writes_requested?(apply: nil, only: nil)
+    assert registry.writes_requested?(apply: true, only: "fix")
+    refute registry.writes_requested?(apply: false, only: nil)
+    refute registry.writes_requested?(apply: nil, only: "critique,map")
+  end
+
+  def test_deterministic_autofix_defaults_to_on_with_a_bounded_write_budget
+    saved = ENV["MASTER_AUTOFIX_MODE"]
+    ENV.delete("MASTER_AUTOFIX_MODE")
+    Master::Fix::AutofixGuard.reset!
+    assert_equal "on", Master::Fix::AutofixGuard.mode
+    assert_equal 15, Master::Fix::AutofixGuard::DEFAULT_MAX_FILES
+  ensure
+    saved.nil? ? ENV.delete("MASTER_AUTOFIX_MODE") : ENV["MASTER_AUTOFIX_MODE"] = saved
+    Master::Fix::AutofixGuard.reset!
   end
 
   def test_fix_dry_run_suppresses_implicit_critique_but_honours_explicit_critique

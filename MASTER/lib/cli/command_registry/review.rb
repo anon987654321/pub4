@@ -60,7 +60,7 @@ module Master
         # /fix is the operator trace: every event is visible in the same append-only
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         targets = fix_targets(target, root:)
-        writes_requested = apply != false && fix_stage_selected?(only)
+        writes_requested = writes_requested?(apply:, only:)
         if writes_requested && worktree_fix_requested?
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
           return Master::Trace::Dmesg.with_log_voice do
@@ -96,7 +96,7 @@ module Master
             end
           end
 
-          writes_requested = apply != false && fix_stage_selected?(only)
+          writes_requested = writes_requested?(apply:, only:)
           effective_critique = critique.nil? ? writes_requested : critique
 
           results = targets.map do |fix_target|
@@ -246,6 +246,12 @@ module Master
         return true if only.nil?
 
         Array(only.to_s.split(",")).map(&:strip).any? { |stage| %w[fix converge].include?(stage.downcase) }
+      end
+
+      # The canonical /fix command writes unless a caller explicitly asks for
+      # read-only work. Review/critique adapters pass apply:false themselves.
+      def writes_requested?(apply:, only:)
+        apply != false && fix_stage_selected?(only)
       end
 
       # `--only critique` and `--only map` select read-only review stages.

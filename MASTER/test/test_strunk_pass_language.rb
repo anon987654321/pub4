@@ -4,15 +4,18 @@ require_relative "test_helper"
 require "voice/strunk_pass"
 
 class TestStrunkPassLanguage < Minitest::Test
-  def test_norwegian_hedges_are_removed
+  def test_norwegian_filter_removes_only_leading_padding
     output = Master::Voice::StrunkPass.brevity("Jeg tror dette virker som en muligens god løsning.", language: :nb)
-    refute_match(/jeg tror|virker som|muligens/i, output)
+    refute_match(/\Ajeg tror/i, output)
+    assert_match(/virker som/i, output)
+    assert_match(/muligens/i, output)
   end
 
-  def test_english_hedges_remain_separate_from_norwegian
-    output = Master::Voice::StrunkPass.brevity("I think that this would work.", language: :en)
-    refute_match(/I think that|would/i, output)
-    assert_match(/this work/i, output)
+  def test_english_filter_preserves_meaning_bearing_modal_verbs
+    output = Master::Voice::StrunkPass.brevity("I think that this would work. The scan could not finish.", language: :en)
+    refute_match(/\AI think that/i, output)
+    assert_match(/this would work/i, output)
+    assert_match(/scan could not finish/i, output)
   end
 
   def test_cached_rules_follow_same_second_voice_changes
@@ -33,8 +36,8 @@ class TestStrunkPassLanguage < Minitest::Test
     end
   end
 
-  def test_language_is_detected_when_not_supplied
+  def test_language_is_detected_without_deleting_a_mid_sentence_qualifier
     output = Master::Voice::StrunkPass.brevity("Dette virker som en mulig løsning.")
-    refute_match(/virker som/i, output)
+    assert_match(/virker som/i, output)
   end
 end
