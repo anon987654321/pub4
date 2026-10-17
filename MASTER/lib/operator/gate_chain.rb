@@ -325,9 +325,10 @@ module Operator
     end
 
     def lexical_stage(scan_only:, trees:, scope:)
+      action = scan_only ? "measuring without writes" : "autofixing"
       Stage.new(
         name: "lexical",
-        purpose: "law/ and the scan registry over #{scope}, autofixing",
+        purpose: "law/ and the scan registry over #{scope}, #{action}",
         mutates: !scan_only,
         run: ->(progress) { gate("--lexical-only", scan_only:, trees:, env: progress) },
       )
