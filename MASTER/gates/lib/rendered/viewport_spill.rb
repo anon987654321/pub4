@@ -132,7 +132,11 @@ module Deploy
 
       surface[:paths].each do |path|
         cdp.navigate("http://#{surface[:host]}#{path}", settle: 0.8)
-        next unless cdp.status.to_i == 200
+        status = cdp.status.to_i
+        unless status == 200
+          @result.fail("viewport_spill: #{surface[:host]}#{path} returned HTTP #{status} — viewport overflow was not measured at #{width}px")
+          next
+        end
 
         spills = JSON.parse(cdp.evaluate(PROBE).to_s)
         if spills.empty?
