@@ -50,6 +50,16 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_equal Registry.slash_commands.sort, surface
   end
 
+  def test_command_categories_are_shared_with_the_web_surface
+    surface = Registry.command_surface
+    assert_equal "fix", surface.find { |entry| entry[:cmd] == "/fix" }.fetch(:category)
+    assert_equal "review", surface.find { |entry| entry[:cmd] == "/laws" }.fetch(:category)
+    assert_equal "session", surface.find { |entry| entry[:cmd] == "/quit" }.fetch(:category)
+    assert_includes Registry.help_summary, "fix0 at master0: /fix [path]"
+    assert_includes Registry.help_summary, "help0 at master0: /help [command]"
+    assert_includes Registry.help_summary, "/exit /quit"
+  end
+
   # A `*_commands` method is a table of verbs. Only control_commands exists,
   # and build merges it; slash_commands is the help list, not a table.
   def test_mobile_platform_commands_replace_the_public_device_surface
