@@ -24,7 +24,7 @@ require_relative "source/typography_contract"
 require_relative "rendered_suite"
 
 module Deploy
-  # Composite: every layout/CSS professional gate. CSS must pass constitution + auditor + dialect.
+  # Composite: source laws plus rendered evidence. CSS must pass constitution + auditor + dialect.
   # When GATE_AUTOFIX=1, leaves that support mechanical fix remeasure themselves;
   # the suite then re-runs the full leaf list once more after any patches.
   class LayoutSuiteGate
