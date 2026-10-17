@@ -1,5 +1,5 @@
 .newsletter-capture {
-  inline-size: min(42rem, calc(100vw - 2rem));
+  inline-size: calc(100vw - 1rem);
   max-inline-size: 42rem;
   padding: 0;
   border: 0;
@@ -17,7 +17,7 @@
 
 .newsletter-capture-art {
   display: grid;
-  min-block-size: 11rem;
+  min-block-size: 8rem;
   place-items: end start;
   padding: var(--space-4);
   background: var(--text);
@@ -40,7 +40,7 @@
 }
 
 .newsletter-capture-copy {
-  padding: var(--space-5);
+  padding: var(--space-4);
 }
 
 .newsletter-capture-kicker {
@@ -148,16 +148,16 @@
   }
 }
 
-@media (max-width: 639px) {
+@media (min-width: 640px) {
   .newsletter-capture {
-    inline-size: calc(100vw - 1rem);
+    inline-size: min(42rem, calc(100vw - 2rem));
   }
 
   .newsletter-capture-art {
-    min-block-size: 8rem;
+    min-block-size: 11rem;
   }
 
   .newsletter-capture-copy {
-    padding: var(--space-4);
+    padding: var(--space-5);
   }
 }
