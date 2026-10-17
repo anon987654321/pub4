@@ -60,6 +60,9 @@ body.vertical-marketplace .storefront-utility--bol {
   justify-content: center;
   gap: 32px;
   padding: 0 var(--bol-gutter);
+  padding-block-start: var(--safe-top);
+  padding-inline-start: calc(var(--bol-gutter) + var(--safe-left));
+  padding-inline-end: calc(var(--bol-gutter) + var(--safe-right));
   border-bottom: 1px solid var(--bol-rule);
   background: unset;
   color: var(--bol-muted);
