@@ -27,6 +27,7 @@ beats:
   finding: "Something went wrong or turned up. Say it plainly and what it means for the task."
   closing: "The work is finished. Close the story in one or two sentences and say how it ended."
   gap: "Nothing new has happened. In one short sentence say the work continues and what it is on, using only the story so far."
+  incomplete: "The run stopped without a complete result. State the blocker plainly; do not imply success."
 
 prompt: |
   Story so far:
@@ -44,27 +45,32 @@ prompt: |
 # the beat's number, so a run of beats does not repeat itself.
 templates:
   opening:
-    - "A new task begins. %{gist}."
-    - "Here is where it starts. %{gist}."
+    - "The task begins. %{gist}."
+    - "The first result is this: %{gist}."
   middle:
     - "Next, %{gist}."
     - "Then %{gist}."
-    - "After that, %{gist}."
-    - "The work moves on. %{gist}."
+    - "The next result is this: %{gist}."
+    - "The work now shows this: %{gist}."
   finding:
-    - "Something turned up. %{gist}."
-    - "A problem. %{gist}."
+    - "The important finding is this: %{gist}."
+    - "A problem needs attention: %{gist}."
   closing:
-    - "That is the end of it. %{gist}."
-    - "The task is done. %{gist}."
+    - "The task is complete. %{gist}."
+    - "The run finished. %{gist}."
+  incomplete:
+    - "The run stopped without verification. %{gist}."
+    - "The run did not finish cleanly. %{gist}."
   gap:
-    - "The work goes on. The last thing was this: %{gist}."
-    - "Still at it. The last word was: %{gist}."
+    - "The work is still underway. The latest confirmed result is %{gist}."
+    - "The task continues. The last confirmed result is %{gist}."
 
 # Events that end a task (only a unit report closing, never one unit finishing: spoken as the closing beat) and events that are
 # findings (the beat is told as a finding). Case-insensitive.
 closing_events:
-  - '\A[\w.\-]+\d+: (?:complete|incomplete)\b'
+  - '\A[\w.\-]+\d+: complete\b'
+incomplete_events:
+  - '\A[\w.\-]+\d+: incomplete\b'
 finding_events:
   - '\b(?:fail|failed|failure|error|errored|broken|missing|timeout|timed out|raised|refused|unreachable|forbidden|inconclusive)\b'
 
@@ -73,6 +79,10 @@ finding_events:
 ignore_events:
   - '\A(?:voice|tts|narr)\d+'
   - '\Allm\d+: (?:tokens|cost|usage)'
+  - '\Aobs\d+: \d+/\d+ files\b'
+  - '\Alaw\d+: lexical (?:scan pass|scanner idle)\b'
+  - '\A[+x] route \d+s\z'
+  - '\Agate\d+: .*\brunning \d+s, elapsed \d+s\z'
   - '\A[\W_]*\z'
 
 # Redaction, applied to every event before it reaches a model or a speaker.

@@ -30,6 +30,13 @@ module Master
         Regexp::IGNORECASE,
       ).freeze
 
+      # These terms carry uncertainty, time, or ability. Removing them can turn
+      # "could not verify" into the ungrammatical and misleading "not verify".
+      MEANING_BEARING_HEDGES = (
+        %w[will would might could may perhaps maybe possibly probably likely seems appears
+           muligens kanskje muligvis mulig] + ["virker som", "kan hende", "det kan hende"]
+      ).freeze
+
       def self.call(text, language: nil) = new(language:).call(text)
       def self.brevity(text, language: nil) = new(language:).brevity(text)
 
@@ -66,7 +73,13 @@ module Master
         cleaned = text.sub(SYCOPHANCY_RE, "")
         rules.fetch("preambles", []).each { |phrase| cleaned = cleaned.sub(/\A\s*#{Regexp.escape(phrase)}\s*/i, "") }
         rules.fetch("endings", []).each { |phrase| cleaned = cleaned.sub(/\s*#{Regexp.escape(phrase)}\s*\z/i, "") }
-        hedges_for(cleaned).each { |hedge| cleaned = cleaned.gsub(/\b#{Regexp.escape(hedge)}\b\s*/i, "") }
+        hedges_for(cleaned).each do |hedge|
+          next if MEANING_BEARING_HEDGES.include?(hedge.to_s.downcase)
+
+          # Remove padding only at a sentence opening. A global substitution
+          # used to leave broken grammar when it deleted words inside a clause.
+          cleaned = cleaned.sub(/\A\s*#{Regexp.escape(hedge)}\b\s*/i, "")
+        end
         cleaned
       end
 

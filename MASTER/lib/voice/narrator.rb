@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "monitor"
+require_relative "strunk_pass"
 
 module Master
   module Voice
@@ -22,7 +23,7 @@ module Master
     # Knobs are in voice.yml under `narration:`. Off: enabled: false there,
     # MASTER_NARRATE=0, or /narrate off. Off means Dmesg speaks its plain line.
     class Narrator
-      Event = Data.define(:text, :raw, :at, :closing, :finding)
+      Event = Data.define(:text, :raw, :at, :closing, :finding, :incomplete)
 
       FALSE_VALUES = %w[0 off false no].freeze
       REFUSAL = /\A(?:i(?:'m| am)? (?:sorry|unable)|i can(?:'|no)t|as an ai\b)/i
@@ -111,9 +112,14 @@ module Master
 
         now = @clock.call
         accepted = @lock.synchronize do
-          next false if @pending.last&.text == text
+          # Identical progress lines in the same batch add no information.
+          next false if @pending.any? { |event| event.text == text }
 
-          @pending << Event.new(text:, raw: raw.to_s, at: now, closing: @script.closing?(text), finding: @script.finding?(text))
+          @pending << Event.new(
+            text:, raw: raw.to_s, at: now,
+            closing: @script.closing?(text), finding: @script.finding?(text),
+            incomplete: @script.incomplete?(text),
+          )
           @pending.shift while @pending.size > @config.fetch("max_events_per_beat") * 3
           @task_open = true
           @last_event_at = now
@@ -207,7 +213,10 @@ module Master
       def due_kind(now)
         if @pending.any?
           waited = now - @pending.first.at
-          return nil unless @pending.any?(&:closing) || waited >= @config.fetch("batch_window_s") || @pending.size >= @config.fetch("max_events_per_beat")
+          return nil unless @pending.any?(&:closing) || @pending.any?(&:incomplete) ||
+                            waited >= @config.fetch("batch_window_s") || @pending.size >= @config.fetch("max_events_per_beat")
+          # Incomplete is terminal, but it must never be narrated as success.
+          return :incomplete if @pending.any?(&:incomplete)
           return :closing if @pending.any?(&:closing)
           return :opening if @beats.zero?
 
@@ -240,6 +249,7 @@ module Master
       def gist_event(kind, events)
         case kind
         when :closing then events.reverse.find(&:closing) || events.last
+        when :incomplete then events.reverse.find(&:incomplete) || events.find(&:finding) || events.last
         when :finding then events.find(&:finding) || events.last
         when :gap then nil
         else events.last
@@ -290,7 +300,9 @@ module Master
       # The model's reply, reduced to sentences it may be allowed to say; empty
       # when any rule is broken, which sends the beat to the template.
       def accept(text, job)
-        clean = Sanitizer.clean(text, @script)
+        # Filter narration before validation and playback. Preserve qualifiers
+        # such as "could not" because they change the meaning of a finding.
+        clean = Master::Voice::StrunkPass.call(Sanitizer.clean(text, @script))
         return [] if clean.empty? || clean.match?(REFUSAL)
 
         sentences = clean.split(/(?<=[.!?])\s+/).map(&:strip).reject(&:empty?).first(@config.fetch("max_sentences_per_beat"))
@@ -310,7 +322,10 @@ module Master
 
       def template_sentences(job, gist)
         line = @script.template(job[:kind], job[:number], gist)
-        line ? [Sanitizer.clean(line, @script)] : []
+        return [] unless line
+
+        clean = Master::Voice::StrunkPass.call(Sanitizer.clean(line, @script))
+        clean.empty? ? [] : [clean]
       end
 
       def normal(sentence) = sentence.downcase.gsub(/[^a-z0-9 ]/, "").squeeze(" ").strip
@@ -341,7 +356,7 @@ module Master
             @beats += 1
             @last_gist = job[:gist_event]&.text || @last_gist
           end
-          reset_task if told.any? && job[:kind] == :closing && @pending.none?
+          reset_task if told.any? && %i[closing incomplete].include?(job[:kind]) && @pending.none?
         end
         told.empty? ? :echo : :spoken
       end

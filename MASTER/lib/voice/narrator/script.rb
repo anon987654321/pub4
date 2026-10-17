@@ -25,6 +25,7 @@ module Master
         def beat_instruction(kind) = @data.dig("beats", kind.to_s).to_s
 
         def closing?(text) = match_any?(@data["closing_events"], text)
+        def incomplete?(text) = match_any?(@data["incomplete_events"], text)
         def finding?(text) = match_any?(@data["finding_events"], text)
         def ignored?(text) = match_any?(@data["ignore_events"], text)
 
