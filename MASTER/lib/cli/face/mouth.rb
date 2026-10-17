@@ -92,9 +92,13 @@ module Master
                 show_direct_fallback
               end
             else
-              spoken ||= Master::Device::Audio.speak(part) if @device.android?
-              spoken ||= direct_speak(part)
-              unless spoken
+              # Accumulate the result only after trying this part. A short-
+              # circuiting spoken ||= fallback(part) silently drops later
+              # chunks once any earlier chunk has succeeded.
+              part_spoken = Master::Device::Audio.speak(part) if @device.android?
+              part_spoken = direct_speak(part) unless part_spoken
+              spoken ||= !!part_spoken
+              unless part_spoken
                 @last_error = "speech synthesis failed"
                 show_direct_fallback
               end
