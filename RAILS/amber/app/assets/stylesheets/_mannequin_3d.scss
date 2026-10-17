@@ -22,7 +22,7 @@
 
 .amber-look-stage {
   position: relative;
-  height: min(70svh, 600px);
+  height: min(70svh, 560px);
   min-height: 430px;
   margin-block-start: 0;
   isolation: isolate;
@@ -104,7 +104,7 @@
 
 .mannequin-stage {
   position: relative;
-  width: min(420px, 78vw);
+  width: min(360px, 90vw);
   min-height: 520px;
   background: transparent;
   overflow: visible;
@@ -116,6 +116,10 @@
 }
 
 @media (min-width: 768px) {
+  .mannequin-stage {
+    width: min(420px, 78vw);
+  }
+
   .amber-look {
     grid-template-columns: minmax(9rem, .34fr) minmax(0, 1.66fr);
     gap: clamp(1.25rem, 3vw, 3rem);
@@ -154,17 +158,6 @@
 
   .amber-look-slide {
     min-width: min(100%, 330px);
-  }
-}
-
-@media (max-width: 767px) {
-  .amber-look-stage {
-    height: min(70svh, 560px);
-    min-height: 430px;
-  }
-
-  .mannequin-stage {
-    width: min(360px, 90vw);
   }
 }
 
