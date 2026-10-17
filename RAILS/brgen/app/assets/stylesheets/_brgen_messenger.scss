@@ -45,8 +45,8 @@
   color: var(--text-secondary);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  text-transform: none;
+  letter-spacing: var(--tracking-normal);
 }
 .messenger-artifact-image {
   inline-size: 100%;
