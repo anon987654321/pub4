@@ -345,8 +345,9 @@ class DesignContractTest < Minitest::Test
     refute_match(/@media\s*\(\s*max-width\b/, source)
     assert_match(/\.affiliate_feed_unit\s*\{[^}]*padding:\s*var\(--space-2\);/m, mobile)
     assert_match(/\.affiliate_feed_grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*gap:\s*var\(--space-2\);/m, mobile)
-    assert_match(/\.affiliate_feed_unit\s*\{[^}]*padding:\s*var\(--space-3\);/m, medium)
-    assert_match(/\.affiliate_feed_grid\s*\{[^}]*gap:\s*var\(--space-3\);/m, medium)
+    assert_match(/@media \(min-width: 480px\) \{[\s\S]*?\.affiliate_feed_unit\s*\{[^}]*padding:\s*var\(--space-3\);/m, source)
+    assert_match(/@media \(min-width: 480px\) \{[\s\S]*?\.affiliate_feed_grid\s*\{[^}]*gap:\s*var\(--space-3\);/m, source)
+    assert_match(/@media \(min-width: 480px\) \{[\s\S]*?\.affiliate_feed_unit--brgen\s*\{[^}]*margin-inline:\s*auto;/m, source)
     assert_match(/@media \(min-width: 768px\) \{[\s\S]*?\.affiliate_feed_grid\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/m, source)
   end
 
