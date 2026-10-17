@@ -86,7 +86,7 @@ body.vertical-tv .show-grid {
 }
 
 body.vertical-tv .show-grid {
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xl), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-xl)), 1fr));
   padding: 0 var(--space-4) var(--space-6);
 }
 
