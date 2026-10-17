@@ -7,7 +7,7 @@
 
 .feed-post {
   padding: var(--space-4, 1rem) 0;
-  border-bottom: 1px solid var(--border);
+  border: 0;
   transition: background var(--transition-fast) var(--ease-out);
 }
 
@@ -36,8 +36,8 @@
 .subscribe-box {
   margin: var(--space-6, 1.5rem) 0;
   padding: var(--space-4, 1rem);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border: 0;
   background: var(--surface-elevated);
   max-width: var(--measure);
 }
