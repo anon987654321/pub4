@@ -29,6 +29,30 @@ class TestGateCoverageReporting < Minitest::Test
     assert_includes line, "1 error(s)"
   end
 
+  def test_layout_suite_promotes_inconclusive_rendered_evidence_to_a_failure
+    suite = Deploy::LayoutSuiteGate.new
+    aggregate = Deploy::GateResult.new
+    rendered = Deploy::GateResult.new.inconclusive!("no Chrome")
+
+    suite.require_rendered_evidence!(aggregate, rendered)
+
+    refute aggregate.ok?
+    assert_match(/rendered evidence is incomplete/, aggregate.failures.first)
+    assert_match(/no Chrome/, aggregate.failures.first)
+  end
+
+  def test_layout_suite_promotes_soft_visual_findings_to_a_failure
+    suite = Deploy::LayoutSuiteGate.new
+    aggregate = Deploy::GateResult.new
+    rendered = Deploy::GateResult.new.checked!
+    rendered.fail("visual baseline missing", severity: :soft)
+
+    suite.require_rendered_evidence!(aggregate, rendered)
+
+    refute aggregate.ok?
+    assert_match(/unapproved visual finding/, aggregate.failures.first)
+  end
+
   def test_reachability_sweep_reports_failure_details_and_counts_omitted_warnings
     reachability = Master::Fix::Reachability.allocate
     coverage = ["coverage0: layout/CssConstitutionGate FAILED — 4 check(s), 2 failure(s)"]
