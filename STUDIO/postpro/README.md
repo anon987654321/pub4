@@ -30,26 +30,34 @@ the folder; it is output, and git should not carry it.
 
 ## The checks that catch what does not raise
 
-The command `--vocab-check` is the one to run after touching any table. It verifies that every
-preset names an effect with an implementation and a stock and lens that exist, that a stock has
-a row in every per-stock table its chain reads, that every key a preset declares has a step in
-its chain that reads it, that every film curve is monotonic, and that nothing is defined which
-neither a preset nor a recipe can reach. It exits non-zero on a problem.
+Run `--vocab-check` after touching a preset, an effect dispatch arm, a stock table, or a recipe
+adapter. The check uses Prism's Ruby AST rather than stopping at the first textual `end`:
+nested blocks cannot truncate method bodies, and comments or strings cannot masquerade as
+executable effects or calls. It checks that every preset step has a real `case fx` arm; stocks,
+print stocks and lenses exist and remain reachable; every stock has the required per-stock
+table rows; every film curve is monotonic; recipe adapters match callable effects; and effects
+are reachable from a preset or a recipe.
 
-It exists because none of those failures raise. An effect with no implementation once returned
-the image unchanged while the log reported the step as done, and a colour temperature that
-`--describe-preset` printed but no step applied is a lie and not a look. Table-driven
-pipelines fail by producing a picture slightly wrong beside a log that agrees with the preset.
-The last recorded run reported eighty-two presets, fourteen stocks, eleven lenses, a
-hundred and eight effects, and twenty key-reader gaps: seventeen missing temperature steps and
-two missing print-stock steps in recovered `legacy_` and `dilla_` presets, plus one missing lens
-step. The source chains have since been repaired to apply their declared settings. The live
-`--vocab-check` has not yet been rerun after the repairs, so the vocabulary must not be called
-clean until that command completes successfully.
+Preset fields have a closed vocabulary. Built-in fields and `iso` are explicit; every other
+declared field must have an effect-reader contract. For each declared reader, the checker
+proves that the corresponding `case fx` arm passes that value into the matching effect call.
+Merely mentioning `p[:temp]` in a comment, string, disconnected expression, or neighboring
+effect arm does not satisfy the contract. It also follows executable call paths from every
+rendering entry point to `apply_finishing_grain`, then runs a tiny in-memory 8×8 probe through
+representative colour, monochrome and print presets to catch failures that table inspection
+cannot see. A problem produces a non-zero result.
 
-The other introspection flags process no image and are equally cheap: `--list-presets`,
-`--list-stocks`, `--list-lenses`, `--describe-preset`, `--fit-grain`, `--export-lut` and
-`--css-filter`.
+These guards exist because table-driven failures rarely raise by themselves: an effect with no
+implementation once returned the input unchanged while the log reported the step as done, and a
+temperature that `--describe-preset` printed but no step applied was a lie and not a look. A
+historical run found twenty-one key-reader gaps across the recovered presets; those preset chains
+were subsequently repaired. That historical count is not current verification. The live
+`--vocab-check` and pinned Ruby/libvips regression suites still need to pass before the current
+vocabulary or rendered behavior can be called clean.
+
+The table/list flags `--list-presets`, `--list-stocks`, `--list-lenses` and
+`--describe-preset` do not need an input photo. `--fit-grain` measures an image, while
+`--export-lut` builds a LUT and `--css-filter` emits a CSS approximation.
 
 ## The model
 
