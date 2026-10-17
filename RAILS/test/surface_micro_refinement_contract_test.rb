@@ -21,14 +21,15 @@ class SurfaceMicroRefinementContractTest < Minitest::Test
     assert_equal 288, source.lines.count { |line| line.match?(/^\d{3}\. /) }
   end
 
-  def test_shared_stacks_forward_the_surface_pass
+  def test_shared_stacks_keep_the_experimental_surface_pass_out_of_production
     STACKS.each do |relative|
       source = File.read(File.join(ROOT, relative), encoding: "UTF-8")
-      assert_includes source, '@forward "surface_micro_refinements";'
+      refute_includes source, '@forward "surface_micro_refinements";'
+      refute_includes source, '@forward "surface_micro_refinements_two";'
     end
   end
 
-  def test_pass_targets_requested_surfaces_and_removes_box_chrome
+  def test_archived_pass_records_its_historical_targets
     source = File.read(SHEET, encoding: "UTF-8")
     assert_includes source, ".nearby-chat-widget-panel"
     assert_includes source, ".radio-track-card"
