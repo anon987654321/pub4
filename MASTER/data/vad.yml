@@ -1,0 +1,22 @@
+# Voice activity detection — single source for Ruby Vad and operator docs.
+# Session and mic capture read these thresholds; do not duplicate in code.
+#
+# backend: auto tries Silero ONNX when model + onnxruntime exist, else energy.
+# energy always works (OpenBSD, CI, no native deps).
+
+vad:
+  backend: auto # auto | energy | silero
+  sample_rate: 16000
+  # Listening / end-of-turn
+  speech_threshold: 0.45
+  silence_threshold: 0.30
+  min_speech_ms: 250
+  hangover_ms: 700
+  # Barge-in while MASTER is speaking (stricter)
+  barge_speech_threshold: 0.60
+  barge_min_speech_ms: 350
+  # Energy backend mapping
+  energy_floor: 0.008
+  energy_ceiling: 0.25
+  # Silero (optional). Path may also be set via MASTER_SILERO_VAD_PATH.
+  silero_model_path: vendor/silero/silero_vad.onnx
