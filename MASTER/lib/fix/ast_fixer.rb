@@ -2,7 +2,7 @@
 
 require "prism"
 require "set"
-require "open3"
+require_relative "../io/exec"
 require "strscan"
 require_relative "ast_fixer/syntax_transforms"
 require_relative "ast_fixer/web_transforms"
@@ -236,7 +236,7 @@ module Master
         end
 
         def node_accepts?(src, mode)
-          _out, status = Open3.capture2e("node", "--input-type=#{mode}", "--check", stdin_data: src)
+          _out, status = Master::Io::Exec.capture2e("node", "--input-type=#{mode}", "--check", stdin_data: src)
           status.success?
         rescue StandardError
           false
