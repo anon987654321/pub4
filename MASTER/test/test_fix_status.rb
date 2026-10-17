@@ -78,7 +78,7 @@ class TestFixStatus < Minitest::Test
 
   def test_status_exposes_terminal_reason_and_bounded_convergence_receipt
     run = run_record("RAILS", state: "validation_failed", pid: 0).merge(
-      "message" => "validation failed: rendered output differs",
+      "message" => "validation failed:\nrendered output differs",
       "finished_at" => "2026-10-17T20:45:00Z",
       "evidence" => {
         "observations" => 3, "files_observed" => 42, "findings" => 7,
