@@ -255,31 +255,55 @@ detail: [
         (HELP_TOPICS.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
       end
 
+      # This taxonomy feeds both the terminal overview and the web palette.
+      # Keep categories here rather than duplicating a second menu in JavaScript.
+      COMMAND_CATEGORIES = {
+        "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
+        "session" => "session", "clear" => "session", "undo" => "session",
+        "model" => "model", "plugin" => "model", "wake" => "model",
+        "review" => "review", "critique" => "review", "laws" => "review",
+        "why" => "review", "explain" => "review", "prove" => "review",
+        "commit" => "change", "deploy" => "change", "snapshot" => "change",
+        "orders" => "change", "wishlist" => "change",
+        "face" => "interface", "voice" => "interface", "narrate" => "interface", "size" => "interface",
+        "play" => "media", "android" => "media", "ios" => "media",
+        "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session",
+      }.freeze
+
+      CATEGORY_ORDER = %w[fix health session model review change interface media constitution help].freeze
+
+      CATEGORY_LABELS = {
+        "fix" => "fix", "health" => "health", "session" => "session",
+        "model" => "model", "review" => "review", "change" => "change",
+        "interface" => "interface", "media" => "media",
+        "constitution" => "constitution", "help" => "help",
+      }.freeze
+
       def command_surface
         slash_commands.filter_map do |slash|
           key = slash.delete_prefix("/")
-          next { cmd: slash, hint: "exit the session" } if %w[exit quit].include?(key)
-
           topic = HELP_TOPICS[key]
-          next unless topic
+          next unless topic || %w[exit quit].include?(key)
 
-          { cmd: slash, hint: topic[:summary] }
+          {
+            cmd: slash,
+            hint: topic ? topic[:summary] : "exit the session",
+            category: COMMAND_CATEGORIES.fetch(key, "other"),
+          }
         end
       end
 
       def help_summary
-        [
-          "fix0 at master0: /fix [path] — observe, repair, verify, repeat",
-          "health0 at master0: /status /doctor /events",
-          "session0 at master0: /session /clear /undo",
-          "model0 at master0: /model /plugin /wake",
-          "review0 at master0: /review /critique /laws /why /explain /prove",
-          "change0 at master0: /commit /deploy /snapshot /orders /wishlist",
-          "interface0 at master0: /face /voice /narrate /size",
-          "media0 at master0: /play /android /ios",
-          "constitution0 at master0: /soul",
-          "help0 at master0: /help [command] shows details; /exit /quit leave",
-        ].join("\n")
+        CATEGORY_ORDER.map do |category|
+          commands = COMMAND_CATEGORIES.filter_map do |name, assigned|
+            "/#{name}" if assigned == category && name != "quit"
+          end
+          next if commands.empty?
+
+          commands = commands.map { |command| command == "/fix" ? "/fix [path]" : command }
+          commands.unshift("/help [command]") if category == "help"
+          "#{category}0 at master0: #{commands.join(' ')}"
+        end.compact.join("\n")
       end
     end
   end
