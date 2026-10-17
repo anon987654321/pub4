@@ -9,7 +9,7 @@ class CliFaceContractTest < Minitest::Test
     File.read(File.join(ROOT, path))
   end
 
-  def test_terminal_face_uses_the_constitutional_state_vocabulary
+  def test_terminal_face_declares_supported_state_vocabulary
     face = read("lib/cli/face.rb")
     laws = read("data/laws.yml")
 
@@ -17,7 +17,8 @@ class CliFaceContractTest < Minitest::Test
       assert_includes face, state
     end
 
-    assert_match(/modes:s*[idle, listening, thinking, working, speaking, warning, error, sleeping, ready]/, laws)
+    assert_match(/STATES\s*=\s*%i\[idle listening thinking working speaking warning error sleeping ready\]/, face)
+    assert_match(/terminal_law_ring:\s*true/, laws)
   end
 
   def test_terminal_face_does_not_direct_voice_users_to_press_enter
