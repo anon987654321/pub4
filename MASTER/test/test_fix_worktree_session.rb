@@ -211,7 +211,7 @@ def test_include_dirty_copies_tracked_edits_without_committing_them
 end
 
 def test_zero_exit_with_incomplete_terminal_report_is_not_success
-    with_repo(worker: "#!/usr/bin/env ruby\\nputs \\"review0: incomplete, validation unavailable\\"\\nexit 0\\n") do |root|
+    with_repo(worker: "#!/usr/bin/env ruby\nputs \"review0: incomplete, validation unavailable\"\nexit 0\n") do |root|
       result = nil
       out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }
 
@@ -226,7 +226,7 @@ def test_zero_exit_with_incomplete_terminal_report_is_not_success
   def test_worker_timeout_terminates_the_group_and_finishes_with_a_terminal_result
     previous = ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"]
     ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"] = "1"
-    with_repo(worker: "#!/usr/bin/env ruby\\nfork { sleep 30 }\\nsleep 30\\n") do |root|
+    with_repo(worker: "#!/usr/bin/env ruby\nfork { sleep 30 }\nsleep 30\n") do |root|
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       result = nil
       out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }

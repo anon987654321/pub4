@@ -48,6 +48,8 @@ module Master
 
       def run(command:, foreign_paths: [], proof_trees: nil, include_dirty: false)
         validate_checkout!
+        configured_timeout_s("MASTER_FIX_WORKTREE_TIMEOUT_S")
+        configured_timeout_s("MASTER_FIX_PROOF_TIMEOUT_S")
         free_gb = disk_free_gb
         return refused("cannot measure free disk space; worktree was not created") unless free_gb
         return refused(format("disk preflight: %.2f GB free, %.2f GB required; worktree was not created",
@@ -84,8 +86,11 @@ module Master
         status, lines = run_child(worktree, command)
         terminal_failure = worker_terminal_failure(lines)
         timeout_line = lines.find { |line| line.match?(/child timeout after \d+s/i) }
+        cancelled_line = lines.find { |line| line.match?(/child cancelled by operator/i) }
         failure_reason = if timeout_line
                            timeout_line.sub(/\Aworktree0:\s*/i, "")
+                         elsif cancelled_line
+                           "worker cancelled by operator"
                          elsif terminal_failure
                            "worker reported an incomplete terminal state: #{terminal_failure.strip}"
                          elsif !status
@@ -134,7 +139,14 @@ module Master
         proof_ok, proof_lines = run_proof(worktree, proof_trees:)
         unless proof_ok
           timeout = proof_lines.find { |line| line.match?(/child timeout after \d+s/i) }
-          reason = timeout ? "final proof timed out; worktree and branch retained" : "final proof failed; worktree and branch retained"
+          cancelled = proof_lines.any? { |line| line.match?(/child cancelled by operator/i) }
+          reason = if timeout
+                     "final proof timed out; worktree and branch retained"
+                   elsif cancelled
+                     "final proof cancelled by operator; worktree and branch retained"
+                   else
+                     "final proof failed; worktree and branch retained"
+                   end
           return preserve(worktree:, branch:, base:, head:, summary: reason, lines: proof_lines)
         end
 
