@@ -38,6 +38,31 @@ class AnalogCapabilitiesTest < Minitest::Test
     assert_nil report.fetch("capabilities").first.fetch("enabled")
   end
 
+  def test_readiness_promotion_requires_immutable_implementation_and_test_evidence
+    verified = {
+      status: :verified,
+      implementation: "STUDIO/postpro/postpro.rb#halation".freeze,
+      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation".freeze
+    }.freeze
+    unavailable = {
+      status: :unavailable,
+      evidence: "provider schema has no such field".freeze,
+      regression_test: "STUDIO/test/test_tools_replicate.rb#test_missing_field".freeze
+    }.freeze
+    missing_test = { status: :verified, implementation: "STUDIO/postpro/postpro.rb#halation".freeze }.freeze
+    mutable_evidence = {
+      status: :verified,
+      implementation: "STUDIO/postpro/postpro.rb#halation",
+      regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation".freeze
+    }.freeze
+
+    assert Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, verified)
+    assert Contract.valid_implementation_record?(:replicate, :timeout_cancellation, unavailable)
+    refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, missing_test)
+    refute Contract.valid_implementation_record?(:postpro, :red_sensitive_halation, mutable_evidence)
+    refute Contract.valid_implementation_record?(:postpro, :not_a_catalogued_direction, verified)
+  end
+
   def test_profiles_are_deterministic_without_promoting_unverified_directions
     profile = Contract.profile(:dilla, intensity: 0.73, seed: 808)
     assert_equal 808, profile[:seed]
