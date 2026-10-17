@@ -1,6 +1,8 @@
 /* Final bol header geometry for the dedicated variant markup. */
 body.vertical-marketplace {
-  --bol-utility-block: 36px;
+  // The utility strip is the first painted storefront row in standalone iOS.
+  // Count the safe-area inset in its height so the menu offset below follows it.
+  --bol-utility-block: calc(36px + var(--safe-top));
   --bol-mainnav-block: 48px;
   --bol-brand-row-block: 48px;
   --bol-search-control-block: 44px;
