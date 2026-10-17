@@ -19,9 +19,10 @@ const faceManifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8
 
 function sourceSetDigest(relativePaths) {
   const hash = createHash("sha256");
-  for (const relativePath of [...relativePaths].sort()) {
+  const sorted = [...relativePaths].sort();
+  for (const [index, relativePath] of sorted.entries()) {
+    if (index > 0) hash.update("\0");
     hash.update(readFileSync(join(root, relativePath)));
-    hash.update("\0");
   }
   return hash.digest("hex");
 }
