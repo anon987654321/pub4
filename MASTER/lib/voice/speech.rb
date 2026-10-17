@@ -389,6 +389,8 @@ module Master
         return ENV["MASTER_TTS_MODE"] if ENV.key?("MASTER_TTS_MODE")
 
         cfg = Transcendent.load_config
+        return "transcendent" if Engines.openbsd? && Transcendent.enabled?
+
         cfg["default_mode"].to_s == "transcendent" && Transcendent.enabled? ? "transcendent" : "classic"
       end
 
