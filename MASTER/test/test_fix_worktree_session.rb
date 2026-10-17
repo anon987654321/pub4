@@ -210,7 +210,39 @@ def test_include_dirty_copies_tracked_edits_without_committing_them
   end
 end
 
-def test_failed_worker_that_wrote_nothing_removes_worktree_and_branch
+def test_zero_exit_with_incomplete_terminal_report_is_not_success
+    with_repo(worker: "#!/usr/bin/env ruby\\nputs \\"review0: incomplete, validation unavailable\\"\\nexit 0\\n") do |root|
+      result = nil
+      out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }
+
+      refute result.ok, err + out
+      assert_match(/incomplete terminal state/, result.summary)
+      refute_match(/clean, no changes to publish/, result.summary)
+      refute File.exist?(result.worktree)
+      assert_empty git_output(root, "branch", "--list", result.branch)
+    end
+  end
+
+  def test_worker_timeout_terminates_the_group_and_finishes_with_a_terminal_result
+    previous = ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"]
+    ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"] = "1"
+    with_repo(worker: "#!/usr/bin/env ruby\\nfork { sleep 30 }\\nsleep 30\\n") do |root|
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = nil
+      out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      refute result.ok, err + out
+      assert_match(/timeout after 1s/, result.summary)
+      assert_operator elapsed, :<, 8, "timed out child or descendant kept the run alive"
+      refute File.exist?(result.worktree)
+      assert_empty git_output(root, "branch", "--list", result.branch)
+    end
+  ensure
+    previous.nil? ? ENV.delete("MASTER_FIX_WORKTREE_TIMEOUT_S") : ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"] = previous
+  end
+
+  def test_failed_worker_that_wrote_nothing_removes_worktree_and_branch
   with_repo(worker: "#!/usr/bin/env ruby\nexit 3\n") do |root|
     result = nil
     out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }

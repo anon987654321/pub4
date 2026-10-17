@@ -82,16 +82,26 @@ module Master
         announce("lane state carried: #{carried.join(", ")}") unless carried.empty?
 
         status, lines = run_child(worktree, command)
-        unless status
+        terminal_failure = worker_terminal_failure(lines)
+        timeout_line = lines.find { |line| line.match?(/child timeout after \d+s/i) }
+        failure_reason = if timeout_line
+                           timeout_line.sub(/\Aworktree0:\s*/i, "")
+                         elsif terminal_failure
+                           "worker reported an incomplete terminal state: #{terminal_failure.strip}"
+                         elsif !status
+                           "worker exited unsuccessfully"
+                         end
+
+        if failure_reason
           failed_head = rev_parse(worktree, "HEAD")
           if failed_head == base && own_dirty(worktree, included).empty?
             cleanup_success(worktree:, branch:)
-            announce("worker failed before writing anything, worktree and branch removed")
-            return Result.new(false, "worker failed; nothing was written, worktree removed", base, failed_head, branch, worktree)
+            announce("#{failure_reason}; no changes were written, worktree and branch removed")
+            return Result.new(false, "#{failure_reason}; no changes were written, worktree removed", base, failed_head, branch, worktree)
           end
           return preserve(
             worktree:, branch:, base:, head: failed_head,
-            summary: "worker failed; worktree and branch retained for recovery",
+            summary: "#{failure_reason}; partial work retained and not published",
             lines:
           )
         end
@@ -123,11 +133,9 @@ module Master
 
         proof_ok, proof_lines = run_proof(worktree, proof_trees:)
         unless proof_ok
-          return preserve(
-            worktree:, branch:, base:, head:,
-            summary: "final proof failed; worktree and branch retained",
-            lines: proof_lines
-          )
+          timeout = proof_lines.find { |line| line.match?(/child timeout after \d+s/i) }
+          reason = timeout ? "final proof timed out; worktree and branch retained" : "final proof failed; worktree and branch retained"
+          return preserve(worktree:, branch:, base:, head:, summary: reason, lines: proof_lines)
         end
 
         if (dirty = own_dirty(worktree, included)).any?
@@ -151,8 +159,21 @@ module Master
           worktree,
         )
       rescue StandardError => e
-        announce("failed, #{e.class}: #{e.message}")
-        Result.new(false, "worktree failed: #{e.class}: #{e.message}", base, head, branch, worktree)
+        detail = "worktree failed, #{e.class}: #{e.message}"
+        announce(detail)
+        if defined?(worktree) && worktree && File.directory?(worktree)
+          recovered_head = begin
+            git!("rev-parse", "HEAD", chdir: worktree)
+          rescue StandardError
+            head
+          end
+          announce("retained worktree: #{worktree}")
+          announce("retained branch: #{branch}") if defined?(branch) && branch
+          announce("inspect: git -C #{worktree} status --short && git -C #{worktree} log --oneline")
+          Result.new(false, "#{detail}; retained worktree: #{worktree}; branch: #{branch}", base, recovered_head, branch, worktree)
+        else
+          Result.new(false, detail, base, head, branch, worktree)
+        end
       ensure
         cleanup_parent(parent) if defined?(parent) && parent && defined?(worktree) && worktree && !File.exist?(worktree)
       end
@@ -255,6 +276,14 @@ module Master
       def refused(summary)
         announce(summary)
         Result.new(false, "worktree refused: #{summary}", nil, nil, nil, nil)
+      end
+
+      # Exit status zero is not sufficient: the CLI can print an explicit
+      # incomplete terminal result. Never report that run as a clean success.
+      def worker_terminal_failure(lines)
+        Array(lines).find do |line|
+          line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading)\b/i)
+        end
       end
 
       def ancestor?(ancestor, descendant)
