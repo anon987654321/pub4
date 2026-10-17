@@ -16,6 +16,16 @@ class AnalogCapabilitiesTest < Minitest::Test
     assert Contract.validate!
   end
 
+  def test_catalogue_rows_and_labels_cannot_be_mutated_after_validation
+    entry = Contract.fetch(:hit_microtiming)
+
+    assert_raises(FrozenError) { entry[:enabled] = true }
+    assert_raises(FrozenError) { entry[:status] = :verified }
+    assert_raises(FrozenError) { entry[:description].replace("ready") }
+    refute JSON.parse(Contract.report(:dilla)).fetch("complete"),
+           "a consumer must not be able to promote a cached catalogue row"
+  end
+
   def test_readiness_report_separates_catalogue_coverage_from_verified_support
     report = JSON.parse(Contract.report(:dilla))
 
