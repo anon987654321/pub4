@@ -23,14 +23,14 @@
   border-block-end: 1px solid var(--border);
 }
 
-.radio-home-eyebrow,
-.radio-section-kicker {
+.radio-home-label,
+.radio-section-label {
   margin: 0 0 8px;
   color: var(--accent);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
 }
 
 .radio-home-header h1,
@@ -45,7 +45,7 @@
   font-size: clamp(2rem, 5vw, 4rem);
 }
 
-.radio-home-header p:not(.radio-home-eyebrow) {
+.radio-home-header p:not(.radio-home-label) {
   max-width: 52ch;
   margin: 12px 0 0;
   color: var(--text-secondary);
