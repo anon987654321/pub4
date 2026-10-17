@@ -261,6 +261,11 @@ body.vertical-marketplace .store-buybox .price {
     margin-top: 16px;
   }
 
+  body.vertical-marketplace .store-pdp-info h1,
+  body.vertical-marketplace .marketplace-listing-header h1 {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+
   body.vertical-marketplace .store-buybox {
     padding: 20px 16px;
   }
