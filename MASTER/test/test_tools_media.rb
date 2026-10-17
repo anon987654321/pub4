@@ -23,6 +23,7 @@ class TestToolsMedia < Minitest::Test
       "f_number" => %w[diffraction_blur],
       "tonemap_ev" => %w[tonemap],
       "temp" => %w[spectral_temp color_temp],
+      "lens" => %w[vintage_lens],
       "tonemap" => %w[tonemap],
       "azimuth" => %w[relight],
       "shape" => %w[relight],
