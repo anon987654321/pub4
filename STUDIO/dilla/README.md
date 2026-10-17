@@ -531,7 +531,7 @@ The reference workflow analyzes the **music only**; it never inspects or downloa
 frames. It imports a YouTube audio stream with yt-dlp, measures duration, format,
 loudness, coarse spectral bands, a low-rate temporal energy map and an estimated tempo
 with FFmpeg, then optionally runs Demucs and Essentia when their command-line tools are
-installed. The FFmpeg tempo estimate keeps BPM below 80 instead of forcing double-time,
+installed. The FFmpeg tempo estimator preserves genuine low-tempo estimates instead of automatically doubling any result below 80 BPM,
 and reports one-minute local tempo windows plus median/range; rhythm features are measured
 within those windows for long references, reducing tempo-change bias. Analysis subprocess timeouts scale with the requested input duration but
 remain capped at one hour per pass. When Essentia is present, the report surfaces independent BPM candidates,
