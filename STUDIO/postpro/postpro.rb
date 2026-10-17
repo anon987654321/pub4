@@ -4783,6 +4783,8 @@ def hd_curve_problems(name, channel, parameters)
   dmin, dmax, pivot, gamma = values
   problems = []
   problems << "#{name} #{channel}: Dmin #{dmin} is not below Dmax #{dmax}" unless dmin < dmax
+  problems << "#{name} #{channel}: Dmin #{dmin} is outside [0, 1]" unless dmin >= 0 && dmin <= 1
+  problems << "#{name} #{channel}: Dmax #{dmax} is outside [0, 1]" unless dmax >= 0 && dmax <= 1
   problems << "#{name} #{channel}: pivot #{pivot} is outside (Dmin, Dmax)" unless dmin < pivot && pivot < dmax
   problems << "#{name} #{channel}: pivot #{pivot} is outside (0, 1)" unless pivot > 0 && pivot < 1
   problems << "#{name} #{channel}: gamma #{gamma} is not positive" unless gamma > 0
