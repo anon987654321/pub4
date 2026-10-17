@@ -61,7 +61,7 @@ module Operator
       "MASTER" => %w[AGENTS.md data/soul.yml data/laws.yml bin/operator bin/check],
       "RAILS" => %w[CLAUDE.md __shared/README.md __shared/design_tokens.yml apps.yml],
       "OPENBSD" => %w[CLAUDE.md PATH_OWNERSHIP.yml data/operator.yml bin/check],
-      "STUDIO" => %w[README.md postpro/postpro.rb replicate/replicate.rb lora/lora.rb dilla/dilla.rb],
+      "STUDIO" => %w[README.md postpro/postpro.rb replicate/replicate.rb replicate/lora/lora.rb dilla/dilla.rb],
     }.freeze
 
     # Defined below module_function: a def above it is a private instance
