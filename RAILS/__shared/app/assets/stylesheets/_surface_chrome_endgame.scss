@@ -401,11 +401,22 @@
 
 @mixin bsdports {
   body.wscons { min-block-size: 100dvh; font-variant-numeric: tabular-nums; }
-  body.wscons main#main-content { inline-size: min(100%, 760px); min-inline-size: 0; margin-inline: auto; padding-inline: var(--page-gutter); padding-block: var(--space-8) var(--space-16); }
+  body.wscons main#main-content {
+    inline-size: min(100%, 760px);
+    min-inline-size: 0;
+    margin-inline: auto;
+    padding-inline: max(var(--space-4), var(--page-gutter));
+    padding-block: var(--space-8) calc(var(--space-16) + env(safe-area-inset-bottom));
+  }
   body.wscons main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
   body.wscons main#main-content :is(p, li, dd) { text-wrap: pretty; }
   body.wscons .port-list { min-inline-size: 0; }
-  body.wscons .port-row { min-inline-size: 0; column-gap: var(--space-4); row-gap: var(--space-1); }
+  body.wscons .port-row {
+    min-inline-size: 0;
+    column-gap: var(--space-4);
+    row-gap: var(--space-1);
+    grid-template-columns: minmax(0, 1fr);
+  }
   body.wscons .port-name { overflow-wrap: anywhere; }
   body.wscons .ports-purpose { max-inline-size: 62ch; text-wrap: pretty; }
   body.wscons .install-panel, body.wscons .install-panel [data-controller="clipboard"] { min-inline-size: 0; }
@@ -414,12 +425,6 @@
   body.wscons :is(input, select, textarea, button, .btn):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
   body.wscons article :is(pre, code) { overflow-wrap: anywhere; }
   body.wscons article pre { max-inline-size: 100%; white-space: pre-wrap; tab-size: 2; }
-  /* Compact defaults fit the port listing and copy command on a narrow screen. */
-  body.wscons main#main-content {
-    padding-inline: max(var(--space-4), var(--page-gutter));
-    padding-block: var(--space-8) calc(var(--space-16) + env(safe-area-inset-bottom));
-  }
-  body.wscons .port-row { grid-template-columns: minmax(0, 1fr); }
   body.wscons .install-panel [data-controller="clipboard"] {
     grid-template-columns: minmax(0, 1fr);
   }
