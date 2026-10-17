@@ -623,6 +623,24 @@ class TestPostproFilm < Minitest::Test
     refute_match(/healthy/, issues.first)
   end
 
+  def test_malformed_preset_rows_and_key_types_are_reported_locally
+    rows, problems = send(:auditable_preset_rows, {
+      valid: { fx: %w[grain], stock: :kodak_portra },
+      broken: :not_a_preset_table
+    })
+
+    assert_equal [:valid], rows.keys
+    assert_equal ["broken: preset definition is not a table"], problems
+
+    rows, problems = send(:auditable_preset_rows, [])
+    assert_empty rows
+    assert_equal ["PRESETS is not a table"], problems
+
+    key_readers = { temp: %w[spectral_temp color_temp] }
+    string_key = send(:preset_unregistered_keys, { "temp" => 5200 }, key_readers)
+    assert_equal [[:invalid_key_type, "\"temp\""]], string_key
+  end
+
   def test_preset_fields_outside_reader_contract_are_rejected
     key_readers = {
       temp: %w[spectral_temp color_temp],
