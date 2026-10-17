@@ -11,9 +11,9 @@ class SurfaceMicroRefinementContractTest < Minitest::Test
     __shared/app/assets/stylesheets/_stack_brgen.scss
   ].freeze
 
-  def test_sheet_has_exactly_288_marked_refinements
-    source = File.read(SHEET, encoding: "UTF-8")
-    assert_equal 288, source.scan(/\/\* srf:\d{3} \*\//).size
+  def test_experimental_stylesheet_is_absent_from_active_asset_tree
+    refute File.exist?(SHEET),
+           "the unvalidated 288-property experiment must not remain a scanned stylesheet"
   end
 
   def test_matrix_has_exactly_288_items
@@ -30,13 +30,13 @@ class SurfaceMicroRefinementContractTest < Minitest::Test
     end
   end
 
-  def test_archived_pass_records_its_historical_targets
-    source = File.read(SHEET, encoding: "UTF-8")
+  def test_archived_matrix_records_the_historical_targets
+    source = File.read(MATRIX, encoding: "UTF-8")
     assert_includes source, ".nearby-chat-widget-panel"
     assert_includes source, ".radio-track-card"
     assert_includes source, ".bol-market-hero"
     assert_includes source, ".store-buybox"
     assert_includes source, "border: 0;"
-    refute_includes source, "box-shadow: 0 "
+    assert_includes source, "Archived surface micro-refinement matrix"
   end
 end
