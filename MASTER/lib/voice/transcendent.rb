@@ -140,8 +140,17 @@ module Master
         played, used_engine = try_engine_chain(
           chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
         )
-        played || Engines.synth_say(clean, out_path, voice: resolved_voice, rate: resolved_rate)
+        unless played && File.size?(out_path)
+          played = Engines.synth_say(clean, out_path, voice: resolved_voice, rate: resolved_rate)
+          used_engine = "say" if played
+        end
+        return false unless played && File.size?(out_path)
+
+        # Diagnostics describe a successful synthesis; their absence must never
+        # turn that synthesis into a failure and silently select classic speech.
+        log_pick(used_engine || "say", resolved_voice, resolved_rate, resolved_pitch, emotion)
         log_quality(out_path)
+        true
       end
 
       def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)

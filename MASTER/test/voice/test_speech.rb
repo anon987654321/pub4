@@ -40,6 +40,26 @@ class TestSpeech < Minitest::Test
     assert_equal ["/tmp/m_tts_probe.mp3"], shaped, "the transcendent path skipped the chain"
   end
 
+  def test_transcendent_success_does_not_depend_on_quality_log_file
+    transcendent = Master::Voice::Transcendent
+    Dir.mktmpdir("master_tts_quality_log") do |dir|
+      output = File.join(dir, "speech.mp3")
+      File.binwrite(output, "synthetic audio bytes")
+
+      transcendent.stub(:build_engine_chain, ["edge"]) do
+        transcendent.stub(:try_engine_chain, [true, :edge]) do
+          transcendent.stub(:log_pick, nil) do
+            transcendent.stub(:log_quality, nil) do
+              assert_equal true, transcendent.synthesize_via_chain(
+                "Hello.", {}, {}, {}, :christopher, "+0%", "+0Hz", output
+              )
+            end
+          end
+        end
+      end
+    end
+  end
+
   def test_a_tts_failure_prints_once_and_stays_in_last_error
     speech = Master::Voice::Speech
     message = "probe failure #{Process.pid}"
