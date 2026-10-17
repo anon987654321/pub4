@@ -307,6 +307,45 @@ class TestCliTerminalFace < Minitest::Test
     end
   end
 
+  def test_speech_interruption_stops_later_chunks_too
+    Dir.mktmpdir("master-face-mouth-interrupt") do |dir|
+      first_path = File.join(dir, "first.mp3")
+      second_path = File.join(dir, "second.mp3")
+      File.write(first_path, "first audio")
+      File.write(second_path, "second audio")
+      count = 0
+      count_lock = Mutex.new
+      synthesize = lambda do |_text|
+        call = count_lock.synchronize { count += 1 }
+        call == 1 ? first_path : second_path
+      end
+      device = Object.new.tap { |item| item.define_singleton_method(:android?) { false } }
+      mouth = Master::CLI::Face::Mouth.new(device:, synthesize:)
+      played = []
+      stop_checks = 0
+      stop = -> { stop_checks += 1; stop_checks == 2 }
+
+      mouth.stub(:available?, true) do
+        mouth.stub(:chunks, ["First sentence.", "Second sentence."]) do
+          mouth.stub(:play, lambda { |_path, part, on_level:, stop:|
+            played << part
+            stop.call
+            true
+          }) do
+            mouth.stub(:direct_speak, ->(part) { flunk("speech after interruption: #{part}") }) do
+              Master::Voice::Playback.stub(:begin_reply_generation!, -> { true }) do
+                assert mouth.say("First sentence. Second sentence.", on_level: ->(_level) {}, stop:)
+              end
+            end
+          end
+        end
+      end
+
+      assert_equal ["First sentence."], played
+      assert_equal 2, stop_checks, "the stop request stays latched and is not read again"
+    end
+  end
+
   def test_android_face_falls_back_to_termux_tts_when_synthesis_is_missing
     spoken = []
     mouth = Master::CLI::Face::Mouth.new(
