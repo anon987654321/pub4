@@ -50,7 +50,7 @@ cannot see. A problem produces a non-zero result.
 These guards exist because table-driven failures rarely raise by themselves: an effect with no
 implementation once returned the input unchanged while the log reported the step as done, and a
 temperature that `--describe-preset` printed but no step applied was a lie and not a look. A
-historical run found twenty-one key-reader gaps across the recovered presets; those preset chains
+historical run found twenty key-reader gaps across the recovered presets; those preset chains
 were subsequently repaired. That historical count is not current verification. The live
 `--vocab-check` and pinned Ruby/libvips regression suites still need to pass before the current
 vocabulary or rendered behavior can be called clean.
