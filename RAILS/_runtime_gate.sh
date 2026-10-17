@@ -118,9 +118,11 @@ rails_runtime_gate() {
     (cd "$app_dir" && bundle_exec check) || { log_err "bundle check failed"; return 1; }
     (cd "$app_dir" && RAILS_ENV=production bundle_exec exec rails db:prepare) \
       || { log_err "db:prepare failed"; return 1; }
-    if [[ -x ${app_dir}/bin/ci ]]; then
-      (cd "$app_dir" && bundle_exec exec bin/ci) || { log_err "bin/ci failed"; return 1; }
-    fi
+    [[ -x ${app_dir}/bin/ci ]] || {
+      log_err "runtime gate: missing executable ${app_dir}/bin/ci"
+      return 1
+    }
+    (cd "$app_dir" && bundle_exec exec bin/ci) || { log_err "bin/ci failed"; return 1; }
   fi
   log_ok "runtime gate passed"
 }
