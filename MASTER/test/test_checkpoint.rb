@@ -144,6 +144,25 @@ class TestCheckpoint < Minitest::Test
     end
   end
 
+  def test_checkpoint_store_follows_a_symlink_alias_to_the_repo_root_safely
+    Dir.mktmpdir do |parent|
+      root = File.join(parent, "repo")
+      alias_root = File.join(parent, "repo-link")
+      FileUtils.mkdir_p(root)
+      File.write(File.join(root, "sample.rb"), "before\n")
+      File.symlink(root, alias_root)
+      store = File.join(alias_root, ".master", "checkpoints")
+      checkpoint = Master::Fix::Checkpoint.new(root: alias_root, dir: store)
+
+      manifest = checkpoint.create(label: "alias", files: ["sample.rb"])
+
+      assert File.file?(File.join(root, ".master", "checkpoints", manifest[:id], "manifest.json"))
+      File.write(File.join(root, "sample.rb"), "after\n")
+      checkpoint.restore(manifest[:id])
+      assert_equal "before\n", File.read(File.join(root, "sample.rb"))
+    end
+  end
+
   def test_create_refuses_a_symlinked_store_directory
     Dir.mktmpdir do |root|
       Dir.mktmpdir do |outside|

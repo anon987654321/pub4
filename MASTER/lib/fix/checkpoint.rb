@@ -19,8 +19,14 @@ module Master
       attr_reader :root, :dir
 
       def initialize(root: Master::ROOT, dir: nil)
-        @root = File.realpath(root)
-        @dir = File.expand_path(dir || File.join(@root, ".master", "checkpoints"), @root)
+        input_root = File.expand_path(root)
+        @root = File.realpath(input_root)
+        input_dir = File.expand_path(dir || File.join(input_root, ".master", "checkpoints"), input_root)
+        @dir = if input_dir.start_with?(input_root + File::SEPARATOR)
+                 File.join(@root, input_dir.delete_prefix(input_root + File::SEPARATOR))
+               else
+                 input_dir
+               end
       end
 
       def create(label:, files: [])
