@@ -43,8 +43,12 @@ if (i = args.index("--model"))
 end
 passthrough = args.select { |arg| arg.match?(/\A--(?:autofix|max-files)=/) }
 args -= passthrough
+# --gates=lexical,sprawl limits the baseline and closing gate stages (MASTER_FIX_GATE_STAGES).
+gates_flag = args.find { |arg| arg.start_with?("--gates=") }
+args -= [gates_flag] if gates_flag
+gate_stages = gates_flag.to_s.delete_prefix("--gates=")
 tree = args.shift
-abort "usage: MASTER/bin/fix-here <#{TREES.join('|')}|path> [--model ID|none] [--no-probe] [--no-publish] [--dry] [--autofix=off|dry|on] [--max-files=N]" if tree.to_s.empty? || args.any?
+abort "usage: MASTER/bin/fix-here <#{TREES.join('|')}|path> [--model ID|none] [--no-probe] [--no-publish] [--dry] [--autofix=off|dry|on] [--max-files=N] [--gates=lexical,sprawl,...]" if tree.to_s.empty? || args.any?
 abort "fix-here: #{tree} is not one of #{TREES.join(', ')} and not a path in this checkout" unless TREES.include?(tree) || File.exist?(File.join(ROOT, tree))
 
 # 1. A worktree, not the shared checkout: .git is a file in a worktree.
@@ -72,6 +76,7 @@ model = model_flag == "none" ? nil : (model_flag || saved)
 
 env = { "MASTER_INTERNAL_CHILD" => "1", "MASTER_FIX_WORKTREE_CHILD" => "1" }
 env["MASTER_FIX_NO_PUBLISH"] = "1" if no_publish
+env["MASTER_FIX_GATE_STAGES"] = gate_stages unless gate_stages.empty?
 if model_flag == "none"
   env["MASTER_MODEL"] = nil
 elsif model
@@ -120,7 +125,7 @@ puts "fix0 at fix-here: running; follow it with: tail -f #{log}"
 # geometry and tap-target gates all answer "nothing listening" and count as inconclusive
 # when no app is up, and a run that measured no layout cannot improve one. So the apps
 # are booted around the run and stopped after it, whatever the run did.
-live = tree == "RAILS" || tree.start_with?("RAILS/")
+live = (tree == "RAILS" || tree.start_with?("RAILS/")) && (gate_stages.empty? || gate_stages.split(/[,\s]+/).include?("source"))
 operator = File.join(MASTER, "bin", "operator")
 triangle_log = File.join(File.dirname(log), "triangle-#{File.basename(tree)}.log")
 if live

@@ -33,6 +33,30 @@ class TestGateChain < Minitest::Test
     assert_empty writers, "scan-only writes in #{writers.join(", ")}"
   end
 
+  def test_fix_verification_can_be_limited_to_named_stages
+    previous = ENV.delete("MASTER_FIX_GATE_STAGES")
+    everything = G.verification_stages("RAILS").map(&:name)
+
+    assert_includes everything, "source"
+
+    ENV["MASTER_FIX_GATE_STAGES"] = "lexical, sprawl"
+
+    assert_equal %w[lexical sprawl], G.verification_stages("RAILS").map(&:name)
+    refute_includes G.verification_stages("RAILS").map(&:name), "source"
+  ensure
+    previous ? ENV["MASTER_FIX_GATE_STAGES"] = previous : ENV.delete("MASTER_FIX_GATE_STAGES")
+  end
+
+  def test_the_baseline_cache_is_not_shared_between_stage_selections
+    previous = ENV.delete("MASTER_FIX_GATE_STAGES")
+    full = G.baseline_key("RAILS")
+    ENV["MASTER_FIX_GATE_STAGES"] = "lexical"
+
+    refute_equal full, G.baseline_key("RAILS")
+  ensure
+    previous ? ENV["MASTER_FIX_GATE_STAGES"] = previous : ENV.delete("MASTER_FIX_GATE_STAGES")
+  end
+
   def test_full_fix_declares_exactly_the_stages_that_write
     writers = G.stages(scan_only: false).select(&:mutates).map(&:name)
 

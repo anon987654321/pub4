@@ -145,7 +145,7 @@ module Operator
         tree_names.any? { |tree| relative == tree || relative.start_with?("#{tree}/") }
       end
       untracked_fingerprint = paths.sort.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
-      Digest::SHA256.hexdigest([head.strip, target.to_s, diff, untracked_fingerprint].join("\0"))
+      Digest::SHA256.hexdigest([head.strip, target.to_s, diff, untracked_fingerprint, verification_only.join(",")].join("\0"))
     end
 
     def fingerprint_untracked(root, relative)
@@ -186,7 +186,17 @@ module Operator
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is
       # not a source-tree proof and can be separately reported by /critique.
-      selected
+      only = verification_only
+      only.empty? ? selected : selected.select { |stage| only.include?(stage.name) }
+    end
+
+    # MASTER_FIX_GATE_STAGES=lexical,openbsd limits the verification ladder to those stages.
+    # The Rails "source" stage boots the apps and runs the rendered gates, about twenty-five
+    # minutes before the first repair; a source-only run names the stages it wants instead.
+    # The same list picks the baseline's stages and the closing verification's, so the
+    # regression check always compares like with like.
+    def verification_only
+      ENV.fetch("MASTER_FIX_GATE_STAGES", "").split(/[,\s]+/).reject(&:empty?)
     end
 
     def trees_for_target(target)
