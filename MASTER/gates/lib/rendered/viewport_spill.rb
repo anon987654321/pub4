@@ -23,6 +23,7 @@ module Deploy
   class ViewportSpillGate
     ROOT = File.expand_path("../../../..", __dir__)
     WIDTH = 390
+    WIDTHS = [320, WIDTH].freeze
     HEIGHT = 844
 
     # Signed out, so this is the guest view of each surface. The forms behind a
@@ -91,8 +92,10 @@ module Deploy
 
       ports = GeometryProbe.app_ports(root: ROOT)
       CdpSession.open(host_map: host_map(ports), timeout: 45) do |cdp|
-        cdp.viewport(WIDTH, HEIGHT, mobile: true)
-        surfaces.each { |surface| measure(cdp, surface, ports) }
+        WIDTHS.each do |width|
+          cdp.viewport(width, HEIGHT, mobile: true)
+          surfaces.each { |surface| measure(cdp, surface, ports, width:) }
+        end
       end
       @result
     rescue CdpSession::Error => e
@@ -109,7 +112,7 @@ module Deploy
     def surfaces = self.class::SURFACES
 
     def unavailable
-      @result.inconclusive!("viewport_spill: no Chrome, so no surface was measured at #{WIDTH}px", gap: Master::Gap::NO_BROWSER)
+      @result.inconclusive!("viewport_spill: no Chrome, so no surface was measured at #{WIDTHS.join("/")}px", gap: Master::Gap::NO_BROWSER)
       @result
     end
 
@@ -120,7 +123,7 @@ module Deploy
       end.to_h
     end
 
-    def measure(cdp, surface, ports)
+    def measure(cdp, surface, ports, width:)
       port = ports[surface[:app]]
       unless port && CrawlSupport.port_open?("127.0.0.1", port)
         @result.skipped_live("viewport_spill: #{surface[:host]} skipped (#{surface[:app]} not listening)")
@@ -135,7 +138,7 @@ module Deploy
         if spills.empty?
           @result.checked!
         else
-          @result.fail("viewport_spill: #{surface[:host]}#{path} at #{WIDTH}px — #{spills.join('; ')}")
+          @result.fail("viewport_spill: #{surface[:host]}#{path} at #{width}px — #{spills.join('; ')}")
         end
       end
     end
