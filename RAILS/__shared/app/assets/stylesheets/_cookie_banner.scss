@@ -21,17 +21,17 @@
   display: none;
 }
 
-.cookie-banner-kicker,
+.cookie-banner-label,
 .cookie-purpose strong {
   display: block;
   font-weight: var(--weight-bold);
 }
 
-.cookie-banner-kicker {
+.cookie-banner-label {
   margin: 0 0 var(--space-1);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
   color: var(--text-secondary);
 }
 
