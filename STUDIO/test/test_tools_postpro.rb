@@ -372,6 +372,18 @@ class TestPostproFilm < Minitest::Test
                  send(:postpro_case_labels, source, :fx).sort
   end
 
+  def test_finishing_grain_probe_records_failure_and_keeps_the_checker_alive
+    probe = Object.new
+    issues = send(:finishing_grain_probe_problems, [:house], probe) do |_image, _name|
+      raise IOError, "synthetic finishing failure"
+    end
+
+    assert_equal 1, issues.length
+    assert_match(/finishing-grain bypass probe raises: IOError: synthetic finishing failure/, issues.first)
+    assert_empty send(:finishing_grain_probe_problems, [:house], probe) { |image, _name| image }
+    assert_match(/no preset grains in its own chain/, send(:finishing_grain_probe_problems, [], probe) { |image, _name| image }.first)
+  end
+
   def test_source_method_reader_covers_output_dispatch_bodies
     source = File.read(POSTPRO_SOURCE)
     methods = send(:postpro_source_methods, source)
