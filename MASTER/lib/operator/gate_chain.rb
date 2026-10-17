@@ -199,6 +199,12 @@ module Operator
       ENV.fetch("MASTER_FIX_GATE_STAGES", "").split(/[,\s]+/).reject(&:empty?)
     end
 
+    # No list means every stage; a list means only the named ones.
+    def verification_stage?(name)
+      only = verification_only
+      only.empty? || only.include?(name.to_s)
+    end
+
     def trees_for_target(target)
       text = target.to_s.strip
       tree_names = text.split(/[,\s]+/).reject(&:empty?).map(&:upcase).uniq.sort

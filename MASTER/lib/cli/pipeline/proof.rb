@@ -173,6 +173,11 @@ module Master
         def proof_runner(abs)
           chain = ::Operator::GateChain
           if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
+            # The rails gates are the "source" stage. A run that named its stages
+            # (MASTER_FIX_GATE_STAGES) without it asked for a source-only proof, and with
+            # no apps up the rendered half could only report red.
+            return unless chain.verification_stage?("source")
+
             return ["rails gates", -> {
               rails_proof(*chain.rails_gates(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
             }]

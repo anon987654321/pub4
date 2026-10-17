@@ -910,6 +910,25 @@ end
     assert_respond_to runner, :call
   end
 
+def test_a_named_stage_list_without_source_leaves_rails_with_no_proof_runner
+  pass = Master::CLI::Pipeline::Pass.allocate
+  rails = File.join(Master::RAILS_ROOT, "brgen_dating")
+  previous = ENV.delete("MASTER_FIX_GATE_STAGES")
+
+  assert_equal "rails gates", pass.send(:proof_runner, rails).first
+
+  ENV["MASTER_FIX_GATE_STAGES"] = "lexical,sprawl"
+
+  assert_nil pass.send(:proof_runner, rails)
+  assert_equal "MASTER", pass.send(:proof_runner, Master::ROOT).first
+
+  ENV["MASTER_FIX_GATE_STAGES"] = "source"
+
+  assert_equal "rails gates", pass.send(:proof_runner, rails).first
+ensure
+  previous ? ENV["MASTER_FIX_GATE_STAGES"] = previous : ENV.delete("MASTER_FIX_GATE_STAGES")
+end
+
   def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
     levels = []
     fix_loop = Object.new
