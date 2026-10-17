@@ -86,7 +86,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
       header
     )
 
-    compact = header.split("@media (max-width: 767px)", 2).first
+    compact = header.split("@media (min-width: 768px)", 2).first
     menu = compact&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
     assert menu, "compact menu geometry must exist before viewport-specific refinements"
     assert_match(/position:\s*fixed;/, menu)
@@ -94,7 +94,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-compact-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu,
                  "the category menu must fit the viewport remaining below the header")
 
-    mobile = header.split("@media (max-width: 767px)", 2).last
+    mobile = compact
     assert_match(/storefront-bol-mega\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/m, mobile)
 
     # Each term must remain attached to the physical box it sizes, so a taller
@@ -109,7 +109,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
 
   def test_tablet_storefront_header_stacks_until_the_canonical_desktop_edge
     header = File.read(HEADER_CSS)
-    compact = header.split("@media (max-width: 767px)", 2).first
+    compact = header.split("@media (min-width: 1024px)", 2).first
     assert compact, "mobile-first compact header styles must exist"
     assert_match(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/, compact)
     assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*none;/m, compact)
