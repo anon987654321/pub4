@@ -42,7 +42,7 @@ body.vertical-marketplace .storefront-bol-brand {
   min-height: var(--bol-brand-row-block);
   min-width: 0;
   color: #fff;
-  font-size: var(--store-text-brand);
+  font-size: var(--store-text-brand-compact);
 }
 
 body.vertical-marketplace .storefront-bol-deliver {
@@ -118,11 +118,11 @@ body.vertical-marketplace .storefront-bol-account .nav-block {
 }
 
 body.vertical-marketplace .storefront-bol-account .nav-block-label {
-  position: static;
-  inline-size: auto;
-  block-size: auto;
-  overflow: visible;
-  clip-path: none;
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
 body.vertical-marketplace .storefront-bol-account .nav-hover:hover {
@@ -155,11 +155,11 @@ body.vertical-marketplace .storefront-bol-categories > summary {
   display: inline-flex;
   align-items: center;
   min-height: var(--bol-mainnav-block);
-  padding-inline: 18px;
+  padding-inline: 14px;
   border: 0;
   background: transparent;
   color: var(--bol-ink);
-  font-size: 14px;
+  font-size: var(--store-text-meta);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -207,7 +207,7 @@ body.vertical-marketplace .storefront-bol-mega {
   inset-inline: 16px;
   inset-block-start: var(--bol-compact-mega-top);
   display: none;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   width: auto;
   max-height: min(65vh, calc(100dvh - var(--bol-compact-mega-top) - var(--space-4)));
@@ -253,30 +253,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a:hover {
   text-decoration: underline;
 }
 
-@media (max-width: 767px) {
-  body.vertical-marketplace .storefront-bol-brand {
-    font-size: var(--store-text-brand-compact);
-  }
 
-  body.vertical-marketplace .storefront-bol-account .nav-block-label {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  body.vertical-marketplace .storefront-bol-mainnav > a,
-  body.vertical-marketplace .storefront-bol-mainnav > .section,
-  body.vertical-marketplace .storefront-bol-categories > summary {
-    padding-inline: 14px;
-    font-size: var(--store-text-meta);
-  }
-
-  body.vertical-marketplace .storefront-bol-mega {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 
 
 /* The listing row's two actions at every width; the md block below sets
@@ -301,7 +278,38 @@ body.vertical-marketplace #marketplace-listings .deal-card-offer {
   text-decoration: underline;
 }
 
+// Compact actions are the base; the wide layout below stacks them in the
+// third grid track when the cards have room.
+body.vertical-marketplace #marketplace-listings .deal-card-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0 0;
+}
+
 @media (min-width: 768px) {
+  body.vertical-marketplace .storefront-bol-brand {
+    font-size: var(--store-text-brand);
+  }
+
+  body.vertical-marketplace .storefront-bol-account .nav-block-label {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  body.vertical-marketplace .storefront-bol-mainnav > a,
+  body.vertical-marketplace .storefront-bol-mainnav > .section,
+  body.vertical-marketplace .storefront-bol-categories > summary {
+    padding-inline: 18px;
+    font-size: 14px;
+  }
+
+  body.vertical-marketplace .storefront-bol-mega {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   body.vertical-marketplace #marketplace-listings .deal-card {
     grid-template-columns: 220px minmax(0, 1fr) 190px;
     align-items: start;
@@ -371,12 +379,5 @@ body.vertical-marketplace #marketplace-listings .deal-card-offer {
   }
 }
 
-@media (max-width: 767px) {
-  body.vertical-marketplace #marketplace-listings .deal-card-actions {
-    display: flex;
-    gap: 8px;
-    padding: 8px 0 0;
-  }
 
-}
 
