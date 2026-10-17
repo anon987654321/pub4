@@ -33,7 +33,20 @@
   }
 
   main#main-content :is(h2, h3, h4, h5, h6, .section-title, .empty-state-title) {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
     letter-spacing: var(--tracking-normal);
+  }
+
+  /* The only secondary display headings are product heroes. Ordinary H2-H6
+     share one supporting treatment; semantic level no longer means a new type
+     style at every depth. */
+  main#main-content :is(.bol-market-hero-copy h2, .store-promo-art h2, .store-heading, .luxury-title, .amber-look-title) {
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    font-weight: var(--weight-heavy);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
   }
 
   main#main-content blockquote {
