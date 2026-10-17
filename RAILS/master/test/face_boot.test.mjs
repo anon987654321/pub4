@@ -802,10 +802,11 @@ test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS ro
   assert.doesNotMatch(runtime, /speakWithBrowserTTS/);
   assert.doesNotMatch(runtime, /speechSynthesis\.speak\(/);
   assert.doesNotMatch(runtime, /new SpeechSynthesisUtterance/);
-  // Mic button was removed: Voice Mode is hands-free by default, so the
-  // dedicated control was redundant chrome. Confirm it's actually gone.
-  assert.doesNotMatch(index, /data-act="mic"/);
-  assert.doesNotMatch(runtime, /data-act="mic"/);
+  // The always-visible microphone indicator is also the touch-accessible
+  // toggle; its accessible pressed state mirrors actual recognition state.
+  assert.match(index, /<button id="mic-dot"[^>]*aria-pressed="false"/);
+  assert.match(runtime, /document\.getElementById\('mic-dot'\)\?\.addEventListener\('click'/);
+  assert.match(runtime, /dot\.setAttribute\("aria-pressed", open \? "true" : "false"\)/);
   // STT/TTS echo regression: continuous SpeechRecognition has no echo
   // cancellation against this page's own TTS audio, so an open mic during
   // playback transcribed the assistant's own reply and resubmitted it as a
@@ -950,4 +951,19 @@ test("shell chrome uses plain CLI prompt words and the monospace source font", (
     assert.ok(existsSync(join(railsRoot, "__shared/public/fonts", file)), `missing bundled font: ${file}`);
   }
   assert.doesNotMatch(css, /\.wordmark\s*\{/);
+});
+
+
+test("face preserves browser zoom and gives each shortcut one owner", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const minimalUi = readFileSync(join(publicDir, "face_minimal_ui.js"), "utf8");
+  const shortcuts = readFileSync(join(publicDir, "shortcut_sheet.js"), "utf8");
+  const runtime = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+
+  assert.match(css, /touch-action:\s*pinch-zoom/);
+  assert.doesNotMatch(css, /touch-action:\s*none/);
+  assert.doesNotMatch(minimalUi, /e\.key === '\?'[\s\S]{0,80}safeStart\(\)/);
+  assert.match(shortcuts, /ev\.key === "\?"[\s\S]{0,100}openSheet\(\)/);
+  assert.match(runtime, /active\?\.closest\?\.\('\[role="dialog"\]'\)/);
+  assert.match(runtime, /const editing = tag === 'INPUT'[\s\S]{0,200}active\?\.closest\?\.\('\[role="dialog"\]'\)/);
 });
