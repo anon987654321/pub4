@@ -1,0 +1,30 @@
+# Overlay for constitutional enforcement metadata (merged onto data/laws.yml by LawParity).
+# Keep this file small and explicit so parity CI does not depend on hand-editing the full catalogue.
+#
+# enforcement: active | deferred
+# detector_ids: Law.define / scan ids that implement the law
+# coverage: tagged_detectors — umbrella laws enforced via tags on other detectors
+# expires_on: required when deferred (ISO date)
+
+CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
+  severity: error
+  enforcement: active
+  detector_ids:
+    - CAPABILITY_STATUS_MUST_BE_TRUTHFUL
+
+ROBUSTNESS:
+  severity: error
+  enforcement: active
+  coverage: tagged_detectors
+
+SINGULARITY:
+  severity: error
+  enforcement: deferred
+  expires_on: "2026-12-31"
+  deferred_reason: "No single Law.define(:SINGULARITY) yet; partial DRY/dedup coverage. Migrate before expiry."
+
+LINEARITY:
+  severity: error
+  enforcement: deferred
+  expires_on: "2026-12-31"
+  deferred_reason: "Complexity detectors under other ids; explicit LINEARITY law+fixtures pending."
