@@ -54,6 +54,46 @@
     padding-inline-start: 0;
   }
 
+  /* One field contract across every dialect: surfaces use backgrounds, never
+     input borders. Native choice/range/file/action controls retain their own
+     affordances; text fields keep a visible outline on keyboard focus. */
+  body :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ) {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+
+  body :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ):focus-visible {
+    border: 0;
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  body .search :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ) {
+    background: transparent;
+    color: inherit;
+  }
+
+  #navBar .search :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
+    select, textarea
+  ) {
+    background: transparent;
+    color: inherit;
+  }
+
   :where(
     .card, .panel, .feed-card, .feed-post, .post-reading, .match,
     .organize-tip, .brand, .amber-look, .port-row, .nested-field,
@@ -430,8 +470,8 @@
   main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
   main#main-content :is(p, li, dd) { text-wrap: pretty; }
   main#main-content :is(button, input, select, textarea) { box-sizing: border-box; }
-  main#main-content :is(input, select, textarea) { min-block-size: var(--tap-min); border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius-sm); }
-  main#main-content :is(input, select, textarea):focus-visible { border-color: var(--accent); outline: var(--focus-ring); outline-offset: 2px; }
+  main#main-content :is(input, select, textarea) { min-block-size: var(--tap-min); border: 0; background: var(--surface); color: var(--text); border-radius: 0; }
+  main#main-content :is(input, select, textarea):focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }
   .feed-post, .feed-card, .post-reading, .comment_item, .newsletter-cta { min-inline-size: 0; overflow-wrap: anywhere; }
   .feed-post :is(img, video), .feed-card :is(img, video), .post-reading :is(img, video) { display: block; max-inline-size: 100%; block-size: auto; }
   .feed-post-prose, .feed-post-body, .post-reading-body-preview { max-inline-size: 66ch; line-height: var(--leading-normal); }
@@ -510,8 +550,8 @@
   body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card) :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
   body[data-surface="luxury"] .item-card--luxury .item-title, body[data-surface="luxury"] .wardrobe-card :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
   body[data-surface="luxury"] .item-card--luxury .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: 1.5; }
-  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input) { min-block-size: var(--tap-min); border: 1px solid var(--luxury-border); border-radius: var(--radius-sm); background: var(--luxury-surface); color: var(--luxury-text); }
-  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input):focus-visible { border-color: var(--text); outline: var(--focus-ring); outline-offset: 2px; }
+  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input) { min-block-size: var(--tap-min); border: 0; border-radius: 0; background: var(--luxury-surface); color: var(--luxury-text); box-shadow: none; }
+  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input):focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }
   body[data-surface="luxury"] .luxury-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
   body[data-surface="luxury"] .luxury-actions .btn { min-block-size: var(--tap-min); min-inline-size: var(--tap-min); }
   body[data-surface="luxury"] .luxury-title { max-inline-size: 12ch; text-wrap: balance; overflow-wrap: anywhere; }
