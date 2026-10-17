@@ -363,7 +363,7 @@ class TestPostproFilm < Minitest::Test
         # when "comment_decoy" then comment_decoy(processed)
         when "lens_flare" then lens_flare(processed)
         end
-        "when \\"string_decoy\\" then string_decoy(processed)"
+        "when \"string_decoy\" then string_decoy(processed)"
       end
     RUBY
 
