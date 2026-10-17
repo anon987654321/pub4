@@ -68,12 +68,12 @@
   width: fit-content;
   margin: 0;
   background: transparent;
-  border: 1px solid var(--luxury-border);
+  border: 0;
   color: var(--luxury-muted);
   font-size: var(--text-xs);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-normal);
   line-height: var(--leading-tight);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .commerce-fit-reasons {
