@@ -19,6 +19,7 @@ class SurfaceMicroRefinementContractTest < Minitest::Test
   def test_matrix_has_exactly_288_items
     source = File.read(MATRIX, encoding: "UTF-8")
     assert_equal 288, source.lines.count { |line| line.match?(/^\d{3}\. /) }
+    assert_includes source, "Archived surface micro-refinement matrix"
   end
 
   def test_shared_stacks_keep_the_experimental_surface_pass_out_of_production
