@@ -117,7 +117,7 @@
 
 .amber-footer-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
   gap: var(--space-10) var(--space-8);
   max-width: 1200px;
   margin-inline: auto;
