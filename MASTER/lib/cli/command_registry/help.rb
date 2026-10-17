@@ -296,7 +296,7 @@ detail: [
       def help_summary
         CATEGORY_ORDER.map do |category|
           commands = COMMAND_CATEGORIES.filter_map do |name, assigned|
-            "/#{name}" if assigned == category && name != "quit"
+            "/#{name}" if assigned == category
           end
           next if commands.empty?
 
