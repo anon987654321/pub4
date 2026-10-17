@@ -308,4 +308,51 @@ class DillaReferenceTest < Minitest::Test
       end
     end
   end
+  def test_temporal_energy_summary_reports_coarse_dynamics_without_audio_tools
+    samples = Array.new(60, 0.01) + Array.new(60, 0.001) +
+              Array.new(60, 0.005) + Array.new(60, 0.01)
+    result = Dilla::Reference.summarize_energy_envelope(samples, sample_rate: 4, window_seconds: 15)
+
+    assert_equal 4, result.fetch("window_count")
+    assert_equal [0, 15, 30, 45], result.fetch("windows").map { |window| window.fetch("start_seconds") }
+    assert_in_delta 10.0, result.fetch("summary").fetch("rms_range_p95_p05_db"), 0.01
+    assert_operator result.fetch("summary").fetch("rms_stddev_db"), :>, 0.0
+  end
+
+  def test_temporal_energy_summary_omits_dynamic_statistics_without_three_windows
+    result = Dilla::Reference.summarize_energy_envelope(Array.new(120, 0.01), sample_rate: 4, window_seconds: 15)
+
+    assert_equal 2, result.fetch("window_count")
+    assert_empty result.fetch("summary")
+  end
+
+  def test_essentia_summary_extracts_independent_features_without_chord_progressions
+    document = {
+      "rhythm" => { "bpm" => 91.8, "bpm_histogram_first_peak_bpm" => 92.0,
+                    "bpm_histogram_second_peak_bpm" => 184.0, "beats_count" => 120,
+                    "onset_rate" => 2.6 },
+      "tonal" => { "key_key" => "A", "key_scale" => "minor",
+                   "chords_progression" => "must not be copied" },
+      "lowlevel" => { "spectral_centroid" => { "mean" => 1850.25 },
+                      "spectral_entropy" => { "mean" => 0.72 } }
+    }
+    summary = Dilla::Reference.essentia_descriptor_summary(document)
+
+    assert_equal 91.8, summary.fetch("bpm")
+    assert_equal "A", summary.fetch("key")
+    assert_equal "minor", summary.fetch("scale")
+    assert_equal 1850.25, summary.fetch("spectral_centroid_mean_hz")
+    refute summary.key?("chords_progression")
+  end
+
+  def test_tempo_crosscheck_exposes_half_double_time_ambiguity
+    result = Dilla::Reference.tempo_crosscheck(
+      { "bpm" => 92.0 }, { "bpm" => 184.0 }
+    )
+
+    assert_equal "half_double_ambiguity", result.fetch("status")
+    assert_equal 92.0, result.fetch("ffmpeg_bpm")
+    assert_equal 184.0, result.fetch("essentia_bpm")
+  end
+
 end
