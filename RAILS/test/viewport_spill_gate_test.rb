@@ -36,6 +36,13 @@ class ViewportSpillGateTest < Minitest::Test
     assert_equal [320, 390], Deploy::ViewportSpillGate::WIDTHS
   end
 
+  def test_a_non_success_route_is_a_finding_not_an_unmeasured_pass
+    source = File.read(File.expand_path("../../MASTER/gates/lib/rendered/viewport_spill.rb", __dir__))
+
+    assert_includes source, "returned HTTP #{'#'}{status} — viewport overflow was not measured"
+    refute_match(/next unless cdp\.status\.to_i == 200/, source)
+  end
+
   # The instrument, checked against a case whose answer is known: an element
   # explicitly wider than the viewport must be reported, and the same element
   # inside a sideways scroller must not — a chip rail is meant to run past the
