@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "time"
 require_relative "visual_cross_page_overlay"
 require_relative "repair_outcomes"
@@ -85,7 +85,7 @@ module Master
       # The operator's verdict on a surface, with the css the working tree
       # changed as its descriptor. root is the repository root.
       def self.operator(root:, surface:, verdict:, note: nil)
-        diff, = Open3.capture2("git", "-C", root.to_s, "diff", "HEAD", "-U0", "--", "RAILS/*.scss", "RAILS/*.css")
+        diff, = Master::Io::Exec.capture2("git", "-C", root.to_s, "diff", "HEAD", "-U0", "--", "RAILS/*.scss", "RAILS/*.css")
         changes = changes_from_diff(diff)
         memory = new(root:)
         verdict.to_s == "rejected" ? memory.reject(surface:, note:, changes:) : memory.record(surface:, verdict:, note:, changes:)
