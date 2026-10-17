@@ -301,6 +301,7 @@ detail: [
           next if commands.empty?
 
           commands = commands.map { |command| command == "/fix" ? "/fix [path]" : command }
+          commands = commands.reject { |command| command == "/help" } if category == "help"
           commands.unshift("/help [command]") if category == "help"
           "#{category}0 at master0: #{commands.join(' ')}"
         end.compact.join("\n")
