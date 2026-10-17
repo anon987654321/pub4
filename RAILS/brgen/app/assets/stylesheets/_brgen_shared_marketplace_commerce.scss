@@ -100,8 +100,8 @@ body.vertical-marketplace .store-badge {
 body.vertical-marketplace .store-terms {
   max-width: var(--bol-max);
   margin: 32px auto 0;
-  border-top: 1px solid var(--bol-rule);
-  border-radius: 0;
+  border: 0;
+  border: 0;
   background: transparent;
 }
 
@@ -131,8 +131,8 @@ body.vertical-marketplace .store-pdp-info h1 {
 }
 
 body.vertical-marketplace .store-buybox {
-  border: 1px solid var(--bol-rule);
-  border-radius: 4px;
+  border: 0;
+  border: 0;
   background: #fff;
   padding: 24px;
 }
@@ -296,7 +296,7 @@ body.vertical-marketplace .store-buybox .price {
     display: grid;
     gap: 24px;
     padding: 24px 0;
-    border-bottom: 1px solid var(--bol-rule);
+  border: 0;
   }
 
   body.vertical-marketplace #marketplace-listings .deal-card-hit {
@@ -339,7 +339,7 @@ body.vertical-marketplace .store-buybox .price {
 @media (max-width: 767px) {
   body.vertical-marketplace #marketplace-listings .deal-card {
     padding-block: 16px;
-    border-bottom: 1px solid var(--bol-rule);
+  border: 0;
   }
 
   body.vertical-marketplace #marketplace-listings .deal-card-body {
