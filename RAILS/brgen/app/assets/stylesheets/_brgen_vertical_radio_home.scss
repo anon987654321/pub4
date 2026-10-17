@@ -72,10 +72,10 @@ font-family: var(--font-brand);
 .radio-nav a,
 .radio-nav-btn {
   padding: 8px 12px;
-  border-radius: 0;
+  border: 0;
   background: var(--scrim-65);
   color: var(--color-text);
-  border: 1px solid var(--edge-strong);
+  border: 0;
   font-size: var(--text-sm);
   text-decoration: none;
   cursor: pointer;
@@ -164,8 +164,8 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   max-width: min(420px, 72vw);
   padding: var(--space-4) var(--space-6);
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
-  border-radius: 0;
+  border: 0;
+  border: 0;
   font: var(--text-xs)/1.4 var(--font);
   color: var(--color-accent);
   pointer-events: none;
@@ -194,7 +194,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   height: 100dvh;
   z-index: 120;
   background: var(--glass-deep);
-  border-inline-start: 1px solid var(--edge);
+  border: 0;
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -210,7 +210,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   align-items: center;
   justify-content: space-between;
   padding: var(--space-6);
-  border-bottom: 1px solid var(--edge);
+  border: 0;
 }
 
 .radio-library-header h2 {
@@ -238,7 +238,7 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  border-bottom: 1px solid var(--edge-soft);
+  border: 0;
   color: inherit;
   text-decoration: none;
 }
