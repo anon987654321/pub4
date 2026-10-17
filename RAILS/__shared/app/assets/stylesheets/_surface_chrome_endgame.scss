@@ -339,20 +339,20 @@
   }
   /* Compact defaults. The stronger layout-scoped selector restores the gutter
      deliberately zeroed by the shared shell for document surfaces. */
-  body[data-layout-pass="micro-320"] .layout > main#main-content {
+  body[data-layout-contract="shared-layout"] .layout > main#main-content {
     padding-inline: max(var(--space-4), var(--page-gutter));
     padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom));
   }
-  body[data-layout-pass="micro-320"] :is(.page-header, .feed-header) {
+  body[data-layout-contract="shared-layout"] :is(.page-header, .feed-header) {
     margin-block-end: var(--space-6);
   }
 
   @media (min-width: 768px) {
-    body[data-layout-pass="micro-320"] .layout > main#main-content {
+    body[data-layout-contract="shared-layout"] .layout > main#main-content {
       padding-inline: 0;
       padding-block-end: calc(var(--space-12) + var(--safe-bottom));
     }
-    body[data-layout-pass="micro-320"] :is(.page-header, .feed-header) {
+    body[data-layout-contract="shared-layout"] :is(.page-header, .feed-header) {
       margin-block-end: var(--space-8);
     }
   }
