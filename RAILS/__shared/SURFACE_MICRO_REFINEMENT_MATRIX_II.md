@@ -1,6 +1,6 @@
-# Surface micro-refinement matrix II
+# Archived surface micro-refinement matrix II
 
-This pass adds four explicit property refinements to each selector below.
+This file records an unvalidated experiment. Its stylesheet is not loaded by production stacks. Reinstate declarations only after rendered before/after evidence and explicit operator approval.
 
 001. shared — .flash, .flash-alert — padding-block: var(--space-2)
 002. shared — .flash, .flash-alert — margin-block: var(--space-2)
@@ -498,3 +498,4 @@ This pass adds four explicit property refinements to each selector below.
 494. radio — .playlist-stage — border-radius: 0
 495. radio — .playlist-stage — box-shadow: none
 496. radio — .playlist-stage — background: transparent
+
