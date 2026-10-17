@@ -402,4 +402,46 @@ class DillaReferenceTest < Minitest::Test
     refute source.values.any? { |value| value.to_s.include?("/private/path") }
   end
 
+  def test_tempo_estimator_preserves_sub_eighty_bpm_grooves
+    sample_rate = 40
+    source_bpm = 70.0
+    beat_samples = sample_rate * 60.0 / source_bpm
+    samples = Array.new(sample_rate * 120, 0.0)
+    position = 0.0
+    while position < samples.size
+      samples[position.round] = 1.0
+      position += beat_samples
+    end
+
+    estimate = Dilla::Reference.estimate_tempo_samples(samples, sample_rate:)
+
+    assert_in_delta source_bpm, estimate.fetch("bpm"), 2.0
+    assert_operator estimate.fetch("bpm"), :<, 100.0
+  end
+
+  def test_tempo_segment_summary_reports_the_median_and_range
+    segments = [
+      { "bpm" => 92.0 }, { "bpm" => 94.0 }, { "bpm" => 96.0 }
+    ]
+    summary = Dilla::Reference.tempo_segment_summary(segments)
+
+    assert_equal 3, summary.fetch("segment_count")
+    assert_equal 94.0, summary.fetch("segment_median_bpm")
+    assert_equal 4.0, summary.fetch("segment_bpm_range")
+  end
+
+  def test_rhythm_segment_summary_uses_the_median_to_limit_transition_outliers
+    windows = [
+      { "timing_spread_ms" => 9.0, "onset_density_per_bar" => 14.0, "offbeat_onset_share" => 0.5 },
+      { "timing_spread_ms" => 12.0, "onset_density_per_bar" => 16.0, "offbeat_onset_share" => 0.7 },
+      { "timing_spread_ms" => 80.0, "onset_density_per_bar" => 20.0, "offbeat_onset_share" => 0.95 }
+    ]
+    summary = Dilla::Reference.summarize_rhythm_segments(windows)
+
+    assert_equal 3, summary.fetch("rhythm_window_count")
+    assert_equal 12.0, summary.fetch("timing_spread_ms")
+    assert_equal 16.0, summary.fetch("onset_density_per_bar")
+    assert_equal 0.7, summary.fetch("offbeat_onset_share")
+  end
+
 end
