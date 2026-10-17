@@ -31,6 +31,7 @@ module Operator
       @root = File.expand_path(root)
       @trees = trees.map(&:to_s)
       @now = now
+      @read_errors = {}
     end
 
     def payload
@@ -39,6 +40,7 @@ module Operator
         processes: processes,
         runs: runs.map { |run| run_row(run) },
         mission: mission_row,
+        read_errors: @read_errors.dup,
         logs: log_rows,
         commits: commit_row,
         retained: retained_rows,
@@ -76,7 +78,14 @@ module Operator
         out << "  pid #{row[:pid]} up #{row[:elapsed]} queue #{queue}"
       end
       out << "runs:"
-      out << "  none in the journal#{@trees.empty? ? "" : " for #{@trees.join(", ")}"}" if data[:runs].empty?
+      if data[:runs].empty?
+        journal_error = data[:read_errors][JOURNAL]
+        out << if journal_error
+                 "  unavailable (#{journal_error})"
+               else
+                 "  none in the journal#{@trees.empty? ? "" : " for #{@trees.join(", ")}"}"
+               end
+      end
       data[:runs].each do |row|
         out << "  #{row[:state].ljust(11)} #{row[:tree]} pass #{row[:pass]}/#{row[:max_passes]} " \
                "files #{row[:files]} pid #{row[:pid]}#{row[:alive] ? " alive" : ""} started #{row[:started]}"
@@ -86,7 +95,12 @@ module Operator
       end
       mission = data[:mission]
       out << "heartbeat: #{data[:heartbeat] || "none yet"}"
-      out << "mission: #{mission ? "#{mission[:state]}/#{mission[:stage]} #{mission[:scope]} attempt #{mission[:attempts]} artifacts #{mission[:artifacts]}" : "none"}"
+      mission_error = data[:read_errors][MISSION]
+      out << if mission_error
+               "mission: unavailable (#{mission_error})"
+             else
+               "mission: #{mission ? "#{mission[:state]}/#{mission[:stage]} #{mission[:scope]} attempt #{mission[:attempts]} artifacts #{mission[:artifacts]}" : "none"}"
+             end
       out << "logs:"
       out << "  none" if data[:logs].empty?
       data[:logs].each { |row| out << "  #{row[:name]} #{row[:age]} ago: #{row[:last]}" }
@@ -261,10 +275,18 @@ module Operator
 
     def read_json(relative_path)
       path = File.join(@root, relative_path)
+      if File.symlink?(path)
+        @read_errors[relative_path] = "refusing symlink"
+        return
+      end
       return unless File.file?(path)
 
-      JSON.parse(File.read(path))
-    rescue JSON::ParserError, SystemCallError
+      JSON.parse(File.read(path, encoding: "UTF-8"))
+    rescue JSON::ParserError => e
+      @read_errors[relative_path] = "invalid JSON: #{e.message.gsub(/\s+/, " ")[0, 100]}"
+      nil
+    rescue SystemCallError => e
+      @read_errors[relative_path] = "#{e.class}: #{e.message.to_s.gsub(/\s+/, " ")[0, 100]}"
       nil
     end
 

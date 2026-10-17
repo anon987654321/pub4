@@ -118,6 +118,38 @@ class TestFixStatus < Minitest::Test
     assert_nil payload[:mission]
   end
 
+  def test_corrupt_journals_are_not_reported_as_empty
+    write("fix_runs.json", "{not valid json")
+    write("mission.json", "{also broken")
+
+    status = Operator::FixStatus.new(root: @root)
+    payload = status.payload
+    rendered = status.render
+
+    assert_match(/invalid JSON:/, payload[:read_errors].fetch(Operator::FixStatus::JOURNAL))
+    assert_match(/invalid JSON:/, payload[:read_errors].fetch(Operator::FixStatus::MISSION))
+    assert_includes rendered, "unavailable (invalid JSON:"
+    assert_includes rendered, "mission: unavailable (invalid JSON:"
+    refute_includes rendered, "none in the journal"
+    refute_match(/mission: none\z/, rendered)
+  end
+
+  def test_status_refuses_symlinked_journal_and_mission_files
+    Dir.mktmpdir do |outside|
+      external = File.join(outside, "payload.json")
+      File.write(external, JSON.generate("version" => 1, "runs" => [run_record("RAILS")]))
+      File.symlink(external, File.join(@root, "MASTER", ".master", "fix_runs.json"))
+      File.symlink(external, File.join(@root, "MASTER", ".master", "mission.json"))
+
+      payload = Operator::FixStatus.new(root: @root).payload
+
+      assert_equal "refusing symlink", payload[:read_errors][Operator::FixStatus::JOURNAL]
+      assert_equal "refusing symlink", payload[:read_errors][Operator::FixStatus::MISSION]
+      assert_empty payload[:runs]
+      assert_nil payload[:mission]
+    end
+  end
+
   def test_render_names_the_empty_cases
     text = Operator::FixStatus.new(root: @root).render
 
