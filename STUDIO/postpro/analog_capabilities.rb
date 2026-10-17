@@ -88,9 +88,11 @@ module Studio
           keys.each_with_index.map do |key, index|
             id = OFFSETS.fetch(component) + index
             status = implementation_status(component, key)
-            { id:, key:, component:, stage: stage_for(component, id),
-              description: key.to_s.tr("_", " "), catalogued: true,
-              status:, enabled: enabled_for(status) }
+            {
+              id:, key:, component:, stage: stage_for(component, id),
+              description: key.to_s.tr("_", " ").freeze,
+              catalogued: true, status:, enabled: enabled_for(status),
+            }.freeze
           end
         end.freeze
       end
