@@ -39,8 +39,8 @@ class LayoutMicroRefinementContractTest < Minitest::Test
     assert_includes mobile, 'body[data-layout-pass="micro-320"] {'
     assert_match(/body\[data-layout-pass="micro-320"\]\s*\{[^}]*text-wrap:\s*pretty;/m, mobile)
     assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-header\s*\{[^}]*max-inline-size:\s*var\(--measure\);/m, wide)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-actions/ , mobile)
-    assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-actions[\s\S]*?max-inline-size:\s*none;/m, wide)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*:where\([\s\S]*?\.page-actions,[\s\S]*?\)\s*\{[^}]*max-inline-size:\s*100%;/m, mobile)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*:where\([\s\S]*?\.page-actions,[\s\S]*?\)\s*\{[^}]*max-inline-size:\s*none;/m, wide)
     assert_match(/body\[data-layout-pass="micro-320"\]\.vertical-marketplace\s+\.storefront-bol-mainnav\s*\{[^}]*max-inline-size:\s*var\(--bol-max\);/m, wide)
     assert_match(/body\[data-layout-pass="micro-320"\]\s*#sections[\s\S]*?max-inline-size:\s*none;/m, wide)
     assert_match(/body\[data-layout-pass="micro-320"\]\s*\{[^}]*text-wrap:\s*balance;/m, wide)
