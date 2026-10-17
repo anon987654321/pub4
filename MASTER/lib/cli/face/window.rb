@@ -211,7 +211,13 @@ module Master
 
         def hear
           heard = listen
-          answer(heard) if heard && !@closing && !@suppress_heard
+          if heard && !@closing
+            if @suppress_heard
+              set(:idle, ["listening interrupted — typed input retained"])
+            else
+              answer(heard)
+            end
+          end
         ensure
           @suppress_heard = false
           @hearing = nil
