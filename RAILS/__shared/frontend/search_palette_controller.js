@@ -11,11 +11,12 @@ import { Controller } from "@hotwired/stimulus"
 // The trigger is a real button, so this works with no keyboard and with no
 // pointer. The shortcuts are an accelerator on top of it, never the only way in.
 export default class extends Controller {
-  static targets = ["panel"]
+  static targets = ["panel", "trigger"]
 
   connect() {
     this.onKey = this.handleKey.bind(this)
     document.addEventListener("keydown", this.onKey)
+    if (this.hasTriggerTarget) this.triggerTarget.setAttribute("aria-expanded", String(this.isOpen))
   }
 
   disconnect() {
@@ -59,6 +60,7 @@ export default class extends Controller {
     // to nowhere leaves a keyboard reader at the top of the document.
     this.returnFocus = document.activeElement
     this.element.classList.add("open")
+    if (this.hasTriggerTarget) this.triggerTarget.setAttribute("aria-expanded", "true")
     document.documentElement.classList.add("palette-open")
     // Queried, not a target: the field belongs to shared/live_search_form,
     // which is rendered by four other surfaces and should not grow a data
@@ -74,6 +76,7 @@ export default class extends Controller {
     if (!this.isOpen) return
 
     this.element.classList.remove("open")
+    if (this.hasTriggerTarget) this.triggerTarget.setAttribute("aria-expanded", "false")
     this.release()
     if (this.returnFocus?.focus) this.returnFocus.focus()
     this.returnFocus = null
