@@ -1,5 +1,5 @@
 ---
-findings: 218
+findings: 217
 by_rule:
   BARE_DIV_WRAPPER: 4
   BEM_IN_VIEWS: 12
@@ -13,7 +13,7 @@ by_rule:
   MEANINGFUL_NAMES: 14
   MEASURE_OPTIMUM: 7
   MIGRATION_REMOVE_COLUMN: 1
-  MOBILE_FIRST: 32
+  MOBILE_FIRST: 31
   NEVER_BATCH_DELETE: 7
   NO_COLUMN_ALIGN: 8
   NO_INLINE_SCRIPT_BLOCK: 10
@@ -108,7 +108,6 @@ finding_members:
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_affiliate_feed_unit.scss:151
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_affiliate_feed_unit.scss:273
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_cookie_banner.scss:143
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_layout_micro_refinements.scss:598
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_newsletter_capture.scss:151
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_post_voting.scss:50
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_post_voting.scss:59
