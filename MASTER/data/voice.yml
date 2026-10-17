@@ -596,7 +596,7 @@ tts:
   # excluded. One event at most per synthesized chunk. MASTER_TTS_DISFLUENCIES=0
   # disables the layer without changing the voice or synthesis engine.
   disfluencies:
-    enabled: true
+    enabled: false
     probability: 0.20
     min_words: 6
     stutter_probability: 0.35
