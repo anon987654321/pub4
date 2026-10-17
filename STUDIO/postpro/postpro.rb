@@ -4756,6 +4756,20 @@ def preset_smoke_problems(names, probe)
   end
 end
 
+# The finishing-grain bypass is a separate runtime proof. Its failure must be
+# recorded as a finding, not allowed to abort the table diagnostics that follow.
+def finishing_grain_probe_problems(names, probe)
+  name = Array(names).first
+  return ["no preset grains in its own chain; finishing-grain bypass cannot be verified"] unless name
+
+  passed_through = yield(probe, name)
+  return [] if passed_through == probe
+
+  ["apply_finishing_grain still runs over a chain that grains itself"]
+rescue StandardError => e
+  ["finishing-grain bypass probe raises: #{e.class}: #{e.message}"]
+end
+
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
@@ -4918,9 +4932,14 @@ def vocab_check
   # standing note about every output being grained twice became a thing to check
   # rather than a thing to report.
   own = PRESETS.select { |_, p| Array(p[:fx]).include?("grain") }
-  probe = Vips::Image.black(8, 8).bandjoin([Vips::Image.black(8, 8)] * 2).copy(interpretation: :srgb) + 128
-  passed_through = apply_finishing_grain(probe, own.keys.first)
-  problems << "apply_finishing_grain still runs over a chain that grains itself" unless passed_through == probe
+  begin
+    probe = Vips::Image.black(8, 8).bandjoin([Vips::Image.black(8, 8)] * 2).copy(interpretation: :srgb) + 128
+    problems.concat(finishing_grain_probe_problems(own.keys, probe) do |image, name|
+      apply_finishing_grain(image, name)
+    end)
+  rescue StandardError => e
+    problems << "cannot build finishing-grain bypass probe: #{e.class}: #{e.message}"
+  end
   notes << "#{own.length} of #{PRESETS.length} presets grain in their own chain; " \
            "the rest take the finishing pass"
 
