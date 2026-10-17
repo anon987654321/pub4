@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "tmpdir"
 require_relative "../review/council/critique"
 require_relative "rails_visual_graph"
@@ -270,7 +270,7 @@ module Master
       # unrestricted repo-wide grep let a common selector/class name in one
       # app misattribute a finding to an unrelated file in another.
       def grep_source(token, allowed:)
-        out, status = Open3.capture2("git", "-C", repo_root, "grep", "-l", "--fixed-strings", token,
+        out, status = Master::Io::Exec.capture2("git", "-C", repo_root, "grep", "-l", "--fixed-strings", token,
                                      "--", "RAILS", "RAILS/master")
         return unless status.success?
 
