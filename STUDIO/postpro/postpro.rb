@@ -4861,18 +4861,29 @@ def vocab_check
   preset_source = source_methods["preset"]
   implemented = postpro_case_labels(preset_source, :fx)
   problems = []
+  valid_presets = PRESETS.each_with_object({}) do |(name, preset_data), rows|
+    if preset_data.is_a?(Hash)
+      rows[name] = preset_data
+    else
+      problems << "#{name}: preset definition is not a table"
+    end
+  end
   postpro_case_label_duplicates(preset_source, :fx).each do |fx|
     problems << "preset(): duplicate effect arm #{fx.inspect}; later branch is unreachable"
   end
 
-  PRESETS.each do |name, p|
+  valid_presets.each do |name, p|
     (Array(p[:fx]) - implemented).each { |fx| problems << "#{name}: fx #{fx.inspect} has no implementation in preset()" }
     problems << "#{name}: stock #{p[:stock].inspect} is not in STOCKS" unless STOCKS.key?(p[:stock])
     if p[:print_stock] && !PRINT_STOCKS.key?(p[:print_stock])
       problems << "#{name}: print_stock #{p[:print_stock].inspect} is not in PRINT_STOCKS"
     end
     if p[:lens]
-      problems << "#{name}: lens #{p[:lens].inspect} is not in LENSES" unless LENSES.key?(p[:lens].to_sym)
+      unless p[:lens].is_a?(String) || p[:lens].is_a?(Symbol)
+        problems << "#{name}: lens #{p[:lens].inspect} must be a name"
+      else
+        problems << "#{name}: lens #{p[:lens].inspect} is not in LENSES" unless LENSES.key?(p[:lens].to_sym)
+      end
     end
     if Array(p[:fx]).include?("vintage_lens") && p[:lens].nil?
       problems << "#{name}: has a vintage_lens step but names no lens, so it gets the zeiss default"
@@ -4919,11 +4930,11 @@ def vocab_check
   end
 
   # Reachability. An effect nothing can select is a comment with a runtime cost.
-  used = PRESETS.values.flat_map { |p| Array(p[:fx]) }.uniq
+  used = valid_presets.values.flat_map { |p| Array(p[:fx]) }.uniq
   (implemented - used - RECIPE_ALLOWED).each { |fx| problems << "#{fx} is implemented but no preset and no recipe can reach it" }
-  (STOCKS.keys - PRESETS.values.map { |p| p[:stock] }.uniq).each { |s| problems << "stock #{s} is defined but no preset uses it" }
-  (LENSES.keys - PRESETS.values.filter_map { |p| p[:lens]&.to_sym }.uniq).each { |l| problems << "lens #{l} is defined but no preset uses it" }
-  (PRINT_STOCKS.keys - PRESETS.values.filter_map { |p| p[:print_stock] }.uniq).each { |s| problems << "print stock #{s} is defined but no preset uses it" }
+  (STOCKS.keys - valid_presets.values.map { |p| p[:stock] }.uniq).each { |s| problems << "stock #{s} is defined but no preset uses it" }
+  (LENSES.keys - valid_presets.values.filter_map { |p| (p[:lens].to_sym if p[:lens].is_a?(String) || p[:lens].is_a?(Symbol)) }.uniq).each { |l| problems << "lens #{l} is defined but no preset uses it" }
+  (PRINT_STOCKS.keys - valid_presets.values.filter_map { |p| p[:print_stock] }.uniq).each { |s| problems << "print stock #{s} is defined but no preset uses it" }
 
   # A preset key is only honoured if some step in the chain reads it. lens: was
   # the first of these to be found, and it was not the only one -- street and
@@ -4950,7 +4961,7 @@ def vocab_check
     end
   end
 
-  PRESETS.each do |name, p|
+  valid_presets.each do |name, p|
     preset_unregistered_keys(p, key_readers).each do |key|
       problems << "#{name}: preset key #{key.inspect} has no declared reader contract"
     end
@@ -5034,7 +5045,7 @@ def vocab_check
   # apply_finishing_grain now stands down for a chain that grains itself, so the
   # standing note about every output being grained twice became a thing to check
   # rather than a thing to report.
-  own = PRESETS.select { |_, p| Array(p[:fx]).include?("grain") }
+  own = valid_presets.select { |_, p| Array(p[:fx]).include?("grain") }
   begin
     probe = Vips::Image.black(8, 8).bandjoin([Vips::Image.black(8, 8)] * 2).copy(interpretation: :srgb) + 128
     problems.concat(finishing_grain_probe_problems(own.keys, probe) do |image, name|
@@ -5099,7 +5110,7 @@ def vocab_check
   # 8x8 pixels through four presets chosen to cover the machinery the table
   # checks cannot reach: HD.apply (film_curve), Spectral.adaptation_matrix
   # (spectral_temp), a black-and-white chain and a print chain. Milliseconds.
-  smoke = %i[portrait cinematic noir masterpiece].select { |name| PRESETS.key?(name) }
+  smoke = %i[portrait cinematic noir masterpiece].select { |name| valid_presets.key?(name) }
   begin
     probe = Vips::Image.black(8, 8).add(128).cast("uchar").bandjoin([128, 128]).copy(interpretation: :srgb)
     problems.concat(preset_smoke_problems(smoke, probe) { |image, name| preset(image, name) })
