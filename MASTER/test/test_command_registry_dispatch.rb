@@ -35,6 +35,20 @@ class TestCommandRegistryDispatch < Minitest::Test
   def test_help_pages_and_the_built_surface_are_one_set
     assert_equal built.keys.sort, Registry::HELP_TOPICS.keys.sort
   end
+  def test_help_overview_leads_with_fix_and_lists_every_registered_command
+    summary = Registry.help_summary
+
+    assert_match(/\Afix0 at master0: \/fix \[path\]/, summary)
+    Registry::HELP_TOPICS.each_key { |name| assert_includes summary, "/#{name}" }
+    assert_includes summary, "/exit"
+    assert_includes summary, "/quit"
+    assert_includes summary, "/help [command]"
+  end
+
+  def test_command_surface_and_help_list_stay_in_parity
+    surface = Registry.command_surface.map { |entry| entry.fetch(:cmd) }.sort
+    assert_equal Registry.slash_commands.sort, surface
+  end
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,
   # and build merges it; slash_commands is the help list, not a table.
