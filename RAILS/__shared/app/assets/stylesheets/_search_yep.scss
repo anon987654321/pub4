@@ -51,6 +51,20 @@
   border-radius: 16px;
 }
 
+/* State visuals follow the completed request and actual result region. The
+   field stays borderless; only its background changes meaning. */
+.search[data-state="loading"] {
+  background-color: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.search[data-state="empty"] {
+  background-color: var(--surface-elevated, var(--surface));
+}
+
+.search[data-state="error"] {
+  background-color: color-mix(in srgb, var(--color-danger, var(--danger)) 10%, var(--surface));
+}
+
 /* Search suggestions and palette results share the expanded field surface.
    The full index result frame deliberately remains below its field on index
    pages; those pages are lists, not autocomplete menus. */

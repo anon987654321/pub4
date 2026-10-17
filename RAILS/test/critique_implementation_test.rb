@@ -228,9 +228,15 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes search_form, 'class="search<%= " active" if query.to_s.strip.present? %>"'
     assert_includes search_form, "expanded: query.to_s.strip.present?"
-    assert_includes controller, "const expanded = q.length > 0 && event.detail?.success !== false"
+    assert_includes controller, 'shell.dataset.state = "loading"'
+    assert_includes controller, 'shell.dataset.state = state'
+    assert_includes controller, 'getAttribute("aria-controls")'
+    assert_includes controller, 'const isEmpty = Boolean('
     assert_includes controller, 'setAttribute("aria-expanded", String(expanded))'
     assert_includes search_css, ".search:has(input:focus-visible)"
+    assert_includes search_css, '.search[data-state="loading"]'
+    assert_includes search_css, '.search[data-state="empty"]'
+    assert_includes search_css, '.search[data-state="error"]'
   end
 
   def test_brgen_search_palette_semantics_track_open_state

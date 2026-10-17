@@ -37,6 +37,12 @@ export default class extends Controller {
   submitForm() {
     if (!this.hasFormTarget) return
 
+    const shell = this.element.classList.contains("search") ? this.element : this.element.closest(".search")
+    if (shell) {
+      shell.dataset.state = "loading"
+      shell.setAttribute("aria-busy", "true")
+    }
+
     const action = new URL(this.formTarget.action, window.location.origin)
     action.searchParams.set("format", "turbo_stream")
     this.formTarget.action = action.pathname + action.search
@@ -49,15 +55,34 @@ export default class extends Controller {
     if (event.target !== this.formTarget) return
 
     this.formTarget.removeAttribute("aria-busy")
+    const succeeded = event.detail?.success !== false
     if (this.hasStatusTarget) {
-      this.statusTarget.textContent = event.detail.success ? this.updatedValue : this.failedValue
+      this.statusTarget.textContent = succeeded ? this.updatedValue : this.failedValue
     }
-    // vYroQxg .search.active when live results are on screen
+
     const shell = this.element.classList.contains("search") ? this.element : this.element.closest(".search")
     if (shell) {
       const q = this.hasInputTarget ? this.inputTarget.value.trim() : ""
-      const expanded = q.length > 0 && event.detail?.success !== false
+      const resultsId = this.hasInputTarget ? this.inputTarget.getAttribute("aria-controls") : null
+      const resultRegion = resultsId ? document.getElementById(resultsId) : null
+      const suggestions = shell.querySelector(":scope > #search_suggestions, :scope > #search_palette_suggestions")
+      const hasResults = Boolean(resultRegion?.textContent.trim())
+      const hasSuggestions = Boolean(suggestions?.textContent.trim())
+      const isEmpty = Boolean(q.length > 0 && succeeded && resultRegion && !hasResults && !hasSuggestions)
+      const expanded = q.length > 0 && succeeded && !isEmpty
+      const state = !succeeded
+        ? "error"
+        : q.length === 0
+          ? "idle"
+          : isEmpty
+            ? "empty"
+            : hasSuggestions && !hasResults
+              ? "suggestions"
+              : "results"
+
+      shell.dataset.state = state
       shell.classList.toggle("active", expanded)
+      shell.removeAttribute("aria-busy")
       if (this.hasInputTarget) this.inputTarget.setAttribute("aria-expanded", String(expanded))
     }
   }
