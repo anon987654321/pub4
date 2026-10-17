@@ -149,10 +149,33 @@ class TestLoraReplicate < Minitest::Test
     assert_equal 60, delay.call("resets in ~900s", 0)
   end
 
+  # Source contracts need complete top-level method bodies: the first `end` may
+  # close a nested block. This reader is limited to top-level Ruby script methods.
+  def source_method_body(source, name)
+    pattern = Regexp.new(
+      "^def\\s+" + Regexp.escape(name) + "(?=[\\s(=]).*?(?=^def\\s+|\\z)",
+      Regexp::MULTILINE
+    )
+    source[pattern]
+  end
+
+  def test_source_method_reader_spans_nested_blocks
+    script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
+    source = File.read(script, encoding: "UTF-8")
+
+    prompt_receipt = source_method_body(source, "prompt_receipt_exists?")
+    presets = source_method_body(source, "postpro_presets")
+    render = source_method_body(source, "render")
+
+    assert_includes prompt_receipt, "File.foreach(path).with_index"
+    assert_includes prompt_receipt, "\\n  false\\nend"
+    assert_includes presets, "@postpro_presets = presets.freeze"
+    assert_includes render, "sleep(e.message.match?(/NSFW/i) ? 1 : 10)"
+  end
   def measured_predict_seconds_reader
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
-    body = source[/^def measured_predict_seconds\(prediction\).*?^end$/m]
+    body = source_method_body(source, "measured_predict_seconds")
     assert body, "provider timing parser must exist"
 
     reader = Class.new
@@ -173,7 +196,7 @@ class TestLoraReplicate < Minitest::Test
   def prompt_receipt_reader
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
-    body = source[/^def prompt_receipt_exists\?.*?^end$/m]
+    body = source_method_body(source, "prompt_receipt_exists?")
     assert body, "prompt receipt lookup must exist"
 
     reader = Class.new
@@ -226,7 +249,7 @@ class TestLoraReplicate < Minitest::Test
   def postpro_preset_reader_class(postpro_path)
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
-    body = source[/^def postpro_presets\b.*?^end$/m]
+    body = source_method_body(source, "postpro_presets")
     assert body, "postpro preset discovery method must exist"
 
     reader = Class.new
@@ -275,7 +298,7 @@ class TestLoraReplicate < Minitest::Test
   def renderer_class_from_source
     path = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(path, encoding: "UTF-8")
-    body = source[/^def render\b.*?^end$/m]
+    body = source_method_body(source, "render")
     assert body, "LoRA Replicate render wrapper must exist"
 
     klass = Class.new
