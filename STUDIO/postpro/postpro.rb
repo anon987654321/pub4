@@ -4686,6 +4686,15 @@ def preset_effect_reads_key?(preset_source, effect, key)
   end
   false
 end
+
+# Preset data has a closed vocabulary. A newly added field must either be a
+# built-in dispatch field, a mechanism-level field (iso), or have an explicit
+# effect reader below. Unknown knobs must fail loudly rather than disappear.
+def preset_unregistered_keys(preset_data, key_readers)
+  base_keys = %i[fx stock intensity iso]
+  preset_data.keys.map(&:to_sym) - base_keys - key_readers.keys
+end
+
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
@@ -4778,6 +4787,9 @@ def vocab_check
   end
 
   PRESETS.each do |name, p|
+    preset_unregistered_keys(p, key_readers).each do |key|
+      problems << "#{name}: preset key #{key.inspect} has no declared reader contract"
+    end
     key_readers.each do |key, readers|
       next unless p.key?(key)
       next unless (Array(p[:fx]) & readers).empty?
