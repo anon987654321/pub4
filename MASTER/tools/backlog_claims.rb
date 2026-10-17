@@ -16,6 +16,7 @@
 # Prose without a concrete citation remains for human review. This audit reports
 # stale claims; it never closes backlog work by itself.
 
+require "open3"
 require "set"
 require_relative "../lib/trace/dmesg"
 
@@ -31,7 +32,12 @@ module BacklogClaims
   module_function
 
   def tracked
-    @tracked ||= `git -C #{ROOT} ls-files`.lines.map(&:strip).to_set
+    return @tracked if defined?(@tracked)
+
+    output, status = Open3.capture2("git", "-C", ROOT, "ls-files")
+    raise "could not inspect tracked repository paths (git ls-files failed)" unless status.success?
+
+    @tracked = output.lines.map(&:strip).to_set
   end
 
   # A citation may be repo-relative or tree-relative; try both before calling it
@@ -56,9 +62,11 @@ module BacklogClaims
 
   def line_count(path)
     @lines ||= {}
-    @lines[path] ||= File.readlines(File.join(ROOT, path)).size
+    return @lines[path] if @lines.key?(path)
+
+    @lines[path] = File.foreach(File.join(ROOT, path)).count
   rescue StandardError
-    0
+    nil
   end
 
   # Return only open checklist items, identified by their source line. The
@@ -75,30 +83,40 @@ module BacklogClaims
   end
 
   def verdict(text)
-    pl = text.scan(PATH_LINE)
-    unless pl.empty?
-      stale = pl.filter_map do |(path, line)|
-        resolved = resolve(path)
-        next "#{path} (absent)" if resolved.nil?
-        # A basename several tracked files share cannot be line-checked without
-        # guessing which one the item meant.
-        next if resolved == :ambiguous
-        next "#{path}:#{line} (file has #{line_count(resolved)} lines)" if line.to_i > line_count(resolved)
+    findings = []
+    cited_paths = text.scan(PATH_LINE)
+    bare_paths = text.scan(BARE_PATH).flatten.uniq
 
-        nil
+    cited_paths.each do |path, line|
+      resolved = resolve(path)
+      if resolved.nil?
+        findings << "missing path: #{path}"
+        next
       end
-      return [:stale_citation, stale] unless stale.empty?
+      if resolved == :ambiguous
+        findings << "inconclusive path: #{path} matches more than one tracked file"
+        next
+      end
 
-      return :citation_holds
+      count = line_count(resolved)
+      if count.nil?
+        findings << "inconclusive line: could not read #{path}"
+      elsif line.to_i > count
+        findings << "stale line: #{path}:#{line} (file has #{count} lines)"
+      end
     end
 
-    paths = text.scan(BARE_PATH).flatten.uniq
-    unless paths.empty?
-      missing = paths.reject { |p| r = resolve(p); r && r != :ambiguous }
-      return [:absent_path, missing] unless missing.empty?
-
-      return :path_holds
+    bare_paths.each do |path|
+      resolved = resolve(path)
+      if resolved.nil?
+        findings << "missing path: #{path}"
+      elsif resolved == :ambiguous
+        findings << "inconclusive path: #{path} matches more than one tracked file"
+      end
     end
+
+    return [:citation_findings, findings.uniq] unless findings.empty?
+    return :citation_holds unless cited_paths.empty? && bare_paths.empty?
 
     :prose
   end
@@ -222,22 +240,24 @@ end
 
   def run
     tally = Hash.new(0)
-    stale = []
+    findings = []
 
     items.each do |number, text|
-      v = verdict(text)
-      kind = v.is_a?(Array) ? v.first : v
+      verdict_result = verdict(text)
+      kind = verdict_result.is_a?(Array) ? verdict_result.first : verdict_result
       tally[kind] += 1
-      stale << [number, v.last, text.lines.first.strip[0, 96]] if v.is_a?(Array)
+      if verdict_result.is_a?(Array)
+        findings << [number, verdict_result.last, text.lines.first.strip[0, 96]]
+      end
     end
 
     Master::Trace::Dmesg.attach("claims0", "master0", "#{items.size} unchecked checklist items")
     tally.sort_by { |_, n| -n }.each { |k, n| Master::Trace::Dmesg.status("claims0", "#{k}, #{n}") }
 
-    return if stale.empty?
+    return if findings.empty?
 
-    Master::Trace::Dmesg.status("claims0", "#{stale.size} stale citations")
-    stale.first(Integer(ENV.fetch("LIMIT", "40"))).each do |number, detail, head|
+    Master::Trace::Dmesg.status("claims0", "#{findings.size} items with citation findings")
+    findings.first(Integer(ENV.fetch("LIMIT", "40"))).each do |number, detail, head|
       Master::Trace::Dmesg.status("claims0", "#{number}, #{head}")
       Master::Trace::Dmesg.status("claims0", Array(detail).join("; "))
     end
