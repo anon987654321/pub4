@@ -368,4 +368,10 @@ class DillaReferenceTest < Minitest::Test
     assert_equal "full_mix_proxy", source
   end
 
+  def test_analysis_timeouts_scale_for_album_length_and_remain_bounded
+    assert_equal 450, Dilla::Reference.analysis_timeout(900)
+    assert_equal 3_600, Dilla::Reference.analysis_timeout(7_200)
+    assert_equal 120, Dilla::Reference.analysis_timeout(1)
+  end
+
 end
