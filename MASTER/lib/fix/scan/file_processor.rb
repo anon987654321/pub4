@@ -40,6 +40,7 @@ module Master
           @skip_semantic = skip_semantic
           @semantic_gap_mutex = Mutex.new
           @semantic_gaps = {}
+          @semantic_gap_notice_emitted = false
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
           @progress_mutex = Mutex.new
@@ -71,7 +72,10 @@ module Master
         end
 
         def reset_semantic_gaps!
-          @semantic_gap_mutex.synchronize { @semantic_gaps.clear }
+          @semantic_gap_mutex.synchronize do
+            @semantic_gaps.clear
+            @semantic_gap_notice_emitted = false
+          end
           self
         end
 
@@ -270,16 +274,18 @@ module Master
           relative = relative_progress_path(path)
           law_id = law.respond_to?(:id) ? law.id.to_s : law.class.name.to_s
           detail = "#{law_id}: #{error.message.to_s[0, 220]}"
-          first = @semantic_gap_mutex.synchronize do
-            next false if @semantic_gaps.key?(relative)
+          first_file, announce = @semantic_gap_mutex.synchronize do
+            next [false, false] if @semantic_gaps.key?(relative)
 
             @semantic_gaps[relative] = detail
-            true
+            first_notice = !@semantic_gap_notice_emitted
+            @semantic_gap_notice_emitted = true
+            [true, first_notice]
           end
-          return unless first
+          return unless first_file
 
           @bus&.publish("scan:semantic_inconclusive", path: relative, law: law_id, message: detail)
-          Master::Trace::Dmesg.status("law0", "semantic inconclusive #{relative}: #{detail}"[0, 200])
+          Master::Trace::Dmesg.status("law0", "semantic assessment inconclusive; details recorded for #{relative}")[0, 200] if announce
         end
 
         # The monitor reports the law that's actually in flight, not merely the
