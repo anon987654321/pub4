@@ -58,26 +58,6 @@ nav[data-pwa-primary-nav] {
   letter-spacing: var(--tracking-wide);
 }
 
-body .search {
-  background-color: var(--search-bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-body .search input {
-  color: var(--text);
-}
-
-body .search input::placeholder {
-  color: var(--text-secondary);
-}
-
-body .search.focus,
-body .search.active {
-  background-color: var(--surface-elevated);
-  border-color: var(--accent);
-}
-
 @include meta.load-css("auth_form");
 
 @include meta.load-css("focus_ring");
