@@ -51,6 +51,9 @@ module Operator
       by = Hash.new { |h, k| h[k] = [] }
       files.each do |f|
         path = File.join(ROOT, f)
+        # A symlink is the one file seen twice, not a copy: it cannot diverge from its target, which
+        # is the failure this census exists for (FUN/zshrc.shared -> OPENBSD/lib/zshrc.shared).
+        next if File.symlink?(path)
         next unless File.file?(path) && File.size(path) >= MIN_SIZE
         by[[Digest::SHA256.file(path).hexdigest, File.size(path)]] << f
       end
