@@ -778,4 +778,21 @@ end
     assert_equal "j_dilla", argv[argv.index("--style") + 1]
   end
 
+  def test_slum_village_reference_infers_the_dilla_production_profile
+    url = "https://youtu.be/XgObDlzrlUc?si=slum-village"
+    calls = []
+
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("reference0: analyzed audio")
+    end) do
+      result = MediaIntent.dispatch("study this Slum Village track: #{url}", root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal "j_dilla", result.value!.fetch(:style)
+    end
+
+    argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+    assert_equal "j_dilla", argv[argv.index("--style") + 1]
+  end
+
 end
