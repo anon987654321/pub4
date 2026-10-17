@@ -68,7 +68,14 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   def test_compact_category_menu_starts_below_the_full_header_stack
     header = File.read(HEADER_CSS)
 
-    assert_match(/--bol-utility-block:\s*36px;/, header)
+    assert_match(/--bol-utility-block:\s*calc\(36px\s*\+\s*var\(--safe-top\)\);/, header,
+                 "the utility block must include the notch inset before downstream menu geometry is derived")
+    catalog = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_catalog.scss"))
+    utility = catalog.match(/body\.vertical-marketplace \.storefront-utility--bol\s*\{([^}]*)\}/m)&.[](1)
+    assert utility, "the utility strip must have one base geometry rule"
+    assert_match(/padding-block-start:\s*var\(--safe-top\)/, utility)
+    assert_match(/padding-inline-start:\s*calc\(var\(--bol-gutter\)\s*\+\s*var\(--safe-left\)\)/, utility)
+    assert_match(/padding-inline-end:\s*calc\(var\(--bol-gutter\)\s*\+\s*var\(--safe-right\)\)/, utility)
     campaigns = File.read(CITY_CAMPAIGNS_CSS)
     assert_includes campaigns, "min-height: var(--bol-utility-block);",
                     "the later campaign module must not override the header's utility-height token"
