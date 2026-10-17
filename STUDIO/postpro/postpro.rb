@@ -4602,6 +4602,38 @@ def postpro_method_reaches?(methods, from, target, seen: [], calls: nil)
   end
 end
 
+def postpro_case_label_duplicates(body, predicate_name)
+  return [] unless body
+
+  require "prism"
+  parsed = Prism.parse(body)
+  raise ArgumentError, "postpro case inventory could not parse its method" unless parsed.success?
+
+  duplicates = []
+  pending = [parsed.value]
+  until pending.empty?
+    node = pending.pop
+    if node.is_a?(Prism::CaseNode) &&
+       node.predicate.is_a?(Prism::LocalVariableReadNode) &&
+       node.predicate.name == predicate_name.to_sym
+      seen = {}
+      node.conditions.each do |branch|
+        next unless branch.is_a?(Prism::WhenNode)
+
+        branch.conditions.each do |condition|
+          next unless condition.is_a?(Prism::StringNode)
+
+          label = condition.unescaped
+          duplicates << label if seen.key?(label)
+          seen[label] = true
+        end
+      end
+    end
+    pending.concat(node.child_nodes.compact)
+  end
+  duplicates.uniq
+end
+
 def postpro_case_labels(body, predicate_name)
   return [] unless body
 
@@ -4667,22 +4699,37 @@ def preset_effect_reads_key?(preset_source, effect, key)
   parsed = Prism.parse(preset_source)
   return false unless parsed.success?
 
+  # Ruby executes the first matching when branch. Later duplicate labels are
+  # unreachable and must not lend a key read to the active effect arm.
   pending = [parsed.value]
+  dispatch = nil
   until pending.empty?
-    node = pending.pop
-    if node.is_a?(Prism::WhenNode) &&
-       node.conditions.any? { |condition| condition.is_a?(Prism::StringNode) && condition.unescaped == effect.to_s }
-      arm = [node.statements].compact
-      until arm.empty?
-        candidate = arm.pop
-        if candidate.is_a?(Prism::CallNode) && candidate.receiver.nil? && candidate.name.to_s == effect.to_s
-          return true if postpro_node_reads_p_key?(candidate, key)
-        end
-        arm.concat(candidate.child_nodes.compact)
-      end
-      next
+    node = pending.shift
+    if node.is_a?(Prism::CaseNode) &&
+       node.predicate.is_a?(Prism::LocalVariableReadNode) &&
+       node.predicate.name == :fx
+      dispatch = node
+      break
     end
     pending.concat(node.child_nodes.compact)
+  end
+  return false unless dispatch
+
+  branch = dispatch.conditions.find do |candidate|
+    candidate.is_a?(Prism::WhenNode) &&
+      candidate.conditions.any? do |condition|
+        condition.is_a?(Prism::StringNode) && condition.unescaped == effect.to_s
+      end
+  end
+  return false unless branch
+
+  pending = [branch.statements].compact
+  until pending.empty?
+    candidate = pending.pop
+    if candidate.is_a?(Prism::CallNode) && candidate.receiver.nil? && candidate.name.to_s == effect.to_s
+      return true if postpro_node_reads_p_key?(candidate, key)
+    end
+    pending.concat(candidate.child_nodes.compact)
   end
   false
 end
@@ -4698,7 +4745,11 @@ end
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
-  implemented = postpro_case_labels(source_methods["preset"], :fx)
+  preset_source = source_methods["preset"]
+  implemented = postpro_case_labels(preset_source, :fx)
+  postpro_case_label_duplicates(preset_source, :fx).each do |fx|
+    problems << "preset(): duplicate effect arm #{fx.inspect}; later branch is unreachable"
+  end
   problems = []
 
   PRESETS.each do |name, p|
