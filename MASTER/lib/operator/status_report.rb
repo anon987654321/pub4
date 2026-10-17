@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "yaml"
 require_relative "environment"
 # Only "yaml" itself is behind this — requiring it does not boot the Master
@@ -124,7 +124,7 @@ module Operator
     # rev-parse, rev-list --count — whose output carries no leading whitespace,
     # so trimming only the tail is the same answer for them and the right one here.
     def git(*args)
-      out, status = Open3.capture2e("git", *args, chdir: @root)
+      out, status = Master::Io::Exec.capture2e("git", *args, chdir: @root)
       status.success? ? out.rstrip : nil
     end
 
@@ -177,7 +177,7 @@ module Operator
                     # Legacy installations only; remove after the broker is universal.
                     ["doas", "-n", "/usr/sbin/rcctl", "check", service]
                   end
-        out, status = Open3.capture2e(*command)
+        out, status = Master::Io::Exec.capture2e(*command)
         if status.success? && out.include?("(ok)")
           "ok"
         else
