@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "ripper"
 require "minitest/mock"
 require "tmpdir"
 require "open3"
@@ -149,14 +150,36 @@ class TestLoraReplicate < Minitest::Test
     assert_equal 60, delay.call("resets in ~900s", 0)
   end
 
-  # Source contracts need complete top-level method bodies: the first `end` may
-  # close a nested block. This reader is limited to top-level Ruby script methods.
+  # Ripper distinguishes block keywords from modifier forms. Count real
+  # block openers to extract a method body through its matching end.
+  # Stopping at the first end silently truncates nested begin/each/if blocks.
   def source_method_body(source, name)
-    pattern = Regexp.new(
-      "^def\\s+" + Regexp.escape(name) + "(?=[\\s(=]).*?(?=^def\\s+|\\z)",
-      Regexp::MULTILINE
-    )
-    source[pattern]
+    signature = Regexp.new("^def\\s+" + Regexp.escape(name) + "(?=[\\s(=])")
+    start_line = source.lines.find_index { |line| signature.match?(line) }
+    return unless start_line
+
+    lines = source.lines
+    stack = []
+    Ripper.lex(source).each do |position, type, token, state|
+      line = position[0]
+      next if line < start_line + 1 || type != :on_kw
+
+      if %w[def class module begin case if unless while until for].include?(token)
+        next if %w[if unless while until].include?(token) &&
+                (state.to_i & Ripper::EXPR_LABEL).positive?
+
+        stack << [token, line]
+      elsif token == "do"
+        # while x do / for x in y do close with one end, not two.
+        next if stack.last && %w[while until for].include?(stack.last[0]) && stack.last[1] == line
+
+        stack << [token, line]
+      elsif token == "end"
+        stack.pop
+        return lines[start_line...line].join if stack.empty?
+      end
+    end
+    nil
   end
 
   def test_source_method_reader_spans_nested_blocks
@@ -168,7 +191,7 @@ class TestLoraReplicate < Minitest::Test
     render = source_method_body(source, "render")
 
     assert_includes prompt_receipt, "File.foreach(path).with_index"
-    assert_includes prompt_receipt, "\\n  false\\nend"
+    assert_includes prompt_receipt, "  false\nend"
     assert_includes presets, "@postpro_presets = presets.freeze"
     assert_includes render, "sleep(e.message.match?(/NSFW/i) ? 1 : 10)"
   end
