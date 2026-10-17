@@ -4700,9 +4700,6 @@ def vocab_check
     end
     if p[:lens]
       problems << "#{name}: lens #{p[:lens].inspect} is not in LENSES" unless LENSES.key?(p[:lens].to_sym)
-      unless Array(p[:fx]).include?("vintage_lens")
-        problems << "#{name}: declares lens #{p[:lens].inspect} but no vintage_lens step to apply it"
-      end
     end
     if Array(p[:fx]).include?("vintage_lens") && p[:lens].nil?
       problems << "#{name}: has a vintage_lens step but names no lens, so it gets the zeiss default"
@@ -4764,7 +4761,7 @@ def vocab_check
     print_stock: %w[print_film], exposure_secs: %w[reciprocity_failure],
     k1: %w[lens_distortion], f_number: %w[diffraction_blur], tonemap_ev: %w[tonemap],
     temp: %w[spectral_temp color_temp], tonemap: %w[tonemap],
-    azimuth: %w[relight], shape: %w[relight],
+    lens: %w[vintage_lens], azimuth: %w[relight], shape: %w[relight],
     aspect_ratio: %w[cinemascope_bars], border_style: %w[polaroid_frame],
   }
 
