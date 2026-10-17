@@ -44,7 +44,7 @@ class LayoutGateEnforcementContractTest < Minitest::Test
   end
 
   def test_auto_repeat_tile_grids_can_shrink_below_their_preferred_tile_width
-    unsafe = /grid-template-columns\\s*:\\s*repeat\\(\\s*auto-(?:fill|fit)\\s*,\\s*minmax\\(\\s*var\\(\\s*--tile-min-[\\w-]+\\s*\\)\\s*,\\s*1fr\\s*\\)/i
+    unsafe = /grid-template-columns\s*:\s*repeat\(\s*auto-(?:fill|fit)\s*,\s*minmax\(\s*var\(\s*--tile-min-[\w-]+\s*\)\s*,\s*1fr\s*\)/i
     archived = %w[
       _layout_micro_refinements.scss
       _surface_micro_refinements.scss
@@ -52,20 +52,20 @@ class LayoutGateEnforcementContractTest < Minitest::Test
     ]
 
     sheets = Dir.glob(File.join(ROOT, "RAILS", "**", "app/assets/stylesheets", "**", "*.{scss,css}"))
-    violations = sheets.reject { |path| archived.include?(File.basename(path)) }
-                       .reject { |path| path.match?(%r{/(?:builds|vendor|node_modules)/}) }
-                       .flat_map do |path|
-      source = File.read(path, encoding: "UTF-8")
-                   .gsub(%r{/\\*.*?\\*/}m, "")
-                   .gsub(%r{//[^\\n]*}, "")
+    violations = sheets.reject { |sheet_path| archived.include?(File.basename(sheet_path)) }
+                       .reject { |sheet_path| sheet_path.match?(%r{/(?:builds|vendor|node_modules)/}) }
+                       .flat_map do |sheet_path|
+      source = File.read(sheet_path, encoding: "UTF-8")
+                   .gsub(%r{/\*.*?\*/}m, "")
+                   .gsub(%r{//[^\n]*}, "")
       source.to_enum(:scan, unsafe).map do
-        line = source[0...Regexp.last_match.begin(0)].count("\\n") + 1
-        "#{path.delete_prefix("#{ROOT}/")}:#{line}"
+        line = source[0...Regexp.last_match.begin(0)].count("\n") + 1
+        "#{sheet_path.delete_prefix("#{ROOT}/")}:#{line}"
       end
     end
 
     assert_empty violations,
-                 "auto-repeat tracks must cap the preferred tile width at the available container width:\\n  #{violations.join("\\n  ")}"
+                 "auto-repeat tracks must cap the preferred tile width at the available container width:\n  #{violations.join("\n  ")}"
   end
 
   private
