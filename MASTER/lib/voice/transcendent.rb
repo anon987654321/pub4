@@ -148,7 +148,7 @@ module Master
 
         # Diagnostics describe a successful synthesis; their absence must never
         # turn that synthesis into a failure and silently select classic speech.
-        log_pick(used_engine || "say", resolved_voice, resolved_rate, resolved_pitch, emotion)
+        log_pick(used_engine || "unknown", resolved_voice, resolved_rate, resolved_pitch, emotion)
         log_quality(out_path)
         true
       end

@@ -1,9 +1,9 @@
 # TTS policy — expressive full-utterance synthesis for CLI speech; live streaming stays fast.
 #
 # `default_mode` selects the completed-utterance synthesis used by CLI Playback.
-# `fast_mode` is a separate transport/streaming control: it keeps live streaming
-# progressive and avoids cold-worker retries when no stream is available. Set
-# MASTER_TTS_MODE=classic to force direct Edge synthesis for the current session.
+# `fast_mode` is a separate latency policy: it keeps web speech progressive
+# and avoids cold-worker retries on the Edge fallback. Set MASTER_TTS_MODE=classic
+# to force direct Edge synthesis for the current CLI session.
 #
 transcendent:
   enabled: true
