@@ -33,4 +33,24 @@ end
 
     assert_equal 3, loop_for_summary.introduced_summary([], after).split("; ").size
   end
+
+# The semantic stream (an LLM) invents law names no registry holds and need not repeat itself between
+# two scans of one file, so its findings can be left out of the new-violations count on request.
+def test_the_semantic_gate_can_be_limited_to_registered_mechanical_laws
+  mechanical = Struct.new(:id).new("ABC_SIZE")
+  semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new
+  loop = Master::Fix::RepairLoop.allocate
+  scanner = Struct.new(:laws).new([mechanical, semantic])
+  loop.instance_variable_set(:@scanner, scanner)
+  rows = [{ law: "ABC_SIZE", line: 3 }, { law: "RATE_LIMITING_MISSING", line: 25 }]
+  previous = ENV.delete("MASTER_FIX_SEMANTIC_GATE")
+
+  assert_equal rows, loop.gate_findings(rows)
+
+  ENV["MASTER_FIX_SEMANTIC_GATE"] = "0"
+
+  assert_equal [{ law: "ABC_SIZE", line: 3 }], loop.gate_findings(rows)
+ensure
+  previous ? ENV["MASTER_FIX_SEMANTIC_GATE"] = previous : ENV.delete("MASTER_FIX_SEMANTIC_GATE")
+end
 end

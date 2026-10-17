@@ -298,9 +298,9 @@ end) if source.to_s.strip.empty?
         old_src = File.read(path, encoding: "UTF-8")
         return :stale unless fingerprint_matches?(violation)
         return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@law.id, old_src, new_src)
-        before = scan_all(path)
+        before = gate_findings(scan_all(path))
         write_atomic(path, new_src)
-        after = scan_all(path)
+        after = gate_findings(scan_all(path))
         return reject_fix(path, old_src, "new_violations", before:, after:, introduced: introduced_summary(before, after, source: new_src)) if after.size > before.size
         if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
           grown = scouts.first(3).map { |violation| "#{violation[:law]} line #{violation[:line]}" }.join(", ")

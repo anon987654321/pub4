@@ -23,6 +23,28 @@ module Master
           false
         end
 
+        # The findings the new-violations gate counts. The semantic stream (an LLM reading the file) names
+        # its findings freely: RATE_LIMITING_MISSING, NO_CHANGELOG_COMMENT and MERGE_BEFORE_MULTIPLY are in
+        # no registry, and two scans of one file need not agree on them, so a rejection on their count can
+        # be noise. MASTER_FIX_SEMANTIC_GATE=0 keeps only findings of registered mechanical laws; the
+        # reflexion verifier still reads the change itself. Strict (every finding) is the default.
+        def gate_findings(rows)
+          return rows if ENV.fetch("MASTER_FIX_SEMANTIC_GATE", "1") != "0"
+
+          ids = mechanical_law_ids
+          ids.empty? ? rows : rows.select { |row| ids.include?(row[:law].to_s) }
+        end
+
+        def mechanical_law_ids
+          laws = @scanner.respond_to?(:laws) ? Array(@scanner.laws) : []
+          laws.reject { |law| semantic_stream_law?(law) }.map { |law| law.id.to_s }.to_set
+        end
+
+        def semantic_stream_law?(law)
+          semantic = defined?(Master::Review::Scan::Laws::SemanticLaw) && Master::Review::Scan::Laws::SemanticLaw
+          (semantic && law.is_a?(semantic)) || law.respond_to?(:set_agent) || law.id.to_s == "semantic"
+        end
+
         # What a rejected repair added, by law, so the retry can be told what to avoid
         # instead of only that "new_violations" happened: "ABC_SIZE +1 (line 12); STRONG_PARAMETERS +2 (line 4, 9)".
         # With the repaired source the first offending line is quoted, so the retry sees the code itself.
