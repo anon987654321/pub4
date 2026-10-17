@@ -374,4 +374,32 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 120, Dilla::Reference.analysis_timeout(1)
   end
 
+  def test_source_metadata_preserves_youtube_identity_in_a_safe_allowlist
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "metadata.json"), JSON.generate(
+        "source_type" => "youtube_audio", "id" => "XgObDlzrlUc",
+        "title" => "Fantastic, Vol. 2", "channel" => "Slum Village",
+        "url" => "https://www.youtube.com/watch?v=XgObDlzrlUc",
+        "duration_seconds" => 4_492.0, "style_key" => "j_dilla",
+        "cookies" => "must never be retained"
+      ))
+
+      source = Dilla::Reference.source_metadata(dir, "/private/path/source.wav")
+
+      assert_equal "youtube_audio", source.fetch("source_type")
+      assert_equal "Fantastic, Vol. 2", source.fetch("title")
+      assert_equal 4_492.0, source.fetch("duration_seconds")
+      refute source.key?("cookies")
+      refute source.values.any? { |value| value.to_s.include?("/private/path") }
+    end
+  end
+
+  def test_local_source_metadata_uses_only_the_filename
+    source = Dilla::Reference.source_metadata("/tmp/no-metadata-here", "/private/path/demo.wav")
+
+    assert_equal "local_audio", source.fetch("source_type")
+    assert_equal "demo.wav", source.fetch("filename")
+    refute source.values.any? { |value| value.to_s.include?("/private/path") }
+  end
+
 end
