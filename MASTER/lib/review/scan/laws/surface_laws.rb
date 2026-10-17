@@ -116,6 +116,40 @@ module Master
         # The doctrine is Müller-Brockmann's (Grid Systems in Graphic Design,
         # 1981): a single spatial module, every dimension a multiple of it —
         # named here so the rule carries its book, not just its number.
+        # Grid structure is a composition law, not a requirement that every page use CSS Grid.
+        # The static pass catches only a high-signal anti-pattern; it leaves unusual
+        # but legitimate overlays to the semantic review and rendered geometry gates.
+        LawDSL.law :GRID_STRUCTURE,
+          severity: :warning, tags: %i[DESIGN LAYOUT], applies_to: CSS_LANGS, autofix: false,
+          description: "grid structure — shared tracks, consistent alignment and parent-owned gap",
+          detect_semantic: "Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?",
+          detect_structural: "Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width.",
+          example_path: "/repo/app/assets/stylesheets/_example.scss",
+          fires: ".cards > * { position: absolute; left: 17px; width: 243px; }\n",
+          does_not_fire: ".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); }\n" do |src, path:|
+          next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
+
+          clean = without_block_comments(src)
+          findings = []
+          clean.to_enum(:scan, /([^{}\n]+)\{([^{}]*)\}/m).each do
+            match = Regexp.last_match
+            selector = match[1].strip
+            body = match[2]
+            next unless selector.match?(/(?:grid|cards|items|results|columns|layout|feed)\b/i)
+            next unless selector.match?(/>\s*\*/)
+            next unless body.match?(/\bposition\s*:\s*absolute\b/i)
+            next unless body.match?(/\b(?:left|right|inset-inline-start|inset-inline-end)\s*:\s*-?\d+(?:\.\d+)?px\b/i)
+            next unless body.match?(/\bwidth\s*:\s*\d{3,}(?:\.\d+)?px\b/i)
+
+            line = clean[0...match.begin(0)].count("\n") + 1
+            findings << finding(
+              line:,
+              message: "grid-like direct children use absolute offsets and a fixed wide width — prefer shared grid/flex tracks and parent-owned gap",
+            )
+          end
+          findings.uniq { |item| [item[:line], item[:message]] }
+        end
+
         LawDSL.law :EIGHT_PX_RHYTHM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           description: "spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module",
