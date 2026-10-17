@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 
 module Master
   module CLI
@@ -58,7 +58,7 @@ module Master
       end
 
       def git_capture(root, *args)
-        out, status = Open3.capture2e("git", "-C", root, *args)
+        out, status = Master::Io::Exec.capture2e("git", "-C", root, *args)
         text = out.to_s
         unless status.success?
           detail = text.lines.last(8).join.strip
