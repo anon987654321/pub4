@@ -1,7 +1,6 @@
-# Surface micro-refinement matrix — 288 concrete adjustments
+# Archived surface micro-refinement matrix — 288 experimental adjustments
 
-Each numbered item maps to one property declaration in _surface_micro_refinements.scss.
-The pass is additive and leaves the existing 343-rule layout_micro_refinements contract intact.
+Each numbered item maps to a property declaration in `_surface_micro_refinements.scss`. This sheet is not loaded by production stacks. Reinstate individual changes only after rendered before/after review and explicit operator approval.
 
 001. shared · page ground — background: var(--bg)
 002. shared · page ground — color: var(--text)
@@ -299,3 +298,4 @@ The pass is additive and leaves the existing 343-rule layout_micro_refinements c
 - Keep the player + queue + sharing/comments idea as one Radio surface.
 - Keep pub3's fullscreen visualizer discipline: safe areas, tiny functional chrome, flat surfaces and reduced motion.
 - Preserve marketplace discovery, filters, seller identity and a clear purchase action; use spacing and imagery instead of nested boxes.
+
