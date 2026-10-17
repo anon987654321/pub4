@@ -4638,6 +4638,28 @@ end
 # to read. This catches a preset field that has a matching but disconnected FX.
 # A preset key must be read by executable Ruby in the matching case arm.
 # Prism excludes comments and strings, which source-text matching mistakes for code.
+def postpro_node_reads_p_key?(root, key)
+  pending = [root].compact
+  until pending.empty?
+    candidate = pending.pop
+    if candidate.is_a?(Prism::CallNode)
+      receiver = candidate.receiver
+      p_receiver = (receiver.is_a?(Prism::LocalVariableReadNode) && receiver.name == :p) ||
+                   (receiver.is_a?(Prism::CallNode) && receiver.receiver.nil? && receiver.name == :p)
+      if p_receiver && (candidate.name == :[] || candidate.name == :fetch)
+        arguments = candidate.arguments&.arguments || []
+        return true if arguments.any? do |argument|
+          argument.is_a?(Prism::SymbolNode) && argument.unescaped == key.to_s
+        end
+      end
+    end
+    pending.concat(candidate.child_nodes.compact)
+  end
+  false
+end
+
+# The matching effect call itself must consume the key. A discarded p[:temp]
+# expression elsewhere in the same when arm does not configure the rendered effect.
 def preset_effect_reads_key?(preset_source, effect, key)
   return false unless preset_source
 
@@ -4653,16 +4675,8 @@ def preset_effect_reads_key?(preset_source, effect, key)
       arm = [node.statements].compact
       until arm.empty?
         candidate = arm.pop
-        if candidate.is_a?(Prism::CallNode)
-          receiver = candidate.receiver
-          p_receiver = (receiver.is_a?(Prism::LocalVariableReadNode) && receiver.name == :p) ||
-                       (receiver.is_a?(Prism::CallNode) && receiver.receiver.nil? && receiver.name == :p)
-          if p_receiver && (candidate.name == :[] || candidate.name == :fetch)
-            arguments = candidate.arguments&.arguments || []
-            return true if arguments.any? do |argument|
-              argument.is_a?(Prism::SymbolNode) && argument.unescaped == key.to_s
-            end
-          end
+        if candidate.is_a?(Prism::CallNode) && candidate.receiver.nil? && candidate.name.to_s == effect.to_s
+          return true if postpro_node_reads_p_key?(candidate, key)
         end
         arm.concat(candidate.child_nodes.compact)
       end
