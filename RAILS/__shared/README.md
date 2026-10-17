@@ -69,7 +69,9 @@ number measured before you believe it.
 
 The surveys of past UI work sit beside this file: the layout and surface refinement
 matrices, the social front page and the two archaeology notes. They are records, not
-contracts.
+contracts. The three `*_micro_refinements*.scss` sheets are intentionally excluded
+from both production stacks until each proposed change has rendered before/after
+evidence and explicit operator approval. A count of CSS declarations is not a quality measure.
 
 ## External page extraction
 
