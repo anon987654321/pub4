@@ -531,7 +531,8 @@ The reference workflow analyzes the **music only**; it never inspects or downloa
 frames. It imports a YouTube audio stream with yt-dlp, measures duration, format,
 loudness, coarse spectral bands, a low-rate temporal energy map and an estimated tempo
 with FFmpeg, then optionally runs Demucs and Essentia when their command-line tools are
-installed. When Essentia is present, the report surfaces independent BPM candidates,
+installed. Analysis subprocess timeouts scale with the requested input duration but
+remain capped at one hour per pass. When Essentia is present, the report surfaces independent BPM candidates,
 onset-rate and selected tonal/spectral summaries alongside the local tempo estimate.
 Agreement and half/double-time ambiguity are reported rather than silently blended. The
 rhythm summary also names its evidence source: a Demucs drums stem when available, or an
