@@ -501,6 +501,27 @@ class TestPostproFilm < Minitest::Test
            "a neighbouring effect arm must not lend its key to this one"
   end
 
+  def test_preset_fields_outside_reader_contract_are_rejected
+    key_readers = {
+      temp: %w[spectral_temp color_temp],
+      lens: %w[vintage_lens]
+    }
+    base = {
+      fx: %w[spectral_temp],
+      stock: :kodak_portra,
+      intensity: 0.85,
+      iso: 400,
+      temp: 5200,
+      lens: "zeiss"
+    }
+
+    assert_empty send(:preset_unregistered_keys, base, key_readers),
+                 "base fields, measured ISO and registered effect keys are allowed"
+    assert_equal [:mystery_filter],
+                 send(:preset_unregistered_keys, base.merge(mystery_filter: 0.25), key_readers),
+                 "new preset fields must be rejected until their reader is declared"
+  end
+
   def test_every_preset_names_a_stock_that_exists
     unknown = PRESETS.filter_map { |name, data| [name, data[:stock]] if data[:stock] && !STOCKS.key?(data[:stock]) }
     assert_empty unknown, "these presets render on a film with no rows: #{unknown.inspect}"
