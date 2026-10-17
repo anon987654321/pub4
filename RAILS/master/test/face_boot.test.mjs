@@ -92,7 +92,7 @@ test("face boot defaults to automatic activation and preserves an explicit prime
   assert.match(view, /q\.get\('primer'\)!=='1'&&document\.body\.dataset\.primer!=='keep'/);
   assert.match(view, /setTimeout\(go,0\)/);
   assert.match(view, /window\._primerFired=true/);
-  assert.match(view, /if\(!window\._primerFired && \/webgl\/i\.test\(String\(type\)\)\) return null/);
+  assert.match(view, /if\s*\(\s*!window\._primerFired\s*&&\s*\/webgl\/i\.test\(String\(type\)\)\)\s*return null/);
 });
 
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
