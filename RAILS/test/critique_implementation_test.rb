@@ -221,6 +221,18 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen_stack, '@forward "search_yep";'
   end
 
+  def test_live_search_expansion_and_keyboard_focus_follow_real_state
+    search_form = read("__shared/app/views/shared/_live_search_form.html.erb")
+    controller = read("__shared/frontend/live_search_controller.js")
+    search_css = read("__shared/app/assets/stylesheets/_search_yep.scss")
+
+    assert_includes search_form, 'class="search<%= " active" if query.to_s.strip.present? %>"'
+    assert_includes search_form, "expanded: query.to_s.strip.present?"
+    assert_includes controller, "const expanded = q.length > 0 && event.detail?.success !== false"
+    assert_includes controller, 'setAttribute("aria-expanded", String(expanded))'
+    assert_includes search_css, ".search:has(input:focus-visible)"
+  end
+
   def test_brgen_search_palette_semantics_track_open_state
     palette = read("brgen/app/views/shared/_search_palette.html.erb")
     controller = read("__shared/frontend/search_palette_controller.js")
