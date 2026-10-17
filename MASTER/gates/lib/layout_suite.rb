@@ -21,6 +21,7 @@ require_relative "research/calibration"
 require_relative "source/frontend_auditor"
 require_relative "source/stimulus_wiring"
 require_relative "source/typography_contract"
+require_relative "rendered_suite"
 
 module Deploy
   # Composite: every layout/CSS professional gate. CSS must pass constitution + auditor + dialect.
@@ -47,6 +48,7 @@ module Deploy
       CalibrationGate,
       FrontendAuditorGate,
       StimulusWiringGate,
+      RenderedSuiteGate,
     ].freeze
 
     def self.run
@@ -77,6 +79,22 @@ module Deploy
       "coverage0: layout/#{name} #{leaf.outcome.to_s.upcase} — #{details.join(', ')}"
     end
 
+    # Source checks cannot certify a rendered layout. The composed browser suite
+    # must actually compare live surfaces without skipped routes, inconclusive
+    # measurements, missing baselines or soft visual findings.
+    def require_rendered_evidence!(aggregate, leaf)
+      reasons = []
+      reasons << "outcome=#{leaf.outcome}" unless leaf.outcome == :passed
+      reasons << "#{leaf.live_skips} live skip(s)" if leaf.live_skips.positive?
+      reasons << "#{leaf.unchecked.size} inconclusive item(s)" unless leaf.unchecked.empty?
+      reasons << "#{leaf.soft_failures.size} unapproved visual finding(s)" unless leaf.soft_failures.empty?
+      reasons << "#{leaf.errors.size} gate error(s)" unless leaf.errors.empty?
+      reasons << "zero rendered checks" if leaf.checks_ran.zero?
+      return if reasons.empty?
+
+      aggregate.fail("layout_suite: rendered evidence is incomplete — #{reasons.join(', ')}")
+    end
+
     # No checked! of its own: a composite measured whatever its leaves
     # measured, and merge! carries their check counts up. Counting here as well
     # would claim a check this class never ran.
@@ -91,6 +109,7 @@ module Deploy
         end
         result.warn(coverage_line(name, leaf))
         result.merge!(leaf, label: name)
+        require_rendered_evidence!(result, leaf) if klass == RenderedSuiteGate
       end
       result
     end
