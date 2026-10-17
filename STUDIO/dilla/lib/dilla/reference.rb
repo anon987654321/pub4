@@ -99,6 +99,7 @@ module Dilla
         prepare_dir(directory)
       end
       puts "reference0: analyzing audio only"
+      source = source_metadata(directory, audio)
       mix = metrics(audio, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: true)
       stems, separation = separate(audio, directory, options, duration)
       tracks = { "mix" => mix }
@@ -136,7 +137,7 @@ module Dilla
       FileUtils.mkdir_p(File.dirname(catalog))
       File.write(catalog, JSON.pretty_generate(profile) + "\n")
       learned = aggregate_saved_profiles(profile.fetch("style_key"), including: profile)
-      report = { "schema_version" => 1, "tracks" => tracks, "separation" => separation,
+      report = { "schema_version" => 1, "source" => source, "tracks" => tracks, "separation" => separation,
                  "essentia" => essentia_result, "tempo_crosscheck" => tempo_check,
                  "temporal_energy" => temporal_energy, "rhythm_analysis" => rhythm_analysis,
                  "production_profile" => profile,
@@ -156,13 +157,29 @@ module Dilla
       write_active_style(profile.fetch("style_key"))
       write_report(File.join(directory, "report.md"), tracks, separation, profile, learned,
                    temporal_energy:, essentia: essentia_result, tempo_crosscheck: tempo_check,
-                   rhythm_analysis:)
+                   rhythm_analysis:, source:)
       puts "reference0: style_hint=#{profile.fetch('style_key')}; learned references=#{learned.fetch('reference_count', 1)}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
       puts "reference0: learned target_bpm=#{learned['target_bpm'] || 'unknown'} groove=#{learned['groove_profile'] || 'unspecified'} features=#{JSON.generate(learned.fetch('features', {}))}"
       puts "reference0: parameters=#{JSON.generate(learned.fetch('parameters', {}))}" unless learned.fetch("parameters", {}).empty?
       puts "reference0: report=#{File.join(directory, 'report.md')}"
       0
+    end
+
+    # Include identifying metadata in analysis outputs so the operator can verify
+    # that the intended recording was analyzed. Never persist an absolute local path.
+    def source_metadata(directory, audio)
+      path = File.join(directory, "metadata.json")
+      if File.file?(path)
+        metadata = JSON.parse(File.read(path))
+        keys = %w[source_type id title channel url duration_seconds license style_key]
+        return metadata.select { |key, _value| keys.include?(key) }
+      end
+
+      { "source_type" => "local_audio", "filename" => File.basename(audio) }
+    rescue JSON::ParserError => error
+      { "source_type" => "unknown", "metadata_status" => "invalid",
+        "filename" => File.basename(audio), "message" => error.message }
     end
 
     def prepare_dir(path)
@@ -624,8 +641,10 @@ module Dilla
     end
 
     def write_report(path, tracks, separation, profile, learned = profile,
-                     temporal_energy: {}, essentia: {}, tempo_crosscheck: {}, rhythm_analysis: {})
-      lines = ["# Audio reference analysis", "", "Estimated tempo: #{tracks.dig('mix', 'tempo', 'bpm') || 'unknown'} BPM",
+                     temporal_energy: {}, essentia: {}, tempo_crosscheck: {}, rhythm_analysis: {}, source: {})
+      lines = ["# Audio reference analysis", "", "## Source",
+               JSON.pretty_generate(source), "",
+               "Estimated tempo: #{tracks.dig('mix', 'tempo', 'bpm') || 'unknown'} BPM",
                "Style hint: #{profile['style_key']} (provided by the user, not automatically classified)",
                "References in learned profile: #{learned['reference_count'] || 1}",
                "Stem separation: #{separation['status']}", "", "## Parts"]
