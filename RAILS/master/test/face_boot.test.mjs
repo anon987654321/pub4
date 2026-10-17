@@ -777,6 +777,10 @@ test("TTS does not dequeue speech while the server cooldown is active", () => {
 
 test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS routing", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
+  const playback = readFileSync(join(publicDir, "face_speech_playback.js"), "utf8");
+  const sources = [part5, speech, playback].join("\n");
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   // Continuous re-arm loop keyed off recognition.onend, not a fixed interval —
   // must re-check State.voiceMode each cycle rather than assuming it stays on.
@@ -805,8 +809,8 @@ test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS ro
   // The always-visible microphone indicator is also the touch-accessible
   // toggle; its accessible pressed state mirrors actual recognition state.
   assert.match(index, /<button id="mic-dot"[^>]*aria-pressed="false"/);
-  assert.match(runtime, /document\.getElementById\('mic-dot'\)\?\.addEventListener\('click'/);
-  assert.match(runtime, /dot\.setAttribute\("aria-pressed", open \? "true" : "false"\)/);
+  assert.match(part5, /document\.getElementById\('mic-dot'\)\?\.addEventListener\('click'/);
+  assert.match(part5, /dot\.setAttribute\("aria-pressed", open \? "true" : "false"\)/);
   // STT/TTS echo regression: continuous SpeechRecognition has no echo
   // cancellation against this page's own TTS audio, so an open mic during
   // playback transcribed the assistant's own reply and resubmitted it as a
