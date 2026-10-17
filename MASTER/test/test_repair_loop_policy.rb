@@ -447,6 +447,26 @@ class TestRepairLoopPolicy < Minitest::Test
     end
   end
 
+# A reply that is a tool call, not a verdict, is asked for again with the diff stated as the whole
+# change; the second answer decides. Only SAFE approves either way.
+def test_a_verdictless_reply_is_asked_for_again_once
+  replies = ["<invoke name=\"ReadFile\">", "SAFE"]
+  assert_equal "puts :y\n", verdict_for(-> { replies.shift })
+  replies = ["<invoke name=\"ReadFile\">", "still thinking aloud"]
+  assert_nil verdict_for(-> { replies.shift })
+  assert_equal 0, replies.size
+end
+
+def test_a_nonverdict_is_logged_as_no_verdict_not_as_unsafe
+  loop = Master::Fix::RepairLoop.allocate
+  Thread.current[:reflexion_reason] = nil
+
+  assert_nil loop.send(:handle_reflexion_response, "<invoke name=\"ReadFile\">", "f.rb", "src")
+  assert_match(/\Ano verdict from the reviewer/, Thread.current[:reflexion_reason])
+ensure
+  Thread.current[:reflexion_reason] = nil
+end
+
   # The verifier answers "UNSAFE: <reason>"; the reason has to reach the rejection line, not
   # only a bus event nobody reads.
   def test_a_reflexion_refusal_keeps_the_verifiers_reason_for_the_log

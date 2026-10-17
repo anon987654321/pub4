@@ -225,7 +225,8 @@ end) if source.to_s.strip.empty?
         return :file_timeout if @file_timed_out
         unless verified
           RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus, detail: Thread.current[:reflexion_reason])
-          RunLedger.refused_because("the reviewer called it unsafe: #{Thread.current[:reflexion_reason]}")
+          reason = Thread.current[:reflexion_reason].to_s
+          RunLedger.refused_because(reason.start_with?("no verdict") ? "the reviewer gave no usable verdict, so the change was not accepted" : "the reviewer called it unsafe: #{reason}")
           return (FixTrace.rejected(@law.id, violation[:file], ["reflexion verifier refused", Thread.current[:reflexion_reason]].compact.join(": ")) && :reflexion_rejected)
         end
         unless consensus_approves?(violation, verified)

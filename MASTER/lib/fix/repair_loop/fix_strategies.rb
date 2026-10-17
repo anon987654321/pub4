@@ -38,8 +38,13 @@ module Master
           prompt = reflexion_prompt(violation, original_src, proposed_src)
           # The verdict reads a diff and answers SAFE or UNSAFE; a cheaper model
           # (MASTER_FIX_VERIFIER_MODEL) can give it, and Opus keeps the repairs.
-          response = Master::Review::LLMDispatcher::ModelPin.with(ENV.fetch("MASTER_FIX_VERIFIER_MODEL", "")) do
-            ask_once_agent(prompt, image: @visual_image).to_s.strip
+          pin = ENV.fetch("MASTER_FIX_VERIFIER_MODEL", "")
+          response = Master::Review::LLMDispatcher::ModelPin.with(pin) { ask_once_agent(prompt, image: @visual_image).to_s.strip }
+          # A reply that is neither verdict (a tool call, a ramble) is asked for again, once, with the
+          # reason it was refused. Only SAFE still approves, so a second non-verdict is still a refusal.
+          unless reflexion_verdict?(response)
+            retry_prompt = "#{prompt}\nYour last reply was not a verdict. The diff above is the whole change; do not read files or call tools. Reply with exactly one line: SAFE, or UNSAFE: <reason>."
+            response = Master::Review::LLMDispatcher::ModelPin.with(pin) { ask_once_agent(retry_prompt, image: @visual_image).to_s.strip }
           end
           handle_reflexion_response(response, path, proposed_src)
         rescue StandardError => e
@@ -88,10 +93,14 @@ module Master
 
         # Only SAFE approves. A reply that was neither word, a refusal, a rambling
         # paragraph, an empty string, approved the fix before.
+        def reflexion_verdict?(response) = response.to_s.match?(/\A(?:SAFE|UNSAFE)\b/)
+
         def handle_reflexion_response(response, path, proposed_src)
           unless response.match?(/\ASAFE\b/)
-            Thread.current[:reflexion_reason] = response[0, 160]
-            @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason: response[0, 160])
+            # The log and the retry note must not call a non-answer an UNSAFE verdict.
+            reason = reflexion_verdict?(response) ? response[0, 160] : "no verdict from the reviewer (it replied: #{response[0, 100]})"
+            Thread.current[:reflexion_reason] = reason
+            @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason:)
             return
           end
           @bus&.publish("repair_loop:reflexion_approved", rule: @law.id, file: path)
