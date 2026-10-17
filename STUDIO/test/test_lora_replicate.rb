@@ -192,9 +192,12 @@ class TestLoraReplicate < Minitest::Test
 
     assert_includes prompt_receipt, "File.foreach(path).with_index"
     assert_includes prompt_receipt, "  false\nend"
+    refute_includes prompt_receipt, "def postpro_presets"
     assert_includes presets, "@postpro_presets = presets.freeze"
     assert_includes render, "sleep(e.message.match?(/NSFW/i) ? 1 : 10)"
+    refute_includes render, "POSTPRO ="
   end
+
   def measured_predict_seconds_reader
     script = File.expand_path("../replicate/lora/_toolkit/run_generate_replicate.rb", __dir__)
     source = File.read(script, encoding: "UTF-8")
