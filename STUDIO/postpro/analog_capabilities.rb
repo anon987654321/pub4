@@ -82,8 +82,7 @@ module Studio
       # its regression contract. :unavailable needs evidence and a test proving
       # the boundary too; a bare :verified flag is never enough.
       def valid_implementation_record?(component, key, record)
-        component = component.to_sym
-        key = key.to_sym
+        return false unless component.is_a?(Symbol) && key.is_a?(Symbol)
         return false unless GROUPS.key?(component) && GROUPS.fetch(component).include?(key)
         return false unless record.is_a?(Hash) && record.frozen?
         return false unless STATUSES.include?(record[:status])
@@ -106,7 +105,7 @@ module Studio
       end
 
       def implementation_status(component, key)
-        implementation_record(component, key).fetch(:status)
+        implementation_record(component, key).fetch(:status, :unverified)
       end
 
       def enabled_for(status)
@@ -121,7 +120,7 @@ module Studio
           keys.each_with_index.map do |key, index|
             id = OFFSETS.fetch(component) + index
             record = implementation_record(component, key)
-            status = record.fetch(:status)
+            status = record.fetch(:status, :unverified)
             {
               id:, key:, component:, stage: stage_for(component, id),
               description: key.to_s.tr("_", " ").freeze,
