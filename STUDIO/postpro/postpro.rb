@@ -5073,7 +5073,7 @@ def vocab_check
   rescue StandardError => e
     problems << "cannot build finishing-grain bypass probe: #{e.class}: #{e.message}"
   end
-  notes << "#{own.length} of #{PRESETS.length} presets grain in their own chain; " \
+  notes << "#{own.length} of #{valid_presets.length} valid presets grain in their own chain; " \
            "the rest take the finishing pass"
 
   # One grain pass, at the end. A lane pool that also draws grain made
