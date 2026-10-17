@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "time"
 require_relative "../io/lane_quota"
 require_relative "../io/lane_health"
@@ -241,7 +241,7 @@ module Operator
     end
 
     def processes
-      out, status = Open3.capture2("ps", "-axo", "pid=,etime=,command=")
+      out, status = Master::Io::Exec.capture2("ps", "-axo", "pid=,etime=,command=")
       return [] unless status.success?
 
       out.each_line.filter_map do |line|
@@ -305,7 +305,7 @@ module Operator
     end
 
     def git(*args)
-      out, status = Open3.capture2e("git", "-C", @root, *args)
+      out, status = Master::Io::Exec.capture2e("git", "-C", @root, *args)
       status.success? ? out.strip : nil
     end
   end
