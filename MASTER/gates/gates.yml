@@ -245,7 +245,7 @@ stimulus_wiring:
 layout_suite:
   require: lib/layout_suite
   class: Deploy::LayoutSuiteGate
-  pass: "Layout suite passed (CSS + geometry + dialect + payment + content + flow + auditor + stimulus)."
+  pass: "Layout suite passed (source laws plus complete rendered geometry, snapshots and browser diagnostics)."
 
 surface_schema:
   require: lib/live/surface_schema
@@ -324,6 +324,7 @@ rendered_suite:
   require: lib/rendered_suite
   class: Deploy::RenderedSuiteGate
   pass: "ok: rendered browser suite clean"
+  covered_by: layout_suite
 
 # Browser probes kept as first-class gates so a probe cannot exist as an
 # unmeasured side script. Each uses the shared CDP transport and is inconclusive
