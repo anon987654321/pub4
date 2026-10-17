@@ -3,18 +3,18 @@
 require_relative "test_helper"
 
 class TestSelfScan < Minitest::Test
-  Finding = Data.define(:rule, :message, :line, :severity, :fix, :tags)
+  Finding = Data.define(:law, :message, :line, :severity, :fix, :tags)
 
   class FakeScanner
-    attr_reader :rules, :seen_laws
+    attr_reader :laws, :seen_laws
 
     def initialize(findings, rules: [])
       @findings = findings
-      @rules = rules.empty? ? [Object.new, Object.new] : rules
+      @laws = rules.empty? ? [Object.new, Object.new] : rules
     end
 
-    def scan_dir(path, depth:, stream: false, laws: nil, rules: nil)
-      @seen_laws = laws
+    def scan_dir(path, depth:, stream: false, laws: nil)
+      @seen_laws = laws || @laws
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
     end
   end
@@ -40,7 +40,7 @@ class TestSelfScan < Minitest::Test
     result = Master::Review::Scan::SelfScan.new(scanner:, root: "/tmp/master", event_bus: bus).call
 
     assert result.ok?
-    assert_equal "judge: lib/ 2 rules, 2 violations", result.value!.line
+    assert_equal "judge: lib/ 2 laws, 2 violations", result.value!.line
     assert_includes bus.events.map(&:first), "self_scan:complete"
     assert_includes bus.events.map(&:first), "self_violation"
   end
@@ -55,7 +55,7 @@ class TestSelfScan < Minitest::Test
     ).call
 
     assert result.ok?
-    assert_equal "judge: lib/ 2 rules, 0 violations", result.value!.line
+    assert_equal "judge: lib/ 2 laws, 0 violations", result.value!.line
     refute_includes bus.events.map(&:first), "self_violation"
   end
 
@@ -76,6 +76,8 @@ class TestSelfScan < Minitest::Test
   def test_autofix_applies_ast_fixer_to_autofixable_findings
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "lib"))
+      _out, status = Master::Io::Exec.capture2e("git", "init", "--quiet", root)
+      assert status.success?, "fixture git repository did not initialize"
       path = File.join(root, "lib", "example.rb")
       File.write(path, "class Example\nend\n")
       scanner = FakeScanner.new([finding("FROZEN_LITERAL")], rules: [FakeRule.new("FROZEN_LITERAL", true)])
@@ -136,7 +138,7 @@ class TestSelfScan < Minitest::Test
 
   private
 
-  def finding(rule)
-    Finding.new(rule:, message: "violation", line: 1, severity: :warning, fix: nil, tags: [])
+  def finding(law)
+    Finding.new(law:, message: "violation", line: 1, severity: :warning, fix: nil, tags: [])
   end
 end

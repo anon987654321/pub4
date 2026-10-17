@@ -238,6 +238,13 @@ module Master
         ENV["MASTER_SKIP_BOOT_SCAN"] == "1" || ENV["MASTER_PIPE"] == "1"
       end
 
+      # A prompt is ready when the session is ready. Repository-wide observation
+      # belongs to an explicit /review or /fix request; continuous observation is
+      # an opt-in diagnostic for an operator who asks for it.
+      def background_scan_enabled?
+        ENV["MASTER_BACKGROUND_SCAN"] == "1" && !skip_boot_scan?
+      end
+
       def mark_booted
         flag = File.join(@refs.root, ".master", "booted_once")
         FileUtils.mkdir_p(File.dirname(flag))

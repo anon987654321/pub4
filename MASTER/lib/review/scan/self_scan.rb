@@ -82,7 +82,7 @@ module Master
         end
 
         def apply_autofixes(pairs)
-          MechanicalAutofix.new(scanner: @scanner, root: @root, event_bus: @bus).apply(pairs).map do |applied|
+          Master::Fix::Scan::MechanicalAutofix.new(scanner: @scanner, root: @root, event_bus: @bus).apply(pairs).map do |applied|
             { path: applied.path, transforms: applied.transforms }
           end
         end

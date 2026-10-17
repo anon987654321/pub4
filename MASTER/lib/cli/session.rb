@@ -54,11 +54,11 @@ module Master
         setup_signals
         @refs.agent.pin_boot_model! if @refs.agent.respond_to?(:pin_boot_model!)
         @refs.session.load! if @refs.session.exists?
-        start_background_loop
+        start_background_loop if background_scan_enabled?
         # One vertical rhythm: the dmesg, a blank line, the ready block, then
         # a blank line before each block that follows and before the prompt.
         terminal_puts(@refs.renderer.splash(@refs.agent.model))
-        start_boot_scan unless skip_boot_scan?
+        start_boot_scan if background_scan_enabled?
         # One line for a resumed session. Replaying its last turns printed an old
         # reply above the prompt, which read as a canned answer to a message not
         # yet typed.
