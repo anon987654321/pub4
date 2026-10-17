@@ -10,7 +10,7 @@ class AnalogCapabilitiesTest < Minitest::Test
   def test_contract_catalogues_every_direction_without_claiming_unverified_readiness
     assert_equal((1..200).to_a, Contract.all.map { |entry| entry[:id] })
     assert_equal({ postpro: 70, replicate: 60, dilla: 70 }, Contract::GROUPS.transform_values(&:length))
-    assert Contract.all.all? { |entry| entry[:catalogued] != false }
+    assert Contract.all.all? { |entry| entry[:catalogued] }
     assert Contract.all.all? { |entry| entry[:stage] }
     assert Contract.all.all? { |entry| entry[:status] == :unverified && entry[:enabled].nil? }
     assert Contract.validate!
