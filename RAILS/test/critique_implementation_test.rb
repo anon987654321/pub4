@@ -264,8 +264,8 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_yep_search_is_the_shared_rails_search_default
-    shared_stack = read("shared/app/assets/stylesheets/_stack.scss")
-    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    shared_stack = read("__shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     amber = amber_css_source
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
     brgen = read("brgen/app/assets/stylesheets/application.scss")
@@ -313,7 +313,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_shared_feed_text_uses_the_existing_leading_tokens
-    minimal = read("shared/app/assets/stylesheets/_minimal.scss")
+    minimal = read("__shared/app/assets/stylesheets/_minimal.scss")
 
     %w[feed-card-text feed-card-body feed-card-meta].each do |selector|
       assert_match(/\.#{selector}\s*\{[^}]*line-height:\s*var\(--leading-normal\);/m, minimal)
