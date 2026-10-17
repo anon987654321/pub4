@@ -166,7 +166,7 @@ class TestCommandRegistryDispatch < Minitest::Test
     ENV.delete("MASTER_TTS_PROFILE")
     Master::Voice::Policy.reload!
 
-    assert_equal "classic", Master::Voice::Speech.synthesis_mode
+    assert_equal "transcendent", Master::Voice::Speech.synthesis_mode
     assert_match(/profile=natural/, Registry.dispatch_voice(ctx: { args: "status" }))
     assert_match(/natural speech selected/, Registry.dispatch_voice(ctx: { args: "natural" }))
     assert_equal "classic", Master::Voice::Speech.synthesis_mode
