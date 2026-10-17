@@ -448,6 +448,23 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_resource_budget_routes_system_probes_through_interrupt_safe_exec
+    budget = Master::Fix::ResourceBudget.new(root: Dir.pwd)
+    status = Struct.new(:success?).new(true)
+    calls = []
+
+    Master::Io::Exec.stub(:capture2e, lambda { |*args, **_opts|
+      calls << args
+      ["0.25", status]
+    }) do
+      File.stub(:executable?, true) do
+        assert_equal 0.25, budget.send(:load_average)
+      end
+    end
+
+    assert_equal [["/sbin/sysctl", "-n", "vm.loadavg"]], calls
+  end
+
   def test_resource_budget_fails_closed_when_measurement_breaks
     budget = Master::Fix::ResourceBudget.new(root: Dir.pwd)
     def budget.classify(_values)
