@@ -30,6 +30,22 @@ class LayoutMicroRefinementContractTest < Minitest::Test
     end
   end
 
+  def test_micro_layout_refinements_are_mobile_first_and_restore_wide_measures
+    sheet = File.read(File.join(ROOT, "__shared/app/assets/stylesheets/_layout_micro_refinements.scss"), encoding: "UTF-8")
+    mobile, wide = sheet.split("@media (min-width: 768px)", 2)
+
+    refute_match(/@media\s*\(\s*max-width\b/, sheet,
+                 "compact layout rules must be the base, not a max-width override")
+    assert_includes mobile, 'body[data-layout-pass="micro-320"] {'
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*\{[^}]*text-wrap:\s*pretty;/m, mobile)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-header\s*\{[^}]*max-inline-size:\s*var\(--measure\);/m, wide)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-actions/ , mobile)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*\.page-actions[\s\S]*?max-inline-size:\s*none;/m, wide)
+    assert_match(/body\[data-layout-pass="micro-320"\]\.vertical-marketplace\s+\.storefront-bol-mainnav\s*\{[^}]*max-inline-size:\s*var\(--bol-max\);/m, wide)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*#sections[\s\S]*?max-inline-size:\s*none;/m, wide)
+    assert_match(/body\[data-layout-pass="micro-320"\]\s*\{[^}]*text-wrap:\s*balance;/m, wide)
+  end
+
   def test_matrix_and_sheet_keep_the_same_refinement_count
     matrix = File.read(File.join(ROOT, "__shared/LAYOUT_MICRO_REFINEMENT_MATRIX.md"), encoding: "UTF-8")
     sheet = File.read(File.join(ROOT, "__shared/app/assets/stylesheets/_layout_micro_refinements.scss"), encoding: "UTF-8")
