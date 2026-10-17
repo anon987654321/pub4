@@ -1424,10 +1424,15 @@ if (fontScaleInput) {
   if (Number.isFinite(storedScale)) fontScaleInput.value = String(storedScale);
 }
 
-// FA62 push-to-talk: hold space = record, release = submit (unless input focused)
+// FA62 push-to-talk: hold space = record, release = submit (unless editing).
 let pttActive = false;
 document.addEventListener('keydown', (e) => {
-  if (e.key === ' ' && !e.repeat && document.activeElement !== zshIn && primerFired) {
+  const active = document.activeElement;
+  const tag = active?.tagName;
+  const editing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+    active?.isContentEditable || active?.closest?.('[role="dialog"]');
+  if (editing) return;
+  if (e.key === ' ' && !e.repeat && active !== zshIn && primerFired) {
     e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();
   }
 });
