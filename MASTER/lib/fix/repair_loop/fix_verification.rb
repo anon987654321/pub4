@@ -26,13 +26,31 @@ module Master
         # The findings the new-violations gate counts. The semantic stream (an LLM reading the file) names
         # its findings freely: RATE_LIMITING_MISSING, NO_CHANGELOG_COMMENT and MERGE_BEFORE_MULTIPLY are in
         # no registry, and two scans of one file need not agree on them, so a rejection on their count can
-        # be noise. MASTER_FIX_SEMANTIC_GATE=0 keeps only findings of registered mechanical laws; the
-        # reflexion verifier still reads the change itself. Strict (every finding) is the default.
+        # be noise. The default reads them loosely: only findings of registered mechanical laws are counted,
+        # and what the semantic stream added is logged, not gated; the reflexion verifier still reads the
+        # change itself. MASTER_FIX_SEMANTIC_GATE=strict counts every finding.
         def gate_findings(rows)
-          return rows if ENV.fetch("MASTER_FIX_SEMANTIC_GATE", "1") != "0"
+          return rows if strict_semantic_gate?
 
           ids = mechanical_law_ids
           ids.empty? ? rows : rows.select { |row| ids.include?(row[:law].to_s) }
+        end
+
+        def strict_semantic_gate? = ENV.fetch("MASTER_FIX_SEMANTIC_GATE", "loose") == "strict"
+
+        # What the semantic stream added by a repair, named in the log so a loose gate is still visible.
+        def note_semantic_drift(path, raw_before, raw_after)
+          return if strict_semantic_gate?
+
+          ids = mechanical_law_ids
+          return if ids.empty?
+
+          laws = ->(rows) { rows.reject { |row| ids.include?(row[:law].to_s) }.map { |row| row[:law].to_s }.tally }
+          was = laws.call(raw_before)
+          added = laws.call(raw_after).filter_map { |law, n| "#{law} +#{n - was.fetch(law, 0)}" if n > was.fetch(law, 0) }
+          return if added.empty?
+
+          Master::Trace::Dmesg.status("fix0", "semantic findings noted, not gated: #{File.basename(path.to_s)} #{added.first(4).join(", ")}")
         end
 
         def mechanical_law_ids

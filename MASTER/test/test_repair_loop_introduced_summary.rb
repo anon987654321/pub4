@@ -34,23 +34,36 @@ end
     assert_equal 3, loop_for_summary.introduced_summary([], after).split("; ").size
   end
 
-# The semantic stream (an LLM) invents law names no registry holds and need not repeat itself between
-# two scans of one file, so its findings can be left out of the new-violations count on request.
-def test_the_semantic_gate_can_be_limited_to_registered_mechanical_laws
-  mechanical = Struct.new(:id).new("ABC_SIZE")
-  semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new
-  loop = Master::Fix::RepairLoop.allocate
-  scanner = Struct.new(:laws).new([mechanical, semantic])
-  loop.instance_variable_set(:@scanner, scanner)
-  rows = [{ law: "ABC_SIZE", line: 3 }, { law: "RATE_LIMITING_MISSING", line: 25 }]
-  previous = ENV.delete("MASTER_FIX_SEMANTIC_GATE")
+  # The semantic stream (an LLM) invents law names no registry holds and need not repeat itself between
+  # two scans of one file, so by default its findings are read loosely: left out of the count, logged only.
+  def test_the_semantic_gate_is_loose_by_default_and_strict_on_request
+    mechanical = Struct.new(:id).new("ABC_SIZE")
+    semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new
+    loop = Master::Fix::RepairLoop.allocate
+    loop.instance_variable_set(:@scanner, Struct.new(:laws).new([mechanical, semantic]))
+    rows = [{ law: "ABC_SIZE", line: 3 }, { law: "RATE_LIMITING_MISSING", line: 25 }]
+    previous = ENV.delete("MASTER_FIX_SEMANTIC_GATE")
 
-  assert_equal rows, loop.gate_findings(rows)
+    assert_equal [{ law: "ABC_SIZE", line: 3 }], loop.gate_findings(rows)
 
-  ENV["MASTER_FIX_SEMANTIC_GATE"] = "0"
+    ENV["MASTER_FIX_SEMANTIC_GATE"] = "strict"
 
-  assert_equal [{ law: "ABC_SIZE", line: 3 }], loop.gate_findings(rows)
-ensure
-  previous ? ENV["MASTER_FIX_SEMANTIC_GATE"] = previous : ENV.delete("MASTER_FIX_SEMANTIC_GATE")
-end
+    assert_equal rows, loop.gate_findings(rows)
+  ensure
+    previous ? ENV["MASTER_FIX_SEMANTIC_GATE"] = previous : ENV.delete("MASTER_FIX_SEMANTIC_GATE")
+  end
+
+  def test_what_the_semantic_stream_added_is_logged_not_gated
+    mechanical = Struct.new(:id).new("ABC_SIZE")
+    semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new
+    loop = Master::Fix::RepairLoop.allocate
+    loop.instance_variable_set(:@scanner, Struct.new(:laws).new([mechanical, semantic]))
+    said = []
+
+    Master::Trace::Dmesg.stub(:status, ->(unit, text) { said << [unit, text] }) do
+      loop.note_semantic_drift("/x/home_controller.rb", [{ law: "ABC_SIZE" }], [{ law: "ABC_SIZE" }, { law: "RATE_LIMITING_MISSING" }])
+    end
+
+    assert_equal [["fix0", "semantic findings noted, not gated: home_controller.rb RATE_LIMITING_MISSING +1"]], said
+  end
 end
