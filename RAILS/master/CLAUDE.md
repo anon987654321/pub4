@@ -45,7 +45,7 @@ code read.
 - The primer markup and prompt shell must exist before renderer work starts.
 - No WebGL context may be created before `go()` sets `_primerFired` true.
 - `three.face.module.js` must not be compiled during initial page load.
-- `face.js` is imported only after `go()` activates the renderer. The default `data-primer="auto"` path queues `go()` after parsing; `?primer=1` and `data-primer="keep"` retain explicit primer activation.
+- `face.js` is imported only after `go()` activates the renderer. The default `data-primer="auto"` path queues `go()` with a zero-delay timer; `?primer=1` and `data-primer="keep"` retain explicit primer activation.
 - The prompt must become visible even if face loading fails.
 - The boot manifest must keep `particle_kernel.js` before face/runtime consumers.
 - SSE may remain open; tests must not wait for network idle on the face page.
@@ -99,7 +99,7 @@ code read.
 **Checks:**
 - `bin/check --profile=web` (there is no `bin/check-web`; the profile replaced it)
 - `ruby -Ilib:test test/test_web_ui.rb --name test_public_asset_manifest_matches_source_files`
-- Manual real-browser tap test after boot changes (see below) — headless
+- Manual real-browser boot test after boot changes (see below) — headless
   CDP tools have shown false hangs in sandboxed environments in this repo's
   history, so a real browser is the trustworthy signal, not a scripted one.
 
