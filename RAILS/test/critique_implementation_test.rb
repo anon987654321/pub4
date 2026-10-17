@@ -221,6 +221,21 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen_stack, '@forward "search_yep";'
   end
 
+  def test_brgen_search_palette_semantics_track_open_state
+    palette = read("brgen/app/views/shared/_search_palette.html.erb")
+    controller = read("__shared/frontend/search_palette_controller.js")
+
+    assert_includes palette, 'data-search-palette-target="trigger"'
+    assert_includes palette, 'aria-haspopup="dialog"'
+    assert_includes palette, 'aria-expanded="false"'
+    assert_includes palette, 'aria-controls="search_palette_dialog"'
+    assert_includes palette, 'id="search_palette_dialog"'
+    assert_includes controller, 'static targets = ["panel", "trigger"]'
+    assert_includes controller, 'String(this.isOpen)'
+    assert_includes controller, 'setAttribute("aria-expanded", "true")'
+    assert_includes controller, 'setAttribute("aria-expanded", "false")'
+  end
+
   def test_radio_restores_first_party_device_tilt_contract
     source = read("brgen/app/javascript/radio_brgen_tunnel.js")
     assert_includes source, "DeviceOrientationEvent"
