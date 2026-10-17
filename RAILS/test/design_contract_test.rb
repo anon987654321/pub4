@@ -329,12 +329,12 @@ class DesignContractTest < Minitest::Test
     path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_marketplace_header.scss")
     source = File.read(path)
 
-    refute_match(/@media\\s*\\(\\s*max-width\\b/, source,
+    refute_match(/@media\s*\(\s*max-width\b/, source,
                  "compact storefront rules are the base, not a max-width override")
-    assert_match(/body\\.vertical-marketplace \\.storefront-bol-brand \\{[^}]*font-size: var\\(--store-text-brand-compact\\)/m, source)
-    assert_match(/@media \\(min-width: 768px\\) \\{[\\s\\S]*?storefront-bol-brand \\{[^}]*font-size: var\\(--store-text-brand\\)/m, source)
-    assert_match(/body\\.vertical-marketplace #marketplace-listings \\.deal-card-actions \\{[^}]*gap: 8px/m, source)
-    assert_match(/@media \\(min-width: 768px\\) \\{[\\s\\S]*?deal-card-actions \\{[^}]*flex-direction: column/m, source)
+    assert_match(/body\.vertical-marketplace \.storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand-compact\)/m, source)
+    assert_match(/@media \(min-width: 768px\) \{[\s\S]*?storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand\)/m, source)
+    assert_match(/body\.vertical-marketplace #marketplace-listings \.deal-card-actions \{[^}]*gap: 8px/m, source)
+    assert_match(/@media \(min-width: 768px\) \{[\s\S]*?deal-card-actions \{[^}]*flex-direction: column/m, source)
   end
 
   def test_brgen_marketplace_badge_offsets_are_valid_css
