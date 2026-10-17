@@ -285,7 +285,7 @@ module Master
           return unless first_file
 
           @bus&.publish("scan:semantic_inconclusive", path: relative, law: law_id, message: detail)
-          Master::Trace::Dmesg.status("law0", "semantic assessment inconclusive; details recorded for #{relative}")[0, 200] if announce
+          Master::Trace::Dmesg.status("law0", "semantic assessment inconclusive; details recorded for #{relative}"[0, 200]) if announce
         end
 
         # The monitor reports the law that's actually in flight, not merely the
