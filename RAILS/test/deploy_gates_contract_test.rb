@@ -228,6 +228,16 @@ class DeployGatesContractTest < Minitest::Test
     refute_match(/if \[\[ -x \$\{app_dir\}\/bin\/ci \]\]; then/, body)
   end
 
+  def test_rails_runtime_gate_fails_closed_when_generic_ci_is_missing
+    source = File.read(File.join(ROOT, "_runtime_gate.sh"))
+    start = source.index("rails_runtime_gate()")
+    body = source[start, source.index("\n}\n", start) - start + 3]
+    generic = body.split(/^  else\s*$/).last
+
+    assert_match(/\[\[ -x \$\{app_dir\}\/bin\/ci \]\] \|\| \{.*return 1/m, generic)
+    refute_match(/if \[\[ -x \$\{app_dir\}\/bin\/ci \]\]; then/, generic)
+  end
+
   def test_rails_master_scan_skip_requires_explicit_acknowledgement
     source = File.read(File.join(ROOT, "_runtime_gate.sh"))
     start = source.index("master_scan_dep()")
