@@ -106,10 +106,20 @@ module Dilla
         tracks[File.basename(path, ".wav")] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: false)
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
+      temporal_energy = temporal_energy_map(audio, ffmpeg:, max_duration: options[:max_duration])
+      essentia_result = essentia(audio, directory)
+      tempo_check = tempo_crosscheck(mix["tempo"], essentia_result.fetch("summary", {}))
       drum_source = stems.find { |path| File.basename(path, ".wav") == "drums" } || audio
       rhythm = rhythm_features(drum_source, ffmpeg:, max_duration: options[:max_duration], bpm: mix.dig("tempo", "bpm"))
       profile = profile_for(mix, style: options[:style])
       profile.fetch("features").merge!(rhythm)
+      energy_summary = temporal_energy.fetch("summary", {})
+      if numeric_value(energy_summary["rms_range_p95_p05_db"])
+        profile.fetch("features")["energy_window_range_db"] = energy_summary["rms_range_p95_p05_db"]
+      end
+      if numeric_value(energy_summary["rms_stddev_db"])
+        profile.fetch("features")["energy_window_stddev_db"] = energy_summary["rms_stddev_db"]
+      end
       apply_rhythm_balance(profile, rhythm)
       stem_features = stem_energy_features(tracks)
       profile.fetch("features").merge!(stem_features)
@@ -126,10 +136,13 @@ module Dilla
       File.write(catalog, JSON.pretty_generate(profile) + "\n")
       learned = aggregate_saved_profiles(profile.fetch("style_key"), including: profile)
       report = { "schema_version" => 1, "tracks" => tracks, "separation" => separation,
-                 "essentia" => essentia(audio, directory), "production_profile" => profile,
+                 "essentia" => essentia_result, "tempo_crosscheck" => tempo_check,
+                 "temporal_energy" => temporal_energy, "production_profile" => profile,
                  "learned_profile" => learned,
                  "limitations" => ["Tempo is estimated; half-time and double-time can both fit.",
+                                   "An independent tempo estimator may disagree or choose half/double time.",
                                    "Demucs stems can bleed and are not discrete kick/snare/hat multitracks.",
+                                   "Temporal energy is a coarse arrangement contour, not a transcription.",
                                    "Spectral levels describe the mix, not isolated instruments.",
                                    "The style label is the user-provided hint, not an automatic genre classification.",
                                    "Only broad production traits guide new music; source audio and composition are not copied."] }
@@ -139,7 +152,8 @@ module Dilla
       FileUtils.mkdir_p(File.dirname(scoped_profile))
       File.write(scoped_profile, JSON.pretty_generate(learned) + "\n")
       write_active_style(profile.fetch("style_key"))
-      write_report(File.join(directory, "report.md"), tracks, separation, profile, learned)
+      write_report(File.join(directory, "report.md"), tracks, separation, profile, learned,
+                   temporal_energy:, essentia: essentia_result, tempo_crosscheck: tempo_check)
       puts "reference0: style_hint=#{profile.fetch('style_key')}; learned references=#{learned.fetch('reference_count', 1)}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
       puts "reference0: learned target_bpm=#{learned['target_bpm'] || 'unknown'} groove=#{learned['groove_profile'] || 'unspecified'} features=#{JSON.generate(learned.fetch('features', {}))}"
@@ -230,11 +244,112 @@ module Dilla
     def essentia(audio, directory)
       exe = executable("ESSENTIA_EXTRACTOR", "streaming_extractor_music")
       return { "status" => "unavailable" } unless exe
+
       name = File.join(directory, "essentia_features.json")
       capture!("Essentia", exe, audio, name, timeout: 900)
-      { "status" => "analyzed", "file" => File.basename(name) }
+      descriptors = JSON.parse(File.read(name))
+      { "status" => "analyzed", "file" => File.basename(name),
+        "summary" => essentia_descriptor_summary(descriptors) }
     rescue Error => error
       { "status" => "failed", "message" => error.message }
+    rescue Errno::ENOENT, JSON::ParserError => error
+      { "status" => "failed", "message" => "invalid Essentia output: #{error.message}" }
+    end
+
+    # Keep the raw extractor output for research, but surface a small, stable
+    # set of independent measurements in the report. Never use exact chord
+    # progressions to steer generation.
+    def essentia_descriptor_summary(document)
+      paths = {
+        "bpm" => %w[rhythm bpm],
+        "bpm_histogram_first_peak_bpm" => %w[rhythm bpm_histogram_first_peak_bpm],
+        "bpm_histogram_second_peak_bpm" => %w[rhythm bpm_histogram_second_peak_bpm],
+        "beats_count" => %w[rhythm beats_count],
+        "onset_rate_per_second" => %w[rhythm onset_rate],
+        "key" => %w[tonal key_key],
+        "scale" => %w[tonal key_scale],
+        "spectral_centroid_mean_hz" => %w[lowlevel spectral_centroid mean],
+        "spectral_entropy_mean" => %w[lowlevel spectral_entropy mean]
+      }
+      paths.each_with_object({}) do |(name, path), summary|
+        value = path.reduce(document) { |node, part| node.is_a?(Hash) ? node[part] : nil }
+        if %w[key scale].include?(name)
+          summary[name] = value if value.is_a?(String) && !value.strip.empty?
+        else
+          number = numeric_value(value)
+          summary[name] = number.round(3) if number
+        end
+      end
+    end
+
+    # The FFmpeg envelope estimate and Essentia beat tracker are deliberately
+    # independent. Report close agreement versus half/double-time ambiguity;
+    # do not silently average contradictory estimators into a false precision.
+    def tempo_crosscheck(tempo, essentia_summary)
+      primary = numeric_value(tempo.is_a?(Hash) ? tempo["bpm"] : nil)
+      independent = numeric_value(essentia_summary.is_a?(Hash) ? essentia_summary["bpm"] : nil)
+      independent ||= numeric_value(essentia_summary["bpm_histogram_first_peak_bpm"]) if essentia_summary.is_a?(Hash)
+      return { "status" => "insufficient_evidence", "ffmpeg_bpm" => primary,
+               "essentia_bpm" => independent }.compact unless primary && independent
+
+      direct_delta = (primary - independent).abs
+      half_delta = (primary - independent * 2.0).abs
+      double_delta = (primary * 2.0 - independent).abs
+      status = if direct_delta <= 3.0
+                 "agreement"
+               elsif [half_delta, double_delta].min <= 4.0
+                 "half_double_ambiguity"
+               else
+                 "disagreement"
+               end
+      { "status" => status, "ffmpeg_bpm" => primary.round(2),
+        "essentia_bpm" => independent.round(2), "absolute_delta_bpm" => direct_delta.round(2) }
+    end
+
+    # Summarize the mix's energy in short windows, independently of the rhythm
+    # detector. Four low-rate samples per second are enough for arrangement-scale
+    # dynamics and keep even a two-hour album small in memory and in the report.
+    def temporal_energy_map(path, ffmpeg:, max_duration:, window_seconds: 15, sample_rate: 4)
+      bytes, = capture!("temporal energy envelope", ffmpeg, "-hide_banner", "-v", "error", "-i", path,
+                        "-t", max_duration.to_s, "-vn", "-ac", "1", "-af",
+                        "aeval=exprs=val(0)*val(0),lowpass=f=1.5", "-ar", sample_rate.to_s,
+                        "-f", "f32le", "pipe:1",
+                        timeout: [[max_duration.to_f.ceil / 4, 120].max, 900].min)
+      samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
+      summarize_energy_envelope(samples, sample_rate:, window_seconds:).merge("status" => "analyzed")
+    rescue Error => error
+      { "status" => "unavailable", "message" => error.message }
+    end
+
+    def summarize_energy_envelope(samples, sample_rate:, window_seconds: 15)
+      per_window = [(sample_rate.to_f * window_seconds).round, 1].max
+      windows = samples.each_slice(per_window).with_index.filter_map do |slice, index|
+        next if slice.empty?
+
+        energy = slice.sum / slice.size
+        rms_db = 10.0 * Math.log10([energy, 1e-12].max)
+        { "start_seconds" => index * window_seconds,
+          "end_seconds" => (index * window_seconds) + slice.size.to_f / sample_rate,
+          "rms_db" => rms_db.round(2) }
+      end
+      levels = windows.map { |window| window.fetch("rms_db") }
+      summary = {}
+      if levels.size >= 3
+        sorted = levels.sort
+        p05 = sorted[((sorted.size - 1) * 0.05).round]
+        p95 = sorted[((sorted.size - 1) * 0.95).round]
+        mean = levels.sum / levels.size
+        variance = levels.sum { |level| (level - mean)**2 } / levels.size
+        summary = {
+          "rms_p05_db" => p05,
+          "rms_p95_db" => p95,
+          "rms_range_p95_p05_db" => (p95 - p05).round(2),
+          "rms_median_db" => sorted[(sorted.size - 1) / 2],
+          "rms_stddev_db" => Math.sqrt(variance).round(2)
+        }
+      end
+      { "window_seconds" => window_seconds, "window_count" => windows.size,
+        "windows" => windows, "summary" => summary }
     end
 
     # Normalize only the broad styles MASTER explicitly identifies. The acoustic
@@ -496,7 +611,8 @@ module Dilla
       end
     end
 
-    def write_report(path, tracks, separation, profile, learned = profile)
+    def write_report(path, tracks, separation, profile, learned = profile,
+                     temporal_energy: {}, essentia: {}, tempo_crosscheck: {})
       lines = ["# Audio reference analysis", "", "Estimated tempo: #{tracks.dig('mix', 'tempo', 'bpm') || 'unknown'} BPM",
                "Style hint: #{profile['style_key']} (provided by the user, not automatically classified)",
                "References in learned profile: #{learned['reference_count'] || 1}",
@@ -504,6 +620,17 @@ module Dilla
       tracks.each { |name, row| lines << "- #{name}: #{row['duration_seconds'] || '?'} s; RMS #{row['rms_db'] || 'unknown'} dB" }
       lines.concat(["", "## Frequency bands"])
       tracks.fetch("mix").fetch("spectral_bands_db", {}).each { |name, value| lines << "- #{name}: #{value || 'not measured'} dB" }
+      energy_summary = temporal_energy.fetch("summary", {})
+      lines.concat(["", "## Temporal energy overview",
+                    "Status: #{temporal_energy['status'] || 'not measured'}",
+                    "Window count: #{temporal_energy['window_count'] || 0}; window size: #{temporal_energy['window_seconds'] || '?'} seconds"])
+      energy_summary.each { |name, value| lines << "- #{name}: #{value}" }
+      essentia_summary = essentia.fetch("summary", {})
+      lines.concat(["", "## Independent tempo and tonal analysis",
+                    "Essentia status: #{essentia['status'] || 'not measured'}"])
+      essentia_summary.each { |name, value| lines << "- #{name}: #{value}" }
+      lines.concat(["", "## Tempo cross-check"])
+      tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## This reference", JSON.pretty_generate(profile),
                     "", "## Learned style profile", JSON.pretty_generate(learned),
                     "", "Audio only was analyzed. The renderer creates new material and does not use source audio or stems.", ""])
