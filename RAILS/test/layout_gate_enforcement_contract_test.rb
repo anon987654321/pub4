@@ -22,6 +22,13 @@ class LayoutGateEnforcementContractTest < Minitest::Test
       "grid_based_layouts" => %w[GRID_STRUCTURE EIGHT_PX_RHYTHM],
       "grid_systems" => %w[GRID_STRUCTURE EIGHT_PX_RHYTHM],
       "typography_hierarchy" => %w[TYPE_HIERARCHY TYPE_TITLE_TOKEN],
+      "aesthetic_integrity" => %w[AESTHETIC_MINIMALISM NO_EYEBROW_LABEL TYPE_HIERARCHY],
+      "clean_lines" => %w[NO_DECORATIVE_FX AESTHETIC_MINIMALISM NO_EYEBROW_LABEL],
+      "content_prioritized" => %w[AESTHETIC_MINIMALISM NO_EYEBROW_LABEL TYPE_HIERARCHY],
+      "essential_elements_only" => %w[AESTHETIC_MINIMALISM NO_EYEBROW_LABEL],
+      "minimal_materials" => %w[AESTHETIC_MINIMALISM NO_DECORATIVE_FX],
+      "remove_non_essentials" => %w[AESTHETIC_MINIMALISM NO_EYEBROW_LABEL],
+      "visual_hierarchy_clarity" => %w[TYPE_HIERARCHY NO_EYEBROW_LABEL],
     }.each do |name, law_ids|
       entry = find_entry(data, name)
       refute_nil entry, "missing declared design principle #{name}"
@@ -56,6 +63,9 @@ class LayoutGateEnforcementContractTest < Minitest::Test
     assert_includes source, "font-weight: var(--weight-heavy);"
     assert_includes source, "text-transform: none;"
     assert_includes source, "main#main-content :is(h2, h3, h4, h5, h6)"
+    assert_includes source, "font-size: var(--text-lg);"
+    assert_includes source, "border: 0;"
+    assert_includes source, "body.wscons .tabs .active"
     %w[.feed-post .match .organize-tip .brand .amber-look .amber-editorial-nav .post-show-actions .port-row].each do |selector|
       assert_includes source, selector, "minimal chrome must cover #{selector}"
     end
