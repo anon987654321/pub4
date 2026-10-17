@@ -1,0 +1,14 @@
+# Speech-to-text — single source for Voice::Stt and operator docs.
+# Backend auto tries vosk, then whisper.cpp, else null (empty text, honest).
+
+stt:
+  backend: auto # auto | vosk | whisper_cpp | null
+  sample_rate: 16000
+  language: en
+  # Vosk (streaming + optional grammar for APPROVAL)
+  vosk_model_path: vendor/vosk/model
+  # grammar: ["yes", "no", "approve", "cancel", "stop"]
+  # whisper.cpp (batch after speech_end)
+  whisper_binary: whisper-cli
+  whisper_model_path: vendor/whisper/ggml-base.en.bin
+  whisper_timeout_s: 60
