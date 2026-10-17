@@ -593,8 +593,8 @@ tts:
 
   # Speech-only delivery texture. These light false starts and hesitations do
   # not alter the transcript; technical instructions, paths, lists and code are
-  # excluded. One event at most per synthesized chunk. MASTER_TTS_DISFLUENCIES=0
-  # disables the layer without changing the voice or synthesis engine.
+  # excluded. Off by default; set enabled: true or MASTER_TTS_DISFLUENCIES=1
+  # to opt in. MASTER_TTS_DISFLUENCIES=0 disables the layer for one session.
   disfluencies:
     enabled: false
     probability: 0.20
