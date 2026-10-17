@@ -100,33 +100,6 @@ body.vertical-playlist .brgen-logo-mark {
   color: var(--color-text, var(--text));
 }
 
-/* The in-page search on the two storefronts is Kaufland.de's field rather than
-   the yep pill: 44px, a 1px #8e8e8e edge, 4px corners, 16px type, sitting on
-   the page with no band of its own. */
-:is(body.vertical-marketplace, body.vertical-takeaway) [data-controller~="live-search"] {
-  padding: 0;
-  background: none;
-}
-
-:is(body.vertical-marketplace, body.vertical-takeaway) .search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-:is(body.vertical-marketplace, body.vertical-takeaway) .search-form input[type="search"] {
-  flex: 1 1 16rem;
-  width: 100%;
-  min-height: var(--tap-min);
-  padding-inline: 12px;
-  border: 1px solid var(--store-rule);
-  border-radius: var(--radius-xs);
-  background: var(--store-page);
-  color: var(--store-ink);
-  font-size: 16px;
-}
-
 /* One column, one left edge.
 
    <main> is the same 600px column the front page uses, so the verticals need
@@ -155,15 +128,6 @@ body[class*="vertical-"] main > section {
 
 :is(body.vertical-marketplace, body.vertical-takeaway) main > section {
   padding-inline: 0;
-}
-
-/* The yep pen paints every .search as a #ccc pill; on the storefronts the field
-   carries its own edge, so the wrapper draws nothing. */
-:is(body.vertical-marketplace, body.vertical-takeaway) .search {
-  width: auto;
-  border: 0;
-  border-radius: 0;
-  background: none;
 }
 
 // Classes the match overlay and profile form name and nothing else defines, as
