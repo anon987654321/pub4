@@ -1,18 +1,19 @@
-/* vYroQxg — recreating yep.com search (exact pen styles). */
-/* scan: intentional-colors — a recreation of someone else's design keeps its exact values */
+/* vYroQxg — shared Yep-style search surface for every RAILS app. */
+/* scan: intentional-colors — exact reference palette and focus treatment. */
 
 .search {
   width: 480px;
   max-width: 100%;
   background-color: #ccc;
   border: 1px solid #ccc;
-  border-radius: var(--radius-pill);
-  font-size: var(--text-lg);
-  /* scale: ok — a recreation keeps its exact values, see line 2 */
-  transition: all 100ms var(--ease-in-out);
+  border-radius: 30px;
+  font-size: 18px;
+  transition: all 100ms ease-in-out;
 }
 
-.search input,
+/* Only the query field gets the transparent inner treatment; submit controls
+   remain usable where a non-live search needs an explicit action. */
+.search input:not([type]),
 .search input[type="search"],
 .search input[type="text"] {
   background: transparent;
@@ -24,8 +25,7 @@
   color: inherit;
 }
 
-.search input::placeholder,
-.search input:placeholder-shown {
+.search input::placeholder {
   color: #aaa;
 }
 
@@ -33,33 +33,38 @@
 .search.active {
   background-color: white;
   border-color: white;
-  /* The lift is what tells you the box took focus — without it the state change
-     is a background swap you can miss. Stripped once by a flat-UI pass over the
-     whole tree, which did not honour the pen allowlist this file sits in and
-     that the four gates carrying PEN_ALLOW exist to enforce. Restored at the
-     pen's exact value. */
-  box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 8px 0px;
 }
 
 .search.active {
   border-radius: 16px;
 }
 
-/* The pen's `.search.active #live_results`. Its results are anchors stacked
-   inside the box, sharing its surface, divided from the input by one rule and
-   aligned to the input's own 24px gutter. :not(:empty) because .active is set
-   from the result count and the suggestion slot can be empty at that moment —
-   a border on an empty div is a stray line under the input. */
-.search.active :is(#search_suggestions, #search_palette_suggestions):not(:empty) {
+/* Search suggestions and palette results share the expanded field surface.
+   The full index result frame deliberately remains below its field on index
+   pages; those pages are lists, not autocomplete menus. */
+.search.active :is(
+  #live_results,
+  #live_search_results,
+  #search_suggestions,
+  #search_palette_suggestions,
+  #search_palette_results
+):not(:empty) {
   border-top: 1px solid #ccc;
   padding: 0 24px;
 }
 
-.search.active :is(#search_suggestions, #search_palette_suggestions):not(:empty) a {
+.search.active :is(
+  #live_results,
+  #live_search_results,
+  #search_suggestions,
+  #search_palette_suggestions,
+  #search_palette_results
+):not(:empty) a {
   display: block;
 }
 
-/* Map existing live-search markup onto the same surface. */
+/* Adapt the shared Rails search form to the same surface. */
 .search .search-form {
   display: block;
   margin: 0;
