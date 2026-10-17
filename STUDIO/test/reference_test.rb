@@ -355,4 +355,17 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 184.0, result.fetch("essentia_bpm")
   end
 
+  def test_rhythm_source_is_explicit_about_demucs_vs_full_mix_proxy
+    audio = "/references/source.wav"
+    stem, source = Dilla::Reference.rhythm_source_for(
+      ["/references/stems/other.wav", "/references/stems/drums.wav"], audio
+    )
+    assert_equal "/references/stems/drums.wav", stem
+    assert_equal "demucs_drums_stem", source
+
+    stem, source = Dilla::Reference.rhythm_source_for([], audio)
+    assert_equal audio, stem
+    assert_equal "full_mix_proxy", source
+  end
+
 end
