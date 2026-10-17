@@ -1,8 +1,8 @@
-# Layout micro-refinement matrix
+# Archived layout micro-refinement matrix
 
-332 browser-layout micro-refinements are implemented from one shared pass. Each target contributes four or more deliberate adjustments; the goal is not visual uniformity between dialects, but tighter geometry, stronger semantics, safer overflow, and better optical alignment while preserving each app's own visual language.
+This matrix records an unvalidated experiment. Its stylesheet is intentionally not loaded by production stacks. A numbered declaration is not proof of visual improvement; reinstate changes individually only after rendered before/after review and explicit operator approval.
 
-The pass covers Amber, Brgen, BSDports, shared chrome, commerce chrome, mobile sheets, feed primitives, forms, overlays, tables, media, and footer surfaces. Mailer HTML/text layouts remain isolated because email-client layout is a separate rendering system.
+The remainder of this file is retained for inspection of the historical proposals, not as a production contract.
 
 001. semantic — body — min-block-size: 100dvh — stable viewport frame and cleaner text rasterisation
 002. semantic — body — overflow-x: clip — stable viewport frame and cleaner text rasterisation
