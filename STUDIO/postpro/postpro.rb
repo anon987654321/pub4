@@ -4567,6 +4567,41 @@ def postpro_source_method(source, name)
   postpro_source_methods(source)[name.to_s]
 end
 
+def postpro_method_calls(body)
+  require "prism"
+  parsed = Prism.parse(body)
+  raise ArgumentError, "postpro method source could not be parsed" unless parsed.success?
+
+  definition = parsed.value.statements.body.first
+  return [] unless definition.is_a?(Prism::DefNode)
+
+  names = []
+  pending = [definition.body].compact
+  until pending.empty?
+    node = pending.pop
+    next if node.is_a?(Prism::DefNode)
+
+    names << node.name.to_s if node.is_a?(Prism::CallNode) && node.receiver.nil?
+    pending.concat(node.child_nodes.compact)
+  end
+  names.uniq
+end
+
+def postpro_method_reaches?(methods, from, target, seen: [], calls: nil)
+  method_name = from.to_s
+  return false if seen.include?(method_name)
+  return false unless methods.key?(method_name)
+
+  calls ||= methods.transform_values { |body| postpro_method_calls(body) }
+  callees = calls.fetch(method_name, [])
+  return true if callees.include?(target.to_s)
+
+  callees.any? do |callee|
+    methods.key?(callee) &&
+      postpro_method_reaches?(methods, callee, target, seen: seen + [method_name], calls:)
+  end
+end
+
 def preset_effect_names
   source = File.read(__FILE__)
   Array(postpro_source_method(source, "preset")).scan(/when "([a-z0-9_]+)"/).flatten.uniq
@@ -4755,9 +4790,9 @@ def vocab_check
   # reach it: run_random writes through process_file, and asserting on the
   # spelling failed a path whose behaviour was right. A check that measures a
   # spelling measures a spelling.
+  calls_by_method = source_methods.transform_values { |body| postpro_method_calls(body) }
   ungrained = %w[process_file run_random run_uplift run_one_shot run_watch].reject do |name|
-    body = source_methods[name]
-    %w[apply_finishing_grain process_file( grade_watched(].any? { |reach| body&.include?(reach) }
+    postpro_method_reaches?(source_methods, name, "apply_finishing_grain", calls: calls_by_method)
   end
   unless ungrained.empty?
     problems << "output paths disagree on the finishing grain: #{ungrained.join(", ")} " \
