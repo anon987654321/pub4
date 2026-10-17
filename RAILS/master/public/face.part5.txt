@@ -1434,6 +1434,11 @@ document.addEventListener('keyup', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  const active = document.activeElement;
+  const tag = active?.tagName;
+  const editing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+    active?.isContentEditable || active?.closest?.('[role="dialog"]');
+  if (editing && !(e.ctrlKey && e.key.toLowerCase() === 'm')) return;
   wakeFromSleep();
   if (e.key === 'Escape') {
     e.preventDefault();
