@@ -518,6 +518,15 @@ class TestPostproFilm < Minitest::Test
     refute send(:preset_effect_reads_key?, source, "spectral_temp", :temp),
            "a later duplicate when arm is unreachable and cannot satisfy the contract"
 
+    same_arm = <<~RUBY
+      fx = "spectral_temp"
+      case fx
+      when "spectral_temp", "spectral_temp" then spectral_temp(processed, target_kelvin: p[:temp])
+      end
+    RUBY
+    assert_empty send(:postpro_case_label_duplicates, same_arm, :fx),
+                 "repeated alternatives in one when arm do not shadow another arm"
+
     preset_source = send(:postpro_source_method, File.read(POSTPRO_SOURCE), "preset")
     assert_empty send(:postpro_case_label_duplicates, preset_source, :fx),
                  "the production effect dispatch must not contain unreachable duplicate arms"
