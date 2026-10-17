@@ -98,6 +98,32 @@
     border: 0;
   }
 
+  /* Content boundaries come from placement and whitespace, not rules or boxes.
+     Interactive fields and buttons are deliberately excluded so their focus and
+     input affordances remain usable. */
+  main#main-content :where(
+    section, article, aside, nav, header, footer, fieldset, details, pre,
+    .card, .panel, .tile, .feed-post, .feed-card, .item-card, .port-row,
+    .install-panel, .empty-state, .data-state, .zone-row, .today-look,
+    .affiliate_sidebar_card, .nearby-chat-widget-panel, .nearby-chat-widget-messenger,
+    .messenger-details-panel, .newsletter-cta, .subscribe-box, .search_palette_panel,
+    .commerce-fit-source, .radio-track-list, .radio-playlist-list, .playlist-queue-item,
+    .playlist-comments, .radio-home-header, .radio-featured, .radio-section-header,
+    .amber-editorial-nav, .amber-footer, .composer, .composer-header, .composer-toolbar,
+    .nearby-chat-widget-header, .nearby-chat-widget-status, .nearby-chat-widget-mode,
+    .nearby-chat-widget-log li, .viz-rows, .viz-row, .viz-column-label
+  ) {
+    border: 0;
+    box-shadow: none;
+  }
+
+  main#main-content .amber-editorial-nav a {
+    border: 0;
+    border-radius: 0;
+    text-transform: none;
+    letter-spacing: var(--tracking-normal);
+  }
+
   body.wscons .tabs .active {
     text-decoration: underline;
     text-underline-offset: 0.18em;
