@@ -114,6 +114,25 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes header, "padding: var(--bol-compact-header-padding) var(--bol-gutter);"
   end
 
+  def test_marketplace_hero_has_one_responsive_geometry_owner
+    campaigns = File.read(CITY_CAMPAIGNS_CSS)
+    commerce = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss"))
+
+    refute_includes campaigns, "min-height: 240px;",
+                    "the late campaign layer must not replace the fluid hero media height"
+    refute_includes campaigns, "padding: 24px;",
+                    "the late campaign layer must not override the commerce hero copy padding"
+    refute_includes campaigns, "clamp(2rem, 10vw, 3rem)",
+                    "the campaign layer must not redefine the hero headline scale"
+    refute_includes campaigns, "clamp(2rem, 9vw, 3rem)",
+                    "the campaign layer must not redefine the product headline scale"
+
+    assert_includes commerce, "min-height: min(78vw, 420px);"
+    assert_includes commerce, "padding: 28px 20px;"
+    assert_includes commerce, "font-size: var(--store-text-hero-compact);"
+    assert_includes commerce, "font-size: clamp(2rem, 9vw, 3rem);"
+  end
+
   def test_tablet_storefront_header_stacks_until_the_canonical_desktop_edge
     header = File.read(HEADER_CSS)
     compact = header.split("@media (min-width: 1024px)", 2).first
