@@ -401,6 +401,7 @@ tokens:
         - workspace:node:removed
         - workspace:relation:created
         - workspace:focus
+        - memory:added
         - task:queued
         - task:active
         - task:waiting-human
@@ -831,6 +832,15 @@ tokens:
         radius: 1.58
         width_segments: 28
         height_segments: 20
+      task_ring:
+        enabled: true
+        max_nodes: 12
+        radius_x: 2.02
+        radius_y: 1.72
+        depth: -0.12
+        dot_radius: 0.027
+        orbit_speed: 0.000004
+        terminal_lifetime_ms: 12000
       nodes:
         lib: [-1.38, 0.10, -0.28]
         law: [-0.70, 1.18, -0.10]

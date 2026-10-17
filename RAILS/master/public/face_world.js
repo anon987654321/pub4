@@ -40,14 +40,157 @@
   const TOPOLOGY_PROFILES = Object.freeze(SPATIAL.topology_profiles || {});
   const CAMERA = SPATIAL.camera || {};
   const BUDGET = SPATIAL.budget || {};
+  const TASK_RING = SPATIAL.task_ring || {};
   const LAYER_NAMES = Array.isArray(SPATIAL.layers)
     ? SPATIAL.layers.map((name) => String(name))
     : ["identity", "eyes", "mouth", "cognition", "repository", "event_field", "camera", "hud"];
+  const activityRecords = new Map();
+  const activityMeshes = new Map();
+  let activityGeometry = null;
+  let activityOrder = 0;
 
   function finite(value, fallback) {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
   }
+
+  const TERMINAL_ACTIVITY_STATES = new Set(["complete", "failed", "cancelled"]);
+
+  function removeActivity(key) {
+    const mesh = activityMeshes.get(key);
+    if (mesh) {
+      mesh.parent?.remove(mesh);
+      mesh.material?.dispose?.();
+      activityMeshes.delete(key);
+    }
+    activityRecords.delete(key);
+  }
+
+  function ensureActivityMesh(record) {
+    if (!TASK_RING.enabled || !world || !THREE || !activityGeometry || activityMeshes.has(record.key)) return;
+    const mesh = new THREE.Mesh(activityGeometry, new THREE.MeshBasicMaterial({
+      color: colorFromCss(),
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false
+    }));
+    mesh.name = "master-activity-" + record.kind;
+    mesh.userData.activityKey = record.key;
+    (layers.event_field || world).add(mesh);
+    activityMeshes.set(record.key, mesh);
+  }
+
+  function rememberActivity(kind, record = {}) {
+    if (!TASK_RING.enabled) return null;
+    const id = String(record.id || "").trim();
+    if (!id) return null;
+    const key = kind + ":" + id;
+    const previous = activityRecords.get(key);
+    const state = String(record.state || (kind === "evidence" ? "evidence" : "queued"));
+    const terminalAt = TERMINAL_ACTIVITY_STATES.has(state)
+      ? (previous?.terminalAt || Date.now())
+      : 0;
+    const item = {
+      key,
+      id,
+      kind,
+      state,
+      label: String(record.kind || record.data?.label || record.data?.name || record.recordType || kind),
+      createdAt: finite(record.createdAt, previous?.createdAt || Date.now()),
+      updatedAt: finite(record.updatedAt, Date.now()),
+      terminalAt,
+      order: previous?.order ?? activityOrder++
+    };
+    activityRecords.set(key, item);
+
+    const limit = Math.max(1, Math.min(24, Math.floor(finite(TASK_RING.max_nodes, 12))));
+    while (activityRecords.size > limit) {
+      const oldest = [...activityRecords.values()].sort((a, b) => {
+        if (Boolean(a.terminalAt) !== Boolean(b.terminalAt)) return a.terminalAt ? -1 : 1;
+        return a.order - b.order;
+      })[0];
+      if (!oldest) break;
+      removeActivity(oldest.key);
+    }
+
+    ensureActivityMesh(item);
+    return item;
+  }
+
+  function isEvidenceRecord(record) {
+    return String(record?.type || record?.recordType || "").toLowerCase().includes("evidence");
+  }
+
+  function syncActivitySnapshot() {
+    const snapshot = window.MasterInteraction?.snapshot?.() || {};
+    (snapshot.task?.records || []).forEach((record) => rememberActivity("task", record));
+    (snapshot.tool?.records || []).forEach((record) => rememberActivity("tool", record));
+    (snapshot.memory?.records || []).filter(isEvidenceRecord).forEach((record) => rememberActivity("evidence", record));
+    for (const record of activityRecords.values()) ensureActivityMesh(record);
+  }
+
+  function updateActivityNodes(now, geometry, state) {
+    const ttl = Math.max(0, finite(TASK_RING.terminal_lifetime_ms, 12000));
+    if (ttl > 0) {
+      const wallNow = Date.now();
+      for (const record of activityRecords.values()) {
+        if (record.terminalAt && wallNow - record.terminalAt >= ttl) removeActivity(record.key);
+      }
+    }
+
+    const records = [...activityRecords.values()].sort((a, b) => a.order - b.order);
+    const radiusX = finite(TASK_RING.radius_x, 2.02);
+    const radiusY = finite(TASK_RING.radius_y, 1.72);
+    const depth = finite(TASK_RING.depth, -0.12);
+    const orbitSpeed = finite(TASK_RING.orbit_speed, 0.000004);
+    const color = shellMaterial?.uniforms?.uColor?.value || colorFromCss();
+    records.forEach((record, index) => {
+      const mesh = activityMeshes.get(record.key);
+      if (!mesh) return;
+      const radiusScale = record.kind === "evidence" ? 1.12 : record.kind === "tool" ? 1.04 : 1;
+      const angle = (Math.PI * 2 * index / Math.max(1, records.length)) + now * orbitSpeed;
+      mesh.position.set(
+        Math.cos(angle) * radiusX * radiusScale,
+        Math.sin(angle) * radiusY * radiusScale,
+        depth + Math.sin(angle * 1.7) * 0.045
+      );
+      const active = record.state === "active" || record.state === "queued" || record.state === "retry";
+      const waiting = record.state.startsWith("waiting");
+      const baseOpacity = record.state === "failed" ? 0.76
+        : record.state === "complete" || record.state === "cancelled" ? 0.19
+        : waiting ? 0.48
+        : record.kind === "evidence" ? 0.34
+        : active ? 0.64 : 0.40;
+      const pulse = active ? 0.12 * (0.5 + 0.5 * Math.sin(now * 0.004 + index)) : 0;
+      const terminalFade = record.terminalAt && ttl > 0
+        ? Math.max(0, 1 - (Date.now() - record.terminalAt) / ttl) : 1;
+      mesh.material.opacity = Math.min(0.9, (baseOpacity + pulse) * terminalFade
+        * (state.mode === "sleeping" ? 0.55 : 1));
+      mesh.material.color.copy(color);
+      const scale = record.state === "failed" ? 1.24 : active ? 1.16 : waiting ? 1.02
+        : record.kind === "evidence" ? 0.76 : 0.82;
+      mesh.scale.setScalar(scale * (1 + pulse * 0.55));
+    });
+  }
+
+  function handleActivityEvent(kind, event) {
+    const detail = event.detail || {};
+    if (kind === "evidence") {
+      const recordType = detail.recordType || "evidence";
+      if (!String(recordType).toLowerCase().includes("evidence")) return;
+      rememberActivity("evidence", { ...detail, type: recordType, state: "evidence" });
+      return;
+    }
+    rememberActivity(kind, detail);
+  }
+
+  [
+    "task:queued", "task:active", "task:waiting-human", "task:waiting-network",
+    "task:waiting-model", "task:complete", "task:failed", "task:cancelled"
+  ].forEach((name) => window.addEventListener(name, (event) => handleActivityEvent("task", event), { passive: true }));
+  ["tool:queued", "tool:active", "tool:retry", "tool:complete", "tool:failed"]
+    .forEach((name) => window.addEventListener(name, (event) => handleActivityEvent("tool", event), { passive: true }));
+  window.addEventListener("memory:added", (event) => handleActivityEvent("evidence", event), { passive: true });
 
   function colorFromCss() {
     const raw = getComputedStyle(document.documentElement)
@@ -282,6 +425,9 @@
     makeNodes();
     makeSplatProxy();
     makeHud();
+    activityGeometry = new THREE.SphereGeometry(
+      Math.max(0.012, finite(TASK_RING.dot_radius, 0.027)), 8, 6
+    );
 
     const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const initialDpr = Math.min(Number(budget.dpr || 1), Number(BUDGET.max_device_pixel_ratio || 2));
@@ -292,6 +438,7 @@
     if (window.MASTER_FACE?.renderer?.setPixelRatio) window.MASTER_FACE.renderer.setPixelRatio(initialDpr);
 
     ready = true;
+    syncActivitySnapshot();
     document.documentElement.dataset.faceWorld = "ready";
     window.dispatchEvent(new CustomEvent("master:face-world-ready"));
   }
@@ -495,6 +642,7 @@
         : 0.10 + geometry.eye_attention * 0.12 + geometry.node_energy * 0.34 + busy * 0.18);
     });
 
+    updateActivityNodes(now, geometry, state);
     updatePulses(now);
 
     // The portrait should feel alive without looking busy: a barely perceptible

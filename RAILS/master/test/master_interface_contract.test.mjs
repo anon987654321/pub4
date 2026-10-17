@@ -11,7 +11,9 @@ const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_m
 const faceConversation = readFileSync(join(root, "styles", "face", "30_conversation.css"), "utf8");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
 const interaction = readFileSync(join(publicDir, "master_interaction_state.js"), "utf8");
+const faceWorld = readFileSync(join(publicDir, "face_world.js"), "utf8");
 const audio = readFileSync(join(publicDir, "face_audio_field.js"), "utf8");
 const render = readFileSync(join(publicDir, "face_render_policy.js"), "utf8");
 const voice = readFileSync(join(publicDir, "voice_surface.js"), "utf8");
@@ -158,4 +160,22 @@ test("face shell stays flat and square", () => {
 test("FaceWorld reports one performance sample per canonical update", () => {
   const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
   assert.match(world, /MasterRenderPolicy\?\.recordFrame\?\.\(now\)/);
+});
+
+
+test("evidence events retain their event name and reach the shared FaceWorld clock", () => {
+  assert.ok(tokens.includes("- memory:added"), "memory:added must be allowed by the canonical contract");
+  assert.match(tokens, /task_ring:\n\s+enabled: true/);
+  assert.match(interaction, /const detail = \{ \.\.\.payload, ts: now\(\), type: name \}/);
+  assert.match(interaction, /detail\.recordType = payload\.type/);
+  for (const event of ["task:queued", "task:active", "task:waiting-human", "task:complete",
+                       "task:failed", "tool:queued", "tool:active", "tool:complete", "tool:failed",
+                       "memory:added"]) {
+    assert.ok(tokens.includes("- " + event), event + " is missing from the face contract");
+  }
+  assert.match(faceWorld, /function syncActivitySnapshot\(\)/);
+  assert.match(faceWorld, /function updateActivityNodes\(now, geometry, state\)/);
+  assert.match(faceWorld, /updateActivityNodes\(now, geometry, state\)/);
+  assert.doesNotMatch(faceWorld, /requestAnimationFrame\(/);
+  assert.ok(manifest.includes("- face_world.js"), "spatial nodes must use the already loaded FaceWorld asset");
 });

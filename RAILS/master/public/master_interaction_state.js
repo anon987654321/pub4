@@ -82,7 +82,10 @@
 
   function emit(type, payload = {}) {
     const name = String(type);
-    const detail = { type: name, ts: now(), ...payload };
+    const detail = { ...payload, ts: now(), type: name };
+    if (Object.prototype.hasOwnProperty.call(payload, "type") && payload.type !== name) {
+      detail.recordType = payload.type;
+    }
     if (CANONICAL_EVENTS.size && !CANONICAL_EVENTS.has(name) && !name.startsWith("interaction:")) return detail;
     window.dispatchEvent(new CustomEvent(detail.type, { detail }));
     window.dispatchEvent(new CustomEvent("master:interaction", { detail }));
