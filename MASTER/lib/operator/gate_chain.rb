@@ -16,6 +16,7 @@ require_relative "gate_heartbeat"
 require_relative "../trace/dmesg"
 require_relative "../boot/paths"
 require_relative "../fix/resource_budget"
+require_relative "../io/exec"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
@@ -129,13 +130,13 @@ module Operator
     BASELINE_FILE = File.join(MASTER, ".master", "gate_baseline.json")
 
     def baseline_key(target, root: ROOT, trees: trees_for_target(target))
-      head, head_status = Open3.capture2("git", "rev-parse", "HEAD", chdir: root)
+      head, head_status = Master::Io::Exec.capture2("git", "rev-parse", "HEAD", chdir: root)
       raise "gate baseline fingerprint: git rev-parse failed" unless head_status.success?
 
-      diff, diff_status = Open3.capture2("git", "diff", "HEAD", "--binary", chdir: root)
+      diff, diff_status = Master::Io::Exec.capture2("git", "diff", "HEAD", "--binary", chdir: root)
       raise "gate baseline fingerprint: git diff failed" unless diff_status.success?
 
-      untracked, untracked_status = Open3.capture2(
+      untracked, untracked_status = Master::Io::Exec.capture2(
         "git", "ls-files", "--others", "--exclude-standard", "-z", chdir: root
       )
       raise "gate baseline fingerprint: git ls-files failed" unless untracked_status.success?
@@ -711,7 +712,7 @@ end
     # Untracked files count: a stage that drops a new file in is a stage that
     # changed the tree, and much of the damage this chain attributes arrives so.
     def dirty
-      out, status = Open3.capture2e("git", "status", "--porcelain=v1", "-z", chdir: ROOT)
+      out, status = Master::Io::Exec.capture2e("git", "status", "--porcelain=v1", "-z", chdir: ROOT)
       raise "gate: git status failed: #{out.to_s.strip}" unless status.success?
 
       parse_dirty_paths(out)
