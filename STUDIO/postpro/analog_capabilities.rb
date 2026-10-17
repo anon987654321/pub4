@@ -72,8 +72,41 @@ module Studio
 
       module_function
 
+      def implementation_record(component, key)
+        IMPLEMENTATION_STATUS.fetch([component.to_sym, key.to_sym]) do
+          { status: :unverified, implementation: nil, evidence: nil, regression_test: nil }.freeze
+        end
+      end
+
+      # A status may leave :unverified only with a concrete source reference and
+      # its regression contract. :unavailable needs evidence and a test proving
+      # the boundary too; a bare :verified flag is never enough.
+      def valid_implementation_record?(component, key, record)
+        component = component.to_sym
+        key = key.to_sym
+        return false unless GROUPS.key?(component) && GROUPS.fetch(component).include?(key)
+        return false unless record.is_a?(Hash) && record.frozen?
+        return false unless STATUSES.include?(record[:status])
+
+        reference = lambda do |value|
+          value.is_a?(String) && !value.strip.empty? && value.frozen?
+        end
+        case record[:status]
+        when :unverified
+          record[:implementation].nil? && record[:evidence].nil? && record[:regression_test].nil?
+        when :verified
+          reference.call(record[:implementation]) && reference.call(record[:regression_test]) &&
+            record[:evidence].nil?
+        when :unavailable
+          reference.call(record[:evidence]) && reference.call(record[:regression_test]) &&
+            record[:implementation].nil?
+        else
+          false
+        end
+      end
+
       def implementation_status(component, key)
-        IMPLEMENTATION_STATUS.fetch([component.to_sym, key.to_sym], :unverified)
+        implementation_record(component, key).fetch(:status)
       end
 
       def enabled_for(status)
@@ -87,11 +120,14 @@ module Studio
         @all ||= GROUPS.flat_map do |component, keys|
           keys.each_with_index.map do |key, index|
             id = OFFSETS.fetch(component) + index
-            status = implementation_status(component, key)
+            record = implementation_record(component, key)
+            status = record.fetch(:status)
             {
               id:, key:, component:, stage: stage_for(component, id),
               description: key.to_s.tr("_", " ").freeze,
               catalogued: true, status:, enabled: enabled_for(status),
+              implementation: record[:implementation], evidence: record[:evidence],
+              regression_test: record[:regression_test],
             }.freeze
           end
         end.freeze
@@ -175,10 +211,14 @@ module Studio
         raise "verified capability must be enabled" unless all.all? { |entry| entry[:status] != :verified || entry[:enabled] == true }
         raise "unavailable capability must be disabled" unless all.all? { |entry| entry[:status] != :unavailable || entry[:enabled] == false }
         raise "unverified capability must not claim enabled or disabled" unless all.all? { |entry| entry[:status] != :unverified || entry[:enabled].nil? }
-        unknown = IMPLEMENTATION_STATUS.keys.reject do |component, key|
-          GROUPS.fetch(component, []).include?(key)
+        invalid_keys = IMPLEMENTATION_STATUS.keys.reject do |identity|
+          identity.is_a?(Array) && identity.length == 2 && identity.frozen?
         end
-        raise "implementation status references unknown capabilities: #{unknown.inspect}" unless unknown.empty?
+        raise "implementation status keys must be frozen [component, key] pairs" unless invalid_keys.empty?
+        invalid = IMPLEMENTATION_STATUS.filter_map do |(component, key), record|
+          [component, key] unless valid_implementation_record?(component, key, record)
+        end
+        raise "implementation status lacks valid implementation/evidence and regression references: #{invalid.inspect}" unless invalid.empty?
         true
       end
     end
