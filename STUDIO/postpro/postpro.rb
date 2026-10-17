@@ -4742,6 +4742,19 @@ def preset_unregistered_keys(preset_data, key_readers)
   preset_data.keys.map(&:to_sym) - base_keys - key_readers.keys
 end
 
+# Keep checking the remaining probe presets after one renderer raises. A single
+# broken chain must not hide later independent failures from the operator.
+def preset_smoke_problems(names, probe)
+  Array(names).filter_map do |name|
+    begin
+      out = yield(probe, name)
+      "preset #{name} returned nothing for an 8x8 probe" unless out
+    rescue StandardError => e
+      "preset #{name} raises on an 8x8 probe: #{e.class}: #{e.message}"
+    end
+  end
+end
+
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
@@ -4963,12 +4976,9 @@ def vocab_check
   smoke = %i[portrait cinematic noir masterpiece].select { |name| PRESETS.key?(name) }
   begin
     probe = Vips::Image.black(8, 8).add(128).cast("uchar").bandjoin([128, 128]).copy(interpretation: :srgb)
-    smoke.each do |name|
-      out = preset(probe, name)
-      problems << "preset #{name} returned nothing for an 8x8 probe" unless out
-    end
+    problems.concat(preset_smoke_problems(smoke, probe) { |image, name| preset(image, name) })
   rescue StandardError => e
-    problems << "preset chain raises on an 8x8 probe: #{e.class}: #{e.message}"
+    problems << "cannot build 8x8 preset probe: #{e.class}: #{e.message}"
   end
 
   problems.each { |line| puts "BROKEN #{line}" }
