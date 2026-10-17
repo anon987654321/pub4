@@ -2,7 +2,7 @@
 
 .item-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-lg), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-lg)), 1fr));
   gap: var(--space-4);
 }
 
