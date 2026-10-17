@@ -445,6 +445,7 @@ class TestPostproFilm < Minitest::Test
       ["lens_distortion", :k1], ["diffraction_blur", :f_number],
       ["tonemap", :tonemap_ev], ["tonemap", :tonemap],
       ["relight", :azimuth], ["relight", :shape],
+      ["vintage_lens", :lens],
       ["cinemascope_bars", :aspect_ratio], ["polaroid_frame", :border_style]
     ]
 
@@ -456,6 +457,10 @@ class TestPostproFilm < Minitest::Test
     disconnected = preset_source.sub("target_kelvin: p[:temp]", "target_kelvin: 6504")
     refute send(:preset_effect_reads_key?, disconnected, "spectral_temp", :temp),
            "a matching effect name must not hide a disconnected temperature value"
+
+    disconnected_lens = preset_source.sub('p.fetch(:lens, "zeiss")', '"cooke"')
+    refute send(:preset_effect_reads_key?, disconnected_lens, "vintage_lens", :lens),
+           "a matching vintage_lens step must actually read the preset lens"
 
     unused_decoy = <<~RUBY
       case fx
