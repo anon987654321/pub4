@@ -552,15 +552,18 @@ module Dilla
                         "-f", "f32le", "pipe:1", timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
       valid_segments = tempo_segments.select do |segment|
-        numeric_value(segment["bpm"])&.between?(50.0, 200.0)
+        next false unless segment.is_a?(Hash)
+        next false unless numeric_value(segment["bpm"])&.between?(50.0, 200.0)
+
+        numeric_value(segment["start_seconds"]) && numeric_value(segment["end_seconds"])
       end
       if valid_segments.empty?
         summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1)
       else
         features = valid_segments.filter_map do |segment|
-          start_index = (numeric_value(segment["start_seconds"]).to_f * sample_rate).round
-          end_index = (numeric_value(segment["end_seconds"]).to_f * sample_rate).round
-          slice = samples[start_index, [end_index - start_index, 0].max] || []
+          start_index = [(numeric_value(segment["start_seconds"]) * sample_rate).round, 0].max
+          end_index = [(numeric_value(segment["end_seconds"]) * sample_rate).round, start_index].max
+          slice = samples[start_index, end_index - start_index] || []
           local = summarize_rhythm_envelope(slice, bpm: numeric_value(segment["bpm"]), sample_rate:)
           local unless local.empty?
         end
