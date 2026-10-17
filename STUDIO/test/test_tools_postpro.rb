@@ -373,6 +373,50 @@ class TestPostproFilm < Minitest::Test
     refute_includes methods.fetch("run_random"), "RANDOM_CHAIN_LENGTH ="
   end
 
+  def test_finishing_grain_reachability_follows_calls_not_comments_or_strings
+    source = File.read(POSTPRO_SOURCE)
+    methods = send(:postpro_source_methods, source)
+    calls = methods.transform_values { |body| send(:postpro_method_calls, body) }
+
+    %w[process_file run_random run_uplift run_one_shot run_watch].each do |name|
+      assert send(:postpro_method_reaches?, methods, name, "apply_finishing_grain", calls: calls),
+             "#{name} must reach the finishing pass through executable calls"
+    end
+
+    fixture = {
+      "run_random" => <<~RUBY,
+        def run_random
+          process_file
+        end
+      RUBY
+      "process_file" => <<~RUBY,
+        def process_file
+          apply_finishing_grain(image)
+        end
+      RUBY
+      "apply_finishing_grain" => <<~RUBY
+        def apply_finishing_grain
+          image
+        end
+      RUBY
+    }
+    fixture_calls = fixture.transform_values { |body| send(:postpro_method_calls, body) }
+    assert send(:postpro_method_reaches?, fixture, "run_random", "apply_finishing_grain", calls: fixture_calls),
+           "an actual helper chain must count"
+
+    decoy = {
+      "run_random" => <<~RUBY
+        def run_random
+          # apply_finishing_grain(image)
+          "process_file("
+        end
+      RUBY
+    }
+    decoy_calls = decoy.transform_values { |body| send(:postpro_method_calls, body) }
+    refute send(:postpro_method_reaches?, decoy, "run_random", "apply_finishing_grain", calls: decoy_calls),
+           "comments and string literals must not satisfy delivery-path validation"
+  end
+
   def test_preset_effect_key_readers_verify_the_actual_case_arm
     source = File.read(POSTPRO_SOURCE)
     preset_source = send(:postpro_source_method, source, "preset")
