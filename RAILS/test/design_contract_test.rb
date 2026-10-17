@@ -359,10 +359,10 @@ class DesignContractTest < Minitest::Test
 
     brgen = source.split("@mixin brgen_precision", 2).last.split("@mixin amber_precision", 2).first
     brgen_mobile, brgen_wide = brgen.split("@media (min-width: 768px)", 2)
-    assert_match(/body\[data-layout-pass="micro-320"\] \.layout > main#main-content\s*\{[^}]*padding-inline:\s*max\(var\(--space-4\), var\(--page-gutter\)\);[^}]*padding-block-end:\s*calc\(var\(--space-16\) \+ env\(safe-area-inset-bottom\)\);/m, brgen_mobile)
-    assert_match(/body\[data-layout-pass="micro-320"\] :is\(\.page-header, \.feed-header\)\s*\{[^}]*margin-block-end:\s*var\(--space-6\);/m, brgen_mobile)
-    assert_match(/body\[data-layout-pass="micro-320"\] \.layout > main#main-content\s*\{[^}]*padding-inline:\s*0;[^}]*padding-block-end:\s*calc\(var\(--space-12\) \+ var\(--safe-bottom\)\);/m, brgen_wide)
-    assert_match(/body\[data-layout-pass="micro-320"\] :is\(\.page-header, \.feed-header\)\s*\{[^}]*margin-block-end:\s*var\(--space-8\);/m, brgen_wide)
+    assert_match(/body\[data-layout-contract="shared-layout"\] \.layout > main#main-content\s*\{[^}]*padding-inline:\s*max\(var\(--space-4\), var\(--page-gutter\)\);[^}]*padding-block-end:\s*calc\(var\(--space-16\) \+ env\(safe-area-inset-bottom\)\);/m, brgen_mobile)
+    assert_match(/body\[data-layout-contract="shared-layout"\] :is\(\.page-header, \.feed-header\)\s*\{[^}]*margin-block-end:\s*var\(--space-6\);/m, brgen_mobile)
+    assert_match(/body\[data-layout-contract="shared-layout"\] \.layout > main#main-content\s*\{[^}]*padding-inline:\s*0;[^}]*padding-block-end:\s*calc\(var\(--space-12\) \+ var\(--safe-bottom\)\);/m, brgen_wide)
+    assert_match(/body\[data-layout-contract="shared-layout"\] :is\(\.page-header, \.feed-header\)\s*\{[^}]*margin-block-end:\s*var\(--space-8\);/m, brgen_wide)
 
     amber = source.split("@mixin amber_precision", 2).last.split("@mixin bsdports", 2).first
     amber_mobile, amber_wide = amber.split("@media (min-width: 768px)", 2)
