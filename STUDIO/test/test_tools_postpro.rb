@@ -358,6 +358,7 @@ class TestPostproFilm < Minitest::Test
   def test_effect_inventory_ignores_comment_and_string_decoys
     source = <<~RUBY
       def preset
+        fx = "fixture"
         processed = case fx
         when "optical_blur" then optical_blur(processed)
         # when "comment_decoy" then comment_decoy(processed)
