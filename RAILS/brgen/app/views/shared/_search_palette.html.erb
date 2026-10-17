@@ -12,8 +12,12 @@
 <div class="search_palette" data-controller="search-palette">
   <button type="button"
           class="search_palette_trigger"
+          data-search-palette-target="trigger"
           data-action="click->search-palette#open"
           aria-label="<%= t("nav.search") %>"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-controls="search_palette_dialog"
           aria-keyshortcuts="/ Meta+K">
     <%= icon :search, size: 22 %>
   </button>
@@ -21,7 +25,8 @@
   <%# aria-modal with a label, so a screen reader is told this is a layer over
       the page rather than more of it. Escape and focus return live in the
       controller. %>
-  <div class="search_palette_overlay"
+  <div id="search_palette_dialog"
+       class="search_palette_overlay"
        role="dialog"
        aria-modal="true"
        aria-label="<%= t("nav.search") %>"
