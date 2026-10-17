@@ -1093,8 +1093,11 @@ law_map:
       severity: low
       confidence: 0.75
       operation: improve
-      law_ids: []
-      status: gap
+      law_ids:
+      - AESTHETIC_MINIMALISM
+      - NO_EYEBROW_LABEL
+      - TYPE_HIERARCHY
+      status: covered
       tags:
       - visual_design
       source: master.yml@30dad7ead
@@ -1379,8 +1382,11 @@ law_map:
       severity: medium
       confidence: 0.9
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - NO_DECORATIVE_FX
+      - AESTHETIC_MINIMALISM
+      - NO_EYEBROW_LABEL
+      status: covered
       root: no_surplus
       tags:
       - visual_design
@@ -1524,8 +1530,11 @@ law_map:
       severity: low
       confidence: 0.8
       operation: improve
-      law_ids: []
-      status: gap
+      law_ids:
+      - AESTHETIC_MINIMALISM
+      - NO_EYEBROW_LABEL
+      - TYPE_HIERARCHY
+      status: covered
       root: proportion
       tags:
       - visual_design
@@ -1840,8 +1849,10 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - AESTHETIC_MINIMALISM
+      - NO_EYEBROW_LABEL
+      status: covered
       root: no_surplus
       tags:
       - visual_design
@@ -2910,8 +2921,10 @@ law_map:
       meaning: 'Using only what''s necessary  '
       operation: simplify
       severity: medium
-      law_ids: []
-      status: gap
+      law_ids:
+      - AESTHETIC_MINIMALISM
+      - NO_DECORATIVE_FX
+      status: covered
       root: no_surplus
       tags:
       - visual_design
@@ -3549,8 +3562,10 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: delete
-      law_ids: []
-      status: gap
+      law_ids:
+      - AESTHETIC_MINIMALISM
+      - NO_EYEBROW_LABEL
+      status: covered
       root: no_surplus
       tags:
       - visual_design
@@ -4310,8 +4325,10 @@ law_map:
       severity: medium
       confidence: 0.8
       operation: clarify
-      law_ids: []
-      status: gap
+      law_ids:
+      - TYPE_HIERARCHY
+      - NO_EYEBROW_LABEL
+      status: covered
       tags:
       - visual_design
       source: master.yml@30dad7ead
