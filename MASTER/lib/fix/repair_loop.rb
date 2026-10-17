@@ -300,7 +300,7 @@ end) if source.to_s.strip.empty?
         before = scan_all(path)
         write_atomic(path, new_src)
         after = scan_all(path)
-        return reject_fix(path, old_src, "new_violations", before:, after:) if after.size > before.size
+        return reject_fix(path, old_src, "new_violations", before:, after:, introduced: introduced_summary(before, after)) if after.size > before.size
         if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
           grown = scouts.first(3).map { |violation| "#{violation[:law]} line #{violation[:line]}" }.join(", ")
           return reject_fix(path, old_src, "boyscout_violation", introduced: "#{scouts.size} more: #{grown}")

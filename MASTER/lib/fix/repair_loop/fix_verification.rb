@@ -23,6 +23,19 @@ module Master
           false
         end
 
+        # What a rejected repair added, by law, so the retry can be told what to avoid
+        # instead of only that "new_violations" happened: "ABC_SIZE +1 (line 12); STRONG_PARAMETERS +2 (line 4, 9)".
+        def introduced_summary(before, after, limit: 3)
+          added = after.group_by { |row| row[:law].to_s }.filter_map do |law, rows|
+            grown = rows.size - before.count { |row| row[:law].to_s == law }
+            next unless grown.positive?
+
+            lines = rows.filter_map { |row| row[:line] }.uniq.first(3).join(", ")
+            "#{law} +#{grown}#{lines.empty? ? "" : " (line #{lines})"}"
+          end
+          added.first(limit).join("; ")
+        end
+
         def note_unverified_fix(violation)
           return if test_file_for(violation[:file]).any?
 
