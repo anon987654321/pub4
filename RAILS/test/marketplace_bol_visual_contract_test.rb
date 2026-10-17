@@ -127,6 +127,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     refute_includes campaigns, "clamp(2rem, 9vw, 3rem)",
                     "the campaign layer must not redefine the product headline scale"
 
+    assert_includes commerce, "order: -1;"
     assert_includes commerce, "min-height: min(78vw, 420px);"
     assert_includes commerce, "padding: 28px 20px;"
     assert_includes commerce, "font-size: var(--store-text-hero-compact);"
