@@ -104,8 +104,8 @@ label { display: block; font-size: var(--text-sm); color: var(--text-secondary);
 
 .search_palette_panel {
   max-inline-size: 42rem;
+  min-inline-size: 0;
   margin-inline: auto;
-  border: 1px solid var(--border);
   background: var(--surface);
   padding: var(--space-3);
 }
