@@ -285,6 +285,8 @@ module Master
           set(:listening, ["listening — say stop or type to interrupt"])
           nudge(:listen)
           heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { @heard_at = Process.clock_gettime(Process::CLOCK_MONOTONIC); show(["heard: #{text}"]) })
+          heard = heard.to_s.strip
+          heard = nil if heard.empty?
           set(:idle, ["heard nothing"]) unless heard
           heard
         rescue StandardError => e
