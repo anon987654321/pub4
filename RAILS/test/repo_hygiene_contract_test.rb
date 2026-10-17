@@ -189,6 +189,21 @@ class RepoHygieneContractTest < Minitest::Test
     end
   end
 
+
+  def test_deploy_script_sources_only_existing_local_helpers
+    script = File.read(File.join(ROOT, "_deploy.sh"), encoding: "UTF-8")
+    helpers = script.lines.filter_map do |line|
+      match = line.match(/^\s*\.\s+"\$\{_deploy_sh_dir\}\/([^"]+)"\s*$/)
+      match && match[1]
+    end
+
+    refute_empty helpers, "deploy orchestrator must declare its helper dependencies"
+    helpers.each do |helper|
+      assert File.file?(File.join(ROOT, helper)),
+             "_deploy.sh sources missing local helper #{helper}"
+    end
+  end
+
   private
 
   def git_files(path)

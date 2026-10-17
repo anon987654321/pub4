@@ -13,7 +13,6 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 . "${_deploy_sh_dir}/_core.sh"
 . "${_deploy_sh_dir}/_bundle.sh"
 . "${_deploy_sh_dir}/_sync.sh"
-. "${_deploy_sh_dir}/_scaffold.sh"
 . "${_deploy_sh_dir}/_database.sh"
 . "${_deploy_sh_dir}/_assets.sh"
 . "${_deploy_sh_dir}/_runtime_gate.sh"
