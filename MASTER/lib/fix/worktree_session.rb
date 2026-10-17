@@ -3,6 +3,7 @@
 require "fileutils"
 require "open3"
 require "securerandom"
+require "shellwords"
 require "stringio"
 require "tmpdir"
 require_relative "../io/github_operations"
@@ -183,7 +184,8 @@ module Master
           end
           announce("retained worktree: #{worktree}")
           announce("retained branch: #{branch}") if defined?(branch) && branch
-          announce("inspect: git -C #{worktree} status --short && git -C #{worktree} log --oneline")
+          announce("inspect: #{inspect_command(worktree, base)}")
+          announce("discard: #{discard_command(worktree, branch)}") if defined?(branch) && branch
           recovery = "#{detail}; retained worktree: #{worktree}; branch: #{branch}"
           Result.new(false, recovery, base, recovered_head, branch, worktree)
         else
@@ -283,9 +285,24 @@ module Master
         Array(lines).last(12).each { |line| announce("worker| #{line}") }
         announce("retained worktree: #{worktree}")
         announce("retained branch: #{branch}")
-        announce("inspect: git -C #{worktree} status --short && git -C #{worktree} log --oneline #{base.to_s[0, 12]}..HEAD")
-        announce("discard: git -C #{@repo_root} worktree remove --force #{worktree} && git -C #{@repo_root} branch -D #{branch} && git -C #{@repo_root} push origin --delete #{branch}")
+        announce("inspect: #{inspect_command(worktree, base)}")
+        announce("discard: #{discard_command(worktree, branch)}")
         Result.new(false, summary, base, head, branch, worktree)
+      end
+
+      def inspect_command(worktree, base = nil)
+        status = Shellwords.join(["git", "-C", worktree, "status", "--short"])
+        log = ["git", "-C", worktree, "log", "--oneline"]
+        log << "#{base.to_s[0, 12]}..HEAD" unless base.to_s.empty?
+        "#{status} && #{Shellwords.join(log)}"
+      end
+
+      def discard_command(worktree, branch)
+        [
+          ["git", "-C", @repo_root, "worktree", "remove", "--force", worktree],
+          ["git", "-C", @repo_root, "branch", "-D", branch],
+          ["git", "-C", @repo_root, "push", "origin", "--delete", branch],
+        ].map { |args| Shellwords.join(args) }.join(" && ")
       end
 
       def refused(summary)

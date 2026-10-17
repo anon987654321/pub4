@@ -322,6 +322,7 @@ def test_failed_worker_with_kept_work_prints_path_branch_and_recovery
     assert_includes text, "retained worktree: #{result.worktree}"
     assert_includes text, "retained branch: #{result.branch}"
     assert_includes text, "inspect: git -C #{result.worktree} status --short"
+    assert_includes text, "discard: git -C #{root} worktree remove --force #{result.worktree}"
     assert_includes text, "branch -D #{result.branch}"
   ensure
     if result&.worktree && File.directory?(result.worktree)
