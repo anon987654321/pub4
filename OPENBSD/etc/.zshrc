@@ -11,7 +11,7 @@ export MASTER_BRUTALIST=1
 export MASTER_STARSHIP=0
 
 typeset -g PUB4_ROOT="${HOME}/pub4"
-source "${PUB4_ROOT}/FUN/zshrc.shared"
+source "${PUB4_ROOT}/OPENBSD/lib/zshrc.shared"
 
 # Non-interactive shells (SSH `cmd`, scp): env only, no auto-launch.
 [[ -o interactive && -t 0 && -t 1 ]] || return

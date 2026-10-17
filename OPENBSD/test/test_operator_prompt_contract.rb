@@ -4,15 +4,15 @@ require "minitest/autorun"
 
 class TestOperatorPromptContract < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  COMPAT = File.join(ROOT, "FUN", "zshrc.shared")
   CANONICAL = File.join(ROOT, "OPENBSD", "lib", "zshrc.shared")
   ZSHRC = File.join(ROOT, "OPENBSD", "etc", ".zshrc")
 
-  def test_existing_shell_entrypoint_resolves_to_the_canonical_prompt
-    assert File.symlink?(COMPAT), "FUN/zshrc.shared should remain a compatibility symlink"
-    assert_equal "../OPENBSD/lib/zshrc.shared", File.readlink(COMPAT)
+  def test_shell_entrypoint_uses_the_canonical_prompt_without_compatibility_tree
+    refute_path_exists File.join(ROOT, "FUN"), "retired FUN compatibility tree must stay removed"
     assert File.file?(CANONICAL)
-    assert_includes File.read(ZSHRC), 'source "${PUB4_ROOT}/FUN/zshrc.shared"'
+    source = File.read(ZSHRC)
+    assert_includes source, 'source "${PUB4_ROOT}/OPENBSD/lib/zshrc.shared"'
+    refute_includes source, "FUN/zshrc.shared"
   end
 
   def test_provider_credentials_are_loaded_only_from_a_host_local_file
