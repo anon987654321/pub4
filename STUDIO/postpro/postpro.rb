@@ -4602,9 +4602,36 @@ def postpro_method_reaches?(methods, from, target, seen: [], calls: nil)
   end
 end
 
+def postpro_case_labels(body, predicate_name)
+  return [] unless body
+
+  require "prism"
+  parsed = Prism.parse(body)
+  raise ArgumentError, "postpro case inventory could not parse its method" unless parsed.success?
+
+  labels = []
+  pending = [parsed.value]
+  until pending.empty?
+    node = pending.pop
+    if node.is_a?(Prism::CaseNode) &&
+       node.predicate.is_a?(Prism::LocalVariableReadNode) &&
+       node.predicate.name == predicate_name.to_sym
+      node.conditions.each do |branch|
+        next unless branch.is_a?(Prism::WhenNode)
+
+        branch.conditions.each do |condition|
+          labels << condition.unescaped if condition.is_a?(Prism::StringNode)
+        end
+      end
+    end
+    pending.concat(node.child_nodes.compact)
+  end
+  labels.uniq
+end
+
 def preset_effect_names
   source = File.read(__FILE__)
-  Array(postpro_source_method(source, "preset")).scan(/when "([a-z0-9_]+)"/).flatten.uniq
+  postpro_case_labels(postpro_source_method(source, "preset"), :fx)
 end
 
 # A named step is not enough: the case arm must consume the value it promises
@@ -4648,7 +4675,7 @@ end
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
-  implemented = Array(source_methods["preset"]).scan(/when "([a-z0-9_]+)"/).flatten.uniq
+  implemented = postpro_case_labels(source_methods["preset"], :fx)
   problems = []
 
   PRESETS.each do |name, p|
