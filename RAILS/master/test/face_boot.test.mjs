@@ -80,6 +80,21 @@ test("face surface owns the full viewport", () => {
   assert.match(view, /<canvas id="face"/);
 });
 
+test("mobile chat viewport keeps browser zoom available", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(view, /<meta name="viewport" content="width=device-width, initial-scale=1\.0, viewport-fit=cover">/);
+  assert.doesNotMatch(view, /user-scalable\s*=\s*no/i);
+});
+
+test("face boot defaults to automatic activation and preserves an explicit primer", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(view, /data-primer="auto"/);
+  assert.match(view, /q\.get\('primer'\)!=='1'&&document\.body\.dataset\.primer!=='keep'/);
+  assert.match(view, /setTimeout\(go,0\)/);
+  assert.match(view, /window\._primerFired=true/);
+  assert.match(view, /if\(!window\._primerFired && \/webgl\/i\.test\(String\(type\)\)\) return null/);
+});
+
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
