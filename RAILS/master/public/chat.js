@@ -635,24 +635,25 @@ document.querySelectorAll('.tool').forEach(btn => {
 (function wireCommandPalette() {
   const COMMANDS = (window.MASTER_COMMANDS || []).map((entry) => ({
     cmd: entry.cmd,
-    hint: entry.hint || ''
+    hint: entry.hint || '',
+    category: entry.category || 'other'
   }));
   // Browser-only controls are local UI actions; actual MASTER commands come from
   // CommandRegistry so the CLI and face cannot drift.
   COMMANDS.push(
-    { cmd: 'ping', hint: 'smoke test connection' },
-    { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
-    { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },
-    { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E' },
-    { action: 'export_jsonl', label: 'export jsonl', hint: 'machine-readable session' },
-    { action: 'export_png', label: 'export face png', hint: 'snapshot canvas' },
-    { action: 'log_search', label: 'filter chat log', hint: 'search visible messages' },
-    { action: 'instant', label: 'toggle instant stream', hint: 'skip typing indicator' },
-    { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only' },
-    { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
-    { action: 'preview', label: 'preview voice', hint: 'play voice blurb' },
-    { action: 'shortcuts', label: 'keyboard shortcuts', hint: 'press ?' },
-    { action: 'voice_mode', label: 'hands-free voice mode', hint: 'continuous listening, no mic press' }
+    { cmd: 'ping', hint: 'smoke test connection', category: 'health' },
+    { action: 'dashboard', label: 'mission control', hint: 'open /dashboard', category: 'health' },
+    { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H', category: 'session' },
+    { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E', category: 'session' },
+    { action: 'export_jsonl', label: 'export jsonl', hint: 'machine-readable session', category: 'session' },
+    { action: 'export_png', label: 'export face png', hint: 'snapshot canvas', category: 'interface' },
+    { action: 'log_search', label: 'filter chat log', hint: 'search visible messages', category: 'session' },
+    { action: 'instant', label: 'toggle instant stream', hint: 'skip typing indicator', category: 'interface' },
+    { action: 'focus', label: 'toggle focus mode', hint: 'hide chrome, face only', category: 'interface' },
+    { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t', category: 'interface' },
+    { action: 'preview', label: 'preview voice', hint: 'play voice blurb', category: 'interface' },
+    { action: 'shortcuts', label: 'keyboard shortcuts', hint: 'press ?', category: 'help' },
+    { action: 'voice_mode', label: 'hands-free voice mode', hint: 'continuous listening, no mic press', category: 'interface' }
   );
 
   // Runtime skills are suggestions, not slash commands. Preserve them as
@@ -661,7 +662,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     if (!Array.isArray(skills)) return;
     skills.forEach((skill) => {
       if (!skill?.name) return;
-      COMMANDS.push({ cmd: skill.name, label: skill.name, hint: skill.description || 'skill' });
+      COMMANDS.push({ cmd: skill.name, label: skill.name, hint: skill.description || 'skill', category: 'skill' });
     });
     filterItems(panelInput?.value || '');
   }).catch(() => {});
@@ -714,7 +715,8 @@ document.querySelectorAll('.tool').forEach(btn => {
       li.setAttribute('role', 'option');
       li.dataset.active = index === activeIndex ? '1' : '0';
       const label = entry.cmd || entry.label || '';
-      li.innerHTML = `${label}<span class="cmd-hint">${entry.hint || ''}</span>`;
+      const category = entry.category || 'other';
+      li.innerHTML = `${label}<span class="cmd-hint">${category} · ${entry.hint || ''}</span>`;
       li.addEventListener('mousedown', (ev) => { ev.preventDefault(); runEntry(entry); });
       list.appendChild(li);
     });
@@ -723,7 +725,7 @@ document.querySelectorAll('.tool').forEach(btn => {
   function filterItems(query) {
     const q = query.trim().toLowerCase();
     filtered = !q ? COMMANDS.slice() : COMMANDS.filter((entry) => {
-      const hay = `${entry.cmd || ''} ${entry.label || ''} ${entry.hint || ''}`.toLowerCase();
+      const hay = `${entry.cmd || ''} ${entry.label || ''} ${entry.category || ''} ${entry.hint || ''}`.toLowerCase();
       return hay.includes(q);
     });
     activeIndex = 0;
