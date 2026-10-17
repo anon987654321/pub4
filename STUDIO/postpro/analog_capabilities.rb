@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "uri"
 
 module Studio
   # Media capability contract owned by Studio. Keeping the contract in code
@@ -78,27 +79,54 @@ module Studio
         end
       end
 
-      # A status may leave :unverified only with a concrete source reference and
-      # its regression contract. :unavailable needs evidence and a test proving
-      # the boundary too; a bare :verified flag is never enough.
+      # Readiness references are executable contracts, not free-form claims.
+      # Resolve local path#method references under the repository root; a file
+      # or method that does not exist cannot promote a capability.
+      def local_source_reference?(value)
+        return false unless value.is_a?(String) && value.frozen? && !value.strip.empty?
+
+        path, member = value.split("#", 2)
+        return false unless path && !path.empty? && member&.match?(/\A[a-z_]\w*[!?]?\z/i)
+
+        root = File.realpath(File.expand_path("../..", __dir__))
+        target = File.realpath(File.expand_path(path, root))
+        return false unless target.start_with?("#{root}#{File::SEPARATOR}")
+        return false unless File.file?(target)
+
+        definition = /^\s*def\s+#{Regexp.escape(member)}(?=\s|\(|$)/
+        File.foreach(target).any? { |line| line.match?(definition) }
+      rescue StandardError
+        false
+      end
+
+      def evidence_reference?(value)
+        return true if local_source_reference?(value)
+        return false unless value.is_a?(String) && value.frozen? && !value.strip.empty?
+
+        uri = URI.parse(value)
+        uri.is_a?(URI::HTTPS) && !uri.host.to_s.empty?
+      rescue URI::InvalidURIError
+        false
+      end
+
+      # A status may leave :unverified only with a concrete source method and
+      # its real regression test. :unavailable needs a source or HTTPS evidence
+      # reference plus a real test proving the boundary; a bare flag is not enough.
       def valid_implementation_record?(component, key, record)
         return false unless component.is_a?(Symbol) && key.is_a?(Symbol)
         return false unless GROUPS.key?(component) && GROUPS.fetch(component).include?(key)
         return false unless record.is_a?(Hash) && record.frozen?
         return false unless STATUSES.include?(record[:status])
 
-        reference = lambda do |value|
-          value.is_a?(String) && !value.strip.empty? && value.frozen?
-        end
         case record[:status]
         when :unverified
           record[:implementation].nil? && record[:evidence].nil? && record[:regression_test].nil?
         when :verified
-          reference.call(record[:implementation]) && reference.call(record[:regression_test]) &&
-            record[:evidence].nil?
+          local_source_reference?(record[:implementation]) &&
+            local_source_reference?(record[:regression_test]) && record[:evidence].nil?
         when :unavailable
-          reference.call(record[:evidence]) && reference.call(record[:regression_test]) &&
-            record[:implementation].nil?
+          evidence_reference?(record[:evidence]) &&
+            local_source_reference?(record[:regression_test]) && record[:implementation].nil?
         else
           false
         end
