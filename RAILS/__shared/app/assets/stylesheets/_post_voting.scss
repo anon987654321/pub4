@@ -2,7 +2,7 @@
 .post-reading-layout {
   display: grid;
   grid-template-columns: var(--vote-target) minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: start;
 }
 .post-reading-main { min-width: 0; }
@@ -57,10 +57,9 @@
   line-height: var(--leading-none);
   color: var(--text);
 }
-@media (max-width: 479px) {
+@media (min-width: 480px) {
   .post-reading-layout {
-    grid-template-columns: var(--vote-target) minmax(0, 1fr);
-    gap: var(--space-2);
+    gap: var(--space-3);
   }
 }
 
