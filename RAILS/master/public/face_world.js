@@ -129,7 +129,7 @@
     for (const record of activityRecords.values()) ensureActivityMesh(record);
   }
 
-  function updateActivityNodes(now, geometry, state) {
+  function updateActivityNodes(now, state) {
     const ttl = Math.max(0, finite(TASK_RING.terminal_lifetime_ms, 12000));
     if (ttl > 0) {
       const wallNow = Date.now();
@@ -642,7 +642,7 @@
         : 0.10 + geometry.eye_attention * 0.12 + geometry.node_energy * 0.34 + busy * 0.18);
     });
 
-    updateActivityNodes(now, geometry, state);
+    updateActivityNodes(now, state);
     updatePulses(now);
 
     // The portrait should feel alive without looking busy: a barely perceptible
