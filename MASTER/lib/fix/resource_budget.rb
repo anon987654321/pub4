@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "etc"
-require "open3"
+require_relative "../io/exec"
 require_relative "../ground/boot_receipt"
 
 module Master
@@ -195,7 +195,7 @@ module Master
         return unless sysctl
 
         key = @platform == "darwin" ? "hw.memsize" : "hw.physmem"
-        out, status = Open3.capture2e(sysctl, "-n", key)
+        out, status = Master::Io::Exec.capture2e(sysctl, "-n", key)
         status.success? ? out.to_i / (1024 * 1024) : nil
       rescue StandardError
         nil
@@ -209,7 +209,7 @@ module Master
         # OpenBSD keeps sysctl in /sbin, macOS in /usr/sbin.
         sysctl = ["/sbin/sysctl", "/usr/sbin/sysctl"].find { |path| File.executable?(path) }
         if sysctl
-          out, status = Open3.capture2e(sysctl, "-n", "vm.loadavg")
+          out, status = Master::Io::Exec.capture2e(sysctl, "-n", "vm.loadavg")
           return out.to_s[/\d+(?:\.\d+)?/]&.to_f if status.success?
         end
         return File.read("/proc/loadavg").to_f if File.file?("/proc/loadavg")
@@ -224,7 +224,7 @@ module Master
           kb = File.read("/proc/self/status")[/^VmRSS:\s+(\d+) kB$/, 1]
           return kb.to_i / 1024.0 if kb
         end
-        out, status = Open3.capture2e("ps", "-o", "rss=", "-p", Process.pid.to_s)
+        out, status = Master::Io::Exec.capture2e("ps", "-o", "rss=", "-p", Process.pid.to_s)
         status.success? ? out.to_i / 1024.0 : nil
       rescue StandardError
         nil
@@ -243,7 +243,7 @@ module Master
       end
 
       def process_count
-        out, status = Open3.capture2e("ps", "-axo", "pid=")
+        out, status = Master::Io::Exec.capture2e("ps", "-axo", "pid=")
         status.success? ? out.lines.size : nil
       rescue StandardError
         nil
@@ -263,7 +263,7 @@ module Master
 
       # df -kP: the fourth column is the space available to this user, in KiB.
       def disk_free_gb(path = @root)
-        out, status = Open3.capture2e("df", "-kP", path)
+        out, status = Master::Io::Exec.capture2e("df", "-kP", path)
         return unless status.success?
 
         (out.lines.last.to_s.split[3].to_f / (1024 * 1024)).round(1)
