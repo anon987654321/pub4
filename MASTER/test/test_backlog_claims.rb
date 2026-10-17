@@ -32,4 +32,28 @@ class TestBacklogClaims < Minitest::Test
     assert_equal expected, items.size
     assert items.all? { |line_number, text| line_number.to_i.positive? && !text.empty? }
   end
+
+  def test_verdict_checks_missing_paths_even_when_a_line_citation_is_valid
+    BacklogClaims.stub(:tracked, Set.new(["MASTER/source.rb"])) do
+      BacklogClaims.stub(:line_count, 12) do
+        result = BacklogClaims.verdict(
+          "MASTER/source.rb:10 is used by STUDIO/missing.rb"
+        )
+
+        assert_equal :citation_findings, result.first
+        assert_includes result.last, "missing path: STUDIO/missing.rb"
+      end
+    end
+  end
+
+  def test_unreadable_line_citation_is_inconclusive_not_stale
+    BacklogClaims.stub(:tracked, Set.new(["MASTER/unreadable.rb"])) do
+      BacklogClaims.stub(:line_count, nil) do
+        result = BacklogClaims.verdict("MASTER/unreadable.rb:5")
+
+        assert_equal :citation_findings, result.first
+        assert_includes result.last, "inconclusive line: could not read MASTER/unreadable.rb"
+      end
+    end
+  end
 end
