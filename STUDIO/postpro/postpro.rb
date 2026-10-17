@@ -4747,10 +4747,10 @@ def vocab_check
   source_methods = postpro_source_methods(source)
   preset_source = source_methods["preset"]
   implemented = postpro_case_labels(preset_source, :fx)
+  problems = []
   postpro_case_label_duplicates(preset_source, :fx).each do |fx|
     problems << "preset(): duplicate effect arm #{fx.inspect}; later branch is unreachable"
   end
-  problems = []
 
   PRESETS.each do |name, p|
     (Array(p[:fx]) - implemented).each { |fx| problems << "#{name}: fx #{fx.inspect} has no implementation in preset()" }
