@@ -64,14 +64,32 @@ module Studio
       GROUPS = { postpro: POSTPRO, replicate: REPLICATE, dilla: DILLA }.freeze
       OFFSETS = { postpro: 1, replicate: 71, dilla: 131 }.freeze
 
+      # This is an inventory of directions, not proof that each direction is
+      # implemented. Promotion out of :unverified requires a concrete code path
+      # and a regression test; otherwise readiness would be a guess.
+      IMPLEMENTATION_STATUS = {}.freeze
+      STATUSES = %i[verified unavailable unverified].freeze
+
       module_function
+
+      def implementation_status(component, key)
+        IMPLEMENTATION_STATUS.fetch([component.to_sym, key.to_sym], :unverified)
+      end
+
+      def enabled_for(status)
+        return true if status == :verified
+        return false if status == :unavailable
+
+        nil
+      end
 
       def all
         @all ||= GROUPS.flat_map do |component, keys|
           keys.each_with_index.map do |key, index|
             id = OFFSETS.fetch(component) + index
+            status = implementation_status(component, key)
             { id:, key:, component:, stage: stage_for(component, id),
-              description: key.to_s.tr("_", " "), enabled: true }
+              description: key.to_s.tr("_", " "), status:, enabled: enabled_for(status) }
           end
         end.freeze
       end
@@ -123,11 +141,13 @@ module Studio
       def profile(component, intensity: 0.5, seed: 0)
         raise ArgumentError, "unknown component: #{component}" unless GROUPS.key?(component.to_sym)
 
+        entries = self.for(component)
         {
           component: component.to_sym,
           seed: Integer(seed),
           intensity: Float(intensity).clamp(0.0, 1.0),
-          capabilities: self.for(component).to_h { |entry| [entry[:key], true] },
+          capabilities: entries.to_h { |entry| [entry[:key], entry[:enabled]] },
+          capability_status: entries.to_h { |entry| [entry[:key], entry[:status]] },
         }
       end
 
@@ -136,7 +156,11 @@ module Studio
         JSON.pretty_generate(
           version: 1,
           count: entries.length,
-          complete: entries.all? { |entry| entry[:enabled] },
+          catalog_complete: entries.length == (component ? GROUPS.fetch(component.to_sym).length : 200),
+          complete: entries.all? { |entry| entry[:enabled] == true },
+          enabled_count: entries.count { |entry| entry[:enabled] == true },
+          unavailable_count: entries.count { |entry| entry[:status] == :unavailable },
+          unverified_count: entries.count { |entry| entry[:status] == :unverified },
           capabilities: entries,
         )
       end
@@ -144,6 +168,14 @@ module Studio
       def validate!
         raise "analog capability contract must contain ids 1..200" unless all.map { |e| e[:id] } == (1..200).to_a
         raise "analog capability keys must be unique" unless all.map { |e| e[:key] }.uniq.length == 200
+        raise "analog capability status is invalid" unless all.all? { |entry| STATUSES.include?(entry[:status]) }
+        raise "verified capability must be enabled" unless all.all? { |entry| entry[:status] != :verified || entry[:enabled] == true }
+        raise "unavailable capability must be disabled" unless all.all? { |entry| entry[:status] != :unavailable || entry[:enabled] == false }
+        raise "unverified capability must not claim enabled or disabled" unless all.all? { |entry| entry[:status] != :unverified || entry[:enabled].nil? }
+        unknown = IMPLEMENTATION_STATUS.keys.reject do |component, key|
+          GROUPS.fetch(component, []).include?(key)
+        end
+        raise "implementation status references unknown capabilities: #{unknown.inspect}" unless unknown.empty?
         true
       end
     end
