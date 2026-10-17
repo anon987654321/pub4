@@ -182,6 +182,15 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_video_filter_graph_labels_background_without_an_empty_filter
+    graph = Dilla::Video.filter_graph
+
+    assert_match(/drawbox=x=116:y=108:w=1048:h=504:color=0x203b56@0\.95:t=1\[base\]/, graph)
+    refute_includes graph, ",[base]"
+    assert_match(/\[0:a\]showwaves=.*\[wave\]/, graph)
+    assert_match(/\[base\]\[wave\]overlay=.*format=yuv420p\[v\]\z/, graph)
+  end
+
   def test_showcase_tempo_schedule_is_repeatable_and_stays_within_92_to_116_bpm
     first = showcase_tempos(seed: 261_013, count: 8)
     assert_equal first, showcase_tempos(seed: 261_013, count: 8)
