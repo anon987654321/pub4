@@ -317,6 +317,33 @@ class TestCliTerminalFace < Minitest::Test
     assert_includes text, "voice0: audio did not play"
   end
 
+  def test_blank_microphone_transcripts_are_ignored_instead_of_sent_as_empty_messages
+    ["", "  \t  "].each do |transcript|
+      ear = Object.new
+      ear.define_singleton_method(:missing) { nil }
+      ear.define_singleton_method(:available?) { true }
+      ear.define_singleton_method(:listen) { |stop:, on_partial:| transcript }
+
+      face = Master::CLI::Face::Window.new(
+        turn: ->(text) { flunk("blank microphone transcript reached turn: #{text.inspect}") },
+        ear:,
+        mouth: Quiet.new(nil),
+        input: StringIO.new,
+        output: StringIO.new,
+        size: -> { [24, 80] },
+      )
+
+      face.stub(:answer, ->(text) { flunk("blank microphone transcript was answered: #{text.inspect}") }) do
+        face.send(:hear)
+      end
+
+      words = face.instance_variable_get(:@words).join(" ")
+      assert_equal :idle, face.instance_variable_get(:@state)
+      assert_includes words, "heard nothing"
+      refute_includes words, "empty message"
+    end
+  end
+
   def test_speaking_does_not_arm_the_microphone
     face = Master::CLI::Face::Window.new(
       turn: ->(_) {},
