@@ -205,7 +205,7 @@ class TestSpeech < Minitest::Test
     refute options.fetch(:style_locked)
   end
 
-  def test_classic_tts_is_the_default_but_transcendent_can_be_requested
+  def test_explicit_classic_mode_can_be_overridden_per_session
     speech = Master::Voice::Speech
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
@@ -234,16 +234,20 @@ class TestSpeech < Minitest::Test
     original ? ENV["MASTER_TTS_MODE"] = original : ENV.delete("MASTER_TTS_MODE")
   end
 
-  def test_default_tts_config_selects_fast_classic_speech
+  def test_default_tts_config_keeps_live_streaming_fast_and_cli_speech_expressive
     cfg = Master::Voice::Transcendent.load_config
     assert_equal true, cfg.fetch("enabled")
     assert_equal true, cfg.fetch("fast_mode")
-    assert_equal "classic", cfg.fetch("default_mode")
+    assert_equal "transcendent", cfg.fetch("default_mode")
   end
 
-  def test_fast_mode_keeps_classic_synthesis_available
-    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
-      assert_equal "classic", Master::Voice::Speech.synthesis_mode
+  def test_fast_mode_does_not_override_cli_synthesis_or_live_streaming_contract
+    config = { "fast_mode" => true, "default_mode" => "transcendent", "enabled" => true }
+    Master::Voice::Transcendent.stub(:load_config, config) do
+      speech = Master::Voice::Speech
+      assert_equal "transcendent", speech.synthesis_mode
+      assert_equal true, speech.fast_tts_mode?
+      assert_equal false, speech.send(:transcendent_streaming_enabled?, {})
     end
   end
 

@@ -1,13 +1,14 @@
-# TTS policy — low-latency conversation by default; expressive synthesis on request.
+# TTS policy — expressive full-utterance synthesis for CLI speech; live streaming stays fast.
 #
-# `fast_mode` selects classic Edge neural TTS and progressive playback for normal
-# conversation. Set MASTER_TTS_MODE=transcendent to request the expressive MLX /
-# Chatterbox / phrase-rhythm pipeline for a particular session.
+# `default_mode` selects the completed-utterance synthesis used by CLI Playback.
+# `fast_mode` is a separate transport/streaming control: it keeps live streaming
+# progressive and avoids cold-worker retries when no stream is available. Set
+# MASTER_TTS_MODE=classic to force direct Edge synthesis for the current session.
 #
 transcendent:
   enabled: true
   fast_mode: true
-  default_mode: classic
+  default_mode: transcendent
   personality: warm_supportive
   warmth: 0.82
   depth: 0.68
@@ -19,9 +20,10 @@ transcendent:
   paralinguistic_tags: true
   melodic_enabled: true
   melodic_threshold: 0.40
-  # Expressive performance applies in MASTER_TTS_MODE=transcendent. Edge receives
-  # the phrase contour through edge_melodic; local engines receive the same
-  # measured emotion controls. The normal conversation path stays direct and fast.
+  # Expressive performance is the default for completed CLI utterances. Edge
+  # receives the phrase contour through edge_melodic; local engines receive the
+  # same measured emotion controls. Progressive live/web streaming remains classic
+  # while fast_mode is enabled, unless MASTER_TTS_MODE explicitly overrides it.
   phrase_rhythm_enabled: true
   phrase_language_switching: true
   mlx_model: mlx-community/chatterbox-fp16

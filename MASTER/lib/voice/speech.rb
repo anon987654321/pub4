@@ -382,15 +382,14 @@ module Master
         rest ? [head, rest, *out.drop(1)] : out
       end
 
+      # The synthesis quality mode and the live transport mode are independent.
+      # fast_mode keeps streaming progressive; it must not silently force normal
+      # completed CLI utterances onto the flatter classic synthesis path.
       def synthesis_mode
         return ENV["MASTER_TTS_MODE"] if ENV.key?("MASTER_TTS_MODE")
 
         cfg = Transcendent.load_config
-        return "classic" if cfg["fast_mode"] == true
-
-        if Engines.openbsd? && Transcendent.enabled?
-          return "transcendent"
-        end
+        return "transcendent" if Engines.openbsd? && Transcendent.enabled?
 
         cfg["default_mode"].to_s == "transcendent" && Transcendent.enabled? ? "transcendent" : "classic"
       end
