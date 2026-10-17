@@ -275,6 +275,38 @@ class TestCliTerminalFace < Minitest::Test
     File.delete("/tmp/fake-face-tts.mp3") if File.exist?("/tmp/fake-face-tts.mp3")
   end
 
+  def test_later_chunk_uses_direct_speech_when_its_synthesis_fails
+    Dir.mktmpdir("master-face-mouth-fallback") do |dir|
+      first_path = File.join(dir, "first.mp3")
+      File.write(first_path, "fake audio")
+      count = 0
+      count_lock = Mutex.new
+      synthesize = lambda do |_text|
+        call = count_lock.synchronize { count += 1 }
+        call == 1 ? first_path : nil
+      end
+      device = Object.new.tap { |item| item.define_singleton_method(:android?) { false } }
+      mouth = Master::CLI::Face::Mouth.new(device:, synthesize:)
+      played = []
+      direct = []
+
+      mouth.stub(:available?, true) do
+        mouth.stub(:chunks, ["First sentence.", "Second sentence."]) do
+          mouth.stub(:play, ->(_path, part, on_level:, stop:) { played << part; true }) do
+            mouth.stub(:direct_speak, ->(part) { direct << part; true }) do
+              Master::Voice::Playback.stub(:begin_reply_generation!, -> { true }) do
+                assert mouth.say("First sentence. Second sentence.", on_level: ->(_level) {})
+              end
+            end
+          end
+        end
+      end
+
+      assert_equal ["First sentence."], played
+      assert_equal ["Second sentence."], direct
+    end
+  end
+
   def test_android_face_falls_back_to_termux_tts_when_synthesis_is_missing
     spoken = []
     mouth = Master::CLI::Face::Mouth.new(
