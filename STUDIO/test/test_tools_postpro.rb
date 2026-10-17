@@ -396,6 +396,22 @@ class TestPostproFilm < Minitest::Test
     refute send(:preset_effect_reads_key?, disconnected, "spectral_temp", :temp),
            "a matching effect name must not hide a disconnected temperature value"
 
+    comment_decoy = <<~RUBY
+      case fx
+      when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504) # p[:temp]
+      end
+    RUBY
+    refute send(:preset_effect_reads_key?, comment_decoy, "spectral_temp", :temp),
+           "a comment must not satisfy the key-reader contract"
+
+    string_decoy = <<~RUBY
+      case fx
+      when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504, annotation: "p[:temp]")
+      end
+    RUBY
+    refute send(:preset_effect_reads_key?, string_decoy, "spectral_temp", :temp),
+           "a string literal must not satisfy the key-reader contract"
+
     multiline = <<~RUBY
       case fx
       when "spectral_temp" then
