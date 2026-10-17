@@ -216,7 +216,7 @@ class TestCLI < Minitest::Test
 
     status = Object.new
     status.define_singleton_method(:success?) { true }
-    Open3.stub(:capture2e, ["x" * 40_000, status]) do
+    Master::Io::Exec.stub(:capture2e, ["x" * 40_000, status]) do
       result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation:, bus:)
 
       assert result.ok?
