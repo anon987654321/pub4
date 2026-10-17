@@ -23,8 +23,8 @@
   flex-direction: column;
   gap: var(--space-3);
   background: var(--dating-card, var(--surface));
-  border: 1px solid var(--dating-border, var(--border));
-  border-radius: var(--radius-lg);
+  border: 0;
+  border: 0;
   padding: var(--space-2);
   transition: transform 220ms var(--ease-spring), opacity var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
   overflow: hidden;
@@ -339,7 +339,7 @@ body.vertical-dating .app-shell {
 }
 
 body.vertical-dating .match {
-  border-bottom: 1px solid var(--dating-border);
+  border: 0;
 }
 
 body.vertical-dating .match .feed-card-avatar-img {
