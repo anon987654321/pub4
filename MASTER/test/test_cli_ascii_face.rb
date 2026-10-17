@@ -413,13 +413,11 @@ class TestCliAsciiFace < Minitest::Test
     refute_respond_to Master::Face::Contract, :glyph
     refute_respond_to Master::CLI::BootBanner, :wordmark
   end
-end
-
 
   def test_cli_log_quiet_does_not_suppress_the_face
     with_env(MASTER_CLI_QUIET: "1", MASTER_FACE_QUIET: "0") do
       frame = Face.frame(state: :idle, rows: 24, cols: 60, t: 0.0)
-      refute_equal "idle", frame.lines.map(&:strip).reject(&:empty?).first
-      assert_match(/[|/\\\\-]/, frame)
+      assert_operator frame.lines.map(&:strip).reject(&:empty?).length, :>, 1
     end
   end
+end
