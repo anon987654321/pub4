@@ -128,52 +128,16 @@ html.palette-open {
   overflow: hidden;
 }
 
-/* The field, restyled for the palette.
-
-   shared/_live_search_form is drawn for a rail — a small rounded pill on a
-   light ground. In a palette it is the only thing on screen and should read as
-   one line of type you are already writing on, so the box goes and a rule under
-   it does the work. */
+/* The palette uses the same shared Yep search as every other Rails surface.
+   Keep only its block layout here; geometry, focus and results belong to
+   __shared/app/assets/stylesheets/_search_yep.scss. */
 .search_palette_panel .search,
 .search_palette_panel .search.focus,
 .search_palette_panel .search.active,
 .search_palette_panel .search-form {
   display: block;
-  /* _search_yep gives .search a fixed 480px pill on a #ccc ground -- the right
-     thing in a rail, wrong as the only element on a dimmed screen. The box goes
-     entirely and the field below carries the line. */
-  inline-size: 100%;
-  max-inline-size: none;
-  width: auto;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
   margin: 0;
-}
-
-.search_palette_panel input[type="search"] {
-  inline-size: 100%;
-  box-sizing: border-box;
-  border: 0;
-  border-block-end: 1px solid var(--border);
-  border-radius: 0;
-  background: transparent;
-  color: var(--text);
-  /* Large enough to be the subject of the screen, and above the 16px floor that
-     stops iOS zooming the viewport when the field takes focus. */
-  font: var(--weight-normal) clamp(1.25rem, 3.5vw, 1.75rem)/1.25 var(--font);
-  padding-block: var(--space-2);
-  padding-inline: 0;
-}
-
-.search_palette_panel input[type="search"]::placeholder {
-  color: color-mix(in srgb, var(--text) 45%, transparent);
-}
-
-.search_palette_panel input[type="search"]:focus {
-  outline: none;
-  border-block-end-color: var(--text);
+  padding: 0;
 }
 
 @include meta.load-css("shell_widgets");
