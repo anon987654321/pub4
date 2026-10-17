@@ -95,6 +95,8 @@ module Master
                            "worker reported an incomplete terminal state: #{terminal_failure.strip}"
                          elsif !status
                            "worker exited unsuccessfully"
+                         elsif !worker_completion_seen?(lines)
+                           "worker exited without an explicit completion report"
                          end
 
         if failure_reason
@@ -295,6 +297,14 @@ module Master
       def worker_terminal_failure(lines)
         Array(lines).find do |line|
           line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading)\b/i)
+        end
+      end
+
+      # A zero exit is not proof that the requested command ran to completion.
+      # The CLI's final review report is the explicit completion contract.
+      def worker_completion_seen?(lines)
+        Array(lines).any? do |line|
+          line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*complete\b/i)
         end
       end
 

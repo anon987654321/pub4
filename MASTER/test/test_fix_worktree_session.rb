@@ -36,7 +36,8 @@ class TestFixWorktreeSession < Minitest::Test
         path = File.join(Dir.pwd, "README")
         File.write(path, "after\n")
         system("git", "add", "README")
-        exit(system("git", "commit", "-m", "worker fix"))
+        puts "review0: complete"
+exit(system("git", "commit", "-m", "worker fix"))
       RUBY
       File.write(File.join(root, "MASTER", "bin", "operator"), "#!/usr/bin/env ruby\nexit 0\n")
       FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "master"))
@@ -112,7 +113,8 @@ class TestFixWorktreeSession < Minitest::Test
         #!/usr/bin/env ruby
         File.write(File.join(Dir.pwd, "README"), "after\n")
         system("git", "add", "README")
-        exit(system("git", "commit", "-m", "worker fix"))
+        puts "review0: complete"
+exit(system("git", "commit", "-m", "worker fix"))
       RUBY
       FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "master"))
       File.write(File.join(root, "MASTER", "bin", "operator"), "#!/usr/bin/env ruby\nexit 0\n")
@@ -172,7 +174,8 @@ def test_uncommitted_tracked_edits_are_reported_and_left_out_by_default
     #!/usr/bin/env ruby
     File.write("README", File.read("MASTER/lib/x.rb"))
     system("git", "add", "README")
-    exit(system("git", "commit", "-m", "worker fix"))
+    puts "review0: complete"
+exit(system("git", "commit", "-m", "worker fix"))
   RUBY
     File.write(File.join(root, "MASTER", "lib", "x.rb"), "dirty\n")
     File.write(File.join(root, "untracked.txt"), "render\n")
@@ -192,7 +195,8 @@ def test_include_dirty_copies_tracked_edits_without_committing_them
     File.write("README", File.read("MASTER/lib/x.rb"))
     File.write("untracked_seen.txt", "x") if File.exist?("untracked.txt")
     system("git", "add", "README")
-    exit(system("git", "commit", "-m", "worker fix"))
+    puts "review0: complete"
+exit(system("git", "commit", "-m", "worker fix"))
   RUBY
     File.write(File.join(root, "MASTER", "lib", "x.rb"), "dirty\n")
     File.write(File.join(root, "untracked.txt"), "render\n")
@@ -210,7 +214,17 @@ def test_include_dirty_copies_tracked_edits_without_committing_them
   end
 end
 
-def test_zero_exit_with_incomplete_terminal_report_is_not_success
+def test_zero_exit_without_a_completion_report_is_not_success
+    with_repo(worker: "#!/usr/bin/env ruby\\nexit 0\\n") do |root|
+      result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test")
+
+      refute result.ok
+      assert_match(/without an explicit completion report/, result.summary)
+      refute File.exist?(result.worktree)
+    end
+  end
+
+  def test_zero_exit_with_incomplete_terminal_report_is_not_success
     with_repo(worker: "#!/usr/bin/env ruby\nputs \"review0: incomplete, validation unavailable\"\nexit 0\n") do |root|
       result = nil
       out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }
@@ -306,7 +320,8 @@ end
       #!/usr/bin/env ruby
       File.write(File.join(Dir.pwd, "README"), "after\n")
       system("git", "add", "README")
-      exit(system("git", "commit", "-m", "worker fix"))
+      puts "review0: complete"
+exit(system("git", "commit", "-m", "worker fix"))
     RUBY
     File.write(File.join(root, "MASTER", "bin", "operator"), "#!/usr/bin/env ruby\nexit 0\n")
     FileUtils.chmod(0o755, [File.join(root, "MASTER", "bin", "master"), File.join(root, "MASTER", "bin", "operator")])
