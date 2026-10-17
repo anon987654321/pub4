@@ -383,7 +383,8 @@ class TestPostproFilm < Minitest::Test
       ["reciprocity_failure", :exposure_secs],
       ["lens_distortion", :k1], ["diffraction_blur", :f_number],
       ["tonemap", :tonemap_ev], ["tonemap", :tonemap],
-      ["relight", :azimuth], ["relight", :shape]
+      ["relight", :azimuth], ["relight", :shape],
+      ["cinemascope_bars", :aspect_ratio], ["polaroid_frame", :border_style]
     ]
 
     pairs.each do |effect, key|
