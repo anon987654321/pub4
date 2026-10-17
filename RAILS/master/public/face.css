@@ -121,7 +121,7 @@ html, body {
   text-rendering: optimizeLegibility;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  touch-action: none;
+  touch-action: pinch-zoom;
   user-select: none;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
