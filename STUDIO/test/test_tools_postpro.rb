@@ -355,6 +355,22 @@ class TestPostproFilm < Minitest::Test
     refute_includes body, "RANDOM_CHAIN_LENGTH ="
   end
 
+  def test_effect_inventory_ignores_comment_and_string_decoys
+    source = <<~RUBY
+      def preset
+        processed = case fx
+        when "optical_blur" then optical_blur(processed)
+        # when "comment_decoy" then comment_decoy(processed)
+        when "lens_flare" then lens_flare(processed)
+        end
+        "when \\"string_decoy\\" then string_decoy(processed)"
+      end
+    RUBY
+
+    assert_equal %w[lens_flare optical_blur],
+                 send(:postpro_case_labels, source, :fx).sort
+  end
+
   def test_source_method_reader_covers_output_dispatch_bodies
     source = File.read(POSTPRO_SOURCE)
     methods = send(:postpro_source_methods, source)
