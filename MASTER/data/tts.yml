@@ -1,9 +1,10 @@
 # TTS policy — faithful speech is the default; expressive synthesis is opt-in.
 #
-# `default_mode` selects the completed-utterance synthesis used by CLI Playback.
+# `default_mode` selects completed-utterance synthesis for CLI Playback on macOS.
 # `fast_mode` is a separate latency policy: it keeps web speech progressive
 # and avoids cold-worker retries on the Edge fallback. Set MASTER_TTS_MODE=transcendent
-# to opt into expressive multi-engine synthesis for the current CLI session.
+# on macOS to opt into expressive multi-engine synthesis for the current CLI session.
+# OpenBSD retains its explicit host-specific policy in Speech.synthesis_mode.
 #
 transcendent:
   enabled: true
@@ -20,9 +21,9 @@ transcendent:
   paralinguistic_tags: true
   melodic_enabled: true
   melodic_threshold: 0.40
-  # Expressive performance is opt-in for completed CLI utterances. Direct Edge
-  # speech is the default because it preserves the supplied words most faithfully.
-  # Select MASTER_TTS_MODE=transcendent when the operator wants multi-engine
+  # On macOS, expressive performance is opt-in for completed CLI utterances.
+  # Direct Edge speech is the default because it preserves the supplied words
+  # most faithfully. Select MASTER_TTS_MODE=transcendent for multi-engine
   # performance, emotion and melodic phrasing.
   phrase_rhythm_enabled: true
   phrase_language_switching: true
