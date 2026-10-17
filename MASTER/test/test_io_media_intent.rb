@@ -756,4 +756,26 @@ end
     assert_equal "12", argv[argv.index("--bars") + 1]
   end
 
+  def test_fantastic_volume_two_reference_is_tagged_as_dilla_and_allows_album_length
+    url = "https://youtu.be/XgObDlzrlUc?si=album-reference"
+    request = "study Slum Village Fantastic, Vol. 2 as an album reference: #{url}"
+    calls = []
+
+    with_dispatch_stub(lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("reference0: analyzed audio")
+    end) do
+      result = MediaIntent.dispatch(request, root: "/tmp/pub4")
+      assert result.ok?, result.inspect
+      assert_equal :audio_reference_analysis, result.value!.fetch(:media)
+      assert_equal "j_dilla", result.value!.fetch(:style)
+    end
+
+    argv = Shellwords.split(calls.fetch(0).fetch(:arg))
+    assert_equal "reference", argv.first
+    assert_equal url, argv[1]
+    assert_equal "7200", argv[argv.index("--max-duration") + 1]
+    assert_equal "j_dilla", argv[argv.index("--style") + 1]
+  end
+
 end
