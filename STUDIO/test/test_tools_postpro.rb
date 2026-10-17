@@ -456,6 +456,16 @@ class TestPostproFilm < Minitest::Test
     refute send(:preset_effect_reads_key?, disconnected, "spectral_temp", :temp),
            "a matching effect name must not hide a disconnected temperature value"
 
+    unused_decoy = <<~RUBY
+      case fx
+      when "spectral_temp" then
+        p[:temp]
+        spectral_temp(processed, target_kelvin: 6504)
+      end
+    RUBY
+    refute send(:preset_effect_reads_key?, unused_decoy, "spectral_temp", :temp),
+           "an unused key read elsewhere in the arm must not configure the effect"
+
     comment_decoy = <<~RUBY
       case fx
       when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504) # p[:temp]
