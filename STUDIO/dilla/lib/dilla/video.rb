@@ -138,8 +138,7 @@ module Dilla
         "color=c=0x07101b:s=#{WIDTH}x#{HEIGHT}:r=#{FPS}",
         "drawgrid=width=80:height=80:thickness=1:color=0x203b56@0.55",
         "drawbox=x=52:y=48:w=1176:h=624:color=0x7298bd@0.65:t=1",
-        "drawbox=x=116:y=108:w=1048:h=504:color=0x203b56@0.95:t=1",
-        "[base]",
+        "drawbox=x=116:y=108:w=1048:h=504:color=0x203b56@0.95:t=1[base]",
       ].join(",")
       wave = "[0:a]showwaves=s=#{WIDTH}x390:mode=cline:rate=#{FPS}:colors=0x8de1ff," \
              "format=rgba,colorkey=black:0.05:0.02[wave]"
