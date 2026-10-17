@@ -9,7 +9,7 @@ main[role="main"] {
 
 .flash {
   padding: var(--space-3) var(--space-6);
-  border-bottom: 1px solid var(--border);
+  border: 0;
 
   &--error,
   &--alert {
