@@ -119,6 +119,14 @@ owns vocabulary, model mapping, request construction and artifact provenance. Th
 reached at `STUDIO/replicate/replicate.rb`, and `MASTER/tools/replicate` is a compatibility
 symlink to it.
 
+The `capabilities` subcommand reports STUDIO's shared catalogue of analogue directions; it is
+not the provider-schema table for Replicate models. The catalogue distinguishes presence from
+readiness: `catalog_complete: true` means the expected inventory is present, while
+`complete: false`, `status: "unverified"` and `enabled: null` mean implementation support has
+not been independently established for those entries. Do not treat a catalogue key as a usable
+feature. Provider request support is defined separately by `MODEL_CAPABILITIES`, the offline
+`vocab-check`, and the credentialed `rake replicate:schema_audit`.
+
 ## Commands
 
 Run these from the repository root. The last two need a token and the network.
