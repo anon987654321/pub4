@@ -431,13 +431,22 @@ body[data-council-persona]::after {
   height: 28px;
   color: var(--c-mic-off, #6b6b6b);
   opacity: 1;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: var(--z-ui);
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
   display: grid;
   place-items: center;
   transition: color 160ms var(--ease-out), opacity 160ms var(--ease-out);
 }
 
+#mic-dot:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
 #mic-dot svg {
   width: 18px;
   height: 18px;
