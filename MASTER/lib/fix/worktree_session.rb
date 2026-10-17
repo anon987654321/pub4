@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "open3"
+require_relative "../io/exec"
 require "securerandom"
 require "shellwords"
 require "stringio"
@@ -202,7 +202,7 @@ module Master
       # df -kP's fourth column is available KiB, consistent with ResourceBudget.
       def disk_free_gb
         [@repo_root, Dir.tmpdir].map do |path|
-          output, status = Open3.capture2e("df", "-kP", path)
+          output, status = Master::Io::Exec.capture2e("df", "-kP", path)
           return nil unless status.success?
 
           fields = output.lines.last.to_s.split
@@ -327,12 +327,12 @@ module Master
       end
 
       def ancestor?(ancestor, descendant)
-        _, status = Open3.capture2e("git", "-C", @repo_root, "merge-base", "--is-ancestor", ancestor, descendant)
+        _, status = Master::Io::Exec.capture2e("git", "-C", @repo_root, "merge-base", "--is-ancestor", ancestor, descendant)
         status.success?
       end
 
       def git_ok?(*args)
-        _, status = Open3.capture2e("git", "-C", @repo_root, *args)
+        _, status = Master::Io::Exec.capture2e("git", "-C", @repo_root, *args)
         status.success?
       end
 
@@ -343,7 +343,7 @@ module Master
       # Porcelain status records begin with a significant space (" M path"), which
       # strip would eat and shift every path by one character.
       def git_raw!(*args, chdir: @repo_root)
-        output, status = Open3.capture2e("git", "-C", chdir, *args)
+        output, status = Master::Io::Exec.capture2e("git", "-C", chdir, *args)
         raise "git #{args.first} failed: #{output.strip}" unless status.success?
 
         output
