@@ -56,7 +56,9 @@ export default class extends Controller {
     const shell = this.element.classList.contains("search") ? this.element : this.element.closest(".search")
     if (shell) {
       const q = this.hasInputTarget ? this.inputTarget.value.trim() : ""
-      shell.classList.toggle("active", q.length > 0 && event.detail?.success !== false)
+      const expanded = q.length > 0 && event.detail?.success !== false
+      shell.classList.toggle("active", expanded)
+      if (this.hasInputTarget) this.inputTarget.setAttribute("aria-expanded", String(expanded))
     }
   }
 }
