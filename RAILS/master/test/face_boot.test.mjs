@@ -316,10 +316,18 @@ test("face.runtime.js is the compact generated loader", () => {
 test("face.runtime.js matches the rake loader contract", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const task = readFileSync(join(root, "lib", "tasks", "face_runtime.rake"), "utf8");
-  for (const name of ["face.part1.txt", "face.part2.txt", "face.part3.txt", "face_speech_runtime.js", "face_speech_playback.js", "face.part5.txt"]) {
+  const sources = ["face.part1.txt", "face.part2.txt", "face.part3.txt", "face_speech_runtime.js", "face_speech_playback.js", "face.part5.txt"];
+
+  // The generator deliberately builds part 1–3 names from a range. Do not
+  // require those three strings to be duplicated literally in the task.
+  for (const name of sources) {
     assert.match(runtime, new RegExp(name.replace(".", "\\.") + "\\b"), name + " missing from runtime");
+  }
+  assert.match(task, /segments = \(1\.\.3\)\.map \{ \|part\| "face\.part#\{part\}\.txt" \}/, "build task must generate face parts 1–3");
+  for (const name of ["face_speech_runtime.js", "face_speech_playback.js", "face.part5.txt"]) {
     assert.match(task, new RegExp(name.replace(".", "\\.") + "\\b"), name + " missing from build task");
   }
+  assert.match(task, /segments\.map/);
 });
 
 
