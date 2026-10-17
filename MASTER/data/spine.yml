@@ -621,11 +621,9 @@ pub4_source_ceilings:
 # from the repo root alone called 198 live items stale, because most are
 # written from inside the tree they are about. It also caught a verdict I had
 # written by hand, where I checked the wrong examples.html.erb.
-# 1051 -> 1052 for tools/backlog_claims.rb. TODO.md holds 2245 numbered items and
-# the honest way to work them is one at a time, which is also the slow way. The
-# part a machine can do is check whether an item is still talking about the tree
-# that exists: path:line citations, bare paths, and whether the file has that many
-# lines.
+# The backlog was consolidated from a legacy numbered list to open checkboxes.
+# The audit must read checkbox state as authoritative, then check cited paths and
+# line ranges. Keep this note about the format rather than a stale item count.
 #
 # Built on a hypothesis it then disproved, which is the useful part. Hand-worked
 # items had gone stale often enough that I expected a large fraction of the corpus
