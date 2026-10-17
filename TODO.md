@@ -1,7 +1,7 @@
 # pub4 TODO
 
 Status: CONSOLIDATED_BACKLOG
-Updated: 2026-10-15
+Updated: 2026-10-17
 Authority: MASTER/data/soul.yml > MASTER/data/laws.yml > executable laws and gates > tree contracts > Git history.
 Owner: operator and maintainers, according to the environment each task requires.
 
@@ -11,12 +11,12 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 
 ## P0 — current-main proof and release safety
 
-- [ ] Run the complete acceptance sweep against current main from an authorized, idle checkout. Record HEAD, real exit status, selected-file counts and summaries from MASTER/tools/boot_smoke.rb, bin/operator measure, bin/operator gate, cd MASTER && rake test, ruby RAILS/test/run_all.rb, each app's bin/ci, ruby OPENBSD/bin/check --profile=full, OPENBSD/test/run_all.rb and cd STUDIO/test && rake. Record which browser, hardware, paid-provider, DNS, backup and VPS checks could not run. Never raise a ratchet merely to fit the current code.
+- [ ] Run the complete acceptance sweep against current main from an authorized, idle checkout. Record HEAD, real exit status, selected-file counts and summaries from MASTER/tools/boot_smoke.rb, bin/operator measure, bin/operator gate, cd MASTER && rake test, ruby RAILS/test/run_all.rb, each app's bin/ci, ruby OPENBSD/bin/check --profile=full, OPENBSD/test/run_all.rb and cd STUDIO/test && rake. Record which browser, hardware, paid-provider, DNS, backup and VPS checks could not run. Never raise a ratchet merely to fit the current code. Execution note 2026-10-17: HEAD observed was 53c03dc48c730b5a7f1cdb10f33ccbce62bff5c2; its combined GitHub status response contained no status entries. Local clone access failed because github.com DNS could not resolve. Resuming the prior /fix RAILS sandbox was blocked by Vercel Hobby usage quota (402; reset 2026-11-01). The earlier sandbox command has no final exit code. None of these observations constitutes a passing acceptance run.
 - [ ] Reproduce every failing MASTER test file on current main and classify it as a defect, an obsolete assertion or a removed subject; repair source when the contract is right, update a test when implementation is right, and remove a test only when its subject no longer exists. The historical estimate of about 185 red files out of 589 came from f9a5a3083 and is not current proof.
 - [ ] Re-run the complete RAILS test census and each app's bin/ci on current main. Fix each reproducible FAIL, HUNG or FLAKE. Report selected-file count alongside results; the historical 170-file / 78-red result is stale.
 - [ ] Run the full current OPENBSD checks after RAILS and MASTER are green and after watched deployment. Prior check --profile=full results included skipped post-deploy and vps_health checks; skipped work is not a pass.
 - [ ] Run all STUDIO tests after the current-main sweep and classify every reproducible failure. Run focused suites separately where their top-level constants collide; do not hide selection shrinkage or order-dependent failures.
-- [ ] Verify no current GitHub status-check result is being inferred from an empty status response. The latest commit observed during this audit was 0a2c6ad9eab03e5283a1dec9117ac1ca1f4c27fb and its combined status response had no attached statuses; recheck HEAD and actual CI before treating this as current.
+- [ ] Verify no current GitHub status-check result is being inferred from an empty status response. On 2026-10-17, current main was 53c03dc48c730b5a7f1cdb10f33ccbce62bff5c2 and the combined status response had zero entries. Actual CI and test execution remain unverified; recheck from an authorized runner and require real command output before closing this item.
 
 ## P0 — MASTER runtime, constitution and /fix
 
