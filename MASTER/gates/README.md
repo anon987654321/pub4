@@ -33,8 +33,7 @@ The rendered gates need a real browser. They load pages in Chrome through the
 DevTools protocol, then measure geometry, reflow, occlusion, viewport spill,
 keyboard order, phone-sized tap targets, WebGL surfaces and web vitals, and they
 compare layout against snapshots committed under `data/layout_snapshots`. The
-rendered suite bundles most of them. When no browser exists, a gate that needs
-one reports itself inconclusive and does not pass. `web_vitals_budget` measures
+rendered suite bundles most of them and is a required leaf of `layout_suite`, not a separate optional proof. A source-clean layout cannot pass acceptance if the browser is absent, a route is skipped, a measurement is inconclusive, a visual baseline is missing, or a rendered gate has an unapproved finding. `web_vitals_budget` measures
 LCP and CLS on one mobile first screen per app, using the canonical
 `pixel_snapshot` inventory; it source-checks INP collection rather than inventing
 an INP value from a scripted load with no real user interaction.
@@ -84,9 +83,7 @@ GATE_BROWSER_DIAGNOSTICS_SETTLE_MS=800 ruby MASTER/gates/runner.rb browser_diagn
 
 `GATE_BROWSER_DIAGNOSTICS_OUTPUT` overrides the artifact root, and
 `GATE_BROWSER_DIAGNOSTICS_SETTLE_MS` bounds the post-load settling window
-(0–5000 ms). The gate is also a leaf of `rendered_suite`, so the standard
-composite and `--all` paths include it once, with no separate browser framework
-or new runtime dependency.
+(0–5000 ms). The gate runs inside `rendered_suite`, which is required by `layout_suite`; there is one route inventory and one browser transport, with no separate browser framework or new runtime dependency.
 
 A last group checks the checkers. The mutation gate plants known defects and
 requires the other gates to catch them. The calibration gate keeps the design
