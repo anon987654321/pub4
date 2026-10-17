@@ -16,7 +16,11 @@ class TestVoiceDisfluency < Minitest::Test
 
   def test_default_speech_preserves_the_words_supplied_for_synthesis
     text = "I think we should keep this small for now."
+    original = ENV["MASTER_TTS_DISFLUENCIES"]
+    ENV.delete("MASTER_TTS_DISFLUENCIES")
     assert_equal text, D.apply(text, source: text)
+  ensure
+    original ? ENV["MASTER_TTS_DISFLUENCIES"] = original : ENV.delete("MASTER_TTS_DISFLUENCIES")
   end
 
   def test_hedged_first_person_speech_can_have_a_natural_hesitation
