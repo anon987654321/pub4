@@ -34,7 +34,9 @@ class LayoutMicroRefinementContractTest < Minitest::Test
     matrix = File.read(File.join(ROOT, "__shared/LAYOUT_MICRO_REFINEMENT_MATRIX.md"), encoding: "UTF-8")
     sheet = File.read(File.join(ROOT, "__shared/app/assets/stylesheets/_layout_micro_refinements.scss"), encoding: "UTF-8")
 
-    assert_equal 343, matrix.lines.count { |line| line.match?(/^d{3}./) }
+    sequence = matrix.lines.filter_map { |line| line[/\A(\d{3})\./, 1] }
+    assert_equal (1..343).map { |n| format("%03d", n) }, sequence,
+                 "the matrix must contain all 343 numbered refinements exactly once"
     assert_includes sheet, "343 concrete property refinements"
     refute_includes sheet, "@include micro-layout-refinements"
   end
