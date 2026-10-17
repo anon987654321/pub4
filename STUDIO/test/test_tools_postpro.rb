@@ -501,6 +501,23 @@ class TestPostproFilm < Minitest::Test
            "a neighbouring effect arm must not lend its key to this one"
   end
 
+  def test_duplicate_effect_labels_are_rejected_and_cannot_supply_unreachable_key_reads
+    source = <<~RUBY
+      case fx
+      when "spectral_temp" then spectral_temp(processed, target_kelvin: 6504)
+      when "spectral_temp" then spectral_temp(processed, target_kelvin: p[:temp])
+      end
+    RUBY
+
+    assert_equal ["spectral_temp"], send(:postpro_case_label_duplicates, source, :fx)
+    refute send(:preset_effect_reads_key?, source, "spectral_temp", :temp),
+           "a later duplicate when arm is unreachable and cannot satisfy the contract"
+
+    preset_source = send(:postpro_source_method, File.read(POSTPRO_SOURCE), "preset")
+    assert_empty send(:postpro_case_label_duplicates, preset_source, :fx),
+                 "the production effect dispatch must not contain unreachable duplicate arms"
+  end
+
   def test_preset_fields_outside_reader_contract_are_rejected
     key_readers = {
       temp: %w[spectral_temp color_temp],
