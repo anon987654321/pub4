@@ -109,8 +109,9 @@ module Dilla
       temporal_energy = temporal_energy_map(audio, ffmpeg:, max_duration: options[:max_duration])
       essentia_result = essentia(audio, directory)
       tempo_check = tempo_crosscheck(mix["tempo"], essentia_result.fetch("summary", {}))
-      drum_source = stems.find { |path| File.basename(path, ".wav") == "drums" } || audio
+      drum_source, rhythm_source_kind = rhythm_source_for(stems, audio)
       rhythm = rhythm_features(drum_source, ffmpeg:, max_duration: options[:max_duration], bpm: mix.dig("tempo", "bpm"))
+      rhythm_analysis = { "source" => rhythm_source_kind, "features" => rhythm }
       profile = profile_for(mix, style: options[:style])
       profile.fetch("features").merge!(rhythm)
       energy_summary = temporal_energy.fetch("summary", {})
@@ -137,7 +138,8 @@ module Dilla
       learned = aggregate_saved_profiles(profile.fetch("style_key"), including: profile)
       report = { "schema_version" => 1, "tracks" => tracks, "separation" => separation,
                  "essentia" => essentia_result, "tempo_crosscheck" => tempo_check,
-                 "temporal_energy" => temporal_energy, "production_profile" => profile,
+                 "temporal_energy" => temporal_energy, "rhythm_analysis" => rhythm_analysis,
+                 "production_profile" => profile,
                  "learned_profile" => learned,
                  "limitations" => ["Tempo is estimated; half-time and double-time can both fit.",
                                    "An independent tempo estimator may disagree or choose half/double time.",
@@ -153,7 +155,8 @@ module Dilla
       File.write(scoped_profile, JSON.pretty_generate(learned) + "\n")
       write_active_style(profile.fetch("style_key"))
       write_report(File.join(directory, "report.md"), tracks, separation, profile, learned,
-                   temporal_energy:, essentia: essentia_result, tempo_crosscheck: tempo_check)
+                   temporal_energy:, essentia: essentia_result, tempo_crosscheck: tempo_check,
+                   rhythm_analysis:)
       puts "reference0: style_hint=#{profile.fetch('style_key')}; learned references=#{learned.fetch('reference_count', 1)}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
       puts "reference0: learned target_bpm=#{learned['target_bpm'] || 'unknown'} groove=#{learned['groove_profile'] || 'unspecified'} features=#{JSON.generate(learned.fetch('features', {}))}"
@@ -466,6 +469,13 @@ module Dilla
       profile
     end
 
+    # State exactly where the rhythm proxy came from. Demucs stems remain broad,
+    # artifact-prone source roles, not isolated kick/snare/hat multitracks.
+    def rhythm_source_for(stems, audio)
+      drum_stem = stems.find { |path| File.basename(path, ".wav") == "drums" }
+      [drum_stem || audio, drum_stem ? "demucs_drums_stem" : "full_mix_proxy"]
+    end
+
     # Measure broad rhythmic traits from a low-rate energy envelope. When Demucs
     # supplies a drums stem we prefer it; otherwise this is explicitly a mix-level
     # estimate. No claims are made about individual kick/snare timing.
@@ -612,7 +622,7 @@ module Dilla
     end
 
     def write_report(path, tracks, separation, profile, learned = profile,
-                     temporal_energy: {}, essentia: {}, tempo_crosscheck: {})
+                     temporal_energy: {}, essentia: {}, tempo_crosscheck: {}, rhythm_analysis: {})
       lines = ["# Audio reference analysis", "", "Estimated tempo: #{tracks.dig('mix', 'tempo', 'bpm') || 'unknown'} BPM",
                "Style hint: #{profile['style_key']} (provided by the user, not automatically classified)",
                "References in learned profile: #{learned['reference_count'] || 1}",
@@ -629,6 +639,9 @@ module Dilla
       lines.concat(["", "## Independent tempo and tonal analysis",
                     "Essentia status: #{essentia['status'] || 'not measured'}"])
       essentia_summary.each { |name, value| lines << "- #{name}: #{value}" }
+      lines.concat(["", "## Rhythm analysis source",
+                    "Source: #{rhythm_analysis['source'] || 'not measured'}"])
+      rhythm_analysis.fetch("features", {}).each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## Tempo cross-check"])
       tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## This reference", JSON.pretty_generate(profile),
