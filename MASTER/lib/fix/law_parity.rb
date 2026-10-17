@@ -46,7 +46,7 @@ module Master
 
       def report
         gaps = call
-        return "law_parity: ok (priority\u2264#{MAX_PRIORITY} constitutional covered)" if gaps.empty?
+        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional covered)" if gaps.empty?
 
         lines = gaps.map { |g| "  #{g.id} (priority #{g.priority}): #{g.reason}" }
         "law_parity: #{gaps.size} gap(s)\n#{lines.join("\n")}"
@@ -57,6 +57,15 @@ module Master
       def priority_constitutional_entries
         data = YAML.safe_load_file(@laws_path, aliases: true)
         raise "laws.yml root must be a mapping" unless data.is_a?(Hash)
+        overlay_path = File.join(File.dirname(@laws_path), "law_enforcement.yml")
+        if File.file?(overlay_path)
+          overlay = YAML.safe_load_file(overlay_path, aliases: true) || {}
+          overlay.each do |id, extra|
+            next unless extra.is_a?(Hash) && data[id].is_a?(Hash)
+
+            data[id] = data[id].merge(extra)
+          end
+        end
 
         data.select do |_id, spec|
           spec.is_a?(Hash) &&
