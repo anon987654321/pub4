@@ -296,7 +296,7 @@ module Master
       # incomplete terminal result. Never report that run as a clean success.
       def worker_terminal_failure(lines)
         Array(lines).find do |line|
-          line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading)\b/i)
+          line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading)\b/i)
         end
       end
 
