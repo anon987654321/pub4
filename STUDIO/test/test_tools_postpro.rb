@@ -523,6 +523,21 @@ class TestPostproFilm < Minitest::Test
                  "the production effect dispatch must not contain unreachable duplicate arms"
   end
 
+  def test_preset_smoke_reports_each_failure_without_skipping_later_presets
+    visited = []
+    issues = send(:preset_smoke_problems, %i[broken healthy], Object.new) do |_probe, name|
+      visited << name
+      raise IOError, "synthetic render failure" if name == :broken
+
+      :rendered
+    end
+
+    assert_equal %i[broken healthy], visited
+    assert_equal 1, issues.length
+    assert_match(/preset broken raises on an 8x8 probe/, issues.first)
+    refute_match(/healthy/, issues.first)
+  end
+
   def test_preset_fields_outside_reader_contract_are_rejected
     key_readers = {
       temp: %w[spectral_temp color_temp],
