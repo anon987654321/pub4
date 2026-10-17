@@ -65,7 +65,10 @@ run_rails_as_app() {
 rails_runtime_gate() {
   local app_name=${1:-}
   local app_dir=${2:-$1}
-  [[ -d $app_dir ]] || { log_warn "rails_runtime_gate: missing ${app_dir}"; return 0; }
+  [[ -d $app_dir ]] || {
+    log_err "rails_runtime_gate: missing ${app_dir}"
+    return 1
+  }
   if [[ ${SKIP_RUNTIME_GATE:-} == 1 ]]; then
     if [[ ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
       log_err "runtime gate skip requires I_UNDERSTAND_FAST_DEPLOY=1"
@@ -96,18 +99,21 @@ rails_runtime_gate() {
     deploy_status "$app_name" "runtime gate: assets precompile"
     rails_assets_precompile_as_app "$app_name" "$app_dir" \
       || { deploy_status "$app_name" "runtime gate: assets precompile" "failed"; return 1; }
-    if [[ -x ${app_dir}/bin/ci ]]; then
-      local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
-      if [[ -d $rails_tree ]]; then
-        # traversal is group-based (710 dev:_pub4ci) — vps_ci.sh converges it;
-        # this gate must not widen /home/dev to the world.
-        chmod -R u+rX,g+rX "$rails_tree" 2>/dev/null || true
-      fi
-      deploy_status "$app_name" "runtime gate: bin/ci"
-      run_rails_as_app "$app_name" "$app_dir" \
-        "ci" \
-        || { deploy_status "$app_name" "runtime gate: bin/ci" "failed"; log_err "bin/ci failed"; return 1; }
+    [[ -x ${app_dir}/bin/ci ]] || {
+      deploy_status "$app_name" "runtime gate: bin/ci" "failed"
+      log_err "runtime gate: missing executable ${app_dir}/bin/ci"
+      return 1
+    }
+    local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
+    if [[ -d $rails_tree ]]; then
+      # traversal is group-based (710 dev:_pub4ci) — vps_ci.sh converges it;
+      # this gate must not widen /home/dev to the world.
+      chmod -R u+rX,g+rX "$rails_tree" 2>/dev/null || true
     fi
+    deploy_status "$app_name" "runtime gate: bin/ci"
+    run_rails_as_app "$app_name" "$app_dir" \
+      "ci" \
+      || { deploy_status "$app_name" "runtime gate: bin/ci" "failed"; log_err "bin/ci failed"; return 1; }
   else
     (cd "$app_dir" && bundle_exec check) || { log_err "bundle check failed"; return 1; }
     (cd "$app_dir" && RAILS_ENV=production bundle_exec exec rails db:prepare) \

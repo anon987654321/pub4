@@ -210,6 +210,24 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes body, "var/db/pub4"
   end
 
+  def test_rails_runtime_gate_fails_closed_when_app_directory_is_missing
+    source = File.read(File.join(ROOT, "_runtime_gate.sh"))
+    start = source.index("rails_runtime_gate()")
+    body = source[start, source.index("\n}\n", start) - start + 3]
+
+    assert_match(/\[\[ -d \$app_dir \]\] \|\| \{.*log_err.*return 1/m, body)
+    refute_match(/\[\[ -d \$app_dir \]\] \|\| \{.*return 0/m, body)
+  end
+
+  def test_rails_runtime_gate_fails_closed_when_named_app_ci_is_missing
+    source = File.read(File.join(ROOT, "_runtime_gate.sh"))
+    start = source.index("rails_runtime_gate()")
+    body = source[start, source.index("\n}\n", start) - start + 3]
+
+    assert_match(/\[\[ -x \$\{app_dir\}\/bin\/ci \]\] \|\| \{.*return 1/m, body)
+    refute_match(/if \[\[ -x \$\{app_dir\}\/bin\/ci \]\]; then/, body)
+  end
+
   def test_rails_master_scan_skip_requires_explicit_acknowledgement
     source = File.read(File.join(ROOT, "_runtime_gate.sh"))
     start = source.index("master_scan_dep()")
