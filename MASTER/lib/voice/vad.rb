@@ -94,7 +94,7 @@ module Master
 
       def mode!(next_mode)
         mode = next_mode.to_sym
-        raise ArgumentError, "unknown voice state: #{mode}" unless %i[listening barge_in].include?(mode)
+        raise ArgumentError, "unknown VAD mode: #{mode}" unless %i[listening barge_in].include?(mode)
 
         @lock.synchronize { @mode = mode }
         mode
