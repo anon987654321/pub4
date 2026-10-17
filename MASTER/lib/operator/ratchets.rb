@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "rbconfig"
-require "open3"
+require_relative "../io/exec"
 
 # Every ratchet in the repo, in one place, with its current value beside its
 # recorded one.
@@ -430,7 +430,7 @@ end
     # OPENBSD/usr/local/bin — a mirror of what is installed on vm23, not
     # something anyone runs from the checkout — are not surfaces of the tree.
     def entrypoints(tree)
-      out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z", tree)
+      out, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "ls-files", "-z", tree)
       return unless status.success?
 
       out.split("\0").select do |path|
@@ -450,7 +450,7 @@ end
     # raise into an unreadable row, which fails.
     def tracked_source_files
       @tracked_source_files ||= begin
-        out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z")
+        out, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "ls-files", "-z")
         raise "git ls-files failed: #{out}" unless status.success?
 
         # uniq: ls-files prints an unmerged path once per stage, so growth reads
@@ -615,7 +615,7 @@ end
       # ceilings all live in one file, which is what made them look like one
       # gate's business.
       output = %w[css_constitution design_metrics].map do |gate|
-        Open3.capture2e(RUBY, File.join(MASTER, "gates", "runner.rb"), gate, chdir: ROOT).first
+        Master::Io::Exec.capture2e(RUBY, File.join(MASTER, "gates", "runner.rb"), gate, chdir: ROOT, timeout: 1_800).first
       end.join("\n")
 
       ceilings.map { |rule, ceiling| css_budget_row(rule, ceiling, output) }
@@ -682,7 +682,7 @@ def deep_rows
     def shell_row(name, dir, command, pattern, ceiling)
       # The commands in deep_rows are fixed literals with no quoting, so the
       # split is faithful; the arg-array form keeps the shell out entirely.
-      output, _status = Open3.capture2e(*command.split, chdir: File.join(ROOT, dir))
+      output, _status = Master::Io::Exec.capture2e(*command.split, chdir: File.join(ROOT, dir), timeout: 1_800)
       current = output[pattern, 1]&.to_i
       Row.new(name:, current:, ceiling:, direction: :down,
               source: "#{dir}: #{command}",
@@ -776,7 +776,7 @@ def deep_rows
     end
 
     def ceiling_deltas(ref, source)
-      before, status = Open3.capture2e("git", "-C", ROOT, "show", "#{ref}:#{source}")
+      before, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "show", "#{ref}:#{source}")
       return ["  #{source}: not at #{ref} (#{before.lines.first&.chomp})"] unless status.success?
 
       was = numeric_leaves(YAML.safe_load(before, aliases: true))
