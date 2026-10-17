@@ -63,7 +63,7 @@ body.vertical-marketplace .storefront-utility--bol {
   padding-block-start: var(--safe-top);
   padding-inline-start: calc(var(--bol-gutter) + var(--safe-left));
   padding-inline-end: calc(var(--bol-gutter) + var(--safe-right));
-  border-bottom: 1px solid var(--bol-rule);
+  border: 0;
   background: unset;
   color: var(--bol-muted);
   font-size: 12px;
@@ -182,7 +182,7 @@ body.vertical-marketplace .bol-kind-tabs {
   gap: 0;
   max-width: var(--bol-max);
   margin: 0 auto 28px;
-  border-bottom: 1px solid var(--bol-rule);
+  border: 0;
   overflow-x: auto;
 }
 
@@ -237,7 +237,7 @@ body.vertical-marketplace .listing-filter-group {
   margin: 0;
   padding: 0 0 20px;
   border: 0;
-  border-bottom: 1px solid var(--bol-rule);
+  border: 0;
 }
 
 body.vertical-marketplace .listing-filter-group legend,
