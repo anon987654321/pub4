@@ -74,7 +74,7 @@ module Master
         # The reason the last proposal on this thread was refused, kept so one retry can show
         # it to the model. Read once: a refusal feeds the next attempt only.
         def refused_because(text)
-          Thread.current[:fix_refusal] = text.to_s.strip[0, 300]
+          Thread.current[:fix_refusal] = text.to_s.strip[0, 600]
           nil
         end
 

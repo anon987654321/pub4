@@ -25,13 +25,17 @@ module Master
 
         # What a rejected repair added, by law, so the retry can be told what to avoid
         # instead of only that "new_violations" happened: "ABC_SIZE +1 (line 12); STRONG_PARAMETERS +2 (line 4, 9)".
-        def introduced_summary(before, after, limit: 3)
+        # With the repaired source the first offending line is quoted, so the retry sees the code itself.
+        def introduced_summary(before, after, source: nil, limit: 3)
+          text = source.to_s.lines
           added = after.group_by { |row| row[:law].to_s }.filter_map do |law, rows|
             grown = rows.size - before.count { |row| row[:law].to_s == law }
             next unless grown.positive?
 
-            lines = rows.filter_map { |row| row[:line] }.uniq.first(3).join(", ")
-            "#{law} +#{grown}#{lines.empty? ? "" : " (line #{lines})"}"
+            numbers = rows.filter_map { |row| row[:line] }.uniq.first(3)
+            quoted = text[numbers.first.to_i - 1].to_s.strip[0, 70] if numbers.any?
+            where = numbers.empty? ? "" : " (line #{numbers.join(", ")}#{quoted.to_s.empty? ? "" : ": `#{quoted}`"})"
+            "#{law} +#{grown}#{where}"
           end
           added.first(limit).join("; ")
         end
