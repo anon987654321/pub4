@@ -592,7 +592,9 @@ Each profile records the user's style hint separately from measured traits: temp
 spectral bands and 15-second energy windows are measurements, while an artist/genre label
 comes from the request, not an automatic genre classifier. The temporal map describes broad
 arrangement energy, not note transcription; independent tempo estimates may disagree or
-choose half/double time, and all conclusions retain those limitations.
+choose half/double time, and all conclusions retain those limitations. The JSON and Markdown
+reports include source title, channel, canonical URL and duration when available; local
+audio reports record only the filename, never the absolute path.
 
 The industrial-techno command makes a new four-on-the-floor composition with distorted
 sub/rumble, dissonant drones, metallic hits and evolving density with a breakdown. It
