@@ -376,6 +376,32 @@ class TestCliTerminalFace < Minitest::Test
     end
   end
 
+  def test_typed_interrupt_drops_late_transcript_and_returns_face_to_idle
+    ear = Object.new
+    ear.define_singleton_method(:missing) { nil }
+    ear.define_singleton_method(:available?) { true }
+    ear.define_singleton_method(:listen) { |stop:, on_partial:| "transcript after typing began" }
+    face = Master::CLI::Face::Window.new(
+      turn: ->(text) { flunk("interrupted transcript reached turn: #{text.inspect}") },
+      ear:,
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+    face.instance_variable_set(:@draft, "h")
+    face.instance_variable_set(:@suppress_heard, true)
+
+    face.stub(:answer, ->(text) { flunk("interrupted transcript was answered: #{text.inspect}") }) do
+      face.send(:hear)
+    end
+
+    assert_equal :idle, face.instance_variable_get(:@state)
+    assert_equal "h", face.instance_variable_get(:@draft)
+    assert_equal false, face.instance_variable_get(:@suppress_heard)
+    assert_includes face.instance_variable_get(:@words).join(" "), "typed input retained"
+  end
+
   def test_speaking_does_not_arm_the_microphone
     face = Master::CLI::Face::Window.new(
       turn: ->(_) {},
