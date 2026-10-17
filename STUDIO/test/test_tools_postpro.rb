@@ -384,8 +384,13 @@ class TestPostproFilm < Minitest::Test
 
     malformed = send(:hd_curve_problems, :fixture, :r, [nil, 0.9, 0.2, 1.0])
     assert_match(/four finite real numbers/, malformed.first)
-    invalid_pivot = send(:hd_curve_problems, :fixture, :r, [0.0, 2.0, 1.5, 1.0])
-    assert_match(/pivot 1.5 is outside \(0, 1\)/, invalid_pivot.first)
+    invalid_pivot = send(:hd_curve_problems, :fixture, :r, [0.0, 0.9, 1.5, 1.0])
+    assert invalid_pivot.any? { |issue| issue.match?(/pivot 1.5 is outside \(0, 1\)/) }
+
+    invalid_min = send(:hd_curve_problems, :fixture, :r, [-0.1, 0.9, 0.2, 1.0])
+    assert invalid_min.any? { |issue| issue.include?("Dmin -0.1 is outside [0, 1]") }
+    invalid_max = send(:hd_curve_problems, :fixture, :r, [0.0, 1.1, 0.2, 1.0])
+    assert invalid_max.any? { |issue| issue.include?("Dmax 1.1 is outside [0, 1]") }
 
     assert_empty send(:hd_curve_problems, :fixture, :r, valid),
                  "a malformed channel must not poison the next independent curve check"
