@@ -31,8 +31,9 @@ class ViewportSpillGateTest < Minitest::Test
     assert_includes source, "ViewportSpillGate"
   end
 
-  def test_it_measures_the_phone_width_it_claims_to
+  def test_it_measures_the_small_phone_floor_and_standard_phone_width
     assert_equal 390, Deploy::ViewportSpillGate::WIDTH
+    assert_equal [320, 390], Deploy::ViewportSpillGate::WIDTHS
   end
 
   # The instrument, checked against a case whose answer is known: an element
