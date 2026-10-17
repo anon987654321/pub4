@@ -239,7 +239,7 @@ class TestCliAsciiFace < Minitest::Test
     end
     refute_equal thinking.call(plain: true), thinking.call
     with_env(MASTER_REDUCED_MOTION: "1") { assert_equal thinking.call(plain: true), thinking.call }
-    with_env(MASTER_CLI_QUIET: "1") { assert_equal "thinking", thinking.call.lines.map(&:strip).reject(&:empty?).first }
+    with_env(MASTER_FACE_QUIET: "1") { assert_equal "thinking", thinking.call.lines.map(&:strip).reject(&:empty?).first }
     assert_equal "thinking", thinking.call(rows: Face::MIN_ROWS - 1).lines.map(&:strip).reject(&:empty?).first
   end
 
@@ -353,7 +353,7 @@ class TestCliAsciiFace < Minitest::Test
   end
 
   def test_quiet_and_reduced_motion_flags
-    with_env(MASTER_CLI_QUIET: "1") do
+    with_env(MASTER_FACE_QUIET: "1") do
       assert_equal "idle", Face.frame(state: :idle, rows: 24, cols: 60, t: 0.0).lines.map(&:strip).reject(&:empty?).first
     end
     with_env(MASTER_REDUCED_MOTION: "1") do
@@ -414,3 +414,12 @@ class TestCliAsciiFace < Minitest::Test
     refute_respond_to Master::CLI::BootBanner, :wordmark
   end
 end
+
+
+  def test_cli_log_quiet_does_not_suppress_the_face
+    with_env(MASTER_CLI_QUIET: "1", MASTER_FACE_QUIET: "0") do
+      frame = Face.frame(state: :idle, rows: 24, cols: 60, t: 0.0)
+      refute_equal "idle", frame.lines.map(&:strip).reject(&:empty?).first
+      assert_match(/[|/\\\\-]/, frame)
+    end
+  end

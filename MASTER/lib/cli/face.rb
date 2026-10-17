@@ -30,13 +30,14 @@ module Master
       # (Motion::EVENTS). level is the audio's loudness from 0.0 to 1.0 while
       # speaking, or nil when no envelope reached us. source is any point
       # source (Head by default); chars and mode replace the ramp and invert it
-      # (MASTER_FACE_CHARS, MASTER_FACE_MODE=light). MASTER_CLI_QUIET=1 draws
-      # the plain word only; MASTER_REDUCED_MOTION=1 holds the head still.
+      # (MASTER_FACE_CHARS, MASTER_FACE_MODE=light). MASTER_FACE_QUIET=1 draws
+      # the plain word only; CLI log quietness never hides the face. MASTER_REDUCED_MOTION=1
+      # holds the head still.
       def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral", source: nil, chars: nil, mode: nil, show_laws: nil)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
         look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: 0)
-        return word(state.to_s, rows, cols) unless rows >= MIN_ROWS && cols >= MIN_COLS && ENV["MASTER_CLI_QUIET"] != "1"
+        return word(state.to_s, rows, cols) unless rows >= MIN_ROWS && cols >= MIN_COLS && ENV["MASTER_FACE_QUIET"] != "1"
 
         look = look.with(yaw: 0.0, turn: 0.0, pitch: 0.0, roll: 0.0, scale: 1.0, dolly: 1.0, bob: 0.0, mix: 0.0, light: Motion::LIGHT.fetch("start")) if ENV["MASTER_REDUCED_MOTION"] == "1"
         look = look.with(turn: 0.0) if ENV["MASTER_FACE_ROTATE"] == "0"
