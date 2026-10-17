@@ -66,8 +66,11 @@
   }
 
   document.addEventListener("keydown", (ev) => {
-    const tag = document.activeElement?.tagName;
-    const inInput = tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.id === "zin";
+    const active = document.activeElement;
+    const tag = active?.tagName;
+    const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" ||
+      active?.isContentEditable || active?.closest?.('[role="dialog"]');
+    if (inInput) return;
     if (ev.key === "?" && !inInput) {
       ev.preventDefault();
       openSheet();
