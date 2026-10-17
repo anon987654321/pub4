@@ -308,11 +308,9 @@ test("face.runtime.js is the compact generated loader", () => {
 });
 
 
-// Prefix-includes let a hand-edit in the middle of the generated file slip
-// through. The louder-voice change lived in face_speech_runtime.js while the
-// browser kept loading a stale face.runtime.js until someone patched the
-// artifact by hand. Byte-for-byte with the rake's concat is the only check
-// that catches that.
+// Face source parts are served separately and stitched into an imported
+// blob by this generated loader. Keep its URL list and the Rake generator's
+// source set in parity so neither artifact drifts to a stale parts list.
 test("face.runtime.js matches the rake loader contract", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const task = readFileSync(join(root, "lib", "tasks", "face_runtime.rake"), "utf8");
