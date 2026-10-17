@@ -189,14 +189,14 @@
 /* Card grids for marketplace-style (keep grid for discovery) */
 .post-grid, .deal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-2xl), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-2xl)), 1fr));
   gap: 12px;
   padding: 12px;
 }
 
 @media (min-width: 768px) {
   .post-grid, .deal-grid {
-    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-2xl), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-2xl)), 1fr));
     gap: 16px;
     padding: 16px;
   }
