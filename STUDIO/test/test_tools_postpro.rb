@@ -391,6 +391,46 @@ class TestPostproFilm < Minitest::Test
                  "a malformed channel must not poison the next independent curve check"
   end
 
+  def test_stock_matrix_audit_reports_malformed_data_without_raising
+    matrix = STOCKS.fetch(:kodak_portra).fetch(:matrix)
+    valid = send(:stock_matrix_audit, :portra, matrix)
+    assert_nil valid.fetch(:problem)
+    assert_operator valid.fetch(:offset), :>=, 0
+
+    missing = send(:stock_matrix_audit, :portra, nil)
+    assert_nil missing.fetch(:problem)
+    assert_nil missing.fetch(:offset)
+
+    malformed = send(:stock_matrix_audit, :fixture, [1.0, 0.0])
+    assert_match(/must contain nine finite real numbers/, malformed.fetch(:problem))
+
+    nonfinite = [1.0] * 9
+    nonfinite[4] = Float::NAN
+    assert_match(/must contain nine finite real numbers/,
+                 send(:stock_matrix_audit, :fixture, nonfinite).fetch(:problem))
+  end
+
+  def test_grain_knot_and_grain_level_audits_keep_malformed_rows_local
+    assert_empty send(:grain_knot_problems, :fixture, nil)
+    assert_empty send(:grain_knot_problems, :fixture, [0.0, 0.5, 1.0])
+    assert_match(/needs at least two knots/,
+                 send(:grain_knot_problems, :fixture, [0.5]).first)
+    assert_match(/go negative/,
+                 send(:grain_knot_problems, :fixture, [-0.1, 0.5]).first)
+    assert_match(/finite real numbers/,
+                 send(:grain_knot_problems, :fixture, [0.0, Float::INFINITY]).first)
+
+    levels, problems = send(
+      :stock_grain_levels,
+      { valid: { grain: 2 }, invalid: { grain: "two" }, absent: {} },
+      0.5
+    )
+    assert_in_delta 1.0, levels.fetch(:valid)
+    assert_equal 1, problems.length
+    assert_match(/grain must be a finite nonnegative number/, problems.first)
+    refute problems.any? { |issue| issue.include?("valid") }
+  end
+
   def test_finishing_grain_probe_records_failure_and_keeps_the_checker_alive
     probe = Object.new
     issues = send(:finishing_grain_probe_problems, [:house], probe) do |_image, _name|
