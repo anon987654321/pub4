@@ -43,6 +43,31 @@ class LayoutGateEnforcementContractTest < Minitest::Test
     assert_equal "layout_suite", registry.dig("rendered_suite", "covered_by")
   end
 
+  def test_auto_repeat_tile_grids_can_shrink_below_their_preferred_tile_width
+    unsafe = /grid-template-columns\\s*:\\s*repeat\\(\\s*auto-(?:fill|fit)\\s*,\\s*minmax\\(\\s*var\\(\\s*--tile-min-[\\w-]+\\s*\\)\\s*,\\s*1fr\\s*\\)/i
+    archived = %w[
+      _layout_micro_refinements.scss
+      _surface_micro_refinements.scss
+      _surface_micro_refinements_two.scss
+    ]
+
+    sheets = Dir.glob(File.join(ROOT, "RAILS", "**", "app/assets/stylesheets", "**", "*.{scss,css}"))
+    violations = sheets.reject { |path| archived.include?(File.basename(path)) }
+                       .reject { |path| path.match?(%r{/(?:builds|vendor|node_modules)/}) }
+                       .flat_map do |path|
+      source = File.read(path, encoding: "UTF-8")
+                   .gsub(%r{/\\*.*?\\*/}m, "")
+                   .gsub(%r{//[^\\n]*}, "")
+      source.to_enum(:scan, unsafe).map do
+        line = source[0...Regexp.last_match.begin(0)].count("\\n") + 1
+        "#{path.delete_prefix("#{ROOT}/")}:#{line}"
+      end
+    end
+
+    assert_empty violations,
+                 "auto-repeat tracks must cap the preferred tile width at the available container width:\\n  #{violations.join("\\n  ")}"
+  end
+
   private
 
   def find_entry(value, name)
