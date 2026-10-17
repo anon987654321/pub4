@@ -76,6 +76,32 @@
   .feed-header {
     border: 0;
   }
+
+  :where(
+    .radio-home-header, .radio-section-link, .radio-playlist-list,
+    .radio-track-card-art, .messenger-artifact-image, .messenger-details-panel,
+    .messenger-composer-box, .messenger-inbox, .composer, .composer-header,
+    .composer-toolbar, .affiliate_sidebar_card, .affiliate_sidebar_card--amazon,
+    .commerce-fit-suggestion, .commerce-fit-source, .today-look, .today-look-pick,
+    .zone-row, .viz-rows, .viz-row, .viz-column-label, .nearby-chat-widget-panel,
+    .nearby-chat-widget-messenger, .nearby-chat-widget-header, .nearby-chat-widget-status,
+    .nearby-chat-widget-mode, .nearby-chat-widget-log li, .nearby-chat-widget-cta,
+    .playlist-transport, .playlist-artwork, .install-panel, .empty, .empty-state,
+    .skeleton, .data-state, .tabs, .category-list .chip, .amber-footer,
+    .subscribe-box
+  ) {
+    border: 0;
+  }
+
+  body.wscons .tabs,
+  body.wscons .tabs .active {
+    border: 0;
+  }
+
+  body.wscons .tabs .active {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
 }
 
 @mixin brgen {
