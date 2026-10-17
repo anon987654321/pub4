@@ -4574,32 +4574,42 @@ end
 
 # A named step is not enough: the case arm must consume the value it promises
 # to read. This catches a preset field that has a matching but disconnected FX.
+# A preset key must be read by executable Ruby in the matching case arm.
+# Prism excludes comments and strings, which source-text matching mistakes for code.
 def preset_effect_reads_key?(preset_source, effect, key)
   return false unless preset_source
 
-  lines = preset_source.lines
-  arm_pattern = Regexp.new('\\A[ \t]*when "' + Regexp.escape(effect.to_s) + '"[ \t]+then\b')
-  start = lines.index { |line| line.match?(arm_pattern) }
-  return false unless start
+  require "prism"
+  parsed = Prism.parse(preset_source)
+  return false unless parsed.success?
 
-  # Inspect the complete arm, not only its opening line. A harmless reflow of
-  # the call must not turn a real key reader into a false failure.
-  arm_indent = lines[start][/\A[ \t]*/].length
-  arm = [lines[start]]
-  lines.drop(start + 1).each do |line|
-    next if line.strip.empty?
-
-    indent = line[/\A[ \t]*/].length
-    break if indent <= arm_indent && line.lstrip.match?(/\A(?:when\b|else\b|end\b)/)
-
-    arm << line
+  pending = [parsed.value]
+  until pending.empty?
+    node = pending.pop
+    if node.is_a?(Prism::WhenNode) &&
+       node.conditions.any? { |condition| condition.is_a?(Prism::StringNode) && condition.unescaped == effect.to_s }
+      arm = [node.statements].compact
+      until arm.empty?
+        candidate = arm.pop
+        if candidate.is_a?(Prism::CallNode)
+          receiver = candidate.receiver
+          p_receiver = (receiver.is_a?(Prism::LocalVariableReadNode) && receiver.name == :p) ||
+                       (receiver.is_a?(Prism::CallNode) && receiver.receiver.nil? && receiver.name == :p)
+          if p_receiver && (candidate.name == :[] || candidate.name == :fetch)
+            arguments = candidate.arguments&.arguments || []
+            return true if arguments.any? do |argument|
+              argument.is_a?(Prism::SymbolNode) && argument.unescaped == key.to_s
+            end
+          end
+        end
+        arm.concat(candidate.child_nodes.compact)
+      end
+      next
+    end
+    pending.concat(node.child_nodes.compact)
   end
-
-  key_name = Regexp.escape(key.to_s)
-  value_pattern = Regexp.new('\\bp(?:\\[\\s*:' + key_name + '\\s*\\]|\\.fetch\\(\\s*:' + key_name + '\\b)')
-  arm.join.match?(value_pattern)
+  false
 end
-
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
