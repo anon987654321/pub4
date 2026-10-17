@@ -126,11 +126,8 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       if (voiceRecActive) return;
       try { rec.start(); voiceRecActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:voice_rec_start", err); }
     };
-    document.addEventListener('keydown', e => {
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      if (e.key === '?') { e.preventDefault(); safeStart(); }
-    });
+    // The '?' key belongs to the shortcut sheet. Voice capture must never
+    // compete with help or start an unsolicited second recognition session.
     window.startVoiceRec = safeStart;
   }
 })();
