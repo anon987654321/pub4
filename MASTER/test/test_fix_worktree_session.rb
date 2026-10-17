@@ -5,6 +5,25 @@ require "fileutils"
 require "open3"
 
 class TestFixWorktreeSession < Minitest::Test
+  def test_disk_preflight_uses_interrupt_safe_subprocess_capture
+    with_repo(worker: "#!/usr/bin/env ruby\\nexit 3\\n") do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+      status = Struct.new(:success?).new(true)
+      calls = []
+      output = "Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/disk 100000 1000 99000 1% /\\n"
+
+      Master::Io::Exec.stub(:capture2e, lambda { |*args, **_opts|
+        calls << args
+        [output, status]
+      }) do
+        assert_operator session.send(:disk_free_gb), :>, 0
+      end
+
+      assert_equal 2, calls.size
+      assert calls.all? { |args| args.first == "df" }
+    end
+  end
+
   def test_disk_preflight_refuses_worktree_before_writing
     with_repo(worker: "#!/usr/bin/env ruby\nexit 3\n") do |root|
       session = Master::Fix::WorktreeSession.new(root:)
