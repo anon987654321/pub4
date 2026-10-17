@@ -224,6 +224,19 @@ def test_zero_exit_without_a_completion_report_is_not_success
     end
   end
 
+  def test_zero_exit_with_open_findings_is_not_success
+    with_repo(worker: "#!/usr/bin/env ruby\nputs \"review0: complete with open findings\"\nexit 0\n") do |root|
+      result = nil
+      out, err = capture_io { result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test") }
+
+      refute result.ok, err + out
+      assert_match(/incomplete terminal state: review0: complete with open findings/, result.summary)
+      refute_match(/clean, no changes to publish/, result.summary)
+      refute File.exist?(result.worktree)
+      assert_empty git_output(root, "branch", "--list", result.branch)
+    end
+  end
+
   def test_zero_exit_with_incomplete_terminal_report_is_not_success
     with_repo(worker: "#!/usr/bin/env ruby\nputs \"review0: incomplete, validation unavailable\"\nexit 0\n") do |root|
       result = nil
