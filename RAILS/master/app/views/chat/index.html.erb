@@ -118,15 +118,15 @@
       role=status rather than aria-hidden: this is now the only indication of
       whether the microphone is open, which is not something to hide from a
       screen reader. %>
-  <div id="mic-dot" class="mic-indicator" role="status"
-       aria-label="<%= t("face.mic_state") %>">
+  <button id="mic-dot" class="mic-indicator" type="button" aria-pressed="false"
+          aria-label="<%= t("face.mic_state") %>" title="<%= t("face.mic_state") %>">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/>
       <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </svg>
     <span class="sr-only" data-mic-state-text></span>
-  </div>
+  </button>
   <div id="tts-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <%# Small synchronous prerequisite: every deferred ecology/worker module and
       the post-primer face import may assume window.ParticleKernel exists. %>
