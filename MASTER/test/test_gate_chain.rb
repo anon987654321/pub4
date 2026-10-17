@@ -33,6 +33,17 @@ class TestGateChain < Minitest::Test
     assert_empty writers, "scan-only writes in #{writers.join(", ")}"
   end
 
+  def test_lexical_stage_describes_its_actual_write_mode
+    readonly = G.stages(scan_only: true).find { |stage| stage.name == "lexical" }
+    writable = G.stages(scan_only: false).find { |stage| stage.name == "lexical" }
+
+    refute readonly.mutates
+    assert_includes readonly.purpose, "measuring without writes"
+    refute_includes readonly.purpose, "autofixing"
+    assert writable.mutates
+    assert_includes writable.purpose, "autofixing"
+  end
+
   def test_fix_verification_can_be_limited_to_named_stages
     previous = ENV.delete("MASTER_FIX_GATE_STAGES")
     everything = G.verification_stages("RAILS").map(&:name)
