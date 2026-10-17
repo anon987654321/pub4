@@ -70,12 +70,12 @@
   display: flex;
   flex-direction: column;
   background: var(--surface-elevated);
-  border: 1px solid var(--border);
-  border-block-end: 0;
-  border-inline-end: 0;
+  border: 0;
+  border: 0;
+  border: 0;
   /* Square, like the tab. The widget is one surface and it now has one
      treatment: nothing in it is rounded. */
-  border-radius: 0;
+  border: 0;
   overflow: hidden;
   animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
@@ -133,8 +133,8 @@
     /* Full bleed: side borders on a sheet that spans the screen are two lines
        against the screen edge, which is the "separation is space, not lines"
        rule in design_rules. The top border stays — it is a real edge. */
-    border-inline: 0;
-    border-radius: 0;
+  border: 0;
+  border: 0;
     padding-block-end: var(--safe-bottom);
     animation-name: nearby-widget-sheet-in;
   }
@@ -155,7 +155,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border);
+  border: 0;
   color: var(--text);
   flex-shrink: 0;
 }
@@ -191,7 +191,7 @@
   justify-content: center;
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--bg);
   color: var(--text);
   font: var(--weight-bold) var(--text-xs)/1 var(--font);
@@ -255,7 +255,7 @@
   align-items: flex-end;
   gap: var(--space-2);
   padding: var(--space-2);
-  border-top: 1px solid var(--border);
+  border: 0;
   flex-shrink: 0;
   font-family: var(--font);
 }
@@ -332,7 +332,7 @@
   font-size: var(--text-sm);
   line-height: 1.4;
   overflow-wrap: anywhere;
-  border-bottom: 1px solid var(--border);
+  border: 0;
   color: var(--text-secondary);
 }
 
@@ -350,7 +350,7 @@
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
-  border-bottom: 1px solid var(--border);
+  border: 0;
   flex-shrink: 0;
 }
 
@@ -390,8 +390,8 @@
   justify-content: center;
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: 0;
+  border: 0;
+  border: 0;
   background: var(--bg);
   text-decoration: none;
   font: var(--weight-bold) var(--text-xs)/1 var(--font-mono);
@@ -405,7 +405,7 @@
 
 .nearby-chat-widget-log li {
   padding: var(--space-1) 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border: 0;
 }
 
 .nearby-chat-widget-log li:last-child {
