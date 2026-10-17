@@ -19,12 +19,8 @@ class TestSpeech < Minitest::Test
     @supervisor.send(:remove_method, :real_ensure_daemon!)
   end
 
-  # Offline, "edge socket produced empty audio" printed fourteen times running.
-  # voice.yml declared the chain, Policy read it, Speech applied it — and the
-  # live path never called it. synthesis_mode has been "transcendent" since
-  # Transcendent shipped, and that branch returned its file untouched, so every
-  # reply this machine spoke went out bare (measured 2026-09-16: -25.3 LUFS raw
-  # against -17.2 through the chain).
+  # Expressive synthesis still has its own shaping contract; normal speech
+  # defaults to the direct path so alternate engines cannot change the words.
   def test_the_transcendent_path_is_shaped_like_every_other
     shaped = []
     Master::Voice::Transcendent.stub(:enabled?, true) do
@@ -254,11 +250,21 @@ class TestSpeech < Minitest::Test
     original ? ENV["MASTER_TTS_MODE"] = original : ENV.delete("MASTER_TTS_MODE")
   end
 
-  def test_default_tts_config_keeps_live_streaming_fast_and_cli_speech_expressive
+  def test_default_tts_config_keeps_live_streaming_fast_and_cli_speech_literal
+    original = ENV["MASTER_TTS_MODE"]
+    ENV.delete("MASTER_TTS_MODE")
     cfg = Master::Voice::Transcendent.load_config
     assert_equal true, cfg.fetch("enabled")
     assert_equal true, cfg.fetch("fast_mode")
-    assert_equal "transcendent", cfg.fetch("default_mode")
+    assert_equal "classic", cfg.fetch("default_mode")
+
+    # The declared default applies on OpenBSD as well as macOS; only an explicit
+    # mode selection should activate the expressive multi-engine path.
+    Master::Voice::Engines.stub(:openbsd?, true) do
+      assert_equal "classic", Master::Voice::Speech.synthesis_mode
+    end
+  ensure
+    original ? ENV["MASTER_TTS_MODE"] = original : ENV.delete("MASTER_TTS_MODE")
   end
 
   def test_fast_mode_does_not_override_cli_synthesis_or_live_streaming_contract
