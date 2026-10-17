@@ -39,7 +39,7 @@ class ViewportSpillGateTest < Minitest::Test
   def test_a_non_success_route_is_a_finding_not_an_unmeasured_pass
     source = File.read(File.expand_path("../../MASTER/gates/lib/rendered/viewport_spill.rb", __dir__))
 
-    assert_includes source, "returned HTTP #{'#'}{status} — viewport overflow was not measured"
+    assert_includes source, 'returned HTTP #{status} — viewport overflow was not measured'
     refute_match(/next unless cdp\.status\.to_i == 200/, source)
   end
 
