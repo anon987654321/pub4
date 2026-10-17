@@ -107,7 +107,7 @@ module Dilla
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
       temporal_energy = temporal_energy_map(audio, ffmpeg:, max_duration: options[:max_duration])
-      essentia_result = essentia(audio, directory)
+      essentia_result = essentia(audio, directory, max_duration: options[:max_duration])
       tempo_check = tempo_crosscheck(mix["tempo"], essentia_result.fetch("summary", {}))
       drum_source, rhythm_source_kind = rhythm_source_for(stems, audio)
       rhythm = rhythm_features(drum_source, ffmpeg:, max_duration: options[:max_duration], bpm: mix.dig("tempo", "bpm"))
@@ -176,7 +176,8 @@ module Dilla
       fmt = probe["format"] || {}
       stream = (probe["streams"] || []).find { |row| row["codec_type"] == "audio" } || {}
       _stdout, logs = capture!("FFmpeg audio stats", ffmpeg, "-hide_banner", "-nostats", "-i", path,
-                               "-t", max_duration.to_s, "-af", "astats=metadata=0:reset=0,ebur128=peak=true", "-f", "null", "-")
+                               "-t", max_duration.to_s, "-af", "astats=metadata=0:reset=0,ebur128=peak=true",
+                               "-f", "null", "-", timeout: analysis_timeout(max_duration))
       result = { "duration_seconds" => fmt["duration"]&.to_f, "codec" => stream["codec_name"],
                  "sample_rate_hz" => stream["sample_rate"]&.to_i, "channels" => stream["channels"]&.to_i,
                  "rms_db" => number(logs, /RMS level dB:\s*(-?[\d.]+)/),
@@ -193,7 +194,8 @@ module Dilla
                   "high_4000_plus_hz" => "highpass=f=4000,volumedetect" }
       filters.to_h do |name, filter|
         _out, logs = capture!("FFmpeg #{name}", ffmpeg, "-hide_banner", "-nostats", "-i", path,
-                              "-t", max_duration.to_s, "-af", filter, "-f", "null", "-")
+                              "-t", max_duration.to_s, "-af", filter, "-f", "null", "-",
+                              timeout: analysis_timeout(max_duration))
         [name, number(logs, /mean_volume:\s*(-?[\d.]+)\s+dB/)]
       rescue Error
         [name, nil]
@@ -203,7 +205,8 @@ module Dilla
     def tempo(path, ffmpeg:, max_duration:)
       bytes, = capture!("tempo envelope", ffmpeg, "-hide_banner", "-v", "error", "-i", path,
                         "-t", max_duration.to_s, "-vn", "-ac", "1", "-af",
-                        "aeval=exprs=val(0)*val(0),lowpass=f=12", "-ar", "40", "-f", "f32le", "pipe:1")
+                        "aeval=exprs=val(0)*val(0),lowpass=f=12", "-ar", "40", "-f", "f32le", "pipe:1",
+                        timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
       return nil if samples.size < 480
       mean = samples.sum / samples.size
@@ -244,12 +247,12 @@ module Dilla
       [[], { "status" => "failed", "files" => [], "message" => error.message }]
     end
 
-    def essentia(audio, directory)
+    def essentia(audio, directory, max_duration: DEFAULT_DURATION)
       exe = executable("ESSENTIA_EXTRACTOR", "streaming_extractor_music")
       return { "status" => "unavailable" } unless exe
 
       name = File.join(directory, "essentia_features.json")
-      capture!("Essentia", exe, audio, name, timeout: 900)
+      capture!("Essentia", exe, audio, name, timeout: analysis_timeout(max_duration))
       descriptors = JSON.parse(File.read(name))
       { "status" => "analyzed", "file" => File.basename(name),
         "summary" => essentia_descriptor_summary(descriptors) }
@@ -316,8 +319,7 @@ module Dilla
       bytes, = capture!("temporal energy envelope", ffmpeg, "-hide_banner", "-v", "error", "-i", path,
                         "-t", max_duration.to_s, "-vn", "-ac", "1", "-af",
                         "aeval=exprs=val(0)*val(0),lowpass=f=1.5", "-ar", sample_rate.to_s,
-                        "-f", "f32le", "pipe:1",
-                        timeout: [[max_duration.to_f.ceil / 4, 120].max, 900].min)
+                        "-f", "f32le", "pipe:1", timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
       summarize_energy_envelope(samples, sample_rate:, window_seconds:).merge("status" => "analyzed")
     rescue Error => error
@@ -486,7 +488,7 @@ module Dilla
       bytes, = capture!("rhythm energy envelope", ffmpeg, "-hide_banner", "-v", "error", "-i", path,
                         "-t", max_duration.to_s, "-vn", "-ac", "1", "-af",
                         "aeval=exprs=val(0)*val(0),lowpass=f=18", "-ar", sample_rate.to_s,
-                        "-f", "f32le", "pipe:1", timeout: [[max_duration.to_f.ceil / 3, 120].max, 900].min)
+                        "-f", "f32le", "pipe:1", timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
       summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:)
     rescue Error
@@ -656,6 +658,12 @@ module Dilla
       Float(out.strip)
     rescue Error, ArgumentError
       nil
+    end
+
+    # Give long-form references longer tool budgets while retaining a strict cap.
+    # At the two-hour input ceiling each individual analysis pass is capped at one hour.
+    def analysis_timeout(max_duration)
+      [[max_duration.to_f.ceil / 2, 120].max, 3_600].min
     end
 
     def capture!(label, *command, timeout: 120)
