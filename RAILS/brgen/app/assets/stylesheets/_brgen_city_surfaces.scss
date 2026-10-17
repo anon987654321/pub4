@@ -159,7 +159,7 @@ aside:not([class]) > h2 {
    section's rhythm above it and room below for the bottom chrome. */
 .site-legal {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   gap: var(--space-8);
   max-width: var(--container-max);
   margin: var(--section-rhythm) auto 0;
