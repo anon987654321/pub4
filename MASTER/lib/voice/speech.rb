@@ -447,12 +447,9 @@ module Master
           text_str, voice:, style:, rate:, pitch:,
           voice_locked:, style_locked:
         )
-        # Shaped here too. The chain was applied on the legacy Edge path only,
-        # and synthesis_mode has been "transcendent" since Transcendent shipped,
-        # so every reply this machine spoke went out bare: measured 2026-09-16,
-        # a live utterance came back at -25.3 LUFS on the raw path and -17.2
-        # through the chain. voice.yml declared it, Policy read it, Speech
-        # applied it, and nothing on the live path ever called it.
+        # Expressive mode must pass its generated file through the same output
+        # chain as direct speech. This keeps the declared shaping policy active
+        # when the opt-in multi-engine mode is selected.
         [true, shaped(result)]
       end
 
