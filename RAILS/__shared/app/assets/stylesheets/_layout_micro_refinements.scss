@@ -595,21 +595,55 @@ body[data-layout-pass="micro-320"] .nav-actions {
   gap: var(--space-1);
   flex-wrap: wrap;
   }
-@media (max-width: 767px) {
+/* Compact defaults; only the larger layout is an enhancement. */
+body[data-layout-pass="micro-320"] {
+  text-wrap: pretty;
+}
+
+body[data-layout-pass="micro-320"] :where(
+  .page-header,
+  .page-actions,
+  .feed-card-actions,
+  form .actions
+) {
+  max-inline-size: 100%;
+}
+
+/* These storefront selectors out-rank the shared compact rule and have
+   their own wide measures, so state the target explicitly on each surface. */
+body[data-layout-pass="micro-320"].vertical-marketplace .storefront-bol-mainnav {
+  max-inline-size: 100%;
+}
+
+body[data-layout-pass="micro-320"] #sections,
+body[data-layout-pass="micro-320"] #accountStuff {
+  max-inline-size: 100%;
+}
+
+@media (min-width: 768px) {
   body[data-layout-pass="micro-320"] {
-    text-wrap: pretty;
+    text-wrap: balance;
+  }
+
+  body[data-layout-pass="micro-320"] .page-header {
+    max-inline-size: var(--measure);
   }
 
   body[data-layout-pass="micro-320"] :where(
-    .page-header,
     .page-actions,
     .feed-card-actions,
-    form .actions,
-    .storefront-bol-mainnav,
-    #sections,
-    #accountStuff
+    form .actions
   ) {
-    max-inline-size: 100%;
+    max-inline-size: none;
+  }
+
+  body[data-layout-pass="micro-320"].vertical-marketplace .storefront-bol-mainnav {
+    max-inline-size: var(--bol-max);
+  }
+
+  body[data-layout-pass="micro-320"] #sections,
+  body[data-layout-pass="micro-320"] #accountStuff {
+    max-inline-size: none;
   }
 }
 
