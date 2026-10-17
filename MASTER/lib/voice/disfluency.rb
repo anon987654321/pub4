@@ -9,7 +9,7 @@ module Master
     # synthesis. It is deliberately bounded and skips lists, code, URLs and paths.
     module Disfluency
       DEFAULTS = {
-        "enabled" => true,
+        "enabled" => false,
         "probability" => 0.20,
         "min_words" => 6,
         "stutter_probability" => 0.35,
