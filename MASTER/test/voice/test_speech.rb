@@ -258,9 +258,9 @@ class TestSpeech < Minitest::Test
     assert_equal true, cfg.fetch("fast_mode")
     assert_equal "classic", cfg.fetch("default_mode")
 
-    # The declared default applies on OpenBSD as well as macOS; only an explicit
-    # mode selection should activate the expressive multi-engine path.
-    Master::Voice::Engines.stub(:openbsd?, true) do
+    # On macOS, the declared default keeps spoken words literal. OpenBSD keeps
+    # its existing host-specific policy unless the operator changes it.
+    Master::Voice::Engines.stub(:openbsd?, false) do
       assert_equal "classic", Master::Voice::Speech.synthesis_mode
     end
   ensure
