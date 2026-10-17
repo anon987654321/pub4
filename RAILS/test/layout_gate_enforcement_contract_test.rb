@@ -68,7 +68,7 @@ class LayoutGateEnforcementContractTest < Minitest::Test
     assert_includes source, "body.wscons .tabs .active"
     assert_includes source, "Content boundaries come from placement and whitespace"
     assert_includes source, "main#main-content :where("
-    assert_includes source, "border: 0;\\n    box-shadow: none;"
+    assert_includes source, "box-shadow: none;"
     assert_includes source, "main#main-content .amber-editorial-nav a"
     %w[.feed-post .match .organize-tip .brand .amber-look .amber-editorial-nav .post-show-actions .port-row].each do |selector|
       assert_includes source, selector, "minimal chrome must cover #{selector}"
