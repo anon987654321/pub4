@@ -4738,9 +4738,33 @@ end
 # Preset data has a closed vocabulary. A newly added field must either be a
 # built-in dispatch field, a mechanism-level field (iso), or have an explicit
 # effect reader below. Unknown knobs must fail loudly rather than disappear.
+def auditable_preset_rows(presets)
+  return [{}, ["PRESETS is not a table"]] unless presets.is_a?(Hash)
+
+  rows = {}
+  problems = []
+  presets.each do |name, definition|
+    if definition.is_a?(Hash)
+      rows[name] = definition
+    else
+      problems << "#{name}: preset definition is not a table"
+    end
+  rescue StandardError => e
+    problems << "#{name}: preset definition cannot be read: #{e.class}: #{e.message}"
+  end
+  [rows, problems]
+rescue StandardError => e
+  [{}, ["PRESETS audit raises #{e.class}: #{e.message}"]]
+end
+
 def preset_unregistered_keys(preset_data, key_readers)
+  return [[:invalid_preset_data, preset_data.class.name]] unless preset_data.is_a?(Hash)
+
   base_keys = %i[fx stock intensity iso]
-  preset_data.keys.map(&:to_sym) - base_keys - key_readers.keys
+  invalid_key_types = preset_data.keys.reject { |key| key.is_a?(Symbol) }
+    .map { |key| [:invalid_key_type, key.inspect] }
+  unknown = preset_data.keys.select { |key| key.is_a?(Symbol) } - base_keys - key_readers.keys
+  unknown + invalid_key_types
 end
 
 # Keep checking the remaining probe presets after one renderer raises. A single
@@ -4861,13 +4885,8 @@ def vocab_check
   preset_source = source_methods["preset"]
   implemented = postpro_case_labels(preset_source, :fx)
   problems = []
-  valid_presets = PRESETS.each_with_object({}) do |(name, preset_data), rows|
-    if preset_data.is_a?(Hash)
-      rows[name] = preset_data
-    else
-      problems << "#{name}: preset definition is not a table"
-    end
-  end
+  valid_presets, malformed_preset_problems = auditable_preset_rows(PRESETS)
+  problems.concat(malformed_preset_problems)
   postpro_case_label_duplicates(preset_source, :fx).each do |fx|
     problems << "preset(): duplicate effect arm #{fx.inspect}; later branch is unreachable"
   end
