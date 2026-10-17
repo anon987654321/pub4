@@ -28,6 +28,23 @@ class DillaTest < Minitest::Test
     Sequencer.new(data, profile_name: profile, pd_amount:, seed:)
   end
 
+  def with_fake_ffmpeg(directory, program)
+    bin = File.join(directory, "bin")
+    FileUtils.mkdir_p(bin)
+    executable = File.join(bin, "ffmpeg")
+    File.write(executable, "#!#{RbConfig.ruby}\n#{program}\n")
+    File.chmod(0o755, executable)
+
+    previous_path = ENV["PATH"]
+    previous_postpro = ENV["DILLA_VIDEO_POSTPRO"]
+    ENV["PATH"] = [bin, previous_path].compact.join(File::PATH_SEPARATOR)
+    ENV["DILLA_VIDEO_POSTPRO"] = "0"
+    yield
+  ensure
+    previous_path.nil? ? ENV.delete("PATH") : ENV["PATH"] = previous_path
+    previous_postpro.nil? ? ENV.delete("DILLA_VIDEO_POSTPRO") : ENV["DILLA_VIDEO_POSTPRO"] = previous_postpro
+  end
+
   def offsets_from_grid(hits, role, step)
     hits.select { |r, _| r == role }.map { |_, t| t - ((t / step).round * step) }
   end
@@ -189,6 +206,47 @@ class DillaTest < Minitest::Test
     refute_includes graph, ",[base]"
     assert_match(/\[0:a\]showwaves=.*\[wave\]/, graph)
     assert_match(/\[base\]\[wave\]overlay=.*format=yuv420p\[v\]\z/, graph)
+  end
+
+  def test_video_render_installs_a_complete_mp4_without_overwriting_a_take
+    Dir.mktmpdir do |dir|
+      audio = File.join(dir, "source.wav")
+      target = File.join(dir, "render.mp4")
+      File.binwrite(audio, "wav fixture")
+
+      with_fake_ffmpeg(dir, 'File.binwrite(ARGV.last, "fake mp4 payload")') do
+        result = nil
+        capture_io { result = Dilla::Video.render(audio:, output: target) }
+
+        assert_equal target, result
+        assert_equal "fake mp4 payload", File.binread(target)
+        assert_empty Dir.glob(File.join(dir, ".*.tmp.mp4"))
+
+        error = assert_raises(Dilla::Video::Error) do
+          Dilla::Video.render(audio:, output: target)
+        end
+        assert_match(/refusing to overwrite existing MP4/, error.message)
+      end
+    end
+  end
+
+  def test_video_render_failure_preserves_audio_and_removes_temporary_output
+    Dir.mktmpdir do |dir|
+      audio = File.join(dir, "source.wav")
+      target = File.join(dir, "render.mp4")
+      File.binwrite(audio, "wav fixture")
+
+      with_fake_ffmpeg(dir, 'warn "controlled ffmpeg failure"; exit 17') do
+        error = assert_raises(Dilla::Video::Error) do
+          Dilla::Video.render(audio:, output: target)
+        end
+
+        assert_match(/ffmpeg exit=17: controlled ffmpeg failure/, error.message)
+        assert_equal "wav fixture", File.binread(audio)
+        refute File.exist?(target)
+        assert_empty Dir.glob(File.join(dir, ".*.tmp.mp4"))
+      end
+    end
   end
 
   def test_showcase_tempo_schedule_is_repeatable_and_stays_within_92_to_116_bpm
