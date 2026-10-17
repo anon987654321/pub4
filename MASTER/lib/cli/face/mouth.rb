@@ -112,7 +112,10 @@ module Master
           ensure
             File.delete(path) if path && File.exist?(path)
           end
-          prefetch&.join
+          if prefetch
+            unused_path, = prefetch.value
+            File.delete(unused_path) if unused_path && File.exist?(unused_path)
+          end
           spoken
         end
 
