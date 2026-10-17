@@ -172,19 +172,20 @@ module Master
           branch,
           worktree,
         )
-      rescue StandardError => e
-        detail = "worktree failed, #{e.class}: #{e.message}"
+      rescue StandardError, Interrupt => e
+        detail = e.is_a?(Interrupt) ? "worktree cancelled by operator" : "worktree failed, #{e.class}: #{e.message}"
         announce(detail)
         if defined?(worktree) && worktree && File.directory?(worktree)
           recovered_head = begin
             git!("rev-parse", "HEAD", chdir: worktree)
-          rescue StandardError
+          rescue StandardError, Interrupt
             head
           end
           announce("retained worktree: #{worktree}")
           announce("retained branch: #{branch}") if defined?(branch) && branch
           announce("inspect: git -C #{worktree} status --short && git -C #{worktree} log --oneline")
-          Result.new(false, "#{detail}; retained worktree: #{worktree}; branch: #{branch}", base, recovered_head, branch, worktree)
+          recovery = "#{detail}; retained worktree: #{worktree}; branch: #{branch}"
+          Result.new(false, recovery, base, recovered_head, branch, worktree)
         else
           Result.new(false, detail, base, head, branch, worktree)
         end

@@ -250,6 +250,35 @@ def test_zero_exit_without_a_completion_report_is_not_success
     end
   end
 
+  def test_interrupt_during_final_proof_preserves_committed_work_and_recovery_instructions
+    worker = <<~RUBY
+      #!/usr/bin/env ruby
+      File.write("README", "after\n")
+      system("git", "add", "README")
+      puts "review0: complete"
+      exit(system("git", "commit", "-m", "worker fix"))
+    RUBY
+    with_repo(worker:) do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+      session.define_singleton_method(:run_proof) { |worktree, proof_trees:| raise Interrupt, "simulated operator cancellation" }
+
+      result = nil
+      out, err = capture_io { result = session.run(command: "/fix test", proof_trees: ["MASTER"]) }
+
+      refute result.ok, err + out
+      assert_match(/cancelled by operator/, result.summary)
+      assert File.directory?(result.worktree), "partial work must be retained for recovery"
+      assert_includes err + out, "inspect: git -C #{result.worktree} status --short"
+      assert_equal "after\n", git_output(root, "show", "#{result.branch}:README")
+    ensure
+      if result&.worktree && File.directory?(result.worktree)
+        git(root, "worktree", "remove", "--force", result.worktree)
+        git(root, "branch", "-D", result.branch)
+        FileUtils.rm_rf(File.dirname(result.worktree))
+      end
+    end
+  end
+
   def test_worker_timeout_terminates_the_group_and_finishes_with_a_terminal_result
     previous = ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"]
     ENV["MASTER_FIX_WORKTREE_TIMEOUT_S"] = "1"
