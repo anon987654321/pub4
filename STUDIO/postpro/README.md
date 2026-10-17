@@ -11,8 +11,9 @@ path and the path is the subject: an image goes through several random chains wr
 Postpro output directory, a directory gives a few random picks from it, and a path that is
 neither is named and refused. Output defaults to the shared dated render directory outside the
 checkout; `POSTPRO_OUTPUT_DIR` chooses another directory. Give it nothing and it asks what to
-grade. The command `postpro.rb --help` lists every flag, and `--capabilities` says what the
-current build can do on this machine.
+grade. The command `postpro.rb --help` lists every flag. `--capabilities` reports the analogue
+direction catalogue and its readiness state; a catalogue entry is not a promise that the
+corresponding effect is implemented or enabled on this machine.
 
 The code is a handful of files. The file `postpro.rb` holds the grade, the presets, the film
 tables and the command line. The file `legacy_effects.rb` holds the creative effects recovered
@@ -25,8 +26,12 @@ when its model is installed.
 
 The file `constitution.rb` is the boundary where MASTER's laws
 become image-generation invariants, `analog_capabilities.rb` backs `--capabilities`, and
-`camera_profiles.json` carries the sensor data. A log file named `postpro.log` also sits in
-the folder; it is output, and git should not carry it.
+`camera_profiles.json` carries the sensor data. Its 200 stable catalogue entries describe
+intended analogue directions. Entries remain `unverified` with a null `enabled` value until a
+concrete code path and regression test establish readiness; the report's `catalog_complete`
+means the inventory is present, while `complete` means all reported directions are verified
+and enabled. These are separate questions by design. A log file named `postpro.log` also sits
+in the folder; it is output, and git should not carry it.
 
 ## The checks that catch what does not raise
 
