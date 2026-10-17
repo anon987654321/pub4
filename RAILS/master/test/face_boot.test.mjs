@@ -778,10 +778,7 @@ test("TTS does not dequeue speech while the server cooldown is active", () => {
 test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS routing", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
-  const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
-  const playback = readFileSync(join(publicDir, "face_speech_playback.js"), "utf8");
-  const sources = [part5, speech, playback].join("\n");
-  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   // Continuous re-arm loop keyed off recognition.onend, not a fixed interval —
   // must re-check State.voiceMode each cycle rather than assuming it stays on.
   assert.match(runtime, /if \(State\.voiceMode\) \{[\s\S]{0,400}startSTT\(\);/);
