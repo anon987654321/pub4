@@ -59,9 +59,15 @@ module Master
           next_path = nil
           next_error = nil
           prefetch = nil
+          stopped = false
+          stop_requested = lambda do
+            next true if stopped
+
+            stopped = !!stop.call
+          end
 
           parts.each_with_index do |part, index|
-            break if stop.call
+            break if stop_requested.call
 
             if index.zero?
               path = @synthesize.call(part)
@@ -83,7 +89,7 @@ module Master
 
             if path && File.exist?(path)
               on_chunk&.call(part)
-              played = play(path, part, on_level:, stop:)
+              played = play(path, part, on_level:, stop: stop_requested)
               played = Master::Device::Audio.speak(part) if !played && @device.android?
               played = direct_speak(part) unless played
               spoken ||= played
