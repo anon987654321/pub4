@@ -426,12 +426,15 @@ module Master
         return false if specifier.empty?
         return false if specifier.match?(%r{\A(?:https?:|//|data:|mailto:|tel:|javascript:|#)}i)
 
+        return false if specifier.start_with?("/")
+
         suffix = File.extname(specifier.split(/[?#]/, 2).first.to_s).downcase
         source_suffixes = %w[
           .js .jsx .mjs .cjs .ts .tsx .css .scss .html .htm .erb .json .yml .yaml .md .mdx
         ]
         return true if source_suffixes.include?(suffix)
-        return true if %i[javascript_import stylesheet_import].include?(kind) &&
+        return true if kind == :stylesheet_import && !specifier.include?(":")
+        return true if %i[javascript_import stylesheet_import markup_import].include?(kind) &&
                        specifier.start_with?("./", "../", "@/")
 
         false
@@ -443,7 +446,7 @@ module Master
           resolved = resolve_local_source_path(reference[:from_file], specifier, source_kind: reference[:source_kind])
           if resolved
             edge(from: reference[:from_file], to: resolved, type: :local_import, weight: 1)
-          elsif reference[:source_kind] == :ruby_require_relative || relative_source_reference?(specifier)
+          else
             @unresolved_references << reference.merge(reason: "local source import did not resolve to an indexed file")
           end
         end
@@ -451,12 +454,13 @@ module Master
 
       def resolve_local_source_path(from, specifier, source_kind: nil)
         clean = specifier.split(/[?#]/, 2).first.to_s
-        base = if source_kind == :ruby_require_relative || source_kind == :stylesheet_import
+        base = if source_kind == :ruby_require_relative
                   File.expand_path(clean.delete_prefix("./"), File.dirname(File.join(@root, from)))
                 elsif clean.start_with?("@/")
                   File.expand_path(clean.delete_prefix("@/"), @root)
-                elsif clean.start_with?("./", "../")
-                  File.expand_path(clean, File.dirname(File.join(@root, from)))
+                elsif clean.start_with?("./", "../") ||
+                      %i[stylesheet_import markup_import].include?(source_kind)
+                  File.expand_path(clean.delete_prefix("./"), File.dirname(File.join(@root, from)))
                 else
                   return nil
                 end
