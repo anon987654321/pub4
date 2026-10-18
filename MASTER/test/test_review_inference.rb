@@ -148,6 +148,19 @@ end
     saved.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = saved
   end
 
+  def test_cli_treats_every_non_done_fix_terminal_as_incomplete
+    pass = Master::CLI::Pipeline::Pass.allocate
+    terminals = Master::Fix::FixLoop::TERMINAL_STATES
+
+    (terminals - [:done]).each do |state|
+      message = "#{state.to_s.upcase}: result"
+      assert pass.send(:non_success_fix_terminal?, message), "#{state} must not be accepted as completion"
+    end
+
+    refute pass.send(:non_success_fix_terminal?, "DONE: clean")
+    refute pass.send(:non_success_fix_terminal?, "ordinary progress")
+  end
+
   def test_incomplete_fix_report_is_not_allowed_to_reach_delivery
     value = "review0: incomplete, 405 findings, 147s\nrepair failed"
     assert Master::CLI::CommandRegistry.incomplete_fix_pipeline?(value)
