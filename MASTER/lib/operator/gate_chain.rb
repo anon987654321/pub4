@@ -129,8 +129,13 @@ module Operator
         snapshot = pending.delete(scope)
         next unless snapshot
 
-        key = baseline_key(scope == "all" ? "all" : scope)
-        write_baseline(key, snapshot)
+        begin
+          key = baseline_key(scope == "all" ? "all" : scope)
+          write_baseline(key, snapshot)
+        rescue StandardError => e
+          # This cache shortens later runs; it is never part of repair success.
+          Master::Trace::Dmesg.status("gate0", "verified baseline cache not persisted for #{scope}, #{e.class}")
+        end
       end
       @verified_fix_snapshots = pending
       true
