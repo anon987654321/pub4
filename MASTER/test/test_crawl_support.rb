@@ -25,7 +25,22 @@ class CrawlSupportTest < Minitest::Test
     assert_includes crawler_source, 'require_relative "../../gates/support/crawl_support"'
     assert_match(/^\s*def fetch\(/, gate_source)
     assert_match(/^\s*def port_open\?\(/, gate_source)
+    assert_match(/on_error:/, gate_source)
+    assert_match(/^\s*def crawler_port_open\?\(/, crawler_source)
     refute_match(/^\s*def fetch\(/, crawler_source)
     refute_match(/^\s*def port_open\?\(/, crawler_source)
+  end
+
+  def test_shared_port_probe_reports_optional_diagnostics_without_masking_failure
+    reported = nil
+    error = Errno::ECONNREFUSED.new("fixture refused")
+
+    Socket.stub(:tcp, ->(*, **) { raise error }) do
+      refute CrawlSupport.port_open?(
+        "127.0.0.1", 9, on_error: ->(failure) { reported = failure }
+      )
+    end
+
+    assert_same error, reported
   end
 end
