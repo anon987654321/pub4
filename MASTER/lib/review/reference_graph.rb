@@ -2,6 +2,7 @@
 
 require "find"
 require "set"
+require "prism"
 
 module Master
   module Review
@@ -28,6 +29,192 @@ module Master
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)
 
+      # Prism-derived facts supplement imports with static symbol and caller
+      # relationships. Ambiguous/dynamic relationships remain explicit evidence
+      # gaps; a token match alone never proves a caller edge.
+      class RubyVisitor < Prism::Visitor
+        attr_reader :definitions, :references, :dynamic_sites
+
+        def initialize(file:)
+          @file = file
+          @namespaces = []
+          @methods = []
+          @definitions = []
+          @references = []
+          @dynamic_sites = []
+        end
+
+        def visit_module_node(node)
+          name = constant_name(node.constant_path)
+          full = qualify(name)
+          @definitions << definition(full, name.split("::").last, :module, node.location.start_line)
+          @namespaces << full
+          super
+          @namespaces.pop
+        end
+
+        def visit_class_node(node)
+          name = constant_name(node.constant_path)
+          full = qualify(name)
+          @definitions << definition(full, name.split("::").last, :class, node.location.start_line)
+          if node.superclass
+            @references << reference(
+              node.superclass.location.start_line,
+              :inheritance,
+              constant_name(node.superclass),
+              scope: @namespaces.last,
+            )
+          end
+          @namespaces << full
+          super
+          @namespaces.pop
+        end
+
+        def visit_def_node(node)
+          receiver = node.receiver && constant_name(node.receiver)
+          owner = receiver || @namespaces.last
+          singleton = !node.receiver.nil?
+          fqn = if owner
+                  "#{owner}#{singleton ? "." : "#"}#{node.name}"
+                else
+                  "(top)##{node.name}"
+                end
+          @definitions << definition(fqn, node.name.to_s, :method, node.location.start_line,
+                                     owner:, singleton:)
+          @methods << { fqn:, owner:, singleton: }
+          super
+          @methods.pop
+        end
+
+        def visit_constant_write_node(node)
+          name = qualify(node.name.to_s)
+          @definitions << definition(name, node.name.to_s, :constant, node.location.start_line)
+          super
+        end
+
+        def visit_constant_path_write_node(node)
+          name = constant_name(node.target)
+          @definitions << definition(name, name.split("::").last, :constant, node.location.start_line)
+          super
+        end
+
+        def visit_constant_read_node(node)
+          @references << reference(node.location.start_line, :constant, node.name.to_s,
+                                   scope: @namespaces.last)
+          super
+        end
+
+        def visit_constant_path_node(node)
+          name = constant_name(node)
+          @references << reference(node.location.start_line, :constant, name, scope: @namespaces.last)
+          super
+        end
+
+        def visit_call_node(node)
+          name = node.name.to_s
+          scope = @namespaces.last
+          receiver = receiver_name(node.receiver, scope)
+          @references << reference(
+            node.location.start_line,
+            :call,
+            name,
+            receiver:,
+            scope:,
+            caller: @methods.last && @methods.last[:fqn],
+            singleton_scope: @methods.last && @methods.last[:singleton],
+          )
+
+          if %w[include prepend extend].include?(name) && node.receiver.nil?
+            Array(node.arguments&.arguments).each do |argument|
+              next unless constant_expression?(argument)
+
+              @references << reference(node.location.start_line, :mixin, constant_name(argument), scope:)
+            end
+          end
+
+          if %w[send public_send __send__].include?(name)
+            target = literal_method_name(Array(node.arguments&.arguments).first)
+            if target
+              @references << reference(node.location.start_line, :dynamic_call, target,
+                                       receiver:, scope:, caller: @methods.last && @methods.last[:fqn])
+            else
+              @dynamic_sites << dynamic_site(node.location.start_line, name, "dynamic method name")
+            end
+          elsif %w[method_missing define_method define_singleton_method const_get const_missing
+                   eval class_eval instance_eval module_eval].include?(name)
+            @dynamic_sites << dynamic_site(node.location.start_line, name, "dynamic lookup or code evaluation")
+          end
+
+          super
+        end
+
+        private
+
+        def definition(fqn, name, kind, line, owner: nil, singleton: false)
+          { fqn:, name:, kind:, file: @file, line:, owner:, singleton: }
+        end
+
+        def reference(line, kind, name, receiver: nil, scope: nil, caller: nil, singleton_scope: false)
+          { from_file: @file, line:, kind:, name:, receiver:, scope:, caller:, singleton_scope: }
+        end
+
+        def dynamic_site(line, name, reason)
+          { file: @file, line:, name:, reason: }
+        end
+
+        def qualify(name)
+          return name if name.include?("::") || @namespaces.empty?
+
+          "#{@namespaces.last}::#{name}"
+        end
+
+        def constant_name(node)
+          return "" unless node
+
+          case node
+          when Prism::ConstantReadNode
+            node.name.to_s
+          when Prism::ConstantPathNode, Prism::ConstantPathTargetNode
+            node.slice.to_s
+          else
+            node.respond_to?(:slice) ? node.slice.to_s : (node.respond_to?(:name) ? node.name.to_s : "")
+          end
+        rescue StandardError
+          ""
+        end
+
+        def receiver_name(node, scope)
+          case node
+          when nil
+            nil
+          when Prism::SelfNode
+            scope
+          when Prism::ConstantReadNode, Prism::ConstantPathNode, Prism::ConstantPathTargetNode
+            constant_name(node)
+          when Prism::CallNode
+            # A constructor expression has a statically known receiver type:
+            # SharedService.new.save can be linked to SharedService#save.
+            node.name.to_s == "new" ? receiver_name(node.receiver, scope) : nil
+          else
+            nil
+          end
+        end
+
+        def constant_expression?(node)
+          node.is_a?(Prism::ConstantReadNode) ||
+            node.is_a?(Prism::ConstantPathNode) ||
+            node.is_a?(Prism::ConstantPathTargetNode)
+        end
+
+        def literal_method_name(node)
+          return unless node
+
+          raw = node.slice.to_s
+          value = raw.sub(/\A:/, "").delete_prefix('"').delete_suffix('"').delete_prefix("'").delete_suffix("'")
+          value if value.match?(/\A[a-zA-Z_][a-zA-Z0-9_]*[!?=]?\z/)
+        end
+      end
+
       attr_reader :nodes, :edges, :analysis_failures, :root
 
       def initialize(root:, event_bus: nil)
@@ -36,6 +223,10 @@ module Master
         @nodes = Set.new
         @edges = []
         @analysis_failures = []
+        @ruby_definitions = []
+        @ruby_references = []
+        @dynamic_sites = []
+        @unresolved_references = []
         @built = false
         @build_lock = Mutex.new
       end
@@ -49,7 +240,12 @@ module Master
             @nodes.clear
             @edges.clear
             @analysis_failures.clear
+            @ruby_definitions.clear
+            @ruby_references.clear
+            @dynamic_sites.clear
+            @unresolved_references.clear
             files.each { |file| analyze(file) }
+            resolve_ruby_references!
             @built = true
           end
 
@@ -58,6 +254,9 @@ module Master
             edges: @edges.map(&:to_h),
             metrics:,
             analysis_failures: @analysis_failures.map(&:dup),
+            ruby_definitions: @ruby_definitions.map(&:dup),
+            unresolved_references: @unresolved_references.map(&:dup),
+            dynamic_sites: @dynamic_sites.map(&:dup),
           }
 
           @bus&.publish(
@@ -79,6 +278,23 @@ module Master
           inbound: impacted.select { |e| e.to == rel }.map(&:from).uniq.sort,
           outbound: impacted.select { |e| e.from == rel }.map(&:to).uniq.sort,
         }
+      end
+
+      # Caller/dependency edges derived from method names are conservative when
+      # ambiguous. These gaps tell repair orchestration where more investigation
+      # is needed; they must not be presented as an empty or complete call graph.
+      def unresolved_for(path)
+        rel = relative(path)
+        target_names = @ruby_definitions.select { |row| row[:file] == rel && row[:kind] == :method }
+                                        .map { |row| row[:name] }.to_set
+        @unresolved_references.select do |row|
+          row[:from_file] == rel || (row[:kind] == :call && target_names.include?(row[:name]))
+        end.map(&:dup)
+      end
+
+      def dynamic_for(path)
+        rel = relative(path)
+        @dynamic_sites.select { |row| row[:file] == rel }.map(&:dup)
       end
 
       private
@@ -126,6 +342,7 @@ module Master
         constant_refs(content, rel)
         command_refs(content, rel)
         event_refs(content, rel)
+        analyze_ruby(content, rel) if ruby_source?(rel)
       rescue StandardError => e
         @analysis_failures << { path: rel.to_s, error: "#{e.class}: #{e.message}" }
         Master::Ground::Swallow.log(
@@ -134,6 +351,107 @@ module Master
           event_bus: @bus,
           path: rel,
         )
+      end
+
+      def ruby_source?(rel)
+        %w[.rb .rake .gemspec .ru].include?(File.extname(rel)) ||
+          %w[Rakefile Gemfile Guardfile Podfile Appfile Fastfile].include?(File.basename(rel))
+      end
+
+      def analyze_ruby(content, rel)
+        parsed = Prism.parse(content)
+        unless parsed.success?
+          @analysis_failures << { path: rel, error: "Prism parse failed: #{parsed.errors.first&.message || "unknown syntax error"}" }
+          return
+        end
+
+        visitor = RubyVisitor.new(file: rel)
+        parsed.value.accept(visitor)
+        @ruby_definitions.concat(visitor.definitions)
+        @ruby_references.concat(visitor.references)
+        @dynamic_sites.concat(visitor.dynamic_sites)
+      end
+
+      def resolve_ruby_references!
+        methods = @ruby_definitions.select { |row| row[:kind] == :method }
+        constants = @ruby_definitions.select { |row| %i[class module constant].include?(row[:kind]) }
+        methods_by_name = methods.group_by { |row| row[:name] }
+        methods_by_fqn = methods.group_by { |row| row[:fqn] }
+        constants_by_fqn = constants.group_by { |row| row[:fqn] }
+        constants_by_name = constants.group_by { |row| row[:name] }
+        weights = Hash.new(0)
+
+        @ruby_references.each do |reference|
+          candidates = case reference[:kind]
+                      when :call, :dynamic_call
+                        resolve_method_reference(reference, methods_by_name, methods_by_fqn)
+                      when :constant, :inheritance, :mixin
+                        resolve_constant_reference(reference, constants_by_name, constants_by_fqn)
+                      else
+                        []
+                      end
+          candidates = candidates.uniq { |row| [row[:fqn], row[:file]] }
+          if candidates.empty?
+            @unresolved_references << reference.merge(reason: "no unique static source target")
+            next
+          end
+
+          candidates.each do |candidate|
+            next if candidate[:file] == reference[:from_file]
+
+            edge_type = {
+              call: :method_call,
+              dynamic_call: :dynamic_method_call,
+              constant: :constant_reference,
+              inheritance: :inheritance,
+              mixin: :mixin,
+            }.fetch(reference[:kind])
+            weights[[reference[:from_file], candidate[:file], edge_type]] += 1
+          end
+        end
+
+        weights.each do |(from, to, type), weight|
+          edge(from:, to:, type:, weight:)
+        end
+      end
+
+      def resolve_method_reference(reference, by_name, by_fqn)
+        name = reference[:name].to_s
+        return [] if name.empty?
+
+        receiver = reference[:receiver].to_s
+        if !receiver.empty?
+          exact = by_fqn.values_at("#{receiver}##{name}", "#{receiver}.#{name}").compact.flatten
+          return exact unless exact.empty?
+        elsif !reference[:scope].to_s.empty?
+          scope = reference[:scope].to_s
+          preferred = if reference[:singleton_scope]
+                        by_fqn.values_at("#{scope}.#{name}", "#{scope}##{name}").compact.flatten
+                      else
+                        by_fqn.values_at("#{scope}##{name}", "#{scope}.#{name}").compact.flatten
+                      end
+          return preferred unless preferred.empty?
+        end
+
+        candidates = Array(by_name[name])
+        unique_names = candidates.map { |row| row[:fqn] }.uniq
+        return candidates if unique_names.one?
+
+        []
+      end
+
+      def resolve_constant_reference(reference, by_name, by_fqn)
+        name = reference[:name].to_s
+        return [] if name.empty?
+
+        exact = by_fqn[name]
+        return exact if exact
+
+        tail = name.split("::").last
+        candidates = Array(by_name[tail])
+        return candidates if candidates.map { |row| row[:fqn] }.uniq.one?
+
+        []
       end
 
       def ruby_requires(content, rel)
@@ -193,6 +511,13 @@ module Master
           edge_count: @edges.size,
           require_edges: grouped.fetch(:require, []).size,
           constant_edges: grouped.fetch(:constant, []).size,
+          resolved_constant_edges: grouped.fetch(:constant_reference, []).size,
+          method_call_edges: grouped.fetch(:method_call, []).size,
+          dynamic_method_call_edges: grouped.fetch(:dynamic_method_call, []).size,
+          inheritance_edges: grouped.fetch(:inheritance, []).size,
+          mixin_edges: grouped.fetch(:mixin, []).size,
+          unresolved_ruby_references: @unresolved_references.size,
+          dynamic_sites: @dynamic_sites.size,
           event_edges: grouped.fetch(:event, []).size,
           command_edges: grouped.fetch(:command, []).size,
         }
