@@ -206,10 +206,12 @@ module Master
         source = within_file_budget(violation) { violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation) }
         return :file_timeout if @file_timed_out
         return (if @model_unavailable
-:model_unavailable
-else
-@model_failed ? :model_failed : :no_proposal
-end) if source.to_s.strip.empty?
+                  :model_unavailable
+                elsif @model_failed
+                  :model_failed
+                else
+                  :no_proposal
+                end) if source.to_s.strip.empty?
 
         source = BestOfN.pick(self, violation, source, custody: @visual_custody, root: @root) if BestOfN.active?(violation, @visual_custody, tool: @law.id)
         return :no_proposal if source.to_s.strip.empty?
