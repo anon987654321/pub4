@@ -78,7 +78,6 @@ module Master
 
       def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
                               apply:, critique:, aesthetic:, only:, target:)
-        targets = fix_targets(target, root:)
         writes_requested = writes_requested?(apply:, only:)
         display_target = display_fix_target(target)
         mode = writes_requested ? "write" : "read-only"
@@ -92,6 +91,7 @@ module Master
         with_dmesg_verbosity(raw, default: "trace") do
           Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
         end
+        targets = fix_targets(target, root:)
         ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
         if writes_requested && worktree_fix_requested?
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
