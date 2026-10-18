@@ -860,7 +860,7 @@ end
 
     result = nil
     Master::CLI::CommandRegistry.stub(:worktree_fix_requested?, false) do
-      Master::CLI::CommandRegistry.stub(:run_pass, ->(_deps, **kwargs) { "DONE: #{kwargs.fetch(:target)} clean" }) do
+      Master::CLI::CommandRegistry.stub(:run_pass, ->(_deps, **_kwargs) { "DONE: clean" }) do
         Operator::GateChain.stub(:baseline, ->(target:) { {} }) do
           Operator::GateChain.stub(:verify_fix, ->(target:, baseline:) { [0, []] }) do
             Operator::GateChain.stub(
