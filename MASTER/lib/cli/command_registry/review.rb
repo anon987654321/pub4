@@ -85,12 +85,16 @@ module Master
         display_target = "all trees" if %w[all everything].any? { |name| display_target.casecmp?(name) }
         display_target = display_target[0, 80]
         mode = writes_requested ? "write" : "read-only"
-        boundary = if writes_requested
-                     worktree_fix_requested? ? "isolated-worktree" : "current-checkout"
-                   else
+        boundary = if !writes_requested
                      "no-write-or-publish"
+                   elsif ENV["MASTER_FIX_WORKTREE_CHILD"] == "1" || worktree_fix_requested?
+                     "isolated-worktree"
+                   else
+                     "current-checkout"
                    end
-        Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
+        with_dmesg_verbosity(raw, default: "trace") do
+          Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
+        end
         ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
         if writes_requested && worktree_fix_requested?
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
