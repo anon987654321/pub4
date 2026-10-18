@@ -27,6 +27,20 @@ module Master
 
       FALSE_VALUES = %w[0 off false no].freeze
       REFUSAL = /\A(?:i(?:'m| am)? (?:sorry|unable)|i can(?:'|no)t|as an ai\b)/i
+      SUCCESS_STATUS = /\b(?:complete(?:d)?|done|finished|success(?:ful|fully)?|verified|passed|fixed|resolved|ready|healthy|clean)\b/i
+      NEGATED_SUCCESS_STATUS = /\b(?:not|never|cannot|can't|couldn't|could not|didn't|did not|doesn't|does not|isn't|is not|wasn't|was not|hasn't|has not|haven't|have not|without)\b(?:\W+\w+){0,2}\W+#{SUCCESS_STATUS.source.sub(/\\b\\\(\?:/, "(?:")}/i
+      GROUNDING_STOP_WORDS = %w[
+        a about after all also am an and any are as at be because been before being but by
+        can cannot could did do does doing down during each for from had has have he her here him
+        his how i if in into is it its just may me might more most my no nor not of off on once
+        one only or our out over per same she should so some than that the their them then there
+        these they this those through to too under until up us very was we were what when where
+        which while who why will with within without would you your
+      ].freeze
+      GROUNDING_CONTEXT_WORDS = %w[
+        begin begins beginning event events first latest machine middle next now operation previous
+        result results run story task thing things work
+      ].freeze
 
       attr_reader :calls, :cost_usd, :beats
 
@@ -314,10 +328,45 @@ module Master
         sentences.reject { |s| told.include?(normal(s)) }
       end
 
-      # Every number spoken must be one the events or the story already hold.
+      # Numbers, substantive wording and completion claims must be supported by
+      # the current events or the story already told. Number-only validation let
+      # fluent but unrelated narration through; a lexical overlap gate sends those
+      # replies to the deterministic event template instead.
       def grounded?(sentences, job)
-        known = (job[:events].map(&:text) + job[:story] + [@last_gist.to_s]).join(" ").scan(/\d+/)
-        sentences.join(" ").scan(/\d+/).all? { |digits| known.include?(digits) }
+        current = job[:events].map(&:text).join(" ")
+        known = ([current] + job[:story] + [@last_gist.to_s]).join(" ")
+        known_numbers = known.scan(/\d+/)
+        return false unless sentences.join(" ").scan(/\d+/).all? { |digits| known_numbers.include?(digits) }
+
+        return false if sentences.any? { |sentence| unsupported_success_claim?(sentence, current, job[:kind]) }
+
+        evidence = grounding_terms(known)
+        sentences.all? do |sentence|
+          terms = grounding_terms(sentence)
+          next false if terms.empty?
+
+          shared = terms.count { |term| evidence.include?(term) }
+          shared.positive? && shared.to_f / terms.length >= 0.5
+        end
+      end
+
+      def unsupported_success_claim?(sentence, current, kind)
+        return false unless sentence.match?(SUCCESS_STATUS)
+        return false if sentence.match?(NEGATED_SUCCESS_STATUS)
+        return true unless kind == :closing && current.match?(SUCCESS_STATUS)
+
+        false
+      end
+
+      def grounding_terms(text)
+        text.to_s.downcase.scan(/[a-z]{3,}/).filter_map do |word|
+          next if GROUNDING_STOP_WORDS.include?(word) || GROUNDING_CONTEXT_WORDS.include?(word)
+
+          term = word.sub(/ies\z/, "y").sub(/s\z/, "").sub(/ing\z/, "").sub(/ed\z/, "")
+          next if term.length < 3 || GROUNDING_STOP_WORDS.include?(term) || GROUNDING_CONTEXT_WORDS.include?(term)
+
+          term
+        end.uniq
       end
 
       def template_sentences(job, gist)
