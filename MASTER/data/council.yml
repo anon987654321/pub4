@@ -120,7 +120,7 @@ personas:
     bias: Caution
     temperature: 0.25
     question: "What did we miss? What evidence is required?"
-    cognitive_lens: failure_modes
+    cognitive_lens: biases
     emphasizes: [ROBUSTNESS]
     can_veto: false
     prompt: Challenge assumptions, enumerate failure paths, edge cases, brittleness, and missing gaps.
@@ -411,6 +411,20 @@ questions:
     - which concept lacks a name and should have one?
     - where does the code lie about what it does?
     - what would a fresh reader misread first?
+  # One check per bias, sampled by the Skeptic's cognitive_lens (Deliberation).
+  biases:
+    - recency, did the latest change or report outweigh older evidence that still holds?
+    - confirmation, which evidence did we look for only because it supports the plan?
+    - anchoring, did the first option we saw set the terms for every option after it?
+    - availability, are we weighing the cases we remember over the cases that are common?
+    - sunk cost, would we choose this path again if none of the work so far had been done?
+    - optimism, what is the evidence for this estimate, and what did the last similar task cost?
+    - dunning-kruger, where do we claim certainty about code or tools we have not read or run?
+    - authority, which claim are we accepting because of who said it rather than what was shown?
+    - bandwagon, are we choosing this because it is popular rather than because it fits the load?
+    - survivorship, which failed attempts and abandoned cases are we not looking at?
+    - framing, does the answer change when the same problem is stated the opposite way?
+    - hindsight, was this outcome knowable when the decision was made, or only after?
   red_team:
     - what observation would falsify your criticism?
     - what useful behavior could your proposed fix accidentally damage?
