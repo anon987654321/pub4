@@ -3,9 +3,9 @@
 require_relative "test_helper"
 
 # The model phase of /fix, bounded: lanes probed before any file is sent, a
-# wall-clock per file, lane failures remembered for the run, the worklist
-# ranked easiest first, proposals that stray outside their finding refused, and
-# a file dropped after two rejects. All with fake lanes; no model is asked.
+# wall-clock per file, lane failures remembered for the run, an impact-ranked
+# worklist, proposals that stray outside their finding refused, and a file
+# dropped after two rejects. All with fake lanes; no model is asked.
 class TestFixModelPhaseGuards < Minitest::Test
   Ledger = Master::Fix::RunLedger
   Probe = Master::Fix::LaneProbe
