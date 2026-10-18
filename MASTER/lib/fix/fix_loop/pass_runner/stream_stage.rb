@@ -6,12 +6,11 @@ module Master
   module Fix
     class FixLoop
       class PassRunner
-        # Model repairs start as each file's scan lands, not after the whole
-        # target is read: a 1,227-file MASTER scan kept every repair waiting
-        # half an hour. The scanner hands each file's findings to a queue and
-        # one worker repairs them, rule by rule, while the scan moves on.
-        # Duplication findings wait for the full scan, because whether they
-        # count at all depends on every other file.
+        # An unbounded operator-requested run completes the eligible finding
+        # scan before repairs start, then queues files by impact. This replaces
+        # alphabetical/easiest-first selection with a traceable importance order.
+        # An explicit --max-files cap retains early-stop behavior unless
+        # MASTER_FIX_RANK=1 requests full-scan ranking under that cap.
         module StreamStage
           STREAM = ENV.fetch("MASTER_FIX_STREAM", "1") != "0"
           # Files repaired at once. One worker left the machine waiting on one
