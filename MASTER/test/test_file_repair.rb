@@ -44,7 +44,8 @@ class TestFileRepair < Minitest::Test
   def test_one_prompt_carries_every_repairable_finding_and_no_constitution
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, (["x = :bad"] + (["y = 1"] * 250)).join("\n") + "\n")
+      source = (["x = :bad"] + (["y = 1"] * 248) + ["LAST_SOURCE_LINE = :seen"]).join("\n") + "\n"
+      File.write(path, source)
       agent = Agent.new("```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,2 +1,2 @@\n-x = :bad\n+x = :good\n y = 1\n```")
 
       subject = repair(root, path, agent)
@@ -55,13 +56,42 @@ class TestFileRepair < Minitest::Test
       assert_includes fixes.first, "FEW_ARGUMENTS"
       assert_includes fixes.first, "CQS"
       refute_includes fixes.first, "SMALL_FILES", "a split waits for a person"
-      assert_operator fixes.first.bytesize, :<, 4_000, "the rules and a window of the file, not the 30 KB constitution or all 250 lines"
+      assert_includes fixes.first, "Complete source, all 250 lines, no excerpts or omissions"
+      assert_includes fixes.first, "LAST_SOURCE_LINE = :seen", "the complete target source must reach the model"
+      assert_includes fixes.first, Digest::SHA256.hexdigest(source)
       assert_includes fixes.first, "minimal unified diff"
       assert_equal 1, result[:fixed]
       assert_equal "x = :good\n", File.readlines(path).first
       assert_equal %w[FEW_ARGUMENTS CQS], subject.asked_rules, "a split filtered out is not asked"
     end
   end
+  def test_prompt_includes_complete_dependency_and_caller_sources_with_hashes
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      source = "module Sample\n  VALUE = :bad\nend\n"
+      dependency = "module SharedContract\n  CONTRACT_SENTINEL = :preserve\nend\n"
+      File.write(path, source)
+      agent = Agent.new("```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,3 +1,3 @@\n module Sample\n-  VALUE = :bad\n+  VALUE = :good\n end\n```")
+      subject = Master::Fix::FileRepair.new(
+        findings: [{ law: "TEST_RULE", line: 2, message: "replace bad value", file: path, severity: :warning }],
+        rules: [Rule.new("TEST_RULE", "replace the bad value")],
+        agent:, scanner: Scanner.new, root:,
+        context_files: [{
+          path: "lib/shared_contract.rb",
+          source: dependency,
+          sha256: Digest::SHA256.hexdigest(dependency),
+        }],
+      )
+
+      subject.run(path)
+
+      prompt = agent.prompts.reject { |item| item.include?("Verify this proposed") }.first
+      assert_includes prompt, "Related dependency/caller: lib/shared_contract.rb"
+      assert_includes prompt, "CONTRACT_SENTINEL = :preserve"
+      assert_includes prompt, Digest::SHA256.hexdigest(dependency)
+    end
+  end
+
   # Asking again with the same prompt returned the same diff that had not applied. The second
   # prompt carries the failure, and only the second.
   class SequenceAgent < Agent
