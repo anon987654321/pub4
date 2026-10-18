@@ -33,6 +33,12 @@ module Master
           # An empty or malformed report is not the same as a clean lint run.
           # The rule's check boundary converts this error into a visible finding;
           # returning nil here would silently retire the linter and count as clean.
+          def report_failure(name, message)
+            error = ReportError.new("#{name}: #{message}")
+            Master::Ground::Swallow.log(error, context: "linter_report #{name}", severity: :load_bearing)
+            raise error
+          end
+
           def linter_json(*argv)
             stdout, stderr, status = Master::Io::Exec.capture3(
               ::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root
@@ -69,11 +75,19 @@ module Master
             return [] unless path.end_with?(".rb") && linter_available?("rubocop")
 
             data = linter_json("rubocop", "--format", "json", "--no-color", path)
-            return [] unless data
+            files = data.is_a?(Hash) ? data["files"] : nil
+            unless files.is_a?(Array) && !files.empty? &&
+                   files.all? { |file| file.is_a?(Hash) && file["offenses"].is_a?(Array) }
+              report_failure("rubocop", "invalid JSON report shape; expected files with offense arrays")
+            end
 
-            offenses = data.dig("files", 0, "offenses") || []
-            offenses.map do |o|
-              finding(line: o.dig("location", "line") || 1, message: "rubocop: #{o["cop_name"]} — #{o["message"]}")
+            files.flat_map do |file|
+              file["offenses"].map do |offense|
+                finding(
+                  line: offense.dig("location", "line") || 1,
+                  message: "rubocop: #{offense["cop_name"]} — #{offense["message"]}"
+                )
+              end
             end
           rescue StandardError => e
             [finding(line: 1, message: "rubocop: scan error — #{e.message}")]
@@ -96,7 +110,10 @@ module Master
             return [] unless path.end_with?(".rb") && linter_available?("reek")
 
             smells = linter_json("reek", "--format", "json", path)
-            return [] unless smells
+            unless smells.is_a?(Array) &&
+                   smells.all? { |smell| smell.is_a?(Hash) && (smell["lines"].nil? || smell["lines"].is_a?(Array)) }
+              report_failure("reek", "invalid JSON report shape; expected an array of smell records")
+            end
 
             smells.flat_map do |smell|
               (smell["lines"] || [1]).map do |line|

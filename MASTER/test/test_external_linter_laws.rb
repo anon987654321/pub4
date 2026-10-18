@@ -37,6 +37,39 @@ class TestExternalLinterLaws < Minitest::Test
     end
   end
 
+  def test_valid_json_with_the_wrong_rubocop_shape_is_not_clean
+    with_rubocop_report(stdout: "null") do |rule|
+      findings = rule.check("def sample; end\n", path: "sample.rb")
+
+      assert_equal 1, findings.size
+      assert_match(/invalid JSON report shape/, findings.first.message)
+    end
+  end
+
+  def test_empty_rubocop_file_array_is_not_clean
+    with_rubocop_report(stdout: JSON.generate("files" => [])) do |rule|
+      findings = rule.check("def sample; end\n", path: "sample.rb")
+
+      assert_equal 1, findings.size
+      assert_match(/invalid JSON report shape/, findings.first.message)
+    end
+  end
+
+  def test_reek_rejects_a_valid_json_value_that_is_not_a_report_array
+    status = Struct.new(:exitstatus).new(0)
+    rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { ['{"issues":[]}', "", status] }) do
+          findings = rule.check("def sample; end\n", path: "sample.rb")
+
+          assert_equal 1, findings.size
+          assert_match(/invalid JSON report shape/, findings.first.message)
+        end
+      end
+    end
+  end
+
   def test_valid_offense_report_survives_linter_exit_status_one
     report = JSON.generate(
       "files" => [{
