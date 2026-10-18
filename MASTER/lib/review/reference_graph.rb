@@ -26,7 +26,7 @@ module Master
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)
 
-      attr_reader :nodes, :edges, :analysis_failures
+      attr_reader :nodes, :edges, :analysis_failures, :root
 
       def initialize(root:, event_bus: nil)
         @root = File.expand_path(root)
@@ -182,6 +182,12 @@ module Master
 
       def relative(path)
         File.expand_path(path).sub(%r{\A#{Regexp.escape(@root)}/?}, "")
+      end
+
+      public :relative
+
+      def includes_path?(path)
+        @nodes.include?(relative(path))
       end
     end
   end
