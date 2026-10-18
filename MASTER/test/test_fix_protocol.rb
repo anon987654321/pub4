@@ -137,6 +137,7 @@ class TestFixProtocol < Minitest::Test
       assert_equal Master::Fix::Protocol::VERSION, payload.fetch("fix_protocol_version")
       assert_includes payload.fetch("stages"), "semantic"
       assert_includes payload.fetch("terminal_states"), "PLATEAU"
+      assert_includes payload.fetch("terminal_states"), "INCONCLUSIVE"
       assert_equal 1, payload.dig("corpus", "total_regular_files")
       assert_kind_of Hash, payload.fetch("detector_matrix")
       assert_kind_of Hash, payload.fetch("detector_summary")
