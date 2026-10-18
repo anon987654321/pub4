@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "fileutils"
 require "open3"
 require "json"
+require "rbconfig"
 
 class TestFixWorktreeSession < Minitest::Test
   def test_disk_preflight_uses_interrupt_safe_subprocess_capture
@@ -115,6 +116,30 @@ exit(system("git", "commit", "-m", "worker fix"))
       refute File.exist?(result.worktree)
       assert_equal "after\n", git_output(root, "show", "origin/main:README")
       refute_empty git_output(root, "ls-remote", "--heads", "origin", result.branch)
+    end
+  end
+
+  def test_streamed_worker_output_redacts_credentials_but_retains_terminal_evidence
+    with_repo(worker: "#!/usr/bin/env ruby\nexit 0\n") do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+      code = <<~'RUBY'
+        puts "remote https://operator:password-value@example.invalid/repo.git?token=query-token"
+        puts "review0: complete"
+      RUBY
+
+      status = nil
+      lines = nil
+      out, err = capture_io do
+        status, lines = session.send(:run_stream, ENV.to_h, RbConfig.ruby, "-e", code, chdir: root, timeout_s: 5)
+      end
+
+      assert status, err + out
+      raw_line = "remote https://operator:password-value@example.invalid/repo.git?token=query-token"
+      assert_includes lines, raw_line, "state detection retains the child's original evidence"
+      assert_includes out + err, "remote https://[redacted]@example.invalid/repo.git?token=[redacted]"
+      refute_includes out + err, "password-value"
+      refute_includes out + err, "query-token"
+      assert_includes out + err, "review0: complete"
     end
   end
 
