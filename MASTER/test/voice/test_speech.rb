@@ -669,7 +669,6 @@ class TestSpeech < Minitest::Test
   def test_classic_speech_retries_once_after_empty_socket_audio_in_fast_mode
     speech = Master::Voice::Speech
     original_error = speech.last_error
-    speech.instance_variable_set(:@last_error, "edge socket produced empty audio")
     seen = nil
     audio_path = nil
     synth = lambda do |text:, voice_name:, style_config:, audio_path:, timeout: nil|
@@ -705,6 +704,29 @@ class TestSpeech < Minitest::Test
     assert_nil speech.last_error, "successful Edge retry must clear the recovered socket error"
   ensure
     File.delete(audio_path) if audio_path && File.exist?(audio_path)
+    speech.instance_variable_set(:@last_error, original_error) if speech
+  end
+
+  def test_fast_classic_speech_does_not_cold_start_when_no_socket_exists
+    speech = Master::Voice::Speech
+    original_error = speech.last_error
+    speech.clear_last_error!
+
+    speech.stub(:fast_tts_mode?, true) do
+      speech.stub(:synthesis_mode, "classic") do
+        speech.stub(:synthesize_edge_socket, nil) do
+          speech.stub(:synthesize_edge_oneshot, ->(**) { flunk "missing socket must not spawn a cold worker" }) do
+            assert_nil speech.synthesize_edge(
+              "Read these words exactly.",
+              voice: :christopher,
+              style_config: { rate: "+0%", pitch: "+0Hz" },
+              shape: false,
+            )
+          end
+        end
+      end
+    end
+  ensure
     speech.instance_variable_set(:@last_error, original_error) if speech
   end
 
