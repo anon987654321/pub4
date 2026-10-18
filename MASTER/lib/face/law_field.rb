@@ -9,6 +9,9 @@ module Master
     # A glyph is a view of a ranked law, never a parallel list of principles.
     module LawField
       MAX_CACHE_ENTRIES = 4
+      @mutex = Mutex.new
+      @cache = {}
+
       module_function
 
       def config(root: Master::ROOT)
@@ -46,8 +49,6 @@ module Master
         path = File.expand_path("data/laws.yml", root)
         stat = File.stat(path)
         key = [path, stat.mtime.to_f, stat.size]
-        @mutex ||= Mutex.new
-        @cache ||= {}
         @mutex.synchronize do
           return @cache.fetch(key) if @cache.key?(key)
 
