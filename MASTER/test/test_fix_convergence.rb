@@ -709,6 +709,39 @@ end
     assert_equal before, checkout_digest(@root), "dispatcher dry-run changed checkout content, .git, index or untracked files"
   end
 
+  def test_dispatch_announces_read_only_mode_before_preflight
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { flunk("dry-run attempted delivery") }
+    fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started repair") }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+    events = []
+
+    Master::Trace::Dmesg.stub(
+      :status,
+      ->(unit, message, **_options) { events << [:status, unit, message] },
+    ) do
+      Master::CLI::CommandRegistry.stub(
+        :observe,
+        ->(*) { events << [:observe]; "clean" },
+      ) do
+        result = Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: @root, bus: nil,
+          ctx: { args: ". --dry-run --no-aesthetic" },
+        )
+
+        assert_includes result, "preview:"
+      end
+    end
+
+    expected = [:status, "fix0", "mode=read-only target=MASTER boundary=no-write-or-publish"]
+    assert_equal expected, events.first
+    assert_operator events.index(expected), :<, events.index([:observe]),
+                    "the operator must see the execution mode before preflight"
+  end
+
   def test_fix_runtime_overrides_are_scoped_to_one_dispatch
     guard = Master::Fix::AutofixGuard
     ledger = Master::Fix::RunLedger
