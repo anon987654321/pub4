@@ -119,7 +119,7 @@ module Studio
         # The trainer version a run will use, so a sidecar can name it. A moving
         # "latest" makes two trainings of one dataset incomparable.
         def trainer_version
-          latest_version(LORA_TRAINER)
+          LORA_TRAINER_VERSION
         end
 
         # Pick a training up by id after an --async start or an interrupted poll.
@@ -211,6 +211,10 @@ module Studio
       CONFIG_PATH = File.expand_path("~/.config/replicate/config.json").freeze
       BASE = "https://api.replicate.com/v1"
       LORA_TRAINER = "ostris/flux-dev-lora-trainer"
+      # Pricing and request behaviour are tied to this reviewed version. The
+      # provider's "latest" pointer can change hardware and cost without a code
+      # change; update the pin, rate and schema evidence together.
+      LORA_TRAINER_VERSION = "26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
       MAX_DOWNLOAD_BYTES = 4 * 1024**3
       # Replicate holds a sync request 60 seconds at most; Cancel-After takes
