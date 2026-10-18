@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "did_you_mean"
+require_relative "../../unwrap_error"
 
 module Master
   module Review
@@ -22,15 +23,12 @@ module Master
         def react_tool_loop(selected_model, messages, sys:, stream:, image: nil, &blk)
           react_sys = build_react_system(sys)
           history = messages.dup
-          last = nil
           empty_rounds = 0
 
           REACT_MAX_STEPS.times do |step|
             result, done = react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
             return result if result.err?
-
-            last = result
-            break if done
+            return result if done
 
             # data/laws.yml's empty_tool_response: two rounds in which every tool
             # answered nothing is a model calling into a void, not progress.
@@ -38,7 +36,11 @@ module Master
             return empty_tool_failure(selected_model) if empty_rounds >= 2
           end
 
-          last || Result.err("react: no response generated", category: :llm_call_failure)
+          @bus&.publish("react:step_limit", model: selected_model, limit: REACT_MAX_STEPS)
+          Result.err(
+            "react: tool loop reached #{REACT_MAX_STEPS}-step limit without a final answer",
+            category: :timeout,
+          )
         end
 
         def react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
@@ -48,10 +50,19 @@ module Master
           return [result, true] if result.err?
 
           text = result.to_s
+          if Master::PhantomRecovery.malformed_tool_call?(text)
+            @bus&.publish("react:malformed_tool_call", model: selected_model, step:)
+            return [Result.err("react: malformed tool-call response; no tool was executed", category: :llm_failure), true]
+          end
+
           calls = parse_tool_calls(text)
           return [result, true] if calls.empty?
 
-          @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size)
+          names = calls.first(16).map do |call|
+            name = call["name"].to_s
+            name.match?(/\A[A-Za-z][A-Za-z0-9_-]{0,63}\z/) ? name : "[invalid]"
+          end
+          @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size, tools: names)
           history << { role: "assistant", content: text }
           tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
           history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
