@@ -83,6 +83,9 @@ module Master
 
         carried = carry_availability_state(worktree)
         announce("lane state carried: #{carried.join(", ")}") unless carried.empty?
+        if carry_gate_baseline(worktree)
+          announce("gate baseline cache carried; the current tree fingerprint decides reuse")
+        end
 
         status, lines = run_child(worktree, command)
         terminal_failure = worker_terminal_failure(lines)
