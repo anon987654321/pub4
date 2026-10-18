@@ -1371,6 +1371,7 @@ end
     deferred = []
     mission = Object.new
     mission.define_singleton_method(:defer!) { |reason:| deferred << reason }
+    mission.define_singleton_method(:requeue_if_requested!) { false }
 
     Master::Fix::RunBudget.stub(:finish_run, ->(**) {}) do
       Master::Io::LaneSelection.stub(:announce, nil) do
@@ -1412,20 +1413,24 @@ end
     lifecycle = []
     mission = Object.new
     mission.define_singleton_method(:defer!) { |reason:| lifecycle << [:mission_deferred, reason] }
+    mission.define_singleton_method(:requeue_if_requested!) { false }
     recovery_error = Master::Result.err("delivery recovery failed", category: :delivery_failed)
+    reachability = loop.instance_variable_get(:@reachability)
 
     Master::Fix::RunBudget.stub(:begin_run, ->(**) { lifecycle << [:budget_started] }) do
       Master::Fix::RunBudget.stub(:finish_run, ->(reason: "completed") { lifecycle << [:budget_finished, reason] }) do
-        loop.stub(:resume_active_transaction, recovery_error) do
-          result = loop.send(
-            :run_journaled,
-            { "id" => "run-recovery", "remaining_seconds" => 60.0, "resumed" => false },
-            files: [], target: @root, max_passes: 1, budget_seconds: 60,
-            mission:, requested: false, incremental: false,
-          )
+        reachability.stub(:verify!, true) do
+          loop.stub(:resume_active_transaction, recovery_error) do
+            result = loop.send(
+              :run_journaled,
+              { "id" => "run-recovery", "remaining_seconds" => 60.0, "resumed" => false },
+              files: [], target: @root, max_passes: 1, budget_seconds: 60,
+              mission:, requested: false, incremental: false,
+            )
 
-          assert result.err?
-          assert_equal :delivery_failed, result.category
+            assert result.err?
+            assert_equal :delivery_failed, result.category
+          end
         end
       end
     end
