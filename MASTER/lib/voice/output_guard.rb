@@ -31,11 +31,8 @@ module Master
         # The messages quote voice.yml's preserve block, so editing the rule edits what is reported.
         @preserve = @laws.preserve
         soul = @laws.data(:soul) || {}
-        # Under "absolute", where soul.yml actually nests it. There is no
-        # top-level anti_simulation key, so this dug nothing and @evidence has
-        # always been {} — the evidence contract is enforced by the hardcoded
-        # regexes further down instead. prompt_filter.rb digs the same block
-        # with the "absolute" prefix, which is what confirms the shape.
+        # soul.yml nests evidence requirements under absolute.anti_simulation;
+        # this map supplies the configured hints for named output contexts.
         @evidence = soul.dig("absolute", "anti_simulation", "require_evidence") || {}
       end
 
@@ -130,11 +127,8 @@ module Master
         end
       end
 
-      # Derived from soul.yml, not restating it. @evidence was dug from a key
-      # that does not exist and was therefore always {}, so these two strings
-      # were the whole contract — a hardcoded copy of the constitution sitting
-      # a few lines below the read meant to supply it. The fallbacks keep the
-      # previous behaviour if the key is ever absent.
+      # Named contexts use soul.yml requirements. These fallbacks keep
+      # modification and completion guidance defined if either key is absent.
       def append_evidence_hint(text, context)
         requirement = @evidence[context.to_s] ||
                       { modification: "show unified diff", completion: "show command output" }[context]
