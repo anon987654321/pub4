@@ -154,14 +154,16 @@ class TestVoiceSupport < Minitest::Test
     assert_empty spoken
   end
 
-  def test_playback_is_silent_off_a_terminal_and_when_told_to_be
+  def test_cli_playback_is_off_by_default_and_explicitly_opt_in
     $stdout.stub(:isatty, true) do
-      with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { assert PB.enabled? }
+      with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { refute PB.enabled? }
+      with_env("MASTER_CLI_SPEAK" => "1", "MASTER_SKIP_TTS" => nil, "CI" => nil) { assert PB.enabled? }
       with_env("MASTER_CLI_SPEAK" => "0", "MASTER_SKIP_TTS" => nil, "CI" => nil) { refute PB.enabled? }
-      with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => "1") { refute PB.enabled? }
+      with_env("MASTER_CLI_SPEAK" => "1", "MASTER_SKIP_TTS" => "1", "CI" => nil) { refute PB.enabled? }
+      with_env("MASTER_CLI_SPEAK" => "1", "MASTER_SKIP_TTS" => nil, "CI" => "1") { refute PB.enabled? }
     end
     $stdout.stub(:isatty, false) do
-      with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { refute PB.enabled? }
+      with_env("MASTER_CLI_SPEAK" => "1", "MASTER_SKIP_TTS" => nil, "CI" => nil) { refute PB.enabled? }
     end
   end
 
