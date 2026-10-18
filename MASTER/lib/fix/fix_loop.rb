@@ -495,7 +495,10 @@ module Master
 
       def recover_pending_delivery(active_pass:, run_id:, commit:)
         recovery_result = retry_delivery(transaction_id: active_pass.fetch("transaction_id"), expected_head: commit)
-        return recovery_result if recovery_result.err?
+        if recovery_result.err?
+          return Result.err("delivery recovery failed: #{recovery_result.message}", category: :delivery_failed)
+        end
+
         @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
                                  message: "recovered Git delivery")
         Result.ok(active_pass.fetch("pass").to_i + 1)
@@ -505,6 +508,7 @@ module Master
         return :timeout if result.err? && result.category == :timeout
         return :crash if result.err? && result.category == :crash
         return :skip if result.err? && result.category == :skip
+        return :delivery_failed if result.err? && result.category == :delivery_failed
         return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
 
         :failed
