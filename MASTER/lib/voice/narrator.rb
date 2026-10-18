@@ -348,8 +348,7 @@ module Master
           terms = grounding_terms(sentence)
           next false if terms.empty?
 
-          shared = terms.count { |term| evidence.include?(term) }
-          shared.positive? && shared.to_f / terms.length >= 0.5
+          terms.all? { |term| evidence.include?(term) }
         end
       end
 
