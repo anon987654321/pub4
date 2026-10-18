@@ -36,6 +36,7 @@ def usage
 
     Usage:
       bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every gate in the repo, fixing as it goes
+      bin/operator gate --fix-proof [--tree=T]  internal /fix final proof against a verified candidate baseline
       bin/operator status [--json]
       bin/operator fix status [--trees=A,B] [--json]  /fix runs, queue, pass, logs, commits and retained worktrees; read-only
       bin/operator vps state [--json] [--remote]
@@ -113,6 +114,7 @@ when "gate"
   require "operator/gate_chain"
   release = !ARGV.delete("--release").nil?
   ENV["MASTER_STRICT"] = "deploy" if release
+  fix_proof = !ARGV.delete("--fix-proof").nil?
   scan_only = !ARGV.delete("--scan-only").nil? || ENV["MASTER_GATE_SCAN_ONLY"] == "1"
   # --explain is the same question people actually ask before starting an hour
   # of gates: what is this going to run.
@@ -124,6 +126,12 @@ when "gate"
   # reasoning is in lib/operator/gate_chain.rb.
   trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }
   trees << ARGV[ARGV.index("--tree") + 1].to_s if ARGV.include?("--tree")
+  if fix_proof
+    selected = Operator::GateChain.normalise_trees(trees)
+    targets = selected.sort == Operator::GateChain::TREES.sort ? ["all"] : selected
+    statuses = targets.map { |target| Operator::GateChain.verify_cached_fix(target:).first }
+    exit(statuses.max || 0)
+  end
   exit Operator::GateChain.run(scan_only:, only:, list:, trees:)
 when "status", nil
   json = ARGV.include?("--json")
