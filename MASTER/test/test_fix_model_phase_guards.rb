@@ -287,9 +287,29 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal 2, queue.size
   end
 
+  def test_an_unbounded_default_scan_collects_the_corpus_before_queueing_repairs
+    previous = ENV["MASTER_FIX_RANK"]
+    ENV.delete("MASTER_FIX_RANK")
+    Ledger.reset!
+    scan = Scanning.new
+    paths = %w[/r/a.rb /r/b.rb /r/c.rb /r/d.rb]
+    queue = Queue.new
+
+    scan.send(:stream_violations, paths, queue)
+
+    assert_equal paths, scan.scanned
+    assert_equal paths.size, queue.size
+  ensure
+    previous ? ENV["MASTER_FIX_RANK"] = previous : ENV.delete("MASTER_FIX_RANK")
+  end
+
   def test_a_limited_run_does_not_wait_for_a_ranked_scan
+    previous = ENV["MASTER_FIX_RANK"]
+    ENV.delete("MASTER_FIX_RANK")
     Ledger.max_files = 2
 
     refute Scanning.new.send(:rank_worklist?)
+  ensure
+    previous ? ENV["MASTER_FIX_RANK"] = previous : ENV.delete("MASTER_FIX_RANK")
   end
 end
