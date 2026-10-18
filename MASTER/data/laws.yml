@@ -115,6 +115,15 @@ RENDERED_VALUES:
     - name: "Operator Sovereignty over Aesthetics"
       url: "internal:operator_decision_log"
 
+markdown_style:
+  aesthetic: tadao_ando
+  applies_to: [MASTER, claude, grok, codex]
+  rules:
+    - fewer sections than feel necessary; cut before you add
+    - irregular composition — vary heading levels and paragraph length
+    - negative space is structure, not waste
+    - concrete over ornament; delete anything decorative
+
 prose:
   en:
     spoken_in: '.'
