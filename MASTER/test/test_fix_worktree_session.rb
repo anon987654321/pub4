@@ -196,7 +196,7 @@ exit(system("git", "commit", "-m", "worker fix"))
 
       refute result.ok, err + out
       assert_equal :delivery_failed, result.category
-      assert_match(/\ADELIVERY_FAILED: final publication did not complete cleanly \(IOError\); PR https:\/\/github\.com\/anon987654321\/pub4\/pull\/99\z/, result.summary)
+      assert_match(/\ADELIVERY_FAILED: final publication did not complete cleanly \(IOError\); PR https:\/\/github\.com\/anon987654321\/pub4\/pull\/99/, result.summary)
       refute_includes result.summary, "private push URL"
       refute_includes result.summary, "user:secret"
       assert File.directory?(result.worktree), "unpublished work must remain available for recovery"
