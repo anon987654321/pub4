@@ -743,9 +743,11 @@ module Master
         # work. Classic CLI speech prioritizes faithful delivery: when its fast
         # socket path returns no audio, allow one bounded whole-file retry before
         # Playback falls through to the host's alternate voice.
-        return if fast_tts_mode? && synthesis_mode != "classic"
+        fast_retry = fast_tts_mode? && synthesis_mode == "classic"
+        return if fast_tts_mode? && !fast_retry
 
-        path = synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
+        retry_timeout = [normal_worker_timeout(text.to_s.length), 30].min if fast_retry
+        path = synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:, timeout: retry_timeout)
         clear_last_error! if path && File.size?(path)
         shape ? shaped(path) : path
       ensure
