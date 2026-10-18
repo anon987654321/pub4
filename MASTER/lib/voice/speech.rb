@@ -734,15 +734,19 @@ module Master
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
         sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
-        return shape ? shaped(sock_path) : sock_path if sock_path
+        if sock_path
+          clear_last_error!
+          return shape ? shaped(sock_path) : sock_path
+        end
 
         # Keep the fast mode's no-cold-retry policy for expressive/streaming
-        # work. Classic CLI speech prioritizes faithful delivery: after both
-        # socket attempts returned empty audio, permit one bounded whole-file retry
-        # before Playback falls through to the host's alternate voice.
+        # work. Classic CLI speech prioritizes faithful delivery: when its fast
+        # socket path returns no audio, allow one bounded whole-file retry before
+        # Playback falls through to the host's alternate voice.
         return if fast_tts_mode? && synthesis_mode != "classic"
 
         path = synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
+        clear_last_error! if path && File.size?(path)
         shape ? shaped(path) : path
       ensure
         log_timing("edge_total", started_at, text_length: text.to_s.length) if started_at
