@@ -108,7 +108,7 @@ module Master
 
         def run_proof(worktree, proof_trees:)
           command = File.join(worktree, "MASTER", "bin", "operator")
-          args = ["gate", "--scan-only"]
+          args = ["gate", "--fix-proof"]
           trees = Array(proof_trees).map(&:to_s).select { |tree| TREES.include?(tree) }.uniq
           args << "--tree=#{trees.join(",")}" unless trees.empty? || trees.sort == TREES.sort
           run_stream(
