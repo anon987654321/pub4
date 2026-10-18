@@ -2,8 +2,9 @@
 #
 # `default_mode` selects completed-utterance synthesis for CLI Playback on macOS.
 # `fast_mode` is a separate latency policy: it keeps web speech progressive
-# and avoids cold-worker retries on the Edge fallback. Set MASTER_TTS_MODE=transcendent
-# on macOS to opt into expressive multi-engine synthesis for the current CLI session.
+# and avoids cold-starting Edge when no socket is available. Classic CLI speech
+# allows one bounded one-shot recovery after an actual socket synthesis failure.
+# Set MASTER_TTS_MODE=transcendent on macOS to opt into multi-engine synthesis.
 # OpenBSD retains its explicit host-specific policy in Speech.synthesis_mode.
 #
 transcendent:
