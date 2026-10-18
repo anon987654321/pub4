@@ -16,8 +16,8 @@ class TestAiOrientation < Minitest::Test
     FileUtils.mkdir_p(File.join(@master, "runtime"))
     FileUtils.mkdir_p(File.join(@root, "RAILS"))
     FileUtils.mkdir_p(File.join(@root, "OPENBSD", "data"))
+    File.write(File.join(@root, "README.md"), "pub4 entry\n")
     File.write(File.join(@root, "CLAUDE.md"), "authority order\n")
-    File.write(File.join(@root, "ARCHITECTURE.md"), "ARCHITECTURE\n")
     File.write(File.join(@root, "TODO.md"), "TODO\n")
     File.write(File.join(@master, "lib", "master.rb"), "module Master\nend\n")
     File.write(File.join(@master, "runtime", "active_plan.md"), "repair boot\nverify again\n")
@@ -69,7 +69,7 @@ class TestAiOrientation < Minitest::Test
     text = Master::AI::Orientation.render(root: @master, target: File.join(@master, "lib"))
 
     assert_includes text, "MASTER orientation v3"
-    assert_includes text, "docs: CLAUDE.md, ARCHITECTURE.md, TODO.md"
+    assert_includes text, "docs: README.md, CLAUDE.md, TODO.md"
     assert_includes text, "target: MASTER/lib"
     assert_includes text, "judgment: rank changes by causal leverage"
     assert_includes text, "scales: reason local"

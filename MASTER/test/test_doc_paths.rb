@@ -31,8 +31,8 @@ class TestDocPaths < Minitest::Test
   # numbers rather than as paths, which is why every section carries the date it
   # was measured.
   DOCS = %w[
+    README.md
     CLAUDE.md
-    ARCHITECTURE.md
     AGENTS.md
     GEMINI.md
     .cursorlaws
@@ -46,6 +46,14 @@ class TestDocPaths < Minitest::Test
     MASTER/tools/README.md
     STUDIO/README.md
   ].freeze
+
+  def test_design_authority_is_laws_yml_without_a_parallel_architecture_document
+    refute File.exist?(File.join(REPO, "ARCHITECTURE.md"))
+
+    root_readme = File.read(File.join(REPO, "README.md"))
+    assert_includes root_readme, "`MASTER/data/laws.yml`"
+    refute_match(/\]\(ARCHITECTURE\.md\)/, root_readme)
+  end
 
   def test_authority_order_puts_executable_law_above_harnesses
     docs = %w[CLAUDE.md MASTER/AGENTS.md RAILS/CLAUDE.md OPENBSD/CLAUDE.md]
@@ -77,7 +85,7 @@ class TestDocPaths < Minitest::Test
     tracked_md = tracked.select { |path| path.end_with?(".md") }
     extras = tracked_md.reject do |path|
       File.basename(path) == "README.md" ||
-        path == "TODO.md" || path == "ARCHITECTURE.md" ||
+        path == "TODO.md" ||
         File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI)\.md\z/) ||
         path == ".github/copilot-instructions.md" ||
         path == "OPENBSD/RUNBOOK.md" ||

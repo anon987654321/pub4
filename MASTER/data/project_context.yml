@@ -317,7 +317,7 @@ entries:
 
     Primary OpenBSD sources: https://www.openbsd.org/goals.html ; https://man.openbsd.org/style.9 ; https://www.openbsd.org/papers/dev-sw-hostile-env.html ; https://www.openbsd.org/security.html ; https://man.openbsd.org/pledge.2 ; https://man.openbsd.org/unveil.2 .
 
-    Existing pub4 mechanisms already embody much of this: soul.yml sets PRESERVE_THEN_IMPROVE_NEVER_BREAK and truthful-evidence constraints; laws.yml defines ROBUSTNESS, SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION and DENSITY, plus evidence-ranked transformation policy preserving semantics, public contracts, references, and side-effect order. ARCHITECTURE.md names the Fold -> Constitution -> World -> Memory/Proof boundary and separates observation/planning/verification from mutation. Core::World has atomic writes, symlink-aware workspace containment, secret-path refusal, and path-scoped rollback for a failed write. Core::Proof checks real command producers and distinct evidence kinds. Reinforce these; do not add duplicate registries or grow the kernel spine merely to resemble another project.
+    Existing pub4 mechanisms already embody much of this: soul.yml sets PRESERVE_THEN_IMPROVE_NEVER_BREAK and truthful-evidence constraints; laws.yml defines ROBUSTNESS, SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION and DENSITY, plus evidence-ranked transformation policy preserving semantics, public contracts, references, and side-effect order. The four-tree ownership and dependency contract lives in MASTER/data/laws.yml#architecture; the live Core::Fold, Constitution, World, Memory and Proof implementations plus their tests enforce the runtime sequence and separate observation/planning/verification from mutation. Core::World has atomic writes, symlink-aware workspace containment, secret-path refusal, and path-scoped rollback for a failed write. Core::Proof checks real command producers and distinct evidence kinds. Reinforce these; do not add duplicate registries or grow the kernel spine merely to resemble another project.
 
     Rubik (MIT, https://github.com/ozgurulukir/rubik): source docs describe fail-closed command/path/synthesis gates, atomic writes, audit records, a reviewable file buffer, and an LIFO inverse runtime. SECURITY.md explicitly says the optional OS sandbox is disabled by default; policy gating and OS isolation must be treated as separate controls. Study only bounded inverse/compensation semantics if a demonstrated gap justifies them; do not import Rubik's full agent/runtime architecture.
 
@@ -340,7 +340,7 @@ entries:
     turns the original failure into success. `MASTER/lib/core/model.rb` exposes the structured
     compensation schema, `MASTER/test/test_core_reversibility.rb` covers classification,
     approval, malformed compensation, successful compensation and refusal, and
-    `ARCHITECTURE.md` records the boundary. Git history and the shared index have no automatic
+    `MASTER/data/laws.yml` is the design authority; tests pin the runtime behavior. Git history and the shared index have no automatic
     inverse. Generic exec and HTTP remain policy-gated, not presumed reversible. Do not claim
     verification yet: the tests were added but have not been run in a Ruby checkout. Future work
     must test idempotency, partial failure and concurrent changes before expanding the set of

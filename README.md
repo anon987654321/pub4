@@ -2,7 +2,7 @@
 
 pub4 is one repository with four governed trees: **MASTER** controls the repair and reasoning runtime, **RAILS** holds the products, **OPENBSD** owns deployment and machine security, and **STUDIO** owns sound and media generation. `RECOVERY/` contains recovery material rather than a fifth application tree.
 
-Start with [the architecture](ARCHITECTURE.md) and the repository's [agent contract](AGENTS.md). For changes, follow the authority chain: `MASTER/data/soul.yml`, `MASTER/data/laws.yml`, executable laws in `MASTER/law/`, then the relevant gates and tree contracts. Do not call work complete without the command output that proves it.
+Start with the repository's [agent contract](AGENTS.md) and the relevant tree or project `README.md`. Design constraints are specified in `MASTER/data/laws.yml` under the constitutional authority of `MASTER/data/soul.yml`; executable laws in `MASTER/law/` and scanner adapters enforce them. Each README is the human entry point for its boundary, while configuration and code remain authoritative for behavior. Do not call work complete without the command output that proves it.
 
 ## The four trees
 

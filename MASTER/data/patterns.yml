@@ -529,7 +529,7 @@ repo_topics:
     - MASTER/data/limits.yml
     - MASTER/data/runtime.yml#repo_ecology
     - MASTER/data/runtime.yml#cognitive_spine
-    - RAILS/amber/ARCHITECTURE.md
+    - RAILS/amber/README.md
     pattern: 'MASTER already thinks in architectures: rule DAGs, dataflow pipelines,
       CRDT convergence, Bayesian priors, repo ecology, and embodied codebase topology.
 

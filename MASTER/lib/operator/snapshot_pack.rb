@@ -44,7 +44,7 @@ module Operator
     ].freeze
 
     TEST_PATH = %r{(\A|/)(test|spec)/|_test\.(rb|mjs|js)\z|\.test\.(mjs|js)\z}
-    DOCUMENTS = %r{(\A|/)(CLAUDE|AGENTS|README|ARCHITECTURE)\.md\z|(\A|/)soul\.yml\z}
+    DOCUMENTS = %r{(\A|/)(CLAUDE|AGENTS|README)\.md\z|(\A|/)soul\.yml\z}
     FENCE_LANG = {
       ".rb" => "ruby", ".rake" => "ruby", ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json",
       ".js" => "javascript", ".mjs" => "javascript", ".ts" => "typescript", ".css" => "css",
