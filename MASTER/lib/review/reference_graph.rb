@@ -14,14 +14,16 @@ module Master
   # - topology visualization
   # - governed autonomous restructuring
     class ReferenceGraph
-      DEFAULT_EXTENSIONS = %w[
-        .rb .rake .gemspec .ru .js .jsx .mjs .cjs .ts .tsx .erb .html .htm
-        .css .scss .yml .yaml .json .jsonc .toml .xml .md .mdx .sh .zsh .ksh
-        .conf .ini
-      ].freeze
+      # Keep this graph aligned with FileCollector's eligible text corpus,
+      # including extensionless build files, dotfiles, documentation and config.
+      # Oversized or binary files are not source dependencies; /fix's inventory
+      # reports their separate exclusion/blocking state.
+      MAX_TEXT_BYTES = 2 * 1024 * 1024
+      PROBE_BYTES = 8 * 1024
 
       IGNORE_DIRS = %w[
-        .git node_modules vendor tmp log coverage dist build .bundle
+        .git node_modules vendor tmp log coverage dist build .bundle .cache
+        .next .output .turbo reports root
       ].freeze
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)
@@ -91,11 +93,24 @@ module Master
             next
           end
 
-          next unless DEFAULT_EXTENSIONS.include?(File.extname(path))
+          next if File.symlink?(path)
+          next unless text_file?(path)
 
           collected << path
         end
         collected
+      end
+
+      def text_file?(path)
+        size = File.size(path)
+        return false if size > MAX_TEXT_BYTES
+
+        probe = File.binread(path, PROBE_BYTES)
+        return false if probe.include?("\0")
+
+        probe.dup.force_encoding(Encoding::UTF_8).valid_encoding?
+      rescue SystemCallError
+        false
       end
 
       def analyze(file)
