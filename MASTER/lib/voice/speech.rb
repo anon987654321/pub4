@@ -736,7 +736,11 @@ module Master
         sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
         return shape ? shaped(sock_path) : sock_path if sock_path
 
-        return if fast_tts_mode?
+        # Keep the fast mode's no-cold-retry policy for expressive/streaming
+        # work. Classic CLI speech prioritizes faithful delivery: after both
+        # socket attempts returned empty audio, permit one bounded whole-file retry
+        # before Playback falls through to the host's alternate voice.
+        return if fast_tts_mode? && synthesis_mode != "classic"
 
         path = synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
         shape ? shaped(path) : path
