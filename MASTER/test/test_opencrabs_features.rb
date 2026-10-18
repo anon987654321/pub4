@@ -205,16 +205,16 @@ class TestOpenCrabsFeatures < Minitest::Test
     assert_match(/at capacity/, second.message)
     assert_equal 1, pool.instance_variable_get(:@reservations)
   ensure
+    4.times { hold << true } if hold
     release << true if release
-    if first
-      result = first.value
-      hold << true if result&.ok?
-      first.join(1)
-    end
+    first&.join(1)
+    pool&.join_all(timeout: 1)
   end
 
   def test_agent_pool_denies_spawn_when_governor_raises
-    bus = Master::Trace::EventBus.new
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **payload| events << [name, payload] }
     governor = Object.new
     governor.define_singleton_method(:permit?) { |*| raise IOError, "permission source unavailable" }
     pool = Master::Review::AgentPool.new(
@@ -231,6 +231,6 @@ class TestOpenCrabsFeatures < Minitest::Test
     refute ran
     assert_empty pool.instance_variable_get(:@workers)
     assert_equal 0, pool.instance_variable_get(:@reservations)
-    assert bus.topics.include?("agent:spawn_check_failed") if bus.respond_to?(:topics)
+    assert events.any? { |name, payload| name == "agent:spawn_check_failed" && payload[:error] == "IOError" }
   end
 end
