@@ -119,7 +119,7 @@ begin
 
     targets.each do |name, port, browser_spec|
       unless options[:public]
-        open = CrawlSupport.port_open?("127.0.0.1", port)
+        open = CrawlSupport.crawler_port_open?("127.0.0.1", port)
         unless open
           if options[:skip_closed]
             skips << "#{name}: port #{port} closed"
