@@ -401,20 +401,21 @@ module Master
       # incomplete terminal result. Never report that run as a clean success.
       def worker_terminal_failure(lines)
         Array(lines).find do |line|
-          line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)
+          line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|crash|skip|blocked|inconclusive|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)
         end
       end
 
       # The worker's terminal vocabulary maps to the shared Result retry policy.
       # A failed delivery can be retried; an operator veto must not be treated as validation.
       def worker_terminal_category(line)
-        state = line.to_s.match(/:\s*(incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)&.captures&.first&.downcase
+        state = line.to_s.match(/:\s*(incomplete|failed|crash|skip|blocked|inconclusive|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)&.captures&.first&.downcase
         case state
         when "delivery_failed" then :delivery_failed
         when "timeout" then :timeout
         when "crash" then :crash
         when "skip" then :skip
         when "blocked" then :policy
+        when "inconclusive" then :inconclusive
         when "human_decision" then :human_decision
         when "plateau", "complete with open findings" then :plateau
         when "reloading" then :reloading
