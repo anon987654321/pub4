@@ -17,10 +17,11 @@ module Master
       GOLDEN = "Golden rule: preserve, then improve, never break. Make the smallest change " \
                "that removes each finding; touch nothing else."
 
-      def initialize(findings:, rules:, agent:, scanner:, root:, context_files: [], **options)
+      def initialize(findings:, rules:, agent:, scanner:, root:, context_files: [], expected_target_sha256: nil, **options)
         @notes = rules.to_h { |rule| [rule.id.to_s, rule.respond_to?(:description) ? rule.description.to_s : ""] }
         @findings = findings
         @context_files = Array(context_files)
+        @expected_target_sha256 = expected_target_sha256
         ids = findings.map { |finding| finding[:law].to_s }.uniq
         super(law: Scope.new(id: ids.join("+"), description: "file repair"), agent:, scanner:, root:, **options)
       end
@@ -61,6 +62,15 @@ module Master
       def request_fix(violation)
         path = violation[:file]
         src = File.read(path, encoding: "UTF-8")
+        if @expected_target_sha256 && Digest::SHA256.hexdigest(src) != @expected_target_sha256
+          RunLedger.declined("target_source_changed_after_context_read", file: path, law: @law.id)
+          return nil
+        end
+        unless context_fresh?(path, src)
+          RunLedger.declined("dependency_source_changed_after_context_read", file: path, law: @law.id)
+          return nil
+        end
+
         excerpt_fix(src:, path:)
       end
 
@@ -77,6 +87,11 @@ module Master
           return RunLedger.declined("model_said_unchanged", file: path, law: @law.id) if response.strip == "UNCHANGED"
           return RunLedger.declined("empty_reply", file: path, law: @law.id) if response.strip.empty?
 
+          unless context_fresh?(path, src)
+            RunLedger.declined("dependency_context_changed_during_model_call", file: path, law: @law.id)
+            return nil
+          end
+
           result = PatchApplier.apply(src, diff_of(response))
           return result.source if result.is_a?(PatchApplier::Success)
 
@@ -87,6 +102,22 @@ module Master
           return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
         end
         nil
+      end
+
+      def context_fresh?(path, target_source)
+        return true unless @expected_target_sha256
+        return false unless Digest::SHA256.hexdigest(target_source) == @expected_target_sha256
+
+        @context_files.all? do |entry|
+          dependency = File.expand_path(entry.fetch(:path).to_s, @root)
+          next false if File.symlink?(dependency) || !File.file?(dependency)
+
+          source = File.read(dependency, encoding: "UTF-8")
+          Digest::SHA256.hexdigest(source) == entry.fetch(:sha256).to_s
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "file_repair.context_fresh", path:)
+        false
       end
 
       # The diff inside a fence when the reply is fenced, else the reply.
