@@ -50,14 +50,15 @@ module Master
       # coming back, or the passes ran out. HUMAN_DECISION is a safe halt when a
       # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
-      TERMINAL_STATES = %i[done plateau crash skip blocked validation_failed delivery_failed timeout human_decision failed reloading].freeze
+      TERMINAL_STATES = %i[done plateau crash skip blocked validation_failed delivery_failed timeout human_decision inconclusive failed reloading].freeze
       # A pass status that ends the run, and the state it ends in.
       PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, human_decision: :human_decision,
                        reloading: :reloading }.freeze
       MEASURED_REPAIR_OUTCOMES = {
-        done: true, plateau: false, crash: false, validation_failed: false,
-        delivery_failed: false, timeout: false, failed: false,
+        done: true, plateau: false, crash: false, skip: false, blocked: false,
+        validation_failed: false, delivery_failed: false, timeout: false,
+        human_decision: false, inconclusive: false, failed: false, reloading: false,
       }.freeze
 
       MAX_PASSES = 15
@@ -512,6 +513,7 @@ module Master
         return :human_decision if result.err? && result.category == :human_decision
         return :plateau if result.err? && result.category == :plateau
         return :reloading if result.err? && result.category == :reloading
+        return :inconclusive if result.err? && result.category == :inconclusive
         return :validation_failed if result.err? && result.category == :validation
         return :failed if result.err? && result.category == :failed
         return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
