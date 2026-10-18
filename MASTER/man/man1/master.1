@@ -1,0 +1,33 @@
+.Dd October 18, 2026
+.Dt MASTER 1
+.Os
+.Sh NAME
+.Nm master
+.Nd start the MASTER interactive runtime or submit an instruction
+.Sh SYNOPSIS
+.Nm
+.Op Ar instruction ...
+.Sh DESCRIPTION
+.Nm
+starts the Ruby runtime through
+.Pa MASTER/bin/master .
+With no instruction, it opens an interactive session. With an instruction,
+it submits that instruction to the same runtime.
+.Pp
+Every requested effect is governed by the current constitutional and policy
+checks before execution. A model proposal is not proof that an effect ran.
+A file change is not complete until the required verification reports its
+actual outcome.
+.Pp
+The repository's
+.Pa MASTER/README.md
+is the human entry point. The implementation and its tests remain authoritative
+for runtime behavior.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+MASTER/bin/master
+MASTER/bin/master "Explain this repository"
+.Ed
+.Sh SEE ALSO
+.Xr operator 1 ,
+.Xr master-fix 1

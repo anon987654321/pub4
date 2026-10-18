@@ -1,0 +1,68 @@
+.Dd October 18, 2026
+.Dt OPERATOR 1
+.Os
+.Sh NAME
+.Nm operator
+.Nd operate and verify the pub4 repository
+.Sh SYNOPSIS
+.Nm
+.Cm status
+.Nm
+.Cm measure
+.Nm
+.Cm gate
+.Op Fl -scan-only
+.Nm
+.Cm test
+.Op Ar path ...
+.Nm
+.Cm vps state
+.Nm
+.Cm vps deploy
+.Ar app
+.Op Fl -remote
+.Sh DESCRIPTION
+.Nm
+is the repository-wide operator entry point at
+.Pa MASTER/bin/operator .
+It coordinates repository state, measurement, gates, tests and the approved
+VPS operation interface.
+.Pp
+.Cm gate
+runs the gate ladder and may repair files by default.
+.Fl -scan-only
+selects the read-only scan mode. Do not use the default mode when only a
+measurement is intended.
+.Pp
+.Cm status
+reports repository state.
+.Cm measure
+reports current measurements and their limits.
+.Cm test
+selects the smallest complete proof available for the requested paths.
+.Cm vps state
+reads VPS state. Deployment changes production and must follow the current
+preflight and approval contract.
+.Pp
+For exact accepted arguments, consult the command's built-in usage and the
+implementation in
+.Pa MASTER/bin/operator .
+Keep this page synchronized with those executable interfaces.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+MASTER/bin/operator status
+MASTER/bin/operator measure
+MASTER/bin/operator gate --scan-only
+MASTER/bin/operator test
+MASTER/bin/operator vps state
+.Ed
+.Sh SECURITY
+The gate can write by default. Use
+.Fl -scan-only
+for a read-only scan. A successful local command does not prove that remote
+services, browser rendering or production health are correct unless those
+checks actually ran.
+.Sh SEE ALSO
+.Xr master 1 ,
+.Xr master-fix 1 ,
+.Xr vps-deploy 8

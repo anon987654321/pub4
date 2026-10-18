@@ -1,0 +1,45 @@
+.Dd October 18, 2026
+.Dt MASTER-FIX 1
+.Os
+.Sh NAME
+.Nm /fix
+.Nd inspect, repair and verify a repository target
+.Sh SYNOPSIS
+.Nm
+.Op Ar path
+.Nm
+.Fl -dry-run
+.Op Ar path
+.Sh DESCRIPTION
+.Cm /fix
+is the canonical repair operation inside the MASTER interactive session.
+It inventories the target, evaluates findings against the active Laws, applies
+admitted repairs, re-observes the result and verifies convergence.
+.Pp
+An unbounded repair must inventory the eligible corpus before dispatching
+changes. A bounded run proves only the work it actually selected.
+.Cm --dry-run
+requests a read-only preview; it must not change source files, Git state,
+run journals or delivery state.
+.Pp
+The final report must preserve the real terminal outcome. A plateau, human
+decision, blocked operation, validation failure, delivery failure or timeout
+is not a successful completion.
+.Pp
+.Cm /review
+and
+.Cm /critique
+are read-only views. They do not replace
+.Cm /fix
+as the canonical repair lifecycle.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+MASTER/bin/master
+/fix
+/fix RAILS
+/fix --dry-run MASTER
+/review RAILS
+.Ed
+.Sh SEE ALSO
+.Xr master 1 ,
+.Xr operator 1

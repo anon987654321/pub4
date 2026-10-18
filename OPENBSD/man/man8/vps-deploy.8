@@ -1,0 +1,80 @@
+.Dd October 18, 2026
+.Dt VPS-DEPLOY 8
+.Os
+.Sh NAME
+.Nm vps-deploy
+.Nd deploy approved pub4 services to the production VPS
+.Sh SYNOPSIS
+.Nm
+.Cm all | master | brgen | amber | bsdports
+.Sh DESCRIPTION
+.Nm
+is the serialized production deploy entry point at
+.Pa OPENBSD/bin/vps-deploy .
+Run it as the unprivileged deploy account
+.Cm dev ,
+not as root and not through
+.Xr doas 1 .
+The script escalates only for the individual steps that require it.
+.Pp
+The command validates its target, checks required local broker availability,
+validates bounded timing and capacity settings, obtains the deploy lock, and
+runs the configured preflight, synchronization, CI, restart, health and deploy
+stamp steps. The exact order and restore behavior are implemented in the script
+and the production runbook.
+.Pp
+The accepted targets are
+.Cm all ,
+.Cm master ,
+.Cm brgen ,
+.Cm amber ,
+and
+.Cm bsdports .
+Unknown targets are refused before deployment.
+.Sh ENVIRONMENT
+.Bl -tag -width "VPS_DEPLOY_PREFLIGHT_SHA"
+.It Ev VPS_DEPLOY_SHA
+Commit to deploy. The default is fetched from
+.Cm origin/main
+once.
+.It Ev VPS_DEPLOY_PREFLIGHT_SHA
+Commit whose boot was already proved by the operator's machine.
+.It Ev VPS_DEPLOY_SKIP_PREFLIGHT
+Break-glass preflight bypass. Setting this to
+.Cm 1
+also requires
+.Ev I_UNDERSTAND_FAST_DEPLOY=1 .
+.It Ev SKIP_CI
+When set to
+.Cm 1 ,
+skips
+.Pa vps_ci.sh ;
+the per-application deploy script and runtime gate still run.
+.It Ev VPS_DEPLOY_DRIFT
+Setting this to
+.Cm fail
+refuses deployment when machine configuration differs from the repository.
+.It Ev PUB4_DEPLOY_BROWSER_GATES
+Setting this to
+.Cm 1
+adds the browser gates after restart.
+.El
+.Sh SECURITY
+Do not run as root. Do not bypass preflight during ordinary deployments. A
+successful synchronization or TLS response alone does not establish that every
+application is healthy. Inspect the actual health and deploy receipt.
+.Pp
+Before live work, read
+.Pa OPENBSD/RUNBOOK.md
+and the owning tree README.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+zsh OPENBSD/bin/vps-deploy --help
+zsh OPENBSD/bin/vps-deploy master
+zsh OPENBSD/bin/vps-deploy all
+.Ed
+.Sh SEE ALSO
+.Xr operator 1 ,
+.Xr pub4-admin 8 ,
+.Xr rcctl 8 ,
+.Xr relayd 8

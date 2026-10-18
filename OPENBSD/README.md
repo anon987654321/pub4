@@ -65,3 +65,17 @@ scratch directory and reads it back. A healed symptom must not stay quiet, so
 deploy stamp. `bin/domain_watch.rb` asks the registries which domains are still
 ours, and with `--tls` it asks every public host for its certificate and a
 health answer, the way a visitor would.
+
+
+## Local manual pages
+
+The deploy and privileged-broker references are under `man/man8/`. From the
+repository root, use:
+
+```zsh
+MANPATH="$PWD/OPENBSD/man" man vps-deploy
+MANPATH="$PWD/OPENBSD/man" man pub4-admin
+```
+
+Read `RUNBOOK.md` before live production work. The manual pages do not replace
+preflight, approval, health verification or recovery procedures.

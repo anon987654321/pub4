@@ -257,3 +257,18 @@ def run(goal)
 end
 ```
 
+
+
+## Local manual pages
+
+The BSD-style reference pages for stable MASTER commands are under
+`man/man1/`. From the repository root, look them up with:
+
+```zsh
+MANPATH="$PWD/MASTER/man" man master
+MANPATH="$PWD/MASTER/man" man operator
+MANPATH="$PWD/MASTER/man" man master-fix
+```
+
+The manuals describe operator interfaces; the executable command registry,
+implementation, Laws and tests remain authoritative.
