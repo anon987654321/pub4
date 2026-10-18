@@ -92,6 +92,38 @@ class TestFileRepair < Minitest::Test
     end
   end
 
+  def test_stale_dependency_context_requires_a_human_decision_before_the_model_call
+    Dir.mktmpdir("file-repair-stale-context") do |root|
+      path = File.join(root, "lib", "sample.rb")
+      dependency_path = File.join(root, "lib", "shared_contract.rb")
+      FileUtils.mkdir_p(File.dirname(path))
+      target_source = "module Sample\n  VALUE = :bad\nend\n"
+      dependency = "module SharedContract\n  CONTRACT = :old\nend\n"
+      File.write(path, target_source)
+      File.write(dependency_path, dependency)
+      agent = Agent.new("UNCHANGED")
+      subject = Master::Fix::FileRepair.new(
+        findings: [{ law: "TEST_RULE", line: 2, message: "replace bad value", file: path, severity: :warning }],
+        rules: [Rule.new("TEST_RULE", "replace the bad value")],
+        agent:, scanner: Scanner.new, root:,
+        context_root: root,
+        expected_target_sha256: Digest::SHA256.hexdigest(target_source),
+        context_files: [{
+          path: "lib/shared_contract.rb",
+          source: dependency,
+          sha256: Digest::SHA256.hexdigest(dependency),
+        }],
+      )
+      File.write(dependency_path, dependency.sub(":old", ":new"))
+
+      result = subject.run(path)
+
+      assert_equal :human_decision, result[:status]
+      assert_empty agent.prompts, "stale dependency context must be refused before asking the model"
+      assert_equal target_source, File.read(path), "no edit may be made from stale context"
+    end
+  end
+
   # Asking again with the same prompt returned the same diff that had not applied. The second
   # prompt carries the failure, and only the second.
   class SequenceAgent < Agent
