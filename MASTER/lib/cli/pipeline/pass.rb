@@ -297,7 +297,7 @@ def default_apply?(*) = false
             end
 
             msg = result.value!.to_s
-            if msg.match?(/\A(?:PLATEAU|HUMAN_DECISION|BLOCKED|VALIDATION_FAILED|DELIVERY_FAILED|TIMEOUT|FAILED|RELOADING):/)
+            if msg.match?(/\A(?:PLATEAU|HUMAN_DECISION|BLOCKED|INCONCLUSIVE|VALIDATION_FAILED|DELIVERY_FAILED|TIMEOUT|FAILED|RELOADING):/)
               @failed_stages << "fix" unless @failed_stages.include?("fix")
               Master::Trace::Dmesg.status("fix0", "incomplete, #{msg[0, 120]}")
               next "fix incomplete: #{msg}"
