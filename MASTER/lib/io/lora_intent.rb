@@ -209,7 +209,7 @@ module Master
             arg: Shellwords.join(["--subject", name, "--prepare", "--write", "--replace"]),
           )
           unless prepare.ok?
-            failures << "#{name}: source preparation failed\\n#{prepare.message}"
+            failures << "#{name}: source preparation failed\n#{prepare.message}"
             next
           end
 
@@ -219,19 +219,20 @@ module Master
             arg: Shellwords.join(["--subject", name, "--train-replicate", "--dry-run"]),
           )
           unless preflight.ok?
-            failures << "#{name}: training preflight failed\\n#{preflight.message}"
+            failures << "#{name}: training preflight failed\n#{preflight.message}"
             next
           end
 
-          reports << "#{name}: source preparation\\n#{prepare.value!}\\n\\n#{name}: training preflight\\n#{preflight.value!}"
+          reports << "#{name}: source preparation\n#{prepare.value!}\n\n#{name}: training preflight\n#{preflight.value!}"
         end
 
+        successful = subjects - failures.map { |failure| failure[/\A[^:]+/] }
         output = [
-          "Source refresh completed for #{(subjects - failures.map { |failure| failure[/\\A[^:]+/] }).join(', ')}.",
-          reports.join("\\n\\n"),
-          ("Source refresh failures:\\n" + failures.join("\\n\\n") unless failures.empty?),
+          "Source refresh completed for #{successful.join(', ')}.",
+          reports.join("\n\n"),
+          ("Source refresh failures:\n" + failures.join("\n\n") unless failures.empty?),
           "Paid training was not started. Review the generated .txt captions for pose, clothing, light and setting, then run the training preflight again. Unreviewed stub captions are a hard training blocker.",
-        ].compact.join("\\n\\n")
+        ].compact.join("\n\n")
         return Result.err(output, category: :validation) unless failures.empty?
 
         Result.ok({
