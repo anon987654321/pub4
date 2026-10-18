@@ -27,7 +27,7 @@ module Master
       include ChildProcess
       include DirtyEdits
 
-      Result = Data.define(:ok, :summary, :base, :head, :branch, :worktree)
+      Result = Data.define(:ok, :summary, :base, :head, :branch, :worktree, :category)
       MIN_FREE_DISK_GB = 2.0
 
       def self.foreign_paths(root:)
@@ -48,6 +48,8 @@ module Master
       end
 
       def run(command:, foreign_paths: [], proof_trees: nil, include_dirty: false)
+        phase = :preflight
+        published_head = nil
         validate_checkout!
         configured_timeout_s("MASTER_FIX_WORKTREE_TIMEOUT_S")
         configured_timeout_s("MASTER_FIX_PROOF_TIMEOUT_S")
@@ -56,6 +58,7 @@ module Master
         return refused(format("disk preflight: %.2f GB free, %.2f GB required; worktree was not created",
                               free_gb, MIN_FREE_DISK_GB)) if free_gb < MIN_FREE_DISK_GB
 
+        phase = :setup
         id = "pid#{Process.pid}-#{SecureRandom.hex(5)}"
         branch = "master/fix-#{id}"
         parent = Dir.mktmpdir("pub4-master-fix-")
@@ -87,6 +90,7 @@ module Master
           announce("gate baseline cache carried; the current tree fingerprint decides reuse")
         end
 
+        phase = :worker
         status, lines = run_child(worktree, command)
         terminal_failure = worker_terminal_failure(lines)
         timeout_line = lines.find { |line| line.match?(/child timeout after \d+s/i) }
@@ -105,16 +109,27 @@ module Master
 
         if failure_reason
           failed_head = rev_parse(worktree, "HEAD")
+          failure_category = if timeout_line
+            :timeout
+          elsif cancelled_line
+            :abort
+          elsif terminal_failure
+            worker_terminal_category(terminal_failure)
+          elsif !status
+            :crash
+          else
+            :validation
+          end
           if failed_head == base && own_dirty(worktree, included).empty?
             remote_cleanup = cleanup_success(worktree:, branch:)
             note = cleanup_note(remote_cleanup, branch)
             announce("#{failure_reason}; no changes were written, worktree removed#{note}")
-            return Result.new(false, "#{failure_reason}; no changes were written, worktree removed#{note}", base, failed_head, branch, worktree)
+            return Result.new(false, "#{failure_reason}; no changes were written, worktree removed#{note}", base, failed_head, branch, worktree, failure_category)
           end
           return preserve(
             worktree:, branch:, base:, head: failed_head,
             summary: "#{failure_reason}; partial work retained and not published",
-            lines:
+            lines:, category: failure_category
           )
         end
 
@@ -166,7 +181,9 @@ module Master
           )
         end
 
+        phase = :publish
         published_head = publish!(worktree:, branch:, head:, base:)
+        phase = :cleanup
         remote_cleanup = cleanup_success(worktree:, branch:)
         note = cleanup_note(remote_cleanup, branch)
         announce("published #{published_head.to_s[0, 12]} to origin/main (candidate #{head[0, 12]}), worktree removed#{note}")
@@ -178,9 +195,29 @@ module Master
           head,
           branch,
           worktree,
+          nil,
         )
       rescue StandardError, Interrupt => e
-        detail = e.is_a?(Interrupt) ? "worktree cancelled by operator" : "worktree failed, #{e.class}: #{e.message}"
+        category = if published_head
+          :infrastructure
+        elsif phase == :publish
+          :delivery_failed
+        elsif e.is_a?(Interrupt)
+          :abort
+        elsif phase == :preflight
+          :validation
+        else
+          :infrastructure
+        end
+        detail = if published_head
+          "delivery completed as #{published_head.to_s[0, 12]}, but worktree cleanup failed (#{e.class})"
+        elsif phase == :publish
+          "DELIVERY_FAILED: final publication did not complete cleanly (#{e.class})"
+        elsif e.is_a?(Interrupt)
+          "worktree cancelled by operator"
+        else
+          "worktree failed, #{e.class}: #{e.message}"
+        end
         announce(detail)
         if defined?(worktree) && worktree && File.directory?(worktree)
           recovered_head = begin
@@ -193,9 +230,9 @@ module Master
           announce("inspect: #{inspect_command(worktree, base)}")
           announce("discard: #{discard_command(worktree, branch)}") if defined?(branch) && branch
           recovery = "#{detail}; retained worktree: #{worktree}; branch: #{branch}"
-          Result.new(false, recovery, base, recovered_head, branch, worktree)
+          Result.new(false, recovery, base, recovered_head, branch, worktree, category)
         else
-          Result.new(false, detail, base, head, branch, worktree)
+          Result.new(false, detail, base, head, branch, worktree, category)
         end
       ensure
         cleanup_parent(parent) if defined?(parent) && parent && defined?(worktree) && worktree && !File.exist?(worktree)
@@ -322,14 +359,14 @@ module Master
         end
       end
 
-      def preserve(worktree:, branch:, base:, head:, summary:, lines:)
+      def preserve(worktree:, branch:, base:, head:, summary:, lines:, category: :validation)
         announce(summary)
         Array(lines).last(12).each { |line| announce("worker| #{line}") }
         announce("retained worktree: #{worktree}")
         announce("retained branch: #{branch}")
         announce("inspect: #{inspect_command(worktree, base)}")
         announce("discard: #{discard_command(worktree, branch)}")
-        Result.new(false, summary, base, head, branch, worktree)
+        Result.new(false, summary, base, head, branch, worktree, category)
       end
 
       def inspect_command(worktree, base = nil)
@@ -349,7 +386,7 @@ module Master
 
       def refused(summary)
         announce(summary)
-        Result.new(false, "worktree refused: #{summary}", nil, nil, nil, nil)
+        Result.new(false, "worktree refused: #{summary}", nil, nil, nil, nil, :policy)
       end
 
       # Exit status zero is not sufficient: the CLI can print an explicit
@@ -357,6 +394,21 @@ module Master
       def worker_terminal_failure(lines)
         Array(lines).find do |line|
           line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)
+        end
+      end
+
+      # The worker's terminal vocabulary maps to the shared Result retry policy.
+      # A failed delivery can be retried; an operator veto must not be treated as validation.
+      def worker_terminal_category(line)
+        state = line.to_s.match(/:\s*(incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)&.captures&.first&.downcase
+        case state
+        when "delivery_failed" then :delivery_failed
+        when "timeout" then :timeout
+        when "crash" then :crash
+        when "skip" then :skip
+        when "blocked", "human_decision" then :policy
+        when "plateau", "reloading" then :inconclusive
+        else :validation
         end
       end
 
