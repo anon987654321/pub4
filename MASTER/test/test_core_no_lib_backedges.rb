@@ -75,7 +75,7 @@ class NoLibBackedgesTest < Minitest::Test
     assert_includes fix_loop, 'require_relative "run_journal"'
     assert_includes fix_loop, 'require_relative "protocol"'
     assert_includes protocol, "TERMINAL_STATES ="
-    %w[DONE PLATEAU HUMAN_DECISION BLOCKED VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED].each do |state|
+    %w[DONE PLATEAU HUMAN_DECISION BLOCKED INCONCLUSIVE VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].each do |state|
       assert_includes protocol, state
     end
   end
