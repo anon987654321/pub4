@@ -414,8 +414,11 @@ module Master
         when "timeout" then :timeout
         when "crash" then :crash
         when "skip" then :skip
-        when "blocked", "human_decision" then :policy
-        when "plateau", "reloading" then :inconclusive
+        when "blocked" then :policy
+        when "human_decision" then :human_decision
+        when "plateau", "complete with open findings" then :plateau
+        when "reloading" then :reloading
+        when "failed" then :failed
         else :validation
         end
       end
