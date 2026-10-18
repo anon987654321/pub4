@@ -309,8 +309,9 @@ module Master
                                         .map { |row| row[:name] }.to_set
         @unresolved_references.select do |row|
           dynamic = row[:receiver_explicit] || row[:kind] == :dynamic_call
-          dynamic && (row[:from_file] == rel ||
-            (%i[call dynamic_call].include?(row[:kind]) && target_names.include?(row[:name])))
+          row[:from_file] == rel ||
+            row[:kind] == :import ||
+            (dynamic && %i[call dynamic_call].include?(row[:kind]) && target_names.include?(row[:name]))
         end.map(&:dup)
       end
 
@@ -431,7 +432,7 @@ module Master
         ]
         return true if source_suffixes.include?(suffix)
         return true if %i[javascript_import stylesheet_import].include?(kind) &&
-                       (specifier.start_with?("./", "../", "@/") || !specifier.include?("/"))
+                       specifier.start_with?("./", "../", "@/")
 
         false
       end
@@ -439,18 +440,20 @@ module Master
       def resolve_path_references!
         @path_references.each do |reference|
           specifier = reference[:name]
-          resolved = resolve_local_source_path(reference[:from_file], specifier)
+          resolved = resolve_local_source_path(reference[:from_file], specifier, source_kind: reference[:source_kind])
           if resolved
             edge(from: reference[:from_file], to: resolved, type: :local_import, weight: 1)
-          elsif relative_source_reference?(specifier)
+          elsif reference[:source_kind] == :ruby_require_relative || relative_source_reference?(specifier)
             @unresolved_references << reference.merge(reason: "local source import did not resolve to an indexed file")
           end
         end
       end
 
-      def resolve_local_source_path(from, specifier)
+      def resolve_local_source_path(from, specifier, source_kind: nil)
         clean = specifier.split(/[?#]/, 2).first.to_s
-        base = if clean.start_with?("@/")
+        base = if source_kind == :ruby_require_relative || source_kind == :stylesheet_import
+                  File.expand_path(clean.delete_prefix("./"), File.dirname(File.join(@root, from)))
+                elsif clean.start_with?("@/")
                   File.expand_path(clean.delete_prefix("@/"), @root)
                 elsif clean.start_with?("./", "../")
                   File.expand_path(clean, File.dirname(File.join(@root, from)))
@@ -581,12 +584,20 @@ module Master
       end
 
       def ruby_requires(content, rel)
-        content.scan(/\b(require_relative|require)\s+["']([^"']+)["']/).each do |kind, target|
-          to = if kind == "require_relative"
-            resolve_relative_require(rel, target)
-          else
-            normalize_require(target)
+        content.to_enum(:scan, /\b(require_relative|require)\s+["']([^"']+)["']/).each do
+          match = Regexp.last_match
+          kind, target = match[1], match[2]
+          if kind == "require_relative"
+            line = content[0...match.begin(0)].count("\n") + 1
+            @path_references << {
+              from_file: rel,
+              line:,
+              kind: :import,
+              source_kind: :ruby_require_relative,
+              name: target,
+            }
           end
+          to = kind == "require_relative" ? resolve_relative_require(rel, target) : normalize_require(target)
           edge(from: rel, to:, type: :require, weight: 1.0)
         end
       end
