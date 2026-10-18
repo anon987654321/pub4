@@ -42,9 +42,9 @@ module Master
         fetched = fetch_page(uri)
         return fetched if fetched.is_a?(Master::Result)
 
-        response, final_uri, redirects = fetched
+        response, final_uri, redirects, body = fetched
+        body = response.body.to_s if body.nil?
         headers = response.each_header.to_h.transform_keys(&:downcase)
-        body = response.body.to_s
         lines = [
           "MASTER external website assessment",
           "Initial URL: #{uri}",
@@ -120,7 +120,6 @@ module Master
                 raise ResponseTooLarge if body.bytesize + chunk.bytesize > MAX_BODY_BYTES
                 body << chunk
               end
-              incoming.instance_variable_set(:@body, body)
             end
             end
           end
@@ -136,7 +135,7 @@ module Master
             redirects += 1
             next
           end
-          return [response, current, redirects]
+          return [response, current, redirects, body]
         end
       rescue ResponseTooLarge
         Result.err("external_audit: response body exceeds #{MAX_BODY_BYTES} bytes", category: :validation)

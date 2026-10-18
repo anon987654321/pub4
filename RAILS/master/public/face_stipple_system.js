@@ -8,8 +8,8 @@
   const params = new URLSearchParams(window.location.search || "");
   const enabled = params.get("stipple") !== "0";
   const MAX_POINTS = 14_000;
-  const MOBILE_FALLBACK = 2_400;
-  const DESKTOP_FALLBACK = 5_200;
+  const MOBILE_FALLBACK = 420;
+  const DESKTOP_FALLBACK = 1_200;
   const PROFILES = Object.freeze({
     idle:      { density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 },
     thinking:  { density: 0.72, ripple: 0.16, turbulence: 0.28, luminosity: 0.91, attract: 0.74 },
@@ -39,7 +39,7 @@
     const contract = window.MASTER_FACE_CONTRACT || {};
     const budget = contract.spatial?.budget || {};
     const mobile = matchMedia("(pointer: coarse)").matches;
-    const configured = Number(mobile ? budget.mobile_points : budget.desktop_particles);
+    const configured = Number(mobile ? budget.mobile_points : budget.desktop_points);
     const fallback = mobile ? MOBILE_FALLBACK : DESKTOP_FALLBACK;
     const ceiling = Number.isFinite(configured) && configured > 0
       ? Math.min(MAX_POINTS, Math.floor(configured))
@@ -168,6 +168,7 @@
         uniform float uLuminosity;
         varying float vAlpha;
         varying float vZone;
+        varying float vThreshold;
         void main() {
           vec3 p = position;
           float zoneWeight = 0.72 + aZone * 0.035;
@@ -178,7 +179,8 @@
           p.xy *= 1.0 - uAttract * 0.007;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          gl_PointSize = aThreshold > uDensity ? 0.0 : 1.0;
+          gl_PointSize = 1.0;
+          vThreshold = aThreshold;
           vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * (1.0 - uEntropy * 0.08), 0.0, 1.0);
           vZone = aZone;
         }
@@ -186,11 +188,13 @@
       fragmentShader: `
         uniform vec3 uColor;
         uniform float uOpacity;
+        uniform float uDensity;
         varying float vAlpha;
         varying float vZone;
+        varying float vThreshold;
         void main() {
           vec2 p = gl_PointCoord - vec2(0.5);
-          if (length(p) > 0.5) discard;
+          if (vThreshold > uDensity || length(p) > 0.5) discard;
           float tone = vZone < 2.0 ? 1.0 : (vZone > 5.0 ? 0.84 : 0.93);
           gl_FragColor = vec4(uColor * tone, vAlpha * uOpacity);
         }

@@ -23,6 +23,8 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /state\.pressureFields\?\.entropy/);
   assert.match(system, /state\.reducedMotion/);
   assert.match(system, /budget\.mobile_points/);
+  assert.match(system, /budget\.desktop_points/);
+  assert.doesNotMatch(system, /budget\.desktop_particles/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /gl_PointSize = aThreshold > uDensity \? 0\.0 : 1\.0/);
 });

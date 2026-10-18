@@ -203,14 +203,14 @@ MASTER can assess a public website from observable evidence, review source when 
 
 - **Design and UX:** use the existing Browser to inspect rendered pages at desktop and mobile sizes, capture screenshots, and route them through an available vision lane. Review hierarchy, typography, contrast, responsive states, navigation, keyboard access and accessibility. HTML-only evidence cannot establish visual quality.
 - **Code and architecture:** when source is available and authorised, inventory the repository, read entrypoints and dependencies, inspect callers and tests, run MASTER's existing laws, then verify proposed repairs. A black-box web page cannot prove the internals of its code.
-- **Network and security:** ExternalAudit performs passive HTTP(S), redirect, TLS and response-header observations plus basic HTML semantics. VulCheck reports local posture observations and can run already-installed scanners only with a second dangerous-tier permit; it never installs or updates packages. Nmap is an active, bounded scan of one explicitly authorised host. Its basic, services and safe profiles avoid full-port sweeps and exploit scripts. A missing header or unavailable check is not a confirmed vulnerability or a pass.
+- **Network and security:** ExternalAudit performs passive HTTP(S), redirect, TLS and response-header observations plus basic HTML semantics. VulCheck reports local posture observations and can run already-installed scanners only with a second dangerous-tier permit; it never installs or updates packages. Nmap is an active, bounded scan of one explicitly authorised host. Its basic, services and safe profiles avoid full-port sweeps and exploit scripts, but `safe` is an NSE script category, not a zero-impact guarantee. A missing header or unavailable check is not a confirmed vulnerability or a pass.
 - **Evidence contract:** separate confirmed defects, hypotheses, missing evidence and out-of-scope checks. Findings should name the URL or file/line, observed evidence, confidence, impact, remediation and how the repair can be verified. This is not a penetration-test certification.
 
 **Code-level review requires separately authorised source access.** The `ExternalAudit` URL lane does not inspect unseen source and does not claim that it did; use the existing repository/source review workflow against an owner-authorised copy. Until that end-to-end source lane is proven with a fixture, report code-side conclusions as INCONCLUSIVE rather than inferring them from page output.
 
 ### Competitive landscape
 
-The space is competitive and split across specialties; the cross-discipline gap is a hypothesis, not a proven absence of competitors.
+The space is already competitive, and product boundaries overlap: GitHub bundles CodeQL/code scanning with dependency and secret-protection capabilities; Snyk markets a platform spanning code, open-source dependencies, secrets, containers, IaC and DAST. Therefore, “one security dashboard” is not a credible differentiation by itself. The narrower hypothesis is a trusted evidence trail that connects rendered UI and accessibility findings to authorised source review, then proves the fix. This remains a hypothesis, not a demonstrated market gap. [GitHub Code Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) · [Snyk platform](https://snyk.io/platform/)
 
 | Segment | Benchmarks | Established strength |
 | --- | --- | --- |
@@ -219,7 +219,11 @@ The space is competitive and split across specialties; the cross-discipline gap 
 | Network discovery | [Nmap](https://nmap.org/book/), [NSE script categories](https://nmap.org/nsedoc/categories/) | Mature host, port and service discovery |
 | Accessibility and visual quality | [Deque axe DevTools](https://www.deque.com/axe/devtools/), [Lighthouse](https://developer.chrome.com/docs/lighthouse/overview), [BrowserStack Percy](https://www.browserstack.com/percy) | Automated accessibility checks, page-quality metrics and visual regression |
 
+For EU-facing e-commerce, accessibility may also be a compliance driver: Directive (EU) 2019/882 applies from 28 June 2025 to specified covered products and services, including e-commerce. Confirm the customer's country-specific scope, exemptions and local implementation with qualified counsel before offering a compliance verdict. [Official Directive (EUR-Lex)](https://eur-lex.europa.eu/eli/dir/2019/882/oj)
+
 MASTER should integrate mature specialists rather than re-create their scanners. The candidate distinction is one evidence trail that connects rendered user experience, source evidence, network observations and verified remediation.
+
+**Nmap licensing gate:** the official Nmap legal notice states that embedding or redistributing Nmap in commercial software/hardware products requires its special OEM licence. The repo calls an already-installed executable and does not vendor the scanner; before packaging or productising a paid hosted Nmap-backed workflow, resolve the applicable licence with counsel or use a separately licensed alternative. [Nmap legal notice](https://nmap.org/book/man-legal.html).
 
 ### Business hypothesis and strategy
 
@@ -227,7 +231,7 @@ MASTER should integrate mature specialists rather than re-create their scanners.
 
 **Initial buyers to test:** independent web agencies, small SaaS firms and Norwegian/European SMEs preparing for launch, redesign or customer security review. Offer a fixed-scope diagnostic first, optional remediation next, then test recurring release reviews. Agency and hosting-provider referrals are plausible channels, not validated channels.
 
-**Validation before scale:** interview ten target buyers and run three paid pilots with written scope. Measure confirmed-finding rate, false positives, time to first useful finding, time to verified remediation, delivery cost, willingness to pay and repeat purchase. Keep the dashboard and multi-tenant service small until buyers repeatedly pay for the report and the follow-through. The possible moat is evidence and verification, not a new scanner. Risks include false positives, out-of-scope testing, liability and a scope too broad to deliver well.
+**Validation before scale:** interview ten target buyers and run three paid pilots with written scope. Present the same pilot at three test prices rather than assuming a market price; record actual conversion and buyer-reported alternatives. Measure confirmed-finding rate, false positives, time to first useful finding, time to verified remediation, delivery cost, willingness to pay and repeat purchase. Keep the dashboard and multi-tenant service small until buyers repeatedly pay for the report and the follow-through. The possible moat is evidence and verification, not a new scanner. Risks include false positives, out-of-scope testing, liability and a scope too broad to deliver well.
 
 ## Runtime
 
