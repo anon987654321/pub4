@@ -37,12 +37,14 @@ module Master
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
                        laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
-                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline:, wishlist:)
+                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline:, wishlist:,
+                       reference_graph: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
           @llm_router = llm_router
           @root = root
+          @reference_graph = reference_graph
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
