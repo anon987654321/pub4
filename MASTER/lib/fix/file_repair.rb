@@ -108,6 +108,9 @@ module Master
         return true unless @expected_target_sha256
         return false unless Digest::SHA256.hexdigest(target_source) == @expected_target_sha256
 
+        current_target = File.read(path, encoding: "UTF-8")
+        return false unless current_target == target_source
+
         @context_files.all? do |entry|
           dependency = File.expand_path(entry.fetch(:path).to_s, @root)
           next false if File.symlink?(dependency) || !File.file?(dependency)
