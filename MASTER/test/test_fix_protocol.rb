@@ -134,6 +134,7 @@ class TestFixProtocol < Minitest::Test
 
       payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
 
+      assert_equal 5, Master::Fix::Protocol::VERSION
       assert_equal Master::Fix::Protocol::VERSION, payload.fetch("fix_protocol_version")
       assert_includes payload.fetch("stages"), "semantic"
       assert_includes payload.fetch("terminal_states"), "PLATEAU"
