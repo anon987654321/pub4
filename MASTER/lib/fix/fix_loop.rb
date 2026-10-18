@@ -175,11 +175,8 @@ module Master
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
         mission = mission_for(target:, requested:)
-        budget_error = exhausted_budget(journal:, run_id:)
-        if budget_error
-          mission.defer!(reason: budget_error.message)
-          return budget_error
-        end
+        budget_error = exhausted_budget(journal:)
+        return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
 
         current_phase = :pass
         run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
@@ -470,12 +467,14 @@ module Master
         full.delete_prefix(root + File::SEPARATOR)
       end
 
-      def exhausted_budget(journal:, run_id:)
-        return if journal["remaining_seconds"].to_f > 0
+      # Route an expired resumed mission through finish_run just like an
+      # in-flight timeout. Writing only the journal row here skipped the
+      # canonical terminal event and outcome receipt, leaving observers with no
+      # terminal state for a run that had already been started.
+      def exhausted_budget(journal:)
+        return if journal["remaining_seconds"].to_f.positive?
 
-        result = Result.err("fix budget exhausted before resume", category: :timeout)
-        @run_journal.terminal(run_id, :timeout, message: result.message)
-        result
+        Result.err("fix budget exhausted before resume", category: :timeout)
       end
 
       def resume_active_transaction(journal:, run_id:, start_pass:)
