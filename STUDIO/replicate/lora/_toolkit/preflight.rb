@@ -198,6 +198,16 @@ module Preflight
                                                                                                            o: observed, ou: observed * TRAIN_USD_PER_SECOND)
   end
 
+  # Preflight ceiling uses the more expensive of the published guide runtime and
+  # the observed run, priced at the explicitly pinned trainer version. This is a
+  # hard pre-call estimate gate, not a guarantee that provider billing cannot vary.
+  def training_estimate_usd(steps)
+    count = Integer(steps)
+    raise ArgumentError, "steps must be a positive integer" unless count.positive?
+
+    [GUIDE_SECONDS_PER_STEP, OBSERVED_SECONDS_PER_STEP].max * count * TRAIN_USD_PER_SECOND
+  end
+
   def render_estimate(count)
     seconds = count * OBSERVED_RENDER_SECONDS
     format("cost before: %<n>d render(s) x ~%<s>.0f s = ~%<t>d s, ~$%<u>.3f at $%<r>s/s (billed by time, not tokens)",
