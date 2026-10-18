@@ -85,7 +85,7 @@ module Master
         @cognition_root = path_root
         @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
         @bus = bus
-        @reference_graph = reference_graph
+        @reference_graph = reference_graph || Master::Review::ReferenceGraph.new(root: @root, event_bus: bus)
         @homeostat = homeostat
         @cognition = nil
         @outcome_prior = nil
@@ -225,7 +225,7 @@ module Master
       # The graph is refreshed per run; failed reads and corpus files with no
       # graph node are explicit gaps, not permission to guess.
       def prepare_dependency_map!(files)
-        graph = @reference_graph ||= Master::Review::ReferenceGraph.new(root: @root, event_bus: @bus)
+        graph = @reference_graph
         snapshot = graph.build(refresh: true)
         failures = Array(snapshot[:analysis_failures])
         missing = Array(files).reject { |path| graph.includes_path?(path) }
