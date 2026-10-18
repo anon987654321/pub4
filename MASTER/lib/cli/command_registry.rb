@@ -307,13 +307,21 @@ module Master
           end
           "voice0 timing: #{details.join(' ')}"
         when "test"
-          ok = Voice::Playback.speak_now("MASTER voice test.")
-          player = Voice::Playback.player
-          if ok
-            "voice0 at mainbus0: test passed, player #{player ? player.first : "none"}"
-          else
-            suffix = Voice::Playback.enabled? ? "see /voice status for the last error" : "use /voice on to enable CLI speech"
-            "voice0 at mainbus0: test failed, #{suffix}"
+          # This explicit diagnostic may speak once even while ordinary CLI
+          # replies are off. Restore the user's session switch immediately after
+          # the synchronous test; it must not silently enable all future replies.
+          original_speak = ENV.fetch("MASTER_CLI_SPEAK", nil)
+          begin
+            ENV["MASTER_CLI_SPEAK"] = "1"
+            ok = Voice::Playback.speak_now("MASTER voice test.")
+            player = Voice::Playback.player
+            if ok
+              "voice0 at mainbus0: test passed, player #{player ? player.first : "none"}"
+            else
+              "voice0 at mainbus0: test failed, see /voice status for the last error"
+            end
+          ensure
+            original_speak ? ENV["MASTER_CLI_SPEAK"] = original_speak : ENV.delete("MASTER_CLI_SPEAK")
           end
         else
           "voice  voice on  voice off  voice natural  voice expressive  voice dilla  voice status  voice timing  voice test"
