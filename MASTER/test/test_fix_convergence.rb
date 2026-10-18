@@ -682,6 +682,11 @@ end
   end
 
   def test_dry_run_does_not_run_mutating_gate_verification
+    File.write(File.join(@root, "tracked.rb"), "puts 1\n")
+    commit_fixture!
+    File.write(File.join(@root, "untracked.rb"), "puts 2\n")
+    before = checkout_digest(@root)
+
     fix_loop = Object.new
     fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started the repair") }
@@ -693,13 +698,15 @@ end
     Operator::GateChain.stub(:verify_fix, ->(**) { flunk("dry-run reached GateChain.verify_fix") }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         result = Master::CLI::CommandRegistry.dispatch_fix(
-          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "RAILS --dry-run --no-aesthetic" }
+          scanner:, fix_loop:, deliberation: nil, root: @root, bus: nil,
+          ctx: { args: ". --dry-run --no-aesthetic" }
         )
 
         assert_includes result, "preview:"
       end
     end
+
+    assert_equal before, checkout_digest(@root), "dispatcher dry-run changed checkout content, .git, index or untracked files"
   end
 
   def test_fix_only_flag_reaches_the_selected_stage_without_widening
