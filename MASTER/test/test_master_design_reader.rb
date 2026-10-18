@@ -4,14 +4,10 @@ require_relative "test_helper"
 require_relative "../tools/master_design"
 
 class MasterDesignReaderTest < Minitest::Test
-  def test_rails_tools_path_forwards_to_the_shared_reader
-    source = File.read(
-      File.join(Master::ROOT, "tools", "rails", "operator", "master_design.rb"),
-      encoding: "UTF-8",
-    )
+  def test_retired_rails_tools_compatibility_path_remains_absent
+    legacy = File.join(Master::ROOT, "tools", "rails", "operator", "master_design.rb")
 
-    assert_includes source, 'require_relative "../../master_design"'
-    refute_match(/^\s*def (tokens_path|document|blocks|tokens|design_system|dig)\b/, source)
+    refute File.exist?(legacy), "remove the unreferenced legacy reader shim instead of recreating it"
   end
 
   def test_shared_reader_resolves_the_canonical_token_document
