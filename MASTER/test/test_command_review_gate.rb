@@ -77,6 +77,7 @@ class TestCommandReviewGate < Minitest::Test
     assert_equal ["MASTER"], registry.worktree_proof_trees("", root: Master::ROOT)
     assert_equal ["MASTER"], registry.worktree_proof_trees(".", root: Master::ROOT)
     assert_equal ["MASTER"], registry.worktree_proof_trees("master", root: Master::ROOT)
+    assert_equal ["MASTER"], registry.worktree_proof_trees("lib/io", root: Master::ROOT)
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
                  registry.worktree_proof_trees("all", root: Master::ROOT)
   end
