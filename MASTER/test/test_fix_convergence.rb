@@ -1322,6 +1322,50 @@ end
     assert_equal :done, event[:payload][:state]
   end
 
+  def test_expired_resumed_mission_publishes_timeout_terminal
+    commit_fixture!
+    loop = build_loop([])
+    terminal_rows = []
+    journal = Object.new
+    journal.define_singleton_method(:start_or_resume) do |**|
+      { "id" => "run-timeout", "remaining_seconds" => 0.0 }
+    end
+    journal.define_singleton_method(:terminal) do |run_id, state, message:, evidence: nil|
+      terminal_rows << { run_id:, state:, message:, evidence: }
+    end
+    loop.instance_variable_set(:@run_journal, journal)
+
+    deferred = []
+    mission = Object.new
+    mission.define_singleton_method(:defer!) { |reason:| deferred << reason }
+
+    Master::Fix::RunBudget.stub(:finish_run, ->(**) {}) do
+      Master::Io::LaneSelection.stub(:announce, nil) do
+        loop.stub(:outcome_guidance, { incremental: false, prediction: nil }) do
+          loop.stub(:mission_for, mission) do
+            result = loop.run_unlocked(
+              @root, max_passes: 1, budget_seconds: 60, incremental: false, requested: false,
+            )
+
+            assert result.err?
+            assert_equal :timeout, result.category
+          end
+        end
+      end
+    end
+
+    assert_equal 1, terminal_rows.size
+    assert_equal "run-timeout", terminal_rows.first[:run_id]
+    assert_equal :timeout, terminal_rows.first[:state]
+    assert_match(/budget exhausted before resume/, terminal_rows.first[:message])
+    assert_equal 1, deferred.size
+    assert_match(/attempt timeout:/, deferred.first)
+
+    event = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }
+    refute_nil event, "an expired resumed run needs the canonical terminal event"
+    assert_equal :timeout, event[:payload][:state]
+  end
+
   def test_a_canonical_repo_leaves_a_hashed_outcome_receipt_the_terminal_event_names
     %w[MASTER RAILS OPENBSD STUDIO].each { |tree| FileUtils.mkdir_p(File.join(@root, tree)) }
     loop = build_loop([])
