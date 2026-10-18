@@ -76,7 +76,7 @@ class TestExternalLinterLaws < Minitest::Test
     rule.stub(:linter_available?, true) do
       Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
         Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { ['[{}]', "", status] }) do
-          findings = rule.check("def sample; end\\n", path: "sample.rb")
+          findings = rule.check("def sample; end\n", path: "sample.rb")
 
           assert_equal 1, findings.size
           assert_match(/scan error/, findings.first.message)
@@ -93,7 +93,7 @@ class TestExternalLinterLaws < Minitest::Test
     rule.stub(:linter_available?, true) do
       Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
         Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { [report, "", status] }) do
-          findings = rule.check("def sample; end\\n", path: "sample.rb")
+          findings = rule.check("def sample; end\n", path: "sample.rb")
 
           assert_equal 1, findings.size
           assert_match(/invalid JSON report shape/, findings.first.message)
@@ -113,7 +113,7 @@ class TestExternalLinterLaws < Minitest::Test
     rule.stub(:linter_available?, true) do
       Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
         Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { [report, "", status] }) do
-          findings = rule.check("def sample; end\\n", path: "sample.rb")
+          findings = rule.check("def sample; end\n", path: "sample.rb")
 
           assert_equal [2, 4], findings.map(&:line)
           assert findings.all? { |finding| finding.message.include?("Example") && finding.message.include?("example smell") }
@@ -129,7 +129,7 @@ class TestExternalLinterLaws < Minitest::Test
     rule.stub(:linter_available?, true) do
       Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
         Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { [report, "", status] }) do
-          findings = rule.check("def sample; end\\n", path: "sample.rb")
+          findings = rule.check("def sample; end\n", path: "sample.rb")
 
           assert_equal 1, findings.size
           assert_equal 1, findings.first.line
