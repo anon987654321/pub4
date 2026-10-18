@@ -32,6 +32,24 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "semantic_opportunities"
     assert_includes text, "two consecutive evidence-backed clean readings"
     assert_includes text, "No deterministic fixer exists"
+    assert_includes text, "complete current source"
+    assert_includes text, "complete direct"
+    assert_includes text, "DOCUMENTATION"
+    assert_includes text, "commit and push"
+    assert_includes text, "Never promise that literally every defect was repaired"
+  end
+
+  def test_practice_laws_name_full_source_docs_and_verified_checkpoint_contracts
+    require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
+    ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+
+    preserve = ::Law.definitions.fetch(:PRESERVE_FIRST)
+    docs = ::Law.definitions.fetch(:DOCUMENTATION_FOLLOWS_CODE)
+    execute = ::Law.definitions.fetch(:EXECUTE_NOT_INSTRUCT)
+
+    assert_match(/complete current target/i, preserve.practice)
+    assert_match(/canonical generator/i, docs.practice)
+    assert_match(/commit and push each owned/i, execute.practice)
   end
 
   def test_external_context_carries_the_cross_tree_operating_model
