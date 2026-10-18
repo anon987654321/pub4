@@ -144,8 +144,16 @@ module Master
           next failure if failure
 
           # One push for the whole run, after every tree has verified.
+          # A verified local repair is not a delivered repair: do not save the
+          # candidate baseline as the published state when its final push fails.
           if writes_requested
-            fix_loop.publish_pending!
+            begin
+              fix_loop.publish_pending!
+            rescue StandardError => e
+              message = "final publish failed after verification (#{e.class})"
+              Master::Trace::Dmesg.status("deliver0", "DELIVERY_FAILED: #{message}")
+              next Master::Result.err("DELIVERY_FAILED: #{message}", category: :delivery_failed)
+            end
             ::Operator::GateChain.persist_verified_baselines!(targets)
           end
           results.join("\n")
