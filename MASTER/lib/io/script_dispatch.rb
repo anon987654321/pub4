@@ -14,6 +14,10 @@ module Master
     module ScriptDispatch
       module_function
 
+      # Public tool names resolve to one canonical entrypoint. LoRA lives under
+      # STUDIO/replicate because that tree owns the whole provider boundary.
+      TOOL_ENTRYPOINTS = { "lora" => File.join("replicate", "lora", "lora.rb") }.freeze
+
       def run(root:, tool:, arg: "", env: {})
         requested_root = File.expand_path(root.to_s.empty? ? Dir.pwd : root)
         script = script_path(requested_root, tool)
@@ -41,7 +45,8 @@ module Master
       # MASTER/tools would hide a boundary violation, so there is deliberately no fallback.
       def script_path(requested_root, tool)
         roots = [requested_root, MasterPaths.repo, MasterPaths.root].uniq
-        candidates = roots.map { |candidate| File.join(candidate, "STUDIO", tool, "#{tool}.rb") }
+        entrypoint = TOOL_ENTRYPOINTS.fetch(tool.to_s) { File.join(tool.to_s, "#{File.basename(tool.to_s)}.rb") }
+        candidates = roots.map { |candidate| File.join(candidate, "STUDIO", entrypoint) }
         candidates.find { |candidate| File.file?(candidate) } || candidates.first
       end
 
