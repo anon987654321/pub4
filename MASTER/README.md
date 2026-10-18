@@ -260,7 +260,7 @@ MASTER without joining its core: a Wi-Fi and Bluetooth observer, and two
 governed browsers for social accounts and travel bookings. Each plugin runs
 under a policy declared in `data/laws.yml`.
 
-Documentation is checked as source: the test suite verifies local Markdown link targets and cited repository paths in maintained entry documents. External link availability is not treated as proven by an offline test. Writing guidance stays with `data/laws.yml`; tree READMEs remain the human entry points, with the OpenBSD runbook and manual pages serving operational work.
+Documentation is checked as source: the test suite verifies local Markdown link targets and cited repository paths in maintained entry documents. External link availability is not treated as proven by an offline test. Writing guidance stays with `data/laws.yml`; tree READMEs remain the human entry points, with the OpenBSD runbook and manual pages serving operational work. Use [Google's technical-writing guidance](https://developers.google.com/tech-writing) and [Diátaxis](https://diataxis.fr/) as editorial references; [Awesome Markdown](https://github.com/mundimark/awesome-markdown) is a tool catalogue, not the project's style authority.
 
 On a phone, MASTER detects Android under Termux and exposes only what the
 Termux:API app reports, so a missing permission is reported as unavailable and
