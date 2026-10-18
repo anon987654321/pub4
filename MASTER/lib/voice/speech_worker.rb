@@ -57,7 +57,10 @@ module Master
 
       def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil, retried: false)
         sock_path = resolve_socket_path
-        return unless sock_path
+        unless sock_path
+          warn_tts("edge socket unavailable after worker retry") if retried
+          return
+        end
 
         req = build_socket_request(voice_name, style_config, text)
         timeout = stream_timeout(text.to_s.length)
