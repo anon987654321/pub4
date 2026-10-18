@@ -12,7 +12,7 @@ const playground = readFileSync(join(publicDir, "face_playground.js"), "utf8");
 const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
 test("stipple assets are declared after existing face modules", () => {
-  assert.match(manifest, /- master_namespace\s+\n\s+- face_stipple_system\s+\n\s+- face_playground/);
+  assert.match(manifest, /- master_namespace\s+- face_stipple_system\s+- face_playground/);
   assert.match(system, /window\.MASTER_FACE_STIPPLE/);
   assert.match(system, /renderer\.render = function/);
   assert.match(system, /active\.root\.add\(active\.points\)/);
@@ -26,7 +26,9 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /budget\.desktop_points/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
   assert.match(system, /buildFromSamples/);
-  assert.match(system, /gl_PointSize = aThreshold > uDensity \? 0\.0 : 1\.0/);
+  assert.match(system, /gl_PointSize = 1\.0/);
+  assert.match(system, /vThreshold = aThreshold/);
+  assert.match(system, /vThreshold > uDensity/);
 });
 
 test("playground is opt-in and supplies seven semantic states", () => {
