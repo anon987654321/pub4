@@ -180,7 +180,7 @@ module Master
         )
         return result.summary if result.ok
 
-        Master::Result.err(result.summary, category: :validation)
+        Master::Result.err(result.summary, category: result.category || :validation)
       end
 
       def include_dirty_requested?(raw)
