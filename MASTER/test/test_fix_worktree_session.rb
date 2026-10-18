@@ -193,7 +193,7 @@ exit(system("git", "commit", "-m", "worker fix"))
 
     states.each do |line, expected|
       assert_equal expected, session.send(:worker_terminal_category, line), line
-      assert_match(/\A(?:review|fix)\d+.*?:\s*(?:incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i, line)
+      assert_equal line, session.send(:worker_terminal_failure, [line]), line
     end
   end
 
