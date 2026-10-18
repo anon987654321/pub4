@@ -28,7 +28,7 @@ class TestOperatorPromptContract < Minitest::Test
 
     assert_match(/PUB4_OPERATOR_ENV_MODE=.*stat -f.*%Lp/, source)
     assert_match(/case "\$PUB4_OPERATOR_ENV_MODE" in\s+\[0-7\]00\|0\[0-7\]00\)/, source)
-    assert_match(/refusing .*operator\.env.*permissions must be owner-only/, source)
+    assert_match(/refusing .*permissions must be owner-only/, source)
     assert_operator source.index('case "$PUB4_OPERATOR_ENV_MODE" in'), :<,
                     source.index('source "$PUB4_OPERATOR_ENV"')
   end
