@@ -204,6 +204,24 @@ class TestCommandRegistryDispatch < Minitest::Test
     original_speak ? ENV["MASTER_CLI_SPEAK"] = original_speak : ENV.delete("MASTER_CLI_SPEAK")
   end
 
+  def test_voice_test_temporarily_enables_audio_without_changing_the_session
+    original_speak = ENV.fetch("MASTER_CLI_SPEAK", nil)
+    ENV.delete("MASTER_CLI_SPEAK")
+    heard = []
+
+    Master::Voice::Playback.stub(:speak_now, ->(text) {
+      heard << [text, ENV["MASTER_CLI_SPEAK"]]
+      true
+    }) do
+      assert_match(/test passed/, Registry.dispatch_voice(ctx: { args: "test" }))
+    end
+
+    assert_equal [["MASTER voice test.", "1"]], heard
+    refute ENV.key?("MASTER_CLI_SPEAK")
+  ensure
+    original_speak ? ENV["MASTER_CLI_SPEAK"] = original_speak : ENV.delete("MASTER_CLI_SPEAK")
+  end
+
   def test_voice_help_explains_the_default_and_optional_presets
     help = Registry.help_text("voice")
     ["/voice on|off", "/voice natural", "/voice expressive", "/voice dilla", "/voice timing", "/voice test"].each do |command|
