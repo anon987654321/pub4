@@ -100,15 +100,19 @@ class LoraIntentTest < Minitest::Test
     assert_equal %w[--subject johann --train-replicate --async], paid.first[:argv]
   end
 
-  def test_retraining_both_subjects_uses_each_canonical_wrapper_and_dry_runs
-    _, calls = run_text("STUDIO/replicate/lora has new training photos for both johann and ragnhild; retrain both models using the Replicate API key")
+  def test_retraining_both_subjects_refreshes_sources_then_preflights_without_spending
+    result, calls = run_text("STUDIO/replicate/lora has new training photos for both johann and ragnhild; retrain both models using the Replicate API key")
 
-    assert_equal 2, calls.length
     assert_equal [
+      %w[--subject johann --prepare --write --replace],
       %w[--subject johann --train-replicate --dry-run],
+      %w[--subject ragnhild --prepare --write --replace],
       %w[--subject ragnhild --train-replicate --dry-run],
     ], calls.map { |call| call[:argv] }
     assert calls.all? { |call| call[:tool] == "lora" }
+    assert result.value![:dry_run]
+    assert result.value![:requires_caption_review]
+    assert_match(/Paid training was not started/, result.value![:output])
   end
 
   def test_status_asks_nothing_and_spends_nothing
