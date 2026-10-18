@@ -47,7 +47,7 @@ module Master
       # layouts. Every candidate is built from a fixed root and a single name.
       def script_path(requested_root, tool)
         name = tool.to_s
-        return File.join(requested_root, "MASTER", "tools", "invalid.rb") unless name.match?(/\\A[a-zA-Z0-9_-]+\\z/)
+        return File.join(requested_root, "MASTER", "tools", "invalid.rb") unless name.match?(/\A[a-zA-Z0-9_-]+\z/)
 
         roots = [requested_root, MasterPaths.repo, MasterPaths.root].uniq
         entrypoint = TOOL_ENTRYPOINTS.fetch(name) { File.join(name, "#{name}.rb") }
