@@ -80,10 +80,7 @@ module Master
                               apply:, critique:, aesthetic:, only:, target:)
         targets = fix_targets(target, root:)
         writes_requested = writes_requested?(apply:, only:)
-        display_target = target.to_s.strip
-        display_target = "MASTER" if display_target.empty? || display_target == "." || display_target.casecmp?("master")
-        display_target = "all trees" if %w[all everything].any? { |name| display_target.casecmp?(name) }
-        display_target = display_target[0, 80]
+        display_target = display_fix_target(target)
         mode = writes_requested ? "write" : "read-only"
         boundary = if !writes_requested
                      "no-write-or-publish"
@@ -355,6 +352,15 @@ module Master
 
       # How many files the model phase takes, easiest first (Fix::RunLedger.max_files).
       MAX_FILES_FLAG = /\A--max-files=(\d+)\z/i
+
+      # Status messages are one-line operator evidence. Do not let a path label
+      # inject terminal controls or forged log lines into the dmesg stream.
+      def display_fix_target(target)
+        display = target.to_s.gsub(/[\x00-\x1f\x7f]/, " ").gsub(/\s+/, " ").strip
+        display = "MASTER" if display.empty? || display == "." || display.casecmp?("master")
+        display = "all trees" if %w[all everything].any? { |name| display.casecmp?(name) }
+        display[0, 80]
+      end
 
       def execution_overrides(raw)
         overrides = { autofix_mode: nil, max_files: nil }
