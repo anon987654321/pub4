@@ -29,8 +29,8 @@ module Master
 
         # Nil when the mouth can speak. Playback.enabled? requires explicit
         # MASTER_CLI_SPEAK=1 (or /voice on), with MASTER_SKIP_TTS, CI and non-TTY
-        # still acting as hard stops. A face also needs a synthesiser, because
-        # nothing about whether Speech can produce audio.
+        # still acting as hard stops. A face also needs a synthesiser: player
+        # presence alone says nothing about whether Speech can produce audio.
         def missing
           return "voice0: off here — replies stay text" unless Master::Voice::Playback.enabled?
           return "voice0: speech synthesis unavailable — replies stay text" unless Master::Voice::Speech.available?
