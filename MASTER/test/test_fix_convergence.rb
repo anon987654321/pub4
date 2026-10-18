@@ -1557,6 +1557,7 @@ end
     expected = {
       human_decision: :human_decision,
       plateau: :plateau,
+      inconclusive: :inconclusive,
       reloading: :reloading,
       failed: :failed,
       delivery_failed: :delivery_failed,
