@@ -425,15 +425,38 @@ class TestGateChain < Minitest::Test
   end
 
   # /fix measures the failing ladder before it repairs anything, and that run costs minutes.
-  # The record is reused only for the same commit, target and complete scanned inputs.
-  def test_baseline_record_is_reused_only_for_the_same_key
+  # Keep distinct scope fingerprints in one bounded cache; targets within
+  # the same governed tree share the same gate scope across disposable worktrees.
+  def test_baseline_records_are_reused_by_key_and_scoped_to_the_governed_tree
     saved = File.file?(G::BASELINE_FILE) ? File.read(G::BASELINE_FILE) : nil
     G.write_baseline("k1", { "suites" => ["x fail"] })
+    G.write_baseline("k2", { "lexical" => ["y fail"] })
 
     assert_equal({ "suites" => ["x fail"] }, G.read_baseline("k1"))
-    assert_nil G.read_baseline("k2")
-    refute_equal G.baseline_key("MASTER/lib/a"), G.baseline_key("MASTER/lib/b")
+    assert_equal({ "lexical" => ["y fail"] }, G.read_baseline("k2"))
+    assert_nil G.read_baseline("missing")
+    assert_equal G.baseline_key("MASTER/lib/a"), G.baseline_key("MASTER/lib/b")
+    refute_equal G.baseline_key("MASTER/lib/a"), G.baseline_key("RAILS")
   ensure
+    saved ? File.write(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
+  end
+
+  def test_verified_gate_snapshot_can_be_rekeyed_for_the_resulting_revision
+    saved = File.file?(G::BASELINE_FILE) ? File.read(G::BASELINE_FILE) : nil
+    previous_results = G.instance_variable_get(:@last_results)
+    G.clear_verified_fix_snapshots!
+    G.instance_variable_set(:@last_results, [
+      G::Result.new(stage: "suites", state: "failed", summary: "standing failure",
+                    changed: [], body: ["x fail"])
+    ])
+
+    G.remember_verified_snapshot("MASTER")
+    G.persist_verified_baselines!(["MASTER"])
+
+    assert_equal({ "suites" => ["x fail"] }, G.read_baseline(G.baseline_key("MASTER")))
+  ensure
+    G.instance_variable_set(:@last_results, previous_results)
+    G.clear_verified_fix_snapshots!
     saved ? File.write(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
   end
 
