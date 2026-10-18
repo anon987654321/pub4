@@ -465,13 +465,10 @@ class TestGateChain < Minitest::Test
     G.clear_verified_fix_snapshots!
     FileUtils.rm_f(G::BASELINE_FILE)
 
-    status, changed = capture_io do
-      result = G.verify_cached_fix(target: "MASTER")
-      break result
-    end
+    result = nil
+    capture_io { result = G.verify_cached_fix(target: "MASTER") }
 
-    assert_equal 3, status
-    assert_empty changed
+    assert_equal [3, []], result
   ensure
     G.clear_verified_fix_snapshots!
     saved ? File.binwrite(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
