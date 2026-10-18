@@ -1366,6 +1366,50 @@ end
     assert_equal :timeout, event[:payload][:state]
   end
 
+  def test_failed_resume_recovery_publishes_terminal_and_finishes_budget
+    loop = build_loop([])
+    terminal_rows = []
+    journal = Object.new
+    journal.define_singleton_method(:next_pass) { |_| 1 }
+    journal.define_singleton_method(:terminal) do |run_id, state, message:, evidence: nil|
+      terminal_rows << { run_id:, state:, message:, evidence: }
+    end
+    loop.instance_variable_set(:@run_journal, journal)
+
+    lifecycle = []
+    mission = Object.new
+    mission.define_singleton_method(:fail!) { |message| lifecycle << [:mission_failed, message] }
+    recovery_error = Master::Result.err("delivery recovery failed", category: :infrastructure)
+
+    Master::Fix::RunBudget.stub(:begin_run, ->(**) { lifecycle << [:budget_started] }) do
+      Master::Fix::RunBudget.stub(:finish_run, ->(reason: "completed") { lifecycle << [:budget_finished, reason] }) do
+        loop.stub(:resume_active_transaction, recovery_error) do
+          result = loop.send(
+            :run_journaled,
+            { "id" => "run-recovery", "remaining_seconds" => 60.0, "resumed" => false },
+            files: [], target: @root, max_passes: 1, budget_seconds: 60,
+            mission:, requested: false, incremental: false,
+          )
+
+          assert result.err?
+          assert_equal :infrastructure, result.category
+        end
+      end
+    end
+
+    assert_equal 1, terminal_rows.size
+    assert_equal "run-recovery", terminal_rows.first[:run_id]
+    assert_equal :failed, terminal_rows.first[:state]
+    assert_match(/delivery recovery failed/, terminal_rows.first[:message])
+    assert_equal :mission_failed, lifecycle.find { |entry| entry.first == :mission_failed }.first
+    assert lifecycle.any? { |entry| entry.first == :budget_finished },
+           "recovery failure must stop the run budget watchdog"
+
+    event = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }
+    refute_nil event, "recovery failure needs the canonical terminal event"
+    assert_equal :failed, event[:payload][:state]
+  end
+
   def test_a_canonical_repo_leaves_a_hashed_outcome_receipt_the_terminal_event_names
     %w[MASTER RAILS OPENBSD STUDIO].each { |tree| FileUtils.mkdir_p(File.join(@root, tree)) }
     loop = build_loop([])
