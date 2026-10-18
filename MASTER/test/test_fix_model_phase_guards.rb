@@ -155,13 +155,24 @@ class TestFixModelPhaseGuards < Minitest::Test
 
   # A pass cut short by a hot reload attempted nothing; calling the run completed was a pass
   # reported over work that never ran.
-  def test_a_run_cut_by_a_reload_does_not_report_completed
+  def test_only_a_done_terminal_state_reports_completed
     loop = Master::Fix::FixLoop.allocate
-    ok = Struct.new(:ok?).new(true)
+    done = Master::Result.ok("DONE: clean")
+    plateau = Master::Result.ok("PLATEAU: pass limit reached")
+    human = Master::Result.ok("HUMAN_DECISION: approval required")
+    inconclusive = Master::Result.err("semantic evidence unavailable", category: :inconclusive)
 
-    assert_equal "completed", loop.send(:run_end_reason, ok)
+    Master::Fix::CodeWatch.stub(:requested?, false) do
+      assert_equal "completed", loop.send(:run_end_reason, done)
+      assert_match(/\Aplateau:/, loop.send(:run_end_reason, plateau))
+      assert_match(/\Ahuman_decision:/, loop.send(:run_end_reason, human))
+      assert_match(/\Ainconclusive:/, loop.send(:run_end_reason, inconclusive))
+    end
+
+    # A pass cut short by a hot reload attempted nothing; calling it completed
+    # would claim work that never ran.
     Master::Fix::CodeWatch.stub(:requested?, true) do
-      assert_match(/\Areloading/, loop.send(:run_end_reason, ok))
+      assert_match(/\Areloading/, loop.send(:run_end_reason, done))
     end
   end
 
