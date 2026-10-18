@@ -9,9 +9,9 @@ require_relative "../../operator/ratchet_sponsor"
 module Master
   module Fix
     class FixLoop
-      # Commits what an explicitly requested fix-loop pass owns. The push waits
-      # for publish_pending! unless MASTER_FIX_PUSH=each, and either way a push
-      # that was made is proved to have landed.
+      # Commits and publishes each explicitly requested, validated repair
+      # checkpoint by default. MASTER_FIX_PUSH=end defers pushes until final
+      # verification; every attempted push is proved to have landed.
       #
       # The checkout is shared by several sessions and a human. The owned unit
       # is the pass's target files, less any already dirty when the pass began:
@@ -128,10 +128,9 @@ module Master
           end
         end
 
-# One push at the end of the run, after final verification. A fix is
-# committed the moment it validates, but publishing every one of them
-# sent each commit to the remote before the run had proved the whole
-# still passed. MASTER_FIX_PUSH=each restores the push per commit.
+# A validated checkpoint is committed and pushed before repair continues.
+# This keeps long sweeps recoverable and the remote close to the actual work.
+# MASTER_FIX_PUSH=end explicitly defers publication until final verification.
 # Names what would be published first, as the pre-push guard does.
 def publish_pending!
   @commit_mutex.synchronize do
@@ -150,7 +149,7 @@ end
 private
 
 def push_each?
-  ENV["MASTER_FIX_PUSH"] == "each" && !no_publish?
+  ENV.fetch("MASTER_FIX_PUSH", "each") != "end" && !no_publish?
 end
 
 # fix-here --no-publish: the run commits locally and leaves the push to its operator.
