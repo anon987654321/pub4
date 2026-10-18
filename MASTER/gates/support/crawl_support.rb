@@ -24,10 +24,15 @@ module CrawlSupport
     end
   end
 
-  def port_open?(host, port, timeout: 0.4)
+  def port_open?(host, port, timeout: 0.4, on_error: nil)
     Socket.tcp(host, port, connect_timeout: timeout).close
     true
-  rescue StandardError
+  rescue StandardError => e
+    begin
+      on_error&.call(e)
+    rescue StandardError
+      # Diagnostics must not change the result of a port probe.
+    end
     false
   end
 end
