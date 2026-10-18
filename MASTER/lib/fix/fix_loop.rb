@@ -161,7 +161,8 @@ module Master
         end
         if requested
           current_phase = :structure
-          prepare_dependency_map!(files)
+          dependency_result = prepare_dependency_map!(files)
+          return dependency_result if dependency_result.is_a?(Master::Result)
           current_phase = :research
           research = ResearchPass.new(
             agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
@@ -235,7 +236,7 @@ module Master
           message = "fix_loop: dependency understanding incomplete; no repair started (#{detail.join("; ")})"
           Master::Trace::Dmesg.status("understand0", "BLOCKED, #{message[0, 180]}")
           @bus&.publish("fix_loop:dependency_map_incomplete", failures: failures.size, missing: missing.size, detail:)
-          raise message
+          return Result.err(message, category: :policy)
         end
 
         Master::Trace::Dmesg.status(
