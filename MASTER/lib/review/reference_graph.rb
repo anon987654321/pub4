@@ -239,6 +239,7 @@ module Master
         @source_digests = {}
         @ruby_definitions = []
         @ruby_references = []
+        @path_references = []
         @dynamic_sites = []
         @unresolved_references = []
         @built = false
@@ -257,6 +258,7 @@ module Master
             @source_digests.clear
             @ruby_definitions.clear
             @ruby_references.clear
+            @path_references.clear
             @dynamic_sites.clear
             @unresolved_references.clear
             files.each { |file| analyze(file) }
@@ -375,6 +377,7 @@ module Master
         constant_refs(content, rel)
         command_refs(content, rel)
         event_refs(content, rel)
+        collect_path_references(content, rel)
         analyze_ruby(content, rel) if ruby_source?(rel, content:)
       rescue StandardError => e
         @analysis_failures << { path: rel.to_s, error: "#{e.class}: #{e.message}" }
@@ -384,6 +387,93 @@ module Master
           event_bus: @bus,
           path: rel,
         )
+      end
+
+      def collect_path_references(content, rel)
+        ext = File.extname(rel).downcase
+        patterns = case ext
+                   when ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"
+                     [
+                       [:javascript_import, /\b(?:import|export)\s+(?:[^;\n]*?\s+from\s*)?["']([^"'\n]+)["']/],
+                       [:javascript_import, /\brequire\s*\(\s*["']([^"'\n]+)["']\s*\)/],
+                       [:javascript_import, /\bimport\s*\(\s*["']([^"'\n]+)["']\s*\)/],
+                     ]
+                   when ".css", ".scss"
+                     [
+                       [:stylesheet_import, /@(?:import|use|forward)\s+(?:url\(\s*)?["']([^"'\n]+)["']/],
+                     ]
+                   when ".html", ".htm", ".erb"
+                     [
+                       [:markup_import, /\b(?:src|href|poster|data)\s*=\s*["']([^"'\n]+)["']/i],
+                     ]
+                   else
+                     []
+                   end
+        patterns.each do |kind, pattern|
+          content.to_enum(:scan, pattern).each do
+            match = Regexp.last_match
+            specifier = match[1].to_s.strip
+            next unless local_source_reference?(specifier, kind)
+
+            line = content[0...match.begin(0)].count("\n") + 1
+            @path_references << { from_file: rel, line:, kind: :import, source_kind: kind, name: specifier }
+          end
+        end
+      end
+
+      def local_source_reference?(specifier, kind)
+        return false if specifier.empty?
+        return false if specifier.match?(%r{\A(?:https?:|//|data:|mailto:|tel:|javascript:|#)}i)
+
+        suffix = File.extname(specifier.split(/[?#]/, 2).first.to_s).downcase
+        source_suffixes = %w[
+          .js .jsx .mjs .cjs .ts .tsx .css .scss .html .htm .erb .json .yml .yaml .md .mdx
+        ]
+        return true if source_suffixes.include?(suffix)
+        return true if %i[javascript_import stylesheet_import].include?(kind) &&
+                       (specifier.start_with?("./", "../", "@/") || !specifier.include?("/"))
+
+        false
+      end
+
+      def resolve_path_references!
+        @path_references.each do |reference|
+          specifier = reference[:name]
+          resolved = resolve_local_source_path(reference[:from_file], specifier)
+          if resolved
+            edge(from: reference[:from_file], to: resolved, type: :local_import, weight: 1)
+          elsif relative_source_reference?(specifier)
+            @unresolved_references << reference.merge(reason: "local source import did not resolve to an indexed file")
+          end
+        end
+      end
+
+      def resolve_local_source_path(from, specifier)
+        clean = specifier.split(/[?#]/, 2).first.to_s
+        base = if clean.start_with?("@/")
+                  File.expand_path(clean.delete_prefix("@/"), @root)
+                elsif clean.start_with?("./", "../")
+                  File.expand_path(clean, File.dirname(File.join(@root, from)))
+                else
+                  return nil
+                end
+        candidates = [base]
+        suffix = File.extname(base)
+        if suffix.empty?
+          %w[.js .jsx .mjs .cjs .ts .tsx .css .scss .html .htm .erb .json .yml .yaml .md .mdx].each do |extension|
+            candidates << "#{base}#{extension}"
+          end
+          %w[index.js index.jsx index.mjs index.cjs index.ts index.tsx index.css index.scss index.html index.htm index.erb index.json].each do |name|
+            candidates << File.join(base, name)
+          end
+        end
+        candidates.map { |candidate| relative(candidate) }
+                  .find { |candidate| @nodes.include?(candidate) }
+      end
+
+      def relative_source_reference?(specifier)
+        specifier.start_with?("./", "../", "@/") &&
+          !specifier.match?(%r{\A(?:https?:|//|data:|mailto:|tel:|javascript:|#)}i)
       end
 
       def ruby_source?(rel, content:)
@@ -448,6 +538,7 @@ module Master
         weights.each do |(from, to, type), weight|
           edge(from:, to:, type:, weight:)
         end
+        resolve_path_references!
       end
 
       def resolve_method_reference(reference, by_name, by_fqn)
@@ -551,7 +642,9 @@ module Master
           dynamic_method_call_edges: grouped.fetch(:dynamic_method_call, []).size,
           inheritance_edges: grouped.fetch(:inheritance, []).size,
           mixin_edges: grouped.fetch(:mixin, []).size,
-          unresolved_ruby_references: @unresolved_references.size,
+          unresolved_ruby_references: @unresolved_references.count { |row| row[:kind] != :import },
+          unresolved_local_imports: @unresolved_references.count { |row| row[:kind] == :import },
+          resolved_local_import_edges: grouped.fetch(:local_import, []).size,
           dynamic_sites: @dynamic_sites.size,
           event_edges: grouped.fetch(:event, []).size,
           command_edges: grouped.fetch(:command, []).size,
