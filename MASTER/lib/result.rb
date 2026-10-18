@@ -23,7 +23,7 @@ module Master
     module ErrClassification
       # Worth trying again as-is, or after a wait: the failure is in the
       # environment rather than in what was asked.
-      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit exhausted offline
+      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure delivery_failed rate_limit exhausted offline
                      inconclusive].freeze
 
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
@@ -64,6 +64,7 @@ module Master
       llm_call_failure: "LLM dispatch exception (network / SDK)",
       no_api_key: "no LLM API key configured in env",
       infrastructure: "system / disk / git error",
+      delivery_failed: "verified work could not be published; retry the delivery step",
       handler_exception: "unexpected error during handler execution",
       crash: "unexpected process failure during a fix stage",
       timeout: "operation exceeded deadline",
