@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "open3"
+require "tempfile"
 require_relative "../trace/dmesg"
 
 module Master
@@ -16,6 +17,7 @@ module Master
         # lane again by failing on it. Copied, never linked, so the run cannot
         # write through to the operator files. Model choice is not carried.
         AVAILABILITY_STATE = %w[lane_quota.yml model_quota.json].freeze
+        GATE_BASELINE_STATE = "gate_baseline.json"
         DEFAULT_CHILD_TIMEOUT_S = 14_400
         MAX_CHILD_TIMEOUT_S = 86_400
         TERMINATION_GRACE_S = 10
@@ -33,6 +35,61 @@ module Master
           carried
         end
 
+        # The baseline is read-only proof of the starting revision. Keep its
+        # fingerprinted cache between disposable worktrees so an identical base
+        # does not repeat the entire scan-only gate before every real repair.
+        def carry_gate_baseline(worktree)
+          source_dir = File.join(@repo_root, "MASTER", ".master")
+          source = File.join(source_dir, GATE_BASELINE_STATE)
+          return false unless safe_gate_baseline_path?(source_dir, source) && File.file?(source)
+
+          destination_dir = File.join(worktree, "MASTER", ".master")
+          destination = File.join(destination_dir, GATE_BASELINE_STATE)
+          return false unless safe_gate_baseline_path?(destination_dir, destination)
+
+          FileUtils.mkdir_p(destination_dir)
+          FileUtils.cp(source, destination)
+          true
+        rescue SystemCallError => e
+          announce("gate baseline cache not carried: #{e.class}")
+          false
+        end
+
+        # Persist only the cache file, never the worker's entire ignored .master
+        # directory. The key includes HEAD and the source-tree fingerprint, so a
+        # cache from a changed or different base will simply be rejected.
+        def persist_gate_baseline(worktree)
+          source_dir = File.join(worktree, "MASTER", ".master")
+          source = File.join(source_dir, GATE_BASELINE_STATE)
+          return false unless safe_gate_baseline_path?(source_dir, source) && File.file?(source)
+
+          destination_dir = File.join(@repo_root, "MASTER", ".master")
+          destination = File.join(destination_dir, GATE_BASELINE_STATE)
+          return false unless safe_gate_baseline_path?(destination_dir, destination)
+
+          bytes = File.binread(source)
+          FileUtils.mkdir_p(destination_dir)
+          Tempfile.create(["gate-baseline", ".json"], destination_dir) do |file|
+            file.binmode
+            file.write(bytes)
+            file.flush
+            file.fsync
+            File.rename(file.path, destination)
+          end
+          true
+        rescue StandardError => e
+          announce("gate baseline cache not persisted: #{e.class}")
+          false
+        end
+
+        def safe_gate_baseline_path?(directory, path)
+          return false if File.symlink?(directory) || File.symlink?(path)
+          return false unless File.expand_path(path).start_with?("#{File.expand_path(@repo_root)}#{File::SEPARATOR}") ||
+                              File.expand_path(path).start_with?("#{File.expand_path(@repo_root)}/")
+
+          true
+        end
+
         def run_child(worktree, command)
           env = ENV.to_h.merge(
             "MASTER_INTERNAL_CHILD" => "1",
@@ -44,6 +101,8 @@ module Master
             env, File.join(worktree, "MASTER", "bin", "master"), command, chdir: worktree,
             timeout_s: configured_timeout_s("MASTER_FIX_WORKTREE_TIMEOUT_S"),
           )
+        ensure
+          persist_gate_baseline(worktree) if worktree
         end
 
         def run_proof(worktree, proof_trees:)
