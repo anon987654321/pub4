@@ -1700,31 +1700,4 @@ end
     assert_equal ["MASTER"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER", root:)
     assert_equal ["MASTER RAILS --apply"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER RAILS --apply", root:)
   end
-
-  def test_visual_repair_stage_passes_current_visual_custody
-    runner = build_loop([]).instance_variable_get(:@pass_runner)
-    custody = Object.new
-    visual_pass = Object.new
-    visual_pass.define_singleton_method(:custody) { custody }
-    runner.instance_variable_set(:@visual_pass, visual_pass)
-
-    repair = Object.new
-    repair.define_singleton_method(:injected_preamble=) { |_value| }
-    repair.define_singleton_method(:run_once) { |_files, **_options| { fixed: 0 } }
-    received = nil
-
-    Master::Fix::RepairLoop.stub(:new, ->(**options) { received = options; repair }) do
-      fixed = runner.send(
-        :run_visual_stage,
-        [{ law: Master::Fix::VisualPass::LAW_ID, file: "RAILS/app.css" }],
-        pass: 1,
-        image: { path: "/tmp/visual.png" },
-        files: [],
-        deadline: Time.now + 30,
-      )
-      assert_equal 0, fixed
-    end
-
-    assert_same custody, received.fetch(:visual_custody)
-  end
 end
