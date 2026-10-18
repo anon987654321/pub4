@@ -24,7 +24,7 @@ module Master
       IMAGE_EXTENSIONS = %w[jpg jpeg png webp].freeze
       NUMBER_WORDS = %w[zero one two three four five six seven eight nine ten].freeze
       PAID = %i[selfie train video].freeze
-      SOURCE_REFRESH_RE = /\\b(?:new|updated|fresh|additional)\\s+(?:training\\s+)?(?:photos?|images?)\\b|\\bsources?\\b/i.freeze
+      SOURCE_REFRESH_RE = /\b(?:new|updated|fresh|additional)\s+(?:training\s+)?(?:photos?|images?)\b|\bsources?\b/i.freeze
 
       def handles?(text) = !intent_for(text, config).nil?
 
@@ -216,14 +216,14 @@ module Master
           )
           return preflight unless preflight.ok?
 
-          reports << "#{name}: source preparation\\n#{prepare.value!}\\n\\n#{name}: training preflight\\n#{preflight.value!}"
+          reports << "#{name}: source preparation\n#{prepare.value!}\n\n#{name}: training preflight\n#{preflight.value!}"
         end
 
         output = [
           "Source refresh completed for #{subjects.join(', ')}.",
-          reports.join("\\n\\n"),
+          reports.join("\n\n"),
           "Paid training was not started. Review the generated .txt captions for pose, clothing, light and setting, then run the training preflight again. Unreviewed stub captions are a hard training blocker.",
-        ].join("\\n\\n")
+        ].join("\n\n")
         Result.ok({
           output:,
           rendered: output,
