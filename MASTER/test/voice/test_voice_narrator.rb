@@ -135,6 +135,25 @@ class TestVoiceNarrator < Minitest::Test
     assert_match(/14 files/, @spoken.join)
   end
 
+  def test_unrelated_story_falls_back_to_the_observed_event
+    n = build(writer: ->(**) { "The moon is a really committed pebble." })
+    n.observe("scan0: reading 14 files")
+    window(n)
+
+    assert_equal :spoken, n.tick
+    refute_match(/moon|committed|pebble/i, @spoken.join)
+    assert_match(/14 files/, @spoken.join)
+  end
+
+  def test_model_cannot_claim_success_for_an_incomplete_run
+    n = build(writer: ->(**) { "The task is complete." })
+    n.observe("fix0: incomplete, semantic assessment unavailable")
+
+    assert_equal :spoken, n.tick
+    refute_match(/\b(?:complete|done|finished|successful|verified)\b/i, @spoken.join)
+    assert_match(/stopped|did not finish/i, @spoken.join)
+  end
+
   def test_refusals_and_repeats_are_not_spoken
     n = build(writer: ->(**) { "I'm sorry, I cannot do that." })
     n.observe("scan0: reading")
