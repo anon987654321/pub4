@@ -231,18 +231,49 @@ module Master
             return { complete: true, files: [] } unless graph # isolated unit tests only; requested /fix always wires it
             return incomplete_repair_context("target source is not indexed") unless graph.includes_path?(path)
 
-            relative = graph.relative(path)
+            target_source = File.read(path, encoding: "UTF-8")
+            target_sha256 = Digest::SHA256.hexdigest(target_source)
+            return incomplete_repair_context("target source changed since dependency graph refresh") \
+              unless graph.source_digest(path) == target_sha256
+
+            dynamic_sites = graph.dynamic_for(path)
+            unless dynamic_sites.empty?
+              site = dynamic_sites.first
+              return incomplete_repair_context(
+                "target contains unresolved dynamic behavior at #{site[:line]} (#{site[:name]}: #{site[:reason]})",
+              )
+            end
+
             radius = graph.blast_radius(path)
             related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
+            adjacent = (related + [relative]).to_set
+            unresolved = graph.unresolved_for(path).select { |reference| adjacent.include?(reference[:from_file]) }
+            unless unresolved.empty?
+              site = unresolved.first
+              return incomplete_repair_context(
+                "dependency/caller relationship remains unresolved at #{site[:from_file]}:#{site[:line]} " \
+                "(#{site[:kind]} #{site[:name]})",
+              )
+            end
+
             entries = []
-            total_bytes = File.size(path)
+            total_bytes = target_source.bytesize
+            if total_bytes > REPAIR_CONTEXT_MAX_BYTES
+              return incomplete_repair_context(
+                "complete target source is #{total_bytes} bytes, exceeding #{REPAIR_CONTEXT_MAX_BYTES}; no excerpt-only repair was attempted",
+              )
+            end
 
             related.sort.each do |rel|
               full = File.expand_path(rel, graph.root)
               next unless File.file?(full)
               return incomplete_repair_context("dependency is a symlink: #{rel}") if File.symlink?(full)
 
-              source = File.read(full, encoding: "UTF-8", invalid: :replace, undef: :replace)
+              source = File.read(full, encoding: "UTF-8")
+              source_sha256 = Digest::SHA256.hexdigest(source)
+              return incomplete_repair_context("dependency changed since graph refresh: #{rel}") \
+                unless graph.source_digest(full) == source_sha256
+
               total_bytes += source.bytesize
               if total_bytes > REPAIR_CONTEXT_MAX_BYTES
                 return incomplete_repair_context(
@@ -250,13 +281,13 @@ module Master
                   "#{REPAIR_CONTEXT_MAX_BYTES} bytes; no excerpt-only repair was attempted",
                 )
               end
-              entries << { path: rel, source:, sha256: Digest::SHA256.hexdigest(source) }
+              entries << { path: rel, source:, sha256: source_sha256 }
             end
 
             {
               complete: true,
               files: entries,
-              target_sha256: Digest::SHA256.file(path).hexdigest,
+              target_sha256:,
             }
           rescue StandardError => e
             incomplete_repair_context("#{e.class}: #{e.message}")
