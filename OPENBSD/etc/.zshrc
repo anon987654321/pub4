@@ -1,19 +1,23 @@
 # Provider credentials are host-local and must never be committed.
 typeset -g PUB4_OPERATOR_ENV="${HOME}/.config/pub4/operator.env"
 if [[ -r "$PUB4_OPERATOR_ENV" ]]; then
-  # A readable file is not necessarily private. On OpenBSD and macOS, %Lp
-  # reports the group/other permission bits as part of the numeric mode.
-  # Unknown modes fail closed: credentials are never sourced on uncertainty.
-  typeset -g PUB4_OPERATOR_ENV_MODE
-  PUB4_OPERATOR_ENV_MODE="$(stat -f '%Lp' "$PUB4_OPERATOR_ENV" 2>/dev/null)" || PUB4_OPERATOR_ENV_MODE=""
-  case "$PUB4_OPERATOR_ENV_MODE" in
-    [0-7]00|0[0-7]00)
-      source "$PUB4_OPERATOR_ENV"
-      ;;
-    *)
-      print -u2 -r -- "operator0: refusing $PUB4_OPERATOR_ENV; permissions must be owner-only (chmod 600)"
-      ;;
-  esac
+  if [[ ! -O "$PUB4_OPERATOR_ENV" ]]; then
+    print -u2 -r -- "operator0: refusing $PUB4_OPERATOR_ENV; file must be owned by the current user"
+  else
+    # A readable file is not necessarily private. On OpenBSD and macOS, %Lp
+    # reports the group/other permission bits as part of the numeric mode.
+    # Unknown modes fail closed: credentials are never sourced on uncertainty.
+    typeset -g PUB4_OPERATOR_ENV_MODE
+    PUB4_OPERATOR_ENV_MODE="$(stat -f '%Lp' "$PUB4_OPERATOR_ENV" 2>/dev/null)" || PUB4_OPERATOR_ENV_MODE=""
+    case "$PUB4_OPERATOR_ENV_MODE" in
+      [0-7]00|0[0-7]00)
+        source "$PUB4_OPERATOR_ENV"
+        ;;
+      *)
+        print -u2 -r -- "operator0: refusing $PUB4_OPERATOR_ENV; permissions must be owner-only (chmod 600)"
+        ;;
+    esac
+  fi
 fi
 
 path=(/home/dev/.local/share/gem/ruby/*/bin(N) $path)
