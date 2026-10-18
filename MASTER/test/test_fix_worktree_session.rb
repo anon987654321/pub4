@@ -121,7 +121,6 @@ exit(system("git", "commit", "-m", "worker fix"))
 
   def test_streamed_worker_output_redacts_credentials_but_retains_terminal_evidence
     with_repo(worker: "#!/usr/bin/env ruby\nexit 0\n") do |root|
-      session = Master::Fix::WorktreeSession.new(root:)
       code = <<~'RUBY'
         puts "remote https://operator:password-value@example.invalid/repo.git?token=query-token"
         puts "review0: complete"
@@ -130,6 +129,7 @@ exit(system("git", "commit", "-m", "worker fix"))
       status = nil
       lines = nil
       out, err = capture_io do
+        session = Master::Fix::WorktreeSession.new(root:)
         status, lines = session.send(:run_stream, ENV.to_h, RbConfig.ruby, "-e", code, chdir: root, timeout_s: 5)
       end
 
