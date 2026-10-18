@@ -252,12 +252,15 @@ class TestFixModelPhaseGuards < Minitest::Test
 
   def test_an_unbounded_worklist_ranks_after_the_complete_scan_by_default
     previous = ENV["MASTER_FIX_RANK"]
+    previous_limit = ENV["MASTER_FIX_MAX_FILES"]
     ENV.delete("MASTER_FIX_RANK")
+    ENV.delete("MASTER_FIX_MAX_FILES")
     Ledger.reset!
 
     assert Stream.new.send(:rank_worklist?)
   ensure
     previous ? ENV["MASTER_FIX_RANK"] = previous : ENV.delete("MASTER_FIX_RANK")
+    previous_limit ? ENV["MASTER_FIX_MAX_FILES"] = previous_limit : ENV.delete("MASTER_FIX_MAX_FILES")
   end
 
   class Scanning < Stream
@@ -289,7 +292,9 @@ class TestFixModelPhaseGuards < Minitest::Test
 
   def test_an_unbounded_default_scan_collects_the_corpus_before_queueing_repairs
     previous = ENV["MASTER_FIX_RANK"]
+    previous_limit = ENV["MASTER_FIX_MAX_FILES"]
     ENV.delete("MASTER_FIX_RANK")
+    ENV.delete("MASTER_FIX_MAX_FILES")
     Ledger.reset!
     scan = Scanning.new
     paths = %w[/r/a.rb /r/b.rb /r/c.rb /r/d.rb]
@@ -301,6 +306,7 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal paths.size, queue.size
   ensure
     previous ? ENV["MASTER_FIX_RANK"] = previous : ENV.delete("MASTER_FIX_RANK")
+    previous_limit ? ENV["MASTER_FIX_MAX_FILES"] = previous_limit : ENV.delete("MASTER_FIX_MAX_FILES")
   end
 
   def test_a_limited_run_does_not_wait_for_a_ranked_scan
