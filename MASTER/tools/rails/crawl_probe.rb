@@ -42,7 +42,7 @@ manifest.fetch("apps", {}).each { |name, spec| targets << [name, spec["port"], s
 
 targets.each do |name, port, paths|
   host = "127.0.0.1"
-  unless CrawlSupport.port_open?(host, port)
+  unless CrawlSupport.crawler_port_open?(host, port)
     if options[:skip_closed]
       skips << "#{name}: port #{port} closed — skipped"
       next
