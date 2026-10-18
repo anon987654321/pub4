@@ -16,9 +16,9 @@ module Master
     #
     # The words come from the cheapest live lane (Io::LaneSelection, tier from
     # voice.yml) under a strict prompt in data/narration.yml. A reply that
-    # invents a number, repeats a sentence, refuses, or runs long is thrown away
-    # and a template line is told instead; so it is when no lane is live or the
-    # session budget is spent. The narrator tells only what the events say.
+    # invents a number, repeats a sentence, refuses, runs long, lacks content
+    # overlap with the events, or claims unsupported success is replaced by a
+    # deterministic template. The narrator tells only what the events support.
     #
     # Knobs are in voice.yml under `narration:`. Off: enabled: false there,
     # MASTER_NARRATE=0, or /narrate off. Off means Dmesg speaks its plain line.
@@ -28,7 +28,7 @@ module Master
       FALSE_VALUES = %w[0 off false no].freeze
       REFUSAL = /\A(?:i(?:'m| am)? (?:sorry|unable)|i can(?:'|no)t|as an ai\b)/i
       SUCCESS_STATUS = /\b(?:complete(?:d)?|done|finished|success(?:ful|fully)?|verified|passed|fixed|resolved|ready|healthy|clean)\b/i
-      NEGATED_SUCCESS_STATUS = /\b(?:not|never|cannot|can't|couldn't|could not|didn't|did not|doesn't|does not|isn't|is not|wasn't|was not|hasn't|has not|haven't|have not|without)\b(?:\W+\w+){0,2}\W+#{SUCCESS_STATUS.source.sub(/\\b\\\(\?:/, "(?:")}/i
+      NEGATED_SUCCESS_STATUS = /\b(?:not|never|cannot|can't|couldn't|could not|didn't|did not|doesn't|does not|isn't|is not|wasn't|was not|hasn't|has not|haven't|have not|without)\b(?:\W+\w+){0,2}\W+(?:complete(?:d)?|done|finished|success(?:ful|fully)?|verified|passed|fixed|resolved|ready|healthy|clean)\b/i
       GROUNDING_STOP_WORDS = %w[
         a about after all also am an and any are as at be because been before being but by
         can cannot could did do does doing down during each for from had has have he her here him
