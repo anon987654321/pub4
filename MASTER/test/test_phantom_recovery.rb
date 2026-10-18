@@ -139,6 +139,21 @@ class TestPhantomRecovery < Minitest::Test
     assert_nil Master::PhantomRecovery.detect("Call a tool with:\n```\n<tool_call>{...}\n```")
   end
 
+  def test_tool_call_requires_a_named_tool_and_object_arguments
+    [
+      %(<tool_call>null</tool_call>),
+      %(<tool_call>"ReadFile"</tool_call>),
+      %(<tool_call>[]</tool_call>),
+      %(<tool_call>{"name":[],"args":{}}</tool_call>),
+      %(<tool_call>{"name":"ReadFile","args":[]}</tool_call>),
+      %(<tool_call>{"name":"bad tool name","args":{}}</tool_call>),
+      %(</tool_call>orphan close),
+    ].each do |text|
+      finding = Master::PhantomRecovery.detect(text)
+      assert_includes finding.fetch(:patterns), "xml_tool_call_failure", "should reject #{text.inspect}"
+    end
+  end
+
   # The prose detectors used to compile into regexes matching only their own
   # sentence, which a reply quoting data/laws.yml would trip.
   def test_semantic_detector_descriptions_are_not_compiled_as_regexes
