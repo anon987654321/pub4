@@ -142,10 +142,16 @@ module Master
       end
 
       def worktree_proof_trees(target, root:)
-        tokens = target.to_s.split(/\s+/)
+        text = target.to_s.strip
         trees = MasterPaths::TREES.dup
+        # TargetResolver's omitted target, "." and "master" all mean MASTER.
+        # Keep that scope through the isolated worker's final proof; all-tree
+        # work must be requested explicitly.
+        return ["MASTER"] if text.empty? || text == "." || text.casecmp?("master")
+        return trees if %w[all everything].any? { |name| text.casecmp?(name) }
+
+        tokens = text.split(/\s+/)
         return tokens.uniq if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
-        return trees if target.to_s.strip.empty?
 
         repo_root = File.expand_path(root)
         repo_root = Master::REPO_ROOT if repo_root == Master::ROOT
