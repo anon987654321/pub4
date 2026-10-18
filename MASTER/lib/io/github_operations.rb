@@ -38,6 +38,8 @@ module Master
       end
 
       def publish_and_merge!(branch:, base:, expected_head:, title:, body:, timeout: DEFAULT_MERGE_TIMEOUT)
+        number = nil
+        pr_url = nil
         return Result.new(false, "GitHub delivery requires a github.com origin", nil, nil, nil) unless github_remote?
         return Result.new(false, "GitHub delivery unavailable — install gh and authenticate with gh auth login", nil, nil, nil) unless available?
 
@@ -45,6 +47,7 @@ module Master
         return pr unless pr.ok
 
         number = pr.number
+        pr_url = pr.url
         current = view(number)
         if current[:head] != expected_head
           return Result.new(
@@ -69,11 +72,28 @@ module Master
         end
 
         unless merge_status.success?
+          # gh may time out or return a non-zero exit after GitHub accepted the
+          # merge. Read authoritative PR state before reporting failure so the
+          # caller can safely distinguish "not delivered" from an ambiguous CLI result.
+          confirmed = view(number)
+          if confirmed[:state] == "MERGED"
+            return Result.new(
+              false,
+              "GitHub PR ##{number} merged but its head could not be verified",
+              number,
+              pr_url,
+              nil,
+            ) unless confirmed[:head] == expected_head
+
+            return merged_result(number:, url: pr_url, state: confirmed)
+          end
+          return Result.new(false, "GitHub PR ##{number} closed before merge", number, pr_url, nil) if confirmed[:state] == "CLOSED"
+
           return Result.new(
             false,
             "GitHub PR ##{number} merge request failed: #{compact(merge_output)}",
             number,
-            pr.url,
+            pr_url,
             nil,
           )
         end
@@ -82,11 +102,19 @@ module Master
         loop do
           state = view(number)
           if state[:state] == "MERGED"
-            return Result.new(true, "GitHub PR ##{number} merged as #{state[:merge_sha].to_s[0, 12]}", number, pr.url, state[:merge_sha])
+            return Result.new(
+              false,
+              "GitHub PR ##{number} merged but its head could not be verified",
+              number,
+              pr_url,
+              nil,
+            ) unless state[:head] == expected_head
+
+            return merged_result(number:, url: pr_url, state:)
           end
-          return Result.new(false, "GitHub PR ##{number} closed before merge", number, pr.url, nil) if state[:state] == "CLOSED"
+          return Result.new(false, "GitHub PR ##{number} closed before merge", number, pr_url, nil) if state[:state] == "CLOSED"
           if state[:head] && state[:head] != expected_head
-            return Result.new(false, "GitHub PR ##{number} head changed while merging", number, pr.url, nil)
+            return Result.new(false, "GitHub PR ##{number} head changed while merging", number, pr_url, nil)
           end
 
           remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -97,10 +125,19 @@ module Master
 
         Result.new(false, "GitHub PR ##{number} did not become MERGED before the delivery deadline", number, pr.url, nil)
       rescue StandardError => e
-        Result.new(false, "GitHub delivery failed: #{e.class}: #{e.message}", nil, nil, nil)
+        Result.new(false, "GitHub delivery failed: #{e.class}: #{e.message}", number, pr_url, nil)
       end
 
       private
+
+      def merged_result(number:, url:, state:)
+        sha = state[:merge_sha].to_s
+        unless sha.match?(/\A[0-9a-f]{40}\z/i)
+          return Result.new(false, "GitHub PR ##{number} reports MERGED without a valid merge commit SHA", number, url, nil)
+        end
+
+        Result.new(true, "GitHub PR ##{number} merged as #{sha[0, 12]}", number, url, sha)
+      end
 
       def origin_repo
         output, status = @executor.capture2e("git", "-C", @root, "remote", "get-url", "origin", timeout: DEFAULT_TIMEOUT)
