@@ -11,10 +11,10 @@ require_relative "../../atomic_write"
 # or captioned against the caption law costs the same per second as a good one,
 # so the checks run on the Mac, in seconds, before anything is uploaded.
 #
-# The figures are Replicate's fine-tuning guide (replicate.com/docs/guides/
-# fine-tune-an-image-model): at least 10 images, 1024 on the short edge or more,
-# a trigger that is not an existing word and not "TOK", and a run billed per
-# second on 8x H100.
+# The preflight shape rules follow Replicate's fine-tuning guide. The cost rate
+# must match Studio::ReplicateClient::LORA_TRAINER_VERSION: the reviewed version's
+# public page lists H200 hardware at $0.001525/s. Training deliberately avoids the
+# provider's moving "latest" pointer, so a hardware/rate change requires a pin review.
 module Preflight
   IMAGE_EXT = %w[.jpg .jpeg .png .webp].freeze
   MIN_IMAGES = 10
@@ -23,10 +23,10 @@ module Preflight
   RESERVED_TRIGGERS = %w[tok].freeze
   DICTIONARY = "/usr/share/dict/words"
 
-  # Replicate's published rate and its example run: 1000 steps in about two
-  # minutes. The README logged fourteen minutes for the same step count, so the
-  # estimate prints both and the sidecar records the seconds actually billed.
-  TRAIN_USD_PER_SECOND = 0.0122
+  # The guide estimate is 1000 steps in about two minutes; one logged run took
+  # fourteen. Show both runtimes at the pinned version's published hardware rate.
+  # https://replicate.com/ostris/flux-dev-lora-trainer/versions
+  TRAIN_USD_PER_SECOND = 0.001525
   GUIDE_SECONDS_PER_STEP = 0.12
   OBSERVED_SECONDS_PER_STEP = 0.84
 
