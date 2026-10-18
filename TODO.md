@@ -1,7 +1,7 @@
 # pub4 TODO
 
 Status: CONSOLIDATED_BACKLOG
-Updated: 2026-10-18 (closeout: main and stale branch refs reconciled)
+Updated: 2026-10-19 (external assessment tools and additive face stipple; acceptance pending)
 Authority: MASTER/data/soul.yml > MASTER/data/laws.yml > executable laws and gates > tree contracts > Git history.
 Owner: operator and maintainers, according to the environment each task requires.
 
@@ -126,6 +126,12 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 - [ ] Run the STUDIO output-path regression suites on the pinned Ruby/libvips host. Postpro bulk grades, stock sheets and LUT exports, Dilla random/industrial renders, and reference-analysis artifacts now use the shared output_paths.rb contract. Relative or checkout-local XDG_DATA_HOME values fall back to ~/Documents, including symlinked paths into the checkout. If ~/Documents itself resolves inside the checkout, the helper now fails visibly rather than writing media there. The isolated path-contract harness passed 7/7 checks. Dedicated subprocess regression coverage now lives in `STUDIO/test/output_path_cli_test.rb`, with consumer-boundary coverage in `RAILS/test/studio_contract_test.rb`; both are unrun on a repository checkout, and the pinned-host suites and gate.rb still need real runtime execution.
 - [ ] Finish the Replicate README contract review for canonical entrypoints, current request patterns, cost behavior, output placement and safe reruns. The Postpro README documents the shared UTC-dated output contract, stock-sheet/LUT destinations, explicit POSTPRO_OUTPUT_DIR overrides and collision-safe default names; full runtime verification remains pending.
 - [ ] Keep suite isolation by subject because top-level constants collide across tool suites. Fix order-dependent fixtures instead of loading everything into one process or adding permanent global shims.
+
+## P1 — external assessment and face stipple
+
+- [ ] Run `MASTER/test/test_external_assessment_tools.rb` and focused tool-registry, boot and security suites on an authorised current-main checkout. Exercise ExternalAudit against a permitted public test site, VulCheck on a test host, and Nmap only against one explicitly authorised lab target. Verify unavailable/inconclusive results are explicit and no installation/update occurs.
+- [ ] Run `node --test RAILS/master/test/face_stipple.test.mjs` and `node --test RAILS/master/test/face_boot.test.mjs`; then visually verify the face in a real browser with default settings, `?stipple=0`, and `?playground=1`. Confirm the layer attaches once beside the existing ParticleKernel, respects reduced motion and point budgets, and never blanks the original face.
+- [ ] Validate the assessment business hypothesis with ten buyer interviews and three paid pilots. Record confirmed-finding and false-positive rates, time to first useful finding, time to verified remediation, delivery cost, willingness to pay and repeat purchase. Do not claim product-market fit until buyer evidence exists.
 
 ## P1 — cross-tree operator UX and architecture
 

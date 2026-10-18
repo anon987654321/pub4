@@ -1992,3 +1992,48 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
   #turn-control { transition: none; }
 }
 
+
+
+/* Developer controls for the additive face stipple layer; hidden unless explicitly enabled. */
+.master-face-stipple-playground {
+  position: fixed;
+  z-index: 40;
+  inset: auto 16px 64px auto;
+  width: min(320px, calc(100vw - 32px));
+  max-height: min(72vh, 560px);
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  color: var(--face-text, #d8d6e0);
+  background: #050505;
+  border: 1px solid var(--face-line, #777);
+  font: 12px/1.4 var(--font-mono, ui-monospace, monospace);
+}
+.master-face-stipple-playground strong { font-size: 13px; font-weight: 700; }
+.master-face-stipple-playground label { display: grid; gap: 5px; }
+.master-face-stipple-playground select,
+.master-face-stipple-playground button {
+  min-height: 36px;
+  padding: 6px 8px;
+  color: inherit;
+  background: #000;
+  border: 1px solid var(--face-line, #777);
+  font: inherit;
+}
+.master-face-stipple-playground input { width: 100%; accent-color: currentColor; }
+.master-face-stipple-playground .master-stipple-field {
+  grid-template-columns: 78px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 8px;
+}
+.master-face-stipple-playground output { text-align: right; font-variant-numeric: tabular-nums; }
+.master-face-stipple-playground .master-stipple-status { margin: 0; color: var(--face-muted, #aaa); }
+@media (prefers-reduced-motion: reduce) {
+  .master-face-stipple-playground,
+  .master-face-stipple-playground * {
+    scroll-behavior: auto;
+    transition: none;
+    animation: none;
+  }
+}

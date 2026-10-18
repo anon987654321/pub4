@@ -193,6 +193,36 @@ bin/master
 
 FREELLMPOOL_PROXY_KEY is also accepted. The URL must be absolute HTTP(S), contain no embedded credentials, query or fragment, and use HTTPS unless its host is loopback. The gateway's /v1/models response becomes the discovered pool, and chat calls use /v1/chat/completions. MASTER does not install or launch the gateway, treat free-tier capacity as guaranteed, or claim offline operation when only a remote route is available. Provider environment values belong in the operator's protected environment file, not in source control or command history.
 
+## External assessment and business direction
+
+MASTER can assess a public website from observable evidence, review source when the owner grants repository access, and use its existing governed tools to create one prioritised remediation plan. These capabilities have different boundaries and should not be presented as interchangeable scanners.
+
+- **Design and UX:** use the existing Browser to inspect rendered pages at desktop and mobile sizes, capture screenshots, and route them through an available vision lane. Review hierarchy, typography, contrast, responsive states, navigation, keyboard access and accessibility. HTML-only evidence cannot establish visual quality.
+- **Code and architecture:** when source is available and authorised, inventory the repository, read entrypoints and dependencies, inspect callers and tests, run MASTER's existing laws, then verify proposed repairs. A black-box web page cannot prove the internals of its code.
+- **Network and security:** ExternalAudit performs passive HTTP(S), redirect, TLS and response-header observations plus basic HTML semantics. VulCheck reports local posture observations and can run already-installed scanners only with a second dangerous-tier permit; it never installs or updates packages. Nmap is an active, bounded scan of one explicitly authorised host. Its basic, services and safe profiles avoid full-port sweeps and exploit scripts. A missing header or unavailable check is not a confirmed vulnerability or a pass.
+- **Evidence contract:** separate confirmed defects, hypotheses, missing evidence and out-of-scope checks. Findings should name the URL or file/line, observed evidence, confidence, impact, remediation and how the repair can be verified. This is not a penetration-test certification.
+
+### Competitive landscape
+
+The space is competitive and split across specialties; the cross-discipline gap is a hypothesis, not a proven absence of competitors.
+
+| Segment | Benchmarks | Established strength |
+| --- | --- | --- |
+| Source and dependency security | [GitHub Code Security](https://github.com/features), [Snyk](https://snyk.io/product/), [Aikido](https://www.aikido.dev/) | Source analysis, dependency findings and developer workflow integration |
+| Dynamic application security | [OWASP ZAP](https://www.zaproxy.org/), [StackHawk](https://www.stackhawk.com/) | Purpose-built DAST/API testing and repeatable security scans |
+| Network discovery | [Nmap](https://nmap.org/book/), [NSE script categories](https://nmap.org/nsedoc/categories/) | Mature host, port and service discovery |
+| Accessibility and visual quality | [Deque axe DevTools](https://www.deque.com/axe/devtools/), [Lighthouse](https://developer.chrome.com/docs/lighthouse/overview), [BrowserStack Percy](https://www.browserstack.com/percy) | Automated accessibility checks, page-quality metrics and visual regression |
+
+MASTER should integrate mature specialists rather than re-create their scanners. The candidate distinction is one evidence trail that connects rendered user experience, source evidence, network observations and verified remediation.
+
+### Business hypothesis and strategy
+
+**Initial offer:** a bounded evidence-backed review of a public website or an owner-authorised app, ending in a concise severity-ranked report and repair plan. Repository access adds code-level evidence; implementation of fixes is a separately authorised service. Do not sell it as a certified pentest or as a replacement for specialist auditors.
+
+**Initial buyers to test:** independent web agencies, small SaaS firms and Norwegian/European SMEs preparing for launch, redesign or customer security review. Offer a fixed-scope diagnostic first, optional remediation next, then test recurring release reviews. Agency and hosting-provider referrals are plausible channels, not validated channels.
+
+**Validation before scale:** interview ten target buyers and run three paid pilots with written scope. Measure confirmed-finding rate, false positives, time to first useful finding, time to verified remediation, delivery cost, willingness to pay and repeat purchase. Keep the dashboard and multi-tenant service small until buyers repeatedly pay for the report and the follow-through. The possible moat is evidence and verification, not a new scanner. Risks include false positives, out-of-scope testing, liability and a scope too broad to deliver well.
+
 ## Runtime
 
 MASTER pins Ruby 4.0.7. Isolated execution through `Ruby::Box` is available only

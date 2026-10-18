@@ -135,6 +135,8 @@ shell_manifest:
   - visual_bridge
   - chat
   - master_namespace
+  - face_stipple_system
+  - face_playground
 
 # Trailing <script defer> tags, after the ordered manifest.
 shell_late:

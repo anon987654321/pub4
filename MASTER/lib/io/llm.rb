@@ -234,6 +234,33 @@ module Master
         def execute(url:, wait: 4) = forward(url: url.to_s, wait: wait.to_f)
       end
 
+      class ExternalAudit < RubyLLM::Tool
+        include ToolForwarding
+        description "Passively assess a public website's security headers and observable HTML semantics. Use render=true for screenshot evidence; visual judgement requires a configured vision lane."
+        parameter :url, description: "Public HTTP(S) URL", required: true
+        parameter :render, description: "Open a same-host browser session and capture a screenshot", type: "boolean", required: false
+        def execute(url:, render: false) = forward(url: url.to_s, render: render == true)
+      end
+
+      class VulCheck < RubyLLM::Tool
+        include ToolForwarding
+        description "Read-only local security posture inventory; never installs packages or updates signatures. Optional installed scanners require separate dangerous-tier approval."
+        parameter :run_scanners, description: "Run already-installed local scanners only", type: "boolean", required: false
+        def execute(run_scanners: false) = forward(run_scanners: run_scanners == true)
+      end
+
+      class Nmap < RubyLLM::Tool
+        include ToolForwarding
+        description "Bounded active Nmap scan of one explicitly authorized hostname or IP. No CIDR, full-port sweep, brute force or exploit scripts."
+        parameter :target, description: "One hostname or IP; not a URL, CIDR, port, range or wildcard", required: true
+        parameter :profile, description: "basic, services, or safe", required: false
+        parameter :authorized, description: "Set true only when the operator authorizes this exact target", type: "boolean", required: true
+        parameter :allow_private, description: "Explicitly allow one private host in an authorized lab", type: "boolean", required: false
+        def execute(target:, profile: "basic", authorized: false, allow_private: false)
+          forward(target: target.to_s, profile: profile.to_s, authorized: authorized == true, allow_private: allow_private == true)
+        end
+      end
+
       class Browser < RubyLLM::Tool
         include ToolForwarding
         description "Use Browser, a sessionful, SSRF-guarded browser. Actions: status, navigate, login, extract, look, follow, paginate, interact, close. Navigate opens a headless session; login opens a visible window for operator-controlled sign-in, but POST-based login submission is blocked by the GET/HEAD-only transport. Sessions stay bound to their first host and use the pinned-IP transport. Every snapshot saves an owner-only screenshot; look captures the current viewport without re-reading the DOM, for a vision lane to describe. Captions never drive navigation. Follow uses a literal same-host anchor href rather than firing page click handlers. Paginate is bounded to 1-50 pages. Every click, set, or type interaction requires fresh human approval. Do not disguise automation or conceal AI identity. External communication requires recipient consent and per-action human approval."
