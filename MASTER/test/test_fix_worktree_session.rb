@@ -118,6 +118,45 @@ exit(system("git", "commit", "-m", "worker fix"))
     end
   end
 
+  def test_final_publication_failure_is_delivery_failed_and_preserves_recovery
+    worker = <<~'RUBY'
+      #!/usr/bin/env ruby
+      File.write("README", "after\n")
+      system("git", "add", "README")
+      puts "review0: complete"
+      exit(system("git", "commit", "-m", "worker fix") ? 0 : 1)
+    RUBY
+
+    with_repo(worker:) do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+      session.define_singleton_method(:publish!) do |worktree:, branch:, head:, base:|
+        raise IOError, "private push URL must not leak"
+      end
+
+      result = nil
+      out, err = capture_io do
+        result = session.run(command: "/fix test", proof_trees: ["MASTER"])
+      end
+
+      refute result.ok, err + out
+      assert_equal :delivery_failed, result.category
+      assert_match(/\ADELIVERY_FAILED: final publication did not complete cleanly \(IOError\)/, result.summary)
+      refute_includes result.summary, "private push URL"
+      assert File.directory?(result.worktree), "unpublished work must remain available for recovery"
+      assert_equal "base\n", git_output(root, "show", "origin/main:README")
+      refute_empty git_output(root, "ls-remote", "--heads", "origin", result.branch)
+    ensure
+      if result&.worktree && File.directory?(result.worktree)
+        git(root, "worktree", "remove", "--force", result.worktree)
+      end
+      if result&.branch
+        git(root, "branch", "-D", result.branch)
+        git(root, "push", "origin", "--delete", result.branch, out: File::NULL, err: File::NULL)
+      end
+      FileUtils.rm_rf(File.dirname(result.worktree)) if result&.worktree
+    end
+  end
+
   def test_gate_baseline_cache_survives_disposable_worktree
     worker = <<~'RUBY'
       #!/usr/bin/env ruby
