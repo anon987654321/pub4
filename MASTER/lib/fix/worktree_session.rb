@@ -146,7 +146,7 @@ module Master
           remote_cleanup = cleanup_success(worktree:, branch:)
           note = cleanup_note(remote_cleanup, branch)
           announce("worker made no committed changes, worktree removed#{note}")
-          return Result.new(true, "worktree: clean, no changes to publish#{note}", base, head, branch, worktree)
+          return Result.new(true, "worktree: clean, no changes to publish#{note}", base, head, branch, worktree, nil)
         end
 
         changed = diff_paths(worktree, base, head)
@@ -155,7 +155,8 @@ module Master
           return preserve(
             worktree:, branch:, base:, head:,
             summary: "#{overlap.size} fix path(s) overlap foreign local work; publication refused",
-            lines: ["overlap: #{overlap.first(12).join(", ")}"]
+            lines: ["overlap: #{overlap.first(12).join(", ")}"],
+            category: :policy
           )
         end
 
@@ -170,7 +171,14 @@ module Master
                    else
                      "final proof failed; worktree and branch retained"
                    end
-          return preserve(worktree:, branch:, base:, head:, summary: reason, lines: proof_lines)
+          proof_category = if timeout
+            :timeout
+          elsif cancelled
+            :abort
+          else
+            :validation
+          end
+          return preserve(worktree:, branch:, base:, head:, summary: reason, lines: proof_lines, category: proof_category)
         end
 
         if (dirty = own_dirty(worktree, included)).any?
