@@ -221,6 +221,36 @@ class TestGateChain < Minitest::Test
     assert_equal %w[lexical suites], captured.map(&:name)
   end
 
+
+  def test_pre_repair_baseline_names_its_read_only_phase_and_subsequent_repair
+    stage = G::Stage.new(name: "lexical", purpose: "measurement", mutates: false, run: -> {})
+    captured = nil
+    fake_report = lambda do |selected, scan_only:, trees:, return_results:|
+      captured = [selected, scan_only, trees, return_results]
+      G.instance_variable_set(:@last_results, [])
+      [0, []]
+    end
+
+    G.stub(:verification_stages, [stage]) do
+      G.stub(:trees_for_target, ["MASTER"]) do
+        G.stub(:baseline_key, "baseline-test") do
+          G.stub(:read_baseline, nil) do
+            G.stub(:report, fake_report) do
+              G.stub(:write_baseline, true) do
+                output, = capture_io { G.baseline(target: "MASTER") }
+                assert_includes output, "baseline0: read-only pre-repair proof starting"
+                assert_includes output, "repair follows"
+                assert_includes output, "baseline0: pre-repair proof captured, clean baseline"
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal [[stage], true, ["MASTER"], true], captured
+  end
+
   def test_rails_fix_verification_uses_the_rails_source_proof_without_generic_suite_duplication
     source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
     suites = G::Stage.new(name: "suites", purpose: "suites", mutates: false, run: -> {})
