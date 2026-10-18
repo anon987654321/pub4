@@ -128,8 +128,7 @@ when "gate"
   trees << ARGV[ARGV.index("--tree") + 1].to_s if ARGV.include?("--tree")
   if fix_proof
     selected = Operator::GateChain.normalise_trees(trees)
-    targets = selected.sort == Operator::GateChain::TREES.sort ? ["all"] : selected
-    statuses = targets.map { |target| Operator::GateChain.verify_cached_fix(target:).first }
+    statuses = selected.map { |target| Operator::GateChain.verify_cached_fix(target:).first }
     exit(statuses.max || 0)
   end
   exit Operator::GateChain.run(scan_only:, only:, list:, trees:)
