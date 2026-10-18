@@ -794,6 +794,47 @@ end
     assert_equal expected, events.first
   end
 
+
+  def test_bare_fix_routes_to_write_enabled_repair_and_delivery
+    previous_trace = ENV["MASTER_FIX_DEEP_TRACE"]
+    ENV["MASTER_FIX_DEEP_TRACE"] = "0"
+    captured = {}
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { captured[:published] = true }
+    repair = lambda do |_deps, **kwargs|
+      captured[:apply] = kwargs.fetch(:apply)
+      captured[:target] = kwargs.fetch(:target)
+      "repair selected"
+    end
+
+    Operator::GateChain.stub(:baseline, {}) do
+      Operator::GateChain.stub(:verify_fix, ->(**) { [0, []] }) do
+        Operator::GateChain.stub(:persist_verified_baselines!, true) do
+          Master::CLI::CommandRegistry.stub(:worktree_fix_requested?, false) do
+            Master::CLI::CommandRegistry.stub(:run_pass, repair) do
+              Master::Trace::Dmesg.stub(:status, ->(*) {}) do
+                Master::Fix::CodeWatch.stub(:requested?, false) do
+                  result = Master::CLI::CommandRegistry.dispatch_fix_parsed(
+                    scanner: nil, fix_loop:, deliberation: nil, root: @root, bus: nil, swarm: nil,
+                    raw: "", apply: nil, critique: nil, aesthetic: false, only: nil, target: ".",
+                  )
+
+                  assert_equal "repair selected", result
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal true, captured[:apply], "bare /fix must not be downgraded to preview"
+    assert_equal ".", captured[:target]
+    assert captured[:published], "a successful write-enabled pass must reach delivery"
+  ensure
+    previous_trace ? ENV["MASTER_FIX_DEEP_TRACE"] = previous_trace : ENV.delete("MASTER_FIX_DEEP_TRACE")
+  end
+
   def test_fix_status_target_is_single_line_and_bounded
     label = Master::CLI::CommandRegistry.display_fix_target(
       "RAILS\nfix0: mode=write\t\e[31m"
