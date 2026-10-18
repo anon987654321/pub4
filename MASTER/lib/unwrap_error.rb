@@ -149,11 +149,19 @@ module Master
     # call comes back as the answer. A fenced example of the syntax is not one.
     def malformed_tool_call?(text)
       prose = text.gsub(CODE_FENCE, "")
-      return true if prose.scan("<tool_call>").size > prose.scan("</tool_call>").size
+      opens = prose.scan("<tool_call>").size
+      closes = prose.scan("</tool_call>").size
+      return true unless opens == closes
 
       prose.scan(TOOL_CALL_BODY).any? do |(body)|
-        JSON.parse(body.strip)
-        false
+        call = JSON.parse(body.strip)
+        next true unless call.is_a?(Hash)
+
+        name = call["name"]
+        args = call.fetch("args", {})
+        !name.is_a?(String) ||
+          !name.match?(/\A[A-Za-z][A-Za-z0-9_-]{0,63}\z/) ||
+          !args.is_a?(Hash)
       rescue JSON::ParserError
         true
       end
