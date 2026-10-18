@@ -216,7 +216,7 @@ module Master
         end
 
         def literal_method_name(node)
-          return unless node
+          return unless node.is_a?(Prism::SymbolNode) || node.is_a?(Prism::StringNode)
 
           raw = node.slice.to_s
           value = raw.sub(/\A:/, "").delete_prefix('"').delete_suffix('"').delete_prefix("'").delete_suffix("'")
@@ -360,7 +360,7 @@ module Master
         constant_refs(content, rel)
         command_refs(content, rel)
         event_refs(content, rel)
-        analyze_ruby(content, rel) if ruby_source?(rel)
+        analyze_ruby(content, rel) if ruby_source?(rel, content:)
       rescue StandardError => e
         @analysis_failures << { path: rel.to_s, error: "#{e.class}: #{e.message}" }
         Master::Ground::Swallow.log(
@@ -371,9 +371,11 @@ module Master
         )
       end
 
-      def ruby_source?(rel)
-        %w[.rb .rake .gemspec .ru].include?(File.extname(rel)) ||
-          %w[Rakefile Gemfile Guardfile Podfile Appfile Fastfile].include?(File.basename(rel))
+      def ruby_source?(rel, content:)
+        return true if %w[.rb .rake .gemspec .ru].include?(File.extname(rel))
+        return true if %w[Rakefile Gemfile Guardfile Podfile Appfile Fastfile].include?(File.basename(rel))
+
+        content.lines.first.to_s.match?(/\A#!.*\bruby\b/)
       end
 
       def analyze_ruby(content, rel)
