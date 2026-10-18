@@ -118,6 +118,27 @@ exit(system("git", "commit", "-m", "worker fix"))
     end
   end
 
+  def test_error_diagnostics_redact_credentials_and_bound_output
+    with_repo(worker: "#!/usr/bin/env ruby\nexit 0\n") do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+      error = RuntimeError.new(
+        "remote https://operator:password-value@example.invalid/repo.git?token=query-token " \
+        "Authorization: Bearer bearer-value ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
+      )
+
+      message = session.send(:safe_error_message, error)
+
+      assert_includes message, "https://[redacted]@example.invalid/repo.git?token=[redacted]"
+      assert_includes message, "Authorization: Bearer [redacted]"
+      refute_includes message, "password-value"
+      refute_includes message, "query-token"
+      refute_includes message, "bearer-value"
+      refute_includes message, "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
+      assert_operator message.length, :<=, 500
+      assert_equal 500, session.send(:safe_error_message, RuntimeError.new("x" * 800)).length
+    end
+  end
+
   def test_final_publication_failure_is_delivery_failed_and_preserves_recovery
     worker = <<~'RUBY'
       #!/usr/bin/env ruby
