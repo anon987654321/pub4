@@ -238,16 +238,18 @@ module Master
             return incomplete_repair_context("target source changed since dependency graph refresh") \
               unless graph.source_digest(path) == target_sha256
 
-            dynamic_sites = graph.dynamic_for(path)
+            radius = graph.blast_radius(path)
+            related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
+            dynamic_sites = ([relative] + related).flat_map do |source_rel|
+              graph.dynamic_for(File.join(graph.root, source_rel))
+            end
             unless dynamic_sites.empty?
               site = dynamic_sites.first
               return incomplete_repair_context(
-                "target contains unresolved dynamic behavior at #{site[:line]} (#{site[:name]}: #{site[:reason]})",
+                "unresolved dynamic behavior at #{site[:file]}:#{site[:line]} (#{site[:name]}: #{site[:reason]})",
               )
             end
 
-            radius = graph.blast_radius(path)
-            related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
             adjacent = (related + [relative]).to_set
             unresolved = graph.unresolved_for(path).select { |reference| adjacent.include?(reference[:from_file]) }
             unless unresolved.empty?
