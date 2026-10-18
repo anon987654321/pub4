@@ -244,6 +244,8 @@ module Master
           "understand0",
           "text-source graph indexed, nodes=#{snapshot[:nodes].size}, edges=#{snapshot[:edges].size}, " \
           "unresolved-ruby=#{graph_metrics[:unresolved_ruby_references]}, " \
+          "unresolved-imports=#{graph_metrics[:unresolved_local_imports]}, " \
+          "local-import-edges=#{graph_metrics[:resolved_local_import_edges]}, " \
           "dynamic-sites=#{graph_metrics[:dynamic_sites]}, analysis-failures=0",
         )
         @bus&.publish(
@@ -251,6 +253,8 @@ module Master
           nodes: snapshot[:nodes].size,
           edges: snapshot[:edges].size,
           unresolved_ruby_references: graph_metrics[:unresolved_ruby_references],
+          unresolved_local_imports: graph_metrics[:unresolved_local_imports],
+          resolved_local_import_edges: graph_metrics[:resolved_local_import_edges],
           dynamic_sites: graph_metrics[:dynamic_sites],
           analysis_failures: 0,
         )
