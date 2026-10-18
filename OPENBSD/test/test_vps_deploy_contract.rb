@@ -695,6 +695,17 @@ class VpsDeployContractTest < Minitest::Test
       assert_includes out, "passed"
     end
   end
+
+  def test_unavailable_disk_measurement_refuses_the_deploy_before_anything_is_stopped
+    Dir.mktmpdir do |dir|
+      out, status = disk_run(dir, free_kb: "unavailable")
+
+      assert_equal 1, status
+      assert_includes out, "free-space measurement for /home is unavailable"
+      assert_includes out, "Nothing was stopped"
+      refute_includes out, "passed"
+    end
+  end
   def deploy_setting_result(value, minimum:, maximum:)
     validator = SOURCE[/^validate_deploy_setting\(\) \{.*?^\}/m]
     refute_nil validator, "the deploy setting validator is missing"
