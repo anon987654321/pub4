@@ -26,6 +26,7 @@ class LoraIntentTest < Minitest::Test
     {
       "generate me a selfie" => true,
       "can you make a lora of ragnhild" => true,
+      "so in pub4, STUDIO/replicate/lora has new training photos for both johann and ragnhild, can you retrain their models using replicate api key?" => true,
       "generate a video with the lora of me" => true,
       "lora status" => true,
       "lag en selfie av meg" => true,
@@ -97,6 +98,17 @@ class LoraIntentTest < Minitest::Test
 
     assert_equal %w[--subject johann --train-replicate --dry-run], dry.first[:argv]
     assert_equal %w[--subject johann --train-replicate --async], paid.first[:argv]
+  end
+
+  def test_retraining_both_subjects_uses_each_canonical_wrapper_and_dry_runs
+    _, calls = run_text("STUDIO/replicate/lora has new training photos for both johann and ragnhild; retrain both models using the Replicate API key")
+
+    assert_equal 2, calls.length
+    assert_equal [
+      %w[--subject johann --train-replicate --dry-run],
+      %w[--subject ragnhild --train-replicate --dry-run],
+    ], calls.map { |call| call[:argv] }
+    assert calls.all? { |call| call[:tool] == "lora" }
   end
 
   def test_status_asks_nothing_and_spends_nothing
