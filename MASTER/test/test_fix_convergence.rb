@@ -1468,6 +1468,30 @@ end
     assert_equal :delivery_failed, loop.send(:terminal_state_for, result)
   end
 
+  def test_delivery_recovery_preserves_policy_head_mismatch
+    loop = build_loop([])
+    policy_error = Master::Result.err("delivery recovery HEAD mismatch", category: :policy)
+
+    result = loop.stub(:retry_delivery, policy_error) do
+      loop.send(
+        :recover_pending_delivery,
+        active_pass: { "transaction_id" => "tx-2", "pass" => 1 },
+        run_id: "run-policy", commit: "deadbeef",
+      )
+    end
+
+    assert_same policy_error, result
+    assert_equal :policy, result.category
+    assert_equal :blocked, loop.send(:terminal_state_for, result)
+  end
+
+  def test_terminal_state_preserves_validation_failures
+    loop = build_loop([])
+    result = Master::Result.err("ground truth refused the repair", category: :validation)
+
+    assert_equal :validation_failed, loop.send(:terminal_state_for, result)
+  end
+
   def test_a_canonical_repo_leaves_a_hashed_outcome_receipt_the_terminal_event_names
     %w[MASTER RAILS OPENBSD STUDIO].each { |tree| FileUtils.mkdir_p(File.join(@root, tree)) }
     loop = build_loop([])
