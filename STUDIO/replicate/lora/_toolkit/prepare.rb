@@ -17,16 +17,18 @@
 require "optparse"
 require "pathname"
 require "fileutils"
+require "time"
 require_relative "curate"
 
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path
 TRIGGER = ENV.fetch("TRIGGER", SUBJECT)
 
-options = { write: false, count: 18 }
+options = { write: false, replace: false, count: 18 }
 OptionParser.new do |p|
   p.banner = "Usage: prepare.rb [--write] [--count N]"
   p.on("--write", "Write dataset/ (default: report only)") { options[:write] = true }
+  p.on("--replace", "Archive a non-empty old dataset before installing this source set; requires --write") { options[:replace] = true }
   p.on("--count N", Integer, "Frames to choose (default 18)") { |v| options[:count] = v }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!
@@ -41,15 +43,49 @@ chosen = Lora::Curate.select(verdicts, count: options[:count])
 puts Lora::Curate.report(verdicts, chosen)
 puts "ok: #{chosen.length} chosen of #{verdicts.length}; trigger #{TRIGGER.inspect}"
 
+abort "warn: --replace requires --write" if options[:replace] && !options[:write]
+
 unless options[:write]
   puts "ok: report only; add --write to create #{Lora::Curate.dataset_dir(SUBJECT_DIR)}"
   exit 0
 end
 
 dataset = Pathname.new(Lora::Curate.dataset_dir(SUBJECT_DIR.to_s))
-abort "warn: #{dataset} is not empty; move it aside first" if dataset.directory? && !dataset.children.empty?
+if dataset.exist?
+  abort "warn: refusing dataset symlink #{dataset}" if dataset.symlink?
+  abort "warn: dataset path is not a directory: #{dataset}" unless dataset.directory?
+  abort "warn: #{dataset} is not empty; use --replace to archive it before refreshing" if !dataset.children.empty? && !options[:replace]
+end
 
-FileUtils.mkdir_p(dataset)
-written = Lora::Curate.prepare(chosen, into: dataset.to_s, token: TRIGGER)
+stamp = Time.now.utc.strftime("%Y%m%dT%H%M%S%N")
+scratch = SUBJECT_DIR.join(".cache", "dataset-build-#{stamp}")
+backup = nil
+FileUtils.mkdir_p(scratch.dirname)
+begin
+  written = Lora::Curate.prepare(chosen, into: scratch.to_s, token: TRIGGER)
+  abort "warn: curator produced no training images; previous dataset is unchanged" if written.empty?
+
+  if dataset.exist?
+    if dataset.children.empty?
+      dataset.rmdir
+    else
+      backup = SUBJECT_DIR.join(".cache", "dataset-backups", "dataset-#{stamp}")
+      FileUtils.mkdir_p(backup.dirname)
+      FileUtils.mv(dataset.to_s, backup.to_s)
+    end
+  end
+
+  begin
+    FileUtils.mv(scratch.to_s, dataset.to_s)
+  rescue StandardError
+    FileUtils.mv(backup.to_s, dataset.to_s) if backup&.exist? && !dataset.exist?
+    raise
+  end
+rescue StandardError
+  FileUtils.rm_rf(scratch.to_s) if scratch.exist?
+  raise
+end
+
 puts "ok: wrote #{written.length} image(s) with stub captions to #{dataset}"
-puts "next: complete each .txt (pose, clothing, light, setting), then ./lora --train-replicate --dry-run"
+puts "ok: previous dataset archived at #{backup}" if backup
+puts "next: review each .txt caption (pose, clothing, light, setting), then ./lora --train-replicate --dry-run"
