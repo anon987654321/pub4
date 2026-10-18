@@ -73,7 +73,7 @@ class TestVoiceNarrator < Minitest::Test
 
   def test_narration_uses_strunk_without_deleting_meaning
     n = build(writer: ->(**) { "Certainly, the repair could not be verified." })
-    n.observe("review0: repair is inconclusive")
+    n.observe("review0: repair could not be verified")
     window(n)
     assert_equal :spoken, n.tick
     assert_equal "the repair could not be verified.", @spoken.first
@@ -117,7 +117,7 @@ class TestVoiceNarrator < Minitest::Test
       "The scan has read 14 files. Three findings are waiting."
     end
     n = build(writer:)
-    n.observe("scan0: reading 14 files, 3 findings")
+    n.observe("scan0: reading 14 files, 3 findings are waiting")
     window(n)
     assert_equal :spoken, n.tick
     assert_equal ["The scan has read 14 files.", "Three findings are waiting."], @spoken
