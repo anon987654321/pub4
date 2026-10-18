@@ -34,12 +34,15 @@ module Master
         can cannot could did do does doing down during each for from had has have he her here him
         his how i if in into is it its just may me might more most my no nor not of off on once
         one only or our out over per same she should so some than that the their them then there
-        these they this those through to too under until up us very was we were what when where
+        these they this those through to too under up us very was we were what when where
         which while who why will with within without would you your
+        zero two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen
+        sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety
+        hundred thousand million
       ].freeze
       GROUNDING_CONTEXT_WORDS = %w[
         begin begins beginning event events first latest machine middle next now operation previous
-        result results run story task thing things work
+        result results story task thing things work
       ].freeze
 
       attr_reader :calls, :cost_usd, :beats
