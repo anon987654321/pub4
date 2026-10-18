@@ -175,7 +175,17 @@ module Operator
         tree_names.any? { |tree| relative == tree || relative.start_with?("#{tree}/") }
       end
       untracked_fingerprint = paths.sort.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
-      Digest::SHA256.hexdigest([head.strip, target.to_s, diff, untracked_fingerprint, verification_only.join(",")].join("\0"))
+      scope = baseline_scope_key_for(tree_names)
+      Digest::SHA256.hexdigest([head.strip, scope, diff, untracked_fingerprint, verification_only.join(",")].join("\0"))
+    end
+
+    def baseline_scope_key(target)
+      baseline_scope_key_for(trees_for_target(target))
+    end
+
+    def baseline_scope_key_for(trees)
+      names = Array(trees).map(&:to_s).reject(&:empty?).map(&:upcase).uniq.sort
+      names == TREES.sort ? "all" : names.join(",")
     end
 
     def fingerprint_untracked(root, relative)
@@ -186,19 +196,36 @@ module Operator
       "#{relative}\0file\0#{File.stat(path).mode & 0o7777}\0#{Digest::SHA256.file(path).hexdigest}"
     end
 
-    def read_baseline(key)
-      stored = JSON.parse(File.read(BASELINE_FILE))
-      return unless stored.is_a?(Hash) && stored["key"] == key && stored["snapshot"].is_a?(Hash)
+    MAX_BASELINE_RECORDS = 16
 
-      stored["snapshot"]
+    def read_baseline(key)
+      baseline_entries[key]
+    end
+
+    def baseline_entries
+      stored = JSON.parse(File.read(BASELINE_FILE))
+      entries = stored["entries"] if stored.is_a?(Hash)
+      if entries.is_a?(Hash)
+        return entries.select { |record_key, value| record_key.is_a?(String) && value.is_a?(Hash) }
+      end
+
+      # Read the single-record format written by earlier MASTER versions.
+      return { stored["key"] => stored["snapshot"] } if
+        stored.is_a?(Hash) && stored["key"].is_a?(String) && stored["snapshot"].is_a?(Hash)
+
+      {}
     rescue Errno::ENOENT, JSON::ParserError, TypeError
-      nil
+      {}
     end
 
     def write_baseline(key, snapshot)
+      entries = baseline_entries
+      entries.delete(key)
+      entries[key] = snapshot
+      entries = entries.to_a.last(MAX_BASELINE_RECORDS).to_h
       FileUtils.mkdir_p(File.dirname(BASELINE_FILE))
       Tempfile.create(["gate-baseline", ".json"], File.dirname(BASELINE_FILE)) do |file|
-        file.write(JSON.generate("key" => key, "snapshot" => snapshot))
+        file.write(JSON.generate("version" => 2, "entries" => entries))
         file.flush
         file.fsync
         File.rename(file.path, BASELINE_FILE)
