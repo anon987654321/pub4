@@ -131,13 +131,15 @@ detail: [
                    "/doctor device location [gps|network|passive] — explicitly request location; never sampled at boot."],
         },
         "voice" => {
-          summary: "speech uses sensible defaults; optional voice styles are easy to discover",
+          summary: "CLI speech is off by default; enable it explicitly when wanted",
           detail: ["/voice — current voice, mode, profile, speaking rate and recent latency.",
-                   "/voice natural — restore clean, fast, everyday speech (the default).",
+                   "/voice on|off — enable or silence CLI speech for this session; default is off.",
+                   "/voice natural — select clean, fast, everyday speech.",
                    "/voice expressive — use the expressive synthesis pipeline.",
                    "/voice dilla — enable Dilla's effects rack and room.",
                    "/voice timing — show measured synthesis and first-audio timings; no launch flags needed.",
-                   "/voice test — synthesize and play “MASTER voice test.” synchronously."],
+                   "/voice test — synthesize and play “MASTER voice test.” synchronously.",
+                   "The web face keeps its own TTS path enabled; CLI speech does not control browser audio."],
         },
         "narrate" => {
           summary: "story narration of what MASTER is doing, on by default",
