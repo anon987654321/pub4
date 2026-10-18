@@ -41,9 +41,13 @@ no age in a caption, a trigger that is neither `TOK` nor an English word, and no
 is a near copy of another. A problem stops a real run, and `--force` overrides that when you
 have judged the problem acceptable.
 
-The estimate gives two figures because the sources
-disagree: Replicate's guide says a thousand steps takes about two minutes, and the one run
-logged here took fourteen. The sidecar records the seconds Replicate actually billed.
+The estimate shows the guide's two-minute runtime beside the fourteen-minute run logged
+here, priced at the reviewed trainer version's published H200 rate of $0.001525 per second.
+At 1,000 steps that is about $0.18 by the guide and $1.28 by the logged runtime. The trainer
+version is pinned in `STUDIO/replicate/client.rb`; update its pin and
+`TRAIN_USD_PER_SECOND` together when reviewing a provider change. The sidecar records the
+runtime reported by Replicate, while the dollar amount is a rate-based estimate rather than
+an account invoice.
 
 Third comes training, the first paid step. `--train-replicate` uploads the zip, pins the
 trainer version, trains `ostris/flux-dev-lora-trainer` into a private model, and writes
