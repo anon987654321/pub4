@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "socket"
 require "yaml"
+require "open3"
 
 # vps-deploy is the entrypoint for every production deploy and had no test.
 #
@@ -694,4 +695,52 @@ class VpsDeployContractTest < Minitest::Test
       assert_includes out, "passed"
     end
   end
+  def deploy_setting_result(value, minimum:, maximum:)
+    validator = SOURCE[/^validate_deploy_setting\(\) \{.*?^\}/m]
+    refute_nil validator, "the deploy setting validator is missing"
+    script = <<~ZSH
+      #{validator}
+      validate_deploy_setting TEST_SETTING "$TEST_VALUE" #{minimum} #{maximum}
+    ZSH
+    out, status = Open3.capture2e({ "TEST_VALUE" => value }, "zsh", "-c", script)
+    [out, status.exitstatus]
+  end
+
+  def test_deploy_timing_overrides_reject_zero_negative_and_nondecimal_values
+    ["0", "-1", "1.5", "1e3", "01", "", "999999999999999999999"].each do |value|
+      out, status = deploy_setting_result(value, minimum: 1, maximum: 60)
+      refute_equal 0, status, "accepted invalid timing value #{value.inspect}"
+      assert_includes out, "invalid TEST_SETTING"
+    end
+  end
+
+  def test_deploy_capacity_threshold_allows_only_bounded_decimal_percentages
+    out, status = deploy_setting_result("0", minimum: 0, maximum: 100)
+    assert_equal 0, status, out
+    out, status = deploy_setting_result("100", minimum: 0, maximum: 100)
+    assert_equal 0, status, out
+    ["-1", "101", "10x", "010"].each do |value|
+      out, status = deploy_setting_result(value, minimum: 0, maximum: 100)
+      refute_equal 0, status, "accepted invalid percentage #{value.inspect}"
+      assert_includes out, "invalid TEST_SETTING"
+    end
+  end
+
+  def test_every_environment_driven_wait_and_capacity_setting_is_validated_before_locking
+    %w[
+      VPS_DEPLOY_LOCK_TTL
+      VPS_DEPLOY_RESTORE_WAIT
+      VPS_DEPLOY_POLL
+      VPS_DEPLOY_SETTLE_WAIT
+      VPS_DEPLOY_MASTER_MIN_AVAIL
+      VPS_DEPLOY_MIN_FREE_KB
+    ].each do |name|
+      assert_includes SOURCE, "validate_deploy_setting #{name}", "#{name} can influence arithmetic without validation"
+    end
+
+    assert_operator SOURCE.index("validate_deploy_setting VPS_DEPLOY_LOCK_TTL"),
+                    :<, SOURCE.index("acquire_deploy_lock"),
+                    "invalid environment must be rejected before a deployment lock is created"
+  end
+
 end
