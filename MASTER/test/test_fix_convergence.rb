@@ -1411,7 +1411,7 @@ end
 
     lifecycle = []
     mission = Object.new
-    mission.define_singleton_method(:fail!) { |message| lifecycle << [:mission_failed, message] }
+    mission.define_singleton_method(:defer!) { |reason:| lifecycle << [:mission_deferred, reason] }
     recovery_error = Master::Result.err("delivery recovery failed", category: :delivery_failed)
 
     Master::Fix::RunBudget.stub(:begin_run, ->(**) { lifecycle << [:budget_started] }) do
@@ -1434,7 +1434,9 @@ end
     assert_equal "run-recovery", terminal_rows.first[:run_id]
     assert_equal :delivery_failed, terminal_rows.first[:state]
     assert_match(/delivery recovery failed/, terminal_rows.first[:message])
-    assert_equal :mission_failed, lifecycle.find { |entry| entry.first == :mission_failed }.first
+    deferred = lifecycle.find { |entry| entry.first == :mission_deferred }
+    refute_nil deferred, "a failed recovery attempt must leave the durable mission retryable"
+    assert_match(/attempt delivery_failed:/, deferred.last)
     assert lifecycle.any? { |entry| entry.first == :budget_finished },
            "recovery failure must stop the run budget watchdog"
 
