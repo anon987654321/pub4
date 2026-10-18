@@ -1379,7 +1379,7 @@ end
     lifecycle = []
     mission = Object.new
     mission.define_singleton_method(:fail!) { |message| lifecycle << [:mission_failed, message] }
-    recovery_error = Master::Result.err("delivery recovery failed", category: :infrastructure)
+    recovery_error = Master::Result.err("delivery recovery failed", category: :delivery_failed)
 
     Master::Fix::RunBudget.stub(:begin_run, ->(**) { lifecycle << [:budget_started] }) do
       Master::Fix::RunBudget.stub(:finish_run, ->(reason: "completed") { lifecycle << [:budget_finished, reason] }) do
@@ -1392,14 +1392,14 @@ end
           )
 
           assert result.err?
-          assert_equal :infrastructure, result.category
+          assert_equal :delivery_failed, result.category
         end
       end
     end
 
     assert_equal 1, terminal_rows.size
     assert_equal "run-recovery", terminal_rows.first[:run_id]
-    assert_equal :failed, terminal_rows.first[:state]
+    assert_equal :delivery_failed, terminal_rows.first[:state]
     assert_match(/delivery recovery failed/, terminal_rows.first[:message])
     assert_equal :mission_failed, lifecycle.find { |entry| entry.first == :mission_failed }.first
     assert lifecycle.any? { |entry| entry.first == :budget_finished },
@@ -1407,7 +1407,25 @@ end
 
     event = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }
     refute_nil event, "recovery failure needs the canonical terminal event"
-    assert_equal :failed, event[:payload][:state]
+    assert_equal :delivery_failed, event[:payload][:state]
+  end
+
+  def test_pending_delivery_recovery_keeps_delivery_failure_typed
+    loop = build_loop([])
+    transport_error = Master::Result.err("push refused", category: :infrastructure)
+
+    result = loop.stub(:retry_delivery, transport_error) do
+      loop.send(
+        :recover_pending_delivery,
+        active_pass: { "transaction_id" => "tx-1", "pass" => 1 },
+        run_id: "run-delivery", commit: "deadbeef",
+      )
+    end
+
+    assert result.err?
+    assert_equal :delivery_failed, result.category
+    assert_match(/delivery recovery failed: push refused/, result.message)
+    assert_equal :delivery_failed, loop.send(:terminal_state_for, result)
   end
 
   def test_a_canonical_repo_leaves_a_hashed_outcome_receipt_the_terminal_event_names
