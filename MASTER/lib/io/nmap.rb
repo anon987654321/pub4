@@ -58,7 +58,7 @@ module Master
           "Requested target: #{target}",
           "Scanned address: #{scan_ip}",
           "Profile: #{profile}",
-          "Authorization: operator asserted authorized=true; governor permit granted",
+          "Authorization: authorized=true flag supplied; dangerous-tier governor permit granted; target ownership is not independently verified",
           "Limits: one resolved address; TCP top 100 ports; T2; one retry; 120-second host timeout; #{@timeout_s}-second process timeout",
           "Started: #{Time.now.utc.iso8601}",
           "Elapsed seconds: #{elapsed.round(2)}",

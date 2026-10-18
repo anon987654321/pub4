@@ -46,7 +46,7 @@
       : fallback;
     const desired = Number.isFinite(Number(requested)) && Number(requested) > 0
       ? Math.floor(Number(requested)) : ceiling;
-    return Math.max(250, Math.min(desired, ceiling, MAX_POINTS));
+    return Math.max(1, Math.min(desired, ceiling, MAX_POINTS));
   }
 
   function defaultSamples(count) {
@@ -282,11 +282,7 @@
         active.root.add(active.points);
         window.__MASTER_STIPPLE__ = active;
       }
-      if (active && (active.root === scene || active.root === scene.children?.find((node) => node === active.root))) {
-        tick(active, window.MASTER_FACE?.State || {}, performance.now() * 0.001);
-      } else if (active && scene?.children?.includes?.(active.root)) {
-        tick(active, window.MASTER_FACE?.State || {}, performance.now() * 0.001);
-      } else if (active && active.root?.parent === scene) {
+      if (active && (active.root === scene || active.root?.parent === scene)) {
         tick(active, window.MASTER_FACE?.State || {}, performance.now() * 0.001);
       }
       return originalRender.call(this, scene, camera, ...rest);

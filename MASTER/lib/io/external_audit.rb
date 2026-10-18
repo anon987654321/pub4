@@ -106,11 +106,18 @@ module Master
           address = SsrfGuard.pinned_address(current)
           return Result.err("external_audit: refused internal/reserved destination", category: :policy) unless address
           http = SsrfGuard.http_for(current, address, timeout: TIMEOUT)
+          body = +""
           response = http.start do |client|
-            client.get(current.request_uri, {
-              "User-Agent" => "MASTER/1 (passive external assessment)",
-              "Accept" => "text/html,application/xhtml+xml,*/*;q=0.1"
-            })
+            request = Net::HTTP::Get.new(current.request_uri)
+            request["User-Agent"] = "MASTER/1 (passive external assessment)"
+            request["Accept"] = "text/html,application/xhtml+xml,*/*;q=0.1"
+            client.request(request) do |incoming|
+              incoming.read_body do |chunk|
+                raise ResponseTooLarge if body.bytesize + chunk.bytesize > MAX_BODY_BYTES
+                body << chunk
+              end
+              incoming.instance_variable_set(:@body, body)
+            end
           end
           if response.is_a?(Net::HTTPRedirection)
             return Result.err("external_audit: redirect limit exceeded", category: :validation) if redirects >= MAX_REDIRECTS
@@ -124,9 +131,10 @@ module Master
             redirects += 1
             next
           end
-          return Result.err("external_audit: response body exceeds #{MAX_BODY_BYTES} bytes", category: :validation) if response.body.to_s.bytesize > MAX_BODY_BYTES
           return [response, current, redirects]
         end
+      rescue ResponseTooLarge
+        Result.err("external_audit: response body exceeds #{MAX_BODY_BYTES} bytes", category: :validation)
       rescue Net::OpenTimeout, Net::ReadTimeout => e
         Result.err("external_audit: TIMEOUT (#{e.class})", category: :timeout)
       rescue StandardError => e
