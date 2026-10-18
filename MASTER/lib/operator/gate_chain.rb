@@ -213,8 +213,10 @@ module Operator
 
       relative = text.delete_prefix("../")
       abs = case relative.upcase
-            when "", ".", "ALL", "EVERYTHING" then ROOT
-            when "MASTER" then MASTER
+            # The CLI runs from MASTER: an omitted target or "." means this
+            # tree, not the repository root. Whole-repo work stays explicit.
+            when "", ".", "MASTER" then MASTER
+            when "ALL", "EVERYTHING" then ROOT
             when "RAILS" then File.join(ROOT, "RAILS")
             when "OPENBSD" then File.join(ROOT, "OPENBSD")
             when "STUDIO" then File.join(ROOT, "STUDIO")
