@@ -185,11 +185,31 @@ class TestCommandRegistryDispatch < Minitest::Test
     Master::Voice::Policy.reload!
   end
 
+  def test_voice_output_toggles_are_explicit_and_off_interrupts_playback
+    original_speak = ENV.fetch("MASTER_CLI_SPEAK", nil)
+    interrupted = []
+
+    ENV["MASTER_CLI_SPEAK"] = "0"
+    Master::Voice::Playback.stub(:enabled?, true) do
+      assert_match(/CLI speech enabled/, Registry.dispatch_voice(ctx: { args: "on" }))
+    end
+    assert_equal "1", ENV["MASTER_CLI_SPEAK"]
+
+    Master::Voice::Playback.stub(:interrupt!, ->(reason) { interrupted << reason; true }) do
+      assert_match(/CLI replies remain text/, Registry.dispatch_voice(ctx: { args: "off" }))
+    end
+    assert_equal "0", ENV["MASTER_CLI_SPEAK"]
+    assert_equal ["voice off"], interrupted
+  ensure
+    original_speak ? ENV["MASTER_CLI_SPEAK"] = original_speak : ENV.delete("MASTER_CLI_SPEAK")
+  end
+
   def test_voice_help_explains_the_default_and_optional_presets
     help = Registry.help_text("voice")
-    ["/voice natural", "/voice expressive", "/voice dilla", "/voice timing", "/voice test"].each do |command|
+    ["/voice on|off", "/voice natural", "/voice expressive", "/voice dilla", "/voice timing", "/voice test"].each do |command|
       assert_includes help, command
     end
+    assert_match(/web face keeps its own TTS path enabled/i, help)
   end
 
 end
