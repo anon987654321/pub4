@@ -178,6 +178,25 @@ exit(system("git", "commit", "-m", "worker fix"))
     end
   end
 
+  def test_worker_terminal_categories_preserve_human_decisions_and_recovery_states
+    session = Master::Fix::WorktreeSession.allocate
+    states = {
+      "fix0: HUMAN_DECISION: approval required" => :human_decision,
+      "fix0: BLOCKED: outside authority" => :policy,
+      "fix0: PLATEAU: no convergence" => :plateau,
+      "fix0: RELOADING: main changed" => :reloading,
+      "fix0: DELIVERY_FAILED: push refused" => :delivery_failed,
+      "fix0: TIMEOUT: budget expired" => :timeout,
+      "fix0: FAILED: unexpected outcome" => :failed,
+      "fix0: complete with open findings" => :plateau,
+    }
+
+    states.each do |line, expected|
+      assert_equal expected, session.send(:worker_terminal_category, line), line
+      assert_match(/\A(?:review|fix)\d+.*?:\s*(?:incomplete|failed|crash|skip|blocked|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i, line)
+    end
+  end
+
   def test_gate_baseline_cache_survives_disposable_worktree
     worker = <<~'RUBY'
       #!/usr/bin/env ruby
