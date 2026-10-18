@@ -17,10 +17,12 @@ module Master
       GOLDEN = "Golden rule: preserve, then improve, never break. Make the smallest change " \
                "that removes each finding; touch nothing else."
 
-      def initialize(findings:, rules:, agent:, scanner:, root:, context_files: [], expected_target_sha256: nil, **options)
+      def initialize(findings:, rules:, agent:, scanner:, root:, context_files: [], context_root: nil,
+                     expected_target_sha256: nil, **options)
         @notes = rules.to_h { |rule| [rule.id.to_s, rule.respond_to?(:description) ? rule.description.to_s : ""] }
         @findings = findings
         @context_files = Array(context_files)
+        @context_root = File.expand_path(context_root || root)
         @expected_target_sha256 = expected_target_sha256
         ids = findings.map { |finding| finding[:law].to_s }.uniq
         super(law: Scope.new(id: ids.join("+"), description: "file repair"), agent:, scanner:, root:, **options)
@@ -118,7 +120,7 @@ module Master
         return false unless current_target == target_source
 
         @context_files.all? do |entry|
-          dependency = File.expand_path(entry.fetch(:path).to_s, @root)
+          dependency = File.expand_path(entry.fetch(:path).to_s, @context_root)
           next false if File.symlink?(dependency) || !File.file?(dependency)
 
           source = File.read(dependency, encoding: "UTF-8")
