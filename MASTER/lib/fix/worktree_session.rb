@@ -100,7 +100,7 @@ module Master
                          elsif cancelled_line
                            "worker cancelled by operator"
                          elsif terminal_failure
-                           "worker reported an incomplete terminal state: #{terminal_failure.strip}"
+                           "worker reported an incomplete terminal state: #{safe_diagnostic_text(terminal_failure.strip)}"
                          elsif !status
                            "worker exited unsuccessfully"
                          elsif !worker_completion_seen?(lines)
@@ -369,7 +369,7 @@ module Master
 
       def preserve(worktree:, branch:, base:, head:, summary:, lines:, category: :validation)
         announce(summary)
-        Array(lines).last(12).each { |line| announce("worker| #{line}") }
+        Array(lines).last(12).each { |line| announce("worker| #{safe_diagnostic_text(line)}") }
         announce("retained worktree: #{worktree}")
         announce("retained branch: #{branch}")
         announce("inspect: #{inspect_command(worktree, base)}")
@@ -446,7 +446,11 @@ module Master
       # provider tokens. Keep useful diagnostics while removing credential-shaped data
       # before an exception reaches the operator log or a Result summary.
       def safe_error_message(error)
-        message = error.message.to_s
+        safe_diagnostic_text(error.message)
+      end
+
+      def safe_diagnostic_text(value)
+        message = value.to_s
         message = message.gsub(%r{(https?://)[^\s/@]+(?::[^\s/@]*)?@}i, '\1[redacted]@')
         message = message.gsub(/\b(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,})\b/i, '[redacted-token]')
         message = message.gsub(/\b(Bearer\s+)[A-Za-z0-9._~+\/=-]+/i, '\1[redacted]')
