@@ -72,6 +72,16 @@ rescue ArgumentError, TypeError
   abort "warn: #{name} must be a positive integer"
 end
 
+def positive_float_env(name, default:)
+  raw = ENV.fetch(name, default.to_s)
+  value = Float(raw)
+  abort "warn: #{name} must be a finite positive number" unless value.finite? && value.positive?
+
+  value
+rescue ArgumentError, TypeError
+  abort "warn: #{name} must be a finite positive number"
+end
+
 options = {
   dry_run: false,
   async: false,
@@ -83,6 +93,7 @@ options = {
   steps: positive_integer_env("LORA_REPLICATE_STEPS", default: 1000),
   lora_rank: positive_integer_env("LORA_REPLICATE_LORA_RANK", default: 16),
   timeout: positive_integer_env("LORA_REPLICATE_TIMEOUT", default: 3600),
+  max_usd: positive_float_env("LORA_MAX_TRAIN_USD", default: 10.0),
   webhook: ENV["REPLICATE_WEBHOOK_URL"].to_s.strip,
 }
 
@@ -98,6 +109,7 @@ OptionParser.new do |p|
   p.on("--steps N", Integer, "Training steps (default 1000)") { |v| options[:steps] = v }
   p.on("--lora-rank N", Integer, "LoRA rank (default 16, as train.yaml)") { |v| options[:lora_rank] = v }
   p.on("--timeout SEC", Integer, "Poll timeout seconds") { |v| options[:timeout] = v }
+  p.on("--max-usd USD", Float, "Refuse paid training above this estimated USD cost (default $10)") { |v| options[:max_usd] = v }
   p.on("--webhook URL", "Replicate webhook URL") { |v| options[:webhook] = v }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!
@@ -109,6 +121,8 @@ end.parse!
 }.each do |key, source|
   abort "warn: #{source} must be a positive integer" unless options.fetch(key).is_a?(Integer) && options.fetch(key).positive?
 end
+abort "warn: --max-usd / LORA_MAX_TRAIN_USD must be a finite positive number" unless
+  options[:max_usd].is_a?(Numeric) && options[:max_usd].finite? && options[:max_usd].positive?
 
 def zip_dataset(dataset_dir, zip_path)
   FileUtils.mkdir_p(zip_path.dirname)
@@ -247,8 +261,21 @@ problems = trigger_report.problems + dataset_report.problems
 problems.each { |line| warn "warn: #{line}" }
 puts "ok: preflight #{images.length} image(s), #{problems.length} problem(s)"
 puts "ok: #{Preflight.cost_estimate(options[:steps])}"
+estimated_usd = Preflight.training_estimate_usd(options[:steps])
+puts format("estimate: conservative training cost ~$%.2f; configured ceiling $%.2f", estimated_usd, options[:max_usd])
 puts "note: images x 100 = #{images.length * 100} steps; steps=#{options[:steps]}"
 abort "fix: repair the dataset, or --force to train anyway" unless problems.empty? || options[:force] || options[:dry_run]
+if !options[:dry_run] && estimated_usd > options[:max_usd]
+  abort format("warn: estimated training cost $%.2f exceeds $%.2f ceiling; no upload or training was started",
+               estimated_usd, options[:max_usd])
+end
+
+# Replicate exposes cancellation by elapsed time, not a dollar-denominated hard
+# limit. Bound its server-side deadline by both the configured timeout and the
+# local cost ceiling; cancellation/billing can still settle slightly later.
+cost_timeout = (options[:max_usd] / Preflight::TRAIN_USD_PER_SECOND).floor
+options[:timeout] = [options[:timeout], cost_timeout].min
+puts "note: training timeout bounded to #{options[:timeout]}s by the configured cost ceiling" unless options[:dry_run]
 
 zip_path = EXPORTS_DIR.join("#{SUBJECT}_dataset.zip")
 zip_dataset(DATASET_DIR, zip_path)
