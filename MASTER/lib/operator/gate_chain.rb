@@ -144,6 +144,24 @@ module Operator
     # What already fails before /fix touches anything: stage name => failing lines.
     # One scan-only ladder, remembered by commit and working-tree content so a second run
     # reuses it. A passing or failing ladder is stored alike: the baseline is what failed.
+    # The isolated worktree's final proof must reuse the candidate snapshot
+    # recorded by the successful inner /fix. It must not create a baseline here:
+    # that would compare the candidate with itself and prove nothing.
+    def verify_cached_fix(target:)
+      key = baseline_key(target)
+      baseline = read_baseline(key)
+      unless baseline
+        scope = baseline_scope_key(target)
+        Master::Trace::Dmesg.status("gate0", "INCONCLUSIVE, no verified candidate baseline for #{scope}")
+        return [3, []]
+      end
+
+      verify_fix(target:, baseline:)
+    rescue StandardError => e
+      Master::Trace::Dmesg.status("gate0", "INCONCLUSIVE, final regression proof failed, #{e.class}: #{e.message}")
+      [3, []]
+    end
+
     def baseline(target:)
       selected = verification_stages(target)
       return {} if selected.empty?
