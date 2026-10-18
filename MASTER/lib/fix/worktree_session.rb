@@ -224,7 +224,7 @@ module Master
         elsif e.is_a?(Interrupt)
           "worktree cancelled by operator"
         else
-          "worktree failed, #{e.class}: #{e.message}"
+          "worktree failed, #{e.class}: #{safe_error_message(e)}"
         end
         announce(detail)
         if defined?(worktree) && worktree && File.directory?(worktree)
@@ -333,7 +333,7 @@ module Master
             announce("remote branch already absent, cleanup complete: origin/#{branch}")
           elsif remote_cleanup == :present
             remote_cleanup = :retained
-            announce("remote branch cleanup warning, retained origin/#{branch}: #{e.message}")
+            announce("remote branch cleanup warning, retained origin/#{branch}: #{safe_error_message(e)}")
           else
             remote_cleanup = :unknown
             announce("remote branch cleanup state unknown for origin/#{branch}: #{e.message}")
@@ -436,6 +436,20 @@ module Master
       def git_ok?(*args)
         _, status = Master::Io::Exec.capture2e("git", "-C", @repo_root, *args)
         status.success?
+      end
+
+      # External command failures can echo authenticated URLs, bearer credentials or
+      # provider tokens. Keep useful diagnostics while removing credential-shaped data
+      # before an exception reaches the operator log or a Result summary.
+      def safe_error_message(error)
+        message = error.message.to_s
+        message = message.gsub(%r{(https?://)[^\s/@]+(?::[^\s/@]*)?@}i, '\1[redacted]@')
+        message = message.gsub(/\b(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,})\b/i, '[redacted-token]')
+        message = message.gsub(/\b(Bearer\s+)[A-Za-z0-9._~+\/=-]+/i, '\1[redacted]')
+        message = message.gsub(/(\b(?:access[_-]?token|refresh[_-]?token|token|api[_-]?key|password|secret|authorization)\b\s*[:=]\s*)["']?[^"' \t\r\n,;]+["']?/i, '\1[redacted]')
+        message = message.gsub(/([?&](?:token|key|password|secret|signature|sig)=)[^&#\s]+/i, '\1[redacted]')
+        message = message.lines.map(&:chomp).join(' ').gsub(/\s+/, ' ').strip
+        message.slice(0, 500)
       end
 
       def git!(*args, chdir: @repo_root)
