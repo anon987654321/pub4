@@ -93,18 +93,47 @@ module Operator
       return [0, []] if selected.empty?
 
       status, changed = report(selected, scan_only: true, trees: trees_for_target(target), return_results: true)
+      if status.zero? && changed.empty?
+        remember_verified_snapshot(target)
+        return [0, changed]
+      end
       return [status, changed] unless status == 1 && baseline && changed.empty?
 
       # Standing failures are not this run's to clear. A run passes when it adds
-      # no failure the tree did not already have; nothing is moved or relaxed.
+      # no failure the tree did not have; nothing is moved or relaxed.
       regressions = GateRegression.new(baseline).regressions(@last_results)
       if regressions.empty?
         Master::Trace::Dmesg.status("gate0", "no regression against the starting baseline, #{baseline.size} stage(s) failed before this run")
+        remember_verified_snapshot(target)
         return [0, changed]
       end
 
       regressions.each { |line| Master::Trace::Dmesg.status("gate0", "regression, #{line}") }
       [status, changed]
+    end
+
+    # These snapshots are only cached after a verified pass, then re-keyed after
+    # the final commit so an identical tree can reuse its regression baseline.
+    def clear_verified_fix_snapshots!
+      @verified_fix_snapshots = {}
+    end
+
+    def remember_verified_snapshot(target)
+      (@verified_fix_snapshots ||= {})[baseline_scope_key(target)] = GateRegression.snapshot(@last_results)
+    end
+
+    def persist_verified_baselines!(targets)
+      pending = @verified_fix_snapshots || {}
+      Array(targets).each do |target|
+        scope = baseline_scope_key(target)
+        snapshot = pending.delete(scope)
+        next unless snapshot
+
+        key = baseline_key(scope == "all" ? "all" : scope)
+        write_baseline(key, snapshot)
+      end
+      @verified_fix_snapshots = pending
+      true
     end
 
     # What already fails before /fix touches anything: stage name => failing lines.
