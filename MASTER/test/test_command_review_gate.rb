@@ -71,6 +71,16 @@ class TestCommandReviewGate < Minitest::Test
     assert_equal ["RAILS"], registry.worktree_proof_trees("RAILS/brgen", root: Master::ROOT)
   end
 
+  def test_bare_fix_and_dot_keep_the_default_proof_scoped_to_master
+    registry = Master::CLI::CommandRegistry
+
+    assert_equal ["MASTER"], registry.worktree_proof_trees("", root: Master::ROOT)
+    assert_equal ["MASTER"], registry.worktree_proof_trees(".", root: Master::ROOT)
+    assert_equal ["MASTER"], registry.worktree_proof_trees("master", root: Master::ROOT)
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO],
+                 registry.worktree_proof_trees("all", root: Master::ROOT)
+  end
+
   def test_gated_command_handles_nil_ctx
     receiver = Receiver.new
     command = Master::CLI::CommandRegistry::Command.new(receiver, :risky_action, review_gate: true)
