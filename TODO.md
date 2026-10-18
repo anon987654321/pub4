@@ -1,7 +1,7 @@
 # pub4 TODO
 
 Status: CONSOLIDATED_BACKLOG
-Updated: 2026-10-19 (external assessment tools and additive face stipple; acceptance pending)
+Updated: 2026-10-19 (external assessment tools, additive face stipple, and Pluribus logo research review; acceptance pending)
 Authority: MASTER/data/soul.yml > MASTER/data/laws.yml > executable laws and gates > tree contracts > Git history.
 Owner: operator and maintainers, according to the environment each task requires.
 
@@ -166,6 +166,10 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 - [ ] **Build a repeatable comparative benchmark after the scenario exists.** Run the same tasks against each locally authorized configured lane, and compare outcome correctness, verified tests, wall-clock/first-useful-output time, interruption recovery, tool errors and measured/estimated spend. Provider-specific comparison is inconclusive when its account or model is unavailable. Do not market “replaces Claude Code/Codex” until the supported scenario set has recorded results and remaining limits.
 
 **Suggested implementation order:** interactive coding scenario and tool-loop proofs; harness policy coverage; isolated subagent lifecycle; durable context; friction/routing; optional editor adapter; always-on lifecycle; comparative benchmark. Several existing P0 items above already cover real browser, voice, Termux, payment, deployment and whole-suite evidence—do not duplicate them or mark them closed merely because a source file exists.
+
+## P1 — visual identity research
+
+- [ ] Review [Pluribus Apple TV Show Logo Research - Grok.pdf](https://github.com/anon987654321/pub4/blob/main/__DELETE/Pluribus%20Apple%20TV%20Show%20Logo%20Research%20-%20Grok.pdf). Extract the report's actionable visual observations, separate supported evidence from speculation, and decide what (if anything) should inform pub4's own distinctive identity. Do not copy the Pluribus or Apple logo, wordmark, or other protected brand expression. Record approved decisions in the existing authoritative laws and token/feature sources rather than creating a parallel design authority; define concrete rendered acceptance evidence and screenshots before closing this item. The report remains research input until it has been reviewed and its disposition recorded.
 
 ## Canonical proof surfaces
 
