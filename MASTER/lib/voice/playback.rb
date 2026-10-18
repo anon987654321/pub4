@@ -82,16 +82,15 @@ module Master
         which("say") != nil
       end
 
-      # Speaking is for a person sitting at a terminal. A pipe, a test, a CI
-      # run and the deploy host all get silence, and none of them should pay
-      # for a synthesis they cannot hear.
+      # CLI speech is opt-in; the browser uses its own TTS transport and
+      # remains enabled independently. Pipes, CI and the global opt-out stay silent.
+      # Set MASTER_CLI_SPEAK=1 or use /voice on for this CLI session.
       def enabled?
-        return false if ENV["MASTER_CLI_SPEAK"] == "0"
         return false if ENV["MASTER_SKIP_TTS"] == "1"
         return false if ENV["CI"]
         return false unless $stdout.isatty
 
-        true
+        ENV["MASTER_CLI_SPEAK"] == "1"
       end
 
       def speak(text, priority: :reply)
