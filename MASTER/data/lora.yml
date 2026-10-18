@@ -21,7 +21,7 @@ draft: '\b(?:draft|quick(?:ly)?|cheap(?:ly)?|preview|rough|utkast)\b'
 final: '\b(?:final|high[- ]quality|best quality|polished|proper)\b'
 kling: '\bkling\b'
 
-action: '\b(?:generate|make|create|render|produce|take|give|get|build|train|fine[- ]?tune|start|animate|shoot|lag|lage|generer|lag\s+meg|trene|tren|bygg)\b'
+action: '\b(?:generate|make|create|render|produce|take|give|get|build|retrain|train|fine[- ]?tune|start|animate|shoot|lag|lage|generer|lag\s+meg|trene|tren|bygg)\b'
 
 intents:
   - name: status
