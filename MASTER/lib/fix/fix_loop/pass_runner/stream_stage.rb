@@ -267,8 +267,8 @@ module Master
 
             related.sort.each do |rel|
               full = File.expand_path(rel, graph.root)
-              next unless File.file?(full)
               return incomplete_repair_context("dependency is a symlink: #{rel}") if File.symlink?(full)
+              return incomplete_repair_context("dependency disappeared since graph refresh: #{rel}") unless File.file?(full)
 
               source = File.read(full, encoding: "UTF-8")
               source_sha256 = Digest::SHA256.hexdigest(source)
