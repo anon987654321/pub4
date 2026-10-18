@@ -63,4 +63,78 @@ class TestReferenceGraph < Minitest::Test
       assert_empty refreshed[:edges].select { |edge| edge[:from] == "Rakefile" }
     end
   end
+
+  def test_prism_connects_a_static_method_caller_to_its_definition_file
+    Dir.mktmpdir("reference-graph-ast") do |root|
+      caller = File.join(root, "lib", "jobs", "persist.rb")
+      shared = File.join(root, "lib", "services", "shared_service.rb")
+      FileUtils.mkdir_p(File.dirname(caller))
+      FileUtils.mkdir_p(File.dirname(shared))
+      File.write(shared, <<~RUBY)
+        module Services
+          class SharedService
+            def save
+              true
+            end
+          end
+        end
+      RUBY
+      File.write(caller, <<~RUBY)
+        module Jobs
+          class Persist
+            def run
+              Services::SharedService.new.save
+            end
+          end
+        end
+      RUBY
+
+      graph = Master::Review::ReferenceGraph.new(root:)
+      result = graph.build
+      radius = graph.blast_radius(shared)
+
+      assert_includes radius[:inbound], "lib/jobs/persist.rb"
+      assert result[:edges].any? do |edge|
+        edge[:from] == "lib/jobs/persist.rb" &&
+          edge[:to] == "lib/services/shared_service.rb" &&
+          edge[:type] == :method_call
+      end
+      assert_equal Digest::SHA256.hexdigest(File.read(shared)), graph.source_digest(shared)
+      assert_empty result[:analysis_failures]
+    end
+  end
+
+  def test_dynamic_dispatch_is_recorded_instead_of_misread_as_a_literal
+    Dir.mktmpdir("reference-graph-dynamic") do |root|
+      path = File.join(root, "lib", "dynamic.rb")
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, <<~RUBY)
+        class DynamicRunner
+          def run(object, method_name)
+            object.send(method_name)
+          end
+        end
+      RUBY
+
+      graph = Master::Review::ReferenceGraph.new(root:)
+      result = graph.build
+
+      assert_equal 1, graph.dynamic_for(path).size
+      assert_equal "dynamic method name", graph.dynamic_for(path).first[:reason]
+      assert_equal 1, result.dig(:metrics, :dynamic_sites)
+    end
+  end
+
+  def test_refresh_reports_invalid_ruby_source_as_an_analysis_gap
+    Dir.mktmpdir("reference-graph-invalid") do |root|
+      path = File.join(root, "broken.rb")
+      File.write(path, "def incomplete(\n")
+
+      graph = Master::Review::ReferenceGraph.new(root:)
+      result = graph.build(refresh: true)
+
+      assert_includes result[:nodes], "broken.rb"
+      assert result[:analysis_failures].any? { |failure| failure[:path] == "broken.rb" }
+    end
+  end
 end
