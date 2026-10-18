@@ -733,17 +733,21 @@ module Master
         started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
         voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+        # A failure reason belongs to this utterance, not the previous one. An
+        # absent socket sets no error; an attempted socket that returns empty or
+        # truncated audio records one through the bounded retry path.
+        clear_last_error!
         sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
         if sock_path
           clear_last_error!
           return shape ? shaped(sock_path) : sock_path
         end
 
-        # Keep the fast mode's no-cold-retry policy for expressive/streaming
-        # work. Classic CLI speech prioritizes faithful delivery: when its fast
-        # socket path returns no audio, allow one bounded whole-file retry before
-        # Playback falls through to the host's alternate voice.
-        fast_retry = fast_tts_mode? && synthesis_mode == "classic"
+        # Keep fast mode from cold-starting a worker when no socket exists. Only
+        # a real failed socket request merits a one-shot recovery, and only for
+        # classic CLI speech where preserving the configured voice beats latency.
+        socket_failed = !last_error.to_s.empty?
+        fast_retry = fast_tts_mode? && synthesis_mode == "classic" && socket_failed
         return if fast_tts_mode? && !fast_retry
 
         retry_timeout = [normal_worker_timeout(text.to_s.length), 30].min if fast_retry
