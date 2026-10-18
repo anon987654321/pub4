@@ -206,9 +206,17 @@ credentials are explicit failures, never inferred passes.
 MASTER speaks to this tool in plain language. Saying "generate me a selfie", "train a lora of
 ragnhild" or "lora status" to `MASTER/bin/master` reaches `lora.rb` through
 `MASTER/lib/io/lora_intent.rb`. The phrases, the people and the spending rule are data in
-`MASTER/data/lora.yml`. Anything that spends money runs as a dry run until the same sentence
-also says "confirm" or "go ahead", and a sentence that names two people for a video is
-refused.
+`MASTER/data/lora.yml`. The canonical entrypoint is `STUDIO/replicate/lora/lora.rb`, and
+MASTER's dispatcher resolves the public `lora` tool to that path.
+
+A request that explicitly mentions new training photos or source folders refreshes each named
+subject from `sources/`. The old `dataset/` is archived under that subject's ignored
+`.cache/dataset-backups/` before the new dataset is installed. Preparation creates caption
+stubs, not finished captions: MASTER runs the Replicate preflight and stops before training,
+even if the request says "confirm" or "go ahead". Complete each caption with pose, clothing,
+light and setting, rerun preflight, then issue a separate confirmed training request. The
+preflight treats unreviewed stub captions as a hard problem. Ordinary paid requests continue
+to dry-run until explicitly confirmed.
 
 ## Commands
 
