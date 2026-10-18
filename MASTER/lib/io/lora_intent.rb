@@ -24,6 +24,7 @@ module Master
       IMAGE_EXTENSIONS = %w[jpg jpeg png webp].freeze
       NUMBER_WORDS = %w[zero one two three four five six seven eight nine ten].freeze
       PAID = %i[selfie train video].freeze
+      SOURCE_REFRESH_RE = /\\b(?:new|updated|fresh|additional)\\s+(?:training\\s+)?(?:photos?|images?)\\b|\\bsources?\\b/i.freeze
 
       def handles?(text) = !intent_for(text, config).nil?
 
@@ -36,6 +37,10 @@ module Master
         return subject if subject.is_a?(Result) && !subject.ok?
 
         subjects = intent == :status ? [nil] : Array(subject&.value!)
+        if intent == :train && text.match?(SOURCE_REFRESH_RE)
+          return refresh_sources(subjects, root:)
+        end
+
         confirmed = confirmed?(text, cfg)
         results = subjects.map do |name|
           built = build(intent, text, name, cfg, root:)
@@ -187,6 +192,46 @@ module Master
         dry = paid && !confirmed
         Result.ok(output: report(intent, result.value!, subject, dry:), rendered: result.value!, media: :"lora_#{intent}",
                   subject:, dry_run: dry)
+      end
+
+      # A request that explicitly supplies new source photographs is a
+      # dataset refresh, not permission to train on yesterday's prepared set.
+      # Archive each old dataset, prepare the source photos, and run paid-lane
+      # preflight only. Curate creates caption stubs; preflight blocks real
+      # training until those captions have been reviewed.
+      def refresh_sources(subjects, root:)
+        reports = []
+        subjects.each do |name|
+          prepare = ScriptDispatch.run(
+            root:,
+            tool: "lora",
+            arg: Shellwords.join(["--subject", name, "--prepare", "--write", "--replace"]),
+          )
+          return prepare unless prepare.ok?
+
+          preflight = ScriptDispatch.run(
+            root:,
+            tool: "lora",
+            arg: Shellwords.join(["--subject", name, "--train-replicate", "--dry-run"]),
+          )
+          return preflight unless preflight.ok?
+
+          reports << "#{name}: source preparation\\n#{prepare.value!}\\n\\n#{name}: training preflight\\n#{preflight.value!}"
+        end
+
+        output = [
+          "Source refresh completed for #{subjects.join(', ')}.",
+          reports.join("\\n\\n"),
+          "Paid training was not started. Review the generated .txt captions for pose, clothing, light and setting, then run the training preflight again. Unreviewed stub captions are a hard training blocker.",
+        ].join("\\n\\n")
+        Result.ok({
+          output:,
+          rendered: output,
+          media: :lora_train,
+          subjects:,
+          dry_run: true,
+          requires_caption_review: true,
+        })
       end
 
       def report(intent, output, subject, dry:)
