@@ -59,6 +59,19 @@ abort "warn: missing #{MASTER_CLIENT}" unless MASTER_CLIENT.file?
 require MASTER_CLIENT.to_s
 require_relative "preflight"
 
+# Environment values are input, not Ruby numeric literals. String#to_i silently
+# turns "typo" into zero and "1000seconds" into 1000; either can corrupt a paid
+# request or create an unexpectedly cheap-looking estimate.
+def positive_integer_env(name, default:)
+  raw = ENV.fetch(name, default.to_s)
+  value = Integer(raw, 10)
+  abort "warn: #{name} must be a positive integer" unless value.positive?
+
+  value
+rescue ArgumentError, TypeError
+  abort "warn: #{name} must be a positive integer"
+end
+
 options = {
   dry_run: false,
   async: false,
@@ -67,9 +80,9 @@ options = {
   cancel: nil,
   destination: ENV["LORA_REPLICATE_DEST"].to_s.strip,
   trigger: ENV.fetch("LORA_TRIGGER") { ENV.fetch("TRIGGER", SUBJECT) },
-  steps: (ENV["LORA_REPLICATE_STEPS"] || "1000").to_i,
-  lora_rank: (ENV["LORA_REPLICATE_LORA_RANK"] || "16").to_i,
-  timeout: (ENV["LORA_REPLICATE_TIMEOUT"] || "3600").to_i,
+  steps: positive_integer_env("LORA_REPLICATE_STEPS", default: 1000),
+  lora_rank: positive_integer_env("LORA_REPLICATE_LORA_RANK", default: 16),
+  timeout: positive_integer_env("LORA_REPLICATE_TIMEOUT", default: 3600),
   webhook: ENV["REPLICATE_WEBHOOK_URL"].to_s.strip,
 }
 
@@ -88,6 +101,14 @@ OptionParser.new do |p|
   p.on("--webhook URL", "Replicate webhook URL") { |v| options[:webhook] = v }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!
+
+{
+  steps: "--steps / LORA_REPLICATE_STEPS",
+  lora_rank: "--lora-rank / LORA_REPLICATE_LORA_RANK",
+  timeout: "--timeout / LORA_REPLICATE_TIMEOUT",
+}.each do |key, source|
+  abort "warn: #{source} must be a positive integer" unless options.fetch(key).is_a?(Integer) && options.fetch(key).positive?
+end
 
 def zip_dataset(dataset_dir, zip_path)
   FileUtils.mkdir_p(zip_path.dirname)
