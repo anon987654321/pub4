@@ -27,9 +27,9 @@ module Master
 
         attr_reader :last_error
 
-        # Nil when the mouth can speak. Playback.enabled? is the switch the
-        # session obeys — MASTER_CLI_SPEAK=0, MASTER_SKIP_TTS, CI, no terminal.
-        # A face also needs a synthesiser, because player presence alone says
+        # Nil when the mouth can speak. Playback.enabled? requires explicit
+        # MASTER_CLI_SPEAK=1 (or /voice on), with MASTER_SKIP_TTS, CI and non-TTY
+        # still acting as hard stops. A face also needs a synthesiser, because
         # nothing about whether Speech can produce audio.
         def missing
           return "voice0: off here — replies stay text" unless Master::Voice::Playback.enabled?
