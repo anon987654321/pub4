@@ -231,18 +231,33 @@ class TestFixModelPhaseGuards < Minitest::Test
     def initialize = @root = "/r"
   end
 
-  def test_the_worklist_is_easiest_first_and_max_files_hands_the_rest_to_the_rule_stage_as_handled
-    rows = ->(n) { Array.new(n) { { law: "CQS" } } }
-    ranked = [["/r/big.rb", rows.(5)], ["/r/small.rb", rows.(1)], ["/r/mid.rb", rows.(3)]]
+  def test_the_worklist_prioritizes_severity_and_hands_deferred_files_to_the_rule_stage
+    rows = ->(law, severity, n) { Array.new(n) { { law:, severity: } } }
+    ranked = [
+      ["/r/big.rb", rows.call("CQS", :warning, 5)],
+      ["/r/small.rb", rows.call("NO_PUTS", :info, 1)],
+      ["/r/mid.rb", rows.call("ROBUSTNESS", :error, 2)],
+    ]
     queue = Queue.new
     streamed = Set.new
     Ledger.max_files = 2
 
     Stream.new.send(:enqueue_ranked, ranked, queue, streamed)
 
-    taken = Array.new(queue.size) { queue.pop.first }
-    assert_equal %w[/r/small.rb /r/mid.rb], taken
-    assert_equal [["big.rb", "CQS"]].to_set, streamed.map { |file, law| [File.basename(file), law] }.to_set
+    taken = Array.new(queue.size) { |item| item.first }
+    assert_equal %w[/r/mid.rb /r/big.rb], taken
+    assert_equal [["small.rb", "NO_PUTS"]].to_set,
+                 streamed.map { |file, law| [File.basename(file), law] }.to_set
+  end
+
+  def test_an_unbounded_worklist_ranks_after_the_complete_scan_by_default
+    previous = ENV["MASTER_FIX_RANK"]
+    ENV.delete("MASTER_FIX_RANK")
+    Ledger.reset!
+
+    assert Stream.new.send(:rank_worklist?)
+  ensure
+    previous ? ENV["MASTER_FIX_RANK"] = previous : ENV.delete("MASTER_FIX_RANK")
   end
 
   class Scanning < Stream
