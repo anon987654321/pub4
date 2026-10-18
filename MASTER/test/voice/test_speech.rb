@@ -666,6 +666,41 @@ class TestSpeech < Minitest::Test
     File.delete(path) if File.exist?(path)
   end
 
+  def test_classic_speech_retries_once_after_empty_socket_audio_in_fast_mode
+    speech = Master::Voice::Speech
+    seen = nil
+    audio_path = nil
+    synth = lambda do |text:, voice_name:, style_config:, audio_path:|
+      seen = [text, voice_name, style_config]
+      File.binwrite(audio_path, "edge-audio")
+      audio_path
+    end
+
+    speech.stub(:fast_tts_mode?, true) do
+      speech.stub(:synthesis_mode, "classic") do
+        speech.stub(:synthesize_edge_socket, nil) do
+          speech.stub(:synthesize_edge_oneshot, synth) do
+            result = speech.synthesize_edge(
+              "Read these words exactly.",
+              voice: :christopher,
+              style_config: { rate: "+0%", pitch: "+0Hz" },
+              shape: false,
+            )
+            audio_path = result
+
+            assert_equal "edge-audio", File.binread(result)
+          end
+        end
+      end
+    end
+
+    assert_equal "Read these words exactly.", seen.fetch(0)
+    assert_equal "en-US-ChristopherNeural", seen.fetch(1)
+    assert_equal "+0%", seen.fetch(2).fetch(:rate)
+  ensure
+    File.delete(audio_path) if audio_path && File.exist?(audio_path)
+  end
+
   def test_synthesize_edge_warns_and_cleans_up_failed_worker_output
     status = Struct.new(:success?).new(false)
     capture_io do
