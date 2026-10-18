@@ -375,7 +375,10 @@ module Master
         @reachability.verify!(target, files:)
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
-        return resumed.tap { mission.fail!(resumed.message) } if resumed.err?
+        if resumed.err?
+          mission.fail!(resumed.message)
+          return finish_run(resumed, target, run_id, mission: nil, requested:)
+        end
 
         if journal["resumed"] && journal["convergence_state"].is_a?(Hash) &&
            @convergence_discipline.respond_to?(:restore_checkpoint)
@@ -484,10 +487,7 @@ module Master
         end
 
         recovery = Transaction::Recovery.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
-        if recovery.err?
-          @run_journal.terminal(run_id, :failed, message: recovery.message)
-          return recovery
-        end
+        return recovery if recovery.err?
         return Result.ok(start_pass) unless recovery.value!.is_a?(Hash) && recovery.value![:state] == :delivery_pending
 
         recover_pending_delivery(active_pass:, run_id:, commit: recovery.value!.fetch(:commit))
@@ -495,10 +495,7 @@ module Master
 
       def recover_pending_delivery(active_pass:, run_id:, commit:)
         recovery_result = retry_delivery(transaction_id: active_pass.fetch("transaction_id"), expected_head: commit)
-        if recovery_result.err?
-          @run_journal.terminal(run_id, :failed, message: recovery_result.message)
-          return recovery_result
-        end
+        return recovery_result if recovery_result.err?
         @run_journal.pass_finish(run_id, active_pass.fetch("pass"), status: :committed,
                                  message: "recovered Git delivery")
         Result.ok(active_pass.fetch("pass").to_i + 1)
