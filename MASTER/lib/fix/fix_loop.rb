@@ -242,12 +242,15 @@ module Master
       def run_end_reason(result)
         return "reloading: origin/main changed" if CodeWatch.requested?
 
-        result.respond_to?(:ok?) && result.ok? ? "completed" : "failed: #{result.to_s[0, 80]}"
+        state = terminal_state_for(result)
+        return "completed" if state == :done
+
+        "#{state}: #{result.to_s[0, 80]}"
       end
 
       def finish_run(result, target, run_id, mission: nil, requested: false)
-        RunBudget.finish_run(reason: run_end_reason(result))
         result = blocked_by_gaps(result)
+        RunBudget.finish_run(reason: run_end_reason(result))
         state = terminal_state_for(result)
         evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
         @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
