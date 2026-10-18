@@ -1488,8 +1488,10 @@ end
     session = Object.new
     session.define_singleton_method(:run) { |**| worktree_error }
 
-    result = Master::Fix::WorktreeSession.stub(:new, session) do
-      Master::CLI::CommandRegistry.dispatch_fix_in_worktree(raw: "MASTER", root: Master::ROOT, target: "MASTER")
+    result = Master::Fix::WorktreeSession.stub(:foreign_paths, []) do
+      Master::Fix::WorktreeSession.stub(:new, session) do
+        Master::CLI::CommandRegistry.dispatch_fix_in_worktree(raw: "MASTER", root: Master::ROOT, target: "MASTER")
+      end
     end
 
     assert result.err?
