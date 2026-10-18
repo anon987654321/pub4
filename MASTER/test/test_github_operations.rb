@@ -56,6 +56,37 @@ class TestGitHubOperations < Minitest::Test
     assert_match(/merged as #{merged[0, 12]}/, result.summary)
   end
 
+  def test_merged_state_without_a_valid_sha_is_not_reported_as_success
+    head = "a" * 40
+    url = "https://github.com/anon987654321/pub4/pull/14"
+    exec = FakeExec.new([
+      ["gh version 2\n", FakeStatus.new(true)],
+      ["Logged in to github.com\n", FakeStatus.new(true)],
+      [{ number: 14, url: }.to_json, FakeStatus.new(true)],
+      ["OPEN\t#{head}\t\t\n", FakeStatus.new(true)],
+      ["network connection reset\n", FakeStatus.new(false)],
+      ["already merged\n", FakeStatus.new(false)],
+      ["MERGED\t#{head}\tbad-sha\t2026-10-18T17:00:00Z\n", FakeStatus.new(true)],
+    ])
+    operations = Master::Io::GitHubOperations.new(
+      root: Dir.pwd, repo: "anon987654321/pub4", executor: exec,
+    )
+
+    result = nil
+    capture_io do
+      result = operations.publish_and_merge!(
+        branch: "master/fix-test", base: "main", expected_head: head,
+        title: "test delivery", body: "body", timeout: 0,
+      )
+    end
+
+    refute result.ok
+    assert_equal 14, result.number
+    assert_equal url, result.url
+    assert_nil result.merged_sha
+    assert_match(/without a valid merge commit SHA/, result.summary)
+  end
+
   def test_post_create_verification_failure_preserves_pr_recovery_details
     head = "a" * 40
     url = "https://github.com/anon987654321/pub4/pull/13"
