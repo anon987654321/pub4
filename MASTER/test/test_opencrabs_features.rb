@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "timeout"
 
 class TestOpenCrabsFeatures < Minitest::Test
   def test_read_file_full_mode_has_no_truncation_suffix_or_limit_error
@@ -178,5 +179,58 @@ class TestOpenCrabsFeatures < Minitest::Test
   ensure
     4.times { hold << true }
     pool&.join_all(timeout: 1)
+  end
+
+  def test_agent_pool_reserves_capacity_before_a_slow_governor_decision
+    entered = Queue.new
+    release = Queue.new
+    governor = Object.new
+    governor.define_singleton_method(:permit?) do |*|
+      entered << true
+      release.pop
+      Master::Result.ok(true)
+    end
+    pool = Master::Review::AgentPool.new(
+      governor:,
+      taxonomy: { "spawn_policy" => { "max_concurrent_children" => 1 } },
+    )
+    hold = Queue.new
+    first = Thread.new { pool.spawn(type: :explore) { hold.pop } }
+
+    entered.pop
+    second = Timeout.timeout(1) { pool.spawn(type: :explore) { hold.pop } }
+
+    assert_predicate second, :err?
+    assert_equal :validation, second.category
+    assert_match(/at capacity/, second.message)
+    assert_equal 1, pool.instance_variable_get(:@reservations)
+  ensure
+    release << true if release
+    if first
+      result = first.value
+      hold << true if result&.ok?
+      first.join(1)
+    end
+  end
+
+  def test_agent_pool_denies_spawn_when_governor_raises
+    bus = Master::Trace::EventBus.new
+    governor = Object.new
+    governor.define_singleton_method(:permit?) { |*| raise IOError, "permission source unavailable" }
+    pool = Master::Review::AgentPool.new(
+      governor:, event_bus: bus,
+      taxonomy: { "spawn_policy" => { "max_concurrent_children" => 1 } },
+    )
+    ran = false
+
+    result = pool.spawn(type: :code) { ran = true }
+
+    assert_predicate result, :err?
+    assert_equal :policy, result.category
+    assert_match(/governor denied/, result.message)
+    refute ran
+    assert_empty pool.instance_variable_get(:@workers)
+    assert_equal 0, pool.instance_variable_get(:@reservations)
+    assert bus.topics.include?("agent:spawn_check_failed") if bus.respond_to?(:topics)
   end
 end
