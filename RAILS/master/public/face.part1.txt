@@ -1,35 +1,61 @@
 "use strict";
 
-// The face is drawn in plain ASCII, as the terminal draws it (face_ascii.js, one renderer
-// and one set of tunables from the face contract). WebGL and THREE are not loaded for it;
-// ?face_mode=3d (or raster) is the explicit way back to the particle head.
-const _faceModeParam = (new URLSearchParams(window.location.search).get('face_mode') || 'auto').toLowerCase();
-const _wantsAscii = _faceModeParam !== '3d' && _faceModeParam !== 'raster';
-// face_ascii.js is a deferred shell script: usually ready long before this runs, but the
-// primer can fire first, so wait for it, and take the particle head if it never arrives.
-if (_wantsAscii && !window.MASTER_FACE_ASCII) {
-  await new Promise((resolve) => {
-    window.addEventListener('master:face-ascii-ready', resolve, { once: true });
-    setTimeout(resolve, 4000);
+// The browser leads with the 3D point-cloud head. ASCII remains explicit and is the
+// fallback when WebGL cannot start; the terminal keeps its native ASCII renderer.
+// ?face_mode=ascii selects ASCII deliberately; the default is the 3D point cloud.
+const _faceModeParam = (new URLSearchParams(window.location.search).get('face_mode') || '3d').toLowerCase();
+const _wantsAscii = _faceModeParam === 'ascii';
+
+function waitForAsciiRenderer() {
+  if (window.MASTER_FACE_ASCII) return Promise.resolve();
+  return new Promise((resolve) => {
+    let timer = null;
+    const finish = () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('master:face-ascii-ready', finish);
+      resolve();
+    };
+    window.addEventListener('master:face-ascii-ready', finish, { once: true });
+    timer = setTimeout(finish, 4000);
   });
 }
-const _asciiEngine = _wantsAscii && window.MASTER_FACE_CONTRACT?.ascii ? (window.MASTER_FACE_ASCII || null) : null;
 
-// Check WebGL before paying THREE's 1.3MB parse cost
+// Probe a disposable canvas only after go() activates this module. Never bind #face
+// to 2D and then try to start WebGL on that same canvas.
 const _wglCv = document.createElement('canvas');
 const _hasCanvas = typeof _wglCv.getContext === 'function';
-const _hasWebGL = !_asciiEngine && _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
+let _hasWebGL = !_wantsAscii && _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
 
 const _dbgEl = document.getElementById('_dbg');
-if (_dbgEl) _dbgEl.textContent = _asciiEngine ? 'ascii' : (_hasWebGL ? 'loading three...' : '2d mode');
+if (_wantsAscii || !_hasWebGL) await waitForAsciiRenderer();
+let _asciiEngine = (_wantsAscii || !_hasWebGL) && window.MASTER_FACE_CONTRACT?.ascii ? (window.MASTER_FACE_ASCII || null) : null;
+if ((_wantsAscii || !_hasWebGL) && !_asciiEngine) {
+  if (_dbgEl) _dbgEl.textContent = 'face unavailable';
+  throw new Error('face unavailable: ASCII fallback is not loaded');
+}
+if (_dbgEl) _dbgEl.textContent = _asciiEngine ? (_wantsAscii ? 'ascii' : 'ascii fallback') : 'loading three...';
 
-// Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-// Absolutize the specifier: this module runs from a blob: URL, where a
-// root-relative path (MASTER_ASSET_PATHS.threeModule = /assets/three…js) fails
-// "Failed to resolve module specifier" — the real root cause of the black face.
-const THREE = _hasWebGL ? await import(new URL(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1', document.baseURI).href) : null;
+// Resolve THREE against the document, not the runtime's blob URL. A failed module
+// import drops to the existing ASCII renderer instead of leaving a black face.
+let THREE = null;
+if (_hasWebGL) {
+  try {
+    THREE = await import(new URL(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1', document.baseURI).href);
+  } catch (error) {
+    _hasWebGL = false;
+    await waitForAsciiRenderer();
+    _asciiEngine = window.MASTER_FACE_CONTRACT?.ascii ? (window.MASTER_FACE_ASCII || null) : null;
+    if (!_asciiEngine) {
+      if (_dbgEl) _dbgEl.textContent = 'face unavailable';
+      window.MASTER_LOG?.warn?.('face_runtime:webgl_import_failed', error);
+      throw error;
+    }
+    if (_dbgEl) _dbgEl.textContent = 'ascii fallback';
+    window.MASTER_LOG?.warn?.('face_runtime:webgl_import_failed_using_ascii', error);
+  }
+}
 
-// Minimal Color stub for no-WebGL path
+// Minimal Color stub for the ASCII/no-WebGL path
 class _Color {
   constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
   clone(){return new _Color(this.r,this.g,this.b);}

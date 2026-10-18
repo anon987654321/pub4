@@ -4,11 +4,9 @@ require "minitest/autorun"
 require "digest"
 require "yaml"
 
-# The web face draws the terminal's ASCII face. The renderer itself is held to the
-# Ruby frames by RAILS/master/test/face_ascii.test.mjs; this reads the source as text
-# and holds what surrounds it: the generated runtime still matches its parts, the boot
-# manifest keeps its order with the new script in it, shell chrome stays conventional
-# text without an ASCII-art logo, and the type is mono for the face and shell.
+# The browser defaults to the 3D point-cloud face; the terminal and explicit web mode
+# share the ASCII renderer. These contracts hold mode choice, fallback, point shading,
+# generated runtime digests, manifest order and shell typography in one place.
 class MasterWebAsciiFaceContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   WEB = File.join(ROOT, "RAILS", "master")
@@ -64,16 +62,40 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
     refute_match(/MASTERFace\b/, read(PUBLIC, "face_ascii.js"))
   end
 
-  def test_the_runtime_draws_ascii_on_a_canvas_that_has_no_webgl_context
+  def test_browser_defaults_to_3d_and_ascii_is_opt_in_with_a_safe_fallback
     part1 = read(PUBLIC, "face.part1.txt")
     part3 = read(PUBLIC, "face.part3.txt")
 
-    assert_match(/_hasWebGL = !_asciiEngine && /, part1, "ascii mode must not create a WebGL context on #face")
+    assert_match(/get\('face_mode'\) \|\| '3d'/, part1)
+    assert_match(/_wantsAscii = _faceModeParam === 'ascii'/, part1)
+    assert_includes part1, "?face_mode=ascii"
+    assert_match(/let _hasWebGL = !_wantsAscii && /, part1)
+    assert_includes part1, "webgl_import_failed_using_ascii"
+    assert_includes part1, "await waitForAsciiRenderer()"
+    assert_includes part1, "face unavailable"
     assert_match(/if \(_asciiEngine && cv && !renderer\)/, part1)
     assert_match(/!renderer && !asciiView/, part3)
     assert_match(/if \(asciiView\) \{\n    drawAsciiFace\(t\);/, part3)
-    assert_includes part1, "?face_mode=3d"
     refute_match(/getElementById\(["']face["']\)\s*\.getContext/, read(PUBLIC, "face_2d_fallback.js"))
+  end
+
+  def test_the_particle_head_uses_neutral_depth_shading_and_single_pixel_points
+    part2 = read(PUBLIC, "face.part2.txt")
+
+    assert_includes part2, "gl_PointSize=1.0"
+    assert_includes part2, "vec3 depthTone=mix(vec3(0.74),vec3(1.0),depth);"
+    refute_includes part2, "vec3(0.74,0.66,0.58)"
+    refute_includes part2, "vec3(1.0,0.98,0.94)"
+  end
+
+  def test_secondary_orbital_particles_are_deterministic_and_subordinate
+    part3 = read(PUBLIC, "face.part3.txt")
+    orbital = part3[/const CLI_FACE_WEB_DENSITY = 360.*?^}/m]
+
+    refute_nil orbital
+    assert_includes orbital, "function faceFieldSample(index, salt = 0)"
+    assert_includes orbital, "opacity: 0.10"
+    refute_match(/Math\.random\(\)/, orbital)
   end
 
   def test_the_configured_face_shortcuts_control_laws_and_overlay_separately
