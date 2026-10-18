@@ -99,6 +99,26 @@ class DomainRegistryTest < ActiveSupport::TestCase
     end
   end
 
+  test "malformed host authorities fail closed" do
+    [
+      "brgen.no:evil",
+      "brgen.no:",
+      "brgen.no:0",
+      "brgen.no:65536",
+      "brgen.no:443:evil",
+      "brgen.no/path",
+      "brgen.no\nforged.invalid",
+      "brgen.no@forged.invalid",
+      "brgen.no..",
+      "bad_host.brgen.no",
+      "-bad.brgen.no",
+      "bad-.brgen.no"
+    ].each do |host|
+      assert_equal "", Brgen::DomainRegistry.normalize_host(host), "#{host.inspect} should not normalize to a registered hostname"
+      assert_raises(Brgen::DomainRegistry::UnknownHost) { Brgen::DomainRegistry.resolve(host) }
+    end
+  end
+
   test "declared subapps round-trip through every city apex" do
     aliases = Brgen::DomainRegistry::SUBAPP_ALIASES
     Brgen::DomainRegistry::ENTRIES.each do |entry|
