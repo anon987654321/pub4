@@ -19,12 +19,12 @@ ROBUSTNESS:
 
 SINGULARITY:
   severity: error
-  enforcement: deferred
-  expires_on: "2026-12-31"
-  deferred_reason: "No single Law.define(:SINGULARITY) yet; partial DRY/dedup coverage. Migrate before expiry."
+  enforcement: active
+  detector_ids:
+    - SINGULARITY
 
 LINEARITY:
   severity: error
-  enforcement: deferred
-  expires_on: "2026-12-31"
-  deferred_reason: "Complexity detectors under other ids; explicit LINEARITY law+fixtures pending."
+  enforcement: active
+  detector_ids:
+    - LINEARITY

@@ -2221,3 +2221,27 @@ Law.define(:AUTOFIX_REQUIRES_CONFIDENCE) do
   bad "A semantic smell triggers an automatic rewrite because the model produced plausible code."
   good "Only a deterministic, fixture-proven transformation is eligible for automatic repair."
 end
+
+Law.define(:SINGULARITY) do
+  source "laws.yml SINGULARITY — one source of truth; the DRY principle of The Pragmatic Programmer"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does this change define a fact, rule, threshold or type a second time when an existing definition already owns it, so the two copies can drift apart?"
+  practice "Every fact has one owner; everything else reads it."
+  fix "Find the existing owner and read from it. If none exists, create one and move every copy onto it in the same change."
+  bad "Add a second Law type whose members mirror the one in the kernel, each carrying its own copy of the same threshold."
+  good "Reuse the kernel's Law type and read the threshold from the single file that owns it."
+end
+
+Law.define(:LINEARITY) do
+  source "laws.yml LINEARITY — sequential flow with minimal branches; cyclomatic complexity, McCabe 1976"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does this change make the path through the code harder to follow in order, with deeper nesting, extra branches, or control flow that jumps back and forth instead of running top to bottom?"
+  practice "Read the code once, top to bottom, and arrive at the result."
+  fix "Flatten with guard clauses, extract the branch that breaks the sequence, and order steps as they run."
+  bad "Nest three conditionals inside a loop so the success path sits at the deepest indent."
+  good "Return early on each failure, then run the success path unindented to the end."
+end
