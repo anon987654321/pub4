@@ -183,6 +183,7 @@ exit(system("git", "commit", "-m", "worker fix"))
     states = {
       "fix0: HUMAN_DECISION: approval required" => :human_decision,
       "fix0: BLOCKED: outside authority" => :policy,
+      "fix0: INCONCLUSIVE: semantic evidence unavailable" => :inconclusive,
       "fix0: PLATEAU: no convergence" => :plateau,
       "fix0: RELOADING: main changed" => :reloading,
       "fix0: DELIVERY_FAILED: push refused" => :delivery_failed,
