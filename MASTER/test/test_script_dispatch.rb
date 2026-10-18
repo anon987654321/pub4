@@ -33,6 +33,21 @@ class TestScriptDispatch < Minitest::Test
     assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate"), Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
+  def test_finds_lora_tool_at_its_canonical_nested_entrypoint
+    workspace = File.expand_path("../..", __dir__)
+    path = Master::Io::ScriptDispatch.script_path(workspace, "lora")
+
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "lora", "lora.rb"), path
+    assert File.file?(path)
+  end
+
+  def test_uses_the_nested_lora_directory_as_working_directory
+    workspace = File.expand_path("../..", __dir__)
+    script = Master::Io::ScriptDispatch.script_path(workspace, "lora")
+
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "lora"), Master::Io::ScriptDispatch.working_directory(workspace, script)
+  end
+
   def test_finds_dilla_engine_under_studio
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "dilla")
