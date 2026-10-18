@@ -23,6 +23,7 @@ require_relative "violation"
 require_relative "wishlist"
 require_relative "protocol"
 require_relative "transformation_plan"
+require_relative "../review/reference_graph"
 require_relative "research_pass"
 require_relative "convergence_discipline"
 require_relative "reflection"
@@ -76,7 +77,7 @@ module Master
 
       def initialize(laws:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
-                     law_resolver: nil, homeostat: nil)
+                     law_resolver: nil, homeostat: nil, reference_graph: nil)
         @laws = laws
         @axioms = axioms
         @agent = agent
@@ -84,6 +85,7 @@ module Master
         @cognition_root = path_root
         @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
         @bus = bus
+        @reference_graph = reference_graph
         @homeostat = homeostat
         @cognition = nil
         @outcome_prior = nil
@@ -102,7 +104,7 @@ module Master
         @file_collector = FileCollector.new(root:, bus:)
         @pass_runner = build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
-          discipline: @convergence_discipline, wishlist: @wishlist)
+          discipline: @convergence_discipline, wishlist: @wishlist, reference_graph: @reference_graph)
         @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
@@ -158,6 +160,8 @@ module Master
           )
         end
         if requested
+          current_phase = :structure
+          prepare_dependency_map!(files)
           current_phase = :research
           research = ResearchPass.new(
             agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
@@ -213,6 +217,32 @@ module Master
         result
       ensure
         @pass_runner&.cleanup_visual_runtime
+      end
+
+      # Before a requested /fix can write, read every eligible text source
+      # into the repository reference graph and refuse partial dependency maps.
+      # The graph is refreshed per run; failed reads and corpus files with no
+      # graph node are explicit gaps, not permission to guess.
+      def prepare_dependency_map!(files)
+        graph = @reference_graph ||= Master::Review::ReferenceGraph.new(root: @root, event_bus: @bus)
+        snapshot = graph.build(refresh: true)
+        failures = Array(snapshot[:analysis_failures])
+        missing = Array(files).reject { |path| graph.includes_path?(path) }
+        unless failures.empty? && missing.empty?
+          detail = []
+          detail << "#{failures.size} source read(s) failed: #{failures.first(3).map { |row| row[:path] }.join(", ")}" if failures.any?
+          detail << "#{missing.size} eligible file(s) absent from dependency graph: #{missing.first(3).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}" if missing.any?
+          message = "fix_loop: dependency understanding incomplete; no repair started (#{detail.join("; ")})"
+          Master::Trace::Dmesg.status("understand0", "BLOCKED, #{message[0, 180]}")
+          @bus&.publish("fix_loop:dependency_map_incomplete", failures: failures.size, missing: missing.size, detail:)
+          raise message
+        end
+
+        Master::Trace::Dmesg.status(
+          "understand0",
+          "complete source graph read, nodes=#{snapshot[:nodes].size}, edges=#{snapshot[:edges].size}, source_read_failures=0",
+        )
+        snapshot
       end
 
       # A run that reaches DONE after skipping files it could not scan, or
