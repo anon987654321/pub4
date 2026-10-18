@@ -63,12 +63,10 @@ module Master
         path = violation[:file]
         src = File.read(path, encoding: "UTF-8")
         if @expected_target_sha256 && Digest::SHA256.hexdigest(src) != @expected_target_sha256
-          RunLedger.declined("target_source_changed_after_context_read", file: path, law: @law.id)
-          return nil
+          return refuse_stale_context(path, "target source changed after context read")
         end
         unless context_fresh?(path, src)
-          RunLedger.declined("dependency_source_changed_after_context_read", file: path, law: @law.id)
-          return nil
+          return refuse_stale_context(path, "target or dependency source changed after context read")
         end
 
         excerpt_fix(src:, path:)
@@ -88,8 +86,7 @@ module Master
           return RunLedger.declined("empty_reply", file: path, law: @law.id) if response.strip.empty?
 
           unless context_fresh?(path, src)
-            RunLedger.declined("dependency_context_changed_during_model_call", file: path, law: @law.id)
-            return nil
+            return refuse_stale_context(path, "target or dependency source changed during model call")
           end
 
           result = PatchApplier.apply(src, diff_of(response))
@@ -101,6 +98,15 @@ module Master
         rescue StandardError => e
           return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
         end
+        nil
+      end
+
+      def refuse_stale_context(path, reason)
+        @person_required = true
+        @bus&.publish("repair_loop:human_decision_required", law: @law.id, file: path, reason:)
+        @bus&.publish("fix_loop:repair_context_incomplete", file: path, reason:)
+        Master::Trace::Dmesg.status("understand0", "HUMAN_DECISION, #{File.basename(path)}: #{reason}"[0, 180])
+        RunLedger.declined("dependency_context_stale", file: path, law: @law.id, detail: reason)
         nil
       end
 
