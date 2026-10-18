@@ -12,7 +12,7 @@ module Master
     # The canonical /fix execution contract. This is procedure, not a second
     # constitution: soul.yml and executable law remain authoritative.
     module Protocol
-      VERSION = 4
+      VERSION = 5
       STAGES = %w[load trace inventory structure scan semantic repair verify repeat report].freeze
       TERMINAL_STATES = %w[DONE PLATEAU CRASH SKIP HUMAN_DECISION BLOCKED INCONCLUSIVE VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].freeze
 
