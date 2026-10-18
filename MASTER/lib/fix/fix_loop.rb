@@ -375,10 +375,7 @@ module Master
         @reachability.verify!(target, files:)
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
-        if resumed.err?
-          mission.fail!(resumed.message)
-          return finish_run(resumed, target, run_id, mission: nil, requested:)
-        end
+        return finish_run(resumed, target, run_id, mission:, requested:) if resumed.err?
 
         if journal["resumed"] && journal["convergence_state"].is_a?(Hash) &&
            @convergence_discipline.respond_to?(:restore_checkpoint)
