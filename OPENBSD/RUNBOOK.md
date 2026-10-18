@@ -565,7 +565,9 @@ Use only `zsh OPENBSD/bin/vps-deploy <app|all>` for production deploys, as `dev`
 The compatibility `zsh RAILS/deploy.sh` delegates to it and refuses UID 0.
 The individual `RAILS/<app>/<app>.sh` entrypoints also refuse root because they
 source code from the dev-writable checkout. Do not run them with `doas`.
-The supervisor handles asset precompile before restart.zsh
+The supervisor handles asset precompile before restart.
+
+```zsh
 cd /home/dev/pub4 && git gc --quiet && git count-objects -v
 ```
 
