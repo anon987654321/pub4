@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "fileutils"
 require "open3"
+require "json"
 
 class TestFixWorktreeSession < Minitest::Test
   def test_disk_preflight_uses_interrupt_safe_subprocess_capture
@@ -83,6 +84,36 @@ exit(system("git", "commit", "-m", "worker fix"))
       refute File.exist?(result.worktree)
       assert_empty git_output(root, "ls-remote", "--heads", "origin", result.branch)
       assert_equal ["foreign.txt"], git_output(root, "status", "--porcelain=v1").lines.map { |line| line[3..].to_s.strip }
+    end
+  end
+
+  def test_gate_baseline_cache_survives_disposable_worktree
+    worker = <<~'RUBY'
+      #!/usr/bin/env ruby
+      require "json"
+      cache = File.join(Dir.pwd, "MASTER", ".master", "gate_baseline.json")
+      abort "baseline cache not carried into worktree" unless JSON.parse(File.read(cache)).fetch("key") == "parent-key"
+      File.write(cache, JSON.generate("key" => "child-key", "snapshot" => {}))
+      File.write("README", "after\n")
+      system("git", "add", "README")
+      puts "review0: complete"
+      exit(system("git", "commit", "-m", "worker fix") ? 0 : 1)
+    RUBY
+
+    with_repo(worker:) do |root|
+      exclude = File.join(root, ".git", "info", "exclude")
+      File.open(exclude, "a") { |io| io.puts("MASTER/.master/") }
+      cache = File.join(root, "MASTER", ".master", "gate_baseline.json")
+      FileUtils.mkdir_p(File.dirname(cache))
+      File.write(cache, JSON.generate("key" => "parent-key", "snapshot" => {}))
+
+      result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test", proof_trees: ["MASTER"])
+
+      assert result.ok, result.summary
+      assert_equal "child-key", JSON.parse(File.read(cache)).fetch("key"),
+                   "the child's newly measured baseline was discarded with the worktree"
+      assert_equal "base\n", File.read(File.join(root, "README"))
+      assert_equal "after\n", git_output(root, "show", "origin/main:README")
     end
   end
 
