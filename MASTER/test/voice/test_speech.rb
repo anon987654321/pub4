@@ -736,7 +736,8 @@ class TestSpeech < Minitest::Test
   def test_synthesize_edge_warns_and_cleans_up_failed_worker_output
     status = Struct.new(:success?).new(false)
     capture_io do
-      # Fast mode skips the one-shot worker, which is the path under test.
+      # Normal mode always permits the bounded one-shot worker; assert that
+      # its failed output is removed before the caller falls back.
       Master::Voice::Speech.stub(:fast_tts_mode?, false) do
         Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
           Master::Io::Exec.stub(:capture3, ["", "worker failed #{Process.pid}", status]) do
