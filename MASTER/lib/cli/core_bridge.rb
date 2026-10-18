@@ -311,7 +311,8 @@ module Master
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, workspace_root: root,
-                                                        verify: scan_verifier(root:), sandbox: shell_sandbox(root:),
+                                                        verify: ToolHooks.wrap_verifier(scan_verifier(root:), root:),
+                                                        sandbox: ToolHooks.wrap_sandbox(shell_sandbox(root:), root:),
                                                         capabilities:),
           world:,
           memory:,

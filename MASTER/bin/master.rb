@@ -42,6 +42,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
       bin/master
       bin/master "<instruction>"
       bin/master --fold "<goal>"
+      bin/master -p "<goal>" --output-format json [--model ID] [--permission-mode plan] [--allowedTools "Read Edit"]
       bin/master --fix-context [target] [--full]
       bin/master replay [sequence]
       bin/master replay <sequence>
@@ -52,6 +53,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
     MASTER/bin/master is the public instruction surface.
     MASTER/bin/ruby selects the best supported Ruby before this file boots.
     MASTER/bin/cli owns slash commands and interactive routing.
+    PreToolUse hooks for the Fold are read from ~/.master/hooks.yml (MASTER_HOOKS overrides); see lib/cli/tool_hooks.rb.
   HELP
   exit 0
 end
