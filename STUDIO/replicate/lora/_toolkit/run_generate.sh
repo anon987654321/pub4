@@ -48,7 +48,7 @@ Four train lanes:
                                                  phone verification)
      needs KAGGLE_USERNAME + KAGGLE_KEY (or ~/.kaggle/kaggle.json), a
      phone-verified account for internet, and an HF_TOKEN notebook secret
-  D) Replicate:     ./lora --train-replicate    (paid, hosted H100)
+  D) Replicate:     ./lora --train-replicate    (paid, pinned H200 trainer)
      needs REPLICATE_API_TOKEN
 
 RunPod (24GB+ GPU — RTX 4090 / A5000 / L4):
