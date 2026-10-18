@@ -102,6 +102,26 @@ class TestExternalLinterLaws < Minitest::Test
     end
   end
 
+  def test_reek_valid_smell_record_preserves_all_reported_lines
+    status = Struct.new(:exitstatus).new(2)
+    rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
+    report = JSON.generate([{
+      "smell_type" => "Example",
+      "message" => "example smell",
+      "lines" => [2, 4]
+    }])
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { [report, "", status] }) do
+          findings = rule.check("def sample; end\\n", path: "sample.rb")
+
+          assert_equal [2, 4], findings.map(&:line)
+          assert findings.all? { |finding| finding.message.include?("Example") && finding.message.include?("example smell") }
+        end
+      end
+    end
+  end
+
   def test_reek_record_with_empty_lines_still_surfaces_the_smell
     status = Struct.new(:exitstatus).new(0)
     rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
