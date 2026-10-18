@@ -41,13 +41,28 @@ module Master
         Result.err("#{tool}: #{e.class}: #{e.message}", category: :infrastructure)
       end
 
-      # Resolve only the canonical Studio entrypoint. A compatibility link under
-      # MASTER/tools would hide a boundary violation, so there is deliberately no fallback.
+      # Resolve known Studio tools first; explicit aliases name tools whose
+      # canonical entrypoint is nested below their provider tree. Other
+      # registered tools retain the existing MASTER/tools and workspace tool
+      # layouts. Every candidate is built from a fixed root and a single name.
       def script_path(requested_root, tool)
+        name = tool.to_s
+        return File.join(requested_root, "MASTER", "tools", "invalid.rb") unless name.match?(/\\A[a-zA-Z0-9_-]+\\z/)
+
         roots = [requested_root, MasterPaths.repo, MasterPaths.root].uniq
-        entrypoint = TOOL_ENTRYPOINTS.fetch(tool.to_s) { File.join(tool.to_s, "#{File.basename(tool.to_s)}.rb") }
-        candidates = roots.map { |candidate| File.join(candidate, "STUDIO", entrypoint) }
-        candidates.find { |candidate| File.file?(candidate) } || candidates.first
+        entrypoint = TOOL_ENTRYPOINTS.fetch(name) { File.join(name, "#{name}.rb") }
+        studio_candidates = roots.map { |candidate| File.join(candidate, "STUDIO", entrypoint) }
+        studio = studio_candidates.find { |candidate| File.file?(candidate) }
+        return studio if studio
+
+        master_candidates = roots.flat_map do |candidate|
+          [
+            File.join(candidate, "MASTER", "tools", "#{name}.rb"),
+            File.join(candidate, "tools", "#{name}.rb"),
+            File.join(candidate, "tools", name, "#{name}.rb"),
+          ]
+        end
+        master_candidates.find { |candidate| File.file?(candidate) } || studio_candidates.first
       end
 
       def working_directory(requested_root, script)
