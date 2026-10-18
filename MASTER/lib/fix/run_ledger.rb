@@ -39,7 +39,8 @@ module Master
           Integer(ENV.fetch("MASTER_FIX_FILE_BUDGET_S", FILE_BUDGET_S.to_s), exception: false) || FILE_BUDGET_S
         end
 
-        # --max-files N: how many files the model phase takes, easiest first.
+        # --max-files N caps model repairs. By default it retains early-stop
+        # behavior; MASTER_FIX_RANK=1 scans the full corpus and ranks impact first.
         def max_files
           @max_files || Integer(ENV.fetch("MASTER_FIX_MAX_FILES", "0"), exception: false).then { |n| n&.positive? ? n : nil }
         end
