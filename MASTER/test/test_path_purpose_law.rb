@@ -100,7 +100,7 @@ class TestPathPurposeRule < Minitest::Test
       rule = Master::Review::Scan::Laws::PathPurposeLaw.new(root:)
 
       assert_empty rule.check("", path: File.join(root, "scratchpad/thing.rb"))
-      logged = Master::Ground::Swallow.recent(context: "PathPurposeRule.owned", limit: 20)
+      logged = Master::Ground::Swallow.recent(context: "PathPurposeLaw.owned", limit: 20)
       assert logged.any? { |row| row["severity"] == "load_bearing" },
              "an unreadable ownership file must report through Swallow, or the scan looks clean"
     end
