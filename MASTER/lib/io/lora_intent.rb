@@ -32,15 +32,29 @@ module Master
         intent = intent_for(text, cfg)
         return Result.err("lora: not a lora request", category: :validation) unless intent
 
-        subject = subject_for(text, cfg) unless intent == :status
+        subject = subject_for(text, cfg, intent:) unless intent == :status
         return subject if subject.is_a?(Result) && !subject.ok?
 
-        name = subject&.value!
+        subjects = intent == :status ? [nil] : Array(subject&.value!)
         confirmed = confirmed?(text, cfg)
-        built = build(intent, text, name, cfg, root:)
-        return built unless built.ok?
+        results = subjects.map do |name|
+          built = build(intent, text, name, cfg, root:)
+          next built unless built.ok?
 
-        run(intent, built.value!, name, confirmed:, root:)
+          run(intent, built.value!, name, confirmed:, root:)
+        end
+        failure = results.find { |result| !result.ok? }
+        return failure if failure
+        return results.first if results.length == 1
+
+        reports = results.map(&:value!)
+        Result.ok({
+          output: reports.map { |report| report[:output] }.join("\n\n"),
+          rendered: reports.map { |report| report[:rendered] }.join("\n\n"),
+          media: :lora_train,
+          subjects:,
+          dry_run: reports.any? { |report| report[:dry_run] },
+        })
       end
 
       def config = YAML.safe_load_file(File.join(MasterPaths.root, "data", "lora.yml"))
@@ -71,11 +85,14 @@ module Master
 
       # Named subjects win over "me". Two names in one request is refused: a
       # render, a training and a clip each belong to one person.
-      def subject_for(text, cfg)
+      def subject_for(text, cfg, intent:)
         named = cfg.fetch("subjects").select do |_, spec|
           spec.fetch("names").any? { |name| text.match?(/\b#{Regexp.escape(name)}/i) }
         end.keys
-        return Result.err("lora: one person per request, you named #{named.join(' and ')}", category: :validation) if named.size > 1
+        if named.size > 1 && intent != :train
+          return Result.err("lora: one person per request, you named #{named.join(' and ')}", category: :validation)
+        end
+        return Result.ok(named) if intent == :train && named.size > 1
         return Result.ok(named.first) if named.size == 1
 
         Result.ok(cfg.fetch("me"))
