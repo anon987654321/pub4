@@ -70,6 +70,55 @@ class TestExternalLinterLaws < Minitest::Test
     end
   end
 
+  def test_reek_rejects_array_entries_missing_the_fields_it_consumes
+    status = Struct.new(:exitstatus).new(0)
+    rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { ['[{}]', "", status] }) do
+          findings = rule.check("def sample; end\\n", path: "sample.rb")
+
+          assert_equal 1, findings.size
+          assert_match(/scan error/, findings.first.message)
+          assert_match(/invalid JSON report shape/, findings.first.message)
+        end
+      end
+    end
+  end
+
+  def test_reek_rejects_non_positive_or_non_integer_line_numbers
+    status = Struct.new(:exitstatus).new(0)
+    rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
+    report = JSON.generate([{ "smell_type" => "Example", "message" => "example", "lines" => [0, "2"] }])
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { [report, "", status] }) do
+          findings = rule.check("def sample; end\\n", path: "sample.rb")
+
+          assert_equal 1, findings.size
+          assert_match(/invalid JSON report shape/, findings.first.message)
+        end
+      end
+    end
+  end
+
+  def test_reek_record_with_empty_lines_still_surfaces_the_smell
+    status = Struct.new(:exitstatus).new(0)
+    rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
+    report = JSON.generate([{ "smell_type" => "Example", "message" => "example", "lines" => [] }])
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { [report, "", status] }) do
+          findings = rule.check("def sample; end\\n", path: "sample.rb")
+
+          assert_equal 1, findings.size
+          assert_equal 1, findings.first.line
+          assert_match(/Example/, findings.first.message)
+        end
+      end
+    end
+  end
+
   def test_valid_offense_report_survives_linter_exit_status_one
     report = JSON.generate(
       "files" => [{
