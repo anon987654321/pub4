@@ -125,6 +125,45 @@ class TestReferenceGraph < Minitest::Test
     end
   end
 
+  def test_resolves_local_typescript_and_stylesheet_imports
+    Dir.mktmpdir("reference-graph-imports") do |root|
+      app = File.join(root, "src", "app.ts")
+      component = File.join(root, "src", "shared.tsx")
+      style = File.join(root, "src", "app.scss")
+      tokens = File.join(root, "src", "tokens.scss")
+      FileUtils.mkdir_p(File.dirname(app))
+      File.write(app, "import { Shared } from \"./shared\";\nexport { Shared };\n")
+      File.write(component, "export const Shared = 1;\n")
+      File.write(style, '@use "./tokens";\n')
+      File.write(tokens, "$space: 4px;\n")
+
+      graph = Master::Review::ReferenceGraph.new(root:)
+      result = graph.build
+      imports = result[:edges].select { |edge| edge[:type] == :local_import }
+
+      assert_includes imports.map { |edge| [edge[:from], edge[:to]] },
+                      ["src/app.ts", "src/shared.tsx"]
+      assert_includes imports.map { |edge| [edge[:from], edge[:to]] },
+                      ["src/app.scss", "src/tokens.scss"]
+      assert_empty result[:analysis_failures]
+    end
+  end
+
+  def test_unresolved_local_import_is_a_gap_not_a_clean_dependency_list
+    Dir.mktmpdir("reference-graph-unresolved-import") do |root|
+      app = File.join(root, "src", "app.ts")
+      FileUtils.mkdir_p(File.dirname(app))
+      File.write(app, 'import { Missing } from "./missing";' + "\n")
+
+      graph = Master::Review::ReferenceGraph.new(root:)
+      result = graph.build
+      unresolved = graph.unresolved_for(app)
+
+      assert unresolved.any? { |reference| reference[:kind] == :import && reference[:name] == "./missing" }
+      assert_equal 1, result.dig(:metrics, :unresolved_local_imports)
+    end
+  end
+
   def test_refresh_reports_invalid_ruby_source_as_an_analysis_gap
     Dir.mktmpdir("reference-graph-invalid") do |root|
       path = File.join(root, "broken.rb")
