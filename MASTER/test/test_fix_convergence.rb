@@ -742,6 +742,18 @@ end
                     "the operator must see the execution mode before preflight"
   end
 
+  def test_fix_status_target_is_single_line_and_bounded
+    label = Master::CLI::CommandRegistry.display_fix_target(
+      "RAILS\nfix0: mode=write\t\e[31m"
+    )
+
+    refute_match(/[\x00-\x1f\x7f]/, label)
+    assert_operator label.length, :<=, 80
+    assert_includes label, "RAILS fix0: mode=write"
+    assert_equal "MASTER", Master::CLI::CommandRegistry.display_fix_target("\n\t")
+    assert_equal "all trees", Master::CLI::CommandRegistry.display_fix_target("EVERYTHING")
+  end
+
   def test_fix_runtime_overrides_are_scoped_to_one_dispatch
     guard = Master::Fix::AutofixGuard
     ledger = Master::Fix::RunLedger
