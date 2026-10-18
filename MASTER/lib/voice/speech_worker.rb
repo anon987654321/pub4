@@ -13,8 +13,8 @@ module Master
     # keeps its name there (Speech.synthesize_edge_socket, Speech.worker_timeout);
     # what to say, in which voice and style, stays in speech.rb.
     module SpeechWorker
-      def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
-        timeout = worker_timeout(text.to_s.length)
+      def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:, timeout: nil)
+        timeout ||= worker_timeout(text.to_s.length)
         err, status = run_edge_worker(text, voice_name, style_config, audio_path, timeout)
         unless status.success?
           warn_tts("edge worker failed: #{err.to_s.strip}") unless err.to_s.strip.empty?
@@ -304,9 +304,16 @@ module Master
           return [FAST_WORKER_TIMEOUT_S + (text_length * 0.01).ceil, FAST_WORKER_TIMEOUT_MAX].min
         end
 
-        [Speech::WORKER_TIMEOUT + (text_length * Speech::WORKER_TIMEOUT_PER_CHAR).ceil, Speech::WORKER_TIMEOUT_MAX].min
+        normal_worker_timeout(text_length)
       rescue ArgumentError
         Speech::WORKER_TIMEOUT
+      end
+
+      # One-shot retry follows the ordinary worker budget even when the warm
+      # socket policy is fast. Its caller supplies a smaller explicit ceiling
+      # for recovery, so this never makes ordinary speech less bounded.
+      def normal_worker_timeout(text_length = 0)
+        [Speech::WORKER_TIMEOUT + (text_length * Speech::WORKER_TIMEOUT_PER_CHAR).ceil, Speech::WORKER_TIMEOUT_MAX].min
       end
 
       # A socket timeout covers the whole utterance, unlike the one-shot worker
