@@ -56,28 +56,52 @@ add a constraint, add a rule. The spine does not grow.
 
 ## Fixing
 
-`/fix [path]` is the one repair operation. It observes the target, critiques it,
-repairs what the laws find, observes again and verifies, until the tree
-converges, stops improving, or reaches a state MASTER may not settle alone.
-`/review` and `/critique` read and argue through the same pipeline without
-writing. A fix run is judged on what it adds against its own starting baseline,
-so old debt it did not touch is not charged to it.
+`/fix [path]` is the single write-enabled convergence operation. `/review` and
+`/critique` are read-only. The pre-repair baseline is deliberately read-only,
+but it is a preflight stage, not a silent downgrade to dry-run. Explicit
+`--dry-run` plans and measures without writing.
 
-Before it writes anything, `/fix` reads the working repository again, checks the
-syntax of every Ruby file, and confirms that the boot chain and the live scanner
-graph load. A pass is transactional: either its validated changes land as one
-unit, or the files return to the state observed before the pass. A concurrent
-edit is detected rather than overwritten. The run is journaled before the first
-pass, so a crashed run is replayed on the next start, not skipped.
+A requested repair starts by inventorying its eligible corpus, refreshing the
+static reference graph and refusing to proceed if an eligible source could not
+be read or indexed. Before a proposed edit, the repair receives the complete
+target file and complete sources for the direct graph-linked dependencies and
+callers that the graph can resolve, with SHA-256 identifiers. These are treated
+as untrusted source data, never as instructions. A missing linked file or a
+context that exceeds `MASTER_FIX_CONTEXT_MAX_BYTES` stops that repair rather
+than clipping the input and guessing. The current graph is static: dynamic
+dispatch, reflection and arbitrary runtime loading still require explicit
+reference investigation and runtime evidence; the graph is not proof that every
+possible call edge has been resolved.
 
-An unfinished goal is a durable mission. The record lives in
-`.master/mission.json`, and each run of the loop is one bounded attempt against
-it. A supervisor holds a lease, renews it during long model calls and restarts
-after a failure with bounded backoff. After a crash, the next process reclaims
-the expired lease and resumes the objective. A mission carries one of four modes,
-observe, plan, repair or deploy, chosen from the task's risk before the first
-effect. The mode picks a starting set of capabilities. It never outranks the
-law.
+The unbounded worklist is scanned before repair starts, then prioritized by the
+highest finding severity, weighted finding impact and a stable path tie-break.
+An explicit `--max-files` is a bounded lane; `MASTER_FIX_RANK=1` asks for a
+full scan before choosing the highest-impact files within that cap. Formatting
+frequency and alphabetical order are not importance measures.
+
+Each owned repair checkpoint must pass its applicable syntax, intent and delivery
+guards before it is committed and pushed. This is the default; set
+`MASTER_FIX_PUSH=end` to defer pushes until final verification, or
+`MASTER_FIX_NO_PUBLISH=1` to leave commits local deliberately. Another operator's
+pre-existing dirty work is never part of the batch. An unsuccessful or
+unconfirmed push is a delivery failure, not a completed repair.
+
+Code that changes behavior, interfaces, commands, configuration or operations
+must carry matching changes to the relevant README or contract. Generated
+documentation is regenerated from its canonical source, never hand-edited, and
+unrelated documents are left alone.
+
+A fix run attempts every actionable finding in scope and repeats measurement and
+repair. It cannot promise to repair literally everything: unsupported surfaces,
+unresolved findings, timeouts, quota exhaustion and human decisions must remain
+visible. Only `DONE` with full applicable coverage and the required consecutive
+clean readings proves completion; every other terminal state remains open work.
+
+The run is journaled before its first repair pass, so a crashed attempt is resumed
+rather than mistaken for success. An unfinished goal is a durable mission in
+`.master/mission.json`; its supervisor renews its lease and retries with bounded
+backoff. Observe, plan, repair and deploy modes choose a starting set of
+capabilities but never outrank the law.
 
 For the web, source-clean is not enough. When the target is under `RAILS/`, a
 pass renders the pages in a real browser, measures their geometry, and hands the
