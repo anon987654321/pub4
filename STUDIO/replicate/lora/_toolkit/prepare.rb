@@ -51,8 +51,8 @@ unless options[:write]
 end
 
 dataset = Pathname.new(Lora::Curate.dataset_dir(SUBJECT_DIR.to_s))
+abort "warn: refusing dataset symlink #{dataset}" if dataset.symlink?
 if dataset.exist?
-  abort "warn: refusing dataset symlink #{dataset}" if dataset.symlink?
   abort "warn: dataset path is not a directory: #{dataset}" unless dataset.directory?
   abort "warn: #{dataset} is not empty; use --replace to archive it before refreshing" if !dataset.children.empty? && !options[:replace]
 end
@@ -63,7 +63,10 @@ backup = nil
 FileUtils.mkdir_p(scratch.dirname)
 begin
   written = Lora::Curate.prepare(chosen, into: scratch.to_s, token: TRIGGER)
-  abort "warn: curator produced no training images; previous dataset is unchanged" if written.empty?
+  if written.empty?
+    FileUtils.rm_rf(scratch.to_s)
+    abort "warn: curator produced no training images; previous dataset is unchanged"
+  end
 
   if dataset.exist?
     if dataset.children.empty?
