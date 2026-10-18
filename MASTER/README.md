@@ -202,6 +202,8 @@ MASTER can assess a public website from observable evidence, review source when 
 - **Network and security:** ExternalAudit performs passive HTTP(S), redirect, TLS and response-header observations plus basic HTML semantics. VulCheck reports local posture observations and can run already-installed scanners only with a second dangerous-tier permit; it never installs or updates packages. Nmap is an active, bounded scan of one explicitly authorised host. Its basic, services and safe profiles avoid full-port sweeps and exploit scripts. A missing header or unavailable check is not a confirmed vulnerability or a pass.
 - **Evidence contract:** separate confirmed defects, hypotheses, missing evidence and out-of-scope checks. Findings should name the URL or file/line, observed evidence, confidence, impact, remediation and how the repair can be verified. This is not a penetration-test certification.
 
+**Code-level review requires separately authorised source access.** The `ExternalAudit` URL lane does not inspect unseen source and does not claim that it did; use the existing repository/source review workflow against an owner-authorised copy. Until that end-to-end source lane is proven with a fixture, report code-side conclusions as INCONCLUSIVE rather than inferring them from page output.
+
 ### Competitive landscape
 
 The space is competitive and split across specialties; the cross-discipline gap is a hypothesis, not a proven absence of competitors.

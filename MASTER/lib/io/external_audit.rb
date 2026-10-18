@@ -2,6 +2,7 @@
 
 require "net/http"
 require "uri"
+require "timeout"
 require_relative "ssrf_guard"
 
 module Master
@@ -109,7 +110,8 @@ module Master
           return Result.err("external_audit: refused internal/reserved destination", category: :policy) unless address
           http = SsrfGuard.http_for(current, address, timeout: TIMEOUT)
           body = +""
-          response = http.start do |client|
+          response = Timeout.timeout(TIMEOUT * 3) do
+            http.start do |client|
             request = Net::HTTP::Get.new(current.request_uri)
             request["User-Agent"] = "MASTER/1 (passive external assessment)"
             request["Accept"] = "text/html,application/xhtml+xml,*/*;q=0.1"
@@ -119,6 +121,7 @@ module Master
                 body << chunk
               end
               incoming.instance_variable_set(:@body, body)
+            end
             end
           end
           if response.is_a?(Net::HTTPRedirection)
@@ -137,7 +140,7 @@ module Master
         end
       rescue ResponseTooLarge
         Result.err("external_audit: response body exceeds #{MAX_BODY_BYTES} bytes", category: :validation)
-      rescue Net::OpenTimeout, Net::ReadTimeout => e
+      rescue Timeout::Error, Net::OpenTimeout, Net::ReadTimeout => e
         Result.err("external_audit: TIMEOUT (#{e.class})", category: :timeout)
       rescue StandardError => e
         Result.err("external_audit: fetch failed: #{e.class}: #{e.message}", category: :infrastructure)
