@@ -13,10 +13,10 @@ module Master
     # lora of me", "lora status".
     #
     # Recognition, the subjects and the spending gate are data (data/lora.yml).
-    # This module turns a sentence into one argv for STUDIO/replicate/lora/lora.rb and runs
-    # it through ScriptDispatch. Anything that spends money (a render, a training,
-    # a clip) runs as a dry run unless the sentence also confirms it, so a request
-    # is always safe to say and the plan is always shown first.
+    # This module turns a sentence into calls to STUDIO/replicate/lora/lora.rb.
+    # A source-refresh request coordinates independent subject preparations and
+    # preflights; it never starts paid training in the same turn.
+    # Other paid work stays dry-run until the sentence confirms it.
     module LoraIntent
       module_function
 
@@ -88,8 +88,8 @@ module Master
         text.match?(pattern(cfg, "confirm"))
       end
 
-      # Named subjects win over "me". Two names in one request is refused: a
-      # render, a training and a clip each belong to one person.
+      # Named subjects win over "me". Multiple names are accepted only for
+      # training/source refresh; a render or clip must belong to one person.
       def subject_for(text, cfg, intent:)
         named = cfg.fetch("subjects").select do |_, spec|
           spec.fetch("names").any? { |name| text.match?(/\b#{Regexp.escape(name)}/i) }
