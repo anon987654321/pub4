@@ -452,10 +452,13 @@ module Master
       def safe_diagnostic_text(value)
         message = value.to_s
         message = message.gsub(%r{(https?://)[^\s/@]+(?::[^\s/@]*)?@}i, '\1[redacted]@')
-        message = message.gsub(/\b(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,})\b/i, '[redacted-token]')
+        message = message.gsub(/\b(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,}|sk_(?:live|test)_[A-Za-z0-9]{16,}|r8_[A-Za-z0-9]{16,})\b/i, '[redacted-token]')
+        message = message.gsub(/\b(authorization\s*[:=]\s*)(Bearer\s+)?[^\s,;]+/i) do
+          "#{Regexp.last_match(1)}#{Regexp.last_match(2)}[redacted]"
+        end
         message = message.gsub(/\b(Bearer\s+)[A-Za-z0-9._~+\/=-]+/i, '\1[redacted]')
-        message = message.gsub(/(\b(?:access[_-]?token|refresh[_-]?token|token|api[_-]?key|password|secret)\b\s*[:=]\s*)["']?[^"' \t\r\n,;]+["']?/i, '\1[redacted]')
-        message = message.gsub(/([?&](?:token|key|password|secret|signature|sig)=)[^&#\s]+/i, '\1[redacted]')
+        message = message.gsub(/(\b[A-Z0-9_]*(?:access[_-]?token|refresh[_-]?token|token|api[_-]?key|client[_-]?secret|private[_-]?key|password|secret)\b\s*[:=]\s*)["']?[^"' \t\r\n,;]+["']?/i, '\1[redacted]')
+        message = message.gsub(/([?&](?:access_token|refresh_token|api_key|client_secret|authorization|auth|token|key|password|secret|signature|sig|credential)=)[^&#\s]+/i, '\1[redacted]')
         message = message.lines.map(&:chomp).join(' ').gsub(/\s+/, ' ').strip
         message.slice(0, 500)
       end
