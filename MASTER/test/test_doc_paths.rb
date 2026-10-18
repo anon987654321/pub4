@@ -286,4 +286,26 @@ class TestDocPaths < Minitest::Test
 
     assert_empty absent, "DOCS names documents that no longer exist: #{absent.join(', ')}"
   end
+
+  # The entry documents are interfaces: a broken local link is a dead control.
+  # External availability is not claimed by this deterministic, offline check.
+  def test_local_markdown_links_resolve
+    broken = DOCS.each_with_object([]) do |doc, errors|
+      next unless doc.end_with?(".md") && File.file?(File.join(REPO, doc))
+
+      body = File.read(File.join(REPO, doc))
+      body.scan(/!?\[[^\]]*\]\(\s*(?:<([^>\n]+)>|([^\s)]+))/).each do |angled, bare|
+        target = angled || bare
+        next if target.match?(/\A(?:https?:|mailto:|tel:|data:|\/\/)/i) || target.start_with?("/")
+
+        path = target.split(/[?#]/, 2).first
+        next if path.empty?
+
+        errors << "#{doc}: broken local Markdown link #{target.inspect}" unless resolves?(path, doc)
+      end
+    end
+
+    assert_empty broken, "maintained entry documents contain broken local links:\n  #{broken.join("\n  ")}"
+  end
+
 end
