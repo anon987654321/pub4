@@ -32,7 +32,15 @@ The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `M
 
 Use `MASTER/bin/operator gate` for the full gate ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
 
-`/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and verify until convergence, plateau or a state requiring a human decision. `/review [path]` and `/critique` are read-only views of that pipeline; `/scan` is a private compatibility alias. `Master::Fix::Protocol` is authoritative; use `MASTER/bin/master --fix-context <target>` when handing a fix to an external model.
+`/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and verify until DONE or a truthful terminal state. Bare `/fix` is write-enabled; its read-only pre-repair baseline is preflight, not a dry-run downgrade. `/review [path]` and `/critique` are read-only views of that pipeline; `/scan` is a private compatibility alias. `Master::Fix::Protocol` is authoritative; use `MASTER/bin/master --fix-context <target>` when handing a fix to an external model.
+
+Before any edit, read the whole current target file and its relevant direct dependencies, callers, loaders, configuration, tests and public contracts. The refreshed `ReferenceGraph` is evidence, not an oracle: validate relevant symbol references and dynamic loading paths rather than assuming every runtime relationship appears in it. Never edit from an excerpt, stale scan result or memory. If relevant source cannot be read, dependency context is incomplete, or the complete required context exceeds the safe limit, stop that repair as BLOCKED or HUMAN_DECISION; never clip a file and guess.
+
+A requested `/fix` attempts every actionable finding in the eligible corpus and continues through repeat scans. DONE is permitted only after full applicable coverage and the required verification; timeout, quota exhaustion, pass limits, exclusions, unsupported surfaces, and unresolved findings are not success. Name every remaining item and reason. Repair order is impact-led, not alphabetical or easiest-first.
+
+Each validated, owned repair batch is committed and pushed before the next batch by default. A failed or unconfirmed push is DELIVERY_FAILED. `MASTER_FIX_PUSH=end` explicitly defers pushes until final verification, and `MASTER_FIX_NO_PUBLISH=1` leaves owned commits local; never stage another operator's dirty files.
+
+When code changes behavior, interfaces, commands, configuration or operational expectations, update the relevant README or contract in the same batch and regenerate affected generated documentation from its canonical source. For agent entry files, edit the marked block here and run `cd MASTER && rake docs:agent_contracts`; verify with `cd MASTER && rake lint:agent_contracts`. Never hand-edit generated copies or churn unrelated docs.
 
 Operational constraints:
 - Shared checkout: keep commits path-scoped and use a worktree for multi-file refactors.
