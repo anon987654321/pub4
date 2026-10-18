@@ -51,6 +51,33 @@ case $app in
   all|master|brgen|amber|bsdports) ;;
   *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
 esac
+
+# Environment values below participate in shell arithmetic and bounded waits.
+# Validate their decimal spelling and limits before acquiring a lock or touching
+# a service. In particular, a zero poll interval otherwise creates an endless
+# wait_up loop during a failed-deploy restore.
+validate_deploy_setting() {
+  local name=$1 value=$2 minimum=$3 maximum=$4
+  [[ $value == <-> && ( $value == 0 || $value != 0* ) ]] || {
+    print -u2 "vps-deploy: invalid $name; expected a decimal integer"
+    return 2
+  }
+  (( ${#value} <= 10 )) || {
+    print -u2 "vps-deploy: invalid $name; value is out of range"
+    return 2
+  }
+  (( value >= minimum && value <= maximum )) || {
+    print -u2 "vps-deploy: invalid $name; allowed range is $minimum..$maximum"
+    return 2
+  }
+}
+
+validate_deploy_setting VPS_DEPLOY_LOCK_TTL "${VPS_DEPLOY_LOCK_TTL:-7200}" 1 604800 || exit 2
+validate_deploy_setting VPS_DEPLOY_RESTORE_WAIT "${VPS_DEPLOY_RESTORE_WAIT:-240}" 1 3600 || exit 2
+validate_deploy_setting VPS_DEPLOY_POLL "${VPS_DEPLOY_POLL:-3}" 1 60 || exit 2
+validate_deploy_setting VPS_DEPLOY_SETTLE_WAIT "${VPS_DEPLOY_SETTLE_WAIT:-240}" 1 3600 || exit 2
+validate_deploy_setting VPS_DEPLOY_MASTER_MIN_AVAIL "${VPS_DEPLOY_MASTER_MIN_AVAIL:-10}" 0 100 || exit 2
+validate_deploy_setting VPS_DEPLOY_MIN_FREE_KB "${VPS_DEPLOY_MIN_FREE_KB:-1048576}" 0 1000000000 || exit 2
 [[ -f /usr/local/sbin/pub4-admin && -x /usr/local/sbin/pub4-admin && ! -L /usr/local/sbin/pub4-admin ]] || {
   print -u2 "vps-deploy: pub4-admin missing; run reviewed OPENBSD/OPERATOR.sh first"
   exit 1
