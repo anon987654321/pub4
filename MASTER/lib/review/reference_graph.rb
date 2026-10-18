@@ -283,7 +283,10 @@ module Master
 
       def blast_radius(path)
         rel = relative(path)
-        impacted = @edges.select { |edge| edge.to == rel || edge.from == rel }
+        impacted = @edges.select do |edge|
+          (edge.to == rel && @nodes.include?(edge.from)) ||
+            (edge.from == rel && @nodes.include?(edge.to))
+        end
         {
           target: rel,
           inbound: impacted.select { |e| e.to == rel }.map(&:from).uniq.sort,
