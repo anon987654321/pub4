@@ -78,18 +78,40 @@ class TestDocPaths < Minitest::Test
     AGENTS.md GEMINI.md .cursorlaws .github/copilot-instructions.md
   ].freeze
 
-  # Human documentation has one shape: README.md at the thing it documents.
-  # The deliberate exceptions are machine-facing agent contracts, the constitutional
-  # data mirrors, the root backlog/map, and the OpenBSD live-operation runbook.
+  # Non-entry Markdown has a narrow purpose: face/reference contracts, archived
+  # RAILS experiments and research, recovery material, and STUDIO migration guides.
+  # These are artifacts, not substitutes for tree/project README entry points.
+  MARKDOWN_REFERENCE_EXCEPTIONS = %w[
+    MASTER/FACE_WORLD.md
+    MASTER/data/principles/openbsd_kernel_philosophy.md
+    MASTER/lib/cli/face/contract.md
+    RAILS/__shared/LAYOUT_MICRO_REFINEMENT_MATRIX.md
+    RAILS/__shared/SOCIAL_FRONT_PAGE.md
+    RAILS/__shared/SURFACE_MICRO_REFINEMENT_MATRIX.md
+    RAILS/__shared/SURFACE_MICRO_REFINEMENT_MATRIX_II.md
+    RAILS/__shared/UI_ARCHAEOLOGY.md
+    RAILS/__shared/UI_ARCHAEOLOGY_II.md
+    RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    STUDIO/postpro/LEGACY_RESTORE.md
+    STUDIO/replicate/lora/guides/prompting.md
+  ].freeze
+
+  # README.md is the human entry point at each tree/project boundary. Other
+  # Markdown survives only when it has a distinct runtime, archive, or recovery job.
   def test_markdown_stays_at_meaningful_boundaries
     tracked_md = tracked.select { |path| path.end_with?(".md") }
+    stale_exceptions = MARKDOWN_REFERENCE_EXCEPTIONS - tracked
+    assert_empty stale_exceptions,
+                 "remove retired Markdown reference exceptions: #{stale_exceptions.join(", ")}"
+
     extras = tracked_md.reject do |path|
       File.basename(path) == "README.md" ||
         path == "TODO.md" ||
         File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI)\.md\z/) ||
         path == ".github/copilot-instructions.md" ||
         path == "OPENBSD/RUNBOOK.md" ||
-        path.match?(%r{\AMASTER/data/(?:SOUL|IDENTITY|CANON)\.md\z})
+        path.match?(%r{\AMASTER/data/(?:SOUL|IDENTITY|CANON)\.md\z}) ||
+        MARKDOWN_REFERENCE_EXCEPTIONS.include?(path)
     end
 
     assert_empty extras,
@@ -306,6 +328,45 @@ class TestDocPaths < Minitest::Test
     end
 
     assert_empty broken, "maintained entry documents contain broken local links:\n  #{broken.join("\n  ")}"
+  end
+  def test_fenced_markdown_blocks_are_balanced
+    broken = DOCS.filter_map do |doc|
+      next unless doc.end_with?(".md") && File.file?(File.join(REPO, doc))
+
+      opened = unclosed_fence(File.read(File.join(REPO, doc), encoding: "UTF-8"))
+      next unless opened
+
+      "#{doc}: unclosed #{opened[:fence].inspect} fence opened on line #{opened[:line]}"
+    end
+
+    assert_empty broken,
+                 "maintained entry documents contain unclosed fenced code blocks:\n  #{broken.join("\n  ")}"
+  end
+
+  def test_fence_checker_matches_marker_and_opening_length
+    assert_nil unclosed_fence("~~~text\n\x60\x60\x60 is content, not a tilde fence\n~~~~\n")
+    assert_nil unclosed_fence("\x60\x60\x60ruby\nputs :ok\n\x60\x60\x60\n")
+
+    opened = unclosed_fence("\x60\x60\x60\x60ruby\n\x60\x60\x60\n")
+    assert_equal "\x60\x60\x60\x60", opened[:fence]
+    assert_equal 1, opened[:line]
+  end
+
+  def unclosed_fence(body)
+    opening = nil
+    body.each_line.with_index(1) do |raw_line, number|
+      line = raw_line.chomp
+      if opening
+        closer = /\A {0,3}#{Regexp.escape(opening[:marker])}{#{opening[:length]},}[ \t]*\z/
+        opening = nil if line.match?(closer)
+      elsif (match = line.match(/\A {0,3}(\x60{3,}|~{3,})(.*)\z/))
+        # CommonMark forbids a backtick in a backtick fence's info string.
+        next if match[1].start_with?("\x60") && match[2].include?("\x60")
+
+        opening = { marker: match[1][0], length: match[1].length, line: number, fence: match[1] }
+      end
+    end
+    opening
   end
 
 end
