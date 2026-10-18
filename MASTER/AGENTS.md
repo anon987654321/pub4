@@ -251,10 +251,13 @@ summary, and a lane that fails twice is dropped for the run. A repair sends the
 failing finding with forty lines around it and asks for a minimal unified diff;
 a proposal that changes lines more than twenty-five from every finding is
 refused before the verifier is asked, and a file stops after two rejected
-proposals. The pass summary prints the rejects by reason. `--max-files=N` (or
-`MASTER_FIX_MAX_FILES`) takes only the N files with the fewest findings, easiest
-first, which means scanning everything before repairing the first; without it
-the run repairs files as they are scanned. `Fix::RunLedger` holds this state.
+proposals. The pass summary prints the rejects by reason. Without a file cap,
+`/fix` scans the complete eligible corpus, then queues files by highest finding
+severity, weighted finding impact, and stable path before any streamed repair
+starts. `--max-files=N` (or `MASTER_FIX_MAX_FILES`) is an explicit bounded lane
+that may stop during inventory and take the first N files; set
+`MASTER_FIX_RANK=1` to scan the complete eligible corpus before selecting the
+highest-impact N instead. `Fix::RunLedger` holds this state.
 
 A run says where it is and stops when it is going nowhere. Every minute it prints
 `fix0 phase=<name> fixed=a failed=b rejected=c lane=<id> elapsed=s`, a line a
