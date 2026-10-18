@@ -61,6 +61,7 @@ module Master
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         targets = fix_targets(target, root:)
         writes_requested = writes_requested?(apply:, only:)
+        ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
         if writes_requested && worktree_fix_requested?
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
           return Master::Trace::Dmesg.with_log_voice do
@@ -109,7 +110,10 @@ module Master
           next failure if failure
 
           # One push for the whole run, after every tree has verified.
-          fix_loop.publish_pending! if writes_requested
+          if writes_requested
+            fix_loop.publish_pending!
+            ::Operator::GateChain.persist_verified_baselines!(targets)
+          end
           results.join("\n")
           end
         end
