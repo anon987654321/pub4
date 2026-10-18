@@ -60,7 +60,7 @@ class TestErrClassification < Minitest::Test
   end
 
   def test_environment_failures_are_retriable
-    %i[infrastructure timeout provider_error llm_failure llm_call_failure].each do |category|
+    %i[infrastructure timeout provider_error llm_failure llm_call_failure delivery_failed].each do |category|
       assert err(category).retriable?, "#{category} is a failure of the environment, not of the request"
     end
   end
