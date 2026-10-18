@@ -590,6 +590,14 @@ end
                  Operator::GateChain.trees_for_target("openbsd,rails,master,studio")
   end
 
+  def test_gate_chain_resolves_default_and_dot_to_master_only
+    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("")
+    assert_equal ["MASTER"], Operator::GateChain.trees_for_target(".")
+    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("master")
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Operator::GateChain.trees_for_target("all")
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Operator::GateChain.trees_for_target("everything")
+  end
+
   def test_gate_chain_resolves_master_relative_internal_paths
     assert_equal ["MASTER"], Operator::GateChain.trees_for_target("lib/io")
   end
