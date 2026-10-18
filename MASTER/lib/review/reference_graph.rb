@@ -15,7 +15,9 @@ module Master
   # - governed autonomous restructuring
     class ReferenceGraph
       DEFAULT_EXTENSIONS = %w[
-        .rb .js .ts .tsx .erb .yml .yaml .json .md .sh
+        .rb .rake .gemspec .ru .js .jsx .mjs .cjs .ts .tsx .erb .html .htm
+        .css .scss .yml .yaml .json .jsonc .toml .xml .md .mdx .sh .zsh .ksh
+        .conf .ini
       ].freeze
 
       IGNORE_DIRS = %w[
@@ -24,33 +26,47 @@ module Master
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)
 
-      attr_reader :nodes, :edges
+      attr_reader :nodes, :edges, :analysis_failures
 
       def initialize(root:, event_bus: nil)
         @root = File.expand_path(root)
         @bus = event_bus
         @nodes = Set.new
         @edges = []
+        @analysis_failures = []
+        @built = false
+        @build_lock = Mutex.new
       end
 
-      def build
-        files.each do |file|
-          analyze(file)
+      # One complete source read builds the graph before repair. Repeated callers
+      # reuse it; an operator-requested /fix explicitly refreshes it so stale
+      # references from a previous run cannot authorize an edit.
+      def build(refresh: false)
+        @build_lock.synchronize do
+          if refresh || !@built
+            @nodes.clear
+            @edges.clear
+            @analysis_failures.clear
+            files.each { |file| analyze(file) }
+            @built = true
+          end
+
+          graph = {
+            nodes: @nodes.to_a.sort,
+            edges: @edges.map(&:to_h),
+            metrics:,
+            analysis_failures: @analysis_failures.map(&:dup),
+          }
+
+          @bus&.publish(
+            "reference_graph:built",
+            nodes: graph[:nodes].size,
+            edges: graph[:edges].size,
+            analysis_failures: graph[:analysis_failures].size,
+          )
+
+          graph
         end
-
-        graph = {
-          nodes: @nodes.to_a.sort,
-          edges: @edges.map(&:to_h),
-          metrics:,
-        }
-
-        @bus&.publish(
-          "reference_graph:built",
-          nodes: graph[:nodes].size,
-          edges: graph[:edges].size,
-        )
-
-        graph
       end
 
       def blast_radius(path)
@@ -93,6 +109,7 @@ module Master
         command_refs(content, rel)
         event_refs(content, rel)
       rescue StandardError => e
+        @analysis_failures << { path: rel.to_s, error: "#{e.class}: #{e.message}" }
         Master::Ground::Swallow.log(
           e,
           context: "reference_graph.analyze",
