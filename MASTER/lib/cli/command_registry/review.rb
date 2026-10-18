@@ -175,9 +175,9 @@ module Master
         # gate is a baseline phase, not the requested repair's execution mode.
         baseline = nil
         if writes_requested
-          Master::Trace::Dmesg.status("gate0", "#{target}: capturing read-only pre-repair baseline")
+          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: capturing read-only pre-repair baseline")
           baseline = ::Operator::GateChain.baseline(target:)
-          Master::Trace::Dmesg.status("gate0", "#{target}: baseline ready; starting write-enabled /fix pass")
+          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; starting write-enabled /fix pass")
         end
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                          target:, apply: writes_requested, critique: effective_critique,
@@ -188,6 +188,7 @@ module Master
         gate_rounds = 0
         gate_status = 0
         gate_changed = []
+        gate_label = ::Operator::GateChain.baseline_scope_key(target)
         loop do
           gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:, baseline:)
           gate_rounds += 1
@@ -205,7 +206,7 @@ module Master
 
         if gate_status != 0
           message = "gate verification did not pass (status #{gate_status})"
-          Master::Trace::Dmesg.status("gate0", "#{target}: #{message}")
+          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: #{message}")
           return Master::Result.err(message, category: :validation)
         end
         if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_changed.any?
@@ -214,7 +215,7 @@ module Master
           return Master::Result.err(message, category: :validation)
         end
 
-        Master::Trace::Dmesg.status("gate0", "#{target}: delivery verified")
+        Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: delivery verified")
         value
       end
 
