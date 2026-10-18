@@ -28,16 +28,28 @@ module Master
               File.exist?(File.join(@root, "bin", name))
           end
 
-          # Returns parsed JSON, or nil on empty output or a parse error. nil
-          # also means "this linter found nothing", so an unreadable payload
-          # cannot go by unsaid.
+          class ReportError < StandardError; end
+
+          # An empty or malformed report is not the same as a clean lint run.
+          # The rule's check boundary converts this error into a visible finding;
+          # returning nil here would silently retire the linter and count as clean.
           def linter_json(*argv)
-            stdout, = Master::Io::Exec.capture3(::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root)
-            return if stdout.empty?
+            stdout, stderr, status = Master::Io::Exec.capture3(
+              ::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root
+            )
+            if stdout.empty?
+              exit_status = status.respond_to?(:exitstatus) ? status.exitstatus : nil
+              error = ReportError.new(
+                "#{argv.first}: empty JSON stdout (exit=#{exit_status || "signal"}, stderr=#{stderr.to_s.empty? ? "empty" : "present"})"
+              )
+              Master::Ground::Swallow.log(error, context: "linter_json #{argv.first}", severity: :load_bearing)
+              raise error
+            end
+
             JSON.parse(stdout)
           rescue JSON::ParserError => e
             Master::Ground::Swallow.log(e, context: "linter_json #{argv.first}", severity: :load_bearing)
-            nil
+            raise ReportError, "#{argv.first}: invalid JSON stdout (#{e.message.lines.first.to_s.strip})"
           end
         end
 
