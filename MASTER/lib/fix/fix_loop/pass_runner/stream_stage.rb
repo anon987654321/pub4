@@ -20,6 +20,10 @@ module Master
           # the older call per rule.
           FILE_REPAIR = ENV.fetch("MASTER_FIX_FILE_REPAIR", "1") != "0"
           RESOURCE_CHECK_SECONDS = 30
+          # The repair prompt must contain the complete source and every direct
+          # file relationship the current graph can prove. If the combined input
+          # exceeds this bound, do not silently clip it and proceed with a guess.
+          REPAIR_CONTEXT_MAX_BYTES = Integer(ENV.fetch("MASTER_FIX_CONTEXT_MAX_BYTES", 180_000))
 
           # What one stream carries from file to file.
           Stream = Struct.new(:streamed, :pass, :breakdown)
@@ -197,13 +201,69 @@ module Master
             findings = repair_memory.fresh(path, findings_of(rows, ids, path))
             return 0 if findings.empty?
 
-            repair = FileRepair.new(findings:, rules: runnable, agent: @agent, scanner: @scanner, root: @root,
-                                    bus: @bus, learnings: @learnings, committer: @committer)
+            context = repair_context(path)
+            unless context[:complete]
+              @human_decision_required = true
+              @bus&.publish("fix_loop:repair_context_incomplete", file: rel, reason: context[:reason])
+              Master::Trace::Dmesg.status("understand0", "HUMAN_DECISION, #{rel}: #{context[:reason]}"[0, 200])
+              RunLedger.declined("dependency_context_incomplete", file: rel, law: ids.join("+"), detail: context[:reason])
+              return 0
+            end
+
+            repair = FileRepair.new(
+              findings:, rules: runnable, agent: @agent, scanner: @scanner, root: @root,
+              bus: @bus, learnings: @learnings, committer: @committer, context_files: context[:files],
+            )
             result = repair.run(path)
             # Only what the model was asked counts: a split filtered out before the
             # call is no decline, and counting it kept those rules from retiring.
             repair_memory.record(path, repair.asked_rules, result[:breakdown])
             tally_rule_results([[repair.scope, result]], breakdown: stream.breakdown, pass: stream.pass)
+          end
+
+          # The dependency graph is built from complete current files before an
+          # operator-requested run starts. Read all direct inbound/outbound file
+          # relationships in full; never truncate a dependency to fit a prompt.
+          # If a file is missing, unreadable, unindexed or the context is too
+          # large, the caller is sent to HUMAN_DECISION rather than edited blind.
+          def repair_context(path)
+            graph = @reference_graph
+            return { complete: true, files: [] } unless graph # isolated unit tests only; requested /fix always wires it
+            return incomplete_repair_context("target source is not indexed") unless graph.includes_path?(path)
+
+            relative = graph.relative(path)
+            radius = graph.blast_radius(path)
+            related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
+            entries = []
+            total_bytes = File.size(path)
+
+            related.sort.each do |rel|
+              full = File.expand_path(rel, graph.root)
+              next unless File.file?(full)
+              return incomplete_repair_context("dependency is a symlink: #{rel}") if File.symlink?(full)
+
+              source = File.read(full, encoding: "UTF-8", invalid: :replace, undef: :replace)
+              total_bytes += source.bytesize
+              if total_bytes > REPAIR_CONTEXT_MAX_BYTES
+                return incomplete_repair_context(
+                  "complete source plus #{entries.size + 1} direct dependencies exceeds " \
+                  "#{REPAIR_CONTEXT_MAX_BYTES} bytes; no excerpt-only repair was attempted",
+                )
+              end
+              entries << { path: rel, source:, sha256: Digest::SHA256.hexdigest(source) }
+            end
+
+            {
+              complete: true,
+              files: entries,
+              target_sha256: Digest::SHA256.file(path).hexdigest,
+            }
+          rescue StandardError => e
+            incomplete_repair_context("#{e.class}: #{e.message}")
+          end
+
+          def incomplete_repair_context(reason)
+            { complete: false, reason: reason.to_s[0, 240], files: [] }
           end
 
           def repair_memory = @repair_memory ||= RepairMemory.new(root: @root)
