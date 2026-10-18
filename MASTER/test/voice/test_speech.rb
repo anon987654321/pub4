@@ -676,23 +676,23 @@ class TestSpeech < Minitest::Test
       File.binwrite(audio_path, "edge-audio")
       audio_path
     end
+    failed_socket = lambda do |**|
+      speech.instance_variable_set(:@last_error, "edge socket produced empty audio")
+      nil
+    end
 
     speech.stub(:fast_tts_mode?, true) do
       speech.stub(:synthesis_mode, "classic") do
         speech.stub(:normal_worker_timeout, 45) do
-          speech.stub(:synthesize_edge_socket, lambda { |**|
-            speech.instance_variable_set(:@last_error, "edge socket produced empty audio")
-            nil
-          }) do
+          speech.stub(:synthesize_edge_socket, failed_socket) do
             speech.stub(:synthesize_edge_oneshot, synth) do
-            result = speech.synthesize_edge(
-              "Read these words exactly.",
-              voice: :christopher,
-              style_config: { rate: "+0%", pitch: "+0Hz" },
-              shape: false,
-            )
-            audio_path = result
-
+              result = speech.synthesize_edge(
+                "Read these words exactly.",
+                voice: :christopher,
+                style_config: { rate: "+0%", pitch: "+0Hz" },
+                shape: false,
+              )
+              audio_path = result
               assert_equal "edge-audio", File.binread(result)
             end
           end
