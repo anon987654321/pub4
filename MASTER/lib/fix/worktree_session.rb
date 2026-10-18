@@ -446,7 +446,7 @@ module Master
         message = message.gsub(%r{(https?://)[^\s/@]+(?::[^\s/@]*)?@}i, '\1[redacted]@')
         message = message.gsub(/\b(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,})\b/i, '[redacted-token]')
         message = message.gsub(/\b(Bearer\s+)[A-Za-z0-9._~+\/=-]+/i, '\1[redacted]')
-        message = message.gsub(/(\b(?:access[_-]?token|refresh[_-]?token|token|api[_-]?key|password|secret|authorization)\b\s*[:=]\s*)["']?[^"' \t\r\n,;]+["']?/i, '\1[redacted]')
+        message = message.gsub(/(\b(?:access[_-]?token|refresh[_-]?token|token|api[_-]?key|password|secret)\b\s*[:=]\s*)["']?[^"' \t\r\n,;]+["']?/i, '\1[redacted]')
         message = message.gsub(/([?&](?:token|key|password|secret|signature|sig)=)[^&#\s]+/i, '\1[redacted]')
         message = message.lines.map(&:chomp).join(' ').gsub(/\s+/, ' ').strip
         message.slice(0, 500)
