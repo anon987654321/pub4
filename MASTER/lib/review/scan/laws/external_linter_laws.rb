@@ -111,12 +111,21 @@ module Master
 
             smells = linter_json("reek", "--format", "json", path)
             unless smells.is_a?(Array) &&
-                   smells.all? { |smell| smell.is_a?(Hash) && (smell["lines"].nil? || smell["lines"].is_a?(Array)) }
-              report_failure("reek", "invalid JSON report shape; expected an array of smell records")
+                   smells.all? do |smell|
+                     smell.is_a?(Hash) &&
+                       smell["smell_type"].is_a?(String) && !smell["smell_type"].empty? &&
+                       smell["message"].is_a?(String) && !smell["message"].empty? &&
+                       (smell["lines"].nil? ||
+                         (smell["lines"].is_a?(Array) &&
+                           smell["lines"].all? { |line| line.is_a?(Integer) && line.positive? }))
+                   end
+              report_failure("reek", "invalid JSON report shape; expected smell_type, message and positive line numbers")
             end
 
             smells.flat_map do |smell|
-              (smell["lines"] || [1]).map do |line|
+              lines = Array(smell["lines"])
+              lines = [1] if lines.empty?
+              lines.map do |line|
                 finding(line:, message: "reek: #{smell["smell_type"]} — #{smell["message"]}")
               end
             end
