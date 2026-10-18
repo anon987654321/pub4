@@ -54,6 +54,16 @@ module Master
           @mode || ENV.fetch("MASTER_AUTOFIX_MODE", "on").downcase.then { |m| MODES.include?(m) ? m : "on" }
         end
 
+        # The explicit override belongs to one CLI operation, not the whole
+        # interactive session. nil means use the environment default next time.
+        def explicit_mode_override
+          @mode
+        end
+
+        def restore_mode_override(value)
+          @mutex.synchronize { @mode = value }
+        end
+
         def mode=(value)
           value = value.to_s.downcase
           raise ArgumentError, "--autofix expects #{MODES.join("|")}, got #{value.inspect}" unless MODES.include?(value)

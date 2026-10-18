@@ -54,11 +54,30 @@ module Master
 
       MAX_FIX_GATE_ROUNDS = Integer(ENV.fetch("MASTER_FIX_GATE_ROUNDS", "5"))
 
+      # Command-line overrides are temporary: a setting on one turn must
+      # not change how the next command repairs the repository.
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
-        # /fix is the operator trace: every event is visible in the same append-only
-        # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
+        overrides = execution_overrides(raw)
+        previous_mode = Master::Fix::AutofixGuard.explicit_mode_override
+        previous_max_files = Master::Fix::RunLedger.max_files_override
+
+        begin
+          Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
+          Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
+          dispatch_fix_parsed(
+            scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
+            apply:, critique:, aesthetic:, only:, target:
+          )
+        ensure
+          Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
+          Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
+        end
+      end
+
+      def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
+                              apply:, critique:, aesthetic:, only:, target:)
         targets = fix_targets(target, root:)
         writes_requested = writes_requested?(apply:, only:)
         ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
@@ -314,6 +333,18 @@ module Master
       # How many files the model phase takes, easiest first (Fix::RunLedger.max_files).
       MAX_FILES_FLAG = /\A--max-files=(\d+)\z/i
 
+      def execution_overrides(raw)
+        overrides = { autofix_mode: nil, max_files: nil }
+        raw.to_s.split(/\s+/).each do |token|
+          if (match = AUTOFIX_FLAG.match(token))
+            overrides[:autofix_mode] = match[1]
+          elsif (match = MAX_FILES_FLAG.match(token))
+            overrides[:max_files] = match[1]
+          end
+        end
+        overrides
+      end
+
       def parse_pass_flags(raw)
         flags = { apply: nil, critique: nil, aesthetic: true, only: nil }
         path_bits = []
@@ -322,10 +353,10 @@ module Master
             flags[flag.first] = flag.last
           elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?(INCLUDE_DIRTY_FLAG)
             next
-          elsif token =~ AUTOFIX_FLAG
-            Master::Fix::AutofixGuard.mode = Regexp.last_match(1)
-          elsif token =~ MAX_FILES_FLAG
-            Master::Fix::RunLedger.max_files = Regexp.last_match(1)
+          elsif token =~ AUTOFIX_FLAG || token =~ MAX_FILES_FLAG
+            # Parsed below as per-dispatch options; parsing must not mutate the
+            # next command's behavior in a long-lived interactive session.
+            next
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)
           else

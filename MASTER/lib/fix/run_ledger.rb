@@ -44,6 +44,13 @@ module Master
           @max_files || Integer(ENV.fetch("MASTER_FIX_MAX_FILES", "0"), exception: false).then { |n| n&.positive? ? n : nil }
         end
 
+        # The command-line override is restored after a single /fix dispatch.
+        def max_files_override = @max_files
+
+        def restore_max_files_override(value)
+          @max_files = value
+        end
+
         def max_files=(value)
           @max_files = Integer(value).positive? ? Integer(value) : nil
         end

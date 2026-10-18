@@ -688,7 +688,7 @@ end
     before = checkout_digest(@root)
 
     fix_loop = Object.new
-    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
+    fix_loop.define_singleton_method(:publish_pending!) { flunk("dry-run attempted delivery") }
     fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started the repair") }
     fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 1, laws: { "RULE" => 1 }, files: {}) }
     scanner = Object.new
@@ -707,6 +707,35 @@ end
     end
 
     assert_equal before, checkout_digest(@root), "dispatcher dry-run changed checkout content, .git, index or untracked files"
+  end
+
+  def test_fix_runtime_overrides_are_scoped_to_one_dispatch
+    guard = Master::Fix::AutofixGuard
+    ledger = Master::Fix::RunLedger
+    previous_mode = guard.explicit_mode_override
+    previous_limit = ledger.max_files_override
+    captured = nil
+
+    Master::CLI::CommandRegistry.stub(
+      :run_pass,
+      lambda do |_deps, **kwargs|
+        captured = { mode: guard.mode, limit: ledger.max_files, kwargs: }
+        "selected"
+      end,
+    ) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: nil, fix_loop: nil, deliberation: nil, root: Master::ROOT, bus: nil,
+        ctx: { args: "RAILS --autofix=off --max-files=2 --only critique" }
+      )
+    end
+
+    assert_equal "off", captured.fetch(:mode)
+    assert_equal 2, captured.fetch(:limit)
+    assert_equal previous_mode, guard.explicit_mode_override
+    assert_equal previous_limit, ledger.max_files_override
+  ensure
+    guard&.restore_mode_override(previous_mode) if defined?(previous_mode)
+    ledger&.restore_max_files_override(previous_limit) if defined?(previous_limit)
   end
 
   def test_fix_only_flag_reaches_the_selected_stage_without_widening
