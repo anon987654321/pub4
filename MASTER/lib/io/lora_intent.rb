@@ -201,29 +201,39 @@ module Master
       # training until those captions have been reviewed.
       def refresh_sources(subjects, root:)
         reports = []
+        failures = []
         subjects.each do |name|
           prepare = ScriptDispatch.run(
             root:,
             tool: "lora",
             arg: Shellwords.join(["--subject", name, "--prepare", "--write", "--replace"]),
           )
-          return prepare unless prepare.ok?
+          unless prepare.ok?
+            failures << "#{name}: source preparation failed\\n#{prepare.message}"
+            next
+          end
 
           preflight = ScriptDispatch.run(
             root:,
             tool: "lora",
             arg: Shellwords.join(["--subject", name, "--train-replicate", "--dry-run"]),
           )
-          return preflight unless preflight.ok?
+          unless preflight.ok?
+            failures << "#{name}: training preflight failed\\n#{preflight.message}"
+            next
+          end
 
-          reports << "#{name}: source preparation\n#{prepare.value!}\n\n#{name}: training preflight\n#{preflight.value!}"
+          reports << "#{name}: source preparation\\n#{prepare.value!}\\n\\n#{name}: training preflight\\n#{preflight.value!}"
         end
 
         output = [
-          "Source refresh completed for #{subjects.join(', ')}.",
-          reports.join("\n\n"),
+          "Source refresh completed for #{(subjects - failures.map { |failure| failure[/\\A[^:]+/] }).join(', ')}.",
+          reports.join("\\n\\n"),
+          ("Source refresh failures:\\n" + failures.join("\\n\\n") unless failures.empty?),
           "Paid training was not started. Review the generated .txt captions for pose, clothing, light and setting, then run the training preflight again. Unreviewed stub captions are a hard training blocker.",
-        ].join("\n\n")
+        ].compact.join("\\n\\n")
+        return Result.err(output, category: :validation) unless failures.empty?
+
         Result.ok({
           output:,
           rendered: output,
