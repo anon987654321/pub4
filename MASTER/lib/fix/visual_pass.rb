@@ -51,9 +51,7 @@ module Master
       # Surface ids are paths, so %r{} keeps the literal slash readable.
       SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
-      Law = Data.define(:id) do
-        def severity = :warning
-      end
+      Law = PassLaw
 
       attr_reader :dir, :custody
 

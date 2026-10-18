@@ -32,9 +32,7 @@ module Master
       AUTO_IMPLEMENTATIONS = %w[next_fix].freeze
       LAW_ID = "CONVERGENCE_WISHLIST"
 
-      Law = Data.define(:id) do
-        def severity = :warning
-      end
+      Law = PassLaw
 
       def initialize(root:, agent:, event_bus: nil)
         @root = File.expand_path(root)
