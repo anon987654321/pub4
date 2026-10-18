@@ -492,11 +492,19 @@ class TestLoraReplicate < Minitest::Test
     refute_predicate Preflight.trigger_report("house"), :ok?
   end
 
+  def test_training_version_is_pinned_to_the_priced_provider_version
+    expected = "26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2"
+
+    assert_equal expected, Client::LORA_TRAINER_VERSION
+    assert_equal expected, Client.new(token: "r8_test").trainer_version
+    assert_equal 0.001525, Preflight::TRAIN_USD_PER_SECOND
+  end
+
   def test_the_estimate_prints_the_guide_and_the_logged_run
     estimate = Preflight.cost_estimate(1000)
 
-    assert_includes estimate, "$1.46"
-    assert_includes estimate, "$10.25"
+    assert_includes estimate, "$0.18"
+    assert_includes estimate, "$1.28"
   end
 
   def test_training_options_reject_malformed_and_nonpositive_values_before_preflight
