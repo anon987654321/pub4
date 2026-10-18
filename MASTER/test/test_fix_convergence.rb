@@ -480,6 +480,29 @@ def test_builder_gives_the_pass_runner_its_scanner_and_violation_tally
   assert_equal 0, runner.instance_variable_get(:@violation_counts)["TEST_RULE"]
 end
 
+  def test_budget_closeout_records_blocked_when_done_is_downgraded_for_gaps
+    loop = build_loop([])
+    runner = loop.instance_variable_get(:@pass_runner)
+    runner.send(
+      :skip_unreadable,
+      File.join(@root, "walk.js"),
+      Master::Result.err("scan failed", category: :infrastructure),
+    )
+
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*| nil }
+    loop.instance_variable_set(:@run_journal, journal)
+    reasons = []
+
+    Master::Fix::RunBudget.stub(:finish_run, ->(reason: "completed") { reasons << reason }) do
+      loop.send(:finish_run, Master::Result.ok("DONE: all clean"), @root, "run-budget-blocked", requested: true)
+    end
+
+    assert_equal 1, reasons.size
+    assert_match(/\Ablocked: BLOCKED: finished with gaps/, reasons.first)
+    refute_equal "completed", reasons.first
+  end
+
   def test_scan_is_not_a_public_command
     assert_includes Master::CLI::TurnRouter::PIPELINE_SLASH, "scan"
     refute_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, "scan"
