@@ -80,6 +80,17 @@ module Master
                               apply:, critique:, aesthetic:, only:, target:)
         targets = fix_targets(target, root:)
         writes_requested = writes_requested?(apply:, only:)
+        display_target = target.to_s.strip
+        display_target = "MASTER" if display_target.empty? || display_target == "." || display_target.casecmp?("master")
+        display_target = "all trees" if %w[all everything].any? { |name| display_target.casecmp?(name) }
+        display_target = display_target[0, 80]
+        mode = writes_requested ? "write" : "read-only"
+        boundary = if writes_requested
+                     worktree_fix_requested? ? "isolated-worktree" : "current-checkout"
+                   else
+                     "no-write-or-publish"
+                   end
+        Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
         ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
         if writes_requested && worktree_fix_requested?
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
