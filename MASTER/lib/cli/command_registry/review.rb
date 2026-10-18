@@ -170,6 +170,7 @@ module Master
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
                          writes_requested:, effective_critique:, critique:, aesthetic:, only:)
+        gate_label = ::Operator::GateChain.baseline_scope_key(target)
         # What already fails, taken before any repair, so delivery can be judged on
         # what the run added instead of on debt it did not create. This scan-only
         # gate is a baseline phase, not the requested repair's execution mode.
@@ -188,7 +189,6 @@ module Master
         gate_rounds = 0
         gate_status = 0
         gate_changed = []
-        gate_label = ::Operator::GateChain.baseline_scope_key(target)
         loop do
           gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:, baseline:)
           gate_rounds += 1
