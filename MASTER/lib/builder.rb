@@ -56,7 +56,7 @@ module Master
         Io::ExternalAudit.new(governor: i[:governor], event_bus: i[:bus], browser:)
       },
       "VulCheck" => ->(_r, i) { Io::VulCheck.new(governor: i[:governor], event_bus: i[:bus]) },
-      "Nmap" => ->(r, i) { Io::Nmap.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "Nmap" => ->(r, i) { Io::Nmap.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus]) },
       "Browser" => ->(r, i) {
         Io::BrowserAgent.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus])
       },

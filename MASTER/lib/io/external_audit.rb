@@ -16,6 +16,8 @@ module Master
       MAX_REDIRECTS = 3
       MAX_BODY_BYTES = 1_048_576
       HTML_TYPES = /text\/html|application\/xhtml\+xml/i.freeze
+      class ResponseTooLarge < StandardError; end
+
       SECURITY_HEADERS = {
         "Content-Security-Policy" => "Review CSP against the application's needs",
         "X-Content-Type-Options" => "Review MIME-sniffing protection",
