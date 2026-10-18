@@ -41,4 +41,26 @@ class TestReferenceGraph < Minitest::Test
       assert_includes radius[:inbound], "RAILS/brgen/app.rb"
     end
   end
+
+
+  def test_indexes_extensionless_text_sources_and_is_idempotent_until_refreshed
+    Dir.mktmpdir("reference-graph") do |root|
+      FileUtils.mkdir_p(File.join(root, "lib"))
+      File.write(File.join(root, "Rakefile"), 'require_relative "lib/app"' + "\n")
+      File.write(File.join(root, "lib", "app.rb"), "module App; end\n")
+
+      graph = Master::Review::ReferenceGraph.new(root:)
+      first = graph.build
+      second = graph.build
+
+      assert_includes first[:nodes], "Rakefile"
+      assert_includes first[:edges].map { |edge| edge[:from] }, "Rakefile"
+      assert_equal first[:edges].size, second[:edges].size
+      refute first[:analysis_failures].any?
+
+      File.write(File.join(root, "Rakefile"), "# changed without a dependency\n")
+      refreshed = graph.build(refresh: true)
+      assert_empty refreshed[:edges].select { |edge| edge[:from] == "Rakefile" }
+    end
+  end
 end
