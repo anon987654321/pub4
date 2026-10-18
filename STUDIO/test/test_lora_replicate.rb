@@ -483,6 +483,19 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_unreviewed_stub_captions_block_training
+    Dir.mktmpdir do |dir|
+      10.times do |i|
+        File.binwrite(File.join(dir, "p#{i}.png"), png(1024, 1024))
+        File.write(File.join(dir, "p#{i}.txt"), "ragnhild, ")
+      end
+      report = Preflight.dataset_report(dir, trigger: "ragnhild")
+
+      refute_predicate report, :ok?
+      assert_equal 10, report.problems.count { |problem| problem.include?("stub caption needs review") }
+    end
+  end
+
   def test_the_trigger_may_not_be_tok_or_a_word
     assert_predicate Preflight.trigger_report("ragnhild_lora"), :ok?
     refute_predicate Preflight.trigger_report("TOK"), :ok?
