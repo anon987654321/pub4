@@ -161,8 +161,14 @@ module Master
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
                          writes_requested:, effective_critique:, critique:, aesthetic:, only:)
         # What already fails, taken before any repair, so delivery can be judged on
-        # what the run added instead of on debt it did not create.
-        baseline = writes_requested ? ::Operator::GateChain.baseline(target:) : nil
+        # what the run added instead of on debt it did not create. This scan-only
+        # gate is a baseline phase, not the requested repair's execution mode.
+        baseline = nil
+        if writes_requested
+          Master::Trace::Dmesg.status("gate0", "#{target}: capturing read-only pre-repair baseline")
+          baseline = ::Operator::GateChain.baseline(target:)
+          Master::Trace::Dmesg.status("gate0", "#{target}: baseline ready; starting write-enabled /fix pass")
+        end
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                          target:, apply: writes_requested, critique: effective_critique,
                          aesthetic:, only:)
