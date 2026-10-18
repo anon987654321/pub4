@@ -12,6 +12,15 @@ module CrawlSupport
 
   module_function
 
+  # Preserve the CLI crawler's diagnostic policy without duplicating socket
+  # handling used by live gates. A failed diagnostic must never mask the probe.
+  def crawler_port_open?(host, port, timeout: 0.4)
+    port_open?(
+      host, port, timeout:,
+      on_error: ->(error) { Master::Ground::Swallow.log(error, context: __FILE__) },
+    )
+  end
+
   def sync_inventory_failures
     out = []
     yml = load_apps_yml
