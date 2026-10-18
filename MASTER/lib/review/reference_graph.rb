@@ -20,12 +20,16 @@ module Master
       # including extensionless build files, dotfiles, documentation and config.
       # Oversized or binary files are not source dependencies; /fix's inventory
       # reports their separate exclusion/blocking state.
-      MAX_TEXT_BYTES = 2 * 1024 * 1024
+      # Match the scanner's maximum readable source size. Repair context has
+      # its own stricter combined budget; inventory must not silently omit a
+      # larger eligible source and make the dependency map appear complete.
+      MAX_TEXT_BYTES = 10 * 1024 * 1024
       PROBE_BYTES = 8 * 1024
 
-      IGNORE_DIRS = %w[
-        .git node_modules vendor tmp log coverage dist build .bundle .cache
-        .next .output .turbo reports root
+      FALLBACK_IGNORE_DIRS = %w[
+        .git .claude node_modules vendor tmp log coverage dist build .bundle
+        .cache .next .output .turbo reports scratch site-packages venv .venv
+        venv-demucs __pycache__ storage cache knowledge fixtures var
       ].freeze
 
       Edge = Struct.new(:type, :from, :to, :weight, keyword_init: true)
@@ -322,19 +326,27 @@ module Master
       def files
         collected = []
         Find.find(@root) do |path|
-          name = File.basename(path)
-
           if File.directory?(path)
-            Find.prune if IGNORE_DIRS.include?(name)
+            Find.prune if File.symlink?(path) || skipped_by_scanner?(path)
             next
           end
 
-          next if File.symlink?(path)
+          next if File.symlink?(path) || skipped_by_scanner?(path)
           next unless text_file?(path)
 
           collected << path
         end
         collected
+      end
+
+      # The fix corpus and the understanding graph must share path ownership.
+      # Scanner owns generated/vendor exclusions. The local fallback is only for
+      # isolated consumers that load ReferenceGraph without the fix runtime.
+      def skipped_by_scanner?(path)
+        return Master::Fix::Scanner.skip_path?(path, root: @root) if defined?(Master::Fix::Scanner)
+
+        relative = File.expand_path(path).delete_prefix("#{@root}/")
+        relative.split(File::SEPARATOR).any? { |segment| FALLBACK_IGNORE_DIRS.include?(segment) }
       end
 
       def text_file?(path)
