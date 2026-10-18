@@ -52,7 +52,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "show returns viseme headers for cached audio" do
+  test "web TTS stays available when CLI playback is disabled" do
     text = "hello test"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
@@ -60,7 +60,9 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
 
-    get "/chat/tts", params: { text:, voice: voice.to_s, style: style.to_s }
+    Master::Voice::Playback.stub(:enabled?, false) do
+      get "/chat/tts", params: { text:, voice: voice.to_s, style: style.to_s }
+    end
 
     assert_response :success
     assert response.headers["X-TTS-Job"].present?
