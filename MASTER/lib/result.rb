@@ -23,13 +23,13 @@ module Master
     module ErrClassification
       # Worth trying again as-is, or after a wait: the failure is in the
       # environment rather than in what was asked.
-      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure delivery_failed rate_limit exhausted offline
-                     inconclusive].freeze
+      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure delivery_failed reloading
+                     rate_limit exhausted offline inconclusive].freeze
 
-      # Retrying reproduces it. Either the request is wrong, the answer is no, or
-      # the operation is over.
+      # Retrying reproduces it, a decision belongs to the operator, or the
+      # outcome already describes a stable stop rather than a transient fault.
       PERMANENT = %i[validation model_missing axiom_violation invalid_request budget no_api_key policy shutdown abort
-                     handler_exception crash skip].freeze
+                     handler_exception crash skip human_decision plateau failed].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
@@ -65,6 +65,10 @@ module Master
       no_api_key: "no LLM API key configured in env",
       infrastructure: "system / disk / git error",
       delivery_failed: "verified work could not be published; retry the delivery step",
+      human_decision: "operator decision required before work can continue",
+      plateau: "repair stopped without proving convergence",
+      reloading: "runtime reload interrupted the attempt; resume after restart",
+      failed: "operation failed without a more specific failure category",
       handler_exception: "unexpected error during handler execution",
       crash: "unexpected process failure during a fix stage",
       timeout: "operation exceeded deadline",
