@@ -499,6 +499,36 @@ class TestLoraReplicate < Minitest::Test
     assert_includes estimate, "$10.25"
   end
 
+  def test_training_options_reject_malformed_and_nonpositive_values_before_preflight
+    script = File.expand_path("../replicate/lora/_toolkit/run_train_replicate.rb", __dir__)
+    cases = [
+      [{ "LORA_REPLICATE_STEPS" => "1000steps" }, [], "LORA_REPLICATE_STEPS must be a positive integer"],
+      [{ "LORA_REPLICATE_LORA_RANK" => "rank16" }, [], "LORA_REPLICATE_LORA_RANK must be a positive integer"],
+      [{ "LORA_REPLICATE_TIMEOUT" => "0" }, [], "LORA_REPLICATE_TIMEOUT must be a positive integer"],
+      [{}, ["--steps", "0"], "--steps / LORA_REPLICATE_STEPS must be a positive integer"],
+      [{}, ["--lora-rank", "-1"], "--lora-rank / LORA_REPLICATE_LORA_RANK must be a positive integer"],
+      [{}, ["--timeout", "0"], "--timeout / LORA_REPLICATE_TIMEOUT must be a positive integer"]
+    ]
+
+    Dir.mktmpdir do |dir|
+      cases.each do |overrides, args, expected|
+        env = {
+          "SUBJECT" => "probe",
+          "MODEL" => "probe",
+          "SUBJECT_DIR" => dir,
+          "LORA_REPLICATE_STEPS" => nil,
+          "LORA_REPLICATE_LORA_RANK" => nil,
+          "LORA_REPLICATE_TIMEOUT" => nil
+        }.merge(overrides)
+        output, status = Open3.capture2e(env, RbConfig.ruby, script, *args)
+
+        refute status.success?, "invalid inputs unexpectedly passed: #{overrides.inspect} #{args.inspect}"
+        assert_includes output, expected
+        refute_match(/no images in/, output, "validation must fail before dataset preflight")
+      end
+    end
+  end
+
   def test_ledger_sums_billed_seconds_by_kind_and_counts_pending_receipts_once
     Dir.mktmpdir do |dir|
       path = File.join(dir, "out", "ledger.jsonl")
