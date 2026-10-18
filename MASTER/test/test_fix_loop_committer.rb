@@ -254,12 +254,11 @@ def test_no_publish_holds_the_commits_instead_of_pushing
   git = FakeGit.new([], ["lib/ok.rb"])
   committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
   committer.baseline!
-  with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
-  git.ahead = 1
-
   previous = ENV["MASTER_FIX_NO_PUBLISH"]
   ENV["MASTER_FIX_NO_PUBLISH"] = "1"
   begin
+    with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
+    git.ahead = 1
     out, = capture_io { assert_equal :held, committer.publish_pending! }
   ensure
     previous ? ENV["MASTER_FIX_NO_PUBLISH"] = previous : ENV.delete("MASTER_FIX_NO_PUBLISH")
@@ -269,14 +268,25 @@ def test_no_publish_holds_the_commits_instead_of_pushing
   assert_includes out, "deliver0: held, 1 commit(s) left local"
 end
 
-# The default is one push at the end of the run, not one per commit.
-def test_commits_do_not_push_until_the_run_publishes
+# Deferring publication is explicit; the default pushes every validated checkpoint.
+def test_each_validated_checkpoint_pushes_by_default
   write_file("lib/ok.rb", "OK = 1\n")
   git = FakeGit.new([], ["lib/ok.rb"])
-  bus = FakeBus.new
-  committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: @dir)
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
   committer.baseline!
+
   with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
+
+  assert_equal 1, git.commits.size
+  assert_equal 1, git.pushes
+end
+
+def test_end_mode_defers_publication_until_the_run_publishes
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+  committer.baseline!
+  with_push_env("end") { committer.commit_if_dirty("fix: ok") }
 
   assert_equal 1, git.commits.size
   assert_equal 0, git.pushes
@@ -284,7 +294,7 @@ def test_commits_do_not_push_until_the_run_publishes
   git.ahead = 1
   # Unpushed work remains after publish_pending! only if the push missed.
   git.define_singleton_method(:push) { @pushes += 1; @ahead = 0 }
-  assert_equal :published, committer.publish_pending!
+  with_push_env("end") { assert_equal :published, committer.publish_pending! }
   assert_equal 1, git.pushes
 end
 
