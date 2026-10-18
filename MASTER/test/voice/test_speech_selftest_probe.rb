@@ -29,6 +29,8 @@ class TestSpeechSelftestProbe < Minitest::Test
     source = File.read(File.join(Master::ROOT, "bin", "tts-worker"))
 
     refute_match(/BUNDLE_ISOLATION_KEYS\.each\s*\{\s*\|key\|\s*ENV\.delete\(key\)/, source)
+    refute_match(/^\s*BUNDLE_ISOLATION_KEYS\s*=/, source)
+    assert_includes source, "unsetenv_others: true"
     assert_includes source, "Entrypoint.prepare!"
     assert_includes source, 'ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")'
     assert_includes source, "require \"bundler/setup\""
