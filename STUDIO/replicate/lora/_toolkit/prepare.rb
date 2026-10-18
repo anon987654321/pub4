@@ -26,7 +26,7 @@ TRIGGER = ENV.fetch("TRIGGER", SUBJECT)
 
 options = { write: false, replace: false, count: 18 }
 OptionParser.new do |p|
-  p.banner = "Usage: prepare.rb [--write] [--count N]"
+  p.banner = "Usage: prepare.rb [--write [--replace]] [--count N]"
   p.on("--write", "Write dataset/ (default: report only)") { options[:write] = true }
   p.on("--replace", "Archive a non-empty old dataset before installing this source set; requires --write") { options[:replace] = true }
   p.on("--count N", Integer, "Frames to choose (default 18)") { |v| options[:count] = v }
