@@ -26,6 +26,7 @@ class TestOperatorPromptContract < Minitest::Test
   def test_provider_environment_is_checked_for_owner_only_permissions_before_source
     source = File.read(ZSHRC)
 
+    assert_includes source, 'if [[ ! -O "$PUB4_OPERATOR_ENV" ]]; then'
     assert_match(/PUB4_OPERATOR_ENV_MODE=.*stat -f.*%Lp/, source)
     assert_match(/case "\$PUB4_OPERATOR_ENV_MODE" in\s+\[0-7\]00\|0\[0-7\]00\)/, source)
     assert_match(/refusing .*permissions must be owner-only/, source)
