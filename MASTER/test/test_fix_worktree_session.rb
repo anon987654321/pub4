@@ -146,19 +146,28 @@ exit(system("git", "commit", "-m", "worker fix"))
   def test_error_diagnostics_redact_credentials_and_bound_output
     with_repo(worker: "#!/usr/bin/env ruby\nexit 0\n") do |root|
       session = Master::Fix::WorktreeSession.new(root:)
+      stripe_key = "sk_live_#{'A' * 24}"
+      replicate_key = "r8_#{'B' * 24}"
       error = RuntimeError.new(
-        "remote https://operator:password-value@example.invalid/repo.git?token=query-token " \
-        "Authorization: Bearer bearer-value ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
+        "remote https://operator:password-value@example.invalid/repo.git?token=query-token&client_secret=url-secret " \
+        "Authorization: Bearer bearer-value Authorization: raw-auth-secret " \
+        "REPLICATE_API_TOKEN=replicate-secret-value #{stripe_key} #{replicate_key} ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
       )
 
       message = session.send(:safe_error_message, error)
 
-      assert_includes message, "https://[redacted]@example.invalid/repo.git?token=[redacted]"
+      assert_includes message, "https://[redacted]@example.invalid/repo.git?token=[redacted]&client_secret=[redacted]"
       assert_includes message, "Authorization: Bearer [redacted]"
+      assert_includes message, "Authorization: [redacted]"
       refute_includes message, "password-value"
       refute_includes message, "query-token"
       refute_includes message, "bearer-value"
       refute_includes message, "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
+      refute_includes message, "raw-auth-secret"
+      refute_includes message, "replicate-secret-value"
+      refute_includes message, "url-secret"
+      refute_includes message, stripe_key
+      refute_includes message, replicate_key
       assert_operator message.length, :<=, 500
       assert_equal 500, session.send(:safe_error_message, RuntimeError.new("x" * 800)).length
     end
