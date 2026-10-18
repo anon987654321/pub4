@@ -231,7 +231,7 @@ module Master
         missing = Array(files).reject { |path| graph.includes_path?(path) }
         unless failures.empty? && missing.empty?
           detail = []
-          detail << "#{failures.size} source read(s) failed: #{failures.first(3).map { |row| row[:path] }.join(", ")}" if failures.any?
+          detail << "#{failures.size} graph analysis failure(s): #{failures.first(3).map { |row| row[:path] }.join(", ")}" if failures.any?
           detail << "#{missing.size} eligible file(s) absent from dependency graph: #{missing.first(3).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}" if missing.any?
           message = "fix_loop: dependency understanding incomplete; no repair started (#{detail.join("; ")})"
           Master::Trace::Dmesg.status("understand0", "BLOCKED, #{message[0, 180]}")
@@ -239,9 +239,20 @@ module Master
           return Result.err(message, category: :policy)
         end
 
+        graph_metrics = snapshot.fetch(:metrics)
         Master::Trace::Dmesg.status(
           "understand0",
-          "complete source graph read, nodes=#{snapshot[:nodes].size}, edges=#{snapshot[:edges].size}, source_read_failures=0",
+          "text-source graph indexed, nodes=#{snapshot[:nodes].size}, edges=#{snapshot[:edges].size}, " \
+          "unresolved-ruby=#{graph_metrics[:unresolved_ruby_references]}, " \
+          "dynamic-sites=#{graph_metrics[:dynamic_sites]}, analysis-failures=0",
+        )
+        @bus&.publish(
+          "fix_loop:dependency_map_ready",
+          nodes: snapshot[:nodes].size,
+          edges: snapshot[:edges].size,
+          unresolved_ruby_references: graph_metrics[:unresolved_ruby_references],
+          dynamic_sites: graph_metrics[:dynamic_sites],
+          analysis_failures: 0,
         )
         snapshot
       end
