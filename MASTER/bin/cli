@@ -95,7 +95,7 @@ end
 def parse_initial_message_options(argv)
   options = {}
   parser = OptionParser.new do |opts|
-    opts.banner = "Usage: bin/cli [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--headless] [--fast] [--verbose|--trace] [--web|--no-web] [--boot-status]"
+    opts.banner = "Usage: bin/cli [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--model ID] [--output-format text|json|stream-json] [--permission-mode MODE] [--allowedTools LIST] [--headless] [--fast] [--verbose|--trace] [--web|--no-web] [--boot-status]"
     opts.on("-h", "--help") do
       help = [
         opts.to_s,
@@ -126,6 +126,22 @@ def parse_initial_message_options(argv)
     opts.on("--fork [ID]") { |id| options[:message] = "/session fork #{id}".strip }
     opts.on("--sessions") { options[:message] = "/session" }
     opts.on("--fold", "run the message through the core Fold, then exit") { ENV["MASTER_FOLD"] = "1" }
+    opts.on("--model ID", "force one model on every lane (MASTER_MODEL)") { |id| ENV["MASTER_MODEL"] = id }
+    opts.on("--output-format FORMAT", %w[text json stream-json],
+            "text, json (one result object) or stream-json (a line per turn, then the result); runs the Fold") do |format|
+      ENV["MASTER_OUTPUT_FORMAT"] = format
+      ENV["MASTER_FOLD"] = "1"
+    end
+    opts.on("--permission-mode MODE", %w[default acceptEdits plan bypassPermissions],
+            "plan reads and proposes; the rest run the repair profile, and the Constitution still judges every effect") do |mode|
+      ENV["MASTER_PERMISSION_MODE"] = mode
+      ENV["MASTER_FOLD"] = "1"
+    end
+    opts.on("--allowedTools LIST", "--allowed-tools LIST",
+            "narrow the Fold to these tools: Read Edit Write Bash WebFetch (scoped Bash(...) entries are ignored)") do |list|
+      ENV["MASTER_ALLOWED_TOOLS"] = list
+      ENV["MASTER_FOLD"] = "1"
+    end
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
     opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
@@ -146,10 +162,10 @@ def parse_initial_message_options(argv)
   options
 end
 
-# Help is answered before the runtime boots. The parser that prints it runs
-# after Master.boot everywhere else, and a full boot costs seconds and can
-# raise before the usage text is ever reached.
-initial_message_from_argv(ARGV.dup) if ARGV.include?("-h") || ARGV.include?("--help")
+# Flags are read before the runtime boots. Help must print without a boot, which
+# costs seconds and can raise first; and the Fold, fast and headless switches
+# are tested below from the environment, which only this parse sets.
+initial_message_from_argv(ARGV.dup)
 
 def acquire_master_process_lock
   inherited = ENV["MASTER_PROCESS_LOCK_FD"]
@@ -244,11 +260,19 @@ end
 if ENV["MASTER_FOLD"] == "1"
   goal = initial_message_from_argv(ARGV)
   container = cli.container
+  format = ENV.fetch("MASTER_OUTPUT_FORMAT") { ENV["MASTER_HEADLESS"] == "1" ? "json" : "text" }
+  streamed = ->(line) { puts JSON.generate(type: "turn", line:) } if format == "stream-json"
   result = Master::CLI::CoreBridge.run(
-    goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model
+    goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model,
+    mode: Master::CLI::CoreBridge.mode_for_permission(ENV["MASTER_PERMISSION_MODE"]),
+    allowed_tools: ENV["MASTER_ALLOWED_TOOLS"], on_turn: streamed
   )
-  if ENV["MASTER_HEADLESS"] == "1"
-    puts JSON.generate(result.merge(status: result[:reason] == :complete ? "SUCCESS" : "INCONCLUSIVE"))
+  if format == "json" || format == "stream-json"
+    complete = result[:reason] == :complete
+    receipt = format == "json" ? result : result.except(:transcript)
+    puts JSON.generate(receipt.merge(type: "result", subtype: complete ? "success" : "inconclusive",
+                                     is_error: !complete, result: result[:summary], num_turns: result[:turns],
+                                     status: complete ? "SUCCESS" : "INCONCLUSIVE"))
   else
     header = "core: #{result[:reason]} turns=#{result[:turns]}"
     puts [header, *result[:transcript], result[:summary]].compact.join("\n")

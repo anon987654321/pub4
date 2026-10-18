@@ -382,5 +382,30 @@ class CoreBridgeSandboxTest < Minitest::Test
     end
   end
 
+  def test_allowed_tools_narrow_the_profile_and_refuse_scoped_entries
+    caps = Master::Core::Capabilities.for(:repair)
+    _, err = capture_io { Master::CLI::CoreBridge.grant_tools(caps, "Read Edit Bash(git diff:*) Frobnicate") }
+    assert_equal %i[stdio read write], caps.capabilities
+    assert_includes err, "Bash(git diff:*)"
+    assert_includes err, "Frobnicate"
+  end
 
+  def test_allowed_tools_never_widen_the_profile
+    caps = Master::Core::Capabilities.for(:observe)
+    Master::CLI::CoreBridge.grant_tools(caps, "Bash Write")
+    assert_equal %i[stdio read], caps.capabilities
+  end
+
+  def test_empty_allowed_tools_leaves_the_fold_read_only
+    caps = Master::CLI::CoreBridge.grant_tools(Master::Core::Capabilities.for(:repair), "")
+    assert_equal %i[stdio read], caps.capabilities
+  end
+
+  def test_only_plan_permission_mode_changes_the_operator_mode
+    assert_equal :plan, Master::CLI::CoreBridge.mode_for_permission("plan")
+    %w[default acceptEdits bypassPermissions].each do |name|
+      assert_nil Master::CLI::CoreBridge.mode_for_permission(name)
+    end
+    assert_nil Master::CLI::CoreBridge.mode_for_permission(nil)
+  end
 end

@@ -13,7 +13,7 @@ module Master
       module_function
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
-              container: nil, risk: :low, mode: nil)
+              container: nil, risk: :low, mode: nil, allowed_tools: nil)
         workspace_root = workspace_root_for(root)
         transcript = []
         observer = build_turn_observer(transcript, root: workspace_root, bus:, on_turn:)
@@ -40,6 +40,7 @@ module Master
           operator_mode = Master::Operator::Mode.for(mission.record.dig("operator", "mode") || requested_mode)
           mode_spec = Master::Operator::Mode.spec(operator_mode)
           capabilities = Master::Operator::Mode.capabilities(operator_mode)
+          capabilities = grant_tools(capabilities, allowed_tools) unless allowed_tools.nil?
           bus&.publish(
             "operator:mode",
             mode: requested_mode,
@@ -59,6 +60,41 @@ module Master
           defer_mission_on_error(mission, e)
           raise
         end
+      end
+
+      # The tool names a person already types, as the capabilities the fold holds.
+      # A list narrows the mode's profile and never widens it: Capabilities can
+      # drop and cannot acquire, so a tool the profile lacks stays refused.
+      # Reading is always held; a list that names nothing leaves the fold read-only.
+      TOOL_CAPABILITIES = {
+        "read" => %i[read], "glob" => %i[read], "grep" => %i[read], "ls" => %i[read],
+        "edit" => %i[write], "multiedit" => %i[write], "notebookedit" => %i[write],
+        "write" => %i[write create],
+        "bash" => %i[execute],
+        "webfetch" => %i[network], "websearch" => %i[network]
+      }.freeze
+      ALWAYS_HELD = %i[stdio read].freeze
+      TOOL_ENTRY = /[^\s,()]+(?:\([^)]*\))?/
+
+      # `plan` reads and proposes; every other permission mode runs the repair
+      # profile, because the Constitution judges each effect whichever is named.
+      def mode_for_permission(value)
+        value.to_s == "plan" ? :plan : nil
+      end
+
+      # A scoped entry such as Bash(git diff:*) is refused rather than widened to
+      # the whole tool: the fold has no per-command grant to give it.
+      def grant_tools(capabilities, list)
+        granted = []
+        list.to_s.scan(TOOL_ENTRY).each do |entry|
+          caps = entry.match?(/[()]/) ? nil : TOOL_CAPABILITIES[entry.downcase]
+          if caps
+            granted.concat(caps)
+          else
+            Master::Trace::Dmesg.status("cli0", "allowed tool ignored, #{entry}", io: $stderr)
+          end
+        end
+        capabilities.drop(*(capabilities.capabilities - granted - ALWAYS_HELD))
       end
 
       # Only the interactive session sets an asker; see Session#terminal_ask.
