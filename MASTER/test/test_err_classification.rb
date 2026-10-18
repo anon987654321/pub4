@@ -2,14 +2,11 @@
 
 require_relative "test_helper"
 
-# Result::Err's two mixins, neither of which had a test.
+# Result::Err's chaining and retry-policy contracts.
 #
-# ErrClassification is the more interesting one, because it was wrong in a way
-# no test could have caught by accident: it classified five of Result's fourteen
-# categories, so `rate_limit.retriable?` was false. Nothing asks yet — neither
-# predicate has a caller in lib/ — which is exactly why nobody noticed, and why
-# the shape of the eventual bug would have been a retry loop that quietly does
-# not retry.
+# Every declared failure must belong to exactly one retry class. The one
+# intentionally unclassified value is `unknown`, which means no caller chose
+# an error category and must not be guessed into either class.
 class TestErrClassification < Minitest::Test
   R = Master::Result
   C = Master::Result::ErrClassification
