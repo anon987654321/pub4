@@ -162,6 +162,7 @@ class TestPhantomRecovery < Minitest::Test
     include Master::Review::LLMDispatcher::ReactLoop
 
     NilTool = Class.new { def call(**) = nil }
+    NonEmptyTool = Class.new { def call(**) = "tool returned evidence" }
 
     attr_reader :bus
 
@@ -179,6 +180,10 @@ class TestPhantomRecovery < Minitest::Test
       Master::Result.ok(%(<tool_call>{"name": "NilTool", "args": {}}</tool_call>))
     end
 
+    def send_llm_request(model, messages, system: nil, stream: false, image: nil, &block)
+      send_ruby_llm(model, messages, sys: system, stream:, image:, &block)
+    end
+
     def tool_available_for_context?(_) = true
   end
 
@@ -193,6 +198,46 @@ class TestPhantomRecovery < Minitest::Test
     assert_predicate result, :err?
     assert_equal 2, harness.sends, "the loop kept asking a model whose tools answered nothing"
     assert harness.bus.events.any? { |event, payload| event == "phantom:detected" && payload[:patterns] == ["empty_tool_response"] }
+  end
+
+  def test_malformed_react_tool_call_is_not_returned_as_a_successful_answer
+    harness = ReactHarness.new
+    malformed = %(<tool_call>{"name":"ReadFile","args": {</tool_call>)
+    harness.define_singleton_method(:send_ruby_llm) do |*, **|
+      @sends += 1
+      Master::Result.ok(malformed)
+    end
+
+    result = harness.send(
+      :react_tool_loop, "m", [{ role: "user", content: "read a file" }], sys: nil, stream: false
+    )
+
+    assert_predicate result, :err?
+    assert_equal :llm_failure, result.category
+    assert_equal 1, harness.sends
+    refute_includes result.message, "<tool_call>"
+    assert harness.bus.events.any? { |event, _| event == "react:malformed_tool_call" }
+  end
+
+  def test_react_step_limit_returns_a_typed_timeout_instead_of_the_last_tool_call
+    harness = ReactHarness.new
+    harness.instance_variable_set(:@tools, [ReactHarness::NonEmptyTool.new])
+    harness.define_singleton_method(:send_ruby_llm) do |*, **|
+      @sends += 1
+      Master::Result.ok(%(<tool_call>{"name":"NonEmptyTool","args":{}}</tool_call>))
+    end
+
+    result = Master::CLI::SubagentContext.stub(:permits?, true) do
+      Master::Ground::Tool::Profile.stub(:allow?, true) do
+        harness.send(:react_tool_loop, "m", [{ role: "user", content: "inspect and report" }], sys: nil, stream: false)
+      end
+    end
+
+    assert_predicate result, :err?
+    assert_equal :timeout, result.category
+    assert_equal Master::Review::LLMDispatcher::REACT_MAX_STEPS, harness.sends
+    assert_match(/step-limit/, harness.bus.events.map(&:first).join(" ").tr("_", "-"))
+    refute_includes result.message, "<tool_call>"
   end
 
   def react_call(harness, tool, name, args)
