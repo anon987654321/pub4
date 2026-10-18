@@ -102,6 +102,23 @@ class TtsWorkerContractTest < Minitest::Test
     ENV.delete("MASTER_TTS_WIRE")
   end
 
+  def test_missing_replacement_socket_preserves_the_failed_retry_state
+    warnings = []
+    @speech.define_singleton_method(:warn_tts) { |message| warnings << message }
+    @speech.define_singleton_method(:resolve_socket_path) { nil }
+
+    result = @speech.synthesize_edge_socket(
+      text: "hello",
+      voice_name: "en-US-ChristopherNeural",
+      style_config: { rate: "+0%", pitch: "+0Hz" },
+      audio_path: "/tmp/unused-empty-socket-test.mp3",
+      retried: true,
+    )
+
+    assert_nil result
+    assert_equal ["edge socket unavailable after worker retry"], warnings
+  end
+
   def test_build_socket_request_produces_valid_json
     req = @speech.build_socket_request("en-US-AriaNeural", {rate: "1.2", pitch: "0.8"}, "hello")
     parsed = JSON.parse(req)
