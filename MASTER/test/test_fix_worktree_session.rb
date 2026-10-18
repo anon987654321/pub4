@@ -87,6 +87,16 @@ exit(system("git", "commit", "-m", "worker fix"))
     end
   end
 
+  def test_remote_branch_state_distinguishes_absent_and_present_refs
+    with_repo(worker: "#!/usr/bin/env ruby\nexit 0\n") do |root|
+      session = Master::Fix::WorktreeSession.new(root:)
+
+      assert_equal :absent, session.send(:remote_branch_state, "missing-branch")
+      git(root, "push", "origin", "HEAD:refs/heads/temporary")
+      assert_equal :present, session.send(:remote_branch_state, "temporary")
+    end
+  end
+
   def test_remote_branch_cleanup_failure_is_reported_after_delivery
     worker = <<~'RUBY'
       #!/usr/bin/env ruby

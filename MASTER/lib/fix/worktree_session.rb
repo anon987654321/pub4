@@ -106,8 +106,8 @@ module Master
         if failure_reason
           failed_head = rev_parse(worktree, "HEAD")
           if failed_head == base && own_dirty(worktree, included).empty?
-            remote_removed = cleanup_success(worktree:, branch:)
-            note = cleanup_note(remote_removed, branch)
+            remote_cleanup = cleanup_success(worktree:, branch:)
+            note = cleanup_note(remote_cleanup, branch)
             announce("#{failure_reason}; no changes were written, worktree removed#{note}")
             return Result.new(false, "#{failure_reason}; no changes were written, worktree removed#{note}", base, failed_head, branch, worktree)
           end
@@ -128,8 +128,8 @@ module Master
 
         head = rev_parse(worktree, "HEAD")
         if head == base
-          remote_removed = cleanup_success(worktree:, branch:)
-          note = cleanup_note(remote_removed, branch)
+          remote_cleanup = cleanup_success(worktree:, branch:)
+          note = cleanup_note(remote_cleanup, branch)
           announce("worker made no committed changes, worktree removed#{note}")
           return Result.new(true, "worktree: clean, no changes to publish#{note}", base, head, branch, worktree)
         end
@@ -167,8 +167,8 @@ module Master
         end
 
         published_head = publish!(worktree:, branch:, head:, base:)
-        remote_removed = cleanup_success(worktree:, branch:)
-        note = cleanup_note(remote_removed, branch)
+        remote_cleanup = cleanup_success(worktree:, branch:)
+        note = cleanup_note(remote_cleanup, branch)
         announce("published #{published_head.to_s[0, 12]} to origin/main (candidate #{head[0, 12]}), worktree removed#{note}")
 
         Result.new(
@@ -278,19 +278,48 @@ module Master
       def cleanup_success(worktree:, branch:)
         git!("worktree", "remove", "--force", worktree)
         git!("branch", "-D", branch)
-        remote_removed = true
+        remote_cleanup = :removed
         begin
           git!("push", "origin", "--delete", branch)
         rescue StandardError => e
-          remote_removed = false
-          announce("remote branch cleanup warning, retained origin/#{branch}: #{e.message}")
+          remote_cleanup = remote_branch_state(branch)
+          if remote_cleanup == :absent
+            remote_cleanup = :already_absent
+            announce("remote branch already absent, cleanup complete: origin/#{branch}")
+          elsif remote_cleanup == :present
+            remote_cleanup = :retained
+            announce("remote branch cleanup warning, retained origin/#{branch}: #{e.message}")
+          else
+            remote_cleanup = :unknown
+            announce("remote branch cleanup state unknown for origin/#{branch}: #{e.message}")
+          end
         end
         cleanup_parent(File.dirname(worktree))
-        remote_removed
+        remote_cleanup
       end
 
-      def cleanup_note(remote_removed, branch)
-        remote_removed ? "" : "; remote branch cleanup failed, retained origin/#{branch}"
+      # GitHub may delete a merged PR branch before local cleanup runs. Distinguish
+      # that from a failed deletion, and do not guess when the remote cannot be read.
+      def remote_branch_state(branch)
+        output, status = Master::Io::Exec.capture2e(
+          "git", "-C", @repo_root, "ls-remote", "--heads", "origin", "refs/heads/#{branch}"
+        )
+        return :unknown unless status.success?
+
+        output.to_s.empty? ? :absent : :present
+      rescue StandardError
+        :unknown
+      end
+
+      def cleanup_note(remote_cleanup, branch)
+        case remote_cleanup
+        when :removed, :already_absent
+          ""
+        when :retained
+          "; remote branch cleanup failed, retained origin/#{branch}"
+        else
+          "; remote branch cleanup state unknown for origin/#{branch}"
+        end
       end
 
       def preserve(worktree:, branch:, base:, head:, summary:, lines:)
