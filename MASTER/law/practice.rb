@@ -58,15 +58,20 @@ end
 Law.define(:PRESERVE_FIRST) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :error
-  ask "Does this change modify working code without reading it first?"
+  ask "Does this code edit proceed before the complete target source and relevant dependencies, callers, loaders, configuration, tests and public contracts have been read and understood?"
   practice <<~TEXT
-    never rewrite working code from scratch. read before write, preserve
-    behavior and intent, and take a larger change only when it is justified and
-    tested.
+    never rewrite working code from a snippet. read the complete current target
+    and its dependency/caller/test/configuration contract before writing, using
+    content hashes and a fresh reference map as evidence. A cached excerpt,
+    assumed caller list or graph that failed to read a source is not complete
+    understanding. If relevant context is missing or exceeds the safe context
+    budget, stop that repair as BLOCKED or HUMAN_DECISION rather than guessing.
+    preserve behavior and intent, and take a larger change only when it is
+    justified and tested.
   TEXT
-  fix "Read before write. Preserve behavior and intent. Larger changes allowed if justified and tested."
-  bad  "rewrites the file from scratch"
-  good "reads it, then changes the four lines that are wrong"
+  fix "Read the entire target and its relevant dependencies before editing; preserve behavior and prove the change."
+  bad  "edits a forty-line excerpt without reading the complete source or its callers"
+  good "reads the whole source, traces dependency and caller files, then changes only the justified lines"
 end
 
 Law.define(:BE_CONCISE) do
@@ -224,24 +229,44 @@ Law.define(:EXECUTE_NOT_INSTRUCT) do
   practice <<~TEXT
     run the probes, gates, tests and fixes here. Never close with "you should
     run X" when X is executable. Gate stdout beats narrative completion; on
-    failure, diagnose and retry rather than handing the chore back.
+    failure, diagnose and retry rather than handing the chore back. Commit and
+    push each owned, verified repair batch before moving on unless the operator
+    explicitly withholds publication or a safety/delivery guard blocks it.
   TEXT
-  fix "run the probes, gates, tests and fixes here."
-  bad  "you should run bin/ci"
-  good "ran bin/ci; here is its output"
+  fix "Run the required proof, then commit and push each owned verified batch; report any blocked delivery."
+  bad  "leaves an accumulating uncommitted repair backlog and says to push it later"
+  good "commits and verifies a coherent repair checkpoint, pushes it, then continues"
 end
 
 Law.define(:SCAN_SWEEP_CONVERGENCE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    "through" means deep scan the path, then sweep until clean or blocked.
-    Lint written paths and audit lib/ for drift after mutations. Plain
-    language, not memorised command chains.
+    "through" means deep scan the path and attempt every actionable finding,
+    then rescan and repeat until DONE or an explicit truthful terminal state.
+    No fixer, time limit, quota pause or failed pass proves everything was
+    repaired. Name every unresolved finding, exclusion, unmeasured surface and
+    human decision. Lint written paths and audit lib/ for drift after mutations.
   TEXT
-  fix "\"through\" means deep scan the path, then sweep until clean or blocked."
-  bad  "one scan, then stops"
-  good "scans, then sweeps until clean or blocked"
+  fix "Sweep every actionable finding and prove convergence; report every blocker and unresolved item."
+  bad  "one scan, then stops or reports success with unresolved findings"
+  good "repairs and rechecks every actionable finding, or names the precise non-DONE terminal state"
+end
+
+Law.define(:DOCUMENTATION_FOLLOWS_CODE) do
+  source "MASTER constitution — one source of truth and executable documentation"
+  severity :error
+  ask "After a code change, are affected user documentation, interface contracts, configuration instructions and operations guidance reconciled, and have generated documents been regenerated from their canonical source?"
+  practice <<~TEXT
+    after every code change, reconcile the affected documentation in the same
+    repair batch. When behavior, public interfaces, commands, configuration or
+    operations change, update the relevant README/contract/runbook and regenerate
+    every affected generated document through its canonical generator. Never
+    hand-edit generated copies, and do not churn unrelated documents.
+  TEXT
+  fix "Update affected documentation and regenerate generated copies from the canonical source before closing the batch."
+  bad  "changes a command or interface but leaves its documented contract stale"
+  good "updates the affected README/contract and runs the canonical docs generator"
 end
 
 Law.define(:COUNCIL_WHEN_RISKY) do
