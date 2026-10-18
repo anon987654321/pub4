@@ -284,6 +284,14 @@ def default_apply?(*) = false
           { before: @observation_totals[before], after: (@observation_totals[after] if after != before) }.compact
         end
 
+        # Read the canonical FixLoop state vocabulary instead of maintaining
+        # a second list of failure-shaped terminal strings here. Only DONE
+        # means this lifecycle proved completion; every other terminal is a halt.
+        def non_success_fix_terminal?(message)
+          state = message.to_s.match(/\A([A-Z_]+):/)&.captures&.first&.downcase&.to_sym
+          state && state != :done && Master::Fix::FixLoop::TERMINAL_STATES.include?(state)
+        end
+
         def run_fix(abs)
           # On vm23 the control plane shares this process and owns Git sync + deploy.
           # Claim the same execution slot around an interactive /fix so the control
@@ -297,7 +305,7 @@ def default_apply?(*) = false
             end
 
             msg = result.value!.to_s
-            if msg.match?(/\A(?:PLATEAU|HUMAN_DECISION|BLOCKED|INCONCLUSIVE|VALIDATION_FAILED|DELIVERY_FAILED|TIMEOUT|FAILED|RELOADING):/)
+            if non_success_fix_terminal?(msg)
               @failed_stages << "fix" unless @failed_stages.include?("fix")
               Master::Trace::Dmesg.status("fix0", "incomplete, #{msg[0, 120]}")
               next "fix incomplete: #{msg}"
