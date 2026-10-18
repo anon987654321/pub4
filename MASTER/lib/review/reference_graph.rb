@@ -108,6 +108,9 @@ module Master
         probe = File.binread(path, PROBE_BYTES)
         return false if probe.include?("\0")
 
+        # Extensionless source and dotfiles are common authoritative inputs
+        # (Rakefile, Gemfile, Makefile, .gitignore). Include all readable text
+        # instead of quietly narrowing the dependency graph by suffix.
         probe.dup.force_encoding(Encoding::UTF_8).valid_encoding?
       rescue SystemCallError
         false
