@@ -165,7 +165,8 @@ module Master
         laws:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:,
         incremental: ENV["MASTER_INCREMENTAL"] == "1",
         ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
-        law_resolver: infra[:law_resolver], homeostat: infra[:homeostat]
+        law_resolver: infra[:law_resolver], homeostat: infra[:homeostat],
+        reference_graph: infra[:reference_graph]
       )
       start_fix_loop_background(fix_loop, root:, bus:) if ENV["MASTER_AUTOFIX"] == "1"
       fix_loop
