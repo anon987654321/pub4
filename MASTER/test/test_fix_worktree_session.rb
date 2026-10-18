@@ -185,7 +185,8 @@ exit(system("git", "commit", "-m", "worker fix"))
     with_repo(worker:) do |root|
       session = Master::Fix::WorktreeSession.new(root:)
       session.define_singleton_method(:publish!) do |worktree:, branch:, head:, base:|
-        raise IOError, "private push URL must not leak"
+        raise IOError,
+              "private push URL https://user:secret@example.test/repo.git; PR https://github.com/anon987654321/pub4/pull/99"
       end
 
       result = nil
@@ -195,8 +196,9 @@ exit(system("git", "commit", "-m", "worker fix"))
 
       refute result.ok, err + out
       assert_equal :delivery_failed, result.category
-      assert_match(/\ADELIVERY_FAILED: final publication did not complete cleanly \(IOError\)/, result.summary)
+      assert_match(/\ADELIVERY_FAILED: final publication did not complete cleanly \(IOError\); PR https:\/\/github\.com\/anon987654321\/pub4\/pull\/99\z/, result.summary)
       refute_includes result.summary, "private push URL"
+      refute_includes result.summary, "user:secret"
       assert File.directory?(result.worktree), "unpublished work must remain available for recovery"
       assert_equal "base\n", git_output(root, "show", "origin/main:README")
       refute_empty git_output(root, "ls-remote", "--heads", "origin", result.branch)
