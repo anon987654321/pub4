@@ -188,7 +188,18 @@ module Brgen
     end
 
     def self.normalize_host(host)
-      host.to_s.downcase.split(":", 2).first.to_s.delete_suffix(".").sub(/\Awww\./, "")
+      authority = host.to_s.downcase
+      return "" if authority.empty? || authority.match?(/[\s\/\\@?#,]/)
+
+      hostname, port = authority.split(":", 2)
+      if authority.include?(":")
+        return "" unless port&.match?(/\A\d{1,5}\z/) && port.to_i.between?(1, 65_535)
+      end
+
+      hostname = hostname.to_s.delete_suffix(".").sub(/\Awww\./, "")
+      return "" unless hostname.match?(/\A[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*\z/)
+
+      hostname
     end
 
     def self.entry_for(host)
