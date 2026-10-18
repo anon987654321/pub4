@@ -1552,6 +1552,24 @@ end
     assert_equal :validation_failed, loop.send(:terminal_state_for, result)
   end
 
+  def test_terminal_state_preserves_every_typed_worktree_outcome
+    loop = build_loop([])
+    expected = {
+      human_decision: :human_decision,
+      plateau: :plateau,
+      reloading: :reloading,
+      failed: :failed,
+      delivery_failed: :delivery_failed,
+      policy: :blocked,
+      validation: :validation_failed,
+    }
+
+    expected.each do |category, state|
+      result = Master::Result.err("terminal #{category}", category:)
+      assert_equal state, loop.send(:terminal_state_for, result), category.to_s
+    end
+  end
+
   def test_a_canonical_repo_leaves_a_hashed_outcome_receipt_the_terminal_event_names
     %w[MASTER RAILS OPENBSD STUDIO].each { |tree| FileUtils.mkdir_p(File.join(@root, tree)) }
     loop = build_loop([])
