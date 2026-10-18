@@ -274,6 +274,17 @@ module Master
         case arg
         when "", "status"
           voice_status
+        when "on"
+          ENV["MASTER_CLI_SPEAK"] = "1"
+          if Voice::Playback.enabled?
+            "voice0 at mainbus0: on, CLI speech enabled for this session"
+          else
+            "voice0 at mainbus0: requested on, but blocked by MASTER_SKIP_TTS, CI, or a non-interactive terminal"
+          end
+        when "off"
+          ENV["MASTER_CLI_SPEAK"] = "0"
+          Voice::Playback.interrupt!("voice off")
+          "voice0 at mainbus0: off, CLI replies remain text"
         when "natural", "normal", "classic", "fast"
           ENV["MASTER_TTS_MODE"] = "classic"
           ENV.delete("MASTER_TTS_PROFILE")
@@ -301,10 +312,11 @@ module Master
           if ok
             "voice0 at mainbus0: test passed, player #{player ? player.first : "none"}"
           else
-            "voice0 at mainbus0: test failed, see /voice status for the last error"
+            suffix = Voice::Playback.enabled? ? "see /voice status for the last error" : "use /voice on to enable CLI speech"
+            "voice0 at mainbus0: test failed, #{suffix}"
           end
         else
-          "voice  voice natural  voice expressive  voice dilla  voice status  voice timing  voice test"
+          "voice  voice on  voice off  voice natural  voice expressive  voice dilla  voice status  voice timing  voice test"
         end
       rescue StandardError => e
         "voice0 at mainbus0: failed, #{e.class}: #{e.message}"
