@@ -87,6 +87,27 @@ exit(system("git", "commit", "-m", "worker fix"))
     end
   end
 
+  def test_remote_branch_cleanup_failure_is_reported_after_delivery
+    worker = <<~'RUBY'
+      #!/usr/bin/env ruby
+      File.write("README", "after\n")
+      system("git", "add", "README")
+      puts "review0: complete"
+      exit(system("git", "commit", "-m", "worker fix"))
+    RUBY
+
+    with_repo(worker:, deny_deletes: true) do |root|
+      result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test", proof_trees: ["MASTER"])
+
+      assert result.ok
+      assert_match(/published/, result.summary)
+      assert_includes result.summary, "remote branch cleanup failed, retained origin/#{result.branch}"
+      refute File.exist?(result.worktree)
+      assert_equal "after\n", git_output(root, "show", "origin/main:README")
+      refute_empty git_output(root, "ls-remote", "--heads", "origin", result.branch)
+    end
+  end
+
   def test_gate_baseline_cache_survives_disposable_worktree
     worker = <<~'RUBY'
       #!/usr/bin/env ruby
@@ -384,7 +405,7 @@ end
 
 private
 
-def with_repo(worker:)
+def with_repo(worker:, deny_deletes: false)
   Dir.mktmpdir("master-worktree-test-") do |dir|
     remote = File.join(dir, "remote.git")
     root = File.join(dir, "pub4")
@@ -403,6 +424,7 @@ def with_repo(worker:)
     git(root, "commit", "-m", "initial", out: File::NULL)
     git(root, "branch", "-M", "main")
     git(root, "push", "-u", "origin", "main", out: File::NULL, err: File::NULL)
+    git(remote, "config", "receive.denyDeletes", "true", out: File::NULL, err: File::NULL) if deny_deletes
     yield root
   end
 end

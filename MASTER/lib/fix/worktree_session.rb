@@ -106,9 +106,10 @@ module Master
         if failure_reason
           failed_head = rev_parse(worktree, "HEAD")
           if failed_head == base && own_dirty(worktree, included).empty?
-            cleanup_success(worktree:, branch:)
-            announce("#{failure_reason}; no changes were written, worktree and branch removed")
-            return Result.new(false, "#{failure_reason}; no changes were written, worktree removed", base, failed_head, branch, worktree)
+            remote_removed = cleanup_success(worktree:, branch:)
+            note = cleanup_note(remote_removed, branch)
+            announce("#{failure_reason}; no changes were written, worktree removed#{note}")
+            return Result.new(false, "#{failure_reason}; no changes were written, worktree removed#{note}", base, failed_head, branch, worktree)
           end
           return preserve(
             worktree:, branch:, base:, head: failed_head,
@@ -127,9 +128,10 @@ module Master
 
         head = rev_parse(worktree, "HEAD")
         if head == base
-          cleanup_success(worktree:, branch:)
-          announce("worker made no committed changes, worktree removed")
-          return Result.new(true, "worktree: clean, no changes to publish", base, head, branch, worktree)
+          remote_removed = cleanup_success(worktree:, branch:)
+          note = cleanup_note(remote_removed, branch)
+          announce("worker made no committed changes, worktree removed#{note}")
+          return Result.new(true, "worktree: clean, no changes to publish#{note}", base, head, branch, worktree)
         end
 
         changed = diff_paths(worktree, base, head)
@@ -165,12 +167,13 @@ module Master
         end
 
         published_head = publish!(worktree:, branch:, head:, base:)
-        cleanup_success(worktree:, branch:)
-        announce("published #{published_head.to_s[0, 12]} to origin/main (candidate #{head[0, 12]}), worktree removed")
+        remote_removed = cleanup_success(worktree:, branch:)
+        note = cleanup_note(remote_removed, branch)
+        announce("published #{published_head.to_s[0, 12]} to origin/main (candidate #{head[0, 12]}), worktree removed#{note}")
 
         Result.new(
           true,
-          "worktree: published candidate #{head[0, 12]} as #{published_head.to_s[0, 12]} to origin/main; local checkout untouched",
+          "worktree: published candidate #{head[0, 12]} as #{published_head.to_s[0, 12]} to origin/main; local checkout untouched#{note}",
           base,
           head,
           branch,
@@ -275,12 +278,19 @@ module Master
       def cleanup_success(worktree:, branch:)
         git!("worktree", "remove", "--force", worktree)
         git!("branch", "-D", branch)
+        remote_removed = true
         begin
           git!("push", "origin", "--delete", branch)
         rescue StandardError => e
-          announce("remote branch cleanup warning, #{e.message}")
+          remote_removed = false
+          announce("remote branch cleanup warning, retained origin/#{branch}: #{e.message}")
         end
         cleanup_parent(File.dirname(worktree))
+        remote_removed
+      end
+
+      def cleanup_note(remote_removed, branch)
+        remote_removed ? "" : "; remote branch cleanup failed, retained origin/#{branch}"
       end
 
       def preserve(worktree:, branch:, base:, head:, summary:, lines:)
