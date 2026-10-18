@@ -28,6 +28,7 @@ module Master
       include DirtyEdits
 
       Result = Data.define(:ok, :summary, :base, :head, :branch, :worktree, :category)
+      PUBLIC_GITHUB_PR = %r{\Ahttps://github\.com/[\w.-]+/[\w.-]+/pull/\d+\z}.freeze
       MIN_FREE_DISK_GB = 2.0
 
       def self.foreign_paths(root:)
@@ -220,7 +221,9 @@ module Master
         detail = if published_head
           "delivery completed as #{published_head.to_s[0, 12]}, but worktree cleanup failed (#{e.class})"
         elsif phase == :publish
-          "DELIVERY_FAILED: final publication did not complete cleanly (#{e.class})"
+          detail = "DELIVERY_FAILED: final publication did not complete cleanly (#{e.class})"
+          pr_url = public_pr_reference(e.message)
+          pr_url ? "#{detail}; PR #{pr_url}" : detail
         elsif e.is_a?(Interrupt)
           "worktree cancelled by operator"
         else
@@ -308,7 +311,11 @@ module Master
               MASTER will not publish directly to main; GitHub is the merge authority.
             BODY
           )
-          raise result.summary unless result.ok
+          unless result.ok
+            pr_url = public_pr_url(result.url)
+            summary = pr_url ? "#{result.summary}; PR #{pr_url}" : result.summary
+            raise summary
+          end
           merged_sha = result.merged_sha.to_s
           raise "GitHub reported MERGED without a valid merge commit SHA" unless merged_sha.match?(/\A[0-9a-f]{40}\z/i)
 
@@ -399,6 +406,18 @@ module Master
 
       # Exit status zero is not sufficient: the CLI can print an explicit
       # incomplete terminal result. Never report that run as a clean success.
+      # Expose only canonical public PR links in delivery failures. Arbitrary
+      # command output may contain credentials, so do not echo it to the operator.
+      def public_pr_url(value)
+        candidate = value.to_s
+        candidate if candidate.match?(PUBLIC_GITHUB_PR)
+      end
+
+      def public_pr_reference(message)
+        candidate = message.to_s[%r{https://github\.com/[\w.-]+/[\w.-]+/pull/\d+}]
+        public_pr_url(candidate)
+      end
+
       def worker_terminal_failure(lines)
         Array(lines).find do |line|
           line.match?(/\A(?:review|fix)\d+(?:\s+at\s+[^:]+)?\s*:\s*(?:incomplete|failed|crash|skip|blocked|inconclusive|validation_failed|delivery_failed|timeout|human_decision|plateau|reloading|complete\s+with\s+open\s+findings)\b/i)
