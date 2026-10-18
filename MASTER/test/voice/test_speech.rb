@@ -680,8 +680,9 @@ class TestSpeech < Minitest::Test
 
     speech.stub(:fast_tts_mode?, true) do
       speech.stub(:synthesis_mode, "classic") do
-        speech.stub(:synthesize_edge_socket, nil) do
-          speech.stub(:synthesize_edge_oneshot, synth) do
+        speech.stub(:normal_worker_timeout, 45) do
+          speech.stub(:synthesize_edge_socket, nil) do
+            speech.stub(:synthesize_edge_oneshot, synth) do
             result = speech.synthesize_edge(
               "Read these words exactly.",
               voice: :christopher,
@@ -690,7 +691,8 @@ class TestSpeech < Minitest::Test
             )
             audio_path = result
 
-            assert_equal "edge-audio", File.binread(result)
+              assert_equal "edge-audio", File.binread(result)
+            end
           end
         end
       end
