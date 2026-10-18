@@ -71,9 +71,14 @@ module Master
         end
 
         def visit_def_node(node)
-          receiver = node.receiver && constant_name(node.receiver)
+          receiver_node = node.receiver
+          receiver = if receiver_node.is_a?(Prism::SelfNode)
+                       @namespaces.last
+                     elsif receiver_node
+                       constant_name(receiver_node)
+                     end
           owner = receiver || @namespaces.last
-          singleton = !node.receiver.nil?
+          singleton = !receiver_node.nil?
           fqn = if owner
                   "#{owner}#{singleton ? "." : "#"}#{node.name}"
                 else
@@ -119,6 +124,7 @@ module Master
             :call,
             name,
             receiver:,
+            receiver_explicit: !node.receiver.nil?,
             scope:,
             caller: @methods.last && @methods.last[:fqn],
             singleton_scope: @methods.last && @methods.last[:singleton],
@@ -136,7 +142,8 @@ module Master
             target = literal_method_name(Array(node.arguments&.arguments).first)
             if target
               @references << reference(node.location.start_line, :dynamic_call, target,
-                                       receiver:, scope:, caller: @methods.last && @methods.last[:fqn])
+                                       receiver:, receiver_explicit: !node.receiver.nil?, scope:,
+                                       caller: @methods.last && @methods.last[:fqn])
             else
               @dynamic_sites << dynamic_site(node.location.start_line, name, "dynamic method name")
             end
@@ -154,8 +161,9 @@ module Master
           { fqn:, name:, kind:, file: @file, line:, owner:, singleton: }
         end
 
-        def reference(line, kind, name, receiver: nil, scope: nil, caller: nil, singleton_scope: false)
-          { from_file: @file, line:, kind:, name:, receiver:, scope:, caller:, singleton_scope: }
+        def reference(line, kind, name, receiver: nil, receiver_explicit: false, scope: nil,
+                      caller: nil, singleton_scope: false)
+          { from_file: @file, line:, kind:, name:, receiver:, receiver_explicit:, scope:, caller:, singleton_scope: }
         end
 
         def dynamic_site(line, name, reason)
@@ -288,7 +296,9 @@ module Master
         target_names = @ruby_definitions.select { |row| row[:file] == rel && row[:kind] == :method }
                                         .map { |row| row[:name] }.to_set
         @unresolved_references.select do |row|
-          row[:from_file] == rel || (row[:kind] == :call && target_names.include?(row[:name]))
+          dynamic = row[:receiver_explicit] || row[:kind] == :dynamic_call
+          dynamic && (row[:from_file] == rel ||
+            (%i[call dynamic_call].include?(row[:kind]) && target_names.include?(row[:name])))
         end.map(&:dup)
       end
 
@@ -423,7 +433,7 @@ module Master
         if !receiver.empty?
           exact = by_fqn.values_at("#{receiver}##{name}", "#{receiver}.#{name}").compact.flatten
           return exact unless exact.empty?
-        elsif !reference[:scope].to_s.empty?
+        elsif !reference[:receiver_explicit] && !reference[:scope].to_s.empty?
           scope = reference[:scope].to_s
           preferred = if reference[:singleton_scope]
                         by_fqn.values_at("#{scope}.#{name}", "#{scope}##{name}").compact.flatten
