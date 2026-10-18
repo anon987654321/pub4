@@ -143,6 +143,9 @@ module Preflight
       next warnings << "#{name}: no caption" unless File.file?(caption)
 
       text = File.read(caption)
+      if text.strip == "#{trigger.strip},"
+        problems << "#{name}: stub caption needs review; describe pose, clothing, light and setting"
+      end
       problems << "#{name}: names an age (#{text[AGE_WORDS]}); age rides the token" if text.match?(AGE_WORDS)
       warnings << "#{name}: names #{text[IDENTITY_WORDS].inspect}; identity rides the token" if text.match?(IDENTITY_WORDS)
       warnings << "#{name}: lacks the trigger #{trigger.inspect}" unless text.downcase.include?(trigger.downcase)
