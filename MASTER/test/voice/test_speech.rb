@@ -680,7 +680,10 @@ class TestSpeech < Minitest::Test
     speech.stub(:fast_tts_mode?, true) do
       speech.stub(:synthesis_mode, "classic") do
         speech.stub(:normal_worker_timeout, 45) do
-          speech.stub(:synthesize_edge_socket, nil) do
+          speech.stub(:synthesize_edge_socket, lambda { |**|
+            speech.instance_variable_set(:@last_error, "edge socket produced empty audio")
+            nil
+          }) do
             speech.stub(:synthesize_edge_oneshot, synth) do
             result = speech.synthesize_edge(
               "Read these words exactly.",
