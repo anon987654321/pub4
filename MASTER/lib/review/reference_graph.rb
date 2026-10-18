@@ -2,6 +2,7 @@
 
 require "find"
 require "set"
+require "digest"
 require "prism"
 
 module Master
@@ -231,6 +232,7 @@ module Master
         @nodes = Set.new
         @edges = []
         @analysis_failures = []
+        @source_digests = {}
         @ruby_definitions = []
         @ruby_references = []
         @dynamic_sites = []
@@ -248,6 +250,7 @@ module Master
             @nodes.clear
             @edges.clear
             @analysis_failures.clear
+            @source_digests.clear
             @ruby_definitions.clear
             @ruby_references.clear
             @dynamic_sites.clear
@@ -307,6 +310,10 @@ module Master
         @dynamic_sites.select { |row| row[:file] == rel }.map(&:dup)
       end
 
+      def source_digest(path)
+        @source_digests[relative(path)]
+      end
+
       private
 
       def files
@@ -347,6 +354,7 @@ module Master
         @nodes << rel
 
         content = File.read(file, encoding: "UTF-8", invalid: :replace, undef: :replace)
+        @source_digests[rel] = Digest::SHA256.hexdigest(content)
 
         ruby_requires(content, rel)
         constant_refs(content, rel)
