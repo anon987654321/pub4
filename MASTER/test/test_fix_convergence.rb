@@ -854,6 +854,39 @@ end
     assert_equal [[:verify, "MASTER"], [:verify, "RAILS"]], events.grep(Array).select { |e| e.first == :verify }
   end
 
+  def test_final_push_failure_is_delivery_failed_and_does_not_persist_baselines
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { raise IOError, "push token should not appear in the report" }
+
+    result = nil
+    Master::CLI::CommandRegistry.stub(:worktree_fix_requested?, false) do
+      Master::CLI::CommandRegistry.stub(:run_pass, ->(_deps, **kwargs) { "DONE: #{kwargs.fetch(:target)} clean" }) do
+        Operator::GateChain.stub(:baseline, ->(target:) { {} }) do
+          Operator::GateChain.stub(:verify_fix, ->(target:, baseline:) { [0, []] }) do
+            Operator::GateChain.stub(
+              :persist_verified_baselines!,
+              ->(*) { flunk("failed publish must not cache a delivered baseline") },
+            ) do
+              result = Operator::GateChain.stub(
+                :clear_verified_fix_snapshots!, nil
+              ) do
+                Master::CLI::CommandRegistry.dispatch_fix(
+                  scanner: nil, fix_loop:, deliberation: nil, root: Master::ROOT, bus: @bus,
+                  ctx: { args: "MASTER RAILS --no-aesthetic" },
+                )
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_instance_of Master::Result::Err, result
+    assert_equal :delivery_failed, result.category
+    assert_match(/\ADELIVERY_FAILED: final publish failed after verification \(IOError\)\z/, result.message)
+    refute_includes result.message, "push token"
+  end
+
   def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
     verified = []
     states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
