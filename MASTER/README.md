@@ -68,10 +68,14 @@ target file and complete sources for the direct graph-linked dependencies and
 callers that the graph can resolve, with SHA-256 identifiers. These are treated
 as untrusted source data, never as instructions. A missing linked file or a
 context that exceeds `MASTER_FIX_CONTEXT_MAX_BYTES` stops that repair rather
-than clipping the input and guessing. The current graph is static: dynamic
-dispatch, reflection and arbitrary runtime loading still require explicit
-reference investigation and runtime evidence; the graph is not proof that every
-possible call edge has been resolved.
+than clipping the input and guessing. The graph now uses Prism to identify Ruby class, module, constant and
+method definitions, plus statically identifiable method calls, inheritance,
+mixins and constant references, alongside import edges. It reports unresolved
+references and dynamic sites; repairs defer when unresolved relationships could
+affect the target or its directly linked files. Dynamic receiver types,
+reflection, metaprogramming, plugin discovery, runtime loading and non-Ruby
+import/call graphs remain incomplete, so this is not proof that every possible
+caller has been discovered.
 
 The unbounded worklist is scanned before repair starts, then prioritized by the
 highest finding severity, weighted finding impact and a stable path tie-break.
