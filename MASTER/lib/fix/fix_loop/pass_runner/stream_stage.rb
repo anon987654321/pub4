@@ -213,7 +213,8 @@ module Master
             repair = FileRepair.new(
               findings:, rules: runnable, agent: @agent, scanner: @scanner, root: @root,
               bus: @bus, learnings: @learnings, committer: @committer,
-              context_files: context[:files], expected_target_sha256: context[:target_sha256],
+              context_files: context[:files], context_root: context[:context_root],
+              expected_target_sha256: context[:target_sha256],
             )
             result = repair.run(path)
             # Only what the model was asked counts: a split filtered out before the
@@ -288,6 +289,7 @@ module Master
             {
               complete: true,
               files: entries,
+              context_root: graph.root,
               target_sha256:,
             }
           rescue StandardError => e
