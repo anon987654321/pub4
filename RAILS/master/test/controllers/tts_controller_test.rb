@@ -60,8 +60,12 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
 
-    Master::Voice::Playback.stub(:enabled?, false) do
+    original_cli_speech = ENV.fetch("MASTER_CLI_SPEAK", nil)
+    begin
+      ENV["MASTER_CLI_SPEAK"] = "0"
       get "/chat/tts", params: { text:, voice: voice.to_s, style: style.to_s }
+    ensure
+      original_cli_speech ? ENV["MASTER_CLI_SPEAK"] = original_cli_speech : ENV.delete("MASTER_CLI_SPEAK")
     end
 
     assert_response :success
