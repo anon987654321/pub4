@@ -672,8 +672,8 @@ class TestSpeech < Minitest::Test
     speech.instance_variable_set(:@last_error, "edge socket produced empty audio")
     seen = nil
     audio_path = nil
-    synth = lambda do |text:, voice_name:, style_config:, audio_path:|
-      seen = [text, voice_name, style_config]
+    synth = lambda do |text:, voice_name:, style_config:, audio_path:, timeout: nil|
+      seen = [text, voice_name, style_config, timeout]
       File.binwrite(audio_path, "edge-audio")
       audio_path
     end
@@ -699,6 +699,7 @@ class TestSpeech < Minitest::Test
     assert_equal "Read these words exactly.", seen.fetch(0)
     assert_equal "en-US-ChristopherNeural", seen.fetch(1)
     assert_equal "+0%", seen.fetch(2).fetch(:rate)
+    assert_equal 30, seen.fetch(3)
     assert_nil speech.last_error, "successful Edge retry must clear the recovered socket error"
   ensure
     File.delete(audio_path) if audio_path && File.exist?(audio_path)
