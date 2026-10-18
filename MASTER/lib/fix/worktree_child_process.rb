@@ -41,11 +41,11 @@ module Master
         def carry_gate_baseline(worktree)
           source_dir = File.join(@repo_root, "MASTER", ".master")
           source = File.join(source_dir, GATE_BASELINE_STATE)
-          return false unless safe_gate_baseline_path?(source_dir, source) && File.file?(source)
+          return false unless safe_gate_baseline_path?(@repo_root, source_dir, source) && File.file?(source)
 
           destination_dir = File.join(worktree, "MASTER", ".master")
           destination = File.join(destination_dir, GATE_BASELINE_STATE)
-          return false unless safe_gate_baseline_path?(destination_dir, destination)
+          return false unless safe_gate_baseline_path?(worktree, destination_dir, destination)
 
           FileUtils.mkdir_p(destination_dir)
           FileUtils.cp(source, destination)
@@ -61,11 +61,11 @@ module Master
         def persist_gate_baseline(worktree)
           source_dir = File.join(worktree, "MASTER", ".master")
           source = File.join(source_dir, GATE_BASELINE_STATE)
-          return false unless safe_gate_baseline_path?(source_dir, source) && File.file?(source)
+          return false unless safe_gate_baseline_path?(worktree, source_dir, source) && File.file?(source)
 
           destination_dir = File.join(@repo_root, "MASTER", ".master")
           destination = File.join(destination_dir, GATE_BASELINE_STATE)
-          return false unless safe_gate_baseline_path?(destination_dir, destination)
+          return false unless safe_gate_baseline_path?(@repo_root, destination_dir, destination)
 
           bytes = File.binread(source)
           FileUtils.mkdir_p(destination_dir)
@@ -82,10 +82,11 @@ module Master
           false
         end
 
-        def safe_gate_baseline_path?(directory, path)
+        def safe_gate_baseline_path?(root, directory, path)
+          base = File.expand_path(root)
+          expanded = File.expand_path(path)
           return false if File.symlink?(directory) || File.symlink?(path)
-          return false unless File.expand_path(path).start_with?("#{File.expand_path(@repo_root)}#{File::SEPARATOR}") ||
-                              File.expand_path(path).start_with?("#{File.expand_path(@repo_root)}/")
+          return false unless expanded.start_with?("#{base}#{File::SEPARATOR}")
 
           true
         end
