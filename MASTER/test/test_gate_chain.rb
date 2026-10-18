@@ -460,6 +460,44 @@ class TestGateChain < Minitest::Test
     saved ? File.write(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
   end
 
+  def test_final_fix_proof_is_inconclusive_without_a_verified_candidate_baseline
+    saved = File.file?(G::BASELINE_FILE) ? File.binread(G::BASELINE_FILE) : nil
+    G.clear_verified_fix_snapshots!
+    FileUtils.rm_f(G::BASELINE_FILE)
+
+    status, changed = capture_io do
+      result = G.verify_cached_fix(target: "MASTER")
+      break result
+    end
+
+    assert_equal 3, status
+    assert_empty changed
+  ensure
+    G.clear_verified_fix_snapshots!
+    saved ? File.binwrite(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
+  end
+
+  def test_final_fix_proof_reuses_the_verified_baseline_for_its_candidate
+    saved = File.file?(G::BASELINE_FILE) ? File.binread(G::BASELINE_FILE) : nil
+    previous_results = G.instance_variable_get(:@last_results)
+    G.clear_verified_fix_snapshots!
+    key = G.baseline_key("MASTER")
+    G.write_baseline(key, {})
+
+    result = G.stub(:report, lambda { |_selected, scan_only:, trees:, return_results:|
+      G.instance_variable_set(:@last_results, [])
+      [0, []]
+    }) do
+      G.verify_cached_fix(target: "MASTER")
+    end
+
+    assert_equal [0, []], result
+  ensure
+    G.instance_variable_set(:@last_results, previous_results)
+    G.clear_verified_fix_snapshots!
+    saved ? File.binwrite(G::BASELINE_FILE, saved) : FileUtils.rm_f(G::BASELINE_FILE)
+  end
+
   def test_untracked_scanned_source_content_invalidates_the_baseline_key
     Dir.mktmpdir("gate-baseline") do |root|
       system("git", "-C", root, "init", "--quiet") || flunk("git init failed")
