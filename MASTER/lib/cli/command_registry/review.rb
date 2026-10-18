@@ -159,12 +159,18 @@ module Master
 
         repo_root = File.expand_path(root)
         repo_root = Master::REPO_ROOT if repo_root == Master::ROOT
+        master_root = File.join(repo_root, "MASTER")
         [target].filter_map do |value|
-          path = File.expand_path(value.to_s, repo_root)
-          trees.find do |tree|
-            base = File.join(repo_root, tree)
-            path == base || path.start_with?("#{base}#{File::SEPARATOR}")
-          end
+          candidates = [
+            File.expand_path(value.to_s, repo_root),
+            File.expand_path(value.to_s, master_root),
+          ].uniq
+          candidates.filter_map do |path|
+            trees.find do |tree|
+              base = File.join(repo_root, tree)
+              path == base || path.start_with?("#{base}#{File::SEPARATOR}")
+            end
+          end.first
         end.uniq
       end
 
