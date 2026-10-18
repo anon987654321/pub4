@@ -71,24 +71,58 @@ module Master
             resolve_violations(raw)
           end
 
-          # Ranking waits for the whole scan, which streaming exists to avoid, so
-          # it is on only when asked for (MASTER_FIX_RANK=1). A run limited by
-          # --max-files takes the first N files that have findings, as they scan.
-          def rank_worklist? = ENV["MASTER_FIX_RANK"] == "1"
+          # An unbounded operator-requested run completes the eligible scan before
+          # it starts repairs, then orders its worklist by impact. An explicit
+          # --max-files bound keeps its early-stop behavior unless ranking was
+          # explicitly requested, so bounded runs do not silently become full scans.
+          def rank_worklist?
+            return true if ENV["MASTER_FIX_RANK"] == "1"
+            return false if RunLedger.max_files
 
-          # Fewest deterministic findings first: the files a model is most likely
-          # to finish in one call go before the ones that need a rewrite. With
-          # --max-files N only the first N are taken; the rest count as handled
-          # so the rule stage after the scan does not send them anyway.
+            ENV.fetch("MASTER_FIX_RANK", "1") != "0"
+          end
+
+          # Severity wins before volume: one error is more urgent than many style
+          # findings. Weighted total impact and finding count break ties, then the
+          # stable path makes the order reproducible. LawOrder separately enforces
+          # the declared dependency order inside each file's repair.
           def enqueue_ranked(ranked, queue, streamed)
-            ordered = ranked.sort_by { |path, rows| [rows.size, path] }
+            ordered = ranked.sort_by do |path, rows|
+              peak, total, count = worklist_priority(rows)
+              [-peak, -total, -count, path]
+            end
             limit = RunLedger.max_files
             taken, left = limit ? ordered.partition.with_index { |_, index| index < limit } : [ordered, []]
             taken.each { |item| queue << item }
             left.each { |path, rows| rows.each { |row| streamed << [path.delete_prefix("#{@root}/"), row[:law].to_s] } }
-            return if left.empty?
 
-            Master::Trace::Dmesg.status("fix0", "worklist ranked by finding count, easiest first: #{taken.size} file(s) taken, #{left.size} left (--max-files #{limit})")
+            detail = if left.empty?
+                       "#{taken.size} file(s)"
+                     else
+                       "#{taken.size} prioritized file(s), #{left.size} deferred (--max-files #{limit})"
+                     end
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "worklist ranked by impact (severity, weighted findings, stable path); " \
+              "full eligible scan completed before repair; #{detail}",
+            )
+          end
+
+          SEVERITY_WEIGHT = {
+            veto: 100_000,
+            critical: 50_000,
+            error: 10_000,
+            warning: 1_000,
+            warn: 1_000,
+            info: 100,
+          }.freeze
+
+          def worklist_priority(rows)
+            weights = Array(rows).map do |row|
+              value = row.is_a?(Hash) ? (row[:severity] || row["severity"]) : nil
+              SEVERITY_WEIGHT.fetch(value.to_s.downcase.to_sym, 500)
+            end
+            [weights.max || 0, weights.sum, weights.size]
           end
 
           def start_workers(queue, streamed, pass, budget)
