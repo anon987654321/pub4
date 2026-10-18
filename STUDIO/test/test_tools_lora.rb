@@ -2,6 +2,7 @@
 
 require_relative "tool_test_helper"
 require "open3"
+require "fileutils"
 require "yaml"
 
 # lora trains on GPUs this suite never has, so what it can check is the part
@@ -216,6 +217,30 @@ class TestLora < Minitest::Test
 
       assert_equal 3, written.length, "a.jpg and a_again.jpg are one moment"
       assert_equal 3, Dir[File.join(dataset, "*.jpg")].length
+    end
+  end
+
+  def test_prepare_replace_archives_the_old_dataset_before_refreshing
+    Dir.mktmpdir do |root|
+      subject_dir = File.join(root, "probe")
+      sources = File.join(subject_dir, "sources")
+      FileUtils.mkdir_p(sources)
+      curate_frames(sources)
+
+      dataset = File.join(subject_dir, "dataset")
+      FileUtils.mkdir_p(dataset)
+      File.write(File.join(dataset, "previous.txt"), "preserve prior set\\n")
+
+      script = File.expand_path("../replicate/lora/_toolkit/prepare.rb", __dir__)
+      env = { "SUBJECT" => "probe", "SUBJECT_DIR" => subject_dir, "TRIGGER" => "probe_lora" }
+      output, status = Open3.capture2e(env, RbConfig.ruby, script, "--write", "--replace")
+
+      assert status.success?, output
+      assert_match(/previous dataset archived at/, output)
+      assert_operator Dir[File.join(dataset, "*.jpg")].length, :>=, 2
+      backups = Dir[File.join(subject_dir, ".cache", "dataset-backups", "dataset-*")]
+      assert_equal 1, backups.length
+      assert_equal "preserve prior set\\n", File.read(File.join(backups.first, "previous.txt"))
     end
   end
 
