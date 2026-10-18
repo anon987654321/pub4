@@ -509,7 +509,11 @@ module Master
         return :skip if result.err? && result.category == :skip
         return :delivery_failed if result.err? && result.category == :delivery_failed
         return :blocked if result.err? && result.category == :policy
+        return :human_decision if result.err? && result.category == :human_decision
+        return :plateau if result.err? && result.category == :plateau
+        return :reloading if result.err? && result.category == :reloading
         return :validation_failed if result.err? && result.category == :validation
+        return :failed if result.err? && result.category == :failed
         return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
 
         :failed
