@@ -1468,6 +1468,23 @@ end
     assert_equal :delivery_failed, loop.send(:terminal_state_for, result)
   end
 
+  def test_worktree_delivery_category_survives_the_cli_adapter
+    worktree_error = Master::Fix::WorktreeSession::Result.new(
+      false, "DELIVERY_FAILED: final publication did not complete", nil, nil, "master/fix-test", "/tmp/kept-worktree",
+      :delivery_failed,
+    )
+    session = Object.new
+    session.define_singleton_method(:run) { |**| worktree_error }
+
+    result = Master::Fix::WorktreeSession.stub(:new, session) do
+      Master::CLI::CommandRegistry.dispatch_fix_in_worktree(raw: "MASTER", root: Master::ROOT, target: "MASTER")
+    end
+
+    assert result.err?
+    assert_equal :delivery_failed, result.category
+    assert_match(/DELIVERY_FAILED/, result.message)
+  end
+
   def test_delivery_recovery_preserves_policy_head_mismatch
     loop = build_loop([])
     policy_error = Master::Result.err("delivery recovery HEAD mismatch", category: :policy)
