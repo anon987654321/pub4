@@ -135,7 +135,7 @@ module Master
                   clean = line.to_s.scrub.gsub(Master::Trace::Dmesg::ANSI, "").delete("\r")
                   next if clean.empty?
 
-                  Master::Trace::Dmesg.forward(clean, io: @io)
+                  Master::Trace::Dmesg.forward(safe_diagnostic_text(clean), io: @io)
                   lines << clean.chomp
                 end
               rescue IOError, Errno::EBADF
