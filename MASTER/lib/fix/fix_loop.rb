@@ -493,6 +493,8 @@ module Master
       def recover_pending_delivery(active_pass:, run_id:, commit:)
         recovery_result = retry_delivery(transaction_id: active_pass.fetch("transaction_id"), expected_head: commit)
         if recovery_result.err?
+          return recovery_result unless recovery_result.category == :infrastructure
+
           return Result.err("delivery recovery failed: #{recovery_result.message}", category: :delivery_failed)
         end
 
@@ -506,6 +508,8 @@ module Master
         return :crash if result.err? && result.category == :crash
         return :skip if result.err? && result.category == :skip
         return :delivery_failed if result.err? && result.category == :delivery_failed
+        return :blocked if result.err? && result.category == :policy
+        return :validation_failed if result.err? && result.category == :validation
         return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
 
         :failed
