@@ -513,9 +513,12 @@ class TestLoraReplicate < Minitest::Test
       [{ "LORA_REPLICATE_STEPS" => "1000steps" }, [], "LORA_REPLICATE_STEPS must be a positive integer"],
       [{ "LORA_REPLICATE_LORA_RANK" => "rank16" }, [], "LORA_REPLICATE_LORA_RANK must be a positive integer"],
       [{ "LORA_REPLICATE_TIMEOUT" => "0" }, [], "LORA_REPLICATE_TIMEOUT must be a positive integer"],
+      [{ "LORA_MAX_TRAIN_USD" => "Infinity" }, [], "LORA_MAX_TRAIN_USD must be a finite positive number"],
       [{}, ["--steps", "0"], "--steps / LORA_REPLICATE_STEPS must be a positive integer"],
       [{}, ["--lora-rank", "-1"], "--lora-rank / LORA_REPLICATE_LORA_RANK must be a positive integer"],
-      [{}, ["--timeout", "0"], "--timeout / LORA_REPLICATE_TIMEOUT must be a positive integer"]
+      [{}, ["--timeout", "0"], "--timeout / LORA_REPLICATE_TIMEOUT must be a positive integer"],
+      [{}, ["--max-usd", "NaN"], "--max-usd / LORA_MAX_TRAIN_USD must be a finite positive number"],
+      [{}, ["--max-usd", "-1"], "--max-usd / LORA_MAX_TRAIN_USD must be a finite positive number"]
     ]
 
     Dir.mktmpdir do |dir|
@@ -526,7 +529,8 @@ class TestLoraReplicate < Minitest::Test
           "SUBJECT_DIR" => dir,
           "LORA_REPLICATE_STEPS" => nil,
           "LORA_REPLICATE_LORA_RANK" => nil,
-          "LORA_REPLICATE_TIMEOUT" => nil
+          "LORA_REPLICATE_TIMEOUT" => nil,
+          "LORA_MAX_TRAIN_USD" => nil
         }.merge(overrides)
         output, status = Open3.capture2e(env, RbConfig.ruby, script, *args)
 
