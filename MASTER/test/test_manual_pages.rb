@@ -28,11 +28,11 @@ class TestManualPages < Minitest::Test
       body = File.read(path)
       section = File.extname(relative).delete(".")
 
-      assert_match(/^\\.Dd .+$/m, body, "#{relative}: missing date")
-      title = body.match(/^\\.Dt\\s+(\\S+)\\s+([1-9])\\s*$/)
+      assert_match(/^\.Dd .+$/m, body, "#{relative}: missing date")
+      title = body.match(/^\.Dt\s+(\S+)\s+([1-9])\s*$/)
       refute_nil title, "#{relative}: missing title and section"
       assert_equal section, title[2], "#{relative}: section disagrees with file extension"
-      assert_match(/^\\.Os(?:\\s|$)/, body, "#{relative}: missing OS macro")
+      assert_match(/^\.Os(?:\s|$)/, body, "#{relative}: missing OS macro")
 
       %w[NAME SYNOPSIS DESCRIPTION].each do |heading|
         assert_includes body, ".Sh #{heading}", "#{relative}: missing #{heading}"
