@@ -34,7 +34,7 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "No deterministic fixer exists"
     assert_includes text, "complete current source"
     assert_includes text, "complete direct"
-    assert_includes text, "DOCUMENTATION"
+    assert_includes text, "generated documentation"
     assert_includes text, "commit and push"
     assert_includes text, "Never promise that literally every defect was repaired"
   end
