@@ -166,16 +166,30 @@ module Operator
       selected = verification_stages(target)
       return {} if selected.empty?
 
+      trees = trees_for_target(target)
       key = baseline_key(target)
       cached = read_baseline(key)
       if cached
-        Master::Trace::Dmesg.status("gate0", "baseline reused for #{key[0, 12]}, ladder not re-run")
+        Master::Trace::Dmesg.status("baseline0", "read-only pre-repair proof reused for #{key[0, 12]}, no ladder rerun")
         return cached
       end
 
-      report(selected, scan_only: true, trees: trees_for_target(target), return_results: true)
+      Master::Trace::Dmesg.status(
+        "baseline0",
+        "read-only pre-repair proof starting, trees=#{trees.join(", ")}, stages=#{selected.map(&:name).join(", ")}; repair follows",
+      )
+      status, changed = report(selected, scan_only: true, trees:, return_results: true)
       snapshot = GateRegression.snapshot(@last_results)
       write_baseline(key, snapshot)
+      outcome = case status
+                when 0 then "clean baseline"
+                when 1 then "existing failures recorded"
+                else "INCONCLUSIVE, status=#{status}"
+                end
+      Master::Trace::Dmesg.status(
+        "baseline0",
+        "pre-repair proof captured, #{outcome}, stages=#{selected.size}, attributed_changes=#{changed.size}",
+      )
       snapshot
     end
 
