@@ -105,8 +105,7 @@ module Master
             loop = RepairLoop.new(
               law: VisualPass::Law.new(VisualPass::LAW_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
-              learnings: @learnings, committer: @committer,
-              visual_custody: @visual_pass&.custody
+              learnings: @learnings, committer: @committer
             )
             loop.injected_preamble = [
               @preamble,
