@@ -68,6 +68,16 @@ class TestErrClassification < Minitest::Test
     end
   end
 
+  def test_fix_terminal_categories_have_their_intended_retry_policy
+    %i[human_decision plateau failed].each do |category|
+      assert err(category).permanent?, "#{category} needs intervention rather than automatic retry"
+      refute err(category).retriable?
+    end
+
+    assert err(:reloading).retriable?, "a runtime reload should resume rather than permanently close the task"
+    refute err(:reloading).permanent?
+  end
+
   def test_handler_exception_is_permanent
     assert err(:handler_exception).permanent?
     refute err(:handler_exception).retriable?
