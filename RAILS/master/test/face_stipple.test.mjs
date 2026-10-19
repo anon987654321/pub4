@@ -197,6 +197,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
 test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /webglcontextlost/);
   assert.match(system, /webglcontextrestored/);
+  assert.match(system, /event\?\.preventDefault\?\.\(\)/);
+  assert.match(system, /if \(!enabled \|\| wrappedRenderer \|\| installing\) return/);
+  assert.match(system, /finally \{\s+installing = false;/);
   assert.match(system, /visibilitychange/);
   assert.match(system, /function uninstall\(\)/);
   assert.match(system, /active\?\.geometry\?\.dispose\?\./);
@@ -205,5 +208,6 @@ test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /pointSizing\(\)/);
   assert.match(system, /pointCeiling: pointBudget\(\)/);
   assert.match(system, /currentFaceState\(\)/);
+  assert.match(system, /installing,/);
 });
 
