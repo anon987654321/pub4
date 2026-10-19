@@ -84,7 +84,6 @@ module Operator
       "ABC_SIZE" => "the method decides too much — split at the branch",
       "PATTERN_EXTRACTION" => "the shape repeats — give it a name",
       "NULL_BLINDNESS" => "use .nil? in Ruby and IS NULL in SQL",
-      "STALE_NAMESPACE" => "use the replacement in data/laws.yml#stale_namespaces",
       "CONTROL_CHARS" => "delete the control character",
       "SQL_INJECTION" => "parameterize the query",
       "veto_patterns" => "a veto is not a refinement — read it before touching the file",

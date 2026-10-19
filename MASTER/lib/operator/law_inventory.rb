@@ -294,7 +294,9 @@ end
     end
 
     def history(id)
-      output, status = Master::Io::Exec.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/laws.yml", "MASTER/lib/review/scan/rules")
+      paths = %w[MASTER/law MASTER/data/laws.yml MASTER/lib/review/scan/laws]
+      format = "--format=%h %cs %s"
+      output, status = Master::Io::Exec.capture2("git", "-C", ROOT, "log", "-n", "5", format, "--", *paths)
       return "history unavailable" unless status.success?
 
       matches = output.lines.grep(/#{Regexp.escape(id.to_s)}/i)

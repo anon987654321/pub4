@@ -135,41 +135,6 @@ end
     assert_empty findings(:COMPLETION_THEATER, "# a, b, etc.\n")
   end
 
-  # --- STALE_NAMESPACE ----------------------------------------------------
-
-  def stale_pairs
-    config = (Master.load_yaml(Master.data_path("laws.yml")) || {})["stale_namespaces"] || {}
-    Array(config["stale_constants"]).select { |row| row.is_a?(Hash) }
-  end
-
-  def test_a_retired_constant_used_as_a_prefix_is_not_a_violation
-    refute_empty stale_pairs
-
-    stale_pairs.each do |row|
-      old = row["old"]
-      # Every replacement contains, or is nested under, some retired prefix — that
-      # is exactly the shape that produced 25 false findings.
-      assert_empty findings(:STALE_NAMESPACE, "#{row["new"]}.call\n"),
-                   "#{row["new"]} is the replacement for #{old} and must not be flagged"
-    end
-  end
-
-  def test_the_bare_retired_constant_is_still_a_violation
-    stale_pairs.each do |row|
-      refute_empty findings(:STALE_NAMESPACE, "x = #{row["old"]}\n"),
-                   "#{row["old"]} is retired and must still be flagged"
-    end
-  end
-
-  def test_a_longer_constant_that_merely_starts_with_a_retired_name_is_ignored
-    assert_empty findings(:STALE_NAMESPACE, "Master::CLIRunner.new\n")
-    assert_empty findings(:STALE_NAMESPACE, "Other::Master::Scanner.new\n")
-  end
-
-  def test_the_rules_own_file_is_exempt
-    assert_empty findings(:STALE_NAMESPACE, "x = Master::CLI\n", path: "lib/review/scan/laws/naming_rules.rb")
-  end
-
   # --- DEAD_CODE ----------------------------------------------------------
   # The detector matched a bare \b(return|raise)\b, so every guard clause read as
   # dead code. It must fire only on an unconditional terminator with reachable
@@ -434,17 +399,6 @@ end
     assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "MASTER/bin/master")
   end
 
-  # The gate ladder's exemption names one file, so it is checked against the
-  # file where it lives: the source read here raises the day gate_chain moves,
-  # and the rule fires on it the day the exemption's address goes stale.
-  def test_no_puts_exempts_gate_chain_where_it_actually_lives
-    relative = "lib/operator/gate_chain.rb"
-    source = File.read(File.join(Master::ROOT, relative))
-
-    refute_empty findings(:NO_PUTS, source, path: "lib/operator/elsewhere.rb"), "gate_chain no longer prints"
-    assert_empty findings(:NO_PUTS, source, path: relative)
-  end
-
   def test_no_puts_still_catches_a_bare_puts_in_library_code
     refute_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/ground/rules.rb")
   end
@@ -638,8 +592,11 @@ end
   # deletion too, since those two were already disjoint. What was broken was a
   # third rule saying the same thing, so the question has to be "how many rules in
   # this tree call this line a discard", which is exactly what it counts.
+  # The model-backed laws raise when no model is configured, which a unit test has none of; the mechanical
+  # laws are the ones whose overlap this asks about.
   def discard_reporters(source)
-    scanner.laws.select do |rule|
+    mechanical = scanner.laws.reject { |rule| rule.is_a?(Master::Review::Scan::Laws::SemanticLaw) }
+    mechanical.select do |rule|
       Array(rule.check(source, path: File.join(Master::ROOT, "lib/example.rb")))
         .any? { |f| f[:message].to_s.match?(/discard|swallow/i) }
     end.map { |rule| rule.id.to_s }
@@ -850,10 +807,25 @@ end
   # is the opt-in, not that one smell, so it is asserted through a smell that
   # still declines skip_comments. All three directions asserted.
 
+  # laws.yml carries no learned smells today, so these tests define the two they need in a temporary
+  # laws.yml: one that reads code only (skip_comments) and one that reads comments too. The property under
+  # test is the masking, not the particular smell.
+  SMELLS = {
+    "learned_smells" => [
+      { "id" => "magic_number", "pattern" => '\b\d{2,}\b', "skip_comments" => true },
+      { "id" => "sycophancy", "pattern" => '\babsolutely\b' },
+    ],
+  }.freeze
+
   def smell_findings(smell_id, source, path: "lib/example.rb")
-    rule = scanner.laws.find { |r| r.id.to_s == "LEARNED_SMELLS" } || raise("LEARNED_SMELLS not registered")
-    Array(rule.check(source, path: File.join(Master::ROOT, path)))
-      .select { |f| (f[:law_id] || f[:law]).to_s == smell_id.to_s }
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "laws.yml"), SMELLS.to_yaml)
+      rule = Master::Review::Scan::Laws::LearnedSmellsLaw.new(root:)
+
+      Array(rule.check(source, path: File.join(root, path)))
+        .select { |f| (f[:law_id] || f[:law]).to_s == smell_id.to_s }
+    end
   end
 
   def test_magic_number_ignores_numbers_in_comments

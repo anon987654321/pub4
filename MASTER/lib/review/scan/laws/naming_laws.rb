@@ -3,43 +3,6 @@
 module Master
   module Review
     module Scan
-      stale_config = begin
-        Master.law("stale_namespaces")
-      rescue KeyError
-        {}
-      end
-      stale_constants = Array(stale_config["stale_constants"]).filter_map { |row| row["old"] if row.is_a?(Hash) }
-      # A retired name counts only as a whole constant path. `\b` sits between a
-      # letter and a colon, so /\bMaster::CLI\b/ matched inside every legitimate
-      # Master::CLI::* reference — 25 of selfcheck's 71 findings, all false.
-      stale_pattern = Regexp.union(
-        stale_constants.map { |name| /(?<![\w:])#{Regexp.escape(name)}(?!::|\w)/ },
-      )
-
-      LawDSL.law :STALE_NAMESPACE,
-        severity: :error,
-        tags: %i[ONE_SOURCE],
-        applies_to: %i[ruby],
-        # One retired name and its replacement, both out of
-        # data/laws.yml#stale_namespaces. The examples live in this file, which
-        # the block below exempts for exactly this reason.
-        fires: "value = Master::Pipeline.new\n",
-        does_not_fire: "value = Master::CLI::Pipeline.new\n",
-        description: "retired constants must not return" do |source, path:|
-          # This file names the retired constants, so it flags itself. The old
-          # exemption named stale_namespace_rule.rb, which no longer exists.
-          next [] if stale_constants.empty? || path.end_with?("naming_laws.rb")
-
-          # Prose is not a constant reference. `Master::CLI` is retired as a
-          # class and alive as a namespace, so a comment explaining that
-          # "Fiber[:master_visitor] is set when a Master::CLI is built" reads as
-          # a use of the retired name — found when RAILS/master joined the corpus,
-          # where it was one of exactly two findings. A comment cannot resolve a
-          # constant, so it cannot resolve a retired one.
-          code = source.each_line.map { |line| line.lstrip.start_with?("#") ? "\n" : line }.join
-          scan_lines(code, stale_pattern, message: "retired constant — use data/laws.yml#stale_namespaces replacement")
-        end
-
       module Laws
         LawDSL.law :PARAMETERIZED_SLUG,
           severity: :warning,

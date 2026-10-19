@@ -14,7 +14,7 @@ module Master
     fires: "  binding.pry\n",
     does_not_fire: "debugger_enabled = false\n",
     description: "no debug breakpoints in committed code" do |src, path:|
-    next [] if path.to_s.include?("/review/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/laws/")
 
     parsed = Prism.parse(src)
     next [] if parsed.failure?
@@ -46,14 +46,7 @@ module Master
     # subject moves out from under it is a gate that starts firing on exactly
     # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
     # 105 findings arrived in selfcheck's largest actionable bucket overnight.
-    # operator/gate_chain.rb and operator/check_runner.rb are one file each
-    # rather than their directory: lib/operator is the operator surface's
-    # library, and its sibling status_report.rb renders a string that bin/operator
-    # prints, which is the shape this rule asks for. Those two cannot take it.
-    # The gate ladder and bin/check run for minutes and the report is the
-    # progress -- which step is running and how it ended -- so a buffered return
-    # would deliver the whole account after the run it was meant to narrate.
-    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session|/operator/(?:gate_chain|check_runner)\.rb\z})
+    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
     # A program's output is its interface, and the rule is about library code.
     # Measured over the four trees: 750 of 941 findings sat in a program — a
     # script with a shebang, a file that runs itself under a $PROGRAM_NAME
@@ -126,7 +119,7 @@ module Master
     # neither is a pattern that hunts for one.
     does_not_fire: "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n",
     description: "unresolved work markers" do |src, path:|
-    next [] if path.to_s.include?("/review/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/laws/")
     # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
     # marker — see data/laws.yml `unfinished`, which learned this at :veto.
     #
