@@ -109,8 +109,18 @@ module Master
         @target = @fresh.find { |row| row[:surface].id == @target[:surface].id }
         @page_tokens = @target ? page_tokens_of(@target) : []
         keep_before_shot if @target
+        @noise = noise
         @target
       end
+
+      # How far the target's score moves when nothing changed: a second capture of it. A
+      # gain smaller than twice that is not a gain.
+      def noise
+        again = measured([@target[:surface]]).first
+        again ? (again[:score] - @target[:score]).abs : 0.0
+      end
+
+      def margin = [TIE, 2 * @noise.to_f].max
 
       # Re-rendering overwrites the screenshot, so the picture the vision check
       # compares against is copied aside first.
@@ -197,7 +207,7 @@ module Master
 
         gain = now[:score] - @target[:score]
         notes = problems(before, after)
-        better = notes.empty? && (gain >= TIE || (gain >= -TIE && looks_better?(now)))
+        better = notes.empty? && (gain >= margin || (gain >= -margin && looks_better?(now)))
         { ok: better, gain:, text: summary(now, notes) }
       end
 

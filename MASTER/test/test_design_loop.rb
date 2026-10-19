@@ -249,6 +249,28 @@ class TestDesignLoop < Minitest::Test
     end
   end
 
+  # A second capture of the target that differs by 15 means a gain of 20 is within the noise.
+  def test_a_gain_smaller_than_twice_the_measured_noise_is_not_kept
+    with_sheet do |path|
+      committed = []
+      stub_scoring do
+        world = world_for(path, committed:)
+        calls = 0
+        inner = world.measure
+        noisy = lambda do |surfaces|
+          calls += 1
+          rows = inner.call(surfaces)
+          calls == 3 ? rows.map { |s, payload, shot| [s, payload.merge("score" => payload["score"] + 15), shot] } : rows
+        end
+        plan = LOOP::Plan.new(surfaces: [Surface.new("brgen/home", "brgen")], root: Dir.pwd, rounds: 1, candidates: 1)
+        rounds = LOOP.new(plan:, world: world.with(measure: noisy)).run
+
+        assert_empty rounds.select { |round| round.outcome == :kept }
+        assert_empty committed
+      end
+    end
+  end
+
   def test_the_selector_of_the_rule_an_edit_sits_in_is_read_from_the_file
     with_sheet(".a, .b > .c { gap: 4px; }\n.d {\n  padding: 4px;\n}\n") do |path|
       assert_equal %w[.d], parse(path, find: "padding: 4px;", replace: "padding: 8px;").selector_tokens
