@@ -22,6 +22,7 @@ GATE_PARENT = ENV.fetch("PUB4_DEPLOY_APP", "rails")
 SUBPROCESS_INCONCLUSIVE = 3
 
 $LOAD_PATH.unshift(ROOT, GATES_DIR)
+require File.join(ROOT, "MASTER", "gates", "support", "gate_autofix")
 require File.join(ROOT, "MASTER", "gates", "support", "gate_result")
 require File.join(ROOT, "MASTER", "gates", "support", "gate_ledger")
 require File.join(ROOT, "MASTER", "gates", "support", "flow_coverage")
@@ -255,7 +256,7 @@ failed = results.select { |_name, result| result.outcome == :failed }.keys
 errored = results.select { |_name, result| result.outcome == :errored }.keys
 inconclusive = results.select { |_name, result| result.outcome == :inconclusive }.keys
 live_skips = results.values.sum(&:live_skips)
-autofix = ENV.fetch("GATE_AUTOFIX", "0") == "1" ? "on" : "off"
+autofix = Deploy::GateAutofix.enabled? ? "on" : "off"
 
 summary = "#{passed} pass, #{failed.size} fail, #{live_skips} skip, #{inconclusive.size} inconclusive, #{errored.size} error"
 summary += " in #{format('%.1fs', elapsed)}, autofix #{autofix}"

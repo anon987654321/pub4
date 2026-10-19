@@ -199,10 +199,6 @@ module Master
         evidence_config.fetch("pass_threshold", 80).to_i
       end
 
-      def evidence_block_threshold
-        evidence_config.fetch("block_threshold", 50).to_i
-      end
-
       def evidence_config
         @evidence_config ||= (Master.load_laws(root: @root || Master::ROOT) || {}).fetch("evidence_scoring", {})
       rescue StandardError => e

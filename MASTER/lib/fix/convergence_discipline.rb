@@ -569,14 +569,13 @@ module Master
 
       def critical_source_files
         paths = [
-          File.join(@root, "MASTER", "lib", "scan_phase.rb"),
           File.join(@root, "MASTER", "data", "laws.yml"),
           File.join(@root, "MASTER", "data", "soul.yml"),
         ]
         patterns = %w[
           MASTER/lib/fix/**/*.rb
           MASTER/lib/review/scan/**/*.rb
-          MASTER/lib/law/**/*.rb
+          MASTER/law/*.rb
         ]
         paths.concat(patterns.flat_map { |pattern| Dir.glob(File.join(@root, pattern)) })
         paths.select { |path| File.file?(path) }.uniq.sort

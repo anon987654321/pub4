@@ -330,7 +330,7 @@ module Deploy
 
       unless File.file?(baseline)
         return { "status" => "MISSING", "baseline" => baseline,
-                 "reason" => "pixel baseline missing for #{surface.id}; review a capture, then set GATE_PIXEL_BASELINE_APPROVE=1" }
+                 "reason" => "pixel baseline missing for #{surface.id}; review a capture, then promote it with MASTER/tools/approve_visual_baselines.rb" }
       end
 
       max_ratio = self.class.pixel_diff_max_ratio
