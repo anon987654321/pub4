@@ -931,6 +931,9 @@ tokens:
         orbit_limit: 0.16
         fov: 38
       budget:
+        # A single additive-point ceiling is partitioned between stipple and FaceWorld.
+        # These weights must sum to 1; FaceState normalizes defensively at runtime.
+        point_allocation: { stipple_fraction: 0.75, world_fraction: 0.25 }
         desktop_points: 1200
         mobile_points: 420
         desktop_particles: 200
