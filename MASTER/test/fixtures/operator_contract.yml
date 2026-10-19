@@ -10,7 +10,7 @@ cases:
     grammar: direct_shell
   - id: shell_pipe
     input: "ls | pwd"
-    grammar:
+    grammar: direct_shell
   - id: focus
     input: "focus mode"
     grammar: toggle_focus
