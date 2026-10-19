@@ -45,6 +45,9 @@ module Operator
       # The locale code and the daemon's config name are not ours to choose.
       %r{/locales/[a-z]{2}(?:-[A-Z]{2})?\.yml\z},
       %r{\.(?:conf|lock|sample|keep|gitkeep|woff2|png|ico|onnx)\z},
+      # Ground::Constitution globs data/principles/*.md, so the directory is the
+      # contract even while it holds one file.
+      %r{\A/MASTER/data/principles/},
       # A tool owns its own dotfolder. .claude/ holds one tracked file because
       # settings.local.json is per-machine and ignored, which is Claude Code's
       # shape, not ours to flatten.
