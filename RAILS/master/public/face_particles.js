@@ -24,9 +24,18 @@
     };
   }
 
+  function reducedMotionActive(state) {
+    const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+    if (typeof canonical === "function") return canonical(state);
+    return Boolean(state?.reducedMotion) ||
+      Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" ||
+      Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  }
+
   function reactAudio(State, mouthPool) {
     const K = window.ParticleKernel;
-    if (!mouthPool || !K || State.reducedMotion) return;
+    if (!mouthPool || !K || reducedMotionActive(State)) return;
     const now = performance.now();
     const onset = Number(audio.onset) || 0;
     if (onset < 0.14 || now - lastAudioPulseAt < 100) return;
@@ -49,7 +58,7 @@
 
   function spawnEmotionalGhost(State, mouthPool, mood) {
     const K = window.ParticleKernel;
-    if (!mouthPool || !K || State.reducedMotion) return;
+    if (!mouthPool || !K || reducedMotionActive(State)) return;
     const lane = (State.emotionalGhosts || []).length % 3;
     const x = (lane - 1) * 0.22;
     K.spawn(mouthPool, x, 0.42 + lane * 0.04, {
