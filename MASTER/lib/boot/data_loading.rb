@@ -14,7 +14,8 @@ module Master
     def parse_yaml_content(content, symbolize_names: false, source: "content")
       raise "yaml too large: #{source}" if content.bytesize > MAX_CONSTITUTION_BYTES
 
-      YAML.safe_load(content, aliases: true, symbolize_names:, permitted_classes: [Date, Time])
+      # The source names the file in a syntax error, which otherwise reads "(<unknown>)".
+      YAML.safe_load(content, aliases: true, symbolize_names:, permitted_classes: [Date, Time], filename: source)
     end
 
     # Read a bounded UTF-8 snapshot once so parser callers can validate exactly

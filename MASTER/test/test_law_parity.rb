@@ -37,7 +37,9 @@ class TestLawParity < Minitest::Test
   def test_active_with_detector_id_in_registry_passes
     parity = Master::Fix::LawParity.new
     data = YAML.safe_load_file(Master::Fix::LawParity::LAWS_PATH, aliases: true)
-    spec = data.fetch("CAPABILITY_STATUS_MUST_BE_TRUTHFUL")
+    # Enforcement metadata lives in the overlay that LawParity merges onto laws.yml.
+    overlay = YAML.safe_load_file(File.join(Master::ROOT, "data", "law_enforcement.yml"), aliases: true)
+    spec = data.fetch("CAPABILITY_STATUS_MUST_BE_TRUTHFUL").merge(overlay.fetch("CAPABILITY_STATUS_MUST_BE_TRUTHFUL"))
     assert_equal "active", spec["enforcement"]
     assert_includes Array(spec["detector_ids"]).map(&:to_s), "CAPABILITY_STATUS_MUST_BE_TRUTHFUL"
     refute parity.call.any? { |g| g.id == "CAPABILITY_STATUS_MUST_BE_TRUTHFUL" }

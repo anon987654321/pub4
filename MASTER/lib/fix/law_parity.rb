@@ -144,7 +144,8 @@ module Master
         begin
           return ids unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
 
-          require_relative "../review/scan/law_dsl" unless defined?(Master::Review::Scan::Law)
+          require_relative "../review/scan/law_dsl"
+
           Master::Review::Scan::Law.registry.each do |klass|
             decl = klass.respond_to?(:declaration) ? klass.declaration : nil
             ids << decl[:id].to_s if decl && decl[:id]
@@ -158,12 +159,12 @@ module Master
       def scan_registry_tags
         tags = Set.new
         begin
-          require_relative "../review/scan/law_dsl" unless defined?(Master::Review::Scan::Law)
+          require_relative "../review/scan/law_dsl"
           Master::Review::Scan::Law.registry.each do |klass|
+            # A LawDSL class carries its tags on the class; a declare-style one in its declaration.
+            Array(klass.dsl_tags).each { |tag| tags << tag.to_s.upcase }
             decl = klass.respond_to?(:declaration) ? klass.declaration : nil
-            next unless decl
-
-            Array(decl[:law_tags]).each { |tag| tags << tag.to_s.upcase }
+            Array(decl && decl[:law_tags]).each { |tag| tags << tag.to_s.upcase }
           end
         rescue Exception
           nil

@@ -93,7 +93,7 @@ class TestLawMapRuntime < Minitest::Test
     target = req.send(:expand_scan_target, "rails")
     assert_equal Master::RAILS_ROOT, target
     face = req.send(:expand_scan_target, "face")
-    assert face.end_with?("web/public")
+    assert face.end_with?("master/public")
   end
 
   def test_provenance_gaps_flags_entries_missing_source

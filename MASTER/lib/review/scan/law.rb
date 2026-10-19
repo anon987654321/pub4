@@ -50,6 +50,9 @@ module Master
 
         # Inherited, so a subclass of a declared rule keeps its parent's identity
         # until it declares its own.
+        # LawDSL classes override this with the tags they declare.
+        def self.dsl_tags = []
+
         def self.declaration
           return @declaration if defined?(@declaration) && @declaration
 
