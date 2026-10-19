@@ -302,6 +302,7 @@ test("calm profile is default and gates rich idle motion", () => {
   assert.match(part1, /document\.documentElement\?\.dataset\?\.reducedMotion === '1'/);
   assert.match(part1, /if \(faceReducedMotionActive\(\)\) return false/);
   assert.match(part1, /faceReducedMotionActive\(\) \? 'battery'/);
+  assert.match(part1, /rootBody\.dataset\.runtimeProfile = faceReducedMotionActive\(\) \? 'battery' : \(State\.profileOverride/);
   assert.match(part1, /if \(v === 'thinking' && !faceReducedMotionActive\(\)/);
   const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
   assert.match(part3, /effectiveNext = faceReducedMotionActive\(\) \? 'battery' : next/);
