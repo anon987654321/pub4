@@ -171,9 +171,12 @@ test("stipple moods come from the face contract, not a second table", () => {
   for (const mode of modes) assert.match(tokens, new RegExp(`^        ${mode}:\\s+\\{ density:`, "m"));
 });
 
-test("playground is opt-in and supplies seven semantic states", () => {
+test("playground is opt-in and exposes all canonical semantic states", () => {
   assert.match(playground, /get\("playground"\) !== "1"/);
-  for (const mode of ["idle", "thinking", "listening", "working", "speaking", "warning", "error"]) assert.match(playground, new RegExp(mode));
+  assert.match(playground, /MASTER_FACE_CONTRACT\?\.state\?\.modes/);
+  assert.match(playground, /MASTER_FACE_STATE/);
+  assert.match(playground, /bridge\.setMode\(value, \{ source: "face-playground" \}\)/);
+  for (const mode of ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"]) assert.match(playground, new RegExp(mode));
   assert.match(playground, /FacePlayground/);
   assert.match(playground, /Refresh diagnostics/);
   assert.match(playground, /MASTER_FACE_STIPPLE\?\.snapshot/);
