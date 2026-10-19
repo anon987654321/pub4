@@ -11,6 +11,15 @@ nav[data-pwa-primary-nav] {
   padding-inline-start: calc(var(--brand-mark-inline) + var(--space-2, 0.5rem));
 }
 
+nav[data-pwa-primary-nav] a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
+}
+
 @include meta.load-css("shell_widgets");
 
 // The jOx logo and the yep search are product pens: their geometry is the
