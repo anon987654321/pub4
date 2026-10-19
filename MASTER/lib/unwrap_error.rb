@@ -10,7 +10,6 @@ module Master
   module PhantomRecovery
     REPETITION_SPAN = 60
     REPETITION_MIN = 3
-    HALT_ON = 3
     TOOL_CALL_BODY = %r{<tool_call>(.*?)</tool_call>}m
     CODE_FENCE = /```.*?```/m
 

@@ -4,7 +4,6 @@ module Master
   module Device
     class Perception
       DEFAULT_INTERVAL = 15
-      SENSOR_INTERVAL = 3
       MAX_BACKOFF = 120
       SENSOR_NAMES = {
         "accelerometer" => /accelerometer/i,

@@ -30,7 +30,6 @@ module Master
       include ConfigAccessors
 
       BUDGET_MAX_DEFAULT = 10.0
-      HISTORY_MAX = 500
       DEFAULT_WEB_PORT = 53_187
 
       DEFAULTS = {

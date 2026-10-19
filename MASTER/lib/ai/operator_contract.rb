@@ -7,8 +7,6 @@ module Master
       STYLE = "openbsd"
       LANGUAGE = "ruby"
       SHELL = "zsh"
-      TREE_DEFAULT_DEPTH = 4
-      TREE_DEFAULT_MAX_ENTRIES = 2_000
 
       module_function
 

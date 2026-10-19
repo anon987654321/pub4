@@ -16,11 +16,6 @@ module Deploy
       { name: "tools", glob: "**/*", entry: nil, owner: "MASTER governance utilities" },
     ].freeze
     PROBE_TIMEOUT = Integer(ENV.fetch("MASTER_TOOLS_PROBE_TIMEOUT", "60"))
-    PREDICTED_FINDINGS = {
-      "tools parse:" => "a file that does not parse",
-      "tools load:" => "an entry point that raises at load",
-      "tools inventory:" => "a file belonging to no declared tree",
-    }.freeze
 
     def self.run(...) = new(...).run
 

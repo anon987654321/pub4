@@ -59,8 +59,6 @@ module Master
 
       include ProposalLifecycle
 
-      SOUL_PATH = File.join(Master::ROOT, "data", "SOUL.md").freeze
-      PROPOSAL_PATH = File.join(Master::ROOT, ".master", "soul_proposal.md").freeze
       ABSOLUTE_PATTERNS = [/anti-simulation rule/i, /golden rule/i, /preserve.*then.*improve/i].freeze
       PROTECTED_PATTERNS = [/voice character/i, /terse.*direct.*dark/i].freeze
 

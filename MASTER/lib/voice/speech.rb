@@ -19,7 +19,6 @@ module Master
     module Speech
       WORKER = File.expand_path("../../bin/tts-worker", __dir__)
       BRIEF_STYLE_WORD_COUNT = 12
-      TTS_SOCKET = File.expand_path("../../.master/tts.sock", __dir__)
       ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
       WORKER_TIMEOUT = 45
       # b2cc32b73 tuned WORKER_TIMEOUT for MAX_CHARS=900 on the VPS;
