@@ -137,11 +137,12 @@
     geometry.setAttribute("aThreshold", new THREE.BufferAttribute(thresholds, 1));
     geometry.setAttribute("aZone", new THREE.BufferAttribute(zones, 1));
     geometry.setAttribute("aBias", new THREE.BufferAttribute(biases, 1));
+    const idle = profiles().idle || IDLE_PROFILE;
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        uTime: { value: 0 }, uDensity: { value: PROFILES.idle.density },
-        uRipple: { value: 0.03 }, uTurbulence: { value: 0.04 },
-        uLuminosity: { value: 0.76 }, uAttract: { value: 0.14 },
+        uTime: { value: 0 }, uDensity: { value: idle.density },
+        uRipple: { value: idle.ripple }, uTurbulence: { value: idle.turbulence },
+        uLuminosity: { value: idle.luminosity }, uAttract: { value: idle.attract },
         uOpacity: { value: 0.74 }, uEntropy: { value: 0.18 },
         uMotionScale: { value: 1 },
         uColor: { value: new THREE.Color(0.90, 0.89, 0.86) }
@@ -304,7 +305,7 @@
 
   window.MASTER_FACE_STIPPLE = Object.freeze({
     createDefault, buildFromSamples, mount, configure, syncFromFaceState, tick, applyPalette,
-    profiles: PROFILES,
+    get profiles() { return profiles(); },
     get system() { return active; },
     get enabled() { return enabled; },
     install
