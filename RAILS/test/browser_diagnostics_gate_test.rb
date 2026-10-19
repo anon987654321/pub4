@@ -65,7 +65,7 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     surfaces = Deploy::GeometryProbe.surfaces
     apps = surfaces.map(&:app).uniq
 
-    %w[brgen amber bsdports master].each { |app| assert_includes apps, app }
+    %w[brgen bsdports master].each { |app| assert_includes apps, app }
     hosts = surfaces.filter_map(&:host)
     %w[brgen.no markedsplass.brgen.no dating.brgen.no tv.brgen.no takeaway.brgen.no maps.brgen.no messenger.brgen.no].each do |host|
       assert_includes hosts, host
@@ -117,14 +117,8 @@ class BrowserDiagnosticsGateTest < Minitest::Test
   end
 
   def test_owned_resources_follow_the_canonical_app_and_vertical_inventories
-    amber = Deploy::GeometryProbe::Surface.new(
-      app: "amber", label: "home", host: nil, path: "/", viewport: "desktop",
-      width: 1440, height: 900, port: 61_352, snapshot: false, profile: nil
-    )
-
-    assert Deploy::BrowserDiagnosticsGate.owned_url?(amber, "https://amberapp.art/assets/application.js")
     assert Deploy::BrowserDiagnosticsGate.owned_url?(SURFACE, "https://dating.brgen.no/assets/application.js")
-    refute Deploy::BrowserDiagnosticsGate.owned_url?(amber, "https://third-party.invalid/script.js")
+    refute Deploy::BrowserDiagnosticsGate.owned_url?(SURFACE, "https://third-party.invalid/script.js")
   end
 
   def test_missing_first_party_script_is_blocking_but_missing_image_is_soft
@@ -223,7 +217,7 @@ class BrowserDiagnosticsGateTest < Minitest::Test
 
     assert_operator pixel_surfaces.size, :>, 0
     assert_operator pixel_surfaces.size, :<, structural_surfaces.size
-    %w[master/chat amber/home amber/wardrobe bsdports/home bsdports/ports_index
+    %w[master/chat bsdports/home bsdports/ports_index
        brgen/core brgen/marketplace brgen/dating brgen/maps brgen/messenger].each do |key|
       app, label = key.split("/", 2)
       assert pixel_surfaces.any? { |surface| surface.app == app && surface.label == label }, key

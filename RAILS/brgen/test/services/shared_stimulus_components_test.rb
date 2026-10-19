@@ -14,10 +14,10 @@ class SharedStimulusComponentsTest < Minitest::Test
   include SourceReader
 
   # stimulus_boot.js holds what every app registers; stimulus_boot_social.js,
-  # _brgen.js and _amber.js hold what only some apps mount, split out so an
+  # _brgen.js holds what only some app mounts, split out so an
   # app that doesn't use a controller never imports its module. Together
   # they are the registry these tests hold the snippet library and views to.
-  BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js].freeze
+  BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js].freeze
 
   def registry_source
     BOOT_FILES.map { |f| read_source(File.join(ROOT, "__shared/frontend", f)) }.join("\n")
@@ -39,8 +39,6 @@ class SharedStimulusComponentsTest < Minitest::Test
     # thing it documents. The line above already asserts the partial that is the
     # real artifact. What it does owe the reader is below.
 
-    wardrobe_form = read_source(File.join(ROOT, "amber/app/views/wardrobe_items/_form.html.erb"))
-    assert_includes wardrobe_form, "character-counter"
     assert_includes read_source(File.join(ROOT, "__shared/app/views/comments/_form_fields.html.erb")), "tiptap-editor"
     assert_includes read_source(File.join(ROOT, "__shared/app/assets/stylesheets/_base.scss")), "field-sizing: content"
     # What matters here is that the post partial is fragment-cached at all. The
@@ -50,7 +48,6 @@ class SharedStimulusComponentsTest < Minitest::Test
     # crawler traffic. Assert the caching, not the key it happens to use.
     fragment = /<% cache \[[^\]]*\bpost\b/
     assert_match fragment, read_source(File.join(ROOT, "brgen/app/views/posts/_post.html.erb"))
-    assert_match fragment, read_source(File.join(ROOT, "amber/app/views/posts/_post.html.erb"))
     # The share button uses the shared clipboard component. This pinned the
     # literal PAIR "clipboard popover", which is the same frozen-detail mistake
     # the comment above records for the cache key, six lines up in this test:
@@ -68,7 +65,6 @@ class SharedStimulusComponentsTest < Minitest::Test
     refute_includes post_partial.gsub(/<%#.*?%>/m, ""), "popover",
                     "popover was removed as dead weight -- do not reintroduce it as a tooltip"
     assert_includes read_source(File.join(ROOT, "brgen/app/views/posts/_post.html.erb")), "shared/post_card"
-    assert_includes read_source(File.join(ROOT, "amber/app/views/posts/_post.html.erb")), "shared/post_card"
     assert_includes read_source(File.join(ROOT, "__shared/app/views/shared/_post_card.html.erb")), "shared/post_vote_rail"
     assert_includes read_source(File.join(ROOT, "__shared/app/views/shared/_copyable.html.erb")),
                     'data-controller="clipboard"'

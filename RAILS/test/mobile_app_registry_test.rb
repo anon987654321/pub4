@@ -8,7 +8,7 @@ require_relative "../__shared/lib/shared/mobile_ios_project"
 class MobileAppRegistryTest < Minitest::Test
   REGISTRY = Shared::MobileAppRegistry
 
-  def test_registry_contains_core_verticals_and_amber
+  def test_registry_contains_core_verticals
     keys = REGISTRY.all.map(&:key)
 
     assert_includes keys, :brgen
@@ -19,7 +19,6 @@ class MobileAppRegistryTest < Minitest::Test
     assert_includes keys, :marketplace
     assert_includes keys, :maps
     assert_includes keys, :messenger
-    assert_includes keys, :amber
   end
 
   def test_vertical_hosts_are_distinct_store_origins
@@ -29,16 +28,14 @@ class MobileAppRegistryTest < Minitest::Test
     assert_equal "brgen.no", REGISTRY.fetch(:brgen).host
     assert_equal "radio.brgen.no", REGISTRY.fetch(:radio).host
     assert_equal "markedsplass.brgen.no", REGISTRY.fetch(:marketplace).host
-    assert_equal "amberapp.art", REGISTRY.fetch(:amber).host
   end
 
   def test_host_lookup_ignores_port_and_trailing_dot
     assert_equal :brgen, REGISTRY.for_host("BRGEN.NO:443").key
-    assert_equal :amber, REGISTRY.for_host("amberapp.art.").key
   end
 
-  def test_registry_covers_every_brgen_store_product_and_amber
-    assert_equal %i[brgen radio dating tv takeaway marketplace maps messenger amber],
+  def test_registry_covers_every_brgen_store_product
+    assert_equal %i[brgen radio dating tv takeaway marketplace maps messenger],
                  REGISTRY.all.map(&:key)
   end
 
@@ -106,7 +103,7 @@ class MobileAppRegistryTest < Minitest::Test
     previous = ENV.delete("APPLE_TEAM_ID")
 
     begin
-      body = JSON.parse(REGISTRY.apple_app_site_association("amberapp.art"))
+      body = JSON.parse(REGISTRY.apple_app_site_association("brgen.no"))
 
       assert_equal [], body.fetch("applinks").fetch("details")
     ensure
@@ -122,7 +119,7 @@ class MobileAppRegistryTest < Minitest::Test
       body = JSON.parse(REGISTRY.apple_app_site_association("amberapp.art"))
       detail = body.fetch("applinks").fetch("details").fetch(0)
 
-      assert_equal "TEAM123.fashion.amber.app", detail.fetch("appID")
+      assert_equal "TEAM123.#{REGISTRY.fetch(:brgen).ios_bundle_id}", detail.fetch("appID")
       assert_equal ["*"], detail.fetch("paths")
     ensure
       ENV["APPLE_TEAM_ID"] = previous
