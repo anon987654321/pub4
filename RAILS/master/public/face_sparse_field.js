@@ -409,30 +409,34 @@
     const state = window.MASTER_FACE_STATE?.snapshot?.() || face?.State || {};
     const cameraDistance = Number(face?.camera?.position?.length?.() || 5.2);
     const idleAge = Math.max(0, performance.now() - Number(state.lastTouch || 0));
-    const baseProfile = modeProfile(state);
-    const profile = String(state.mode || "").toLowerCase() === "idle" && idleAge > 45_000 ? MODES.super_void : baseProfile;
+    const mode = String(state.mode || document.documentElement.dataset.masterMode || "idle").toLowerCase();
+    const baseProfile = modeProfile({ ...state, mode });
+    const profile = mode === "idle" && idleAge > 45_000 ? modeProfile({ mode: "super_void" }) : baseProfile;
     const mobile = isMobile();
     const maxActive = mobile ? mobileParticles : maxParticles;
     const distanceDensity = clamp((6.8 - cameraDistance) / 2.4, 0.24, 1);
-    const minimum = profile === MODES.super_void ? 8 : 14;
+    const minimum = profile.mode === "super_void" ? 8 : 14;
     const requested = Math.min(maxActive, Math.max(minimum, Math.round(profile.count * Number(SPEC.density_scale || 1) * distanceDensity)));
     const focus = clamp(state.focus ?? state.attention ?? 0.8);
     const confidence = clamp(state.confidence ?? 0.86);
     const risk = clamp(state.risk ?? 0);
     const reduced = Boolean(state.reducedMotion) || matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const movementTime = reduced ? 0 : time;
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
     const semanticAge = Math.max(0, time - semantic.at);
-    const semanticLive = semanticAge < 2400 ? 1 - semanticAge / 2400 : 0;
-    const gather = state.mode === "thinking" || state.mode === "working" ? (0.05 + profile.activity * 0.16) * focus : 0;
-    const voiceFilament = state.mode === "speaking" ? (0.10 + (Number(state.arousal) || 0) * 0.22) : 0;
+    const semanticLive = reduced ? 0 : semanticAge < 2400 ? 1 - semanticAge / 2400 : 0;
+    const gather = mode === "thinking" || mode === "working" ? (0.05 + profile.activity * 0.16) * focus : 0;
+    const voiceFilament = mode === "speaking" ? (0.10 + (Number(state.arousal) || 0) * 0.22) : 0;
     const breath = reduced ? 0 : Math.sin(time * 0.00035) * (0.012 + profile.activity * 0.018);
     const tide = reduced ? 0 : Math.sin(time * 0.00042 + state.entropy * 4.0) * profile.drift;
     const isPointer = pointerActive || (time - presence.at) < 700;
     const presenceX = isPointer ? (pointerActive ? pointer.x : presence.x) : 0;
     const presenceY = isPointer ? (pointerActive ? pointer.y : presence.y) : 0;
 
-    pointMaterial.uniforms.uTime.value = time * 0.001;
+    pointMaterial.uniforms.uTime.value = movementTime * 0.001;
+    pointMaterial.uniforms.uViewportHeight.value = Math.max(1,
+      Number(face.renderer?.domElement?.height) || Number(document.documentElement.clientHeight) || 1);
     pointMaterial.uniforms.uEnergy.value = profile.activity + risk * 0.4;
     pointMaterial.uniforms.uOpacity.value = reduced ? 0.42 : 0.78;
 
@@ -448,28 +452,28 @@
 
       if (groups[i] === 8) {
         const orbit = profile.orbit * (1.0 + seeded(i, 71) * 0.8);
-        const a = phase[i] + time * 0.00010 * orbit;
+        const a = phase[i] + movementTime * 0.00010 * orbit;
         const radius = 1.0 + seeded(i, 72) * 1.4;
         tx = Math.cos(a) * radius;
         ty = Math.sin(a) * radius * 0.72;
         tz = Math.sin(a * 1.7) * 0.48;
-        ty += Math.sin(time * 0.00022 + phase[i]) * profile.drift * 0.32;
+        ty += Math.sin(movementTime * 0.00022 + phase[i]) * profile.drift * 0.32;
       }
 
       // Collapse, fragment and resolve are the face's large semantic motions.
-      if (state.mode === "sleeping") {
+      if (mode === "sleeping") {
         tx *= 0.16; ty *= 0.16; tz -= 0.48;
-      } else if (state.mode === "error") {
-        tx += Math.sin(time * 0.0011 + phase[i]) * 0.10 * profile.drift;
-        ty += Math.cos(time * 0.0013 + phase[i]) * 0.08 * profile.drift;
-        tz += Math.sin(time * 0.0009 + phase[i]) * 0.10;
+      } else if (mode === "error") {
+        tx += Math.sin(movementTime * 0.0011 + phase[i]) * 0.10 * profile.drift;
+        ty += Math.cos(movementTime * 0.0013 + phase[i]) * 0.08 * profile.drift;
+        tz += Math.sin(movementTime * 0.0009 + phase[i]) * 0.10;
       } else {
         tx += breath * (1 + Math.abs(baseY));
         ty += tide * 0.03;
 
         // Thought gathers at the forehead; attention becomes visible as
         // particles choosing one place instead of vibrating everywhere.
-        if ((state.mode === "thinking" || state.mode === "working") && gather > 0 && groups[i] !== 8) {
+        if ((mode === "thinking" || mode === "working") && gather > 0 && groups[i] !== 8) {
           const pull = gather * (groups[i] === 7 || groups[i] === 4 ? 1.0 : 0.42);
           tx += (0.0 - tx) * pull;
           ty += (0.36 - ty) * pull;
@@ -487,8 +491,8 @@
 
         // Speaking grows a filament around the mouth rather than filling the
         // lower face. The curve is a voice trace, not a second mouth.
-        if (state.mode === "speaking" && voiceFilament > 0 && groups[i] === 3) {
-          const a = phase[i] + time * 0.0015;
+        if (mode === "speaking" && voiceFilament > 0 && groups[i] === 3) {
+          const a = phase[i] + movementTime * 0.0015;
           const fx = Math.cos(a) * 0.34;
           const fy = -0.46 + Math.sin(a) * 0.10;
           tx += (fx - tx) * voiceFilament;
@@ -496,13 +500,13 @@
           tz += 0.05 * Math.sin(a * 2.0);
         }
 
-        if (state.mode === "listening" && groups[i] === 5) {
+        if (mode === "listening" && groups[i] === 5) {
           const earBloom = 0.06 + profile.activity * 0.10;
           tx += Math.sign(baseX || 1) * earBloom;
           ty += Math.sin(phase[i]) * earBloom * 0.4;
         }
-        if (state.mode === "ready" && groups[i] !== 8) {
-          tx *= 1.0 + Math.sin(time * 0.0005 + phase[i]) * 0.012;
+        if (mode === "ready" && groups[i] !== 8) {
+          tx *= 1.0 + Math.sin(movementTime * 0.0005 + phase[i]) * 0.012;
         }
       }
 
@@ -511,21 +515,29 @@
       tx += asym * (groups[i] === 5 ? 1.4 : 0.8);
       ty += asym * 0.65;
 
-      if (isPointer) {
-        const magnet = pointerForce(tx, ty, presenceX, presenceY, state.mode);
+      if (isPointer && !reduced) {
+        const magnet = pointerForce(tx, ty, presenceX, presenceY, mode);
         tx = magnet[0];
         ty = magnet[1];
       } else if (pointerActive) {
         pointerActive = false;
       }
 
-      const spring = reduced ? 0.24 : 0.08 + profile.activity * 0.035;
-      velocities[j] = velocities[j] * 0.90 + (tx - positions[j]) * spring;
-      velocities[j + 1] = velocities[j + 1] * 0.90 + (ty - positions[j + 1]) * spring;
-      velocities[j + 2] = velocities[j + 2] * 0.90 + (tz - positions[j + 2]) * spring;
-      positions[j] += velocities[j];
-      positions[j + 1] += velocities[j + 1];
-      positions[j + 2] += velocities[j + 2];
+      if (reduced) {
+        // Keep the selected semantic pose without springing, orbiting or drifting toward it.
+        velocities[j] = velocities[j + 1] = velocities[j + 2] = 0;
+        positions[j] = tx;
+        positions[j + 1] = ty;
+        positions[j + 2] = tz;
+      } else {
+        const spring = 0.08 + profile.activity * 0.035;
+        velocities[j] = velocities[j] * 0.90 + (tx - positions[j]) * spring;
+        velocities[j + 1] = velocities[j + 1] * 0.90 + (ty - positions[j + 1]) * spring;
+        velocities[j + 2] = velocities[j + 2] * 0.90 + (tz - positions[j + 2]) * spring;
+        positions[j] += velocities[j];
+        positions[j + 1] += velocities[j + 1];
+        positions[j + 2] += velocities[j + 2];
+      }
 
       const rank = active ? 1 : 0;
       const well = groups[i] === 1 || groups[i] === 3 ? 1.18 : 1.0;
@@ -541,9 +553,18 @@
     pointGeometry.attributes.aSize.needsUpdate = true;
     pointGeometry.attributes.aOpacity.needsUpdate = true;
 
-    updateGhosts(time);
-    updateTrails(time);
-    updateRing(time);
+    if (reduced) {
+      // Suppress transient motion-dependent after-effects while retaining the semantic face.
+      ghosts.length = 0;
+      trails.length = 0;
+      updateGhosts(time);
+      updateTrails(time);
+      if (ringMaterial) ringMaterial.opacity = 0;
+    } else {
+      updateGhosts(time);
+      updateTrails(time);
+      updateRing(time);
+    }
     document.documentElement.style.setProperty("--master-face-void", String(profile.void.toFixed(3)));
   }
 
@@ -613,6 +634,7 @@
   if (window.MASTER_FACE) attach();
 
   window.MASTER_FACE_SPARSE = Object.freeze({
+    profile: (state = {}) => Object.freeze({ ...modeProfile(state) }),
     update,
     attach,
     resonate,
