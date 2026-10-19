@@ -182,11 +182,14 @@
 
   function renderBudget() {
     const budget = CONTRACT_BUDGET;
-    const mobile = matchMedia("(max-width: 767px)").matches || Number(navigator.hardwareConcurrency || 8) <= 4;
+    const mediaMatches = (query) => typeof matchMedia === "function" && matchMedia(query).matches;
+    // Coarse-pointer devices may have a large viewport; classify them by capability, not width alone.
+    const mobile = mediaMatches("(pointer: coarse)") || mediaMatches("(max-width: 767px)") || Number(navigator.hardwareConcurrency || 8) <= 4;
     const maxPoints = Number(budget[mobile ? "mobile_points" : "desktop_points"]) || (mobile ? 420 : 1200);
     const particles = Number(budget[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
-    const reducedMotion = !!matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // The OS preference and the explicit page toggle must constrain the same shared budget.
+    const reducedMotion = document.documentElement?.dataset?.reducedMotion === "1" || mediaMatches("(prefers-reduced-motion: reduce)");
     const reducedMotionParticles = Number(budget.reduced_motion_particles) || 64;
     const effectiveParticles = reducedMotion ? Math.min(particles, reducedMotionParticles) : particles;
     const profile = document.documentElement?.dataset?.runtimeProfile || "";
