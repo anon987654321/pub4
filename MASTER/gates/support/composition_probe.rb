@@ -5,7 +5,7 @@ require "uri"
 
 module Deploy
   module CompositionProbe
-    DANGEROUS_TEXT = /\b(?:delete|remove|destroy|send|submit|post|publish|save|buy|purchase|checkout|pay|sign\s*out|log\s*out|logout|follow|unfollow|like|unlike|favorite|unfavorite|confirm|register|sign\s*in|log\s*in|accept|decline|block|unblock|mute|unmute|archive|restore|join|leave)\b/i
+    DANGEROUS_TEXT = /\b(?:delete|remove|destroy|send|submit|post|publish|save|buy|purchase|checkout|pay|sign\s*out|log\s*out|logout|follow|unfollow|like|unlike|favorite|unfavorite|confirm|register|sign\s*in|log\s*in|accept|decline|block|unblock|mute|unmute|archive|restore|join|leave|slett|fjern|publiser|lagre|kjøp|betal|logg\s*ut|logg\s*inn|følg|favoritt|bekreft|registrer|godta|avvis|blokker|demp|arkiver|gjenopprett|forlat|bli\s*med)\b/i
     MAX_PAIRS = Integer(ENV.fetch("MASTER_VISUAL_COMPOSITION_PAIRS", "4"))
 
     # The page-side scripts, kept as data so each Ruby method stays about one

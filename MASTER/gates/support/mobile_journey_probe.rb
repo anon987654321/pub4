@@ -79,7 +79,7 @@ module Deploy
           let url;
           try { url = new URL(raw, location.href); } catch (_) { continue; }
           if (url.origin !== origin || url.pathname === location.pathname && url.search === location.search) continue;
-          if (/\\b(logout|signout|delete|destroy|remove|unsubscribe)\\b/i.test(
+          if (/\\b(logout|signout|delete|destroy|remove|unsubscribe|slett|fjern|logg\\s*ut)\\b/i.test(
             [link.textContent, link.getAttribute("aria-label"), url.pathname].filter(Boolean).join(" ")
           )) continue;
           if (link.hasAttribute("data-method") || link.hasAttribute("data-turbo-method")) continue;
