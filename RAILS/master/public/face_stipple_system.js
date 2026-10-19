@@ -70,15 +70,19 @@
   function pointBudget(requested) {
     const contract = window.MASTER_FACE_CONTRACT || {};
     const budget = contract.spatial?.budget || {};
-    // FaceState owns device classification and the effective budget. Fall back
-    // to its canonical static point limits only for older shells without it.
+    // FaceState owns the split. An older shell with only a total budget still
+    // honors the canonical allocation instead of granting each overlay the total.
     const sharedBudget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
-    const shared = Number(sharedBudget.stipple_points ?? sharedBudget.points);
     const mobile = constrainedDevice();
-    const configured = Number.isFinite(shared) && shared > 0
-      ? shared
-      : Number(budget[mobile ? "mobile_points" : "desktop_points"]);
     const fallback = mobile ? MOBILE_FALLBACK : DESKTOP_FALLBACK;
+    const totalValue = Number(sharedBudget.points ?? budget[mobile ? "mobile_points" : "desktop_points"]);
+    const total = Number.isFinite(totalValue) && totalValue > 0 ? totalValue : fallback;
+    const allocation = budget.point_allocation || {};
+    const stippleWeight = Math.max(0.1, Number(allocation.stipple_fraction) || 0.75);
+    const worldWeight = Math.max(0.1, Number(allocation.world_fraction) || 0.25);
+    const fallbackShare = Math.max(1, Math.floor(total * stippleWeight / (stippleWeight + worldWeight)));
+    const shared = Number(sharedBudget.stipple_points);
+    const configured = Number.isFinite(shared) && shared > 0 ? shared : fallbackShare;
     const ceiling = Number.isFinite(configured) && configured > 0
       ? Math.min(MAX_POINTS, Math.floor(configured))
       : fallback;
