@@ -12,6 +12,9 @@ class VisualIdentityContractTest < Minitest::Test
   SHARED_CHROME = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_layout_chrome.scss")
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
   BRGEN_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
+  AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
+  AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "_amber_late_product_finish.scss")
+  BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_shared_chrome.scss")
   FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
   SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
 
@@ -51,6 +54,27 @@ class VisualIdentityContractTest < Minitest::Test
     assert_includes css, "border-block-end-color: var(--pub4-signal);"
     assert_includes css, ':root[data-theme="light"] .sort-tab.active'
     assert_includes css, "border-block-end-color: var(--pub4-signal-on-light);"
+  end
+
+  def test_amber_uses_semantic_current_page_and_signal_ink_without_recolouring_photography
+    layout = File.read(AMBER_LAYOUT, encoding: "UTF-8")
+    styles = File.read(AMBER_STYLES, encoding: "UTF-8")
+
+    assert_includes layout, 'aria: { current: current_page?(items_path) ? "page" : nil }'
+    assert_includes layout, 'aria: { current: current_page?(outfits_path) ? "page" : nil }'
+    assert_includes styles, '.amber-editorial-nav a[aria-current="page"]'
+    assert_includes styles, "color: var(--pub4-signal-on-light);"
+    refute_match(/\.item-photo\s*\{[^}]*filter:/m, styles,
+                 "the aesthetic must not tint garment/product photography")
+  end
+
+  def test_bsdports_keeps_terminal_palette_and_marks_current_navigation_in_text
+    styles = File.read(BSDPORTS_STYLES, encoding: "UTF-8")
+
+    assert_includes styles, 'nav[data-pwa-primary-nav] a[aria-current="page"]'
+    assert_includes styles, "color: var(--accent);"
+    assert_includes styles, "text-decoration-thickness: 2px;"
+    assert_includes Operator::MasterDesign.tokens.dig("visual_identity", "adaptations", "bsdports"), "terminal green"
   end
 
   def test_display_scale_is_opt_in_and_used_for_one_primary_editorial_heading
