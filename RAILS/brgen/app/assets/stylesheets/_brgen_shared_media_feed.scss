@@ -180,7 +180,11 @@
 .post-progressive-indicator.is-active {
   color: var(--text);
   font-weight: var(--weight-heavy);
-  border-block-end: 2px solid var(--text);
+  border-block-end: 2px solid var(--pub4-signal);
+}
+
+html[data-theme="light"] .post-progressive-indicator.is-active {
+  border-block-end-color: var(--pub4-signal-on-light);
 }
 
 .post-progressive-step > h2 {

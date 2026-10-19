@@ -605,4 +605,21 @@ class DesignContractTest < Minitest::Test
     face = File.expand_path("../RAILS/master/public/face.css", ROOT)
     (rails + [face]).uniq.reject { |path| path.match?(TAP_FLOOR_SKIP) || !File.file?(path) }
   end
+  def test_brgen_active_navigation_uses_the_semantic_signal_without_repainting_the_brand
+    typography = File.read(File.join(ROOT, "brgen/app/assets/stylesheets/_brgen_shared_typography.scss"))
+    feed = File.read(File.join(ROOT, "brgen/app/assets/stylesheets/_brgen_shared_media_feed.scss"))
+    tokens = Operator::MasterDesign.tokens.fetch("visual_identity")
+
+    assert_includes typography, "border-block-end-color: var(--pub4-signal);"
+    assert_includes typography, 'html[data-theme="light"] .home-feed-view.is-active'
+    assert_includes typography, "border-block-end-color: var(--pub4-signal-on-light);"
+    assert_includes feed, "border-block-end: 2px solid var(--pub4-signal);"
+    assert_includes feed, 'html[data-theme="light"] .post-progressive-indicator.is-active'
+    assert_equal "#C8F55F", tokens.fetch("signal")
+    assert_equal "#50630A", tokens.fetch("signal_on_light")
+    # The city header and its identity colours remain app-owned; only the
+    # selected marker receives the global signal.
+    refute_match(/--brgen-header-bg:\s*var\(--pub4-signal\)/, File.read(File.join(ROOT, "brgen/app/assets/stylesheets/application.scss")))
+  end
+
 end

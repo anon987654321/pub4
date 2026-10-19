@@ -214,7 +214,11 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
 }
 
 .home-feed-view.is-active {
-  border-block-end-color: var(--accent);
+  border-block-end-color: var(--pub4-signal);
+}
+
+html[data-theme="light"] .home-feed-view.is-active {
+  border-block-end-color: var(--pub4-signal-on-light);
 }
 
 #feed-panel,
