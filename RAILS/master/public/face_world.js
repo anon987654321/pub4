@@ -328,7 +328,14 @@
   }
 
   function makeSplatProxy() {
-    const count = Math.max(384, Math.min(Number(BUDGET.desktop_points) || 1200, 1200));
+    // FaceState owns the effective budget, including constrained/mobile devices.
+    // The proxy must not quietly allocate the desktop point ceiling on a phone.
+    const effectiveBudget = window.MASTER_FACE_STATE?.renderBudget?.();
+    const configured = Number(effectiveBudget?.points ?? BUDGET.desktop_points ?? 1200);
+    const ceiling = Number.isFinite(configured) && configured > 0
+      ? Math.min(1200, Math.floor(configured))
+      : 1200;
+    const count = Math.max(1, ceiling);
     splatCount = count;
     const positions = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
