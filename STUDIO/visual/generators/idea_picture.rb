@@ -125,7 +125,9 @@ module Studio
         end
 
         version = JSON.parse(File.read(path))["version"].to_s
-        raise "training manifest has no version: #{path}" if version.empty?
+        unless version.match?(/\A[^\/\s:]+\/[^:\s]+:[^:\s]+\z/)
+          raise "training manifest has no valid owner/model:version: #{path}"
+        end
 
         version
       rescue JSON::ParserError => error
