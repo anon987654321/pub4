@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "erb"
 require "yaml"
+require_relative "engine_roots"
 
 # Two promises each app's config makes to production, read as data rather than
 # as spelling.
@@ -18,7 +19,8 @@ class AppConfigContractTest < Minitest::Test
 
   def job_roots(app)
     [File.join(ROOT, app, "app", "jobs"), File.join(ROOT, "__shared", "app", "jobs"),
-     *Dir.glob(File.join(ROOT, app, "engines", "*", "app", "jobs"))]
+     *Dir.glob(File.join(ROOT, app, "engines", "*", "app", "jobs")),
+     *(app == "brgen" ? Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "jobs")) : [])]
   end
 
   def job_file(class_name)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # A DELETE that cannot be taken back asks first. Every such control in the four
 # apps already does — measured 2026-09-13, 25 confirmed of 25 — so this is a
@@ -18,10 +19,8 @@ class DestructiveConfirmationTest < Minitest::Test
   IRREVERSIBLE_KEY = /(?:\A|[._])(?:delete|delete_permanent|unsend|remove_listing|end_party|unmatch|group_leave)\z/
 
   def views
-    %w[amber brgen bsdports shared].flat_map do |app|
-      Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) +
-        Dir.glob(File.join(ROOT, app, "engines/*/app/views/**/*.erb"))
-    end.sort
+    own = %w[amber brgen bsdports __shared].flat_map { |app| Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) }
+    (own + Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app/views/**/*.erb"))).sort
   end
 
   # The helper call a DELETE option belongs to: back to its button_to/link_to,
