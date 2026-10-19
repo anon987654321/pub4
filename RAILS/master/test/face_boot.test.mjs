@@ -298,7 +298,13 @@ test("calm profile is default and gates rich idle motion", () => {
   const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
   assert.match(part1, /\['calm', 'full', 'crt', 'battery'\]/);
   assert.match(part1, /function isRichMotionProfile/);
-  assert.match(part1, /State\.reducedMotion && runtimeProfile\(\) !== 'battery'\) startStar/);
+  assert.match(part1, /function faceReducedMotionActive\(\)/);
+  assert.match(part1, /if \(faceReducedMotionActive\(\)\) return false/);
+  assert.match(part1, /faceReducedMotionActive\(\) \? 'battery'/);
+  assert.match(part1, /if \(v === 'thinking' && !faceReducedMotionActive\(\)/);
+  const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
+  assert.match(part3, /effectiveNext = faceReducedMotionActive\(\) \? 'battery' : next/);
+  assert.match(part3, /!faceReducedMotionActive\(\) && window\.ParticleKernel/);
 });
 
 test("face.runtime.js is the compact generated loader", () => {
