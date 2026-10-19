@@ -181,6 +181,8 @@ class TestIdeaPictureOutput < Minitest::Test
     Object.new.tap { |status| status.define_singleton_method(:success?) { true } }
   end
 
+  public
+
   def test_subject_manifest_is_configurable_and_missing_manifest_is_actionable
     Dir.mktmpdir do |dir|
       manifest = File.join(dir, "replicate_training.json")
