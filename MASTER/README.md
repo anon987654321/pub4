@@ -348,7 +348,6 @@ MANPATH="$PWD/MASTER/man" man master-fix
 The manuals describe operator interfaces; the executable command registry,
 implementation, Laws and tests remain authoritative.
 
-
 ## Personal privacy and consent
 
-Read [PERSONAL_PRIVACY.md](PERSONAL_PRIVACY.md) before enabling personal-device, companion or financial workflows. `Master::Ground::PersonalPermissions` is a local, default-deny ledger for scoped grants, purpose limitation, expiry, revocation and inspectable audit events. It is not yet proof that each device/tool adapter enforces the ledger. Until adapter-level tests prove that integration, do not describe the primitive alone as protection: microphone, camera, location, memory, messaging, purchases, financial actions and destructive operations must remain disabled unless their actual execution path checks the policy and the relevant native OS permission. See the single repository backlog for the required adapter integration and real Android acceptance proof.
+Read [PERSONAL_PRIVACY.md](PERSONAL_PRIVACY.md) before enabling personal-device, companion or financial workflows. `Master::Ground::PersonalPermissions` is a local, default-deny ledger for scoped grants, purpose limitation, expiry, revocation and inspectable audit events. It is not yet proof that each hardware/tool adapter enforces the ledger. Until adapter-level tests prove that integration, do not describe the primitive alone as protection: microphone, camera, location, memory, messaging, purchases, financial actions and destructive operations must remain disabled unless their actual execution path checks the policy and the relevant native OS permission. See the single repository backlog for the required adapter integration and real Android acceptance proof.
