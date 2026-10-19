@@ -21,6 +21,8 @@ module Master
             "--trace expands the redacted event payload; --normal and --quiet reduce output;",
             "MASTER_CLI_QUIET=1 silences the unit lines in the interactive CLI.",
             "--dry-run stops after the reading and says what it would take on.",
+            "--design, on a target inside one RAILS app, then runs the layout loop on that app:",
+            "bin/operator design, whose kept edits are local commits for you to review.",
             "There is no /scan: observation is where a fix starts, not a command.",
           ],
         },

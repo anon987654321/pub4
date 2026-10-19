@@ -85,6 +85,19 @@ class TestScanRequestTargets < Minitest::Test
     assert_equal "../RAILS/amber", path
   end
 
+  # --design is read by dispatch_fix after the fix; as a path it would resolve nowhere and
+  # the scan would quietly run over MASTER instead.
+  def test_parse_pass_flags_reads_design_beside_the_path_and_keeps_it_out_of_the_path
+    registry = Master::CLI::CommandRegistry
+    apply, _critique, _aesthetic, only, path = registry.parse_pass_flags("--design RAILS/brgen --max-files=5")
+
+    assert_nil apply
+    assert_nil only
+    assert_equal "RAILS/brgen", path
+    assert registry.design_requested?("RAILS/brgen --DESIGN")
+    refute registry.design_requested?("RAILS/brgen --no-autofix")
+  end
+
   def test_aesthetic_profile_walks_only_aesthetic_rules
     scanner = RecordingScanner.new
     def scanner.laws

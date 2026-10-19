@@ -66,10 +66,11 @@ module Master
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
           Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
-          dispatch_fix_parsed(
+          rendered = dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:
           )
+          design_requested?(raw) && writes_requested?(apply:, only:) ? design_after_fix(rendered, target:) : rendered
         ensure
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
@@ -161,6 +162,29 @@ module Master
         # A run that stopped for newer code continues on it, in this process.
         puts rendered
         Master::Fix::CodeWatch.reexec!(root, "/fix #{raw}")
+        rendered
+      end
+
+      def design_requested?(raw) = raw.to_s.split(/\s+/).any? { |token| token.casecmp?(DESIGN_FLAG) }
+
+      # `/fix --design` follows a verified fix with `bin/operator design` on the target's app:
+      # the loop that keeps a layout edit only when the measured score rises. Its commits stay
+      # local for the operator to review, and a failure here is reported without changing what
+      # /fix already delivered.
+      def design_after_fix(rendered, target:)
+        return rendered if rendered.is_a?(Master::Result::Err)
+
+        apps = Master::Fix::DesignScope.apps_for(target)
+        if apps.empty?
+          Master::Trace::Dmesg.status("design0", "--design needs a target inside one RAILS app, such as RAILS/brgen; not run")
+          return rendered
+        end
+        require_relative "../../operator/design_run"
+        code = ::Operator::DesignRun.main(["--app", apps.join(",")], root: Master::REPO_ROOT)
+        Master::Trace::Dmesg.status("design0", "layout loop finished with exit #{code}; its commits are local until you push")
+        rendered
+      rescue StandardError => e
+        Master::Trace::Dmesg.status("design0", "FAILED: #{e.class}: #{e.message.lines.first.to_s.strip[0, 160]}")
         rendered
       end
 
@@ -337,6 +361,9 @@ module Master
       # Read by dispatch_fix_in_worktree; never a path.
       INCLUDE_DIRTY_FLAG = "--include-dirty"
 
+      # Read by dispatch_fix: after a verified write-enabled fix, run the layout loop on the target's app.
+      DESIGN_FLAG = "--design"
+
       PASS_FLAGS = {
         "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
@@ -383,7 +410,7 @@ module Master
         joined_only(raw.split(/\s+/)).each do |token|
           if (flag = PASS_FLAGS[token.downcase])
             flags[flag.first] = flag.last
-          elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?(INCLUDE_DIRTY_FLAG)
+          elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?(INCLUDE_DIRTY_FLAG) || token.casecmp?(DESIGN_FLAG)
             next
           elsif token =~ AUTOFIX_FLAG || token =~ MAX_FILES_FLAG
             # Parsed below as per-dispatch options; parsing must not mutate the
