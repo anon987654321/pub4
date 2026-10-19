@@ -39,6 +39,9 @@
   let contextState = "ready";
 
   function reducedMotionEnabled(state = {}) {
+    const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+    if (typeof canonical === "function") return canonical(state);
+    // Compatibility fallback for an older shell without the canonical state bridge.
     const mediaReduced = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
     const declaredReduced = document.documentElement?.dataset?.reducedMotion === "1";
     const runtimeReduced = Boolean(window.MASTER_FACE?.State?.reducedMotion);
