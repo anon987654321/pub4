@@ -3516,7 +3516,8 @@ def random_stage_rank
       end
     end
     measured = positions.transform_values { |seen| seen.sum / seen.size }
-    RECIPE_ALLOWED.to_h { |fx| [fx, measured.fetch(fx, 0.85)] }
+    # The finishing grain is appended after the drawn steps, so it ranks last.
+    RECIPE_ALLOWED.to_h { |fx| [fx, measured.fetch(fx, 0.85)] }.merge(RANDOM_ALWAYS => 1.0)
   end
 end
 
@@ -5077,6 +5078,10 @@ def run_random(subject = nil)
       drawn << chain
       $cli_logger.info "#{file_index + 1}/#{files.count} #{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
       process_file(file, 1, nil, chain)
+    rescue StandardError => e
+      # One refused chain costs one take, not the rest of the family.
+      $logger.error "random #{File.basename(file)} take #{index + 1}: #{e.message}"
+      $cli_logger.error "take #{index + 1} failed: #{e.message}"
     end
   rescue StandardError => e
     $logger.error "random #{File.basename(file)}: #{e.message}"

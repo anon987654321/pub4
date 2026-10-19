@@ -72,7 +72,10 @@ module Postpro
         raise ArgumentError, "constitutional grade contains an effect with no physical stage"
       end
 
-      ordered = ranks.each_cons(2).all? { |left, right| left <= right }
+      # A repeat is a second pass placed later on purpose, so order is judged on
+      # each effect's first appearance.
+      first_passes = effects.uniq.map { |effect| stage_rank[effect] }
+      ordered = first_passes.each_cons(2).all? { |left, right| left <= right }
       raise ArgumentError, "constitutional grade breaks physical transformation order" unless ordered
 
       true
