@@ -319,10 +319,16 @@
     syncFromFaceState(system, state);
   }
 
-  function isFaceScene(scene) {
-    return Array.isArray(scene?.children) && scene.children.some((node) =>
-      node?.type === "Object3D" && node.children?.some((child) => child?.type === "Points")
+  // Three.js scene roots may be Group, Object3D, or another container. Detect
+  // the face by its point child, not an exact parent type label.
+  function hasFacePoints(node) {
+    return Array.isArray(node?.children) && node.children.some((child) =>
+      child?.isPoints === true || child?.type === "Points"
     );
+  }
+
+  function isFaceScene(scene) {
+    return Array.isArray(scene?.children) && scene.children.some(hasFacePoints);
   }
 
   async function install() {
@@ -357,8 +363,7 @@
       renderedFrames += 1;
       if (active?.points) active.points.visible = !document.hidden && contextState !== "lost";
       if (!active && isFaceScene(scene)) {
-        const root = scene.children.find((node) => node?.type === "Object3D" &&
-          node.children?.some((child) => child?.type === "Points"));
+        const root = scene.children.find(hasFacePoints);
         const facePoints = root?.children?.find((child) => child?.type === "Points");
         const sampled = samplesFromFaceGeometry(facePoints, pointBudget());
         active = buildFromSamples(THREE, sampled || defaultSamples(pointBudget()));
