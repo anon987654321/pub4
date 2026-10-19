@@ -19,7 +19,7 @@ module Master
             check_config_valid(root),
             check_data_dir(root),
             check_soul_yaml(root),
-            check_rules_yaml(root),
+            check_laws_yaml(root),
             check_providers_yaml(root),
             check_models_yaml(root),
             check_voice_yaml(root),
@@ -117,8 +117,8 @@ module Master
           check_yaml_file(root, "data/soul.yml", "soul_yaml")
         end
 
-        def check_rules_yaml(root)
-          check_yaml_file(root, "data/laws.yml", "rules_yaml")
+        def check_laws_yaml(root)
+          check_yaml_file(root, "data/laws.yml", "laws_yaml")
         end
 
         def check_providers_yaml(root)
@@ -134,7 +134,7 @@ module Master
         end
 
         def check_limits_yaml(root)
-          check_yaml_file(root, "data/limits.yml", "limits_yaml", required: false)
+          check_yaml_file(root, "data/limits.yml", "limits_yaml")
         end
 
         def check_yaml_file(root, rel_path, name, required: true)
