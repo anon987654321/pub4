@@ -242,6 +242,7 @@ module Master
         @path_references = []
         @dynamic_sites = []
         @unresolved_references = []
+        @external_references = 0
         @built = false
         @build_lock = Mutex.new
       end
@@ -261,6 +262,7 @@ module Master
             @path_references.clear
             @dynamic_sites.clear
             @unresolved_references.clear
+            @external_references = 0
             files.each { |file| analyze(file) }
             resolve_ruby_references!
             @built = true
@@ -505,6 +507,8 @@ module Master
         @dynamic_sites.concat(visitor.dynamic_sites)
       end
 
+      MAX_SPLIT_FILES = 8
+
       def resolve_ruby_references!
         methods = @ruby_definitions.select { |row| row[:kind] == :method }
         constants = @ruby_definitions.select { |row| %i[class module constant].include?(row[:kind]) }
@@ -523,9 +527,12 @@ module Master
                       else
                         []
                       end
+
+          next if candidates == :namespace
+
           candidates = candidates.uniq { |row| [row[:fqn], row[:file]] }
           if candidates.empty?
-            @unresolved_references << reference.merge(reason: "no unique static source target")
+            note_unresolved(reference, external: external_reference?(reference, methods_by_name, constants_by_name))
             next
           end
 
@@ -547,6 +554,26 @@ module Master
           edge(from:, to:, type:, weight:)
         end
         resolve_path_references!
+      end
+
+      # A name the repository never defines (require_relative, Dir.pwd, each) points outside it: a gap in
+      # nothing this graph could have known, and no reason to refuse a repair.
+      def note_unresolved(reference, external:)
+        if external
+          @external_references += 1
+        else
+          @unresolved_references << reference.merge(reason: "no unique static source target")
+        end
+
+        nil
+      end
+
+      def external_reference?(reference, methods_by_name, constants_by_name)
+        name = reference[:name].to_s
+        case reference[:kind]
+        when :call, :dynamic_call then methods_by_name[name].nil?
+        else constants_by_name[name.split("::").last].nil?
+        end
       end
 
       def resolve_method_reference(reference, by_name, by_fqn)
@@ -579,13 +606,21 @@ module Master
         return [] if name.empty?
 
         exact = by_fqn[name]
-        return exact if exact
+        return spread_or_namespace(exact) if exact
 
         tail = name.split("::").last
         candidates = Array(by_name[tail])
-        return candidates if candidates.map { |row| row[:fqn] }.uniq.one?
+        return spread_or_namespace(candidates) if candidates.map { |row| row[:fqn] }.uniq.one?
 
         []
+      end
+
+      # A class or module split over a few files depends on all of them. A name opened in many files,
+      # such as Master or Master::CLI, is a scope and not a dependency on any one of them: counted as
+      # one, a single reference tied a file to the whole tree (a million edges) and any dynamic call
+      # anywhere put every repair in HUMAN_DECISION.
+      def spread_or_namespace(rows)
+        rows.map { |row| row[:file] }.uniq.size > MAX_SPLIT_FILES ? :namespace : rows
       end
 
       def ruby_requires(content, rel)
@@ -659,6 +694,7 @@ module Master
           inheritance_edges: grouped.fetch(:inheritance, []).size,
           mixin_edges: grouped.fetch(:mixin, []).size,
           unresolved_ruby_references: @unresolved_references.count { |row| row[:kind] != :import },
+          external_ruby_references: @external_references,
           unresolved_local_imports: @unresolved_references.count { |row| row[:kind] == :import },
           resolved_local_import_edges: grouped.fetch(:local_import, []).size,
           dynamic_sites: @dynamic_sites.size,

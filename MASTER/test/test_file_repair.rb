@@ -65,6 +65,45 @@ class TestFileRepair < Minitest::Test
       assert_equal %w[FEW_ARGUMENTS CQS], subject.asked_rules, "a split filtered out is not asked"
     end
   end
+  # When callers cannot all be found, a repair may change a body and may not change what the file defines.
+  def locked_repair(interface_locked, replacement)
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "module Sample\n  def self.call = :bad\nend\n")
+      diff = "```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,3 +1,3 @@\n module Sample\n-  def self.call = :bad\n" \
+             "+  #{replacement}\n end\n```"
+      subject = Master::Fix::FileRepair.new(
+        findings: [{ law: "TEST_RULE", line: 2, message: "replace bad value", file: path, severity: :warning }],
+        rules: [Rule.new("TEST_RULE", "replace the bad value")],
+        agent: Agent.new(diff), scanner: Scanner.new, root:
+      )
+      subject.lock_interface! if interface_locked
+
+      yield subject.run(path), File.read(path)
+    end
+  end
+
+  def test_a_locked_repair_may_change_a_body_but_not_a_name
+    locked_repair(true, "def self.call = :good") do |result, text|
+      assert_equal 1, result[:fixed]
+      assert_includes text, ":good"
+    end
+  end
+
+  def test_a_locked_repair_that_renames_a_method_is_refused_and_leaves_the_file
+    locked_repair(true, "def self.other = :good") do |result, text|
+      assert_equal 0, result[:fixed]
+      assert_includes text, "def self.call = :bad"
+    end
+  end
+
+  def test_an_unlocked_repair_may_rename
+    locked_repair(false, "def self.other = :good") do |result, text|
+      assert_equal 1, result[:fixed]
+      assert_includes text, "def self.other"
+    end
+  end
+
   def test_prompt_includes_complete_dependency_and_caller_sources_with_hashes
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")

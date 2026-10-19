@@ -328,7 +328,9 @@ module Master
     # A comment explaining why the code avoids Date.today names it; amber's
     # PlannedOutfit did, and the rule sent it for repair. Blanking comment
     # lines keeps every line number.
-    src = src.gsub(/^\s*#.*$/, "")
+    # Spaces and tabs only before the #: \s would take the newlines of the blank lines above a comment
+    # with it, and every finding after it reported the wrong line.
+    src = src.gsub(/^[ \t]*#.*$/, "")
     # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
     # explicitly, the other is epoch seconds. Every RAILS finding this rule
     # produced was one of those two forms — JWT exp/iat, a tmpfile suffix, and

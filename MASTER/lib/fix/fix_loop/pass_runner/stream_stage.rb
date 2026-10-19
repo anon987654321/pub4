@@ -216,6 +216,7 @@ module Master
               context_files: context[:files], context_root: context[:context_root],
               expected_target_sha256: context[:target_sha256],
             )
+            repair.lock_interface! if context[:interface_locked]
             result = repair.run(path)
             # Only what the model was asked counts: a split filtered out before the
             # call is no decline, and counting it kept those rules from retiring.
@@ -241,25 +242,7 @@ module Master
             relative = graph.relative(path)
             radius = graph.blast_radius(path)
             related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
-            dynamic_sites = ([relative] + related).flat_map do |source_rel|
-              graph.dynamic_for(File.join(graph.root, source_rel))
-            end
-            unless dynamic_sites.empty?
-              site = dynamic_sites.first
-              return incomplete_repair_context(
-                "unresolved dynamic behavior at #{site[:file]}:#{site[:line]} (#{site[:name]}: #{site[:reason]})",
-              )
-            end
-
-            adjacent = (related + [relative]).to_set
-            unresolved = graph.unresolved_for(path).select { |reference| adjacent.include?(reference[:from_file]) }
-            unless unresolved.empty?
-              site = unresolved.first
-              return incomplete_repair_context(
-                "dependency/caller relationship remains unresolved at #{site[:from_file]}:#{site[:line]} " \
-                "(#{site[:kind]} #{site[:name]})",
-              )
-            end
+            lock_reasons = interface_lock_reasons(graph:, path:, relative:, inbound: Array(radius[:inbound]))
 
             entries = []
             total_bytes = target_source.bytesize
@@ -294,9 +277,38 @@ module Master
               files: entries,
               context_root: graph.root,
               target_sha256:,
+              interface_locked: !lock_reasons.empty?,
+              lock_reasons:,
             }
           rescue StandardError => e
             incomplete_repair_context("#{e.class}: #{e.message}")
+          end
+
+          # Define-style calls make methods; they never call the target by a name this graph cannot see.
+          DYNAMIC_DEFINERS = %w[define_method define_singleton_method].freeze
+
+          # Callers the graph cannot see: a dynamic call in the target or in a file that calls it, a
+          # name-based caller whose receiver is unknown, an import in the target that did not resolve.
+          # None refuses the repair. Each means the repair may not change what the file defines, which
+          # FileRepair holds it to: a change to the body cannot break a caller, a change to the name can.
+          # What the target itself calls outward is not here: editing the target cannot change its callees.
+          def interface_lock_reasons(graph:, path:, relative:, inbound:)
+            dynamic_lock_reasons(graph:, files: [relative] + inbound) +
+              unresolved_lock_reasons(graph:, path:, relative:, inbound:)
+          end
+
+          def dynamic_lock_reasons(graph:, files:)
+            sites = files.flat_map { |rel| graph.dynamic_for(File.join(graph.root, rel)) }
+            calls = sites.reject { |site| DYNAMIC_DEFINERS.include?(site[:name].to_s) }
+            calls.map { |site| "dynamic #{site[:name]} at #{site[:file]}:#{site[:line]}" }
+          end
+
+          def unresolved_lock_reasons(graph:, path:, relative:, inbound:)
+            callers = (inbound + [relative]).to_set
+            rows = graph.unresolved_for(path).select do |row|
+              callers.include?(row[:from_file]) && (row[:from_file] != relative || row[:kind] == :import)
+            end
+            rows.map { |row| "unresolved #{row[:kind]} #{row[:name]} at #{row[:from_file]}:#{row[:line]}" }
           end
 
           def incomplete_repair_context(reason)

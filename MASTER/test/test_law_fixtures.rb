@@ -118,4 +118,14 @@ class TestLawFixtures < Minitest::Test
     puts "rule_fixture_debt: #{unfixtured.size} < ceiling #{ceiling} — record the new low in data/laws.yml law_ratchets.fixture_debt"
   end
 
+  # Comment lines are blanked before the scan and a finding keeps the line it is on: the pattern that
+  # blanked them took the newlines of the blank lines above a comment with it.
+  def test_time_zone_finding_reports_its_own_line_after_blank_lines_and_comments
+    law = Law.registry.find { |klass| law_id(klass).to_s == "TIME_ZONE_UNSAFE" }
+    source = "a = 1\n\n\n# a comment\n\n" + format("b = %s.now\n", "Time")
+
+    found = law.new.check(source, path: "/repo/app/models/example.rb")
+
+    assert_equal [6], found.map { |finding| finding[:line] }
+  end
 end

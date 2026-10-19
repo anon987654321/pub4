@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require_relative "../review/reference_graph"
 
 module Master
   module Fix
@@ -13,6 +14,9 @@ module Master
     # verifier, apply guard, tests and commit, and changes only what it asks.
     class FileRepair < RepairLoop
       Scope = Data.define(:id, :description)
+
+      # Called when the graph cannot see every caller: the repair may change a body, not a name.
+      def lock_interface! = @interface_locked = true
 
       GOLDEN = "Golden rule: preserve, then improve, never break. Make the smallest change " \
                "that removes each finding; touch nothing else."
@@ -92,7 +96,12 @@ module Master
           end
 
           result = PatchApplier.apply(src, diff_of(response))
-          return result.source if result.is_a?(PatchApplier::Success)
+          if result.is_a?(PatchApplier::Success)
+            failure = interface_failure(path, before: src, after: result.source)
+            return result.source unless failure
+
+            next
+          end
 
           RunLedger.declined("patch_rejected", file: path, law: @law.id, detail: result.reason)
           failure = "your diff did not apply to the file (#{result.reason.to_s[/\A[^-]+/].to_s.strip}); copy every context line exactly as shown in the complete source"
@@ -101,6 +110,35 @@ module Master
           return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
         end
         nil
+      end
+
+      # The note for the next try when a locked repair dropped a definition, else nil. A repair may add to
+      # what a Ruby file defines; with callers the graph cannot see, taking from it could break one.
+      def interface_failure(path, before:, after:)
+        return unless @interface_locked
+
+        dropped = dropped_definitions(path, before:, after:)
+        return if dropped.empty?
+
+        names = dropped.first(3).join(", ")
+        RunLedger.declined("interface_changed", file: path, law: @law.id, detail: names)
+        "your diff removed or renamed #{names}; callers of this file cannot all be found statically, " \
+          "so every method, class and constant it defines must keep its name"
+      end
+
+      def dropped_definitions(path, before:, after:)
+        return [] unless path.to_s.end_with?(".rb")
+
+        (definitions_of(before) - definitions_of(after)).map { |kind, name| "#{kind} #{name}" }
+      end
+
+      def definitions_of(source)
+        parsed = Prism.parse(source)
+        return Set.new if parsed.failure?
+
+        visitor = Master::Review::ReferenceGraph::RubyVisitor.new(file: "repair")
+        parsed.value.accept(visitor)
+        visitor.definitions.to_set { |row| [row[:kind], row[:fqn]] }
       end
 
       def refuse_stale_context(path, reason)

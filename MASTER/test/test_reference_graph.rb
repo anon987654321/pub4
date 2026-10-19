@@ -50,6 +50,42 @@ class TestReferenceGraph < Minitest::Test
     end
   end
 
+  # Builds a graph over files given as name => source, and yields it with the root.
+  def graph_of(files)
+    Dir.mktmpdir("reference-graph") do |root|
+      files.each { |name, source| File.write(File.join(root, name), source) }
+      graph = Master::Review::ReferenceGraph.new(root:)
+      graph.build
+      yield graph, root
+    end
+  end
+
+  # Master and Master::CLI are opened in hundreds of files. A reference to the scope is not a dependency on any
+  # one of them; counted as one it linked every file to the whole tree and blocked every repair.
+  def test_a_namespace_opened_in_many_files_is_not_a_dependency_on_each
+    opened = (0..9).to_h { |n| ["ns_#{n}.rb", "module Ns\n  VALUE_#{n} = #{n}\nend\n"] }
+    files = opened.merge("thing.rb" => "module Ns\n  class Thing; end\nend\n",
+                         "scope_user.rb" => "puts Ns\n", "thing_user.rb" => "Ns::Thing.new\n")
+
+    graph_of(files) do |graph, root|
+      callers = graph.blast_radius(File.join(root, "thing.rb")).fetch(:inbound)
+
+      assert_includes callers, "thing_user.rb", "a reference to the class is a dependency on its file"
+      refute_includes callers, "scope_user.rb", "a reference to the scope is not"
+    end
+  end
+
+  def test_a_class_split_over_two_files_depends_on_both
+    files = { "part_a.rb" => "class Split\n  def a = 1\nend\n", "part_b.rb" => "class Split\n  def b = 2\nend\n",
+              "user.rb" => "Split.new\n" }
+
+    graph_of(files) do |graph, root|
+      %w[part_a.rb part_b.rb].each do |part|
+        assert_includes graph.blast_radius(File.join(root, part)).fetch(:inbound), "user.rb"
+      end
+    end
+  end
+
   def test_blast_radius_uses_the_resolved_cross_tree_edge
     Dir.mktmpdir("reference-graph") do |root|
       caller = File.join(root, "RAILS", "brgen", "app.rb")

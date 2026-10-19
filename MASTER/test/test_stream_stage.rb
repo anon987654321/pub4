@@ -51,6 +51,10 @@ class StreamStageTest < Minitest::Test
   # The conflict resolver is not under test; rows pass through as hashes.
   def resolve_violations(raw) = raw.map(&:to_h)
 
+  # An unbounded run ranks its worklist after the whole scan by default (MASTER_FIX_RANK). Overlapping the
+  # scan with repairs is the mode MASTER_FIX_RANK=0 selects, and these two tests describe that mode.
+  OVERLAPPING = /start_before|duplication_waits/
+
   def setup
     @root = "/repo"
     @events = Queue.new
@@ -61,6 +65,14 @@ class StreamStageTest < Minitest::Test
     @committer = NullCommitter.new
     @law_order = LawOrder.new([Rule.new("LONG_METHOD"), Rule.new("DRY")])
     @violation_counts = Hash.new(0)
+    @rank_before = ENV["MASTER_FIX_RANK"]
+    ENV["MASTER_FIX_RANK"] = "0" if name.match?(OVERLAPPING)
+  end
+
+  def teardown
+    ENV.delete("MASTER_FIX_RANK")
+    ENV["MASTER_FIX_RANK"] = @rank_before if @rank_before
+    FileUtils.remove_entry(@temporary_path) if @temporary_path
   end
 
   def test_repairs_start_before_the_scan_finishes
@@ -114,6 +126,40 @@ class StreamStageTest < Minitest::Test
     end
   end
 
+  def test_a_repair_context_is_complete_when_the_graph_knows_the_target
+    Dir.mktmpdir do |root|
+      path = File.join(root, "target.rb")
+      File.write(path, "x = 1\n")
+      @reference_graph = FakeGraph.new(root)
+
+      context = repair_context(path)
+
+      assert context[:complete], context[:reason]
+      assert_equal root, context[:context_root]
+      assert_equal Digest::SHA256.hexdigest("x = 1\n"), context[:target_sha256]
+    end
+  end
+
+  def test_callers_the_graph_cannot_see_lock_the_interface_without_refusing_the_repair
+    graph = graph_with(inbound: ["caller.rb"], dynamic: { "caller.rb" => "public_send" })
+
+    context = repair_context_for(graph)
+
+    assert context[:complete], context[:reason]
+    assert context[:interface_locked]
+    assert_match(/dynamic public_send at caller.rb:1/, context[:lock_reasons].first)
+  end
+
+  def test_define_method_in_a_caller_and_a_dynamic_call_in_a_dependency_do_not_lock
+    graph = graph_with(inbound: ["caller.rb"], outbound: ["dependency.rb"],
+                       dynamic: { "caller.rb" => "define_method", "dependency.rb" => "send" })
+
+    context = repair_context_for(graph)
+
+    assert context[:complete], context[:reason]
+    refute context[:interface_locked], context[:lock_reasons].inspect
+  end
+
   private
 
   def run_law_once(rule, files, _pass)
@@ -139,6 +185,25 @@ class StreamStageTest < Minitest::Test
   def circuit_open? = false
   def llm_stage_resources_ok?(_pass) = true
 
+  def temporary_path = @temporary_path ||= Dir.mktmpdir
+
+  # A FakeGraph over real files: the target, its callers and its dependencies, and the dynamic call
+  # (file => method name) each reports.
+  def graph_with(inbound: [], outbound: [], dynamic: {})
+    (["target.rb"] + inbound + outbound).each { |name| File.write(File.join(temporary_path, name), "x = 1\n") }
+    sites = dynamic.to_h { |file, name| [file, [{ file:, line: 1, name: }]] }
+
+    FakeGraph.new(temporary_path).tap do |graph|
+      graph.define_singleton_method(:blast_radius) { |_path| { inbound:, outbound: } }
+      graph.define_singleton_method(:dynamic_for) { |file| sites.fetch(File.basename(file), []) }
+    end
+  end
+
+  def repair_context_for(graph)
+    @reference_graph = graph
+    repair_context(File.join(temporary_path, "target.rb"))
+  end
+
   # A requested /fix gives every repair a complete context from the dependency graph; an
   # undefined name inside it was rescued into "context incomplete" and sent each file to
   # HUMAN_DECISION, so nothing was ever repaired.
@@ -149,19 +214,5 @@ class StreamStageTest < Minitest::Test
     def blast_radius(_path) = { inbound: [], outbound: [] }
     def dynamic_for(_path) = []
     def unresolved_for(_path) = []
-  end
-
-  def test_a_repair_context_is_complete_when_the_graph_knows_the_target
-    Dir.mktmpdir do |root|
-      path = File.join(root, "target.rb")
-      File.write(path, "x = 1\n")
-      @reference_graph = FakeGraph.new(root)
-
-      context = repair_context(path)
-
-      assert context[:complete], context[:reason]
-      assert_equal root, context[:context_root]
-      assert_equal Digest::SHA256.hexdigest("x = 1\n"), context[:target_sha256]
-    end
   end
 end
