@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "open3"
 require "yaml"
+require_relative "../../../subprocess"
 
 module Dilla
   # Offline MP4 export. The waveform is drawn over an architectural grid and
@@ -13,6 +13,8 @@ module Dilla
     WIDTH = 1280
     HEIGHT = 720
     FPS = 30
+    ENCODER_TIMEOUT = 900
+    PROBE_TIMEOUT = 15
     VIDEO_RECIPE = File.expand_path("../../../postpro/video.yml", __dir__).freeze
     FILTER_VALUE = /\A[a-zA-Z0-9_=@.,: +()\/'-]+\z/.freeze
 
@@ -56,7 +58,9 @@ module Dilla
       binary = executable("ffmpeg")
       return false unless binary
 
-      stdout, _stderr, status = Open3.capture3(binary, "-hide_banner", "-encoders")
+      stdout, _stderr, status = Studio::Subprocess.capture3(
+        binary, "-hide_banner", "-encoders", timeout: [command_timeout, PROBE_TIMEOUT].min
+      )
       status.success? && stdout.include?("libx264")
     rescue StandardError
       false
@@ -87,7 +91,7 @@ module Dilla
         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
         "-shortest", temporary,
       ]
-      _stdout, stderr, status = Open3.capture3(*command)
+      _stdout, stderr, status = Studio::Subprocess.capture3(*command, timeout: command_timeout)
       unless status.success? && File.file?(temporary) && File.size(temporary).positive?
         detail = stderr.to_s.lines.last(5).join.strip
         raise Error, "ffmpeg exit=#{status.exitstatus}: #{detail.empty? ? "no diagnostic output" : detail}"
@@ -113,6 +117,15 @@ module Dilla
       rescue SystemCallError
         nil
       end
+    end
+
+    def command_timeout
+      value = Integer(ENV.fetch("DILLA_FFMPEG_TIMEOUT", ENCODER_TIMEOUT.to_s), 10)
+      raise Error, "DILLA_FFMPEG_TIMEOUT must be 1..3600 seconds" unless value.between?(1, 3600)
+
+      value
+    rescue ArgumentError, TypeError
+      raise Error, "DILLA_FFMPEG_TIMEOUT must be an integer from 1 to 3600"
     end
 
     def postpro_filters(preset)

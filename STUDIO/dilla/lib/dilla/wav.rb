@@ -51,20 +51,25 @@ module WAV
   end
 
   # Bounded-memory output for long renders; never overwrites an existing take.
+  # Bounded-memory output published atomically. The final path appears only after
+  # every block and the RIFF sizes have been written and synced; a crash or an
+  # invalid block can leave a temporary file only, never a plausible partial WAV.
   def self.write_stream(path, frames:, channels:, bits: 16, block_size: 8192)
     raise ArgumentError, "frames must be positive" unless frames.is_a?(Integer) && frames.positive?
     raise ArgumentError, "channels must be one or two" unless [1, 2].include?(channels)
     raise ArgumentError, "bits must be 16 or 24" unless [16, 24].include?(bits)
     raise ArgumentError, "block size must be positive" unless block_size.is_a?(Integer) && block_size.positive?
 
+    destination = File.expand_path(path.to_s)
+    directory = File.dirname(destination)
+    FileUtils.mkdir_p(directory)
+
     width = bits / 8
     header = +"RIFF" + [0].pack("V") + "WAVEfmt " + [16].pack("V") + [1].pack("v")
     header << [channels, SAMPLE_RATE, SAMPLE_RATE * width * channels, width * channels, bits].pack("vVVvv")
     header << "data" << [0].pack("V")
-    created = false
-    complete = false
-    File.open(path, "wx+") do |file|
-      created = true
+
+    Tempfile.create(["studio-output-", ".tmp"], directory, binmode: true) do |file|
       file.write(header)
       offset = 0
       while offset < frames
@@ -74,23 +79,31 @@ module WAV
                channel_data.all? { |values| values.is_a?(Array) && values.length == count }
           raise ArgumentError, "audio block must contain #{channels} channels by #{count} frames"
         end
+
         flat = channels == 1 ? channel_data.fetch(0) : Stereo.interleave(channel_data)
         bytes = bits == 24 ? pack24(flat) : flat.map { |sample| (sample * 32_767).round.clamp(-32_768, 32_767) }.pack("s<*")
         file.write(bytes)
         offset += count
       end
+
       data_size = file.size - 44
       raise ArgumentError, "WAV exceeds RIFF size limit" if data_size > 0xffff_ffff - 36
       file.seek(4)
       file.write([36 + data_size].pack("V"))
       file.seek(40)
       file.write([data_size].pack("V"))
-      complete = true
+      file.flush
+      file.fsync
+      File.chmod(0o666 & ~File.umask, file.path)
+      file.close
+
+      # A hard link is an atomic create-if-absent publish. It does not silently
+      # replace an earlier take and cannot expose the temporary WAV's old header.
+      File.link(file.path, destination)
     end
     path
-  rescue StandardError
-    File.delete(path) if created && !complete && File.file?(path)
-    raise
+  rescue Errno::EEXIST
+    raise ArgumentError, "refusing to overwrite existing take: #{path}; choose a new path"
   end
 
   # Three bytes a sample, least significant first.
