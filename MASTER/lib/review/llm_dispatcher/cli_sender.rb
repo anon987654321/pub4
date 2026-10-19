@@ -158,11 +158,18 @@ def claude_on_path?
   end
 end
 
-# These two mark the parent as a Claude Code session, and a `claude --print`
+# The first two mark the parent as a Claude Code session, and a `claude --print`
 # that inherits them from one hangs until killed; unset, it answers in about
-# five seconds (measured 2026-09-24 from inside a session). Only these two:
-# CLAUDE_CODE_OAUTH_TOKEN and the other CLAUDE_* names can carry the login.
-CLAUDE_SESSION_ENV = { "CLAUDECODE" => nil, "CLAUDE_CODE_ENTRYPOINT" => nil }.freeze
+# five seconds (measured 2026-09-24 from inside a session). The second two are
+# keys MASTER loads for its API lanes: `claude` prefers them to its own
+# subscription login and exits 1 when the key has no credit, so every call of
+# this keyless lane failed and the chain fell to a free model (2026-10-19).
+# CLAUDE_CODE_OAUTH_TOKEN and the other CLAUDE_* names can carry the login, so
+# they stay.
+CLAUDE_SESSION_ENV = {
+  "CLAUDECODE" => nil, "CLAUDE_CODE_ENTRYPOINT" => nil,
+  "ANTHROPIC_API_KEY" => nil, "ANTHROPIC_AUTH_TOKEN" => nil
+}.freeze
 
 # A lane answers in text and nothing else. Left its tools, `claude --print`
 # edited files and ran git inside the /fix worktree on its own: it committed

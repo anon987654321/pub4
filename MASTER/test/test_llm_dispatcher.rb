@@ -370,6 +370,24 @@ end
     assert_includes captured_args, "--strict-mcp-config"
   end
 
+  # `claude` prefers ANTHROPIC_API_KEY to its subscription login. MASTER loads that key for
+  # its API lanes, so the keyless CLI lane has to start without it or it fails on a spent key.
+  def test_the_claude_cli_lane_starts_without_api_keys_so_the_login_answers
+    dispatcher, = build_dispatcher
+    ok_status = Struct.new(:success?).new(true)
+    captured_env = nil
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |_t, *_args, env: {}, **|
+      captured_env = env
+      ["pong", "", ok_status]
+    end
+    dispatcher.send(:claude_cli_call, "claude-opus-5-5", [{ role: "user", content: "ping" }], nil)
+
+    %w[ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN CLAUDECODE CLAUDE_CODE_ENTRYPOINT].each do |name|
+      assert captured_env.key?(name) && captured_env[name].nil?, "#{name} must be unset for the lane"
+    end
+    refute captured_env.key?("CLAUDE_CODE_OAUTH_TOKEN"), "the OAuth token can carry the login"
+  end
+
   # Exit 0 and the limit on stdout: /fix took it as the model's answer.
   def test_a_subscription_limit_is_a_quota_not_an_answer
     dispatcher, = build_dispatcher
