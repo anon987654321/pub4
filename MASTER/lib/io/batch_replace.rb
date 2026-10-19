@@ -39,7 +39,7 @@ module Master
 
       def resolve_target(directory)
         target = directory ? File.expand_path(directory, @root) : @root
-        return Result.ok(target) if PathGuard.inside_root?(target, @root)
+        return Result.ok(target) if PathGuard.inside_real_root?(target, @root)
 
         Result.err("replace: path escapes root: #{directory}", category: :validation)
       end
@@ -90,7 +90,9 @@ module Master
 
       def candidate_paths(target)
         Dir.glob(File.join(target, "**", "*")).select do |path|
-          File.file?(path) && SAFE_EXTENSIONS.include?(File.extname(path)) && !sacred?(relative(path))
+          File.file?(path) && !File.symlink?(path) &&
+            PathGuard.inside_real_root?(path, @root) &&
+            SAFE_EXTENSIONS.include?(File.extname(path)) && !sacred?(relative(path))
         end
       end
 
