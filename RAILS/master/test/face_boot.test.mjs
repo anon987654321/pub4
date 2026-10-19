@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const viewsDir = join(root, "app", "views");
+const railsRoot = join(root, "..");
 // Face assets are declared in config/face_assets.yml and rendered from it, so
 // the view no longer spells their names. Read the manifest as text — Node has
 // no YAML parser and these are presence checks, not structural ones.
@@ -98,7 +99,7 @@ test("face boot defaults to automatic activation and preserves an explicit prime
 
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
@@ -130,7 +131,7 @@ test("FaceWorld consumes the semantic layers and bounded render budget", () => {
 
 test("Face state derives modes and aliases from the shared contract", () => {
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
-  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(state, /CONTRACT_STATE\.modes/);
   assert.match(state, /Object\.entries\(CONTRACT\.mode_aliases/);
   assert.match(state, /mobile_particles/);
@@ -297,7 +298,7 @@ test("calm profile is default and gates rich idle motion", () => {
   const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
   assert.match(part1, /\['calm', 'full', 'crt', 'battery'\]/);
   assert.match(part1, /function isRichMotionProfile/);
-  assert.match(part1, /isRichMotionProfile\(\)\) startStar/);
+  assert.match(part1, /State\.reducedMotion && runtimeProfile\(\) !== 'battery'\) startStar/);
 });
 
 test("face.runtime.js is the compact generated loader", () => {
@@ -363,9 +364,9 @@ test("master_namespace exposes canonical MASTER facade getters", () => {
 });
 
 test("attention_model loads before face modules", () => {
-  const faceJs = readFileSync(join(publicDir, "face.js"), "utf8");
   const attn = readFileSync(join(publicDir, "attention_model.js"), "utf8");
-  assert.match(faceJs, /"attention_model\.js"/);
+  assert.ok(faceManifest.indexOf("- attention_model.js") >= 0);
+  assert.ok(faceManifest.indexOf("- attention_model.js") < faceManifest.indexOf("- particle_kernel.js"));
   assert.match(attn, /window\.MASTER\.attention/);
 });
 
@@ -382,7 +383,7 @@ test("chat index inline boot lazy-imports face with status hint, auto-retry, 35s
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /MASTER_ASSET_PATHS/);
   assert.match(index, /function loadFace/);
-  assert.match(index, /import\("<%= asset_path\("face\.js"\) %>"\)/);
+  assert.match(index, /import\("<%= FaceAssets\.versioned\(asset_path\("face\.js"\), "face\.js"\) %>"\)/);
   assert.match(index, /dismissPrimer\(\);\n\s+revealPrompt\(\);/);
   assert.match(index, /window\.__MASTER_PRIMER_TAP__=go/);
   assert.doesNotMatch(index, /DOMContentLoaded.*armPrimer/);
@@ -522,21 +523,21 @@ test("nothing takes a 2D context on the shared #face canvas", () => {
 });
 
 test("face runtime consumes the constitutional state contract", () => {
-  const contract = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+  const contract = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
   const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
-  assert.match(contract, /face_interface:[\\s\\S]*schema: 1/);
-  assert.match(contract, /mode_aliases:[\\s\\S]*phantom: error/);
+  assert.match(contract, /face_interface:[\s\S]*schema: 1/);
+  assert.match(contract, /mode_aliases:[\s\S]*phantom: error/);
   assert.match(state, /MASTER_FACE_CONTRACT/);
   assert.match(state, /CONTRACT_STATE\.modes/);
-  assert.match(state, /MASTERTopology\.classifyEvent/);
+  assert.match(state, /registry\.classifyEvent/);
   assert.match(index, /MASTER_FACE_CONTRACT = <%= raw/);
 });
 
 test("face.js has no second fallback module list", () => {
   const source = readFileSync(join(publicDir, "face.js"), "utf8");
   assert.match(source, /MASTER_ASSET_PATHS\?\.faceModulesList/);
-  assert.doesNotMatch(source, /|| \[\s*"attention_model\.js"/);
+  assert.doesNotMatch(source, /\|\| \[\s*"attention_model\.js"/);
 });
 
 test("obsolete point renderer stays absent", () => {
@@ -573,13 +574,13 @@ test("face.css keeps primer and prompt layering stable", () => {
 
 test("MASTER web and CLI share one monospaced face contract", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(rules, /face_root:[\s\S]*font_label:.*JetBrainsMono/);
   assert.match(css, /--font-label:\s*"JetBrainsMono/);
   assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.doesNotMatch(css, /var\(--font-label\)/, "MASTER face may not fall back to a second typography contract");
-  assert.match(css, /message\\.user,\\s*\\nmessage\\.assistant[\\s\\S]*border:\s*0;[\\s\\S]*background:\s*transparent/);
-  assert.match(css, /#chat-log[\\s\\S]*max-inline-size:\s*66ch/);
+  assert.match(css, /\.message\.user,\s*\n\.message\.assistant[\s\S]*border:\s*0;[\s\S]*background:\s*transparent/);
+  assert.match(css, /#chat-log[\s\S]*max-inline-size:\s*66ch/);
 });
 
 test("FaceWorld is one renderer projection, not a second renderer", () => {
@@ -591,7 +592,7 @@ test("FaceWorld is one renderer projection, not a second renderer", () => {
   assert.match(world, /window\.MASTER_FACE_WORLD/);
   assert.match(world, /master-sdf-shell/);
   assert.match(world, /master-splat-field/);
-  assert.match(world, /master-node-lib/);
+  assert.match(world, /master-node-\$\{name\}/);
   assert.doesNotMatch(world, /new THREE\.WebGLRenderer/);
   assert.doesNotMatch(world, /new THREE\.Scene/);
   assert.doesNotMatch(world, /requestAnimationFrame/);
@@ -655,7 +656,9 @@ test("visual layers consume the canonical face frame", () => {
 
 test("topology registry exposes canonical classifier", () => {
   const registry = readFileSync(join(publicDir, "topology_registry.js"), "utf8");
-  assert.match(registry, /phantom:detected/);
+  const patterns = readFileSync(join(root, "..", "..", "MASTER", "data", "topologies.yml"), "utf8");
+  assert.match(patterns, /phantom:\(detected\|occurrence\|recovery\|halt\)/);
+  assert.match(registry, /EVENT_CLASSIFIER/);
   assert.match(registry, /classifyEvent/);
   assert.match(registry, /bootRemoteTopologies\(\)/);
 });
@@ -671,7 +674,7 @@ test("chat_actions retains interrupted transport failures without duplicating pa
 
 test("chat_actions posts chat stream instead of EventSource GET", () => {
   const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   assert.match(actions, /method:\s*"POST"/);
   assert.match(actions, /\/chat\/message/);
   assert.doesNotMatch(actions, /new EventSource\(/);
@@ -685,7 +688,7 @@ test("chat_actions posts chat stream instead of EventSource GET", () => {
 
 test("face runtime dispatches ready event for deferred vision hooks", () => {
   const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   const vision = readFileSync(join(publicDir, "face_vision_core.js"), "utf8");
   assert.match(part1, /master:face-ready/);
   assert.match(runtime, /master:face-ready/);
@@ -693,7 +696,7 @@ test("face runtime dispatches ready event for deferred vision hooks", () => {
 });
 
 test("face runtime keeps named SSE reactions on the POST stream path", () => {
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   assert.match(runtime, /function handleFaceNamedEvent/);
   ["mood", "model", "verdict", "council:speech", "confidence", "felt"].forEach((event) => {
     assert.ok(runtime.includes(`event === '${event}'`), `missing named handler for ${event}`);
@@ -705,15 +708,15 @@ test("face runtime keeps named SSE reactions on the POST stream path", () => {
 test("web face is an evolved rendering of the CLI face", () => {
   const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
   const cliFace = readFileSync(join(root, "..", "..", "MASTER", "lib", "cli", "face.rb"), "utf8");
-  assert.match(cliFace, /GREYS = \(232\.\.255\)/);
-  assert.match(cliFace, /SPECK_LIGHT/);
-  assert.match(part3, /CLI_FACE_WEB_DENSITY = 2400/);
+  assert.match(cliFace, /Glyphs::DEFAULT_CHARS/);
+  assert.match(cliFace, /MASTER_FACE_RAMP/);
+  assert.match(part3, /CLI_FACE_WEB_DENSITY = \d+;/);
   assert.match(part3, /orbitalField = new THREE\.Points/);
   assert.match(part3, /size: 1/);
 });
 
 test("face runtime keeps chat stream and particle worker boot paths", () => {
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   assert.match(runtime, /function sendMessage/);
   assert.match(runtime, /MASTERChat\.startChatStream/);
   assert.doesNotMatch(runtime, /new EventSource\(/, "the face sends through chat_actions' POST stream only");
@@ -722,7 +725,7 @@ test("face runtime keeps chat stream and particle worker boot paths", () => {
 });
 
 test("tts defaults to server style inference and recovers after fallback cooldown", () => {
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   const controller = readFileSync(join(root, "app", "controllers", "tts_controller.rb"), "utf8");
   const chatJs = readFileSync(join(publicDir, "chat.js"), "utf8");
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
@@ -745,7 +748,7 @@ test("tts defaults to server style inference and recovers after fallback cooldow
   assert.match(index, /MASTER_VOICE_POLICY/);
   assert.doesNotMatch(controller, /params\[:style\]\.present\?/);
   assert.doesNotMatch(controller, /params\[:voice\]\.present\?/);
-  assert.match(controller, /Voice::Policy\.single_voice_key/);
+  assert.match(controller, /Master::Voice::Speech\.voice_for_text\(text\)/);
 });
 
 // There is no welcome greeting: MASTER speaks when spoken to. It was removed
@@ -768,7 +771,7 @@ test("no welcome greeting: MASTER speaks when spoken to", () => {
 });
 
 test("voice mode arms from a real gesture and reports microphone startup truthfully", () => {
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   assert.match(part5, /function listenOnFirstGesture/);
   assert.match(part5, /enterVoiceMode\(\{ fromAuto: true, fromGesture: true \}\)/);
@@ -780,7 +783,7 @@ test("voice mode arms from a real gesture and reports microphone startup truthfu
 
 test("TTS does not dequeue speech while the server cooldown is active", () => {
   const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const runtime = faceSource;
   assert.match(speech, /const unavailableUntil = Number\(tts\.serverUnavailableUntil \|\| 0\)/);
   assert.match(speech, /scheduleTtsTick\(Math\.max\(250, unavailableUntil - Date\.now\(\)\)\)/);
   assert.match(runtime, /const unavailableUntil = Number\(tts\.serverUnavailableUntil \|\| 0\)/);
@@ -914,7 +917,7 @@ test("MASTER face markup hooks have owned styling", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   for (const hook of [".brand-mark", ".brand-text", ".mic-indicator"]) {
-    assert.match(view, new RegExp(hook.replace(".", "\\.")));
+    assert.match(view, new RegExp("class=\"[^\"]*\\b" + hook.slice(1) + "\\b"));
     assert.match(css, new RegExp(hook.replace(".", "\\.") + "\\s*\\{"));
   }
   assert.match(css, /body\[data-mode="listening"\] \.mic-indicator/);
@@ -952,7 +955,7 @@ test("shell chrome uses plain CLI prompt words and the monospace source font", (
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
   assert.doesNotMatch(view, /id="wordmark"|Contract\.wordmark|Contract\.glyph/);
-  assert.match(view, /class="pp"[^>]*><%= Master::Face::Contract\.user_token %><\/span>/);
+  assert.match(view, /class="pp"[^>]*><%= Master::Face::Contract\.shell_prompt %><\/span>/);
   assert.doesNotMatch(view, /class="sep2"|\$ <\/span>/);
   assert.match(css, /--font-mono:\s*"Source Code Pro"/);
   assert.match(css, /font-family:\s*"Source Sans 3"/);

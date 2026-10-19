@@ -12,5 +12,5 @@ npx --yes esbuild@0.25.9 "$ENTRY" \
   --platform=browser \
   --target=es2020 \
   --outfile="$OUT"
-ruby -e 'p, digest = ARGV; body = File.read(p); marker = "// SOURCE-SET-SHA256: #{digest}\\n"; body = body.sub(/\\A/, marker); File.write(p, body)' "$OUT" "$SOURCE_DIGEST"
+ruby -e 'p, digest = ARGV; body = File.read(p); marker = "// SOURCE-SET-SHA256: #{digest}\n"; body = body.sub(/\A/, marker); File.write(p, body)' "$OUT" "$SOURCE_DIGEST"
 report_bundle_size "$OUT"
