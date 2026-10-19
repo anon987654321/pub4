@@ -1,0 +1,13 @@
+<%# One scheduled or live session. Extracted from live_streams/_list for the
+    reflex. The turbo_frame the buttons target still wraps the list, so an
+    accept/end still swaps in place; only pagination changed. %>
+<li>
+  <article>
+    <h2><%= link_to live_stream.title, live_stream_path(live_stream) %></h2>
+    <p><%= live_stream_status_label(live_stream.status) %> · <%= live_stream.scheduled_at || live_stream.created_at %></p>
+    <% if live_stream.user_id == Current.user.id %>
+      <%= button_to t("live_streams.mark_live"), live_stream_path(live_stream), method: :patch, params: { start: true }, class: "btn", data: { turbo_frame: "live-streams" } if live_stream.status == "scheduled" %>
+      <%= button_to t("live_streams.mark_ended"), live_stream_path(live_stream), method: :patch, params: { end: true }, class: "btn", data: { turbo_frame: "live-streams" } if live_stream.status == "live" %>
+    <% end %>
+  </article>
+</li>

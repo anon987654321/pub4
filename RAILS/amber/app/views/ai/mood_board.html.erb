@@ -1,0 +1,19 @@
+<% content_for :title, t("pages.mood_board") %>
+<%= tag.h1 t("pages.mood_board") %>
+<%= form_with url: ai_mood_board_path, method: :get do |f| %>
+  <div class="field">
+    <%= f.label :description, t("ai.mood_describe") %>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :description, value: @description, rows: 3, class: "input input--wide" , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+  </div>
+  <div class="actions"><%= f.submit t("ai.match_wardrobe"), class: "btn" %></div>
+<% end %>
+<% if @outfit_name.present? %>
+  <div class="ai-card">
+    <%= tag.h2 @outfit_name %>
+    <%= tag.p @reasoning %>
+  </div>
+  <div class="item-grid"><%= render @items %></div>
+<% end %>

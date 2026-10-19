@@ -37,6 +37,7 @@ module Deploy
       { app: "brgen", host: "radio.brgen.no", paths: %w[/] },
       { app: "brgen", host: "maps.brgen.no", paths: %w[/] },
       { app: "brgen", host: "messenger.brgen.no", paths: %w[/] },
+      { app: "amber", host: "amberapp.art", paths: %w[/ /items] },
       { app: "bsdports", host: "bsdports.brgen.no", paths: %w[/] },
     ].freeze
 

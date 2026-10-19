@@ -1,0 +1,14 @@
+default: &default
+  store_options:
+    max_size: <%= ENV.fetch("SOLID_CACHE_MAX_SIZE", 128.megabytes).to_i %>
+    namespace: <%= Rails.env %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  database: cache
+  <<: *default

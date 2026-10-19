@@ -1,0 +1,1 @@
+<%= button_to t("actions.like_count", count: outfit.likes_count.to_i), like_outfit_path(outfit), method: :post, class: "btn", form: { id: dom_id(outfit, :like) } %>

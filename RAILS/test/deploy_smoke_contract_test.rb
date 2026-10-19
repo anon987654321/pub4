@@ -5,7 +5,7 @@ require "minitest/autorun"
 class DeploySmokeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   OPENBSD_ROOT = File.expand_path("../../OPENBSD", __dir__)
-  APPS = %w[brgen bsdports].freeze
+  APPS = %w[amber brgen bsdports].freeze
   RAILS_APPS = APPS
   SMOKE = File.join(OPENBSD_ROOT, "bin", "deploy-smoke.sh")
 
@@ -14,12 +14,13 @@ class DeploySmokeContractTest < Minitest::Test
   ENDPOINTS = {
     "master" => ["http://127.0.0.1:53187/up", "https://ai.brgen.no/up"],
     "brgen" => ["http://127.0.0.1:38182/up", "https://brgen.no/up"],
+    "amber" => ["http://127.0.0.1:61352/up", "https://amberapp.art/up"],
     "bsdports" => ["http://127.0.0.1:47312/up", "https://bsdports.org/up"],
   }.freeze
 
   # An app may be waived only by its own named variable, so a waiver is visible in
   # the command that waives it.
-  WAIVERS = { "bsdports" => "ALLOW_BSDPORTS_DOWN" }.freeze
+  WAIVERS = { "amber" => "ALLOW_AMBER_DOWN", "bsdports" => "ALLOW_BSDPORTS_DOWN" }.freeze
 
   def smoke_body
     @smoke_body ||= begin

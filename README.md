@@ -11,14 +11,14 @@ decisive type, deliberate negative space, and a restrained mineral-lime signal
 (`#C8F55F`) used only where it carries meaning. The contract is
 `MASTER/data/laws.yml#visual_identity_contract`; values live in
 `MASTER/data/tokens.yml#tokens.visual_identity`. Brgen keeps its deep-blue local
-identity remains product-specific, bsdports remains terminal-green,
+identity, Amber preserves garment colour, bsdports remains terminal-green,
 OpenBSD output stays plain and explicit, and STUDIO never overrides operator-owned
 grades. The reference is inspiration only: pub4 must retain original branding.
 
 ## The four trees
 
 - [MASTER](MASTER/README.md) — constitutional Ruby runtime, `/fix`, laws, operator commands and verification.
-- [RAILS](RAILS/README.md) — Brgen, bsdports, shared product code and Rails contracts.
+- [RAILS](RAILS/README.md) — Brgen, Amber, shared product code and Rails contracts.
 - [OPENBSD](OPENBSD/README.md) — production host, network, deployment, security and recovery.
 - [STUDIO](STUDIO/README.md) — Dilla, visual tools, post-processing and media-provider workflows.
 

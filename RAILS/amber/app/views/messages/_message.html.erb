@@ -1,0 +1,9 @@
+<% viewer_id = local_assigns[:viewer_id] || Current.user&.id %>
+<% mine = message.sender_id == viewer_id %>
+<li id="<%= dom_id(message) %>" class="amber-message<%= " amber-message--mine" if mine %>" role="listitem">
+  <header>
+    <strong><%= mine ? t("messages.to", name: message.recipient.display_name) : t("messages.from", name: message.sender.display_name) %></strong>
+    <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
+  </header>
+  <p><%= message.body %></p>
+</li>

@@ -1,0 +1,24 @@
+<%# size, not count: Outfit.with_images_for_display preloads :items, and .count
+    ignores a loaded association and issues its own SELECT — one per outfit on
+    every page of the wardrobe. .size reads what is already there. %>
+<article class="item-card item-card--luxury" id="<%= dom_id(outfit) %>">
+  <div class="item-photo-wrap">
+    <% if outfit.image.attached? %>
+      <%= link_to outfit, aria: { label: outfit.name } do %>
+        <%= responsive_image_tag outfit.image, alt: outfit.name, preset: :card, sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
+      <% end %>
+    <% else %>
+      <div class="outfit-composition item-photo" role="img" aria-label="<%= t("outfits.items_in", name: outfit.name, items: outfit.items.first(4).map(&:title).to_sentence) %>">
+        <% outfit.items.first(4).each do |item| %>
+          <% if item.photos.attached? %>
+            <%= responsive_image_tag item.photos.first, alt: item.title, preset: :thumb, sizes: "90px" %>
+          <% else %>
+            <%= item.category.to_s.first(2).upcase %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+  <%= link_to outfit.name, outfit, class: "item-title" %>
+  <%= t("wardrobe.chip_items", count: outfit.items.size) %> · <%= t("outfits.combined_wears", count: outfit.total_wears) %>
+</article>

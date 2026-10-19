@@ -35,7 +35,7 @@ pub4_rcctl() {
     *) log_err "pub4_rcctl: refused action: $action"; return 2 ;;
   esac
   case "$service" in
-    master|brgen|bsdports|master_jobs|brgen_jobs|bsdports_jobs) ;;
+    master|brgen|amber|bsdports|master_jobs|brgen_jobs|amber_jobs|bsdports_jobs) ;;
     *) log_err "pub4_rcctl: refused service: $service"; return 2 ;;
   esac
   [[ -x /usr/local/sbin/pub4-admin ]] || {

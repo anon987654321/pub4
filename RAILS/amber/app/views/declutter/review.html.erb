@@ -1,0 +1,96 @@
+<div class="declutter-page">
+  <header role="banner" aria-label="<%= t("declutter.review_header_label") %>">
+    <%= tag.h1 t("declutter.review_title") %>
+    <%= tag.p @item.title %>
+  </header>
+
+  <section role="region" aria-label="<%= t("declutter.item_under_review") %>">
+    <%= render "items/item", item: @item %>
+  </section>
+
+  <% if @score.present? %>
+    <section role="region" aria-label="<%= t("declutter.score") %>">
+      <%= tag.h2 t("declutter.score") %>
+      <dl class="meta">
+        <% @score.each do |key, value| %>
+          <%= tag.dt key.to_s.humanize %>
+          <%= tag.dd value.is_a?(Float) ? value.round(3) : value %>
+        <% end %>
+      </dl>
+    </section>
+  <% end %>
+
+  <% if @action.present? %>
+    <section role="region" aria-label="<%= t("declutter.recommended_action") %>">
+      <%= tag.h2 t("declutter.recommended_action") %>
+      <p><%= tag.strong (@action[:recommendation] || @action["recommendation"]).to_s.humanize %></p>
+      <p><%= @action[:copy] || @action["copy"] %></p>
+      <p><%= t("declutter.destination") %> <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
+    </section>
+  <% end %>
+
+  <section role="region" aria-label="<%= t("declutter.decision_form") %>">
+    <%= tag.h2 t("declutter.decision") %>
+    <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
+      <div class="field">
+        <%= form.label :decision %>
+        <%= form.select :decision, %w[keep wear_this_week repair sell donate release sentimental_archive], include_blank: true %>
+      </div>
+      <div class="field">
+        <%= form.label :reason_kept %>
+        <%= form.text_field :reason_kept, placeholder: t("declutter.reason_kept") %>
+      </div>
+      <div class="field">
+        <%= form.label :notes %>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+          <%= form.text_area :notes, rows: 4, data: { character_counter_target: "input" } %>
+          <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+        </div>
+      </div>
+      <%= form.submit t("declutter.save_review"), class: "btn" %>
+    <% end %>
+  </section>
+
+  <section>
+    <%= tag.h2 t("declutter.move_item") %>
+    <nav role="navigation">
+      <% %w[keep wear_this_week repair sell donate sentimental_archive release].each do |target| %>
+        <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch, class: "btn-sm" %>
+      <% end %>
+      <%= button_to t("declutter.declutter_box"), move_declutter_path(@item, target: "declutter_box"), method: :patch, class: "btn-sm" %>
+    </nav>
+  </section>
+
+  <section>
+    <%= tag.h2 t("declutter.week_challenge") %>
+    <%= form_with url: challenge_declutter_path(@item), method: :post do |form| %>
+      <div class="field">
+        <%= form.label :due_on %>
+        <%= form.date_field :due_on, value: 7.days.from_now.to_date %>
+      </div>
+      <div class="field">
+        <%= form.label :note %>
+        <%= form.text_field :note, value: "Wear once before deciding." %>
+      </div>
+      <%= form.submit t("declutter.create_challenge"), class: "btn" %>
+    <% end %>
+  </section>
+
+  <% if @last_chance.present? %>
+    <section>
+      <%= tag.h2 t("declutter.last_chance_outfits") %>
+      <p><%= t("declutter.one_more_role") %></p>
+      <ul>
+        <% @last_chance.each_with_index do |suggestion, index| %>
+          <li>
+            <%= tag.strong Array(suggestion[:titles] || suggestion["titles"]).join(" · ") %>
+            <p><%= suggestion[:reason] || suggestion["reason"] %></p>
+            <%= button_to t("declutter.create_outfit"), create_last_chance_outfit_declutter_path(@item, index: index), method: :post, class: "btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <p><%= link_to "← Declutter dashboard", declutter_index_path %></p>
+</div>
