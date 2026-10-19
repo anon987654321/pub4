@@ -73,7 +73,7 @@ tokens:
       avoid: ["copied campaign art", "copied wordmarks", "false product colours", "decorative lens flare"]
     typography_roles:
       display: "text-display"
-      body: "text-body"
+      body: "text-base"
       technical: "font-mono"
       wordmark: "original pub4 artwork only"
     adaptations:
