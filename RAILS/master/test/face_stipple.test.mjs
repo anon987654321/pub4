@@ -27,7 +27,8 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /budget\.desktop_points/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
   assert.match(system, /buildFromSamples/);
-  assert.match(system, /gl_PointSize = 1\.0 \+ clamp\(aBias, 0\.0, 1\.5\) \* 0\.75/);
+  assert.match(system, /float distanceScale = clamp\(5\.0 \/ max\(1\.0, -mv\.z\), 0\.75, 1\.25\)/);
+  assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale, 1\.0, 1\.5\)/);
   assert.match(system, /vThreshold = aThreshold/);
   assert.match(system, /vThreshold > uDensity/);
 });
@@ -48,6 +49,9 @@ test("playground is opt-in and supplies seven semantic states", () => {
 });
 
 test("stipple module boots and builds from the canonical idle profile", () => {
+  let coarsePointer = false;
+  let prefersReducedMotion = false;
+  let faceState = {};
   const window = {
     location: { search: "" },
     MASTER_FACE_CONTRACT: {
@@ -59,10 +63,21 @@ test("stipple module boots and builds from the canonical idle profile", () => {
         }
       }
     },
-    addEventListener() {}
+    MASTER_FACE_STATE: { snapshot: () => faceState },
+    matchMedia: (query) => ({
+      matches: (query === "(pointer: coarse)" && coarsePointer) ||
+        (query === "(prefers-reduced-motion: reduce)" && prefersReducedMotion)
+    }),
+    addEventListener() {},
+    dispatchEvent() {}
   };
-  const document = { body: { classList: { contains: () => false } } };
-  let coarsePointer = false;
+  const document = {
+    body: { classList: { contains: () => false } },
+    documentElement: { dataset: {} },
+    hidden: false,
+    addEventListener() {},
+    removeEventListener() {}
+  };
   runInNewContext(system, {
     window,
     document,
@@ -73,13 +88,17 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     Array,
     String,
     CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
-    matchMedia: (query) => ({ matches: query === "(pointer: coarse)" && coarsePointer }),
+    matchMedia: window.matchMedia,
     getComputedStyle: () => ({ getPropertyValue: () => "" }),
     performance: { now: () => 0 }
   });
 
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.buildFromSamples, "function");
+  assert.equal(typeof window.MASTER_FACE_STIPPLE?.snapshot, "function");
+  assert.equal(typeof window.MASTER_FACE_STIPPLE?.uninstall, "function");
   assert.equal(window.MASTER_FACE_STIPPLE.profiles.idle.density, 0.44);
+  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 1200);
+  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().context, "ready");
 
   class BufferAttribute {
     constructor(array, itemSize) { this.array = array; this.itemSize = itemSize; }
@@ -137,8 +156,33 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(stipple.material.uniforms.uTurbulence.value, 0);
   assert.equal(stipple.material.uniforms.uMotionScale.value, 0);
 
+  // OS and document-level preferences work even when the face-state bit is stale.
+  prefersReducedMotion = true;
+  api.tick(stipple, { mode: "idle", reducedMotion: false }, 3);
+  assert.equal(stipple.material.uniforms.uTime.value, 0);
+  assert.equal(stipple.material.uniforms.uMotionScale.value, 0);
+  assert.equal(api.snapshot().reducedMotion, true);
+  prefersReducedMotion = false;
+  document.documentElement.dataset.reducedMotion = "1";
+  api.tick(stipple, { mode: "idle", reducedMotion: false }, 4);
+  assert.equal(stipple.material.uniforms.uTime.value, 0);
+  assert.equal(api.snapshot().reducedMotion, true);
+  document.documentElement.dataset.reducedMotion = "0";
+
   // The layer never exceeds the canonical desktop/mobile point ceiling.
   assert.equal(api.createDefault(THREE, 5000).count, 1200);
   coarsePointer = true;
   assert.equal(api.createDefault(THREE, 5000).count, 420);
+
+test("stipple lifecycle is observable and reversible", () => {
+  assert.match(system, /webglcontextlost/);
+  assert.match(system, /webglcontextrestored/);
+  assert.match(system, /visibilitychange/);
+  assert.match(system, /function uninstall\(\)/);
+  assert.match(system, /active\?\.geometry\?\.dispose\?\./);
+  assert.match(system, /active\?\.material\?\.dispose\?\./);
+  assert.match(system, /lastRenderIntervalMs/);
+  assert.match(system, /pointCeiling: pointBudget\(\)/);
+  assert.match(system, /currentFaceState\(\)/);
 });
+;
