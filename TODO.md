@@ -78,7 +78,6 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 
 ## P0 — OPENBSD production, domains and recovery
 
-- [ ] Confirm the renewal date for svalbrd.no with the registrar. On 2026-10-12, Norid showed it registered, DNSSEC-signed, with NS ns1-3.hyp.net and A 185.134.245.113 but no published expiry; RAILS/apps.yml recorded 2026-09-06, already past, while sibling .no facts read 2027-08. The registrar is the authority. Update owned_domain_facts.svalbrd.no.expires, run ruby OPENBSD/bin/domain_watch.rb --update and prove ruby OPENBSD/test/test_domain_expiry.rb passes.
 <!-- open-debt -->
 - [ ] Resolve the previously unregistered domains brmingham.uk, glasgw.uk, lverpool.uk, mnchester.uk and dnver.us. Either register them through the registrar or remove their zones and ACME configuration and record each decision in OPENBSD/data/domain_released.yml. Re-run the domain watcher; do not leave dormant zone entries that appear live.
 <!-- open-debt -->
