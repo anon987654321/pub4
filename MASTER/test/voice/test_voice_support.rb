@@ -11,27 +11,22 @@ require "rbconfig"
 class TestVoiceSupport < Minitest::Test
   PB = Master::Voice::Playback
 
-  def test_enrich_tags_a_later_sentence_when_the_dice_allow
-    text = "One. Two. Three."
-    Master::Voice::Enrich.stub(:rand, ->(*args) { args.empty? ? 0.0 : 1 }) do
-      assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(
-        text, { primary: :humor, scores: {} }, tags: true
-      )
-    end
-    Master::Voice::Enrich.stub(:rand, ->(*args) { args.empty? ? 0.99 : 1 }) do
-      assert_equal text, Master::Voice::Enrich.apply(
-        text, { primary: :humor, scores: {} }, tags: true
-      )
-    end
-  end
+# The gate is a hash of the text, so the same reply is always tagged the same
+# way: one tag, never on the first sentence.
+def test_enrich_tags_a_later_sentence_deterministically
+  emotion = { primary: :humor, scores: { humor: 1.0 } }
+  text = "One. Two. Three."
+
+  assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, emotion, tags: true)
+  assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, emotion, tags: true)
+  assert_equal "A. B. C.", Master::Voice::Enrich.apply("A. B. C.", emotion, tags: true)
+end
 
   def test_enrich_leaves_single_sentences_and_quiet_comfort_alone
-    Master::Voice::Enrich.stub(:rand, ->(*args) { args.empty? ? 0.0 : 1 }) do
-      assert_equal "Only one.", Master::Voice::Enrich.apply("Only one.", { primary: :humor }, tags: true)
-      assert_equal "A. B.", Master::Voice::Enrich.apply(
-        "A. B.", { primary: :comfort, scores: { comfort: 0.1 } }, tags: true
-      )
-    end
+    assert_equal "Only one.", Master::Voice::Enrich.apply("Only one.", { primary: :humor }, tags: true)
+    assert_equal "A. B.", Master::Voice::Enrich.apply(
+      "A. B.", { primary: :comfort, scores: { comfort: 0.1 } }, tags: true
+    )
   end
 
   def test_enrich_is_dry_by_default
@@ -46,6 +41,10 @@ class TestVoiceSupport < Minitest::Test
   ensure
     previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
+
+# Playback.which prefers the Homebrew directories, so a test that builds a
+# PATH of fake players looks only in that PATH.
+def path_only_which = ->(cmd) { Master::Io::Exec.which(cmd) }
 
   def test_playback_speak_now_falls_back_to_native_speech_when_synthesis_is_missing
     spoken = []
@@ -66,6 +65,7 @@ class TestVoiceSupport < Minitest::Test
     spoken = []
     queue = Queue.new
     queue << ["hello", "hello", true, :christopher, :warm]
+    queue.close
     PB.instance_variable_set(:@queue, queue)
     PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
       PB.stub(:synthesize, nil) do
@@ -89,8 +89,10 @@ class TestVoiceSupport < Minitest::Test
 
     PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
     with_env("PATH" => dir) do
-      PB.stub(:generation_active?, true) do
-        refute PB.play(audio_path)
+      PB.stub(:which, path_only_which) do
+        PB.stub(:generation_active?, true) do
+          refute PB.play(audio_path)
+        end
       end
     end
   ensure
@@ -128,10 +130,14 @@ class TestVoiceSupport < Minitest::Test
     File.write(audio, "audio")
     spoken = []
 
-    PB.stub(:player, [player, []]) do
-      PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
-        PB.stub(:generation_active?, true) do
-          assert PB.send(:play_or_fallback, audio, "same reply", generation: 0)
+    with_env("PATH" => dir) do
+      PB.stub(:player, [player, []]) do
+        PB.stub(:which, path_only_which) do
+          PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
+            PB.stub(:generation_active?, true) do
+              assert PB.send(:play_or_fallback, audio, "same reply", generation: 0)
+            end
+          end
         end
       end
     end
@@ -174,7 +180,11 @@ class TestVoiceSupport < Minitest::Test
       File.chmod(0o755, File.join(dir, name))
     end
     PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
-    with_env("PATH" => dir) { assert_equal [File.join(dir, "ffplay"), %w[-nodisp -autoexit -loglevel quiet]], PB.player }
+    with_env("PATH" => dir) do
+      PB.stub(:which, path_only_which) do
+        assert_equal [File.join(dir, "ffplay"), %w[-nodisp -autoexit -loglevel quiet]], PB.player
+      end
+    end
   ensure
     PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
     FileUtils.rm_rf(dir)
@@ -183,6 +193,7 @@ class TestVoiceSupport < Minitest::Test
   def test_speak_refuses_empty_and_keeps_only_the_current_reply
     queued = []
     long = "x" * 12_000
+    PB.instance_variable_set(:@queue, queued)
     PB.instance_variable_set(:@pending, nil)
     PB.stub(:enabled?, true) do
       PB.stub(:available?, true) do
@@ -200,6 +211,7 @@ class TestVoiceSupport < Minitest::Test
     assert_equal " hello ".strip, queued.first[1]
     refute_includes queued.map { |job| job[1] }, long
   ensure
+    PB.instance_variable_set(:@queue, nil)
     PB.instance_variable_set(:@pending, nil)
     PB.instance_variable_set(:@generation, 0)
   end
@@ -243,6 +255,7 @@ class TestVoiceSupport < Minitest::Test
 
   def test_a_line_already_waiting_or_just_spoken_is_not_spoken_again
     queued = []
+    PB.instance_variable_set(:@queue, queued)
     PB.instance_variable_set(:@pending, nil)
     PB.instance_variable_set(:@last_said, nil)
     PB.instance_variable_set(:@last_at, 0.0)
@@ -265,6 +278,7 @@ class TestVoiceSupport < Minitest::Test
 
     assert_equal ["the same sentence"], queued.map(&:first)
   ensure
+    PB.instance_variable_set(:@queue, nil)
     PB.instance_variable_set(:@pending, nil)
     PB.instance_variable_set(:@last_said, nil)
     PB.instance_variable_set(:@generation, 0)
@@ -293,7 +307,7 @@ def test_a_reply_is_spoken_sentence_by_sentence_so_the_first_words_come_first
 
   assert_operator queued.size, :>, 1, "the reply went out as one utterance"
   assert_equal reply, queued.map { |job| job[1] }.join(" "), "the words changed on the way out"
-  assert_equal [false] * (queued.size - 1) + [true], queued.map(&:last), "only the last utterance closes the reply"
+  assert_equal [false] * (queued.size - 1) + [true], queued.map { |job| job[2] }, "only the last utterance closes the reply"
 ensure
   PB.instance_variable_set(:@pending, nil)
   PB.instance_variable_set(:@last_said, nil)
@@ -441,7 +455,7 @@ end
     job = ["hello", "hello", true, :christopher, :warm]
     delivered = false
     queue = Object.new
-    queue.define_singleton_method(:pop) do
+    queue.define_singleton_method(:pop) do |_non_block = false|
       next nil if delivered
 
       delivered = true
@@ -452,9 +466,14 @@ end
     PB.instance_variable_set(:@generation, 0)
     PB.instance_variable_set(:@job_generations, { job.object_id => 0 })
 
-    PB.stub(:play, false) do
-      PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
-        PB.send(:drain)
+    audio = Tempfile.new(["reply", ".mp3"])
+    PB.stub(:stream_playback_ready?, false) do
+      PB.stub(:synthesize, audio.path) do
+        PB.stub(:play, false) do
+          PB.stub(:native_say, ->(text, **) { spoken << text; true }) do
+            PB.send(:drain)
+          end
+        end
       end
     end
 
@@ -463,8 +482,8 @@ end
     PB.instance_variable_set(:@queue, nil)
     PB.instance_variable_set(:@job_generations, {})
     PB.instance_variable_set(:@generation, 0)
+    audio&.close!
   end
-
 
   def test_playback_warning_deduplicates_repeats_but_preserves_distinct_causes
     warned = PB.instance_variable_get(:@warned)
