@@ -68,16 +68,12 @@ module Master
       end
 
       def row(surface:, payload:, shot:)
-        { surface:, payload:, shot:, score: score(payload), offenders: offenders(surface, payload) }
+        found = VisualQualityGates.measure(surface, payload)["offenders"]
+        counts = found.transform_values(&:size).reject { |_, count| count.zero? }
+        { surface:, payload:, shot:, score: score(payload), offenders: counts, offender_keys: found.reject { |_, keys| keys.empty? } }
       end
 
       def score(payload) = LayoutScoreStore.measure(@plan.root, payload).score
-
-      # {offender name => elements}, only the ones present.
-      def offenders(surface, payload)
-        found = VisualQualityGates.measure(surface, payload)["offenders"]
-        found.transform_values(&:size).reject { |_, count| count.zero? }
-      end
 
       # A page with next to nothing on it (a login wall, an empty list) has no layout to
       # improve, so it is not chosen however low it scores.

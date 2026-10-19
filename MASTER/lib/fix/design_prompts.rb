@@ -33,9 +33,11 @@ module Master
           The image is the current render of #{@target[:surface].id}.
           Its layout score is #{@target[:score].round(1)} of 100.
           Weakest measures (0 to 1): #{weakest_measures}.
-          Gate offenders: #{@target[:offenders].inspect}.
-          Classes and ids actually on this page: #{@page_tokens.first(80).join(' ')}.
-          Edit a rule whose selector matches one of them, or it will change nothing you can see.
+          Elements the gates flagged (kind: element keys): #{@target[:offender_keys].inspect}.
+          The largest elements on this page, as key [x y w h]:
+          #{page_map}
+          Edit a rule whose selector matches one of these classes or ids, or it will change nothing you can see.
+          All classes and ids on the page: #{@page_tokens.first(80).join(' ')}.
           Direction: #{DIRECTION}
           Make ONE edit to ONE of the stylesheets below that improves the layout you can see: spacing, alignment,
           sizing, hierarchy, grid or flex structure, overflow, reading width. Change layout properties only, never
@@ -48,6 +50,15 @@ module Master
 
           #{sources.map { |path| "FILE #{path}\n#{File.read(path, encoding: 'UTF-8')[0, SOURCE_CHARS]}" }.join("\n\n")}
         TEXT
+      end
+
+      MAP_ROWS = 20
+
+      # The biggest boxes on the page: where a layout edit can be seen.
+      def page_map
+        els = Array(@target[:payload]["elements"]).select { |e| e["rect"] && e["visible"] != false }
+        big = els.max_by(MAP_ROWS) { |e| e["rect"]["w"].to_f * e["rect"]["h"].to_f }
+        big.map { |e| "#{e['key']} #{e['rect'].values_at('x', 'y', 'w', 'h').map { |v| v.to_f.round }}" }.join("\n          ")
       end
 
       def weakest_measures
