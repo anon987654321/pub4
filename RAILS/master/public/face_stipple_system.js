@@ -25,6 +25,7 @@
   });
 
   const overrides = {};
+  let installing = false;
   let wrappedRenderer = null;
   let originalRender = null;
   let renderWrapper = null;
@@ -314,17 +315,20 @@
   }
 
   async function install() {
-    if (!enabled || wrappedRenderer) return;
+    if (!enabled || wrappedRenderer || installing) return;
     const face = window.MASTER_FACE;
     const renderer = face?.renderer;
     const modulePath = window.MASTER_ASSET_PATHS?.threeModule;
     if (!renderer || typeof renderer.render !== "function" || !modulePath) return;
     let THREE;
+    installing = true;
     try {
       THREE = await import(new URL(modulePath, document.baseURI).href);
     } catch (error) {
       window.MASTER_LOG?.warn?.("face_stipple:three_import_failed", error);
       return;
+    } finally {
+      installing = false;
     }
     if (wrappedRenderer || window.MASTER_FACE?.renderer !== renderer) return;
 
@@ -359,7 +363,10 @@
     renderer.render = renderWrapper;
   }
 
-  function onContextLost() {
+  function onContextLost(event) {
+    // Context restoration is browser-controlled; cancellation asks the browser
+    // to attempt restoration instead of treating this layer as permanently lost.
+    event?.preventDefault?.();
     contextState = "lost";
     if (active?.points) active.points.visible = false;
     window.dispatchEvent?.(new CustomEvent("master:stipple-context", { detail: { state: "lost" } }));
@@ -408,6 +415,7 @@
     };
     return {
       enabled,
+      installing,
       installed: Boolean(wrappedRenderer && renderWrapper && wrappedRenderer.render === renderWrapper),
       visible: Boolean(active?.points?.visible && !document.hidden && contextState !== "lost"),
       hidden: Boolean(document.hidden),
