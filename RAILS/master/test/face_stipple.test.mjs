@@ -94,6 +94,11 @@ test("shared render budget gives coarse-pointer devices the mobile ceiling", () 
   assert.equal(coarse.stipple_points, 315);
   assert.equal(coarse.world_points, 105);
   assert.equal(coarse.stipple_points + coarse.world_points, coarse.points);
+  const narrow = loadFaceStateBudget({ narrowViewport: true, cores: 8 }).renderBudget();
+  assert.equal(narrow.stipple_points, 315);
+  assert.equal(narrow.world_points, 105);
+  const lowCore = loadFaceStateBudget({ cores: 4 }).renderBudget();
+  assert.equal(lowCore.stipple_points + lowCore.world_points, lowCore.points);
   assert.equal(loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget().particles, 120);
   assert.equal(loadFaceStateBudget({ narrowViewport: true, cores: 8 }).renderBudget().points, 420);
   assert.equal(loadFaceStateBudget({ cores: 4 }).renderBudget().points, 420);
@@ -138,6 +143,9 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /hardwareConcurrency/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
   assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /effectiveBudget\?\.world_points/);
+  assert.match(faceStateSource, /stipple_points: stipplePoints/);
+  assert.match(faceStateSource, /world_points: worldPoints/);
+  assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /fallbackShare/);
   assert.match(sparseField, /sharedParticleBudget = Number\(window\.MASTER_FACE_STATE\?\.renderBudget\?\.\(\)\.particles\)/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /uPointSizeReferenceDepth: \{ value: clamp\(pointSize\.reference_depth/);
