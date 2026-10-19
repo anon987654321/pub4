@@ -4,7 +4,7 @@
 lean on the beat and a rack of analogue colour.** The executable `dilla.rb` is a thin
 shell over the modules in `lib/dilla/`. Instrument patches and grooves live in
 `data/dilla.json`; the eight-part Blue Hour Dilla Minor Dub Cut lives in
-`data/showcase.json`; harmonic references live in `data/music_theory.json`.
+`data/showcase.json`; harmonic references live in `data/music_theory.json`. The historical named chord, drum-groove and sample-study research recovered from pub3 is retained separately in `data/recovered_music.json`; it is research evidence, not a verified transcription set, and it does not enter the default render rotation.
 
 A bare `ruby dilla.rb` renders the finite eight-part Blue Hour composition to a WAV and
 a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a repeatable
@@ -501,7 +501,7 @@ naive and alias at very high pitch. A render takes about a fifth to a third of i
 length to compute, more with the echo and the colour chains on. The old engine, which
 was far larger, is not lost. The tag `dilla-engine-final` marks the last commit that
 carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and
-`git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it.
+`git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it. The tag also preserves the earlier browser/Three.js `RadioVideo` and `LiveAudiovisual` implementation. Those renderers depend on their historical bundle and output contract, so they are deliberately not copied into this engine's FFmpeg video path.
 
 ## Library layout
 
@@ -520,7 +520,7 @@ file `data/dilla.json` is the runtime pool of progressions, patches, groove prof
 drum patterns, stages, noise layers, the stereo places, the master and the shared
 bus-effect rigs. The file `data/music_theory.json` is the interval, chord and
 harmonic-motion reference with the curated original two- and three-bar progressions, and
-`data/showcase.json` is the Blue Hour arrangement.
+`data/showcase.json` is the Blue Hour arrangement. `data/recovered_music.json` preserves 42 named historical progression profiles, three legacy progression groups, drum/swing studies, synthesis notes and five sample-study leads. Artist and track labels remain unverified research leads; this file is not loaded into the runtime progression pool.
 
 To hear it, `ruby dilla.rb --play` streams without end,
 `ruby dilla.rb --progression 3 --seed 5 --out take.wav` renders one pass,
