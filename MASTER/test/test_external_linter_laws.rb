@@ -18,6 +18,23 @@ class TestExternalLinterLaws < Minitest::Test
     end
   end
 
+  def test_every_file_is_judged_by_the_masters_rubocop_config
+    seen = nil
+    capture = lambda do |*args, **_options|
+      seen = args
+      ['{"files":[{"offenses":[]}]}', "", Struct.new(:exitstatus).new(0)]
+    end
+    rule = Master::Review::Scan::Laws::RubocopLaw.new(root: Master::ROOT)
+
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, capture) { rule.check("x = 1\n", path: "../OPENBSD/test/sample.rb") }
+      end
+    end
+
+    assert_equal File.join(Master::ROOT, ".rubocop.yml"), seen[seen.index("--config") + 1]
+  end
+
   def test_empty_stdout_is_a_finding_not_a_clean_lint_result
     with_rubocop_report(stdout: "", stderr: "process failed", exitstatus: 1) do |rule|
       findings = rule.check("def sample; end\n", path: "sample.rb")

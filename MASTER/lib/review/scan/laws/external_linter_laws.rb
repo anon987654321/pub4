@@ -74,7 +74,10 @@ module Master
           def check(_code, path:)
             return [] unless path.end_with?(".rb") && linter_available?("rubocop")
 
-            data = linter_json("rubocop", "--format", "json", "--no-color", path)
+            # Only MASTER carries a .rubocop.yml, so a file in another tree would be judged by rubocop's
+            # defaults, which prefer single quotes where the house style is double.
+            config = File.join(@root, ".rubocop.yml")
+            data = linter_json("rubocop", "--config", config, "--format", "json", "--no-color", path)
             files = data.is_a?(Hash) ? data["files"] : nil
             unless files.is_a?(Array) && !files.empty? &&
                    files.all? { |file| file.is_a?(Hash) && file["offenses"].is_a?(Array) }
