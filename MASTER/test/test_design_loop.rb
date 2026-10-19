@@ -132,11 +132,17 @@ class TestDesignLoop < Minitest::Test
     shot
   end
 
-  def world_for(path, committed:, other_drop: 0, flat: false, vision: '{"better":"same","why":"no difference"}')
+  NO_DIFFERENCE = '{"better":"same","why":"no difference"}'
+
+  # options: other_drop (score lost elsewhere), flat (score never moves), vision (the check's reply).
+  def world_for(path, committed:, **options)
+    drop = options.fetch(:other_drop, 0)
+    flat = options.fetch(:flat, false)
+    vision = options.fetch(:vision, NO_DIFFERENCE)
     measure = lambda do |surfaces|
       wide = File.read(path).include?("padding: 16px")
       surfaces.map do |surface|
-        [surface, { "score" => fake_score(surface, wide:, other_drop:, flat:) }, screenshot(path, surface)]
+        [surface, { "score" => fake_score(surface, wide:, other_drop: drop, flat:) }, screenshot(path, surface)]
       end
     end
     edit = reply(path, find: "padding: 4px;", replace: "padding: 16px;")
