@@ -173,6 +173,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(api.createDefault(THREE, 5000).count, 1200);
   coarsePointer = true;
   assert.equal(api.createDefault(THREE, 5000).count, 420);
+});
 
 test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /webglcontextlost/);
@@ -185,4 +186,4 @@ test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /pointCeiling: pointBudget\(\)/);
   assert.match(system, /currentFaceState\(\)/);
 });
-;
+
