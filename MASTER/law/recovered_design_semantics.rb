@@ -59,7 +59,7 @@ Law.define(:HTML_HEADING_HIERARCHY) do
 end
 
 Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
-  source "pub4 visual identity contract — canonical tokens and semantic face accent"
+  source "pub4 visual identity contract — canonical tokens, measured contrast and semantic face accent"
   severity :warning
   languages %i[yaml]
   path "MASTER/data/tokens.yml"
@@ -72,16 +72,46 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
     signal = identity.fetch("signal")
     ink = identity.fetch("signal_ink")
     light_ink = identity.fetch("signal_on_light")
+    fraction = Float(identity.fetch("max_highlight_area_fraction"))
+    motion = identity.fetch("motion")
+    adaptations = identity.fetch("adaptations")
+    avoid = identity.fetch("avoid")
+
+    luminance = lambda do |hex|
+      channels = hex.to_s.delete_prefix("#").scan(/../).map { |channel| channel.to_i(16) / 255.0 }
+      next nil unless channels.length == 3
+
+      linear = channels.map do |value|
+        value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055)**2.4
+      end
+      0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+    end
+    contrast = lambda do |foreground, background|
+      values = [luminance.call(foreground), luminance.call(background)]
+      next 0.0 if values.any?(&:nil?)
+
+      high, low = values.sort.reverse
+      (high + 0.05) / (low + 0.05)
+    end
+    valid_hex = ->(value) { value.to_s.match?(/\A#[0-9a-f]{6}\z/i) }
+    required_adapters = %w[master brgen amber bsdports openbsd studio]
 
     !identity.fetch("name").eql?("signal_and_stillness") ||
-      !signal.to_s.match?(/\A#[0-9a-f]{6}\z/i) ||
-      !ink.to_s.match?(/\A#[0-9a-f]{6}\z/i) ||
-      !light_ink.to_s.match?(/\A#[0-9a-f]{6}\z/i) ||
-      anchors.fetch("c_accent") != "var(--pub4-signal)"
-  rescue Psych::Exception, KeyError, TypeError
+      !valid_hex.call(signal) || !valid_hex.call(ink) || !valid_hex.call(light_ink) ||
+      contrast.call(signal, ink) < 7.0 ||
+      contrast.call(light_ink, "#FFFFFF") < 4.5 ||
+      contrast.call(light_ink, "#EFEFEF") < 4.5 ||
+      fraction <= 0.0 || fraction > 0.08 ||
+      anchors.fetch("c_accent") != "var(--pub4-signal)" ||
+      motion.fetch("default") != "still" ||
+      motion.fetch("change_requires_semantic_state") != true ||
+      motion.fetch("reduced_motion_must_preserve_meaning") != true ||
+      !avoid.any? { |item| item.to_s.include?("protected brand expression") } ||
+      !required_adapters.all? { |key| adaptations.fetch(key).is_a?(String) && !adaptations.fetch(key).empty? }
+  rescue Psych::Exception, KeyError, TypeError, ArgumentError
     true
   end
-  fix "Restore tokens.visual_identity as the single palette source and point the face accent at var(--pub4-signal)."
+  fix "Restore the canonical signal-and-stillness tokens, measured contrast, still-by-default motion, local dialect adapters and var(--pub4-signal) face anchor."
   bad <<~YAML
     tokens:
       visual_identity:
@@ -99,6 +129,19 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
         signal: "#C8F55F"
         signal_ink: "#101010"
         signal_on_light: "#50630A"
+        max_highlight_area_fraction: 0.08
+        avoid: ["copied protected brand expression"]
+        motion:
+          default: still
+          change_requires_semantic_state: true
+          reduced_motion_must_preserve_meaning: true
+        adaptations:
+          master: "signal on ink"
+          brgen: "retain deep-blue identity"
+          amber: "preserve garment colour"
+          bsdports: "retain terminal green"
+          openbsd: "plain operational text"
+          studio: "operator-owned media grades"
       face_root:
         anchors:
           c_accent: "var(--pub4-signal)"
