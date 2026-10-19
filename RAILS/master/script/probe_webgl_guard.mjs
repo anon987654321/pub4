@@ -189,7 +189,9 @@ async function main() {
     }
   } finally {
     proc.kill("SIGTERM");
-    await rm(profile, { recursive: true, force: true });
+    // Chrome keeps writing into its profile until it exits; removing it earlier fails with ENOTEMPTY.
+    for (let waited = 0; exited === null && waited < 5000; waited += 100) await new Promise((done) => setTimeout(done, 100));
+    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
 }
 
