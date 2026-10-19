@@ -134,19 +134,20 @@ class TestIdeaPictureOutput < Minitest::Test
       render_root = File.join(dir, "renders")
       status = successful_status
 
-      runner = lambda do |env, *args|
+      runner = lambda do |env, *args, timeout:|
         script = File.join(Studio::Visual::IdeaPicture::ROOT, "postpro", "postpro.rb")
+        assert_equal 600, timeout
         assert_equal script, args.fetch(1)
         output_dir = env.fetch("POSTPRO_OUTPUT_DIR")
         FileUtils.mkdir_p(output_dir)
         File.write(File.join(output_dir, "postpro_portrait_source_test_v1.jpg"), "graded")
-        ["postpro0: ok write", status]
+        ["postpro0: ok write", "", status]
       end
 
       Dir.mktmpdir do |working_directory|
         Dir.chdir(working_directory) do
           Studio::OutputPaths.stub(:render_directory, render_root) do
-            Open3.stub(:capture2e, runner) do
+            Studio::Subprocess.stub(:capture3, runner) do
               graded = picture.send(:grade, source, "stamp")
               assert_equal File.join(render_root, "photograph-stamp",
                                      "postpro_portrait_source_test_v1.jpg"), graded
@@ -166,7 +167,7 @@ class TestIdeaPictureOutput < Minitest::Test
       picture = Studio::Visual::IdeaPicture.new(directory: dir)
 
       Studio::OutputPaths.stub(:render_directory, File.join(dir, "renders")) do
-        Open3.stub(:capture2e, ->(_env, *_args) { ["postpro0: ok", successful_status] }) do
+        Studio::Subprocess.stub(:capture3, ->(_env, *_args, timeout:) { ["postpro0: ok", "", successful_status] }) do
           error = assert_raises(RuntimeError) { picture.send(:grade, source, "stamp") }
           assert_match(/produced no graded still/, error.message)
         end
@@ -178,5 +179,31 @@ class TestIdeaPictureOutput < Minitest::Test
 
   def successful_status
     Object.new.tap { |status| status.define_singleton_method(:success?) { true } }
+  end
+
+  def test_subject_manifest_is_configurable_and_missing_manifest_is_actionable
+    Dir.mktmpdir do |dir|
+      manifest = File.join(dir, "replicate_training.json")
+      File.write(manifest, JSON.generate("version" => "owner/model:version-123"))
+      picture = Studio::Visual::IdeaPicture.new(
+        directory: dir, subject: "probe", model_manifest: manifest
+      )
+      assert_equal "owner/model:version-123", picture.send(:still_model)
+
+      missing = File.join(dir, "missing", "replicate_training.json")
+      blocked = Studio::Visual::IdeaPicture.new(
+        directory: dir, subject: "probe", model_manifest: missing
+      )
+      error = assert_raises(RuntimeError) { blocked.send(:still_model) }
+      assert_includes error.message, missing
+      assert_includes error.message, "approved training run"
+    end
+  end
+
+  def test_subject_name_cannot_escape_the_lora_directory
+    error = assert_raises(ArgumentError) do
+      Studio::Visual::IdeaPicture.new(subject: "../elsewhere")
+    end
+    assert_match(/simple directory name/, error.message)
   end
 end

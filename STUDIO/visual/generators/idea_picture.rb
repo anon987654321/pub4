@@ -2,21 +2,31 @@
 
 require "json"
 require "fileutils"
-require "open3"
 require "rbconfig"
 require_relative "../../output_paths"
 require_relative "../../replicate/client"
+require_relative "../../subprocess"
 
 module Studio
   module Visual
     class IdeaPicture
       FILM = "prunaai/p-video-2-pro"
       ROOT = File.expand_path("../..", __dir__)
-      SUBJECT = File.join(ROOT, "replicate", "lora", "ragnhild")
+      SUBJECTS = File.join(ROOT, "replicate", "lora").freeze
 
-      def initialize(client: nil, directory: File.expand_path("~/ideas"))
+      def initialize(
+        client: nil,
+        directory: File.expand_path("~/ideas"),
+        subject: ENV.fetch("STUDIO_PHOTOGRAPH_SUBJECT", "ragnhild"),
+        model_manifest: nil
+      )
         @client = client
         @directory = directory
+        @subject = subject.to_s
+        raise ArgumentError, "subject must be a simple directory name" unless @subject.match?(/\A[a-zA-Z0-9_-]+\z/)
+
+        @subject_directory = File.join(SUBJECTS, @subject)
+        @model_manifest = model_manifest || default_model_manifest
       end
 
       def write(words, film: true, duration: 5)
@@ -84,7 +94,7 @@ module Studio
       end
 
       def subject_env
-        path = File.join(SUBJECT, "subject.env")
+        path = File.join(@subject_directory, "subject.env")
         return {} unless File.file?(path)
 
         File.foreach(path).each_with_object({}) do |line, env|
@@ -99,22 +109,38 @@ module Studio
         end
       end
 
+      def default_model_manifest
+        configured = subject_env["MODEL"].to_s.strip
+        configured = @subject if configured.empty?
+        raise ArgumentError, "MODEL in #{@subject}/subject.env must be a simple directory name" unless configured.match?(/\A[a-zA-Z0-9_.-]+\z/)
+
+        File.join(@subject_directory, "weights", configured, "replicate_training.json")
+      end
+
       def still_model
-        path = File.join(SUBJECT, "weights", "ragnhild", "replicate_training.json")
-        version = JSON.parse(File.read(path))["version"] if File.file?(path)
-        raise "ragnhild has no trained version" if version.to_s.empty?
+        path = @model_manifest
+        unless File.file?(path)
+          raise "no trained Replicate version for #{@subject}; expected #{path}. " \
+                "Complete an approved training run or pass a subject with a valid training manifest."
+        end
+
+        version = JSON.parse(File.read(path))["version"].to_s
+        raise "training manifest has no version: #{path}" if version.empty?
 
         version
+      rescue JSON::ParserError => error
+        raise "invalid training manifest #{path}: #{error.message}"
       end
 
       def grade(path, stamp)
         script = File.join(ROOT, "postpro", "postpro.rb")
         output_dir = File.join(Studio::OutputPaths.render_directory, "photograph-#{stamp}")
         env = { "POSTPRO_OUTPUT_DIR" => output_dir }
-        stdout, status = Open3.capture2e(
-          env, RbConfig.ruby, script, "--rough", "--count", "1", path
+        stdout, stderr, status = Studio::Subprocess.capture3(
+          env, RbConfig.ruby, script, "--rough", "--count", "1", path, timeout: 600
         )
-        raise "postpro failed: #{stdout.lines.last.to_s.strip}" unless status.success?
+        output = [stdout, stderr].compact.join("\n")
+        raise "postpro failed: #{output.lines.last.to_s.strip}" unless status.success?
 
         ext = File.extname(path)
         stem = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
