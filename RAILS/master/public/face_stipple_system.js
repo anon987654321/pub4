@@ -173,7 +173,9 @@
           p.xy *= 1.0 - uAttract * 0.007;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          gl_PointSize = 1.0;
+          // Keep the face mostly pin-sharp, but let sample bias create a restrained size hierarchy.
+          // Hardware may clamp this range; the silhouette must remain legible at one pixel.
+          gl_PointSize = 1.0 + clamp(aBias, 0.0, 1.5) * 0.75;
           vThreshold = aThreshold;
           vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * (1.0 - uEntropy * 0.08), 0.0, 1.0);
           vZone = aZone;
