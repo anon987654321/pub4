@@ -65,7 +65,7 @@ end
 saved = [target_config, source_config].map { |f| File.file?(f) ? File.read(f)[/^model:\s*(\S+)/, 1] : nil }.compact.first
 model = model_flag == "none" ? nil : (model_flag || saved)
 
-env = { "MASTER_INTERNAL_CHILD" => "1", "MASTER_FIX_WORKTREE_CHILD" => "1" }
+env = { "MASTER_INTERNAL_CHILD" => "1" }
 env["MASTER_FIX_NO_PUBLISH"] = "1" if no_publish
 env["MASTER_FIX_GATE_STAGES"] = gate_stages unless gate_stages.empty?
 if model_flag == "none"
@@ -75,7 +75,7 @@ elsif model
 end
 log = File.join(MASTER, ".master", "fix-#{File.basename(tree)}.log")
 
-puts "fix0 at fix-here: tree=#{tree} worktree=#{ROOT}"
+puts "fix0 at fix-here: tree=#{tree} root=#{ROOT}"
 puts "fix0 at fix-here: disk=#{format('%.1f', free)} GiB free, model=#{model || 'pool (none forced)'}, log=#{log}"
 if dry
   puts "fix0 at fix-here: --dry, would run MASTER/bin/master /fix #{tree}"
@@ -138,7 +138,7 @@ status = nil
 begin
   pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, *passthrough, chdir: ROOT, out: [log, "w"], err: [:child, :out], pgroup: true)
 # A TERM or INT aimed at the wrapper must reach the whole run, grandchildren and their MCP
-# servers included; otherwise it keeps the quota and the worktree. A run that is still alive
+# servers included; otherwise it keeps the quota. A run that is still alive
 # KILL_AFTER_S seconds after TERM is killed, because a handler can be stuck inside a model call.
 KILL_AFTER_S = Integer(ENV.fetch("FIX_HERE_KILL_AFTER_S", "20"))
 term_sent_at = nil

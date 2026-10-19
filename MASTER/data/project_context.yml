@@ -356,5 +356,5 @@ entries:
     commit path-scoped (git commit -- paths), never git commit -a, run git log origin/main..HEAD
     before pushing and say what went with it, land with MASTER/bin/operator land. Enforced by
     MASTER/tools/block_branching.rb (a Claude PreToolUse hook), bin/operator worktree refuses,
-    /fix runs in the checkout unless MASTER_FIX_WORKTREE=1. Removing a leftover worktree or
+    /fix runs in the checkout (its worktree session was deleted). Removing a leftover worktree or
     branch stays allowed. Supersedes the older worktree-by-default memories and CLAUDE.md trap 1.

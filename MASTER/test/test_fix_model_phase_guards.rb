@@ -244,7 +244,7 @@ class TestFixModelPhaseGuards < Minitest::Test
 
     Stream.new.send(:enqueue_ranked, ranked, queue, streamed)
 
-    taken = Array.new(queue.size) { |item| item.first }
+    taken = Array.new(queue.size) { queue.pop.first }
     assert_equal %w[/r/mid.rb /r/big.rb], taken
     assert_equal [["small.rb", "NO_PUTS"]].to_set,
                  streamed.map { |file, law| [File.basename(file), law] }.to_set

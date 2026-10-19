@@ -196,23 +196,6 @@ class TestFixFreshCheckoutModels < Minitest::Test
   end
 
 
-  # The temporary checkout starts knowing which lanes are dead and how many calls
-  # each model has used today; config.yml, which holds a model choice, is not carried.
-  def test_the_worktree_session_carries_lane_state_but_not_the_saved_model
-    repo = File.join(@dir, "repo")
-    tree = File.join(@dir, "tree")
-    FileUtils.mkdir_p([File.join(repo, "MASTER", ".master"), tree])
-    { "lane_quota.yml" => "---\nagy: 1792226033.5\n", "model_quota.json" => "{}", "config.yml" => "model: claude-cli:claude-sonnet-5-5\n" }
-      .each { |name, body| File.write(File.join(repo, "MASTER", ".master", name), body) }
-    session = Master::Fix::WorktreeSession.allocate
-    session.instance_variable_set(:@repo_root, repo)
-
-    assert_equal %w[lane_quota.yml model_quota.json], session.send(:carry_availability_state, tree)
-    carried = Dir.children(File.join(tree, "MASTER", ".master")).sort
-    assert_equal %w[lane_quota.yml model_quota.json], carried
-    refute File.symlink?(File.join(tree, "MASTER", ".master", "lane_quota.yml")), "copied, not linked"
-  end
-
   def test_a_saved_model_in_the_default_config_does_not_pin_the_boot
     ENV["MASTER_MODEL"] = nil
     assert_equal [OPUS, "availability"], Selection.boot_choice(env: ENV, saved: nil)

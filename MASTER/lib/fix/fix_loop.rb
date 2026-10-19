@@ -59,7 +59,7 @@ module Master
       MEASURED_REPAIR_OUTCOMES = {
         done: true, plateau: false, crash: false, skip: false, blocked: false,
         validation_failed: false, delivery_failed: false, timeout: false,
-        human_decision: false, inconclusive: false, failed: false, reloading: false,
+        inconclusive: false, failed: false, reloading: false
       }.freeze
 
       MAX_PASSES = 15

@@ -106,7 +106,7 @@ module Master
 
       def domains_for(target, protocol)
         value = target.to_s.tr("\\", "/").strip
-        tree_names = %w[MASTER RAILS OPENBSD STUDIO]
+        tree_names = MasterPaths::TREES
         target_names = value.split(/[\s,]+/).reject(&:empty?)
         expanded = File.expand_path(value.empty? ? "." : value, @root)
         full_tree = expanded == @root || %w[. ./].include?(value) ||

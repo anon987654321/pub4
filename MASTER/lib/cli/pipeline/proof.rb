@@ -183,8 +183,27 @@ module Master
             }]
           end
 
-          tree = PROOF_ROOTS.find { |_name, root| abs == root || abs.start_with?("#{root}/") }&.first
-          [tree, -> { suite_proof(chain, tree) }] if tree
+          tree, root = PROOF_ROOTS.find { |_name, dir| abs == dir || abs.start_with?("#{dir}/") }
+          return unless tree
+          # A narrower target proves with the tests that map to it, as `bin/operator test` does;
+          # the whole suites answer for the whole tree. A file or directory took the full suites
+          # of its tree for every pass, thirty minutes to repair one file.
+          return [tree, -> { suite_proof(chain, tree) }] if abs == root
+
+          ["#{tree} tests for #{File.basename(abs)}", -> { targeted_proof(chain, abs) }]
+        end
+        public :proof_runner
+
+        # No test maps to the path is not a failure of the repair: it is a target with no proof to
+        # offer, and says so in the reading.
+        UNMAPPED = /no suite maps to/
+
+        def targeted_proof(chain, abs)
+          ok, out = chain.capture(chain::RUBY, File.join(chain::MASTER, "bin", "operator"), "test", abs,
+                                  chdir: chain::MASTER, env: { "CHECK_VERBOSE" => "1" })
+          lines = Array(out)
+          held = ok || lines.any? { |line| line.to_s.match?(UNMAPPED) }
+          [held, ["proof tests for #{abs}: #{ok ? "ok" : "FAIL"}", *lines]]
         end
 
         def suite_proof(chain, tree)

@@ -3,7 +3,6 @@
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../operator/gate_chain"
-require_relative "../../fix/worktree_session"
 require_relative "../../boot/paths"
 
 module Master
@@ -82,26 +81,12 @@ module Master
         writes_requested = writes_requested?(apply:, only:)
         display_target = display_fix_target(target)
         mode = writes_requested ? "write" : "read-only"
-        boundary = if !writes_requested
-                     "no-write-or-publish"
-                   elsif ENV["MASTER_FIX_WORKTREE_CHILD"] == "1" || worktree_fix_requested?
-                     "isolated-worktree"
-                   else
-                     "current-checkout"
-                   end
+        boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
         with_dmesg_verbosity(raw, default: "trace") do
           Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
         end
         targets = fix_targets(target, root:)
         ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
-        if writes_requested && worktree_fix_requested?
-          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
-          return Master::Trace::Dmesg.with_log_voice do
-            with_dmesg_verbosity(raw, default: "trace") do
-              dispatch_fix_in_worktree(raw:, root:, target:)
-            end
-          end
-        end
         Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
         trace_scope = execution_trace_scopes(target)
 
@@ -182,58 +167,6 @@ module Master
       rescue StandardError => e
         Master::Trace::Dmesg.status("design0", "FAILED: #{e.class}: #{e.message.lines.first.to_s.strip[0, 160]}")
         rendered
-      end
-
-      def worktree_fix_requested?
-        # This repository writes straight to main, so /fix runs in the checkout and its
-        # per-pass commits push to main. The isolated worktree stays only as an explicit
-        # MASTER_FIX_WORKTREE=1 opt-in.
-        ENV.fetch("MASTER_FIX_WORKTREE", "0") == "1" && ENV["MASTER_FIX_WORKTREE_CHILD"] != "1"
-      end
-
-      def dispatch_fix_in_worktree(raw:, root:, target:)
-        result = Master::Fix::WorktreeSession.new(root:).run(
-          command: ["/fix", raw].reject(&:empty?).join(" "),
-          foreign_paths: Master::Fix::WorktreeSession.foreign_paths(root:),
-          proof_trees: worktree_proof_trees(target, root:),
-          include_dirty: include_dirty_requested?(raw),
-        )
-        return result.summary if result.ok
-
-        Master::Result.err(result.summary, category: result.category || :validation)
-      end
-
-      def include_dirty_requested?(raw)
-        ENV["MASTER_FIX_INCLUDE_DIRTY"] == "1" || raw.to_s.split(/\s+/).any? { |token| token.casecmp?(INCLUDE_DIRTY_FLAG) }
-      end
-
-      def worktree_proof_trees(target, root:)
-        text = target.to_s.strip
-        trees = MasterPaths::TREES.dup
-        # TargetResolver's omitted target, "." and "master" all mean MASTER.
-        # Keep that scope through the isolated worker's final proof; all-tree
-        # work must be requested explicitly.
-        return ["MASTER"] if text.empty? || text == "." || text.casecmp?("master")
-        return trees if %w[all everything].any? { |name| text.casecmp?(name) }
-
-        tokens = text.split(/\s+/)
-        return tokens.uniq if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
-
-        repo_root = File.expand_path(root)
-        repo_root = Master::REPO_ROOT if repo_root == Master::ROOT
-        master_root = File.join(repo_root, "MASTER")
-        [target].filter_map do |value|
-          candidates = [
-            File.expand_path(value.to_s, repo_root),
-            File.expand_path(value.to_s, master_root),
-          ].uniq
-          candidates.filter_map do |path|
-            trees.find do |tree|
-              base = File.join(repo_root, tree)
-              path == base || path.start_with?("#{base}#{File::SEPARATOR}")
-            end
-          end.first
-        end.uniq
       end
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
@@ -354,9 +287,6 @@ module Master
         "--trace" => "trace", "trace" => "trace"
       }.freeze
 
-      # Read by dispatch_fix_in_worktree; never a path.
-      INCLUDE_DIRTY_FLAG = "--include-dirty"
-
       PASS_FLAGS = {
         "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
@@ -403,7 +333,7 @@ module Master
         joined_only(raw.split(/\s+/)).each do |token|
           if (flag = PASS_FLAGS[token.downcase])
             flags[flag.first] = flag.last
-          elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?(INCLUDE_DIRTY_FLAG)
+          elsif DMESG_FLAGS.key?(token.downcase)
             next
           elsif token =~ AUTOFIX_FLAG || token =~ MAX_FILES_FLAG
             # Parsed below as per-dispatch options; parsing must not mutate the

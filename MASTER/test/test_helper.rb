@@ -8,8 +8,6 @@ ENV["MASTER_NO_POOL_PROBES"] = "1"
 # The suite is the proof: a test that drives a writing /fix pass must not start
 # the whole suite again from inside it.
 ENV["MASTER_IN_PROOF"] = "1"
-# Unit tests use the real checkout as their fixture; do not recursively create fix worktrees.
-ENV["MASTER_FIX_WORKTREE"] = "0"
 # Scripted CDP doubles answer only the verbs a test names; stress states and
 # extra engines are exercised by their own tests, which switch them on.
 ENV["MASTER_VISUAL_STRESS"] = "0"

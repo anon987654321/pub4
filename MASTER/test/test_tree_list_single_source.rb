@@ -17,7 +17,7 @@ class TestTreeListSingleSource < Minitest::Test
   def test_the_named_constants_read_the_one_list
     {
       Master::Convergence => :ROOTS, Master::Core::Constitution => :REPO_TREES,
-      Master::Fix::Reachability => :TOP_LEVEL_TREES, Master::Fix::WorktreeSession => :TREES,
+      Master::Fix::Reachability => :TOP_LEVEL_TREES,
       Operator::GateChain => :TREES, Operator::Readers => :TREES, Master::Snapshot => :DEFAULT_TREES
     }.each do |owner, name|
       assert_equal MasterPaths::TREES, owner.const_get(name).to_a, "#{owner}::#{name}"

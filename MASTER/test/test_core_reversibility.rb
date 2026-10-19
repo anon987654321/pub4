@@ -221,7 +221,7 @@ class TestCoreReversibility < Minitest::Test
 
     assert_instance_of Master::Core::Verdict::Block, verdict
     assert_equal :effect_reversibility, verdict.by
-    assert_match(/no World handler/, verdict.reason)
+    assert_match(/no reversibility contract or World handler/, verdict.reason)
   end
 
   def test_unscoped_stage_is_blocked_instead_of_prompting_for_approval

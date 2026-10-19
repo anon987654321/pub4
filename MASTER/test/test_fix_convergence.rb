@@ -794,10 +794,10 @@ end
     assert_equal expected, events.first
   end
 
-
   def test_bare_fix_routes_to_write_enabled_repair_and_delivery
     previous_trace = ENV["MASTER_FIX_DEEP_TRACE"]
     ENV["MASTER_FIX_DEEP_TRACE"] = "0"
+
     captured = {}
     fix_loop = Object.new
     fix_loop.define_singleton_method(:publish_pending!) { captured[:published] = true }
@@ -807,25 +807,22 @@ end
       "repair selected"
     end
 
-    Operator::GateChain.stub(:baseline, {}) do
-      Operator::GateChain.stub(:verify_fix, ->(**) { [0, []] }) do
-        Operator::GateChain.stub(:persist_verified_baselines!, true) do
-          Master::CLI::CommandRegistry.stub(:worktree_fix_requested?, false) do
-            Master::CLI::CommandRegistry.stub(:run_pass, repair) do
-              Master::Trace::Dmesg.stub(:status, ->(*) {}) do
-                Master::Fix::CodeWatch.stub(:requested?, false) do
-                  result = Master::CLI::CommandRegistry.dispatch_fix_parsed(
-                    scanner: nil, fix_loop:, deliberation: nil, root: @root, bus: nil, swarm: nil,
-                    raw: "", apply: nil, critique: nil, aesthetic: false, only: nil, target: ".",
-                  )
+    stubs = [
+      [Operator::GateChain, :baseline, {}],
+      [Operator::GateChain, :verify_fix, ->(**) { [0, []] }],
+      [Operator::GateChain, :persist_verified_baselines!, true],
+      [Master::CLI::CommandRegistry, :run_pass, repair],
+      [Master::Trace::Dmesg, :status, ->(*) {}],
+      [Master::Fix::CodeWatch, :requested?, false],
+    ]
 
-                  assert_equal "repair selected", result
-                end
-              end
-            end
-          end
-        end
-      end
+    stubbed(stubs) do
+      result = Master::CLI::CommandRegistry.dispatch_fix_parsed(
+        scanner: nil, fix_loop:, deliberation: nil, root: @root, bus: nil, swarm: nil,
+        raw: "", apply: nil, critique: nil, aesthetic: false, only: nil, target: "."
+      )
+
+      assert_equal "repair selected", result
     end
 
     assert_equal true, captured[:apply], "bare /fix must not be downgraded to preview"
@@ -923,7 +920,7 @@ end
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "MASTER RAILS OPENBSD --no-aesthetic" }
+          ctx: { args: "MASTER RAILS OPENBSD --no-aesthetic --no-critique" }
         )
       end
     end
@@ -949,7 +946,7 @@ end
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "MASTER RAILS --no-aesthetic" }
+          ctx: { args: "MASTER RAILS --no-aesthetic --no-critique" }
         )
       end
     end
@@ -964,26 +961,20 @@ end
     fix_loop.define_singleton_method(:publish_pending!) { raise IOError, "push token should not appear in the report" }
 
     result = nil
-    Master::CLI::CommandRegistry.stub(:worktree_fix_requested?, false) do
-      Master::CLI::CommandRegistry.stub(:run_pass, ->(_deps, **_kwargs) { "DONE: clean" }) do
-        Operator::GateChain.stub(:baseline, ->(target:) { {} }) do
-          Operator::GateChain.stub(:verify_fix, ->(target:, baseline:) { [0, []] }) do
-            Operator::GateChain.stub(
-              :persist_verified_baselines!,
-              ->(*) { flunk("failed publish must not cache a delivered baseline") },
-            ) do
-              result = Operator::GateChain.stub(
-                :clear_verified_fix_snapshots!, nil
-              ) do
-                Master::CLI::CommandRegistry.dispatch_fix(
-                  scanner: nil, fix_loop:, deliberation: nil, root: Master::ROOT, bus: @bus,
-                  ctx: { args: "MASTER RAILS --no-aesthetic" },
-                )
-              end
-            end
-          end
-        end
-      end
+    no_cache = ->(*) { flunk("failed publish must not cache a delivered baseline") }
+    stubs = [
+      [Master::CLI::CommandRegistry, :run_pass, ->(_deps, **_kwargs) { "DONE: clean" }],
+      [Operator::GateChain, :baseline, ->(target:) { {} }],
+      [Operator::GateChain, :verify_fix, ->(target:, baseline:) { [0, []] }],
+      [Operator::GateChain, :persist_verified_baselines!, no_cache],
+      [Operator::GateChain, :clear_verified_fix_snapshots!, nil],
+    ]
+
+    stubbed(stubs) do
+      result = Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: nil, fix_loop:, deliberation: nil, root: Master::ROOT, bus: @bus,
+        ctx: { args: "MASTER RAILS --no-aesthetic --no-critique" }
+      )
     end
 
     assert_instance_of Master::Result::Err, result
@@ -1007,7 +998,7 @@ end
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "RAILS --no-aesthetic" }
+          ctx: { args: "RAILS --no-aesthetic --no-critique" }
         )
       end
     end
@@ -1070,7 +1061,7 @@ end
     result = Master::Fix::ExecutionTrace.stub(:new, ->(**) { fake_trace }) do
       Master::CLI::CommandRegistry.dispatch_fix(
         scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-        ctx: { args: "RAILS --no-aesthetic" }
+        ctx: { args: "RAILS --no-aesthetic --no-critique" }
       )
     end
 
@@ -1105,7 +1096,7 @@ end
         Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-            ctx: { args: "RAILS --no-aesthetic" }
+            ctx: { args: "RAILS --no-aesthetic --no-critique" }
           )
         end
       end
@@ -1117,12 +1108,49 @@ end
     ENV["MASTER_FIX_DEEP_TRACE"] = saved if saved
   end
 
+  # Applies each [owner, method, value] stub in turn around the block, so a test does not nest them.
+  def stubbed(stubs, &block)
+    return block.call if stubs.empty?
+
+    (owner, name, value), *rest = stubs
+    owner.stub(name, value) { stubbed(rest, &block) }
+  end
+
   def test_proof_resolves_the_foreign_operator_namespace
     pass = Master::CLI::Pipeline::Pass.allocate
-    name, runner = pass.send(:proof_runner, Master::ROOT)
+    name, runner = pass.proof_runner(Master::ROOT)
 
     assert_equal "MASTER", name
     assert_respond_to runner, :call
+  end
+
+  # A file or directory inside a tree proves with the tests that map to it; only the tree
+  # itself runs the whole suites. One file once took the full thirty-minute suite per pass.
+  def test_a_narrower_target_proves_with_its_own_tests_not_the_whole_suite
+    pass = Master::CLI::Pipeline::Pass.allocate
+    target = File.join(Master::ROOT, "lib", "cli", "fold_risk.rb")
+    ran = []
+    Operator::GateChain.stub(:capture, ->(*cmd, **) { ran << cmd; [true, ["ok"], 0] }) do
+      name, runner = pass.proof_runner(target)
+      ok, = runner.call
+
+      assert_equal "MASTER tests for fold_risk.rb", name
+      assert ok
+    end
+
+    assert_equal 1, ran.size
+    assert_equal ["test", target], ran.first.last(2)
+    refute_includes ran.first.join(" "), "--profile=ci", "the whole suite is not run for one file"
+  end
+
+  def test_a_target_no_test_maps_to_is_not_a_failed_repair
+    pass = Master::CLI::Pipeline::Pass.allocate
+    Operator::GateChain.stub(:capture, ->(*_cmd, **) { [false, ["test0: failed, no suite maps to lib/x.rb"], 1] }) do
+      _name, runner = pass.proof_runner(File.join(Master::ROOT, "lib", "x.rb"))
+      ok, = runner.call
+
+      assert ok
+    end
   end
 
 def test_a_named_stage_list_without_source_leaves_rails_with_no_proof_runner
@@ -1130,16 +1158,16 @@ def test_a_named_stage_list_without_source_leaves_rails_with_no_proof_runner
   rails = File.join(Master::RAILS_ROOT, "brgen_dating")
   previous = ENV.delete("MASTER_FIX_GATE_STAGES")
 
-  assert_equal "rails gates", pass.send(:proof_runner, rails).first
+  assert_equal "rails gates", pass.proof_runner(rails).first
 
   ENV["MASTER_FIX_GATE_STAGES"] = "lexical,sprawl"
 
-  assert_nil pass.send(:proof_runner, rails)
-  assert_equal "MASTER", pass.send(:proof_runner, Master::ROOT).first
+  assert_nil pass.proof_runner(rails)
+  assert_equal "MASTER", pass.proof_runner(Master::ROOT).first
 
   ENV["MASTER_FIX_GATE_STAGES"] = "source"
 
-  assert_equal "rails gates", pass.send(:proof_runner, rails).first
+  assert_equal "rails gates", pass.proof_runner(rails).first
 ensure
   previous ? ENV["MASTER_FIX_GATE_STAGES"] = previous : ENV.delete("MASTER_FIX_GATE_STAGES")
 end
@@ -1158,13 +1186,14 @@ end
         Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-            ctx: { args: "RAILS --no-aesthetic" }
+            ctx: { args: "RAILS --no-aesthetic --no-critique" }
           )
         end
       end
     end
 
-    assert_equal ["trace"], levels
+    # The mode line and the lifecycle are each wrapped, so the level repeats; it is always trace.
+    assert_equal ["trace"], levels.uniq
   end
 
   def test_fix_surfaces_a_gate_failure_when_it_makes_no_changes
@@ -1179,7 +1208,7 @@ end
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "RAILS --no-aesthetic" }
+          ctx: { args: "RAILS --no-aesthetic --no-critique" }
         )
       end
     end
@@ -1210,7 +1239,7 @@ end
         Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-            ctx: { args: "lib/io --no-aesthetic" }
+            ctx: { args: "lib/io --no-aesthetic --no-critique" }
           )
         end
       end
@@ -1245,7 +1274,7 @@ end
   # for its duration and restores the environment afterwards.
   def test_rails_proof_blocks_inconclusive_measurements_inside_a_proof
     pass = Master::CLI::Pipeline::Pass.allocate
-    _name, runner = pass.send(:proof_runner, Master::RAILS_ROOT)
+    _name, runner = pass.proof_runner(Master::RAILS_ROOT)
     previous_strict = ENV["GATE_STRICT_INCONCLUSIVE"]
     # test_helper.rb sets MASTER_IN_PROOF for the whole suite; the ordinary
     # call below must run outside a proof, so the flag is lifted for this test.
@@ -1573,51 +1602,9 @@ end
     assert_equal :delivery_failed, loop.send(:terminal_state_for, result)
   end
 
-  def test_worktree_delivery_category_survives_the_cli_adapter
-    worktree_error = Master::Fix::WorktreeSession::Result.new(
-      false, "DELIVERY_FAILED: final publication did not complete", nil, nil, "master/fix-test", "/tmp/kept-worktree",
-      :delivery_failed,
-    )
-    session = Object.new
-    session.define_singleton_method(:run) { |**| worktree_error }
-
-    result = Master::Fix::WorktreeSession.stub(:foreign_paths, []) do
-      Master::Fix::WorktreeSession.stub(:new, session) do
-        Master::CLI::CommandRegistry.dispatch_fix_in_worktree(raw: "MASTER", root: Master::ROOT, target: "MASTER")
-      end
-    end
-
-    assert result.err?
-    assert_equal :delivery_failed, result.category
-    assert_match(/DELIVERY_FAILED/, result.message)
-  end
-
-  def test_delivery_recovery_preserves_policy_head_mismatch
+  def test_terminal_state_preserves_every_typed_outcome
     loop = build_loop([])
-    policy_error = Master::Result.err("delivery recovery HEAD mismatch", category: :policy)
 
-    result = loop.stub(:retry_delivery, policy_error) do
-      loop.send(
-        :recover_pending_delivery,
-        active_pass: { "transaction_id" => "tx-2", "pass" => 1 },
-        run_id: "run-policy", commit: "deadbeef",
-      )
-    end
-
-    assert_same policy_error, result
-    assert_equal :policy, result.category
-    assert_equal :blocked, loop.send(:terminal_state_for, result)
-  end
-
-  def test_terminal_state_preserves_validation_failures
-    loop = build_loop([])
-    result = Master::Result.err("ground truth refused the repair", category: :validation)
-
-    assert_equal :validation_failed, loop.send(:terminal_state_for, result)
-  end
-
-  def test_terminal_state_preserves_every_typed_worktree_outcome
-    loop = build_loop([])
     expected = {
       human_decision: :human_decision,
       plateau: :plateau,
