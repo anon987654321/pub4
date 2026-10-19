@@ -13,7 +13,16 @@
   // The nine moods live in MASTER/data/tokens.yml (face_interface.stipple.profiles) and arrive
   // as MASTER_FACE_CONTRACT; only idle is kept here so a page without the contract still draws.
   const IDLE_PROFILE = Object.freeze({ density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 });
+  const DEFAULT_POINT_SIZE = Object.freeze({
+    base: 0.90, bias_scale: 0.35, bias_min: 0.25, bias_max: 1.50,
+    reference_depth: 5.0, distance_min: 0.75, distance_max: 1.25,
+    output_min: 1.0, output_max: 1.5
+  });
   const profiles = () => window.MASTER_FACE_CONTRACT?.stipple?.profiles || {};
+  const pointSizing = () => ({
+    ...DEFAULT_POINT_SIZE,
+    ...(window.MASTER_FACE_CONTRACT?.stipple?.point_size || {})
+  });
 
   const overrides = {};
   let wrappedRenderer = null;
@@ -155,8 +164,18 @@
     geometry.setAttribute("aZone", new THREE.BufferAttribute(zones, 1));
     geometry.setAttribute("aBias", new THREE.BufferAttribute(biases, 1));
     const idle = profiles().idle || IDLE_PROFILE;
+    const pointSize = pointSizing();
     const material = new THREE.ShaderMaterial({
       uniforms: {
+        uPointSizeBase: { value: clamp(pointSize.base, DEFAULT_POINT_SIZE.base, 0.1, 2.0) },
+        uPointSizeBiasScale: { value: clamp(pointSize.bias_scale, DEFAULT_POINT_SIZE.bias_scale, 0.0, 1.0) },
+        uPointSizeBiasMin: { value: clamp(pointSize.bias_min, DEFAULT_POINT_SIZE.bias_min, 0.0, 1.5) },
+        uPointSizeBiasMax: { value: clamp(pointSize.bias_max, DEFAULT_POINT_SIZE.bias_max, 0.25, 1.5) },
+        uPointSizeReferenceDepth: { value: clamp(pointSize.reference_depth, DEFAULT_POINT_SIZE.reference_depth, 1.0, 20.0) },
+        uPointSizeDistanceMin: { value: clamp(pointSize.distance_min, DEFAULT_POINT_SIZE.distance_min, 0.1, 2.0) },
+        uPointSizeDistanceMax: { value: clamp(pointSize.distance_max, DEFAULT_POINT_SIZE.distance_max, 0.1, 2.0) },
+        uPointSizeOutputMin: { value: clamp(pointSize.output_min, DEFAULT_POINT_SIZE.output_min, 1.0, 1.5) },
+        uPointSizeOutputMax: { value: clamp(pointSize.output_max, DEFAULT_POINT_SIZE.output_max, 1.0, 1.5) },
         uTime: { value: 0 }, uDensity: { value: idle.density },
         uRipple: { value: idle.ripple }, uTurbulence: { value: idle.turbulence },
         uLuminosity: { value: idle.luminosity }, uAttract: { value: idle.attract },
@@ -176,6 +195,15 @@
         uniform float uAttract;
         uniform float uEntropy;
         uniform float uMotionScale;
+        uniform float uPointSizeBase;
+        uniform float uPointSizeBiasScale;
+        uniform float uPointSizeBiasMin;
+        uniform float uPointSizeBiasMax;
+        uniform float uPointSizeReferenceDepth;
+        uniform float uPointSizeDistanceMin;
+        uniform float uPointSizeDistanceMax;
+        uniform float uPointSizeOutputMin;
+        uniform float uPointSizeOutputMax;
         uniform float uLuminosity;
         varying float vAlpha;
         varying float vZone;
@@ -190,11 +218,14 @@
           p.xy *= 1.0 - uAttract * 0.007;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          // Keep a restrained bias hierarchy and attenuate it with camera distance.
-          // The 5-unit reference matches the canonical face camera; hardware may clamp the result.
-          float distanceScale = clamp(5.0 / max(1.0, -mv.z), 0.75, 1.25);
-          float biasedSize = 0.90 + clamp(aBias, 0.25, 1.5) * 0.35;
-          gl_PointSize = clamp(biasedSize * distanceScale, 1.0, 1.5);
+          // Canonical token values control both sample bias and camera-distance attenuation.
+          // Hardware may clamp the requested size further; retain readable one-pixel points.
+          float distanceScale = clamp(uPointSizeReferenceDepth / max(1.0, -mv.z),
+            uPointSizeDistanceMin, uPointSizeDistanceMax);
+          float biasedSize = uPointSizeBase +
+            clamp(aBias, uPointSizeBiasMin, uPointSizeBiasMax) * uPointSizeBiasScale;
+          gl_PointSize = clamp(biasedSize * distanceScale,
+            uPointSizeOutputMin, uPointSizeOutputMax);
           vThreshold = aThreshold;
           vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * (1.0 - uEntropy * 0.08), 0.0, 1.0);
           vZone = aZone;
@@ -390,7 +421,14 @@
       uniforms: {
         density: value("uDensity"), ripple: value("uRipple"), turbulence: value("uTurbulence"),
         luminosity: value("uLuminosity"), attract: value("uAttract"), opacity: value("uOpacity"),
-        time: value("uTime")
+        time: value("uTime"),
+        pointSizeBase: value("uPointSizeBase"),
+        pointSizeBiasScale: value("uPointSizeBiasScale"),
+        pointSizeReferenceDepth: value("uPointSizeReferenceDepth"),
+        pointSizeDistanceMin: value("uPointSizeDistanceMin"),
+        pointSizeDistanceMax: value("uPointSizeDistanceMax"),
+        pointSizeOutputMin: value("uPointSizeOutputMin"),
+        pointSizeOutputMax: value("uPointSizeOutputMax")
       }
     };
   }
