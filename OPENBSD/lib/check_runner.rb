@@ -65,7 +65,8 @@ module Deploy
     def capture(env, *cmd)
       output = +""
       status = nil
-      Open3.popen2e(env, *cmd, chdir: @root, pgroup: true) do |_stdin, stdout, wait_thread|
+      Open3.popen2e(env, *cmd, chdir: @root, pgroup: true) do |stdin, stdout, wait_thread|
+        stdin.close
         Timeout.timeout(@timeout) do
           output << stdout.read
           status = wait_thread.value
