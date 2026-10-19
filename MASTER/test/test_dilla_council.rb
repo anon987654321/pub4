@@ -19,10 +19,9 @@ class TestDillaCouncil < Minitest::Test
     assert_includes dilla[:files], "../STUDIO/dilla/dilla.rb"
     assert_includes dilla[:files], "../STUDIO/dilla/data/dilla.json"
     assert_includes dilla[:files], "../STUDIO/dilla/data/showcase.json"
-    assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/engine.rb"
-    assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/sequencer.rb"
-    assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/colour.rb"
-    assert_includes dilla[:files], "../STUDIO/dilla/lib/dilla/echo.rb"
+    assert_includes dilla[:files], "../STUDIO/dilla/data/music_theory.json"
+    assert_includes dilla[:files], "../STUDIO/dilla/data/recovered_music.json"
+    refute dilla[:files].any? { |path| path.include?("../STUDIO/dilla/lib/dilla/") }
   end
 
   def test_dilla_preset_sources_resolve_from_master_root

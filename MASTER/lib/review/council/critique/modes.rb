@@ -79,27 +79,18 @@ module Master
             },
             dilla: {
               preset_key: "dilla_critique",
-              max_bytes: 36_864,
+              max_bytes: 400_000,
               panel: [
                 "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer",
                 "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
               ],
-              # The executable is thin; critique the engine modules and canonical data too.
+              # Dilla has one Ruby source; critique the complete engine with its canonical music data.
               files: %w[
                 ../STUDIO/dilla/dilla.rb
                 ../STUDIO/dilla/data/dilla.json
                 ../STUDIO/dilla/data/music_theory.json
                 ../STUDIO/dilla/data/showcase.json
-                ../STUDIO/dilla/lib/dilla/engine.rb
-                ../STUDIO/dilla/lib/dilla/sequencer.rb
-                ../STUDIO/dilla/lib/dilla/chords.rb
-                ../STUDIO/dilla/lib/dilla/arp.rb
-                ../STUDIO/dilla/lib/dilla/colour.rb
-                ../STUDIO/dilla/lib/dilla/echo.rb
-                ../STUDIO/dilla/lib/dilla/synthesis.rb
-                ../STUDIO/dilla/lib/dilla/voices.rb
-                ../STUDIO/dilla/lib/dilla/drums.rb
-                ../STUDIO/dilla/lib/dilla/effects.rb
+                ../STUDIO/dilla/data/recovered_music.json
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb
               ],

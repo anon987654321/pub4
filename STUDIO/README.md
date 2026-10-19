@@ -6,10 +6,12 @@ leaves a line in a ledger, so a result can be heard or seen again and a bill can
 
 ## Tools and boundaries
 
-Four tools live here. `dilla/dilla.rb` is a thin executable over `dilla/lib/dilla/`; it reads
-progressions and runtime choices from `dilla/data/dilla.json` and harmonic references from
-`dilla/data/music_theory.json`. It builds its own oscillators, voicings, arpeggios, drums and
-effects without samples, and can render WAV/MIDI or play continuously.
+Four tools live here. `dilla/dilla.rb` is Dilla's single authoritative Ruby source for
+composition, music theory, synthesis, sequencing, effects, mixing/mastering, reference analysis
+and rendering. Progressions and sound choices stay in `dilla/data/dilla.json`, the harmonic
+catalogue in `dilla/data/music_theory.json`, and curated/recovered arrangements in their own
+JSON data files. It builds its own oscillators, voicings, arpeggios, drums and effects without
+samples, and can render WAV/MIDI/MP4 or play continuously.
 
 The tool `postpro/postpro.rb` grades and transforms still images through film emulation; startup/dependency policy is isolated in `postpro/bootstrap.rb`.
 

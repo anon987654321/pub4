@@ -4,6 +4,10 @@ This companion documents implementation-level sound decisions. The operator cont
 canonical commands, output ownership and reference-analysis workflow remain in
 [README.md](README.md).
 
+The complete live Ruby implementation is `dilla.rb`, organised in labelled sections.
+Progressions, patches, grooves, showcase arrangements and recovered historical research
+remain versioned data; the executable source is not scattered across subsystem files.
+
 ## Composition and groove
 
 The data holds a flat list of progressions, each a list of chord names such as Fm9,

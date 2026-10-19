@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "open3"
 require "rbconfig"
 require "tmpdir"
-require_relative "../dilla/lib/dilla"
+require_relative "../dilla/dilla"
 
 class DillaReferenceTest < Minitest::Test
   DIR = File.expand_path("../dilla", __dir__)

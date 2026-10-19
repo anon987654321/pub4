@@ -1,10 +1,13 @@
 # Dilla
 
 **A small room that plays a chord progression soft and a little late, with drums that
-lean on the beat and a rack of analogue colour.** The executable `dilla.rb` is a thin
-shell over the modules in `lib/dilla/`. Instrument patches and grooves live in
-`data/dilla.json`; the eight-part Blue Hour Dilla Minor Dub Cut lives in
-`data/showcase.json`; harmonic references live in `data/music_theory.json`. The historical named chord, drum-groove and sample-study research recovered from pub3 is retained separately in `data/recovered_music.json`; it is research evidence, not a verified transcription set, and it does not enter the default render rotation.
+lean on the beat and a rack of analogue colour.** The complete live engine is the single
+Ruby file `dilla.rb`: composition, music theory, synthesis, sequencing, instruments, effects,
+mixing/mastering, reference analysis and output all live there. The versioned musical data
+remains separate: `data/dilla.json` holds patches and grooves, `data/showcase.json` holds
+the eight-part Blue Hour arrangement, and `data/music_theory.json` holds harmonic references.
+Research recovered from pub3 is preserved in `data/recovered_music.json`; it is not a verified
+transcription set and does not enter the default render rotation.
 
 A bare `ruby dilla.rb` renders the finite eight-part Blue Hour composition to a WAV and
 a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a repeatable
