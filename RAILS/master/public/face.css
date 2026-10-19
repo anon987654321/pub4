@@ -308,8 +308,17 @@ body[data-hidden-tab="1"] #cognition-ecology {
   cursor: pointer;
 }
 
-#cmd-palette-list li[data-active="1"],
-#cmd-palette-list li:hover {
+#cmd-palette-list li[data-active="1"] {
+  background: var(--pub4-signal);
+  color: var(--pub4-signal-ink);
+}
+
+#cmd-palette-list li[data-active="1"] .cmd-hint {
+  color: var(--pub4-signal-ink);
+  opacity: 0.8;
+}
+
+#cmd-palette-list li:hover:not([data-active="1"]) {
   background: var(--hover-tint);
   color: var(--face-fg);
 }
