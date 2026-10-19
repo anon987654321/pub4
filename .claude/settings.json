@@ -21,6 +21,12 @@
             "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_git_stash.rb\"",
             "statusMessage": "Checking for a shared git stash",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_branching.rb\"",
+            "statusMessage": "Checking this writes straight to main",
+            "timeout": 15
           }
         ]
       },

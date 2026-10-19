@@ -53,9 +53,8 @@ def usage
       bin/operator lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/operator branches               every branch against main: merged, active, conflicts, deletes_heavily or ready
-      bin/operator land -m <msg> <path>...  commit, rebase, re-check, push
-      bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
-      bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live gates probe
+      bin/operator land -m <msg> <path>...  commit path-scoped, re-check, push main
+            bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live gates probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
       bin/operator visual <seed [app...] [--yes]|unseed|status|approve <surface>>  believable local content for the visual pass, development database only
       bin/operator premerge [--apps|--pwa|--contracts|--coverage|--gates|--list]  the Rails premerge proof
@@ -240,7 +239,7 @@ when "land"
   # Commit, rebase onto origin/main, re-check, push — in that order, because the
   # order is where it goes wrong.
   #
-  # Every landing in a worktree is the same five steps, and the two that get
+  # Every landing is the same five steps, and the two that get
   # skipped are the two that matter. Rebasing onto a main that moved can
   # invalidate a green run, so the checks run again AFTER the rebase and not
   # only before it. And `git push` sends every commit beneath yours, so this
@@ -257,12 +256,6 @@ when "land"
   paths = ARGV
   die("land", "usage, bin/operator land -m <message> <path>...", 64) if paths.empty?
   die("land", "usage, bin/operator land needs -m <message> or -F <file>", 64) unless message || message_file
-
-  # A worktree carries .git as a file. In the shared checkout the rebase below
-  # would carry other sessions' local commits onto origin/main with this one.
-  unless File.file?(File.join(ROOT, ".git"))
-    die("land", "refused outside a worktree, use bin/operator worktree <name> first")
-  end
 
   def run!(*cmd, chdir: ROOT)
     out, status = Master::Io::Exec.capture2e(*cmd, chdir: chdir)
@@ -282,8 +275,14 @@ when "land"
   die("land", "nothing committed, paths matched no changes?") unless ok
 
   run!("git", "fetch", "-q", "origin")
-  rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
-  abort("land: rebase onto origin/main failed — resolve, then run land again\n#{rebase_out}") unless rebased
+  # The checkout is shared, so it may hold other sessions' uncommitted files and a
+  # rebase refuses a dirty tree. A rebase is only needed when origin/main has
+  # commits this one lacks.
+  _, current = run!("git", "merge-base", "--is-ancestor", "origin/main", "HEAD")
+  unless current
+    rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
+    abort("land: rebase onto origin/main failed, resolve (or wait for the other session's uncommitted files to be committed), then run land again\n#{rebase_out}") unless rebased
+  end
 
   # The same measurement again. A rebase brings other people's commits under
   # yours, and theirs can put a ceiling over the edge that yours did not.
@@ -387,9 +386,7 @@ when "worktree"
   # nothing. Sessions kept picking nothing, and kept committing each other's work.
   # finish rebases onto origin/main and pushes the branch — it does not merge
   # to local main, which is how another session's push published commits twice.
-  name = ARGV.shift
-  die("worktree", "usage, bin/operator worktree <name>|finish [--remove]", 64) if name.to_s.empty?
-  exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
+  die("worktree", "refused: this repository writes straight to main. No worktrees, branches or pull requests; commit path-scoped with bin/operator land -m <msg> <path>...", 64)
 when "law:silent"
   output = Operator::LawInventory.render_collection(:silent, json: ARGV.include?("--json"))
   if output
