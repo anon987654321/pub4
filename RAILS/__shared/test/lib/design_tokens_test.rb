@@ -195,4 +195,13 @@ end
   end
 
 
+  def test_face_signal_does_not_overwrite_shared_dialect_accent
+    scss = File.read(DesignTokens::DIALECT_PATH, encoding: "UTF-8")
+
+    assert_includes scss, "$c-accent: oklch(78% 0.10 300),"
+    assert_includes DesignTokens.face_root_css, "--c-accent: var(--pub4-signal);"
+    assert_nil DesignTokens.scss_anchor_drift?
+  end
+
+
 end

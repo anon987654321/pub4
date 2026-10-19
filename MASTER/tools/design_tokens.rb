@@ -254,7 +254,11 @@ module DesignTokens
     drifted = []
 
     face_anchors.each do |key, value|
-      next if key == "x_text"
+      # These are not all dialect defaults: the face's signal accent is an
+      # intentional projection from visual_identity, not the palette mixin's
+      # separate --c-accent default. The face root is generated directly from
+      # the canonical anchor and cannot leak its identity into app dialects.
+      next if %w[x_text c_accent].include?(key)
 
       needle = "$#{key.tr('_', '-')}: #{value}"
       drifted << "#{key}=#{value}" unless scss.include?(needle)

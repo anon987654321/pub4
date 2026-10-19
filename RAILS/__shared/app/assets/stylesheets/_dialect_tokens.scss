@@ -52,7 +52,7 @@ $vertical-accent-ink: #110f19;
   // gate asserts — zeroing it here to match the greyscale broke that link and
   // would have recoloured the face, a surface this scheme does not cover.
   $c-text: oklch(86% 0.02 300),
-  $c-accent: var(--pub4-signal),
+  $c-accent: oklch(78% 0.10 300),
   $c-danger: oklch(60% 0.14 35),
   $c-code: oklch(74% 0.11 275)
 ) {
