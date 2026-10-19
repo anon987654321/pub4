@@ -46,8 +46,10 @@ a dated folder under `${XDG_DATA_HOME:-~/Documents}/dilla-renders`, outside the 
 default. `POSTPRO_OUTPUT_DIR` redirects Postpro, and `DILLA_OUTPUT_DIR` redirects Dilla's
 default renders. Reference-analysis artifacts share the same XDG data home as MASTER.
 Explicit `--output`, `--out` and `--video` paths remain operator-controlled. The
-`photograph.rb` workflow uses a per-job folder under the same dated directory for its
-returned graded still.
+`photograph.rb` workflow accepts `--subject NAME` or `STUDIO_PHOTOGRAPH_SUBJECT`, validates
+that subject's `replicate_training.json` manifest, and runs Postpro with a 600-second process
+deadline. A missing or malformed training manifest is an explicit prerequisite failure; it
+never silently falls back to a generic model.
 
 Dilla's default showcase preserves existing takes: it tries the familiar filenames, then the
 ignored `out/` directory, then a fresh timestamped WAV/MP4 pair. Its WAV and MIDI writers
