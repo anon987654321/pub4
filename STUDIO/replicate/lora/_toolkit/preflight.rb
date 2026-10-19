@@ -372,7 +372,14 @@ module Preflight
       Gem::Package::TarReader.new(file).each do |entry|
         header = entry.header
         name = entry.full_name.to_s
-        normalized = name.tr("\\", "/").sub(/\/+\z/, "")
+        type = header.typeflag.to_s
+        next if type == "5" && name.tr("\\", "/").match?(/\A(?:\.\/)+\z/)
+
+        # Strip harmless leading ./ segments produced by standard tar commands,
+        # but refuse parent traversal, internal dot segments and ambiguous slashes.
+        normalized = name.tr("\\", "/")
+        normalized = normalized.sub(/\A(?:\.\/)+/, "")
+        normalized = normalized.sub(/\/+\z/, "")
         parts = normalized.split("/")
         if normalized.empty? || normalized.start_with?("/") ||
            normalized.match?(/\A[A-Za-z]:/) || name.include?("\\") ||
@@ -381,7 +388,6 @@ module Preflight
           next
         end
 
-        type = header.typeflag.to_s
         unless ["0", "\0", "5", "x", "g", "L", "K"].include?(type)
           unsafe << "#{name}: unsupported archive entry type #{type.inspect}"
           next
