@@ -11,8 +11,9 @@ require_relative "../lib/trace/dmesg"
 SWEEP_ROOT = File.expand_path("../..", __dir__)
 
 SECRET_PATTERNS = [
-  /sk-[A-Za-z0-9_\-]{16,}/,
-  /sk-ant-[A-Za-z0-9_\-]{16,}/,
+  # A key starts at a word boundary: vosk-model-small-en-us is not one.
+  /\bsk-[A-Za-z0-9_\-]{16,}/,
+  /\bsk-ant-[A-Za-z0-9_\-]{16,}/,
   /AKIA[0-9A-Z]{16}/,
   /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/,
   /(?<![a-z_])api_key\s*[:=]\s*["'][^"']{8,}["']/i,
