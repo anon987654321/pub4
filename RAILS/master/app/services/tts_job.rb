@@ -265,7 +265,7 @@ class TtsJob
     avail = bytes_available
     return if avail.zero?
 
-    File.binread(cache_path, avail)
+    File.binread(audio_path, avail)
   end
 
   def write_token
@@ -348,6 +348,12 @@ class TtsJob
 
   def cache_path
     CACHE_DIR.join("#{@job_id}.mp3")
+  end
+
+  # The job's audio wherever it landed: Edge TTS writes mp3, a native voice writes wav or aiff.
+  # Size is the caller's question, so a file still being written is found too.
+  def audio_path
+    AUDIO_EXTENSIONS.map { |ext| CACHE_DIR.join("#{@job_id}#{ext}") }.find { |path| File.file?(path) }
   end
 
   def meta_path
