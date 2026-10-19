@@ -77,7 +77,7 @@ git -c safe.directory="$repo" -C "$repo" archive HEAD MASTER/data/tokens.yml | t
 rm -rf "$mirror/MASTER/lib/operator"
 git -c safe.directory="$repo" -C "$repo" archive HEAD MASTER/lib/operator | tar xf - -C "$mirror"
 for rel in MASTER/lib/boot/paths.rb MASTER/lib/ground/swallow.rb \
-           MASTER/lib/io/exec.rb MASTER/lib/ops/process_spawn.rb \
+           MASTER/lib/io/exec.rb MASTER/lib/io/process_spawn.rb \
            MASTER/lib/trace/dmesg.rb MASTER/lib/trace/logging.rb \
            MASTER/lib/voice/playback.rb; do
   git -c safe.directory="$repo" -C "$repo" archive HEAD "$rel" | tar xf - -C "$mirror"
