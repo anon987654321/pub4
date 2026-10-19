@@ -55,6 +55,9 @@
   }
 
   function reducedMotionEnabled(state = {}) {
+    const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+    if (typeof canonical === "function") return canonical(state);
+    // Compatibility fallback for an older shell without the canonical state bridge.
     return Boolean(state?.reducedMotion) ||
       Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
       document.documentElement?.dataset?.reducedMotion === "1" ||
