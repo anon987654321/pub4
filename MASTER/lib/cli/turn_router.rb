@@ -38,6 +38,10 @@ module Master
 
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if public_research_request?(text)
+        # A question is for the agent, which has tools and this turn's evidence rule. Command
+        # inference reads a question's words as an operator command: a council review of the
+        # whole diff, or a shell lookup of "which file defines X".
+        return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if question?(text)
 
         intercepted = deterministic_intercept(text, container:)
         return intercepted if intercepted
@@ -241,6 +245,13 @@ module Master
         return false if value.empty? || value.match?(PUBLIC_RESEARCH_MUTATION)
 
         value.match?(PUBLIC_SITE) && value.match?(PUBLIC_RESEARCH_ACTION)
+      end
+
+      QUESTION_START = /\A(?:please\s+)?(?:in\s+(?:one|a\s+few)\s+(?:sentence|word)s?,?\s+)?(?:what|why|how|which|where|when|who|whom|whose|does|do|did|is|are|was|were|can|could|should|would|will|explain|describe)\b/i.freeze
+
+      def question?(text)
+        value = text.to_s.strip
+        value.match?(QUESTION_START) || value.end_with?("?")
       end
 
       def casual?(text)

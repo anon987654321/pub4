@@ -39,6 +39,31 @@ class TurnRouterTest < Minitest::Test
 # /fix is the verb that writes, and the words that mean "go through the tree
 # and change it" are spellings of it. The reading words argue and change
 # nothing. /scan is only a spelling of /fix: a reading nobody acts on is what /fix absorbed.
+# A question is answered, not dispatched: command inference would turn its words into a
+# council review or a shell lookup.
+def test_a_question_goes_to_the_agent_and_never_to_command_inference
+  questions = ["In one sentence, what does MASTER/lib/face.rb do?",
+               "Which file defines Master::Face::Contract.stipple_profile?",
+               "why aren't you reading tts out loud?",
+               "how do I run the review pass through master?",
+               "is the council enabled"]
+  questions.each do |message|
+    reached = nil
+    Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { reached = :casual; Master::Result.ok({ rendered: "" }) }) do
+      Master::CLI::TurnRouter.stub(:infer_operator_command, ->(*, **) { reached = :inferred; nil }) do
+        Master::CLI::TurnRouter.call(message:, container: build_container)
+      end
+    end
+    assert_equal :casual, reached, message
+  end
+end
+
+def test_an_instruction_is_still_not_a_question
+  refute Master::CLI::TurnRouter.question?("run the tests in lib/io")
+  refute Master::CLI::TurnRouter.question?("review rails")
+  assert Master::CLI::TurnRouter.question?("what is the current model")
+end
+
 def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
   router = Master::CLI::TurnRouter
 

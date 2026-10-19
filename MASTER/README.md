@@ -258,7 +258,9 @@ file so that it sounds like the server. The design tokens live in
 ## Entering
 
 `bin/master "<instruction>"` runs one instruction across the repository, and
-bare `bin/master` opens a session. `bin/cli` is the same runtime without the
+bare `bin/master` opens a session. A question goes to the agent, which reads and
+searches the checkout before it answers; only an instruction or a slash command
+reaches a command. `bin/cli` is the same runtime without the
 repository-wide setup. `bin/operator` is the operator's surface: it runs the
 gate ladder, reports status, lints files by the laws with no model, runs the
 tests that prove a change, manages worktrees and the production box, boots the
