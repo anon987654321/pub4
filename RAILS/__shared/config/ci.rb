@@ -152,9 +152,9 @@ Operator::CiGuard.run! do
     # fails if they drift apart. Change the globs here and that test will tell
     # you which app to update. This comment is a pointer, not a warning to keep
     # in mind — the keeping-in-mind is what failed twice.
-    if Dir.glob("engines/*/test/**/*_test.rb").any?
-      test_glob = "{test,engines/*/test}/**/*_test.rb"
-      test_exclude = "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb"
+    if Dir.glob("../brgen_*/test/**/*_test.rb").any?
+      test_glob = "{test,../brgen_*/test}/**/*_test.rb"
+      test_exclude = "{test,../brgen_*/test}/{system,dummy,fixtures}/**/*_test.rb"
       step "rails_test", "env FULL_COVERAGE=1 DEFAULT_TEST='#{test_glob}' DEFAULT_TEST_EXCLUDE='#{test_exclude}' bin/rails test"
     else
       step "rails_test", "bin/rails test"

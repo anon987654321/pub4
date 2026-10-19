@@ -22,12 +22,10 @@ class TestScopeParityTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   CI = File.join(ROOT, "__shared", "config", "ci.rb")
 
-  # Apps that carry mountable engines. Only these need the wider glob; the others
-  # have no engines/ directory and Rails' default already covers them.
+  # Apps that carry mountable verticals, which are sibling gems (brgen_*/) beside the app. Only brgen
+  # declares them; the others have no sibling tests and Rails' default already covers them.
   def apps_with_engines
-    @apps_with_engines ||= Dir.glob(File.join(ROOT, "*", "engines", "*", "test")).map { |p|
-      p.delete_prefix("#{ROOT}/").split("/").first
-    }.uniq.sort
+    @apps_with_engines ||= Dir.glob(File.join(ROOT, "brgen_*", "test")).empty? ? [] : %w[brgen]
   end
 
   def ci_source = @ci_source ||= File.read(CI)
@@ -37,14 +35,14 @@ class TestScopeParityTest < Minitest::Test
   end
 
   def test_ci_still_widens_the_glob_for_engines
-    assert_equal "{test,engines/*/test}/**/*_test.rb", ci_glob("test_glob"),
+    assert_equal "{test,../brgen_*/test}/**/*_test.rb", ci_glob("test_glob"),
                  "ci.rb no longer widens DEFAULT_TEST — if the shape changed, application.rb must follow"
-    assert_equal "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb", ci_glob("test_exclude"),
+    assert_equal "{test,../brgen_*/test}/{system,dummy,fixtures}/**/*_test.rb", ci_glob("test_exclude"),
                  "ci.rb's exclude changed shape; the app-local default must match it"
   end
 
   def test_every_app_with_engines_matches_cis_scope_locally
-    refute_empty apps_with_engines, "no app has engines/*/test — this check has stopped measuring anything"
+    refute_empty apps_with_engines, "no app has sibling brgen_*/test — this check has stopped measuring anything"
 
     mismatched = apps_with_engines.reject do |app|
       config = File.read(File.join(ROOT, app, "config", "application.rb"))
@@ -62,12 +60,13 @@ class TestScopeParityTest < Minitest::Test
     apps_with_engines.each do |app|
       Dir.chdir(File.join(ROOT, app)) do
         narrow = Dir.glob("test/**/*_test.rb")
-        wide = Dir.glob("{test,engines/*/test}/**/*_test.rb")
-             .reject { |f| File.fnmatch?("{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb", f, File::FNM_EXTGLOB) }
+        excluded = "{test,../brgen_*/test}/{system,dummy,fixtures}/**/*_test.rb"
+        wide = Dir.glob("{test,../brgen_*/test}/**/*_test.rb")
+                  .reject { |f| File.fnmatch?(excluded, f, File::FNM_EXTGLOB) }
 
         missed = wide - narrow
         refute_empty missed,
-                     "#{app} has engines/*/test but the wide glob finds nothing extra — check the glob, not the tree"
+                     "#{app} has sibling brgen_*/test but the wide glob finds nothing extra; check the glob"
       end
     end
   end

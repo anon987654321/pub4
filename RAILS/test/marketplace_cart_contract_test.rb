@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 class MarketplaceCartContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -14,13 +15,15 @@ class MarketplaceCartContractTest < Minitest::Test
     return File.read(direct) if File.file?(direct)
 
     vertical = relative[%r{\Aapp/(?:controllers|views|models)/([a-z_]+)/}, 1]
-    engine = vertical && File.join(BRGEN, "engines", vertical, relative)
+    home = EngineRoots::PATHS[vertical]
+    engine = home && File.join(File.dirname(BRGEN), home, relative)
     assert engine && File.file?(engine), "missing brgen/#{relative}"
     File.read(engine)
   end
 
   def brgen_routes
-    [File.join(BRGEN, "config/routes.rb"), *Dir.glob(File.join(BRGEN, "engines/*/config/routes.rb")).sort]
+    engine_routes = Dir.glob(File.join(File.dirname(BRGEN), EngineRoots::GLOB, "config/routes.rb")).sort
+    [File.join(BRGEN, "config/routes.rb"), *engine_routes]
       .select { |f| File.file?(f) }.map { |f| File.read(f) }.join("\n")
   end
 

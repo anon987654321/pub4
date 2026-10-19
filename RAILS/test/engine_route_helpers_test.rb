@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # isolate_namespace drops the vertical prefix from the engine's own helpers.
 # Step 4 of the recipe in brgen/README.md: rewrite every v_X_(path|url) → X_\2 inside engines/v/app.
@@ -25,8 +26,8 @@ class EngineRouteHelpersTest < Minitest::Test
 
   def test_the_glob_still_sees_the_engines
     ENGINES.each do |vertical|
-      views = Dir.glob(File.join(ROOT, "brgen/engines/#{vertical}/app/views/**/*.erb"))
-      refute_empty views, "brgen/engines/#{vertical}/app/views is empty or gone"
+      views = Dir.glob(File.join(ROOT, "#{EngineRoots::PATHS.fetch(vertical)}/app/views/**/*.erb"))
+      refute_empty views, "#{EngineRoots::PATHS.fetch(vertical)}/app/views is empty or gone"
     end
   end
 
@@ -34,7 +35,8 @@ class EngineRouteHelpersTest < Minitest::Test
 
   def leftovers_in(vertical)
     pattern = /\b#{Regexp.escape(vertical)}_#{Regexp.escape(vertical)}_[a-z0-9_]+(?:_path|_url)\b/
-    Dir.glob(File.join(ROOT, "brgen/engines/#{vertical}/app/{views,helpers,controllers}/**/*.{erb,rb}")).flat_map do |path|
+    pattern = File.join(ROOT, EngineRoots::PATHS.fetch(vertical), "app/{views,helpers,controllers}/**/*.{erb,rb}")
+    Dir.glob(pattern).flat_map do |path|
       File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, i|
         next if line.lstrip.start_with?("#", "<%#")
         match = line[pattern]

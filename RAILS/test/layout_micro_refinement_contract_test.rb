@@ -6,9 +6,9 @@ class LayoutMicroRefinementContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   LAYOUTS = %w[
-    ../amber/app/views/layouts/application.html.erb
-    ../brgen/app/views/layouts/application.html.erb
-    ../bsdports/app/views/layouts/application.html.erb
+    amber/app/views/layouts/application.html.erb
+    brgen/app/views/layouts/application.html.erb
+    bsdports/app/views/layouts/application.html.erb
   ].freeze
 
   SHARED_STACKS = %w[

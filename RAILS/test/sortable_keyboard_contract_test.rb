@@ -3,10 +3,10 @@
 require "minitest/autorun"
 
 class SortableKeyboardContractTest < Minitest::Test
-  ROOT = File.expand_path("../shared", __dir__)
+  ROOT = File.expand_path("../__shared", __dir__)
   VENDOR = File.join(ROOT, "vendor/javascript/@stimulus-components--sortable.js")
-  OUTFIT_VIEW = File.expand_path("../../amber/app/views/outfits/show.html.erb", __dir__)
-  VARIANT_VIEW = File.expand_path("../../brgen_marketplace/app/views/marketplace/variants/index.html.erb", __dir__)
+  OUTFIT_VIEW = File.expand_path("../amber/app/views/outfits/show.html.erb", __dir__)
+  VARIANT_VIEW = File.expand_path("../brgen_marketplace/app/views/marketplace/variants/index.html.erb", __dir__)
 
   def test_shared_sortable_has_a_visible_keyboard_reorder_path
     source = File.read(VENDOR)

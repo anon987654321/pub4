@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # Static contract: state-mutating vertical controllers exist with the actions
 # apps.yml claims are done. Complements model_coverage_contract_test.rb.
@@ -140,7 +141,7 @@ class ControllerCoverageContractTest < Minitest::Test
 
   def test_views_do_not_call_a_pagy_helper_their_app_may_not_have
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}", "app", "views", "**", "*.erb")) +
-            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb")) +
+            Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views", "**", "*.erb")) +
             Dir.glob(File.join(ROOT, "__shared", "app", "views", "**", "*.erb"))
 
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
@@ -184,7 +185,7 @@ class ControllerCoverageContractTest < Minitest::Test
     docs = {
       "brgen/README.md" => File.read(File.join(ROOT, "brgen", "README.md")),
       "brgen_marketplace/README.md" =>
-        File.read(File.join(ROOT, "brgen", "engines", "marketplace", "README.md")),
+        File.read(File.join(ROOT, "brgen_marketplace", "README.md")),
     }
 
     return if host_has_listings # the claim would be true; nothing to police
