@@ -43,7 +43,7 @@ visual_identity:
     - decorative lens flare
   typography_roles:
     display: text-display
-    body: text-body
+    body: text-base
     technical: font-mono
     wordmark: original pub4 artwork only
   adaptations:
