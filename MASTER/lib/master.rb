@@ -163,8 +163,10 @@ end
 
   # The one reader of data/laws.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
-  def self.law_entries(root: ROOT)
-    data = load_laws(root:) || {}
+  def self.law_entries(root: ROOT) = law_entries_in(load_laws(root:) || {})
+
+  # The law entries of an already-loaded laws.yml body, so a caller that holds one need not read the file again.
+  def self.law_entries_in(data)
     legacy = data["laws"]
     if legacy.is_a?(Hash)
       return legacy.filter_map { |id, value| value.merge("id" => id.to_s) if value.is_a?(Hash) }
@@ -172,6 +174,7 @@ end
 
     data.filter_map do |id, value|
       next unless value.is_a?(Hash) && value["priority"] && value["statement"]
+
       value.merge("id" => id.to_s)
     end
   end

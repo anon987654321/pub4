@@ -88,7 +88,7 @@ module Master
         def mechanical(entries, registry: build_registry_ids)
           entries.select do |law|
             law["detect_lexical"] || law["detect_structural"] ||
-              law_detector?(law["id"]) ||
+              law_detector?(law["id"]) || law_detector?(law["folded_into"]) ||
               detected?(registry, law["id"]) || detected?(registry, law["folded_into"])
           end
         end
@@ -135,6 +135,8 @@ module Master
         end
 
         def law_detector?(id)
+          return false if id.to_s.empty?
+
           require File.join(@root, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           law = ::Law.definitions[id.to_sym] || ::Law.definitions[id.to_s]

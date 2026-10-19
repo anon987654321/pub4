@@ -23,17 +23,24 @@ class TestRuleCatalogue < Minitest::Test
   # AUTOMATED_CSS_ANALYSIS, which is where the false positives came from: eight
   # check names under `config.checks`, each with an `id` and — correctly — no
   # tier and no severity, because a check name is not a rule.
-  BODY = {
-    "laws" => [
+  # laws.yml's own shape: each law a top-level key carrying a priority and a statement. `catalogue` builds one
+  # from rows with an id; the extra keys (learned_smells) sit beside them as they do in the file.
+  def catalogue(*rows, **extra)
+    entries = rows.to_h do |row|
+      [row.fetch("id"), { "priority" => 1, "statement" => "s" }.merge(row.except("id"))]
+    end
+    entries.merge(extra.transform_keys(&:to_s))
+  end
+
+  def body_with_checks
+    catalogue(
       { "id" => "EIGHT_PX_RHYTHM", "tier" => "design", "severity" => "warning" },
       { "id" => "AUTOMATED_CSS_ANALYSIS", "tier" => "design", "severity" => "warning",
         "config" => { "checks" => [{ "id" => "eight_px_rhythm", "enforce" => ["Operator::ScaleLint"] },
                                    { "id" => "touch_target", "enforce" => ["TOUCH_TARGET_MIN"] }] } },
-    ],
-    "learned_smells" => [
-      { "id" => "magic_number", "pattern" => "\\d", "severity" => "warning" },
-    ],
-  }.freeze
+      learned_smells: [{ "id" => "magic_number", "pattern" => "\d", "severity" => "warning" }],
+    )
+  end
 
   # Put the original method back rather than removing the override: module_function
   # leaves one singleton copy, and removing it takes the real reader with it — the
@@ -47,7 +54,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   def test_a_check_id_inside_a_laws_config_is_not_a_rule
-    with_body(BODY) do
+    with_body(body_with_checks) do
       assert_empty Operator::LawHygiene.missing_metadata,
                    "config check names carry no tier because they are not laws"
       assert_empty Operator::LawHygiene.id_case_collisions,
@@ -59,8 +66,8 @@ class TestRuleCatalogue < Minitest::Test
   # laws.yml's `laws:` key: a learned smell reports under its own id, so it
   # collides with a registered rule exactly as another rule would.
   def test_a_learned_smell_still_counts_as_a_population
-    body = { "laws" => [{ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error" }],
-             "learned_smells" => [{ "id" => "bare_rescue", "pattern" => "rescue" }] }
+    body = catalogue({ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error" },
+                     learned_smells: [{ "id" => "bare_rescue", "pattern" => "rescue" }])
     with_body(body) do
       assert_equal [%w[BARE_RESCUE bare_rescue]], Operator::LawHygiene.id_case_collisions
       assert_equal ["bare_rescue"], Operator::LawHygiene.missing_metadata
@@ -68,8 +75,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   def test_a_rule_declaring_only_a_tier_has_metadata
-    body = { "laws" => [{ "id" => "A", "tier" => "design" }, { "id" => "B", "severity" => "info" },
-                         { "id" => "C" }] }
+    body = catalogue({ "id" => "A", "tier" => "design" }, { "id" => "B", "severity" => "info" }, { "id" => "C" })
     with_body(body) { assert_equal ["C"], Operator::LawHygiene.missing_metadata }
   end
 
@@ -91,7 +97,7 @@ class TestRuleCatalogue < Minitest::Test
   # deterministic detector and a semantic question, while the catalogue keeps
   # descriptive metadata only.
   def test_a_semantic_prompt_beside_a_detector_is_one_rule_at_two_depths
-    body = { "laws" => [{ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error" }] }
+    body = catalogue({ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error" })
     laws = { FAIL_VISIBLY: Law.new(id: :FAIL_VISIBLY, detect: ->(_) { true }, fix: "Catch it.", severity: :error) }
     with_body(body) do
       with_populations(laws:) { assert_empty Operator::LawHygiene.cross_population_duplicates }
@@ -102,12 +108,12 @@ class TestRuleCatalogue < Minitest::Test
   # deterministic detector, which the YamlDeclarativeLaw bridge runs, beside a
   # law that also detects. Two things can fire, so it is a twin.
   def test_a_lexical_entry_beside_a_law_detector_is_a_duplicate
-    body = { "laws" => [{ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error",
-                           "detect_lexical" => "rescue$" }] }
+    body = catalogue({ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error",
+                       "detect_lexical" => "rescue$" })
     laws = { BARE_RESCUE: Law.new(id: :BARE_RESCUE, detect: ->(_) { true }, fix: "x", severity: :error) }
     with_body(body) do
       with_populations(laws:) do
-        assert_equal [{ rule: "BARE_RESCUE", homes: ["law/", "laws.yml"] }],
+        assert_equal [{ law: "BARE_RESCUE", homes: ["law/", "laws.yml"] }],
                      Operator::LawHygiene.cross_population_duplicates
       end
     end
@@ -116,9 +122,9 @@ class TestRuleCatalogue < Minitest::Test
   # What the old duplicate count was reaching for: not that an id lives in two
   # files, but that the two tell a reader different things.
   def test_a_conflicting_fix_or_severity_is_reported_and_agreement_is_not
-    body = { "laws" => [{ "id" => "AGREES", "severity" => "error", "fix" => "Same words." },
-                         { "id" => "DRIFTED", "severity" => "error", "fix" => "An older draft." },
-                         { "id" => "LOUDER", "severity" => "info", "fix" => "Same words." }] }
+    body = catalogue({ "id" => "AGREES", "severity" => "error", "fix" => "Same words." },
+                     { "id" => "DRIFTED", "severity" => "error", "fix" => "An older draft." },
+                     { "id" => "LOUDER", "severity" => "info", "fix" => "Same words." })
     laws = { AGREES: Law.new(id: :AGREES, detect: ->(_) { true }, fix: "Same words.", severity: :error),
              DRIFTED: Law.new(id: :DRIFTED, detect: ->(_) { true }, fix: "What the law enforces.", severity: :error),
              LOUDER: Law.new(id: :LOUDER, detect: ->(_) { true }, fix: "Same words.", severity: :warn) }
@@ -126,7 +132,7 @@ class TestRuleCatalogue < Minitest::Test
       with_populations(laws:) do
         conflicts = Operator::LawHygiene.statement_conflicts
 
-        assert_equal %w[DRIFTED LOUDER], conflicts.map { |c| c[:rule] }
+        assert_equal %w[DRIFTED LOUDER], conflicts.map { |c| c[:law] }
         assert_equal ["fix"], conflicts.first[:reasons]
         assert_match(/info declared, warning enforced/, conflicts.last[:reasons].first)
       end
@@ -136,7 +142,7 @@ class TestRuleCatalogue < Minitest::Test
   # :warn in a law and "warning" in the catalogue are the same severity, and a
   # check that says otherwise reports every law in the tree.
   def test_warn_and_warning_are_one_severity
-    body = { "laws" => [{ "id" => "SAME", "severity" => "warning", "fix" => "One." }] }
+    body = catalogue({ "id" => "SAME", "severity" => "warning", "fix" => "One." })
     laws = { SAME: Law.new(id: :SAME, detect: ->(_) { true }, fix: "One.", severity: :warn) }
     with_body(body) { with_populations(laws:) { assert_empty Operator::LawHygiene.statement_conflicts } }
   end
@@ -145,11 +151,11 @@ class TestRuleCatalogue < Minitest::Test
   # live rule is the defect. Both asserted, because narrowing this check to
   # silence the second would turn it off rather than fix it.
   def test_an_alias_is_reported_only_when_its_subject_is_still_alive
-    body = { "laws" => [{ "id" => "DRY", "tier" => "principle", "aliases" => %w[duplicate_code retired_id] },
-                         { "id" => "duplicate_code", "tier" => "smell" }] }
+    body = catalogue({ "id" => "DRY", "tier" => "principle", "aliases" => %w[duplicate_code retired_id] },
+                     { "id" => "duplicate_code", "tier" => "smell" })
     with_body(body) do
       reported = Operator::LawHygiene.alias_shadows_live_law
-      assert_equal [{ rule: "DRY", alias_name: "duplicate_code" }], reported
+      assert_equal [{ law: "DRY", alias_name: "duplicate_code" }], reported
     end
   end
 

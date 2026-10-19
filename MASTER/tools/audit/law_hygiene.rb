@@ -47,7 +47,7 @@ module Operator
     # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are laws.
     def yaml_laws
       body = master_laws
-      Master.law_entries(root: MASTER).select { |r| r.is_a?(Hash) && r["id"] } +
+      Master.law_entries_in(body).select { |r| r.is_a?(Hash) && r["id"] } +
         Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
 
