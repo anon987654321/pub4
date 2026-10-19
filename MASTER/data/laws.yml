@@ -150,7 +150,7 @@ visual_identity_contract:
     openbsd: "OpenBSD Operator prompt and dmesg discipline; plain text remains complete without colour"
     studio: "editorial composition only where appropriate; rendered values and media fidelity remain operator-owned"
   acceptance:
-    required: [canonical_tokens, generated_artifact_sync, contrast, reduced_motion, narrow_and_wide_screens, rendered_screenshots]
+    required: [canonical_tokens, generated_artifact_sync, executable_law_fixtures, contrast, semantic_states, reduced_motion, typography_roles, product_dialect_contracts, media_fidelity, narrow_and_wide_screens, rendered_screenshots, original_brand_assets]
     evidence: "Record commit, generator/test output, viewport dimensions and before/after screenshots; source inspection alone is not visual proof."
 
 prose:
