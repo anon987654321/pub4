@@ -46,6 +46,33 @@ module Master
         end
       end
 
+      SCREEN_NAME = /\A[\w.-]{1,40}\z/
+
+      # /screen — keep MASTER running in a GNU screen session you can leave and come back to.
+      # It starts bin/master detached and names the command that reattaches; it never
+      # attaches itself, because this terminal is already inside a session.
+      def dispatch_screen(root, ctx: nil)
+        word = arg_for(ctx).split(/\s+/).first.to_s
+        return "screen: not installed" unless screen_path
+        return screen_list if word == "list"
+
+        name = word.empty? ? "master" : word
+        return "screen: names are letters, digits, dot, dash and underscore" unless name.match?(SCREEN_NAME)
+        return "screen: #{name} is running; reattach with: screen -r #{name}" if screen_running?(name)
+
+        _out, status = Master::Io::Exec.capture2e(screen_path, "-dmS", name, File.join(root, "bin", "master"), chdir: root, timeout: 15)
+        status.success? ? "screen: started #{name}; attach with: screen -r #{name}" : "screen: could not start #{name}"
+      end
+
+      def screen_path = Master::Io::Exec.which("screen")
+
+      def screen_list
+        out, = Master::Io::Exec.capture2e(screen_path, "-ls", timeout: 10)
+        out.to_s.strip
+      end
+
+      def screen_running?(name) = screen_list.match?(/\d+\.#{Regexp.escape(name)}\s/)
+
       # /owner — local paired owner profile. Values are explicit, bounded and reversible.
       def dispatch_owner(root, ctx: nil)
         return "owner: local-only" if Fiber[:master_visitor] == true

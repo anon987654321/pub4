@@ -120,6 +120,24 @@ class TestCommandRegistryDispatch < Minitest::Test
                  "a new command table has to be merged by build, or it is a verb with no route"
   end
 
+  def test_screen_starts_master_detached_and_names_the_reattach_command
+    spawned = nil
+    listing = ["No Sockets found.", nil]
+    registry = Master::CLI::CommandRegistry
+    Master::Io::Exec.stub(:which, "/usr/bin/screen") do
+      Master::Io::Exec.stub(:capture2e, lambda { |*cmd, **|
+        spawned = cmd if cmd.include?("-dmS")
+        [listing.first, Struct.new(:success?).new(true)]
+      }) do
+        result = registry.dispatch_screen("/repo", ctx: Master::CLI::PipelineContext.new(user_message: "/screen", args: ""))
+
+        assert_equal ["/usr/bin/screen", "-dmS", "master", "/repo/bin/master"], spawned
+        assert_match(/screen -r master/, result)
+        assert_match(/letters, digits/, registry.dispatch_screen("/repo", ctx: Master::CLI::PipelineContext.new(user_message: "x", args: "a;b")))
+      end
+    end
+  end
+
   def test_bare_play_command_renders_and_plays_a_random_progression
     captured = nil
     media = Master::Io::MediaIntent

@@ -60,6 +60,13 @@ detail: [
   "A render lands in the dated dilla-renders folder under your documents and is never written over.",
 ],
         },
+        "screen" => {
+          summary: "keep MASTER running in a screen session you can leave and reattach",
+          detail: [
+            "/screen [name] — start bin/master detached in a GNU screen session (default name master), or say it is already running.",
+            "/screen list — the screen sessions on this machine. Reattach with `screen -r <name>`; detach with ctrl-a d.",
+          ],
+        },
         "plugin" => {
           summary: "list and invoke governed plugins",
           detail: [
@@ -263,7 +270,7 @@ detail: [
       COMMAND_CATEGORIES = {
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
         "session" => "session", "clear" => "session", "undo" => "session",
-        "model" => "model", "plugin" => "model", "wake" => "model",
+        "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
         "review" => "review", "critique" => "review", "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",

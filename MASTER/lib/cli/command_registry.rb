@@ -42,6 +42,7 @@ module Master
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
           "play" => command(:dispatch_play, d[:root]),
+          "screen" => command(:dispatch_screen, root),
           "android" => command(:dispatch_android, root),
           "ios" => command(:dispatch_ios, root),
           "wake" => command(:dispatch_wake, root),
