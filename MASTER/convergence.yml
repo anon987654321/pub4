@@ -32,8 +32,8 @@ workstreams:
   - id: wishlist_registry
     state: landed
     title: One non-authoritative wishlist registry with honest states and proof owners
-    implementation: MASTER/lib/convergence/wishlist.rb
-    proof: MASTER/test/test_convergence_wishlist.rb
+    implementation: MASTER/lib/convergence/workstreams.rb
+    proof: MASTER/test/test_convergence_workstreams.rb
   - id: command_discovery
     state: landed
     title: Discoverable /wishlist, /size, /explain and /prove surfaces

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "receipt"
-require_relative "wishlist"
+require_relative "workstreams"
 
 module Master
   module Convergence
@@ -57,7 +57,7 @@ end
 
       def check_commands
         commands = Master::CLI::CommandRegistry::HELP_TOPICS.keys
-        required = %w[status fix rules why wishlist size explain prove events]
+        required = %w[status fix laws why wishlist size explain prove events]
         missing = required - commands
         missing.empty? ? pass_row("commands", "required convergence commands documented") : fail_row("commands", "missing #{missing.join(", ")}")
       rescue StandardError => e
@@ -65,7 +65,7 @@ end
       end
 
       def check_wishlist(root)
-        items = Wishlist.items(root:)
+        items = Workstreams.items(root: File.join(root, "MASTER"))
         missing_paths = items.reject { |item| item[:implementation_present] }
         missing_paths.empty? ? pass_row("wishlist", "#{items.size} workstreams have implementation anchors") :
           inconclusive_row("wishlist", "#{missing_paths.size} workstream implementation anchors need external proof")

@@ -4,7 +4,7 @@ require "yaml"
 
 module Master
   module Convergence
-    module Wishlist
+    module Workstreams
       ROOT = Master::ROOT
       STATES = Master::Convergence::STATES
 

@@ -3,7 +3,7 @@
 require_relative "../../convergence/architecture"
 require_relative "../../convergence/measure"
 require_relative "../../convergence/proof"
-require_relative "../../convergence/wishlist"
+require_relative "../../convergence/workstreams"
 
 module Master
   module CLI
@@ -11,7 +11,7 @@ module Master
       module_function
 
       def dispatch_wishlist(_root, ctx: nil)
-        Master::Convergence::Wishlist.render(arg_for(ctx), root: Master::ROOT)
+        Master::Convergence::Workstreams.render(arg_for(ctx), root: Master::ROOT)
       rescue StandardError => e
         "wishlist0: failed — #{e.class}: #{e.message}"
       end
