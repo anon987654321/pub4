@@ -27,12 +27,13 @@ class MethodLengthRatchetTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   LIMIT = 30
 
-  ROOTS = %w[shared brgen amber bsdports gates tools test lib].freeze
+  # The gates and tools left RAILS for MASTER, where SMALL_FUNCTIONS and its own ratchet govern them.
+  BRGEN_TREES = %w[brgen brgen_dating brgen_maps brgen_marketplace brgen_messenger brgen_radio].freeze
+  ROOTS = (%w[__shared amber bsdports test lib] + BRGEN_TREES).freeze
 
   AREAS = {
-    "gates" => %w[gates tools],
-    "shared" => %w[shared],
-    "brgen" => %w[brgen],
+    "shared" => %w[__shared],
+    "brgen" => BRGEN_TREES,
     "amber" => %w[amber],
     "bsdports" => %w[bsdports],
     "test" => %w[test lib],
@@ -58,7 +59,6 @@ class MethodLengthRatchetTest < Minitest::Test
     # directory, so this falls without anyone writing a shorter method.
     # 35 -> 34 when the gates that listed partial paths learned to read rules out
     # of each app's one application.scss, and two long checks got shorter.
-    "gates" => [34, 68],
     # 57 -> 48 on 2026-08-23. record_public_href was the 52: one case statement
     # over every routable class in the city, split into the apex, the verticals
     # and the two media engines. A sentinel separates "no branch claimed this
@@ -66,7 +66,10 @@ class MethodLengthRatchetTest < Minitest::Test
     # first may fall through to polymorphic_path and both are nil.
     # 9/48 -> 5/37 on 2026-09-25, measured rather than split: long methods
     # shortened or deleted since 2026-08-23 left without the ceiling following.
-    "brgen" => [5, 37],
+    # Re-pointed 2026-10-20: the scan read brgen/ only, and the verticals left it for sibling gems, so
+    # their long methods went uncounted. 5/37 -> 8/51 is the same debt now measured, not new growth.
+    # The number moves down as these are split; catalog_item (51) is the longest.
+    "brgen" => [8, 51],
 # 3/34 -> 2/32 on 2026-08-25. The 48 was css_coverage_lint's used_names:
 # five copies of the same three lines, one per way of applying a class,
 # which is why it grew past this ratchet on every new way found. Split
@@ -75,11 +78,13 @@ class MethodLengthRatchetTest < Minitest::Test
 # so the counts it reports are unchanged.
 # 2/32 -> 1/31 on 2026-09-25: MobileIosProject.spec (51) built its target
 # and schemes in helpers, byte-identical YAML out.
-"shared" => [1, 31],
+"shared" => [2, 52],
     # 1/35 -> 1/31 on 2026-09-25, measured: ai_controller#suggest_outfits is the one.
-    "amber" => [1, 31],
+    "amber" => [0, 0],
     # 1/46 -> 0/0 on 2026-09-25: NvdCve#crossref (48) is a fetch and a record.
     "bsdports" => [0, 0],
+    # RAILS/test and lib, first measured 2026-10-20 when the area gained a ceiling; the longest is a fixture-heavy test.
+    "test" => [6, 51],
   }.freeze
 
   def ruby_files
@@ -143,7 +148,7 @@ class MethodLengthRatchetTest < Minitest::Test
 
   def test_the_scan_reaches_the_tree_it_claims_to
     refute_empty ruby_files, "no ruby files found — the glob is wrong, not the tree"
-    assert ruby_files.any? { |f| f.include?("/engines/") },
+    assert ruby_files.any? { |f| f.include?("/brgen_") },
            "engine code is missing, the blind spot that hid 57 views when the verticals moved"
   end
 

@@ -25,6 +25,9 @@ class FileLengthRatchetTest < Minitest::Test
 
   # kind => [glob roots, limit in code lines]
   LIMITS = { "rb" => 300, "scss" => 400, "erb" => 150 }.freeze
+  BRGEN_AND_APPS = %w[
+    __shared brgen brgen_dating brgen_maps brgen_marketplace brgen_messenger brgen_radio amber bsdports
+  ].freeze
 
   # Rails writes these from the migrations; a split is undone by the next
   # db:migrate. Excluded, not allow-listed, so they never read as debt.
@@ -62,12 +65,11 @@ class FileLengthRatchetTest < Minitest::Test
     # 337 -> 336: seed_listings and seed_live_posts each spelled the four-line
     # city-centre fallback, and base_coordinates says it once. That paid for
     # the line that stores a demo post's link embed, with one to spare.
-    "brgen/lib/brgen/bergen_demo_seeder.rb" => 336,
+    "brgen/lib/brgen/bergen_demo_seeder.rb" => 333,
     # The data itself, which is long because Bergen is. It is on this list for
     # the same reason db/seeds.rb is: splitting it is possible, not obviously
     # worth doing. Splitting it further would be splitting a list of restaurants
     # from a list of neighbourhoods, which buys two files and no clarity.
-    "brgen/lib/brgen/bergen_demo_data.rb" => 507,
 # 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
@@ -102,7 +104,7 @@ class FileLengthRatchetTest < Minitest::Test
 # count.
 # 342 -> 321 when the sampled checks stopped listing partial paths and read
 # selector families out of each app's one application.scss instead.
-"gates/lib/research/design_metrics.rb" => 321,
+
 # 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
 # rendered_geometry/contrast_checks.rb — the one subject in this gate that
 # is colour rather than geometry, and the rendered counterpart to the
@@ -150,7 +152,7 @@ class FileLengthRatchetTest < Minitest::Test
 # 341 -> 326 on 2026-09-25. 8dd5f4d34 added check_visual_composition and took
 # the file to 367; it and check_centered_prose ask how text sits on the screen
 # rather than whether a box is the right size, and they are composition_checks.rb.
-"gates/lib/rendered/rendered_geometry.rb" => 326, # type checks live in geometry_type.rb
+
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
@@ -184,11 +186,10 @@ class FileLengthRatchetTest < Minitest::Test
     # The ceilings still only fall: defragmenting a stylesheet lowers its row.
     # 6486 -> 6479: the inline flash notice went with the markup that wore
     # it — a notice is a toast now, so its four rules styled nothing.
-    "brgen/app/assets/stylesheets/application.scss" => 6479,
+
     # 1721 -> 1649: the home page's marquee rows, hero and guest feed went
     # with the four-looks design.
-    "amber/app/assets/stylesheets/application.scss" => 1649,
-    "bsdports/app/assets/stylesheets/application.scss" => 454,
+
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted
     # to being two gates in one — "critical-path user flows + MASTER
@@ -206,6 +207,23 @@ class FileLengthRatchetTest < Minitest::Test
     # 455 -> 449: the same inline-notice rule, in the sheet amber and
     # bsdports share.
     "__shared/app/assets/stylesheets/_minimal.scss" => 449,
+    # First measured 2026-10-20, when the scan learned the sibling gems and __shared: debt that was invisible,
+    # recorded so it can only fall. Split a file and lower its row; do not raise one.
+    "__shared/app/assets/stylesheets/_components.scss" => 541,
+    "__shared/app/assets/stylesheets/_surface_chrome_endgame.scss" => 525,
+    "__shared/app/helpers/schema_helper.rb" => 350,
+    "amber/app/views/layouts/application.html.erb" => 163,
+    "brgen/app/assets/stylesheets/_brgen_dating.scss" => 415,
+    "brgen/app/assets/stylesheets/_brgen_feed_posts.scss" => 508,
+    "brgen/app/assets/stylesheets/_brgen_marketplace.scss" => 925,
+    "brgen/app/assets/stylesheets/_brgen_messenger.scss" => 569,
+    "brgen/app/services/marketplace/payments/dintero_checkout.rb" => 346,
+    "brgen/app/views/conversations/show.html.erb" => 151,
+    "brgen/test/helpers/application_helper_test.rb" => 323,
+    "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 189,
+    "test/critique_implementation_test.rb" => 515,
+    "test/design_contract_test.rb" => 501,
+    "test/gates/flow_coverage_test.rb" => 360,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
@@ -280,13 +298,12 @@ class FileLengthRatchetTest < Minitest::Test
 
   def candidates
     @candidates ||= begin
-      apps = %w[shared brgen amber bsdports gates tools test lib]
+      # The gates and tools moved to MASTER, whose own ratchet governs them; the verticals are sibling gems.
+      apps = BRGEN_AND_APPS + %w[test lib]
       rb = apps.flat_map { |a| Dir.glob(File.join(ROOT, a, "**/*.rb")) }
-      scss = %w[shared brgen amber bsdports].flat_map { |a| Dir.glob(File.join(ROOT, a, "**/*.scss")) }
-      erb = %w[shared brgen amber bsdports].flat_map do |a|
-        Dir.glob(File.join(ROOT, a, "app/views/**/*.erb")) +
-          Dir.glob(File.join(ROOT, a, "engines/*/app/views/**/*.erb"))
-      end
+      styled = BRGEN_AND_APPS
+      scss = styled.flat_map { |a| Dir.glob(File.join(ROOT, a, "**/*.scss")) }
+      erb = styled.flat_map { |a| Dir.glob(File.join(ROOT, a, "{app,engines/*/app}/views/**/*.erb")) }
       { "rb" => rb, "scss" => scss, "erb" => erb }.transform_values do |paths|
         paths.reject { |p| p.match?(%r{/(vendor|node_modules|public)/|/db/migrate/}) || p.match?(GENERATED) }
              .uniq.sort
@@ -306,7 +323,7 @@ class FileLengthRatchetTest < Minitest::Test
 
   def test_the_scan_reaches_the_tree_it_claims_to
     assert candidates.values.all? { |paths| paths.size.positive? }, "a glob returned nothing"
-    assert candidates["erb"].any? { |p| p.include?("/engines/") },
+    assert candidates["erb"].any? { |p| p.include?("/brgen_") },
            "engine views are missing, the blind spot that hid 57 of them"
   end
 
