@@ -6,7 +6,7 @@ require "open3"
 # rescue paths call Swallow. Without this require the swallow raises NameError
 # and the timeout path never kills the process group it exists to kill.
 require_relative "../ground/swallow"
-require_relative "../ops/process_spawn"
+require_relative "process_spawn"
 
 module Master
   module Io
@@ -40,7 +40,8 @@ module Master
       # and return the reaped streams in popen order followed by the status.
       def run_capture(opener, cmd, timeout, opts)
         stdin_data, spawn_opts = split_opts(opts)
-        Open3.public_send(opener, *cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, *streams, wait_thr|
+        options = ProcessSpawn.options(spawn_opts.merge(pgroup: true))
+        Open3.public_send(opener, *cmd, **options) do |stdin, *streams, wait_thr|
           readers = streams.map { |stream| reader_for(stream) }
           writer = writer_for(stdin, stdin_data)
           status = bounded_wait(wait_thr, timeout, readers)

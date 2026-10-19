@@ -2,7 +2,7 @@
 
 require "open3"
 require "set"
-require_relative "../ops/process_spawn"
+require_relative "../io/process_spawn"
 
 module Master
   module Voice
@@ -475,7 +475,7 @@ end
         player_path, player_args = stream_player
         return false unless player_path
 
-        spawn_opts = Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL)
+        spawn_opts = Master::Io::ProcessSpawn.options(out: File::NULL, err: File::NULL)
         cmd = stream_cmd(player_path, player_args)
         outcome = pump_stream_pipe(cmd, spawn_opts, values, voice_name, style_config)
         return true if outcome.ok
@@ -756,7 +756,7 @@ def decode_job(job)
           break unless generation_active?(generation)
 
           @lock.synchronize { @last_player_attempted = true }
-          pid = Process.spawn(name, *args, path, **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL))
+          pid = Process.spawn(name, *args, path, **Master::Io::ProcessSpawn.options(out: File::NULL, err: File::NULL))
           # Compare the generation while holding the lock, without calling
           # generation_active? (which takes the same non-reentrant mutex).
           @lock.synchronize { @playing_pid = pid if generation == @generation }

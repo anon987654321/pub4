@@ -9,7 +9,7 @@ class TestReachExec < Minitest::Test
   def test_process_spawn_closes_an_inherited_master_lock_fd
     original = ENV["MASTER_PROCESS_LOCK_FD"]
     ENV["MASTER_PROCESS_LOCK_FD"] = "91"
-    options = Master::Ops::ProcessSpawn.options(pgroup: true)
+    options = Master::Io::ProcessSpawn.options(pgroup: true)
     assert_equal :close, options.fetch(91)
     assert options[:close_others]
   ensure

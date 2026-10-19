@@ -90,7 +90,7 @@ finding_members:
   - MEANINGFUL_NAMES MASTER/lib/fix/run_journal.rb:41
   - MEANINGFUL_NAMES MASTER/lib/fix/supervisor.rb:27
   - MEANINGFUL_NAMES MASTER/lib/operator/fix_status.rb:43
-  - MEANINGFUL_NAMES MASTER/lib/ops/process_spawn.rb:12
+  - MEANINGFUL_NAMES MASTER/lib/io/process_spawn.rb:12
   - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:119
   - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:167
   - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:239

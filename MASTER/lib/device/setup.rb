@@ -3,7 +3,7 @@
 require "etc"
 require "json"
 require "fileutils"
-require_relative "../ops/process_spawn"
+require_relative "../io/process_spawn"
 require_relative "../trace/dmesg"
 
 module Master
@@ -166,7 +166,7 @@ module Master
       def spawn_logged(argv)
         FileUtils.mkdir_p(File.dirname(LOG))
         pid = Process.spawn({ "DEBIAN_FRONTEND" => "noninteractive" }, *argv,
-                             **Master::Ops::ProcessSpawn.options(in: File::NULL, out: [LOG, "a"], err: [:child, :out]))
+                             **Master::Io::ProcessSpawn.options(in: File::NULL, out: [LOG, "a"], err: [:child, :out]))
         Process.wait2(pid).last.success?
       rescue SystemCallError
         false

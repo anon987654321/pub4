@@ -2,7 +2,7 @@
 
 require "digest"
 require "fileutils"
-require_relative "../ops/process_spawn"
+require_relative "../io/process_spawn"
 require "socket"
 require "rbconfig"
 
@@ -151,7 +151,7 @@ module Master
         log = log_path(root, index:)
         pid = Process.spawn(
           env, RbConfig.ruby, worker, "--daemon", path,
-          chdir: root, out: log, err: log, **Master::Ops::ProcessSpawn.options
+          chdir: root, out: log, err: log, **Master::Io::ProcessSpawn.options
         )
         @daemon_pids[index] = pid
         @daemon_waiters[index] = Process.detach(pid)

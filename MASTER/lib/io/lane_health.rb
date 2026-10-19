@@ -5,7 +5,7 @@ require "uri"
 require "yaml"
 require_relative "../gap"
 require_relative "lane_quota"
-require_relative "../ops/process_spawn"
+require_relative "process_spawn"
 
 module Master
   module Io
@@ -159,7 +159,7 @@ module Master
       def recently_failed? = @failed_at && @clock.call - @failed_at < RETRY_AFTER_FAILED_START_S
 
       def spawn_ollama(binary)
-        pid = Process.spawn(binary, "serve", **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL, pgroup: true))
+        pid = Process.spawn(binary, "serve", **ProcessSpawn.options(out: File::NULL, err: File::NULL, pgroup: true))
         Process.detach(pid)
       end
 

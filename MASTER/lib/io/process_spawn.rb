@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ops
+  module Io
     # Spawn options for every child MASTER creates. The control-plane flock is
     # intentionally inherited only across the single bin/master -> bin/cli exec;
     # media players, ffmpeg and test subprocesses must never become lock holders.

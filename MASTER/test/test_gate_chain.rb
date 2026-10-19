@@ -110,10 +110,10 @@ class TestGateChain < Minitest::Test
   end
 
   # Every other test stubs disk_state; a load-order fault in it refused every stage of a real gate run,
-  # where process_spawn has already defined Master::Ops.
+  # where Io::Exec has already been required.
   def test_disk_state_measures_in_a_process_that_loads_only_the_gate_chain
     lib = File.expand_path("../lib", __dir__)
-    script = 'require "ops/process_spawn"; require "operator/gate_chain"; g = Operator::GateChain; ' \
+    script = 'require "io/exec"; require "operator/gate_chain"; g = Operator::GateChain; ' \
              "print g.disk_state([g::ROOT])[:free_gb].class"
     out, status = Open3.capture2e(RbConfig.ruby, "-I", lib, "-e", script)
 
