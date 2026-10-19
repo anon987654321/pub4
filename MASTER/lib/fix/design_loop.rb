@@ -135,7 +135,10 @@ module Master
       # see, so it is refused before it costs a render.
       def refuse_unseen_selector!(edit)
         tokens = edit.selector_tokens
-        return if @page_tokens.empty? || tokens.empty? || (tokens & @page_tokens).any?
+        return if @page_tokens.empty?
+
+        raise DesignEdit::Refused, "its rule names no class or id, so it applies across the app" if tokens.empty?
+        return if (tokens & @page_tokens).any?
 
         raise DesignEdit::Refused, "its selector (#{tokens.first(3).join(' ')}) is not on this page"
       end

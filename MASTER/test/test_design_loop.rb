@@ -111,6 +111,19 @@ class TestDesignLoop < Minitest::Test
     end
   end
 
+  # `main > h1 ~ *` once reached every page of an app and was kept because few pages were re-measured.
+  def test_a_new_rule_must_name_a_class_or_id
+    with_sheet do |path|
+      universal = parse(path, find: "padding: 4px;", replace: "padding: 4px;\n}\nmain > h1 ~ * {\n  margin: 8px;")
+      element_only = parse(path, find: "padding: 4px;", replace: "padding: 4px;\n}\nh2 {\n  margin: 8px;")
+      named = parse(path, find: "padding: 4px;", replace: "padding: 4px;\n}\n.card .title {\n  margin: 8px;")
+
+      assert_match(/across the whole app/, refused(universal))
+      assert_match(/across the whole app/, refused(element_only))
+      assert named.check!
+    end
+  end
+
   def test_a_file_that_was_not_offered_is_refused
     with_sheet do |path|
       edit = EDIT.parse(reply("/etc/passwd", find: "a", replace: "b"), allowed: [path])

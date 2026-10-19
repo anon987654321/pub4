@@ -28,6 +28,8 @@ module Master
       SPACING = /\A(?:margin|padding|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-[a-z]+)*\z/i
       LENGTH_PX = /(?<![\w.-])(-?\d*\.?\d+)(px|rem|em)\b/
       LENGTH = /-?\d*\.?\d+(?:px|r?em|ch|vh|vw|%)?/
+      RULE_SELECTOR = /(?:\A|[};])\s*([^{};@]+)\{/
+      UNIVERSAL = /(?:\A|[\s>+~,(])\*(?![\w-])/
       MAX_CHARS = 1_200
       NO_RULES = Rules.new(guard: nil, scale: nil)
 
@@ -79,6 +81,7 @@ module Master
         raise Refused, "the text to replace occurs #{count} times, not once" unless count == 1
 
         refuse_rendered_values!
+        refuse_broad_rules!
         refuse_off_scale!
         reason = @rules.guard&.call(file, text.sub(proposal.find) { proposal.replace })
         raise Refused, "the laws refuse it: #{reason}" if reason
@@ -113,6 +116,15 @@ module Master
         bad = changed.find { |name, _| name.match?(RENDERED_PROPERTY) }
         raise Refused, "changes a rendered value (#{bad.join(': ')}), which the loop leaves to the operator" if bad
         raise Refused, "changes a border or outline colour" if colour_changed?
+      end
+
+      # A new rule has to name a class or id. `main > h1 ~ *` matched every element after
+      # a heading on every page of an app, and only a few pages were re-measured.
+      def refuse_broad_rules!
+        selectors = ->(text) { text.scan(RULE_SELECTOR).flatten.map(&:strip) }
+        broad = (selectors.(proposal.replace) - selectors.(proposal.find))
+                .find { |selector| selector.match?(UNIVERSAL) || !selector.match?(/[.#]/) }
+        raise Refused, "the rule `#{broad}` would match across the whole app; name a class or id" if broad
       end
 
       def important_added? = proposal.replace.include?("!important") && !proposal.find.include?("!important")
