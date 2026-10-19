@@ -124,7 +124,6 @@ module Master
       def registered_tag_names
         tags = Set.new
         scan_registry_tags.each { |t| tags << t }
-        %w[ROBUSTNESS SINGULARITY LINEARITY].each { |t| tags << t }
         tags
       end
 

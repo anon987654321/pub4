@@ -42,4 +42,24 @@ class TestLawParity < Minitest::Test
     assert_includes Array(spec["detector_ids"]).map(&:to_s), "CAPABILITY_STATUS_MUST_BE_TRUTHFUL"
     refute parity.call.any? { |g| g.id == "CAPABILITY_STATUS_MUST_BE_TRUTHFUL" }
   end
+
+  # Tag coverage is read from the detectors that carry the tag, so an umbrella
+  # Law that no detector tags is a gap rather than a hardcoded pass.
+  def test_tagged_coverage_needs_a_detector_that_carries_the_tag
+    dir = Dir.mktmpdir("law_parity")
+    path = File.join(dir, "laws.yml")
+    File.write(path, <<~YAML)
+      UNTAGGED_UMBRELLA:
+        priority: 1
+        tier: constitutional
+        severity: error
+        enforcement: active
+        coverage: tagged_detectors
+        statement: no detector tags this
+    YAML
+    gaps = Master::Fix::LawParity.new(root: dir, laws_path: path).call
+    assert_equal ["UNTAGGED_UMBRELLA"], gaps.map(&:id)
+  ensure
+    FileUtils.remove_entry(dir) if dir && File.directory?(dir)
+  end
 end
