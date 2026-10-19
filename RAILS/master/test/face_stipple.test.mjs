@@ -27,8 +27,8 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /budget\.desktop_points/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
   assert.match(system, /buildFromSamples/);
-  assert.match(system, /float distanceScale = clamp\(5\.0 \/ max\(1\.0, -mv\.z\), 0\.75, 1\.25\)/);
-  assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale, 1\.0, 1\.5\)/);
+  assert.match(system, /uPointSizeReferenceDepth: \{ value: clamp\(pointSize\.reference_depth/);
+  assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale,\s+uPointSizeOutputMin, uPointSizeOutputMax\)/);
   assert.match(system, /vThreshold = aThreshold/);
   assert.match(system, /vThreshold > uDensity/);
 });
@@ -37,6 +37,10 @@ test("stipple moods come from the face contract, not a second table", () => {
   const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(system, /MASTER_FACE_CONTRACT\?\.stipple\?\.profiles/);
   assert.doesNotMatch(system, /speaking:\s*\{ density/);
+  assert.match(tokens, /point_size:\s*\n\s+base: 0\.90/);
+  assert.match(tokens, /reference_depth: 5\.0/);
+  assert.match(tokens, /output_min: 1\.0/);
+  assert.match(tokens, /output_max: 1\.5/);
   const modes = tokens.match(/modes: \[([^\]]+)\]/)[1].split(",").map((name) => name.trim());
   for (const mode of modes) assert.match(tokens, new RegExp(`^        ${mode}:\\s+\\{ density:`, "m"));
 });
@@ -60,6 +64,11 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     MASTER_FACE_CONTRACT: {
       spatial: { budget: { desktop_points: 1200, mobile_points: 420 } },
       stipple: {
+        point_size: {
+          base: 0.90, bias_scale: 0.35, bias_min: 0.25, bias_max: 1.50,
+          reference_depth: 5.0, distance_min: 0.75, distance_max: 1.25,
+          output_min: 1.0, output_max: 1.5
+        },
         profiles: {
           idle: { density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 },
           thinking: { density: 0.72, ripple: 0.16, turbulence: 0.28, luminosity: 0.91, attract: 0.74 }
@@ -130,6 +139,13 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(stipple.material.uniforms.uTurbulence.value, 0.04);
   assert.equal(stipple.material.uniforms.uLuminosity.value, 0.76);
   assert.equal(stipple.material.uniforms.uAttract.value, 0.14);
+  assert.equal(stipple.material.uniforms.uPointSizeBase.value, 0.90);
+  assert.equal(stipple.material.uniforms.uPointSizeBiasScale.value, 0.35);
+  assert.equal(stipple.material.uniforms.uPointSizeReferenceDepth.value, 5.0);
+  assert.equal(stipple.material.uniforms.uPointSizeDistanceMin.value, 0.75);
+  assert.equal(stipple.material.uniforms.uPointSizeDistanceMax.value, 1.25);
+  assert.equal(stipple.material.uniforms.uPointSizeOutputMin.value, 1.0);
+  assert.equal(stipple.material.uniforms.uPointSizeOutputMax.value, 1.5);
 
   // An absent pressure event must preserve the mode's canonical density.
   api.tick(stipple, { mode: "idle", reducedMotion: false }, 0);
@@ -186,6 +202,7 @@ test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /active\?\.geometry\?\.dispose\?\./);
   assert.match(system, /active\?\.material\?\.dispose\?\./);
   assert.match(system, /lastRenderIntervalMs/);
+  assert.match(system, /pointSizing\(\)/);
   assert.match(system, /pointCeiling: pointBudget\(\)/);
   assert.match(system, /currentFaceState\(\)/);
 });
