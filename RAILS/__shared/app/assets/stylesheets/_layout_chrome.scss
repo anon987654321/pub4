@@ -107,7 +107,7 @@ body[data-layout="document"] {
   font-size: var(--text-display);
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-tighter);
-  line-height: 1.02;
+  line-height: var(--leading-none);
   text-wrap: balance;
 }
 
