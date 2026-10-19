@@ -52,7 +52,7 @@ module Master
           ],
         },
         "play" => {
-summary: "render and play a Dilla-pocket progression through the canonical drum and dub effects rig",
+summary: "play the curated Blue Hour Dilla showcase or a named progression through the canonical effects rig",
 detail: [
   "/play — the curated Blue Hour Dilla showcase, with sections at 92–116 BPM, the full dust kit, analogue tape, dub echo and crystallizer.",
   "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
