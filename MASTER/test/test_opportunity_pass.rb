@@ -17,7 +17,7 @@ class OpportunityPassTest < Minitest::Test
 
       assert_equal 1, findings.size
       assert_includes findings.first[:message], "dead Rake glob"
-      assert_equal Master::Fix::OpportunityPass::RULE_ID, findings.first[:law]
+      assert_equal Master::Fix::OpportunityPass::LAW_ID, findings.first[:law]
     end
   end
 
@@ -56,4 +56,24 @@ class OpportunityPassTest < Minitest::Test
     end
   end
 
+  def scratch_master_with_repeated_names_and_stale_paths(root)
+    lib = File.join(root, "MASTER", "lib")
+    %w[a b c d].each do |dir|
+      FileUtils.mkdir_p(File.join(lib, dir))
+      File.write(File.join(lib, dir, "proof.rb"), "# x\n")
+    end
+    File.write(File.join(lib, "a", "notes.rb"), Array.new(30) { |i| "# see MASTER/lib/gone_#{i}.rb\n" }.join)
+  end
+
+  def test_design_findings_reach_the_pass_even_when_stale_paths_fill_the_list
+    Dir.mktmpdir do |root|
+      scratch_master_with_repeated_names_and_stale_paths(root)
+
+      pass = Master::Fix::OpportunityPass.new(root:)
+      findings = pass.run(target: File.join(root, "MASTER"), files: []).value.fetch(:findings)
+
+      assert_equal Master::Fix::OpportunityPass::MAX_FINDINGS, findings.size
+      assert(findings.any? { |finding| finding[:message].start_with?("repeated module name: proof.rb") })
+    end
+  end
 end

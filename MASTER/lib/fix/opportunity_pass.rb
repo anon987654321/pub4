@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../boot/paths"
+require_relative "design_audit"
 
 module Master
   module Fix
@@ -18,6 +19,8 @@ module Master
       GLOB_RE = /(?:FileList|Dir\.glob)\s*\[(.*?)\]/.freeze
       STRING_RE = /["']([^"']+)["']/.freeze
       MAX_FINDINGS = 20
+      # Room kept for design findings, so a long list of stale paths cannot crowd them out.
+      DESIGN_SLOTS = 6
       SPRAWL_LIMITS = {
         "MASTER/Rakefile" => 650,
         "MASTER/lib/operator/ratchets.rb" => 600,
@@ -78,7 +81,12 @@ module Master
           collect_visual_duplicates(findings)
           collect_sprawl(findings, roots)
         end
-        findings.first(MAX_FINDINGS)
+        design = relative == "MASTER" ? collect_design : []
+        findings.first(MAX_FINDINGS - design.size.clamp(0, DESIGN_SLOTS)) + design.first(DESIGN_SLOTS)
+      end
+
+      def collect_design
+        DesignAudit.run(repo_root:).map { |row| Finding.new(row.file, row.line, row.message, row.fix) }
       end
 
       def publish_opportunities(target, findings)
