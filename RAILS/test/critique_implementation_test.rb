@@ -359,7 +359,7 @@ class CritiqueImplementationTest < Minitest::Test
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
     amber_css = amber_css_source
     amber_polish = read("amber/app/assets/stylesheets/_commerce_polish.scss")
-    seller = read("brgen/engines/marketplace/app/views/marketplace/stores/show.html.erb")
+    seller = read("brgen_marketplace/app/views/marketplace/stores/show.html.erb")
     item = read("amber/app/views/items/show.html.erb")
 
     assert_includes brgen_css, 'commerce_polish'

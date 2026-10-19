@@ -15,7 +15,7 @@ class TriangleContractTest < Minitest::Test
 
   test "triangle derives app surfaces from apps.yml and keeps master explicit" do
     assert_includes source, 'YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"))'
-    assert_includes source, 'name: "master", port: 53187'
+    assert_match(/name: "master", port: 53_?187/, source)
     refute_match(/port:\s*38\d{3}/, source)
   end
 

@@ -3,6 +3,10 @@
 require "minitest/autorun"
 
 class PwaGeneratorContractTest < Minitest::Test
+  # Minitest::Test has no `test "name" do`; without this Kernel#test swallowed the call
+  # and the file never ran.
+  def self.test(name, &block) = define_method("test_#{name.gsub(/\W+/, "_")}", &block)
+
   ROOT = File.expand_path("..", __dir__)
 
   def source

@@ -3,6 +3,10 @@
 require "minitest/autorun"
 
 class RailsUpgradeContractTest < Minitest::Test
+  # Minitest::Test has no `test "name" do`; without this Kernel#test swallowed the call
+  # and the file never ran.
+  def self.test(name, &block) = define_method("test_#{name.gsub(/\W+/, "_")}", &block)
+
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports].freeze
   ROOTS = APPS + ["../RAILS/master"]
@@ -65,8 +69,8 @@ class RailsUpgradeContractTest < Minitest::Test
       "amber/app/models/message.rb" => "after_create_commit :enqueue_master_reply",
       "brgen/app/models/notification.rb" => "after_create_commit",
       "brgen/app/models/repost.rb" => "after_create_commit :federate",
-      "brgen/app/models/message.rb" => "after_create_commit :maybe_summon_bot",
-      "brgen/engines/marketplace/app/models/marketplace/listing.rb" => "after_create_commit :queue_ranking_recalculation"
+      "brgen_messenger/app/models/message.rb" => "after_create_commit :maybe_summon_bot",
+      "brgen_marketplace/app/models/marketplace/listing.rb" => "after_create_commit :queue_ranking_recalculation",
     }.each do |path, callback|
       source = read(path)
 

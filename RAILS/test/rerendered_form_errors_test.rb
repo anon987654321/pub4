@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # A controller that answers a failed save with `render :x, status:
 # :unprocessable_entity` owes the visitor the reason. The only other signal is
@@ -19,7 +20,7 @@ class RerenderedFormErrorsTest < Minitest::Test
   RERENDER = /render\s+:(\w+),\s*status:\s*:unprocessable_(?:entity|content)/
 
   def roots
-    APPS.map { |app| File.join(ROOT, app) } + Dir.glob(File.join(ROOT, "brgen/engines/*"))
+    APPS.map { |app| File.join(ROOT, app) } + Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}"))
   end
 
   def find_view(root, name)

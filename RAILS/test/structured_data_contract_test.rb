@@ -43,10 +43,10 @@ class StructuredDataContractTest < Minitest::Test
 
   def test_remaining_public_shows_emit_json_ld
     {
-      "brgen/engines/tv/app/views/tv/channels/show.html.erb" => "broadcast_channel",
-      "brgen/engines/tv/app/views/tv/shows/show.html.erb" => "tv_series",
-      "brgen/engines/tv/app/views/tv/live_streams/show.html.erb" => "type: :video",
-      "brgen/engines/playlist/app/views/playlist/sets/show.html.erb" => "music_playlist",
+      "brgen_radio/tv/app/views/tv/channels/show.html.erb" => "broadcast_channel",
+      "brgen_radio/tv/app/views/tv/shows/show.html.erb" => "tv_series",
+      "brgen_radio/tv/app/views/tv/live_streams/show.html.erb" => "type: :video",
+      "brgen_radio/playlist/app/views/playlist/sets/show.html.erb" => "music_playlist",
     }.each do |path, marker|
       assert_includes read_rel(path), marker, "#{path} still has a title and no structured data"
     end
@@ -71,19 +71,20 @@ class StructuredDataContractTest < Minitest::Test
   end
 
   def test_owners_can_attach_a_place
-    restaurant = read_rel("brgen/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb")
-    store = read_rel("brgen/engines/marketplace/app/controllers/marketplace/stores_controller.rb")
+    restaurant = read_rel("brgen_marketplace/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb")
+    store = read_rel("brgen_marketplace/app/controllers/marketplace/stores_controller.rb")
     assert_includes restaurant, ":place_id"
     assert_includes store, ":place_id"
     assert_includes restaurant, "load_city_places"
     assert_includes store, "load_city_places"
-    assert File.file?(File.join(ROOT, "brgen/engines/takeaway/app/views/takeaway/restaurants/_place_field.html.erb"))
+    place_field = "brgen_marketplace/engines/takeaway/app/views/takeaway/restaurants/_place_field.html.erb"
+    assert File.file?(File.join(ROOT, place_field))
   end
 
   def test_show_pages_ask_for_nearby_neighbours
-    listing = read_rel("brgen/engines/marketplace/app/controllers/marketplace/listings_controller.rb")
-    restaurant = read_rel("brgen/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb")
-    place = read_rel("brgen/engines/maps/app/controllers/maps/places_controller.rb")
+    listing = read_rel("brgen_marketplace/app/controllers/marketplace/listings_controller.rb")
+    restaurant = read_rel("brgen_marketplace/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb")
+    place = read_rel("brgen_maps/app/controllers/maps/places_controller.rb")
     assert_includes listing, "nearby_listings_for"
     assert_includes restaurant, "nearby_restaurants_for"
     assert_includes place, "nearby_places_for"

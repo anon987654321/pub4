@@ -183,7 +183,7 @@ class ControllerCoverageContractTest < Minitest::Test
 
     docs = {
       "brgen/README.md" => File.read(File.join(ROOT, "brgen", "README.md")),
-      "brgen/engines/marketplace/README.md" =>
+      "brgen_marketplace/README.md" =>
         File.read(File.join(ROOT, "brgen", "engines", "marketplace", "README.md")),
     }
 

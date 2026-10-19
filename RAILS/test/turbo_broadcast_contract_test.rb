@@ -102,8 +102,8 @@ class TurboBroadcastContractTest < Minitest::Test
   # the page actually renders.
   def test_the_tv_broadcasts_name_both_partial_and_target
     {
-      "brgen/engines/tv/app/models/tv/stream_chat.rb" => %w[tv/stream_chats/stream_chat tv-live-stream-],
-      "brgen/engines/tv/app/models/tv/video_note.rb" => %w[tv/video_notes/video_note video_notes_],
+      "brgen_radio/tv/app/models/tv/stream_chat.rb" => %w[tv/stream_chats/stream_chat tv-live-stream-],
+      "brgen_radio/tv/app/models/tv/video_note.rb" => %w[tv/video_notes/video_note video_notes_],
     }.each do |file, (partial, target)|
       body = File.read(File.join(ROOT, file))
 
@@ -114,8 +114,8 @@ class TurboBroadcastContractTest < Minitest::Test
 
   def test_the_wired_partials_exist
     %w[
-      brgen/engines/tv/app/views/tv/stream_chats/_stream_chat.html.erb
-      brgen/engines/tv/app/views/tv/video_notes/_video_note.html.erb
+      brgen_radio/tv/app/views/tv/stream_chats/_stream_chat.html.erb
+      brgen_radio/tv/app/views/tv/video_notes/_video_note.html.erb
     ].each { |path| assert File.file?(File.join(ROOT, path)), "missing #{path}" }
   end
 
@@ -123,8 +123,8 @@ class TurboBroadcastContractTest < Minitest::Test
   # this pass wired end to end.
   def test_the_tv_streams_have_subscribers
     {
-      "brgen/engines/tv/app/views/tv/live_streams/show.html.erb" => "tv:live_stream:",
-      "brgen/engines/tv/app/views/tv/videos/show.html.erb" => "tv:video:",
+      "brgen_radio/tv/app/views/tv/live_streams/show.html.erb" => "tv:live_stream:",
+      "brgen_radio/tv/app/views/tv/videos/show.html.erb" => "tv:video:",
     }.each do |view, stream|
       body = File.read(File.join(ROOT, view))
 

@@ -23,7 +23,7 @@ require_relative "../../MASTER/gates/lib/source/affiliate_honesty"
 class HonestyGatesTest < Minitest::Test
   include MethodSwap
 
-  ENGINE = "brgen/engines/marketplace"
+  ENGINE = "brgen_marketplace"
 
   # The smallest tree that satisfies PaymentHonestyGate::REQUIRED and both
   # raise-site read-backs. Content is chosen to match the declared pattern and

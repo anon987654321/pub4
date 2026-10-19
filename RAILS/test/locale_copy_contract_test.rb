@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 require "yaml"
 
 # The Norwegian copy says what an action does. Three questions locale_contract_test
@@ -60,7 +61,7 @@ class LocaleCopyContractTest < Minitest::Test
   end
 
   def nb_files
-    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared,brgen_*,brgen/engines/*}/**/config/locales/**/*nb*.yml"))
+    Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared,#{EngineRoots::GLOB}}/**/config/locales/**/*nb*.yml"))
        .reject { |file| file.include?("/vendor/") }.sort.uniq
   end
 

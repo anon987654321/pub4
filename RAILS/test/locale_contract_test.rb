@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 require "yaml"
 require "psych"
 
@@ -45,14 +46,16 @@ class LocaleContractTest < Minitest::Test
   # an en.yml under vendor/bundle in every app. brgen's verticals are engines,
   # and each carries its own config/locales that Rails loads beside the host's.
   def locale_files
-    @locale_files ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared,brgen/engines/*}/config/locales/**/*.yml")).sort
+    pattern = "{brgen,amber,bsdports,__shared,#{EngineRoots::GLOB}}/config/locales/**/*.yml"
+    @locale_files ||= Dir.glob(File.join(ROOT, pattern)).sort
   end
 
   # Each unit that owns a locale directory, so a vertical's strings are held to
   # the same parity as the app mounting it.
   def locale_units
     @locale_units ||= %w[brgen amber bsdports shared] +
-                      Dir.glob(File.join(ROOT, "brgen/engines/*/config/locales")).sort.map { |dir| rel(dir).delete_suffix("/config/locales") }
+                      Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/config/locales")).sort
+                          .map { |dir| rel(dir).delete_suffix("/config/locales") }
   end
 
   def test_the_glob_finds_the_locale_files

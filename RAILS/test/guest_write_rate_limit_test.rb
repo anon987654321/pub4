@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # A write a guest can reach, with nothing limiting how often.
 #
@@ -43,7 +44,7 @@ class GuestWriteRateLimitTest < Minitest::Test
   def controllers
     @controllers ||= Dir[
       File.join(RAILS_ROOT, "{brgen,amber,bsdports}/app/controllers/**/*.rb"),
-      File.join(RAILS_ROOT, "brgen/engines/*/app/controllers/**/*.rb"),
+      File.join(RAILS_ROOT, "#{EngineRoots::GLOB}/app/controllers/**/*.rb"),
       File.join(RAILS_ROOT, "__shared/app/controllers/**/*.rb")
     ].sort
   end

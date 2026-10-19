@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # Two rate limits on one controller are one rate limit unless they are named.
 #
@@ -31,7 +32,7 @@ class RateLimitNamingTest < Minitest::Test
   def controllers
     @controllers ||= Dir[
       File.join(RAILS_ROOT, "{brgen,amber,bsdports}/app/controllers/**/*.rb"),
-      File.join(RAILS_ROOT, "brgen/engines/*/app/controllers/**/*.rb"),
+      File.join(RAILS_ROOT, "#{EngineRoots::GLOB}/app/controllers/**/*.rb"),
       File.join(RAILS_ROOT, "__shared/app/controllers/**/*.rb"),
     ].sort
   end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # `includes(:image)` where :image is an attachment raises, and only when rows
 # exist.
@@ -24,7 +25,7 @@ class AttachmentPreloadTest < Minitest::Test
   def sources
     @sources ||= Dir[
       File.join(RAILS_ROOT, "{brgen,amber,bsdports}/app/**/*.rb"),
-      File.join(RAILS_ROOT, "brgen/engines/*/app/**/*.rb"),
+      File.join(RAILS_ROOT, "#{EngineRoots::GLOB}/app/**/*.rb"),
       File.join(RAILS_ROOT, "__shared/app/**/*.rb")
     ].reject { |path| path.include?("/vendor/") }
   end

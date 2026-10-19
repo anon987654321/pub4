@@ -59,7 +59,7 @@ class I18nResolutionTest < Minitest::Test
 
   # Views and helpers the app can render: its own, the engine's, and — the part
   # this missed — the mountable engines brgen's verticals live in. 102 view and
-  # helper files under brgen/engines/*/app were outside the glob, which is the
+  # helper files under {brgen_*,brgen_radio/*,brgen_marketplace/engines/*}/app were outside the glob, which is the
   # same blind spot that cost four other scanners 57 views when the verticals
   # moved and read as an improving finding count rather than as blindness.
   def keys_used_by(app)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # An ownership guard must compare a column, not an association.
 #
@@ -51,9 +52,9 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
       "@profile comes from Current.user, already materialised",
     "brgen/app/controllers/posts_controller.rb" =>
       "set_post includes :user",
-    "brgen/engines/playlist/app/controllers/playlist/playlists_controller.rb" =>
+    "brgen_radio/playlist/app/controllers/playlist/playlists_controller.rb" =>
       "set_playlist includes :user",
-    "brgen/engines/tv/app/controllers/tv/videos_controller.rb" =>
+    "brgen_radio/tv/app/controllers/tv/videos_controller.rb" =>
       "set_video includes :user",
   }.freeze
 
@@ -81,7 +82,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
 
   def controllers
     (Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}/app/controllers/**/*.rb")) +
-     Dir.glob(File.join(ROOT, "brgen/engines/*/app/controllers/**/*.rb")) +
+     Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/app/controllers/**/*.rb")) +
      Dir.glob(File.join(ROOT, "__shared/app/controllers/**/*.rb")))
       .reject { |path| path.include?("/vendor/") }
       .map { |path| path.sub("#{ROOT}/", "") }

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 require "set"
 require_relative "../../MASTER/tools/scss"
 
@@ -35,7 +36,7 @@ class VerticalConsistencyTest < Minitest::Test
   def brgen_stylesheets
     @brgen_stylesheets ||= (
       Dir.glob(File.join(ROOT, "brgen/app/assets/stylesheets/**/*.scss")) +
-      Dir.glob(File.join(ROOT, "brgen/engines/*/app/assets/stylesheets/**/*.scss"))
+      Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/app/assets/stylesheets/**/*.scss"))
     ).reject { |f| f.match?(%r{/(vendor|node_modules|public|builds)/}) }.sort
   end
 
@@ -53,7 +54,7 @@ class VerticalConsistencyTest < Minitest::Test
   # The blind spot that hid 57 views when the verticals moved, stated for the
   # styles: every engine that exists is a vertical scope the scan reads.
   def test_the_scan_reaches_the_engines
-    engines = Dir.glob(File.join(ROOT, "brgen/engines/*")).map { |dir| File.basename(dir) }
+    engines = Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}")).map { |dir| File.basename(dir) }
 
     refute_empty brgen_stylesheets
     refute_empty engines, "brgen has no engines — this test is measuring nothing"
@@ -172,7 +173,7 @@ class VerticalConsistencyTest < Minitest::Test
   # disk now, and this holds that every engine that exists is covered.
   def test_the_view_contract_covers_every_engine
     require_relative "../../MASTER/gates/lib/live/user_flow"
-    on_disk = Dir.glob(File.join(ROOT, "brgen/engines/*/app/views"))
+    on_disk = Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/app/views"))
                  .map { |path| path.sub("#{ROOT}/", "") }
 
     refute_empty on_disk, "brgen has no engine views — this test is measuring nothing"

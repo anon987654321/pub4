@@ -125,9 +125,9 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
   def test_all_scss_files_includes_nested_engine_sources_and_excludes_artifacts
     Dir.mktmpdir do |root|
       host = File.join(root, "RAILS/amber/app/assets/stylesheets/application.scss")
-      engine = File.join(root, "RAILS/brgen/engines/dating/app/assets/stylesheets/_vertical.scss")
-      vendor = File.join(root, "RAILS/brgen/engines/dating/app/assets/stylesheets/vendor/_vendor.scss")
-      build = File.join(root, "RAILS/brgen/engines/dating/app/assets/stylesheets/builds/_built.scss")
+      engine = File.join(root, "RAILS/brgen_dating/app/assets/stylesheets/_vertical.scss")
+      vendor = File.join(root, "RAILS/brgen_dating/app/assets/stylesheets/vendor/_vendor.scss")
+      build = File.join(root, "RAILS/brgen_dating/app/assets/stylesheets/builds/_built.scss")
 
       [host, engine, vendor, build].each do |path|
         FileUtils.mkdir_p(File.dirname(path))

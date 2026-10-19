@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 require "yaml"
 
 # TODO.md, rails_flash_strings_untranslated: 169 hardcoded English
@@ -38,7 +39,7 @@ class AppFlashI18nTest < Minitest::Test
     "shared" => ["__shared/app/controllers/**/*.rb"],
     "amber" => ["amber/app/controllers/**/*.rb"],
     "bsdports" => ["bsdports/app/controllers/**/*.rb"],
-    "brgen" => ["brgen/app/controllers/**/*.rb", "brgen/engines/*/app/controllers/**/*.rb"],
+    "brgen" => ["brgen/app/controllers/**/*.rb", "#{EngineRoots::GLOB}/app/controllers/**/*.rb"],
   }.freeze
 
   def load_locale(relative, locale)

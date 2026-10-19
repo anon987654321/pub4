@@ -48,8 +48,8 @@ class FormControlNamesTest < Minitest::Test
   #     "takeaway_order_items_#{item.id}", and the interpolation only resolves
   #     at render time.
   KNOWN_UNREADABLE = [
-    "brgen/engines/playlist/app/views/playlist/playlists/show.html.erb",
-    "brgen/engines/takeaway/app/views/takeaway/orders/new.html.erb",
+    "brgen_radio/playlist/app/views/playlist/playlists/show.html.erb",
+    "brgen_marketplace/engines/takeaway/app/views/takeaway/orders/new.html.erb",
   ].freeze
 
   def views
