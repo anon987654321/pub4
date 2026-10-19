@@ -202,6 +202,19 @@ class TestIdeaPictureOutput < Minitest::Test
     end
   end
 
+  def test_manifest_rejects_versions_that_are_not_provider_model_version_ids
+    Dir.mktmpdir do |dir|
+      manifest = File.join(dir, "replicate_training.json")
+      File.write(manifest, JSON.generate("version" => "not-a-model-version"))
+      picture = Studio::Visual::IdeaPicture.new(
+        directory: dir, subject: "probe", model_manifest: manifest
+      )
+
+      error = assert_raises(RuntimeError) { picture.send(:still_model) }
+      assert_includes error.message, "owner/model:version"
+    end
+  end
+
   def test_subject_name_cannot_escape_the_lora_directory
     error = assert_raises(ArgumentError) do
       Studio::Visual::IdeaPicture.new(subject: "../elsewhere")
