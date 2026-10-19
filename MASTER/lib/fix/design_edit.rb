@@ -59,6 +59,18 @@ module Master
 
       def key = [file, proposal.find]
 
+      # The classes and ids in the selector of the rule the edit sits in; empty when it
+      # sits in a rule of plain element selectors or cannot be located.
+      def selector_tokens
+        text = File.read(file, encoding: "UTF-8")
+        head = text[0, text.index(proposal.find).to_i]
+        open = head.rindex("{")
+        return [] unless open
+
+        start = (head.rindex(/[};]/, open) || -1) + 1
+        head[start...open].scan(/[.#][\w-]+/).uniq
+      end
+
       # Raises Refused with the reason; returns the file's current text.
       def check!
         refuse_scope!

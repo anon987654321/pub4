@@ -134,15 +134,18 @@ class TestDesignLoop < Minitest::Test
 
   NO_DIFFERENCE = '{"better":"same","why":"no difference"}'
 
-  # options: other_drop (score lost elsewhere), flat (score never moves), vision (the check's reply).
+  # options: other_drop (score lost elsewhere), flat (score never moves), vision (the check's reply),
+  # classes (what is on the page).
   def world_for(path, committed:, **options)
     drop = options.fetch(:other_drop, 0)
     flat = options.fetch(:flat, false)
     vision = options.fetch(:vision, NO_DIFFERENCE)
+    elements = options.fetch(:classes, [".card"]).map { |key| { "key" => "body>main>#{key}" } }
     measure = lambda do |surfaces|
       wide = File.read(path).include?("padding: 16px")
       surfaces.map do |surface|
-        [surface, { "score" => fake_score(surface, wide:, other_drop: drop, flat:) }, screenshot(path, surface)]
+        payload = { "score" => fake_score(surface, wide:, other_drop: drop, flat:), "elements" => elements }
+        [surface, payload, screenshot(path, surface)]
       end
     end
     edit = reply(path, find: "padding: 4px;", replace: "padding: 16px;")
@@ -216,6 +219,26 @@ class TestDesignLoop < Minitest::Test
         assert_includes File.read(path), "padding: 4px;"
         assert_empty committed
       end
+    end
+  end
+  # A rule that matches nothing on the page changes nothing either judge can see.
+  def test_an_edit_to_a_selector_that_is_not_on_the_page_is_refused_without_a_render
+    with_sheet do |path|
+      committed = []
+      stub_scoring do
+        rounds = loop_for(path, committed:, classes: [".other"]).run
+
+        assert_empty rounds.select { |round| round.outcome == :kept }
+        assert_includes File.read(path), "padding: 4px;"
+        assert_empty committed
+      end
+    end
+  end
+
+  def test_the_selector_of_the_rule_an_edit_sits_in_is_read_from_the_file
+    with_sheet(".a, .b > .c { gap: 4px; }\n.d {\n  padding: 4px;\n}\n") do |path|
+      assert_equal %w[.d], parse(path, find: "padding: 4px;", replace: "padding: 8px;").selector_tokens
+      assert_equal %w[.a .b .c], parse(path, find: "gap: 4px;", replace: "gap: 8px;").selector_tokens
     end
   end
 end

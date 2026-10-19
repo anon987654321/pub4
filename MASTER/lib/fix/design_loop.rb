@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require_relative "design_edit"
+require_relative "design_prompts"
 require_relative "layout_score_store"
 require_relative "visual_quality_gates"
 
@@ -17,12 +18,13 @@ module Master
     # Every outside effect is injected (browser, model, CSS build, git) so the
     # loop's decisions are testable without Chrome or a model.
     class DesignLoop
+      include DesignPrompts
+
       TIE = 0.05
       OTHERS_TOLERANCE = 1.0
       STALL_LIMIT = 4
       TRIES_PER_SURFACE = 2
       GUARDS = 4
-      SOURCE_CHARS = 12_000
       Round = Data.define(:number, :surface, :why, :outcome, :before, :after)
 
       # What the loop works on and how long.
@@ -32,15 +34,6 @@ module Master
       # ask ->(prompt, image) { reply }; build ->(app) { ok }; commit_file ->(path, message) { ok };
       # sources_for ->(surface) { [stylesheet paths] }; guard ->(path, new_text) { refusal or nil }.
       World = Data.define(:measure, :ask, :build, :commit_file, :sources_for, :guard)
-
-      VARIANTS = [
-        "Change as little as possible.",
-        "Reach it through a different selector or property than the obvious one.",
-        "Prefer an existing token or layout primitive over a new value.",
-      ].freeze
-
-      DIRECTION = "Flat, brutalist, Swiss: one sans family, a strict 8px rhythm, tap targets of at least 44px, " \
-                  "clear hierarchy, nothing decorative (no gradients, shadows or ornament)."
 
       def initialize(plan:, world:, say: ->(_) {})
         @plan = plan
@@ -104,6 +97,7 @@ module Master
         @fresh = measured(guards.map { |row| row[:surface] })
         merge(@fresh)
         @target = @fresh.find { |row| row[:surface].id == @target[:surface].id }
+        @page_tokens = @target ? page_tokens_of(@target) : []
         keep_before_shot if @target
         @target
       end
@@ -130,10 +124,25 @@ module Master
         edit = DesignEdit.parse(reply, allowed: sources, rules: DesignEdit::Rules.new(guard: @world.guard, scale: nil))
         raise DesignEdit::Refused, "already tried and undone" if @rejected.include?(edit.key)
 
+        refuse_unseen_selector!(edit)
         edit
       rescue DesignEdit::Refused, StandardError => e
         @say.call("#{@target[:surface].id}: edit not usable, #{e.message.lines.first.to_s.strip}")
         nil
+      end
+
+      # An edit to a rule that matches nothing on the page changes nothing the judges can
+      # see, so it is refused before it costs a render.
+      def refuse_unseen_selector!(edit)
+        tokens = edit.selector_tokens
+        return if @page_tokens.empty? || tokens.empty? || (tokens & @page_tokens).any?
+
+        raise DesignEdit::Refused, "its selector (#{tokens.first(3).join(' ')}) is not on this page"
+      end
+
+      # The classes and ids the walk found on the page.
+      def page_tokens_of(row)
+        Array(row[:payload]["elements"]).flat_map { |element| element["key"].to_s.scan(/[.#][\w-]+/) }.uniq
       end
 
       # Applies the edit, re-renders, judges, and always puts the file back.
@@ -216,15 +225,6 @@ module Master
         false
       end
 
-      def vision_prompt
-        <<~TEXT
-          Two renders of the same page, A then B. Direction: #{DIRECTION}
-          Which has the better layout: clearer hierarchy, steadier spacing, nothing cramped or floating?
-          Say "same" if you cannot tell them apart.
-          Return only JSON: {"better": "A" or "B" or "same", "why": "<one short sentence>"}.
-        TEXT
-      end
-
       # "name +n" for each offender kind that grew between two sets of rows.
       def new_offenders(before, after)
         base = tally(before)
@@ -261,37 +261,6 @@ module Master
         Round.new(number:, surface: @target[:surface].id, why:, outcome:, before: @target[:score], after:)
       end
 
-      def prompt(sources, variant)
-        <<~TEXT
-          The image is the current render of #{@target[:surface].id}.
-          Its layout score is #{@target[:score].round(1)} of 100.
-          Weakest measures (0 to 1): #{weakest_measures}.
-          Gate offenders: #{@target[:offenders].inspect}.
-          Direction: #{DIRECTION}
-          Make ONE edit to ONE of the stylesheets below that improves the layout you can see: spacing, alignment,
-          sizing, hierarchy, grid or flex structure, overflow, reading width. Change layout properties only, never
-          a colour, font, shadow or opacity, never a token file, and keep every spacing value on the declared
-          scale or a var(--token).
-          #{VARIANTS[variant % VARIANTS.size]}
-          #{undone_note}
-          Return only JSON: {"file": "<one path below>", "find": "<exact text from that file, occurring once>",
-          "replace": "<new text>", "why": "<one short sentence>"}.
-
-          #{sources.map { |path| "FILE #{path}\n#{File.read(path, encoding: 'UTF-8')[0, SOURCE_CHARS]}" }.join("\n\n")}
-        TEXT
-      end
-
-      def weakest_measures
-        subs = LayoutScoreStore.measure(@plan.root, @target[:payload]).subs
-        weakest = subs.sort_by { |_, value| value.to_f }.first(3)
-        weakest.map { |name, value| "#{name} #{value&.round(2)}" }.join(", ")
-      end
-
-      def undone_note
-        return "" if @undone.empty?
-
-        "Tried and undone, with the reason: #{@undone.last(4).join(' | ')}. Do something different."
-      end
     end
   end
 end
