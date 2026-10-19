@@ -197,6 +197,12 @@
     // Coarse-pointer devices may have a large viewport; classify them by capability, not width alone.
     const mobile = mediaMatches("(pointer: coarse)") || mediaMatches("(max-width: 767px)") || Number(navigator.hardwareConcurrency || 8) <= 4;
     const maxPoints = Number(budget[mobile ? "mobile_points" : "desktop_points"]) || (mobile ? 420 : 1200);
+    const pointAllocation = budget.point_allocation || {};
+    const stippleWeight = Math.max(0.1, Number(pointAllocation.stipple_fraction) || 0.75);
+    const worldWeight = Math.max(0.1, Number(pointAllocation.world_fraction) || 0.25);
+    const weightTotal = stippleWeight + worldWeight;
+    const stipplePoints = Math.max(1, Math.min(maxPoints - 1, Math.floor(maxPoints * stippleWeight / weightTotal)));
+    const worldPoints = Math.max(1, maxPoints - stipplePoints);
     const particles = Number(budget[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
     // The OS preference, live face state and explicit page toggle use one shared policy.
@@ -210,6 +216,8 @@
     if (profile === "battery") fps = Math.min(fps, Number(budget.battery_fps) || 12);
     return Object.freeze({
       points: maxPoints,
+      stipple_points: stipplePoints,
+      world_points: worldPoints,
       particles: effectiveParticles,
       reduced_motion_particles: reducedMotionParticles,
       dpr,
