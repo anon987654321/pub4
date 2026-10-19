@@ -5,38 +5,38 @@
     glyph existed only here. shirt, layers, log_out and user_plus joined the
     shared set for this; the rest were already in it. %>
 <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
-<%= link_to root_path, class: nav_cls.(root_path) do %>
+<%= link_to root_path, class: nav_cls.(root_path), aria: { current: ("page" if current_page?(root_path)) } do %>
   <%= icon :home, size: 26 %>
   <%= t("nav.home") %>
 <% end %>
 <% if authenticated? %>
-  <%= link_to feed_posts_path, class: nav_cls.(feed_posts_path) do %>
+  <%= link_to feed_posts_path, class: nav_cls.(feed_posts_path), aria: { current: ("page" if current_page?(feed_posts_path)) } do %>
     <%= icon :explore, size: 26 %>
     <%= t("nav.feed") %>
   <% end %>
-  <%= link_to items_path, class: nav_cls.(items_path) do %>
+  <%= link_to items_path, class: nav_cls.(items_path), aria: { current: ("page" if current_page?(items_path)) } do %>
     <%= icon :shirt, size: 26 %>
     <%= t("nav.wardrobe") %>
   <% end %>
-  <%= link_to outfits_path, class: nav_cls.(outfits_path) do %>
+  <%= link_to outfits_path, class: nav_cls.(outfits_path), aria: { current: ("page" if current_page?(outfits_path)) } do %>
     <%= icon :layers, size: 26 %>
     <%= t("nav.outfits") %>
   <% end %>
   <%# Mix & Match was a top-level nav entry in the original spec; the dressing
       room existed but was reachable only from a button on outfits#index. %>
-  <%= link_to dressing_room_outfits_path, class: nav_cls.(dressing_room_outfits_path) do %>
+  <%= link_to dressing_room_outfits_path, class: nav_cls.(dressing_room_outfits_path), aria: { current: ("page" if current_page?(dressing_room_outfits_path)) } do %>
     <%= icon :sparkles, size: 26 %>
     <%= t("nav.mix_match") %>
   <% end %>
-  <%= link_to planned_outfits_path, class: nav_cls.(planned_outfits_path) do %>
+  <%= link_to planned_outfits_path, class: nav_cls.(planned_outfits_path), aria: { current: ("page" if current_page?(planned_outfits_path)) } do %>
     <%= icon :calendar, size: 26 %>
     <%= t("nav.planner") %>
   <% end %>
-  <%= link_to ai_search_path, class: nav_cls.(ai_search_path) do %>
+  <%= link_to ai_search_path, class: nav_cls.(ai_search_path), aria: { current: ("page" if current_page?(ai_search_path)) } do %>
     <%= icon :search, size: 26 %>
     <%= t("nav.search") %>
   <% end %>
-  <%= link_to messages_path, class: nav_cls.(messages_path) do %>
+  <%= link_to messages_path, class: nav_cls.(messages_path), aria: { current: ("page" if current_page?(messages_path)) } do %>
     <%= icon :messages, size: 26 %>
     <%= t("nav.messages") %>
   <% end %>
@@ -50,15 +50,15 @@
     <span class="compose-label"><%= t("nav.add_item") %></span>
   <% end %>
 <% else %>
-  <%= link_to demo_wardrobe_path, class: nav_cls.(demo_wardrobe_path) do %>
+  <%= link_to demo_wardrobe_path, class: nav_cls.(demo_wardrobe_path), aria: { current: ("page" if current_page?(demo_wardrobe_path)) } do %>
     <%= icon :play, size: 26 %>
     <%= t("nav.demo") %>
   <% end %>
-  <%= link_to new_session_path, class: nav_cls.(new_session_path) do %>
+  <%= link_to new_session_path, class: nav_cls.(new_session_path), aria: { current: ("page" if current_page?(new_session_path)) } do %>
     <%= icon :sign_in, size: 26 %>
     <%= t("nav.sign_in") %>
   <% end %>
-  <%= link_to new_registration_path, class: nav_cls.(new_registration_path) do %>
+  <%= link_to new_registration_path, class: nav_cls.(new_registration_path), aria: { current: ("page" if current_page?(new_registration_path)) } do %>
     <%= icon :user_plus, size: 26 %>
     <%= t("nav.sign_up") %>
   <% end %>
