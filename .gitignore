@@ -292,9 +292,10 @@ STUDIO/replicate/lora/*/contact_sheet.jpg
 # generated assets — the fetch command and sizes live in STUDIO/postpro/README.md.
 STUDIO/postpro/models/
 
-# Postpro's random-chain renders and their sidecars. When the source is a
-# subject photograph the render carries the face too, so the lora privacy rule
-# above applies at this path as well: deliberate publication takes `git add -f`.
+# Postpro source captures and generated renders. These rules prevent future
+# untracked additions; they do not untrack originals that are already in Git.
+# The publication and history decision is recorded in the single root TODO.md.
+STUDIO/postpro/IMG_*
 STUDIO/postpro/postpro_*.jpg
 STUDIO/postpro/postpro_*.jpg.json
 
