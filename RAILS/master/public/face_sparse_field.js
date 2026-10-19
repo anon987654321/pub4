@@ -49,6 +49,12 @@
   let ghostSerial = 0;
 
   const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, Number(v) || 0));
+
+  function reducedMotionEnabled(state = {}) {
+    return Boolean(state?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" ||
+      Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  }
   const smooth = (a, b, x) => {
     const t = clamp((x - a) / Math.max(0.0001, b - a));
     return t * t * (3 - 2 * t);
@@ -274,7 +280,9 @@
   }
 
   function isMobile() {
-    return matchMedia?.("(max-width: 767px)")?.matches || Number(navigator.hardwareConcurrency || 8) <= 4;
+    const coarse = Boolean(window.matchMedia?.("(pointer: coarse)")?.matches);
+    const narrow = Boolean(window.matchMedia?.("(max-width: 767px)")?.matches);
+    return coarse || narrow || Number(window.navigator?.hardwareConcurrency || 8) <= 4;
   }
 
   function captureGhosts(state) {
@@ -420,7 +428,7 @@
     const focus = clamp(state.focus ?? state.attention ?? 0.8);
     const confidence = clamp(state.confidence ?? 0.86);
     const risk = clamp(state.risk ?? 0);
-    const reduced = Boolean(state.reducedMotion) || matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const reduced = reducedMotionEnabled(state);
     const movementTime = reduced ? 0 : time;
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
