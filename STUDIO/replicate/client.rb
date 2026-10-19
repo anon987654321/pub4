@@ -326,21 +326,32 @@ module Studio
 
       def upload_binary(path, mime:)
         boundary = "ReplicateBoundary#{rand(1_000_000_000)}"
-        req = Net::HTTP::Post.new(URI("#{BASE}/files"))
+        uri = URI("#{BASE}/files")
+        req = Net::HTTP::Post.new(uri)
         req["Authorization"] = "Token #{@token}"
         req["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
-        req.body = multipart_body(path, boundary, mime:)
-        data = request(req, URI("#{BASE}/files"))
-        data.dig("urls", "get") || data["serving_url"] || data["url"] || raise("upload missing URL")
+
+        # Stream the multipart payload from a temporary file instead of holding
+        # an entire dataset ZIP in a second, equally large Ruby String.
+        Tempfile.create(["replicate-upload-", ".multipart"], binmode: true) do |body|
+          write_multipart_body(body, path, boundary, mime:)
+          body.flush
+          body.rewind
+          req.body_stream = body
+          req["Content-Length"] = body.size.to_s
+          data = request(req, uri)
+          data.dig("urls", "get") || data["serving_url"] || data["url"] || raise("upload missing URL")
+        end
       end
 
-      def multipart_body(path, boundary, mime: "application/octet-stream")
-        filename = File.basename(path)
-        "--#{boundary}\r\n".b +
-          "Content-Disposition: form-data; name=\"content\"; filename=\"#{filename}\"\r\n".b +
-          "Content-Type: #{mime}\r\n\r\n".b +
-          File.binread(path) +
-          "\r\n--#{boundary}--\r\n".b
+      def write_multipart_body(body, path, boundary, mime:)
+        filename = File.basename(path).gsub(/[^A-Za-z0-9._-]/, "_")
+        filename = "upload.bin" if filename.empty?
+        body.write("--#{boundary}\r\n".b)
+        body.write("Content-Disposition: form-data; name=\"content\"; filename=\"#{filename}\"\r\n".b)
+        body.write("Content-Type: #{mime}\r\n\r\n".b)
+        File.open(path, "rb") { |source| IO.copy_stream(source, body) }
+        body.write("\r\n--#{boundary}--\r\n".b)
       end
 
       # The input parameter names the provider currently declares, from the same
@@ -384,6 +395,7 @@ module Studio
       def request(req, uri, attempts: 3)
         last_error = nil
         attempts.times do |attempt|
+          req.body_stream.rewind if req.body_stream&.respond_to?(:rewind)
           return attempt_request(req, uri)
         rescue ExhaustedError => e
           # Out of the retry loop entirely, and onto the gate: no wait inside

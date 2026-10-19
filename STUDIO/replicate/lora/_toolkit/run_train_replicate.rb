@@ -140,24 +140,59 @@ end
 
 def extract_weights_tar(tar_path, dest_dir)
   unsafe = Preflight.unsafe_tar_entries(tar_path.to_s)
-  abort "warn: refusing #{tar_path}: #{unsafe.first(3).join(', ')}" unless unsafe.empty?
+  raise ArgumentError, "refusing #{tar_path}: #{unsafe.first(3).join(', ')}" unless unsafe.empty?
 
-  FileUtils.mkdir_p(dest_dir)
-  before = dest_dir.glob("*.safetensors").map(&:to_s)
-  ok = system("tar", "-xf", tar_path.to_s, "-C", dest_dir.to_s)
-  abort "warn: tar extract failed: #{tar_path}" unless ok
+  destination = Pathname.new(dest_dir).expand_path
+  FileUtils.mkdir_p(destination)
+  published = []
 
-  # Flatten common trainer layouts (trained_model/*.safetensors).
-  dest_dir.glob("**/*.safetensors").each do |sf|
-    next if sf.dirname == dest_dir
+  # Only checkpoint bytes are needed from the trainer archive. Read regular
+  # files through TarReader into an isolated directory; never let tar create
+  # paths, links, devices or permissions in the weights tree.
+  Dir.mktmpdir(".weights-stage-", destination.to_s) do |staging|
+    staged = []
+    File.open(tar_path, "rb") do |file|
+      Gem::Package::TarReader.new(file).each do |entry|
+        next unless ["0", "\0"].include?(entry.header.typeflag.to_s)
 
-    target = dest_dir.join(sf.basename)
-    FileUtils.mv(sf.to_s, target.to_s) unless target.exist?
+        name = entry.full_name.to_s
+        next unless name.downcase.end_with?(".safetensors")
+
+        basename = File.basename(name)
+        path = File.join(staging, basename)
+        raise ArgumentError, "duplicate weight basename #{basename.inspect}" if File.exist?(path)
+
+        File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |output|
+          IO.copy_stream(entry, output)
+          output.flush
+          output.fsync
+        end
+        staged << path
+      end
+    end
+
+    raise ArgumentError, "trainer archive contained no .safetensors weights" if staged.empty?
+
+    begin
+      staged.each do |source|
+        filename = File.basename(source)
+        target = destination.join(filename)
+        suffix = 1
+        while target.exist? || target.symlink?
+          stem = File.basename(filename, ".safetensors")
+          target = destination.join("#{stem}-restored-#{suffix}.safetensors")
+          suffix += 1
+        end
+        File.link(source, target.to_s)
+        published << target.to_s
+      end
+    rescue StandardError
+      published.each { |path| File.unlink(path) if File.file?(path) && !File.symlink?(path) }
+      raise
+    end
   end
 
-  after = dest_dir.glob("*.safetensors").map(&:to_s)
-  new_files = after - before
-  new_files
+  published
 end
 
 def append_log(lines)

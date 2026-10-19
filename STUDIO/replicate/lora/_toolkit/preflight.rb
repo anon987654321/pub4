@@ -4,6 +4,7 @@ require "digest"
 require "fileutils"
 require "json"
 require "open3"
+require "rubygems/package"
 require "time"
 require_relative "../../atomic_write"
 
@@ -361,11 +362,42 @@ module Preflight
     end
   end
 
-  # Entries of a trainer tar that would land outside the target directory.
+  # Inspect the archive format itself before extraction. Name-only tar listings
+  # miss symlink/hardlink targets and special filesystem entries. Reject links,
+  # special files, unsafe paths and duplicate checkpoint basenames.
   def unsafe_tar_entries(tar_path)
-    out, status = Open3.capture2("tar", "-tf", tar_path)
-    return ["tar listing failed"] unless status.success?
+    unsafe = []
+    weight_basenames = {}
+    File.open(tar_path, "rb") do |file|
+      Gem::Package::TarReader.new(file).each do |entry|
+        header = entry.header
+        name = entry.full_name.to_s
+        normalized = name.tr("\\", "/").sub(/\/+\z/, "")
+        parts = normalized.split("/")
+        if normalized.empty? || normalized.start_with?("/") ||
+           normalized.match?(/\A[A-Za-z]:/) || name.include?("\\") ||
+           name.include?("\0") || parts.any? { |part| part.empty? || part == "." || part == ".." }
+          unsafe << "#{name.inspect}: unsafe archive path"
+          next
+        end
 
-    out.lines.map(&:strip).select { |entry| entry.start_with?("/") || entry.split("/").include?("..") }
+        type = header.typeflag.to_s
+        unless ["0", "\0", "5", "x", "g", "L", "K"].include?(type)
+          unsafe << "#{name}: unsupported archive entry type #{type.inspect}"
+          next
+        end
+        next unless ["0", "\0"].include?(type) && name.downcase.end_with?(".safetensors")
+
+        basename = File.basename(normalized)
+        if (previous = weight_basenames[basename])
+          unsafe << "#{name}: duplicate weight basename also used by #{previous}"
+        else
+          weight_basenames[basename] = name
+        end
+      end
+    end
+    unsafe
+  rescue StandardError => error
+    ["archive could not be inspected (#{error.class}: #{error.message})"]
   end
 end
