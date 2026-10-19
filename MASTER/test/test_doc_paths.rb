@@ -329,6 +329,7 @@ class TestDocPaths < Minitest::Test
 
     assert_empty broken, "maintained entry documents contain broken local links:\n  #{broken.join("\n  ")}"
   end
+
   def test_fenced_markdown_blocks_are_balanced
     broken = DOCS.filter_map do |doc|
       next unless doc.end_with?(".md") && File.file?(File.join(REPO, doc))
