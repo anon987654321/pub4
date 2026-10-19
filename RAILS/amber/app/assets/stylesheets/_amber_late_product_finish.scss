@@ -62,6 +62,15 @@ body[data-surface="luxury"] .amber-editorial-nav a {
   letter-spacing: var(--tracking-normal);
 }
 
+body[data-surface="luxury"] .amber-editorial-nav a[aria-current="page"] {
+  color: var(--pub4-signal-on-light);
+  font-weight: var(--weight-heavy);
+  text-decoration: underline;
+  text-decoration-color: var(--pub4-signal-on-light);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.28em;
+}
+
 body[data-surface="luxury"] .amber-editorial-nav a:hover,
 body[data-surface="luxury"] .amber-editorial-nav a:focus-visible {
   background: transparent;
