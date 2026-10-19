@@ -130,8 +130,24 @@ module Deploy
 
     def self.log_file(app) = File.join(RUN_DIR, "#{app[:name]}.log")
 
+    # application.css is built output and git-ignored, so a fresh worktree has
+    # none: every page of an app whose layout links it answered 500 and the
+    # rendered gates screenshotted Rails' error page instead of the layout.
+    def self.build_css(app)
+      return true unless File.file?(File.join(app[:dir], "app", "assets", "stylesheets", "application.scss"))
+      return true if File.file?(File.join(app[:dir], "app", "assets", "builds", "application.css"))
+
+      out, status = Master::Io::Exec.capture2e(RUBY, File.join(ROOT, "MASTER", "tools", "rails", "build_all_css.rb"), "--app", app[:name], chdir: ROOT, timeout: BOOT_TIMEOUT)
+      return true if status.success?
+
+      warn "triangle: #{app[:name]} css build failed\n#{out.lines.last(8).join}"
+      false
+    end
+
     def self.migrate(app)
       seed_from_main(app)
+      return false unless build_css(app)
+
       out, status = Master::Io::Exec.capture2e(env_for(app), BUNDLE, "exec", RUBY, "bin/rails", "db:prepare", chdir: app[:dir], timeout: BOOT_TIMEOUT)
       return true if status.success?
 
