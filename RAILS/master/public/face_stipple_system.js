@@ -477,7 +477,7 @@
     get profiles() { return profiles(); },
     get system() { return active; },
     get enabled() { return enabled; },
-    install, uninstall, snapshot
+    install, uninstall, snapshot, isFaceScene
   });
 
   window.addEventListener("master:face-ready", install);
