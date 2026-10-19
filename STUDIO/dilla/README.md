@@ -128,24 +128,24 @@ was far larger, is not lost. The tag `dilla-engine-final` marks the last commit 
 carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and
 `git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it. The tag also preserves the earlier browser/Three.js `RadioVideo` and `LiveAudiovisual` implementation. Those renderers depend on their historical bundle and output contract, so they are deliberately not copied into this engine's FFmpeg video path.
 
-## Library layout
+## One Ruby source, explicit data
 
-The executable `dilla.rb` is a thin shell. The file `lib/dilla.rb` loads the modules of
-`lib/dilla/`, which hold chord voicing, synthesis, voices, drums and kits, the
-sequencer, the arpeggios and the flow arpeggio, the organ, the soundfont bridge, MIDI,
-the playlist bags, and then the sound path: `stream.rb` has every filter and effect as a
-processor with memory, `stereo.rb` the pan law, the ping-pong echo and the imager,
-`stages.rb` the optional effect stages, `noise.rb` the noise and sparkle layers,
-`tape.rb` the tape stack, `mastering.rb` the mixing and mastering chain, `moves.rb` the
-master stage and the hand that makes live moves, `streamer.rb` one pass rendered a block
-at a time, `show.rb` the passes and decks, and `player.rb` the pipe to the player.
+`dilla.rb` is the single authoritative Ruby implementation: chord parsing and voicing,
+progression selection, groove timing, arpeggiation, generative melody, organ, instrument and
+drum synthesis, soundfont bridging, effects, tape, mixing and mastering, reference analysis,
+industrial-techno generation, playback, and WAV/MIDI/MP4 output all live in labelled
+sections of this file. There are no parallel per-subsystem Ruby implementations to keep in
+sync.
 
-The
-file `data/dilla.json` is the runtime pool of progressions, patches, groove profiles,
-drum patterns, stages, noise layers, the stereo places, the master and the shared
-bus-effect rigs. The file `data/music_theory.json` is the interval, chord and
-harmonic-motion reference with the curated original two- and three-bar progressions, and
-`data/showcase.json` is the Blue Hour arrangement. `data/recovered_music.json` preserves 42 named historical progression profiles, three legacy progression groups, drum/swing studies, synthesis notes and five sample-study leads. Artist and track labels remain unverified research leads; this file is not loaded into the runtime progression pool.
+The data stays separate because it is music, not executable logic. `data/dilla.json` is the
+validated runtime pool of progressions, patches, groove profiles, drum patterns, stages,
+noise layers, stereo placement, mastering parameters and shared bus-effect rigs.
+`data/music_theory.json` holds interval, chord and harmonic-motion references plus curated
+two- and three-bar progressions. `data/showcase.json` is the Blue Hour arrangement.
+`data/recovered_music.json` preserves 42 named historical progression profiles, three
+legacy progression groups, drum/swing studies, synthesis notes and five sample-study leads.
+Artist and track labels remain unverified research leads; this archive is not loaded into the
+runtime progression pool.
 
 To hear it, `ruby dilla.rb --play` streams without end,
 `ruby dilla.rb --progression 3 --seed 5 --out take.wav` renders one pass,
@@ -153,10 +153,8 @@ To hear it, `ruby dilla.rb --play` streams without end,
 `ruby dilla.rb --arp list` names the arpeggios.
 
 The theory catalogue is explanatory source material; runtime choices still come from the
-engine's validated data pools.
-
-Curated compositions list suggested voice patches and
-intent so they can be auditioned as distinct arrangements.
+validated data pools. Curated compositions list suggested voice patches and intent so they
+can be auditioned as distinct arrangements.
 
 ## Audio-reference analysis and style learning
 
