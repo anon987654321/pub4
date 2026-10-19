@@ -43,7 +43,7 @@ Each validated, owned repair batch is committed and pushed before the next batch
 When code changes behavior, interfaces, commands, configuration or operational expectations, update the relevant README or contract in the same batch and regenerate affected generated documentation from its canonical source. For agent entry files, edit the marked block here and run `cd MASTER && rake docs:agent_contracts`; verify with `cd MASTER && rake lint:agent_contracts`. Never hand-edit generated copies or churn unrelated docs.
 
 Operational constraints:
-- Shared checkout: keep commits path-scoped and use a worktree for multi-file refactors.
+- Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro outputs are irreplaceable. Never overwrite a take or change a rendered sound/look by taste alone.
@@ -78,10 +78,10 @@ says so explicitly.
 
 **Never read-modify-write a file another session may hold.** Read, edit and
 write is three moments; a commit landing between the read and the write is
-silently reverted by your write. To publish safely: `git fetch origin`,
-`git worktree add -q ../pub4-<name> origin/main --detach`, apply there, commit,
-`PUB4_PUSH_ALL=1 git push origin HEAD:main`, then `git worktree remove --force`
-and `git worktree prune`. Delete the worktree in the same session that made it.
+silently reverted by your write. Keep the gap short: read the file, edit it and
+`git commit -- <paths>` in one step, then `git fetch origin`, check
+`git log --oneline origin/main..HEAD` and `git push origin HEAD:main`
+(`PUB4_PUSH_ALL=1` when more than your commit goes).
 
 **Verify the instrument before the finding.** Measurement code here is wrong
 about the code more often than the code is wrong about the world. Check a probe
@@ -98,7 +98,7 @@ reading. An env var set by nobody in `MASTER/` may be set in `RAILS/` or
 `OPENBSD/`. And before recording an orphan, ask what it is a second copy of —
 that question, not "who calls it", is what has actually paid for deletions.
 
-**Read a ratchet in a clean worktree, once, after the tree stops moving.**
+**Read a ratchet once, after the tree stops moving.**
 `bin/operator measure` in the shared checkout counts other sessions'
 uncommitted edits, `test_no_ratchet_is_slack` skips whenever a measured tree is
 dirty, and a low recorded mid-session locks in a state that was not clean. Read
@@ -428,7 +428,7 @@ gates it names exist.
     operator's own audit trail, checkable only against a session transcript,
     which is not an artefact this repo keeps.
 
-Isolated checkout if more than one agent is in the repo: `MASTER/bin/operator worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
+There is one checkout and it is shared; work in it and write straight to main. It has one git index, so `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the rule, and `MASTER/tools/block_branching.rb` refuses worktrees, branches and PRs.
 
 ## Patch closeout
 
@@ -460,9 +460,9 @@ in `OPENBSD/CLAUDE.md`.
 - **No browser verification by the agent.** Driving a browser to confirm its
   own clicks is a computer-use driver, and so are screenshot and VNC workers.
   Rendered pages are measured by the gates over CDP, on the deploy host.
-- **No parallel change streams.** Isolation is `operator worktree`, one checkout
-  per line of work, merged and deleted in the same session, and the fix loop
-  commits only the paths its own pass changed. Docker, Modal and Daytona
+- **No parallel change streams.** One checkout, written straight to main: no
+  worktree, branch or PR, and the fix loop commits only the paths its own pass
+  changed. Docker, Modal and Daytona
   backends, a worker fleet and an agent process table answer a question one
   OpenBSD host does not ask. A session writable set seeded from git-dirty paths
   inverts in a shared checkout, admitting the files other sessions hold; the

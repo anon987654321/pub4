@@ -27,7 +27,7 @@ Each validated, owned repair batch is committed and pushed before the next batch
 When code changes behavior, interfaces, commands, configuration or operational expectations, update the relevant README or contract in the same batch and regenerate affected generated documentation from its canonical source. For agent entry files, edit the marked block here and run `cd MASTER && rake docs:agent_contracts`; verify with `cd MASTER && rake lint:agent_contracts`. Never hand-edit generated copies or churn unrelated docs.
 
 Operational constraints:
-- Shared checkout: keep commits path-scoped and use a worktree for multi-file refactors.
+- Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro outputs are irreplaceable. Never overwrite a take or change a rendered sound/look by taste alone.

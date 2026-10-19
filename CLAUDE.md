@@ -55,7 +55,7 @@ MASTER/bin/operator gate --scan-only     # the same ladder, writing nothing
 MASTER/bin/operator status               # what is dirty, per tree
 MASTER/bin/operator test                 # the suites
 MASTER/bin/operator measure              # every ratchet, current vs ceiling
-MASTER/bin/operator worktree <name>      # your own checkout — see the first trap
+MASTER/bin/operator land -m <msg> <path>...  # commit those paths, re-check, push main
 MASTER/bin/operator vps state | deploy   # the box
 
 cd MASTER && bin/check               # ordinary code
@@ -86,15 +86,15 @@ surface. Two runtime surfaces; STUDIO is a governed production tree.
 
 ## Five traps, in the order they will bite you
 
-1. **The checkout is shared, so take a worktree by default.** Several agents edit
-   this tree at once. `git commit -a` sweeps up someone else's half-finished work,
-   and `git push` publishes every commit beneath yours. Prefer `MASTER/bin/operator
-   worktree <name>` for any change past a trivial one-file edit — a clean tree with
-   no other session's dirt is worth the setup, and it is how this file was last
-   edited. Merge it back and delete the worktree and its branch in the same
-   session; a lingering worktree is its own hazard. Writing straight to main is the
-   exception now — and when you do, commit path-scoped: `git commit -- <paths>`
-   with no prior `git add`.
+1. **Write straight to main. No worktrees, no branches, no pull requests.** The
+   checkout is shared and several agents edit it at once, so commit path-scoped:
+   `git commit -- <paths>` with no prior `git add` (a new file needs `git add --
+   <that path>` and nothing else). Never `git commit -a`, which sweeps up someone
+   else's half-finished work. A hook (`MASTER/tools/block_branching.rb`) refuses
+   creating a worktree or branch, opening or merging a PR, and pushing any ref but
+   main; `bin/operator worktree` refuses too. Removing a leftover worktree or
+   branch stays allowed. `MASTER/bin/operator land -m <msg> <path>...` is the
+   whole landing: commit those paths, re-check, push main.
 2. **Strict loading is on in every environment.** Reading a lazy association off a
    record fetched by id raises, in test and production both. Associations carrying
    a `:destroy` cascade are exempt (`Shared::CascadingAssociationsLoad`), which is
@@ -127,8 +127,8 @@ Neither can tell sessions apart; nothing in git can. Path scoping bounds the
 commit, not the push — `git push` sends every commit beneath yours, and on
 2026-08-10 one push carried four commits another session had told its user were
 still local. Run `git log --oneline origin/main..HEAD` before pushing and say in
-your report what went with you. There is no per-commit push; the only real fix is
-a worktree.
+your report what went with you. There is no per-commit push, so land small and
+often: the fewer commits sit unpushed, the fewer ride along.
 
 Paths do not identify sessions either. Everything commits as the same author, and
 inferring "this is my tree, so this is my commit" was wrong twice on 2026-08-10,

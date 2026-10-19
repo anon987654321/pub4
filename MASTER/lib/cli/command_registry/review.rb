@@ -165,7 +165,10 @@ module Master
       end
 
       def worktree_fix_requested?
-        ENV.fetch("MASTER_FIX_WORKTREE", "1") != "0" && ENV["MASTER_FIX_WORKTREE_CHILD"] != "1"
+        # This repository writes straight to main, so /fix runs in the checkout and its
+        # per-pass commits push to main. The isolated worktree stays only as an explicit
+        # MASTER_FIX_WORKTREE=1 opt-in.
+        ENV.fetch("MASTER_FIX_WORKTREE", "0") == "1" && ENV["MASTER_FIX_WORKTREE_CHILD"] != "1"
       end
 
       def dispatch_fix_in_worktree(raw:, root:, target:)

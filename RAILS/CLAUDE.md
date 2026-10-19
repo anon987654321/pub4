@@ -106,11 +106,10 @@ and `/fix` mutates the working tree. `MASTER_GATE_SCAN_ONLY=1` for preflight.
   Structural baselines still require `GATE_SNAPSHOT_UPDATE=1`.
 - **Deploy sheds amber and bsdports**, and TLS keeps answering, so the outage
   looks like `curl 000` rather than a 5xx. Check ports 61352 and 47312 directly.
-- **In a worktree, live gates measure main.** The local fleet serves the main
-  checkout, so a view change stays invisible to rendered gates until it merges,
-  while gate data files are read from your tree. App suites do run in a
-  worktree: `cd RAILS/<app> && RBENV_VERSION=4.0.5 rbenv exec bundle exec rails
-  test` prepares its own sqlite from the checked-in schema.
+- **App suites run in the checkout.** `cd RAILS/<app> && RBENV_VERSION=4.0.5
+  rbenv exec bundle exec rails test` prepares its own sqlite from the checked-in
+  schema. The local fleet (`bin/operator triangle up`) serves this checkout, so
+  a view change shows in the rendered gates as soon as it is saved.
 - **Horizon features** in `apps.horizon.yml` are `agent: ignore` — do not
   implement unprompted.
 
