@@ -91,11 +91,11 @@
 
 <% if home %>
   <nav class="amber-editorial-nav" aria-label="<%= t("nav.primary_nav") %>">
-    <%= link_to t("home.new_in"), items_path %>
-    <%= link_to t("nav.outfits"), outfits_path %>
-    <%= link_to t("nav.feed"), posts_path %>
-    <%= link_to t("nav.connections"), connections_path %>
-    <%= link_to t("nav.messages"), messages_path if authenticated? %>
+    <%= link_to t("home.new_in"), items_path, aria: { current: current_page?(items_path) ? "page" : nil } %>
+    <%= link_to t("nav.outfits"), outfits_path, aria: { current: current_page?(outfits_path) ? "page" : nil } %>
+    <%= link_to t("nav.feed"), posts_path, aria: { current: current_page?(posts_path) ? "page" : nil } %>
+    <%= link_to t("nav.connections"), connections_path, aria: { current: current_page?(connections_path) ? "page" : nil } %>
+    <%= link_to t("nav.messages"), messages_path, aria: { current: current_page?(messages_path) ? "page" : nil } if authenticated? %>
   </nav>
 <% end %>
 
