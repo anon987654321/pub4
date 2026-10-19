@@ -79,6 +79,8 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
     white_floor = Float(contrast_floors.fetch("signal_on_white_min"))
     paper_floor = Float(contrast_floors.fetch("signal_on_paper_min"))
     motion = identity.fetch("motion")
+    art_direction = identity.fetch("art_direction")
+    typography_roles = identity.fetch("typography_roles")
     adaptations = identity.fetch("adaptations")
     avoid = identity.fetch("avoid")
 
@@ -113,6 +115,16 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
       motion.fetch("default") != "still" ||
       motion.fetch("change_requires_semantic_state") != true ||
       motion.fetch("reduced_motion_must_preserve_meaning") != true ||
+      art_direction.fetch("subject_count").to_i != 1 ||
+      art_direction.fetch("preserve_media_colour") != true ||
+      art_direction.fetch("preserve_likeness") != true ||
+      art_direction.fetch("grade_is_explicit") != true ||
+      !art_direction.fetch("typography_layer").to_s.include?("editable") ||
+      !art_direction.fetch("signal_usage").to_s.include?("never colour-grade") ||
+      typography_roles.fetch("display") != "text-display" ||
+      typography_roles.fetch("body") != "text-base" ||
+      typography_roles.fetch("technical") != "font-mono" ||
+      !typography_roles.fetch("wordmark").to_s.include?("original") ||
       !avoid.any? { |item| item.to_s.include?("protected brand expression") } ||
       !required_adapters.all? { |key| adaptations.fetch(key).is_a?(String) && !adaptations.fetch(key).empty? }
   rescue Psych::Exception, KeyError, TypeError, ArgumentError
@@ -147,6 +159,18 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
           default: still
           change_requires_semantic_state: true
           reduced_motion_must_preserve_meaning: true
+        art_direction:
+          subject_count: 1
+          typography_layer: "separate and editable critical copy"
+          signal_usage: "original graphics only; never colour-grade photographic subjects with the signal"
+          preserve_media_colour: true
+          preserve_likeness: true
+          grade_is_explicit: true
+        typography_roles:
+          display: text-display
+          body: text-base
+          technical: font-mono
+          wordmark: original pub4 artwork only
         adaptations:
           master: "signal on ink"
           brgen: "retain deep-blue identity"
