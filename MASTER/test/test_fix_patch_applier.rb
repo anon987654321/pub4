@@ -50,6 +50,15 @@ class PatchApplierTest < Minitest::Test
   end
 
   # A failed hunk left Oops.rej in the MASTER tree /fix ran in.
+  # The refused hunks come back with the failure, so a rejected diff can be read rather than guessed at.
+  def test_a_failed_diff_carries_the_hunks_patch_refused
+    result = Applier.apply(ORIGINAL, diff(from: "line seventeen", to: "line SEVENTEEN"))
+
+    assert_instance_of Applier::Failure, result
+    assert_includes result.rejected, "-line seventeen"
+    assert_includes result.rejected, "+line SEVENTEEN"
+  end
+
   def test_a_failed_hunk_leaves_nothing_in_the_working_directory
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) { Applier.apply(ORIGINAL, diff(from: "line seventeen", to: "line SEVENTEEN")) }

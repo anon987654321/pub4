@@ -14,7 +14,8 @@ module Master
       DIFF_THRESHOLD = 8_192
 
       Success = Struct.new(:source, keyword_init: true)
-      Failure = Struct.new(:reason, keyword_init: true)
+      # `rejected` is the text of the hunks patch(1) refused, so a failure can be read, not guessed at.
+      Failure = Struct.new(:reason, :rejected, keyword_init: true)
 
       # A diff naming two files, applied to the one temp copy this class makes,
       # is not merely wrong — patch(1) applies the first file's hunks, then
@@ -25,6 +26,8 @@ module Master
       # the working directory. The caller only ever hands one file's source, so
       # a second header is a model error and is refused before the shell.
       MULTI_FILE_HEADER = /^--- /
+
+      REJECTED_CHARS = 1_200
 
       # A model writes a hunk header's line counts by estimate, and patch(1) refuses
       # a hunk whose body disagrees with them, so a correct edit with a wrong count
@@ -93,9 +96,10 @@ module Master
           rejects = "#{f.path}.rej"
           out, err, status = Master::Io::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", "-r", rejects, f.path,
                                                        stdin_data: @diff, chdir: File.dirname(f.path))
+          refused = File.exist?(rejects) ? File.read(rejects)[0, REJECTED_CHARS] : nil
           FileUtils.rm_f(rejects)
           # patch(1) reports a failed hunk on stdout, so err alone gave reason: "".
-          return Failure.new(reason: failure_reason(out, err)) unless status.success?
+          return Failure.new(reason: failure_reason(out, err), rejected: refused) unless status.success?
 
           result = File.read(f.path)
           return Failure.new(reason: "no change") if result.strip == @original.strip

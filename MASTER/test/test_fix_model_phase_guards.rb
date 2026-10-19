@@ -201,6 +201,20 @@ class TestFixModelPhaseGuards < Minitest::Test
     ENV.delete("MASTER_FIX_FILE_BUDGET_S")
   end
 
+  # A repair is a proposal, a retry after a patch that did not apply, and a verifier call: three or four
+  # model calls of twenty to sixty seconds. The budget has to hold them, and MASTER_FIX_FILE_BUDGET_S overrides it.
+  def test_the_default_file_budget_holds_a_repair_with_a_retry_and_the_environment_overrides_it
+    ENV.delete("MASTER_FIX_FILE_BUDGET_S")
+
+    assert_operator Ledger.file_budget_s, :>=, 4 * 60
+
+    ENV["MASTER_FIX_FILE_BUDGET_S"] = "7"
+
+    assert_equal 7, Ledger.file_budget_s
+  ensure
+    ENV.delete("MASTER_FIX_FILE_BUDGET_S")
+  end
+
   def test_a_fast_file_keeps_its_answer
     loop = budget_loop
     loop.send(:start_file_budget)

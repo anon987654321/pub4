@@ -104,12 +104,21 @@ module Master
           end
 
           RunLedger.declined("patch_rejected", file: path, law: @law.id, detail: result.reason)
+          show_rejected_hunks(path, result)
           failure = "your diff did not apply to the file (#{result.reason.to_s[/\A[^-]+/].to_s.strip}); copy every context line exactly as shown in the complete source"
           @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: result.reason.to_s[0, 160])
         rescue StandardError => e
           return unless handle_fix_exception(e, { law: @law.id, file: path }, event: "repair_loop:fix_error") == :retry
         end
         nil
+      end
+
+      # What patch(1) refused, on one trace line, so the next change to the diff format starts from evidence.
+      def show_rejected_hunks(path, result)
+        return if result.rejected.to_s.empty?
+
+        shown = result.rejected.inspect[0, 600]
+        Master::Trace::Dmesg.status("fix0", "patch rejected in #{File.basename(path)}: #{shown}")
       end
 
       # The note for the next try when a locked repair dropped a definition, else nil. A repair may add to

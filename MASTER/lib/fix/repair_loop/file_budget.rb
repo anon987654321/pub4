@@ -6,7 +6,7 @@ module Master
   module Fix
     class RepairLoop
       # Two bounds on what one proposal may cost: the wall-clock a file gets for
-      # its model calls (RunLedger.file_budget_s, 90 s by default), and the lines
+      # its model calls (RunLedger.file_budget_s, 240 s by default), and the lines
       # a fix may touch (the finding's own line plus a margin). A file that runs
       # out of time is skipped and recorded, never waited out; a proposal that
       # rewrites lines no finding names is refused before the verifier is asked.

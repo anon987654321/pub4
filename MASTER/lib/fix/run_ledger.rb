@@ -12,7 +12,10 @@ module Master
     module RunLedger
       MAX_REJECTS_PER_FILE = 2
       LANE_FAILURES_BEFORE_DROP = 2
-      FILE_BUDGET_S = 90
+      # A repair is a proposal, a retry when its patch does not apply, and a verifier call: three or four
+      # model calls, and the claude-cli lane answers each in twenty to sixty seconds. Ninety seconds spent
+      # the budget on the second proposal, after the first patch failed, and the file was skipped.
+      FILE_BUDGET_S = 240
 
       @mutex = Mutex.new
       @reasons = Hash.new(0)
