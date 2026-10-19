@@ -10,17 +10,10 @@
   const MAX_POINTS = 14_000;
   const MOBILE_FALLBACK = 420;
   const DESKTOP_FALLBACK = 1_200;
-  const PROFILES = Object.freeze({
-    idle:      { density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 },
-    thinking:  { density: 0.72, ripple: 0.16, turbulence: 0.28, luminosity: 0.91, attract: 0.74 },
-    listening: { density: 0.62, ripple: 0.17, turbulence: 0.09, luminosity: 0.85, attract: 0.86 },
-    working:   { density: 0.75, ripple: 0.24, turbulence: 0.34, luminosity: 0.90, attract: 0.60 },
-    speaking:  { density: 0.84, ripple: 0.60, turbulence: 0.19, luminosity: 0.98, attract: 0.40 },
-    warning:   { density: 0.84, ripple: 0.52, turbulence: 0.48, luminosity: 0.96, attract: 0.22 },
-    error:     { density: 0.56, ripple: 0.82, turbulence: 0.65, luminosity: 1.00, attract: 0.04 },
-    ready:     { density: 0.60, ripple: 0.06, turbulence: 0.06, luminosity: 0.82, attract: 0.25 },
-    sleeping:  { density: 0.30, ripple: 0.00, turbulence: 0.00, luminosity: 0.48, attract: 0.10 }
-  });
+  // The nine moods live in MASTER/data/tokens.yml (face_interface.stipple.profiles) and arrive
+  // as MASTER_FACE_CONTRACT; only idle is kept here so a page without the contract still draws.
+  const IDLE_PROFILE = Object.freeze({ density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 });
+  const profiles = () => window.MASTER_FACE_CONTRACT?.stipple?.profiles || {};
 
   const overrides = {};
   let wrappedRenderer = null;
@@ -214,7 +207,8 @@
 
   function profileFor(state) {
     const mode = String(state?.mode || state?.mood || "idle").toLowerCase();
-    return PROFILES[mode] || PROFILES.idle;
+    const table = profiles();
+    return table[mode] || table.idle || IDLE_PROFILE;
   }
 
   function configure(values = {}) {

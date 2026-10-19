@@ -31,6 +31,14 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /vThreshold > uDensity/);
 });
 
+test("stipple moods come from the face contract, not a second table", () => {
+  const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
+  assert.match(system, /MASTER_FACE_CONTRACT\?\.stipple\?\.profiles/);
+  assert.doesNotMatch(system, /speaking:\s*\{ density/);
+  const modes = tokens.match(/modes: \[([^\]]+)\]/)[1].split(",").map((name) => name.trim());
+  for (const mode of modes) assert.match(tokens, new RegExp(`^        ${mode}:\\s+\\{ density:`, "m"));
+});
+
 test("playground is opt-in and supplies seven semantic states", () => {
   assert.match(playground, /get\("playground"\) !== "1"/);
   for (const mode of ["idle", "thinking", "listening", "working", "speaking", "warning", "error"]) assert.match(playground, new RegExp(mode));
