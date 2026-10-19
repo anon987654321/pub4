@@ -163,15 +163,14 @@ module Master
           "--base", base,
           "--title", title,
           "--body", body,
-          "--json", "number,url",
           timeout: [DEFAULT_TIMEOUT, 300].max
         )
         return Result.new(false, "GitHub PR create failed: #{compact(output)}", nil, nil, nil) unless status.success?
 
-        data = JSON.parse(output)
-        number = Integer(data.fetch("number"))
-        Result.new(true, "GitHub PR ##{number} created", number, data.fetch("url").to_s, nil)
-      rescue JSON::ParserError, KeyError, ArgumentError => e
+        url = output.to_s[%r{https://github\.com/\S+/pull/\d+}]
+        number = Integer(url[%r{/pull/(\d+)\z}, 1])
+        Result.new(true, "GitHub PR ##{number} created", number, url, nil)
+      rescue TypeError, ArgumentError, NoMethodError => e
         Result.new(false, "GitHub PR create returned invalid metadata: #{e.message}", nil, nil, nil)
       end
 

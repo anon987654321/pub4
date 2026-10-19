@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
-require_relative "master_design"
+require_relative "../../master_design"
 
 module Operator
   # Flags var(--token, #hex) fallbacks whose hex literal matches NO real

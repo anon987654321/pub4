@@ -31,7 +31,7 @@ class TestGitHubOperations < Minitest::Test
     exec = FakeExec.new([
       ["gh version 2\n", FakeStatus.new(true)],
       ["Logged in to github.com\n", FakeStatus.new(true)],
-      [{ number: 12, url: }.to_json, FakeStatus.new(true)],
+      ["#{url}\n", FakeStatus.new(true)],
       ["OPEN\t#{head}\t\t\n", FakeStatus.new(true)],
       ["network connection reset\n", FakeStatus.new(false)],
       ["already merged\n", FakeStatus.new(false)],
@@ -62,7 +62,7 @@ class TestGitHubOperations < Minitest::Test
     exec = FakeExec.new([
       ["gh version 2\n", FakeStatus.new(true)],
       ["Logged in to github.com\n", FakeStatus.new(true)],
-      [{ number: 14, url: }.to_json, FakeStatus.new(true)],
+      ["#{url}\n", FakeStatus.new(true)],
       ["OPEN\t#{head}\t\t\n", FakeStatus.new(true)],
       ["network connection reset\n", FakeStatus.new(false)],
       ["already merged\n", FakeStatus.new(false)],
@@ -93,7 +93,7 @@ class TestGitHubOperations < Minitest::Test
     exec = FakeExec.new([
       ["gh version 2\n", FakeStatus.new(true)],
       ["Logged in to github.com\n", FakeStatus.new(true)],
-      [{ number: 13, url: }.to_json, FakeStatus.new(true)],
+      ["#{url}\n", FakeStatus.new(true)],
       ["API unavailable\n", FakeStatus.new(false)],
     ])
     operations = Master::Io::GitHubOperations.new(

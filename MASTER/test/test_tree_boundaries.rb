@@ -8,7 +8,7 @@ class TreeBoundaryContractTest < Minitest::Test
   RUNTIME_GLOBS = {
     "MASTER/lib" => File.join(ROOT, "MASTER", "lib", "**", "*.rb"),
     "RAILS apps" => File.join(ROOT, "RAILS", "*", "app", "**", "*.rb"),
-    "RAILS shared" => File.join(ROOT, "RAILS", "shared", "app", "**", "*.rb"),
+    "RAILS shared" => File.join(ROOT, "RAILS", "__shared", "app", "**", "*.rb"),
     "RAILS app libs" => File.join(ROOT, "RAILS", "*", "lib", "**", "*.rb"),
     "STUDIO dilla" => File.join(ROOT, "STUDIO", "dilla", "**", "*.rb"),
   }.freeze

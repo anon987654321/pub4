@@ -162,7 +162,7 @@ module Master
       # Where Rails and Sass look: beside the source, the app root, the view and
       # stylesheet load paths, and the shared engine every app mounts.
       def lookup_dirs(root, source, ref)
-        shared = File.join(@root, "RAILS", "shared")
+        shared = File.join(@root, "RAILS", "__shared")
         loads = [root, shared].flat_map do |base|
           [File.join(base, "app", "views"), File.join(base, "app", "assets", "stylesheets")]
         end

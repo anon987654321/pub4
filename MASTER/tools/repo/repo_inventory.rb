@@ -116,7 +116,7 @@ def duplicate_basename_entries
 end
 
 def low_density_slug_entries
-  require File.expand_path("../lib/ground/parameterized_slug.rb", __dir__)
+  require File.expand_path("../../lib/ground/parameterized_slug.rb", __dir__)
   slug = Master::Ground::ParameterizedSlug
 
   repo_paths.filter_map do |path|

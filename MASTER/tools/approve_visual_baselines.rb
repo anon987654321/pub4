@@ -86,7 +86,7 @@ module VisualBaselineApproval
       { id:, source: screenshot, target:, bytes: File.binread(screenshot), digest: }
     rescue KeyError => e
       raise ApprovalError, "#{id} manifest is missing #{e.key.inspect}"
-    rescue PngDiff::InvalidPng => e
+    rescue Deploy::PngDiff::InvalidPng => e
       raise ApprovalError, "#{id} screenshot is not a supported PNG: #{e.message}"
     end
 
@@ -149,7 +149,7 @@ if $PROGRAM_NAME == __FILE__
     raise VisualBaselineApproval::ApprovalError, "--manifest is required" unless options[:manifest]
 
     VisualBaselineApproval.approve(manifest_path: options[:manifest], selected: options[:surfaces], replace: options[:replace])
-  rescue OptionParser::ParseError, VisualBaselineApproval::ApprovalError, JSON::ParserError, SystemCallError, PngDiff::InvalidPng => e
+  rescue OptionParser::ParseError, VisualBaselineApproval::ApprovalError, JSON::ParserError, SystemCallError, Deploy::PngDiff::InvalidPng => e
     warn "visual_baseline0: BLOCKED — #{e.class}: #{e.message}"
     exit 1
   end

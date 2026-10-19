@@ -37,9 +37,9 @@ module Master
         return unless File.file?(path)
 
         File.foreach(path).with_index do |line, index|
-          next unless line.match?(/^- [ ]/)
+          next unless line.match?(/^- \[ \]/)
 
-          text = line.sub(/^- [ ]s*/, "").strip
+          text = line.sub(/^- \[ \]\s*/, "").strip
           next if text.empty? || text.match?(/(agent|ignore)/i)
           items << { kind: "todo", priority: 40, source: "TODO.md:#{index + 1}", text: text[0, 220] }
           break if items.count { |item| item[:kind] == "todo" } >= 3
