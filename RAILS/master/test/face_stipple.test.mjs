@@ -184,7 +184,27 @@ test("playground is opt-in and exposes all canonical semantic states", () => {
   assert.match(css, /\.master-stipple-diagnostics/);
 });
 
-test("playground routes all canonical states through FaceState", () => {\n  let applied = null;\n  const modes = ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"];\n  const window = {\n    MASTER_FACE_CONTRACT: { state: { modes } },\n    MASTER_FACE_STATE: { setMode: (mode, detail) => { applied = { mode, detail }; } },\n    addEventListener() {},\n    dispatchEvent() {}\n  };\n  const location = { search: "" };\n  runInNewContext(playground, {\n    window, location, URLSearchParams,\n    CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } }\n  });\n  assert.equal(window.FacePlayground.states.length, 9);\n  assert.equal(window.FacePlayground.setState("sleeping"), true);\n  assert.equal(applied.mode, "sleeping");\n  assert.equal(applied.detail.source, "face-playground");\n  assert.equal(window.FacePlayground.setState("not-a-state"), false);\n});\n\ntest("stipple module boots and builds from the canonical idle profile", () => {
+test("playground routes all canonical states through FaceState", () => {
+  let applied = null;
+  const modes = ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"];
+  const window = {
+    MASTER_FACE_CONTRACT: { state: { modes } },
+    MASTER_FACE_STATE: { setMode: (mode, detail) => { applied = { mode, detail }; } },
+    addEventListener() {},
+    dispatchEvent() {}
+  };
+  const location = { search: "" };
+  runInNewContext(playground, {
+    window, location, URLSearchParams,
+    CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } }
+  });
+  assert.equal(window.FacePlayground.states.length, 9);
+  assert.equal(window.FacePlayground.setState("sleeping"), true);
+  assert.equal(applied.mode, "sleeping");
+  assert.equal(applied.detail.source, "face-playground");
+  assert.equal(window.FacePlayground.setState("not-a-state"), false);
+});
+test("stipple module boots and builds from the canonical idle profile", () => {
   let coarsePointer = false;
   let narrowViewport = false;
   let hardwareCores = 8;
