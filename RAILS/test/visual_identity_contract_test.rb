@@ -12,6 +12,8 @@ class VisualIdentityContractTest < Minitest::Test
   SHARED_CHROME = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_layout_chrome.scss")
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
   BRGEN_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
+  FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
+  SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
 
   def test_signal_is_canonical_original_and_semantically_named
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
@@ -57,7 +59,20 @@ class VisualIdentityContractTest < Minitest::Test
 
     assert_includes css, ".page-header h1.pub4-display-title"
     assert_includes css, "font-size: var(--text-display);"
+    assert_includes css, "line-height: var(--leading-none);"
     assert_includes view, 'class: "pub4-display-title"'
+  end
+
+  def test_reduced_motion_preserves_meaning_without_perpetual_animation
+    identity = Operator::MasterDesign.tokens.fetch("visual_identity")
+    face_motion = File.read(FACE_MOTION, encoding: "UTF-8")
+    shared_motion = File.read(SHARED_MOTION, encoding: "UTF-8")
+
+    assert_equal "still", identity.dig("motion", "default")
+    assert_equal true, identity.dig("motion", "reduced_motion_must_preserve_meaning")
+    assert_includes face_motion, "prefers-reduced-motion: reduce"
+    assert_includes shared_motion, "prefers-reduced-motion: reduce"
+    assert_includes shared_motion, "animation: none;"
   end
 
   def test_product_dialects_remain_explicit_in_the_visual_contract
