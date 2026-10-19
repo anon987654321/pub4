@@ -11,7 +11,7 @@ repo harnesses > this per-tree contract.
 
 ## The fleet is four, and master is the one that gets dropped
 
-`bin/vps-deploy all` deploys `master brgen amber bsdports`, in that order,
+`bin/vps-deploy all` deploys `master brgen bsdports`, in that order,
 halting the pass on the first failure. Prefer it over four hand-typed runs.
 
 Until it existed there was no way to say "deploy everything", so the set lived
@@ -19,8 +19,7 @@ in whoever was typing — and master is not under `/home/*/app`, so an operator
 enumerating the Rails apps does not see it and leaves it behind. A pull moves
 the checkout for everything; only a deploy makes any of it live.
 
-The order is load-bearing, not alphabetical. Every deploy sheds amber and
-bsdports: they land in `rcctl failed` with ports 61352/47312 closed while relayd
+The order is load-bearing, not alphabetical. A deploy may shed bsdports: they land in `rcctl failed` with ports 61352/47312 closed while relayd
 keeps answering TLS, so the outage reads as a hang rather than a 5xx and nothing
 reports it. Deploying those two last folds the restore into the same pass, and
 the top-level run's exit trap restores every service that was started when the
@@ -180,7 +179,7 @@ not the deployed script's outcome. Always verify independently via:
 2. `doas rcctl check <app>`.
 3. A live `curl` against the app's actual URL, not just `/up`.
 
-## `resource_guard.sh` shedding amber/bsdports — check it actually recovers
+## `resource_guard.sh` shedding bsdports — check it actually recovers
 
 Under load, the VPS's `resource_guard.sh` cron sheds `amber`/`bsdports` (tracked
 in `/var/db/resource_guard_shed`). Check that file first to confirm a down app
@@ -219,7 +218,7 @@ file sits in a comment on that file; these have no single file to sit on.
 - **No fourth public Rails app** beyond brgen, amber and bsdports until brgen's
   high-churn verticals are engines with their own migrations and tests, money and
   identity primitives live in `RAILS/__shared` with more than one consumer, and CI
-  runs the layout suite and `/up` smoke for all three apps. Every restart before
+  runs the layout suite and `/up` smoke for all two apps. Every restart before
   pub4 grew surface before its boundaries held; horizon ideas wait in
   `RAILS/apps.horizon.yml`.
 - **No staging environment.** vm23 is one vCPU and 1 GB and already sheds apps
@@ -262,7 +261,6 @@ file sits in a comment on that file; these have no single file to sit on.
   nothing names.** `bin/manual_master_deploy.ksh` (the fallback when
   `vps_deploy_master.sh` stalls), `bin/vps_production_push.sh` (the acknowledged
   hotfix path), `ptr_openbsd_amsterdam.rb` (the only door to the PTR record) and
-  `bin/amber_queue_sweep.sh` (the backlog sweep `RAILS/amber/README.md` names)
   have no cron or script caller because their caller is a person, and RUNBOOK,
   "Occasional operator tools", lists each. A zero-caller census measures the
   wrong thing for them. `dr-restore-check` and `uptime-probe` had neither a caller
@@ -274,7 +272,7 @@ file sits in a comment on that file; these have no single file to sit on.
 - **No sweep of `|| true`.** Most are idempotence on `rcctl`, `pkill`, `chmod`,
   `install` and `rm -f`. Read the exit path before removing one.
 - **No deleting the four documented fallback scripts.** `manual_master_deploy.ksh`,
-  `vps_production_push.sh`, `ptr_openbsd_amsterdam.rb` and `amber_queue_sweep.sh`
+  `vps_production_push.sh` and `ptr_openbsd_amsterdam.rb`
   look unused because `vps-deploy` and cron cover the ordinary case. Each is the
   documented answer to a failure that case cannot reach: a stalled MASTER deploy,
   a push from the box, a changed IP needing a new PTR, a stale Solid Queue

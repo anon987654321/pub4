@@ -1,9 +1,9 @@
 # Rails apps
 
-**Three Rails apps, one shared engine, and one process that answers to a hundred
+**Two Rails apps, one shared engine, and one process that answers to a hundred
 hostnames, each built so that a stranger on a phone sees a single, quiet product
-and never the machinery beneath it.** brgen is the city network, amber is the
-wardrobe, and bsdports is a search of the ports tree. They run on SQLite behind
+and never the machinery beneath it.** Brgen is the city network, and bsdports is
+a search of the ports tree. They run on SQLite behind
 Falcon, on one box called vm23, and everything they share lives in one engine
 so that a fix made once is made everywhere.
 
@@ -32,17 +32,17 @@ The MASTER web face, which serves `ai.brgen.no`, is a fourth Rails surface in
 
 Everything that builds, tests or probes these apps now lives under MASTER. The
 old RAILS `bin` directory is gone, and its work moved into `MASTER/tools/rails`,
-reached through the operator: `triangle` boots brgen, amber, bsdports and the
+reached through the operator: `triangle` boots brgen, bsdports and the
 face on the ports the live gates probe, `premerge` runs the premerge proof, `ci`
 runs each app's own `bin/ci`, and `coverage` runs the full coverage pass. Each app
 also keeps its own `bin/ci` for RuboCop, Brakeman, bundler-audit and the tests.
 The design tokens come from `MASTER/data/tokens.yml`, and the shared engine's
 `design_tokens.yml` is a file generated from it, not a second source.
 
-Production is one box. A deploy sheds amber and bsdports, and relayd keeps
-answering TLS with their ports closed, so the outage looks like a hang and not a
-server error. The deploy command restores them. If you deploy by hand, check
-ports 61352 and 47312. Health is `/up` for liveness and `/health` for the depth of
+Production is one box. Under memory pressure, bsdports may be suspended while
+relayd continues to answer TLS; the deployment command restores it. If you need
+to diagnose this state, inspect port 47312. Amber has been retired and must not be
+restarted or brought back into deployment inventory. Health is `/up` for liveness and `/health` for the depth of
 Solid Cache, Solid Queue and the database. Secrets live in `/etc/<app>.env` on the
 box, and no `config/master.key` is in git. `_deploy.sh` is the orchestrator,
 `deploy.sh` a thin shim, and each app's own script sources the shared contract.
@@ -65,7 +65,7 @@ the inventory now names them explicitly.
 Media work goes through the contract in `MASTER/contracts/studio.rb`. STUDIO owns
 postpro, replicate and dilla, and Rails does not load their classes. Provider
 tokens belong in the app's env file on the box and never in credentials or source.
-All three apps compile the same service worker from the engine's `pwa` directory,
+Both apps compile the same service worker from the engine's `pwa` directory,
 and the styled error pages in the engine's `public` directory are copied into each
 app at deploy.
 
@@ -74,8 +74,7 @@ app at deploy.
 The shared contract is `MASTER/data/laws.yml#visual_identity_contract`, and its
 values are generated from `MASTER/data/tokens.yml`. Shared hierarchy and the
 semantic signal may travel across apps; product dialects do not collapse into one
-palette. Brgen retains its local editorial identity, Amber protects garment colour
-and neutral presentation, bsdports remains terminal-green, and MASTER's face uses
+palette. Brgen retains its local editorial identity, bsdports remains terminal-green, and MASTER's face uses
 the signal on ink. Review generated assets and rendered screenshots, not source
 tokens alone.
 
