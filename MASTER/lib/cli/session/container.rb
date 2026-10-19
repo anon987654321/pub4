@@ -10,21 +10,7 @@ module Master
         keyword_init: true
       ) do
         def self.from_hash(deps)
-          new(
-            session: deps[:session],
-            agent: deps[:agent],
-            renderer: deps[:renderer],
-            logging: deps[:logging],
-            undo: deps[:undo],
-            config: deps[:config],
-            pipeline: deps[:pipeline],
-            scanner: deps[:scanner],
-            root: deps.fetch(:root, Dir.pwd),
-            diff_stager: deps[:diff_stager],
-            bus: deps[:bus],
-            watch_loop: deps[:watch_loop],
-            skills: deps[:skills],
-          )
+          new(**deps.slice(*members), root: deps.fetch(:root, Dir.pwd))
         end
       end
     end
