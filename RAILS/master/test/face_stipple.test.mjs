@@ -25,7 +25,11 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /state\??\.reducedMotion/);
   assert.match(system, /budget\.mobile_points/);
   assert.match(system, /budget\.desktop_points/);
+  assert.match(system, /MASTER_FACE_STATE\?\.renderBudget\?\.\(\)\.points/);
+  assert.match(system, /max-width: 767px/);
+  assert.match(system, /hardwareConcurrency/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
+  assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /effectiveBudget\?\.points/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /uPointSizeReferenceDepth: \{ value: clamp\(pointSize\.reference_depth/);
   assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale,\s+uPointSizeOutputMin, uPointSizeOutputMax\)/);
@@ -57,6 +61,8 @@ test("playground is opt-in and supplies seven semantic states", () => {
 
 test("stipple module boots and builds from the canonical idle profile", () => {
   let coarsePointer = false;
+  let narrowViewport = false;
+  let hardwareCores = 8;
   let prefersReducedMotion = false;
   let faceState = {};
   const window = {
@@ -75,9 +81,14 @@ test("stipple module boots and builds from the canonical idle profile", () => {
         }
       }
     },
-    MASTER_FACE_STATE: { snapshot: () => faceState },
+    navigator: { hardwareConcurrency: hardwareCores },
+    MASTER_FACE_STATE: {
+      snapshot: () => faceState,
+      renderBudget: () => ({ points: (coarsePointer || narrowViewport || hardwareCores <= 4) ? 420 : 1200 })
+    },
     matchMedia: (query) => ({
       matches: (query === "(pointer: coarse)" && coarsePointer) ||
+        (query === "(max-width: 767px)" && narrowViewport) ||
         (query === "(prefers-reduced-motion: reduce)" && prefersReducedMotion)
     }),
     addEventListener() {},
@@ -191,6 +202,12 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   // The layer never exceeds the canonical desktop/mobile point ceiling.
   assert.equal(api.createDefault(THREE, 5000).count, 1200);
   coarsePointer = true;
+  assert.equal(api.createDefault(THREE, 5000).count, 420);
+  coarsePointer = false;
+  narrowViewport = true;
+  assert.equal(api.createDefault(THREE, 5000).count, 420);
+  narrowViewport = false;
+  hardwareCores = 4;
   assert.equal(api.createDefault(THREE, 5000).count, 420);
 });
 
