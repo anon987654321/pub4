@@ -633,9 +633,7 @@ function updateRuntimeProfile() {
   State.hidden = document.hidden;
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
-  if (!State.profileOverride) {
-    rootBody.dataset.runtimeProfile = faceReducedMotionActive() ? 'battery' : (State.profileOverride || ((State.hidden || State.coarsePointer) ? 'battery' : 'calm'));
-  }
+  rootBody.dataset.runtimeProfile = faceReducedMotionActive() ? 'battery' : (State.profileOverride || ((State.hidden || State.coarsePointer) ? 'battery' : 'calm'));
   rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }
 
