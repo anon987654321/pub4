@@ -47,7 +47,8 @@ class AnalogCapabilitiesTest < Minitest::Test
     unavailable = {
       status: :unavailable,
       evidence: "https://provider.example.invalid/schema/timeout-cancellation".freeze,
-      regression_test: "STUDIO/test/test_tools_replicate.rb#test_failed_chain_is_recorded_with_its_stage_error_and_kept_frames".freeze
+      regression_test: ("STUDIO/test/test_tools_replicate.rb" \
+                        "#test_a_failed_chain_is_recorded_with_its_stage_error_and_kept_frames").freeze,
     }.freeze
     missing_test = {
       status: :verified,
