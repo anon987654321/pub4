@@ -1,7 +1,13 @@
 /* Developer-only face controls. Inert without ?playground=1 or an explicit enable(). */
 (() => {
   "use strict";
-  const STATES = ["idle", "thinking", "listening", "working", "speaking", "warning", "error"];
+  const FALLBACK_STATES = Object.freeze(["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"]);
+  const CONTRACT_STATES = window.MASTER_FACE_CONTRACT?.state?.modes;
+  const STATES = Object.freeze(Array.from(new Set(
+    (Array.isArray(CONTRACT_STATES) ? CONTRACT_STATES : FALLBACK_STATES)
+      .map((name) => String(name).toLowerCase())
+      .filter((name) => /^[a-z][a-z0-9_-]{0,31}$/.test(name))
+  )));
   let panel = null;
   const el = (tag, text) => {
     const node = document.createElement(tag);
@@ -28,9 +34,15 @@
   function setState(name) {
     const value = String(name || "").toLowerCase();
     if (!STATES.includes(value)) return false;
-    const state = window.MASTER_FACE?.State;
-    if (state) { state.mode = value; state.mood = value; }
-    window.dispatchEvent(new CustomEvent("master:stipple-state", { detail: { mode: value } }));
+    const bridge = window.MASTER_FACE_STATE;
+    if (typeof bridge?.setMode === "function") {
+      bridge.setMode(value, { source: "face-playground" });
+    } else {
+      // Compatibility for older face shells without the canonical state bridge.
+      const state = window.MASTER_FACE?.State;
+      if (state) { state.mode = value; state.mood = value; }
+    }
+    window.dispatchEvent(new CustomEvent("master:stipple-state", { detail: { mode: value, source: "face-playground" } }));
     return true;
   }
 
