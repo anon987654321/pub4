@@ -17,6 +17,7 @@ module Studio
         tmp.close
         File.chmod(mode, tmp.path)
         File.rename(tmp.path, path)
+        fsync_directory(directory) if RUBY_PLATFORM !~ /win32|mingw/
       end
       path
     end
@@ -36,6 +37,7 @@ module Studio
         tmp.close
         File.chmod(mode, tmp.path)
         File.rename(tmp.path, target)
+        fsync_directory(directory) if RUBY_PLATFORM !~ /win32|mingw/
       end
       destination
     end
@@ -70,6 +72,16 @@ module Studio
     end
 
     private
+
+    # The data fsync makes the bytes durable; syncing the containing directory
+    # makes the rename durable on POSIX filesystems after a sudden power loss.
+    def fsync_directory(directory)
+      dir_fd = IO.sysopen(directory, File::RDONLY)
+      dir_io = IO.new(dir_fd)
+      dir_io.fsync
+    ensure
+      dir_io&.close
+    end
 
     def truncate_incomplete_jsonl_tail(file)
       file.seek(0, IO::SEEK_END)
