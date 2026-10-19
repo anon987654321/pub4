@@ -21,7 +21,7 @@ module Deploy
   #   1. Every identifier in data-controller resolves to a registration — either
   #      an application.register("name", …) or a @stimulus-components table
   #      entry in one of the boot files the app's own index.js imports
-  #      (stimulus_boot.js plus whichever of _social/_brgen/_amber apply), or
+  #      (stimulus_boot.js plus whichever of _social/_brgen apply), or
   #      a file in the app's own controllers/ directory (eagerLoadControllersFrom
   #      derives the identifier from the filename).
   #
@@ -35,22 +35,20 @@ module Deploy
   class StimulusWiringGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    APPS = %w[amber brgen bsdports].freeze
+    APPS = %w[brgen bsdports].freeze
 
     # stimulus_boot.js holds what every app registers. stimulus_boot_social.js
-    # (brgen + amber, not bsdports), stimulus_boot_brgen.js and
-    # stimulus_boot_amber.js hold what only some apps mount — split out so an
+    # brgen-only components live in stimulus_boot_brgen.js;
+    # bsdports never imports these modules.
     # app that doesn't use a controller never imports its module. Each app's
     # true registration set is the union of the files its own index.js calls.
     BOOT_FILES = {
       universal: "stimulus_boot.js",
       social: "stimulus_boot_social.js",
       brgen: "stimulus_boot_brgen.js",
-      amber: "stimulus_boot_amber.js",
     }.freeze
 
     APP_BOOT_FILES = {
-      "amber" => %i[universal social amber],
       "brgen" => %i[universal social brgen],
       "bsdports" => %i[universal],
     }.freeze
@@ -279,7 +277,7 @@ module Deploy
     # that, and it did.
     # The verticals are engines that sit beside brgen as RAILS/brgen_<name> (brgen_radio holds
     # playlist and tv one level down), pinned into brgen's importmap and mounted in its routes,
-    # so their views, helpers and controllers belong to brgen. amber and bsdports have none.
+    # so their views, helpers and controllers belong to brgen. bsdports has none.
     def engine_dirs(app)
       return [] unless app == "brgen"
 
@@ -325,7 +323,7 @@ module Deploy
       normalized = path.delete_prefix("#{@rails_root}/")
       normalized.start_with?("__shared/app/helpers/", "__shared/app/components/") ||
         normalized.start_with?("#{normalized.split("/").first}/app/helpers/") ||
-        normalized.match?(%r{\A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/}) ||
+        normalized.match?(%r{\A(?:brgen|bsdports)/engines/[^/]+/app/helpers/}) ||
         normalized.match?(%r{\Abrgen_[^/]+/(?:[^/]+/)?(?:engines/[^/]+/)?app/helpers/})
     end
 

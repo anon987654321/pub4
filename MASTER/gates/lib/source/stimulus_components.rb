@@ -6,11 +6,11 @@ module Deploy
   class StimulusComponentsGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    # nested-form (amber only) and checkbox-select-all (brgen only) register
+    # checkbox-select-all (brgen only) registers
     # in their app-scoped boot files rather than stimulus_boot.js, so every
     # app that doesn't mount them never imports the module. The three files
     # together are this gate's "boot" vocabulary.
-    BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js]
+    BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js]
       .map { |f| File.join(RAILS_ROOT, "__shared/frontend", f) }.freeze
     BASELINE = File.join(RAILS_ROOT, "__shared/config/importmap_baseline.rb")
     VENDOR = File.join(RAILS_ROOT, "__shared/vendor/javascript")

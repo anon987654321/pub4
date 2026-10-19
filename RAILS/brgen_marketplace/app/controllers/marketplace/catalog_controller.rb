@@ -96,9 +96,6 @@ module Marketplace
         url: listing_url(listing),
         image_url: catalog_image_url(listing),
         reasons: ranker.reasons(listing),
-        handoff: {
-          amber_url: amber_handoff_url(listing)
-        },
         metadata: {
           locality: listing.location,
           source: "brgen",
@@ -113,23 +110,5 @@ module Marketplace
       url_for(listing.photos.first)
     end
 
-    def amber_handoff_url(listing)
-      Shared::Commerce.amber_handoff_url(
-        base: ENV.fetch("AMBER_PUBLIC_URL", "https://amberapp.art"),
-        title: listing.title,
-        category: amber_category(listing.category&.name),
-        source_url: listing_url(listing),
-        commerce_key: Shared::Commerce.canonical_id(
-          source: "brgen",
-          type: "listing",
-          city_id: listing.city_id,
-          record_id: listing.id
-        )
-      )
-    end
-
-    def amber_category(name)
-      Item::CATEGORIES.find { |category| category.casecmp?(name.to_s) } if defined?(Item)
-    end
   end
 end

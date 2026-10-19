@@ -51,7 +51,6 @@ module Deploy
 
     DB_PATH = {
       "brgen" => File.join(ROOT, "RAILS", "brgen", "storage", "development.sqlite3"),
-      "amber" => File.join(ROOT, "RAILS", "amber", "storage", "development.sqlite3"),
       "bsdports" => File.join(ROOT, "RAILS", "bsdports", "storage", "development.sqlite3"),
     }.freeze
 
@@ -115,7 +114,6 @@ module Deploy
       "brgen/tv/channels/show" => :tv_channel,
       "brgen/tv/shows/index" => :tv_channel_slug,
       "brgen/tv/videos/show" => :tv_video,
-      "amber/demo_wardrobe/show" => :amber_demo_item,
       "bsdports/categories/show" => :bsdports_category,
       "bsdports/ports/show" => :bsdports_port,
     }.freeze
@@ -265,23 +263,6 @@ module Deploy
         JOIN tv_channels ON tv_channels.id = tv_videos.tv_channel_id
         WHERE tv_channels.city_id = ?
         ORDER BY tv_videos.id LIMIT 1
-      SQL
-      id && { id: }
-    end
-
-    # -- amber -------------------------------------------------------------
-
-    # DemoWardrobeController#show reads Amber::DemoWardrobe.items, which is
-    # `user.items.active_wardrobe` on the one demo@amberapp.art account --
-    # released/donated/sold/recycled items fall out of that scope, so #show
-    # 404s on one even though the row still exists.
-    def amber_demo_item(app)
-      id = scalar(app, <<~SQL)
-        SELECT items.id FROM items
-        JOIN users ON users.id = items.user_id
-        WHERE users.email_address = 'demo@amberapp.art'
-          AND items.lifecycle_state NOT IN ('released', 'donated', 'sold', 'recycled')
-        ORDER BY items.id LIMIT 1
       SQL
       id && { id: }
     end
