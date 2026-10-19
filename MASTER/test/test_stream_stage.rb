@@ -138,4 +138,30 @@ class StreamStageTest < Minitest::Test
   def emit_topology(*); end
   def circuit_open? = false
   def llm_stage_resources_ok?(_pass) = true
+
+  # A requested /fix gives every repair a complete context from the dependency graph; an
+  # undefined name inside it was rescued into "context incomplete" and sent each file to
+  # HUMAN_DECISION, so nothing was ever repaired.
+  FakeGraph = Struct.new(:root) do
+    def includes_path?(_path) = true
+    def source_digest(path) = Digest::SHA256.hexdigest(File.read(path, encoding: "UTF-8"))
+    def relative(path) = path.delete_prefix("#{root}/")
+    def blast_radius(_path) = { inbound: [], outbound: [] }
+    def dynamic_for(_path) = []
+    def unresolved_for(_path) = []
+  end
+
+  def test_a_repair_context_is_complete_when_the_graph_knows_the_target
+    Dir.mktmpdir do |root|
+      path = File.join(root, "target.rb")
+      File.write(path, "x = 1\n")
+      @reference_graph = FakeGraph.new(root)
+
+      context = repair_context(path)
+
+      assert context[:complete], context[:reason]
+      assert_equal root, context[:context_root]
+      assert_equal Digest::SHA256.hexdigest("x = 1\n"), context[:target_sha256]
+    end
+  end
 end

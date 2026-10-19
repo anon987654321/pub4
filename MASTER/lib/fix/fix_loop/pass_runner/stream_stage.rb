@@ -238,6 +238,7 @@ module Master
             return incomplete_repair_context("target source changed since dependency graph refresh") \
               unless graph.source_digest(path) == target_sha256
 
+            relative = graph.relative(path)
             radius = graph.blast_radius(path)
             related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
             dynamic_sites = ([relative] + related).flat_map do |source_rel|
