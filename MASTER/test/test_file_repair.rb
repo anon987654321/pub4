@@ -97,6 +97,49 @@ class TestFileRepair < Minitest::Test
     end
   end
 
+  # A FileRepair over a one-method sample, answered by `agent`, with a finding at `line`.
+  def sample_repair(root, agent, line: 2)
+    path = File.join(root, "sample.rb")
+    File.write(path, "module Sample\n  def self.call = :bad\nend\n")
+
+    repair = Master::Fix::FileRepair.new(
+      findings: [{ law: "TEST_RULE", line:, message: "m", file: path, severity: :warning }],
+      rules: [Rule.new("TEST_RULE", "r")], agent:, scanner: Scanner.new, root:
+    )
+    [repair, path]
+  end
+
+  # A diff touching a line farther than SCOPE_PAD from every finding is refused, so the prompt says where the
+  # edge is instead of spending a call and a retry to learn it.
+  def test_the_prompt_names_the_lines_a_diff_may_touch
+    Dir.mktmpdir do |root|
+      agent = Agent.new("UNCHANGED")
+      subject, path = sample_repair(root, agent, line: 40)
+
+      subject.run(path)
+
+      prompt = agent.prompts.reject { |item| item.include?("Verify this proposed") }.first
+      assert_includes prompt, "Every changed line must lie between line 15 and line 65 of the target"
+    end
+  end
+
+  # A diff that does not apply is saved with the hunks patch(1) refused; the trace collapses whitespace, which
+  # is the evidence such a diff is made of.
+  def test_a_diff_that_does_not_apply_is_saved_for_reading
+    stale = "```diff\n--- a/sample.rb\n+++ b/sample.rb\n@@ -1,3 +1,3 @@\n module Sample\n" \
+            "-  def self.call = :missing\n+  def self.call = :good\n end\n```"
+    Dir.mktmpdir do |root|
+      subject, path = sample_repair(root, Agent.new(stale))
+
+      subject.run(path)
+
+      diffs = Dir[File.join(root, ".master", "patch_rejects", "sample.rb.*")].grep(/\.diff\z/)
+      refute_empty diffs
+      assert_includes File.read(diffs.first), "-  def self.call = :missing"
+      assert_includes File.read(diffs.first.sub(/\.diff\z/, ".rej")), ":missing"
+    end
+  end
+
   def test_an_unlocked_repair_may_rename
     locked_repair(false, "def self.other = :good") do |result, text|
       assert_equal 1, result[:fixed]

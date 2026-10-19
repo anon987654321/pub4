@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require_relative "../review/reference_graph"
 
 module Master
@@ -104,7 +105,7 @@ module Master
           end
 
           RunLedger.declined("patch_rejected", file: path, law: @law.id, detail: result.reason)
-          show_rejected_hunks(path, result)
+          show_rejected_hunks(path, result:, diff: diff_of(response))
           failure = "your diff did not apply to the file (#{result.reason.to_s[/\A[^-]+/].to_s.strip}); copy every context line exactly as shown in the complete source"
           @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: result.reason.to_s[0, 160])
         rescue StandardError => e
@@ -113,12 +114,18 @@ module Master
         nil
       end
 
-      # What patch(1) refused, on one trace line, so the next change to the diff format starts from evidence.
-      def show_rejected_hunks(path, result)
+      # What the model sent and what patch(1) refused, saved beside the run's other state, so a failure to
+      # apply is read against the real source and not guessed at. The trace collapses whitespace, which is
+      # the evidence a diff that did not apply is made of.
+      def show_rejected_hunks(path, result:, diff:)
         return if result.rejected.to_s.empty?
 
-        shown = result.rejected.inspect[0, 600]
-        Master::Trace::Dmesg.status("fix0", "patch rejected in #{File.basename(path)}: #{shown}")
+        directory = File.join(@root, ".master", "patch_rejects")
+        FileUtils.mkdir_p(directory)
+        stem = File.join(directory, "#{File.basename(path)}.#{Process.clock_gettime(Process::CLOCK_REALTIME).to_i}")
+        File.write("#{stem}.diff", diff)
+        File.write("#{stem}.rej", result.rejected)
+        Master::Trace::Dmesg.status("fix0", "patch rejected in #{File.basename(path)}; saved #{stem}.diff and .rej")
       end
 
       # The note for the next try when a locked repair dropped a definition, else nil. A repair may add to
@@ -234,9 +241,21 @@ module Master
           Reply with ONLY a minimal unified diff for the target file (`--- a/#{File.basename(path)}` / `+++ b/#{File.basename(path)}`, @@ hunks).
           Use the complete target source to reason about method boundaries, invariants and side effects.
           Preserve all unrelated behavior and public contracts. Change only what the findings justify.
+          #{allowed_lines_note}
           Copy context lines exactly. Do not reformat, reorder or rename unrelated code.
           If no finding is real, reply exactly: UNCHANGED
         PROMPT
+      end
+
+      # A diff that changes a line farther than SCOPE_PAD from every finding is refused before the verifier
+      # is asked; saying so up front saves the call and the retry.
+      def allowed_lines_note
+        lines = scope_lines(nil).select(&:positive?)
+        return "" if lines.empty?
+
+        low = [lines.min - SCOPE_PAD, 1].max
+        "Every changed line must lie between line #{low} and line #{lines.max + SCOPE_PAD} of the target; " \
+          "a diff that touches a line outside that range is refused."
       end
 
       def rule_notes
