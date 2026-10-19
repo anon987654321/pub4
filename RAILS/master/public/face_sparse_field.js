@@ -424,8 +424,9 @@
     const mode = String(state.mode || document.documentElement.dataset.masterMode || "idle").toLowerCase();
     const baseProfile = modeProfile({ ...state, mode });
     const profile = mode === "idle" && idleAge > 45_000 ? modeProfile({ mode: "super_void" }) : baseProfile;
-    const mobile = isMobile();
-    const sharedParticleBudget = Number(window.MASTER_FACE_STATE?.renderBudget?.().particles);
+    const sharedBudget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
+    const mobile = typeof sharedBudget.constrained_device === "boolean" ? sharedBudget.constrained_device : isMobile();
+    const sharedParticleBudget = Number(sharedBudget.particles);
     const localParticleLimit = mobile ? mobileParticles : maxParticles;
     const maxActive = Number.isFinite(sharedParticleBudget) && sharedParticleBudget > 0
       ? Math.min(localParticleLimit, Math.floor(sharedParticleBudget))
