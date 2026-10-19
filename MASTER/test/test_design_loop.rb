@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 require "tmpdir"
 require_relative "../lib/fix/design_loop"
 
 class TestDesignLoop < Minitest::Test
-  Surface = Struct.new(:id, :app)
+  Surface = Struct.new(:id, :app, :label, :host, :path)
   EDIT = Master::Fix::DesignEdit
   LOOP = Master::Fix::DesignLoop
   SCALE = [0.0, 4.0, 8.0, 16.0].freeze
@@ -149,13 +150,18 @@ class TestDesignLoop < Minitest::Test
   NO_DIFFERENCE = '{"better":"same","why":"no difference"}'
 
   # options: other_drop (score lost elsewhere), flat (score never moves), vision (the check's reply),
-  # classes (what is on the page).
+  # classes (what is on the page), built (collects the apps whose CSS was rebuilt), seen (collects
+  # the surface ids of each measurement), prompts (collects what the model was asked).
   def world_for(path, committed:, **options)
     drop = options.fetch(:other_drop, 0)
     flat = options.fetch(:flat, false)
     vision = options.fetch(:vision, NO_DIFFERENCE)
+    built = options.fetch(:built, [])
+    seen = options.fetch(:seen, [])
+    prompts = options.fetch(:prompts, [])
     elements = options.fetch(:classes, FILLER + [".card"]).map { |key| { "key" => "body>main>#{key}" } }
     measure = lambda do |surfaces|
+      seen << surfaces.map(&:id)
       wide = File.read(path).include?("padding: 16px")
       surfaces.map do |surface|
         payload = { "score" => fake_score(surface, wide:, other_drop: drop, flat:), "elements" => elements }
@@ -164,15 +170,18 @@ class TestDesignLoop < Minitest::Test
     end
     edit = reply(path, find: "padding: 4px;", replace: "padding: 16px;")
     LOOP::World.new(
-      measure:, ask: ->(prompt, _images) { prompt.include?("Two renders") ? vision : edit },
-      build: ->(_app) { true }, commit_file: ->(file, message) { committed << [file, message] },
+      measure:, ask: ->(prompt, _images) { (prompts << prompt) && prompt.include?("Two renders") ? vision : edit },
+      build: ->(app) { built << app && true }, commit_file: ->(file, message) { committed << [file, message] },
       sources_for: ->(_surface) { [path] }, guard: nil
     )
   end
 
+  HOME_AND_FEED = [Surface.new("brgen/home", "brgen"), Surface.new("brgen/feed", "brgen")].freeze
+
+  # world: what world_for takes, and surfaces (the surfaces the run measures).
   def loop_for(path, committed:, **world)
-    surfaces = [Surface.new("brgen/home", "brgen"), Surface.new("brgen/feed", "brgen")]
-    plan = LOOP::Plan.new(surfaces:, root: Dir.pwd, rounds: 3, candidates: 1)
+    surfaces = world.delete(:surfaces) || HOME_AND_FEED
+    plan =LOOP::Plan.new(surfaces:, root: Dir.pwd, rounds: 3, candidates: 1)
     LOOP.new(plan:, world: world_for(path, committed:, **world))
   end
 
@@ -275,6 +284,101 @@ class TestDesignLoop < Minitest::Test
     with_sheet(".a, .b > .c { gap: 4px; }\n.d {\n  padding: 4px;\n}\n") do |path|
       assert_equal %w[.d], parse(path, find: "padding: 4px;", replace: "padding: 8px;").selector_tokens
       assert_equal %w[.a .b .c], parse(path, find: "gap: 4px;", replace: "gap: 8px;").selector_tokens
+    end
+  end
+
+  # font-size is the one font property the loop may set, on a declared step and never smaller.
+  def test_a_font_size_takes_only_a_declared_step_and_never_shrinks
+    steps = [16.0, 20.0, 24.0]
+    with_sheet(".a {\n  gap: 8px;\n}\n") do |path|
+      add = ->(size, **rules) { parse(path, find: "gap: 8px;", replace: "gap: 8px;\n  font-size: #{size};", **rules) }
+
+      assert add.("20px", type_scale: steps).check!
+      assert add.("1.25rem", type_scale: steps).check!
+      assert_match(/not a declared text size/, refused(add.("18px", type_scale: steps)))
+      assert_match(/not a declared text size/, refused(add.("clamp(1rem, 2vw, 2rem)", type_scale: steps)))
+      assert_match(/not a declared text size/, refused(add.("20px")))
+    end
+    with_sheet(".a {\n  font-size: 24px;\n}\n") do |path|
+      shrunk = parse(path, find: "font-size: 24px;", replace: "font-size: 16px;", type_scale: steps)
+
+      assert_match(/smaller than 24px/, refused(shrunk))
+    end
+  end
+
+  def test_the_rest_of_the_font_stays_with_the_operator
+    with_sheet(".a {\n  gap: 8px;\n}\n") do |path|
+      ["font-weight: 700;", "font-family: serif;", "font: 20px/1.2 sans-serif;", "font-size-adjust: 0.5;"].each do |declaration|
+        edit = parse(path, find: "gap: 8px;", replace: "gap: 8px;\n  #{declaration}", type_scale: [20.0])
+
+        assert_match(/rendered value/, refused(edit))
+      end
+    end
+  end
+
+  def with_shared_sheet
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "RAILS", "__shared"))
+      path = File.join(dir, "RAILS", "__shared", "app.scss")
+      File.write(path, ".card {\n  padding: 4px;\n  color: #111;\n}\n")
+      yield path
+    end
+  end
+
+  # A shared stylesheet reaches every app, so a run that measures one app cannot judge an edit to it.
+  def test_a_shared_stylesheet_is_refused_when_the_run_measures_one_app
+    with_shared_sheet do |path|
+      committed = []
+      stub_scoring do
+        rounds = loop_for(path, committed:).run
+
+        assert_empty rounds.select { |round| round.outcome == :kept }
+        assert_includes File.read(path), "padding: 4px;"
+        assert_empty committed
+      end
+    end
+  end
+
+  def test_a_shared_stylesheet_edit_is_rebuilt_for_every_measured_app
+    with_shared_sheet do |path|
+      committed = []
+      built = []
+      surfaces = [Surface.new("brgen/home", "brgen"), Surface.new("amber/home", "amber")]
+      stub_scoring do
+        rounds = loop_for(path, committed:, surfaces:, built:).run
+
+        assert_equal :kept, rounds.first.outcome
+        assert_equal %w[amber brgen], built.uniq.sort
+      end
+    end
+  end
+
+  def test_every_measured_app_is_guarded_however_many_surfaces_another_app_has
+    with_sheet do |path|
+      committed = []
+      seen = []
+      surfaces = %w[home a b c d e f].map { |name| Surface.new("brgen/#{name}", "brgen") } + [Surface.new("amber/home", "amber")]
+      stub_scoring do
+        loop_for(path, committed:, surfaces:, seen:).run
+
+        assert_includes seen[1], "amber/home"
+      end
+    end
+  end
+  # The loop holds a surface to the direction the /fix critic and fixer already use, not a second copy.
+  def test_the_edit_request_carries_the_design_layer_brief_and_the_house_typeface_rule
+    with_sheet do |path|
+      prompts = []
+      surfaces = [Surface.new("amber/wardrobe", "amber", "wardrobe", nil, "/wardrobe"), Surface.new("amber/feed", "amber", "feed", nil, "/feed")]
+      stub_scoring do
+        loop_for(path, committed: [], surfaces:, prompts:).run
+      end
+      request = prompts.find { |text| text.include?("Make ONE edit") }
+
+      assert_includes request, "Flat, brutalist, Swiss"
+      assert_includes request, "aesthetic_direction=editorial_wardrobe"
+      assert_includes request, Master::Design::Typeface::HOUSE_RULE
+      assert_match(/font-size/, request)
     end
   end
 end

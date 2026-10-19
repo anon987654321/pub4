@@ -6,10 +6,10 @@ module Master
   module Fix
     # One proposed stylesheet edit for the design loop: parsed from the model's
     # reply, checked against what the loop may change, and applied or undone on
-    # disk. The loop changes layout (spacing, size, alignment, structure) and
-    # never a rendered value: laws.yml RENDERED_VALUES leaves colour, typeface,
-    # shadow, opacity and the named layout tokens to the operator, so those edits
-    # are refused here whatever the model asked for.
+    # disk. The loop changes layout (spacing, size, alignment, structure, text size
+    # on a declared step) and never a rendered value: laws.yml RENDERED_VALUES
+    # leaves colour, typeface, weight, shadow, opacity and the named layout tokens
+    # to the operator, so those edits are refused here whatever the model asked for.
     class DesignEdit
       Refused = Class.new(StandardError)
 
@@ -17,11 +17,18 @@ module Master
       Proposal = Data.define(:file, :find, :replace, :why)
 
       # What may be checked beyond the text: guard ->(path, new_text) { refusal or nil }, the mechanical
-      # laws judging the file as it would be written; scale, the declared spacing steps in px.
-      Rules = Data.define(:guard, :scale)
+      # laws judging the file as it would be written; scale, the declared spacing steps in px;
+      # type_scale, the declared text sizes in px a font-size may take (none declared: none allowed).
+      Rules = Data.define(:guard, :scale, :type_scale) do
+        def initialize(guard:, scale:, type_scale: nil) = super
+      end
 
-      RENDERED_PROPERTY = /\A(?:color|background(?:-[a-z]+)*|font(?:-[a-z]+)*|border(?:-[a-z]+)*-color|outline-color|
+      # font-size is the one font property the loop may set, and only to a declared step
+      # (refuse_off_type_scale!): family, weight and the rest of the font shorthand stay the operator's.
+      RENDERED_PROPERTY = /\A(?:color|background(?:-[a-z]+)*|font(?:-(?!size\z)[a-z]+)*|border(?:-[a-z]+)*-color|outline-color|
                               box-shadow|text-shadow|opacity|filter|fill|stroke|mix-blend-mode)\z/ix
+      FONT_SIZE = "font-size"
+      TYPE_STEP_PX = 1.0
       COLOUR_BEARING = /\A(?:border|outline)(?:-[a-z]+)?\z/i
       DECLARATION = /([a-z-]+)\s*:\s*([^;{}]+)/i
       TOKEN_FILE = %r{(?:_tokens|_dialect_tokens|design_tokens|/tokens)\.(?:scss|css|yml)\z}
@@ -83,6 +90,7 @@ module Master
         refuse_rendered_values!
         refuse_broad_rules!
         refuse_off_scale!
+        refuse_off_type_scale!
         reason = @rules.guard&.call(file, text.sub(proposal.find) { proposal.replace })
         raise Refused, "the laws refuse it: #{reason}" if reason
 
@@ -145,8 +153,31 @@ module Master
         end
       end
 
+      # A font-size the edit introduces must be a token or sit on a declared text step, and
+      # may not be smaller than the size it replaces: a layout score that reads line length
+      # in characters is also raised by shrinking text, which is not a layout fix.
+      def refuse_off_type_scale!
+        steps = Array(@rules.type_scale)
+        before = declarations(proposal.find).to_h[FONT_SIZE]
+        changed.each do |name, value|
+          next unless name == FONT_SIZE
+          next if value.match?(/\Avar\(\s*--text-[\w-]+\s*\)\z/)
+
+          px = text_px(value)
+          raise Refused, "font-size: #{value} is not a declared text size" unless px && steps.any? { |step| (step - px).abs <= TYPE_STEP_PX }
+
+          was = before && text_px(before)
+          raise Refused, "font-size: #{value} makes the text smaller than #{before}" if was && px < was - TYPE_STEP_PX
+        end
+      end
+
+      def text_px(value)
+        match = value.strip.match(/\A(\d*\.?\d+)(px|rem|em)\z/)
+        match && match[1].to_f * (match[2] == "px" ? 1 : 16)
+      end
+
       # Declarations the edit adds or alters.
-      def changed = declarations(proposal.replace) - declarations(proposal.find)
+      def changed =declarations(proposal.replace) - declarations(proposal.find)
 
       # [[property, value], ...] with whitespace squeezed, so a rule rewritten onto
       # one line compares equal to the same declarations on several.

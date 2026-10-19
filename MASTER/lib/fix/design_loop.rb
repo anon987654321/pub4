@@ -26,6 +26,7 @@ module Master
       TRIES_PER_SURFACE = 2
       MIN_PAGE_TOKENS = 8
       GUARDS = 4
+      SHARED = "/RAILS/__shared/"
       Round = Data.define(:number, :surface, :why, :outcome, :before, :after)
 
       # What the loop works on and how long.
@@ -141,10 +142,12 @@ module Master
 
       def propose(sources, variant)
         reply = @world.ask.call(prompt(sources, variant), [@target[:shot]])
-        edit = DesignEdit.parse(reply, allowed: sources, rules: DesignEdit::Rules.new(guard: @world.guard, scale: nil))
+        rules = DesignEdit::Rules.new(guard: @world.guard, scale: nil, type_scale: type_steps)
+        edit = DesignEdit.parse(reply, allowed: sources, rules:)
         raise DesignEdit::Refused, "already tried and undone" if @rejected.include?(edit.key)
 
         refuse_unseen_selector!(edit)
+        refuse_lone_shared!(edit)
         edit
       rescue DesignEdit::Refused, StandardError => e
         @say.call("#{@target[:surface].id}: edit not usable, #{e.message.lines.first.to_s.strip}")
@@ -163,6 +166,36 @@ module Master
         raise DesignEdit::Refused, "its selector (#{tokens.first(3).join(' ')}) is not on this page"
       end
 
+      # A stylesheet under RAILS/__shared reaches every app that imports it, so an edit there
+      # is judged on every app the run measures; a run that measures one app cannot judge it.
+      def refuse_lone_shared!(edit)
+        return unless shared?(edit) && measured_apps.size < 2
+
+        raise DesignEdit::Refused, "it is in a stylesheet shared across apps and this run measures only " \
+                                   "#{measured_apps.first}; name more apps with --app"
+      end
+
+      def shared?(edit) = edit.file.to_s.include?(SHARED)
+
+      def measured_apps = @state.map { |row| row[:surface].app }.uniq
+
+      # Rebuilds the CSS the edit can change: the target's app, or every measured app for a
+      # shared stylesheet, so the guards are measured against the edit and not a stale build.
+      def rebuild(edit)
+        apps = shared?(edit) ? measured_apps : [@target[:surface].app]
+        apps.map { |app| @world.build.call(app) }.all?
+      end
+
+      # The declared text sizes a font-size may take: the token scale at or above the
+      # body minimum, so a size cannot be chosen by shrinking text to fit a measure.
+      def type_steps
+        declared = LayoutScoreStore.tokens(@plan.root).font.map(&:px)
+        return declared if declared.empty?
+
+        minimum = Master::Design::Typography.profile(:social, root: File.join(@plan.root, "MASTER")).fetch(:minimum_body_px)
+        declared.select { |px| px >= minimum }
+      end
+
       # The classes and ids the walk found on the page.
       def page_tokens_of(row)
         Array(row[:payload]["elements"]).flat_map { |element| element["key"].to_s.scan(/[.#][\w-]+/) }.uniq
@@ -171,7 +204,7 @@ module Master
       # Applies the edit, re-renders, judges, and always puts the file back.
       def trial(edit)
         original = edit.apply!
-        return nil unless @world.build.call(@target[:surface].app)
+        return nil unless rebuild(edit)
 
         after = measured(@fresh.map { |row| row[:surface] })
         verdict = judge(@fresh, after)
@@ -190,7 +223,7 @@ module Master
 
       def restore(edit, original)
         edit.restore(original)
-        @world.build.call(@target[:surface].app)
+        rebuild(edit)
       end
 
       # The target plus a few others spread across the set: a stylesheet edit is
@@ -198,7 +231,9 @@ module Master
       def guards
         others = @state.reject { |row| row[:surface].id == @target[:surface].id }
         step = [others.size / GUARDS, 1].max
-        [@target, *others.each_slice(step).map(&:first).first(GUARDS)]
+        chosen = [@target, *others.each_slice(step).map(&:first).first(GUARDS)]
+        covered = chosen.map { |row| row[:surface].app }
+        chosen + others.reject { |row| covered.include?(row[:surface].app) }.uniq { |row| row[:surface].app }
       end
 
       def judge(before, after)
@@ -261,7 +296,7 @@ module Master
       def keep(number, best)
         edit = best[:edit]
         edit.apply!
-        @world.build.call(@target[:surface].app)
+        rebuild(edit)
         after = @target[:score] + best[:gain]
         @world.commit_file.call(edit.file, commit_message(edit, after))
         merge(best[:after])

@@ -80,7 +80,7 @@ module Operator
     def run_loop(plan:, world:, root:)
       before = head(root)
       results = Master::Fix::DesignLoop.new(plan:, world:, say: method(:say)).run
-      report(results, root:, before:)
+      report(results, root:, before:, surfaces: plan.surfaces)
     end
 
     def world_for(root:, dir:, agent:, graph:)
@@ -148,17 +148,32 @@ module Operator
       status.success?
     end
 
+    # A kept edit moves pixels on the surfaces it touched. Baseline approval is the operator's
+    # (tools/approve_visual_baselines.rb is never part of the loop), so the run names the surfaces
+    # it measured that carry an approved PNG and the review that comes before approving.
+    def baselines_note(kept, surfaces)
+      return if kept.empty?
+
+      pixel = surfaces.select { |surface| surface.respond_to?(:pixel_snapshot) && surface.pixel_snapshot }.map(&:id)
+      return if pixel.empty?
+
+      say("pixel baselines may now differ on: #{pixel.join(', ')}")
+      say("review: ruby MASTER/gates/runner.rb browser_diagnostics; then ruby MASTER/tools/approve_visual_baselines.rb " \
+          "--manifest <run>/manifest.json --replace")
+    end
+
     def head(root) = Master::Io::Exec.capture2e("git", "-C", root, "rev-parse", "HEAD").first.strip
 
     def boot_agent(root) = Master.bootstrap_container(root: File.join(root, "MASTER"))[:agent]
 
-    def report(results, root:, before:)
+    def report(results, root:, before:, surfaces: [])
       kept = results.select { |r| r.outcome == :kept }
       kept.each { |r| say("kept ##{r.number} #{r.surface}: #{r.why} (#{r.before.round(1)} -> #{r.after.round(1)})") }
       say("#{kept.size} edit(s) kept in #{results.size} round(s)")
       ahead = Master::Io::Exec.capture2e("git", "-C", root, "log", "--oneline", "#{before}..HEAD").first
       ahead.each_line { |line| say("committed #{line.strip}") }
       say("not pushed: review `git log origin/main..HEAD`, then push main")
+      baselines_note(kept, surfaces)
       kept.empty? ? 1 : 0
     end
   end
