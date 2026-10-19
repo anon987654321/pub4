@@ -20,7 +20,8 @@ The script escalates only for the individual steps that require it.
 The command validates its target, checks required local broker availability,
 validates bounded timing and capacity settings, obtains the deploy lock, and
 runs the configured preflight, synchronization, CI, restart, health and deploy
-stamp steps. The exact order and restore behavior are implemented in the script
+stamp steps.
+The exact order and restore behavior are implemented in the script
 and the production runbook.
 .Pp
 The accepted targets are
@@ -34,13 +35,15 @@ Unknown targets are refused before deployment.
 .Sh ENVIRONMENT
 .Bl -tag -width "VPS_DEPLOY_PREFLIGHT_SHA"
 .It Ev VPS_DEPLOY_SHA
-Commit to deploy. The default is fetched from
+Commit to deploy.
+The default is fetched from
 .Cm origin/main
 once.
 .It Ev VPS_DEPLOY_PREFLIGHT_SHA
 Commit whose boot was already proved by the operator's machine.
 .It Ev VPS_DEPLOY_SKIP_PREFLIGHT
-Break-glass preflight bypass. Setting this to
+Break-glass preflight bypass.
+Setting this to
 .Cm 1
 also requires
 .Ev I_UNDERSTAND_FAST_DEPLOY=1 .
@@ -60,9 +63,12 @@ Setting this to
 adds the browser gates after restart.
 .El
 .Sh SECURITY
-Do not run as root. Do not bypass preflight during ordinary deployments. A
+Do not run as root.
+Do not bypass preflight during ordinary deployments.
+A
 successful synchronization or TLS response alone does not establish that every
-application is healthy. Inspect the actual health and deploy receipt.
+application is healthy.
+Inspect the actual health and deploy receipt.
 .Pp
 Before live work, read
 .Pa OPENBSD/RUNBOOK.md

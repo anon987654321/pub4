@@ -12,16 +12,19 @@
 is the root-owned broker installed at
 .Pa /usr/local/sbin/pub4-admin .
 It exposes a bounded argv protocol for selected service, resource, application
-layout, deployment and CI operations. It does not evaluate shell command
+layout, deployment and CI operations.
+It does not evaluate shell command
 strings and does not accept an arbitrary filesystem path as a command selector.
 .Pp
 The broker requires effective root privileges through the reviewed
 .Xr doas 1
-path. The deploy script checks that the installed broker exists, is executable,
+path.
+The deploy script checks that the installed broker exists, is executable,
 and is not a symbolic link before continuing.
 .Pp
 Unknown verbs, unapproved services, invalid argument shapes and paths outside
-the explicit allowlist are refused. The broker is an internal privilege
+the explicit allowlist are refused.
+The broker is an internal privilege
 boundary, not a general-purpose shell.
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -30,9 +33,10 @@ doas /usr/local/sbin/pub4-admin disk-usage /home
 .Ed
 .Sh SECURITY
 Do not expand the verb set or replace fixed argv validation with shell
-evaluation. Update the calling contract and its regression tests when the
+evaluation.
+Update the calling contract and its regression tests when the
 privileged interface changes.
 .Sh SEE ALSO
-.Xr vps-deploy 8 ,
 .Xr doas 1 ,
-.Xr rcctl 8
+.Xr rcctl 8 ,
+.Xr vps-deploy 8
