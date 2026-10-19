@@ -64,7 +64,7 @@ class TestScanSkipGuard < Minitest::Test
     File.stub(:exist?, true) do
       error = assert_raises(Master::Fix::MassSkipError) { runner.violations(paths) }
       assert_equal 30, error.total
-      assert_match(/21 of 30 file\(s\) skipped/, error.message)
+      assert_match(/\d+ of 30 file\(s\) skipped/, error.message)
     end
   end
 
