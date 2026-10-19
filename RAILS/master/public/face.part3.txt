@@ -259,7 +259,7 @@ function faceEchoSafe() {
 function faceAwareness() {
   const spec = window.MASTER_VOICE_POLICY?.awareness || {};
   const out = { glanceScale: 1, lean: 0, heard: false };
-  if (State.reducedMotion) return out;
+  if (faceReducedMotionActive()) return out;
   if (State.mode === 'speaking') out.glanceScale = spec.speaking?.glance_scale ?? 1;
   if (State.mode !== 'listening') return out;
   const listening = spec.listening || {};
@@ -280,7 +280,7 @@ function drawAsciiFace(now) {
     level: tts.playing && State.voiceRMS > 0.005 ? Math.min(1, State.voiceRMS * 2.5) : null,
     viseme: State.viseme,
     shapes: window.MASTER_VOICE_POLICY?.mouth?.shapes,
-    reduced: State.reducedMotion,
+    reduced: faceReducedMotionActive(),
   });
 }
 
@@ -311,7 +311,7 @@ function frame(t) {
         pressureLine
       ].filter(Boolean).join(' · ');
     }
-    if (!State.reducedMotion && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
+    if (!faceReducedMotionActive() && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
       FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.03);
       resize();
     } else if (fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
@@ -402,7 +402,7 @@ function frame(t) {
   }
 
   const idleCalm = State.mode === 'idle' && !tts.playing ? 0.028 : 0.04;
-  const lerpSpeed = State.reducedMotion ? 0.12 : idleCalm + Math.min(0.08, State.pulse * 0.6);
+  const lerpSpeed = faceReducedMotionActive() ? 0.12 : idleCalm + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
   if ((_dbgFrames & 7) === 0) {
     const r = (colorCurrent.r * 255)|0, g = (colorCurrent.g * 255)|0, b = (colorCurrent.b * 255)|0;
@@ -447,7 +447,7 @@ function frame(t) {
       mode: State.mode,
       speaking: State.mode === 'speaking',
       ttsPlaying: !!tts.playing,
-      reducedMotion: State.reducedMotion,
+      reducedMotion: faceReducedMotionActive(),
       calmStareUntil: State.calmStareUntil,
       nervousUntil: State.nervousUntil,
       blinkMs: State.idleSignature?.blink_ms,
@@ -478,10 +478,10 @@ function frame(t) {
     const tensionScale = 1 - (State.pressureTension || 0) * 0.05;
     const speakingEnergy = State.mode === 'speaking' || tts.playing ? Math.max(0, Math.min(1, State.visemeAmp || 0)) : 0;
     const speechBreath = speakingEnergy * (0.035 + Math.sin(sec * 8.0) * 0.008);
-    const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath + speechBreath);
+    const breath = silenceScale * idleSig.breath * tensionScale * (faceReducedMotionActive() ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath + speechBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
-    if (State.shake > 0.01 && !State.reducedMotion && isRichMotionProfile()) {
+    if (State.shake > 0.01 && !faceReducedMotionActive() && isRichMotionProfile()) {
       head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.z = State.lean;
@@ -638,7 +638,7 @@ function frame(t) {
   const rasterOnly = renderMode === 'raster' || (!renderer && renderMode !== '3d');
   if (rasterOnly && renderer) renderer.domElement.style.opacity = '0';
   else if (renderer) renderer.domElement.style.opacity = '';
-  const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98 && renderMode !== 'wireframe';
+  const phosphorOn = !faceReducedMotionActive() && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98 && renderMode !== 'wireframe';
   if (phosphorOn && phosphorFadeMesh && phosphorFadeScene && phosphorFadeCam && faceMat?._phosphorPrimed) {
     let decay = State.coarsePointer ? Math.max(0.55, FACE_PHOSPHOR_DECAY - 0.12) : FACE_PHOSPHOR_DECAY;
     if (tts.playing) decay = Math.max(0.52, decay - 0.05);
