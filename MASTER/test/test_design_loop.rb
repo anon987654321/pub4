@@ -9,6 +9,7 @@ class TestDesignLoop < Minitest::Test
   EDIT = Master::Fix::DesignEdit
   LOOP = Master::Fix::DesignLoop
   SCALE = [0.0, 4.0, 8.0, 16.0].freeze
+  FILLER = (1..9).map { |n| ".filler-#{n}" }.freeze
 
   def with_sheet(css = ".card {\n  padding: 4px;\n  color: #111;\n}\n")
     Dir.mktmpdir do |dir|
@@ -153,7 +154,7 @@ class TestDesignLoop < Minitest::Test
     drop = options.fetch(:other_drop, 0)
     flat = options.fetch(:flat, false)
     vision = options.fetch(:vision, NO_DIFFERENCE)
-    elements = options.fetch(:classes, [".card"]).map { |key| { "key" => "body>main>#{key}" } }
+    elements = options.fetch(:classes, FILLER + [".card"]).map { |key| { "key" => "body>main>#{key}" } }
     measure = lambda do |surfaces|
       wide = File.read(path).include?("padding: 16px")
       surfaces.map do |surface|
@@ -239,7 +240,7 @@ class TestDesignLoop < Minitest::Test
     with_sheet do |path|
       committed = []
       stub_scoring do
-        rounds = loop_for(path, committed:, classes: [".other"]).run
+        rounds = loop_for(path, committed:, classes: FILLER).run
 
         assert_empty rounds.select { |round| round.outcome == :kept }
         assert_includes File.read(path), "padding: 4px;"

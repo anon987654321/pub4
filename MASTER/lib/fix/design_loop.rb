@@ -24,6 +24,7 @@ module Master
       OTHERS_TOLERANCE = 1.0
       STALL_LIMIT = 4
       TRIES_PER_SURFACE = 2
+      MIN_PAGE_TOKENS = 8
       GUARDS = 4
       Round = Data.define(:number, :surface, :why, :outcome, :before, :after)
 
@@ -47,6 +48,7 @@ module Master
 
       def run
         @state = measured(@plan.surfaces)
+        survey
         stalls = 0
         results = []
         @plan.rounds.times do |index|
@@ -77,8 +79,20 @@ module Master
         found.transform_values(&:size).reject { |_, count| count.zero? }
       end
 
+      # A page with next to nothing on it (a login wall, an empty list) has no layout to
+      # improve, so it is not chosen however low it scores.
       def weakest
-        @state.reject { |row| @spent[row[:surface].id] >= TRIES_PER_SURFACE }.min_by { |row| row[:score] }
+        open = @state.reject { |row| @spent[row[:surface].id] >= TRIES_PER_SURFACE || sparse?(row) }
+        open.min_by { |row| row[:score] }
+      end
+
+      def sparse?(row) = page_tokens_of(row).size < MIN_PAGE_TOKENS
+
+      def survey
+        @state.each do |row|
+          note = sparse?(row) ? ", too little on the page to work on" : ""
+          @say.call("#{row[:surface].id}: score #{row[:score].round(1)}, #{page_tokens_of(row).size} classes and ids#{note}")
+        end
       end
 
       def attempt(number)
