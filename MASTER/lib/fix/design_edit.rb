@@ -41,7 +41,7 @@ module Master
         text = ->(key) { data[key].to_s }
         new(Proposal.new(file:, find: text.("find"), replace: text.("replace"), why: text.("why").strip), rules)
       rescue JSON::ParserError
-        raise Refused, "the reply was not a JSON edit"
+        raise Refused, "the reply was not a JSON edit (it began #{reply.to_s[0, 90].inspect})"
       end
 
       # The declared spacing steps, read once.
