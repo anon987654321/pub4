@@ -102,8 +102,6 @@ module WAV
       File.link(file.path, destination)
     end
     path
-  rescue Errno::EEXIST
-    raise ArgumentError, "refusing to overwrite existing take: #{path}; choose a new path"
   end
 
   # Three bytes a sample, least significant first.
