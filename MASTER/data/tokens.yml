@@ -1530,12 +1530,12 @@ tokens:
       action: >
         Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
         nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
-        are debt. Ratchet: RAILS/shared/lib/operator/chrome_i18n_lint.rb (CI).
+        are debt. Ratchet: MASTER/tools/chrome_i18n_lint.rb (CI).
         Opt-out: <%# chrome_i18n: ok %> above the line.
       empty_partial: shared/empty_state
       empty_requires_action: true
-      empty_cta_lint: RAILS/shared/lib/operator/empty_state_lint.rb
-      adhoc_empty_lint: RAILS/shared/lib/operator/adhoc_empty_lint.rb
+      empty_cta_lint: MASTER/tools/empty_state_lint.rb
+      adhoc_empty_lint: MASTER/tools/adhoc_empty_lint.rb
     space_not_lines:
       action: >
         List/grid cards separate with gap + surface elevation, not hairline

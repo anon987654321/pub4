@@ -26,8 +26,8 @@ ROOT = File.expand_path("../../..", __dir__)
 SHARED_STYLES = File.join(RAILS_ROOT, "__shared", "app", "assets", "stylesheets")
 def shared_public_dir
   home = ENV["HOME"].to_s
-  if home != "" && File.directory?(File.join(home, "shared"))
-    File.join(home, "shared", "public")
+  if home != "" && File.directory?(File.join(home, "__shared"))
+    File.join(home, "__shared", "public")
   else
     File.join(RAILS_ROOT, "__shared", "public")
   end
