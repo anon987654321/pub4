@@ -7,12 +7,13 @@ require "tmpdir"
 # A PreToolUse hook can only add a refusal: exit 2 refuses with stderr as the
 # reason, exit 0 allows, any other status is a fault that allows.
 class ToolHooksTest < Minitest::Test
-  def hook_file(dir, script, matcher: nil)
+  def hook_file(dir, script, matcher: nil, on_fault: nil)
     guard = File.join(dir, "guard.rb")
     File.write(guard, script)
     file = File.join(dir, "hooks.yml")
     row = { "command" => [RbConfig.ruby, guard] }
     row["matcher"] = matcher if matcher
+    row["on_fault"] = on_fault if on_fault
     File.write(file, YAML.dump("PreToolUse" => [row]))
     file
   end
@@ -76,6 +77,33 @@ class ToolHooksTest < Minitest::Test
       findings = verifier.call(path: "a.rb", content: "x")
       assert_equal 2, findings.size
       assert_includes findings.first, "LAW:1"
+    end
+  end
+
+  def test_on_fault_deny_refuses_when_the_hook_crashes
+    Dir.mktmpdir do |dir|
+      hooks = Master::CLI::ToolHooks.entries(hook_file(dir, "exit 1", on_fault: "deny"))
+      reason = nil
+      capture_io { reason = Master::CLI::ToolHooks.refusal("Bash", { command: "ls" }, root: dir, hooks:) }
+      assert_includes reason, "on_fault: deny"
+    end
+  end
+
+  def test_on_fault_deny_refuses_when_the_program_is_missing
+    hooks = [[nil, ["/no/such/hook-program"], true]]
+    reason = nil
+    capture_io { reason = Master::CLI::ToolHooks.refusal("Bash", { command: "ls" }, root: Dir.tmpdir, hooks:) }
+    assert_includes reason, "on_fault: deny"
+  end
+
+  def test_a_hooks_file_others_can_write_loads_nothing
+    Dir.mktmpdir do |dir|
+      file = hook_file(dir, "exit 2")
+      File.chmod(0o666, file)
+      entries = nil
+      _, err = capture_io { entries = Master::CLI::ToolHooks.entries(file) }
+      assert_empty entries
+      assert_includes err, "writable by another user"
     end
   end
 end

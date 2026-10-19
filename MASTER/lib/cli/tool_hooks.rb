@@ -12,17 +12,20 @@ module Master
     #   PreToolUse:
     #     - matcher: Bash|Write        # regexp over the tool name; absent matches all
     #       command: [ruby, /home/me/guard.rb]   # argv, never a shell string
+    #       on_fault: deny             # optional; a crash, timeout or missing program refuses
     #
     # The program reads one JSON object on stdin (hook_event_name, tool_name,
     # tool_input) and answers with its exit status: 0 allows, 2 refuses with
-    # stderr as the reason, anything else is a hook fault that allows and is
-    # logged. The Fold's verbs map to the names a hook author already knows:
-    # exec is Bash, write is Write.
+    # stderr as the reason, anything else is a hook fault. A fault allows and is
+    # logged unless the entry says on_fault: deny, which refuses instead. The
+    # Fold's verbs map to the names a hook author already knows: exec is Bash,
+    # write is Write.
     #
     # The file is read from the person's home, never from the workspace: the
     # Fold writes into the workspace, and a hook it could author would run
-    # outside the Constitution on the next turn. A hook can only add refusals;
-    # it never widens what the Constitution allows.
+    # outside the Constitution on the next turn. The file must belong to the
+    # current user (or root) and be writable by no one else, or no hook loads.
+    # A hook can only add refusals; it never widens what the Constitution allows.
     module ToolHooks
       module_function
 
@@ -33,11 +36,25 @@ module Master
         ENV.fetch("MASTER_HOOKS") { File.join(Dir.home, ".master", "hooks.yml") }
       end
 
-      # Entries are [Regexp|nil, argv]. A file that is absent holds none; one that
-      # does not parse is reported and holds none, since refusing every effect
-      # over a typo would stop the Fold for a reason it cannot act on.
+      # A hook is a command run with the person's authority, so its file is
+      # trusted only when no one else can have written it.
+      def trusted?(file)
+        stat = File.stat(file)
+        owned = [Process.euid, 0].include?(stat.uid)
+        owned && (stat.mode & 0o022).zero? && (File.stat(File.dirname(file)).mode & 0o002).zero?
+      end
+
+      # Entries are [Regexp|nil, argv, closed]. A file that is absent holds none;
+      # one that is untrusted or does not parse is reported and holds none, since
+      # refusing every effect over a typo would stop the Fold for a reason it
+      # cannot act on.
       def entries(file = path)
         return [] unless File.file?(file)
+
+        unless trusted?(file)
+          Master::Trace::Dmesg.status("hook0", "hooks ignored, #{file} is writable by another user or not yours", io: $stderr)
+          return []
+        end
 
         rows = Array(YAML.safe_load_file(file, aliases: false)&.fetch(EVENT, nil))
         rows.filter_map do |row|
@@ -45,7 +62,8 @@ module Master
           next if argv.empty?
 
           matcher = row["matcher"].to_s
-          [matcher.empty? || matcher == "*" ? nil : Regexp.new("\\A(?:#{matcher})\\z"), argv]
+          pattern = matcher.empty? || matcher == "*" ? nil : Regexp.new("\\A(?:#{matcher})\\z")
+          [pattern, argv, row["on_fault"].to_s == "deny"]
         end
       rescue Psych::Exception, SystemCallError, TypeError, RegexpError => e
         Master::Trace::Dmesg.status("hook0", "hooks ignored, #{e.class}: #{e.message}", io: $stderr)
@@ -56,25 +74,28 @@ module Master
       # until one refuses.
       def refusal(tool_name, tool_input, root:, hooks: entries)
         payload = JSON.generate(hook_event_name: EVENT, tool_name:, tool_input:)
-        hooks.each do |matcher, argv|
+        hooks.each do |matcher, argv, closed|
           next if matcher && !matcher.match?(tool_name)
 
-          reason = ask(argv, payload, root:)
+          reason = ask(argv, payload, root:, closed:)
           return reason if reason
         end
         nil
       end
 
-      def ask(argv, payload, root:)
+      def ask(argv, payload, root:, closed: false)
         _out, err, status = Master::Io::Exec.capture3(*argv, stdin_data: payload, chdir: root, timeout: TIMEOUT_S)
         return nil if status.success?
         return "hook refused #{argv.first}: #{err.to_s.strip}".strip.chomp(":") if status.exitstatus == 2
 
-        Master::Trace::Dmesg.status("hook0", "#{argv.first} faulted, exit #{status.exitstatus.inspect}; allowing", io: $stderr)
-        nil
+        fault(argv, "exit #{status.exitstatus.inspect}", closed)
       rescue SystemCallError => e
-        Master::Trace::Dmesg.status("hook0", "#{argv.first} not run, #{e.message}; allowing", io: $stderr)
-        nil
+        fault(argv, e.message, closed)
+      end
+
+      def fault(argv, detail, closed)
+        Master::Trace::Dmesg.status("hook0", "#{argv.first} faulted, #{detail}; #{closed ? "refusing" : "allowing"}", io: $stderr)
+        closed ? "hook faulted #{argv.first}: #{detail} (on_fault: deny)" : nil
       end
 
       # Wrap the exec sandbox the Constitution already holds. A hook refusal is a

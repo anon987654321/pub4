@@ -88,7 +88,10 @@ def initial_message_from_argv(argv)
   tail = rest.reject { |arg| arg.start_with?("--") }
   [message, *tail, *kept].join(" ").strip
 rescue OptionParser::ParseError => e
-  Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr)
+  # The flags are parsed once before boot and again where the message is wanted;
+  # a bad flag is reported on the first pass only.
+  Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr) unless $MASTER_OPTION_ERROR_SEEN
+  $MASTER_OPTION_ERROR_SEEN = true
   argv.reject { |arg| arg.start_with?("--") && !arg.match?(COMMAND_FLAG) }.join(" ").strip
 end
 
@@ -135,6 +138,9 @@ def parse_initial_message_options(argv)
     opts.on("--permission-mode MODE", %w[default acceptEdits plan bypassPermissions],
             "plan reads and proposes; the rest run the repair profile, and the Constitution still judges every effect") do |mode|
       ENV["MASTER_PERMISSION_MODE"] = mode
+      if mode == "bypassPermissions"
+        Master::Trace::Dmesg.status("cli0", "bypassPermissions bypasses nothing, the Constitution still judges every effect", io: $stderr)
+      end
       ENV["MASTER_FOLD"] = "1"
     end
     opts.on("--allowedTools LIST", "--allowed-tools LIST",
