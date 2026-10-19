@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "fileutils"
 require "ripper"
 require "minitest/mock"
 require "tmpdir"
@@ -9,6 +10,7 @@ require "rbconfig"
 require "openssl"
 require_relative "../replicate/client"
 require_relative "../replicate/lora/_toolkit/preflight"
+require_relative "../replicate/lora/_toolkit/weight_archive"
 require_relative "../replicate/lora/_toolkit/video"
 
 # The paid half of lora, with the network cut out: what the client sends, how it
@@ -828,18 +830,67 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
-  def test_weight_archive_publisher_reads_only_regular_checkpoints_and_publishes_without_overwrite
-    source = File.read(File.expand_path("../replicate/lora/_toolkit/run_train_replicate.rb", __dir__))
-    body_start = source.index("def extract_weights_tar(")
-    body_end = source.index("\ndef append_log", body_start)
-    refute_nil body_start
-    refute_nil body_end
-    body = source[body_start...body_end]
+  def test_weight_archive_publishes_regular_checkpoints_from_dot_prefixed_tars
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "source")
+      destination = File.join(dir, "weights")
+      FileUtils.mkdir_p(source)
+      File.binwrite(File.join(source, "model.safetensors"), "checkpoint bytes")
+      archive = File.join(dir, "weights.tar")
+      _out, status = Open3.capture2("tar", "-cf", archive, "-C", source, ".")
+      skip "tar cannot build the fixture" unless status.success?
 
-    assert_includes body, "Gem::Package::TarReader"
-    assert_includes body, "File::EXCL"
-    assert_includes body, "File.link(source, target.to_s)"
-    refute_includes body, 'system("tar", "-xf"',
-                    "provider archives are not extracted by an unrestricted tar command"
+      published = Lora::WeightArchive.extract(archive, destination)
+
+      expected = File.join(destination, "model.safetensors")
+      assert_equal [expected], published
+      assert_equal "checkpoint bytes", File.binread(expected)
+      assert_equal 0o600, File.stat(expected).mode & 0o777
+      assert_empty Dir.glob(File.join(destination, ".weights-stage-*"))
+    end
+  end
+
+  def test_weight_archive_never_overwrites_an_existing_checkpoint
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "source")
+      destination = File.join(dir, "weights")
+      FileUtils.mkdir_p(source)
+      FileUtils.mkdir_p(destination)
+      File.binwrite(File.join(source, "model.safetensors"), "new bytes")
+      original = File.join(destination, "model.safetensors")
+      File.binwrite(original, "existing bytes")
+      archive = File.join(dir, "weights.tar")
+      _out, status = Open3.capture2("tar", "-cf", archive, "-C", source, "model.safetensors")
+      skip "tar cannot build the fixture" unless status.success?
+
+      published = Lora::WeightArchive.extract(archive, destination)
+
+      restored = File.join(destination, "model-restored-1.safetensors")
+      assert_equal [restored], published
+      assert_equal "existing bytes", File.binread(original)
+      assert_equal "new bytes", File.binread(restored)
+    end
+  end
+
+  def test_weight_archive_refuses_symlink_members_before_publishing_anything
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "source")
+      destination = File.join(dir, "weights")
+      FileUtils.mkdir_p(source)
+      outside = File.join(dir, "outside.safetensors")
+      File.binwrite(outside, "outside bytes")
+      File.symlink(outside, File.join(source, "linked.safetensors"))
+      archive = File.join(dir, "malicious.tar")
+      _out, status = Open3.capture2("tar", "-cf", archive, "-C", source, "linked.safetensors")
+      skip "tar cannot build symlink fixture" unless status.success?
+
+      error = assert_raises(ArgumentError) { Lora::WeightArchive.extract(archive, destination) }
+
+      assert_match(/unsupported archive entry type/, error.message)
+      refute File.exist?(destination)
+      assert_equal "outside bytes", File.read(outside)
+    rescue NotImplementedError, SystemCallError => error
+      skip "symlinks unavailable: #{error.message}"
+    end
   end
 end
