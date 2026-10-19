@@ -55,11 +55,22 @@
     return value - Math.floor(value);
   };
 
+  function constrainedDevice() {
+    const matches = (query) => Boolean(window.matchMedia?.(query)?.matches);
+    const cores = Number(window.navigator?.hardwareConcurrency || 8);
+    return matches("(pointer: coarse)") || matches("(max-width: 767px)") || cores <= 4;
+  }
+
   function pointBudget(requested) {
     const contract = window.MASTER_FACE_CONTRACT || {};
     const budget = contract.spatial?.budget || {};
-    const mobile = Boolean(window.matchMedia?.("(pointer: coarse)")?.matches);
-    const configured = Number(mobile ? budget.mobile_points : budget.desktop_points);
+    // FaceState owns device classification and the effective budget. Fall back
+    // to its canonical static point limits only for older shells without it.
+    const shared = Number(window.MASTER_FACE_STATE?.renderBudget?.().points);
+    const mobile = constrainedDevice();
+    const configured = Number.isFinite(shared) && shared > 0
+      ? shared
+      : Number(budget[mobile ? "mobile_points" : "desktop_points"]);
     const fallback = mobile ? MOBILE_FALLBACK : DESKTOP_FALLBACK;
     const ceiling = Number.isFinite(configured) && configured > 0
       ? Math.min(MAX_POINTS, Math.floor(configured))
