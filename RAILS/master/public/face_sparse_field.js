@@ -7,18 +7,10 @@
   const CONTRACT = window.MASTER_FACE_CONTRACT || {};
   const SPATIAL = CONTRACT.spatial || {};
   const SPEC = SPATIAL.sparse_field || {};
-  const MODES = Object.freeze({
-    idle:      { count: 48,  activity: 0.12, void: 0.94, drift: 0.10, orbit: 0.18 },
-    super_void:{ count: 18,  activity: 0.05, void: 0.995, drift: 0.018, orbit: 0.04 },
-    listening: { count: 88,  activity: 0.42, void: 0.82, drift: 0.18, orbit: 0.28 },
-    thinking:  { count: 148, activity: 0.72, void: 0.66, drift: 0.28, orbit: 0.48 },
-    working:   { count: 124, activity: 0.66, void: 0.70, drift: 0.24, orbit: 0.42 },
-    speaking:  { count: 116, activity: 0.78, void: 0.70, drift: 0.22, orbit: 0.38 },
-    warning:   { count: 78,  activity: 0.58, void: 0.78, drift: 0.34, orbit: 0.56 },
-    error:     { count: 58,  activity: 0.86, void: 0.82, drift: 0.62, orbit: 0.88 },
-    sleeping:  { count: 22,  activity: 0.05, void: 0.98, drift: 0.03, orbit: 0.08 },
-    ready:     { count: 60,  activity: 0.24, void: 0.90, drift: 0.12, orbit: 0.20 }
-  });
+  // Motion profiles are canonical in MASTER/data/tokens.yml. Keep one idle
+  // fallback for an older shell that has not passed the contract yet.
+  const FALLBACK_PROFILE = Object.freeze({ activity: 0.12, void: 0.94, drift: 0.10, orbit: 0.18 });
+  const MODE_PROFILES = SPEC.profiles || { idle: FALLBACK_PROFILE };
 
   let THREE = null;
   let root = null;
@@ -39,8 +31,8 @@
   let loading = false;
   let pointerActive = false;
   const pointer = { x: 0, y: 0 };
-  const maxParticles = Number(SPEC.max_particles || 260);
-  const mobileParticles = Number(SPEC.mobile_max_particles || 140);
+  const maxParticles = Math.max(1, Math.floor(Number(SPEC.max_particles) || 260));
+  const mobileParticles = Math.max(1, Math.min(maxParticles, Math.floor(Number(SPEC.mobile_max_particles) || 140)));
   const positions = new Float32Array(maxParticles * 3);
   const velocities = new Float32Array(maxParticles * 3);
   const targets = new Float32Array(maxParticles * 3);
@@ -68,8 +60,19 @@
   const now = () => performance.now();
 
   function modeProfile(state) {
-    const mode = String(state?.mode || document.documentElement.dataset.masterMode || "idle").toLowerCase();
-    return MODES[mode] || MODES.idle;
+    const requested = String(state?.mode || document.documentElement.dataset.masterMode || "idle").toLowerCase();
+    const mode = Object.prototype.hasOwnProperty.call(MODE_PROFILES, requested) ? requested : "idle";
+    const configured = Number(SPEC[`${mode}_particles`]);
+    const fallback = Number(mode === "super_void" ? SPEC.super_void_particles : SPEC.idle_particles);
+    const count = Number.isFinite(configured) && configured > 0
+      ? configured
+      : Number.isFinite(fallback) && fallback > 0 ? fallback : 48;
+    return Object.freeze({
+      ...FALLBACK_PROFILE,
+      ...(MODE_PROFILES[mode] || FALLBACK_PROFILE),
+      mode,
+      count: Math.max(1, Math.min(maxParticles, Math.floor(count)))
+    });
   }
 
   function addAnchor(i, x, y, z, group = 0) {
