@@ -111,4 +111,12 @@ class FoldDeliberationTest < Minitest::Test
     assessment = Master::CLI::FoldRisk.assess("commit the auth fix")
     assert_equal :high, assessment[:risk]
   end
+
+  # Observe cannot execute, so a request to start a session must not be classified as observing.
+  def test_fold_risk_treats_starting_a_terminal_session_as_executing
+    goal = "create a pseudo terminal (e.g. unix screen) that i can reattach with screen -r"
+
+    assert_equal :high, Master::CLI::FoldRisk.assess(goal)[:risk]
+    refute_equal :high, Master::CLI::FoldRisk.assess("what is a pseudo terminal")[:risk]
+  end
 end

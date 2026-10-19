@@ -8,6 +8,9 @@ module Master
     # FoldRisk — classify goal risk for conditional ideation and council gates.
     module FoldRisk
       HIGH_PATTERNS = /\b(commit|ship|push|deploy|tribunal|full\s+pass|refactor\s+all|delete\s+all)\b/i.freeze
+      # A goal that starts a process or session executes, and only the repair profile may
+      # execute: classified low it ran in observe and every exec was refused by capability.
+      EXEC_PATTERNS = /\b(create|start|launch|spawn|open|run|attach)\b.{0,40}\b(terminal|pty|shell|screen|tmux|session|process|server|daemon|command|script)\b/i.freeze
       MEDIUM_PATTERNS = /\b(fix|implement|add|migrate|workflow|scan|refactor|clean|polish)\b/i.freeze
 
       module_function
@@ -16,6 +19,7 @@ module Master
         route = CLI::IntentRouter.new.route(goal)
         risk = route[:risk]
         risk = :high if goal.to_s.match?(HIGH_PATTERNS)
+        risk = :high if goal.to_s.match?(EXEC_PATTERNS)
         risk = :medium if risk == :low && goal.to_s.match?(MEDIUM_PATTERNS)
         risk = :high if repo_wide?(goal)
         risk = bump_risk(risk, route[:intent])
