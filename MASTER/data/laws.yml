@@ -137,6 +137,13 @@ visual_identity_contract:
     - "Real product, garment, person and media colours remain truthful."
     - "Every tree adapts the visual language to its task instead of sharing one forced palette."
     - "Never copy the reference's wordmark, key art, characters or distinctive protected expression."
+    - "The signal occupies no more than the declared highlight-area budget and remains a semantic accent rather than a universal page background."
+    - "Selected navigation and command-palette items have an explicit state marker and remain understandable without colour."
+    - "The display role is opt-in; body, metadata and technical type retain their separate semantic roles."
+    - "Product photographs, clothing colours, faces and media grades are not recoloured to satisfy branding."
+    - "Brand marks are original artwork; wordmark typography does not replace semantic page headings."
+    - "CLI and OpenBSD operator output retain plain-text state labels, location and actionable recovery without decorative colour."
+    - "Generated artwork keeps critical copy editable and out of generative photographic pixels."
   adapters:
     master: "signal-and-stillness; monochrome console chrome; expressive face is the only organic focal centerpiece"
     rails: "shared typography and semantic signal; retain each product dialect recorded in apps.yml"
