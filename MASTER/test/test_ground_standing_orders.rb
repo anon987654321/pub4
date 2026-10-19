@@ -20,6 +20,18 @@ class StandingOrdersTest < Minitest::Test
     @orders = Orders.new
   end
 
+  RecordingBus = Struct.new(:events) do
+    def publish(event, payload = {})
+      events << [event, payload]
+    end
+  end
+
+  def bus_on_orders
+    bus = RecordingBus.new([])
+    @orders.instance_variable_set(:@bus, bus)
+    bus
+  end
+
   def teardown
     @saved.each do |path, bytes|
       if bytes
@@ -229,15 +241,19 @@ class StandingOrdersTest < Minitest::Test
   def test_invalid_filter_is_ignored_and_reported
     subject = order("trigger" => "event", "event" => "tool:after", "filter" => "[")
 
+    bus = bus_on_orders
+
     refute @orders.send(:filter_match?, subject, { tool: "write_file" })
-    assert @bus.events.any? { |event| event.first == "standing_order:invalid_filter" }
+    assert bus.events.any? { |event| event.first == "standing_order:invalid_filter" }
   end
 
   def test_invalid_exclude_is_ignored_and_reported
     subject = order("trigger" => "event", "event" => "tool:after", "exclude" => "[")
 
+    bus = bus_on_orders
+
     refute @orders.send(:exclude_match?, subject, { tool: "write_file" })
-    assert @bus.events.any? { |event| event.first == "standing_order:invalid_exclude" }
+    assert bus.events.any? { |event| event.first == "standing_order:invalid_exclude" }
   end
 
   def test_an_empty_filter_matches_everything

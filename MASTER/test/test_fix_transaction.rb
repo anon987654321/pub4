@@ -58,7 +58,6 @@ class TestFixTransaction < Minitest::Test
       refute Dir.exist?(File.join(dir, ".master", "fix_transactions", id))
     end
   end
-end
 
   def test_checkpoint_advances_the_rollback_floor
     Dir.mktmpdir do |dir|
@@ -79,3 +78,4 @@ end
       assert_equal "delivered", File.read(path)
     end
   end
+end
