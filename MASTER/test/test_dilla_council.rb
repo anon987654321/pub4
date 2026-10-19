@@ -15,6 +15,7 @@ class TestDillaCouncil < Minitest::Test
     dilla = modes[:dilla]
     assert_equal "dilla_critique", dilla[:preset_key]
     assert dilla[:include_mix_metrics]
+    assert_operator dilla[:max_bytes], :>=, 400_000
     assert_match(/cherry-pick/i, dilla[:ideation_prompt])
     assert_includes dilla[:files], "../STUDIO/dilla/dilla.rb"
     assert_includes dilla[:files], "../STUDIO/dilla/data/dilla.json"

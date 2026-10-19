@@ -39,7 +39,7 @@ Bare MASTER `/play` renders and plays this same eight-section Blue Hour composit
 without encoding a video. This keeps the interactive audition and `ruby dilla.rb` on the
 same musical arrangement and the same section-level drum and instrument effects.
 A named `/play progression N` request remains a single progression, at 92 BPM unless
-an explicit tempo or an available J Dilla reference supplies another value. Dilla-pocket
+an explicit tempo or an available hip-hop reference supplies another value. Dilla-pocket
 progressions use the full drum pattern, Rhodes, and the `dilla_night` bus-effects rig.
 
 The rig is defined once in `data/dilla.json`: cassette colour, heavy drum tape, drum-bus
@@ -158,9 +158,9 @@ can be auditioned as distinct arrangements.
 
 ## Audio-reference analysis and style learning
 
-The canonical Dilla benchmark is Slum Village's *Fantastic, Vol. 2*: study the record itself for pocket, swing, microtiming, sample-to-drum relationship, phrase density, arrangement changes and broad tonal balance. An orchestral performance of Dilla's music is valuable as a tribute and evidence of his influence, but it is not the sonic target for the beat engine. Learn measurable production traits and musical principles, not the source melody or a note-for-note arrangement.
+The canonical hip-hop reference should be studied for pocket, swing, microtiming, sample-to-drum relationship, phrase density, arrangement changes and broad tonal balance. An orchestral tribute is useful evidence of musical influence, but it is not the target sound for a beat engine. Learn measurable production traits and musical principles, not source melodies or note-for-note arrangements.
 
-Explicitly describing a source as an album (or naming *Fantastic, Vol. 2*) lets MASTER use the analyzer's existing hard two-hour ceiling. Ordinary track references retain the shorter default cap. This enables full-album uploads without silently making every pasted link an expensive long-form Demucs job.
+Explicitly describing a source as an album lets MASTER use the analyzer's existing hard two-hour ceiling. Ordinary track references retain the shorter default cap. This enables full-album uploads without silently making every pasted link an expensive long-form Demucs job.
 
 The reference workflow analyzes the **music only**; it never inspects or downloads video
 frames. It imports a YouTube audio stream with yt-dlp, measures duration, format,
@@ -175,9 +175,8 @@ Agreement and half/double-time ambiguity are reported rather than silently blend
 rhythm summary also names its evidence source: a Demucs drums stem when available, or an
 explicitly labelled full-mix proxy when separation is unavailable or disabled.
 
-MASTER can infer a broad style from the instruction accompanying the link, so a J Dilla,
-Slum Village or boom-bap reference and an industrial-techno reference stay separate. In chat, say
-something like “learn the J Dilla sound from this track” and paste the link; later,
+MASTER can infer a broad style from the instruction accompanying the link, so a boom-bap reference and an industrial-techno reference stay separate. In chat, say
+something like “learn this track's hip-hop production style” and paste the link; later,
 “make a beat like that” uses the learned profile. For techno, say “study this
 industrial-techno track” and paste the link, then ask for a track in that style. A
 pasted YouTube link by itself is also treated as a reference, although without any style
@@ -193,7 +192,7 @@ ruby dilla.rb reference /absolute/path/to/audio.wav
 ruby dilla.rb industrial-techno
 ~~~
 
-A J Dilla profile supplies an averaged target tempo, the dedicated Dilla shadow pocket,
+A hip-hop profile supplies an averaged target tempo, the dedicated Dilla shadow pocket,
 a Rhodes voice, dusty kit, and cassette-coloured drums to later Dilla beat renders; a
 matching industrial-techno profile steers the separate techno renderer. Each new link
 adds a compact measurement record to that style's learned profile, averaging tempo and
@@ -204,13 +203,13 @@ its groove amount, rather than forcing every reference through one preset.
 
 When Demucs stems are available, their relative drum/bass/vocal/other energy shares are
 recorded too: bass and drum balance gently steers industrial rumble and kick ducking,
-while J Dilla renders use a bounded (at most 2 dB) drum/chord mix adjustment. Missing
+while hip-hop renders use a bounded (at most 2 dB) drum/chord mix adjustment. Missing
 stems or unusable measurements leave Dilla's normal mix defaults intact. Rhythm features
 describe the measured envelope and do not claim exact kick/snare note transcription.
 
 General references remain general and do not silently become techno. Style profiles and
 the active style are saved separately, so a general link or a techno reference does not
-erase the accumulated J Dilla profile, and vice versa. Dilla chooses arrangement length
+erase the accumulated hip-hop profile, and vice versa. Dilla chooses arrangement length
 and an internal seed itself; `--bars` and `--seed` remain optional expert overrides.
 
 Install yt-dlp and FFmpeg for URL import and measurement. To use source separation,

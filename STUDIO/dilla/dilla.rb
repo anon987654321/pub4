@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # Dilla's complete musical and audio runtime. The JSON files beside this script are data,
 # not alternate implementations. Generic STUDIO output/process policies remain shared services.
 
@@ -6080,7 +6081,7 @@ module Dilla
     def style_key(value)
       hint = value.to_s.downcase.tr("_", " ").gsub(/[^a-z0-9]+/, " ").strip
       return "industrial_techno" if hint.match?(/\bindustrial techno\b|\btechno\b/)
-      return "j_dilla" if hint.match?(/\bj dilla\b|\bdilla\b|\bboom bap\b|\bhip hop\b/)
+      return "j_dilla" if hint.match?(/\bdilla\b|\bboom bap\b|\bhip hop\b/)
       "general"
     end
 
