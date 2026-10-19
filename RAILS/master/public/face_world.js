@@ -136,7 +136,7 @@
     for (const record of activityRecords.values()) ensureActivityMesh(record);
   }
 
-  function updateActivityNodes(now, state) {
+  function updateActivityNodes(now, state, reducedMotion = false) {
     const ttl = Math.max(0, finite(TASK_RING.terminal_lifetime_ms, 12000));
     if (ttl > 0) {
       const wallNow = Date.now();
@@ -155,7 +155,7 @@
       const mesh = activityMeshes.get(record.key);
       if (!mesh) return;
       const radiusScale = record.kind === "evidence" ? 1.12 : record.kind === "tool" ? 1.04 : 1;
-      const angle = (Math.PI * 2 * index / Math.max(1, records.length)) + now * orbitSpeed;
+      const angle = (Math.PI * 2 * index / Math.max(1, records.length)) + (reducedMotion ? 0 : now * orbitSpeed);
       mesh.position.set(
         Math.cos(angle) * radiusX * radiusScale,
         Math.sin(angle) * radiusY * radiusScale,
@@ -168,7 +168,7 @@
         : waiting ? 0.48
         : record.kind === "evidence" ? 0.34
         : active ? 0.64 : 0.40;
-      const pulse = active ? 0.12 * (0.5 + 0.5 * Math.sin(now * 0.004 + index)) : 0;
+      const pulse = !reducedMotion && active ? 0.12 * (0.5 + 0.5 * Math.sin(now * 0.004 + index)) : 0;
       const terminalFade = record.terminalAt && ttl > 0
         ? Math.max(0, 1 - (Date.now() - record.terminalAt) / ttl) : 1;
       mesh.material.opacity = Math.min(0.9, (baseOpacity + pulse) * terminalFade
@@ -664,7 +664,7 @@
         : 0.10 + geometry.eye_attention * 0.12 + geometry.node_energy * 0.34 + busy * 0.18);
     });
 
-    updateActivityNodes(now, state);
+    updateActivityNodes(now, state, reducedMotion);
     updatePulses(now, reducedMotion);
 
     // Reduced motion keeps the semantic composition but removes idle breathing.
