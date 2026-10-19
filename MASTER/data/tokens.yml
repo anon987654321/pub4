@@ -424,6 +424,19 @@ tokens:
       focus: 0.86
       activity: 0.14
       risk: 0.0
+    # How the stipple layer looks in each state in `modes` above; the web face
+    # reads this through MASTER_FACE_CONTRACT and Ruby through Face::Contract.
+    stipple:
+      profiles:
+        idle:      { density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 }
+        thinking:  { density: 0.72, ripple: 0.16, turbulence: 0.28, luminosity: 0.91, attract: 0.74 }
+        listening: { density: 0.62, ripple: 0.17, turbulence: 0.09, luminosity: 0.85, attract: 0.86 }
+        working:   { density: 0.75, ripple: 0.24, turbulence: 0.34, luminosity: 0.90, attract: 0.60 }
+        speaking:  { density: 0.84, ripple: 0.60, turbulence: 0.19, luminosity: 0.98, attract: 0.40 }
+        warning:   { density: 0.84, ripple: 0.52, turbulence: 0.48, luminosity: 0.96, attract: 0.22 }
+        error:     { density: 0.56, ripple: 0.82, turbulence: 0.65, luminosity: 1.00, attract: 0.04 }
+        ready:     { density: 0.60, ripple: 0.06, turbulence: 0.06, luminosity: 0.82, attract: 0.25 }
+        sleeping:  { density: 0.30, ripple: 0.00, turbulence: 0.00, luminosity: 0.48, attract: 0.10 }
     interaction:
       states: [idle, waking, listening, holding, yielded, processing, speaking, sleeping, error]
       turn_states: [draft, listening, committed, interrupted, discarded, failed]

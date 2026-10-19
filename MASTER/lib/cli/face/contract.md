@@ -4,7 +4,7 @@ The terminal face is a presentation adapter for the same MASTER runtime used by 
 
 ## Canonical authority
 
-`MASTER/data/tokens.yml#face_interface` owns shared state names, interaction/turn/task/tool states, events, prompt tokens, the ASCII ramp and measured ink values, mesh and camera parameters, sampling and fit rules, and declared performance budgets. Change those definitions first; do not copy the values into Ruby constants or browser code. The face contract in the runtime owns the semantic state shape. The terminal renderer implements that contract rather than redefining it.
+`MASTER/data/tokens.yml#face_interface` owns shared state names, the stipple profile of each state, interaction/turn/task/tool states, events, prompt tokens, the ASCII ramp and measured ink values, mesh and camera parameters, sampling and fit rules, and declared performance budgets. Change those definitions first; do not copy the values into Ruby constants or browser code. The face contract in the runtime owns the semantic state shape. The terminal renderer implements that contract rather than redefining it.
 
 ## Surface responsibilities
 

@@ -60,6 +60,12 @@ module Master
       def user_token(root: Master::ROOT) = prompt(root:).fetch("user_token", "user")
       def master_token(root: Master::ROOT) = prompt(root:).fetch("master_token", "master")
 
+      # The stipple dials for one mode; an unknown mode reads as idle, as the web face does.
+      def stipple_profile(mode, root: Master::ROOT)
+        profiles = data(root:).fetch("stipple", {}).fetch("profiles", {})
+        profiles.fetch(mode.to_s) { profiles.fetch("idle") }.transform_keys(&:to_s).freeze
+      end
+
       def modes(root: Master::ROOT)
         Array(state(root:).fetch("modes", [])).map(&:to_s).freeze
       end

@@ -150,6 +150,19 @@ class TestRenderer < Minitest::Test
     assert_equal 72, contract.dig("prompt", "max_ch")
   end
 
+  # The stipple moods are one table for the web face and Ruby; every state the
+  # contract names has a row, each dial is a bounded number, and an unknown
+  # mode reads as idle the way the browser reads it.
+  def test_stipple_profiles_cover_every_face_mode_with_bounded_dials
+    contract = Master::Face::Contract
+    contract.modes.each do |mode|
+      profile = contract.stipple_profile(mode)
+      assert_equal %w[attract density luminosity ripple turbulence], profile.keys.sort, mode
+      profile.each_value { |value| assert_includes 0.0..1.2, value, mode }
+    end
+    assert_equal contract.stipple_profile("idle"), contract.stipple_profile("no-such-mode")
+  end
+
   def test_shell_prompt_measures_visible_cells_not_ansi_bytes
     renderer = FakeRenderer.new(config: {})
 
