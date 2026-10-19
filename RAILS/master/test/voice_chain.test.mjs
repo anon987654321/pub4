@@ -71,12 +71,17 @@ test("every filter the declared chain names has a node", () => {
   assert.equal(chain.stages, declaredChain.split(",").length);
 });
 
+// Read from the declaration, like the band below: the test holds the face to voice.yml
+// rather than to whatever numbers voice.yml carried once.
 test("the formant peaks carry the declared frequencies and gains", () => {
   const { ctx } = build(declaredChain);
   const peaks = ctx.created.filter((n) => n.kind === "biquad" && n.type === "peaking");
-  assert.deepEqual(peaks.map((p) => p.frequency.value), [520, 1480, 2520]);
-  assert.deepEqual(peaks.map((p) => p.gain.value), [4.5, 3.6, 2.8]);
-  assert.deepEqual(peaks.map((p) => p.Q.value), [1.1, 1.3, 1.5]);
+  const declared = [...declaredChain.matchAll(/equalizer=f=([\d.]+):t=q:w=([\d.]+):g=([\d.-]+)/g)]
+    .map((m) => ({ f: parseFloat(m[1]), q: parseFloat(m[2]), g: parseFloat(m[3]) }));
+  assert.ok(declared.length > 0, "voice.yml declares no equalizer peaks");
+  assert.deepEqual(peaks.map((p) => p.frequency.value), declared.map((d) => d.f));
+  assert.deepEqual(peaks.map((p) => p.gain.value), declared.map((d) => d.g));
+  assert.deepEqual(peaks.map((p) => p.Q.value), declared.map((d) => d.q));
 });
 
 // The expected band is read from the declaration, so the test holds the face

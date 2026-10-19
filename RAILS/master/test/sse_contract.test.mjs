@@ -125,6 +125,6 @@ test("face source modules log failures for chat and TTS paths", () => {
   const chat = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
   assert.match(chat, /face_runtime:chat_transport_missing/);
-  assert.match(speech, /speakFailure/);
+  assert.match(speech, /serverFailureCount/);
   assert.match(speech, /tts fail/);
 });

@@ -67,6 +67,6 @@ test("a classifier row in the served shape merges", () => {
 // The caller, not the merge: destructuring the rows is what broke it, and the
 // merge already reads either shape, so the rows go through whole.
 test("the remote classifier rows are passed through whole", () => {
-  assert.match(source, /mergeRemoteClassifier\(remoteKey\(remote, "EVENT_CLASSIFIER"\)\)/);
+  assert.match(source, /mergeRemoteClassifier\(catalog\.event_classifier \|\| \[\]\)/);
   assert.doesNotMatch(source, /forEach\(\(\[pattern, meta\]\)/);
 });

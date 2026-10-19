@@ -30,7 +30,6 @@
     [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
     [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
     [/repair_loop:(?:fix_applied|fix_rejected|write_error)/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
-    [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
     [/repair_loop:pass/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
   ];
 
@@ -248,9 +247,8 @@
     if (/phantom:(?:detected|halt|recovery)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));
     }
-    // council:pass and council:veto are the bus outcomes, and tribunal:rendered is
-    // a separate verdict; any of them stops the rotator.
-    if (/council:(?:pass|veto)|tribunal:rendered/i.test(type)) {
+    // council:pass and council:veto are the bus outcomes; either stops the rotator.
+    if (/council:(?:pass|veto)/i.test(type)) {
       stopCouncilRotator();
       delete document.documentElement.dataset.councilBreath;
     }

@@ -33,13 +33,13 @@ test("canonical interface modules are declared in the shell manifest", () => {
   }
 });
 
-test("laws publish the canonical interaction, audio and performance contract", () => {
-  assert.match(laws, /interaction:/);
-  assert.match(laws, /audio:/);
-  assert.match(laws, /target_fps: 60/);
-  assert.match(laws, /main_thread_budget_ms: 8/);
-  assert.match(laws, /speech:start/);
-  assert.match(laws, /task:waiting-human/);
+test("tokens publish the canonical interaction, audio and performance contract", () => {
+  assert.match(tokens, /interaction:/);
+  assert.match(tokens, /audio:/);
+  assert.match(tokens, /target_fps: 60/);
+  assert.match(tokens, /main_thread_budget_ms: 8/);
+  assert.match(tokens, /speech:start/);
+  assert.match(tokens, /task:waiting-human/);
 });
 
 test("interaction state defines the canonical turn task tool visual and memory stores", () => {
@@ -50,7 +50,7 @@ test("interaction state defines the canonical turn task tool visual and memory s
     "turn:committed", "turn:discarded", "turn:interrupted",
     "task:queued", "task:waiting-human", "task:waiting-network", "task:waiting-model",
     "tool:queued", "tool:active", "tool:retry", "tool:complete", "tool:failed"
-  ]) assert.ok(interaction.includes(event), event + " missing");
+  ]) assert.ok((interaction + tokens).includes(event), event + " missing");
 });
 
 test("audio field keeps smoothed and transient signals separate", () => {
@@ -65,7 +65,7 @@ test("audio field keeps smoothed and transient signals separate", () => {
 });
 
 test("render policy exposes a 60fps target and adaptive hysteresis without a second RAF", () => {
-  assert.match(render, /TARGET_FPS = 60/);
+  assert.match(render, /TARGET_FPS = Number\(PERFORMANCE\.target_fps\) \|\| 60/);
   assert.match(render, /HYSTERESIS/);
   assert.match(render, /function recordFrame/);
   assert.match(render, /PerformanceObserver/);

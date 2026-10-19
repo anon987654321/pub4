@@ -23,8 +23,7 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /state\.pressureFields\?\.pct/);
   assert.match(system, /state\.pressureFields\?\.entropy/);
   assert.match(system, /state\??\.reducedMotion/);
-  assert.match(system, /budget\.mobile_points/);
-  assert.match(system, /budget\.desktop_points/);
+  assert.match(system, /budget\[mobile \? "mobile_points" : "desktop_points"\]/);
   assert.match(system, /MASTER_FACE_STATE\?\.renderBudget\?\.\(\)\.points/);
   assert.match(system, /max-width: 767px/);
   assert.match(system, /hardwareConcurrency/);

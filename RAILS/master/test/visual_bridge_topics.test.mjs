@@ -38,7 +38,7 @@ function publishedTopics() {
       if (!name.endsWith(".rb")) continue;
       const code = readFileSync(join(base, name), "utf8").replace(/^\s*#.*$/gm, "");
       for (const match of code.matchAll(/\bpublish!?\(?\s*["']([a-z][a-z0-9_]*:[a-z0-9_:]+)/g)) topics.add(match[1]);
-      for (const match of code.matchAll(/\bevent:\s*["']([a-z][a-z0-9_]*:[a-z0-9_:]+)["']/g)) topics.add(match[1]);
+      for (const match of code.matchAll(/\b(?:event|type):\s*["']([a-z][a-z0-9_]*:[a-z0-9_:]+)["']/g)) topics.add(match[1]);
     }
   }
   return topics;

@@ -50,10 +50,12 @@ const documentMock = {
 }
 
 globalThis.document = documentMock
+globalThis.window = globalThis
 globalThis.innerWidth = 1200
 globalThis.innerHeight = 800
 globalThis.devicePixelRatio = 1
 globalThis.matchMedia = () => ({ matches: true })
+globalThis.getComputedStyle = () => ({ getPropertyValue: () => "" })
 globalThis.requestAnimationFrame = () => 1
 globalThis.cancelAnimationFrame = () => {}
 globalThis.addEventListener = (name, callback) => {
