@@ -189,7 +189,8 @@
     const particles = Number(budget[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
     // The OS preference and the explicit page toggle must constrain the same shared budget.
-    const reducedMotion = document.documentElement?.dataset?.reducedMotion === "1" || mediaMatches("(prefers-reduced-motion: reduce)");
+    const reducedMotion = Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" || mediaMatches("(prefers-reduced-motion: reduce)");
     const reducedMotionParticles = Number(budget.reduced_motion_particles) || 64;
     const effectiveParticles = reducedMotion ? Math.min(particles, reducedMotionParticles) : particles;
     const profile = document.documentElement?.dataset?.runtimeProfile || "";
