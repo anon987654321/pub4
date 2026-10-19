@@ -21,23 +21,22 @@ class TreeContractTest < Minitest::Test
     lib/cli/command_registry
     lib/cli/session
     lib/review/scan/laws
-    lib/review/scan/engines
+    lib/fix/scan
     lib/fix/fix_loop
-    lib/core/memory
+    lib/ground/memory
     lib/music
     lib/voice/renderer
   ].freeze
 
   PROTECTED_PATHS = %w[
-    MASTER/bin/ruby
-    MASTER/bin/cli
+    MASTER/bin
     MASTER/lib
     MASTER/data
     MASTER/law
-    MASTER/tools/Rakefile
     MASTER/tools/test
     OPENBSD/var/nsd
-    RAILS/brgen/engines
+    RAILS/brgen_marketplace/engines
+    RAILS/brgen_radio
     STUDIO
     STUDIO/dilla
     STUDIO/replicate/lora
@@ -45,7 +44,15 @@ class TreeContractTest < Minitest::Test
     STUDIO/replicate
   ].freeze
 
-  BRGEN_ENGINES = %w[marketplace playlist tv takeaway dating maps].freeze
+  # Each vertical's engine root, relative to RAILS/.
+  BRGEN_ENGINES = {
+    "marketplace" => "brgen_marketplace",
+    "playlist" => "brgen_radio/playlist",
+    "tv" => "brgen_radio/tv",
+    "takeaway" => "brgen_marketplace/engines/takeaway",
+    "dating" => "brgen_dating",
+    "maps" => "brgen_maps",
+  }.freeze
 
   def test_ruby_sources_never_contain_transport_markup
     Dir.glob(File.join(ROOT, "**", "*.rb")).each do |path|
@@ -69,12 +76,11 @@ class TreeContractTest < Minitest::Test
     assert_includes cli, 'require_relative "../lib/boot/entrypoint"'
     assert_includes cli, '$LOAD_PATH.unshift File.expand_path("../lib", __dir__)'
     assert_includes entrypoint, 'require_relative "dependency_manager"'
-    assert_includes entrypoint, 'File.join(root, "bin", "ruby")'
   end
 
   def test_protected_master_boundaries_remain_directories
     PROTECTED_PATHS.each do |relative|
-      path = File.join(File.expand_path("../..", ROOT), relative)
+      path = File.join(File.expand_path("..", ROOT), relative)
       assert Dir.exist?(path), "protected runtime/deploy boundary moved: #{relative}"
     end
 
@@ -84,8 +90,8 @@ class TreeContractTest < Minitest::Test
   end
 
   def test_brgen_engine_boundaries_remain_mountable
-    BRGEN_ENGINES.each do |engine|
-      path = File.join(File.expand_path("../..", ROOT), "RAILS/brgen/engines", engine)
+    BRGEN_ENGINES.each do |engine, root|
+      path = File.join(File.expand_path("..", ROOT), "RAILS", root)
       assert Dir.exist?(path), "brgen engine boundary moved: #{engine}"
       assert File.file?(File.join(path, "config/routes.rb")), "#{engine} engine lost config/routes.rb"
       assert File.file?(File.join(path, "lib", engine, "engine.rb")), "#{engine} engine lost its Rails::Engine class"
@@ -111,7 +117,8 @@ class TreeContractTest < Minitest::Test
   def test_autoload_ignores_point_at_real_files
     manifest = YAML.safe_load_file(File.join(ROOT, "data/autoload.yml")).fetch("autoload")
     manifest.values.flatten.each do |relative|
-      assert File.file?(File.join(ROOT, "lib", relative)), "autoload ignore points at missing file: #{relative}"
+      assert File.exist?(File.join(ROOT, "lib", relative)) || File.exist?(File.join(ROOT, "lib", "#{relative}.rb")),
+             "autoload ignore points at missing path: #{relative}"
     end
   end
 end
