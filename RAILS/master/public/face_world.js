@@ -338,13 +338,23 @@
   }
 
   function makeSplatProxy() {
-    // FaceState owns the effective budget, including constrained/mobile devices.
-    // The proxy must not quietly allocate the desktop point ceiling on a phone.
-    const effectiveBudget = window.MASTER_FACE_STATE?.renderBudget?.();
-    const configured = Number(effectiveBudget?.world_points ?? effectiveBudget?.points ?? BUDGET.desktop_points ?? 1200);
+    // FaceState owns the split. Older shells with only the total budget still
+    // derive their share from the canonical allocation instead of taking the total.
+    const effectiveBudget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
+    const mobile = Boolean(window.matchMedia?.("(pointer: coarse)")?.matches) ||
+      Boolean(window.matchMedia?.("(max-width: 767px)")?.matches) || Number(window.navigator?.hardwareConcurrency || 8) <= 4;
+    const fallbackTotal = Number(BUDGET[mobile ? "mobile_points" : "desktop_points"]) || (mobile ? 420 : 1200);
+    const totalValue = Number(effectiveBudget.points ?? fallbackTotal);
+    const total = Number.isFinite(totalValue) && totalValue > 0 ? totalValue : fallbackTotal;
+    const allocation = BUDGET.point_allocation || {};
+    const stippleWeight = Math.max(0.1, Number(allocation.stipple_fraction) || 0.75);
+    const worldWeight = Math.max(0.1, Number(allocation.world_fraction) || 0.25);
+    const fallbackShare = Math.max(1, Math.floor(total * worldWeight / (stippleWeight + worldWeight)));
+    const sharedWorld = Number(effectiveBudget.world_points);
+    const configured = Number.isFinite(sharedWorld) && sharedWorld > 0 ? sharedWorld : fallbackShare;
     const ceiling = Number.isFinite(configured) && configured > 0
       ? Math.min(1200, Math.floor(configured))
-      : 1200;
+      : Math.min(1200, fallbackShare);
     const count = Math.max(1, ceiling);
     splatCount = count;
     const positions = new Float32Array(count * 3);
