@@ -21,23 +21,35 @@ class TestDesignAudit < Minitest::Test
     File.write(path, text)
   end
 
-  def test_a_name_defined_in_four_places_is_reported_once
-    tree do |root, lib|
-      %w[a b c d].each { |dir| write(File.join(lib, dir, "proof.rb")) }
+  SHARED_BODY = "def one = 1\ndef two = 2\ndef three = 3\ndef four = 4\n"
 
-      rows = audit.repeated_names(lib, repo_root: root)
+  def test_two_files_of_one_name_with_the_same_methods_are_one_idea_written_twice
+    tree do |root, lib|
+      write(File.join(lib, "a", "proof.rb"), SHARED_BODY)
+      write(File.join(lib, "b", "proof.rb"), SHARED_BODY)
+
+      rows = audit.duplicated_modules(lib, repo_root: root)
 
       assert_equal 1, rows.size
-      assert_includes rows.first.message, "proof.rb is defined 4 times"
+      assert_includes rows.first.message, "share 4 method names"
     end
   end
 
-  def test_a_name_in_three_places_and_a_conventional_name_are_left_alone
+  def test_two_files_of_one_name_doing_different_things_are_left_alone
     tree do |root, lib|
-      %w[a b c].each { |dir| write(File.join(lib, dir, "proof.rb")) }
-      %w[a b c d e].each { |dir| write(File.join(lib, dir, "version.rb")) }
+      write(File.join(lib, "a", "proof.rb"), SHARED_BODY)
+      write(File.join(lib, "b", "proof.rb"), "def alpha = 1\ndef beta = 2\ndef gamma = 3\ndef one = 1\n")
 
-      assert_empty audit.repeated_names(lib, repo_root: root)
+      assert_empty audit.duplicated_modules(lib, repo_root: root)
+    end
+  end
+
+  def test_a_conventional_name_is_never_a_duplicate
+    tree do |root, lib|
+      write(File.join(lib, "a", "version.rb"), SHARED_BODY)
+      write(File.join(lib, "b", "version.rb"), SHARED_BODY)
+
+      assert_empty audit.duplicated_modules(lib, repo_root: root)
     end
   end
 

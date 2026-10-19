@@ -9,8 +9,9 @@ module Master
     module DesignAudit
       Row = Data.define(:file, :line, :message, :fix)
 
-      # A basename shared this often is a naming habit, not a coincidence of two modules.
-      REPEATED_NAME = 4
+      # Same-named files must share this many method names, and this share of them, to count as one idea.
+      SHARED_METHODS = 3
+      SHARED_SHARE = 0.5
 
       # Below this, a test that reads source text is a contract on one fact, not a habit.
       SPELLING_MIN = 5
@@ -27,21 +28,33 @@ module Master
 
       def run(repo_root:)
         lib = File.join(repo_root, "MASTER", "lib")
-        [repeated_names(lib, repo_root:), lone_directories(lib), spelling_tests(repo_root:),
+        [duplicated_modules(lib, repo_root:), lone_directories(lib), spelling_tests(repo_root:),
          spawn_in_loops(lib)].flatten
       end
 
-      # One basename in four directories is usually one idea written four times.
-      def repeated_names(lib, repo_root:)
+      # Two files of one name that also share most of their method names are one idea written twice. A shared
+      # name alone is not evidence: Core::Proof and Convergence::Proof are different things in different places.
+      def duplicated_modules(lib, repo_root:)
         groups = Dir.glob(File.join(lib, "**", "*.rb")).group_by { |path| File.basename(path, ".rb") }
-        groups.filter_map do |name, paths|
-          next if paths.size < REPEATED_NAME || CONVENTIONAL.include?(name)
-
-          where = paths.map { |path| path.delete_prefix("#{repo_root}/") }.join(", ")
-          Row.new(paths.first, 1, "repeated module name: #{name}.rb is defined #{paths.size} times (#{where})",
-                  "Read each. Where they are one idea, keep a single module and make the rest thin callers; " \
-                  "where they are different ideas, rename each for what it does so the names stop colliding.")
+        groups.reject { |name, paths| paths.size < 2 || CONVENTIONAL.include?(name) }.flat_map do |_name, paths|
+          paths.combination(2).filter_map { |pair| duplicate_row(pair, repo_root:) }
         end
+      end
+
+      def duplicate_row(pair, repo_root:)
+        first, second = pair.map { |path| method_names(path) }
+        shared = first & second
+        return if shared.size < SHARED_METHODS || shared.size < (first | second).size * SHARED_SHARE
+
+        where = pair.map { |path| path.delete_prefix("#{repo_root}/") }.join(" and ")
+        names = shared.first(4).join(", ")
+        Row.new(pair.first, 1, "duplicated module: #{where} share #{shared.size} method names (#{names})",
+                "Read both. Keep one implementation and make the other a thin caller or delete it; " \
+                "check every caller and require before removing either.")
+      end
+
+      def method_names(path)
+        File.read(path, encoding: "UTF-8").scan(/^\s*def (?:self\.)?([a-z_]\w*[?!]?)/).flatten.uniq
       end
 
       # lib/x/ holding one file beside lib/x.rb is a folder that earns nothing.

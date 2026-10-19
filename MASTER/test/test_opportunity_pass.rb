@@ -60,7 +60,7 @@ class OpportunityPassTest < Minitest::Test
     lib = File.join(root, "MASTER", "lib")
     %w[a b c d].each do |dir|
       FileUtils.mkdir_p(File.join(lib, dir))
-      File.write(File.join(lib, dir, "proof.rb"), "# x\n")
+      File.write(File.join(lib, dir, "proof.rb"), "def one = 1\ndef two = 2\ndef three = 3\n")
     end
     File.write(File.join(lib, "a", "notes.rb"), Array.new(30) { |i| "# see MASTER/lib/gone_#{i}.rb\n" }.join)
   end
@@ -73,7 +73,7 @@ class OpportunityPassTest < Minitest::Test
       findings = pass.run(target: File.join(root, "MASTER"), files: []).value.fetch(:findings)
 
       assert_equal Master::Fix::OpportunityPass::MAX_FINDINGS, findings.size
-      assert(findings.any? { |finding| finding[:message].start_with?("repeated module name: proof.rb") })
+      assert(findings.any? { |finding| finding[:message].start_with?("duplicated module:") })
     end
   end
 end
