@@ -147,11 +147,10 @@ module Master
         end
       end
 
+      # The whole tree, not a path inside it: the fleet check and the layout browser sweep it
+      # starts cost minutes and say nothing about one Ruby file.
       def top_level_target?(target)
-        TOP_LEVEL_TREES.any? do |name|
-          root = File.join(@repo_root, name)
-          target == root || target.start_with?(root + File::SEPARATOR)
-        end
+        TOP_LEVEL_TREES.any? { |name| target == File.join(@repo_root, name) }
       end
 
       def inside_repo?(path)
