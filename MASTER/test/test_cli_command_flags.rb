@@ -6,7 +6,7 @@ require_relative "test_helper"
 # rather than booting the runtime.
 class TestCliCommandFlags < Minitest::Test
   SOURCE = File.read(File.expand_path("../bin/cli", __dir__))
-  HELPERS = SOURCE[/^COMMAND_FLAG.*?(?=^# Help is answered)/m]
+  HELPERS = SOURCE[/^COMMAND_FLAG.*?(?=^# Flags are read before the runtime boots)/m]
 
   def setup
     host = Object.new
