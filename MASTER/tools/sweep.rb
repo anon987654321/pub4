@@ -56,7 +56,7 @@ module Operator
         Probe.new(unit: "dupcensus", trees: %w[MASTER], run: -> { tool("dup_census.rb") }),
         Probe.new(unit: "datareach", trees: %w[MASTER], run: -> { tool("data_reach.rb") }),
         Probe.new(unit: "readersing", trees: %w[MASTER], run: -> { tool("reader_singularity.rb") }),
-        Probe.new(unit: "rulereach", trees: %w[MASTER], run: -> { tool("rule_reach.rb") }),
+        Probe.new(unit: "lawreach", trees: %w[MASTER], run: -> { tool("law_reach.rb") }),
         Probe.new(unit: "namespace", trees: %w[MASTER], run: -> { tool("namespace_ratchet.rb") }),
         Probe.new(unit: "designbase", trees: %w[RAILS], run: -> { tool("design_baseline.rb") }),
 # OPENBSD's declarations and their readers live in different files by

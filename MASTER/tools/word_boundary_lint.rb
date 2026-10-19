@@ -27,7 +27,7 @@ rules = File.join(root, "data", "laws.yml")
 scan.call(rules, File.read(rules)) if File.file?(rules)
 
 Dir.glob(File.join(root, "law", "*.rb")).each { |path| scan.call(path, File.read(path)) }
-Dir.glob(File.join(root, "lib", "review", "scan", "rules", "*.rb")).each { |path| scan.call(path, File.read(path)) }
+Dir.glob(File.join(root, "lib", "review", "scan", "laws", "*.rb")).each { |path| scan.call(path, File.read(path)) }
 
 if hits.empty?
   Master::Trace::Dmesg.status("word0", "clean")
