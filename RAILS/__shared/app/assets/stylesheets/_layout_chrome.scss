@@ -89,7 +89,7 @@ body[data-layout="document"] {
   margin: 0;
 }
 
-.page-header h1 {
+ .page-header h1 {
   margin: 0;
   max-inline-size: 100%;
   font-size: var(--text-title);
@@ -97,6 +97,17 @@ body[data-layout="document"] {
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-tight);
   overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+/* Opt-in editorial display scale. Use only for a page's primary focal title;
+   ordinary product screens keep the compact shared heading role. */
+.page-header h1.pub4-display-title {
+  max-inline-size: 14ch;
+  font-size: var(--text-display);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.02;
   text-wrap: balance;
 }
 

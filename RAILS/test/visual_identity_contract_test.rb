@@ -9,6 +9,8 @@ class VisualIdentityContractTest < Minitest::Test
   FACE_COMPILED = File.join(ROOT, "master", "public", "face.css")
   BRGEN_NAV = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_typography.scss")
   BRGEN_STEPS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_media_feed.scss")
+  SHARED_CHROME = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_layout_chrome.scss")
+  BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
 
   def test_signal_is_canonical_original_and_semantically_named
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
@@ -37,6 +39,15 @@ class VisualIdentityContractTest < Minitest::Test
     assert_includes nav, "border-block-end-color: var(--pub4-signal-on-light);"
     assert_includes steps, "border-block-end: 2px solid var(--pub4-signal);"
     assert_includes steps, "border-block-end-color: var(--pub4-signal-on-light);"
+  end
+
+  def test_display_scale_is_opt_in_and_used_for_one_primary_editorial_heading
+    css = File.read(SHARED_CHROME, encoding: "UTF-8")
+    view = File.read(BRGEN_POSTS, encoding: "UTF-8")
+
+    assert_includes css, ".page-header h1.pub4-display-title"
+    assert_includes css, "font-size: var(--text-display);"
+    assert_includes view, 'class: "pub4-display-title"'
   end
 
   def test_product_dialects_remain_explicit_in_the_visual_contract
