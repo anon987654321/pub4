@@ -169,7 +169,7 @@
         : record.kind === "evidence" ? 0.34
         : active ? 0.64 : 0.40;
       const pulse = !reducedMotion && active ? 0.12 * (0.5 + 0.5 * Math.sin(now * 0.004 + index)) : 0;
-      const terminalFade = record.terminalAt && ttl > 0
+      const terminalFade = !reducedMotion && record.terminalAt && ttl > 0
         ? Math.max(0, 1 - (Date.now() - record.terminalAt) / ttl) : 1;
       mesh.material.opacity = Math.min(0.9, (baseOpacity + pulse) * terminalFade
         * (state.mode === "sleeping" ? 0.55 : 1));
