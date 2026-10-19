@@ -33,6 +33,37 @@ tokens:
   # Each edge is here because something already uses it, with the count as of
   # 2026-08-11. New work picks one of these; a new edge is a design decision that
   # goes in this list first.
+  visual_identity:
+    name: "signal_and_stillness"
+    signal: "#C8F55F"
+    signal_ink: "#101010"
+    signal_on_light: "#50630A"
+    max_highlight_area_fraction: 0.08
+    usage:
+      - "primary action or selected marker where the local dialect permits"
+      - "focus and attention on dark surfaces"
+      - "meaningful state transition, never perpetual decoration"
+    avoid:
+      - "large full-page signal-colour backgrounds"
+      - "signal colour as body text on white"
+      - "glow, lens flare, ornamental gradients or shadows"
+      - "copied wordmarks, campaign art, characters or protected brand expression"
+    composition:
+      hierarchy: "one unmistakable focal point per first screen"
+      negative_space: "intentional and measured, never filled by decoration"
+      surfaces: "flat and structured by alignment, type and rules"
+      typography: "expressive display scale paired with readable body text"
+    motion:
+      default: "still"
+      change_requires_semantic_state: true
+      reduced_motion_must_preserve_meaning: true
+    adaptations:
+      master: "mineral-lime signal on ink; organic face remains the sole expressive centerpiece"
+      brgen: "retain deep-blue city identity and local editorial photography; signal is a sparse semantic accent only"
+      amber: "retain neutral fashion surfaces and truthful garment colour; signal never recolours product photography"
+      bsdports: "retain OpenBSD terminal green and flat monochrome surfaces"
+      openbsd: "plain operational text; signal never substitutes for a truthful written state"
+      studio: "retain media fidelity, operator-owned grades and original subject identity"
   viewport:
     xs: 480
     sm: 576
@@ -302,7 +333,7 @@ tokens:
     anchors:
       c_text: "oklch(86% 0.02 300)"
       x_text: "#d8d6e0"
-      c_accent: "oklch(78% 0.10 300)"
+      c_accent: "var(--pub4-signal)"
       c_danger: "oklch(60% 0.14 35)"
       c_code: "oklch(74% 0.11 275)"
     font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'

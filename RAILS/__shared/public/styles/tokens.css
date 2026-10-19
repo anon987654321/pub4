@@ -12,6 +12,9 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #efefef;
   --danger: #e46151;
+  --pub4-signal: #C8F55F;
+  --pub4-signal-ink: #101010;
+  --pub4-signal-on-light: #50630A;
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   --weight-normal: 400;
   --weight-medium: 500;

@@ -1,4 +1,35 @@
 # GENERATED from MASTER/data/tokens.yml. Do not edit by hand.
+visual_identity:
+  name: signal_and_stillness
+  signal: "#C8F55F"
+  signal_ink: "#101010"
+  signal_on_light: "#50630A"
+  max_highlight_area_fraction: 0.08
+  usage:
+  - primary action or selected marker where the local dialect permits
+  - focus and attention on dark surfaces
+  - meaningful state transition, never perpetual decoration
+  avoid:
+  - large full-page signal-colour backgrounds
+  - signal colour as body text on white
+  - glow, lens flare, ornamental gradients or shadows
+  - copied wordmarks, campaign art, characters or protected brand expression
+  composition:
+    hierarchy: one unmistakable focal point per first screen
+    negative_space: intentional and measured, never filled by decoration
+    surfaces: flat and structured by alignment, type and rules
+    typography: expressive display scale paired with readable body text
+  motion:
+    default: still
+    change_requires_semantic_state: true
+    reduced_motion_must_preserve_meaning: true
+  adaptations:
+    master: mineral-lime signal on ink; organic face remains the sole expressive centerpiece
+    brgen: retain deep-blue city identity and local editorial photography; signal is a sparse semantic accent only
+    amber: retain neutral fashion surfaces and truthful garment colour; signal never recolours product photography
+    bsdports: retain OpenBSD terminal green and flat monochrome surfaces
+    openbsd: plain operational text; signal never substitutes for a truthful written state
+    studio: retain media fidelity, operator-owned grades and original subject identity
 viewport:
   xs: 480
   sm: 576

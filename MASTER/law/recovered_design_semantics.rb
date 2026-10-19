@@ -58,6 +58,53 @@ Law.define(:HTML_HEADING_HIERARCHY) do
   X
 end
 
+Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
+  source "pub4 visual identity contract — canonical tokens and semantic face accent"
+  severity :warning
+  languages %i[yaml]
+  path "MASTER/data/tokens.yml"
+  scope :file
+  detect do |text|
+    document = YAML.safe_load(text, aliases: true)
+    tokens = document.fetch("tokens")
+    identity = tokens.fetch("visual_identity")
+    anchors = tokens.fetch("face_root").fetch("anchors")
+    signal = identity.fetch("signal")
+    ink = identity.fetch("signal_ink")
+    light_ink = identity.fetch("signal_on_light")
+
+    !identity.fetch("name").eql?("signal_and_stillness") ||
+      !signal.to_s.match?(/\A#[0-9a-f]{6}\z/i) ||
+      !ink.to_s.match?(/\A#[0-9a-f]{6}\z/i) ||
+      !light_ink.to_s.match?(/\A#[0-9a-f]{6}\z/i) ||
+      anchors.fetch("c_accent") != "var(--pub4-signal)"
+  rescue Psych::Exception, KeyError, TypeError
+    true
+  end
+  fix "Restore tokens.visual_identity as the single palette source and point the face accent at var(--pub4-signal)."
+  bad <<~YAML
+    tokens:
+      visual_identity:
+        name: signal_and_stillness
+        signal: "#C8F55F"
+        signal_ink: "#101010"
+      face_root:
+        anchors:
+          c_accent: "#C8F55F"
+  YAML
+  good <<~YAML
+    tokens:
+      visual_identity:
+        name: signal_and_stillness
+        signal: "#C8F55F"
+        signal_ink: "#101010"
+        signal_on_light: "#50630A"
+      face_root:
+        anchors:
+          c_accent: "var(--pub4-signal)"
+  YAML
+end
+
 Law.define(:INTERACTION_SEMANTICS) do
   source "pub3 master.json HTML semantics + WAI-ARIA — navigation is a link, an action is a button"
   severity :warning

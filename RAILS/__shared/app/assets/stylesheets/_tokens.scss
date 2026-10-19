@@ -45,6 +45,13 @@ $luxury: true !default;
     --color-warning: #c9a227;
     --color-success: #00ba7c;
     --color-info: #5b9fd4;
+    /* Canonical visual identity signal from MASTER/data/tokens.yml. This is
+       available to every dialect, but each product opts into it semantically
+       rather than replacing its own brand accent. The token reader pins these
+       three values and reports drift. */
+    --pub4-signal: #C8F55F;
+    --pub4-signal-ink: #101010;
+    --pub4-signal-on-light: #50630A;
     --color-overlay: rgb(0 0 0 / 0.4);
     --color-border: var(--border);
     --color-midtone-tint: var(--hover);

@@ -124,6 +124,28 @@ markdown_style:
     - negative space is structure, not waste
     - concrete over ornament; delete anything decorative
 
+visual_identity_contract:
+  name: signal_and_stillness
+  value_authority: MASTER/data/tokens.yml#tokens.visual_identity
+  purpose: "An original pub4 identity built from contrast, scale, stillness and one restrained semantic signal."
+  rules:
+    - "A first screen has one dominant focal point and one clearly primary next action."
+    - "Neutral surfaces, typography, alignment and negative space carry hierarchy before decoration."
+    - "The signal colour marks meaning; it does not replace local product identity or semantic status text."
+    - "Motion must represent a real state change and have a reduced-motion equivalent."
+    - "Surface treatments remain flat; no decorative glow, ornamental shadow or generic AI gradient."
+    - "Real product, garment, person and media colours remain truthful."
+    - "Every tree adapts the visual language to its task instead of sharing one forced palette."
+    - "Never copy the reference's wordmark, key art, characters or distinctive protected expression."
+  adapters:
+    master: "signal-and-stillness; monochrome console chrome; expressive face is the only organic focal centerpiece"
+    rails: "shared typography and semantic signal; retain each product dialect recorded in apps.yml"
+    openbsd: "OpenBSD Operator prompt and dmesg discipline; plain text remains complete without colour"
+    studio: "editorial composition only where appropriate; rendered values and media fidelity remain operator-owned"
+  acceptance:
+    required: [canonical_tokens, generated_artifact_sync, contrast, reduced_motion, narrow_and_wide_screens, rendered_screenshots]
+    evidence: "Record commit, generator/test output, viewport dimensions and before/after screenshots; source inspection alone is not visual proof."
+
 prose:
   en:
     spoken_in: '.'
@@ -949,6 +971,7 @@ law_map:
     - universal_visual_language
     - visual_hierarchy_clarity
     - visual_weight
+    - signal_and_stillness
     clean_code:
     - avoid_duplicate_code
     - avoid_feature_envy
@@ -1096,6 +1119,17 @@ law_map:
       root: stewardship
       tags:
       - code
+    signal_and_stillness:
+      meaning: "Original identity with one restrained signal colour, strong hierarchy and semantic stillness"
+      detects: inconsistent_visual_identity
+      severity: medium
+      confidence: 0.9
+      operation: reconcile
+      law_ids:
+      - VISUAL_IDENTITY_SOURCE_OF_TRUTH
+      status: covered
+      tags:
+      - visual_design
     aesthetic_integrity:
       meaning: 'Appearance matches function  '
       detects: visual_clutter

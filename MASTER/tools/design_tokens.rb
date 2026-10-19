@@ -29,6 +29,12 @@ module DesignTokens
     "ease_spring" => "ease-spring",
   }.freeze
 
+  VISUAL_IDENTITY_MAP = {
+    "signal" => "pub4-signal",
+    "signal_ink" => "pub4-signal-ink",
+    "signal_on_light" => "pub4-signal-on-light",
+  }.freeze
+
   LUXURY_MAP = {
     "light_bg" => "luxury-bg",
     "light_surface" => "luxury-surface",
@@ -54,6 +60,7 @@ module DesignTokens
   TOKEN_MAPS = {
     "shared_chrome" => SHARED_CHROME_MAP,
     "luxury" => LUXURY_MAP,
+    "visual_identity" => VISUAL_IDENTITY_MAP,
   }.freeze
 
   # amber is the wardrobe app and keeps its own luxury palette, set from its --amber-*
@@ -78,6 +85,7 @@ module DesignTokens
     tokens = load
     social = tokens.fetch("social")
     shared_chrome = tokens.fetch("shared_chrome")
+    visual_identity = tokens.fetch("visual_identity")
     face_layout = tokens.fetch("face_root").fetch("layout")
     family = shared_chrome.fetch("font")
 
@@ -96,6 +104,9 @@ module DesignTokens
         --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
         --accent: #{social.fetch("accent")};
         --danger: #{social.fetch("danger")};
+        --pub4-signal: #{visual_identity.fetch("signal")};
+        --pub4-signal-ink: #{visual_identity.fetch("signal_ink")};
+        --pub4-signal-on-light: #{visual_identity.fetch("signal_on_light")};
         --font: #{family};
         --weight-normal: 400;
         --weight-medium: 500;
@@ -148,7 +159,11 @@ module DesignTokens
     anchors = data.fetch("anchors")
     derived = data.fetch("derived")
     layout = data.fetch("layout")
-    lines = [":root {"]
+    visual_identity = root.fetch("visual_identity")
+    lines = [":root {",
+             "  --pub4-signal: #{visual_identity.fetch('signal')};",
+             "  --pub4-signal-ink: #{visual_identity.fetch('signal_ink')};",
+             "  --pub4-signal-on-light: #{visual_identity.fetch('signal_on_light')};"]
     FACE_ORDER.each do |key|
       lines << "  --#{key.tr('_', '-')}: #{anchors.fetch(key)};"
     end
@@ -310,13 +325,11 @@ module DesignTokens
   # (the CI drift check) only reports, changing nothing.
   def reconcile_dialect_maps(sync:)
     data = load
-    shared_chrome = data.fetch("shared_chrome", {})
-    luxury = data.fetch("luxury", {})
     findings = []
 
     all_scss_files.each do |path|
       TOKEN_MAPS.each do |section, mappings|
-        source = section == "shared_chrome" ? shared_chrome : luxury
+        source = data.fetch(section, {})
         mappings.each do |yml_key, css_var|
           next unless source.key?(yml_key)
 
