@@ -229,6 +229,43 @@ def test_play_live_music_honours_a_named_progression_and_pattern
   end
 end
 
+def test_play_live_music_honours_a_bare_progression_number
+  Dir.mktmpdir do |dir|
+    with_clean_player do
+      calls = []
+      ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
+      begin
+        with_player do
+          with_dispatch_stub(dilla_runner(calls)) { assert MediaIntent.play_live_music("1 sparse").ok? }
+        end
+      ensure
+        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+      end
+      words = Shellwords.split(calls.last[:arg])
+      assert_equal "1", words[words.index("--progression") + 1]
+      assert_equal "sparse", words[words.index("--drums") + 1]
+    end
+  end
+end
+
+def test_play_list_names_the_choices_and_plays_nothing
+  with_clean_player do
+    with_player do |played|
+      calls = []
+      with_dispatch_stub(dilla_runner(calls)) do
+        %w[list --list].each do |word|
+          result = MediaIntent.play_live_music(word)
+          assert result.ok?, result.inspect
+          assert_match(/progressions \d+\.\.\d+/, result.value![:rendered])
+          assert_includes result.value![:rendered], "sparse"
+        end
+      end
+      assert_empty played
+      assert_equal ["--list"], calls.map { |call| call[:arg] }.uniq
+    end
+  end
+end
+
 def test_play_live_music_reports_a_failed_render_without_playing
   with_clean_player do
     with_player do |played|

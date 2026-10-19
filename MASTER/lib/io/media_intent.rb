@@ -570,7 +570,7 @@ module Master
         return menu unless menu.ok?
 
         choices = menu.value!
-        named = text[/\bprogression\s+(\d+)\b/i, 1]
+        named = text[/\bprogression\s+(\d+)\b/i, 1] || text[/\A\s*(\d+)(?![\d.])/, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
         # Explicit Dilla requests must not depend on prior reference analysis.
         explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
@@ -662,7 +662,24 @@ module Master
         latest_reference_profile(style: "j_dilla")
       end
 
+      # `/play list` names what a render can be asked for; the chords stay in
+      # dilla's own --list so MASTER holds no second copy of them.
+      def list_dilla(root)
+        menu = dilla_menu(root)
+        return menu unless menu.ok?
+
+        choices = menu.value!
+        line = [
+          "progressions #{choices[:progressions].first}..#{choices[:progressions].last} (#{choices[:progressions].size})",
+          "drum patterns #{choices[:drums].join(", ")}",
+          "groove profiles #{choices[:profiles].join(", ")}"
+        ].join("\n")
+        Result.ok(output: line, rendered: line, media: :dilla_list)
+      end
+
       def play_live_music(arg, root: MasterPaths.root, bus: nil)
+        return list_dilla(root) if arg.to_s.strip.match?(/\A(?:--)?list\z/i)
+
         rendered = render_dilla(arg.to_s, root:)
         return rendered unless rendered.ok?
 
