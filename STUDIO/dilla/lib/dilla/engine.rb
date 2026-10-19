@@ -399,7 +399,7 @@ def render(data, options) = options[:buffer_only] ? render_section(data, options
 # A rigged standalone pass uses the same complete per-bus processors as a showcase section,
 # followed by the same final tape stack and ceiling.
 def render_effect_rig_take(data, options)
-  plan = plan_pass(data, options, capture: !!options[:midi])
+  plan = plan_pass(data, options)
   buf = render_section(data, options, plan:)
   buf = tape_stage(buf, data, options, plan.seed)
   fade = [SAMPLE_RATE / 25, buf.size / 2].min
@@ -412,7 +412,12 @@ def render_effect_rig_take(data, options)
   out = options[:out] || Dilla::Video.default_paths(root: File.expand_path("../..", __dir__)).fetch(:audio)
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write(out, buf, bits: options[:bits] || 16, replace: options[:replace])
-  MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, plan.parts, replace: options[:replace]) if options[:midi]
+  if options[:midi]
+    drum_seconds = plan.names.size * plan.beats * 60.0 / plan.bpm
+    rotation = plan.drums == 'rotate' ? data.fetch('drum_patterns').keys : plan.drums
+    hits = plan.drums ? plan.seq.drum_hits(rotation, plan.bpm, drum_seconds) : []
+    MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, hits, search: plan.search, replace: options[:replace])
+  end
   puts format("Wrote %s (%.2fs, 44.1 kHz mono) — effect rig %s", out, buf.size / SAMPLE_RATE.to_f, options.fetch(:effect_rig))
   puts format("  bpm=%g profile=%s drums=%s kit=%s voice=%s", plan.bpm, plan.profile, plan.drums || "-", options[:kit] || plan.profile_row["kit"] || "-", options[:voice] || plan.profile_row["voice"] || "-")
   out
