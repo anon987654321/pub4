@@ -140,6 +140,7 @@ class TestAstFixerSafety < Minitest::Test
     refute Prism.parse(out).failure?
     assert_includes out, "b: 2,"
   end
+
   # `= NULL` -> `IS NULL` is a SQL repair. It used to run case-insensitively over
   # every file, so it also matched JavaScript, where `= null` is assignment. It
   # rewrote web/app/views/chat/index.html.erb's boot script to `timerIS NULL`
@@ -180,6 +181,7 @@ class TestAstFixerSafety < Minitest::Test
   # repairs. This asserts the fixer cannot touch it.
   def test_does_not_repair_sql_inside_a_ruby_string_literal
     fixer = null_fixer_for("test/test_ast_fixer_safety.rb")
+
     fixture = %(    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"\n) # scan: intentional — the defect the fixer repairs
 
     assert_equal fixture, fixer.send(:normalise_null_comparison, fixture)

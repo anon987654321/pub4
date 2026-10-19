@@ -298,7 +298,7 @@ module Master
         end
 
         LawDSL.law :VERTICAL_BREATH,
-          severity: :info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          severity: :info, autofix: "add_vertical_breath", tags: %i[BEAUTY], applies_to: %i[ruby javascript],
           fires: (1..10).map { |i| "line#{i} = 1\n" }.join,
           does_not_fire: "a = 1\n\nb = 2\n",
           description: "vertical breath — avoid dense blocks of 10+ lines without a blank line" do |src, path:|

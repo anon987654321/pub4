@@ -7,6 +7,7 @@ require "strscan"
 require_relative "ast_fixer/syntax_transforms"
 require_relative "ast_fixer/web_transforms"
 require_relative "ast_fixer/dead_code_and_commas"
+require_relative "ast_fixer/vertical_breath"
 
 module Master
   module Fix
@@ -23,18 +24,25 @@ module Master
       # which lines sit inside multi-line literals — lives in a mixin.
       class AstFixer
         JS_EXTS = %w[.js .ts .jsx .tsx].freeze
+
         STYLE_EXTS = %w[.css .scss].freeze
 
         Result = Struct.new(:path, :changed, :transforms, :content, keyword_init: true)
         Strategy = Struct.new(:predicate, :transforms, keyword_init: true)
+
         STRATEGIES = [
-          Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code add_trailing_commas]),
+          Strategy.new(
+            predicate: :ruby?,
+            transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code
+                           add_trailing_commas add_vertical_breath],
+          ),
           Strategy.new(predicate: :sql_context?, transforms: %i[normalise_null_comparison]),
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
           Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_viewport_fit add_skip_to_main add_lazy_loading]),
           Strategy.new(predicate: :javascript?, transforms: %i[replace_unreassigned_var convert_for_in_arrays convert_string_concat convert_optional_chaining]),
           Strategy.new(predicate: :style?, transforms: %i[snap_to_eight_px_rhythm remove_decorative_fx enforce_flat_pixels snap_touch_targets]),
         ].freeze
+
         # remove_immediate_dead_code/add_trailing_commas are Ruby-AST heuristics
         # (Prism-based literal-line protection, Ruby hash/array trailing-comma
         # convention) -- they used to sit here and run against every file type.
@@ -52,6 +60,7 @@ module Master
         include SyntaxTransforms
         include WebTransforms
         include DeadCodeAndCommas
+        include VerticalBreath
 
         # A transform that takes code out is a different risk from one that puts
         # an attribute in, and this is the one place that knows which is which.
@@ -183,6 +192,7 @@ module Master
         # also been narrowed, but the code should not depend on that.
         def apply_transforms(src, transforms)
           current = src
+
           transforms.each do |transform|
             next if !@allow_deletions && DELETING_TRANSFORMS.include?(transform.to_s)
 
@@ -211,6 +221,7 @@ module Master
         # on PATH for JS), nothing is measured and nothing is judged.
         def broke_syntax?(before, after)
           validator = syntax_validator
+
           return false unless validator
           return false unless send(validator, before)
 
@@ -256,6 +267,7 @@ module Master
         def style_balanced?(src)
           depth = 0
           scanner = StringScanner.new(src)
+
           until scanner.eos?
             case
             when scanner.scan(%r{/\*.*?\*/}m) then next
@@ -265,6 +277,7 @@ module Master
             when scanner.scan(/\}/) then depth -= 1
             else scanner.pos += 1
             end
+
             return false if depth.negative?
           end
           depth.zero?
@@ -300,6 +313,7 @@ module Master
                 else
                   src.gsub(/[ \t]+(?=\n|\z)/, "")
                 end
+
           @transforms << :trailing_whitespace if out != src
           out
         end
@@ -340,6 +354,7 @@ module Master
           # the content — three executable cron scripts came back 0644 from
           # one pass before this line existed.
           File.chmod(File.stat(@path).mode, temporary_path) if File.exist?(@path)
+
           File.rename(temporary_path, @path)
         rescue StandardError => e
           delete_temporary_path(temporary_path) if defined?(temporary_path)
@@ -350,6 +365,7 @@ module Master
           File.delete(path) if path && File.exist?(path)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "AstFixer.delete_temporary_path")
+
           nil
         end
       end
