@@ -18,6 +18,7 @@
 # time: under $10 of credit Replicate allows a burst of five, and a parallel run
 # lost two frames of twelve to it.
 
+require "digest"
 require "fileutils"
 require "json"
 require "net/http"
@@ -27,8 +28,9 @@ require "optparse"
 require "pathname"
 require "rbconfig"
 require "time"
+require "tmpdir"
 
-SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
+SUBJECT =ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script directly" }
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
 TOOLKIT = Pathname.new(__dir__).expand_path
@@ -38,10 +40,20 @@ REPO_ROOT = TOOLKIT.join("../../../..").expand_path
 require_relative "preflight"
 require_relative "shoots"
 
+# FLUX 2 holds a person across up to eight reference photographs with no
+# training (flux-2-pro's page: eight on the API, nine megapixels in all). A
+# reference is shrunk to REFERENCE_EDGE on its long side, so eight of them stay
+# under that total.
+REFERENCE_MODEL = "black-forest-labs/flux-2-pro"
+REFERENCE_LIMIT = 8
+REFERENCE_EDGE = 1024
+REFERENCE_EXTENSIONS = %w[.jpg .jpeg .png .webp].freeze
+
 options = { set: "selfies", only: nil, side: nil, scale: 1.0, seed: 42, dry_run: false,
             guidance: 3.0, steps: 28, draft: false,
             max_seconds: ENV["LORA_MAX_SECONDS"].to_s.empty? ? nil : ENV["LORA_MAX_SECONDS"].to_f,
-            model: ENV["LORA_REPLICATE_MODEL"].to_s.strip, grade: ENV.fetch("LORA_GRADE", "random") }
+            model: ENV["LORA_REPLICATE_MODEL"].to_s.strip, grade: ENV.fetch("LORA_GRADE", "random"),
+            references: [], max_images: nil }
 OptionParser.new do |p|
   p.banner = "Usage: run_generate_replicate.rb [options]"
   p.on("--set NAME", "Prompt set (#{available_sets.join(', ')}); default selfies") { |v| options[:set] = v }
@@ -55,9 +67,30 @@ OptionParser.new do |p|
   p.on("--steps N", Integer, "num_inference_steps (default 28, as the validation frames)") { |v| options[:steps] = v }
   p.on("--draft", "Cheap seed-picking pass: webp, go_fast, out/<set>_draft/, ungraded") { options[:draft] = true }
   p.on("--max-seconds N", Float, "Stop once the ledger shows N billed seconds for this subject (env LORA_MAX_SECONDS)") { |v| options[:max_seconds] = v }
+  p.on("--reference PATH", "Photograph of the subject, up to #{REFERENCE_LIMIT}; renders on #{REFERENCE_MODEL}, no LoRA") do |v|
+    options[:references] << v
+  end
+  p.on("--max-images N", Integer, "Reference mode: render at most N sittings (billed per image)") do |v|
+    options[:max_images] = v
+  end
   p.on("--dry-run", "Print the prompts and the model; render nothing") { options[:dry_run] = true }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!
+
+REFERENCE_MODE = !options[:references].empty?
+# Reference frames share sitting numbers with LoRA frames, so the ledger keeps them apart.
+LEDGER_SET = REFERENCE_MODE ? "#{options[:set]}_ref" : options[:set]
+if REFERENCE_MODE
+  refs = options[:references].map { |path| File.expand_path(path) }
+  abort "warn: --reference takes at most #{REFERENCE_LIMIT} photographs, got #{refs.length}" if refs.length > REFERENCE_LIMIT
+  refs.each do |path|
+    image = File.file?(path) && REFERENCE_EXTENSIONS.include?(File.extname(path).downcase)
+    abort "warn: reference #{path} is not a jpg, png or webp file" unless image
+  end
+  abort "warn: --reference needs --max-images N; flux-2 bills per image, the ledger counts seconds" unless options[:max_images]&.positive?
+  options[:references] = refs
+  options[:model] = REFERENCE_MODEL if options[:model].empty?
+end
 
 abort "warn: unknown set #{options[:set]} — have: #{available_sets.join(', ')}" unless available_sets.include?(options[:set])
 
@@ -77,6 +110,11 @@ FIXED_SEED_SETS = %w[distance].freeze
 # The settings the first twelve validation frames of this LoRA were rendered and
 # judged at, so a new set is comparable with them.
 def render_input(prompt, seed, options)
+  if REFERENCE_MODE
+    return { prompt:, input_images: Array(options[:reference_urls]), aspect_ratio: "3:4",
+             output_format: "jpg", output_quality: 95, seed: }
+  end
+
   input = { prompt:, model: "dev", lora_scale: options[:scale], aspect_ratio: "3:4", num_outputs: 1,
             guidance_scale: options[:guidance], num_inference_steps: options[:steps], output_format: "jpg",
             output_quality: 95, go_fast: false, seed: }
@@ -180,23 +218,63 @@ end
 model = options[:model].empty? ? trained_model : options[:model]
 sittings = prompts_for(SUBJECT, side: options[:side], only: options[:only], set: options[:set])
 abort "warn: set #{options[:set]} matched no sittings" if sittings.empty?
+if REFERENCE_MODE
+  # The prompts name the LoRA's trigger word, which means nothing to a model
+  # that has not been trained on it. The photographs carry the person instead.
+  env = subject_env(SUBJECT)
+  trigger = env.fetch("TRIGGER")
+  # The written scenes say "her" and "she", because they were drafted for
+  # Ragnhild. A man's frame reads them as his: "her" before a noun is "his",
+  # "her" ending a clause is "him".
+  man = env.fetch("DESCRIPTOR", "").match?(/\bman\b/i)
+  object_her = /\bher\b(?= *(?:[,.;:]|\z|and\b|with\b|from\b|in\b|while\b|as\b|but\b))/
+  sittings = sittings.first(options[:max_images]).map do |shoot, prompt|
+    prompt = prompt.gsub(trigger, "the person in the reference photographs")
+    prompt = prompt.gsub(object_her, "him").gsub(/\bher\b/, "his").gsub(/\bshe\b/, "he") if man
+    [shoot, prompt]
+  end
+end
 
-suffix = options[:draft] ? "_draft" : ""
+lane = REFERENCE_MODE ? "_ref" : ""
+suffix = options[:draft] ? "_draft" : lane
 out_dir = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "#{options[:set]}#{suffix}")
-graded_dir = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "#{options[:set]}_postpro")
+graded_dir = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "#{options[:set]}#{lane}_postpro")
 extension = options[:draft] ? "webp" : "jpg"
 LEDGER = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "ledger.jsonl")
 puts "ok: model #{model}"
 puts "ok: #{sittings.length} sitting(s) -> #{out_dir}#{options[:draft] ? " (draft: webp, go_fast, ungraded)" : ""}"
 
 if options[:dry_run]
+  options[:references].each { |path| puts "ok: reference #{path}" }
   sittings.each { |shoot, prompt| puts format("%02d  %s", shoot["n"], prompt) }
-  puts "ok: #{Preflight.render_estimate(sittings.length)}"
+  if REFERENCE_MODE
+    puts "ok: #{sittings.length} image(s) at the model's per-image price; its page lists the rate"
+  else
+    puts "ok: #{Preflight.render_estimate(sittings.length)}"
+  end
   exit 0
 end
 
 require REPO_ROOT.join("STUDIO/replicate/client").to_s
 client = Studio::ReplicateClient.new
+
+# References are shrunk, then uploaded, once per run. Their upload URLs change
+# every run, so the fingerprint that guards a resume uses the photographs' own
+# digests and not the URLs.
+REFERENCE_DIGESTS = options[:references].map { |path| Digest::SHA256.file(path).hexdigest[0, 16] }.freeze
+if REFERENCE_MODE
+  scratch = Dir.mktmpdir("lora_reference")
+  at_exit { FileUtils.remove_entry(scratch) }
+  options[:reference_urls] = options[:references].each_with_index.map do |path, index|
+    small = File.join(scratch, format("%02d.jpg", index))
+    edge = "#{REFERENCE_EDGE}x#{REFERENCE_EDGE}>"
+    ok = system("magick", path, "-auto-orient", "-resize", edge, "-quality", "92", small)
+    abort "warn: could not shrink reference #{path}" unless ok && File.size?(small)
+
+    client.upload_file(small)
+  end
+  puts "ok: #{options[:reference_urls].length} reference photograph(s) uploaded"
+end
 
 # A key the model does not declare is dropped by the API without a word, which
 # is a differently-rendered picture and no error.
@@ -230,8 +308,8 @@ sittings.each do |shoot, prompt|
 
   seed = FIXED_SEED_SETS.include?(options[:set]) ? options[:seed] : options[:seed] + shoot["n"] - 1
   input = render_input(prompt, seed, options)
-  fingerprint = Preflight.render_fingerprint(model:, input:)
-  receipt = Preflight.latest_render_event(LEDGER, set: options[:set], n: shoot["n"])
+  fingerprint = Preflight.render_fingerprint(model:, input: REFERENCE_MODE ? input.merge(input_images: REFERENCE_DIGESTS) : input)
+  receipt = Preflight.latest_render_event(LEDGER, set: LEDGER_SET, n: shoot["n"])
   action = Preflight.render_receipt_action(receipt, fingerprint:)
   abort "warn: unresolved paid render receipt for #{path.basename}; inspect #{LEDGER} and reconcile before rerunning" if action == :blocked
 
@@ -245,7 +323,7 @@ sittings.each do |shoot, prompt|
     # Persist the intent before the create request. If the response is lost,
     # the next run stops rather than accidentally creating the same paid job again.
     Preflight.ledger_append(LEDGER, kind: "render_attempt", status: "started",
-                                     set: options[:set], n: shoot["n"], model:,
+                                     set: LEDGER_SET, n: shoot["n"], model:,
                                      fingerprint:, seed:)
     begin
       prediction = render(client, model, input)
@@ -260,7 +338,7 @@ sittings.each do |shoot, prompt|
       end
       # The durable prediction receipt comes before downloading its expiring URL.
       Preflight.ledger_append(LEDGER, kind: "render_attempt", status: "prediction_received",
-                                       set: options[:set], n: shoot["n"], model:, fingerprint:,
+                                       set: LEDGER_SET, n: shoot["n"], model:, fingerprint:,
                                        id: prediction["id"], output_url:, seconds:)
       if prediction["id"].to_s.empty? || output_url.empty?
         raise IOError, "prediction response omitted its id or output URL; receipt retained"
@@ -293,7 +371,7 @@ sittings.each do |shoot, prompt|
 
   if action == :new || receipt["kind"] == "render_attempt"
     Preflight.ledger_append(LEDGER, kind: "render", status: "output_ready",
-                                     set: options[:set], n: shoot["n"], model:, fingerprint:,
+                                     set: LEDGER_SET, n: shoot["n"], model:, fingerprint:,
                                      id: prediction["id"], output_url:, seconds:)
   end
   preset = options[:draft] ? nil : preset_for(options[:grade], shoot["n"])

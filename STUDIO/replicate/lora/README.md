@@ -84,6 +84,16 @@ clip with two people needs a first frame with both in it, because two adapters d
 in one render. Stills of a scene with no trained face go through
 `STUDIO/replicate/replicate.rb`, which already carries the other image models.
 
+A subject also renders with no training. Pass up to eight photographs as `--reference PHOTO`
+and `--generate-replicate` sends them to `black-forest-labs/flux-2-pro`, which holds the person
+across the frame. Each reference shrinks to 1024 pixels on its long side before upload. The
+trigger word means nothing to that model, so the prompts say "the person in the reference
+photographs" instead. `--max-images N` is required, because the model bills per image and the
+ledger counts seconds. Frames land in `out/<set>_ref/` with their own ledger rows, beside the
+LoRA frames and never over them. The reference photographs set the ceiling: grainy,
+wide-angle, hooded or dark references return the same faults. What makes a reference or a
+render good is in `guides/photography.md`.
+
 ## Four train lanes
 
 The dataset and the trigger are the same on every lane; pick the one that fits the cost.
@@ -172,8 +182,8 @@ the pipeline.
   holds the shell helpers it shares.
 - The `run_train_*.rb` and `run_generate_*.rb` scripts hold the lanes, and the `*_session.rb`
   files are what the Kaggle and Colab notebooks run.
-- The `guides/` folder holds narrated walkthroughs and a prompting note, kept as recordings and
-  not trusted as instructions.
+- The `guides/` folder holds narrated walkthroughs, a prompting note and a photography note,
+  kept as recordings and not trusted as instructions.
 
 The seed-media lane lives beside the subjects because it has none. `seed_media.yml` is every
 photograph the RAILS apps seed with, written as a prompt. `run_seed_media_colab.rb` makes
@@ -233,5 +243,3 @@ ragnhild/lora --generate-replicate --set selfies --draft
 ragnhild/lora --generate-replicate --set selfies --max-seconds 600
 ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns" --dry-run
 ```
-
-
