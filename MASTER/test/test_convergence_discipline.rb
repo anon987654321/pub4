@@ -44,8 +44,6 @@ class TestConvergenceDiscipline < Minitest::Test
     assert_equal :consensus, @discipline.strategy_for(files: [@path], findings: [])
   end
 
-
-
   def test_historical_repair_outcomes_increase_review_depth_only_with_enough_evidence
     write_repair_history(successes: 1, failures: 5)
     assert_equal :adversarial, @discipline.strategy_for(files: [@path], findings: [])

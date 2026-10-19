@@ -368,7 +368,6 @@ Research references:
 - monospaced MASTER web typography
 - non-empty CLI results preserved when the presenter returns an empty string
 
-
 ## Distant-human morphology
 
 The face uses `MASTER/data/laws.yml#tokens.face_interface.spatial.morphology` as its
@@ -406,8 +405,6 @@ References:
 
 The interface layer remains subordinate to the human morphology so the face reads as a
 future person first and a computational being second.
-
-
 
 ### Stipple point-size hierarchy
 

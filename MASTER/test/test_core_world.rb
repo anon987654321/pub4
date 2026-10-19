@@ -189,7 +189,6 @@ class WorldTest < Minitest::Test
     previous.nil? ? ENV.delete("RUBYOPT") : ENV["RUBYOPT"] = previous
   end
 
-
   def test_exec_failure_is_err_observation_not_raise
     with_world do |world|
       obs = world.perform(E.exec([RbConfig.ruby, "-e", "exit 3"]))

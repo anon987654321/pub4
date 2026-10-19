@@ -45,7 +45,7 @@ module Master
             "purpose" => reason,
             "granted_at" => now.iso8601(6),
             "expires_at" => expiry&.iso8601(6),
-            "revoked_at" => nil
+            "revoked_at" => nil,
           }
           state["grants"] = grants
           append_event(state, "grant", key, actor, reason)

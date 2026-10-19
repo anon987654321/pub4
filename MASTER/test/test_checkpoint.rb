@@ -66,7 +66,6 @@ class TestCheckpoint < Minitest::Test
     end
   end
 
-
   def test_restore_refuses_tampered_checkpoint_before_overwriting_source
     Dir.mktmpdir do |root|
       path = File.join(root, "lib", "sample.rb")

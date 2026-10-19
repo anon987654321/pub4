@@ -52,7 +52,6 @@ module Master
           nil
         end
 
-
         def consolidate!(agent: nil)
           return "nothing to consolidate" if @store.empty?
 

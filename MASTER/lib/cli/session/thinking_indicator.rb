@@ -313,8 +313,6 @@ module Master
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
       end
 
-
-
       # The spinner repaints with \r\e[K, which clears one row. A line wider
       # than the screen wraps onto a second row that nothing clears, and every
       # tick left another copy behind it. Unit lines are printed once and may

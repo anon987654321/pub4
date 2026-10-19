@@ -14,7 +14,7 @@ module Master
       SCANNERS = {
         "chkrootkit" => ["chkrootkit"],
         "rkhunter" => ["rkhunter", "--check", "--sk"],
-        "aide" => ["aide", "--check"]
+        "aide" => ["aide", "--check"],
       }.freeze
       ANDROID_INDICATORS = [
         "/system/xbin/su", "/system/bin/su", "/sbin/su",
@@ -40,7 +40,7 @@ module Master
           "Platform: #{kind} (#{RUBY_PLATFORM})",
           "Mode: #{run_scanners ? 'installed scanners requested' : 'read-only inventory'}",
           "Observations are evidence, not proof of compromise or proof of a clean system.",
-          ""
+          "",
         ]
         posture_probes(kind).each { |label, argv| lines << probe_line(label, argv) }
         lines.concat(android_indicators) if kind == :android

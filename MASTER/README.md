@@ -128,7 +128,6 @@ become ordinary findings, and the next pass renders again. If the browser or the
 council cannot run, the pass says it is inconclusive and does not claim
 success.
 
-
 ## Debugging Ruby behavior
 
 Start with a reproducible failing test, then use the pinned Ruby debugger for
@@ -338,8 +337,6 @@ def run(goal)
   Done.new(reason: :max_turns, turns: @max_turns, summary: nil)
 end
 ```
-
-
 
 ## Local manual pages
 

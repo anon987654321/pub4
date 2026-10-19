@@ -23,7 +23,7 @@ module Master
         "Content-Security-Policy" => "Review CSP against the application's needs",
         "X-Content-Type-Options" => "Review MIME-sniffing protection",
         "Referrer-Policy" => "Review referrer data disclosure",
-        "Permissions-Policy" => "Review browser-feature access policy"
+        "Permissions-Policy" => "Review browser-feature access policy",
       }.freeze
 
       def initialize(governor:, event_bus: nil, browser: nil)

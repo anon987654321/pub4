@@ -18,7 +18,7 @@ class TestBacklogClaims < Minitest::Test
 
     assert_equal [
       ["3", "first open item"],
-      ["6", "second open item"]
+      ["6", "second open item"],
     ], BacklogClaims.parse_items(source)
   end
 
