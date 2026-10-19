@@ -19,6 +19,7 @@ test("shared face budgets classify coarse pointers and declared reduced motion",
   assert.match(faceStateSource, /mediaMatches\("\(pointer: coarse\)"\)/);
   assert.match(faceStateSource, /function reducedMotionEnabled\(snapshotValue = state\)/);
   assert.match(faceStateSource, /reducedMotion: reducedMotionEnabled/);
+  assert.match(faceStateSource, /const mediaQueryCache = new Map\(\)/);
   assert.match(faceStateSource, /window\.MASTER_FACE\?\.State\?\.reducedMotion/);
   assert.match(faceStateSource, /dataset\?\.reducedMotion === "1"/);
   assert.match(sparseField, /function reducedMotionEnabled\(state = \{\}\)/);
@@ -94,6 +95,7 @@ test("shared render budget gives coarse-pointer devices the mobile ceiling", () 
   assert.equal(coarse.stipple_points, 315);
   assert.equal(coarse.world_points, 105);
   assert.equal(coarse.stipple_points + coarse.world_points, coarse.points);
+  assert.equal(coarse.constrained_device, true);
   const narrow = loadFaceStateBudget({ narrowViewport: true, cores: 8 }).renderBudget();
   assert.equal(narrow.stipple_points, 315);
   assert.equal(narrow.world_points, 105);
@@ -107,6 +109,7 @@ test("shared render budget gives coarse-pointer devices the mobile ceiling", () 
   assert.equal(desktop.stipple_points, 900);
   assert.equal(desktop.world_points, 300);
   assert.equal(desktop.stipple_points + desktop.world_points, desktop.points);
+  assert.equal(desktop.constrained_device, false);
 });
 
 test("shared render budget honors declared reduced motion and hidden-tab ceilings", () => {
@@ -146,7 +149,8 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(faceStateSource, /stipple_points: stipplePoints/);
   assert.match(faceStateSource, /world_points: worldPoints/);
   assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /fallbackShare/);
-  assert.match(sparseField, /sharedParticleBudget = Number\(window\.MASTER_FACE_STATE\?\.renderBudget\?\.\(\)\.particles\)/);
+  assert.match(sparseField, /sharedParticleBudget = Number\(sharedBudget\.particles\)/);
+  assert.match(sparseField, /sharedBudget\.constrained_device/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /uPointSizeReferenceDepth: \{ value: clamp\(pointSize\.reference_depth/);
   assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale,\s+uPointSizeOutputMin, uPointSizeOutputMax\)/);
