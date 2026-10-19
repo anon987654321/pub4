@@ -161,8 +161,6 @@
 
 .sort-tabs { display: flex; padding-bottom: var(--space-2); }
 
-main > h1 ~ * { margin-block-start: var(--space-2); max-inline-size: 66ch; }
-
 .sort-tab {
   padding: 16px 16px; /* mobile tighter */
   border-block-end: 2px solid transparent;
