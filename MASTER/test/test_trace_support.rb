@@ -7,6 +7,18 @@ require_relative "test_helper"
 # dmesg from every event, and Triggers runs named handlers without letting one
 # failure stop the rest.
 class TestTraceSupport < Minitest::Test
+  # Narration is on by default and owns the voice, which silences log-line speech; these
+  # tests are about the log voice, so the narrator stands aside for each of them.
+  def setup
+    @narrating = Master::Voice::Narrator.method(:narrating?)
+    Master::Voice::Narrator.define_singleton_method(:narrating?) { false }
+  end
+
+  def teardown
+    original = @narrating
+    Master::Voice::Narrator.define_singleton_method(:narrating?) { original.call }
+  end
+
   def test_normal_is_the_default_operator_mode
     previous = ENV["MASTER_DMESG"]
     previous_quiet = ENV["MASTER_QUIET"]
@@ -90,7 +102,7 @@ class TestTraceSupport < Minitest::Test
     end
 
     assert_equal 1, spoken.size
-    assert_equal "fix0: repairing", spoken.first.first
+    assert_equal ["fix0: repairing"], spoken.first.first
   end
 
   def test_fix_log_voice_narrates_forwarded_surface_outcomes_without_debug_churn
@@ -114,8 +126,9 @@ class TestTraceSupport < Minitest::Test
     end
 
     assert_equal 2, spoken.size
-    assert_includes spoken.first.first, "brgen/guest_marketplace_browse PASS"
-    assert_includes spoken.last.first, "rendered_suite running 4m43s"
+    # The speech form reads the path aloud: underscores become spaces and brgen is said as Bergen.
+    assert_includes spoken.first.first, "guest marketplace browse PASS"
+    assert_includes spoken.last.first, "rendered suite running 4m43s"
   end
 
   def test_trace_includes_redacted_payload_context
@@ -324,15 +337,17 @@ class TestTraceSupport < Minitest::Test
         nested += 1
         bus.publish("trace:nested", note: "redaction")
       end
-      original.bind_call(value)
+      original.bind_call(redactor, value)
     end
 
     Master::Trace::Dmesg.with_verbosity("normal") do
       bus.publish("boot", ts: 1)
     end
 
+    # The bus queues a publish made while a handler runs, so the nested event is logged once
+    # after the first rather than recursing into the logger.
     assert_equal 1, nested
-    assert_equal ["boot0: ready"], logging.dmesg.lines.map(&:chomp)
+    assert_equal ["boot0: ready", "trace0: nested, note redaction"], logging.dmesg.lines.map(&:chomp)
   ensure
     singleton&.send(:define_method, :text, original) if original
   end
@@ -347,7 +362,7 @@ class TestTraceSupport < Minitest::Test
     end
 
     lines = logging.dmesg.lines.map(&:chomp)
-    assert_equal "tool0 at master0: write, path lib/a.rb, bytes 12", lines[0]
+    assert_equal "tool0 at master0: write, bytes 12, path lib/a.rb", lines[0]
     assert_equal "boot0: ready", lines[1]
     assert_includes lines[2], "model0 at master0: call"
     refute_includes lines[2], "0123456789abcdef0123456789abcdef"

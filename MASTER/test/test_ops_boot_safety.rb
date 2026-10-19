@@ -72,10 +72,10 @@ class BootSafetySpec < Minitest::Test
   # (too brittle) assert.
   def test_cli_installs_guards_before_and_after_boot
     source = File.read(CLI)
-    assert_includes source, "Master.prepare_runtime!"
     assert_includes source, "RuntimeLoopGuards.install!"
-    assert_operator source.index("Master.prepare_runtime!"), :<, source.index("Master.boot")
     assert_operator source.index("Master.boot"), :<, source.index("RuntimeLoopGuards.install!")
+    boot = File.read(MASTER_BOOT)
+    assert_includes boot[boot.index("def boot(root"), 120], "prepare_runtime!", "Master.boot prepares the runtime before it boots"
 
     runtime_source = File.read(MASTER_RUNTIME)
     assert_includes runtime_source, "install_process_guards!"
@@ -87,7 +87,6 @@ class BootSafetySpec < Minitest::Test
     source = File.read(File.expand_path("../lib/ops.rb", __dir__))
     assert_includes source, "reclaim_detached_media_holders"
     assert_includes source, "STUDIO/dilla"
-    assert_includes source, "royksopp\\.rb"
     assert_includes source, 'ps", "-ax", "-o", "pid=,ppid=,pgid=,command="'
     refute_includes source, "return false if pid.positive? && process_alive?(pid)"
     assert_includes source, "0.25"

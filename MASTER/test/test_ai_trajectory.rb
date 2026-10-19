@@ -85,7 +85,7 @@ class TestAiTrajectory < Minitest::Test
       good = {
         "task" => "inspect",
         "model" => "small-model",
-        "events" => [{ "tool" => "Tree" }, { "tool" => "verify" }],
+        "events" => [{ "tool" => "Tree", "ok" => true }, { "tool" => "verify" }],
         "outcome" => "complete",
         "verified" => true,
       }
