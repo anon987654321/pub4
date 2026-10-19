@@ -2,7 +2,13 @@
 (() => {
   "use strict";
 
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function reducedMotionActive(state = st()) {
+    const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+    if (typeof canonical === "function") return canonical(state);
+    return Boolean(state?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" ||
+      Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  }
   const cv = document.getElementById("face");
   const K = () => window.ParticleKernel;
   const face = () => window.MASTER_FACE;
@@ -21,6 +27,7 @@
   }
 
   function spawnCrown(n = 2, opts = {}) {
+    if (reducedMotionActive()) return;
     const pool = eyePool();
     const kernel = K();
     if (!pool || !kernel) return;
@@ -76,14 +83,7 @@
     if (/photo:ready|input:photo/.test(name)) spawnCrown(3, { valence: 0.55, confidence: 0.9 });
   });
 
-  // web_013 — reduced-motion low-amplitude breaths
-  const breathScale = reducedMotion ? 0.42 : 1;
-  setInterval(() => {
-    const state = st();
-    if (!state) return;
-    if (state._breathScale == null) state._breathScale = breathScale;
-    state.breath = Math.min(1.4, (state.breath || 1) * state._breathScale + (1 - state._breathScale) * 0.08);
-  }, 900);
+  // Breathing is owned by the canonical face frame loop; do not add a second timer.
 
   // web_014 — mouse tilt biases eye mask position
   if (cv) {
@@ -112,18 +112,7 @@
     }, { passive: true });
   }
 
-  // web_018 — reduced-motion sinusoidal eye scan
-  if (reducedMotion) {
-    let phase = 0;
-    setInterval(() => {
-      phase += 0.08;
-      const state = st();
-      if (!state) return;
-      state.mouseX = Math.sin(phase) * 0.35;
-      state.mouseY = Math.cos(phase * 0.7) * 0.18;
-      boostEye(0.03);
-    }, 120);
-  }
+  // Reduced motion removes the continuous sinusoidal scan; semantic gaze updates remain event-driven.
 
   // web_020 — streaming nudges eye attention
   window.addEventListener("chat:chunk", () => boostEye(0.05));
