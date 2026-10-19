@@ -39,7 +39,7 @@ module Operator
         return String(key).startsWith("pub4:welcome-onboarding:") ? "1" : read.call(this, key);
       };
     JS
-    STYLE = /\.s?css\z/
+    SOURCE = /\.(?:s?css|erb)\z/
     NOT_SOURCE = %r{/(?:vendor|builds|node_modules)/|\.min\.}
 
     module_function
@@ -89,7 +89,7 @@ module Operator
         ask: ->(prompt, images) { ask(agent, prompt:, images:) },
         build: ->(app) { build_css(app, root:) },
         commit_file: ->(file, message) { commit(file, message, root:) },
-        sources_for: ->(surface) { stylesheets(graph, surface) },
+        sources_for: ->(surface) { sources(graph, surface) },
         guard: method(:law_refusal),
       )
     end
@@ -100,8 +100,9 @@ module Operator
       agent.ask_once(prompt, law: false, image: pictures.first.merge(extra: pictures.drop(1)))
     end
 
-    def stylesheets(graph, surface)
-      graph.sources_for(surface).select { |path| path.match?(STYLE) && !path.match?(NOT_SOURCE) }
+    # Stylesheets, and the views whose classes they style: the loop edits a rule or adds a class.
+    def sources(graph, surface)
+      graph.sources_for(surface).select { |path| path.match?(SOURCE) && !path.match?(NOT_SOURCE) }
     end
 
     # Payload and screenshot for each surface in one browser session.

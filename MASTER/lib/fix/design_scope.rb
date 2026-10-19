@@ -2,8 +2,8 @@
 
 module Master
   module Fix
-    # Which RAILS apps a /fix target names, for the design loop that `/fix --design` runs
-    # after the fix. The loop measures one rendered app at a time, so a target that names
+    # Which RAILS apps a /fix target names, for the design loop that /fix runs
+    # after a verified fix. The loop measures one rendered app at a time, so a target that names
     # no single app (RAILS, a tree list, the shared layer) names none: guessing every app
     # would start an hours-long run nobody asked for.
     module DesignScope

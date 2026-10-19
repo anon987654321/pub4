@@ -18,9 +18,10 @@ module Master
 
       # What may be checked beyond the text: guard ->(path, new_text) { refusal or nil }, the mechanical
       # laws judging the file as it would be written; scale, the declared spacing steps in px;
-      # type_scale, the declared text sizes in px a font-size may take (none declared: none allowed).
-      Rules = Data.define(:guard, :scale, :type_scale) do
-        def initialize(guard:, scale:, type_scale: nil) = super
+      # type_scale, the declared text sizes in px a font-size may take (none declared: none allowed);
+      # classes, the class names the offered stylesheets define, which a view edit may add to an element.
+      Rules = Data.define(:guard, :scale, :type_scale, :classes) do
+        def initialize(guard:, scale:, type_scale: nil, classes: nil) = super
       end
 
       # font-size is the one font property the loop may set, and only to a declared step
@@ -46,7 +47,8 @@ module Master
         data = JSON.parse(reply.to_s[/\{.*\}/m].to_s)
         file = allowed.find { |path| path == data["file"] || path.end_with?(data["file"].to_s) }
         text = ->(key) { data[key].to_s }
-        new(Proposal.new(file:, find: text.("find"), replace: text.("replace"), why: text.("why").strip), rules)
+        proposal = Proposal.new(file:, find: text.("find"), replace: text.("replace"), why: text.("why").strip)
+        (file.to_s.end_with?(".erb") ? MarkupEdit : self).new(proposal, rules)
       rescue JSON::ParserError
         raise Refused, "the reply was not a JSON edit (it began #{reply.to_s[0, 90].inspect})"
       end
@@ -63,6 +65,9 @@ module Master
       end
 
       def file = proposal.file
+
+      # A view edit (MarkupEdit) changes markup and needs no stylesheet rebuild.
+      def markup? = false
 
       def why = proposal.why
 
@@ -108,7 +113,7 @@ module Master
       private
 
       def refuse_scope!
-        raise Refused, "the file is not one of the offered stylesheets" unless file
+        raise Refused, "the file is not one of the offered sources" unless file
         if file.match?(TOKEN_FILE)
           raise Refused, "token values are operator-owned (RENDERED_VALUES), so token files are not edited"
         end
@@ -200,3 +205,5 @@ module Master
     end
   end
 end
+
+require_relative "markup_edit"

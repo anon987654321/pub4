@@ -62,6 +62,7 @@ module Master
           a colour, typeface, font weight, shadow or opacity, never a token file, and keep every spacing value on the
           declared scale or a var(--token).
           #{type_note}
+          #{markup_note(sources)}
           #{VARIANTS[variant % VARIANTS.size]}
           #{undone_note}
           Return only JSON: {"file": "<one path below>", "find": "<exact text from that file, occurring once>",
@@ -92,6 +93,14 @@ module Master
         return "Do not set a font-size." if steps.empty?
 
         "A font-size may be set only to one of these px steps, or a var(--text-*) token, and never made smaller: #{steps.join(', ')}."
+      end
+
+      # A view is offered beside the stylesheets and may only gain classes those stylesheets define.
+      def markup_note(sources)
+        return "" unless sources.any? { |path| path.end_with?(".erb") }
+
+        'A view (.erb) may be edited only to ADD class names, defined in the stylesheets below, to an element\'s ' \
+          'static class="..." attribute: never its text, ERB tags, tags or existing class names.'
       end
 
       def undone_note

@@ -92,10 +92,10 @@ An explicit `--max-files` is a bounded lane; `MASTER_FIX_RANK=1` asks for a
 full scan before choosing the highest-impact files within that cap. Formatting
 frequency and alphabetical order are not importance measures.
 
-On a target inside one RAILS app, `--design` follows the verified fix with the layout loop of
-`bin/operator design`. That loop keeps a stylesheet edit only when the surface's measured layout score
+On a target inside one RAILS app, `/fix` follows the verified fix with the layout loop of
+`bin/operator design`, with no flag to add. That loop keeps a stylesheet edit only when the surface's measured layout score
 rises and nothing else gets worse, commits each kept edit locally for review, and never pushes; a target
-that names no single app is reported and skipped.
+that names no single app skips the loop.
 
 Each owned repair checkpoint must pass its applicable syntax, intent and delivery
 guards before it is committed and pushed. This is the default; set

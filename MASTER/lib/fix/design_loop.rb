@@ -27,6 +27,7 @@ module Master
       MIN_PAGE_TOKENS = 8
       GUARDS = 4
       SHARED = "/RAILS/__shared/"
+      MARKUP_FILES = 2
       Round = Data.define(:number, :surface, :why, :outcome, :before, :after)
 
       # What the loop works on and how long.
@@ -136,13 +137,15 @@ module Master
       end
 
       def candidates
-        sources = Array(@world.sources_for.call(@target[:surface])).first(4)
+        offered = Array(@world.sources_for.call(@target[:surface]))
+        views, sheets = offered.partition { |path| path.end_with?(".erb") }
+        sources = sheets.first(4) + views.first(MARKUP_FILES)
         Array.new(@plan.candidates) { |variant| propose(sources, variant) }.compact.uniq(&:key)
       end
 
       def propose(sources, variant)
         reply = @world.ask.call(prompt(sources, variant), [@target[:shot]])
-        rules = DesignEdit::Rules.new(guard: @world.guard, scale: nil, type_scale: type_steps)
+        rules = DesignEdit::Rules.new(guard: @world.guard, scale: nil, type_scale: type_steps, classes: sheet_classes(sources))
         edit = DesignEdit.parse(reply, allowed: sources, rules:)
         raise DesignEdit::Refused, "already tried and undone" if @rejected.include?(edit.key)
 
@@ -160,7 +163,9 @@ module Master
         tokens = edit.selector_tokens
         return if @page_tokens.empty?
 
-        raise DesignEdit::Refused, "its rule names no class or id, so it applies across the app" if tokens.empty?
+        if tokens.empty?
+          raise DesignEdit::Refused, edit.markup? ? "its element has no class to find it by on the page" : "its rule names no class or id, so it applies across the app"
+        end
         return if (tokens & @page_tokens).any?
 
         raise DesignEdit::Refused, "its selector (#{tokens.first(3).join(' ')}) is not on this page"
@@ -182,8 +187,16 @@ module Master
       # Rebuilds the CSS the edit can change: the target's app, or every measured app for a
       # shared stylesheet, so the guards are measured against the edit and not a stale build.
       def rebuild(edit)
+        return true if edit.markup?
+
         apps = shared?(edit) ? measured_apps : [@target[:surface].app]
         apps.map { |app| @world.build.call(app) }.all?
+      end
+
+      # The class names the offered stylesheets define: what a view edit may add to an element.
+      def sheet_classes(sources)
+        sheets = sources.reject { |path| path.end_with?(".erb") }
+        sheets.flat_map { |path| File.read(path, encoding: "UTF-8").scan(/\.([A-Za-z_][\w-]*)/).flatten }.uniq
       end
 
       # The declared text sizes a font-size may take: the token scale at or above the
