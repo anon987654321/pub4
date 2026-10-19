@@ -566,7 +566,7 @@
     const facialProjection = finite(morphology.facial_projection, 0.88);
 
     const audioEnergy = Math.max(0, Math.min(1, (audio.rms * 0.45) + (audio.mid * 0.35) + (audio.high * 0.20)));
-    const audioPulse = Math.max(audio.onset, audio.bass * 0.65);
+    const audioPulse = reducedMotion ? 0 : Math.max(audio.onset, audio.bass * 0.65);
     const fracture = finite(topologyProfile.fracture, 0);
     const tiltX = finite(topologyProfile.tilt_x, 0);
     const tiltY = finite(topologyProfile.tilt_y, 0);
