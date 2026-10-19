@@ -768,4 +768,65 @@ class TestLoraReplicate < Minitest::Test
 
     refute_match(/invalid option/, out)
   end
+
+  def test_tar_symlink_entries_are_unsafe_even_when_the_member_name_is_relative
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "inside.txt"), "safe")
+      File.symlink("../../outside.txt", File.join(dir, "redirect"))
+      archive = File.join(dir, "links.tar")
+      _out, status = Open3.capture2("tar", "-cf", archive, "-C", dir, "inside.txt", "redirect")
+      skip "tar cannot build symlink fixture" unless status.success?
+
+      errors = Preflight.unsafe_tar_entries(archive)
+      refute_empty errors
+      assert errors.any? { |entry| entry.match?(/redirect|entry type/) }, errors.inspect
+    rescue NotImplementedError, SystemCallError => error
+      skip "symlinks unavailable: #{error.message}"
+    end
+  end
+
+  def test_training_upload_uses_a_seekable_stream_instead_of_a_payload_sized_string
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "dataset.zip")
+      File.binwrite(path, ("payload" * 1024))
+      client = Client.new(token: "t")
+      response = Struct.new(:code, :body).new("200", '{"urls":{"get":"https://replicate.delivery/upload"}}')
+      recorded = {}
+
+      http = Object.new
+      http.define_singleton_method(:request) do |request|
+        recorded[:content_length] = request["Content-Length"].to_i
+        recorded[:body_string] = request.body
+        recorded[:content_type] = request["Content-Type"]
+        recorded[:body] = request.body_stream.read
+        response
+      end
+      starter = lambda { |_host, _port, **_options, &block| block.call(http) }
+
+      url = nil
+      Net::HTTP.stub(:start, starter) { url = client.upload_zip(path) }
+
+      assert_equal "https://replicate.delivery/upload", url
+      assert_nil recorded[:body_string]
+      assert_equal recorded[:content_length], recorded[:body].bytesize
+      assert_match(%r{multipart/form-data; boundary=}, recorded[:content_type])
+      assert_includes recorded[:body], "payload"
+      assert_empty Dir.glob(File.join(dir, "replicate-upload-*.multipart"))
+    end
+  end
+
+  def test_weight_archive_publisher_reads_only_regular_checkpoints_and_publishes_without_overwrite
+    source = File.read(File.expand_path("../replicate/lora/_toolkit/run_train_replicate.rb", __dir__))
+    body_start = source.index("def extract_weights_tar(")
+    body_end = source.index("\ndef append_log", body_start)
+    refute_nil body_start
+    refute_nil body_end
+    body = source[body_start...body_end]
+
+    assert_includes body, "Gem::Package::TarReader"
+    assert_includes body, "File::EXCL"
+    assert_includes body, "File.link(source, target.to_s)"
+    refute_includes body, 'system("tar", "-xf"',
+                    "provider archives are not extracted by an unrestricted tar command"
+  end
 end

@@ -3042,4 +3042,63 @@ class DillaTest < Minitest::Test
     chain.limit(chain.process(frame))
   end
 
+
+  def test_streamed_wav_publishes_a_complete_file_and_refuses_replacement
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "take.wav")
+      result = WAV.write_stream(path, frames: 4, channels: 1, block_size: 2) do |_offset, count|
+        [Array.new(count, 0.25)]
+      end
+
+      assert_equal path, result
+      bytes = File.binread(path)
+      assert_equal "RIFF", bytes[0, 4]
+      assert_equal bytes.bytesize - 8, bytes[4, 4].unpack1("V")
+      assert_equal bytes.bytesize - 44, bytes[40, 4].unpack1("V")
+      original = bytes.dup
+
+      error = assert_raises(ArgumentError) do
+        WAV.write_stream(path, frames: 1, channels: 1) { |_offset, count| [Array.new(count, 0.0)] }
+      end
+      assert_match(/refusing to overwrite/, error.message)
+      assert_equal original, File.binread(path)
+    end
+  end
+
+  def test_failed_streamed_wav_never_publishes_a_partial_destination
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "broken.wav")
+      error = assert_raises(RuntimeError) do
+        WAV.write_stream(path, frames: 4, channels: 1, block_size: 2) do
+          raise "synthesis failed"
+        end
+      end
+
+      assert_match(/synthesis failed/, error.message)
+      refute File.exist?(path)
+      assert_empty Dir.glob(File.join(dir, "studio-output-*"))
+    end
+  end
+
+  def test_video_export_terminates_a_timed_out_encoder_and_keeps_source_audio
+    Dir.mktmpdir do |dir|
+      audio = File.join(dir, "source.wav")
+      video = File.join(dir, "timed-out.mp4")
+      File.binwrite(audio, "existing source audio")
+      previous_timeout = ENV["DILLA_FFMPEG_TIMEOUT"]
+      ENV["DILLA_FFMPEG_TIMEOUT"] = "1"
+
+      with_fake_ffmpeg(dir, "sleep 10") do
+        error = assert_raises(Dilla::Video::Error) do
+          Dilla::Video.render(audio:, output: video, preset: "dilla_heavy")
+        end
+        assert_match(/timed out/, error.message)
+      end
+
+      refute File.exist?(video)
+      assert_equal "existing source audio", File.binread(audio)
+    ensure
+      previous_timeout.nil? ? ENV.delete("DILLA_FFMPEG_TIMEOUT") : ENV["DILLA_FFMPEG_TIMEOUT"] = previous_timeout
+    end
+  end
 end
