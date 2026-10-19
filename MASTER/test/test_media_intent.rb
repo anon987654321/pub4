@@ -128,18 +128,14 @@ def test_bare_play_renders_the_dilla_pocket_at_92_bpm_and_plays_the_wav
     end
   end
 
-  words = Shellwords.split(calls.fetch(1)[:arg])
-  assert_equal "0", words[words.index("--progression") + 1]
-  assert_equal "dilla_shadow_full", words[words.index("--drums") + 1]
-  assert_equal "dilla_shadow", words[words.index("--profile") + 1]
-  assert_equal "92", words[words.index("--bpm") + 1]
-  assert_equal "dilla_night", words[words.index("--effect-rig") + 1]
-  assert_equal "kit_dust", words[words.index("--kit") + 1]
-  assert_equal "rhodes_mark1", words[words.index("--voice") + 1]
-  assert_equal "subtle", words[words.index("--sonitex") + 1]
-  assert_equal "2", words[words.index("--sonitex-instances") + 1]
-  assert_equal "0.54", words[words.index("--vcs") + 1]
-  assert_match(/\.wav\z/, words[words.index("--out") + 1])
+  words = Shellwords.split(calls.fetch(0)[:arg])
+  assert_includes words, "--showcase"
+  assert_includes words, "--no-video"
+  assert_equal "Blue Hour — Dilla Minor Dub Cut", result.value!.fetch(:style)
+  assert_equal "dilla_shadow_full", result.value!.fetch(:drums)
+  assert_equal "kit_dust", result.value!.fetch(:kit)
+  refute_includes words, "--list"
+  assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
 end
 
   def test_postpro_capability_question_does_not_require_source_path

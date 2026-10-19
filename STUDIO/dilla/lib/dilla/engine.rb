@@ -160,6 +160,8 @@ elsif options[:play]
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
   elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != 'organ')
     render_showcase(data, options)
+  elsif options[:effect_rig]
+    render_effect_rig_take(data, options)
   else
     render(data, options)
   end
@@ -312,8 +314,8 @@ end
 
 # A section of the showcase: one pass rendered whole and mono by the functional effects, kept
 # in memory for the arrangement to join. Every other render is streamed (see render_stream).
-def render_section(data, options)
-  plan = plan_pass(data, options)
+def render_section(data, options, plan: nil)
+  plan ||= plan_pass(data, options)
   names, profile, drums, seq, bpm, beats, buf = plan.to_h.values_at(:names, :profile, :drums, :seq, :bpm, :beats, :buf)
   # Progression buffers reserve a full second for arbitrary note tails. A curated section
   # has a known gate and a short echo, so discard that unused second before rendering drums.
@@ -393,6 +395,28 @@ end
 
 # A render: a showcase section stays whole and mono in memory, anything else is streamed.
 def render(data, options) = options[:buffer_only] ? render_section(data, options) : render_stream(data, options)
+
+# A rigged standalone pass uses the same complete per-bus processors as a showcase section,
+# followed by the same final tape stack and ceiling.
+def render_effect_rig_take(data, options)
+  plan = plan_pass(data, options, capture: !!options[:midi])
+  buf = render_section(data, options, plan:)
+  buf = tape_stage(buf, data, options, plan.seed)
+  fade = [SAMPLE_RATE / 25, buf.size / 2].min
+  fade.times do |i|
+    buf[i] *= i.to_f / [fade, 1].max
+    buf[-fade + i] *= (fade - i - 1).to_f / [fade, 1].max
+  end
+  peak = buf.map(&:abs).max || 0.0
+  buf.map! { |sample| sample * (0.92 / peak) } if peak > 0.92
+  out = options[:out] || Dilla::Video.default_paths(root: File.expand_path("../..", __dir__)).fetch(:audio)
+  FileUtils.mkdir_p(File.dirname(out))
+  WAV.write(out, buf, bits: options[:bits] || 16, replace: options[:replace])
+  MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, plan.parts, replace: options[:replace]) if options[:midi]
+  puts format("Wrote %s (%.2fs, 44.1 kHz mono) — effect rig %s", out, buf.size / SAMPLE_RATE.to_f, options.fetch(:effect_rig))
+  puts format("  bpm=%g profile=%s drums=%s kit=%s voice=%s", plan.bpm, plan.profile, plan.drums || "-", options[:kit] || plan.profile_row["kit"] || "-", options[:voice] || plan.profile_row["voice"] || "-")
+  out
+end
 
 # The last colour before the file: the tape stack, and the ceiling that follows it.
 def tape_stage(buf, data, options, seed)

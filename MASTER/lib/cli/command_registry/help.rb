@@ -54,9 +54,9 @@ module Master
         "play" => {
 summary: "render and play a Dilla-pocket progression through the canonical drum and dub effects rig",
 detail: [
-  "/play — a fresh 92 BPM Dilla-pocket progression, full dust-kit drums, analogue tape, dub echo and crystallizer, rendered to a new wav and played.",
+  "/play — the curated Blue Hour Dilla showcase, with sections at 92–116 BPM, the full dust kit, analogue tape, dub echo and crystallizer.",
   "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
-  "Bare /play works without a saved reference; an available J Dilla reference may steer its pocket and tempo.",
+  "Bare /play renders the same arrangement as `ruby STUDIO/dilla/dilla.rb`; named progression requests use the Dilla pocket at 92 BPM unless an explicit or reference tempo applies.",
   "A render lands in the dated dilla-renders folder under your documents and is never written over.",
 ],
         },

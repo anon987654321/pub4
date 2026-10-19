@@ -182,10 +182,31 @@ def test_play_live_music_renders_then_plays_the_wav
       ensure
         saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
       end
-      assert_equal "--list", calls.first[:arg]
-      assert_equal "dilla", calls.last[:tool]
-      assert_includes calls.last[:arg], "--progression"
+      assert_equal 1, calls.size
+      assert_equal "dilla", calls.first[:tool]
+      words = Shellwords.split(calls.first[:arg])
+      assert_includes words, "--showcase"
+      assert_includes words, "--no-video"
+      assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
     end
+  end
+end
+
+def test_dilla_render_paths_add_suffixes_instead_of_reusing_existing_takes
+  Dir.mktmpdir do |home|
+    saved = ENV["XDG_DATA_HOME"]
+    ENV["XDG_DATA_HOME"] = home
+    at = Time.utc(2026, 10, 19, 12, 34, 56)
+    first = MediaIntent.dilla_unique_render_path("blue-hour", at:)
+    FileUtils.mkdir_p(File.dirname(first))
+    File.write(first, "preserve")
+    second = MediaIntent.dilla_unique_render_path("blue-hour", at:)
+
+    assert_equal "blue-hour-20261019T123456Z.wav", File.basename(first)
+    assert_equal "blue-hour-20261019T123456Z-1.wav", File.basename(second)
+    assert_equal "preserve", File.read(first)
+  ensure
+    saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
   end
 end
 

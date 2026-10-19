@@ -519,6 +519,33 @@ module Master
         Contracts::Studio.output_path(kind: :dilla_render_directory, at:)
       end
 
+      # Keep every audition distinct, including two commands within the same second.
+      def dilla_unique_render_path(prefix, at: Time.now.utc)
+        directory = dilla_renders_dir(at:)
+        stamp = at.strftime("%Y%m%dT%H%M%SZ")
+        candidate = File.join(directory, "#{prefix}-#{stamp}.wav")
+        suffix = 0
+        while File.exist?(candidate) || File.symlink?(candidate)
+          suffix += 1
+          candidate = File.join(directory, "#{prefix}-#{stamp}-#{suffix}.wav")
+        end
+        candidate
+      end
+
+      # The bare MASTER audition is the same curated composition as `ruby dilla.rb`.
+      # Skip video encoding here; the interactive path needs the canonical audio.
+      def render_dilla_showcase(root:, output: nil)
+        now = Time.now.utc
+        output ||= dilla_unique_render_path("blue-hour", at: now)
+        FileUtils.mkdir_p(File.dirname(output))
+        argv = ["--showcase", "--no-video", "--out", output]
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |value| Shellwords.escape(value) }.join(" "))
+        return result unless result.ok?
+
+        Result.ok({ log: result.value!, path: output, progression: "Blue Hour — Dilla Minor Dub Cut",
+                    drums: "dilla_shadow_full", groove: "dilla_shadow", kit: "kit_dust", tempo_range: [92, 116] })
+      end
+
       # What dilla.rb can render, read from its own --list rather than from its
       # data file, so MASTER names no progression or drum pattern of its own.
       def dilla_menu(root)
@@ -537,6 +564,8 @@ module Master
       # A progression and a drum pattern: explicit choices win; a learned J Dilla
       # reference then steers tempo and pocket. Dilla itself owns all menu values.
       def render_dilla(text, root:, output: nil)
+        return render_dilla_showcase(root:, output:) if text.to_s.strip.empty?
+
         menu = dilla_menu(root)
         return menu unless menu.ok?
 
@@ -544,7 +573,7 @@ module Master
         named = text[/\bprogression\s+(\d+)\b/i, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
         # Bare /play is a Dilla-first audition; it must not depend on prior reference analysis.
-        explicit_dilla = text.strip.empty? || text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
+        explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
         named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i) && !explicit_dilla
         reference = if explicit_dilla
                       dilla_reference_profile
@@ -575,8 +604,7 @@ module Master
         drum_balance = reference_balance_adjustment(reference, "drums_energy_share") if dilla_pocket
         chord_balance = reference_balance_adjustment(reference, "other_energy_share") if dilla_pocket
         unless output
-          now = Time.now.utc
-          output = File.join(dilla_renders_dir(at: now), "#{progression}-#{pattern}-#{now.strftime('%Y%m%dT%H%M%SZ')}.wav")
+          output = dilla_unique_render_path("#{progression}-#{pattern}")
         end
         FileUtils.mkdir_p(File.dirname(output))
         argv = ["--progression", progression, "--out", output]

@@ -30,14 +30,17 @@ Endless random playback remains available with `--play`; a random finite take re
 explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or
 `--drums` continue to choose exactly what they name.
 
-MASTER `/play` uses the same synthesis engine but renders a fresh 92 BPM Dilla-pocket
-take by default: `dilla_shadow` groove, the full `kit_dust` drum pattern, Rhodes, and
-the `dilla_night` bus-effects rig. The rig is defined once in `data/dilla.json`; it applies
-cassette colour, heavy drum tape, drum-bus dub echo and crystallizer, with a quieter
-instrument echo/crystallizer send. MASTER adds the `--effect-rig dilla_night` option to
-ordinary progression renders so those effects are not exclusive to the curated showcase.
-Use `--effect-rig NAME` to select another declared bus-effects rig. Explicit effect flags
-remain authoritative over the rig defaults.
+Bare MASTER `/play` renders and plays this same eight-section Blue Hour composition,
+without encoding a video. This keeps the interactive audition and `ruby dilla.rb` on the
+same musical arrangement and the same section-level drum and instrument effects.
+A named `/play progression N` request remains a single progression, at 92 BPM unless
+an explicit tempo or an available J Dilla reference supplies another value. Dilla-pocket
+progressions use the full drum pattern, Rhodes, and the `dilla_night` bus-effects rig.
+
+The rig is defined once in `data/dilla.json`: cassette colour, heavy drum tape, drum-bus
+dub echo and crystallizer, with a quieter instrument echo/crystallizer send. The
+`--effect-rig NAME` option applies this complete per-bus chain to standalone progression
+renders too. Explicit effect flags remain authoritative over the rig defaults.
 
 ## Composition and groove
 
