@@ -543,7 +543,8 @@ module Master
         choices = menu.value!
         named = text[/\bprogression\s+(\d+)\b/i, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
-        explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
+        # Bare /play is a Dilla-first audition; it must not depend on prior reference analysis.
+        explicit_dilla = text.strip.empty? || text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
         named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i) && !explicit_dilla
         reference = if explicit_dilla
                       dilla_reference_profile
@@ -552,12 +553,12 @@ module Master
                     end
         dilla_pocket = !named_other_style && (reference || explicit_dilla)
         named_pattern = choices[:drums].find { |id| text.match?(/\b#{Regexp.escape(id)}\b/) }
-        dilla_patterns = %w[dilla_shadow dilla_broken dusty_laid_back boom_bap]
+        dilla_patterns = %w[dilla_shadow_full dilla_broken_full dilla_shadow dilla_broken dusty_laid_back boom_bap]
         density = reference_feature(reference, "onset_density_per_bar") if dilla_pocket
         offbeat = reference_feature(reference, "offbeat_onset_share") if dilla_pocket
         ranked_patterns = []
         ranked_patterns << "dusty_laid_back" if density && density < 7.5
-        ranked_patterns << "dilla_broken" if offbeat && offbeat > 0.60
+        ranked_patterns << "dilla_broken_full" if offbeat && offbeat > 0.60
         ranked_patterns.concat(dilla_patterns)
         pattern = named_pattern || if dilla_pocket
                                      ranked_patterns.uniq.find { |id| choices[:drums].include?(id) } || choices[:drums].sample
@@ -570,7 +571,7 @@ module Master
                  end
         groove_scale = reference_groove_scale(reference) if dilla_pocket
         explicit_bpm = text.match(/\b(\d{2,3}(?:\.\d+)?)\s*bpm\b/i)&.captures&.first
-        bpm = explicit_bpm ? explicit_bpm.to_f : reference&.fetch("target_bpm", nil)
+        bpm = explicit_bpm ? explicit_bpm.to_f : (reference&.fetch("target_bpm", nil) || (dilla_pocket ? 92 : nil))
         drum_balance = reference_balance_adjustment(reference, "drums_energy_share") if dilla_pocket
         chord_balance = reference_balance_adjustment(reference, "other_energy_share") if dilla_pocket
         unless output
@@ -586,8 +587,8 @@ module Master
         argv.concat(["--drum-balance", drum_balance.to_s]) unless drum_balance.nil?
         argv.concat(["--chord-balance", chord_balance.to_s]) unless chord_balance.nil?
         if dilla_pocket
-          argv.concat(["--kit", "kit_dust", "--voice", "rhodes_mark1", "--sonitex", "cassette", "--sonitex-instances", "3",
-                       "--drum-tape", "heavy", "--vcs", "0.78"])
+          argv.concat(["--effect-rig", "dilla_night", "--kit", "kit_dust", "--voice", "rhodes_mark1",
+                       "--sonitex", "subtle", "--sonitex-instances", "2", "--vcs", "0.54"])
         end
         result = ScriptDispatch.run(root:, tool: "dilla", arg: argv.map { |v| Shellwords.escape(v) }.join(" "))
         return result unless result.ok?

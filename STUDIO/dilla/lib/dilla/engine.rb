@@ -46,6 +46,7 @@ def run(argv)
     o.on('--video PATH', 'Write the matching MP4 visualizer at PATH') { |v| options[:video] = v }
     o.on('--no-video', 'Render only the WAV; do not encode an MP4') { options[:video] = false }
     o.on('--video-preset NAME', 'Postpro video preset (default dilla_heavy)') { |v| options[:video_preset] = v }
+    o.on('--effect-rig NAME', 'Apply a named bus-effects rig from data/dilla.json') { |v| options[:effect_rig] = v }
     o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
     o.on('--render', 'Write one random take to a new file under the renders folder instead of playing live') { options[:render] = true }
     o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
@@ -109,6 +110,7 @@ def run(argv)
   options[:live] = true if live_argument
 
   data = JSON.parse(File.read(File.expand_path('../../data/dilla.json', __dir__)))
+  apply_effect_rig!(options, data) if options[:effect_rig]
   if bare_run?(options)
     if options[:render]
       randomize_take!(data, options)
@@ -163,7 +165,30 @@ elsif options[:play]
   end
 end
 
+# Apply one canonical bus-effects row to an ordinary progression render. Explicit CLI values
+# retain precedence; data/dilla.json remains the single source for each rig's defaults.
+def apply_effect_rig!(options, data)
+  name = options[:effect_rig]
+  return options unless name
+
+  rig = data.fetch('bus_effects').fetch(name) { abort "studio0: unknown effect rig #{name.inspect}" }
+  {
+    drum_sonitex: 'drum_sonitex',
+    drum_sonitex_instances: 'drum_sonitex_instances',
+    drum_tape: 'drum_tape',
+    drum_vcs: 'drum_vcs',
+    drum_dub_echo: 'drum_dub_echo',
+    drum_crystallizer: 'drum_crystallizer',
+    instrument_dub_echo: 'instrument_dub_echo',
+    instrument_crystallizer: 'instrument_crystallizer'
+  }.each do |option, key|
+    options[option] = rig.fetch(key) unless options.key?(option)
+  end
+  options
+end
+
 # Flags that choose what is played. A run that names none of them is a bare run, and a bare
+
 # run is a new take every time; --showcase is the way to the fixed Blue Hour piece.
 CONTENT_FLAGS = %i[showcase live list prog random drums kit profile arp arp_style repeat voice mode play quick
                    patch_per_chord].freeze
@@ -488,7 +513,7 @@ def render_showcase(data, options)
 
   sections.each_with_index do |section, index|
     section_bpm = options[:bpm] || tempos.fetch(index)
-    effect_rig = data.fetch('bus_effects').fetch(section.fetch('effect_rig'))
+    effect_rig = data.fetch('bus_effects').fetch(options[:effect_rig] || section.fetch('effect_rig'))
     mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section.fetch('mode', 'repeat')))
     section_options = {
       names: section.fetch('progression'),

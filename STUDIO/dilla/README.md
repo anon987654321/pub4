@@ -30,6 +30,15 @@ Endless random playback remains available with `--play`; a random finite take re
 explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or
 `--drums` continue to choose exactly what they name.
 
+MASTER `/play` uses the same synthesis engine but renders a fresh 92 BPM Dilla-pocket
+take by default: `dilla_shadow` groove, the full `kit_dust` drum pattern, Rhodes, and
+the `dilla_night` bus-effects rig. The rig is defined once in `data/dilla.json`; it applies
+cassette colour, heavy drum tape, drum-bus dub echo and crystallizer, with a quieter
+instrument echo/crystallizer send. MASTER adds the `--effect-rig dilla_night` option to
+ordinary progression renders so those effects are not exclusive to the curated showcase.
+Use `--effect-rig NAME` to select another declared bus-effects rig. Explicit effect flags
+remain authoritative over the rig defaults.
+
 ## Composition and groove
 
 The data holds a flat list of progressions, each a list of chord names such as Fm9,

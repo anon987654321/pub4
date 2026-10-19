@@ -52,11 +52,12 @@ module Master
           ],
         },
         "play" => {
-summary: "render a Dilla progression with a drum pattern and play it on the local sound card",
+summary: "render and play a Dilla-pocket progression through the canonical drum and dub effects rig",
 detail: [
-  "/play — a random progression and a random drum pattern, rendered to a wav and played.",
+  "/play — a fresh 92 BPM Dilla-pocket progression, full dust-kit drums, analogue tape, dub echo and crystallizer, rendered to a new wav and played.",
   "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
-  "A render lands in the dilla-renders folder under your documents, dated, and is never written over.",
+  "Bare /play works without a saved reference; an available J Dilla reference may steer its pocket and tempo.",
+  "A render lands in the dated dilla-renders folder under your documents and is never written over.",
 ],
         },
         "plugin" => {

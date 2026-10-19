@@ -180,6 +180,29 @@ class DillaTest < Minitest::Test
                  SHOWCASE.fetch("sections").last.fetch("progression")
   end
 
+  def test_named_effect_rig_supplies_processing_defaults_from_canonical_data
+    options = { effect_rig: "dilla_night" }
+    apply_effect_rig!(options, DATA)
+    rig = DATA.fetch("bus_effects").fetch("dilla_night")
+
+    assert_equal rig.fetch("drum_sonitex"), options.fetch(:drum_sonitex)
+    assert_equal rig.fetch("drum_sonitex_instances"), options.fetch(:drum_sonitex_instances)
+    assert_equal rig.fetch("drum_tape"), options.fetch(:drum_tape)
+    assert_equal rig.fetch("drum_vcs"), options.fetch(:drum_vcs)
+    assert_equal rig.fetch("drum_dub_echo"), options.fetch(:drum_dub_echo)
+    assert_equal rig.fetch("drum_crystallizer"), options.fetch(:drum_crystallizer)
+    assert_equal rig.fetch("instrument_dub_echo"), options.fetch(:instrument_dub_echo)
+    assert_equal rig.fetch("instrument_crystallizer"), options.fetch(:instrument_crystallizer)
+  end
+
+  def test_named_effect_rig_preserves_explicit_operator_overrides
+    options = { effect_rig: "dilla_night", drum_tape: "light" }
+    apply_effect_rig!(options, DATA)
+
+    assert_equal "light", options.fetch(:drum_tape)
+    assert_equal DATA.fetch("bus_effects").fetch("dilla_night").fetch("drum_crystallizer"), options.fetch(:drum_crystallizer)
+  end
+
   def test_default_output_paths_preserve_existing_takes
     Dir.mktmpdir do |dir|
       fresh = Dilla::Video.default_paths(root: dir, stamp: "fixed")
@@ -279,6 +302,7 @@ class DillaTest < Minitest::Test
       stdout, stderr, status = run_dilla(
         "--progression", "2",
         "--profile", "dilla_shadow",
+        "--effect-rig", "dilla_night",
         "--beats", "1",
         "--bpm", "92",
         "--seed", "31",

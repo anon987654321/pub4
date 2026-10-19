@@ -30,7 +30,10 @@ class MediaIntentSpec < Minitest::Test
   TEXT
   DILLA_LISTING = LISTING.sub(
     "Drum patterns: boom_bap, offbeat_inversion, sparse",
-    "Drum patterns: dilla_shadow, dilla_broken, dusty_laid_back, boom_bap, offbeat_inversion, sparse"
+    "Drum patterns: dilla_shadow_full, dilla_broken_full, dilla_shadow, dilla_broken, dusty_laid_back, boom_bap, offbeat_inversion, sparse"
+  ).sub(
+    "Groove profiles: late_snare, behind_the_beat, dry",
+    "Groove profiles: dilla_shadow, late_snare, behind_the_beat, dry"
   )
 
   # Answers --list with the menu and records every other call; a render "writes" its --out.
@@ -564,7 +567,7 @@ end
       assert_equal "dilla", calls.last.fetch(:tool)
       assert_equal "kit_dust", render[render.index("--kit") + 1]
       assert_equal "rhodes_mark1", render[render.index("--voice") + 1]
-      assert_equal "dilla_shadow", render[render.index("--drums") + 1]
+      assert_equal "dilla_shadow_full", render[render.index("--drums") + 1]
     end
   end
 
@@ -683,7 +686,7 @@ end
           assert result.ok?, result.inspect
           assert_equal "behind_the_beat", result.value!.fetch(:groove)
           assert_equal 92, result.value!.fetch(:bpm)
-          assert_equal "dilla_broken", result.value!.fetch(:drums)
+          assert_equal "dilla_broken_full", result.value!.fetch(:drums)
           assert_equal 1.14, result.value!.fetch(:groove_scale)
         end
       ensure
@@ -692,14 +695,14 @@ end
       words = Shellwords.split(calls.last.fetch(:arg))
       assert_equal "behind_the_beat", words[words.index("--profile") + 1]
       assert_equal "92", words[words.index("--bpm") + 1]
-      assert_equal "dilla_broken", words[words.index("--drums") + 1]
+      assert_equal "dilla_broken_full", words[words.index("--drums") + 1]
       assert_equal "1.14", words[words.index("--groove") + 1]
       assert_equal "kit_dust", words[words.index("--kit") + 1]
       assert_equal "rhodes_mark1", words[words.index("--voice") + 1]
-      assert_equal "cassette", words[words.index("--sonitex") + 1]
-      assert_equal "3", words[words.index("--sonitex-instances") + 1]
-      assert_equal "heavy", words[words.index("--drum-tape") + 1]
-      assert_equal "0.78", words[words.index("--vcs") + 1]
+      assert_equal "dilla_night", words[words.index("--effect-rig") + 1]
+      assert_equal "subtle", words[words.index("--sonitex") + 1]
+      assert_equal "2", words[words.index("--sonitex-instances") + 1]
+      assert_equal "0.54", words[words.index("--vcs") + 1]
       assert_equal "2.0", words[words.index("--drum-balance") + 1]
       assert_equal "1.0", words[words.index("--chord-balance") + 1]
     end

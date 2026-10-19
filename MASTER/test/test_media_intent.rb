@@ -7,7 +7,7 @@ require_relative "../lib/io/media_intent"
 require_relative "../lib/music/synth"
 
 class MediaIntentTest < Minitest::Test
-  LISTING = "Progressions:\n   0  Cm9 Fm9\n\nDrum patterns: boom_bap, sparse\nGroove profiles: dry\n"
+  LISTING = "Progressions:\n   0  Cm9 Fm9\n\nDrum patterns: dilla_shadow_full, dilla_broken_full, dilla_shadow, dilla_broken, boom_bap, sparse\nGroove profiles: dilla_shadow, dry\n"
 
   # dilla.rb answers --list with its menu; anything else is a render.
   def dilla_stub(calls)
@@ -117,7 +117,7 @@ def test_plain_live_music_language_routes_to_dilla
   assert_equal "--list", calls.first[:arg]
 end
 
-def test_bare_play_renders_a_random_progression_with_drums_and_plays_the_wav
+def test_bare_play_renders_the_dilla_pocket_at_92_bpm_and_plays_the_wav
   calls = []
 
   without_sound do
@@ -130,7 +130,15 @@ def test_bare_play_renders_a_random_progression_with_drums_and_plays_the_wav
 
   words = Shellwords.split(calls.fetch(1)[:arg])
   assert_equal "0", words[words.index("--progression") + 1]
-  assert_includes %w[boom_bap sparse], words[words.index("--drums") + 1]
+  assert_equal "dilla_shadow_full", words[words.index("--drums") + 1]
+  assert_equal "dilla_shadow", words[words.index("--profile") + 1]
+  assert_equal "92", words[words.index("--bpm") + 1]
+  assert_equal "dilla_night", words[words.index("--effect-rig") + 1]
+  assert_equal "kit_dust", words[words.index("--kit") + 1]
+  assert_equal "rhodes_mark1", words[words.index("--voice") + 1]
+  assert_equal "subtle", words[words.index("--sonitex") + 1]
+  assert_equal "2", words[words.index("--sonitex-instances") + 1]
+  assert_equal "0.54", words[words.index("--vcs") + 1]
   assert_match(/\.wav\z/, words[words.index("--out") + 1])
 end
 
