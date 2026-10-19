@@ -88,13 +88,24 @@ module Postpro
       raise ArgumentError, "constitutional batch must generate five to ten variations per source by default"
     end
 
-    # Creates the output folder and says once where renders will land.
-    def announce_output_dir!
-      return if @announced_output_dir
+    # A render sits beside its source. POSTPRO_OUTPUT_DIR overrides that, and a
+    # source inside the checkout renders to the dated directory instead, because
+    # generated images are never committed and never belong in the tree.
+    def output_dir_for(source)
+      return OUTPUT_DIR unless ENV.fetch("POSTPRO_OUTPUT_DIR", "").empty?
 
-      FileUtils.mkdir_p(OUTPUT_DIR)
-      warn "postpro: renders go to #{OUTPUT_DIR} (set POSTPRO_OUTPUT_DIR to choose)"
-      @announced_output_dir = true
+      beside = File.dirname(File.expand_path(source))
+      Studio::OutputPaths.inside_repository?(beside) ? OUTPUT_DIR : beside
+    end
+
+    # Creates the output folder and says once per folder where renders will land.
+    def announce_output_dir!(directory = OUTPUT_DIR)
+      @announced_output_dirs ||= []
+      return if @announced_output_dirs.include?(directory)
+
+      FileUtils.mkdir_p(directory)
+      warn "postpro: renders go to #{directory} (set POSTPRO_OUTPUT_DIR to choose)"
+      @announced_output_dirs << directory
     end
 
     # Keep prior grades and their provenance. Generated names are stable until
@@ -142,8 +153,8 @@ module Postpro
       input = File.expand_path(input_path)
       output = File.expand_path(output_path)
       verify_distinct_source!(input_path: input, output_path: output)
-      unless File.dirname(output) == OUTPUT_DIR
-        raise ArgumentError, "constitutional output must stay in the Postpro output directory"
+      unless File.dirname(output) == output_dir_for(input)
+        raise ArgumentError, "constitutional output must sit beside its source or in the Postpro output directory"
       end
       unless File.basename(output).start_with?("postpro_")
         raise ArgumentError, "constitutional output must use postpro_ prefix"
@@ -153,7 +164,7 @@ module Postpro
         raise ArgumentError, "constitutional output already exists: #{File.basename(existing)}"
       end
 
-      announce_output_dir!
+      announce_output_dir!(File.dirname(output))
       true
     end
   end

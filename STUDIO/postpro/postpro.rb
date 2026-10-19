@@ -3930,7 +3930,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       ext = File.extname(file)
       safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
       output_ext = ARGV.include?("--tiff16") ? ".tif" : ext
-      output = File.join(Postpro::Constitution::OUTPUT_DIR,
+      output = File.join(Postpro::Constitution.output_dir_for(file),
                          "postpro_#{safe_stem}_#{suffix}_v#{i + 1}#{output_ext}")
       output = Postpro::Constitution.available_output_path(output)
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
@@ -4986,7 +4986,7 @@ def run_stock_sheet
   output = requested_output
   if output.to_s.empty?
     safe_stem = File.basename(input_path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
-    output = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{safe_stem}_stocks_#{preset_name}.jpg")
+    output = File.join(Postpro::Constitution.output_dir_for(input_path), "postpro_#{safe_stem}_stocks_#{preset_name}.jpg")
     output = Postpro::Constitution.available_output_path(output)
     Postpro::Constitution.verify_output!(input_path: input_path, output_path: output)
   else
@@ -5106,7 +5106,7 @@ def run_uplift(dir, files)
       processed = rgb_bands(apply_finishing_grain(preset_chain(image, [base, layer]), base))
       ext = File.extname(file)
       safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
-      output = File.join(Postpro::Constitution::OUTPUT_DIR,
+      output = File.join(Postpro::Constitution.output_dir_for(file),
                          "postpro_#{safe_stem}_#{base}+#{layer}_v#{i + 1}#{ext}")
       output = Postpro::Constitution.available_output_path(output)
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
@@ -5147,7 +5147,7 @@ def run_watch
       next if File.size(path) < 50_000
       ext = File.extname(path)
       base = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
-      out = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{base}_#{preset_name}#{ext}")
+      out = File.join(Postpro::Constitution.output_dir_for(path), "postpro_#{base}_#{preset_name}#{ext}")
       out = Postpro::Constitution.available_output_path(out)
       Postpro::Constitution.verify_output!(input_path: path, output_path: out)
       PostproBootstrap.dmesg "new path=#{File.basename(path)} -> #{File.basename(out)}"

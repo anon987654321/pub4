@@ -11,8 +11,9 @@ house grade for stills, and its entry point is `STUDIO/postpro/postpro.rb`.
 Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it a bare
 path and the path is the subject: an image goes through several random chains written to the
 Postpro output directory, a directory gives a few random picks from it, and a path that is
-neither is named and refused. Output defaults to the shared dated render directory outside the
-checkout; `POSTPRO_OUTPUT_DIR` chooses another directory. Give it nothing and it asks what to
+neither is named and refused. Output defaults to the folder of the source photograph, or to the
+shared dated render directory when the source sits inside the checkout; `POSTPRO_OUTPUT_DIR`
+chooses another directory. Give it nothing and it asks what to
 grade. The command `postpro.rb --help` lists every flag. `--capabilities` reports the analogue
 direction catalogue and its readiness state; a catalogue entry is not a promise that the
 corresponding effect is implemented or enabled on this machine.
@@ -129,8 +130,8 @@ the weights everything falls back to the proxies, with one quiet log line.
 
 A bare path, or `--random`, renders several variations of a photograph, each through its own
 chain, with a JSON sidecar naming every effect and the seed. By default the media and sidecars
-go to the shared dated render directory outside the checkout. Set `POSTPRO_OUTPUT_DIR` to
-choose another output directory. If a generated name already exists, Postpro preserves it
+sit beside the source photograph; a source inside the checkout renders to the shared dated
+directory outside it. Set `POSTPRO_OUTPUT_DIR` to choose another output directory. If a generated name already exists, Postpro preserves it
 and chooses a timestamped sibling.
 
 Heavy mode is the standing default: five variations dealt
@@ -150,8 +151,8 @@ the others and takes a stock no other picture used.
 Other modes grade in bulk. The `--watch` flag grades every new photo that lands in a folder,
 `--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.
 The `--stock-sheet` flag tiles one frame through every stock. Bulk grades, stock sheets and
-LUT exports use the shared dated render directory outside the checkout by default.
-`POSTPRO_OUTPUT_DIR` chooses another default directory; pass `--output` where the command
+LUT exports follow the same rule: grades and stock sheets sit beside their source, and LUT
+exports go to the shared dated directory. `POSTPRO_OUTPUT_DIR` chooses another directory; pass `--output` where the command
 accepts an explicit destination.
 
 ## Reading a frame, and a set
