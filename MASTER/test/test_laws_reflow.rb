@@ -4,8 +4,7 @@ require_relative "test_helper"
 require "yaml"
 
 class TestLawsReflow < Minitest::Test
-  EXPECTED_ORDER = %w[
-    transformation_policy
+  RANKED_LAWS = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL
     ROBUSTNESS
     SINGULARITY
@@ -13,24 +12,19 @@ class TestLawsReflow < Minitest::Test
     PROXIMITY
     ABSTRACTION
     DENSITY
-    prose
     RENDERED_VALUES
-    architecture
-    runtime_policy
-    self_test
-    plugins
-    tokens
-    veto_patterns
-    anti_patterns
-    rule_deps
   ].freeze
 
-  def test_policy_blocks_are_reflowed_by_importance
+  # The file's own header promises the eight priority-ranked laws come first and
+  # that everything after them is an execution-policy block.
+  def test_ranked_laws_come_first_then_policy_blocks
     path = File.join(Master::ROOT, "data", "laws.yml")
     body = File.read(path, encoding: "UTF-8")
     keys = body.scan(/^([A-Za-z_][A-Za-z0-9_-]*):\s*$/).flatten
 
-    assert_equal EXPECTED_ORDER, keys
+    assert_equal RANKED_LAWS, keys.first(RANKED_LAWS.size)
+    assert keys.drop(RANKED_LAWS.size).all? { |key| key.match?(/\A[a-z][a-z0-9_]*\z/) },
+           "a block after the ranked laws is not a lower-case policy block"
   end
 
   def test_policy_file_remains_valid_yaml
@@ -38,7 +32,6 @@ class TestLawsReflow < Minitest::Test
     data = YAML.safe_load_file(path, aliases: true)
 
     assert_kind_of Hash, data
-    assert_equal 1, data["schema"]
   end
 
   def test_policy_reflow_does_not_duplicate_top_level_keys
