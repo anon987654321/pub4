@@ -56,7 +56,7 @@
   // web_011 — ecology orbit tightens with kernel attention
   setInterval(() => {
     const ecology = window.MASTEREcology;
-    if (!ecology?.agents) return;
+    if (!ecology?.agents || reducedMotionActive()) return;
     const pool = eyePool();
     const kernel = K();
     if (!pool || !kernel) return;
@@ -88,6 +88,7 @@
   // web_014 — mouse tilt biases eye mask position
   if (cv) {
     cv.addEventListener("pointermove", (e) => {
+      if (reducedMotionActive()) return;
       const state = st();
       if (!state) return;
       const nx = (e.clientX / innerWidth - 0.5) * 2;
@@ -104,6 +105,7 @@
   // web_015 — face edge hover peripheral arousal
   if (cv) {
     cv.addEventListener("pointermove", (e) => {
+      if (reducedMotionActive()) return;
       const edge = Math.min(e.clientX, innerWidth - e.clientX, e.clientY, innerHeight - e.clientY);
       if (edge > 72) return;
       const state = st();
