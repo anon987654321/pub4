@@ -11,17 +11,20 @@
 .Nm
 starts the Ruby runtime through
 .Pa MASTER/bin/master .
-With no instruction, it opens an interactive session. With an instruction,
+With no instruction, it opens an interactive session.
+With an instruction,
 it submits that instruction to the same runtime.
 .Pp
 Every requested effect is governed by the current constitutional and policy
-checks before execution. A model proposal is not proof that an effect ran.
+checks before execution.
+A model proposal is not proof that an effect ran.
 A file change is not complete until the required verification reports its
 actual outcome.
 .Pp
 The repository's
 .Pa MASTER/README.md
-is the human entry point. The implementation and its tests remain authoritative
+is the human entry point.
+The implementation and its tests remain authoritative
 for runtime behavior.
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -29,5 +32,5 @@ MASTER/bin/master
 MASTER/bin/master "Explain this repository"
 .Ed
 .Sh SEE ALSO
-.Xr operator 1 ,
-.Xr master-fix 1
+.Xr master-fix 1 ,
+.Xr operator 1

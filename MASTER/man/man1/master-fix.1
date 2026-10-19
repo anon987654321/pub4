@@ -17,19 +17,22 @@ It inventories the target, evaluates findings against the active Laws, applies
 admitted repairs, re-observes the result and verifies convergence.
 .Pp
 An unbounded repair must inventory the eligible corpus before dispatching
-changes. A bounded run proves only the work it actually selected.
+changes.
+A bounded run proves only the work it actually selected.
 .Cm --dry-run
 requests a read-only preview; it must not change source files, Git state,
 run journals or delivery state.
 .Pp
-The final report must preserve the real terminal outcome. A plateau, human
+The final report must preserve the real terminal outcome.
+A plateau, human
 decision, blocked operation, validation failure, delivery failure or timeout
 is not a successful completion.
 .Pp
 .Cm /review
 and
 .Cm /critique
-are read-only views. They do not replace
+are read-only views.
+They do not replace
 .Cm /fix
 as the canonical repair lifecycle.
 .Sh EXAMPLES

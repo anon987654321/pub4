@@ -13,6 +13,8 @@ class TestManualPages < Minitest::Test
     OPENBSD/man/man8/pub4-admin.8
   ].freeze
 
+  BASE_SYSTEM_PAGES = %w[doas rcctl relayd].freeze
+
   def manual_paths
     Dir.glob(File.join(REPO, "{MASTER,OPENBSD}/man/man[1-9]/*.[1-9]"))
        .map { |path| path.delete_prefix("#{REPO}/") }.sort
@@ -49,9 +51,22 @@ class TestManualPages < Minitest::Test
     end
 
     pages.each do |page|
-      output, status = Open3.capture2e("mandoc", "-Tlint", page)
+      # -Wwarning drops the STYLE tier, whose "referenced manual not found" depends on
+      # the host manpath; test_cross_references_name_a_page_that_exists judges those.
+      output, status = Open3.capture2e("mandoc", "-Tlint", "-Wwarning", page)
       assert status.success?, "#{page}: mandoc exited unsuccessfully: #{output}"
       assert_empty output, "#{page}: mandoc reported diagnostics: #{output}"
+    end
+  end
+
+  def test_cross_references_name_a_page_that_exists
+    ours = manual_paths.map { |path| File.basename(path).sub(/\.([1-9])\z/) { " #{Regexp.last_match(1)}" } }
+    manual_paths.each do |relative|
+      File.read(File.join(REPO, relative)).scan(/^\.Xr (\S+) (\d)/).each do |name, section|
+        next if BASE_SYSTEM_PAGES.include?(name)
+
+        assert_includes ours, "#{name} #{section}", "#{relative}: .Xr #{name} #{section} names no page in this repo"
+      end
     end
   end
 

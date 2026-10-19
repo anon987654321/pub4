@@ -31,7 +31,8 @@ VPS operation interface.
 .Cm gate
 runs the gate ladder and may repair files by default.
 .Fl -scan-only
-selects the read-only scan mode. Do not use the default mode when only a
+selects the read-only scan mode.
+Do not use the default mode when only a
 measurement is intended.
 .Pp
 .Cm status
@@ -41,7 +42,8 @@ reports current measurements and their limits.
 .Cm test
 selects the smallest complete proof available for the requested paths.
 .Cm vps state
-reads VPS state. Deployment changes production and must follow the current
+reads VPS state.
+Deployment changes production and must follow the current
 preflight and approval contract.
 .Pp
 For exact accepted arguments, consult the command's built-in usage and the
@@ -57,9 +59,11 @@ MASTER/bin/operator test
 MASTER/bin/operator vps state
 .Ed
 .Sh SECURITY
-The gate can write by default. Use
+The gate can write by default.
+Use
 .Fl -scan-only
-for a read-only scan. A successful local command does not prove that remote
+for a read-only scan.
+A successful local command does not prove that remote
 services, browser rendering or production health are correct unless those
 checks actually ran.
 .Sh SEE ALSO
