@@ -163,6 +163,19 @@ class TestRenderer < Minitest::Test
     assert_equal contract.stipple_profile("idle"), contract.stipple_profile("no-such-mode")
   end
 
+  def test_stipple_point_size_is_canonical_and_bounded
+    sizing = Master::Face::Contract.stipple_point_size
+
+    assert_equal %w[base bias_max bias_min bias_scale distance_max distance_min output_max output_min reference_depth],
+                 sizing.keys.sort
+    assert_equal 5.0, sizing.fetch("reference_depth")
+    assert_operator sizing.fetch("bias_min"), :<=, sizing.fetch("bias_max")
+    assert_operator sizing.fetch("distance_min"), :<=, sizing.fetch("distance_max")
+    assert_operator sizing.fetch("output_min"), :<=, sizing.fetch("output_max")
+    assert_includes 1.0..1.5, sizing.fetch("output_min")
+    assert_includes 1.0..1.5, sizing.fetch("output_max")
+  end
+
   def test_shell_prompt_measures_visible_cells_not_ansi_bytes
     renderer = FakeRenderer.new(config: {})
 
