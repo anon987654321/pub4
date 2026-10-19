@@ -815,6 +815,19 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_tar_dot_prefixes_are_normalized_without_weakening_traversal_checks
+    Dir.mktmpdir do |dir|
+      payload = File.join(dir, "payload")
+      FileUtils.mkdir_p(payload)
+      File.write(File.join(payload, "ok.txt"), "safe")
+      archive = File.join(dir, "dot-prefix.tar")
+      _out, status = Open3.capture2("tar", "-cf", archive, "-C", payload, ".")
+      skip "tar cannot build dot-prefix fixture" unless status.success?
+
+      assert_empty Preflight.unsafe_tar_entries(archive)
+    end
+  end
+
   def test_weight_archive_publisher_reads_only_regular_checkpoints_and_publishes_without_overwrite
     source = File.read(File.expand_path("../replicate/lora/_toolkit/run_train_replicate.rb", __dir__))
     body_start = source.index("def extract_weights_tar(")
