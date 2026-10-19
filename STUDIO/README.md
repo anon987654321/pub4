@@ -11,7 +11,7 @@ progressions and runtime choices from `dilla/data/dilla.json` and harmonic refer
 `dilla/data/music_theory.json`. It builds its own oscillators, voicings, arpeggios, drums and
 effects without samples, and can render WAV/MIDI or play continuously.
 
-The tool `postpro/postpro.rb` grades and transforms still images through film emulation.
+The tool `postpro/postpro.rb` grades and transforms still images through film emulation; startup/dependency policy is isolated in `postpro/bootstrap.rb`.
 
 The tool `replicate/replicate.rb` generates images through the Replicate service from a named
 photographic vocabulary. The tool `replicate/lora/lora.rb` trains and renders a LoRA of one
