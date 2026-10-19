@@ -94,6 +94,8 @@ test("micro-interactions remove continuous motion and crown spawns under reduced
   assert.match(microInteractions, /function reducedMotionActive\(state = st\(\)\)/);
   assert.match(microInteractions, /if \(reducedMotionActive\(\)\) return/);
   assert.doesNotMatch(microInteractions, /phase \+= 0\.08/);
+  assert.match(microInteractions, /ecology\?\.agents \|\| reducedMotionActive\(\)/);
+  assert.match(microInteractions, /cv\.addEventListener\("pointermove", \(e\) => \{\s*if \(reducedMotionActive\(\)\) return;/);
   let spawns = 0;
   let reduced = true;
   const pool = { count: 1, alive: new Uint8Array([1]), cells: new Float32Array(16) };
