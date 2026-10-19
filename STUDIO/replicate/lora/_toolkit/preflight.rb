@@ -396,10 +396,11 @@ module Preflight
         next unless ["0", "\0"].include?(type) && name.downcase.end_with?(".safetensors")
 
         basename = File.basename(normalized)
-        if (previous = weight_basenames[basename])
+        key = basename.downcase
+        if (previous = weight_basenames[key])
           unsafe << "#{name}: duplicate weight basename also used by #{previous}"
         else
-          weight_basenames[basename] = name
+          weight_basenames[key] = name
         end
       end
     end
