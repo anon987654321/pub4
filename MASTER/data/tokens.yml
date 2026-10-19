@@ -945,6 +945,18 @@ tokens:
         error_particles: 58
         sleeping_particles: 22
         ready_particles: 60
+        super_void_particles: 18
+        profiles:
+          idle:       { activity: 0.12, void: 0.94, drift: 0.10, orbit: 0.18 }
+          super_void: { activity: 0.05, void: 0.995, drift: 0.018, orbit: 0.04 }
+          listening:  { activity: 0.42, void: 0.82, drift: 0.18, orbit: 0.28 }
+          thinking:   { activity: 0.72, void: 0.66, drift: 0.28, orbit: 0.48 }
+          working:    { activity: 0.66, void: 0.70, drift: 0.24, orbit: 0.42 }
+          speaking:   { activity: 0.78, void: 0.70, drift: 0.22, orbit: 0.38 }
+          warning:    { activity: 0.58, void: 0.78, drift: 0.34, orbit: 0.56 }
+          error:      { activity: 0.86, void: 0.82, drift: 0.62, orbit: 0.88 }
+          sleeping:   { activity: 0.05, void: 0.98, drift: 0.03, orbit: 0.08 }
+          ready:      { activity: 0.24, void: 0.90, drift: 0.12, orbit: 0.20 }
         eye_well_radius: 0.24
         mouth_void_ratio: 0.86
         depth_layers: 3
