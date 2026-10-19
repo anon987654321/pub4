@@ -10,7 +10,7 @@
 #
 # --remote adds the one ssh probe to vm23 (read-only).
 
-require "open3"
+require_relative "../lib/io/exec"
 require "json"
 require "etc"
 
@@ -26,7 +26,7 @@ def say(level, area, message)
 end
 
 def run(*argv, timeout: 20)
-  out, status = Open3.capture2e(*argv)
+  out, status = Master::Io::Exec.capture2e(*argv, timeout:)
   [out.to_s, status.success?]
 rescue StandardError
   ["", false]
