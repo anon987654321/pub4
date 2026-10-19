@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 24
+  count: 25
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -345,3 +345,16 @@ entries:
     verification yet: the tests were added but have not been run in a Ruby checkout. Future work
     must test idempotency, partial failure and concurrent changes before expanding the set of
     compensators.
+- key: feedback_write_straight_to_main_2026_10_19
+  name: write straight to main
+  description: 2026-10-19 directive, Johann - no worktrees, branches or pull requests in pub4; always write directly to main
+  type: feedback
+  body: >-
+    Johann banned worktrees, branches and PRs on 2026-10-19; all work is written directly to
+    main in the one shared checkout. Why - every worktree or branch is a second copy that must
+    merge back, and stale copies and lost merges were the recurring failure. How to apply -
+    commit path-scoped (git commit -- paths), never git commit -a, run git log origin/main..HEAD
+    before pushing and say what went with it, land with MASTER/bin/operator land. Enforced by
+    MASTER/tools/block_branching.rb (a Claude PreToolUse hook), bin/operator worktree refuses,
+    /fix runs in the checkout unless MASTER_FIX_WORKTREE=1. Removing a leftover worktree or
+    branch stays allowed. Supersedes the older worktree-by-default memories and CLAUDE.md trap 1.
