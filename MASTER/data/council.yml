@@ -425,6 +425,8 @@ questions:
     - survivorship, which failed attempts and abandoned cases are we not looking at?
     - framing, does the answer change when the same problem is stated the opposite way?
     - hindsight, was this outcome knowable when the decision was made, or only after?
+    - groupthink, which persona disagreed, and if none did, who was supposed to?
+    - not invented here, what existing module, gem or file already does this, and why was it not read first?
   red_team:
     - what observation would falsify your criticism?
     - what useful behavior could your proposed fix accidentally damage?

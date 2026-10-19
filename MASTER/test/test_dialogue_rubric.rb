@@ -11,9 +11,11 @@ class TestDialogueRubric < Minitest::Test
     data = Rubric.data(root: Master::ROOT)
 
     assert Rubric.valid?(root: Master::ROOT)
-    assert_equal 6, data.fetch("dimensions").size
-    assert_equal 3, data.fetch("sycophancy_fixtures").size
-    assert_equal 3, data.fetch("bench").fetch("sycophancy_fixture_count")
+    assert_equal 9, data.fetch("dimensions").size
+    assert_equal data.fetch("dimensions").keys, data.fetch("bench").fetch("required_dimensions")
+    assert_equal 4, data.fetch("sycophancy_fixtures").size
+    assert_equal 4, data.fetch("bench").fetch("sycophancy_fixture_count")
+    assert_equal 1, data.fetch("bench").fetch("questions_per_turn_max")
   end
 
   def test_prompt_block_carries_conversation_law
@@ -27,6 +29,13 @@ class TestDialogueRubric < Minitest::Test
   def test_forbidden_openers_are_rejected
     assert_equal ["no_ai_isms: Great question"], Rubric.evaluate("Great question! The answer is 42.", root: Master::ROOT)
     assert_empty Rubric.evaluate("The answer is 42.", root: Master::ROOT)
+  end
+
+  def test_more_than_one_question_per_turn_is_rejected
+    assert_equal ["one_question: 3 questions (max 1)"], Rubric.evaluate("Which host? Which branch? Restart relayd too?", root: Master::ROOT)
+    assert_empty Rubric.evaluate("Which host? `respond_to?` is defined in ```ruby\nx.respond_to?(:y)\n```", root: Master::ROOT)
+    assert_equal ["one_question: 2 questions (max 1)"], Rubric.evaluate("Which host? Which branch? `respond_to?`", root: Master::ROOT)
+    assert_empty Rubric.evaluate("The method `respond_to?` ends with a question mark but is not a question.", root: Master::ROOT)
   end
 
   def test_sycophancy_fixtures_contain_a_good_reasoned_disagreement

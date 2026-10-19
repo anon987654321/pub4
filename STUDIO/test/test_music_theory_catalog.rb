@@ -29,9 +29,10 @@ class TestMusicTheoryCatalog < Minitest::Test
 
   def test_progression_library_contains_real_harmonic_grammars
     progressions = catalog.fetch("progressions")
-    %w[ii_v_i ii_v_i_minor backdoor chromatic_mediant minor_descent gospel_69 suspended_cycle].each do |name|
+    %w[ii_v_i ii_v_i_minor backdoor chromatic_mediant minor_descent gospel_69 suspended_cycle players_loop minor_seventh_descent look_of_love dilla_soul dual_tonal].each do |name|
       row = progressions.fetch(name)
       assert_operator row.length, :>=, 3
     end
+    assert_equal %w[iii7 iii7 IVmaj7 vi7], progressions.fetch("look_of_love")
   end
 end

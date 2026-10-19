@@ -114,6 +114,13 @@ progressions:
   altered_turnaround: [Imaj7, vi7, ii7, V7alt]
   circle_soft: [vi9, ii9, V13, Imaj9]
   chromatic_bass: [Imaj9, Imaj9/G#, vi9, V13/F#]
+  # Fantastic loops: minor sevenths as the ground colour, often moving by
+  # step inside one key rather than by cadence.
+  players_loop: [i7, iv7, ii7, v7]
+  minor_seventh_descent: [i7, v7, ii7, vi7]
+  look_of_love: [iii7, iii7, IVmaj7, vi7]
+  dilla_soul: [i7, iv7, bVIImaj7, bIIImaj7]
+  dual_tonal: [i9, ii7, "#vii7"]
 
 # Metadata for humans/tools. This is deliberately descriptive rather than a
 # second executable rulebook.

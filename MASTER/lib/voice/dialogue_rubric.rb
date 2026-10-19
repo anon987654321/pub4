@@ -50,11 +50,23 @@ module Master
         text = response.to_s.strip
         return [] if text.empty?
 
+        bench = data(root:).fetch("bench", {})
         failures = []
-        Array(data(root:).dig("bench", "forbidden_openers")).each do |phrase|
+        Array(bench["forbidden_openers"]).each do |phrase|
           failures << "no_ai_isms: #{phrase}" if text.match?(/\A#{Regexp.escape(phrase)}/i)
         end
+        asked = question_count(text)
+        limit = bench.fetch("questions_per_turn_max", 1).to_i
+        failures << "one_question: #{asked} questions (max #{limit})" if asked > limit
         failures
+      end
+
+      # Ignore code spans/fences and count question punctuation closing prose questions.
+      def question_count(text)
+        prose = text.gsub(/\x60\x60\x60.*?\x60\x60\x60/m, " ")
+        prose = prose.gsub(/\x60\x60\x60.*\z/m, " ")
+        prose = prose.gsub(/\x60+[^\x60\n]*\x60+/, " ")
+        prose.scan(/\?(?=(?:["\x27\)\]\u2019\u201D]*\s|\z))/).size
       end
 
       def valid?(root: Master::ROOT)
@@ -68,6 +80,14 @@ module Master
         fixtures = payload["sycophancy_fixtures"]
         raise ArgumentError, "dialogue rubric dimensions missing" unless dimensions.is_a?(Hash) && dimensions.any?
         raise ArgumentError, "dialogue rubric fixtures missing" unless fixtures.is_a?(Array) && fixtures.any?
+
+        bench = payload["bench"]
+        raise ArgumentError, "dialogue rubric bench missing" unless bench.is_a?(Hash)
+        required_dimensions = Array(bench["required_dimensions"]).map(&:to_s)
+        raise ArgumentError, "dialogue rubric required dimensions drift" unless required_dimensions == dimensions.keys.map(&:to_s)
+        raise ArgumentError, "dialogue rubric fixture count drift" unless bench["sycophancy_fixture_count"] == fixtures.length
+        question_limit = bench["questions_per_turn_max"]
+        raise ArgumentError, "dialogue rubric question limit missing" unless question_limit.is_a?(Integer) && question_limit >= 0
 
         dimensions.each do |name, item|
           raise ArgumentError, "dialogue rubric #{name} missing rule" if item["rule"].to_s.strip.empty?
