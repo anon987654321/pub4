@@ -61,7 +61,7 @@ config = container.dig(:config)
 port = (config&.respond_to?(:web_port) ? config.web_port : nil) || 53_187
 
 failures << "auth_tier" unless step("auth tier") do
-  require_relative "../web/app/middleware/auth_tier"
+  require_relative "../../RAILS/master/app/middleware/auth_tier"
 
   token = "x" * 64
   ok = Dir.mktmpdir("master-auth-tier") do |dir|

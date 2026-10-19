@@ -405,12 +405,13 @@ class TestCliAsciiFace < Minitest::Test
     assert_equal ascii.fetch("chars"), Face::Glyphs::DEFAULT_CHARS
     assert_equal ascii.fetch("aspect"), Face::Glyphs::ASPECT
   end
+
+  # The art stops at the face; the three shell glyphs the CLI and web share are the one token set left over.
   def test_ascii_art_contract_is_limited_to_the_face_renderer
     ascii = Master::Face::Contract.ascii
     refute ascii.key?("wordmark")
-    refute ascii.key?("prompt")
+    assert_equal %w[input continuation output], ascii.fetch("prompt").keys
     refute_respond_to Master::Face::Contract, :wordmark
-    refute_respond_to Master::Face::Contract, :glyph
     refute_respond_to Master::CLI::BootBanner, :wordmark
   end
 
