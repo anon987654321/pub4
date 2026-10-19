@@ -31,7 +31,10 @@ module Master
       alias << push
 
       def each
-        enum_for(__method__) unless block_given?
+        return enum_for(__method__) unless block_given?
+
+        to_a.each { |entry| yield entry }
+        self
       end
 
       def to_a = synchronize { @size.times.map { |i| @buffer[(@start + i) % @capacity] } }

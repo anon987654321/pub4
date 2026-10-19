@@ -23,8 +23,8 @@ class TestRecoveredDesignSemantics < Minitest::Test
     bad = "# title\n\nSetup. Details. More details. More details.\n"
     good = "# title\n\nThe vision is first. The rest follows.\n"
 
-    refute_empty rule.scan(bad)
-    assert_empty rule.scan(good)
+    refute_empty law.scan(bad)
+    assert_empty law.scan(good)
   end
 
   def test_configuration_shape_rejects_excessive_nesting
@@ -43,10 +43,10 @@ class TestRecoveredDesignSemantics < Minitest::Test
         level: info
     YAML
 
-    refute_empty rule.scan(bad, file: "config.yml")
-    assert_empty rule.scan(good, file: "config.yml")
-    refute_empty rule.scan(bad, file: "config.json")
-    assert_empty rule.scan(good, file: "config.json")
+    refute_empty law.scan(bad, file: "config.yml")
+    assert_empty law.scan(good, file: "config.yml")
+    refute_empty law.scan(bad, file: "config.json")
+    assert_empty law.scan(good, file: "config.json")
   end
 
   def test_semantic_laws_are_questions_not_fake_lexical_detectors
@@ -60,9 +60,9 @@ class TestRecoveredDesignSemantics < Minitest::Test
   def test_each_recovered_law_has_worked_examples
     EXPECTED.each do |id|
       law = Law.definitions.fetch(id)
-      assert_operator rule.bad.to_s.length, :>, 0, "#{id} missing bad example"
-      assert_operator rule.good.to_s.length, :>, 0, "#{id} missing good example"
-      assert_operator rule.fix.to_s.length, :>, 0, "#{id} missing fix"
+      assert_operator law.bad.to_s.length, :>, 0, "#{id} missing bad example"
+      assert_operator law.good.to_s.length, :>, 0, "#{id} missing good example"
+      assert_operator law.fix.to_s.length, :>, 0, "#{id} missing fix"
     end
   end
 end

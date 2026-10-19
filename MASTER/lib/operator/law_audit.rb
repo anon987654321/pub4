@@ -200,14 +200,14 @@ module Operator
         puts "law_audit: every fixture survives being read as a real file"
       else
         found[:fixture_blindness].each do |f|
-          warn "law_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
+          warn "law_audit: #{f[:law]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
         end
         warn "law_audit: a fixture read whole and a file read with its comments blanked are different inputs"
       end
 
       found[:saturation].each do |r|
         warn format("law_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
-                    r[:rule], r[:hits], r[:applicable], (r[:rate] * 100).round)
+                    r[:law], r[:hits], r[:applicable], (r[:rate] * 100).round)
       end
 
       puts "law_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?

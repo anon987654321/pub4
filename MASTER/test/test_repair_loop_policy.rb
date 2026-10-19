@@ -480,8 +480,6 @@ end
     Thread.current[:reflexion_reason] = nil
   end
 
-  private
-
   class SilentAgent
     def ask(_prompt) = ""
     def ask_once(_prompt, **) = ""
@@ -500,7 +498,7 @@ end
       loop = build_loop(root:, bus:, scanner: Scanner.new, agent: SilentAgent.new)
 
       outcome = loop.send(:fix_violation,
-                          Master::Fix::RepairLoop::Violation.from_finding(
+                          Master::Fix::Violation.from_finding(
                             { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
                             file: path, ext: ".rb",
                           ))

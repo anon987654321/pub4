@@ -137,8 +137,6 @@ class TestProofBaseline < Minitest::Test
     assert_includes message.lines.map(&:chomp), "proof: 10 of 20; no new failures"
   end
 
-  private
-
   # A baseline suite proof runs minutes with its output captured: it speaks on
   # the gate heartbeat cadence like the rails gates do.
   def test_a_suite_proof_runs_under_the_gate_heartbeat

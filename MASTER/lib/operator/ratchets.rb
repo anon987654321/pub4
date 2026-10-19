@@ -122,7 +122,7 @@ module Operator
        master_row("law_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "lib/operator/law_audit")
          blind = Operator::LawAudit.audit[:fixture_blindness]
-         [blind.size, Operator::LawAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
+         [blind.size, Operator::LawAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:law]}: #{row[:detail]}" }]
        end]
     end
 
@@ -134,7 +134,7 @@ module Operator
          require File.join(MASTER, "lib/operator/law_audit")
          saturated = Operator::LawAudit.audit[:saturation]
          [saturated.size, Operator::LawAudit.ceilings.fetch("saturated"),
-          saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
+          saturated.map { |row| format("%s: %d/%d files", row[:law], row[:hits], row[:applicable]) }]
        end]
     end
 
