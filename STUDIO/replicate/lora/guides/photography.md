@@ -72,6 +72,47 @@ sources advise a light hand.
   candidates per shot, discard by the identity check, and let the operator choose; the
   first plausible frame is a draft.
 
+## Video and the duet
+
+A council of four reviewers (director, colorist, identity engineer, adversary) agreed on
+these rules on 2026-10-19. They come from the reviewers' knowledge, and the grade values
+stay unproven until a test frame passes.
+
+- One person per generated clip. Join the two people with a cut. A composite start
+  frame is the fallback, and `wan-2.7-r2v` with both references is a single-clip control,
+  because merged and swapped faces are its known failure.
+- Clips run three to five seconds, on a locked or slow camera, with no hands and no
+  speech, and the face stays at medium close-up or wider. Cut on the beat; one bar at
+  92 bpm is about 2.6 seconds.
+- Every clip starts from a still that passed the identity gate. Test one clip per model at
+  low resolution before any batch.
+- Grade once, in this order: exposure and white balance matched to one reference frame per
+  scene, curve, saturation with skin exempt, halation, vignette, then a single grain pass
+  on the assembled film. Clips get normalization only. Stack no sharpening, bloom or skin
+  smoothing on faces.
+- Choose one look per film. Portra 400 suits daylight portraits, Vision3 500T suits night,
+  Eterna 250D suits restraint. A look comes from three to five reference frames the
+  operator supplies, never from prose.
+- Measure after grading: skin hue inside the look's band, highlights above 98% luma under
+  1% of pixels, adjacent-shot colour distance under 6 (Lab), grain spread under 15%
+  across shots.
+
+### The identity gate
+
+Replicate hosts `apna-mart/face-match` (Facenet512 by default), which takes two images and
+returns a verdict, a distance and the model's threshold. It is the cheap embedder to
+calibrate first. Calibrate on real photographs as positives against 200 or more other
+faces as negatives, set the threshold at a fixed false-accept rate, and add a second
+embedder, because one model is gameable. Embeddings pass plastic skin and dead eyes, so
+the gate also needs texture, eye and flicker checks, and it must fail the rejected renders
+of 2026-10-19 before it is trusted. Score every Nth video frame and take the worst.
+
+Verified on 2026-10-19 through the Replicate API: `flux-2-pro` (`input_images`),
+`wan-2.7-i2v` (`first_frame`, `last_frame`, `audio`), `wan-2.7-r2v` (`reference_images`),
+`kling-v3-omni-video` (`start_image`, `reference_images`, `multi_prompt`) and
+`seedance-2.0` (`image`, `reference_images`, `reference_audios`) exist with those inputs.
+Prices are not in the schema; read each model page before a run.
+
 ## Not verified
 
 Nothing found on Leibovitz, on halation, grain and tone-curve principles, or on
