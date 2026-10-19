@@ -17,9 +17,12 @@ const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8"
 
 test("shared face budgets classify coarse pointers and declared reduced motion", () => {
   assert.match(faceStateSource, /mediaMatches\("\(pointer: coarse\)"\)/);
+  assert.match(faceStateSource, /function reducedMotionEnabled\(snapshotValue = state\)/);
+  assert.match(faceStateSource, /reducedMotion: reducedMotionEnabled/);
   assert.match(faceStateSource, /window\.MASTER_FACE\?\.State\?\.reducedMotion/);
   assert.match(faceStateSource, /dataset\?\.reducedMotion === "1"/);
   assert.match(sparseField, /function reducedMotionEnabled\(state = \{\}\)/);
+  assert.match(sparseField, /MASTER_FACE_STATE\?\.reducedMotion/);
   assert.match(sparseField, /window\.MASTER_FACE\?\.State\?\.reducedMotion/);
   assert.match(sparseField, /window\.matchMedia\?\.\("\(pointer: coarse\)"\)/);
   assert.match(sparseField, /const reduced = reducedMotionEnabled\(state\)/);
@@ -33,6 +36,7 @@ test("stipple discovery accepts Group containers with point children", () => {
 
 test("FaceWorld observes reduced motion across shader, camera and event layers", () => {
   assert.match(faceWorld, /function reducedMotionEnabled\(state = \{\}\)/);
+  assert.match(faceWorld, /MASTER_FACE_STATE\?\.reducedMotion/);
   assert.match(faceWorld, /window\.MASTER_FACE\?\.State\?\.reducedMotion/);
   assert.match(faceWorld, /document\.documentElement\?\.dataset\?\.reducedMotion === "1"/);
   assert.match(faceWorld, /window\.matchMedia\?\.\("\(prefers-reduced-motion: reduce\)"\)/);
@@ -91,13 +95,17 @@ test("shared render budget gives coarse-pointer devices the mobile ceiling", () 
 });
 
 test("shared render budget honors declared reduced motion and hidden-tab ceilings", () => {
-  const reduced = loadFaceStateBudget({ reducedMotion: true }).renderBudget();
+  const reducedState = loadFaceStateBudget({ reducedMotion: true });
+  assert.equal(reducedState.reducedMotion(), true);
+  const reduced = reducedState.renderBudget();
   assert.equal(reduced.particles, 64);
   assert.equal(reduced.fps, 8);
   const liveFaceReduced = loadFaceStateBudget({ faceMotion: true }).renderBudget();
   assert.equal(liveFaceReduced.particles, 64);
   assert.equal(liveFaceReduced.fps, 8);
-  const osReduced = loadFaceStateBudget({ prefersReducedMotion: true }).renderBudget();
+  const osReducedState = loadFaceStateBudget({ prefersReducedMotion: true });
+  assert.equal(osReducedState.reducedMotion(), true);
+  const osReduced = osReducedState.renderBudget();
   assert.equal(osReduced.particles, 64);
   assert.equal(osReduced.fps, 8);
   assert.equal(loadFaceStateBudget({ hidden: true }).renderBudget().fps, 0);
@@ -324,6 +332,7 @@ test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /lastRenderIntervalMs/);
   assert.match(system, /FRAME_SAMPLE_LIMIT = 60/);
   assert.match(system, /renderTiming: \{/);
+  assert.match(system, /MASTER_FACE_STATE\?\.reducedMotion/);
   assert.match(system, /window\.MASTER_FACE\?\.State\?\.reducedMotion/);
   assert.match(system, /p50RenderIntervalMs: percentile\(0\.50\)/);
   assert.match(system, /p95RenderIntervalMs: percentile\(0\.95\)/);
