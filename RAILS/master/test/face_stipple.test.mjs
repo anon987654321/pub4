@@ -12,6 +12,7 @@ const system = readFileSync(join(publicDir, "face_stipple_system.js"), "utf8");
 const playground = readFileSync(join(publicDir, "face_playground.js"), "utf8");
 const css = readFileSync(join(publicDir, "face.css"), "utf8");
 const faceStateSource = readFileSync(join(publicDir, "face_state.js"), "utf8");
+const faceWorld = readFileSync(join(publicDir, "face_world.js"), "utf8");
 const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8");
 
 test("shared face budgets classify coarse pointers and declared reduced motion", () => {
@@ -26,6 +27,17 @@ test("stipple discovery accepts Group containers with point children", () => {
   assert.match(system, /function hasFacePoints\(node\)/);
   assert.match(system, /scene\.children\.some\(hasFacePoints\)/);
   assert.match(system, /scene\.children\.find\(hasFacePoints\)/);
+});
+
+test("FaceWorld observes reduced motion across shader, camera and event layers", () => {
+  assert.match(faceWorld, /function reducedMotionEnabled\(state = \{\}\)/);
+  assert.match(faceWorld, /document\.documentElement\?\.dataset\?\.reducedMotion === "1"/);
+  assert.match(faceWorld, /window\.matchMedia\?\.\("\(prefers-reduced-motion: reduce\)"\)/);
+  assert.match(faceWorld, /const reducedMotion = reducedMotionEnabled\(state\)/);
+  assert.match(faceWorld, /shellMaterial\.uniforms\.uTime\.value = reducedMotion \? 0 : now/);
+  assert.match(faceWorld, /updatePulses\(now, reducedMotion\)/);
+  assert.match(faceWorld, /const rotationEase = reducedMotion \? 1 : 0\.035/);
+  assert.match(faceWorld, /const cameraEase = reducedMotion \? 1 : 0\.035/);
 });
 
 function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, cores = 8, reducedMotion = false, hidden = false } = {}) {
@@ -205,6 +217,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
 
   const THREE = { BufferAttribute, BufferGeometry, Color, ShaderMaterial, Points };
   const api = window.MASTER_FACE_STIPPLE;
+  assert.equal(api.isFaceScene({ children: [{ type: "Group", children: [{ type: "Points" }] }] }), true);
+  assert.equal(api.isFaceScene({ children: [{ type: "Object3D", children: [{ type: "Points" }] }] }), true);
+  assert.equal(api.isFaceScene({ children: [{ type: "Group", children: [] }] }), false);
   const stipple = api.buildFromSamples(THREE, [{ x: 0, y: 0, z: 0, zone: 0, bias: 1 }]);
   assert.equal(stipple.count, 1);
   assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
