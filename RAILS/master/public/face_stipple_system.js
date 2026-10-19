@@ -223,8 +223,16 @@
   function syncFromFaceState(system, state) {
     if (!system?.material || !state) return;
     const profile = { ...profileFor(state), ...overrides };
-    const pressureRaw = Number(state.pressureFields?.pct ?? 0);
-    const pressure = pressureRaw > 1 ? clamp(pressureRaw / 100, 0, 0, 1) : clamp(pressureRaw, 0, 0, 1);
+    // Missing telemetry is not zero pressure. Keep the canonical profile unchanged
+    // until a pressure reading exists; face events report pct on a 0..100 scale,
+    // while normalized 0..1 values remain accepted for compatibility.
+    const pressureValue = state.pressureFields?.pct;
+    const pressureRaw = pressureValue == null ? null : Number(pressureValue);
+    const pressure = pressureRaw == null || !Number.isFinite(pressureRaw)
+      ? 0.5
+      : pressureRaw > 1
+        ? clamp(pressureRaw / 100, 0, 0, 1)
+        : clamp(pressureRaw, 0, 0, 1);
     const entropy = clamp(state.pressureFields?.entropy ?? state.entropy ?? 0.18, 0.18, 0, 1);
     const motion = state.reducedMotion ? 0 : 1;
     const u = system.material.uniforms;

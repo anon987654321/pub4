@@ -302,6 +302,56 @@ screen saver. The sparse shader uses one-pixel points rather than soft particle 
 negative space as the dominant visual material. The renderer remains subordinate to the
 single FaceState and the existing frame clock.
 
+## Additive stipple layer
+
+The browser stipple layer is a bounded rendering adapter, not a second face-state
+system. `RAILS/master/public/face_stipple_system.js` reads the nine profiles from
+`MASTER_FACE_CONTRACT.stipple.profiles`, derives its starting point samples
+deterministically, and attaches the overlay through the existing face renderer.
+It does not own a second animation loop or replace the canonical FaceState,
+FaceWorld, ParticleKernel, or sparse gravitational field.
+
+The layer is enabled by default for the web face; `?stipple=0` disables it for
+comparison. Its point count is capped by `face_interface.spatial.budget`: the
+current canonical ceilings are 1,200 desktop points and 420 coarse-pointer/mobile
+points. The renderer may choose less detail, never more. Missing pressure telemetry
+uses the neutral pressure value, so it does not silently alter a mode's canonical
+density. Reduced motion freezes time and removes ripple and turbulence while
+retaining the still-state profile.
+
+This is a stipple/point-sprite shader, not a Gaussian-splat renderer. The latter
+uses anisotropic Gaussian primitives, density control, and visibility-aware
+splatting; its costs and visual quality cannot be inferred from this overlay.
+The canonical `kinetic_depth` direction still calls for raw WebGL points and
+short shaders. Replacing the current Three.js face is a separate renderer migration
+and must preserve deferred WebGL boot, the single frame clock, accessible state
+and the text/ASCII recovery path. Do not layer a second point engine onto the
+page merely to claim the migration is complete.
+
+The focused regression contract is
+`node --test RAILS/master/test/face_stipple.test.mjs`. Browser acceptance remains
+open until the default face, `?stipple=0`, and `?playground=1` have been captured
+at narrow and wide viewports with console output, point/FPS evidence and reduced
+motion enabled and disabled. The source test and a mocked shader test are not a
+substitute for GPU/browser evidence.
+
+Research references:
+- Three.js `Points` and `BufferGeometry` describe the point-cloud primitives
+  and GPU-backed attribute buffers:
+  https://threejs.org/docs/pages/Points
+  https://threejs.org/docs/pages/BufferGeometry
+- MDN WebGL best practices cover hardware-dependent point-size limits, resource
+  budgets and batching:
+  https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+- Kerbl et al., *3D Gaussian Splatting for Real-Time Radiance Field Rendering*,
+  describes anisotropic Gaussian primitives and visibility-aware splatting:
+  https://ar5iv.labs.arxiv.org/html/2308.04079
+- Design-token exchange and contextual resolution are covered by the Design
+  Tokens Community Group's 2025.10 reports; these are Community Group reports,
+  not W3C Recommendations:
+  https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/
+  https://www.w3.org/community/reports/design-tokens/CG-FINAL-resolver-20251028/
+
 ## Current landed foundation
 
 - one executable Ruby face contract

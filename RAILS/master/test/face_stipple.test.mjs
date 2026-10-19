@@ -51,6 +51,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   const window = {
     location: { search: "" },
     MASTER_FACE_CONTRACT: {
+      spatial: { budget: { desktop_points: 1200, mobile_points: 420 } },
       stipple: {
         profiles: {
           idle: { density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 },
@@ -61,6 +62,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     addEventListener() {}
   };
   const document = { body: { classList: { contains: () => false } } };
+  let coarsePointer = false;
   runInNewContext(system, {
     window,
     document,
@@ -71,7 +73,8 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     Array,
     String,
     CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
-    matchMedia: () => ({ matches: false }),
+    matchMedia: (query) => ({ matches: query === "(pointer: coarse)" && coarsePointer }),
+    getComputedStyle: () => ({ getPropertyValue: () => "" }),
     performance: { now: () => 0 }
   });
 
@@ -105,4 +108,37 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(stipple.material.uniforms.uTurbulence.value, 0.04);
   assert.equal(stipple.material.uniforms.uLuminosity.value, 0.76);
   assert.equal(stipple.material.uniforms.uAttract.value, 0.14);
+
+  // An absent pressure event must preserve the mode's canonical density.
+  api.tick(stipple, { mode: "idle", reducedMotion: false }, 0);
+  assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
+
+  // State changes reuse the one contract; pressure can modulate density without
+  // replacing the named profile, and reduced motion removes animation only.
+  api.tick(stipple, {
+    mode: "thinking",
+    pressureFields: { pct: 50, entropy: 0.28 },
+    reducedMotion: false
+  }, 1);
+  assert.equal(stipple.material.uniforms.uDensity.value, 0.72);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0.16);
+  assert.ok(Math.abs(stipple.material.uniforms.uTurbulence.value - 0.3304) < 0.00001);
+  assert.equal(stipple.material.uniforms.uLuminosity.value, 0.91);
+  assert.equal(stipple.material.uniforms.uAttract.value, 0.74);
+  assert.equal(stipple.material.uniforms.uTime.value, 1);
+
+  api.tick(stipple, {
+    mode: "thinking",
+    pressureFields: { pct: 50, entropy: 0.28 },
+    reducedMotion: true
+  }, 2);
+  assert.equal(stipple.material.uniforms.uTime.value, 0);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0);
+  assert.equal(stipple.material.uniforms.uTurbulence.value, 0);
+  assert.equal(stipple.material.uniforms.uMotionScale.value, 0);
+
+  // The layer never exceeds the canonical desktop/mobile point ceiling.
+  assert.equal(api.createDefault(THREE, 5000).count, 1200);
+  coarsePointer = true;
+  assert.equal(api.createDefault(THREE, 5000).count, 420);
 });
