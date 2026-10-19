@@ -313,35 +313,7 @@ module Master
         Master::Ground::Swallow.log(e, context: "cli.print_unit_line", event_bus: @refs.bus)
       end
 
-      def activity_row_safe_to_draw?
-        return false unless @activity_row_reserved && @reading_input
-        return false unless $stdin.tty? && $stdout.tty?
 
-        width = TTY::Screen.width.to_i
-        buffer = Reline.line_buffer.to_s
-        prompt = @active_prompt.to_s
-        width.positive? && prompt.length + buffer.length * 2 + 2 < width
-      rescue StandardError
-        false
-      end
-
-      # Called under Dmesg's terminal mutex. If the input wraps, abandon the
-      # animation row rather than moving the cursor into the user's draft.
-      def clear_reserved_activity_row(target)
-        return false unless @activity_row_reserved
-
-        safe = activity_row_safe_to_draw? && target.respond_to?(:tty?) && target.tty?
-        if safe
-          target.print("\e7\e[1A\r\e[K\e8")
-          target.flush if target.respond_to?(:flush)
-        end
-        @activity_row_reserved = false
-        safe
-      rescue StandardError => e
-        @activity_row_reserved = false
-        Master::Ground::Swallow.log(e, context: "cli.activity_row.clear", event_bus: @refs.bus)
-        false
-      end
 
       # The spinner repaints with \r\e[K, which clears one row. A line wider
       # than the screen wraps onto a second row that nothing clears, and every
