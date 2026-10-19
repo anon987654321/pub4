@@ -8,6 +8,7 @@
   const params = new URLSearchParams(window.location.search || "");
   const enabled = params.get("stipple") !== "0";
   const MAX_POINTS = 14_000;
+  const FRAME_SAMPLE_LIMIT = 60;
   const MOBILE_FALLBACK = 420;
   const DESKTOP_FALLBACK = 1_200;
   // The nine moods live in MASTER/data/tokens.yml (face_interface.stipple.profiles) and arrive
@@ -34,6 +35,7 @@
   let renderedFrames = 0;
   let lastFrameAt = 0;
   let lastRenderIntervalMs = null;
+  const frameIntervals = [];
   let contextState = "ready";
 
   function reducedMotionEnabled(state = {}) {
@@ -358,7 +360,13 @@
     document.addEventListener?.("visibilitychange", onVisibilityChange, false);
     renderWrapper = function(scene, camera, ...rest) {
       const now = performance.now();
-      if (lastFrameAt > 0) lastRenderIntervalMs = Math.max(0, now - lastFrameAt);
+      if (lastFrameAt > 0) {
+        lastRenderIntervalMs = Math.max(0, now - lastFrameAt);
+        if (lastRenderIntervalMs > 0) {
+          frameIntervals.push(lastRenderIntervalMs);
+          if (frameIntervals.length > FRAME_SAMPLE_LIMIT) frameIntervals.shift();
+        }
+      }
       lastFrameAt = now;
       renderedFrames += 1;
       if (active?.points) active.points.visible = !document.hidden && contextState !== "lost";
@@ -418,6 +426,7 @@
     renderedFrames = 0;
     lastFrameAt = 0;
     lastRenderIntervalMs = null;
+    frameIntervals.length = 0;
     contextState = "ready";
     return wasInstalled;
   }
@@ -425,6 +434,15 @@
   function snapshot() {
     const state = currentFaceState();
     const uniforms = active?.material?.uniforms || {};
+    const intervals = frameIntervals.filter((value) => Number.isFinite(value) && value > 0).sort((a, b) => a - b);
+    const percentile = (fraction) => {
+      if (!intervals.length) return null;
+      const index = Math.min(intervals.length - 1, Math.max(0, Math.ceil(fraction * intervals.length) - 1));
+      return Number(intervals[index].toFixed(2));
+    };
+    const meanInterval = intervals.length
+      ? Number((intervals.reduce((sum, value) => sum + value, 0) / intervals.length).toFixed(2))
+      : null;
     const value = (name) => {
       const raw = uniforms[name]?.value;
       return Number.isFinite(Number(raw)) ? Number(raw) : null;
@@ -442,6 +460,14 @@
       pointCeiling: pointBudget(),
       rendererCalls: renderedFrames,
       lastRenderIntervalMs,
+      renderTiming: {
+        sampleCount: intervals.length,
+        meanRenderIntervalMs: meanInterval,
+        p50RenderIntervalMs: percentile(0.50),
+        p95RenderIntervalMs: percentile(0.95),
+        approximateRenderCallsPerSecond: lastRenderIntervalMs > 0
+          ? Number((1000 / lastRenderIntervalMs).toFixed(1)) : null
+      },
       uniforms: {
         density: value("uDensity"), ripple: value("uRipple"), turbulence: value("uTurbulence"),
         luminosity: value("uLuminosity"), attract: value("uAttract"), opacity: value("uOpacity"),
