@@ -21,9 +21,11 @@ class IdleProfileSpec < Minitest::Test
     part1 = read("../RAILS/master/public/face.part1.txt")
     part3 = read("../RAILS/master/public/face.part3.txt")
 
-    assert_includes part1, "isRichMotionProfile()) startStar()"
+    assert_includes part1, "faceReducedMotionActive() && runtimeProfile() !== 'battery') startStar()"
     assert_includes part3, "if (!isRichMotionProfile()) return"
     assert_includes part3, "isRichMotionProfile())"
+    assert_includes part1, "function faceReducedMotionActive()"
+    assert_includes part1, "document.documentElement?.dataset.reducedMotion === '1'"
     refute_includes part3, "State.shake = 1.2"
     assert_includes part3, "applyShake(1.2)"
   end
