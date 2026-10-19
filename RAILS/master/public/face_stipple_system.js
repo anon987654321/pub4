@@ -72,7 +72,8 @@
     const budget = contract.spatial?.budget || {};
     // FaceState owns device classification and the effective budget. Fall back
     // to its canonical static point limits only for older shells without it.
-    const shared = Number(window.MASTER_FACE_STATE?.renderBudget?.().points);
+    const sharedBudget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
+    const shared = Number(sharedBudget.stipple_points ?? sharedBudget.points);
     const mobile = constrainedDevice();
     const configured = Number.isFinite(shared) && shared > 0
       ? shared
