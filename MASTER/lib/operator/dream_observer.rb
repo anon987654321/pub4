@@ -71,7 +71,7 @@ module Master
         out = IO.popen([RbConfig.ruby, tool, "--list"], chdir: root, err: File::NULL, &:read)
         sets = out.to_s.lines.grep(/dup0:/).first(3)
         sets.each do |line|
-          text = line.sub(/Adup0:s*/, "").strip
+          text = line.sub(/\Adup0:\s*/, "").strip
           next if text.empty?
           items << { kind: "duplicate", priority: 20, source: "dup_census", text: text[0, 220] }
         end

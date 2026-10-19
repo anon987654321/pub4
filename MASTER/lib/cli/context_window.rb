@@ -129,7 +129,7 @@ module Master
           lines << "#{key}:"
           Array(value).each { |item| lines << "- #{item}" }
         end
-        lines.join("\\n")
+        lines.join("\n")
       end
 
       def append_daily_log(summary, tier:)

@@ -123,7 +123,7 @@ module Master
         end
         hidden = measured.size - 30
         lines << "  ... #{hidden} more models" if hidden.positive?
-        lines.join("\\n")
+        lines.join("\n")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "command_registry.model_health")
         "model health: unavailable (#{e.class})"

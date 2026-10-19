@@ -73,21 +73,21 @@ module Master
 
       def transition(name)
         case name
-        when /Astt:startz/ then { interaction: "listening", voice: "listening", visual: "attention" }
-        when /Astt:endz/, /Astt:abortz/ then { interaction: "processing", voice: "idle", visual: "working" }
-        when /Atts:playback:startz/, /Avoice:speakingz/ then { interaction: "speaking", voice: "speaking", visual: "attention" }
-        when /Atts:playback:endz/, /Avoice:idlez/ then { interaction: "idle", voice: "idle", visual: "idle" }
-        when /Afix_loop:/ then { interaction: "processing", task: "fixing", visual: "working", system: "maintenance" }
-        when /Agate:/, /Ascan:/ then { interaction: "processing", task: "checking", visual: "working", system: "checking" }
-        when /Aheartbeat:(?:run|mission_wake)/ then { task: "observing", system: "maintenance" }
-        when /Aheartbeat:(?:scan_clean|self_test)/ then { task: "idle", visual: "success", system: "ready" }
-        when /Aheartbeat:errorz/ then { task: "idle", visual: "error", system: "degraded" }
-        when /Amodel:/ then { interaction: "processing", visual: "working", system: "thinking" }
-        when /Atool:completez/, /Atask:completez/ then { task: "idle", visual: "success" }
-        when /Atool:failedz/, /Atask:failedz/ then { task: "idle", visual: "error" }
-        when /Aui:awayz/ then { interaction: "sleeping", visual: "idle" }
-        when /Aui:returnz/ then { interaction: "idle", visual: "attention" }
-        when /Asystem:readyz/ then { system: "ready", visual: "idle" }
+        when /\Astt:start\z/ then { interaction: "listening", voice: "listening", visual: "attention" }
+        when /\Astt:end\z/, /\Astt:abort\z/ then { interaction: "processing", voice: "idle", visual: "working" }
+        when /\Atts:playback:start\z/, /\Avoice:speaking\z/ then { interaction: "speaking", voice: "speaking", visual: "attention" }
+        when /\Atts:playback:end\z/, /\Avoice:idle\z/ then { interaction: "idle", voice: "idle", visual: "idle" }
+        when /\Afix_loop:/ then { interaction: "processing", task: "fixing", visual: "working", system: "maintenance" }
+        when /\Agate:/, /\Ascan:/ then { interaction: "processing", task: "checking", visual: "working", system: "checking" }
+        when /\Aheartbeat:(?:run|mission_wake)/ then { task: "observing", system: "maintenance" }
+        when /\Aheartbeat:(?:scan_clean|self_test)/ then { task: "idle", visual: "success", system: "ready" }
+        when /\Aheartbeat:error\z/ then { task: "idle", visual: "error", system: "degraded" }
+        when /\Amodel:/ then { interaction: "processing", visual: "working", system: "thinking" }
+        when /\Atool:complete\z/, /\Atask:complete\z/ then { task: "idle", visual: "success" }
+        when /\Atool:failed\z/, /\Atask:failed\z/ then { task: "idle", visual: "error" }
+        when /\Aui:away\z/ then { interaction: "sleeping", visual: "idle" }
+        when /\Aui:return\z/ then { interaction: "idle", visual: "attention" }
+        when /\Asystem:ready\z/ then { system: "ready", visual: "idle" }
         else {}
         end
       end

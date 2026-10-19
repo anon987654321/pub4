@@ -36,4 +36,16 @@ class TestSensoryState < Minitest::Test
     state = Master::Trace::SensoryState.snapshot(root: @dir)
     assert_operator state["history"].length, :<=, 32
   end
+
+  # The transition patterns are anchored whole-name matches; an anchor that lost its
+  # backslash matches nothing and leaves the state at its default.
+  def test_speech_to_text_events_drive_the_listening_and_processing_states
+    @bus.publish("stt:start")
+    assert_equal "listening", Master::Trace::SensoryState.snapshot(root: @dir)["interaction"]
+
+    @bus.publish("stt:end")
+    state = Master::Trace::SensoryState.snapshot(root: @dir)
+    assert_equal "processing", state["interaction"]
+    assert_equal "working", state["visual"]
+  end
 end

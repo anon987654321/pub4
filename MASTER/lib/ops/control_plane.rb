@@ -198,7 +198,7 @@ module Master
       def report(message)
         return if message == @last_report
         @last_report = message
-        detail = message.to_s.sub(/Acontrol0:s*/, "")
+        detail = message.to_s.sub(/\Acontrol0:\s*/, "")
         Master::Trace::Dmesg.status("control0", detail, io: @out)
       end
 
