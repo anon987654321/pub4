@@ -1,0 +1,184 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require "tmpdir"
+require_relative "../lib/fix/design_loop"
+
+class TestDesignLoop < Minitest::Test
+  Surface = Struct.new(:id, :app)
+  EDIT = Master::Fix::DesignEdit
+  LOOP = Master::Fix::DesignLoop
+  SCALE = [0.0, 4.0, 8.0, 16.0].freeze
+
+  def with_sheet(css = ".card {\n  padding: 4px;\n  color: #111;\n}\n")
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "app.scss")
+      File.write(path, css)
+      yield path
+    end
+  end
+
+  def reply(path, find:, replace:, why: "more room")
+    JSON.generate("file" => path, "find" => find, "replace" => replace, "why" => why)
+  end
+
+  def parse(path, find:, replace:, **rules)
+    EDIT.parse(reply(path, find:, replace:), allowed: [path], rules: EDIT::Rules.new(guard: nil, scale: nil, **rules))
+  end
+
+  def refused(edit) = assert_raises(EDIT::Refused) { edit.check! }.message
+
+  def test_an_edit_to_spacing_is_applied_and_undone
+    with_sheet do |path|
+      edit = parse(path, find: "padding: 4px;", replace: "padding: 16px;")
+      original = edit.apply!
+
+      assert_includes File.read(path), "padding: 16px;"
+      edit.restore(original)
+      assert_includes File.read(path), "padding: 4px;"
+    end
+  end
+
+  def test_rendered_values_are_refused_whatever_the_model_asks
+    with_sheet do |path|
+      assert_match(/rendered value/, refused(parse(path, find: "color: #111;", replace: "color: #f00;")))
+      swapped = parse(path, find: "padding: 4px;", replace: "padding: 4px;\n  background: blue;")
+
+      assert_match(/rendered value/, refused(swapped))
+    end
+  end
+
+  def test_font_shadow_important_repeats_and_missing_text_are_refused
+    with_sheet(".a {\n  gap: 4px;\n  gap: 4px;\n}\n") do |path|
+      assert_match(/occurs 2 times/, refused(parse(path, find: "gap: 4px;", replace: "gap: 8px;")))
+      assert_match(/occurs 0 times/, refused(parse(path, find: "nothing here", replace: "x")))
+      forbidden = [".a {\n  font-size: 20px;", ".a {\n  box-shadow: 0 0 4px #000;", ".a {\n  margin: 0 !important;"]
+      forbidden.each do |replace|
+        assert_raises(EDIT::Refused) { parse(path, find: ".a {", replace:).apply! }
+      end
+    end
+  end
+
+  def test_a_rule_rewritten_onto_one_line_may_keep_its_colour
+    css = ".empty {\n  color: var(--text-secondary);\n  padding: 32px 12px;\n}\n"
+    with_sheet(css) do |path|
+      replace = ".empty { color: var(--text-secondary); padding: 48px 16px; max-inline-size: 66ch; }"
+      parse(path, find: css.strip, replace:).apply!
+
+      assert_includes File.read(path), "padding: 48px 16px"
+    end
+  end
+
+  def test_changing_the_colour_inside_a_one_line_rule_is_refused
+    css = ".empty { color: red; padding: 4px; }\n"
+    with_sheet(css) do |path|
+      edit = parse(path, find: css.strip, replace: ".empty { color: blue; padding: 4px; }")
+
+      assert_raises(EDIT::Refused) { edit.apply! }
+    end
+  end
+
+  # RENDERED_VALUES in laws.yml names layout constants: the token files stay the operator's.
+  def test_token_files_are_never_edited
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "_tokens.scss")
+      File.write(path, ":root {\n  --space-3: 12px;\n}\n")
+
+      assert_match(/operator-owned/, refused(parse(path, find: "--space-3: 12px;", replace: "--space-3: 16px;")))
+    end
+  end
+
+  def test_spacing_must_sit_on_the_declared_scale
+    with_sheet do |path|
+      off = parse(path, find: "padding: 4px;", replace: "padding: 13px;", scale: SCALE)
+      on = parse(path, find: "padding: 4px;", replace: "padding: 1rem;", scale: SCALE)
+
+      assert_match(/off the declared spacing scale/, refused(off))
+      assert on.check!
+    end
+  end
+
+  def test_the_mechanical_laws_can_refuse_the_file_as_it_would_be_written
+    with_sheet do |path|
+      seen = nil
+      guard = ->(file, text) { (seen = [file, text]) && "NO_DECORATIVE_FX: gradient" }
+      rules = EDIT::Rules.new(guard:, scale: nil)
+      edit = EDIT.parse(reply(path, find: "padding: 4px;", replace: "padding: 16px;"), allowed: [path], rules:)
+
+      assert_match(/the laws refuse it: NO_DECORATIVE_FX/, refused(edit))
+      assert_includes seen.last, "padding: 16px;"
+      assert_includes File.read(path), "padding: 4px;"
+    end
+  end
+
+  def test_a_file_that_was_not_offered_is_refused
+    with_sheet do |path|
+      edit = EDIT.parse(reply("/etc/passwd", find: "a", replace: "b"), allowed: [path])
+
+      assert_match(/not one of the offered/, refused(edit))
+    end
+  end
+
+  # A fake world: padding 4px scores 40 on the home surface and 16px scores 60; others stay 50.
+  def fake_score(surface, wide:, other_drop:)
+    return(wide ? 60.0 : 40.0) if surface.id == "brgen/home"
+
+    wide ? 50.0 - other_drop : 50.0
+  end
+
+  def world_for(path, committed:, other_drop: 0)
+    measure = lambda do |surfaces|
+      wide = File.read(path).include?("padding: 16px")
+      surfaces.map do |surface|
+        score = fake_score(surface, wide:, other_drop:)
+        [surface, { "score" => score }, "/dev/null"]
+      end
+    end
+    LOOP::World.new(
+      measure:, ask: ->(_prompt, _image) { reply(path, find: "padding: 4px;", replace: "padding: 16px;") },
+      build: ->(_app) { true }, commit_file: ->(file, message) { committed << [file, message] },
+      sources_for: ->(_surface) { [path] }, guard: nil
+    )
+  end
+
+  def loop_for(path, committed:, other_drop: 0)
+    surfaces = [Surface.new("brgen/home", "brgen"), Surface.new("brgen/feed", "brgen")]
+    plan = LOOP::Plan.new(surfaces:, root: Dir.pwd, rounds: 3, candidates: 1)
+    LOOP.new(plan:, world: world_for(path, committed:, other_drop:))
+  end
+
+  def stub_scoring(&block)
+    store = Master::Fix::LayoutScoreStore
+    result = Struct.new(:score, :subs)
+    store.stub(:measure, ->(_root, payload) { result.new(payload["score"], { "alignment" => 0.5 }) }) do
+      Master::Fix::VisualQualityGates.stub(:measure, ->(_surface, _payload) { { "offenders" => {} } }, &block)
+    end
+  end
+
+  def test_an_edit_that_raises_the_score_is_kept_and_committed
+    with_sheet do |path|
+      committed = []
+      stub_scoring do
+        rounds = loop_for(path, committed:).run
+
+        assert_equal :kept, rounds.first.outcome
+        assert_includes File.read(path), "padding: 16px;"
+        assert_equal [path], committed.map(&:first)
+        assert_match(/layout score 40\.0 -> 60\.0/, committed.first.last)
+      end
+    end
+  end
+
+  def test_an_edit_that_hurts_another_surface_is_undone_and_not_committed
+    with_sheet do |path|
+      committed = []
+      stub_scoring do
+        rounds = loop_for(path, committed:, other_drop: 5).run
+
+        assert_empty rounds.select { |round| round.outcome == :kept }
+        assert_includes File.read(path), "padding: 4px;"
+        assert_empty committed
+      end
+    end
+  end
+end

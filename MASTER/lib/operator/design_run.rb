@@ -1,0 +1,153 @@
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+require "time"
+require_relative "visual_review_triangle"
+
+module Operator
+  # bin/operator design: Fix::DesignLoop with its real collaborators. Boots the
+  # local apps it needs, screenshots the weakest surfaces, asks the vision model
+  # for one layout edit at a time, keeps each edit that scores higher as its own
+  # commit on main, and undoes the rest. Nothing is pushed; the run prints what
+  # is ahead of origin/main.
+  module DesignRun
+    # The command line. It knows which declared surfaces it asks for.
+    Options = Struct.new(:apps, :surfaces, :rounds, :candidates, :limit, :out, keyword_init: true) do
+      def choose(declared)
+        rows = declared.select { |surface| apps.include?(surface.app) }
+        rows = rows.select { |surface| named?(surface) } unless surfaces.empty?
+        raise "no declared surface matches #{apps.join(',')}" if rows.empty?
+
+        rows.first(limit)
+      end
+
+      def plan(chosen, root) = Master::Fix::DesignLoop::Plan.new(surfaces: chosen, root:, rounds:, candidates:)
+
+      private
+
+      def named?(surface) = surfaces.any? { |word| surface.id.start_with?(word) || surface.label == word }
+    end
+
+    CSS_BUILDERS = { "master" => "build_face_css.rb" }.freeze
+    STYLE = /\.s?css\z/
+    NOT_SOURCE = %r{/(?:vendor|builds|node_modules)/|\.min\.}
+
+    module_function
+
+    def parse(argv, root:, now: Time.now)
+      out = File.join(root, "MASTER", ".master", "design", now.strftime("%Y%m%dT%H%M%S"))
+      opts = Options.new(apps: ["brgen"], surfaces: [], rounds: 12, candidates: 2, limit: 12, out:)
+      OptionParser.new do |o|
+        o.on("--app LIST") { |v| opts.apps = v.split(",").map(&:strip).reject(&:empty?) }
+        o.on("--surface LIST") { |v| opts.surfaces = v.split(",").map(&:strip).reject(&:empty?) }
+        o.on("--rounds N", Integer) { |v| opts.rounds = v }
+        o.on("--candidates N", Integer) { |v| opts.candidates = v.clamp(1, 4) }
+        o.on("--limit N", Integer) { |v| opts.limit = v.clamp(1, 60) }
+      end.parse!(argv.dup)
+      opts
+    end
+
+    def say(text) = Master::Trace::Dmesg.status("design0", text)
+
+    def main(argv, root:, agent: nil)
+      opts = parse(argv, root:)
+      require_relative "../fix/design_loop"
+      require_relative "../fix/visual_pass_review_entry"
+      FileUtils.mkdir_p(opts.out)
+      ghost = File.join(opts.out, "_ghost")
+      pass = Master::Fix::VisualPass.new(agent: nil, root:).review_open(dir: opts.out, ghost_root: ghost)
+      chosen = opts.choose(pass.review_surfaces(target: "RAILS"))
+      triangle = VisualReviewTriangle.new(ports: Deploy::GeometryProbe.app_ports(root:))
+      down = triangle.ensure_up(chosen.map(&:app).uniq)
+      raise "apps did not answer /up: #{down.join(', ')}" unless down.empty?
+
+      world = world_for(root:, dir: opts.out, agent: agent || boot_agent(root), graph: pass.review_graph)
+      run_loop(plan: opts.plan(chosen, root), world:, root:)
+    ensure
+      triangle&.release
+    end
+
+    def run_loop(plan:, world:, root:)
+      before = head(root)
+      results = Master::Fix::DesignLoop.new(plan:, world:, say: method(:say)).run
+      report(results, root:, before:)
+    end
+
+    def world_for(root:, dir:, agent:, graph:)
+      Master::Fix::DesignLoop::World.new(
+        measure: ->(rows) { shoot(rows, root:, dir:) },
+        ask: ->(prompt, image) { ask(agent, prompt:, image:) },
+        build: ->(app) { build_css(app, root:) },
+        commit_file: ->(file, message) { commit(file, message, root:) },
+        sources_for: ->(surface) { stylesheets(graph, surface) },
+        guard: method(:law_refusal),
+      )
+    end
+
+    def ask(agent, prompt:, image:)
+      agent.ask_once(prompt, law: false, image: { path: image, name: File.basename(image), mime: "image/png" })
+    end
+
+    def stylesheets(graph, surface)
+      graph.sources_for(surface).select { |path| path.match?(STYLE) && !path.match?(NOT_SOURCE) }
+    end
+
+    # Payload and screenshot for each surface in one browser session.
+    def shoot(surfaces, root:, dir:)
+      require_relative "../../gates/support/geometry_probe"
+      require_relative "../../gates/support/surface_probes"
+      rows = []
+      Deploy::GeometryProbe.with_browser(root:, warm: surfaces) do |cdp|
+        surfaces.each { |surface| (row = capture(cdp, surface, dir:)) && rows << row }
+      end
+      rows
+    end
+
+    def capture(cdp, surface, dir:)
+      payload = Deploy::SurfaceProbes.attach(cdp, surface, Deploy::GeometryProbe.walk(cdp, surface))
+      return unless Deploy::GeometryProbe.ok?(payload)
+
+      shot = File.join(dir, "#{surface.id.to_s.gsub(/[^a-zA-Z0-9._-]+/, '_')}.png")
+      cdp.screenshot(shot, capture_beyond_viewport: true)
+      [surface, payload, shot]
+    end
+
+    # The mechanical laws, judging the file as the edit would leave it. Only what the
+    # edit introduces counts, so a stylesheet that already carries debt stays editable.
+    def law_refusal(path, content)
+      verdict = Master::Fix::WriteGuard.default.verdict(path:, content:)
+      verdict.blocked? ? verdict.reason : nil
+    end
+
+    def build_css(app, root:)
+      tool = CSS_BUILDERS.fetch(app, "build_all_css.rb")
+      args = tool == "build_all_css.rb" ? ["--app", app] : []
+      script = File.join(root, "MASTER", "tools", "rails", tool)
+      _out, status = Master::Io::Exec.capture2e(RbConfig.ruby, script, *args, chdir: root, timeout: 600)
+      FileUtils.rm_f(File.join(root, "RAILS", app, "public", "assets", ".manifest.json"))
+      status.success?
+    end
+
+    def commit(file, message, root:)
+      relative = file.to_s.delete_prefix("#{root}/")
+      args = ["git", "-C", root, "commit", "-q", "-m", message, "--", relative]
+      _out, status = Master::Io::Exec.capture2e(*args, timeout: 60)
+      status.success?
+    end
+
+    def head(root) = Master::Io::Exec.capture2e("git", "-C", root, "rev-parse", "HEAD").first.strip
+
+    def boot_agent(root) = Master.bootstrap_container(root: File.join(root, "MASTER"))[:agent]
+
+    def report(results, root:, before:)
+      kept = results.select { |r| r.outcome == :kept }
+      kept.each { |r| say("kept ##{r.number} #{r.surface}: #{r.why} (#{r.before.round(1)} -> #{r.after.round(1)})") }
+      say("#{kept.size} edit(s) kept in #{results.size} round(s)")
+      ahead = Master::Io::Exec.capture2e("git", "-C", root, "log", "--oneline", "#{before}..HEAD").first
+      ahead.each_line { |line| say("committed #{line.strip}") }
+      say("not pushed: review `git log origin/main..HEAD`, then push main")
+      kept.empty? ? 1 : 0
+    end
+  end
+end

@@ -53,6 +53,7 @@ def usage
       bin/operator lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/operator branches               every branch against main: merged, active, conflicts, deletes_heavily or ready
+      bin/operator design [--app A] [--surface S] [--rounds N]  screenshot, edit one layout rule, keep it if the score rises, commit each
       bin/operator land -m <msg> <path>...  commit path-scoped, re-check, push main
             bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live gates probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
@@ -317,6 +318,14 @@ when "land"
   push_out, pushed = run!("git", "push", "origin", "HEAD:main")
   abort("land: push refused\n#{push_out}") unless pushed
   Master::Trace::Dmesg.status("land0", "on origin/main")
+when "design"
+  # The design loop: screenshot the weakest surfaces, ask the vision model for one
+  # layout edit at a time, keep each edit that scores higher as its own commit on
+  # main, undo the rest. Nothing is pushed.
+  #   bin/operator design [--app brgen,master] [--surface home,feed] [--rounds 12] [--candidates 2]
+  require "master"
+  require "operator/design_run"
+  exit Operator::DesignRun.main(ARGV, root: ROOT)
 when "visual"
   # seed|unseed|status load local development content; approve blesses.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "rails", "visual_seed.rb"), *ARGV) if %w[seed unseed status].include?(ARGV.first)
