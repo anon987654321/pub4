@@ -44,14 +44,14 @@ module WAV
       File.chmod(mode, tmp.path)
       tmp.close
       replace ? File.rename(tmp.path, path) : File.link(tmp.path, path)
+      fsync_directory(directory) if RUBY_PLATFORM !~ /win32|mingw/
     end
     path
   rescue Errno::EEXIST
     raise ArgumentError, "refusing to overwrite existing take: #{path}; choose a new path or pass --replace"
   end
 
-  # Bounded-memory output for long renders; never overwrites an existing take.
-  # Bounded-memory output published atomically. The final path appears only after
+  # Bounded-memory output for long renders. The final path appears only after
   # every block and the RIFF sizes have been written and synced; a crash or an
   # invalid block can leave a temporary file only, never a plausible partial WAV.
   def self.write_stream(path, frames:, channels:, bits: 16, block_size: 8192)
@@ -100,6 +100,7 @@ module WAV
       # A hard link is an atomic create-if-absent publish. It does not silently
       # replace an earlier take and cannot expose the temporary WAV's old header.
       File.link(file.path, destination)
+      fsync_directory(directory) if RUBY_PLATFORM !~ /win32|mingw/
     end
     path
   end
@@ -111,4 +112,14 @@ module WAV
       [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff].pack('C3')
     end.join
   end
+
+  # File bytes and the directory entry are separate durability boundaries.
+  def self.fsync_directory(directory)
+    descriptor = IO.sysopen(directory, File::RDONLY)
+    dir_io = IO.new(descriptor)
+    dir_io.fsync
+  ensure
+    dir_io&.close
+  end
+  private_class_method :fsync_directory
 end
