@@ -73,6 +73,7 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
     ink = identity.fetch("signal_ink")
     light_ink = identity.fetch("signal_on_light")
     fraction = Float(identity.fetch("max_highlight_area_fraction"))
+    display_size = identity.fetch("display_size").to_s
     contrast_floors = identity.fetch("contrast")
     ink_floor = Float(contrast_floors.fetch("signal_on_ink_min"))
     white_floor = Float(contrast_floors.fetch("signal_on_white_min"))
@@ -102,6 +103,8 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
 
     !identity.fetch("name").eql?("signal_and_stillness") ||
       !valid_hex.call(signal) || !valid_hex.call(ink) || !valid_hex.call(light_ink) ||
+      !display_size.match?(/\Aclamp\([^)]*\)\z/) ||
+      ink_floor < 7.0 || white_floor < 4.5 || paper_floor < 4.5 ||
       contrast.call(signal, ink) < ink_floor ||
       contrast.call(light_ink, "#FFFFFF") < white_floor ||
       contrast.call(light_ink, "#EFEFEF") < paper_floor ||
@@ -133,6 +136,11 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
         signal: "#C8F55F"
         signal_ink: "#101010"
         signal_on_light: "#50630A"
+        display_size: "clamp(40px, 6vw, 88px)"
+        contrast:
+          signal_on_ink_min: 7.0
+          signal_on_white_min: 4.5
+          signal_on_paper_min: 4.5
         max_highlight_area_fraction: 0.08
         avoid: ["copied protected brand expression"]
         motion:
