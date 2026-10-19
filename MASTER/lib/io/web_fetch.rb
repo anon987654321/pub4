@@ -91,11 +91,10 @@ module Master
         return Result.err("web_fetch: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
         raw_body = response.body.to_s
-        limit = full ? MAX_FULL_BYTES : MAX_BYTES
-        return Result.err("web_fetch: response exceeds #{limit} bytes; narrow the request", category: :validation) if raw_body.bytesize > limit
+        return Result.err("web_fetch: response exceeds #{MAX_FULL_BYTES} bytes; narrow the request", category: :validation) if raw_body.bytesize > MAX_FULL_BYTES
 
         stripped = strip_html(raw_body)
-        stripped = stripped.byteslice(0, MAX_BYTES) unless full
+        stripped = stripped.byteslice(0, MAX_BYTES).scrub("") unless full
         @bus&.publish("tool:after", tool: NAME, url:)
         @bus&.publish("tool:untrusted_output", tool: NAME, source: url)
         Result.ok(guarded(stripped, url))

@@ -19,6 +19,16 @@ class TestWebFetchCodePen < Minitest::Test
     end
   end
 
+  def test_a_page_larger_than_the_text_limit_returns_its_first_text
+    page = "<html><body>#{"<p>word </p>" * 4_000}</body></html>"
+    response = Struct.new(:code, :body).new("200", page)
+    result = fetch.send(:deliver, "https://example.test/", response)
+
+    assert result.ok?
+    assert_operator result.value!.bytesize, :<=, Fetch::MAX_BYTES + 200
+    assert_includes result.value!, "word"
+  end
+
   def test_partial_failure_is_disclosed_in_the_result
     tool = fetch
     response = lambda do |url, full: false|
