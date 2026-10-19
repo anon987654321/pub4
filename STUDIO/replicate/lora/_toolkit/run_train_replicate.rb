@@ -58,6 +58,7 @@ abort "warn: missing #{MASTER_CLIENT}" unless MASTER_CLIENT.file?
 
 require MASTER_CLIENT.to_s
 require_relative "preflight"
+require_relative "weight_archive"
 
 # Environment values are input, not Ruby numeric literals. String#to_i silently
 # turns "typo" into zero and "1000seconds" into 1000; either can corrupt a paid
@@ -138,63 +139,6 @@ def zip_dataset(dataset_dir, zip_path)
   zip_path
 end
 
-def extract_weights_tar(tar_path, dest_dir)
-  unsafe = Preflight.unsafe_tar_entries(tar_path.to_s)
-  raise ArgumentError, "refusing #{tar_path}: #{unsafe.first(3).join(', ')}" unless unsafe.empty?
-
-  destination = Pathname.new(dest_dir).expand_path
-  FileUtils.mkdir_p(destination)
-  published = []
-
-  # Only checkpoint bytes are needed from the trainer archive. Read regular
-  # files through TarReader into an isolated directory; never let tar create
-  # paths, links, devices or permissions in the weights tree.
-  Dir.mktmpdir(".weights-stage-", destination.to_s) do |staging|
-    staged = []
-    File.open(tar_path, "rb") do |file|
-      Gem::Package::TarReader.new(file).each do |entry|
-        next unless ["0", "\0"].include?(entry.header.typeflag.to_s)
-
-        name = entry.full_name.to_s
-        next unless name.downcase.end_with?(".safetensors")
-
-        basename = File.basename(name)
-        path = File.join(staging, basename)
-        raise ArgumentError, "duplicate weight basename #{basename.inspect}" if File.exist?(path)
-
-        File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |output|
-          IO.copy_stream(entry, output)
-          output.flush
-          output.fsync
-        end
-        staged << path
-      end
-    end
-
-    raise ArgumentError, "trainer archive contained no .safetensors weights" if staged.empty?
-
-    begin
-      staged.each do |source|
-        filename = File.basename(source)
-        target = destination.join(filename)
-        suffix = 1
-        while target.exist? || target.symlink?
-          stem = File.basename(filename, ".safetensors")
-          target = destination.join("#{stem}-restored-#{suffix}.safetensors")
-          suffix += 1
-        end
-        File.link(source, target.to_s)
-        published << target.to_s
-      end
-    rescue StandardError
-      published.each { |path| File.unlink(path) if File.file?(path) && !File.symlink?(path) }
-      raise
-    end
-  end
-
-  published
-end
-
 def append_log(lines)
   FileUtils.mkdir_p(LOG_PATH.dirname)
   File.open(LOG_PATH, "a") do |f|
@@ -257,7 +201,7 @@ def fetch_weights(client, weights_url, training_id)
   FileUtils.mkdir_p(EXPORTS_DIR)
   client.download_url(weights_url, tar_path.to_s)
   puts "ok: downloaded #{tar_path}"
-  extract_weights_tar(tar_path, WEIGHTS_DIR).each { |path| puts "ok: weight #{path}" }
+  Lora::WeightArchive.extract(tar_path, WEIGHTS_DIR).each { |path| puts "ok: weight #{path}" }
 rescue StandardError => e
   warn "warn: could not download/extract weights: #{e.message}"
   warn "fix: open #{weights_url.to_s.sub(/\?.*/, '')} or use destination model on Replicate API"
