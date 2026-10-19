@@ -49,7 +49,7 @@ targets:
   brgen: 27
   amber: 28
   bsdports: 3
-  shared: 8
+  __shared: 8
 
   # MASTER and OPENBSD, added 2026-09-06. MASTER judges every effect against
   # its constitution; until then the gate that applies the law read only the Rails
