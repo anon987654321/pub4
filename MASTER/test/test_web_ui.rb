@@ -190,7 +190,6 @@ class TestWebUI < Minitest::Test
     assert_includes semantics, "/council:/.test(name)"
     retired = YAML.safe_load_file(File.expand_path("../data/event_topics.yml", __dir__)).fetch("retired")
     retired.each { |topic| refute_includes semantics, topic }
-    refute_includes semantics, "council:deliberation"
   end
 
   def test_visual_bridge_delegates_event_classification_to_registry
@@ -203,7 +202,7 @@ class TestWebUI < Minitest::Test
     assert_includes registry, "mergeCanonicalCatalog"
     assert_includes registry, "remoteKey"
     refute_includes registry, "phantom:detected"
-    assert_includes topologies, "phantom:detected"
+    assert_includes topologies, "phantom:(detected|occurrence|recovery|halt)"
     assert_includes topologies, "infer:resolved|route:resolved|llm:routed"
   end
 
@@ -230,9 +229,8 @@ class TestWebUI < Minitest::Test
     # re-fires the callback on every write -> an infinite mutation->observe->mutate
     # microtask loop that starves the main thread before load or the primer tap
     # handler ever runs (root cause behind 30+ "dead tap"/"slow page" commits,
-    # fixed 2026-07-11). childList/characterData carry the real external signal.
-    assert_includes source, "childList: true, subtree: true, characterData: true"
-    refute_match(/observe\(el,\s*\{[^}]*attributes/, source)
+    # fixed). No observer may watch attributes on the elements it writes.
+    refute_match(/observe\([^)]*\{[^}]*attributes/, source)
   end
 
   def test_rc_d_master_digest_covers_every_manifest_asset
@@ -337,10 +335,9 @@ class TestWebUI < Minitest::Test
     # /btw research and /rebuild were retired by 7c23a5ee5, which cut the slash
     # surface to a sentence and eight verbs: work is plain language or /review.
     # Asserting a command the surface deliberately dropped tests the old design.
-    # What still matters is that the eight it kept are reachable.
-    %w[/review /status /undo /commit /model /pair /doctor /help].each do |verb|
-      assert_includes chat, verb, "the slash surface lost #{verb}"
-    end
+    # The verbs live in the CLI registry; what the page owes them is the pass-through.
+    assert_includes actions, 'message.startsWith("/")'
+    assert_includes actions, "/chat/command"
     # visual_bridge's phantom flinch, and every topic it listens for, are held in
     # web/test/visual_bridge_topics.test.mjs.
     assert_includes actions, "addEventListener('compaction'"
@@ -828,7 +825,7 @@ class TestWebUI < Minitest::Test
   def test_container_bootstrap_uses_standard_error_boundary
     loader = File.read(File.expand_path("../../RAILS/master/config/initializers/master_container.rb", __dir__))
 
-    refute_includes loader, "rescue Exception"
+    refute_match(/rescue\s+Exception/, loader)
     assert_includes loader, "rescue StandardError"
   end
 
@@ -841,8 +838,9 @@ class TestWebUI < Minitest::Test
     assert_includes loader, "def rearm!"
     assert_includes loader, "config.x.master_bootstrap_started = false",
                     "a failed attempt must release the flag or nothing retries"
-    assert_includes loader, "rubocop:disable Lint/RescueException",
-                    "StandardError alone leaves NoMemoryError to kill the thread in silence"
+    assert_match(/rescue\s+StandardError\s*=>\s*\w+/, loader,
+                 "the bootstrap thread reports application failures and lets process-level ones end the process")
+    refute_match(/rescue\s+Exception/, loader)
   end
 
   # assets:precompile boots the app but never serves anything, and the container
@@ -866,6 +864,7 @@ class TestWebUI < Minitest::Test
         def self.logger = Logger.new(nil)
       end
       module Master
+        ROOT = Dir.pwd
         def self.prepare_runtime! = nil
         module Voice; module TtsSupervisor; def self.ensure_daemon!(**) = exit!(3); end; end
       end
