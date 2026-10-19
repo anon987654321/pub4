@@ -74,10 +74,10 @@ $luxury: true !default;
     --text-xl: 1.5rem;
     /* design_tokens ui_polish.type_tokens.text_display */
     --text-2xl: 1.75rem;
-  /* The display slot: the one large centred headline a page leads with,
-     at antigravity.google's scale (operator, 2026-09-25). px, not rem, because
-     brgen roots at 18px and the scale is the reference's, not a multiple of
-     the reading size. */
+  /* One restrained editorial display slot from
+     MASTER/data/tokens.yml#tokens.visual_identity.display_size. Pixel-based
+     bounds are deliberate because Brgen roots at 18px; every screen uses this
+     single optional role instead of inventing a second display ladder. */
   --text-display: clamp(40px, 6vw, 88px);
   /* The gap between a page's sections, from the same reference: 64px on a
      phone, opening to 160px on a wide screen. */

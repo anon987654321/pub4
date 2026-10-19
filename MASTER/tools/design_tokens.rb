@@ -33,6 +33,7 @@ module DesignTokens
     "signal" => "pub4-signal",
     "signal_ink" => "pub4-signal-ink",
     "signal_on_light" => "pub4-signal-on-light",
+    "display_size" => "text-display",
   }.freeze
 
   LUXURY_MAP = {
@@ -107,6 +108,7 @@ module DesignTokens
         --pub4-signal: #{visual_identity.fetch("signal")};
         --pub4-signal-ink: #{visual_identity.fetch("signal_ink")};
         --pub4-signal-on-light: #{visual_identity.fetch("signal_on_light")};
+        --text-display: #{visual_identity.fetch("display_size")};
         --font: #{family};
         --weight-normal: 400;
         --weight-medium: 500;

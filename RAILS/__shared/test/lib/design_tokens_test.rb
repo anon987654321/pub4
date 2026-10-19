@@ -204,4 +204,21 @@ end
   end
 
 
+  def test_display_size_is_generated_from_the_visual_identity_token
+    identity = DesignTokens.load.fetch("visual_identity")
+    css = DesignTokens.static_tokens_css
+
+    assert_equal "clamp(40px, 6vw, 88px)", identity.fetch("display_size")
+    assert_includes css, "--text-display: #{identity.fetch('display_size')};"
+  end
+
+  def test_identity_contrast_floors_are_operator_owned_tokens
+    floors = DesignTokens.load.fetch("visual_identity").fetch("contrast")
+
+    assert_operator floors.fetch("signal_on_ink_min"), :>=, 7.0
+    assert_operator floors.fetch("signal_on_white_min"), :>=, 4.5
+    assert_operator floors.fetch("signal_on_paper_min"), :>=, 4.5
+  end
+
+
 end

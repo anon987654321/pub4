@@ -38,6 +38,11 @@ tokens:
     signal: "#C8F55F"
     signal_ink: "#101010"
     signal_on_light: "#50630A"
+    display_size: "clamp(40px, 6vw, 88px)"
+    contrast:
+      signal_on_ink_min: 7.0
+      signal_on_white_min: 4.5
+      signal_on_paper_min: 4.5
     max_highlight_area_fraction: 0.08
     usage:
       - "primary action or selected marker where the local dialect permits"

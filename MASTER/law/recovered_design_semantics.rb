@@ -73,6 +73,10 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
     ink = identity.fetch("signal_ink")
     light_ink = identity.fetch("signal_on_light")
     fraction = Float(identity.fetch("max_highlight_area_fraction"))
+    contrast_floors = identity.fetch("contrast")
+    ink_floor = Float(contrast_floors.fetch("signal_on_ink_min"))
+    white_floor = Float(contrast_floors.fetch("signal_on_white_min"))
+    paper_floor = Float(contrast_floors.fetch("signal_on_paper_min"))
     motion = identity.fetch("motion")
     adaptations = identity.fetch("adaptations")
     avoid = identity.fetch("avoid")
@@ -98,9 +102,9 @@ Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
 
     !identity.fetch("name").eql?("signal_and_stillness") ||
       !valid_hex.call(signal) || !valid_hex.call(ink) || !valid_hex.call(light_ink) ||
-      contrast.call(signal, ink) < 7.0 ||
-      contrast.call(light_ink, "#FFFFFF") < 4.5 ||
-      contrast.call(light_ink, "#EFEFEF") < 4.5 ||
+      contrast.call(signal, ink) < ink_floor ||
+      contrast.call(light_ink, "#FFFFFF") < white_floor ||
+      contrast.call(light_ink, "#EFEFEF") < paper_floor ||
       fraction <= 0.0 || fraction > 0.08 ||
       anchors.fetch("c_accent") != "var(--pub4-signal)" ||
       motion.fetch("default") != "still" ||

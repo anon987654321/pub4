@@ -20,6 +20,7 @@ class VisualIdentityContractTest < Minitest::Test
     assert_equal "#101010", identity.fetch("signal_ink")
     assert_equal "#50630A", identity.fetch("signal_on_light")
     assert_equal 0.08, identity.fetch("max_highlight_area_fraction")
+    assert_equal "clamp(40px, 6vw, 88px)", identity.fetch("display_size")
     assert identity.fetch("avoid").any? { |rule| rule.include?("protected brand expression") }
   end
 
