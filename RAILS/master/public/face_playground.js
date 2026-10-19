@@ -53,11 +53,24 @@
     select.addEventListener("change", () => setState(select.value));
     const status = el("p", "Additive layer; ParticleKernel retained");
     status.className = "master-stipple-status";
+    status.setAttribute("aria-live", "polite");
+    const diagnostics = el("pre", "Use Refresh diagnostics to inspect the current renderer state.");
+    diagnostics.id = "master-face-stipple-diagnostics";
+    diagnostics.className = "master-stipple-diagnostics";
+    diagnostics.setAttribute("aria-label", "Face stipple runtime diagnostics");
+    const refresh = el("button", "Refresh diagnostics");
+    refresh.type = "button";
+    refresh.setAttribute("aria-controls", diagnostics.id);
+    refresh.addEventListener("click", () => {
+      const report = window.MASTER_FACE_STIPPLE?.snapshot?.();
+      diagnostics.textContent = report ? JSON.stringify(report, null, 2) : "Diagnostics unavailable";
+      status.textContent = report ? "Diagnostics refreshed." : "Diagnostics unavailable.";
+    });
     const close = el("button", "Close");
     close.type = "button";
     close.addEventListener("click", () => { panel?.remove(); panel = null; });
     stateLabel.append(select);
-    panel.append(title, stateLabel, status,
+    panel.append(title, stateLabel, status, refresh, diagnostics,
       slider("Density", 0.08, 0.98, 0.44, "density"),
       slider("Ripple", 0, 1, 0.03, "ripple"),
       slider("Turbulence", 0, 1, 0.04, "turbulence"),
