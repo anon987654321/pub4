@@ -13,6 +13,7 @@ class VisualIdentityContractTest < Minitest::Test
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
   BRGEN_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
   AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
+  AMBER_SIDEBAR = File.join(ROOT, "amber", "app", "views", "shared", "_sidebar_nav.html.erb")
   AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "_amber_late_product_finish.scss")
   BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_shared_chrome.scss")
   FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
@@ -57,12 +58,12 @@ class VisualIdentityContractTest < Minitest::Test
   end
 
   def test_amber_uses_semantic_current_page_and_signal_ink_without_recolouring_photography
-    layout = File.read(AMBER_LAYOUT, encoding: "UTF-8")
+    sidebar = File.read(AMBER_SIDEBAR, encoding: "UTF-8")
     styles = File.read(AMBER_STYLES, encoding: "UTF-8")
 
-    assert_includes layout, 'aria: { current: current_page?(items_path) ? "page" : nil }'
-    assert_includes layout, 'aria: { current: current_page?(outfits_path) ? "page" : nil }'
-    assert_includes styles, '.amber-editorial-nav a[aria-current="page"]'
+    assert_includes sidebar, 'aria: { current: ("page" if current_page?(items_path)) }'
+    assert_includes sidebar, 'aria: { current: ("page" if current_page?(outfits_path)) }'
+    assert_includes styles, '.sidebar .nav-item.active'
     assert_includes styles, "color: var(--pub4-signal-on-light);"
     refute_match(/\.item-photo\s*\{[^}]*filter:/m, styles,
                  "the aesthetic must not tint garment/product photography")
