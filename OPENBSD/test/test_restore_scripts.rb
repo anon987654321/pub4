@@ -80,8 +80,8 @@ class RestoreScriptsTest < Minitest::Test
   end
 
   def test_vps_ci_mirrors_the_tracked_tree_not_vendor
-    source = File.read(File.join(ROOT, "bin", "vps_ci.sh"))
-    assert_includes source, "git -C \"$repo\" archive HEAD RAILS"
+    source = File.read(File.join(ROOT, "usr", "local", "libexec", "ci-sync.ksh"))
+    assert_includes source, "archive HEAD RAILS"
     refute_includes source, 'doas tar cf - -C "$repo" RAILS'
     assert_includes source, "vendor/javascript"
     assert_includes source, "public"
@@ -93,7 +93,7 @@ class RestoreScriptsTest < Minitest::Test
   # left the new code live with no assets: brgen served every page with a 404ing
   # <link> on 2026-08-14 while /up, rcctl check and the TLS probe all passed.
   def test_vps_ci_keeps_compiled_assets_across_the_prune
-    source = File.read(File.join(ROOT, "bin", "vps_ci.sh"))
+    source = File.read(File.join(ROOT, "usr", "local", "libexec", "ci-sync.ksh"))
     prune = source[/for dir_rel in test app lib config bin db engines public.*?done/m]
     assert prune, "the prune loop moved — re-read this before trusting the assertions below"
     assert_includes prune, "public/assets", "the prune must special-case the one directory git does not carry"

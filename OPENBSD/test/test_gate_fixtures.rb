@@ -84,7 +84,7 @@ class InstalledTargetsGateFixtureTest < Minitest::Test
 
     # Named by the guard itself, not by any file that mentions the path: a comment
     # elsewhere naming it would keep the key present with the guard unread.
-    assert_includes GATE.referenced.fetch("bin/emergency_cpu.sh", []), "bin/resource_guard.sh",
+    assert_includes GATE.referenced.fetch("bin/emergency_cpu.sh", []), "usr/local/bin/resource_guard.sh",
                     "resource_guard.sh's crisis path is no longer read, so a missing install would pass"
     assert_includes GATE.referenced.keys, "libexec/stale_ci_cleanup.ksh"
     assert_empty GATE.orphans

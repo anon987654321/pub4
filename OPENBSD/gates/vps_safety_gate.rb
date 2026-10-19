@@ -121,6 +121,8 @@ else
 end
 
 admin_path = File.join(OPENBSD, "usr", "local", "sbin", "pub4-admin")
+# A symlinked broker is refused below; later checks still read this, so it starts as text.
+admin = ""
 if File.symlink?(admin_path)
   failures << "usr/local/sbin/pub4-admin must not be a symlink"
 end
@@ -372,7 +374,8 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('run_rails_task(args[1], args[2])') &&
                            admin.include?('supervised_helper(RAILS_TASK, app, 7200, arguments)') &&
                            admin.include?('args[0] == "retire-legacy"') &&
-                           admin.include?('def legacy_service_name(app)') &&
+                           admin.include?("def legacy_service_name(app)\n" \
+                                         "    return nil unless RAILS_APPS.include?(app)") &&
                            admin.include?('File.lstat(path)')
   failures << "pub4-admin must expose only fixed app-scoped CI helper verbs" unless broker_helper_dispatch
 

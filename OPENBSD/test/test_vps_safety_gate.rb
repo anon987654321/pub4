@@ -49,6 +49,9 @@ class VpsSafetyGateTest < Minitest::Test
                    File.join(dir, "RAILS", "_runtime_gate.sh"))
       FileUtils.cp(File.join(ROOT, "..", "RAILS", "_bundle.sh"),
                    File.join(dir, "RAILS", "_bundle.sh"))
+      %w[_service.sh _sync.sh _deploy.sh].each do |name|
+        FileUtils.cp(File.join(ROOT, "..", "RAILS", name), File.join(dir, "RAILS", name))
+      end
       FileUtils.mkdir_p(File.join(openbsd, "bin"))
       FileUtils.cp(File.join(ROOT, "bin", "vps-state"), File.join(openbsd, "bin", "vps-state"))
       FileUtils.cp(File.join(ROOT, "bin", "restore_litestream.sh"), File.join(openbsd, "bin", "restore_litestream.sh"))

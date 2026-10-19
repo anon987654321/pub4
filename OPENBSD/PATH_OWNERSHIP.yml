@@ -8,6 +8,10 @@ ownership:
     purpose: deploy front door, runbook, recipes, and agent gotchas with the standing refusals
     risk: high
     check: OPENBSD/bin/check
+  man:
+    purpose: BSD manuals for the operator surface, pub4-admin(8) and vps-deploy(8)
+    risk: low
+    check: mandoc -Tlint OPENBSD/man/man8/pub4-admin.8 OPENBSD/man/man8/vps-deploy.8
   PATH_OWNERSHIP.yml:
     purpose: this map
     risk: low

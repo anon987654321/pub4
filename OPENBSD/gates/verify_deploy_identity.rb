@@ -37,6 +37,8 @@ RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_FILE = File.join(RAILS_ROOT, "apps.yml")
 SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")
 SHARED_BUNDLE = File.join(RAILS_ROOT, "_bundle.sh")
+# The production bundle runs as the app user, so its flags live in the root-owned task helper.
+RAILS_TASK = File.join(ROOT, "OPENBSD", "usr", "local", "libexec", "rails-task.ksh")
 # An argument names another library to source, so a test can hand the function
 # check one that defines nothing and watch the run fail.
 FUNCTION_LIBRARY = ARGV.fetch(0, SHARED_DEPLOY)
@@ -47,18 +49,19 @@ ports = Hash.new { |h, k| h[k] = [] }
 domains = Hash.new { |h, k| h[k] = [] }
 shared_functions = File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""
 shared_functions += File.file?(SHARED_BUNDLE) ? File.read(SHARED_BUNDLE) : ""
+shared_functions += File.file?(RAILS_TASK) ? File.read(RAILS_TASK) : ""
 failures << "missing shared deploy functions: #{SHARED_DEPLOY}" if shared_functions.empty?
 missing_functions = File.file?(FUNCTION_LIBRARY) ? shell_functions_missing(FUNCTION_LIBRARY, SHARED_FUNCTIONS) : SHARED_FUNCTIONS
 failures << "sourcing #{FUNCTION_LIBRARY} defines no #{missing_functions.join(', ')}" if missing_functions.any?
 failures << "shared bundler helper missing deployment config" unless shared_functions.include?(
-  "bundle config set --local deployment true"
+  "config set --local deployment true",
 )
 failures << "shared bundler helper missing without config" unless shared_functions.include?(
-  'bundle config set --local without \"development test\"'
+  'config set --local without \"development test\"',
 )
 shared_checks = {
   'need_cmd "$RUBY" "$BUNDLE" doas' => "shared deploy helper must require the resolved ruby, bundle and doas",
-  'doas mkdir -p "${APP_DIR}/.bundle"' => "shared deploy helper missing app .bundle mkdir",
+  "mkdir -p .bundle" => "shared deploy helper missing app .bundle mkdir",
   'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "shared deploy helper missing bundler install",
   'install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"' => "shared deploy helper missing standard rc.d install call",
   'relayd_add_relay "$APP_NAME" "$APP_DOMAIN" "$APP_PORT"' => "shared deploy helper missing standard relay call"
