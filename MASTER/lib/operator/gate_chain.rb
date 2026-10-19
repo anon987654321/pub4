@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../master"
+# process_spawn.rb defines Master::Ops first, so Zeitwerk never loads ops.rb on its own.
+require_relative "../ops"
 
 require "digest"
 require "fileutils"

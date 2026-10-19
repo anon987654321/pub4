@@ -109,10 +109,11 @@ class TestGateChain < Minitest::Test
     previous.nil? ? ENV.delete(key) : ENV[key] = previous
   end
 
-  # Every other test stubs disk_state; a load-order fault in it refused every stage of a real gate run.
+  # Every other test stubs disk_state; a load-order fault in it refused every stage of a real gate run,
+  # where process_spawn has already defined Master::Ops.
   def test_disk_state_measures_in_a_process_that_loads_only_the_gate_chain
     lib = File.expand_path("../lib", __dir__)
-    script = 'require "operator/gate_chain"; g = Operator::GateChain; ' \
+    script = 'require "ops/process_spawn"; require "operator/gate_chain"; g = Operator::GateChain; ' \
              "print g.disk_state([g::ROOT])[:free_gb].class"
     out, status = Open3.capture2e(RbConfig.ruby, "-I", lib, "-e", script)
 
