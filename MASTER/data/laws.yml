@@ -133,6 +133,10 @@ visual_identity_contract:
     - "Neutral surfaces, typography, alignment and negative space carry hierarchy before decoration."
     - "The signal colour marks meaning; it does not replace local product identity or semantic status text."
     - "Motion must represent a real state change and have a reduced-motion equivalent."
+    - "Reduced-motion policy applies to every animated layer and transition, including audio-driven, pointer-driven and status-driven effects; retain semantic information without continuous movement."
+    - "Concurrent visual layers share a device budget; no adapter may spend the whole renderer budget independently or create an unbounded point, pulse or trail population."
+    - "Rendering adapters must expose bounded lifecycle and failure status, release resources they own, and never describe a lost or uninitialized context as ready."
+    - "Performance claims distinguish JavaScript render-call cadence from GPU completion or validated frame rate, and include device and viewport evidence when measured."
     - "Surface treatments remain flat; no decorative glow, ornamental shadow or generic AI gradient."
     - "Real product, garment, person and media colours remain truthful."
     - "Every tree adapts the visual language to its task instead of sharing one forced palette."
@@ -150,7 +154,7 @@ visual_identity_contract:
     openbsd: "OpenBSD Operator prompt and dmesg discipline; plain text remains complete without colour"
     studio: "editorial composition only where appropriate; rendered values and media fidelity remain operator-owned"
   acceptance:
-    required: [canonical_tokens, generated_artifact_sync, executable_law_fixtures, contrast, semantic_states, reduced_motion, typography_roles, product_dialect_contracts, media_fidelity, narrow_and_wide_screens, rendered_screenshots, original_brand_assets]
+    required: [canonical_tokens, generated_artifact_sync, executable_law_fixtures, contrast, semantic_states, reduced_motion, reduced_motion_runtime, aggregate_render_budget, renderer_lifecycle, render_state_regression, device_performance_evidence, typography_roles, product_dialect_contracts, media_fidelity, narrow_and_wide_screens, rendered_screenshots, original_brand_assets]
     evidence: "Record commit, generator/test output, viewport dimensions and before/after screenshots; source inspection alone is not visual proof."
 
 prose:
