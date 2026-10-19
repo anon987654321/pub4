@@ -38,12 +38,13 @@ test("FaceWorld observes reduced motion across shader, camera and event layers",
   assert.match(faceWorld, /window\.matchMedia\?\.\("\(prefers-reduced-motion: reduce\)"\)/);
   assert.match(faceWorld, /const reducedMotion = reducedMotionEnabled\(state\)/);
   assert.match(faceWorld, /shellMaterial\.uniforms\.uTime\.value = reducedMotion \? 0 : now/);
+  assert.match(faceWorld, /audioPulse = reducedMotion \? 0 : Math\.max/);
   assert.match(faceWorld, /updatePulses\(now, reducedMotion\)/);
   assert.match(faceWorld, /const rotationEase = reducedMotion \? 1 : 0\.035/);
   assert.match(faceWorld, /const cameraEase = reducedMotion \? 1 : 0\.035/);
 });
 
-function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, cores = 8, reducedMotion = false, faceMotion = false, hidden = false } = {}) {
+function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, cores = 8, reducedMotion = false, faceMotion = false, prefersReducedMotion = false, hidden = false } = {}) {
   const window = {
     MASTER_FACE_CONTRACT: {
       state: {
@@ -66,7 +67,8 @@ function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, co
   };
   const matchMedia = (query) => ({ matches:
     query === "(pointer: coarse)" ? coarsePointer :
-    query === "(max-width: 767px)" ? narrowViewport : false
+    query === "(max-width: 767px)" ? narrowViewport :
+    query === "(prefers-reduced-motion: reduce)" ? prefersReducedMotion : false
   });
   runInNewContext(faceStateSource, {
     window, document, matchMedia, navigator: { hardwareConcurrency: cores }, devicePixelRatio: 2,
@@ -91,6 +93,9 @@ test("shared render budget honors declared reduced motion and hidden-tab ceiling
   const liveFaceReduced = loadFaceStateBudget({ faceMotion: true }).renderBudget();
   assert.equal(liveFaceReduced.particles, 64);
   assert.equal(liveFaceReduced.fps, 8);
+  const osReduced = loadFaceStateBudget({ prefersReducedMotion: true }).renderBudget();
+  assert.equal(osReduced.particles, 64);
+  assert.equal(osReduced.fps, 8);
   assert.equal(loadFaceStateBudget({ hidden: true }).renderBudget().fps, 0);
 });
 
