@@ -38,7 +38,7 @@ class StudioContractTest < Minitest::Test
       ENV.delete("DILLA_OUTPUT_DIR")
 
       at = Time.iso8601("2026-01-02T00:30:00+02:00")
-      expected = File.join(dir, "xdg-data", "dilla-renders", "2026-01-01")
+      expected = File.join(File.realpath(dir), "xdg-data", "dilla-renders", "2026-01-01")
       assert_equal expected,
                    Contracts::Studio.output_path(kind: :dilla_render_directory, at:)
     end

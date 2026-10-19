@@ -47,7 +47,7 @@ class MobileAppRegistryTest < Minitest::Test
 
     assert_equal REGISTRY.all.map { |app| app.key.to_s.split("_").map(&:capitalize).join },
                  spec.fetch("configs").keys
-    native = File.expand_path("../../../../MASTER/tools/rails/native", __dir__)
+    native = File.expand_path("../../MASTER/tools/rails/native", __dir__)
     assert_equal [{ "path" => File.join(native, "Pub4MobileApp.swift") }], spec.fetch("targets").fetch("Pub4Mobile").fetch("sources")
     settings = spec.fetch("targets").fetch("Pub4Mobile").fetch("settings").fetch("base")
     assert_equal File.join(native, "Info.plist"), settings.fetch("INFOPLIST_FILE")
