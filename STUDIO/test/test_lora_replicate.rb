@@ -830,6 +830,26 @@ class TestLoraReplicate < Minitest::Test
     end
   end
 
+  def test_tar_rejects_checkpoint_basename_aliases_across_directories_and_case
+    Dir.mktmpdir do |dir|
+      first = File.join(dir, "first")
+      second = File.join(dir, "second")
+      FileUtils.mkdir_p(first)
+      FileUtils.mkdir_p(second)
+      File.binwrite(File.join(first, "model.safetensors"), "first")
+      File.binwrite(File.join(second, "MODEL.SAFETENSORS"), "second")
+      archive = File.join(dir, "duplicate.tar")
+      _out, status = Open3.capture2(
+        "tar", "-cf", archive, "-C", dir, "first/model.safetensors", "second/MODEL.SAFETENSORS"
+      )
+      skip "tar cannot build the fixture" unless status.success?
+
+      errors = Preflight.unsafe_tar_entries(archive)
+      refute_empty errors
+      assert errors.any? { |entry| entry.include?("duplicate weight basename") }, errors.inspect
+    end
+  end
+
   def test_weight_archive_publishes_regular_checkpoints_from_dot_prefixed_tars
     Dir.mktmpdir do |dir|
       source = File.join(dir, "source")
