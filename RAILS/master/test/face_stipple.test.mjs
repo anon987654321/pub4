@@ -27,7 +27,7 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /budget\.desktop_points/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
   assert.match(system, /buildFromSamples/);
-  assert.match(system, /gl_PointSize = 1\.0/);
+  assert.match(system, /gl_PointSize = 1\.0 \+ clamp\(aBias, 0\.0, 1\.5\) \* 0\.75/);
   assert.match(system, /vThreshold = aThreshold/);
   assert.match(system, /vThreshold > uDensity/);
 });
@@ -99,9 +99,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     constructor(geometry, material) { this.geometry = geometry; this.material = material; this.type = "Points"; }
   }
 
-  const stipple = window.MASTER_FACE_STIPPLE.buildFromSamples({
-    BufferAttribute, BufferGeometry, Color, ShaderMaterial, Points
-  }, [{ x: 0, y: 0, z: 0, zone: 0, bias: 1 }]);
+  const THREE = { BufferAttribute, BufferGeometry, Color, ShaderMaterial, Points };
+  const api = window.MASTER_FACE_STIPPLE;
+  const stipple = api.buildFromSamples(THREE, [{ x: 0, y: 0, z: 0, zone: 0, bias: 1 }]);
   assert.equal(stipple.count, 1);
   assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
   assert.equal(stipple.material.uniforms.uRipple.value, 0.03);
