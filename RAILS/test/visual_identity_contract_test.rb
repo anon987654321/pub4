@@ -108,5 +108,17 @@ class VisualIdentityContractTest < Minitest::Test
     assert_includes adapters.fetch("bsdports"), "terminal green"
     assert_includes adapters.fetch("openbsd"), "plain operational text"
     assert_includes adapters.fetch("studio"), "operator-owned"
+
+    art = identity.fetch("art_direction")
+    type_roles = identity.fetch("typography_roles")
+    assert_equal 1, art.fetch("subject_count")
+    assert_equal true, art.fetch("preserve_media_colour")
+    assert_equal true, art.fetch("preserve_likeness")
+    assert_equal true, art.fetch("grade_is_explicit")
+    assert_includes art.fetch("typography_layer"), "editable"
+    assert_equal "text-display", type_roles.fetch("display")
+    assert_equal "text-base", type_roles.fetch("body")
+    assert_equal "font-mono", type_roles.fetch("technical")
+    assert_includes type_roles.fetch("wordmark"), "original"
   end
 end
