@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "json"
 require_relative "design_edit"
 require_relative "layout_score_store"
 require_relative "visual_quality_gates"
@@ -46,6 +48,7 @@ module Master
         @say = say
         @rejected = []
         @undone = []
+        @judged = 0
         @spent = Hash.new(0)
       end
 
@@ -101,6 +104,15 @@ module Master
         @fresh = measured(guards.map { |row| row[:surface] })
         merge(@fresh)
         @target = @fresh.find { |row| row[:surface].id == @target[:surface].id }
+        keep_before_shot if @target
+        @target
+      end
+
+      # Re-rendering overwrites the screenshot, so the picture the vision check
+      # compares against is copied aside first.
+      def keep_before_shot
+        @before_shot = @target[:shot].sub(/\.png\z/, ".before.png")
+        FileUtils.cp(@target[:shot], @before_shot)
       end
 
       def give_up(number)
@@ -114,7 +126,7 @@ module Master
       end
 
       def propose(sources, variant)
-        reply = @world.ask.call(prompt(sources, variant), @target[:shot])
+        reply = @world.ask.call(prompt(sources, variant), [@target[:shot]])
         edit = DesignEdit.parse(reply, allowed: sources, rules: DesignEdit::Rules.new(guard: @world.guard, scale: nil))
         raise DesignEdit::Refused, "already tried and undone" if @rejected.include?(edit.key)
 
@@ -163,27 +175,54 @@ module Master
 
         gain = now[:score] - @target[:score]
         notes = problems(before, after)
-        { ok: gain >= TIE && notes.empty?, gain:, text: summary(now, notes) }
+        better = notes.empty? && (gain >= TIE || (gain >= -TIE && looks_better?(now)))
+        { ok: better, gain:, text: summary(now, notes) }
       end
 
       def summary(now, notes)
-        "#{@target[:score].round(1)} -> #{now[:score].round(1)}#{notes.map { |note| ", #{note}" }.join}"
+        shown = notes + [@vision].compact
+        "#{@target[:score].round(1)} -> #{now[:score].round(1)}#{shown.map { |note| ", #{note}" }.join}"
       end
 
       def problems(before, after)
         notes = []
         others = after.reject { |row| row[:surface].id == @target[:surface].id }
-        notes << "another surface scored lower" if others_worse?(before, others)
+        lower = lower_surfaces(before, others)
+        notes << "scored lower: #{lower.join(', ')}" unless lower.empty?
         added = new_offenders(before, after)
         notes << "new gate offenders: #{added.join(', ')}" unless added.empty?
         notes
       end
 
-      def others_worse?(before, others)
-        others.any? do |row|
+      def lower_surfaces(before, others)
+        others.filter_map do |row|
           was = before.find { |old| old[:surface].id == row[:surface].id }
-          row[:score] < (was ? was[:score] : 0) - OTHERS_TOLERANCE
+          drop = (was ? was[:score] : 0) - row[:score]
+          "#{row[:surface].id} -#{drop.round(1)}" if drop > OTHERS_TOLERANCE
         end
+      end
+
+      # The layout score is geometry arithmetic and does not move for many changes a
+      # person would see. When it is flat, a vision model compares the two renders; the
+      # order is alternated so the answer does not follow position.
+      def looks_better?(now)
+        @judged += 1
+        order = @judged.odd? ? [@before_shot, now[:shot]] : [now[:shot], @before_shot]
+        verdict = JSON.parse(@world.ask.call(vision_prompt, order)[/\{.*\}/m].to_s)
+        @vision = "vision: #{verdict['better']}, #{verdict['why']}".strip
+        verdict["better"].to_s.upcase == (order.first == now[:shot] ? "A" : "B")
+      rescue JSON::ParserError, StandardError
+        @vision = "vision: no verdict"
+        false
+      end
+
+      def vision_prompt
+        <<~TEXT
+          Two renders of the same page, A then B. Direction: #{DIRECTION}
+          Which has the better layout: clearer hierarchy, steadier spacing, nothing cramped or floating?
+          Say "same" if you cannot tell them apart.
+          Return only JSON: {"better": "A" or "B" or "same", "why": "<one short sentence>"}.
+        TEXT
       end
 
       # "name +n" for each offender kind that grew between two sets of rows.

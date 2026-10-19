@@ -77,7 +77,7 @@ module Operator
     def world_for(root:, dir:, agent:, graph:)
       Master::Fix::DesignLoop::World.new(
         measure: ->(rows) { shoot(rows, root:, dir:) },
-        ask: ->(prompt, image) { ask(agent, prompt:, image:) },
+        ask: ->(prompt, images) { ask(agent, prompt:, images:) },
         build: ->(app) { build_css(app, root:) },
         commit_file: ->(file, message) { commit(file, message, root:) },
         sources_for: ->(surface) { stylesheets(graph, surface) },
@@ -85,8 +85,10 @@ module Operator
       )
     end
 
-    def ask(agent, prompt:, image:)
-      agent.ask_once(prompt, law: false, image: { path: image, name: File.basename(image), mime: "image/png" })
+    # The first picture is the image; any further ones ride along as extras.
+    def ask(agent, prompt:, images:)
+      pictures = images.map { |path| { path:, name: File.basename(path), mime: "image/png" } }
+      agent.ask_once(prompt, law: false, image: pictures.first.merge(extra: pictures.drop(1)))
     end
 
     def stylesheets(graph, surface)

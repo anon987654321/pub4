@@ -120,31 +120,37 @@ class TestDesignLoop < Minitest::Test
   end
 
   # A fake world: padding 4px scores 40 on the home surface and 16px scores 60; others stay 50.
-  def fake_score(surface, wide:, other_drop:)
-    return(wide ? 60.0 : 40.0) if surface.id == "brgen/home"
+  def fake_score(surface, wide:, other_drop:, flat:)
+    return(wide && !flat ? 60.0 : 40.0) if surface.id == "brgen/home"
 
     wide ? 50.0 - other_drop : 50.0
   end
 
-  def world_for(path, committed:, other_drop: 0)
+  def screenshot(path, surface)
+    shot = File.join(File.dirname(path), "#{surface.id.tr('/', '_')}.png")
+    File.write(shot, "png")
+    shot
+  end
+
+  def world_for(path, committed:, other_drop: 0, flat: false, vision: '{"better":"same","why":"no difference"}')
     measure = lambda do |surfaces|
       wide = File.read(path).include?("padding: 16px")
       surfaces.map do |surface|
-        score = fake_score(surface, wide:, other_drop:)
-        [surface, { "score" => score }, "/dev/null"]
+        [surface, { "score" => fake_score(surface, wide:, other_drop:, flat:) }, screenshot(path, surface)]
       end
     end
+    edit = reply(path, find: "padding: 4px;", replace: "padding: 16px;")
     LOOP::World.new(
-      measure:, ask: ->(_prompt, _image) { reply(path, find: "padding: 4px;", replace: "padding: 16px;") },
+      measure:, ask: ->(prompt, _images) { prompt.include?("Two renders") ? vision : edit },
       build: ->(_app) { true }, commit_file: ->(file, message) { committed << [file, message] },
       sources_for: ->(_surface) { [path] }, guard: nil
     )
   end
 
-  def loop_for(path, committed:, other_drop: 0)
+  def loop_for(path, committed:, **world)
     surfaces = [Surface.new("brgen/home", "brgen"), Surface.new("brgen/feed", "brgen")]
     plan = LOOP::Plan.new(surfaces:, root: Dir.pwd, rounds: 3, candidates: 1)
-    LOOP.new(plan:, world: world_for(path, committed:, other_drop:))
+    LOOP.new(plan:, world: world_for(path, committed:, **world))
   end
 
   def stub_scoring(&block)
@@ -174,6 +180,31 @@ class TestDesignLoop < Minitest::Test
       committed = []
       stub_scoring do
         rounds = loop_for(path, committed:, other_drop: 5).run
+
+        assert_empty rounds.select { |round| round.outcome == :kept }
+        assert_includes File.read(path), "padding: 4px;"
+        assert_empty committed
+      end
+    end
+  end
+  # The score can sit flat while a person sees a better page, so a vision check decides then.
+  def test_a_flat_score_is_kept_when_the_vision_check_says_the_new_render_is_better
+    with_sheet do |path|
+      committed = []
+      stub_scoring do
+        rounds = loop_for(path, committed:, flat: true, vision: '{"better":"B","why":"more room"}').run
+
+        assert_equal :kept, rounds.first.outcome
+        assert_equal [path], committed.map(&:first)
+      end
+    end
+  end
+
+  def test_a_flat_score_is_undone_when_the_vision_check_cannot_tell_the_renders_apart
+    with_sheet do |path|
+      committed = []
+      stub_scoring do
+        rounds = loop_for(path, committed:, flat: true).run
 
         assert_empty rounds.select { |round| round.outcome == :kept }
         assert_includes File.read(path), "padding: 4px;"
