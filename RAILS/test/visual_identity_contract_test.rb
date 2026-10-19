@@ -18,6 +18,7 @@ class VisualIdentityContractTest < Minitest::Test
   BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_shared_chrome.scss")
   FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
   SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
+  LAWS_SOURCE = File.read(File.expand_path("../../MASTER/data/laws.yml", __dir__), encoding: "UTF-8")
 
   def test_signal_is_canonical_original_and_semantically_named
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
@@ -100,7 +101,21 @@ class VisualIdentityContractTest < Minitest::Test
     assert_includes shared_motion, "animation: none;"
   end
 
-  def test_product_dialects_remain_explicit_in_the_visual_contract
+  def test_canonical_visual_contract_requires_runtime_and_performance_proof
+      %w[
+        reduced_motion_runtime
+        aggregate_render_budget
+        renderer_lifecycle
+        render_state_regression
+        device_performance_evidence
+      ].each { |requirement| assert_includes LAWS_SOURCE, requirement }
+  
+      assert_includes LAWS_SOURCE, "Reduced-motion policy applies to every animated layer and transition"
+      assert_includes LAWS_SOURCE, "no adapter may spend the whole renderer budget independently"
+      assert_includes LAWS_SOURCE, "JavaScript render-call cadence from GPU completion"
+    end
+  
+    def test_product_dialects_remain_explicit_in_the_visual_contract
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
     adapters = identity.fetch("adaptations")
 
