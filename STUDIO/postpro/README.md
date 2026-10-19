@@ -1,6 +1,6 @@
 # postpro
 
-Startup diagnostics, dependency probing and the explicit opt-in dependency-installation path live in `bootstrap.rb`. Loading the entrypoint is observational; `rake postpro:bootstrap` is the intentional installation command.
+Startup diagnostics, dependency probing and the explicit opt-in dependency-installation path live in `bootstrap.rb`; optional per-effect texture/contrast diagnostics live in `explain.rb`. Loading the entrypoint is observational; `rake postpro:bootstrap` is the intentional installation command.
 
 **Film is a physical process, and postpro models the process rather than imitating the
 result.** A filter is a lookup table with an opinion. This is an emulsion: crystals with a
