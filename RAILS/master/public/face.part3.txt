@@ -835,12 +835,13 @@ cv.addEventListener('pointerup', () => {
     const cur = rootBody.dataset.runtimeProfile || 'full';
     const idx = RUNTIME_PROFILES.indexOf(cur);
     const next = RUNTIME_PROFILES[(idx + 1 + RUNTIME_PROFILES.length) % RUNTIME_PROFILES.length] || 'full';
-    rootBody.dataset.runtimeProfile = next;
+    const effectiveNext = faceReducedMotionActive() ? 'battery' : next;
+    rootBody.dataset.runtimeProfile = effectiveNext;
     State.profileOverride = next;
-    if (window.ParticleKernel && eyePool) {
+    if (!faceReducedMotionActive() && window.ParticleKernel && eyePool) {
       window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });
     }
-    window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: next });
+    window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: effectiveNext });
     resize();
   }
   lastTapT = now;
