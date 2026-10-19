@@ -11,6 +11,22 @@ const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 const system = readFileSync(join(publicDir, "face_stipple_system.js"), "utf8");
 const playground = readFileSync(join(publicDir, "face_playground.js"), "utf8");
 const css = readFileSync(join(publicDir, "face.css"), "utf8");
+const faceStateSource = readFileSync(join(publicDir, "face_state.js"), "utf8");
+const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8");
+
+test("shared face budgets classify coarse pointers and declared reduced motion", () => {
+  assert.match(faceStateSource, /mediaMatches\("\(pointer: coarse\)"\)/);
+  assert.match(faceStateSource, /dataset\?\.reducedMotion === "1"/);
+  assert.match(sparseField, /function reducedMotionEnabled\(state = \{\}\)/);
+  assert.match(sparseField, /window\.matchMedia\?\.\("\(pointer: coarse\)"\)/);
+  assert.match(sparseField, /const reduced = reducedMotionEnabled\(state\)/);
+});
+
+test("stipple discovery accepts Group containers with point children", () => {
+  assert.match(system, /function hasFacePoints\(node\)/);
+  assert.match(system, /scene\.children\.some\(hasFacePoints\)/);
+  assert.match(system, /scene\.children\.find\(hasFacePoints\)/);
+});
 
 test("stipple assets are declared after existing face modules", () => {
   assert.match(manifest, /- master_namespace\s+- face_stipple_system\s+- face_playground/);
