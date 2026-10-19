@@ -291,6 +291,13 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(stipple.material.uniforms.uTime.value, 0);
   assert.equal(api.snapshot().reducedMotion, true);
   document.documentElement.dataset.reducedMotion = "0";
+  window.MASTER_FACE = { State: { reducedMotion: true } };
+  api.tick(stipple, { mode: "thinking", reducedMotion: false }, 5);
+  assert.equal(stipple.material.uniforms.uTime.value, 0);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0);
+  assert.equal(stipple.material.uniforms.uTurbulence.value, 0);
+  assert.equal(api.snapshot().reducedMotion, true);
+  window.MASTER_FACE.State.reducedMotion = false;
 
   // The layer never exceeds the canonical desktop/mobile point ceiling.
   assert.equal(api.createDefault(THREE, 5000).count, 1200);
