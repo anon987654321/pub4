@@ -299,6 +299,7 @@ test("calm profile is default and gates rich idle motion", () => {
   assert.match(part1, /\['calm', 'full', 'crt', 'battery'\]/);
   assert.match(part1, /function isRichMotionProfile/);
   assert.match(part1, /function faceReducedMotionActive\(\)/);
+  assert.match(part1, /document\.documentElement\?\.dataset\?\.reducedMotion === '1'/);
   assert.match(part1, /if \(faceReducedMotionActive\(\)\) return false/);
   assert.match(part1, /faceReducedMotionActive\(\) \? 'battery'/);
   assert.match(part1, /if \(v === 'thinking' && !faceReducedMotionActive\(\)/);
