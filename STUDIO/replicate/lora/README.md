@@ -174,8 +174,9 @@ the pipeline.
 
 - `curate.rb` decides which photographs earn a place and prepares them, and `heal.rb` removes a
   mark from skin in the ungraded original before anything grades it.
-- `preflight.rb` guards every paid run, `judge.rb` refuses a frame worse than a real photograph
-  of the subject against `judge_thresholds.yml`, and `shoots.rb` picks the sittings.
+- `preflight.rb` guards every paid run, `weight_archive.rb` validates and stages downloaded
+  checkpoints without extracting untrusted links, `judge.rb` refuses a frame worse than a real
+  photograph of the subject against `judge_thresholds.yml`, and `shoots.rb` picks the sittings.
 - `contact_sheet.rb` lays frames out as one sheet, and `postpro_samples.rb` grades generated
   portraits.
 - The `run_generate.sh` script is the dispatcher every `./lora` flag lands in, and `toolkit.sh`
