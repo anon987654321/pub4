@@ -28,6 +28,53 @@ test("stipple discovery accepts Group containers with point children", () => {
   assert.match(system, /scene\.children\.find\(hasFacePoints\)/);
 });
 
+function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, cores = 8, reducedMotion = false, hidden = false } = {}) {
+  const window = {
+    MASTER_FACE_CONTRACT: {
+      state: {
+        modes: ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"],
+        default_mode: "idle", default_topology: "face", entropy: 0.18, confidence: 0.86,
+        attention: 1, arousal: 0.22, valence: 0.18, focus: 0.86, activity: 0.14, risk: 0
+      },
+      spatial: { budget: {
+        desktop_points: 1200, mobile_points: 420, desktop_particles: 200, mobile_particles: 120,
+        reduced_motion_particles: 64, max_device_pixel_ratio: 2, active_fps: 24, idle_fps: 12,
+        hidden_fps: 0, reduced_motion_fps: 8, battery_fps: 12, pulse_limit: 24, hud_labels: 5
+      } }
+    },
+    addEventListener() {},
+  };
+  const document = {
+    documentElement: { dataset: { reducedMotion: reducedMotion ? "1" : "0", runtimeProfile: "" }, style: { setProperty() {} } },
+    body: { dataset: {} }, hidden, addEventListener() {}, getElementById() { return null; }
+  };
+  const matchMedia = (query) => ({ matches:
+    query === "(pointer: coarse)" ? coarsePointer :
+    query === "(max-width: 767px)" ? narrowViewport : false
+  });
+  runInNewContext(faceStateSource, {
+    window, document, matchMedia, navigator: { hardwareConcurrency: cores }, devicePixelRatio: 2,
+    performance: { now: () => 100 },
+    CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } }
+  });
+  return window.MASTER_FACE_STATE;
+}
+
+test("shared render budget gives coarse-pointer devices the mobile ceiling", () => {
+  assert.equal(loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget().points, 420);
+  assert.equal(loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget().particles, 120);
+  assert.equal(loadFaceStateBudget({ narrowViewport: true, cores: 8 }).renderBudget().points, 420);
+  assert.equal(loadFaceStateBudget({ cores: 4 }).renderBudget().points, 420);
+  assert.equal(loadFaceStateBudget({}).renderBudget().points, 1200);
+});
+
+test("shared render budget honors declared reduced motion and hidden-tab ceilings", () => {
+  const reduced = loadFaceStateBudget({ reducedMotion: true }).renderBudget();
+  assert.equal(reduced.particles, 64);
+  assert.equal(reduced.fps, 8);
+  assert.equal(loadFaceStateBudget({ hidden: true }).renderBudget().fps, 0);
+});
+
 test("stipple assets are declared after existing face modules", () => {
   assert.match(manifest, /- master_namespace\s+- face_stipple_system\s+- face_playground/);
   assert.match(system, /window\.MASTER_FACE_STIPPLE/);
