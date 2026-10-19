@@ -179,7 +179,7 @@ module Master
       end
 
       def dispatch_turn(input, accumulated:, state:)
-        return Master::Result.err("turn cancelled before dispatch", category: :cancelled) if turn_cancel_requested?
+        return Master::Result.err("turn cancelled before dispatch", category: :abort) if turn_cancel_requested?
 
         on_turn = build_on_turn_handler(accumulated, state)
         @pipeline_thread = spawn_pipeline_thread(input, on_turn)

@@ -249,9 +249,9 @@ class TestCLI < Minitest::Test
     review = Master::CLI::CommandRegistry.help_text("review")
     fix = Master::CLI::CommandRegistry.help_text("fix")
 
-    assert_match(%r{^fix0 at master0: /fix \[path\] is the primary repair operation}, summary)
-    assert_match(/^write0 at master0: \/fix is the canonical repair path/, summary)
-    assert_match(/^help0 at master0: \/help \[command\] shows command details/, summary)
+    assert_match(%r{^fix0 at master0: /fix \[path\]$}, summary)
+    assert_match(/^health0 at master0: \/status \/doctor \/events$/, summary)
+    assert_match(/^help0 at master0: \/help \[command\]$/, summary)
     refute_includes summary, "--dry-run"
     assert_includes review, "/review [path]"
     assert_includes review, "--only", "the stages are the detail, not the summary"
@@ -404,14 +404,15 @@ end
   def test_prompt_refreshes_skills_before_rendering
     skills = Minitest::Mock.new
     skills.expect(:discover!, [])
-    renderer = Minitest::Mock.new
-    renderer.expect(:prompt_token, "master$")
-    renderer.expect(:render, "master$ ", ["master$ "], mode: :dim)
+    session = Struct.new(:phase, :token_est, :cost).new(:ready, 0, 0.0)
+    agent = Struct.new(:model).new("test-model")
+    renderer = Object.new
+    renderer.define_singleton_method(:prompt_line) { |*_args, **_options| [nil, "master$ "] }
 
     cli = Master::CLI::Session.new(
       container: {
-        session: Object.new,
-        agent: Object.new,
+        session:,
+        agent:,
         renderer:,
         logging: Object.new,
         undo: Object.new,
@@ -426,7 +427,6 @@ end
 
     assert_equal "master$ ", output
     skills.verify
-    renderer.verify
   end
 
   def test_model_list_is_one_row_per_model_with_the_current_one_marked
