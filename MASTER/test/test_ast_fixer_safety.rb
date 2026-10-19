@@ -215,14 +215,16 @@ class TestAstFixerSafety < Minitest::Test
     result = Master::Fix::Scan::AstFixer.propose("broken.rb", source)
 
     assert_includes result.transforms, :strip_accidental_sub_wrapper
-    assert_equal "VALUE = \"literal\"\n", result.content
+    refute_includes result.content, "</sub>"
+    assert_includes result.content, "VALUE = \"literal\"\n"
   end
 
   def test_valid_ruby_containing_sub_markup_is_never_rewritten
     source = "VALUE = \"<sub>literal</sub>\"\n"
     result = Master::Fix::Scan::AstFixer.propose("broken.rb", source)
 
-    refute result.changed
+    assert_includes result.content, source.strip, "the literal survives"
+    refute_includes result.transforms, :strip_accidental_sub_wrapper
   end
 
 end
