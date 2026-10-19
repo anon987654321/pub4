@@ -17,7 +17,24 @@
 
   const overrides = {};
   let wrappedRenderer = null;
+  let originalRender = null;
+  let renderWrapper = null;
+  let rendererCanvas = null;
   let active = null;
+  let renderedFrames = 0;
+  let lastFrameAt = 0;
+  let lastRenderIntervalMs = null;
+  let contextState = "ready";
+
+  function reducedMotionEnabled(state = {}) {
+    const mediaReduced = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+    const declaredReduced = document.documentElement?.dataset?.reducedMotion === "1";
+    return Boolean(state?.reducedMotion) || declaredReduced || mediaReduced;
+  }
+
+  function currentFaceState() {
+    return window.MASTER_FACE_STATE?.snapshot?.() || window.MASTER_FACE?.State || {};
+  }
 
   const clamp = (value, fallback, min = 0, max = 1) => {
     const number = Number(value);
@@ -31,7 +48,7 @@
   function pointBudget(requested) {
     const contract = window.MASTER_FACE_CONTRACT || {};
     const budget = contract.spatial?.budget || {};
-    const mobile = matchMedia("(pointer: coarse)").matches;
+    const mobile = Boolean(window.matchMedia?.("(pointer: coarse)")?.matches);
     const configured = Number(mobile ? budget.mobile_points : budget.desktop_points);
     const fallback = mobile ? MOBILE_FALLBACK : DESKTOP_FALLBACK;
     const ceiling = Number.isFinite(configured) && configured > 0
@@ -173,9 +190,11 @@
           p.xy *= 1.0 - uAttract * 0.007;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          // Keep the face mostly pin-sharp, but let sample bias create a restrained size hierarchy.
-          // Hardware may clamp this range; the silhouette must remain legible at one pixel.
-          gl_PointSize = 1.0 + clamp(aBias, 0.0, 1.5) * 0.75;
+          // Keep a restrained bias hierarchy and attenuate it with camera distance.
+          // The 5-unit reference matches the canonical face camera; hardware may clamp the result.
+          float distanceScale = clamp(5.0 / max(1.0, -mv.z), 0.75, 1.25);
+          float biasedSize = 0.90 + clamp(aBias, 0.25, 1.5) * 0.35;
+          gl_PointSize = clamp(biasedSize * distanceScale, 1.0, 1.5);
           vThreshold = aThreshold;
           vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * (1.0 - uEntropy * 0.08), 0.0, 1.0);
           vZone = aZone;
@@ -236,7 +255,7 @@
         ? clamp(pressureRaw / 100, 0, 0, 1)
         : clamp(pressureRaw, 0, 0, 1);
     const entropy = clamp(state.pressureFields?.entropy ?? state.entropy ?? 0.18, 0.18, 0, 1);
-    const motion = state.reducedMotion ? 0 : 1;
+    const motion = reducedMotionEnabled(state) ? 0 : 1;
     const u = system.material.uniforms;
     u.uDensity.value = clamp(profile.density + (pressure - 0.5) * 0.24, profile.density, 0.08, 0.98);
     u.uRipple.value = clamp(profile.ripple, 0, 0, 1) * motion;
@@ -253,7 +272,7 @@
 
   function tick(system, state, timeSeconds) {
     if (!system?.material) return;
-    system.material.uniforms.uTime.value = state?.reducedMotion ? 0 : Number(timeSeconds) || 0;
+    system.material.uniforms.uTime.value = reducedMotionEnabled(state) ? 0 : Number(timeSeconds) || 0;
     syncFromFaceState(system, state);
   }
 
@@ -276,11 +295,21 @@
       window.MASTER_LOG?.warn?.("face_stipple:three_import_failed", error);
       return;
     }
-    if (wrappedRenderer || !window.MASTER_FACE?.renderer) return;
+    if (wrappedRenderer || window.MASTER_FACE?.renderer !== renderer) return;
 
-    const originalRender = renderer.render;
+    const previousRender = renderer.render;
+    originalRender = previousRender;
     wrappedRenderer = renderer;
-    renderer.render = function(scene, camera, ...rest) {
+    rendererCanvas = renderer.domElement || null;
+    rendererCanvas?.addEventListener?.("webglcontextlost", onContextLost, false);
+    rendererCanvas?.addEventListener?.("webglcontextrestored", onContextRestored, false);
+    document.addEventListener?.("visibilitychange", onVisibilityChange, false);
+    renderWrapper = function(scene, camera, ...rest) {
+      const now = performance.now();
+      if (lastFrameAt > 0) lastRenderIntervalMs = Math.max(0, now - lastFrameAt);
+      lastFrameAt = now;
+      renderedFrames += 1;
+      if (active?.points) active.points.visible = !document.hidden && contextState !== "lost";
       if (!active && isFaceScene(scene)) {
         const root = scene.children.find((node) => node?.type === "Object3D" &&
           node.children?.some((child) => child?.type === "Points"));
@@ -292,9 +321,77 @@
         window.__MASTER_STIPPLE__ = active;
       }
       if (active && (active.root === scene || active.root?.parent === scene)) {
-        tick(active, window.MASTER_FACE?.State || {}, performance.now() * 0.001);
+        tick(active, currentFaceState(), performance.now() * 0.001);
       }
-      return originalRender.call(this, scene, camera, ...rest);
+      return previousRender.call(this, scene, camera, ...rest);
+    };
+    renderer.render = renderWrapper;
+  }
+
+  function onContextLost() {
+    contextState = "lost";
+    if (active?.points) active.points.visible = false;
+    window.dispatchEvent?.(new CustomEvent("master:stipple-context", { detail: { state: "lost" } }));
+  }
+
+  function onContextRestored() {
+    contextState = "ready";
+    if (active?.points) active.points.visible = !document.hidden;
+    window.dispatchEvent?.(new CustomEvent("master:stipple-context", { detail: { state: "restored" } }));
+  }
+
+  function onVisibilityChange() {
+    if (active?.points) active.points.visible = !document.hidden && contextState !== "lost";
+  }
+
+  function uninstall() {
+    const wasInstalled = Boolean(wrappedRenderer);
+    if (wrappedRenderer && renderWrapper && wrappedRenderer.render === renderWrapper && originalRender) {
+      wrappedRenderer.render = originalRender;
+    }
+    rendererCanvas?.removeEventListener?.("webglcontextlost", onContextLost, false);
+    rendererCanvas?.removeEventListener?.("webglcontextrestored", onContextRestored, false);
+    document.removeEventListener?.("visibilitychange", onVisibilityChange, false);
+    if (active?.root && active.points) active.root.remove?.(active.points);
+    active?.geometry?.dispose?.();
+    active?.material?.dispose?.();
+    if (window.__MASTER_STIPPLE__ === active) delete window.__MASTER_STIPPLE__;
+    active = null;
+    wrappedRenderer = null;
+    originalRender = null;
+    renderWrapper = null;
+    rendererCanvas = null;
+    renderedFrames = 0;
+    lastFrameAt = 0;
+    lastRenderIntervalMs = null;
+    contextState = "ready";
+    return wasInstalled;
+  }
+
+  function snapshot() {
+    const state = currentFaceState();
+    const uniforms = active?.material?.uniforms || {};
+    const value = (name) => {
+      const raw = uniforms[name]?.value;
+      return Number.isFinite(Number(raw)) ? Number(raw) : null;
+    };
+    return {
+      enabled,
+      installed: Boolean(wrappedRenderer && renderWrapper && wrappedRenderer.render === renderWrapper),
+      visible: Boolean(active?.points?.visible && !document.hidden && contextState !== "lost"),
+      hidden: Boolean(document.hidden),
+      context: contextState,
+      reducedMotion: reducedMotionEnabled(state),
+      mode: String(state.mode || state.mood || "idle").toLowerCase(),
+      pointCount: Number(active?.count) || 0,
+      pointCeiling: pointBudget(),
+      rendererCalls: renderedFrames,
+      lastRenderIntervalMs,
+      uniforms: {
+        density: value("uDensity"), ripple: value("uRipple"), turbulence: value("uTurbulence"),
+        luminosity: value("uLuminosity"), attract: value("uAttract"), opacity: value("uOpacity"),
+        time: value("uTime")
+      }
     };
   }
 
@@ -318,7 +415,7 @@
     get profiles() { return profiles(); },
     get system() { return active; },
     get enabled() { return enabled; },
-    install
+    install, uninstall, snapshot
   });
 
   window.addEventListener("master:face-ready", install);
