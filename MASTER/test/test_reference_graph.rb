@@ -24,6 +24,20 @@ class TestReferenceGraph < Minitest::Test
     end
   end
 
+  # File.binread returns nil at the end of an empty file; a .gitkeep crashed the whole /fix structure stage.
+  def test_an_empty_file_does_not_crash_the_walk
+    Dir.mktmpdir("reference-graph") do |root|
+      FileUtils.mkdir_p(File.join(root, "MASTER", "data"))
+      File.write(File.join(root, "MASTER", "data", ".gitkeep"), "")
+      File.write(File.join(root, "MASTER", "a.rb"), "module A; end
+")
+
+      result = Master::Review::ReferenceGraph.new(root:).build
+
+      assert result[:edges].is_a?(Array)
+    end
+  end
+
   def test_blast_radius_uses_the_resolved_cross_tree_edge
     Dir.mktmpdir("reference-graph") do |root|
       caller = File.join(root, "RAILS", "brgen", "app.rb")

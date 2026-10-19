@@ -356,7 +356,8 @@ module Master
         size = File.size(path)
         return false if size > MAX_TEXT_BYTES
 
-        probe = File.binread(path, PROBE_BYTES)
+        # binread returns nil at the end of an empty file, which a .gitkeep is.
+        probe = File.binread(path, PROBE_BYTES).to_s
         return false if probe.include?("\0")
 
         # Extensionless source and dotfiles are common authoritative inputs

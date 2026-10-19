@@ -429,6 +429,27 @@ end
     skills.verify
   end
 
+  # A pass hands the critique a file as its root; git -C needs the file's directory.
+  def test_the_critique_diff_of_a_file_runs_in_its_directory_limited_to_the_file
+    Dir.mktmpdir do |dir|
+      identity = %w[-c user.email=t@t -c user.name=t]
+      git = ->(*args) { Master::Io::Exec.capture2e("git", "-C", dir, *identity, *args) }
+
+      file = File.join(dir, "a.rb")
+      git.call("init", "-q")
+      File.write(file, "A = 1\n")
+      git.call("add", "a.rb")
+      git.call("commit", "-q", "-m", "a")
+      File.write(file, "A = 2\n")
+      File.write(File.join(dir, "b.rb"), "B = 1\n")
+
+      diff = Master::CLI::CouncilCrit.diff_artifact(file, scope: "diff")
+
+      assert_includes diff, "+A = 2"
+      refute_includes diff, "b.rb"
+    end
+  end
+
   def test_model_list_is_one_row_per_model_with_the_current_one_marked
     agent = Struct.new(:model).new("ollama:gemma3:4b")
     rows = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:).lines
