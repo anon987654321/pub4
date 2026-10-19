@@ -15,6 +15,8 @@ const faceStateSource = readFileSync(join(publicDir, "face_state.js"), "utf8");
 const faceWorld = readFileSync(join(publicDir, "face_world.js"), "utf8");
 const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8");
 const microInteractions = readFileSync(join(publicDir, "face_micro_interactions.js"), "utf8");
+const faceParticles = readFileSync(join(publicDir, "face_particles.js"), "utf8");
+const phosphorTrail = readFileSync(join(publicDir, "face_phosphor_trail.js"), "utf8");
 
 test("shared face budgets classify coarse pointers and declared reduced motion", () => {
   assert.match(faceStateSource, /mediaMatches\("\(pointer: coarse\)"\)/);
@@ -34,6 +36,58 @@ test("stipple discovery accepts Group containers with point children", () => {
   assert.match(system, /function hasFacePoints\(node\)/);
   assert.match(system, /scene\.children\.some\(hasFacePoints\)/);
   assert.match(system, /scene\.children\.find\(hasFacePoints\)/);
+});
+
+test("particle emissions share the canonical reduced-motion policy", () => {
+  let reduced = true;
+  let spawns = 0;
+  const listeners = new Map();
+  const window = {
+    MASTER_FACE_STATE: { reducedMotion: () => reduced },
+    ParticleKernel: { spawn: () => { spawns += 1; } },
+    addEventListener: (name, callback) => listeners.set(name, callback)
+  };
+  const performance = { now: () => 1000 };
+  const document = { documentElement: { dataset: { reducedMotion: "0" } } };
+  runInNewContext(faceParticles, { window, document, performance, matchMedia: () => ({ matches: false }) });
+  listeners.get("audio:update")({ detail: { onset: 0.9, mid: 0.5, bass: 0.5, high: 0.3, rms: 0.2 } });
+  const state = { reducedMotion: false, confidence: 0.9, pressureFields: {}, emotionalGhosts: [] };
+  const pool = {};
+  window.MASTER_FACE_PARTICLES.reactAudio(state, pool);
+  window.MASTER_FACE_PARTICLES.spawnEmotionalGhost(state, pool, "thinking");
+  assert.equal(spawns, 0);
+  reduced = false;
+  window.MASTER_FACE_PARTICLES.reactAudio(state, pool);
+  window.MASTER_FACE_PARTICLES.spawnEmotionalGhost(state, pool, "thinking");
+  assert.ok(spawns > 0);
+});
+
+test("phosphor afterimage capture stops when canonical reduced motion is active", () => {
+  let reduced = true;
+  let draws = 0;
+  let creations = 0;
+  const context = {
+    globalCompositeOperation: "source-over", globalAlpha: 1, fillStyle: "",
+    drawImage() { draws += 1; }, fillRect() {},
+  };
+  const body = { dataset: { runtimeProfile: "calm" }, appendChild() {} };
+  const document = {
+    body, documentElement: { dataset: { aesthetic: "", reducedMotion: "0" } },
+    createElement() { creations += 1; return { id: "", style: {}, width: 0, height: 0, getContext: () => context }; }
+  };
+  const window = {
+    MASTER_FACE_STATE: { snapshot: () => ({}), reducedMotion: () => reduced },
+    addEventListener() {}
+  };
+  runInNewContext(phosphorTrail, { window, document, matchMedia: () => ({ matches: false }) });
+  window.MASTER_PHOSPHOR_TRAIL.capture({ width: 32, height: 32 });
+  assert.equal(draws, 0);
+  assert.equal(creations, 0);
+  assert.equal(window.MASTER_PHOSPHOR_TRAIL.reducedMotion(), true);
+  reduced = false;
+  window.MASTER_PHOSPHOR_TRAIL.capture({ width: 32, height: 32 });
+  assert.equal(draws, 1);
+  assert.equal(creations, 1);
 });
 
 test("micro-interactions remove continuous motion and crown spawns under reduced motion", () => {
