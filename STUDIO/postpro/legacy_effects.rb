@@ -249,9 +249,9 @@ module Postpro
       r, g, b = image.bandsplit
       shift = [[image.width * 0.004 * i, 1.0].max.round, 1].max
       shifted = Vips::Image.bandjoin([
-        r.roll(shift, 0),
+        r.wrap(x: shift, y: 0),
         g,
-        b.roll(-shift, 0),
+        b.wrap(x: -shift, y: 0),
       ])
       noise = Vips::Image.gaussnoise(image.width, image.height, sigma: 6.0 * i)
       noise = rgb_bands(noise, image.bands)

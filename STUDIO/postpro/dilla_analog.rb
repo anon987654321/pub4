@@ -31,7 +31,7 @@ module Postpro
       i = intensity.to_f.clamp(0.0, 1.0)
       x = image.cast("float") / 255.0
       drive = 0.35 + 1.15 * i
-      curved = (x * (1.0 + drive)) / (1.0 + (x * drive))
+      curved = (x * (1.0 + drive)) / ((x * drive) + 1.0)
       # Dilla's tape chain also rolls the top; keep it gentle enough to preserve
       # the current film curve and let the image's own stock decide colour.
       result = (curved * 255.0).gaussblur([image.width / 2600.0, 0.15].max)
@@ -55,9 +55,9 @@ module Postpro
       r, g, b = image.bandsplit
       scale = [image.width / 1800.0, 0.35].max * i
       offsets = NASTY_PHASE_OFFSETS
-      red = r.roll((offsets[1] * scale).round, 0)
+      red = r.wrap(x: (offsets[1] * scale).round, y: 0)
       green = g
-      blue = b.roll(-(offsets[2] * scale).round, 0)
+      blue = b.wrap(x: -(offsets[2] * scale).round, y: 0)
       shifted = Vips::Image.bandjoin([red, green, blue]).cast("float")
       safe_cast(image.cast("float") * (1.0 - 0.20 * i) + shifted * (0.20 * i))
     end
@@ -69,7 +69,7 @@ module Postpro
                     image
                   else
                     delta = ((NASTY_PHASE_OFFSETS[index] * [image.width / 1800.0, 0.35].max * i).round)
-                    image.roll(delta, index.even? ? delta / 2 : -(delta / 2))
+                    image.wrap(x: delta, y: index.even? ? delta / 2 : -(delta / 2))
                   end
         d = 0.18 + index * 0.07
         dilla_tape_saturation(shifted, d)

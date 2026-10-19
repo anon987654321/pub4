@@ -4250,7 +4250,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
 
     rescue StandardError => e
       failed_variations += 1
-      $logger.error "Variation #{i + 1} failed: #{e.message}"
+      $logger.error "Variation #{i + 1} failed: #{e.message} at #{e.backtrace&.first(4)&.join(' <- ')}"
       $cli_logger.error "Variation #{i + 1} failed: #{e.message}"
     end
   end
