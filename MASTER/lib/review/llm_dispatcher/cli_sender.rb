@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "base64"
+require "json"
 require "open3"
 require "tempfile"
 require "timeout"
@@ -139,10 +141,41 @@ end
       # waiting beats thrashing.
       CLI_SLOTS = Integer(ENV.fetch("MASTER_CLI_SLOTS", 2)).then { |n| SizedQueue.new(n).tap { |queue| n.times { queue << true } } }
 
-def send_claude_cli(model_alias, messages, sys:)
+def send_claude_cli(model_alias, messages, sys:, image: nil)
   return Result.err("claude-cli: no claude on PATH", category: :no_api_key) unless claude_on_path?
 
-  with_cli_slot { claude_cli_call(model_alias, messages, sys) }
+  with_cli_slot { claude_cli_call(model_alias, messages, sys, image) }
+end
+
+# The images a request carries, as the content blocks `claude --print` takes on
+# stream-json input: the primary image (a path or base64 data) then image[:extra].
+# The plain-text lane drops images, and a vision model that never saw the
+# screenshot judges a layout from numbers alone.
+def claude_image_blocks(image)
+  return [] unless image.respond_to?(:[])
+
+  entries = [image, *Array(image[:extra])]
+  entries.filter_map do |entry|
+    path = entry[:path].to_s
+    data = if !path.empty? && File.file?(path)
+      Base64.strict_encode64(File.binread(path))
+    elsif !entry[:data].to_s.empty?
+      entry[:data].to_s
+    end
+    next unless data
+
+    mime = entry[:mime].to_s
+    mime = { ".png" => "image/png", ".webp" => "image/webp", ".gif" => "image/gif" }.fetch(File.extname(path).downcase, "image/jpeg") if mime.empty?
+    { type: "image", source: { type: "base64", media_type: mime, data: } }
+  end
+end
+
+# The reply of a stream-json run: the final `result` event's text.
+def claude_stream_reply(out)
+  event = out.lines.filter_map { |line| JSON.parse(line) rescue nil }.reverse.find { |e| e["type"] == "result" }
+  return nil unless event
+
+  event["is_error"] ? nil : event["result"].to_s
 end
 
 # The same reading of PATH that ModelRouter uses to keep an absent lane
@@ -181,11 +214,17 @@ CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config"].freeze
 # the recordings. It is a quota, and the lane stands down like one.
 CLAUDE_CLI_LIMIT = /\A\s*(?:You've hit your \w*\s*limit|Claude (?:AI )?usage limit reached)/i
 
-def claude_cli_call(model_alias, messages, sys)
+def claude_cli_call(model_alias, messages, sys, image = nil)
   args = ["claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
   args += ["--system-prompt", sys] if sys && !sys.empty?
+  blocks = claude_image_blocks(image)
+  stdin = text_prompt_for(messages)
+  unless blocks.empty?
+    args += ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
+    stdin = JSON.generate(type: "user", message: { role: "user", content: [*blocks, { type: "text", text: stdin }] }) + "\n"
+  end
   timeout_s = claude_cli_timeout_s
-  out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: text_prompt_for(messages), env: CLAUDE_SESSION_ENV)
+  out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: stdin, env: CLAUDE_SESSION_ENV)
   # A CLI that dies with nothing on either stream taught the operator nothing:
   # the 2026-09-16 /fix printed "claude-cli:" and a blank a hundred and
   # seventy-eight times. `claude --print` from inside a session hangs and is
@@ -194,7 +233,9 @@ def claude_cli_call(model_alias, messages, sys)
     said = cli_lane_complaint(out, err) || "exited #{status.exitstatus} with nothing on either stream"
     return Result.err("claude-cli: #{said}", category: :provider_error)
   end
+  out = claude_stream_reply(out) || "" unless blocks.empty?
   return Result.err("claude-cli: #{out.strip.lines.first.strip}", category: :exhausted) if out.match?(CLAUDE_CLI_LIMIT)
+  return Result.err("claude-cli: no reply on stream-json output", category: :provider_error) if out.strip.empty? && !blocks.empty?
 
   Result.ok(out.strip)
 rescue Timeout::Error

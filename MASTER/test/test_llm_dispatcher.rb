@@ -370,6 +370,33 @@ end
     assert_includes captured_args, "--strict-mcp-config"
   end
 
+  # A screenshot given to the claude lane used to be dropped: the lane sent the
+  # text and the model judged a layout from numbers. Images ride stream-json.
+  def test_the_claude_cli_lane_carries_images_as_stream_json_content_blocks
+    dispatcher, = build_dispatcher
+    ok_status = Struct.new(:success?).new(true)
+    captured = nil
+    reply = JSON.generate(type: "result", is_error: false, result: "a black square")
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |_t, *args, stdin_data: nil, **|
+      captured = [args, stdin_data]
+      [reply + "\n", "", ok_status]
+    end
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "shot.png")
+      File.binwrite(path, "\x89PNG fake")
+      result = dispatcher.send(:claude_cli_call, "claude-sonnet-5-5", [{ role: "user", content: "look" }], nil,
+                               { path:, extra: [{ path: }] })
+
+      assert_equal "a black square", result.value!
+    end
+    args, stdin = captured
+    assert_includes args, "stream-json"
+    content = JSON.parse(stdin).dig("message", "content")
+    assert_equal %w[image image text], content.map { |block| block["type"] }
+    assert_equal "image/png", content.first.dig("source", "media_type")
+    assert_includes args, "--strict-mcp-config"
+  end
+
   # `claude` prefers ANTHROPIC_API_KEY to its subscription login. MASTER loads that key for
   # its API lanes, so the keyless CLI lane has to start without it or it fails on a spent key.
   def test_the_claude_cli_lane_starts_without_api_keys_so_the_login_answers
@@ -448,7 +475,7 @@ end
     dispatcher.define_singleton_method(:build_react_system) do |base|
       "#{base}\nAvailable tools: Browser"
     end
-    dispatcher.define_singleton_method(:send_claude_cli) do |model_alias, messages, sys:|
+    dispatcher.define_singleton_method(:send_claude_cli) do |model_alias, messages, sys:, image: nil|
       turns << { model_alias:, messages: messages.map(&:dup), system: sys }
       Master::Result.ok(replies.shift)
     end
