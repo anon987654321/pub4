@@ -43,6 +43,15 @@ ceiling it must respect.
 MASTER can run offline when a local model is available. It deploys to OpenBSD
 and judges a codebase without a cloud control plane.
 
+## Visual identity
+
+The current direction is **signal and stillness**: neutral, flat surfaces; decisive
+typography; deliberate negative space; and one original mineral-lime signal for
+meaningful states. The visual contract lives in `MASTER/data/laws.yml`; values
+live in `MASTER/data/tokens.yml`. The browser and terminal face are presentation
+adapters, not separate visual authorities. The signal must never obscure a truthful
+runtime state, reduce accessibility, or force another product's palette.
+
 ## The loop
 
 The whole control flow is a fold that fits on one screen. The model proposes an

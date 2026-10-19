@@ -159,4 +159,40 @@ def test_only_amber_owns_four_luxury_properties_and_the_check_still_passes
   assert_equal 4, DesignTokens::APP_OWNED_PALETTE.values.flatten.size
   assert_empty DesignTokens.dialect_token_drift
 end
+  def test_signal_and_stillness_is_single_sourced_for_both_css_generators
+    identity = DesignTokens.load.fetch("visual_identity")
+
+    assert_equal "signal_and_stillness", identity.fetch("name")
+    assert_equal "#C8F55F", identity.fetch("signal")
+    assert_equal "#101010", identity.fetch("signal_ink")
+    assert_equal "#50630A", identity.fetch("signal_on_light")
+    assert_equal "var(--pub4-signal)", DesignTokens.load.dig("face_root", "anchors", "c_accent")
+
+    shared = DesignTokens.static_tokens_css
+    face = DesignTokens.face_root_css
+    %w[pub4-signal pub4-signal-ink pub4-signal-on-light].each do |name|
+      assert_includes shared, "--#{name}:"
+      assert_includes face, "--#{name}:"
+    end
+    assert_includes face, "--c-accent: var(--pub4-signal);"
+  end
+
+  def test_signal_ink_has_adequate_contrast_for_its_intended_surfaces
+    identity = DesignTokens.load.fetch("visual_identity")
+    ratio = lambda do |foreground, background|
+      luminance = lambda do |hex|
+        rgb = hex.delete("#").scan(/../).map { |channel| channel.to_i(16) / 255.0 }
+        linear = rgb.map { |value| value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055)**2.4 }
+        0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+      end
+      values = [luminance.call(foreground), luminance.call(background)].sort.reverse
+      (values[0] + 0.05) / (values[1] + 0.05)
+    end
+
+    assert_operator ratio.call(identity.fetch("signal"), identity.fetch("signal_ink")), :>=, 7.0
+    assert_operator ratio.call(identity.fetch("signal_on_light"), "#FFFFFF"), :>=, 4.5
+    assert_operator ratio.call(identity.fetch("signal_on_light"), "#EFEFEF"), :>=, 4.5
+  end
+
+
 end

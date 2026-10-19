@@ -1,7 +1,7 @@
 # pub4 TODO
 
 Status: CONSOLIDATED_BACKLOG
-Updated: 2026-10-19 (external assessment tools, additive face stipple, and Pluribus logo research review; acceptance pending)
+Updated: 2026-10-19 (visual identity token foundation; rendered rollout and Pluribus research review pending)
 Authority: MASTER/data/soul.yml > MASTER/data/laws.yml > executable laws and gates > tree contracts > Git history.
 Owner: operator and maintainers, according to the environment each task requires.
 
@@ -169,7 +169,9 @@ A checkbox means unfinished or not yet proved. Old measurements below are histor
 
 ## P1 — visual identity research
 
-- [ ] Review [Pluribus Apple TV Show Logo Research - Grok.pdf](https://github.com/anon987654321/pub4/blob/main/__DELETE/Pluribus%20Apple%20TV%20Show%20Logo%20Research%20-%20Grok.pdf). Extract the report's actionable visual observations, separate supported evidence from speculation, and decide what (if anything) should inform pub4's own distinctive identity. Do not copy the Pluribus or Apple logo, wordmark, or other protected brand expression. Record approved decisions in the existing authoritative laws and token/feature sources rather than creating a parallel design authority; define concrete rendered acceptance evidence and screenshots before closing this item. The report remains research input until it has been reviewed and its disposition recorded.
+- [ ] Review [Pluribus Apple TV Show Logo Research - Grok.pdf](https://github.com/anon987654321/pub4/blob/main/__DELETE/Pluribus%20Apple%20TV%20Show%20Logo%20Research%20-%20Grok.pdf). Extract the report's actionable visual observations, separate supported evidence from speculation, and decide what (if anything) should inform pub4's own distinctive identity. Do not copy the Pluribus or Apple logo, wordmark, or other protected brand expression. Record approved decisions in the existing authoritative laws and token/feature sources rather than creating a parallel design authority; define concrete rendered acceptance evidence and screenshots before closing this item. A provisional signal-and-stillness token contract now exists, but the PDF is research input until reviewed and its disposition recorded.
+
+- [ ] Complete the rendered signal-and-stillness rollout across MASTER, Brgen, Amber, bsdports, OpenBSD Operator, documentation and STUDIO outputs. Use the canonical `MASTER/data/laws.yml#visual_identity_contract` and `MASTER/data/tokens.yml#tokens.visual_identity`; preserve each product dialect and operator-owned rendered values. Run token-generator/drift, law fixture, contrast, accessibility and motion checks; capture before/after Chrome screenshots at narrow and wide viewports, the terminal face and operator prompt, plus representative media renders. Remove the task only when the generated artifacts are synchronized, focused tests have real exit codes, and the visual evidence is reviewed. Source changes alone do not close this item.
 
 ## Canonical proof surfaces
 

@@ -15,6 +15,14 @@ before SSH, `doas`, deploy, DNS, relayd, NSD or recovery. `CLAUDE.md` holds the 
 edges that have burned agents here, and `PATH_OWNERSHIP.yml` says what every path is
 for. Read the man page for a file and its daemon before you change either.
 
+## Visual identity
+
+Operator output follows the shared contract in `MASTER/data/laws.yml`: plain,
+quiet status text; an explicit location and phase; and concise, truthful failure
+states. Colour is supplemental, never a replacement for written state. Keep the
+prompt free of decorative banners and keep the actual 3D/ASCII face inside its
+own renderer.
+
 ## Command entry points
 
 The commands live in one place. `data/operator.yml` is the source of the command

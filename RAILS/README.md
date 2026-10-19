@@ -69,6 +69,16 @@ All three apps compile the same service worker from the engine's `pwa` directory
 and the styled error pages in the engine's `public` directory are copied into each
 app at deploy.
 
+## Visual identity
+
+The shared contract is `MASTER/data/laws.yml#visual_identity_contract`, and its
+values are generated from `MASTER/data/tokens.yml`. Shared hierarchy and the
+semantic signal may travel across apps; product dialects do not collapse into one
+palette. Brgen retains its local editorial identity, Amber protects garment colour
+and neutral presentation, bsdports remains terminal-green, and MASTER's face uses
+the signal on ink. Review generated assets and rendered screenshots, not source
+tokens alone.
+
 ## Running it
 
 ```zsh

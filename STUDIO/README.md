@@ -27,6 +27,15 @@ automation should name the STUDIO path. Each tool is standalone: the entry point
 the MASTER process booted, and a gate refuses any file here that requires from MASTER, RAILS or
 OPENBSD. Read the README beside a tool before changing it.
 
+## Visual identity
+
+STUDIO can use pub4's restrained editorial composition for titles, previews and
+promotional artwork, while keeping the subject truthful and the treatment explicit.
+The shared values originate in `MASTER/data/tokens.yml`; they do not override
+operator-owned grades, colour science, likeness quality or Dilla's separate sonic
+identity. Any new visual treatment must be optional, reproducible and compared
+against a saved reference render.
+
 ## Output ownership
 
 The tools hand work to each other by file. Replicate grades what it generates through postpro

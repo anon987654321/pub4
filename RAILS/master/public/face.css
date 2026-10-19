@@ -34,9 +34,12 @@
 
 /* BEGIN:generated-face-root — ruby MASTER/tools/rails/generate_face_root_css.rb */
 :root {
+  --pub4-signal: #C8F55F;
+  --pub4-signal-ink: #101010;
+  --pub4-signal-on-light: #50630A;
   --c-text: oklch(86% 0.02 300);
   --x-text: #d8d6e0;
-  --c-accent: oklch(78% 0.10 300);
+  --c-accent: var(--pub4-signal);
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
   --font-mono: "Source Code Pro", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
