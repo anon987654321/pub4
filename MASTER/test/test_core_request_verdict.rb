@@ -50,14 +50,27 @@ class RequestVerdictTest < Minitest::Test
     assert_includes verdict.prompt, "removes a directory"
   end
 
-  # The rules after this one would be judging an effect nobody has agreed to.
-  def test_a_request_returns_immediately_and_is_not_revised_further
-    later = C::Constitution::Law.new(
-      id: :never_reached, verbs: %i[exec],
-      judge: ->(_e, _m) { raise "a later rule ran after a Request" }
+  # A Request is not a safety verdict: every later law still judges the effect, so a yes
+  # cannot approve what a later law would block, and a later allow leaves the Request standing.
+  def test_a_request_does_not_hide_a_later_block
+    blocker = C::Constitution::Law.new(
+      id: :later_block, verbs: %i[exec],
+      judge: ->(_e, _m) { C::Verdict::Block.new(reason: "later law refuses", by: :later_block) }
     )
     law = C::Constitution.new(
-      laws: [C::Constitution.send(:sandboxed_exec_rule, ->(_argv) { { ask: "check" } }), later],
+      laws: [C::Constitution.send(:sandboxed_exec_rule, ->(_argv) { { ask: "check" } }), blocker],
+    )
+
+    verdict = law.admit(effect, nil)
+
+    assert_kind_of C::Verdict::Block, verdict
+    assert_equal :later_block, verdict.by
+  end
+
+  def test_a_request_survives_a_later_law_that_allows
+    bystander = C::Constitution::Law.new(id: :later_allow, verbs: %i[exec], judge: ->(_e, _m) { nil })
+    law = C::Constitution.new(
+      laws: [C::Constitution.send(:sandboxed_exec_rule, ->(_argv) { { ask: "check" } }), bystander],
     )
 
     assert_kind_of C::Verdict::Request, law.admit(effect, nil)
