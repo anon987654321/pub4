@@ -106,9 +106,14 @@ module Master
           @config.respond_to?(:task_type) && @config.task_type.to_s == "chat"
         end
 
+        # The evidence rule prepare_evidence set for this turn rides along: a turn labelled casual
+        # still gets its repository or research route, and the model has to be told to take it.
         def casual_dynamic_prompt
+          root = @config["root"] || Master::ROOT
           [
             conversational_register_line,
+            "Working in #{root}. You can read and search it with your tools; check before claiming anything about its current state.",
+            Fiber[:master_evidence_note],
             ("Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic),
             (@memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)),
           ].compact.join("\n\n")

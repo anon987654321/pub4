@@ -24,8 +24,43 @@ class TestEvidenceRouter < Minitest::Test
     assert_equal :device, Router.classify("Scan nearby Wi-Fi and Bluetooth devices on Android.")
   end
 
+  def test_questions_about_master_itself_are_answered_from_the_repository
+    assert_equal :repository, Router.classify("why aren't you reading tts out loud?")
+    assert_equal :repository, Router.classify("what does /fix do by default?")
+    assert_equal :repository, Router.classify("how do your skills get loaded?")
+    assert_equal :unknown, Router.classify("how does this obscure protocol work?")
+    assert_equal :conversation, Router.classify("hello")
+  end
+
+  def test_unknown_questions_are_told_to_inspect_the_project_too
+    assert_match(/inspect them with your tools/, Router.prompt_for(:unknown))
+  end
+
   def test_unknown_factual_questions_get_an_evidence_prompt
     assert_equal :unknown, Router.classify("How does this obscure protocol work?")
     assert_match(/do not answer from memory/, Router.prompt_for(:unknown))
+  end
+
+  # A turn labelled casual still has an evidence route; its rule has to reach the prompt.
+  class CasualHost
+    include Master::Review::Agent::PromptBuilder
+
+    Config = Struct.new(:task_type) do
+      def [](key) = key == "root" ? "/work/pub4" : nil
+    end
+    Session = Struct.new(:messages, :topic)
+
+    def initialize = (@config = Config.new("chat"); @session = Session.new([{ role: :user, content: "why no tts?" }], nil))
+    def prompt = casual_dynamic_prompt
+  end
+
+  def test_the_casual_prompt_carries_the_evidence_rule_and_the_working_directory
+    Fiber[:master_evidence_note] = Router.prompt_for(:repository)
+    out = CasualHost.new.prompt
+
+    assert_includes out, "this turn concerns the repository"
+    assert_includes out, "Working in /work/pub4"
+  ensure
+    Fiber[:master_evidence_note] = nil
   end
 end

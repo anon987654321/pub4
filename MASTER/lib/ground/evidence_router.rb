@@ -17,6 +17,12 @@ module Master
       # foo.rb or notes.md do not end in a registrable TLD, so they stay repository questions.
       SITE = %r{\bhttps?://\S+|\bwww\.\S+|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|co|app|shop|store|no|se|dk|de|uk|fr|nl|eu)\b}i
       SITE_INTENT = /\b(?:go\s+to|visit|summari[sz]e|headlines?|news|today(?:['’]s)?|latest|current|find|look(?:ing)?|search|browse|check|open|read|see|show|get|buy|price|prices|cheap(?:est)?|compare|reviews?|listings?|products?|deals?|order|what'?s\s+on)\b/i
+      # A question put to MASTER about itself ("why aren't you reading TTS aloud?", "what does /fix
+      # do?") is answered from this checkout, not from memory: it names the assistant and one of its
+      # own parts, or a slash command.
+      ASSISTANT = /\b(?:you|your|yourself|master)\b/i
+      OWN_PARTS = /\b(?:tts|voice|speech|narrat\w*|speak\w*|face|council|skills?|lanes?|models?|sessions?|memory|tools?|commands?|boot|config\w*|settings?|defaults?|fix|gates?|ratchets?|laws?)\b/i
+      SLASH_COMMAND = %r{(?:^|\s)/[a-z][a-z-]+\b}
       DEVICE = /\b(?:android|termux|wifi|wi-?fi|bluetooth|sensor|camera|microphone|battery|torch|location|device)\b/i
       CONVERSATION = /\A(?:hi|hello|hey|thanks?|thank\s+you|good\s+(?:morning|evening|night)|how\s+are\s+you)[!?.,\s]*\z/i
 
@@ -32,10 +38,14 @@ module Master
         return :deep_research if value.match?(RESEARCH)
         return :browser if value.match?(BROWSER)
         return :device if value.match?(DEVICE)
-        return :repository if value.match?(REPOSITORY)
+        return :repository if value.match?(REPOSITORY) || about_itself?(value)
         return :unknown if value.match?(/\b(?:what|why|how|which|is|are|does|do|can|could)\b/i)
 
         :conversation
+      end
+
+      def about_itself?(value)
+        (value.match?(ASSISTANT) && value.match?(OWN_PARTS)) || value.match?(SLASH_COMMAND)
       end
 
       def web_required?(mode)
@@ -65,7 +75,7 @@ module Master
         when :device
           "Capability rule: this turn concerns local hardware. Use the governed device or wireless capability and report unavailable permissions or backends plainly."
         else
-          RESEARCH_PROMPT
+          "#{RESEARCH_PROMPT} If the question may concern this project or this machine, inspect them with your tools first."
         end
       end
     end
