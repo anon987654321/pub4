@@ -96,10 +96,10 @@ RUBY
 ci_steps = [law_syntax, boot_smoke, rake["test"], rake["test:core"], rake["test:subsystems"],
             rake["test:web"], rake["test:web_ui"], rake["selftest"],
             rake["lint:data_singularity"], rake["core_smoke"], rake["tools"]]
-ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["MASTER_CI_FULL"] == "1"
+ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] unless ENV["MASTER_CI_FULL"] == "0"
 ci_steps << web_node_step
-ci_steps << rake["test:integration_web"] if ENV["MASTER_CI_WEB"] == "1"
-if ENV["MASTER_CI_BROWSER"] == "1"
+ci_steps << rake["test:integration_web"] unless ENV["MASTER_CI_WEB"] == "0"
+unless ENV["MASTER_CI_BROWSER"] == "0"
   webgl = File.join(ROOT, "..", "RAILS", "master", "script", "probe_webgl_guard.mjs")
   if node_bin && File.file?(webgl)
     # The probe reads this itself; without it a machine with no browser reports

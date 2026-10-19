@@ -60,7 +60,7 @@ module Master
       # The visual pass's hook: a no-op unless MASTER_CROSS_APP=1. Writes the
       # report beside the dead-CSS one; the pass itself is unchanged.
       def self.write_for(captures)
-        return unless ENV["MASTER_CROSS_APP"] == "1"
+        return if ENV["MASTER_CROSS_APP"] == "0"
 
         new(from_captures(captures), out_dir: File.expand_path("../../.master/cross_app", __dir__)).write
       end

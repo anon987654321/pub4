@@ -22,7 +22,7 @@ module Master
           # Two style authorities that both autofix cannot share a tree, so this one
           # waits until its config is reconciled with the law.
           def linter_available?(name)
-            return false unless ENV["MASTER_EXTERNAL_LINT"] == "1"
+            return false if ENV["MASTER_EXTERNAL_LINT"] == "0"
 
             ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) } ||
               File.exist?(File.join(@root, "bin", name))

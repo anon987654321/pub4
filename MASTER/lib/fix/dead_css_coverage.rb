@@ -38,7 +38,7 @@ module Master
       # The visual pass's hook: a no-op unless MASTER_DEAD_CSS=1, so a rendered
       # review costs nothing extra by default.
       def self.around(cdp, surface, &block)
-        return yield unless ENV["MASTER_DEAD_CSS"] == "1"
+        return yield if ENV["MASTER_DEAD_CSS"] == "0"
 
         (@shared ||= new).track(cdp, surface, &block)
       end

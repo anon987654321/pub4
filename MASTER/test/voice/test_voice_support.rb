@@ -160,9 +160,9 @@ def path_only_which = ->(cmd) { Master::Io::Exec.which(cmd) }
     assert_empty spoken
   end
 
-  def test_cli_playback_is_off_by_default_and_explicitly_opt_in
+  def test_cli_playback_is_on_by_default_and_can_be_turned_off
     $stdout.stub(:isatty, true) do
-      with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { refute PB.enabled? }
+      with_env("MASTER_CLI_SPEAK" => nil, "MASTER_SKIP_TTS" => nil, "CI" => nil) { assert PB.enabled? }
       with_env("MASTER_CLI_SPEAK" => "1", "MASTER_SKIP_TTS" => nil, "CI" => nil) { assert PB.enabled? }
       with_env("MASTER_CLI_SPEAK" => "0", "MASTER_SKIP_TTS" => nil, "CI" => nil) { refute PB.enabled? }
       with_env("MASTER_CLI_SPEAK" => "1", "MASTER_SKIP_TTS" => "1", "CI" => nil) { refute PB.enabled? }

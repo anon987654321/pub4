@@ -27,7 +27,7 @@ module Master
         # more and the two scans compared, mechanical and semantic findings apart, so how often the
         # semantic stream disagrees with itself is measured instead of assumed. One extra scan per repair.
         def log_scan_agreement(path, first)
-          return unless ENV["MASTER_FIX_SCAN_AGREEMENT"] == "1"
+          return if ENV["MASTER_FIX_SCAN_AGREEMENT"] == "0"
 
           line = scan_agreement_line(File.basename(path.to_s), first, scan_all(path))
           Master::Trace::Dmesg.status("fix0", line)

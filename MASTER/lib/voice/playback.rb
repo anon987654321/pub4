@@ -84,13 +84,13 @@ module Master
 
       # CLI speech is opt-in; the browser uses its own TTS transport and
       # remains enabled independently. Pipes, CI and the global opt-out stay silent.
-      # Set MASTER_CLI_SPEAK=1 or use /voice on for this CLI session.
+      # On by default; MASTER_CLI_SPEAK=0 or /voice off silences this CLI session.
       def enabled?
         return false if ENV["MASTER_SKIP_TTS"] == "1"
         return false if ENV["CI"]
         return false unless $stdout.isatty
 
-        ENV["MASTER_CLI_SPEAK"] == "1"
+        ENV["MASTER_CLI_SPEAK"] != "0"
       end
 
       def speak(text, priority: :reply)

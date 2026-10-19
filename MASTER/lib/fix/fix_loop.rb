@@ -796,7 +796,7 @@ module Master
         @bus&.publish("fix_loop:structure_checkpoint", target:, changes: changes.size)
       end
 
-      def structural_enabled? = ENV["MASTER_FIX_STRUCTURAL"] == "1"
+      def structural_enabled? = ENV["MASTER_FIX_STRUCTURAL"] != "0"
 
       def structural_target?(target)
         expanded = File.expand_path(target.to_s)

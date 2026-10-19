@@ -43,7 +43,7 @@ module Master
       Trace::Ledger::Feedback.new(event_bus: bus, learnings: autonomous[:learnings]).attach
       Trace::Ledger::Reflexion.new(event_bus: bus, root:).attach
       subscribe_graph_retriever(bus:, infra:, root:) unless lean_boot
-      return unless ENV["MASTER_BOOT_SELF_TEST"] == "1"
+      return if ENV["MASTER_BOOT_SELF_TEST"] == "0"
 
       publish_self_test(bus, Review::Scan::SelfTest.new(root:, event_bus: bus).call)
     end

@@ -242,7 +242,7 @@ module Master
       # belongs to an explicit /review or /fix request; continuous observation is
       # an opt-in diagnostic for an operator who asks for it.
       def background_scan_enabled?
-        ENV["MASTER_BACKGROUND_SCAN"] == "1" && !skip_boot_scan?
+        ENV["MASTER_BACKGROUND_SCAN"] != "0" && !skip_boot_scan?
       end
 
       def mark_booted
