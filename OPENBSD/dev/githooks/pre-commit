@@ -178,17 +178,17 @@ unless engine_staged.empty? || ENV["PUB4_PARSE_SKIP"] == "1"
   end
 end
 
-# The constitution, applied to what is about to land. Opt-in because building the
-# scanner boots the runtime and this hook fires on every commit in a shared tree:
-# LINT=1 makes the rules MASTER documents for coding agents something git
-# enforces on any of them, rather than something claude, grok or codex has to
-# remember. --changed-lines scopes it to the lines this commit adds, so a file's
-# standing debt never blocks the change that merely touched it. A launch failure
-# (no bundle here) proceeds; only a real finding refuses.
-if ENV["LINT"] == "1" && ENV["LINT_SKIP"] != "1"
+# The constitution, applied to what is about to land: the rules MASTER documents
+# for coding agents become something git enforces on any of them, rather than
+# something claude, grok or codex has to remember. It costs about six seconds,
+# because building the scanner boots the runtime. On by default; LINT=0 turns it
+# off for one commit. --changed-lines scopes it to the lines this commit adds, so
+# a file's standing debt never blocks the change that merely touched it. A launch
+# failure proceeds; only a real finding refuses.
+if ENV["LINT"] != "0" && ENV["LINT_SKIP"] != "1"
   pub4 = File.expand_path("../../../MASTER/bin/operator", __dir__)
   master = File.expand_path("../../../MASTER", __dir__)
-  ran = system("bundle", "exec", "ruby", pub4, "lint", "--staged", "--changed-lines", chdir: master)
+  ran = system(RbConfig.ruby, pub4, "lint", "--staged", "--changed-lines", chdir: master)
   if ran == false
     warn ""
     warn "pre-commit: REFUSED — bin/operator lint found violations in the lines you staged."
