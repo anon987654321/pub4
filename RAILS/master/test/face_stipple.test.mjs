@@ -14,6 +14,7 @@ const css = readFileSync(join(publicDir, "face.css"), "utf8");
 const faceStateSource = readFileSync(join(publicDir, "face_state.js"), "utf8");
 const faceWorld = readFileSync(join(publicDir, "face_world.js"), "utf8");
 const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8");
+const microInteractions = readFileSync(join(publicDir, "face_micro_interactions.js"), "utf8");
 
 test("shared face budgets classify coarse pointers and declared reduced motion", () => {
   assert.match(faceStateSource, /mediaMatches\("\(pointer: coarse\)"\)/);
@@ -33,6 +34,32 @@ test("stipple discovery accepts Group containers with point children", () => {
   assert.match(system, /function hasFacePoints\(node\)/);
   assert.match(system, /scene\.children\.some\(hasFacePoints\)/);
   assert.match(system, /scene\.children\.find\(hasFacePoints\)/);
+});
+
+test("micro-interactions remove continuous motion and crown spawns under reduced motion", () => {
+  assert.match(microInteractions, /function reducedMotionActive\(state = st\(\)\)/);
+  assert.match(microInteractions, /if \(reducedMotionActive\(\)\) return/);
+  assert.doesNotMatch(microInteractions, /phase \+= 0\.08/);
+  let spawns = 0;
+  let reduced = true;
+  const pool = { count: 1, alive: new Uint8Array([1]), cells: new Float32Array(16) };
+  const window = {
+    MASTER_FACE_STATE: { reducedMotion: () => reduced },
+    MASTER_FACE: { State: { reducedMotion: false }, eyePool: pool, mouthPool: pool },
+    ParticleKernel: { spawn: () => { spawns += 1; }, FIELDS_PER_CELL: 16, FIELD: { attention: 0, pressure: 1 } },
+    addEventListener() {}, dispatchEvent() {}
+  };
+  const document = { getElementById: () => null, documentElement: { dataset: { reducedMotion: "1" } } };
+  runInNewContext(microInteractions, {
+    window, document, matchMedia: () => ({ matches: false }),
+    setInterval() { return 1; },
+    CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } }
+  });
+  window.MASTER_FACE_MICRO.spawnCrown(3);
+  assert.equal(spawns, 0);
+  reduced = false;
+  window.MASTER_FACE_MICRO.spawnCrown(3);
+  assert.equal(spawns, 3);
 });
 
 test("FaceWorld observes reduced motion across shader, camera and event layers", () => {
