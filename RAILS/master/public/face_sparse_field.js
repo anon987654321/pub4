@@ -425,7 +425,11 @@
     const baseProfile = modeProfile({ ...state, mode });
     const profile = mode === "idle" && idleAge > 45_000 ? modeProfile({ mode: "super_void" }) : baseProfile;
     const mobile = isMobile();
-    const maxActive = mobile ? mobileParticles : maxParticles;
+    const sharedParticleBudget = Number(window.MASTER_FACE_STATE?.renderBudget?.().particles);
+    const localParticleLimit = mobile ? mobileParticles : maxParticles;
+    const maxActive = Number.isFinite(sharedParticleBudget) && sharedParticleBudget > 0
+      ? Math.min(localParticleLimit, Math.floor(sharedParticleBudget))
+      : localParticleLimit;
     const distanceDensity = clamp((6.8 - cameraDistance) / 2.4, 0.24, 1);
     const minimum = profile.mode === "super_void" ? 8 : 14;
     const requested = Math.min(maxActive, Math.max(minimum, Math.round(profile.count * Number(SPEC.density_scale || 1) * distanceDensity)));
