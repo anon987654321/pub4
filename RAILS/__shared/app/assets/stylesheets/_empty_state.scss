@@ -33,19 +33,20 @@
   opacity: 0.85;
 }
 
-/* Legacy chrome glyph when no .empty-state-icon child */
+/* The stipple mark an empty state wears when its caller has no icon: dots on a
+   fixed grid fading to nothing at the edge, the same dot-and-density language as
+   the MASTER face. Drawn, not typed, so it needs no glyph font; still, so it
+   needs no reduced-motion branch; the 2.5rem box is unchanged, so layout is. */
 .empty-state:not(:has(.empty-state-icon))::before {
-  content: "○";
-  display: grid;
-  place-items: center;
+  content: "";
+  display: block;
   margin: 0 auto var(--space-1);
   width: 2.5rem;
   height: 2.5rem;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--hover-subtle);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  background: radial-gradient(circle at center, var(--text-secondary) 0 0.55px, transparent 0.7px) 0 0 / 5px 5px;
+  -webkit-mask: radial-gradient(circle at center, black 0 45%, transparent 72%);
+  mask: radial-gradient(circle at center, black 0 45%, transparent 72%);
+  opacity: 0.85;
 }
 
 .empty-state-title {
