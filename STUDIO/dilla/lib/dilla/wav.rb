@@ -39,9 +39,9 @@ module WAV
 
     Tempfile.create(["studio-output-", ".tmp"], directory, binmode: true) do |tmp|
       tmp.write(bytes)
+      File.chmod(mode, tmp.path)
       tmp.flush
       tmp.fsync
-      File.chmod(mode, tmp.path)
       tmp.close
       replace ? File.rename(tmp.path, path) : File.link(tmp.path, path)
       fsync_directory(directory) if RUBY_PLATFORM !~ /win32|mingw/
@@ -92,9 +92,9 @@ module WAV
       file.write([36 + data_size].pack("V"))
       file.seek(40)
       file.write([data_size].pack("V"))
+      File.chmod(0o666 & ~File.umask, file.path)
       file.flush
       file.fsync
-      File.chmod(0o666 & ~File.umask, file.path)
       file.close
 
       # A hard link is an atomic create-if-absent publish. It does not silently
