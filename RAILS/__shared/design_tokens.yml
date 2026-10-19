@@ -28,6 +28,24 @@ visual_identity:
     default: still
     change_requires_semantic_state: true
     reduced_motion_must_preserve_meaning: true
+  art_direction:
+    subject_count: 1
+    background: flat paper or ink
+    typography_layer: separate and editable; never bake critical copy into generated photography
+    signal_usage: original graphic overlays only; never colour-grade photographic subjects with the signal
+    preserve_media_colour: true
+    preserve_likeness: true
+    grade_is_explicit: true
+    avoid:
+    - copied campaign art
+    - copied wordmarks
+    - false product colours
+    - decorative lens flare
+  typography_roles:
+    display: text-display
+    body: text-body
+    technical: font-mono
+    wordmark: original pub4 artwork only
   adaptations:
     master: mineral-lime signal on ink; organic face remains the sole expressive centerpiece
     brgen: retain deep-blue city identity and local editorial photography; signal is a sparse semantic accent only
