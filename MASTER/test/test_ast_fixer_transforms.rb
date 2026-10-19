@@ -467,6 +467,20 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :trailing_commas
   end
 
+  # A brace-expansion glob starts a line with { and ended the old line-walk before it reached the %w[ opener.
+  def test_trailing_commas_skip_a_percent_word_array_whose_item_starts_with_a_brace
+    source = <<~RUBY
+      globs = %w[
+        {__shared,brgen}/app/assets/stylesheets/**/*.scss
+        brgen/engines/*/app/assets/stylesheets/*.scss
+      ]
+    RUBY
+    result = fix("design_metrics.rb", source)
+
+    refute_includes result[:content], "scss,"
+    refute_includes result[:transforms], :trailing_commas
+  end
+
   # The RAILS apps inherit rubocop-rails-omakase, whose trailing-comma cops
   # forbid the comma, and their bin/ci runs it. The rule already stood down for
   # them; the fixer did not, and a gate run over RAILS added 351.

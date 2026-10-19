@@ -148,6 +148,7 @@ module Master
 
             protected_lines = literal_lines(src)
             crowded = crowded_close_lines(src)
+            percent_arrays = percent_array_close_lines(src)
             lines = src.lines
             changed = false
             (1...lines.length).each do |i|
@@ -158,7 +159,7 @@ module Master
               previous = lines[i - 1]
               next unless current.match?(/^[\]}]/)
               next if block_close?(lines, i)
-              next if percent_word_array_close?(lines, i)
+              next if percent_arrays.include?(i + 1)
               next if previous.rstrip.end_with?(",", "[", "{", "(")
               next unless previous.match?(/^\s*[^#\n]+/)
 
@@ -219,15 +220,21 @@ module Master
             false
           end
 
-          def percent_word_array_close?(lines, close_index)
-            close_line = lines[close_index].strip
-            return false unless close_line.start_with?("]")
+          # Closing lines of %w[], %i[] and %W[] arrays. Their items are bare words, so a comma
+          # before the bracket becomes part of the last word. Found from the parse, not by walking
+          # lines back to an opener: a glob item such as {a,b}/c starts with a brace.
+          def percent_array_close_lines(src)
+            result = Prism.parse(src)
+            return Set.new if result.failure?
 
-            close_index.downto(0) do |index|
-              return true if lines[index].match?(%r/%[iIwW]\[/)
-              return false if lines[index].strip.start_with?("[", "{")
+            closes = Set.new
+            stack = [result.value]
+            until stack.empty?
+              node = stack.pop
+              closes << node.closing_loc.start_line if node.is_a?(Prism::ArrayNode) && node.opening_loc&.slice&.start_with?("%") && node.closing_loc
+              stack.concat(node.compact_child_nodes)
             end
-            false
+            closes
           end
         end
       end
