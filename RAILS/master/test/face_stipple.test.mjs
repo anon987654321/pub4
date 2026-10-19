@@ -299,6 +299,11 @@ test("stipple lifecycle is observable and reversible", () => {
   assert.match(system, /active\?\.geometry\?\.dispose\?\./);
   assert.match(system, /active\?\.material\?\.dispose\?\./);
   assert.match(system, /lastRenderIntervalMs/);
+  assert.match(system, /FRAME_SAMPLE_LIMIT = 60/);
+  assert.match(system, /renderTiming: \{/);
+  assert.match(system, /p50RenderIntervalMs: percentile\(0\.50\)/);
+  assert.match(system, /p95RenderIntervalMs: percentile\(0\.95\)/);
+  assert.match(system, /approximateRenderCallsPerSecond/);
   assert.match(system, /pointSizing\(\)/);
   assert.match(system, /pointCeiling: pointBudget\(\)/);
   assert.match(system, /currentFaceState\(\)/);
