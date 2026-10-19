@@ -1134,6 +1134,7 @@ law_map:
       operation: reconcile
       law_ids:
       - VISUAL_IDENTITY_SOURCE_OF_TRUTH
+      - SIGNAL_COLOR_IS_SEMANTIC
       status: covered
       tags:
       - visual_design
