@@ -150,6 +150,30 @@ class StreamStageTest < Minitest::Test
     assert_match(/dynamic public_send at caller.rb:1/, context[:lock_reasons].first)
   end
 
+  # Related files past the byte budget used to refuse the repair outright. The ones that fit are shown, smallest
+  # first, callers before dependencies, and the repair is held to the names it has for the rest.
+  def test_related_files_over_the_budget_are_left_out_and_lock_the_interface
+    graph = graph_with(inbound: ["small_caller.rb", "big_caller.rb"], outbound: ["dependency.rb"])
+    File.write(File.join(temporary_path, "big_caller.rb"), "# filler\n" * 25_000)
+
+    context = repair_context_for(graph)
+
+    assert context[:complete], context[:reason]
+    assert_equal %w[small_caller.rb dependency.rb], context[:files].map { |entry| entry[:path] }
+    assert context[:interface_locked]
+    assert_match(/1 related file\(s\) not shown/, context[:lock_reasons].last)
+  end
+
+  def test_a_related_file_that_changed_since_the_graph_read_it_still_refuses_the_repair
+    graph = graph_with(inbound: ["caller.rb"])
+    graph.define_singleton_method(:source_digest) { |file| File.basename(file) == "caller.rb" ? "stale" : super(file) }
+
+    context = repair_context_for(graph)
+
+    refute context[:complete]
+    assert_match(/dependency changed since graph refresh: caller.rb/, context[:reason])
+  end
+
   def test_define_method_in_a_caller_and_a_dynamic_call_in_a_dependency_do_not_lock
     graph = graph_with(inbound: ["caller.rb"], outbound: ["dependency.rb"],
                        dynamic: { "caller.rb" => "define_method", "dependency.rb" => "send" })

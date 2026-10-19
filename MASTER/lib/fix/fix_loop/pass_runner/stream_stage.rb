@@ -241,10 +241,8 @@ module Master
 
             relative = graph.relative(path)
             radius = graph.blast_radius(path)
-            related = (Array(radius[:inbound]) + Array(radius[:outbound])).uniq - [relative]
-            lock_reasons = interface_lock_reasons(graph:, path:, relative:, inbound: Array(radius[:inbound]))
-
-            entries = []
+            inbound = Array(radius[:inbound]) - [relative]
+            lock_reasons = interface_lock_reasons(graph:, path:, relative:, inbound:)
             total_bytes = target_source.bytesize
             if total_bytes > REPAIR_CONTEXT_MAX_BYTES
               return incomplete_repair_context(
@@ -252,25 +250,10 @@ module Master
               )
             end
 
-            related.sort.each do |rel|
-              full = File.expand_path(rel, graph.root)
-              return incomplete_repair_context("dependency is a symlink: #{rel}") if File.symlink?(full)
-              return incomplete_repair_context("dependency disappeared since graph refresh: #{rel}") unless File.file?(full)
-
-              source = File.read(full, encoding: "UTF-8")
-              source_sha256 = Digest::SHA256.hexdigest(source)
-              return incomplete_repair_context("dependency changed since graph refresh: #{rel}") \
-                unless graph.source_digest(full) == source_sha256
-
-              total_bytes += source.bytesize
-              if total_bytes > REPAIR_CONTEXT_MAX_BYTES
-                return incomplete_repair_context(
-                  "complete source plus #{entries.size + 1} direct dependencies exceeds " \
-                  "#{REPAIR_CONTEXT_MAX_BYTES} bytes; no excerpt-only repair was attempted",
-                )
-              end
-              entries << { path: rel, source:, sha256: source_sha256 }
-            end
+            outbound = Array(radius[:outbound]) - [relative] - inbound
+            room = REPAIR_CONTEXT_MAX_BYTES - total_bytes
+            entries, omitted = related_sources(graph:, inbound:, outbound:, room:)
+            lock_reasons << "#{omitted.size} related file(s) not shown, over the context budget" unless omitted.empty?
 
             {
               complete: true,
@@ -280,8 +263,47 @@ module Master
               interface_locked: !lock_reasons.empty?,
               lock_reasons:,
             }
+          rescue IncompleteContext => e
+            incomplete_repair_context(e.message)
           rescue StandardError => e
             incomplete_repair_context("#{e.class}: #{e.message}")
+          end
+
+          IncompleteContext = Class.new(StandardError)
+
+          # The callers first, then the dependencies, each smallest first so the most files fit. A file past
+          # the budget is left out and said so; the repair is then held to the names it has. A related file
+          # that is a symlink, gone or changed since the graph was read still refuses the repair.
+          def related_sources(graph:, inbound:, outbound:, room:)
+            ordered = [inbound, outbound].flat_map do |group|
+              group.sort_by { |rel| File.size?(File.expand_path(rel, graph.root)).to_i }
+            end
+
+            entries = []
+            omitted = []
+
+            ordered.each do |rel|
+              source = read_related(graph, rel)
+              if source.bytesize > room
+                omitted << rel
+              else
+                room -= source.bytesize
+                entries << { path: rel, source:, sha256: Digest::SHA256.hexdigest(source) }
+              end
+            end
+
+            [entries, omitted]
+          end
+
+          def read_related(graph, rel)
+            full = File.expand_path(rel, graph.root)
+            raise IncompleteContext, "dependency is a symlink: #{rel}" if File.symlink?(full)
+            raise IncompleteContext, "dependency disappeared since graph refresh: #{rel}" unless File.file?(full)
+
+            source = File.read(full, encoding: "UTF-8")
+            return source if graph.source_digest(full) == Digest::SHA256.hexdigest(source)
+
+            raise IncompleteContext, "dependency changed since graph refresh: #{rel}"
           end
 
           # Define-style calls make methods; they never call the target by a name this graph cannot see.
