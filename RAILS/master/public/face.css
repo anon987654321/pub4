@@ -2041,6 +2041,17 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
 }
 .master-face-stipple-playground output { text-align: right; font-variant-numeric: tabular-nums; }
 .master-face-stipple-playground .master-stipple-status { margin: 0; color: var(--face-muted, #aaa); }
+.master-face-stipple-playground .master-stipple-diagnostics {
+  max-height: 180px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--face-line, #777);
+  color: var(--face-muted, #aaa);
+  font: inherit;
+  font-size: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 @media (prefers-reduced-motion: reduce) {
   .master-face-stipple-playground,
   .master-face-stipple-playground * {
