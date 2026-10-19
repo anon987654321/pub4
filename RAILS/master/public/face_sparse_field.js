@@ -51,6 +51,9 @@
   const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, Number(v) || 0));
 
   function reducedMotionEnabled(state = {}) {
+    const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+    if (typeof canonical === "function") return canonical(state);
+    // Compatibility fallback for an older shell without the canonical state bridge.
     return Boolean(state?.reducedMotion) ||
       Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
       document.documentElement?.dataset?.reducedMotion === "1" ||
