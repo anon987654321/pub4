@@ -52,6 +52,7 @@
 
   function reducedMotionEnabled(state = {}) {
     return Boolean(state?.reducedMotion) ||
+      Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
       document.documentElement?.dataset?.reducedMotion === "1" ||
       Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
   }
