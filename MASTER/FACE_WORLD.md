@@ -298,9 +298,10 @@ the pointer leaves. Eye and mouth wells remain deliberately empty. Evidence crea
 connecting trails; speech creates separate voice traces; Law/canonical events create resonance
 rings. Detached particles orbit in the periphery with a small anti-gravity drift, while
 stable asymmetry and seeded memory prevent the field from becoming a perfectly mirrored
-screen saver. The sparse shader uses one-pixel points rather than soft particle glows, keeping
-negative space as the dominant visual material. The renderer remains subordinate to the
-single FaceState and the existing frame clock.
+screen saver. The sparse-field shader uses hard-edged points with distance-aware size
+clamped to its four-pixel shader ceiling rather than soft particle glows, keeping negative
+space as the dominant visual material. The renderer remains subordinate to the single
+FaceState and the existing frame clock.
 
 ## Additive stipple layer
 
@@ -410,4 +411,10 @@ future person first and a computational being second.
 
 ### Stipple point-size hierarchy
 
-The stipple shader now uses the existing canonical sample-bias attribute to give points a restrained, bounded size hierarchy instead of forcing every sample to exactly one pixel. It deliberately remains subtle: face identity is still carried by sparse contours and voids, and hardware may clamp point sizes. This is not a substitute for the separately specified raw-WebGL renderer migration or real-device visual verification. The regression test now binds the actual exported API and its Three.js stubs before checking neutral pressure, semantic mode changes, reduced motion and point ceilings.
+The stipple shader now combines the existing canonical sample-bias attribute with camera-space depth attenuation, then bounds the requested point size to 1–1.5 pixels. The five-unit reference depth corresponds approximately to the canonical face camera distance; the GPU may clamp point sizes further. The face identity remains carried by sparse contours and voids, not by simply enlarging every point.
+
+Stipple motion now honors all three existing reduced-motion signals: the semantic face-state bit, the document accessibility projection (`data-reduced-motion="1"`), and the operating-system `prefers-reduced-motion` preference. When any is active, its shader clock is held at zero and ripple/turbulence are disabled while the still-state profile remains.
+
+The renderer adapter now exposes a bounded diagnostic snapshot through `MASTER_FACE_STIPPLE.snapshot()`: enabled/installed/visible state, context state, semantic mode, point count and ceiling, renderer-call count, last renderer-call interval and relevant shader uniforms. The opt-in `?playground=1` console includes an accessible refresh control for inspecting that snapshot. Visibility and WebGL context events suppress the additive overlay while unavailable; `uninstall()` restores the wrapped render method when it still owns it, detaches the overlay and disposes its geometry/material.
+
+These source changes do not stop the underlying face renderer, prove WebGL context restoration on a real device, or replace the separately specified raw-WebGL renderer migration. Browser/GPU verification remains required. The regression tests now cover the reduced-motion sources, depth-aware size bound, diagnostics surface and lifecycle contract, but the repository Node runner has not yet been executed.
