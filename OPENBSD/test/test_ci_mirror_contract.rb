@@ -11,7 +11,7 @@ require "minitest/autorun"
 class CiMirrorContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   CI = File.read(File.join(ROOT, "RAILS", "__shared", "config", "ci.rb"), encoding: "UTF-8")
-  SYNC = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
+  SYNC = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "libexec", "ci-sync.ksh"), encoding: "UTF-8")
   LITERAL = /^\s*require_relative\s+["']([^"'#]+)["']/
 
   # Whole directories the sync archives, plus the files it names one by one.
@@ -20,9 +20,9 @@ class CiMirrorContractTest < Minitest::Test
   end
 
   def mirrored_files
-    list = SYNC[/local -a lib_files=\(([^)]*)\)/m, 1]
-    refute_nil list, "lib_files not found in vps_ci.sh -- the scan broke, not the sync"
-    list.split + SYNC.scan(%r{archive HEAD (MASTER/data/\S+)}).flatten
+    list = SYNC[/for rel in (MASTER\/lib\/.*?); do/m, 1]
+    refute_nil list, "the MASTER/lib file list not found in ci-sync.ksh -- the scan broke, not the sync"
+    list.delete("\\").split + SYNC.scan(%r{archive HEAD (MASTER/data/\S+)}).flatten
   end
 
   # MasterDesign reads data/tokens.yml from the mirror; the app user cannot reach the repo copy.

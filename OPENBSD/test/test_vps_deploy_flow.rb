@@ -58,7 +58,7 @@ class VpsDeployFlowTest < Minitest::Test
     exports = env.map { |k, v| "export #{k}=#{v}" }.join("\n")
     zsh(<<~ZSH)
       repo=#{box}; lock_owner=1; deploy_stage=start
-      doas() { print "amber brgen master sshd"; }
+      admin_service() { print "amber brgen master sshd"; }
       #{exports}
       #{PIN_BLOCK}
       print "SHA=$VPS_DEPLOY_SHA"; print "STARTED=$VPS_DEPLOY_STARTED"
@@ -161,6 +161,7 @@ class VpsDeployFlowTest < Minitest::Test
       export VPS_DEPLOY_STARTED="#{started}" VPS_DEPLOY_POLL=1 VPS_DEPLOY_RESTORE_WAIT=3 VPS_DEPLOY_SHED_FILE=#{dir}/shed
       release_deploy_lock() { print released; }
       sleep() { :; }
+      admin_service() { doas rcctl "$@"; }
       doas() {
         [[ $1 == rcctl ]] || return 0
         case $2 in
@@ -313,6 +314,7 @@ class VpsDeployFlowTest < Minitest::Test
         repo=#{dir}; export VPS_DEPLOY_STARTED="brgen amber sshd"
         typeset -A deploy_ports; deploy_ports=(brgen 41001 amber 41002)
         load_deploy_ports() { return 0 }
+        admin_service() { doas rcctl "$@"; }
         doas() { [[ $3 == brgen ]] }
         wait_up() { print "waited $1 $2"; return 0 }
         #{SOURCE[/^settle_boots\(\) \{.*?^\}$/m]}

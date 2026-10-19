@@ -163,7 +163,7 @@ class VpsDeployContractTest < Minitest::Test
   def test_production_tree_sync_uses_the_bounded_app_user_helper
     deploy = File.read(File.join(ROOT, "RAILS", "_deploy.sh"), encoding: "UTF-8")
     sync = File.read(File.join(ROOT, "RAILS", "_sync.sh"), encoding: "UTF-8")
-    block = deploy[/rails_sync_app_tree "$app_name" app.*?overlay_shared_public "$APP_DIR"/m]
+    block = deploy[/rails_sync_app_tree "\$app_name" app.*?overlay_shared_public "\$APP_DIR"/m]
 
     refute_nil block, "production deploy must use the fixed app-user sync path"
     assert_includes block, 'rails_sync_app_tree "$app_name" shared'
@@ -191,7 +191,7 @@ class VpsDeployContractTest < Minitest::Test
     assert_equal 1, core.scan("bundle_install_as_app() {").length
     assert_includes core, 'run_rails_as_app "$app_name" "$app_dir" "bundle-install"'
     assert_includes File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh")), '/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"'
-    assert_includes deploy, 'if [[ -x /usr/local/sbin/pub4-admin ]]; then'
+    assert_includes deploy, "[[ -x /usr/local/sbin/pub4-admin ]] || {"
     refute_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
     refute_includes deploy, 'doas tee "${APP_DIR}/.bundle/config"'
   end
@@ -372,7 +372,7 @@ class VpsDeployContractTest < Minitest::Test
                  "SKIP_CI=1 must still run the app script, which is what reaches rails_runtime_gate")
   end
 
-  GUARD = File.read(File.join(ROOT, "OPENBSD", "bin", "resource_guard.sh"), encoding: "UTF-8")
+  GUARD = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "bin", "resource_guard.sh"), encoding: "UTF-8")
 
   def flag_block
     SOURCE[/^deploy_flag=.*?^trap 'exit 143' TERM$/m]
@@ -562,12 +562,13 @@ class VpsDeployContractTest < Minitest::Test
   # "The path /home/brgen/__shared does not exist".
   def test_ci_mirror_syncs_every_sibling_path_gem_the_gemfiles_name
     ci = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
-    assert_includes ci, "shared_dir=/home/${app}/__shared"
-    assert_includes ci, "RAILS/brgen_*"
+    sync = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "libexec", "ci-sync.ksh"), encoding: "UTF-8")
+    assert_includes sync, "shared_dir=$app_home/__shared"
+    assert_includes sync, "RAILS/brgen_*"
     # The suite outlasts the guard's one-hour default on this box.
-    assert_includes ci, "export PUB4_CI_TIMEOUT=${PUB4_CI_TIMEOUT:-7200}"
+    assert_includes ci, "ci_timeout=${PUB4_CI_TIMEOUT:-7200}"
     # A directory the repo no longer has must not survive the sync, or its stale tests keep running.
-    assert_includes ci, '[[ -d $src/engines ]] || doas rm -rf "${app_dir}/engines"'
+    assert_includes sync, '[ -d "$src/engines" ] || rm -rf "$app_dir/engines"'
 
     APPS.each do |app|
       gemfile = File.join(ROOT, "RAILS", app, "Gemfile")
@@ -593,6 +594,7 @@ class VpsDeployContractTest < Minitest::Test
       release_deploy_lock() { print released; }
       write_stamp() { stamp_written=1; print "stamp $1 $2"; }
       doas() { [[ $1 == rcctl && $2 == check && $3 == #{down} ]] && return 1; return 0; }
+      admin_service() { doas rcctl "$@"; }
       #{finish_block}
       touch $deploy_flag
       #{body}

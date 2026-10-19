@@ -54,7 +54,8 @@ guard_impl_path = File.join(OPENBSD, "usr", "local", "bin", "resource_guard.sh")
 if File.file?(guard_wrapper_path) && !File.symlink?(guard_wrapper_path) &&
    File.file?(guard_impl_path) && !File.symlink?(guard_impl_path)
   guard_wrapper = File.read(guard_wrapper_path)
-  guard_impl = File.read(guard_impl_path)
+  # Comments explain what was removed; only code can reintroduce it.
+  guard_impl = File.readlines(guard_impl_path).grep_v(/^\s*#/).join
   guard_wrapper_contract = guard_wrapper.include?('if [ "$(id -u)" -eq 0 ]; then') &&
                           guard_wrapper.include?('runner=/usr/local/bin/resource_guard.sh') &&
                           guard_wrapper.include?('exec doas "$runner"') &&
@@ -142,7 +143,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                        admin.include?("def master_web_root!") &&
                        admin.include?("def master_web_tree_paths!(root)") &&
                        admin.include?("Find.find(root)") &&
-                       admin.include?("raise \"symlink refused in MASTER web path: #{path}\" if stat.symlink?")
+                       admin.include?('raise "symlink refused in MASTER web path: #{path}" if stat.symlink?')
   failures << "master-web helper must be fixed-path and symlink-safe" unless master_web_contract
   broker_contract = admin.include?("def command_for(argv)") &&
                     admin.include?("exec(*command)") &&
@@ -160,7 +161,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                admin.include?("when RAILS_SYNC then [app, *Array(helper_arguments)]") &&
                admin.include?("spawn_options[:uid] = account.uid") &&
                admin.include?("spawn_options[:gid] = account.gid") &&
-               admin.include?('trusted_script!(helper)')
+               admin.include?("trusted_script!(helper)")
   unsafe_spawn = admin.include?("Process.spawn") &&
                  (admin.scan("Process.spawn").length != 1 || !safe_spawn)
   failures << "pub4-admin must not evaluate shell command strings or widen its CI spawn" if
@@ -234,7 +235,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                           rails_task.include?('[ ! -L "$app_dir/db" ]') &&
                           rails_task.include?('[ ! -L "$app_dir/storage" ]') &&
                           rails_task.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
-                          rails_task.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\\n") &&
+                          rails_task.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\n") &&
                           rails_task.scan('exec /usr/bin/su -m "$app" -c "$script"').length == 1 &&
                           !rails_task.include?("EOF_KEY") &&
                           rails_task.include?('unset BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITH BUNDLE_WITHOUT')
@@ -365,7 +366,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                            admin.include?('args[0] == "ci-run" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('args[0] == "ci-sync" && RAILS_APPS.include?(args[1])') &&
                            admin.include?('trusted_script!(CI_PREPARE)') &&
-                           admin.include?('trusted_script!(CI_RUN)') &&
+                           admin.include?("trusted_script!(helper)") &&
                            admin.include?('supervised_helper(CI_SYNC, app, 900)') &&
                            admin.include?('args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])') &&
                            admin.include?('run_rails_task(args[1], args[2])') &&

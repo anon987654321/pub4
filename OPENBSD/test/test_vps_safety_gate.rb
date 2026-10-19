@@ -41,6 +41,7 @@ class VpsSafetyGateTest < Minitest::Test
       FileUtils.cp(File.join(ROOT, "emergency_cpu.sh"), File.join(openbsd, "emergency_cpu.sh"))
       FileUtils.cp(File.join(ROOT, "usr", "local", "bin", "resource_guard.sh"),
                    File.join(openbsd, "usr", "local", "bin", "resource_guard.sh"))
+      FileUtils.mkdir_p(File.join(openbsd, "bin"))
       FileUtils.cp(File.join(ROOT, "bin", "resource_guard.sh"), File.join(openbsd, "bin", "resource_guard.sh"))
       FileUtils.cp(File.join(ROOT, "OPERATOR.sh"), File.join(openbsd, "OPERATOR.sh"))
       FileUtils.mkdir_p(File.join(dir, "RAILS"))

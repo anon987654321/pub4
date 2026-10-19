@@ -85,8 +85,8 @@ restore_app() {
 
   log "starting $app"
   if [[ $DRY_RUN != 1 ]]; then
-    doas rcctl start "$app"
-    doas rcctl check "$app"
+    doas /usr/local/sbin/pub4-admin service start "$app"
+    doas /usr/local/sbin/pub4-admin service check "$app"
   fi
 }
 
