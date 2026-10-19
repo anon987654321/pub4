@@ -364,6 +364,13 @@ if (ARGV & %w[-h --help]).any?
   exit 0
 end
 
+# Defined here, above its first caller: a def below a top-level use is not yet
+# defined when that line runs.
+def argv_flag(flag)
+  idx = ARGV.index(flag)
+  idx && ARGV[idx + 1]
+end
+
 # A lone --preset falls through to the interactive chooser and can look like a
 # hung non-interactive job. Named one-shot grades are only valid with input and
 # output paths; watch and stock-sheet have their own documented preset routes.
@@ -4303,11 +4310,6 @@ def auto_mode
   preset_name = CONFIG["default_preset"] || "house"
 
   [patterns, variations, { type: :preset, preset: preset_name }]
-end
-
-def argv_flag(flag)
-  idx = ARGV.index(flag)
-  idx && ARGV[idx + 1]
 end
 
 def postpro_quality_report(original, processed, reference_path = nil)

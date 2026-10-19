@@ -12,7 +12,6 @@ module Postpro
     # All default renders share STUDIO's dated, external output contract.
     # POSTPRO_OUTPUT_DIR remains the explicit override for managed callers.
     OUTPUT_DIR = Studio::OutputPaths.render_directory.freeze
-    LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
       File.expand_path("../../MASTER/law/definition.rb", __dir__),
@@ -53,12 +52,10 @@ module Postpro
       @law_sources ||= (LAW_PATHS.map { |path| File.read(path, encoding: "UTF-8") }.join("\n")).freeze
     end
 
-    def rules_catalog
-      @rules_catalog ||= File.read(LAWS_PATH, encoding: "UTF-8").freeze
-    end
-
+    # The required laws live in law/*.rb, not in laws.yml's text: a law migrated
+    # out of the catalogue is still a law, and only its definition can be run.
     def verify_law_catalog!
-      missing = REQUIRED_LAWS.reject { |id| rules_catalog.include?(id) && law_sources.match?(/Law\.define\(:#{id}\)/) }
+      missing = REQUIRED_LAWS.reject { |id| law_sources.match?(/Law\.define\(:#{id}\)/) }
       return true if missing.empty?
 
       raise ArgumentError, "MASTER constitution missing required law(s): #{missing.join(", ")}"
