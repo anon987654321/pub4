@@ -5,8 +5,40 @@ require_relative "test_helper"
 class TestPlugins < Minitest::Test
   def test_manifests_have_local_policy
     manifests = Master::Plugin.list
-    assert_equal %w[air_superiority social_browser travel_browser], manifests.map(&:id)
+    assert_equal %w[air_superiority session_browser social_browser travel_browser], manifests.map(&:id)
     manifests.each { |manifest| assert Master::Plugin.policy(manifest.id).is_a?(Hash) }
+  end
+
+
+  def test_session_browser_policy_is_closed_by_default
+    policy = Master::Plugin.policy("session_browser")
+    assert_equal [], policy.fetch("allowed_hosts")
+    assert_equal [true, false], [policy.fetch("session_host_bound"), policy.fetch("security_challenge_bypass")]
+
+    plugin = Master::Plugin.load("session_browser")
+    result = plugin.call(action: "status")
+    assert_equal "blocked: no allowed hosts configured", result.fetch(:policy)
+    assert_equal 4, result.fetch(:max_sessions)
+    assert_equal true, result.fetch(:read_only_transport)
+  end
+
+  def test_session_browser_refuses_hosts_until_operator_allowlists_them
+    plugin = Master::Plugin.load("session_browser")
+    assert_raises(Master::Plugin::PolicyError) do
+      plugin.send(:validate_url!, "https://example.com/")
+    end
+  end
+
+  def test_session_browser_normalizes_the_same_www_host_consistently
+    plugin = Master::Plugin.load("session_browser")
+    assert_equal "example.com", plugin.send(:canonical_host, "WWW.Example.com.")
+  end
+
+  def test_session_browser_screenshot_action_is_not_observable
+    assert_equal %w[status inspect], Master::Plugin.info("session_browser").observe_actions
+    assert_raises(Master::Plugin::PolicyError) do
+      Master::Plugin.observe("session_browser", action: "look")
+    end
   end
 
   def test_social_sites_are_fixed_and_https_only

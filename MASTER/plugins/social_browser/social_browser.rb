@@ -11,6 +11,7 @@ require "yaml"
 module Master
   module Plugins
     class SocialBrowser < Master::Plugin::Base
+      Error = Master::Plugin::Error
       # Lexical lookup from Master::Plugins does not reach Master::Plugin.
       PolicyError = Master::Plugin::PolicyError
 

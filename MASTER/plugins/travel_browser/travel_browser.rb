@@ -9,6 +9,7 @@ require "uri"
 module Master
   module Plugins
     class TravelBrowser < Master::Plugin::Base
+      Error = Master::Plugin::Error
       PolicyError = Master::Plugin::PolicyError
 
       ACTIONS = %w[status inspect open login fill click book].freeze

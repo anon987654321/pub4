@@ -819,6 +819,25 @@ plugins:
     session_credentials_stored_by_master: false
     screenshot_evidence: required
     confirmation_evidence: required
+  session_browser:
+    scope: external_web_observation
+    allowed_hosts: []
+    allowed_network_methods: [GET, HEAD]
+    max_sessions: 4
+    session_host_bound: true
+    screenshot_cap: 500
+    pagination_page_cap: 50
+    pagination_output_bytes: 131072
+    anchor_navigation_by_href_only: true
+    computer_use_loop: forbidden
+    visible_login_requires_workstation_display: true
+    visible_login_post_submission: blocked
+    prompt_injection_from_pages: untrusted
+    security_challenge_bypass: false
+    session_state_owner_only: true
+    chromium_profile_persists_site_data: true
+    screenshot_evidence: required
+    observable_actions: [status, inspect]
   social_browser:
     scope: external_web
     account_scope: operator_owned_or_authorized

@@ -1,0 +1,6 @@
+---
+id: session_browser
+version: 1.0.0
+description: Read-only, host-allowlisted browser sessions with persistent owner-only profiles.
+entrypoint: session_browser.rb
+observe_actions: [status, inspect]

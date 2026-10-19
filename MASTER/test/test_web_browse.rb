@@ -106,7 +106,7 @@ class TestWebBrowse < Minitest::Test
     assert_equal "identity", client.last_request["accept-encoding"]
   end
 
-  def test_upstream_content_encoding_is_preserved
+  def test_non_identity_content_encoding_is_aborted_before_chromium_decodes_it
     request = InterceptedRequest.new(url: "https://example.com/compressed.js")
     response = FakeResponse.new(
       headers: { "content-type" => "application/javascript", "content-encoding" => "gzip" },
@@ -120,8 +120,8 @@ class TestWebBrowse < Minitest::Test
       end
     end
 
-    assert_equal "gzip", request.response_options[:responseHeaders]["content-encoding"]
-    assert_equal "compressed-wire-bytes", request.response_options[:body]
+    assert request.aborted
+    refute request.response_options
   end
 
   def test_non_http_subrequests_are_aborted

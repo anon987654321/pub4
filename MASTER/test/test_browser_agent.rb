@@ -114,6 +114,8 @@ class TestBrowserAgent < Minitest::Test
     transport = Master::Io::WebBrowse.new(governor: Governor.new)
     assert transport.send(:request_allowed_for_host?, URI("https://example.com/page"), "example.com")
     assert transport.send(:request_allowed_for_host?, URI("https://EXAMPLE.COM/page"), "example.com")
+    assert transport.send(:request_allowed_for_host?, URI("https://www.example.com/page"), "example.com")
+    assert transport.send(:request_allowed_for_host?, URI("https://EXAMPLE.COM./page"), "example.com")
     refute transport.send(:request_allowed_for_host?, URI("https://other.example/page"), "example.com")
   end
 

@@ -37,6 +37,7 @@ module Master
         "host-resolver-rules" => "MAP * ~NOTFOUND",
       }.freeze
       ResourceLimit = Class.new(StandardError)
+      UnsupportedContentEncoding = Class.new(StandardError)
 
       # Fetch does not intercept every non-HTTP networking primitive (for example,
       # WebSockets). Disable those APIs before untrusted page scripts execute.
@@ -207,7 +208,7 @@ module Master
         options = { responseCode: response.code.to_i, responseHeaders: response_headers(response) }
         options[:body] = body unless method == "HEAD"
         request.respond(**options)
-      rescue ResourceLimit
+      rescue ResourceLimit, UnsupportedContentEncoding
         request.abort
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "WebBrowse.pinned_get", url: request.url) rescue nil
@@ -219,7 +220,13 @@ module Master
       end
 
       def request_allowed_for_host?(uri, allowed_host)
-        allowed_host.nil? || uri.host.to_s.casecmp(allowed_host.to_s).zero?
+        return true if allowed_host.nil?
+
+        canonical_host(uri.host) == canonical_host(allowed_host)
+      end
+
+      def canonical_host(host)
+        host.to_s.downcase.sub(/\\.\\z/, "").sub(/\\Awww\\./, "")
       end
 
       def reserve_request!(budget)
@@ -251,6 +258,11 @@ module Master
           connection.request(outbound) do |incoming|
             response = incoming
             next if method == "HEAD"
+
+            encoding = incoming["content-encoding"].to_s.strip.downcase
+            unless encoding.empty? || encoding == "identity"
+              raise UnsupportedContentEncoding, "refused encoded response: #{encoding}"
+            end
 
             incoming.read_body do |chunk|
               raise ResourceLimit if body.bytesize + chunk.bytesize > MAX_RESOURCE_BYTES
