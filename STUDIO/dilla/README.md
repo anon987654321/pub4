@@ -18,7 +18,9 @@ default output directory.
 
 The MP4 is made offline by FFmpeg from the rendered audio, an architectural
 grid/waveform scene, and the selected recipe in `STUDIO/postpro/video.yml` (default
-`dilla_heavy`). FFmpeg with the `libx264` encoder is required for video. If it is
+`dilla_heavy`). FFmpeg with the `libx264` encoder is required for video. Export is bounded
+to 900 seconds by default; set `DILLA_FFMPEG_TIMEOUT` to an integer from 1 to 3600 seconds
+to override the deadline. A timed-out encoder is terminated as a process group. If FFmpeg is
 unavailable or export fails, the WAV remains intact and the command reports an explicit
 MP4 failure. Use `--no-video` for an audio-only render, `--video PATH` to choose the MP4
 path, or `--video-preset NAME` to choose a recipe. `DILLA_VIDEO_POSTPRO=0` bypasses the
