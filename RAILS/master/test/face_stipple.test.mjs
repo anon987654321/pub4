@@ -39,6 +39,9 @@ test("FaceWorld observes reduced motion across shader, camera and event layers",
   assert.match(faceWorld, /const reducedMotion = reducedMotionEnabled\(state\)/);
   assert.match(faceWorld, /shellMaterial\.uniforms\.uTime\.value = reducedMotion \? 0 : now/);
   assert.match(faceWorld, /audioPulse = reducedMotion \? 0 : Math\.max/);
+  assert.match(faceWorld, /function updateActivityNodes\(now, state, reducedMotion = false\)/);
+  assert.match(faceWorld, /reducedMotion \? 0 : now \* orbitSpeed/);
+  assert.match(faceWorld, /!reducedMotion && active \? 0\.12 \*/);
   assert.match(faceWorld, /updatePulses\(now, reducedMotion\)/);
   assert.match(faceWorld, /const rotationEase = reducedMotion \? 1 : 0\.035/);
   assert.match(faceWorld, /const cameraEase = reducedMotion \? 1 : 0\.035/);
