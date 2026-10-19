@@ -26,6 +26,18 @@ class StudioSubprocessTest < Minitest::Test
     assert_operator elapsed, :<, 3.0
   end
 
+  def test_timeout_covers_descendants_that_keep_output_pipes_open
+    error = assert_raises(Studio::Subprocess::TimeoutError) do
+      Studio::Subprocess.capture3(
+        RbConfig.ruby, "-e",
+        "Process.spawn('sleep', '10', out: STDOUT, err: STDERR); exit 0",
+        timeout: 0.1
+      )
+    end
+
+    assert_match(/timed out/, error.message)
+  end
+
   def test_invalid_deadlines_are_rejected
     assert_raises(ArgumentError) do
       Studio::Subprocess.capture3(RbConfig.ruby, "-e", "exit", timeout: Float::INFINITY)
