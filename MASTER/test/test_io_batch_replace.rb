@@ -67,6 +67,35 @@ class TestIoBatchReplace < Minitest::Test
     assert_equal :validation, result.category
   end
 
+  def test_a_directory_symlink_outside_the_root_is_refused
+    outside = Dir.mktmpdir("batch_replace_outside_")
+    outside_file = File.join(outside, "notes.md")
+    File.write(outside_file, "OldName here\n")
+    File.symlink(outside, File.join(@root, "linked"))
+
+    result = replace(old_str: "OldName", new_str: "NewName", dir: "linked")
+
+    assert result.err?
+    assert_equal "OldName here\n", File.read(outside_file)
+  ensure
+    FileUtils.rm_rf(outside) if outside
+  end
+
+  def test_a_file_symlink_outside_the_root_is_skipped
+    outside = Dir.mktmpdir("batch_replace_outside_")
+    outside_file = File.join(outside, "notes.md")
+    link = File.join(@root, "lib", "linked.md")
+    File.write(outside_file, "OldName here\n")
+    File.symlink(outside_file, link)
+
+    replace(old_str: "OldName", new_str: "NewName")
+
+    assert File.symlink?(link), "bulk replacement must not consume a file symlink"
+    assert_equal "OldName here\n", File.read(outside_file)
+  ensure
+    FileUtils.rm_rf(outside) if outside
+  end
+
   def test_the_governor_decides_before_anything_is_read
     denied = Master::Result.err("denied", category: :policy)
     result = replace(governor: Governor.new(denied), old_str: "OldName", new_str: "NewName")
