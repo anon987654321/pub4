@@ -406,3 +406,8 @@ References:
 The interface layer remains subordinate to the human morphology so the face reads as a
 future person first and a computational being second.
 
+
+
+### Stipple point-size hierarchy
+
+The stipple shader now uses the existing canonical sample-bias attribute to give points a restrained, bounded size hierarchy instead of forcing every sample to exactly one pixel. It deliberately remains subtle: face identity is still carried by sparse contours and voids, and hardware may clamp point sizes. This is not a substitute for the separately specified raw-WebGL renderer migration or real-device visual verification. The regression test now binds the actual exported API and its Three.js stubs before checking neutral pressure, semantic mode changes, reduced motion and point ceilings.
