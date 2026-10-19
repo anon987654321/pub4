@@ -33,7 +33,7 @@ class GateRequiresResolveTest < Minitest::Test
     assert_empty strays, "declared preconditions nothing checks"
     refute_empty rows.select { |_, row| Array(row["needs"]).include?("browser") }
     refute_includes source, "BROWSER_BACKED", "the list belongs in gates.yml; a copy here drifts from it"
-    assert_includes source, 'needs(key).include?("browser")'
+    assert_includes source, 'needs.include?("browser")'
   end
 
   GATES = File.expand_path("../../MASTER/gates", __dir__)

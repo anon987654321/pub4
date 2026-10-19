@@ -118,11 +118,14 @@ class VisualContractGateTest < Minitest::Test
     assert_includes script, "time, [data-money] { visibility: hidden !important; }"
   end
 
+  # The runner hands its environment to every gate unchanged, so the capture switches reach visual_contract
+  # as long as it does not scrub the environment and the explainer documents them.
   def test_runner_forwards_visual_capture_env_to_gate
-    source = File.read(File.expand_path("../../MASTER/gates/runner.rb", __dir__))
-    %w[VISUAL_CAPTURE VISUAL_CAPTURE_APP VISUAL_CAPTURE_BASE visual_contract_capture_args].each do |needle|
-      assert_includes source, needle
-    end
+    runner = File.read(File.expand_path("../../MASTER/gates/runner.rb", __dir__))
+    explain = File.read(File.expand_path("../../MASTER/gates/support/runner_explain.rb", __dir__))
+
+    refute_includes runner, "unsetenv_others"
+    %w[VISUAL_CAPTURE VISUAL_CAPTURE_APP VISUAL_CAPTURE_BASE].each { |name| assert_includes explain, name }
   end
 end
 

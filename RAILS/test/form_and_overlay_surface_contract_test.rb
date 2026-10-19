@@ -27,7 +27,7 @@ class FormAndOverlaySurfaceContractTest < Minitest::Test
   end
 
   def test_pre_push_regenerates_snapshots_before_publishing
-    assert_includes HOOK, "MASTER/tools/snapshot.rb"
+    assert_includes HOOK, "\"tools\", \"snapshot.rb\""
     assert_includes HOOK, "snapshot regeneration failed; push refused"
   end
 end
