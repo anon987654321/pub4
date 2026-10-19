@@ -572,7 +572,7 @@ module Master
         choices = menu.value!
         named = text[/\bprogression\s+(\d+)\b/i, 1]
         progression = choices[:progressions].include?(named) ? named : choices[:progressions].sample
-        # Bare /play is a Dilla-first audition; it must not depend on prior reference analysis.
+        # Explicit Dilla requests must not depend on prior reference analysis.
         explicit_dilla = text.match?(/\b(?:j\s*dilla|dilla|boom[ -]?bap|hip[ -]?hop)\b/i)
         named_other_style = text.match?(/\b(?:bach|baroque|flying lotus|flylo|madlib|royksopp|industrial[ -]?techno|techno)\b/i) && !explicit_dilla
         reference = if explicit_dilla

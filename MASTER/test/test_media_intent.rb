@@ -117,7 +117,7 @@ def test_plain_live_music_language_routes_to_dilla
   assert_equal "--list", calls.first[:arg]
 end
 
-def test_bare_play_renders_the_dilla_pocket_at_92_bpm_and_plays_the_wav
+def test_bare_play_renders_the_curated_blue_hour_showcase_and_plays_the_wav
   calls = []
 
   without_sound do
