@@ -109,6 +109,17 @@ class TestGateChain < Minitest::Test
     previous.nil? ? ENV.delete(key) : ENV[key] = previous
   end
 
+  # Every other test stubs disk_state; a load-order fault in it refused every stage of a real gate run.
+  def test_disk_state_measures_in_a_process_that_loads_only_the_gate_chain
+    lib = File.expand_path("../lib", __dir__)
+    script = 'require "operator/gate_chain"; g = Operator::GateChain; ' \
+             "print g.disk_state([g::ROOT])[:free_gb].class"
+    out, status = Open3.capture2e(RbConfig.ruby, "-I", lib, "-e", script)
+
+    assert status.success?, out
+    assert_equal "Float", out.lines.last.to_s.strip
+  end
+
   def test_gate_capture_refuses_to_start_a_child_when_disk_is_critical
     Dir.mktmpdir do |dir|
       G.stub(:disk_state, ->(*) { { free_gb: 1.0, critical: true } }) do

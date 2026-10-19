@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../master"
+
 require "digest"
 require "fileutils"
 require "json"
@@ -785,7 +787,8 @@ end
 
       free_gb = readings.min
       { free_gb:, critical: budget.disk_critical?({ values: { disk_free_gb: free_gb } }) }
-    rescue StandardError
+    rescue StandardError => e
+      Master::Trace::Dmesg.status("gate0", "disk state unreadable: #{e.class}: #{e.message}"[0, 200])
       { free_gb: nil, critical: true }
     end
 
