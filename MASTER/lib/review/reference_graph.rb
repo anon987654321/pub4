@@ -676,6 +676,7 @@ module Master
       def includes_path?(path)
         @nodes.include?(relative(path))
       end
+      public :includes_path?
     end
   end
 end

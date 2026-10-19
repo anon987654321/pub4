@@ -38,6 +38,18 @@ class TestReferenceGraph < Minitest::Test
     end
   end
 
+  # fix_loop and the stream stage both ask the graph whether a path has a node.
+  def test_a_built_graph_answers_whether_a_path_has_a_node
+    Dir.mktmpdir("reference-graph") do |root|
+      File.write(File.join(root, "a.rb"), "module A; end\n")
+      graph = Master::Review::ReferenceGraph.new(root:)
+      graph.build
+
+      assert graph.includes_path?(File.join(root, "a.rb"))
+      refute graph.includes_path?(File.join(root, "missing.rb"))
+    end
+  end
+
   def test_blast_radius_uses_the_resolved_cross_tree_edge
     Dir.mktmpdir("reference-graph") do |root|
       caller = File.join(root, "RAILS", "brgen", "app.rb")
