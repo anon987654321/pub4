@@ -62,6 +62,7 @@ function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, co
         attention: 1, arousal: 0.22, valence: 0.18, focus: 0.86, activity: 0.14, risk: 0
       },
       spatial: { budget: {
+        point_allocation: { stipple_fraction: 0.75, world_fraction: 0.25 },
         desktop_points: 1200, mobile_points: 420, desktop_particles: 200, mobile_particles: 120,
         reduced_motion_particles: 64, max_device_pixel_ratio: 2, active_fps: 24, idle_fps: 12,
         hidden_fps: 0, reduced_motion_fps: 8, battery_fps: 12, pulse_limit: 24, hud_labels: 5
@@ -88,11 +89,19 @@ function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, co
 }
 
 test("shared render budget gives coarse-pointer devices the mobile ceiling", () => {
-  assert.equal(loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget().points, 420);
+  const coarse = loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget();
+  assert.equal(coarse.points, 420);
+  assert.equal(coarse.stipple_points, 315);
+  assert.equal(coarse.world_points, 105);
+  assert.equal(coarse.stipple_points + coarse.world_points, coarse.points);
   assert.equal(loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget().particles, 120);
   assert.equal(loadFaceStateBudget({ narrowViewport: true, cores: 8 }).renderBudget().points, 420);
   assert.equal(loadFaceStateBudget({ cores: 4 }).renderBudget().points, 420);
-  assert.equal(loadFaceStateBudget({}).renderBudget().points, 1200);
+  const desktop = loadFaceStateBudget({}).renderBudget();
+  assert.equal(desktop.points, 1200);
+  assert.equal(desktop.stipple_points, 900);
+  assert.equal(desktop.world_points, 300);
+  assert.equal(desktop.stipple_points + desktop.world_points, desktop.points);
 });
 
 test("shared render budget honors declared reduced motion and hidden-tab ceilings", () => {
@@ -124,11 +133,12 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /state\.pressureFields\?\.entropy/);
   assert.match(system, /state\??\.reducedMotion/);
   assert.match(system, /budget\[mobile \? "mobile_points" : "desktop_points"\]/);
-  assert.match(system, /MASTER_FACE_STATE\?\.renderBudget\?\.\(\)\.points/);
+  assert.match(system, /sharedBudget\.stipple_points \?\? sharedBudget\.points/);
   assert.match(system, /max-width: 767px/);
   assert.match(system, /hardwareConcurrency/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
-  assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /effectiveBudget\?\.points/);
+  assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /effectiveBudget\?\.world_points/);
+  assert.match(sparseField, /sharedParticleBudget = Number\(window\.MASTER_FACE_STATE\?\.renderBudget\?\.\(\)\.particles\)/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /uPointSizeReferenceDepth: \{ value: clamp\(pointSize\.reference_depth/);
   assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale,\s+uPointSizeOutputMin, uPointSizeOutputMax\)/);
@@ -183,7 +193,11 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     navigator: { hardwareConcurrency: hardwareCores },
     MASTER_FACE_STATE: {
       snapshot: () => faceState,
-      renderBudget: () => ({ points: (coarsePointer || narrowViewport || hardwareCores <= 4) ? 420 : 1200 })
+      renderBudget: () => {
+        const points = (coarsePointer || narrowViewport || hardwareCores <= 4) ? 420 : 1200;
+        const stipple_points = Math.floor(points * 0.75);
+        return { points, stipple_points, world_points: points - stipple_points };
+      }
     },
     matchMedia: (query) => ({
       matches: (query === "(pointer: coarse)" && coarsePointer) ||
@@ -219,7 +233,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.snapshot, "function");
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.uninstall, "function");
   assert.equal(window.MASTER_FACE_STIPPLE.profiles.idle.density, 0.44);
-  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 1200);
+  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 900);
   assert.equal(window.MASTER_FACE_STIPPLE.snapshot().context, "ready");
 
   class BufferAttribute {
@@ -309,9 +323,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   window.MASTER_FACE.State.reducedMotion = false;
 
   // The layer never exceeds the canonical desktop/mobile point ceiling.
-  assert.equal(api.createDefault(THREE, 5000).count, 1200);
+  assert.equal(api.createDefault(THREE, 5000).count, 900);
   coarsePointer = true;
-  assert.equal(api.createDefault(THREE, 5000).count, 420);
+  assert.equal(api.createDefault(THREE, 5000).count, 315);
   coarsePointer = false;
   narrowViewport = true;
   assert.equal(api.createDefault(THREE, 5000).count, 420);
