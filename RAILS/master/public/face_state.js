@@ -49,8 +49,16 @@
     return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
   };
 
+  const mediaQueryCache = new Map();
+
   function mediaMatches(query) {
-    return typeof matchMedia === "function" && Boolean(matchMedia(query)?.matches);
+    if (typeof matchMedia !== "function") return false;
+    let media = mediaQueryCache.get(query);
+    if (!media) {
+      media = matchMedia(query);
+      if (media) mediaQueryCache.set(query, media);
+    }
+    return Boolean(media?.matches);
   }
 
   // Canonical motion policy shared by renderers, the budget and semantic state adapters.
@@ -216,6 +224,7 @@
     if (profile === "battery") fps = Math.min(fps, Number(budget.battery_fps) || 12);
     return Object.freeze({
       points: maxPoints,
+      constrained_device: mobile,
       stipple_points: stipplePoints,
       world_points: worldPoints,
       particles: effectiveParticles,
