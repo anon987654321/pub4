@@ -102,20 +102,20 @@ class VisualIdentityContractTest < Minitest::Test
   end
 
   def test_canonical_visual_contract_requires_runtime_and_performance_proof
-      %w[
-        reduced_motion_runtime
-        aggregate_render_budget
-        renderer_lifecycle
-        render_state_regression
-        device_performance_evidence
-      ].each { |requirement| assert_includes LAWS_SOURCE, requirement }
-  
-      assert_includes LAWS_SOURCE, "Reduced-motion policy applies to every animated layer and transition"
-      assert_includes LAWS_SOURCE, "no adapter may spend the whole renderer budget independently"
-      assert_includes LAWS_SOURCE, "JavaScript render-call cadence from GPU completion"
-    end
-  
-    def test_product_dialects_remain_explicit_in_the_visual_contract
+    %w[
+      reduced_motion_runtime
+      aggregate_render_budget
+      renderer_lifecycle
+      render_state_regression
+      device_performance_evidence
+    ].each { |requirement| assert_includes LAWS_SOURCE, requirement }
+
+    assert_includes LAWS_SOURCE, "Reduced-motion policy applies to every animated layer and transition"
+    assert_includes LAWS_SOURCE, "no adapter may spend the whole renderer budget independently"
+    assert_includes LAWS_SOURCE, "JavaScript render-call cadence from GPU completion"
+  end
+
+  def test_product_dialects_remain_explicit_in_the_visual_contract
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
     adapters = identity.fetch("adaptations")
 
