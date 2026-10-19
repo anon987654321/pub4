@@ -92,7 +92,7 @@ class TestRenderer < Minitest::Test
     aliases = Master::Face::Contract.mode_aliases
 
     assert_equal 24, budget.fetch("active_fps")
-    assert_equal 12, budget.fetch("mobile_particles")
+    assert_equal 120, budget.fetch("mobile_particles")
     assert_equal "error", aliases.fetch("phantom")
     assert_equal 38, Master::Face::Contract.camera.fetch("fov")
   end

@@ -31,8 +31,10 @@ visual_identity:
   art_direction:
     subject_count: 1
     background: flat paper or ink
-    typography_layer: separate and editable; never bake critical copy into generated photography
-    signal_usage: original graphic overlays only; never colour-grade photographic subjects with the signal
+    typography_layer: separate and editable; never bake critical copy into generated
+      photography
+    signal_usage: original graphic overlays only; never colour-grade photographic
+      subjects with the signal
     preserve_media_colour: true
     preserve_likeness: true
     grade_is_explicit: true
@@ -48,10 +50,13 @@ visual_identity:
     wordmark: original pub4 artwork only
   adaptations:
     master: mineral-lime signal on ink; organic face remains the sole expressive centerpiece
-    brgen: retain deep-blue city identity and local editorial photography; signal is a sparse semantic accent only
-    amber: retain neutral fashion surfaces and truthful garment colour; signal never recolours product photography
+    brgen: retain deep-blue city identity and local editorial photography; signal
+      is a sparse semantic accent only
+    amber: retain neutral fashion surfaces and truthful garment colour; signal never
+      recolours product photography
     bsdports: retain OpenBSD terminal green and flat monochrome surfaces
-    openbsd: plain operational text; signal never substitutes for a truthful written state
+    openbsd: plain operational text; signal never substitutes for a truthful written
+      state
     studio: retain media fidelity, operator-owned grades and original subject identity
 viewport:
   xs: 480
@@ -98,7 +103,7 @@ system:
   tile_gap_col: 8px
   control_pad_inline: 16px
   control_gap: 8px
-  radius_card: 12px
+  radius_card: 16px
 storefront_art:
   name: matte_product_promotion
   family: marketplace_takeaway
@@ -296,7 +301,7 @@ face_root:
   anchors:
     c_text: oklch(86% 0.02 300)
     x_text: "#d8d6e0"
-    c_accent: oklch(78% 0.10 300)
+    c_accent: var(--pub4-signal)
     c_danger: oklch(60% 0.14 35)
     c_code: oklch(74% 0.11 275)
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira
@@ -377,6 +382,62 @@ face_interface:
     focus: 0.86
     activity: 0.14
     risk: 0.0
+  stipple:
+    profiles:
+      idle:
+        density: 0.44
+        ripple: 0.03
+        turbulence: 0.04
+        luminosity: 0.76
+        attract: 0.14
+      thinking:
+        density: 0.72
+        ripple: 0.16
+        turbulence: 0.28
+        luminosity: 0.91
+        attract: 0.74
+      listening:
+        density: 0.62
+        ripple: 0.17
+        turbulence: 0.09
+        luminosity: 0.85
+        attract: 0.86
+      working:
+        density: 0.75
+        ripple: 0.24
+        turbulence: 0.34
+        luminosity: 0.9
+        attract: 0.6
+      speaking:
+        density: 0.84
+        ripple: 0.6
+        turbulence: 0.19
+        luminosity: 0.98
+        attract: 0.4
+      warning:
+        density: 0.84
+        ripple: 0.52
+        turbulence: 0.48
+        luminosity: 0.96
+        attract: 0.22
+      error:
+        density: 0.56
+        ripple: 0.82
+        turbulence: 0.65
+        luminosity: 1.0
+        attract: 0.04
+      ready:
+        density: 0.6
+        ripple: 0.06
+        turbulence: 0.06
+        luminosity: 0.82
+        attract: 0.25
+      sleeping:
+        density: 0.3
+        ripple: 0.0
+        turbulence: 0.0
+        luminosity: 0.48
+        attract: 0.1
   interaction:
     states:
     - idle
@@ -432,6 +493,7 @@ face_interface:
     - workspace:node:removed
     - workspace:relation:created
     - workspace:focus
+    - memory:added
     - task:queued
     - task:active
     - task:waiting-human
@@ -487,36 +549,104 @@ face_interface:
     converged: ready
     settled: idle
   ascii:
-    chars: " .:-=+*#%@"
+    prompt:
+      input: "|-"
+      continuation: "\\_"
+      output: "/"
+    chars: " .,:~;r+=civ*YnyeaXPq&#8W@"
+    ramps:
+      sculpt: " .,:~;r+=civ*YnyeaXPq&#8W@"
+      classic: " .:;=*#@"
+      high_contrast: " .;=#@"
+      fine_detail: " .:;=*#@"
+    ink:
+      " ": 0.0
+      ".": 0.0362
+      ",": 0.0492
+      ":": 0.0576
+      "~": 0.0646
+      ";": 0.0753
+      r: 0.0802
+      "+": 0.0834
+      "=": 0.091
+      c: 0.0967
+      i: 0.1003
+      v: 0.103
+      "*": 0.1103
+      "Y": 0.1161
+      "n": 0.1222
+      "y": 0.1288
+      e: 0.1379
+      a: 0.1442
+      X: 0.1499
+      P: 0.1574
+      q: 0.1633
+      "&": 0.1718
+      "#": 0.1797
+      '8': 0.1871
+      W: 0.201
+      "@": 0.2099
     mode: dark
     fit: 0.92
     camera: 3.2
     aspect: 2.0
+    samples: 2
+    samples_large:
+      cells: 6000
+      samples: 1
+    size:
+      mode: auto
+      margin:
+        cols: 2
+        rows: 0
+      floor:
+      - 28
+      - 64
+      cap:
+      - 120
+      - 300
+      span: 1.25
+    mesh:
+      rows:
+      - 40
+      - 96
+      per_row: 1.6
+      around:
+      - 48
+      - 150
+      per_col: 0.9
+      skull: 1.45
+      chin: 1.2
+      jaw: 0.6
+      blur: 0.02
+      back: 0.72
     light:
-    - -0.4
-    - 0.5
-    - 0.75
-    splat:
-    - - 0
-      - 0
-    - - 1
-      - 0
-    - - 0
-      - 1
-    - - -1
-      - 0
-    - - 0
-      - -1
-    crease: 0.8
+      start: -0.6
+      orbit: 0.6
+      elevation: 0.5
+      fill_dir:
+      - -0.4
+      - 0.25
+      - 0.9
+      ambient: 0.16
+      key: 0.62
+      fill: 0.16
+      rim: 0.3
+      spec: 0.22
+      shininess: 16
     shade:
-      base: 0.18
-      gain: 0.75
-      paint: 0.8
+      paint: 0.6
+      gain: 1.0
+      gamma: 1.2
       ceiling: 0.97
-    edge_gradient: 0.02
-    hollow: 0.5
-    gap: 3
-    see_through: 2.5
+    cavity:
+      gain: 0.15
+    cover: 0.2
+    edge_fade: 0.4
+    edge_gradient: 0.5
+    crease: 0.6
+    vote: 0.35
+    depth_edge: 0.15
     dither_gain: 0.55
     dither:
     - - 0
@@ -538,6 +668,7 @@ face_interface:
     depth:
       near: 0.62
       far: 0.3
+      tone: 0.08
     web:
       rows: 44
       font:
@@ -571,12 +702,29 @@ face_interface:
       - sleeping
       - ready
     occlusion: 2.5
+    facing: 0.1
     min_rows: 8
     min_cols: 16
     features:
       eye_open: "("
       eye_close: ")"
       pupil: o
+      pupil_large: O
+      eye_floor: 9
+      eye_share: 0.1
+      eye_tall_at: 13
+      eye_lid_top:
+      - "."
+      - "-"
+      - "."
+      eye_lid_bottom:
+      - "'"
+      - "-"
+      - "'"
+      nostril_at: 7
+      nostril:
+      - "("
+      - ")"
       lid: "-"
       brow: "-"
       nose: "|"
@@ -760,6 +908,15 @@ face_interface:
       radius: 1.58
       width_segments: 28
       height_segments: 20
+    task_ring:
+      enabled: true
+      max_nodes: 12
+      radius_x: 2.02
+      radius_y: 1.72
+      depth: -0.12
+      dot_radius: 0.027
+      orbit_speed: 4.0e-06
+      terminal_lifetime_ms: 12000
     nodes:
       lib:
       - -1.38
@@ -815,7 +972,7 @@ face_interface:
       distance: 5.2
       parallax: 0.06
       orbit_limit: 0.16
-    fov: 38
+      fov: 38
     budget:
       desktop_points: 1200
       mobile_points: 420
@@ -969,9 +1126,9 @@ light:
   danger: "#a9483c"
 vertical_accents:
   marketplace:
-    accent: "#98876e"
-    hover: "#8d7e66"
-    light: "#98876e"
+    accent: "#2563EB"
+    hover: "#1D4ED8"
+    light: "#1E40AF"
   tv:
     accent: "#dc635c"
     hover: "#b83a33"
@@ -1029,7 +1186,7 @@ scale:
   - 0.05
   - 0.08
   - 0.14
-  line_height:
+  line_height: &2
   - 1
   - 1.25
   - 1.4
@@ -1275,6 +1432,47 @@ ux_laws:
   progressive_disclosure:
     require_advanced_hidden: true
     action: Advanced/secondary controls should start collapsed or on secondary surfaces.
+typography:
+  accessibility:
+    body_min_px: 16
+    mobile_input_min_px: 16
+    normal_text_contrast: 7.0
+    large_text_contrast: 4.5
+  line_length:
+    min_ch: 45
+    max_ch: 75
+    ideal_ch: 66
+  line_height:
+    allowed: *2
+    body_preferred: 1.5
+  hierarchy:
+    max_font_families: 2
+    max_font_weights: 3
+    max_font_sizes: 8
+    min_weight_delta: 200
+    min_size_ratio_between_levels: 1.2
+    h1_body_min_ratio: 1.75
+    h1_body_max_ratio: 5.5
+    h2_body_min_ratio: 1.5
+    h2_body_max_ratio: 3.5
+    h3_body_min_ratio: 1.25
+    h3_body_max_ratio: 2.5
+  letter_spacing:
+    all_caps_min_em: 0.05
+    all_caps_max_em: 0.15
+    lowercase_body_should_letterspace: false
+  micro:
+    default_features:
+    - kern
+    body_numerals: oldstyle-nums
+    table_numerals: tabular-nums
+    hyphenate_limit_chars:
+    - 6
+    - 3
+    - 2
+    orphans: 3
+    widows: 3
+    void_target: 0.7
 worn_type:
   type_scale_ratio: 1.25
   type_scale_tolerance_px: 1.5

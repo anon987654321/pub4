@@ -249,7 +249,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_asset_paths_script_emits_every_declared_asset
-    web = File.expand_path("../web", __dir__)
+    web = File.expand_path("../../RAILS/master", __dir__)
     manifest = YAML.safe_load_file(File.join(web, "config", "face_assets.yml"))
     # Every group the manifest declares, read from the manifest rather than
     # named here: a copy of the group list let shell_css join the file and the
@@ -267,7 +267,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_music_pack_is_wellformed_and_declared
-    web = File.expand_path("../web", __dir__)
+    web = File.expand_path("../../RAILS/master", __dir__)
     pack = JSON.parse(File.read(File.join(web, "public", "face_music_packs.json")))
 
     # The engine fetches this one file and the pack is its only harmony table;

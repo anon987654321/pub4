@@ -56,13 +56,12 @@ class TtsWorkerContractTest < Minitest::Test
   end
 
   def test_worker_timeout_normal_mode_uses_speech_constants
-    # Speech::WORKER_TIMEOUT = 8, WORKER_TIMEOUT_PER_CHAR = 0.02, WORKER_TIMEOUT_MAX = 30
-    # 8 + ceil(100 * 0.02) = 10
-    assert_equal 10, @speech.worker_timeout(100)
-    # 8 + ceil(500 * 0.02) = 18
-    assert_equal 18, @speech.worker_timeout(500)
-    # capped at 30
-    assert_equal 30, @speech.worker_timeout(2000)
+    base = Master::Voice::Speech::WORKER_TIMEOUT
+    per_char = Master::Voice::Speech::WORKER_TIMEOUT_PER_CHAR
+    cap = Master::Voice::Speech::WORKER_TIMEOUT_MAX
+    assert_equal base + (100 * per_char).ceil, @speech.worker_timeout(100)
+    assert_equal base + (500 * per_char).ceil, @speech.worker_timeout(500)
+    assert_equal cap, @speech.worker_timeout(1_000_000)
   end
 
   def test_stream_timeout_allows_the_audio_duration_in_fast_mode
