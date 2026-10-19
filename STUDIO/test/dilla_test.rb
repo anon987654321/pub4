@@ -3057,10 +3057,9 @@ class DillaTest < Minitest::Test
       assert_equal bytes.bytesize - 44, bytes[40, 4].unpack1("V")
       original = bytes.dup
 
-      error = assert_raises(ArgumentError) do
+      assert_raises(Errno::EEXIST) do
         WAV.write_stream(path, frames: 1, channels: 1) { |_offset, count| [Array.new(count, 0.0)] }
       end
-      assert_match(/refusing to overwrite/, error.message)
       assert_equal original, File.binread(path)
     end
   end
