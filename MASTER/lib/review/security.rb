@@ -67,6 +67,7 @@ module Master
           prompt_injection: [
             /ignore (?:previous|all|your) instructions/i,
             /disregard (?:your )?(?:system )?prompt/i,
+            /reveal (?:your |the )?(?:hidden |secret )?(?:system )?(?:prompt|instructions)/i,
             /you are now (?:a|an|in)/i,
             /pretend (?:to be|you are|you're)/i,
             /new instructions:/i,

@@ -421,7 +421,8 @@ class TestIoTools < Minitest::Test
   class FakeClient
     attr_reader :started
 
-    def start = @started = true
+    def connect = @started = true
+    alias start connect
     def tools = [Struct.new(:name, :description).new("read", "reads")]
   end
 
@@ -668,10 +669,13 @@ class TestIoTools < Minitest::Test
     def network = @network
     def go_to(url) = @visited = url
     def at_css(css) = css.include?("textarea") || css.include?("prompt") ? @input : @reply
+
+    # The reply appears once the prompt has been typed, as it does on a provider page.
+    def css(_selector) = @input&.typed && @reply ? [@reply] : []
   end
 
   def test_web_chat_refuses_to_start_a_browser_when_disabled
-    with_env("MASTER_WEB_CHAT", nil) do
+    with_env("MASTER_WEB_CHAT", "0") do
       with_env("MASTER_KEYLESS", nil) do
         Master.stub(:keyless_llm_enabled?, false) do
           chat = Master::Io::WebChat.new(provider: "chatgpt")

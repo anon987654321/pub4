@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "fix/scanner"
+require "review/scan/laws/external_linter_laws"
 require "json"
 
 class TestExternalLinterLaws < Minitest::Test
