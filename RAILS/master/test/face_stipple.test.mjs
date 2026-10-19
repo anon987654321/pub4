@@ -15,7 +15,7 @@ const css = readFileSync(join(publicDir, "face.css"), "utf8");
 test("stipple assets are declared after existing face modules", () => {
   assert.match(manifest, /- master_namespace\s+- face_stipple_system\s+- face_playground/);
   assert.match(system, /window\.MASTER_FACE_STIPPLE/);
-  assert.match(system, /renderer\.render = function/);
+  assert.match(system, /renderWrapper = function/);
   assert.match(system, /active\.root\.add\(active\.points\)/);
 });
 
