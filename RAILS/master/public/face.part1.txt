@@ -220,10 +220,17 @@ function applyTheme(_theme, persist = true) {
   if (meta) meta.setAttribute('content', '#000000');
 }
 const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
+function faceReducedMotionActive() {
+  const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+  if (typeof canonical === 'function' && canonical()) return true;
+  return Boolean(State.reducedMotion) || rootBody.dataset.reducedMotion === '1' ||
+    Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+}
 function runtimeProfile() {
   return rootBody.dataset.runtimeProfile || 'calm';
 }
 function isRichMotionProfile() {
+  if (faceReducedMotionActive()) return false;
   const p = runtimeProfile();
   return p === 'full' || p === 'crt';
 }
@@ -236,7 +243,7 @@ function cycleRuntimeProfile() {
   const idx = RUNTIME_PROFILES.indexOf(current);
   const next = RUNTIME_PROFILES[(idx + 1) % RUNTIME_PROFILES.length];
   State.profileOverride = next;
-  rootBody.dataset.runtimeProfile = next;
+  rootBody.dataset.runtimeProfile = faceReducedMotionActive() ? 'battery' : next;
   localStorage.setItem('master:runtime_profile', next);
   const tintMap = {
     calm: TINT.idle,
@@ -617,7 +624,7 @@ Object.defineProperty(State, 'mode', {
     if (micText) micText.textContent = v === 'listening' ? 'Microphone on' : 'Microphone off';
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking' && !State.reducedMotion && runtimeProfile() !== 'battery') startStar(); else stopStar();
+    if (v === 'thinking' && !faceReducedMotionActive() && runtimeProfile() !== 'battery') startStar(); else stopStar();
   },
   configurable: true
 });
@@ -627,7 +634,7 @@ function updateRuntimeProfile() {
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
   if (!State.profileOverride) {
-    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';
+    rootBody.dataset.runtimeProfile = faceReducedMotionActive() ? 'battery' : (State.profileOverride || ((State.hidden || State.coarsePointer) ? 'battery' : 'calm'));
   }
   rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }
@@ -754,7 +761,7 @@ function resize() {
   const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
   const scaleMin = typeof FACE_RENDER_SCALE_MIN !== 'undefined' ? FACE_RENDER_SCALE_MIN : 0.48;
   if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
-    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
+    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (faceReducedMotionActive() || profile === 'battery' ? 0.62 : scaleMax);
   }
   let internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
   let internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
