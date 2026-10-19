@@ -55,7 +55,7 @@ class TestConvergenceDiscipline < Minitest::Test
   def test_begin_run_records_read_evidence_and_observe_tracks_best_state
     baseline = @discipline.begin_run([@path])
     refute_empty baseline
-    @discipline.observe(pass: 1, findings: [{ rule: "A" }], files: [@path], progressed: true)
+    @discipline.observe(pass: 1, findings: [{ law: "A" }], files: [@path], progressed: true)
     @discipline.observe(pass: 2, findings: [], files: [@path], progressed: true)
 
     assert_equal 0, @discipline.best_state.fetch(:score)
@@ -67,14 +67,14 @@ class TestConvergenceDiscipline < Minitest::Test
 
   def test_observe_emits_attention_budget
     @discipline.begin_run([@path])
-    @discipline.observe(pass: 1, findings: [
-      { rule: "high", consumers: 8, confidence: 0.9 },
-      { rule: "uncertain", confidence: 0.1, status: :uncertain },
+    crowd = Array.new(8) { |n| { law: "high#{n}", consumers: 8, confidence: 0.9 } }
+    @discipline.observe(pass: 1, findings: crowd + [
+      { law: "uncertain", confidence: 0.1, status: :uncertain },
     ], files: [@path], progressed: false)
 
     event = @bus.events.find { |name, _| name == "fix_loop:attention" }
     refute_nil event
-    assert_equal 2, event.last.fetch(:candidates)
+    assert_equal 9, event.last.fetch(:candidates)
     assert_equal true, event.last.fetch(:preserved_uncertainty)
   end
 
@@ -106,7 +106,8 @@ class TestConvergenceDiscipline < Minitest::Test
                  @discipline.adaptive_decision(deadline_expired: false, pass_limit: 1, absolute_limit: 60).reason
 
     @discipline.begin_run([@path])
-    @discipline.observe(pass: 1, findings: [], files: [@path], progressed: true)
+    @discipline.observe(pass: 1, findings: [{ law: "A", severity: "error" }], files: [@path], progressed: true)
+    @discipline.observe(pass: 2, findings: [], files: [@path], progressed: true)
     assert_equal :extend,
                  @discipline.adaptive_decision(deadline_expired: false, pass_limit: 1, absolute_limit: 60).action
     assert_equal :deadline,
@@ -168,17 +169,18 @@ class TestConvergenceDiscipline < Minitest::Test
   def test_strategy_rotates_with_risk_size_and_language_diversity
     assert_equal :consensus, @discipline.strategy_for(files: [@path], findings: [])
     assert_equal :adversarial,
-                 @discipline.strategy_for(files: [@path], findings: [{ rule: "SQL_INJECTION" }])
+                 @discipline.strategy_for(files: [@path], findings: [{ law: "SQL_INJECTION" }])
     many = Array.new(8, @path)
     assert_equal :ensemble, @discipline.strategy_for(files: many, findings: [])
     assert_equal :incremental,
-                 @discipline.strategy_for(files: [@path], findings: Array.new(8) { { rule: "STYLE" } })
+                 @discipline.strategy_for(files: [@path], findings: Array.new(8) { { law: "STYLE" } })
   end
 
   def test_reasoning_contract_restores_cognitive_and_scientific_method_constraints
     text = @discipline.reasoning_contract(strategy: :adversarial, files: [@path], findings: [])
 
-    assert_includes text, "scientific method"
+    assert_includes text, "hypothesis"
+    assert_includes text, "evidence rule"
     assert_includes text, "active-file budget"
     assert_includes text, "independent-concern budget"
     assert_includes text, "alternatives"
