@@ -301,6 +301,7 @@ module Master
         return :stale unless fingerprint_matches?(violation)
         return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@law.id, old_src, new_src)
         raw_before = scan_all(path)
+        log_scan_agreement(path, raw_before)
         before = gate_findings(raw_before)
         write_atomic(path, new_src)
         raw_after = scan_all(path)

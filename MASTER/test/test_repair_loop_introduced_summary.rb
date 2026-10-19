@@ -66,4 +66,17 @@ end
 
     assert_equal [["fix0", "semantic findings noted, not gated: home_controller.rb RATE_LIMITING_MISSING +1"]], said
   end
+
+  def test_scan_agreement_separates_mechanical_from_semantic_findings
+    mechanical = Struct.new(:id).new("ABC_SIZE")
+    semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new
+    loop = Master::Fix::RepairLoop.allocate
+    loop.instance_variable_set(:@scanner, Struct.new(:laws).new([mechanical, semantic]))
+    first = [{ law: "ABC_SIZE", line: 1 }, { law: "RATE_LIMITING_MISSING", line: 9 }]
+    second = [{ law: "ABC_SIZE", line: 1 }, { law: "ONE_SOURCE_LLM", line: 3 }, { law: "ONE_SOURCE_LLM", line: 4 }]
+
+    line = loop.scan_agreement_line("f.rb", first, second)
+
+    assert_equal "scan agreement f.rb: mechanical 1 vs 1 same; semantic 1 vs 2 (second minus first: RATE_LIMITING_MISSING -1, ONE_SOURCE_LLM +2)", line
+  end
 end

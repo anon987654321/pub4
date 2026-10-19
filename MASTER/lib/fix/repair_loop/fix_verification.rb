@@ -23,6 +23,33 @@ module Master
           false
         end
 
+        # A control for the semantic gate (MASTER_FIX_SCAN_AGREEMENT=1): the unchanged file is scanned once
+        # more and the two scans compared, mechanical and semantic findings apart, so how often the
+        # semantic stream disagrees with itself is measured instead of assumed. One extra scan per repair.
+        def log_scan_agreement(path, first)
+          return unless ENV["MASTER_FIX_SCAN_AGREEMENT"] == "1"
+
+          line = scan_agreement_line(File.basename(path.to_s), first, scan_all(path))
+          Master::Trace::Dmesg.status("fix0", line)
+          @bus&.publish("repair_loop:scan_agreement", law: @law.id, file: path, summary: line)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "repair_loop.scan_agreement", event_bus: @bus, path:)
+        end
+
+        def scan_agreement_line(name, first, second)
+          ids = mechanical_law_ids
+          split = ->(rows) { ids.empty? ? [rows, []] : rows.partition { |row| ids.include?(row[:law].to_s) } }
+          mech1, sem1 = split.call(first)
+          mech2, sem2 = split.call(second)
+          laws = ->(rows) { rows.map { |row| row[:law].to_s }.tally }
+          a = laws.call(sem1)
+          b = laws.call(sem2)
+          gained = (a.keys | b.keys).to_h { |law| [law, b.fetch(law, 0) - a.fetch(law, 0)] }.reject { |_, n| n.zero? }
+          same = laws.call(mech1) == laws.call(mech2) ? "same" : "DIFFERENT"
+          "scan agreement #{name}: mechanical #{mech1.size} vs #{mech2.size} #{same}; semantic #{sem1.size} vs #{sem2.size}" \
+            "#{gained.empty? ? " same laws" : " (second minus first: #{gained.map { |law, n| "#{law} #{n.positive? ? "+" : ""}#{n}" }.join(", ")})"}"
+        end
+
         # The findings the new-violations gate counts. The semantic stream (an LLM reading the file) names
         # its findings freely: RATE_LIMITING_MISSING, NO_CHANGELOG_COMMENT and MERGE_BEFORE_MULTIPLY are in
         # no registry, and two scans of one file need not agree on them, so a rejection on their count can
