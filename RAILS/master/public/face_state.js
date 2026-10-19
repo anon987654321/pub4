@@ -49,6 +49,18 @@
     return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
   };
 
+  function mediaMatches(query) {
+    return typeof matchMedia === "function" && Boolean(matchMedia(query)?.matches);
+  }
+
+  // Canonical motion policy shared by renderers, the budget and semantic state adapters.
+  function reducedMotionEnabled(snapshotValue = state) {
+    return Boolean(snapshotValue?.reducedMotion) ||
+      Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" ||
+      mediaMatches("(prefers-reduced-motion: reduce)");
+  }
+
   function registryResult(text, detail = {}) {
     const registry = window.MASTERTopology;
     if (!registry || typeof registry.classifyEvent !== "function") return {};
@@ -182,15 +194,13 @@
 
   function renderBudget() {
     const budget = CONTRACT_BUDGET;
-    const mediaMatches = (query) => typeof matchMedia === "function" && matchMedia(query).matches;
     // Coarse-pointer devices may have a large viewport; classify them by capability, not width alone.
     const mobile = mediaMatches("(pointer: coarse)") || mediaMatches("(max-width: 767px)") || Number(navigator.hardwareConcurrency || 8) <= 4;
     const maxPoints = Number(budget[mobile ? "mobile_points" : "desktop_points"]) || (mobile ? 420 : 1200);
     const particles = Number(budget[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
-    // The OS preference and the explicit page toggle must constrain the same shared budget.
-    const reducedMotion = Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
-      document.documentElement?.dataset?.reducedMotion === "1" || mediaMatches("(prefers-reduced-motion: reduce)");
+    // The OS preference, live face state and explicit page toggle use one shared policy.
+    const reducedMotion = reducedMotionEnabled();
     const reducedMotionParticles = Number(budget.reduced_motion_particles) || 64;
     const effectiveParticles = reducedMotion ? Math.min(particles, reducedMotionParticles) : particles;
     const profile = document.documentElement?.dataset?.runtimeProfile || "";
@@ -227,6 +237,7 @@
     setMode,
     setAttention,
     geometryProfile,
+    reducedMotion: reducedMotionEnabled,
     renderBudget
   });
 
