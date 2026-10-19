@@ -373,7 +373,8 @@ module Preflight
         header = entry.header
         name = entry.full_name.to_s
         type = header.typeflag.to_s
-        next if type == "5" && name.tr("\\", "/").match?(/\A(?:\.\/)+\z/)
+        root_name = name.tr("\\", "/").sub(/\/+\z/, "")
+        next if type == "5" && [".", ""].include?(root_name)
 
         # Strip harmless leading ./ segments produced by standard tar commands,
         # but refuse parent traversal, internal dot segments and ambiguous slashes.
