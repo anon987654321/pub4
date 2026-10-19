@@ -54,6 +54,12 @@
     return Number.isFinite(number) ? number : fallback;
   }
 
+  function reducedMotionEnabled(state = {}) {
+    return Boolean(state?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" ||
+      Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  }
+
   const TERMINAL_ACTIVITY_STATES = new Set(["complete", "failed", "cancelled"]);
 
   function removeActivity(key) {
@@ -492,21 +498,23 @@
     return typeof performance !== "undefined" ? performance.now() : Date.now();
   }
 
-  function updatePulses(now) {
+  function updatePulses(now, reducedMotion = false) {
     pulses = pulses.filter((pulse) => {
       const age = now - pulse.userData.started;
-      const t = age / pulse.userData.life;
-      if (t >= 1) {
+      if (age >= pulse.userData.life) {
         pulse.parent?.remove(pulse);
         pulse.geometry?.dispose?.();
         pulse.material?.dispose?.();
         return false;
       }
+      const t = reducedMotion ? 0.5 : age / pulse.userData.life;
       const a = pulse.userData.from.position;
       const b = pulse.userData.to.position;
       pulse.position.lerpVectors(a, b, t);
-      pulse.scale.setScalar(0.7 + pulse.userData.energy * Math.sin(Math.PI * t));
-      pulse.material.opacity = (1 - t) * Math.min(0.9, 0.25 + pulse.userData.energy * 0.65);
+      pulse.scale.setScalar(reducedMotion ? 0.7 + pulse.userData.energy * 0.5 : 0.7 + pulse.userData.energy * Math.sin(Math.PI * t));
+      pulse.material.opacity = reducedMotion
+        ? Math.min(0.78, 0.25 + pulse.userData.energy * 0.4)
+        : (1 - t) * Math.min(0.9, 0.25 + pulse.userData.energy * 0.65);
       return true;
     });
   }
@@ -522,6 +530,7 @@
     if (!geometry) return;
 
     const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
+    const reducedMotion = reducedMotionEnabled(state);
     const topology = String(state.topology || "papua-mask");
     const portrait = topology === "face" || topology === "papua-mask";
     const topologyProfile = TOPOLOGY_PROFILES[topology] || TOPOLOGY_PROFILES["papua-mask"] || {};
@@ -564,18 +573,21 @@
     const pointerY = finite(window.MASTER_FACE?.State?.mouseY, 0);
     const cameraLimit = finite(CAMERA.orbit_limit, 0.16);
     const cameraParallax = finite(CAMERA.parallax, geometry.camera_parallax);
-    const targetX = Math.max(-cameraLimit, Math.min(cameraLimit, pointerY * cameraParallax));
-    const targetY = Math.max(-cameraLimit, Math.min(cameraLimit, pointerX * cameraParallax));
+    const targetX = reducedMotion ? 0 : Math.max(-cameraLimit, Math.min(cameraLimit, pointerY * cameraParallax));
+    const targetY = reducedMotion ? 0 : Math.max(-cameraLimit, Math.min(cameraLimit, pointerX * cameraParallax));
 
-    world.rotation.y += ((pointerX * 0.045) + tiltY * (geometry.fracture + fracture) - world.rotation.y) * 0.035;
-    world.rotation.x += ((pointerY * 0.028) + tiltX * (geometry.fracture + fracture) - world.rotation.x) * 0.035;
+    const targetRotationY = (reducedMotion ? 0 : pointerX * 0.045) + tiltY * (geometry.fracture + fracture);
+    const targetRotationX = (reducedMotion ? 0 : pointerY * 0.028) + tiltX * (geometry.fracture + fracture);
+    const rotationEase = reducedMotion ? 1 : 0.035;
+    world.rotation.y += (targetRotationY - world.rotation.y) * rotationEase;
+    world.rotation.x += (targetRotationX - world.rotation.x) * rotationEase;
 
     shell.scale.set(
       geometry.shell_scale * cranialWidth * upperFaceScale * (1 + audioPulse * 0.018),
       geometry.shell_scale * cranialScale * facialVerticalization * (1 + audioPulse * 0.010),
       geometry.shell_scale * facialProjection * (1 + audioPulse * 0.012)
     );
-    shellMaterial.uniforms.uTime.value = now;
+    shellMaterial.uniforms.uTime.value = reducedMotion ? 0 : now;
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
     shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
@@ -586,9 +598,9 @@
     nodes.forEach((node) => {
       node.visible = !portrait;
       const phase = node.userData.phase;
-      const pulse = 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density + audioEnergy * 0.08;
+      const pulse = reducedMotion ? 1 : 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density + audioEnergy * 0.08;
       node.scale.setScalar(pulse);
-      node.position.z = NODE_LAYOUT[node.userData.index][3] + Math.sin(now * 0.00065 + phase) * 0.05 * geometry.depth;
+      node.position.z = NODE_LAYOUT[node.userData.index][3] + (reducedMotion ? 0 : Math.sin(now * 0.00065 + phase) * 0.05 * geometry.depth);
       node.material.opacity = Math.min(0.85, 0.20 + geometry.neural_density * 0.55 * density);
       node.material.color.copy(shellMaterial.uniforms.uColor.value);
     });
@@ -604,7 +616,7 @@
       splatProxy.material.opacity =
         Math.min(0.18, 0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04);
       splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
-      splatProxy.rotation.z = (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
+      splatProxy.rotation.z = reducedMotion ? 0 : (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
     }
 
     if (camera) {
@@ -614,7 +626,7 @@
       const zoom = Math.max(0, Math.min(1, finite(runtimeState.cameraZoom, 0)));
       const age = started > 0 ? now - started : Infinity;
       const duration = 3200;
-      const progress = Math.max(0, Math.min(1, age / duration));
+      const progress = reducedMotion ? 1 : Math.max(0, Math.min(1, age / duration));
       let envelope = 0;
       if (zoom > 0 && progress < 1) {
         if (progress < 0.375) {
@@ -630,10 +642,12 @@
 
       const targetFov = finite(CAMERA.fov, 38) - envelope * zoom * 10;
       const targetDistance = finite(geometry.camera_distance, baseDistance) + envelope * zoom * 0.55;
-      camera.position.z += (targetDistance - camera.position.z) * 0.035;
-      camera.position.x += (targetX - camera.position.x) * 0.035;
-      camera.position.y += (targetY - camera.position.y) * 0.035;
-      camera.fov += (targetFov - camera.fov) * 0.08;
+      const cameraEase = reducedMotion ? 1 : 0.035;
+      const fovEase = reducedMotion ? 1 : 0.08;
+      camera.position.z += (targetDistance - camera.position.z) * cameraEase;
+      camera.position.x += (targetX - camera.position.x) * cameraEase;
+      camera.position.y += (targetY - camera.position.y) * cameraEase;
+      camera.fov += (targetFov - camera.fov) * fovEase;
       camera.updateProjectionMatrix?.();
     }
 
@@ -650,12 +664,15 @@
     });
 
     updateActivityNodes(now, state);
-    updatePulses(now);
+    updatePulses(now, reducedMotion);
 
-    // The portrait should feel alive without looking busy: a barely perceptible
-    // breath keeps the head from freezing while leaving operator attention on the eyes.
-    const breath = Math.sin(now * 0.00072) * (state.mode === "idle" ? 0.008 : 0.004);
-    world.position.y += (breath - world.position.y) * 0.08;
+    // Reduced motion keeps the semantic composition but removes idle breathing.
+    if (reducedMotion) {
+      world.position.y = 0;
+    } else {
+      const breath = Math.sin(now * 0.00072) * (state.mode === "idle" ? 0.008 : 0.004);
+      world.position.y += (breath - world.position.y) * 0.08;
+    }
 
     const activePoints = Math.max(0, Math.min(splatCount, Number(budget.points || 420)));
     if (splatProxy) {
