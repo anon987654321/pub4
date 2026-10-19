@@ -67,11 +67,71 @@ module Deploy
       false
     end
 
+    # The process listening on a port and the directory it was started in. lsof
+    # is the only portable way to ask; nil when nothing listens or lsof cannot say.
+    def self.listener(port)
+      out, status = Master::Io::Exec.capture2e("lsof", "-nP", "-iTCP:#{port}", "-sTCP:LISTEN", "-Fp", timeout: 10)
+      pid = status.success? ? out[/^p(\d+)/, 1] : nil
+      return nil unless pid
+
+      cwd_out, = Master::Io::Exec.capture2e("lsof", "-a", "-p", pid, "-d", "cwd", "-Fn", timeout: 10)
+      { pid: pid.to_i, cwd: cwd_out[/^n(.+)$/, 1].to_s }
+    rescue StandardError
+      nil
+    end
+
+    # A server answering on the port is only this checkout's if it was started in
+    # this checkout. One left behind by a sibling agent worktree (pub4-<name>)
+    # answers /up too, so a booted run measured another tree's code. Those are
+    # stopped; a server in the main checkout or anywhere else is the operator's
+    # and is reported, never killed.
+    SIBLING_WORKTREE = %r{/pub4-[^/]+/RAILS/}
+
+    def self.foreign_listener(app)
+      found = listener(app[:port])
+      return nil if found.nil? || found[:cwd].start_with?(app[:dir])
+
+      found
+    end
+
+    def self.reap_sibling(app, found)
+      return false unless found[:cwd].match?(SIBLING_WORKTREE)
+
+      warn "triangle: #{app[:name]} port #{app[:port]} was held by pid #{found[:pid]} from #{found[:cwd]}; stopping it"
+      Process.kill("TERM", found[:pid])
+      sleep 2
+      true
+    rescue Errno::ESRCH, Errno::EPERM
+      true
+    end
+
+    # An empty development database makes db:prepare run the seeds, which attach
+    # images and took over ten minutes on a fresh /fix worktree. A seeded copy in
+    # the main checkout is the same data, so a worktree starts from it.
+    def self.seed_from_main(app)
+      target = File.join(app[:dir], "storage")
+      return if File.file?(File.join(target, "development.sqlite3"))
+
+      common, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "rev-parse", "--path-format=absolute", "--git-common-dir", timeout: 10)
+      return unless status.success?
+
+      source = File.join(File.dirname(common.strip), "RAILS", File.basename(app[:dir]), "storage")
+      return if File.expand_path(source) == File.expand_path(target)
+      return unless File.file?(File.join(source, "development.sqlite3"))
+
+      FileUtils.mkdir_p(target)
+      FileUtils.cp_r(File.join(source, "."), target)
+      puts "triangle: #{app[:name]} database copied from #{source}"
+    rescue StandardError => e
+      warn "triangle: #{app[:name]} seeded database not copied (#{e.message}); db:prepare will seed"
+    end
+
     def self.pid_file(app) = File.join(RUN_DIR, "#{app[:name]}.pid")
 
     def self.log_file(app) = File.join(RUN_DIR, "#{app[:name]}.log")
 
     def self.migrate(app)
+      seed_from_main(app)
       out, status = Master::Io::Exec.capture2e(env_for(app), BUNDLE, "exec", RUBY, "bin/rails", "db:prepare", chdir: app[:dir], timeout: BOOT_TIMEOUT)
       return true if status.success?
 
@@ -137,8 +197,16 @@ module Deploy
       failed = []
       selected(names).each do |app|
         if listening?(app[:port])
-          puts "triangle: #{app[:name]} already up on #{app[:port]}"
-          next
+          foreign = foreign_listener(app)
+          if foreign && !reap_sibling(app, foreign)
+            warn "triangle: #{app[:name]} port #{app[:port]} is held by pid #{foreign[:pid]} running from #{foreign[:cwd]}, not this checkout"
+            failed << app[:name]
+            next
+          end
+          unless foreign
+            puts "triangle: #{app[:name]} already up on #{app[:port]}"
+            next
+          end
         end
         unless File.directory?(app[:dir])
           warn "triangle: #{app[:name]} has no directory at #{app[:dir]}"
@@ -172,7 +240,15 @@ module Deploy
     def self.down(names = [])
       selected(names).each do |app|
         path = pid_file(app)
-        next unless File.file?(path)
+        unless File.file?(path)
+          # A server whose pid file is gone (the run was killed) still holds the port.
+          mine = listener(app[:port])
+          if mine && mine[:cwd].start_with?(app[:dir])
+            Process.kill("TERM", mine[:pid])
+            puts "triangle: stopped #{app[:name]} (pid #{mine[:pid]}, no pid file)"
+          end
+          next
+        end
 
         pid = File.read(path).to_i
         begin

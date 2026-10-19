@@ -129,6 +129,15 @@ live = (tree == "RAILS" || tree.start_with?("RAILS/")) && (gate_stages.empty? ||
 operator = File.join(MASTER, "bin", "operator")
 triangle_log = File.join(File.dirname(log), "triangle-#{File.basename(tree)}.log")
 if live
+  # Booting takes minutes and the run's own handler is installed after it, so a TERM
+  # in this window used to kill the wrapper and leave every server it had started
+  # holding its port for the next run.
+  %w[TERM INT HUP].each do |sig|
+    trap(sig) do
+      system(operator, "triangle", "down", chdir: ROOT, out: File::NULL, err: File::NULL)
+      exit 143
+    end
+  end
   puts "fix0 at fix-here: booting the apps for the rendered gates, log=#{triangle_log}"
   up = system(operator, "triangle", "up", chdir: ROOT, out: [triangle_log, "w"], err: [:child, :out])
   puts "fix0 at fix-here: #{up ? 'apps are up' : 'the apps did not all boot; layout evidence will be partial (see the triangle log)'}"
