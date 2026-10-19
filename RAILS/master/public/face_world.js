@@ -341,7 +341,7 @@
     // FaceState owns the effective budget, including constrained/mobile devices.
     // The proxy must not quietly allocate the desktop point ceiling on a phone.
     const effectiveBudget = window.MASTER_FACE_STATE?.renderBudget?.();
-    const configured = Number(effectiveBudget?.points ?? BUDGET.desktop_points ?? 1200);
+    const configured = Number(effectiveBudget?.world_points ?? effectiveBudget?.points ?? BUDGET.desktop_points ?? 1200);
     const ceiling = Number.isFinite(configured) && configured > 0
       ? Math.min(1200, Math.floor(configured))
       : 1200;
