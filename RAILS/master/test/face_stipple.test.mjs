@@ -45,7 +45,10 @@ test("playground is opt-in and supplies seven semantic states", () => {
   assert.match(playground, /get\("playground"\) !== "1"/);
   for (const mode of ["idle", "thinking", "listening", "working", "speaking", "warning", "error"]) assert.match(playground, new RegExp(mode));
   assert.match(playground, /FacePlayground/);
+  assert.match(playground, /Refresh diagnostics/);
+  assert.match(playground, /MASTER_FACE_STIPPLE\?\.snapshot/);
   assert.match(css, /\.master-face-stipple-playground/);
+  assert.match(css, /\.master-stipple-diagnostics/);
 });
 
 test("stipple module boots and builds from the canonical idle profile", () => {
