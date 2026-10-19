@@ -15,6 +15,14 @@ class TestLora < Minitest::Test
   # needs an explicit publication decision.
   PUBLISHED_SUBJECT_MEDIA = [].freeze
 
+  def test_ignored_postpro_source_captures_are_documented_without_claiming_tracked_files_are_hidden
+    ignore = File.read(File.join(ToolTest::ROOT, "..", ".gitignore"))
+    assert_includes ignore, "STUDIO/postpro/IMG_*"
+    assert_includes ignore, "STUDIO/replicate/lora/*/weights/"
+    # Ignore patterns prevent future additions only. Tracked media remains in
+    # git ls-files until publication has been deliberately resolved.
+  end
+
   def test_no_private_subject_media_is_committed_without_being_named_here
     tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "replicate/lora")
     skip "not a git checkout" unless status.success?
