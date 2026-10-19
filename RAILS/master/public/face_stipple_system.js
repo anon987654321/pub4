@@ -41,7 +41,8 @@
   function reducedMotionEnabled(state = {}) {
     const mediaReduced = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
     const declaredReduced = document.documentElement?.dataset?.reducedMotion === "1";
-    return Boolean(state?.reducedMotion) || declaredReduced || mediaReduced;
+    const runtimeReduced = Boolean(window.MASTER_FACE?.State?.reducedMotion);
+    return Boolean(state?.reducedMotion) || runtimeReduced || declaredReduced || mediaReduced;
   }
 
   function currentFaceState() {
