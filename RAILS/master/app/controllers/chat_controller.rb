@@ -3,7 +3,7 @@
 require "digest"
 require "json"
 require_relative "../../../../MASTER/lib/io/exec"
-require_relative "../../../../MASTER/lib/face/law_field"
+require_relative "../../../../MASTER/lib/face"
 
 class ChatController < ApplicationController
   include ActionController::Live
