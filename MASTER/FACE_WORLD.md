@@ -411,7 +411,7 @@ future person first and a computational being second.
 
 ### Stipple point-size hierarchy
 
-The stipple shader now combines the existing canonical sample-bias attribute with camera-space depth attenuation, then bounds the requested point size to 1–1.5 pixels. The five-unit reference depth corresponds approximately to the canonical face camera distance; the GPU may clamp point sizes further. The face identity remains carried by sparse contours and voids, not by simply enlarging every point.
+The stipple shader now combines the existing canonical sample-bias attribute with camera-space depth attenuation, then bounds the requested point size to 1–1.5 pixels. All sizing values live at `MASTER/data/tokens.yml#tokens.face_interface.stipple.point_size` and arrive in the browser through `MASTER_FACE_CONTRACT`; the shader consumes them as uniforms rather than owning a duplicate tuning table. The five-unit reference depth corresponds approximately to the canonical face camera distance; the GPU may clamp point sizes further. The face identity remains carried by sparse contours and voids, not by simply enlarging every point.
 
 Stipple motion now honors all three existing reduced-motion signals: the semantic face-state bit, the document accessibility projection (`data-reduced-motion="1"`), and the operating-system `prefers-reduced-motion` preference. When any is active, its shader clock is held at zero and ripple/turbulence are disabled while the still-state profile remains.
 
