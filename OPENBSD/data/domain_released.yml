@@ -11,5 +11,9 @@
 #
 # Format:
 #   dnver.us:
-#     decided: 2026-08-07
+#     decided: '2026-08-07'   (quoted: the test reads with safe_load, which refuses dates)
 #     why: Duplicate of denvr.us; one Denver domain is enough.
+
+svalbrd.no:
+  decided: '2026-10-20'
+  why: Removed from the owned set at Johann's direction; it lapsed 2026-09-06 and was never renewed.

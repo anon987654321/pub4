@@ -166,11 +166,6 @@ stvanger.no:
   created: '2020-08-22'
   expires: '2027-08-22'
   expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
-svalbrd.no:
-  state: registered
-  created: '2020-09-06'
-  expires: '2026-09-06'
-  expires_source: RAILS/apps.yml owned_domain_facts; the registry publishes none
 trmso.no:
   state: available
 trndheim.no:

@@ -576,7 +576,6 @@ OWNED_DOMAINS=(
   lsangeles.store
   oshlo.no
   stvanger.no
-  svalbrd.no
   trndheim.no
   wshingtondc.com
   wshingtondc.us

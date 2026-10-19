@@ -247,7 +247,7 @@ class OwnedDomainFactsAgreeTest < Minitest::Test
   EXPECTED = %w[
     amberapp.art amberapp.no amberapp.online brgen.no bsdports.net bsdports.org
     cardff.uk denvr.us edinbrgh.uk foball.no frankfrt.de lndon.uk lsangeles.com
-    lsangeles.store oshlo.no stvanger.no svalbrd.no trndheim.no wshingtondc.com
+    lsangeles.store oshlo.no stvanger.no trndheim.no wshingtondc.com
     wshingtondc.us
   ].freeze
 
@@ -263,9 +263,9 @@ class OwnedDomainFactsAgreeTest < Minitest::Test
 
     # An expiry is operator data, not a permanent test fixture. Keep the
     # schema valid without pinning a date that must change on renewal.
-    svalbrd = inventory.fetch("owned_domain_facts").fetch("svalbrd.no")
-    assert_equal true, svalbrd.fetch("renew")
-    assert_match(/\A\d{4}-\d{2}-\d{2}\z/, svalbrd.fetch("expires").to_s)
+    stvanger = inventory.fetch("owned_domain_facts").fetch("stvanger.no")
+    assert_equal true, stvanger.fetch("renew")
+    assert_match(/\A\d{4}-\d{2}-\d{2}\z/, stvanger.fetch("expires").to_s)
   end
 
   def test_openbsd_owned_domains_match_rails_inventory
