@@ -66,6 +66,12 @@ module Master
         profiles.fetch(mode.to_s) { profiles.fetch("idle") }.transform_keys(&:to_s).freeze
       end
 
+      # Point-sprite sizing is shared with the browser shader through the same
+      # canonical face_interface block; callers must not copy these dials.
+      def stipple_point_size(root: Master::ROOT)
+        data(root:).fetch("stipple", {}).fetch("point_size", {}).transform_keys(&:to_s).freeze
+      end
+
       def modes(root: Master::ROOT)
         Array(state(root:).fetch("modes", [])).map(&:to_s).freeze
       end
