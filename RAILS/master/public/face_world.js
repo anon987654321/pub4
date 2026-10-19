@@ -595,7 +595,7 @@
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
     shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
-    shellMaterial.uniforms.uOpacity.value = geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1) * (0.88 + audioEnergy * 0.12);
+    shellMaterial.uniforms.uOpacity.value = geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1) * (0.88 + (reducedMotion ? 0 : audioEnergy) * 0.12);
     shellMaterial.uniforms.uEntropy.value = state.entropy;
     shellMaterial.uniforms.uColor.value.copy(colorFromCss());
 
