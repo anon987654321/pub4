@@ -2,6 +2,8 @@
 
 require_relative "../../../operator/ruby_runner"
 
+require "digest"
+require "fileutils"
 require "open3"
 require "json"
 
@@ -39,23 +41,68 @@ module Master
             raise error
           end
 
+          # Files that change a linter's verdict besides the file it reads.
+          LINT_INPUTS = %w[.rubocop.yml .reek.yml config.reek Gemfile.lock].freeze
+
+          # A report is a function of the argv, the file and the linter's configuration, so it is kept by the
+          # digest of all three: a gate over 1800 unchanged files spent its whole budget spawning rubocop and
+          # reek once each and never finished.
           def linter_json(*argv)
+            key = lint_cache_key(argv)
+            cached = key && read_lint_cache(key)
+            return cached if cached
+
+            report = run_linter_json(*argv)
+            write_lint_cache(key, report) if key
+            report
+          end
+
+          def lint_cache_key(argv)
+            target = File.expand_path(argv.last.to_s, @root)
+            return unless File.file?(target)
+
+            inputs = LINT_INPUTS.map { |name| File.join(@root, name) }.select { |path| File.file?(path) }
+            parts = [argv.first(argv.size - 1), target, Digest::SHA256.file(target).hexdigest,
+                     inputs.map { |path| Digest::SHA256.file(path).hexdigest }]
+            Digest::SHA256.hexdigest(JSON.generate(parts))
+          end
+
+          def lint_cache_path(key) = File.join(@root, ".master", "lint_cache", "#{key}.json")
+
+          def read_lint_cache(key)
+            path = lint_cache_path(key)
+            JSON.parse(File.read(path)) if File.file?(path)
+          rescue JSON::ParserError, SystemCallError => e
+            Master::Ground::Swallow.log(e, context: "lint_cache read")
+            nil
+          end
+
+          def write_lint_cache(key, report)
+            path = lint_cache_path(key)
+            FileUtils.mkdir_p(File.dirname(path))
+            File.write("#{path}.tmp#{Process.pid}", JSON.generate(report))
+            File.rename("#{path}.tmp#{Process.pid}", path)
+          rescue SystemCallError => e
+            Master::Ground::Swallow.log(e, context: "lint_cache write")
+          end
+
+          def run_linter_json(*argv)
             stdout, stderr, status = Master::Io::Exec.capture3(
               ::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root
             )
-            if stdout.empty?
-              exit_status = status.respond_to?(:exitstatus) ? status.exitstatus : nil
-              error = ReportError.new(
-                "#{argv.first}: empty JSON stdout (exit=#{exit_status || "signal"}, stderr=#{stderr.to_s.empty? ? "empty" : "present"})"
-              )
-              Master::Ground::Swallow.log(error, context: "linter_json #{argv.first}", severity: :load_bearing)
-              raise error
-            end
+            raise empty_report_error(argv.first, stderr:, status:) if stdout.empty?
 
             JSON.parse(stdout)
           rescue JSON::ParserError => e
             Master::Ground::Swallow.log(e, context: "linter_json #{argv.first}", severity: :load_bearing)
             raise ReportError, "#{argv.first}: invalid JSON stdout (#{e.message.lines.first.to_s.strip})"
+          end
+
+          def empty_report_error(name, stderr:, status:)
+            detail = "exit=#{status.exitstatus || "signal"}, stderr=#{stderr.to_s.empty? ? "empty" : "present"}"
+            error = ReportError.new("#{name}: empty JSON stdout (#{detail})")
+            Master::Ground::Swallow.log(error, context: "linter_json #{name}", severity: :load_bearing)
+            error
           end
         end
 

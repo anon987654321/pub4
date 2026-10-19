@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "fix/scanner"
 require "review/scan/laws/external_linter_laws"
 require "json"
+require "tmpdir"
 
 class TestExternalLinterLaws < Minitest::Test
   def with_rubocop_report(stdout:, stderr: "", exitstatus: 0)
@@ -33,6 +34,46 @@ class TestExternalLinterLaws < Minitest::Test
     end
 
     assert_equal File.join(Master::ROOT, ".rubocop.yml"), seen[seen.index("--config") + 1]
+  end
+
+  # Counts the linter spawns for a run of checks over one real file in a scratch root.
+  def spawns_for(contents:)
+    Dir.mktmpdir do |root|
+      calls = 0
+      capture = lambda do |*_args, **_options|
+        calls += 1
+
+        ['{"files":[{"offenses":[]}]}', "", Struct.new(:exitstatus).new(0)]
+      end
+
+      with_linter(root:, capture:) { |rule, path| check_each(rule:, path:, contents:) }
+      calls
+    end
+  end
+
+  def with_linter(root:, capture:)
+    rule = Master::Review::Scan::Laws::RubocopLaw.new(root:)
+
+    rule.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
+        Master::Io::Exec.stub(:capture3, capture) { yield rule, File.join(root, "sample.rb") }
+      end
+    end
+  end
+
+  def check_each(rule:, path:, contents:)
+    contents.each do |text|
+      File.write(path, text)
+      rule.check(text, path:)
+    end
+  end
+
+  def test_an_unchanged_file_is_linted_once
+    assert_equal 1, spawns_for(contents: ["x = 1\n", "x = 1\n", "x = 1\n"])
+  end
+
+  def test_a_changed_file_is_linted_again
+    assert_equal 2, spawns_for(contents: ["x = 1\n", "x = 2\n", "x = 1\n"])
   end
 
   def test_empty_stdout_is_a_finding_not_a_clean_lint_result
