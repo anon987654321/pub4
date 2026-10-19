@@ -151,6 +151,7 @@ test("stipple moods come from the face contract, not a second table", () => {
   assert.match(system, /MASTER_FACE_CONTRACT\?\.stipple\?\.profiles/);
   assert.doesNotMatch(system, /speaking:\s*\{ density/);
   assert.match(tokens, /point_size:\s*\n\s+base: 0\.90/);
+  assert.match(tokens, /point_allocation: \{ stipple_fraction: 0\.75, world_fraction: 0\.25 \}/);
   assert.match(tokens, /reference_depth: 5\.0/);
   assert.match(tokens, /output_min: 1\.0/);
   assert.match(tokens, /output_max: 1\.5/);
@@ -328,10 +329,10 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(api.createDefault(THREE, 5000).count, 315);
   coarsePointer = false;
   narrowViewport = true;
-  assert.equal(api.createDefault(THREE, 5000).count, 420);
+  assert.equal(api.createDefault(THREE, 5000).count, 315);
   narrowViewport = false;
   hardwareCores = 4;
-  assert.equal(api.createDefault(THREE, 5000).count, 420);
+  assert.equal(api.createDefault(THREE, 5000).count, 315);
 });
 
 test("stipple lifecycle is observable and reversible", () => {
