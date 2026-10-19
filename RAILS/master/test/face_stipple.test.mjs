@@ -145,7 +145,7 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /max-width: 767px/);
   assert.match(system, /hardwareConcurrency/);
   assert.doesNotMatch(system, /budget\.desktop_particles/);
-  assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /effectiveBudget\?\.world_points/);
+  assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /effectiveBudget\.world_points/);
   assert.match(faceStateSource, /stipple_points: stipplePoints/);
   assert.match(faceStateSource, /world_points: worldPoints/);
   assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /fallbackShare/);
