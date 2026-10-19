@@ -307,6 +307,12 @@ test("calm profile is default and gates rich idle motion", () => {
   const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
   assert.match(part3, /effectiveNext = faceReducedMotionActive\(\) \? 'battery' : next/);
   assert.match(part3, /!faceReducedMotionActive\(\) && window\.ParticleKernel/);
+  assert.match(part3, /function syncSemanticPools\(dtSec, reducedMotion = false\)/);
+  assert.match(part3, /const reducedMotion = faceReducedMotionActive\(\)/);
+  assert.match(part3, /faceMat\.uniforms\.uTime\.value = reducedMotion \? 0 : sec/);
+  assert.match(part3, /State\.idleAlphaDrift = reducedMotion \? 0\.5/);
+  assert.match(part3, /State\.pulse = 0; State\.flash = 0/);
+  assert.match(part3, /if \(faceReducedMotionActive\(\)\) return;/);
 });
 
 test("face.runtime.js is the compact generated loader", () => {
