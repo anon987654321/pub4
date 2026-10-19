@@ -54,17 +54,21 @@ class HonestyGatesTest < Minitest::Test
       "post \"checkout\"\npost \"webhooks/tradedoubler\"\n",
   }.freeze
 
+  # The ERB fixtures live in their own files: a template inside a Ruby string is two languages in one file.
+  FEED_UNIT_ERB = File.read(File.join(__dir__, "data", "affiliate", "_affiliate_feed_unit.html.erb"))
+  DISCLOSURE_ERB = File.read(File.join(__dir__, "data", "affiliate", "_affiliate_disclosure.html.erb"))
+
   # The smallest tree that satisfies AffiliateHonestyGate::REQUIRED, its
   # FORBIDDEN table and its three hand-written client assertions.
   AFFILIATE_TREE = {
-    "shared/app/models/shared/affiliate_product.rb" => "scope :real, -> { where(placeholder: false) }\n",
-    "shared/app/services/shared/tradedoubler.rb" =>
+    "__shared/app/models/shared/affiliate_product.rb" => "scope :real, -> { where(placeholder: false) }\n",
+    "__shared/app/services/shared/tradedoubler.rb" =>
       "def configured? = products_token.present?\nMATRIX = \"matrix_uri\"\nFID = \"fid\"\n",
-    "shared/app/services/shared/affiliate.rb" => "def import_all!; end\n",
+    "__shared/app/services/shared/affiliate.rb" => "def import_all!; end\n",
     "brgen/lib/brgen/affiliate_placeholders.rb" => "{ placeholder: true }\n",
-    "shared/app/views/shared/_affiliate_feed_unit.html.erb" => "<%= render \"shared/affiliate_disclosure\" %>\n",
-    "shared/app/views/shared/_affiliate_disclosure.html.erb" => "<%= t(\"affiliate_disclosure_text\") %>\n",
-    "shared/app/models/shared/affiliate_conversion.rb" => "def self.record_from_postback!(params); end\n",
+    "__shared/app/views/shared/_affiliate_feed_unit.html.erb" => FEED_UNIT_ERB,
+    "__shared/app/views/shared/_affiliate_disclosure.html.erb" => DISCLOSURE_ERB,
+    "__shared/app/models/shared/affiliate_conversion.rb" => "def self.record_from_postback!(params); end\n",
     "brgen/app/controllers/webhooks/tradedoubler_controller.rb" =>
       "def create\n  return head(:unauthorized) unless secure_compare(token, secret)\nend\n",
     "brgen/app/jobs/affiliate_import_job.rb" => "class AffiliateImportJob; end\n",
@@ -153,7 +157,7 @@ class HonestyGatesTest < Minitest::Test
   # inventing tracking it was never issued.
   def test_affiliate_honesty_fails_when_configured_stops_gating_on_the_token
     defect = AFFILIATE_TREE.merge(
-      "shared/app/services/shared/tradedoubler.rb" =>
+      "__shared/app/services/shared/tradedoubler.rb" =>
         "def configured? = true\nMATRIX = \"matrix_uri\"\nFID = \"fid\"\n"
     )
 
@@ -162,7 +166,7 @@ class HonestyGatesTest < Minitest::Test
 
   def test_affiliate_honesty_fails_when_the_products_api_drops_the_matrix_uri
     defect = AFFILIATE_TREE.merge(
-      "shared/app/services/shared/tradedoubler.rb" => "def configured? = products_token.present?\nFID = \"fid\"\n"
+      "__shared/app/services/shared/tradedoubler.rb" => "def configured? = products_token.present?\nFID = \"fid\"\n",
     )
 
     assert_names gate(Deploy::AffiliateHonestyGate, defect), /Products API must use matrix URI/

@@ -8,6 +8,8 @@ class SharedTopologyContractTest < Minitest::Test
   EXTENSIONS = %w[.rb .rake .sh .zsh .yml .yaml .json .js .mjs .scss .css].freeze
   INTENTIONAL_RETIRED_PATHS = [
     "MASTER/lib/fix/restructure_sweep/context.rb",
+    # Builds a fixture tree that deliberately contains the retired path.
+    "MASTER/test/test_reference_graph.rb",
   ].freeze
 
   def active_files
@@ -20,7 +22,7 @@ class SharedTopologyContractTest < Minitest::Test
   def retired_path_hits(source)
     source.lines.each_with_index.filter_map do |line, index|
       next unless line.match?(/RAILS\/shared(?:\/|")/) ||
-                  line.match?(/(?:File\.|\b)join\([^\n)]*,\s*["']shared["']/) ||
+                  line.match?(/(?:File\.|\b)join\(\s*[^\n,)"']+,\s*["']shared["']\s*[,)]/) ||
                   line.match?(/File\.expand_path\([^\n)]*(?:\.\.\/)+shared\//) ||
                   line.match?(/(?:\.\.\/)+shared\/(?:app|config|lib|frontend|public|pwa|design_tokens)/)
 
