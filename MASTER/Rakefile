@@ -358,7 +358,9 @@ namespace :test do
     # failed in a grandchild the list had supposedly freed. Both call `unbundled`
     # now, which is this method by another name.
     Bundler.with_unbundled_env do
-      Dir.chdir(File.join(__dir__, "..", "RAILS", "master")) { sh "bundle exec rails test" }
+      # The running ruby, named: the binstubs say `env ruby`, which finds macOS's 2.6 when PATH has no rbenv.
+      rails_test = [RbConfig.ruby, "-S", "bundle", "exec", RbConfig.ruby, "bin/rails", "test"]
+      Dir.chdir(File.join(__dir__, "..", "RAILS", "master")) { sh(*rails_test) }
     end
   end
 
