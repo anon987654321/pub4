@@ -383,6 +383,16 @@ face_interface:
     activity: 0.14
     risk: 0.0
   stipple:
+    point_size:
+      base: 0.9
+      bias_scale: 0.35
+      bias_min: 0.25
+      bias_max: 1.5
+      reference_depth: 5.0
+      distance_min: 0.75
+      distance_max: 1.25
+      output_min: 1.0
+      output_max: 1.5
     profiles:
       idle:
         density: 0.44
