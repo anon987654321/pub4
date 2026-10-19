@@ -28,8 +28,17 @@
     return trailCtx;
   }
 
+  function reducedMotionActive() {
+    const state = window.MASTER_FACE_STATE?.snapshot?.() || window.MASTER_FACE?.State;
+    const canonical = window.MASTER_FACE_STATE?.reducedMotion;
+    if (typeof canonical === "function") return canonical(state);
+    return Boolean(state?.reducedMotion) ||
+      document.documentElement?.dataset?.reducedMotion === "1" ||
+      Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  }
+
   function capturePhosphorTrail(sourceCanvas) {
-    if (!sourceCanvas || window.State?.reducedMotion) return;
+    if (!sourceCanvas || reducedMotionActive()) return;
     const profile = document.body?.dataset?.runtimeProfile;
     if (profile === "battery") return;
     const w = sourceCanvas.width;
@@ -48,6 +57,7 @@
 
   window.MASTER_PHOSPHOR_TRAIL = Object.freeze({
     capture: capturePhosphorTrail,
+    reducedMotion: reducedMotionActive,
     audio: () => ({ ...audio })
   });
 })();
