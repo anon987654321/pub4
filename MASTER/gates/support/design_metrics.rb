@@ -65,7 +65,7 @@ module Deploy
     def light_only_vertical_keys(rails_root)
       globs = %w[
         {__shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
-        brgen/engines/*/app/assets/stylesheets/*.scss
+        {brgen_*,brgen_radio/*,brgen_marketplace/engines/*}/app/assets/stylesheets/*.scss
       ]
       light_only = {}
       globs.each do |pattern|
@@ -307,9 +307,9 @@ decls.compact.each { |_, v, _| values << v }
       @read_custom_properties[rails_root] ||= begin
         globs = %w[
           {__shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
-          brgen/engines/*/app/assets/stylesheets/*.scss
+          {brgen_*,brgen_radio/*,brgen_marketplace/engines/*}/app/assets/stylesheets/*.scss
           {__shared,brgen,amber,bsdports}/app/**/*.erb
-          brgen/engines/*/app/**/*.erb
+          {brgen_*,brgen_radio/*,brgen_marketplace/engines/*}/app/**/*.erb
           __shared/frontend/**/*.js
           {__shared,brgen,amber,bsdports}/app/javascript/**/*.js
         ]
