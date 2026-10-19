@@ -38,6 +38,12 @@
             "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/require_law_first.rb\"",
             "statusMessage": "Checking the law was read",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/law_check_edit.rb\"",
+            "statusMessage": "Judging the edit by the laws",
+            "timeout": 30
           }
         ]
       }
