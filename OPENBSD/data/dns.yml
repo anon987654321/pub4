@@ -111,9 +111,8 @@ extra_records:
       )
 
 # Hosts that exist under a zone for reasons the vertical list does not cover.
-# ns is the glue for the nameserver every other zone is delegated to. amber
-# needs no host here: its one name is amberapp.art, a zone of its own in
-# ALL_DOMAINS. baibl, blognet and hjerterom were here until their apps were
+# ns is the glue for the nameserver every other zone is delegated to. baibl,
+# blognet and hjerterom were here until their apps were
 # deleted on 2026-08-12.
 extra_hosts:
   brgen.no:

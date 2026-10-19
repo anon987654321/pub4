@@ -3,11 +3,6 @@
   "generated_from": "RAILS/apps.yml",
   "apps": [
     {
-      "name": "amber",
-      "domain": "amberapp.art",
-      "port": 61352
-    },
-    {
       "name": "brgen",
       "domain": "brgen.no",
       "port": 38182
