@@ -1,8 +1,8 @@
 #!/bin/ksh
 # Return a core app's grown resident set to the box.
 #
-# resource_guard.sh sheds OPTIONAL="bsdports amber" under pressure and
-# restores them when it clears. It never touches CORE="master brgen", by design —
+# resource_guard.sh sheds OPTIONAL="bsdports" under pressure and
+# restores it when it clears. It never touches CORE="master brgen", by design —
 # those are the surfaces that must stay up. The consequence is that brgen's
 # worker grows and nothing ever gives the memory back.
 #
@@ -14,8 +14,8 @@
 #
 # 130M of resident set, and 330M of swap with it. That matters because the box
 # was paging continuously at rest (vmstat pi 13-27/s while idle), and a page-in
-# is what a visitor actually feels: amber's home measured 12.19s to first byte
-# cold against 0.40s warm. On a low-traffic site nearly every visitor is the cold
+# is what a visitor actually feels: the retired Amber app measured 12.19s to first
+# byte cold against 0.40s warm; that historical surface is no longer an active target. On a low-traffic site nearly every visitor is the cold
 # case.
 #
 # Install: doas cp OPENBSD/usr/local/bin/core-reclaim.sh /usr/local/bin/ &&
@@ -43,7 +43,7 @@ STATE=/var/db/core_reclaim_last
 # master's RSS reads 42M against 927M of address space because it is almost
 # entirely swapped out — RSS understates a swapped process, so the same ceiling
 # would never fire for it and a VSZ ceiling would fire constantly. Restarting the
-# face also drops any open TTS socket. amber and bsdports already belong to
+# face also drops any open TTS socket. The retired Amber history and active bsdports already belonged to
 # resource_guard; two jobs restarting one app is how they fight.
 APP=brgen
 PORT=38182

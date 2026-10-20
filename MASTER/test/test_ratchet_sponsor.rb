@@ -73,8 +73,8 @@ class TestRatchetSponsor < Minitest::Test
 
   def test_fleet_reads_the_canonical_rails_inventory
     assert_equal File.join(Fleet::ROOT, "RAILS", "apps.yml"), Fleet::APPS_YML
-    assert_equal %w[amber brgen bsdports], Fleet.app_names
-    assert_equal %w[__shared amber brgen bsdports], Fleet.asset_roots
+    assert_equal %w[brgen bsdports], Fleet.app_names
+    assert_equal %w[__shared brgen bsdports], Fleet.asset_roots
   end
 
   def test_design_baseline_measures_shared_engine_sources_and_face_css

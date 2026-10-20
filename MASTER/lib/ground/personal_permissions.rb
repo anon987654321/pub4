@@ -9,7 +9,9 @@ module Master
   module Ground
     # Local, default-deny permission ledger for personal-device capabilities.
     # This ledger is a policy primitive: every hardware/tool adapter must call
-    # allowed? immediately before use. A grant here is not Android OS permission.
+    # allowed? immediately before use. Personal-memory grants are also bound to
+    # one paired subject; a grant for one person cannot unlock another's workspace.
+    # A grant here is not Android OS permission.
     class PersonalPermissions
       include ::Master::Io::AtomicWrite
 
@@ -29,8 +31,10 @@ module Master
 
       # Permission is granted only after a real, explicit confirmation flow.
       # Callers must not infer confirmation from proximity, silence, or defaults.
-      def grant(scope:, confirmed_by:, purpose:, expires_at: nil)
+      def grant(scope:, confirmed_by:, purpose:, expires_at: nil, subject: nil)
         key = normalize_scope(scope)
+        owner = subject_for_scope(key, subject)
+        grant_key = record_key(key, owner)
         actor = required_text(confirmed_by, "confirmed_by", MAX_ACTOR_BYTES)
         reason = required_text(purpose, "purpose", MAX_PURPOSE_BYTES)
         expiry = parse_expiry(expires_at)
@@ -39,8 +43,9 @@ module Master
         with_lock do
           state = read_state
           grants = state.fetch("grants", {})
-          grants[key] = {
+          grants[grant_key] = {
             "scope" => key,
+            "subject" => owner,
             "confirmed_by" => actor,
             "purpose" => reason,
             "granted_at" => now.iso8601(6),
@@ -48,17 +53,21 @@ module Master
             "revoked_at" => nil,
           }
           state["grants"] = grants
-          append_event(state, "grant", key, actor, reason)
+          append_event(state, "grant", key, actor, reason, subject: owner)
           write_state(state)
         end
         true
       end
 
       # No permission exists unless a current, non-revoked grant exists.
-      def allowed?(scope:, purpose: nil)
+      def allowed?(scope:, purpose: nil, subject: nil)
         key = normalize_scope(scope)
+        owner = optional_subject(subject)
+        return false if key == "personal_memory" && owner.nil?
+
+        grant_key = record_key(key, key == "personal_memory" ? owner : nil)
         with_lock do
-          grant = read_state.fetch("grants", {})[key]
+          grant = read_state.fetch("grants", {})[grant_key]
           next false unless grant.is_a?(Hash)
           next false unless grant["revoked_at"].nil?
           next false if grant["expires_at"] && Time.iso8601(grant["expires_at"]) <= now
@@ -68,19 +77,21 @@ module Master
         end
       end
 
-      def revoke(scope:, confirmed_by:, reason: "user revoked permission")
+      def revoke(scope:, confirmed_by:, reason: "user revoked permission", subject: nil)
         key = normalize_scope(scope)
+        owner = subject_for_scope(key, subject)
+        grant_key = record_key(key, owner)
         actor = required_text(confirmed_by, "confirmed_by", MAX_ACTOR_BYTES)
         detail = required_text(reason, "reason", MAX_PURPOSE_BYTES)
         with_lock do
           state = read_state
-          grant = state.fetch("grants", {})[key]
+          grant = state.fetch("grants", {})[grant_key]
           return false unless grant.is_a?(Hash) && grant["revoked_at"].nil?
 
           grant["revoked_at"] = now.iso8601(6)
           grant["revoked_by"] = actor
           grant["revocation_reason"] = detail
-          append_event(state, "revoke", key, actor, detail)
+          append_event(state, "revoke", key, actor, detail, subject: owner)
           write_state(state)
         end
         true
@@ -107,6 +118,23 @@ module Master
         key
       end
 
+      def subject_for_scope(scope, subject)
+        return nil unless scope == "personal_memory"
+
+        required_text(subject, "subject", MAX_ACTOR_BYTES)
+      end
+
+      def optional_subject(subject)
+        value = subject.to_s.strip
+        return if value.empty? || value.bytesize > MAX_ACTOR_BYTES
+
+        value
+      end
+
+      def record_key(scope, subject)
+        scope == "personal_memory" ? "#{scope}:#{subject}" : scope
+      end
+
       def required_text(value, name, max_bytes)
         text = value.to_s.strip
         raise ArgumentError, "#{name} is required" if text.empty?
@@ -131,8 +159,10 @@ module Master
       end
 
       def active?(grant)
-        grant.is_a?(Hash) && grant["revoked_at"].nil? &&
-          (!grant["expires_at"] || Time.iso8601(grant["expires_at"]) > now)
+        return false unless grant.is_a?(Hash) && grant["revoked_at"].nil?
+        return false if grant["scope"] == "personal_memory" && optional_subject(grant["subject"]).nil?
+
+        !grant["expires_at"] || Time.iso8601(grant["expires_at"]) > now
       end
 
       def with_lock
@@ -156,10 +186,12 @@ module Master
         parsed
       end
 
-      def append_event(state, action, scope, actor, detail)
+      def append_event(state, action, scope, actor, detail, subject: nil)
         events = state.fetch("events", [])
-        events << { "at" => now.iso8601(6), "action" => action, "scope" => scope,
-                    "actor" => actor, "detail" => detail }
+        event = { "at" => now.iso8601(6), "action" => action, "scope" => scope,
+                  "actor" => actor, "detail" => detail }
+        event["subject"] = subject if subject
+        events << event
         state["events"] = events.last(500)
       end
 

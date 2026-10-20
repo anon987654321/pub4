@@ -39,7 +39,7 @@ master_scan_dep() {
 # run_rails_as_app APP_NAME APP_DIR CMD — app-owned bundle/rails (avoids Gemfile.lock permission errors).
 run_rails_as_app() {
   local app_name=$1 app_dir=$2 task=${3:-} database=${4:-}
-  case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
+  case "$app_name" in master|brgen|bsdports) ;; *) log_err "run_rails_as_app: refused app: $app_name"; return 2 ;; esac
   [[ $app_dir == "/home/${app_name}/app" ]] || { log_err "run_rails_as_app: refused app path: $app_dir"; return 2; }
   case "$task" in
     bundle-install|ci-bundle-install|bundle-check|bundle-cache-prepare|db-storage-migrate|db-prepare|db-seed|demo-seed|assets-precompile|ci|overlay-initializers|overlay-public) [[ -z $database ]] || return 2 ;;

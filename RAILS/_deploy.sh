@@ -22,7 +22,7 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 deploy_tracked_app() {
   local app_name=${1:-$APP_NAME}
   case "$app_name" in
-    brgen|amber|bsdports) ;;
+    brgen|bsdports) ;;
     *) log_err "deploy_tracked_app: refused unknown app: $app_name"; return 2 ;;
   esac
 

@@ -69,6 +69,46 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert Registry.respond_to?(:dispatch_device)
   end
 
+  def test_privacy_grant_is_local_only_subject_scoped_and_revocable
+    require "tmpdir"
+    old_subject = Fiber[:master_pair_subject]
+    old_paired = Fiber[:master_paired]
+    old_visitor = Fiber[:master_visitor]
+
+    Dir.mktmpdir("privacy-command") do |root|
+      Fiber[:master_pair_subject] = "subject-a"
+      Fiber[:master_paired] = true
+      Fiber[:master_visitor] = nil
+
+      grant = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant personal_memory", args: "grant personal_memory"),
+      )
+      assert_match(/enabled/, grant)
+
+      permissions = Master::Ground::PersonalPermissions.new(root:)
+      purpose = Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE
+      assert permissions.allowed?(scope: "personal_memory", subject: "subject-a", purpose:)
+      refute permissions.allowed?(scope: "personal_memory", subject: "subject-b", purpose:)
+
+      revoke = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy revoke personal_memory", args: "revoke personal_memory"),
+      )
+      assert_match(/disabled immediately/, revoke)
+      refute permissions.allowed?(scope: "personal_memory", subject: "subject-a", purpose:)
+
+      Fiber[:master_visitor] = true
+      denied = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant personal_memory", args: "grant personal_memory"),
+      )
+      assert_match(/local-only/, denied)
+      refute permissions.allowed?(scope: "personal_memory", subject: "subject-a", purpose:)
+    end
+  ensure
+    Fiber[:master_pair_subject] = old_subject
+    Fiber[:master_paired] = old_paired
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_face_is_a_documented_command_surface
     assert built.key?("face")
     assert_includes Registry::HELP_TOPICS.keys, "face"
@@ -89,8 +129,8 @@ class TestCommandRegistryDispatch < Minitest::Test
     end.new(0)
 
     assert_equal(
-      "remote: vps-deploy: all ok (master brgen amber bsdports)",
-      Registry.send(:deploy_summary, "vps-deploy: all -> master\nvps-deploy: master ok\nvps-deploy: all ok (master brgen amber bsdports)\n", status),
+      "remote: vps-deploy: all ok (master brgen bsdports)",
+      Registry.send(:deploy_summary, "vps-deploy: all -> master\nvps-deploy: master ok\nvps-deploy: all ok (master brgen bsdports)\n", status),
     )
   end
 

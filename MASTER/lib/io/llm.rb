@@ -385,7 +385,7 @@ module Master
 
       class MemoryRecord < RubyLLM::Tool
         include ToolForwarding
-        description "Write a durable markdown memory record (user facts, feedback, project context, or external references)."
+        description "Write durable context. Personal profile/memory requires a paired subject and an explicit /privacy grant; unpaired user facts are refused rather than written to shared project context."
         parameter :key, description: "Snake-case identifier, e.g. user_role or feedback_no_python", required: true
         parameter :description, description: "One-line hook surfaced in the memory index", required: true
         parameter :body, description: "Full memory body (markdown)", required: true

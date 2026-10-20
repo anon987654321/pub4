@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Loads believable Norwegian content into the LOCAL development database of
-# brgen, amber and bsdports, so the visual pass judges full pages instead of
+# brgen and bsdports, so the visual pass judges full pages instead of
 # empty ones.
 #
 #   bin/operator visual seed [app ...] [--scale=N] [--yes]   plan, or with --yes run
@@ -32,7 +32,7 @@ require_relative "../../lib/operator/ruby_runner"
 module Deploy
   class VisualSeed
     ROOT = File.expand_path("../../..", __dir__)
-    APPS = %w[brgen amber bsdports].freeze
+    APPS = %w[brgen bsdports].freeze
     SCALE = 2
     TIMEOUT = Integer(ENV.fetch("VISUAL_SEED_TIMEOUT", "900"))
 

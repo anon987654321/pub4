@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
-# Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
+# Usage: zsh OPENBSD/bin/vps-deploy all|brgen|bsdports|master
 set -euo pipefail
 
 # SSH executes this as a non-login shell on vm23; pin the OpenBSD package path.
@@ -9,7 +9,7 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 usage() {
   print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (run as dev, never under doas)
 
-  all          master, then every app, amber and bsdports last (master last when the box is short of memory)
+  all          master, then brgen and bsdports last (master last when the box is short of memory)
   VPS_DEPLOY_SHA=<sha>   deploy exactly this commit (default: origin/main, fetched once)
   VPS_DEPLOY_PREFLIGHT_SHA=<sha>   the operator's machine already proved this commit boots
   VPS_DEPLOY_SKIP_PREFLIGHT=1      break-glass, needs I_UNDERSTAND_FAST_DEPLOY=1
@@ -48,8 +48,8 @@ app=${1:-}
 [[ -n $app ]] || { usage >&2; exit 2 }
 
 case $app in
-  all|master|brgen|amber|bsdports) ;;
-  *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
+  all|master|brgen|bsdports) ;;
+  *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, bsdports"; exit 2 ;;
 esac
 
 # Environment values below participate in shell arithmetic and bounded waits.
@@ -354,7 +354,7 @@ restore_started() {
   local -a want order failed restored
   local svc port origin
   want=( ${=VPS_DEPLOY_STARTED} )
-  for svc in brgen amber bsdports master; do (( ${want[(Ie)$svc]} )) && order+=($svc); done
+  for svc in brgen bsdports master; do (( ${want[(Ie)$svc]} )) && order+=($svc); done
   for svc in $want; do (( ${order[(Ie)$svc]} )) || order+=($svc); done
   for svc in $order; do
     admin_service check "$svc" >/dev/null 2>&1 && continue
@@ -401,7 +401,7 @@ finish() {
       print -u2 "            zsh OPENBSD/bin/vps-deploy $app"
     fi
     local other
-    for other in amber bsdports; do
+    for other in bsdports; do
       [[ $other == "$app" ]] && continue
       admin_service get "$other" >/dev/null 2>&1 || continue
       admin_service check "$other" >/dev/null 2>&1 \
@@ -487,26 +487,26 @@ fi
 # not see it and a typed list leaves it behind. Naming the four here makes the
 # set a definition rather than a habit.
 #
-# Order is load-bearing. Every deploy sheds amber and bsdports — they go to
+# Order is load-bearing. Every deploy sheds bsdports — it goes to
 # rcctl failed with their ports closed while TLS keeps answering, so the outage
 # reads as a hang rather than a 5xx and nothing reports it. Deploying those two
 # last folds the restore into the same pass instead of leaving a window where
 # they are down and nobody is looking. master leads because it is independent of
 # the Rails apps and is the one that gets forgotten.
-DEPLOY_ALL=(master brgen amber bsdports)
+DEPLOY_ALL=(master brgen bsdports)
 
 # master leads only when the box can take it: every app that was started is
 # answering /up and memory availability (the last resource_guard tick) is at or
 # above VPS_DEPLOY_MASTER_MIN_AVAIL percent. Otherwise the apps go first and master
 # last, so a master failure halts a pass whose apps are already deployed and up
 # instead of one that has shed them. The restore in the exit trap covers either order.
-DEPLOY_ALL_DEGRADED=(brgen amber bsdports master)
+DEPLOY_ALL_DEGRADED=(brgen bsdports master)
 choose_deploy_order() {
   local svc port avail why=
   load_deploy_ports
   avail=$("$RUBY" -e 'print File.readlines(ARGV[0]).last.to_s[/mem_avail=(\d+)/, 1].to_s' \
     "${VPS_DEPLOY_GUARD_LOG:-/var/log/resource_guard_history.log}" 2>/dev/null)
-  for svc in brgen amber bsdports; do
+  for svc in brgen bsdports; do
     (( ${${=VPS_DEPLOY_STARTED:-}[(Ie)$svc]} )) || continue
     port=${deploy_ports[$svc]:-}
     [[ -n $port ]] && wait_up "$port" 5 || why="$svc is not answering /up"
@@ -810,7 +810,7 @@ fi
 
 # Restore whatever the guard shed while we were deploying.
 #
-# resource_guard sheds its OPTIONAL list — bsdports, then amber — under
+# resource_guard sheds bsdports under
 # sustained pressure, and a deploy is exactly that. relayd keeps answering TLS
 # with their ports closed, so the outage reads as a hang rather than a 5xx and
 # nothing reports it: on 2026-08-23 amber and bsdports were restarted by hand
@@ -837,7 +837,7 @@ restore_started || restore_failed=1
 #
 # The browser half — rendered_suite, layout_suite, visual_contract — is NOT here
 # and is opt-in through PUB4_DEPLOY_BROWSER_GATES=1. Chrome is installed, but
-# this box is 1GB with four apps resident and resource_guard sheds amber and
+# this box is 1GB with three apps resident and resource_guard sheds bsdports
 # bsdports under exactly that pressure. A deploy that takes the site down to
 # check the site has failed at the only thing it was for.
 #

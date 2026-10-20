@@ -64,8 +64,14 @@ module Master
         Domain adapters and smell vocabulary:
         %<domain_profile>s
 
+        Refactoring methods (how to work):
+        %<refactoring_methods>s
+
         Refactoring technique playbook:
         %<refactoring_playbook>s
+
+        Refactoring gates (what a kept change must satisfy):
+        %<refactoring_gates>s
 
         Automatic vetoes:
         %<automatic_vetoes>s
@@ -93,8 +99,10 @@ module Master
 
         Attack it. Does it change behaviour, break a caller, a require, load order,
         or a Zeitwerk path and constant pair? Does it only move complexity around,
-        or leave the tree harder to find one's way in? Approve only a change a
-        maintainer of this code would thank you for.
+        or leave the tree harder to find one's way in? Does it merge code that only
+        looks alike, whose units change for different reasons, or abstract fewer
+        than three sites? Does it flatten depth that mirrors a real domain
+        boundary? Approve only a change a maintainer of this code would thank you for.
         Answer with exactly one line: APPROVE, or REJECT: <reason>.
 
         ```diff
@@ -254,7 +262,9 @@ module Master
           contracts: Contracts.for(tree).strip,
           evidence_hierarchy: @transformation_plan.evidence_hierarchy.map { |entry| "  #{entry.fetch("id")}: #{entry.fetch("practice")}" }.join("\n"),
           domain_profile: @transformation_plan.domain_adapters.map { |domain, adapter| "  #{domain}: #{adapter}; smells=#{@transformation_plan.smell_catalog.fetch(domain, []).join(", ")}" }.join("\n"),
-          refactoring_playbook: @transformation_plan.refactoring_playbook.fetch("technique_by_domain").map { |domain, techniques| "  #{domain}: #{techniques.join(", ")}" }.join("\n"),
+          refactoring_methods: playbook_lines("methods") { |entry| "  #{entry.fetch("id")}: #{entry.fetch("action")}" },
+          refactoring_playbook: playbook_lines("technique_by_domain") { |domain, techniques| "  #{domain}: #{techniques.join(", ")}" },
+          refactoring_gates: playbook_lines("gates") { |gate| "  - #{gate}" },
           automatic_vetoes: @transformation_plan.automatic_vetoes.map { |veto| "  - #{veto}" }.join("\n"),
           law: problem.laws.join(", "),
           path: relative(problem.files.first),
@@ -264,6 +274,12 @@ module Master
           candidate_operations: problem.candidate_operations.join(", "),
           context: Context.new(@root, problem.files.first, related: problem.files.drop(1)).to_s,
         )
+      end
+
+      # Methods and gates were validated at boot but never shown to the model;
+      # a declared method no prompt carries governs nothing.
+      def playbook_lines(section, &)
+        @transformation_plan.refactoring_playbook.fetch(section).map(&).join("\n")
       end
 
       def verdict(problem, plan, diff)

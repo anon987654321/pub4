@@ -9,7 +9,7 @@ set -e
 case ${1:-} in
 -h|--help)
   echo "usage: /usr/local/bin/resource_guard.sh"
-  echo "  shed bsdports, then amber, after GUARD_SHED_STRIKES (2) breaching ticks; restore when pressure clears"
+  echo "  shed bsdports after GUARD_SHED_STRIKES (2) breaching ticks; restore when pressure clears"
   exit 0
   ;;
 esac
@@ -41,7 +41,7 @@ CORE="master brgen"
 # bsdports is a low-traffic ports index and leads. amber is a real app with real
 # users and goes last. Every entry here is a service someone loses, so the first
 # shed already costs a site — there is no free step to spend before amber.
-OPTIONAL="bsdports amber"
+OPTIONAL="bsdports"
 # vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
 # busy, which is routine, not an emergency. Calm baseline ~0.5-1.4,
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
@@ -66,7 +66,7 @@ LOAD_RESTORE=2.0
 # History (2026-07-11): the guard originally measured vmstat's "pages free"
 # alone, which excludes the OpenBSD buffer cache (~20% of RAM, reclaimable
 # on demand). Any file I/O warming the cache dropped "free" below 12% while
-# real available memory was fine, so the guard shed amber/bsdports
+# real available memory was fine, so the guard shed then-active Amber/bsdports
 # on nearly every tick — a measurement artifact, not memory pressure. Free +
 # Cache from top(1) is the honest availability signal. MEM_RESTORE > MEM_WARN
 # gives hysteresis so shed/restore can't oscillate around one threshold.
@@ -283,7 +283,7 @@ if [[ $shed -eq 1 ]]; then
   # One service per tick, the same way restore releases one per tick. Shedding
   # the whole OPTIONAL list on one breach gave up more than the pressure asked
   # for and then took three ticks to undo. The list is ordered cheapest-to-lose
-  # first, so a mild breach costs bsdports and leaves amber up.
+  # first, so a mild breach costs bsdports; Amber is retired and not in the active list.
   for svc in $OPTIONAL; do
     if rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
       logger -t resource-guard "shed $svc (load=$load mem_avail=${mem_avail_pct}% strikes=$strikes)"

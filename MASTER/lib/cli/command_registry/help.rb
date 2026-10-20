@@ -126,6 +126,15 @@ detail: [
           detail: ["/ios — begin onboarding on an iPhone or iPad through the browser/PWA.",
                    "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
+        "privacy" => {
+          summary: "inspect and revoke subject-specific personal-memory consent",
+          detail: [
+            "/privacy — show whether personal profile and memory are enabled for the paired subject.",
+            "/privacy grant personal_memory — explicitly allow this local paired subject's profile and memory to be read and written.",
+            "/privacy revoke personal_memory — immediately disable that scope for this subject.",
+            "The command is local-only. Microphone, camera, location, messages, purchases, deployment and financial scopes cannot be granted here until their execution adapters enforce the same policy and native OS permissions.",
+          ],
+        },
         "wake" => {
           summary: "control the Android/Termux wake-word listener",
           detail: ["/wake — report whether the local wake-word listener is enabled and which phrases it recognizes.",
@@ -273,6 +282,7 @@ detail: [
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
         "session" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
+        "privacy" => "constitution",
         "review" => "review", "critique" => "review", "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",

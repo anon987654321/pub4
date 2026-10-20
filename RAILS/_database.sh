@@ -6,7 +6,7 @@ set -euo pipefail
 # app_secret_for APP_NAME — read or create SECRET_KEY_BASE in /etc/<app>.env
 app_secret_for() {
   local app_name=${1:-} secret
-  case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "app_secret_for: refused unknown app: $app_name"; return 2 ;; esac
+  case "$app_name" in master|brgen|bsdports) ;; *) log_err "app_secret_for: refused unknown app: $app_name"; return 2 ;; esac
 
   [[ -x /usr/local/sbin/pub4-admin ]] || {
     log_err "app_secret_for: pub4-admin is missing; run OPERATOR.sh before deploying"
@@ -83,7 +83,7 @@ secondary_db_initialized() {
 # migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).
 migrate_sqlite_db_to_storage_if_needed() {
   local app_name=$1 app_dir=$2
-  case "$app_name" in master|brgen|amber|bsdports) ;; *) log_err "storage migration: refused app: $app_name"; return 2 ;; esac
+  case "$app_name" in master|brgen|bsdports) ;; *) log_err "storage migration: refused app: $app_name"; return 2 ;; esac
   [[ $app_dir == "/home/${app_name}/app" ]] || {
     log_err "storage migration: refused app path: $app_dir"
     return 2

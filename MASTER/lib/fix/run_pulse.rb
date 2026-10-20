@@ -338,7 +338,7 @@ module Master
       # then one attach line per device. A device that cannot work says
       # "not configured" and why, so silence never means absent.
       module Banner
-        TRIANGLE = { "amber" => 61_352, "bsdports" => 47_312 }.freeze
+        TRIANGLE = { "bsdports" => 47_312 }.freeze
         PROBE_TIMEOUT = 0.3
         BYTES_PER_MB = 1_048_576
 

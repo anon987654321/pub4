@@ -11,7 +11,7 @@ set -euo pipefail
 rails_sync_app_tree() {
   local app_name=$1 mode=$2
   case "$app_name" in
-    brgen|amber|bsdports) ;;
+    brgen|bsdports) ;;
     *) log_err "rails_sync_app_tree: refused app: $app_name"; return 2 ;;
   esac
   case "$mode" in
