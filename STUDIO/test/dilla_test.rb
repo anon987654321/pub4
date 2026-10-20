@@ -418,6 +418,27 @@ class DillaTest < Minitest::Test
     assert_operator Critic.score(Critic.measure([warm])), :<, Critic.score(Critic.measure([white]))
   end
 
+  def test_guitar_voices_are_plucked_strings_in_tune_that_die_away_and_replay
+    %w[nylon_guitar steel_guitar muted_guitar clean_electric].each do |name|
+      spec = DATA.fetch("voices").fetch(name).merge("name" => name)
+      assert_equal "string", spec.fetch("family")
+      note = Voices.note(spec, 57, 1.0, 0.3)
+      assert_equal note, Voices.note(spec, 57, 1.0, 0.3), "#{name} is the same note each time"
+      assert_operator note.map(&:abs).max, :<, 1.0, name
+      period = SAMPLE_RATE / Chords.hz(57)
+      segment = note[2000, 8000]
+      lags = ((period.round - 3)..(period.round + 3)).to_a
+      scores = lags.map { |lag| (0...4000).sum { |i| segment[i] * segment[i + lag] } }
+      k = scores.each_index.max_by { |i| scores[i] }
+      y0, y1, y2 = scores[k - 1], scores[k], scores[k + 1]
+      lag = lags[k] + (0.5 * (y0 - y2) / (y0 - (2 * y1) + y2))
+      assert_in_delta 0.0, 1200 * Math.log2(period / lag), 3.0, "#{name} is within three cents of A3"
+      early = note[3000, 2000].map(&:abs).max
+      late = note[(SAMPLE_RATE * 0.8).to_i, 2000].map(&:abs).max
+      assert_operator late, :<, early, "#{name} dies away"
+    end
+  end
+
   def test_every_language_chord_parses_and_stays_in_the_register
     Languages.all.each do |language, names|
       assert_equal 8, names.size, language

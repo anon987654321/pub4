@@ -58,6 +58,8 @@ the chords. `--takes N` renders each showcase section N times from different see
 take whose spectrum, dynamics and peaks fall nearest the warm target the critic measures, and every
 showcase run ends with the critic's reading of the whole programme.
 
+Four guitar voices (nylon, steel, muted and clean electric) are plucked strings: a burst of noise circulates in a tuned delay line and loses its highs on each trip, as a real string does. They hold pitch to within a cent, take any of the repeat and strum styles, and sound in the showcase section called Nylon Room.
+
 ## Engine notes
 
 The detailed composition/groove, voice/instrument and effects/mastering rationale is kept in
