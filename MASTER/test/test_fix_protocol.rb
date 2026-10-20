@@ -25,7 +25,7 @@ class TestFixProtocol < Minitest::Test
   end
 
   def test_instruction_distinguishes_fix_from_dry_run
-    text = Master::Fix::Protocol.instruction
+    text = Master::Fix::Protocol.instruction.gsub(/\s+/, " ")
 
     assert_includes text, "/fix and --dry-run are distinct"
     assert_includes text, "lexical_violations"
@@ -33,7 +33,7 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "two consecutive evidence-backed clean readings"
     assert_includes text, "No deterministic fixer exists"
     assert_includes text, "complete current source"
-    assert_includes text, "complete direct"
+    assert_includes text, "complete current source of every direct dependency"
     assert_includes text, "generated documentation"
     assert_includes text, "commit and push"
     assert_includes text, "Never promise that literally every defect was repaired"
@@ -49,7 +49,7 @@ class TestFixProtocol < Minitest::Test
 
     assert_match(/complete current target/i, preserve.practice)
     assert_match(/canonical generator/i, docs.practice)
-    assert_match(/commit and push each owned/i, execute.practice)
+    assert_match(/commit and push each owned/i, execute.practice.gsub(/\s+/, " "))
   end
 
   def test_external_context_carries_the_cross_tree_operating_model

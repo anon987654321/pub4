@@ -7,7 +7,6 @@ module Master
     # Protocol-level admission for agents that claim to mirror MASTER.
     # This verifies identity and procedure; it does not trust a prompt claim.
     class LawHandshake
-      PROTOCOL_VERSION = 1
       Verdict = Data.define(:accepted, :reason, :digest, :protocol_version) do
         def accepted? = accepted == true
       end
@@ -43,30 +42,36 @@ module Master
         def digest = @digest
       end
 
+      def self.protocol_version
+        ensure_law!
+        Law::Contract::VERSION
+      end
+
       def self.current
         ensure_law!
         new.verify(
-          contract_version: PROTOCOL_VERSION,
+          contract_version: protocol_version,
           law_digest: Law::Contract.digest,
           protocol: Law::Contract::PROTOCOL,
         )
       end
 
       def verify(contract_version:, law_digest:, protocol:)
-        self.class.ensure_law!
+        klass = self.class
+        klass.ensure_law!
         data = JSON.parse(Law::Contract.render)
-        version_ok = Integer(contract_version) == PROTOCOL_VERSION
+        version_ok = Integer(contract_version) == klass.protocol_version
         digest_ok = law_digest.to_s == data.fetch("law_digest")
         protocol_ok = Array(protocol).map(&:to_s) == data.fetch("protocol")
         Verdict.new(
           accepted: version_ok && digest_ok && protocol_ok,
           reason: handshake_reason(version_ok, digest_ok, protocol_ok),
           digest: data.fetch("law_digest"),
-          protocol_version: PROTOCOL_VERSION,
+          protocol_version: klass.protocol_version,
         )
       rescue StandardError => e
         Verdict.new(accepted: false, reason: "invalid handshake: #{e.message}", digest: Law::Contract.digest,
-                    protocol_version: PROTOCOL_VERSION)
+                    protocol_version: self.class.protocol_version)
       end
 
       def handshake_reason(version_ok, digest_ok, protocol_ok)
