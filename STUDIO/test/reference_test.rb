@@ -590,6 +590,59 @@ class DillaReferenceTest < Minitest::Test
     assert_equal "full_mix_proxy", source
   end
 
+  def test_capture_delegates_to_the_shared_bounded_subprocess_with_argv_intact
+    calls = []
+    status = Object.new
+    status.define_singleton_method(:success?) { true }
+    capture = lambda do |*command, timeout:, **options|
+      calls << { command:, timeout:, options: }
+      ["stdout", "stderr", status]
+    end
+
+    result = Studio::Subprocess.stub(:capture3, capture) do
+      Dilla::Reference.capture!("band analysis", "path with spaces", "arg;safe", timeout: 5)
+    end
+
+    assert_equal ["stdout", "stderr"], result
+    assert_equal ["path with spaces", "arg;safe"], calls.fetch(0).fetch(:command)
+    assert_equal 5, calls.fetch(0).fetch(:timeout)
+    assert_empty calls.fetch(0).fetch(:options)
+  end
+
+  def test_capture_translates_shared_subprocess_timeouts_to_reference_errors
+    capture = lambda do |*_command, timeout:, **_options|
+      raise Studio::Subprocess::TimeoutError, "process timed out after #{timeout}s: sonare"
+    end
+
+    error = assert_raises(Dilla::Reference::Error) do
+      Studio::Subprocess.stub(:capture3, capture) do
+        Dilla::Reference.capture!("libsonare", "sonare", "analyze", "track.wav", timeout: 0.25)
+      end
+    end
+
+    assert_match(/libsonare timed out after 0.25s/, error.message)
+    assert_match(/process timed out/, error.message)
+  end
+
+  def test_capture_preserves_exit_status_and_only_the_last_five_stderr_lines
+    status = Object.new
+    status.define_singleton_method(:success?) { false }
+    status.define_singleton_method(:exitstatus) { 7 }
+    stderr = (1..6).map { |number| "line #{number}\n" }.join
+    capture = ->(*_command, timeout:, **_options) { ["", stderr, status] }
+
+    error = assert_raises(Dilla::Reference::Error) do
+      Studio::Subprocess.stub(:capture3, capture) do
+        Dilla::Reference.capture!("Essentia", "streaming_extractor_music", timeout: 3)
+      end
+    end
+
+    assert_match(/Essentia exited 7/, error.message)
+    assert_includes error.message, "line 2"
+    assert_includes error.message, "line 6"
+    refute_includes error.message, "line 1"
+  end
+
   def test_analysis_timeouts_scale_for_album_length_and_remain_bounded
     assert_equal 450, Dilla::Reference.analysis_timeout(900)
     assert_equal 3_600, Dilla::Reference.analysis_timeout(7_200)

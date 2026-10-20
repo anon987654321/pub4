@@ -7046,13 +7046,14 @@ module Dilla
     end
 
     def capture!(label, *command, timeout: 120)
-      stdout, stderr, status = Timeout.timeout(timeout) { Open3.capture3(*command) }
+      stdout, stderr, status = Studio::Subprocess.capture3(*command, timeout:)
       return [stdout, stderr] if status.success?
+
       raise Error, "#{label} exited #{status.exitstatus}: #{stderr.lines.last(5).join.strip}"
     rescue Errno::ENOENT => error
       raise Error, "#{label}: executable missing (#{error.message})"
-    rescue Timeout::Error
-      raise Error, "#{label} timed out after #{timeout}s"
+    rescue Studio::Subprocess::TimeoutError => error
+      raise Error, "#{label} timed out after #{timeout}s (#{error.message})"
     end
 
     def executable(env, name)

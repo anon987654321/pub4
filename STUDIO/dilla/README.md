@@ -182,7 +182,9 @@ with FFmpeg, then optionally runs Demucs and Essentia when their command-line to
 installed. The FFmpeg tempo estimator preserves genuine low-tempo estimates instead of automatically doubling any result below 80 BPM,
 and reports one-minute local tempo windows plus median/range; rhythm features are measured
 within those windows for long references, reducing tempo-change bias. Analysis subprocess timeouts scale with the requested input duration but
-remain capped at one hour per pass. When Essentia is present, the report surfaces independent BPM candidates,
+remain capped at one hour per pass. Tools run in isolated process groups; a timeout terminates the child
+and lingering descendants rather than only interrupting the waiting Ruby call. When Essentia is present,
+the report surfaces independent BPM candidates,
 onset-rate and selected tonal/spectral summaries alongside the local tempo estimate.
 Agreement and half/double-time ambiguity are reported rather than silently blended. The
 rhythm summary also names its evidence source: a Demucs drums stem when available, or an
