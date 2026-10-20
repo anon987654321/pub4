@@ -407,7 +407,7 @@ class DillaReferenceTest < Minitest::Test
     refute summary.key?("key")
     refute summary.key?("time_signature")
     refute summary.key?("beats_count")
-    assert_equal 0, summary.fetch("section_count")
+    assert_equal 1, summary.fetch("section_count")
     refute summary.key?("section_types")
   end
 
