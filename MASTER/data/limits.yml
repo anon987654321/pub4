@@ -284,7 +284,7 @@ dmesg:
   flush: true
 
 session_modes:
-  default: balanced
+  default: strict
   env: MASTER_MODE
   modes:
     loose:
@@ -292,6 +292,7 @@ session_modes:
       council: false
       autofix_llm: false
       autofix_mechanical: true
+      semantic_sample: 0
       max_fix_passes: 3
       description: Hygiene and style only; no LLM fix loop
     balanced:
@@ -299,16 +300,18 @@ session_modes:
       council: risky
       autofix_llm: true
       autofix_mechanical: true
+      semantic_sample: 0
       max_fix_passes: 8
-      description: Default scan/fix; council on multi-file/security
+      description: Sampled scan/fix; council on multi-file/security
     strict:
       scan_profile: full
       council: true
       autofix_llm: true
       autofix_mechanical: true
+      semantic_sample: 1.0
       max_fix_passes: 15
       severity_floor: warning
-      description: Full Laws, council on, full fix budget
+      description: Default. Every Law, violations and opportunities, semantic read of every file, council at the end
 
 # Read by nothing. Reference material for agents, kept
 # because it is worth reading and deleted from no-one's reach — but it does not

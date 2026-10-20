@@ -20,6 +20,13 @@ module Master
         new(root:).set!(mode)
       end
 
+      # The share of otherwise-clean files that get the semantic read: the environment
+      # when it names one, else the active mode's.
+      def self.semantic_sample(root: Master::ROOT)
+        env = ENV["MASTER_SCAN_SEMANTIC_SAMPLE"]
+        env.to_s.empty? ? current(root:)[:semantic_sample] : env.to_f
+      end
+
       def initialize(root: Master::ROOT)
         @root = root
         @cfg = load_cfg
@@ -37,6 +44,7 @@ module Master
           council: spec["council"],
           autofix_llm: truthy?(spec.fetch("autofix_llm", true)),
           autofix_mechanical: truthy?(spec.fetch("autofix_mechanical", true)),
+          semantic_sample: Float(spec["semantic_sample"] || 0),
           max_fix_passes: Integer(spec["max_fix_passes"] || 8),
           severity_floor: spec["severity_floor"],
           description: spec["description"].to_s,
@@ -65,7 +73,7 @@ module Master
                   else "council #{spec[:council]}"
                   end
         profile = spec[:scan_profile].to_s.tr("_", " ")
-        semantic = ENV["MASTER_SCAN_SEMANTIC_SAMPLE"].to_f >= 1.0 ? "semantic full" : "semantic sampled"
+        semantic = self.class.semantic_sample(root: @root) >= 1.0 ? "semantic full" : "semantic sampled"
         "#{spec[:name]}, #{profile} mechanical scan, #{semantic}, #{council}, #{spec[:max_fix_passes]} fix passes"
       end
 

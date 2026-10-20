@@ -56,7 +56,7 @@ module Master
           changed_paths: Array(changed_paths).first(40).map { |path| relative(path) },
           history: Array(history).last(6).map { |row| row.to_h.slice(:pass, :score, :progressed) },
           structural_mode: ENV["MASTER_FIX_STRUCTURAL"] == "0" ? "disabled" : "enabled",
-          semantic_mode: ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0"),
+          semantic_mode: Master::Ground::ModePosture.semantic_sample.to_s,
           applicable_laws: law_selection.to_h,
         }
 

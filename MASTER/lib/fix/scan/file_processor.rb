@@ -26,11 +26,9 @@ module Master
         PROGRESS_IDLE_GRACE_SECONDS = 3.0
         PROGRESS_HEARTBEAT_SECONDS = 5.0
 
-        # Fraction of otherwise-clean files that still get the semantic pass.
-        # Keyed on the path digest rather than rand, so two scans of the same
-        # tree ask the same questions and their reports can be compared.
-        SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0").to_f
-
+        # Fraction of otherwise-clean files that still get the semantic pass, from
+        # Ground::ModePosture. Keyed on the path digest rather than rand, so two scans
+        # of the same tree ask the same questions and their reports can be compared.
         def self.max_lines_for(path)
           STYLE_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? STYLE_MAX_LINES : MAX_LINES
         end
@@ -216,7 +214,7 @@ module Master
         def semantic_sample
           return @semantic_sample_override if @semantic_sample_override
 
-          ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", SEMANTIC_SAMPLE.to_s).to_f
+          Master::Ground::ModePosture.semantic_sample
         end
 
         # Relative to the repo, not the absolute path: keyed on the latter, two

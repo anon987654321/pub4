@@ -79,7 +79,13 @@ class WorkflowInferenceTest < Minitest::Test
     posture = Master::Ground::ModePosture.new(root: File.expand_path("..", __dir__))
 
     with_env("MASTER_SCAN_SEMANTIC_SAMPLE", nil) do
-      assert_includes posture.line, "full mechanical scan"
+      line = posture.line
+
+      assert_includes line, "full mechanical scan"
+      assert_includes line, "semantic full"
+    end
+
+    with_env("MASTER_SCAN_SEMANTIC_SAMPLE", "0") do
       assert_includes posture.line, "semantic sampled"
     end
 
