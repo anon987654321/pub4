@@ -46,7 +46,7 @@ Operational constraints:
 - Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
-- Dilla and postpro outputs are irreplaceable. Never overwrite a take or change a rendered sound/look by taste alone.
+- Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
 - Operator-owned rendered values include colour, type, layout and sound. Stop at that decision boundary; do not invent aesthetic values.
 - Ruby is tree-scoped: the repository root and Rails apps pin 4.0.5; MASTER pins
   4.0.7. Use each tree's canonical launcher rather than assuming root Ruby is
@@ -111,9 +111,10 @@ git — `NO_CHANGELOG_COMMENT` in `law/universal.rb` enforces it.
 **The RAILS apps default to Norwegian.** Assert through I18n keys, never
 English literals; a hardcoded English string is a defect, not a placeholder.
 
-**Renders are irreplaceable.** dilla and postpro write real output with
-rotating seeds. Never render over a take that matters, and never change a
-rendered-sound or graded-look default on your own judgement.
+**Renders are replaceable.** dilla and postpro write output that a new run may
+delete and replace; postpro removes a source's earlier takes before it renders a
+new family. Never change a rendered-sound or graded-look default on your own
+judgement.
 
 **Scanner findings are hashes with a path, not Finding objects.**
 `Scanner#findings(paths)` is the flat API. `scan_dir` returns Result wrapping

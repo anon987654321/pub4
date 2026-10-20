@@ -111,9 +111,10 @@ borrows the vocabulary of the old Dilla engine and is now its own single source)
 `Voice::Policy` reads them, `Speech#shaped` applies the chain, `browser_payload`
 hands them to the face so it sounds like the server.
 
-**Renders are irreplaceable.** dilla and postpro write real output with rotating
-   seeds. Never render over a take that matters, and never change a rendered-sound
-   or graded-look default on your own judgement.
+**Renders are replaceable.** dilla and postpro write output that a new run may delete and
+   replace; postpro removes a source's earlier takes before it renders a new family. The
+   `RELEASE*.mp3` masters are compilations, not renders. Never change a rendered-sound or
+   graded-look default on your own judgement.
 
 ## Working in a shared index
 

@@ -30,7 +30,7 @@ Operational constraints:
 - Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
-- Dilla and postpro outputs are irreplaceable. Never overwrite a take or change a rendered sound/look by taste alone.
+- Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
 - Operator-owned rendered values include colour, type, layout and sound. Stop at that decision boundary; do not invent aesthetic values.
 - Ruby is tree-scoped: the repository root and Rails apps pin 4.0.5; MASTER pins
   4.0.7. Use each tree's canonical launcher rather than assuming root Ruby is
