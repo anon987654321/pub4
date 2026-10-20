@@ -67,6 +67,7 @@ module Master
         terminal_puts
         run_input(initial_message) if initial_message
         @running = true
+        play_boot_sound
         start_bard_bed
         run_face if face_on_start?(initial_message)
         repl_loop
@@ -138,6 +139,12 @@ module Master
 
       def terminal_print(text, io: $stdout)
         terminal_write(io:) { |target| target.print(text); target.flush if target.respond_to?(:flush) }
+      end
+
+      def play_boot_sound
+        Master::Voice::BootSound.play
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.boot_sound", event_bus: @refs.bus)
       end
 
       # The bard's beat starts with the session when the bard can be heard; closing the session stops it.
