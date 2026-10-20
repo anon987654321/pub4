@@ -3,6 +3,7 @@
 require "json"
 require_relative "../ai/orientation"
 require_relative "../ground/law_resolver"
+require_relative "structural_review"
 require_relative "tree_reasoning"
 
 module Master
@@ -60,6 +61,7 @@ module Master
           semantic_mode: Master::Ground::ModePosture.semantic_sample.to_s,
           applicable_laws: law_selection.to_h,
           first_read_proposals: Master::Fix::TreeReasoning.hints(@root),
+          structural_review_findings: Master::Fix::StructuralReview.findings(@root),
         }
 
         text = <<~PROMPT

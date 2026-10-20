@@ -88,6 +88,18 @@ module Master
         end
       end
 
+      # The second read, after the trace: the whole target reviewed with fresh eyes against the Laws.
+      # Inconclusive is reported and the run goes on.
+      def structural_review(deliberation:, bus:, targets:)
+        return if ENV["MASTER_FIX_STRUCTURAL_REVIEW"] == "0"
+
+        review = Master::Fix::StructuralReview.new(agent: deliberation.agent, root: Master.repo_root, bus:)
+        targets.each do |review_target|
+          result = review.call(target: review_target)
+          Master::Trace::Dmesg.status("look0", result.summary) unless result.answered?
+        end
+      end
+
       def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
                               apply:, critique:, aesthetic:, only:, target:)
         writes_requested = writes_requested?(apply:, only:)
@@ -127,6 +139,8 @@ module Master
               next Master::Result.err(message, category: :validation)
             end
           end
+
+          structural_review(deliberation:, bus:, targets:)
 
           writes_requested = writes_requested?(apply:, only:)
           effective_critique = critique.nil? ? writes_requested : critique

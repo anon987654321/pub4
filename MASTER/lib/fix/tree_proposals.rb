@@ -15,29 +15,36 @@ module Master
 
       module_function
 
+      # A reading of an answer: the header word that starts a line, the kinds it may carry and, when
+      # given, the law ids that exist. A law id outside `laws` is not a Law and is cleared.
+      Dialect = Struct.new(:header, :kinds, :laws)
+      FIRST_READ = Dialect.new("PROPOSE", KINDS, nil)
+
       # [proposals, dropped] for an answer, checked against the paths the tree holds.
-      def parse(answer, known_paths)
-        lines = answer.lines.select { |line| line.strip.upcase.start_with?("PROPOSE:") }
-        parsed = lines.map { |line| proposal_from(line, known_paths) }
+      def parse(answer, known_paths, dialect = FIRST_READ)
+        lines = answer.lines.select { |line| line.strip.upcase.start_with?("#{dialect.header}:") }
+        parsed = lines.map { |line| proposal_from(line, known_paths, dialect) }
         [parsed.compact.first(MAX), parsed.count(nil)]
       end
 
-      def proposal_from(line, known_paths)
+      def proposal_from(line, known_paths, dialect = FIRST_READ)
         kind, paths, law, reason = line.split(":", 2).last.to_s.split("|", 4).map(&:strip)
-        names = paths.to_s.split(",").map { |name| name.strip.chomp("/") }.reject(&:empty?)
-        return unless sound?(kind, names, known_paths)
+        names = names_from(paths)
+        return unless sound?(kind, names, known_paths, dialect.kinds)
 
-        Proposal.new(kind: kind.downcase, paths: names, law: law_id(law),
+        Proposal.new(kind: kind.downcase, paths: names, law: law_id(law, dialect.laws),
                      reason: reason.to_s.byteslice(0, MAX_FIELD_BYTES))
       end
 
-      def sound?(kind, names, known_paths)
-        KINDS.include?(kind.to_s.downcase) && !names.empty? && names.all? { |name| known_paths.include?(name) }
+      def names_from(paths) = paths.to_s.split(",").map { |name| name.strip.chomp("/") }.reject(&:empty?)
+
+      def sound?(kind, names, known_paths, kinds = KINDS)
+        kinds.include?(kind.to_s.downcase) && !names.empty? && names.all? { |name| known_paths.include?(name) }
       end
 
-      def law_id(text)
+      def law_id(text, laws = nil)
         id = text.to_s.upcase
-        id.empty? || id == "NONE" ? nil : id
+        id.empty? || id == "NONE" || (laws && !laws.include?(id)) ? nil : id
       end
     end
   end
