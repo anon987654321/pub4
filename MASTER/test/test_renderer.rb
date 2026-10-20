@@ -413,6 +413,21 @@ class TestRenderer < Minitest::Test
   # A repair preview printed {“FEW_ARGUMENTS” => 28}: the renderer curled the
   # quotes inside a hash dump, so the line was no longer the value it reported
   # and no longer pasted back. Prose still gets the typographic pair.
+  def test_prose_gets_bringhursts_apostrophe_and_one_space_after_a_period
+    renderer = Master::Voice::Renderer.new(config: {})
+
+    assert_equal "Don’t wait. It’s done.", renderer.beautify("Don't wait.  It's done.")
+    assert_equal "see https://x.org/o'brien", renderer.beautify("see https://x.org/o'brien")
+    assert_equal "count=3 isn't", renderer.beautify("count=3 isn't")
+  end
+
+  def test_the_terminal_reply_path_sets_prose_typographically
+    renderer = Master::Voice::Renderer.new(config: {})
+    text = renderer.terminal_markdown("It's a fine day -- really, 3-5 of them.  Truly.\n")
+
+    assert_includes text, "It’s a fine day — really, 3–5 of them. Truly."
+  end
+
   def test_quotes_stay_straight_on_a_record_line
     renderer = FakeRenderer.new(config: {})
 

@@ -61,7 +61,7 @@ module Master
             body = body.gsub(/(?<!\*)\*([^*\n]+)\*(?!\*)/) { Regexp.last_match(1) }
             body = body.gsub(/__([^_\n]+)__/) { Regexp.last_match(1) }
             body = body.gsub(/`([^`\n]+)`/) { Regexp.last_match(1) }
-            rows.concat(measure(body, width:).lines(chomp: true))
+            rows.concat(measure(beautify(body), width:).lines(chomp: true))
           end
 
           rows.join("\n") + (source.end_with?("\n") ? "\n" : "")
@@ -73,13 +73,25 @@ module Master
         # digit-hyphen-digit rewrote identifiers and dates too: model IDs
         # printed as claude-opus-4–8 and dates as 2026–08–02.
         def beautify(text)
-          curl_quotes(text)
+          curl_apostrophes(curl_quotes(text))
             .gsub(/\s--\s/, " — ")
             .gsub(/(?<![\w-])(\d+)-(\d+)(?![\w-])/, "\\1–\\2")
             .gsub("...", "…")
+            .gsub(/([.!?…])  +(?=\S)/, "\\1 ")
         end
 
         private
+
+        # An apostrophe between letters is a closing single quote, as Bringhurst sets it: don't becomes don’t. A
+        # line with a URL or a record keeps its straight marks.
+        def curl_apostrophes(text)
+          curled = text.lines.map do |line|
+            next line if line.include?("=") || line.include?("://")
+
+            line.gsub(/(?<=\p{L})'(?=\p{L})/, "’")
+          end
+          curled.join
+        end
 
         # Quoted strings on record lines carry data, so typography changes only
         # prose. Keep straight quotes in hashes, values and key=value records.
