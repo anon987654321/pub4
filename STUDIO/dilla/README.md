@@ -227,9 +227,22 @@ and an internal seed itself; `--bars` and `--seed` remain optional expert overri
 
 Install yt-dlp and FFmpeg for URL import and measurement. To use source separation,
 install Demucs in a dedicated environment and make its demucs executable available on
-PATH, or set DEMUCS_BIN. Essentia's streaming_extractor_music is optional. Unavailable
-tools are reported as such and do not become required just to render Dilla's existing
-showcase.
+PATH, or set DEMUCS_BIN. Essentia's `streaming_extractor_music` is optional.
+
+For a second independent estimate of tempo, meter, beats and downbeats, key, chords,
+sections, timbre, dynamics and rhythm, optionally install libsonare in the environment
+used by MASTER/Dilla (`pip install libsonare`). Its command-line entry point is
+`sonare`; set `LIBSONARE_BIN` if it lives outside `PATH`. Dilla calls
+`sonare analyze FILE --json` using an argument vector, stores the raw result in
+`libsonare_features.json`, and surfaces a compact summary plus a separate tempo
+cross-check in `analysis.json` and `report.md`. On inputs other than WAV/MP3, FFmpeg
+creates a temporary mono WAV that is removed after analysis. The optional pass is
+skipped above 900 seconds because the Python CLI loads the decoded recording in memory;
+the existing FFmpeg/Essentia workflow still handles longer references. Use
+`--no-libsonare` to disable the pass for a run. Dilla never installs tools or downloads
+models automatically, and missing or failed optional engines are reported instead of
+being represented as successful measurements. Unavailable tools do not become required
+just to render Dilla's existing showcase.
 
 Reference output, reports, JSON profiles and stems default to
 `${XDG_DATA_HOME:-~/Downloads}/dilla-references`. Relative or checkout-local
