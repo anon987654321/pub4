@@ -25,6 +25,7 @@ module Deploy
     # Before the 11b0633bd move this constant sat at RAILS/gates and three
     # levels sufficed; from MASTER it is four plus the RAILS_ROOT join.
     ROOT = File.expand_path("../../../..", __dir__)
+
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = Fleet.app_names.freeze
 
@@ -76,6 +77,7 @@ module Deploy
     # nowhere.
     def check_icons(app, source)
       icons = parse_icons(source)
+
       @result.checked!
       if icons.empty?
         @result.fail("pwa_installable: #{app} manifest lists no icons")
@@ -103,6 +105,7 @@ module Deploy
     # a checker that requires it is measuring its own assumption.
     def parse_icons(source)
       block = source[/"icons":\s*\[(.*?)\]/m, 1].to_s
+
       block.scan(/\{(.*?)\}/m).flatten.filter_map do |entry|
         src = entry[/"src":\s*"([^"]+)"/, 1]
         next unless src
@@ -138,9 +141,11 @@ module Deploy
     # correct.
     def check_brgen_brand
       @result.checked!
+
       manifest = manifest_path("brgen")
       unless manifest
         @result.fail("pwa_installable: brgen has no manifest under app/views/pwa")
+
         return
       end
       source = File.read(manifest)

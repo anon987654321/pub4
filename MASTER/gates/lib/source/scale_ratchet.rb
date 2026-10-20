@@ -38,6 +38,7 @@ module Deploy
         baselines.each do |kind, baseline|
           result.checked!
           count = counts[kind].to_i
+
           if count > baseline
             over << "#{surface}.#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})"
           elsif count < baseline

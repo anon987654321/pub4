@@ -22,6 +22,7 @@ module Deploy
   # sass-embedded moves in a Gemfile.lock.
   class CssMinifyIntegrityGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = Fleet.app_names.freeze
     MIN_SELECTOR_LIST_SIZE = 3
@@ -93,6 +94,7 @@ module Deploy
           "missing after compression: #{missing.inspect}",
         )
       end
+
       # This app's stylesheet was compiled and compared; an app without an
       # application.scss should not make the ones that have it count for nothing.
       result.checked!

@@ -17,6 +17,7 @@ module Deploy
   # defects by name in prose, and that is documentation rather than coupling.
   class EngineBoundariesGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     SOURCE_GLOB = "{app,lib,config,db,test}/**/*.{rb,erb,rake}"
     NAMESPACE = /isolate_namespace\s+([A-Z]\w*)/
 
@@ -46,6 +47,7 @@ module Deploy
         result.checked!
         foreign = engines.values - [own]
         reference = /(?<![A-Za-z0-9_])(#{foreign.join('|')})::[A-Z]/
+
         Dir.glob(File.join(engines_root, dir, SOURCE_GLOB)).sort.each do |path|
           rel = path.delete_prefix("#{File.join(engines_root, dir)}/")
           allowed = @exempt.dig(dir, rel) || []
@@ -65,6 +67,7 @@ module Deploy
           end
         end
       end
+
       stale_exemptions(used).each do |dir, rel, other|
         result.fail("engine_boundaries: EXEMPT #{dir}/#{rel} => #{other} matches no reference — delete the row")
       end
@@ -87,6 +90,7 @@ module Deploy
         *Dir.glob(File.join(engines_root, "brgen_*", "engines", "*", "lib", "*", "engine.rb")),
         *Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb")),
       ]
+
       engine_paths.sort.each_with_object({}) do |path, out|
         name = File.read(path)[NAMESPACE, 1] or next
         out[path.delete_prefix("#{engines_root}/").sub(%r{/lib/.*\z}, "")] = name

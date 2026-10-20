@@ -57,6 +57,7 @@ def boot_lines
     Master::CLI::BootBanner.print(io: $stdout)
   RUBY
   out = IO.popen({ "MASTER_BOOT_STATUS" => "1" }, ["ruby", "-e", script], chdir: master, err: File::NULL, &:read)
+
   lines = out.lines.map(&:chomp).reject(&:empty?)
   raise "shell_loop_record: BootBanner printed nothing — refusing to film a blank" if lines.empty?
 
@@ -178,6 +179,7 @@ Deploy::CdpSession.open do |cdp|
   # A file, not a data: URL — every colour in the stylesheet starts with #, which
   # a data: URL reads as the start of its fragment and truncates.
   page = File.join(frame_dir, "term.html")
+
   File.write(page, PAGE)
   cdp.navigate("file://#{page}", settle: 0.4)
   cdp.evaluate(COLOUR)

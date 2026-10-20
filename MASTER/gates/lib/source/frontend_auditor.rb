@@ -30,6 +30,7 @@ module Deploy
         result.checked!
         findings = Shared::FrontendAuditor.call(root: root_path)
         errs = findings.select { |f| f.severity == :error }
+
         warns = findings.select { |f| f.severity == :warning }
         infos = findings.select { |f| f.severity == :info }
         by_app[app] = { errors: errs.size, warnings: warns.size, info: infos.size }
@@ -42,6 +43,7 @@ module Deploy
         warns.first(8).each do |f|
           result.warn("auditor warning [#{app}] #{f.path}: #{f.rule} — #{f.message}")
         end
+
         # Pen allow-list hits are info — surface count only
         pen_infos = infos.count { |f| f.rule == :product_pen }
         result.warn("auditor [#{app}]: #{errs.size} error(s), #{warns.size} warning(s), #{pen_infos} product pen(s) preserved") if findings.any?

@@ -93,6 +93,7 @@ end
 # as having no browser: the PATH-only check made every browser gate inconclusive there.
 def browser_available?
   require File.join(GATES_DIR, "support", "cdp_session")
+
   Deploy::CdpSession.available?
 rescue LoadError, StandardError
   %w[google-chrome chromium chromium-browser].any? do |command|
@@ -120,6 +121,7 @@ def run_script(path, args, gap: nil)
   stdout, status = Open3.capture2e(ENV.to_h, *command, chdir: ROOT)
   stdout.to_s.lines.each { |line| log_retired(line.chomp) }
   result = Deploy::GateResult.new
+
   if status.exitstatus == SUBPROCESS_INCONCLUSIVE
     result.inconclusive!("#{File.basename(path)}: subprocess measured nothing", gap:)
   elsif status.success?
@@ -127,6 +129,7 @@ def run_script(path, args, gap: nil)
   else
     result.fail("#{File.basename(path)} exited #{status.exitstatus}")
   end
+
   [result, stdout]
 rescue StandardError => e
   [Deploy::GateResult.from_error(e, gate: File.basename(path)), ""]
@@ -145,6 +148,7 @@ def run_gate(name, row, args)
         result, output = run_script(path, args, gap: declared_gap(row))
       else
         klass = constant_for(row.fetch("class"))
+
         result = klass.run
         raise TypeError, "#{row['class']} did not return Deploy::GateResult" unless result.is_a?(Deploy::GateResult)
       end
@@ -176,6 +180,7 @@ def explain
     puts format("  %-24s %s", name, pass ? "pass: #{pass}" : "script: #{row['script'] || 'registered'}")
   end
   puts "  GATE_AUDITOR_STRICT advisory"
+
   puts "  GATE_STRICT_INCONCLUSIVE blocks inconclusive gates"
   puts "  GATE_STRICT_ERRORS blocks errored gates"
   puts "  GATE_STRICT_SOFT promotes soft failures"
@@ -195,6 +200,7 @@ def parse_options
     opts.on("--explain") { options[:explain] = true }
     opts.on("--ledger") { options[:ledger] = true }
     opts.on("--no-autofix") { ENV["GATE_AUTOFIX"] = "0" }
+
     opts.on("--scan-only") { ENV["GATE_AUTOFIX"] = "0" }
     opts.on("-h", "--help") { puts opts; exit }
   end
@@ -224,11 +230,13 @@ names.each_with_index do |name, index|
   result, duration_ms, output = run_gate(name, row, options[:args])
   record(name, result, duration_ms)
   results[name] = result
+
   outcome = result.outcome
   if outcome == :passed
     result.render(row["pass"]) if %w[
       css_constitution design_metrics rendered_suite layout_suite flow_journey page_simulation mobile_flow
     ].include?(name)
+
     log_retired("#{GATE_UNIT} at #{GATE_PARENT}: #{name} passed")
   else
     result.render
@@ -245,6 +253,7 @@ end
 token_reads = Deploy::TokenReads.result
 unless token_reads.outcome == :inconclusive
   record("token_reads", token_reads, 0)
+
   results["token_reads"] = token_reads
   token_reads.render
   say("token_reads #{token_reads.outcome}")

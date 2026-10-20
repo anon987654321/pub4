@@ -20,6 +20,7 @@ module Deploy
       @budget_recoveries = @recoveries
       result = yield
       raise_exceeded(label, seconds, started) if monotonic > @budget_deadline
+
       result
     rescue CdpSession::Error
       raise_exceeded(label, seconds, started) if monotonic > @budget_deadline

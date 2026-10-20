@@ -13,6 +13,7 @@ module Deploy
     REQUIRED_STIMULUS_REGISTRATIONS = %w[
       autosave draft-store media-picker feed-compose scroll-reveal offline-feed pwa-standalone post-progressive
     ].freeze
+
     REQUIRED_SHARED_INITIALIZERS = %w[omniauth.rb auth_extensions.rb].freeze
     REQUIRED_SHARED_CONTROLLERS = %w[
       shared/reactions_controller.rb
@@ -62,6 +63,7 @@ module Deploy
         pub4/offline_feed pub4/pwa_standalone
       ].each do |pin|
         result.checked!
+
         result.fail("importmap_baseline missing pin #{pin}") unless baseline_text.include?(%("#{pin}"))
       end
       REQUIRED_STIMULUS_REGISTRATIONS.each do |name|
@@ -124,6 +126,7 @@ module Deploy
         # only one of them reports a red that no edit in the tree can clear.
         REQUIRED_PUBLIC_FILES.each do |file|
           next if File.file?(File.join(RAILS_ROOT, app, "public", file))
+
           next if File.file?(File.join(RAILS_ROOT, "__shared", "public", file))
 
           result.fail("#{app}: missing public/#{file}, and shared/public/#{file} is not there to overlay either")

@@ -20,6 +20,7 @@ module Deploy
   # no place a balance could be repaired in.
   class CssBraceBalanceGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     RAILS = File.join(ROOT, "RAILS")
     APPS = Fleet.asset_roots.freeze
     MASTER_WEB = %w[RAILS/master/public/face.css RAILS/master/public/chat_upload.css].freeze
@@ -62,6 +63,7 @@ module Deploy
           opens.pop
         end
       end
+
       if opens.first
         result.fail("css_brace_balance: #{relative(path)} block opened on line #{opens.first} never closes — " \
                     "every rule behind it is nested inside it and stops matching")
@@ -80,6 +82,7 @@ module Deploy
       quote = nil
       line = 1
       index = 0
+
       while index < source.size
         char = source[index]
         pair = source[index, 2]
@@ -88,12 +91,14 @@ module Deploy
           (opened = nil; index += 1) if pair == "*/"
         elsif quote
           index += 1 if char == "\\"
+
           quote = nil if char == quote || char == "\n"
         elsif pair == "/*"
           opened = line
           index += 1
         elsif pair == "//" && source[index - 1] != ":"
           index = source.index("\n", index) || source.size
+
           next
         elsif char == "\"" || char == "'"
           quote = char

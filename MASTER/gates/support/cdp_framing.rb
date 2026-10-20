@@ -40,6 +40,7 @@ module Deploy
       bytes = payload.b
       header = [0x81].pack("C")
       len = bytes.bytesize
+
       header += if len < 126
                   [0x80 | len].pack("C")
                 elsif len < 65_536
@@ -47,6 +48,7 @@ module Deploy
                 else
                   [0x80 | 127, len].pack("CQ>")
                 end
+
       mask = SecureRandom.bytes(4)
       masked = bytes.bytes.each_with_index.map { |b, i| b ^ mask.getbyte(i % 4) }.pack("C*")
       @socket.write(header + mask + masked)
@@ -62,6 +64,7 @@ module Deploy
         case opcode
         when 0x9 # ping -> pong
           write_control(0xA, payload)
+
           next
         when 0xA # pong
           next
@@ -72,6 +75,7 @@ module Deploy
         else
           buffer = payload
         end
+
         return buffer if @frame_fin
       end
     end
@@ -92,6 +96,7 @@ module Deploy
       opcode = b0 & 0x0F
       masked = (b1 & 0x80) != 0
       len = b1 & 0x7F
+
       # elsif, not two ifs: a 126-form frame carrying exactly 127 bytes would
       # otherwise satisfy the second test and swallow eight payload bytes as a
       # 64-bit length.
@@ -100,12 +105,14 @@ module Deploy
       elsif len == 127
         len = read_exactly(8, deadline).unpack1("Q>")
       end
+
       if len > MAX_FRAME_BYTES
         @desync = true
         raise CdpSession::Desync, "implausible frame length #{len} — the read stream is out of sync"
       end
       mask = masked ? read_exactly(4, deadline) : nil
       payload = len.zero? ? +"" : read_exactly(len, deadline)
+
       if mask && payload
         payload = payload.bytes.each_with_index.map { |b, i| b ^ mask.getbyte(i % 4) }.pack("C*")
       end
@@ -135,11 +142,13 @@ module Deploy
         remaining = deadline - monotonic
         if remaining <= 0 || !IO.select([@socket], nil, nil, [remaining, 0.0].max)
           started = !out.empty? || @mid_frame
+
           if started && !graced
             graced = true
             deadline = monotonic + FRAME_GRACE_SECONDS
             next
           end
+
           @desync = true if started
           # CdpSession::Timeout, not Timeout. Bare `Timeout` resolves to the
           # stdlib module here — every sibling raise in this file qualifies the

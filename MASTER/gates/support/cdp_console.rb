@@ -36,11 +36,13 @@ module Deploy
           text: entry["text"].to_s, url: entry["url"].to_s }
       when "Runtime.consoleAPICalled"
         params = event["params"] or next
+
         { level: CONSOLE_LEVELS.fetch(params["type"].to_s, params["type"].to_s),
           source: "console", text: console_args_text(params["args"]),
           url: params.dig("stackTrace", "callFrames", 0, "url").to_s }
       when "Runtime.exceptionThrown"
         detail = event.dig("params", "exceptionDetails") or next
+
         { level: "error", source: "exception",
           text: exception_text(detail),
           url: detail["url"].to_s }

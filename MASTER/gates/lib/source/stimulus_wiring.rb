@@ -34,6 +34,7 @@ module Deploy
   #      helper or script produces, unless UNMOUNTED_ALLOWED names it and why.
   class StimulusWiringGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = %w[amber brgen bsdports].freeze
 
@@ -256,6 +257,7 @@ module Deploy
       # stay unregistered while the HTML itself remains syntactically valid.
       mount_sources(app).select { |path| helper_or_component?(path) }.each do |path|
         rel = path.sub("#{@rails_root}/", "")
+
         text = File.read(path)
         identifiers(text).each do |id|
           result.checked!
@@ -301,6 +303,7 @@ module Deploy
       @shared_views_reaching ||= {}
       @shared_views_reaching[app] ||= begin
         shared = Dir.glob(File.join(@rails_root, "__shared/app/views/**/*.erb"))
+
         reached, partials = shared.partition { |path| !File.basename(path).start_with?("_") }
         helpers = ([app] + engine_dirs(app)).flat_map { |dir| Dir.glob(File.join(@rails_root, dir, "app/{helpers,components,controllers}/**/*.rb")) } +
                   Dir.glob(File.join(@rails_root, "__shared/app/{helpers,components,controllers}/**/*.rb"))
@@ -350,6 +353,7 @@ module Deploy
     def identifiers(text)
       raw = text.scan(/data-controller="([^"]*)"/).flatten +
             text.scan(/\bcontroller:\s*"([^"]*)"/).flatten
+
       # ERB has to be removed from the whole group before splitting: an
       # interpolation contains spaces, so splitting first turns
       # `<%= @dynamic %>` into three tokens of which only the first looks
@@ -450,6 +454,7 @@ module Deploy
     def values_in(path)
       (@values ||= {})[path] ||= begin
         source = File.read(path)
+
         start = source.index(/static\s+values\s*=\s*\{/)
         if start.nil?
           []
@@ -457,6 +462,7 @@ module Deploy
           open = source.index("{", start)
           depth = 0
           close = nil
+
           source[open..].each_char.with_index do |ch, offset|
             depth += 1 if ch == "{"
             depth -= 1 if ch == "}"
@@ -465,10 +471,12 @@ module Deploy
               break
             end
           end
+
           block = close ? source[(open + 1)...close] : ""
           # Top-level keys only: `activeClass: { type: … }` must not contribute
           # "type" and "default" as declared value names.
           depth = 0
+
           block.scan(/([{}])|([a-zA-Z_$][\w$]*)\s*:/).each_with_object([]) do |(brace, name), keys|
             if brace
               depth += brace == "{" ? 1 : -1
@@ -486,6 +494,7 @@ module Deploy
       (@vendor_base ||= {})[path] ||= begin
         source = File.read(path)
         base = source[/export\s+default\s+class\s+extends\s+([A-Za-z_$][\w$]*)/, 1]
+
         if base.nil? || base == "Controller"
           false
         else

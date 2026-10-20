@@ -6,6 +6,7 @@ require_relative "rendered/browser_diagnostics"
 require_relative "rendered/rendered_geometry"
 require_relative "rendered/layout_snapshot"
 require_relative "rendered/journey_invariant"
+
 require_relative "rendered/reflow"
 require_relative "rendered/keyboard_flow"
 require_relative "rendered/mobile_flow"
@@ -68,11 +69,13 @@ module Deploy
       result = GateResult.new
       LEAVES.each do |klass|
         name = klass.name.split("::").last
+
         leaf = begin
           klass.run
         rescue StandardError => e
           GateResult.from_error(e, gate: name)
         end
+
         result.warn(coverage_line(name, leaf))
         result.merge!(leaf, label: name)
       end

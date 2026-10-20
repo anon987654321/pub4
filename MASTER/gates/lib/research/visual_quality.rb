@@ -64,6 +64,7 @@ module Deploy
       @exemplars = ExemplarStructure.new
       @quality = VisualQuality.new
       run_good_fixtures
+
       run_bad_fixtures
       run_live
       optional_png_ink
@@ -79,6 +80,7 @@ module Deploy
           @result.fail("visual_quality: missing good fixture #{file}")
           next
         end
+
         @result.checked!
         html = File.read(path)
         r = @exemplars.score(html, id)
@@ -101,6 +103,7 @@ module Deploy
           next
         end
         @result.checked!
+
         r = @exemplars.score(File.read(path), id)
         if r.pass?
           @result.fail("visual_quality: bad fixture #{id} unexpectedly passed (score #{r.score}/#{r.max}) — gate blind")
@@ -116,10 +119,12 @@ module Deploy
         app = inventory[probe[:app]]
         unless app
           @result.fail("visual_quality: unknown app #{probe[:app]}")
+
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", app.port)
           @result.skipped_live("visual_quality: live #{probe[:quality_surface]} skipped (port closed)")
+
           next
         end
         @result.checked!
@@ -144,6 +149,7 @@ module Deploy
         brgen-marketplace-desktop.png
         brgen-public-mobile.png
       ]
+
       ratios = []
       samples.each do |name|
         path = File.join(VISUAL_DIR, name)
@@ -160,6 +166,7 @@ module Deploy
           @result.fail("visual_quality png: #{name} content_ratio #{ratio} looks noisy/crushed (principle=signal_noise)", severity: :soft)
         end
       end
+
       @result.warn("visual_quality png: content sampled #{ratios.map { |n, r| "#{n}=#{r}" }.join(', ')}") if ratios.any?
     end
 

@@ -8,10 +8,12 @@
 # domain_alignment.rb — a crash that could not happen when the same gate class
 # ran in-process.
 require_relative "support/utf8"
+
 require "open3"
 require "rbconfig"
 require_relative "../../MASTER/lib/operator/ruby_runner"
 require "timeout"
+
 # From the manifest, not from four hardcoded paths.
 #
 # All four moved into lib/host and lib/source, gates.yml moved with them, and
@@ -28,6 +30,7 @@ require "timeout"
 # runs frontend_auditor, which belongs to layout_suite, so requiring its own
 # composite loaded three of the four and left the fourth undefined at line 152.
 require "yaml"
+
 RELEASE_GATE_CLASSES = %w[
   Deploy::DomainAlignmentGate
   Deploy::FrontendAuditorGate
@@ -41,6 +44,7 @@ YAML.load_file(manifest_path).then { |manifest| manifest["gates"] || manifest }
     .each_value.select { |row| row.is_a?(Hash) && RELEASE_GATE_CLASSES.include?(row["class"]) }
     .each do |row|
       require_path = row.fetch("require")
+
       # Paths starting with a known tree (MASTER, RAILS, OPENBSD) are repo-relative.
       # Others are RAILS-relative.
       full_path = if require_path.match?(%r{\A(?:MASTER|RAILS|OPENBSD)/})
@@ -89,6 +93,7 @@ def run(label, command, chdir: ROOT, env: {})
       Timeout.timeout(STEP_TIMEOUT) do
         status = wait_thread.value
         stdout = stdout_reader.value
+
         stderr = stderr_reader.value
       end
     rescue Timeout::Error
@@ -135,6 +140,7 @@ if BUNDLE
       *BUNDLE, "exec", *RUBY, "-e",
       'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])'
     ]
+
     run("#{app} importmap", importmap_audit, chdir: dir)
   end
 else

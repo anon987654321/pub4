@@ -40,6 +40,7 @@ module Deploy
         return
       end
       @result.checked!(7)
+
       %w[social luxury openbsd_wscons face_root vertical_accents].each do |key|
         @result.fail("dialect_purity: MASTER tokens missing #{key}") unless data.key?(key)
       end
@@ -70,6 +71,7 @@ module Deploy
     # its own again is still held to the map.
     def check_vertical_accents
       sheets = brgen_stylesheets
+
       return @result.fail("dialect_purity: brgen has no application.scss") if sheets.empty?
 
       sources = sheets.to_h { |path| [path, File.read(path)] }
@@ -114,6 +116,7 @@ module Deploy
     # than the name appearing somewhere in the file.
     def check_dialect_roots
       brgen = app_stylesheet("brgen")
+
       if brgen
         roots = Operator::ScssRules.rules(File.read(brgen)).select { |rule| rule.selector.start_with?(":root") }
         @result.fail("dialect_purity: brgen's :root does not include the brgen-old tokens") unless roots.any? { |rule| rule.body.match?(/brgen-old/) }

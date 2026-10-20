@@ -58,6 +58,7 @@ module Deploy
       vipps = read("brgen/app/services/marketplace/payments/vipps_checkout.rb")
       @result.fail("payment_honesty: VippsCheckout must raise NotConfigured") unless vipps.match?(/raise NotConfigured/)
       dintero = read("brgen/app/services/marketplace/payments/dintero_checkout.rb")
+
       @result.fail("payment_honesty: DinteroCheckout must raise NotConfigured") unless dintero.match?(/raise NotConfigured/)
       # The source contract above is the bulk of this gate and does not need a
       # booted app; only the cart probe does. Counting it stops a closed brgen port
@@ -89,6 +90,7 @@ module Deploy
       code = res.code.to_i
       @result.fail("payment_honesty: cart HTTP #{code}") unless code.between?(200, 399)
       body = res.body.to_s
+
       @result.fail("payment_honesty: cart shows Exception") if body.include?("Exception") || body.include?("Routing Error")
     rescue StandardError => e
       @result.fail("payment_honesty live: #{e.class}: #{e.message}")

@@ -28,6 +28,7 @@ module Deploy
   # learn to skip.
   class LocaleShadowingGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     APPS = %w[amber brgen bsdports].freeze
     BUDGET = File.join(__dir__, "../../data/locale_shadowing.yml")
 
@@ -80,6 +81,7 @@ module Deploy
             YAML.safe_load_file(path, aliases: true)
           rescue StandardError => e
             @result.inconclusive!("locale_shadowing #{path}: locale file unreadable (#{e.class}: #{e.message})")
+
             next
           end
           next unless doc.is_a?(Hash)
@@ -104,6 +106,7 @@ module Deploy
     def collect_empty(node, prefix, out)
       node.each do |key, value|
         path = prefix + [key.to_s]
+
         if value.is_a?(Hash)
           value.empty? ? out << path.join(".") : collect_empty(value, path, out)
         elsif value.nil?
@@ -153,6 +156,7 @@ module Deploy
           YAML.safe_load_file(path, aliases: true)
         rescue StandardError => e
           @unreadable = true
+
           @result.inconclusive!("locale_shadowing: locale file unreadable #{path} (#{e.class}: #{e.message})")
           next
         end
@@ -174,6 +178,7 @@ module Deploy
           out[(prefix + [key.to_s]).join(".")] = value
         end
       end
+
       out
     end
 

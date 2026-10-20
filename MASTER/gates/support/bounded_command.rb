@@ -31,6 +31,7 @@ module BoundedCommand
       # Read on a thread: the pipe fills at 64KB, so waiting on the process
       # before draining it deadlocks against the child's own output.
       reader = Thread.new { output << out.read.to_s }
+
       unless wait.join(timeout)
         kill_tree(wait.pid)
         reader.join(5)

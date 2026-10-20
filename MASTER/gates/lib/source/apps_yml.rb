@@ -73,6 +73,7 @@ module Deploy
       port = meta["port"]
       if port
         @result.fail("#{name}: port must be integer, got #{port.class}") unless port.is_a?(Integer)
+
         ports << port if port.is_a?(Integer)
       else
         @result.warn("#{name}: no port declared")

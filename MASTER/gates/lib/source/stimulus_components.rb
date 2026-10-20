@@ -6,6 +6,7 @@ module Deploy
   class StimulusComponentsGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
+
     # nested-form (amber only) and checkbox-select-all (brgen only) register
     # in their app-scoped boot files rather than stimulus_boot.js, so every
     # app that doesn't mount them never imports the module. The three files
@@ -134,6 +135,7 @@ module Deploy
             next if controller.empty?
             line = body[0, match.begin(0)].count("\n") + 1
             location = "#{path.sub(ROOT + '/', '')}:#{line}"
+
             usages[controller] << location unless usages[controller].include?(location)
           end
         end
@@ -153,6 +155,7 @@ module Deploy
       else
         boot = BOOT_FILES.map { |f| File.read(f) }.join("\n")
         result.checked!(REQUIRED_CONTROLLERS.size + 1)
+
         REQUIRED_CONTROLLERS.each do |name|
           result.fail("pub4_stimulus_boot must register #{name}") unless boot.include?(%("#{name}"))
         end

@@ -7,6 +7,7 @@ module Deploy
   class GeneratedAssetGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
+
     # Stylesheets only. Watching app/javascript/**/*.{js,ts} here
     # compared against application.css — but every app serves its JS through
     # importmap, unbundled, so no JS file has application.css as its build
@@ -74,6 +75,7 @@ module Deploy
         if $?&.success?
           out.split("\0").filter_map do |entry|
             rel = entry[3..]
+
             File.join(ROOT, rel) if rel && !rel.empty?
           end.to_set
         end
@@ -97,6 +99,7 @@ module Deploy
       dirty = dirty_paths
       sources.each do |source|
         next if File.mtime(source) <= build_mtime
+
         # mtime alone is not evidence. `git checkout`/`pull` rewrites every file
         # in one pass, so which of two files lands a millisecond later is write
         # order, not an edit — this reported brgen's _channels.scss (1.3ms) and
@@ -124,6 +127,7 @@ module Deploy
     # withdrawn. A literal `--radius-card: 12px` in SCSS against `16px` in
     # the build is the case this exists for.
     TOKEN_DECL = /--([\w-]+)\s*:\s*([^;}{]+)/
+
     # Hex, lengths, and unitless numbers (weights). Everything else is
     # interpolation, calc(), a font stack, or a minified selector — the class
     # that made a property-by-property check report every dialect as drift.
@@ -153,6 +157,7 @@ module Deploy
         body = File.read(path)
         interpolated.concat(interpolated_tokens(body))
         token_literals(body).each { |name, values| allowed[name].concat(values) }
+
         # --bg: #{$bg} compiles to a hex the custom property never spells.
         # The mixin default `$bg: #17161c` is that hex, the same source
         # fallback_drift_lint.collect_from_scss already reads.
@@ -216,6 +221,7 @@ module Deploy
     # that would turn a drifted generator path into a green asset gate.
     def service_worker_stale?(app_dir, result, app_name)
       sw_source = File.join(RAILS_ROOT, "__shared", "pwa", "service_worker.js")
+
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
       return unless File.file?(sw_source)
 
@@ -245,6 +251,7 @@ module Deploy
       # An edit the working tree has and the build does not is the real failure
       # here, exactly as it is for the stylesheets.
       dirty = dirty_paths
+
       return if dirty && !(dirty.include?(sw_source) && !dirty.include?(sw_build))
 
       result.fail("#{app_name}: stale service-worker.js relative to shared/pwa/service_worker.js " \

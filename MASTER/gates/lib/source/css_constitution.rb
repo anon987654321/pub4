@@ -6,6 +6,7 @@ require_relative "../../support/gate_result"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/fleet"
 require_relative "../../../tools/master_design"
+
 require_relative "../../../tools/scss"
 require_relative "../../../tools/frontend_law_set"
 require_relative "../../support/css_spacing_scans"
@@ -39,12 +40,15 @@ module Deploy
     # effect off explicitly would have been the one penalised for it, and that
     # stylesheet was MASTER's face.
     FLAT_PATTERN = /box-shadow\s*:(?!\s*none\b)|text-shadow\s*:(?!\s*none\b)|backdrop-filter\s*:(?!\s*none\b)|filter\s*:[^;]*\bblur\(/i
+
     TWITTER_BLUE = /#1d9bf0|#1DA1F2/i
     LONG_TRANSITION = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
     PHYSICAL_LR = /^\s*(margin|padding|inset)-(left|right)\s*:|^\s*left\s*:|^\s*right\s*:/
+
     IMPORTANT = /!important\b/
     REDUCED_MOTION = /@media[^{]*prefers-reduced-motion/
     SPACING = /\b(?:margin|padding|gap|row-gap|column-gap|inset)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?\s*:\s*([^;{]+)/
+
 # A number inside a var() fallback is the token's own declared value, not a
 # spacing literal anyone chose. `calc(var(--chrome-inset, 12px) +
 # var(--tap-min, 44px) + var(--space-1, 4px))` names three tokens and no
@@ -56,6 +60,7 @@ module Deploy
 # one number guaranteed to appear in a tap-target fallback was the one
 # number the allowlist rejected.
 VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
+
     HEX = /#[0-9a-fA-F]{3,8}\b/
     COMMENT = %r{\A\s*(?://|/\*|\*)}
 
@@ -68,12 +73,15 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # and two rival size ladders in the same tree — the token one
     # (12/14/16/18/20) and a hardcoded 13/15/17 borrowed from x.com.
     FONT_SIZE = /(?:\A|[;{\s])font-size\s*:\s*([^;}]+)/
+
     FONT_WEIGHT = /(?:\A|[;{\s])font-weight\s*:\s*([^;}]+)/
+
     # line_height was the one typography key with no reader. The --leading-*
     # ladder in _typography.scss is the vocabulary, so a literal — even one equal
     # to a step — is leading that retuning the token cannot reach.
     LINE_HEIGHT = /(?:\A|[;{\s])line-height\s*:\s*([^;}]+)/
     TIMING = /(?:transition(?:-timing-function)?|animation)\s*:\s*([^;}]+)/
+
     # Keyword timing functions are what CINEMA_PALETTE ("cubic-bezier easing on
     # every transition") exists to forbid; the tokens are the way to satisfy it.
     KEYWORD_EASING = /(?<![-\w])(?:ease|ease-in|ease-out|ease-in-out|linear)(?![-\w(])/
@@ -123,6 +131,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         "type_scale" => [], "weight_ladder" => [],
         "child_margin" => [], "card_padding" => [], "leading" => []
       }
+
       files.each { |path| scan(path) }
       judge_budgets
       check_weight
@@ -135,6 +144,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         data = YAML.safe_load_file(BUDGET_PATH)
         rules = data&.dig("rules")
         raise "budget has no rules: #{BUDGET_PATH}" unless rules.is_a?(Hash)
+
         rules
       end
     rescue StandardError => e
@@ -158,6 +168,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
           diagnostic_limit = 100
           hits.first(diagnostic_limit).each { |hit| @result.warn("css_constitution #{rule}: #{hit}") }
           omitted = hits.size - diagnostic_limit
+
           @result.warn("css_constitution #{rule}: #{omitted} additional finding(s) omitted") if omitted.positive?
           @result.fail("css_constitution #{rule}: #{hits.size} exceeds ceiling #{ceiling} (+#{hits.size - ceiling}) — " \
                        "fix them, or record a new ceiling with a reason")
@@ -251,6 +262,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # A budget that counts its own prose ratchets against documentation.
     def strip_comments(body)
       out = +""
+
       rest = body.dup
       until rest.empty?
         if (open = rest.index("/*"))
@@ -259,6 +271,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
           # Keep the newlines so line numbers survive.
           span = close ? rest[open..close + 1] : rest[open..]
           out << ("\n" * span.count("\n"))
+
           rest = close ? rest[(close + 2)..] : ""
         else
           out << rest.gsub(%r{//.*}, "")
@@ -290,6 +303,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         motion_depth ||= depth if line.match?(REDUCED_MOTION)
         depth += line.count("{") - line.count("}")
         where = "#{rel}:#{index + 1}"
+
         @tally["important"] << where if line.match?(IMPORTANT) && motion_depth.nil?
         @tally["magic_hex"] << where if !token_source && line.match?(HEX)
         count_typography(where, line) unless token_source || face_line
@@ -319,6 +333,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       # verticals first moved and 1406 lines of CSS went unmeasured.
       rails = APPS.flat_map do |app|
         bases = [File.join(RAILS, app, "app/assets/stylesheets")]
+
         bases.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
         bases.flat_map do |base|
           next [] unless File.directory?(base)
@@ -388,6 +403,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       # per app, and file_length_ratchet_test.rb holds each one to a ceiling.
       lines = strip_comments(body).each_line.count do |line|
         stripped = line.strip
+
         !stripped.empty? && !stripped.start_with?("//", "/*", "*")
       end
       if lines > 250 && !File.basename(path).start_with?("application")
@@ -411,6 +427,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # the browser its bold file was the body weight.
     def check_font_face_descriptors(rel, body)
       in_face = false
+
       strip_comments(body).each_line.with_index do |line, index|
         in_face = true if line.match?(/@font-face/)
         if in_face && line.match?(/font-(?:weight|style|stretch)\s*:\s*var\(/)

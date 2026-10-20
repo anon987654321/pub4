@@ -53,6 +53,7 @@ module Deploy
       # the script has a build path and a stuck sass-embedded is exactly the
       # child that used to hang a whole run.
       _out, status = BoundedCommand.capture2e(RbConfig.ruby, build_script, "--check", timeout: 120, chdir: ROOT)
+
       if BoundedCommand.timed_out?(status)
         result.fail("CSS build check passed 120s and was killed — tools/build_all_css.rb --check is stuck")
       elsif !status.success?
@@ -78,6 +79,7 @@ module Deploy
       viewport_fit = body.match?(/viewport-fit=cover/i)
       issues << "missing viewport-fit=cover" if viewport && !viewport_fit
       charset = body.match?(/<meta\s+charset=/i) || body.match?(/tag\.meta\s+charset/i)
+
       issues << "missing charset meta" if body.match?(/<head\b/i) && !charset
       csp = body.match?(/csp_meta_tag|content-security-policy/i)
       issues << "missing CSP meta" if body.match?(/<head\b/i) && !csp
@@ -104,6 +106,7 @@ module Deploy
         result.fail("RAILS/master chat index: missing face asset path map") unless body.include?("MASTER_ASSET_PATHS")
         result.fail("RAILS/master chat index: missing lazy face import") unless body.match?(/import\("<%= (?:FaceAssets\.versioned\()?asset_path\("face\.js"\)/)
         result.fail("RAILS/master chat index: missing primer dismissal") unless body.include?("dismissPrimer")
+
         result.fail("RAILS/master chat index: missing prompt reveal") unless body.include?("revealPrompt")
         result.fail("RAILS/master chat index: missing error-live wiring") unless body.include?("error-live")
         result.fail("RAILS/master chat index: missing face boot watchdog") unless body.include?("fallback=setTimeout")

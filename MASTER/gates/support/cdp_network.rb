@@ -45,6 +45,7 @@ module Deploy
         next if params["canceled"] || error == "net::ERR_ABORTED"
 
         request = requests[params["requestId"]] || {}
+
         {
           url: request[:url].to_s,
           resource_type: request[:resource_type].to_s,

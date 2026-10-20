@@ -11,6 +11,7 @@ ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
 require "operator/ruby_runner"
 require "operator/environment"
+
 # lib/production: the composite that folds every host check into one verdict
 # sorted into host/live/meta/rendered/research/source, and this was the one
 # caller the move missed. A subprocess gate that cannot load is a gate that

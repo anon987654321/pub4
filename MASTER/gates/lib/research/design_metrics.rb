@@ -6,6 +6,7 @@ require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
 require_relative "../../support/gate_result"
 require_relative "../../support/deploy_inventory"
+
 require_relative "../../support/fleet"
 require_relative "../../support/crawl_support"
 require_relative "../../support/geometry_probe"
@@ -87,6 +88,7 @@ module Deploy
     def source_stylesheets
       @source_stylesheets ||= APPS.flat_map do |app|
         roots = [File.join(RAILS, app, "app/assets/stylesheets")]
+
         roots.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
         roots.flat_map { |r| Dir.glob(File.join(r, "**/*.scss")) }
       end.uniq.sort
@@ -121,6 +123,7 @@ module Deploy
         line.each_char do |char|
           if char == "{"
             opens << [index, false]
+
             opens[0..-2].each { |frame| frame[1] = true }
             next
           end
@@ -166,18 +169,21 @@ module Deploy
       @result.fail("design_metrics: touch.target_recommended_px missing/invalid") if recommended < touch
       body_min = @rules.dig("typography", "accessibility", "body_min_px").to_i
       @result.fail("design_metrics: body_min_px missing") if body_min < 16
+
       gap = @rules.dig("layout_rules", "whitespace", "gap_over_margin")
       @result.fail("design_metrics: whitespace.gap_over_margin missing") if gap.nil?
       card = @rules.dig("ultraminimalism", "negative_space", "card_padding_px").to_i
       @result.fail("design_metrics: card_padding_px missing/invalid") if card <= 0
       columns = @rules.dig("layout_rules", "grid", "columns").to_i
       @result.fail("design_metrics: grid.columns missing/invalid") if columns <= 0
+
       para = @rules.dig("layout_rules", "whitespace", "paragraph_margin_em").to_f
       @result.fail("design_metrics: paragraph_margin_em missing/invalid") if para <= 0
       sec_min = @rules.dig("layout_rules", "whitespace", "section_padding_min_rem").to_f
       sec_max = @rules.dig("layout_rules", "whitespace", "section_padding_max_rem").to_f
       @result.fail("design_metrics: section_padding missing/invalid") if sec_min <= 0 || sec_max < sec_min
       sidebar = @rules.dig("layout_rules", "proportion", "split_sidebar_ratio").to_f
+
       main = @rules.dig("layout_rules", "proportion", "split_main_ratio").to_f
       @result.fail("design_metrics: split ratios missing/invalid") if sidebar <= 0 || (main + sidebar - 1.0).abs > 0.02
       visible = @rules.dig("ultraminimalism", "swiss_style", "visible_grid_optional")
@@ -191,6 +197,7 @@ module Deploy
       if body
         px = DesignMetrics.to_px(body) || (body == "1rem" ? 16.0 : nil)
         min = @rules.dig("typography", "accessibility", "body_min_px").to_f
+
         if px && px + 0.01 < min
           @result.fail("design_metrics type: shared_chrome.font_size_body #{body} (#{px}px) < body_min_px #{min}", severity: :hard)
         end
@@ -203,6 +210,7 @@ module Deploy
         ch = m.to_f
         min_ch = @rules.dig("typography", "line_length", "min_ch").to_f
         max_ch = @rules.dig("typography", "line_length", "max_ch").to_f
+
         if ch < min_ch || ch > max_ch
           @result.fail(
             "design_metrics measure: measure_body #{measure} outside #{min_ch}–#{max_ch}ch (principle=hierarchy)",
@@ -217,6 +225,7 @@ module Deploy
       chs = DesignMetrics.extract_ch_measures(sample_css("brgen", Regexp.union(SAMPLES.values_at(:marketplace, :posts))))
       if chs.any?
         bad = chs.reject { |c| c.between?(@rules.dig("typography", "line_length", "min_ch").to_f, @rules.dig("typography", "line_length", "max_ch").to_f) }
+
         bad.each do |c|
           @result.fail("design_metrics measure: max-width #{c}ch outside ideal range", severity: :soft)
         end
@@ -275,6 +284,7 @@ module Deploy
           sample_css("brgen", Regexp.union(SAMPLES.values_at(:posts, :nav, :forms))),
         "__shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "__shared/app/assets/stylesheets/_minimal.scss")),
       }
+
       samples.each do |rel, css|
         DesignMetrics.extract_line_heights(css).each do |lh|
           if lh + 0.001 < body_min
@@ -299,6 +309,7 @@ module Deploy
     # also carries columns and base_unit_px that nothing else supplies.
     def check_spacing_rhythm
       allowed = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
+
       allowed = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i) if allowed.empty?
       base = @rules.dig("layout_rules", "grid", "base_unit_px").to_i
       base = 8 if base <= 0
@@ -309,6 +320,7 @@ module Deploy
         "__shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "__shared/app/assets/stylesheets/_minimal.scss")),
       }
       off = []
+
       samples.each do |rel, css|
         DesignMetrics.extract_spacing_px(css).each do |px|
           # ignore fractional rem noise; round to nearest px
@@ -328,6 +340,7 @@ module Deploy
       max_sizes = @rules.dig("typography", "hierarchy", "max_font_sizes").to_i
       max_sizes = 8 if max_sizes <= 0
       chrome = @tokens["shared_chrome"] || {}
+
       sizes = %w[font_size_meta font_size_body font_size_title font_size_display].filter_map do |k|
         DesignMetrics.to_px(chrome[k]) if chrome[k]
       end
@@ -366,6 +379,7 @@ module Deploy
         { label: "marketplace", path: "/", selector: "#navBar a, .deal-fav, .btn" },
         { label: "nearby", path: "/nearby", selector: ".btn, .nearby-locate-actions button" },
       ]
+
       surfaces = probes.filter_map do |probe|
         GeometryProbe.surfaces(root: ROOT).find do |surface|
           surface.app == "brgen" && surface.label == probe[:label] && surface.path == probe[:path] && surface.viewport == "mobile"
@@ -381,17 +395,20 @@ module Deploy
           @result.checked!
           cdp.viewport(surface.width, surface.height, mobile: surface.width < 500)
           cdp.headers(GeometryProbe::PROBE_HEADERS)
+
           cdp.clear_cookies
           cdp.navigate(surface.url)
           rows = cdp.evaluate(
             "Array.from(document.querySelectorAll(#{probe[:selector].to_json})).slice(0,5).map(el => { const r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; })",
           )
+
           unless rows.is_a?(Array) && rows.any?
             @result.fail("design_metrics browser: no elements for #{probe[:selector]} on #{probe[:path]}", severity: :soft)
             next
           end
           rows.each do |row|
             next unless row.is_a?(Hash)
+
             h = row["height"].to_f
             w = row["width"].to_f
             next if h < 1 || w < 1
@@ -407,6 +424,7 @@ module Deploy
     rescue StandardError => e
       @result.inconclusive!("design_metrics browser: #{e.class}: #{e.message}")
     end
+
     def read_css(path)
       raise "design_metrics: required stylesheet missing: #{path}" unless File.file?(path)
 

@@ -71,6 +71,7 @@ module Deploy
     # migration in this fleet uses, matched nothing. The scan saw 3 of 200 calls
     # and the duplicate check below had never once seen a table.
     CREATE_TABLE = /create_table\s+(?::(\w+)|"(\w+)"|'(\w+)')/
+
     def create_table_names(body)
       body.scan(CREATE_TABLE).map { |symbol, double, single| symbol || double || single }
     end
@@ -84,6 +85,7 @@ module Deploy
     # rather than count the calls.
     def guarded_for?(body, table)
       return true if body.match?(/create_table\s+(?::#{table}|["']#{table}["'])[^\n]*if_not_exists/)
+
       return true if body.match?(/table_exists\?\(\s*[:"']#{table}\b/)
 
       # GUARD_EXPENSIVE_OPS sees drop_table inside the pattern and cannot tell a
@@ -97,6 +99,7 @@ module Deploy
         body = read_utf8(path) # scan: intentional — two plain lines beat a .then
         create_table_names(body).each do |table|
           first = seen[table]
+
           if first.nil?
             seen[table] = File.basename(path)
             next

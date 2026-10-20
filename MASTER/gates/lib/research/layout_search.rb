@@ -11,6 +11,7 @@ module Deploy
   class LayoutSearchGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
+
     # Views live in the brgen_marketplace engine, a sibling of brgen. The
     # marketplace component styles live in the host entrypoint's feature partial.
     ENGINE = File.join(RAILS, "brgen_marketplace")
@@ -45,6 +46,7 @@ module Deploy
       missing << File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss") if feature_styles.empty?
       if missing.any?
         missing.each { |p| @result.fail("layout_search: missing #{p.sub(RAILS + '/', '')}") }
+
         return
       end
       if cards_css.empty?
@@ -78,6 +80,7 @@ module Deploy
     def card_source
       File.read(CARD).gsub(/render ["']marketplace\/([a-z_]+)["'][^\n]*/) do
         partial = File.join(ENGINE, "app/views/marketplace/_#{Regexp.last_match(1)}.html.erb")
+
         File.file?(partial) ? File.read(partial) : Regexp.last_match(0)
       end
     end

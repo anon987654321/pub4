@@ -10,6 +10,7 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     APPS = %w[amber brgen bsdports].freeze
     PRODUCER = /<%=?\s*(?:content_for|provide)\s*(?:\(\s*)?:([a-zA-Z_][a-zA-Z0-9_]*)|<%=?\s*(?:content_for|provide)\s*(?:\(\s*)?["']([a-zA-Z_][a-zA-Z0-9_]*)["']/
+
     # A consumer is a `yield :key` or `content_for(:key)` anywhere inside an ERB tag, not only
     # at its start: `<%= content_for?(:title) ? "#{yield :title} - Amber" : "Amber" %>` reads the
     # slot, and anchoring on `<%= yield` called every such layout a non-consumer.

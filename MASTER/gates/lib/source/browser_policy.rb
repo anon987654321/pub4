@@ -7,6 +7,7 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__).freeze
     REQUIRED_HOSTS = %w[127.0.0.1 localhost 0.0.0.0 169.254.169.254].freeze
     REQUIRED_ACTIONS = %w[click set type].freeze
+
     REQUIRED_INTERACTION_POLICY = {
       "ai_identity_disclosure_required" => true,
       "recipient_consent_required" => true,
@@ -29,6 +30,7 @@ module Deploy
       return failure("browser policy missing forbidden hosts: #{missing_hosts.join(", ")}") unless missing_hosts.empty?
       missing_actions = REQUIRED_ACTIONS - Array(policy["write_actions"]).map(&:to_s)
       return failure("browser policy missing write actions: #{missing_actions.join(", ")}") unless missing_actions.empty?
+
       return failure("browser write consent must be required") unless policy["consent_required"] == true
       interactions = policy["external_interactions"]
       return failure("browser external interaction policy missing") unless interactions.is_a?(Hash)
@@ -36,6 +38,7 @@ module Deploy
         return failure("browser external interaction policy #{key} must be #{expected}") unless interactions[key] == expected
       end
       methods = Array(policy["allowed_network_methods"]).map { |method| method.to_s.upcase }
+
       return failure("browser policy must allow only GET/HEAD browser requests") unless methods.sort == %w[GET HEAD]
       return failure("browser session limit must be four") unless policy["max_sessions"] == 4
       read_actions = Array(policy["read_actions"]).map(&:to_s)
@@ -43,6 +46,7 @@ module Deploy
       missing_read_actions = required_read_actions - read_actions
       return failure("browser policy missing read actions: #{missing_read_actions.join(", ")}") unless missing_read_actions.empty?
       return failure("browser sessions must be host-bound") unless policy["session_host_bound"] == true
+
       return failure("browser screenshots must be evidence") unless policy["screenshot_evidence_required"] == true
       return failure("browser capture cap must be 500") unless policy["max_capture_files"] == 500
       return failure("browser page limit must be 50") unless policy["max_pagination_pages"] == 50
@@ -58,12 +62,14 @@ module Deploy
       evasion_patterns = /navigator\.webdriver|AutomationControlled|browse_randomly|humanize_mouse|stealth_script|user_agents\s*:/i
       browser_config = File.join(root, "data", "browser_agents.yml")
       sources = [content, (File.read(browser_config) if File.file?(browser_config))].compact
+
       if sources.any? { |text| text.match?(evasion_patterns) }
         return failure("Browser must not disguise automation or simulate random browsing")
       end
       %w[SsrfGuard.pinned_address secure_page :dangerous ensure_session_host! target_from_anchor! save_screenshot(state) MAX_PAGINATION_OUTPUT_BYTES].each do |guard|
         return failure("Browser security or capability guard missing: #{guard}") unless content.include?(guard)
       end
+
       return failure("Browser interaction consent boundary missing") unless content.include?('interact #{op}')
       return failure("Browser capture limit disagrees with policy") unless content.include?("MAX_CAPTURES = #{policy["max_capture_files"]}")
       return failure("Browser page limit disagrees with policy") unless content.include?("clamp(1, #{policy["max_pagination_pages"]})")

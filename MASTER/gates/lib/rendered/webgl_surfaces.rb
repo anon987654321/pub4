@@ -60,6 +60,7 @@ module Deploy
         cdp.viewport(1024, 768)
         surfaces.each { |surface| measure(cdp, surface, ports) }
       end
+
       @result
     rescue CdpSession::Error => e
       # A browser that will not start is an unchecked precondition, not a pass:
