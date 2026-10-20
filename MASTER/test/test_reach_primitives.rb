@@ -68,12 +68,22 @@ class ReachPrimitivesTest < Minitest::Test
     assert_includes result.value!, "needle.txt"
   end
 
+  def test_a_repo_relative_glob_finds_the_file_and_an_empty_result_says_what_it_searched
+    File.write(File.join(@dir, "known.txt"), "a known line\n")
+    tool = Master::Io::SearchFiles.new(root: @dir)
+    prefix = File.basename(@dir)
+
+    assert_includes tool.call(pattern: "known line", glob: "#{prefix}/known.txt").value!, "known.txt"
+    assert_includes tool.call(pattern: "known line", path: "known.txt").value!, "known.txt"
+    assert_match(/no files matched nothing\*/, tool.call(pattern: "x", glob: "nothing*").value!)
+  end
+
   def test_search_files_never_returns_cached_results
     path = File.join(@dir, "mutable.txt")
     tool = Master::Io::SearchFiles.new(root: @dir)
 
     File.write(path, "first\n")
-    assert_equal "(no matches)", tool.call(pattern: "second").value!
+    assert_match(/\A\(no matches in 1 files/, tool.call(pattern: "second").value!)
 
     File.write(path, "second\n")
     assert_includes tool.call(pattern: "second").value!, "mutable.txt"

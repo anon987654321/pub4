@@ -16,10 +16,15 @@ module Master
 
       def reset! = self
 
-      def call(pattern:, glob: "**/*", context_lines: 2)
+      # `path` is a glob under the root too; a repo-relative `MASTER/lib/x.rb` means `lib/x.rb` when the root is
+      # MASTER, so a model that thinks from the repo root finds its file instead of an empty result.
+      def call(pattern:, glob: "**/*", context_lines: 2, path: nil)
         regexp = Regexp.new(pattern)
-        results = collect_results(current_paths(glob), regexp, context_lines)
-        Result.ok(format_results(results))
+        glob = relative_glob(path || glob)
+
+        paths = current_paths(glob)
+        results = collect_results(paths, regexp, context_lines)
+        Result.ok(format_results(results, searched: paths.size, glob:))
       rescue RegexpError
         Result.err("invalid pattern: #{pattern}", category: :validation)
       rescue StandardError => e
@@ -57,11 +62,23 @@ module Master
         "#{relative}:#{index + 1}\n#{snippet}"
       end
 
-      def format_results(results)
-        return "(no matches)" if results.empty?
+      def format_results(results, searched:, glob:)
+        return no_match_line(searched, glob) if results.empty?
 
         suffix = results.size >= MAX_RESULTS ? "\n[...truncated]" : ""
         results.join("\n---\n") + suffix
+      end
+
+      # An empty result must say what it searched, so it can be told from a search that looked in the wrong place.
+      def no_match_line(searched, glob)
+        return "(no matches in #{searched} files for #{glob})" if searched.positive?
+
+        "(no files matched #{glob} under #{File.basename(@root)}; globs are relative to #{File.basename(@root)})"
+      end
+
+      def relative_glob(glob)
+        prefix = "#{File.basename(@root)}/"
+        glob.to_s.start_with?(prefix) ? glob.to_s.delete_prefix(prefix) : glob.to_s
       end
 
       def current_paths(glob)
