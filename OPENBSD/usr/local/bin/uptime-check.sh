@@ -11,7 +11,7 @@
 # to close. Reading is the half that is safe, so this reads apps.yml as data
 # through a system interpreter and never runs anything from the checkout.
 #
-# The names below are the fallback for a box with no checkout to read.
+# The active app names below are only the fallback for a box with no checkout to read; they must track RAILS/apps.yml.
 #
 # The legacy bsdports public endpoint can be waived independently when its DNS/TLS
 # delegation is known to be outside this host's control:
@@ -62,7 +62,7 @@ check() {
 # Falling back is a finding, not a quiet substitution. The built-in names are
 # still checked — knowing those four are up is worth more than checking nothing —
 # but the run exits nonzero whatever they answer, because this script cannot then
-# tell you a fifth app exists and is down. A green uptime check measuring a fleet
+# tell you an active app exists and is down. A green uptime check measuring a fleet
 # that is one deploy out of date is the failure the header at the top describes.
 targets=$(app_targets) || targets=
 if [[ -z $targets ]]; then
