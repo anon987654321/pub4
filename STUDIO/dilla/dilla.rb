@@ -6680,7 +6680,7 @@ def run(argv)
   options = {}
   OptionParser.new do |o|
     o.banner = 'Usage: ruby dilla.rb [options] | reference URL_OR_AUDIO | industrial-techno [options]'
-    o.on('--showcase', 'Render the eight-part Blue Hour composition') { options[:showcase] = true }
+    o.on('--showcase', 'Render the default showcase: the Blue Hour suite and the rest of the room') { options[:showcase] = true }
     o.on('--video PATH', 'Write the matching MP4 visualizer at PATH') { |v| options[:video] = v }
     o.on('--no-video', 'Render only the WAV; do not encode an MP4') { options[:video] = false }
     o.on('--video-preset NAME', 'Postpro video preset (default dilla_heavy)') { |v| options[:video_preset] = v }
@@ -6991,33 +6991,47 @@ def render_section(data, options, plan: nil)
   buf
 end
 
-# One render, streamed whole: the pass is run through the same streamer as --play, a bar at a
-# time, then the master stage, and written as a stereo wav (or mono with --mono). Returns the path.
-def render_stream(data, options)
+# One pass run through the streamer a bar at a time, as --play does: the profile's own stages,
+# noise, drums and echo, in stereo unless --mono. Returns the frame and the streamer.
+def stream_frame(data, options)
   streamer = Streamer.new(data, options, ring: true)
-  plan = streamer.plan
   frame = Stereo.zeros(streamer.channels, 0)
   bar = streamer.beat * 4
   until streamer.finished?
     part = streamer.next_block(bar)
     Stereo.concat!(frame, streamer.channels == 1 ? [part] : part)
   end
+  [frame, streamer]
+end
+
+# The master stage of a whole programme: the tape stack, the master chain (EQ, multiband, glue,
+# loudness, true-peak), the stereo imager and the dither. Returns the frame, the loudness report
+# (nil with --no-master) and the tape instance count.
+def master_frame(frame, data, options, seed:, bpm:, channels:)
   tape = data.fetch('tape')
   instances = options.fetch(:tape, tape.fetch('instances'))
   args = { drive: options[:tape_drive] || tape.fetch('drive'), config: tape }
   # the stack is level matched against the programme itself, which a whole render has to hand
-  stack = instances.positive? ? ->(sample) { Tape::Stack.new(instances:, seed: plan.seed, sample:, **args) } : nil
-  chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch('master'), channels: streamer.channels, bpm: plan.bpm, whole: true)
+  stack = instances.positive? ? ->(sample) { Tape::Stack.new(instances:, seed:, sample:, **args) } : nil
+  chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch('master'), channels:, bpm:, whole: true)
   chain&.target = options[:lufs] if options[:lufs]
-  master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset: nil, seed: plan.seed, instances:, tape_args: args,
+  master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset: nil, seed:, instances:, tape_args: args,
                              imager: options[:mono] ? nil : data.dig('stereo', 'imager'), chain:)
   frame = master.process(frame)
   if (tail = master.flush)
     frame = frame.each_with_index.map { |channel, c| channel.drop(chain.latency) + tail[c].first(chain.latency) } # the limiter's delay taken out
   end
+  frame = Mastering::Dither.new(seed).process(frame) if chain && options.fetch(:bits, 16) == 16
+  [frame, (Mastering.report(frame) if chain), instances]
+end
+
+# One render, streamed whole: the pass is run through the same streamer as --play, a bar at a
+# time, then the master stage, and written as a stereo wav (or mono with --mono). Returns the path.
+def render_stream(data, options)
+  frame, streamer = stream_frame(data, options)
+  plan = streamer.plan
+  frame, report, instances = master_frame(frame, data, options, seed: plan.seed, bpm: plan.bpm, channels: streamer.channels)
   bits = options.fetch(:bits, 16)
-  frame = Mastering::Dither.new(plan.seed).process(frame) if chain && bits == 16
-  report = Mastering.report(frame) if chain
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write(out, streamer.channels == 1 ? frame.first : frame, bits:, replace: options[:replace])
@@ -7171,6 +7185,84 @@ def showcase_tempos(seed:, count:)
   Array.new(count) { |index| order[index % order.size] }
 end
 
+# One section of the showcase as a stereo frame. A section marked "engine": "stream" runs through
+# the streamer, so its profile's own voices, stages, noise, drums and echo all play; any other
+# section is the curated mono pass rendered whole by render_section, as it always was.
+def showcase_section(data, options, section, index:, seed:, bpm:)
+  stream = section['engine'] == 'stream'
+  mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section['mode']))
+  mode ||= 'repeat' unless stream
+  section_options = {
+    names: section.fetch('progression'),
+    section_index: index,
+    bpm:,
+    beats: options[:beats] || section.fetch('beats_per_chord', 2.0),
+    gate: options[:gate] || section['gate'],
+    voice: options[:voice] || section['voice'],
+    mode:,
+    repeat: options[:repeat].is_a?(String) ? options[:repeat] : section['repeat'],
+    arp: options[:arp] || (mode == 'arp' ? true : nil),
+    arp_style: options[:arp_style] || section['arp_style'],
+    arp_rate: options[:arp_rate] || section['arp_rate'],
+    pad: options[:pad] || section['pad'],
+    strum: options[:strum] || section['strum'],
+    profile: options[:profile] || section['profile'],
+    drums: options[:drums] || section['drums'],
+    kit: options[:kit] || section['kit'],
+    key: section['organ_key'],
+    scale: section['scale'],
+    bars: section['bars'],
+    chord_voices: section['chord_voices'],
+    patch_per_chord: section['patch_per_chord'],
+    echo: options[:echo] || section['echo'],
+    echo_mix: options[:echo_mix] || section['echo_mix'],
+    echo_feedback: options[:echo_feedback] || section['echo_feedback'],
+    echo_time: options[:echo_time] || section['echo_time_ms'],
+    echo_tail: section['echo_tail_seconds'],
+    echo_reverb: section['echo_reverb'],
+    mix: section.fetch('mix', {}).merge(options[:mix] || {}),
+    scale_pcs: section['scale_pcs'],
+    melody: section['melody'],
+    melody_voice: section['melody_voice'],
+    layers: section['layers'],
+    seed: seed + (index * 97),
+    groove: options[:groove] || section['groove'],
+    transpose: options[:transpose] || section['transpose'],
+    wrap: options[:wrap],
+    plain: options[:plain],
+    sonitex: options[:sonitex] || section['sonitex'],
+    sonitex_instances: options[:sonitex_instances] || section['sonitex_instances'],
+    vcs: options[:vcs].nil? ? section['vcs'] : options[:vcs]
+  }
+  if stream
+    frame, = stream_frame(data, section_options.reject { |_key, value| value.nil? })
+    return frame
+  end
+
+  effect_rig = data.fetch('bus_effects').fetch(options[:effect_rig] || section.fetch('effect_rig'))
+  section_options = {
+    **section_options,
+    gate: section_options[:gate] || 0.88,
+    voice: section_options[:voice] || section.fetch('voice'),
+    repeat: section_options[:repeat] || 'half_note_pulse',
+    profile: section_options[:profile] || 'soft_swing',
+    drums: section_options[:drums] || section.fetch('drums'),
+    kit: section_options[:kit] || 'kit_dust',
+    echo: section_options[:echo] || false,
+    drum_sonitex: options[:drum_sonitex] || effect_rig.fetch('drum_sonitex'),
+    drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch('drum_sonitex_instances'),
+    drum_tape: options[:drum_tape] || effect_rig.fetch('drum_tape'),
+    drum_vcs: effect_rig.fetch('drum_vcs'),
+    drum_dub_echo: effect_rig.fetch('drum_dub_echo'),
+    drum_crystallizer: effect_rig.fetch('drum_crystallizer'),
+    instrument_dub_echo: effect_rig.fetch('instrument_dub_echo'),
+    instrument_crystallizer: effect_rig.fetch('instrument_crystallizer'),
+    buffer_only: true
+  }.reject { |_key, value| value.nil? }
+  buffer = render(data, section_options)
+  [buffer, buffer.dup]
+end
+
 # Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
 # and drum synthesiser used by ordinary progression renders.
 def render_showcase(data, options)
@@ -7178,91 +7270,47 @@ def render_showcase(data, options)
   sections = arrangement.fetch('sections')
   seed = options[:seed] || 261_013
   tempos = showcase_tempos(seed:, count: sections.size)
-  crossfade = (arrangement.fetch('crossfade_seconds', 0.18) * SAMPLE_RATE).round
-  combined = []
+  default_crossfade = arrangement.fetch('crossfade_seconds', 0.18)
+  combined = nil
+  bpms = []
 
   sections.each_with_index do |section, index|
-    section_bpm = options[:bpm] || tempos.fetch(index)
-    effect_rig = data.fetch('bus_effects').fetch(options[:effect_rig] || section.fetch('effect_rig'))
-    mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section.fetch('mode', 'repeat')))
-    section_options = {
-      names: section.fetch('progression'),
-      section_index: index,
-      bpm: section_bpm,
-      beats: options[:beats] || section.fetch('beats_per_chord', 2.0),
-      gate: options[:gate] || section.fetch('gate', 0.88),
-      voice: options[:voice] || section.fetch('voice'),
-      mode:,
-      repeat: options[:repeat].is_a?(String) ? options[:repeat] : section.fetch('repeat', 'half_note_pulse'),
-      arp: options[:arp] || (mode == 'arp' ? true : nil),
-      arp_style: options[:arp_style],
-      arp_rate: options[:arp_rate],
-      pad: options[:pad],
-      strum: options[:strum],
-      profile: options[:profile] || section.fetch('profile', 'soft_swing'),
-      drums: options[:drums] || section.fetch('drums'),
-      kit: options[:kit] || section.fetch('kit', 'kit_dust'),
-      echo: options[:echo] || section.fetch('echo', false),
-      echo_mix: options[:echo_mix] || section['echo_mix'],
-      echo_feedback: options[:echo_feedback] || section['echo_feedback'],
-      echo_time: options[:echo_time] || section['echo_time_ms'],
-      echo_tail: section['echo_tail_seconds'],
-      echo_reverb: section['echo_reverb'],
-      mix: section.fetch('mix', {}).merge(options[:mix] || {}),
-      scale_pcs: section['scale_pcs'],
-      melody: section['melody'],
-      melody_voice: section['melody_voice'],
-      layers: section['layers'],
-      drum_sonitex: options[:drum_sonitex] || effect_rig.fetch('drum_sonitex'),
-      drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch('drum_sonitex_instances'),
-      drum_tape: options[:drum_tape] || effect_rig.fetch('drum_tape'),
-      drum_vcs: effect_rig.fetch('drum_vcs'),
-      drum_dub_echo: effect_rig.fetch('drum_dub_echo'),
-      drum_crystallizer: effect_rig.fetch('drum_crystallizer'),
-      instrument_dub_echo: effect_rig.fetch('instrument_dub_echo'),
-      instrument_crystallizer: effect_rig.fetch('instrument_crystallizer'),
-      seed: seed + (index * 97),
-      groove: options[:groove],
-      transpose: options[:transpose],
-      wrap: options[:wrap],
-      plain: options[:plain],
-      sonitex: options[:sonitex] || section['sonitex'],
-      sonitex_instances: options[:sonitex_instances] || section['sonitex_instances'],
-      vcs: options[:vcs].nil? ? section['vcs'] : options[:vcs],
-      buffer_only: true
-    }.reject { |_key, value| value.nil? }
-
-    part = render(data, section_options)
-    if combined.empty?
-      combined = part
+    section_bpm = options[:bpm] || section['bpm'] || tempos.fetch(index)
+    bpms << section_bpm
+    frame = showcase_section(data, options, section, index:, seed:, bpm: section_bpm)
+    if combined.nil?
+      combined = frame
     else
-      overlap = [crossfade, combined.size, part.size].min
-      left = combined.pop(overlap)
-      overlap.times do |i|
-        phase = overlap <= 1 ? 1.0 : i.to_f / (overlap - 1)
-        combined << (left[i] * (1.0 - phase)) + (part[i] * phase)
+      overlap = [((section['crossfade_seconds'] || default_crossfade) * SAMPLE_RATE).round, combined.first.size, frame.first.size].min
+      combined.each_index do |c|
+        left = combined[c].pop(overlap)
+        overlap.times do |i|
+          phase = overlap <= 1 ? 1.0 : i.to_f / (overlap - 1)
+          combined[c] << (left[i] * (1.0 - phase)) + (frame[c][i] * phase)
+        end
+        combined[c].concat(frame[c].drop(overlap))
       end
-      combined.concat(part.drop(overlap))
     end
     puts format('section %d/%d: %s — %d BPM, %s', index + 1, sections.size,
-                section.fetch('name'), section_bpm, section.fetch('voice'))
+                section.fetch('name'), section_bpm, section['voice'] || section['profile'])
   end
 
-  combined = tape_stage(combined, data, options, seed)
-  fade = [SAMPLE_RATE / 25, combined.size / 2].min
-  fade.times do |i|
-    combined[i] *= i.to_f / [fade, 1].max
-    combined[-fade + i] *= (fade - i - 1).to_f / [fade, 1].max
+  fade = [SAMPLE_RATE / 25, combined.first.size / 2].min
+  combined.each do |channel|
+    fade.times do |i|
+      channel[i] *= i.to_f / [fade, 1].max
+      channel[-fade + i] *= (fade - i - 1).to_f / [fade, 1].max
+    end
   end
-  peak = combined.map(&:abs).max || 0.0
-  combined.map! { |sample| sample * (0.92 / peak) } if peak > 0.92
+  combined, report, = master_frame(combined, data, options, seed:, bpm: bpms.first, channels: 2)
 
   out = options[:out] || Dilla::Video.default_paths(root: __dir__).fetch(:audio)
   FileUtils.mkdir_p(File.dirname(out))
-  WAV.write(out, combined, replace: options[:replace])
-  puts format('Wrote %s (%.2fs, 44.1 kHz mono) — %s', out, combined.size / SAMPLE_RATE.to_f,
+  WAV.write(out, combined, bits: options.fetch(:bits, 16), replace: options[:replace])
+  puts format('Wrote %s (%.2fs, 44.1 kHz stereo) — %s', out, combined.first.size / SAMPLE_RATE.to_f,
               arrangement.fetch('title'))
-  puts "  seed=#{seed}; sections=#{sections.size}; tempos=#{tempos.join(',')}; peak=#{format('%.3f', combined.map(&:abs).max || 0.0)}"
+  puts "  seed=#{seed}; sections=#{sections.size}; tempos=#{bpms.join(',')}"
+  puts Mastering.report_line(report) if report
   unless options[:video] == false
     video_out = options[:video] || Dilla::Video.paired_path(out)
     begin
