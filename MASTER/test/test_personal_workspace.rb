@@ -13,6 +13,13 @@ class TestPersonalWorkspace < Minitest::Test
     Fiber[:master_pair_subject] = nil
   end
 
+  def grant_personal_memory(subject)
+    Master::Ground::PersonalPermissions.new(root: @root).grant(
+      scope: "personal_memory", subject:, confirmed_by: "local owner",
+      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+    )
+  end
+
   def test_ensure_writes_user_and_memory
     dir = Master::Ground::PersonalWorkspace.ensure!(root: @root, subject: "abc123")
     assert File.file?(File.join(dir, "USER.md"))
@@ -23,6 +30,7 @@ class TestPersonalWorkspace < Minitest::Test
     Master::Ground::PersonalWorkspace.ensure!(root: @root, subject: "sub1")
     File.write(File.join(@root, ".master", "workspace", "sub1", "USER.md"), "I am Jules")
     Fiber[:master_pair_subject] = "sub1"
+    grant_personal_memory("sub1")
 
     section = Master::Ground::PersonalWorkspace.prompt_section(@root)
     assert_includes section, "Personal workspace"
@@ -30,6 +38,7 @@ class TestPersonalWorkspace < Minitest::Test
   end
 
   def test_append_memory_stays_in_the_subject_dir
+    grant_personal_memory("sub1")
     path = Master::Ground::PersonalWorkspace.append_memory(
       root: @root, subject: "sub1", key: "prefers_tea", body: "drinks tea", type: "user",
     )
@@ -60,6 +69,7 @@ class TestPersonalWorkspace < Minitest::Test
         Master::Device::Agent.stub(:owner_subject, "owner123") do
           Fiber[:master_pair_subject] = nil
           Fiber[:master_visitor] = nil
+          grant_personal_memory("owner123")
           tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
           result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
           assert result.ok?, result.inspect
@@ -73,6 +83,7 @@ class TestPersonalWorkspace < Minitest::Test
 
   def test_memory_record_writes_to_workspace_when_paired
     Fiber[:master_pair_subject] = "sub1"
+    grant_personal_memory("sub1")
     tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
     result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
     assert result.ok?, result.inspect
@@ -80,6 +91,42 @@ class TestPersonalWorkspace < Minitest::Test
     assert_includes File.read(File.join(@root, ".master", "workspace", "sub1", "MEMORY.md")), "likes_tea"
   ensure
     Fiber[:master_pair_subject] = nil
+  end
+
+  def test_unpaired_user_facts_never_fall_back_to_shared_project_context
+    tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
+    result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
+
+    refute result.ok?
+    assert_equal :policy, result.category
+    assert_match(/refusing to write them to shared project_context/, result.message)
+    refute File.exist?(File.join(@root, "data", "project_context.yml"))
+  end
+
+  def test_paired_personal_memory_is_denied_until_its_subject_grants_consent
+    Fiber[:master_pair_subject] = "sub1"
+    tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)
+    result = tool.call(key: "likes_tea", description: "pref", body: "drinks tea", type: "user")
+
+    refute result.ok?
+    assert_equal :policy, result.category
+    refute File.exist?(File.join(@root, ".master", "workspace", "sub1", "MEMORY.md"))
+  ensure
+    Fiber[:master_pair_subject] = nil
+  end
+
+  def test_owner_profile_is_not_read_or_written_without_the_personal_memory_grant
+    subject = "sub1"
+    path = File.join(Master::Ground::PersonalWorkspace.dir_for(subject, root: @root), "USER.md")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, "# USER\n- Name: Secret\n")
+
+    assert_empty Master::Device::OwnerProfile.values(root: @root, subject:)
+    assert_raises(Master::Ground::PersonalWorkspace::PermissionDenied) do
+      Master::Device::OwnerProfile.set(root: @root, subject:, name: "Changed")
+    end
+    assert_includes File.read(path), "Secret"
+    refute_includes File.read(path), "Changed"
   end
 
   def test_pulse_reports_a_todo_line
