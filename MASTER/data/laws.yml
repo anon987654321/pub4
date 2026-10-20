@@ -34,6 +34,7 @@ ROBUSTNESS:
 SINGULARITY:
   priority: 2
   tier: constitutional
+  severity: error
   statement: One source of truth; no duplication; data integrity.
   applies_to:
   - duplication
@@ -48,6 +49,7 @@ SINGULARITY:
 LINEARITY:
   priority: 3
   tier: constitutional
+  severity: error
   statement: Sequential flow; minimal branches; clear path.
   applies_to:
   - control_flow
@@ -338,6 +340,26 @@ transformation_policy:
     reference_graph: required
     side_effect_order: required
     rendered_output: required_when_applicable
+  acceptance:
+    concepts: "after <= before, or after <= before + 1 when traceability improves"
+    loc: "ceiling never rises; tighten it when a step lowers the measure"
+    tie: keep_current_tree
+  co_change:
+    shared_decision: defragment
+    leaky_dependency: decouple
+  exit:
+    convergence: "no candidate clears the payoff/risk threshold"
+    plateau: "five consecutive steps without a scorecard improvement"
+    veto: "an invariant or preservation check fails"
+  reconsider:
+    trigger: "cohesion or traceability regresses across a window of landed steps"
+    action: "open a revert candidate; the base tree is not sacred once the measure falls"
+  delete:
+    not_when: "dynamic dispatch, send, require_dependency, reflection, or public API surface reaches it"
+  candidates:
+    distinct: "pairwise-distinct target files; paraphrases of one change count once"
+    thresholds: "rule of three for merge sites; other counts configurable with a recorded reason"
+  proof: "every edit to this section ships a fixture that fails against the prior text"
   evidence:
     before: "Record hashes and measured facts from the observed state before mutation."
     after: "Re-observe the changed artifact and compare the same facts after mutation."
