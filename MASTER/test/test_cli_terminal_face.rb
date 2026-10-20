@@ -194,6 +194,28 @@ class TestCliTerminalFace < Minitest::Test
       assert_equal :eof, face.send(:read_key, 0), "#{failure} failure should use the ordinary EOF path"
     end
   end
+  def test_run_restores_the_terminal_when_the_input_stream_closes
+    stream = Object.new
+    stream.define_singleton_method(:tty?) { false }
+    stream.define_singleton_method(:wait_readable) { |_timeout| raise IOError, "closed stream" }
+    stream.define_singleton_method(:getch) { flunk("getch must not run after readiness fails") }
+    output = StringIO.new
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(nil),
+      mouth: Quiet.new(nil),
+      input: stream,
+      output: output,
+      size: -> { [24, 80] },
+    )
+
+    result = face.stub(:arm_ear, nil) { face.run }
+
+    assert_equal "face0: closed", result
+    assert_includes output.string, "\\e[?1049h"
+    assert_includes output.string, "\\e[?1049l"
+    assert_equal true, face.instance_variable_get(:@closing)
+  end
 
   def test_a_failed_turn_does_not_start_picture_work
     face = Master::CLI::Face::Window.new(
