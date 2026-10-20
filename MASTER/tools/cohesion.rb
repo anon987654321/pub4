@@ -369,7 +369,7 @@ return if collisions.any?
     ROOTS = %w[
       MASTER/lib MASTER/law MASTER/tools RAILS/master/app
       RAILS/__shared/app RAILS/__shared/lib
-      RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
+      RAILS/brgen/app RAILS/brgen/lib
       RAILS/bsdports/app RAILS/bsdports/lib
       STUDIO/replicate/lora STUDIO/postpro STUDIO/replicate
       OPENBSD/lib
