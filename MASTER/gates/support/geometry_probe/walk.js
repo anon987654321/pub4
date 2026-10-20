@@ -334,7 +334,9 @@
       // Laid out but parked outside the viewport — a closed drawer or a
       // carousel slide. Still a real element with real styles; just not
       // on the first screen, which callers should say out loud.
-      onscreen: r.right > 0 && r.left < vw && r.bottom > 0,
+      // Both axes must intersect the viewport. bottom > 0 alone marks every
+      // below-the-fold element as onscreen and pollutes first-screen metrics.
+      onscreen: r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh,
       hit: hit
     });
   }
