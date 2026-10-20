@@ -523,7 +523,7 @@ function frame(t) {
       morphCurrent += faceMat._morphVel;
     }
     faceMat.uniforms.uMorph.value = morphCurrent;
-    faceMat.uniforms.uTime.value = t * 0.001;
+    faceMat.uniforms.uTime.value = reducedMotion ? 0 : sec;
     faceMat.uniforms.uColor.value.copy(colorCurrent);
     const voiceRMS = State.voiceRMS || 0;
     const whisperScale = tts.playing && voiceRMS < 0.015 ? 0.72 + voiceRMS * 19 : 1.0;
