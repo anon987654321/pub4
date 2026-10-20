@@ -67,7 +67,16 @@ module Master
         terminal_puts
         run_input(initial_message) if initial_message
         @running = true
+        run_face if face_on_start?(initial_message)
         repl_loop
+      end
+
+      # Bare `bin/master` on a terminal opens on the face, so the shell and the face are one entry. A message
+      # on the command line, a pipe, or MASTER_FACE_ON_START=0 keeps the plain shell.
+      def face_on_start?(initial_message)
+        return false if initial_message || ENV["MASTER_FACE_ON_START"] == "0"
+
+        $stdin.tty? && $stdout.tty? && Master.patterns_config.fetch("cli", {})["face_on_start"] == true
       end
 
       def pipe(input)
