@@ -1,6 +1,19 @@
 # GENERATED from MASTER/data/tokens.yml. Do not edit by hand.
 visual_identity:
   name: signal_and_stillness
+  material: greyscale_particle_stipple
+  principle: 'Reality is assembled from many small carriers. The interface does not
+    pretend to be a solid skin; it shows the field. Density is belonging, luminosity
+    is attention, ripple is signal, negative space is as real as matter. Colour is
+    a sparse semantic accent, never the substance.
+
+    '
+  lineage:
+  - e pluribus unum — out of many, one readable form
+  - signal as propagating state, not ornament
+  - turned and unturned density as membership in the field
+  - residual — individuality survives inside the collective
+  - stillness by default — motion only when meaning moves
   signal: "#C8F55F"
   signal_ink: "#101010"
   signal_on_light: "#50630A"
@@ -448,6 +461,58 @@ face_interface:
         turbulence: 0.0
         luminosity: 0.48
         attract: 0.1
+  stipple_vocabulary:
+    pluribus: many discrete carriers
+    unum: one coherent readable form
+    signal: propagating change of membership or attention; the lime accent marks admission
+      and focus
+    turned: high density and luminosity, admitted into the field
+    unturned: low density, still individual, not yet joined
+    residual: the particular inside the collective, kept in idle
+    void: negative space as equal material
+    gather: parts pull toward one locus
+    ripple: a signal crosses the field
+    fragment: parts leave the form
+    settle: the field re-coheres
+  stipple_membership:
+    idle: transitional
+    listening: transitional
+    thinking: turned
+    working: turned
+    speaking: turned
+    warning: transitional
+    error: unturned
+    ready: locked
+    sleeping: unturned
+  stipple_force:
+    idle: residual
+    listening: ripple
+    thinking: gather
+    working: gather
+    speaking: ripple
+    warning: residual
+    error: fragment
+    ready: settle
+    sleeping: residual
+  stipple_note:
+    idle: many at rest; individual seeds still visible
+    listening: the field opens to incoming signal
+    thinking: parts concentrate toward one locus
+    working: the locus holds while work runs
+    speaking: signal leaves through the mouth region
+    warning: binding loosens; individuals reappear
+    error: admission fails; the field breaks, may rejoin
+    ready: out of many, one stable form
+    sleeping: carriers at rest; the field dims, not erased
+  stipple_forbidden:
+  - bright_multicolour_particle_fields
+  - decorative_particle_carpets_behind_content
+  - signal_as_body_text_on_white
+  - signal_as_large_background_fill
+  - glow_lens_flare_ornamental_gradients
+  - solid_mesh_as_primary_face_material
+  - motion_without_semantic_state
+  - erasing_all_residual_individuality_in_idle
   interaction:
     states:
     - idle
@@ -984,6 +1049,9 @@ face_interface:
       orbit_limit: 0.16
       fov: 38
     budget:
+      point_allocation:
+        stipple_fraction: 0.75
+        world_fraction: 0.25
       desktop_points: 1200
       mobile_points: 420
       desktop_particles: 200
@@ -1651,8 +1719,8 @@ ui_polish:
   chrome_i18n:
     action: 'Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
       nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
-      are debt. Ratchet: MASTER/tools/chrome_i18n_lint.rb (CI). Opt-out:
-      <%# chrome_i18n: ok %> above the line.
+      are debt. Ratchet: MASTER/tools/chrome_i18n_lint.rb (CI). Opt-out: <%# chrome_i18n:
+      ok %> above the line.
 
       '
     empty_partial: shared/empty_state
