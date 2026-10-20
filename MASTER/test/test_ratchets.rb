@@ -33,7 +33,8 @@ class TestRatchets < Minitest::Test
 
   def test_law_trace_reads_the_recorded_ceiling
     row = rows.find { |candidate| candidate.name == "law_trace" }
-    recorded = YAML.safe_load_file(File.join(Operator::Ratchets::MASTER, "data", "laws.yml")).dig("law_map", "law_trace_ceiling")
+    laws = Master.load_yaml(File.join(Operator::Ratchets::MASTER, "data", "laws.yml"))
+    recorded = laws.dig("law_map", "law_trace_ceiling")
 
     assert_equal recorded, row.ceiling,
                  "law_trace must use laws.yml#law_map rather than a stale presentation-layer baseline"

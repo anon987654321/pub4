@@ -47,7 +47,7 @@ module Master
       def law_line(priority:, id:, text:) = "  #{id} (#{priority}): #{text[0, STATEMENT_CHARS]}"
 
       def top_laws(root)
-        catalog = YAML.safe_load_file(File.join(root, "MASTER", "data", "laws.yml"), aliases: true) || {}
+        catalog = Master.load_yaml(File.join(root, "MASTER", "data", "laws.yml")) || {}
         rows = catalog.filter_map do |id, row|
           next unless row.is_a?(Hash) && row["priority"].is_a?(Numeric) && !row["statement"].to_s.empty?
 

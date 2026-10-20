@@ -38,7 +38,7 @@ class TestLawParity < Minitest::Test
     parity = Master::Fix::LawParity.new
     data = YAML.safe_load_file(Master::Fix::LawParity::LAWS_PATH, aliases: true)
     # Enforcement metadata lives in the overlay that LawParity merges onto laws.yml.
-    overlay = YAML.safe_load_file(File.join(Master::ROOT, "data", "law_enforcement.yml"), aliases: true)
+    overlay = Master.load_yaml(File.join(Master::ROOT, "data", "law_enforcement.yml"))
     spec = data.fetch("CAPABILITY_STATUS_MUST_BE_TRUTHFUL").merge(overlay.fetch("CAPABILITY_STATUS_MUST_BE_TRUTHFUL"))
     assert_equal "active", spec["enforcement"]
     assert_includes Array(spec["detector_ids"]).map(&:to_s), "CAPABILITY_STATUS_MUST_BE_TRUTHFUL"

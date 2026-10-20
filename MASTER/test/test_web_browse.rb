@@ -187,7 +187,7 @@ class TestWebBrowse < Minitest::Test
   def test_it_is_registered_for_the_builder_the_llm_and_the_catalogue
     assert Master::Builder::DEFAULT_TOOL_MAP.key?("WebBrowse")
     assert_equal Master::Io::LLM::WebBrowse, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::WebBrowse)
-    names = YAML.safe_load_file(File.join(Master::ROOT, "data", "tools.yml")).map { |row| row["name"] }
+    names = Master.load_yaml(File.join(Master::ROOT, "data", "tools.yml")).map { |row| row["name"] }
     assert_includes names, "WebBrowse"
   end
 

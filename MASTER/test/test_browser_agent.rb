@@ -121,7 +121,7 @@ class TestBrowserAgent < Minitest::Test
 
   def test_policy_and_runtime_registration_agree
     root = Master::ROOT
-    policy = YAML.safe_load_file(File.join(root, "data", "laws.yml"), aliases: true).fetch("browser_policy")
+    policy = Master.load_yaml(File.join(root, "data", "laws.yml")).fetch("browser_policy")
     assert_equal true, policy.fetch("consent_required")
     assert_includes policy.fetch("write_actions"), "click"
     assert_equal %w[status navigate login extract look follow paginate close], policy.fetch("read_actions")
@@ -143,7 +143,7 @@ class TestBrowserAgent < Minitest::Test
     assert_equal "forbidden", interactions.fetch("platform_evasion")
     assert Master::Builder::DEFAULT_TOOL_MAP.key?("Browser")
     assert_equal Master::Io::LLM::Browser, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::BrowserAgent)
-    tools = YAML.safe_load_file(File.join(root, "data", "tools.yml"), aliases: true)
+    tools = Master.load_yaml(File.join(root, "data", "tools.yml"))
     assert tools.any? { |row| row["name"] == "Browser" && row["default"] == true }
   end
 end

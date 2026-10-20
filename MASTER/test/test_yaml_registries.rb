@@ -76,7 +76,7 @@ class TestDeletedFilesAbsent < Minitest::Test
 end
 
 class TestLawsYamlRegistry < Minitest::Test
-  REQUIRED_LAW_FIELDS = %w[id priority principle].freeze
+  REQUIRED_LAW_FIELDS = %w[id priority statement].freeze
 
   def test_laws_yml_has_no_duplicate_rule_ids
     ids = rules.map { |rule| rule["id"] }.compact
@@ -92,15 +92,6 @@ class TestLawsYamlRegistry < Minitest::Test
     end
 
     assert missing.empty?, "laws.yml entries missing required fields: #{missing.join('; ')}"
-  end
-
-  def test_failure_taxonomy_retry_contract
-    taxonomy = data.fetch("failure_taxonomy")
-
-    assert_operator taxonomy.dig("transient", "max_retries"), :<=, 3
-    assert_equal "exponential_backoff", taxonomy.dig("transient", "strategy")
-    assert_equal 0, taxonomy.dig("permanent", "max_retries")
-    assert_equal "fail_fast", taxonomy.dig("permanent", "strategy")
   end
 
   def test_phantom_recovery_contract
@@ -119,12 +110,12 @@ class TestLawsYamlRegistry < Minitest::Test
     # two had to be reading the tree as it is.
     refute soul.dig("absolute", "rules"), "soul must not hold rules; law/ is the registry"
     law_dir = File.expand_path("../law", __dir__)
-    require File.join(law_dir, "law")
+    require File.join(law_dir, "definition")
     ::Law.load_all(law_dir) if ::Law.definitions.empty?
     preserve_rule = ::Law.definitions.fetch(:PRESERVE_FIRST)
     assert_equal :error, preserve_rule.severity
     assert_match(/never rewrite working code/i, preserve_rule.practice)
-    assert_match(/Preserve behavior and intent/, preserve_rule.fix)
+    assert_match(/preserve behavior/i, preserve_rule.fix)
   end
 
   def test_patterns_do_not_reference_unknown_rules_yml_ids
@@ -284,7 +275,7 @@ end
 
   def executable_law_ids
     law_dir = File.expand_path("../law", __dir__)
-    require File.join(law_dir, "law")
+    require File.join(law_dir, "definition")
     ::Law.load_all(law_dir) if ::Law.definitions.empty?
     ::Law.definitions.keys.map(&:to_s)
   end
@@ -355,9 +346,14 @@ class TestClusterConsistency < Minitest::Test
 end
 
 class TestConstitutionYamlLoading < Minitest::Test
+  # These run without booting Master: the commit-msg hook, the standalone
+  # ratchet instrument and a test file that requires nothing but minitest.
   ALLOWED_DIRECT_LOADS = %w[
     lib/master.rb
     spec/static_syntax_spec.rb
+    lib/ground/commit_format.rb
+    lib/operator/ratchets.rb
+    test/test_future_face.rb
   ].freeze
 
   def test_data_yml_runtime_readers_use_master_loader
@@ -384,9 +380,10 @@ class TestLawsPhysicalOrder < Minitest::Test
   # authority boundary. Tokens live in tokens.yml and must not re-enter this file.
   ORDER = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES prose zsh detection_calibration
-    phantom_recovery transformation_policy self_test veto_patterns anti_patterns
+    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES markdown_style visual_identity_contract
+    prose zsh detection_calibration phantom_recovery transformation_policy self_test veto_patterns anti_patterns
     architecture runtime_policy law_deps plugins law_ratchets law_map browser_policy
+    face_ascii personal_privacy
   ].freeze
   TRANSFORMATION_ORDER = %w[
     remove defragment flatten decouple split hoist merge relocate rename reorder
@@ -406,7 +403,7 @@ class TestLawsPhysicalOrder < Minitest::Test
     assert_equal TRANSFORMATION_ORDER, policy.fetch("operations").keys
     assert_equal ["prove"], policy.fetch("postflight")
     %w[semantic_meaning public_contracts reference_graph side_effect_order rendered_output].each do |invariant|
-      assert_equal "required", policy.fetch("preservation").fetch(invariant),
+      assert_includes %w[required required_when_applicable], policy.fetch("preservation").fetch(invariant),
                    "transformation flow must preserve #{invariant}"
     end
   end

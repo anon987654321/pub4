@@ -46,9 +46,19 @@ class TestLawMapRepair < Minitest::Test
     end
   end
 
+  def test_fix_removes_a_dangling_id_from_a_one_line_row
+    with_fixture do |root|
+      row = '    flow_law: {"law_ids": ["IMG_ALT", "FLOW_DANGLING"], "status": "covered"}'
+      File.write(File.join(root, "data", "laws.yml"), "#{FIXTURE}#{row}\n")
+
+      assert_includes Master::Fix::LawMapRepair.fix!(root:), %w[flow_law FLOW_DANGLING]
+      assert_equal %w[IMG_ALT], Master::Ground::Map::LawMap.load(root:).laws["flow_law"].law_ids
+    end
+  end
+
   def test_fix_is_a_noop_on_a_clean_file
     with_fixture do |root|
-      fixture = FIXTURE.sub("\n          - FAKE_DANGLING_LAW", "")
+      fixture = FIXTURE.sub("\n      - FAKE_DANGLING_LAW", "").sub("ANOTHER_FAKE_LAW", "IMG_ALT")
       File.write(File.join(root, "data", "laws.yml"), fixture)
       assert_equal [], Master::Fix::LawMapRepair.fix!(root:)
       refute File.exist?(File.join(root, "data", "laws.yml.bak"))

@@ -62,7 +62,7 @@ module Master
         })
       end
 
-      def config = YAML.safe_load_file(File.join(MasterPaths.root, "data", "lora.yml"))
+      def config = Master.load_yaml(File.join(MasterPaths.root, "data", "lora.yml"))
 
       def pattern(cfg, key) = Regexp.new(cfg.fetch(key), REGEXP_OPTIONS)
 
