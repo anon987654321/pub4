@@ -39,9 +39,9 @@ also keeps its own `bin/ci` for RuboCop, Brakeman, bundler-audit and the tests.
 The design tokens come from `MASTER/data/tokens.yml`, and the shared engine's
 `design_tokens.yml` is a file generated from it, not a second source.
 
-Production is one box. A deploy sheds amber and bsdports, and relayd keeps
-answering TLS with their ports closed, so the outage looks like a hang and not a
-server error. The deploy command restores them. If you deploy by hand, check
+Production is one box. A deploy can temporarily shed bsdports while relayd
+continues answering TLS, so the outage can look like a hang rather than a server
+error. The deploy flow restores any previously running active service. If you deploy by hand, check
 ports 61352 and 47312. Health is `/up` for liveness and `/health` for the depth of
 Solid Cache, Solid Queue and the database. Secrets live in `/etc/<app>.env` on the
 box, and no `config/master.key` is in git. `_deploy.sh` is the orchestrator,
