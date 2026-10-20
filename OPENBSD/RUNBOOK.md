@@ -25,7 +25,6 @@ Internet
   -> loopback app ports
       -> MASTER Falcon on ai.brgen.no
       -> brgen Rails app and vertical subdomains
-      -> amber Rails app
       -> bsdports Rails app
   -> NSD/acme/httpd for DNS and certificate plumbing
 ```
@@ -112,7 +111,7 @@ SSH aliases, host topology and provider access are kept in this runbook so live-
 | brgen · takeaway | `https://takeaway.brgen.no` |
 | brgen · tv | `https://tv.brgen.no` |
 | brgen · messenger | `https://messenger.brgen.no` |
-| amber | `https://amberapp.art` |
+| Amber (retired; domain disposition pending) | `https://amberapp.art` — not an active app endpoint |
 | bsdports | `https://bsdports.org` |
 
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`)
@@ -153,7 +152,7 @@ every site relayd serves, not just the new one.
 6. **Verify**: `curl -sS -o /dev/null -w '%{http_code}' https://glasgw.uk/` is
    200, and the page title names the city.
 
-The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
+The active stack serves two Rails apps (Brgen and bsdports) plus MASTER. Amber was retired on 2026-10-20; owned domains remain listed until their disposition is decided. `baibl`,
 `blognet` and `hjerterom` are retired; on 2026-08-12 their users, home
 directories (1.6 GB between them), rc.d scripts, `/etc/*.env` files, login
 classes, certificate symlinks and DNS zones were removed from vm23, and their
@@ -282,7 +281,7 @@ makes the Mac the only copy off vm23.
 **Restored separately.** `dr-pull` holds databases and uploads, nothing else, and
 no script in this repository copies the following off the box. After a rebuild
 they come from the operator's own records: `/etc/master.env` and
-`/etc/<app>.env` for brgen, amber and bsdports; the DNSSEC keys
+`/etc/<app>.env` for the active apps Brgen and bsdports; retired Amber secrets must not be reinstalled as an active service. The DNSSEC keys
 `K<zone>.+013+ksk.*` and `K<zone>.+013+zsk.*` in `/var/nsd/zones/master` (no DS is published at any registry today,
 so the signatures validate nothing yet; once DS records are published, losing
 the KSK makes every signed zone fail validation); the DKIM key `/etc/mail/dkim/private.rsa.key`; the
@@ -353,7 +352,7 @@ When `bin/vps-deploy` fails it says where. Whatever the stage (pull, ci+sync,
 migrate, precompile, restart, health, gates), an exit trap stamps
 `last_deploy_<app>.json` failed, prints `FAILED at stage "<stage>"`, says
 whether the app was stopped for the deploy and so is down (the next command is
-`doas /usr/local/sbin/pub4-admin service start <app>` or a rerun), lists amber or bsdports if they are down,
+`doas /usr/local/sbin/pub4-admin service start <app>` or a rerun), lists bsdports if it is down,
 releases the lock and the deploy flag, and appends `finished ... exit=N
 stage=...` to `~/vps-deploy.log` directly, so a dropped ssh session still leaves
 the verdict. A kill or hangup counts as a failure with the stage it interrupted.
@@ -378,7 +377,7 @@ failure. Nothing is stopped before step 4.
 4. Record `doas rcctl ls started`. This is what the exit trap restores.
 5. Choose the order. `master` leads only when every app that was started answers
    `/up` and the last `resource_guard` tick shows `mem_avail` at or above
-   `VPS_DEPLOY_MASTER_MIN_AVAIL` (10). Otherwise: brgen, amber, bsdports, master.
+   `VPS_DEPLOY_MASTER_MIN_AVAIL` (10). Otherwise: brgen, bsdports, master.
 6. For each target: wait until every running app answers `/up` (no CI, bundle or
    precompile on top of a Falcon boot); disk and load preflight; CI and sync;
    migrate; precompile (again after settling); restart; `/up`; stylesheet;
@@ -386,7 +385,7 @@ failure. Nothing is stopped before step 4.
    its `/up`; the loopback gates; the flow journeys for that app only
    (`FLOW_APP=<app>`, HTTP only, one pass or fail line per flow).
 7. On any failure the exit trap of the top-level run restores every service from
-   the step 4 list that is not running, in serving order (brgen, amber, bsdports,
+   the step 4 list that is not running, in serving order (brgen, bsdports,
    master, then the rest), one at a time, each waiting up to
    `VPS_DEPLOY_RESTORE_WAIT` (240) seconds for `/up`. Each line says whether the
    deploy stopped it, `resource_guard` shed it, or it went down for another reason.
@@ -400,8 +399,6 @@ and deploy-flag removal only on restart.
 ```zsh
 doas rcctl restart brgen
 until curl -fsS http://127.0.0.1:38182/up >/dev/null; do sleep 3; done
-doas rcctl restart amber
-until curl -fsS http://127.0.0.1:61352/up >/dev/null; do sleep 3; done
 doas rcctl restart bsdports
 until curl -fsS http://127.0.0.1:47312/up >/dev/null; do sleep 3; done
 doas rcctl restart master
@@ -427,7 +424,7 @@ deliberately:
 
 | Script | CI | Scope | When |
 |--------|----|-------|------|
-| `zsh OPENBSD/bin/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
+| `zsh OPENBSD/bin/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, bsdports | Normal code change; tests must pass |
 | `I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh` | **No** — `SKIP_CI=1 SKIP_RUNTIME_GATE=1 bin/vps-deploy all`; only the post-restart gates run, and the runtime skip requires that exact acknowledgement. | master + every app, in vps-deploy's order; `DEMO_SEED_ON_DEPLOY=1` adds brgen's demo seed | Fast hotfix; skips test gate |
 | `zsh OPENBSD/bin/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
 | `ksh OPENBSD/bin/start_all_apps.sh` as `dev` | **No** — recovery only | Calls the fixed `pub4-admin start-all-apps` broker verb; checks all services and pins them against `resource_guard.sh` shedding | Recovery after a deliberate decision to keep every app running despite load |
@@ -449,9 +446,7 @@ dead one until it is written down.
 | `ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 … --hostname …` | anywhere | Set the PTR record via openbsd.amsterdam's `ptr4`/`ptr6` endpoints; `--ipv6` sets the v6 record. Needed only if the VM's IP changes. It prints the request as a dry run unless `APPLY_PTR=1` is set. |
 | `zsh OPENBSD/bin/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
 | `ksh OPENBSD/bin/manual_master_deploy.ksh` | vm23, under tmux | Fallback when `vps_deploy_master.sh` stalls. It pkills the stuck deploy and its precompile, then precompiles MASTER web, runs the `master_web_assets` gate, restarts master and relayd, and probes `/up`. Output goes to `/tmp/master_manual.log`, not the terminal — `tail -f` it. |
-| `sh OPENBSD/bin/amber_queue_sweep.sh [APP]` | vm23 | **Deletes** finished jobs, orphaned executions, unfinished Turbo broadcasts and duplicate media jobs from a Solid Queue backlog (amber by default); drain-jobs.sh runs due jobs, this removes what should never run. Named in `RAILS/amber/README.md` |
 | `zsh OPENBSD/bin/deploy-diff.sh` | workstation | Read-only: runs `config_drift_gate.rb --remote`, then diffs `relayd.conf` (which the gate excludes) and prints `rcctl check`. It changes nothing in either direction; `sync.rb` above is what pulls the live side back into the repo. |
-| `sh OPENBSD/bin/amber_queue_sweep.sh [APP]` | vm23 | Delete a stale Solid Queue backlog (finished jobs, orphaned executions, unfinished Turbo broadcasts, duplicate media jobs) with sqlite3, no Rails boot. `drain-jobs.sh` runs due jobs hourly; this removes what should never run. |
 
 ## Self-healing cron (vm23)
 
@@ -462,12 +457,12 @@ Tracked mirror: `OPENBSD/etc/crontab.vm23` (installed idempotently by
 |-----|----------|--------------|
 | `relayd-watchdog` | `*/5 * * * *` | syslog tag `relayd-watchdog` — restarts relayd when unhealthy or backend table stale. It does **not** heal `doas.conf`: that step ran `validate_doas.ksh` from a dev-owned checkout as root every five minutes and was removed, with the reason in the script's own header |
 | `config-drift-check` | `*/15 * * * *` | `/var/log/config_drift.log` — relayd Host routes vs acme SANs vs NSD zones vs DNSSEC paths |
-| `resource_guard.sh` | `*/5 * * * *` | sheds bsdports then amber under sustained pressure; `/var/log/resource_guard_history.log` |
+| `resource_guard.sh` | `*/5 * * * *` | sheds active optional service bsdports under sustained pressure; historical measurements include the now-retired Amber app; `/var/log/resource_guard_history.log` |
 | `uptime-check.sh` | `*/5 * * * *` | `/var/log/uptime-check.log`, with `ALLOW_BSDPORTS_DOWN=1` |
 | `pub4-alert watch` | `*/15 * * * *` | `/var/log/pub4-alerts.log`, shown by `vps-state` — disk 90%, swap 92%, any `rcctl ls failed` service except `brgen_jobs`, no `dr-pull` report in 48 h. Each key alerts once per six hours |
 | `drain-jobs.sh` | `5 * * * *` | `/var/log/drain-jobs.log` |
 | `core-reclaim.sh` | `40 * * * *` | `/var/log/core-reclaim.log` — returns a core app's grown resident set |
-| `keep-warm.sh` | `*/10 * * * *` | `/var/log/keep-warm.log` — brgen and amber only |
+| `keep-warm.sh` | `*/10 * * * *` | `/var/log/keep-warm.log` — active Brgen front page only |
 | `prune-guests.sh` | `20 4 * * *` | `/var/log/prune-guests.log` |
 | `renew-certs.sh` | `0 2 * * 1` | `/var/log/cert-renewal.log` |
 | `vps_weekly_integrity.sh` | `30 3 * * 0` | **tracked and never installed** — absent from root's live crontab and from `/usr/local/bin`, measured 2026-09-12. See TODO 1060. |
@@ -514,14 +509,15 @@ sh OPENBSD/bin/deploy-smoke.sh
 # laptop / public only
 sh OPENBSD/bin/deploy-smoke.sh --public
 
-# policy: amber optional on 1GB hosts
-ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh
+# bsdports public DNS/TLS may be waived only when the known registrar-parking
+# condition is confirmed; this does not waive its required local port check.
+ALLOW_BSDPORTS_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh
 ```
 
-Checks `rcctl` (when present), localhost `/up` ports (master 53187, brgen 38182,
-amber 61352), public HTTPS, free-RAM warning, and brgen homepage regressions.
+Checks `rcctl` (when present), localhost `/up` ports for MASTER (53187), Brgen
+(38182) and bsdports (47312), public HTTPS, free-RAM warning, and Brgen homepage regressions.
 See `TODO.md` (OPENBSD operator debt) → `multi_app_ram` for the three-app memory
-ceiling. Restart order when recovering: **master → brgen → amber → relayd**.
+ceiling. Restart order when recovering: **master → brgen → bsdports → relayd**.
 
 ## vps_console.exp modes
 
@@ -531,7 +527,7 @@ as its first argument: `expect -f OPENBSD/bin/vps_console.exp <mode>`.
 | Mode | Purpose |
 |------|---------|
 | `short [cmd]` | One console command (default `uptime`); 15s timeout |
-| `status` | Tail install log + `rcctl check` master/brgen/amber/bsdports |
+| `status` | Tail install log + `rcctl check` master/brgen/bsdports |
 | `probe` | Raw console banner/login probe (debug connectivity) |
 | `fix_key` | Install vm23 `authorized_keys` + flush pf `bruteforce` |
 | `start_install` | `nohup /tmp/vps_on_vm_install.sh` from console |
@@ -557,7 +553,7 @@ Rails; `rails_test` on the box is where the remaining failures live.
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
 zsh OPENBSD/bin/vps-deploy brgen       # canonical serial deploy
-zsh OPENBSD/bin/vps-deploy amber       # or: all
+zsh OPENBSD/bin/vps-deploy bsdports    # or: all
 ruby OPENBSD/gates/health_check.rb --public --all-ready-apps
 ```
 
