@@ -158,8 +158,8 @@ module Master
       def dispatch_deploy(_root, ctx: nil)
         target = arg_for(ctx).split(/\s+/).reject { |token| token.start_with?("--") }.first.to_s.downcase
         target = "all" if target.empty?
-        allowed = %w[all master brgen bsdports]
-        return "deploy: usage /deploy all|master|brgen|bsdports --confirm (Amber is retired)" unless allowed.include?(target)
+        allowed = %w[all master brgen amber bsdports]
+        return "deploy: usage /deploy all|master|brgen|amber|bsdports --confirm" unless allowed.include?(target)
 
         operator = File.join(MasterPaths.repo, "MASTER", "bin", "operator")
         output, status = Master::Io::Exec.capture2e(

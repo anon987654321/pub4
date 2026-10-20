@@ -117,13 +117,6 @@ end
     assert_equal "brgen --confirm", router.deployment_args("release brgen to production --confirm")
   end
 
-  def test_retired_amber_stays_a_single_rejected_target_not_the_all_fleet
-    router = Master::CLI::TurnRouter
-
-    assert router.deployment_intent?("deploy amber")
-    assert_equal "amber", router.deployment_args("deploy amber")
-  end
-
   def test_deploy_confirmation_survives_natural_language_routing
     args = Master::CLI::TurnRouter.deployment_args(
       "please deploy MASTER and RAILS and OPENBSD to vm23 --confirm",

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Boots brgen, bsdports and the MASTER face on the ports every gate
+# Boots brgen, amber, bsdports and the MASTER face on the ports every gate
 # probes, so the live half of the suite measures something.
 #
 #   bin/operator triangle up      boot, migrate, wait for /up, print status
@@ -11,7 +11,8 @@
 #
 # Why this exists: the browser and live-HTTP gates belong on the deploy host,
 # and vm23 has no headroom to run them (the old backlog item 2). So they ran nowhere,
-# and every gate whose live half was skipped still printed PASSED. Neither active app ships bin/dev, so this is the one way to boot them together.
+# and every gate whose live half was skipped still printed PASSED. None of the
+# three apps ships bin/dev, so this is the one way to boot them together.
 #
 # Pending migrations are the usual reason a booted app answers 500 rather than
 # 200, so `up` migrates before it waits.

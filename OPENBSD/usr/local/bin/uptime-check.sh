@@ -11,11 +11,10 @@
 # to close. Reading is the half that is safe, so this reads apps.yml as data
 # through a system interpreter and never runs anything from the checkout.
 #
-# The active app names below are only the fallback for a box with no checkout to read; they must track RAILS/apps.yml.
+# The names below are the fallback for a box with no checkout to read.
 #
-# The legacy bsdports public endpoint can be waived independently when its DNS/TLS
-# delegation is known to be outside this host's control:
-#   ALLOW_BSDPORTS_DOWN=1
+# Optional apps can be waived the same way deploy-smoke does:
+#   ALLOW_AMBER_DOWN=1 ALLOW_BSDPORTS_DOWN=1
 # UPTIME_PATH_PREFIX lets the test put fake curl, ruby34 and logger first.
 PATH=${UPTIME_PATH_PREFIX:+$UPTIME_PATH_PREFIX:}/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # Strict on purpose: every fallible command below already carries its own
@@ -27,6 +26,7 @@ down=
 PUB4_ROOT=${PUB4_ROOT:-/home/dev/pub4}
 FALLBACK='brgen,https://brgen.no/up
 master,https://ai.brgen.no/up
+amber,https://amberapp.art/up
 bsdports,https://bsdports.org/up'
 
 # name,url per line. The master face is not in apps.yml — it is not a Rails app
@@ -62,7 +62,7 @@ check() {
 # Falling back is a finding, not a quiet substitution. The built-in names are
 # still checked — knowing those four are up is worth more than checking nothing —
 # but the run exits nonzero whatever they answer, because this script cannot then
-# tell you an active app exists and is down. A green uptime check measuring a fleet
+# tell you a fifth app exists and is down. A green uptime check measuring a fleet
 # that is one deploy out of date is the failure the header at the top describes.
 targets=$(app_targets) || targets=
 if [[ -z $targets ]]; then
@@ -78,6 +78,7 @@ for row in $targets; do
   name=${row%%,*}
   url=${row#*,}
   case $name in
+  amber)    if [[ ${ALLOW_AMBER_DOWN:-0} == 1 ]]; then continue; fi ;;
   bsdports) if [[ ${ALLOW_BSDPORTS_DOWN:-0} == 1 ]]; then continue; fi ;;
   esac
   check "$url"
@@ -101,7 +102,7 @@ if [[ $fail != 0 ]]; then
 	n=$(( n + 1 ))
 	print -r -- "$n" > "$failstate" 2>/dev/null || true
 	if (( n >= after )) && [[ -x $alert ]]; then
-		"$alert" raise uptime-down "down for $n consecutive checks:$down - on the box: doas rcctl check brgen bsdports master relayd; ls /home/dev/pub4/.deploying-* (a deploy in flight); /var/log/uptime-check.log"
+		"$alert" raise uptime-down "down for $n consecutive checks:$down - on the box: doas rcctl check brgen amber bsdports master relayd; ls /home/dev/pub4/.deploying-* (a deploy in flight); /var/log/uptime-check.log"
 	fi
 else
 	print -r -- 0 > "$failstate" 2>/dev/null || true

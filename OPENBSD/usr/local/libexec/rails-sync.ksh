@@ -12,7 +12,7 @@ unset TAR_OPTIONS RUBYOPT RUBYLIB GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH B
 app=$1
 mode=$2
 case "$app" in
-  brgen|bsdports) ;;
+  brgen|amber|bsdports) ;;
   *) echo "rails-sync: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$mode" in

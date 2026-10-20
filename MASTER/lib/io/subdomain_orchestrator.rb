@@ -7,15 +7,15 @@ require "uri"
 
 module Master
   module Io
-    # Routes operator intent to Brgen verticals, bsdports and MASTER. Maps the
-    # Gemini/Grok subdomain_orchestrator tool.
+    # Routes operator intent to pub4 subdomain clusters (brgen verticals, amber,
+    # bsdports, MASTER). Maps the Gemini/Grok subdomain_orchestrator tool.
     class SubdomainOrchestrator
       TIER = :guarded
       NAME = "subdomain_orchestrator".freeze
 
       CLUSTER_DOMAINS = %w[
         marketplace playlist takeaway tv messages maps
-        bsdports brgen ai dating messenger
+        amber bsdports brgen ai dating messenger
       ].freeze
 
       # Named from the constant so the two cannot disagree: the model reads this to
@@ -63,6 +63,8 @@ module Master
           probe_app("bsdports", "https://bsdports.org/up")
         when "maps"
           fetch_maps_viewport
+        when "amber"
+          probe_app(domain, app_url(domain))
         when "messages", "messenger"
           { broker: "active", cluster: "brgen", subdomain: "messenger", latency_ms: probe_latency("brgen"), queue_depth: 0 }
         when "marketplace", "takeaway", "playlist", "tv", "dating", "ai", "brgen"

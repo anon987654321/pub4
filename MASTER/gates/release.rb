@@ -53,7 +53,7 @@ YAML.load_file(manifest_path).then { |manifest| manifest["gates"] || manifest }
 
 # RAILS/, where the apps, the shared engine and the contract tests live.
 ROOT = File.expand_path("../../RAILS", __dir__)
-APPS = %w[brgen bsdports].freeze
+APPS = %w[amber brgen bsdports].freeze
 FAILURES = [] # scan: intentional — this script's accumulator, appended to by every step below
 STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_GATE_STEP_TIMEOUT", "180"))
 

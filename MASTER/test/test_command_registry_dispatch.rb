@@ -129,8 +129,8 @@ class TestCommandRegistryDispatch < Minitest::Test
     end.new(0)
 
     assert_equal(
-      "remote: vps-deploy: all ok (master brgen bsdports)",
-      Registry.send(:deploy_summary, "vps-deploy: all -> master\nvps-deploy: master ok\nvps-deploy: all ok (master brgen bsdports)\n", status),
+      "remote: vps-deploy: all ok (master brgen amber bsdports)",
+      Registry.send(:deploy_summary, "vps-deploy: all -> master\nvps-deploy: master ok\nvps-deploy: all ok (master brgen amber bsdports)\n", status),
     )
   end
 

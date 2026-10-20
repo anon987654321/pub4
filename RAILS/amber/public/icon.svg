@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Amber">
+  <title>Amber</title>
+  <defs>
+    <radialGradient id="amberGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFB999"/>
+      <stop offset="33%" stop-color="#E6CCE6"/>
+      <stop offset="66%" stop-color="#CCE6CC"/>
+      <stop offset="100%" stop-color="#99E6E6"/>
+    </radialGradient>
+    <linearGradient id="amberShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFB999"/>
+      <stop offset="50%" stop-color="#E6CCE6"/>
+      <stop offset="100%" stop-color="#99E6E6"/>
+    </linearGradient>
+  </defs>
+  <!-- Soft cream pad so hairlines read -->
+  <rect width="512" height="512" fill="#FFFFFF"/>
+  <!-- Brand disc -->
+  <circle cx="256" cy="256" r="220" fill="url(#amberGrad)"/>
+  <!-- Caprasimo-style wordmark (system fallback if Caprasimo missing at rasterize) -->
+  <text x="256" y="292" text-anchor="middle" font-family="Caprasimo, Georgia, serif" font-size="200" font-weight="400" fill="#FFFFFF" letter-spacing="-6">a</text>
+  <!-- Retro hairlines (white, matching logo strokes) -->
+  <g fill="none" stroke="#FFFFFF" stroke-opacity="0.95">
+    <path stroke-width="1" d="M70,180 C160,120 280,220 400,130 S470,160 490,140"/>
+    <path stroke-width="1.5" d="M70,200 C160,140 280,240 400,150 S470,180 490,160"/>
+    <path stroke-width="2" d="M70,218 C160,158 280,258 400,168 S470,198 490,178"/>
+    <path stroke-width="2.5" d="M70,232 C160,172 280,272 400,182 S470,212 490,192"/>
+    <path stroke-width="3" d="M70,244 C160,184 280,284 400,194 S470,224 490,204"/>
+    <path stroke-width="3.5" d="M70,254 C160,194 280,294 400,204 S470,234 490,214"/>
+  </g>
+</svg>

@@ -15,7 +15,7 @@ unset TAR_OPTIONS RUBYOPT RUBYLIB GEM_HOME GEM_PATH
 [ "$#" -eq 1 ] || { echo "ci-sync: expected one app name" >&2; exit 64; }
 app=$1
 case "$app" in
-  brgen|bsdports) ;;
+  brgen|amber|bsdports) ;;
   *) echo "ci-sync: refused unknown app: $app" >&2; exit 64 ;;
 esac
 [ "$(id -un)" = "$app" ] || { echo "ci-sync: must run as the selected app user" >&2; exit 77; }

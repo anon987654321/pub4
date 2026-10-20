@@ -15,8 +15,8 @@ app=${1:-}
 # Validate before using the argument in any filesystem path. This entrypoint
 # only runs Rails app CI; an arbitrary app string must never widen its reach.
 case $app in
-  brgen|bsdports) ;;
-  *) print -u2 "vps_ci: unknown app \"$app\" — allowed: brgen, bsdports"; exit 2 ;;
+  brgen|amber|bsdports) ;;
+  *) print -u2 "vps_ci: unknown app \"$app\" — allowed: brgen, amber, bsdports"; exit 2 ;;
 esac
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
@@ -46,7 +46,7 @@ export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 # specific is the useful setting until the set has been stable a while.
 #
 # Found this way: .rubocop.yml was missing and nothing said so for twelve days,
-# and .ruby-version is absent from bsdports' copy-tree entirely.
+# and .ruby-version is absent from amber's and bsdports' copy-trees entirely.
 unaccounted_tracked_files() {
   local app=$1 repo=$2
   local -a synced=(${(P)3}) kept=(${(P)4})

@@ -5,7 +5,7 @@
 # route manifest, and deploy-smoke.sh. Reads and reports; on failure it prints
 # the previous deployed SHA and the manual rollback, and runs nothing.
 #
-#   OPENBSD/bin/canary [--local | --public] [--app brgen,bsdports] [--budget-ms N] [--no-smoke] [--json]
+#   OPENBSD/bin/canary [--local | --public] [--app brgen,amber] [--budget-ms N] [--no-smoke] [--json]
 #
 # --local (default) is for the box: loopback ports with each app's Host header.
 # --public probes the real domains over TLS from anywhere. Exit 0 only when

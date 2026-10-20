@@ -1,0 +1,36 @@
+<%= form_with url: ai_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
+  <%= icon :search, size: 19 %>
+  <%= form.search_field :q, value: params[:q], placeholder: t("search.wardrobe_short"), aria: { label: t("search.wardrobe_short") } %>
+<%# tabindex -1: this submit exists only so the form posts on Enter, which
+    implicit submission already does. Being focusable AND visually hidden made it
+    a keyboard trap — keyboard_flow counted it both as a stop with no visible
+    ring (a ring cannot be seen on a hidden element) and among 7 off-screen tab
+    stops on /wardrobe. Out of the tab order, Enter still submits. %>
+  <%= form.submit t("search.submit"), class: "visually-hidden", tabindex: -1 %>
+<% end %>
+
+<% if authenticated? && defined?(@items_count) %>
+  <div class="sidebar-card">
+    <%= tag.h3 t("wardrobe.your_wardrobe") %>
+    <ul>
+      <li><%= t("wardrobe.chip_items", count: @items_count) %></li>
+      <li><%= t("wardrobe.chip_spark_joy", count: @joy_count) %></li>
+      <li><%= t("wardrobe.chip_never_worn", count: @never_worn_count) %></li>
+      <% if @utilization_rate %>
+        <li><%= t("wardrobe.chip_utilisation", rate: @utilization_rate) %></li>
+      <% end %>
+    </ul>
+  </div>
+<% elsif @demo_items&.any? %>
+  <div class="sidebar-card">
+    <%= tag.h3 t("wardrobe.demo_capsule") %>
+    <p><%= t("items.pieces", count: @demo_items.size) %> · <%= t("outfits.count", count: @demo_outfits&.size.to_i) %></p>
+    <p><%= link_to t("home.browse_demo"), demo_wardrobe_path %></p>
+  </div>
+<% end %>
+
+<div class="sidebar-card">
+  <%= tag.h3 t("wardrobe.style_notes") %>
+  <p><%= t("wardrobe.style_notes_body") %></p>
+  <p><%= link_to t("wardrobe.talk_to_master"), root_path(master: 1) %></p>
+</div>

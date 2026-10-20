@@ -7,7 +7,7 @@ export PATH
 app=${1:-}
 timeout=${2:-}
 case "$app" in
-  brgen|bsdports) ;;
+  brgen|amber|bsdports) ;;
   *) echo "ci-run: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$timeout" in

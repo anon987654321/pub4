@@ -8,7 +8,7 @@ require_relative "brgen_vertical_surfaces"
 
 module Deploy
   # Canonical inventory of full-page Rails surfaces for UI/UX simulation.
-  # Discovers non-partial HTML views under Brgen, bsdports, shared Rails views and MASTER web, then
+  # Discovers non-partial HTML views under brgen, amber, and MASTER web, then
   # maps each to a host + path + guest/auth persona.
   module PageInventory
     ROOT = File.expand_path("../../..", __dir__)
@@ -59,7 +59,7 @@ module Deploy
       %w[passwords new] => { path: "/passwords/new", persona: "guest" },
       %w[passwords edit] => { path: "/passwords/:token/edit", persona: "guest", needs_id: true },
       # bsdports keeps the social routes behind BSDPORTS_SOCIAL=1.
-      %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen] },
+      %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen amber] },
       %w[pages privacy] => { path: "/privacy", persona: "guest" }, %w[pages terms] => { path: "/terms", persona: "guest" }, %w[pages cookies] => { path: "/cookies", persona: "guest" },
       %w[shared changelog] => { path: "/changelog", persona: "guest" }
     }.freeze
@@ -88,7 +88,7 @@ module Deploy
     module_function
 
     def all
-      brgen_pages + brgen_engine_pages + bsdports_pages + shared_pages + master_pages
+      brgen_pages + brgen_engine_pages + amber_pages + bsdports_pages + shared_pages + master_pages
     end
 
     def manifest
@@ -222,6 +222,28 @@ module Deploy
       end
     end
 
+    def amber_pages
+      root = APPS["amber"][:views]
+      discover(root).filter_map do |abs|
+        parts = relative_parts(abs, root)
+        path, action = amber_route(parts)
+        next unless path
+
+        rel = parts.join("/")
+        {
+          id: "amber/#{rel}",
+          app: "amber",
+          view: abs.sub("#{ROOT}/", ""),
+          abs_view: abs,
+          host: nil,
+          path:,
+          action:,
+          persona: guest_open_amber?(path, rel) ? "guest" : "auth",
+          needs_id: path.match?(/:\w+/),
+        }
+      end
+    end
+
     def master_pages
       MASTER_PAGES.map do |row|
         abs = File.join(ROOT, row[:view])
@@ -313,6 +335,11 @@ module Deploy
       [VERTICAL_HOSTS.fetch(parts[0], APEX), resolved, parts[-1]] if resolved
     end
 
+    def amber_route(parts)
+      resolved = manifest_route("amber", parts)
+      [resolved, parts[-1]] if resolved
+    end
+
     # Sign-in and sign-up are the only authoring forms a guest reaches.
     GUEST_AUTHORING_PATHS = %w[/session/new /registration/new /passwords/new].freeze
 
@@ -328,6 +355,15 @@ module Deploy
       return false if path.end_with?("/new")
 
       true
+    end
+
+    def guest_open_amber?(path, _rel)
+      open_exact = %w[/ /items /demo /posts /posts/feed /session/new /registration/new /outfits /passwords/new]
+      return true if open_exact.include?(path)
+      return true if path.start_with?("/demo") || path.start_with?("/ai/")
+      return false if path.end_with?("/edit") || path.include?("/new")
+      # Default browse indexes that still need session are auth
+      %w[/connections /declutter /live_streams /messages /planned_outfits /wardrobe_items /items/shopping_list].include?(path) ? false : false
     end
 
     def write_snapshot!(path = File.join(ROOT, "MASTER", "gates", "data", "page_sim_inventory.yml"))

@@ -138,7 +138,7 @@ module Master
 
         return report("control0: waiting — loop slot active") if LoopOwner.active
 
-        report("control0: deploying #{short(head)} -> master brgen bsdports")
+        report("control0: deploying #{short(head)} -> master brgen amber bsdports")
         _stdout, stderr, status = run_deploy("zsh", @deploy, "all")
         unless status.success?
           save_state(head, "failed")
@@ -146,7 +146,7 @@ module Master
         end
 
         save_state(head, "ok")
-        report("control0: deployed #{short(head)} -> master brgen bsdports")
+        report("control0: deployed #{short(head)} -> master brgen amber bsdports")
       end
 
       def ancestor?(older, newer)

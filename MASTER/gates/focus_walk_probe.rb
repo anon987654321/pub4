@@ -18,6 +18,7 @@ require "json"
 PAGES = Fleet.urls({
   # Routes, not numbers -- see the note in tap_target_probe.
   "brgen home" => %w[brgen /],
+  "amber home" => %w[amber /],
   "bsdports home" => %w[bsdports /],
   "face" => %w[master /],
 }).freeze

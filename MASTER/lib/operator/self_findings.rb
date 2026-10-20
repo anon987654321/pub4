@@ -53,7 +53,7 @@ module Operator
     # file at all.
     TREES = %w[
       MASTER/lib MASTER/law MASTER/tools RAILS/master RAILS/__shared/lib OPENBSD
-      RAILS/brgen RAILS/bsdports RAILS/__shared/app RAILS/__shared/config
+      RAILS/amber RAILS/brgen RAILS/bsdports RAILS/__shared/app RAILS/__shared/config
     ].freeze
 
     module_function

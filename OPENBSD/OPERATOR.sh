@@ -467,9 +467,9 @@ sync_openbsd_apply() {
       || log WARN "$svc restart/start failed"
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen 38182 bsdports 47312)
+  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312)
   typeset -a core_apps=(brgen)
-  typeset -a optional_apps=(bsdports)
+  typeset -a optional_apps=(amber bsdports)
   for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
@@ -539,6 +539,7 @@ typeset -r LOCALHOST="127.0.0.1"
 typeset -a PUBLIC_RESOLVERS=(1.1.1.1 9.9.9.9)
 typeset -A APP_PORTS=(
   brgen 38182
+  amber 61352
   bsdports 47312
   master 53187
 )
@@ -549,6 +550,7 @@ validate_ip "$HYP_IP"   || { log ERROR "Invalid HYP_IP: $HYP_IP"; exit 1 }
 
 ALL_APPS=(
   brgen:brgen.no
+  amber:amberapp.art
   bsdports:bsdports.org
 )
 
@@ -632,6 +634,7 @@ ALL_DOMAINS=(
   discordb.org
   stacyspassion.com
   foball.no
+  amberapp.art
 )
 
 

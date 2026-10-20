@@ -1,0 +1,27 @@
+<% content_for :title, t("live_streams.title") %>
+
+<header role="banner" aria-label="<%= t("live_streams.title") %>">
+  <%= tag.h1 t("live_streams.title") %>
+  <p><%= t("wardrobe.sessions_lead") %></p>
+</header>
+
+<section class="form-wrap" aria-label="<%= t("live_streams.schedule_region") %>">
+  <%= form_with model: @live_stream do |f| %>
+    <%= render "shared/errors", object: @live_stream if lookup_context.exists?("shared/errors", [], true) %>
+    <div class="field"><%= f.label :title, t("wardrobe.session_title") %><%= f.text_field :title, required: true %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+    <div class="field"><%= f.label :scheduled_at %><%= f.datetime_field :scheduled_at %></div>
+    <div class="field"><%= f.submit t("live_streams.schedule"), class: "btn" %></div>
+  <% end %>
+</section>
+
+<%= render "live_streams/list" %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "LiveStreamsInfiniteScrollReflex#load_more",
+           sentinel_id: "amber-live-streams-sentinel" %>
+<%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+    ActionCable, so without JavaScript a truncated list would say nothing about
+    the rest of itself. noscript, so a reader with JavaScript sees one
+    mechanism rather than two. %>
+<noscript><%= render "shared/pager", pagy: @pagy %></noscript>

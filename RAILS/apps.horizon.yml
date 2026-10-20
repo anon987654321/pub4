@@ -41,7 +41,7 @@ horizon:
     # never a billing, promotion or subscription stack per engine.
     monetization:
       - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: planned }
-      - { name: shared Commerce, Ledger and Campaign domains, status: planned, notes: "before any affiliate or promotion code; marketplace and takeaway consume it" }
+      - { name: shared Commerce, Ledger and Campaign domains, status: planned, notes: "before any affiliate or promotion code; marketplace, takeaway and amber consume it" }
       - { name: seller verification badge for a seller with no shop, status: planned, notes: "verified business for stores and restaurants is done (apps.yml); a private seller has no organisation number to check, so this needs its own proof" }
       - { name: paid listing boosts and category/homepage placement, status: planned, notes: "organic discovery stays quality-weighted; paid never overwhelms it" }
       - { name: seller credits with a transparent ledger, status: planned, notes: "Finta-style 0% commission plus Flon-style credits" }
@@ -52,6 +52,18 @@ horizon:
       - { name: payments abstraction (refunds, invoices, VAT, reconciliation), status: planned }
       - { name: revenue dashboard (MRR, churn, conversion funnel), status: planned }
       - { name: marketplace liquidity signals (empty categories, unmet demand), status: planned, notes: "liquidity before ads" }
+  amber:
+    wardrobe:
+      - { name: fashion embeddings (pgvector), status: planned }
+      - { name: visual similarity search, status: planned }
+      - { name: virtual fitting room, status: planned }
+      - { name: mood matcher, status: planned }
+      - { name: event outfit planner, status: planned }
+      - { name: sustainable styles / resale, status: planned }
+      - { name: weather-based suggestions, status: planned }
+      - { name: "outfit scored as a whole (item scores minus clash); wears-well-with on items#show", status: planned }
+      - { name: global trends / local designer highlights, status: planned }
+      - { name: style agents (MASTER integration), status: planned }
   bsdports:
     core:
       - { name: FreeBSD/NetBSD ports parsers, status: planned, notes: "OpenBSD-only production scope" }

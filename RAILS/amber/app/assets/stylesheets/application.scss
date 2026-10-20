@@ -1,0 +1,249 @@
+@use "stack" as *;
+@use "shell";
+@use "site_legal";
+@use "shell_widgets";
+@use "responsive";
+@use "embeds";
+@use "affiliate_feed_unit";
+@use "commerce_polish";
+@use "dialect_tokens" as x;
+@use "surface_signal";
+@use "sass:meta";
+
+// ============================================================ tokens
+
+// amber's inks over the family light palette, read from design_tokens.yml
+// luxury through the --luxury-* tokens sync_dialect_tokens keeps in step.
+// Secondary text and hairlines take the luxury inks because the family #666666
+// on #efefef reads 4.99:1, under the 7:1 TYPOGRAPHY sets for normal text.
+// --danger has no --luxury-* token to read, so its value is written here and
+// luxury.light_danger records it for the contrast census.
+@mixin amber-light-inks {
+  --text-secondary: var(--luxury-muted);
+  // White paper, the operator's call on 2026-09-25: the luxury light surface
+  // (#fff) under everything rather than its #efefef ground.
+  --bg: var(--surface);
+  --border: var(--luxury-border);
+  --danger: #82372d;
+}
+
+// Luxury on :root alone loses to stack's social light: _tokens.scss paints
+// light-tokens at [data-theme=light] and at :root:not([data-theme=dark])
+// inside prefers-color-scheme: light, (0,2,0) against :root's (0,1,0). The two
+// rules after this one restate luxury at those selectors, so a visitor in OS
+// light mode wears amber's dialect. shared/README.md records the same leak for
+// brgen's two light themes.
+:root {
+  @include x.luxury-light-tokens;
+  @include amber-light-inks;
+  @include x.app-root-tokens;
+  color-scheme: light;
+  // Not inverted. These name the ink and the paper, and .btn paints
+  // background: var(--color-black) with no border, so the other way round
+  // every button would take the page's own colour and only its label would show.
+  --color-black: var(--text);
+  --color-white: var(--bg);
+  --color-extra-light-grey: var(--border);
+  --color-grey-text: var(--text-secondary);
+  --color-danger: var(--danger);
+  // --color-success, --color-warning and --color-info come from
+  // shared/_tokens.scss through stack's @forward "tokens". One declaration is
+  // what keeps each colour the same value everywhere.
+  --font-size-base: var(--font-size);
+  --color-badge: var(--accent);
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
+  /* The Caprasimo word's size in the logo's own viewBox units. Display type
+     reads no step of the body ladder; this is the mark's own scale. */
+  --brand-hero: 120px;
+  /* The home page's standing figure, drawn in points under the clothes it
+     wears: light enough that the garments read as worn rather than as a second
+     drawing. The operator's value, 2026-09-25. */
+  --figure-ink: #8eaee3;
+  /* Amber luxury refinements (UI_REFINEMENTS §D) */
+  --line-height-relaxed: 1.6;
+  --letter-display: 0.04em;
+  --focus-ring: 2px solid var(--accent);
+  --elev-1: 1px solid var(--border);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    @include x.luxury-light-tokens;
+    @include amber-light-inks;
+    color-scheme: light;
+  }
+}
+
+[data-theme="light"] {
+  @include x.luxury-light-tokens;
+  @include amber-light-inks;
+  color-scheme: light;
+}
+
+#dark-toggle {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-root {
+  min-height: 100dvh;
+}
+
+#dark-toggle:checked ~ .theme-root {
+  @include x.luxury-dark-tokens;
+  @include x.app-root-tokens;
+  color-scheme: dark;
+  --color-black: var(--text);
+  --color-white: var(--bg);
+  --color-extra-light-grey: var(--border);
+  --color-grey-text: var(--text-secondary);
+  --color-danger: var(--danger);
+  --color-badge: var(--accent);
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
+}
+
+/* Amber logo — the wordmark on a swoosh, an animated radial gradient and white
+   retro lines. Geometry and motion match the canonical logo HTML (viewBox
+   1000×500).
+
+   Caprasimo is amber's brand mark, and the wordmark is the only thing set in
+   it: body, headings, UI and the error pages read the single sans stack in
+   var(--font). */
+@font-face {
+  font-family: "Caprasimo";
+  src: url("/fonts/caprasimo-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@property --gradient-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
+@property --gradient-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
+// ============================================================ base
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* html only. On body as well, the shorthand resolves --font-size a second time
+   against html's size, which from 1280px, where the query below raises it,
+   sets body at 20.25px under html's 18px. brgen sets its font the same way. */
+html {
+  font: var(--font-size) / var(--line-height) var(--font);
+}
+
+body {
+  font: inherit;
+  line-height: var(--line-height-relaxed);
+  letter-spacing: var(--tracking-normal);
+}
+
+@media (min-width: 1280px) {
+  html {
+    font-size: var(--text-lg);
+    line-height: 1.5;
+  }
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Unread message: the same two-signal state the notification list wears —
+   weight and a leading accent dot; the "unread" word in the meta line is
+   the third, textual signal. */
+.message--unread {
+  font-weight: var(--weight-bold, 600);
+}
+.message--unread::before {
+  content: "";
+  display: inline-block;
+  inline-size: var(--space-2, 0.5rem);
+  block-size: var(--space-2, 0.5rem);
+  margin-inline-end: var(--space-2, 0.5rem);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+@keyframes moveGradient {
+  0% { --gradient-x: 0%; --gradient-y: 0%; }
+  25% { --gradient-x: 100%; --gradient-y: 0%; }
+  50% { --gradient-x: 100%; --gradient-y: 100%; }
+  75% { --gradient-x: 0%; --gradient-y: 100%; }
+  100% { --gradient-x: 0%; --gradient-y: 0%; }
+}
+
+@keyframes amber-skeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+h1,
+h2 {
+  margin-bottom: var(--space-3);
+  font-family: var(--font);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight, 1.25);
+  letter-spacing: var(--tracking-tight, -0.01em);
+  max-width: var(--measure-wide);
+}
+
+// ============================================================ chrome: mark, hero, footer
+@include meta.load-css("amber_chrome");
+// ============================================================ components: guest compose
+@include meta.load-css("amber_guest_compose");
+// ============================================================ layout
+@include meta.load-css("amber_layout");
+// ============================================================ components: wardrobe items
+@include meta.load-css("amber_wardrobe");
+// ============================================================ components: item forms
+@include meta.load-css("amber_item_forms");
+// ============================================================ pages: dashboard
+@include meta.load-css("amber_dashboard");
+// ============================================================ pages: dressing room
+@include meta.load-css("amber_dressing_room");
+// ============================================================ pages: organize
+@include meta.load-css("amber_looks");
+// ============================================================ product pen: jOx logo
+@include meta.load-css("amber_jox_logo");
+// ============================================================ components: editorial feed
+@include meta.load-css("amber_editorial_feed");
+// ============================================================ shared modules and overrides
+@include meta.load-css("amber_shared_overrides");

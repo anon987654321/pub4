@@ -8,14 +8,14 @@ REPO_ROOT=${SCRIPT_DIR:h}
 
 if [[ $(id -u) -eq 0 ]]; then
   print -u2 "deploy.sh: refusing to run checkout scripts as root."
-  print -u2 "            Run as dev: zsh RAILS/deploy.sh [brgen|bsdports|all]"
+  print -u2 "            Run as dev: zsh RAILS/deploy.sh [brgen|amber|bsdports|all]"
   exit 2
 fi
 
 case ${1:-brgen} in
-  all|brgen|bsdports) app=${1:-brgen} ;;
+  all|brgen|amber|bsdports) app=${1:-brgen} ;;
   --help|-h)
-    print -r -- "usage: zsh RAILS/deploy.sh [brgen|bsdports|all]"
+    print -r -- "usage: zsh RAILS/deploy.sh [brgen|amber|bsdports|all]"
     exit 0
     ;;
   *)

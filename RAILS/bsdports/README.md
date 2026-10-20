@@ -8,8 +8,9 @@ It is a Rails 8.2.0.alpha app on Ruby 4.0.5, with SQLite, Falcon and Hotwire. Se
 through an FTS5 index over port names and comments, kept beside the data in the same database.
 The pages wear the terminal-green look of OpenBSD itself, flat and dense, with one line to a
 port, because the index is the product. The app follows the shared engine's layout and
-accessibility contracts and takes its design values from MASTER, so it differs from Brgen in
-dialect and not in grammar. Its interface is Norwegian by default, like Brgen. The promise, the stack and the status of every feature are in `apps.yml`, under
+accessibility contracts and takes its design values from MASTER, so it differs from brgen and
+amber in dialect and not in grammar. Its interface is Norwegian by default, like the other two
+apps. The promise, the stack and the status of every feature are in `apps.yml`, under
 `bsdports`.
 
 The ports data arrives by import. The rake task `ports:import_now` reads a local tree at once.
@@ -26,9 +27,9 @@ gives the reasons.
 
 A deploy runs through `OPENBSD/bin/vps-deploy bsdports`, which runs `bsdports.sh` on vm23 and
 copies the tree to `/home/bsdports/app`. The shared engine sits beside it at
-`/home/bsdports/__shared`. During a bsdports deploy, relayd may continue answering TLS
-while this app's port is closed, so the site can appear alive from outside while its backend
-is unavailable. The deploy contract restores any previously running active service. After any deploy, prove that `127.0.0.1:47312` answers `/up` and `/health`.
+`/home/bsdports/__shared`. Every deploy sheds amber and bsdports together, and relayd keeps
+answering TLS while their ports are closed, so a site that looks alive from outside can be
+down underneath. After any deploy, prove that `127.0.0.1:47312` answers `/up` and `/health`.
 Both matter, because `/up` says the process lives and `/health` says Solid Cache, Solid Queue
 and the database are in order.
 

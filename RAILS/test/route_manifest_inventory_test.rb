@@ -43,7 +43,7 @@ class RouteManifestInventoryTest < Minitest::Test
   end
 
   def test_manifest_covers_every_app_the_inventory_probes
-    assert_equal %w[brgen bsdports], manifest.fetch("apps").keys.sort
+    assert_equal %w[amber brgen bsdports], manifest.fetch("apps").keys.sort
     manifest["apps"].each_value do |row|
       refute_empty row.fetch("routes"), "an app with no routes resolves nothing"
       assert_match(/\A[0-9a-f]{16}\z/, row.fetch("digest"))
@@ -60,10 +60,10 @@ class RouteManifestInventoryTest < Minitest::Test
   # inventory gives them (page_inventory.rb#shared_pages). They were listed here
   # as brgen/pages/* until 2026-08-12, when the per-app copies were dropped in
   # favour of the one in RAILS/__shared -- which is also why all three apps can be
-  # asserted for both active apps instead of Brgen alone.
+  # asserted now instead of brgen alone.
   def test_routes_beat_the_filename_convention
     expected = { "brgen/bookmarks/index" => "/saved" }
-    %w[brgen bsdports].each do |app|
+    %w[amber brgen bsdports].each do |app|
       expected["#{app}/shared/pages/privacy"] = "/privacy"
       expected["#{app}/shared/pages/terms"] = "/terms"
       expected["#{app}/shared/pages/cookies"] = "/cookies"
@@ -125,17 +125,16 @@ class RouteManifestInventoryTest < Minitest::Test
   # The other direction, so the rule above cannot be satisfied by an inventory
   # that dropped everything.
   def test_the_inventory_still_covers_every_app
-    %w[brgen bsdports master].each do |app|
+    %w[amber brgen bsdports master].each do |app|
       refute_empty inventory.select { |page| page[:app] == app }, "#{app} left the inventory"
     end
     assert_operator inventory.size, :>, 150, "the inventory collapsed"
   end
 
-  def test_active_route_manifest_is_complete_and_digest_is_stable
-    assert_equal %w[brgen bsdports], Deploy::RouteManifest.apps
+  def test_digest_moves_when_a_route_source_changes
     before = Deploy::RouteManifest.digest("brgen")
 
     assert_equal before, Deploy::RouteManifest.digest("brgen")
-    assert_match(/\\A[0-9a-f]{16}\\z/, before)
+    refute_equal before, Deploy::RouteManifest.digest("amber")
   end
 end

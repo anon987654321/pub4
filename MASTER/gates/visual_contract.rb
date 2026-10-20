@@ -52,6 +52,11 @@ module VisualContractGate
       # Marketplace vertical (Host markedsplass.* in capture when available)
       marketplace: "/", marketplace_sign_in: "/session/new"
     },
+    amber: {
+      public: "/", sign_in: "/session/new", wardrobe: "/items", item: "/items/1",
+      outfit: "/outfits/1", upload: "/items/new", ai_result: "/ai/suggest_outfits",
+      empty: "/items?q=visual-contract-no-match", error: "/404-visual-contract", offline: "/offline"
+    },
     bsdports: {
       public: "/", empty: "/ports?q=visual-contract-no-match", results: "/ports?q=git",
       detail: "/ports/1", advisory: "/ports/1#cves-security-advisories",
@@ -280,7 +285,7 @@ end
 
 app_i = ARGV.index("--app")
 base_i = ARGV.index("--base")
-app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|bsdports required")
+app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|amber|bsdports required")
 base = (base_i && ARGV[base_i + 1]) || abort("--base URL required")
 results = begin
   VisualContractGate.capture(base:, app:)

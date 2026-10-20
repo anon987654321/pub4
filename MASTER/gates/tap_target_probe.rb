@@ -24,6 +24,8 @@ PAGES = Fleet.urls({
   "brgen home" => %w[brgen /],
   "brgen post feed" => %w[brgen /posts],
   "marketplace" => ["brgen", "/?vertical=marketplace"],
+  "amber home" => %w[amber /],
+  "amber items" => %w[amber /items],
   "bsdports home" => %w[bsdports /],
   "face" => %w[master /],
 }).freeze

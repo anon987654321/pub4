@@ -53,6 +53,7 @@ en:
     message_aria: "Message"
     attach_photo: "Attach photo"
     music_loop: "Music on or off"
+    stop_response: "Stop response"
     pause_speech: "Pause or resume speech"
     placeholder: "ask anything"
     mic_state: "Microphone"

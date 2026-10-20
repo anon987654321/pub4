@@ -119,7 +119,7 @@ relayd_confirm_live() {
 relayd_add_relay() {
   local app=$1 domain=$2 port=$3
 
-  case "$app" in brgen|bsdports) ;; *) log_err "relayd: refused unknown app: $app"; return 2 ;; esac
+  case "$app" in brgen|amber|bsdports) ;; *) log_err "relayd: refused unknown app: $app"; return 2 ;; esac
   [[ $domain == *.* ]] || { log_err "relayd: refused invalid domain"; return 2; }
   [[ $port == <-> ]] || { log_err "relayd: refused invalid port"; return 2; }
 

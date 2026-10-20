@@ -11,8 +11,8 @@ class TestVisualSeed < Minitest::Test
   def tree
     Dir.mktmpdir("seed-tree") do |root|
       FileUtils.mkdir_p(File.join(root, "RAILS"))
-      File.write(File.join(root, "RAILS", "apps.yml"), { "apps" => { "brgen" => { "port" => 1 }, "bsdports" => { "port" => 3 } } }.to_yaml)
-      %w[brgen bsdports].each { |app| FileUtils.mkdir_p(File.join(root, "RAILS", app, "storage")) }
+      File.write(File.join(root, "RAILS", "apps.yml"), { "apps" => { "brgen" => { "port" => 1 }, "amber" => { "port" => 2 }, "bsdports" => { "port" => 3 } } }.to_yaml)
+      %w[brgen amber bsdports].each { |app| FileUtils.mkdir_p(File.join(root, "RAILS", app, "storage")) }
       yield root
     end
   end
@@ -33,25 +33,25 @@ class TestVisualSeed < Minitest::Test
     tree do |root|
       ran = []
       seed, out = seeder(root, ran)
-      assert_equal 0, seed.seed(%w[brgen])
+      assert_equal 0, seed.seed(%w[amber])
       assert_empty ran
-      assert_match(/would seed brgen/, out.string)
+      assert_match(/would seed amber/, out.string)
     end
   end
 
   def test_seed_backs_up_labels_and_unseed_restores
     tree do |root|
-      File.write(db(root, "brgen"), "mine")
+      File.write(db(root, "amber"), "mine")
       ran = []
       seed, = seeder(root, ran)
-      assert_equal 0, seed.seed(%w[brgen], scale: 3, yes: true)
-      assert_equal [["brgen", "db:prepare", "3"], ["brgen", "db:seed", "3"]], ran
-      assert_equal "seeded", File.read(db(root, "brgen"))
-      label = JSON.parse(File.read(seed.marker("brgen")))
+      assert_equal 0, seed.seed(%w[amber], scale: 3, yes: true)
+      assert_equal [["amber", "db:prepare", "3"], ["amber", "db:seed", "3"]], ran
+      assert_equal "seeded", File.read(db(root, "amber"))
+      label = JSON.parse(File.read(seed.marker("amber")))
       assert_equal 3, label["scale"]
-      seed.unseed(%w[brgen])
-      assert_equal "mine", File.read(db(root, "brgen"))
-      refute File.exist?(seed.marker("brgen"))
+      seed.unseed(%w[amber])
+      assert_equal "mine", File.read(db(root, "amber"))
+      refute File.exist?(seed.marker("amber"))
     end
   end
 
@@ -79,10 +79,10 @@ class TestVisualSeed < Minitest::Test
 
   def test_a_failed_seed_puts_the_database_back
     tree do |root|
-      File.write(db(root, "bsdports"), "mine")
+      File.write(db(root, "amber"), "mine")
       seed, out = seeder(root, [], fail_on: "db:seed")
-      refute_equal 0, seed.seed(%w[bsdports], yes: true)
-      assert_equal "mine", File.read(db(root, "bsdports"))
+      refute_equal 0, seed.seed(%w[amber], yes: true)
+      assert_equal "mine", File.read(db(root, "amber"))
       assert_match(/failed; its database is back/, out.string)
     end
   end
@@ -91,9 +91,8 @@ class TestVisualSeed < Minitest::Test
     tree do |root|
       seed, = seeder(root, [])
       assert_raises(ArgumentError) { seed.seed(%w[master], yes: true) }
-      assert_raises(ArgumentError) { seed.seed(%w[amber], yes: true) }
       ENV["DATABASE_URL"] = "postgres://prod"
-      assert_equal 2, seed.seed(%w[brgen], yes: true)
+      assert_equal 2, seed.seed(%w[amber], yes: true)
     ensure
       ENV.delete("DATABASE_URL")
     end

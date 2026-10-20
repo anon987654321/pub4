@@ -21,7 +21,7 @@ Next (serial — one app at a time):
   2. zsh OPENBSD/bin/vps-deploy <app>     # not vps_ci.sh: it syncs and tests, never migrates or restarts
   3. ruby OPENBSD/gates/integrity_gate.rb
   4. ruby OPENBSD/gates/health_check.rb --public --all-ready-apps
-  5. sh OPENBSD/bin/deploy-smoke.sh       # fast local+public smoke; only known bsdports DNS/TLS waiver may apply
+  5. sh OPENBSD/bin/deploy-smoke.sh       # fast local+public smoke (ALLOW_AMBER_DOWN=1 if needed)
 
 MASTER web changes also need:
   zsh OPENBSD/bin/vps-deploy master

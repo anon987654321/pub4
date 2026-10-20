@@ -1,0 +1,48 @@
+<% content_for :title, t("demo.wardrobe") %>
+<%# The demo wardrobe is amber's one public catalogue. Structured data stopped
+    at items#show, which is behind authentication and therefore invisible to a
+    crawler — this page is the one that was worth describing. %>
+<% content_for :json_ld, json_ld_script(demo_item_list_schema(@items, title: t("demo.wardrobe"))) %>
+
+<header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
+  <p><%= t("demo.capsule_kicker", name: Amber::DemoWardrobe::DEMO_DISPLAY_NAME) %></p>
+  <%= tag.h1 t("demo.wardrobe") %>
+  <p class="tagline"><%= t("demo.index_tagline") %></p>
+  <nav role="navigation" aria-label="<%= t("demo.wardrobe_actions") %>">
+    <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-primary" %>
+    <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn-ghost" %>
+  </nav>
+</header>
+
+<% if @outfits.any? %>
+  <%= turbo_frame_tag "demo-outfits" do %>
+    <section>
+      <%= tag.h2 t("nav.outfits") %>
+      <div class="plan-list">
+        <% @outfits.each do |outfit| %>
+          <div class="plan-row">
+            <%= tag.strong outfit.name %>
+            <%= outfit.context_label %> · <%= t("items.pieces", count: outfit.items.size) %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+<% end %>
+
+<section>
+  <%= tag.h2 t("demo.all_pieces") %>
+  <div class="item-grid" id="demo-items">
+    <%= render partial: "demo_wardrobe/item", collection: @items %>
+  </div>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "DemoWardrobeInfiniteScrollReflex#load_more",
+             sentinel_id: "demo-items-sentinel" %>
+
+  <%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+      ActionCable, so without JavaScript a truncated list would say nothing about
+      the rest of itself. noscript, so a reader with JavaScript sees one
+      mechanism rather than two. %>
+  <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
+</section>

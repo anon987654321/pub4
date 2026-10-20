@@ -1,0 +1,62 @@
+<% content_for :title, t("pages.wardrobe") %>
+<%# empty_state: coverage-ok — the wardrobe list and its empty state render in items/_live_search_results %>
+<%# No turbo_stream_from "items": Item declines broadcasts_refreshes on purpose,
+    and says why at the callback — a 1-CPU VPS, and the media and AI pipelines
+    touch an item many times per upload. Subscribing to a stream nothing writes
+    opens an ActionCable connection per viewer of the busiest page in the app and
+    delivers nothing. Outfit and PlannedOutfit do broadcast, and their index
+    pages subscribe; this one is the pair that never matched. %>
+
+<section data-controller="filter" role="region" aria-label="<%= t("wardrobe.items_region") %>">
+  <header role="banner" aria-label="<%= t("wardrobe.header") %>">
+    <hgroup>
+      <p><%= t("wardrobe.closet_intelligence") %></p>
+      <h1><%= t("pages.wardrobe") %> (<%= @pagy.count %>)</h1>
+    </hgroup>
+    <div class="wardrobe-action-groups">
+      <nav role="navigation" aria-label="<%= t("wardrobe.primary_actions") %>" class="wardrobe-action-group">
+        <%= link_to t("home.add_item"), new_item_path, class: "btn btn-primary" %>
+        <%= link_to t("actions.compose_outfit"), new_outfit_path, class: "btn" %>
+      </nav>
+      <details class="wardrobe-more-tools">
+        <summary><%= t("wardrobe.more_tools") %></summary>
+        <nav role="navigation" aria-label="<%= t("wardrobe.use_what_i_own") %>" class="wardrobe-action-group">
+          <%= tag.h2 t("wardrobe.use_what_i_own") %>
+          <%= link_to t("wardrobe.ai_pair"), ai_suggest_outfits_path, class: "btn" %>
+          <%= link_to t("wardrobe.packing_list"), ai_packing_list_path, class: "btn" %>
+          <%= link_to t("wardrobe.declutter_thoughtfully"), declutter_index_path, class: "btn" %>
+        </nav>
+        <nav role="navigation" aria-label="<%= t("wardrobe.records_gaps_nav") %>" class="wardrobe-action-group wardrobe-action-group--secondary">
+          <%= tag.h2 t("wardrobe.records_gaps") %>
+          <%= link_to t("wardrobe.wear_analytics"), analytics_wardrobe_items_path, class: "btn" %>
+          <%= link_to t("pages.organize"), organize_wardrobe_items_path, class: "btn" %>
+          <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "btn" %>
+          <%# Also routed and linked from nowhere. It answers "which occasions does my
+              wardrobe cover", which is the same question as gaps and analytics, so it
+              sits with them. %>
+          <%= link_to t("wardrobe.occasion_map"), ai_occasions_path, class: "btn" %>
+          <%= link_to t("wardrobe.shop_gap"), shopping_list_items_path, class: "btn" %>
+          <%= button_to t("items.archive_seasonal"), archive_seasonal_items_path, method: :post, class: "btn" %>
+          <%= button_to t("items.resurface_seasonal"), resurface_seasonal_items_path, method: :post, class: "btn" %>
+        </nav>
+      </details>
+    </div>
+  </header>
+
+  <div class="chips" aria-label="<%= t("wardrobe.analytics_summary") %>">
+    <span class="chip"><%= t("wardrobe.chip_active", count: @analytics[:active_items]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_never_worn", count: @analytics[:never_worn]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_underused", count: @analytics[:underused]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_box", count: @analytics[:declutter_box]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_memory", count: @analytics[:sentimental_archive]) %></span>
+    <% if @analytics[:cost_per_wear] %><span class="chip"><%= t("wardrobe.chip_avg_wear", amount: number_to_currency(@analytics[:cost_per_wear])) %></span><% end %>
+  </div>
+
+  <nav class="chips" aria-label="<%= t("wardrobe.lifecycle_filter") %>">
+    <% %w[active box memory seasonal repair all].each do |key| %>
+      <%= link_to t("wardrobe.lifecycle.#{key}"), items_path(lifecycle: key), class: "chip#{" chip--active" if @lifecycle_filter == key}" %>
+    <% end %>
+  </nav>
+
+  <%= live_search_index url: items_path(lifecycle: @lifecycle_filter), results_partial: "items/live_search_results", placeholder: t("search.wardrobe"), label: t("search.wardrobe_label") %>
+</section>

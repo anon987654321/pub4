@@ -6,7 +6,8 @@
 #   zsh OPENBSD/bin/vps_production_push.sh
 #   DEMO_SEED_ON_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh   # also seed brgen's guest demo
 #
-# One deploy path, not two. vps-deploy owns the active order (master, brgen, bsdports), the pull, the per-app health gate, the deploy stamp, the
+# One deploy path, not two. vps-deploy owns the order (master first, amber and
+# bsdports last), the pull, the per-app health gate, the deploy stamp, the
 # restore of shed apps and the post-restart gates; this file only chooses the
 # fast flags. SKIP_CI=1 skips vps_ci.sh and SKIP_RUNTIME_GATE=1 skips the bin/ci
 # runtime gate inside ${app}.sh, which is OOM-prone on 1 GB. What still runs is

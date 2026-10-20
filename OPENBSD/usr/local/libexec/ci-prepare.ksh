@@ -7,7 +7,7 @@ export PATH
 
 app=${1:-}
 case "$app" in
-  brgen|bsdports) ;;
+  brgen|amber|bsdports) ;;
   *) echo "ci-prepare: refused unknown app: $app" >&2; exit 64 ;;
 esac
 
