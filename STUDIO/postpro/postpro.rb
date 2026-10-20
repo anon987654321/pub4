@@ -19,6 +19,7 @@ require "rbconfig"
 require_relative "legacy_effects"
 require_relative "dilla_analog"
 require_relative "constitution"
+require_relative "../source_map"
 require_relative "depth"
 include Postpro::LegacyEffects
 include Postpro::DillaAnalog
@@ -56,6 +57,7 @@ POSTPRO_USAGE = <<~TXT
     --measure FILE [--against AFTER]  read texture numbers and palette, or how a grade moved them
     --stock-sheet FILE [--preset NAME] [--output FILE]  one frame through every stock, tiled
     --gallery [DIR]                   an index.html contact page of every render in DIR
+    --map                             the table of contents of this file, with line numbers
     --set DIR                         which frames repeat, and how far each sits from the set's exposure
     --vocab-check                     are the tables consistent?
     --capabilities                    what this build can do
@@ -4248,7 +4250,7 @@ def one_shot_mode?
 end
 
 def introspect_mode?
-  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut --fit-grain --gallery]).any?
+  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut --fit-grain --gallery --map]).any?
 end
 
 # Does every preset name things that exist, and does every table have a row for
@@ -4981,6 +4983,8 @@ def run_introspect
     puts describe_preset(name)
   elsif (scan = argv_flag("--fit-grain"))
     puts fit_grain(scan)
+  elsif ARGV.include?("--map")
+    puts Studio::SourceMap.render(__FILE__)
   elsif ARGV.include?("--gallery")
     write_gallery(argv_flag("--gallery") || Dir.pwd)
   elsif (name = argv_flag("--css-filter"))

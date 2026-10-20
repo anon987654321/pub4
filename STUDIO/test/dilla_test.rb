@@ -21,6 +21,8 @@ class DillaTest < Minitest::Test
 
   # Mono unless a test asks for stereo: most tests read the samples of one channel.
   def run_dilla(*args, chdir:, stereo: false)
+    skip "renders audio; unset DILLA_FAST to run it" if ENV["DILLA_FAST"] == "1"
+
     Open3.capture3(RbConfig.ruby, SCRIPT, *(stereo ? [] : ["--mono"]), *args, chdir:)
   end
 
@@ -366,32 +368,66 @@ class DillaTest < Minitest::Test
     assert_equal PROGRESSIONS.map { |p| p.join(" ") }.uniq.size, PROGRESSIONS.size, "a spelling appears twice"
   end
 
-def test_every_language_chord_parses_and_stays_in_the_register
-  Languages.all.each do |language, names|
-    assert_equal 8, names.size, language
-    Chords.midi_notes(names).each do |notes|
-      assert_operator notes.first, :>=, 24, language
-      assert_operator notes.last, :<=, Chords::HIGH, language
+  def test_key_lock_moves_roots_and_basses_and_keeps_qualities
+    # the last chord rests on G, so every root moves up three semitones and the slash bass with it
+    assert_equal %w[Gm9 Cm9 Bbmaj7/G], KeyLock.lock(%w[Em9 Am9 Gmaj7/E], "Bb")
+    assert_equal %w[Ebm9 Bbm9], KeyLock.lock(%w[Ebm9 Bbm9], "Bb")
+    assert_equal "E", KeyLock.tonic(%w[D/E Db/E C/E Bm/E Bbm/E Am/E])
+    assert_equal ["Bbm69"], KeyLock.lock(["Dm6/9"], "Bb")
+  end
+
+  def test_every_catalogue_progression_locks_and_scores_a_fit
+    PROGRESSIONS.each do |names|
+      assert_equal names.size, KeyLock.lock(names, "Bb").size
+      assert_includes 0.0..1.0, ModalFamily.fit(names)
     end
   end
-end
 
-def test_voicing_styles_reshape_a_chord_and_restore_the_default
-  names = %w[Bbm9 Ebm9 Abmaj9]
-  plain = Chords.midi_notes(names)
-  Chords::STYLES.each do |style|
-    styled = Chords.styled(style) { Chords.midi_notes(names) }
-    refute_equal plain, styled, style
-    styled.each { |notes| assert_operator notes.drop(1).first, :>=, Chords::LOW, style }
+  def test_lead_and_bass_lines_follow_the_chords_and_replay_from_a_seed
+    names = Languages.progression("planing_m9")
+    lead = Lines.lead(names, beats: 4, seed: 9)
+    bass = Lines.bass(names, beats: 4, seed: 9)
+    assert_equal lead, Lines.lead(names, beats: 4, seed: 9)
+    assert_operator lead.size, :>=, names.size * 3
+    assert(lead.all? { |beat, midi, length, gain| beat >= 0 && midi.between?(60, 90) && length.positive? && gain.positive? })
+    assert(bass.all? { |_, midi, _, _| midi.between?(Lines::BASS_LOW, Lines::BASS_HIGH + 12) })
+    assert_equal Chords.parse(names.first)[:pc], bass.first[1] % 12
   end
-  assert_equal plain, Chords.midi_notes(names)
-  assert_raises(ArgumentError) { Chords.styled("bebop") { nil } }
-end
 
-def test_so_what_voicing_is_fourths_under_a_major_third
-  upper = Chords.styled("so_what") { Chords.midi_notes(["Bbm9"]) }.first.drop(1)
-  assert_equal [5, 5, 4], upper.each_cons(2).map { |a, b| b - a }
-end
+  def test_critic_prefers_a_warm_falling_spectrum_to_white_noise
+    rng = Random.new(1)
+    white = Array.new(SAMPLE_RATE * 2) { (rng.rand - 0.5) * 0.4 }
+    low = Tape::Biquad.lowpass(900)
+    warm = white.map { |x| low.step(x) * 3.0 }
+    assert_operator Critic.score(Critic.measure([warm])), :<, Critic.score(Critic.measure([white]))
+  end
+
+  def test_every_language_chord_parses_and_stays_in_the_register
+    Languages.all.each do |language, names|
+      assert_equal 8, names.size, language
+      Chords.midi_notes(names).each do |notes|
+        assert_operator notes.first, :>=, 24, language
+        assert_operator notes.last, :<=, Chords::HIGH, language
+      end
+    end
+  end
+
+  def test_voicing_styles_reshape_a_chord_and_restore_the_default
+    names = %w[Bbm9 Ebm9 Abmaj9]
+    plain = Chords.midi_notes(names)
+    Chords::STYLES.each do |style|
+      styled = Chords.styled(style) { Chords.midi_notes(names) }
+      refute_equal plain, styled, style
+      styled.each { |notes| assert_operator notes.drop(1).first, :>=, Chords::LOW, style }
+    end
+    assert_equal plain, Chords.midi_notes(names)
+    assert_raises(ArgumentError) { Chords.styled("bebop") { nil } }
+  end
+
+  def test_so_what_voicing_is_fourths_under_a_major_third
+    upper = Chords.styled("so_what") { Chords.midi_notes(["Bbm9"]) }.first.drop(1)
+    assert_equal [5, 5, 4], upper.each_cons(2).map { |a, b| b - a }
+  end
 
   def test_every_chord_name_parses
     CHORDS.each { |name| Chords.parse(name) }
@@ -1952,7 +1988,7 @@ end
     refute_equal a.lines["right"].map(&:to_a), Organ.compose(seed: 8, config: ORGAN).lines["right"].map(&:to_a)
     assert_equal "D", Organ.compose(seed: 1, config: ORGAN, key: "D", scale: "dorian").key
     assert_equal "Bb", Organ.compose(seed: 1, config: ORGAN, key: "A#", scale: "major").key
-    assert_raises(ArgumentError) { Organ.compose(seed: 1, config: ORGAN, scale: "lydian") }
+    assert_raises(ArgumentError) { Organ.compose(seed: 1, config: ORGAN, scale: "whole_tone") }
   end
 
   def test_phrases_run_two_to_four_bars_fill_the_piece_and_close_on_cadences
@@ -2971,7 +3007,8 @@ end
 
   def test_widening_keeps_the_mono_sum_within_half_a_decibel
     rng = Random.new(8)
-    left = Array.new(40_000) { (Math.sin(rng.rand * 7) * 0.2) + (tone(900.0, 1.0)[rng.rand(1000)] * 0.1) }
+    pure = tone(900.0, 1.0)
+    left = Array.new(40_000) { (Math.sin(rng.rand * 7) * 0.2) + (pure[rng.rand(1000)] * 0.1) }
     right = left.each_with_index.map { |v, i| (v * 0.6) + (Math.sin(i / 3.0) * 0.1) }
     wide = Stream::Imager.new(widen: 0.9, width: 1.4).process([left, right])
     before = left.zip(right).map { |a, b| (a + b) / 2 }

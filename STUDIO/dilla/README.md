@@ -50,6 +50,14 @@ dub echo and crystallizer, with a quieter instrument echo/crystallizer send. The
 `--effect-rig NAME` option applies this complete per-bus chain to standalone progression
 renders too. Explicit effect flags remain authoritative over the rig defaults.
 
+The harmony is written as well as quoted. Twelve rule-made progressions, in five languages (falling fifths, pedal
+mixture, planing, quartal stacks and static suspensions), sit beside the catalogue and are listed by `--list`;
+`--voicing` lays any chord out as drop-2, drop-3, spread, cluster, quartal or so-what; `--key-lock Bb`
+brings a progression to rest on one tonic; and `--improvise` adds a lead and a bass worked out from
+the chords. `--takes N` renders each showcase section N times from different seeds and keeps the
+take whose spectrum, dynamics and peaks fall nearest the warm target the critic measures, and every
+showcase run ends with the critic's reading of the whole programme.
+
 ## Engine notes
 
 The detailed composition/groove, voice/instrument and effects/mastering rationale is kept in
