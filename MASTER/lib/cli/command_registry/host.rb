@@ -2,6 +2,7 @@
 
 require_relative "../../operator/capability_graph"
 require_relative "../../io/exec"
+require_relative "../../ground/personal_workspace"
 
 module Master
   module CLI
@@ -44,6 +45,47 @@ module Master
           Fiber[:master_pair_subject] = result[:subject]
           Master::Ground::Pairing.redeem_notice(result)
         end
+      end
+
+      # /privacy is intentionally local-only. The only wired personal capability
+      # is subject-scoped memory/profile; hardware, messaging and financial scopes
+      # remain unavailable until their own adapters enforce the ledger and OS grants.
+      def dispatch_privacy(root, ctx: nil)
+        return "privacy: local-only; visitors cannot grant personal capabilities" if Fiber[:master_visitor] == true
+
+        subject = Fiber[:master_pair_subject].to_s.strip
+        if subject.empty? && defined?(Master::Device::Agent) && Master::Device.respond_to?(:android?) &&
+            Master::Device.android? && Master::Device::Agent.paired?(root:)
+          subject = Master::Device::Agent.owner_subject(root:).to_s
+        end
+        return "privacy: no paired subject; pair the local owner before enabling personal memory" if subject.empty?
+
+        permissions = Master::Ground::PersonalPermissions.new(root:)
+        arg = arg_for(ctx).to_s.strip.downcase
+        case arg
+        when "", "status"
+          active = permissions.allowed?(
+            scope: "personal_memory", subject:, purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+          )
+          "privacy: personal profile and memory #{active ? "enabled" : "disabled"}; consent is bound to this paired subject"
+        when "grant personal_memory"
+          permissions.grant(
+            scope: "personal_memory", subject:, confirmed_by: "local operator",
+            purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+          )
+          "privacy: personal profile and memory enabled for this paired subject"
+        when /\Arevoke personal_memory(?:\s+(.+))?\z/
+          reason = Regexp.last_match(1).to_s.strip
+          revoked = permissions.revoke(
+            scope: "personal_memory", subject:, confirmed_by: "local operator",
+            reason: reason.empty? ? "personal memory revoked by owner" : reason,
+          )
+          revoked ? "privacy: personal profile and memory disabled immediately" : "privacy: no active personal-memory grant"
+        else
+          "privacy: status | grant personal_memory | revoke personal_memory"
+        end
+      rescue StandardError => e
+        "privacy0: unavailable — #{e.class}: #{e.message}"
       end
 
       SCREEN_NAME = /\A[\w.-]{1,40}\z/
