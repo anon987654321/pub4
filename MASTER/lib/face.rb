@@ -69,6 +69,16 @@ module Master
         profiles.fetch(mode.to_s) { profiles.fetch("idle") }.transform_keys(&:to_s).freeze
       end
 
+      # What a state means in the stipple material: its membership, its force and a note.
+      # An unknown mode reads as idle, as the dials do.
+      def stipple_meaning(mode, root: Master::ROOT)
+        face = data(root:)
+        name = face.fetch("stipple_force", {}).key?(mode.to_s) ? mode.to_s : "idle"
+        { "membership" => face.fetch("stipple_membership", {}).fetch(name),
+          "force" => face.fetch("stipple_force", {}).fetch(name),
+          "note" => face.fetch("stipple_note", {}).fetch(name) }.freeze
+      end
+
       # Point-sprite sizing is shared with the browser shader through the same
       # canonical face_interface block; callers must not copy these dials.
       def stipple_point_size(root: Master::ROOT)

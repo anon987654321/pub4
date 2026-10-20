@@ -35,6 +35,20 @@ tokens:
   # goes in this list first.
   visual_identity:
     name: "signal_and_stillness"
+    # The primary material under the identity: greyscale particle stipple. The meaning of
+    # each face state in that material is face_interface.stipple.semantics.
+    material: "greyscale_particle_stipple"
+    principle: >
+      Reality is assembled from many small carriers. The interface does not pretend to be a
+      solid skin; it shows the field. Density is belonging, luminosity is attention, ripple is
+      signal, negative space is as real as matter. Colour is a sparse semantic accent, never
+      the substance.
+    lineage:
+      - "e pluribus unum — out of many, one readable form"
+      - "signal as propagating state, not ornament"
+      - "turned and unturned density as membership in the field"
+      - "residual — individuality survives inside the collective"
+      - "stillness by default — motion only when meaning moves"
     signal: "#C8F55F"
     signal_ink: "#101010"
     signal_on_light: "#50630A"
@@ -449,6 +463,62 @@ tokens:
         error:     { density: 0.56, ripple: 0.82, turbulence: 0.65, luminosity: 1.00, attract: 0.04 }
         ready:     { density: 0.60, ripple: 0.06, turbulence: 0.06, luminosity: 0.82, attract: 0.25 }
         sleeping:  { density: 0.30, ripple: 0.00, turbulence: 0.00, luminosity: 0.48, attract: 0.10 }
+    # What each state means in the material, as parallel maps keyed by state so no path runs deeper
+    # than the configuration depth law allows. The dials for a state are in stipple.profiles; these
+    # say why they are what they are. Membership runs unturned < transitional < turned < locked.
+    # uncertainty reads as warning and convergence as ready; working and sleeping extend the same
+    # forces to the states this face has beyond the original seven.
+    stipple_vocabulary:
+      pluribus: "many discrete carriers"
+      unum: "one coherent readable form"
+      signal: "propagating change of membership or attention; the lime accent marks admission and focus"
+      turned: "high density and luminosity, admitted into the field"
+      unturned: "low density, still individual, not yet joined"
+      residual: "the particular inside the collective, kept in idle"
+      void: "negative space as equal material"
+      gather: "parts pull toward one locus"
+      ripple: "a signal crosses the field"
+      fragment: "parts leave the form"
+      settle: "the field re-coheres"
+    stipple_membership:
+      idle: transitional
+      listening: transitional
+      thinking: turned
+      working: turned
+      speaking: turned
+      warning: transitional
+      error: unturned
+      ready: locked
+      sleeping: unturned
+    stipple_force:
+      idle: residual
+      listening: ripple
+      thinking: gather
+      working: gather
+      speaking: ripple
+      warning: residual
+      error: fragment
+      ready: settle
+      sleeping: residual
+    stipple_note:
+      idle: "many at rest; individual seeds still visible"
+      listening: "the field opens to incoming signal"
+      thinking: "parts concentrate toward one locus"
+      working: "the locus holds while work runs"
+      speaking: "signal leaves through the mouth region"
+      warning: "binding loosens; individuals reappear"
+      error: "admission fails; the field breaks, may rejoin"
+      ready: "out of many, one stable form"
+      sleeping: "carriers at rest; the field dims, not erased"
+    stipple_forbidden:
+      - bright_multicolour_particle_fields
+      - decorative_particle_carpets_behind_content
+      - signal_as_body_text_on_white
+      - signal_as_large_background_fill
+      - glow_lens_flare_ornamental_gradients
+      - solid_mesh_as_primary_face_material
+      - motion_without_semantic_state
+      - erasing_all_residual_individuality_in_idle
     interaction:
       states: [idle, waking, listening, holding, yielded, processing, speaking, sleeping, error]
       turn_states: [draft, listening, committed, interrupted, discarded, failed]

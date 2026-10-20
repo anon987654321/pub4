@@ -163,6 +163,22 @@ class TestRenderer < Minitest::Test
     assert_equal contract.stipple_profile("idle"), contract.stipple_profile("no-such-mode")
   end
 
+  # The meaning of each state in the material is one table with the dials: every mode has a
+  # membership and a force, and the force is a word the vocabulary defines.
+  def test_stipple_meaning_covers_every_face_mode_from_the_vocabulary
+    contract = Master::Face::Contract
+    vocabulary = contract.data.fetch("stipple_vocabulary")
+
+    contract.modes.each do |mode|
+      meaning = contract.stipple_meaning(mode)
+      assert_equal %w[force membership note], meaning.keys.sort, mode
+      assert vocabulary.key?(meaning.fetch("force")), "#{mode}: force is not in the vocabulary"
+    end
+
+    assert_equal "residual", contract.stipple_meaning("idle").fetch("force")
+    assert_equal contract.stipple_meaning("idle"), contract.stipple_meaning("no-such-mode")
+  end
+
   def test_stipple_point_size_is_canonical_and_bounded
     sizing = Master::Face::Contract.stipple_point_size
 

@@ -36,6 +36,38 @@ Ruby reads it through `MASTER/lib/face.rb`. Browser code receives
 the same block as `MASTER_FACE_CONTRACT` and keeps dynamic state in
 `MASTER_FACE_STATE`.
 
+## Primary material: particle stipple
+
+FaceWorld's material is greyscale particle stipple, named in `tokens.visual_identity.material`
+and governed by the law `VISUAL_PARTICLE_STIPPLE_PRIMARY`. The face is not a solid skin. It is a
+field of many carriers that resolve into one readable head: out of many, one. A renderer may
+simplify geometry for a device's limits; it may not invent a second identity material, such as a
+coloured particle skin or a glossy mesh.
+
+What each state means in that material lives beside its dials, in
+`tokens.face_interface.stipple_vocabulary`, `stipple_membership`, `stipple_force` and
+`stipple_note`, and the browser playground prints the reading for the state it shows. Membership
+runs from unturned (still individual) through transitional and turned (admitted into the field)
+to locked.
+
+| State | Membership | Force | Reading |
+|---|---|---|---|
+| idle | transitional | residual | many at rest; individual seeds still visible |
+| listening | transitional | ripple | the field opens to incoming signal |
+| thinking | turned | gather | parts concentrate toward one locus |
+| working | turned | gather | the locus holds while work runs |
+| speaking | turned | ripple | signal leaves through the mouth region |
+| warning | transitional | residual | binding loosens; individuals reappear |
+| error | unturned | fragment | admission fails; the field breaks and may rejoin |
+| ready | locked | settle | out of many, one stable form |
+| sleeping | unturned | residual | carriers at rest; the field dims but is not erased |
+
+Motion defaults to still. Gather, ripple, fragment and settle run only when a state supplies the
+cause, and reduced motion keeps the turned and unturned contrast readable without animation.
+Idle keeps its residual, because a field with no individual variation is a fog. The lime signal
+marks admission and focus only. The point budget and the stipple layer's limits are in the
+section on the additive stipple layer below.
+
 ## 3D restructuring catalogue
 
 These are implementation directions that all preserve the same state contract.

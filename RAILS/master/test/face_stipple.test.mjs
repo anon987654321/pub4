@@ -261,6 +261,7 @@ test("playground is opt-in and exposes all canonical semantic states", () => {
   assert.match(playground, /bridge\.setMode\(value, \{ source: "face-playground" \}\)/);
   for (const mode of ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"]) assert.match(playground, new RegExp(mode));
   assert.match(playground, /FacePlayground/);
+  assert.match(playground, /stipple_force\?\.\[name\]/);
   assert.match(playground, /Refresh diagnostics/);
   assert.match(playground, /MASTER_FACE_STIPPLE\?\.snapshot/);
   assert.match(css, /\.master-face-stipple-playground/);

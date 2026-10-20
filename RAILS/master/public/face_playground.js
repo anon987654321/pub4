@@ -9,6 +9,13 @@
       .filter((name) => /^[a-z][a-z0-9_-]{0,31}$/.test(name))
   )));
   let panel = null;
+  let statusNode = null;
+  // What the state means in the stipple material, from the contract the face already carries.
+  const reading = (name) => {
+    const face = window.MASTER_FACE_CONTRACT || {};
+    const force = face.stipple_force?.[name];
+    return force ? `${name}: ${face.stipple_membership?.[name]}, ${force}. ${face.stipple_note?.[name] || ""}` : "";
+  };
   const el = (tag, text) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -43,6 +50,7 @@
       if (state) { state.mode = value; state.mood = value; }
     }
     window.dispatchEvent(new CustomEvent("master:stipple-state", { detail: { mode: value, source: "face-playground" } }));
+    if (statusNode && reading(value)) statusNode.textContent = reading(value);
     return true;
   }
 
@@ -64,6 +72,7 @@
     STATES.forEach((name) => select.append(el("option", name)));
     select.addEventListener("change", () => setState(select.value));
     const status = el("p", "Additive layer; ParticleKernel retained");
+    statusNode = status;
     status.className = "master-stipple-status";
     status.setAttribute("aria-live", "polite");
     const diagnostics = el("pre", "Use Refresh diagnostics to inspect the current renderer state.");
