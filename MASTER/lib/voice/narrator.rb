@@ -64,6 +64,9 @@ module Master
         @env = env
         @autostart = autostart
         @lock = Monitor.new
+        @cheer = Cheer.new(Master.load_yaml(Master.data_path("bard.yml"), default: {})["cheer"]) if voice == :bard
+        @started_at = @clock.call
+        @last_cheer_at = 0.0
         @override = nil
         @epoch = 0
         @calls = 0
@@ -239,11 +242,11 @@ module Master
         close_idle_task(now)
         return :backlog if queued > @config.fetch("max_backlog")
 
-        kind = due_kind(now)
+        kind = due_kind(now) || cheer_kind(now)
         return :wait unless kind
         return :rate if @config.fetch("max_sentences_per_minute") - recent_sentences(now) < 1
 
-        events = kind == :gap ? [] : take_events
+        events = %i[gap cheer].include?(kind) ? [] : take_events
         @gaps_in_row += 1 if kind == :gap
         { kind:, events:, epoch: @epoch, number: @beats, story: @story.dup, gist_event: gist_event(kind, events) }
       end
@@ -263,6 +266,14 @@ module Master
               now - @last_spoken_at >= @config.fetch("max_gap_s")
           :gap
         end
+      end
+
+      # Nothing pending and nothing said for a while: the bard may freestyle to lift the listener.
+      def cheer_kind(now)
+        return unless @cheer&.due?(now, [@started_at, @last_event_at, @last_spoken_at, @last_cheer_at].max)
+        return unless @pending.empty? && !@task_open
+
+        :cheer
       end
 
       def close_idle_task(now)
@@ -296,11 +307,29 @@ module Master
       end
 
       def compose(job, now)
+        return cheer_lines(job, now) if job[:kind] == :cheer
+
         gist = @script.gist_of(job[:gist_event]&.text || @last_gist)
         text = model_text(job, now) if model_usable?(now)
         sentences = text ? accept(text, job) : []
         sentences = template_sentences(job, gist) if sentences.empty?
         sentences
+      end
+
+      def cheer_lines(job, now)
+        @last_cheer_at = now
+        live = model_usable?(now)
+        lines = @cheer.sentences(writer: (@writer if live), script: @script, story: job[:story])
+        count_call if live
+
+        lines
+      end
+
+      def count_call
+        @lock.synchronize do
+          @calls += 1
+          @cost_usd += @config.fetch("est_cost_per_call_usd")
+        end
       end
 
       def model_usable?(now)

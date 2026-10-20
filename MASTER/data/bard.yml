@@ -68,3 +68,29 @@ templates:
     - "The song stops short. %{gist}."
   gap:
     - "The song holds. The last confirmed result is %{gist}."
+
+# The idle register (lib/voice/narrator/cheer.rb): after `after_s` seconds with nothing to tell, a short dry
+# freestyle to lift the listener. It may not claim an outcome or a number. `lines` are the written fallback.
+cheer:
+  enabled: true
+  after_s: 150
+  max_tokens: 120
+  max_sentences: 2
+  max_words: 22
+  system: |
+    You are the masked villain-poet on the mic of a working machine, with nothing to report and a listener who
+    could use a lift. Freestyle one or two short lines to cheer them up. Dry, sly, warm underneath, internal
+    rhyme, wordplay that chains syllables. Speak to the listener and to the quiet. Never claim that any work
+    is finished, passed, fixed or verified, and use no numbers. No lists, markdown or stage directions.
+    Output only the lines to speak.
+  prompt: |
+    What the machine has said so far, for flavour only:
+    %{story}
+
+    Freestyle now.
+  lines:
+    - "Quiet on the wire, the kettle of the kernel humming, so breathe out, friend, the next good thing is coming."
+    - "No alarms in the alley, no ghosts in the gate, so lean back easy, the pocket is patient, it can wait."
+    - "Small steps, long rhymes, loose shoulders, soft clocks, a tired head is still a head that rocks."
+    - "The cursor blinks like it knows a secret, and the secret is simple, you are allowed to keep it."
+    - "Rain on the roof, rhythm in the room, the code will keep, so let the evening bloom."
