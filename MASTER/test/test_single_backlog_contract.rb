@@ -17,7 +17,7 @@ class TestSingleBacklogContract < Minitest::Test
   end
 
   def test_every_seam_names_its_tree_need_and_evidence
-    seams = YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "operator_seams.yml")).fetch("seams")
+    seams = Master.load_yaml(File.join(ROOT, "MASTER", "data", "operator_seams.yml")).fetch("seams")
 
     refute_empty seams
     assert_equal seams.size, seams.uniq { |seam| seam.fetch("id") }.size
