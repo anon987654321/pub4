@@ -5274,6 +5274,98 @@
       "sustain": 3.4,
       "tone": 4200,
       "release": 0.3
+    },
+    "chip_pulse": {
+      "family": "moog",
+      "group": "moog",
+      "gain": 12,
+      "waves": [
+        "pulse",
+        "pulse"
+      ],
+      "detune": [
+        0,
+        3
+      ],
+      "octaves": [
+        0,
+        1
+      ],
+      "cutoff": 5200,
+      "env_amount": 800,
+      "resonance": 0.1,
+      "drive": 1.6,
+      "amp": [
+        0.002,
+        0.12,
+        0.55,
+        0.08
+      ],
+      "filter_env": [
+        0.001,
+        0.08,
+        0.3,
+        0.05
+      ]
+    },
+    "chip_bass": {
+      "family": "moog",
+      "group": "moog",
+      "gain": 13,
+      "waves": [
+        "pulse",
+        "triangle"
+      ],
+      "detune": [
+        0,
+        0
+      ],
+      "octaves": [
+        -1,
+        -1
+      ],
+      "cutoff": 700,
+      "env_amount": 900,
+      "resonance": 0.15,
+      "drive": 1.4,
+      "amp": [
+        0.002,
+        0.16,
+        0.35,
+        0.06
+      ],
+      "filter_env": [
+        0.001,
+        0.1,
+        0.2,
+        0.05
+      ]
+    },
+    "fm_bell": {
+      "family": "rhodes",
+      "group": "rhodes",
+      "body_index": 0.6,
+      "bell_index": 7.5,
+      "bell_ratio": 3.5,
+      "bell_decay": 0.9,
+      "body_decay": 1.0,
+      "decay": 1.8,
+      "release": 0.4,
+      "click": 0.01,
+      "velocity_bright": 0.6
+    },
+    "fm_lofi_ep": {
+      "family": "rhodes",
+      "group": "rhodes",
+      "body_index": 2.4,
+      "bell_index": 3.2,
+      "bell_ratio": 7,
+      "bell_decay": 0.12,
+      "body_decay": 0.5,
+      "decay": 0.9,
+      "release": 0.2,
+      "click": 0.05,
+      "velocity_bright": 0.7
     }
   },
   "sonitex": {
