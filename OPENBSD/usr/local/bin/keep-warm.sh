@@ -23,7 +23,7 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 case ${1:-} in
 -h|--help)
   echo "usage: /usr/local/bin/keep-warm.sh"
-  echo "  render brgen's and amber's home over loopback; log only a slow or failed hit"
+  echo "  render Brgen's home over loopback; log only a slow or failed hit"
   exit 0
   ;;
 esac
@@ -45,7 +45,7 @@ esac
 # visitor arrives on cold. bsdports is a low-traffic ports index nobody waits on,
 # and master is 927M of address space that is correctly swapped out until someone
 # actually opens the face. The shed case is handled below, per target.
-set -A TARGETS "brgen.no 38182" "amberapp.art 61352"
+set -A TARGETS "brgen.no 38182"
 
 # A real page, not /up. The health endpoint answers from a handful of objects and
 # leaves the render path — views, the feed query, the template cache — exactly as
