@@ -66,8 +66,8 @@ class TestVoiceBed < Minitest::Test
     end
   end
 
-  def test_the_bed_boots_with_the_session_only_when_the_data_says_so
-    assert_equal true, config["autostart"]
+  def test_there_is_no_music_at_startup_unless_the_data_says_so
+    assert_equal false, config["autostart"]
     assert_equal false, Bed.boot(nil)
     assert_equal false, Bed.boot(config.merge("autostart" => false))
   end

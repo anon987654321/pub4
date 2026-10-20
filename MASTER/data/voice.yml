@@ -815,7 +815,8 @@ bard:
   # `progressions` per start; they are the long extended-chord ones in STUDIO/dilla/data/dilla.json.
   bed:
     enabled: true
-    autostart: true
+    # false: no music at startup. The beat then starts only under the bard's first spoken line.
+    autostart: false
     tool: STUDIO/dilla/dilla.rb
     volume: 0.22
     player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} -f s16le -ar 44100 -ch_layout stereo -i -"
