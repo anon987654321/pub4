@@ -73,8 +73,9 @@ module Master
         repl_loop
       end
 
-      # The shell is the default entry. The face opens first only when asked (MASTER_FACE_ON_START=1, or
-      # face_on_start in the data), and never for a message on the command line or a pipe.
+      # Interactive sessions open the face when face_on_start is enabled by the data.
+      # The default enables it; MASTER_FACE_ON_START=0 opts out. Command-line messages and
+      # non-TTY pipes stay plain so automation never receives terminal animation.
       def face_on_start?(initial_message)
         return false if initial_message || ENV["MASTER_FACE_ON_START"] == "0"
         return false unless $stdin.tty? && $stdout.tty?
