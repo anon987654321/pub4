@@ -31,6 +31,14 @@ class TestCliCommandFlags < Minitest::Test
     refute_match(/option error/, err + out)
   end
 
+  def test_dry_run_is_never_dropped
+    argv = ["/fix", "MASTER", "--dry-run", "--no-autofix", "--only=critique"]
+
+    message = @host.method(:initial_message_from_argv).call(argv)
+
+    assert_equal "/fix MASTER --dry-run --no-autofix --only=critique", message
+  end
+
   def test_fix_flags_do_not_raise_an_option_error
     out, err = capture_io { @host.send(:initial_message_from_argv, ["/fix", "MASTER", "--max-files=3"]) }
 

@@ -24,7 +24,7 @@ module Master
 
       def proposal_from(line, known_paths)
         kind, paths, law, reason = line.split(":", 2).last.to_s.split("|", 4).map(&:strip)
-        names = paths.to_s.split(",").map(&:strip).reject(&:empty?)
+        names = paths.to_s.split(",").map { |name| name.strip.chomp("/") }.reject(&:empty?)
         return unless sound?(kind, names, known_paths)
 
         Proposal.new(kind: kind.downcase, paths: names, law: law_id(law),

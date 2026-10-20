@@ -75,9 +75,9 @@ if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
 end
 
 # Flags the slash commands read from their own argument text (/fix --max-files=25,
-# /fix --no-critique). The top-level parser does not know them and must not reject
-# them or drop them.
-COMMAND_FLAG = /\A--(?:(?:autofix|max-files)=|no-critique\z)/
+# /fix --no-critique, /fix --dry-run). The top-level parser does not know them and
+# must not reject them or drop them: a dropped --dry-run is a write run.
+COMMAND_FLAG = /\A--(?:(?:autofix|max-files|only)=|dry-run\z|no-autofix\z|apply\z|(?:no-)?critique\z|no-aesthetic\z)/
 
 def initial_message_from_argv(argv)
   kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }

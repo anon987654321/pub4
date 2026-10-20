@@ -53,6 +53,13 @@ class TestFixTreeReasoning < Minitest::Test
     assert_equal 1, result.dropped
   end
 
+  def test_a_directory_named_with_a_trailing_slash_is_known
+    agent = FakeAgent.new("PROPOSE: merge | lib/, lonely/ | NONE | fold the two\n")
+    result = Reasoning.new(agent:, root: @root).call(target: @root)
+
+    assert_equal %w[lib lonely], result.proposals.first.paths
+  end
+
   def test_an_unknown_kind_is_dropped
     agent = FakeAgent.new("PROPOSE: vaporise | lib/a.rb | NONE | no\n")
     result = Reasoning.new(agent:, root: @root).call(target: @root)
