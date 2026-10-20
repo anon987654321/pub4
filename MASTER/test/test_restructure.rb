@@ -326,6 +326,29 @@ class TestRestructure < Minitest::Test
     assert_includes text, "MASTER/lib/user_policy.rb"
   end
 
+  def test_restructure_exit_reports_a_partial_attempt_budget_as_limit_reached
+    problem_class = Struct.new(:id, :size, :laws, :files, :candidate_operations, :findings, :reason, :confidence, keyword_init: true)
+    path = File.join(@repo, "MASTER/lib/big.rb")
+    problems = 2.times.map do |index|
+      problem_class.new(
+        id: "p#{index}", size: 1, laws: ["GOD_CLASS"], files: [path],
+        candidate_operations: %w[split], findings: [[path, "GOD_CLASS", "line 1: job", []]],
+        reason: "one finding", confidence: :single,
+      )
+    end
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **fields| events << [name, fields] }
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo, bus:)
+    sweep.define_singleton_method(:candidates) { |_target, _run_id| problems }
+    sweep.define_singleton_method(:attempt) { |_problem, candidate_map:| nil }
+
+    sweep.run_tree(File.join(@repo, "MASTER"), "budget-test", attempts: 1, rounds: 1, keeps: 1)
+
+    exit_event = events.find { |name, _fields| name == "fix_loop:restructure_exit" }
+    assert_equal "LIMIT_REACHED", exit_event.last.fetch(:state)
+  end
+
   def test_candidate_map_scores_actual_findings_without_padding
     big = File.join(@repo, "MASTER/lib/big.rb")
     problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(

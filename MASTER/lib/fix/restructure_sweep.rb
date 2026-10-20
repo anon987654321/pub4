@@ -204,7 +204,14 @@ module Master
           end
           kept.concat(round_kept)
           if round_kept.empty?
-            terminal = vetoes.positive? && vetoes == problems.size && problems.size <= attempts ? :veto : :plateau
+            terminal =
+              if problems.size > attempts
+                :limit_reached
+              elsif vetoes.positive? && vetoes == problems.size
+                :veto
+              else
+                :plateau
+              end
             break
           end
 
