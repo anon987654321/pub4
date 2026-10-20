@@ -38,11 +38,18 @@ module Master
         # duplicate findings that nothing can attribute, so the whole segment is
         # off the walk for the same reason `reports` is.
         SKIP_PATH_SEGMENTS = %w[
-          .git .claude vendor node_modules tmp log coverage .bundle storage cache dist build
+          .git vendor node_modules tmp log coverage .bundle storage cache dist build
           knowledge fixtures var .cache scratch
           site-packages venv .venv venv-demucs __pycache__
-          reports
         ].freeze
+
+        # Generated report output, but only outside an app's views: `app/views/**/reports/` is authored code that
+        # the plain segment rule swallowed.
+        GENERATED_REPORTS = "reports"
+
+        # The agent worktrees under .claude are full second trees; .claude/settings.json is authored and linted.
+        AGENT_WORKTREES = %w[.claude/worktrees].freeze
+
         # Spelled relative to MASTER, and matched relative to whatever root the
         # scan was given — which are the same thing only when MASTER scans
         # itself. `bin/gate` and every cross-tree run pass the repo root, where
@@ -62,7 +69,7 @@ module Master
           RAILS/master/public/face.modules.bundle.js RAILS/master/public/face_vision.bundle.js
         ].freeze
         MASTER_LOCAL_PATHS = %w[.master runtime].flat_map { |path| [path, "MASTER/#{path}"] }.freeze
-        SKIP_RELATIVE_PATHS = (MASTER_LOCAL_PATHS + GENERATED_FACE_BUNDLES + %w[
+        SKIP_RELATIVE_PATHS = (MASTER_LOCAL_PATHS + AGENT_WORKTREES + GENERATED_FACE_BUNDLES + %w[
           RAILS/master/public/assets RAILS/master/script/three_build
           RAILS/master/node_modules RAILS/master/tmp RAILS/master/log
         ]).freeze
@@ -109,6 +116,7 @@ module Master
         def skip_path?(path, root: nil)
           segments = relative_segments(path, root)
           return true if SKIP_PATH_SEGMENTS.any? { |segment| segments.include?(segment) }
+          return true if segments.include?(GENERATED_REPORTS) && !segments.include?("app")
 
           rel = relative_path(path, root)
           return true if SKIP_PATH_SUFFIXES.any? { |suffix| rel == suffix || rel.end_with?("/#{suffix}") }

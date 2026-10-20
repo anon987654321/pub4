@@ -76,6 +76,8 @@ end
   # Extension first because it is free and covers 3,876 of 4,272 tracked files.
   # The name and the shebang are the fallbacks, and the shebang is a read, so
   # the answer is memoised: the scanner asks this once per rule per file.
+  RUBY_MAGIC_COMMENT = /\A#\s*(?:frozen_string_literal:|-\*-.*coding)/
+
   def self.language_for(path)
     @language_for ||= {}
     key = path.to_s
@@ -99,12 +101,14 @@ end
     shebang_language(path)
   end
 
-  # Only the first line, and only when it is a shebang. A file that opens with
-  # anything else has nothing to say about its language here.
+  # Only the first line: a shebang, or the Ruby magic comment an extensionless script opens with
+  # (OPENBSD/bin/reach has neither a shebang nor an extension and went unlinted). Anything else has
+  # nothing to say about its language here.
   def self.shebang_language(path)
     return unless File.file?(path)
 
     first = File.open(path) { |io| io.gets.to_s }
+    return "ruby" if first.scrub.match?(RUBY_MAGIC_COMMENT)
     return unless first.start_with?("#!")
 
     match = SHEBANG_LANGUAGES.find { |pattern, _lang| pattern.match?(first) }

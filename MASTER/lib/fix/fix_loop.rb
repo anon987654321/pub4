@@ -131,7 +131,8 @@ module Master
         # It must ask both semantic streams across the eligible corpus.
         @pass_runner&.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
         guidance = outcome_guidance(target:, incremental:)
-        incremental = guidance.fetch(:incremental)
+        # A requested /fix lints every line of every eligible file; only an unattended run may sample.
+        incremental = requested ? false : guidance.fetch(:incremental)
         @outcome_prior = guidance[:prediction]
         Master::Io::LaneSelection.announce
         current_phase = :corpus

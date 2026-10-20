@@ -21,6 +21,14 @@ class TestInstrumentCheck < Minitest::Test
     end
   end
 
+  def setup
+    @previous = ENV.delete("MASTER_FIX_INSTRUMENT_CHECK")
+  end
+
+  def teardown
+    ENV["MASTER_FIX_INSTRUMENT_CHECK"] = @previous if @previous
+  end
+
   def scripted(answers) = Scripted.new(answers:)
 
   def test_a_healthy_set_of_instruments_passes

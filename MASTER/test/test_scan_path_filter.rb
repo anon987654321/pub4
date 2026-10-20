@@ -54,4 +54,43 @@ class TestScanPathFilter < Minitest::Test
     rails_file = File.join(Master::REPO_ROOT, "RAILS", "brgen", "app", "models", "post.rb")
     refute Scanner.skip_path?(rails_file, root: Master::REPO_ROOT)
   end
+
+  def test_authored_views_named_reports_and_the_committed_claude_settings_are_scanned
+    root = Master::REPO_ROOT
+    scanned = %w[RAILS/brgen/app/views/admin/reports/index.html.erb .claude/settings.json]
+
+    scanned.each { |relative| refute Scanner.skip_path?(File.join(root, relative), root:), relative }
+  end
+
+  def test_generated_reports_and_agent_worktrees_are_still_skipped
+    root = Master::REPO_ROOT
+    skipped = %w[MASTER/gates/reports/run.json .claude/worktrees/a/MASTER/lib/x.rb]
+
+    skipped.each { |relative| assert Scanner.skip_path?(File.join(root, relative), root:), relative }
+  end
+
+  def test_an_extensionless_script_with_a_ruby_magic_comment_is_ruby
+    Dir.mktmpdir do |dir|
+      script = File.join(dir, "reach")
+      File.write(script, "# frozen_string_literal: true\n\nputs 1\n")
+
+      assert_equal "ruby", Master.language_for(script)
+    end
+  end
+
+  # Every tracked file with a language is linted unless a rule says why not, and the rules are all about files
+  # nobody authored: vendored code, deliberately bad fixtures, generated bundles and schemas.
+  UNAUTHORED = %r{/vendor/|/fixtures/|/public/|db/schema\.rb|service-worker\.js|\.min\.|/db/structure\.sql}
+
+  def test_no_authored_tracked_file_with_a_language_is_skipped_without_a_reason
+    root = Master::REPO_ROOT
+    tracked = IO.popen(["git", "-C", root, "ls-files", "-z"], &:read).force_encoding("UTF-8").split("\0")
+    tracked = tracked.select(&:valid_encoding?)
+    unexplained = tracked.select do |relative|
+      path = File.join(root, relative)
+      File.file?(path) && Master.language_for(path) && Scanner.skip_path?(path, root:) && !relative.match?(UNAUTHORED)
+    end
+
+    assert_empty unexplained, "authored files the scan never reads: narrow the rule that skips them"
+  end
 end
