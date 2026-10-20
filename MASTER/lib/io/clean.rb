@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
-require "timeout"
+require_relative "exec"
 
 module Master
   module Io
@@ -42,37 +41,12 @@ module Master
 
       private
 
-      # Shell-out with a hard time budget: read stdout/stderr on separate threads
-      # (so a full pipe can't deadlock the wait) and kill a child that overruns,
-      # instead of blocking the caller forever. Returns a nil status on timeout.
+      # Keep Clean's timeout result contract while delegating pipe draining and
+      # process-group termination to the shared runner.
       def run_bounded(*cmd)
-        # pgroup: true isolates the child (and any grandchildren clean.sh spawns)
-        # in their own process group so a timeout can reap the whole tree, not
-        # zsh alone — otherwise orphaned children keep running past the kill.
-        Open3.popen3(*cmd, pgroup: true) do |stdin, stdout, stderr, wait_thr|
-          stdin.close
-          out_reader = Thread.new { stdout.read }
-          err_reader = Thread.new { stderr.read }
-          begin
-            Timeout.timeout(@timeout_s) { wait_thr.value }
-            [out_reader.value, err_reader.value, wait_thr.value]
-          rescue Timeout::Error
-            terminate(wait_thr.pid)
-            out_reader.kill
-            err_reader.kill
-            [nil, nil, nil]
-          end
-        end
-      end
-
-      def terminate(pid)
-        pgid = Process.getpgid(pid)
-        Process.kill("TERM", -pgid)
-        sleep 0.2
-        Process.kill("KILL", -pgid)
-      rescue Errno::ESRCH, Errno::EPERM => e
-        Master::Ground::Swallow.log(e, context: "Clean.terminate")
-        nil
+        Master::Io::Exec.capture3(*cmd, timeout: @timeout_s, raise_on_timeout: true)
+      rescue Master::Io::Exec::TimeoutError
+        [nil, nil, nil]
       end
     end
   end
