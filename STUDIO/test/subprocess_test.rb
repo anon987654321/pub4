@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "rbconfig"
+require "tmpdir"
 require_relative "../subprocess"
 
 class StudioSubprocessTest < Minitest::Test
