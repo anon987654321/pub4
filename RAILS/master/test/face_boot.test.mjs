@@ -310,6 +310,10 @@ test("calm profile is default and gates rich idle motion", () => {
   assert.match(part3, /function syncSemanticPools\(dtSec, reducedMotion = false\)/);
   assert.match(part3, /const reducedMotion = faceReducedMotionActive\(\)/);
   assert.match(part3, /faceMat\.uniforms\.uTime\.value = reducedMotion \? 0 : sec/);
+  const clockAssignments = part3.match(/^\s*faceMat\.uniforms\.uTime\.value\s*=.*$/gm) ?? [];
+  assert.ok(clockAssignments.length >= 1);
+  assert.ok(clockAssignments.every(line => /reducedMotion \? 0 :/.test(line)),
+    "every primary shader clock write must stop under reduced motion");
   assert.match(part3, /State\.idleAlphaDrift = reducedMotion \? 0\.5/);
   assert.match(part3, /State\.pulse = 0; State\.flash = 0/);
   assert.match(part3, /if \(faceReducedMotionActive\(\)\) return;/);
