@@ -2747,6 +2747,20 @@ rescue StandardError => e
   image
 end
 
+# A radical take may change everything except that there is still a picture. One
+# that has gone nearly black, burnt out or flat is refused and drawn again.
+TAKE_MEAN_RANGE = (45.0..210.0)
+TAKE_MIN_SPREAD = 55
+
+def check_take_survives!(image)
+  luma = image.bandmean.cast("uchar")
+  mean = luma.avg
+  spread = luma.percent(95) - luma.percent(5)
+  return if TAKE_MEAN_RANGE.cover?(mean) && spread >= TAKE_MIN_SPREAD
+
+  raise ArgumentError, "take refused: mean luma #{mean.round} spread #{spread}"
+end
+
 # Filmic shoulder + toe: raised shadow floor + soft highlight rolloff.
 # Models the analog curve endpoints without stock-specific emulsion data.
 def film_shoulder(image, intensity = 0.75)
@@ -3443,16 +3457,16 @@ RANDOM_WEAR = %w[dust_and_hair newton_rings scan_noise gate_weave
                         vhs_tracking_noise vhs_interlace_comb
                         crt_phosphor_bloom crt_scanlines minidv_block_dropout
                         hi8_chroma_noise].freeze
-# Lower than they were. At 0.55 to 0.95 a lead announces itself, and two of
-# them argue; the brief was subtlety and the honest reading of subtlety is that
-# a viewer should not be able to name the effect. Depth is not loudness.
-RANDOM_LEAD_STRENGTH = (0.38..0.66)
-RANDOM_SUPPORT_STRENGTH = (0.05..0.16)
+# A lead has to read. At 0.38 to 0.66 with supports at 0.05 to 0.16 the stack summed
+# to almost nothing and five takes of one frame looked like one take (operator
+# review, 2026-10-20), so the leads sit high and the supports are audible.
+RANDOM_LEAD_STRENGTH = (0.55..0.9)
+RANDOM_SUPPORT_STRENGTH = (0.12..0.28)
 # And one step is allowed to disagree with the family, quietly. A chain that is
 # only coherent is a template; the interest is in the one thing that should not
 # be there, at a strength that makes it a suggestion rather than a joke.
 RANDOM_WILDCARD_CHANCE = 0.5
-RANDOM_WILDCARD_STRENGTH = (0.06..0.16)
+RANDOM_WILDCARD_STRENGTH = (0.1..0.25)
 # The operator's standing directive (2026-10-03): every random run is five
 # radically different results, from subtle analog to experimental, through
 # heavy filters arranged at random, and the chain may get quite long. Heavy
@@ -3699,6 +3713,54 @@ end
 
 def random_chain_name(chain)
   chain.map { |fx, _| fx }.tally.map { |fx, n| n > 1 ? "#{fx}x#{n}" : fx }.join("-")
+end
+
+# Looks that commit. A heavy take starts from one of these named presets at full
+# strength, so five takes of one frame differ in what they decided and not only in
+# how much they changed it. They span stocks and colour worlds on purpose.
+HEAVY_LOOKS = %i[
+  noir neon_night tokyo_night bleached magic_hour kodachrome_look technicolor_3strip
+  cross_process cyanotype_look infrared_look cinematic blockbuster golden_age
+  day_for_night process_e6 reversal dream silver_gelatin
+].freeze
+
+# A preset written as the ordered recipe the random chains speak, so a look can be
+# merged with drawn steps. Effects the recipe vocabulary lacks are dropped.
+def preset_as_recipe(name)
+  data = PRESETS.fetch(name.to_sym)
+  stock = (data[:stock] || :kodak_portra).to_s
+  intensity = (data[:intensity] || 0.8).to_f.clamp(0.3, 1.0)
+  Array(data[:fx]).map(&:to_s).uniq.filter_map do |fx|
+    next unless RECIPE_ALLOWED.include?(fx)
+
+    params = { "intensity" => intensity, "stock" => stock }
+    params["target_kelvin"] = data[:temp].to_f if fx == "spectral_temp" && data[:temp]
+    params["kelvin"] = data[:temp].to_f if fx == "color_temp" && data[:temp]
+    [fx, params]
+  end
+end
+
+# Each take must differ from the last in kind. The next look is drawn from the
+# ones not yet used, on a stock no earlier take used, and a repeat of either is the
+# last resort once the families run out.
+def next_heavy_look(rng, used)
+  stocks = used.map { |look| PRESETS.fetch(look)[:stock] }
+  fresh = (HEAVY_LOOKS - used).shuffle(random: rng)
+  fresh.find { |look| !stocks.include?(PRESETS.fetch(look)[:stock]) } || fresh.first || HEAVY_LOOKS.sample(random: rng)
+end
+
+# The look's own steps, then a random chain of light, texture and wear drawn
+# around them, in physical order with one grain pass last.
+def look_led_chain(rng, look:, avoid: [], lane: nil)
+  base = preset_as_recipe(look)
+  taken = base.map(&:first)
+  tail = random_chain(rng, avoid:, lane:).reject { |fx, _| taken.include?(fx) || fx == RANDOM_ALWAYS }
+  stock = (PRESETS.fetch(look.to_sym)[:stock] || :kodak_portra).to_s
+  grain = base.find { |fx, _| fx == RANDOM_ALWAYS } || [RANDOM_ALWAYS, { "intensity" => 0.6, "stock" => stock }]
+  rank = random_stage_rank
+  body = (base.reject { |fx, _| fx == RANDOM_ALWAYS } + tail)
+         .each_with_index.sort_by { |(fx, _), index| [rank.fetch(fx, 0.85), index] }.map(&:first)
+  body << grain
 end
 
 def random_chain_lane(chain)
@@ -3952,6 +4014,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
 
       grained = recipe_data&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
       processed = anchor_tones(processed)
+      check_take_survives!(processed) if recipe_data
       processed = apply_finishing_grain(processed, preset_name, grained:)
       processed = rgb_bands(processed)
       lane = recipe_data ? random_chain_lane(recipe_data) : nil
@@ -5104,14 +5167,27 @@ def run_random(subject = nil)
     count = (override || (heavy_mode? ? 5 : rng.rand(RANDOM_VARIATIONS))).clamp(1, 24)
     Postpro::Constitution.verify_batch!(variation_count: count, explicit_count: !override.nil?)
     drawn = []
+    looks = []
     Postpro::Constitution.retire_previous_renders!(file)
     count.times do |index|
       lane = heavy_mode? ? HEAVY_LANE_DEAL[index % HEAVY_LANE_DEAL.size] : nil
-      chain = random_chain(rng, avoid: drawn, lane:)
-      Postpro::Constitution.verify_chain!(chain: chain, stage_rank: random_stage_rank)
-      drawn << chain
-      $cli_logger.info "#{file_index + 1}/#{files.count} #{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
-      process_file(file, 1, nil, chain)
+      attempts = 0
+      refused = []
+      begin
+        look = heavy_mode? ? next_heavy_look(rng, looks + refused) : nil
+        chain = look ? look_led_chain(rng, look:, avoid: drawn, lane:) : random_chain(rng, avoid: drawn, lane:)
+        Postpro::Constitution.verify_chain!(chain: chain, stage_rank: random_stage_rank)
+        $cli_logger.info "#{file_index + 1}/#{files.count} #{index + 1}/#{count}: #{File.basename(file)} — #{look} #{random_chain_name(chain)}"
+        process_file(file, 1, nil, chain)
+        drawn << chain
+        looks << look if look
+      rescue RuntimeError => e
+        # A take that destroyed the picture is drawn again, on another look.
+        raise unless e.message.start_with?("all ") && (attempts += 1) < 4
+
+        refused << look
+        retry
+      end
     rescue StandardError => e
       # One refused chain costs one take, not the rest of the family.
       $logger.error "random #{File.basename(file)} take #{index + 1}: #{e.message}"

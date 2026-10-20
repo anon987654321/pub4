@@ -141,9 +141,14 @@ directory outside it. Set `POSTPRO_OUTPUT_DIR` to choose another output director
 first removes the earlier renders of the same source, since renders are replaceable. If a
 generated name still exists, Postpro preserves it and chooses a timestamped sibling.
 
-Heavy mode is the standing default: five variations dealt
-from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter
-taste.
+Heavy mode is the standing default: five variations with long chains, and each take must
+differ from the last in kind. A take starts from a named look at full strength (noir, neon
+night, Technicolor, cross process, infrared and a dozen more), drawn so that no two takes of
+one run share a look or a stock, and a random chain of light, texture and wear is grown around
+it. The leads and supports run strong enough to read. A take that comes out nearly black,
+burnt out or flat is refused and drawn again on another look, up to three times, because a
+radical take may change everything except that there is still a picture. `POSTPRO_HEAVY=0`
+returns to the lighter taste.
 
 Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family again.
 
