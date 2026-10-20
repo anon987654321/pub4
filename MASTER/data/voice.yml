@@ -808,6 +808,14 @@ bard:
     tool: STUDIO/dilla/dilla.rb
     volume: 0.35
     player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} -f s16le -ar 44100 -ch_layout stereo -i -"
+    # Prerendered tracks loop at once; a nice'd render tops the cache up to cache_target. Outside the repo.
+    loop_player: "ffplay -nodisp -autoexit -loglevel quiet -loop 0 -af volume=%{volume} %{path}"
+    cache_dir: ~/.master/bed/cache
+    cache_target: 4
+    render_args: ["--render", "--no-video", "--bpm", "82", "--beats", "4", "--voicing", "so_what",
+                  "--drums", "dusty_laid_back", "--profile", "dilla_shadow", "--groove", "1.2", "--mode", "pad",
+                  "--patch-per-chord", "--echo", "1,2",
+                  "--vcs", "0.5", "--tape", "3", "--sonitex"]
     progressions: [9, 11, 12, 13, 14, 15]
     args: ["--play", "--bpm", "82", "--beats", "4", "--voicing", "so_what", "--drums", "dusty_laid_back",
            "--profile", "dilla_shadow", "--groove", "1.2", "--mode", "pad", "--patch-per-chord", "--echo", "1,2"]

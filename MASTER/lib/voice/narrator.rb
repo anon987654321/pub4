@@ -173,7 +173,7 @@ module Master
       # One step of the story. Returns what it did: :spoken, or why not.
       def tick(now = @clock.call)
         return :off unless enabled?
-        return :held if now < @held_until
+        return :held if now < @held_until || Playback.external_speaking?
 
         queued = @backlog.call
         job = @lock.synchronize { plan(now, queued) }

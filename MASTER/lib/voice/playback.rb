@@ -44,6 +44,9 @@ module Master
       @queue = nil
       @worker = nil
       @lock = Mutex.new
+      @external_lock = Mutex.new
+      @external_count = 0
+      EXTERNAL_WAIT_S = 90
       @warned = Set.new
       @pending = nil
       @last_said = nil
@@ -599,6 +602,7 @@ def decode_job(job)
       end
 
       def consume_prepared(prepared)
+        wait_for_external_speech
         return consume_stream_prepared(prepared) if prepared.is_a?(StreamingPrepared)
         return false unless prepared&.path && generation_active?(prepared.generation)
 
@@ -607,6 +611,22 @@ def decode_job(job)
         end
         spoken(prepared.text) if prepared.last && generation_active?(prepared.generation)
         true
+      end
+
+      # Another mouth (the face stage) owns the speaker while it speaks; the queue waits its turn, so two
+      # voices never play at once. Bounded, so a mouth that died holding the speaker cannot silence the queue.
+      def external_speech
+        @external_lock.synchronize { @external_count += 1 }
+        yield
+      ensure
+        @external_lock.synchronize { @external_count -= 1 }
+      end
+
+      def external_speaking? = @external_lock.synchronize { @external_count.positive? }
+
+      def wait_for_external_speech(limit_s: EXTERNAL_WAIT_S)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + limit_s
+        sleep(0.1) while external_speaking? && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
       end
 
       def playback_failed!

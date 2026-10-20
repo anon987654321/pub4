@@ -13,6 +13,14 @@ module Master
       # loudness in twentieths of a second, read before playback starts; with
       # no ffmpeg the mouth moves on a timer instead.
       class Mouth
+        # The mouth plays on its own player, so while it speaks the shared speech queue and the bard wait:
+        # two voices never play at once.
+        module ExternalSpeech
+          def say(*, **, &) = Master::Voice::Playback.external_speech { super }
+        end
+
+        prepend ExternalSpeech
+
         FRAME_S = 0.05
         RATE = 4_000
         # Without an envelope a termux-media-player take has no known length,
