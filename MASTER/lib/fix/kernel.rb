@@ -3,7 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "securerandom"
 require "tempfile"
 require "time"
@@ -475,7 +475,7 @@ module Master
                                                         File.file?(File.join(@workspace_root, ".git"))
 
         target_relative = relative(@workspace_root, target)
-        output, error, status = Open3.capture3(
+        output, error, status = Master::Io::Exec.capture3(
           "git", "-C", @workspace_root, "diff", "--name-status", "-z", "--no-renames", "HEAD", "--",
           target_relative.empty? ? "." : target_relative
         )
@@ -518,7 +518,7 @@ module Master
         return unless File.directory?(File.join(@workspace_root, ".git")) || File.file?(File.join(@workspace_root, ".git"))
 
         relative_path = relative(@workspace_root, path)
-        output, _error, status = Open3.capture3("git", "-C", @workspace_root, "show", "HEAD:#{relative_path}")
+        output, _error, status = Master::Io::Exec.capture3("git", "-C", @workspace_root, "show", "HEAD:#{relative_path}")
         status.success? ? output : nil
       end
 
@@ -563,7 +563,7 @@ module Master
             new_file.write(after)
             old_file.flush
             new_file.flush
-            output, error, status = Open3.capture3(
+            output, error, status = Master::Io::Exec.capture3(
               "diff", "-u", "-L", "a/#{path}", "-L", "b/#{path}", old_file.path, new_file.path
             )
             raise "diff failed: #{error.to_s.strip}" if status.exitstatus && status.exitstatus > 1
