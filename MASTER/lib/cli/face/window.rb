@@ -21,8 +21,10 @@ module Master
         EXIT_WORDS = %w[/exit /quit exit quit].freeze
         DIM = "\e[2m"
         PLAIN = "\e[0m"
-        ACCENT = "\e[38;2;130;211;255m"
-        COOL = "\e[38;2;194;224;255m"
+        # Neutral phosphor keeps the terminal face in the browser's restrained
+        # particle-stipple palette.
+        ACCENT = "\e[38;2;224;229;238m"
+        COOL = "\e[38;2;164;174;190m"
 
         WORDS = %w[/face face].freeze
         MESSAGE_FLAGS = %w[-m -p --message --prompt].freeze
@@ -85,11 +87,32 @@ module Master
           painter = Thread.new { paint_forever }
           raw { converse }
           "face0: closed"
+        rescue EOFError, IOError, SystemCallError
+          "face0: terminal closed"
         ensure
-          painter&.kill
+          # Shutdown is a lifecycle boundary for every reader and painter.
+          # Stop microphone capture cooperatively; then bound joins so a closed
+          # tty cannot leave an orphaned thread behind.
+          @closing = true
+          @halt_ear = true
+          hearing = @hearing
+          if hearing&.alive?
+            hearing.join(0.25)
+            hearing.kill if hearing.alive?
+            hearing.join(0.1)
+          end
+          if painter&.alive?
+            painter.kill
+            painter.join(0.1)
+          end
           unsubscribe_from_bus
-          @output.print("#{PLAIN}\e[?25h\e[?1049l")
-          @output.flush
+          begin
+            @output.print("#{PLAIN}\e[?25h\e[?1049l")
+            @output.flush
+          rescue IOError, SystemCallError
+            # Terminal restoration is best-effort after its descriptor closes.
+            nil
+          end
         end
 
         # One whole window as the escape sequences that draw it, t seconds
@@ -138,7 +161,7 @@ module Master
           painted = body.each_with_index.map do |line, i|
             "\e[#{i + 1};1H#{line}\e[K"
           end.join
-          cursor_column = [draft.length + Master::Face::Contract.user_token.length + 2, cols].min
+          cursor_column = [draft.length + Master::Face::Contract.shell_prompt.length + 1, cols].min
           "\e[?25l#{painted}\e[#{prompt_row};#{cursor_column}H\e[?25h"
         end
 
@@ -154,6 +177,8 @@ module Master
             @output.flush
             sleep 1.0 / Face::FPS
           end
+        rescue IOError, SystemCallError
+          @closing = true
         end
 
         def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -432,7 +457,9 @@ module Master
 
           key = @input.getch
           key.nil? ? :eof : key
-        rescue EOFError
+        rescue EOFError, IOError, SystemCallError
+          # A stream can close after readiness polling but before getch.
+          # Treat it as EOF so every consumer follows the normal leave path.
           :eof
         end
 
@@ -498,10 +525,10 @@ module Master
 
         def heading(state, color:)
           mic = mic_label
-          label = "MASTER · face0 at master0: #{state}, #{mic}"
+          label = "MASTER face0 at master0: #{state}, #{mic}"
           return label unless color
 
-          "#{ACCENT}MASTER#{PLAIN} #{DIM}·#{PLAIN} #{DIM}face0 at master0:#{PLAIN} #{COOL}#{state}#{PLAIN}#{DIM},#{PLAIN} #{COOL}#{mic}#{PLAIN}"
+          "#{ACCENT}MASTER#{PLAIN} #{DIM}face0 at master0:#{PLAIN} #{COOL}#{state}#{PLAIN}#{DIM},#{PLAIN} #{COOL}#{mic}#{PLAIN}"
         end
 
         def status(state)
@@ -511,7 +538,7 @@ module Master
 
         def prompt_line(draft, cols, color:)
           line = typed(draft, cols)
-          token = "#{Master::Face::Contract.user_token} "
+          token = "#{Master::Face::Contract.shell_prompt} "
           return line unless color && line.start_with?(token)
 
           "#{ACCENT}#{token}#{PLAIN}#{line.delete_prefix(token)}"
@@ -519,7 +546,7 @@ module Master
 
         # The end of the line being typed, which is the part being typed into.
         def typed(draft, cols)
-          line = "#{Master::Face::Contract.user_token} #{draft}"
+          line = "#{Master::Face::Contract.shell_prompt} #{draft}"
           line.length > cols ? line[-cols..] : line
         end
 
