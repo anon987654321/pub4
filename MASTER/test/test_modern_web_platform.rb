@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "open3"
 require "master"
 require_relative "../lib/fix/visual_pass"
 # VisualPass#run loads the probe only when it runs; capture_resting needs it here.
@@ -41,6 +42,31 @@ class TestModernWebPlatformEvidence < Minitest::Test
     payload = Deploy::WebPlatformProbe.run(mobile, Surface.new(id: "m", viewport: "mobile"))
     assert_equal true, payload["disclosure"]
     assert_equal [:evaluate], mobile.calls, "the probe did more than read the page"
+  end
+
+
+  def test_geometry_walk_marks_only_rectangles_intersecting_viewport
+    expression = Deploy::GeometryProbe::WALK[/onscreen:\\s*(.+?),\\s*\\n\\s*hit:/m, 1]
+    refute_nil expression, "geometry walk must expose its viewport-intersection predicate"
+
+    script = <<~JS
+      const onscreen = (r, vw, vh) => (#{expression});
+      const cases = [
+        [{ left: 10, right: 90, top: 10, bottom: 40 }, 100, 100, true],
+        [{ left: 10, right: 90, top: 110, bottom: 140 }, 100, 100, false],
+        [{ left: 10, right: 90, top: -20, bottom: 10 }, 100, 100, true],
+        [{ left: -20, right: 10, top: 10, bottom: 40 }, 100, 100, true],
+        [{ left: 110, right: 140, top: 10, bottom: 40 }, 100, 100, false],
+        [{ left: 10, right: 90, top: -140, bottom: -110 }, 100, 100, false]
+      ];
+      for (const [rect, width, height, expected] of cases) {
+        if (Boolean(onscreen(rect, width, height)) !== expected) process.exit(1);
+      }
+    JS
+    _stdout, stderr, status = Open3.capture3("node", "-e", script)
+    assert status.success?, "viewport intersection cases failed: #{stderr}"
+  rescue Errno::ENOENT
+    skip "node is unavailable; JavaScript viewport predicate not executed"
   end
 
   def test_visual_pass_feeds_platform_evidence_into_review
