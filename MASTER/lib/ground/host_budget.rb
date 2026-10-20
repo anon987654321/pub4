@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 require_relative "../trace/dmesg"
 
 module Master
@@ -80,7 +80,7 @@ module Master
       def suspended_ruby_pids(user: ENV["USER"])
         return [] unless user && !user.empty?
 
-        out, _status = Open3.capture2("ps", "x", "-o", "pid=,stat=,command=", "-U", user)
+        out, _status = Master::Io::Exec.capture2("ps", "x", "-o", "pid=,stat=,command=", "-U", user)
         out.each_line.filter_map do |line|
           pid, stat, *cmd = line.split
           next unless stat&.include?("T")

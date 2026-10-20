@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "io/exec"
 require "time"
 
 module Master
@@ -170,7 +170,7 @@ module Master
       end
 
       def git_head(root)
-        stdout, status = Open3.capture2("git", "-C", repo_root(root), "rev-parse", "HEAD")
+        stdout, status = Master::Io::Exec.capture2("git", "-C", repo_root(root), "rev-parse", "HEAD")
         status.success? ? stdout.strip : nil
       rescue SystemCallError
         nil

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../../io/exec"
 
 module Master
   module Fix
@@ -17,7 +17,7 @@ module Master
         def self.rules(repo_root)
           rails = File.join(repo_root, "RAILS")
           APPS.to_h do |app|
-            out, err, status = Open3.capture3("npx", "--yes", SASS, "--no-source-map", "--quiet",
+            out, err, status = Master::Io::Exec.capture3("npx", "--yes", SASS, "--no-source-map", "--quiet",
                                               "--load-path=#{app}/app/assets/stylesheets",
                                               "--load-path=shared/app/assets/stylesheets",
                                               "#{app}/app/assets/stylesheets/application.scss", chdir: rails)
