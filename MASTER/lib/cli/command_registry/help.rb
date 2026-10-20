@@ -56,10 +56,10 @@ module Master
         "play" => {
 summary: "play the curated Blue Hour Dilla showcase or a named progression through the canonical effects rig",
 detail: [
-  "/play — the curated Blue Hour Dilla showcase, with sections at 92–116 BPM, the full dust kit, analogue tape, dub echo and crystallizer.",
+  "/play — render and play the canonical Blue Hour Dilla showcase through the same arrangement and effects pipeline as ruby STUDIO/dilla/dilla.rb; video encoding is skipped.",
   "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
   "Bare /play renders the same arrangement as `ruby STUDIO/dilla/dilla.rb`; named progression requests use the Dilla pocket at 92 BPM unless an explicit or reference tempo applies.",
-  "A render lands in the dated dilla-renders folder under your documents and is never written over.",
+  "Each audition writes a distinct dated WAV and leaves reference dilla.wav and dilla_norsk.wav untouched.",
 ],
         },
         "screen" => {
@@ -264,8 +264,9 @@ detail: [
           detail: [
             "/face — open the MASTER face in the alternate terminal screen, as large as the terminal allows.",
             "/face size auto|small|large|WxH — choose the face's size (WxH is columns by rows) and open it; the choice holds for the session.",
-            "bin/master starts in the shell; /face opens this stage. Ctrl-D or /exit returns to the shell.",
-            "MASTER_FACE_ON_START=1 opens on the face at start. /fix and the other long commands run from the shell.",
+            "A bare interactive bin/master opens here by default; Ctrl-D or /exit returns to the shared Ruby REPL.",
+            "The web chat and terminal share the location-aware Operator prompt, TurnRouter and command registry.",
+            "MASTER_FACE_ON_START=0 opts out. /fix and other long commands run on the shell surface.",
             "While idle it listens through the microphone and says so on its status line (mic on).",
             "Type to take the floor.",
             "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",
