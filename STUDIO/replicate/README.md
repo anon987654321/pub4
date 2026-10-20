@@ -127,6 +127,16 @@ not been independently established for those entries. Do not treat a catalogue k
 feature. Provider request support is defined separately by `MODEL_CAPABILITIES`, the offline
 `vocab-check`, and the credentialed `rake replicate:schema_audit`.
 
+## External discovery and creative providers
+
+The model catalogue is deliberately provider-neutral. Two external resources are useful at different stages, but neither is a substitute for the existing Replicate client.
+
+[OpenArt MCP and CLI](https://openart.ai/mcp/) exposes image and video generation, model discovery, references, result tracking, and an account library to an explicitly authenticated agent. The documented MCP endpoint is `https://mcp.openart.ai/mcp`; sign-in uses OAuth, and generations spend credits from the connected OpenArt account. Its [official CLI source](https://github.com/OpenArt-AI/cli) is another local integration route. Treat OpenArt as an optional, user-authorized creative provider for reference boards, consistent character exploration, image-to-video experiments, and music-video concepts—not as a hidden default or a free backend. Keep credentials outside the repository, make credit-bearing calls explicit, and preserve the user's reference assets and approval boundary. Review the installer and pin a reviewed release before adopting the CLI; do not pipe a remote install script directly into a shell on hardened hosts.
+
+[GitHub Signals](https://githubsignals.io/) is a searchable open-source project index with topic pages, direct upstream links, and public CSV/RSS exports ([CSV](https://githubsignals.io/export.csv), [RSS](https://githubsignals.io/feed.xml)). Use it as a discovery feed for image, audio, video, 3D, agent, and model tooling—not as an authority on quality, licence, safety, or compatibility. The archive can suggest candidates for Replicate catalog and chain work, while the upstream repository remains the source of truth.
+
+A safe intake path is: record the discovery URL and date; inspect the upstream source, licence, recent maintenance, dependency tree, and model/data terms; run a dry-run or schema test; pin the exact revision or model version; then add only verified capabilities to this tool's catalogue and provenance records. A listing, README, social video, or generated demo is a lead, not evidence that the software or model is ready for production. Discovery must not install or execute projects, spend credits, download model weights, or change the default provider by itself.
+
 ## Commands
 
 Run these from the repository root. The last two need a token and the network.
