@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../ast_fixer"
+require_relative "ast_fixer"
 require_relative "../write_guard"
 require_relative "../autofix_guard"
 

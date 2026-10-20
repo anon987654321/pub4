@@ -4,7 +4,7 @@ require_relative "../io/exec"
 require "timeout"
 require "tempfile"
 require "prism"
-require_relative "ast_fixer"
+require_relative "scan/ast_fixer"
 require_relative "execution_snapshot"
 require_relative "../boot/paths"
 
