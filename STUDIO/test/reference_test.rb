@@ -30,6 +30,7 @@ class DillaReferenceTest < Minitest::Test
       out, err, status = Open3.capture3(RbConfig.ruby, SCRIPT, *args, chdir: DIR)
       assert status.success?, "#{args.first} --help failed: #{out}\n#{err}"
       assert_match(/Usage: ruby dilla\.rb/, out)
+      assert_includes out, "--no-libsonare" if args.first == "reference"
     end
   end
 
