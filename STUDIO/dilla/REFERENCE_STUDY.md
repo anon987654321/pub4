@@ -50,6 +50,23 @@ The transferable idea is not “find a soul loop and add vinyl noise.” A chopp
 
 Dilla's work spans many sources, years, collaborators, and mastering conditions. The supplied compilations therefore cannot justify a single fixed EQ curve or a universal “lo-fi” chain. Compare the low-frequency punch, midrange sample intelligibility, hat/transient edge, stereo field, envelope, and noise floor separately. A worn sample texture can coexist with a clean kick transient; a mellow sample does not require every channel to be dark; adding hiss cannot repair a weak groove.
 
+## Evidence hierarchy and common imitation traps
+
+### Do not turn an anecdote into a timing preset
+
+Dan Charnas's interview discusses a possible shift around 1997–1998 toward independent swing and note-shift timing, using Another Batch as an example. Importantly, Charnas also says he wishes he had more authoritative evidence about the exact equipment chronology. Keep that uncertainty in view: it is useful historical context, not permission to assign a particular sampler to every track.
+
+The DJ Mag account of “Don't Say A Word” describes straight hi-hats with an early snare creating a groove that initially sounds swung. That is a concrete, testable example of the main hypothesis here: the relationship between lanes matters more than a universal late-hat or late-snare recipe.
+
+Recent producer discussions show why community advice should be treated as exploratory. In one thread, commenters suggest early snares and late offbeat hats, then immediately disagree about whether snares can also be late or move both ways within a phrase. Another describes cutting audio at drum-hit boundaries and replaying those pieces in a new rhythm. A separate discussion of “Don't Cry” emphasizes that chopped fragments still need to form a coherent, singable melody. These are useful experiments and listening prompts, not verified descriptions of either supplied mix.
+
+### Microtiming is not a quality dial
+
+The study “Does it Swing? Microtiming Deviations and Swing Feeling in Jazz” manipulated the natural deviations of twelve piano jazz standards and surveyed 160 listeners. In that experiment, naturally fluctuating deviations were not essential for perceived swing; expanded deviations were rated lower, and quantized versions were rated slightly higher than the originals. This is not a hip-hop experiment and cannot settle how any J Dilla recording works. It does, however, reject the generic assumption that more random timing error always creates more groove. The correct engineering response is to compare repeatable, constrained variations against a timing-stable control and evaluate the actual audio.
+
+### The sample must make musical sense after the edit
+
+Community listening advice and the Donuts sampling thesis converge on a compositional point: the cuts matter because their new order creates a phrase. A sample sliced only at transients can still sound like unrelated fragments if the pitch contour, harmonic tension, phrase endings, and rhythmic answers do not cohere. Analyze phrase function and the interaction between sample rhythm and drums before adding more chops or effects.
 ## Concrete measurement protocol
 
 Run this on a small, provenance-checked set of bounded audio excerpts first. Keep the raw analysis JSON and source fingerprints next to every summary so the results can be reproduced.
@@ -92,3 +109,8 @@ For the two supplied mixes specifically, the next executable step is to obtain b
 - [DJ Mag: D is for Dilla — the life and legacy of a hip-hop phenomenon](https://djmag.com/features/d-dilla-life-and-legacy-of-hip-hop-phenomenon)
 - [MPC Forums: 2004 Jay Dee interview transcript](https://www.mpc-forums.com/viewtopic.php?p=142320)
 - [Zachary Diaz, Analysis of Sampling Techniques by J Dilla in Donuts (2018)](https://scholarworks.sfasu.edu/etds/197/)
+- [Dan Charnas interview, Passion of the Weiss: Dilla Time and independent swing/shift timing](https://www.powmag.net/p/an-interview-with-dan-charnas-author-of-the-new-book-dilla-time)
+- [Datseris et al., Does it Swing? Microtiming Deviations and Swing Feeling in Jazz (2019)](https://arxiv.org/abs/1904.03442)
+- [Reddit community discussion: How to make J Dilla swing in Logic Pro (2025; conflicting heuristics, anecdotal)](https://www.reddit.com/r/makinghiphop/comments/1j6tg8s/)
+- [Reddit community discussion: how Dilla-style chops stay coherent (2023; listener interpretation)](https://www.reddit.com/r/makinghiphop/comments/162v6ae/)
+- [Reddit community discussion: chopping a sample on drum-hit boundaries and re-sequencing it (2022; producer anecdote)](https://www.reddit.com/r/makinghiphop/comments/yeotnh/)
