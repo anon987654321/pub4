@@ -8,8 +8,18 @@ module Master
       class Script
         UNIT_PREFIX = /\A[-\s]*[\w.\-]+\d+(?: at [\w.\-]+)?:\s*/
 
-        def self.load(path = nil)
-          new(Master.load_yaml(path || Master.data_path("narration.yml"), default: {}) || {})
+        # Layers, later over earlier: a path that adds to the factual script (the bard) replaces the
+        # keys it names and merges the maps `beats` and `templates` beat by beat.
+        def self.load(*paths)
+          paths = [Master.data_path("narration.yml")] if paths.empty?
+          layers = paths.map { |path| Master.load_yaml(path, default: {}) || {} }
+          new(layers.reduce { |base, overlay| merge(base, overlay) })
+        end
+
+        def self.merge(base, overlay)
+          base.merge(overlay) do |key, old, new|
+            %w[beats templates].include?(key) ? old.merge(new) : new
+          end
         end
 
         def initialize(data)
@@ -21,6 +31,7 @@ module Master
         attr_reader :redact, :spoken
 
         def system_prompt = @data.fetch("system", "").to_s
+        def register_words = Array(@data["register_words"]).map { |word| word.to_s.downcase }
         def prompt_template = @data.fetch("prompt", "").to_s
         def beat_instruction(kind) = @data.dig("beats", kind.to_s).to_s
 

@@ -22,6 +22,10 @@ module Master
     #
     # Knobs are in voice.yml under `narration:`. Off: enabled: false there,
     # MASTER_NARRATE=0, or /narrate off. Off means Dmesg speaks its plain line.
+    #
+    # The same class is the bard when built with voice: :bard: data/bard.yml laid over narration.yml
+    # and voice.yml bard: over narration:. The bard is on by default and the one that speaks; off
+    # (enabled: false under bard:, MASTER_BARD=0, /bard off) hands the story to the factual narrator.
     class Narrator
       Event = Data.define(:text, :raw, :at, :closing, :finding, :incomplete)
 
@@ -48,9 +52,10 @@ module Master
       attr_reader :calls, :cost_usd, :beats
 
       def initialize(config: nil, script: nil, writer: nil, speaker: nil, backlog: nil, audible: nil,
-                     clock: nil, env: ENV, autostart: false)
-        @config = config || self.class.load_config
-        @script = script || Script.load
+                     clock: nil, env: ENV, autostart: false, voice: :narrator)
+        @voice = voice
+        @config = config || self.class.load_config(voice)
+        @script = script || Script.load(*self.class.script_paths(voice))
         @writer = writer || LaneWriter.new(@config)
         @speaker = speaker || method(:speak_to_playback)
         @backlog = backlog || -> { Playback.backlog }
@@ -71,33 +76,47 @@ module Master
       end
 
       class << self
-        def load_config
+        # The bard's knobs lie over the narrator's; only what differs is written under `bard:`.
+        def load_config(voice = :narrator)
           row = Master.load_yaml(Master.data_path("voice.yml"), default: {}) || {}
-          row["narration"].is_a?(Hash) ? row["narration"] : {}
+          narration = row["narration"].is_a?(Hash) ? row["narration"] : {}
+          bard = row["bard"].is_a?(Hash) ? row["bard"] : {}
+          voice == :bard ? narration.merge(bard) : narration
         end
 
-        def instance = (@instance ||= new(autostart: true))
+        # The bard's script lies over the factual one, so the filters have one copy.
+        def script_paths(voice = :narrator)
+          [Master.data_path("narration.yml"), *(Master.data_path("bard.yml") if voice == :bard)]
+        end
+
+        def instance(voice = :narrator) = ((@instances ||= {})[voice] ||= new(voice:, autostart: true))
 
         def reset_instance!
-          @instance&.stop
-          @instance = nil
+          @instances&.each_value(&:stop)
+          @instances = nil
+        end
+
+        # The one teller of the story: the bard when it is on, else the factual narrator, else none.
+        def teller
+          %i[bard narrator].map { |voice| instance(voice) }.find { |told| told.enabled? && told.audible? }
         end
 
         # Dmesg asks this per line: is the story the voice for this line?
-        def narrating? = instance.enabled? && instance.audible?
+        def narrating? = !teller.nil?
 
-        def observe(text) = narrating? ? instance.observe(text) : false
+        def observe(text) = teller&.observe(text) || false
 
         # The user took the floor: drop what is waiting and stay quiet a while.
-        def interrupted! = @instance&.interrupt
+        def interrupted! = @instances&.each_value(&:interrupt)
 
         # A reply is about to be spoken; it says what the pending events would.
-        def reply_started! = @instance&.halt!
+        def reply_started! = @instances&.each_value(&:halt!)
       end
 
       def enabled?
         return @override unless @override.nil?
         return false if FALSE_VALUES.include?(@env["MASTER_NARRATE"].to_s.strip.downcase)
+        return false if @voice == :bard && FALSE_VALUES.include?(@env["MASTER_BARD"].to_s.strip.downcase)
 
         @config["enabled"] == true
       end
@@ -363,6 +382,7 @@ module Master
       def grounding_terms(text)
         text.to_s.downcase.scan(/[a-z]{3,}/).filter_map do |word|
           next if GROUNDING_STOP_WORDS.include?(word) || GROUNDING_CONTEXT_WORDS.include?(word)
+          next if @script.register_words.include?(word)
 
           term = word.sub(/ies\z/, "y").sub(/s\z/, "").sub(/ing\z/, "").sub(/ed\z/, "")
           next if term.length < 3 || GROUNDING_STOP_WORDS.include?(term) || GROUNDING_CONTEXT_WORDS.include?(term)
@@ -413,7 +433,13 @@ module Master
       end
 
       def speak_to_playback(sentence)
-        Playback.enqueue(sentence, style: :neutral, rate: presence(@config["rate"]), pitch: presence(@config["pitch"]), last: true)
+        Playback.enqueue(sentence, **delivery)
+      end
+
+      # Delivery is data: voice.yml's section for this register names the voice, style, rate and pitch.
+      def delivery
+        { voice: presence(@config["voice"])&.to_sym, style: (presence(@config["style"]) || :neutral).to_sym,
+          rate: presence(@config["rate"]), pitch: presence(@config["pitch"]), last: true }.compact
       end
 
       def presence(value) = value.to_s.strip.empty? ? nil : value.to_s.strip

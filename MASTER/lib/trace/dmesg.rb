@@ -279,8 +279,8 @@ module Master
         nil
       end
 
-      # Story narration is the default voice for what the runtime prints; the
-      # Narrator decides what is worth telling and when (voice.yml narration).
+      # The story is the default voice for what the runtime prints; the Narrator picks its teller,
+      # the bard or the factual voice, which decides what is worth telling and when.
       def narrate(text)
         defined?(Master::Voice::Narrator) && Master::Voice::Narrator.observe(text)
       rescue StandardError => e

@@ -16,6 +16,7 @@ _operator() {
     'worktree:refused, this repository writes straight to main'
     'laws:one law, its exemption, and what it finds'
     'branches:every branch against main, to delete the merged ones'
+    'brief:the authority chain, the mechanical guards and the top-ranked Laws, before the first edit'
     'design:screenshot, edit one layout rule, keep it only if it measures better'
     'doctor:the environment traps, checked in seconds'
     'event-bus:census Ruby publishers and subscribers and browser events'

@@ -50,6 +50,7 @@ module Master
           "doctor" => command(:dispatch_doctor, root),
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
           "narrate" => Command.new { |ctx| dispatch_narrate(ctx:) },
+          "bard" => Command.new { |context| dispatch_bard(context:) },
           "laws" => command(:dispatch_laws, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
@@ -360,9 +361,11 @@ module Master
         narrator = Voice::Narrator.instance
         case arg_for(ctx).downcase
         when "on"
+          Voice::Narrator.instance(:bard).disable!
           narrator.enable!
-          "narr0 at voice0: on, MASTER tells what it does as one running story"
+          "narr0 at voice0: on, MASTER tells what it does as one running story, plainly"
         when "off"
+          Voice::Narrator.instance(:bard).disable!
           narrator.disable!
           Voice::Playback.interrupt!("narration off")
           "narr0 at voice0: off, plain one-line speech"
@@ -373,6 +376,33 @@ module Master
         end
       rescue StandardError => e
         "narr0 at voice0: failed, #{e.class}: #{e.message}"
+      end
+
+      # The lyrical teller of the story, on by default. On makes it the one voice that speaks; off
+      # hands the story back to the plain narrator.
+      def dispatch_bard(context: nil)
+        bard = Voice::Narrator.instance(:bard)
+
+        case arg_for(context).downcase
+        when "on", "off" then bard_switch(bard, enable: arg_for(context).casecmp?("on"))
+        when "", "status" then narration_status(bard.status).sub("narr0", "bard0")
+        else "bard  bard on  bard off  bard status"
+        end
+      rescue StandardError => e
+        "bard0 at voice0: failed, #{e.class}: #{e.message}"
+      end
+
+      def bard_switch(bard, enable:)
+        if enable
+          Voice::Narrator.instance.disable!
+          bard.enable!
+          return "bard0 at voice0: on, MASTER sings what it does as one continuous song"
+        end
+
+        bard.disable!
+        Voice::Narrator.instance.enable!
+        Voice::Playback.interrupt!("bard off")
+        "bard0 at voice0: off, the plain narrator tells the story"
       end
 
       def narration_status(state)

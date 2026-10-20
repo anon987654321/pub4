@@ -166,6 +166,13 @@ detail: [
                    "/narrate on|off — tell the work as one running story, or fall back to plain one-line speech.",
                    "Pacing, caps and the model lane are in data/voice.yml under narration; MASTER_NARRATE=0 turns it off for a run."],
         },
+        "bard" => {
+          summary: "lyrical telling of what MASTER is doing, on by default",
+          detail: ["/bard — state, beats told, model or template, cost against the cap.",
+                   "/bard on|off — sing the work as one continuous song, or hand it back to the plain /narrate voice.",
+                   "One teller speaks at a time. data/bard.yml lays the lyrical script over data/narration.yml; " \
+                   "MASTER_BARD=0 turns it off for a run."],
+        },
         "help" => {
           summary: "this list",
           detail: ["/help", "/help <command>"],
@@ -287,7 +294,8 @@ detail: [
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",
         "orders" => "change", "wishlist" => "change",
-        "face" => "interface", "voice" => "interface", "narrate" => "interface", "size" => "interface",
+        "face" => "interface", "voice" => "interface", "narrate" => "interface", "bard" => "interface",
+        "size" => "interface",
         "play" => "media", "android" => "media", "ios" => "media",
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session",
       }.freeze
