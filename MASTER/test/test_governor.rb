@@ -28,4 +28,17 @@ class GovernorTest < Minitest::Test
   ensure
     Fiber[:master_terminal_ask] = nil
   end
+  def test_the_rate_ceiling_comes_from_the_data_and_is_not_three_a_minute
+    assert_operator Master::Fix::Governor.rate_limits.fetch("dangerous"), :>, 10
+  end
+
+  def test_a_call_over_the_ceiling_is_refused
+    governor = Master::Fix::Governor.new(config: Config.new(true))
+
+    Master::Fix::Governor.stub(:rate_limits, { "dangerous" => 2 }) do
+      results = Array.new(3) { governor.check_permit("zsh", :dangerous, "ls") }
+
+      assert_equal %i[ok ok rate_limit], results.map { |result| result.ok? ? :ok : result.category }
+    end
+  end
 end

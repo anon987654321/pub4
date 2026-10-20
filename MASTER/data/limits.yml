@@ -1133,3 +1133,9 @@ orientation:
   read_in_full: >-
     read each important file whole with the file tool before judging it; a search for a string is not a
     reading, and an empty result proves nothing until the search is shown to find a known line.
+
+governor:
+  # Calls a minute per tool tier; a ceiling against a runaway loop. Absent means no limit.
+  rate_limits:
+    guarded: 240
+    dangerous: 120

@@ -8,8 +8,11 @@ module Master
       RATE_WINDOW = 60.0
       TIERS = { safe: 0, guarded: 1, dangerous: 2 }.freeze
 
-      # Sliding-window rate limits per tier (calls per minute).
-      TIER_RATE_LIMITS = { guarded: 10, dangerous: 3 }.freeze
+      # Sliding-window rate limits per tier (calls per minute), from limits.yml governor.rate_limits. They guard
+      # against a runaway loop, not against work: three shell calls a minute made an analysis impossible.
+      def self.rate_limits
+        Master.load_yaml(Master.limits_path, default: {}).dig("governor", "rate_limits") || {}
+      end
 
       def initialize(config:, event_bus: nil)
         @config = config
@@ -75,7 +78,7 @@ module Master
       end
 
       def check_rate_limit!(tier)
-        limit = TIER_RATE_LIMITS[tier]
+        limit = self.class.rate_limits[tier.to_s]
         return unless limit
         now = Time.now.to_f
         @rate_mutex.synchronize do
