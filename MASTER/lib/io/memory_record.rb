@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../ground/personal_workspace"
 
 module Master
   module Io
@@ -31,15 +32,31 @@ module Master
         end
 
         if subject.strip != ""
+          unless Master::Ground::PersonalWorkspace.permission_granted?(root: @root, subject:)
+            return Result.err(
+              "memory_record: personal profile and memory are disabled; use /privacy grant personal_memory in the local paired session",
+              category: :policy,
+            )
+          end
+
           path = Master::Ground::PersonalWorkspace.append_memory(root: @root, subject:, key:, body:, type:)
           @bus&.publish("memory:record", key:, type:, path: relative(path), paired: true)
           return Result.ok("memory_record: #{relative(path)}")
+        end
+
+        if type == "user"
+          return Result.err(
+            "memory_record: personal facts require a paired subject; refusing to write them to shared project_context.yml",
+            category: :policy,
+          )
         end
 
         path = persist_context(key:, description:, type:, body:)
         @memory&.remember("claude/#{key}", body.to_s.strip, type:)
         @bus&.publish("memory:record", key:, type:, path: relative(path))
         Result.ok("memory_record: #{relative(path)}")
+      rescue Master::Ground::PersonalWorkspace::PermissionDenied => e
+        Result.err("memory_record: #{e.message}", category: :policy)
       rescue StandardError => e
         Result.err("memory_record: #{e.message}", category: :unknown)
       end
