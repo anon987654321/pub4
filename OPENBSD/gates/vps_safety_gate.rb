@@ -153,7 +153,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                     admin.include?("SERVICES")
   failures << "pub4-admin must be a fixed-path closed broker" unless broker_contract
   task_app_scope = admin.include?("known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS") &&
-                   admin.include?("RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze")
+                   admin.include?("RAILS_TASK_APPS = %w[master brgen bsdports].freeze")
   failures << "pub4-admin must validate each helper against its own app allowlist" unless task_app_scope
   safe_spawn = admin.include?('Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)') &&
                admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK, RAILS_SYNC].include?(helper)') &&
@@ -171,7 +171,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   sync_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-sync.ksh")
   if File.file?(sync_path)
     sync = File.read(sync_path)
-    sync_contract = sync.include?("brgen|amber|bsdports") &&
+    sync_contract = sync.include?("brgen|bsdports") &&
                     sync.include?('repo=/home/dev/pub4') &&
                     sync.include?('[ "$(id -un)" = "$app" ]') &&
                     sync.include?('tar xf - -C "$app_dir"') &&
@@ -194,7 +194,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   end
   if File.file?(prepare_path)
     prepare = File.read(prepare_path)
-    prepare_contract = prepare.include?("brgen|amber|bsdports") &&
+    prepare_contract = prepare.include?("brgen|bsdports") &&
                        prepare.include?('[ ! -L "$app_home" ]') &&
                        prepare.include?('[ ! -L "$app_dir" ]') &&
                        prepare.include?('[ "$(stat -f %u "$storage")" = "$app_uid" ]') &&
@@ -212,7 +212,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
                               rails_task.include?("export SECRET_KEY_BASE") &&
                               !rails_task.include?('command="SECRET_KEY_BASE=$secret')
     failures << "Rails task secrets must use the child environment, never command arguments" unless rails_task_secret_contract
-    rails_task_contract = rails_task.include?("master|brgen|amber|bsdports") &&
+    rails_task_contract = rails_task.include?("master|brgen|bsdports") &&
                           rails_task.include?("overlay-initializers|overlay-public") &&
                           rails_task.include?("bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci") &&
                           rails_task.include?("bundle-cache-prepare") &&
@@ -249,7 +249,7 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   runner_path = File.join(OPENBSD, "usr", "local", "libexec", "ci-run.ksh")
   if File.file?(runner_path)
     runner = File.read(runner_path)
-    runner_contract = runner.include?("brgen|amber|bsdports") &&
+    runner_contract = runner.include?("brgen|bsdports") &&
                       runner.include?('[ "$timeout" -ge 1 ] && [ "$timeout" -le 7200 ]') &&
                       runner.include?('cd /home/$app/app') &&
                       runner.include?('exec /usr/bin/su -m "$app" -c "$script"') &&
@@ -432,7 +432,7 @@ end
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
 smoke_source = File.read(File.join(OPENBSD, "bin", "deploy-smoke.sh"))
-smoke_contract = smoke_source.include?('case "$svc" in master|brgen|amber|bsdports|relayd)') &&
+smoke_contract = smoke_source.include?('case "$svc" in master|brgen|bsdports|relayd)') &&
                  smoke_source.include?('doas /usr/local/sbin/pub4-admin service check "$svc"') &&
                  smoke_source.include?('if [ -L /usr/local/sbin/pub4-admin ]; then') &&
                  smoke_source.include?("Bootstrap fallback only")
@@ -440,11 +440,11 @@ failures << "deploy-smoke service checks must use the fixed broker and an explic
 install_all_source = File.read(File.join(OPENBSD, "bin", "vps_install_all.sh"))
 install_all_contract = install_all_source.include?("admin_service() {") &&
                        install_all_source.include?('case "$action" in check|start|stop|restart)') &&
-                       install_all_source.include?('case "$service" in master|brgen|amber|bsdports)') &&
+                       install_all_source.include?('case "$service" in master|brgen|bsdports)') &&
                        install_all_source.include?('doas /usr/local/sbin/pub4-admin service "$action" "$service"') &&
                        install_all_source.include?('doas rcctl "$action" "$service"') &&
                        install_all_source.include?("Bootstrap fallback only") &&
-                       install_all_source.include?('case "$app" in brgen|amber|bsdports)')
+                       install_all_source.include?('case "$app" in brgen|bsdports)')
 failures << "vps_install_all service control must be broker-first and app-allowlisted" unless install_all_contract
 deploy_all_source = File.read(File.join(OPENBSD, "bin", "deploy_all.sh"))
 deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${app}') &&
