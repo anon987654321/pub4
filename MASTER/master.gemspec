@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.3"
 
   spec.add_dependency "zeitwerk",   "~> 2.7"
-  spec.add_dependency "ruby_llm", "~> 2.0"
+  spec.add_dependency "ruby_llm", "~> 2.1.0"
   spec.add_dependency "mcp", "~> 1.6"
   spec.add_dependency "event_stream_parser", ">= 1.0"
   spec.add_dependency "faraday", ">= 2.0"

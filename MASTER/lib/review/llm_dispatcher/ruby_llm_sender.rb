@@ -292,6 +292,31 @@ end)
       module ProviderFailure
         private
 
+        # RubyLLM 2.1 normalizes provider HTTP failures into typed classes. Their
+        # class is stronger evidence than provider-specific message wording; CLI,
+        # gateway and older-provider errors still use the established text fallback.
+        RUBY_LLM_ERROR_CATEGORIES = {
+          "RubyLLM::PaymentRequiredError" => :budget,
+          "RubyLLM::RateLimitError" => :rate_limit,
+          "RubyLLM::OverloadedError" => :rate_limit,
+          "RubyLLM::BadRequestError" => :invalid_request,
+          "RubyLLM::ContextLengthExceededError" => :invalid_request,
+          "RubyLLM::UnsupportedAttachmentError" => :invalid_request,
+          "RubyLLM::ModelNotFoundError" => :model_missing,
+          "RubyLLM::UnauthorizedError" => :auth_error,
+          "RubyLLM::ForbiddenError" => :auth_error,
+          "RubyLLM::ServerError" => :provider_error,
+          "RubyLLM::ServiceUnavailableError" => :provider_error,
+        }.freeze
+
+        def ruby_llm_error_category(err)
+          ancestors = err.class.ancestors.filter_map(&:name)
+          RUBY_LLM_ERROR_CATEGORIES.each do |class_name, category|
+            return category if ancestors.include?(class_name)
+          end
+          nil
+        end
+
         # The lane cannot be reached at all: the name did not resolve, no route
         # exists, the connection was refused or the local daemon is down. Each is
         # an unreachable lane (LaneReply reads the same words), and the failover

@@ -256,6 +256,12 @@ module Master
       # and :llm_call_failure is not in fallback_policy.on — classified as
       # :budget / :rate_limit, the chain and the single-shot hop walk on.
       def classified_call_failure(err)
+        native_category = ruby_llm_error_category(err)
+        if native_category
+          category = native_category == :auth_error && !Master.any_api_key_present? ? :no_api_key : native_category
+          return Result.err(redact_secrets(err.message.to_s), category:)
+        end
+
         return Result.err(redact_secrets(err.message.to_s), category: :offline) if offline_error?(err)
         return Result.err(key_refusal(err), category: :no_api_key) if missing_key_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)

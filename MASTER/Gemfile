@@ -10,7 +10,7 @@ gem "yaml"
 # Ruby 4.0 ships json 2.18.0 in the supported runtime line; keep boot on that pre-activated version.
 gem "json", "= 2.18.0"
 
-gem "ruby_llm", "~> 2.0"
+gem "ruby_llm", "~> 2.1.0"
 gem "mcp", "~> 1.6"
 gem "event_stream_parser", ">= 1.0"
 gem "faraday", ">= 2.0"

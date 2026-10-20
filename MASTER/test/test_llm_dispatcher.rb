@@ -196,6 +196,41 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal :offline, dispatcher.send(:classified_call_failure, SocketError.new("Network is unreachable")).category
   end
 
+  def test_ruby_llm_typed_errors_map_to_master_failover_categories
+    dispatcher, = build_dispatcher
+    cases = [
+      [RubyLLM::PaymentRequiredError.new("payment required"), :budget],
+      [RubyLLM::RateLimitError.new("provider rejected the request"), :rate_limit],
+      [RubyLLM::OverloadedError.new("capacity reached"), :rate_limit],
+      [RubyLLM::BadRequestError.new("invalid payload"), :invalid_request],
+      [RubyLLM::ContextLengthExceededError.new("context too long"), :invalid_request],
+      [RubyLLM::UnsupportedAttachmentError.new("unsupported media"), :invalid_request],
+      [RubyLLM::ModelNotFoundError.new("unknown model"), :model_missing],
+      [RubyLLM::ServerError.new("upstream failure"), :provider_error],
+      [RubyLLM::ServiceUnavailableError.new("temporarily unavailable"), :provider_error],
+    ]
+
+    cases.each do |error, expected|
+      result = dispatcher.send(:classified_call_failure, error)
+      assert_equal expected, result.category, error.class.name
+    end
+  end
+
+  def test_ruby_llm_auth_errors_distinguish_missing_keys_from_rejected_keys
+    dispatcher, = build_dispatcher
+    error = RubyLLM::UnauthorizedError.new("credentials rejected")
+
+    with_key = Master.stub(:any_api_key_present?, true) do
+      dispatcher.send(:classified_call_failure, error)
+    end
+    without_key = Master.stub(:any_api_key_present?, false) do
+      dispatcher.send(:classified_call_failure, error)
+    end
+
+    assert_equal :auth_error, with_key.category
+    assert_equal :no_api_key, without_key.category
+  end
+
   def test_invalid_request_uses_a_declared_non_retriable_category
     dispatcher, = build_dispatcher
 
