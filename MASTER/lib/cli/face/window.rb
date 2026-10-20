@@ -199,8 +199,12 @@ module Master
 
         def current_viseme = @viseme || "neutral"
 
-        def arm_ear
+        # The microphone opens on Tab (push to talk). It arms by itself only when face_auto_mic is on (the data,
+        # or MASTER_FACE_AUTO_MIC=1), and then never while the beat or the voice is playing, so it does not
+        # hear MASTER and answer itself.
+        def arm_ear(forced: false)
           return unless @ear.available?
+          return unless forced || auto_mic?
           return if @hearing
           return if @ear_after && Process.clock_gettime(Process::CLOCK_MONOTONIC) < @ear_after
           return unless @lock.synchronize { @state == :idle && @draft.empty? }
@@ -230,6 +234,7 @@ module Master
           # keys still interrupt capture and become the start of the prompt.
           return toggle_law_field if key == @law_toggle_key
           return interrupt_ear(key) if hearing?
+          return arm_ear(forced: true) if key == "\t"
 
           nudge(:key)
           return submit if ENTER.include?(key)
@@ -260,6 +265,19 @@ module Master
         end
 
         def hearing? = @hearing&.alive?
+
+        def auto_mic?
+          return false if ENV["MASTER_FACE_AUTO_MIC"] == "0"
+          return false if Master::Voice::Bed.running? || Master::Voice::Playback.backlog.positive?
+
+          ENV["MASTER_FACE_AUTO_MIC"] == "1" || Master.patterns_config.fetch("cli", {})["face_auto_mic"] == true
+        end
+
+        def mic_label
+          return "mic off" unless @ear.available?
+
+          hearing? ? "mic on" : "mic ready, Tab to talk"
+        end
 
         # Enter ends the take and sends what was heard. A letter ends it too,
         # and that letter is the start of a typed line instead.
@@ -470,7 +488,7 @@ module Master
         def change(&) = @lock.synchronize(&)
 
         def heading(state, color:)
-          mic = @ear.available? ? "mic on" : "mic off"
+          mic = mic_label
           label = "MASTER · face0 at master0: #{state}, #{mic}"
           return label unless color
 
@@ -478,7 +496,7 @@ module Master
         end
 
         def status(state)
-          mic = @ear.available? ? "mic on" : "mic off"
+          mic = mic_label
           "#{state}, #{mic}, #{@law_toggle_label} laws, Enter sends, Ctrl-C interrupts, Ctrl-D quits"
         end
 

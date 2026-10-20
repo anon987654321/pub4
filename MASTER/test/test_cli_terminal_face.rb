@@ -31,12 +31,13 @@ class TestCliTerminalFace < Minitest::Test
   end
 
   def test_the_face_owns_the_stage_and_control_strip
-    painted = rows_of(window.screen(30, 80, 2.0)).values
-    assert painted.any? { |text| text.match?(CONTOUR) }
-    refute painted.any? { |text| text.match?(BRAILLE) }
-    assert painted.any? { |text| text.include?("idle, mic on") }
-    refute painted.any? { |text| text.include?("/ FACE") }
-    refute painted.any? { |text| text.include?("recent") }
+    shown = rows_of(window.screen(30, 80, 2.0)).values.join("\n")
+
+    assert_match CONTOUR, shown
+    refute_match BRAILLE, shown
+    assert_includes shown, "idle, mic ready, Tab to talk"
+    refute_includes shown, "/ FACE"
+    refute_includes shown, "recent"
   end
 
   def test_depth_is_bold_near_and_dim_far_in_colour_terminals
