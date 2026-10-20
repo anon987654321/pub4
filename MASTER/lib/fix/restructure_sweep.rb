@@ -114,7 +114,8 @@ module Master
         each measured regression needs an operation-specific justification, while unmeasured dimensions stay inconclusive.
         A tie keeps the current tree. Approve only a change a maintainer would thank you for.
         Scorecard evidence: %<scorecard>s
-        Answer with exactly one line: APPROVE, or REJECT: <reason>.
+        Answer with exactly one line: APPROVE: <evidence and reasons any measured regressions are acceptable>, or REJECT: <reason>.
+        A bare APPROVE is invalid. If any measured regression lacks an operation-specific justification, reject.
 
         ```diff
         %<diff>s
@@ -401,7 +402,8 @@ module Master
             diff:,
           ),
         ).strip
-        answer.start_with?("APPROVE") ? nil : "review: #{answer.lines.first.to_s.strip[0, 200]}"
+        approval = answer.match(/\AAPPROVE:\s+\S.{19,}\z/)
+        approval ? nil : "review: #{answer.lines.first.to_s.strip[0, 200]}"
       end
 
       def commit_message(problem, plan)

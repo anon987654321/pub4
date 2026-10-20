@@ -363,6 +363,42 @@ class TestRestructure < Minitest::Test
     assert_equal "LIMIT_REACHED", exit_event.last.fetch(:state)
   end
 
+  def test_restructure_review_rejects_bare_approval
+    problem_class = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true)
+    path = File.join(@repo, "MASTER/lib/big.rb")
+    problem = problem_class.new(
+      id: "p-review", findings: [[path, "GOD_CLASS", "line 1: test finding", []]],
+      files: [path], laws: %w[GOD_CLASS], reason: "one finding",
+      confidence: :single, candidate_operations: %w[split],
+    )
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, operation:| "APPROVE" }
+    sweep = Master::Fix::RestructureSweep.new(agent:, repo_root: @repo)
+    plan = Restructure::Plan.parse("SUMMARY: split Big\nOPERATIONS: split\n=== WRITE MASTER/lib/big.rb\nclass Big; end\n=== END\n")
+
+    result = sweep.send(:verdict, problem, plan, "diff", scorecard_before: {})
+
+    assert_match(/review: APPROVE/, result)
+  end
+
+  def test_restructure_review_accepts_approval_with_evidence
+    problem_class = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true)
+    path = File.join(@repo, "MASTER/lib/big.rb")
+    problem = problem_class.new(
+      id: "p-review", findings: [[path, "GOD_CLASS", "line 1: test finding", []]],
+      files: [path], laws: %w[GOD_CLASS], reason: "one finding",
+      confidence: :single, candidate_operations: %w[split],
+    )
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, operation:|
+      "APPROVE: relevant tests passed, the unchanged import paths are recorded, and the file/line scorecard has no unexplained regression"
+    end
+    sweep = Master::Fix::RestructureSweep.new(agent:, repo_root: @repo)
+    plan = Restructure::Plan.parse("SUMMARY: split Big\nOPERATIONS: split\n=== WRITE MASTER/lib/big.rb\nclass Big; end\n=== END\n")
+
+    assert_nil sweep.send(:verdict, problem, plan, "diff", scorecard_before: {})
+  end
+
   def test_candidate_map_scores_actual_findings_without_padding
     big = File.join(@repo, "MASTER/lib/big.rb")
     problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
