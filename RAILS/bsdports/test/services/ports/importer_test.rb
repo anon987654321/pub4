@@ -21,6 +21,48 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     assert_equal "succeeded", result.import_run.status
   end
 
+  test "reimport reconciles removed and retyped dependency edges" do
+    platform = platforms(:openbsd)
+
+    Dir.mktmpdir do |dir|
+      app_makefile = File.join(dir, "devel", "app", "Makefile")
+      library_makefile = File.join(dir, "devel", "library", "Makefile")
+      FileUtils.mkdir_p(File.dirname(app_makefile))
+      FileUtils.mkdir_p(File.dirname(library_makefile))
+      File.write(app_makefile, <<~MAKE)
+        COMMENT = example app
+        DISTNAME = app-1.0
+        BUILD_DEPENDS = devel/library
+      MAKE
+      File.write(library_makefile, <<~MAKE)
+        COMMENT = example library
+        DISTNAME = library-1.0
+      MAKE
+
+      Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
+      app = Port.find_by!(platform:, pkgpath: "devel/app")
+      library = Port.find_by!(platform:, pkgpath: "devel/library")
+      assert_equal [["build", library.id]], app.dependencies.pluck(:dep_type, :depends_on_id)
+
+      File.write(app_makefile, <<~MAKE)
+        COMMENT = example app
+        DISTNAME = app-1.0
+        RUN_DEPENDS = devel/library
+        TEST_DEPENDS = devel/library
+      MAKE
+      Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
+      assert_equal [["run", library.id], ["test", library.id]].sort,
+                   app.dependencies.reload.pluck(:dep_type, :depends_on_id).sort
+
+      File.write(app_makefile, <<~MAKE)
+        COMMENT = example app
+        DISTNAME = app-1.0
+      MAKE
+      Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
+      assert_empty app.dependencies.reload
+    end
+  end
+
   test "a restricted port is imported with its distfiles flag off" do
     platform = platforms(:openbsd)
 

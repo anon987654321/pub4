@@ -125,6 +125,13 @@ class PortTest < ActiveSupport::TestCase
     assert_empty Port.search("a_term_that_matches_no_port").to_a
   end
 
+  test "malformed FTS punctuation cannot raise a search error" do
+    port("curl", comment: "transfer tool")
+
+    assert_empty Port.search('"unterminated ( OR )').to_a
+    assert_empty Port.search("!!!").to_a
+  end
+
   test "the triggers keep the index in step with created, renamed and deleted ports" do
     curl = port("curl", comment: "transfer tool")
     assert_equal [ curl ], Port.search("transfer").to_a

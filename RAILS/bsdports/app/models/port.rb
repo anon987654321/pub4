@@ -25,7 +25,13 @@ class Port < ApplicationRecord
   scope :by_category, ->(cat) { where(category: cat) }
   scope :by_maintainer, ->(maintainer) { where(maintainer_id: maintainer.id) }
   scope :search, ->(q) {
-    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", q ]))
+    # Treat input as terms, not FTS5 syntax. A stray quote or parenthesis from a
+    # live search must be a miss rather than a database exception.
+    terms = q.to_s.scan(/[[:alnum:]_]+/)
+    next none if terms.empty?
+
+    query = terms.map { |term| "\"" + term.gsub('"', '""') + "\"" }.join(" AND ")
+    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", query ]))
     ids.any? ? where(id: ids) : none
   }
   scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)

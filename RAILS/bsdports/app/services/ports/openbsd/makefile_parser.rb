@@ -34,6 +34,7 @@ module Ports
           description: read_descr,
           build_depends: parse_depends(vars["BUILD_DEPENDS"]),
           run_depends: parse_depends(vars["RUN_DEPENDS"]),
+          test_depends: parse_depends(vars["TEST_DEPENDS"]),
           lib_depends: parse_depends(vars["LIB_DEPENDS"]),
           permit_file_distfiles: permit_distfiles?(vars)
         }

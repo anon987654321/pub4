@@ -43,6 +43,12 @@ class Ports::Openbsd::MakefileParserTest < ActiveSupport::TestCase
     assert_equal %w[devel/gettext], metadata[:run_depends]
   end
 
+  test "parses TEST_DEPENDS as a distinct dependency type" do
+    metadata = parse_makefile("TEST_DEPENDS = devel/ruby-minitest\n")
+
+    assert_equal %w[devel/ruby-minitest], metadata[:test_depends]
+  end
+
   test "a restricted port does not permit distfiles" do
     metadata = parse_makefile(%(PERMIT_PACKAGE = "patent issues"\n))
 

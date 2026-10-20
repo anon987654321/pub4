@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Ports
   class Importer
     Result = Data.define(:platform, :import_run, :ports_count, :tree_path)
@@ -13,6 +15,7 @@ module Ports
       @tree_path = tree_path
       @use_ftp_fallback = use_ftp_fallback
       @pending_deps = []
+      @imported_ports = {}
       @ports_count = 0
     end
 
@@ -61,7 +64,7 @@ module Ports
 
     private
 
-    attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps, :ports_count
+    attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps, :ports_count, :imported_ports
 
     # One transaction per port, deliberately. A transaction around the whole
     # import would hold SQLite's single writer lock for the minutes an import
@@ -125,6 +128,7 @@ module Ports
       port[:maintainer] = metadata[:maintainer]
       port.maintainer_id = maintainer&.id
       port.save!
+      imported_ports[port.id] = port
       record_version_change(port, old_version)
       queue_dependencies(port, metadata)
       @ports_count += 1
@@ -158,6 +162,7 @@ module Ports
       {
         "build" => metadata[:build_depends],
         "run" => metadata[:run_depends],
+        "test" => metadata[:test_depends],
         "lib" => metadata[:lib_depends]
       }.each do |dep_type, pkgpaths|
         Array(pkgpaths).each do |pkgpath|
@@ -167,6 +172,19 @@ module Ports
     end
 
     def resolve_dependencies
+      # A repeated import is a desired-state sync, not an append-only graph:
+      # retain edges that still match the source, remove edges that disappeared
+      # or changed type, then create the missing desired edges below.
+      desired_dependencies = Hash.new { |hash, port_id| hash[port_id] = Set.new }
+      pending_deps.each do |entry|
+        desired_dependencies[entry[:port].id] << [ entry[:pkgpath], entry[:dep_type] ]
+      end
+
+      Dependency.includes(:depends_on).where(port_id: imported_ports.keys).find_each do |dependency|
+        key = [ dependency.depends_on&.pkgpath, dependency.dep_type ]
+        dependency.destroy! unless desired_dependencies[dependency.port_id].include?(key)
+      end
+
       unresolved = []
       pending_deps.each do |entry|
         depends_on = Port.find_by(platform:, pkgpath: entry[:pkgpath])
