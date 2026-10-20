@@ -311,7 +311,7 @@ STUDIO/postpro/postpro_*.jpg.json
 STUDIO/replicate/lora/*.mp4
 STUDIO/replicate/lora/*.mov
 
-# Stray render folders. Renders default to ~/Documents/dilla-renders; these names are
+# Stray render folders. Renders default to ~/Downloads/dilla-renders; these names are
 # what a session hand-made inside the tree before that default existed.
 STUDIO/**/dilla-showcase-*/
 STUDIO/**/render-*/

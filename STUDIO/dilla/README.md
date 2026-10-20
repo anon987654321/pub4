@@ -230,9 +230,9 @@ tools are reported as such and do not become required just to render Dilla's exi
 showcase.
 
 Reference output, reports, JSON profiles and stems default to
-`${XDG_DATA_HOME:-~/Documents}/dilla-references`. Relative or checkout-local
+`${XDG_DATA_HOME:-~/Downloads}/dilla-references`. Relative or checkout-local
 `XDG_DATA_HOME` values are ignored for output safety when they are relative or point
-inside the checkout. If `~/Documents` itself resolves inside the checkout, STUDIO refuses
+inside the checkout. If `~/Downloads` itself resolves inside the checkout, STUDIO refuses
 the fallback rather than writing media there. With an absolute data home outside the checkout,
 Dilla and MASTER share the learned-profile store.
 Each profile records the user's style hint separately from measured traits: tempo estimates,

@@ -43,7 +43,7 @@ work lives in `MASTER/data/operator_seams.yml`, decisions beside the thing they 
 Build output
 never sits at the root whatever the tool's default: a renderer that writes to
 `$PWD` once left a session's renders at the root for weeks. Renders belong outside
-the repo, under `${XDG_DATA_HOME:-~/Documents}/dilla-renders/<date>`, which is where
+the repo, under `${XDG_DATA_HOME:-~/Downloads}/dilla-renders/<date>`, which is where
 /play puts them; postpro writes beside the source photograph (the dated directory when
 the source sits inside the repo), and `dilla.rb` replaces `dilla.wav` and `dilla.mp4`
 beside itself, unless `--out` says otherwise.
