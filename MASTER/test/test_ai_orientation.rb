@@ -64,6 +64,12 @@ class TestAiOrientation < Minitest::Test
 
   def teardown = FileUtils.rm_rf(@root)
 
+  def test_every_turn_is_told_to_read_important_files_whole
+    text = Master::AI::Orientation.render(root: @master, target: File.join(@master, "lib"))
+
+    assert_includes text, "reading: read each important file whole"
+  end
+
   def test_render_is_compact_live_context_and_includes_pending_work
     text = Master::AI::Orientation.render(root: @master, target: File.join(@master, "lib"))
 

@@ -1123,3 +1123,13 @@ process:
     disk_free_gb:
       warn: 5
       crit: 2
+
+# What every model turn is oriented with (lib/ai/orientation.rb). `tree: fix` is the /fix Tree, with sizes
+# and the sprawl signals; read_in_full is the rule the turn is told, so an analysis reads a file whole
+# before it judges it.
+orientation:
+  tree: fix
+  tree_max_bytes: 6000
+  read_in_full: >-
+    read each important file whole with the file tool before judging it; a search for a string is not a
+    reading, and an empty result proves nothing until the search is shown to find a known line.

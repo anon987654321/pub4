@@ -55,10 +55,30 @@ module Master
         parts << atlas unless atlas.to_s.empty?
 
         parts << "tree:"
-        parts.concat(tree_lines(root, depth:, max_entries:))
+        parts.concat(tree_section(root, depth:, max_entries:))
+        reading = settings["read_in_full"].to_s
+        parts << "reading: #{reading}" unless reading.empty?
         parts.join("\n")
       rescue StandardError => e
         "MASTER orientation unavailable: #{e.class}: #{e.message}"
+      end
+
+      # What `limits.yml orientation:` says: the tree is the /fix Tree (every directory with its size and the
+      # sprawl signals), bounded, and the reading rule every turn is told.
+      def settings
+        Master.load_yaml(Master.limits_path, default: {}).fetch("orientation", {})
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "AI::Orientation.settings")
+        {}
+      end
+
+      def tree_section(root, depth:, max_entries:)
+        return tree_lines(root, depth:, max_entries:) unless settings["tree"] == "fix"
+
+        view = Master::Fix::TreeView.new(Master::Fix::Tree.new(root:, target: root)).render(max_lines: 120)
+        view.byteslice(0, settings.fetch("tree_max_bytes", 6_000)).lines.map(&:chomp)
+      rescue StandardError
+        tree_lines(root, depth:, max_entries:)
       end
 
       def repository_atlas(repo_root)
