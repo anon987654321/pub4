@@ -451,6 +451,16 @@ the tree once; reopen one only with the measurement or the consumer it names. A
 reason tied to code lives as a comment on that code, and OPENBSD's refusals are
 in `OPENBSD/CLAUDE.md`.
 
+- **No covert room listening, and no verdicts on people.** MASTER does not listen to a
+  room in the background, keep a rolling recording, or analyse speech it was not handed.
+  `Cognition::DiscourseObserver` reads a transcript the operator supplies, points at
+  catalogued wording with its span, the evidence against it and other explanations, caps
+  its confidence at what wording alone can show, and appends every call to an audit
+  trail. It never says what anyone intends or is. Capture, when it exists, goes through
+  the `microphone` and `speech_recognition` grants in the personal ledger, shows its
+  state while open, and covers only conversations the operator takes part in: recording
+  others who do not know is a crime in Norway and no grant from the operator cures it.
+  Reopen only with an adapter that enforces all of that and a test that fails without it.
 - **No serif typefaces.** The operator's no-serif directive stands for brgen, amber and
   master. Instrument Serif, IBM Plex Serif and Source Serif 4, with their
   `ibm_plex_editorial` and `source_editorial` pairings, stay out of the token set;

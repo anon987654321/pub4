@@ -1,0 +1,35 @@
+---
+# Observable speech patterns that Cognition::DiscourseObserver can point at in a transcript it is
+# handed. A pattern is wording, not a verdict: it says "this span is consistent with X", names what
+# else could explain it, and never says what a speaker intends or is. Add a pattern only with an
+# observable marker, an honest alternative explanation and a limit, under the same key in each map.
+# The observer and its tests are the only readers.
+version: 1
+confidence_cap: 0.6
+# Wording that weakens a match: a quotation, a report of what someone said, or a hedge.
+counter_markers: [he said, she said, they said, you said, i said, quote, for example, such as, maybe, perhaps]
+markers:
+  denial_of_event: [that never happened, i never said that, you're making that up, you are making that up]
+  reality_questioning:
+    [you're imagining, you are imagining, you always misremember, you're too sensitive, you're overreacting]
+  appeal_to_unnamed_others: [everyone thinks, everybody says, people are saying, we all agree]
+  guilt_appeal: [after all i've done, after all i have done, if you really loved me, you'll regret]
+  loaded_question: [when did you stop, why do you always, why are you so]
+  false_dichotomy: [you're either with me or, either you do this or, it's me or]
+  urgency_pressure: [you must decide now, last chance, right now or never, decide right now]
+alternatives:
+  denial_of_event: [the speaker remembers it differently, a misunderstanding about which event is meant]
+  reality_questioning: [a blunt way of disagreeing, genuine concern about the other person]
+  appeal_to_unnamed_others: [a shorthand for a real consensus, reporting what others actually said]
+  guilt_appeal: [a plain statement of hurt, frustration in a heated moment]
+  loaded_question: [a clumsy real question, a pattern the speaker has actually observed]
+  false_dichotomy: [a real ultimatum after a long dispute, a rhetorical flourish]
+  urgency_pressure: [a real deadline, impatience]
+limit:
+  denial_of_event: "a transcript cannot show who is right about what happened"
+  reality_questioning: "tone and history decide whether this is concern or pressure, and neither is in the text"
+  appeal_to_unnamed_others: "the text cannot show whether the others exist"
+  guilt_appeal: "a single phrase is weak evidence; a repeated one is stronger"
+  loaded_question: "the premise may be true"
+  false_dichotomy: "some choices are genuinely binary"
+  urgency_pressure: "a stated deadline can be true"
