@@ -51,11 +51,29 @@ class TestPersonalPermissions < Minitest::Test
   end
 
   def test_ledger_is_local_and_owner_only
-    @permissions.grant(scope: "personal_memory", confirmed_by: "owner", purpose: "remember chosen preferences")
+    @permissions.grant(scope: "personal_memory", subject: "subject-a", confirmed_by: "owner", purpose: "remember chosen preferences")
     path = File.join(@root, ".master", "permissions", "personal.json")
     assert File.file?(path)
     assert_equal 0o600, File.stat(path).mode & 0o777
     assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
+  end
+
+  def test_personal_memory_grants_do_not_cross_subjects
+    @permissions.grant(
+      scope: "personal_memory", subject: "subject-a", confirmed_by: "owner",
+      purpose: "read and write personal profile and memory",
+    )
+
+    assert @permissions.allowed?(scope: "personal_memory", subject: "subject-a",
+                                 purpose: "read and write personal profile and memory")
+    refute @permissions.allowed?(scope: "personal_memory", subject: "subject-b",
+                                 purpose: "read and write personal profile and memory")
+    refute @permissions.allowed?(scope: "personal_memory",
+                                 purpose: "read and write personal profile and memory")
+
+    assert @permissions.revoke(scope: "personal_memory", subject: "subject-a",
+                               confirmed_by: "owner", reason: "changed my mind")
+    refute @permissions.allowed?(scope: "personal_memory", subject: "subject-a")
   end
 
   def test_state_is_persistent_and_inspectable
