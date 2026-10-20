@@ -779,6 +779,41 @@ class DillaTest < Minitest::Test
     refute_equal hits, other
   end
 
+  # A player's hand does not repeat; a profile without bar_drift_steps does, as its first bar did.
+  def test_bar_drift_makes_bars_differ_inside_the_window
+    hits = four_bars("dilla_shadow")
+
+    refute_equal times_in_bar(hits, 0, role: "snare"), times_in_bar(hits, 1, role: "snare")
+    assert(offsets_from_grid(hits, "snare", 60.0 / 82 / 4).all? { |offset| offset.abs <= MAX_OFFSET + 1e-9 })
+  end
+
+  def test_a_profile_without_bar_drift_repeats_its_first_bar
+    plain = four_bars(POCKET)
+
+    assert_equal times_in_bar(plain, 0), times_in_bar(plain, 1)
+  end
+
+  def test_chords_lean_behind_the_beat_only_when_the_profile_says_so
+    shadow = sequencer("dilla_shadow", seed: 3)
+    leans = (0..7).map { |index| shadow.chord_lean(index, 60.0 / 82) }
+
+    assert_operator leans.sum / leans.size, :>, 0.0
+    assert_operator leans.uniq.size, :>, 1, "each chord leans a little differently"
+    assert(leans.all? { |lean| lean.abs <= MAX_OFFSET + 1e-9 })
+    assert_equal 0.0, sequencer(POCKET, seed: 3).chord_lean(2, 60.0 / 82)
+  end
+
+  def bar_seconds = 60.0 / 82 * 4
+
+  def four_bars(profile) = sequencer(profile, seed: 5).drum_hits("dusty_laid_back", 82.0, bar_seconds * 4)
+
+  def times_in_bar(hits, number, role: nil)
+    inside = hits.select do |hit|
+      (role.nil? || hit.first == role) && hit.last >= number * bar_seconds && hit.last < (number + 1) * bar_seconds
+    end
+    inside.map { |hit| (hit.last - (number * bar_seconds)).round(6) }
+  end
+
   # The same share of a sixteenth is a different number of milliseconds at each tempo.
   def test_the_same_share_gives_different_milliseconds_at_70_88_and_104_bpm
     ms = [70.0, 88.0, 104.0].map do |bpm|

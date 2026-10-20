@@ -3435,6 +3435,138 @@
       "Eb7alt",
       "Dm9",
       "Dm6/9"
+    ],
+    [
+      "Dm9",
+      "Db13",
+      "Cmaj9",
+      "Bmaj7#11"
+    ],
+    [
+      "Gm9",
+      "C13",
+      "Fmaj9",
+      "Bbmaj7#11",
+      "Ebmaj7#11",
+      "Am7b5",
+      "D7b9",
+      "Gm9"
+    ],
+    [
+      "Ebmaj9",
+      "Dm9",
+      "Dbmaj9",
+      "Cm9"
+    ],
+    [
+      "Am9",
+      "Abmaj7#11",
+      "Gm9",
+      "Gbmaj7#11",
+      "Fmaj9"
+    ],
+    [
+      "Cmaj7#11",
+      "Ebmaj7#11",
+      "Abmaj7#11",
+      "Emaj7#11"
+    ],
+    [
+      "Fm9",
+      "Dbmaj9",
+      "Abmaj9",
+      "Ebmaj9",
+      "Bbm11",
+      "Gbmaj7#11"
+    ],
+    [
+      "Dm11",
+      "Bbmaj9",
+      "Gm11",
+      "Ebmaj7#11",
+      "Am7b5",
+      "D7alt",
+      "Dm11"
+    ],
+    [
+      "Am9",
+      "Fmaj7#11",
+      "G6/9",
+      "Em7"
+    ],
+    [
+      "Dm9",
+      "Bbmaj7",
+      "C6/9",
+      "Am7"
+    ],
+    [
+      "Cm9",
+      "Dbmaj7#11",
+      "Bb6/9",
+      "Gm7"
+    ],
+    [
+      "Fm9",
+      "Dbmaj7#11",
+      "Ab6/9",
+      "Eb6/9"
+    ],
+    [
+      "Em11",
+      "A13sus4",
+      "Dmaj9",
+      "Gmaj7",
+      "C7",
+      "B7sus4"
+    ],
+    [
+      "Bbmaj9",
+      "Am7",
+      "Abmaj7#11",
+      "Gm9",
+      "C13",
+      "Fmaj9"
+    ],
+    [
+      "Cmaj9",
+      "A7b13",
+      "Dm11",
+      "G13b9",
+      "Em7",
+      "Ebdim7",
+      "Dm9",
+      "G7alt"
+    ],
+    [
+      "Fm9",
+      "Bbm11",
+      "Eb13",
+      "Abmaj9",
+      "Dbmaj7#11",
+      "Gb13",
+      "Cm7b5",
+      "F7b9"
+    ],
+    [
+      "Am9",
+      "Am/G",
+      "Am/F#",
+      "Fmaj7#11",
+      "E7b9"
+    ],
+    [
+      "D13",
+      "G13",
+      "C13",
+      "F13",
+      "Bbmaj9"
+    ],
+    [
+      "Am9",
+      "Gmaj7",
+      "Fmaj7#11",
+      "E7b9"
     ]
   ],
   "essential": [
@@ -5663,12 +5795,14 @@
           "drift_steps": 0.02,
           "anchor": [
             0
-          ]
+          ],
+          "bar_drift_steps": 0.015
         },
         "snare": {
           "shift_steps": -0.13,
           "drift_steps": 0.018,
-          "anchor": []
+          "anchor": [],
+          "bar_drift_steps": 0.02
         },
         "hat": {
           "shift_steps": 0,
@@ -5678,12 +5812,18 @@
             4,
             8,
             12
-          ]
+          ],
+          "bar_drift_steps": 0.035
         },
         "ghost": {
           "shift_steps": 0.18,
           "drift_steps": 0.02,
-          "anchor": []
+          "anchor": [],
+          "bar_drift_steps": 0.03
+        },
+        "chord": {
+          "shift_steps": 0.22,
+          "drift_steps": 0.1
         }
       },
       "texture": {

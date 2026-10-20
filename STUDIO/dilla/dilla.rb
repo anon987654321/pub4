@@ -4171,7 +4171,7 @@ class Sequencer
     swing = @profile.fetch('swing', 0.5)
     buf = []
     Chords.freqs(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |freqs, idx|
-      delay = idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount
+      delay = [(idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount) + chord_lean(idx, beat), 0.0].max
       pad = (delay * SAMPLE_RATE).to_i
       buf.concat(Array.new(pad, 0.0)) if pad > 0
       buf.concat(Synth.chord(freqs, beats * beat, detune: detune, strum:))
@@ -4186,7 +4186,8 @@ class Sequencer
     swing = @profile.fetch('swing', 0.5)
     buf = Array.new((((names.size * beats * beat) + 1.5) * SAMPLE_RATE).to_i, 0.0)
     Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |notes, idx|
-      start = (idx * beats * beat) + (idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount)
+      swung = idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount
+      start = [(idx * beats * beat) + swung + chord_lean(idx, beat), 0.0].max
       plucks = notes.each_with_index.map { |midi, k| Pluck.new(start + (k * strum), 0.0, midi, beats * beat, 1.0 / Math.sqrt(notes.size)) }
       sound(buf, plucks, voices[idx % voices.size])
     end
@@ -4567,7 +4568,7 @@ if mode == 'arp'
         cells.each do |role, cell|
           vel, count = cell.is_a?(Array) ? cell : [cell.to_f, 1]
           nudge = offsets.fetch(role, 0.0)
-          nudge = pocket_lean(pocket, role, i) * step if pocket&.key?(role)
+          nudge = pocket_lean(pocket, role:, step_in_bar: i, bar:) * step if pocket&.key?(role)
           if role == 'kick' && first_kick
             nudge = offsets.fetch('kick_first', nudge) unless pocket&.key?(role)
             first_kick = false
@@ -4591,14 +4592,35 @@ if mode == 'arp'
 
   # How far a hit leans from its step, in sixteenths (before --groove). The draw belongs to
   # the render seed, the voice and the step in the bar, never the bar, so bars repeat.
-  def pocket_lean(pocket, role, step_in_bar)
+  def pocket_lean(pocket, role:, step_in_bar:, bar: 0)
     spec = pocket.fetch(role)
     ghost = pocket['ghost']
     spec = ghost if ghost && role == 'snare' && !pocket.fetch('backbeat', []).include?(step_in_bar)
     return 0.0 if spec.fetch('anchor', []).include?(step_in_bar)
 
     draw = Random.new(Zlib.crc32("#{@seed}:#{role}:#{step_in_bar}")).rand * 2 - 1
-    spec.fetch('shift_steps', 0.0) + spec.fetch('drift_steps', 0.0) * draw
+    lean = spec.fetch("shift_steps", 0.0) + (spec.fetch("drift_steps", 0.0) * draw)
+    lean + bar_drift(spec:, role:, step: step_in_bar, bar:)
+  end
+
+  # A hand that does not repeat: with `bar_drift_steps` the same hit leans a little differently every bar,
+  # which a player's does and a pattern's does not. Absent, bars repeat as the first did.
+  def bar_drift(spec:, role:, step:, bar:)
+    amount = spec.fetch("bar_drift_steps", 0.0)
+    return 0.0 if amount.zero?
+
+    (Random.new(Zlib.crc32("#{@seed}:#{role}:#{step}:bar#{bar}")).rand * 2 - 1) * amount
+  end
+
+  # The chords sit on a grid of their own: `pocket.chord` { shift_steps, drift_steps } leans each chord from the
+  # drums, in sixteenths of a beat's quarter, seeded per chord, never past MAX_OFFSET. Absent, they sit on the beat.
+  def chord_lean(index, beat)
+    spec = @profile.dig("pocket", "chord")
+    return 0.0 unless spec
+
+    draw = Random.new(Zlib.crc32("#{@seed}:chord:#{index}")).rand * 2 - 1
+    lean = (spec.fetch("shift_steps", 0.0) + (spec.fetch("drift_steps", 0.0) * draw)) * beat / 4.0
+    (lean * @pd_amount).clamp(-MAX_OFFSET, MAX_OFFSET)
   end
 
   # The mix levels in dB: the data's, the profile's over them, the flags over those.
