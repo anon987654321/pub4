@@ -166,6 +166,10 @@ detail: [
                    "/narrate on|off — tell the work as one running story, or fall back to plain one-line speech.",
                    "Pacing, caps and the model lane are in data/voice.yml under narration; MASTER_NARRATE=0 turns it off for a run."],
         },
+        "reload" => {
+          detail: ["/reload — restart this session in place so edits to lib/ and data/ take effect.",
+                   "The conversation is kept; the beat and speech stop first."],
+        },
         "bard" => {
           summary: "lyrical telling of what MASTER is doing, on by default",
           detail: ["/bard — state, beats told, model or template, cost against the cap.",
@@ -295,6 +299,7 @@ detail: [
         "commit" => "change", "deploy" => "change", "snapshot" => "change",
         "orders" => "change", "wishlist" => "change",
         "face" => "interface", "voice" => "interface", "narrate" => "interface", "bard" => "interface",
+        "reload" => "session",
         "size" => "interface",
         "play" => "media", "android" => "media", "ios" => "media",
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session",

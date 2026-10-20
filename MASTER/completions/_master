@@ -21,6 +21,7 @@ _master() {
     'model:show or switch the active model, and connect its subscriptions'
     'narrate:story narration of what MASTER is doing, on by default'
     'bard:lyrical telling of what MASTER is doing, on by default'
+    'reload:restart this session in place'
     'orders:the objective ledger'
     'play:render a Dilla progression with a drum pattern and play it'
     'plugin:list and invoke governed plugins'

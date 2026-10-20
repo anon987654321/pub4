@@ -51,6 +51,7 @@ module Master
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
           "narrate" => Command.new { |ctx| dispatch_narrate(ctx:) },
           "bard" => Command.new { |context| dispatch_bard(context:) },
+          "reload" => Command.new { |_context| dispatch_reload },
           "laws" => command(:dispatch_laws, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
@@ -376,6 +377,19 @@ module Master
         end
       rescue StandardError => e
         "narr0 at voice0: failed, #{e.class}: #{e.message}"
+      end
+
+      # Restart this session in place so edits to lib/ and data/ take effect. The conversation is saved,
+      # the beat and speech stop first, and the process lock is dropped so the fresh bin/master takes it.
+      def dispatch_reload
+        Trace::Dmesg.status("master0", "reloading")
+        Voice::Bed.stop
+        Voice::Playback.interrupt!("reload")
+
+        $stdin.cooked! if $stdin.tty?
+        exec({ "MASTER_PROCESS_LOCK_FD" => nil }, File.join(Master::ROOT, "bin", "master"), *ARGV)
+      rescue SystemCallError => e
+        "reload failed, #{e.class}: #{e.message}"
       end
 
       # The lyrical teller of the story, on by default. On makes it the one voice that speaks; off
