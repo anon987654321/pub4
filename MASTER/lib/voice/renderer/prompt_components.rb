@@ -56,6 +56,7 @@ module Master
             d("host0 at mainbus0: #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
             d("voice0 at mainbus0: #{voice}"),
             d("web0 at mainbus0: #{web}"),
+            *radio_lines,
             d("root on master0"),
           ].join("\n")
         rescue StandardError
@@ -65,6 +66,13 @@ module Master
             d("voice0 at mainbus0: unknown"),
             d("root on master0"),
           ].join("\n")
+        end
+
+        # net0 and bth0, as a kernel prints its radios; patterns.yml cli.boot_devices: false leaves them out.
+        def radio_lines
+          return [] unless Master.patterns_config.fetch("cli", {})["boot_devices"] == true
+
+          Master::CLI::BootDevices.lines.map { |line| d(line) }
         end
 
         # [state line or nil, prompt]. The state line carries what a status bar

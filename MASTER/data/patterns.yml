@@ -872,6 +872,8 @@ cli:
   # `bin/master` is a shell first, as a Unix tool is: quiet, text in and out. /face opens the face on request;
   # MASTER_FACE_ON_START=1 (or true here) opens on it instead. The face listens while idle and says so.
   face_on_start: false
+  # The radios on the startup lines: net0 (wifi) and bth0 (bluetooth), as a kernel prints them.
+  boot_devices: true
   # The face's microphone is push to talk (Tab); true arms it by itself while idle and the voice is quiet.
   face_auto_mic: false
   # Commands that run for minutes and would leave the face looking stuck; the face points to the shell for them.
