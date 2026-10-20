@@ -23,7 +23,10 @@ module Master
           laws = structural_laws(target)
           local = tracked(target).flat_map do |path|
             code = File.read(path, encoding: "UTF-8")
-            laws.flat_map { |law| law.check(code, path:) }.map { |finding| [path, finding[:law].to_s, finding[:message].to_s, []] }
+            laws.flat_map { |law| law.check(code, path:) }.map do |finding|
+              message = finding[:line] ? "line #{finding[:line]}: #{finding[:message]}" : finding[:message].to_s
+              [path, finding[:law].to_s, message, []]
+            end
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []

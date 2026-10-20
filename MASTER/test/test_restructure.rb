@@ -326,6 +326,29 @@ class TestRestructure < Minitest::Test
     assert_includes text, "MASTER/lib/user_policy.rb"
   end
 
+  def test_candidate_map_scores_actual_findings_without_padding
+    big = File.join(@repo, "MASTER/lib/big.rb")
+    problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
+      id: "p1",
+      findings: [[big, "GOD_CLASS", "line 2: two jobs", []]],
+      files: [big],
+      laws: %w[GOD_CLASS],
+      reason: "one finding",
+      confidence: :high,
+      candidate_operations: %w[split],
+    )
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo)
+    ranked = sweep.send(:ranked_candidate_map, [problem])
+    map = sweep.send(:render_candidate_map, ranked)
+    prompt = sweep.send(:proposal, "MASTER", problem, candidate_map: map)
+
+    assert_equal [1, 3], [ranked.first.fetch(:payoff), ranked.first.fetch(:risk)]
+    assert_includes map, "Evidence-backed candidates: 1; distinct target paths: 1"
+    assert_includes map, "shortfalls: 14 candidates and 2 paths"
+    assert_includes prompt, "line 2: two jobs"
+    assert_includes prompt, "No source has changed during this phase"
+  end
+
   def test_proposal_carries_every_playbook_method_and_gate
     big = File.join(@repo, "MASTER/lib/big.rb")
     problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
@@ -338,7 +361,8 @@ class TestRestructure < Minitest::Test
       candidate_operations: %w[split],
     )
     sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo)
-    prompt = sweep.send(:proposal, "MASTER", problem)
+    map = sweep.send(:render_candidate_map, sweep.send(:ranked_candidate_map, [problem]))
+    prompt = sweep.send(:proposal, "MASTER", problem, candidate_map: map)
     playbook = Master::Fix::TransformationPlan.new.refactoring_playbook
 
     playbook.fetch("methods").each { |entry| assert_includes prompt, "#{entry.fetch("id")}: #{entry.fetch("action")}" }
@@ -347,6 +371,8 @@ class TestRestructure < Minitest::Test
     assert_includes prompt, "Measured baseline scorecard"
     assert_includes prompt, "Co-change evidence"
     assert_includes prompt, "Choose exactly one transformation"
+    assert_includes prompt, "Evidence-backed candidates"
+    assert_includes prompt, "No source has changed during this phase"
   end
 
   def test_each_tree_is_proved_its_own_way

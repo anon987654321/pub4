@@ -25,6 +25,12 @@ module Master
       FIRST_ROUNDS = 1
       FIRST_KEEPS = 1
       TREES = Contracts::BY_TREE.keys.freeze
+      OPERATION_RISK = {
+        "remove" => 5, "rename" => 4, "relocate" => 4, "merge" => 4,
+        "split" => 3, "defragment" => 3, "decouple" => 3, "hoist" => 2,
+        "flatten" => 2, "reorder" => 2, "simplify" => 2, "reflow" => 1,
+        "recommend" => 1,
+      }.freeze
 
       PROPOSE = <<~TEXT
         Restructure one underlying problem in this tree rather than fixing its findings independently.
@@ -43,7 +49,10 @@ module Master
         Findings:
         %<findings>s
 
-        Candidate transformations:
+        Read-only candidate map. No source has changed during this phase:
+        %<candidate_map>s
+
+        Candidate transformations for the selected problem:
         %<candidate_operations>s
 
         Choose exactly one transformation for this commit. Map candidates before writing; score payoff and risk from
@@ -148,7 +157,8 @@ module Master
       # deterministic finding clustering and candidate ordering as the live restructure
       # stage, but never asks the model, writes files, commits, or pushes.
       def preview(target:, run_id: "preview")
-        candidates(target, run_id).map do |problem|
+        ranked_candidate_map(candidates(target, run_id)).map do |row|
+          problem = row.fetch(:problem)
           {
             problem_id: problem.id,
             files: problem.files.map { |path| relative(path) },
@@ -156,6 +166,9 @@ module Master
             candidate_operations: problem.candidate_operations,
             primary_operation: problem.primary_operation,
             confidence: problem.confidence.to_s,
+            payoff: row.fetch(:payoff),
+            risk: row.fetch(:risk),
+            payoff_risk: row.fetch(:ratio),
             evidence_hierarchy: @transformation_plan.evidence_hierarchy,
             domain_adapters: @transformation_plan.domain_adapters,
             smell_catalog: @transformation_plan.smell_catalog,
@@ -169,24 +182,28 @@ module Master
         kept = []
         terminal = :limit_reached
         rounds.times do |round|
-          problems = candidates(target, "#{run_id}-#{round}")
-          if problems.empty?
+          break if kept.size >= keeps
+
+          ranked = ranked_candidate_map(candidates(target, "#{run_id}-#{round}"))
+          if ranked.empty?
             terminal = :convergence
             break
           end
+          problems = ranked.map { |row| row.fetch(:problem) }
+          candidate_map = render_candidate_map(ranked)
 
           round_kept = []
           vetoes = 0
           problems.first(attempts).each do |problem|
             break if kept.size + round_kept.size >= keeps
 
-            result = attempt(problem)
+            result = attempt(problem, candidate_map:)
             round_kept << result.value! if result&.ok?
             vetoes += 1 if policy_veto?(result)
           end
           kept.concat(round_kept)
           if round_kept.empty?
-            terminal = vetoes.positive? && vetoes == [attempts, problems.size].min ? :veto : :plateau
+            terminal = vetoes.positive? && vetoes == problems.size && problems.size <= attempts ? :veto : :plateau
             break
           end
 
@@ -199,6 +216,45 @@ module Master
         Master::Trace::Dmesg.status("restructure0", "terminal=#{terminal} kept=#{kept.size}")
         @bus&.publish("fix_loop:restructure_exit", target: relative(target), state: terminal.to_s.upcase, kept: kept.size)
         kept
+      end
+
+      def ranked_candidate_map(problems)
+        Array(problems).map do |problem|
+          signal_count = problem.size + [problem.laws.size - 1, 0].max + [problem.files.size - 1, 0].max
+          payoff = [[signal_count, 1].max, 5].min
+          risk = problem.candidate_operations.map { |operation| OPERATION_RISK.fetch(operation, 5) }.max || 5
+          { problem:, payoff:, risk:, ratio: payoff.to_f / risk }
+        end.sort_by do |row|
+          [-row.fetch(:ratio), -row.fetch(:payoff), row.fetch(:risk), row.fetch(:problem).id]
+        end
+      end
+
+      # The map is evidence-backed, scored, and read-only. If the tree has fewer
+      # than the requested number of candidates, report the shortfall instead of
+      # inventing filler or repeating the same move under different names.
+      def render_candidate_map(rows)
+        wanted = Integer(@transformation_plan.candidate_map_policy.fetch("minimum_alternatives"))
+        min_paths = Integer(@transformation_plan.candidate_map_policy.fetch("minimum_distinct_target_paths"))
+        distinct_paths = rows.flat_map { |row| row.fetch(:problem).files }.uniq
+        shown = rows.first(30).map do |row|
+          problem = row.fetch(:problem)
+          findings = problem.findings.map { |path, law, message, _related| "#{relative(path)} #{law} #{message}" }
+          format(
+            "  %s payoff=%d/5 risk=%d/5 ratio=%.2f operation=%s paths=%s evidence=%s",
+            problem.id, row.fetch(:payoff), row.fetch(:risk), row.fetch(:ratio),
+            problem.candidate_operations.join(","), problem.files.map { |path| relative(path) }.join(","),
+            findings.join(" | "),
+          )
+        end
+        shortfall = [wanted - rows.size, 0].max
+        path_shortfall = [min_paths - distinct_paths.size, 0].max
+        [
+          "Evidence-backed candidates: #{rows.size}; distinct target paths: #{distinct_paths.size}.",
+          "Requested minimums: #{wanted} candidates and #{min_paths} distinct target paths; shortfalls: #{shortfall} candidates and #{path_shortfall} paths.",
+          "Shortfalls are reported, never padded. Payoff/risk is a deterministic ranking aid, not an equivalence proof.",
+          *shown,
+          (rows.size > shown.size ? "  omitted #{rows.size - shown.size} lower-ranked candidates" : nil),
+        ].compact.join("\n")
       end
 
       def policy_veto?(result)
@@ -252,11 +308,11 @@ module Master
 
       private
 
-      def attempt(problem)
+      def attempt(problem, candidate_map: "")
         path, = problem.findings.first
         tree = relative(path).split("/").first
         baseline_scorecard = Restructure::Proof.for(tree, @root).scorecard
-        answer = ask(proposal(tree, problem, scorecard: baseline_scorecard))
+        answer = ask(proposal(tree, problem, scorecard: baseline_scorecard, candidate_map:))
         return if answer.strip == "KEEP"
 
         plan = Restructure::Plan.parse(answer)
@@ -272,7 +328,7 @@ module Master
         report(problem, plan, result)
       end
 
-      def proposal(tree, problem, scorecard: nil)
+      def proposal(tree, problem, scorecard: nil, candidate_map: "")
         scorecard ||= Restructure::Proof.for(tree, @root).scorecard
         findings = problem.findings.map do |path, rule, message, related|
           related = Array(related).map { |item| relative(item) }.reject { |item| item == relative(path) }
@@ -299,6 +355,7 @@ module Master
           problem_id: problem.id,
           findings:,
           candidate_operations: problem.candidate_operations.join(", "),
+          candidate_map:,
           context: Context.new(
             @root, problem.files.first, related: problem.files.drop(1), scorecard:,
             co_change_window: @transformation_plan.scorecard_policy.fetch("history_window_commits"),

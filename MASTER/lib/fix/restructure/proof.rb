@@ -125,7 +125,7 @@ module Master
         def read(path) = File.file?(File.join(@repo_root, path)) ? File.read(File.join(@repo_root, path), encoding: "UTF-8") : nil
 
         def defined_constants(text)
-          text.to_s.scan(/^\s*(?:class|module)\s+([A-Z][\w:]*)/).flatten.uniq
+          text.to_s.scan(/^\s*(?:class|module)\s+([A-Z][\w:]*)|^\s*([A-Z][\w]*)\s*=/).flatten.compact.uniq
         end
 
         # A deleted declaration reappearing under a new path is a move, not dead-code
