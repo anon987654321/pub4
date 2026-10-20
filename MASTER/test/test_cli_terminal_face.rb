@@ -56,7 +56,7 @@ class TestCliTerminalFace < Minitest::Test
       row, col = screen.scan(/\e\[(\d+);(\d+)H\e\[\?25h\z/).first.map(&:to_i)
       prompt = rows_of(screen).fetch(row)
 
-      assert prompt.start_with?("#{Master::Face::Contract.user_token} "), "row #{row} of #{rows} is not the prompt: #{prompt.inspect}"
+      assert prompt.start_with?("#{Master::Face::Contract.shell_prompt} "), "row #{row} of #{rows} is not the prompt: #{prompt.inspect}"
       assert_equal prompt.length + 1, col, "the cursor follows the draft"
     end
   end
@@ -166,8 +166,33 @@ class TestCliTerminalFace < Minitest::Test
     refute_includes text, "job 0"
   end
 
-  def test_typed_input_uses_the_user_token
-    assert_equal "$ hello", window.send(:typed, "hello", 80)
+  def test_typed_input_uses_the_shared_location_aware_operator_prompt
+    prompt = Master::Face::Contract.shell_prompt
+    assert_match(/\A[^:]+:.+\$\z/, prompt)
+    assert_equal "#{prompt} hello", window.send(:typed, "hello", 80)
+  end
+
+  def test_closed_terminal_streams_are_reported_as_eof
+    [:readiness, :character].each do |failure|
+      stream = Object.new
+      if failure == :readiness
+        stream.define_singleton_method(:wait_readable) { |_timeout| raise IOError, "closed stream" }
+        stream.define_singleton_method(:getch) { flunk("getch must not run after readiness fails") }
+      else
+        stream.define_singleton_method(:wait_readable) { |_timeout| true }
+        stream.define_singleton_method(:getch) { raise IOError, "closed stream" }
+      end
+      face = Master::CLI::Face::Window.new(
+        turn: ->(_) {},
+        ear: Quiet.new(nil),
+        mouth: Quiet.new(nil),
+        input: stream,
+        output: StringIO.new,
+        size: -> { [24, 80] },
+      )
+
+      assert_equal :eof, face.send(:read_key, 0), "#{failure} failure should use the ordinary EOF path"
+    end
   end
 
   def test_a_failed_turn_does_not_start_picture_work
