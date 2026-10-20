@@ -15,7 +15,7 @@ class TestStudioOutputPaths < Minitest::Test
         Dir.mktmpdir do |working_directory|
           Dir.chdir(working_directory) do
             path = Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
-            expected = File.join(File.expand_path("~/Documents"),
+            expected = File.join(File.expand_path("~/Downloads"),
                                  "dilla-renders", "2026-01-02")
             assert_equal expected, path
             assert path.start_with?(File::SEPARATOR)
@@ -39,7 +39,7 @@ class TestStudioOutputPaths < Minitest::Test
       repo_root = File.expand_path("..", Studio::Visual::IdeaPicture::ROOT)
       with_environment("XDG_DATA_HOME", File.join(repo_root, "temporary-output")) do
         path = Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
-        expected = File.join(File.expand_path("~/Documents"), "dilla-renders", "2026-01-02")
+        expected = File.join(File.expand_path("~/Downloads"), "dilla-renders", "2026-01-02")
 
         assert_equal expected, path
         refute path.start_with?("#{repo_root}#{File::SEPARATOR}")
@@ -56,7 +56,7 @@ class TestStudioOutputPaths < Minitest::Test
 
         with_environment("XDG_DATA_HOME", File.join(link, "temporary-output")) do
           path = Studio::OutputPaths.render_directory(at: Time.utc(2026, 1, 2))
-          expected = File.join(File.expand_path("~/Documents"), "dilla-renders", "2026-01-02")
+          expected = File.join(File.expand_path("~/Downloads"), "dilla-renders", "2026-01-02")
 
           assert_equal expected, path
           assert Studio::OutputPaths.inside_repository?(File.join(link, "temporary-output"))

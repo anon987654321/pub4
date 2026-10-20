@@ -4,7 +4,7 @@
 # this path contract instead of guessing output locations.
 module Studio
   module OutputPaths
-    FALLBACK_DATA_HOME = File.expand_path("~/Documents").freeze
+    FALLBACK_DATA_HOME = File.expand_path("~/Downloads").freeze
     REPOSITORY_ROOT = File.realpath(File.expand_path("..", __dir__)).freeze
 
     module_function
@@ -20,7 +20,7 @@ module Studio
       candidate
     end
 
-    # Even the fallback must be safe: Documents can itself be a symlink into
+    # Even the fallback must be safe: Downloads can itself be a symlink into
     # the checkout. Refuse that rare configuration rather than writing renders
     # into the repository under the guise of a fallback.
     def fallback_data_home(path = FALLBACK_DATA_HOME)
