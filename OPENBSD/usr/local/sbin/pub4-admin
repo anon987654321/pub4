@@ -13,8 +13,8 @@ require "socket"
 require "time"
 
 module Pub4Admin
-  APPS = %w[master brgen amber bsdports].freeze
-  SERVICES = %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].freeze
+  APPS = %w[master brgen bsdports].freeze
+  SERVICES = %w[master brgen bsdports brgen_jobs bsdports_jobs].freeze
   SERVICE_ACTIONS = %w[check get start stop restart].freeze
   RCCTL = "/usr/sbin/rcctl"
   DU = "/usr/bin/du"
@@ -29,8 +29,8 @@ module Pub4Admin
   RAILS_TASK = "/usr/local/libexec/rails-task.ksh"
   RAILS_SYNC = "/usr/local/libexec/rails-sync.ksh"
   BUNDLE_CACHE_BASE = "/var/cache/pub4/bundle"
-  RAILS_APPS = %w[brgen amber bsdports].freeze
-  RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze
+  RAILS_APPS = %w[brgen bsdports].freeze
+  RAILS_TASK_APPS = %w[master brgen bsdports].freeze
   STAMP_DIR = "/var/db/pub4"
   RUBY_CANDIDATES = %w[
     /usr/local/bin/ruby4.0 /usr/local/bin/ruby40
@@ -726,7 +726,7 @@ module Pub4Admin
     else
       return 64 unless allowed.include?(task) && database.nil?
     end
-    return 64 if task == "demo-seed" && !%w[brgen amber].include?(app)
+    return 64 if task == "demo-seed" && !%w[brgen].include?(app)
 
     arguments = [app, task]
     arguments << database if %w[schema-load secondary-db-check bundle-cas-hydrate].include?(task)

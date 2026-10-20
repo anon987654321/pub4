@@ -10,7 +10,8 @@
 # Stack default: Rails 8.2.0.alpha, Ruby 4.0.5, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
 # Feature statuses are verified against landed code + the repository-root TODO.md, not asserted from memory.
-# Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
+# Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active product apps: brgen and bsdports.
+# Amber was retired from the deployable app set on 2026-10-20; its owned-domain records remain for explicit disposition.
 
 # The stack every app pins. Read by the production gate, the stack contract test
 # (RAILS/test/rails_stack_contract_test.rb) and nothing else; the Gemfiles and
@@ -295,87 +296,6 @@ apps:
         - { name: MenuItem availability state machine,                      status: done, notes: "available flag + available_for_order? + order_item menu_item_must_be_available validation" }
         - { name: Order full state machine (placed→delivered),              status: done, notes: "Takeaway::Order TRANSITIONS pending→delivered + transition_to! + status notifications" }
         - { name: group orders, status: done, notes: "Takeaway::GroupOrdersController — one basket several people add to, each line attributed and the total split, placed by the host" }
-
-  amber:
-    title: Amber
-    brand:
-      category: personal_wardrobe_intelligence
-      promise: "Know what you own. Wear what matters."
-      position: "A private wardrobe intelligence companion, not a fashion storefront: it helps a person understand, enjoy, wear and edit what they already own."
-      distinctive_mechanic: "A warm personal wardrobe graph expressed through editorial fashion, a dressing-room mannequin and subtle amber/golden cues."
-      voice: [warm, observant, non_judgmental, precise]
-      visual_character: [ivory, amber, ink, soft_texture, pixel_stardust, mannequin_forms]
-      experience_principles: [private_by_default, explain_why, buy_less_wear_more, delight_without_pressure, intelligence_with_honest_boundaries]
-    # amberapp.art is amber's one name. amberapp.com is not ours: it is a
-    # for-sale lander at another registrar, so read whois before calling a
-    # domain ours. The session cookie is domain: :all, which scopes it to the
-    # registrable domain, so a brgen.no sign-in never reaches amber; the
-    # MASTER-signed token at /sso/from_master is the one door between them.
-    domain: amberapp.art
-    port: 61352
-    stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, Falcon, Active Storage, OpenBSD, relayd
-    stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
-    deploy_script: RAILS/amber/amber.sh
-    deploy_root: RAILS/amber
-    public: true
-    mobile:
-      amber:
-        android:
-          package: fashion.amber.app
-          certificate_env: AMBER_ANDROID_CERT_SHA256
-        ios:
-          bundle_id: fashion.amber.app
-          team_id_env: APPLE_TEAM_ID
-    features:
-      core:
-        - { name: "Item (title, color, size, material, texture, brand, price, category, sku, release_date, stock_quantity, available, user)", status: done, notes: pub4 version adds mood/occasion/life_phase/times_worn on top }
-        - { name: cost_per_wear calculation, status: done }
-        - { name: wear! increment, status: done }
-        - { name: aging_unworn / never_worn scopes,                        status: done }
-        - { name: Outfit (likes_count), status: done }
-        - { name: OutfitItem join (position),                              status: done }
-        - { name: Item photos (Active Storage has_many_attached),          status: done }
-        - { name: Hotwire broadcasts_refreshes on Item/Outfit,             status: done }
-        - { name: items + outfits index/show views,                        status: done }
-        - { name: Post model for amber social feed,                        status: done }
-        - { name: "Post link embeds (YouTube, SoundCloud, Vimeo, Spotify)", status: done, notes: "Shared::LinkEmbed, as on brgen, on a JSON column read from the Tiptap body; the lookup waits for the hourly queue drain and the plain link shows until then; AmberDemoSeeder posts three verified recordings" }
-        - { name: Comment (polymorphic via Shared::Commentable),           status: done, notes: "comments table + CommentsController on posts#show" }
-        - { name: Wardrobe model (collection container),                   status: done, notes: "WardrobeItem join model + wardrobe_items CRUD/analytics" }
-        - { name: Connection model (follow / friend),                      status: done, notes: "connections table + pending/accepted/blocked + ConnectionsController" }
-        - { name: LiveStream model,                                        status: done, notes: "live_streams table + scheduled/live/ended states + LiveStreamsController" }
-        - { name: Message model,                                           status: done, notes: "messages table + unread scope + MessagesController" }
-        - { name: wardrobe upload UI (drag-and-drop),                      status: done, notes: "media-picker Stimulus drop handler + direct_upload on items form" }
-        - { name: photo polish pipeline (variants + portrait postpro + dominant color), status: done, notes: "WardrobeMediaJob single polish pass; analysis_status photo_polish_*; NOT ML segment/matting" }
-        - { name: local garment fingerprint (not semantic embedding),      status: done, notes: "FingerprintGarmentJob CRC32-64; EmbedGarmentJob alias; pgvector still planned" }
-        - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGeneration + outfits#generate; weather prefilled from Weather Bergen" }
-        - { name: style evolution timeline / aesthetic phases,             status: done, notes: "StyleEvolution + wardrobe_items#timeline groups life_phase + wear history" }
-        - { name: underused item surfacing,                                status: done, notes: "Item#underused? + analytics dashboard + items index chips" }
-        - { name: wardrobe analytics dashboard,                            status: done, notes: "WardrobeAnalytics + wardrobe_items#analytics" }
-        - { name: wardrobe information visualisation,                      status: done, notes: "WardrobeCharts + _figure/_histogram partials: category mix, wear distribution, cost-per-wear, idle. CSS --share bars, no chart library. cost_per_wear was computed and never rendered before this." }
-        - { name: closet organisation tips (rules),                        status: done, notes: "WardrobeAnalytics#tips are heuristics; UI labels source=rules not AI" }
-        - { name: closet organisation (care/storage/zoning/restraint),     status: done, notes: "ClosetOrganization service + wardrobe_items#organize; every tip names its principle and the wardrobe evidence; source=rules" }
-        - { name: mix & match magic (taste-ranked carousels),              status: done, notes: "TasteRanker + outfits#dressing_room counter-rotating zone carousels + save_look; declared (StylePreference) and revealed (joy/wear/recency/phase) taste" }
-        - { name: style assistant (daily look),                            status: done, notes: "StyleAssistant on home dashboard: deterministic per user+date, weather-aware, rests recent wears, persists nothing until save_look" }
-        - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScore, challenges, last-chance→Outfit, 30d box hygiene job" }
-        - { name: AI stylist with offline fallbacks,                       status: done, notes: "WardrobeAi OpenRouter when OPENROUTER_API_KEY; heuristics/rules otherwise; honest UI" }
-        - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
-        - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD + ShopTheLook suggestions" }
-        - { name: shop smarter page,                                       status: done, notes: "items#shopping_list: gaps + duplicates-before-you-buy + every affiliate link you own, grouped by merchant, rel=nofollow noopener sponsored. Store-feed half is the 'global trends' planned item — the page says so instead of showing an empty section." }
-        - { name: "style sessions (calendar status, not video)",           status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }
-        - { name: locale negotiation + switcher (nb/en),                   status: done, notes: "LocalizedRequest concern: ?locale= > session > Accept-Language (by q) > :nb, plus a footer switcher. available_locales had carried en since the app was built with nothing able to reach it. Rules engines (ClosetOrganization/TasteRanker/WardrobeAnalytics/WardrobeGap/DuplicateDetector) translated too." }
-        - { name: structured data on public pages,                         status: done, notes: "AmberSchemaHelper: ItemList + Product on /demo and the guest home, Article on posts#show. Uses demo URLs, not /items/:id, which is behind auth. Shared schema_url_for now emits absolute URLs." }
-      planned:
-        - { name: fashion embeddings (pgvector),                           status: planned, agent: ignore, notes: "BLOCKER: pgvector is a Postgres extension and database.yml is sqlite3 in every environment. This is a platform migration, not a feature. FingerprintGarmentJob's CRC32-64 fingerprint is the honest stand-in until then." }
-        - { name: visual similarity search,                                status: planned, agent: ignore }
-        - { name: real garment matting / segmentation,                     status: planned, agent: ignore }
-        - { name: virtual fitting room,                                    status: planned, agent: ignore }
-        - { name: mood matcher,                                            status: planned, agent: ignore }
-        - { name: event outfit planner,                                    status: planned, agent: ignore }
-        - { name: sustainable styles / resale marketplace,                 status: planned, agent: ignore }
-        - { name: richer weather agent suggestions,                        status: planned, agent: ignore }
-        - { name: global trends / local designer highlights,               status: planned, agent: ignore }
-        - { name: style agents (MASTER integration),                       status: planned, agent: ignore }
-        - { name: live video streaming,                                    status: planned, agent: ignore }
 
   bsdports:
     title: bsdports
