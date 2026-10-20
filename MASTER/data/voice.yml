@@ -801,6 +801,16 @@ bard:
   rate: "+14%"
   pitch: "-20Hz"
   max_words_per_sentence: 14
+  # The beat under the bard, dilla's own --play stream (lib/voice/bed.rb). One progression is drawn from
+  # `progressions` per start; they are the long extended-chord ones in STUDIO/dilla/data/dilla.json.
+  bed:
+    enabled: true
+    tool: STUDIO/dilla/dilla.rb
+    volume: 0.35
+    player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} -f s16le -ar 44100 -ch_layout stereo -i -"
+    progressions: [9, 11, 12, 13, 14, 15]
+    args: ["--play", "--bpm", "82", "--beats", "4", "--voicing", "so_what", "--drums", "dusty_laid_back",
+           "--profile", "dilla_shadow", "--groove", "1.2", "--mode", "pad", "--patch-per-chord", "--echo", "1,2"]
 
 voice:
   style: openbsd_dmesg

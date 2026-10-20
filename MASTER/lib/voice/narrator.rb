@@ -222,6 +222,7 @@ module Master
       private
 
       def reset_task
+        Bed.stop
         @pending = []
         @story = []
         @beats = 0
@@ -433,6 +434,7 @@ module Master
       end
 
       def speak_to_playback(sentence)
+        Bed.start(@config["bed"])
         Playback.enqueue(sentence, **delivery)
       end
 
