@@ -401,12 +401,18 @@ module Master
         return false if sentences.any? { |sentence| unsupported_success_claim?(sentence, current, job[:kind]) }
 
         evidence = grounding_terms(known)
+        return anchored?(sentences, evidence) if @config["grounding"] == "anchor"
+
         sentences.all? do |sentence|
           terms = grounding_terms(sentence)
           next false if terms.empty?
 
           terms.all? { |term| evidence.include?(term) }
         end
+      end
+
+      def anchored?(sentences, evidence)
+        sentences.any? { |sentence| (grounding_terms(sentence) & evidence).any? }
       end
 
       def unsupported_success_claim?(sentence, current, kind)

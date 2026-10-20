@@ -55,24 +55,14 @@ prompt: |
 # events, because they say how the machine is told, not what it did.
 register_words: [song, verse, line, refrain, note, rhythm, beat]
 
+# No written lines: with no model the bard is silent, not a filler that reads a status line or says the song holds.
 templates:
-  opening:
-    - "The song begins. %{gist}."
-    - "The first note is this: %{gist}."
-  middle:
-    - "The line goes on: %{gist}."
-    - "Next, %{gist}."
-    - "Then %{gist}."
-  finding:
-    - "A trouble shows in the song: %{gist}."
-    - "The verse turns on this: %{gist}."
-  closing:
-    - "The song ends here. %{gist}."
-    - "The last note is this: %{gist}."
-  incomplete:
-    - "The song stops short. %{gist}."
-  gap:
-    - "The song holds. The last confirmed result is %{gist}."
+  opening: []
+  middle: []
+  finding: []
+  closing: []
+  incomplete: []
+  gap: []
 
 # The idle register (lib/voice/narrator/cheer.rb): after `after_s` seconds with nothing to tell, a short dry
 # freestyle to lift the listener. It may not claim an outcome or a number. `lines` are the written fallback.

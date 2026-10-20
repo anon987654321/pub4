@@ -82,7 +82,11 @@ finding_events:
 # Lines never narrated: the voice's own status, spinner repaint noise, and
 # token tallies. Matched against the line with its unit prefix still on.
 ignore_events:
-  - '\A(?:voice|tts|narr)\d+'
+  - '\A(?:voice|tts|narr|bard)\d+'
+  - '\Abed0:'
+  - '\A(?:net|bth)0 at mainbus0:'
+  - '\Amaster0: (?:internal child|MASTER_MODEL)'
+  - '\A(?:master0|host0|web0|session0|boot0)\b.* at (?:mainbus0|master0):'
   - '\Allm\d+: (?:tokens|cost|usage)'
   - '\Aobs\d+: \d+/\d+ files\b'
   - '\Alaw\d+: lexical (?:scan pass|scanner idle)\b'

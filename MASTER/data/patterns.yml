@@ -874,8 +874,9 @@ cli:
   face_on_start: false
   # The radios on the startup lines: net0 (wifi) and bth0 (bluetooth), as a kernel prints them.
   boot_devices: true
-  # The face's microphone is push to talk (Tab); true arms it by itself while idle and the voice is quiet.
-  face_auto_mic: false
+  # The face listens by itself while idle and MASTER is quiet, ends a take on silence and answers without Enter.
+  # false makes it push to talk (Tab). The status line says "mic on" whenever it can hear.
+  face_auto_mic: true
   # Commands that run for minutes and would leave the face looking stuck; the face points to the shell for them.
   face_shell_only: ["/fix", "/review", "/critique", "/scan"]
 

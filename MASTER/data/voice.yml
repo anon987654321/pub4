@@ -804,6 +804,9 @@ bard:
   rate: "-14%"
   pitch: "-14Hz"
   max_words_per_sentence: 12
+  # anchor: a reply may use new words so long as it names something from the events and claims no number or outcome
+  # they do not support. The narrator keeps the strict test (every word grounded).
+  grounding: anchor
   # Notional model spend before the bard falls back to written templates; 0.05 was gone after fifty calls.
   max_cost_usd: 0.25
   # A work run is summarised, not read out: fewer, longer-spaced beats of one sentence each.

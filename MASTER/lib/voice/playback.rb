@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 require "open3"
 require "set"
 require_relative "../io/process_spawn"
@@ -108,6 +110,7 @@ module Master
 
         return if echo?(str)
 
+        trace_speech(:speak, str, voice: Speech.voice_for_text(str), style: nil, rate: nil, pitch: nil)
         # Conversational replies own the speaker. Diagnostic/council speech can
         # stay queued, but a reply starts a fresh playback generation so stale
         # audio is stopped before the answer enters the queue.
@@ -156,6 +159,8 @@ end
         str = text.to_s.strip
         return false if str.empty?
 
+        trace_speech(:enqueue, str, voice:, style:, rate:, pitch:)
+
         queue = ensure_queue
         accepted = @lock.synchronize do
           current = generation || @generation
@@ -179,6 +184,19 @@ end
       # Synchronous path for an operator-facing hardware test. Normal replies
       # remain asynchronous; a test must not report "queued" and leave the
       # process to decide whether the worker ever reached the speaker.
+      # MASTER_VOICE_TRACE=<file> appends one JSON line per utterance handed to the speaker, with its voice and
+      # the caller, so a doubled or wrong voice can be read instead of guessed.
+      def trace_speech(via, text, **delivery)
+        path = ENV.fetch("MASTER_VOICE_TRACE", "")
+        return if path.empty?
+
+        where = caller_locations(2, 2).map { |loc| "#{File.basename(loc.path)}:#{loc.lineno}" }
+        row = { at: Time.now.strftime("%T.%L"), via:, text: text[0, 90], caller: where, **delivery }
+        File.open(path, "a") { |io| io.puts(JSON.generate(row)) }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Voice::Playback.trace_speech")
+      end
+
       def speak_now(text)
         str = text.to_s.strip
         return false if str.empty?

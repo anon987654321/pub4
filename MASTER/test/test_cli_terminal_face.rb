@@ -35,7 +35,7 @@ class TestCliTerminalFace < Minitest::Test
 
     assert_match CONTOUR, shown
     refute_match BRAILLE, shown
-    assert_includes shown, "idle, mic ready, Tab to talk"
+    assert_includes shown, "idle, mic on"
     refute_includes shown, "/ FACE"
     refute_includes shown, "recent"
   end

@@ -266,9 +266,18 @@ module Master
 
         def hearing? = @hearing&.alive?
 
+        # Hands free is the data default: the face listens when idle, ends a take on silence and answers without
+        # Enter. It holds off while MASTER speaks (the face's voice, the speech queue, the beat), so it does not
+        # hear itself.
         def auto_mic?
-          return false if ENV["MASTER_FACE_AUTO_MIC"] == "0"
           return false if Master::Voice::Bed.running? || Master::Voice::Playback.backlog.positive?
+          return false if Master::Voice::Playback.external_speaking?
+
+          auto_mic_setting?
+        end
+
+        def auto_mic_setting?
+          return false if ENV["MASTER_FACE_AUTO_MIC"] == "0"
 
           ENV["MASTER_FACE_AUTO_MIC"] == "1" || Master.patterns_config.fetch("cli", {})["face_auto_mic"] == true
         end
@@ -276,7 +285,7 @@ module Master
         def mic_label
           return "mic off" unless @ear.available?
 
-          hearing? ? "mic on" : "mic ready, Tab to talk"
+          hearing? || auto_mic_setting? ? "mic on" : "mic ready, Tab to talk"
         end
 
         # Enter ends the take and sends what was heard. A letter ends it too,

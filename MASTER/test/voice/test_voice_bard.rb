@@ -31,28 +31,31 @@ class TestVoiceBard < Minitest::Test
     script = Narrator::Script.load(*Narrator.script_paths(:bard))
 
     assert_includes script.register_words, "song"
-    assert_match(/song/, script.template(:opening, 0, "reading 14 files"))
+    assert_nil script.template(:opening, 0, "reading 14 files"), "the bard keeps no written lines"
     assert script.closing?("fix0: complete, 2 repairs"), "the narration closing patterns still apply"
     assert script.ignored?("tts0: speaking"), "the narration ignore patterns still apply"
   end
 
-  def test_it_sings_a_template_when_no_lane_is_live
-    assert_equal :spoken, beat(build, "scan0: reading 14 files")
-    assert_match(/song begins|first note/i, @spoken.first)
-    assert_match(/reading 14 files/, @spoken.first)
+  def test_it_is_silent_when_no_lane_is_live_rather_than_reading_a_filler
+    assert_equal :rate, beat(build, "scan0: reading 14 files")
+    assert_empty @spoken
   end
 
-  def test_a_reply_that_invents_something_is_replaced_by_the_template
-    { "The scan found 47 mysterious modules in the dark." => /47|mysterious/,
-      "Everything is complete and verified." => /complete|verified/i,
-      "The ancient engines hummed under a silver moon." => /ancient|moon/i,
-      "The song crosses a burning bridge." => /bridge|burning/i }.each do |reply, forbidden|
-      bard = build(reply:)
-      beat(bard, "scan0: 3 files checked")
+  def test_a_reply_that_invents_something_is_not_spoken
+    { "The scan found 47 mysterious modules in the dark." => "an invented number",
+      "Everything is complete and verified." => "an unsupported outcome",
+      "The ancient engines hummed under a silver moon." => "no anchor in the events" }.each do |reply, why|
+      @spoken = []
+      beat(build(reply:), "scan0: 3 files checked")
 
-      refute spoken_include?(forbidden), reply
-      assert spoken_include?(/3 files checked/), "the template should have told the event"
+      assert_empty @spoken, "#{reply} (#{why})"
     end
+  end
+
+  def test_a_slam_line_that_names_the_events_may_use_new_words
+    beat(build(reply: "Three files checked, and the pocket stays warm."), "scan0: 3 files checked")
+
+    assert_equal ["Three files checked, and the pocket stays warm."], @spoken
   end
 
   def test_a_lyrical_sentence_that_uses_only_the_events_and_the_register_survives
