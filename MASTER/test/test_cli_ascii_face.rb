@@ -22,7 +22,6 @@ class TestCliAsciiFace < Minitest::Test
       \\\       //
        \\\-----//
 
-
   FRAME
 
   def head_frame(rows, cols, look, state: :idle)

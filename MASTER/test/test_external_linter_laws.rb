@@ -167,7 +167,7 @@ class TestExternalLinterLaws < Minitest::Test
     report = JSON.generate([{
       "smell_type" => "Example",
       "message" => "example smell",
-      "lines" => [2, 4]
+      "lines" => [2, 4],
     }])
     rule.stub(:linter_available?, true) do
       Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
@@ -204,7 +204,7 @@ class TestExternalLinterLaws < Minitest::Test
         "offenses" => [{
           "location" => { "line" => 2 },
           "cop_name" => "Style/Example",
-          "message" => "example offense"
+          "message" => "example offense",
         }]
       }]
     )
