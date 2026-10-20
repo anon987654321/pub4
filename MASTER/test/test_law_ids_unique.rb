@@ -21,7 +21,7 @@ class TestLawIdsUnique < Minitest::Test
   end
 
   def scanner
-    @scanner ||= Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+    @scanner ||= Master::Builder.build_scanner(root: Master::ROOT)
   end
 
   def test_every_registered_law_id_is_unique

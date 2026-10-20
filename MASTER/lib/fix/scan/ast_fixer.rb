@@ -2,7 +2,7 @@
 
 require "prism"
 require "set"
-require_relative "../io/exec"
+require_relative "../../io/exec"
 require "strscan"
 require_relative "ast_fixer/syntax_transforms"
 require_relative "ast_fixer/web_transforms"
