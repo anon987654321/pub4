@@ -212,8 +212,8 @@ class TestCliTerminalFace < Minitest::Test
     result = face.stub(:arm_ear, nil) { face.run }
 
     assert_equal "face0: closed", result
-    assert_includes output.string, "\\e[?1049h"
-    assert_includes output.string, "\\e[?1049l"
+    assert_includes output.string, "\e[?1049h"
+    assert_includes output.string, "\e[?1049l"
     assert_equal true, face.instance_variable_get(:@closing)
   end
 
