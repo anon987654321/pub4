@@ -6119,16 +6119,19 @@ module Dilla
     REFERENCE_ROOT = Studio::OutputPaths.reference_root.freeze
     MAX_DURATION = 7_200
     DEFAULT_DURATION = 900
+    # libsonare decodes full files into memory, so keep this optional pass short.
+    LIBSONARE_MAX_DURATION_SECONDS = 900
     VIDEO_ID = /\A[A-Za-z0-9_-]{11}\z/.freeze
     class Error < StandardError; end
     module_function
 
     def run(argv)
-      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION, style: "general" }
+      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION, style: "general", libsonare: true }
       OptionParser.new do |parser|
         parser.banner = "Usage: ruby dilla.rb reference YOUTUBE_URL_OR_AUDIO [options]"
         parser.on("--out DIR") { |value| options[:out] = value }
         parser.on("--no-stems") { options[:stems] = false }
+        parser.on("--no-libsonare", "Skip optional libsonare analysis") { options[:libsonare] = false }
         parser.on("--model NAME") { |value| options[:model] = value }
         parser.on("--style NAME") { |value| options[:style] = style_key(value) }
         parser.on("--max-duration SECONDS", Integer) do |value|
@@ -6190,7 +6193,7 @@ module Dilla
 
     def analyze(audio, directory = nil, options = {})
       raise Error, "audio file does not exist: #{audio}" unless File.file?(audio) && File.readable?(audio)
-      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION, style: "general" }.merge(options)
+      options = { stems: true, model: "htdemucs", max_duration: DEFAULT_DURATION, style: "general", libsonare: true }.merge(options)
       ffmpeg = executable("FFMPEG_BIN", "ffmpeg") or raise Error, "ffmpeg unavailable"
       ffprobe = executable("FFPROBE_BIN", "ffprobe") or raise Error, "ffprobe unavailable"
       duration = probe_duration(audio, ffprobe)
@@ -6212,7 +6215,15 @@ module Dilla
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
       temporal_energy = temporal_energy_map(audio, ffmpeg:, max_duration: options[:max_duration])
       essentia_result = essentia(audio, directory, max_duration: options[:max_duration])
+      libsonare_result = if options[:libsonare]
+                           libsonare(audio, directory, max_duration: options[:max_duration], source_duration: duration)
+                         else
+                           { "status" => "disabled" }
+                         end
       tempo_check = tempo_crosscheck(mix["tempo"], essentia_result.fetch("summary", {}))
+      libsonare_tempo_check = tempo_crosscheck(
+        mix["tempo"], libsonare_result.fetch("summary", {}), engine: "libsonare"
+      )
       drum_source, rhythm_source_kind = rhythm_source_for(stems, audio)
       rhythm = rhythm_features(
         drum_source, ffmpeg:, max_duration: options[:max_duration],
@@ -6247,7 +6258,8 @@ module Dilla
       File.write(catalog, JSON.pretty_generate(profile) + "\n")
       learned = aggregate_saved_profiles(profile.fetch("style_key"), including: profile)
       report = { "schema_version" => 1, "source" => source, "tracks" => tracks, "separation" => separation,
-                 "essentia" => essentia_result, "tempo_crosscheck" => tempo_check,
+                 "essentia" => essentia_result, "libsonare" => libsonare_result,
+                 "tempo_crosscheck" => tempo_check, "libsonare_tempo_crosscheck" => libsonare_tempo_check,
                  "temporal_energy" => temporal_energy, "rhythm_analysis" => rhythm_analysis,
                  "production_profile" => profile,
                  "learned_profile" => learned,
@@ -6257,6 +6269,7 @@ module Dilla
                                    "Temporal energy is a coarse arrangement contour, not a transcription.",
                                    "Spectral levels describe the mix, not isolated instruments.",
                                    "The style label is the user-provided hint, not an automatic genre classification.",
+                                   "libsonare is optional and only analyzes references no longer than 15 minutes.",
                                    "Only broad production traits guide new music; source audio and composition are not copied."] }
       File.write(File.join(directory, "analysis.json"), JSON.pretty_generate(report) + "\n")
       File.write(File.join(REFERENCE_ROOT, "latest_profile.json"), JSON.pretty_generate(learned) + "\n")
@@ -6265,7 +6278,8 @@ module Dilla
       File.write(scoped_profile, JSON.pretty_generate(learned) + "\n")
       write_active_style(profile.fetch("style_key"))
       write_report(File.join(directory, "report.md"), tracks, separation, profile, learned,
-                   temporal_energy:, essentia: essentia_result, tempo_crosscheck: tempo_check,
+                   temporal_energy:, essentia: essentia_result, libsonare: libsonare_result,
+                   tempo_crosscheck: tempo_check, libsonare_tempo_crosscheck: libsonare_tempo_check,
                    rhythm_analysis:, source:)
       puts "reference0: style_hint=#{profile.fetch('style_key')}; learned references=#{learned.fetch('reference_count', 1)}; separation=#{separation['status']}; analyzed #{tracks.size - 1} stems"
       puts "reference0: estimated tempo=#{mix.dig('tempo', 'bpm') || 'unknown'} BPM"
@@ -6408,6 +6422,133 @@ module Dilla
       [[], { "status" => "failed", "files" => [], "message" => error.message }]
     end
 
+    # Optional C++-backed music analysis through libsonare's Python CLI.
+    # Use argv rather than a shell and never make this a rendering dependency.
+    # Its Python binding loads the file into memory, so sources are capped at 15 minutes.
+    def libsonare(audio, directory, max_duration: DEFAULT_DURATION, source_duration: nil)
+      unless source_duration && source_duration.to_f.finite?
+        return { "status" => "skipped_unknown_duration",
+                 "max_duration_seconds" => LIBSONARE_MAX_DURATION_SECONDS }
+      end
+      if source_duration.to_f > LIBSONARE_MAX_DURATION_SECONDS
+        return { "status" => "skipped_duration",
+                 "max_duration_seconds" => LIBSONARE_MAX_DURATION_SECONDS }
+      end
+
+      exe = executable("LIBSONARE_BIN", "sonare")
+      return { "status" => "unavailable" } unless exe
+
+      timeout = analysis_timeout([source_duration.to_f.ceil, max_duration.to_i].min)
+      input = audio
+      temporary = nil
+      unless %w[.wav .mp3].include?(File.extname(audio).downcase)
+        ffmpeg = executable("FFMPEG_BIN", "ffmpeg")
+        return { "status" => "unavailable", "message" => "ffmpeg unavailable for libsonare format conversion" } unless ffmpeg
+
+        temporary = Tempfile.new(["libsonare-input-", ".wav"], directory)
+        input = temporary.path
+        temporary.close
+        capture!("libsonare input conversion", ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error",
+                 "-y", "-i", audio, "-t", source_duration.to_s, "-vn", "-ac", "1", "-ar", "22050",
+                 "-c:a", "pcm_s16le", input, timeout:)
+        unless File.file?(input) && File.size(input).positive?
+          return { "status" => "failed", "message" => "libsonare input conversion produced no audio" }
+        end
+      end
+
+      stdout, = capture!("libsonare analysis", exe, "analyze", input, "--json", timeout:)
+      descriptors = JSON.parse(stdout)
+      return { "status" => "failed", "message" => "invalid libsonare output: expected a JSON object" } unless descriptors.is_a?(Hash)
+
+      name = File.join(directory, "libsonare_features.json")
+      File.write(name, JSON.pretty_generate(descriptors) + "\n")
+      { "status" => "analyzed", "file" => File.basename(name),
+        "summary" => libsonare_descriptor_summary(descriptors) }
+    rescue Error => error
+      { "status" => "failed", "message" => error.message }
+    rescue Errno::ENOENT, JSON::ParserError, Errno::EACCES, Errno::EIO => error
+      { "status" => "failed", "message" => "libsonare analysis failed: #{error.message}" }
+    ensure
+      temporary&.close!
+    end
+
+    # Keep compact measurements for style learning. Full timelines remain in a raw
+    # JSON sidecar; exact chord names do not steer a future composition.
+    def libsonare_descriptor_summary(document)
+      return {} unless document.is_a?(Hash)
+
+      summary = {}
+      bpm = numeric_value(document["bpm"])
+      summary["bpm"] = bpm.round(2) if bpm&.between?(20.0, 400.0)
+      confidence = numeric_value(document["bpm_confidence"])
+      summary["bpm_confidence"] = confidence.round(3) if confidence&.between?(0.0, 1.0)
+
+      key = document["key"]
+      if key.is_a?(Hash)
+        name = key["name"]
+        summary["key"] = name.strip if name.is_a?(String) && !name.strip.empty?
+        value = numeric_value(key["confidence"])
+        summary["key_confidence"] = value.round(3) if value&.between?(0.0, 1.0)
+      end
+
+      meter = document["time_signature"]
+      if meter.is_a?(Hash)
+        numerator = numeric_value(meter["numerator"])
+        denominator = numeric_value(meter["denominator"])
+        if numerator&.between?(1, 32) && denominator&.between?(1, 32) &&
+           numerator == numerator.to_i && denominator == denominator.to_i
+          summary["time_signature"] = "#{numerator.to_i}/#{denominator.to_i}"
+        end
+      end
+
+      beats = document["beats"]
+      if beats.is_a?(Array)
+        summary["beats_count"] = beats.size
+        times = beats.filter_map do |beat|
+          value = numeric_value(beat["time"]) if beat.is_a?(Hash)
+          value if value && value >= 0
+        end
+        intervals = times.each_cons(2).map { |first, last| last - first }.select(&:positive?)
+        if intervals.size >= 2
+          median_interval = median_value(intervals)
+          mean_interval = intervals.sum / intervals.size.to_f
+          variance = intervals.sum { |value| (value - mean_interval)**2 } / intervals.size
+          summary["beat_interval_median_ms"] = (median_interval * 1_000).round(2)
+          summary["beat_interval_cv_pct"] = (Math.sqrt(variance) / mean_interval * 100).round(2) if mean_interval.positive?
+        end
+      end
+      summary["downbeats_count"] = document["downbeat_indices"].size if document["downbeat_indices"].is_a?(Array)
+      summary["chord_count"] = document["chords"].size if document["chords"].is_a?(Array)
+      if document["sections"].is_a?(Array)
+        sections = document["sections"].select { |section| section.is_a?(Hash) }
+        summary["section_count"] = sections.size
+        types = sections.filter_map do |section|
+          type = section["type"]
+          type.strip if type.is_a?(String) && !type.strip.empty?
+        end.uniq.sort.first(16)
+        summary["section_types"] = types unless types.empty?
+      end
+
+      { "timbre" => "timbre", "dynamics" => "dynamics", "rhythm" => "rhythm" }.each do |source, prefix|
+        values = document[source]
+        next unless values.is_a?(Hash)
+
+        values.each do |name, value|
+          if name == "groove_type" && value.is_a?(String) && !value.strip.empty?
+            summary["#{prefix}_#{name}"] = value.strip
+          elsif name == "is_compressed" && (value == true || value == false)
+            summary["#{prefix}_#{name}"] = value
+          else
+            number = numeric_value(value)
+            summary["#{prefix}_#{name}"] = number.round(3) if number
+          end
+        end
+      end
+      form = document["form"]
+      summary["form"] = form.strip if form.is_a?(String) && !form.strip.empty?
+      summary
+    end
+
     def essentia(audio, directory, max_duration: DEFAULT_DURATION)
       exe = executable("ESSENTIA_EXTRACTOR", "streaming_extractor_music")
       return { "status" => "unavailable" } unless exe
@@ -6452,14 +6593,18 @@ module Dilla
     # The FFmpeg envelope estimate and Essentia beat tracker are deliberately
     # independent. Report close agreement versus half/double-time ambiguity;
     # do not silently average contradictory estimators into a false precision.
-    def tempo_crosscheck(tempo, essentia_summary)
+    def tempo_crosscheck(tempo, independent_summary, engine: "essentia")
       primary = numeric_value(tempo.is_a?(Hash) ? tempo["segment_median_bpm"] : nil)
       global = numeric_value(tempo.is_a?(Hash) ? tempo["bpm"] : nil)
       primary ||= global
-      independent = numeric_value(essentia_summary.is_a?(Hash) ? essentia_summary["bpm"] : nil)
-      independent ||= numeric_value(essentia_summary["bpm_histogram_first_peak_bpm"]) if essentia_summary.is_a?(Hash)
+      engine_name = engine.to_s == "libsonare" ? "libsonare" : "essentia"
+      field = "#{engine_name}_bpm"
+      independent = numeric_value(independent_summary.is_a?(Hash) ? independent_summary["bpm"] : nil)
+      if !independent && independent_summary.is_a?(Hash) && engine_name == "essentia"
+        independent = numeric_value(independent_summary["bpm_histogram_first_peak_bpm"])
+      end
       return { "status" => "insufficient_evidence", "ffmpeg_bpm" => primary,
-               "ffmpeg_global_bpm" => global, "essentia_bpm" => independent }.compact unless primary && independent
+               "ffmpeg_global_bpm" => global, field => independent }.compact unless primary && independent
 
       direct_delta = (primary - independent).abs
       half_delta = (primary - independent * 2.0).abs
@@ -6473,7 +6618,7 @@ module Dilla
                end
       { "status" => status, "ffmpeg_bpm" => primary.round(2),
         "ffmpeg_global_bpm" => global&.round(2),
-        "essentia_bpm" => independent.round(2), "absolute_delta_bpm" => direct_delta.round(2) }.compact
+        field => independent.round(2), "absolute_delta_bpm" => direct_delta.round(2) }.compact
     end
 
     # Summarize the mix's energy in short windows, independently of the rhythm
@@ -6834,7 +6979,8 @@ module Dilla
     end
 
     def write_report(path, tracks, separation, profile, learned = profile,
-                     temporal_energy: {}, essentia: {}, tempo_crosscheck: {}, rhythm_analysis: {}, source: {})
+                     temporal_energy: {}, essentia: {}, libsonare: {}, tempo_crosscheck: {},
+                     libsonare_tempo_crosscheck: {}, rhythm_analysis: {}, source: {})
       lines = ["# Audio reference analysis", "", "## Source",
                JSON.pretty_generate(source), "",
                "Estimated tempo: #{tracks.dig('mix', 'tempo', 'bpm') || 'unknown'} BPM",
@@ -6864,9 +7010,16 @@ module Dilla
                     "Window count: #{temporal_energy['window_count'] || 0}; window size: #{temporal_energy['window_seconds'] || '?'} seconds"])
       energy_summary.each { |name, value| lines << "- #{name}: #{value}" }
       essentia_summary = essentia.fetch("summary", {})
-      lines.concat(["", "## Independent tempo and tonal analysis",
+      lines.concat(["", "## Independent tempo, tonal and groove analysis",
                     "Essentia status: #{essentia['status'] || 'not measured'}"])
-      essentia_summary.each { |name, value| lines << "- #{name}: #{value}" }
+      essentia_summary.each { |name, value| lines << "- essentia.#{name}: #{value}" }
+      libsonare_summary = libsonare.fetch("summary", {})
+      lines << "Libsonare status: #{libsonare['status'] || 'not measured'}"
+      libsonare_summary.each { |name, value| lines << "- libsonare.#{name}: #{value}" }
+      lines.concat(["", "## Tempo cross-check: FFmpeg versus Essentia"])
+      tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
+      lines.concat(["", "## Tempo cross-check: FFmpeg versus libsonare"])
+      libsonare_tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## Rhythm analysis source",
                     "Source: #{rhythm_analysis['source'] || 'not measured'}"])
       rhythm_analysis.fetch("features", {}).each { |name, value| lines << "- #{name}: #{value}" }
