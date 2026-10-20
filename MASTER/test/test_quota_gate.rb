@@ -32,8 +32,15 @@ class TestQuotaGate < Minitest::Test
     assert Gate.blocked?, "asked without a model, the tier still reads as blocked"
   end
 
+  def test_a_trip_without_a_model_closes_only_the_provider_its_error_names
+    Gate.trip!(source: "council persona P0", message: CREDITS)
+
+    assert Gate.blocked?("openrouter:nvidia/nemotron:free")
+    refute Gate.blocked?("claude-cli:claude-sonnet-5-5")
+  end
+
   def test_a_trip_without_a_model_closes_every_lane
-    Gate.trip!(source: "semantic Law X", message: CREDITS)
+    Gate.trip!(source: "semantic Law X", message: "Individual quota reached")
 
     assert Gate.blocked?("claude-cli:claude-sonnet-5-5")
   end

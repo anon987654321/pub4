@@ -68,6 +68,8 @@ module Master
       LOCK = Monitor.new
       # Hard refusals. A key that is rejected is not a balance that refills, so
       # these do not re-probe.
+      # A provider the error text names outright, for a trip whose model is not known.
+      PROVIDER_NAMED = /openrouter|anthropic|openai|deepseek|mistral|xai|gemini/i
       REFUSED_RE = /unauthorized|invalid[ _-]?api[ _-]?key|revoked|forbidden|\b401\b|\b403\b/i
 
       @state = :available
@@ -249,9 +251,16 @@ end,
       end
 
       def close_lane(model)
-        lane = model.to_s.empty? ? :any : Master::Io::LaneQuota.lane_of(model)
+        lane = lane_of(model)
         @lanes[lane] = @state == :refused ? :refused : @resume_at
         Master::Io::LaneQuota.note(model, @message) unless lane == :any
+      end
+
+      # The lane a trip closes: the model's own, else the provider the error names, else the whole tier.
+      def lane_of(model)
+        return Master::Io::LaneQuota.lane_of(model) unless model.to_s.empty?
+
+        @message.to_s[PROVIDER_NAMED, 0]&.downcase || :any
       end
 
       def blocked_now? = @state == :refused || (!@resume_at.nil? && now < @resume_at)
@@ -277,7 +286,8 @@ end,
         warn("quota0: #{cause_now} via #{@source}: #{@message} (dmesg unavailable: #{e.class})")
       end
 
-      private_class_method :blocked_now?, :blocked_lane?, :close_lane, :now, :cause_now, :recovery_now, :announce
+      private_class_method :blocked_now?, :blocked_lane?, :close_lane, :lane_of, :now, :cause_now,
+                           :recovery_now, :announce
     end
   end
 end
