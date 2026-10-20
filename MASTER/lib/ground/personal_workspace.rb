@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "personal_permissions"
 
 module Master
   module Ground
@@ -9,6 +10,9 @@ module Master
     module PersonalWorkspace
       MAX_BYTES = 4_096
       REL = ".master/workspace"
+      MEMORY_PERMISSION_PURPOSE = "read and write personal profile and memory".freeze
+
+      class PermissionDenied < StandardError; end
       USER_STUB = <<~MD
         # USER
 
@@ -41,7 +45,7 @@ module Master
             Master::Device.android? && Master::Device::Agent.paired?(root:)
           subject = Master::Device::Agent.owner_subject(root:)
         end
-        return unless subject.to_s.strip != ""
+        return unless permission_granted?(root:, subject:)
 
         dir = dir_for(subject, root:)
         user = read_capped(File.join(dir, "USER.md"))
@@ -55,6 +59,10 @@ module Master
       end
 
       def append_memory(root:, subject:, key:, body:, type: "general")
+        unless permission_granted?(root:, subject:)
+          raise PermissionDenied, "personal profile and memory are disabled; use /privacy grant personal_memory in the local paired session"
+        end
+
         ensure!(root:, subject:)
         path = File.join(dir_for(subject, root:), "MEMORY.md")
         stamp = Time.now.utc.strftime("%Y-%m-%d")
@@ -74,6 +82,15 @@ module Master
         "HEARTBEAT_OK"
       rescue StandardError
         "HEARTBEAT_OK"
+      end
+
+      def permission_granted?(root:, subject:)
+        id = subject.to_s.strip
+        return false if id.empty?
+
+        PersonalPermissions.new(root:).allowed?(
+          scope: "personal_memory", subject: id, purpose: MEMORY_PERMISSION_PURPOSE,
+        )
       end
 
       def sanitize(subject)
