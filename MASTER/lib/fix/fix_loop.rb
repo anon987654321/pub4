@@ -5,6 +5,7 @@ require "time"
 require_relative "scanner"
 require_relative "run_journal"
 require_relative "reachability"
+require_relative "instrument_check"
 require_relative "fix_loop/committer"
 require_relative "fix_loop/council_round"
 require_relative "fix_loop/llm_router"
@@ -422,6 +423,7 @@ module Master
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
+        InstrumentCheck.new(root: @root, bus: @bus).verify!
         @reachability.verify!(target, files:)
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
