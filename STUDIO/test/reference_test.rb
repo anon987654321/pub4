@@ -577,6 +577,38 @@ class DillaReferenceTest < Minitest::Test
     end
   end
 
+  def test_reference_report_includes_frequency_bands_for_the_mix_and_drums_stem
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "report.md")
+      Dilla::Reference.write_report(
+        path,
+        {
+          "mix" => {
+            "tempo" => { "bpm" => 92.0 },
+            "spectral_bands_db" => {
+              "sub_25_120_hz" => -12.0, "high_4000_plus_hz" => -9.0
+            }
+          },
+          "drums" => {
+            "rms_db" => -8.0,
+            "spectral_bands_db" => {
+              "sub_25_120_hz" => -15.0, "high_4000_plus_hz" => -7.0
+            }
+          }
+        },
+        { "status" => "separated" }, { "style_key" => "j_dilla" },
+        { "reference_count" => 1 }, source: { "source_type" => "local_audio" }
+      )
+
+      report = File.read(path)
+      assert_includes report, "### mix"
+      assert_includes report, "### drums"
+      assert_includes report, "- sub_25_120_hz: -12.0 dB"
+      assert_includes report, "- high_4000_plus_hz: -7.0 dB"
+      assert_equal 2, report.scan(/^### (?:mix|drums)$/).length
+    end
+  end
+
   def test_rhythm_source_is_explicit_about_demucs_vs_full_mix_proxy
     audio = "/references/source.wav"
     stem, source = Dilla::Reference.rhythm_source_for(

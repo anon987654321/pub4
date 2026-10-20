@@ -188,7 +188,9 @@ the report surfaces independent BPM candidates,
 onset-rate and selected tonal/spectral summaries alongside the local tempo estimate.
 Agreement and half/double-time ambiguity are reported rather than silently blended. The
 rhythm summary also names its evidence source: a Demucs drums stem when available, or an
-explicitly labelled full-mix proxy when separation is unavailable or disabled.
+explicitly labelled full-mix proxy when separation is unavailable or disabled. Where a drums
+stem exists, its broad 25–120 Hz and 4 kHz-plus energy bands are also reported beside the mix.
+Those are stem-level frequency summaries, not isolated kick or hi-hat measurements.
 
 MASTER can infer a broad style from the instruction accompanying the link, so a boom-bap reference and an industrial-techno reference stay separate. In chat, say
 something like “learn this track's hip-hop production style” and paste the link; later,

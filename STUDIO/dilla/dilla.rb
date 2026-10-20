@@ -6210,7 +6210,10 @@ module Dilla
       stems, separation = separate(audio, directory, options, duration)
       tracks = { "mix" => mix }
       stems.each do |path|
-        tracks[File.basename(path, ".wav")] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: false)
+        name = File.basename(path, ".wav")
+        # Measure broad low/high energy in the drums stem as well as the mix.
+        # Demucs roles are not isolated kick/snare/hat tracks.
+        tracks[name] = metrics(path, ffmpeg:, ffprobe:, max_duration: options[:max_duration], bands: name == "drums")
       end
       mix["tempo"] = tempo(audio, ffmpeg:, max_duration: options[:max_duration])
       temporal_energy = temporal_energy_map(audio, ffmpeg:, max_duration: options[:max_duration])
@@ -6989,7 +6992,13 @@ module Dilla
                "Stem separation: #{separation['status']}", "", "## Parts"]
       tracks.each { |name, row| lines << "- #{name}: #{row['duration_seconds'] || '?'} s; RMS #{row['rms_db'] || 'unknown'} dB" }
       lines.concat(["", "## Frequency bands"])
-      tracks.fetch("mix").fetch("spectral_bands_db", {}).each { |name, value| lines << "- #{name}: #{value || 'not measured'} dB" }
+      tracks.each do |track_name, row|
+        bands = row.fetch("spectral_bands_db", {})
+        next if bands.empty?
+
+        lines << "### #{track_name}"
+        bands.each { |name, value| lines << "- #{name}: #{value || 'not measured'} dB" }
+      end
       tempo_data = tracks.dig("mix", "tempo") || {}
       tempo_windows = tempo_data.fetch("segments", [])
       lines.concat(["", "## Local tempo windows",
