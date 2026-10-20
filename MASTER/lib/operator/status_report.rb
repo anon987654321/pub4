@@ -17,7 +17,6 @@ module Operator
     PORTS = {
       "MASTER web" => Integer(ENV.fetch("MASTER_WEB_PORT", DEFAULT_MASTER_WEB_PORT.to_s)),
       "brgen" => 38_182,
-      "amber" => 61_352,
       "bsdports" => 47_312,
     }.freeze
 
@@ -164,7 +163,6 @@ module Operator
       mapping = {
         "MASTER web" => "master",
         "brgen" => "brgen",
-        "amber" => "amber",
         "bsdports" => "bsdports",
       }
       mapping.transform_values do |service|
