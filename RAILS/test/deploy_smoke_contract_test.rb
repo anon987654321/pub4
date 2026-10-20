@@ -5,22 +5,21 @@ require "minitest/autorun"
 class DeploySmokeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   OPENBSD_ROOT = File.expand_path("../../OPENBSD", __dir__)
-  APPS = %w[amber brgen bsdports].freeze
+  APPS = %w[brgen bsdports].freeze
   RAILS_APPS = APPS
   SMOKE = File.join(OPENBSD_ROOT, "bin", "deploy-smoke.sh")
 
-  # Every app's local port and public URL, and the rcctl service name. bsdports had
-  # neither local check when this list was only strings.
+  # Each active Rails app has a local port and public URL, plus an rcctl service
+  # check. Keep the registry aligned with the two active products.
   ENDPOINTS = {
     "master" => ["http://127.0.0.1:53187/up", "https://ai.brgen.no/up"],
     "brgen" => ["http://127.0.0.1:38182/up", "https://brgen.no/up"],
-    "amber" => ["http://127.0.0.1:61352/up", "https://amberapp.art/up"],
     "bsdports" => ["http://127.0.0.1:47312/up", "https://bsdports.org/up"],
   }.freeze
 
   # An app may be waived only by its own named variable, so a waiver is visible in
   # the command that waives it.
-  WAIVERS = { "amber" => "ALLOW_AMBER_DOWN", "bsdports" => "ALLOW_BSDPORTS_DOWN" }.freeze
+  WAIVERS = { "bsdports" => "ALLOW_BSDPORTS_DOWN" }.freeze
 
   def smoke_body
     @smoke_body ||= begin
@@ -78,6 +77,12 @@ class DeploySmokeContractTest < Minitest::Test
       assert_match(/#{app}_req=0/, smoke_code, "#{variable} does not actually waive #{app}")
       assert_includes smoke_code, "$#{app}_req", "#{app}_req is set but passed to no check"
     end
+  end
+
+  def test_retired_amber_is_neither_probed_nor_waived
+    refute_includes smoke_code, "amberapp.art"
+    refute_includes smoke_code, "ALLOW_AMBER_DOWN"
+    refute_includes smoke_code, "check_rcctl amber"
   end
 
   def test_deploy_smoke_gate_static_contract
