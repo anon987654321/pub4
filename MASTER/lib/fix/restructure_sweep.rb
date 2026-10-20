@@ -228,7 +228,7 @@ module Master
 
       def ranked_candidate_map(problems)
         Array(problems).map do |problem|
-          signal_count = problem.size + [problem.laws.size - 1, 0].max + [problem.files.size - 1, 0].max
+          signal_count = problem.findings.size + [problem.laws.size - 1, 0].max + [problem.files.size - 1, 0].max
           payoff = [[signal_count, 1].max, 5].min
           risk = problem.candidate_operations.map { |operation| OPERATION_RISK.fetch(operation, 5) }.max || 5
           { problem:, payoff:, risk:, ratio: payoff.to_f / risk }
