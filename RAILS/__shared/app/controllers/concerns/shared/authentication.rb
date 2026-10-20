@@ -34,6 +34,7 @@ module Shared
                                "guests get a soft Current.user by design — gate identity-bound " \
                                "actions with require_real_user instead.")
           end
+
           return
         end
 
@@ -96,6 +97,7 @@ module Shared
         ip_address: request.remote_ip,
       )
       Current.user = user
+
       # domain: :all for the same reason as the session cookie (see
       # shared/config/initializers/session_store.rb): the verticals are
       # subdomains, and a host-only cookie signed you out on the way to them.
@@ -232,6 +234,7 @@ module Shared
     # Idempotent, and a no-op for real users and already-saved guests.
     def ensure_guest_user!
       user = Current.user
+
       return user unless user&.new_record?
 
       user.save!

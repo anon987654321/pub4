@@ -12,6 +12,7 @@ module Shared
       # limits share a counter. See RAILS/test/rate_limit_naming_test.rb.
       rate_limit to: 10, within: 3.minutes, only: :create, name: "request_reset",
         with: -> { redirect_to new_password_path, alert: t("shared.flash.rate_limited") }
+
       # update is the other half of the same flow and had no limit: it takes a
       # token from the URL and sets a password. The token is a signed
       # MessageVerifier value, so this is not a guessing hole — it is the half of

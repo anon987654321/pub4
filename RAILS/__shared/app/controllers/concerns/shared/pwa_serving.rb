@@ -60,6 +60,7 @@ module Shared
       render js: service_worker_source, content_type: "application/javascript", layout: false
     rescue StandardError => e
       ::Rails.logger.error("[pwa] service_worker render failed: #{e.class}: #{e.message}")
+
       # A worker that fails to render must still be a valid worker. Returning an
       # error page here leaves the previously installed worker in place serving
       # a stale cache, with no route back.

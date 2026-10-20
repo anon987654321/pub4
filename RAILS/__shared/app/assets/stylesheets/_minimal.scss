@@ -122,8 +122,6 @@ nav a:hover {
   color: var(--black);
 }
 
-
-
 /* .skip-nav went with shared/frontend/layouts/_nav.html.erb, the pre-engine
    layout that was its only consumer. Every live app uses .skip-link. */
 .skip-link {
@@ -141,7 +139,7 @@ nav a:hover {
   border-radius: var(--radius-pill);
   width: 1px;
   height: 1px;
-  margin: -1px;
+  margin: -0px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   clip-path: inset(50%);
@@ -356,8 +354,6 @@ footer {
   direction: rtl;
 }
 
-
-
 /* Scaled down to fit a small phone, undone from xs up. A transform rather than a
    type step is not what this would be if it were written today — scaling text
    blurs it and makes the footer a containing block — but changing that is a
@@ -565,5 +561,5 @@ footer {
 .feed-card-byline{display:flex;align-items:baseline;gap:4px;min-width:0;margin-bottom:var(--space-2)}
 .feed-card-byline .feed-card-name{font-size:var(--text-sm)}
 .feed-card-byline .feed-card-handle,.feed-card-byline .feed-card-time{font-size:var(--text-xs)}
-.feed-card-actions{gap:2px}
+.feed-card-actions{gap:0px}
 .feed-action-count:empty{display:none}

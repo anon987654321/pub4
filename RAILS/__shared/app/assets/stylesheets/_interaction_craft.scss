@@ -49,7 +49,6 @@
   }
 }
 
-
 @supports (view-transition-name: none) {
   ::view-transition-old(root) {
     animation: interaction-view-out var(--transition-fast) var(--ease-out) both;

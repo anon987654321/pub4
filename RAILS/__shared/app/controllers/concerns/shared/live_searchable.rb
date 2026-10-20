@@ -35,6 +35,7 @@ module Shared
         vertical:,
         app: live_search_app_name,
       )
+
       @search_suggestions = @live_search_result.suggestions
       @live_search_result.scope
     end
@@ -52,6 +53,7 @@ module Shared
     def finish_live_search(partial:, locals: {}, target: "live_search_results", suggestions: "search_suggestions")
       respond_to do |format|
         format.html
+
         format.turbo_stream do
           streams = []
           streams << turbo_stream.update(
@@ -59,11 +61,13 @@ module Shared
             partial: "shared/search_suggestions",
             locals: { suggestions: search_suggestions },
           )
+
           streams << turbo_stream.update(
             target,
             partial:,
             locals:,
           )
+
           render turbo_stream: streams
         end
       end

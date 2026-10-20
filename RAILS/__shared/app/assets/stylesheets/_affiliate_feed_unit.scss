@@ -142,8 +142,6 @@
   margin-block-start: var(--space-3);
 }
 
-
-
 @media (prefers-reduced-motion: reduce) {
   .affiliate_feed_tile {
     transition: none;
@@ -154,7 +152,6 @@
 .affiliate_feed_unit--in_grid {
   grid-column: 1 / -1;
 }
-
 
 .affiliate_sidebar_grid {
   display: grid;
@@ -227,7 +224,6 @@
   background: var(--surface-elevated);
 }
 
-
 .affiliate_feed_unit--brgen {
   max-width: 42rem;
   margin-inline: var(--space-2);
@@ -274,5 +270,4 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
-
 
