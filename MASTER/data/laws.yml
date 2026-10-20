@@ -436,7 +436,7 @@ transformation_policy:
       - id: delete_before_abstract
         action: "Try deletion or consolidation before introducing a new abstraction."
       - id: same_reason_to_change
-        action: "Consolidate only when the units share a reason to change; superficial similarity is insufficient."
+        action: "Consolidate only when the units share a reason to change; superficial similarity is insufficient. Below three sites keep the duplication: a wrong abstraction costs more than a repeated line."
       - id: preparatory_refactoring
         action: "Reshape code toward a safe seam before making the requested behavior change."
       - id: history_as_evidence

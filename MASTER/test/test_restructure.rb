@@ -291,6 +291,26 @@ class TestRestructure < Minitest::Test
     assert_includes text, "MASTER/lib/user_policy.rb"
   end
 
+  def test_proposal_carries_every_playbook_method_and_gate
+    big = File.join(@repo, "MASTER/lib/big.rb")
+    problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
+      id: "p1",
+      findings: [[big, "GOD_CLASS", "two jobs", []]],
+      files: [big],
+      laws: %w[GOD_CLASS],
+      reason: "one finding",
+      confidence: :high,
+      candidate_operations: %w[split],
+    )
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo)
+    prompt = sweep.send(:proposal, "MASTER", problem)
+    playbook = Master::Fix::TransformationPlan.new.refactoring_playbook
+
+    playbook.fetch("methods").each { |entry| assert_includes prompt, "#{entry.fetch("id")}: #{entry.fetch("action")}" }
+    playbook.fetch("gates").each { |gate| assert_includes prompt, gate }
+    assert_includes prompt, "Below three sites keep the duplication"
+  end
+
   def test_each_tree_is_proved_its_own_way
     assert_equal %w[MASTER RAILS OPENBSD STUDIO], Master::Fix::RestructureSweep::Contracts::BY_TREE.keys
     assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
