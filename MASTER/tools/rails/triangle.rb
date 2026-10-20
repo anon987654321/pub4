@@ -10,7 +10,7 @@
 #   bin/operator triangle down    stop what this script started
 #
 # Why this exists: the browser and live-HTTP gates belong on the deploy host,
-# and vm23 has no headroom to run them (TODO.md item 2). So they ran nowhere,
+# and vm23 has no headroom to run them (the old backlog item 2). So they ran nowhere,
 # and every gate whose live half was skipped still printed PASSED. None of the
 # three apps ships bin/dev, so this is the one way to boot them together.
 #

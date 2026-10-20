@@ -10,7 +10,10 @@ so that a fix made once is made everywhere.
 This README is the entry to the tree. Feature truth is `apps.yml`, which also
 holds the ports, the domains and the stack versions, so nothing here restates
 them. Planned work that is not yet real sits in `apps.horizon.yml` and is
-marked for agents to ignore. The single authoritative queue for RAILS and cross-tree work is the repository-root `TODO.md`. Rules for working in the tree are in `CLAUDE.md` beside this file, and each app keeps its own contract in an `AGENTS.md`.
+marked for agents to ignore. Work only the operator can finish is listed in
+`MASTER/data/operator_seams.yml`. Rules for working in the tree are in `CLAUDE.md` beside
+this file,
+and each app keeps its own contract in an `AGENTS.md`.
 
 brgen is not a folder of apps. Every city apex in `Brgen::DomainRegistry` serves
 the feed, and the verticals are engines reached on subdomains of that apex, so

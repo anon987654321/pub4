@@ -1,31 +1,31 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Operator
   # Owns the one read of the open operator debt: StatusReport#backlog_open_count
   # delegates here rather than counting a second way.
   #
-  # The per-tree backlog files were consolidated into the repo-root TODO.md.
-  # Open operator debt now lives under its OPENBSD section, one item per hidden
-  # "<!-- open-debt -->" marker line; this counts those.
+  # Open operator debt is the seams in MASTER/data/operator_seams.yml, one
+  # entry each; this counts those.
   module OperatorDocs
     # __dir__ is MASTER/lib/operator, so the repo root is three levels up, not four.
     # At four this resolved to the directory *containing* the checkout, the path
     # was absent, and every method degraded to its empty default without raising.
     ROOT = File.expand_path("../../..", __dir__)
-    DEBT_RELATIVE = "TODO.md"
+    DEBT_RELATIVE = "MASTER/data/operator_seams.yml"
     DEBT_PATH = File.join(ROOT, DEBT_RELATIVE)
-    OPEN_DEBT_MARKER = "<!-- open-debt -->"
 
     module_function
 
     # root: so the cross-repo diagnostic can pass its own checkout rather than
-    # inheriting this file's idea of where the repo is. Counts marker lines,
-    # not substrings, so prose that names the marker cannot inflate the number.
+    # inheriting this file's idea of where the repo is.
     def open_debt_count(root: ROOT)
       path = root == ROOT ? DEBT_PATH : File.join(root, DEBT_RELATIVE)
       return 0 unless File.file?(path)
 
-      File.readlines(path).count { |line| line.strip == OPEN_DEBT_MARKER }
+      seams = (YAML.safe_load_file(path) || {}).fetch("seams", [])
+      seams.is_a?(Array) ? seams.size : 0
     end
   end
 end

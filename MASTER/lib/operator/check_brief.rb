@@ -6,7 +6,7 @@ module Operator
       "selftest" => {
         category: "known_debt",
         debt_tag: "agent-ignore",
-        suggested_action: "skip unless the task targets scan rules; see TODO.md Self-Test Debt",
+        suggested_action: "skip unless the task targets scan rules",
       },
       "lint:data_singularity" => {
         category: "true_violation",

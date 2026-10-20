@@ -2,7 +2,7 @@
 
 # Every scan rule that carries worked examples must satisfy them.
 #
-# Across seven categories audited in RAILS/FINAL_TODO.md, six failed the same
+# Across seven categories audited in RAILS/FINAL_the old backlog, six failed the same
 # way: the law matched a pattern adjacent to the law it enforced.
 #
 #   TIME_ZONE_UNSAFE     matched Time.now; the law is about Time.zone, and

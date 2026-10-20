@@ -172,7 +172,7 @@ spine:
   # 38175 -> 38197 for the autofix trust boundary, and it closes the half of
   # the safety tier that was never covered. AstFixer transformed and wrote in
   # one call, so the only thing between a misfiring transform and the file was
-  # the transform own judgement, and TODO.md records the trial run where one
+  # the transform own judgement, and the old backlog records the trial run where one
   # write in three was damage. It proposes a candidate now and MechanicalAutofix
   # is the governed writer, judging it with the same WriteGuard every
   # constitutional write passes. The other twelve are the deleting-transform
@@ -308,8 +308,8 @@ pub4_source_ceilings:
   # STUDIO 24 -- so every row kept the reading it had. The "a -> b" figures in
   # the notes below are in the old unit.
   # Lowered when the per-tree backlog files were consolidated into the repo-root
-  # TODO.md (which sits in no tree and so counts toward none): MASTER -1 (DEBT.md),
-  # RAILS -2 (TODO.md, BLOCKERS.md), OPENBSD -1 (data/debt.yml).
+  # the old backlog (which sits in no tree and so counts toward none): MASTER -1 (DEBT.md),
+  # RAILS -2 (the old backlog, BLOCKERS.md), OPENBSD -1 (data/debt.yml).
   # 1037 -> 1038 accounts for lib/autonomy/dream_loop.rb, which ca0d8d104 added
   #
   # 1038 -> 1040 is tools/sprawl_census.rb and data/sprawl_census.yml, named
@@ -512,7 +512,7 @@ pub4_source_ceilings:
   # recorder is a RAILS probe because CdpSession lives there, and the Rakefile is
   # the wrong home for sixty lines of prose extraction.
   # 1041 -> 1042 for AEGIS.md. Aegis is a product thesis -- the sea case for
-  # this runtime's offline-first design -- and it had been sitting in TODO.md,
+  # this runtime's offline-first design -- and it had been sitting in the old backlog,
   # which is the file people open to find out what to fix. That is why nobody
   # had read it. It folds into nothing: README.md is the pitch for what exists
   # and this is the argument for what a body would be for.
@@ -608,7 +608,7 @@ pub4_source_ceilings:
 # raised described a tree that no longer existed. This is the shared checkout
 # in one row: a ratchet is a measurement of now, not a running total of what
 # one session did.
-# 1050 -> 1051 for tools/backlog_triage.rb. TODO.md holds 5,741 items and grew
+# 1050 -> 1051 for tools/backlog_triage.rb. the old backlog holds 5,741 items and grew
 # by 2,100 in one evening while fourteen were verified by hand; of those, three
 # were already done and three were false, so working the list unread wastes
 # about half the effort and one item would have deleted five live commands.
@@ -834,7 +834,7 @@ pub4_source_ceilings:
 # 2393 -> 2394 for shared/_site_legal.scss. The legal footer carried its type
 # system as an inline style element in a partial all three layouts render, so a
 # second type system shipped on every page of every app and NO_INLINE_STYLES
-# had a finding it could not act on. Five separate passes through TODO.md
+# had a finding it could not act on. Five separate passes through the old backlog
 # reached that same paragraph independently, which is what a real defect looks
 # like from outside.
 #
@@ -974,7 +974,7 @@ pub4_source_ceilings:
   # dilla/live/ is eight files now and reads like one subject. Folding it is the
   # obvious win and it is not mine to take: these render real audio and this repo
   # says not to reshape a rendering tool on an outsider's judgement. It belongs to
-  # the owner, and it is in TODO.md so the next person sees the same eight.
+  # the owner, and it is in the old backlog so the next person sees the same eight.
   # 150 -> 149 folds dilla/lib/spectral_audit_run.rb into spectral_audit.rb behind
   # the $PROGRAM_NAME guard MASTER's own tools use. The runner was a second file
   # whose only caller was the usage line in its own header -- nothing in the repo
@@ -997,7 +997,7 @@ pub4_source_ceilings:
   # first writes music, the second plays over it, the third knows nothing about
   # music at all. MASTER/tools/gate.rb's DILLA_SUPPORT_CEILING carries the same
   # reasoning for the same three modules.
-  # 153 -> 148, a fall. CATALOGUE.md arrived from TODO.md and six files left:
+  # 153 -> 148, a fall. CATALOGUE.md arrived from the old backlog and six files left:
   # a test asserting render_rand, a method the engine has never defined, and
   # five the sweep found dead. A catalogue of livesets is dilla's work and
   # belongs beside the three sets it was written after.

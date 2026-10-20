@@ -306,7 +306,7 @@ module Master
         # a configuration namespace. doc_baselines.yml#doc_paths lists dead path
         # references per document and doc_baselines.yml#doc_numbers lists untraceable
         # numbers per document, so any document carrying both debts appears in
-        # both — as RAILS/FINAL_TODO.md now does. That is two registers agreeing
+        # both — as RAILS/FINAL_the old backlog now does. That is two registers agreeing
         # about which file has problems, not two sources of truth for one value,
         # which is what SINGULARITY exists to catch. Exempted by file rather than
         # by key: the keys are arbitrary document paths, so a key-name allowlist

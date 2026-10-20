@@ -121,7 +121,7 @@ class DeployGatesContractTest < Minitest::Test
 
   # A registered gate that nothing runs.
   #
-  # `runner.rb --all` exists and is called by nothing (TODO.md:
+  # `runner.rb --all` exists and is called by nothing (the old backlog:
   # rails_gates_not_wired), so a gate is only ever run if some script names it or
   # names the composite that covers it. dns_zones was the one that neither
   # applied to: registered in gates.yml, complete, and never once executed. When
@@ -387,7 +387,7 @@ class DeployGatesContractTest < Minitest::Test
     end
     assert File.exist?(File.join(ROOT, "apps.horizon.yml"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "deploy.sh"))
-    assert File.exist?(File.join(REPO_ROOT, "TODO.md"))
+    assert File.exist?(File.join(REPO_ROOT, "MASTER", "data", "operator_seams.yml"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
     # MASTER/bin/operator, not a root bin/. The repo root holds four documents and
     # the four governed trees; the operator surface has lived under MASTER since the

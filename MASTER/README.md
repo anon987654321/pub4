@@ -311,7 +311,7 @@ not a claim.
 
 Every change a model wants runs through the loop below, from `lib/core/fold.rb`.
 Read [AGENTS](AGENTS.md) for the contract every agent works under, and the
-repository's single backlog in [backlog](../TODO.md). Licensed MIT.
+operator-only work in [operator seams](data/operator_seams.yml). Licensed MIT.
 
 ```ruby
 def run(goal)

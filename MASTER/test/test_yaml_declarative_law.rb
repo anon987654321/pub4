@@ -113,7 +113,7 @@ class TestYamlDeclarativeLaw < Minitest::Test
   # Dated on purpose. The bridge is empty, and the point of asserting it is that
   # the day somebody adds a `detect_lexical` back, this test fails and asks
   # whether the bridge is still wanted — rather than the rule quietly staying a
-  # path nothing takes. See TODO.md, "The YAML lexical bridge compiles nothing".
+  # path nothing takes. See the old backlog, "The YAML lexical bridge compiles nothing".
   def test_the_live_corpus_still_declares_no_lexical_rules
     live = Master.law_entries(root: Master::ROOT)
 

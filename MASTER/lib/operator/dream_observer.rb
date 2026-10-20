@@ -33,16 +33,13 @@ module Master
       end
 
       def add_todo(items, root)
-        path = File.join(root, "TODO.md")
+        path = File.join(root, "MASTER", "data", "operator_seams.yml")
         return unless File.file?(path)
 
-        File.foreach(path).with_index do |line, index|
-          next unless line.match?(/^- \[ \]/)
-
-          text = line.sub(/^- \[ \]\s*/, "").strip
-          next if text.empty? || text.match?(/(agent|ignore)/i)
-          items << { kind: "todo", priority: 40, source: "TODO.md:#{index + 1}", text: text[0, 220] }
-          break if items.count { |item| item[:kind] == "todo" } >= 3
+        seams = (YAML.safe_load_file(path) || {}).fetch("seams", [])
+        seams.first(3).each do |seam|
+          items << { kind: "todo", priority: 40, source: "operator_seams.yml:#{seam['id']}",
+                     text: "#{seam['id']} (needs #{seam['needs']}): #{seam['evidence']}"[0, 220] }
         end
       end
 

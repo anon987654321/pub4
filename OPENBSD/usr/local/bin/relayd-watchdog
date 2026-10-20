@@ -14,7 +14,7 @@ require "open3"
 # stale_ci_cleanup.ksh dropped the identical pattern for the same reason; this
 # watchdog and config-drift-check were the two survivors. doas policy is now
 # only installed deliberately by OPERATOR.sh (root-run), never auto-synced from
-# a user-writable tree. See TODO.md root_dot_sources_dev_owned_repo.
+# a user-writable tree. See the old backlog root_dot_sources_dev_owned_repo.
 
 # No port table here: stale_backends reads each table's name and port from
 # `relayctl show hosts`, so relayd.conf is the only list this watchdog follows.

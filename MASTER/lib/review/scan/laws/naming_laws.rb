@@ -32,7 +32,7 @@ module Master
           end
         end
 
-# TYPE_IN_NAME and NUMBERED_NAME, the two naming detectors from TODO.md's
+# TYPE_IN_NAME and NUMBERED_NAME, the two naming detectors from the old backlog's
 # AST-detector backlog. AST rather than a Law line-regex because both are about
 # declarations — a method, a parameter, a local, an ivar — and a regex over raw
 # lines cannot tell a declaration from a mention of one in a comment.

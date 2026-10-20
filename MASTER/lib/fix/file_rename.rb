@@ -24,7 +24,7 @@ module Master
         document: %r{\.md\z},
       }.freeze
       # A convention file is found by its name; renaming it loses it.
-      FIXED_NAMES = %w[README.md CLAUDE.md AGENTS.md GEMINI.md TODO.md CHANGELOG.md LICENSE.md].freeze
+      FIXED_NAMES = %w[README.md CLAUDE.md AGENTS.md GEMINI.md CHANGELOG.md LICENSE.md].freeze
 
       def self.kind(path)
         return if FIXED_NAMES.include?(File.basename(path)) || path.match?(%r{/(vendor|node_modules|builds)/})

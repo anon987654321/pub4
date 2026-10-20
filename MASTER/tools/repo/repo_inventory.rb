@@ -32,7 +32,6 @@ ALLOWED_ROOT_FILES = %w[
   CLAUDE.md
   GEMINI.md
   README.md
-  TODO.md
   VERSION
 ].freeze
 GENERATED_ROOT_FILES = %w[

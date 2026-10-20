@@ -225,7 +225,7 @@ module Operator
     #
     # Error severity only. The same run reports 10,147 warnings and 7,997 info.
     # A ceiling nobody can hold is decoration, and the warning half is the
-    # scan-noise TODO.md already triages one entry at a time.
+    # scan-noise the old backlog already triages one entry at a time.
     #
     # The scanner's own rules only. A law reaches the scanner through
     # LawBridgeLaw and reports under its own id, so the STRICT_MODE_ZSH,

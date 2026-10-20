@@ -520,8 +520,8 @@ ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh
 
 Checks `rcctl` (when present), localhost `/up` ports (master 53187, brgen 38182,
 amber 61352), public HTTPS, free-RAM warning, and brgen homepage regressions.
-See `TODO.md` (OPENBSD operator debt) → `multi_app_ram` for the three-app memory
-ceiling. Restart order when recovering: **master → brgen → amber → relayd**.
+vm23 has 1 GB, so three apps leave little headroom. Restart order when
+recovering: **master → brgen → amber → relayd**.
 
 ## vps_console.exp modes
 
@@ -724,8 +724,8 @@ the full installer from macOS.
 - Run `ruby OPENBSD/gates/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
 - Put a lasting reason in a comment beside the config or script it explains, a
-  standing refusal in `OPENBSD/CLAUDE.md`, and open work in the repo-root
-  `TODO.md`.
+  standing refusal in `OPENBSD/CLAUDE.md`, and open operator work in
+  `MASTER/data/operator_seams.yml`.
 
 ## Launch wipe (demo data -> cold start)
 

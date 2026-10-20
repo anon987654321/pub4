@@ -4,7 +4,7 @@
    this and give the tablet a three-column step, which is the better answer — but
    the floor has to be measured against the real dashboard container, behind a
    login the probe cannot reach, and a floor wider than the column would drop
-   desktop from four columns to three. TODO.md carries the measurement. */
+   desktop from four columns to three. the measurement is in the commit that set it. */
 .dash-stats dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

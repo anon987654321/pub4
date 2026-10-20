@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# TODO.md, rails_coverage_contract_is_tautological: "shared/sso_token
+# the old backlog, rails_coverage_contract_is_tautological: "shared/sso_token
 # ... has zero tests; sso_token also has no replay/nonce protection on its 120s
 # token." Both are addressed here — the tests came first and the replay test is the
 # one that failed before the jti landed.
@@ -11,6 +11,7 @@ require "test_helper"
 # is wired in all three apps and the MASTER side is not in this repository, so this
 # is a dormant entry point being hardened, not a live login path.
 class Shared::SsoTokenTest < ActiveSupport::TestCase
+
   SECRET = "x" * 32
 
   def with_secret(value = SECRET)

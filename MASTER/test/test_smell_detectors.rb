@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "review/scan/law_dsl"
 
-# The four detectors from TODO.md's "Rule and AST-detector backlog". Each is
+# The four detectors from the old backlog's "Rule and AST-detector backlog". Each is
 # tested the way law/ tests its own: one source it must flag, and one it must
 # not, because a detector that only fires proves nothing about what it exempts —
 # and every exemption below is a false positive that was measured against this

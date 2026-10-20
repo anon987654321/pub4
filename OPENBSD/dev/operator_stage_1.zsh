@@ -17,7 +17,7 @@ stage_1() {
   # the WAV->MP3 conversion on `ffmpeg?` and returns *quietly* when it is absent.
   # Without it TTS produced un-concatenated or unconverted audio on the VPS with
   # no error anywhere — working on a Mac and silently degrading in production,
-  # which is the worst failure shape. See TODO.md "Host TTS Binaries".
+  # which is the worst failure shape. See the old backlog "Host TTS Binaries".
   pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/var/log/pkg_add.log \
     || { log ERROR "pkg_add failed. See /var/log/pkg_add.log"; exit 1 }
 

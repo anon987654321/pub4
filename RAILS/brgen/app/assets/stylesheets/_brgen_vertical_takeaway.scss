@@ -16,7 +16,7 @@ body.vertical-takeaway {
    stays the ink for the dark #202020 eta chip. brgen defaults light on every
    surface (ApplicationHelper::DEFAULT_SURFACE_THEME), so this is the
    unconditional value: #c62b1b is 5.58 on #ffffff and 4.99 on #f2f2f2. The
-   other verticals want the same fill/ink split; TODO.md carries it. */
+   other verticals want the same fill/ink split; that is a rendered change for the operator. */
 --food-dash-ink: #c62b1b;
 }
 

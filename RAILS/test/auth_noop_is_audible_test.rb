@@ -2,11 +2,11 @@
 
 require "minitest/autorun"
 
-# TODO.md, brgen_allow_unauthenticated_access_is_a_noop: in an app
+# the old backlog, brgen_allow_unauthenticated_access_is_a_noop: in an app
 # whose User has a `guest` column, Shared::Authentication.allow_unauthenticated_access
 # does nothing, and that is deliberate — guests get a soft Current.user so the
 # product is usable without signup, and require_real_user is the identity gate.
-#
+
 # The part that was debt is that a control read as a control and returned in
 # silence, so an author who wrote it got nothing and no warning. The fix is a
 # dev/test log line. Nothing pinned it, which is how a fix of this shape is

@@ -795,7 +795,7 @@ end
     # Every entry below names a duplicate this task tolerates and why; an
     # entry that stops matching is a hole in the gate and fails the task
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
-    # recorded in TODO.md — tolerated so the gate can land, never permanent.
+    # recorded in the old backlog — tolerated so the gate can land, never permanent.
     known = {
       "CAPABILITY_STATUS_MUST_BE_TRUTHFUL:" =>
         "overlay key: law_enforcement.yml merges onto laws.yml by law id, so the id has to be repeated",
@@ -962,7 +962,7 @@ namespace :constitution do
 end
 
 # LOC ratchet — budgets live in data/limits.yml under loc_body_budgets, and this
-# task is that key's reader. limits.yml is the file TODO.md names for holding 44
+# task is that key's reader. limits.yml is the file the old backlog names for holding 44
 # keys with no reader, so a budget nothing read would have been the 45th.
 #
 # A budget falls on its own whenever the subsystem falls, and rises only in a

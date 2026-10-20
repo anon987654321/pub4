@@ -56,7 +56,7 @@ end
 
   # AstFixer used to transform and write in one call, so the only thing between a
   # misfiring transform and the file was the transform's own judgement — and the
-  # trial run TODO.md records made three writes, two of them damage, one of which
+  # trial run the old backlog records made three writes, two of them damage, one of which
   # `node --check` waved through. The candidate is judged before it becomes the
   # file now, by the same guard every constitutional write passes.
   class RefusingGuard

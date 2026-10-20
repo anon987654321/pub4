@@ -230,7 +230,7 @@ file sits in a comment on that file; these have no single file to sit on.
   one host family with one Ruby pin, so a platform matrix or a Linux runner
   cannot reproduce what differs: the Mac and box locks disagree because
   `rb-kqueue` resolves only on BSD, and the fix is the `install_if` entry in
-  `TODO.md`.
+  the Gemfile.
 - **No repair-plan command, no dry run on every mutating command, and no deploy
   that fails closed on revision drift.** A deploy is the only mutation and halts
   on its first failure. Revisions disagree between deploys by design, which is

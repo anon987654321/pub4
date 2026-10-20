@@ -21,7 +21,7 @@ class TestDocPaths < Minitest::Test
   # Docs an agent is actually pointed at. Adding one here is the point: a
   # document nobody reads does not need this guard, and a document that teaches
   # a path does.
-  # TODO.md is deliberately not here, and the reason is measured rather than an
+  # the old backlog is deliberately not here, and the reason is measured rather than an
   # omission. It cites 428 repo paths; 34 of them name subjects that are gone on
   # purpose — MASTER/DEBT.md, RAILS/BLOCKERS.md, docs/SEVERANCE.md, the deleted
   # io/lora_pipeline.rb — because a register that records what was removed has to

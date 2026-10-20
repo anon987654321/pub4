@@ -209,7 +209,7 @@ module Master
     # `cdp.evaluate(<<~JS)` in MASTER/gates/face_capture_probe.rb holds
     # `f && f.primerFired` — correct JavaScript, and four SAFE_NAVIGATION
     # findings telling it to use Ruby's `&.`, which JavaScript does not have.
-    # TODO.md records the same shape costing more: RUBY_NUMERIC_UNDERSCORE fired
+    # the old backlog records the same shape costing more: RUBY_NUMERIC_UNDERSCORE fired
     # inside ffmpeg filter strings, where its fix writes 44_100 into
     # sample_rates=44100 and breaks every render.
     #

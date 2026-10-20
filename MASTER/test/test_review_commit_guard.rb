@@ -5,13 +5,14 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 
-# TODO.md, Test coverage: no test named CommitGuard. It is the anti-omission check
+# the old backlog, Test coverage: no test named CommitGuard. It is the anti-omission check
 # — "did this commit quietly delete a public method?" — which is exactly the kind
 # of guard that can stop working without anyone noticing, because a guard that
 # finds nothing looks identical to a codebase with nothing wrong.
 #
 # Real git history in a temp repo, because from_git shells out to `git show`.
 class CommitGuardTest < Minitest::Test
+
   def setup
     @repo = Dir.mktmpdir("commit_guard_test")
     sh("git", "init", "-q", "--initial-branch=main", ".")

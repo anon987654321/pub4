@@ -6,7 +6,7 @@
 # bsdports was the hole this script existed to cover and did not: it had no local
 # check at all and its public check was optional, so the one post-deploy gate that
 # is supposed to notice a dead app could not fail on the app that was found dead
-# (TODO.md: amber_bsdports_stop_and_stay_down). The contract test passed
+# (the old backlog: amber_bsdports_stop_and_stay_down). The contract test passed
 # throughout, because it asserted the URL was present rather than required.
 # A waiver is now a named variable per app, so waiving is a decision that shows up
 # in the command line rather than a default nobody reads.
@@ -135,7 +135,7 @@ mem_hint() {
         *)
           # crude: free under ~80M is tight for a third Rails app
           if [ "$free_m" -lt 80 ]; then
-            warn "low free RAM (~$free_m M) — amber+brgen+master may OOM (see TODO.md multi_app_ram)"
+            warn "low free RAM (~$free_m M) — amber+brgen+master may OOM (vm23 has 1 GB)"
           fi
           ;;
       esac
@@ -251,7 +251,7 @@ if [ "$run_public" = "1" ]; then
     *expireddomain*)
       printf '     cause: bsdports.org is delegated to %s\n' "$bsdports_ns" >&2
       printf '     that is registrar parking, not this box, and it terminates no TLS.\n' >&2
-      printf '     The domain, not the app: TODO.md bsdports_org_delegated_to_parking.\n' >&2
+      printf '     The domain, not the app: bsdports.org is delegated to a parking page.\n' >&2
       ;;
     esac
   fi

@@ -31,15 +31,16 @@ renamed.
 | `STUDIO/` | Media production: dilla, postpro, replicate and lora. | `STUDIO/*/<tool>.rb` |
 
 The repo root holds the four governed trees plus a small set of repository
-contracts/configuration: `README.md`, `CLAUDE.md`, generated agent harnesses,
-`TODO.md` and `VERSION`. Design constraints belong in `MASTER/data/laws.yml`;
+contracts/configuration: `README.md`, `CLAUDE.md`, generated agent harnesses
+and `VERSION`. Design constraints belong in `MASTER/data/laws.yml`;
 each tree or project README is its human entry point. A separate architecture
 document would duplicate the design authority and is not maintained. `.claude/`
 is committed Claude tooling configuration, and `RECOVERY/` is historical restore
 evidence; neither is a governed product tree. There is no `TREE.md` on current
 main; the tree contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media
-tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded into `TODO.md`
-on 2026-09-06 — one backlog, forward work as its last section.) Build output
+tool plane; `MASTER/tools/` keeps compatibility symlinks. The backlog file is gone: operator-only
+work lives in `MASTER/data/operator_seams.yml`, decisions beside the thing they decide.
+Build output
 never sits at the root whatever the tool's default: a renderer that writes to
 `$PWD` once left a session's renders at the root for weeks. Renders belong outside
 the repo, under `${XDG_DATA_HOME:-~/Documents}/dilla-renders/<date>`, which is where
@@ -169,8 +170,8 @@ You have it when you can name the Law that governs a line you are about to
 write without opening the file. Until then, open the file.
 
 **A Law you cannot state is a Law you will break**, and the breakage is
-usually the exemption rather than the rule — every scan noise entry in
-`TODO.md` is somebody who knew the rule and not what it spares.
+usually the exemption rather than the rule — every scan noise entry
+is somebody who knew the rule and not what it spares.
 
 Two cautions from the tree itself. `data/laws.yml` and `data/soul.yml` are
 `paths.immutable`: read them, never let an effect write them. And a rule
@@ -239,7 +240,7 @@ here. Name a file only when the reader must open it. Bullets for files,
 commands and lists — never for prose.
 
 Detail is on request, not by default. A finding gets one sentence and a
-pointer; the reasoning lives in the commit and in `TODO.md`. When something is
+pointer; the reasoning lives in the commit. When something is
 uncertain, say so in a clause, not a paragraph.
 
 ## Writing style
@@ -253,12 +254,12 @@ the offbeat. Make sure the reader knows who is speaking. Use orthodox spelling.
 
 ## You decide, and you close
 
-You have decision authority over `TODO.md`. An entry closes when you do it, or
-when you decide against it and write the argument into the file that owns the
-decision — then delete the entry. A record of finished work is closed by
-deleting it. The authority stops at anything that changes a rendered value (a
+You have decision authority over open work. It closes when you do it, or when
+you decide against it and write the argument into the file that owns the
+decision. There is no backlog file to keep: a record of finished work is closed
+by not writing it. The authority stops at anything that changes a rendered value (a
 colour, a font, a sound, a graded look) and anything needing money, a registrar
-login, or a console on vm23: name the seam and leave it.
+login, or a console on vm23: name the seam in `MASTER/data/operator_seams.yml` and leave it.
 
 The bounds are in `MASTER/AGENTS.md`, under the same heading, and they are the
 three this repo keeps relearning — verify the instrument before the finding,
@@ -276,4 +277,4 @@ pointer.
 | RAILS CSS or visual work | `RAILS/__shared/README.md` |
 | brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
 | Why something odd is deliberate | the comment beside it; standing refusals in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`, "Refused, and why" |
-| The backlog: parity gaps, blockers, debt, what not to chase | `TODO.md` (repo root) |
+| Operator-only work and the evidence that closes it | `MASTER/data/operator_seams.yml` |

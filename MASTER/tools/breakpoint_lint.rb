@@ -88,7 +88,7 @@ module Operator
     # same eight characters in both, and the lint reported two correct container
     # queries in _components as unrecognised viewport widths.
     #
-    # That is the shape this repo's own TODO.md calls Scanner Convention 1 and
+    # That is the shape this repo's own the old backlog calls Scanner Convention 1 and
     # breakpoint_lint already learned once with comments: a check that reports
     # correct code gets the correct code changed. The header's note that the
     # three tolerated edges "are gone from the sheets" is true of one of them.

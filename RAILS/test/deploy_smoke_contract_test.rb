@@ -89,13 +89,6 @@ class DeploySmokeContractTest < Minitest::Test
     assert_includes body, "assume_ssl"
   end
 
-  def test_backlog_points_at_deploy_smoke
-    # The operator debt register was consolidated into the repo-root TODO.md.
-    backlog = File.read(File.expand_path("../../TODO.md", __dir__))
-    assert_includes backlog, "deploy-smoke.sh"
-    assert_includes backlog, "multi_app_ram"
-  end
-
   def test_all_deployed_apps_expose_rails_health_up_route
     APPS.each do |app|
       routes = read(File.join(ROOT, app, "config/routes.rb"))

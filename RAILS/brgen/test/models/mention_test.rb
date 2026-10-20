@@ -113,7 +113,7 @@ class MentionTest < ActiveSupport::TestCase
   end
 
 # Shared::Mentionable is polymorphic and Comment includes it, so a handle in a
-# reply notifies too. TODO.md carried this as the gap the Tier 1 close left --
+# reply notifies too. the old backlog carried this as the gap the Tier 1 close left --
 # "Post is the only model in any of the three apps that includes the concern"
 # -- and it was true when written. Nothing asserted it after it stopped being
 # true, which is how a closed record and an open one look the same.

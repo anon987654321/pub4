@@ -94,7 +94,7 @@ private
     # and nil to take another turn — extracted from `run` so that method stays
     # under DENSITY's 20 code lines without the fold gaining a new direct file.
     # The direct seven-file invariant and recursive core ratchet are enforced in
-    # data/spine.yml. See TODO.md, "The fold spine
+    # data/spine.yml. See the old backlog, "The fold spine
     # had never been scanned".
     def apply(turn, admitted)
       if admitted.done?

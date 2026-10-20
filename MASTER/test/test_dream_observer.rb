@@ -7,7 +7,7 @@ class TestDreamObserver < Minitest::Test
   def test_observe_ranks_evidence_and_writes_only_queue
     Dir.mktmpdir do |dir|
       Master::Operator::DreamObserver.stub(:add_todo, ->(items, _) {
-        items << { kind: "todo", priority: 40, source: "TODO.md:1", text: "inspect" }
+        items << { kind: "todo", priority: 40, source: "operator_seams.yml:x", text: "inspect" }
       }) do
         Master::Operator::DreamObserver.stub(:add_sprawl, ->(items, _) {
           items << { kind: "structure", priority: 10, source: "sprawl", text: "flatten" }

@@ -4,10 +4,10 @@ require "minitest/autorun"
 require_relative "engine_roots"
 require "yaml"
 
-# TODO.md, rails_flash_strings_untranslated: 169 hardcoded English
+# the old backlog, rails_flash_strings_untranslated: 169 hardcoded English
 # flash strings across the family, every one of them a toast in English over a
 # Norwegian page, because all three apps set default_locale = :nb.
-#
+
 # This test replaced a first version that could not have caught the bug it was
 # written for. That version compared the KEY NAMES used in code against the key
 # names in the YAML, and the shared engine's block had been appended at the top

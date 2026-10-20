@@ -117,7 +117,7 @@ bootstrap_rails_app() {
   # root:<app> 640, not root:wheel: the rc.d script sources /etc/<app>.env at
   # runtime *as the app user* (su -l resets the environment, so the secret cannot
   # be interpolated into daemon_flags without landing in falcon's ps(1) argv —
-  # readable by any local account; see rc.d/<app> and TODO.md
+  # readable by any local account; see rc.d/<app> and the old backlog
   # secrets_in_process_argv). Group-<app> lets only that app (and root) read it,
   # so a foothold in another app user — or dev, which is in wheel — can no longer
   # read this secret at rest.

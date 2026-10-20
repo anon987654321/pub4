@@ -124,7 +124,7 @@ module Brgen
     # The city apexes that actually serve this app. Every other ENTRIES row is a
     # domain we intend to run and have wired into OPERATOR.sh#ALL_DOMAINS, but
     # relayd only answers for an apex whose certificate exists on disk — see
-    # TODO.md "City vanity TLS". LIVE_DOMAINS stays deployment evidence, not
+    # the old backlog "City vanity TLS". LIVE_DOMAINS stays deployment evidence, not
     # navigation data.
     #
     # Ground truth is `grep keypair /etc/relayd.conf` on vm23, and domain_alignment

@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "tempfile"
 require_relative "../../MASTER/tools/breakpoint_lint"
 
-# TODO.md, rails_no_breakpoint_token: colour, space, motion,
+# the old backlog, rails_no_breakpoint_token: colour, space, motion,
 # elevation and the dialect maps are single-sourced; the viewport scale was not, so
 # breakpoints were written by hand and drifted into 13 distinct widths across 58
 # media queries.

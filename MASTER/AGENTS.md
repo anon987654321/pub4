@@ -170,7 +170,7 @@ extension — `test/test_entrypoint_requires.rb` holds the case that broke
 The task as given is the deliverable, but it is not the whole job. Reason about
 what the change is actually for, and say what you find.
 
-A finding is a hypothesis. Several entries in `TODO.md` were stale within a day
+A finding is a hypothesis. Several backlog entries were stale within a day
 of being written — the price-drop alerts, the takeaway push and three map layers
 were all built while the file still called them open. Re-measure before working
 from one, and prefer a small measurement over a long argument.
@@ -388,7 +388,8 @@ Touch-map: `data/agent_map.yml`. Law sections live in `data/laws.yml`. Work is a
 
 Run the smallest proof: `bin/check` for ordinary code, `bin/check --profile=agent` for law, scanners and the loop, `bin/check --profile=web` for the face, `OPENBSD/bin/check-rails --profile=contributor` for deploy and Rails, and `MASTER/bin/operator gate` for the whole ladder. On failure: `bin/check --profile=agent --format=brief`.
 
-`--profile=agent` may fail on known debt tagged `agent-ignore` in the repo-root `TODO.md`. Do not chase scan noise on unrelated patches.
+`--profile=agent` may fail on known debt tagged `agent-ignore`.
+Do not chase scan noise on unrelated patches.
 
 ## Do Not Touch
 
@@ -423,7 +424,7 @@ gates it names exist.
 7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no
    gate: an ordering rule for two commands run on the VPS; nothing in the repo
    observes whether the box was deployed after its last pull.
-8. Feature truth: `RAILS/apps.yml`; backlog and debt: repo-root `TODO.md`. —
+8. Feature truth: `RAILS/apps.yml`; operator-only work: `MASTER/data/operator_seams.yml`. —
    gate: `MASTER/gates/lib/source/apps_yml.rb`
 9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 —
    see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a
@@ -573,3 +574,33 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
   branches (`feat/operator-memory-review-*`, `recover/memory-governance-*`) have
   no caller, and a learning or governance layer nothing reads is the inert config
   this tree keeps deleting. Reopen with the caller that needs one.
+- **No capability adapter ships without `PersonalPermissions`.** Microphone,
+  camera, location, contacts, personal memory, financial reads and purchases go
+  through `Master::Ground::PersonalPermissions` or they do not exist. Financial
+  actions stay read-only by default; a consequential one needs fresh,
+  transaction-specific approval with a verified summary. Until a real device
+  adapter and its proof exist, say the guard is tested, never that the device is
+  protected. Reopen with the first adapter that wants the capability.
+- **No "fluent coding agent" programme ahead of a measurable turn.** The eight
+  priorities (a continuous edit-test turn, one policy-bound tool graph, isolated
+  subagents, durable long sessions, less routine friction, cost-aware routing, an
+  IDE adapter, an always-available operator) and the cross-lane benchmark all
+  presuppose one deterministic, provider-independent acceptance scenario that does
+  not exist. Build that scenario first; a plan written before it ranks by taste.
+  The IDE adapter waits on the core loop being measurable, and no benchmark runs
+  against lanes the operator has not authorised.
+- **No distant-future kernel rewrite.** Effect, Constitution, World, Memory and
+  Proof, with the separate FixLoop lifecycle, are the kernel. Reopen with a
+  concrete defect the present shape cannot express.
+- **The Rails 8.2 alpha pin moves only by a deliberate change.** Never float it.
+  An upgrade is its own commit with compatible Gemfiles and lockfiles and the
+  app, contract and browser suites after it. Reopen on an upstream release or a
+  security advisory.
+- **The 200-entry analogue catalogue claims nothing it has not implemented.**
+  `analog_capabilities.rb` reports every entry `unverified` with `enabled: null`
+  until the status registry names a concrete implementation and a regression.
+  Do not mark one enabled to tidy the count.
+- **The Pluribus logo PDF is not chased.** The only copy sat under `__DELETE/`
+  with a text layer that did not match its page; a source that disagrees with its
+  own label is not evidence for a visual identity. The identity rests on the
+  tokens in `data/tokens.yml`.

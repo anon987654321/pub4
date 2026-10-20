@@ -2,7 +2,7 @@
 
 require_relative "../lib/trace/dmesg"
 
-# \b next to punctuation has now cost this repo three incidents: TODO.md read
+# \b next to punctuation has now cost this repo three incidents: the old backlog read
 # as a work marker, and OPEN_CLOSED's is_a? clause which could never match.
 # A word boundary needs a word character beside it.
 

@@ -4,8 +4,8 @@ ownership:
     purpose: project front door
     risk: low
     check: bin/check
-  ../TODO.md:
-    purpose: the one authoritative repo-wide backlog for all unfinished work;
+  data/operator_seams.yml:
+    purpose: the operator-only work no agent can finish, with the evidence that closes each;
       feature truth lives in RAILS/apps.yml and RAILS/apps.horizon.yml, and
       operational recipes live in ../OPENBSD/data/operator.yml
     risk: medium

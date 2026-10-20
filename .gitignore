@@ -220,7 +220,7 @@ MASTER/tools/dilla/samples/dug/**/*.wav
 #
 # None of the three had ever been committed when this went in, so ignoring them
 # is sufficient. If one ever is, ignoring will not remove it. The current
-# historical-secret and private-media review lives in STUDIO/TODO.md and
+# historical-secret and private-media review is the private_media_and_history seam in MASTER/data/operator_seams.yml and
 # RAILS/test/tracked_secrets_test.rb. Deleting from HEAD never purges public Git
 # history; any purge requires a separate filter-repo plan coordinated across
 # reachable refs and clones before rewriting and force-pushing.
@@ -294,7 +294,7 @@ STUDIO/postpro/models/
 
 # Postpro source captures and generated renders. These rules prevent future
 # untracked additions; they do not untrack originals that are already in Git.
-# The publication and history decision is recorded in the single root TODO.md.
+# The publication and history decision is recorded in MASTER/data/operator_seams.yml.
 STUDIO/postpro/IMG_*
 STUDIO/postpro/postpro_*.jpg
 STUDIO/postpro/postpro_*.jpg.json

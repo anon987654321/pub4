@@ -16,8 +16,8 @@ ownership:
     purpose: this map
     risk: low
     check: ruby OPENBSD/test/test_path_ownership.rb
-  ../TODO.md:
-    purpose: consolidated repo-wide backlog; features live in RAILS/apps.yml,
+  ../MASTER/data/operator_seams.yml:
+    purpose: operator-only work and its closing evidence; features live in RAILS/apps.yml,
       operator recipes in data/operator.yml
     risk: medium
     check: MASTER/bin/operator status

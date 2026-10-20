@@ -1,0 +1,284 @@
+# Work only the operator can finish, and what proves it finished.
+#
+# Each entry is a seam: the code or the test exists, and what is missing is a thing no agent in a checkout
+# can supply (a console on vm23, a registrar login, a physical device, a paid provider call, a real browser,
+# ears, a person's photographs, a credential, a decision of rights). An entry closes when its evidence
+# exists and is recorded in the commit that deletes the entry; nothing here is a changelog and nothing
+# here is a to-do for an agent. `bin/operator status` prints this file.
+#
+# The repo-wide TODO.md this replaces is gone. What it asked of the code was done or decided: decisions live
+# beside the thing they decide (MASTER/AGENTS.md and OPENBSD/CLAUDE.md "Refused, and why", RAILS/apps.yml,
+# OPENBSD/data/domain_released.yml), and what remained is below.
+#
+# needs: console (vm23), registrar, device, provider (paid), browser, ears, material (photos, data),
+#        credential, rights (a decision about publication), idle-host.
+schema: 1
+seams:
+  # MASTER
+  - id: android_consent_ux
+    tree: MASTER
+    needs: device
+    evidence: >-
+      Owner/nearby-person separation, pair/release/re-pair, per-scope purpose and expiry, revocation and memory
+      export verified on a real Android/Termux device, with the device and Termux versions.
+  - id: android_termux_install
+    tree: MASTER
+    needs: device
+    evidence: >-
+      Fresh install and update from the maintained Termux source, Termux:API, native gem install, offline and
+      local-model fallback, microphone permission and Norwegian and English recognition, with real command
+      output.
+  - id: selfie_route_live
+    tree: MASTER
+    needs: provider
+    evidence: >-
+      The "generate me a selfie" route through an already configured provider, with the cost preflight, the
+      actual response and the saved output and receipt. INCONCLUSIVE until then; no other image service is
+      substituted.
+  - id: browser_vision_end_to_end
+    tree: MASTER
+    needs: browser
+    evidence: >-
+      A real page screenshot passed to vision analysis whose description cites source evidence, with browser
+      interaction kept behind its own permission boundary.
+  - id: face_in_a_real_browser
+    tree: MASTER
+    needs: browser
+    evidence: >-
+      Default 3D, explicit ASCII, WebGL-off fallback, reduced motion, console errors and frame budget at desktop
+      and mobile widths, saved screenshots and the Node suites' exit codes (face_stipple.test.mjs,
+      face_boot.test.mjs).
+  - id: voice_by_ear
+    tree: MASTER
+    needs: ears
+    evidence: >-
+      Playback on the Mac and on OpenBSD with no partial, silent or duplicate speech and no second speech path;
+      natural TTS judged against the measured prosody work; recorded by the operator.
+  - id: worktree_delivery_against_github
+    tree: MASTER
+    needs: credential
+    evidence: >-
+      Worktree delivery against a real GitHub staging repository and token, with failure cleanup and accurate
+      delivery reporting, leaving the operator checkout untouched.
+  - id: cognition_benchmark_data
+    tree: MASTER
+    needs: material
+    evidence: >-
+      Independently evidenced verified-outcomes.jsonl rows, each with a receipt digest; Brier scores against the
+      constant 0.5 baseline decide whether OutcomeModel stays. No outcome is fabricated.
+  # OPENBSD
+  - id: shell_init_credential_rotation
+    tree: OPENBSD
+    needs: credential
+    evidence: >-
+      Live provider values moved into the owner-only host file, interactive provider startup verified, every
+      reachable branch and tag searched for historical copies, and any credential that was ever committed
+      rotated.
+  # MASTER
+  - id: release_acceptance_on_an_idle_host
+    tree: MASTER
+    needs: idle-host
+    evidence: >-
+      bin/operator gate, MASTER rake test, RAILS/test/run_all.rb, each app's bin/ci, OPENBSD check
+      --profile=full, OPENBSD/test/run_all.rb and the STUDIO suites run on an idle machine with HEAD and real
+      exit codes recorded. The 2026-10-20 runs were on a machine at load 40 to 160 and timed out.
+  - id: external_assessment_on_authorised_targets
+    tree: MASTER
+    needs: credential
+    evidence: >-
+      ExternalAudit against a permitted public test site, VulCheck on a test host and Nmap against one
+      explicitly authorised lab target; unavailable results explicit, nothing installed or updated.
+  - id: nmap_licence_boundary
+    tree: MASTER
+    needs: rights
+    evidence: >-
+      Qualified counsel confirms the Nmap OEM/commercial-embedding boundary, or a separately licensed scanner is
+      chosen, before any paid Nmap-backed hosted workflow is offered. The adapter keeps calling an independently
+      installed executable until then.
+  - id: assessment_business_hypothesis
+    tree: MASTER
+    needs: material
+    evidence: >-
+      Ten buyer interviews and three paid pilots, with confirmed-finding and false-positive rates, time to first
+      useful finding, time to verified remediation, delivery cost, willingness to pay and repeat purchase
+      recorded.
+  # RAILS
+  - id: brgen_first_screen_in_chrome
+    tree: RAILS
+    needs: browser
+    evidence: >-
+      Front page and messenger at phone, tablet and desktop widths in Norwegian and English on two registered
+      city hosts, with screenshots, rendered geometry, 44px hit areas, focus order and reduced motion.
+      First-screen design changes are rendered values and the operator's.
+  - id: tenant_isolation_live
+    tree: RAILS
+    needs: browser
+    evidence: >-
+      Feeds, conversations, inbox search, attachments, notifications, Turbo streams and jobs shown not to leak
+      between cities, with unknown and malformed Host headers refused.
+  - id: messenger_journey_in_a_browser
+    tree: RAILS
+    needs: browser
+    evidence: >-
+      Room switching, direct open, streaming send and receive, the unread divider, tail following, keyboard
+      search and recovery after a dropped stream, in the one-pane and four-pane layouts.
+  - id: payments_in_provider_staging
+    tree: RAILS
+    needs: provider
+    evidence: >-
+      Dintero, Stripe Connect and Vipps webhooks (signatures, duplicates, out-of-order delivery), idempotent
+      paid states, integer minor units, refunds and failures proved in provider staging.
+  - id: pwa_on_real_devices
+    tree: RAILS
+    needs: device
+    evidence: >-
+      Install, service-worker upgrade and rollback, stale-cache recovery, offline shell and media upload on real
+      Android and iOS, with the Workbox output rebuilt from source.
+  - id: city_registry_matches_dns_and_tls
+    tree: RAILS
+    needs: registrar
+    evidence: >-
+      Each registered city host shown to resolve and hold a valid certificate before a registry entry or footer
+      link claims it.
+  - id: journeys_in_all_three_apps
+    tree: RAILS
+    needs: browser
+    evidence: >-
+      Authentication, upload, search, error and mobile-navigation journeys rechecked in Brgen, Amber and
+      bsdports separately.
+  # OPENBSD
+  - id: unregistered_domains
+    tree: OPENBSD
+    needs: registrar
+    evidence: >-
+      brmingham.uk, glasgw.uk, lverpool.uk, mnchester.uk and dnver.us either registered or removed with their
+      zones and ACME entries, each decision in OPENBSD/data/domain_released.yml, and the domain watcher re-run.
+  - id: watched_all_target_deploy
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      zsh OPENBSD/bin/vps-deploy all ends with all ok and four ok stamps, with target commits, ~/vps-deploy.log,
+      vps-state, relayd, app ports and services recorded.
+  - id: deploy_failure_trap_window
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      A controlled failure on a throwaway ref shows the failed stamp, the stage, whether the app stays stopped,
+      lock and flag cleanup and the final log entry.
+  - id: second_offhost_backup_and_key_recovery
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      A second off-host copy of the backups, a tested recovery path for DNSSEC and DKIM keys, /etc/*.env, SSH
+      host keys and the ACME account key, and dr-pull --drill matching pull and blob counts.
+  - id: dnssec_ds_at_registrars
+    tree: OPENBSD
+    needs: registrar
+    evidence: >-
+      Current DS records from doas ruby OPENBSD/bin/ds-records published at each registrar, dig +short DS
+      answering, and domain_watch --tls reporting ds=1.
+  - id: monitoring_and_crontab_on_vm23
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      pub4-alert, uptime-check.sh, relayd-watchdog and the cron and newsyslog entries installed after reading
+      every diff, the amber.brgen.no probe retired, and deploy-diff shrinking.
+  - id: two_consecutive_deploys
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      Two vps-deploy all runs in one approved window with vps-state --json, deploy-diff and rcctl ls started
+      captured before, between and after, and matching apart from stamp times.
+  - id: syspatch_in_a_console_window
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      The 69 base patches applied per OPENBSD/RUNBOOK.md Updates with the documented rollback, then syspatch -c
+      empty, domain_watch --tls healthy and vps-state all ok.
+  - id: full_check_after_deploy
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      ruby OPENBSD/bin/check --profile=full after a watched deploy, with no skipped check counted as a pass.
+  - id: privilege_migration_on_vm23
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      vps_install_all.sh's direct rcctl fallback and the console and recovery paths reviewed, the focused and
+      full OpenBSD contracts and smoke tests run on a real checkout, and an authenticated recovery path proved
+      before /etc/doas.conf is narrowed.
+  - id: manual_pages_on_openbsd
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      ruby -Itest test/test_manual_pages.rb from MASTER with mandoc present and no skipped lint, and MANPATH
+      lookup of all five pages.
+  - id: prompt_parity_on_a_live_openbsd_shell
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      The shared prompt grammar read identically on the Mac shell, the live OpenBSD shell, the MASTER CLI and
+      the web face, without giving the browser shell or filesystem authority.
+  # STUDIO
+  - id: lora_source_refresh_and_paid_training
+    tree: STUDIO
+    needs: provider
+    evidence: >-
+      The native source-refresh request for Johann and Ragnhild reaching the canonical tool, both sources/
+      curated, datasets archived, captions reviewed, both preflights passing, then a separate explicit
+      paid-training confirmation with Replicate IDs, versions, costs and weights.
+  - id: private_media_and_history
+    tree: STUDIO
+    needs: rights
+    evidence: >-
+      A publication or removal decision for the 36 tracked IMG_* captures and the 12.4 MB LoRA weight file, a
+      history audit across mirrors, branches and tags, and any rewrite coordinated with clone owners. No
+      deletion by size alone.
+  - id: person_renders_and_duet_video
+    tree: STUDIO
+    needs: material
+    evidence: >-
+      About twenty new reference photographs per person (sharp, even daylight, 50–85 mm), a face-embedding
+      identity gate thresholded from them, a Veo 3.1, Kling, Seedance and Wan bake-off with cost per second, and
+      a look bible the operator approves. Closes when the operator accepts a render.
+  - id: dilla_by_ear
+    tree: STUDIO
+    needs: ears
+    evidence: >-
+      Chord spellings in dilla.json checked against records, groove offsets verified by ear, the
+      named-progression and live-mode output heard, the 92 BPM dark-minor brief rendered and judged, and /play
+      level checked on the host without clipping.
+  - id: reference_workflow_with_a_real_link
+    tree: STUDIO
+    needs: ears
+    evidence: >-
+      A real YouTube audio link and a local file analysed (tempo, bars, tonal summary, audio only), a
+      reference-driven render generated and listened to, Slum Village's Fantastic Vol. 2 as the groove
+      benchmark.
+  - id: lora_route_end_to_end
+    tree: STUDIO
+    needs: provider
+    evidence: >-
+      The "make a video with the lora of me" route through its real intent and provider path, run once under
+      TurnRouterTest and once live.
+  - id: paid_media_cost_proof
+    tree: STUDIO
+    needs: provider
+    evidence: >-
+      One Veo 3.1 Fast clip under an enforced cap of about 5 dollars, real-person-photo acceptance confirmed,
+      the actual bill compared with the estimate, and Kling kept as fallback.
+  # RAILS
+  - id: visual_identity_acceptance
+    tree: RAILS
+    needs: browser
+    evidence: >-
+      Before and after Chrome screenshots at narrow and wide widths, the terminal face and prompt, and
+      representative media renders for the signal-and-stillness rollout, with contrast, motion and performance
+      evidence reviewed by the operator.
+  # MASTER
+  - id: remote_branch_aliases
+    tree: MASTER
+    needs: credential
+    evidence: >-
+      The nine remote master/fix-pid* aliases deleted from an authorized checkout after git fetch --prune and
+      git worktree list show them orphaned. Local worktrees were removed on 2026-10-20.

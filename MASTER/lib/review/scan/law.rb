@@ -146,7 +146,7 @@ module Master
 
         # Every node under this law, in source order. Ten rules in
         # structural_rules.rb each carried a byte-identical private `visit` doing
-        # exactly this — the copy-paste TODO.md names as "one shared AST-walk
+        # exactly this — the copy-paste the old backlog names as "one shared AST-walk
         # helper". They call this now, and a fix to the traversal lands once.
         def walk(node, &block)
           return unless node.respond_to?(:child_nodes)

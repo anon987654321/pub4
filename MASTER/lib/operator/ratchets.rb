@@ -686,7 +686,7 @@ def deep_rows
       current = output[pattern, 1]&.to_i
       Row.new(name:, current:, ceiling:, direction: :down,
               source: "#{dir}: #{command}",
-              note: ceiling.nil? ? "no recorded ceiling — see TODO.md" : nil)
+              note: ceiling.nil? ? "no recorded ceiling" : nil)
     end
 
     def relative_to_root(path)

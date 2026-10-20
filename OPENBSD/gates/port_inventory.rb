@@ -56,7 +56,6 @@ module Deploy
       "OPENBSD/usr/local/bin/keep-warm.sh" => "checked: check_smoke_probes",
       "RAILS/test/deploy_smoke_contract_test.rb" => "asserts the smoke scripts' own content",
       "CLAUDE.md" => "prose: the shed-vs-outage triage note, trap 3",
-      "TODO.md" => "prose: the repo-wide backlog, which names ports in its deploy entries",
       "RAILS/CLAUDE.md" => "prose: the shed-vs-outage triage note",
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",

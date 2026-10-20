@@ -7,7 +7,7 @@
 # match its tracked OPENBSD/ mirror byte-for-byte.
 #
 # The doas keepenv root-RCE stayed live in production for days while the repo and
-# TODO.md both called it fixed, because nothing ever compared the mirror against
+# the old backlog both called it fixed, because nothing ever compared the mirror against
 # the running /etc. This is the check that would have caught it: the repo IS the
 # live config, and when it is not, that is either an undeployed fix or a hand-edit
 # nobody copied back, and both are the bug this gate names.

@@ -5,7 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 
-# TODO.md, Test coverage: no test named GitOperations. It is the runtime's only
+# the old backlog, Test coverage: no test named GitOperations. It is the runtime's only
 # git surface — status, ahead/behind, and the mutation half (add/commit/push/
 # reset --hard/tag/fetch) that autocommit and the deploy path drive.
 #
@@ -14,6 +14,7 @@ require "open3"
 # can reach the checkout it is running in, which matters more than usual: one of
 # the methods under test is reset_hard.
 class GitOperationsTest < Minitest::Test
+
   def setup
     @tmp = Dir.mktmpdir("git_operations_test")
     @remote = File.join(@tmp, "remote.git")

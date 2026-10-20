@@ -33,7 +33,7 @@ class ChromeI18nLintTest < Minitest::Test
   # rule — the string gets translated, the element is deleted, the markup moves —
   # the marker stays and silences whatever occupies those lines next.
   #
-  # Written after deleting FINAL_TODO.md left two MASTER baselines still granting
+  # Written after deleting FINAL_the old backlog left two MASTER baselines still granting
   # it exemptions for dimensions and a path that no longer existed. Both were
   # caught, by tests that check exactly this. Inline opt-outs are the harder case
   # because they sit next to code that moves under them.

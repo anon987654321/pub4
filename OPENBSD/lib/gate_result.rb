@@ -195,7 +195,7 @@ module Deploy
     # checks, zero unchecked and reported PASSED. layout_geometry did exactly that
     # on 2026-08-03 -- PASSED having skipped all 17 of its checks because no app was
     # listening, which is how a dead amber and bsdports read as green for an unknown
-    # number of days (TODO.md: amber_bsdports_stop_and_stay_down).
+    # number of days (the old backlog: amber_bsdports_stop_and_stay_down).
     #
     # A gate that skipped some live checks and ran others still passes: this asks
     # whether anything at all was measured, not whether everything was.
