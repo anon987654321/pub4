@@ -355,6 +355,227 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 184.0, result.fetch("essentia_bpm")
   end
 
+  def test_libsonare_summary_reports_groove_and_structure_without_chord_names
+    document = {
+      "bpm" => 143.6, "bpm_confidence" => 0.84,
+      "key" => { "name" => "A minor", "confidence" => 0.77 },
+      "time_signature" => { "numerator" => 4, "denominator" => 4 },
+      "beats" => [{ "time" => 0.0 }, { "time" => 0.418 }, { "time" => 0.836 }, { "time" => 1.28 }],
+      "downbeat_indices" => [0],
+      "chords" => [{ "name" => "Am", "start" => 0.0 }, { "name" => "F", "start" => 1.2 }],
+      "sections" => [{ "type" => "intro" }, { "type" => "drop" }, { "type" => "drop" }],
+      "timbre" => { "brightness" => 0.71, "warmth" => 0.24 },
+      "dynamics" => { "dynamic_range_db" => 10.5, "is_compressed" => false },
+      "rhythm" => { "syncopation" => 0.67, "groove_type" => "driving" },
+      "form" => "intro-drop"
+    }
+
+    summary = Dilla::Reference.libsonare_descriptor_summary(document)
+
+    assert_equal 143.6, summary.fetch("bpm")
+    assert_equal 0.84, summary.fetch("bpm_confidence")
+    assert_equal "A minor", summary.fetch("key")
+    assert_equal "4/4", summary.fetch("time_signature")
+    assert_equal 4, summary.fetch("beats_count")
+    assert_in_delta 418.0, summary.fetch("beat_interval_median_ms"), 5.0
+    assert_operator summary.fetch("beat_interval_cv_pct"), :>, 0.0
+    assert_equal 1, summary.fetch("downbeats_count")
+    assert_equal 2, summary.fetch("chord_count")
+    assert_equal 3, summary.fetch("section_count")
+    assert_equal %w[drop intro], summary.fetch("section_types")
+    assert_equal 0.71, summary.fetch("timbre_brightness")
+    assert_equal 10.5, summary.fetch("dynamics_dynamic_range_db")
+    assert_equal 0.67, summary.fetch("rhythm_syncopation")
+    assert_equal "driving", summary.fetch("rhythm_groove_type")
+    assert_equal "intro-drop", summary.fetch("form")
+    refute summary.key?("chords"), "exact chord names must not enter the compact production summary"
+    refute summary.key?("chord_names")
+  end
+
+  def test_libsonare_summary_ignores_malformed_and_non_finite_values
+    assert_empty Dilla::Reference.libsonare_descriptor_summary(nil)
+    summary = Dilla::Reference.libsonare_descriptor_summary(
+      "bpm" => Float::INFINITY,
+      "bpm_confidence" => 1.4,
+      "key" => { "name" => " ", "confidence" => -0.1 },
+      "time_signature" => { "numerator" => 4.5, "denominator" => 4 },
+      "beats" => "not-a-list",
+      "sections" => [{ "type" => 17 }, nil]
+    )
+    refute summary.key?("bpm")
+    refute summary.key?("bpm_confidence")
+    refute summary.key?("key")
+    refute summary.key?("time_signature")
+    refute summary.key?("beats_count")
+    assert_equal 0, summary.fetch("section_count")
+    refute summary.key?("section_types")
+  end
+
+  def test_libsonare_is_optional_when_its_executable_is_missing
+    Dir.mktmpdir do |dir|
+      result = Dilla::Reference.stub(:executable, nil) do
+        Dilla::Reference.libsonare("/audio/track.wav", dir, source_duration: 60)
+      end
+      assert_equal "unavailable", result.fetch("status")
+      refute result.key?("summary")
+    end
+  end
+
+  def test_libsonare_skips_sources_over_the_memory_bound_before_tool_discovery
+    Dir.mktmpdir do |dir|
+      resolver = ->(*) { flunk("must not discover a tool for a source over the cap") }
+      result = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.libsonare("/audio/album.wav", dir, max_duration: 7_200, source_duration: 901)
+      end
+      assert_equal "skipped_duration", result.fetch("status")
+      assert_equal 900, result.fetch("max_duration_seconds")
+    end
+  end
+
+  def test_libsonare_skips_sources_with_unknown_duration
+    Dir.mktmpdir do |dir|
+      resolver = ->(*) { flunk("must not launch an analyzer for unknown-duration input") }
+      result = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.libsonare("/audio/unknown.wav", dir, source_duration: nil)
+      end
+      assert_equal "skipped_unknown_duration", result.fetch("status")
+    end
+  end
+
+  def test_libsonare_converts_unsupported_formats_and_parses_json
+    Dir.mktmpdir do |dir|
+      audio = File.join(dir, "track.flac")
+      File.write(audio, "fixture audio bytes")
+      calls = []
+      document = {
+        "bpm" => 143.6, "key" => { "name" => "A minor", "confidence" => 0.8 },
+        "beats" => [], "chords" => [], "sections" => []
+      }
+      resolver = lambda do |env_name, _default_name|
+        env_name == "LIBSONARE_BIN" ? "/opt/sonare" : "/opt/ffmpeg"
+      end
+      capture = lambda do |label, *command, timeout:|
+        calls << { label:, command:, timeout: }
+        if label == "libsonare input conversion"
+          File.write(command.last, "converted wav bytes")
+          ["", ""]
+        else
+          [JSON.generate(document), ""]
+        end
+      end
+
+      result = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.stub(:capture!, capture) do
+          Dilla::Reference.libsonare(audio, dir, max_duration: 900, source_duration: 60)
+        end
+      end
+
+      assert_equal "analyzed", result.fetch("status")
+      assert_equal 143.6, result.fetch("summary").fetch("bpm")
+      assert File.file?(File.join(dir, "libsonare_features.json"))
+      assert_equal 2, calls.size
+      assert_equal "ffmpeg", File.basename(calls[0].fetch(:command).first)
+      assert_equal "sonare", File.basename(calls[1].fetch(:command).first)
+      assert_equal ["analyze", "--json"], [calls[1].fetch(:command)[1], calls[1].fetch(:command)[3]]
+      assert_match(/\.wav\z/, calls[1].fetch(:command)[2])
+      assert calls.all? { |call| call.fetch(:timeout).positive? }
+      refute Dir.children(dir).any? { |name| name.start_with?("libsonare-input-") },
+             "temporary conversion must be removed"
+    end
+  end
+
+  def test_libsonare_wav_input_uses_an_argument_vector_without_shell_interpolation
+    Dir.mktmpdir do |dir|
+      audio = File.join(dir, "track ' $(not-a-command).wav")
+      File.write(audio, "fixture audio bytes")
+      commands = []
+      resolver = ->(env_name, _default_name) { env_name == "LIBSONARE_BIN" ? "/opt/sonare" : nil }
+      capture = lambda do |_label, *command, timeout:|
+        commands << [command, timeout]
+        [JSON.generate("bpm" => 91.0, "beats" => [], "chords" => [], "sections" => []), ""]
+      end
+      result = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.stub(:capture!, capture) do
+          Dilla::Reference.libsonare(audio, dir, source_duration: 30)
+        end
+      end
+
+      assert_equal "analyzed", result.fetch("status")
+      assert_equal 1, commands.size
+      assert_equal ["analyze", audio, "--json"], commands.first.first[1..3]
+    end
+  end
+
+  def test_libsonare_reports_missing_ffmpeg_for_conversion
+    Dir.mktmpdir do |dir|
+      resolver = ->(env_name, _default_name) { env_name == "LIBSONARE_BIN" ? "/opt/sonare" : nil }
+      result = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.libsonare("/audio/track.flac", dir, source_duration: 60)
+      end
+      assert_equal "unavailable", result.fetch("status")
+      assert_includes result.fetch("message"), "ffmpeg unavailable"
+    end
+  end
+
+  def test_libsonare_malformed_output_and_timeouts_are_explicit_failures
+    Dir.mktmpdir do |dir|
+      audio = File.join(dir, "track.wav")
+      File.write(audio, "fixture audio bytes")
+      resolver = ->(_env_name, _default_name) { "/opt/sonare" }
+      invalid = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.stub(:capture!, ->(_label, *args, **kwargs) { ["not json", ""] }) do
+          Dilla::Reference.libsonare(audio, dir, source_duration: 60)
+        end
+      end
+      assert_equal "failed", invalid.fetch("status")
+      assert_match(/invalid libsonare output/, invalid.fetch("message"))
+
+      timeout = Dilla::Reference.stub(:executable, resolver) do
+        Dilla::Reference.stub(:capture!, ->(label, *args, **kwargs) { raise Dilla::Reference::Error, "#{label} timed out after #{kwargs[:timeout]}s" }) do
+          Dilla::Reference.libsonare(audio, dir, source_duration: 60)
+        end
+      end
+      assert_equal "failed", timeout.fetch("status")
+      assert_match(/timed out/, timeout.fetch("message"))
+    end
+  end
+
+  def test_libsonare_tempo_crosscheck_names_the_engine_and_detects_half_double_time
+    agreement = Dilla::Reference.tempo_crosscheck({ "bpm" => 143.0 }, { "bpm" => 144.5 }, engine: "libsonare")
+    assert_equal "agreement", agreement.fetch("status")
+    assert_equal 144.5, agreement.fetch("libsonare_bpm")
+
+    ambiguous = Dilla::Reference.tempo_crosscheck({ "bpm" => 72.0 }, { "bpm" => 144.0 }, engine: "libsonare")
+    assert_equal "half_double_ambiguity", ambiguous.fetch("status")
+    assert_equal 144.0, ambiguous.fetch("libsonare_bpm")
+
+    insufficient = Dilla::Reference.tempo_crosscheck({ "bpm" => nil }, {}, engine: "libsonare")
+    assert_equal "insufficient_evidence", insufficient.fetch("status")
+  end
+
+  def test_reference_report_includes_optional_libsonare_state_and_crosscheck
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "report.md")
+      Dilla::Reference.write_report(
+        path, { "mix" => { "tempo" => { "bpm" => 143.0 }, "spectral_bands_db" => {} } },
+        { "status" => "not_run" }, { "style_key" => "industrial_techno" },
+        { "reference_count" => 1 }, essentia: { "status" => "unavailable" },
+        libsonare: { "status" => "analyzed", "summary" => { "bpm" => 143.2, "rhythm_groove_type" => "driving" } },
+        tempo_crosscheck: { "status" => "agreement" },
+        libsonare_tempo_crosscheck: { "status" => "half_double_ambiguity" },
+        rhythm_analysis: { "source" => "full_mix_proxy", "features" => { "timing_spread_ms" => 12.0 } },
+        source: { "source_type" => "local_audio" }
+      )
+
+      report = File.read(path)
+      assert_includes report, "Libsonare status: analyzed"
+      assert_includes report, "libsonare.bpm: 143.2"
+      assert_includes report, "libsonare.rhythm_groove_type: driving"
+      assert_includes report, "Tempo cross-check: FFmpeg versus libsonare"
+      assert_includes report, "half_double_ambiguity"
+    end
+  end
+
   def test_rhythm_source_is_explicit_about_demucs_vs_full_mix_proxy
     audio = "/references/source.wav"
     stem, source = Dilla::Reference.rhythm_source_for(
