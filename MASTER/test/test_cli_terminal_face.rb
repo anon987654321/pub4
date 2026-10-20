@@ -56,7 +56,7 @@ class TestCliTerminalFace < Minitest::Test
       row, col = screen.scan(/\e\[(\d+);(\d+)H\e\[\?25h\z/).first.map(&:to_i)
       prompt = rows_of(screen).fetch(row)
 
-      assert prompt.start_with?("#{Master::Face::Contract.shell_prompt} "), "row #{row} of #{rows} is not the prompt: #{prompt.inspect}"
+      assert prompt.start_with?("#{face.send(:operator_prompt)} "), "row #{row} of #{rows} is not the prompt: #{prompt.inspect}"
       assert_equal prompt.length + 1, col, "the cursor follows the draft"
     end
   end
@@ -167,7 +167,7 @@ class TestCliTerminalFace < Minitest::Test
   end
 
   def test_typed_input_uses_the_shared_location_aware_operator_prompt
-    prompt = Master::Face::Contract.shell_prompt
+    prompt = window.send(:operator_prompt)
     assert_match(/\A[^:]+:.+\$\z/, prompt)
     assert_equal "#{prompt} hello", window.send(:typed, "hello", 80)
   end
