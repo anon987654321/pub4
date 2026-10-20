@@ -333,6 +333,8 @@ module Master
         required_metrics = %w[cohesion coupling domain_depth decision_duplication traceability concepts loc]
         missing = required_metrics - Array(scorecard.fetch("metrics")).map(&:to_s)
         raise ArgumentError, "scorecard metrics missing: #{missing.join(", ")}" unless missing.empty?
+        missing = required_metrics - scorecard.fetch("measurements").keys.map(&:to_s)
+        raise ArgumentError, "scorecard measurement descriptions missing: #{missing.join(", ")}" unless missing.empty?
         raise ArgumentError, "invalid scorecard history window" unless (1..500).cover?(Integer(scorecard.fetch("history_window_commits")))
         raise ArgumentError, "scorecard tie rule missing" unless scorecard.fetch("acceptance").fetch("tie") == "keep_current_tree"
 

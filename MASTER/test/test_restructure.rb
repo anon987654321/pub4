@@ -326,6 +326,20 @@ class TestRestructure < Minitest::Test
     assert_includes text, "MASTER/lib/user_policy.rb"
   end
 
+  def test_restructure_exit_reports_done_after_a_fresh_empty_scan
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **fields| events << [name, fields] }
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo, bus:)
+    sweep.define_singleton_method(:candidates) { |_target, _run_id| [] }
+
+    result = sweep.run_tree(File.join(@repo, "MASTER"), "empty-scan", attempts: 1, rounds: 1, keeps: 1)
+
+    assert_empty result
+    exit_event = events.find { |name, _fields| name == "fix_loop:restructure_exit" }
+    assert_equal "DONE", exit_event.last.fetch(:state)
+  end
+
   def test_restructure_exit_reports_a_partial_attempt_budget_as_limit_reached
     problem_class = Struct.new(:id, :size, :laws, :files, :candidate_operations, :findings, :reason, :confidence, keyword_init: true)
     path = File.join(@repo, "MASTER/lib/big.rb")

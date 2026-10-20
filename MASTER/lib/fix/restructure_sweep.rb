@@ -186,7 +186,7 @@ module Master
 
           ranked = ranked_candidate_map(candidates(target, "#{run_id}-#{round}"))
           if ranked.empty?
-            terminal = :convergence
+            terminal = :done
             break
           end
           problems = ranked.map { |row| row.fetch(:problem) }
@@ -219,7 +219,7 @@ module Master
           terminal = :limit_reached if kept.size >= keeps || round == rounds - 1
         end
         if terminal == :limit_reached
-          terminal = :convergence if candidates(target, "#{run_id}-final").empty?
+          terminal = :done if candidates(target, "#{run_id}-final").empty?
         end
         Master::Trace::Dmesg.status("restructure0", "terminal=#{terminal} kept=#{kept.size}")
         @bus&.publish("fix_loop:restructure_exit", target: relative(target), state: terminal.to_s.upcase, kept: kept.size)
@@ -227,10 +227,12 @@ module Master
       end
 
       def ranked_candidate_map(problems)
+        score_min, score_max = @transformation_plan.candidate_map_policy.fetch("score_range").map(&:to_i)
         Array(problems).map do |problem|
           signal_count = problem.findings.size + [problem.laws.size - 1, 0].max + [problem.files.size - 1, 0].max
-          payoff = [[signal_count, 1].max, 5].min
-          risk = problem.candidate_operations.map { |operation| OPERATION_RISK.fetch(operation, 5) }.max || 5
+          payoff = [[signal_count, score_min].max, score_max].min
+          risk = (problem.candidate_operations.map { |operation| OPERATION_RISK.fetch(operation, score_max) }.max || score_max)
+            .clamp(score_min, score_max)
           { problem:, payoff:, risk:, ratio: payoff.to_f / risk }
         end.sort_by do |row|
           [-row.fetch(:ratio), -row.fetch(:payoff), row.fetch(:risk), row.fetch(:problem).id]
@@ -244,12 +246,13 @@ module Master
         wanted = Integer(@transformation_plan.candidate_map_policy.fetch("minimum_alternatives"))
         min_paths = Integer(@transformation_plan.candidate_map_policy.fetch("minimum_distinct_target_paths"))
         distinct_paths = rows.flat_map { |row| row.fetch(:problem).files }.uniq
+        score_max = @transformation_plan.candidate_map_policy.fetch("score_range").last.to_i
         shown = rows.first(30).map do |row|
           problem = row.fetch(:problem)
           findings = problem.findings.map { |path, law, message, _related| "#{relative(path)} #{law} #{message}" }
           format(
-            "  %s payoff=%d/5 risk=%d/5 ratio=%.2f operation=%s paths=%s evidence=%s",
-            problem.id, row.fetch(:payoff), row.fetch(:risk), row.fetch(:ratio),
+            "  %s payoff=%d/%d risk=%d/%d ratio=%.2f operation=%s paths=%s evidence=%s",
+            problem.id, row.fetch(:payoff), score_max, row.fetch(:risk), score_max, row.fetch(:ratio),
             problem.candidate_operations.join(","), problem.files.map { |path| relative(path) }.join(","),
             findings.join(" | "),
           )
