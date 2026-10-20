@@ -3,7 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "set"
 require_relative "snapshot_map"
 require_relative "snapshot_minify"
@@ -301,12 +301,12 @@ module Operator
       ref = reference.to_s
       raise ArgumentError, "snapshot: --since needs a non-option commit reference" if ref.empty? || ref.start_with?("-")
 
-      resolved, _err, status = Open3.capture3("git", "rev-parse", "--verify", "--quiet", "#{ref}^{commit}", chdir: host::REPO)
+      resolved, _err, status = Master::Io::Exec.capture3("git", "rev-parse", "--verify", "--quiet", "#{ref}^{commit}", chdir: host::REPO)
       raise ArgumentError, "snapshot: --since reference #{ref.inspect} is not a commit" unless status.success?
 
       base = resolved.strip
       tree_path = host::TREE_PATHS.fetch(tree)
-      raw, err, status = Open3.capture3(
+      raw, err, status = Master::Io::Exec.capture3(
         "git", "diff", "--no-ext-diff", "--no-textconv", "--name-status", "-z", "--find-renames", base, "--", tree_path,
         chdir: host::REPO,
       )
