@@ -67,6 +67,19 @@ The study “Does it Swing? Microtiming Deviations and Swing Feeling in Jazz” 
 ### The sample must make musical sense after the edit
 
 Community listening advice and the Donuts sampling thesis converge on a compositional point: the cuts matter because their new order creates a phrase. A sample sliced only at transients can still sound like unrelated fragments if the pitch contour, harmonic tension, phrase endings, and rhythmic answers do not cohere. Analyze phrase function and the interaction between sample rhythm and drums before adding more chops or effects.
+## Mix engineering and the drummer-producer relationship
+
+### Samples should already fit before the mix engineer reaches for a fix
+
+In Reverb's interviews with Todd Fairall, Bob Power, David Kennedy and Dave Cooley—engineers associated with different phases of Dilla's career—the production method is emphatically not one recipe. Fairall recalls some Fantastic Vol. 2 material reaching the mix already recorded to analogue tape, samples sometimes receiving a watery dynamic-filter treatment, and a short gated oscillator triggered by the kick to add tightly controlled energy around 40 Hz. Power describes Dilla's sound choices as chosen for timbral and frequency content as much as for the sound identity itself; he also describes using high-pass and low-pass filtering to keep elements out of each other's frequency ranges. These are project-specific observations by collaborators, not a universal plug-in chain to impose on every beat.
+
+On Donuts, mastering engineer Dave Cooley remembered timing compressor releases to the track tempo to preserve the disorienting compression pump, and preferring a less polished, matte-feeling top end. He also emphasized that the record arrived largely complete and needed comparatively little mastering. The lesson for Dilla is mix architecture first: choose sounds with complementary spectra, establish a clear low-end envelope, make room with selective filtering, and only add saturation, pumping or high-frequency softening when the arrangement benefits. Do not simulate a vintage console just because a reference sounds warm.
+
+### A groove can be lopsided without each lane being randomly late
+
+The Sounding Out! analysis of Donuts and the Soulquarians period describes de-quantization as insufficient on its own: Dilla imposes a timing sense on the sequence, rather than simply disabling a quantize switch. Its account of the Dilla–Questlove interaction emphasizes a feedback relationship between programmed drums and played drums, with tick-like hats between pulses, crisp but not aggressively cracking snares/claps, and a kick that is substantial without dominating. This gives Dilla a practical arrangement test: mute the sample and listen to kick, snare and hats together; then mute the drums and study the sample phrase; restore both and decide whether the two timing systems converse or compete.
+
+An important limitation remains: these are researched observations about named works and collaborators' experience, not measurements from the supplied rare-beat mix or 100-beat compilation. The analyzer's four broad spectral bands, loudness/peak statistics and low-rate timing-spread proxy cannot by themselves identify a 40 Hz kick oscillator, infer a specific compressor release, or classify a snare's exact position. Those claims require track-specific listening and, where possible, isolated stems or multitracks.
 ## Concrete measurement protocol
 
 Run this on a small, provenance-checked set of bounded audio excerpts first. Keep the raw analysis JSON and source fingerprints next to every summary so the results can be reproduced.
@@ -109,6 +122,8 @@ For the two supplied mixes specifically, the next executable step is to obtain b
 - [DJ Mag: D is for Dilla — the life and legacy of a hip-hop phenomenon](https://djmag.com/features/d-dilla-life-and-legacy-of-hip-hop-phenomenon)
 - [MPC Forums: 2004 Jay Dee interview transcript](https://www.mpc-forums.com/viewtopic.php?p=142320)
 - [Zachary Diaz, Analysis of Sampling Techniques by J Dilla in Donuts (2018)](https://scholarworks.sfasu.edu/etds/197/)
+- [Reverb: Engineering Dilla — interviews with engineers who mixed and mastered different Dilla projects](https://reverb.com/news/engineering-dilla-how-j-dillas-classic-albums-were-mixed-and-mastered)
+- [Sounding Out!: On Donuts, Sandwiches and Beattapes — sampling, de-quantization and the Dilla–Questlove relationship](https://soundstudiesblog.com/2012/02/06/on-donuts-sandwiches-and-beattapes-listening-for-j-dilla-six-years-on/)
 - [Dan Charnas interview, Passion of the Weiss: Dilla Time and independent swing/shift timing](https://www.powmag.net/p/an-interview-with-dan-charnas-author-of-the-new-book-dilla-time)
 - [Datseris et al., Does it Swing? Microtiming Deviations and Swing Feeling in Jazz (2019)](https://arxiv.org/abs/1904.03442)
 - [Reddit community discussion: How to make J Dilla swing in Logic Pro (2025; conflicting heuristics, anecdotal)](https://www.reddit.com/r/makinghiphop/comments/1j6tg8s/)
