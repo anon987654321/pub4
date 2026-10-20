@@ -186,6 +186,8 @@ law_groups:
   - RAMS_THOROUGH
   - AESTHETIC_MINIMALISM
   - CONTRAST_TOKENS
+scan_workers: 6
+
 scan_profiles:
   default: full
   core:
