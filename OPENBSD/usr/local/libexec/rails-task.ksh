@@ -19,7 +19,7 @@ case "$task" in
     [ "$#" -eq 3 ] || exit 64
     printf "%s\n" "$database" | /usr/bin/grep -Eq "^ruby([0-9]{2}|[0-9]+[.][0-9]+)\$" || exit 64
     ;;
-  demo-seed) [ "$#" -eq 2 ] && { [ "$app" = brgen ] || [ "$app" = amber ]; } || exit 64 ;;
+  demo-seed) [ "$#" -eq 2 ] && [ "$app" = brgen ] || exit 64 ;;
   schema-load|secondary-db-check) [ "$#" -eq 3 ] || exit 64; case "$database" in cache|queue|cable) ;; *) exit 64 ;; esac ;;
   *) echo "rails-task: refused task: $task" >&2; exit 64 ;;
 esac
