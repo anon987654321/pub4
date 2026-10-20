@@ -798,9 +798,9 @@ bard:
   enabled: true
   voice: guy
   style: neutral
-  rate: "+14%"
-  pitch: "-20Hz"
-  max_words_per_sentence: 14
+  rate: "-4%"
+  pitch: "-26Hz"
+  max_words_per_sentence: 16
   # The beat under the bard, dilla's own --play stream (lib/voice/bed.rb). One progression is drawn from
   # `progressions` per start; they are the long extended-chord ones in STUDIO/dilla/data/dilla.json.
   bed:
