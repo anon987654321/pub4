@@ -5,6 +5,24 @@ require "rbconfig"
 require_relative "../subprocess"
 
 class StudioSubprocessTest < Minitest::Test
+  def test_on_path_finds_only_executables_from_the_supplied_path
+    Dir.mktmpdir("studio-path") do |dir|
+      executable = File.join(dir, "brew")
+      plain_file = File.join(dir, "plain")
+      File.write(executable, "#!/bin/sh\n")
+      File.chmod(0o755, executable)
+      File.write(plain_file, "not executable")
+      Dir.mkdir(File.join(dir, "folder"))
+
+      assert Studio::Subprocess.on_path?("brew", path: dir)
+      refute Studio::Subprocess.on_path?("plain", path: dir)
+      refute Studio::Subprocess.on_path?("folder", path: dir)
+      refute Studio::Subprocess.on_path?("", path: dir)
+      refute Studio::Subprocess.on_path?("./brew", path: dir)
+      refute Studio::Subprocess.on_path?("brew", path: "/nonexistent")
+    end
+  end
+
   def test_capture_returns_separate_output_and_exit_status
     stdout, stderr, status = Studio::Subprocess.capture3(
       RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')", timeout: 5

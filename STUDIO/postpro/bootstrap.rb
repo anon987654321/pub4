@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../subprocess"
 require "rbconfig"
 require "time"
 
@@ -118,37 +118,37 @@ module PostproBootstrap
     os = RbConfig::CONFIG["host_os"]
     case os
     when /darwin/
-      if system("which", "brew", out: File::NULL, err: File::NULL)
+      if Studio::Subprocess.on_path?("brew")
         dmesg "attempting: brew install vips"
         system("brew", "install", "vips")
       else
         dmesg "ERROR homebrew not found, install manually: brew install vips"
       end
     when /linux/
-      if system("which", "apt", out: File::NULL, err: File::NULL)
+      if Studio::Subprocess.on_path?("apt")
         dmesg "attempting: apt install libvips-dev"
         system("apt", "update") && system("apt", "install", "-y", "libvips-dev")
-      elsif system("which", "dnf", out: File::NULL, err: File::NULL)
+      elsif Studio::Subprocess.on_path?("dnf")
         dmesg "attempting: dnf install vips-devel"
         system("dnf", "install", "-y", "vips-devel")
-      elsif system("which", "yum", out: File::NULL, err: File::NULL)
+      elsif Studio::Subprocess.on_path?("yum")
         dmesg "attempting: yum install vips-devel"
         system("yum", "install", "-y", "vips-devel")
-      elsif system("which", "apk", out: File::NULL, err: File::NULL)
+      elsif Studio::Subprocess.on_path?("apk")
         dmesg "attempting: apk add vips-dev"
         system("apk", "add", "vips-dev")
-      elsif system("which", "pacman", out: File::NULL, err: File::NULL)
+      elsif Studio::Subprocess.on_path?("pacman")
         dmesg "attempting: pacman -S libvips"
         system("pacman", "-S", "--noconfirm", "libvips")
       else
         dmesg "ERROR no supported package manager found"
       end
     when /openbsd/
-      if system("which", "pkg_add", out: File::NULL, err: File::NULL)
+      if Studio::Subprocess.on_path?("pkg_add")
         dmesg "attempting: pkg_add libvips"
         if Process.uid.zero?
           system("pkg_add", "-I", "libvips")
-        elsif system("which", "doas", out: File::NULL, err: File::NULL)
+        elsif Studio::Subprocess.on_path?("doas")
           system("doas", "-n", "pkg_add", "-I", "libvips")
         else
           dmesg "ERROR pkg_add needs root or doas"

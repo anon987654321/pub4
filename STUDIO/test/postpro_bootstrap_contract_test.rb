@@ -21,9 +21,10 @@ class PostproBootstrapContractTest < Minitest::Test
   def test_bootstrap_module_keeps_its_own_required_dependencies
     source = File.read(BOOTSTRAP)
 
-    %w[fileutils json open3 rbconfig time].each do |library|
+    %w[fileutils json rbconfig time].each do |library|
       assert_includes source, %(require "#{library}")
     end
+    assert_includes source, %(require_relative "../subprocess")
     assert_includes source, "BOOT_TIME = Time.now.freeze"
     assert_includes source, "module PostproBootstrap"
   end
