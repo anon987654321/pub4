@@ -21,6 +21,16 @@ class TestCliCommandFlags < Minitest::Test
     assert_equal "/fix RAILS --max-files=25 --autofix=on", @host.send(:initial_message_from_argv, argv)
   end
 
+  def test_no_critique_survives_into_the_message_without_an_option_error
+    argv = ["/fix", "MASTER", "--no-critique"]
+    message = nil
+    out, err = capture_io { message = @host.method(:initial_message_from_argv).call(argv) }
+
+    assert_equal "/fix MASTER --no-critique", message
+
+    refute_match(/option error/, err + out)
+  end
+
   def test_fix_flags_do_not_raise_an_option_error
     out, err = capture_io { @host.send(:initial_message_from_argv, ["/fix", "MASTER", "--max-files=3"]) }
 
