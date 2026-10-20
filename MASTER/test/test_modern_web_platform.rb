@@ -46,7 +46,7 @@ class TestModernWebPlatformEvidence < Minitest::Test
 
 
   def test_geometry_walk_marks_only_rectangles_intersecting_viewport
-    expression = Deploy::GeometryProbe::WALK[/onscreen:\\s*(.+?),\\s*\\n\\s*hit:/m, 1]
+    expression = Deploy::GeometryProbe::WALK[/onscreen:\s*(.+?),\s*\n\s*hit:/m, 1]
     refute_nil expression, "geometry walk must expose its viewport-intersection predicate"
 
     script = <<~JS
