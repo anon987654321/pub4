@@ -151,7 +151,7 @@ module Master
           # enough that the re-probe is not due yet; the council is a paid
           # tier, so it is skipped and says so rather than spending 26 calls
           # to relearn one fact.
-          return exhausted_error if Io::QuotaGate.blocked? && !local_floor_available?
+          return exhausted_error if panel_blocked? && !local_floor_available?
 
           context = reflexion_context(context)
           @panel_size = active.size
@@ -202,10 +202,20 @@ module Master
           target = @availability.council_target(
             current: active.size,
             local_posture: self.class.local_posture?,
-            scarce: Io::QuotaGate.blocked?,
+            scarce: panel_blocked?,
             local_only: local_floor_available? && !cloud_floor_available?,
           )
           active.first(target)
+        end
+
+        # The paid tier is closed for the panel only when every lane it could
+        # speak through is closed. One provider out of credit leaves the rest.
+        def panel_blocked?
+          return false unless Io::QuotaGate.blocked?
+
+          lanes = Array(@agent.candidate_models(task_type: :review)) if @agent.class.method_defined?(:candidate_models)
+          lanes ||= []
+          lanes.empty? || lanes.all? { |model| Io::QuotaGate.blocked?(model) }
         end
 
         def local_floor_available?
@@ -344,14 +354,14 @@ module Master
         end
 
         def collect_parallel(code:, context:, personas: @personas, image: nil)
-          return [] if circuit_open? || Io::QuotaGate.blocked?
+          return [] if circuit_open? || panel_blocked?
 
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [TOTAL_BUDGET_S, Master::Review::LLMDispatcher::PassClock.remaining || TOTAL_BUDGET_S].min
           personas.each_slice(MAX_CONCURRENT).each_with_object([]) do |batch, feedback|
             # A batch already in flight cannot be recalled, but the batches
             # after it can: one confirmed spend limit ends the round rather
             # than buying the same refusal 22 more times.
-            break feedback if Io::QuotaGate.blocked? || Master::Review::LLMDispatcher::PassClock.expired?
+            break feedback if panel_blocked? || Master::Review::LLMDispatcher::PassClock.expired?
 
             threads = batch.map do |persona|
               Thread.new { ask_persona(persona:, code:, context:, image:) }
@@ -363,7 +373,7 @@ module Master
         def collect_sequential(code:, context:, personas: @personas, image: nil)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_with_object([]) do |persona, feedback|
-            break feedback if Io::QuotaGate.blocked? || Master::Review::LLMDispatcher::PassClock.expired?
+            break feedback if panel_blocked? || Master::Review::LLMDispatcher::PassClock.expired?
             break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?(persona)
 
             turn_context = feedback.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(feedback)}"
@@ -407,9 +417,9 @@ module Master
           # Checked here as well as per batch: the four threads of a batch
           # queue behind the dispatcher's CLI slots, so the ones still waiting
           # when the first comes back refused can be spared their own refusal.
-          return quota_skipped(persona) if Io::QuotaGate.blocked?
-
           model = lane_for(persona, image:)
+          return quota_skipped(persona) if Io::QuotaGate.blocked?(model)
+
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
           response = if model

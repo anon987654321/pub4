@@ -52,7 +52,7 @@ module Master
             dir, depth:, glob: "**/*", stream: true,
             autofix:, autofix_root: root, laws: selected_laws
           )
-          scan_dir.ok? ? scan_dir.value! : "scan failed"
+          scan_dir.ok? ? scan_dir.value! : "scan failed: #{scan_dir.message}"
         end
 
         # One file is the same contract as a directory walk: scan, and if autofix

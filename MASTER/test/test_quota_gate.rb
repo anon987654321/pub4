@@ -10,8 +10,33 @@ class TestQuotaGate < Minitest::Test
   Gate = Master::Io::QuotaGate
   CREDITS = "Insufficient credits. Add more using https://openrouter.ai"
 
-  def setup = Gate.reset!
-  def teardown = Gate.reset!
+  def setup
+    Gate.reset!
+    @lane_dir = Dir.mktmpdir
+    Master::Io::LaneQuota.path = File.join(@lane_dir, "lane_quota.yml")
+  end
+
+  def teardown
+    Gate.reset!
+    Master::Io::LaneQuota.path = nil
+    FileUtils.remove_entry(@lane_dir)
+  end
+
+  # One provider out of credit closes its own lane. The subscription CLI the
+  # council also speaks through stays spendable, so the panel still sits.
+  def test_a_spend_limit_closes_only_the_lane_that_hit_it
+    Gate.trip!(source: "council persona P0", message: CREDITS, model: "openrouter:nvidia/nemotron:free")
+
+    assert Gate.blocked?("openrouter:nvidia/nemotron:free")
+    refute Gate.blocked?("claude-cli:claude-sonnet-5-5")
+    assert Gate.blocked?, "asked without a model, the tier still reads as blocked"
+  end
+
+  def test_a_trip_without_a_model_closes_every_lane
+    Gate.trip!(source: "semantic Law X", message: CREDITS)
+
+    assert Gate.blocked?("claude-cli:claude-sonnet-5-5")
+  end
 
   # The whole point of the class: a spend limit and a throttle want opposite
   # answers, so they cannot share a category.

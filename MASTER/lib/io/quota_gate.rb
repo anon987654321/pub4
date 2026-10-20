@@ -2,6 +2,7 @@
 
 require "monitor"
 require_relative "../fix/constants"
+require_relative "lane_quota"
 
 module Master
   module Io
@@ -38,9 +39,15 @@ module Master
     # here is why" — which no per-model cache can answer, and which is the half
     # that otherwise reads as a clean bill of health.
     #
+    # One lane out of credit closes that lane, not the others: a trip that names
+    # its model blocks the model's lane (Io::LaneQuota.lane_of) and leaves a
+    # subscription CLI or another provider spendable. A trip with no model, or
+    # a caller that names none, still means the whole paid tier.
+    #
     # Downstream contract (the queryable surface, not the log line):
     #   QuotaGate.state          -> :available | :exhausted | :refused
-    #   QuotaGate.blocked?       -> do not spend a paid call right now
+    #   QuotaGate.blocked?(model = nil) -> do not spend a paid call right now,
+    #                              on that model's lane when one is named
     #   QuotaGate.tripped?       -> a limit was hit at any point this run
     #   QuotaGate.skipped(name)  -> record a tier that did not run because of it
     #   QuotaGate.skipped_tiers  -> those names, first-seen order
@@ -71,6 +78,7 @@ module Master
       @message = nil
       @skipped = []
       @substitutions = []
+      @lanes = {}
 
       module_function
 
@@ -101,6 +109,7 @@ module Master
           @source = source.to_s
           @model = model.to_s
           @message = message.to_s.strip
+          close_lane(model)
           was_open
         end
         announce if first
@@ -126,13 +135,16 @@ module Master
           @state = :available
           @resume_at = nil
           @confirmations = 0
+          @lanes = {}
           true
         end
       end
 
       def state = LOCK.synchronize { @state }
 
-      def blocked? = LOCK.synchronize { blocked_now? }
+      # With a model, blocked only when that model's own lane is closed (or the
+      # trip named no lane); without one, blocked when anything is.
+      def blocked?(model = nil) = LOCK.synchronize { model.to_s.empty? ? blocked_now? : blocked_lane?(model) }
 
       def tripped? = LOCK.synchronize { @confirmations.positive? }
 
@@ -224,7 +236,22 @@ end,
           @message = nil
           @skipped = []
           @substitutions = []
+          @lanes = {}
         end
+      end
+
+      def blocked_lane?(model)
+        return false unless blocked_now?
+        return true if @lanes.empty? || @lanes.key?(:any)
+
+        resume = @lanes[Master::Io::LaneQuota.lane_of(model)]
+        !resume.nil? && (resume == :refused || now < resume)
+      end
+
+      def close_lane(model)
+        lane = model.to_s.empty? ? :any : Master::Io::LaneQuota.lane_of(model)
+        @lanes[lane] = @state == :refused ? :refused : @resume_at
+        Master::Io::LaneQuota.note(model, @message) unless lane == :any
       end
 
       def blocked_now? = @state == :refused || (!@resume_at.nil? && now < @resume_at)
@@ -250,7 +277,7 @@ end,
         warn("quota0: #{cause_now} via #{@source}: #{@message} (dmesg unavailable: #{e.class})")
       end
 
-      private_class_method :blocked_now?, :now, :cause_now, :recovery_now, :announce
+      private_class_method :blocked_now?, :blocked_lane?, :close_lane, :now, :cause_now, :recovery_now, :announce
     end
   end
 end
