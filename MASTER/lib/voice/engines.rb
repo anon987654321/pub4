@@ -181,7 +181,8 @@ module Master
       end
 
       def try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path, pitch)
-        return [false, nil] unless system("which", bin, out: File::NULL, err: File::NULL)
+        bin = Master::Io::Exec.which(bin)
+        return [false, nil] unless bin
 
         ok = system(
           bin, "--model", model, "--text", enriched, "--voice", voice, "--speed", speed.to_s,

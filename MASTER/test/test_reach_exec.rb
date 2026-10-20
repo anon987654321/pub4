@@ -149,6 +149,16 @@ class TestReachExec < Minitest::Test
     end
   end
 
+  def test_which_accepts_an_explicit_executable_path
+    Dir.mktmpdir do |dir|
+      tool = File.join(dir, "tool")
+      File.write(tool, "#!/bin/sh\n")
+      File.chmod(0o755, tool)
+
+      assert_equal tool, E.which(tool, path: "/nonexistent")
+    end
+  end
+
   def test_which_tries_the_preferred_directories_before_the_path
     Dir.mktmpdir do |first|
       Dir.mktmpdir do |second|

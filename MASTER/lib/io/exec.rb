@@ -66,13 +66,14 @@ module Master
 
       HOMEBREW_BINS = %w[/opt/homebrew/bin /usr/local/bin].freeze
 
-      # The path of the first executable regular file called `name`: the
+      # Resolve an executable path directly when supplied; otherwise try
       # `prefer` directories first, then each directory of `path`. nil when none
-      # is, or when `name` is blank. `path` takes a PATH string so a caller that
-      # runs a child under its own environment asks that environment's question.
+      # is found or `name` is blank. `path` lets a caller resolve against a
+      # child's environment rather than inheriting the current process's PATH.
       def which(name, path: ENV.fetch("PATH", ""), prefer: [])
         name = name.to_s
         return nil if name.empty?
+        return File.expand_path(name) if File.file?(name) && File.executable?(name)
 
         [*prefer, *path.to_s.split(File::PATH_SEPARATOR)].uniq.each do |dir|
           candidate = File.join(dir, name)
