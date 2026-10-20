@@ -199,6 +199,7 @@ module Master
 
             result = attempt(problem, candidate_map:)
             round_kept << result.value! if result&.ok?
+            break if result&.ok?
             vetoes += 1 if policy_veto?(result)
           end
           kept.concat(round_kept)

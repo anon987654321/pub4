@@ -31,9 +31,11 @@ module Master
           tests = related_tests(plan)
           delete_needles = plan.deletes.to_h { |path| [path, names_in(path, nil)] }
           deleted_constants = plan.deletes.to_h { |path| [path, defined_constants(read(path))] }
+          failing_before = failing(tests)
           {
-            tests:, failing: failing(tests), tree: tree_baseline(plan), delete_needles:,
-            deleted_constants:, scorecard: scorecard(extra_paths: plan.paths),
+            tests:, failing: failing_before, passing: tests - failing_before,
+            tree: tree_baseline(plan), delete_needles:, deleted_constants:,
+            scorecard: scorecard(extra_paths: plan.paths),
             contracts: contract_snapshot(extra_paths: plan.paths), ratchet: ratchet_snapshot,
           }
         end
@@ -112,6 +114,17 @@ module Master
 
           body = File.read(path, encoding: "UTF-8")
           body[/^\s*core_recursive_files:\s*(\d+)\s*$/, 1]&.to_i
+        end
+
+        def test_evidence(before)
+          after = @last_test_results
+          {
+            selected: before[:tests],
+            passed_before: before.fetch(:passing, []),
+            failing_before: before[:failing],
+            passed_after: after&.fetch(:passing),
+            failing_after: after&.fetch(:failing),
+          }
         end
 
         # A reason the restructure fails, or nil.
@@ -196,7 +209,12 @@ module Master
         end
 
         def test_failure(before)
-          added = failing(before[:tests]) - before[:failing]
+          failing_after = failing(before[:tests])
+          @last_test_results = {
+            failing: failing_after,
+            passing: before[:tests] - failing_after,
+          }
+          added = failing_after - before[:failing]
           "tests now failing: #{added.join(", ")}" unless added.empty?
         end
 

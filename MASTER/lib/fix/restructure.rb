@@ -184,8 +184,12 @@ module Master
           operations: plan.operations,
           written: plan.writes.keys,
           deleted: plan.deletes,
-          related_tests: { selected: before[:tests], failing_before: before[:failing] },
           proof: "review_and_tree_proof_held",
+        }
+        evidence[:pass_set_before_after] = @proof.test_evidence(before) if @proof.respond_to?(:test_evidence)
+        evidence[:residual_risk] = {
+          unmeasured_scorecard_dimensions: Array(before.dig(:scorecard, "unmeasured")),
+          note: "Static equivalence evidence does not prove unobserved dynamic dispatch or external consumers absent.",
         }
         if @proof.respond_to?(:scorecard) && before[:scorecard]
           after_scorecard = @proof.scorecard(extra_paths: plan.paths)
@@ -209,7 +213,10 @@ module Master
         end
         if @proof.respond_to?(:ratchet_snapshot)
           after_ratchet = @proof.ratchet_snapshot
-          evidence[:ratchet_delta] = { before: before[:ratchet], after: after_ratchet } if before[:ratchet] || after_ratchet
+          if before[:ratchet] || after_ratchet
+            delta = before[:ratchet] && after_ratchet ? after_ratchet - before[:ratchet] : nil
+            evidence[:ratchet_delta] = { before: before[:ratchet], after: after_ratchet, delta: }
+          end
         end
         evidence
       end
