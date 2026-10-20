@@ -27,6 +27,12 @@
             "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_branching.rb\"",
             "statusMessage": "Checking this writes straight to main",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_gnu_text_tools.rb\"",
+            "statusMessage": "Checking for GNU text tools",
+            "timeout": 15
           }
         ]
       },
