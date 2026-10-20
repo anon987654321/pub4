@@ -101,6 +101,12 @@ octave goes out with the picture. Rated film keeps its own box speed, each stop 
 more, cell size scales with image width, and the finishing grain pass stands down for any
 chain that already grains itself.
 
+Every graded picture then passes through a tone anchor before its last grain. Stacked lifts leave
+the darkest pixel at fifteen percent grey and the frame reads as milk, so the anchor stretches
+the picture's own 0.5th and 99.5th luma percentiles to a printed black and white with one gain on
+all three bands, which holds hue, and bends the midtones with a gentle S-curve.
+`POSTPRO_ANCHOR=0` returns the unanchored grade.
+
 Halation is a ring. Light that passes through the emulsion reflects off the rear of the base
 and re-exposes an annulus around a highlight, not a halo centred on it. The radii differ per
 channel because red penetrates furthest, which is why CineStill blooms red.
@@ -131,8 +137,9 @@ the weights everything falls back to the proxies, with one quiet log line.
 A bare path, or `--random`, renders several variations of a photograph, each through its own
 chain, with a JSON sidecar naming every effect and the seed. By default the media and sidecars
 sit beside the source photograph; a source inside the checkout renders to the shared dated
-directory outside it. Set `POSTPRO_OUTPUT_DIR` to choose another output directory. If a generated name already exists, Postpro preserves it
-and chooses a timestamped sibling.
+directory outside it. Set `POSTPRO_OUTPUT_DIR` to choose another output directory. A new run
+first removes the earlier renders of the same source, since renders are replaceable. If a
+generated name still exists, Postpro preserves it and chooses a timestamped sibling.
 
 Heavy mode is the standing default: five variations dealt
 from subtle to bleeding edge, with long chains. `POSTPRO_HEAVY=0` returns to the lighter
@@ -152,8 +159,8 @@ Other modes grade in bulk. The `--watch` flag grades every new photo that lands 
 `--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.
 The `--stock-sheet` flag tiles one frame through every stock. Bulk grades, stock sheets and
 LUT exports follow the same rule: grades and stock sheets sit beside their source, and LUT
-exports go to the shared dated directory. `POSTPRO_OUTPUT_DIR` chooses another directory; pass `--output` where the command
-accepts an explicit destination.
+exports go to the shared dated directory. `POSTPRO_OUTPUT_DIR` chooses another directory; pass
+`--output` where the command accepts an explicit destination.
 
 ## Reading a frame, and a set
 

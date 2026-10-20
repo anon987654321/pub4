@@ -2715,6 +2715,38 @@ rescue StandardError => e
   $logger.error "adaptive_contrast: #{e.message}"; image
 end
 
+# Every graded picture needs a black and a white. Stacked lifts (shadow_lift,
+# film_base_density, faded curves) leave the darkest pixel at 15% grey and the
+# frame reads as milk, whatever the stock. The anchor stretches the picture's own
+# 0.5th and 99.5th luma percentiles to a printed black and white with one gain on
+# all three bands, so hue holds, then bends the midtones with a gentle S-curve.
+# POSTPRO_ANCHOR=0 returns the unanchored grade.
+ANCHOR_BLACK = 0.03
+ANCHOR_WHITE = 0.975
+ANCHOR_S_CURVE = 0.30
+ANCHOR_MAX_GAIN = 2.4
+
+def anchor_tones(image)
+  return image if ENV["POSTPRO_ANCHOR"] == "0"
+
+  luma = image.bandmean.cast("uchar")
+  low = luma.percent(0.5)
+  high = luma.percent(99.5)
+  return image if high - low < 24
+
+  gain = [(ANCHOR_WHITE - ANCHOR_BLACK) / ((high - low) / 255.0), ANCHOR_MAX_GAIN].min
+  offset = ANCHOR_BLACK - (low / 255.0 * gain)
+  bands = image.bands
+  stretched = (image.cast("float") / 255.0).linear([gain] * bands, [offset] * bands)
+  stretched = clamp01(stretched)
+  smooth = stretched * stretched * stretched.linear([-2.0] * bands, [3.0] * bands)
+  bent = stretched + ((smooth - stretched) * ANCHOR_S_CURVE)
+  safe_cast(bent * 255.0)
+rescue StandardError => e
+  $logger.error "anchor_tones: #{e.message}"
+  image
+end
+
 # Filmic shoulder + toe: raised shadow floor + soft highlight rolloff.
 # Models the analog curve endpoints without stock-specific emulsion data.
 def film_shoulder(image, intensity = 0.75)
@@ -3919,6 +3951,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       next unless processed
 
       grained = recipe_data&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
+      processed = anchor_tones(processed)
       processed = apply_finishing_grain(processed, preset_name, grained:)
       processed = rgb_bands(processed)
       lane = recipe_data ? random_chain_lane(recipe_data) : nil
@@ -4915,7 +4948,7 @@ def run_one_shot
   # and run_watch did not, so the same --preset gave a different negative
   # depending on whether it arrived through a batch or through replicate's
   # --postpro handoff -- and the handoff is the path that produces the finals.
-  processed = apply_finishing_grain(processed, preset_name)
+  processed = apply_finishing_grain(anchor_tones(processed), preset_name)
   processed = rgb_bands(processed)
   quality = CONFIG["jpeg_quality"] || 95
   # process_file honours --tiff16 and this ignored it, so the one-shot mode
@@ -5071,6 +5104,7 @@ def run_random(subject = nil)
     count = (override || (heavy_mode? ? 5 : rng.rand(RANDOM_VARIATIONS))).clamp(1, 24)
     Postpro::Constitution.verify_batch!(variation_count: count, explicit_count: !override.nil?)
     drawn = []
+    Postpro::Constitution.retire_previous_renders!(file)
     count.times do |index|
       lane = heavy_mode? ? HEAVY_LANE_DEAL[index % HEAVY_LANE_DEAL.size] : nil
       chain = random_chain(rng, avoid: drawn, lane:)
@@ -5165,7 +5199,7 @@ end
 # so a single arrival can be graded without a loop that never returns.
 def grade_watched(path, out, preset_name)
   image = load_image(path)
-  processed = rgb_bands(apply_finishing_grain(preset(image, preset_name), preset_name))
+  processed = rgb_bands(apply_finishing_grain(anchor_tones(preset(image, preset_name)), preset_name))
   processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
   write_grade_sidecar(path, out, preset_name, image, processed)
 end

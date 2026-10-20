@@ -5,6 +5,7 @@
 # their migration out of the catalogue. This adapter turns the applicable laws
 # into image-generation invariants rather than trying to lint aesthetics with regex.
 require "fileutils"
+require "json"
 require_relative "../output_paths"
 
 module Postpro
@@ -98,6 +99,27 @@ module Postpro
       Studio::OutputPaths.inside_repository?(beside) ? OUTPUT_DIR : beside
     end
 
+    # Renders are replaceable: a new family for a source removes the old one first.
+    # A render belongs to a source when its sidecar names that source as its input,
+    # so two photographs whose names share a prefix never touch each other's takes.
+    def retire_previous_renders!(source)
+      input = File.expand_path(source)
+      retired = Dir.glob(File.join(output_dir_for(input), "postpro_*.json")).count do |sidecar|
+        next false unless sidecar_input(sidecar) == input
+
+        FileUtils.rm_f([sidecar.delete_suffix(".json"), sidecar])
+        true
+      end
+      warn "postpro: removed #{retired} earlier render(s) of #{File.basename(input)}" if retired.positive?
+      retired
+    end
+
+    def sidecar_input(path)
+      JSON.parse(File.read(path, encoding: "UTF-8"))["input"]
+    rescue JSON::ParserError, SystemCallError
+      nil
+    end
+
     # Creates the output folder and says once per folder where renders will land.
     def announce_output_dir!(directory = OUTPUT_DIR)
       @announced_output_dirs ||= []
@@ -108,8 +130,8 @@ module Postpro
       @announced_output_dirs << directory
     end
 
-    # Keep prior grades and their provenance. Generated names are stable until
-    # they collide; on a rerun, move the new output to a timestamped sibling.
+    # Generated names are stable until they collide; a name still on disk keeps its
+    # file and the new output takes a timestamped sibling.
     def available_output_path(output_path)
       output = File.expand_path(output_path)
       return output unless existing_output(output)
