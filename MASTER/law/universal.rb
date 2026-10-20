@@ -1364,19 +1364,6 @@ Law.define(:HYRUM) do
   X
 end
 
-Law.define(:LEAKY_ABSTRACTION) do
-  source "Law of Leaky Abstractions (Joel Spolsky)"
-  severity :warning
-  ask "Does an abstraction force callers to know implementation details it was supposed to hide?"
-  fix "Hide protocol, storage, and implementation decisions behind a stable interface."
-  bad <<~'X'
-    store.sql("SELECT * FROM users")
-  X
-  good <<~'X'
-    users = store.active_users
-  X
-end
-
 Law.define(:TEMPORAL_COUPLING) do
   source "The Pragmatic Programmer — temporal coupling"
   severity :warning
@@ -1625,19 +1612,6 @@ Law.define(:DEFENSIVE_INPUT) do
   X
   good <<~'X'
     path = SafePath.parse(params.fetch(:path)); File.read(path)
-  X
-end
-
-Law.define(:GRACEFUL_DEGRADATION) do
-  source "Release It! graceful degradation"
-  severity :warning
-  ask "Does one component failure bring down the whole operation when a bounded degraded mode is available?"
-  fix "Isolate failures and provide a safe fallback or partial result."
-  bad <<~'X'
-    profile = ProfileAPI.fetch!; render(profile)
-  X
-  good <<~'X'
-    profile = ProfileAPI.fetch(timeout: 2) || Profile.empty
   X
 end
 
@@ -1974,19 +1948,6 @@ Law.define(:DESIGN_BY_CONTRACT) do
   X
   good <<~'X'
     def divide(a, b); raise ArgumentError if b.zero?; a / b; end
-  X
-end
-
-Law.define(:CRASH_EARLY) do
-  source "The Pragmatic Programmer — Crash Early"
-  severity :warning
-  ask "Does the system limp along after detecting a state that makes continued work unsafe or misleading?"
-  fix "Stop at the detection point with a clear failure rather than propagating bad state."
-  bad <<~'X'
-    value = parse(input); use(value) despite parse_error
-  X
-  good <<~'X'
-    raise ParseError, parse_error if parse_error
   X
 end
 
