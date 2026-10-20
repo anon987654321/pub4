@@ -156,6 +156,13 @@ class TestReachExec < Minitest::Test
       File.chmod(0o755, tool)
 
       assert_equal tool, E.which(tool, path: "/nonexistent")
+      refute E.on_path?(tool, path: "/nonexistent")
+
+      Dir.chdir(dir) do
+        assert_nil E.which("tool", path: "/nonexistent")
+        refute E.on_path?("tool", path: "/nonexistent")
+        assert_equal tool, E.which("./tool", path: "/nonexistent")
+      end
     end
   end
 

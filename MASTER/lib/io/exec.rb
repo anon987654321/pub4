@@ -66,14 +66,17 @@ module Master
 
       HOMEBREW_BINS = %w[/opt/homebrew/bin /usr/local/bin].freeze
 
-      # Resolve an executable path directly when supplied; otherwise try
-      # `prefer` directories first, then each directory of `path`. nil when none
-      # is found or `name` is blank. `path` lets a caller resolve against a
-      # child's environment rather than inheriting the current process's PATH.
+      # Resolve an explicit path as given; otherwise search the preferred
+      # directories and PATH. on_path? deliberately does not treat a cwd file
+      # or explicit path as a PATH hit.
       def which(name, path: ENV.fetch("PATH", ""), prefer: [])
         name = name.to_s
         return nil if name.empty?
-        return File.expand_path(name) if File.file?(name) && File.executable?(name)
+        if name.include?(File::SEPARATOR)
+          return File.expand_path(name) if File.file?(name) && File.executable?(name)
+
+          return nil
+        end
 
         [*prefer, *path.to_s.split(File::PATH_SEPARATOR)].uniq.each do |dir|
           candidate = File.join(dir, name)
@@ -82,7 +85,7 @@ module Master
         nil
       end
 
-      def on_path?(name, **) = !which(name, **).nil?
+      def on_path?(name, **) = !name.to_s.include?(File::SEPARATOR) && !which(name, **).nil?
 
       # Open3.capture* consume stdin_data and binmode; all other options belong
       # to spawn and must pass through, including env, chdir, and redirects.
