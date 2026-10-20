@@ -33,6 +33,15 @@ module Master
           protected paths, operator-owned rendered values, or external
           authority boundaries.
 
+          0. TREE
+          Before anything is scanned, lay out the tracked files of the target as a
+          tree with its sprawl measurements (Fix::Tree) and have the model say
+          what it would reshape: files that belong together, folders that earn
+          nothing, names that mislead. The proposals name only paths the tree
+          holds, are hints for the STRUCTURE step and the closing reflection, and
+          never edit anything. A model that cannot answer is reported and the run
+          goes on.
+
           1. LOAD
           Read the live constitution, Law registry, executable Law definitions,
           Law examples, protected paths, verification commands, doc generators,

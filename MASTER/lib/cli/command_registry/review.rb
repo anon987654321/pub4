@@ -76,6 +76,18 @@ module Master
         end
       end
 
+      # The first step of every /fix: lay out the tree and let the model say what it would
+      # reshape, before any Law scans. Inconclusive is reported and the run goes on.
+      def first_read(deliberation:, bus:, targets:)
+        return if ENV["MASTER_FIX_TREE"] == "0"
+
+        reasoning = Master::Fix::TreeReasoning.new(agent: deliberation.agent, root: Master.repo_root, bus:)
+        targets.each do |tree_target|
+          result = reasoning.call(target: tree_target)
+          Master::Trace::Dmesg.status("tree0", result.summary) unless result.answered?
+        end
+      end
+
       def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
                               apply:, critique:, aesthetic:, only:, target:)
         writes_requested = writes_requested?(apply:, only:)
@@ -92,6 +104,8 @@ module Master
 
         rendered = Master::Trace::Dmesg.with_log_voice do
           with_dmesg_verbosity(raw, default: "trace") do
+          first_read(deliberation:, bus:, targets:)
+
           unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
             trace = begin
               Master::Fix::ExecutionTrace.new(
