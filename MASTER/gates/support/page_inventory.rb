@@ -59,7 +59,7 @@ module Deploy
       %w[passwords new] => { path: "/passwords/new", persona: "guest" },
       %w[passwords edit] => { path: "/passwords/:token/edit", persona: "guest", needs_id: true },
       # bsdports keeps the social routes behind BSDPORTS_SOCIAL=1.
-      %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen amber] },
+      %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen] },
       %w[pages privacy] => { path: "/privacy", persona: "guest" }, %w[pages terms] => { path: "/terms", persona: "guest" }, %w[pages cookies] => { path: "/cookies", persona: "guest" },
       %w[shared changelog] => { path: "/changelog", persona: "guest" }
     }.freeze
