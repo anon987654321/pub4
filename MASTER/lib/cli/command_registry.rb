@@ -235,6 +235,8 @@ module Master
         return "face0: no session" unless container
 
         turn = ->(text) do
+          return face_shell_only_notice if face_shell_only?(text)
+
           streamed = +""
           result = TurnRouter.call(message: text, container:, on_turn: ->(line) { streamed << line << "\n" })
           return result if streamed.strip.empty? || result.err?
@@ -255,6 +257,14 @@ module Master
       ensure
         terminal&.close
       end
+
+      # A command that runs for minutes would leave the face looking stuck, so it is run from the shell.
+      def face_shell_only?(text)
+        word = text.to_s.strip.split.first.to_s.downcase
+        Array(Master.patterns_config.fetch("cli", {})["face_shell_only"]).include?(word)
+      end
+
+      def face_shell_only_notice = "That runs for minutes. Ctrl-D leaves the face; run it in the shell."
 
       def face_size(arg)
         words = arg.to_s.split

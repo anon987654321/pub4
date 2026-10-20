@@ -50,7 +50,9 @@ module Master
 
           sentences = clean.split(/(?<=[.!?])\s+/).map(&:strip).reject(&:empty?)
           sentences = sentences.first(@config.fetch("max_sentences"))
-          sentences.any? { |line| line.split.size > @config.fetch("max_words") } ? [] : sentences
+          return [] if sentences.any? { |line| line.split.size > @config.fetch("max_words") }
+
+          sentences.reject { |line| @said.include?(line) }
         end
 
         def written

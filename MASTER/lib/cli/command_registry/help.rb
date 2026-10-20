@@ -258,8 +258,8 @@ detail: [
           detail: [
             "/face — open the MASTER face in the alternate terminal screen, as large as the terminal allows.",
             "/face size auto|small|large|WxH — choose the face's size (WxH is columns by rows) and open it; the choice holds for the session.",
-            "A bare bin/master opens on it. Ctrl-D or /exit returns to the shell.",
-            "MASTER_FACE_ON_START=0 starts in the shell instead.",
+            "bin/master starts in the shell; /face opens this stage. Ctrl-D or /exit returns to the shell.",
+            "MASTER_FACE_ON_START=1 opens on the face at start. /fix and the other long commands run from the shell.",
             "While idle it listens through the microphone and says so on its status line (mic on).",
             "Type to take the floor.",
             "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",

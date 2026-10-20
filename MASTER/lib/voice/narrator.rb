@@ -313,7 +313,13 @@ module Master
         text = model_text(job, now) if model_usable?(now)
         sentences = text ? accept(text, job) : []
         sentences = template_sentences(job, gist) if sentences.empty?
-        sentences
+        unsaid(sentences)
+      end
+
+      # A line already told in this story is not told again: the same status repeated is noise.
+      def unsaid(sentences)
+        told = @story.map { |sentence| normal(sentence) }
+        sentences.reject { |sentence| told.include?(normal(sentence)) }
       end
 
       def cheer_lines(job, now)

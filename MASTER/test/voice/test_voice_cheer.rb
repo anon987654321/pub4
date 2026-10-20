@@ -50,6 +50,16 @@ class TestVoiceCheer < Minitest::Test
     end
   end
 
+  def test_a_model_freestyle_already_said_is_not_said_twice
+    bard = build(reply: "Quiet room, loose shoulders, soft clocks, easy rocks.")
+    2.times do
+      @now += cheer_config["after_s"] + 1
+      bard.tick
+    end
+
+    assert_equal 1, @spoken.count("Quiet room, loose shoulders, soft clocks, easy rocks.")
+  end
+
   def test_written_lines_rotate_before_any_repeats
     bard = build
     lines = Array.new(cheer_config["lines"].size) do

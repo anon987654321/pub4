@@ -72,12 +72,13 @@ module Master
         repl_loop
       end
 
-      # Bare `bin/master` on a terminal opens on the face, so the shell and the face are one entry. A message
-      # on the command line, a pipe, or MASTER_FACE_ON_START=0 keeps the plain shell.
+      # The shell is the default entry. The face opens first only when asked (MASTER_FACE_ON_START=1, or
+      # face_on_start in the data), and never for a message on the command line or a pipe.
       def face_on_start?(initial_message)
         return false if initial_message || ENV["MASTER_FACE_ON_START"] == "0"
+        return false unless $stdin.tty? && $stdout.tty?
 
-        $stdin.tty? && $stdout.tty? && Master.patterns_config.fetch("cli", {})["face_on_start"] == true
+        ENV["MASTER_FACE_ON_START"] == "1" || Master.patterns_config.fetch("cli", {})["face_on_start"] == true
       end
 
       def pipe(input)

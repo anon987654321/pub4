@@ -869,9 +869,11 @@ cli:
   dmesg_buffer_lines: 80
   multiline_max_lines: 500
   history_limit: 2000
-  # An interactive bare `bin/master` opens on the face; Ctrl-D or /exit leaves it for the shell.
-  # The face listens while idle and says so on its status line; MASTER_FACE_ON_START=0 skips it.
-  face_on_start: true
+  # `bin/master` is a shell first, as a Unix tool is: quiet, text in and out. /face opens the face on request;
+  # MASTER_FACE_ON_START=1 (or true here) opens on it instead. The face listens while idle and says so.
+  face_on_start: false
+  # Commands that run for minutes and would leave the face looking stuck; the face points to the shell for them.
+  face_shell_only: ["/fix", "/review", "/critique", "/scan"]
 
 # Merged from former heartbeat.yml — heartbeat jobs live here. Schedule-based
 # maintenance outside the heartbeat remains removed. self_test runs as the
