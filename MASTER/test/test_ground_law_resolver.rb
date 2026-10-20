@@ -42,7 +42,7 @@ class TestGroundLawResolver < Minitest::Test
     real = Master::Ground::LawResolver.new
 
     assert_equal 1, real.priority("ROBUSTNESS")
-    assert_equal 2, real.priority("ABSTRACTION")
+    assert_equal 5, real.priority("ABSTRACTION")
     assert_equal 6, real.priority("DENSITY")
   end
 

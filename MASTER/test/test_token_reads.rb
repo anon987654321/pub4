@@ -26,7 +26,7 @@ class TestTokenReads < Minitest::Test
   end
 
   def test_typography_hierarchy_thresholds_are_declared
-    tokens = YAML.safe_load_file(File.join(Master::ROOT, "data", "tokens.yml"), aliases: true)
+    tokens = Master.load_yaml(File.join(Master::ROOT, "data", "tokens.yml"))
     hierarchy = tokens.dig("typography", "hierarchy")
 
     %w[h1 h2 h3].each do |level|

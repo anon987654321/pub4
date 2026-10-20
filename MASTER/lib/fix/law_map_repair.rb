@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "set"
 
 module Master
@@ -49,6 +50,59 @@ module Master
         raise "law-map Law registry unreadable: #{e.class}: #{e.message}"
       end
 
+      FLOW_WIDTH = 120
+
+      # A row is JSON after its key, wrapped between fields and array items so no line passes
+      # FLOW_WIDTH. Continuation lines sit six columns in; the last ends with the closing brace.
+      def flow_row(name, row, width: FLOW_WIDTH)
+        lines = ["    #{name}: {"]
+
+        flow_tokens(row).each do |token|
+          joined = join_token(lines.last, token)
+          joined.size > width ? lines << "      #{token}" : lines[-1] = joined
+        end
+        "#{lines.join("\n")}\n"
+      end
+
+      def join_token(line, token)
+        tight = line.end_with?("{", "[") || token.start_with?("]")
+        tight ? "#{line}#{token}" : "#{line} #{token}"
+      end
+
+      def flow_tokens(row)
+        last = row.size - 1
+        tokens = row.each_with_index.flat_map do |(key, value), index|
+          field_tokens(key, value, tail: index == last ? "" : ",")
+        end
+        tokens[-1] += "}"
+        tokens
+      end
+
+      def field_tokens(key, value, tail:)
+        label = JSON.generate(key)
+        return ["#{label}: #{JSON.generate(value)}#{tail}"] unless value.is_a?(Array) && value.size > 1
+
+        items = value.map { |item| "#{JSON.generate(item)}," }
+        items[-1] = items.last.chomp(",")
+        ["#{label}: [", *items, "]#{tail}"]
+      end
+
+      def flow_row_span(lines, index)
+        stop = (index...lines.size).find { |i| lines[i].end_with?("}\n") }
+        index..stop if stop
+      end
+
+      def remove_from_flow_row(lines, index, dangling:)
+        law_id, reference = dangling
+        return unless lines[index].start_with?("    #{law_id}: {")
+
+        span = flow_row_span(lines, index) or return
+        row = JSON.parse(lines[span].join.sub(/\A    #{Regexp.escape(law_id)}: /, ""))
+        return unless row["law_ids"]&.delete(reference)
+
+        [span, flow_row(law_id, row)]
+      end
+
       def remove_law_id(text, law_id, reference)
         lines = text.lines
         in_law_map = false
@@ -64,6 +118,12 @@ module Master
           in_laws = true if line == "  laws:\n"
           next unless in_laws
 
+          span, rewritten = remove_from_flow_row(lines, index, dangling: [law_id, reference])
+          if span
+            lines[span] = [rewritten]
+            return lines.join
+          end
+
           if (match = line.match(/\A    ([^:\s][^:]*)\s*:\s*\n\z/))
             current = match[1]
             in_law_ids = false
@@ -75,12 +135,12 @@ module Master
             next
           end
 
-          if current == law_id && in_law_ids && line.match?(/\A        - #{Regexp.escape(reference)}\s*\n\z/)
+          if current == law_id && in_law_ids && line.match?(/\A {6,8}- #{Regexp.escape(reference)}\s*\n\z/)
             target = index
             break
           end
 
-          in_law_ids = false if line.match?(/\A      \S/) && !line.match?(/\A      law_ids:/)
+          in_law_ids = false if line.match?(/\A      [^\s-]/)
         end
 
         return text unless target

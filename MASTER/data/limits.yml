@@ -1036,9 +1036,11 @@ loc_body_budgets:
   # Three folds have moved deleted files and top-level keys into laws.yml --
   # 86eaff4cf, ff7e93a82, and the 2026-09-05 merge that made design_rules
   # fourteen rules in the catalogue rather than a second top-level section.
-  # Those lines crossed a boundary, they were not written. Down only from 3728,
-  # and a raise needs the commit that folded something in.
-  data/laws.yml: 3728
+  # Those lines crossed a boundary, they were not written. Down only from 2050,
+  # and a raise needs the commit that folded something in. law_map rows are
+  # flow mappings wrapped at 120 columns; the parsed data, and so the contract digest, is
+  # unchanged from the block form.
+  data/laws.yml: 2050
 
 # Historical convergence semantics recovered from pub -> pub2 -> pub3 -> pub4.
 # Reader: Master::Fix::ConvergenceDiscipline. Keep behavior here, not prose-only.
