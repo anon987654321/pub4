@@ -30,7 +30,6 @@ The connected GitHub file API exposes repository text and Git objects but did no
 
 Selective carryover only: preserve ideas, not historical dependencies. The current shared token system, Rails partials and MASTER minimalism contracts remain authoritative.
 
-
 ## final salvage pass
 
 The final text-corpus pass found four genuinely missing executable invariants and one further semantic invariant:

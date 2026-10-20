@@ -124,7 +124,7 @@ catalog: nil)
         "demo_media_source_name" => entry["source_name"],
         "demo_media_photographer" => entry["photographer"],
         "demo_media_photographer_url" => entry["photographer_url"],
-        "demo_media_license" => entry["license"]
+        "demo_media_license" => entry["license"],
       }.reject { |_key, value| value.nil? || value.to_s.empty? }
       return if values.empty?
 
