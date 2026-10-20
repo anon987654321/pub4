@@ -23,6 +23,8 @@ module Master
       end
 
       def values(root:, subject:)
+        return {} unless Ground::PersonalWorkspace.permission_granted?(root:, subject:)
+
         ensure!(root:, subject:)
         File.read(path(root:, subject:), encoding: "UTF-8").each_line.filter_map do |line|
           match = line.match(/\A-\s+([^:]+):\s*(.*?)\s*\z/)
@@ -36,6 +38,7 @@ module Master
         ensure!(root:, subject:)
         updates = fields.transform_keys(&:to_s).slice(*KEYS).transform_values { |value| value.to_s.strip }.reject { |_k, v| v.empty? }
         return values(root:, subject:) if updates.empty?
+        ensure_permission!(root:, subject:)
 
         rows = File.read(path(root:, subject:), encoding: "UTF-8").lines
         labels = LABELS.values.map { |label| Regexp.escape(label) }.join("|")
@@ -54,6 +57,7 @@ module Master
       def forget(root:, subject:, key:)
         key = key.to_s
         raise ArgumentError, "unknown owner field: #{key}" unless KEYS.include?(key)
+        ensure_permission!(root:, subject:)
 
         set(root:, subject:, **{ key => "" })
         rows = File.read(path(root:, subject:), encoding: "UTF-8").lines
@@ -77,12 +81,23 @@ module Master
       end
 
       def onboarding_prompt(root:, subject:)
+        unless Ground::PersonalWorkspace.permission_granted?(root:, subject:)
+          return "owner0: personal profile and memory are off; explicitly enable with /privacy grant personal_memory"
+        end
+
         profile = values(root:, subject:)
         missing = KEYS.select { |key| !profile.key?(key) }
         return "owner0: profile complete" if missing.empty?
 
         labels = missing.first(3).map { |key| LABELS.fetch(key) }
         "owner0: tell me any of these you want me to remember: #{labels.join(", ")}. "           "You can skip any item. Give me a pet name too, if you want a more personal feel."
+      end
+
+      def ensure_permission!(root:, subject:)
+        return if Ground::PersonalWorkspace.permission_granted?(root:, subject:)
+
+        raise Ground::PersonalWorkspace::PermissionDenied,
+              "personal profile and memory are disabled; use /privacy grant personal_memory"
       end
 
       def ensure!(root:, subject:)
