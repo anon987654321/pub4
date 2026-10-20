@@ -126,6 +126,7 @@ module Master
       def disable!
         @override = false
         halt!
+        Bed.stop
       end
 
       def audible? = @audible.call
@@ -214,6 +215,7 @@ module Master
       end
 
       def stop
+        Bed.stop
         @stopping = true
         @thread&.kill
         @thread = nil
@@ -222,7 +224,6 @@ module Master
       private
 
       def reset_task
-        Bed.stop
         @pending = []
         @story = []
         @beats = 0
@@ -269,6 +270,7 @@ module Master
         return unless now - [@last_event_at, @last_spoken_at].max >= @config.fetch("task_idle_s")
 
         reset_task
+        Bed.stop
       end
 
       # The events of one beat, oldest first. Over the cap, findings stay and the
