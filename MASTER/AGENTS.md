@@ -32,7 +32,17 @@ The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `M
 
 Use `MASTER/bin/operator gate` for the full gate ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
 
-`/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and verify until DONE or a truthful terminal state. Bare `/fix` is write-enabled; its read-only pre-repair baseline is preflight, not a dry-run downgrade. `/review [path]` and `/critique` are read-only views of that pipeline; `/scan` is a private compatibility alias. `Master::Fix::Protocol` is authoritative; use `MASTER/bin/master --fix-context <target>` when handing a fix to an external model.
+`/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and
+verify until DONE or a truthful terminal state. Bare `/fix` is write-enabled; its read-only
+pre-repair baseline is preflight, not a dry-run downgrade. Before any Law scans, `/fix` makes
+two whole-target reads: a tracked-file tree with sprawl measurements and the model's first read
+of it, then a structural review of what stands out, what is odd, what is over- or
+under-engineered, what wants a refactor or a do-over, and where the target does not hold to the
+Laws. Both name only paths the tree holds and Laws that exist, are hints for the structural step
+and the closing reflection, and never edit. `/review [path]` and `/critique` are read-only views
+of that pipeline; `/scan` is a private compatibility alias. `Master::Fix::Protocol` is
+authoritative; use `MASTER/bin/master --fix-context <target>` when handing a fix to an external
+model.
 
 Before any edit, read the whole current target file and its relevant direct dependencies, callers, loaders, configuration, tests and public contracts. The refreshed `ReferenceGraph` is evidence, not an oracle: validate relevant symbol references and dynamic loading paths rather than assuming every runtime relationship appears in it. Never edit from an excerpt, stale scan result or memory. If relevant source cannot be read, dependency context is incomplete, or the complete required context exceeds the safe limit, stop that repair as BLOCKED or HUMAN_DECISION; never clip a file and guess.
 
