@@ -25,6 +25,13 @@ class TestBlockBranching < Minitest::Test
     end
   end
 
+  def test_shell_redirects_are_not_refs
+    ["git push origin main 2>&1", "git push origin 0123abc:main > push.log 2>&1", "git push &> out"].each do |command|
+      assert_equal 0, call(command).first, command
+    end
+    assert_equal 2, call("git push origin topic 2>&1").first
+  end
+
   def test_blocks_pushing_anything_but_main
     ["git push origin topic", "git push -u origin topic", "git push origin HEAD:topic", "git push origin main topic"].each do |command|
       assert_equal 2, call(command).first, command

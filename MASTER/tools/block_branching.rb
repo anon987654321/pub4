@@ -25,9 +25,22 @@ GH_PR = /(?:\A|[;&|(`]|\$\()\s*(?:\S+=\S+\s+)*(?:command\s+)?gh\s+pr\s+(create|m
 BRANCH_READS = %w[-a -r -v -vv --list -l --show-current --contains --merged --no-merged --points-at].freeze
 BRANCH_EDITS = %w[-d -D --delete -m -M --move -c -C --copy -u --set-upstream-to --unset-upstream].freeze
 
+# A redirect is not a ref: drop `2>&1`, `>out` and `> out` (operator plus its target).
+def without_redirects(words)
+  skip = false
+
+  words.reject do |word|
+    redirect = word.match?(/\A(?:\d*[<>]+|&>)/)
+    drop = skip || redirect
+    skip = redirect && word.match?(/\A(?:\d*[<>]+|&>)\z/)
+    drop
+  end
+end
+
 def refusal(command)
   command.to_s.scan(GIT).each do |_opts, sub, rest|
     words = rest.to_s.shellsplit rescue rest.to_s.split
+    words = without_redirects(words)
     flags = words.select { |word| word.start_with?("-") }
     plain = words.reject { |word| word.start_with?("-") }
 
