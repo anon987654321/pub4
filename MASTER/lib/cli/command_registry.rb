@@ -46,6 +46,7 @@ module Master
           "android" => command(:dispatch_android, root),
           "ios" => command(:dispatch_ios, root),
           "wake" => command(:dispatch_wake, root),
+          "privacy" => command(:dispatch_privacy, root),
           "doctor" => command(:dispatch_doctor, root),
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
           "narrate" => Command.new { |ctx| dispatch_narrate(ctx:) },
