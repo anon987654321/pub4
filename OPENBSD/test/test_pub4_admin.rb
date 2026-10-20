@@ -165,7 +165,7 @@ class Pub4AdminTest < Minitest::Test
   def test_rails_task_uses_its_own_app_allowlist
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     assert_includes source, "known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS"
-    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
+    assert_includes source, "RAILS_TASK_APPS = %w[master brgen bsdports].freeze"
   end
   def test_npm_cache_task_is_app_owned_and_symlink_safe
     broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
@@ -222,8 +222,8 @@ class Pub4AdminTest < Minitest::Test
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
     assert_includes source, 'args[0] == "rails-task" && RAILS_TASK_APPS.include?(args[1])'
     assert_includes source, 'args[0] == "ensure-secret" && APPS.include?(args[1])'
-    assert_includes source, "RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze"
-    assert_includes helper, "master|brgen|amber|bsdports"
+    assert_includes source, "RAILS_TASK_APPS = %w[master brgen bsdports].freeze"
+    assert_includes helper, "master|brgen|bsdports"
     assert_includes helper, "rails-task: /home must be a real root-owned directory"
     assert_includes helper, "app .bundle must be a real app-owned directory"
     assert_includes helper, "bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci"
@@ -245,7 +245,7 @@ class Pub4AdminTest < Minitest::Test
 
     assert_includes source, 'args[0] == "ci-run" && RAILS_APPS.include?(args[1])'
     assert_includes source, "supervised_helper(CI_RUN, app, duration)"
-    assert_includes helper, 'brgen|amber|bsdports'
+    assert_includes helper, 'brgen|bsdports'
     assert_includes helper, '[ "$timeout" -le 7200 ]'
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
     assert_equal 1, helper.scan('exec /usr/bin/su -m "$app" -c "$script"').length
@@ -354,7 +354,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, 'args[0] == "ci-prepare" && RAILS_APPS.include?(args[1])'
     assert_includes source, 'trusted_script!(CI_PREPARE)'
     assert_includes source, 'exec("/bin/ksh", CI_PREPARE, args[1])'
-    assert_includes helper, 'brgen|amber|bsdports'
+    assert_includes helper, 'brgen|bsdports'
     assert_includes helper, 'storage="$app_dir/storage"'
     assert_includes helper, '[ ! -L /home/dev ]'
     assert_includes helper, '[ -L "$storage" ]'
