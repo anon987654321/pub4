@@ -3278,6 +3278,166 @@
       "Dbmaj9",
       "Cm9",
       "Bbm9"
+    ],
+    [
+      "E7#9"
+    ],
+    [
+      "Dm7",
+      "Am7",
+      "Ebmaj7",
+      "Bb"
+    ],
+    [
+      "Dm7",
+      "Gm7",
+      "Ebmaj7",
+      "Abmaj7"
+    ],
+    [
+      "Cm",
+      "Bb",
+      "Dm"
+    ],
+    [
+      "Am",
+      "G",
+      "Bm"
+    ],
+    [
+      "Em",
+      "Bm",
+      "D"
+    ],
+    [
+      "Db",
+      "Fm",
+      "Eb",
+      "B",
+      "Cm"
+    ],
+    [
+      "F#",
+      "D#m",
+      "A#m",
+      "G#m",
+      "B"
+    ],
+    [
+      "Bm7",
+      "Em7",
+      "Gm7",
+      "A13"
+    ],
+    [
+      "C#m9",
+      "Bm11",
+      "Amaj9",
+      "G13"
+    ],
+    [
+      "Am9",
+      "D13",
+      "Gmaj9",
+      "Cmaj7#11"
+    ],
+    [
+      "Em9",
+      "A13",
+      "Dmaj9",
+      "Gmaj7#11"
+    ],
+    [
+      "Bbm11",
+      "Dbmaj9",
+      "Fm9",
+      "A7"
+    ],
+    [
+      "Dm11",
+      "Gm11",
+      "Ebmaj9",
+      "Cmaj7"
+    ],
+    [
+      "Dm9",
+      "C13",
+      "Bbmaj9",
+      "Gm9",
+      "Fmaj7",
+      "Bbm9",
+      "A7alt",
+      "Dm9"
+    ],
+    [
+      "Dm9",
+      "Gm11",
+      "C13",
+      "Fmaj9",
+      "Bbm9",
+      "Ebmaj7#11",
+      "A7alt",
+      "Dm9"
+    ],
+    [
+      "Dm9",
+      "C13",
+      "Fmaj9",
+      "Gm11",
+      "Bbmaj9",
+      "Ebmaj7#11",
+      "A7alt",
+      "Dm9"
+    ],
+    [
+      "Dm9",
+      "Dbmaj9",
+      "Cm9",
+      "Bmaj9",
+      "Bbm9",
+      "A13",
+      "Gm11",
+      "Dm9"
+    ],
+    [
+      "Dm11",
+      "Gsus9",
+      "C13sus",
+      "Fmaj7#11",
+      "Bbm9",
+      "Absus2",
+      "A7alt",
+      "Dm11"
+    ],
+    [
+      "Dmaj9",
+      "Bm9",
+      "Em11",
+      "A13",
+      "Gmaj9",
+      "Cm9",
+      "F7alt",
+      "Dmaj9"
+    ],
+    [
+      "Dmaj9",
+      "Bm9",
+      "Em11",
+      "A13",
+      "Gmaj9",
+      "C7",
+      "Ebmaj7#11",
+      "Dmaj9"
+    ],
+    [
+      "Dm9",
+      "Bbmaj7#11",
+      "Gm9",
+      "C13",
+      "Fmaj9",
+      "Eb7alt",
+      "Dm9",
+      "Dm6/9"
     ]
   ],
   "essential": [
@@ -3870,13 +4030,53 @@
         7,
         9,
         10
+      ],
+      "lydian": [
+        0,
+        2,
+        4,
+        6,
+        7,
+        9,
+        11
+      ],
+      "mixolydian": [
+        0,
+        2,
+        4,
+        5,
+        7,
+        9,
+        10
+      ],
+      "phrygian": [
+        0,
+        1,
+        3,
+        5,
+        7,
+        8,
+        10
+      ],
+      "locrian": [
+        0,
+        1,
+        3,
+        5,
+        6,
+        8,
+        10
       ]
     },
     "scale_weights": {
       "harmonic_minor": 4,
       "natural_minor": 2,
       "major": 3,
-      "dorian": 1
+      "dorian": 1,
+      "lydian": 1,
+      "mixolydian": 1,
+      "phrygian": 1,
+      "locrian": 1
     },
     "phrase_bars": [
       2,
