@@ -18,6 +18,25 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
     Rails.cache = @original_cache
   end
 
+  test "refreshes only OpenBSD ports in a mixed-platform catalogue" do
+    openbsd = Platform.find_or_create_by!(slug: "openbsd") { |p| p.name = "OpenBSD" }
+    freebsd = Platform.find_or_create_by!(slug: "freebsd") { |p| p.name = "FreeBSD" }
+    openbsd_category = Category.find_or_create_by!(platform: openbsd, slug: "devel") { |c| c.name = "devel" }
+    freebsd_category = Category.find_or_create_by!(platform: freebsd, slug: "devel") { |c| c.name = "devel" }
+    openbsd_port = Port.create!(platform: openbsd, category: openbsd_category,
+                                name: "openbsd-only", version: "1.0", pkgpath: "devel/openbsd-only")
+    Port.create!(platform: freebsd, category: freebsd_category,
+                 name: "freebsd-only", version: "1.0", pkgpath: "devel/freebsd-only")
+
+    calls = []
+    NvdCve.stub(:crossref, ->(port, limit: 5) { calls << [ port, limit ]; [] }) do
+      SecurityAdvisoryRefreshJob.perform_now(batch_size: 10)
+    end
+
+    assert_equal [ openbsd_port ], calls.map(&:first)
+    assert_equal openbsd_port.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
+  end
+
   test "refreshes advisories in batches and advances cursor" do
     platform = Platform.find_or_create_by!(slug: "openbsd") { |p| p.name = "OpenBSD" }
     category = Category.first || Category.create!(platform: platform, name: "devel")
