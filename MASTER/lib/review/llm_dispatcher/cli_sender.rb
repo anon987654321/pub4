@@ -113,17 +113,10 @@ rescue StandardError => e
 end
 
       def find_agy_bin
-        if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
-          return ENV["AGY_BIN"]
-        end
-        home_bin = File.expand_path("~/.local/bin/agy")
-        return home_bin if File.file?(home_bin) && File.executable?(home_bin)
+        configured = ENV["AGY_BIN"]
+        return configured if configured && File.file?(configured) && File.executable?(configured)
 
-        ENV["PATH"].to_s.split(File::PATH_SEPARATOR).each do |dir|
-          candidate = File.join(dir, "agy")
-          return candidate if File.file?(candidate) && File.executable?(candidate)
-        end
-        nil
+        Master::Io::Exec.which("agy", prefer: [File.expand_path("~/.local/bin")])
       end
 
       def agy_cli_timeout_s
@@ -185,10 +178,7 @@ def claude_on_path?
   return false if ENV["MASTER_NO_CLAUDE_CLI"] == "1"
   return @claude_on_path unless @claude_on_path.nil?
 
-  @claude_on_path = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
-    exe = File.join(dir, "claude")
-    File.file?(exe) && File.executable?(exe)
-  end
+  @claude_on_path = Master::Io::Exec.on_path?("claude")
 end
 
 # The first two mark the parent as a Claude Code session, and a `claude --print`
