@@ -23,30 +23,39 @@ module Master
     # through unchanged. On timeout the returned status is a non-success Process
     # status (the child signalled), so existing `status.success?` checks fall
     # through to their error path the same way they do for a real failure.
+    # Callers that need to distinguish a timeout may set raise_on_timeout: true.
     module Exec
       module_function
 
       DEFAULT_TIMEOUT = Integer(ENV.fetch("MASTER_EXEC_TIMEOUT", "120"))
       GRACE_S = 0.2
 
-      def capture3(*cmd, timeout: DEFAULT_TIMEOUT, **opts) = run_capture(:popen3, cmd, timeout, opts)
+      class TimeoutError < StandardError; end
 
-      def capture2e(*cmd, timeout: DEFAULT_TIMEOUT, **opts) = run_capture(:popen2e, cmd, timeout, opts)
+      def capture3(*cmd, timeout: DEFAULT_TIMEOUT, raise_on_timeout: false, **opts) =
+        run_capture(:popen3, cmd, timeout, opts, raise_on_timeout:)
 
-      def capture2(*cmd, timeout: DEFAULT_TIMEOUT, **opts) = run_capture(:popen2, cmd, timeout, opts)
+      def capture2e(*cmd, timeout: DEFAULT_TIMEOUT, raise_on_timeout: false, **opts) =
+        run_capture(:popen2e, cmd, timeout, opts, raise_on_timeout:)
+
+      def capture2(*cmd, timeout: DEFAULT_TIMEOUT, raise_on_timeout: false, **opts) =
+        run_capture(:popen2, cmd, timeout, opts, raise_on_timeout:)
 
       # The body the three captures share: spawn in its own process group, drain
       # every output stream on a thread, feed stdin on another, wait with a bound
       # and return the reaped streams in popen order followed by the status.
-      def run_capture(opener, cmd, timeout, opts)
+      def run_capture(opener, cmd, timeout, opts, raise_on_timeout: false)
         stdin_data, spawn_opts = split_opts(opts)
         options = ProcessSpawn.options(spawn_opts.merge(pgroup: true))
         Open3.public_send(opener, *cmd, **options) do |stdin, *streams, wait_thr|
           readers = streams.map { |stream| reader_for(stream) }
           writer = writer_for(stdin, stdin_data)
-          status = bounded_wait(wait_thr, timeout, readers)
+          status, timed_out = bounded_wait(wait_thr, timeout, readers)
           writer&.join
-          [*readers.map { |reader| reap(reader) }, status]
+          result = [*readers.map { |reader| reap(reader) }, status]
+          raise TimeoutError, "process timed out after #{timeout}s" if timed_out && raise_on_timeout
+
+          result
         end
       end
       private_class_method :run_capture
@@ -125,19 +134,19 @@ module Master
         end
       end
 
-# Thread#join(limit) is the bound: Exec runs before Bundler activates the
-# lockfile, and requiring the timeout default gem here pins the stock
-# version and fails Bundler.setup when the lockfile asks for a newer one.
-def bounded_wait(wait_thr, timeout, readers)
-  children = Fiber[:master_children]
-  wait = -> { wait_thr.join(timeout) }
-  finished = children ? children.track(wait_thr.pid, &wait) : wait.call
-  return wait_thr.value if finished
+      # Thread#join(limit) is the bound: Exec runs before Bundler activates the
+      # lockfile, and requiring the timeout default gem here pins the stock
+      # version and fails Bundler.setup when the lockfile asks for a newer one.
+      def bounded_wait(wait_thr, timeout, readers)
+        children = Fiber[:master_children]
+        wait = -> { wait_thr.join(timeout) }
+        finished = children ? children.track(wait_thr.pid, &wait) : wait.call
+        return [wait_thr.value, false] if finished
 
-  kill_group(wait_thr.pid)
-  readers.each(&:kill)
-  wait_thr.value
-end
+        kill_group(wait_thr.pid)
+        readers.each(&:kill)
+        [wait_thr.value, true]
+      end
 
       def kill_group(pid)
         pgid = Process.getpgid(pid)

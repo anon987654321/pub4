@@ -74,6 +74,12 @@ class TestReachExec < Minitest::Test
     assert_operator elapsed, :<, 3
   end
 
+  def test_timeout_can_raise_for_callers_that_classify_timeout
+    assert_raises(E::TimeoutError) do
+      E.capture3("sh", "-c", "sleep 30", timeout: 0.1, raise_on_timeout: true)
+    end
+  end
+
   def test_timeout_returns_fast_non_success_and_reaps_tree
     marker = "master_exec_timeout_probe_#{Process.pid}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)

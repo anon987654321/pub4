@@ -2,9 +2,9 @@
 
 require "base64"
 require "json"
-require "open3"
 require "tempfile"
 require "timeout"
+require_relative "../../io/exec"
 
 module Master
   module Review
@@ -244,40 +244,14 @@ rescue StandardError => e
   Result.err("claude-cli: #{e.message}", category: :provider_error)
 end
 
+      # Keep the dispatcher-specific timeout contract, but let the sanctioned
+      # runner own stream draining, child tracking and process-group cleanup.
       def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil, env: {})
-        Open3.popen3(env, *cmd) do |stdin, stdout, stderr, wait_thr|
-          stdin.write(stdin_data) if stdin_data
-          stdin.close
-          out_reader = Thread.new { stdout.read }.tap { |thread| thread.report_on_exception = false }
-          err_reader = Thread.new { stderr.read }.tap { |thread| thread.report_on_exception = false }
-          if wait_thr.join(timeout_s)
-            [out_reader.value, err_reader.value, wait_thr.value]
-          else
-            terminate_subprocess(wait_thr)
-            # Kill the readers before closing what they are reading. Closing
-            # first left both threads inside IO#read on a closed handle, so each
-            # terminated with "stream closed in another thread" and
-            # report_on_exception printed a backtrace over the operator's
-            # prompt — twice, on every timeout.
-            [out_reader, err_reader].each { |reader| reader.kill.join }
-            [stdout, stderr].each { |io| io.close unless io.closed? }
-            raise Timeout::Error
-          end
-        end
-      end
-
-      def terminate_subprocess(wait_thr)
-        return unless signal_process(wait_thr, "TERM")
-        return if wait_thr.join(0.5)
-        signal_process(wait_thr, "KILL", log_context: "LLMDispatcher.terminate_subprocess")
-      end
-
-      def signal_process(wait_thr, signal, log_context: nil)
-        Process.kill(signal, wait_thr.pid)
-        true
-      rescue Errno::ESRCH => e
-        Master::Ground::Swallow.log(e, context: log_context) if log_context
-        false
+        Master::Io::Exec.capture3(
+          env, *cmd, stdin_data:, timeout: timeout_s, raise_on_timeout: true
+        )
+      rescue Master::Io::Exec::TimeoutError
+        raise Timeout::Error
       end
 
       def claude_cli_timeout_s
