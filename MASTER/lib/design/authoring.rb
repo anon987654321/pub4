@@ -15,7 +15,7 @@ module Master
       end
 
       EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
-      APPS = %w[brgen amber bsdports master __shared].freeze
+      APPS = %w[brgen bsdports master __shared].freeze
       GENERATED = /(\.min\.|face\.runtime\.js\z|\/vendor\/|\/node_modules\/|\/public\/assets\/)/
 
       # The four steps a designer takes before the first line, and the tells
@@ -101,7 +101,7 @@ module Master
       end
 
       def house_typeface?(surface)
-        %w[brgen amber __shared].include?(surface.app)
+        %w[brgen __shared].include?(surface.app)
       end
     end
   end
