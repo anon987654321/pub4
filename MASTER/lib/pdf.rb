@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "open3"
+require_relative "io/exec"
 require "tempfile"
 
 module Master
@@ -14,7 +14,7 @@ module Master
     def executable = ENV.fetch("MASTER_PDF_ENGINE", "pandoc")
 
     def available?(command: executable)
-      _stdout, _stderr, status = Open3.capture3(command, "--version")
+      _stdout, _stderr, status = Master::Io::Exec.capture3(command, "--version")
       status.success?
     rescue Errno::ENOENT
       false
@@ -33,7 +33,7 @@ module Master
         arguments << "--pdf-engine=#{pdf_engine}" if pdf_engine
         arguments << "--metadata=title:#{title}" if title && !title.to_s.empty?
 
-        _stdout, stderr, status = Open3.capture3(command, *arguments)
+        _stdout, stderr, status = Master::Io::Exec.capture3(command, *arguments)
         raise Error, stderr.strip unless status.success?
 
         output

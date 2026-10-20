@@ -21,7 +21,7 @@
 # --selfcheck is the instrument's own proof: a steady tone must show almost no
 # pitch movement and a swept tone a lot, and it must find a known pause.
 
-require "open3"
+require_relative "../../lib/io/exec"
 require "json"
 require "tmpdir"
 
@@ -37,11 +37,11 @@ module VoiceMeasure
   module_function
 
   def ffmpeg(*args)
-    Open3.capture3("ffmpeg", "-hide_banner", "-nostats", *args)
+    Master::Io::Exec.capture3("ffmpeg", "-hide_banner", "-nostats", *args)
   end
 
   def duration(path)
-    out, _err, status = Open3.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path)
+    out, _err, status = Master::Io::Exec.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path)
     status.success? ? out.to_f : 0.0
   end
 
@@ -91,7 +91,7 @@ module VoiceMeasure
   end
 
   def samples(path)
-    pcm, status = Open3.capture2("ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", RATE.to_s, "-f", "s16le", "-", binmode: true)
+    pcm, status = Master::Io::Exec.capture2("ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", RATE.to_s, "-f", "s16le", "-", binmode: true)
     status.success? ? pcm.unpack("s<*").map { |v| v / 32_768.0 } : []
   end
 

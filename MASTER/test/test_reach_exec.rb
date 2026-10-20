@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "rbconfig"
 require_relative "../lib/io/exec"
 
 class TestReachExec < Minitest::Test
@@ -34,6 +35,18 @@ class TestReachExec < Minitest::Test
     out, status = E.capture2("sh", "-c", "printf hi")
     assert_equal "hi", out
     assert status.success?
+  end
+
+  def test_binmode_preserves_binary_capture_output_and_stdin
+    payload = "\xFF\x00".b
+    out, status = E.capture2(
+      RbConfig.ruby, "-e", "STDOUT.write(STDIN.read)",
+      stdin_data: payload, binmode: true
+    )
+
+    assert status.success?
+    assert_equal payload.bytes, out.bytes
+    assert_equal Encoding::BINARY, out.encoding
   end
 
   def test_non_zero_exit_is_non_success

@@ -45,9 +45,13 @@ module Master
       # every output stream on a thread, feed stdin on another, wait with a bound
       # and return the reaped streams in popen order followed by the status.
       def run_capture(opener, cmd, timeout, opts, raise_on_timeout: false)
-        stdin_data, spawn_opts = split_opts(opts)
+        stdin_data, binmode, spawn_opts = split_opts(opts)
         options = ProcessSpawn.options(spawn_opts.merge(pgroup: true))
         Open3.public_send(opener, *cmd, **options) do |stdin, *streams, wait_thr|
+          if binmode
+            stdin.binmode
+            streams.each(&:binmode)
+          end
           readers = streams.map { |stream| reader_for(stream) }
           writer = writer_for(stdin, stdin_data)
           status, timed_out = bounded_wait(wait_thr, timeout, readers)
@@ -79,13 +83,13 @@ module Master
 
       def on_path?(name, **) = !which(name, **).nil?
 
-      # Open3.capture* treat stdin_data:/binmode: as capture options and pass the
-      # rest to spawn; mirror that split so chdir:/env/redirects still forward.
+      # Open3.capture* consume stdin_data and binmode; all other options belong
+      # to spawn and must pass through, including env, chdir, and redirects.
       def split_opts(opts)
         opts = opts.dup
         stdin_data = opts.delete(:stdin_data)
-        opts.delete(:binmode)
-        [stdin_data, opts]
+        binmode = opts.delete(:binmode)
+        [stdin_data, binmode, opts]
       end
 
       def writer_for(stdin, data)

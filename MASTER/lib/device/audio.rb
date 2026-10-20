@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 
 module Master
   module Device
@@ -57,7 +57,7 @@ module Master
       def executable?(command) = Master::Io::Exec.on_path?(command)
 
       def run(*argv)
-        _stdout, _stderr, status = Open3.capture3(*argv)
+        _stdout, _stderr, status = Master::Io::Exec.capture3(*argv)
         status.success?
       rescue StandardError
         false
