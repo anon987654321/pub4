@@ -19,6 +19,22 @@ class DillaTest < Minitest::Test
   CHORDS = PROGRESSIONS.flatten.uniq
   PLAYABLE = Playlist.new(DATA, Random.new(0)).voice_names # the rotation leaves out a soundfont voice with no soundfont
 
+  # Measured at 20 s to 180 s each; DILLA_FAST=1 skips them with the CLI render tests.
+  SLOW = %w[
+    test_live_moves_run_inside_a_show_are_logged_and_leave_every_deck_as_it_was
+    test_two_decks_play_eight_to_sixteen_bars_and_cross_over_two_to_four_on_the_bar_line
+    test_the_new_profiles_render_stereo_in_blocks_the_same_as_whole
+    test_a_pass_cut_into_blocks_is_the_pass_in_one_block
+    test_the_show_starts_with_one_beat_then_plays_a_bar_at_a_time_and_joins_under_the_last_beat
+    test_a_stack_keeps_the_programme_within_one_decibel_of_its_input_level
+    test_mastering_is_deterministic
+    test_a_show_that_cannot_keep_up_drops_the_dear_stages_and_says_so
+  ].freeze
+
+  def setup
+    skip "slow (DILLA_FAST=1)" if ENV["DILLA_FAST"] == "1" && SLOW.include?(name)
+  end
+
   # Mono unless a test asks for stereo: most tests read the samples of one channel.
   def run_dilla(*args, chdir:, stereo: false)
     skip "renders audio; unset DILLA_FAST to run it" if ENV["DILLA_FAST"] == "1"
