@@ -178,6 +178,17 @@ declared there may have no detector — 92 of the 242 carry none and resolve
 through `law/` or a fold — so the file is the law, not the scanner's coverage
 of it.
 
+## Every agent mirrors MASTER
+
+MASTER is the configuration; Claude, Grok, Codex, DeepSeek and GLM are tools
+that follow it. Run `MASTER/bin/operator brief` before the first edit: it
+prints the authority chain, the mechanical guards and the top-ranked laws as
+they are now. Commits take MASTER's own shape, defined once in
+`MASTER/data/commit_format.yml` and enforced for every author by the
+`commit-msg` hook: a capitalised subject of at most 72 characters with no
+`feat:` prefix and no full stop, a blank line, the body, a blank line, and a
+`Co-authored-by:` trailer.
+
 ## Two habits this repo learned the hard way
 
 **Verify the instrument before the finding.** Naive pattern-matching over this

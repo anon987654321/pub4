@@ -26,6 +26,14 @@ Each validated, owned repair batch is committed and pushed before the next batch
 
 When code changes behavior, interfaces, commands, configuration or operational expectations, update the relevant README or contract in the same batch and regenerate affected generated documentation from its canonical source. For agent entry files, edit the marked block here and run `cd MASTER && rake docs:agent_contracts`; verify with `cd MASTER && rake lint:agent_contracts`. Never hand-edit generated copies or churn unrelated docs.
 
+Commits take MASTER's own shape, defined once in
+`MASTER/data/commit_format.yml` and enforced for every author by the
+`commit-msg` hook that `MASTER/bin/operator hooks` installs: a capitalised
+subject of at most 72 characters with no `feat:` prefix and no full stop, a
+blank line, a body saying what changed and what it cost, a blank line, and a
+`Co-authored-by:` trailer. Run `MASTER/bin/operator brief` first; it prints
+the authority chain, the guards and the top-ranked laws as they are now.
+
 Operational constraints:
 - Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.

@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# One commit shape for every author.
+#
+# MASTER's runtime normalises a subject, appends `Co-authored-by: MASTER` and commits
+# (Master::Io::GitOperations#commit). Claude Code, Grok, Codex, DeepSeek, GLM and a person at a terminal
+# commit by other routes, and the log read five ways. This holds all of them to the shape MASTER's own commits
+# have, defined once in MASTER/data/commit_format.yml and read by MASTER/lib/ground/commit_format.rb.
+#
+# Installed by `bin/operator hooks` (core.hooksPath). Merges, reverts and fixups pass untouched.
+# PUB4_COMMIT_FORMAT=0 skips the check for one commit you mean to make otherwise.
+
+require_relative "../../../MASTER/lib/ground/commit_format"
+
+ROOT = File.expand_path("../../..", __dir__)
+EXEMPT = /\A(?:Merge |Revert |fixup! |squash! )/
+
+exit 0 if ENV["PUB4_COMMIT_FORMAT"] == "0"
+
+message = File.read(ARGV.fetch(0)).lines.reject { |line| line.start_with?("#") }.join.strip
+exit 0 if message.match?(EXEMPT)
+
+problems = Master::Ground::CommitFormat.problems(message, root: File.join(ROOT, "MASTER"))
+exit 0 if problems.empty?
+
+warn "commit-msg: this message does not have MASTER's commit shape (MASTER/data/commit_format.yml):"
+problems.each { |problem| warn "  - #{problem}" }
+warn "  Subject of the change (capitalised, no type prefix, no full stop), a blank line, the body,"
+warn "  a blank line, then a trailer such as `Co-authored-by: <author>`. PUB4_COMMIT_FORMAT=0 skips this once."
+exit 1

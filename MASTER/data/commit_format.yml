@@ -1,0 +1,28 @@
+# The shape of a commit message in this repo, for MASTER's runtime and for every agent beside it.
+#
+# This is what MASTER's own commits are, written down once. Master::Io::GitOperations#commit normalises a
+# subject to these rules before it commits and adds the trailer as a second -m; the commit-msg hook holds every
+# other author (Claude Code, Grok, Codex, DeepSeek, GLM, a person) to the same shape, so the log reads one way.
+#
+#   Subject of the change, capitalised, no conventional-commit prefix, no full stop
+#
+#   Body: what changed and why, with the numbers. Optional, like MASTER's own.
+#
+#   Co-authored-by: MASTER
+#
+# `git log --grep="Co-authored-by: MASTER"` is how a runtime commit is told from an agent's or a person's.
+#
+# Read by Master::Ground::CommitFormat (lib/ground/commit_format.rb). Change the shape here and nowhere else.
+schema: 1
+subject:
+  max_chars: 72
+  # A subject is a label: no trailing . ! or ?
+  trailing_punctuation: false
+  # `feat:`, `fix(scope):` and the rest are stripped from MASTER's subjects, so an author does not write them.
+  conventional_prefix: false
+  capitalised: true
+trailers:
+  # A trailer is a `Key: value` line, alone in the last paragraph.
+  required: true
+  accepted_keys:
+    - Co-authored-by

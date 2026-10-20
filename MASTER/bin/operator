@@ -641,6 +641,14 @@ when "readers"
   Master::Trace::Dmesg.status("readers0", "#{hard} references would break on delete or move")
   exit(hard.zero? ? 0 : 1)
 
+when "brief"
+  # What an agent is told before its first edit, from the same module Claude Code's SessionStart hook calls.
+
+  # A harness with no hook runs this first (the generated AGENTS.md says so).
+  require_relative "../lib/ground/agent_brief"
+
+  puts Master::Ground::AgentBrief.render(root: ROOT)
+
 when "hooks"
   # core.hooksPath rather than copying into .git/hooks: a copy is a second
   # implementation that drifts from the tracked one, silently, which is the
