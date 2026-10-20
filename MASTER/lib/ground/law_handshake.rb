@@ -57,21 +57,26 @@ module Master
       end
 
       def verify(contract_version:, law_digest:, protocol:)
-        klass = self.class
-        klass.ensure_law!
+        self.class.ensure_law!
         data = JSON.parse(Law::Contract.render)
-        version_ok = Integer(contract_version) == klass.protocol_version
-        digest_ok = law_digest.to_s == data.fetch("law_digest")
-        protocol_ok = Array(protocol).map(&:to_s) == data.fetch("protocol")
+        checks = checks_for(data, contract_version:, law_digest:, protocol:)
         Verdict.new(
-          accepted: version_ok && digest_ok && protocol_ok,
-          reason: handshake_reason(version_ok, digest_ok, protocol_ok),
+          accepted: checks.all?,
+          reason: handshake_reason(*checks),
           digest: data.fetch("law_digest"),
-          protocol_version: klass.protocol_version,
+          protocol_version: data.fetch("contract_version"),
         )
       rescue StandardError => e
         Verdict.new(accepted: false, reason: "invalid handshake: #{e.message}", digest: Law::Contract.digest,
                     protocol_version: self.class.protocol_version)
+      end
+
+      def checks_for(data, contract_version:, law_digest:, protocol:)
+        [
+          Integer(contract_version) == data.fetch("contract_version"),
+          law_digest.to_s == data.fetch("law_digest"),
+          Array(protocol).map(&:to_s) == data.fetch("protocol"),
+        ]
       end
 
       def handshake_reason(version_ok, digest_ok, protocol_ok)

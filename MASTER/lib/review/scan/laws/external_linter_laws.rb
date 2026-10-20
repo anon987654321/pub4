@@ -99,7 +99,8 @@ module Master
           end
 
           def empty_report_error(name, stderr:, status:)
-            detail = "exit=#{status.exitstatus || "signal"}, stderr=#{stderr.to_s.empty? ? "empty" : "present"}"
+            first = stderr.to_s.lines.map(&:strip).find { |line| !line.empty? }.to_s[0, 160]
+            detail = "exit=#{status.exitstatus || "signal"}, stderr=#{first.empty? ? "empty" : first}"
             error = ReportError.new("#{name}: empty JSON stdout (#{detail})")
             Master::Ground::Swallow.log(error, context: "linter_json #{name}", severity: :load_bearing)
             error
