@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Face dot field prototype</title>
+<link rel="stylesheet" href="face_dotfield.css">
+</head>
+<body>
+<main>
+  <canvas id="field" aria-label="A face condensing out of a field of dots; one mark stays solid"></canvas>
+  <form>
+    <button type="button" id="replay">Replay</button>
+    <label>Condense <input id="condense" type="range" min="0" max="1" step="0.001" value="0"></label>
+    <label>Speech level <input id="level" type="range" min="0" max="1" step="0.01" value="0"></label>
+    <label><input id="solo" type="checkbox" checked> Solid mark</label>
+  </form>
+</main>
+<script src="face_dotfield.js"></script>
+</body>
+</html>
