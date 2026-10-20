@@ -203,22 +203,14 @@ class DillaTest < Minitest::Test
     assert_equal DATA.fetch("bus_effects").fetch("dilla_night").fetch("drum_crystallizer"), options.fetch(:drum_crystallizer)
   end
 
-  def test_default_output_paths_preserve_existing_takes
+  def test_default_output_paths_are_one_fixed_pair_beside_the_engine
     Dir.mktmpdir do |dir|
-      fresh = Dilla::Video.default_paths(root: dir, stamp: "fixed")
-      assert_equal File.join(dir, "dilla.wav"), fresh.fetch(:audio)
-      assert_equal File.join(dir, "dilla.mp4"), fresh.fetch(:video)
+      File.write(File.join(dir, "dilla.wav"), "replaced on the next run")
 
-      File.write(fresh.fetch(:audio), "kept")
-      fallback = Dilla::Video.default_paths(root: dir, stamp: "fixed")
-      assert_equal File.join(dir, "out", "dilla.wav"), fallback.fetch(:audio)
-      refute_equal fresh.fetch(:audio), fallback.fetch(:audio)
+      paths = Dilla::Video.default_paths(root: dir)
 
-      FileUtils.mkdir_p(File.join(dir, "out"))
-      File.write(fallback.fetch(:audio), "also kept")
-      timestamped = Dilla::Video.default_paths(root: dir, stamp: "fixed")
-      assert_equal File.join(dir, "out", "dilla-fixed.wav"), timestamped.fetch(:audio)
-      assert_equal File.join(dir, "out", "dilla-fixed.mp4"), timestamped.fetch(:video)
+      assert_equal File.join(dir, "dilla.wav"), paths.fetch(:audio)
+      assert_equal File.join(dir, "dilla.mp4"), paths.fetch(:video)
     end
   end
 

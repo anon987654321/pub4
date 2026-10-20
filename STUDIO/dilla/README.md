@@ -14,10 +14,10 @@ a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a r
 seed, while retaining the dark minor harmony, full drum patterns, layered synths and
 shared tape/dub/crystallizer rig.
 
-If the tracked `dilla.wav` audition reference already exists, the default exporter
-preserves it and writes to `out/dilla.wav` and `out/dilla.mp4`; if that pair is
-occupied, it chooses a fresh timestamped pair. Set `DILLA_OUTPUT_DIR` to choose another
-default output directory.
+The default exporter writes `dilla.wav` and `dilla.mp4` beside `dilla.rb` and replaces that
+pair on every run, since a render is replaceable and no new file or folder appears. Set
+`DILLA_OUTPUT_DIR` to choose another default output directory, and pass `--out` to keep a
+take, which then refuses to overwrite.
 
 The MP4 is made offline by FFmpeg from the rendered audio, an architectural
 grid/waveform scene, and the selected recipe in `STUDIO/postpro/video.yml` (default

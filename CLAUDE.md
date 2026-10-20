@@ -43,8 +43,9 @@ on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: a renderer that writes to
 `$PWD` once left a session's renders at the root for weeks. Renders belong outside
 the repo, under `${XDG_DATA_HOME:-~/Documents}/dilla-renders/<date>`, which is where
-/play and postpro put them; `dilla.rb` writes to `out/` beside itself, which is
-git-ignored, unless `--out` says otherwise.
+/play puts them; postpro writes beside the source photograph (the dated directory when
+the source sits inside the repo), and `dilla.rb` replaces `dilla.wav` and `dilla.mp4`
+beside itself, unless `--out` says otherwise.
 
 ## Commands
 

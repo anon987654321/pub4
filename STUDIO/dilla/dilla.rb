@@ -5513,29 +5513,11 @@ module Dilla
 
     module_function
 
-    # Never overwrite an old take just because the operator typed the short command.
-    # Prefer the familiar filenames when absent; otherwise keep the prior audio intact
-    # and render into ignored out/, adding a timestamp only when that pair is occupied.
-    def default_paths(root:, output_dir: ENV["DILLA_OUTPUT_DIR"], stamp: Time.now.utc.strftime("%Y%m%dT%H%M%SZ"))
+    # The short command renders one fixed pair beside dilla.rb and replaces it on
+    # every run: a render is replaceable, and no new file or folder appears.
+    def default_paths(root:, output_dir: ENV["DILLA_OUTPUT_DIR"])
       base = File.expand_path(output_dir.to_s.empty? ? root : output_dir)
-      [
-        { audio: File.join(base, "dilla.wav"), video: File.join(base, "dilla.mp4") },
-        { audio: File.join(base, "out", "dilla.wav"), video: File.join(base, "out", "dilla.mp4") },
-      ].each do |pair|
-        return pair.freeze unless pair.values.any? { |path| occupied?(path) }
-      end
-
-      index = 0
-      loop do
-        suffix = index.zero? ? stamp : "#{stamp}-#{index}"
-        pair = {
-          audio: File.join(base, "out", "dilla-#{suffix}.wav"),
-          video: File.join(base, "out", "dilla-#{suffix}.mp4"),
-        }
-        return pair.freeze unless pair.values.any? { |path| occupied?(path) }
-
-        index += 1
-      end
+      { audio: File.join(base, "dilla.wav"), video: File.join(base, "dilla.mp4") }.freeze
     end
 
     def paired_path(audio)
@@ -6776,6 +6758,9 @@ def run(argv)
       options[:showcase] = true
     end
   end
+
+  # A render to the default location is replaceable; an explicit --out still refuses.
+  options[:replace] = true if options[:out].nil?
 
   if options[:showcase]
     defaults = Dilla::Video.default_paths(root: __dir__)
