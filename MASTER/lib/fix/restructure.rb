@@ -85,7 +85,7 @@ module Master
         failure ||= delivery_safety_failure(plan, message, reviewed_diff)
         return undo(originals, failure) if failure
 
-        commit(plan, message, evidence: preservation_evidence(plan, originals))
+        commit(plan, message, evidence: preservation_evidence(plan, originals, before:))
       rescue StandardError => e
         originals ? undo(originals, "#{e.class}: #{e.message}") : Result.err("restructure: #{e.message}")
       end
@@ -176,16 +176,42 @@ module Master
         Result.err("restructure undone: #{failure}", category: :validation)
       end
 
-      def preservation_evidence(plan, originals)
+      def preservation_evidence(plan, originals, before:)
         after = plan.paths.to_h { |path| [path, read(path)] }
-        {
+        evidence = {
           before: originals.to_h { |path, body| [path, Digest::SHA256.hexdigest(body.to_s)] },
           after: after.to_h { |path, body| [path, Digest::SHA256.hexdigest(body.to_s)] },
           operations: plan.operations,
           written: plan.writes.keys,
           deleted: plan.deletes,
+          related_tests: { selected: before[:tests], failing_before: before[:failing] },
           proof: "review_and_tree_proof_held",
         }
+        if @proof.respond_to?(:scorecard) && before[:scorecard]
+          after_scorecard = @proof.scorecard(extra_paths: plan.paths)
+          numeric_delta = before[:scorecard].filter_map do |name, value|
+            next unless value.is_a?(Numeric) && after_scorecard[name].is_a?(Numeric)
+
+            [name, after_scorecard[name] - value]
+          end.to_h
+          evidence[:scorecard] = { before: before[:scorecard], after: after_scorecard, delta: numeric_delta }
+        end
+        if @proof.respond_to?(:contract_snapshot) && before[:contracts]
+          after_contracts = @proof.contract_snapshot(extra_paths: plan.paths)
+          evidence[:public_constant_diff] = {
+            removed: before[:contracts].fetch("public_constants") - after_contracts.fetch("public_constants"),
+            added: after_contracts.fetch("public_constants") - before[:contracts].fetch("public_constants"),
+          }
+          evidence[:require_path_diff] = {
+            removed: before[:contracts].fetch("require_paths") - after_contracts.fetch("require_paths"),
+            added: after_contracts.fetch("require_paths") - before[:contracts].fetch("require_paths"),
+          }
+        end
+        if @proof.respond_to?(:ratchet_snapshot)
+          after_ratchet = @proof.ratchet_snapshot
+          evidence[:ratchet_delta] = { before: before[:ratchet], after: after_ratchet } if before[:ratchet] || after_ratchet
+        end
+        evidence
       end
 
       # Multi-file proposals do not get a weaker delivery boundary than

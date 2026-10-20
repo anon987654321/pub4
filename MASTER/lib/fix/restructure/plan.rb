@@ -39,6 +39,9 @@ module Master
           return "unknown transformation(s): #{unknown.join(", ")}" if unknown.any?
 
           return "transformations are out of constitutional order: #{operations.join(", ")}" unless transformation_plan.ordered?(operations)
+          return "one transformation per restructure; got #{operations.size}" unless operations.size == 1
+          return "BATCH_DELETE: delete one explicitly named file per restructure" if deletes.size > 1
+          return "MIXED_COMMIT: keep production changes separate from tests, specs, and fixtures" if mixed_test_and_production_paths?
 
           return if allowed_operations.nil?
 
@@ -62,6 +65,13 @@ module Master
 
         def paths = writes.keys + deletes
         def empty? = paths.empty?
+
+        private
+
+        def mixed_test_and_production_paths?
+          is_test_path = ->(path) { path.to_s.split("/").any? { |part| %w[test spec fixtures].include?(part) } }
+          paths.any?(&is_test_path) && paths.any? { |path| !is_test_path.call(path) }
+        end
       end
     end
   end

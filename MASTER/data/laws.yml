@@ -297,6 +297,110 @@ phantom_recovery:
 
 transformation_policy:
   version: 1
+  invariants:
+    public_api: "Keep public constants, public method signatures, command verbs, routes, and observable behaviour unchanged."
+    public_import_paths: "Keep existing require and import paths; when a path must move, retain a tested compatibility shim and prove its loader contract."
+    dependency_direction: "lib never requires bin; the core never requires optional clusters; do not reverse an established dependency edge."
+    out_of_scope: "Name protected paths and excluded surfaces before writing; never infer permission from the task being nearby."
+    behavior: "Characterize the unchanged baseline first; tests, golden output, and side-effect order must remain equivalent."
+    file_creation: "New production files are move targets or independently owned concepts, never summaries, changelogs, design notes, or wrappers without a caller."
+    deletion: "Delete only a named path with evidence; inspect constants, dynamic dispatch, reflection, loaders, render paths, and deployment references."
+  candidate_map:
+    minimum_alternatives: 15
+    minimum_distinct_target_paths: 3
+    score_range: [1, 5]
+    exhaustion: "If fewer defensible alternatives or distinct target paths exist, report the actual count; never pad the map with paraphrases."
+  loop:
+    convergence: "DONE only when a fresh structural scan has no actionable findings."
+    plateau: "PLATEAU when candidates remain but a complete round keeps no verified improvement."
+    veto: "VETO when a constitutional invariant, preservation contract, or scope guard refuses the proposed change."
+    bounded_run: "LIMIT_REACHED when the configured run budget ends before convergence; never report DONE."
+  operation_rules:
+    remove:
+      when: "Dead or redundant material is proven unreachable and its contracts are accounted for."
+      not_when: "Dynamic dispatch, reflection, external consumers, generated artifacts, or deployment paths are unresolved."
+    defragment:
+      when: "One concept is scattered across files that change together for the same decision."
+      not_when: "The pieces have independent owners or independent reasons to change."
+    flatten:
+      when: "A wrapper or directory carries no domain, lifecycle, security, or compatibility meaning."
+      not_when: "Depth mirrors a genuine domain boundary or a public loader path."
+    decouple:
+      when: "A dependency leaks across an ownership boundary and causes unrelated changes to ripple."
+      not_when: "A new abstraction only adds indirection for one caller."
+    split:
+      when: "One unit holds responsibilities with distinct reasons to change."
+      not_when: "The split creates one-use files or moves complexity without improving traceability."
+    hoist:
+      when: "Several consumers share one invariant or value with one authoritative owner."
+      not_when: "The value is local by nature or consumers only look syntactically similar."
+    merge:
+      when: "At least three sites encode the same decision and history or ownership evidence shows they change together."
+      not_when: "Fewer than three sites exist, clients diverge, or the common abstraction hides different decisions."
+    relocate:
+      when: "Ownership and the actual dependency graph place a concept beside another owner."
+      not_when: "The move changes a public import path, loader expectation, or external mirror without a compatibility proof."
+    rename:
+      when: "A name is materially misleading and every reference can be rewritten while preserving public contracts."
+      not_when: "A public name would disappear without a compatibility alias or path shim."
+    reorder:
+      when: "Primary facts or load-bearing logic are buried below secondary detail."
+      not_when: "Order controls side effects, initialization, precedence, or external output."
+    reflow:
+      when: "Physical boundaries obscure the existing semantic structure."
+      not_when: "Line wrapping is the only claimed benefit or a generated artifact owns the text."
+    simplify:
+      when: "A shorter form preserves meaning and reduces decisions or indirection."
+      not_when: "The removed distinction carries a real invariant, useful name, or failure boundary."
+    recommend:
+      when: "The evidence identifies a plausible improvement but cannot prove safe automatic mutation."
+      not_when: "Recommendation is being used to hide a deterministic gate that should be run."
+  decision_table:
+    - condition: "Fewer than three independent sites."
+      choose: "KISS; retain duplication."
+    - condition: "Three or more sites encode the same decision and co-change for the same reason."
+      choose: "DRY; consolidate the decision at its owner."
+    - condition: "Three or more lookalike sites serve divergent clients or change for different reasons."
+      choose: "KISS; keep distinct implementations."
+  scorecard:
+    history_window_commits: 200
+    metrics: [cohesion, coupling, domain_depth, decision_duplication, traceability, concepts, loc]
+    measurements:
+      cohesion: "Use actual recurring Git co-change pairs; never infer cohesion from neighbouring paths alone."
+      coupling: "Count concrete static require/import/render reference edges as a proxy; inspect ownership before interpreting the count."
+      domain_depth: "Measure maximum path depth and single-child directories, then distinguish redundant layers from meaningful domain paths."
+      decision_duplication: "Requires naming the decision and comparing actual sites; raw repeated lines alone are insufficient."
+      traceability: "Requires measuring files needed to follow one behaviour; mark unmeasured unless the relevant dependency path is known."
+      concepts: "Count tracked paths plus named declarations; a new concept must earn its cost by reducing traceability or coupling."
+      loc: "Measure tracked source lines; the structural ratchet is a non-increasing ceiling, not a per-step shrink mandate."
+    acceptance:
+      regression: "Every measured regression needs an operation-specific justification; unmeasured dimensions remain explicitly inconclusive."
+      concepts: "Prefer non-increasing concepts; a new concept must earn its cost by reducing traceability or coupling."
+      loc: "Never raise a ratchet without an explicit measured reason."
+      tie: "keep_current_tree"
+  proof_of_equivalence:
+    required: [pass_set_before_after, public_constant_diff, require_path_diff, source_hashes_before_after, scorecard_before_after, ratchet_delta, residual_risk]
+    no_narrative_substitute: true
+  structural_gates:
+    UNALIASED_MOVE:
+      detector: "Master::Fix::Restructure::Proof#unaliased_move_failure"
+      positive_fixture: "MASTER/test/test_restructure.rb#test_unaliased_move_is_refused"
+      negative_fixture: "MASTER/test/test_restructure.rb#test_dead_constant_deletion_is_not_a_move"
+    MIXED_COMMIT:
+      detector: "Master::Fix::Restructure::Plan#validate_operations!"
+      positive_fixture: "MASTER/test/test_restructure.rb#test_plan_rejects_mixed_test_and_production_changes"
+      negative_fixture: "MASTER/test/test_restructure.rb#test_plan_spares_a_production_only_change"
+    SINGLE_CHILD_DIR:
+      detector: "Master::Review::Scan::Laws::FileSprawlLaw"
+      positive_fixture: "MASTER/test/test_scan_law_contracts.rb#test_file_sprawl_flags_lone_files_and_tiny_files_but_not_core_or_law"
+      negative_fixture: "MASTER/test/test_scan_law_contracts.rb#test_file_sprawl_spares_what_rails_names_and_nothing_else"
+    BATCH_DELETE:
+      detector: "Master::Fix::Restructure::Plan#validate_operations! and MASTER/law/shell.rb:NEVER_BATCH_DELETE"
+      positive_fixture: "MASTER/test/test_restructure.rb#test_plan_rejects_multiple_named_deletions"
+      negative_fixture: "MASTER/test/test_restructure.rb#test_dead_constant_deletion_is_not_a_move"
+  not_applicable_operations:
+    FUZZY_MOVE: "Restructure plans replace complete named file bodies; there is no fuzzy search/replace move path. Do not add a parallel fuzzy matcher."
+
   preflight:
     - inventory
     - classify

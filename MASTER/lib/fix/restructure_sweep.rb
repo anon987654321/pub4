@@ -46,12 +46,11 @@ module Master
         Candidate transformations:
         %<candidate_operations>s
 
-        Any combination of these is allowed across the repository surfaces: defragment scattered concepts; decouple
-        independent concerns; flatten wrappers, nesting and needless directories;
-        merge equivalent logic; split unlike responsibilities; relocate code beside
-        its owner; rename misleading names; reorder for importance; remove redundant
-        material; reflow prose and lines; simplify accidental complexity. Behaviour,
-        meaning and public contracts must not change.
+        Choose exactly one transformation for this commit. Map candidates before writing; score payoff and risk from
+        evidence, compare distinct target paths, and never pad the candidate set with paraphrases. Apply one operation,
+        verify it, and only then use its result as the next step's baseline.
+        The transformation policy below supplies triggers, vetoes, the DRY/KISS decision table, scorecard, and proof.
+        Similarity alone never justifies consolidation. Behaviour, meaning, import paths, and public contracts must not change.
 
         %<transformations>s
 
@@ -102,7 +101,10 @@ module Master
         or leave the tree harder to find one's way in? Does it merge code that only
         looks alike, whose units change for different reasons, or abstract fewer
         than three sites? Does it flatten depth that mirrors a real domain
-        boundary? Approve only a change a maintainer of this code would thank you for.
+        boundary? Does the old public import path survive? Compare the measured scorecard below with the baseline;
+        each measured regression needs an operation-specific justification, while unmeasured dimensions stay inconclusive.
+        A tie keeps the current tree. Approve only a change a maintainer would thank you for.
+        Scorecard evidence: %<scorecard>s
         Answer with exactly one line: APPROVE, or REJECT: <reason>.
 
         ```diff
@@ -165,20 +167,43 @@ module Master
 
       def run_tree(target, run_id, attempts:, rounds:, keeps:)
         kept = []
+        terminal = :limit_reached
         rounds.times do |round|
+          problems = candidates(target, "#{run_id}-#{round}")
+          if problems.empty?
+            terminal = :convergence
+            break
+          end
+
           round_kept = []
-          candidates(target, "#{run_id}-#{round}").first(attempts).each do |problem|
+          vetoes = 0
+          problems.first(attempts).each do |problem|
             break if kept.size + round_kept.size >= keeps
 
             result = attempt(problem)
             round_kept << result.value! if result&.ok?
+            vetoes += 1 if policy_veto?(result)
           end
           kept.concat(round_kept)
-          break if round_kept.empty?
+          if round_kept.empty?
+            terminal = vetoes.positive? && vetoes == [attempts, problems.size].min ? :veto : :plateau
+            break
+          end
 
           Master::Trace::Dmesg.status("restructure0", "round #{round + 1}, kept #{round_kept.size}, total #{kept.size}")
+          terminal = :limit_reached if kept.size >= keeps || round == rounds - 1
         end
+        if terminal == :limit_reached
+          terminal = :convergence if candidates(target, "#{run_id}-final").empty?
+        end
+        Master::Trace::Dmesg.status("restructure0", "terminal=#{terminal} kept=#{kept.size}")
+        @bus&.publish("fix_loop:restructure_exit", target: relative(target), state: terminal.to_s.upcase, kept: kept.size)
         kept
+      end
+
+      def policy_veto?(result)
+        result.is_a?(Result) && !result.ok? &&
+          result.message.to_s.match?(/MIXED_COMMIT|BATCH_DELETE|UNALIASED_MOVE|restructure refused|immutable|off limits|outside .*policy|stale read required/i)
       end
 
       def sweep_targets(target)
@@ -230,13 +255,14 @@ module Master
       def attempt(problem)
         path, = problem.findings.first
         tree = relative(path).split("/").first
-        answer = ask(proposal(tree, problem))
+        baseline_scorecard = Restructure::Proof.for(tree, @root).scorecard
+        answer = ask(proposal(tree, problem, scorecard: baseline_scorecard))
         return if answer.strip == "KEEP"
 
         plan = Restructure::Plan.parse(answer)
         return report(problem, nil, "the answer held no plan") if plan.empty?
 
-        review = ->(diff) { verdict(problem, plan, diff) }
+        review = ->(diff) { verdict(problem, plan, diff, scorecard_before: baseline_scorecard) }
         result = @restructures[tree].call(
           plan,
           message: commit_message(problem, plan),
@@ -246,7 +272,8 @@ module Master
         report(problem, plan, result)
       end
 
-      def proposal(tree, problem)
+      def proposal(tree, problem, scorecard: nil)
+        scorecard ||= Restructure::Proof.for(tree, @root).scorecard
         findings = problem.findings.map do |path, rule, message, related|
           related = Array(related).map { |item| relative(item) }.reject { |item| item == relative(path) }
           [
@@ -272,7 +299,10 @@ module Master
           problem_id: problem.id,
           findings:,
           candidate_operations: problem.candidate_operations.join(", "),
-          context: Context.new(@root, problem.files.first, related: problem.files.drop(1)).to_s,
+          context: Context.new(
+            @root, problem.files.first, related: problem.files.drop(1), scorecard:,
+            co_change_window: @transformation_plan.scorecard_policy.fetch("history_window_commits"),
+          ).to_s,
         )
       end
 
@@ -282,7 +312,15 @@ module Master
         @transformation_plan.refactoring_playbook.fetch(section).map(&).join("\n")
       end
 
-      def verdict(problem, plan, diff)
+      def verdict(problem, plan, diff, scorecard_before: {})
+        tree = relative(problem.files.first).split("/").first
+        scorecard_after = Restructure::Proof.for(tree, @root).scorecard(extra_paths: plan.paths)
+        numeric_delta = scorecard_before.filter_map do |name, value|
+          next unless value.is_a?(Numeric) && scorecard_after[name].is_a?(Numeric)
+
+          [name, scorecard_after[name] - value]
+        end.to_h
+        scorecard_text = "before: #{scorecard_before.inspect}\nafter: #{scorecard_after.inspect}\ndelta: #{numeric_delta.inspect}"
         answer = ask(
           format(
             ATTACK,
@@ -291,6 +329,7 @@ module Master
             path: relative(problem.files.first),
             operations: plan.operations.join(", "),
             summary: plan.summary,
+            scorecard: scorecard_text,
             diff:,
           ),
         ).strip

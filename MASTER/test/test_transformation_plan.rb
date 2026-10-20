@@ -75,6 +75,22 @@ class TestTransformationPlan < Minitest::Test
     assert_includes names, "RuboCop Ruby Style Guide"
   end
 
+  def test_restructure_invariants_scorecard_and_exit_conditions_are_read_and_rendered
+    assert_equal "keep_current_tree", @plan.scorecard_policy.fetch("acceptance").fetch("tie")
+    assert_equal 200, @plan.scorecard_policy.fetch("history_window_commits")
+    assert_includes @plan.loop_policy.fetch("convergence"), "DONE"
+    assert_includes @plan.loop_policy.fetch("plateau"), "PLATEAU"
+    assert_includes @plan.loop_policy.fetch("veto"), "VETO"
+    assert_includes @plan.structural_gates.fetch("UNALIASED_MOVE").fetch("detector"), "unaliased_move_failure"
+    assert_includes @plan.not_applicable_operations.fetch("FUZZY_MOVE"), "complete named file bodies"
+
+    prompt = @plan.prompt
+    %w[MIXED_COMMIT SINGLE_CHILD_DIR BATCH_DELETE scorecard traceability concepts].each do |term|
+      assert_includes prompt, term
+    end
+    assert_includes prompt, "at its owner"
+  end
+
   def test_rename_policy_covers_code_and_structure
     assert_equal %w[files constants methods variables laws sections], @plan.rename_policy.fetch("scopes")
     assert_equal true, @plan.rename_policy.fetch("require_reference_rewrite")

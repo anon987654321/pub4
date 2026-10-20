@@ -56,12 +56,37 @@ module Master
       def prompt
         lines = operations.map { |op| format("%2d. %-12s %s", op.position, op.name, op.purpose) }
         [
-          "Universal transformation order:",
+          "Universal transformation policy:",
           *lines,
           "",
           "Preflight: #{preflight.join(", ")}.",
           "Postflight: #{postflight.join(", ")}.",
-          "Use the smallest evidenced operation; recommend rather than mutate when proof is insufficient.",
+          "Hard invariants (encoded gates, not suggestions):",
+          *invariants.map { |name, value| "  #{name}: #{value}" },
+          "",
+          "Read-only candidate map: consider at least #{candidate_map_policy.fetch("minimum_alternatives")} materially distinct alternatives and score payoff/risk #{candidate_map_policy.fetch("score_range").inspect}; compare at least #{candidate_map_policy.fetch("minimum_distinct_target_paths")} distinct target paths when they exist. #{candidate_map_policy.fetch("exhaustion")}",
+          "",
+          "DRY versus KISS, in order:",
+          *decision_table.map { |row| "  #{row.fetch("condition")} => #{row.fetch("choose")}" },
+          "",
+          "Operation trigger and veto:",
+          *operation_rules.map { |name, row| "  #{name}: when #{row.fetch("when")} Not when #{row.fetch("not_when")}" },
+          "",
+          "Loop exit contracts:",
+          *loop_policy.map { |state, condition| "  #{state}: #{condition}" },
+          "",
+          "Scorecard dimensions:",
+          "  metrics: #{scorecard_policy.fetch("metrics").join(", ")}",
+          "  history window: #{scorecard_policy.fetch("history_window_commits")} commits",
+          *scorecard_policy.fetch("measurements").map { |name, method| "  #{name}: #{method}" },
+          *scorecard_policy.fetch("acceptance").map { |name, rule| "  accept #{name}: #{rule}" },
+          "",
+          "Proof of equivalence must attach: #{proof_of_equivalence.fetch("required").join(", ")}.",
+          "Narrative alone is not proof: #{proof_of_equivalence.fetch("no_narrative_substitute")}.",
+          "Existing structural gates and their bad/good fixtures:",
+          *structural_gates.map { |id, row| "  #{id}: #{row.fetch("detector")}; flags #{row.fetch("positive_fixture")}; spares #{row.fetch("negative_fixture")}" },
+          *not_applicable_operations.map { |id, why| "  #{id}: not applicable — #{why}" },
+          "",
           "Evidence priority: characterization, structural, runtime, and visual evidence outrank semantic judgment; taste alone never authorizes mutation.",
           "Check the domain smell catalog and adapter before proposing a transformation; similarity is not sameness and duplication is not automatically abstraction-worthy.",
           research_instructions,
@@ -113,6 +138,16 @@ module Master
         Array(@policy.fetch("automatic_vetoes")).map(&:to_s).freeze
       end
 
+      def invariants = policy_section("invariants")
+      def candidate_map_policy = policy_section("candidate_map")
+      def loop_policy = policy_section("loop")
+      def operation_rules = policy_section("operation_rules")
+      def decision_table = policy_section("decision_table")
+      def scorecard_policy = policy_section("scorecard")
+      def proof_of_equivalence = policy_section("proof_of_equivalence")
+      def structural_gates = policy_section("structural_gates")
+      def not_applicable_operations = policy_section("not_applicable_operations")
+
       def research
         Array(@policy.fetch("research")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze
       end
@@ -162,6 +197,7 @@ module Master
         validate_vetoes!
         validate_research!
         validate_research_protocol!
+        validate_restructure_contract!
         true
       rescue KeyError => e
         raise ArgumentError, "transformation policy missing #{e.key.inspect}"
@@ -253,6 +289,66 @@ module Master
         true
       rescue KeyError => e
         raise ArgumentError, "research protocol missing #{e.key.inspect}"
+      end
+
+      def policy_section(name)
+        stringify_keys(@policy.fetch(name))
+      end
+
+      def stringify_keys(value)
+        case value
+        when Hash
+          value.to_h { |key, child| [key.to_s, stringify_keys(child)] }.freeze
+        when Array
+          value.map { |child| stringify_keys(child) }.freeze
+        else
+          value
+        end
+      end
+
+      def validate_restructure_contract!
+        required_invariants = %w[public_api public_import_paths dependency_direction out_of_scope behavior file_creation deletion]
+        missing = required_invariants - invariants.keys
+        raise ArgumentError, "restructure invariants missing: #{missing.join(", ")}" unless missing.empty?
+
+        map = candidate_map_policy
+        raise ArgumentError, "invalid candidate map minimum" unless Integer(map.fetch("minimum_alternatives")).positive?
+        raise ArgumentError, "invalid distinct target minimum" unless Integer(map.fetch("minimum_distinct_target_paths")).positive?
+        range = Array(map.fetch("score_range")).map { |value| Integer(value) }
+        raise ArgumentError, "invalid payoff/risk score range" unless range.size == 2 && range.first >= 1 && range.last <= 5 && range.first <= range.last
+        missing = %w[convergence plateau veto bounded_run] - loop_policy.keys
+        raise ArgumentError, "restructure terminal states missing: #{missing.join(", ")}" unless missing.empty?
+
+        missing = REQUIRED - operation_rules.keys
+        raise ArgumentError, "operation trigger/veto missing: #{missing.join(", ")}" unless missing.empty?
+        operation_rules.each do |name, row|
+          %w[when not_when].each do |key|
+            raise ArgumentError, "#{name} operation rule missing #{key}" if row.fetch(key).to_s.empty?
+          end
+        end
+        choices = decision_table.map { |row| row.fetch("choose") }
+        raise ArgumentError, "DRY/KISS decision table incomplete" unless choices.any? { |choice| choice.include?("KISS") } && choices.any? { |choice| choice.include?("DRY") }
+
+        scorecard = scorecard_policy
+        required_metrics = %w[cohesion coupling domain_depth decision_duplication traceability concepts loc]
+        missing = required_metrics - Array(scorecard.fetch("metrics")).map(&:to_s)
+        raise ArgumentError, "scorecard metrics missing: #{missing.join(", ")}" unless missing.empty?
+        raise ArgumentError, "invalid scorecard history window" unless (1..500).cover?(Integer(scorecard.fetch("history_window_commits")))
+        raise ArgumentError, "scorecard tie rule missing" unless scorecard.fetch("acceptance").fetch("tie") == "keep_current_tree"
+
+        required_evidence = %w[pass_set_before_after public_constant_diff require_path_diff source_hashes_before_after scorecard_before_after ratchet_delta residual_risk]
+        missing = required_evidence - Array(proof_of_equivalence.fetch("required")).map(&:to_s)
+        raise ArgumentError, "equivalence evidence missing: #{missing.join(", ")}" unless missing.empty?
+        %w[UNALIASED_MOVE MIXED_COMMIT SINGLE_CHILD_DIR BATCH_DELETE].each do |id|
+          row = structural_gates.fetch(id)
+          %w[detector positive_fixture negative_fixture].each do |key|
+            raise ArgumentError, "#{id} gate missing #{key}" if row.fetch(key).to_s.empty?
+          end
+        end
+        raise ArgumentError, "FUZZY_MOVE applicability must be explicit" if not_applicable_operations.fetch("FUZZY_MOVE").to_s.empty?
+        true
+      rescue KeyError => e
+        raise ArgumentError, "restructure contract missing #{e.key.inspect}"
       end
 
       def load_policy

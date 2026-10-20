@@ -103,6 +103,41 @@ class TestRestructure < Minitest::Test
     assert_includes reason, "outside the problem's candidate set"
   end
 
+  def test_plan_rejects_two_ordered_operations_in_one_atomic_restructure
+    plan = Restructure::Plan.parse("OPERATIONS: remove, simplify\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "one transformation per restructure"
+  end
+
+  def test_plan_rejects_multiple_named_deletions
+    plan = Restructure::Plan.parse("OPERATIONS: remove\n=== DELETE MASTER/lib/a.rb\n=== DELETE MASTER/lib/b.rb\n=== END\n")
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "BATCH_DELETE"
+  end
+
+  def test_plan_rejects_mixed_test_and_production_changes
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: mix source and tests
+      OPERATIONS: split
+      === WRITE MASTER/lib/big.rb
+      class Big; end
+      === WRITE MASTER/test/test_big.rb
+      class TestBig; end
+      === END
+    TEXT
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "MIXED_COMMIT"
+  end
+
+  def test_plan_spares_a_production_only_change
+    plan = Restructure::Plan.parse("OPERATIONS: simplify\n=== WRITE MASTER/lib/big.rb\nclass Big; end\n=== END\n")
+
+    assert_nil plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+  end
+
   def test_a_plan_reads_its_writes_deletes_and_summary
     plan = split_plan
 
@@ -309,6 +344,9 @@ class TestRestructure < Minitest::Test
     playbook.fetch("methods").each { |entry| assert_includes prompt, "#{entry.fetch("id")}: #{entry.fetch("action")}" }
     playbook.fetch("gates").each { |gate| assert_includes prompt, gate }
     assert_includes prompt, "Below three sites keep the duplication"
+    assert_includes prompt, "Measured baseline scorecard"
+    assert_includes prompt, "Co-change evidence"
+    assert_includes prompt, "Choose exactly one transformation"
   end
 
   def test_each_tree_is_proved_its_own_way
@@ -327,6 +365,37 @@ class TestRestructure < Minitest::Test
     plan = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb\nmodule Takeaway\nend\n=== END\n")
     proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
     assert_includes proof.send(:test_files, plan), engine_test
+  end
+
+  def test_unaliased_move_is_refused
+    write("MASTER/lib/movable.rb", "class Movable\nend\n")
+    write("MASTER/lib/movable_new.rb", "class Movable\nend\n")
+    sh("git", "add", "-A", chdir: @repo)
+    sh("git", "commit", "-m", "movable baseline", chdir: @repo)
+
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: move Movable
+      OPERATIONS: relocate
+      === WRITE MASTER/lib/movable_new.rb
+      class Movable
+      end
+      === DELETE MASTER/lib/movable.rb
+      === END
+    TEXT
+    proof = Restructure::ScriptProof.new(repo_root: @repo, tree: "MASTER")
+    before = proof.baseline(plan)
+    File.delete(File.join(@repo, "MASTER/lib/movable.rb"))
+
+    assert_match(/UNALIASED_MOVE/, proof.failure(plan, before))
+  end
+
+  def test_dead_constant_deletion_is_not_a_move
+    plan = Restructure::Plan.parse("OPERATIONS: remove\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    proof = Restructure::ScriptProof.new(repo_root: @repo, tree: "MASTER")
+    before = proof.baseline(plan)
+    File.delete(File.join(@repo, "MASTER/lib/tiny.rb"))
+
+    assert_nil proof.send(:unaliased_move_failure, plan, before)
   end
 
   def test_a_written_file_must_still_parse_as_what_it_is
