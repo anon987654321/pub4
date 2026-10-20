@@ -366,6 +366,33 @@ class DillaTest < Minitest::Test
     assert_equal PROGRESSIONS.map { |p| p.join(" ") }.uniq.size, PROGRESSIONS.size, "a spelling appears twice"
   end
 
+def test_every_language_chord_parses_and_stays_in_the_register
+  Languages.all.each do |language, names|
+    assert_equal 8, names.size, language
+    Chords.midi_notes(names).each do |notes|
+      assert_operator notes.first, :>=, 24, language
+      assert_operator notes.last, :<=, Chords::HIGH, language
+    end
+  end
+end
+
+def test_voicing_styles_reshape_a_chord_and_restore_the_default
+  names = %w[Bbm9 Ebm9 Abmaj9]
+  plain = Chords.midi_notes(names)
+  Chords::STYLES.each do |style|
+    styled = Chords.styled(style) { Chords.midi_notes(names) }
+    refute_equal plain, styled, style
+    styled.each { |notes| assert_operator notes.drop(1).first, :>=, Chords::LOW, style }
+  end
+  assert_equal plain, Chords.midi_notes(names)
+  assert_raises(ArgumentError) { Chords.styled("bebop") { nil } }
+end
+
+def test_so_what_voicing_is_fourths_under_a_major_third
+  upper = Chords.styled("so_what") { Chords.midi_notes(["Bbm9"]) }.first.drop(1)
+  assert_equal [5, 5, 4], upper.each_cons(2).map { |a, b| b - a }
+end
+
   def test_every_chord_name_parses
     CHORDS.each { |name| Chords.parse(name) }
   end

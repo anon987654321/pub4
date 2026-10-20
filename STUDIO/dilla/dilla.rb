@@ -1363,13 +1363,13 @@ module Chords
   # One voicing as MIDI notes, lowest first. Each upper note starts at the one nearest the
   # last chord, then the search tries every octave shift (down, none, up) on every voice and
   # keeps the cheapest set that has no duplicate pitch and no neighbours closer than MIN_GAP.
-  def self.voice(name, previous = nil, search: true)
+  def self.voice(name, previous = nil, search: true, style: self.style)
     chord = parse(name)
     bass = 36 + (((chord[:bass] || chord[:pc]) - 36) % 12)
     before = previous ? previous.drop(1) : []
     reference = before.empty? ? [CENTRE] : before
     start = upper_pcs(chord).map { |pc| nearest(pc, reference) }.sort
-    return [bass] + apart(start) unless search
+    return [bass] + restyle(apart(start), style) unless search
 
     best = nil
     [-12, 0, 12].repeated_permutation(start.size) do |shifts|
@@ -1379,7 +1379,84 @@ module Chords
       score = cost(upper, before)
       best = [score, upper] if best.nil? || score < best.first - 1e-9
     end
-    [bass] + (best ? best.last : apart(start))
+    [bass] + restyle(best ? best.last : apart(start), style)
+  end
+
+  # The ways a player can lay the same chord out. nil keeps the voice-led default above. drop2 and
+  # drop3 take the second or third voice from the top down an octave; spread lifts every other voice
+  # an octave; cluster packs the tones into one close position. quartal and so_what rebuild the upper
+  # structure as stacked fourths (so_what ends on a major third) and so name no mode: the pitch classes
+  # of the chord are not kept, only its register and its lowest upper note.
+  STYLES = %w[drop2 drop3 spread cluster quartal so_what].freeze
+
+  @style = nil
+
+  def self.style = @style
+
+  def self.check_style(name)
+    return if name.nil? || STYLES.include?(name.to_s)
+
+    raise ArgumentError, "voicing #{name.inspect}: expected one of #{STYLES.join(', ')}"
+  end
+
+  # Runs the block with every voicing laid out in `name` (nil for the default), then puts the last one back.
+  def self.styled(name)
+    check_style(name)
+
+    before = @style
+    @style = name&.to_s
+    yield
+  ensure
+    @style = before
+  end
+
+  # Lays every later voicing out in `name` for the rest of the run (nil returns to the default).
+  def self.use(name)
+    check_style(name)
+
+    @style = name&.to_s
+  end
+
+  LAYOUTS = {
+    'drop2' => ->(upper) { drop(upper, 2) },
+    'drop3' => ->(upper) { drop(upper, 3) },
+    'spread' => ->(upper) { upper.each_with_index.map { |n, i| i.odd? && n + 12 <= HIGH ? n + 12 : n } },
+    'cluster' => ->(upper) { close_position(upper) },
+    'quartal' => ->(upper) { stack(upper, [0, 5, 10, 15, 20]) },
+    'so_what' => ->(upper) { stack(upper, [0, 5, 10, 15, 20].first(upper.size).tap { |s| s[-1] = s[-2].to_i + 4 if s.size > 1 }) }
+  }.freeze
+
+  def self.restyle(upper, style)
+    layout = LAYOUTS[style] or return upper
+    seat(layout.call(upper).sort.uniq)
+  end
+
+  # The nth voice from the top, an octave lower, when four voices are there to take it from.
+  def self.drop(upper, nth)
+    return upper if upper.size < 4
+
+    out = upper.dup
+    lowered = out[-nth] - 12
+    out[-nth] = lowered if lowered >= LOW
+    out
+  end
+
+  # Every pitch class once, each the nearest note above the one before, from the lowest voice up.
+  def self.close_position(upper)
+note = upper.min
+others = upper.map { |n| n % 12 }.uniq.reject { |pc| pc == note % 12 }.sort_by { |pc| (pc - note) % 12 }
+[note] + others.map { |pc| note += (pc - note) % 12 }
+  end
+
+  def self.stack(upper, steps)
+    steps.first(upper.size).map { |step| upper.min + step }
+  end
+
+  # Moves a whole voicing by octaves into the register, then opens any minor second.
+  def self.seat(notes)
+    notes = notes.map { |n| n - 12 } while notes.last > HIGH && notes.first - 12 >= LOW
+    notes = notes.map { |n| n + 12 } while notes.first < LOW
+    apart(notes)
   end
 
   # A minor second between neighbours is a rub: the upper one goes up an octave, or when
@@ -1416,6 +1493,51 @@ module Chords
   def self.freqs(names, search: true, transpose: 0, wrap: false)
     midi_notes(names, search:, transpose:, wrap:).map { |notes| notes.map { |n| hz(n) } }
   end
+end
+
+# Twelve progressions the engine writes from rules rather than from records. Each language is a
+# constraint on harmonic motion, a list of [root offset in semitones, quality] against a tonic:
+# Bach moves by descending fifths and prepared suspensions, Grieg sits a pedal under borrowed
+# mixture, Dilla plane one quality (or hold a slash pedal), Flying Lotus stacks fourths and
+# refuses to resolve, Röyksopp keeps the bass still under suspended chords. The tonic is Bb, the
+# centre the rest of the catalogue is locked to, so every language shares a key with the curated rotation.
+module Languages
+  # Quality => chord-name suffix the Chords parser reads. q4 and q4b have no name of their own:
+  # the eleventh and thirteenth chords carry the same stacked-fourth colour.
+  SUFFIX = {
+    'maj' => '', 'min' => 'm', 'dim' => 'dim', 'maj7' => 'maj7', 'maj9' => 'maj9', 'm7' => 'm7',
+    'm9' => 'm9', 'm11' => 'm11', '7' => '7', 'sus2' => 'sus2', 'sus4' => 'sus4', 'sus9' => '9sus4',
+    'add9' => 'add9', 'q4' => 'm11', 'q4b' => 'm13', 'maj7#11' => 'maj7#11', '13' => '13',
+    '7alt' => '7alt', 'm6/9' => 'm69', '13sus' => '13sus4'
+  }.freeze
+
+  ROOTS = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
+  TONIC = 10 # Bb
+
+  SPECS = {
+    'bach_descending_fifths' => [[0, 'min'], [5, 'min'], [10, 'maj'], [3, 'maj7'], [8, 'maj'], [1, 'dim'], [7, 'sus4'], [0, 'min']],
+    'bach_suspension_chain' => [[0, 'min'], [7, 'sus4'], [7, 'maj'], [5, 'min'], [0, 'sus4'], [0, 'min'], [10, 'maj7'], [0, 'min']],
+    'grieg_pedal_mixture' => [[0, 'm9'], [10, 'add9'], [8, 'maj7'], [0, 'm9'], [0, 'm9'], [11, 'maj'], [7, 'min'], [0, 'm9']],
+    'grieg_motif_fall' => [[0, 'min'], [10, 'maj'], [5, 'min'], [0, 'min'], [0, 'min'], [11, 'min'], [7, 'maj7'], [0, 'm9']],
+    'dilla_planing_m9' => [[0, 'm9'], [-2, 'm9'], [-3, 'm9'], [-5, 'm9'], [0, 'm9'], [-2, 'm9'], [-4, 'm9'], [-5, 'm9']],
+    'dilla_maj9_walk' => [[0, 'maj9'], [-1, 'maj9'], [-3, 'maj9'], [-4, 'maj9'], [0, 'maj9'], [-1, 'maj9'], [2, 'maj9'], [0, 'maj9']],
+    'dilla_slash_pedal' => [[0, 'm11'], [5, 'm9'], [3, 'maj9'], [10, 'm9'], [0, 'm11'], [5, 'm9'], [8, 'maj9'], [0, 'm11']],
+    'dilla_chromatic_drop' => [[0, 'm9'], [-1, 'm9'], [-2, 'm9'], [-3, 'm9'], [-4, 'm9'], [-3, 'm9'], [-1, 'm9'], [0, 'm9']],
+    'flylo_quartal_mediants' => [[0, 'q4'], [4, 'q4'], [8, 'q4b'], [4, 'q4'], [-4, 'q4'], [-8, 'q4b'], [3, 'q4'], [8, 'q4']],
+    'flylo_unresolved_stack' => [[0, 'q4b'], [6, 'q4'], [1, 'q4'], [8, 'q4b'], [3, 'q4'], [-2, 'q4'], [7, 'q4b'], [6, 'q4']],
+    'royksopp_static_sus' => [[0, 'sus2'], [0, 'sus4'], [0, 'm9'], [0, 'sus2'], [5, 'sus2'], [0, 'sus4'], [10, 'sus2'], [0, 'm9']],
+    'royksopp_dorian_lift' => [[0, 'm9'], [5, 'maj'], [10, 'sus2'], [0, 'm9'], [2, 'min'], [5, 'maj'], [10, 'add9'], [0, 'm9']]
+  }.freeze
+
+  def self.names = SPECS.keys
+
+  # The chord names of one language in `tonic` (a pitch class, Bb by default).
+  def self.progression(language, tonic: TONIC)
+    SPECS.fetch(language) { raise ArgumentError, "language #{language.inspect}: expected one of #{names.join(', ')}" }
+         .map { |offset, quality| "#{ROOTS[(tonic + offset) % 12]}#{SUFFIX.fetch(quality)}" }
+  end
+
+  def self.all(tonic: TONIC) = SPECS.keys.to_h { |language| [language, progression(language, tonic:)] }
 end
 
 # --- synthesis.rb ---
@@ -6731,7 +6853,8 @@ def run(argv)
     o.on('--effect-rig NAME', 'Apply a named bus-effects rig from data/dilla.json') { |v| options[:effect_rig] = v }
     o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
     o.on('--render', 'Write one random take to a new file under the renders folder instead of playing live') { options[:render] = true }
-    o.on('--list', 'List progressions, drum patterns and groove profiles') { options[:list] = true }
+    o.on('--list', 'List progressions, drum patterns, groove profiles, voicings and harmonic languages') { options[:list] = true }
+    o.on('--voicing STYLE', Chords::STYLES, "Lay every chord out as #{Chords::STYLES.join(', ')} (default: voice-led)") { |v| Chords.use(v) }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
     o.on('--random', 'Random progression and drum pattern (the default groove profile)') { options[:random] = true }
     o.on('--drums NAME', 'Drum pattern name, or rotate to change the pattern every phrase') { |v| options[:drums] = v }
@@ -6843,6 +6966,10 @@ elsif options[:play]
     puts
     puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
+    puts "Voicings (--voicing): #{Chords::STYLES.join(', ')}"
+    puts
+    puts 'Harmonic languages (a progression written from rules, in Bb):'
+    Languages.all.each { |language, chords| puts format('  %-24s %s', language, chords.join(' ')) }
   elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != 'organ')
     render_showcase(data, options)
   elsif options[:effect_rig]
@@ -7322,7 +7449,7 @@ def render_showcase(data, options)
   sections.each_with_index do |section, index|
     section_bpm = options[:bpm] || section['bpm'] || tempos.fetch(index)
     bpms << section_bpm
-    frame = showcase_section(data, options, section, index:, seed:, bpm: section_bpm)
+    frame = Chords.styled(options[:voicing] || section['voicing']) { showcase_section(data, options, section, index:, seed:, bpm: section_bpm) }
     if combined.nil?
       combined = frame
     else
