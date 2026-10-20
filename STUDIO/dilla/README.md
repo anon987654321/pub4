@@ -5,14 +5,18 @@ lean on the beat and a rack of analogue colour.** The complete live engine is th
 Ruby file `dilla.rb`: composition, music theory, synthesis, sequencing, instruments, effects,
 mixing/mastering, reference analysis and output all live there. The versioned musical data
 remains separate: `data/dilla.json` holds patches and grooves, `data/showcase.json` holds
-the eight-part Blue Hour arrangement, and `data/music_theory.json` holds harmonic references.
+the default arrangement, and `data/music_theory.json` holds harmonic references.
 Research recovered from pub3 is preserved in `data/recovered_music.json`; it is not a verified
 transcription set and does not enter the default render rotation.
 
-A bare `ruby dilla.rb` renders the finite eight-part Blue Hour composition to a WAV and
-a matching MP4 visualizer. It varies section tempos across 92–116 BPM from a repeatable
-seed, while retaining the dark minor harmony, full drum patterns, layered synths and
-shared tape/dub/crystallizer rig.
+A bare `ruby dilla.rb` needs no configuration. It renders a finite eighteen-section tour of
+the room to a stereo WAV and a matching MP4 visualizer, mastered once as a whole. It opens
+with the eight-section Blue Hour suite, then plays through what else dilla does: flowing and
+broken-pair arpeggios, a pendulum arp over a radio-damaged groove, tape-dusted stabs, a dub
+room, a four-voice pad, a rotating-registration organ, and a techno and an industrial
+section, before Blue Hour returns. Each section declares its own tempo, and a section marked
+`"engine": "stream"` runs through the same streamer as `--play`, so its groove profile's
+voices, effect stages, noise, drums and echo all sound.
 
 The default exporter writes `dilla.wav` and `dilla.mp4` beside `dilla.rb` and replaces that
 pair on every run, since a render is replaceable and no new file or folder appears. Set
@@ -35,7 +39,7 @@ Endless random playback remains available with `--play`; a random finite take re
 explicit with `--render`. Named options such as `--progression`, `--arp`, `--voice` or
 `--drums` continue to choose exactly what they name.
 
-Bare MASTER `/play` renders and plays this same eight-section Blue Hour composition,
+Bare MASTER `/play` renders and plays this same showcase arrangement,
 without encoding a video. This keeps the interactive audition and `ruby dilla.rb` on the
 same musical arrangement and the same section-level drum and instrument effects.
 A named `/play progression N` request remains a single progression, at 92 BPM unless
