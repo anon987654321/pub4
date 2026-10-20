@@ -54,6 +54,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_gate.rb\" record",
+            "statusMessage": "Noting the edit",
+            "timeout": 10
+          },
+          {
+            "type": "command",
             "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ROOT=\"$(git rev-parse --show-toplevel)\" && ruby \"$ROOT/MASTER/tools/rails/build_all_css.rb\";; esac; } 2>/dev/null || true",
             "statusMessage": "Rebuilding app CSS",
             "timeout": 900
@@ -82,9 +88,27 @@
         "hooks": [
           {
             "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_gate.rb\"",
+            "statusMessage": "Judging what you changed before you finish",
+            "timeout": 240
+          },
+          {
+            "type": "command",
             "command": "test -f \"$HOME/.claude/hooks/speak_reply.rb\" && ruby \"$HOME/.claude/hooks/speak_reply.rb\" || true",
             "statusMessage": "Speaking the reply",
             "timeout": 120
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/session_law_context.rb\"",
+            "statusMessage": "Loading the constitution",
+            "timeout": 20
           }
         ]
       }
