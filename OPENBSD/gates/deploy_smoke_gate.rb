@@ -40,6 +40,7 @@ def check_relayd(failures)
     inventory = JSON.parse(File.read(master_json))
     if (master_entry = inventory.dig("master_face"))
       master_port = master_entry.fetch("port")
+
       failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
       failures << "relayd: master missing http /up check" unless relayd.include?("forward to <master> port #{master_port} check http \"/up\"")
     end
@@ -99,6 +100,7 @@ def check_master_rc(failures, rc_text = (File.read(MASTER_RC) if File.file?(MAST
   unless requests.any? { |path, _| public_paths.include?(path.split("?").first) }
     failures << "rc.d/master: no warmup request asks a path AuthTier serves without a token (#{public_paths.join(' ')})"
   end
+
   requests.each do |path, line|
     failures << "rc.d/master: warmup #{path} carries a credential" if line.match?(/token=|Authorization:|X-Token/i)
     failures << "rc.d/master: warmup #{path} needs auth since the tier gate" if path.start_with?("/chat/metrics")
@@ -116,6 +118,7 @@ def check_apps_production(failures)
     text += "\n#{File.read(baseline)}" if text.include?("production_baseline") && File.file?(baseline)
     domain = metadata.fetch("domain")
     failures << "#{name}: production.rb missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
+
     failures << "#{name}: production.rb has force_ssl" if text.match?(/\bconfig\.force_ssl\s*=\s*true\b/)
     failures << "#{name}: production.rb missing host #{domain}" unless text.match?(/\b#{Regexp.escape(domain)}\b/)
     # Fix: /up check was performance theater (matching /upload)
@@ -145,6 +148,7 @@ def check_master_web(failures)
   end
 
   master_web_root = File.join(ROOT, "RAILS", "master")
+
   [
     File.join(master_web_root, "public/face.runtime.js"),
     File.join(master_web_root, "lib/tasks/face_runtime.rake"),
@@ -170,6 +174,7 @@ def check_operator(failures)
   if File.file?(openbsd)
     text = File.read(openbsd)
     failures << "OPERATOR.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
+
     failures << "OPERATOR.sh: default deploy must run sync/apply path" unless text.match?(/""\)\s*\n\s*deploy_live/m)
   else
     failures << "missing canonical OpenBSD deploy script"

@@ -637,8 +637,6 @@ ALL_DOMAINS=(
   amberapp.art
 )
 
-
-
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 deploy_live() {

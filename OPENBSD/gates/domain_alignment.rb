@@ -68,8 +68,10 @@ module Deploy
         expected_apps = Inventory.new(root: ROOT.to_s).apps.to_h do |app|
           [app.name, { domain: app.domain, port: app.port }]
         end
+
         expected_apps.each do |name, exp|
           entry = master[:apps][name]
+
           unless entry
             result.fail("deploy_inventory.json missing #{name}")
             next
@@ -77,6 +79,7 @@ module Deploy
           result.fail("deploy_inventory.json domain mismatch for #{name}: #{entry['domain']} != #{exp[:domain]}") if entry["domain"] != exp[:domain]
           result.fail("deploy_inventory.json port mismatch for #{name}: #{entry['port']} != #{exp[:port]}") if entry["port"].to_i != exp[:port]
         end
+
         m = master[:master] || {}
         if m["domain"] != "ai.brgen.no" || m["port"].to_i != 53_187
           result.fail("deploy_inventory.json master_face mismatch: #{m['domain']}:#{m['port']}")
@@ -118,6 +121,7 @@ module Deploy
     # would be the kind that passes having measured nothing.
     def live_domains_check(result, registry_domains, relayd_keys)
       declared = extract_constant(REGISTRY.read, "LIVE_DOMAINS")
+
       certified = registry_domains & relayd_keys
 
       unknown = declared - registry_domains
@@ -143,6 +147,7 @@ module Deploy
     # master_face rather than apps.yml.
     def live_apexes(master)
       apps = Inventory.new(root: ROOT.to_s).apps.map(&:domain)
+
       face = master.dig(:master, "domain")
       (apps + [face]).compact.uniq
     rescue StandardError => e
@@ -156,6 +161,7 @@ module Deploy
 
     def parse_registry_subdomains
       text = REGISTRY.read
+
       {
         tv: extract_constant(text, "TV_SUBDOMAINS"),
         dating: extract_constant(text, "DATING_SUBDOMAINS"),

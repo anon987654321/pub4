@@ -27,6 +27,7 @@ def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_vp
   report = { failures: [], warnings: [], skipped: [] }
   gates.each do |gate|
     label = "integrity: #{gate.name.ljust(18)}"
+
     script = File.join(root, gate.path)
     unless File.file?(script)
       report[:warnings] << "#{gate.name}: missing #{gate.path}"
@@ -45,6 +46,7 @@ def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_vp
     # GATE_STRICT_INCONCLUSIVE=1, the same policy the RAILS runner applies.
     if ok == :inconclusive && !%w[1 true yes on].include?(ENV["GATE_STRICT_INCONCLUSIVE"].to_s.downcase)
       report[:skipped] << "#{gate.name}: measured nothing — #{out.lines.first.to_s.strip}"
+
       io.puts "#{label} inconclusive"
     elsif ok == true
       io.puts "#{label} ok"
@@ -53,6 +55,7 @@ def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_vp
       io.puts "#{label} warn"
     else
       report[:failures] << gate.name
+
       io.puts "#{label} fail"
       io.puts out unless out.strip.empty?
       # A box-side gate that cannot connect usually means a pull with no deploy.
@@ -61,6 +64,7 @@ def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_vp
       end
     end
   end
+
   report
 end
 

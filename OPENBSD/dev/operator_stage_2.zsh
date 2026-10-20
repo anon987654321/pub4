@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # Stage 2 of OPENBSD/OPERATOR.sh: services, Rails apps and relayd.
 #
 # This file is sourced by OPERATOR.sh after its shared helpers and deploy facts
 # are loaded. It owns stage_2 and its helpers; it does not execute on source.
-
 
 check_libvips_security() {
   if ! command -v vips >/dev/null 2>&1; then

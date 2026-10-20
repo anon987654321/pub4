@@ -54,6 +54,7 @@ module Deploy
       git sqlite3 psql rcctl relayctl nsd-control acme-client
       vips ffmpeg node npm doas su tee logger newsyslog drill dig sendmail curl wget
     ].freeze
+
     # Ruby arrives by version (OPENBSD/lib/ruby_select.sh lists them); every
     # suffix it may pick is provided by the package of that version.
     RUBY_SUFFIXES = ["4.0", "40", "3.4", "34", "3.3", "33", ""].freeze

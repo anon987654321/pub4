@@ -25,6 +25,7 @@ module Deploy
   # lives in OPENBSD/gates/health_check.rb, which runs as root on vm23.
   class DnsZonesGate
     ROOT = File.expand_path("../..", __dir__)
+
     REGISTRY = File.join(ROOT, "RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
     # Both come from data/dns.yml, which is the file that renders the delegation
     # these checks then verify. A literal here could disagree with the zones it
@@ -69,6 +70,7 @@ module Deploy
     # agree" is the whole question.
     def app_domains_delegate_to_us
       domains = app_domains
+
       return @result.inconclusive!("dns_zones: deploy_inventory.json not parseable") if domains.empty?
 
       resolver = Resolv::DNS.new(nameserver: PUBLIC_RESOLVERS, search: [], ndots: 1)
@@ -95,6 +97,7 @@ module Deploy
         @result.fail("dns_zones: #{domain} (#{app}) resolves to #{addresses.sort.join(', ')}, " \
                      "not #{NAMESERVER} — it is delegated somewhere that is not us")
       end
+
       @result.checked!(1)
     rescue Resolv::ResolvTimeout
       @result.skipped_live("dns_zones: public lookup for #{domain} timed out — not measured, not absent")
@@ -170,6 +173,7 @@ module Deploy
         @result.fail("dns_zones: #{domain} is in LIVE_DOMAINS and #{NAMESERVER} does not answer for " \
                      "#{missing.sort.join(', ')}")
       end
+
       if timed_out.any?
         @result.skipped_live("dns_zones: #{NAMESERVER} timed out for #{timed_out.sort.join(', ')} " \
                              "after #{RETRIES} attempts — not measured, not absent")
@@ -220,6 +224,7 @@ module Deploy
         :ok
       rescue Resolv::ResolvTimeout
         retry if attempts < RETRIES
+
         :timeout
       rescue Resolv::ResolvError
         retry if attempts < RETRIES

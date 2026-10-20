@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # Stage 1 of OPENBSD/OPERATOR.sh: DNS, DNSSEC and TLS.
 #
 # This file is sourced by OPERATOR.sh after its shared helpers and deploy facts
 # are loaded. It owns stage_1 only; it does not execute on source.
-
 
 stage_1() {
   log INFO "Stage 1: DNS and certificates"

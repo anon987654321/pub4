@@ -28,6 +28,7 @@ OptionParser.new do |parser|
                       "brgen, and master, which is a service rather than an apps.yml app") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }
+
   # Everything else in this file needs rcctl, pfctl, /etc/relayd.conf and localhost
   # ports -- i.e. vm23. --public-only is the subset an external checker can actually
   # answer, and it exists so OPENBSD/bin/uptime-check.sh can be a wrapper over this
@@ -35,6 +36,7 @@ OptionParser.new do |parser|
   # and would have gone on naming four after a fifth app shipped.
   parser.on("--public-only", "Only public HTTPS endpoints (runs anywhere, no vm23 tools)") do
     options[:public_only] = true
+
     options[:public] = true
   end
   parser.on("--json", "Emit machine-readable JSON on success") { options[:json] = true }
@@ -55,6 +57,7 @@ MASTER_FACE_UNREADABLE = +""
 # failures, so an absent tool belongs in that list.
 def run(*cmd)
   out, status = Open3.capture2e(*cmd)
+
   [status.success?, out.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?").strip]
 rescue Errno::ENOENT, Errno::EACCES => e
   [false, "#{cmd.first}: #{e.class.name.split("::").last} (this check needs vm23)"]
@@ -68,6 +71,7 @@ end
 
 def load_apps
   body = YAML.safe_load(File.read(APPS_YML)) || {}
+
   body.fetch("apps").to_h do |name, metadata|
     [name.to_s, { "domain" => metadata.fetch("domain").to_s, "port" => Integer(metadata.fetch("port")) }]
   end
@@ -77,6 +81,7 @@ rescue StandardError => e
   # is the only honest answer a health check has when it does not know what it
   # is meant to check.
   APPS_UNREADABLE.replace("apps.yml unreadable: #{e.class}: #{e.message}")
+
   {}
 end
 
@@ -152,6 +157,7 @@ if on_box
 # until a SIGHUP. Packet filter logging was off and every health check passed.
 # The state is in the process title, which is the only place it appears.
 suspended, ps_out = run("/bin/ps", "-axo", "command")
+
 if suspended && ps_out.include?("pflogd: [suspended]")
   failures << "pflogd: suspended — logging is off; move /var/log/pflog aside and SIGHUP (see RUNBOOK)"
 end
@@ -191,9 +197,11 @@ end
     YAML.safe_load_file(File.join(__dir__, "..", "data", "dns.yml")).fetch("nameserver").fetch("ip").to_s
   rescue StandardError => e
     failures << "dns: data/dns.yml nameserver.ip unreadable: #{e.class}: #{e.message}"
+
     ""
   end
   dns_ok = false
+
   if nameserver.empty?
     dns_ok = true
   elsif File.executable?("/usr/bin/dig")
@@ -201,6 +209,7 @@ end
     dns_ok &&= !dns_out.empty? && dns_out.include?("brgen.no")
   elsif (dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) })
     dns_ok, dns_out = run(dns_cmd, "@#{nameserver}", "brgen.no", "SOA")
+
     dns_ok &&= dns_out.include?("brgen.no.")
   end
   unless dns_ok
@@ -224,6 +233,7 @@ end
   # Root-only files, so it degrades to silence rather than a false pass off the
   # box or without doas.
   zone_dir = "/var/nsd/zones/master"
+
   signed = Dir.glob("#{zone_dir}/*.zone.signed")
   if signed.any?
     soon = signed.filter_map do |path|
@@ -231,6 +241,7 @@ end
                                .scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/)
                                .flatten
                                .min
+
       unless expiry
         failures << "dnssec: #{File.basename(path)} contains no readable RRSIG expiry"
         next
@@ -257,6 +268,7 @@ end
       count = File.read(path, encoding: "BINARY").scan(/IN\s+DNSKEY\s+25[67]\s/).size
       [File.basename(path, ".zone.signed"), count] if count > 2
     end
+
     unless overkeyed.empty?
       failures << "dnssec: #{overkeyed.size} zone(s) publish more than one KSK+ZSK pair " \
                   "(#{overkeyed.first(5).map { |z, c| "#{z} #{c}" }.join(', ')})"
@@ -309,6 +321,7 @@ end
 if on_box
   apps.each_key do |name|
     queue_db = "/home/#{name}/app/storage/production_queue.sqlite3"
+
     next unless File.readable?(queue_db)
 
     counts = [
@@ -317,6 +330,7 @@ if on_box
       "SELECT COUNT(*) FROM solid_queue_processes",
     ].map do |sql|
       ok, out = run("/usr/local/bin/sqlite3", "-readonly", queue_db, sql)
+
       ok ? out.strip.to_i : nil
     end
     pending, workers = counts
@@ -350,11 +364,13 @@ if on_box
   require "etc"
   stat_entry = lambda do |path|
     stat = File.stat(path)
+
     owner = begin
       Etc.getpwuid(stat.uid).name
     rescue ArgumentError # a uid with no passwd entry is reported by number
       stat.uid.to_s
     end
+
     { path:, mode: stat.mode, owner: }
   end
   failures.concat(Deploy::PermissionAudit.failures(
@@ -396,22 +412,26 @@ up_checks.each do |name, port|
       deploy = payload["deploy"] || {}
       failures << "master health: deploy.tts_socket false" if deploy["tts_socket"] == false
       failures << "master health: missing deploy.face_runtime_digest" if deploy["face_runtime_digest"].to_s.empty?
+
       booted = Deploy::DeployStamp.booted_mismatch(app: "master", booted: deploy["git_sha"],
                                                    stamped: Deploy::DeployStamp.sha("master"))
       failures << booted if booted
       voice = deploy.dig("voice_policy", "single_voice").to_s
       expected_voice = begin
         require "yaml"
+
         YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "voice.yml"), aliases: true)
             .dig("tts", "single_voice").to_s
       rescue StandardError
         ""
       end
+
       if expected_voice.empty?
         failures << "master health: could not read MASTER/data/voice.yml tts.single_voice"
       elsif voice != expected_voice
         failures << "master health: voice_policy.single_voice=#{voice.inspect} (expected #{expected_voice})"
       end
+
       failures << "master health: checks.tts false" if payload.dig("checks", "tts") == false
     end
   rescue JSON::ParserError
@@ -428,11 +448,13 @@ elsif File.file?("/etc/relayd.conf")
   # before one failure printed, so an unprivileged run reads it through doas, as
   # the rcctl and pfctl checks above already do.
   relayd_path = "/etc/relayd.conf"
+
   relayd_read, relayd_conf = if File.readable?(relayd_path)
                                [true, File.read(relayd_path)]
                              else
                                run(*privileged("/bin/cat", relayd_path))
                              end
+
   if !relayd_read
     failures << "relayd: cannot read #{relayd_path} (#{relayd_conf})"
   elsif !(relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"'))
@@ -440,6 +462,7 @@ elsif File.file?("/etc/relayd.conf")
   end
   (relayd_read ? ready_apps : []).each do |name|
     domain = app_domains[name]
+
     port = app_ports[name]
     failures << "relayd: missing domain route for #{domain}" if domain && !relayd_conf.include?(domain)
     failures << "relayd: missing backend port for #{name}:#{port}" if port && !relayd_conf.include?("port #{port}")
@@ -490,6 +513,7 @@ scope = if options[:public_only]
         else
           mode
         end
+
 if options[:json]
   puts JSON.generate(ok: true, scope: scope, services_checked: required_services, apps_checked: ready_apps)
 else

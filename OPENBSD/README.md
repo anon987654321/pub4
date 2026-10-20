@@ -74,7 +74,6 @@ deploy stamp. `bin/domain_watch.rb` asks the registries which domains are still
 ours, and with `--tls` it asks every public host for its certificate and a
 health answer, the way a visitor would.
 
-
 ## Local manual pages
 
 The deploy and privileged-broker references are under `man/man8/`. From the

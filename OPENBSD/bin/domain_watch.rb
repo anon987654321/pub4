@@ -98,12 +98,14 @@ module Deploy
       Open3.popen2e(*argv, pgroup: true) do |stdin, stream, wait|
         stdin.close
         reader = Thread.new { out << stream.read.to_s }
+
         unless wait.join(seconds)
           begin
             Process.kill("TERM", -wait.pid)
           rescue Errno::ESRCH, Errno::EPERM
             nil
           end
+
           wait.join(2)
         end
         reader.join(2)
@@ -119,6 +121,7 @@ module Deploy
       argv = ["whois"]
       argv += ["-h", server] if server
       argv << domain
+
       # No shell, so a zone name out of the DNS policy is an argument and not a
       # command. The bound is capture_bounded's, in Ruby — an unqualified
       # `timeout` was a cron PATH bug this tree has already shipped, and naming
@@ -175,6 +178,7 @@ module Deploy
   # is fetched first and a TLD missing from it is never called available.
   def query(domain)
     result = whois_query(domain)
+
     return result unless result["state"] == "unknown"
 
     rdap_query(domain) || result
@@ -186,6 +190,7 @@ module Deploy
     @rdap_bases ||= begin
       out = capture_bounded("curl", "-sS", BOOTSTRAP, seconds: 20)
       parsed = JSON.parse(out.to_s)
+
       parsed.fetch("services", []).each_with_object({}) do |(tlds, urls), map|
         tlds.each { |t| map[t] = urls.first }
       end
@@ -193,6 +198,7 @@ module Deploy
       # An empty map is every TLD unresolvable, and silently: the expiry check
       # then reports nothing wrong about domains it never asked about.
       warn "domain_watch: RDAP bootstrap unreachable (#{e.class}: #{e.message.lines.first.to_s.strip}) — no expiry dates this run"
+
       {}
     end
     @rdap_bases[tld]
@@ -213,6 +219,7 @@ module Deploy
     return nil unless body
 
     event = ->(name) { body["events"]&.find { |e| e["eventAction"] == name }&.dig("eventDate") }
+
     {
       "state" => "registered",
       "created" => event.call("registration"),
@@ -246,6 +253,7 @@ module Deploy
       ssl.hostname = host
       ssl.connect
       cert = ssl.peer_cert
+
       ssl.close
       socket.close
       cert
@@ -274,6 +282,7 @@ module Deploy
         cert = certificate_of(host)
         row = { "host" => host, "ns" => dig("NS", apex).sort, "ds" => dig("DS", apex).size,
                 "a" => dig("A", host), "aaaa" => dig("AAAA", host) }
+
         if cert.is_a?(OpenSSL::X509::Certificate)
           row.merge!("not_after" => cert.not_after.utc.to_date.to_s, "days_left" => (cert.not_after.utc.to_date - Date.today).to_i,
                      "covers_host" => covers?(cert, host), "http" => https_status(host))
@@ -305,6 +314,7 @@ module Deploy
       facts = YAML.safe_load_file(RAILS_APPS).fetch("owned_domain_facts", {})
       rows.to_h do |domain, row|
         recorded = facts.dig(domain, "expires")
+
         if row["state"] == "registered" && row["expires"].to_s.empty? && recorded
           row = row.merge("expires" => recorded.to_s, "expires_source" => "RAILS/apps.yml owned_domain_facts; the registry publishes none")
         end
@@ -388,6 +398,7 @@ if $PROGRAM_NAME == __FILE__
     rows.each do |r|
       healthy = r["http"].to_s.match?(/\A[23]/) && r["covers_host"] && r["days_left"].to_i > 14
       bad += 1 unless healthy
+
       puts format("%-26s %-8s ns=%s ds=%d a=%s aaaa=%s %s", r["host"], healthy ? "ok" : "PROBLEM", r["ns"].join(","), r["ds"],
                   r["a"].join(","), r["aaaa"].join(",").then { |v| v.empty? ? "-" : v },
                   r["tls"] ? "tls=#{r['tls']}" : "cert_to=#{r['not_after']} (#{r['days_left']}d) covers=#{r['covers_host']} /up=#{r['http']}")
@@ -432,6 +443,7 @@ if $PROGRAM_NAME == __FILE__
   expiring = Deploy::DomainWatch.expiring(current)
   if expiring.any?
     puts "\nEXPIRING or LAPSED (#{expiring.size}):"
+
     expiring.each do |domain, days, status|
       when_ = if status.to_s.match?(/renewal required|suspended|grace|redemption/i)
                 status.to_s.sub(/\.\z/, "")
@@ -440,6 +452,7 @@ if $PROGRAM_NAME == __FILE__
               else
                 "#{days} day(s) left"
               end
+
       puts "  #{domain.ljust(18)} #{when_}"
     end
     puts "  Renew at the registrar. Nothing in this repo can do it."

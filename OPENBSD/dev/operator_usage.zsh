@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # Command-line usage text for OPENBSD/OPERATOR.sh.
 # Sourced by the entrypoint; defines usage without executing it.
 

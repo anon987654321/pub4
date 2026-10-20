@@ -46,6 +46,7 @@ DRIFT_ROOT = [ENV["PUB4_ROOT"], File.expand_path("../..", __dir__), "/home/dev/p
        .compact
        .find { |dir| File.file?(File.join(dir, "OPENBSD", "etc", "doas.conf")) } ||
        File.expand_path("../..", __dir__)
+
 MIRROR = File.join(DRIFT_ROOT, "OPENBSD")
 
 # Repo mirror => live path, for every file installed byte-for-byte.
@@ -105,6 +106,7 @@ EXCLUDED = %w[etc/relayd.conf etc/mail/smtpd.conf etc/litestream.yml etc/acme-cl
 # such file and no /var/log/pub4 to write into, and the weekly integrity pass has
 # therefore never run once. Every /etc file matched, so the gate said clean.
 CRONTAB_MIRROR = "etc/crontab.vm23"
+
 CRONTAB_KEY = "@root-crontab"
 
 REMOTE = ARGV.include?("--remote")
@@ -123,6 +125,7 @@ end
 # nothing found.
 def doas_run(*command)
   out, status = Open3.capture2e("doas", "-n", *command)
+
   status.success? ? out : nil
 rescue Errno::ENOENT
   nil
@@ -168,6 +171,7 @@ end
 def scheduled_commands(text)
   text.to_s.lines.filter_map do |line|
     line = line.strip
+
     next if line.empty? || line.start_with?("#")
     next unless line =~ %r{\A(?:@\w+|\S+\s+\S+\s+\S+\s+\S+\s+\S+)\s+(.+)\z}
 
@@ -181,6 +185,7 @@ end
 # never drift.
 def verbatim_report(live_map, mirror: MIRROR)
   report = { drift: {}, missing: [], compared: [], unfound: [] }
+
   VERBATIM.each do |repo_rel, live_path|
     repo_path = File.join(mirror, repo_rel)
     # Counted, not skipped: a gate that cannot find the repo compares nothing,
@@ -231,6 +236,7 @@ def report(drift, missing, compared, unfound, cron)
     warn "config-drift: #{name}: DRIFT - the live copy differs from OPENBSD/#{name}"
     warn "  #{detail}"
   end
+
   cron[:absent].each do |command|
     warn "config-drift: #{CRONTAB_MIRROR}: DRIFT - root's crontab does not schedule #{command}"
   end
@@ -261,6 +267,7 @@ def crontab_report(repo_text, live_text)
   live = scheduled_commands(live_text)
   absent = declared - live
   extra = (live - declared).select { |command| command.start_with?("/usr/local/") }
+
   {
     ok: absent.empty? && extra.empty?,
     declared: declared.size,
