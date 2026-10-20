@@ -9,6 +9,7 @@ require "socket"
 require "timeout"
 require "yaml"
 require_relative "../fix/routes_manifest"
+require_relative "../io/exec"
 
 module Operator
   # The post-deploy canary. It answers one question after vps-deploy: is the box
@@ -68,7 +69,7 @@ module Operator
     module Rollback
       module_function
 
-      def advice(root:, git: ->(*argv) { Open3.capture2(*argv, err: File::NULL).first.to_s.strip })
+      def advice(root:, git: ->(*argv) { Master::Io::Exec.capture2(*argv, err: File::NULL).first.to_s.strip })
         current = git.call("git", "-C", root, "rev-parse", "--short", "HEAD")
         previous = git.call("git", "-C", root, "rev-parse", "--short", "HEAD@{1}")
         previous = "unknown" if previous.empty?
@@ -94,7 +95,7 @@ module Operator
         @smoke = smoke
         @flows = flows
         @http = http || method(:fetch)
-        @shell = shell || ->(*argv) { Open3.capture2e(*argv) }
+        @shell = shell || ->(*argv) { Master::Io::Exec.capture2e(*argv) }
         @connect = connect || method(:open_port)
         @apps = load_apps(apps)
       end
@@ -340,7 +341,7 @@ module Operator
     end
 
     def git_out(root, *argv)
-      Open3.capture2("git", "-C", root, *argv, err: File::NULL).first.to_s.strip
+      Master::Io::Exec.capture2("git", "-C", root, *argv, err: File::NULL).first.to_s.strip
     end
 
     def report(results)
