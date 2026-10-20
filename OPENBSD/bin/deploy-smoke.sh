@@ -16,7 +16,6 @@ set -eu
 CURL=${CURL:-curl}
 TIMEOUT=${SMOKE_TIMEOUT:-20}
 MODE=${1:-auto}
-ALLOW_AMBER_DOWN=${ALLOW_AMBER_DOWN:-0}
 ALLOW_BSDPORTS_DOWN=${ALLOW_BSDPORTS_DOWN:-0}
 
 # Usage first, and from a here-document rather than by printing the top of the
@@ -31,7 +30,6 @@ usage: deploy-smoke.sh [--local|--public|auto]
   --public   public HTTPS only
   auto       both when rcctl is present, public otherwise (default)
 
-  ALLOW_AMBER_DOWN=1      do not fail when amber is down
   ALLOW_BSDPORTS_DOWN=1   do not fail when bsdports is down
   SMOKE_TIMEOUT=20        seconds per request
   CURL=curl               the client to use
@@ -89,7 +87,7 @@ check_rcctl() {
   if ! have_rcctl; then
     return 0
   fi
-  case "$svc" in master|brgen|amber|bsdports|relayd) ;; *) fail "refused service target $svc"; return 1 ;; esac
+  case "$svc" in master|brgen|bsdports|relayd) ;; *) fail "refused service target $svc"; return 1 ;; esac
   service_ok=0
   if [ -L /usr/local/sbin/pub4-admin ]; then
     fail "pub4-admin is a symlink; refusing service check"
@@ -135,7 +133,7 @@ mem_hint() {
         *)
           # crude: free under ~80M is tight for a third Rails app
           if [ "$free_m" -lt 80 ]; then
-            warn "low free RAM (~$free_m M) — amber+brgen+master may OOM (see TODO.md multi_app_ram)"
+            warn "low free RAM (~$free_m M) — brgen, bsdports and MASTER may be under pressure (see TODO.md)"
           fi
           ;;
       esac
@@ -208,10 +206,6 @@ esac
 # the usage alone rather than with a banner naming the argument it rejected.
 printf 'deploy-smoke: mode=%s timeout=%ss\n' "$MODE" "$TIMEOUT"
 
-amber_req=1
-if [ "$ALLOW_AMBER_DOWN" = "1" ]; then
-  amber_req=0
-fi
 bsdports_req=1
 if [ "$ALLOW_BSDPORTS_DOWN" = "1" ]; then
   bsdports_req=0
@@ -222,12 +216,10 @@ if [ "$run_local" = "1" ]; then
   mem_hint
   check_rcctl master 1
   check_rcctl brgen 1
-  check_rcctl amber "$amber_req"
   check_rcctl bsdports "$bsdports_req"
   check_rcctl relayd 1
   check_http master_local  "http://127.0.0.1:53187/up" 1
   check_http brgen_local   "http://127.0.0.1:38182/up" 1
-  check_http amber_local   "http://127.0.0.1:61352/up" "$amber_req"
   # The local port is the check that distinguishes a shed app from a relayd
   # failure: a shed app leaves 443 answering and only this port closed.
   check_http bsdports_local "http://127.0.0.1:47312/up" "$bsdports_req"
@@ -237,7 +229,6 @@ if [ "$run_public" = "1" ]; then
   printf '\n== public ==\n'
   check_http master_public  "https://ai.brgen.no/up" 1
   check_http brgen_public   "https://brgen.no/up" 1
-  check_http amber_public   "https://amberapp.art/up" "$amber_req"
   # Required, and it fails today for a reason that is not the app: bsdports.org
   # is delegated to the registrar's parking nameservers, parking terminates no
   # TLS, and the answer is 000 whether or not port 47312 is healthy. A red line
@@ -260,12 +251,11 @@ if [ "$run_public" = "1" ]; then
   # else here proves that tar arrived: /up answers from the app, and propshaft
   # never digests these files, so a sync that dropped public/ would look green.
   #
-  # This exact font 404'd on amber for months while the stylesheet asking for it
-  # returned 200, because it existed only under one app-local public root.
+  # Historical incident: this shared font once 404ed on the retired Amber app
+  # while its stylesheet returned 200. The source mismatch is still linted.
   # Operator::AssetUrlLint catches that source mismatch; this probe still proves
   # the shared asset actually shipped.
   check_http shared_font_brgen "https://brgen.no/fonts/lg.woff2" 1
-  check_http shared_font_amber "https://amberapp.art/fonts/lg.woff2" "$amber_req"
   brgen_html_smoke
 fi
 
