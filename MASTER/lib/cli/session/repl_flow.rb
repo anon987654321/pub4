@@ -89,6 +89,7 @@ module Master
         return if @closed
 
         @closed = true
+        Master::Voice::Bed.stop
         shutdown_interactive_queue! if $stdin.tty? && $stdout.tty?
         stop_background_loop
         save_cli_history

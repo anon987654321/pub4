@@ -15,6 +15,9 @@ tts:
   # The language map takes precedence over single_voice; single_voice is the
   # fallback for text whose language cannot be determined.
   single_voice: christopher
+  # One speaker. When Edge returns nothing for a sentence, that sentence is silent; true lets macOS say or
+  # espeak speak it instead, in a different voice.
+  os_voice_fallback: false
   neural: en-US-ChristopherNeural
   rotation:
     - christopher
@@ -801,24 +804,31 @@ bard:
   rate: "+0%"
   pitch: "-12Hz"
   max_words_per_sentence: 12
+  # A work run is summarised, not read out: fewer, longer-spaced beats of one sentence each.
+  max_sentences_per_beat: 1
+  batch_window_s: 9.0
+  max_events_per_beat: 12
+  max_sentences_per_minute: 6
   # The beat under the bard, dilla's own --play stream (lib/voice/bed.rb). One progression is drawn from
   # `progressions` per start; they are the long extended-chord ones in STUDIO/dilla/data/dilla.json.
   bed:
     enabled: true
+    autostart: true
     tool: STUDIO/dilla/dilla.rb
     volume: 0.22
     player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} -f s16le -ar 44100 -ch_layout stereo -i -"
-    # Prerendered tracks loop at once; a nice'd render tops the cache up to cache_target. Outside the repo.
-    loop_player: "ffplay -nodisp -autoexit -loglevel quiet -loop 0 -af volume=%{volume} %{path}"
+    # Prerendered tracks play at once, one whole progression each and then the next; a nice'd render tops the
+    # cache up to cache_target. Outside the repo.
+    loop_player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} %{path}"
     cache_dir: ~/.master/bed/cache
     cache_target: 4
-    render_args: ["--render", "--no-video", "--bpm", "82", "--beats", "4", "--voicing", "so_what",
-                  "--drums", "dusty_laid_back", "--profile", "dilla_shadow", "--groove", "1.2", "--mode", "pad",
-                  "--patch-per-chord", "--echo", "1,2",
-                  "--vcs", "0.5", "--tape", "3", "--sonitex"]
-    progressions: [9, 11, 12, 13, 14, 15]
-    args: ["--play", "--bpm", "82", "--beats", "4", "--voicing", "so_what", "--drums", "dusty_laid_back",
-           "--profile", "dilla_shadow", "--groove", "1.2", "--mode", "pad", "--patch-per-chord", "--echo", "1,2"]
+    render_args: ["--render", "--no-video", "--bpm", "82", "--beats", "4", "--drums", "dusty_laid_back",
+                  "--profile", "dilla_shadow", "--groove", "1.2", "--improvise", "--vcs", "0.5", "--tape", "4",
+                  "--drum-tape", "heavy", "--sonitex"]
+    progressions: [9, 11, 12, 13, 14, 15, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502,
+                   503, 504, 505]
+    args: ["--play", "--bpm", "82", "--beats", "4", "--drums", "dusty_laid_back", "--profile", "dilla_shadow",
+           "--groove", "1.2", "--improvise", "--vcs", "0.5", "--tape", "4", "--drum-tape", "heavy", "--sonitex"]
 
 voice:
   style: openbsd_dmesg

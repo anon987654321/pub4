@@ -67,6 +67,7 @@ module Master
         terminal_puts
         run_input(initial_message) if initial_message
         @running = true
+        start_bard_bed
         run_face if face_on_start?(initial_message)
         repl_loop
       end
@@ -136,6 +137,17 @@ module Master
 
       def terminal_print(text, io: $stdout)
         terminal_write(io:) { |target| target.print(text); target.flush if target.respond_to?(:flush) }
+      end
+
+      # The bard's beat starts with the session when the bard can be heard; closing the session stops it.
+      def start_bard_bed
+        bard = Master::Voice::Narrator.instance(:bard)
+        return unless bard.enabled? && bard.audible?
+
+        started = Master::Voice::Bed.boot(Master::Voice::Narrator.load_config(:bard)["bed"])
+        Master::Trace::Dmesg.status("bed0", "beat #{started ? "on" : "off"}") unless started.nil?
+      rescue StandardError => e
+        Master::Trace::Dmesg.status("bed0", "beat failed, #{e.class}: #{e.message}")
       end
 
       def init_session_state!

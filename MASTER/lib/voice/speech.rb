@@ -428,7 +428,7 @@ module Master
           return path if path
         end
 
-        return if voice_locked
+        return if voice_locked || !os_voice_fallback?
 
         path = synthesize_espeak(text_str) if espeak_path
         return path if path
@@ -437,6 +437,10 @@ module Master
       ensure
         log_timing("synthesis_total", started_at, text_length: text.to_s.length) if started_at
       end
+
+      # An OS voice (macOS say, espeak) is a second, different speaker; off unless voice.yml tts.os_voice_fallback
+      # is true, so a failed Edge sentence is silent rather than spoken by a stranger.
+      def os_voice_fallback? = Policy.data["os_voice_fallback"] == true
 
       def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
         use_mode = (mode || synthesis_mode).to_s

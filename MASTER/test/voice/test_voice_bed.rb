@@ -27,14 +27,15 @@ class TestVoiceBed < Minitest::Test
     assert_includes Bed.player(config), "volume=#{config["volume"]}"
   end
 
-  def test_a_cached_track_plays_as_a_loop_at_once
+  def test_a_cached_track_plays_once_through_so_the_next_progression_can_follow
     Dir.mktmpdir do |dir|
       track = File.join(dir, "bed one.wav")
       File.write(track, "RIFF")
       argv = Bed.loop_command(config, track)
 
       assert_equal "ffplay", argv.first
-      assert_includes argv, "-loop"
+      assert_includes argv, "-autoexit"
+      refute_includes argv, "-loop"
       assert_equal track, argv.last
     end
   end
@@ -50,12 +51,25 @@ class TestVoiceBed < Minitest::Test
     end
   end
 
+  def test_the_next_track_is_never_the_one_just_played
+    pool = %w[a b c].map { |name| "/cache/#{name}.wav" }
+    Bed.stub(:tracks, pool) do
+      assert(Array.new(30) { Bed.next_track(config, "/cache/a.wav") }.none? { |track| track == "/cache/a.wav" })
+    end
+  end
+
   def test_a_full_cache_renders_nothing_more
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "a.wav"), "RIFF")
 
       assert_equal false, Bed.prerender(config.merge("cache_dir" => dir, "cache_target" => 1))
     end
+  end
+
+  def test_the_bed_boots_with_the_session_only_when_the_data_says_so
+    assert_equal true, config["autostart"]
+    assert_equal false, Bed.boot(nil)
+    assert_equal false, Bed.boot(config.merge("autostart" => false))
   end
 
   def test_a_disabled_or_missing_bed_never_starts

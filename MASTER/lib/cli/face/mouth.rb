@@ -230,6 +230,8 @@ module Master
         end
 
         def direct_speech?
+          return false unless Master::Voice::Speech.os_voice_fallback?
+
           !RUBY_PLATFORM.include?("openbsd") && Master::Voice::Playback.which("say")
         end
 

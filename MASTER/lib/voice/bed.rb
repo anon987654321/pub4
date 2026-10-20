@@ -6,9 +6,10 @@ require "shellwords"
 module Master
   module Voice
     # The beat under the bard: STUDIO/dilla's own music, started with the first spoken line of a task and
-    # stopped when the task ends. It is heard at once: a prerendered track from the cache plays on a loop,
-    # and while the cache is short a nice'd background render adds tracks to it. With an empty cache the
-    # first start streams dilla live (about six seconds to sound) and fills the cache for the next one.
+    # stopped when the task ends. It is heard at once: prerendered tracks from the cache play one after
+    # another, each progression once through and then a different one, never the same twice running. While
+    # the cache is short a nice'd background render adds tracks to it. With an empty cache the first start
+    # streams dilla live (about six seconds to sound) and fills the cache for the next one.
     # Every choice lives in voice.yml under bard.bed: the progressions to draw from, the drums, the groove,
     # the players, the volume and the cache size. A different track is drawn per start.
     module Bed
@@ -20,10 +21,13 @@ module Master
 
         FileUtils.mkdir_p(cache_dir(config))
 
-        started = (track = cached(config)) ? launch(loop_command(config, track)) : launch(live_command(config))
+        started = tracks(config).any? ? rotate(config) : launch(live_command(config))
         prerender(config)
         started
       end
+
+      # At session start, when voice.yml says so (bard.bed.autostart): the beat is there from the first moment.
+      def boot(config) = config.is_a?(Hash) && config["autostart"] == true && start(config)
 
       def launch(argv)
         return false unless argv
@@ -32,7 +36,7 @@ module Master
         options = { out: File::NULL, err: File::NULL, pgroup: true, chdir: workdir }
 
         @pid = Process.spawn(*argv, **Master::Io::ProcessSpawn.options(options))
-        Process.detach(@pid)
+        @waiter = Process.detach(@pid)
         true
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Bed.launch")
@@ -50,11 +54,38 @@ module Master
       def cached(config, random: Random.new) = tracks(config).sample(random:)
 
       def stop
+        @stopping = true
         pid, @pid = @pid, nil
         signal(-pid, "TERM") if pid
       end
 
-      def running? = !@pid.nil? && signal(@pid, 0)
+      def running? = (!@pid.nil? && signal(@pid, 0)) || (@rotation&.alive? == true)
+
+      # Plays the cached tracks in turn, one whole progression each, a different one next, until stopped.
+      def rotate(config)
+        @stopping = false
+        @rotation = Thread.new do
+          Thread.current.report_on_exception = false
+          last = nil
+          until @stopping
+            track = next_track(config, last)
+            break unless track
+
+            last = track
+            play_through(loop_command(config, track))
+          end
+        end
+        true
+      end
+
+      def next_track(config, last)
+        pool = tracks(config)
+        (pool - [last]).sample || pool.first
+      end
+
+      def play_through(argv)
+        launch(argv) ? @waiter.join : @stopping = true
+      end
 
       def signal(pid, name)
         Process.kill(name, pid)

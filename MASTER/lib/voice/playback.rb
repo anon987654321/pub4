@@ -82,7 +82,7 @@ module Master
       end
 
       def native_say_available?
-        which("say") != nil
+        Speech.os_voice_fallback? && which("say") != nil
       end
 
       # CLI speech is opt-in; the browser uses its own TTS transport and

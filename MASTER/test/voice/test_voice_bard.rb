@@ -24,7 +24,7 @@ class TestVoiceBard < Minitest::Test
 
   def test_the_bard_is_on_by_default_over_the_narrators_knobs
     assert_equal true, CONFIG["enabled"]
-    assert_equal Narrator.load_config["max_sentences_per_minute"], CONFIG["max_sentences_per_minute"]
+    assert_equal Narrator.load_config["max_tokens"], CONFIG["max_tokens"], "unset knobs come from the narrator"
   end
 
   def test_the_script_lays_the_bard_over_the_narration_filters
