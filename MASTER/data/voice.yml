@@ -804,6 +804,8 @@ bard:
   rate: "-14%"
   pitch: "-14Hz"
   max_words_per_sentence: 12
+  # Notional model spend before the bard falls back to written templates; 0.05 was gone after fifty calls.
+  max_cost_usd: 0.25
   # A work run is summarised, not read out: fewer, longer-spaced beats of one sentence each.
   max_sentences_per_beat: 1
   batch_window_s: 9.0
