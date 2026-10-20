@@ -166,6 +166,12 @@ detail: [
                    "/narrate on|off — tell the work as one running story, or fall back to plain one-line speech.",
                    "Pacing, caps and the model lane are in data/voice.yml under narration; MASTER_NARRATE=0 turns it off for a run."],
         },
+        "incident" => {
+          summary: "a private dated log of what happened, kept on this machine",
+          detail: ["/incident add <what happened> — keep a dated note; nothing is recorded or sent.",
+                   "/incident list — the notes in order. /incident summary — counts by week, weekday and part of day.",
+                   "The counts describe your notes; they cannot show what was said."],
+        },
         "reload" => {
           detail: ["/reload — restart this session in place so edits to lib/ and data/ take effect.",
                    "The conversation is kept; the beat and speech stop first."],
@@ -303,7 +309,7 @@ detail: [
         "commit" => "change", "deploy" => "change", "snapshot" => "change",
         "orders" => "change", "wishlist" => "change",
         "face" => "interface", "voice" => "interface", "narrate" => "interface", "bard" => "interface",
-        "reload" => "session",
+        "reload" => "session", "incident" => "session",
         "size" => "interface",
         "play" => "media", "android" => "media", "ios" => "media",
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session",

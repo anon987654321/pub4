@@ -52,6 +52,7 @@ module Master
           "narrate" => Command.new { |ctx| dispatch_narrate(ctx:) },
           "bard" => Command.new { |context| dispatch_bard(context:) },
           "reload" => Command.new { |_context| dispatch_reload },
+          "incident" => Command.new { |context| dispatch_incident(context:) },
           "laws" => command(:dispatch_laws, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
@@ -387,6 +388,26 @@ module Master
         end
       rescue StandardError => e
         "narr0 at voice0: failed, #{e.class}: #{e.message}"
+      end
+
+      INCIDENT_USAGE = "incident  /incident add <what happened>  /incident list  /incident summary"
+
+      # A private dated log kept on this machine: /incident add <text>, list, summary. See CLI::IncidentLog.
+      def dispatch_incident(context: nil)
+        verb, text = arg_for(context).split(" ", 2)
+        handlers = { "add" => -> { incident_added(text) }, "list" => -> { incident_notes },
+                     "summary" => -> { IncidentLog.summary } }
+        handler = handlers[verb || "summary"]
+        handler ? handler.call : INCIDENT_USAGE
+      end
+
+      def incident_notes = IncidentLog.list.then { |list| list.empty? ? IncidentLog.summary : list }
+
+      def incident_added(text)
+        entry = IncidentLog.add(text)
+        return "incident0: nothing to keep; say what happened" unless entry
+
+        "incident0: kept #{entry["at"][0, 16].tr("T", " ")}, on this machine only"
       end
 
       # Restart this session in place so edits to lib/ and data/ take effect. The conversation is saved,

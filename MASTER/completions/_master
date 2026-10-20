@@ -22,6 +22,7 @@ _master() {
     'narrate:story narration of what MASTER is doing, on by default'
     'bard:lyrical telling of what MASTER is doing, on by default'
     'reload:restart this session in place'
+    'incident:a private dated log of what happened'
     'orders:the objective ledger'
     'play:render a Dilla progression with a drum pattern and play it'
     'plugin:list and invoke governed plugins'
