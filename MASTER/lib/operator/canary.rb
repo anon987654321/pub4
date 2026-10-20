@@ -14,9 +14,9 @@ module Operator
   # The post-deploy canary. It answers one question after vps-deploy: is the box
   # serving what it should, and if not, exactly what is not.
   #
-  #   ports      amber's and bsdports' ports are the ones a deploy sheds and
-  #              relayd keeps answering TLS without, so a dead app looks like a
-  #              hang; brgen and master are checked with them.
+  #   ports      bsdports is checked locally as well as publicly; relayd can
+  #              still answer TLS while the app port is down, which looks like a
+  #              hang. Brgen and MASTER are checked alongside it.
   #   services   rcctl check for each daemon.
   #   routes     every public GET route from the route manifest: 200..399, under
   #              the latency budget, response headers under relayd's 8 KB limit,
@@ -31,7 +31,7 @@ module Operator
   module Canary
     HEADER_LIMIT_BYTES = 8 * 1024
     DEFAULT_BUDGET_MS = 3000
-    SERVICES = %w[master brgen amber bsdports relayd].freeze
+    SERVICES = %w[master brgen bsdports relayd].freeze
     MASTER = { "domain" => "ai.brgen.no", "port" => 53_187 }.freeze
     SKIPPED_PREFIXES = %w[/internal /rails /cable /admin].freeze
     Reply = Struct.new(:status, :headers, :body, :elapsed_ms, keyword_init: true)
