@@ -59,6 +59,9 @@ require "openssl"
 require "uri"
 require "digest"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/voice/edge_gec"
+
+Master::Voice::EdgeGec.install!
 
 WORKER_VERSION = Digest::SHA256.file(__FILE__).hexdigest[0, 16]
 
