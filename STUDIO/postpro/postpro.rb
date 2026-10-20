@@ -55,6 +55,7 @@ POSTPRO_USAGE = <<~TXT
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
     --measure FILE [--against AFTER]  read texture numbers and palette, or how a grade moved them
     --stock-sheet FILE [--preset NAME] [--output FILE]  one frame through every stock, tiled
+    --gallery [DIR]                   an index.html contact page of every render in DIR
     --set DIR                         which frames repeat, and how far each sits from the set's exposure
     --vocab-check                     are the tables consistent?
     --capabilities                    what this build can do
@@ -3919,6 +3920,23 @@ rescue StandardError => e
   $cli_logger.error "export_lut failed: #{e.message}"
 end
 
+# A contact page of every render in a folder, written beside the renders it lists.
+def write_gallery(directory)
+  require "cgi"
+  folder = File.expand_path(directory)
+  names = Dir.glob(File.join(folder, "postpro_*.{jpg,jpeg,png}")).sort.map { |path| File.basename(path) }
+  cells = names.map do |name|
+    safe = CGI.escapeHTML(name)
+    "<a href='#{safe}' style='width:320px'><img src='#{safe}' style='width:320px;display:block' loading=lazy>" \
+      "<div>#{CGI.escapeHTML(name[0, 52])}</div></a>"
+  end
+  page = "<!doctype html><meta charset=utf-8><title>postpro renders</title>" \
+         "<body style='margin:0;background:#111;color:#ccc;font:12px monospace'>" \
+         "<div style='display:flex;flex-wrap:wrap;gap:4px;padding:4px'>#{cells.join}</div>"
+  File.write(File.join(folder, "index.html"), page)
+  $cli_logger.info "gallery: #{names.size} renders listed in #{File.join(folder, "index.html")}"
+end
+
 # Introspection
 def describe_preset(name)
   p = PRESETS[name.to_sym] or return "unknown preset: #{name}"
@@ -4230,7 +4248,7 @@ def one_shot_mode?
 end
 
 def introspect_mode?
-  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut --fit-grain]).any?
+  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut --fit-grain --gallery]).any?
 end
 
 # Does every preset name things that exist, and does every table have a row for
@@ -4963,6 +4981,8 @@ def run_introspect
     puts describe_preset(name)
   elsif (scan = argv_flag("--fit-grain"))
     puts fit_grain(scan)
+  elsif ARGV.include?("--gallery")
+    write_gallery(argv_flag("--gallery") || Dir.pwd)
   elsif (name = argv_flag("--css-filter"))
     puts css_filter(name.to_sym)
   elsif (name = argv_flag("--export-lut"))

@@ -162,8 +162,9 @@ the others and takes a stock no other picture used.
 
 Other modes grade in bulk. The `--watch` flag grades every new photo that lands in a folder,
 `--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.
-The `--stock-sheet` flag tiles one frame through every stock. Bulk grades, stock sheets and
-LUT exports follow the same rule: grades and stock sheets sit beside their source, and LUT
+The `--gallery` flag writes an `index.html` contact page of every render in a folder, beside the
+renders it lists. The `--stock-sheet` flag tiles one frame through every stock. Bulk grades,
+stock sheets and LUT exports follow the same rule: grades and stock sheets sit beside their source, and LUT
 exports go to the shared dated directory. `POSTPRO_OUTPUT_DIR` chooses another directory; pass
 `--output` where the command accepts an explicit destination.
 
