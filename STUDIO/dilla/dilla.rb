@@ -18,6 +18,7 @@ require "yaml"
 require "zlib"
 require_relative "../output_paths"
 require_relative "../subprocess"
+require_relative "../source_map"
 
 SAMPLE_RATE = 44_100
 MAX_OFFSET = 0.035
@@ -1497,9 +1498,10 @@ end
 
 # Twelve progressions the engine writes from rules rather than from records. Each language is a
 # constraint on harmonic motion, a list of [root offset in semitones, quality] against a tonic:
-# Bach moves by descending fifths and prepared suspensions, Grieg sits a pedal under borrowed
-# mixture, Dilla plane one quality (or hold a slash pedal), Flying Lotus stacks fourths and
-# refuses to resolve, Röyksopp keeps the bass still under suspended chords. The tonic is Bb, the
+# Fifths moves by descending fifths and prepared suspensions, the pedal languages sit a pedal under
+# borrowed mixture, planing moves one quality as a shape (or holds a slash pedal), the quartal
+# languages stack fourths and refuse to resolve, and the static one keeps the bass still under
+# suspended chords. The tonic is Bb, the
 # centre the rest of the catalogue is locked to, so every language shares a key with the curated rotation.
 module Languages
   # Quality => chord-name suffix the Chords parser reads. q4 and q4b have no name of their own:
@@ -1515,18 +1517,18 @@ module Languages
   TONIC = 10 # Bb
 
   SPECS = {
-    'bach_descending_fifths' => [[0, 'min'], [5, 'min'], [10, 'maj'], [3, 'maj7'], [8, 'maj'], [1, 'dim'], [7, 'sus4'], [0, 'min']],
-    'bach_suspension_chain' => [[0, 'min'], [7, 'sus4'], [7, 'maj'], [5, 'min'], [0, 'sus4'], [0, 'min'], [10, 'maj7'], [0, 'min']],
-    'grieg_pedal_mixture' => [[0, 'm9'], [10, 'add9'], [8, 'maj7'], [0, 'm9'], [0, 'm9'], [11, 'maj'], [7, 'min'], [0, 'm9']],
-    'grieg_motif_fall' => [[0, 'min'], [10, 'maj'], [5, 'min'], [0, 'min'], [0, 'min'], [11, 'min'], [7, 'maj7'], [0, 'm9']],
-    'dilla_planing_m9' => [[0, 'm9'], [-2, 'm9'], [-3, 'm9'], [-5, 'm9'], [0, 'm9'], [-2, 'm9'], [-4, 'm9'], [-5, 'm9']],
-    'dilla_maj9_walk' => [[0, 'maj9'], [-1, 'maj9'], [-3, 'maj9'], [-4, 'maj9'], [0, 'maj9'], [-1, 'maj9'], [2, 'maj9'], [0, 'maj9']],
-    'dilla_slash_pedal' => [[0, 'm11'], [5, 'm9'], [3, 'maj9'], [10, 'm9'], [0, 'm11'], [5, 'm9'], [8, 'maj9'], [0, 'm11']],
-    'dilla_chromatic_drop' => [[0, 'm9'], [-1, 'm9'], [-2, 'm9'], [-3, 'm9'], [-4, 'm9'], [-3, 'm9'], [-1, 'm9'], [0, 'm9']],
-    'flylo_quartal_mediants' => [[0, 'q4'], [4, 'q4'], [8, 'q4b'], [4, 'q4'], [-4, 'q4'], [-8, 'q4b'], [3, 'q4'], [8, 'q4']],
-    'flylo_unresolved_stack' => [[0, 'q4b'], [6, 'q4'], [1, 'q4'], [8, 'q4b'], [3, 'q4'], [-2, 'q4'], [7, 'q4b'], [6, 'q4']],
-    'royksopp_static_sus' => [[0, 'sus2'], [0, 'sus4'], [0, 'm9'], [0, 'sus2'], [5, 'sus2'], [0, 'sus4'], [10, 'sus2'], [0, 'm9']],
-    'royksopp_dorian_lift' => [[0, 'm9'], [5, 'maj'], [10, 'sus2'], [0, 'm9'], [2, 'min'], [5, 'maj'], [10, 'add9'], [0, 'm9']]
+    'falling_fifths' => [[0, 'min'], [5, 'min'], [10, 'maj'], [3, 'maj7'], [8, 'maj'], [1, 'dim'], [7, 'sus4'], [0, 'min']],
+    'suspension_chain' => [[0, 'min'], [7, 'sus4'], [7, 'maj'], [5, 'min'], [0, 'sus4'], [0, 'min'], [10, 'maj7'], [0, 'min']],
+    'pedal_mixture' => [[0, 'm9'], [10, 'add9'], [8, 'maj7'], [0, 'm9'], [0, 'm9'], [11, 'maj'], [7, 'min'], [0, 'm9']],
+    'motif_fall' => [[0, 'min'], [10, 'maj'], [5, 'min'], [0, 'min'], [0, 'min'], [11, 'min'], [7, 'maj7'], [0, 'm9']],
+    'planing_m9' => [[0, 'm9'], [-2, 'm9'], [-3, 'm9'], [-5, 'm9'], [0, 'm9'], [-2, 'm9'], [-4, 'm9'], [-5, 'm9']],
+    'maj9_walk' => [[0, 'maj9'], [-1, 'maj9'], [-3, 'maj9'], [-4, 'maj9'], [0, 'maj9'], [-1, 'maj9'], [2, 'maj9'], [0, 'maj9']],
+    'slash_pedal' => [[0, 'm11'], [5, 'm9'], [3, 'maj9'], [10, 'm9'], [0, 'm11'], [5, 'm9'], [8, 'maj9'], [0, 'm11']],
+    'chromatic_drop' => [[0, 'm9'], [-1, 'm9'], [-2, 'm9'], [-3, 'm9'], [-4, 'm9'], [-3, 'm9'], [-1, 'm9'], [0, 'm9']],
+    'quartal_mediants' => [[0, 'q4'], [4, 'q4'], [8, 'q4b'], [4, 'q4'], [-4, 'q4'], [-8, 'q4b'], [3, 'q4'], [8, 'q4']],
+    'unresolved_stack' => [[0, 'q4b'], [6, 'q4'], [1, 'q4'], [8, 'q4b'], [3, 'q4'], [-2, 'q4'], [7, 'q4b'], [6, 'q4']],
+    'static_suspensions' => [[0, 'sus2'], [0, 'sus4'], [0, 'm9'], [0, 'sus2'], [5, 'sus2'], [0, 'sus4'], [10, 'sus2'], [0, 'm9']],
+    'dorian_lift' => [[0, 'm9'], [5, 'maj'], [10, 'sus2'], [0, 'm9'], [2, 'min'], [5, 'maj'], [10, 'add9'], [0, 'm9']]
   }.freeze
 
   def self.names = SPECS.keys
@@ -1538,6 +1540,169 @@ module Languages
   end
 
   def self.all(tonic: TONIC) = SPECS.keys.to_h { |language| [language, progression(language, tonic:)] }
+end
+
+# One tonal centre across a rotation. Progressions come from records in different keys, and a
+# stream that alternates a Bb piece with an E piece (a tritone apart, the furthest there is) has
+# no centre at all. KeyLock moves a progression's roots, and its slash basses, so it rests on the
+# chosen tonic: chord quality, extensions and voicing intent are untouched, so this is
+# transposition and not reharmonisation.
+module KeyLock
+  PITCH = { 'C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, 'B' => 11 }.freeze
+  NAMES = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
+  SYMBOL = %r{\A([A-G][b#]?)([^/]*)(?:/([A-G][b#]?))?\z}
+  # When this share of chords stand over one bass note, that bass is the tonic: a chromatic
+  # descent over a standing pedal rests on the pedal, not on its last chord.
+  PEDAL_SHARE = 0.6
+  # Bb: half the catalogue's curated progressions already rest there.
+  DEFAULT = 'Bb'
+
+  def self.pitch_class(name)
+    match = name.to_s.match(/\A([A-G])([b#]?)\z/) or raise ArgumentError, "note #{name.inspect}"
+    letter, accidental = match.captures
+    (PITCH.fetch(letter) + Chords::ACCIDENTAL.fetch(accidental)) % 12
+  end
+
+  def self.parts(chord)
+    SYMBOL.match(chord.to_s.sub('6/9', '69')) or raise ArgumentError, "chord #{chord.inspect}: no root"
+  end
+
+  def self.tonic(names)
+    parsed = names.map { |chord| parts(chord) }
+    basses = parsed.filter_map { |m| m[3] }
+    if basses.size >= parsed.size * PEDAL_SHARE
+      pedal, count = basses.tally.max_by { |_note, n| n }
+      return pedal if count >= basses.size * PEDAL_SHARE
+    end
+    parsed.last[1]
+  end
+
+  # The fewest semitones, up or down, that bring `from` to `to`; never more than six.
+  def self.interval(from, to)
+    delta = (pitch_class(to) - pitch_class(from)) % 12
+    delta > 6 ? delta - 12 : delta
+  end
+
+  def self.shift(chord, semitones)
+    m = parts(chord)
+    bass = m[3] && "/#{NAMES[(pitch_class(m[3]) + semitones) % 12]}"
+    "#{NAMES[(pitch_class(m[1]) + semitones) % 12]}#{m[2]}#{bass}"
+  end
+
+  def self.lock(names, target = DEFAULT)
+    semitones = interval(tonic(names), target)
+    semitones.zero? ? names : names.map { |chord| shift(chord, semitones) }
+  end
+end
+
+# Which locked progressions share a scale, not only a root. The collection is Bb Dorian/Aeolian
+# with the major third (the bittersweet soul region and its parallel major); a progression's fit
+# is the share of its roots, after the lock, that lie inside it. Roots and not every tone, because
+# an extension may borrow from outside the key for one chord without leaving it.
+module ModalFamily
+  DEGREES = %w[Bb C Db D Eb F Gb G Ab].freeze
+  # 0.80 keeps every progression Dilla himself produced and still excludes the ones that modulate.
+  THRESHOLD = 0.80
+
+  def self.collection = @collection ||= DEGREES.map { |note| KeyLock.pitch_class(note) }
+
+  def self.fit(names, target = KeyLock::DEFAULT)
+    roots = KeyLock.lock(names, target).map { |chord| KeyLock.pitch_class(KeyLock.parts(chord)[1]) }
+    roots.count { |pc| collection.include?(pc) }.fdiv(roots.size)
+  end
+
+  def self.compatible?(names, target = KeyLock::DEFAULT) = fit(names, target) >= THRESHOLD
+end
+
+# A lead and a bass worked out from the chords instead of written down. A voicing fills the
+# harmony; a line moves against it, which is what a player adds. Both return melody events
+# ([beat, midi, length in beats, gain]) the sequencer already plays, and both are seeded, so a take
+# can be played again.
+module Lines
+  # Semitones above the chord root. First match wins. A minor seventh takes Dorian, whose raised sixth
+  # keeps a line from turning mournful; a major seventh takes Lydian, whose raised fourth sounds chosen.
+  SCALES = [
+    [[4, 11], [0, 2, 4, 6, 7, 9, 11]],
+    [[3, 10], [0, 2, 3, 5, 7, 9, 10]],
+    [[4, 10], [0, 2, 4, 5, 7, 9, 10]],
+    [[3, 7], [0, 2, 3, 5, 7, 8, 10]],
+    [[4, 7], [0, 2, 4, 5, 7, 9, 11]]
+  ].freeze
+  PENTATONIC = [0, 3, 5, 7, 10].freeze
+  LEAD_BASE = 60 # the lowest root the line sits on: guide tones then top out near Bb5, over the pad and under the ceiling
+  BASS_LOW = 28
+  BASS_HIGH = 40
+  DENSITY = 0.35 # the chance of a passing tone between the target and the approach
+
+  def self.scale_for(chord)
+    tones = chord[:tones].map { |t| t % 12 }
+    (SCALES.find { |required, _| required.all? { |i| tones.include?(i) } } || [nil, PENTATONIC]).last
+  end
+
+  # The two notes that say which chord this is. Root and fifth are the same in a major, a minor and a
+  # dominant; the third and the seventh differ, so a line states them first.
+  def self.guide_tones(chord)
+    tones = chord[:tones].map { |t| t % 12 }
+    guides = (tones & [3, 4]) + (tones & [10, 11])
+    guides.empty? ? (tones & [2, 5, 7]).first(1) : guides
+  end
+
+  def self.root_note(chord, floor) = floor + ((chord[:pc] - floor) % 12)
+
+  # Three notes over a chord, into the next: a guide tone on the downbeat, a chromatic approach a
+  # semitone from the next target on the offbeat before it, and the next chord's guide tone as the
+  # landing, so the line crosses the change instead of stopping at it.
+  def self.lead(names, beats:, seed:, density: DENSITY)
+    rng = Random.new(seed)
+    chords = names.map { |name| Chords.parse(name) }
+    step = beats / 8.0
+    chords.each_with_index.flat_map do |chord, i|
+      guides = guide_tones(chord)
+      next [] if guides.empty?
+
+      scale = scale_for(chord)
+      root = root_note(chord, LEAD_BASE)
+      target = guides.sample(random: rng)
+      at = i * beats
+      events = [[at, root + target, step * 2.2, 0.34]]
+      if rng.rand < density
+        degree = (scale.index(target) || 0) + [-2, -1, 1, 2].sample(random: rng)
+        octave, index = degree.clamp(-7, 13).divmod(scale.size)
+        events << [at + (step * 3), root + (12 * octave) + scale[index], step, 0.26]
+      end
+      following = chords[(i + 1) % chords.size]
+      next_guides = guide_tones(following)
+      unless next_guides.empty?
+        landing = root_note(following, LEAD_BASE) + next_guides.sample(random: rng)
+        landing -= 12 while landing - (root + target) > 7
+        landing += 12 while (root + target) - landing > 7
+        events << [at + (step * 6.5), landing + (rng.rand < 0.5 ? -1 : 1), step * 0.5, 0.24]
+        events << [at + (step * 7), landing, step * 1.4, 0.32]
+      end
+      events
+    end
+  end
+
+  # The root where the harmony changes, an octave answer in the gap, and a step toward the next root,
+  # long enough to still sound when the next arrives (rests on the one, lands just after it).
+  def self.bass(names, beats:, seed:)
+    rng = Random.new(seed + 1)
+    chords = names.map { |name| Chords.parse(name) }
+    chords.each_with_index.flat_map do |chord, i|
+      root = bass_root(chord[:bass] || chord[:pc])
+      at = i * beats
+      events = [[at + (beats * 0.12), root, beats * 0.55, 0.85]]
+      events << [at + (beats * 0.5), root + 12, beats * 0.2, 0.5] if rng.rand < 0.6
+      target = bass_root(chords[(i + 1) % chords.size][:pc])
+      gap = target - root
+      if gap != 0 && gap.abs <= 7
+        events << [at + (beats * 0.82), root + (gap.positive? ? [1, 2] : [-1, -2]).sample(random: rng), beats * 0.16, 0.6]
+      end
+      events
+    end
+  end
+
+  def self.bass_root(pc) = BASS_LOW + ((pc - BASS_LOW) % 12)
 end
 
 # --- synthesis.rb ---
@@ -2733,6 +2898,74 @@ module Mastering
   def self.report_line(report)
     format('  loudness: %<lufs>.1f LUFS-I, true peak %<tp>.2f dBTP, crest %<crest>.1f dB, correlation %<corr>.2f',
            lufs: report[:lufs], tp: report[:true_peak_db], crest: report[:crest_db], corr: report[:correlation])
+  end
+end
+
+# A listening pass in numbers, so a take can be chosen by something other than the first draw.
+# It scores what a producer hears before anything else: whether the spectrum falls away
+# the way warm music does (tape and vinyl roll the top off, about 4.5 dB an octave), whether any
+# octave pokes out of that line (mud near 300 Hz, a harsh edge near 4 kHz), whether the dynamics
+# breathe and nothing is clipped. Every term is a deviation in decibels, so the score is a number of
+# decibels off the target and lower is better. 0 is the target; the terms are printed so the
+# reason for a score can be read.
+module Critic
+  CENTRES = [50, 100, 200, 400, 800, 1600, 3200, 6400].freeze
+  SLOPE_DB_PER_OCTAVE = -4.5
+  CREST_DB = (9.0..16.0)
+  TRUE_PEAK_CEILING_DB = -1.0
+  WINDOW_SECONDS = 24 # the middle of a long take; a filter bank over five minutes is minutes of Ruby
+
+  def self.band_levels(mono)
+    CENTRES.map do |hz|
+      filter = Tape::Biquad.bandpass(hz, Math.sqrt(2.0))
+      energy = mono.sum { |x| (y = filter.step(x)) * y } / mono.size
+      Mastering.to_db(Math.sqrt([energy, 1e-18].max))
+    end
+  end
+
+  def self.middle(frame)
+    size = frame.first.size
+    limit = WINDOW_SECONDS * SAMPLE_RATE
+    return frame if size <= limit
+
+    from = (size - limit) / 2
+    frame.map { |channel| channel[from, limit] }
+  end
+
+  # Slope of the band levels against octave number, by least squares, and the rms of what is left.
+  def self.fit(levels)
+    xs = levels.each_index.to_a
+    mx = xs.sum.fdiv(xs.size)
+    my = levels.sum / levels.size
+    slope = xs.sum { |x| (x - mx) * (levels[x] - my) } / xs.sum { |x| (x - mx)**2 }
+    residual = xs.map { |x| levels[x] - (my + (slope * (x - mx))) }
+    [slope, Math.sqrt(residual.sum { |r| r * r } / residual.size), residual]
+  end
+
+  def self.measure(frame)
+    window = middle(frame)
+    levels = band_levels(Stereo.fold(window))
+    slope, bumpiness, residual = fit(levels)
+    report = Mastering.report(window)
+    mud = residual[CENTRES.index(400)] - ((residual[CENTRES.index(200)] + residual[CENTRES.index(800)]) / 2.0)
+    edge = residual[CENTRES.index(3200)] - ((residual[CENTRES.index(1600)] + residual[CENTRES.index(6400)]) / 2.0)
+    {
+      tilt: (slope - SLOPE_DB_PER_OCTAVE).abs,
+      bumpiness:,
+      mud: [mud, 0.0].max,
+      edge: [edge, 0.0].max,
+      crest: [CREST_DB.begin - report[:crest_db], report[:crest_db] - CREST_DB.end, 0.0].max,
+      peak: [report[:true_peak_db] - TRUE_PEAK_CEILING_DB, 0.0].max,
+      slope:
+    }
+  end
+
+  def self.score(measures) = measures.except(:slope).values.sum
+
+  def self.line(measures)
+    format('  critic: %<score>.1f dB off (tilt %<slope>.1f dB/oct, bumpy %<bump>.1f, mud %<mud>.1f, edge %<edge>.1f, crest %<crest>.1f, peak %<peak>.1f)',
+           score: score(measures), slope: measures[:slope], bump: measures[:bumpiness], mud: measures[:mud],
+           edge: measures[:edge], crest: measures[:crest], peak: measures[:peak])
   end
 end
 
@@ -6853,6 +7086,7 @@ def run(argv)
     o.on('--effect-rig NAME', 'Apply a named bus-effects rig from data/dilla.json') { |v| options[:effect_rig] = v }
     o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
     o.on('--render', 'Write one random take to a new file under the renders folder instead of playing live') { options[:render] = true }
+    o.on('--map', 'Print the table of contents of this file: every module and class with its line number') { options[:map] = true }
     o.on('--list', 'List progressions, drum patterns, groove profiles, voicings and harmonic languages') { options[:list] = true }
     o.on('--voicing STYLE', Chords::STYLES, "Lay every chord out as #{Chords::STYLES.join(', ')} (default: voice-led)") { |v| Chords.use(v) }
     o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
@@ -6900,6 +7134,9 @@ def run(argv)
     o.on('--sonitex-instances N', Integer, 'Run it 1 to 3 times: one is a colour, three are a sound') { |v| options[:sonitex_instances] = v }
     o.on('--drum-tape LEVEL', %w[light medium heavy], 'Analogue tape saturation on the drum bus') { |v| options[:drum_tape] = v }
     o.on('--vcs [AMOUNT]', Float, 'The summing colour, 0 to 1, on each bus and the master') { |v| options[:vcs] = v || true }
+    o.on('--key-lock NOTE', "Bring every progression to rest on NOTE (e.g. Bb), keeping its chord qualities") { |v| options[:key_lock] = v }
+    o.on('--improvise', 'Add a lead and a bass worked out from the chords (curated sections)') { options[:improvise] = true }
+    o.on('--takes N', Integer, 'With --showcase: render each section N times from different seeds and keep the one the critic scores nearest the target') { |v| options[:takes] = v.clamp(1, 9) }
     o.on('--transpose N', Integer, 'Move every note N semitones before synthesis; tempo and echo timing stay') { |v| options[:transpose] = v }
     o.on('--octaves N', Integer, 'Sugar for --transpose 12*N') { |v| options[:transpose] = 12 * v }
     o.on('--transpose-wrap', 'Fold any note still above 14 kHz down by octaves') { options[:wrap] = true }
@@ -6935,6 +7172,8 @@ def run(argv)
     options[:video] = Dilla::Video.paired_path(options[:out]) if options[:video].nil?
   end
 
+  return puts(Studio::SourceMap.render(__FILE__)) if options[:map]
+
   unless options[:replace] || options[:play] || options[:live] || options[:list] || options[:arp] == 'list'
     outputs = []
     if options[:out]
@@ -6962,7 +7201,9 @@ elsif options[:play]
     play_showcase(data, options)
   elsif options[:list]
     puts 'Progressions:'
-    progressions.each_with_index { |chords, i| puts format('%4d  %s', i, chords.join(' ')) }
+    progressions.each_with_index do |chords, i|
+      puts format('%4d  %s%s', i, chords.join(' '), options[:key_lock] ? format('  [fit %.2f]', ModalFamily.fit(chords, options[:key_lock])) : '')
+    end
     puts
     puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
@@ -7070,12 +7311,22 @@ end
 Plan = Struct.new(:index, :names, :profile, :profile_row, :drums, :seq, :bpm, :beats, :voice, :mode, :search, :piece,
                   :chord_voices, :seed, :buf, :parts, :pick, keyword_init: true)
 
+# Sounds melody events ([beat, midi, length in beats, gain]) into the buffer with one voice.
+def play_line(seq, buf, events, bpm, voice_name)
+  beat_seconds = 60.0 / bpm
+  plucks = events.map do |beat, midi, length, gain|
+    Pluck.new(beat.to_f * beat_seconds, 0.0, midi.to_i, length.to_f * beat_seconds, gain.to_f)
+  end
+  seq.sound(buf, plucks, seq.voice_spec(voice_name))
+end
+
 def plan_pass(data, options, capture: false)
   progressions = data.fetch('progressions')
   seed = options[:seed] || Random.new_seed % 1_000_000
   pick = Random.new(seed)
   index = options[:section_index] || (options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size)))
   names = options[:names] || progressions.fetch(index) { abort "No progression: #{index}" }
+  names = KeyLock.lock(names, options[:key_lock]) if options[:key_lock]
   profile = options[:profile] || data.fetch('default_profile')
   profile_row = data['groove_profiles'].fetch(profile) { abort "No groove profile: #{profile}" }
   drums = options[:drums] || profile_row['drums'] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
@@ -7112,13 +7363,9 @@ def plan_pass(data, options, capture: false)
       seq.render_chords(names, bpm, beats, search:, strum: seq.strum(options[:strum]), voice:,
                         voices: chord_voices && seq.voice_specs(chord_voices))
     end
-  if options[:melody]
-    beat_seconds = 60.0 / bpm
-    plucks = options[:melody].map do |beat, midi, length, gain|
-      Pluck.new(beat.to_f * beat_seconds, 0.0, midi.to_i, length.to_f * beat_seconds, gain.to_f)
-    end
-    seq.sound(buf, plucks, seq.voice_spec(options[:melody_voice] || 'rhodes_mark1'))
-  end
+melody = options[:melody] || (options[:improvise] ? Lines.lead(names, beats:, seed:) : nil)
+play_line(seq, buf, melody, bpm, options[:melody_voice] || 'rhodes_mark1') if melody
+play_line(seq, buf, Lines.bass(names, beats:, seed:), bpm, 'moog_bass') if options[:improvise]
   render_layers(buf, seq, names, bpm, beats, options, search:)
   Plan.new(index:, names:, profile:, profile_row:, drums:, seq:, bpm:, beats:, voice:, mode:, search:, piece:, chord_voices:, seed:, buf:,
            parts: seq.capture, pick:)
@@ -7395,6 +7642,7 @@ def showcase_section(data, options, section, index:, seed:, bpm:)
     scale_pcs: section['scale_pcs'],
     melody: section['melody'],
     melody_voice: section['melody_voice'],
+    improvise: options[:improvise] || section['improvise'],
     layers: section['layers'],
     seed: seed + (index * 97),
     groove: options[:groove] || section['groove'],
@@ -7436,6 +7684,17 @@ end
 
 # Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
 # and drum synthesiser used by ordinary progression renders.
+# Renders `count` takes of one thing, each from its own seed (the first is `seed` itself), and keeps
+# the one the Critic finds nearest the target. One take is returned untouched and unmeasured.
+def best_take(count, seed:)
+  takes = Array.new(count) { |attempt| yield(seed + (attempt * 7919)) }
+  return takes.first if takes.one?
+
+  scored = takes.map { |frame| [Critic.score(Critic.measure(frame)), frame] }
+  puts "  takes: #{scored.map { |score, _| format('%.1f', score) }.join(' / ')} dB off, keeping #{format('%.1f', scored.map(&:first).min)}"
+  scored.min_by(&:first).last
+end
+
 def render_showcase(data, options)
   arrangement_path = options.fetch(:arrangement) { File.join(__dir__, "data", "showcase.json") }
   arrangement = JSON.parse(File.read(arrangement_path))
@@ -7449,7 +7708,9 @@ def render_showcase(data, options)
   sections.each_with_index do |section, index|
     section_bpm = options[:bpm] || section['bpm'] || tempos.fetch(index)
     bpms << section_bpm
-    frame = Chords.styled(options[:voicing] || section['voicing']) { showcase_section(data, options, section, index:, seed:, bpm: section_bpm) }
+frame = best_take(options[:takes] || 1, seed:) do |take_seed|
+  Chords.styled(options[:voicing] || section['voicing']) { showcase_section(data, options, section, index:, seed: take_seed, bpm: section_bpm) }
+end
     if combined.nil?
       combined = frame
     else
@@ -7483,6 +7744,7 @@ def render_showcase(data, options)
               arrangement.fetch('title'))
   puts "  seed=#{seed}; sections=#{sections.size}; tempos=#{bpms.join(',')}"
   puts Mastering.report_line(report) if report
+  puts Critic.line(Critic.measure(combined))
   unless options[:video] == false
     video_out = options[:video] || Dilla::Video.paired_path(out)
     begin
