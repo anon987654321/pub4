@@ -409,15 +409,15 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  # Several Speech stubs at one nesting level, for the opt-in OS voice fallback tests.
+  def stub_speech(stubs, &block)
+    stubs.reduce(block) { |inner, (name, value)| -> { Master::Voice::Speech.stub(name, value) { inner.call } } }.call
+  end
+
   def test_synthesize_falls_back_to_espeak_when_edge_returns_nil
-    Master::Voice::Speech.stub(:edge_tts_available?, true) do
-      Master::Voice::Speech.stub(:synthesize_edge, nil) do
-        Master::Voice::Speech.stub(:espeak_path, "/usr/local/bin/espeak") do
-          Master::Voice::Speech.stub(:synthesize_espeak, "/tmp/fallback.wav") do
-            assert_equal "/tmp/fallback.wav", Master::Voice::Speech.synthesize("hello")
-          end
-        end
-      end
+    stub_speech(os_voice_fallback?: true, edge_tts_available?: true, synthesize_edge: nil,
+                espeak_path: "/usr/local/bin/espeak", synthesize_espeak: "/tmp/fallback.wav") do
+      assert_equal "/tmp/fallback.wav", Master::Voice::Speech.synthesize("hello")
     end
   end
 
@@ -505,16 +505,9 @@ class TestSpeech < Minitest::Test
   end
 
   def test_synthesize_falls_back_to_say_when_edge_and_espeak_miss
-    Master::Voice::Speech.stub(:try_transcendent_synthesis, [false, nil]) do
-      Master::Voice::Speech.stub(:available?, true) do
-        Master::Voice::Speech.stub(:edge_tts_available?, false) do
-          Master::Voice::Speech.stub(:espeak_path, nil) do
-            Master::Voice::Speech.stub(:synthesize_say, "/tmp/say-fallback.mp3") do
-              assert_equal "/tmp/say-fallback.mp3", Master::Voice::Speech.synthesize("hello")
-            end
-          end
-        end
-      end
+    stub_speech(os_voice_fallback?: true, try_transcendent_synthesis: [false, nil], available?: true,
+                edge_tts_available?: false, espeak_path: nil, synthesize_say: "/tmp/say-fallback.mp3") do
+      assert_equal "/tmp/say-fallback.mp3", Master::Voice::Speech.synthesize("hello")
     end
   end
 
@@ -840,7 +833,7 @@ class TestSpeech < Minitest::Test
   def test_no_profile_leaves_the_voice_exactly_as_declared
     with_profile(nil) do
       assert_equal "", Master::Voice::Policy.profile_name
-      assert_equal "+4%", Master::Voice::Policy.default_rate
+      assert_equal "-6%", Master::Voice::Policy.default_rate
       assert_empty Master::Voice::Policy.layers
       refute Master::Voice::Layers.active?
       refute Master::Voice::Policy.fx_enabled?
@@ -919,7 +912,7 @@ class TestSpeech < Minitest::Test
 
   def test_an_unknown_profile_speaks_the_default_voice
     with_profile("no-such-profile") do
-      assert_equal "+4%", Master::Voice::Policy.default_rate
+      assert_equal "-6%", Master::Voice::Policy.default_rate
       refute Master::Voice::Layers.active?
     end
   end

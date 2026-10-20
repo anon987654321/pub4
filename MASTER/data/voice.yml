@@ -65,7 +65,7 @@ tts:
   # slightly brisker (+4%) with neutral pitch; the prior values (-5%, -12Hz)
   # were tuned for the former voice. Christopher's operator_log below is unchanged.
   # operator_log line below was tuned by ear and is untouched.
-  default_rate: "+4%"
+  default_rate: "-6%"
   default_pitch: "+0Hz"
   operator_log:
     voice: christopher
@@ -801,8 +801,8 @@ bard:
   enabled: true
   voice: guy
   style: neutral
-  rate: "+0%"
-  pitch: "-12Hz"
+  rate: "-14%"
+  pitch: "-14Hz"
   max_words_per_sentence: 12
   # A work run is summarised, not read out: fewer, longer-spaced beats of one sentence each.
   max_sentences_per_beat: 1
@@ -822,12 +822,12 @@ bard:
     loop_player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} %{path}"
     cache_dir: ~/.master/bed/cache
     cache_target: 4
-    render_args: ["--render", "--no-video", "--bpm", "82", "--beats", "4", "--drums", "dusty_laid_back",
+    render_args: ["--render", "--no-video", "--bpm", "92", "--beats", "4", "--drums", "dusty_laid_back",
                   "--profile", "dilla_shadow", "--groove", "1.2", "--improvise", "--vcs", "0.5", "--tape", "4",
                   "--drum-tape", "heavy", "--sonitex"]
     progressions: [9, 11, 12, 13, 14, 15, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502,
                    503, 504, 505]
-    args: ["--play", "--bpm", "82", "--beats", "4", "--drums", "dusty_laid_back", "--profile", "dilla_shadow",
+    args: ["--play", "--bpm", "92", "--beats", "4", "--drums", "dusty_laid_back", "--profile", "dilla_shadow",
            "--groove", "1.2", "--improvise", "--vcs", "0.5", "--tape", "4", "--drum-tape", "heavy", "--sonitex"]
 
 voice:

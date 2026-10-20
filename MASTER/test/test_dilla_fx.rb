@@ -43,7 +43,8 @@ class TestDillaFx < Minitest::Test
     assert_equal [:christopher], Policy.rotation_keys
     assert_equal :christopher, Policy.language_voices.fetch("en")
     assert_equal :christopher, Master::Voice::Speech.default_voice if ENV["MASTER_TTS_VOICE"].to_s.empty?
-    assert_equal "+4%", Policy.default_rate
+    # Unhurried by operator order, 2026-10-20.
+    assert_equal "-6%", Policy.default_rate
     assert_equal "+0Hz", Policy.default_pitch
     %w[single_voice neural].each { |key| refute_match(/jenny/i, Policy::FALLBACK.fetch(key)) }
     refute_includes Policy::FALLBACK.fetch("rotation"), "jenny"
