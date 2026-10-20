@@ -64,6 +64,7 @@ module Lora
       rx, ry = spot.rx * w, spot.ry * h
       pad = [rx, ry].max * 2.5
       left = (cx - pad).floor.clamp(0, w - 1)
+
       top = (cy - pad).floor.clamp(0, h - 1)
       box_w = (cx + pad).ceil.clamp(0, w) - left
       box_h = (cy + pad).ceil.clamp(0, h) - top
@@ -93,6 +94,7 @@ module Lora
       image = Vips::Image.new_from_file(input).autorot
       image = image[0..2] if image.bands > 3
       specs.map { parse(_1) }.each { |spot| image = heal(image, spot) }
+
       image.write_to_file(output, Q: 97)
       puts "ok: #{specs.size} spot(s) healed -> #{output}"
     end

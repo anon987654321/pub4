@@ -18,6 +18,7 @@ require_relative "../../atomic_write"
 # provider's moving "latest" pointer, so a hardware/rate change requires a pin review.
 module Preflight
   IMAGE_EXT = %w[.jpg .jpeg .png .webp].freeze
+
   MIN_IMAGES = 10
   FLOOR_SHORT_EDGE = 512
   PREFERRED_SHORT_EDGE = 1024
@@ -64,6 +65,7 @@ module Preflight
     File.open(path, "rb") do |file|
       head = file.read(32).to_s
       return png_size(head) if head.start_with?("\x89PNG".b)
+
       return jpeg_size(file) if head.start_with?("\xFF\xD8".b)
       return webp_size(head) if head[0, 4] == "RIFF" && head[8, 4] == "WEBP"
     end
@@ -116,6 +118,7 @@ module Preflight
     problems = []
     warnings = []
     problems << "#{images.length} image(s); Replicate recommends at least #{MIN_IMAGES}" if images.length < MIN_IMAGES
+
     check_sizes(images, problems, warnings)
     check_captions(dir, images, trigger, problems, warnings)
     check_duplicates(images, warnings)
@@ -151,6 +154,7 @@ module Preflight
       warnings << "#{name}: names #{text[IDENTITY_WORDS].inspect}; identity rides the token" if text.match?(IDENTITY_WORDS)
       warnings << "#{name}: lacks the trigger #{trigger.inspect}" unless text.downcase.include?(trigger.downcase)
     end
+
     stems = images.map { |path| File.basename(path, ".*") }
     Dir.glob(File.join(dir, "*.txt")).each do |path|
       warnings << "#{File.basename(path)}: caption without an image" unless stems.include?(File.basename(path, ".txt"))
@@ -245,6 +249,7 @@ module Preflight
   # row only; otherwise the attempt receipt carries the spend.
   def billable_render_rows(rows)
     renders = rows.select { |row| row["kind"] == "render" }
+
     rendered_ids = renders.filter_map do |row|
       id = row["id"].to_s
       id unless id.empty?
@@ -368,6 +373,7 @@ module Preflight
   def unsafe_tar_entries(tar_path)
     unsafe = []
     weight_basenames = {}
+
     File.open(tar_path, "rb") do |file|
       Gem::Package::TarReader.new(file).each do |entry|
         header = entry.header
@@ -382,6 +388,7 @@ module Preflight
         normalized = normalized.sub(/\A(?:\.\/)+/, "")
         normalized = normalized.sub(/\/+\z/, "")
         parts = normalized.split("/")
+
         if normalized.empty? || normalized.start_with?("/") ||
            normalized.match?(/\A[A-Za-z]:/) || name.include?("\\") ||
            name.include?("\0") || parts.any? { |part| part.empty? || part == "." || part == ".." }
@@ -404,6 +411,7 @@ module Preflight
         end
       end
     end
+
     unsafe
   rescue StandardError => error
     ["archive could not be inspected (#{error.class}: #{error.message})"]

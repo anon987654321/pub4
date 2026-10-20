@@ -13,6 +13,7 @@ module Studio
       Tempfile.create(["studio-", ".tmp"], directory, binmode: true) do |tmp|
         tmp.write(content.to_s)
         tmp.flush
+
         tmp.fsync
         tmp.close
         File.chmod(mode, tmp.path)
@@ -27,11 +28,13 @@ module Studio
     # into memory, and a failed copy never replaces a previously valid artifact.
     def copy_atomic(source, destination)
       target = File.expand_path(destination)
+
       directory = File.dirname(target)
       FileUtils.mkdir_p(directory)
       mode = File.file?(target) ? File.stat(target).mode & 0o7777 : 0o640
       Tempfile.create(["studio-copy-", ".tmp"], directory, binmode: true) do |tmp|
         File.open(source, "rb") { |input| IO.copy_stream(input, tmp) }
+
         tmp.flush
         tmp.fsync
         tmp.close
@@ -51,6 +54,7 @@ module Studio
       File.open(path, File::RDWR | File::CREAT, mode) do |file|
         file.binmode
         file.flock(File::LOCK_EX)
+
         begin
           truncate_incomplete_jsonl_tail(file)
           file.seek(0, IO::SEEK_END)
@@ -68,6 +72,7 @@ module Studio
           file.flock(File::LOCK_UN)
         end
       end
+
       path
     end
 

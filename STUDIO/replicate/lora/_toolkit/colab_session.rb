@@ -59,6 +59,7 @@ def sh!(*command)
   # IPython's own formatter crashed while rendering a DNS error and buried it 80
   # lines up. Worth a marker anyone can search for.
   warn ""
+
   warn "=" * 72
   warn "FAILED: #{command.join(' ')}"
   warn "The Python traceback below this only reports that ruby exited non-zero."
@@ -92,6 +93,7 @@ def prepare
   ENV["AI_TOOLKIT_ROOT"] = AI_TOOLKIT.to_s
   abort "warn: no subject at #{SUBJECT_DIR}" unless SUBJECT_DIR.directory?
   [WEIGHTS_DIR, PERSIST].each(&:mkpath)
+
   restrain_the_downloader
   add_swap
   drop_latent_cache
@@ -150,6 +152,7 @@ end
 # a container that does not will fail here harmlessly, and the failure is worth
 # printing because it turns the next OOM from a mystery into a known cause.
 SWAP_PATH = "/content/swapfile"
+
 SWAP_SIZE = "24G"
 
 def add_swap
@@ -193,9 +196,11 @@ end
 # failure, different resource, and much harder to read from the log.
 def restrain_the_downloader
   ENV["HF_HUB_DISABLE_XET"] = "1"
+
   ENV["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
   ENV["HF_HOME"] ||= "/content/hf_cache"
   FileUtils.mkdir_p(ENV["HF_HOME"])
+
   # Says what it SETS, not what it achieves.
   #
   # It used to announce "xet and hf_transfer disabled ... Slower, and it
@@ -209,6 +214,7 @@ def restrain_the_downloader
   # The variables stay because they are correct to set and cost nothing. What
   # changed is that this no longer claims they worked.
   puts "note: requested HF_HUB_DISABLE_XET=1 and HF_HUB_ENABLE_HF_TRANSFER=0."
+
   puts "note: xet has ignored this before — if you still see 'Reconstructing'"
   puts "note: progress bars below, it did, and the transfer is still the fast path."
   puts "note: model cache at #{ENV['HF_HOME']}"
@@ -276,6 +282,7 @@ def install_ai_toolkit
   else
     sh!("git", "clone", "--depth", "1", "https://github.com/ostris/ai-toolkit.git", AI_TOOLKIT.to_s)
   end
+
   # Colab's own torch is CUDA-matched to its driver; a clean venv would pull a
   # second multi-GB one off PyPI that is not. run_ai_toolkit.rb requires a venv
   # python, so it stays a venv — one that can see the image's packages.
@@ -308,6 +315,7 @@ STALE_PINS = %w[scipy albumentations albucore optimum-quanto torchao].freeze
 # the kind of thing that surfaces three hours later as a strange loss curve.
 def install_requirements(pip)
   requirements = AI_TOOLKIT.join("requirements.txt")
+
   puts "run: #{pip} install -r #{requirements} (verbose; several pins predate Colab's Python 3.13)"
   return puts "ok: requirements installed as pinned" if system(pip, "install", "-r", requirements.to_s)
 
@@ -334,6 +342,7 @@ end
 # so anything else in there resolving by relative path still does.
 def relax_pins(requirements, depth = 0)
   out = AI_TOOLKIT.join("requirements_relaxed.txt")
+
   out.write(flatten_requirements(requirements).map { |line| relax_line(line) }.join)
   out
 end
@@ -408,6 +417,7 @@ def checkpoint_nan?(path)
     seen += 1
     break if seen >= 4
   end
+
   false
 # Narrow on purpose. `rescue StandardError` here caught NameError from a missing
 # `require "json"` and reported it as an uninspectable file, so the guard was
@@ -415,6 +425,7 @@ def checkpoint_nan?(path)
 # malformed file is a thing to shrug at; a bug in this method is not.
 rescue IOError, SystemCallError, JSON::ParserError => e
   warn "note: could not inspect #{path.basename} (#{e.class}: #{e.message}); resuming anyway"
+
   false
 end
 
@@ -435,6 +446,7 @@ end
 # Sampled across several modules because one all-zero tensor could be an honestly
 # dead module; every up tensor being zero could not.
 UP_TENSOR = /lora_up|lora_B/
+
 UP_TENSORS_TO_CHECK = 8
 
 def checkpoint_untrained?(path)
@@ -468,6 +480,7 @@ end
 # because that is how ai-toolkit orders them.
 def local_name(path)
   step = path.basename.to_s[/_(\d+)\.safetensors\z/, 1]
+
   step ? "#{MODEL}_#{step}.safetensors" : "#{MODEL}.safetensors"
 end
 
@@ -485,6 +498,7 @@ def restore_checkpoints
   # trade. They stay; this run just ignores them.
   if ENV["LORA_FRESH"].to_s.strip == "1"
     puts "ok: LORA_FRESH=1 — starting from scratch, ignoring #{PERSIST.glob('*.safetensors').length} checkpoint(s) in Drive"
+
     return
   end
 
@@ -514,10 +528,12 @@ def restore_checkpoints
       puts "warn: numbers are real; the training behind those steps is not."
       puts "warn: delete them from #{PERSIST} once you are sure."
     end
+
     # Not assumed to exist. LORA_COLAB_STAGES lets any stage run on its own, and
     # the directory is only created by prepare, so `restore` alone died on ENOENT
     # from inside FileUtils with a stack trace and no line of its own.
     WEIGHTS_DIR.mkpath
+
     landing = WEIGHTS_DIR.join(local_name(path))
     FileUtils.cp(path, landing)
     if landing.basename != path.basename
@@ -553,6 +569,7 @@ def watch_for_nan(line, state)
       warn ""
       warn "=" * 72
       warn "ABORTING: #{NAN_TOLERANCE} consecutive NaN losses. Nothing is being learned."
+
       warn "A NaN gradient updates no weights, so this would run to completion and"
       warn "save checkpoints containing an untrained adapter."
       warn ""
@@ -560,6 +577,7 @@ def watch_for_nan(line, state)
       warn "fp32/bf16 and its VAE overflows fp16. render_config.rb sets"
       warn "vae_path to madebyollin/sdxl-vae-fp16-fix for exactly this."
       warn ""
+
       warn "If that override IS in the config above and you are still here, the"
       warn "NaN is not being produced now — it is being read off disk. Check the"
       warn "latent-caching line: seven images at 768px take a second or two to"
@@ -567,6 +585,7 @@ def watch_for_nan(line, state)
       warn "was encoded and the cache is from an earlier, broken run. prepare"
       warn "drops that cache every run; LORA_KEEP_LATENT_CACHE turns it off."
       warn "=" * 72
+
       return false
     end
   else
@@ -594,11 +613,13 @@ end
 # this has no step in its name at all.
 def checkpoint_step(path)
   each_sampled_tensor(path) { break } # opens and validates the header
+
   header = File.open(path, "rb") do |file|
     length = file.read(8).unpack1("Q<")
     JSON.parse(file.read(length))
   end
   meta = header["__metadata__"] or return nil
+
   value = meta["training_step"] || meta["step"] || meta["steps"]
   value && Integer(value, exception: false)
 rescue IOError, SystemCallError, JSON::ParserError
@@ -621,6 +642,7 @@ def warn_if_already_at_ceiling
   warn "because skip_first_sample means nothing samples until a step completes."
   warn "It takes about ten minutes and produces nothing, and the log reads like a"
   warn "normal run. That has now happened once."
+
   warn ""
   warn "Pick one:"
   warn "  LORA_STEPS=#{reached + 1000}   continue training, keeping what is learnt"
@@ -639,12 +661,14 @@ def train
   # Piped rather than system(), so watch_for_nan can see the loss. The output is
   # re-printed unchanged, so this costs nothing except the ability to stop.
   command = ["sh", SUBJECT_DIR.join("lora").to_s, "--train"]
+
   puts "run: #{command.join(' ')}"
   state = { nan: 0 }
   ok = Dir.chdir(SUBJECT_DIR) do
     IO.popen(command, err: %i[child out]) do |io|
       io.each_line do |line|
         print line
+
         $stdout.flush
         unless watch_for_nan(line, state)
           Process.kill("TERM", io.pid) rescue nil
@@ -652,6 +676,7 @@ def train
         end
       end
     end
+
     $?.success?
   end
   abort "warn: failed: #{command.join(' ')}" unless ok
@@ -673,6 +698,7 @@ end
 # once is twenty-five minutes and a bad seed is worth finding in three.
 def generate
   ENV["LORA_DEVICE"] = "cuda_t4"
+
   ENV["LORA_SKIP_POSTPRO"] = "1"
   ENV["LORA_PROMPT_SET"] = ENV["LORA_PROMPT_SET"].to_s.strip.empty? ? "shoots" : ENV["LORA_PROMPT_SET"]
 
@@ -705,6 +731,7 @@ end
 # --quarantine on judge.rb itself is the destructive-ish option, and it moves.
 def judge_portraits
   judge = Pathname.new(__dir__).join("judge.rb")
+
   return unless judge.file? && OUT_DIR.directory?
 
   puts "run: judging #{OUT_DIR.basename} against the reference envelope"

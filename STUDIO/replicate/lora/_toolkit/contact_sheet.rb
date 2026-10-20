@@ -31,6 +31,7 @@ OptionParser.new do |parser|
   parser.banner = "usage: contact_sheet.rb <dir> [options]"
   parser.on("--out PATH", "output jpg (default <dir>/contact_sheet.jpg)") { |v| options[:out] = v }
   parser.on("--cols N", Integer, "columns (default: near-square)") { |v| options[:cols] = v }
+
   parser.on("--cell N", Integer, "cell size in px (default 512)") { |v| options[:cell] = v }
   parser.on("--gap N", Integer, "gutter in px (default 12)") { |v| options[:gap] = v }
   parser.on("--match STR", "only files whose name contains STR") { |v| options[:match] = v }

@@ -109,6 +109,7 @@ known.each do |frame|
     # rather than the full renders' tens.
     ok = system("vips", "thumbnail", frame, "#{out}[Q=82,strip]", "1280", "--size", "down",
                 out: File::NULL, err: File::NULL) && File.size?(out)
+
     FileUtils.cp(frame, out) unless ok
     installed[catalog_path][key] = true
     puts format("  %-32s -> %s [graded upstream]", key, out.sub("#{ROOT}/", ""))

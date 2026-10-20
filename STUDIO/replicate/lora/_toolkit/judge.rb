@@ -93,6 +93,7 @@ def calibrate(dir, match)
   readings = frames.map { |path| Postpro::Uncanny.read(path.to_s) }
   thresholds = CHECKS.to_h do |metric, spec|
     values = readings.map { |r| r.send(metric) }
+
     # Rounded outward, not to nearest. The file is written to six decimal places,
     # and rounding a floor UP excludes the very image that set it — the first
     # calibration failed two of its own seven reference photographs for exactly
@@ -114,6 +115,7 @@ def calibrate(dir, match)
     #{thresholds.map { |k, v| "  #{k}: #{format('%.6f', v)}" }.join("\n")}
   YAML
   puts "ok: calibrated from #{frames.length} image(s) -> #{THRESHOLDS_FILE}"
+
   thresholds.each { |metric, value| puts format("  %-16s %s %.6f", metric, CHECKS[metric][:direction], value) }
 end
 

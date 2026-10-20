@@ -343,6 +343,7 @@ EXPRESSION_POOL = [
   "mid-laugh candid expression", "a thoughtful downward glance",
   "eyes closed, head slightly tilted", "an unguarded expression caught between two others",
 ].freeze
+
 POSE_POOL = [
   "facing camera directly", "three-quarter turn", "profile turn",
   "looking over one shoulder", "leaning slightly forward", "turning away from the camera",
@@ -351,6 +352,7 @@ WARDROBE_POOL = [
   "wool coat", "simple knit sweater", "plain white shirt", "denim jacket",
   "dark turtleneck", "oversized raincoat", "linen shirt, sleeves rolled", "heavy fisherman's jumper",
 ].freeze
+
 BACKGROUND_POOL = [
   "plain studio backdrop", "fjord shoreline", "Bergen street corner", "cafe window",
   "mountain road", "empty car park at night", "wooden dock in rain",
@@ -503,10 +505,12 @@ end
 # too: the same faces photographed from 45 cm were rated less attractive
 # (d = 0.31) and less trustworthy (d = 0.24) than from 135 cm (PMC3448657).
 SCENARIO_LENSES = %w[50mm 85mm 105mm 135mm].freeze
+
 # Every drawn sitting asks for sharp eyes, the feature portrait ratings follow
 # most closely; see FOCUS_VOCAB. Written sittings keep their own wording.
 SCENARIO_FOCUS = "sharp focus on the nearest eye"
 SCENARIO_DISTANCES = %w[2m 3m 5m].freeze
+
 SCENARIO_FIELDS = {
   expression: [EXPRESSION_POOL, POOL_STRIDES.fetch(:expression)],
   pose: [POSE_POOL, POOL_STRIDES.fetch(:pose)],
@@ -563,6 +567,7 @@ def scenario_problems(conflicts: BACKGROUND_LIGHT_CONFLICTS)
   problems = SCENARIO_FIELDS.filter_map do |field, (pool, stride)|
     "scenario #{field} stride #{stride} cannot visit all #{pool.length} entries" if stride.gcd(pool.length) != 1
   end
+
   conflicts.each { |background, lights| problems.concat(conflict_problems(background, lights)) }
   (SCENARIO_LENSES - LENS_VOCAB.keys).each { |lens| problems << "scenario lens #{lens} is not in LENS_VOCAB" }
   (SCENARIO_DISTANCES - SUBJECT_DISTANCE_VOCAB.keys).each do |distance|
@@ -583,6 +588,7 @@ end
 def scenario_sitting(number)
   pick = SCENARIO_FIELDS.keys.to_h { |field| [field, scenario_pick(field, number - 1)] }
   pick[:lighting] = scenario_light(pick.fetch(:background), number - 1)
+
   {
     "n" => number,
     "side" => "Scenarios",
@@ -609,6 +615,7 @@ end
 # The arm is drawn rather than defaulted: it is half of what makes the frame read
 # as a selfie, and the geometry can be refused with or without it.
 SELFIE_FRAMING = "self-portrait framing, no wide-angle distortion"
+
 # Both eyes, since a selfie meets the lens square on; SCENARIO_FOCUS spends four
 # more tokens on the nearest one, which a budget this full cannot give.
 SELFIE_FOCUS = "both eyes sharp"
@@ -616,6 +623,7 @@ SELFIE_CROPS = ["close on the face", "head and shoulders", "chest up"].freeze
 # The lens follows the crop, so each crop fills its frame from the stated
 # distance with the lens a photographer standing there would carry.
 SELFIE_CROP_LENS = { "close on the face" => "105mm", "head and shoulders" => "85mm", "chest up" => "50mm" }.freeze
+
 SELFIE_GAZES = ["eyes on the lens", "eyes just past the lens", "chin lowered, eyes up", "looking off frame"].freeze
 # Warm faces caught around a laugh rather than posed for one, and no bare
 # "smiling", which collapses to one performed shape. Neutral moments were tried
@@ -625,7 +633,9 @@ SELFIE_MOMENTS = [
   "just after a laugh", "a wide real grin", "laughing at something off frame",
   "a warm half-smile", "amused, about to laugh", "cheeks lifted, eyes bright", "biting back a grin",
 ].freeze
+
 SELFIE_ARMS = ["arm in frame", "no arm in frame", "hand at the jaw"].freeze
+
 SELFIE_PLACES = [
   "parked car", "ferry deck", "unmade bed", "kitchen counter", "bus window seat",
   "front hallway", "rooftop", "under an umbrella", "crowded bar",
@@ -694,6 +704,7 @@ end
 def selfie_sitting(number)
   pick = SELFIE_FIELDS.keys.to_h { |field| [field, selfie_pick(field, number - 1)] }
   light = selfie_light(number - 1)
+
   {
     "n" => number,
     "side" => "Selfies",
@@ -751,6 +762,7 @@ def selfie_problems
   SELFIE_PLACE_LIGHT_CONFLICTS.each do |place, lights|
     problems << "a selfie conflict names an unknown place #{place.inspect}" unless SELFIE_PLACES.include?(place)
     problems << "#{place.inspect} refuses every selfie light" if (SELFIE_LIGHTS - lights).empty?
+
     (lights - SELFIE_LIGHTS).each { |light| problems << "a selfie conflict names an unknown light #{light.inspect}" }
   end
   (SELFIE_LIGHTS - LIGHTING_VOCAB.keys).each { |light| problems << "selfie light #{light} is not in LIGHTING_VOCAB" }

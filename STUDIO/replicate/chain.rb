@@ -103,6 +103,7 @@ module Replicate
           timeout: row["timeout"]
         )
       end
+
       { name: name, description: doc["description"], stages: stages }
     end
 
@@ -115,6 +116,7 @@ module Replicate
     # method defined in replicate.rb would make that impossible.
     def self.problems(chain, capability_for:)
       found = []
+
       stages = chain.fetch(:stages)
 
       stages.each_with_index do |stage, index|
@@ -158,6 +160,7 @@ module Replicate
             found << "#{position} is first and inherits #{what.inspect}, but nothing has run yet"
             next
           end
+
           # The refusal that matters: a stage that expects an image from the one
           # before it, handed to a model with nowhere to put an image.
           # Either spelling. FLUX 1 editors take a single `input_image`; FLUX 2
@@ -287,6 +290,7 @@ module Replicate
       chain.fetch(:stages).each_with_index.map do |stage, index|
         carried = stage.inherits.empty? ? "nothing" : stage.inherits.join(" + ")
         opts = stage.options.empty? ? "" : "  [#{stage.options.map { |k, v| "#{k}=#{v}" }.join(' ')}]"
+
         format("  %2d. %-22s %-38s carries: %s%s",
                index + 1, stage.name.to_s, stage.model.to_s, carried, opts)
       end

@@ -26,6 +26,7 @@ PLAN = JSON.parse(MOUNT.join("kaggle_session.json").read).freeze
 ROOT = Pathname.new(ENV.fetch("LORA_KAGGLE_ROOT", "/kaggle/tmp/lora"))
 SUBJECT_DIR = ROOT.join(PLAN.fetch("subject"))
 TOOLKIT_DIR = ROOT.join("_toolkit")
+
 DATASET_DIR = SUBJECT_DIR.join("dataset")
 WEIGHTS_DIR = SUBJECT_DIR.join("weights", PLAN.fetch("model"))
 OUT_DIR = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s)
@@ -48,6 +49,7 @@ end
 # so the cache goes in the latter.
 def prepare_environment
   abort_unless(!ENV["HF_TOKEN"].to_s.strip.empty?, "HF_TOKEN missing — the notebook did not set it")
+
   ENV["HUGGINGFACE_HUB_TOKEN"] = ENV.fetch("HF_TOKEN")
   ENV["HF_HOME"] = "/kaggle/tmp/hf"
   ENV["AI_TOOLKIT_ROOT"] = AI_TOOLKIT.to_s
@@ -103,6 +105,7 @@ end
 # otherwise, 512 buckets because the budget here is the clock.
 def train
   ENV["LORA_DEVICE"] = "cuda_t4"
+
   ENV["LORA_STEPS"] = PLAN.fetch("steps").to_s
   ENV["LORA_SAMPLE_EVERY"] = PLAN.fetch("sample_every").to_s
   ENV["LORA_SKIP_POSTPRO"] = "1"

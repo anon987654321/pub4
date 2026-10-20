@@ -31,7 +31,7 @@ def parse_options
     presets: %w[portrait],
     limit: 12,
     clean_output: true,
-    dry_run: false
+    dry_run: false,
   }
 
   OptionParser.new do |parser|
@@ -39,6 +39,7 @@ def parse_options
     parser.on("--input-dir DIR") { |value| options[:input_dir] = Pathname.new(value).expand_path }
     parser.on("--output-dir DIR") { |value| options[:output_dir] = Pathname.new(value).expand_path }
     parser.on("--postpro PATH") { |value| options[:postpro] = Pathname.new(value).expand_path }
+
     parser.on("--presets LIST") { |value| options[:presets] = value.split(",").map(&:strip).reject(&:empty?) }
     parser.on("--limit N", Integer) { |value| options[:limit] = value }
     parser.on("--keep-output") { options[:clean_output] = false }

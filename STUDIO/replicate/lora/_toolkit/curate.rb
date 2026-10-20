@@ -35,6 +35,7 @@ module Lora
     # FLUX trains at 512, 768 or 1024 on the short edge. Below 512 there is
     # nothing to train on.
     MIN_SHORT_EDGE = 512
+
     PREFERRED_SHORT_EDGE = 1024
     # Below this a frame is soft. Calibrated against a mobile video: its sharpest
     # frames read about 0.045 and its softest about 0.035, while a still
@@ -53,6 +54,7 @@ module Lora
 
     def self.scan(dir)
       files = Dir[File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}")].sort
+
       files.each_with_index.filter_map do |path, index|
         # autorot, or every phone photograph is measured sideways.
         #
@@ -63,6 +65,7 @@ module Lora
         # and written into the dataset on their side. A LoRA trained on that
         # learns a sideways face.
         image = Vips::Image.new_from_file(path, access: :random).autorot
+
         reading = Postpro::Uncanny.read(path)
         Candidate.new(path: path, width: image.width, height: image.height,
                       texture: reading.texture, clipping: reading.clipping, index: index)
@@ -71,6 +74,7 @@ module Lora
         # rather than dropping silently — a HEIC in a set of JPEGs is the usual
         # cause and it is fixable.
         warn "curate: vips cannot open #{path}, skipped"
+
         nil
       end
     end
@@ -90,6 +94,7 @@ module Lora
         elsif candidate.clipping > BLOWN_CEILING
           format("%.1f%% blown — no information where the highlight was", candidate.clipping)
         end
+
       Verdict.new(candidate: candidate, rejected_for: reason)
     end
 
@@ -104,6 +109,7 @@ module Lora
     # each nth", which is harmless.
     def self.select(verdicts, count:)
       usable = verdicts.select(&:usable?).map(&:candidate)
+
       return usable if usable.size <= count
 
       window = usable.size.to_f / count
@@ -135,6 +141,7 @@ module Lora
     # rather than the thing worth naming carefully.
     def self.pairing_problems(dir, caption_ext: ".txt")
       images = Dir[File.join(dir, "*.{jpg,jpeg,png,webp}")].map { |f| File.basename(f, ".*") }
+
       captions = Dir[File.join(dir, "*#{caption_ext}")].map { |f| File.basename(f, caption_ext) }
 
       problems = []
@@ -144,6 +151,7 @@ module Lora
       (captions - images).sort.each do |stem|
         problems << "#{stem}#{caption_ext}: caption with no image — left behind when the image was removed"
       end
+
       empty = captions.select do |stem|
         path = File.join(dir, "#{stem}#{caption_ext}")
         File.file?(path) && File.read(path).strip.empty?
@@ -158,6 +166,7 @@ module Lora
     # had no human judgement applied to the one field that carries meaning.
     def self.unedited_captions(dir, token:, caption_ext: ".txt")
       stub = caption_stub(token).strip
+
       Dir[File.join(dir, "*#{caption_ext}")].select { |path| File.read(path).strip == stub }
                                             .map { |path| File.basename(path) }.sort
     rescue StandardError
@@ -194,8 +203,10 @@ module Lora
     # aim is to stop the extremes teaching a colour, not to white-balance
     # everything into a studio.
     EXPOSURE_CLAMP = 1.45
+
     CAST_CORRECTION = 0.6
     CAST_CLAMP = 1.25
+
     # Below this channel spread, the colour is left exactly as shot.
     #
     # Exposure is corrected on every image because brightness carries nothing
@@ -242,6 +253,7 @@ module Lora
           else
             (0..2).map do |ch|
               full = target_ratio[ch] / stat[:ratios][ch]
+
               clamp(1.0 + (full - 1.0) * CAST_CORRECTION, CAST_CLAMP)
             end
           end
@@ -261,6 +273,7 @@ module Lora
       image = Vips::Image.new_from_file(path, access: :random).autorot
       means = image.bandsplit.first(3).map(&:avg)
       luma = image.colourspace("b-w").avg
+
       # Ratios rather than absolute channel means, so exposure and white balance
       # are corrected independently instead of one soaking up the other.
       grey = means.sum / 3.0
@@ -283,6 +296,7 @@ module Lora
     def self.report(verdicts, chosen, duplicates: Postpro::FrameSet.near_duplicates(chosen.map(&:path)))
       lines = ["curate: #{verdicts.size} candidate(s)"]
       rejected = verdicts.reject(&:usable?)
+
       unless rejected.empty?
         lines << "curate: #{rejected.size} unusable —"
         rejected.first(12).each do |verdict|
@@ -290,12 +304,14 @@ module Lora
         end
         lines << "  … and #{rejected.size - 12} more" if rejected.size > 12
       end
+
       lines << "curate: chose #{chosen.size}"
       chosen.each do |candidate|
         lines << format("  %-34s %dx%d  %.1fMP  texture %.4f",
                         File.basename(candidate.path), candidate.width, candidate.height,
                         candidate.megapixels, candidate.texture)
       end
+
       duplicates.each do |pair|
         lines << "curate: one moment twice — #{File.basename(pair.first)} ~ #{File.basename(pair.second)} " \
                  "(#{pair.distance}/64 bits differ); keep one"

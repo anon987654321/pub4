@@ -21,6 +21,7 @@ module Studio
                  else
                    raise ArgumentError, "unsupported image type #{File.extname(path)}"
                  end
+
           upload_binary(path, mime:)
         end
 
@@ -57,6 +58,7 @@ module Studio
             file.flush
             file.fsync
             File.chmod(mode, file.path)
+
             file.close
             File.rename(file.path, target)
           end
@@ -81,6 +83,7 @@ module Studio
           end
         end
       end
+
       # LoRA training lifecycle (ostris/flux-dev-lora-trainer): start, poll,
       # fetch weights. Grouped apart from prediction/model-management to keep
       # ReplicateClient itself under the NO_GOD_CLASS public-method ceiling --
@@ -105,6 +108,7 @@ module Studio
           version: nil
         )
           create_model(destination) unless model_exists?(destination)
+
           trainings_uri, body = build_training_request(
             photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:, version:
           )
@@ -135,6 +139,7 @@ module Studio
         def training_weights_url(training)
           training = get_training(training) if training.is_a?(String)
           output = training["output"]
+
           case output
           when Hash
             output["weights"] || output["version"]
@@ -176,6 +181,7 @@ module Studio
         # dies.
         def run(model_id, input, timeout: 600)
           pinned = model_id.split(":", 2)[1]
+
           version = pinned || latest_version(model_id)
           headers = {
             "Prefer" => "wait=#{[timeout, MAX_SYNC_WAIT].min}",
@@ -199,6 +205,7 @@ module Studio
       # A 4xx other than 429 means the request itself is wrong and retrying
       # retries repeat the same failure.
       TransientError = Class.new(StandardError)
+
       # A spend limit. The status codes alone could not tell this apart: a
       # 402 already fell through to the plain raise and was handled correctly
       # by accident, but Replicate also answers 429 when the account is out of
@@ -217,6 +224,7 @@ module Studio
       LORA_TRAINER_VERSION = "26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
       MAX_DOWNLOAD_BYTES = 4 * 1024**3
+
       # Replicate holds a sync request 60 seconds at most; Cancel-After takes
       # 5 seconds to 24 hours.
       MAX_SYNC_WAIT = 60
@@ -273,6 +281,7 @@ module Studio
         rows = []
         while uri && rows.length < remaining
           page = get(uri)
+
           rows.concat(Array(page["results"]))
           uri = page["next"].to_s.empty? ? nil : URI(page["next"])
         end
@@ -337,6 +346,7 @@ module Studio
           write_multipart_body(body, path, boundary, mime:)
           body.flush
           body.rewind
+
           req.body_stream = body
           req["Content-Length"] = body.size.to_s
           data = request(req, uri)
@@ -365,6 +375,7 @@ module Studio
       # or, worse, as a setting silently dropped.
       def input_keys(model_id)
         owner, name = model_id.split("/")
+
         model = get(URI("#{BASE}/models/#{owner}/#{name}"))
         schema = model.dig("latest_version", "openapi_schema",
                            "components", "schemas", "Input", "properties")
@@ -396,12 +407,14 @@ module Studio
         last_error = nil
         attempts.times do |attempt|
           req.body_stream.rewind if req.body_stream&.respond_to?(:rewind)
+
           return attempt_request(req, uri)
         rescue ExhaustedError => e
           # Out of the retry loop entirely, and onto the gate: no wait inside
           # this run makes the account solvent, and the caller needs to know
           # the capability is gone rather than that one call failed.
           warn("replicate quota exhausted: #{e.message}")
+
           raise
         rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
           # GET is safe to retry. Replicate throttling 429 explicitly rejects
@@ -464,12 +477,14 @@ module Studio
       def settle(pred, timeout:)
         start = Time.now
         delay = 1
+
         loop do
           case pred["status"]
           when "succeeded" then return pred
           when "failed" then raise "prediction failed: #{pred['error']}"
           when "canceled" then raise "prediction canceled"
           end
+
           if Time.now - start > timeout
             cancel_prediction(pred["id"])
             raise "prediction timeout after #{timeout}s (canceled)"
@@ -485,16 +500,19 @@ module Studio
         delay = 5
         loop do
           training = get(URI("#{BASE}/trainings/#{id}"))
+
           case training["status"]
           when "succeeded" then return training
           when "failed" then raise "training failed: #{training['error']}"
           when "canceled" then raise "training canceled"
           end
+
           if Time.now - start > timeout
             cancel_training(id)
             raise "training timeout after #{timeout}s (canceled)"
           end
           sleep delay
+
           delay = [delay + 2, 15].min
         end
       end
