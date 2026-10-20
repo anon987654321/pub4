@@ -23,7 +23,10 @@ module Master
           laws = structural_laws(target)
           local = tracked(target).flat_map do |path|
             code = File.read(path, encoding: "UTF-8")
-            laws.flat_map { |law| law.check(code, path:) }.map { |finding| [path, finding[:law].to_s, finding[:message].to_s, []] }
+            laws.flat_map { |law| law.check(code, path:) }.map do |finding|
+              message = finding[:line] ? "line #{finding[:line]}: #{finding[:message]}" : finding[:message].to_s
+              [path, finding[:law].to_s, message, []]
+            end
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []
@@ -229,16 +232,19 @@ module Master
           end
         end
 
-        def initialize(repo_root, path, related: [])
+        def initialize(repo_root, path, related: [], scorecard: nil, co_change_window: 200)
           @root = repo_root
           @path = path
           @related = Array(related)
+          @scorecard = scorecard
+          @co_change_window = Integer(co_change_window)
           @tree = File.join(repo_root, relative(path).split("/").first)
         end
 
         def to_s
-          [surface_section, inventory_section, history_section, file_section, related_section, directory_section, owner_section,
-           reference_section, production_reference_section, requirer_section].compact.join("\n\n")
+          [surface_section, inventory_section, history_section, co_change_section, scorecard_section, file_section,
+           related_section, directory_section, owner_section, reference_section, production_reference_section,
+           requirer_section].compact.join("\n\n")
         end
 
         private
@@ -278,6 +284,42 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "restructure.history", path: @path)
           nil
+        end
+
+        def co_change_section
+          tree = File.basename(@tree)
+          out, status = Master::Io::Exec.capture2e(
+            "git", "-C", @root, "log", "--all", "--format=COMMIT:%H", "--name-only",
+            "-n", @co_change_window.to_s, "--", "#{tree}/",
+          )
+          return "Co-change evidence: INCONCLUSIVE; git history was unavailable." unless status.success?
+
+          commits = out.split(/^COMMIT:/).drop(1).map do |chunk|
+            rows = chunk.lines.map(&:strip).reject(&:empty?)
+            rows.shift
+            rows.select { |path| path.start_with?("#{tree}/") }.uniq
+          end.select { |files| files.size > 1 }
+          focus = [relative(@path), *@related.map { |path| relative(path) }].uniq
+          counts = Hash.new(0)
+          commits.each do |files|
+            selected = files & focus
+            next if selected.empty?
+
+            (files - selected).each { |other| counts[other] += selected.size }
+          end
+          recurring = counts.select { |_path, count| count >= 2 }.sort_by { |path, count| [-count, path] }.first(8)
+          evidence = recurring.empty? ? "no recurring pairs observed; absence is weak evidence" :
+            recurring.map { |path, count| "#{path}=#{count}" }.join(", ")
+          "Co-change evidence (last #{@co_change_window} commits in #{tree}): #{evidence}. Shared decision plus shared owner suggests gathering; a leaking dependency across independent owners suggests decoupling. Co-change alone does not choose the operation."
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "restructure.co_change", path: @path)
+          "Co-change evidence: INCONCLUSIVE (#{e.class})."
+        end
+
+        def scorecard_section
+          return if @scorecard.nil?
+
+          "Measured baseline scorecard: #{@scorecard.inspect}. Unmeasured dimensions: #{Array(@scorecard["unmeasured"]).join(", ")}."
         end
 
         def file_section

@@ -25,6 +25,12 @@ module Master
       FIRST_ROUNDS = 1
       FIRST_KEEPS = 1
       TREES = Contracts::BY_TREE.keys.freeze
+      OPERATION_RISK = {
+        "remove" => 5, "rename" => 4, "relocate" => 4, "merge" => 4,
+        "split" => 3, "defragment" => 3, "decouple" => 3, "hoist" => 2,
+        "flatten" => 2, "reorder" => 2, "simplify" => 2, "reflow" => 1,
+        "recommend" => 1,
+      }.freeze
 
       PROPOSE = <<~TEXT
         Restructure one underlying problem in this tree rather than fixing its findings independently.
@@ -43,15 +49,17 @@ module Master
         Findings:
         %<findings>s
 
-        Candidate transformations:
+        Read-only candidate map. No source has changed during this phase:
+        %<candidate_map>s
+
+        Candidate transformations for the selected problem:
         %<candidate_operations>s
 
-        Any combination of these is allowed across the repository surfaces: defragment scattered concepts; decouple
-        independent concerns; flatten wrappers, nesting and needless directories;
-        merge equivalent logic; split unlike responsibilities; relocate code beside
-        its owner; rename misleading names; reorder for importance; remove redundant
-        material; reflow prose and lines; simplify accidental complexity. Behaviour,
-        meaning and public contracts must not change.
+        Choose exactly one transformation for this commit. Map candidates before writing; score payoff and risk from
+        evidence, compare distinct target paths, and never pad the candidate set with paraphrases. Apply one operation,
+        verify it, and only then use its result as the next step's baseline.
+        The transformation policy below supplies triggers, vetoes, the DRY/KISS decision table, scorecard, and proof.
+        Similarity alone never justifies consolidation. Behaviour, meaning, import paths, and public contracts must not change.
 
         %<transformations>s
 
@@ -102,8 +110,12 @@ module Master
         or leave the tree harder to find one's way in? Does it merge code that only
         looks alike, whose units change for different reasons, or abstract fewer
         than three sites? Does it flatten depth that mirrors a real domain
-        boundary? Approve only a change a maintainer of this code would thank you for.
-        Answer with exactly one line: APPROVE, or REJECT: <reason>.
+        boundary? Does the old public import path survive? Compare the measured scorecard below with the baseline;
+        each measured regression needs an operation-specific justification, while unmeasured dimensions stay inconclusive.
+        A tie keeps the current tree. Approve only a change a maintainer would thank you for.
+        Scorecard evidence: %<scorecard>s
+        Answer with exactly one line: APPROVE: <evidence and reasons any measured regressions are acceptable>, or REJECT: <reason>.
+        A bare APPROVE is invalid. If any measured regression lacks an operation-specific justification, reject.
 
         ```diff
         %<diff>s
@@ -146,7 +158,8 @@ module Master
       # deterministic finding clustering and candidate ordering as the live restructure
       # stage, but never asks the model, writes files, commits, or pushes.
       def preview(target:, run_id: "preview")
-        candidates(target, run_id).map do |problem|
+        ranked_candidate_map(candidates(target, run_id)).map do |row|
+          problem = row.fetch(:problem)
           {
             problem_id: problem.id,
             files: problem.files.map { |path| relative(path) },
@@ -154,6 +167,9 @@ module Master
             candidate_operations: problem.candidate_operations,
             primary_operation: problem.primary_operation,
             confidence: problem.confidence.to_s,
+            payoff: row.fetch(:payoff),
+            risk: row.fetch(:risk),
+            payoff_risk: row.fetch(:ratio),
             evidence_hierarchy: @transformation_plan.evidence_hierarchy,
             domain_adapters: @transformation_plan.domain_adapters,
             smell_catalog: @transformation_plan.smell_catalog,
@@ -165,20 +181,97 @@ module Master
 
       def run_tree(target, run_id, attempts:, rounds:, keeps:)
         kept = []
+        terminal = :limit_reached
         rounds.times do |round|
+          break if kept.size >= keeps
+
+          ranked = ranked_candidate_map(candidates(target, "#{run_id}-#{round}"))
+          if ranked.empty?
+            terminal = :done
+            break
+          end
+          problems = ranked.map { |row| row.fetch(:problem) }
+          candidate_map = render_candidate_map(ranked)
+
           round_kept = []
-          candidates(target, "#{run_id}-#{round}").first(attempts).each do |problem|
+          vetoes = 0
+          problems.first(attempts).each do |problem|
             break if kept.size + round_kept.size >= keeps
 
-            result = attempt(problem)
+            result = attempt(problem, candidate_map:)
             round_kept << result.value! if result&.ok?
+            break if result&.ok?
+            vetoes += 1 if policy_veto?(result)
           end
           kept.concat(round_kept)
-          break if round_kept.empty?
+          if round_kept.empty?
+            terminal =
+              if problems.size > attempts
+                :limit_reached
+              elsif vetoes.positive? && vetoes == problems.size
+                :veto
+              else
+                :plateau
+              end
+            break
+          end
 
           Master::Trace::Dmesg.status("restructure0", "round #{round + 1}, kept #{round_kept.size}, total #{kept.size}")
+          terminal = :limit_reached if kept.size >= keeps || round == rounds - 1
         end
+        if terminal == :limit_reached
+          terminal = :done if candidates(target, "#{run_id}-final").empty?
+        end
+        Master::Trace::Dmesg.status("restructure0", "terminal=#{terminal} kept=#{kept.size}")
+        @bus&.publish("fix_loop:restructure_exit", target: relative(target), state: terminal.to_s.upcase, kept: kept.size)
         kept
+      end
+
+      def ranked_candidate_map(problems)
+        score_min, score_max = @transformation_plan.candidate_map_policy.fetch("score_range").map(&:to_i)
+        Array(problems).map do |problem|
+          signal_count = problem.findings.size + [problem.laws.size - 1, 0].max + [problem.files.size - 1, 0].max
+          payoff = [[signal_count, score_min].max, score_max].min
+          risk = (problem.candidate_operations.map { |operation| OPERATION_RISK.fetch(operation, score_max) }.max || score_max)
+            .clamp(score_min, score_max)
+          { problem:, payoff:, risk:, ratio: payoff.to_f / risk }
+        end.sort_by do |row|
+          [-row.fetch(:ratio), -row.fetch(:payoff), row.fetch(:risk), row.fetch(:problem).id]
+        end
+      end
+
+      # The map is evidence-backed, scored, and read-only. If the tree has fewer
+      # than the requested number of candidates, report the shortfall instead of
+      # inventing filler or repeating the same move under different names.
+      def render_candidate_map(rows)
+        wanted = Integer(@transformation_plan.candidate_map_policy.fetch("minimum_alternatives"))
+        min_paths = Integer(@transformation_plan.candidate_map_policy.fetch("minimum_distinct_target_paths"))
+        distinct_paths = rows.flat_map { |row| row.fetch(:problem).files }.uniq
+        score_max = @transformation_plan.candidate_map_policy.fetch("score_range").last.to_i
+        shown = rows.first(30).map do |row|
+          problem = row.fetch(:problem)
+          findings = problem.findings.map { |path, law, message, _related| "#{relative(path)} #{law} #{message}" }
+          format(
+            "  %s payoff=%d/%d risk=%d/%d ratio=%.2f operation=%s paths=%s evidence=%s",
+            problem.id, row.fetch(:payoff), score_max, row.fetch(:risk), score_max, row.fetch(:ratio),
+            problem.candidate_operations.join(","), problem.files.map { |path| relative(path) }.join(","),
+            findings.join(" | "),
+          )
+        end
+        shortfall = [wanted - rows.size, 0].max
+        path_shortfall = [min_paths - distinct_paths.size, 0].max
+        [
+          "Evidence-backed candidates: #{rows.size}; distinct target paths: #{distinct_paths.size}.",
+          "Requested minimums: #{wanted} candidates and #{min_paths} distinct target paths; shortfalls: #{shortfall} candidates and #{path_shortfall} paths.",
+          "Shortfalls are reported, never padded. Payoff/risk is a deterministic ranking aid, not an equivalence proof.",
+          *shown,
+          (rows.size > shown.size ? "  omitted #{rows.size - shown.size} lower-ranked candidates" : nil),
+        ].compact.join("\n")
+      end
+
+      def policy_veto?(result)
+        result.is_a?(Result) && !result.ok? &&
+          result.message.to_s.match?(/MIXED_COMMIT|BATCH_DELETE|UNALIASED_MOVE|restructure refused|immutable|off limits|outside .*policy|stale read required/i)
       end
 
       def sweep_targets(target)
@@ -227,16 +320,17 @@ module Master
 
       private
 
-      def attempt(problem)
+      def attempt(problem, candidate_map: "")
         path, = problem.findings.first
         tree = relative(path).split("/").first
-        answer = ask(proposal(tree, problem))
+        baseline_scorecard = Restructure::Proof.for(tree, @root).scorecard
+        answer = ask(proposal(tree, problem, scorecard: baseline_scorecard, candidate_map:))
         return if answer.strip == "KEEP"
 
         plan = Restructure::Plan.parse(answer)
         return report(problem, nil, "the answer held no plan") if plan.empty?
 
-        review = ->(diff) { verdict(problem, plan, diff) }
+        review = ->(diff) { verdict(problem, plan, diff, scorecard_before: baseline_scorecard) }
         result = @restructures[tree].call(
           plan,
           message: commit_message(problem, plan),
@@ -246,7 +340,8 @@ module Master
         report(problem, plan, result)
       end
 
-      def proposal(tree, problem)
+      def proposal(tree, problem, scorecard: nil, candidate_map: "")
+        scorecard ||= Restructure::Proof.for(tree, @root).scorecard
         findings = problem.findings.map do |path, rule, message, related|
           related = Array(related).map { |item| relative(item) }.reject { |item| item == relative(path) }
           [
@@ -272,7 +367,11 @@ module Master
           problem_id: problem.id,
           findings:,
           candidate_operations: problem.candidate_operations.join(", "),
-          context: Context.new(@root, problem.files.first, related: problem.files.drop(1)).to_s,
+          candidate_map:,
+          context: Context.new(
+            @root, problem.files.first, related: problem.files.drop(1), scorecard:,
+            co_change_window: @transformation_plan.scorecard_policy.fetch("history_window_commits"),
+          ).to_s,
         )
       end
 
@@ -282,7 +381,15 @@ module Master
         @transformation_plan.refactoring_playbook.fetch(section).map(&).join("\n")
       end
 
-      def verdict(problem, plan, diff)
+      def verdict(problem, plan, diff, scorecard_before: {})
+        tree = relative(problem.files.first).split("/").first
+        scorecard_after = Restructure::Proof.for(tree, @root).scorecard(extra_paths: plan.paths)
+        numeric_delta = scorecard_before.filter_map do |name, value|
+          next unless value.is_a?(Numeric) && scorecard_after[name].is_a?(Numeric)
+
+          [name, scorecard_after[name] - value]
+        end.to_h
+        scorecard_text = "before: #{scorecard_before.inspect}\nafter: #{scorecard_after.inspect}\ndelta: #{numeric_delta.inspect}"
         answer = ask(
           format(
             ATTACK,
@@ -291,10 +398,12 @@ module Master
             path: relative(problem.files.first),
             operations: plan.operations.join(", "),
             summary: plan.summary,
+            scorecard: scorecard_text,
             diff:,
           ),
         ).strip
-        answer.start_with?("APPROVE") ? nil : "review: #{answer.lines.first.to_s.strip[0, 200]}"
+        approval = answer.match(/\AAPPROVE:\s+\S.{19,}\z/)
+        approval ? nil : "review: #{answer.lines.first.to_s.strip[0, 200]}"
       end
 
       def commit_message(problem, plan)

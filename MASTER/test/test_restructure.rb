@@ -103,6 +103,41 @@ class TestRestructure < Minitest::Test
     assert_includes reason, "outside the problem's candidate set"
   end
 
+  def test_plan_rejects_two_ordered_operations_in_one_atomic_restructure
+    plan = Restructure::Plan.parse("OPERATIONS: remove, simplify\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "one transformation per restructure"
+  end
+
+  def test_plan_rejects_multiple_named_deletions
+    plan = Restructure::Plan.parse("OPERATIONS: remove\n=== DELETE MASTER/lib/a.rb\n=== DELETE MASTER/lib/b.rb\n=== END\n")
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "BATCH_DELETE"
+  end
+
+  def test_plan_rejects_mixed_test_and_production_changes
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: mix source and tests
+      OPERATIONS: split
+      === WRITE MASTER/lib/big.rb
+      class Big; end
+      === WRITE MASTER/test/test_big.rb
+      class TestBig; end
+      === END
+    TEXT
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "MIXED_COMMIT"
+  end
+
+  def test_plan_spares_a_production_only_change
+    plan = Restructure::Plan.parse("OPERATIONS: simplify\n=== WRITE MASTER/lib/big.rb\nclass Big; end\n=== END\n")
+
+    assert_nil plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+  end
+
   def test_a_plan_reads_its_writes_deletes_and_summary
     plan = split_plan
 
@@ -291,6 +326,102 @@ class TestRestructure < Minitest::Test
     assert_includes text, "MASTER/lib/user_policy.rb"
   end
 
+  def test_restructure_exit_reports_done_after_a_fresh_empty_scan
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **fields| events << [name, fields] }
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo, bus:)
+    sweep.define_singleton_method(:candidates) { |_target, _run_id| [] }
+
+    result = sweep.run_tree(File.join(@repo, "MASTER"), "empty-scan", attempts: 1, rounds: 1, keeps: 1)
+
+    assert_empty result
+    exit_event = events.find { |name, _fields| name == "fix_loop:restructure_exit" }
+    assert_equal "DONE", exit_event.last.fetch(:state)
+  end
+
+  def test_restructure_exit_reports_a_partial_attempt_budget_as_limit_reached
+    problem_class = Struct.new(:id, :size, :laws, :files, :candidate_operations, :findings, :reason, :confidence, keyword_init: true)
+    path = File.join(@repo, "MASTER/lib/big.rb")
+    problems = 2.times.map do |index|
+      problem_class.new(
+        id: "p#{index}", size: 1, laws: ["GOD_CLASS"], files: [path],
+        candidate_operations: %w[split], findings: [[path, "GOD_CLASS", "line 1: job", []]],
+        reason: "one finding", confidence: :single,
+      )
+    end
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |name, **fields| events << [name, fields] }
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo, bus:)
+    sweep.define_singleton_method(:candidates) { |_target, _run_id| problems }
+    sweep.define_singleton_method(:attempt) { |_problem, candidate_map:| nil }
+
+    sweep.run_tree(File.join(@repo, "MASTER"), "budget-test", attempts: 1, rounds: 1, keeps: 1)
+
+    exit_event = events.find { |name, _fields| name == "fix_loop:restructure_exit" }
+    assert_equal "LIMIT_REACHED", exit_event.last.fetch(:state)
+  end
+
+  def test_restructure_review_rejects_bare_approval
+    problem_class = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true)
+    path = File.join(@repo, "MASTER/lib/big.rb")
+    problem = problem_class.new(
+      id: "p-review", findings: [[path, "GOD_CLASS", "line 1: test finding", []]],
+      files: [path], laws: %w[GOD_CLASS], reason: "one finding",
+      confidence: :single, candidate_operations: %w[split],
+    )
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, operation:| "APPROVE" }
+    sweep = Master::Fix::RestructureSweep.new(agent:, repo_root: @repo)
+    plan = Restructure::Plan.parse("SUMMARY: split Big\nOPERATIONS: split\n=== WRITE MASTER/lib/big.rb\nclass Big; end\n=== END\n")
+
+    result = sweep.send(:verdict, problem, plan, "diff", scorecard_before: {})
+
+    assert_match(/review: APPROVE/, result)
+  end
+
+  def test_restructure_review_accepts_approval_with_evidence
+    problem_class = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true)
+    path = File.join(@repo, "MASTER/lib/big.rb")
+    problem = problem_class.new(
+      id: "p-review", findings: [[path, "GOD_CLASS", "line 1: test finding", []]],
+      files: [path], laws: %w[GOD_CLASS], reason: "one finding",
+      confidence: :single, candidate_operations: %w[split],
+    )
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, operation:|
+      "APPROVE: relevant tests passed, the unchanged import paths are recorded, and the file/line scorecard has no unexplained regression"
+    end
+    sweep = Master::Fix::RestructureSweep.new(agent:, repo_root: @repo)
+    plan = Restructure::Plan.parse("SUMMARY: split Big\nOPERATIONS: split\n=== WRITE MASTER/lib/big.rb\nclass Big; end\n=== END\n")
+
+    assert_nil sweep.send(:verdict, problem, plan, "diff", scorecard_before: {})
+  end
+
+  def test_candidate_map_scores_actual_findings_without_padding
+    big = File.join(@repo, "MASTER/lib/big.rb")
+    problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
+      id: "p1",
+      findings: [[big, "GOD_CLASS", "line 2: two jobs", []]],
+      files: [big],
+      laws: %w[GOD_CLASS],
+      reason: "one finding",
+      confidence: :high,
+      candidate_operations: %w[split],
+    )
+    sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo)
+    ranked = sweep.send(:ranked_candidate_map, [problem])
+    map = sweep.send(:render_candidate_map, ranked)
+    prompt = sweep.send(:proposal, "MASTER", problem, candidate_map: map)
+
+    assert_equal [1, 3], [ranked.first.fetch(:payoff), ranked.first.fetch(:risk)]
+    assert_includes map, "Evidence-backed candidates: 1; distinct target paths: 1"
+    assert_includes map, "shortfalls: 14 candidates and 2 paths"
+    assert_includes prompt, "line 2: two jobs"
+    assert_includes prompt, "No source has changed during this phase"
+  end
+
   def test_proposal_carries_every_playbook_method_and_gate
     big = File.join(@repo, "MASTER/lib/big.rb")
     problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
@@ -303,12 +434,18 @@ class TestRestructure < Minitest::Test
       candidate_operations: %w[split],
     )
     sweep = Master::Fix::RestructureSweep.new(agent: nil, repo_root: @repo)
-    prompt = sweep.send(:proposal, "MASTER", problem)
+    map = sweep.send(:render_candidate_map, sweep.send(:ranked_candidate_map, [problem]))
+    prompt = sweep.send(:proposal, "MASTER", problem, candidate_map: map)
     playbook = Master::Fix::TransformationPlan.new.refactoring_playbook
 
     playbook.fetch("methods").each { |entry| assert_includes prompt, "#{entry.fetch("id")}: #{entry.fetch("action")}" }
     playbook.fetch("gates").each { |gate| assert_includes prompt, gate }
     assert_includes prompt, "Below three sites keep the duplication"
+    assert_includes prompt, "Measured baseline scorecard"
+    assert_includes prompt, "Co-change evidence"
+    assert_includes prompt, "Choose exactly one transformation"
+    assert_includes prompt, "Evidence-backed candidates"
+    assert_includes prompt, "No source has changed during this phase"
   end
 
   def test_each_tree_is_proved_its_own_way
@@ -327,6 +464,37 @@ class TestRestructure < Minitest::Test
     plan = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb\nmodule Takeaway\nend\n=== END\n")
     proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
     assert_includes proof.send(:test_files, plan), engine_test
+  end
+
+  def test_unaliased_move_is_refused
+    write("MASTER/lib/movable.rb", "class Movable\nend\n")
+    write("MASTER/lib/movable_new.rb", "class Movable\nend\n")
+    sh("git", "add", "-A", chdir: @repo)
+    sh("git", "commit", "-m", "movable baseline", chdir: @repo)
+
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: move Movable
+      OPERATIONS: relocate
+      === WRITE MASTER/lib/movable_new.rb
+      class Movable
+      end
+      === DELETE MASTER/lib/movable.rb
+      === END
+    TEXT
+    proof = Restructure::ScriptProof.new(repo_root: @repo, tree: "MASTER")
+    before = proof.baseline(plan)
+    File.delete(File.join(@repo, "MASTER/lib/movable.rb"))
+
+    assert_match(/UNALIASED_MOVE/, proof.failure(plan, before))
+  end
+
+  def test_dead_constant_deletion_is_not_a_move
+    plan = Restructure::Plan.parse("OPERATIONS: remove\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    proof = Restructure::ScriptProof.new(repo_root: @repo, tree: "MASTER")
+    before = proof.baseline(plan)
+    File.delete(File.join(@repo, "MASTER/lib/tiny.rb"))
+
+    assert_nil proof.send(:unaliased_move_failure, plan, before)
   end
 
   def test_a_written_file_must_still_parse_as_what_it_is
