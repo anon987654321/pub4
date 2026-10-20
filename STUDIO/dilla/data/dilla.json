@@ -5106,6 +5106,42 @@
       "program": 89,
       "gain": 10,
       "fallback": "ruby_strings"
+    },
+    "nylon_guitar": {
+      "family": "string",
+      "group": "guitar",
+      "gain": 6,
+      "pick": 0.45,
+      "sustain": 1.4,
+      "tone": 2600,
+      "release": 0.18
+    },
+    "steel_guitar": {
+      "family": "string",
+      "group": "guitar",
+      "gain": 6,
+      "pick": 0.95,
+      "sustain": 2.6,
+      "tone": 6500,
+      "release": 0.25
+    },
+    "muted_guitar": {
+      "family": "string",
+      "group": "guitar",
+      "gain": 8,
+      "pick": 0.6,
+      "sustain": 0.22,
+      "tone": 1800,
+      "release": 0.05
+    },
+    "clean_electric": {
+      "family": "string",
+      "group": "guitar",
+      "gain": 6,
+      "pick": 0.8,
+      "sustain": 3.4,
+      "tone": 4200,
+      "release": 0.3
     }
   },
   "sonitex": {

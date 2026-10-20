@@ -2058,6 +2058,51 @@ module Voices
     end
   end
 
+  # A plucked string, by Karplus-Strong: a burst of noise circulates in a delay line the length of one
+  # period, and each trip round the loop averages neighbouring samples, so the highs die first, as on
+  # a real string. `pick` is how bright the burst is (a nail against a thumb), `sustain` the
+  # seconds the note takes to fall 60 dB, and `tone` a lowpass
+  # standing in for the body and the pickup. A first-order allpass tunes the loop to the fraction of a
+  # sample the averaging would otherwise leave flat. The burst is seeded from the pitch, so a note is
+  # the same note each time it is struck.
+  def self.string(patch, freq, dur, amp)
+    return [] unless audible?(freq)
+
+    release = patch.fetch('release', 0.12)
+    n = ((dur + release) * SAMPLE_RATE).to_i
+    # The two-point average reads the newest sample too, so it delays by half a sample less than the line is long.
+    delay = (SAMPLE_RATE / freq) + 0.5
+    whole = delay.floor
+    return [] if whole < 2
+
+    frac = delay - whole
+    coef = (1.0 - frac) / (1.0 + frac)
+    loop_gain = 10.0**(-3.0 / (freq * patch.fetch('sustain', 2.0)))
+    rng = Random.new(freq.round)
+    pick = patch.fetch('pick', 0.7).clamp(0.05, 1.0)
+    previous = 0.0
+    line = Array.new(whole) { previous += pick * (((rng.rand * 2.0) - 1.0) - previous) }
+    mean = line.sum / line.size
+    line.map! { |x| x - mean }
+    pos = 0
+    ap_in = ap_out = 0.0
+    low = 0.0
+    k = 1.0 - Math.exp(-TAU * patch.fetch('tone', 5000.0) / SAMPLE_RATE)
+    tail = (release * SAMPLE_RATE).to_i
+    Array.new(n) do |i|
+      head = line[pos]
+      averaged = loop_gain * 0.5 * (head + line[(pos + 1) % whole])
+      tuned = (coef * (averaged - ap_out)) + ap_in
+      ap_in = averaged
+      ap_out = tuned
+      line[pos] = tuned
+      pos = (pos + 1) % whole
+      low += k * (head - low)
+      fade = i < n - tail ? 1.0 : (n - i).fdiv(tail)
+      low * amp * 1.5 * fade
+    end
+  end
+
   # One note of the named voice as a Reader. `decay` is the drum voice's own, per step; `step` is
   # a sixteenth of the tempo in seconds and `registration` the organ's weights. The voices that
   # cost the most (moog, rhodes, gated, organ) are read a block at a time; the rest are cheap and
@@ -2071,6 +2116,7 @@ module Voices
     when 'moog' then moog_reader(spec, freq, dur, amp)
     when 'rhodes' then rhodes_reader(spec, freq, dur, amp, velocity)
     when 'dfam' then Reader.of(dfam(spec, freq, dur, amp, decay || spec.fetch('decay', 0.12)))
+    when 'string' then Reader.of(string(spec, freq, dur, amp))
     when 'gated' then gated_reader(spec, freq, dur, amp, step)
     when 'organ' then organ_reader(spec, freq, dur, amp, registration)
     when 'fluid' then raise ArgumentError, "voice #{spec['name'].inspect} is a soundfont voice: the sequencer mixes it, a single note cannot"

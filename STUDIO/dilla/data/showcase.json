@@ -1298,6 +1298,49 @@
       "kit": "kit_dust",
       "voicing": "so_what",
       "improvise": true
+    },
+    {
+      "name": "Nylon Room",
+      "progression": [
+        "Bbm11",
+        "Ebm9",
+        "Dbmaj9",
+        "Abm9",
+        "Bbm11",
+        "Ebm9",
+        "Gbmaj9",
+        "Bbm11"
+      ],
+      "bpm": 76,
+      "beats_per_chord": 4,
+      "voice": "nylon_guitar",
+      "mode": "repeat",
+      "repeat": "dotted_eighth_push",
+      "profile": "dilla_shadow",
+      "drums": "dilla_broken_full",
+      "echo": false,
+      "echo_mix": 0,
+      "echo_feedback": 0,
+      "echo_time_ms": 260,
+      "echo_tail_seconds": 0,
+      "mix": {
+        "kick": -8,
+        "snare": -9,
+        "clap": -15,
+        "hat": -13,
+        "chords": -4,
+        "perc": -15
+      },
+      "melody_voice": "steel_guitar",
+      "sonitex": "subtle",
+      "sonitex_instances": 1,
+      "vcs": 0.3,
+      "echo_reverb": 0,
+      "gate": 0.9,
+      "effect_rig": "dilla_night",
+      "kit": "kit_dust",
+      "improvise": true,
+      "voicing": "drop2"
     }
   ]
 }
