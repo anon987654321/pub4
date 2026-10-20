@@ -161,7 +161,7 @@ module Master
           painted = body.each_with_index.map do |line, i|
             "\e[#{i + 1};1H#{line}\e[K"
           end.join
-          cursor_column = [draft.length + operator_prompt.length + 1, cols].min
+          cursor_column = [draft.length + operator_prompt.length + 2, cols].min
           "\e[?25l#{painted}\e[#{prompt_row};#{cursor_column}H\e[?25h"
         end
 
