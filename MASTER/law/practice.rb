@@ -661,18 +661,6 @@ Law.define(:VOICE_TERSE_UNIX) do
   good "silence on success"
 end
 
-Law.define(:STRUNK_ACTIVE) do
-  source "MASTER constitution (soul.yml absolute.rules)"
-  severity :warn
-  practice <<~TEXT
-    Strunk & White — active voice in code, comments, commits, CLI, TTS; omit
-    needless words.
-  TEXT
-  fix "Active voice; cut the words that carry nothing."
-  bad  "the file was modified by the job"
-  good "the job modified the file"
-end
-
 Law.define(:AESTHETIC_DISCIPLINE) do
   source "MASTER constitution: universal visual and typographic principles"
   severity :info
