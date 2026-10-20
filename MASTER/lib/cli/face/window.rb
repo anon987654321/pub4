@@ -161,7 +161,7 @@ module Master
           painted = body.each_with_index.map do |line, i|
             "\e[#{i + 1};1H#{line}\e[K"
           end.join
-          cursor_column = [draft.length + Master::Face::Contract.shell_prompt.length + 1, cols].min
+          cursor_column = [draft.length + operator_prompt.length + 1, cols].min
           "\e[?25l#{painted}\e[#{prompt_row};#{cursor_column}H\e[?25h"
         end
 
@@ -538,15 +538,21 @@ module Master
 
         def prompt_line(draft, cols, color:)
           line = typed(draft, cols)
-          token = "#{Master::Face::Contract.shell_prompt} "
+          token = "#{operator_prompt} "
           return line unless color && line.start_with?(token)
 
           "#{ACCENT}#{token}#{PLAIN}#{line.delete_prefix(token)}"
         end
 
+        # Reuse the same host:path$ prompt contract as the ordinary shell and
+        # browser face, but reflect this terminal's actual working directory.
+        def operator_prompt
+          Master::Face::Contract.shell_prompt(path: Dir.pwd, root: Master::ROOT)
+        end
+
         # The end of the line being typed, which is the part being typed into.
         def typed(draft, cols)
-          line = "#{Master::Face::Contract.shell_prompt} #{draft}"
+          line = "#{operator_prompt} #{draft}"
           line.length > cols ? line[-cols..] : line
         end
 
