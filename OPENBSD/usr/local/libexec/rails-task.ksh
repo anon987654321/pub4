@@ -10,7 +10,7 @@ app=${1:-}
 task=${2:-}
 database=${3:-}
 case "$app" in
-  master|brgen|amber|bsdports) ;;
+  master|brgen|bsdports) ;;
   *) echo "rails-task: refused unknown app: $app" >&2; exit 64 ;;
 esac
 case "$task" in
