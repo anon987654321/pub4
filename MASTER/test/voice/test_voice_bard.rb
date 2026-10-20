@@ -27,6 +27,13 @@ class TestVoiceBard < Minitest::Test
     assert_equal Narrator.load_config["max_tokens"], CONFIG["max_tokens"], "unset knobs come from the narrator"
   end
 
+  def test_the_bard_has_its_own_dry_voice_without_changing_the_narrator
+    assert_equal "davis", CONFIG["voice"]
+    assert_equal "-10%", CONFIG["rate"]
+    assert_equal "-14Hz", CONFIG["pitch"]
+    refute_equal CONFIG["voice"], Narrator.load_config["voice"]
+  end
+
   def test_the_script_lays_the_bard_over_the_narration_filters
     script = Narrator::Script.load(*Narrator.script_paths(:bard))
 
