@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 
 module Master
   module Voice
@@ -90,7 +90,7 @@ module Master
       # Overall level plus every band in one decode. Returns
       # [{max:, mean:}, *bands] in graph order, or [] if ffmpeg refused.
       def analyse(path)
-        _out, err, status = Open3.capture3(*analysis_command(path))
+        _out, err, status = Master::Io::Exec.capture3(*analysis_command(path))
         return [] unless status.success?
 
         readings = {}
@@ -121,21 +121,17 @@ module Master
       def duration_sec(path)
         return 0.0 unless tool?("ffprobe")
 
-        out, = Open3.capture3(
+        out, = Master::Io::Exec.capture3(
           "ffprobe", "-v", "error", "-show_entries", "format=duration",
           "-of", "default=noprint_wrappers=1:nokey=1", path
         )
         out.to_s.strip.to_f
       end
 
-      # Open3.capture3 raises Errno::ENOENT for a missing binary rather than
+      # Master::Io::Exec.capture3 raises Errno::ENOENT for a missing binary rather than
       # returning a failed status, so a host without ffmpeg took the whole
       # council critique down instead of degrading.
-      def tool?(name)
-        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          File.executable?(File.join(dir, name))
-        end
-      end
+      def tool?(name) = Master::Io::Exec.on_path?(name)
     end
   end
 end

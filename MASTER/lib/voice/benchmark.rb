@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "yaml"
 
 module Master
@@ -91,7 +91,7 @@ module Master
       end
 
       def probe_duration(path)
-        out, _err, status = Open3.capture3(
+        out, _err, status = Master::Io::Exec.capture3(
           "ffprobe", "-v", "error", "-show_entries", "format=duration",
           "-of", "default=noprint_wrappers=1:nokey=1", path
         )
@@ -99,7 +99,7 @@ module Master
       end
 
       def silence_profile(path)
-        out, err, status = Open3.capture3(
+        out, err, status = Master::Io::Exec.capture3(
           "ffmpeg", "-hide_banner", "-i", path.to_s, "-af",
           "silencedetect=noise=-42dB:d=0.07", "-f", "null", "-"
         )
@@ -117,7 +117,7 @@ module Master
       end
 
       def rms_profile(path)
-        out, err, _status = Open3.capture3(
+        out, err, _status = Master::Io::Exec.capture3(
           "ffmpeg", "-hide_banner", "-i", path.to_s,
           "-af", "volumedetect", "-f", "null", "-"
         )
@@ -138,7 +138,7 @@ module Master
       def aubio_pitch(path)
         return unless executable?("aubionotes")
 
-        out, _err, status = Open3.capture3(
+        out, _err, status = Master::Io::Exec.capture3(
           "aubionotes", "-i", path.to_s, "-t", "0.2"
         )
         return unless status.success?

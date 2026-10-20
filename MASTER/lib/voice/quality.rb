@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 
 module Master
   module Voice
@@ -27,7 +27,7 @@ module Master
       end
 
       def probe(path)
-        out, _err, status = Open3.capture3(
+        out, _err, status = Master::Io::Exec.capture3(
           "ffprobe", "-v", "error", "-select_streams", "a:0",
           "-show_entries", "format=duration:stream=sample_rate,channels",
           "-of", "csv=p=0:s=,", path
@@ -43,7 +43,7 @@ module Master
       end
 
       def clipping?(path)
-        _out, err, status = Open3.capture3(
+        _out, err, status = Master::Io::Exec.capture3(
           "ffmpeg", "-v", "info", "-i", path,
           "-af", "astats=metadata=1:reset=1",
           "-f", "null", "-"
@@ -56,7 +56,7 @@ module Master
       end
 
       def volume_stats(path)
-        _out, err, status = Open3.capture3(
+        _out, err, status = Master::Io::Exec.capture3(
           "ffmpeg", "-v", "info", "-i", path,
           "-af", "volumedetect",
           "-f", "null", "-"

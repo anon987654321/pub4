@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 require "fileutils"
 require "json"
 require "securerandom"
@@ -44,7 +44,7 @@ module Master
         when "chatterbox" then chatterbox_cli?
         when "replicate_kokoro" then replicate_token?
         when "edge", "edge_melodic" then Speech.edge_tts_available?
-        when "say" then system("which", "say", out: File::NULL, err: File::NULL)
+        when "say" then Master::Io::Exec.on_path?("say")
         else false
         end
       end
@@ -109,9 +109,9 @@ module Master
         return cfg_bin if cfg_bin != "" && File.executable?(cfg_bin)
 
         %w[python3.12 python3.11 python3].each do |bin|
-          next unless system("which", bin, out: File::NULL, err: File::NULL)
+          next unless Master::Io::Exec.on_path?(bin)
 
-          out, _status = Open3.capture2(bin, "-c", "import sys; print(sys.version_info[:major]*10+sys.version_info[:minor])", err: File::NULL)
+          out, _status = Master::Io::Exec.capture2(bin, "-c", "import sys; print(sys.version_info[:major]*10+sys.version_info[:minor])", err: File::NULL)
           ver = out.strip.to_i
           return bin if ver >= MIN_MLX_PYTHON_VERSION_CODE
         end
@@ -128,7 +128,7 @@ module Master
         # The CLI cannot run a chatterbox model (synth_mlx sends those through the
         # Python API), so its presence says nothing about them.
         return true if !cfg["mlx_model"].to_s.downcase.include?("chatterbox") &&
-                       system("which", "mlx_audio.tts.generate", out: File::NULL, err: File::NULL)
+                       Master::Io::Exec.on_path?("mlx_audio.tts.generate")
 
         _out, status = Master::Io::Exec.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
         status.success?
@@ -590,7 +590,7 @@ module Master
                     out: File::NULL, err: File::NULL)
         return false unless ok && File.size?(aiff)
 
-        if system("which", "afconvert", out: File::NULL, err: File::NULL)
+        if Master::Io::Exec.on_path?("afconvert")
           system("afconvert", "-f", "m4af", "-d", "aac", aiff, out_path, out: File::NULL, err: File::NULL)
           File.delete(aiff)
           File.size?(out_path)
@@ -627,12 +627,11 @@ module Master
         )
       end
 
-      # Memoized: this is asked once per synthesized phrase, and each ask was a
-      # fork+exec of which(1).
+      # Memoized: synthesis asks this once per phrase, so resolve the executable once.
       def ffmpeg?
         return @ffmpeg unless @ffmpeg.nil?
 
-        @ffmpeg = system("which", "ffmpeg", out: File::NULL, err: File::NULL) || false
+        @ffmpeg = Master::Io::Exec.on_path?("ffmpeg")
       end
     end
   end
