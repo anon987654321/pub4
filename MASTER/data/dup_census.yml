@@ -1,7 +1,6 @@
 ---
-duplicate_sets: 21
+duplicate_sets: 20
 duplicate_members:
-- RAILS/__shared/config/initializers/inflections.rb | RAILS/master/config/initializers/inflections.rb
 - RAILS/__shared/config/storage.yml | RAILS/amber/config/storage.yml | RAILS/brgen/config/storage.yml | RAILS/bsdports/config/storage.yml
 - RAILS/__shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb
 - RAILS/__shared/public/icon.png | RAILS/master/public/icon.png
