@@ -60,9 +60,8 @@ module Master
 
           Ground::Pairing.apply_token!(result[:token], root:)
           public_result = result.reject { |key, _| key == :token }
-          Ground::PersonalWorkspace.append_memory(
-            root:, subject: public_result[:subject], key: "owner_label", body: public_result[:label], type: "user",
-          )
+          # The owner label is already stored in device_agent.json. Do not
+          # duplicate it into personal memory before that separate scope is granted.
           save_state(root, {
             "owner_subject" => public_result[:subject],
             "owner_label" => public_result[:label],
