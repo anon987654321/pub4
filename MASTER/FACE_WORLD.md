@@ -410,7 +410,6 @@ The stipple shader now combines the existing canonical sample-bias attribute wit
 
 Stipple motion now honors all three existing reduced-motion signals: the semantic face-state bit, the document accessibility projection (`data-reduced-motion="1"`), and the operating-system `prefers-reduced-motion` preference. When any is active, its shader clock is held at zero and ripple/turbulence are disabled while the still-state profile remains. `FaceState.reducedMotion()` is the canonical resolver for the semantic bit, document projection and OS preference; the sparse field, stipple adapter and FaceWorld delegate to it when available and retain a compatibility fallback for older shells.
 
-
 The shared `FaceState.renderBudget()` also classifies coarse-pointer devices as constrained even when their viewport is wider than the phone breakpoint; the sparse gravitational field uses the same coarse-pointer signal for its own particle ceiling. Its motion update now observes the same face-state, document and OS reduced-motion signals, so the sparse layer no longer continues its background drift when only the document-level preference is active.
 
 Stipple scene discovery follows a container’s point children instead of requiring the parent object to have the exact `type === "Object3D"` label. This admits ordinary Three.js `Group` containers while keeping the overlay attached beside an existing point layer. These are compatibility safeguards, not proof of successful context recovery or a completed raw-WebGL migration.

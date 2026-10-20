@@ -16,6 +16,7 @@ module Deploy
   # everywhere.
   class CrossAppEquivalenceGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     RAILS_ROOT = File.join(ROOT, "RAILS")
     SHARED_FRONTEND = File.join(RAILS_ROOT, "__shared", "frontend")
 
@@ -65,6 +66,7 @@ module Deploy
                               .transform_values(&:first)
                               .values
       GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("cross_app: #{app} port closed — skipped") }
+
       live = GeometryProbe.reachable(surfaces)
       if live.size < 2
         @result.inconclusive!("cross_app: need at least two apps running to compare (have #{live.size})")
@@ -77,11 +79,13 @@ module Deploy
           payload = GeometryProbe.walk(cdp, surface)
           unless GeometryProbe.ok?(payload)
             error = payload["error"] || "HTTP #{payload["status"]}"
+
             if GeometryProbe.timeout?(payload)
               @result.incomplete!("cross_app: #{surface.app} shared chrome not compared — #{error}")
             else
               @result.fail("cross_app: #{surface.app} unreachable (#{error})")
             end
+
             next
           end
           chrome[surface.app] = cdp.evaluate(CHROME)
@@ -149,6 +153,7 @@ module Deploy
     # warning: a shared controller nobody mounts anywhere is dead code.
     def compare_controllers(chrome)
       rendered = chrome.transform_values { |c| Array(c["controllers"]) }
+
       anywhere = rendered.values.reduce(:|) || []
 
       layout_mounted = layout_controller_names

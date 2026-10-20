@@ -23,6 +23,7 @@ module Deploy
   # Scope: focus triangle — brgen · amber · MASTER web.
   class PageSimulationGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     REPORT_PATH = File.join(ROOT, "MASTER", "gates", "data", "page_sim_report.yml")
     SNAPSHOT_PATH = File.join(ROOT, "MASTER", "gates", "data", "page_sim_inventory.yml")
 
@@ -145,6 +146,7 @@ module Deploy
       push_entry(entry)
     rescue StandardError => e
       entry["ok"] = false
+
       entry["findings"] = ["#{e.class}: #{e.message}"]
       @result.fail("page_sim live:#{page[:id]}: #{e.class}: #{e.message}")
       push_entry(entry)
@@ -186,6 +188,7 @@ module Deploy
           # MASTER offline.html is a bare public asset, not an app layout.
           findings << (static_public ? soft("static page missing main landmark") : hard("missing main landmark / face root"))
         end
+
         has_skip = body.match?(/skip-link|Skip to|#main-content|#zin|id="primer"/i)
         unless has_skip
           if static_public || (page[:app] == "master" && page[:path] != "/" && page[:path] != "/dashboard")
@@ -239,6 +242,7 @@ module Deploy
       body.scan(/render\s*\(?\s*(?:partial:\s*)?["']shared\/empty_state["'](.*?)%>/m).each do |m|
         chunk = m[0].to_s
         next if chunk.include?("action:") || chunk.include?("actions:")
+
         # opt-out comment on preceding line is handled by empty_state_lint; soft here
         if body.include?("empty_state: no-action-ok")
           next
@@ -283,6 +287,7 @@ module Deploy
       # Bare text_field without label helper nearby is a soft smell
       fields = body.scan(/\b(text_field|email_field|password_field|text_area|number_field|telephone_field)\b/).size
       labels = body.scan(/\blabel\b|aria-label|label_tag|f\.label/).size
+
       if fields.positive? && labels.zero?
         findings << soft("#{page[:id]}: #{fields} form field(s) with no label/aria-label in template")
       end
@@ -318,6 +323,7 @@ module Deploy
       end
       if page[:path] == "/dashboard"
         findings << hard("#{page[:id]}: mission control missing skip-link") unless body.match?(/skip-link|#main-content/)
+
         findings << hard("#{page[:id]}: mission control missing main landmark") unless body.match?(/id=["']main-content["']|role=["']main["']/)
       end
       findings
@@ -369,6 +375,7 @@ module Deploy
     # password-reset token, which no probe can ever hold a live one of.
     def resolve_pages_needing_an_id(ports_open)
       resolved = []
+
       unprobed = []
       PageInventory.guest_needing_id.each do |page|
         next unless ports_open[page[:app]]
@@ -387,6 +394,7 @@ module Deploy
       unprobed.group_by { |page| page[:app] }.each do |app, rows|
         rows.group_by { |page| LiveRecordIds.unresolved_reason(page) }.each do |reason, grouped|
           paths = grouped.map { |page| page[:path] }.uniq
+
           @result.warn(
             "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — "             "#{paths.join(", ")} — #{reason}",
           )
@@ -398,6 +406,7 @@ module Deploy
       by_app = pages.group_by { |p| p[:app] }.transform_values(&:size)
       hard = @result.failures.size
       soft = @result.soft_failures.size
+
       @report["summary"] = {
         "total_pages" => pages.size,
         "by_app" => by_app,
@@ -411,6 +420,7 @@ module Deploy
         "source_ok" => @report["pages"].count { |e| e["mode"] == "source" && e["ok"] },
         "source_total" => @report["pages"].count { |e| e["mode"] == "source" },
       }
+
       File.write(REPORT_PATH, @report.to_yaml)
       @report["pages"].group_by { |entry| entry["app"].to_s }.sort.each do |app, rows|
         source = rows.select { |entry| entry["mode"] == "source" }
@@ -418,6 +428,7 @@ module Deploy
         source_ok = source.count { |entry| entry["ok"] == true }
         hard_findings = rows.count { |entry| entry["ok"] == false }
         unresolved = Array(unprobed).count { |page| page[:app].to_s == app }
+
         @result.warn(
           "coverage0: pages/#{app} source=#{source_ok}/#{source.size} live=#{live.size} " \
           "hard_findings=#{hard_findings} unresolved_ids=#{unresolved}",

@@ -48,18 +48,21 @@ options = {
 }
 OptionParser.new do |o|
   o.banner = "usage: face_loop_record.rb --audio WAV --out MP4 [options]"
+
   o.on("--url URL", "Face URL (default: MASTER on the loopback)") { |v| options[:url] = v }
   o.on("--audio PATH", "16-bit PCM wav to speak") { |v| options[:audio] = v }
   o.on("--out PATH", "mp4 to write") { |v| options[:out] = v }
   o.on("--fps N", Integer, "Video frame rate (default 20)") { |v| options[:fps] = v }
   o.on("--seconds N", Float, "Record only the first N seconds") { |v| options[:seconds] = v }
   o.on("--clip X,Y,W,H", "Crop, in CSS pixels") { |v| options[:clip] = v.split(",").map(&:to_i) }
+
   o.on("--work DIR", "Where frames go (default: a temp dir under the audio)") { |v| options[:work] = v }
   o.on("--exposure F", Float, "Pin uExposure to this; 0 leaves the page's own") { |v| options[:exposure] = v }
   o.on("--tint F", Float, "Pin uColor to this grey; 0 leaves the page's own") { |v| options[:tint] = v }
   o.on("--timeout S", Integer, "Seconds to wait for the first drawn frame") { |v| options[:timeout] = v }
   o.on("--viewport WxH", "Page size in CSS pixels (default 1280x720)") { |v| options[:viewport] = v.split("x").map(&:to_i) }
   o.on("--scale F", Float, "Device pixel ratio for the capture (default 2)") { |v| options[:scale] = v }
+
   o.on("--from N", Integer, "First frame of this slice (default 0)") { |v| options[:from] = v }
   o.on("--to N", Integer, "One past the last frame of this slice (default: all)") { |v| options[:to] = v }
   o.on("--warmup N", Integer, "Frames drawn and dropped before the first kept one (default 20)") { |v| options[:warmup] = v }
@@ -90,6 +93,7 @@ def read_wav(path)
   while offset + 8 <= raw.bytesize
     id = raw[offset, 4]
     size = raw[offset + 4, 4].unpack1("V")
+
     body = raw[offset + 8, size]
     fmt = body.unpack("vvVVvv") if id == "fmt "
     data = body if id == "data"
@@ -111,12 +115,14 @@ end
 def fft!(re, im)
   n = re.size
   j = 0
+
   (1...n).each do |i|
     bit = n >> 1
     while j & bit != 0
       j ^= bit
       bit >>= 1
     end
+
     j |= bit
     if i < j
       re[i], re[j] = re[j], re[i]
@@ -126,16 +132,19 @@ def fft!(re, im)
   len = 2
   while len <= n
     angle = -2.0 * Math::PI / len
+
     wr = Math.cos(angle)
     wi = Math.sin(angle)
     (0...n).step(len) do |start|
       cr = 1.0
       ci = 0.0
+
       (0...(len / 2)).each do |k|
         a = start + k
         b = a + len / 2
         tr = re[b] * cr - im[b] * ci
         ti = re[b] * ci + im[b] * cr
+
         re[b] = re[a] - tr
         im[b] = im[a] - ti
         re[a] += tr
@@ -143,6 +152,7 @@ def fft!(re, im)
         cr, ci = (cr * wr - ci * wi), (cr * wi + ci * wr)
       end
     end
+
     len <<= 1
   end
 end
@@ -165,17 +175,20 @@ def envelope(samples, rate, frames, fps)
       sample = samples[start + i] || 0
       [[((sample / 32_768.0) * 128.0).round + 128, 0].max, 255].min
     end
+
     FFT_SIZE.times do |i|
       re[i] = ((samples[start + i] || 0) / 32_768.0) * HANN[i]
       im[i] = 0.0
     end
     fft!(re, im)
+
     freq_bytes = Array.new(BINS) do |k|
       magnitude = Math.sqrt((re[k] * re[k]) + (im[k] * im[k])) / (FFT_SIZE / 2.0)
       db = magnitude.positive? ? 20.0 * Math.log10(magnitude) : MIN_DB
       byte = ((db - MIN_DB) / span * 255.0).round
       [[byte, 0].max, 255].min
     end
+
     out << time_bytes.pack("C*") << freq_bytes.pack("C*")
   end
   out
@@ -242,6 +255,7 @@ begin
     # separates "drew something" from "loaded and sat there".
     deadline = Time.now + options[:timeout]
     ready = nil
+
     loop do
       ready = JSON.parse(cdp.evaluate(<<~JS).to_s) # scan: intentional — a CDP recorder evaluates JavaScript by definition
         JSON.stringify({
@@ -252,6 +266,7 @@ begin
         })
       JS
       break if ready["failed"] || (ready["present"] && ready["frames"].to_i > 2 && ready["mat"])
+
       break if Time.now > deadline
 
       sleep 0.15
@@ -339,6 +354,7 @@ begin
     # first frames of a slice are drawn and thrown away rather than kept.
     render = lambda do |index|
       base = index * step
+
       times = (1..substeps).map { |n| (base - step + (step * n / substeps)).round(3) }
       cdp.evaluate(<<~JS) # scan: intentional — a CDP recorder evaluates JavaScript by definition
         (function(){
@@ -390,6 +406,7 @@ FileUtils.rm_f(envelope_path)
 # or cropped a second time. yuv420p and faststart because this is played in a
 # browser and a README.
 audio_args = ["-i", options[:audio], "-c:a", "aac", "-b:a", "128k", "-shortest"]
+
 ok = system("ffmpeg", "-y", "-loglevel", "error",
             "-framerate", options[:fps].to_s, "-i", File.join(work, "f_%05d.jpg"),
             *audio_args,

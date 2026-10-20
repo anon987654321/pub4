@@ -33,6 +33,7 @@ module Deploy
   # passed on an absent precondition now use it too.
   class DeployDriftGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     STAMP_DIR = ENV.fetch("PUB4_STAMP_DIR", "/var/db/pub4")
     APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
@@ -54,6 +55,7 @@ module Deploy
       stamps = read_stamps
       @stamp_errors.each { |message| result.inconclusive!(message) }
       result.inconclusive!(@app_roots_error) if @app_roots_error
+
       if stamps.empty?
         result.inconclusive!(
           "deploy_drift: no deploy stamps under #{STAMP_DIR} — this gate only has something to " \
@@ -141,6 +143,7 @@ module Deploy
         [app, parsed]
       rescue StandardError => e
         @stamp_errors << "deploy_drift: unreadable deploy stamp #{path}: #{e.class}: #{e.message}"
+
         nil
       end
       rows.sort.to_h

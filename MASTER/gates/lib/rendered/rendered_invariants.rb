@@ -118,6 +118,7 @@ module Deploy
       # "exit 3, no reason given (subprocess gate)" for an in-process gate.
       unless CdpSession.available?
         @result.inconclusive!("no Chrome/Chromium — theme, chat corner and top band not measured", gap: Master::Gap::NO_BROWSER)
+
         return @result
       end
 
@@ -127,6 +128,7 @@ module Deploy
         check_amber_home_looks(session)
         check_phone_bottom_chrome(session)
       end
+
       @result
     rescue CdpSession::Unavailable => e
       @result.inconclusive!("rendered_invariants: #{e.message}")
@@ -144,6 +146,7 @@ module Deploy
       # and wait out the 300ms slide before measuring.
       if session.evaluate("!!document.querySelector('.revealed')")
         session.press("Escape")
+
         sleep 0.5
       end
       measured = session.evaluate(format(PROBE, band: JSON.generate(TOP_BAND)))
@@ -155,6 +158,7 @@ module Deploy
       check_chat_corner(host, data)
       check_top_band_alignment(host, data)
       check_optical_band_center(host, data)
+
       check_band_overlap(host, data)
       check_mark_label(host, data)
     rescue StandardError => e
@@ -181,6 +185,7 @@ module Deploy
     # since a flipped page agrees with itself perfectly.
     def check_theme(host, expected, data)
       luma = data["luma"]
+
       return unless luma
 
       declared = data["declared"]
@@ -308,6 +313,7 @@ module Deploy
     # nothing and the check would pass having seen no prompt.
     def check_phone_bottom_chrome(session)
       session.viewport(PHONE[:width], PHONE[:height], mobile: true)
+
       session.navigate("https://#{PHONE[:host]}/", settle: 1.5)
       session.evaluate(%(window.dispatchEvent(new Event("scroll"))))
       sleep 0.3

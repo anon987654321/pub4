@@ -16,6 +16,7 @@ module Deploy
   # renders a visible ring.
   class KeyboardFlowGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     MAX_TABS = 25
 
     FOCUS_RESET = <<~JS
@@ -77,6 +78,7 @@ module Deploy
     # and aria-busy are set from script, read and taken off again.
     STATE_MARK = File.read(File.join(__dir__, "../../support/journey_probe/state_mark.js")).freeze
     STATE_READ = File.read(File.join(__dir__, "../../support/journey_probe/state_read.js")).freeze
+
     STATES = %w[active disabled busy].freeze
     STATE_WHY = {
       "active" => "a press gives no feedback, so it is pressed again",
@@ -105,6 +107,7 @@ module Deploy
       GeometryProbe.with_browser do |cdp|
         live.each { |surface| measured += 1 if walk_tab_order(cdp, surface) }
       end
+
       # Counted per surface walked, so one surface that could not be measured
       # does not make the ones that were count for nothing — and a run where
       # every surface refused to release focus, or timed out, walked no tab order
@@ -112,6 +115,7 @@ module Deploy
       # failures, so counting attempts reported them as a pass.
       if measured.zero?
         @result.inconclusive!("keyboard_flow: 0/#{live.size} surface(s) yielded a tab order — nothing was walked")
+
         return @result
       end
       # Findings from the surfaces that were walked still block; only the pass is
@@ -136,16 +140,19 @@ module Deploy
         brgen/core brgen/nearby brgen/marketplace brgen/session_new
         amber/home amber/wardrobe amber/feed amber/sign_in
       ]
+
       desktop = GeometryProbe.surfaces
                              .select { |s| s.viewport == "desktop" }
                              .uniq { |s| "#{s.app}/#{s.label}" }
       by_key = {}
+
       desktop.each { |s| by_key["#{s.app}/#{s.label}"] = s }
       picked = preferred.filter_map { |k| by_key[k] }
       # Up to 3 additional per app for breadth
       desktop.group_by(&:app).each_value do |rows|
         rows.each do |s|
           break if picked.count { |p| p.app == s.app } >= 4
+
           picked << s unless picked.include?(s)
         end
       end
@@ -157,6 +164,7 @@ module Deploy
       payload = GeometryProbe.walk(cdp, surface)
       unless GeometryProbe.ok?(payload)
         err = payload["error"] || "HTTP #{payload["status"]}"
+
         if err.to_s.match?(/timeout|Timeout/i)
           @result.warn("keyboard_flow: #{label} skipped (#{err})")
         else
@@ -262,6 +270,7 @@ module Deploy
       @result = result
       counts = STATES.map do |state|
         read = rows.reject { |row| row[state].nil? }
+
         flat = read.select { |row| row[state] == row["rest"] }
         report_flat_state(label, state, flat, read.size) unless flat.empty?
         "#{state} #{flat.size}/#{read.size}"
@@ -282,6 +291,7 @@ module Deploy
     # nav. It only works if it is the first stop.
     def check_skip_link_first(label, stops)
       index = stops.index { |s| s["href"] == "#main-content" || s["sel"].to_s.include?("skip") }
+
       if index.nil?
         @result.fail("keyboard_flow: #{label} skip link is not reachable by keyboard in #{stops.size} tabs " \
                      "(it is in the HTML but never receives focus)", severity: :soft)

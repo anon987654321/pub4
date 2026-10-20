@@ -79,6 +79,7 @@ module Contracts
                               use_ssl: uri.scheme == "https") { |http| http.request(req) }
         parsed = JSON.parse(res.body.to_s).transform_keys(&:to_s)
         return { "ok" => false, "error" => parsed["error"] || "HTTP #{res.code}", "output" => "" } if res.code.to_i >= 400
+
         parsed
       rescue JSON::ParserError
         { "ok" => res.code.to_i < 400, "output" => res.body.to_s, "error" => nil }

@@ -57,6 +57,7 @@ module Deploy
       # Counted per surface, so one surface that could not be measured does not
       # make the ones that were count for nothing.
       @result.checked!(live.size)
+
       # A gate that reports nothing must be distinguishable from a gate that
       # ran nothing, or a silently-empty sweep reads as a pass forever.
       @result.warn("journey_invariant: checked idempotence + back-button on #{live.size} surface(s), " \
@@ -70,6 +71,7 @@ module Deploy
       first = GeometryProbe.walk(cdp, surface)
       unless GeometryProbe.ok?(first)
         error = first["error"] || "HTTP #{first["status"]}"
+
         if GeometryProbe.timeout?(first)
           @result.incomplete!("journey_invariant: #{surface.id} not measured — #{error}")
         else
@@ -146,6 +148,7 @@ module Deploy
       GeometryProbe.reachable(GeometryProbe.surfaces).uniq { |s| [s.app, s.host, s.path] }.each do |surface|
         follow = ->(href) { CrawlSupport.fetch(URI.join(surface_base(surface), href).to_s, host: surface.host).code }
         label = "#{surface.app}/#{surface.label}"
+
         journeys["pager"] += 1 if TurboJourneys.judge_pager(label, fetch_raw(surface), @result, follow:)
       rescue StandardError => e
         @result.inconclusive!("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed — #{e.class}: #{e.message}")
@@ -186,14 +189,17 @@ module Deploy
             "journey_invariant back_button: could not load #{other.id} before history.back — " \
             "#{before_back["error"] || "HTTP #{before_back["status"]}"}"
           )
+
           return
         end
         cdp.evaluate("history.back()")
+
         sleep 0.4
         unless GeometryProbe.wait_for_fonts(cdp)
           @result.incomplete!("journey_invariant back_button: #{surface.id} restored page fonts did not settle")
           return
         end
+
         restored = cdp.evaluate(GeometryProbe::WALK).merge("status" => 200)
       rescue CdpSession::Error => e
         @result.incomplete!("journey_invariant back_button: #{surface.id} could not be measured — #{e.class.name.split("::").last}: #{e.message}")
@@ -224,6 +230,7 @@ module Deploy
     def check_no_js_parity(surfaces)
       surfaces.group_by(&:app).each do |app, rows|
         surface = rows.first
+
         html = begin
           fetch_raw(surface)
         rescue StandardError => e

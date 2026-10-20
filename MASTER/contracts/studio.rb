@@ -40,6 +40,7 @@ module Contracts
         raise ArgumentError, "unknown STUDIO output path kind: #{kind.inspect}"
       end
       script = dilla_script or raise "STUDIO Dilla entrypoint is unavailable"
+
       argv = [RbConfig.ruby, script, "output-path", command]
       argv << at.utc.iso8601 if kind.to_sym == :dilla_render_directory
       output, status = run_bounded(argv, chdir: root, timeout: OUTPUT_PATH_TIMEOUT)

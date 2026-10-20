@@ -18,6 +18,7 @@ module Deploy
   # from there passes a body-regex probe and fails here.
   class FlowJourneyGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     DATA = File.join(File.expand_path("../..", __dir__), "data", "flows.yml")
     MAX_REDIRECTS = 5
     # shared.flash.rate_limited, nb and en.
@@ -36,6 +37,7 @@ module Deploy
       # vps-deploy judges one app at a time: FLOW_APP=brgen runs only brgen's journeys,
       # so another app that is shed or mid-boot cannot fail this app's deploy.
       only = ENV["FLOW_APP"].to_s.split(",").map(&:strip).reject(&:empty?)
+
       flows = flows.select { |flow| only.include?(flow["app"]) } unless only.empty?
       ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
       # MASTER web is not a RAILS/apps.yml row — face + mission control.
@@ -52,6 +54,7 @@ module Deploy
         unless port
           @result.fail("flow:#{flow["id"]} unknown app #{app.inspect}")
           @result.warn(surface_coverage_line(flow, app, :error, "unknown app"))
+
           counts[:error] += 1
           next
         end
@@ -67,6 +70,7 @@ module Deploy
             "flow:#{flow["id"]} did not run -- it writes accounts, posts or orders and this host serves production " \
             "(GATE_ALLOW_WRITES=1 runs it against a throwaway copy of the app)",
           )
+
           @result.warn(surface_coverage_line(flow, app, :inconclusive, "writes refused on the deploy host"))
           outcomes[app][flow["id"]] = :inconclusive
           counts[:inconclusive] += 1
@@ -80,15 +84,18 @@ module Deploy
           # Missing credentials mean no request was made. Do not increment
           # checks_ran: that would turn an unmeasured account journey into green.
           counts[:inconclusive] += 1
+
           @result.warn(surface_coverage_line(flow, app, :inconclusive, "credentials unavailable"))
         when :failed
           ran += 1
+
           counts[:failed] += 1
           @result.checked!
           @result.warn(surface_coverage_line(flow, app, :fail))
         when :inconclusive
           # The guest flow ran, but its data invariant could not be evaluated.
           ran += 1
+
           counts[:inconclusive] += 1
           @result.checked!
           @result.warn(surface_coverage_line(flow, app, :inconclusive, "journey ran; invariant unmeasured"))
@@ -96,6 +103,7 @@ module Deploy
           ran += 1
           counts[:passed] += 1
           @result.checked!
+
           @result.warn(surface_coverage_line(flow, app, :pass))
         end
       end
@@ -121,6 +129,7 @@ module Deploy
         paths = host_steps.map { |step| step["get"] || step["post"] || "(unknown path)" }.uniq
         host.empty? ? paths.join(", ") : "#{host} [#{paths.join(", ")}]"
       end
+
       description = "#{steps.size} step(s)"
       description += " — #{surfaces.join('; ')}" unless surfaces.empty?
       description += " — #{detail}" if detail && !detail.to_s.empty?
@@ -156,6 +165,7 @@ module Deploy
     # it is still a person's job.
     def credentials_for(flow)
       keys = Array(flow["requires_credentials"])
+
       return {} if keys.empty?
 
       values = keys.to_h { |key| [ key, ENV[key].to_s ] }
@@ -186,15 +196,18 @@ module Deploy
       vars = credentials.merge("unique" => token, "flow_password" => "Passord-#{token}",
                                "flow_wrong_password" => "feil-passord-#{token}",
                                "flow_new_password" => "Nytt-passord-#{token}")
+
       Array(flow["steps"]).each do |step|
         name = step["name"] || step["get"] || step["post"]
         label = "flow:#{id}/#{name}"
+
         host = step["host"] || flow["host"]
         client.accept = step["accept"]
         # A value an optional capture could not find means the dataset has nothing
         # for this journey to act on: the app is unseeded, not broken.
         if (missing = Array(step["needs"]).reject { |key| vars.key?(key.to_s) }).any?
           @result.inconclusive!("#{label}: needs #{missing.join(', ')} from the page before it and found none -- the dataset is empty (seed the app)")
+
           return :inconclusive
         end
         if step["mail"]
@@ -203,6 +216,7 @@ module Deploy
 
           next
         end
+
         response = begin
           if (path = step["post"])
             client.post(interpolate(path, vars), resolve_params(step["params"], vars), host:)
@@ -211,6 +225,7 @@ module Deploy
           end
         rescue StandardError => e
           @result.fail("#{label}: #{e.class}: #{e.message}")
+
           return :failed
         end
 
@@ -242,6 +257,7 @@ module Deploy
     # the environment that cannot be read, not the product that is wrong.
     def read_mail(label, spec, app, vars)
       dir = ENV["FLOW_#{app.upcase}_MAIL_DIR"] || File.join(@root, "RAILS", app == "master" ? "master" : app, "tmp", "mails")
+
       path = File.join(dir, interpolate(spec.fetch("to"), vars))
       deadline = Time.now + spec.fetch("within", 10).to_f
       sleep 0.25 until File.file?(path) || Time.now > deadline
@@ -257,6 +273,7 @@ module Deploy
         found = text.scan(Regexp.new(capture.fetch("pattern"))).flatten.first
         unless found
           @result.fail("#{label}: mail to #{spec["to"]} held nothing for #{capture["pattern"].inspect}")
+
           return :failed
         end
         vars[capture.fetch("as").to_s] = found
@@ -310,6 +327,7 @@ module Deploy
       if (want = step["expect_final_path"])
         actual = response.final_path
         hops = response.redirects.empty? ? "" : " via #{response.redirects.join(' → ')}"
+
         # `{ not: /session/new }` as well as a literal path. A successful sign-in
         # lands wherever the app was headed — root, the stored return path, a
         # vertical — so the only stable thing to assert is where it must NOT be.
@@ -317,6 +335,7 @@ module Deploy
         # from the sign-in page and every later step tests a guest while the
         # journey's name says account.
         want = interpolate(want, vars) if want.is_a?(String)
+
         if want.is_a?(Hash) && want.key?("matches")
           unless Regexp.new(interpolate(want["matches"], vars)).match?(actual)
             @result.fail("#{label}: landed on #{actual}#{hops}, not on a path matching #{want["matches"].inspect}")
@@ -325,11 +344,13 @@ module Deploy
         elsif want.is_a?(Hash) && want.key?("not_matches")
           if Regexp.new(interpolate(want["not_matches"], vars)).match?(actual)
             @result.fail("#{label}: landed on #{actual}#{hops}, a path matching #{want["not_matches"].inspect} that this step must not reach")
+
             return false
           end
         elsif want.is_a?(Hash) && want.key?("not")
           if actual == want["not"]
             @result.fail("#{label}: landed back on #{actual}#{hops} — refused, not signed in")
+
             return false
           end
         elsif actual != want
@@ -392,6 +413,7 @@ module Deploy
     # journey that carries on without the value would test a different page.
     def capture_values(label, step, body, captures, vars)
       ok = true
+
       %w[capture number].each do |kind|
         Array(step[kind]).each do |spec|
           match = Regexp.new(interpolate(spec.fetch("pattern"), vars)).match(body)
@@ -402,6 +424,7 @@ module Deploy
             ok = false
             next
           end
+
           if kind == "number"
             captures[spec.fetch("as").to_s] = match[1].to_i
           else
@@ -430,6 +453,7 @@ module Deploy
           "flow:#{flow["id"]} skipped invariants — #{Array(flow["requires_data"]).join('/')} is 0, " \
           "the dataset is empty (seed the app to make this journey meaningful)",
         )
+
         return
       end
 
@@ -440,6 +464,7 @@ module Deploy
           next
         end
         left = captures.fetch(left_name)
+
         right_raw = rule.fetch("right")
         right = right_raw.is_a?(Integer) ? right_raw : captures[right_raw.to_s]
         right += rule["delta"].to_i if right && rule["delta"]
@@ -488,6 +513,7 @@ module Deploy
         # presented as "Ruby" spent one shared allowance of 15 posts and every
         # later run was sent to the sign-in wall.
         @agent = "pub4-flow-journey/#{Time.now.to_i.to_s(36)}#{rand(36**4).to_s(36)}"
+
         @port = port
         @host = host
         @default_host = default_host
@@ -517,18 +543,21 @@ module Deploy
         MAX_REDIRECTS.times do
           response = request(url, header_host, verb, params)
           store_cookies(response)
+
           store_csrf(response.body)
           code = response.code.to_i
           if [301, 302, 303, 307, 308].include?(code)
             location = response["location"].to_s
             redirects << location
             url, header_host = follow(location, url, header_host)
+
             # 303 means "see other", and 301/302 after a POST are treated the
             # same way by every browser: the next hop is a GET with no body.
             # Replaying the params would post the form twice.
             verb, params = :get, nil if code != 307 && code != 308
             next
           end
+
           final = display_url(url, header_host)
           @last_page = final if verb == :get
           return Response.new(code:, body: response.body.to_s, final_url: final, redirects:)
@@ -554,6 +583,7 @@ module Deploy
       # a local journey.
       def follow(location, current, header_host)
         target = URI.join(current, location)
+
         host = local?(target.host) ? header_host : target.host
 
         [ "http://#{@host}:#{@port}#{target.request_uri}", host ]
@@ -575,11 +605,13 @@ module Deploy
         Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
           req = build_request(uri, verb, params)
           req["Host"] = header_host if header_host
+
           # What a browser sends: HTML first, and the page the form sat on. Without
           # the first a content-negotiating route (search) answers JSON; without the
           # second redirect_back lands on its fallback and a "stay on the page"
           # action looks like a jump to the root.
           req["Accept"] = @accept || "text/html,application/xhtml+xml"
+
           req["User-Agent"] = @agent
           req["Referer"] = @last_page if @last_page && verb != :get
           req["Cookie"] = @cookies.map { |k, v| "#{k}=#{v}" }.join("; ") unless @cookies.empty?
@@ -606,6 +638,7 @@ module Deploy
       def flatten_params(params, prefix = nil)
         params.each_with_object({}) do |(key, value), out|
           name = prefix ? "#{prefix}[#{key}]" : key.to_s
+
           if value.is_a?(Hash)
             out.merge!(flatten_params(value, name))
           else

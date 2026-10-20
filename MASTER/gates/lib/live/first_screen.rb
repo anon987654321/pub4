@@ -28,6 +28,7 @@ module Deploy
   # Chrome, which is what makes it a floor rather than a substitute.
   class FirstScreenGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     RAILS = File.join(ROOT, "RAILS")
 
     # The touch floor, spelled either way.
@@ -92,6 +93,7 @@ SCHEMA_FOR_LABEL = {
         # JSON API surfaces (e.g. maps /places) have no HTML landmarks.
         json_api = s[:label].to_s.match?(/maps_places|places_json/)
         landmarks = json_api ? [] : [%r{skip-link|main-content|<main\b}i]
+
         {
           app: "brgen",
           port_key: "brgen",
@@ -168,6 +170,7 @@ SCHEMA_FOR_LABEL = {
         path = File.join(@rails_root, rel)
         unless File.file?(path)
           @result.fail("first_screen: missing #{rel}")
+
           next
         end
         source_touch_check(rel, File.read(path), selector, needle && Regexp.new(needle, Regexp::IGNORECASE))
@@ -201,6 +204,7 @@ SCHEMA_FOR_LABEL = {
         @result.fail("first_screen: #{label} HTTP #{code}")
         return
       end
+
       body = utf8_body(res.body)
       ["Exception", "Routing Error"].each do |bad|
         @result.fail("first_screen: #{label} saw #{bad}") if body.include?(bad.tr("\\", ""))
@@ -232,6 +236,7 @@ SCHEMA_FOR_LABEL = {
                   SCHEMA_FOR_LABEL[label.split("/").last.to_s]
       if schema_id
         @schema_checker ||= DomSurfaceSchema.new
+
         @schema_checker.apply_to_result!(@result, body, schema_id)
       end
     rescue StandardError => e

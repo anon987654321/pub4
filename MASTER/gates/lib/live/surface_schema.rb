@@ -56,6 +56,7 @@ module Deploy
         id = File.basename(path, ".html").sub(/\Abad_/, "")
         html = File.read(path)
         findings = @schema.check(html, id)
+
         if findings.empty?
           @result.fail("fixture bad/#{id}: expected schema findings, got none (gate blind)")
         else
@@ -70,6 +71,7 @@ module Deploy
         app = inventory[surface[:app]]
         unless app
           @result.fail("surface_schema: unknown app #{surface[:app]}")
+
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", app.port)
@@ -82,6 +84,7 @@ module Deploy
         body = fetch(url, host: surface[:host])
         if body.nil?
           @result.fail("surface_schema: #{surface[:schema]} fetch failed")
+
           next
         end
         @schema.apply_to_result!(@result, body, surface[:schema])

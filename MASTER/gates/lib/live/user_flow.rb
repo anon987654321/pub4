@@ -6,6 +6,7 @@ require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
 require_relative "../../support/flow_coverage"
 require_relative "../../support/crawl_support"
+
 require_relative "../../support/gate_autofix"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/guest_flow_persona"
@@ -75,6 +76,7 @@ module Deploy
           expect_body: s[:expect_body],
         }
       end
+
       brgen_paths << {
         path: "/session/new",
         host: nil,
@@ -82,6 +84,7 @@ module Deploy
         expect_status: (200..399),
         expect_body: [/Sign|Log|password|session|Vipps|Google/i],
       }
+
       {
         "brgen" => brgen_paths,
         "amber" => [
@@ -131,6 +134,7 @@ module Deploy
       unless File.file?(LAW_MAP)
         @result.fail("user_flow: missing MASTER/data/laws.yml#law_map")
       end
+
       # Semantic anchors must exist so laws stay authoritative
       flat = @law_map.dig("laws", "flat_ui") || @law_map.dig("clusters", "aesthetic")
       @result.fail("user_flow: law_map missing aesthetic/flat_ui cluster") unless flat
@@ -146,6 +150,7 @@ module Deploy
       markers.each do |name, rels|
         @result.checked!
         present = rels.any? { |rel| marker_present?(app, rel) }
+
         if name.include?("payment") && !present
           @result.warn("#{app.name}: source flow '#{name}' not fully wired (honest stub still required by design contract)")
         elsif !present
@@ -189,6 +194,7 @@ module Deploy
       response = CrawlSupport.fetch(url, host: step[:host])
       code = response.code.to_i
       range = step[:expect_status]
+
       ok_status = range.respond_to?(:cover?) ? range.cover?(code) : Array(range).map(&:to_i).include?(code)
       unless ok_status
         @result.fail("#{app.name}/#{label}: HTTP #{code} for #{url}#{step[:host] ? " Host=#{step[:host]}" : ""}")

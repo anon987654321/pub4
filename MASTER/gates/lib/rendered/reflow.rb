@@ -142,12 +142,14 @@ module Deploy
       GeometryProbe.with_browser do |cdp|
         live.each { |surface| measured += 1 if sweep(cdp, surface, widths) }
       end
+
       # Counted per surface swept, so one surface that could not be measured does
       # not make the ones that were count for nothing — and a sweep where every
       # width raised does not count as a sweep at all. A CDP error is a warning
       # here, so counting attempts reported an empty sweep as a pass.
       if measured.zero?
         @result.inconclusive!("reflow: 0/#{live.size} surface(s) survived the sweep — no width was measured")
+
         return @result
       end
       if GeometryProbe.too_few_measured?(measured, live.size)
@@ -178,6 +180,7 @@ module Deploy
           cdp.viewport(width, 900, mobile: width < 500)
           cdp.navigate(surface.url, settle: 0.1)
           GeometryProbe.wait_for_fonts(cdp, timeout: 2)
+
           samples[width] = cdp.evaluate(SCALARS)
         rescue CdpSession::Error => e
           @result.warn("reflow: #{surface.app}/#{surface.label} @#{width}px — #{e.class.name.split("::").last}")
@@ -202,6 +205,7 @@ module Deploy
       severity = widths.min <= 360 ? :hard : :soft
       worst = spills.max_by { |_w, s| s["scroll_width"].to_i - s["client_width"].to_i }
       offenders = Array(worst[1]["offenders"]).first(3)
+
       @result.fail(
         "reflow overflow: #{surface.app}/#{surface.label} scrolls horizontally at #{widths.join(', ')}px " \
         "(worst #{worst[0]}px: #{worst[1]["scroll_width"]} > #{worst[1]["client_width"]}#{offenders.empty? ? "" : " — #{offenders.join(', ')}"}) " \
@@ -272,6 +276,7 @@ module Deploy
     # surface transitions more than a design system plausibly declares.
     def check_breakpoints(surface, samples)
       ordered = samples.sort_by(&:first)
+
       transitions = []
       ordered.each_cons(2) do |(w1, a), (w2, b)|
         changed = %w[columns tab_bar sidebar].select { |k| a[k] != b[k] }

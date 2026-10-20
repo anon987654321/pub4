@@ -6,6 +6,7 @@ require "json"
 require "tmpdir"
 require "time"
 require "uri"
+
 require "yaml"
 require_relative "../../../lib/gap"
 require_relative "../../support/gate_result"
@@ -22,6 +23,7 @@ module Deploy
   # separately approved PNG baselines. Normal /fix and autofix never bless PNGs.
   class BrowserDiagnosticsGate
     ROOT = File.expand_path("../../../..", __dir__).freeze
+
     DEFAULT_OUTPUT = File.join(Dir.tmpdir, "pub4-browser-diagnostics").freeze
     DEFAULT_SETTLE_MS = 500
     MAX_SETTLE_MS = 5_000
@@ -96,6 +98,7 @@ module Deploy
       Array(request_failures).each do |failure|
         url = failure[:url].to_s
         message = "#{url} — #{failure[:error]}"
+
         if owned_url?(surface, url) && CRITICAL_RESOURCE_TYPES.include?(failure[:resource_type].to_s)
           hard << "first-party executable request failed: #{message}"
         elsif owned_url?(surface, url)
@@ -119,6 +122,7 @@ module Deploy
         # do not infer app ownership from a broad suffix such as *.brgen.no.
         first_party_hosts.concat(BrgenVerticalSurfaces::SURFACES.map { |row| row[:host] })
       end
+
       first_party_hosts.compact.map { |value| value.to_s.downcase }.include?(host)
     rescue URI::InvalidURIError, KeyError, SystemCallError
       false
@@ -163,6 +167,7 @@ module Deploy
         FileUtils.mkdir_p(screenshot_dir)
       rescue SystemCallError => e
         @result.fail("browser_diagnostics: evidence delivery failed to create #{screenshot_dir} — #{e.class}: #{e.message}")
+
         return @result
       end
       settle_ms = Integer(ENV.fetch("GATE_BROWSER_DIAGNOSTICS_SETTLE_MS", DEFAULT_SETTLE_MS.to_s)).clamp(0, MAX_SETTLE_MS)
@@ -180,6 +185,7 @@ module Deploy
       end
 
       manifest = File.join(output, "manifest.json")
+
       payload = {
         schema: 1,
         generated_at: Time.now.utc.iso8601,
@@ -190,6 +196,7 @@ module Deploy
         results: rows,
         summary: rows.group_by { |row| row.fetch("status") }.transform_values(&:length)
       }
+
       begin
         File.write(manifest, JSON.pretty_generate(payload) + "\n")
       rescue SystemCallError => e
@@ -204,6 +211,7 @@ module Deploy
         return @result
       end
       @result.warn("browser_diagnostics: #{measured}/#{rows.size} route/viewport cells measured")
+
       @result.warn("browser_diagnostics: evidence manifest #{manifest}")
       @result
     rescue CdpSession::Unavailable, CdpSession::Error, SystemCallError => e
@@ -252,6 +260,7 @@ module Deploy
       messages = cdp.console_messages
       http_errors = cdp.http_failures
       request_errors = cdp.request_failures
+
       verdict = self.class.grade(
         surface:,
         status:,
@@ -270,12 +279,14 @@ module Deploy
         verdict[:hard] << pixel.fetch("reason")
       elsif %w[MISSING UNSUPPORTED].include?(pixel["status"])
         message = pixel.fetch("reason")
+
         if self.class.pixel_baseline_strict?
           verdict[:hard] << message
         else
           verdict[:soft] << message
         end
       end
+
       verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
       verdict[:soft].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}", severity: :soft) }
@@ -307,10 +318,12 @@ module Deploy
         "pixel_diff_image" => pixel["pixel_diff_image"],
         "pixel_diff_max_ratio" => pixel["max_ratio"]
       }
+
       print_row(surface, row)
       row
     rescue CdpSession::Error, SystemCallError => e
       @result.inconclusive!("browser_diagnostics: #{surface.id} CDP could not complete — #{e.class}: #{e.message}")
+
       row = {
         "app" => surface.app,
         "surface" => surface.label,
@@ -319,6 +332,7 @@ module Deploy
         "status" => "INCONCLUSIVE",
         "reason" => "#{e.class}: #{e.message}"
       }
+
       puts "browser0: #{surface.id} INCONCLUSIVE — #{row.fetch('reason')}"
       row
     end
@@ -337,6 +351,7 @@ module Deploy
       slug = File.basename(screenshot, ".png")
       diff_path = File.join(screenshot_dir, "#{slug}-pixel-diff.png")
       compared = PngDiff.compare(baseline_path: baseline, current_path: screenshot, diff_path:)
+
       common = {
         "baseline" => baseline,
         "pixel_diff_count" => compared[:pixel_diff_count],
@@ -383,16 +398,19 @@ module Deploy
         "http_failures=#{row['http_failures'].size}",
         "request_failures=#{row['request_failures'].size}"
       ]
+
       detail = row["failure_reasons"].empty? ? counts.join(" ") : row["failure_reasons"].join("; ")
       pixel_status = row["pixel_baseline_status"]
       if %w[COMPARED REGRESSION DIMENSION_MISMATCH MISSING UNSUPPORTED].include?(pixel_status)
         detail += " pixel=#{pixel_status}"
+
         if row["pixel_diff_ratio"]
           detail += " changed_pixels=#{row['pixel_diff_count']} drift=#{(row['pixel_diff_ratio'] * 100).round(4)}%"
           detail += " budget=#{(row['pixel_diff_max_ratio'] * 100).round(3)}%" if row["pixel_diff_max_ratio"]
         end
         detail += " diff=#{row['pixel_diff_image']}" if row["pixel_diff_image"]
       end
+
       detail += " screenshot=#{row['screenshot']}" if row["screenshot"]
       puts "browser0: #{surface.id} #{row['status']} — #{detail}"
     end

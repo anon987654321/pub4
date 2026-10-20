@@ -6,17 +6,20 @@ require_relative "source/css_constitution"
 require_relative "source/scale_ratchet"
 require_relative "source/css_brace_balance"
 require_relative "source/css_minify_integrity"
+
 require_relative "live/first_screen"
 require_relative "source/dialect_purity"
 require_relative "source/payment_honesty"
 require_relative "source/affiliate_honesty"
 require_relative "source/content_honesty"
+
 require_relative "source/content_for_yield"
 require_relative "research/layout_search"
 require_relative "live/user_flow"
 require_relative "live/surface_schema"
 require_relative "research/design_metrics"
 require_relative "research/visual_quality"
+
 require_relative "research/calibration"
 require_relative "source/frontend_auditor"
 require_relative "source/stimulus_wiring"
@@ -85,6 +88,7 @@ module Deploy
     def require_rendered_evidence!(aggregate, leaf)
       reasons = []
       reasons << "outcome=#{leaf.outcome}" unless leaf.outcome == :passed
+
       reasons << "#{leaf.live_skips} live skip(s)" if leaf.live_skips.positive?
       reasons << "#{leaf.unchecked.size} inconclusive item(s)" unless leaf.unchecked.empty?
       reasons << "#{leaf.soft_failures.size} unapproved visual finding(s)" unless leaf.soft_failures.empty?
@@ -102,11 +106,13 @@ module Deploy
       result = GateResult.new
       LEAVES.each do |klass|
         name = klass.name.split("::").last
+
         leaf = begin
           klass.run
         rescue StandardError => e
           GateResult.from_error(e, gate: name)
         end
+
         result.warn(coverage_line(name, leaf))
         result.merge!(leaf, label: name)
         require_rendered_evidence!(result, leaf) if klass == RenderedSuiteGate

@@ -32,6 +32,7 @@ module Deploy
   # layout" is precisely the self-healing behaviour this gate exists to remove.
   class LayoutSnapshotGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     DIR = File.join(File.expand_path("../..", __dir__), "data", "layout_snapshots")
 
     # A moved box matters; a box that shifted by a sub-pixel rounding does not.
@@ -66,6 +67,7 @@ module Deploy
       accepted_updates = {}
       pending_updates = {}
       alias_conflict = false
+
       GeometryProbe.each_payload(live) do |surface, payload|
         if payload["error"]
           if GeometryProbe.timeout?(payload)
@@ -73,6 +75,7 @@ module Deploy
           else
             @result.fail("layout_snapshot: #{surface.id} probe failed — #{payload["error"]}")
           end
+
           next
         end
         status = payload["status"].to_i
@@ -94,6 +97,7 @@ module Deploy
           diffs = compare(previous.fetch(:current), current)
           if diffs.any?
             alias_conflict = true
+
             @result.fail(
               "layout_snapshot: #{surface.id} disagrees with #{previous.fetch(:surface)} " \
               "for shared baseline #{rel(path)} — #{tally(diffs)}",
@@ -101,11 +105,13 @@ module Deploy
           end
           next
         end
+
         accepted_updates[path] = { surface: surface.id, current: } if self.class.update?
         if !File.file?(path)
           if self.class.update?
             pending_updates[path] = current
             written += 1
+
             @result.warn("layout_snapshot: #{surface.id} baseline creation proposed (#{current["elements"].size} elements)")
           else
             @result.fail("layout_snapshot: #{surface.id} has no committed baseline — " \
@@ -121,12 +127,14 @@ module Deploy
           next
         elsif self.class.update?
           pending_updates[path] = current
+
           written += 1
           @result.warn("layout_snapshot: #{surface.id} baseline update proposed (#{diffs.size} change(s): #{tally(diffs)})")
         else
           report(surface, diffs, path)
         end
       end
+
       if alias_conflict
         # Never partially accept a multi-surface baseline update: all surfaces
         # sharing a baseline must agree before any proposed baseline is written.

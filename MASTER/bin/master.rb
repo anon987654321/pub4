@@ -24,6 +24,7 @@ end
 if ARGV.first == "--fix-context"
   target = ARGV[1] && !ARGV[1].start_with?("-") ? ARGV[1] : ROOT
   full = ARGV.include?("--full")
+
   exec(
     RbConfig.ruby,
     File.join(MASTER, "tools", "agent_context.rb"),
@@ -90,6 +91,7 @@ $MASTER_PROCESS_LOCK = if ENV["MASTER_INTERNAL_CHILD"] == "1"
 unless ENV["MASTER_INTERNAL_CHILD"] == "1" || $MASTER_PROCESS_LOCK
   owner = Master::Ops::ProcessLock.owner(path: File.join(MASTER, ".master", "process.lock"))
   detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
+
   Master::Trace::Dmesg.status(
     "master0",
     "another process owns the control plane#{detail}",

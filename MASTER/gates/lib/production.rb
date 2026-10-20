@@ -6,6 +6,7 @@ require "rubygems"
 require_relative "../support/gate_result"
 require_relative "../support/bounded_command"
 require_relative "../lib/source/apps_yml"
+
 # MASTER/gates, because these two measure MASTER rather than a Rails app. They
 # were siblings here until 2026-09-11 and the composite still folds their
 # verdicts into the production gate, which is why the path reaches across.
@@ -94,6 +95,7 @@ module Deploy
       fail_app!(app_failures, "TLS terminates at relayd; do not enable config.force_ssl in Rails") if prod_active.any? { |line| line.match?(/\bconfig\.force_ssl\s*=\s*true\b/) }
       mailer_ok = prod_active.any? { |line| line.include?(domain) && (line.include?("action_mailer.default_url_options") || line.include?("mailer_host:")) }
       fail_app!(app_failures, "production mailer host must use #{domain}") unless mailer_ok
+
       hosts_ok = prod_active.any? { |line| line.include?(domain) && (line.include?("config.hosts") || line.include?("hosts:")) }
       fail_app!(app_failures, "production config.hosts must include #{domain}") unless hosts_ok
       prod_text = prod_active.join("\n")
@@ -124,12 +126,14 @@ module Deploy
         # The stack pins Rails from its git source at one ref; a version requirement is the
         # fallback for an app that takes a released gem.
         pinned_ref = gemfile_text[/^gem ["']rails["'],\s*github:\s*["'][^"']+["'],\s*ref:\s*["']([^"']+)["']/, 1]
+
         if pinned_ref
           fail_app!(app_failures, "Gemfile pins Rails at #{pinned_ref}, not #{RAILS_STACK.fetch("rails_ref")}") unless pinned_ref == RAILS_STACK.fetch("rails_ref")
         else
           requirement_text = gemfile_text[/^gem ['"]rails['"],\s*['"]([^'"]+)['"]/, 1]
           begin
             requirement = requirement_text && Gem::Requirement.new(requirement_text)
+
             fail_app!(app_failures, "Gemfile does not allow Rails #{RAILS_VERSION}") unless requirement&.satisfied_by?(RAILS_VERSION)
           rescue ArgumentError
             fail_app!(app_failures, "Gemfile has an invalid Rails requirement")
@@ -138,6 +142,7 @@ module Deploy
         lockfile = File.join(app_dir, "Gemfile.lock")
         if File.file?(lockfile)
           locked = File.read(lockfile)[/^    rails \((\d+(?:\.\d+)+(?:\.[a-z][a-z0-9]*)?)\)$/m, 1]
+
           fail_app!(app_failures, "Gemfile.lock must resolve Rails #{RAILS_VERSION}") unless locked && Gem::Version.new(locked) == RAILS_VERSION
         else
           fail_app!(app_failures, "missing Gemfile.lock")
@@ -172,6 +177,7 @@ module Deploy
     # reads the tree, so it asserts the script, not the rcctl state.
     def check_job_supervisor(app_failures, name)
       web_rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", name)
+
       jobs_rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", "#{name}_jobs")
 
       web_code = uncommented(web_rcd)
@@ -201,20 +207,24 @@ module Deploy
       shared_ci = File.join(RAILS_ROOT, "__shared", "config", "ci.rb")
       if File.file?(ci_bin)
         ci_parts = [File.read(ci_bin)]
+
         ci_parts << File.read(ci_config) if File.file?(ci_config)
         ci_parts << File.read(shared_ci) if File.file?(shared_ci) && ci_parts.join.include?("shared/config/ci")
         ci_text = ci_parts.join("\n")
         fail_app!(app_failures, "bin/ci must be executable") unless File.executable?(ci_bin)
+
         fail_app!(app_failures, "bin/ci must run RuboCop") unless ci_text.include?("rubocop")
         fail_app!(app_failures, "bin/ci must run bundler-audit") unless ci_text.include?("bundler-audit")
         fail_app!(app_failures, "bin/ci must run Brakeman") unless ci_text.include?("brakeman")
         fail_app!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails") && ci_text.include?("test")
         fail_app!(app_failures, "bin/ci must pin BUNDLER_AUDIT_UPDATE (offline VPS)") unless ci_text.include?("BUNDLER_AUDIT_UPDATE")
+
         fail_app!(app_failures, "bin/ci must set NPM_CONFIG_CACHE (copy-tree npm)") unless ci_text.include?("NPM_CONFIG_CACHE")
         guard = File.join(ROOT, "MASTER", "tools", "rails", "operator", "ci_guard.rb")
         fail_app!(app_failures, "missing MASTER/tools/rails/operator/ci_guard.rb") unless File.file?(guard)
         fail_app!(app_failures, "shared CI must use Operator::CiGuard") unless ci_text.include?("Operator::CiGuard")
         fail_app!(app_failures, "shared CI must skip importmap on VPS") unless ci_text.include?("unless vps_host")
+
         # RuboCop no longer skips on the VPS, so this asserts the opposite of what it
         # used to. vm23 is where the deploy gate actually runs; skipping there left
         # the only Ruby-style enforcement a local bin/ci nothing runs automatically,
@@ -223,6 +233,7 @@ module Deploy
         # skipped it.
         fail_app!(app_failures, "shared CI must run RuboCop on the VPS too") if
           ci_text.match?(/rubocop[^\n]*unless vps_host|step[ (]"rubocop"[^\n]*unless vps_host/)
+
         # Two facts, checked separately, because the regex that checked them
         # together was measuring the order they happen to appear in.
         #
@@ -249,6 +260,7 @@ module Deploy
         deploy_text = File.read(deploy_script)
         deploy_contract = [deploy_text, File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""].join("\n")
         fail_app!(app_failures, "deploy script must call shared deploy entrypoint") unless deploy_text.include?('deploy_tracked_app "$APP_NAME"')
+
         fail_app!(app_failures, "deploy contract must require the resolved ruby and bundle") unless deploy_contract.include?('need_cmd "$RUBY" "$BUNDLE"')
         fail_app!(app_failures, "deploy contract must configure relayd for #{domain}") unless deploy_contract.include?("relayd_add_relay")
       else

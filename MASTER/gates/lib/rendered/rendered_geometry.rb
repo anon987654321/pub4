@@ -7,6 +7,7 @@ require_relative "../../support/rendered_geometry/token_checks"
 require_relative "../../support/rendered_geometry/placement_checks"
 require_relative "../../support/rendered_geometry/composition_checks"
 require_relative "../../support/gate_result"
+
 require_relative "../../support/geometry_probe"
 require_relative "../../support/geometry_autofix"
 require_relative "../../support/gate_autofix"
@@ -28,6 +29,7 @@ module Deploy
   # floor; this one needs a browser and a booted app and is the assertion.
   class RenderedGeometryGate
     include ContrastChecks
+
     include TokenChecks
     include PlacementChecks
     include CompositionChecks
@@ -89,8 +91,10 @@ module Deploy
           else
             @result.fail("geometry: #{surface.id} probe failed — #{payload["error"]}")
           end
+
           next
         end
+
         probed += 1
         check_surface(surface, payload)
       end
@@ -108,6 +112,7 @@ module Deploy
       @tokens = Operator::MasterDesign.tokens
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
+
       # design_rules states the spacing grid twice and the two disagree:
       # pixel_perfection.eight_px_rhythm allows 12 and 20, layout_rules.grid.
       # allowed_spacing_px does not. css_constitution, rhythm_lint and
@@ -117,6 +122,7 @@ module Deploy
       # which list is real. Same precedence as design_metrics: rhythm first,
       # grid as the fallback.
       @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
+
       if @allowed_spacing.empty?
         @allowed_spacing = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
       end
@@ -141,6 +147,7 @@ module Deploy
       check_contrast(surface, elements)
       check_token_conformance(surface, data)
       check_layout(surface, data)
+
       check_input_zoom(surface, elements)
       check_subpixel(surface, elements)
       check_edge_alignment(surface, elements)
@@ -232,6 +239,7 @@ module Deploy
         r = els.first["frect"]
         "#{key} at (#{r["x"]}, #{r["y"]})#{" x#{els.size}" if els.size > 1}"
       end
+
       @result.fail(
         "geometry subpixel: #{surface.id} paints #{by_key.size} distinct component(s) on fractional " \
         "pixels (#{offenders.size} instances) — #{named.join('; ')} (principle=pixel_perfection)",
@@ -365,6 +373,7 @@ module Deploy
           is_image: element["tag"] == "img",
         )
       end
+
       return if mapped.empty?
 
       dialect = { "brgen" => :social, "amber" => :luxury }.fetch(surface.app.to_s, :default)
@@ -374,6 +383,7 @@ module Deploy
         dialect:,
         contrast_ok: rendered_design_quality_contrast_ok?(elements),
       )
+
       @result.fail(
         "geometry design_quality: #{surface.id} fails rendered hard floor "         "(tap=#{vector.tap_ok} contrast=#{vector.contrast_ok})",
         severity: :hard,
@@ -426,6 +436,7 @@ module Deploy
         else
           offenders.map { |o| "#{o["sel"]} (right=#{o["right"]})" }.join("; ")
         end
+
       @result.fail(
         "geometry overflow: #{surface.id} scrolls horizontally (#{scroll}px > #{client}px viewport) — #{names}",
         severity: :hard,
@@ -454,6 +465,7 @@ module Deploy
         h = el.dig("rect", "h")
         sev = critical?(el) ? :hard : :soft
         label = el["text"].to_s.empty? ? (el["aria"] || el["tag"]) : el["text"]
+
         @result.fail(
           "geometry touch: #{surface.id} #{key} renders #{w}×#{h} < #{@min_touch.to_i}px " \
           "(#{group.size}×, #{label.to_s.strip[0, 30].inspect}) principle=fitts_law",
@@ -471,6 +483,7 @@ module Deploy
       blocked.group_by { |el| el["key"].to_s.sub(/\[\d+\]\z/, "") }.first(5).each do |key, group|
         el = group.first
         sev = critical?(el) ? :hard : :soft
+
         @result.fail(
           "geometry occlusion: #{surface.id} #{key} centre pixel is owned by #{el["hit"].sub("blocked:", "")} " \
           "(#{group.size}× unclickable) principle=fitts_law",
@@ -498,11 +511,13 @@ module Deploy
       buried = elements.select do |el|
         el["position"].to_s == "fixed" && el["hit"].to_s.start_with?("under_chrome")
       end
+
       return if buried.empty?
 
       buried.group_by { |el| el["key"].to_s.sub(/\[\d+\]\z/, "") }.first(5).each do |key, group|
         el = group.first
         label = el["text"].to_s.strip.empty? ? (el["aria"] || el["tag"]) : el["text"].to_s.strip
+
         @result.fail(
           "geometry chrome occlusion: #{surface.id} #{key} is position:fixed " \
           "(#{label.to_s[0, 30].inspect}, z=#{el["z"] || "auto"}) and its centre pixel is owned by " \
@@ -511,6 +526,7 @@ module Deploy
           "(#{group.size}×) principle=fitts_law",
           severity: :hard,
         )
+
         @result.autofix(app: surface.app, selector: key, kind: :occlusion,
                         detail: "#{surface.id}: fixed chrome buried by #{el["hit"].sub("under_chrome:", "")}")
       end

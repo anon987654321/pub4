@@ -21,6 +21,7 @@ module Deploy
   # no running app, deterministic, fast enough to run on every commit.
   class GateMutationGate
     ROOT = File.expand_path("../../..", __dir__)
+
     GATES = File.expand_path("..", __dir__)
     SURFACES = File.join(GATES, "fixtures", "surfaces")
     EXEMPLARS = File.join(GATES, "fixtures", "exemplars")
@@ -128,6 +129,7 @@ module Deploy
             @result.warn("gate_mutation: #{id}/#{mutation_id} transform raised #{e.class}")
             nil
           end
+
           if mutant.nil? || mutant == html
             inapplicable += 1
             next
@@ -162,6 +164,7 @@ module Deploy
       fixtures.each do |path|
         id = File.basename(path, ".html").delete_prefix("good_")
         page = { id:, app: "brgen", path: "/", persona: "guest", view: path }
+
         html = File.read(path)
         if hard_count(gate.live_findings(page, 200, html, "fixture")).positive?
           @result.fail("gate_mutation: page_simulation already rejects good_#{id}.html — its plants measure nothing")
@@ -233,6 +236,7 @@ module Deploy
     def verdict(html, schema_id)
       findings = @schema.check(html, schema_id)
       quality = @quality.score(html, surface: surface_kind(schema_id))
+
       {
         hard: findings.count { |f| f.severity == :hard },
         soft: findings.count { |f| f.severity == :soft },
@@ -266,6 +270,7 @@ module Deploy
 
       survived.group_by { |row| row[:mutation] }.sort_by { |_m, rows| -rows.size }.each do |mutation, rows|
         surfaces = rows.map { |r| r[:id] }.sort.join(", ")
+
         @result.fail(
           "gate_mutation: #{mutation} survives on #{surfaces} — the suite does not detect " \
           "\"#{rows.first[:description]}\" on #{rows.size == 1 ? 'this surface' : "#{rows.size} surfaces"}",

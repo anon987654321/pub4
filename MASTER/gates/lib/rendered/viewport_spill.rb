@@ -22,6 +22,7 @@ module Deploy
   # what the scroller is for.
   class ViewportSpillGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     WIDTH = 390
     WIDTHS = [320, WIDTH].freeze
     HEIGHT = 844
@@ -97,6 +98,7 @@ module Deploy
           surfaces.each { |surface| measure(cdp, surface, ports, width:) }
         end
       end
+
       @result
     rescue CdpSession::Error => e
       # A browser that will not start measured nothing, and a gate that reports
@@ -139,6 +141,7 @@ module Deploy
         end
 
         spills = JSON.parse(cdp.evaluate(PROBE).to_s)
+
         if spills.empty?
           @result.checked!
         else

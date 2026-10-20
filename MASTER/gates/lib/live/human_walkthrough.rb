@@ -89,6 +89,7 @@ module Deploy
 def layout_with_partials(app)
   root = File.join(@rails_root, app.name)
   layout = File.read(File.join(root, "app/views/layouts/application.html.erb"))
+
   layout + Dir.glob(File.join(root, "app/views/{layouts,shared}/_*.erb"))
               .map { |partial| File.read(partial) }.join
 rescue StandardError
@@ -134,6 +135,7 @@ end
     # is still the frame. Anything below that is a component the page happens to
     # contain, and finding a marker there is not evidence the chrome carries it.
     RENDER_CALL = /render(?:\s+partial:)?\s+"([a-z0-9_]+(?:\/[a-z0-9_]+)+)"/
+
     PARTIAL_DEPTH = 2
 
     def resolve_rendered_partials(app, sources)
@@ -142,6 +144,7 @@ end
       PARTIAL_DEPTH.times do
         found = frontier.join("\n").scan(RENDER_CALL).flatten.uniq.filter_map do |name|
           dir, base = File.split(name)
+
           rel = "app/views/#{dir}/_#{base}.html.erb"
           rel if File.file?(File.join(@rails_root, app, rel))
         end
@@ -187,6 +190,7 @@ end
 unless layout_with_partials(app).include?("global_search_path")
   result.fail("brgen: sidebar search must submit to global_search_path")
 end
+
         Array(files[:mobile_tabs]).each_with_index do |pat, i|
           result.fail("brgen: mobile tab missing aria/i18n marker ##{i + 1}") unless nav_source.match?(pat)
         end

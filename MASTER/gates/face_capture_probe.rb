@@ -98,6 +98,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
     # that drew nothing gives, which is the confusion the comment above records
     # one layer down. Say that the probe itself failed.
     warn "face_capture_probe: state read failed (#{e.class}: #{e.message.lines.first.to_s.strip})"
+
     {}
   end
 
@@ -123,6 +124,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
     })()
   JS
   cdp.press("Enter") unless tapped.include?("called")
+
   puts "tap: #{tapped.include?(%q{called}) ? %q{__MASTER_PRIMER_TAP__()} : %q{keydown fallback}}"
 
   deadline = Time.now + options[:timeout]
@@ -130,6 +132,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   loop do
     ready = state.call
     break if ready["failed"]
+
     # Wait for MASTER_FACE to EXIST before judging anything about it.
     #
     # This read `primer && (frames > 0 || !renderer)`, and on a surface with
@@ -145,6 +148,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
     # `present` separates them.
     break if ready["present"] && ready["primer"] &&
              (ready["frames"].to_i.positive? || !ready["renderer"])
+
     break if Time.now > deadline
 
     sleep 0.1
@@ -156,6 +160,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   unless ready["primer"]
     abort "warn: primer never fired. The tap was not accepted; the face is still gated."
   end
+
   unless ready["present"]
     abort "warn: window.MASTER_FACE is undefined — the face runtime never loaded. " \
           "Nothing has drawn; a capture here would be black."
@@ -176,6 +181,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   after = state.call
   drawn = after["frames"].to_i - ready["frames"].to_i
   puts "captured #{options[:frames]} frame(s) -> #{options[:out]}"
+
   # A sequence whose frame counter did not move is a still repeated N times,
   # which looks like footage and is not. Said rather than left to be noticed in
   # the edit.

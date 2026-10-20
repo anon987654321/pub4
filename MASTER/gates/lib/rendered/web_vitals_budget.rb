@@ -27,6 +27,7 @@ module Deploy
   # reading available here.
   class WebVitalsBudget
     ROOT = File.expand_path("../../../..", __dir__)
+
     SHARED = File.join(ROOT, "RAILS", "__shared")
     HOTWIRE = File.join(SHARED, "frontend", "hotwire.js")
 
@@ -90,6 +91,7 @@ module Deploy
       GeometryProbe.unreachable_apps(surfaces).each do |app|
         @result.skipped_live("web_vitals_budget: #{app} port closed — paint budget not measured")
       end
+
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("web_vitals_budget: no app reachable — paint budget not measured")
@@ -103,6 +105,7 @@ module Deploy
 
     def selected_surfaces
       rows = GeometryProbe.surfaces
+
       # Honor focused runs such as GATE_SURFACES=amber/wardrobe. Otherwise use
       # the canonical pixel_snapshot declarations and pick one mobile first
       # screen per app, so the same inventory governs visuals and performance.
@@ -114,6 +117,7 @@ module Deploy
                  else
                    rows.group_by(&:app).keys.sort.filter_map do |app|
                      app_rows = rows.select { |surface| surface.app == app }
+
                      app_rows.find { |surface| surface.viewport == "mobile" } || app_rows.first
                    end
                  end

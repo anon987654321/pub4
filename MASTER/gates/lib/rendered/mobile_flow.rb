@@ -16,6 +16,7 @@ module Deploy
   # Needs Chrome + listening apps. Without either: inconclusive (not a pass).
   class MobileFlowGate
     ROOT = File.expand_path("../../../..", __dir__)
+
     PHONE = [390, 844].freeze
     TOUCH_MIN = 44
 
@@ -116,6 +117,7 @@ module Deploy
           report_surface("#{surface.app}/#{surface.label}", :skipped, "app port closed")
         end
       end
+
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("mobile_flow: no app reachable")
@@ -130,6 +132,7 @@ module Deploy
           @result.fail("mobile_flow: BrgenVerticalSurfaces missing subapp #{sub}")
         end
       end
+
       # Deliberately not counted as a check. It is a list read from source, and
       # counting it let the gate report PASSED next to its own "Chrome navigated
       # 0/N surfaces" line — one satisfied check standing in for the phone
@@ -143,6 +146,7 @@ module Deploy
           measured += 1 if ok
         end
       end
+
       # checked! only once enough surfaces were measured: a count recorded first
       # outranks the inconclusive note, and the gate would pass over two pages.
       if measured.zero?
@@ -151,6 +155,7 @@ module Deploy
         @result.inconclusive!("mobile_flow: only #{measured}/#{live.size} surfaces measured (CDP timeouts) — warm apps and re-run")
       else
         @result.checked!(measured)
+
         @result.warn("mobile_flow: measured #{measured}/#{live.size} mobile surface(s) at #{PHONE.join('×')}")
       end
       @result
@@ -167,6 +172,7 @@ module Deploy
         next unless rows
 
         base = rows.find { |s| s.viewport == "mobile" } || rows.first
+
         GeometryProbe::Surface.new(
           app: base.app,
           label: base.label,
@@ -186,11 +192,13 @@ module Deploy
       # Force phone size regardless of surface declaration.
       w, h = PHONE
       payload = GeometryProbe.walk(cdp, surface, width: w, height: h)
+
       unless GeometryProbe.ok?(payload)
         err = payload["error"] || "HTTP #{payload["status"]}"
         # CDP timeout under load is environment flake, not a design defect.
         if err.to_s.match?(/timeout|Timeout/i)
           @result.warn("mobile_flow: #{label} skipped (#{err})")
+
           report_surface(label, :inconclusive, err)
         else
           @result.fail("mobile_flow: #{label} unreachable (#{err})")
@@ -210,6 +218,7 @@ module Deploy
       hard_before = @result.failures.size
       soft_before = @result.soft_failures.size
       judge(@result, surface.app, surface.label, m, face_in_payload: payload.to_s.include?("face"))
+
       state = if @result.failures.size > hard_before
                 :fail
               elsif @result.soft_failures.size > soft_before
@@ -217,6 +226,7 @@ module Deploy
               else
                 :pass
               end
+
       report_surface(label, state)
       true
     end
@@ -243,6 +253,7 @@ module Deploy
         end
       else
         @result.fail("mobile_flow: #{label} missing main landmark") unless m["has_main"]
+
         @result.fail("mobile_flow: #{label} missing skip-link") unless m["has_skip"]
       end
 
@@ -259,6 +270,7 @@ module Deploy
       undersized.each do |c|
         primary = c["label"].to_s.match?(/primary|sign|logg|cart|sell|post|add|live/i)
         sev = primary ? :hard : :soft
+
         @result.fail(
           "mobile_flow: #{label} touch target #{c["label"].inspect} is #{c["w"]}×#{c["h"]} (min #{TOUCH_MIN}px)",
           severity: sev,
@@ -271,6 +283,7 @@ module Deploy
           @result.fail("mobile_flow: #{label} expected mobile tab bar chrome", severity: :soft)
         end
       end
+
       result
     end
   end

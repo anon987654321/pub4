@@ -154,6 +154,7 @@ module Deploy
 
       measured = 0
       GeometryProbe.with_browser { |cdp| live.each { |surface| measured += 1 if probe(cdp, surface) } }
+
       # Surfaces measured, not surfaces attempted. A navigation timeout is a
       # warning here, so a run where Chrome opened and every page timed out
       # pressed nothing at all — and counting the attempts reported that as a
@@ -166,6 +167,7 @@ module Deploy
       else
         @result.checked!(measured)
       end
+
       @result
     end
 
@@ -176,6 +178,7 @@ module Deploy
       payload = GeometryProbe.walk(cdp, surface)
       unless GeometryProbe.ok?(payload)
         error = payload["error"] || "HTTP #{payload["status"]}"
+
         # A navigation timeout is the probe having a bad minute, not the page
         # having a defect; the other gates draw the same line.
         if error.to_s.match?(/timeout/i)
@@ -192,6 +195,7 @@ module Deploy
           "is covered by #{hit["covered_by"]} at #{hit["at"].join(",")}; a press there misses it",
         )
       end
+
       true
     end
   end

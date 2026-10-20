@@ -50,6 +50,7 @@ Deploy::CdpSession.open do |cdp|
     cdp.navigate(url, settle: 0.6)
     bad = []
     seen = []
+
     steps.times do
       cdp.press("Tab")
       state = JSON.parse(cdp.evaluate(CHECK).to_s)
@@ -57,12 +58,14 @@ Deploy::CdpSession.open do |cdp|
       key = state["sel"]
       break if seen.include?(key) && seen.last(3).include?(key) # cycled
       seen << key
+
       bad << "#{key} #{state['text'].inspect}" unless state["ring"]
     end
     bad.uniq!
     total_bad += bad.size
     puts bad.empty? ? "#{name}: #{seen.uniq.size} stops, every one shows a ring" :
                       "#{name}: #{bad.size} ringless stop(s) of #{seen.uniq.size}"
+
     bad.first(8).each { |b| puts "  #{b}" }
   rescue Deploy::CdpSession::Error => e
     puts "#{name}: probe failed (#{e.class}) — measured nothing"
