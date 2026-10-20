@@ -3866,19 +3866,19 @@
   "noise": {
     "air": {
       "hz": 8000,
-      "db": -54
+      "db": -66
     },
     "bed": {
       "hz": 200,
-      "db": -48
+      "db": -60
     },
     "dust": {
       "rate": 3,
-      "db": -42
+      "db": -56
     },
     "sparkle": {
       "rate": 1.6,
-      "db": -30,
+      "db": -46,
       "midi": [
         108,
         119
@@ -3934,6 +3934,11 @@
       "dynamic": {
         "threshold_db": -30,
         "range": 0.35
+      },
+      "lowcut_hz": 32,
+      "low_shelf": {
+        "hz": 150,
+        "db": -5
       }
     },
     "multiband": {
@@ -3970,8 +3975,8 @@
       "ratio": 6,
       "attack_ms": 3,
       "release_ms": 80,
-      "makeup_db": 10,
-      "mix": 0.2
+      "makeup_db": 5,
+      "mix": 0.12
     },
     "glue": {
       "threshold_db": -16,
@@ -4389,7 +4394,7 @@
       "octaves": [
         0,
         0,
-        -1
+        0
       ],
       "cutoff": 700,
       "env_amount": 1800,
@@ -4447,14 +4452,14 @@
     "rhodes_mark1": {
       "family": "rhodes",
       "group": "rhodes",
-      "body_index": 1.3,
-      "bell_index": 2.8,
+      "body_index": 1.1,
+      "bell_index": 1.8,
       "bell_ratio": 14,
       "bell_decay": 0.25,
       "body_decay": 0.9,
       "decay": 1.6,
       "release": 0.35,
-      "click": 0.05,
+      "click": 0.02,
       "velocity_bright": 0.5
     },
     "rhodes_stage73": {
@@ -4575,36 +4580,36 @@
       "waves": [
         "saw",
         "saw",
-        "pulse",
-        "saw"
+        "triangle",
+        "triangle"
       ],
       "detune": [
-        0,
-        -5,
-        4,
-        6
+        -7,
+        7,
+        -3,
+        3
       ],
       "octaves": [
         0,
         0,
         0,
-        -1
+        0
       ],
-      "cutoff": 1500,
-      "env_amount": 2600,
-      "resonance": 0.18,
-      "drive": 1.1,
+      "cutoff": 900,
+      "env_amount": 900,
+      "resonance": 0.1,
+      "drive": 1.0,
       "amp": [
-        0.12,
-        0.5,
+        0.9,
+        0.6,
         0.8,
-        0.7
+        1.2
       ],
       "filter_env": [
-        0.25,
         0.9,
-        0.35,
-        0.7
+        1.2,
+        0.5,
+        1.0
       ]
     },
     "prophet_warm": {
@@ -4624,17 +4629,17 @@
       "octaves": [
         0,
         0,
-        -1
+        0
       ],
-      "cutoff": 1100,
-      "env_amount": 1800,
+      "cutoff": 900,
+      "env_amount": 900,
       "resonance": 0.12,
       "drive": 1,
       "amp": [
-        0.2,
+        0.5,
         0.7,
         0.8,
-        0.9
+        1.0
       ],
       "filter_env": [
         0.4,
@@ -4650,36 +4655,36 @@
       "waves": [
         "saw",
         "saw",
-        "saw",
-        "pulse"
+        "triangle",
+        "triangle"
       ],
       "detune": [
         -6,
+        6,
         -2,
-        3,
-        6
+        2
       ],
       "octaves": [
         0,
         0,
         0,
-        -1
+        0
       ],
-      "cutoff": 900,
-      "env_amount": 1500,
-      "resonance": 0.25,
-      "drive": 1.15,
+      "cutoff": 700,
+      "env_amount": 800,
+      "resonance": 0.12,
+      "drive": 1.0,
       "amp": [
-        0.35,
+        0.9,
         0.8,
         0.8,
-        1
+        1.2
       ],
       "filter_env": [
-        0.6,
+        1.0,
         1.5,
         0.5,
-        1
+        1.0
       ]
     },
     "juno_strings": {
@@ -4710,15 +4715,15 @@
         0,
         0
       ],
-      "cutoff": 2200,
-      "env_amount": 600,
+      "cutoff": 1500,
+      "env_amount": 300,
       "resonance": 0.05,
       "drive": 1,
       "amp": [
-        0.18,
-        0.4,
+        0.6,
+        0.5,
         0.85,
-        0.55
+        1.0
       ],
       "filter_env": [
         0.2,
@@ -4772,37 +4777,37 @@
       "gain": 13,
       "waves": [
         "saw",
-        "pulse",
+        "triangle",
         "saw",
-        "saw"
+        "triangle"
       ],
       "detune": [
-        0,
+        -5,
         4,
-        -4,
-        6
+        5,
+        -3
       ],
       "octaves": [
         0,
         0,
         0,
-        -1
+        0
       ],
-      "cutoff": 700,
-      "env_amount": 3200,
-      "resonance": 0.32,
-      "drive": 1.2,
+      "cutoff": 600,
+      "env_amount": 1200,
+      "resonance": 0.15,
+      "drive": 1.0,
       "amp": [
-        0.22,
+        0.7,
         0.7,
         0.8,
-        0.8
+        1.2
       ],
       "filter_env": [
-        0.35,
-        1,
-        0.3,
-        0.6
+        0.8,
+        1.0,
+        0.5,
+        1.0
       ]
     },
     "ruby_strings": {
@@ -5119,9 +5124,9 @@
         "head_bump_db": 3,
         "hf_rolloff": 13800,
         "lf_rolloff": 34,
-        "hiss_amp": 0.0028,
+        "hiss_amp": 0.00112,
         "pop_rate": 0.00035,
-        "pop_amp": 0.14,
+        "pop_amp": 0.056,
         "crush_bits": 12,
         "crush_sr": 1.69,
         "crush_mix": 0.32,
@@ -5141,9 +5146,9 @@
         "head_bump_db": 3,
         "hf_rolloff": 13800,
         "lf_rolloff": 34,
-        "hiss_amp": 0.003,
+        "hiss_amp": 0.0012,
         "pop_rate": 0.00025,
-        "pop_amp": 0.12,
+        "pop_amp": 0.048,
         "crush_bits": 14,
         "crush_sr": 1.69,
         "crush_mix": 0.18,
@@ -5163,9 +5168,9 @@
         "head_bump_db": 3,
         "hf_rolloff": 11200,
         "lf_rolloff": 34,
-        "hiss_amp": 0.009,
+        "hiss_amp": 0.0036,
         "pop_rate": 0.0012,
-        "pop_amp": 0.32,
+        "pop_amp": 0.128,
         "crush_bits": 10,
         "crush_sr": 1.69,
         "crush_mix": 0.48,
@@ -5185,9 +5190,9 @@
         "head_bump_db": 3.8,
         "hf_rolloff": 12600,
         "lf_rolloff": 34,
-        "hiss_amp": 0.0028,
+        "hiss_amp": 0.00112,
         "pop_rate": 0.00035,
-        "pop_amp": 0.14,
+        "pop_amp": 0.056,
         "crush_bits": 12,
         "crush_sr": 1.69,
         "crush_mix": 0.52,
@@ -5207,9 +5212,9 @@
         "head_bump_db": 4.2,
         "hf_rolloff": 10800,
         "lf_rolloff": 34,
-        "hiss_amp": 0.0035,
+        "hiss_amp": 0.0014,
         "pop_rate": 0.00012,
-        "pop_amp": 0.14,
+        "pop_amp": 0.056,
         "crush_bits": 12,
         "crush_sr": 1.69,
         "crush_mix": 0.22,
@@ -5229,9 +5234,9 @@
         "head_bump_db": 5.2,
         "hf_rolloff": 7000,
         "lf_rolloff": 38,
-        "hiss_amp": 0.0022,
+        "hiss_amp": 0.00088,
         "pop_rate": 0.00035,
-        "pop_amp": 0.14,
+        "pop_amp": 0.056,
         "crush_bits": 12,
         "crush_sr": 1.85,
         "crush_mix": 0.42,
@@ -5251,9 +5256,9 @@
         "head_bump_db": 6,
         "hf_rolloff": 9600,
         "lf_rolloff": 45,
-        "hiss_amp": 0.006,
+        "hiss_amp": 0.0024,
         "pop_rate": 0.0009,
-        "pop_amp": 0.24,
+        "pop_amp": 0.096,
         "crush_bits": 8,
         "crush_sr": 2.05,
         "crush_mix": 0.58,
@@ -11025,7 +11030,7 @@
   "bus_effects": {
     "dilla_night": {
       "drum_sonitex": "cassette",
-      "drum_sonitex_instances": 3,
+      "drum_sonitex_instances": 1,
       "drum_tape": "heavy",
       "drum_vcs": 0.78,
       "drum_dub_echo": {
@@ -11038,15 +11043,15 @@
         "intensity": 0.74,
         "volume": 0.82,
         "lowpass": 4300,
-        "saturation": 0.95,
+        "saturation": 0.5,
         "reverb": 0,
         "tail": 1.15
       },
       "drum_crystallizer": {
         "delay_ms": 352,
         "semitones": 12,
-        "feedback": 0.44,
-        "mix": 0.52,
+        "feedback": 0.25,
+        "mix": 0.2,
         "repeats": 3,
         "tail": 1.15,
         "grain_ms": 76
@@ -11061,7 +11066,7 @@
         "intensity": 0.52,
         "volume": 0.32,
         "lowpass": 4900,
-        "saturation": 0.72,
+        "saturation": 0.4,
         "reverb": 0,
         "tail": 0.72
       },
@@ -11069,7 +11074,7 @@
         "delay_ms": 366,
         "semitones": 7,
         "feedback": 0.24,
-        "mix": 0.14,
+        "mix": 0.06,
         "repeats": 2,
         "tail": 0.55,
         "grain_ms": 96
@@ -11265,7 +11270,7 @@
       "kick": {
         "voice": "techno_kick",
         "style": "pocket",
-        "tail": 0.8,
+        "tail": 0.3,
         "lowpass": 5000
       },
       "snare": {

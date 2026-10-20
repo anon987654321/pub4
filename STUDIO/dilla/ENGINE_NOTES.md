@@ -147,7 +147,8 @@ and the modifiers.
 ## Voices and instruments
 
 A voice is a row of the data. The sine voice is a stack of four sine partials. The moog
-voices are detuned saw and pulse oscillators on phase accumulators into a four-pole
+voices are detuned saw and pulse oscillators, band-limited by a polynomial step correction so
+no harmonic folds back below the Nyquist, on phase accumulators into a four-pole
 ladder lowpass with a drive, a resonance and an envelope that sweeps the cutoff, so
 every note begins bright and darkens. The rhodes voices are frequency-modulated electric
 pianos: a body pair near one to one, a bell pair at fourteen to one whose index dies
@@ -166,7 +167,8 @@ bag keeps a group from following itself.
 The polysynth pads are the moog voice with more
 oscillators: `prophet_pad` and `prophet_warm` stack saws, pulses and triangles under a
 ladder that opens on the attack and settles, `oberheim_pad` is wider and darker, and
-`cs80_ensemble` sweeps a resonant filter for a brass-like swell.
+`cs80_ensemble` sweeps a resonant filter for a brass-like swell. No pad stacks an octave-down
+copy of the chord: that put every tone's double into the sub and the whole chord into mud.
 
 The string machines,
 `juno_strings` and `solina_ensemble`, get their ensemble from a static spread of six or
@@ -238,6 +240,12 @@ the play bag leaves the soundfont voices out. Whatever vibrato a soundfont's own
 carry is the soundfont's, and the engine cannot remove it.
 
 ## Effects and mastering
+
+The mastering equaliser opens with a rumble cut of two Butterworth sections below 32 hertz and a
+low shelf at 150 hertz, so the kick and bass sit under the music rather than over it; the
+parallel compressor lifts the body by five decibels at a twelfth of the mix, which raises
+the floor no further than the music. The kit kick rings for a third of a second, not four-fifths,
+because four kicks a bar at the longer tail made one unbroken sub tone.
 
 The tape space echo has three playback heads at one, two and three times a base delay,
 which is a dotted eighth unless `--echo-time` says milliseconds. The heads in use are

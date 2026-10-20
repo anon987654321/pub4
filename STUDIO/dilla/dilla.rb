@@ -1559,6 +1559,19 @@ module Voices
     'sine' => ->(p) { Math.sin(TAU * p) }
   }.freeze
 
+  # The polynomial band-limited step: the correction that rounds each jump of a saw or a pulse
+  # over two samples, so the shape keeps no harmonic past the Nyquist to fold back down as the
+  # inharmonic whistle a naive saw leaves. `phase` runs 0 to 1; `step` is how far it moves a sample.
+  def self.blep(phase, step)
+    rising = phase / step
+    falling = (phase - 1.0) / step
+    return (rising + rising) - (rising * rising) - 1.0 if phase < step
+
+    return (falling * falling) + (falling + falling) + 1.0 if phase > 1.0 - step
+
+    0.0
+  end
+
   # A four-pole ladder lowpass: each pole moves toward the one before, the last feeds back.
   # The pole coefficient is x / (1 + x), which needs no exponential in the sample loop.
   class Ladder
@@ -1608,9 +1621,10 @@ module Voices
       k = 0
       while k < wave_count
         p = phases[k]
+        dt = incs[k]
         sum += case waves[k]
-               when 0 then (2.0 * p) - 1.0
-               when 1 then p < 0.5 ? 1.0 : -1.0
+               when 0 then (2.0 * p) - 1.0 - blep(p, dt)
+               when 1 then (p < 0.5 ? 1.0 : -1.0) + blep(p, dt) - blep((p + 0.5) % 1.0, dt)
                when 2 then p < 0.5 ? (4.0 * p) - 1.0 : 3.0 - (4.0 * p)
                else Math.sin(TAU * p)
                end
@@ -2426,9 +2440,14 @@ module Mastering
       lm = spec.fetch('low_mid')
       air = spec.fetch('air')
       dyn = spec.fetch('dynamic')
+      @lowcut = spec["lowcut_hz"]
+      @weight_db = spec.dig("low_shelf", "db")
+      @weight_hz = spec.dig("low_shelf", "hz")
+      @weight_gain = 10.0**(@weight_db / 20.0) if @weight_db
       @chains = Array.new(channels) do
-        { cut: Tape::Biquad.peaking(lm.fetch('hz'), lm.fetch('q'), lm.fetch('db')), air: Tape::Biquad.highshelf(air.fetch('hz'), air.fetch('db')),
-          band: Tape::Biquad.bandpass(lm.fetch('hz'), lm.fetch('q')) }
+        { cut: Tape::Biquad.peaking(lm.fetch("hz"), lm.fetch("q"), lm.fetch("db")),
+          air: Tape::Biquad.highshelf(air.fetch("hz"), air.fetch("db")),
+          band: Tape::Biquad.bandpass(lm.fetch("hz"), lm.fetch("q")), **bottom_end }
       end
       @threshold = Mastering.db(dyn.fetch('threshold_db'))
       @range = dyn.fetch('range')
@@ -2439,7 +2458,7 @@ module Mastering
 
     def process(frame)
       count = frame.first.size
-      statics = frame.each_with_index.map { |channel, c| channel.map { |x| @chains[c][:air].step(@chains[c][:cut].step(x)) } }
+      statics = frame.each_with_index.map { |channel, c| channel.map { |x| shape(@chains[c], x) } }
       bands = frame.each_with_index.map { |channel, c| channel.map { |x| @chains[c][:band].step(x) } }
       Array.new(frame.size) do |c|
         Array.new(count) do |i|
@@ -2451,6 +2470,27 @@ module Mastering
           statics[c][i] - (depth * bands[c][i])
         end
       end
+    end
+
+    private
+
+    # What each chain does to a sample before the dynamic cut: the rumble cut, the weight of the
+    # bottom octaves, the low-mid cut, the air.
+    def shape(chain, sample)
+      sample = chain[:rumble].reduce(sample) { |value, section| section.step(value) } if chain[:rumble]
+      sample = chain[:weight].step(sample) * @weight_gain if chain[:weight]
+      chain[:air].step(chain[:cut].step(sample))
+    end
+
+    # Two Butterworth sections, 24 dB an octave: rumble under the lowest note is never music.
+    # The weight is a low shelf of `low_shelf.db` at `low_shelf.hz`, built as the same shelf
+    # turned over (a high shelf of the opposite sign) and a gain, so one shelf shape serves both.
+    def bottom_end
+      {
+        rumble: @lowcut && Array.new(2) { Tape::Biquad.highpass(@lowcut) },
+
+        weight: @weight_db && Tape::Biquad.highshelf(@weight_hz, -@weight_db),
+      }
     end
   end
 
@@ -6681,6 +6721,10 @@ def run(argv)
   OptionParser.new do |o|
     o.banner = 'Usage: ruby dilla.rb [options] | reference URL_OR_AUDIO | industrial-techno [options]'
     o.on('--showcase', 'Render the default showcase: the Blue Hour suite and the rest of the room') { options[:showcase] = true }
+    o.on("--arrangement PATH", "With --showcase: play the sections of this JSON file, not data/showcase.json") do |v|
+      options[:arrangement] = v
+      options[:showcase] = true
+    end
     o.on('--video PATH', 'Write the matching MP4 visualizer at PATH') { |v| options[:video] = v }
     o.on('--no-video', 'Render only the WAV; do not encode an MP4') { options[:video] = false }
     o.on('--video-preset NAME', 'Postpro video preset (default dilla_heavy)') { |v| options[:video_preset] = v }
@@ -7266,7 +7310,8 @@ end
 # Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
 # and drum synthesiser used by ordinary progression renders.
 def render_showcase(data, options)
-  arrangement = JSON.parse(File.read(File.join(__dir__, "data", "showcase.json")))
+  arrangement_path = options.fetch(:arrangement) { File.join(__dir__, "data", "showcase.json") }
+  arrangement = JSON.parse(File.read(arrangement_path))
   sections = arrangement.fetch('sections')
   seed = options[:seed] || 261_013
   tempos = showcase_tempos(seed:, count: sections.size)

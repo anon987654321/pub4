@@ -9,14 +9,13 @@ the default arrangement, and `data/music_theory.json` holds harmonic references.
 Research recovered from pub3 is preserved in `data/recovered_music.json`; it is not a verified
 transcription set and does not enter the default render rotation.
 
-A bare `ruby dilla.rb` needs no configuration. It renders a finite eighteen-section tour of
-the room to a stereo WAV and a matching MP4 visualizer, mastered once as a whole. It opens
-with the eight-section Blue Hour suite, then plays through what else dilla does: flowing and
-broken-pair arpeggios, a pendulum arp over a radio-damaged groove, tape-dusted stabs, a dub
-room, a four-voice pad, a rotating-registration organ, and a techno and an industrial
-section, before Blue Hour returns. Each section declares its own tempo, and a section marked
-`"engine": "stream"` runs through the same streamer as `--play`, so its groove profile's
-voices, effect stages, noise, drums and echo all sound.
+A bare `ruby dilla.rb` needs no configuration. It renders the finite Blue Hour suite to a stereo
+WAV and a matching MP4 visualizer, mastered once as a whole: seven slow progressions in the
+minor and major keys a tone or a third apart, each played twice, a chord to the bar, with a
+stepwise Rhodes melody on top, a warm pad and strings beneath and soft drums. `--arrangement`
+plays any other file of sections in the same form. Each section declares its own tempo, and a
+section marked `"engine": "stream"` runs through the same streamer as `--play`, so its groove
+profile's voices, effect stages, noise, drums and echo all sound.
 
 The default exporter writes `dilla.wav` and `dilla.mp4` beside `dilla.rb` and replaces that
 pair on every run, since a render is replaceable and no new file or folder appears. Set
@@ -145,7 +144,7 @@ The data stays separate because it is music, not executable logic. `data/dilla.j
 validated runtime pool of progressions, patches, groove profiles, drum patterns, stages,
 noise layers, stereo placement, mastering parameters and shared bus-effect rigs.
 `data/music_theory.json` holds interval, chord and harmonic-motion references plus curated
-two- and three-bar progressions. `data/showcase.json` is the Blue Hour arrangement.
+two- and three-bar progressions. `data/showcase.json` is the Blue Hour suite.
 `data/recovered_music.json` preserves 42 named historical progression profiles, three
 legacy progression groups, drum/swing studies, synthesis notes and five sample-study leads.
 Artist and track labels remain unverified research leads; this archive is not loaded into the
