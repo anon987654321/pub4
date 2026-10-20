@@ -35,14 +35,20 @@ module Studio
           completed = true
         ensure
           terminate_group(waiter) unless completed
+          # Stop the readers before the pipes close under them: a reader that dies on a
+          # closed stream re-raises its IOError from join and hides the TimeoutError.
+          readers.each do |reader|
+            reader.kill if reader.alive?
+            begin
+              reader.join
+            rescue IOError, SystemCallError
+              nil
+            end
+          end
           [stdin, stdout, stderr].each do |io|
             io.close unless io.closed?
           rescue IOError, SystemCallError
             nil
-          end
-          readers.each do |reader|
-            reader.kill if reader.alive?
-            reader.join
           end
         end
       end
