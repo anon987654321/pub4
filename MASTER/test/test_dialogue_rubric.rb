@@ -3,6 +3,19 @@
 require_relative "test_helper"
 require "master"
 require_relative "../lib/voice/dialogue_rubric"
+require_relative "../lib/review/agent/prompt_builder"
+
+class SupportPromptHost
+  include Master::Review::Agent::PromptBuilder
+
+  def initialize(message)
+    @personality = Object.new
+    @config = { "root" => Master::ROOT }
+    @session = Struct.new(:messages).new([{ role: "user", content: message }])
+  end
+
+  public :support_practice_for_turn
+end
 
 class TestDialogueRubric < Minitest::Test
   Rubric = Master::Voice::DialogueRubric
@@ -31,16 +44,54 @@ class TestDialogueRubric < Minitest::Test
     assert_includes block, "Disagree when a claim is wrong"
   end
 
-  def test_support_practice_reaches_the_prompt_with_research_and_safety
-    block = Rubric.prompt_block(root: Master::ROOT)
+  def test_support_practice_is_routed_only_to_relevant_turns
+    prompt = SupportPromptHost.new("I am overwhelmed and keep putting off a necessary task.")
+                    .support_practice_for_turn
 
-    assert_includes block, "<master_support_practice>"
-    assert_includes block, "real time, money, energy"
-    assert_includes block, "no default couples therapy"
-    assert_includes block, "arXiv/ar5iv"
-    assert_includes block, "113 for immediate danger to life"
-    assert_includes block, "mixed and limited findings"
-    assert_includes block, "NICE NG222"
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "real time, money, energy"
+    assert_includes prompt, "Clinical skills:"
+    assert_includes prompt, "Crisis and referral:"
+    refute_includes prompt, "Couples and relationship safety:"
+    refute_includes prompt, "Martial and contemplative practice:"
+    refute_includes prompt, "NICE NG222"
+  end
+
+  def test_relationship_and_manipulation_guidance_is_targeted
+    prompt = Rubric.support_prompt_for(
+      "My partner checks my phone, controls money and says I am crazy when I object.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "no default couples therapy"
+    assert_includes prompt, "safety planning"
+  end
+
+  def test_crisis_prompt_has_direct_safety_and_local_resources
+    prompt = Rubric.support_prompt_for(
+      "I do not think I can keep myself safe tonight.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "113 for immediate danger to life"
+    assert_includes prompt, "NICE NG225"
+  end
+
+  def test_research_sources_are_added_for_clinical_and_research_questions
+    prompt = Rubric.support_prompt_for("What is the evidence for CBT?", root: Master::ROOT)
+
+    assert_includes prompt, "Research starting points"
+    assert_includes prompt, "NICE NG222"
+    assert_includes prompt, "arXiv/ar5iv"
+  end
+
+  def test_non_support_turns_do_not_receive_the_support_protocol
+    assert_nil Rubric.support_prompt_for("Refactor this Ruby method and add a regression test.", root: Master::ROOT)
+    assert_nil SupportPromptHost.new("Refactor this Ruby method and add a regression test.")
+                        .support_practice_for_turn
   end
 
   def test_support_scenarios_cover_distinct_real_world_needs
