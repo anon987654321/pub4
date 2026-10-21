@@ -136,6 +136,65 @@ class TestResearchSourceTools < Minitest::Test
     FileUtils.rm_rf(root) if root
   end
 
+  def test_github_repo_miner_returns_bounded_ranked_metadata_without_running_code
+    tool = Master::Io::GitHubRepoMiner.new(governor: allow)
+    body = JSON.generate({
+      "total_count" => 1,
+      "items" => [{
+        "full_name" => "ruby/example",
+        "html_url" => "https://github.com/ruby/example",
+        "description" => "A Ruby example project",
+        "stargazers_count" => 123,
+        "forks_count" => 12,
+        "language" => "Ruby",
+        "updated_at" => "2026-10-20T10:00:00Z",
+      }],
+    })
+    tool.define_singleton_method(:fetch_response) do |query:, sort:, limit:|
+      raise "unexpected normalized query: #{query}" unless query == "Ruby"
+      raise "unexpected sort: #{sort}" unless sort == "stars"
+      raise "unexpected limit: #{limit}" unless limit == 1
+      Struct.new(:code, :body).new("200", body)
+    end
+
+    result = tool.call(query: "Find popular GitHub repos for Ruby", sort: "stars", limit: 1)
+
+    assert result.ok?, result.to_s
+    assert_includes result.value!, "ruby/example"
+    assert_includes result.value!, "https://github.com/ruby/example"
+    assert_includes result.value!, "123 stars"
+  end
+
+  def test_arxiv_research_returns_abstract_and_ar5iv_html_link
+    tool = Master::Io::ArxivResearch.new(governor: allow)
+    feed = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom">
+        <entry>
+          <id>http://arxiv.org/abs/2401.12345v1</id>
+          <title>Rendering Future Faces</title>
+          <summary>A study of robust rendering and perceptual geometry.</summary>
+          <published>2024-01-20T00:00:00Z</published>
+          <author><name>Alice Example</name></author>
+        </entry>
+      </feed>
+    XML
+    tool.define_singleton_method(:search_response) do |query:, sort_by:, limit:|
+      raise "unexpected normalized query: #{query}" unless query == "rendering"
+      raise "unexpected sort: #{sort_by}" unless sort_by == "relevance"
+      raise "unexpected limit: #{limit}" unless limit == 5
+      Struct.new(:code, :body).new("200", feed)
+    end
+
+    result = tool.call(query: "Review arXiv research papers on rendering")
+
+    assert result.ok?, result.to_s
+    assert_includes result.value!, "Rendering Future Faces"
+    assert_includes result.value!, "https://arxiv.org/abs/2401.12345v1"
+    assert_includes result.value!, "https://ar5iv.labs.arxiv.org/html/2401.12345v1"
+    assert_includes result.value!, "robust rendering and perceptual geometry"
+  end
+
   def test_research_source_routing_selects_matching_adapter_and_arguments
     agent = Master::Review::Agent.allocate
     agent.define_singleton_method(:evidence_tool) { |name| name }
