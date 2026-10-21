@@ -15,6 +15,7 @@ module Ports
       @tree_path = tree_path
       @use_ftp_fallback = use_ftp_fallback
       @pending_deps = []
+      @dependency_sync_port_ids = Set.new
       @imported_ports = {}
       @ports_count = 0
     end
@@ -64,7 +65,7 @@ module Ports
 
     private
 
-    attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps, :ports_count, :imported_ports
+    attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps, :ports_count, :imported_ports, :dependency_sync_port_ids
 
     # One transaction per port, deliberately. A transaction around the whole
     # import would hold SQLite's single writer lock for the minutes an import
@@ -159,6 +160,12 @@ module Ports
     end
 
     def queue_dependencies(port, metadata)
+      keys = %i[build_depends run_depends test_depends lib_depends]
+      # Thin package-index rows do not describe dependency state. Preserve the
+      # existing graph unless the source explicitly carries dependency metadata.
+      return unless keys.any? { |key| metadata.key?(key) && !metadata[key].nil? }
+
+      dependency_sync_port_ids << port.id
       {
         "build" => metadata[:build_depends],
         "run" => metadata[:run_depends],
@@ -180,7 +187,7 @@ module Ports
         desired_dependencies[entry[:port].id] << [ entry[:pkgpath], entry[:dep_type] ]
       end
 
-      Dependency.includes(:depends_on).where(port_id: imported_ports.keys).find_each do |dependency|
+      Dependency.includes(:depends_on).where(port_id: dependency_sync_port_ids.to_a).find_each do |dependency|
         key = [ dependency.depends_on&.pkgpath, dependency.dep_type ]
         dependency.destroy! unless desired_dependencies[dependency.port_id].include?(key)
       end
