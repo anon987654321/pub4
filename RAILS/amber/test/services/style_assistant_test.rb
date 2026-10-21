@@ -51,6 +51,27 @@ class StyleAssistantTest < ActiveSupport::TestCase
     assert_includes suggestion.picks.map(&:zone), :shoes
   end
 
+  test "each garment taste score is reused across outfit combinations" do
+    owner = stock(user("assistant-score-cache@example.com"))
+    ranker = TasteRanker.new(owner)
+    calls = Hash.new(0)
+    original = ranker.method(:score_for)
+    ranker.define_singleton_method(:score_for) do |item|
+      calls[item.id] += 1
+      original.call(item)
+    end
+
+    suggestion = nil
+    TasteRanker.stub(:new, ->(_user) { ranker }) do
+      suggestion = StyleAssistant.new(owner, weather: { temp: 2.0, description: "Rain" },
+                                      date: Date.new(2026, 8, 10)).suggest
+    end
+
+    assert suggestion.any?
+    assert_operator calls.length, :>, 3
+    assert calls.values.all? { |count| count == 1 }, "repeated taste scores: #{calls.inspect}"
+  end
+
   test "cold weather adds a layer and warm weather does not" do
     owner = stock(user("assistant-weather@example.com"))
     date = Date.new(2026, 8, 10)

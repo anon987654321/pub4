@@ -69,8 +69,9 @@ class TasteRanker
 
   # Sorted best-first. Ties break on id so the order is stable between requests
   # — a carousel that reshuffles on every page load is not a preference model.
-  def rank(items)
-    items.to_a.sort_by { |item| [ -score_for(item), item.id ] }
+  def rank(items, scorer: nil)
+    score = scorer || method(:score_for)
+    items.to_a.sort_by { |item| [ -score.call(item), item.id ] }
   end
 
   def score_for(item)

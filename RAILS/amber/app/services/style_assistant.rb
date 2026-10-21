@@ -104,9 +104,18 @@ class StyleAssistant
     selected.sort_by { |pick| order.fetch(pick.zone) }
   end
 
+  # Scores are facts about a garment within this one suggestion. Reuse them
+  # across ranking and combination scoring: a five-zone, five-candidate look
+  # otherwise re-scores each garment hundreds of times.
+  def taste_score(item)
+    @taste_scores ||= {}
+    key = item.id || item.object_id
+    @taste_scores.fetch(key) { @taste_scores[key] = ranker.score_for(item) }
+  end
+
   def composition_score(composition)
     items = composition.map(&:item)
-    taste = items.sum { |item| ranker.score_for(item) } / items.size.to_f
+    taste = items.sum { |item| taste_score(item) } / items.size.to_f
     compatibility = compatibility_ranker.score_items(items, weather: compatibility_weather)
     (taste * 0.65 + compatibility * 0.35).round(4)
   end
@@ -129,7 +138,7 @@ class StyleAssistant
       rested = pool.reject { |item| resting?(item) }
       # A thin zone gets its rested garments back rather than disappearing:
       # "no shoes today" is not a styling opinion, it is a bug.
-      ranker.rank(rested.presence || pool).first(SHORTLIST)
+      ranker.rank(rested.presence || pool, scorer: method(:taste_score)).first(SHORTLIST)
     end
   end
 
@@ -166,8 +175,8 @@ class StyleAssistant
     best_bottom = shortlist_for(:bottom).first
     return true if best_top.nil? || best_bottom.nil?
 
-    separates = (ranker.score_for(best_top) + ranker.score_for(best_bottom)) / 2.0
-    ranker.score_for(best_dress) > separates
+    separates = (taste_score(best_top) + taste_score(best_bottom)) / 2.0
+    taste_score(best_dress) > separates
   end
 
   def layer? = cold? || wet?
