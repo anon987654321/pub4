@@ -160,7 +160,7 @@ module Master
             ok, out = inside_proof { runner.call }
             held, verdict = Proof.judge(Reading.parse(ok, out), baseline)
             Master::Trace::Dmesg.status("gate0", verdict)
-            @failed_stages << "proof" unless held
+            fail_stage("proof", verdict) unless held
             [verdict, proof_body(held, out), (deliver_leftovers(abs, verdict) if held)].compact.join("\n")
           end]
         end

@@ -36,10 +36,11 @@ module Master
         end
       end
 
-      def verify!
-        return true if ENV["MASTER_FIX_INSTRUMENT_CHECK"] == "0"
+      # The failures to report: none when the check is switched off.
+      def broken(env: ENV) = env["MASTER_FIX_INSTRUMENT_CHECK"] == "0" ? [] : failures
 
-        broken = failures
+      def verify!
+        broken = self.broken
         return true if broken.empty?
 
         @bus&.publish("fix_loop:instruments_unavailable", failures: broken)

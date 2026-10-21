@@ -109,6 +109,9 @@ module Master
         @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
+      # What /fix measures with, tried before anything is read: the check run_journaled repeats on entry.
+      def instrument_failures = InstrumentCheck.new(root: @root, bus: @bus).broken
+
       # A halt stops the runs nobody asked for, the background runner and the
       # watcher, when MASTER's own tree reads red. An operator's /fix is the
       # request to repair exactly that tree; halting it too refused every fix

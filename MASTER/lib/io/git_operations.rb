@@ -99,13 +99,14 @@ module Master
       module History
         def log_between(from, to = "HEAD")
           out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "log", "--oneline", "#{from}..#{to}")
-          st.success? ? out.strip.lines.map(&:chomp) : []
+          st.success? ? from_git(out).strip.lines.map(&:chomp) : []
         end
 
         def patch_between(from, to = "HEAD", limit: 400)
           out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "diff", "#{from}..#{to}")
           return "" unless st.success?
 
+          out = from_git(out)
           lines = out.lines
           return out if lines.size <= limit
 
@@ -132,9 +133,16 @@ module Master
           out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "diff")
           return "" unless st.success?
 
+          out = from_git(out)
           lines = out.lines
           lines.size <= limit ? out : "#{lines.first(limit).join}… #{lines.size - limit} more lines of patch\n"
         end
+
+        private
+
+        # git writes bytes. A pipe read comes back tagged binary, and a binary string raises when it is
+        # joined to the ellipsis above or to any other UTF-8 text.
+        def from_git(text) = text.dup.force_encoding(Encoding::UTF_8).scrub
       end
 
       include Mutations

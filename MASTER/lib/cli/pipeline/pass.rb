@@ -16,6 +16,7 @@ module Master
 
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
           @failed_stages = []
+          @causes = {}
           @swarm = swarm
           @scanner = scanner
           @fix_loop = fix_loop
@@ -74,7 +75,7 @@ module Master
           ok = pass_ok?(sections)
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
           result = Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
-                              failed_stages: @failed_stages.dup, totals: totals_for_report)
+                              failed_stages: @failed_stages.dup, totals: totals_for_report, causes: @causes.dup)
           Master::Trace::Dmesg.status(@unit, [ok ? "complete" : "incomplete", result.counts, "#{elapsed}s"].compact.join(", ")) if elapsed >= 1
           @bus&.publish("review:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
                                             failed_stages: @failed_stages)
@@ -92,10 +93,24 @@ module Master
             sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
                                    "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
           end
-          sections.concat(fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
+          sections.concat(guarded_fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
           sections << critique_section(resolved, shell) if critique && run?("critique") && !run?("fix")
           sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
           sections
+        end
+
+        # A run whose instruments are broken reports thousands of files as clean or as scan errors. Ask
+        # first, in seconds, and stop with the reason, before the baseline suites and the scan spend an hour.
+        # :reek:ManualDispatch -- a loop without the check, as a test double has none, is not a broken one.
+        def guarded_fix_sections(**)
+          broken = @fix_loop.respond_to?(:instrument_failures) ? @fix_loop.instrument_failures : []
+          return fix_sections(**) if broken.empty?
+
+          reason = broken.join("; ")
+          fail_stage("instruments", reason)
+          Master::Trace::Dmesg.status("fix0", "instruments unavailable, nothing was read: #{reason}"[0, 220])
+          listed = broken.map { |line| "- #{line}" }.join("\n")
+          [["instruments", "fix instruments unavailable, nothing was read:\n#{listed}"]]
         end
 
         # `--only` names stages; without it every stage runs, which is what
@@ -146,7 +161,10 @@ module Master
           sections << ["repair", log_phase("fix0", "converge", "path #{shell}, max #{posture[:max_fix_passes]} passes") do
             run_fix(resolved)
           end]
-          sections << ["changes", changes_section(before)]
+          changes = changes_section(before)
+          sections << ["changes", changes]
+          return sections << ["proof", REPAIR_UNPROVEN] if repair_failed_without_changes?(changes)
+
           sections << reobserve_section(before:, resolved:, shell:, aesthetic: run_aesthetic)
           sections << proof_section(resolved, baseline)
         end
@@ -197,6 +215,11 @@ module Master
             readings.join("\n")
           end]
         end
+
+        REPAIR_UNPROVEN = "skipped: the repair failed and changed nothing, so there is nothing to read again or prove"
+
+        # A repair that died before writing leaves the tree as the first reading saw it.
+        def repair_failed_without_changes?(changes) = @failed_stages.include?("fix") && changes == "nothing changed"
 
         # The second reading of a repair covers the files the repair changed; see Reobservation.
         def reobserve_section(before:, resolved:, shell:, aesthetic:)
@@ -336,14 +359,14 @@ def default_apply?(*) = false
           claimed = Master::Ops::LoopOwner.with_claim("fix") do
             result = @fix_loop.run(abs, requested: true)
             unless result.ok?
-              @failed_stages << "fix" unless @failed_stages.include?("fix")
+              fail_stage("fix", result.message)
               Master::Trace::Dmesg.status("fix0", "failed, #{result.message}")
               next "fix failed: #{result.message}"
             end
 
             msg = result.value!.to_s
             if non_success_fix_terminal?(msg)
-              @failed_stages << "fix" unless @failed_stages.include?("fix")
+              fail_stage("fix", msg)
               Master::Trace::Dmesg.status("fix0", "incomplete, #{msg[0, 120]}")
               next "fix incomplete: #{msg}"
             end
@@ -353,7 +376,7 @@ def default_apply?(*) = false
           return claimed unless claimed == false
 
           holder = Master::Ops::LoopOwner.active || {}
-          @failed_stages << "fix" unless @failed_stages.include?("fix")
+          fail_stage("fix", "loop slot held by #{holder["loop"]} pid #{holder["pid"]}")
           Master::Trace::Dmesg.status("fix0", "failed, loop slot held by #{holder["loop"]} pid #{holder["pid"]}; no repair ran")
           "fix failed: loop slot held by #{holder["loop"]} pid #{holder["pid"]}"
         rescue StandardError => e
@@ -366,9 +389,15 @@ def default_apply?(*) = false
         def stage_failure(label, unit, error)
           raise error if DEFECT_ERRORS.any? { |klass| error.is_a?(klass) }
 
-          @failed_stages << label
+          fail_stage(label, "#{error.class}: #{error.message}")
           Master::Trace::Dmesg.status(unit, "#{error.class}: #{error.message}")
           "#{label} failed: #{error.class}: #{error.message}"
+        end
+
+        # Marks a stage failed and keeps its first reason, which the report footer prints.
+        def fail_stage(label, cause)
+          @failed_stages << label unless @failed_stages.include?(label)
+          @causes[label] ||= cause.to_s.strip[0, 240]
         end
 
         def run_fix_preview(abs)
@@ -435,7 +464,7 @@ def default_apply?(*) = false
 
         def run_critique(abs)
           unless @deliberation
-            @failed_stages << "critique" unless @failed_stages.include?("critique")
+            fail_stage("critique", "deliberation not configured")
             Master::Trace::Dmesg.status("crit0", "failed, deliberation not configured")
             return "critique failed: deliberation not configured"
           end
@@ -471,7 +500,7 @@ def default_apply?(*) = false
           )
           return result.value! if result.ok?
 
-          @failed_stages << "critique" unless @failed_stages.include?("critique")
+          fail_stage("critique", result.message)
           Master::Trace::Dmesg.status("crit0", "failed, #{result.message}")
           "critique failed: #{result.message}"
         rescue StandardError => e

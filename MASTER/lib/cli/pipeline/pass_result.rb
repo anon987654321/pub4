@@ -4,8 +4,8 @@ module Master
   module CLI
     class Pipeline
       class Pass
-        Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages, :totals) do
-          def initialize(totals: {}, **fields) = super(totals:, **fields)
+        Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages, :totals, :causes) do
+          def initialize(totals: {}, causes: {}, **fields) = super(totals:, causes:, **fields)
 
           def counts
             before, after = totals.values_at(:before, :after)
@@ -54,8 +54,14 @@ module Master
                       "#{unit}: complete with open findings"
                     end
             base = "#{base}, #{counts}" if counts
+            base = [base, *cause_lines].join("\n")
             skipped = Master::Io::QuotaGate.report
             skipped ? "#{base}\n\n#{unit}: #{skipped}" : base
+          end
+
+          # Why each failed stage failed, first reason only, so the footer names the cause.
+          def cause_lines
+            failed_stages.filter_map { |stage| "#{unit}: cause, #{stage}: #{causes[stage]}" if causes[stage] }
           end
         end
       end

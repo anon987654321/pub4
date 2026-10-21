@@ -80,6 +80,7 @@ module Master
       # reshape, before any Law scans. Inconclusive is reported and the run goes on.
       def first_read(deliberation:, bus:, targets:)
         return if ENV["MASTER_FIX_TREE"] == "0"
+        return Master::Trace::Dmesg.status("tree0", "no model lane, first read skipped") unless deliberation
 
         reasoning = Master::Fix::TreeReasoning.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |tree_target|
@@ -92,6 +93,7 @@ module Master
       # Inconclusive is reported and the run goes on.
       def structural_review(deliberation:, bus:, targets:)
         return if ENV["MASTER_FIX_STRUCTURAL_REVIEW"] == "0"
+        return Master::Trace::Dmesg.status("look0", "no model lane, structural review skipped") unless deliberation
 
         review = Master::Fix::StructuralReview.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |review_target|
@@ -255,10 +257,20 @@ module Master
       end
 
       def incomplete_fix_pipeline(value)
-        detail = value.to_s.lines.find { |line| line.match?(/\breview\d+:\s*incomplete\b/i) }.to_s.strip
-        message = "fix pipeline incomplete#{detail.empty? ? "" : ": #{detail}"}"
+        lines = value.to_s.lines
+        detail = lines.find { |line| line.match?(/\breview\d+:\s*incomplete\b/i) }.to_s.strip
+        cause = footer_cause(lines)
+        head = detail.empty? ? "" : ": #{detail}"
+        tail = cause.empty? ? "" : "; cause #{cause}"
+        message = "fix pipeline incomplete#{head}#{tail}"
         Master::Trace::Dmesg.status("fix0", message[0, 200])
         Master::Result.err(message, category: :validation)
+      end
+
+      # The first `review0: cause, <stage>: <reason>` footer line, as `<stage>: <reason>`.
+      def footer_cause(lines)
+        found = lines.find { |line| line.match?(/\breview\d+:\s*cause,/i) }.to_s.strip
+        found.sub(/\Areview\d+:\s*cause,\s*/i, "")
       end
 
       def execution_trace_scopes(target)
