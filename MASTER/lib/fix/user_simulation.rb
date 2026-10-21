@@ -3,7 +3,6 @@
 require "digest"
 require "fileutils"
 require "json"
-require "tmpdir"
 require_relative "../io/exec"
 require_relative "rails_app"
 
@@ -653,7 +652,11 @@ module Master
       end
 
       def reason(error)
-        "#{error.class}: #{error.message}".gsub(@root, "<repo>")[0, 180]
+        message = error.message.to_s
+          .gsub(@root, "<repo>")
+          .gsub(/((?:api[_-]?key|access[_-]?token|password|secret|authorization)\s*[=:]\s*)\S+/i, "\\1<redacted>")
+          .gsub(/\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,})\b/, "<redacted>")
+        "#{error.class}: #{message}"[0, 180]
       end
     end
   end
