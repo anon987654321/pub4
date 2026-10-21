@@ -73,21 +73,27 @@ module Master
 
       HOMEBREW_BINS = %w[/opt/homebrew/bin /usr/local/bin].freeze
 
-      # Resolve an explicit path as given; otherwise search the preferred
-      # directories and PATH. on_path? deliberately does not treat a cwd file
-      # or explicit path as a PATH hit.
-      def which(name, path: ENV.fetch("PATH", ""), prefer: [])
+      # Resolve explicit paths or command names on PATH, including PATHEXT on
+      # Windows. Preferred directories retain precedence over PATH, and names
+      # that already have an extension are never expanded a second time.
+      def which(name, path: ENV.fetch("PATH", ""), prefer: [], extensions: ENV["PATHEXT"])
         name = name.to_s
         return nil if name.empty?
-        if name.include?(File::SEPARATOR)
-          return File.expand_path(name) if File.file?(name) && File.executable?(name)
 
+        suffixes = extensions.to_s.split(";").reject(&:empty?)
+        names = File.extname(File.basename(name)).empty? ? [name, *suffixes.map { |suffix| "#{name}#{suffix}" }] : [name]
+        if name.include?(File::SEPARATOR)
+          names.each do |candidate|
+            return File.expand_path(candidate) if File.file?(candidate) && File.executable?(candidate)
+          end
           return nil
         end
 
         [*prefer, *path.to_s.split(File::PATH_SEPARATOR)].uniq.each do |dir|
-          candidate = File.join(dir, name)
-          return candidate if File.file?(candidate) && File.executable?(candidate)
+          names.each do |candidate_name|
+            candidate = File.join(dir, candidate_name)
+            return candidate if File.file?(candidate) && File.executable?(candidate)
+          end
         end
         nil
       end

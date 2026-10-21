@@ -46,6 +46,27 @@ class TestVoiceStt < Minitest::Test
     assert_kind_of Master::Voice::Stt::Result, result
   end
 
+  def test_whisper_binary_resolution_uses_the_shared_pathext_lookup
+    Dir.mktmpdir("whisper-path") do |dir|
+      binary = File.join(dir, "whisper-cli.EXE")
+      File.write(binary, "#!/bin/sh\\n")
+      File.chmod(0o755, binary)
+      original_path = ENV["PATH"]
+      original_pathext = ENV["PATHEXT"]
+      original_binary = ENV["MASTER_WHISPER_BINARY"]
+      begin
+        ENV["PATH"] = dir
+        ENV["PATHEXT"] = ".EXE;.CMD"
+        ENV.delete("MASTER_WHISPER_BINARY")
+        assert_equal binary, Master::Voice::Stt::WhisperCppBackend.binary_path({})
+      ensure
+        original_path.nil? ? ENV.delete("PATH") : ENV["PATH"] = original_path
+        original_pathext.nil? ? ENV.delete("PATHEXT") : ENV["PATHEXT"] = original_pathext
+        original_binary.nil? ? ENV.delete("MASTER_WHISPER_BINARY") : ENV["MASTER_WHISPER_BINARY"] = original_binary
+      end
+    end
+  end
+
   def test_whisper_cli_capture_preserves_text_and_diagnostics
     with_whisper_binary("echo 'recognized words'; echo 'notice' >&2") do |binary|
       backend = whisper_backend(binary, timeout: 2)

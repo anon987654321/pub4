@@ -32,7 +32,7 @@ module Master
           candidates.each do |c|
             return c if c.include?("/") && File.executable?(c)
 
-            path = which(c)
+            path = Master::Io::Exec.which(c)
             return path if path
           end
           nil
@@ -50,17 +50,6 @@ module Master
             File.expand_path("~/.local/share/master/ggml-base.en.bin", __dir__),
           ]
           candidates.find { |p| File.file?(p) }
-        end
-
-        def self.which(cmd)
-          exts = ENV["PATHEXT"] ? ENV["PATHEXT"].split(";") : [""]
-          ENV["PATH"].to_s.split(File::PATH_SEPARATOR).each do |dir|
-            exts.each do |ext|
-              path = File.join(dir, "#{cmd}#{ext}")
-              return path if File.executable?(path) && !File.directory?(path)
-            end
-          end
-          nil
         end
 
         def initialize(binary:, model:, config: {})

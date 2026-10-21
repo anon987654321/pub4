@@ -187,6 +187,18 @@ class TestReachExec < Minitest::Test
     end
   end
 
+  def test_which_honors_pathext_for_command_names_and_explicit_paths
+    Dir.mktmpdir do |dir|
+      tool = File.join(dir, "whisper-cli.EXE")
+      File.write(tool, "#!/bin/sh\\n")
+      File.chmod(0o755, tool)
+
+      assert_equal tool, E.which("whisper-cli", path: dir, extensions: ".EXE;.CMD")
+      assert_equal tool, E.which(File.join(dir, "whisper-cli"), extensions: ".EXE;.CMD")
+      assert E.on_path?("whisper-cli", path: dir, extensions: ".EXE")
+    end
+  end
+
   def test_which_tries_the_preferred_directories_before_the_path
     Dir.mktmpdir do |first|
       Dir.mktmpdir do |second|
