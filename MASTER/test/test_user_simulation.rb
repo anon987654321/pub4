@@ -11,6 +11,17 @@ class TestUserSimulation < Minitest::Test
   UserSimulation = Master::Fix::UserSimulation
   CAMPAIGN = File.join(Master::REPO_ROOT, "RAILS", "test", "interaction_campaign_400.json")
 
+  def test_simulator_reuses_the_existing_candidate_owner_file
+    owner = File.join(Master::REPO_ROOT, "MASTER", "lib", "fix", "best_of_n.rb")
+    strategy = File.join(Master::REPO_ROOT, "MASTER", "lib", "fix", "repair_loop", "fix_strategies.rb")
+    standalone = File.join(Master::REPO_ROOT, "MASTER", "lib", "fix", "user_simulation.rb")
+
+    assert File.file?(owner)
+    assert_includes File.read(owner), "class UserSimulation"
+    assert_includes File.read(strategy), 'require_relative "../best_of_n"'
+    refute File.exist?(standalone), "the simulator must not create a second implementation file"
+  end
+
   def test_campaign_schema_and_runtime_evidence_are_validated
     campaign = JSON.parse(File.read(CAMPAIGN, encoding: "UTF-8"))
 
