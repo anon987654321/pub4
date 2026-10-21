@@ -109,6 +109,27 @@ class TestUserSimulation < Minitest::Test
     end
   end
 
+  def test_candidate_simulation_never_overwrites_concurrent_source_changes
+    Dir.mktmpdir("master-user-simulation") do |root|
+      path, = fixture_tree(root, "safe\n")
+      runner = lambda do |_test_path|
+        File.write(path, "concurrent edit\n") if File.read(path).strip == "candidate"
+        { state: :pass, signature: "pass" }
+      end
+      simulation = UserSimulation.new(root:, campaign_path: CAMPAIGN, runner:)
+      writer = ->(target, text) { File.write(target, text) }
+
+      error = assert_raises(UserSimulation::RestoreFailure) do
+        simulation.evaluate_candidates(
+          path:, original: "safe\n", candidates: ["candidate\n"], writer:
+        )
+      end
+
+      assert_match(/refusing to overwrite concurrent content/, error.message)
+      assert_equal "concurrent edit\n", File.read(path)
+    end
+  end
+
   def test_missing_test_mapping_is_explicit_and_does_not_write_a_candidate
     Dir.mktmpdir("master-user-simulation") do |root|
       path = File.join(root, "misc", "sample.rb")
