@@ -158,7 +158,10 @@ module Operator
           reason = "test process did not report exactly one executed mapped Minitest case"
         else
           runs, assertions, failures, errors, skips = summary.captures.map { |value| value.to_s.to_i }
-          if skips.positive?
+          if assertions.zero?
+            state = "BLOCKED"
+            reason = "mapped test executed without assertions; no behavior was verified"
+          elsif skips.positive?
             state = "SKIPPED"
             reason = "Minitest skipped the mapped test"
           elsif failures.positive? || errors.positive?
