@@ -118,18 +118,26 @@ module Ports
       maintainer = upsert_maintainer(metadata[:maintainer])
       port = Port.find_or_initialize_by(platform:, pkgpath: metadata[:pkgpath])
       old_version = port.version
-      port.assign_attributes(
+      thin_metadata = metadata.key?(:full_pkgname)
+      attributes = {
         name: metadata[:name],
-        category: category,
-        comment: metadata[:comment],
-        description: metadata[:description],
-        homepage: safe_homepage(metadata[:homepage], metadata[:pkgpath]),
         version: metadata[:version].presence || "unknown",
-        permit_file_distfiles: metadata[:permit_file_distfiles] == true,
         last_updated: Date.current
-      )
-      port[:maintainer] = metadata[:maintainer]
-      port.maintainer_id = maintainer&.id
+      }
+      unless thin_metadata
+        attributes.merge!(
+          category: category,
+          comment: metadata[:comment],
+          description: metadata[:description],
+          homepage: safe_homepage(metadata[:homepage], metadata[:pkgpath]),
+          permit_file_distfiles: metadata[:permit_file_distfiles] == true
+        )
+      end
+      port.assign_attributes(attributes)
+      unless thin_metadata
+        port[:maintainer] = metadata[:maintainer]
+        port.maintainer_id = maintainer&.id
+      end
       port.save!
       imported_ports[port.id] = port
       record_version_change(port, old_version)
