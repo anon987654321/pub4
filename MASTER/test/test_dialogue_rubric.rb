@@ -354,6 +354,33 @@ class TestDialogueRubric < Minitest::Test
     refute_includes prompt, "Helsenorge — mental-health help"
   end
 
+  def test_crisis_signal_ignores_common_explicit_self_harm_denials
+    [
+      "I am not suicidal.",
+      "I'm not thinking about suicide.",
+      "I am not planning to hurt myself.",
+      "I would never hurt myself.",
+      "I don't want to hurt myself.",
+      "I don't want to kill myself.",
+      "I have no plan to kill myself.",
+      "I have no thoughts of suicide.",
+      "I do not intend to harm myself.",
+      "I feel safe and have no thoughts of self-harm.",
+    ].each do |statement|
+      refute Rubric.crisis_signal?(statement), statement
+    end
+  end
+
+  def test_any_separate_positive_danger_signal_survives_a_negation
+    [
+      "I have no thoughts of self-harm, but I don't want to wake up tomorrow.",
+      "I don't want to hurt myself, but my partner threatened to kill me.",
+      "I am not suicidal, but I am going to hurt someone.",
+    ].each do |statement|
+      assert Rubric.crisis_signal?(statement), statement
+    end
+  end
+
   def test_a_positive_crisis_signal_survives_an_adjacent_negation
     prompt = Rubric.support_prompt_for(
       "I feel safe and have no thoughts of self-harm, but I don't want to wake up tomorrow.",
