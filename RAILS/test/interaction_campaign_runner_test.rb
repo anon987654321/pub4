@@ -47,7 +47,8 @@ class InteractionCampaignRunnerTest < Minitest::Test
       results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
       refute_nil results_path
       ledger = JSON.parse(File.read(results_path, encoding: "UTF-8"))
-      row = ledger.fetch("results").sole
+      assert_equal 1, ledger.fetch("results").length
+      row = ledger.fetch("results").fetch(0)
       assert_equal "RI-011", row.fetch("case_id")
       assert_equal "PASS", row.fetch("status")
       evidence = row.fetch("evidence")
@@ -76,7 +77,9 @@ class InteractionCampaignRunnerTest < Minitest::Test
       assert_equal 3, runner.run
       refute called
       results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
-      row = JSON.parse(File.read(results_path)).fetch("results").sole
+      results = JSON.parse(File.read(results_path)).fetch("results")
+      assert_equal 1, results.length
+      row = results.fetch(0)
       assert_equal "SKIPPED", row.fetch("status")
       assert_match(/no exact action\/fault adapter registered/, row.fetch("reason"))
       assert_nil row.fetch("evidence")
