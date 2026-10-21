@@ -21,11 +21,14 @@ class RegistrationsController < ApplicationController
       return
     end
 
+    guest = persisted_guest_for_registration
     prepare_email_registration(registration_params)
     if @user.save
       send_signup_verification!(@user)
+      merged = merge_registration_guest(@user, guest)
       start_new_session_for @user
-      redirect_to root_path, notice: t("shared.email_verification.signup_notice")
+      notice_key = merged ? "shared.email_verification.signup_notice_guest_merged" : "shared.email_verification.signup_notice"
+      redirect_to root_path, notice: t(notice_key, default: t("shared.email_verification.signup_notice"))
     else
       render :new, status: :unprocessable_entity
     end
