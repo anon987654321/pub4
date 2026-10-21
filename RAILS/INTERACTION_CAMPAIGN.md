@@ -42,7 +42,7 @@ A source-derived expectation is a test oracle, not an observed outcome. Do not c
 
 The manifest contract is covered by `test/interaction_campaign_contract_test.rb` and is included by the existing recursive `RAILS/test/run_all.rb` contract runner. The fixture is normalized to avoid repeating surface contracts, action text, fault instructions and evidence paths in every row.
 
-MASTER `/fix` uses the campaign to propose several materially different repairs, compare candidates against the target Law and focused tests, reject observed regressions and restore the original before each next trial. This is not a claim to have executed all 400 scenarios. A candidate test run is scoped to existing tests selected from `focused_test_paths`; the broader browser/acceptance scenario is still NOT_RUN until that exact behavior is driven and evidence is saved.
+MASTER `/fix` uses the campaign to propose several materially different repairs, compare candidates against the target Law and focused tests, reject observed regressions and restore the original before each next trial. This is not a claim to have executed all 400 scenarios. A candidate test run is scoped to existing tests selected from `focused_test_paths`; the broader browser/acceptance scenario is still NOT_RUN until that exact behavior is driven and evidence is saved. Candidate telemetry keeps the distinction explicit: `scenario_oracles_consulted` is an oracle count, `status` is the result of the focused tests, and `scenario_runtime_status: NOT_RUN` means no individual campaign interaction was executed by that event.
 
 ## Run order
 
