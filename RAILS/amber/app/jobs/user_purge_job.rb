@@ -53,9 +53,20 @@ class UserPurgeJob < ApplicationJob
   def perform
     return unless User.column_names.include?("deletion_scheduled_at")
 
+    failures = []
     User.where.not(deletion_scheduled_at: nil)
         .where("deletion_scheduled_at <= ?", Time.current)
-        .find_each { |user| erase!(user) }
+        .find_each do |user|
+      erase!(user)
+    rescue StandardError => error
+      # Keep this user's deletion marker so the next run retries it, but do
+      # not let one corrupt record prevent unrelated due accounts being erased.
+      Rails.logger.error("[privacy] Amber erasure failed user_id=#{user.id} error=#{error.class}")
+      failures << [user.id, error.class.name]
+    end
+    return if failures.empty?
+
+    raise "Amber account erasure failures: #{failures.map { |id, kind| "#{id}=#{kind}" }.join(", ")}"
   end
 
   private
