@@ -5,7 +5,10 @@ class CommentsController < ApplicationController
   before_action :set_port
 
   def create
-    parent_id = params.dig(:comment, :parent_id)
+    comment_input = params[:comment]
+    return head(:unprocessable_entity) unless comment_input.is_a?(ActionController::Parameters)
+
+    parent_id = comment_input[:parent_id]
     parent = nil
     if parent_id.present?
       valid_id = parent_id.is_a?(Integer) && parent_id.positive? ||
