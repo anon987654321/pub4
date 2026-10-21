@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <meta name="theme-color" content="#050710">
+  <% theme_color = Master.tokens.fetch("face_root").fetch("face_bg") %>
+  <meta name="theme-color" content="<%= theme_color %>">
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
   <meta name="master-tier" content="<%= @tier.to_s %>">

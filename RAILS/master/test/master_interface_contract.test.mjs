@@ -208,11 +208,11 @@ test("chat and mission control share accessible Ghostty-inspired session tabs", 
   assert.match(chatIndex, /href="\/" aria-current="page"/);
   assert.match(dashboard, /href="\/dashboard" aria-current="page"/);
   assert.match(faceMotion, /\.master-session-tab\[aria-current="page"\]::after/);
-  assert.match(faceMotion, /@media \(max-width: 420px\)/);
+  assert.match(faceMotion, /@media \(min-width: 480px\)/);
   assert.match(faceMotion, /\.master-session-tab:focus-visible/);
 });
 
-test("canonical graphite theme reaches generated face CSS and the installed PWA", () => {
+test("canonical theme token reaches CSS, routes and PWA manifest", () => {
   const rootStart = faceCss.indexOf("/* BEGIN:generated-face-root");
   const rootEnd = faceCss.indexOf("/* END:generated-face-root */", rootStart);
   assert.ok(rootStart >= 0 && rootEnd > rootStart, "generated face token block is missing");
@@ -221,17 +221,25 @@ test("canonical graphite theme reaches generated face CSS and the installed PWA"
   assert.match(tokens, /x_text: "#e7eeff"/);
   assert.match(root, /--face-bg: #050710;/);
   assert.match(root, /--x-text: #e7eeff;/);
-  assert.match(pwaManifest, /"background_color": "#050710"/);
-  assert.match(pwaManifest, /"theme_color": "#050710"/);
-  assert.match(chatIndex, /meta name="theme-color" content="#050710"/);
+  assert.match(pwaManifest, /"background_color": <%= theme_color\.to_json %>/);
+  assert.match(pwaManifest, /"theme_color": <%= theme_color\.to_json %>/);
+  for (const page of [chatIndex, dashboard]) {
+    assert.match(page, /theme_color = Master\.tokens\.fetch\("face_root"\)\.fetch\("face_bg"\)/);
+    assert.match(page, /meta name="theme-color" content="<%= theme_color %>"/);
+  }
+  assert.match(dashboard, /rel="manifest" href="<%= pwa_manifest_path\(format: :json\) %>"/);
   assert.doesNotMatch(faceMotion, /--c-accent: oklch\(82% 0\.12 222\)/);
   assert.doesNotMatch(faceMotion, /--radius-md: 12px/);
 });
 
-test("session chrome uses space, not decorative divider borders", () => {
+test("session chrome is mobile-first, nuanced and motion-aware", () => {
   const start = faceMotion.indexOf("/* Ghostty-inspired session chrome:");
   assert.ok(start >= 0, "shared session chrome source is missing");
   const chrome = faceMotion.slice(start);
   assert.match(chrome, /gap: 0\.25rem/);
+  assert.match(chrome, /color-mix\(in oklch, var\(--face-bg\) 92%, var\(--c-code\)\)/);
+  assert.match(chrome, /\.master-session-tab\[aria-current="page"\]::after/);
+  assert.match(chrome, /@media \(min-width: 480px\)/);
+  assert.doesNotMatch(chrome, /@media \(max-width:/);
   assert.doesNotMatch(chrome, /border-(?:block|inline)-end:\s*1px/);
 });
