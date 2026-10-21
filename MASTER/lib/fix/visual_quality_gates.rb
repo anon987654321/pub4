@@ -122,9 +122,10 @@ module Master
         end
       end
 
-      def worse(base, cur)
+      def worse(base, cur, allow_layout_change: false)
         base["metrics"].filter_map do |name, was|
           now = cur["metrics"][name].to_f
+          next if allow_layout_change && name == "layout_shift"
           next if name == "layout_shift" ? now <= [was.to_f, SHIFT_GOOD].max : now <= was.to_f
 
           fresh = Array(cur["offenders"][name]) - Array(base["offenders"][name])
@@ -159,7 +160,7 @@ module Master
       # `prior` is the verdict already reached (snapshot custody); a failing
       # prior stands. Otherwise any worsened metric or unanchored chrome drift
       # rejects the fix.
-      def judge(measured, root:, prior:, anchors: [])
+      def judge(measured, root:, prior:, anchors: [], allow_layout_change: false)
         return prior unless prior.ok?
 
         problems = []
@@ -167,7 +168,7 @@ module Master
         measured.each do |surface, payload|
           base = load(root, surface)
           cur = measure(surface, payload, baseline_rects: base && base["rects"])
-          bad = base ? worse(base, cur) : []
+          bad = base ? worse(base, cur, allow_layout_change:) : []
           drift = VisualDriftBudget.check(surface, payload, root:, anchors:)
           bad += LayoutScoreStore.judge(surface, payload, root:)
           problems << "#{surface.id}: #{bad.join("; ")}" unless bad.empty?
