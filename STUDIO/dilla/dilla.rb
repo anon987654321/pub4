@@ -6244,12 +6244,18 @@ module Dilla
         drum_source, ffmpeg:, max_duration: options[:max_duration],
         bpm: mix.dig("tempo", "bpm"), tempo_segments: mix.dig("tempo", "segments") || []
       )
+      rhythm_zoom_windows = rhythm.delete("rhythm_zoom_windows") || []
       rhythm_window_count = rhythm.delete("rhythm_window_count")
       rhythm_analysis = { "source" => rhythm_source_kind,
                           "window_count" => rhythm_window_count,
-                          "features" => rhythm }
+                          "features" => rhythm.dup,
+                          "zoom_windows" => rhythm_zoom_windows }
+      # Grid vectors are evidence for the report, not stable style-profile knobs.
+      profile_rhythm = rhythm.reject do |name, _value|
+        name.start_with?("sixteenth_grid_") || %w[sixteenth_cell_ms grid_measurement].include?(name)
+      end
       profile = profile_for(mix, style: options[:style])
-      profile.fetch("features").merge!(rhythm)
+      profile.fetch("features").merge!(profile_rhythm)
       energy_summary = temporal_energy.fetch("summary", {})
       if numeric_value(energy_summary["rms_range_p95_p05_db"])
         profile.fetch("features")["energy_window_range_db"] = energy_summary["rms_range_p95_p05_db"]
@@ -6820,19 +6826,33 @@ module Dilla
 
         numeric_value(segment["start_seconds"]) && numeric_value(segment["end_seconds"])
       end
+      zoom_windows = []
       if valid_segments.empty?
-        summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1)
+        summary = summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1)
+        zoom_windows = rhythm_zoom_summaries(samples, bpm: tempo, sample_rate:)
       else
         features = valid_segments.filter_map do |segment|
-          start_index = [(numeric_value(segment["start_seconds"]) * sample_rate).round, 0].max
-          end_index = [(numeric_value(segment["end_seconds"]) * sample_rate).round, start_index].max
+          start_seconds = numeric_value(segment["start_seconds"])
+          end_seconds = numeric_value(segment["end_seconds"])
+          start_index = [(start_seconds * sample_rate).round, 0].max
+          end_index = [(end_seconds * sample_rate).round, start_index].max
           slice = samples[start_index, end_index - start_index] || []
-          local = summarize_rhythm_envelope(slice, bpm: numeric_value(segment["bpm"]), sample_rate:)
+          segment_bpm = numeric_value(segment["bpm"])
+          zoom_windows.concat(
+            rhythm_zoom_summaries(slice, bpm: segment_bpm, sample_rate:, time_offset: start_seconds)
+          )
+          local = summarize_rhythm_envelope(slice, bpm: segment_bpm, sample_rate:)
           local unless local.empty?
         end
-        features.empty? ? summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1) :
-          summarize_rhythm_segments(features)
+        summary = if features.empty?
+                    summarize_rhythm_envelope(samples, bpm: tempo, sample_rate:).merge("rhythm_window_count" => 1)
+                  else
+                    summarize_rhythm_segments(features)
+                  end
+        zoom_windows = rhythm_zoom_summaries(samples, bpm: tempo, sample_rate:) if features.empty?
       end
+      summary["rhythm_zoom_windows"] = zoom_windows
+      summary
     rescue Error
       {}
     end
@@ -6846,13 +6866,26 @@ module Dilla
       {
         "timing_spread_ms" => 1,
         "onset_density_per_bar" => 2,
-        "offbeat_onset_share" => 3
+        "offbeat_onset_share" => 3,
+        "sixteenth_cell_ms" => 2
       }.each do |field, precision|
         values = segments.filter_map { |features| numeric_value(features[field]) }.sort
         next if values.empty?
 
         summary[field] = median_value(values).round(precision)
       end
+      %w[sixteenth_grid_hits_per_bar sixteenth_grid_strength_share].each do |field|
+        vectors = segments.filter_map do |features|
+          values = features[field]
+          values if values.is_a?(Array) && values.length == 16 && values.all? { |value| numeric_value(value) }
+        end
+        next if vectors.empty?
+
+        summary[field] = 16.times.map do |index|
+          median_value(vectors.filter_map { |values| numeric_value(values[index]) }).round(field.end_with?("share") ? 4 : 2)
+        end
+      end
+      summary["grid_measurement"] = "mix_level_onset_proxy_not_drum_transcription"
       summary
     end
 
@@ -6914,12 +6947,53 @@ module Dilla
       end
       duration = samples.size.to_f / sample_rate
       bars = duration * bpm.to_f / 240.0
+      grid_hits = Array.new(16, 0)
+      grid_strength = Array.new(16, 0.0)
+      peaks.each do |position|
+        grid_position = (((position - phase_best) / subdivision).round % 16)
+        grid_hits[grid_position] += 1
+        grid_strength[grid_position] += novelty[position]
+      end
+      sixteenth_grid_hits_per_bar = grid_hits.map { |count| (count / [bars, 0.001].max).round(2) }
+      sixteenth_grid_strength_share = grid_strength.map do |strength|
+        (strength / total_strength).round(4)
+      end
       features = {
         "timing_spread_ms" => timing_spread_ms.round(1),
-        "onset_density_per_bar" => (peaks.size / [bars, 0.001].max).round(2)
+        "onset_density_per_bar" => (peaks.size / [bars, 0.001].max).round(2),
+        "sixteenth_cell_ms" => (60_000.0 / bpm.to_f / 4.0).round(2),
+        "sixteenth_grid_hits_per_bar" => sixteenth_grid_hits_per_bar,
+        "sixteenth_grid_strength_share" => sixteenth_grid_strength_share,
+        "grid_measurement" => "mix_level_onset_proxy_not_drum_transcription"
       }
       features["offbeat_onset_share"] = (offbeat_strength / total_strength).round(3) if total_strength.positive?
       features
+    end
+
+    # Summarize complete 8- and 16-bar windows. This is a zoomed view of the
+    # low-rate mix/stem envelope, not a note transcription. Partial windows are
+    # omitted so every row compares the same number of bars.
+    def rhythm_zoom_summaries(samples, bpm:, sample_rate: 100, time_offset: 0.0)
+      return [] if samples.size < sample_rate * 4 || !bpm.to_f.between?(50.0, 200.0)
+
+      [8, 16].flat_map do |bar_count|
+        window_size = (bar_count * 240.0 / bpm.to_f * sample_rate).round
+        next [] if window_size <= 0
+
+        count = samples.size / window_size
+        Array.new(count) do |window_index|
+          offset = window_index * window_size
+          window = samples.slice(offset, window_size) || []
+          features = summarize_rhythm_envelope(window, bpm:, sample_rate:)
+          next if features.empty?
+
+          start_seconds = time_offset.to_f + offset.to_f / sample_rate
+          { "bars" => bar_count,
+            "start_seconds" => start_seconds.round(3),
+            "end_seconds" => (start_seconds + window.size.to_f / sample_rate).round(3),
+            "features" => features }
+        end.compact
+      end.sort_by { |window| [window.fetch("start_seconds"), window.fetch("bars")] }
     end
 
     # Demucs gives broad source roles rather than isolated kick/snare/hats.
@@ -7042,8 +7116,24 @@ module Dilla
       lines.concat(["", "## Tempo cross-check: FFmpeg versus libsonare"])
       libsonare_tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## Rhythm analysis source",
-                    "Source: #{rhythm_analysis['source'] || 'not measured'}"])
+                    "Source: #{rhythm_analysis['source'] || 'not measured'}",
+                    "Grid positions, accent shares and timing spread are mix/stem-envelope proxies; they do not identify isolated kick, snare or hat hits."])
       rhythm_analysis.fetch("features", {}).each { |name, value| lines << "- #{name}: #{value}" }
+      zoom_windows = rhythm_analysis.fetch("zoom_windows", [])
+      lines.concat(["", "## Eight- and sixteen-bar rhythm windows",
+                    "Each row is a complete window; times are offsets in the source audio.",
+                    "| Bars | Start (s) | End (s) | Timing spread (ms) | Onsets/bar | Offbeat share | Sixteenth-grid strength share (cells 1–16) |",
+                    "|---:|---:|---:|---:|---:|---:|---|"])
+      zoom_windows.each do |window|
+        features = window.fetch("features", {})
+        spread = features["timing_spread_ms"] || "unknown"
+        density = features["onset_density_per_bar"] || "unknown"
+        offbeat = features["offbeat_onset_share"] || "unknown"
+        shares = features["sixteenth_grid_strength_share"]
+        shares_text = shares.is_a?(Array) ? shares.map { |value| format("%.3f", value) }.join(", ") : "unavailable"
+        lines << "| #{window['bars']} | #{window['start_seconds']} | #{window['end_seconds']} | #{spread} | #{density} | #{offbeat} | #{shares_text} |"
+      end
+      lines << "No complete 8- or 16-bar window had enough onset evidence." if zoom_windows.empty?
       lines.concat(["", "## Tempo cross-check"])
       tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## This reference", JSON.pretty_generate(profile),
