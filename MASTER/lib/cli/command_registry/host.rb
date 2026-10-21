@@ -258,6 +258,8 @@ module Master
 
       # Show the universal inventory without running tools or loading provider code.
       def dispatch_capabilities(root, ctx: nil)
+        return "capabilities: local operator only; visitor inventory is restricted" if Fiber[:master_visitor] == true
+
         args = Shellwords.split(arg_for(ctx).to_s)
         action = args.shift.to_s.downcase
         action = "list" if action.empty?

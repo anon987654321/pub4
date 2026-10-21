@@ -71,6 +71,14 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes Registry.help_text("capabilities"), "/capabilities describe"
   end
 
+  def test_capability_inventory_is_restricted_for_visitors
+    old_visitor = Fiber[:master_visitor]
+    Fiber[:master_visitor] = true
+    assert_match(/local operator only/, Registry.dispatch_capabilities(Master::ROOT, ctx: { args: "list" }))
+  ensure
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_task_cli_and_capability_search_are_actionable
     require "tmpdir"
     old_subject = Fiber[:master_pair_subject]
