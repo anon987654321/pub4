@@ -11,6 +11,9 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, I18n.t("dashboard.heading_mission")
+    assert_select "#refresh-state[role='status']"
+    assert_select "#status[aria-live='polite']"
+    assert_includes response.body, I18n.t("dashboard.refresh_failed")
   end
 
   test "index is Norwegian by default and English when the browser asks" do

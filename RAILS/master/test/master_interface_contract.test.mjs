@@ -5,6 +5,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const dashboard = readFileSync(join(root, "app", "views", "dashboard", "index.html.erb"), "utf8");
 const publicDir = join(root, "public");
 const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
 const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
@@ -178,4 +179,15 @@ test("evidence events retain their event name and reach the shared FaceWorld clo
   assert.match(faceWorld, /updateActivityNodes\(now, state\)/);
   assert.doesNotMatch(faceWorld, /requestAnimationFrame\(/);
   assert.ok(manifest.includes("- face_world.js"), "spatial nodes must use the already loaded FaceWorld asset");
+});
+
+test("mission control distinguishes fresh, failed and terminal live states", () => {
+  assert.match(dashboard, /id="refresh-state"[^>]*role="status"/);
+  assert.match(dashboard, /if \(!r\.ok \|\| d\.error\)/);
+  assert.match(dashboard, /catch \(error\)/);
+  assert.match(dashboard, /document\.hidden/);
+  assert.match(dashboard, /inFlight/);
+  assert.match(dashboard, /i18nRefreshFailed/);
+  assert.match(dashboard, /i18nUpdated/);
+  assert.match(dashboard, /closeDoor\(\)/);
 });

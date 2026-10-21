@@ -58,6 +58,8 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes Registry.help_summary, "fix0 at master0: /fix [path]"
     assert_includes Registry.help_summary, "help0 at master0: /help [command]"
     assert_includes Registry.help_summary, "/exit /quit"
+    assert_includes Registry.help_summary, "input0 at master0: describe work in plain language; slash commands are optional."
+    assert_includes Registry.help_summary, "fix0 at master0: /fix [path] writes; /review and /critique read; /help <command> shows syntax."
   end
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,

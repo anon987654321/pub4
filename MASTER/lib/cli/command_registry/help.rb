@@ -333,7 +333,7 @@ detail: [
       end
 
       def help_summary
-        CATEGORY_ORDER.map do |category|
+        lines = CATEGORY_ORDER.filter_map do |category|
           commands = COMMAND_CATEGORIES.filter_map do |name, assigned|
             "/#{name}" if assigned == category
           end
@@ -343,7 +343,10 @@ detail: [
           commands = commands.reject { |command| command == "/help" } if category == "help"
           commands.unshift("/help [command]") if category == "help"
           "#{category}0 at master0: #{commands.join(' ')}"
-        end.compact.join("\n")
+        end
+        lines << "input0 at master0: describe work in plain language; slash commands are optional."
+        lines << "fix0 at master0: /fix [path] writes; /review and /critique read; /help <command> shows syntax."
+        lines.join("\n")
       end
     end
   end
