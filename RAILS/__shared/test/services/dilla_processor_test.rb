@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "rails"
 require "logger"
+require "tmpdir"
 
 Rails.logger ||= Logger.new(File::NULL)
 require "rbconfig"
@@ -12,6 +13,23 @@ require_relative "../../app/services/shared/dilla_processor"
 # dilla has hung indefinitely in the past, pinning a Solid Queue worker forever.
 # run_with_timeout must free the worker and kill the child instead of blocking.
 class DillaProcessorTest < Minitest::Test
+  def test_on_path_checks_files_not_directories_or_same_named_relative_paths
+    Dir.mktmpdir("shared-subprocess-path") do |dir|
+      executable = File.join(dir, "yt-dlp")
+      plain_file = File.join(dir, "plain")
+      File.write(executable, "#!/bin/sh\n")
+      File.chmod(0o755, executable)
+      File.write(plain_file, "not executable")
+      Dir.mkdir(File.join(dir, "folder"))
+
+      assert Shared::Subprocess.on_path?("yt-dlp", path: dir)
+      refute Shared::Subprocess.on_path?("plain", path: dir)
+      refute Shared::Subprocess.on_path?("folder", path: dir)
+      refute Shared::Subprocess.on_path?("", path: dir)
+      refute Shared::Subprocess.on_path?("./yt-dlp", path: dir)
+    end
+  end
+
   def test_shared_subprocess_keeps_stdout_and_stderr_separate
     stdout, stderr, status = Shared::Subprocess.capture3(
       RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')", timeout: 2

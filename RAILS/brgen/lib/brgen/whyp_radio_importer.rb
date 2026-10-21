@@ -55,9 +55,7 @@ module Brgen
 
     def require_commands!
       %w[yt-dlp ffmpeg].each do |command|
-        available = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          File.executable?(File.join(dir, command))
-        end
+        available = Shared::Subprocess.on_path?(command)
         abort "radio: #{command} is required" unless available
       end
     end

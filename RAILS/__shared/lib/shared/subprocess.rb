@@ -10,6 +10,18 @@ module Shared
 
     module_function
 
+    # Filesystem PATH probe: avoid spawning `which` just to check a command.
+    # It intentionally accepts command names only, never directories or paths.
+    def on_path?(name, path: ENV.fetch("PATH", ""))
+      name = name.to_s
+      return false if name.empty? || name.include?(File::SEPARATOR)
+
+      path.to_s.split(File::PATH_SEPARATOR).any? do |directory|
+        candidate = File.join(directory, name)
+        File.file?(candidate) && File.executable?(candidate)
+      end
+    end
+
     def capture3(*command, timeout:, env: nil, chdir: nil)
       seconds = Float(timeout)
       raise ArgumentError, "timeout must be finite and positive" unless seconds.finite? && seconds.positive?
