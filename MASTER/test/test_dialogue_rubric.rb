@@ -8,10 +8,10 @@ require_relative "../lib/review/agent/prompt_builder"
 class SupportPromptHost
   include Master::Review::Agent::PromptBuilder
 
-  def initialize(message, previous: nil)
+  def initialize(message, previous: nil, history: [])
     @personality = Object.new
     @config = { "root" => Master::ROOT }
-    messages = [{ role: "user", content: previous }, { role: "user", content: message }].compact
+    messages = [*Array(history), previous, message].compact.map { |content| { role: "user", content: } }
     @session = Struct.new(:messages).new(messages)
   end
 
@@ -58,6 +58,17 @@ class TestDialogueRubric < Minitest::Test
     refute_includes prompt, "NICE NG222"
   end
 
+  def test_generic_personal_advice_is_routed_without_clinical_jargon
+    prompt = Rubric.support_prompt_for(
+      "I need advice. My boss has been humiliating me in meetings.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Practical response:"
+    assert_includes prompt, "one decision-changing question"
+  end
+
   def test_relationship_and_manipulation_guidance_is_targeted
     prompt = Rubric.support_prompt_for(
       "My partner checks my phone, controls money and says I am crazy when I object.",
@@ -85,6 +96,18 @@ class TestDialogueRubric < Minitest::Test
     prompt = SupportPromptHost.new(
       "What should I say?",
       previous: "My partner checks my phone, controls money and says I am crazy when I object.",
+    ).support_practice_for_turn
+
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "safety planning"
+  end
+
+  def test_follow_up_chain_retains_the_nearest_support_topic
+    prompt = SupportPromptHost.new(
+      "Go on.",
+      previous: "What should I say?",
+      history: ["My partner checks my phone, controls money and says I am crazy when I object."],
     ).support_practice_for_turn
 
     assert_includes prompt, "Couples and relationship safety:"
