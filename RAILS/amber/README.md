@@ -114,7 +114,7 @@ activity. The federated-identity and account-merge tables are app-owned migratio
 
 Account deletion sets a 30-day grace period and revokes the active login immediately. Amber's
 `UserPurgeJob` is scheduled daily at 03:50. It removes private wardrobe, profile, connection,
-identity, session and inbox data; deletes attachments through model callbacks; and anonymises the
+identity, session, inbox and account-linked outbound-attribution data; deletes click records tied to private wardrobe objects, purges attachments through model callbacks, and anonymises the
 user row. Public posts and comments remain attached to the anonymised row to preserve discussion,
 but references to removed wardrobe items/outfits and moderation cases targeting those private
 objects are removed. If a required erasure table is missing or an account cannot be purged, the
