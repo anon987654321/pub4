@@ -62,7 +62,9 @@ module Master
           return unless result&.ok?
 
           value = result.value!
-          findings = improvement_findings(value, selected).first(MAX_IMPROVEMENT_FINDINGS)
+          winners = Master::Review::Council::Critique::CherryPick.one_per_issue(value[:cherry_picks])
+          repair_value = value.merge(cherry_picks: winners)
+          findings = improvement_findings(repair_value, selected).first(MAX_IMPROVEMENT_FINDINGS)
           @bus&.publish(
             "fix_loop:improvement_council",
             pass:, files: selected.size, critiques: Array(value[:feedback]).size,
