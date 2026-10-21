@@ -29,7 +29,11 @@ class OmniauthCallbacksController < ::ApplicationController
     end
 
     user = find_or_create_user(auth)
-    merge_guest_into(user) if session[:guest_user_id].present?
+    transfer = transfer_guest_history_from_session(user)
+    if transfer == false
+      redirect_to new_session_path, alert: t("shared.flash.guest_history_transfer_failed")
+      return
+    end
     # Was complete_login_for(user, remember: true) -- a method that exists in no
     # app and in no gem here, so every successful OAuth callback raised
     # NoMethodError. start_new_session_for is the one session entry point
@@ -148,12 +152,4 @@ class OmniauthCallbacksController < ::ApplicationController
     end
   end
 
-  def merge_guest_into(user)
-    guest = User.find_by(id: session[:guest_user_id], guest: true)
-    return unless guest
-
-    AccountMerger.new(guest_user: guest, user:).call if defined?(AccountMerger)
-  rescue StandardError => error
-    Rails.logger.warn("OAuth guest merge failed: #{error.message}")
-  end
 end
