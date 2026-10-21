@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dashboard = readFileSync(join(root, "app", "views", "dashboard", "index.html.erb"), "utf8");
+const chatIndex = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
+const pwaManifest = readFileSync(join(root, "app", "views", "pwa", "manifest.json.erb"), "utf8");
 const publicDir = join(root, "public");
 const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
 const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
@@ -193,4 +195,35 @@ test("mission control distinguishes fresh, failed and terminal live states", () 
   assert.match(dashboard, /i18nRefreshFailed/);
   assert.match(dashboard, /i18nUpdated/);
   assert.match(dashboard, /closeDoor\(\)/);
+});
+
+test("chat and mission control share accessible Ghostty-inspired session tabs", () => {
+  for (const page of [chatIndex, dashboard]) {
+    assert.match(page, /class="master-titlebar/);
+    assert.match(page, /class="master-session-tabs" aria-label=/);
+    assert.match(page, /class="master-session-tab"/);
+    assert.match(page, /href="\/" /);
+    assert.match(page, /href="\/dashboard"/);
+  }
+  assert.match(chatIndex, /href="\/" aria-current="page"/);
+  assert.match(dashboard, /href="\/dashboard" aria-current="page"/);
+  assert.match(faceMotion, /\.master-session-tab\[aria-current="page"\]::after/);
+  assert.match(faceMotion, /@media \(max-width: 420px\)/);
+  assert.match(faceMotion, /\.master-session-tab:focus-visible/);
+});
+
+test("canonical graphite theme reaches generated face CSS and the installed PWA", () => {
+  const rootStart = faceCss.indexOf("/* BEGIN:generated-face-root");
+  const rootEnd = faceCss.indexOf("/* END:generated-face-root */", rootStart);
+  assert.ok(rootStart >= 0 && rootEnd > rootStart, "generated face token block is missing");
+  const root = faceCss.slice(rootStart, rootEnd);
+  assert.match(tokens, /face_bg: "#050710"/);
+  assert.match(tokens, /x_text: "#e7eeff"/);
+  assert.match(root, /--face-bg: #050710;/);
+  assert.match(root, /--x-text: #e7eeff;/);
+  assert.match(pwaManifest, /"background_color": "#050710"/);
+  assert.match(pwaManifest, /"theme_color": "#050710"/);
+  assert.match(chatIndex, /meta name="theme-color" content="#050710"/);
+  assert.doesNotMatch(faceMotion, /--c-accent: oklch\(82% 0\.12 222\)/);
+  assert.doesNotMatch(faceMotion, /--radius-md: 12px/);
 });

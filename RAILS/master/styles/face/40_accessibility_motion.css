@@ -755,14 +755,6 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
   outline: 2px solid var(--pub4-signal);
   outline-offset: -3px;
 }
-body.mission-control .master-titlebar {
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  max-inline-size: none;
-  margin: 0;
-}
 body.mission-control .mission-heading {
   max-inline-size: 80ch;
   margin: 0 0 1rem;
