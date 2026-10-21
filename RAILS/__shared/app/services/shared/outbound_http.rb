@@ -114,14 +114,14 @@ module Shared
     # ipaddr= pins the socket destination while Net::HTTP keeps the original host
     # for the Host header and SNI, so certificate verification still checks the
     # name rather than the address.
-    def request(uri, method: :get, headers: {}, body: nil, max_body: MAX_BODY)
+    def request(uri, method: :get, headers: {}, body: nil, max_body: MAX_BODY, open_timeout: TIMEOUT, read_timeout: TIMEOUT)
       raise URI::InvalidURIError, "HTTPS required" unless uri.is_a?(URI::HTTPS)
       raise URI::InvalidURIError, "non-standard HTTPS port" unless uri.port.nil? || uri.port == 443
 
       address = resolve_addresses(uri.hostname).reject { |addr| unsafe_ip?(addr) }.first
       raise SocketError, "unsafe or unresolvable remote host" unless address
 
-      http = pinned_connection(uri, address)
+      http = pinned_connection(uri, address, open_timeout:, read_timeout:)
       klass = method.to_sym == :post ? Net::HTTP::Post : Net::HTTP::Get
       request = klass.new(uri.request_uri)
       headers.each { |key, value| request[key] = value }
@@ -129,7 +129,7 @@ module Shared
       http.request(request) { |response| response.body = capped_body(response, max_body) }
     end
 
-    def pinned_connection(uri, address)
+    def pinned_connection(uri, address, open_timeout: TIMEOUT, read_timeout: TIMEOUT)
       # Passing nil disables Net::HTTP's implicit :ENV proxy lookup; a proxy
       # would otherwise route around the IP address this guard approved.
       http = Net::HTTP.new(uri.hostname, uri.port || 443, nil)
@@ -139,8 +139,8 @@ module Shared
 
       http.ipaddr = address
       http.use_ssl = true
-      http.open_timeout = TIMEOUT
-      http.read_timeout = TIMEOUT
+      http.open_timeout = open_timeout
+      http.read_timeout = read_timeout
       http
     end
 
