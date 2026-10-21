@@ -96,6 +96,18 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "NICE NG225"
   end
 
+  def test_missing_support_data_keeps_conservative_crisis_guidance
+    prompt = Rubric.support_prompt_for(
+      "I do not think I can keep myself safe tonight.",
+      root: "/missing-master-support-data",
+    )
+
+    assert_includes prompt, "<master_support_fallback>"
+    assert_includes prompt, "Immediate safety takes priority"
+    assert_includes prompt, "113 is for life-threatening medical emergencies"
+    assert_includes prompt, "never invent citations"
+  end
+
   def test_norwegian_relationship_and_control_language_is_routed
     prompt = Rubric.support_prompt_for(
       "Kjæresten min sjekker telefonen min og kontrollerer pengene mine.",
