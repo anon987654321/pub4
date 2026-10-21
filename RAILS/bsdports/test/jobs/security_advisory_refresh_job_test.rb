@@ -29,7 +29,7 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
                  name: "freebsd-only", version: "1.0", pkgpath: "devel/freebsd-only")
 
     calls = []
-    NvdCveCrossrefJob.stub(:perform_later, ->(**arguments) { calls << arguments[:port_id] }) do
+    NvdCveCrossrefJob.stub(:enqueue_for, ->(**arguments) { calls << arguments[:port_id] }) do
       SecurityAdvisoryRefreshJob.perform_now(batch_size: 10)
     end
 
@@ -51,7 +51,7 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
     end
 
     calls = []
-    NvdCveCrossrefJob.stub(:perform_later, ->(**arguments) { calls << arguments[:port_id] }) do
+    NvdCveCrossrefJob.stub(:enqueue_for, ->(**arguments) { calls << arguments[:port_id] }) do
       SecurityAdvisoryRefreshJob.perform_now(batch_size: 2)
     end
 
