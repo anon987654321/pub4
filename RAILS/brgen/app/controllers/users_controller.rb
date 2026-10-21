@@ -66,8 +66,8 @@ class UsersController < ApplicationController
       return
     end
 
-    prepare_email_registration(user_params)
     guest = persisted_guest_for_registration
+    prepare_email_registration(user_params)
 
     unless @user.save
       render :new, status: :unprocessable_entity
