@@ -27,23 +27,32 @@ module Master
         @surfaces = Array(surfaces).select(&:snapshot).uniq
         @bus = bus
         @layout_completion = !!layout_completion
+        @preflight_verified = false
         @snapshot_gate = Deploy::LayoutSnapshotGate.new
       end
 
-      def layout_completion? = @layout_completion
+      def layout_completion? = @layout_completion && @preflight_verified
 
       def preflight!(captures)
+        @preflight_verified = false
         VisualQualityGates.record(captures, root: @root)
         verdict = compare_captures(Array(captures), "before visual fix")
-        return verdict if verdict.ok? || !@layout_completion || verdict.category != :policy
+        if verdict.ok?
+          @preflight_verified = true
+          return verdict
+        end
+        return verdict unless @layout_completion && verdict.category == :policy
 
         plan = snapshot_update_plan(snapshot_rows(captures), require_stable_elements: false)
         return inconclusive("layout baseline drift could not be reconciled to measured surfaces") if plan.empty?
 
+        @preflight_verified = true
         Result.ok(state: :layout_completion_baseline_drift, pending_snapshots: plan.size)
       rescue LayoutCompletionEvidenceMissing => e
+        @preflight_verified = false
         inconclusive("layout completion baseline is not promotable: #{e.message}")
       rescue LayoutCompletionConflict => e
+        @preflight_verified = false
         Result.err("layout completion requires a decision: #{e.message}", category: :policy, gap: Master::Gap::OPERATOR_DECISION)
       end
 
@@ -61,7 +70,7 @@ module Master
         snapshot_verdict = compare_payloads(measured, "after visual fix")
         updates = {}
         prior = snapshot_verdict
-        if snapshot_verdict.err? && @layout_completion && snapshot_verdict.category == :policy
+        if snapshot_verdict.err? && layout_completion? && snapshot_verdict.category == :policy
           updates = snapshot_update_plan(measured)
           return Result.err("layout completion found no changed structural snapshots to reconcile", category: :inconclusive, gap: UNMEASURABLE) if updates.empty?
           prior = Result.ok(state: :authorized_layout_completion)
@@ -74,7 +83,7 @@ module Master
         end
 
         quality = VisualQualityGates.judge(
-          measured, root: @root, prior:, anchors:, allow_layout_change: updates.any?
+          measured, root: @root, prior:, anchors:, allow_layout_change: updates.any? && layout_completion?
         )
         return quality unless quality.ok?
         return quality if updates.empty?
