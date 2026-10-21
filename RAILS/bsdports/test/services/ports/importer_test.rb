@@ -184,6 +184,8 @@ class Ports::ImporterTest < ActiveSupport::TestCase
       assert system("tar", "czf", archive, "-C", dir, "ports"), "tar must build the fixture archive"
 
       tarball.define_singleton_method(:download) { |_from, to, **| FileUtils.cp(archive, to) || true }
+      tarball.define_singleton_method(:verification_ready?) { true }
+      tarball.define_singleton_method(:verify_tarball) { |_archive, _signature| true }
       tarball.define_singleton_method(:free_bytes) { |_path| Ports::Openbsd::PortsTarball::REQUIRED_FREE_BYTES }
       fetcher = FakeIndexFetcher.new([])
       previous = ENV["BSDPORTS_PORTS_TARBALL"]
@@ -202,6 +204,21 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     ensure
       previous.nil? ? ENV.delete("BSDPORTS_PORTS_TARBALL") : ENV["BSDPORTS_PORTS_TARBALL"] = previous
     end
+  end
+
+  test "the ports tarball never extracts when signature verification fails" do
+    platform = platforms(:openbsd)
+    tarball = Ports::Openbsd::PortsTarball.new(platform:, release: "7.9")
+    previous = ENV["BSDPORTS_PORTS_TARBALL"]
+    ENV["BSDPORTS_PORTS_TARBALL"] = "1"
+    tarball.define_singleton_method(:verification_ready?) { true }
+    tarball.define_singleton_method(:free_bytes) { |_path| Ports::Openbsd::PortsTarball::REQUIRED_FREE_BYTES }
+    tarball.define_singleton_method(:download) { |_from, to, **| File.write(to, "untrusted"); true }
+    tarball.define_singleton_method(:verify_tarball) { |_archive, _signature| false }
+
+    assert_nil tarball.with_tree { |_| flunk "an unverified ports tree must not be extracted" }
+  ensure
+    previous.nil? ? ENV.delete("BSDPORTS_PORTS_TARBALL") : ENV["BSDPORTS_PORTS_TARBALL"] = previous
   end
 
   class FakeTarball
