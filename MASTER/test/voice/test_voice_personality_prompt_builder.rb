@@ -117,6 +117,10 @@ def test_core_context_keeps_constitution_and_output_contract
   def test_zsh_reference_tables_reach_the_prompt
     prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :full)
 
+    assert_includes prompt, "MASTER interactive-zsh restrictions:"
+    assert_includes prompt, "never transfer this substitution list to ksh/sh scripts"
+    assert_includes prompt, "target-host administration commands"
+    assert_includes prompt, "Bash, Perl and Python remain prohibited in agent shell calls and committed scripts."
     assert_includes prompt, "Zsh replacements:"
     assert_includes prompt, "SSH reading:"
     assert_includes prompt, "Zsh native patterns:"
