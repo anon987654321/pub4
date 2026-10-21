@@ -72,7 +72,10 @@ class OutfitCompatibility
   def weather_fit(items, weather)
     return 0.75 if weather.blank?
     weather = weather.to_s.downcase
-    matches = items.count { |item| [ GarmentTaxonomy.weather_fit(item), "all_weather" ].include?(weather) || GarmentTaxonomy.weather_fit(item) == "all_weather" }
+    matches = items.count do |item|
+      fit = GarmentTaxonomy.weather_fit(item)
+      fit == weather || fit == "all_weather"
+    end
     [ matches / items.size.to_f, 1.0 ].min
   end
 

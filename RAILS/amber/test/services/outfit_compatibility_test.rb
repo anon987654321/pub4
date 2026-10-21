@@ -29,6 +29,19 @@ class OutfitCompatibilityTest < ActiveSupport::TestCase
     assert_operator dress_look, :>, shoe_only
   end
 
+  test "weather compatibility evaluates each garment fit once" do
+    owner = user("compatibility-weather-cost@example.com")
+    scorer = OutfitCompatibility.new(owner)
+    items = [ Item.new(category: "Tops"), Item.new(category: "Shoes") ]
+    calls = 0
+
+    GarmentTaxonomy.stub(:weather_fit, ->(_item) { calls += 1; "warm" }) do
+      scorer.score_items(items, weather: "cold")
+    end
+
+    assert_equal items.size, calls
+  end
+
   test "an avoid preference lowers the score for a matching combination" do
     owner = user("compatibility-avoid@example.com")
     owner.style_preferences.create!(kind: :avoid, name: "polyester", weight: 1.0)
