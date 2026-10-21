@@ -148,8 +148,34 @@ module Master
 
         support_practice_block(support, areas: areas.uniq, include_sources:)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "dialogue_rubric.support_prompt_for", severity: :cosmetic)
-        nil
+        Master::Ground::Swallow.log(e, context: "dialogue_rubric.support_prompt_for", severity: :error)
+        support_fallback_prompt(text)
+      end
+
+      # A missing or malformed clinical protocol must degrade to conservative
+      # guidance, not silently remove crisis handling from the current turn.
+      # This intentionally small fallback is a safety floor, not a second copy
+      # of the full data-driven protocol.
+      def support_fallback_prompt(text)
+        lines = [
+          "Support guidance data is unavailable. Apply these minimum safe defaults; do not claim the full protocol loaded.",
+          "Reply in the person's language unless they ask otherwise. Be warm, direct and nonjudgmental.",
+          "Give one to three realistic next steps with a specific first action. Ask at most one decision-changing question.",
+          "Do not diagnose the person or someone else from chat, infer hidden intent as fact, or advise starting, stopping or changing medication.",
+          "For nontrivial clinical claims, use current clinical guidelines and systematic reviews when research tools are available. Open and verify sources; never invent citations. If research is unavailable, state that limit.",
+        ]
+        if text.match?(CRISIS_CUES)
+          lines.concat([
+            "Immediate safety takes priority. Ask directly whether there is immediate danger when needed, encourage immediate contact with local emergency services and a trusted person, and do not delay help for a long intake.",
+            "If the person is in Norway: 113 is for life-threatening medical emergencies, 112 is for immediate risk from violence, 116 117 is urgent medical care, and Mental Helse 116 123 is a listening service. Elsewhere, use verified local contacts.",
+            "Offer steps to move away from immediate means of harm only where safe. Do not use low/medium/high labels or a score to predict suicide.",
+          ])
+        end
+        <<~XML.strip
+          <master_support_fallback>
+          #{lines.map { |line| "- #{line}" }.join("\n")}
+          </master_support_fallback>
+        XML
       end
 
       def support_practice_block(support, areas:, include_sources: false)
