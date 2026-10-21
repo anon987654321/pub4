@@ -184,7 +184,8 @@ module Operator
       end
 
       log_name = "#{row.fetch("id")}.log"
-      File.write(File.join(run_dir, log_name), output.to_s)
+      log_output = redact_output(output.to_s)
+      File.write(File.join(run_dir, log_name), log_output)
       evidence = {
         "test_path" => adapter.fetch("path"),
         "test_name" => adapter.fetch("name"),
@@ -199,7 +200,8 @@ module Operator
         "started_at" => started_at,
         "duration_ms" => ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - monotonic_start) * 1000).round,
         "log" => log_name,
-        "output_sha256" => Digest::SHA256.hexdigest(output.to_s)
+        "output_sha256" => Digest::SHA256.hexdigest(output.to_s),
+        "log_sha256" => Digest::SHA256.hexdigest(log_output)
       }
       common.merge("status" => state, "reason" => reason, "evidence" => evidence).tap do |result|
         @io.puts("campaign0: #{result.fetch("case_id")} #{state} #{reason || adapter.fetch("name")}")
@@ -257,6 +259,13 @@ module Operator
       actual
     rescue SystemCallError
       nil
+    end
+
+    def redact_output(output)
+      output
+        .gsub(/((?:api[_-]?key|access[_-]?token|password|secret|authorization)\\s*[=:]\\s*)(?:Bearer\\s+)?[^\\s,;]+/i, "\\1<redacted>")
+        .gsub(/\\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,})\\b/, "<redacted>")
+        .gsub(/((?:set-cookie|cookie)\\s*:\\s*)[^\\r\\n]+/i, "\\1<redacted>")
     end
 
     def execute(command:, chdir:, timeout:)
