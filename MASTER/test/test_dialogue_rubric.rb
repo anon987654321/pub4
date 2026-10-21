@@ -311,6 +311,8 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "safety planning"
     assert_includes prompt, "112 for immediate risk from violence"
     assert_includes prompt, "DARVO"
+    assert_includes prompt, "Research starting points"
+    assert_includes prompt, "UK statutory guidance — domestic abuse and coercive control"
   end
 
   def test_crisis_prompt_has_direct_safety_and_local_resources
@@ -523,6 +525,21 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Martial and contemplative practice:"
     assert_includes prompt, "Do not turn non-attachment into emotional suppression"
     assert_includes prompt, "Evidence on martial arts and adult mental health is mixed"
+    assert_includes prompt, "Research starting points"
+    assert_includes prompt, "Martial arts and adult mental health — systematic review"
+  end
+
+  def test_condition_specific_OCD_advice_includes_the_matching_guideline
+    prompt = Rubric.support_prompt_for(
+      "My OCD symptoms are interfering with my everyday life. What should I consider?",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Clinical skills:"
+    assert_includes prompt, "Research starting points"
+    assert_includes prompt, "NICE CG31"
+    refute_includes prompt, "NICE NG222"
+    refute_includes prompt, "NICE NG116"
   end
 
   def test_non_support_turns_do_not_receive_the_support_protocol
