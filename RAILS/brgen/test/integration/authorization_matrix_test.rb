@@ -114,6 +114,12 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     end
   end
 
+  def test_RI_010_unauthorized_actor_cannot_open_protected_community
+    get "/communities/new"
+
+    assert_response :redirect
+  end
+
   test "every guarded route refuses a visitor who is not a real user" do
     MATRIX.each do |route, verb, guest_outcome, _, params|
       reset!
