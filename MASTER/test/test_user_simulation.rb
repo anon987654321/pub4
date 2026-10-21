@@ -8,7 +8,7 @@ require_relative "test_helper"
 require_relative "../lib/fix/repair_loop"
 
 class TestUserSimulation < Minitest::Test
-  UserSimulation = Master::Fix::RepairLoop::FixStrategies::UserSimulation
+  UserSimulation = Master::Fix::UserSimulation
   CAMPAIGN = File.join(Master::REPO_ROOT, "RAILS", "test", "interaction_campaign_400.json")
 
   def test_campaign_schema_and_runtime_evidence_are_validated
