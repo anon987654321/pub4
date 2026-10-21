@@ -110,7 +110,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     end
     email = "blocked-merge-#{SecureRandom.hex(5)}@example.test"
 
-    AccountMerger.stub(:new, merger) do
+    AccountMerger.stub(:new, ->(**_kwargs) { merger }) do
       post registration_url, params: {
         accept_terms: "1", accept_age: "1",
         user: { email_address: email, password: "long-enough-pass", password_confirmation: "long-enough-pass" }
