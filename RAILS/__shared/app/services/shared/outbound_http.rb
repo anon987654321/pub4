@@ -19,6 +19,7 @@ module Shared
     # gigabyte, so the body is read in chunks and the read stops at the cap
     # rather than holding the whole answer in memory first.
     MAX_BODY = 1_000_000
+    MAX_MEDIA_BODY = 8_000_000
 
     class BodyTooLarge < StandardError; end
 
