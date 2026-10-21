@@ -39,6 +39,13 @@ class UserPurgeJobTest < ActiveJob::TestCase
 
     public_post = Post.create!(user: @user, body: "Public outfit post", item: item, outfit: outfit)
     other_post = Post.create!(user: @other, body: "A post using the shared item", item: item, outfit: outfit)
+    private_item_click = Shared::OutboundClick.create!(
+      app: "amber", url_host: "merchant.example", subject_type: "Item", subject_id: item.id,
+      user_id: @other.id, guest: false, created_at: Time.current
+    )
+    user_click = Shared::OutboundClick.create!(
+      app: "amber", url_host: "merchant.example", user_id: @user.id, guest: false, created_at: Time.current
+    )
     preserved_comment = Comment.create!(user: @user, commentable: other_post, content: "A public comment")
     private_item_comment = Comment.create!(user: @other, commentable: item, content: "Comment on private item")
     private_outfit_comment = Comment.create!(user: @other, commentable: outfit, content: "Comment on private outfit")
@@ -113,6 +120,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_empty Connection.where("requester_id = :id OR addressee_id = :id", id: @user.id)
     assert_empty Shared::Reaction.where(user_id: @user.id)
     assert_empty Shared::Notification.where("user_id = :id OR actor_id = :id", id: @user.id)
+    assert_not Shared::OutboundClick.exists?(user_click.id), "outbound click tied to erased account survived"
+    assert_not Shared::OutboundClick.exists?(private_item_click.id), "outbound click retained a private item target"
 
     [*profile_blob_ids, *item_blob_ids, *outfit_blob_ids].each do |blob_id|
       assert_empty ActiveStorage::Attachment.where(blob_id: blob_id), "an erased user's attachment survived"
