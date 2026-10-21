@@ -28,13 +28,63 @@ module Master
         Array(data(root:)["sycophancy_fixtures"])
       end
 
-      SUPPORT_CUES = /\b(?:overwhelmed|overwhelm|anxious|anxiety|panic|depress(?:ed|ion)|stress(?:ed)?|grief|lonely|loneliness|burned out|burnt out|ruminat(?:e|ing|ion)|trauma|therap(?:y|ist)|mental health|psychiatr|cbt|dbt|act therapy|adhd|autis(?:m|tic)|medication|antidepressant|antipsychotic|stimulant|psychotropic|prescription|ssri|snri|dose|psychiatrist|psychologist|suicid|self[- ]harm|hurt myself|keep myself safe|can't stay safe|want to die|don't want to live|do not want to live|overdos(?:e|ed)|hurt someone|immediate danger|unsafe at home|don't feel safe|do not feel safe|threatened me|hit me|hitting me|forced me|afraid of my partner|scared of my partner|won't let me|doesn't let me|reads my messages|checks my phone|relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break up|argument|fight with|gaslight|manipulat|narcissis|abusive|coercive|controlling me|boundaries|boundary|family conflict|procrastinat(?:e|ion)|motivation|anger|angry|resentment|shame|guilt|social anxiety|sleep problems|can't stop thinking|cannot stop thinking|keep replaying|i feel (?:sad|stuck|empty|hopeless|anxious|angry|overwhelmed|unsafe|lost)|i(?:'m| am) struggling|i can't cope|i cannot cope|martial arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai chi|aikido|budo|coping)\b/i.freeze
-      RELATIONSHIP_CUES = /\b(?:relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break up|argument|fight with|dating|intimacy|divorce|family conflict)\b/i.freeze
-      MANIPULATION_CUES = /\b(?:gaslight|manipulat|narcissis|abusive|coercive|controlling me|surveillance|stalking|threat(?:en|s|ening)?|threatened me|hit me|hitting me|forced me|calls me crazy|says i am crazy|says i'm crazy|isolation|financial control|controls my money|checks my phone|reads my messages|demands my password|tracks my phone|monitors me|won't let me|doesn't let me)\b/i.freeze
-      MARTIAL_CUES = /\b(?:martial arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai chi|aikido|budo|qi gong|kung fu|karate|judo|taekwondo|non[- ]?attachment)\b/i.freeze
-      CRISIS_CUES = /\b(?:suicid(?:e|al)|kill myself|end my life|want to die|don't want to live|do not want to live|can't keep myself safe|cannot keep myself safe|(?:don't|do not) think i can keep myself safe|not sure i can keep myself safe|can't stay safe|hurt myself|self[- ]harm|overdos(?:e|ed)|hurt someone|going to hurt someone|immediate danger)\b/i.freeze
-      RESEARCH_CUES = /\b(?:research|studies|evidence|clinical guideline|systematic review|meta-analysis|meta analysis|scientific evidence|papers|citations|sources)\b/i.freeze
-      CLINICAL_DETAIL_CUES = /\b(?:depress(?:ed|ion)|psychiatr|diagnos(?:e|is|tic)|medication|antidepressant|bipolar|psychosis|mania|adhd|autis(?:m|tic)|ptsd|ocd|panic disorder|therapy options|treatment options|side effects|mental health professional)\b/i.freeze
+      SUPPORT_CUES = %r{
+        \b(?:
+          overwhelmed|overwhelm|anxious|anxiety|panic|depress(?:ed|ion)|stress(?:ed)?|grief|lonely|loneliness
+          |burned\s+out|burnt\s+out|ruminat(?:e|ing|ion)|trauma|therap(?:y|ist)|mental\s+health|psychiatr
+          |cbt|dbt|act\s+therapy|adhd|autis(?:m|tic)|medication|antidepressant|antipsychotic|stimulant
+          |psychotropic|prescription|ssri|snri|dose|psychiatrist|psychologist|suicid|self[- ]harm|hurt\s+myself
+          |keep\s+myself\s+safe|can't\s+stay\s+safe|want\s+to\s+die|don't\s+want\s+to\s+live
+          |do\s+not\s+want\s+to\s+live|overdos(?:e|ed)|hurt\s+someone|immediate\s+danger
+          |unsafe\s+at\s+home|don't\s+feel\s+safe|do\s+not\s+feel\s+safe|threatened\s+me
+          |hit\s+me|hitting\s+me|forced\s+me|afraid\s+of\s+my\s+partner|scared\s+of\s+my\s+partner
+          |won't\s+let\s+me|doesn't\s+let\s+me|reads\s+my\s+messages|checks\s+my\s+phone
+          |relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break\s+up
+          |argument|fight\s+with|gaslight|manipulat|narcissis|abusive|coercive|controlling\s+me
+          |boundaries|boundary|family\s+conflict|procrastinat(?:e|ion)|motivation|anger|angry|resentment|shame|guilt
+          |social\s+anxiety|sleep\s+problems|can't\s+stop\s+thinking|cannot\s+stop\s+thinking
+          |keep\s+replaying|i\s+feel\s+(?:sad|stuck|empty|hopeless|anxious|angry|overwhelmed|unsafe|lost)
+          |i(?:'m|\s+am)\s+struggling|i\s+can't\s+cope|i\s+cannot\s+cope
+          |martial\s+arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai\s+chi|aikido|budo|coping
+        )\b
+      }ix.freeze
+
+      RELATIONSHIP_CUES = %r{
+        \b(?:relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break\s+up
+        |argument|fight\s+with|dating|intimacy|divorce|family\s+conflict)\b
+      }ix.freeze
+
+      MANIPULATION_CUES = %r{
+        \b(?:gaslight|manipulat|narcissis|abusive|coercive|controlling\s+me|surveillance|stalking
+        |threat(?:en|s|ening)?|threatened\s+me|hit\s+me|hitting\s+me|forced\s+me|calls\s+me\s+crazy
+        |says\s+i\s+am\s+crazy|says\s+i'm\s+crazy|isolation|financial\s+control|controls\s+my\s+money
+        |checks\s+my\s+phone|reads\s+my\s+messages|demands\s+my\s+password|tracks\s+my\s+phone
+        |monitors\s+me|won't\s+let\s+me|doesn't\s+let\s+me)\b
+      }ix.freeze
+
+      MARTIAL_CUES = %r{
+        \b(?:martial\s+arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai\s+chi|aikido|budo
+        |qi\s+gong|kung\s+fu|karate|judo|taekwondo|non[- ]?attachment)\b
+      }ix.freeze
+
+      CRISIS_CUES = %r{
+        \b(?:suicid(?:e|al)|kill\s+myself|end\s+my\s+life|want\s+to\s+die|don't\s+want\s+to\s+live
+        |do\s+not\s+want\s+to\s+live|can't\s+keep\s+myself\s+safe|cannot\s+keep\s+myself\s+safe
+        |(?:don't|do\s+not)\s+think\s+i\s+can\s+keep\s+myself\s+safe|not\s+sure\s+i\s+can\s+keep\s+myself\s+safe
+        |can't\s+stay\s+safe|hurt\s+myself|self[- ]harm|overdos(?:e|ed)|hurt\s+someone
+        |going\s+to\s+hurt\s+someone|immediate\s+danger)\b
+      }ix.freeze
+
+      RESEARCH_CUES = %r{
+        \b(?:research|studies|evidence|clinical\s+guideline|systematic\s+review|meta-analysis|meta\s+analysis
+        |scientific\s+evidence|papers|citations|sources)\b
+      }ix.freeze
+
+      CLINICAL_DETAIL_CUES = %r{
+        \b(?:depress(?:ed|ion)|psychiatr|diagnos(?:e|is|tic)|medication|antidepressant|bipolar|psychosis|mania
+        |adhd|autis(?:m|tic)|ptsd|ocd|panic\s+disorder|therapy\s+options|treatment\s+options|side\s+effects
+        |mental\s+health\s+professional)\b
+      }ix.freeze
 
       def prompt_block(root: Master::ROOT)
         items = data(root:).fetch("dimensions", {})
