@@ -144,4 +144,25 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_equal "Keep this post", original_post.reload.body
     assert_equal 1.day.from_now.to_date, @user.deletion_scheduled_at.to_date
   end
+
+  test "one failed erasure does not prevent other due accounts from being purged" do
+    failed = @user
+    completed = @other
+    [failed, completed].each do |user|
+      user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 1.second.ago)
+    end
+    job = UserPurgeJob.new
+    erase = job.method(:erase!)
+    job.define_singleton_method(:erase!) do |user|
+      raise "synthetic erasure failure" if user.id == failed.id
+
+      erase.call(user)
+    end
+
+    assert_raises(RuntimeError) { job.perform }
+
+    assert_equal "purged-#{completed.id}@deleted.invalid", completed.reload.email_address
+    assert_nil completed.deletion_scheduled_at
+    assert failed.reload.deletion_scheduled_at.present?, "failed account must remain due for retry"
+  end
 end
