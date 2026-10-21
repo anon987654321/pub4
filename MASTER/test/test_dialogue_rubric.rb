@@ -630,6 +630,30 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Do not predict suicide using a low/medium/high label"
   end
 
+  def test_unlabeled_manipulation_patterns_route_without_diagnosis
+    prompt = Rubric.support_prompt_for(
+      "My partner denies what happened, twists my words and gives me the silent treatment whenever I disagree.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "Assess repeated observable behavior"
+    assert_includes prompt, "moving goalposts"
+    assert_includes prompt, "Research starting points"
+  end
+
+  def test_nynorsk_manipulation_patterns_route_without_labels
+    prompt = Rubric.support_prompt_for(
+      "Kjærasten min nektar for det som skjedde, vrir orda mine og snur det mot meg.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "Reply in the language the person is using"
+  end
+
   def test_threat_and_assault_language_routes_to_crisis_and_manipulation_guidance
     prompt = Rubric.support_prompt_for(
       "My partner shoved me, choked me and threatened to kill me if I leave.",
