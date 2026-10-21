@@ -28,7 +28,7 @@ class FederatedIdentityContractTest < Minitest::Test
 
   def test_email_less_bankid_login_is_looked_up_by_persisted_subject
     callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
-    assert_includes callback, "ExternalIdentity.find_by(subject: auth.uid.to_s)"
+    assert_includes callback, "external_identities&.find_by(subject: auth.uid.to_s)"
     assert_includes callback, '::IdentityProvider.find_by(slug: auth.provider.to_s)'
     assert_includes callback, "identity.save!"
   end
