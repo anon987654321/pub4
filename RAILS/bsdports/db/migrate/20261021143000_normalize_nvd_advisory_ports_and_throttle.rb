@@ -31,6 +31,20 @@ class NormalizeNvdAdvisoryPortsAndThrottle < ActiveRecord::Migration[8.1]
   end
 
   def down
+    # The old schema had room for one port per advisory. Refuse a rollback that
+    # would discard newly recorded affected-port relationships.
+    multiple_ports = connection.select_value(<<~SQL)
+      SELECT 1
+      FROM security_advisory_ports
+      GROUP BY security_advisory_id
+      HAVING COUNT(*) > 1
+      LIMIT 1
+    SQL
+    if multiple_ports
+      raise ActiveRecord::IrreversibleMigration,
+            "security advisories now belong to multiple ports; preserve the join table"
+    end
+
     drop_table :nvd_rate_limits
 
     add_reference :security_advisories, :port, null: true, foreign_key: true
