@@ -91,6 +91,22 @@ class InteractionCampaignContractTest < Minitest::Test
                  "a surface action is represented more than once"
   end
 
+  def test_focused_test_paths_are_canonical_repository_files
+    paths = @campaign.fetch("surfaces").flat_map do |surface|
+      focused = surface.fetch("focused_test_paths")
+      refute_empty focused, "#{surface.fetch("id")}: no focused test paths"
+      assert_equal focused.length, focused.uniq.length,
+                   "#{surface.fetch("id")}: duplicate focused test paths"
+      focused
+    end
+
+    paths.each do |relative|
+      refute relative.start_with?("/"), "absolute focused test path is not portable: #{relative}"
+      refute relative.split("/").include?(".."), "focused test path escapes repository: #{relative}"
+      assert File.file?(File.join(ROOT, relative)), "missing focused test path: #{relative}"
+    end
+  end
+
   def test_evidence_paths_are_repository_relative_and_exist
     paths = @campaign.fetch("surfaces").flat_map { |surface| surface.fetch("evidence_paths") }.uniq
     assert_operator paths.length, :>=, 20
