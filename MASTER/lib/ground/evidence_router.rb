@@ -80,8 +80,6 @@ module Master
         "Evidence-based public guidance and reviews about #{topics.uniq.join('; ')}."
       end
 
-      private_class_method :web_search_query
-
       def web_required?(mode)
         %i[web_current deep_research].include?(mode)
       end
