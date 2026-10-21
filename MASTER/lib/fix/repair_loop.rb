@@ -301,6 +301,9 @@ module Master
       def apply(path, new_src, violation)
         old_src = File.read(path, encoding: "UTF-8")
         return :stale unless fingerprint_matches?(violation)
+        if (reason = VisualCompletion.change_blocker(root: @root, path:, before: old_src, after: new_src, custody: @visual_custody))
+          return reject_fix(path, old_src, "visual_operator_owned", evidence: reason)
+        end
         return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@law.id, old_src, new_src)
         raw_before = scan_all(path)
         log_scan_agreement(path, raw_before)
