@@ -810,6 +810,41 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Research starting points"
   end
 
+  def test_plain_language_emotional_abuse_and_control_route_to_manipulation_guidance
+    examples = [
+      "My partner is abusing me emotionally.",
+      "My partner keeps belittling me and says everything is my fault.",
+      "My partner calls me stupid and worthless.",
+      "My partner controls my finances and who I see.",
+      "My partner threatens me when I say no.",
+      "My partner keeps me isolated from friends.",
+      "My partner demands my passwords and tracks my location.",
+    ]
+
+    examples.each do |message|
+      prompt = Rubric.support_prompt_for(message, root: Master::ROOT)
+      refute_nil prompt, message
+      assert_includes prompt, "Manipulation resistance:", message
+      assert_includes prompt, "Assess repeated observable behavior", message
+      refute_includes prompt, "Couple therapy models for relationship distress", message
+    end
+  end
+
+  def test_nynorsk_degrading_and_isolation_phrasing_routes_to_manipulation_guidance
+    examples = [
+      "Kjærasten min kallar meg dum og verdilaus.",
+      "Kjærasten min truar meg når eg seier nei.",
+      "Kjærasten min styrer kven eg får møte og held meg isolert frå venner.",
+    ]
+
+    examples.each do |message|
+      prompt = Rubric.support_prompt_for(message, root: Master::ROOT)
+      refute_nil prompt, message
+      assert_includes prompt, "Manipulation resistance:", message
+      assert_includes prompt, "Reply in the language the person is using", message
+    end
+  end
+
   def test_nynorsk_manipulation_patterns_route_without_labels
     prompt = Rubric.support_prompt_for(
       "Kjærasten min nektar for det som skjedde, vrir orda mine og snur det mot meg.",
