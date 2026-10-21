@@ -62,6 +62,40 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   end
 
 
+  test "email signup transfers anonymous posts and MASTER chat to the new account" do
+    post_body = "Anonymous before signup #{SecureRandom.hex(4)}"
+    post posts_url, params: { post: { body: post_body, anonymous: true } }
+    assert_redirected_to root_path
+    anonymous_post = Post.find_by!(body: post_body)
+    guest = anonymous_post.user
+    assert guest.guest?
+
+    post invite_master_messages_path
+    assert_redirected_to messages_path
+    master = User.find_by!(email_address: "master@amber.local", bot: true)
+    chat_body = "Guest chat before signup #{SecureRandom.hex(4)}"
+    post messages_path, params: { message: { recipient_id: master.id, body: chat_body } }
+    assert_redirected_to messages_path
+    outgoing = Message.find_by!(sender_id: guest.id, recipient_id: master.id, body: chat_body)
+    incoming = Message.find_by!(sender_id: master.id, recipient_id: guest.id)
+
+    email = "merged-#{SecureRandom.hex(5)}@example.test"
+    post registration_url, params: {
+      accept_terms: "1", accept_age: "1",
+      user: { email_address: email, password: "long-enough-pass", password_confirmation: "long-enough-pass" }
+    }
+
+    assert_redirected_to root_path
+    account = User.find_by!(email_address: email)
+    assert_equal account.id, anonymous_post.reload.user_id
+    assert anonymous_post.anonymous?, "account conversion must preserve anonymous presentation"
+    assert_equal account.id, outgoing.reload.sender_id
+    assert_equal account.id, incoming.reload.recipient_id
+    refute guest.reload.guest?
+    assert AccountMerge.exists?(guest_user_id: guest.id, user_id: account.id)
+    refute account.email_verified?, "merging guest history must not bypass email verification"
+  end
+
   test "unverified account cannot post as a claimed identity until email confirmation" do
     email = "confirm-#{SecureRandom.hex(4)}@example.com"
     post registration_url, params: {
