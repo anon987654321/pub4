@@ -142,6 +142,17 @@ module Master
         \b(?:martial\s+arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai\s+chi|aikido|budo
         |qi\s+gong|kung\s+fu|karate|judo|taekwondo|non[- ]?attachment|kampkunst|kampsport|meditasjon)\b
       }ix.freeze
+      # Route philosophical/practical-life questions about martial traditions,
+      # not ordinary technique, competition scoring or training logistics.
+      MARTIAL_SUPPORT_CUES = %r{
+        \b(?:martial\s+arts|karate|judo|aikido|tai\s+chi|kung\s+fu|budo|zen|qi\s+gong)\b
+        .{0,60}\b(?:philosoph\w*|discipline|conflict|anger|patience|self[- ]control|mindfulness
+          |mental\s+health|coping|stress|focus|resilience|boundaries|non[- ]?attachment)\b
+        |
+        \b(?:philosoph\w*|discipline|conflict|anger|patience|self[- ]control|mindfulness
+          |mental\s+health|coping|stress|focus|resilience|boundaries|non[- ]?attachment)\b
+        .{0,60}\b(?:martial\s+arts|karate|judo|aikido|tai\s+chi|kung\s+fu|budo|zen|qi\s+gong)\b
+      }ix.freeze
 
       CRISIS_CUES = %r{
         \b(?:suicid(?:e|al)|kill\s+myself|end\s+my\s+life|want\s+to\s+die|don't\s+want\s+to\s+live
@@ -290,7 +301,8 @@ module Master
         text = message.to_s
         return false if text.empty?
 
-        [SUPPORT_CUES, MANIPULATION_CUES, OCD_CUES].any? { |cue| text.match?(cue) } || crisis_signal?(text)
+        [SUPPORT_CUES, MANIPULATION_CUES, OCD_CUES, MARTIAL_SUPPORT_CUES].any? { |cue| text.match?(cue) } ||
+          crisis_signal?(text)
       end
 
       # The full clinical protocol is injected only when the current message
