@@ -9,5 +9,6 @@ nb:
       done: "E-postadressen er bekreftet. Du kan nå publisere innlegg og sende meldinger fra kontoen."
       invalid: "Bekreftelseslenken er ugyldig eller allerede brukt."
       resent: "Hvis kontoen din trenger bekreftelse, er en bekreftelses-e-post sendt."
+      oauth_email_conflict: "Denne e-postadressen har allerede en konto. Logg inn på den kontoen først; denne leverandøren har ikke bekreftet at den eier e-postadressen."
       signup_notice: "Konto opprettet. Sjekk innboksen for å bekrefte e-postadressen før du publiserer innlegg eller sender meldinger som registrert bruker."
       signup_notice_guest_merged: "Konto opprettet, og den anonyme aktiviteten din ble overført. Sjekk innboksen for å bekrefte e-postadressen før du publiserer innlegg eller sender meldinger som registrert bruker."

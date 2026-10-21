@@ -3,6 +3,8 @@
 # AN204: OAuth callback handler
 
 class OmniauthCallbacksController < ::ApplicationController
+  class IdentityEmailConflict < StandardError; end
+
   allow_unauthenticated_access
   # create calls User.create! for an unrecognised uid, so a callback that gets
   # this far makes an account. Reaching it needs a real roundtrip through the
@@ -35,6 +37,8 @@ class OmniauthCallbacksController < ::ApplicationController
     start_new_session_for user
 
     redirect_to after_authentication_url, notice: t("shared.flash.signed_in_with", provider: auth.provider)
+  rescue IdentityEmailConflict
+    redirect_to new_session_path, alert: t("shared.email_verification.oauth_email_conflict")
   end
 
   private
@@ -44,13 +48,44 @@ class OmniauthCallbacksController < ::ApplicationController
     return record.user if record&.user
 
     email = auth.info.email.to_s.downcase.strip
+    verified_email = verified_provider_email?(auth)
     user = User.find_by(email_address: email) if email.present?
-    user ||= User.create!(
-      email_address: email.presence || "#{auth.uid}@#{auth.provider}.oauth",
-      password: SecureRandom.hex(24),
-    )
+    raise IdentityEmailConflict if user && !verified_email
+
+    unless user
+      user = User.new(
+        email_address: email.presence || "#{auth.uid}@#{auth.provider}.oauth",
+        password: SecureRandom.hex(24),
+      )
+      user.require_email_verification = true if email.present? && !verified_email
+      user.save!
+      if user.require_email_verification
+        user.generate_email_verification!
+        Shared::VerificationMailer.verify(user, request.host).deliver_later
+      end
+    end
     persist_external_identity(user, auth)
     user
+  end
+
+  # Never infer email ownership from a profile field alone. Google and Vipps
+  # expose the OIDC email_verified claim; Facebook's email field alone does not
+  # prove mailbox control. An unverified new address is allowed to register,
+  # but only after the shared confirmation flow does it gain write permissions.
+  def verified_provider_email?(auth)
+    return false unless %w[google_oauth2 vipps].include?(auth.provider.to_s)
+    return false if auth.info&.email.to_s.strip.empty?
+
+    extra = auth.extra
+    raw_info = hash_value(extra, :raw_info)
+    claim = hash_value(raw_info, :email_verified)
+    claim == true || claim.to_s.casecmp("true").zero?
+  end
+
+  def hash_value(hash, key)
+    return unless hash.respond_to?(:[])
+
+    hash[key] || hash[key.to_s] || hash[key.to_sym]
   end
 
   def external_identity_for(auth)
