@@ -12,3 +12,4 @@ en:
       oauth_email_conflict: "That email already has an account. Sign in to that account first; this provider has not verified that it owns the email address."
       signup_notice: "Account created. Check your inbox to confirm your email before posting or messaging as your account."
       signup_notice_guest_merged: "Account created and your anonymous activity was carried over. Check your inbox to confirm your email before posting or messaging as your account."
+      signup_guest_merge_failed: "Your account was created and a confirmation email was sent, but we could not safely attach your anonymous activity. Your guest session is still active; sign in again later to retry the transfer."
