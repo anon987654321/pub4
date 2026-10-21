@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require "uri"
 
 module Ports
   class Importer
@@ -121,7 +122,7 @@ module Ports
         category: category,
         comment: metadata[:comment],
         description: metadata[:description],
-        homepage: metadata[:homepage],
+        homepage: safe_homepage(metadata[:homepage], metadata[:pkgpath]),
         version: metadata[:version].presence || "unknown",
         permit_file_distfiles: metadata[:permit_file_distfiles] == true,
         last_updated: Date.current
@@ -133,6 +134,19 @@ module Ports
       record_version_change(port, old_version)
       queue_dependencies(port, metadata)
       @ports_count += 1
+    end
+
+    def safe_homepage(value, pkgpath)
+      return if value.blank?
+
+      uri = URI.parse(value)
+      return value if uri.is_a?(URI::HTTP) && uri.host.present?
+
+      Rails.logger.warn("bsdports ignored non-web homepage for #{pkgpath}")
+      nil
+    rescue URI::InvalidURIError
+      Rails.logger.warn("bsdports ignored invalid homepage for #{pkgpath}")
+      nil
     end
 
     def upsert_category(name)
