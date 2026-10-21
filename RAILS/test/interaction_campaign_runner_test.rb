@@ -122,4 +122,23 @@ class InteractionCampaignRunnerTest < Minitest::Test
     end
   end
 
+
+  def test_mapped_test_without_assertions_is_blocked
+    Dir.mktmpdir("interaction-campaign-no-assertions") do |evidence_root|
+      executor = lambda do |**|
+        ["1 runs, 0 assertions, 0 failures, 0 errors, 0 skips\n", Status.new(true, 0)]
+      end
+      runner = Runner.new(
+        case_ids: ["RI-011"], root: ROOT, manifest_path: MANIFEST,
+        evidence_root:, io: StringIO.new, executor:
+      )
+
+      assert_equal 3, runner.run
+      results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
+      row = JSON.parse(File.read(results_path)).fetch("results").fetch(0)
+      assert_equal "BLOCKED", row.fetch("status")
+      assert_match(/executed without assertions/, row.fetch("reason"))
+    end
+  end
+
 end
