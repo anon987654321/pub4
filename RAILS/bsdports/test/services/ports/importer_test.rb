@@ -147,6 +147,25 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     assert Dependency.exists?(edge.id), "missing dependency metadata must not erase the existing graph"
   end
 
+  test "import ignores an executable homepage protocol from a Makefile" do
+    platform = platforms(:openbsd)
+
+    Dir.mktmpdir do |dir|
+      makefile = File.join(dir, "misc", "unsafe-homepage", "Makefile")
+      FileUtils.mkdir_p(File.dirname(makefile))
+      File.write(makefile, <<~MAKE)
+        COMMENT = unsafe homepage fixture
+        DISTNAME = unsafe-homepage-1.0
+        HOMEPAGE = javascript:alert(1)
+      MAKE
+
+      Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
+    end
+
+    port = Port.find_by!(platform:, pkgpath: "misc/unsafe-homepage")
+    assert_nil port.homepage
+  end
+
   test "a run that imports nothing fails loudly rather than reporting success" do
     platform = platforms(:openbsd)
 
