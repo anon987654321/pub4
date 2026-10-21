@@ -402,8 +402,11 @@ end
         end
 
         web = evidence_tool("WebSearch")
-        searches = [text]
-        searches << "#{text} official documentation" if mode == :deep_research
+        # External searches need the question's evidence topic, not the intimate
+        # details that motivated it. The router leaves technical research intact.
+        query = Ground::EvidenceRouter.web_search_query(text)
+        searches = [query]
+        searches << "#{query} official documentation" if mode == :deep_research
         snippets.concat(
           searches.filter_map do |query|
             result = web&.call(query:)
