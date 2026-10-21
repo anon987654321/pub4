@@ -19,7 +19,7 @@
     <%= tag.dt t("ports.maintainer") %><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || t("ports.unknown") %></span><% end %></dd>
     <%= tag.dt t("ports.local_install") %><%= tag.dd @pkg_info.present? ? t("ports.installed", info: @pkg_info) : t("ports.not_installed") %>
     <%= tag.dt t("ports.pkgpath") %><dd><code><%= @port.pkgpath %></code></dd>
-    <% if @port.homepage.present? %><%= tag.dt t("ports.homepage") %><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
+    <% if @port.homepage.present? %><%= tag.dt t("ports.homepage") %><dd><% if @port.homepage.match?(/\Ahttps?:\/\//i) %><%= link_to @port.homepage, @port.homepage, rel: "nofollow noopener noreferrer" %><% else %><%= @port.homepage %><% end %></dd><% end %>
     <% update_age = @port.last_updated && (Date.current - @port.last_updated).to_i %>
     <% stale = update_age.present? && update_age > 365 %>
     <%= tag.dt t("ports.updated") %><dd><%= tag.span "#{@port.last_updated&.strftime("%Y-%m-%d") || t("ports.unknown")}#{" #{t("ports.stale", count: update_age)}" if stale}",
