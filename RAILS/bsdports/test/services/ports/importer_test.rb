@@ -124,6 +124,27 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     assert Port.exists?(platform:, pkgpath: "packages/git")
   end
 
+  test "thin package-index imports preserve existing dependency edges" do
+    platform = platforms(:openbsd)
+    category = Category.create!(platform:, name: "uncategorised", slug: "uncategorised",
+                                description: "Uncategorised package-index entries")
+    source = Port.create!(platform:, category:, name: "git", pkgpath: "packages/git", version: "1")
+    target = Port.create!(platform:, category:, name: "lib", pkgpath: "packages/lib", version: "1")
+    edge = Dependency.create!(port: source, depends_on: target, dep_type: "run")
+    fetcher = FakeIndexFetcher.new([
+      { name: "git", version: "2.50.0", pkgpath: "packages/git", category: "uncategorised" }
+    ])
+
+    Ports::Openbsd::PackageIndexFetcher.stub(:new, ->(**) { fetcher }) do
+      Ports::Openbsd::PortsTarball.stub(:new, ->(**) { FakeTarball.new }) do
+        Ports::Importer.call(platform:, tree_path: "/nonexistent/ports", use_ftp_fallback: true)
+      end
+    end
+
+    assert_equal "2.50.0", source.reload.version
+    assert Dependency.exists?(edge.id), "missing dependency metadata must not erase the existing graph"
+  end
+
   test "a run that imports nothing fails loudly rather than reporting success" do
     platform = platforms(:openbsd)
 
