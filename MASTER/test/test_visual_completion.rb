@@ -120,9 +120,9 @@ class TestVisualCompletion < Minitest::Test
       assert_predicate observed, :ok?
       assert transaction.observed_current?("MASTER/gates/data/layout_snapshots/app-home-mobile.json")
 
-      File.write(snapshot, "{\\"title\\":\\"concurrent\\"}\\n")
+      File.write(snapshot, '{"title":"concurrent"}' + "\n")
       refute transaction.observed_current?("MASTER/gates/data/layout_snapshots/app-home-mobile.json")
-      File.write(snapshot, "{\\"title\\":\\"after\\"}\\n")
+      File.write(snapshot, '{"title":"after"}' + "\n")
       assert transaction.observed_current?("MASTER/gates/data/layout_snapshots/app-home-mobile.json")
 
       rolled_back = transaction.rollback!
