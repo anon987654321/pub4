@@ -66,7 +66,8 @@ module Ports
 
     private
 
-    attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps, :ports_count, :imported_ports, :dependency_sync_port_ids
+    attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps,
+                :ports_count, :imported_ports, :dependency_sync_port_ids
 
     # One transaction per port, deliberately. A transaction around the whole
     # import would hold SQLite's single writer lock for the minutes an import
