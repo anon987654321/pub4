@@ -327,7 +327,7 @@ module Master
         end
 
         if @visual_custody && visual_source?(path)
-          custody = @visual_custody.verify!(anchors: [violation[:anchor]].compact)
+          custody = @visual_custody.verify!(anchors: [violation[:anchor]].compact, committer: @committer)
           return reject_fix(path, old_src, "visual_regression", evidence: [custody.message, custody.gap&.clause].compact.join(", ")) unless custody.ok?
         end
 
