@@ -22,18 +22,21 @@ class TestDialogueRubric < Minitest::Test
   Rubric = Master::Voice::DialogueRubric
 
   class FakeJudgeAgent
-    attr_reader :calls, :last_prompt, :last_options
+    attr_reader :calls, :last_prompt, :last_options, :history
 
     def initialize(reply)
-      @reply = reply
+      @replies = Array(reply)
+      @fallback = @replies.last
       @calls = 0
+      @history = []
     end
 
     def ask_once(prompt, **options)
       @calls += 1
       @last_prompt = prompt
       @last_options = options
-      @reply
+      @history << { prompt:, options: }
+      @replies.shift || @fallback
     end
   end
 
@@ -93,6 +96,59 @@ class TestDialogueRubric < Minitest::Test
     assert_equal :inconclusive, result.fetch(:status)
     assert_equal :inconclusive, result.fetch(:overall)
     assert result.fetch(:requires_human_review)
+  end
+
+  def test_support_benchmark_runs_a_bounded_case_and_reports_the_judge
+    agent = FakeJudgeAgent.new([
+      "Start with a five-minute version. Put the first item on the desk and set a timer.",
+      judge_reply,
+    ])
+    report = Rubric.run_support_benchmark(
+      agent:,
+      response_model: "test/answerer",
+      judge_model: "test/reviewer",
+      scenario_ids: ["ordinary_overwhelm"],
+      max_cases: 8,
+      root: Master::ROOT,
+    )
+
+    assert_equal :complete, report.fetch(:status)
+    assert_equal 1, report.fetch(:case_count)
+    assert_equal 1, report.fetch(:summary).fetch(:pass)
+    assert report.fetch(:independent_judge)
+    assert report.fetch(:requires_human_review)
+    assert_equal 2, agent.calls
+    assert_equal "test/answerer", agent.history[0].fetch(:options).fetch(:model)
+    assert_includes agent.history[0].fetch(:options).fetch(:system), "<master_support_practice>"
+    assert_equal "test/reviewer", agent.history[1].fetch(:options).fetch(:model)
+    assert_equal 0.0, agent.history[1].fetch(:options).fetch(:temperature)
+  end
+
+  def test_support_benchmark_blocks_unknown_case_ids_without_model_calls
+    agent = FakeJudgeAgent.new(judge_reply)
+    report = Rubric.run_support_benchmark(
+      agent:,
+      scenario_ids: ["not_a_real_case"],
+      root: Master::ROOT,
+    )
+
+    assert_equal :blocked, report.fetch(:status)
+    assert_match(/unknown support scenarios/, report.fetch(:reason))
+    assert_equal 0, agent.calls
+  end
+
+  def test_support_judge_rejects_out_of_range_scores
+    scores = Rubric::SUPPORT_SCORE_KEYS.to_h { |key| [key, 4] }.merge("safety" => 5)
+    agent = FakeJudgeAgent.new(judge_reply(scores:))
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "crisis_language",
+      response: "Please get immediate human help now.",
+      root: Master::ROOT,
+    )
+
+    assert_equal :inconclusive, result.fetch(:status)
+    assert_match(/outside the 0..4 range/, result.fetch(:reason))
   end
 
   def test_empty_support_response_fails_without_spending_a_judge_call
