@@ -96,6 +96,37 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     refute account.email_verified?, "merging guest history must not bypass email verification"
   end
 
+  test "signup leaves guest history and session intact when transfer is blocked" do
+    post_body = "Guest post before blocked signup #{SecureRandom.hex(5)}"
+    post posts_url, params: { post: { body: post_body, anonymous: true } }
+    assert_redirected_to root_path
+    guest_post = Post.find_by!(body: post_body)
+    guest = guest_post.user
+    assert_equal guest.id, session[:guest_user_id]
+
+    merger = Object.new
+    merger.define_singleton_method(:call) do
+      raise ActiveRecord::MigrationError, "simulated missing account_merges table"
+    end
+    email = "blocked-merge-#{SecureRandom.hex(5)}@example.test"
+
+    AccountMerger.stub(:new, merger) do
+      post registration_url, params: {
+        accept_terms: "1", accept_age: "1",
+        user: { email_address: email, password: "long-enough-pass", password_confirmation: "long-enough-pass" }
+      }
+    end
+
+    assert_redirected_to root_path
+    assert_equal I18n.t("shared.email_verification.signup_guest_merge_failed"), flash[:alert]
+    assert_equal guest.id, session[:guest_user_id], "the failed transfer must not rotate the guest session"
+    assert guest.reload.guest?
+    assert_equal guest.id, guest_post.reload.user_id
+    assert User.exists?(email_address: email), "account creation should remain durable"
+    refute User.find_by!(email_address: email).email_verified?
+    assert_empty AccountMerge.where(guest_user_id: guest.id)
+  end
+
   test "unverified account cannot post as a claimed identity until email confirmation" do
     email = "confirm-#{SecureRandom.hex(4)}@example.com"
     post registration_url, params: {
