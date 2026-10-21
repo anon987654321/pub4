@@ -36,6 +36,15 @@ class TestEvidenceRouter < Minitest::Test
     refute_includes query, "controls my money"
   end
 
+  def test_norwegian_personal_query_matches_language_without_guessing_country
+    query = Router.web_search_query("Jeg er redd for at kjæresten min kontrollerer meg. Undersøk psykisk vold.")
+
+    assert_includes query, "Norwegian-language clinical guidance"
+    refute_includes query, "Norwegian official health guidance"
+    refute_includes query, "kjæresten min"
+    refute_includes query, "kontrollerer meg"
+  end
+
   def test_technical_ai_therapist_research_keeps_its_requested_topic
     request = "How can MASTER improve its AI therapist prompt? Research GitHub and ar5iv."
 
