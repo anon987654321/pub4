@@ -133,8 +133,13 @@ module Master
 
             relative_paths = Array(paths).map { |path| relative(path) }
             return Result.err("visual baseline path is outside the allowed snapshot directory", category: :policy) if relative_paths.any?(&:nil?) ||
-              relative_paths.any? { |path| !path.match?(%r{\\AMASTER/gates/data/layout_snapshots/[A-Za-z0-9._-]+\\.json\\z}) }
+              relative_paths.any? { |path| !path.match?(%r{\AMASTER/gates/data/layout_snapshots/[A-Za-z0-9._-]+\.json\z}) }
             return Result.err("visual baseline is already dirty at run start", category: :policy) if (relative_paths & @baseline).any?
+            current_changes = Array(@git.changed_paths)
+            newly_dirty = (relative_paths - @related_owned_paths) & current_changes
+            return Result.err("visual baseline changed concurrently during this run", category: :policy) if newly_dirty.any?
+            stale_owned = (relative_paths & @related_owned_paths).reject { |path| @transaction.observed_current?(path) }
+            return Result.err("visual baseline changed concurrently during this run", category: :policy) if stale_owned.any?
             return Result.err("visual baseline file is missing", category: :inconclusive) unless relative_paths.all? { |path| File.file?(File.join(@root, path)) }
 
             boundaries = relative_paths.map { |path| Master::Phoenix.boundary_for(path, root: @root) }
