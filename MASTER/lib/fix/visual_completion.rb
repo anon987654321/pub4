@@ -43,8 +43,7 @@ module Master
 
       def enabled_for_target?(root:, target:)
         config = policy(root:)
-        return false unless config["schema"].to_i == 1 && config["enabled"] == true
-        return false unless config["target"].to_s == "RAILS"
+        return false unless authorized_policy?(config)
 
         relative = relative_path(root:, path: target)
         return false unless relative && (relative == "RAILS" || relative.start_with?("RAILS/"))
@@ -55,8 +54,7 @@ module Master
 
       def enabled_for_path?(root:, path:)
         config = policy(root:)
-        return false unless config["schema"].to_i == 1 && config["enabled"] == true
-        return false unless config["target"].to_s == "RAILS"
+        return false unless authorized_policy?(config)
         return false unless ELIGIBLE_EXTENSIONS.include?(File.extname(path.to_s).downcase)
 
         relative = relative_path(root:, path:)
@@ -97,6 +95,29 @@ module Master
 
       def canonical_token_path?(relative)
         relative.match?(%r{\ARAILS/(?:__shared|shared)/app/assets/stylesheets/_dialect_tokens\.scss\z})
+      end
+
+      def authorized_policy?(config)
+        return false unless config["schema"].to_i == 1 && config["enabled"] == true
+        return false unless config["target"].to_s == "RAILS"
+
+        constraints = config.fetch("constraints", {})
+        verification = config.fetch("verification", {})
+        constraints["preserve_product_dialects"] == true &&
+          constraints["use_existing_tokens_and_primitives"] == true &&
+          constraints["canonical_tokens_are_immutable"] == true &&
+          constraints["palette_and_font_family_are_operator_owned"] == true &&
+          constraints["semantic_color_changes_are_operator_owned"] == true &&
+          constraints["mobile_first"] == true &&
+          constraints["keyboard_and_reduced_motion"] == true &&
+          constraints["preserve_interactions_and_localization"] == true &&
+          verification["require_measurable_browser"] == true &&
+          verification["require_accessible_and_functional_states"] == true &&
+          verification["require_focused_tests"] == true &&
+          verification["permit_snapshot_promotion_after_quality_pass"] == true &&
+          verification["promote_missing_or_unmeasurable_baselines"] == false
+      rescue NoMethodError
+        false
       end
 
       def excluded?(relative, config)
