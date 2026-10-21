@@ -67,7 +67,7 @@ class UsersController < ApplicationController
     end
 
     prepare_email_registration(user_params)
-    guest = Current.user if Current.user&.guest? && Current.user.persisted?
+    guest = persisted_guest_for_registration
 
     unless @user.save
       render :new, status: :unprocessable_entity
@@ -78,25 +78,12 @@ class UsersController < ApplicationController
     # identity until it's verified (see ApplicationController#require_verified_email).
     send_signup_verification!(@user)
 
-    merged = merge_guest_into(@user, guest)
+    merged = merge_registration_guest(@user, guest)
     start_new_session_for @user
     redirect_to after_authentication_url, notice: t(merged ? "shared.email_verification.signup_notice_guest_merged" : "shared.email_verification.signup_notice")
   end
 
   private
-
-  # Carry the guest's posts, comments and conversations onto the new account.
-  # Must run before start_new_session_for, which resets the session holding the
-  # guest id. A failed merge must not cost the visitor the account they   # made, so it is logged rather than raised. Returns true when a merge ran.
-  def merge_guest_into(user, guest)
-    return false unless guest
-
-    AccountMerger.new(guest_user: guest, user: user).call
-    true
-  rescue StandardError => error
-    Rails.logger.warn("guest merge on signup failed: #{error.message}")
-    false
-  end
 
   def profile_params
     params.require(:user).permit(:username, :display_name)
