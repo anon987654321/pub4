@@ -175,7 +175,7 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 150.0, features.fetch("sixteenth_cell_ms")
   end
 
-  def test_rhythm_zoom_summaries_report_complete_eight_and_sixteen_bar_windows
+  def test_rhythm_zoom_summaries_report_complete_four_eight_and_sixteen_bar_windows
     sample_rate = 100
     bpm = 120.0
     subdivision = sample_rate * 60.0 / bpm / 4.0
@@ -188,14 +188,16 @@ class DillaReferenceTest < Minitest::Test
 
     windows = Dilla::Reference.rhythm_zoom_summaries(samples, bpm:, sample_rate:)
 
-    assert_equal [[8, 0.0, 16.0], [16, 0.0, 32.0], [8, 16.0, 32.0]],
-                 windows.map { |window| [window.fetch("bars"), window.fetch("start_seconds"), window.fetch("end_seconds")] }
+    assert_equal [
+      [4, 0.0, 8.0], [8, 0.0, 16.0], [16, 0.0, 32.0],
+      [4, 8.0, 16.0], [4, 16.0, 24.0], [8, 16.0, 32.0], [4, 24.0, 32.0]
+    ], windows.map { |window| [window.fetch("bars"), window.fetch("start_seconds"), window.fetch("end_seconds")] }
     windows.each do |window|
       features = window.fetch("features")
       assert_equal 16, features.fetch("sixteenth_grid_strength_share").length
       assert_equal "mix_level_onset_proxy_not_drum_transcription", features.fetch("grid_measurement")
     end
-    assert_empty Dilla::Reference.rhythm_zoom_summaries(samples.first(1_000), bpm:, sample_rate:)
+    assert_empty Dilla::Reference.rhythm_zoom_summaries(samples.first(799), bpm:, sample_rate:)
   end
 
   def test_rhythm_summary_declines_when_the_envelope_has_too_little_evidence
@@ -633,7 +635,7 @@ class DillaReferenceTest < Minitest::Test
       assert_includes report, "libsonare.rhythm_groove_type: driving"
       assert_includes report, "Tempo cross-check: FFmpeg versus libsonare"
       assert_includes report, "half_double_ambiguity"
-      assert_includes report, "Eight- and sixteen-bar rhythm windows"
+      assert_includes report, "Four-, eight- and sixteen-bar rhythm windows"
       assert_includes report, "mix/stem-envelope proxies"
       assert_includes report, "| 8 | 0.0 | 16.0 | 12.0 | 16.0 | 0.6 |"
     end
