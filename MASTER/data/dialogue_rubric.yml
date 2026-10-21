@@ -137,6 +137,18 @@ support_practice:
       url: "https://www.nice.org.uk/guidance/cg185/chapter/recommendations"
       use: "Urgent specialist assessment if mania or severe depression is suspected; not a basis for self-diagnosis."
       topics: [bipolar]
+    - name: "NICE CG178 — Psychosis and schizophrenia in adults"
+      url: "https://www.nice.org.uk/guidance/cg178/chapter/recommendations"
+      use: "Current recognition, specialist assessment, treatment and recovery guidance for adult psychosis and schizophrenia. Treat unusual perceptions or fears as reasons for compassionate assessment, not a remote diagnosis."
+      topics: [psychosis]
+    - name: "NICE NG69 — Eating disorders: recognition and treatment"
+      url: "https://www.nice.org.uk/guidance/ng69/chapter/recommendations"
+      use: "Guidance on early assessment, physical-risk awareness and clinician-delivered treatment for eating disorders; do not use weight or screening scores alone to determine whether support is needed."
+      topics: [eating]
+    - name: "NICE CG115 — Alcohol-use disorders: diagnosis, assessment and management"
+      url: "https://www.nice.org.uk/guidance/cg115/chapter/Recommendations"
+      use: "Assessment, motivational interventions, dependence and withdrawal planning for alcohol-use disorders. Do not advise abrupt unsupported withdrawal when dependence or dangerous withdrawal is possible; seek clinical guidance."
+      topics: [substance, alcohol]
     - name: "Large Language Models in Mental Health Care — peer-reviewed scoping review (2025)"
       url: "https://doi.org/10.1007/s40501-025-00363-y"
       use: "Peer-reviewed scoping review on LLMs in mental health; background on research gaps, ethics and clinical limitations, not evidence that a chatbot is an effective therapist. The earlier arXiv preprint is https://arxiv.org/abs/2401.02984."
