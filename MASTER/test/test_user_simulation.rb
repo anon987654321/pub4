@@ -27,6 +27,20 @@ class TestUserSimulation < Minitest::Test
     end
   end
 
+  def test_every_focused_test_mapping_points_to_a_real_test_file
+    UserSimulation::SURFACE_TESTS.each do |surface, paths|
+      refute_empty paths, "#{surface} has no focused test mapping"
+      assert_equal paths.length, paths.uniq.length, "#{surface} repeats a test path"
+
+      paths.each do |relative|
+        refute relative.start_with?("/"), "#{surface}: absolute test path #{relative}"
+        refute relative.split("/").include?(".."), "#{surface}: test path escapes the repository"
+        assert File.file?(File.join(Master::REPO_ROOT, relative)),
+               "#{surface}: focused test path is missing: #{relative}"
+      end
+    end
+  end
+
   def test_relevant_user_scenarios_are_prompted_as_oracles_not_results
     simulation = UserSimulation.new(root: Master::REPO_ROOT)
     path = File.join(Master::REPO_ROOT, "RAILS", "brgen", "app", "controllers", "posts_controller.rb")
