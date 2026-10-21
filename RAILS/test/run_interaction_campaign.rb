@@ -263,9 +263,9 @@ module Operator
 
     def redact_output(output)
       output
-        .gsub(/((?:api[_-]?key|access[_-]?token|password|secret|authorization)\\s*[=:]\\s*)(?:Bearer\\s+)?[^\\s,;]+/i, "\\1<redacted>")
-        .gsub(/\\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,})\\b/, "<redacted>")
-        .gsub(/((?:set-cookie|cookie)\\s*:\\s*)[^\\r\\n]+/i, "\\1<redacted>")
+        .gsub(/((?:api[_-]?key|access[_-]?token|password|secret|authorization)\s*[=:]\s*)(?:Bearer\s+)?[^\s,;]+/i, "\\1<redacted>")
+        .gsub(/\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,})\b/, "<redacted>")
+        .gsub(/((?:set-cookie|cookie)\s*:\s*)[^\r\n]+/i, "\\1<redacted>")
     end
 
     def execute(command:, chdir:, timeout:)
