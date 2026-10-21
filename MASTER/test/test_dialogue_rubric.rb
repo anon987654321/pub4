@@ -424,6 +424,20 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "never invent citations"
   end
 
+  def test_missing_support_data_does_not_escalate_explicit_crisis_denial
+    prompt = nil
+    Master::Ground::Swallow.stub(:log, nil) do
+      prompt = Rubric.support_prompt_for(
+        "I am not suicidal and have no thoughts of self-harm.",
+        root: "/missing-master-support-data",
+      )
+    end
+
+    assert_includes prompt, "<master_support_fallback>"
+    refute_includes prompt, "Immediate safety takes priority"
+    refute_includes prompt, "113 is for life-threatening medical emergencies"
+  end
+
   def test_norwegian_relationship_and_control_language_is_routed
     prompt = Rubric.support_prompt_for(
       "Kjæresten min sjekker telefonen min og kontrollerer pengene mine.",
