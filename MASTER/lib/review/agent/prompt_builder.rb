@@ -135,10 +135,18 @@ module Master
         def support_practice_for_turn
           return unless @personality
 
-          Master::Voice::DialogueRubric.support_prompt_for(
-            last_user_message,
-            root: @config["root"] || Master::ROOT,
-          )
+          messages = @session.respond_to?(:messages) ? Array(@session.messages) : []
+          user_messages = messages.reverse_each.filter_map do |entry|
+            next unless (entry[:role] || entry["role"]).to_s == "user"
+
+            (entry[:content] || entry["content"]).to_s
+          end.first(2)
+          current = user_messages.first || last_user_message
+          return if current.empty?
+
+          follow_up = current.match?(/\A\s*(?:and then|what now|what next|what should i say|what do i do|what about (?:it|this|that|him|her|them)|why|how|go on|continue|tell me more|elaborate|more detail|yes|no|okay|ok|that makes sense|what do you mean)\b[.!?\s]*\z/i)
+          topic = follow_up ? user_messages.join("\n") : current
+          Master::Voice::DialogueRubric.support_prompt_for(topic, root: @config["root"] || Master::ROOT)
         end
 
         def system_prompt
