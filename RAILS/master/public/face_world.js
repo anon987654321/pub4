@@ -14,6 +14,7 @@
   let semanticForm = "face";
   let semanticBlend = 0;
   let semanticBlendTarget = 0;
+  let semanticMorphInProgress = false;
   let nodes = [];
   let edges = null;
   let pulses = [];
@@ -97,7 +98,6 @@
     ];
     for (let i = 0; i < count; i += 1) {
       const u = (i + 0.5) / count;
-      const a = seeded(i, 31) * Math.PI * 2;
       const b = seeded(i, 32);
       const c = seeded(i, 33);
       let x = 0, y = 0, z = 0;
@@ -157,6 +157,7 @@
     semanticForm = form;
     semanticBlendTarget = form === "face" ? 0 : 1;
     splatTargetPositions = buildSubjectPositions(form);
+    semanticMorphInProgress = Boolean(splatTargetPositions);
     document.documentElement.dataset.faceSubject = form;
     window.dispatchEvent(new CustomEvent("master:face-subject", {
       detail: { form, active: semanticBlendTarget > 0 }
@@ -475,6 +476,7 @@
 
     splatBasePositions = positions.slice();
     splatTargetPositions = buildSubjectPositions(semanticForm);
+    semanticMorphInProgress = semanticForm !== "face";
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
@@ -795,12 +797,17 @@
     if (splatProxy) {
       const positionAttribute = splatProxy.geometry.getAttribute("position");
       const positions = positionAttribute?.array;
-      if (positions && splatBasePositions && splatTargetPositions) {
+      if (semanticMorphInProgress && positions && splatTargetPositions) {
+        const ease = reducedMotion ? 1 : 0.065;
+        let settled = true;
         for (let index = 0; index < positions.length; index += 1) {
-          positions[index] = splatBasePositions[index] +
-            (splatTargetPositions[index] - splatBasePositions[index]) * semanticBlend;
+          const target = splatTargetPositions[index];
+          const next = positions[index] + (target - positions[index]) * ease;
+          positions[index] = Math.abs(target - next) < 0.0005 ? target : next;
+          if (positions[index] !== target) settled = false;
         }
         positionAttribute.needsUpdate = true;
+        semanticMorphInProgress = !settled;
       }
       splatProxy.geometry.setDrawRange(0, activePoints);
       const subjectActive = semanticBlend > 0.012 || semanticBlendTarget > 0.012;
