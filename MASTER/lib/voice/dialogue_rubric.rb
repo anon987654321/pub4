@@ -247,11 +247,19 @@ module Master
         nil
       end
 
+      # A shared relevance check keeps initial routing and short follow-ups
+      # consistent. Crisis and manipulation cues can be relevant even when they
+      # do not contain one of the broader support words.
+      def support_relevant?(message)
+        text = message.to_s
+        !text.empty? && [SUPPORT_CUES, CRISIS_CUES, MANIPULATION_CUES].any? { |cue| text.match?(cue) }
+      end
+
       # The full clinical protocol is injected only when the current message
       # indicates that personal support is relevant, never into every coding turn.
       def support_prompt_for(message, root: Master::ROOT)
         text = message.to_s
-        return if text.empty? || ![SUPPORT_CUES, CRISIS_CUES, MANIPULATION_CUES].any? { |cue| text.match?(cue) }
+        return unless support_relevant?(text)
 
         support = data(root:).fetch("support_practice")
         areas = %w[response_contract privacy_and_memory clinical_methods evidence_and_research crisis_and_referral]
