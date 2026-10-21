@@ -66,11 +66,7 @@ class UserPurgeJob < ApplicationJob
     ActiveRecord::Base.transaction do
       item_ids = Item.where(user_id: user.id).select(:id)
       outfit_ids = Outfit.where(user_id: user.id).select(:id)
-
-      Post.where(item_id: item_ids).update_all(item_id: nil)
-      Post.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
-      Comment.where(commentable_type: "Item", commentable_id: item_ids).find_each(&:destroy!)
-      Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids).find_each(&:destroy!)
+      detach_deleted_private_content(item_ids:, outfit_ids:)
 
       DESTROY.each do |row|
         model = resolve!(row.fetch(:model))
@@ -82,6 +78,19 @@ class UserPurgeJob < ApplicationJob
       anonymise(user)
       user.sessions.delete_all
     end
+  end
+
+  def detach_deleted_private_content(item_ids:, outfit_ids:)
+    # Foreign-key inventory: items/outfits are referenced by content and
+    # derived suggestions outside the deleted user's own associations.
+    Post.where(item_id: item_ids).update_all(item_id: nil)
+    Post.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
+    CreatorWardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
+    WardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
+    Recommendation.where(item_id: item_ids).or(Recommendation.where(outfit_id: outfit_ids)).find_each(&:destroy!)
+    DeclutterChallenge.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
+    Comment.where(commentable_type: "Item", commentable_id: item_ids).find_each(&:destroy!)
+    Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids).find_each(&:destroy!)
   end
 
   def nullify_review_cases(user)
