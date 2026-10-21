@@ -19,7 +19,8 @@ class Takeaway::Restaurant < ApplicationRecord
   belongs_to :user
   belongs_to :place, optional: true
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
-  has_many :orders, class_name: "Takeaway::Order", dependent: :destroy
+  # Order history is a receipt, not a child resource the restaurant owner can erase.
+  has_many :orders, class_name: "Takeaway::Order", dependent: :restrict_with_error
   has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
   has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
   has_many :opening_hours, class_name: "Takeaway::OpeningHour", dependent: :destroy

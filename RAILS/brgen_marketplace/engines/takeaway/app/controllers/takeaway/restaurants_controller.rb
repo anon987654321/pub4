@@ -54,8 +54,15 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   end
 
   def destroy
-    @restaurant.destroy
-    redirect_to restaurants_path
+    if @restaurant.orders.exists?
+      # A closed kitchen may stop trading, but its orders are the customer's
+      # receipt and must outlive the restaurant's public listing.
+      @restaurant.update!(active: false)
+      redirect_to restaurants_path, notice: t("flash.takeaway.restaurant_archived")
+    else
+      @restaurant.destroy!
+      redirect_to restaurants_path
+    end
   end
 
   private

@@ -231,4 +231,21 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
   ensure
     Rails.application.config.x.vapid = vapid_before
   end
+  test "closing a restaurant with order history keeps receipts and blocks hard deletion" do
+    order = place_takeaway_order!(restaurant: @restaurant, user: @diner, item: @soup)
+    sign_in_as(@owner)
+
+    assert_no_difference "Takeaway::Order.count" do
+      delete takeaway.restaurant_path(@restaurant)
+    end
+
+    assert_redirected_to takeaway.restaurants_path
+    assert_not @restaurant.reload.active?
+    assert Takeaway::Order.exists?(order.id), "closing a kitchen must not erase its order history"
+
+    refute @restaurant.destroy, "a restaurant with orders must refuse hard deletion"
+    assert_predicate @restaurant.errors[:base], :any?,
+                     "refusing deletion must explain why"
+    assert Takeaway::Order.exists?(order.id)
+  end
 end

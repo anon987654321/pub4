@@ -1763,6 +1763,7 @@ nb:
       playlist_created: Spillelisten er opprettet.
       track_added: Sporet er lagt til.
     takeaway:
+      restaurant_archived: Restauranten er stengt. Eksisterende bestillinger og historikk er bevart.
       restaurant_saved: Restauranten er lagret.
       restaurant_unsaved: Restauranten er fjernet fra lagrede.
       menu_item_added: Retten er lagt til.

@@ -1755,6 +1755,7 @@ en:
       playlist_created: Playlist created.
       track_added: Track added.
     takeaway:
+      restaurant_archived: Restaurant closed. Existing orders and their history were kept.
       restaurant_saved: Restaurant saved.
       restaurant_unsaved: Restaurant removed from saved.
       menu_item_added: Menu item added.
