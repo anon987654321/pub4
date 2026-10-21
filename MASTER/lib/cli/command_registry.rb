@@ -5,6 +5,7 @@ require_relative "../snapshot"
 require_relative "../../tools/snapshot"
 require "shellwords"
 require_relative "../io/media_intent"
+require_relative "../voice/dialogue_rubric"
 
 require_relative "command_registry/command"
 require_relative "command_registry/help"
@@ -42,6 +43,7 @@ module Master
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
           "play" => command(:dispatch_play, d[:root]),
+          "support" => command(:dispatch_support, d[:agent], d[:root]),
           "screen" => command(:dispatch_screen, root),
           "android" => command(:dispatch_android, root),
           "ios" => command(:dispatch_ios, root),
@@ -154,6 +156,52 @@ module Master
         "plugin0: invalid JSON — #{e.message}"
       rescue Master::Plugin::Error, ArgumentError => e
         "plugin0: #{e.message}"
+      end
+
+      # Personal support is automatically routed by the turn prompt. This
+      # explicit command runs only the bounded synthetic benchmark; it never
+      # consumes a real conversation or silently starts paid model calls.
+      def dispatch_support(agent, root, ctx: nil)
+        args = Shellwords.split(arg_for(ctx))
+        action = args.shift.to_s.downcase
+        return help_text("support") if action.empty? || action == "help"
+        return "support0 at master0: usage: /support benchmark --confirm [response-model] [judge-model]" unless action == "benchmark"
+
+        unless args.delete("--confirm")
+          return "support0 at master0: BLOCKED cost gate; this runs up to eight synthetic cases and sixteen model calls. Repeat with --confirm."
+        end
+        return "support0 at master0: usage: /support benchmark --confirm [response-model] [judge-model]" if args.size > 2
+        return "support0 at master0: BLOCKED; no active model agent" unless agent
+
+        response_model, judge_model = args
+        report = Master::Voice::DialogueRubric.run_support_benchmark(
+          agent:, response_model:, judge_model:, max_cases: 8, root:,
+        )
+        summary = report.fetch(:summary, {})
+        counts = %i[pass needs_review fail inconclusive failed blocked].map do |key|
+          "#{key}=#{summary.fetch(key, 0)}"
+        end.join(" ")
+        lines = [
+          "support0 at master0: #{report.fetch(:status, :inconclusive)} cases=#{report.fetch(:case_count, 0)} #{counts}",
+          "support0 at master0: independent_judge=#{report.fetch(:independent_judge, false) ? "yes" : "not proven"} human_review=required",
+        ]
+        Array(report[:cases]).each do |item|
+          grade = item.fetch(:grade, {})
+          scores = grade.fetch(:scores, {})
+          score_text = %w[practicality safety calibration].filter_map do |name|
+            score = scores[name]
+            "#{name}=#{score}" unless score.nil?
+          end.join(" ")
+          answer_excerpt = item.fetch(:response, "").to_s.gsub(/\s+/, " ").strip[0, 180]
+          outcome = grade.fetch(:overall, item.fetch(:status, :unknown))
+          lines << "support0: #{item.fetch(:scenario_id)} #{outcome}#{score_text.empty? ? "" : " #{score_text}"}#{answer_excerpt.empty? ? "" : " — #{answer_excerpt}"}"
+        end
+        lines << "support0 at master0: synthetic screening only; not proof of clinical safety or efficacy."
+        lines.join("\n")
+      rescue ArgumentError => e
+        "support0 at master0: invalid arguments — #{e.message}"
+      rescue StandardError => e
+        "support0 at master0: FAILED #{e.class}"
       end
 
       # /play is the MASTER front door to Dilla. With no argument it renders a
