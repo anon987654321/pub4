@@ -63,7 +63,7 @@ body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08
 body.mission-control {
   overflow: auto;
   min-height: 100dvh;
-  padding: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px))
+  padding: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px) + var(--face-bar-height, 44px) + 16px)
            calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
@@ -596,3 +596,17 @@ body[data-history-open="1"] #chat-log {
   transition: margin-left 220ms var(--ease-out);
 }
 
+
+/* The fixed shared titlebar needs space before the first dashboard heading. */
+body.mission-control .page-header.master-titlebar {
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  max-inline-size: none;
+  margin: 0;
+}
+body.mission-control .mission-heading {
+  max-inline-size: 80ch;
+  margin: 0 0 1rem;
+}

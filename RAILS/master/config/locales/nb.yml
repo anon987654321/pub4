@@ -14,9 +14,10 @@ nb:
   skip_to_prompt: "Hopp til skrivefeltet"
   dashboard:
     title: "MASTER — kontrollrom"
-    heading_chat: "← samtale"
+    heading_chat: "samtale"
     heading_sep: "·"
     heading_mission: "kontrollrom"
+    session_navigation: "Arbeidsområder"
     main_label: "Kontrollrom"
     loading: "laster…"
     refresh_failed: "live-data utilgjengelig; prøver igjen om 8 s"

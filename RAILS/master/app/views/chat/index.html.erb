@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#050710">
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
   <meta name="master-tier" content="<%= @tier.to_s %>">
@@ -75,7 +75,7 @@
       f.addEventListener('load',on);document.addEventListener('DOMContentLoaded',on);})();
   </script>
   <style nonce="<%= content_security_policy_nonce %>">
-    html, body { background: #000; color: #d8d6e0; } /* scan: intentional-colors — painted before any stylesheet loads; the FOUC guard cannot cite what has not arrived */
+    html, body { background: #050710; color: #e7eeff; } /* scan: intentional-colors — painted before any stylesheet loads; the FOUC guard cannot cite what has not arrived */
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors — same FOUC guard: the canvas ground exists before the stylesheet */
     #primer { background: transparent; }
     #zsh { background: #000; }
@@ -101,11 +101,15 @@
       so it is the same markup and the same class names rather than a second design.
       <header> because it is page content that would otherwise sit outside any
       landmark, which is what axe flagged on the RAILS side. %>
-  <header>
+  <header class="master-titlebar">
     <% mark = "ai.brgen.no" %>
     <a class="brand-mark" href="/" aria-label="<%= mark %>">
       <span class="brand-text"><%= mark %></span>
     </a>
+    <nav class="master-session-tabs" aria-label="<%= t("dashboard.session_navigation") %>">
+      <a class="master-session-tab" href="/" aria-current="page"><%= t("dashboard.heading_chat") %></a>
+      <a class="master-session-tab" href="/dashboard"><%= t("dashboard.heading_mission") %></a>
+    </nav>
   </header>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div id="ascii-star" aria-hidden="true"></div>

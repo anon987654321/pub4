@@ -739,7 +739,7 @@ body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08
 body.mission-control {
   overflow: auto;
   min-height: 100dvh;
-  padding: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px))
+  padding: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px) + var(--face-bar-height, 44px) + 16px)
            calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
@@ -2038,5 +2038,141 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
     scroll-behavior: auto;
     transition: none;
     animation: none;
+  }
+}
+
+
+/* The fixed shared titlebar needs space before the first dashboard heading. */
+body.mission-control .page-header.master-titlebar {
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  max-inline-size: none;
+  margin: 0;
+}
+body.mission-control .mission-heading {
+  max-inline-size: 80ch;
+  margin: 0 0 1rem;
+}
+
+
+/* Ghostty-inspired session chrome: tabs are real routes, not decorative pills.
+   The face remains the surface; this bar only makes workspace navigation clear. */
+.master-titlebar {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--z-ui);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+  block-size: calc(var(--face-bar-height) + var(--safe-top));
+  padding-block-start: var(--safe-top);
+  padding-inline-start: var(--inset-l);
+  padding-inline-end: calc(var(--inset-r) + var(--tap-min));
+  border-block-end: 1px solid var(--border-faint);
+  background: var(--face-bg);
+  color: var(--face-fg);
+}
+.master-titlebar .brand-mark {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  min-block-size: var(--tap-min);
+  padding-inline-end: 0.75rem;
+  color: var(--face-fg);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: none;
+}
+.master-titlebar .brand-mark:hover {
+  color: var(--face-fg);
+}
+.master-titlebar .brand-mark:focus-visible {
+  outline: 2px solid var(--pub4-signal);
+  outline-offset: -2px;
+}
+.master-session-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  align-items: stretch;
+  min-inline-size: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+.master-session-tabs::-webkit-scrollbar {
+  display: none;
+}
+.master-session-tab {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  padding-inline: 0.875rem;
+  border-inline-end: 1px solid var(--border-faint);
+  color: var(--face-muted);
+  font: var(--text-meta)/1 var(--font-mono);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.master-session-tab:hover {
+  background: var(--hover-tint);
+  color: var(--face-fg);
+}
+.master-session-tab[aria-current="page"] {
+  color: var(--face-fg);
+  font-weight: 600;
+}
+.master-session-tab[aria-current="page"]::after {
+  position: absolute;
+  inset-inline: 0.65rem;
+  inset-block-end: -1px;
+  block-size: 2px;
+  background: var(--pub4-signal);
+  content: "";
+}
+.master-session-tab:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--pub4-signal);
+  outline-offset: -3px;
+}
+body.mission-control .master-titlebar {
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  max-inline-size: none;
+  margin: 0;
+}
+body.mission-control .mission-heading {
+  max-inline-size: 80ch;
+  margin: 0 0 1rem;
+}
+@media (max-width: 420px) {
+  .master-titlebar .brand-mark {
+    display: none;
+  }
+  .master-titlebar {
+    gap: 0;
+  }
+  .master-session-tab {
+    padding-inline: 0.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .master-titlebar *,
+  .master-session-tab {
+    transition: none;
+    scroll-behavior: auto;
   }
 }

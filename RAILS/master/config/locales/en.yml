@@ -3,9 +3,10 @@ en:
   skip_to_prompt: "Skip to prompt"
   dashboard:
     title: "MASTER — mission control"
-    heading_chat: "← chat"
+    heading_chat: "chat"
     heading_sep: "·"
     heading_mission: "mission control"
+    session_navigation: "Workspace"
     main_label: "Mission control"
     loading: "loading…"
     refresh_failed: "live data unavailable; retrying in 8 s"
