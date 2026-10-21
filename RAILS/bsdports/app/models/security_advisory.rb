@@ -6,7 +6,8 @@ class SecurityAdvisory < ApplicationRecord
   include Shared::Reactable
   enum :severity, { low: 0, medium: 1, high: 2, critical: 3 }, default: :medium
 
-  belongs_to :port, optional: true
+  has_many :security_advisory_ports, dependent: :destroy
+  has_many :ports, through: :security_advisory_ports
 
   validates :title, :severity, presence: true
   validates :identifier, uniqueness: true, allow_blank: true
