@@ -233,6 +233,7 @@ class TestMediaLanes < Minitest::Test
     assert_equal first.value!["path"], again.value!["path"]
     assert_equal true, again.value!["cached"]
     assert_includes printed, "cached=yes"
+    assert_match(/latency media=image reuse=hit elapsed_ms=\d+/, printed)
     assert_empty @calls
   end
 
@@ -249,6 +250,7 @@ class TestMediaLanes < Minitest::Test
     assert_equal false, second.value!.fetch("cached")
     assert_equal PNG, File.binread(second.value!.fetch("path"))
     assert_includes printed, "cached=no"
+    assert_match(/latency media=image reuse=miss elapsed_ms=\d+/, printed)
     refute_empty @calls, "invalid cache entries must fall through to a real media lane"
   end
 
