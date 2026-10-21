@@ -178,7 +178,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "Martial and contemplative practice:"
     assert_includes prompt, "Do not turn non-attachment into emotional suppression"
-    assert_includes prompt, "mixed and limited findings"
+    assert_includes prompt, "Evidence on martial arts and adult mental health is mixed"
   end
 
   def test_non_support_turns_do_not_receive_the_support_protocol
