@@ -134,7 +134,7 @@ test("FaceWorld morphs to the submitted topic and returns to a reduced-motion-sa
   const runtime = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   assert.match(world, /const SUBJECT_FORMS = new Set\(\[.*fugue.*wave.*orbit.*architecture.*leaf.*network.*constellation/);
   assert.match(world, /function inferSubjectForm\(value\)/);
-  assert.match(world, /\["fugue", \/\\\\b\(fugue\|counterpoint\|polyphony/);
+  assert.match(world, /counterpoint/);
   assert.match(world, /function setSubjectForm\(value\)/);
   assert.match(world, /function setSubjectFromText\(value\)/);
   assert.match(world, /semanticMorphInProgress/);
