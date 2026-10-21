@@ -119,8 +119,18 @@ Stimulus packages are vendored, never fetched from a CDN;
 `shared/README.md` explains the gate that holds
 it and why a `pin` costs a `modulepreload`.
 
-The visual design is deliberate and the user is a trained architect. Restore or
-ask; never invent a layout fix. Hidden swipe-reveal navigation is intended.
+The visual design and product dialect are operator-owned. By default, restore or
+ask; never invent a layout fix. The explicit campaign in
+`RAILS/visual_completion.yml` authorizes `/fix RAILS` to complete measured
+layout, type-scale, leading, and spacing-rhythm defects in app frontend files,
+using existing primitives and tokens. It does not authorize palette or semantic
+colour changes, font-family changes, canonical token edits, or a new visual
+identity. Browser evidence, functional/accessibility checks, and focused tests
+are required. Structural snapshots may be promoted only after the rendered
+quality gate passes and the snapshot joins the same rollback-safe `/fix`
+transaction. Missing baselines or inconclusive measurements remain blockers.
+
+Hidden swipe-reveal navigation is intended.
 
 Split large mixed HTML/CSS/JS documents before editing them, and never ask a
 model to rewrite one unless the output is a minimal unified diff. Structure goes
