@@ -4,10 +4,10 @@ require_relative "visual_completion"
 
 module Master
   module Fix
-    # Operator-owned rendered values blocking. Rendered values (colors, fonts,
-    # sound parameters, layout constants) are owned by the operator, not by /fix.
-    # Rules that would change these values must block and wait for explicit
-    # operator approval before mutation.
+    # Rendered values (palette, font family, sound parameters, canonical tokens)
+    # remain operator-owned. Only the separately recorded Rails completion campaign
+    # may authorize its narrow layout/type-rhythm rules, and only with active visual
+    # custody; all other findings still wait for an explicit operator decision.
     module VisualCustodyBlocking
       module_function
 
