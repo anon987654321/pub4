@@ -77,6 +77,8 @@ module Master
         Io::CodePen => Io::LLM::CodePen,
         Io::Gist => Io::LLM::Gist,
         Io::YoutubeTranscript => Io::LLM::YoutubeTranscript,
+        Io::GitHubRepoMiner => Io::LLM::GitHubRepoMiner,
+        Io::ArxivResearch => Io::LLM::ArxivResearch,
         Io::PluginObserve => Io::LLM::PluginObserve,
         Io::AskLlm => Io::LLM::AskLlm,
         Io::GitContext => Io::LLM::GitContext,
