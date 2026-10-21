@@ -43,6 +43,10 @@ class FediverseInboxBodyLimitTest < ActiveSupport::TestCase
     }
   end
 
+  test "inbox controller and middleware share one byte limit" do
+    assert_equal Fediverse::InboxBodyLimit::MAX_BYTES, Fediverse::InboxesController::MAX_BODY
+  end
+
   test "declared oversized body is rejected without reading the input" do
     input = TrackingInput.new("x" * (Fediverse::InboxBodyLimit::MAX_BYTES + 1))
     request = {
