@@ -169,6 +169,19 @@ end
     assert_match(/fix pipeline incomplete/, result.message)
   end
 
+  def test_open_findings_footer_is_not_allowed_to_reach_delivery
+    value = "review0: complete with open findings, 12 findings, 147s\\n"
+    assert Master::CLI::CommandRegistry.incomplete_fix_pipeline?(value)
+    result = Master::CLI::CommandRegistry.incomplete_fix_pipeline(value)
+    assert result.err?
+    assert_match(/complete with open findings/, result.message)
+  end
+
+  def test_patch_quoting_open_findings_footer_is_not_a_pipeline_failure
+    value = '+    assert_equal "review0: complete with open findings", footer'
+    refute Master::CLI::CommandRegistry.incomplete_fix_pipeline?(value)
+  end
+
   def test_turn_router_itself_maps_to_master
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "run master through itself",
