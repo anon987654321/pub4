@@ -349,6 +349,99 @@ class TestRepairLoopPolicy < Minitest::Test
     end
   end
 
+  def test_best_candidate_rejects_unavailable_mapped_simulation_evidence
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
+      simulation = Object.new
+      simulation.define_singleton_method(:evaluate_candidates) do |**|
+        [{
+          status: :unavailable,
+          reason: "test runner unavailable",
+          test_paths: ["test/test_sample.rb"],
+          regressions: [],
+          improvements: [],
+        }]
+      end
+      loop.define_singleton_method(:user_simulation) { simulation }
+
+      assert_nil loop.__send__(:best_candidate, ["clean\\n"], path)
+      rejected = bus.events.find { |event, _| event == "repair_loop:candidate_rejected" }
+      assert_equal "repair_loop:candidate_rejected", rejected&.first
+      assert_match(/simulation unavailable: test runner unavailable/, rejected.last.fetch(:reason))
+      assert_includes bus.events.map(&:first), "repair_loop:candidate_selection_blocked"
+    end
+  end
+
+  def test_best_candidate_marks_no_test_fallback_as_unverified
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
+      simulation = Object.new
+      simulation.define_singleton_method(:evaluate_candidates) do |**|
+        [{
+          status: :unavailable,
+          reason: "no focused test path exists for this surface",
+          test_paths: [],
+          regressions: [],
+          improvements: [],
+        }]
+      end
+      loop.define_singleton_method(:user_simulation) { simulation }
+
+      assert_equal "clean\\n", loop.__send__(:best_candidate, ["clean\\n"], path)
+      selected = bus.events.find { |event, _| event == "repair_loop:candidate_selected_unverified" }
+      assert_equal :unavailable, selected.last.fetch(:status)
+      assert_empty selected.last.fetch(:tests)
+      assert_match(/no focused test path/, selected.last.fetch(:reason))
+      refute_includes bus.events.map(&:first), "repair_loop:candidate_selected"
+    end
+  end
+
+  def test_best_candidate_rejects_a_missing_simulation_result
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
+      simulation = Object.new
+      simulation.define_singleton_method(:evaluate_candidates) { |**| [] }
+      loop.define_singleton_method(:user_simulation) { simulation }
+
+      assert_nil loop.__send__(:best_candidate, ["clean\\n"], path)
+      rejected = bus.events.find { |event, _| event == "repair_loop:candidate_rejected" }
+      assert_match(/candidate has no simulation result/, rejected.last.fetch(:reason))
+    end
+  end
+
+  def test_best_candidate_rejects_blocked_simulation
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
+      simulation = Object.new
+      simulation.define_singleton_method(:evaluate_candidates) do |**|
+        [{
+          status: :blocked,
+          reason: "runner launch refused",
+          test_paths: ["test/test_sample.rb"],
+          regressions: [],
+          improvements: [],
+        }]
+      end
+      loop.define_singleton_method(:user_simulation) { simulation }
+
+      assert_nil loop.__send__(:best_candidate, ["clean\\n"], path)
+      refute_includes bus.events.map(&:first), "repair_loop:candidate_selected"
+      assert_includes bus.events.map(&:first), "repair_loop:candidate_selection_blocked"
+    end
+  end
+
   class BrokenRescanScanner < RecordingScanner
     def scan(path, laws: nil)
       @paths << path
