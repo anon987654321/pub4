@@ -18,7 +18,8 @@ end
 
 apply = ARGV.delete("--apply")
 path = ARGV[0] || "/etc/relayd.conf"
-body = File.read(path)
+# Root runs this with no LANG, so a default read is US-ASCII and a non-ASCII comment raises.
+body = File.read(path, encoding: Encoding::UTF_8)
 dropped = []
 lines = body.each_line.filter_map do |line|
   if line =~ /^\s*tls keypair "([^"]+)"/
