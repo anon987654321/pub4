@@ -55,7 +55,9 @@ class InteractionCampaignRunnerTest < Minitest::Test
       assert_equal Digest::SHA256.file(File.join(ROOT, evidence.fetch("test_path"))).hexdigest,
                    evidence.fetch("test_sha256")
       log_path = File.join(File.dirname(results_path), evidence.fetch("log"))
-      assert_equal Digest::SHA256.file(log_path).hexdigest, evidence.fetch("output_sha256")
+      assert_equal Digest::SHA256.file(log_path).hexdigest, evidence.fetch("log_sha256")
+      assert_equal Digest::SHA256.hexdigest("1 runs, 4 assertions, 0 failures, 0 errors, 0 skips\\n"),
+                   evidence.fetch("output_sha256")
       assert_equal "NOT_RUN", JSON.parse(File.read(MANIFEST)).fetch("cases")
                                         .find { |item| item.fetch("id") == "RI-011" }.fetch("runtime_status"),
                    "run-local evidence must not silently mutate the checked-in inventory"
@@ -139,6 +141,27 @@ class InteractionCampaignRunnerTest < Minitest::Test
       assert_equal "BLOCKED", row.fetch("status")
       assert_match(/executed without assertions/, row.fetch("reason"))
     end
+  end
+
+
+  def test_saved_logs_redact_credentials_and_keep_distinct_hashes
+    runner = Runner.allocate
+    output = [
+      "api_key=api-secret-value",
+      "Authorization: Bearer bearer-secret-value",
+      "Cookie: session=private-cookie-value",
+      "github token ghp_abcdefghijklmnopqrstuvwxyz1234567890"
+    ].join("\n")
+    redacted = runner.send(:redact_output, output)
+
+    assert_includes redacted, "api_key=<redacted>"
+    assert_includes redacted, "Authorization: <redacted>"
+    assert_includes redacted, "Cookie: <redacted>"
+    refute_includes redacted, "api-secret-value"
+    refute_includes redacted, "bearer-secret-value"
+    refute_includes redacted, "private-cookie-value"
+    refute_includes redacted, "ghp_abcdefghijklmnopqrstuvwxyz1234567890"
+    refute_equal Digest::SHA256.hexdigest(output), Digest::SHA256.hexdigest(redacted)
   end
 
 end
