@@ -7,36 +7,9 @@ require "uri"
 class NvdCve
   BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
-  # NVD publishes a rate limit rather than leaving callers to guess at one:
-  # five requests in a rolling thirty seconds anonymously, fifty with a key.
-  # The budget lives here, where the request is made. A caller that paces itself
-  # enforces a limit it cannot see and protects no other caller.
-  WINDOW_SECONDS = 30.0
-  REQUESTS_PER_WINDOW = { keyed: 50, anonymous: 5 }.freeze
-
-  @window = []
-  @window_lock = Mutex.new
-
-  class << self
-    def crossref(port, limit: 5)
-      new(port).crossref(limit: limit)
-    end
-
-    # Waits only as long as the oldest request in the window still has to live.
-    # A fixed sleep pays the full price on every call; this pays nothing until
-    # the budget is actually spent.
-    def throttle!
-      budget = ENV["NVD_API_KEY"].present? ? REQUESTS_PER_WINDOW[:keyed] : REQUESTS_PER_WINDOW[:anonymous]
-      delay = @window_lock.synchronize do
-        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        @window.reject! { |at| now - at >= WINDOW_SECONDS }
-        wait = @window.size < budget ? 0 : (WINDOW_SECONDS - (now - @window.first))
-        @window << (now + wait)
-        wait
-      end
-      sleep(delay) if delay.positive?
-    end
-  end
+  # Request pacing belongs to NvdCveCrossrefJob, which reserves slots in a
+  # shared database row and reschedules work instead of sleeping a request or
+  # worker thread. Keep this service focused on fetching and recording data.
 
   def initialize(port)
     @port = port
@@ -52,7 +25,6 @@ class NvdCve
   private
 
     def fetch(limit)
-      self.class.throttle!
       q = "openbsd #{@port.name}"
       uri = URI("#{BASE}?keywordSearch=#{URI.encode_www_form_component(q)}&resultsPerPage=#{limit}")
 
@@ -94,7 +66,12 @@ class NvdCve
       adv.cvss_score = score if score
       adv.source_url ||= "https://nvd.nist.gov/vuln/detail/#{id}"
       adv.severity = severity(score) if score
-      adv if adv.save
+      return unless adv.save
+
+      # One NVD identifier can affect many ports. The join's unique index and
+      # find_or_create_by! make repeated cross-references idempotent.
+      SecurityAdvisoryPort.find_or_create_by!(security_advisory: adv, port: @port)
+      adv
     end
 
     def severity(score)
