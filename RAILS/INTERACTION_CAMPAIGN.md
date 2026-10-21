@@ -36,11 +36,13 @@ This cross-product makes the scenario inventory auditable; it does not assert th
 
 ## Evidence and status semantics
 
-Each case resolves a specific action, adversarial condition and expected outcome through canonical surface, action and fault records. Evidence paths and surface-level contracts are stored once. The current records use `assessment: SOURCE_EXPECTATION_ONLY` and `runtime_status: NOT_RUN`.
+Each case resolves a specific action, adversarial condition and expected outcome through canonical surface, action and fault records. Evidence paths, surface-level contracts and each surface's `focused_test_paths` are stored once. MASTER `/fix` reads that same mapping to choose existing focused tests for baseline/candidate comparisons; it does not copy a second test map into Ruby. The current records use `assessment: SOURCE_EXPECTATION_ONLY` and `runtime_status: NOT_RUN`.
 
 A source-derived expectation is a test oracle, not an observed outcome. Do not change a case to `PASS` without saved runtime evidence, or to `FAIL` without a reproducible failure record. Use `BLOCKED` when the environment, credentials or fixture prerequisites prevent execution and `SKIPPED` only with a recorded reason. Keep production data and live payment endpoints out of this campaign.
 
 The manifest contract is covered by `test/interaction_campaign_contract_test.rb` and is included by the existing recursive `RAILS/test/run_all.rb` contract runner. The fixture is normalized to avoid repeating surface contracts, action text, fault instructions and evidence paths in every row.
+
+MASTER `/fix` uses the campaign to propose several materially different repairs, compare candidates against the target Law and focused tests, reject observed regressions and restore the original before each next trial. This is not a claim to have executed all 400 scenarios. A candidate test run is scoped to existing tests selected from `focused_test_paths`; the broader browser/acceptance scenario is still NOT_RUN until that exact behavior is driven and evidence is saved.
 
 ## Run order
 
