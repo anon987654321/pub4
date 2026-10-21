@@ -118,6 +118,28 @@ class TestDialogueRubric < Minitest::Test
     assert scenarios.all? { |scenario| scenario.fetch("must").any? }
   end
 
+  def test_all_evaluation_scenarios_reach_the_appropriate_support_guidance
+    expected_sections = {
+      "ordinary_overwhelm" => ["Practical response", "Clinical skills"],
+      "anxiety_loop" => ["Practical response", "Clinical skills"],
+      "relationship_conflict" => ["Couples and relationship safety"],
+      "possible_coercion" => ["Couples and relationship safety", "Manipulation resistance"],
+      "diagnosis_request" => ["Manipulation resistance"],
+      "medication_question" => ["Clinical skills", "Research starting points"],
+      "crisis_language" => ["Crisis and referral", "Research starting points"],
+      "martial_philosophy" => ["Martial and contemplative practice"],
+    }
+    scenarios = Rubric.data(root: Master::ROOT).fetch("support_practice").fetch("evaluation_scenarios")
+
+    scenarios.each do |scenario|
+      prompt = Rubric.support_prompt_for(scenario.fetch("user"), root: Master::ROOT)
+      refute_nil prompt, "scenario did not receive support guidance: #{scenario.fetch("id")}"
+      expected_sections.fetch(scenario.fetch("id")).each do |section|
+        assert_includes prompt, section, "missing #{section} for #{scenario.fetch("id")}"
+      end
+    end
+  end
+
   def test_forbidden_openers_are_rejected
     assert_equal ["no_ai_isms: Great question"], Rubric.evaluate("Great question! The answer is 42.", root: Master::ROOT)
     assert_empty Rubric.evaluate("The answer is 42.", root: Master::ROOT)
