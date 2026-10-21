@@ -24,7 +24,7 @@ snapshot_aliases:
   "brgen/conversations/desktop": "brgen/messenger/desktop"
 
 # Width sweep for the reflow gate — WCAG 1.4.10 floor through desktop.
-reflow_widths: [320, 360, 390, 414, 480, 540, 600, 680, 768, 834, 900, 1024, 1180, 1280, 1440, 1600]
+reflow_widths: [320, 360, 375, 390, 414, 430, 480, 540, 600, 640, 680, 768, 834, 900, 1024, 1180, 1280, 1440, 1600]
 
 include_brgen_verticals: true
 brgen_vertical_viewports: [mobile, desktop]
