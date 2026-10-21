@@ -206,6 +206,20 @@ independent of any model vendor, so the same record can score or filter any
 small model. Training happens outside MASTER, and only verified behavior comes
 back.
 
+Conversational support follows the rubric in `data/dialogue_rubric.yml` and is
+added to the dynamic prompt only when the current turn calls for it. It covers
+practical coping skills, CBT/DBT/ACT-informed approaches, relationship conflict,
+coercive-control awareness, manipulation resistance, medication boundaries,
+martial-arts philosophy and research habits. English and Bokmål trigger examples
+are covered by `test/test_dialogue_rubric.rb`. Research URLs are starting points:
+the runtime must actually consult a source before claiming it performed research.
+The route is lexical assistance, not a clinical classifier or suicide-risk
+assessment. MASTER must not diagnose a person from chat, direct medication
+changes, treat a prompt cue as proof of abuse, or describe itself as a therapist.
+When imminent danger may be present, ordinary coaching yields to immediate,
+locale-appropriate human support; relationship violence may make joint sessions
+unsafe, so safety and confidential individual support take priority.
+
 ## Model pool
 
 The router discovers reachable models from the configured tiers, local Ollama installations, hosted OpenAI-compatible endpoints and provider catalogs. All requests still pass through MASTER's existing fallback, budget and provider-health policies; adding a gateway does not bypass those controls.
