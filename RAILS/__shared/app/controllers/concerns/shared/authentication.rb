@@ -157,6 +157,28 @@ module Shared
       redirect_to sign_in_path, alert: t("shared.flash.sign_in_required")
     end
 
+    # Transfer guest-owned history only when the audit row confirms the
+    # destination. A missing migration, conflicting destination or failed write
+    # returns false and leaves the guest/session untouched.
+    def transfer_guest_history_to(user, guest)
+      ::AccountMerger.new(guest_user: guest, user: user).call
+      ::AccountMerge.exists?(guest_user_id: guest.id, user_id: user.id, status: "merged")
+    rescue StandardError => error
+      Rails.logger.error("[auth] guest history transfer failed: #{error.class}")
+      false
+    end
+
+    # Email, magic-link and provider sign-in all enter through this lookup. The
+    # previous guest id is retained across an interrupted signup so a later
+    # sign-in can retry the transfer without upgrading the old cookie.
+    def transfer_guest_history_from_session(user)
+      ids = [session[:guest_user_id], session[:previous_guest_user_id]].compact.uniq
+      guest = ids.filter_map { |id| ::User.find_by(id: id, guest: true) }.first
+      return unless guest
+
+      transfer_guest_history_to(user, guest)
+    end
+
     # Registered identities confirm the address they claim. Guests keep their
     # anonymous posting and chatting path; a high-assurance BankID identity may
     # also write under its own identity without inventing mailbox proof from a
