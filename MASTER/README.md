@@ -225,7 +225,10 @@ relationship violence may make joint sessions unsafe, so safety and confidential
 individual support take priority.
 
 The synthetic response-quality screen is exposed as
-`Master::Voice::DialogueRubric.run_support_benchmark`. A run is capped at eight
+`Master::Voice::DialogueRubric.run_support_benchmark` and through
+`/support benchmark --confirm [response-model] [judge-model]` in the CLI and
+web command palette. Confirmation is required before the bounded run because
+it can make up to sixteen model calls. A run is capped at eight
 named scenarios; it records each candidate answer, grades practicality,
 empathy and agency, calibration, safety, research quality and fit, treats
 malformed judge output as inconclusive, and lets critical safety findings
