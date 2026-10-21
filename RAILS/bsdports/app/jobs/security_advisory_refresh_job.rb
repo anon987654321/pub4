@@ -31,14 +31,15 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
       return
     end
 
-    refreshed = 0
+    enqueued = 0
     ports.each do |port|
-      refreshed += NvdCve.crossref(port, limit: 3).size
+      NvdCveCrossrefJob.perform_later(port_id: port.id)
+      enqueued += 1
     rescue StandardError => e
-      Rails.logger.warn("bsdports: advisory refresh skipped for #{port.name}: #{e.message}")
+      Rails.logger.warn("bsdports: advisory refresh could not queue #{port.name}: #{e.class}: #{e.message}")
     end
 
     Rails.cache.write(CURSOR_KEY, ports.last.id, expires_in: 2.days)
-    Rails.logger.info("bsdports: refreshed #{refreshed} security advisories across #{ports.size} ports")
+    Rails.logger.info("bsdports: queued #{enqueued} NVD cross-references across #{ports.size} ports")
   end
 end
