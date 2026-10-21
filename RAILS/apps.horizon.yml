@@ -16,7 +16,6 @@ horizon:
       - { name: city population in seeds, status: planned, notes: "no column or reader in any schema; CitySeed covers all 43 registry cities otherwise" }
 
       - { name: recent searches in the search palette, status: planned }
-      - { name: messenger conversation archive, status: planned }
       - { name: messenger notification suppressed while its conversation is open, status: planned }
     subapp_takeaway:
       - { name: delivery-area validation and cart expiry, status: planned }
@@ -25,7 +24,6 @@ horizon:
     subapp_dating:
       - { name: premium memberships / boost / super-like purchases, status: planned }
 
-      - { name: premium memberships / boost purchases, status: planned }
       - { name: two-sided ranked_for (looking_for both ways), status: planned }
     subapp_marketplace:
       - { name: AI recommendations, status: planned }
