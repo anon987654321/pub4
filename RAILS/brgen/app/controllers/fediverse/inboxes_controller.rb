@@ -29,7 +29,7 @@ class Fediverse::InboxesController < ApplicationController
 
   # A body larger than this is not a real activity. Read before parsing, so a
   # malicious sender cannot make us allocate their way.
-  MAX_BODY = InboxBodyLimit::MAX_BYTES
+  MAX_BODY = Fediverse::InboxBodyLimit::MAX_BYTES
 
   def create
     body = request.raw_post.to_s
