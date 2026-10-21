@@ -237,6 +237,8 @@ module Master
               %w[master_cli]
             when %r{\AMASTER/lib/io/(?:web|http|sse)}
               %w[master_chat]
+            when %r{\A(?:OPENBSD|STUDIO)/}
+              []
             when %r{\AMASTER/gates/}
               relative.match?(%r{face|primer|page_simulation}) ? %w[master_face cross_cut] : %w[cross_cut]
             when %r{\AMASTER/}
@@ -254,7 +256,9 @@ module Master
             candidates = []
             candidates << relative if test_path?(relative)
             candidates.concat(matching_test_paths(relative))
-            candidates.concat(ids.flat_map { |id| SURFACE_TESTS.fetch(id, []) })
+            mapped = ids.flat_map { |id| SURFACE_TESTS.fetch(id, []).first(1) }
+            secondary = ids.flat_map { |id| SURFACE_TESTS.fetch(id, []).drop(1) }
+            candidates.concat(mapped).concat(secondary)
             candidates.select { |candidate| File.file?(File.join(@root, candidate)) }.uniq.first(MAX_TEST_FILES)
           end
 
