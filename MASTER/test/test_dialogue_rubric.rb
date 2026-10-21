@@ -98,6 +98,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Research starting points"
     assert_includes prompt, "NICE NG222"
     assert_includes prompt, "arXiv/ar5iv"
+    assert_includes prompt, "ar5iv.labs.arxiv.org/html/2401.02984"
   end
 
   def test_non_support_turns_do_not_receive_the_support_protocol
