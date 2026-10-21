@@ -512,8 +512,10 @@ module Deploy
         runs_gate = content.match?(/gates\/runner\.rb"?\s+master_web_assets/)
         result.fail("#{relative_path} must run the master_web_assets gate") unless runs_gate
 
-        restarts_master = content.include?("rcctl restart master")
-        starts_master = content.include?("rcctl start master")
+        # The deploy scripts reach master through the root broker; the bare rcctl spelling predates it.
+        restarts_master = content.match?(/(?:rcctl|pub4-admin service|admin_service) restart master/)
+        starts_master = content.match?(/(?:rcctl|pub4-admin service|admin_service) start master/)
+
         if restart_mode == :restart
           result.fail("#{relative_path} must restart master after precompile") unless restarts_master
         elsif !restarts_master && !starts_master
