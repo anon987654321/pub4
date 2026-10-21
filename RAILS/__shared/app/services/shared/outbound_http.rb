@@ -39,6 +39,11 @@ module Shared
       2001::/23 2001:db8::/32 2002::/16 fec0::/10 fc00::/7 fe80::/10 ff00::/8
     ].map { |cidr| IPAddr.new(cidr) }.freeze
 
+    # IANA currently allocates IPv6 global unicast from 2000::/3. Deny every
+    # other IPv6 range by default, including space not yet listed in the
+    # special-purpose registry, rather than trying to enumerate all of it.
+    GLOBAL_IPV6 = IPAddr.new("2000::/3").freeze
+
     DNS_LABEL_MAX_BYTES = 63
     DNS_MAX_WIRE_BYTES = 255
 
@@ -88,6 +93,8 @@ module Shared
     def unsafe_ip?(addr)
       ip = IPAddr.new(addr)
       ip = ip.native if ip.respond_to?(:ipv4_mapped?) && ip.ipv4_mapped?
+      return true if ip.ipv6? && !GLOBAL_IPV6.include?(ip)
+
       UNSAFE_NETS.any? { |net| net.include?(ip) }
     rescue IPAddr::InvalidAddressError
       true
