@@ -23,11 +23,25 @@ class SecurityAdvisoryTest < ActiveSupport::TestCase
     refute advisory(title: nil).valid?
   end
 
-  # A port is optional: an advisory can name a library this tree does not
-  # package yet, and dropping it because of that loses the warning.
-  test "an advisory without a port is still an advisory" do
-    assert advisory.valid?
-    assert advisory(port: @port).valid?
+  # An advisory is a fact about a CVE; port relationships live in the join,
+  # so an advisory is valid before any package is linked.
+  test "an advisory can exist without a linked port" do
+    record = advisory
+    assert record.valid?
+    assert_empty record.ports
+  end
+
+  test "one CVE can be linked to multiple affected ports" do
+    other = Port.create!(platform: @platform, category: @category, name: "curl-compat",
+                         pkgpath: "net/curl-compat", version: "1")
+    record = advisory(identifier: "CVE-2026-44001").tap(&:save!)
+
+    record.ports << @port
+    record.ports << other
+
+    assert_equal [ @port.id, other.id ].sort, record.ports.pluck(:id).sort
+    assert_includes @port.security_advisories, record
+    assert_includes other.security_advisories, record
   end
 
   test "the four severities are ordered from low to critical" do
@@ -84,11 +98,13 @@ class SecurityAdvisoryTest < ActiveSupport::TestCase
     assert_equal [ fresh, old ], SecurityAdvisory.recent.to_a
   end
 
-  test "destroying a port takes its advisories with it" do
-    advisory(port: @port, identifier: "CVE-2026-0004").save!
+  test "destroying a port removes only its relationship to an advisory" do
+    record = advisory(identifier: "CVE-2026-0004").tap(&:save!)
+    record.ports << @port
 
-    assert_difference "SecurityAdvisory.count", -1 do
+    assert_difference "SecurityAdvisoryPort.count", -1 do
       @port.destroy!
     end
+    assert SecurityAdvisory.exists?(record.id), "an advisory must survive loss of one affected port"
   end
 end
