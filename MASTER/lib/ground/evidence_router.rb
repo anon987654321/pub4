@@ -75,7 +75,8 @@ module Master
         topics << "clinical guidance on medication safety and speaking with a prescriber" if value.match?(/medication|antidepressant|dose|medicine|medisin|antidepressiva|prescription/i)
         topics << "clinical guidance for trauma and PTSD" if value.match?(/trauma|ptsd|traume|flashback/i)
         topics << "evidence-based mental health coping and professional support" if topics.empty? || value.match?(/mental health|therap|psychiatr|overwhelmed|coping|psychisk helse|mestring/i)
-        topics << "Norwegian official health guidance" if value.match?(/\b(?:Norway|Norwegian|Norge|Noreg|Helsenorge)\b|[æøå]/i)
+        topics << "Norwegian-language clinical guidance" if value.match?(/[æøå]/i)
+        topics << "Norwegian official health guidance" if value.match?(/\b(?:Norway|Norwegian|Norge|Noreg|Helsenorge)\b/i)
 
         "Evidence-based public guidance and reviews about #{topics.uniq.join('; ')}."
       end
