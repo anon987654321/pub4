@@ -129,6 +129,23 @@ test("FaceWorld consumes the semantic layers and bounded render budget", () => {
   assert.match(state, /max_device_pixel_ratio/);
 });
 
+test("FaceWorld morphs to the submitted topic and returns to a reduced-motion-safe resting face", () => {
+  const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  const runtime = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  assert.match(world, /const SUBJECT_FORMS = new Set\(\[.*fugue.*wave.*orbit.*architecture.*leaf.*network.*constellation/);
+  assert.match(world, /function inferSubjectForm\(value\)/);
+  assert.match(world, /\["fugue", \/\\\\b\(fugue\|counterpoint\|polyphony/);
+  assert.match(world, /function setSubjectForm\(value\)/);
+  assert.match(world, /function setSubjectFromText\(value\)/);
+  assert.match(world, /semanticMorphInProgress/);
+  assert.match(world, /reducedMotion \? 1 : 0\.065/);
+  assert.match(world, /splatProxy\.visible = activePoints > 0 && \(!portrait \|\| subjectActive\)/);
+  assert.doesNotMatch(world, /splatProxy\.visible = activePoints > 0;/);
+  assert.match(world, /faceCanvas\.style\.opacity/);
+  assert.match(world, /detail\.type !== "speech:partial"/);
+  assert.match(runtime, /MASTER_FACE_WORLD\?\.setSubjectFromText\?\.\(v\)/);
+});
+
 test("Face state derives modes and aliases from the shared contract", () => {
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
   const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
