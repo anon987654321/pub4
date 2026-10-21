@@ -296,6 +296,7 @@ if (_hasWebGL && THREE) {
 
 const FACE_SCATTER_HOME = faceScatter.slice();
 let semanticMorphTarget = null;
+let semanticMorphRestoreOnSettled = false;
 let morphCurrent = 0.0, morphTarget = 0.88;
 let mouthPool = null;
 let eyePool = null;
