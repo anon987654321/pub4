@@ -2,6 +2,7 @@
 
 require_relative "../../ai/orientation"
 require_relative "../../cli/context_layers"
+require_relative "../../voice/dialogue_rubric"
 
 module Master
   module Review
@@ -75,6 +76,7 @@ module Master
           parts << Master::AI::OperatorContract.prompt
           parts << CLI::SubagentContext.brief
           parts << conversational_register_line if casual_task?
+          parts << support_practice_for_turn
           parts << felt_sense_section if @felt_sense.is_a?(Hash)
           parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
           parts << Ground::ActivePlan.prompt_section(@config["root"] || Master::ROOT)
@@ -113,6 +115,7 @@ module Master
           [
             conversational_register_line,
             "Working in #{root}. You can read and search it with your tools; check before claiming anything about its current state.",
+            support_practice_for_turn,
             Fiber[:master_evidence_note],
             ("Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic),
             (@memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)),
@@ -125,6 +128,17 @@ module Master
             "a few natural sentences, genuinely present. Stay yourself. If the person " \
             "asks something factual, use your tools to check instead of guessing, " \
             "and give a real, specific answer."
+        end
+
+        # Inject the relevant support protocol per turn; the static persona stays
+        # lean for coding work and never carries the entire clinical reference corpus.
+        def support_practice_for_turn
+          return unless @personality
+
+          Master::Voice::DialogueRubric.support_prompt_for(
+            last_user_message,
+            root: @config["root"] || Master::ROOT,
+          )
         end
 
         def system_prompt
