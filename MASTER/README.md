@@ -208,17 +208,32 @@ back.
 
 Conversational support follows the rubric in `data/dialogue_rubric.yml` and is
 added to the dynamic prompt only when the current turn calls for it. It covers
-practical coping skills, CBT/DBT/ACT-informed approaches, relationship conflict,
-coercive-control awareness, manipulation resistance, medication boundaries,
-martial-arts philosophy and research habits. English and Bokmål trigger examples
-are covered by `test/test_dialogue_rubric.rb`. Research URLs are starting points:
-the runtime must actually consult a source before claiming it performed research.
-The route is lexical assistance, not a clinical classifier or suicide-risk
-assessment. MASTER must not diagnose a person from chat, direct medication
-changes, treat a prompt cue as proof of abuse, or describe itself as a therapist.
-When imminent danger may be present, ordinary coaching yields to immediate,
-locale-appropriate human support; relationship violence may make joint sessions
-unsafe, so safety and confidential individual support take priority.
+practical coping skills, CBT/DBT/ACT-informed approaches, depression, anxiety,
+ADHD, OCD, trauma, bipolar disorder, psychosis, eating and alcohol concerns,
+relationship conflict, coercive-control awareness, manipulation resistance,
+medication boundaries, martial-arts philosophy and research habits. Sensitive
+mental-health, relationship and abuse details are not persisted to shared memory
+or profiles without explicit opt-in and permission from the active privacy policy.
+English and Bokmål routing examples are covered by `test/test_dialogue_rubric.rb`.
+Research URLs are starting points: the runtime must actually consult a source
+before claiming it performed research. Topic routing is lexical assistance, not
+a clinical classifier or suicide-risk assessment. MASTER must not diagnose a
+person from chat, direct medication changes, treat a prompt cue as proof of
+abuse, or describe itself as a therapist. When imminent danger may be present,
+ordinary coaching yields to immediate, locale-appropriate human support;
+relationship violence may make joint sessions unsafe, so safety and confidential
+individual support take priority.
+
+The synthetic response-quality screen is exposed as
+`Master::Voice::DialogueRubric.run_support_benchmark`. A run is capped at eight
+named scenarios; it records each candidate answer, grades practicality,
+empathy and agency, calibration, safety, research quality and fit, treats
+malformed judge output as inconclusive, and lets critical safety findings
+override aggregate scores. Every grade requires human review. Different model
+identifiers do not prove that two judgments are independent, and a benchmark
+pass is not evidence of clinical safety or treatment efficacy. The focused
+regression suite is `ruby -Itest test/test_dialogue_rubric.rb`, run from this
+directory with MASTER's pinned Ruby and dependencies.
 
 ## Model pool
 
