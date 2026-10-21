@@ -129,3 +129,63 @@ For the two supplied mixes specifically, the next executable step is to obtain b
 - [Reddit community discussion: How to make J Dilla swing in Logic Pro (2025; conflicting heuristics, anecdotal)](https://www.reddit.com/r/makinghiphop/comments/1j6tg8s/)
 - [Reddit community discussion: how Dilla-style chops stay coherent (2023; listener interpretation)](https://www.reddit.com/r/makinghiphop/comments/162v6ae/)
 - [Reddit community discussion: chopping a sample on drum-hit boundaries and re-sequencing it (2022; producer anecdote)](https://www.reddit.com/r/makinghiphop/comments/yeotnh/)
+
+## Second-pass findings: sample function, metric reinterpretation, and phrase design
+
+This pass expands the research beyond “Dilla swing.” It adds three independent dimensions to the groove model: what a sample is doing in the arrangement, how its original meter is re-heard after editing, and how its pitch/time transformation changes the phrase.
+
+### Classify sample function before measuring the chop
+
+The [Sampling Donuts project](https://samplingdonuts.com/) uses a useful three-way vocabulary drawn from musicology: **structural** samples establish the harmonic/rhythmic foundation, **surface** samples decorate or punctuate it, and **lyric** samples carry intelligible words or phrases. A sample may serve more than one role, but the labels force the analyst to ask what the fragment contributes rather than merely identifying its source.
+
+For a new, original Dilla-style arrangement, this suggests a practical scorecard per layer:
+
+- Structural: does it establish harmony, pulse, bass movement, or the main loop?
+- Surface: does it answer a vocal or drum hit, mark a transition, or add a one-shot accent?
+- Lyric: does a short spoken/sung fragment communicate a phrase or become a rhythmic instrument?
+- Role change: does muting or reordering the fragment change its role over the course of the beat?
+
+This is an arrangement vocabulary, not a sample-identification tool. The analyzer should store a role as a human-reviewed annotation with provenance and confidence, never infer the exact source from spectral similarity.
+
+### Treat meter as material to reinterpret, not just a tempo to match
+
+The [Bristol doctoral research on Dilla and sampling](https://research-information.bristol.ac.uk/en/studentTheses/signifying-producers/) discusses “Stakes Is High” and Dilla's account of using Ahmad Jamal's “Swahililand,” understood by him as a 5/8 source, then reframing the material into a three-measure 4/4 loop with a small pitch change. A separate [music-theory analysis of hip-hop sampling](https://www.gmth.de/zeitschrift/artikel/1221.aspx) documents a Dilla treatment in which slowing a sample by roughly 29% also lowers its pitch by approximately a tritone.
+
+These are examples from named recordings, not measurements of either supplied YouTube compilation. Their broader production lesson is that a loop's original accents, bar line, and melodic cadence need not survive as the new beat's meter. The producer can preserve a recognizable fragment while changing the perceived downbeat, grouping, phrase length, or harmonic function. Pitch and speed may be coupled by the sampler, but modern time-stretching can decouple them; the correct choice is musical, not an authenticity checkbox.
+
+For the engine, test three original-source transformations against the same newly composed drums: (1) pitch-shift and speed-change together, (2) time-stretch with pitch held, and (3) re-sequence a small set of original synthesized/cleared fragments across a new three- or four-bar phrase. Score phrase coherence, transient clarity, harmonic fit, and pocket; do not optimize for resemblance to a specific protected track.
+
+### Analyze the edit as a phrase-level event map
+
+A useful reference worksheet should mark events, not just global features:
+
+- source start/end and attribution confidence;
+- phrase and bar boundaries, including uncertain downbeats;
+- candidate chop boundaries and the transient or note tail at each cut;
+- repeated, omitted, reversed, or re-ordered fragments;
+- pitch shift and playback-rate hypotheses, kept separate when evidence cannot distinguish them;
+- new drum/bass entries, dropouts, call-and-response, and transition hits;
+- sample role (structural/surface/lyric), evidence source, and human-review status.
+
+This is the bridge between audio analysis and composition. RMS, tempo, and spectral balance can guide broad choices, but they cannot reconstruct this event map on their own. A transient detector can propose cut points; only listening and harmonic/phrase review can decide whether a chop functions musically.
+
+### What this means for implementation and regression coverage
+
+The existing `Dilla::Reference` pipeline already provides bounded source retrieval, metadata, FFmpeg metrics, optional Essentia/Libsonare tempo cross-checks, Demucs stems, broad energy contours, and a low-rate rhythm-envelope proxy. It also explicitly warns that Demucs drums are not isolated kick/snare/hat tracks. That is a useful foundation, but it does **not** yet establish sample-accurate per-hit microtiming or reliable sixteenth-grid accent counts for a full mix.
+
+The next safe increments should be separate, independently testable contracts:
+
+1. **Onset proposals:** emit timestamped candidates plus detector/version/confidence; empty or low-confidence input returns an explicit insufficient-evidence status.
+2. **Grid hypotheses:** compare multiple plausible beat/subdivision grids and half/double time; retain competing hypotheses rather than silently picking one.
+3. **Per-lane timing:** only calculate kick/snare/hat offsets when stems or human-validated labels support those roles. Otherwise name the result mix-level onset proxy.
+4. **Window summaries:** summarize 4-, 8-, and 16-bar windows after a grid has been selected; preserve source time boundaries and all raw event times.
+5. **Golden fixtures:** use generated click tracks with known BPM, known per-lane offsets, missing hits, swung offbeats, tempo changes, silence, and noise. Assert expected values and uncertainty, not a hand-picked Dilla number.
+6. **No hidden mutation:** analysis of a reference must not silently change global groove settings or generation defaults. Learned profiles remain attributable to source fingerprints, style scope, and explicit operator activation.
+
+### Source additions
+
+- [Sampling Donuts — sample roles, timing, duration and sample-use annotations](https://samplingdonuts.com/)
+- [Zachary B. F. Diaz, Signifyin(g) producers: J Dilla and contemporary hip-hop production (University of Bristol, 2023)](https://research-information.bristol.ac.uk/en/studentTheses/signifying-producers/)
+- [ZGMTH: Hip-Hop Sampling as Analytic Act](https://www.gmth.de/zeitschrift/artikel/1221.aspx)
+- [J Dilla Instrumentals Mix (part 1), tracklist and comments](https://www.mixcloud.com/Jedi1200/j-dilla-instrumentals-mix-part-1/)
+
