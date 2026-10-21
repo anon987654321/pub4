@@ -92,5 +92,11 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes amber, 't("shared.email_verification.signup_guest_merge_failed")'
     assert_includes read("RAILS/__shared/config/locales/social.en.yml"), "guest_history_transfer_failed:"
     assert_includes read("RAILS/__shared/config/locales/social.nb.yml"), "guest_history_transfer_failed:"
+    signup_failure = read("RAILS/amber/test/controllers/registrations_controller_test.rb")
+    sign_in_failure = read("RAILS/amber/test/controllers/sessions_controller_guest_transfer_test.rb")
+    assert_includes signup_failure, "test \"signup leaves guest history and session intact when transfer is blocked\""
+    assert_includes signup_failure, "session[:guest_user_id]"
+    assert_includes sign_in_failure, "test \"password sign-in preserves the guest session when history transfer fails\""
+    assert_includes sign_in_failure, "refute Session.exists?(user_id: member.id)"
   end
 end
