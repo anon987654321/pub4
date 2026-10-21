@@ -36,7 +36,9 @@ class NvdCve
       uri = URI("#{BASE}?keywordSearch=#{URI.encode_www_form_component(q)}&resultsPerPage=#{limit}")
 
       headers = {}
-      headers["apiKey"] = key if (key = ENV["NVD_API_KEY"]).present?
+      if (key = ENV["NVD_API_KEY"]).present?
+        headers["apiKey"] = key
+      end
       res = Shared::OutboundHttp.request(
         uri, headers:, max_body: Shared::OutboundHttp::MAX_BODY,
         open_timeout: 5, read_timeout: 10
