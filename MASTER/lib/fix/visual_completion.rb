@@ -46,19 +46,24 @@ module Master
         return false unless authorized_policy?(config)
 
         relative = relative_path(root:, path: target)
-        return false unless relative && (relative == "RAILS" || relative.start_with?("RAILS/"))
+        return false unless relative == "RAILS"
         return false if excluded?(relative, config)
 
         true
       end
 
-      def enabled_for_path?(root:, path:)
+      def frontend_campaign_path?(root:, path:)
         config = policy(root:)
         return false unless authorized_policy?(config)
         return false unless ELIGIBLE_EXTENSIONS.include?(File.extname(path.to_s).downcase)
 
         relative = relative_path(root:, path:)
-        relative && relative.start_with?("RAILS/") && !excluded?(relative, config) && !canonical_token_path?(relative)
+        relative && relative.start_with?("RAILS/") && !excluded?(relative, config)
+      end
+
+      def enabled_for_path?(root:, path:)
+        relative = relative_path(root:, path:)
+        frontend_campaign_path?(root:, path:) && !canonical_token_path?(relative)
       end
 
       def authorized_visual_rule?(rule_id, root:, path:, custody:)
@@ -76,6 +81,61 @@ module Master
 
         PROMPT
       end
+
+      # Enforce the ownership boundary on the candidate itself, not only
+      # through prompt wording. Styling values that determine identity stay
+      # fixed while permitted layout properties change.
+      def change_blocker(root:, path:, before:, after:, custody:)
+        return unless custody&.respond_to?(:layout_completion?) && custody.layout_completion?
+        return unless frontend_campaign_path?(root:, path:)
+        return "canonical visual tokens are operator-owned" if canonical_token_path?(relative_path(root:, path:))
+
+        prior = protected_visual_signatures(before)
+        proposed = protected_visual_signatures(after)
+        return unless prior != proposed
+
+        "palette/semantic colours and font-family are operator-owned; preserve existing declarations"
+      end
+
+      COLOR_PROPERTIES = %w[
+        color background background-color background-image border border-color
+        border-top border-right border-bottom border-left border-top-color
+        border-right-color border-bottom-color border-left-color outline
+        outline-color text-decoration-color text-shadow box-shadow fill stroke
+        caret-color accent-color
+      ].freeze
+      COLOR_TOKEN = /#[0-9a-f]{3,8}\\b|(?:rgba?|hsla?)\\s*\\([^)]*\\)|\\b(?:transparent|currentcolor|black|white|red|green|blue|yellow|orange|purple|gray|grey)\\b|var\\(\\s*--[\\w-]+\\s*\\)/i
+
+      def protected_visual_signatures(source)
+        color_rows = []
+        font_rows = []
+        source.to_s.each_line do |line|
+          line.scan(/(?:\\A|[;{])\\s*([a-z-]+)\\s*:\\s*([^;{}\\n]+)\\s*;?/i).each do |property, value|
+            name = property.downcase
+            value = value.strip
+            if COLOR_PROPERTIES.include?(name)
+              tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
+              signature = tokens.empty? ? value.gsub(/\\s+/, " ").downcase : tokens
+              color_rows << [name, signature]
+            elsif name == "font-family"
+              font_rows << value.gsub(/\\s+/, " ").strip
+            end
+          end
+          line.scan(/style\\s*=\\s*["']([^"']*)["']/i).flatten.each do |inline|
+            inline.scan(/\\b([a-z-]+)\\s*:\\s*([^;{}]+)\\s*;?/i).each do |property, value|
+              name = property.downcase
+              if COLOR_PROPERTIES.include?(name)
+                tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
+                color_rows << [name, tokens.empty? ? value.gsub(/\\s+/, " ").downcase : tokens]
+              elsif name == "font-family"
+                font_rows << value.gsub(/\\s+/, " ").strip
+              end
+            end
+          end
+        end
+        [color_rows.sort_by(&:inspect), font_rows.sort]
+      end
+      private_class_method :protected_visual_signatures
 
       def repo_root(root)
         expanded = File.expand_path(root.to_s)
