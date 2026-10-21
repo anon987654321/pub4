@@ -23,6 +23,7 @@ class UserPurgeJob < ApplicationJob
     { model: "AccountMerge", key: :guest_user_id },
     { model: "Shared::Notification", key: :user_id },
     { model: "Shared::Notification", key: :actor_id },
+    { model: "Shared::OutboundClick", key: :user_id },
     { model: "Shared::Reaction", key: :user_id },
     { model: "Vote", key: :user_id },
     { model: "Follow", key: :follower_id },
@@ -106,6 +107,10 @@ class UserPurgeJob < ApplicationJob
     if defined?(Shared::ReviewCase) && Shared::ReviewCase.table_exists?
       Shared::ReviewCase.where(reviewable_type: "Item", reviewable_id: item_ids).find_each(&:destroy!)
       Shared::ReviewCase.where(reviewable_type: "Outfit", reviewable_id: outfit_ids).find_each(&:destroy!)
+    end
+    if defined?(Shared::OutboundClick) && Shared::OutboundClick.table_exists?
+      Shared::OutboundClick.where(subject_type: "Item", subject_id: item_ids).find_each(&:destroy!)
+      Shared::OutboundClick.where(subject_type: "Outfit", subject_id: outfit_ids).find_each(&:destroy!)
     end
   end
 
