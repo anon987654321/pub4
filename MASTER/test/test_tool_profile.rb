@@ -85,6 +85,9 @@ class TestToolHabits < Minitest::Test
 
     assert_match(/Tool habits:/, note)
     assert_match(/SearchKnowledge/, note)
+    assert_match(/AssistantTasks/, note)
+    assert_match(/CapabilityCatalog/, note)
+    assert_match(/no background notifications/, note)
   end
 
   def test_sensitive_research_habit_minimizes_external_queries

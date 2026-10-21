@@ -64,6 +64,34 @@ class TestCommandRegistryDispatch < Minitest::Test
 
   # A `*_commands` method is a table of verbs. Only control_commands exists,
   # and build merges it; slash_commands is the help list, not a table.
+  def test_task_and_capability_commands_are_registered_and_documented
+    assert_equal :dispatch_task, built.fetch("task").method_name
+    assert_equal :dispatch_capabilities, built.fetch("capabilities").method_name
+    assert_includes Registry.help_text("task"), "/task verify-step"
+    assert_includes Registry.help_text("capabilities"), "/capabilities describe"
+  end
+
+  def test_task_cli_and_capability_search_are_actionable
+    require "tmpdir"
+    old_subject = Fiber[:master_pair_subject]
+    old_visitor = Fiber[:master_visitor]
+    Fiber[:master_pair_subject] = nil
+    Fiber[:master_visitor] = nil
+
+    Dir.mktmpdir("task-cli") do |root|
+      created = Registry.dispatch_task(root, ctx: { args: 'create "Call the dentist"' })
+      assert_match(/created [a-f0-9]+ \[open\] Call the dentist/, created)
+      listed = Registry.dispatch_task(root, ctx: { args: "list" })
+      assert_includes listed, "Call the dentist"
+      assert_includes listed, "no background notifications are sent"
+      described = Registry.dispatch_capabilities(Master::ROOT, ctx: { args: "search browser" })
+      assert_match(/core_tool Browser|plugin session_browser/, described)
+    end
+  ensure
+    Fiber[:master_pair_subject] = old_subject
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_mobile_platform_commands_replace_the_public_device_surface
     assert_equal :dispatch_android, built.fetch("android").method_name
     assert_equal :dispatch_ios, built.fetch("ios").method_name

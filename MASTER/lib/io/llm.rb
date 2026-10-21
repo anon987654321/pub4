@@ -465,6 +465,47 @@ module Master
         end
       end
 
+      class AssistantTasks < RubyLLM::Tool
+        include ToolForwarding
+
+        description "Keep a durable owner-local task list with bounded steps and recorded verification evidence. Does not execute actions or send notifications."
+        parameter :action, description: "list, show, create, update, add_step, start_step, block_step, verify_step, block, resume or complete", required: true
+        parameter :id, description: "Task id returned by create/list", required: false
+        parameter :title, description: "Task title (for create/update)", required: false
+        parameter :description, description: "Optional task detail", required: false
+        parameter :due_at, description: "ISO-8601 due time; use none to clear", required: false
+        parameter :priority, description: "low, normal or high", required: false
+        parameter :step_id, description: "Step id returned by add_step", required: false
+        parameter :step_title, description: "New step title", required: false
+        parameter :evidence, description: "Observed verification output or user-confirmed evidence", required: false
+        parameter :note, description: "Reason for starting, blocking or resuming a task/step", required: false
+        parameter :query, description: "Optional list search string", required: false
+
+        def execute(action:, id: nil, title: nil, description: nil, due_at: nil, priority: nil,
+                    step_id: nil, step_title: nil, evidence: nil, note: nil, query: nil)
+          forward(action: action.to_s, id: id&.to_s, title: title&.to_s, description: description&.to_s,
+                  due_at: due_at&.to_s, priority: priority&.to_s, step_id: step_id&.to_s,
+                  step_title: step_title&.to_s, evidence: evidence&.to_s, note: note&.to_s, query: query&.to_s) do |value|
+            JSON.pretty_generate(value)
+          end
+        end
+      end
+
+      class CapabilityCatalog < RubyLLM::Tool
+        include ToolForwarding
+
+        description "Discover registered core tools and declared read-only plugin capabilities. Discovery does not execute plugins or prove provider reachability."
+        parameter :action, description: "list, search or describe", required: true
+        parameter :query, description: "Search text, required for action=search", required: false
+        parameter :name, description: "Tool name, plugin id, or plugin:<id>:<observation_action> for action=describe", required: false
+
+        def execute(action:, query: nil, name: nil)
+          forward(action: action.to_s, query: query&.to_s, name: name&.to_s) do |value|
+            JSON.pretty_generate(value)
+          end
+        end
+      end
+
       class DynamicHttp < RubyLLM::Tool
         include ToolForwarding
         description "Call a configured HTTP tool from data/tools.dynamic.yml."

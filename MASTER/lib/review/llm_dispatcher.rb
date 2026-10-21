@@ -80,6 +80,8 @@ module Master
         Io::GitHubRepoMiner => Io::LLM::GitHubRepoMiner,
         Io::ArxivResearch => Io::LLM::ArxivResearch,
         Io::PluginObserve => Io::LLM::PluginObserve,
+        Io::AssistantTasks => Io::LLM::AssistantTasks,
+        Io::CapabilityCatalog => Io::LLM::CapabilityCatalog,
         Io::AskLlm => Io::LLM::AskLlm,
         Io::GitContext => Io::LLM::GitContext,
         Io::AstEdit => Io::LLM::AstEdit,

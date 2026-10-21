@@ -135,6 +135,23 @@ detail: [
           detail: ["/ios — begin onboarding on an iPhone or iPad through the browser/PWA.",
                    "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
+        "capabilities" => {
+          summary: "discover core tools and optional plugin observation capabilities",
+          detail: ["/capabilities — list registered tools and plugin observation actions.",
+                   "/capabilities search <words> — search names and descriptions.",
+                   "/capabilities describe <tool|plugin|plugin:id:action> — inspect metadata without running it.",
+                   "The inventory is not a live health check. Plugins expose only declared read-only observations here; their own policy still governs execution."],
+        },
+        "task" => {
+          summary: "keep a durable private task list with bounded steps and evidence",
+          detail: ["/task — list open work and flag overdue due dates; no background notifications are sent.",
+                   "/task create <title> | show <id> | search <words>.",
+                   "/task step <id> <title> — add a step. /task start-step <id> <step-id> <note> marks work started.",
+                   "/task verify-step <id> <step-id> <evidence> records evidence; it is not independently authenticated.",
+                   "/task block-step <id> <step-id> <reason> | block <id> <reason> | resume <id> <note>.",
+                   "/task complete <id> <evidence> requires every step to be verified. /task update <id> title|description|priority|due_at <value>.",
+                   "Tasks stay in an owner-local, permission-restricted file. MASTER does not execute task steps or claim to send reminders."],
+        },
         "agenda" => {
           summary: "read a paired owner's imported local calendar",
           detail: [
@@ -326,7 +343,7 @@ detail: [
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
         "session" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
-        "privacy" => "constitution", "agenda" => "session",
+        "privacy" => "constitution", "agenda" => "session", "task" => "session", "capabilities" => "model",
         "review" => "review", "critique" => "review", "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",

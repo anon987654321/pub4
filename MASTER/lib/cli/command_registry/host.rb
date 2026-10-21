@@ -4,6 +4,8 @@ require_relative "../../operator/capability_graph"
 require_relative "../../io/exec"
 require_relative "../../ground/personal_workspace"
 require_relative "../../ground/personal_calendar"
+require_relative "../../ground/assistant_tasks"
+require_relative "../../ground/capability_catalog"
 
 module Master
   module CLI
@@ -163,6 +165,134 @@ module Master
         lines = ["agenda: no events for #{date} (#{result.fetch(:total_events)} imported)"] if lines.empty?
         lines << "agenda: note: #{result.fetch(:recurring_series)} recurring series are not expanded; verify their occurrences in the source calendar" if result.fetch(:recurring_series).positive?
         lines.join("\n")
+      end
+
+      # /task is a local, durable personal task board. It records supplied
+      # verification evidence but never executes actions or claims to send reminders.
+      def dispatch_task(root, ctx: nil)
+        return "task: local-owner only; visitor sessions cannot access personal tasks" if Fiber[:master_visitor] == true
+
+        args = Shellwords.split(arg_for(ctx).to_s)
+        action = args.shift.to_s.downcase
+        tasks = Master::Ground::AssistantTasks.new(root:)
+        case action
+        when "", "list"
+          render_task_list(tasks.call(action: "list"))
+        when "search"
+          query = args.join(" ")
+          return "task: usage /task search <words>" if query.empty?
+          render_task_list(tasks.call(action: "list", query:))
+        when "create"
+          title = args.join(" ")
+          return "task: usage /task create <title>" if title.empty?
+          task = tasks.call(action: "create", title:)
+          "task: created #{task["id"]} [#{task["state"]}] #{task["title"]}"
+        when "show"
+          return "task: usage /task show <id>" unless args.size == 1
+          render_task(tasks.call(action: "show", id: args.first))
+        when "step", "add-step"
+          id = args.shift.to_s
+          title = args.join(" ")
+          return "task: usage /task step <id> <step title>" if id.empty? || title.empty?
+          step = tasks.call(action: "add_step", id:, step_title: title).fetch("step")
+          "task: step #{step["id"]} added to #{id} — #{step["title"]}"
+        when "start-step", "block-step", "verify-step"
+          id = args.shift.to_s
+          step_id = args.shift.to_s
+          detail = args.join(" ")
+          return "task: usage /task #{action} <id> <step-id> <note or evidence>" if [id, step_id, detail].any?(&:empty?)
+          verb = { "start-step" => "start_step", "block-step" => "block_step", "verify-step" => "verify_step" }.fetch(action)
+          payload = verb == "verify_step" ? { evidence: detail } : { note: detail }
+          result = tasks.call(action: verb, id:, step_id:, **payload)
+          "task: #{action} #{result.fetch("step")["state"]} — #{result.fetch("step")["title"]}#{verb == "verify_step" ? " (evidence recorded; not independently authenticated)" : ""}"
+        when "block", "resume", "complete"
+          id = args.shift.to_s
+          detail = args.join(" ")
+          return "task: usage /task #{action} <id> <reason or evidence>" if id.empty? || detail.empty?
+          payload = action == "complete" ? { evidence: detail } : { note: detail }
+          result = tasks.call(action:, id:, **payload)
+          "task: #{result["id"]} [#{result["state"]}] #{result["title"]}#{action == "complete" ? " (completion recorded against supplied evidence)" : ""}"
+        when "update"
+          id = args.shift.to_s
+          field = args.shift.to_s
+          value = args.join(" ")
+          return "task: usage /task update <id> title|description|priority|due_at <value>" if id.empty? || value.empty?
+          return "task: update field must be title, description, priority or due_at" unless %w[title description priority due_at].include?(field)
+          task = tasks.call(action: "update", id:, **{ field.to_sym => value })
+          "task: updated #{task["id"]} — #{task["title"]}"
+        else
+          "task: list | search <words> | create <title> | show <id> | step <id> <title> | start-step <id> <step-id> <note> | verify-step <id> <step-id> <evidence> | block-step <id> <step-id> <reason> | block <id> <reason> | resume <id> <note> | complete <id> <evidence> | update <id> <field> <value>"
+        end
+      rescue ArgumentError, Master::Ground::AssistantTasks::Error => e
+        "task0: #{e.message}"
+      rescue StandardError => e
+        "task0: unavailable — #{e.class}: #{e.message}"
+      end
+
+      def render_task_list(result)
+        rows = result.fetch("tasks")
+        lines = rows.map do |task|
+          verified = Array(task["steps"]).count { |step| step["state"] == "verified" }
+          due = task["due_at"].to_s.empty? ? "" : " due=#{task["due_at"]}"
+          overdue = task["overdue"] ? " overdue" : ""
+          "#{task["id"]} [#{task["state"]}] #{task["title"]}#{due}#{overdue} steps=#{verified}/#{Array(task["steps"]).size}"
+        end
+        lines = ["task: no tasks yet; create one with /task create <title>"] if lines.empty?
+        lines << "task: showing #{rows.size} of #{result["count"]}" if result["truncated"]
+        lines << "task: due dates are local metadata; no background notifications are sent"
+        lines.join("\n")
+      end
+
+      def render_task(task)
+        lines = ["#{task["id"]} [#{task["state"]}] #{task["title"]}",
+                 "priority=#{task["priority"]} due=#{task["due_at"] || "none"}"]
+        lines << task["description"] unless task["description"].to_s.empty?
+        Array(task["steps"]).each do |step|
+          lines << "  #{step["id"]} [#{step["state"]}] #{step["title"]}"
+          lines << "    evidence: #{step["evidence"]}" unless step["evidence"].to_s.empty?
+          lines << "    note: #{step["note"]}" unless step["note"].to_s.empty?
+        end
+        lines << "verification: #{task["verification_note"]}" unless task["verification_note"].to_s.empty?
+        lines.join("\n")
+      end
+
+      # Show the universal inventory without running tools or loading provider code.
+      def dispatch_capabilities(root, ctx: nil)
+        args = Shellwords.split(arg_for(ctx).to_s)
+        action = args.shift.to_s.downcase
+        action = "list" if action.empty?
+        case action
+        when "list"
+          result = Master::Ground::CapabilityCatalog.call(action: "list", root:)
+          lines = ["capabilities: profile=#{result["profile"]}"]
+          result.fetch("core_tools").each do |tool|
+            profile = tool["allowed_by_current_profile"] ? "profile" : "withheld"
+            tier = tool["elevated_required"] ? "elevated" : "standard"
+            enabled = tool["boot_enabled"] ? "enabled" : "disabled"
+            lines << "tool #{tool["name"]} [#{profile}, #{tier}, #{enabled}] — #{tool["description"]}"
+          end
+          result.fetch("plugins").each do |plugin|
+            actions = plugin.fetch("observation_actions").map { |row| row["name"] }.join(",")
+            lines << "plugin #{plugin["id"]} [#{plugin["status"]}; observations=#{actions.empty? ? "none" : actions}] — #{plugin["description"]}"
+          end
+          lines << "capabilities: metadata only; registration does not prove runtime availability"
+          lines.join("\n")
+        when "search"
+          query = args.join(" ")
+          return "capabilities: usage /capabilities search <words>" if query.empty?
+          result = Master::Ground::CapabilityCatalog.call(action: "search", query:, root:)
+          result.fetch("results").map { |row| "#{row["kind"]} #{row["name"] || row["id"]} — #{row["description"]}" }.join("\n").then { |body| body.empty? ? "capabilities: no matches" : body }
+        when "describe"
+          name = args.join(" ")
+          return "capabilities: usage /capabilities describe <tool|plugin|plugin:id:action>" if name.empty?
+          JSON.pretty_generate(Master::Ground::CapabilityCatalog.call(action: "describe", name:, root:))
+        else
+          "capabilities: list | search <words> | describe <tool|plugin|plugin:id:action>"
+        end
+      rescue ArgumentError => e
+        "capabilities0: #{e.message}"
+      rescue StandardError => e
+        "capabilities0: unavailable — #{e.class}: #{e.message}"
       end
 
       SCREEN_NAME = /\A[\w.-]{1,40}\z/
