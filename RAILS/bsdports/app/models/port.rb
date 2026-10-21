@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "uri"
+
 class Port < ApplicationRecord
   # Engine-ize Shared via pub4-shared
   include Shared::Reactable
@@ -20,6 +22,7 @@ class Port < ApplicationRecord
 
   validates :name, :version, :pkgpath, presence: true
   validates :pkgpath, uniqueness: { scope: :platform_id }
+  validate :homepage_uses_safe_protocol
 
   scope :recent_updates, -> { joins(:port_updates).order("port_updates.committed_at DESC").distinct }
   scope :by_category, ->(cat) { where(category: cat) }
@@ -73,6 +76,15 @@ class Port < ApplicationRecord
 
   def watched_by?(user)
     watches.exists?(user: user)
+  end
+
+  def homepage_uses_safe_protocol
+    return if homepage.blank?
+
+    uri = URI.parse(homepage)
+    errors.add(:homepage, "must use HTTP or HTTPS") unless uri.is_a?(URI::HTTP) && uri.host.present?
+  rescue URI::InvalidURIError
+    errors.add(:homepage, "is invalid")
   end
 
   def latest_update
