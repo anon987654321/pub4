@@ -363,17 +363,25 @@ module Master
         raise "duplicate fault id" unless faults.map { |row| row.fetch("id") }.uniq.size == faults.size
         raise "duplicate case id" unless cases.map { |row| row.fetch("id") }.uniq.size == cases.size
 
-        surface_ids = surfaces.map { |row| row.fetch("id") }
+        surface_map = surfaces.to_h { |row| [row.fetch("id"), row] }
+        surface_ids = surface_map.keys
         fault_ids = faults.map { |row| row.fetch("id") }
         surfaces.each do |surface|
           rows = cases.select { |row| row.fetch("surface_id") == surface.fetch("id") }
+          actions = surface.fetch("actions")
+          action_ids = actions.map { |row| row.fetch("id") }
           raise "#{surface.fetch("id")} must have 20 cases" unless rows.size == 20
-          raise "#{surface.fetch("id")} must have 20 distinct actions" unless surface.fetch("actions").size == 20
+          raise "#{surface.fetch("id")} must have 20 actions" unless actions.size == 20
+          raise "#{surface.fetch("id")} has duplicate action ids" unless action_ids.uniq.size == action_ids.size
+          raise "#{surface.fetch("id")} has duplicate action text" unless actions.map { |row| row.fetch("action") }.uniq.size == actions.size
           raise "#{surface.fetch("id")} must cover all fault modes" unless rows.map { |row| row.fetch("fault_mode") }.sort == fault_ids.sort
         end
         cases.each do |row|
-          raise "unknown campaign surface" unless surface_ids.include?(row.fetch("surface_id"))
+          surface = surface_map[row.fetch("surface_id")]
+          raise "unknown campaign surface" unless surface
           raise "unknown campaign fault" unless fault_ids.include?(row.fetch("fault_mode"))
+          action_ids = surface.fetch("actions").map { |action| action.fetch("id") }
+          raise "#{row.fetch("id")} references an unknown action" unless action_ids.include?(row.fetch("action_id"))
           raise "invalid runtime status" unless RUNTIME_STATES.include?(row.fetch("runtime_status"))
           if %w[PASS FAIL].include?(row.fetch("runtime_status")) && row.fetch("runtime_evidence").to_s.empty?
             raise "#{row.fetch("id")} has a runtime verdict without evidence"
