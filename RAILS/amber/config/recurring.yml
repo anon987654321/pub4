@@ -22,6 +22,11 @@ production:
     class: Shared::PruneGuestUsersJob
     queue: default
     schedule: every day at 3:45am
+  # GDPR erasure: purge personal data after the 30-day deletion grace period.
+  purge_deleted_users:
+    class: UserPurgeJob
+    queue: bulk
+    schedule: every day at 3:50am
 
 development:
   declutter_hygiene:
