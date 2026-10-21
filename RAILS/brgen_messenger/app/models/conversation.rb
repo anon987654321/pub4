@@ -17,8 +17,8 @@ class Conversation < ApplicationRecord
 
   # A shared login is not a shared inbox. City-owned threads stay in their
   # city; nearby cells are intentionally global; unassigned legacy private
-  # threads remain visible only on the original brgen.no host until opened and
-  # pinned to Bergen. A registered host without a City row fails closed.
+  # threads remain visible only on the original brgen.no host until a pair
+  # lookup pins them to Bergen. A registered host without a City row fails closed.
   def self.current_city_scope
     tenant = ActsAsTenant.current_tenant
     return none if tenant.nil? && Current.domain.present?
@@ -86,10 +86,10 @@ class Conversation < ApplicationRecord
       .where(id: ConversationParticipant.where(user_id: b.id).select(:conversation_id))
       .order(:id).first
 
-    # Claim a legacy unassigned DM for Bergen on first use. The city scope makes
-    # this possible only on the original host, never on a second city.
+    # Claim a legacy unassigned DM for Bergen on the first pair lookup. The city
+    # scope makes this possible only on the original host, never in another city.
     if conversation && conversation.city_id.nil? && ActsAsTenant.current_tenant
-      conversation.update_column(:city_id, ActsAsTenant.current_tenant.id)
+      conversation.update_columns(city_id: ActsAsTenant.current_tenant.id, updated_at: Time.current)
     end
     conversation
   end
