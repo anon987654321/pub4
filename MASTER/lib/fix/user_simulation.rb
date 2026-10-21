@@ -34,90 +34,7 @@ module Master
         }
       ].map(&:freeze).freeze
 
-      SURFACE_TESTS = {
-        "brgen_auth" => %w[
-          RAILS/brgen/test/controllers/session_boundaries_test.rb
-          RAILS/brgen/test/integration/authorization_matrix_test.rb
-        ],
-        "brgen_social" => %w[
-          RAILS/brgen/test/system/tiptap_morph_test.rb
-          RAILS/brgen/test/integration/moderation_and_erasure_test.rb
-        ],
-        "market_discovery" => %w[
-          RAILS/brgen/test/controllers/storefront_search_test.rb
-          RAILS/brgen/test/controllers/marketplace_category_page_test.rb
-        ],
-        "market_checkout" => %w[
-          RAILS/brgen/test/system/marketplace_checkout_test.rb
-          RAILS/brgen/test/controllers/marketplace_basket_test.rb
-        ],
-        "dating" => %w[
-          RAILS/brgen/test/system/dating_swipe_test.rb
-          RAILS/brgen/test/controllers/dating_likes_test.rb
-        ],
-        "messenger" => %w[
-          RAILS/brgen/test/integration/front_page_messenger_entry_test.rb
-          RAILS/brgen/test/models/messenger_query_budget_test.rb
-        ],
-        "takeaway" => %w[
-          RAILS/brgen/test/controllers/takeaway_controllers_test.rb
-          RAILS/brgen/test/controllers/takeaway_group_orders_test.rb
-        ],
-        "maps_events" => %w[
-          RAILS/brgen/test/controllers/maps_layers_test.rb
-          RAILS/brgen/test/controllers/events_controller_test.rb
-        ],
-        "radio_playlist" => %w[
-          RAILS/brgen/test/controllers/playlist_writes_test.rb
-          RAILS/brgen/test/controllers/playlist_visibility_test.rb
-        ],
-        "tv" => %w[
-          RAILS/brgen/test/controllers/tv_feed_test.rb
-          RAILS/brgen/test/controllers/tv_watch_time_test.rb
-        ],
-        "amber_wardrobe" => %w[
-          RAILS/amber/test/controllers/wardrobe_authorization_test.rb
-          RAILS/amber/test/integration/wardrobe_mutations_test.rb
-        ],
-        "amber_outfits" => %w[
-          RAILS/amber/test/controllers/dressing_room_test.rb
-          RAILS/amber/test/services/style_assistant_test.rb
-        ],
-        "amber_social" => %w[
-          RAILS/amber/test/integration/social_guards_test.rb
-          RAILS/amber/test/controllers/posts_controller_anonymous_test.rb
-        ],
-        "bsdports" => %w[
-          RAILS/bsdports/test/controllers/ports_controller_test.rb
-          RAILS/bsdports/test/models/dependency_tree_test.rb
-        ],
-        "master_face" => %w[
-          RAILS/master/test/face_boot.test.mjs
-          RAILS/master/test/primer_single_fire.test.mjs
-        ],
-        "master_chat" => %w[
-          RAILS/master/test/chat_degraded_send.test.mjs
-          RAILS/master/test/sse_contract.test.mjs
-        ],
-        "master_cli" => %w[
-          MASTER/test/test_cli.rb
-          MASTER/test/test_bin_scripts.rb
-        ],
-        "master_fix" => %w[
-          MASTER/test/test_repair_loop_policy.rb
-          MASTER/test/test_fix_protocol.rb
-        ],
-        "pwa" => %w[
-          RAILS/test/pwa_offline_store.test.mjs
-          RAILS/test/stimulus_components_runtime_contract.test.mjs
-        ],
-        "cross_cut" => %w[
-          RAILS/brgen/test/integration/authorization_matrix_test.rb
-          RAILS/amber/test/integration/authorization_matrix_test.rb
-          RAILS/bsdports/test/integration/authorization_matrix_test.rb
-          RAILS/master/test/face_boot.test.mjs
-        ]
-      }.transform_values(&:freeze).freeze
+
 
       RUNTIME_STATES = %w[NOT_RUN PASS FAIL BLOCKED SKIPPED].freeze
       MAX_TEST_FILES = 4
@@ -167,6 +84,8 @@ module Master
         ids.each do |id|
           surface = surfaces.fetch(id)
           lines << "Surface #{id}; actor: #{surface.fetch("actor")}; invariant: #{surface.fetch("contract")}"
+          focused = Array(surface.fetch("focused_test_paths", []))
+          lines << "Focused existing tests: #{focused.join(", ")}" unless focused.empty?
         end
         cases.each do |row|
           surface = surfaces.fetch(row.fetch("surface_id"))
@@ -235,6 +154,11 @@ module Master
         end
       end
 
+      def focused_test_paths_for(surface_id)
+        surface = campaign.fetch("surfaces").find { |row| row.fetch("id") == surface_id }
+        Array(surface&.fetch("focused_test_paths", []))
+      end
+
       def test_paths_for(path)
         relative = relative_path(path)
         return [] unless relative
@@ -243,8 +167,8 @@ module Master
         candidates = []
         candidates << relative if test_path?(relative)
         candidates.concat(matching_test_paths(relative))
-        mapped = ids.flat_map { |id| SURFACE_TESTS.fetch(id, []).first(1) }
-        secondary = ids.flat_map { |id| SURFACE_TESTS.fetch(id, []).drop(1) }
+        mapped = ids.flat_map { |id| focused_test_paths_for(id).first(1) }
+        secondary = ids.flat_map { |id| focused_test_paths_for(id).drop(1) }
         candidates.concat(mapped).concat(secondary)
         candidates.select { |candidate| File.file?(File.join(@root, candidate)) }.uniq.first(MAX_TEST_FILES)
       end
