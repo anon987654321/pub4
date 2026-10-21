@@ -101,6 +101,13 @@ class LayoutScoreTest < Minitest::Test
                     "only the 20px visible tail belongs to an 800px viewport"
   end
 
+  def test_centering_uses_the_clipped_union_centroid
+    nested = [el(0, 0, 400, 400), el(0, 0, 100, 400)]
+    assert_equal 1.0, L.centering(payload(nested), nested),
+                 "a nested left-aligned child must not pull a centered parent off-centre"
+    assert_equal 1.0, compute(nested).subs["centering"]
+  end
+
   def test_missing_parts_redistribute_weight
     result = compute([])
     assert_equal 0.0, result.score
