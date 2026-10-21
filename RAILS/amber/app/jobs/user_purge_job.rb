@@ -101,6 +101,18 @@ class UserPurgeJob < ApplicationJob
     CreatorWardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
     WardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
     Recommendation.where(item_id: item_ids).or(Recommendation.where(outfit_id: outfit_ids)).find_each(&:destroy!)
+    # Polymorphic activity has no database foreign keys, so every other user's
+    # reaction, notification or vote on a private object needs explicit removal.
+    if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
+      Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids).find_each(&:destroy!)
+      Shared::Reaction.where(reactable_type: "Outfit", reactable_id: outfit_ids).find_each(&:destroy!)
+    end
+    if defined?(Shared::Notification) && Shared::Notification.table_exists?
+      Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids).find_each(&:destroy!)
+      Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids).find_each(&:destroy!)
+    end
+    Vote.where(votable_type: "Item", votable_id: item_ids).find_each(&:destroy!)
+    Vote.where(votable_type: "Outfit", votable_id: outfit_ids).find_each(&:destroy!)
     # These are per-user records, but Item declares them as has_one even
     # though the schema allows multiple users to reference the same item.
     # Explicitly remove every user's rows before erasing the target item.
