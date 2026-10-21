@@ -96,7 +96,7 @@ module Master
       end
 
       def canonical_token_path?(relative)
-        relative.match?(%r{\\ARAILS/(?:__shared|shared)/app/assets/stylesheets/_dialect_tokens\\.scss\\z})
+        relative.match?(%r{\ARAILS/(?:__shared|shared)/app/assets/stylesheets/_dialect_tokens\.scss\z})
       end
 
       def excluded?(relative, config)
