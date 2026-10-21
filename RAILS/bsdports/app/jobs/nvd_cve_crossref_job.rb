@@ -12,7 +12,12 @@ class NvdCveCrossrefJob < ApplicationJob
       return
     end
 
-    NvdCve.crossref(port)
-    port.record_activity!("PortCvesCrossreferenced", source_vertical: "bsdports")
+    result = NvdCve.crossref(port)
+    action = result.status == :succeeded ? "PortCvesCrossreferenced" : "PortCvesCrossrefFailed"
+    port.record_activity!(
+      action,
+      source_vertical: "bsdports",
+      metadata: { status: result.status.to_s, advisory_count: result.count, error: result.error }
+    )
   end
 end
