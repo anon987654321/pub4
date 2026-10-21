@@ -384,6 +384,14 @@ tokens:
       border_soft: "rgb(164 190 244 / 23%)"
       border_strong: "rgb(175 202 255 / 34%)"
       hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
+      chrome_bg: "#11131a"
+      chrome_surface: "#171a23"
+      chrome_surface_active: "#202431"
+      chrome_border: "#303747"
+      chrome_hover: "rgb(183 182 239 / 8%)"
+      chrome_text: "#dce1eb"
+      chrome_muted: "#a0a8b8"
+      chrome_focus: "#b7b6ef"
     layout:
       tap-min: 44px
       text-meta: "0.8125rem"

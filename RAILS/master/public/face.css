@@ -66,6 +66,14 @@
   --border-soft: rgb(164 190 244 / 23%);
   --border-strong: rgb(175 202 255 / 34%);
   --hover-tint: color-mix(in srgb, var(--face-fg) 8%, transparent);
+  --chrome-bg: #11131a;
+  --chrome-surface: #171a23;
+  --chrome-surface-active: #202431;
+  --chrome-border: #303747;
+  --chrome-hover: rgb(183 182 239 / 8%);
+  --chrome-text: #dce1eb;
+  --chrome-muted: #a0a8b8;
+  --chrome-focus: #b7b6ef;
   --tap-min: 44px;
   --text-meta: 0.8125rem;
   --text-title: 1.25rem;
@@ -774,17 +782,22 @@ body.mission-control .grid {
 }
 body.mission-control .panel {
   margin-block-end: 24px;
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--chrome-border);
 }
 body.mission-control .panel h2 {
   font-size: var(--text-meta);
   font-weight: 400;
-  color: var(--face-muted);
-  margin-bottom: 4px;
+  color: var(--chrome-muted);
+  margin-bottom: 6px;
 }
 body.mission-control pre {
+  color: var(--chrome-text);
   font-family: var(--font-mono);
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.6;
 }
 body.mission-control .meta { opacity: 0.65; margin-bottom: 8px; }
 body.mission-control a { color: var(--c-text); }
@@ -1851,10 +1864,10 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   padding: 9px 12px;
   gap: 8px;
   transform: translate(-50%, 0);
-  border: 1px solid rgb(155 181 233 / 24%);
-  border-radius: 17px;
-  background: rgb(9 13 27 / 88%);
-  color: #e7eeff;
+  border: 1px solid var(--chrome-border);
+  border-radius: 10px;
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
   font: 400 1rem/1.5 var(--font-mono);
   backdrop-filter: blur(18px) saturate(120%);
   transition: opacity 180ms ease, border-color 180ms ease, background 180ms ease;
@@ -1866,8 +1879,8 @@ body:not(.face-ready) #zsh.live {
   background: rgb(9 13 27 / 88%);
 }
 body #zsh.live:focus-within {
-  background: rgb(12 18 35 / 96%);
-  border-color: rgb(137 195 255 / 52%);
+  background: var(--chrome-surface-active);
+  border-color: var(--chrome-focus);
 }
 body.zen #zsh {
   opacity: 0.96;
@@ -1882,13 +1895,13 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
   min-height: 42px;
   padding: 8px 0;
   font: 400 1rem/1.5 var(--font-mono);
-  color: #edf2ff;
-  caret-color: #8ce5ef;
+  color: var(--chrome-text);
+  caret-color: var(--pub4-signal);
   user-select: text;
   -webkit-user-select: text;
   touch-action: auto;
 }
-#zsh input::placeholder, #zsh textarea::placeholder { color: rgb(165 180 214 / 72%); }
+#zsh input::placeholder, #zsh textarea::placeholder { color: var(--chrome-muted); }
 #photo-button, #music-btn, #spin-btn {
   min-inline-size: 44px;
   min-block-size: 44px;
@@ -2073,8 +2086,9 @@ body.mission-control .mission-heading {
   padding-block-start: var(--safe-top);
   padding-inline-start: var(--inset-l);
   padding-inline-end: calc(var(--inset-r) + var(--tap-min));
-  background: color-mix(in oklch, var(--face-bg) 92%, var(--c-code));
-  color: var(--face-fg);
+  background: var(--chrome-bg);
+  color: var(--chrome-text);
+  border-block-end: 1px solid var(--chrome-border);
 }
 .master-titlebar .brand-mark {
   display: none;
@@ -2120,7 +2134,7 @@ body.mission-control .mission-heading {
   min-inline-size: var(--tap-min);
   min-block-size: var(--tap-min);
   padding-inline: 0.75rem;
-  color: color-mix(in oklch, var(--face-muted) 82%, var(--c-code));
+  color: var(--chrome-muted);
   font: var(--text-meta)/1 var(--font-mono);
   text-decoration: none;
   white-space: nowrap;
@@ -2129,12 +2143,12 @@ body.mission-control .mission-heading {
               color var(--transition-fast) var(--ease-out);
 }
 .master-session-tab:hover {
-  background: color-mix(in oklch, var(--face-bg) 82%, var(--c-code));
-  color: var(--face-fg);
+  background: var(--chrome-hover);
+  color: var(--chrome-text);
 }
 .master-session-tab[aria-current="page"] {
-  background: color-mix(in oklch, var(--face-bg) 88%, var(--c-code));
-  color: var(--face-fg);
+  background: var(--chrome-surface-active);
+  color: var(--chrome-text);
   font-weight: 600;
 }
 .master-session-tab[aria-current="page"]::after {
@@ -2147,7 +2161,7 @@ body.mission-control .mission-heading {
 }
 .master-session-tab:focus-visible {
   z-index: 1;
-  outline: 2px solid var(--pub4-signal);
+  outline: 2px solid var(--chrome-focus);
   outline-offset: -3px;
 }
 body.mission-control .master-titlebar { padding-inline-end: var(--inset-r); }
@@ -2159,6 +2173,31 @@ body.mission-control .mission-heading {
   .master-titlebar { gap: 0.5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
   .master-session-tab { padding-inline: 0.875rem; }
+}
+@media (max-width: 479px) {
+  body.mission-control {
+    padding-inline: calc(12px + var(--safe-left)) calc(12px + var(--safe-right));
+  }
+  body.mission-control .panel {
+    margin-block-end: 20px;
+    padding-inline-start: 10px;
+  }
+  .master-titlebar { background: var(--chrome-bg); }
+  .master-session-tab {
+    padding-inline: 0.625rem;
+    font-size: 0.75rem;
+  }
+  #zsh {
+    width: calc(100dvw - 16px - var(--safe-left) - var(--safe-right));
+    min-height: 60px;
+    padding: 7px;
+    gap: 4px;
+    border-radius: 8px;
+  }
+  #photo-button, #music-btn, #spin-btn {
+    min-inline-size: var(--tap-min);
+    min-block-size: var(--tap-min);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .master-titlebar *, .master-session-tab {

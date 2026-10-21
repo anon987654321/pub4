@@ -997,6 +997,26 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
 });
 
 
+test("Ghostty-inspired chrome uses canonical graphite and violet tokens without weakening mobile targets", () => {
+  const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
+  const generated = readFileSync(join(railsRoot, "__shared", "design_tokens.yml"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+
+  for (const [name, value] of [
+    ["chrome_bg", "#11131a"],
+    ["chrome_surface", "#171a23"],
+    ["chrome_surface_active", "#202431"],
+    ["chrome_border", "#303747"],
+    ["chrome_focus", "#b7b6ef"]
+  ]) {
+    assert.ok(tokens.includes(name + ': "' + value + '"'), "canonical token missing " + name);
+    assert.ok(generated.includes(name + ": " + value), "generated token missing " + name);
+    assert.ok(css.includes("--" + name.replaceAll("_", "-") + ": " + value), "CSS projection missing " + name);
+  }
+  assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 1px solid var\(--chrome-border\)/s);
+  assert.match(css, /@media \(max-width: 479px\) \{[\s\S]*?min-inline-size: var\(--tap-min\);[\s\S]*?min-block-size: var\(--tap-min\);/);
+});
+
 test("shell chrome uses plain CLI prompt words and the monospace source font", () => {
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");

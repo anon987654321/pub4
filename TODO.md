@@ -12,7 +12,7 @@ Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-
 
 ## MASTER CLI, web, voice, and shared session
 
-- [ ] Finish the Ghostty-inspired web-console pass with rendered visual review. The source now has real Chat/Mission routes, mobile-first session chrome, and a canonical PWA theme color; final spacing, colour balance, face/prompt coexistence, dashboard density, and desktop/mobile screenshots remain unverified.
+- [ ] Finish the Ghostty-inspired web-console pass with rendered visual review. The canonical palette now separates graphite shell surfaces, muted violet focus, neutral text, and the sparse lime semantic signal; the face renderer remains the focal point. Source-level mobile rules are in place, but final spacing, face/prompt coexistence, dashboard density, contrast measurements, and desktop/mobile screenshots remain unverified.
 - [ ] Verify the installed PWA end to end: install, launch, safe-area layout, offline fallback, stale asset handling, service-worker update, and recovery after a failed request. Confirm that the shared manifest stays host-aware and that only intended stable resources are cached.
 - [ ] Validate parity across CLI and browser for conversation/session state and the requested /connect, /join, and /msg channel flows. Check destination, reconnect, history, interruption, and error behavior; do not assume parity from shared naming.
 - [ ] Run the full /fix phase loop per tree and demonstrate truthful DONE, PLATEAU, HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED, and TIMEOUT states. Verify dirty-tree preservation, interrupted writes, disk exhaustion, retry convergence, and rollback/undo behavior.
@@ -55,7 +55,7 @@ Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-
 - [ ] Benchmark RubyLLM routing/provider gains using representative workloads: latency, success rate, token/context use, cost, retries, circuit breakers, and fallback quality. Keep measurements per provider/model and distinguish observed values from estimates.
 - [ ] Re-run the DRY/KISS and duplication census across the current tree. Review duplicate decisions, one-use abstractions, generated files, single-child directories, stale pointers/docs, and concepts that should have one authoritative owner. Preserve public paths/contracts and compare structural ratchets before and after changes.
 - [ ] Re-run the four-tree performance sweep with before/after evidence: boot, CLI response, web first paint and interaction latency, JS/CSS payloads, memory/CPU, background work, and Dilla render time. Avoid claims based only on source size or unrepresentative local machines.
-- [ ] Reconcile older conversation requests against executable source/tests before closing them. The current GitHub listing has no open issues or pull requests, so unresolved chat commitments must stay represented here until proven complete.
+- [ ] Reconcile older conversation requests against executable source/tests before closing them. Current issue search exposes legacy open issues (#416, #415, #396, #93, #92, #91, #90, #89, #88, #87, #86, #83, #82, #81, #80), so inspect their scope and close only with evidence; do not assume an empty issue list. Prior chat commitments still outstanding include the larger DRY/KISS census, Dilla/Postpro and Brgen SCSS source consolidation, the complete DeepSeek/Master findings audit, and fresh bounded tests across all four trees. Keep these represented here until proven complete.
 
 ## Closure rule
 
