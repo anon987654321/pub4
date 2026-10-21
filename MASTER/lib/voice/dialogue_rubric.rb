@@ -114,6 +114,29 @@ module Master
         |mental\s+health\s+professional|depresjon|psykiatri|diagnose|medisin|antidepressiva|bipolar
         |psykose|mani|autisme|panikklidelse|behandling|bivirkninger|psykolog|psykisk\s+helsepersonell)\b
       }ix.freeze
+      AI_MENTAL_HEALTH_CUES = %r{
+        \b(?:master|ai|llms?|chatbots?|large\s+language\s+models?|artificial\s+intelligence
+        |ai\s+therapist|psychotherapy\s+evaluation|model\s+evaluation|red[- ]?team|benchmarks?)\b
+      }ix.freeze
+      DEPRESSION_CUES = %r{
+        \b(?:depress(?:ed|ion)|antidepressant|depresjon|antidepressiva|nedstemthet)\b
+      }ix.freeze
+      OCD_CUES = %r{
+        \b(?:ocd|obsessive[- ]compulsive|tvangslidelse|tvangstanker|tvangshandlinger)\b
+      }ix.freeze
+      TRAUMA_CUES = %r{
+        \b(?:ptsd|post[- ]traumatic|trauma|traumatized|traumatisert|traume|flashbacks)\b
+      }ix.freeze
+      BIPOLAR_CUES = %r{
+        \b(?:bipolar|mania|manic|bipolaritet|mani|manisk)\b
+      }ix.freeze
+      COPING_CUES = %r{
+        \b(?:cbt|dbt|act|behavioral\s+activation|behavioural\s+activation|emotion\s+regulation
+        |mindfulness|coping\s+skills|mestring|følelsesregulering|kognitiv\s+terapi|dialektisk\s+atferdsterapi)\b
+      }ix.freeze
+      NORWAY_CUES = %r{
+        \b(?:norway|norwegian|norge|noreg|norsk|norske|bokmål|bokmal)\b|[æøå]
+      }ix.freeze
 
       def prompt_block(root: Master::ROOT)
         items = data(root:).fetch("dimensions", {})
@@ -144,12 +167,32 @@ module Master
         areas << "manipulation_resilience" if text.match?(MANIPULATION_CUES)
         areas.concat(%w[relationship_safety manipulation_resilience]) if text.match?(CRISIS_CUES)
         areas << "martial_and_contemplative_practice" if text.match?(MARTIAL_CUES)
-        include_sources = text.match?(RESEARCH_CUES) || text.match?(CLINICAL_DETAIL_CUES) || text.match?(CRISIS_CUES)
+        include_sources = text.match?(RESEARCH_CUES) || text.match?(CLINICAL_DETAIL_CUES) ||
+                          text.match?(CRISIS_CUES) || text.match?(AI_MENTAL_HEALTH_CUES)
+        topic_keys = research_topics_for(text)
 
-        support_practice_block(support, areas: areas.uniq, include_sources:)
+        support_practice_block(support, areas: areas.uniq, include_sources:, topic_keys:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "dialogue_rubric.support_prompt_for", severity: :load_bearing)
         support_fallback_prompt(text)
+      end
+
+      def research_topics_for(text)
+        topics = []
+        topics << "ai_evaluation" if text.match?(AI_MENTAL_HEALTH_CUES)
+        topics << "crisis" if text.match?(CRISIS_CUES)
+        topics << "relationship" if text.match?(RELATIONSHIP_CUES)
+        topics << "manipulation" if text.match?(MANIPULATION_CUES)
+        topics << "martial" if text.match?(MARTIAL_CUES)
+        topics << "depression" if text.match?(DEPRESSION_CUES)
+        topics << "ocd" if text.match?(OCD_CUES)
+        topics << "trauma" if text.match?(TRAUMA_CUES)
+        topics << "bipolar" if text.match?(BIPOLAR_CUES)
+        topics << "coping" if text.match?(COPING_CUES)
+        topics << "clinical" if text.match?(CLINICAL_DETAIL_CUES)
+        topics << "norway" if text.match?(NORWAY_CUES)
+        topics << "general" if text.match?(RESEARCH_CUES) || topics.empty?
+        topics.uniq
       end
 
       # A missing or malformed clinical protocol must degrade to conservative
@@ -178,7 +221,7 @@ module Master
         XML
       end
 
-      def support_practice_block(support, areas:, include_sources: false)
+      def support_practice_block(support, areas:, include_sources: false, topic_keys: [])
         lines = [support.fetch("activation")]
         sections = {
           "response_contract" => "Practical response",
@@ -199,9 +242,16 @@ module Master
           lines.concat(items.map { |item| "- #{item}" })
         end
 
-        sources = include_sources ? Array(support["research_sources"]) : []
+        sources = if include_sources
+                    Array(support["research_sources"]).select do |source|
+                      source_topics = Array(source["topics"]).map(&:to_s)
+                      source_topics.empty? || !(source_topics & Array(topic_keys).map(&:to_s)).empty?
+                    end
+                  else
+                    []
+                  end
         unless sources.empty?
-          lines << "Research starting points — open current sources and verify relevance before citing:"
+          lines << "Research starting points — open the most relevant current sources and verify relevance before citing:"
           sources.each do |source|
             lines << "- #{source.fetch("name")}: #{source.fetch("url")} — #{source.fetch("use")}"
           end
@@ -273,6 +323,7 @@ module Master
         raise ArgumentError, "support practice sources missing" unless sources.is_a?(Array) && sources.size >= 6
         sources.each do |source|
           raise ArgumentError, "support practice source missing field" unless %w[name url use].all? { |key| source[key].to_s.strip != "" }
+          raise ArgumentError, "support practice source topics missing" unless source["topics"].is_a?(Array) && source["topics"].any?
           raise ArgumentError, "support practice source URL invalid" unless source["url"].to_s.match?(%r{\Ahttps://\S+\z})
         end
         scenarios = support["evaluation_scenarios"]
