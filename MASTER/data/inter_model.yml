@@ -5,8 +5,8 @@ version: "1.0.0"
 
 message:
   roles: [proposer, critic, synthesizer, repair, judge]
-  required: [role, authority_boundary, task, success_criteria, constraints]
-  optional: [artifact_ref, prior_findings, budget, forbidden]
+  required: [role, authority_boundary, task, success_criteria, constraints, artifact_ref]
+  optional: [prior_findings, budget, forbidden]
   authority_boundary: one concise sentence naming what the model may and may not do
   constraints: list of applicable Law identifiers or explicit hard limits
   artifact_ref: sha256 of the exact bounded artifact supplied for this turn
