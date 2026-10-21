@@ -43,6 +43,7 @@ class User < ApplicationRecord
   has_many :followers,       through: :follows_as_followee, source: :follower
   has_many :sessions,        dependent: :destroy, inverse_of: :user
   has_many :external_identities, dependent: :destroy
+  has_many :account_merges, dependent: :destroy
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
