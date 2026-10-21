@@ -292,6 +292,11 @@ body[data-hidden-tab="1"] #cognition-ecology {
   outline: none;
 }
 
+#cmd-palette-input:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
+}
+
 #cmd-palette-list {
   list-style: none;
   max-height: 42vh;

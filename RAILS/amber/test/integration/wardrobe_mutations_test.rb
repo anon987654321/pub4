@@ -70,6 +70,29 @@ class WardrobeMutationsTest < ActionDispatch::IntegrationTest
     assert_redirected_to outfit_path(outfit)
   end
 
+  test "cannot link another owner's item into a personal wardrobe" do
+    owner = make_user("foreign_owner")
+    other = make_user("foreign_entry")
+    foreign_item = owner.items.create!(title: "Private coat", category: "Outerwear")
+    sign_in_amber(other)
+
+    assert_no_difference -> { WardrobeItem.count } do
+      post wardrobe_items_path, params: { wardrobe_item: { item_id: foreign_item.id } }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "metadata edits do not re-enqueue media work when photos are unchanged" do
+    user = make_user("metadata_edit")
+    sign_in_amber(user)
+    item = user.items.create!(title: "Cotton shirt", category: "Tops")
+
+    assert_no_enqueued_jobs(only: WardrobeMediaJob) do
+      patch item_path(item), params: { item: { title: "Cotton shirt, updated" } }
+    end
+    assert_redirected_to item_path(item)
+  end
+
   test "non-owner cannot wear another user item" do
     owner = make_user("item_owner")
     other = make_user("item_other")

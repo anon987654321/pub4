@@ -22,6 +22,7 @@
     ],
     amber: [
       [ :home, root_path ], [ :search, ai_search_path ], [ :style_profile, ai_style_profile_path ],
+      [ :privacy_settings, privacy_setting_path ],
       *(authenticated? ? [] : [ [ :sign_in, new_session_path ], [ :create_account, new_registration_path ] ])
     ]
   }

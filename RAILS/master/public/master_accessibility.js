@@ -22,6 +22,8 @@
     const label = "microphone " + String(state);
     node.dataset.captureState = state;
     node.setAttribute("aria-label", label);
+    node.title = label;
+    node.setAttribute("aria-pressed", state === "listening" ? "true" : "false");
     if (text) text.textContent = label;
   }
 

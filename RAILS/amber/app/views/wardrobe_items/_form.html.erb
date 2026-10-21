@@ -3,7 +3,8 @@
 
   <%= tag.fieldset do %>
     <%= form.label :item_id %>
-    <%= form.number_field :item_id, required: true, inputmode: "numeric" %>
+    <%= form.collection_select :item_id, Current.user.items.order(:title), :id, :title,
+          { prompt: true }, { required: true } %>
   <% end %>
 
   <%= tag.fieldset do %>

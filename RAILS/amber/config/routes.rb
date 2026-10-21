@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   }
 
   resource :registration, only: %i[new create]
+  resource :privacy_setting, only: %i[show update]
 
   resource :session, only: %i[new create destroy] do
     # Passwordless sign-in. The mailer, the token generator and the columns
@@ -117,6 +118,7 @@ Rails.application.routes.draw do
     get "style", to: "ai#style_profile", as: :ai_style_profile
     post "style", to: "ai#style_profile"
     get "pack", to: "ai#packing_list", as: :ai_packing_list
+    post "pack", to: "ai#packing_list", as: :ai_create_packing_list
   end
 
   get "demo", to: "demo_wardrobe#index", as: :demo_wardrobe

@@ -817,6 +817,15 @@ en:
         title: "%{joy} of %{total} garments spark joy"
         body: "The other %{count} are the ones you push past to reach these. Empty rail is not waste — it is what makes the remaining garments visible."
         principle: "Negative space is the design"
+
+  privacy_settings:
+    title: "Privacy and AI"
+    lead: "Choose whether Amber may send wardrobe details to an external AI provider. Local wardrobe rules continue to work when this is off."
+    ai_heading: "AI processing"
+    allow_ai_analysis: "Allow external AI analysis"
+    ai_description: "When disabled, Amber uses local rules and does not send wardrobe details to OpenRouter or use the optional STUDIO outfit-photo service."
+    save: "Save privacy settings"
+    saved: "Privacy settings saved."
   footer:
     label: "Site"
     wardrobe: "Wardrobe"
@@ -850,6 +859,7 @@ en:
       home: "Home"
       search: "Search"
       style_profile: "Style profile"
+      privacy_settings: "Privacy and AI"
       sign_in: "Sign in"
       create_account: "Create account"
     locales:

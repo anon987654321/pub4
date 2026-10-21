@@ -19,6 +19,15 @@ class WardrobeItemTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:user_id], I18n.t("errors.messages.taken")
   end
 
+  test "cannot associate another owner's garment with this wardrobe" do
+    other = User.strict_loading(false).create!(email_address: "wardrobe-other@amber.test", password: "password123")
+    foreign_item = Item.create!(user: other, title: "Private coat", category: "Outerwear")
+    entry = WardrobeItem.new(user: @user, item: foreign_item)
+
+    assert_not entry.valid?
+    assert entry.errors[:item_id].any?
+  end
+
   test "validates condition inclusion" do
     entry = WardrobeItem.new(user: @user, item: @item, condition: "mythical")
 

@@ -45,7 +45,7 @@ class ItemsController < ApplicationController
 
   def show
     @item.record_activity!("AmberItemViewed", source_vertical: "amber") unless passive_request?
-    @ai_available = WardrobeAi.configured?
+    @ai_available = WardrobeAi.new(Current.user).available?
     # AffiliateLink.new, not @item.affiliate_links.build: build appends the
     # unsaved record to the loaded association, so the view's
     # `@item.affiliate_links.any?` became true for items with none and then
@@ -79,9 +79,10 @@ class ItemsController < ApplicationController
   def edit; end
 
   def update
+    photos_changed = incoming_photos?
     return render(:edit, status: :unprocessable_entity) unless @item.update(item_params)
 
-    WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
+    WardrobeMediaJob.perform_later(@item.id) if photos_changed && @item.photos.attached?
     @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
     redirect_to(@item, notice: t("flash.updated"))
   end
@@ -199,6 +200,10 @@ class ItemsController < ApplicationController
 
   def apply_lifecycle_filter(scope)
     scope.merge(Item.for_lifecycle(params[:lifecycle]))
+  end
+
+  def incoming_photos?
+    Array(params.dig(:item, :photos)).any?(&:present?)
   end
 
   def item_params

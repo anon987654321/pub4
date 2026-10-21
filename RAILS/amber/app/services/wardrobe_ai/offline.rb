@@ -105,6 +105,7 @@ class WardrobeAi
       [ {
         "name" => [ occasion, season, "Closet combo" ].compact_blank.join(" · "),
         "items" => picks.map(&:title),
+        "item_ids" => picks.map(&:id),
         "description" => "Rule-based from your active wardrobe (AI key not configured or model returned empty).",
         "source" => "rule"
       } ]

@@ -31,9 +31,9 @@ class HomeController < ApplicationController
     # and `price` is a MoneyInOre reader, so every signed-in dashboard raised
     # SQLite3::SQLException: no such column: price.
     @worst_cpw = items.where("price_cents > 0 AND times_worn > 0")
-                             .select(&:cost_per_wear)
-                             .sort_by { |i| -i.cost_per_wear }
-                             .first(3)
+                      .order(Arel.sql("price_cents * 1.0 / times_worn DESC, id ASC"))
+                      .limit(3)
+                      .to_a
     @aging_unworn = items.aging_unworn.limit(4)
     @recent_items = items.recent.limit(6)
     @planned_this_week = Current.user.planned_outfits.this_week.includes(:outfit)

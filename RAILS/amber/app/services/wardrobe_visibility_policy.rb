@@ -22,6 +22,7 @@ class WardrobeVisibilityPolicy
   end
 
   def can_run_ai_analysis?
-    @viewer == @owner && (@owner.privacy_setting&.allow_ai_analysis? != false)
+    @viewer == @owner && @owner.present? &&
+      PrivacySetting.where(user_id: @owner.id, allow_ai_analysis: true).exists?
   end
 end

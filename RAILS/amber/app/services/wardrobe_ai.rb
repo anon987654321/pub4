@@ -26,10 +26,18 @@ class WardrobeAi
   # Pass client: nil to force offline heuristics (explicit); omit for auto OpenRouter.
   def initialize(user, client: :auto)
     @user = user
-    @client = client == :auto ? build_client : client
+    # Consent is checked even for an injected client. Missing settings and
+    # failed lookups fail closed; local rules remain available.
+    @client = if remote_ai_allowed?
+      client == :auto ? build_client : client
+    end
   end
 
   def available? = @client.present?
+
+  # Whether consent allows an external processing path, independent of whether
+  # a particular provider is configured or reachable.
+  def external_processing_allowed? = remote_ai_allowed?
 
   def analyze_joy(item)
     prompt = <<~PROMPT
@@ -58,25 +66,30 @@ class WardrobeAi
   end
 
   def suggest_outfits(occasion: nil, season: nil)
-    items = @user.items.joy.active_wardrobe.limit(20).to_a
-    items = @user.items.active_wardrobe.limit(20).to_a if items.empty?
-    return rule_based_outfits(items, occasion:, season:) if items.empty? || !@client
+    items = @user.items.joy.in_rotation.limit(20).to_a
+    items = @user.items.in_rotation.limit(20).to_a if items.empty?
+    return [] if items.empty?
 
-    items_summary = items.map { |i| "#{i.title} (#{i.category}, #{i.color})" }.join(", ")
+    unless @client
+      return normalize_outfits(rule_based_outfits(items, occasion:, season:), items)
+    end
+
+    items_summary = items.map { |item| "#{item.id}: #{item.title} (#{item.category}, #{item.color})" }.join(", ")
     prompt = <<~PROMPT
-      You are a fashion stylist with vision. Suggest 3 outfit combinations (3 items each) from the wardrobe.
-      Use both the text metadata and the attached photos to judge fit, colour harmony, style, and occasion.
+      Suggest up to 3 outfit combinations from the listed garments.
+      Every garment starts with its unique numeric ID. Return JSON only:
+      {"outfits":[{"name":"outfit name","item_ids":[123,456,789],"description":"why it works"}]}
+      Use only IDs from the supplied catalogue. Never invent IDs or substitute garments.
       #{occasion ? "Occasion: #{occasion}" : ""}
       #{season ? "Season: #{season}" : ""}
-      Items: #{items_summary}
-      Reply ONLY with JSON: {"outfits": [{"name": "outfit name", "items": ["item title 1", "item title 2", "item title 3"], "description": "why it works"}]}
+      Garments: #{items_summary}
     PROMPT
-    vision_items = items.select { |i| i.photos.attached? }.first(5)
-    attachments = vision_items.filter_map { |item| item.photos.first if item.photos.attached? }
+    attachments = items.select { |item| item.photos.attached? }.first(5).filter_map do |item|
+      item.photos.first if item.photos.attached?
+    end
     outfits = chat(prompt, with: attachments.presence)["outfits"] || []
     outfits = rule_based_outfits(items, occasion:, season:) if outfits.blank?
-    Array(outfits).each { |o| o["source"] ||= @client ? PROVIDER_SOURCE : "rule" if o.is_a?(Hash) }
-    outfits
+    normalize_outfits(outfits, items)
   end
 
   def declutter_candidates
@@ -196,27 +209,66 @@ class WardrobeAi
   end
 
   def suggest_packing_list(duration, climate)
-    if @client
+    items = @user.items.in_rotation.limit(10).to_a
+    if @client && items.any?
+      catalog = items.map { |item| "#{item.id}: #{item.title} (#{item.category}, #{item.color}, #{item.season})" }.join("; ")
       prompt = <<~PROMPT
-        Suggest 5-8 outfits from the user's wardrobe for a #{duration}-day trip in #{climate} climate.
-        Return JSON: {"outfits": [{"name": "outfit name", "items": ["item title 1", "item title 2"]}, ...], "tips": "brief packing tip"}
-        User wardrobe: #{@user.items.limit(10).map { |i| "#{i.title} (#{i.category}, #{i.color}, #{i.season})" }.join("; ")}
+        Suggest 5-8 day-by-day outfit groups for a #{duration}-day trip in #{climate} climate.
+        Only use these wardrobe garments, each identified by its numeric ID.
+        Return JSON: {"outfits":[{"name":"Day 1","item_ids":[12,34]}],"tips":"brief packing tip"}.
+        Do not invent or replace IDs. Wardrobe: #{catalog}
       PROMPT
       result = chat(prompt)
-      return result if result["outfits"].present?
+      outfits = normalize_outfits(result["outfits"], items)
+      return result.merge("outfits" => outfits) if outfits.present?
     end
 
-    items = @user.items.active_wardrobe.limit(8)
+    items = @user.items.in_rotation.limit(8).to_a if items.empty?
     {
-      "outfits" => items.each_slice(3).with_index.map { |slice, i|
-        { "name" => "Day #{i + 1}", "items" => slice.map(&:title) }
-      },
+      "outfits" => items.each_slice(3).with_index.map do |slice, index|
+        { "name" => "Day #{index + 1}", "items" => slice.map(&:title), "item_ids" => slice.map(&:id) }
+      end,
       "tips" => "Rule-based pack from active wardrobe (#{duration} days, #{climate}).",
       "source" => "heuristic"
     }
   end
 
   private
+
+  def remote_ai_allowed?
+    @user.present? &&
+      PrivacySetting.where(user_id: @user.id, allow_ai_analysis: true).exists?
+  rescue StandardError => e
+    Rails.logger.warn("WardrobeAi consent check failed; using local rules: #{e.class}")
+    false
+  end
+
+  def normalize_outfits(outfits, candidates)
+    by_id = candidates.index_by(&:id)
+    by_title = candidates.group_by { |item| item.title.to_s.strip.downcase }
+
+    Array(outfits).filter_map do |outfit|
+      next unless outfit.is_a?(Hash)
+
+      ids = Array(outfit["item_ids"]).filter_map do |value|
+        value.to_s.match?(/\A\d+\z/) ? value.to_i : nil
+      end.select { |id| by_id.key?(id) }.uniq
+      if ids.empty?
+        ids = Array(outfit["items"]).filter_map do |label|
+          title = label.to_s.split("(").first.strip.downcase
+          matches = by_title.fetch(title, [])
+          matches.one? ? matches.first.id : nil
+        end.uniq
+      end
+      next if ids.empty?
+
+      outfit.merge(
+        "item_ids" => ids,
+        "items" => ids.map { |id| by_id.fetch(id).title },
+        "source" => outfit["source"].presence || (@client ? PROVIDER_SOURCE : "rule")
+      )
+    end
+  end
 
   def build_client
     return nil unless Shared::Llm.configured?

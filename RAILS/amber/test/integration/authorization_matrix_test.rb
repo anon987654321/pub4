@@ -28,6 +28,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     [ "/items/new",        :get,  :redirect, :ok ],
     [ "/outfits",          :get,  :redirect, :ok ],
     [ "/wardrobe_items",   :get,  :redirect, :ok ],
+    [ "/wardrobe_items",   :post, :redirect, :any ],
     # Writes. The gates exercise none of these, and a write is where an open
     # door actually costs something.
     [ "/items",            :post, :redirect, :any ],

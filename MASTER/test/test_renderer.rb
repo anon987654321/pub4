@@ -39,6 +39,20 @@ class TestRenderer < Minitest::Test
     end
   end
 
+  def test_compact_splash_reports_degraded_voice_when_synthesis_failed
+    old = ENV["MASTER_TTS_DEGRADED"]
+    ENV.delete("MASTER_TTS_DEGRADED")
+    renderer = FakeRenderer.new(config: {})
+
+    assert defined?(Master::Voice::Speech), "speech service should be available to the renderer"
+    Master::Voice::Speech.stub(:last_error, "provider unavailable") do
+      text = renderer.splash("model")
+      assert_includes strip_ansi(text), "voice0 at mainbus0: degraded"
+    end
+  ensure
+    ENV["MASTER_TTS_DEGRADED"] = old
+  end
+
   def test_compact_splash_names_the_release_version
     old = ENV.delete("MASTER_BOOT_STATUS")
     $stdout.stub(:tty?, false) do

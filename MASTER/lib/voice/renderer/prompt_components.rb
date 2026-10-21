@@ -50,7 +50,10 @@ module Master
                 else
                   "not configured"
                 end
-          voice = ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "ready"
+          speech_error = Master::Voice::Speech.last_error if defined?(Master::Voice::Speech)
+          playback_error = Master::Voice::Playback.last_error if defined?(Master::Voice::Playback)
+          voice_reason = [speech_error, playback_error].compact.map(&:to_s).reject(&:empty?).first
+          voice = ENV["MASTER_TTS_DEGRADED"] == "1" || voice_reason ? "degraded" : "ready"
           [
             d("master0 at mainbus0: MASTER #{release_version} ##{context[:build]}, model #{model}"),
             d("host0 at mainbus0: #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),

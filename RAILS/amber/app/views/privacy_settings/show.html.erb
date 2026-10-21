@@ -1,0 +1,22 @@
+<% content_for :title, t("privacy_settings.title") %>
+
+<section class="form-page" aria-labelledby="privacy-settings-title">
+  <%= tag.h1 t("privacy_settings.title"), id: "privacy-settings-title" %>
+  <p><%= t("privacy_settings.lead") %></p>
+
+  <%= form_with model: @privacy_setting, url: privacy_setting_path, method: :patch, class: "form" do |form| %>
+    <fieldset>
+      <legend><%= t("privacy_settings.ai_heading") %></legend>
+      <div class="field">
+        <%= form.check_box :allow_ai_analysis %>
+        <%= form.label :allow_ai_analysis, t("privacy_settings.allow_ai_analysis") %>
+        <p><%= t("privacy_settings.ai_description") %></p>
+      </div>
+    </fieldset>
+    <div class="actions">
+      <%= form.submit t("privacy_settings.save"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+
+  <p><%= link_to t("actions.back_to_wardrobe"), items_path %></p>
+</section>

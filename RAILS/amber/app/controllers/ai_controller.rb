@@ -6,10 +6,8 @@ Shared::Contracts.require_contract("studio")
 class AiController < ApplicationController
   before_action :require_real_user
 
-  # suggest_outfits is a GET that may ask STUDIO for one bounded photograph.
-  # The request rate limit does not see generated media as a write, so this path
-  # keeps its own one-photo ceiling.
-  STUDIO_PHOTOGRAPHS_PER_REQUEST = 1
+  # GET actions only suggest. The explicit generate_outfit POST owns persistence
+  # and the optional single STUDIO photograph.
 
   rate_limit to: 10, within: 10.minutes, only: :suggest_outfits,
              by: -> { "u#{Current.user&.id}" },
@@ -37,37 +35,13 @@ class AiController < ApplicationController
   end
 
   def suggest_outfits
-    RecommendOutfitsJob.perform_later(Current.user.id, occasion: params[:occasion], season: params[:season]) if defined?(RecommendOutfitsJob)
     service = WardrobeAi.new(Current.user)
     @ai_available = service.available?
     @suggestions = service.suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
-    @studio_photo = WardrobeAi.studio_photograph_available?
-
-    return unless @studio_photo
-
-    @suggestions.select { |s| s.is_a?(Hash) }.first(STUDIO_PHOTOGRAPHS_PER_REQUEST).each do |s|
-      combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
-      begin
-        out = Contracts::Studio.photograph(prompt: combo)
-        if out["still"].to_s != ""
-          imgf = out["still"]
-          if imgf && File.file?(imgf)
-            outfit = Current.user.outfits.create!(name: s["name"], description: s["description"].to_s)
-            Array(s["items"]).each do |tit|
-              key = tit.to_s.split("(").first.strip.downcase
-              it = Current.user.items.where("lower(title) LIKE ?", "%#{key}%").first || Current.user.items.joy.active_wardrobe.first
-              outfit.outfit_items.create!(item: it) if it
-            end
-            outfit.image.attach(io: File.open(imgf), filename: "visual.jpg")
-            s["outfit_id"] = outfit.id
-          end
-        end
-      rescue StandardError => e
-        Rails.logger.warn("STUDIO photograph for suggestion failed: #{e.message}")
-      end
-    end
+    # GET is read-only. Optional photography belongs to the explicit save POST.
+    @studio_photo = service.external_processing_allowed? && WardrobeAi.studio_photograph_available?
   end
 
   def declutter_guide
@@ -75,8 +49,9 @@ class AiController < ApplicationController
   end
 
   def capsule
-    @result = WardrobeAi.new(Current.user).capsule_optimizer
-    @ai_available = WardrobeAi.configured?
+    service = WardrobeAi.new(Current.user)
+    @result = service.capsule_optimizer
+    @ai_available = service.available?
   end
 
   def color_palette
@@ -86,9 +61,10 @@ class AiController < ApplicationController
 
   def search
     @query = params[:q].to_s.strip
-    @ai_available = WardrobeAi.configured?
+    service = WardrobeAi.new(Current.user)
+    @ai_available = service.available?
     if @query.present?
-      result = WardrobeAi.new(Current.user).natural_language_search(@query)
+      result = service.natural_language_search(@query)
       ids = Array(result["item_ids"])
       @items = Current.user.items.where(id: ids)
       @explanation = result["explanation"]
@@ -122,7 +98,7 @@ class AiController < ApplicationController
   # index is [user_id, kind, name], which would otherwise leave a user holding
   # several contradictory aesthetics.
   def style_profile
-    if request.post? || params[:answers].present?
+    if request.post?
       answers = params[:answers] || {}
       result = WardrobeAi.new(Current.user).infer_style_profile(answers)
       aesthetic = result["aesthetic"].presence || "minimal"
@@ -139,58 +115,78 @@ class AiController < ApplicationController
   end
 
   def packing_list
-    if params[:duration].present?
-      @duration = params[:duration].to_i
-      @climate = params[:climate].to_s
-      @result = WardrobeAi.new(Current.user).suggest_packing_list(@duration, @climate)
-      if @result["outfits"]
-        list = Current.user.packing_lists.create!(
-          name: "#{@climate} #{@duration}d trip",
-          starts_on: Date.current,
-          ends_on: Date.current + @duration
-        )
-        Array(@result["outfits"]).each do |outfit|
-          Array(outfit["items"]).each do |title|
-            key = title.to_s.split("(").first.strip.downcase
-            item = Current.user.items.where("lower(title) LIKE ?", "%#{key}%").first
-            next unless item
+    # GET renders the form only. Saving a list is a deliberate POST.
+    return unless request.post?
 
-            list.packing_list_items.find_or_create_by!(item: item) { |pli| pli.quantity = 1 }
-          end
-        end
-        @packing_list = list
+    @duration = Integer(params[:duration].to_s, exception: false)
+    @duration = @duration ? @duration.clamp(1, 14) : 1
+    @climate = params[:climate].to_s.presence_in(%w[hot cold mild rainy dry]) || "mild"
+    @result = WardrobeAi.new(Current.user).suggest_packing_list(@duration, @climate)
+    return unless @result["outfits"]
+
+    list = Current.user.packing_lists.create!(
+      name: "#{@climate} #{@duration}d trip",
+      starts_on: Date.current,
+      ends_on: Date.current + @duration
+    )
+    Array(@result["outfits"]).each do |outfit|
+      ids = Array(outfit["item_ids"]).filter_map do |value|
+        value.to_s.match?(/\A\d+\z/) ? value.to_i : nil
+      end.uniq
+      Current.user.items.in_rotation.where(id: ids).find_each do |item|
+        list.packing_list_items.find_or_create_by!(item:) { |pli| pli.quantity = 1 }
       end
     end
+    @packing_list = list
   end
 
   def generate_outfit
-    suggestions = WardrobeAi.new(Current.user).suggest_outfits(
+    service = WardrobeAi.new(Current.user)
+    suggestion = Array(service.suggest_outfits(
       occasion: params[:occasion], season: params[:season]
-    )
-    suggestion = Array(suggestions).first
+    )).first
     return redirect_to(ai_suggest_outfits_path, alert: t("flash.no_outfit_suggestion")) unless suggestion
 
     outfit = create_outfit_from_vision_suggestion(suggestion)
+    return redirect_to(ai_suggest_outfits_path, alert: t("flash.no_outfit_suggestion")) unless outfit
+
+    attach_studio_photo(outfit) if service.external_processing_allowed? && WardrobeAi.studio_photograph_available?
     redirect_to(outfit, notice: t("flash.outfit_created"))
   end
 
   private
 
   def create_outfit_from_vision_suggestion(suggestion)
-    name = suggestion["name"].presence || "Suggested outfit"
+    ids = Array(suggestion["item_ids"]).filter_map do |value|
+      value.to_s.match?(/\A\d+\z/) ? value.to_i : nil
+    end.uniq
+    items = Current.user.items.in_rotation.where(id: ids).to_a
+    return if items.empty?
+
     outfit = Current.user.outfits.create!(
-      name: name,
+      name: suggestion["name"].presence || "Suggested outfit",
       description: suggestion["description"].to_s,
       season: params[:season],
-      occasion: params[:occasion],
+      occasion: params[:occasion]
     )
-    titles = Array(suggestion["items"])
-    titles.each_with_index do |title, index|
-      key = title.to_s.split("(").first.strip.downcase
-      item = Current.user.items.where("lower(title) LIKE ?", "%#{key}%").first
-      item ||= Current.user.items.joy.active_wardrobe.first
-      outfit.outfit_items.create!(item: item, position: index) if item
+    items.sort_by(&:id).each_with_index do |item, index|
+      outfit.outfit_items.create!(item:, position: index)
     end
     outfit
+  end
+
+  def attach_studio_photo(outfit)
+    prompt = "Professional fashion photography of the saved outfit '#{outfit.name}' with " \
+             "#{outfit.items.map(&:title).join(', ')}. #{outfit.description}. " \
+             "Model, Kodak Portra, editorial fashion photography."
+    result = Contracts::Studio.photograph(prompt:)
+    image_path = result["still"].to_s
+    return unless File.file?(image_path)
+
+    File.open(image_path, "rb") do |image|
+      outfit.image.attach(io: image, filename: "amber-outfit-#{outfit.id}.jpg", content_type: "image/jpeg")
+    end
+  rescue StandardError => e
+    Rails.logger.warn("STUDIO photograph for saved outfit failed: #{e.class}: #{e.message}")
   end
 end

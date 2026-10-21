@@ -815,6 +815,15 @@ nb:
         title: "%{joy} av %{total} plagg gir glede"
         body: "De andre %{count} er dem du skyver forbi for å nå disse. Tom stang er ikke sløsing — det er det som gjør de gjenværende plaggene synlige."
         principle: "Tomrommet er designet"
+
+  privacy_settings:
+    title: "Personvern og KI"
+    lead: "Velg om Amber kan sende garderobedetaljer til en ekstern KI-tjeneste. Lokale garderoberegler fungerer fortsatt når dette er slått av."
+    ai_heading: "KI-behandling"
+    allow_ai_analysis: "Tillat ekstern KI-analyse"
+    ai_description: "Når dette er slått av, bruker Amber lokale regler og sender ikke garderobedetaljer til OpenRouter eller bruker den valgfrie STUDIO-tjenesten for antrekksbilder."
+    save: "Lagre personvernvalg"
+    saved: "Personvernvalgene er lagret."
   footer:
     label: "Nettsted"
     wardrobe: "Garderobe"
@@ -848,6 +857,7 @@ nb:
       home: "Hjem"
       search: "Søk"
       style_profile: "Stilprofil"
+      privacy_settings: "Personvern og KI"
       sign_in: "Logg inn"
       create_account: "Opprett konto"
     locales:

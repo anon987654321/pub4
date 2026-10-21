@@ -32,6 +32,35 @@ class AiControllerTest < ActionDispatch::IntegrationTest
     refute WardrobeAi.studio_photograph_available?
   end
 
+  test "GET analysis pages do not persist state or enqueue recommendations" do
+    sign_in_as("ai-get-read-only@example.com")
+
+    assert_no_difference -> { PackingList.count + StylePreference.count + Recommendation.count } do
+      assert_no_enqueued_jobs(only: RecommendOutfitsJob) do
+        get ai_suggest_outfits_path
+        assert_response :success
+        get ai_packing_list_path, params: { duration: "3", climate: "cold" }
+        assert_response :success
+        get ai_style_profile_path, params: { answers: { body_type: "slim" } }
+        assert_response :success
+      end
+    end
+  end
+
+  test "packing list is persisted only after explicit POST" do
+    sign_in_as("ai-packing-post@example.com")
+
+    assert_no_difference -> { PackingList.count } do
+      get ai_packing_list_path, params: { duration: "3", climate: "cold" }
+      assert_response :success
+    end
+
+    assert_difference -> { PackingList.count }, 1 do
+      post ai_create_packing_list_path, params: { duration: "3", climate: "cold" }
+    end
+    assert_response :success
+  end
+
   test "suggest outfits stops at its own limit" do
     sign_in_as("ai-limit@example.com")
 

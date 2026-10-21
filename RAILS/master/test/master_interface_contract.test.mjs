@@ -97,7 +97,10 @@ test("accessibility projection exposes live state, reduced motion and forced col
   assert.match(accessibility, /prefers-reduced-motion/);
   assert.match(accessibility, /forced-colors/);
   assert.match(accessibility, /microphone/);
+  assert.match(accessibility, /aria-pressed/);
+  assert.match(accessibility, /state === "listening" \? "true" : "false"/);
   assert.match(accessibility, /task failed/);
+  assert.match(faceCss, /#cmd-palette-input:focus-visible/);
 });
 
 test("recognizer end is not treated as a conversational boundary", () => {
