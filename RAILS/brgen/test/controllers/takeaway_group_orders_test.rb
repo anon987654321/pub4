@@ -110,4 +110,20 @@ class TakeawayGroupOrdersTest < ActionDispatch::IntegrationTest
     assert_equal 18_000, shares[@host.id] || shares[nil]
     assert_equal 12_000, shares[@colleague.id]
   end
+  test "a group order cannot add a menu item that is unavailable" do
+    unavailable = Takeaway::MenuItem.create!(
+      restaurant: @restaurant, name: "Sold out", price_cents: 9_900, available: false
+    )
+    @order.open_group!
+    sign_in_as(@colleague)
+    existing_total = @order.reload.total_cents
+
+    assert_no_difference -> { @order.order_items.count } do
+      patch takeaway.group_order_path(@order.group_token),
+            params: { menu_item_id: unavailable.id, quantity: 1 }
+    end
+
+    assert_response :not_found
+    assert_equal existing_total, @order.reload.total_cents
+  end
 end

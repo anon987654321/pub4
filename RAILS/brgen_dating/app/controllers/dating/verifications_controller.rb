@@ -34,7 +34,7 @@ class Dating::VerificationsController < Dating::BaseController
   def update
     return head :forbidden unless reviewer?
 
-    verification = Dating::Verification.find(params[:id])
+    verification = Dating::Verification.pending.find(params[:id])
     case params[:decision]
     when "approve" then verification.approve!(by: Current.user, note: params[:note])
     when "reject" then verification.reject!(by: Current.user, note: params[:note])

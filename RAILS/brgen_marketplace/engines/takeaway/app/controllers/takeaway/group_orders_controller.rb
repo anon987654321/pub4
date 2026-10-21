@@ -27,7 +27,7 @@ class Takeaway::GroupOrdersController < Takeaway::BaseController
   def update
     order = joinable_order or return
 
-    item = order.restaurant.menu_items.find(params.require(:menu_item_id))
+    item = order.restaurant.menu_items.available.find(params.require(:menu_item_id))
     quantity = params[:quantity].to_i.clamp(1, 20)
     order.order_items.create!(menu_item: item, quantity: quantity,
                               unit_price_cents: item.price_cents, user: Current.user)

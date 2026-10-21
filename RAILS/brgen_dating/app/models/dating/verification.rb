@@ -30,17 +30,22 @@ class Dating::Verification < ApplicationRecord
   def pending? = status == "pending"
 
   def approve!(by:, note: nil)
-    transaction do
-      update!(status: "verified", reviewed_by: by, reviewed_at: Time.current, review_note: note.presence)
+    with_lock do
+      raise ActiveRecord::RecordNotFound unless pending?
+
+      reviewed_at = Time.current
+      update!(status: "verified", reviewed_by: by, reviewed_at: reviewed_at, review_note: note.presence)
       # Denormalised onto the profile: every deck card reads it, and a join per
       # card is the shape that made this feed slow before.
-      Dating::Profile.where(id: profile_id).update_all(verified_at: Time.current)
+      Dating::Profile.where(id: profile_id).update_all(verified_at: reviewed_at)
     end
     notify(I18n.t("dating.verification_approved_title"), I18n.t("dating.verification_approved_body"))
   end
 
   def reject!(by:, note: nil)
-    transaction do
+    with_lock do
+      raise ActiveRecord::RecordNotFound unless pending?
+
       update!(status: "rejected", reviewed_by: by, reviewed_at: Time.current, review_note: note.presence)
       Dating::Profile.where(id: profile_id).update_all(verified_at: nil)
       Dating::LocationPing.where(user_id: Dating::Profile.where(id: profile_id).pick(:user_id)).delete_all

@@ -68,6 +68,30 @@ class Dating::VerificationTest < ActiveSupport::TestCase
     assert_equal "ikke samme person", Dating::Verification.last.review_note
   end
 
+  test "a rejected verification cannot later be approved" do
+    verification = request!
+    verification.reject!(by: @reviewer, note: "not a match")
+    notification_count = Notification.count
+
+    assert_raises(ActiveRecord::RecordNotFound) { verification.approve!(by: @reviewer) }
+    assert_equal "rejected", verification.reload.status
+    assert_nil @profile.reload.verified_at
+    assert_equal notification_count, Notification.count
+  end
+
+  test "a verified request cannot later be rejected" do
+    verification = request!
+    verification.approve!(by: @reviewer)
+    notification_count = Notification.count
+    verified_at = @profile.reload.verified_at
+
+    assert_raises(ActiveRecord::RecordNotFound) { verification.reject!(by: @reviewer) }
+    assert_equal "verified", verification.reload.status
+    assert_equal verified_at, @profile.reload.verified_at
+    assert_equal notification_count, Notification.count
+  end
+
+
   private
 
   def build_request

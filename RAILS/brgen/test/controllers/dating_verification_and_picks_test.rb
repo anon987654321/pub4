@@ -88,6 +88,11 @@ class DatingVerificationAndPicksTest < ActionDispatch::IntegrationTest
     assert_equal "verified", verification.reload.status
     assert_not_nil profile.reload.verified_at
     assert Notification.where(user_id: @viewer.id, kind: "alert").exists?
+
+    patch dating.verification_path(verification, decision: "reject")
+    assert_response :not_found
+    assert_equal "verified", verification.reload.status
+    assert_not_nil profile.reload.verified_at
   end
 
   test "a blank admin address makes nobody a reviewer" do
