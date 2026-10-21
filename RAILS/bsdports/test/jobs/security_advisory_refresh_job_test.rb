@@ -59,6 +59,7 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
     assert_equal ports.map(&:id).sort, calls.sort
     assert_equal ports.last.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
+
   test "a queue failure keeps the cursor at the last successfully queued port" do
     platform = Platform.find_or_create_by!(slug: "openbsd") { |record| record.name = "OpenBSD" }
     category = Category.find_or_create_by!(platform:, slug: "refresh-failure") do |record|
