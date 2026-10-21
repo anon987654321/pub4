@@ -33,7 +33,7 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
 
     enqueued = 0
     ports.each do |port|
-      NvdCveCrossrefJob.perform_later(port_id: port.id)
+      NvdCveCrossrefJob.enqueue_for(port_id: port.id)
       enqueued += 1
     rescue StandardError => e
       Rails.logger.warn("bsdports: advisory refresh could not queue #{port.name}: #{e.class}: #{e.message}")
