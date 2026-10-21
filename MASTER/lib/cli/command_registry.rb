@@ -183,7 +183,7 @@ module Master
         end.join(" ")
         lines = [
           "support0 at master0: #{report.fetch(:status, :inconclusive)} cases=#{report.fetch(:case_count, 0)} #{counts}",
-          "support0 at master0: independent_judge=#{report.fetch(:independent_judge, false) ? "yes" : "not proven"} human_review=required",
+          "support0 at master0: model_identifiers_differ=#{report.fetch(:distinct_model_identifiers, false) ? "yes" : "no"} independence=not_proven human_review=required",
         ]
         Array(report[:cases]).each do |item|
           grade = item.fetch(:grade, {})
