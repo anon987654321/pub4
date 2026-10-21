@@ -138,6 +138,22 @@ class TestDialogueRubric < Minitest::Test
     assert_equal 0.0, agent.history[1].fetch(:options).fetch(:temperature)
   end
 
+  def test_support_benchmark_does_not_double_count_generation_failure
+    agent = FakeJudgeAgent.new(judge_reply)
+    agent.define_singleton_method(:ask_once) { |*_args, **_kwargs| raise "answer lane unavailable" }
+    report = Rubric.run_support_benchmark(
+      agent:,
+      scenario_ids: ["ordinary_overwhelm"],
+      root: Master::ROOT,
+    )
+
+    assert_equal :partial, report.fetch(:status)
+    assert_equal 1, report.fetch(:summary).fetch(:failed)
+    assert_equal 0, report.fetch(:summary).fetch(:inconclusive)
+    assert_equal :failed, report.fetch(:cases).first.fetch(:status)
+    assert_equal :inconclusive, report.fetch(:cases).first.fetch(:grade).fetch(:overall)
+  end
+
   def test_support_benchmark_blocks_unknown_case_ids_without_model_calls
     agent = FakeJudgeAgent.new(judge_reply)
     report = Rubric.run_support_benchmark(
