@@ -65,6 +65,25 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     refute legacy.reload.email_verified?
   end
 
+  test "BankID cannot claim a manually registered unverified placeholder address" do
+    controller = OmniauthCallbacksController.new
+    controller.define_singleton_method(:external_identity_for) { |_auth| nil }
+    auth = auth_for("bankid", email_verified: false, email: nil)
+    legacy = User.new(email_address: "#{auth.uid}@bankid.oauth", password: SecureRandom.hex(24))
+    legacy.require_email_verification = true
+    legacy.save!
+    legacy.generate_email_verification!
+    token = legacy.reload.email_verification_token
+
+    assert_raises(OmniauthCallbacksController::IdentityEmailConflict) do
+      controller.send(:find_or_create_user, auth)
+    end
+
+    assert_equal token, legacy.reload.email_verification_token
+    refute ExternalIdentity.joins(:identity_provider)
+                           .where(user_id: legacy.id, identity_providers: { slug: "bankid" }).exists?
+  end
+
   private
 
   def auth_for(provider, email_verified:, email: "person@example.test")
