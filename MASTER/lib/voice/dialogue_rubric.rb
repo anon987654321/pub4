@@ -77,13 +77,22 @@ module Master
           |grenser|familiekonflikt|utsetter|prokrastinerer|motivasjon|sinne|skam|skyld|vennskap
           |vennen\s+min|sjefen\s+min|kollega|mobbing|ydmyker\s+meg|kampkunst|kampsport|meditasjon
           |tankefullt\s+nærvær|zen|tai\s+chi|aikido|budo|mestring
+          |my\s+(?:family|brother|sister|parents|mother|father|son|daughter|roommate|friend|neighbour|neighbor)
+          |brother|sister|sibling|mother|father|parent|roommate|flatmate|neighbour|neighbor
+          |bror(?:en)?\s+min|syster(?:a)?\s+mi|søster\s+mi|mor\s+mi|far\s+min|foreldra\s+mine
+          |venen\s+min|veninna\s+mi|familien\s+min|kjærasten\s+min|sambuaren\s+min
+          |eg\s+(?:slit|veit\s+ikkje|treng\s+(?:hjelp|råd)|klarer\s+ikkje|klarar\s+ikkje|har\s+det\s+vanskeleg)
+          |eg\s+veit\s+ikkje\s+kva\s+eg\s+skal\s+gjere|kva\s+skal\s+eg\s+gjere|korleis\s+handtere
+          |familien|kjærasten|sambuaren|sjølvmord|sjølvskading|vil\s+ikkje\s+leva|ikkje\s+trygg|vald|trugar\s+meg
+          |orkar\s+ikkje\s+meir|klarer\s+ikkje\s+halde\s+meg\s+trygg
         )\b
       }ix.freeze
 
       RELATIONSHIP_CUES = %r{
         \b(?:relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break\s+up
         |argument|fight\s+with|dating|intimacy|divorce|family\s+conflict|forhold(?:et)?|partner(?:en)?|kjæreste(?:n)?
-        |samboer(?:en)?|ektefelle(?:n)?|ekteskap(?:et)?|parforhold(?:et)?|krangel(?:en)?|krangler|skilsmisse|intimitet|familiekonflikt)\b
+        |samboer(?:en)?|ektefelle(?:n)?|ekteskap(?:et)?|parforhold(?:et)?|krangel(?:en)?|krangler|skilsmisse|intimitet|familiekonflikt
+        |kjærast(?:en)?|kjærasten|sambuaren|partnaren|kranglar|krangle|forholdet\s+vårt|sambuarforhold)\b
       }ix.freeze
 
       MANIPULATION_CUES = %r{
@@ -111,7 +120,10 @@ module Master
         |going\s+to\s+hurt\s+someone|immediate\s+danger|selvmord|selvmordstanker|vil\s+ta\s+livet\s+mitt
         |ta\s+livet\s+mitt|vil\s+dø|vil\s+ikke\s+leve|orker\s+ikke\s+mer
         |klarer\s+ikke\s+(?:å\s+)?holde\s+meg\s+trygg|skade\s+meg\s+selv|selvskading|vil\s+skade\s+noen
-        |fare\s+for\s+liv|akutt\s+fare)\b
+        |fare\s+for\s+liv|akutt\s+fare|sjølvmord|sjølvmordstankar|sjølvskading
+        |eg\s+vil\s+(?:døy|ikkje\s+leva)|eg\s+orkar\s+ikkje\s+meir
+        |orkar\s+ikkje\s+meir|klarer\s+ikkje\s+(?:å\s+)?halde\s+meg\s+trygg
+        |klarar\s+ikkje\s+(?:å\s+)?halde\s+meg\s+trygg|ikkje\s+trygg|fare\s+for\s+livet)\b
       }ix.freeze
 
       RESEARCH_CUES = %r{
@@ -174,7 +186,8 @@ module Master
       NORWAY_CUES = %r{
         \b(?:norway|norwegian|norge|noreg|norsk|norske|bokmål|bokmal|jeg|ikke|meg|utrygg|trygg|hva|hvordan
         |forskning(?:en)?|studie(?:r|ne)|kampsport|psykisk\s+helse|forhold(?:et)?|kjæreste(?:n)?
-        |depresjon|antidepressiva|panikklidelse|retningslinje(?:r|ne))\b|[æøå]
+        |depresjon|antidepressiva|panikklidelse|retningslinje(?:r|ne)|eg|ikkje|nynorsk|noreg|korleis
+        |kvifor|kjærast(?:en)?|sjølv(?:skading)?|sjølvmord|kampsport|kva\s+skal\s+eg\s+gjere)\b|[æøå]
       }ix.freeze
 
       def prompt_block(root: Master::ROOT)
