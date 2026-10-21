@@ -1,6 +1,7 @@
 <div class="auth-form">
   <%= tag.h1 t("auth.create_account") %>
   <p class="auth-form-lead"><%= t("auth.create_lead") %></p>
+  <%= render "shared/oauth_links" %>
   <%= form_with model: @user || User.new, url: registration_path do |f| %>
     <%= render "shared/errors", object: @user if @user %>
     <div class="field">

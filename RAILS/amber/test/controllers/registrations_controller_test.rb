@@ -38,4 +38,22 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to root_path
   end
+
+  test "registration shares the configured identity providers with sign-in" do
+    previous = Rails.application.config.x.oauth_provider_slugs
+    begin
+      Rails.application.config.x.oauth_provider_slugs = %w[vipps google_oauth2 facebook]
+      get new_registration_url
+
+      assert_response :success
+      assert_select 'nav.oauth-links'
+      assert_select 'form[action="/auth/vipps"]'
+      assert_select 'form[action="/auth/google_oauth2"]'
+      assert_select 'form[action="/auth/facebook"]'
+      refute_includes response.body, "/auth/github"
+    ensure
+      Rails.application.config.x.oauth_provider_slugs = previous
+    end
+  end
+
 end
