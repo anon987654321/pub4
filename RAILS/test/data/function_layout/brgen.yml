@@ -107,7 +107,7 @@ checks:
      has: ["nav.sign_in", "main_app.new_session_path"], lack: ["sign up\", main_app.new_session_path"]}
   - {id: auth.create_account_from_sign_in, in: brgen/app/views/sessions/new.html.erb, has: [new_user_path]}
   - {id: auth.verified_email_gate,
-     in: brgen/app/controllers/application_controller.rb,
+     in: shared/app/controllers/concerns/shared/authentication.rb,
      has: ["def require_verified_email", guest?]}
   - {id: auth.passwords, in: shared/app/views/passwords/new.html.erb, has: [email]}
   # --- dating ---
