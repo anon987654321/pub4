@@ -37,7 +37,8 @@ class TestCliAsciiFace < Minitest::Test
   end
 
   def test_golden_frame_is_exact
-    assert_equal GOLDEN.lines.map(&:rstrip), head_frame(12, 24, Face::Motion.rest).lines
+    # The heredoc stops at the last drawn row; the twelfth row is blank.
+    assert_equal GOLDEN.each_line(chomp: true).to_a + [""], head_frame(12, 24, Face::Motion.rest).lines
   end
 
   def test_every_fixture_frame_is_reproduced_and_plain_ascii
