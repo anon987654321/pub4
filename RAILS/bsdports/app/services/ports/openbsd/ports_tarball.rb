@@ -118,7 +118,10 @@ module Ports
         key = trusted_signify_key
         return false unless key && verification_ready?
 
-        output, status = Open3.capture2e("signify", "-C", "-p", key, "-x", signature, archive)
+        output, status = Open3.capture2e(
+          "signify", "-C", "-p", key, "-x", File.basename(signature), File.basename(archive),
+          chdir: File.dirname(archive)
+        )
         return true if status.success?
 
         Rails.logger.warn("bsdports ports.tar.gz signature verification failed: #{output.lines.last(3).join.strip}")
