@@ -63,7 +63,6 @@ class NvdCve
       pub = cve["published"]
 
       adv = SecurityAdvisory.find_or_initialize_by(identifier: id)
-      adv.port ||= @port
       adv.title = desc[0, 200] if adv.title.blank?
       adv.description = desc if adv.description.blank?
       adv.published_at ||= pub ? Time.parse(pub) : Time.current
