@@ -15,6 +15,13 @@ class AccountMerger
     return user unless guest_user.respond_to?(:guest?) && guest_user.guest?
 
     ActiveRecord::Base.transaction do
+      # Serialize two tabs completing signup/OAuth for the same guest. The
+      # second waiter rechecks the locked row instead of moving the same rows
+      # or colliding with the unique audit index.
+      guest_user.lock!
+      user.lock!
+      next unless guest_user.guest?
+
       merge_posts
       merge_comments
       merge_conversations
@@ -75,7 +82,9 @@ class AccountMerger
   end
 
   def record_merge
-    return unless defined?(::AccountMerge) && ::AccountMerge.table_exists?
+    unless defined?(::AccountMerge) && ::AccountMerge.table_exists?
+      raise ActiveRecord::MigrationError, "account_merges table unavailable; refusing guest history transfer"
+    end
 
     ::AccountMerge.create!(
       guest_user: guest_user,
