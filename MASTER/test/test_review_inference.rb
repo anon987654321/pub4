@@ -170,9 +170,14 @@ end
   end
 
   def test_open_findings_footer_is_not_allowed_to_reach_delivery
-    value = "review0: complete with open findings, 12 findings, 147s\n"
-    assert Master::CLI::CommandRegistry.incomplete_fix_pipeline?(value)
-    result = Master::CLI::CommandRegistry.incomplete_fix_pipeline(value)
+    footer = Master::CLI::Pipeline::Pass::Result.new(
+      target: "MASTER", mode: "strict", sections: [], ok: false, unit: "review0", failed_stages: [],
+      totals: { before: 12, after: 12 }
+    ).footer
+
+    assert_match(/review0: complete with open findings/, footer)
+    assert Master::CLI::CommandRegistry.incomplete_fix_pipeline?(footer)
+    result = Master::CLI::CommandRegistry.incomplete_fix_pipeline(footer)
     assert result.err?
     assert_match(/complete with open findings/, result.message)
   end
