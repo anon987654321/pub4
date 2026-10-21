@@ -2,6 +2,7 @@
 
 class PostsController < ApplicationController
   before_action :require_real_user, except: %i[index show create]
+  before_action :require_verified_email, only: :create
   before_action :set_post, only: %i[show destroy like]
   before_action :authorize_owner!, only: :destroy
 

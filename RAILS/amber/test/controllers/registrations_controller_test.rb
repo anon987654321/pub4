@@ -27,6 +27,10 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     }
     assert_redirected_to root_path
 
+    account = User.find_by!(email_address: "already@example.com")
+    refute account.email_verified?
+    assert_predicate account.email_verification_token, :present?
+
     get new_registration_url
     assert_redirected_to root_path
 
@@ -42,7 +46,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "registration shares the configured identity providers with sign-in" do
     previous = Rails.application.config.x.oauth_provider_slugs
     begin
-      Rails.application.config.x.oauth_provider_slugs = %w[vipps google_oauth2 facebook]
+      Rails.application.config.x.oauth_provider_slugs = %w[bankid vipps google_oauth2 facebook]
       get new_registration_url
 
       assert_response :success
@@ -50,10 +54,38 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       assert_select 'form[action="/auth/vipps"]'
       assert_select 'form[action="/auth/google_oauth2"]'
       assert_select 'form[action="/auth/facebook"]'
+      assert_select 'form[action="/auth/bankid"]'
       refute_includes response.body, "/auth/github"
     ensure
       Rails.application.config.x.oauth_provider_slugs = previous
     end
+  end
+
+
+  test "unverified account cannot post as a claimed identity until email confirmation" do
+    email = "confirm-#{SecureRandom.hex(4)}@example.com"
+    post registration_url, params: {
+      accept_terms: "1", accept_age: "1",
+      user: { email_address: email, password: "long-enough-pass", password_confirmation: "long-enough-pass" }
+    }
+
+    assert_redirected_to root_path
+    account = User.find_by!(email_address: email)
+    refute account.email_verified?
+
+    assert_no_difference -> { Post.count } do
+      post posts_url, params: { post: { body: "A first post before email confirmation" } }
+    end
+    assert_redirected_to root_path
+
+    get verify_email_path(account.email_verification_token)
+    assert_redirected_to root_path
+    assert account.reload.email_verified?
+
+    assert_difference -> { Post.count }, 1 do
+      post posts_url, params: { post: { body: "A post after email confirmation" } }
+    end
+    assert_redirected_to posts_url
   end
 
 end

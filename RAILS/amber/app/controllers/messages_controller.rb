@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class MessagesController < ApplicationController
+  before_action :require_verified_email, only: :create
   before_action :require_user_session
 
   def index
