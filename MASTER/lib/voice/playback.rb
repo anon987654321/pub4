@@ -730,9 +730,10 @@ def decode_job(job)
       # it either, and inventing a fourth reader for it here would change how
       # MASTER sounds on an assumption rather than a decision.
       def synthesize(text, voice: nil, style: nil, rate: nil, pitch: nil)
+        @synthesis_error = nil
         dynamic = transcendent_mode?
         locked_style = style && style != :auto
-        Speech.synthesize(
+        path = Speech.synthesize(
           text,
           voice:,
           style: dynamic && !locked_style ? :auto : (style || Speech.default_style),
@@ -741,10 +742,16 @@ def decode_job(job)
           voice_locked: true,
           style_locked: !dynamic || locked_style || rate || pitch,
         )
+        @synthesis_error = "the synthesiser returned no audio" unless path
+        path
       rescue StandardError => e
-        warn_once("speech synthesis error — #{e.class}: #{e.message}")
+        @synthesis_error = "#{e.class}: #{e.message}"
+        warn_once("speech synthesis error — #{@synthesis_error}")
         nil
       end
+
+      # Why the last synthesize returned nothing, for a face that has no stderr to show it on.
+      def synthesis_error = @synthesis_error
 
       # A failed player is recoverable when the policy-mapped native voice exists.
       # Never bypass synthesis failure itself; fallback begins only after a player error.

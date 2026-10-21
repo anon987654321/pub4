@@ -113,7 +113,7 @@ module Master
               part_spoken = direct_speak(part) unless part_spoken
               spoken ||= !!part_spoken
               unless part_spoken
-                @last_error = "speech synthesis failed"
+                @last_error = ["speech synthesis failed", Master::Voice::Playback.synthesis_error].compact.join(": ")
                 show_direct_fallback
               end
             end

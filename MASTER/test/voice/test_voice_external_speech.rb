@@ -47,3 +47,21 @@ class TestFaceMouthHoldsTheSpeaker < Minitest::Test
     assert held
   end
 end
+
+class TestVoiceSynthesisError < Minitest::Test
+  Playback = Master::Voice::Playback
+
+  def test_a_failed_synthesis_says_why
+    Master::Voice::Speech.stub(:synthesize, ->(*, **) { raise IOError, "edge socket closed" }) do
+      Playback.stub(:warn_once, nil) { assert_nil Playback.synthesize("Hei.") }
+    end
+
+    assert_equal "IOError: edge socket closed", Playback.synthesis_error
+  end
+
+  def test_silence_from_the_synthesiser_is_named
+    Master::Voice::Speech.stub(:synthesize, nil) { assert_nil Playback.synthesize("Hei.") }
+
+    assert_equal "the synthesiser returned no audio", Playback.synthesis_error
+  end
+end
