@@ -151,6 +151,31 @@ class TestUserSimulation < Minitest::Test
     end
   end
 
+  def test_symlinked_target_is_blocked_without_writing_through_the_link
+    Dir.mktmpdir("master-user-simulation") do |root|
+      outside = File.join(root, "outside.rb")
+      File.write(outside, "outside original\n")
+      path = File.join(root, "RAILS", "brgen", "app", "models", "post.rb")
+      FileUtils.mkdir_p(File.dirname(path))
+      File.symlink(outside, path)
+      write_called = false
+      simulation = UserSimulation.new(root:, campaign_path: CAMPAIGN)
+      writer = lambda do |target, text|
+        write_called = true
+        File.write(target, text)
+      end
+
+      result = simulation.evaluate_candidates(
+        path:, original: "outside original\n", candidates: ["candidate\n"], writer:
+      ).fetch(0)
+
+      assert_equal :blocked, result.fetch(:status)
+      refute write_called
+      assert File.symlink?(path)
+      assert_equal "outside original\n", File.read(outside)
+    end
+  end
+
   def test_insufficient_file_budget_blocks_before_touching_source
     Dir.mktmpdir("master-user-simulation") do |root|
       path, = fixture_tree(root, "safe\n")
