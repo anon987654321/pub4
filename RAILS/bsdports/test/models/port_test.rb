@@ -50,6 +50,17 @@ class PortTest < ActiveSupport::TestCase
            "the same pkgpath in another tree is a different port"
   end
 
+  test "homepage accepts only absolute HTTP and HTTPS URLs" do
+    assert port("secure-home", homepage: "https://example.test/project").valid?
+    assert port("plain-home", homepage: "http://example.test/project").valid?
+
+    unsafe = Port.new(platform: @platform, category: @category, name: "bad-home",
+                      pkgpath: "net/bad-home", version: "1.0",
+                      homepage: "javascript:alert(1)")
+    refute unsafe.valid?
+    assert_includes unsafe.errors.attribute_names, :homepage
+  end
+
   test "a maintainer is optional and a platform and category are not" do
     assert port("wget").valid?
     refute Port.new(category: @category, name: "x", pkgpath: "net/x", version: "1").valid?
