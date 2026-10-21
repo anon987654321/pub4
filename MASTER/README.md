@@ -132,12 +132,15 @@ rather than mistaken for success. An unfinished goal is a durable mission in
 backoff. Observe, plan, repair and deploy modes choose a starting set of
 capabilities but never outrank the law.
 
-For the web, source-clean is not enough. When the target is under `RAILS/`, a
-pass renders the pages in a real browser, measures their geometry, and hands the
-screenshot and the measurements to a council. The council's chosen repairs
-become ordinary findings, and the next pass renders again. If the browser or the
-council cannot run, the pass says it is inconclusive and does not claim
-success.
+For the web, source-clean is not enough. When the target is under `RAILS/`, the
+visual pass captures browser renders and geometry when the browser and app are
+available; missing live evidence remains inconclusive, never a pass. The repair
+loop uses its ordinary finding and candidate-selection path to propose layout
+changes, then measures the resulting render again. The multi-model critique
+council is opt-in inside `/fix`: set `MASTER_FIX_COUNCIL=1` or request
+`--critique`; otherwise the report offers `/critique` on the result instead
+of making every repair wait on the council. A successful source scan alone does
+not prove visual completion.
 
 ## Debugging Ruby behavior
 
