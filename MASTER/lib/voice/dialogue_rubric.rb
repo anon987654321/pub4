@@ -43,6 +43,7 @@ module Master
           </master_dialogue_rubric>
 
           #{support}
+        XML
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "dialogue_rubric.prompt_block", severity: :cosmetic)
         nil
