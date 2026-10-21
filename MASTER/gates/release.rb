@@ -9,10 +9,9 @@
 # ran in-process.
 require_relative "support/utf8"
 
-require "open3"
 require "rbconfig"
 require_relative "../../MASTER/lib/operator/ruby_runner"
-require "timeout"
+require_relative "../lib/io/exec"
 
 # From the manifest, not from four hardcoded paths.
 #
@@ -80,40 +79,13 @@ end
 
 def run(label, command, chdir: ROOT, env: {})
   puts "release gate: #{label}"
-  stdout = +""
-  stderr = +""
-  status = nil
-
-  Open3.popen3(env, *command, chdir:) do |stdin, out, err, wait_thread|
-    stdin.close
-    stdout_reader = Thread.new { out.read }
-    stderr_reader = Thread.new { err.read }
-
-    begin
-      Timeout.timeout(STEP_TIMEOUT) do
-        status = wait_thread.value
-        stdout = stdout_reader.value
-
-        stderr = stderr_reader.value
-      end
-    rescue Timeout::Error
-      begin
-        Process.kill("TERM", wait_thread.pid)
-      rescue Errno::ESRCH
-        # Child exited exactly as the timeout fired.
-      end
-
-      sleep 1
-
-      begin
-        Process.kill("KILL", wait_thread.pid) if wait_thread.alive?
-      rescue Errno::ESRCH
-        # Already gone after TERM.
-      end
-
-      FAILURES << "#{label}: timed out after #{STEP_TIMEOUT}s (#{command.join(" ")})"
-      return
-    end
+  begin
+    stdout, stderr, status = Master::Io::Exec.capture3(
+      env, *command, chdir:, timeout: STEP_TIMEOUT, raise_on_timeout: true
+    )
+  rescue Master::Io::Exec::TimeoutError
+    FAILURES << "#{label}: timed out after #{STEP_TIMEOUT}s (#{command.join(" ")})"
+    return
   end
 
   return if status.success?

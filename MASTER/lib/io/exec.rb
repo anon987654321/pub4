@@ -30,7 +30,14 @@ module Master
       DEFAULT_TIMEOUT = Integer(ENV.fetch("MASTER_EXEC_TIMEOUT", "120"))
       GRACE_S = 0.2
 
-      class TimeoutError < StandardError; end
+      class TimeoutError < StandardError
+        attr_reader :result
+
+        def initialize(message, result: nil)
+          @result = result
+          super(message)
+        end
+      end
 
       def capture3(*cmd, timeout: DEFAULT_TIMEOUT, raise_on_timeout: false, **opts) =
         run_capture(:popen3, cmd, timeout, opts, raise_on_timeout:)
@@ -57,7 +64,7 @@ module Master
           status, timed_out = bounded_wait(wait_thr, timeout, readers)
           writer&.join
           result = [*readers.map { |reader| reap(reader) }, status]
-          raise TimeoutError, "process timed out after #{timeout}s" if timed_out && raise_on_timeout
+          raise TimeoutError.new("process timed out after #{timeout}s", result:) if timed_out && raise_on_timeout
 
           result
         end

@@ -100,6 +100,20 @@ class TestReachExec < Minitest::Test
     refute status.success?
   end
 
+  def test_timeout_exception_preserves_captured_output
+    error = assert_raises(E::TimeoutError) do
+      E.capture3(
+        "sh", "-c", "printf before; printf warning 1>&2; sleep 30",
+        timeout: 0.1, raise_on_timeout: true
+      )
+    end
+
+    stdout, stderr, status = error.result
+    assert_includes stdout, "before"
+    assert_includes stderr, "warning"
+    refute status.success?
+  end
+
   def test_timeout_returns_fast_non_success_and_reaps_tree
     marker = "master_exec_timeout_probe_#{Process.pid}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
