@@ -75,7 +75,7 @@ module Ports
       def decline_reason
         return "BSDPORTS_PORTS_TARBALL is not 1" unless self.class.enabled?
         return "release unknown" if release.blank?
-        return "invalid release identifier" unless release.to_s.match?(/\\A\\d+\\.\\d+\\z/)
+        return "invalid release identifier" unless release.to_s.match?(/\A\d+\.\d+\z/)
         return "trusted signify key or signify executable unavailable" unless verification_ready?
 
         free = free_bytes(@workdir || Dir.tmpdir)
