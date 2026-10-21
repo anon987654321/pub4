@@ -264,7 +264,7 @@ module Master
 
       def incomplete_fix_pipeline(value)
         lines = value.to_s.lines
-        detail = lines.find { |line| line.match?(FOOTER_INCOMPLETE) }.to_s.strip
+        detail = lines.find { |line| line.match?(FOOTER_INCOMPLETE) || line.match?(FOOTER_OPEN_FINDINGS) }.to_s.strip
         cause = footer_cause(lines)
         head = detail.empty? ? "" : ": #{detail}"
         tail = cause.empty? ? "" : "; cause #{cause}"
