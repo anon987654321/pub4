@@ -28,15 +28,19 @@ class TestUserSimulation < Minitest::Test
   end
 
   def test_every_focused_test_mapping_points_to_a_real_test_file
-    UserSimulation::SURFACE_TESTS.each do |surface, paths|
-      refute_empty paths, "#{surface} has no focused test mapping"
-      assert_equal paths.length, paths.uniq.length, "#{surface} repeats a test path"
+    surfaces = JSON.parse(File.read(CAMPAIGN, encoding: "UTF-8")).fetch("surfaces")
+
+    surfaces.each do |surface|
+      name = surface.fetch("id")
+      paths = surface.fetch("focused_test_paths")
+      refute_empty paths, "#{name} has no focused test mapping"
+      assert_equal paths.length, paths.uniq.length, "#{name} repeats a test path"
 
       paths.each do |relative|
-        refute relative.start_with?("/"), "#{surface}: absolute test path #{relative}"
-        refute relative.split("/").include?(".."), "#{surface}: test path escapes the repository"
+        refute relative.start_with?("/"), "#{name}: absolute test path #{relative}"
+        refute relative.split("/").include?(".."), "#{name}: test path escapes the repository"
         assert File.file?(File.join(Master::REPO_ROOT, relative)),
-               "#{surface}: focused test path is missing: #{relative}"
+               "#{name}: focused test path is missing: #{relative}"
       end
     end
   end
@@ -194,7 +198,7 @@ class TestUserSimulation < Minitest::Test
 
   def fixture_tree(root, source)
     path = File.join(root, "RAILS", "brgen", "app", "models", "post.rb")
-    tests = UserSimulation::SURFACE_TESTS.fetch("brgen_social")
+    tests = UserSimulation.new(root:, campaign_path: CAMPAIGN).focused_test_paths_for("brgen_social")
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, source)
     tests.each do |test_path|
