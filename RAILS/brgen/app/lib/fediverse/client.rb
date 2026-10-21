@@ -14,7 +14,7 @@ module Fediverse
 
     # Remote servers are untrusted input. A malicious or broken one can answer a
     # gigabyte, so the body is capped rather than read whole into memory.
-    MAX_BODY = 1_000_000
+    MAX_BODY = Shared::OutboundHttp::MAX_BODY
 
     module_function
 
