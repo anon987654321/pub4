@@ -1,0 +1,13 @@
+en:
+  shared:
+    email_verification:
+      subject: "Confirm your email address"
+      welcome: "Welcome."
+      body: "Confirm your email address to use your account for posting and messaging."
+      confirm: "Confirm email address"
+      ignore: "If you did not create this account, you can ignore this message."
+      done: "Email confirmed. You can now post and message from your account."
+      invalid: "That confirmation link is invalid or already used."
+      resent: "If your account needs confirmation, a verification email has been sent."
+      signup_notice: "Account created. Check your inbox to confirm your email before posting or messaging as your account."
+      signup_notice_guest_merged: "Account created and your anonymous activity was carried over. Check your inbox to confirm your email before posting or messaging as your account."

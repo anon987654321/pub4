@@ -1,0 +1,13 @@
+nb:
+  shared:
+    email_verification:
+      subject: "Bekreft e-postadressen din"
+      welcome: "Velkommen."
+      body: "Bekreft e-postadressen din for å bruke kontoen til innlegg og meldinger."
+      confirm: "Bekreft e-postadresse"
+      ignore: "Hvis du ikke opprettet denne kontoen, kan du se bort fra denne meldingen."
+      done: "E-postadressen er bekreftet. Du kan nå publisere innlegg og sende meldinger fra kontoen."
+      invalid: "Bekreftelseslenken er ugyldig eller allerede brukt."
+      resent: "Hvis kontoen din trenger bekreftelse, er en bekreftelses-e-post sendt."
+      signup_notice: "Konto opprettet. Sjekk innboksen for å bekrefte e-postadressen før du publiserer innlegg eller sender meldinger som registrert bruker."
+      signup_notice_guest_merged: "Konto opprettet, og den anonyme aktiviteten din ble overført. Sjekk innboksen for å bekrefte e-postadressen før du publiserer innlegg eller sender meldinger som registrert bruker."

@@ -1,0 +1,4 @@
+<p><%= t("mailer.verify_welcome", default: t("shared.email_verification.welcome")) %></p>
+<p><%= t("mailer.verify_body", default: t("shared.email_verification.body")) %></p>
+<p><%= link_to t("mailer.verify_cta", default: t("shared.email_verification.confirm")), @verification_url %></p>
+<p><%= t("mailer.verify_ignore", default: t("shared.email_verification.ignore")) %></p>
