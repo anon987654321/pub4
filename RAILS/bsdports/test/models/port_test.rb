@@ -171,10 +171,11 @@ class PortTest < ActiveSupport::TestCase
     app = port("sample-app", comment: "small application")
     library = port("rare-library", comment: "shared library")
     Dependency.create!(port: app, depends_on: library, dep_type: "run")
-    SecurityAdvisory.create!(
-      port: app, identifier: "CVE-2099-1234", title: "sample advisory",
+    advisory = SecurityAdvisory.create!(
+      identifier: "CVE-2099-1234", title: "sample advisory",
       description: "example security note", severity: :high
     )
+    advisory.ports << app
 
     assert_includes Port.search("rare-library").to_a, app
     assert_includes Port.search("CVE-2099-1234").to_a, app
