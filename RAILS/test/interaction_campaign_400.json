@@ -4249,7 +4249,11 @@
       "fault_mode": "empty_state",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/amber/test/controllers/posts_controller_anonymous_test.rb",
+        "name": "test_guest_feed_shows_actionable_empty_state_when_no_posts_exist"
+      }
     },
     {
       "id": "RI-242",
