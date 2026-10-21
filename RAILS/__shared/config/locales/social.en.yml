@@ -218,6 +218,7 @@ en:
       account_deletion_scheduled: "Account scheduled for deletion in 30 days. Export emailed if configured."
       account_deletion_cancelled: "Account deletion cancelled."
       account_scheduled_for_deletion: "This account is scheduled for deletion."
+      guest_history_transfer_failed: "We could not safely attach your anonymous activity to this account. Your guest session is still active; try again later before signing out."
       sign_in_required: "Sign in to continue."
       magic_link_sent: "If that address has an account, a sign-in link is on its way."
       magic_link_invalid: "That sign-in link has expired or been used already."
