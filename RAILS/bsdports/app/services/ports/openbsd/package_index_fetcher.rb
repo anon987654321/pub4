@@ -18,6 +18,7 @@ module Ports
       DEFAULT_ARCH = "amd64"
       OPEN_TIMEOUT = 15
       READ_TIMEOUT = 60
+      MAX_INDEX_BODY_BYTES = 20 * 1024 * 1024
 
       def initialize(platform:, base: nil, arch: nil, release: nil)
         @platform = platform
@@ -78,20 +79,21 @@ module Ports
       # because a silent nil here reads as an empty index, and an empty index reads
       # as "this platform has no packages".
       #
-      # Shared::OutboundHttp is the fuller rule — it resolves the name and rejects
-      # RFC1918, loopback and link-local — but it holds a read to ten seconds and a
-      # body to a megabyte, which is sized for a web page, and this fetch allows a
-      # sixty-second read for a whole package index. This is the same principle at
-      # the one seam that needs it here, rather than a second copy of that module.
+      # The index is larger than a typical web page, but it is still untrusted
+      # input. Use the shared DNS-pinned public HTTPS guard with this client's
+      # longer read timeout and an explicit catalogue-size ceiling.
       def get(url, limit: 3)
         raise "too many redirects for #{url}" if limit.zero?
 
         uri = URI.parse(url)
-        response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
-                                                       open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-          http.get(uri.request_uri)
+        unless uri.is_a?(URI::HTTPS) && uri.port == 443 && uri.userinfo.nil?
+          raise URI::InvalidURIError, "package index mirror must use HTTPS on port 443"
         end
 
+        response = Shared::OutboundHttp.request(
+          uri, max_body: MAX_INDEX_BODY_BYTES,
+          open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT
+        )
         case response
         when Net::HTTPSuccess then response.body
         when Net::HTTPRedirection then follow(url, response["location"], limit)
