@@ -411,4 +411,17 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "trusted_script!(RESOURCE_GUARD)"
     assert_includes source, "trusted_script!(SOLID_QUEUE_PROOF)"
   end
+
+  def test_runbook_teaches_target_aware_command_diagnosis
+    runbook = File.read(File.expand_path("../RUNBOOK.md", __dir__))
+
+    assert_includes runbook, "## Command selection and diagnosis"
+    assert_includes runbook, "https://man.openbsd.org/OpenBSD-<release>/<page>"
+    assert_includes runbook, "current-manual pages are not proof for an older host."
+    assert_includes runbook, "`syspatch -c` lists available base patches"
+    assert_includes runbook, "`syspatch -l` lists installed patches"
+    assert_includes runbook, "`pfctl -nf /etc/pf.conf`"
+    assert_includes runbook, "configured, enabled, running, locally healthy,"
+    assert_includes runbook, "Do not infer success from a wrapper's exit code"
+  end
 end
