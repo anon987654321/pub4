@@ -236,7 +236,8 @@ override aggregate scores. Every grade requires human review. Different model
 identifiers do not prove that two judgments are independent, and a benchmark
 pass is not evidence of clinical safety or treatment efficacy. The focused
 regression suite is `ruby -Itest test/test_dialogue_rubric.rb`, run from this
-directory with MASTER's pinned Ruby and dependencies.
+directory with MASTER's pinned Ruby and dependencies. The suite has not yet
+been executed in the pinned runtime for this change.
 
 ## Model pool
 
