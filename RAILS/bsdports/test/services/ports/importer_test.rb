@@ -108,7 +108,7 @@ class Ports::ImporterTest < ActiveSupport::TestCase
   test "with no local tree it reaches the remote fallback instead of raising there" do
     platform = platforms(:openbsd)
     fetcher = FakeIndexFetcher.new([
-      { name: "git", version: "2.49.0", pkgpath: "packages/git", category: "uncategorised" }
+      { name: "git", version: "2.49.0", full_pkgname: "git-2.49.0", pkgpath: "packages/git", category: "uncategorised" }
     ])
 
     Ports::Openbsd::PackageIndexFetcher.stub(:new, ->(**) { fetcher }) do
@@ -139,7 +139,7 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     target = Port.create!(platform:, category:, name: "lib", pkgpath: "packages/lib", version: "1")
     edge = Dependency.create!(port: source, depends_on: target, dep_type: "run")
     fetcher = FakeIndexFetcher.new([
-      { name: "git", version: "2.50.0", pkgpath: "packages/git", category: "uncategorised" }
+      { name: "git", version: "2.50.0", full_pkgname: "git-2.50.0", pkgpath: "packages/git", category: "uncategorised" }
     ])
 
     Ports::Openbsd::PackageIndexFetcher.stub(:new, ->(**) { fetcher }) do
