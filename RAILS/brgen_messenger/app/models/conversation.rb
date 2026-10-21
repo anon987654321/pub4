@@ -88,7 +88,7 @@ class Conversation < ApplicationRecord
 
     # Claim a legacy unassigned DM for Bergen on first use. The city scope makes
     # this possible only on the original host, never on a second city.
-    if conversation&.city_id.nil? && ActsAsTenant.current_tenant
+    if conversation && conversation.city_id.nil? && ActsAsTenant.current_tenant
       conversation.update_column(:city_id, ActsAsTenant.current_tenant.id)
     end
     conversation
