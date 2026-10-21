@@ -8,10 +8,11 @@ require_relative "../lib/review/agent/prompt_builder"
 class SupportPromptHost
   include Master::Review::Agent::PromptBuilder
 
-  def initialize(message)
+  def initialize(message, previous: nil)
     @personality = Object.new
     @config = { "root" => Master::ROOT }
-    @session = Struct.new(:messages).new([{ role: "user", content: message }])
+    messages = [{ role: "user", content: previous }, { role: "user", content: message }].compact
+    @session = Struct.new(:messages).new(messages)
   end
 
   public :support_practice_for_turn
@@ -78,6 +79,17 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "113 for immediate danger to life"
     assert_includes prompt, "NICE NG225"
+  end
+
+  def test_short_follow_up_keeps_the_previous_support_topic
+    prompt = SupportPromptHost.new(
+      "What should I say?",
+      previous: "My partner checks my phone, controls money and says I am crazy when I object.",
+    ).support_practice_for_turn
+
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "safety planning"
   end
 
   def test_research_sources_are_added_for_clinical_and_research_questions
