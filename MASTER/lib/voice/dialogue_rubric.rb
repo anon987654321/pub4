@@ -148,7 +148,7 @@ module Master
         |mindfulness|coping\s+skills|mestring|følelsesregulering|kognitiv\s+terapi|dialektisk\s+atferdsterapi)\b
       }ix.freeze
       NORWAY_CUES = %r{
-        \b(?:norway|norwegian|norge|noreg|norsk|norske|bokmål|bokmal|hva|hvordan|forskning(?:en)?|studie(?:r|ne)|kampsport|psykisk\s+helse|forhold(?:et)?|kjæreste(?:n)?|depresjon|antidepressiva|panikklidelse|retningslinje(?:r|ne))\b|[æøå]
+        \b(?:norway|norwegian|norge|noreg|norsk|norske|bokmål|bokmal|jeg|ikke|meg|utrygg|trygg|hva|hvordan|forskning(?:en)?|studie(?:r|ne)|kampsport|psykisk\s+helse|forhold(?:et)?|kjæreste(?:n)?|depresjon|antidepressiva|panikklidelse|retningslinje(?:r|ne))\b|[æøå]
       }ix.freeze
 
       def prompt_block(root: Master::ROOT)
