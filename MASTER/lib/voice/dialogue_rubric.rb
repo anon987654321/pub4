@@ -121,6 +121,14 @@ module Master
       DEPRESSION_CUES = %r{
         \b(?:depress(?:ed|ion)|antidepressant|depresjon|antidepressiva|nedstemthet)\b
       }ix.freeze
+      ANXIETY_CUES = %r{
+        \b(?:anxiety\s+disorder|generalized\s+anxiety|generalised\s+anxiety|panic\s+disorder
+        |panic\s+attack|gad|social\s+anxiety\s+disorder|angstlidelse|panikklidelse|panikkanfall
+        |generalisert\s+angst|sosial\s+angst)\b
+      }ix.freeze
+      ADHD_CUES = %r{
+        \b(?:adhd|attention[- ]deficit(?:\s+hyperactivity)?\s+disorder|add)\b
+      }ix.freeze
       OCD_CUES = %r{
         \b(?:ocd|obsessive[- ]compulsive|tvangslidelse|tvangstanker|tvangshandlinger)\b
       }ix.freeze
@@ -168,7 +176,8 @@ module Master
         areas.concat(%w[relationship_safety manipulation_resilience]) if text.match?(CRISIS_CUES)
         areas << "martial_and_contemplative_practice" if text.match?(MARTIAL_CUES)
         include_sources = text.match?(RESEARCH_CUES) || text.match?(CLINICAL_DETAIL_CUES) ||
-                          text.match?(CRISIS_CUES) || text.match?(AI_MENTAL_HEALTH_CUES)
+                          text.match?(CRISIS_CUES) || text.match?(AI_MENTAL_HEALTH_CUES) ||
+                          text.match?(ANXIETY_CUES) || text.match?(ADHD_CUES)
         topic_keys = research_topics_for(text)
 
         support_practice_block(support, areas: areas.uniq, include_sources:, topic_keys:)
@@ -185,6 +194,8 @@ module Master
         topics << "manipulation" if text.match?(MANIPULATION_CUES)
         topics << "martial" if text.match?(MARTIAL_CUES)
         topics << "depression" if text.match?(DEPRESSION_CUES)
+        topics << "anxiety" if text.match?(ANXIETY_CUES)
+        topics << "adhd" if text.match?(ADHD_CUES)
         topics << "ocd" if text.match?(OCD_CUES)
         topics << "trauma" if text.match?(TRAUMA_CUES)
         topics << "bipolar" if text.match?(BIPOLAR_CUES)
