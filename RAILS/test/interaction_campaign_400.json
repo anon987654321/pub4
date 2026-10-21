@@ -2188,7 +2188,11 @@
       "fault_mode": "page_refresh",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/brgen/test/controllers/session_boundaries_test.rb",
+        "name": "test_RI_012_authentication_rotates_session_and_survives_refresh"
+      }
     },
     {
       "id": "RI-013",
