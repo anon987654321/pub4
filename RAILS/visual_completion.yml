@@ -1,0 +1,29 @@
+# Explicit operator authorization for the bounded Rails layout-completion campaign.
+# This grants measured layout refinement, not general visual redesign.
+schema: 1
+enabled: true
+target: RAILS
+exclude:
+  - RAILS/master
+allowed_visual_rules:
+  - AESTHETIC_FLAT_SEMANTIC
+  - TYPE_SCALE
+  - LEADING
+  - NO_DECORATIVE_FX
+  - SQUINT_TEST
+  - PIXEL_PERFECTION_RHYTHM
+constraints:
+  preserve_product_dialects: true
+  use_existing_tokens_and_primitives: true
+  canonical_tokens_are_immutable: true
+  palette_and_font_family_are_operator_owned: true
+  semantic_color_changes_are_operator_owned: true
+  mobile_first: true
+  keyboard_and_reduced_motion: true
+  preserve_interactions_and_localization: true
+verification:
+  require_measurable_browser: true
+  require_accessible_and_functional_states: true
+  require_focused_tests: true
+  permit_snapshot_promotion_after_quality_pass: true
+  promote_missing_or_unmeasurable_baselines: false
