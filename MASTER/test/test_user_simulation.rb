@@ -42,6 +42,9 @@ class TestUserSimulation < Minitest::Test
         assert File.file?(File.join(Master::REPO_ROOT, relative)),
                "#{name}: focused test path is missing: #{relative}"
       end
+
+      assert_equal paths, UserSimulation.new(root: Master::REPO_ROOT, campaign_path: CAMPAIGN).focused_test_paths_for(name),
+                   "#{name}: runtime resolver diverged from the campaign manifest"
     end
   end
 
