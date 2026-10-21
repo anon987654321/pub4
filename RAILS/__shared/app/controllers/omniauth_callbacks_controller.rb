@@ -57,9 +57,11 @@ class OmniauthCallbacksController < ::ApplicationController
         email_address: email.presence || "#{auth.uid}@#{auth.provider}.oauth",
         password: SecureRandom.hex(24),
       )
-      user.require_email_verification = true if email.present? && !verified_email
+      # A missing provider email still needs a unique placeholder, but that
+      # non-deliverable address is not evidence of mailbox ownership.
+      user.require_email_verification = true unless verified_email
       user.save!
-      if user.require_email_verification
+      if user.require_email_verification && email.present?
         user.generate_email_verification!
         Shared::VerificationMailer.verify(user, request.host).deliver_later
       end

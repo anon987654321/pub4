@@ -22,7 +22,7 @@ module Shared
     CACHE_TTL = 3600
     JSON_LIMIT = 1_000_000
     CLOCK_SKEW = 60
-    HIGH_ASSURANCE_ACR = %w[urn:bankid:bid urn:bankid:bid;LOA=4 4].freeze
+    HIGH_ASSURANCE_ACR = ["urn:bankid:bid;LOA=4"].freeze
     @cache = {}
     @cache_mutex = Mutex.new
 

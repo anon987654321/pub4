@@ -249,6 +249,82 @@
     return setSubjectForm(inferSubjectForm(value));
   }
 
+  // The semantic subject follows the active conversation and returns to the
+  // resting face after inactivity. Switching between two non-face subjects
+  // passes through the resting geometry because the primary renderer has one
+  // scatter target; replacing it in place snaps when the morph is at its limit.
+  const SUBJECT_IDLE_RESTORE_MS = 45_000;
+  const SUBJECT_MORPH_SETTLE_TIMEOUT_MS = 2_400;
+  let subjectRestoreTimer = null;
+  let subjectTransitionTimer = null;
+  let pendingSubjectForm = null;
+  let subjectTransitionGeneration = 0;
+
+  function clearSubjectRestoreTimer() {
+    if (subjectRestoreTimer) clearTimeout(subjectRestoreTimer);
+    subjectRestoreTimer = null;
+  }
+
+  function restoreFaceSubject() {
+    clearSubjectRestoreTimer();
+    if (subjectTransitionTimer) clearTimeout(subjectTransitionTimer);
+    subjectTransitionTimer = null;
+    pendingSubjectForm = null;
+    subjectTransitionGeneration += 1;
+    return setSubjectForm("face");
+  }
+
+  function setConversationSubject(value) {
+    const next = inferSubjectForm(value);
+    if (next === semanticForm && !pendingSubjectForm) return next;
+
+    const currentMorph = Number(window.MASTER_FACE?.morphCurrent);
+    const faceStillMorphing = semanticForm === "face" && nativeSubjectField &&
+      Number.isFinite(currentMorph) && currentMorph < 0.995;
+
+    if (next !== "face" && pendingSubjectForm && semanticForm === "face") {
+      pendingSubjectForm = next;
+      return next;
+    }
+
+    if (next !== "face" && !reducedMotionEnabled() &&
+        (semanticForm !== "face" || faceStillMorphing)) {
+      if (subjectTransitionTimer) clearTimeout(subjectTransitionTimer);
+      pendingSubjectForm = next;
+      const generation = ++subjectTransitionGeneration;
+      if (semanticForm !== "face") setSubjectForm("face");
+      const deadline = Date.now() + SUBJECT_MORPH_SETTLE_TIMEOUT_MS;
+      const advanceWhenFaceIsResting = () => {
+        if (generation !== subjectTransitionGeneration) return;
+        const morph = Number(window.MASTER_FACE?.morphCurrent);
+        if (!Number.isFinite(morph) || morph >= 0.995 || Date.now() >= deadline) {
+          const form = pendingSubjectForm;
+          pendingSubjectForm = null;
+          subjectTransitionTimer = null;
+          if (form && form !== "face") setSubjectForm(form);
+          return;
+        }
+        subjectTransitionTimer = setTimeout(advanceWhenFaceIsResting, 40);
+      };
+      subjectTransitionTimer = setTimeout(advanceWhenFaceIsResting, 40);
+      return next;
+    }
+
+    if (subjectTransitionTimer) clearTimeout(subjectTransitionTimer);
+    subjectTransitionTimer = null;
+    pendingSubjectForm = null;
+    subjectTransitionGeneration += 1;
+    return setSubjectForm(next);
+  }
+
+  function scheduleFaceRestoration() {
+    clearSubjectRestoreTimer();
+    subjectRestoreTimer = setTimeout(() => {
+      subjectRestoreTimer = null;
+      restoreFaceSubject();
+    }, SUBJECT_IDLE_RESTORE_MS);
+  }
+
   const TERMINAL_ACTIVITY_STATES = new Set(["complete", "failed", "cancelled"]);
 
   function removeActivity(key) {
@@ -923,7 +999,7 @@
   }
 
   window.MASTER_FACE_WORLD = Object.freeze({
-    load, update, spawnPulse, setSubjectForm, setSubjectFromText, inferSubjectForm
+    load, update, spawnPulse, setSubjectForm, setSubjectFromText, setConversationSubject, restoreFaceSubject, inferSubjectForm
   });
   window.addEventListener("master:visual", (event) => {
     const detail = event.detail || {};
@@ -936,11 +1012,31 @@
   }, { passive: true });
   window.addEventListener("master:bus", (event) => {
     const detail = event.detail || {};
-    if (detail.type !== "speech:partial") return;
+    const type = String(detail.type || "");
     const payload = detail.payload || {};
-    const transcript = payload.transcript || payload.text;
-    if (transcript) setSubjectFromText(transcript);
+
+    if (type === "turn:started") {
+      clearSubjectRestoreTimer();
+      return;
+    }
+
+    if (type === "speech:partial" || type === "speech:end" || type === "turn:committed") {
+      const text = String(payload.transcript || payload.text || "").trim();
+      if (text) setConversationSubject(text);
+      if (type !== "speech:partial") scheduleFaceRestoration();
+      return;
+    }
+
+    if (type === "turn:discarded" || type === "turn:interrupted") {
+      restoreFaceSubject();
+    }
   }, { passive: true });
+  window.addEventListener("pagehide", () => {
+    clearSubjectRestoreTimer();
+    if (subjectTransitionTimer) clearTimeout(subjectTransitionTimer);
+    subjectTransitionTimer = null;
+    pendingSubjectForm = null;
+  }, { once: true });
   window.addEventListener("master:face-ready", () => load(), { once: true });
   if (window._primerFired) load();
 })();

@@ -30,13 +30,16 @@ class EmailSubscriptionsController < ApplicationController
       return
     end
 
-    sub = EmailSubscription.find_or_initialize_by(email: params[:email_subscription][:email])
-    if sub.new_record?
-      sub.city = params[:email_subscription][:city].presence
+    sub = EmailSubscription.find_or_initialize_by(email: params.dig(:email_subscription, :email))
+    if sub.new_record? || !sub.agreed_to_marketing?
+      reconfirm = sub.persisted?
+      city = params.dig(:email_subscription, :city).presence
+      interests = params.dig(:email_subscription, :interests).presence
+      sub.city = city if sub.new_record? || city.present?
       sub.locale = I18n.locale.to_s
-      sub.agreed_to_marketing = true
-      sub.interests = params[:email_subscription][:interests].presence
-      if sub.save
+      sub.interests = interests if sub.new_record? || interests.present?
+
+      if sub.record_marketing_consent!(source: "signup_form", reconfirm:)
         EmailSubscriptionConfirmationJob.perform_later(sub.id)
         redirect_back fallback_location: root_path, notice: t("flash.confirm_your_inbox")
       else

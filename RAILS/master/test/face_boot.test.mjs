@@ -148,7 +148,15 @@ test("FaceWorld morphs the primary face field into a topic with a bounded fallba
   assert.match(world, /splatProxy\.visible = activePoints > 0 && !primaryMorphActive/);
   assert.doesNotMatch(world, /splatProxy\.visible = activePoints > 0;/);
   assert.match(world, /faceCanvas\.style\.opacity/);
-  assert.match(world, /detail\.type !== "speech:partial"/);
+  assert.match(world, /type === "speech:partial" \|\| type === "speech:end" \|\| type === "turn:committed"/);
+  assert.match(world, /turn:started/);
+  assert.match(world, /turn:discarded/);
+  assert.match(world, /turn:interrupted/);
+  assert.match(world, /SUBJECT_IDLE_RESTORE_MS = 45_000/);
+  assert.match(world, /SUBJECT_MORPH_SETTLE_TIMEOUT_MS = 2_400/);
+  assert.match(world, /advanceWhenFaceIsResting/);
+  assert.match(world, /function restoreFaceSubject\(\)/);
+  assert.match(world, /window\.addEventListener\("pagehide"/);
   assert.match(part2, /FACE_SCATTER_HOME = faceScatter\.slice\(\)/);
   assert.match(part2, /semanticMorphRestoreOnSettled/);
   assert.match(part3, /semanticMorphTarget == null \? automaticMorphTarget/);

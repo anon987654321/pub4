@@ -43,6 +43,20 @@ class BankidOIDCTest < Minitest::Test
     end
   end
 
+  def test_rejects_acr_values_that_do_not_claim_high_assurance
+    fingerprint = Digest::SHA256.hexdigest(@root.to_der)
+    ["urn:bankid:bid", "4", "urn:bankid:bid;LOA=3"].each do |acr|
+      OIDC.stub(:trusted_root_fingerprint, fingerprint) do
+        assert_raises(OIDC::InvalidToken, "accepted #{acr}") do
+          OIDC.verify_id_token!(
+            signed_token("acr" => acr), environment: "current", client_id: CLIENT_ID, nonce: NONCE,
+            discovery: @discovery, jwks: { "keys" => [@jwk] }, now: @now
+          )
+        end
+      end
+    end
+  end
+
   def test_rejects_wrong_nonce_after_valid_signature
     fingerprint = Digest::SHA256.hexdigest(@root.to_der)
     OIDC.stub(:trusted_root_fingerprint, fingerprint) do

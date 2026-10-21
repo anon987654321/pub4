@@ -33,6 +33,18 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "an identity without an email cannot verify its synthetic placeholder" do
+    controller = OmniauthCallbacksController.new
+    controller.define_singleton_method(:external_identity_for) { |_auth| nil }
+    auth = auth_for("bankid", email_verified: false, email: nil)
+
+    user = controller.send(:find_or_create_user, auth)
+
+    assert user.persisted?
+    assert_match(/@bankid\.oauth\z/, user.email_address)
+    refute user.email_verified?
+  end
+
   private
 
   def auth_for(provider, email_verified:, email: "person@example.test")
