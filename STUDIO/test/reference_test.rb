@@ -25,6 +25,28 @@ class DillaReferenceTest < Minitest::Test
     end
   end
 
+  def test_accepts_both_operator_supplied_dilla_references_without_playlist_tracking
+    sources = {
+      "https://www.youtube.com/watch?v=22OnSvf-SDc&list=RD22OnSvf-SDc&start_radio=1" => "22OnSvf-SDc",
+      "https://www.youtube.com/watch?v=XKB5h2tJQHQ&list=RDXKB5h2tJQHQ&start_radio=1&pp=oAcB" => "XKB5h2tJQHQ"
+    }
+
+    sources.each do |url, expected_id|
+      parsed = Dilla::Reference.parse_url(url)
+      assert_equal expected_id, parsed.fetch(:id)
+      assert_equal "https://www.youtube.com/watch?v=#{expected_id}", parsed.fetch(:url)
+    end
+  end
+
+  def test_reference_urls_reject_playlist_only_inputs_even_when_they_are_mix_playlists
+    [
+      "https://www.youtube.com/playlist?list=RD22OnSvf-SDc",
+      "https://www.youtube.com/playlist?list=RDXKB5h2tJQHQ"
+    ].each do |url|
+      assert_raises(Dilla::Reference::Error) { Dilla::Reference.parse_url(url) }
+    end
+  end
+
   def test_cli_defines_reference_modules_before_dispatching_subcommands
     [["reference", "--help"], ["industrial-techno", "--help"]].each do |args|
       out, err, status = Open3.capture3(RbConfig.ruby, SCRIPT, *args, chdir: DIR)
