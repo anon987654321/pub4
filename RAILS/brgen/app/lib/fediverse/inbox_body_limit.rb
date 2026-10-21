@@ -71,6 +71,7 @@ module Fediverse
 
         requested = requested_length.nil? ? remaining + 1 : [requested_length, remaining + 1].min
         chunk = @input.read(requested)
+        chunk = "" if chunk.nil? && requested_length.nil?
         record!(chunk)
         assign_outbuf(chunk, outbuf)
       end
@@ -126,7 +127,10 @@ module Fediverse
 
       def assign_outbuf(chunk, outbuf)
         return chunk unless outbuf
-        return outbuf.replace("") if chunk.nil?
+        if chunk.nil?
+          outbuf.replace("")
+          return nil
+        end
 
         outbuf.replace(chunk)
       end
