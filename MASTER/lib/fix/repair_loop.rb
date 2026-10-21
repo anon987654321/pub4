@@ -180,7 +180,9 @@ module Master
       end
 
       def attempt_fix(violation)
-        if (gap = VisualCustodyBlocking.gap_for(violation[:law]))
+        if (gap = VisualCustodyBlocking.gap_for(
+          violation[:law], root: @root, path: violation[:file], custody: @visual_custody
+        ))
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
           @bus&.publish("fix:requires_operator_decision", finding: review)
@@ -413,6 +415,7 @@ module Master
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
+        #{VisualCompletion.prompt_context(root: @root, path:, custody: @visual_custody)}
         #{Master::Design::Authoring.context(path:, root: @root)}
         #{PrimitiveFirst.hint(violation, root: @root)}
         #{Protocol.law_prompt(@law)}
