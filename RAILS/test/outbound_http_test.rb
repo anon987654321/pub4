@@ -132,6 +132,11 @@ class FediverseSsrfTest < Minitest::Test
     assert_equal "aaaabbbb", response.body
   end
 
+  def test_media_body_budget_is_bounded_and_larger_than_json
+    assert_operator Shared::OutboundHttp::MAX_MEDIA_BODY, :>, Shared::OutboundHttp::MAX_BODY
+    assert_operator Shared::OutboundHttp::MAX_MEDIA_BODY, :<=, 8_000_000
+  end
+
   def test_an_oversized_body_is_a_network_error_callers_already_rescue
     assert_includes Shared::OutboundHttp::NETWORK_ERRORS, Shared::OutboundHttp::BodyTooLarge
   end
