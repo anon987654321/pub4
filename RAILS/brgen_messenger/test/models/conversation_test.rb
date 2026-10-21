@@ -42,6 +42,37 @@ class ConversationTest < ActiveSupport::TestCase
     assert_nil Conversation.direct_between(@ola, @third)
   end
 
+  test "the same pair gets a separate private thread in each city" do
+    bergen_thread = Conversation.find_or_create_direct(@kari, @ola)
+    oslo = City.find_by!(domain: "oshlo.no")
+    ActsAsTenant.current_tenant = oslo
+
+    oslo_thread = Conversation.find_or_create_direct(@kari, @ola)
+
+    refute_equal bergen_thread.id, oslo_thread.id
+    assert_equal @city.id, bergen_thread.reload.city_id
+    assert_equal oslo.id, oslo_thread.reload.city_id
+    assert_equal [ oslo_thread.id ], Conversation.for_user(@kari).where(slug: nil).pluck(:id)
+    assert_equal oslo_thread.id, Conversation.direct_between(@kari, @ola).id
+
+    ActsAsTenant.current_tenant = @city
+    assert_equal [ bergen_thread.id ], Conversation.for_user(@kari).where(slug: nil).pluck(:id)
+    assert_equal bergen_thread.id, Conversation.direct_between(@kari, @ola).id
+  end
+
+  test "a legacy unassigned direct thread is pinned to Bergen when reopened" do
+    legacy = Conversation.create!(conversation_type: "direct")
+    legacy.participants << @kari << @ola
+
+    assert_equal legacy.id, Conversation.direct_between(@kari, @ola).id
+    assert_equal @city.id, legacy.reload.city_id
+
+    oslo = City.find_by!(domain: "oshlo.no")
+    ActsAsTenant.current_tenant = oslo
+    refute_includes Conversation.for_user(@kari).pluck(:id), legacy.id
+    assert_nil Conversation.direct_between(@kari, @ola)
+  end
+
   # A group room is not a DM, however many people are in it.
   test "a group is never returned as a direct thread" do
     group = Conversation.create_group!(creator: @kari, name: "Turgruppa", users: [ @ola ])
