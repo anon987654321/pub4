@@ -456,6 +456,35 @@ class TestDialogueRubric < Minitest::Test
     refute_includes adhd, "NICE NG116"
   end
 
+  def test_psychosis_eating_and_alcohol_queries_get_specific_guidelines
+    psychosis = Rubric.support_prompt_for(
+      "I keep hearing voices and feel watched.",
+      root: Master::ROOT,
+    )
+    eating = Rubric.support_prompt_for(
+      "I keep binge eating and feel ashamed.",
+      root: Master::ROOT,
+    )
+    alcohol = Rubric.support_prompt_for(
+      "I am worried I drink too much every night.",
+      root: Master::ROOT,
+    )
+
+    assert_includes psychosis, "NICE CG178"
+    assert_includes psychosis, "not a remote diagnosis"
+    refute_includes psychosis, "NICE NG69"
+    refute_includes psychosis, "NICE CG115"
+
+    assert_includes eating, "NICE NG69"
+    refute_includes eating, "NICE CG178"
+    refute_includes eating, "NICE CG115"
+
+    assert_includes alcohol, "NICE CG115"
+    assert_includes alcohol, "Do not advise abrupt unsupported withdrawal"
+    refute_includes alcohol, "NICE CG178"
+    refute_includes alcohol, "NICE NG69"
+  end
+
   def test_martial_philosophy_preserves_boundaries_and_safety
     prompt = Rubric.support_prompt_for(
       "Can martial arts philosophy help me handle anger?",
