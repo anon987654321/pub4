@@ -25,6 +25,7 @@ module Ports
       REQUIRED_FREE_BYTES = 2 * 1024 * 1024 * 1024
       OPEN_TIMEOUT = 15
       READ_TIMEOUT = 300
+      MAX_TARBALL_BYTES = 150 * 1024 * 1024
 
       def self.enabled? = ENV["BSDPORTS_PORTS_TARBALL"] == "1"
 
@@ -91,25 +92,34 @@ module Ports
         nil
       end
 
-      def download(from, to, limit: 3)
-        raise "too many redirects for #{from}" if limit.zero?
+      def download(from, to, limit: 3, origin: nil)
+        raise "too many redirects for #{from}" if limit.negative?
 
         uri = URI.parse(from)
-        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
-                                            open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-          http.request(Net::HTTP::Get.new(uri)) do |response|
-            case response
-            when Net::HTTPSuccess
-              File.open(to, "wb") { |f| response.read_body { |chunk| f.write(chunk) } }
-              return true
-            when Net::HTTPRedirection
-              return download(URI.join(from, response["location"]).to_s, to, limit: limit - 1)
-            else
-              Rails.logger.warn("bsdports ports.tar.gz #{from} returned #{response.code}")
-              return false
-            end
-          end
+        unless uri.is_a?(URI::HTTPS) && uri.port == 443 && uri.userinfo.nil?
+          raise URI::InvalidURIError, "ports mirror must use HTTPS on port 443"
         end
+        origin ||= [uri.scheme, uri.host, uri.port]
+        unless [uri.scheme, uri.host, uri.port] == origin
+          raise URI::InvalidURIError, "ports mirror redirect changed origin"
+        end
+
+        # Resolve, reject private/reserved addresses, pin the socket destination,
+        # and cap the body before writing it. Never follow a redirect to a new host.
+        response = Shared::OutboundHttp.request(uri, max_body: MAX_TARBALL_BYTES)
+        if response.is_a?(Net::HTTPRedirection)
+          target = URI.join(from, response["location"].to_s)
+          return download(target.to_s, to, limit: limit - 1, origin:)
+        end
+        unless response.is_a?(Net::HTTPSuccess)
+          Rails.logger.warn("bsdports ports.tar.gz #{from} returned #{response.code}")
+          return false
+        end
+
+        File.open(to, "wb") { |file| file.write(response.body) }
+        true
+      rescue Shared::OutboundHttp::BodyTooLarge => e
+        Rails.logger.warn("bsdports ports.tar.gz rejected: #{e.message}")
         false
       rescue StandardError => e
         Rails.logger.warn("bsdports ports.tar.gz download failed: #{e.class}: #{e.message}")
