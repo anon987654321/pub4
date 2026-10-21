@@ -6,7 +6,7 @@ require_relative "../lib/boot/entrypoint"
 ROOT = File.expand_path("..", __dir__)
 Master::Boot::Entrypoint.prepare!(root: ROOT)
 
-require "open3"
+require_relative "../lib/io/exec"
 require "socket"
 require "yaml"
 require_relative "../lib/trace/dmesg"
@@ -43,7 +43,7 @@ def fail_check(name, detail) = Check.new(name:, state: :fail, detail:)
 def unmeasured(name, detail) = Check.new(name:, state: :unmeasured, detail:)
 
 def run(*argv, chdir: ROOT)
-  stdout, stderr, status = Open3.capture3(*argv, chdir: chdir)
+  stdout, stderr, status = Master::Io::Exec.capture3(*argv, chdir: chdir)
   [status.success?, stdout.strip, stderr.strip]
 rescue Errno::ENOENT => e
   [false, "", e.message]

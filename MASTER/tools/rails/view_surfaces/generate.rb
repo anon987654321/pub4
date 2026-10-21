@@ -12,7 +12,7 @@
 # fleet (probe_routes.rb), then rewrites the block from the pages that
 # answered 200 HTML (write_surfaces.rb). Work files go to a temporary
 # directory; the YAML is the only thing written in the tree.
-require "open3"
+require_relative "../../../lib/io/exec"
 require "tmpdir"
 
 HERE = __dir__
@@ -20,7 +20,7 @@ RAILS = File.expand_path("../../../../RAILS", HERE)
 APPS = %w[amber bsdports brgen].freeze
 
 def run!(*cmd, chdir:, out: nil)
-  stdout, stderr, status = Open3.capture3(*cmd, chdir:)
+  stdout, stderr, status = Master::Io::Exec.capture3(*cmd, chdir:)
   abort "#{cmd.join(" ")} failed in #{chdir}:\n#{stderr.lines.last(5).join}" unless status.success?
   File.write(out, stdout) if out
   stdout

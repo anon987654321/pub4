@@ -4,7 +4,7 @@
 # Subprocess gates are started with system() and do not inherit runner.rb's
 # Encoding.default_external; see the same require in release.rb.
 require_relative "support/utf8"
-require "open3"
+require_relative "../lib/io/exec"
 require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
@@ -48,7 +48,7 @@ RUBY
 
 def run!(cmd, chdir: ROOT, env: nil)
   env_vars = env ? ENV.to_h.merge(env) : ENV.to_h
-  stdout, stderr, status = Open3.capture3(env_vars, *cmd, chdir:)
+  stdout, stderr, status = Master::Io::Exec.capture3(env_vars, *cmd, chdir:)
   [status.success?, [stdout, stderr].join.strip]
 end
 

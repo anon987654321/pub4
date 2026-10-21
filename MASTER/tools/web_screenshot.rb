@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "open3"
+require_relative "../lib/io/exec"
 require "optparse"
 require "shellwords"
 require_relative "../lib/trace/dmesg"
@@ -55,7 +55,7 @@ args = [
   options[:url],
 ]
 
-stdout, stderr, status = Open3.capture3(*args)
+stdout, stderr, status = Master::Io::Exec.capture3(*args)
 unless status.success? && File.exist?(options[:out]) && File.size(options[:out]).positive?
   Master::Trace::Dmesg::Report.print("screenshot0", stderr.empty? ? stdout : stderr, io: $stderr)
   Master::Trace::Dmesg.status("screenshot0", "failed", io: $stderr)

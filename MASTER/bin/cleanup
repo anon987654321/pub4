@@ -6,7 +6,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "../lib/io/exec"
 require "optparse"
 require "time"
 require_relative "../lib/trace/dmesg"
@@ -24,7 +24,7 @@ OptionParser.new do |opts|
 end.parse!
 
 def capture(*argv, chdir: REPO)
-  stdout, stderr, status = Open3.capture3(*argv, chdir: chdir)
+  stdout, stderr, status = Master::Io::Exec.capture3(*argv, chdir: chdir)
   raise "#{argv.join(' ')} failed: #{stderr}" unless status.success?
   stdout
 end

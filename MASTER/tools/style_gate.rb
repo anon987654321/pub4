@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../lib/io/exec"
 require_relative "../lib/operator/ruby_runner"
 require_relative "../lib/trace/dmesg"
 
@@ -12,7 +12,7 @@ RUBY = Operator::RubyRunner.ruby_cmd
 BUNDLE = Operator::RubyRunner.bundle_cmd
 
 def run(label, command, chdir: ROOT)
-  out, err, status = Open3.capture3(*command, chdir:)
+  out, err, status = Master::Io::Exec.capture3(*command, chdir:)
   body = [out, err].map(&:strip).reject(&:empty?).join("\n")
   { label:, ok: status.success?, body:, exit: status.exitstatus }
 end

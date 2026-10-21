@@ -29,7 +29,7 @@
 
 require "json"
 require "yaml"
-require "open3"
+require_relative "../lib/io/exec"
 require_relative "../lib/trace/dmesg"
 
 module Operator
@@ -94,7 +94,7 @@ end
     end
 
     def capture(*cmd, chdir: MASTER)
-      out, err, status = Open3.capture3(*cmd, chdir:)
+      out, err, status = Master::Io::Exec.capture3(*cmd, chdir:)
       body = "#{out}#{err}".lines.map(&:rstrip).reject(&:empty?)
       [status.success?, body]
     rescue StandardError => e
