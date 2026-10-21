@@ -118,7 +118,7 @@ module Master
           next if value.empty?
 
           if COLOR_PROPERTIES.include?(property)
-            tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
+            tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }
             color_rows << [property, tokens.empty? ? value.gsub(/\s+/, " ").downcase : tokens]
           elsif property == "font-family"
             font_rows << value.gsub(/\s+/, " ").strip
@@ -132,7 +132,7 @@ module Master
             name = property.strip.downcase
             value = value.strip
             if COLOR_PROPERTIES.include?(name)
-              tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
+              tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }
               color_rows << [name, tokens.empty? ? value.gsub(/\s+/, " ").downcase : tokens]
             elsif name == "font-family"
               font_rows << value.gsub(/\s+/, " ").strip
@@ -169,6 +169,8 @@ module Master
 
         constraints = config.fetch("constraints", {})
         verification = config.fetch("verification", {})
+        return false unless constraints.is_a?(Hash) && verification.is_a?(Hash)
+
         constraints["preserve_product_dialects"] == true &&
           constraints["use_existing_tokens_and_primitives"] == true &&
           constraints["canonical_tokens_are_immutable"] == true &&
