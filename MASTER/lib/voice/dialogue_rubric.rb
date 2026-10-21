@@ -148,7 +148,7 @@ module Master
 
         support_practice_block(support, areas: areas.uniq, include_sources:)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "dialogue_rubric.support_prompt_for", severity: :error)
+        Master::Ground::Swallow.log(e, context: "dialogue_rubric.support_prompt_for", severity: :load_bearing)
         support_fallback_prompt(text)
       end
 
