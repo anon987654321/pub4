@@ -5,6 +5,7 @@ require_relative "../lib/fix/visual_completion"
 require_relative "../lib/fix/visual_custody_blocking"
 require_relative "../lib/fix/visual_quality_gates"
 require_relative "../lib/fix/transaction"
+require_relative "../gates/support/geometry_probe"
 
 class TestVisualCompletion < Minitest::Test
   class AuthorizedCustody
@@ -26,6 +27,13 @@ class TestVisualCompletion < Minitest::Test
     refute completion.enabled_for_target?(root: repo, target: "OPENBSD")
     refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/master/public/face.css"))
     refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/brgen/app/models/post.rb"))
+    refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss"))
+  end
+
+  def test_reflow_gate_covers_core_mobile_tablet_and_desktop_widths
+    required = [320, 360, 375, 390, 430, 480, 640, 768, 1024, 1280]
+
+    assert_empty required - Deploy::GeometryProbe.reflow_widths
   end
 
   def test_only_bounded_layout_rules_bypass_operator_owned_visual_decisions
