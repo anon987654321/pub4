@@ -15,9 +15,19 @@ apps. The promise, the stack and the status of every feature are in `apps.yml`, 
 
 The ports data arrives by import. The rake task `ports:import_now` reads a local tree at once.
 Set `PLATFORM` to `openbsd` and `BSDPORTS_TREE_PATH` to `/usr/ports`, and it reports how many
-ports it loaded. The task `ports:import` queues the same work on Solid Queue instead, and
-`FTP_FALLBACK`, on by default, lets the importer fall back to FTP when the local tree yields no
-ports.
+ports it loaded. The task `ports:import` queues the same work on Solid Queue instead.
+When no local tree is present, the importer tries the signed HTTPS ports tarball only when
+`BSDPORTS_PORTS_TARBALL=1`, a matching trusted signify key and the `signify` executable are
+available, and free disk space is sufficient. Otherwise it uses the thin package index. That
+index updates package names and versions; it does not authoritatively describe dependency edges,
+so an index-only import preserves previously known dependencies.
+
+NVD cross-reference is asynchronous and operator-only. Set `BSDPORTS_ADMIN_EMAIL` in the
+production environment to the operator account's email address; leave it unset to disable manual
+cross-reference requests. `NVD_API_KEY` is optional and changes the shared request interval, not
+the authorization boundary. Cross-reference jobs reserve distinct database-backed request slots,
+and the scheduled refresh queues work instead of making NVD requests inside a web request or
+bulk refresh thread.
 
 The shared engine's social routes (notifications, reactions, reports) are off here, because the
 schema has none of their tables. Setting `BSDPORTS_SOCIAL=1` draws them, and it should wait
