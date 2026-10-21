@@ -142,7 +142,7 @@ module Ports
 
         # Resolve, reject private/reserved addresses, pin the socket destination,
         # and cap the body before writing it. Never follow a redirect to a new host.
-        response = Shared::OutboundHttp.request(uri, max_body: max_bytes)
+        response = Shared::OutboundHttp.request(uri, max_body: max_bytes, open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT)
         if response.is_a?(Net::HTTPRedirection)
           target = URI.join(from, response["location"].to_s)
           return download(target.to_s, to, limit: limit - 1, origin:, max_bytes:)
