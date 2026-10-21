@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
-class VerificationMailer < ApplicationMailer
-  def verify(user)
-    @user = user
-    @token = user.email_verification_token
-    mail subject: I18n.t("mailer.verify_email_subject"), to: user.email_address
+# Compatibility entry point retained for existing Brgen mailer callers/tests.
+# The body, tokens, URL and translations live in the shared engine.
+class VerificationMailer
+  def self.verify(user)
+    host = Rails.application.routes.default_url_options[:host].presence ||
+      Rails.application.config.action_mailer.default_url_options[:host].presence ||
+      "brgen.no"
+    Shared::VerificationMailer.verify(user, host)
   end
 end

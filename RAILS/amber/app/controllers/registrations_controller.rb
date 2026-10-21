@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class RegistrationsController < ApplicationController
+  include Shared::EmailRegistration
   unauthenticated_access_only only: %i[new create]
+  skip_before_action :ensure_guest_user!, only: :create
   # brgen's UsersController#create — the same job in the other app — has carried
   # 10 per 10 minutes since it was written, and this one carried nothing: signup
   # is guest-reachable by definition, so an unlimited create is an unlimited
@@ -14,18 +16,16 @@ class RegistrationsController < ApplicationController
   def new = render
 
   def create
-    unless params[:accept_terms] == "1" && params[:accept_age] == "1"
-      flash.now[:alert] = t("legal.accept_terms")
-      render :new, status: :unprocessable_entity
+    unless signup_terms_accepted?
+      render_signup_terms_error(registration_params)
       return
     end
 
-    # An ivar so the re-rendered form shows why the save failed; a local left the
-    # view building a blank User.new with no errors to show.
-    @user = User.new(registration_params)
+    prepare_email_registration(registration_params)
     if @user.save
+      send_signup_verification!(@user)
       start_new_session_for @user
-      redirect_to root_path, notice: t("flash.welcome")
+      redirect_to root_path, notice: t("shared.email_verification.signup_notice")
     else
       render :new, status: :unprocessable_entity
     end

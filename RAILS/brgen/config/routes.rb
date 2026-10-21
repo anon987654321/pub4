@@ -20,9 +20,6 @@ Rails.application.routes.draw do
   post "internal/dilla_publish" => "internal#dilla_publish", as: :internal_dilla_publish
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
 
-  get  "verify/:token" => "email_verifications#show",   as: :verify_email
-  post "verify/resend" => "email_verifications#create", as: :resend_verification
-
   post   "users/:user_id/block" => "blocks#create",  as: :block_user
   delete "users/:user_id/block" => "blocks#destroy", as: :unblock_user
 
@@ -59,6 +56,7 @@ Rails.application.routes.draw do
   end
   resources :passwords, param: :token, only: %i[new create edit update]
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/email_verification.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/verification.rb", __dir__)))
   post "fingerprint" => "fingerprints#create"
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/fleet.rb", __dir__)))

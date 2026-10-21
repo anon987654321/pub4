@@ -26,6 +26,7 @@ Rails.application.routes.draw do
   end
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/legal.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/email_verification.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/verification.rb", __dir__)))
   post "fingerprint" => "fingerprints#create"
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/social.rb", __dir__)))

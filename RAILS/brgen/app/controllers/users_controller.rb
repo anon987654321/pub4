@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
+  include Shared::EmailRegistration
   allow_unauthenticated_access only: :show
   unauthenticated_access_only only: %i[new create]
   # Sign-up writes a user, not a guest row; minting a guest here would give
@@ -60,16 +61,12 @@ class UsersController < ApplicationController
       return
     end
 
-    unless params[:accept_terms] == "1" && params[:accept_age] == "1"
-      @user = User.new(user_params)
-      @user.errors.add(:base, t("legal.accept_terms"))
-      render :new, status: :unprocessable_entity
+    unless signup_terms_accepted?
+      render_signup_terms_error(user_params)
       return
     end
 
-    @user = User.new(user_params)
-    @user.guest = false
-    @user.require_email_verification = true # a public signup must confirm before posting
+    prepare_email_registration(user_params)
     guest = Current.user if Current.user&.guest? && Current.user.persisted?
 
     unless @user.save
@@ -79,12 +76,11 @@ class UsersController < ApplicationController
 
     # Send the confirmation email; the account exists but can't post under its
     # identity until it's verified (see ApplicationController#require_verified_email).
-    @user.generate_email_verification!
-    VerificationMailer.verify(@user).deliver_later
+    send_signup_verification!(@user)
 
     merged = merge_guest_into(@user, guest)
     start_new_session_for @user
-    redirect_to after_authentication_url, notice: t(merged ? "flash.welcome_guest_merged" : "flash.welcome")
+    redirect_to after_authentication_url, notice: t(merged ? "shared.email_verification.signup_notice_guest_merged" : "shared.email_verification.signup_notice")
   end
 
   private
