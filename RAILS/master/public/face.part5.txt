@@ -1326,6 +1326,7 @@ zshBar.addEventListener('submit', (e) => {
   if (!v) return;
   const accepted = window.MASTER_FACE?.sendMessage?.(v);
   if (accepted === false) return;
+  window.MASTER_FACE_WORLD?.setSubjectFromText?.(v);
   zshIn.value = '';
   State.pulse = 0.4;
   State.ripplePhase = 0;
