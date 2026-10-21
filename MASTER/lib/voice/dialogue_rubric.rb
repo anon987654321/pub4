@@ -57,7 +57,7 @@ module Master
           |føler\s+meg\s+(?:trist|fastlåst|tom|håpløs|engstelig|sint|overveldet|utrygg|fortapt)
           |jeg\s+(?:sliter|trenger\s+hjelp|trenger\s+råd|vet\s+ikke\s+hva\s+jeg\s+skal\s+gjøre)
           |jeg\s+har\s+det\s+vanskelig|jeg\s+klarer\s+ikke|trenger\s+personlige\s+råd
-          |forhold|partner|kjæreste|samboer|ektefelle|ekteskap|parforhold|krangel|krangler|skilsmisse
+          |forhold(?:et)?|partner(?:en)?|kjæreste(?:n)?|samboer(?:en)?|ektefelle(?:n)?|ekteskap(?:et)?|parforhold(?:et)?|krangel(?:en)?|krangler|skilsmisse
           |intimitet|familiekonflikt|gaslighting|manipulasjon|narsissist|psykisk\s+vold|kontrollerer\s+meg
           |sjekker\s+(?:mobilen|telefonen)|sporer\s+(?:mobilen|telefonen)|truer\s+meg|slår\s+meg
           |tvinger\s+meg|holder\s+meg\s+isolert|kontrollerer\s+(?:økonomien|pengene\s+mine)
@@ -70,8 +70,8 @@ module Master
 
       RELATIONSHIP_CUES = %r{
         \b(?:relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break\s+up
-        |argument|fight\s+with|dating|intimacy|divorce|family\s+conflict|forhold|partner|kjæreste
-        |samboer|ektefelle|ekteskap|parforhold|krangel|krangler|skilsmisse|intimitet|familiekonflikt)\b
+        |argument|fight\s+with|dating|intimacy|divorce|family\s+conflict|forhold(?:et)?|partner(?:en)?|kjæreste(?:n)?
+        |samboer(?:en)?|ektefelle(?:n)?|ekteskap(?:et)?|parforhold(?:et)?|krangel(?:en)?|krangler|skilsmisse|intimitet|familiekonflikt)\b
       }ix.freeze
 
       MANIPULATION_CUES = %r{
