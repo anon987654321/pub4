@@ -274,6 +274,29 @@ class TestIoTools < Minitest::Test
     assert_includes bus.names, "tool:warning"
   end
 
+  def test_web_search_minimizes_sensitive_story_before_governor_and_network
+    governor = allow
+    tool = Master::Io::WebSearch.new(governor:)
+    story = "I am scared because my boyfriend Alex checks my phone and controls my money. Research whether this is coercive control."
+    seen = nil
+    body = { "Abstract" => "Public safety guidance" }.to_json
+    tool.define_singleton_method(:fetch_search_response) do |query|
+      seen = query
+      Response.new("200", body)
+    end
+
+    result = tool.call(query: story)
+
+    assert result.ok?, result.to_s
+    refute_includes seen, "Alex"
+    refute_includes seen, "my boyfriend"
+    refute_includes seen, "checks my phone"
+    refute_includes seen, "controls my money"
+    assert_includes seen, "coercive control"
+    assert_includes seen, "safety planning"
+    assert_equal seen, governor.asked.first.last
+  end
+
   def test_web_search_redacts_prompt_injection_from_results
     governor = allow
     bus = Bus.new
