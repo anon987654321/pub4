@@ -48,6 +48,8 @@ class AmberErasureContractTest < Minitest::Test
     assert_includes job, "Recommendation.where(item_id: item_ids)"
     assert_includes job, 'Comment.where(commentable_type: "Item", commentable_id: item_ids)'
     assert_includes job, 'Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids)'
+    assert_includes job, 'Shared::ReviewCase.where(reviewable_type: "Item", reviewable_id: item_ids)'
+    assert_includes job, 'Shared::ReviewCase.where(reviewable_type: "Outfit", reviewable_id: outfit_ids)'
     refute_match(/\{ model: "Post", key: :user_id \}/, job)
     refute_match(/\{ model: "Comment", key: :user_id \}/, job)
   end
