@@ -128,7 +128,8 @@ class TestDialogueRubric < Minitest::Test
     assert_equal :complete, report.fetch(:status)
     assert_equal 1, report.fetch(:case_count)
     assert_equal 1, report.fetch(:summary).fetch(:pass)
-    assert report.fetch(:independent_judge)
+    assert report.fetch(:distinct_model_identifiers)
+    assert_includes report.fetch(:note), "do not guarantee independent judgments"
     assert report.fetch(:requires_human_review)
     assert_equal 2, agent.calls
     assert_equal "test/answerer", agent.history[0].fetch(:options).fetch(:model)
