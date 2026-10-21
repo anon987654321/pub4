@@ -118,8 +118,10 @@ module Master
         |psykose|mani|autisme|panikklidelse|behandling|bivirkninger|psykolog|psykisk\s+helsepersonell)\b
       }ix.freeze
       AI_MENTAL_HEALTH_CUES = %r{
-        \b(?:master|ai|llms?|chatbots?|large\s+language\s+models?|artificial\s+intelligence
+        \b(?:ai|llms?|chatbots?|large\s+language\s+models?|artificial\s+intelligence
         |ai\s+therapist|psychotherapy\s+evaluation|model\s+evaluation|red[- ]?team|benchmarks?)\b
+        |\bmaster\b(?=.*\b(?:therap(?:y|ist)|mental\s+health|support\s+protocol|psychotherapy
+        |counsel(?:ing|ling)?|rubric|prompt|safety|evaluation)\b)
       }ix.freeze
       DEPRESSION_CUES = %r{
         \b(?:depress(?:ed|ion)|antidepressant|depresjon|antidepressiva|nedstemthet)\b
