@@ -18,10 +18,12 @@ class ConversationMutesController < ApplicationController
 
   private
 
-  # The viewer's own participant row is the thing being muted and the membership
-  # check at once, as for the pin: no row, no thread, a 404.
+  # Membership and city ownership are both required; shared accounts must not
+  # mutate mute state for a thread from another city's host.
   def set_participant
-    @participant = ConversationParticipant.where(user_id: Current.user.id)
-                                          .find_by!(conversation_id: params[:conversation_id])
+    @participant = ConversationParticipant.joins(:conversation)
+                                          .merge(Conversation.current_city_scope)
+                                          .where(user_id: Current.user.id, conversation_id: params[:conversation_id])
+                                          .take!
   end
 end
