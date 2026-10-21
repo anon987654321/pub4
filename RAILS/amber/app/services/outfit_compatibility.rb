@@ -15,7 +15,13 @@ class OutfitCompatibility
   end
 
   def score(outfit, occasion: nil, weather: nil)
-    items = outfit.items.to_a
+    score_items(outfit.items.to_a, occasion:, weather:)
+  end
+
+  # Score a proposed combination without persisting an Outfit. The daily
+  # assistant can compare candidate combinations while remaining read-only.
+  def score_items(items, occasion: nil, weather: nil)
+    items = Array(items)
     return 0.0 if items.empty?
 
     scores = [ category_balance(items), color_balance(items), occasion_fit(items, occasion), weather_fit(items, weather), preference_fit(items) ]
@@ -39,7 +45,10 @@ class OutfitCompatibility
   def category_balance(items)
     categories = items.map(&:category).compact
     required = %w[Tops Bottoms Shoes]
-    coverage = required.count { |category| categories.include?(category) } / required.size.to_f
+    dress_covers_separates = categories.include?("Dresses")
+    coverage = required.count do |category|
+      categories.include?(category) || (dress_covers_separates && %w[Tops Bottoms].include?(category))
+    end / required.size.to_f
     [ coverage, 1.0 ].min
   end
 
@@ -76,7 +85,10 @@ class OutfitCompatibility
     return 0.7 if total_weight.zero?
 
     score = preferences.sum do |preference|
-      text.include?(preference.name.to_s.downcase) ? preference.weight.to_f : 0
+      next 0.0 unless text.include?(preference.name.to_s.downcase)
+
+      magnitude = preference.weight.to_f.abs
+      preference.avoid? ? -magnitude : magnitude
     end
 
     ((score / total_weight) + 0.5).clamp(0.0, 1.0)

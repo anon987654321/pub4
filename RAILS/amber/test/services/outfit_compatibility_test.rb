@@ -1,0 +1,41 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class OutfitCompatibilityTest < ActiveSupport::TestCase
+  def user(email)
+    User.strict_loading(false).create!(email_address: email, password: "password")
+  end
+
+  test "proposed combinations can be scored without persisting an outfit" do
+    owner = user("compatibility-composition@example.com")
+    dress = Item.new(title: "Wool dress", category: "Dresses", material: "wool")
+    shoes = Item.new(title: "Leather shoes", category: "Shoes", material: "leather")
+
+    scorer = OutfitCompatibility.new(owner)
+
+    assert_includes 0.0..1.0, scorer.score_items([dress, shoes], weather: "cold")
+    assert_equal 0.0, scorer.score_items([])
+  end
+
+  test "a dress satisfies the top and bottom roles in category balance" do
+    owner = user("compatibility-dress@example.com")
+    scorer = OutfitCompatibility.new(owner)
+    dress = Item.new(title: "Dress", category: "Dresses")
+    shoes = Item.new(title: "Shoes", category: "Shoes")
+    shoe_only = scorer.score_items([shoes])
+    dress_look = scorer.score_items([dress, shoes])
+
+    assert_operator dress_look, :>, shoe_only
+  end
+
+  test "an avoid preference lowers the score for a matching combination" do
+    owner = user("compatibility-avoid@example.com")
+    owner.style_preferences.create!(kind: :avoid, name: "polyester", weight: 1.0)
+    scorer = OutfitCompatibility.new(owner)
+    avoided = Item.new(title: "Polyester tee", category: "Tops", material: "polyester")
+    neutral = Item.new(title: "Linen tee", category: "Tops", material: "linen")
+
+    assert_operator scorer.score_items([avoided]), :<, scorer.score_items([neutral])
+  end
+end

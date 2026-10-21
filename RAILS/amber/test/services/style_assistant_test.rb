@@ -37,6 +37,20 @@ class StyleAssistantTest < ActiveSupport::TestCase
     assert_operator week.uniq.size, :>, 1, "the suggestion never changed across a week"
   end
 
+  test "daily outfit selection considers combinations without persisting them" do
+    owner = stock(user("assistant-compatible@example.com"))
+    before = [owner.outfits.count, owner.recommendations.count]
+
+    suggestion = StyleAssistant.new(owner, weather: { temp: 14.0, description: "Clear" },
+                                    date: Date.new(2026, 8, 10)).suggest
+
+    assert suggestion.any?
+    assert_equal before, [owner.outfits.count, owner.recommendations.count]
+    assert_includes suggestion.picks.map(&:zone), :top
+    assert_includes suggestion.picks.map(&:zone), :bottom
+    assert_includes suggestion.picks.map(&:zone), :shoes
+  end
+
   test "cold weather adds a layer and warm weather does not" do
     owner = stock(user("assistant-weather@example.com"))
     date = Date.new(2026, 8, 10)

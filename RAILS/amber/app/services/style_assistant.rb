@@ -10,10 +10,9 @@
 #
 # Two properties make it a *daily* suggestion rather than a shuffle:
 #
-#   * It is deterministic for a given user and date. No RNG — the day's
-#     Julian number rotates the pick through a taste-ranked shortlist, so
-#     refreshing the page shows the same outfit and tomorrow shows a
-#     different one.
+#   * It is deterministic for a given user and date. No RNG — a small
+#     set of near-best combinations is ranked by taste and outfit compatibility,
+#     then the day's Julian number rotates through that set.
 #   * It rests what you wore. A garment worn inside REST_DAYS is held
 #     back unless its zone would otherwise be empty.
 #
@@ -49,6 +48,9 @@ class StyleAssistant
   # A garment worn inside this window is rested.
   REST_DAYS = 3
 
+  # Keep daily looks from becoming static while avoiding visibly weaker outfits.
+  COMPOSITION_TOLERANCE = 0.025
+
   COLD_C = 10
   WARM_C = 20
   WET = /rain|snow|shower|thunder/i
@@ -71,21 +73,56 @@ class StyleAssistant
 
   def picks
     @picks ||= begin
-      chosen = dress_leads? ? [ pick(:dress), pick(:shoes) ] : [ pick(:top), pick(:bottom), pick(:shoes) ]
-      chosen << pick(:outer) if layer?
-      chosen << pick(:accessory)
-      # Head-to-toe reading order, so the card stacks the way the mannequin does.
-      order = ZONES.keys.each_with_index.to_h
-      chosen.compact.sort_by { |p| order.fetch(p.zone) }
+      zones = dress_leads? ? %i[dress shoes] : %i[top bottom shoes]
+      zones << :outer if layer?
+      zones << :accessory
+      choose_composition(zones)
     end
   end
 
-  def pick(zone)
-    shortlist = shortlist_for(zone)
-    return nil if shortlist.empty?
+  # Select from complete looks, not independent best-per-zone picks. Each zone
+  # is bounded to SHORTLIST candidates, so even a five-zone look evaluates at
+  # most 3,125 combinations and writes no Outfit or Recommendation records.
+  def choose_composition(zones)
+    pools = zones.filter_map do |zone|
+      items = shortlist_for(zone)
+      [ zone, items ] unless items.empty?
+    end
+    return [] if pools.empty?
 
-    item = shortlist[(date.jd + ZONE_ROTATION.fetch(zone, 0)) % shortlist.size]
-    Pick.new(zone: zone, item: item, reasons: reasons_for(zone, item))
+    combinations = pools.reduce([ [] ]) do |partials, (zone, items)|
+      partials.flat_map do |partial|
+        items.map { |item| partial + [ Pick.new(zone: zone, item: item, reasons: reasons_for(zone, item)) ] }
+      end
+    end
+
+    scored = combinations.map { |composition| [ composition_score(composition), composition ] }
+    best_score = scored.map(&:first).max
+    finalists = scored
+      .select { |score, _composition| best_score - score <= COMPOSITION_TOLERANCE }
+      .sort_by { |score, composition| [ -score, composition.map { |pick| pick.item.id } ] }
+      .first(SHORTLIST)
+
+    selected = finalists.fetch(date.jd % finalists.length).last
+    order = ZONES.keys.each_with_index.to_h
+    selected.sort_by { |pick| order.fetch(pick.zone) }
+  end
+
+  def composition_score(composition)
+    items = composition.map(&:item)
+    taste = items.sum { |item| ranker.score_for(item) } / items.size.to_f
+    compatibility = compatibility_ranker.score_items(items, weather: compatibility_weather)
+    (taste * 0.65 + compatibility * 0.35).round(4)
+  end
+
+  def compatibility_ranker = @compatibility_ranker ||= OutfitCompatibility.new(user)
+
+  def compatibility_weather
+    return "cold" if cold?
+    return "rain" if wet?
+    return "warm" if warm?
+
+    nil
   end
 
   def shortlist_for(zone)
