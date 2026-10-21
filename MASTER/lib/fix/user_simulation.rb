@@ -170,7 +170,7 @@ module Master
         mapped = ids.flat_map { |id| focused_test_paths_for(id).first(1) }
         secondary = ids.flat_map { |id| focused_test_paths_for(id).drop(1) }
         candidates.concat(mapped).concat(secondary)
-        target = File.expand_path(path.to_s)
+        target = File.expand_path(path.to_s, @root)
         candidates.select do |candidate|
           candidate_path = File.expand_path(File.join(@root, candidate))
           candidate_path != target && File.file?(candidate_path)
@@ -182,6 +182,7 @@ module Master
       # raw test output, which may contain user data or secrets.
       def evaluate_candidates(path:, original:, candidates:, writer:, deadline: @deadline)
         @deadline = deadline
+        path = File.expand_path(path.to_s, @root)
         sources = Array(candidates).map(&:to_s)
         return [] if sources.empty?
 
@@ -331,7 +332,7 @@ module Master
       end
 
       def relative_path(path)
-        expanded = File.expand_path(path.to_s)
+        expanded = File.expand_path(path.to_s, @root)
         prefix = "#{@root}/"
         return unless expanded.start_with?(prefix)
 
