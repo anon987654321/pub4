@@ -9,6 +9,15 @@ module Master
     class Agent
       module PromptBuilder
         TOPIC_DRIFT_THRESHOLD = 6
+        SUPPORT_FOLLOW_UP = %r{
+          \A\s*
+          (?:
+            and\s+then|what\s+now|what\s+next|what\s+should\s+i\s+say|what\s+do\s+i\s+do
+            |what\s+about\s+(?:it|this|that|him|her|them)|why|how|go\s+on|continue|tell\s+me\s+more
+            |elaborate|more\s+detail|yes|no|okay|ok|that\s+makes\s+sense|what\s+do\s+you\s+mean
+          )
+          \b[.!?\s]*\z
+        }ix.freeze
 
         private
 
@@ -144,7 +153,7 @@ module Master
           current = user_messages.first || last_user_message
           return if current.empty?
 
-          follow_up = current.match?(/\A\s*(?:and then|what now|what next|what should i say|what do i do|what about (?:it|this|that|him|her|them)|why|how|go on|continue|tell me more|elaborate|more detail|yes|no|okay|ok|that makes sense|what do you mean)\b[.!?\s]*\z/i)
+          follow_up = current.match?(SUPPORT_FOLLOW_UP)
           topic = follow_up ? user_messages.join("\n") : current
           Master::Voice::DialogueRubric.support_prompt_for(topic, root: @config["root"] || Master::ROOT)
         end
