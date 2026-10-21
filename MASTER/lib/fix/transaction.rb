@@ -116,7 +116,10 @@ module Master
 
       def observed_current?(path)
         relative = normalize(path)
-        relative && @paths.include?(relative) && @seen[relative].include?(fingerprint(absolute(relative)))
+        return false unless relative && @paths.include?(relative)
+
+        expected = @seen[relative].last
+        expected && expected == fingerprint(absolute(relative))
       rescue StandardError
         false
       end
