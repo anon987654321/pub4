@@ -40,6 +40,17 @@ class PortsTarballTest < ActiveSupport::TestCase
     assert_equal 0, requests
   end
 
+  test "unknown free space disables the tarball rather than guessing" do
+    previous = ENV["BSDPORTS_PORTS_TARBALL"]
+    ENV["BSDPORTS_PORTS_TARBALL"] = "1"
+    @tarball.define_singleton_method(:verification_ready?) { true }
+    @tarball.define_singleton_method(:free_bytes) { |_path| nil }
+
+    assert_equal "free disk space unknown", @tarball.decline_reason
+  ensure
+    previous.nil? ? ENV.delete("BSDPORTS_PORTS_TARBALL") : ENV["BSDPORTS_PORTS_TARBALL"] = previous
+  end
+
   test "release identifiers reject path and URL components" do
     invalid = Ports::Openbsd::PortsTarball.new(platform: platforms(:openbsd), release: "../internal")
     previous = ENV["BSDPORTS_PORTS_TARBALL"]
