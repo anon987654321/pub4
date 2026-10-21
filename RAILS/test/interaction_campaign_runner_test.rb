@@ -334,6 +334,23 @@ class InteractionCampaignRunnerTest < Minitest::Test
     )
   end
 
+  def test_root_level_rails_node_test_uses_the_rails_working_directory
+    exercise_runtime_adapter(
+      case_id: "RI-361",
+      source_path: "RAILS/test/pwa_offline_store.test.mjs",
+      source: "import test from \"node:test\"; import assert from \"node:assert/strict\";\ntest(\"test_RI_361_pwa_manifest_contract\", () => { assert.equal(true, true); });\n",
+      adapter: {
+        "runner" => "node_test",
+        "path" => "RAILS/test/pwa_offline_store.test.mjs",
+        "name" => "test_RI_361_pwa_manifest_contract"
+      },
+      output: "TAP version 13\n# Subtest: test_RI_361_pwa_manifest_contract\n    ok 1 - manifest contract\n    1..1\nok 1 - test_RI_361_pwa_manifest_contract\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n",
+      expected_command: ["node", "--test", "--test-reporter=tap", "--test-name-pattern",
+                         "^test_RI_361_pwa_manifest_contract$", "test/pwa_offline_store.test.mjs"],
+      expected_chdir_suffix: "/RAILS"
+    )
+  end
+
   def exercise_runtime_adapter(case_id:, source_path:, source:, adapter:, output:, expected_command:, expected_chdir_suffix:)
     Dir.mktmpdir("interaction-campaign-runtime-adapter") do |root|
       manifest_path = File.join(root, "RAILS", "test", "interaction_campaign_400.json")

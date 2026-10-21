@@ -281,15 +281,21 @@ module Operator
         relative_test = match[1]
         command = ["ruby", "-Itest", relative_test, "--name", "\\A#{name}\\z"]
       when "node_test"
-        match = path.match(/\ARAILS\/([A-Za-z0-9_-]+)\/(.+\.mjs)\z/)
-        if match
-          app_root = File.join(@root, "RAILS", match[1])
-          relative_test = match[2]
-        elsif path.match?(/\ARAILS\/test\/.+\.mjs\z/)
+        if path.match?(/\ARAILS\/test\/.+\.mjs\z/)
           app_root = File.join(@root, "RAILS")
           relative_test = path.delete_prefix("RAILS/")
         else
-          return { error: "Node test adapter must target a RAILS app or RAILS/test .mjs file" }
+          match = path.match(/\ARAILS\/([A-Za-z0-9_-]+)\/(.+\.mjs)\z/)
+          return { error: "Node test adapter must target a RAILS app or RAILS/test .mjs file" } unless match
+
+          app_root = File.join(@root, "RAILS", match[1])
+          relative_test = match[2]
+        end
+        if relative_test.to_s.empty?
+          return { error: "Node test path is empty" }
+        end
+        unless relative_test.end_with?(".mjs")
+          return { error: "Node test adapter must target an .mjs file" }
         end
 
         registration = /(?:test|it)\s*\(\s*["'`]#{Regexp.escape(name)}["'`]/
