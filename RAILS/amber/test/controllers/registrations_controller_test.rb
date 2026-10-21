@@ -67,7 +67,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     post posts_url, params: { post: { body: post_body, anonymous: true } }
     assert_redirected_to root_path
     anonymous_post = Post.find_by!(body: post_body)
-    guest = anonymous_post.user
+    guest = User.find(anonymous_post.user_id)
     assert guest.guest?
 
     post invite_master_messages_path
