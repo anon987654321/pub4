@@ -683,6 +683,29 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "112 for immediate risk from violence"
   end
 
+  def test_everyday_self_worth_distress_gets_practical_support_not_crisis_classification
+    prompt = Rubric.support_prompt_for(
+      "I hate myself, feel worthless and cannot face the day.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Practical response:"
+    assert_includes prompt, "one to three high-value actions"
+    refute_includes prompt, "113 for immediate danger to life"
+  end
+
+  def test_nynorsk_self_worth_and_shame_phrasing_routes_to_support
+    prompt = Rubric.support_prompt_for(
+      "Eg hatar meg sjølv og skjemst over alt eg gjer.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Practical response:"
+    assert_includes prompt, "Reply in the language the person is using"
+  end
+
   def test_forbidden_openers_are_rejected
     assert_equal ["no_ai_isms: Great question"], Rubric.evaluate("Great question! The answer is 42.", root: Master::ROOT)
     assert_empty Rubric.evaluate("The answer is 42.", root: Master::ROOT)
