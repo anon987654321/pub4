@@ -197,6 +197,10 @@ class TestDialogueRubric < Minitest::Test
     )
 
     assert_includes prompt, "Large Language Models in Mental Health Care"
+    assert_includes prompt, "Large Language Models and Their Applications in Mental Health — 2026 scoping review"
+    assert_includes prompt, "Generative Large Language Models in Mental Health Care Settings — 2026 systematic review and meta-analysis"
+    assert_includes prompt, "doi.org/10.1007/s40501-025-00363-y"
+    assert_includes prompt, "ar5iv mirror can fail or serve a truncated conversion"
     assert_includes prompt, "AI Psychotherapy Evaluation (AIPsychEval)"
     assert_includes prompt, "Between Help and Harm"
     assert_includes prompt, "Mental Health Safety Evaluation framework"
