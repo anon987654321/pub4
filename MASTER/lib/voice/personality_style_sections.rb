@@ -44,7 +44,7 @@ module Master
 
       def zsh_banned_line(zsh)
         banned = Array(zsh["banned_commands"]).join(", ")
-        "Zsh scripts: never use #{banned}. Use pure zsh parameter expansion and builtins instead." unless banned.empty?
+        "MASTER interactive-zsh restrictions: #{banned}. Prefer zsh builtins for local transforms; never transfer this substitution list to ksh/sh scripts or target-host administration commands. Bash, Perl and Python remain prohibited in agent shell calls and committed scripts." unless banned.empty?
       end
 
       def zsh_replacement_line(zsh)
