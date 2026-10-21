@@ -156,7 +156,7 @@ module Master
           topic = current
           if current.match?(SUPPORT_FOLLOW_UP)
             prior_support = user_messages.drop(1).find do |message|
-              message.match?(Master::Voice::DialogueRubric::SUPPORT_CUES)
+              Master::Voice::DialogueRubric.support_relevant?(message)
             end
             topic = [prior_support, current].compact.join("\n")
           end
