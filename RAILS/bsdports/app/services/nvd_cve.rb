@@ -35,17 +35,12 @@ class NvdCve
       q = "openbsd #{@port.name}"
       uri = URI("#{BASE}?keywordSearch=#{URI.encode_www_form_component(q)}&resultsPerPage=#{limit}")
 
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.open_timeout = 5
-      http.read_timeout = 10
-
-      req = Net::HTTP::Get.new(uri)
-      if (key = ENV["NVD_API_KEY"]).present?
-        req["apiKey"] = key
-      end
-
-      res = http.request(req)
+      headers = {}
+      headers["apiKey"] = key if (key = ENV["NVD_API_KEY"]).present?
+      res = Shared::OutboundHttp.request(
+        uri, headers:, max_body: Shared::OutboundHttp::MAX_BODY,
+        open_timeout: 5, read_timeout: 10
+      )
       raise IOError, "NVD returned HTTP #{res.code}" unless res.is_a?(Net::HTTPSuccess)
 
       data = JSON.parse(res.body)
