@@ -37,12 +37,14 @@ module Operator
     def list
       campaign.fetch("cases").each do |row|
         adapter = row["runtime_test"]
-        description = if adapter
-                        "#{adapter.fetch("path")}##{adapter.fetch("name")}"
-                      else
-                        "no exact action/fault adapter"
-                      end
-        @io.puts("campaign0: #{row.fetch("id")} #{adapter ? "EXECUTABLE" : "UNMAPPED"} #{description}")
+        state, description = if adapter
+                               checked = command_for(row, adapter)
+                               checked[:error] ? ["BLOCKED", checked[:error]] :
+                                 ["READY", "#{adapter.fetch("path")}##{adapter.fetch("name")}"]
+                             else
+                               ["UNMAPPED", "no exact action/fault adapter"]
+                             end
+        @io.puts("campaign0: #{row.fetch("id")} #{state} #{description}")
       end
       0
     rescue StandardError => e
