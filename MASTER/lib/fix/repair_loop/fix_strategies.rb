@@ -2,7 +2,7 @@
 
 require "tempfile"
 require_relative "../../io/exec"
-require_relative "../user_simulation"
+require_relative "../best_of_n"
 
 module Master
   module Fix
