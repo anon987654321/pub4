@@ -9,10 +9,12 @@ class ContractRunnerContractTest < Minitest::Test
     @source ||= File.read(File.join(ROOT, "test", "run_all.rb"))
   end
 
-  def test_contract_runner_isolated_per_file
-    assert_includes source, "Open3.popen2e"
-    assert_includes source, "pgroup: true"
-    assert_includes source, "Timeout.timeout"
+  def test_contract_runner_isolated_per_file_uses_shared_bounded_capture
+    assert_includes source, "Shared::Subprocess.capture2e"
+    assert_includes source, "timeout: TIMEOUT"
+    refute_includes source, "Open3.popen2e"
+    refute_includes source, "Timeout.timeout"
+    refute_includes source, "def kill_group"
   end
 
   def test_contract_runner_can_replay_passing_files_with_deterministic_seeds

@@ -23,6 +23,14 @@ module Shared
     end
 
     def capture3(*command, timeout:, env: nil, chdir: nil)
+      capture_with(:popen3, command, timeout, env, chdir)
+    end
+
+    def capture2e(*command, timeout:, env: nil, chdir: nil)
+      capture_with(:popen2e, command, timeout, env, chdir)
+    end
+
+    def capture_with(opener, command, timeout, env, chdir)
       seconds = Float(timeout)
       raise ArgumentError, "timeout must be finite and positive" unless seconds.finite? && seconds.positive?
       raise ArgumentError, "command must not be empty" if command.empty?
@@ -32,12 +40,12 @@ module Shared
       options[:chdir] = chdir if chdir
       deadline = monotonic + seconds
 
-      Open3.popen3(*popen, **options) do |stdin, stdout, stderr, waiter|
+      Open3.public_send(opener, *popen, **options) do |stdin, *streams, waiter|
         readers = []
         completed = false
         begin
           stdin.close
-          readers = [stdout, stderr].map do |io|
+          readers = streams.map do |io|
             Thread.new { io.read }.tap { |thread| thread.report_on_exception = false }
           end
 
@@ -47,15 +55,18 @@ module Shared
 
           readers.each_with_index do |reader, index|
             remaining = deadline - monotonic
-            stream = index.zero? ? "stdout" : "stderr"
+            stream = opener == :popen2e ? "output" : (index.zero? ? "stdout" : "stderr")
             unless remaining.positive? && reader.join(remaining)
               raise TimeoutError, "process timed out waiting for #{stream}: #{command_label(command)}"
             end
           end
 
-          result = [readers[0].value, readers[1].value, waiter.value]
           completed = true
-          result
+          if opener == :popen2e
+            [readers.first.value, waiter.value]
+          else
+            [readers[0].value, readers[1].value, waiter.value]
+          end
         ensure
           unless completed
             terminate_group(waiter.pid)
@@ -68,7 +79,7 @@ module Shared
               end
             end
           end
-          [stdin, stdout, stderr].each do |io|
+          [stdin, *streams].each do |io|
             io.close unless io.closed?
           rescue IOError, SystemCallError
             nil
@@ -76,6 +87,7 @@ module Shared
         end
       end
     end
+    private_class_method :capture_with
 
     def wait_for(waiter, deadline)
       remaining = deadline - monotonic

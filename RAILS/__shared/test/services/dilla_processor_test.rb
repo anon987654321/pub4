@@ -30,6 +30,16 @@ class DillaProcessorTest < Minitest::Test
     end
   end
 
+  def test_shared_subprocess_merges_output_for_process_suite_runner
+    output, status = Shared::Subprocess.capture2e(
+      RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')", timeout: 2
+    )
+
+    assert_includes output, "out"
+    assert_includes output, "err"
+    assert status.success?
+  end
+
   def test_shared_subprocess_keeps_stdout_and_stderr_separate
     stdout, stderr, status = Shared::Subprocess.capture3(
       RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')", timeout: 2

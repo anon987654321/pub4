@@ -33,9 +33,8 @@
 # Exit status is the number of failing files, capped at 255.
 
 require "digest"
-require "open3"
 require "rbconfig"
-require "timeout"
+require_relative "../__shared/lib/shared/subprocess"
 
 module Operator
   class ContractSuite
@@ -110,19 +109,10 @@ module Operator
       env = { "MT_NO_PLUGINS" => "1" }
       command = [RbConfig.ruby, "-I#{TEST_DIR}", path]
       command.concat(["--seed", seed.to_s]) if seed
-      out = nil
-      status = nil
-      Open3.popen2e(env, *command, chdir: RAILS_ROOT, pgroup: true) do |stdin, io, thread|
-        stdin.close
-        begin
-          Timeout.timeout(TIMEOUT) do
-            out = io.read
-            status = thread.value
-          end
-        rescue Timeout::Error
-          kill_group(thread.pid)
-          status = nil
-        end
+      out, status = begin
+        Shared::Subprocess.capture2e(*command, timeout: TIMEOUT, env:, chdir: RAILS_ROOT)
+      rescue Shared::Subprocess::TimeoutError => error
+        [error.message, nil]
       end
       build(path, out, status)
     end
@@ -171,15 +161,6 @@ module Operator
       @io.puts("contracts: #{red.map { |o| o.file.sub("test/", "") }.join(', ')}")
     end
 
-    def kill_group(pid)
-      Process.kill("-KILL", Process.getpgid(pid))
-    rescue StandardError
-      begin
-        Process.kill("KILL", pid)
-      rescue Errno::ESRCH # scan: intentional — already gone is the goal state
-        nil
-      end
-    end
   end
 end
 
