@@ -96,7 +96,8 @@ module Master
             meta = @tool_registry.fetch(name, {})
             next unless tool_available_for_context?(meta)
             desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
-            "- #{name}#{param_signature(t)}: #{desc}"
+            rules = Array(meta["usage_rules"]).join(" ")
+            "- #{name}#{param_signature(t)}: #{desc}#{rules.empty? ? "" : " Rules: #{rules}"}"
           end.join("\n")
 
           react_instructions = <<~INST.strip

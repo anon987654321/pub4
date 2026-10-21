@@ -55,12 +55,24 @@ module Master
           when :messaging
             "Session scope: paired messaging. Personal workspace loaded. Not a full operator session."
           when :elevated
-            "Session scope: elevated operator. Dangerous tools unlocked."
+            ["Session scope: elevated operator. Dangerous tools unlocked.", habits].join("\n\n")
           else
             build = group("build")
             suffix = build.empty? ? "" : " Build group: #{build.join(', ')}."
-            "Session scope: full operator.#{suffix}"
+            ["Session scope: full operator.#{suffix}", habits].join("\n\n")
           end
+        end
+
+        # When to reach for a tool, from data/tool_habits.yml. A missing or broken
+        # file costs the habits, never the session.
+        def habits
+          lines = Array(Master.load_yaml(Master.data_path("tool_habits.yml"))&.dig("knowledge_gap"))
+          return if lines.empty?
+
+          "Tool habits:\n#{lines.map { |line| "- #{line.to_s.strip}" }.join("\n")}"
+        rescue StandardError => e
+          Swallow.log(e, context: "ToolProfile.habits")
+          nil
         end
 
         def groups

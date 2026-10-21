@@ -72,3 +72,23 @@ class TestToolProfile < Minitest::Test
     assert_match(/Build group:/, Master::Ground::Tool::Profile.session_note)
   end
 end
+
+class TestToolHabits < Minitest::Test
+  def teardown
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
+  end
+
+  def test_operator_sessions_carry_the_knowledge_gap_habits
+    Fiber[:master_visitor] = false
+    note = Master::Ground::Tool::Profile.session_note
+
+    assert_match(/Tool habits:/, note)
+    assert_match(/SearchKnowledge/, note)
+  end
+
+  def test_visitors_get_no_habits
+    Fiber[:master_visitor] = true
+    refute_match(/Tool habits:/, Master::Ground::Tool::Profile.session_note)
+  end
+end
