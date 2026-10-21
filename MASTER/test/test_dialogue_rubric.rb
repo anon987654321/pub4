@@ -567,8 +567,20 @@ class TestDialogueRubric < Minitest::Test
     refute_includes prompt, "NICE NG116"
   end
 
+  def test_narcissist_diagnosis_request_gets_behavior_based_guidance
+    prompt = Rubric.support_prompt_for(
+      "Tell me if my ex is a narcissist.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "Do not diagnose the user or another person from a chat"
+    assert_includes prompt, "assess repeated observable behavior"
+  end
+
   def test_non_support_turns_do_not_receive_the_support_protocol
     assert_nil Rubric.support_prompt_for("Refactor this Ruby method and add a regression test.", root: Master::ROOT)
+    assert_nil Rubric.support_prompt_for("Add a regression test for this parser.", root: Master::ROOT)
     assert_nil SupportPromptHost.new("Refactor this Ruby method and add a regression test.")
                         .support_practice_for_turn
   end
