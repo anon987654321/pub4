@@ -47,7 +47,7 @@ module Master
           |hit\s+me|hitting\s+me|forced\s+me|afraid\s+of\s+my\s+partner|scared\s+of\s+my\s+partner
           |won't\s+let\s+me|doesn't\s+let\s+me|reads\s+my\s+messages|checks\s+my\s+phone
           |relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break\s+up
-          |argument|fight\s+with|gaslight|manipulat|narcissis|abusive|coercive|controlling\s+me
+          |argument|fight\s+with|gaslight|manipulat|narcissis\w*|abusive|coercive|controlling\s+me
           |boundaries|boundary|family\s+conflict|procrastinat(?:e|ion)|motivation|anger|angry|resentment|shame|guilt
           |social\s+anxiety|sleep\s+problems|can't\s+stop\s+thinking|cannot\s+stop\s+thinking
           |keep\s+replaying|i\s+feel\s+(?:sad|stuck|empty|hopeless|anxious|angry|overwhelmed|unsafe|lost|worthless|ashamed|like\s+a\s+failure)
@@ -102,7 +102,7 @@ module Master
       }ix.freeze
 
       MANIPULATION_CUES = %r{
-        \b(?:gaslight|manipulat|narcissis|abusive|coercive|controlling\s+me|surveillance|stalking
+        \b(?:gaslight|manipulat|narcissis\w*|abusive|coercive|controlling\s+me|surveillance|stalking
         |threat(?:en|s|ening)?|threatened\s+me|hit\s+me|hitting\s+me|forced\s+me|calls\s+me\s+crazy
         |says\s+i\s+am\s+crazy|says\s+i'm\s+crazy|isolation|financial\s+control|controls\s+my\s+money
         |checks\s+my\s+phone|reads\s+my\s+messages|demands\s+my\s+password|tracks\s+my\s+phone
@@ -193,7 +193,8 @@ module Master
         |generalisert\s+angst|sosial\s+angst)\b
       }ix.freeze
       ADHD_CUES = %r{
-        \b(?:adhd|attention[- ]deficit(?:\s+hyperactivity)?\s+disorder|add)\b
+        \b(?:adhd|attention[- ]deficit(?:\s+hyperactivity)?\s+disorder)\b
+        |\badd\s+(?:diagnosis|symptoms?|treatment|medication|assessment)\b
       }ix.freeze
       PSYCHOSIS_CUES = %r{
         \b(?:psychosis|psychotic|schizophren\w*|hallucinat\w*|hearing\s+voices|hear\s+voices
@@ -252,7 +253,7 @@ module Master
       # do not contain one of the broader support words.
       def support_relevant?(message)
         text = message.to_s
-        !text.empty? && [SUPPORT_CUES, CRISIS_CUES, MANIPULATION_CUES].any? { |cue| text.match?(cue) }
+        !text.empty? && [SUPPORT_CUES, CRISIS_CUES, MANIPULATION_CUES, OCD_CUES].any? { |cue| text.match?(cue) }
       end
 
       # The full clinical protocol is injected only when the current message
