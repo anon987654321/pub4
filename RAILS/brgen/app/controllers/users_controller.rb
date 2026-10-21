@@ -79,8 +79,13 @@ class UsersController < ApplicationController
     send_signup_verification!(@user)
 
     merged = merge_registration_guest(@user, guest)
+    if guest && !merged
+      redirect_to after_authentication_url, alert: t("shared.email_verification.signup_guest_merge_failed")
+      return
+    end
+
     start_new_session_for @user
-    redirect_to after_authentication_url, notice: t(merged ? "shared.email_verification.signup_notice_guest_merged" : "shared.email_verification.signup_notice")
+    redirect_to after_authentication_url, notice: t(guest ? "shared.email_verification.signup_notice_guest_merged" : "shared.email_verification.signup_notice")
   end
 
   private
