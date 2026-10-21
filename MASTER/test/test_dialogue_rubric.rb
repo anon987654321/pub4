@@ -322,6 +322,31 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Helsenorge — mental-health help"
   end
 
+  def test_plain_bokmal_crisis_phrase_gets_norwegian_resources
+    prompt = Rubric.support_prompt_for(
+      "Jeg klarer ikke holde meg trygg i kveld.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "113 for immediate danger to life"
+    assert_includes prompt, "Helsenorge — mental-health help"
+    assert_includes prompt, "NICE NG225"
+  end
+
+  def test_plain_bokmal_research_gets_only_relevant_sources
+    prompt = Rubric.support_prompt_for(
+      "Hva sier forskningen om kampsport og psykisk helse?",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Martial arts and adult mental health — systematic review"
+    assert_includes prompt, "Research starting points"
+    refute_includes prompt, "Helsenorge — mental-health help"
+    refute_includes prompt, "Helsenorge — violence and abuse"
+    refute_includes prompt, "NICE NG222"
+  end
+
   def test_norwegian_personal_advice_and_research_are_routed
     personal = Rubric.support_prompt_for(
       "Jeg vet ikke hva jeg skal gjøre. Sjefen min ydmyker meg foran kollegaer.",
