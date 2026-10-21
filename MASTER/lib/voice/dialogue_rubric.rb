@@ -36,6 +36,9 @@ module Master
           |burned\s+out|burnt\s+out|ruminat(?:e|ing|ion)|trauma|therap(?:y|ist)|mental\s+health|psychiatr
           |cbt|dbt|act\s+therapy|adhd|autis(?:m|tic)|medication|antidepressant|antipsychotic|stimulant
           |psychotropic|prescription|ssri|snri|dose|psychiatrist|psychologist|suicid|self[- ]harm|hurt\s+myself
+          |hear\s+voices|hearing\s+voices|voices\s+telling\s+me|hallucinat\w*|schizophren\w*|psychosis
+          |eating\s+disorder|anorexi\w*|bulimi\w*|binge\s+eating|purging|restrictive\s+eating
+          |alcohol|drink\s+too\s+much|drinking\s+too\s+much|substance\s+use|addiction|dependen(?:ce|cy)
           |keep\s+myself\s+safe|can't\s+stay\s+safe|(?:don't|do\s+not)\s+think\s+i\s+can\s+keep\s+myself\s+safe|not\s+sure\s+i\s+can\s+keep\s+myself\s+safe|want\s+to\s+die|don't\s+want\s+to\s+live
           |do\s+not\s+want\s+to\s+live|overdos(?:e|ed)|hurt\s+someone|immediate\s+danger
           |unsafe\s+at\s+home|don't\s+feel\s+safe|do\s+not\s+feel\s+safe|threatened\s+me
@@ -54,7 +57,10 @@ module Master
           |workplace\s+bullying|bullying|humiliat\w*
           |psykisk\s+helse|sliter|angst|angstlidelse|deprimert|depresjon|panikk|stresset|ensom|ensomhet
           |sorg|utbrent|tankekjør|grubler|traume|terapi|terapeut|psykiatri|medisin|medisiner|antidepressiva
-          |psykose|mani|selvmord|selvmordstanker|selvskading|skade\s+meg\s+selv|vil\s+dø|vil\s+ikke\s+leve
+          |psykose|schizofreni\w*|hører\s+stemmer|hallusinasjon\w*|vrangforestillinger
+          |spiseforstyrrelse\w*|anoreksi|bulimi|overspising|oppkast|alkohol|drikker\s+for\s+mye
+          |rusmiddel\w*|rusbruk|avhengighet|abstinens\w*
+          |mani|selvmord|selvmordstanker|selvskading|skade\s+meg\s+selv|vil\s+dø|vil\s+ikke\s+leve
           |orker\s+ikke\s+mer|klarer\s+ikke\s+(?:å\s+)?holde\s+meg\s+trygg|fare\s+for\s+liv
           |føler\s+meg\s+(?:trist|fastlåst|tom|håpløs|engstelig|sint|overveldet|utrygg|fortapt)
           |jeg\s+(?:sliter|trenger\s+hjelp|trenger\s+råd|vet\s+ikke\s+hva\s+jeg\s+skal\s+gjøre)
@@ -134,6 +140,20 @@ module Master
       ADHD_CUES = %r{
         \b(?:adhd|attention[- ]deficit(?:\s+hyperactivity)?\s+disorder|add)\b
       }ix.freeze
+      PSYCHOSIS_CUES = %r{
+        \b(?:psychosis|psychotic|schizophren\w*|hallucinat\w*|hearing\s+voices|hear\s+voices
+        |voices\s+telling\s+me|paranoia|delusions?|psykose|schizofreni\w*|hører\s+stemmer
+        |hallusinasjon\w*|vrangforestillinger)\b
+      }ix.freeze
+      EATING_DISORDER_CUES = %r{
+        \b(?:eating\s+disorder|anorexi\w*|bulimi\w*|binge\s+eating|purging|restrictive\s+eating
+        |spiseforstyrrelse\w*|overspising|oppkast\s+etter\s+mat)\b
+      }ix.freeze
+      SUBSTANCE_CUES = %r{
+        \b(?:alcohol|drink\s+too\s+much|drinking\s+too\s+much|alcohol\s+dependence
+        |substance\s+use|substance\s+misuse|addiction|dependen(?:ce|cy)|withdrawal|detox
+        |alkohol|drikker\s+for\s+mye|alkoholavhengighet|rusmiddel\w*|rusbruk|avhengighet|abstinens\w*)\b
+      }ix.freeze
       OCD_CUES = %r{
         \b(?:ocd|obsessive[- ]compulsive|tvangslidelse|tvangstanker|tvangshandlinger)\b
       }ix.freeze
@@ -182,7 +202,9 @@ module Master
         areas << "martial_and_contemplative_practice" if text.match?(MARTIAL_CUES)
         include_sources = text.match?(RESEARCH_CUES) || text.match?(CLINICAL_DETAIL_CUES) ||
                           text.match?(CRISIS_CUES) || text.match?(AI_MENTAL_HEALTH_CUES) ||
-                          text.match?(ANXIETY_CUES) || text.match?(ADHD_CUES)
+                          text.match?(ANXIETY_CUES) || text.match?(ADHD_CUES) ||
+                          text.match?(PSYCHOSIS_CUES) || text.match?(EATING_DISORDER_CUES) ||
+                          text.match?(SUBSTANCE_CUES)
         topic_keys = research_topics_for(text)
 
         support_practice_block(support, areas: areas.uniq, include_sources:, topic_keys:)
@@ -201,6 +223,10 @@ module Master
         topics << "depression" if text.match?(DEPRESSION_CUES)
         topics << "anxiety" if text.match?(ANXIETY_CUES)
         topics << "adhd" if text.match?(ADHD_CUES)
+        topics << "psychosis" if text.match?(PSYCHOSIS_CUES)
+        topics << "eating" if text.match?(EATING_DISORDER_CUES)
+        topics << "substance" if text.match?(SUBSTANCE_CUES)
+        topics << "alcohol" if text.match?(SUBSTANCE_CUES) && text.match?(/\balcohol\b|\bdrink\b|\bdrinking\b|\balkohol\b|\bdrikker\b/i)
         topics << "ocd" if text.match?(OCD_CUES)
         topics << "trauma" if text.match?(TRAUMA_CUES)
         topics << "bipolar" if text.match?(BIPOLAR_CUES)
