@@ -108,10 +108,11 @@ a failed immediate service check during startup does not by itself prove a crash
 Verify independently with a service signal, an application-level request, and
 the actual public route where relevant.
 
-For patch state, `syspatch -c` lists available base patches and `syspatch -l`
-lists installed patches. Neither alone decides a release upgrade. Read the target
-release's upgrade instructions, establish a usable backup and console/recovery
-path, and assess service and package compatibility before proposing an upgrade.
+For patch state, `syspatch -c` lists available base patches and
+`syspatch -l` lists installed patches. Neither alone decides a release upgrade.
+Read the target release's upgrade instructions, establish a usable backup and
+console/recovery path, and assess service and package compatibility before
+proposing an upgrade.
 OpenBSD supports upgrades only to the immediately following release. If the host
 is more than one release behind the target, plan and verify each supported
 transition in sequence; never assume a direct jump is supported.
