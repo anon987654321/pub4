@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "visual_completion"
+
 module Master
   module Fix
     # Operator-owned rendered values blocking. Rendered values (colors, fonts,
@@ -27,7 +29,15 @@ module Master
       end
 
       # The gap a blocked finding carries: no measurement settles it, a person decides.
-      def gap_for(rule_id) = (Master::Gap::OPERATOR_DECISION if fix_blocking_rule?(rule_id))
+      def gap_for(rule_id, root: Master::ROOT, path: nil, custody: nil)
+        return unless fix_blocking_rule?(rule_id)
+
+        return if path && VisualCompletion.authorized_visual_rule?(
+          rule_id, root:, path:, custody:
+        )
+
+        Master::Gap::OPERATOR_DECISION
+      end
 
       # User-facing reason why the repair is blocked.
       def blocking_reason(rule_id)
