@@ -875,7 +875,9 @@
     semanticBlend = reducedMotion
       ? semanticBlendTarget
       : semanticBlend + (semanticBlendTarget - semanticBlend) * 0.045;
-    if (nativeSubjectField && semanticForm === "face" && semanticBlend <= 0.012) {
+    const primaryMorphValue = Number(window.MASTER_FACE?.morphCurrent);
+    if (nativeSubjectField && semanticForm === "face" && semanticBlend <= 0.012 &&
+        (!Number.isFinite(primaryMorphValue) || primaryMorphValue > 0.995)) {
       nativeSubjectField = false;
     }
     if (splatProxy) {
@@ -896,7 +898,7 @@
       splatProxy.geometry.setDrawRange(0, activePoints);
       const subjectActive = semanticBlend > 0.012 || semanticBlendTarget > 0.012;
       const primaryMorphActive = nativeSubjectField && (semanticForm !== "face" || semanticBlend > 0.012);
-      splatProxy.visible = activePoints > 0 && (!portrait || (subjectActive && !primaryMorphActive));
+      splatProxy.visible = activePoints > 0 && !primaryMorphActive && (!portrait || subjectActive);
       splatProxy.material.opacity = Math.min(
         0.28,
         0.03 + geometry.neural_density * 0.09 * density +
