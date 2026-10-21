@@ -9,6 +9,11 @@
   let shell = null;
   let shellMaterial = null;
   let splatProxy = null;
+  let splatBasePositions = null;
+  let splatTargetPositions = null;
+  let semanticForm = "face";
+  let semanticBlend = 0;
+  let semanticBlendTarget = 0;
   let nodes = [];
   let edges = null;
   let pulses = [];
@@ -62,6 +67,105 @@
       Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
       document.documentElement?.dataset?.reducedMotion === "1" ||
       Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  }
+
+  const SUBJECT_FORMS = new Set(["face", "fugue", "wave", "orbit", "architecture", "leaf", "network", "constellation"]);
+  const SUBJECT_HINTS = [
+    ["fugue", /\b(fugue|counterpoint|polyphony|music|melody|rhythm|beat|jazz|dilla|song|harmony|symphony|tempo|chord)\b/i],
+    ["wave", /\b(audio|sound|wave|frequency|signal|radio|spectrum|pitch|voice|speech|vibration)\b/i],
+    ["architecture", /\b(architecture|building|house|bridge|city|structure|tower|room|design|geometry|facade)\b/i],
+    ["leaf", /\b(nature|forest|tree|leaf|plant|garden|ecology|flower|root|branch|growth)\b/i],
+    ["orbit", /\b(space|planet|cosmos|star|orbit|galaxy|solar|universe|astronomy|celestial)\b/i],
+    ["network", /\b(network|graph|system|code|program|repo|repository|dependency|software|git|master|rails|openbsd|studio|github|test|fix|api|model|latency)\b/i]
+  ];
+
+  function inferSubjectForm(value) {
+    const text = String(value || "").normalize("NFKC").slice(0, 6000);
+    if (!text.trim()) return "face";
+    return SUBJECT_HINTS.find(([, pattern]) => pattern.test(text))?.[0] || "constellation";
+  }
+
+  function buildSubjectPositions(form) {
+    if (!splatBasePositions) return null;
+    if (form === "face") return splatBasePositions.slice();
+
+    const positions = new Float32Array(splatBasePositions.length);
+    const count = splatCount;
+    const centers = [
+      [-1.05, -0.72, 0.06], [-0.38, 0.78, -0.24], [0.58, 0.28, 0.15],
+      [1.03, -0.62, -0.20], [0.18, -0.12, 0.45], [-0.76, 0.24, 0.34], [0.72, 0.88, -0.35]
+    ];
+    for (let i = 0; i < count; i += 1) {
+      const u = (i + 0.5) / count;
+      const a = seeded(i, 31) * Math.PI * 2;
+      const b = seeded(i, 32);
+      const c = seeded(i, 33);
+      let x = 0, y = 0, z = 0;
+      if (form === "fugue") {
+        const strand = i % 3;
+        const angle = u * Math.PI * 6 + strand * Math.PI * 2 / 3;
+        const radius = 0.48 + b * 0.18;
+        x = Math.cos(angle) * radius;
+        y = (u - 0.5) * 3.25;
+        z = Math.sin(angle) * radius;
+      } else if (form === "wave") {
+        x = (u - 0.5) * 3.35;
+        y = Math.sin(u * Math.PI * 6 + b * 0.45) * 0.68 + (b - 0.5) * 0.18;
+        z = (c - 0.5) * 0.38;
+      } else if (form === "orbit") {
+        const plane = i % 3;
+        const angle = u * Math.PI * 4 + (b - 0.5) * 0.22;
+        const radius = 0.78 + c * 0.32;
+        if (plane === 0) { x = Math.cos(angle) * radius; y = Math.sin(angle) * radius; z = (b - 0.5) * 0.08; }
+        else if (plane === 1) { x = Math.cos(angle) * radius; y = (b - 0.5) * 0.08; z = Math.sin(angle) * radius; }
+        else { x = (b - 0.5) * 0.08; y = Math.cos(angle) * radius; z = Math.sin(angle) * radius; }
+      } else if (form === "architecture") {
+        const level = Math.floor(u * 11);
+        const taper = 0.34 + 0.48 * (1 - level / 10);
+        x = (Math.floor(b * 7) - 3) * taper * 0.16;
+        y = (level / 10 - 0.5) * 3.0;
+        z = (Math.floor(c * 7) - 3) * 0.16;
+      } else if (form === "leaf") {
+        y = (u - 0.5) * 3.15;
+        const width = Math.sin(Math.PI * u) * 1.45;
+        x = (b - 0.5) * width;
+        z = (c - 0.5) * 0.22 + x * 0.06;
+        if (i % 9 === 0) { x = 0; z = 0.02; }
+      } else if (form === "network") {
+        x = (Math.floor(b * 9) - 4) * 0.29;
+        y = (Math.floor(u * 11) - 5) * 0.28;
+        z = (Math.floor(c * 9) - 4) * 0.29;
+      } else {
+        const center = centers[Math.floor(seeded(i, 34) * centers.length)];
+        x = center[0] + (b - 0.5) * 0.44;
+        y = center[1] + (seeded(i, 35) - 0.5) * 0.44;
+        z = center[2] + (c - 0.5) * 0.44;
+      }
+      const offset = i * 3;
+      positions[offset] = x;
+      positions[offset + 1] = y;
+      positions[offset + 2] = z;
+    }
+    return positions;
+  }
+
+  function setSubjectForm(value) {
+    const form = SUBJECT_FORMS.has(String(value || "").toLowerCase())
+      ? String(value).toLowerCase()
+      : "constellation";
+    if (form === semanticForm && splatTargetPositions) return form;
+    semanticForm = form;
+    semanticBlendTarget = form === "face" ? 0 : 1;
+    splatTargetPositions = buildSubjectPositions(form);
+    document.documentElement.dataset.faceSubject = form;
+    window.dispatchEvent(new CustomEvent("master:face-subject", {
+      detail: { form, active: semanticBlendTarget > 0 }
+    }));
+    return form;
+  }
+
+  function setSubjectFromText(value) {
+    return setSubjectForm(inferSubjectForm(value));
   }
 
   const TERMINAL_ACTIVITY_STATES = new Set(["complete", "failed", "cancelled"]);
@@ -369,6 +473,8 @@
       sizes[i] = 0.012 + seeded(i, 5.1) * 0.018;
     }
 
+    splatBasePositions = positions.slice();
+    splatTargetPositions = buildSubjectPositions(semanticForm);
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
@@ -605,7 +711,9 @@
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
     shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
-    shellMaterial.uniforms.uOpacity.value = geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1) * (0.88 + (reducedMotion ? 0 : audioEnergy) * 0.12);
+    shellMaterial.uniforms.uOpacity.value =
+      geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1) *
+      (0.88 + (reducedMotion ? 0 : audioEnergy) * 0.12) * (1 - semanticBlend * 0.68);
     shellMaterial.uniforms.uEntropy.value = state.entropy;
     shellMaterial.uniforms.uColor.value.copy(colorFromCss());
 
@@ -623,14 +731,6 @@
       edges.visible = !portrait;
       edges.material.opacity = Math.min(0.28, (0.035 + geometry.neural_density * 0.10) * density);
       edges.material.color.copy(shellMaterial.uniforms.uColor.value);
-    }
-
-    if (splatProxy) {
-      splatProxy.visible = !portrait;
-      splatProxy.material.opacity =
-        Math.min(0.18, 0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04);
-      splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
-      splatProxy.rotation.z = reducedMotion ? 0 : (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
     }
 
     if (camera) {
@@ -689,14 +789,34 @@
     }
 
     const activePoints = Math.max(0, Math.min(splatCount, Number(budget.points || 420)));
+    semanticBlend = reducedMotion
+      ? semanticBlendTarget
+      : semanticBlend + (semanticBlendTarget - semanticBlend) * 0.045;
     if (splatProxy) {
+      const positionAttribute = splatProxy.geometry.getAttribute("position");
+      const positions = positionAttribute?.array;
+      if (positions && splatBasePositions && splatTargetPositions) {
+        for (let index = 0; index < positions.length; index += 1) {
+          positions[index] = splatBasePositions[index] +
+            (splatTargetPositions[index] - splatBasePositions[index]) * semanticBlend;
+        }
+        positionAttribute.needsUpdate = true;
+      }
       splatProxy.geometry.setDrawRange(0, activePoints);
-      splatProxy.visible = activePoints > 0;
+      const subjectActive = semanticBlend > 0.012 || semanticBlendTarget > 0.012;
+      splatProxy.visible = activePoints > 0 && (!portrait || subjectActive);
       splatProxy.material.opacity = Math.min(
-        0.18,
-        0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04
+        0.28,
+        0.03 + geometry.neural_density * 0.09 * density +
+          (geometry.fracture + fracture) * 0.04 + semanticBlend * 0.16
       );
+      splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
+      splatProxy.rotation.z = reducedMotion ? 0 :
+        (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
     }
+    const faceCanvas = document.getElementById("face");
+    if (faceCanvas) faceCanvas.style.opacity = (1 - semanticBlend * 0.58).toFixed(3);
+    document.documentElement.style.setProperty("--master-face-subject-blend", semanticBlend.toFixed(3));
 
     // All legacy visual projections consume this same frame; none schedules time.
     window.MASTEREcologyRender?.update?.(now);
@@ -708,7 +828,9 @@
     window.MasterRenderPolicy?.recordFrame?.(now);
   }
 
-  window.MASTER_FACE_WORLD = Object.freeze({ load, update, spawnPulse });
+  window.MASTER_FACE_WORLD = Object.freeze({
+    load, update, spawnPulse, setSubjectForm, setSubjectFromText, inferSubjectForm
+  });
   window.addEventListener("master:visual", (event) => {
     const detail = event.detail || {};
     const name = String(detail.name || detail.mode || "");
@@ -717,6 +839,13 @@
       const to = from === "tools" ? "web" : from === "lib" ? "tools" : "lib";
       spawnPulse(from, to, Number(detail.activity || detail.confidence || 0.5));
     }
+  }, { passive: true });
+  window.addEventListener("master:bus", (event) => {
+    const detail = event.detail || {};
+    if (detail.type !== "speech:partial") return;
+    const payload = detail.payload || {};
+    const transcript = payload.transcript || payload.text;
+    if (transcript) setSubjectFromText(transcript);
   }, { passive: true });
   window.addEventListener("master:face-ready", () => load(), { once: true });
   if (window._primerFired) load();
