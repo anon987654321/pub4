@@ -468,41 +468,16 @@ body[data-mode="listening"] .mic-indicator {
 }
 
 
-/* Motion-led face direction — intentional-colors: ink, ice, cyan and periwinkle.
-   Keep the existing scene, state model and animation budgets as the sole runtime. */
-:root {
-  --c-text: oklch(93% 0.025 250);
-  --x-text: #e7eeff;
-  --c-accent: oklch(82% 0.12 222);
-  --c-code: oklch(81% 0.10 268);
-  --face-bg: #050710;
-  --face-fg: #e7eeff;
-  --face-muted: #a1acc5;
-  --face-dim: rgb(176 194 232 / 18%);
-  --face-soft: rgb(176 194 232 / 7%);
-  --border-faint: rgb(164 190 244 / 16%);
-  --border-soft: rgb(164 190 244 / 23%);
-  --border-strong: rgb(175 202 255 / 34%);
-  --font-brand: Inter, "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --radius-xs: 5px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-  --face-bar-height: 64px;
-}
-
+/* Runtime rendering mechanics only. Palette, typography and geometry are token-owned. */
 html, body {
-  background: var(--face-bg);
-  color: var(--face-fg);
-  font-family: Inter, "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   cursor: auto;
   touch-action: auto;
 }
-body[data-aesthetic="phosphor"] { background: #050710; }
 
-canvas#face { background: #050710; }
+body[data-aesthetic="phosphor"] { background: var(--face-bg); }
+
+canvas#face { background: var(--face-bg); }
 #cognition-ecology { opacity: 0.38; }
 
 .brand-mark {

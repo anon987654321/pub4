@@ -37,12 +37,12 @@
   --pub4-signal: #C8F55F;
   --pub4-signal-ink: #101010;
   --pub4-signal-on-light: #50630A;
-  --c-text: oklch(86% 0.02 300);
-  --x-text: #d8d6e0;
+  --c-text: oklch(93% 0.025 250);
+  --x-text: #e7eeff;
   --c-accent: var(--pub4-signal);
   --c-danger: oklch(60% 0.14 35);
-  --c-code: oklch(74% 0.11 275);
-  --font-mono: "Source Code Pro", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --c-code: oklch(81% 0.10 268);
+  --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -54,17 +54,17 @@
   --inset-r: calc(var(--chrome-inset) + var(--safe-right));
   --inset-b: calc(var(--chrome-inset) + var(--safe-bottom));
   --inset-l: calc(var(--chrome-inset) + var(--safe-left));
-  --face-bg: black;
-  --face-fg: var(--c-text);
-  --face-muted: color-mix(in oklch, var(--c-text) 81%, black);
-  --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
-  --face-soft: color-mix(in srgb, var(--c-text) 8%, transparent);
+  --face-bg: #050710;
+  --face-fg: var(--x-text);
+  --face-muted: #a1acc5;
+  --face-dim: rgb(176 194 232 / 18%);
+  --face-soft: rgb(176 194 232 / 7%);
   --face-alert: color-mix(in oklch, var(--c-danger) 75%, white);
   --mood-accent: var(--c-accent);
   --canvas-mood-accent: var(--c-accent);
-  --border-faint: color-mix(in srgb, var(--face-fg) 10%, transparent);
-  --border-soft: color-mix(in srgb, var(--face-fg) 14%, transparent);
-  --border-strong: color-mix(in srgb, var(--face-fg) 24%, transparent);
+  --border-faint: rgb(164 190 244 / 16%);
+  --border-soft: rgb(164 190 244 / 23%);
+  --border-strong: rgb(175 202 255 / 34%);
   --hover-tint: color-mix(in srgb, var(--face-fg) 8%, transparent);
   --tap-min: 44px;
   --text-meta: 0.8125rem;
@@ -1742,41 +1742,16 @@ body[data-mode="listening"] .mic-indicator {
 }
 
 
-/* Motion-led face direction — intentional-colors: ink, ice, cyan and periwinkle.
-   Keep the existing scene, state model and animation budgets as the sole runtime. */
-:root {
-  --c-text: oklch(93% 0.025 250);
-  --x-text: #e7eeff;
-  --c-accent: oklch(82% 0.12 222);
-  --c-code: oklch(81% 0.10 268);
-  --face-bg: #050710;
-  --face-fg: #e7eeff;
-  --face-muted: #a1acc5;
-  --face-dim: rgb(176 194 232 / 18%);
-  --face-soft: rgb(176 194 232 / 7%);
-  --border-faint: rgb(164 190 244 / 16%);
-  --border-soft: rgb(164 190 244 / 23%);
-  --border-strong: rgb(175 202 255 / 34%);
-  --font-brand: Inter, "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --radius-xs: 5px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-  --face-bar-height: 64px;
-}
-
+/* Runtime rendering mechanics only. Palette, typography and geometry are token-owned. */
 html, body {
-  background: var(--face-bg);
-  color: var(--face-fg);
-  font-family: Inter, "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   cursor: auto;
   touch-action: auto;
 }
-body[data-aesthetic="phosphor"] { background: #050710; }
 
-canvas#face { background: #050710; }
+body[data-aesthetic="phosphor"] { background: var(--face-bg); }
+
+canvas#face { background: var(--face-bg); }
 #cognition-ecology { opacity: 0.38; }
 
 .brand-mark {
