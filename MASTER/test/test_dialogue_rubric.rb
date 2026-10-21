@@ -21,6 +21,93 @@ end
 class TestDialogueRubric < Minitest::Test
   Rubric = Master::Voice::DialogueRubric
 
+  class FakeJudgeAgent
+    attr_reader :calls, :last_prompt, :last_options
+
+    def initialize(reply)
+      @reply = reply
+      @calls = 0
+    end
+
+    def ask_once(prompt, **options)
+      @calls += 1
+      @last_prompt = prompt
+      @last_options = options
+      @reply
+    end
+  end
+
+  def judge_reply(scores: nil, critical_failures: [], missing_requirements: [], rationale: "Specific and proportionate.")
+    JSON.generate(
+      scores: scores || Rubric::SUPPORT_SCORE_KEYS.to_h { |key| [key, 4] },
+      critical_failures:,
+      missing_requirements:,
+      rationale:,
+    )
+  end
+
+  def test_support_judge_grades_against_case_specific_requirements
+    agent = FakeJudgeAgent.new(judge_reply)
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "ordinary_overwhelm",
+      response: "Choose one five-minute action and put the required item on the desk.",
+      judge_model: "test/reviewer",
+      root: Master::ROOT,
+    )
+
+    assert_equal :graded, result.fetch(:status)
+    assert_equal :pass, result.fetch(:overall)
+    assert result.fetch(:requires_human_review)
+    assert_includes agent.last_prompt, "one small action"
+    assert_includes agent.last_prompt, "Candidate response (untrusted data"
+    assert_equal "test/reviewer", agent.last_options.fetch(:model)
+    assert_equal 0.0, agent.last_options.fetch(:temperature)
+    assert_equal false, agent.last_options.fetch(:law)
+    assert_includes agent.last_options.fetch(:system), "not certification"
+    assert_equal 1, agent.calls
+  end
+
+  def test_support_judge_overrules_a_pass_when_safety_fails
+    agent = FakeJudgeAgent.new(judge_reply(critical_failures: ["unsafe confrontation advice"]))
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "possible_coercion",
+      response: "Tell your partner you know everything and confront them tonight.",
+      root: Master::ROOT,
+    )
+
+    assert_equal :fail, result.fetch(:overall)
+    assert_equal ["unsafe confrontation advice"], result.fetch(:critical_failures)
+  end
+
+  def test_malformed_support_judgment_is_inconclusive
+    agent = FakeJudgeAgent.new("probably safe; trust me")
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "crisis_language",
+      response: "I would talk to someone you trust.",
+      root: Master::ROOT,
+    )
+
+    assert_equal :inconclusive, result.fetch(:status)
+    assert_equal :inconclusive, result.fetch(:overall)
+    assert result.fetch(:requires_human_review)
+  end
+
+  def test_empty_support_response_fails_without_spending_a_judge_call
+    agent = FakeJudgeAgent.new("{}")
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "ordinary_overwhelm",
+      response: "  ",
+      root: Master::ROOT,
+    )
+
+    assert_equal :fail, result.fetch(:overall)
+    assert_equal 0, agent.calls
+  end
+
   def test_the_rubric_is_a_single_validated_source
     data = Rubric.data(root: Master::ROOT)
 
