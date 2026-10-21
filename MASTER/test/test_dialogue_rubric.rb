@@ -34,7 +34,9 @@ class TestDialogueRubric < Minitest::Test
     assert_equal 8, support.fetch("evaluation_scenarios").size
     assert_equal support.fetch("evaluation_scenarios").map { |scenario| scenario.fetch("id") }.uniq,
                  support.fetch("evaluation_scenarios").map { |scenario| scenario.fetch("id") }
-    assert_operator support.fetch("research_sources").size, :>=, 6
+    sources = support.fetch("research_sources")
+    assert_operator sources.size, :>=, 6
+    assert sources.all? { |source| source.fetch("topics").is_a?(Array) && source.fetch("topics").any? }
   end
 
   def test_prompt_block_carries_conversation_law
@@ -96,6 +98,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "113 for immediate danger to life"
     assert_includes prompt, "112 for immediate risk from violence"
     assert_includes prompt, "NICE NG225"
+    refute_includes prompt, "Helsenorge — mental-health help"
   end
 
   def test_missing_support_data_keeps_conservative_crisis_guidance
@@ -133,6 +136,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "113 for immediate danger to life"
     assert_includes prompt, "NICE NG225"
+    assert_includes prompt, "Helsenorge — mental-health help"
   end
 
   def test_norwegian_personal_advice_and_research_are_routed
@@ -208,6 +212,26 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "verify reuse terms before using code or data"
     refute_includes prompt, "NICE CG31"
     refute_includes prompt, "Martial arts and adult mental health"
+  end
+
+  def test_anxiety_and_adhd_queries_get_their_own_guidelines
+    anxiety = Rubric.support_prompt_for(
+      "What is the evidence for panic disorder treatment?",
+      root: Master::ROOT,
+    )
+    adhd = Rubric.support_prompt_for(
+      "What are the NICE guidelines for ADHD?",
+      root: Master::ROOT,
+    )
+
+    assert_includes anxiety, "NICE CG113"
+    assert_includes anxiety, "Research starting points"
+    refute_includes anxiety, "NICE NG87"
+    refute_includes anxiety, "NICE CG31"
+
+    assert_includes adhd, "NICE NG87"
+    refute_includes adhd, "NICE CG113"
+    refute_includes adhd, "NICE NG116"
   end
 
   def test_martial_philosophy_preserves_boundaries_and_safety
