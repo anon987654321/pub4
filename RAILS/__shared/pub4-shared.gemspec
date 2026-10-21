@@ -18,6 +18,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rqrcode", ">= 2.2"
   spec.add_dependency "chunky_png", ">= 1.4"
   spec.add_dependency "omniauth", ">= 2.1"
+  spec.add_dependency "omniauth-oauth2", ">= 1.9", "< 2"
+  spec.add_dependency "jwt", ">= 2.10", "< 3"
   spec.add_dependency "omniauth-google-oauth2", ">= 1.1"
   spec.add_dependency "omniauth-github", ">= 2.0"
   spec.add_dependency "omniauth-rails_csrf_protection", ">= 1.0"

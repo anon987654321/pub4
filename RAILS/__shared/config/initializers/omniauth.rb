@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require Shared::Engine.root.join("lib/omniauth/strategies/vipps").to_s if File.exist?(Shared::Engine.root.join("lib/omniauth/strategies/vipps.rb"))
+require Shared::Engine.root.join("lib/omniauth/strategies/bankid").to_s if File.exist?(Shared::Engine.root.join("lib/omniauth/strategies/bankid.rb"))
 
 Rails.application.config.x.oauth_provider_slugs = []
 # POST only. shared/_oauth_links renders every provider with button_to.
@@ -23,7 +24,14 @@ Rails.application.config.middleware.use OmniAuth::Builder do
     scope: "email,profile", prompt: "select_account")
   register_provider.call(self, :facebook, "FACEBOOK_CLIENT_ID", "FACEBOOK_CLIENT_SECRET",
     scope: "email,public_profile")
-  register_provider.call(self, :github, "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", scope: "user:email")
   register_provider.call(self, :vipps, "VIPPS_CLIENT_ID", "VIPPS_CLIENT_SECRET",
     scope: "openid email name phoneNumber")
+
+  bankid_environment = ENV.fetch("BANKID_OIDC_ENV", "production").downcase
+  if %w[production current].include?(bankid_environment)
+    register_provider.call(self, :bankid, "BANKID_CLIENT_ID", "BANKID_CLIENT_SECRET",
+      scope: "openid profile", environment: bankid_environment)
+  else
+    Rails.logger.warn("omniauth provider bankid unavailable: BANKID_OIDC_ENV must be production or current")
+  end
 end

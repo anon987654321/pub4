@@ -81,7 +81,7 @@ class OmniauthCallbacksController < ::ApplicationController
 
   def assurance_level_for(provider)
     case provider.to_s
-    when "vipps" then "verified"
+    when "vipps", "bankid" then "verified"
     else "account"
     end
   end
