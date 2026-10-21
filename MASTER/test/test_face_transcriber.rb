@@ -51,6 +51,12 @@ class TestFaceTranscriber < Minitest::Test
     assert_equal %w[-nt -np -l auto], argv.last(4)
   end
 
+  def test_binary_words_become_unicode
+    heard = transcriber(out: " අපි අපි\n".b).final("\0" * 32_000)
+    assert_equal Encoding::UTF_8, heard.encoding
+    assert heard.match?(/අපි/)
+  end
+
   def test_interims_take_the_fast_model_beside_the_accurate_one
     base = File.join(@dir, "ggml-base.bin")
     words = transcriber

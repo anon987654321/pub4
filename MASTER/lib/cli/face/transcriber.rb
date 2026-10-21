@@ -88,7 +88,9 @@ module Master
             file.write(wav_bytes(pcm))
             file.flush
             out, _err, status = @run.call(WHISPER, "-m", path, "-f", file.path, "-nt", "-np", "-l", "auto")
-            status.success? ? out.gsub(NON_SPEECH, " ").split.join(" ") : nil
+            # whisper-cli prints UTF-8, but a pipe read under a C locale is tagged binary, and a
+            # binary string raises in every UTF-8 regexp and join downstream.
+            status.success? ? out.dup.force_encoding(Encoding::UTF_8).scrub.gsub(NON_SPEECH, " ").split.join(" ") : nil
           end
         rescue SystemCallError
           nil
