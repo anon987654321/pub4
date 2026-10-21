@@ -92,6 +92,29 @@ class ConversationHandlingTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "another city's participant cannot view, pin, mute, or archive its thread from Bergen" do
+    oslo = City.find_by!(domain: "oshlo.no")
+    ActsAsTenant.current_tenant = oslo
+    remote = Conversation.find_or_create_direct(@user, @friend)
+    ActsAsTenant.current_tenant = @city
+    sign_in_as(@user)
+
+    get conversation_path(remote)
+    assert_response :not_found
+
+    post conversation_pin_path(remote)
+    assert_response :not_found
+    post conversation_mute_path(remote)
+    assert_response :not_found
+    post conversation_archive_path(remote)
+    assert_response :not_found
+
+    state = ConversationParticipant.find_by!(conversation: remote, user: @user)
+    assert_nil state.pinned_at
+    assert_nil state.muted_at
+    assert_nil state.archived_at
+  end
+
   test "a muted thread gets no push and an unmuted one does" do
     pushed = []
     Shared::Pushable.stub(:push_to, ->(recipient, **_) { pushed << recipient.id }) do
