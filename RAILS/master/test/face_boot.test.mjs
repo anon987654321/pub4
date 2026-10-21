@@ -1010,7 +1010,7 @@ test("Ghostty-inspired chrome uses canonical graphite and violet tokens without 
     ["chrome_focus", "#b7b6ef"]
   ]) {
     assert.ok(tokens.includes(name + ': "' + value + '"'), "canonical token missing " + name);
-    assert.ok(generated.includes(name + ": " + value), "generated token missing " + name);
+    assert.ok(generated.includes(name + ': "' + value + '"'), "generated token missing " + name);
     assert.ok(css.includes("--" + name.replaceAll("_", "-") + ": " + value), "CSS projection missing " + name);
   }
   assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 1px solid var\(--chrome-border\)/s);
