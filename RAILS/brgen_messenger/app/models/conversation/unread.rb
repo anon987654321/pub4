@@ -19,6 +19,7 @@ class Conversation
       # participant who has never opened the thread has everything unread.
       def unread_scope_for(user)
         Message.joins(conversation: :conversation_participants)
+               .merge(Conversation.current_city_scope)
                .where(conversation_participants: { user_id: user.id })
                .where(
                  "messages.created_at > COALESCE(conversation_participants.last_read_at, ?)",
