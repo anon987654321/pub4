@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 require "time"
 require_relative "../cli/routing/provider_health"
+require_relative "../io/exec"
 
 module Operator
   class CapabilityGraph
@@ -59,9 +60,7 @@ module Operator
       names.any? { |name| executable_in_path?(name) } ? "available" : "unavailable"
     end
 
-    def executable_in_path?(name)
-      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) }
-    end
+    def executable_in_path?(name) = Master::Io::Exec.on_path?(name)
 
     def model_state(model)
       return "unknown" if model.to_s.empty?
