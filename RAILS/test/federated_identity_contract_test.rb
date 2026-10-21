@@ -47,8 +47,10 @@ class FederatedIdentityContractTest < Minitest::Test
   def test_guest_history_merger_has_one_owner_and_preserves_amber_chat
     merger = read("RAILS/__shared/app/services/account_merger.rb")
     registration = read("RAILS/__shared/app/controllers/concerns/shared/email_registration.rb")
-    controller = read("RAILS/amber/app/controllers/registrations_controller.rb")
+    brgen_controller = read("RAILS/brgen/app/controllers/users_controller.rb")
+    amber_controller = read("RAILS/amber/app/controllers/registrations_controller.rb")
     merge_migration = read("RAILS/amber/db/migrate/20261021230200_add_guest_account_merges_to_amber.rb")
+    amber_user = read("RAILS/amber/app/models/user.rb")
 
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/services/account_merger.rb"))
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/models/account_merge.rb"))
@@ -56,10 +58,13 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes merger, 'columns.include?("sender_id")'
     assert_includes merger, 'columns.include?("recipient_id")'
     assert_includes merger, "def merge_trust_signals"
+    assert_includes merger, "ActiveRecord::MigrationError"
     assert_includes merger, "def record_merge"
     assert_includes registration, "persisted_guest_for_registration"
     assert_includes registration, "AccountMerger.new(guest_user: guest, user: user).call"
-    assert_includes controller, "merge_registration_guest(@user, guest)"
+    assert_includes brgen_controller, "merge_registration_guest(@user, guest)"
+    assert_includes amber_controller, "merge_registration_guest(@user, guest)"
     assert_includes merge_migration, "create_table :account_merges, if_not_exists: true"
+    assert_includes amber_user, "has_many :account_merges, dependent: :destroy"
   end
 end
