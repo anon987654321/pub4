@@ -38,9 +38,15 @@ class PackageIndexFetcherRedirectTest < ActiveSupport::TestCase
   # anywhere.
   def with(*responses)
     visited = []
+    request_options = []
     queue = responses.dup
-    Net::HTTP.stub(:start, ->(host, *_args, **_opts) { visited << host; queue.shift }) do
-      yield visited
+    handler = lambda do |uri, **options|
+      visited << uri.host
+      request_options << options
+      queue.shift
+    end
+    Shared::OutboundHttp.stub(:request, handler) do
+      yield visited, request_options
     end
   end
 
@@ -49,10 +55,26 @@ class PackageIndexFetcherRedirectTest < ActiveSupport::TestCase
     assert_kind_of Net::HTTPSuccess, success("body")
   end
 
+  test "configured HTTP and nonstandard ports are rejected before connecting" do
+    requests = []
+    Shared::OutboundHttp.stub(:request, ->(uri, **options) { requests << [uri, options] }) do
+      assert_raises(URI::InvalidURIError) do
+        fetcher.send(:get, "http://127.0.0.1/index.txt")
+      end
+      assert_raises(URI::InvalidURIError) do
+        fetcher.send(:get, "https://cdn.openbsd.org:8443/index.txt")
+      end
+    end
+    assert_empty requests
+  end
+
   test "a redirect within the mirror is followed" do
-    with(redirect("/pub/OpenBSD/snapshots/INDEX"), success("INDEX BODY")) do |visited|
+    with(redirect("/pub/OpenBSD/snapshots/INDEX"), success("INDEX BODY")) do |visited, options|
       assert_equal "INDEX BODY", fetcher.send(:get, "https://cdn.openbsd.org/pub/OpenBSD/INDEX")
       assert_equal %w[cdn.openbsd.org cdn.openbsd.org], visited
+      assert_equal 15, options.first[:open_timeout]
+      assert_equal 60, options.first[:read_timeout]
+      assert_equal Ports::Openbsd::PackageIndexFetcher::MAX_INDEX_BODY_BYTES, options.first[:max_body]
     end
   end
 
