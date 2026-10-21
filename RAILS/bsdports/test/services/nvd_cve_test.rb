@@ -38,7 +38,7 @@ class NvdCveTest < ActiveSupport::TestCase
     response = Net::HTTPServiceUnavailable.new("1.1", "503", "Unavailable")
     result = nil
 
-    Shared::OutboundHttp.stub(:request, ->(*, **_options) { response }) do
+    Shared::OutboundHttp.stub(:request, ->(_uri, **_options) { response }) do
       result = NvdCve.new(@first).crossref
     end
 
