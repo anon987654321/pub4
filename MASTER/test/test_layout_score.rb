@@ -91,6 +91,16 @@ class LayoutScoreTest < Minitest::Test
     assert_operator sparse.subs["centering"], :<, 0.5
   end
 
+  def test_density_counts_overlapping_boxes_once_and_clips_to_viewport
+    overlapped = [el(0, 0, 400, 320), el(0, 0, 400, 320)]
+    assert_equal 1.0, L.density(payload(overlapped), overlapped),
+                 "the same 40% viewport region must not be counted twice"
+
+    barely_visible = [el(0, 780, 400, 400)]
+    assert_in_delta 0.1, L.density(payload(barely_visible), barely_visible), 0.001,
+                    "only the 20px visible tail belongs to an 800px viewport"
+  end
+
   def test_missing_parts_redistribute_weight
     result = compute([])
     assert_equal 0.0, result.score
@@ -116,6 +126,22 @@ class LayoutScoreTest < Minitest::Test
 
   def test_store_without_baseline_never_blocks
     assert_empty S.judge(@surface, bad_payload, root: @root)
+  end
+
+  def test_legacy_score_baseline_is_replaced_after_metric_version_change
+    S.seed(@surface, good_payload, root: @root)
+    entry = S.load(@root, @surface)
+    entry["baseline"].delete("version")
+    File.write(S.path(@root, @surface), JSON.pretty_generate(entry))
+
+    assert_nil S.baseline(@root, @surface), "legacy scores are not comparable to the new density formula"
+    assert_empty S.judge(@surface, bad_payload, root: @root)
+
+    S.settle([[@surface, bad_payload]], root: @root)
+    updated = S.load(@root, @surface)
+    assert_equal L::VERSION, updated.dig("baseline", "version")
+    assert_equal L.compute(bad_payload, tokens: @tokens).score, S.baseline(@root, @surface)
+    assert_equal 2, updated["history"].size, "keep the old measurement for archaeology"
   end
 
   def test_evidence_row_names_the_score
