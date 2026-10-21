@@ -97,10 +97,13 @@ class TestDialogueRubric < Minitest::Test
   end
 
   def test_missing_support_data_keeps_conservative_crisis_guidance
-    prompt = Rubric.support_prompt_for(
-      "I do not think I can keep myself safe tonight.",
-      root: "/missing-master-support-data",
-    )
+    prompt = nil
+    Master::Ground::Swallow.stub(:log, nil) do
+      prompt = Rubric.support_prompt_for(
+        "I do not think I can keep myself safe tonight.",
+        root: "/missing-master-support-data",
+      )
+    end
 
     assert_includes prompt, "<master_support_fallback>"
     assert_includes prompt, "Immediate safety takes priority"
