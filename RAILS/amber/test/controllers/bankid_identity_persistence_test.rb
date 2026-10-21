@@ -35,6 +35,26 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     assert_equal first.id, second.id
   end
 
+  test "a returning BankID subject reclaims its unverified legacy placeholder" do
+    uid = "legacy-bankid-#{SecureRandom.hex(8)}"
+    legacy = User.new(email_address: "#{uid}@bankid.oauth", password: SecureRandom.hex(24))
+    legacy.require_email_verification = true
+    legacy.save!
+    auth = Auth.new("bankid", uid, Info.new(nil, nil),
+                    { id_info: { iss: "https://auth.bankid.no/auth/realms/prod" } })
+    callback = OmniauthCallbacksController.new
+
+    assert_no_difference -> { User.count } do
+      returned = callback.send(:find_or_create_user, auth)
+      assert_equal legacy.id, returned.id
+    end
+
+    provider = IdentityProvider.find_by!(slug: "bankid")
+    identity = ExternalIdentity.find_by!(identity_provider: provider, subject: uid)
+    assert_equal legacy.id, identity.user_id
+    refute legacy.reload.email_verified?
+  end
+
   test "persisted BankID assurance permits claimed-identity writes without email proof" do
     uid = "bankid-subject-#{SecureRandom.hex(8)}"
     auth = Auth.new(
