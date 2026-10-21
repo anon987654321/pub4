@@ -56,7 +56,7 @@ class InteractionCampaignRunnerTest < Minitest::Test
                    evidence.fetch("test_sha256")
       log_path = File.join(File.dirname(results_path), evidence.fetch("log"))
       assert_equal Digest::SHA256.file(log_path).hexdigest, evidence.fetch("log_sha256")
-      assert_equal Digest::SHA256.hexdigest("1 runs, 4 assertions, 0 failures, 0 errors, 0 skips\\n"),
+      assert_equal Digest::SHA256.hexdigest("1 runs, 4 assertions, 0 failures, 0 errors, 0 skips\n"),
                    evidence.fetch("output_sha256")
       assert_equal "NOT_RUN", JSON.parse(File.read(MANIFEST)).fetch("cases")
                                         .find { |item| item.fetch("id") == "RI-011" }.fetch("runtime_status"),
