@@ -156,26 +156,34 @@ module Operator
       state = nil
       reason = nil
       exit_status = nil
-      runs = assertions = failures = errors = skips = nil
+      runs = assertions = failures = errors = skips = passes = nil
 
       begin
         output, status = @executor.call(command:, chdir: command_data.fetch(:app_root), timeout: @timeout)
         exit_status = status.exitstatus
-        summary = output.to_s.match(/(?:\A|\n)\s*(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?(?:, (\d+) skips?)?/m)
-        if summary.nil? || summary[1].to_i != 1
+        summary = parse_summary(output, command_data.fetch(:runner))
+        if summary.nil? || summary.fetch(:runs) != 1
           state = "BLOCKED"
-          reason = "test process did not report exactly one executed mapped Minitest case"
+          reason = "test process did not report exactly one executed mapped test"
+        elsif command_data.fetch(:runner) != "node_test" && summary.fetch(:assertions").to_i.zero?
+          state = "BLOCKED"
+          reason = "mapped test executed without assertions; no behavior was verified"
         else
-          runs, assertions, failures, errors, skips = summary.captures.map { |value| value.to_s.to_i }
-          if assertions.zero?
-            state = "BLOCKED"
-            reason = "mapped test executed without assertions; no behavior was verified"
-          elsif skips.positive?
+          runs = summary.fetch(:runs)
+          assertions = summary[:assertions]
+          failures = summary.fetch(:failures)
+          errors = summary.fetch(:errors)
+          skips = summary.fetch(:skips)
+          passes = summary[:passes]
+          if skips.positive?
             state = "SKIPPED"
-            reason = "Minitest skipped the mapped test"
+            reason = "mapped test was skipped"
           elsif failures.positive? || errors.positive?
             state = "FAIL"
             reason = "mapped test reported failures or errors"
+          elsif command_data.fetch(:runner) == "node_test" && passes != 1
+            state = "BLOCKED"
+            reason = "Node test did not report exactly one passing test"
           elsif status.success? && exit_status == 0
             state = "PASS"
           else
@@ -208,6 +216,8 @@ module Operator
       evidence = {
         "test_path" => adapter.fetch("path"),
         "test_name" => adapter.fetch("name"),
+        "runner" => command_data.fetch(:runner),
+        "passes" => passes,
         "test_sha256" => test_sha256,
         "test_sha256_after" => test_sha256_after,
         "test_source_unchanged" => test_sha256_after == test_sha256,
@@ -232,11 +242,12 @@ module Operator
     def command_for(row, adapter)
       path = adapter.fetch("path").to_s
       name = adapter.fetch("name").to_s
+      runner = adapter.fetch("runner", "rails_minitest").to_s
       return { error: "runtime test path must be repository-relative" } if path.start_with?("/") || path.split("/").include?("..")
       return { error: "runtime test name is invalid" } unless name.match?(/\Atest_[A-Za-z0-9_]+\z/)
 
       surface = campaign.fetch("surfaces").find { |item| item.fetch("id") == row.fetch("surface_id") }
-      return { error: "runtime test surface is missing" } unless surface
+      return { error: "runtime test surface is missing" unless surface
       allowed = surface.fetch("focused_test_paths") + surface.fetch("evidence_paths")
       return { error: "runtime test path is not in the canonical surface evidence map" } unless allowed.include?(path)
 
@@ -244,26 +255,86 @@ module Operator
       return { error: "runtime test file is missing, symlinked or outside the repository" } unless absolute
 
       source = File.read(absolute, encoding: "UTF-8")
-      unless source.match?(/^\s*def\s+#{Regexp.escape(name)}(?:\s|\(|$)/)
-        return { error: "runtime test method #{name} is not defined in #{path}" }
+      case runner
+      when "rails_minitest"
+        unless source.match?(/^\s*def\s+#{Regexp.escape(name)}(?:\s|\(|$)/)
+          return { error: "runtime test method #{name} is not defined in #{path}" }
+        end
+
+        match = path.match(/\ARAILS\/([A-Za-z0-9_-]+)\/(.+)\z/)
+        return { error: "Rails runtime adapter must target an app-owned test path" } unless match
+
+        app_root = File.join(@root, "RAILS", match[1])
+        return { error: "runtime test app has no bin/rails" } unless File.file?(File.join(app_root, "bin", "rails"))
+
+        relative_test = match[2]
+        command = ["bin/rails", "test", relative_test, "--name", "\\A#{name}\\z"]
+      when "ruby_minitest"
+        unless source.match?(/^\s*def\s+#{Regexp.escape(name)}(?:\s|\(|$)/)
+          return { error: "runtime test method #{name} is not defined in #{path}" }
+        end
+
+        match = path.match(/\AMASTER\/test\/(.+\.rb)\z/)
+        return { error: "Ruby Minitest adapter must target MASTER/test" } unless match
+
+        app_root = File.join(@root, "MASTER")
+        relative_test = match[1]
+        command = ["ruby", "-Itest", relative_test, "--name", "\\A#{name}\\z"]
+      when "node_test"
+        match = path.match(/\ARAILS\/([A-Za-z0-9_-]+)\/(.+\.mjs)\z/)
+        if match
+          app_root = File.join(@root, "RAILS", match[1])
+          relative_test = match[2]
+        elsif path.match?(/\ARAILS\/test\/.+\.mjs\z/)
+          app_root = File.join(@root, "RAILS")
+          relative_test = path.delete_prefix("RAILS/")
+        else
+          return { error: "Node test adapter must target a RAILS app or RAILS/test .mjs file" }
+        end
+
+        registration = /(?:test|it)\s*\(\s*["'`]#{Regexp.escape(name)}["'`]/
+        return { error: "exact Node test #{name} is not registered in #{path}" } unless source.match?(registration)
+        return { error: "Node adapter source does not expose an assertion" } unless source.match?(/\bassert(?:\.|\s*\()/)
+
+        command = ["node", "--test", "--test-reporter=tap", "--test-name-pattern", "^#{Regexp.escape(name)}$", relative_test]
+      else
+        return { error: "unsupported runtime test runner #{runner}" }
       end
 
-      match = path.match(/\ARAILS\/([A-Za-z0-9_-]+)\/(.+)\z/)
-      return { error: "runtime adapter must target an app-owned Rails test path" } unless match
-
-      app_root = File.join(@root, "RAILS", match[1])
-      return { error: "runtime adapter app has no bin/rails" } unless File.file?(File.join(app_root, "bin", "rails"))
-
-      relative_test = match[2]
       {
         app_root:,
         test_path: absolute,
-        command: ["bin/rails", "test", relative_test, "--name", "\\A#{name}\\z"]
+        command:,
+        runner:
       }
     rescue KeyError => e
       { error: "runtime adapter is missing #{e.key}" }
     rescue StandardError => e
       { error: "runtime adapter validation failed: #{e.class}" }
+    end
+
+    def parse_summary(output, runner)
+      if runner == "node_test"
+        patterns = {
+          runs: /(?:\A|\n)# tests (\d+)\s*(?:\r?\n|\z)/,
+          passes: /(?:\A|\n)# pass (\d+)\s*(?:\r?\n|\z)/,
+          failures: /(?:\A|\n)# fail (\d+)\s*(?:\r?\n|\z)/,
+          skips: /(?:\A|\n)# skipped (\d+)\s*(?:\r?\n|\z)/
+        }
+        values = patterns.to_h do |key, pattern|
+          match = output.to_s.match(pattern)
+          [key, match && match[1].to_i]
+        end
+        return nil if values.values.any?(&:nil?)
+
+        return values.merge(assertions: nil, errors: 0)
+      end
+
+      match = output.to_s.match(/(?:\A|\n)\s*(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?(?:, (\d+) skips?)?/m)
+      return nil unless match
+
+      runs, assertions, failures, errors, skips = match.captures.map { |value| value.to_s.to_i }
+      { runs:, assertions:, failures:, errors:, skips:, passes: nil }
     end
 
     def safe_repo_file(relative)

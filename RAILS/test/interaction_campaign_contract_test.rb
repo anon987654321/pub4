@@ -140,8 +140,19 @@ class InteractionCampaignContractTest < Minitest::Test
       assert_match(/\Atest_[A-Za-z0-9_]+\z/, name, "#{row.fetch("id")}: invalid Minitest method name")
 
       source = File.read(File.join(ROOT, path), encoding: "UTF-8")
-      assert_match(/^\s*def\s+#{Regexp.escape(name)}(?:\s|\(|$)/, source,
-                   "#{row.fetch("id")}: method #{name} is not defined in #{path}")
+      runner = adapter.fetch("runner", "rails_minitest")
+      case runner
+      when "rails_minitest", "ruby_minitest"
+        assert_match(/^\s*def\s+#{Regexp.escape(name)}(?:\s|\(|$)/, source,
+                     "#{row.fetch("id")}: method #{name} is not defined in #{path}")
+      when "node_test"
+        assert_match(/(?:test|it)\s*\(\s*["'`]#{Regexp.escape(name)}["'`]/, source,
+                     "#{row.fetch("id")}: exact Node test #{name} is not registered in #{path}")
+        assert_match(/\bassert(?:\.|\s*\()/, source,
+                     "#{row.fetch("id")}: Node adapter exposes no assertion in #{path}")
+      else
+        flunk "#{row.fetch("id")}: unsupported runtime test runner #{runner}"
+      end
     end
   end
 

@@ -271,4 +271,75 @@ class InteractionCampaignRunnerTest < Minitest::Test
     end
   end
 
+  def test_master_repair_case_resolves_to_exact_ruby_minitest
+    exercise_runtime_adapter(
+      case_id: "RI-341",
+      source_path: "MASTER/test/test_repair_loop_policy.rb",
+      source: "class RepairLoopFixtureTest; def test_RI_341_fix_repairs_known_small_defect_and_verifies; assert true; end; end\n",
+      adapter: {
+        "runner" => "ruby_minitest",
+        "path" => "MASTER/test/test_repair_loop_policy.rb",
+        "name" => "test_RI_341_fix_repairs_known_small_defect_and_verifies"
+      },
+      output: "1 runs, 1 assertions, 0 failures, 0 errors, 0 skips\n",
+      expected_command: ["ruby", "-Itest", "test_repair_loop_policy.rb", "--name",
+                         "\\Atest_RI_341_fix_repairs_known_small_defect_and_verifies\\z"],
+      expected_chdir_suffix: "/MASTER"
+    )
+  end
+
+  def test_master_browser_case_resolves_to_exact_node_test_and_parses_tap
+    exercise_runtime_adapter(
+      case_id: "RI-281",
+      source_path: "RAILS/master/test/campaign_case.test.mjs",
+      source: "import test from \"node:test\"; import assert from \"node:assert/strict\";\ntest(\"test_RI_281_face_boot_ready_fallback\", () => { assert.equal(true, true); });\n",
+      adapter: {
+        "runner" => "node_test",
+        "path" => "RAILS/master/test/campaign_case.test.mjs",
+        "name" => "test_RI_281_face_boot_ready_fallback"
+      },
+      output: "TAP version 13\n# Subtest: test_RI_281_face_boot_ready_fallback\n    ok 1 - boot fallback exists\n    1..1\nok 1 - test_RI_281_face_boot_ready_fallback\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n",
+      expected_command: ["node", "--test", "--test-reporter=tap", "--test-name-pattern",
+                         "^test_RI_281_face_boot_ready_fallback$", "test/campaign_case.test.mjs"],
+      expected_chdir_suffix: "/RAILS/master"
+    )
+  end
+
+  def exercise_runtime_adapter(case_id:, source_path:, source:, adapter:, output:, expected_command:, expected_chdir_suffix:)
+    Dir.mktmpdir("interaction-campaign-runtime-adapter") do |root|
+      manifest_path = File.join(root, "RAILS", "test", "interaction_campaign_400.json")
+      FileUtils.mkdir_p(File.dirname(manifest_path))
+      manifest = JSON.parse(File.read(MANIFEST, encoding: "UTF-8"))
+      row = manifest.fetch("cases").find { |item| item.fetch("id") == case_id }
+      row["runtime_test"] = adapter
+      surface = manifest.fetch("surfaces").find { |item| item.fetch("id") == row.fetch("surface_id") }
+      surface.fetch("focused_test_paths") << source_path unless surface.fetch("focused_test_paths").include?(source_path)
+      File.write(manifest_path, "#{JSON.pretty_generate(manifest)}\n")
+
+      target = File.join(root, source_path)
+      FileUtils.mkdir_p(File.dirname(target))
+      File.write(target, source)
+      calls = []
+      executor = lambda do |command:, chdir:, timeout:|
+        calls << { command:, chdir:, timeout: }
+        [output, Status.new(true, 0)]
+      end
+      evidence_root = File.join(root, ".master", "interaction_campaign_runs")
+      runner = Runner.new(
+        case_ids: [case_id], root:, manifest_path:, evidence_root:,
+        io: StringIO.new, executor:
+      )
+
+      assert_equal 0, runner.run
+      assert_equal 1, calls.length
+      assert_equal expected_command, calls.fetch(0).fetch(:command)
+      assert calls.fetch(0).fetch(:chdir).end_with?(expected_chdir_suffix)
+      result_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
+      result = JSON.parse(File.read(result_path, encoding: "UTF-8")).fetch("results").fetch(0)
+      assert_equal "PASS", result.fetch("status")
+      assert_equal adapter.fetch("runner"), result.fetch("evidence").fetch("runner")
+    end
+  end
+
+
 end
