@@ -290,6 +290,10 @@ module Master
         topics << "ai_evaluation" if text.match?(AI_MENTAL_HEALTH_CUES)
         topics << "crisis" if text.match?(CRISIS_CUES)
         topics << "relationship" if text.match?(RELATIONSHIP_CUES)
+        # Couple-therapy research is relevant only to ordinary relationship conflict.
+        # Do not surface it when manipulation or immediate-safety cues are present.
+        topics << "couples_therapy" if text.match?(RELATIONSHIP_CUES) &&
+                                      !text.match?(MANIPULATION_CUES) && !text.match?(CRISIS_CUES)
         topics << "manipulation" if text.match?(MANIPULATION_CUES)
         topics << "martial" if text.match?(MARTIAL_CUES)
         topics << "depression" if text.match?(DEPRESSION_CUES)
