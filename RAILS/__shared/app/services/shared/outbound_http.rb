@@ -37,12 +37,13 @@ module Shared
       192.88.99.0/24 192.168.0.0/16 198.18.0.0/15 198.51.100.0/24
       203.0.113.0/24 224.0.0.0/4 240.0.0.0/4
       ::/128 ::1/128 64:ff9b::/96 64:ff9b:1::/48 100::/64
-      2001::/23 2001:db8::/32 2002::/16 3f00::/8 fec0::/10 fc00::/7 fe80::/10 ff00::/8
+      2001::/23 2001:db8::/32 2002::/16 2d00::/8 2e00::/7 3000::/5 3800::/6
+      3c00::/7 3e00::/8 3f00::/8 fec0::/10 fc00::/7 fe80::/10 ff00::/8
     ].map { |cidr| IPAddr.new(cidr) }.freeze
 
-    # IANA currently allocates IPv6 global unicast from 2000::/3. Deny every
-    # other IPv6 range by default and the reserved 3f00::/8 slice within it;
-    # never treat unallocated or documentation space as a public destination.
+    # IANA defines 2000::/3 as assignable global unicast, but reserves
+    # unassigned subranges inside it. UNSAFE_NETS rejects those reservations
+    # too; do not treat address space awaiting allocation as a public target.
     GLOBAL_IPV6 = IPAddr.new("2000::/3").freeze
 
     DNS_LABEL_MAX_BYTES = 63
