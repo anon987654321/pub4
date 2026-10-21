@@ -3,12 +3,15 @@
 class PortsController < ApplicationController
   include Shared::LiveSearchable
 
+  helper_method :nvd_operator?
+
   allow_unauthenticated_access only: %i[index show explore]
   before_action :set_port, only: %i[show explore watch unwatch crossref_cves review]
   # watch/unwatch called require_authentication inside the action body,
   # where its redirect does not halt the action — so the next line ran
   # find_or_create_by!(user: Current.user) for an unauthenticated visitor.
   before_action :require_authentication, only: %i[crossref_cves review watch unwatch]
+  before_action :require_nvd_operator, only: :crossref_cves
 
   def index
     scope = Port.includes(:category)
@@ -99,9 +102,9 @@ class PortsController < ApplicationController
   end
 
   def crossref_cves
-    NvdCve.crossref(@port)
-    @port.record_activity!("PortCvesCrossreferenced", source_vertical: "bsdports")
-    redirect_to @port, notice: t("flash.cve_cross_reference_complete")
+    NvdCveCrossrefJob.perform_later(port_id: @port.id)
+    @port.record_activity!("PortCvesCrossrefQueued", source_vertical: "bsdports")
+    redirect_to @port, notice: t("flash.cve_cross_reference_queued")
   end
 
   def review
@@ -131,6 +134,19 @@ class PortsController < ApplicationController
   end
 
   private
+
+  def nvd_operator?
+    configured_email = ENV["BSDPORTS_ADMIN_EMAIL"].to_s.strip
+    return false if configured_email.blank? || Current.user.nil?
+
+    email_matches = Current.user.email_address.to_s.casecmp?(configured_email)
+    verified = !Current.user.respond_to?(:email_verified?) || Current.user.email_verified?
+    email_matches && verified
+  end
+
+  def require_nvd_operator
+    head :forbidden unless nvd_operator?
+  end
 
   def set_port
     scope = Port.includes(:category, :platform, :maintainer)
