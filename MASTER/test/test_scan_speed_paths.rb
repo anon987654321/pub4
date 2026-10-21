@@ -140,6 +140,37 @@ class TestScanSpeedPaths < Minitest::Test
     end
   end
 
+  def test_file_processor_line_guard_preserves_eof_and_limit_semantics
+    Dir.mktmpdir do |dir|
+      processor = Master::Fix::Scan::FileProcessor.new(skip_semantic: true)
+      max_lines = Master::Fix::Scan::FileProcessor::MAX_LINES
+      allowed = {
+        "empty.rb" => "",
+        "no_final_newline.rb" => "one line",
+        "final_newline.rb" => "one line\\n",
+        "max_without_newline.rb" => ("x\\n" * (max_lines - 1)) + "x",
+        "max_with_newline.rb" => "x\\n" * max_lines,
+      }
+
+      allowed.each do |name, source|
+        path = File.join(dir, name)
+        File.write(path, source)
+        result = processor.send(:read_file, path)
+
+        assert result.ok?, "#{name}: #{result.message}"
+        assert_equal source, result.value!, name
+      end
+
+      too_long = File.join(dir, "too_long.rb")
+      File.write(too_long, "x\\n" * (max_lines + 1))
+      result = processor.send(:read_file, too_long)
+
+      assert result.err?
+      assert_equal :validation, result.category
+      assert_match(/file too long/, result.message)
+    end
+  end
+
   def test_law_scan_matches_the_per_line_reading_it_replaced
     css = "/* a !important\n   !important in a comment */\na { color: red !important; }\n" \
           "b { x: 1 !important; } /* scan: intentional */\n// !important\n"

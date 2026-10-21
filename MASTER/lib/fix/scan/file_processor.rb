@@ -114,7 +114,9 @@ module Master
           return validation if validation.err?
 
           code = File.read(path, encoding: "UTF-8").scrub
-          return Result.err("file too long: #{path}", category: :validation) if code.lines.count > self.class.max_lines_for(path)
+          line_count = code.count("\n")
+          line_count += 1 unless code.empty? || code.end_with?("\n")
+          return Result.err("file too long: #{path}", category: :validation) if line_count > self.class.max_lines_for(path)
 
           @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
           Result.ok(law_conducted(path, code))
