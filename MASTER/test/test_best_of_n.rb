@@ -184,6 +184,29 @@ class TestUserSimulation < Minitest::Test
     assert_operator UserSimulation.candidate_count, :<=, 5
   end
 
+  def test_candidate_telemetry_does_not_claim_scenario_execution
+    Dir.mktmpdir("master-campaign-telemetry") do |root|
+      path, tests = fixture_tree(root, "broken\n")
+      events = []
+      bus = Object.new
+      bus.define_singleton_method(:publish) { |event, payload = {}| events << [event, payload] }
+      runner = ->(_test_path) { { state: :pass, signature: "pass" } }
+      simulation = UserSimulation.new(root:, campaign_path: CAMPAIGN, runner:, bus:)
+      writer = ->(target, source) { File.write(target, source) }
+
+      result = simulation.evaluate_candidates(
+        path:, original: "broken\n", candidates: ["fixed\n"], writer:
+      ).fetch(0)
+
+      assert_equal :pass, result.fetch(:status)
+      _event, payload = events.find { |event, _| event == "repair_loop:candidate_simulation" }
+      assert_equal tests, payload.fetch(:tests)
+      assert_equal 20, payload.fetch(:scenario_oracles_consulted)
+      assert_equal "NOT_RUN", payload.fetch(:scenario_runtime_status)
+      refute payload.key?(:scenarios), "oracle count must not imply executed journeys"
+    end
+  end
+
   def test_passing_candidate_is_tested_and_original_source_is_restored
     Dir.mktmpdir("master-user-simulation") do |root|
       path, tests = fixture_tree(root, "broken\n")
