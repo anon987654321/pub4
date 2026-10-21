@@ -146,7 +146,7 @@ module Master
         |hallusinasjon\w*|vrangforestillinger)\b
       }ix.freeze
       EATING_DISORDER_CUES = %r{
-        \b(?:eating\s+disorder|anorexi\w*|bulimi\w*|binge\s+eating|purging|restrictive\s+eating
+        \b(?:eating\s+disorder|anorexi\w*|anoreksi|bulimi\w*|binge\s+eating|purging|restrictive\s+eating
         |spiseforstyrrelse\w*|overspising|oppkast\s+etter\s+mat)\b
       }ix.freeze
       SUBSTANCE_CUES = %r{
