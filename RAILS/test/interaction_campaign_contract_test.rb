@@ -136,10 +136,10 @@ class InteractionCampaignContractTest < Minitest::Test
       refute path.start_with?("/"), "#{row.fetch("id")}: absolute runtime test path"
       refute path.split("/").include?(".."), "#{row.fetch("id")}: runtime test path escapes repository"
       assert_includes allowed_paths, path, "#{row.fetch("id")}: adapter path is not canonical"
-      assert_match(/\\Atest_[A-Za-z0-9_]+\\z/, name, "#{row.fetch("id")}: invalid Minitest method name")
+      assert_match(/\Atest_[A-Za-z0-9_]+\z/, name, "#{row.fetch("id")}: invalid Minitest method name")
 
       source = File.read(File.join(ROOT, path), encoding: "UTF-8")
-      assert_match(/^\\s*def\\s+#{Regexp.escape(name)}(?:\\s|\\(|$)/, source,
+      assert_match(/^\s*def\s+#{Regexp.escape(name)}(?:\s|\(|$)/, source,
                    "#{row.fetch("id")}: method #{name} is not defined in #{path}")
     end
   end
