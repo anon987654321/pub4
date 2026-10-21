@@ -31,10 +31,10 @@ class AmberErasureContractTest < Minitest::Test
     assert_includes job, "def nullify_review_cases(user)"
     assert_includes job, "reviewer_id: nil"
     assert_includes job, "def anonymise(user)"
-    assert_includes job, '"deleted_at"'
-    assert_includes job, '"email_address"'
+    assert_includes job, "deleted_at: Time.current"
+    assert_includes job, 'email_address: "purged-'
     assert_includes job, "def resolve!(name)"
-    assert_includes job, "raise \"erasure table unavailable: #{name}\""
+    assert_includes job, 'raise "erasure table unavailable: #{name}"'
   end
 
   def test_public_threads_remain_but_private_item_and_outfit_links_are_removed
