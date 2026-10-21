@@ -151,6 +151,46 @@ class TestDialogueRubric < Minitest::Test
     assert_match(/outside the 0..4 range/, result.fetch(:reason))
   end
 
+  def test_support_judge_rejects_missing_finding_arrays
+    reply = JSON.generate(
+      scores: Rubric::SUPPORT_SCORE_KEYS.to_h { |key| [key, 4] },
+      missing_requirements: [],
+      rationale: "Looks good.",
+    )
+    agent = FakeJudgeAgent.new(reply)
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "ordinary_overwhelm",
+      response: "Try a five-minute first step.",
+      root: Master::ROOT,
+    )
+
+    assert_equal :inconclusive, result.fetch(:status)
+    assert_match(/finding lists or rationale missing/, result.fetch(:reason))
+  end
+
+  def test_support_benchmark_caps_a_run_at_eight_synthetic_cases
+    scenario_ids = Rubric.data(root: Master::ROOT).fetch("support_practice").fetch("evaluation_scenarios")
+                    .map { |scenario| scenario.fetch("id") }
+    replies = Array.new(8) do
+      ["Try one small next step and review what happened.", judge_reply]
+    end.flatten
+    agent = FakeJudgeAgent.new(replies)
+    report = Rubric.run_support_benchmark(
+      agent:,
+      response_model: "test/answerer",
+      judge_model: "test/reviewer",
+      scenario_ids:,
+      max_cases: 99,
+      root: Master::ROOT,
+    )
+
+    assert_equal :complete, report.fetch(:status)
+    assert_equal 8, report.fetch(:case_count)
+    assert_equal 16, agent.calls
+    assert_equal 8, report.fetch(:summary).fetch(:pass)
+  end
+
   def test_empty_support_response_fails_without_spending_a_judge_call
     agent = FakeJudgeAgent.new("{}")
     result = Rubric.judge_support_response(
