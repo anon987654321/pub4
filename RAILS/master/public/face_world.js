@@ -228,10 +228,19 @@
     semanticForm = form;
     semanticBlendTarget = form === "face" ? 0 : 1;
     splatTargetPositions = buildSubjectPositions(form);
-    semanticMorphInProgress = Boolean(splatTargetPositions);
+
+    const facePositions = form === "face" ? null : buildFaceSubjectPositions(form);
+    nativeSubjectField = form === "face"
+      ? window.MASTER_FACE?.resetSubjectScatter?.() === true
+      : Boolean(facePositions && window.MASTER_FACE?.setSubjectScatter?.(facePositions) === true);
+    // If the primary renderer can take the semantic field, let its actual face
+    // vertices morph and keep the secondary cloud dormant. Older/no-WebGL builds
+    // retain the bounded FaceWorld cloud as a graceful fallback.
+    semanticMorphInProgress = nativeSubjectField ? false : Boolean(splatTargetPositions);
     document.documentElement.dataset.faceSubject = form;
+    document.documentElement.dataset.faceSubjectRenderer = nativeSubjectField ? "primary-points" : "face-world-fallback";
     window.dispatchEvent(new CustomEvent("master:face-subject", {
-      detail: { form, active: semanticBlendTarget > 0 }
+      detail: { form, active: semanticBlendTarget > 0, renderer: nativeSubjectField ? "primary-points" : "face-world-fallback" }
     }));
     return form;
   }
