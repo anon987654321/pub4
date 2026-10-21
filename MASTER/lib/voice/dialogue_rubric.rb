@@ -162,7 +162,7 @@ module Master
         return if text.empty? || !text.match?(SUPPORT_CUES)
 
         support = data(root:).fetch("support_practice")
-        areas = %w[response_contract clinical_methods evidence_and_research crisis_and_referral]
+        areas = %w[response_contract privacy_and_memory clinical_methods evidence_and_research crisis_and_referral]
         areas << "relationship_safety" if text.match?(RELATIONSHIP_CUES)
         areas << "manipulation_resilience" if text.match?(MANIPULATION_CUES)
         areas.concat(%w[relationship_safety manipulation_resilience]) if text.match?(CRISIS_CUES)
@@ -224,6 +224,7 @@ module Master
         lines = [support.fetch("activation")]
         sections = {
           "response_contract" => "Practical response",
+          "privacy_and_memory" => "Privacy and memory",
           "clinical_methods" => "Clinical skills",
           "relationship_safety" => "Couples and relationship safety",
           "manipulation_resilience" => "Manipulation resistance",
@@ -309,7 +310,7 @@ module Master
         support = payload["support_practice"]
         raise ArgumentError, "support practice missing" unless support.is_a?(Hash)
         support_keys = %w[
-          activation response_contract clinical_methods relationship_safety manipulation_resilience
+          activation response_contract privacy_and_memory clinical_methods relationship_safety manipulation_resilience
           martial_and_contemplative_practice evidence_and_research crisis_and_referral research_sources
           evaluation_scenarios
         ]
