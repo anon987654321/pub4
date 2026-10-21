@@ -64,6 +64,8 @@ module Master
       "CodePen" => ->(_r, i) { Io::CodePen.new(governor: i[:governor], event_bus: i[:bus]) },
       "Gist" => ->(_r, i) { Io::Gist.new(governor: i[:governor], event_bus: i[:bus]) },
       "YouTubeTranscript" => ->(_r, i) { Io::YoutubeTranscript.new(governor: i[:governor], event_bus: i[:bus]) },
+      "GitHubRepoMiner" => ->(_r, i) { Io::GitHubRepoMiner.new(governor: i[:governor], event_bus: i[:bus]) },
+      "ArxivResearch" => ->(_r, i) { Io::ArxivResearch.new(governor: i[:governor], event_bus: i[:bus]) },
       "PluginObserve" => ->(_r, i) { Io::PluginObserve.new(governor: i[:governor], event_bus: i[:bus]) },
       "Clean" => ->(r, i) { Io::Clean.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord" => ->(r, i) { Io::FeedbackRecord.new(learnings: i[:learnings]) },
