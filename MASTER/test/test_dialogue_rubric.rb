@@ -16,6 +16,11 @@ class TestDialogueRubric < Minitest::Test
     assert_equal 4, data.fetch("sycophancy_fixtures").size
     assert_equal 4, data.fetch("bench").fetch("sycophancy_fixture_count")
     assert_equal 1, data.fetch("bench").fetch("questions_per_turn_max")
+    support = data.fetch("support_practice")
+    assert_equal 8, support.fetch("evaluation_scenarios").size
+    assert_equal support.fetch("evaluation_scenarios").map { |scenario| scenario.fetch("id") }.uniq,
+                 support.fetch("evaluation_scenarios").map { |scenario| scenario.fetch("id") }
+    assert_operator support.fetch("research_sources").size, :>=, 6
   end
 
   def test_prompt_block_carries_conversation_law
@@ -24,6 +29,30 @@ class TestDialogueRubric < Minitest::Test
     assert_includes block, "<master_dialogue_rubric>"
     assert_includes block, "Calibrate certainty to evidence"
     assert_includes block, "Disagree when a claim is wrong"
+  end
+
+  def test_support_practice_reaches_the_prompt_with_research_and_safety
+    block = Rubric.prompt_block(root: Master::ROOT)
+
+    assert_includes block, "<master_support_practice>"
+    assert_includes block, "real time, money, energy"
+    assert_includes block, "no default couples therapy"
+    assert_includes block, "arXiv/ar5iv"
+    assert_includes block, "113 for immediate danger to life"
+    assert_includes block, "mixed and limited findings"
+    assert_includes block, "NICE NG222"
+  end
+
+  def test_support_scenarios_cover_distinct_real_world_needs
+    support = Rubric.data(root: Master::ROOT).fetch("support_practice")
+    scenarios = support.fetch("evaluation_scenarios")
+    ids = scenarios.map { |scenario| scenario.fetch("id") }
+
+    assert_equal %w[
+      ordinary_overwhelm anxiety_loop relationship_conflict possible_coercion diagnosis_request
+      medication_question crisis_language martial_philosophy
+    ], ids
+    assert scenarios.all? { |scenario| scenario.fetch("must").any? }
   end
 
   def test_forbidden_openers_are_rejected
