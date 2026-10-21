@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
-require "timeout"
+require_relative "../../MASTER/lib/io/exec"
 require_relative "dmesg"
 
 module Deploy
@@ -63,27 +62,13 @@ module Deploy
     end
 
     def capture(env, *cmd)
-      output = +""
-      status = nil
-      Open3.popen2e(env, *cmd, chdir: @root, pgroup: true) do |stdin, stdout, wait_thread|
-        stdin.close
-        Timeout.timeout(@timeout) do
-          output << stdout.read
-          status = wait_thread.value
-        end
-      rescue Timeout::Error
-        terminate_process_group(wait_thread.pid)
-        output << "\nstep timed out after #{@timeout}s: #{cmd.join(' ')}\n"
-      end
-      [output, status || TimeoutStatus.new]
-    end
-
-    def terminate_process_group(pid)
-      Process.kill("TERM", -pid)
-      sleep 1
-      Process.kill("KILL", -pid)
-    rescue Errno::ESRCH
-      :already_exited
+      Master::Io::Exec.capture2e(
+        env, *cmd, chdir: @root, timeout: @timeout, raise_on_timeout: true
+      )
+    rescue Master::Io::Exec::TimeoutError => error
+      output = error.result&.first.to_s
+      output << "\nstep timed out after #{@timeout}s: #{cmd.join(' ')}\n"
+      [output, TimeoutStatus.new]
     end
   end
 end
