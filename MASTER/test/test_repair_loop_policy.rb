@@ -352,7 +352,7 @@ class TestRepairLoopPolicy < Minitest::Test
   def test_best_candidate_rejects_unavailable_mapped_simulation_evidence
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "violation\\n")
+      File.write(path, "violation\n")
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
       simulation = Object.new
@@ -367,7 +367,7 @@ class TestRepairLoopPolicy < Minitest::Test
       end
       loop.define_singleton_method(:user_simulation) { simulation }
 
-      assert_nil loop.__send__(:best_candidate, ["clean\\n"], path)
+      assert_nil loop.__send__(:best_candidate, ["clean\n"], path)
       rejected = bus.events.find { |event, _| event == "repair_loop:candidate_rejected" }
       assert_equal "repair_loop:candidate_rejected", rejected&.first
       assert_match(/simulation unavailable: test runner unavailable/, rejected.last.fetch(:reason))
@@ -378,7 +378,7 @@ class TestRepairLoopPolicy < Minitest::Test
   def test_best_candidate_marks_no_test_fallback_as_unverified
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "violation\\n")
+      File.write(path, "violation\n")
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
       simulation = Object.new
@@ -393,7 +393,7 @@ class TestRepairLoopPolicy < Minitest::Test
       end
       loop.define_singleton_method(:user_simulation) { simulation }
 
-      assert_equal "clean\\n", loop.__send__(:best_candidate, ["clean\\n"], path)
+      assert_equal "clean\n", loop.__send__(:best_candidate, ["clean\n"], path)
       selected = bus.events.find { |event, _| event == "repair_loop:candidate_selected_unverified" }
       assert_equal :unavailable, selected.last.fetch(:status)
       assert_empty selected.last.fetch(:tests)
@@ -405,14 +405,14 @@ class TestRepairLoopPolicy < Minitest::Test
   def test_best_candidate_rejects_a_missing_simulation_result
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "violation\\n")
+      File.write(path, "violation\n")
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
       simulation = Object.new
       simulation.define_singleton_method(:evaluate_candidates) { |**| [] }
       loop.define_singleton_method(:user_simulation) { simulation }
 
-      assert_nil loop.__send__(:best_candidate, ["clean\\n"], path)
+      assert_nil loop.__send__(:best_candidate, ["clean\n"], path)
       rejected = bus.events.find { |event, _| event == "repair_loop:candidate_rejected" }
       assert_match(/candidate has no simulation result/, rejected.last.fetch(:reason))
     end
@@ -421,7 +421,7 @@ class TestRepairLoopPolicy < Minitest::Test
   def test_best_candidate_rejects_blocked_simulation
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "violation\\n")
+      File.write(path, "violation\n")
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
       simulation = Object.new
@@ -436,7 +436,7 @@ class TestRepairLoopPolicy < Minitest::Test
       end
       loop.define_singleton_method(:user_simulation) { simulation }
 
-      assert_nil loop.__send__(:best_candidate, ["clean\\n"], path)
+      assert_nil loop.__send__(:best_candidate, ["clean\n"], path)
       refute_includes bus.events.map(&:first), "repair_loop:candidate_selected"
       assert_includes bus.events.map(&:first), "repair_loop:candidate_selection_blocked"
     end
