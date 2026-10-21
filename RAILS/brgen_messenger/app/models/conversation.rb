@@ -15,7 +15,26 @@ class Conversation < ApplicationRecord
 
   validates :conversation_type, inclusion: { in: %w[direct group] }
 
-  scope :for_user, ->(u) { joins(:conversation_participants).where(conversation_participants: { user: u }) }
+  # A shared login is not a shared inbox. City-owned threads stay in their
+  # city; nearby cells are intentionally global; unassigned legacy private
+  # threads remain visible only on the original brgen.no host until opened and
+  # pinned to Bergen. A registered host without a City row fails closed.
+  def self.current_city_scope
+    tenant = ActsAsTenant.current_tenant
+    return none if tenant.nil? && Current.domain.present?
+    return all unless tenant
+
+    city_scope = where(city_id: tenant.id)
+    if tenant.domain == "brgen.no"
+      city_scope = city_scope.or(where(city_id: nil, slug: nil))
+    end
+    city_scope.or(where(city_id: nil).where("conversations.slug LIKE ?", "nearby-%"))
+  end
+
+  scope :for_user, ->(u) {
+    current_city_scope.joins(:conversation_participants)
+                      .where(conversation_participants: { user: u })
+  }
   # The inbox is two lists: what you keep in view and what you put away. The
   # archive state is the viewer's own, read off the participant row that
   # for_user already joins.
@@ -62,14 +81,26 @@ class Conversation < ApplicationRecord
   # and every pair of people got a fresh thread each time they opened a DM from
   # a different button, splitting their history across duplicates.
   def self.direct_between(a, b)
-    where(conversation_type: "direct")
+    conversation = current_city_scope.where(conversation_type: "direct")
       .where(id: ConversationParticipant.where(user_id: a.id).select(:conversation_id))
       .where(id: ConversationParticipant.where(user_id: b.id).select(:conversation_id))
       .order(:id).first
+
+    # Claim a legacy unassigned DM for Bergen on first use. The city scope makes
+    # this possible only on the original host, never on a second city.
+    if conversation&.city_id.nil? && ActsAsTenant.current_tenant
+      conversation.update_column(:city_id, ActsAsTenant.current_tenant.id)
+    end
+    conversation
   end
 
   def self.find_or_create_direct(a, b)
-    direct_between(a, b) || create!(conversation_type: "direct").tap do |c|
+    tenant = ActsAsTenant.current_tenant
+    if tenant.nil? && Current.domain.present?
+      raise ActiveRecord::RecordNotFound, "city context is unavailable for private messaging"
+    end
+
+    direct_between(a, b) || create!(conversation_type: "direct", city: tenant).tap do |c|
       c.participants << a << b
     end
   end
