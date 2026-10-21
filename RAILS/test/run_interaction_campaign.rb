@@ -157,7 +157,7 @@ module Operator
           state = "BLOCKED"
           reason = "test process did not report an executed Minitest run"
         else
-          runs, assertions, failures, errors, skips = summary.captures.map { |value| value.to_i }
+          runs, assertions, failures, errors, skips = summary.captures.map { |value| value.to_s.to_i }
           if skips.positive?
             state = "SKIPPED"
             reason = "Minitest skipped the mapped test"
