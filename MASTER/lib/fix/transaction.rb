@@ -112,6 +112,13 @@ module Master
         Result.err("transaction observation: #{e.message}", category: :infrastructure)
       end
 
+      def observed_current?(path)
+        relative = normalize(path)
+        relative && @paths.include?(relative) && @seen[relative].include?(fingerprint(absolute(relative)))
+      rescue StandardError
+        false
+      end
+
       # The delivery sub-machine (begin_delivery! / record_commit! /
       # delivery_pending? / delivery_head_after / finalize_delivery!) lives in
       # Delivery, reached through this one accessor, so those five methods no
