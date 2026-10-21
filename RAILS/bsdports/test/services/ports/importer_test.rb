@@ -130,7 +130,12 @@ class Ports::ImporterTest < ActiveSupport::TestCase
       record.name = "uncategorised"
       record.description = "Uncategorised package-index entries"
     end
-    source = Port.create!(platform:, category:, name: "git", pkgpath: "packages/git", version: "1")
+    source = Port.create!(
+      platform:, category:, name: "git", pkgpath: "packages/git", version: "1",
+      comment: "existing summary", description: "existing detail",
+      homepage: "https://example.test/git", permit_file_distfiles: true
+    )
+    source.update_column(:maintainer, "Existing Maintainer")
     target = Port.create!(platform:, category:, name: "lib", pkgpath: "packages/lib", version: "1")
     edge = Dependency.create!(port: source, depends_on: target, dep_type: "run")
     fetcher = FakeIndexFetcher.new([
@@ -143,7 +148,13 @@ class Ports::ImporterTest < ActiveSupport::TestCase
       end
     end
 
-    assert_equal "2.50.0", source.reload.version
+    source.reload
+    assert_equal "2.50.0", source.version
+    assert_equal "existing summary", source.comment
+    assert_equal "existing detail", source.description
+    assert_equal "https://example.test/git", source.homepage
+    assert_equal true, source.permit_file_distfiles
+    assert_equal "Existing Maintainer", source[:maintainer]
     assert Dependency.exists?(edge.id), "missing dependency metadata must not erase the existing graph"
   end
 
