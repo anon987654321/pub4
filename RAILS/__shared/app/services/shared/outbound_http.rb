@@ -145,8 +145,9 @@ module Shared
     def capped_body(response, limit)
       body = +""
       response.read_body do |chunk|
+        raise BodyTooLarge, "response body exceeds #{limit} bytes" if body.bytesize + chunk.bytesize > limit
+
         body << chunk
-        raise BodyTooLarge, "response body exceeds #{limit} bytes" if body.bytesize > limit
       end
       body
     end
