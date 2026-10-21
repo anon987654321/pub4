@@ -511,16 +511,24 @@ function frame(t) {
     // morph 0 all ~17k additive points pile into one oval and saturate to a
     // white blob ("no face, just a glow"). Chat/TTS turns reset lastTouch,
     // so this floor only shows during genuinely idle stretches.
-    morphTarget = reducedMotion ? morphCurrent : (!primerFired ? 0.88 : (idleS > 60 ? Math.max(0.55, 1 - (idleS - 60) / 30) : confTight));
+    const automaticMorphTarget = reducedMotion ? morphCurrent :
+      (!primerFired ? 0.88 : (idleS > 60 ? Math.max(0.55, 1 - (idleS - 60) / 30) : confTight));
+    morphTarget = semanticMorphTarget == null ? automaticMorphTarget : semanticMorphTarget;
     const springK = 0.038, springDamp = 0.72;
     if (!faceMat._morphVel) faceMat._morphVel = 0;
     if (reducedMotion) {
       faceMat._morphVel = 0;
-      morphTarget = morphCurrent;
+      if (semanticMorphTarget == null) morphTarget = morphCurrent;
+      else morphCurrent = semanticMorphTarget;
     } else {
       faceMat._morphVel += (morphTarget - morphCurrent) * springK;
       faceMat._morphVel *= springDamp;
       morphCurrent += faceMat._morphVel;
+    }
+    if (semanticMorphRestoreOnSettled && Math.abs(morphCurrent - 1.0) < 0.002 &&
+        Math.abs(faceMat._morphVel) < 0.002) {
+      semanticMorphTarget = null;
+      semanticMorphRestoreOnSettled = false;
     }
     faceMat.uniforms.uMorph.value = morphCurrent;
     faceMat.uniforms.uTime.value = reducedMotion ? 0 : sec;
