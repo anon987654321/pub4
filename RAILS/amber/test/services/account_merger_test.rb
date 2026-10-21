@@ -15,6 +15,7 @@ class AccountMergerTest < ActiveSupport::TestCase
       password: SecureRandom.hex(24)
     )
     post = guest.posts.create!(body: "Anonymous post retained #{suffix}", anonymous: true)
+    stale_guest_session = guest.sessions.create!(user_agent: "stale guest browser", ip_address: "127.0.0.1")
     outgoing_body = "Guest to member #{suffix}"
     incoming_body = "Member to guest #{suffix}"
     now = Time.current
@@ -27,6 +28,8 @@ class AccountMergerTest < ActiveSupport::TestCase
 
     assert_equal member.id, result.id
     assert_equal member.id, post.reload.user_id
+    refute Session.exists?(id: stale_guest_session.id),
+           "a guest cookie must not become a registered account session"
     assert post.anonymous?, "a guest post must keep its anonymous presentation after ownership transfer"
     assert_equal [member.id, member.id],
                  [Message.find_by!(body: outgoing_body).sender_id, Message.find_by!(body: incoming_body).recipient_id]
