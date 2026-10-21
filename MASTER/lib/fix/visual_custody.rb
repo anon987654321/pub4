@@ -22,19 +22,32 @@ module Master
 
       attr_reader :surfaces
 
-      def initialize(root:, surfaces:, bus: nil)
+      def initialize(root:, surfaces:, bus: nil, layout_completion: false)
         @root = root
         @surfaces = Array(surfaces).select(&:snapshot).uniq
         @bus = bus
+        @layout_completion = !!layout_completion
         @snapshot_gate = Deploy::LayoutSnapshotGate.new
       end
 
+      def layout_completion? = @layout_completion
+
       def preflight!(captures)
         VisualQualityGates.record(captures, root: @root)
-        compare_captures(Array(captures), "before visual fix")
+        verdict = compare_captures(Array(captures), "before visual fix")
+        return verdict if verdict.ok? || !@layout_completion || verdict.category != :policy
+
+        plan = snapshot_update_plan(snapshot_rows(captures))
+        return inconclusive("layout baseline drift could not be reconciled to measured surfaces") if plan.empty?
+
+        Result.ok(state: :layout_completion_baseline_drift, pending_snapshots: plan.size)
+      rescue LayoutCompletionEvidenceMissing => e
+        inconclusive("layout completion baseline is not promotable: #{e.message}")
+      rescue LayoutCompletionConflict => e
+        Result.err("layout completion requires a decision: #{e.message}", category: :policy, gap: Master::Gap::OPERATOR_DECISION)
       end
 
-      def verify!(anchors: [])
+      def verify!(anchors: [], committer: nil)
         return Result.err("visual custody: no snapshot surfaces", category: :inconclusive, gap: UNMEASURABLE) if @surfaces.empty?
         return unavailable unless Deploy::GeometryProbe.available?
 
@@ -44,7 +57,44 @@ module Master
             measured << [surface, Deploy::SurfaceProbes.attach(cdp, surface, Deploy::GeometryProbe.walk(cdp, surface))]
           end
         end
-        VisualQualityGates.judge(measured, root: @root, prior: compare_payloads(measured, "after visual fix"), anchors:)
+
+        snapshot_verdict = compare_payloads(measured, "after visual fix")
+        updates = {}
+        prior = snapshot_verdict
+        if snapshot_verdict.err? && @layout_completion && snapshot_verdict.category == :policy
+          updates = snapshot_update_plan(measured)
+          return Result.err("layout completion found no changed structural snapshots to reconcile", category: :inconclusive, gap: UNMEASURABLE) if updates.empty?
+          prior = Result.ok(state: :authorized_layout_completion)
+        end
+
+        if updates.any?
+          return Result.err("layout snapshot promotion requires the active /fix transaction", category: :policy, gap: Master::Gap::OPERATOR_DECISION) unless committer
+          enlisted = committer.enlist_related_visual_baselines!(updates.keys)
+          return enlisted unless enlisted.ok?
+        end
+
+        quality = VisualQualityGates.judge(
+          measured, root: @root, prior:, anchors:, allow_layout_change: updates.any?
+        )
+        return quality unless quality.ok?
+        return quality if updates.empty?
+
+        original_bytes = updates.keys.to_h { |path| [path, File.binread(path)] }
+        begin
+          updates.each { |path, data| @snapshot_gate.send(:write, path, data) }
+          observed = committer.observe_related_visual_baseline_writes!(updates.keys)
+          raise observed.message unless observed.ok?
+        rescue StandardError => e
+          restore_snapshot_bytes(original_bytes)
+          return Result.err("layout snapshot promotion failed and was restored: #{e.class}: #{e.message}", category: :infrastructure, gap: UNMEASURABLE)
+        end
+
+        @bus&.publish("fix_loop:layout_snapshot_promoted", paths: updates.keys.map { |path| relative(path) })
+        Result.ok(state: :authorized_layout_completion, snapshots_updated: updates.size)
+      rescue LayoutCompletionEvidenceMissing => e
+        inconclusive("layout completion could not verify every snapshot: #{e.message}")
+      rescue LayoutCompletionConflict => e
+        Result.err("layout completion requires an operator decision: #{e.message}", category: :policy, gap: Master::Gap::OPERATOR_DECISION)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_custody", event_bus: @bus)
         Result.err("visual custody: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive, gap: UNMEASURABLE)
@@ -60,6 +110,63 @@ module Master
           [surface, capture[:payload]]
         end
         compare_payloads(rows, label)
+      end
+
+      class LayoutCompletionEvidenceMissing < StandardError; end
+      class LayoutCompletionConflict < StandardError; end
+
+      def snapshot_rows(captures)
+        Array(captures).filter_map do |capture|
+          next unless @surfaces.include?(capture[:surface])
+          next unless capture.dig(:payload, "composition", "state") == "resting"
+
+          [capture[:surface], capture[:payload]]
+        end
+      end
+
+      # Build an all-or-nothing update plan. A missing baseline, bad HTTP
+      # response, thin DOM, failed geometry walk, malformed snapshot, or shared
+      # alias disagreement is never repaired by silently blessing a new render.
+      def snapshot_update_plan(measured)
+        raise LayoutCompletionEvidenceMissing, "no rendered surfaces" if measured.empty?
+
+        grouped = {}
+        measured.each do |surface, payload|
+          raise LayoutCompletionEvidenceMissing, "#{surface.id}: geometry was not measurable" unless Deploy::GeometryProbe.ok?(payload)
+
+          status = payload["status"].to_i
+          unless status.zero? || status.between?(200, 399)
+            raise LayoutCompletionEvidenceMissing, "#{surface.id}: HTTP #{status}"
+          end
+
+          path = baseline_path(surface)
+          raise LayoutCompletionEvidenceMissing, "#{surface.id}: baseline missing" unless File.file?(path)
+
+          baseline = JSON.parse(File.read(path))
+          current = @snapshot_gate.send(:distill, payload)
+          if current.fetch("elements", []).size < Deploy::LayoutSnapshotGate::MIN_ELEMENTS
+            raise LayoutCompletionEvidenceMissing, "#{surface.id}: fewer than #{Deploy::LayoutSnapshotGate::MIN_ELEMENTS} stable elements"
+          end
+
+          if grouped.key?(path) && grouped.fetch(path).fetch(:current) != current
+            raise LayoutCompletionConflict, "#{surface.id} disagrees with another surface sharing #{relative(path)}"
+          end
+          grouped[path] ||= { baseline:, current: }
+        end
+
+        grouped.filter_map do |path, row|
+          changed = @snapshot_gate.send(:compare, row.fetch(:baseline), row.fetch(:current))
+          [path, row.fetch(:current)] unless changed.empty?
+        end.to_h
+      rescue JSON::ParserError => e
+        raise LayoutCompletionEvidenceMissing, "snapshot JSON is unreadable: #{e.message}"
+      end
+
+      def restore_snapshot_bytes(original_bytes)
+        original_bytes.each { |path, bytes| File.binwrite(path, bytes) }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix.visual_custody.restore_snapshots", event_bus: @bus, severity: :load_bearing)
+        raise "could not restore structural snapshots: #{e.class}: #{e.message}"
       end
 
       def compare_payloads(rows, label)
