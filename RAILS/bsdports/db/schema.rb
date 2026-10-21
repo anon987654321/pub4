@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_28_111500) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_21_143000) do
   create_table "categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -135,7 +135,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_28_111500) do
     t.float "cvss_score"
     t.text "description"
     t.string "identifier"
-    t.integer "port_id"
     t.datetime "published_at"
     t.datetime "resolved_at"
     t.integer "severity", default: 1, null: false
@@ -143,8 +142,25 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_28_111500) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.index ["identifier"], name: "index_security_advisories_on_identifier", unique: true
-    t.index ["port_id"], name: "index_security_advisories_on_port_id"
     t.index ["published_at"], name: "index_security_advisories_on_published_at"
+  end
+
+  create_table "security_advisory_ports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "port_id", null: false
+    t.integer "security_advisory_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["port_id"], name: "index_security_advisory_ports_on_port_id"
+    t.index ["security_advisory_id", "port_id"], name: "index_security_advisory_ports_on_advisory_and_port", unique: true
+    t.index ["security_advisory_id"], name: "index_security_advisory_ports_on_security_advisory_id"
+  end
+
+  create_table "nvd_rate_limits", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "next_allowed_at"
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_nvd_rate_limits_on_name", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -196,7 +212,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_28_111500) do
   add_foreign_key "ports", "categories"
   add_foreign_key "ports", "maintainers"
   add_foreign_key "ports", "platforms"
-  add_foreign_key "security_advisories", "ports"
+  add_foreign_key "security_advisory_ports", "ports"
+  add_foreign_key "security_advisory_ports", "security_advisories"
   add_foreign_key "sessions", "users"
   add_foreign_key "watches", "ports"
   add_foreign_key "watches", "users"
