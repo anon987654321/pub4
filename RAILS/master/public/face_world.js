@@ -15,6 +15,7 @@
   let semanticBlend = 0;
   let semanticBlendTarget = 0;
   let semanticMorphInProgress = false;
+  let nativeSubjectField = false;
   let nodes = [];
   let edges = null;
   let pulses = [];
