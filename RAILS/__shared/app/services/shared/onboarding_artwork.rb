@@ -50,7 +50,7 @@ module Shared
           seed:
         )
         source = hero&.url.to_s
-        return nil unless source.start_with?("http://", "https://")
+        return nil unless source.start_with?("https://")
 
         ArtworkPipeline.publish_remote(
           url: source,
