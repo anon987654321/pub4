@@ -50,7 +50,28 @@ class OmniauthCallbacksController < ::ApplicationController
     email = auth.info.email.to_s.downcase.strip
     verified_email = verified_provider_email?(auth)
     user = User.find_by(email_address: email) if email.present?
-    raise IdentityEmailConflict if user && !verified_email
+    legacy_bankid_placeholder = false
+
+    # Before the shared subject tables existed, BankID accounts were created
+    # with a deterministic, non-deliverable "#{sub}@bankid.oauth" placeholder.
+    # Reclaim only that exact legacy address when it remains unverified and
+    # active; the live, validated BankID subject is the proof for this mapping.
+    # This avoids turning a returning user into a duplicate-account failure
+    # after the migration, without treating the placeholder as mailbox proof.
+    if user.nil? && email.blank? && auth.provider.to_s == "bankid"
+      legacy_email = "#{auth.uid}@bankid.oauth"
+      legacy_user = User.find_by(email_address: legacy_email)
+      if legacy_user
+        eligible = !legacy_user.email_verified? && legacy_user.try(:deleted_at).blank? &&
+                   legacy_user.try(:deletion_scheduled_at).blank? && !legacy_user.try(:deletion_pending?)
+        raise IdentityEmailConflict unless eligible
+
+        user = legacy_user
+        legacy_bankid_placeholder = true
+      end
+    end
+
+    raise IdentityEmailConflict if user && !verified_email && !legacy_bankid_placeholder
 
     unless user
       user = User.new(
