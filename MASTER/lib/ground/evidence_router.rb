@@ -26,6 +26,15 @@ module Master
       DEVICE = /\b(?:android|termux|wifi|wi-?fi|bluetooth|sensor|camera|microphone|battery|torch|location|device)\b/i
       CONVERSATION = /\A(?:hi|hello|hey|thanks?|thank\s+you|good\s+(?:morning|evening|night)|how\s+are\s+you)[!?.,\s]*\z/i
 
+      # Personal stories can contain intimate names, relationship details, symptoms
+      # or medication context. Search providers need the research topic, not the
+      # story that made the question matter. Keep technical requests about evaluating
+      # an AI/repository intact; this changes only personally framed sensitive queries.
+      PERSONAL_REPORT = /\b(?:i(?:'m|\s+am|\s+feel|\s+keep|\s+have|\s+can't|\s+cannot|\s+don't|\s+do\s+not|\s+want|\s+need\s+help|\s+struggle|\s+worry|\s+fear)|my\s+(?:partner|boyfriend|girlfriend|wife|husband|ex|child|parent|family|anxiety|depression|trauma|diagnosis|medication|antidepressant|health|boss|money|debt|lawyer|doctor)|protect\s+myself|someone\s+close\s+to\s+me|jeg(?:\s+er|\s+føler|\s+har|\s+sliter|\s+klarer|\s+orker|\s+vil)|kjæresten\s+min|mannen\s+min|kona\s+mi|barnet\s+mitt|meg\s+selv)\b/i
+      SENSITIVE_PERSONAL_TOPIC = /\b(?:mental\s+health|therap(?:y|ist)|psychiatr|depress(?:ed|ion)|anxiety|panic|suicid|self[- ]harm|trauma|ptsd|ocd|bipolar|mania|psychosis|medication|antidepressant|dose|diagnos|abuse|abusive|coercive|gaslight|manipulat|controlling|violence|threat|relationship|partner|boyfriend|girlfriend|spouse|couples?|family\s+conflict|harass(?:ment|ed)|humiliat(?:e|ed|ing)|workplace\s+bully|addict|alcohol|substance|overwhelmed|coping|grief|debt|financial\s+control|money\s+problems|legal\s+trouble|lonely|loneliness|fear|afraid|unsafe|kjæreste|vold|overgrep|psykisk\s+helse|depresjon|angst|selvmord|selvskading|traume|medisin|antidepressiva|manipulasjon|kontrollerer|trakassering|økonomisk\s+kontroll|ensom)\b/i
+      TECHNICAL_SUPPORT_RESEARCH = /\b(?:github|repository|repo|codebase|system\s+prompt|prompt\s+engineering|benchmark|red[- ]?team|evaluation\s+(?:framework|dataset|benchmark)|model\s+evaluation|llms?|ai\s+(?:system|therapist|safety)|artificial\s+intelligence|MASTER)\b/i
+      TECHNICAL_ACTION = /\b(?:build|improve|evaluate|benchmark|implement|test|research|review|design|audit|red[- ]?team)\b/i
+
       RESEARCH_PROMPT = "Evidence rule: when a question is current, niche, uncertain, "                        "or externally verifiable, do not answer from memory. Use the "                        "available knowledge or web tools first, then separate observed "                        "evidence from inference."
 
       module_function
@@ -47,6 +56,31 @@ module Master
       def about_itself?(value)
         (value.match?(ASSISTANT) && value.match?(OWN_PARTS)) || value.match?(SLASH_COMMAND)
       end
+
+      # Minimize personally sensitive context before it leaves the local runtime.
+      # Returns the original query for technical requests and for ordinary questions
+      # whose wording is not a personal sensitive report.
+      def web_search_query(text)
+        value = text.to_s.strip
+        return value if value.empty?
+        return value unless value.match?(PERSONAL_REPORT) && value.match?(SENSITIVE_PERSONAL_TOPIC)
+        return value if value.match?(TECHNICAL_SUPPORT_RESEARCH) && value.match?(TECHNICAL_ACTION)
+
+        topics = []
+        topics << "suicide crisis response and safety planning" if value.match?(/suicid|self[- ]harm|can't keep myself safe|cannot keep myself safe|selvmord|selvskading|holde meg trygg/i)
+        topics << "coercive control domestic abuse and confidential safety planning" if value.match?(/abuse|abusive|coercive|gaslight|controlling|manipulat|checks? my phone|controls? (?:my )?(?:money|finances)|violence|threat|vold|overgrep|kontrollerer|trakassering|økonomisk kontroll/i)
+        topics << "evidence-based relationship conflict and couples counselling" if value.match?(/relationship|partner|boyfriend|girlfriend|spouse|couple|family conflict|kjæreste|mannen min|kona mi|familie/i)
+        topics << "clinical guidelines for depression and behavioral activation" if value.match?(/depress|nedstemthet|depresjon/i)
+        topics << "clinical guidelines for anxiety and CBT-based coping" if value.match?(/anxiety|panic|afraid|fear|angst|uro/i)
+        topics << "clinical guidance on medication safety and speaking with a prescriber" if value.match?(/medication|antidepressant|dose|medicine|medisin|antidepressiva|prescription/i)
+        topics << "clinical guidance for trauma and PTSD" if value.match?(/trauma|ptsd|traume|flashback/i)
+        topics << "evidence-based mental health coping and professional support" if topics.empty? || value.match?(/mental health|therap|psychiatr|overwhelmed|coping|psychisk helse|mestring/i)
+        topics << "Norwegian official health guidance" if value.match?(/\b(?:Norway|Norwegian|Norge|Noreg|Helsenorge)\b|[æøå]/i)
+
+        "Evidence-based public guidance and reviews about #{topics.uniq.join('; ')}."
+      end
+
+      private_class_method :web_search_query
 
       def web_required?(mode)
         %i[web_current deep_research].include?(mode)
