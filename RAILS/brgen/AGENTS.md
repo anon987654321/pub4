@@ -28,13 +28,13 @@ markedsplass.brgen.no    marketplace.lsangeles.com     markedsplass.oshlo.no
 | What | Engine / code | Bergen | Los Angeles |
 |---|---|---|---|
 | Main feed (posts, communities, events, stories, DMs) | host `app/` | `brgen.no` | `lsangeles.com` |
-| Marketplace + food | `engines/marketplace` + nested `engines/takeaway` | `markedsplass.brgen.no` + `/food` | `marketplace.lsangeles.com` + `/food` |
-| Dating | `engines/dating` | `dating.brgen.no` | `dating.lsangeles.com` |
-| Legacy Takeaway host | compatibility mount of Marketplace food | `takeaway.brgen.no` | `takeaway.lsangeles.com` |
-| TV | `engines/tv` | `tv.brgen.no` | `tv.lsangeles.com` |
-| Maps | `engines/maps` | `maps.brgen.no` | `maps.lsangeles.com` |
-| Playlist | `engines/playlist` | `radio.brgen.no` | `radio.lsangeles.com` |
-| Messenger | host routes, not an engine | `messenger.brgen.no` | `messenger.lsangeles.com` |
+| Marketplace + food | `../brgen_marketplace` + nested `../brgen_marketplace/engines/takeaway` | `markedsplass.brgen.no` + `/food` | `marketplace.lsangeles.com` + `/food` |
+| Dating | `../brgen_dating` | `dating.brgen.no` | `dating.lsangeles.com` |
+| Legacy Takeaway host | compatibility mount of Marketplace food at `../brgen_marketplace/engines/takeaway` | `takeaway.brgen.no` | `takeaway.lsangeles.com` |
+| TV | `../brgen_radio/tv` | `tv.brgen.no` | `tv.lsangeles.com` |
+| Maps | `../brgen_maps` | `maps.brgen.no` | `maps.lsangeles.com` |
+| Playlist | `../brgen_radio/playlist` | `radio.brgen.no` | `radio.lsangeles.com` |
+| Messenger | host-drawn routes; Stimulus asset engine in `../brgen_messenger` | `messenger.brgen.no` | `messenger.lsangeles.com` |
 
 Marketplace is the only vertical whose **subdomain word** is localized
 (`markedsplass` / `marketplace` / `marktplatz` / …). Food ordering is a Marketplace
@@ -44,7 +44,7 @@ tv, maps, messenger and playlist are the same English token on every city.
 **Not a brgen subapp.** `ai.brgen.no` is MASTER (`RAILS/master`), different rc.d.
 `amberapp.art` is a separate Rails app. Do not mount either here.
 
-Recipe for engines: `README.md`. Feature inventory: `RAILS/apps.yml`. Local
+Recipe for engines: `README.md`. Sibling engine paths are relative to this directory; their shared test inventory is `RAILS/test/engine_roots.rb`. Feature inventory: `RAILS/apps.yml`. Local
 verticals need `Host: dating.brgen.no` (etc.); `dating.localhost` 404s because
 the registry keys off city apexes, not localhost.
 

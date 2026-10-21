@@ -45,10 +45,16 @@ export default class extends Controller {
     }
   }
 
+  _hasCenter() {
+    return this.hasCenterLatValue &&
+      this.hasCenterLngValue &&
+      Number.isFinite(this.centerLatValue) &&
+      Number.isFinite(this.centerLngValue)
+  }
+
   _center() {
-    const lat = this.hasCenterLatValue ? this.centerLatValue : 60.39299
-    const lng = this.hasCenterLngValue ? this.centerLngValue : 5.32415
-    return [lng, lat]
+    // Unknown cities open at a world view, never at Bergen by accident.
+    return this._hasCenter() ? [this.centerLngValue, this.centerLatValue] : [0, 0]
   }
 
   _styleUrl() {
@@ -65,7 +71,7 @@ export default class extends Controller {
       container: canvas,
       style: this._styleUrl(),
       center: this._center(),
-      zoom: this.hasZoomValue ? this.zoomValue : 12.2,
+      zoom: this.hasZoomValue ? this.zoomValue : (this._hasCenter() ? 12.2 : 1.5),
       pitch: 55,
       bearing: -14,
       antialias: true
