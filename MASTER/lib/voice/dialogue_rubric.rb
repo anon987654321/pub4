@@ -483,7 +483,10 @@ module Master
           end
         end
 
-        outcomes = reports.filter_map { |item| item.dig(:grade, :overall) }
+        # Keep case-level counters mutually exclusive: a failed response
+        # may carry an inconclusive placeholder grade, but belongs only in failed.
+        outcomes = reports.reject { |item| %i[failed blocked].include?(item[:status]) }
+                          .filter_map { |item| item.dig(:grade, :overall) }
         counts = %i[pass needs_review fail inconclusive].to_h do |outcome|
           [outcome, outcomes.count(outcome)]
         end
