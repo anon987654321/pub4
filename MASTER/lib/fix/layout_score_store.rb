@@ -31,7 +31,12 @@ module Master
         nil
       end
 
-      def baseline(root, surface) = load(root, surface)&.dig("baseline", "score")
+      # A score version changes when its measurement semantics change. Old
+      # scores remain in history but cannot veto a render scored by new rules.
+      def baseline(root, surface)
+        row = load(root, surface)&.dig("baseline")
+        row["score"] if row && row["version"] == LayoutScore::VERSION
+      end
 
       # Stores the resting score as the state a fix must not worsen.
       def seed(surface, payload, root:)
@@ -59,9 +64,12 @@ module Master
 
       def write(root, surface, result, advance:)
         entry = load(root, surface) || { "history" => [] }
-        row = { "at" => Time.now.utc.iso8601, "score" => result.score, "subs" => round(result.subs), "facts" => result.facts }
+        row = { "version" => LayoutScore::VERSION, "at" => Time.now.utc.iso8601,
+                "score" => result.score, "subs" => round(result.subs), "facts" => result.facts }
         entry["history"] = (entry["history"] << row).last(KEEP)
-        entry["baseline"] = row if advance && row["score"] >= entry.dig("baseline", "score").to_f
+        baseline = entry["baseline"]
+        compatible = baseline.is_a?(Hash) && baseline["version"] == LayoutScore::VERSION
+        entry["baseline"] = row if advance && (!compatible || row["score"] >= baseline["score"].to_f)
         FileUtils.mkdir_p(dir(root))
         File.write(path(root, surface), JSON.pretty_generate(entry))
       end
