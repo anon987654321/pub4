@@ -59,6 +59,16 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
   end
 
 
+  test "legacy executable homepage values render as text rather than links" do
+    @port.update_column(:homepage, "javascript:alert(1)")
+
+    get port_path(@port)
+
+    assert_response :success
+    assert_includes response.body, "javascript:alert(1)"
+    refute_match(/href=["']javascript:alert\\(1\\)/i, response.body)
+  end
+
   test "cross-port comment parents are rejected by controller and model" do
     user = make_user("thread-owner")
     other_port = Port.create!(
