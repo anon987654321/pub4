@@ -315,6 +315,21 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "UK statutory guidance — domestic abuse and coercive control"
   end
 
+  def test_couples_therapy_research_is_only_surfaced_for_non_coercive_conflict
+    ordinary_conflict = Rubric.support_prompt_for(
+      "My partner and I keep having the same argument.",
+      root: Master::ROOT,
+    )
+    coercive_control = Rubric.support_prompt_for(
+      "My partner checks my phone, controls money and says I am crazy when I object.",
+      root: Master::ROOT,
+    )
+
+    assert_includes ordinary_conflict, "Couple therapy models for relationship distress"
+    assert_includes coercive_control, "UK statutory guidance — domestic abuse and coercive control"
+    refute_includes coercive_control, "Couple therapy models for relationship distress"
+  end
+
   def test_crisis_prompt_has_direct_safety_and_local_resources
     prompt = Rubric.support_prompt_for(
       "I do not think I can keep myself safe tonight.",
