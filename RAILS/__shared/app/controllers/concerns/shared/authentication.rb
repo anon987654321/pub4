@@ -173,6 +173,8 @@ module Shared
     # sign-in can retry the transfer without upgrading the old cookie.
     def transfer_guest_history_from_session(user)
       ids = [session[:guest_user_id], session[:previous_guest_user_id]].compact.uniq
+      return if ids.empty? || !::User.column_names.include?("guest")
+
       guest = ids.filter_map { |id| ::User.find_by(id: id, guest: true) }.first
       return unless guest
 
