@@ -130,6 +130,28 @@ module Master
           semantic-model, structural, or rendered-surface repair as applicable.
           Keep source and its verified dependency context attached to the repair.
 
+          For each model-assisted finding, generate up to MASTER_FIX_CANDIDATES
+          materially different alternatives (default three), not repeated retries
+          of the same prompt. Distinguish a minimal local repair, a root-cause
+          repair at the natural owner, and reuse/simplification of an existing
+          abstraction. Do not pad the set with duplicate source. Apply this to
+          council, diff, ordinary source, and large-file repair routes.
+
+          Read the relevant surface cases from
+          RAILS/test/interaction_campaign_400.json and include their actors,
+          actions, fault injections and expected invariants in each candidate's
+          context. These entries are scenario oracles, not runtime results. Run
+          the relevant existing focused tests once against the baseline, then
+          against each viable candidate in the test environment, under a
+          serialized and reversible source swap. Restore the exact original
+          before continuing. If the source changes concurrently or restoration
+          fails, stop the repair. Reject candidates that introduce a focused-test
+          failure or change an existing failure signature. Prefer fewer remaining
+          target-Law findings, then passing focused tests, then smaller diffs.
+          An unavailable runner, timeout or unmapped test suite is not a pass.
+          Report the actual executed test paths and keep every unexecuted campaign
+          case NOT_RUN; prompt context alone never proves an interaction worked.
+
           After each coherent batch passes syntax checks and its focused proof,
           commit and push that owned batch by default. Never stage another
           operator's dirty paths. An explicit no-publish instruction, a shared-
