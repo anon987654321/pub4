@@ -289,6 +289,10 @@ module Master
                 row = nil
                 begin
                   writer.call(path, source)
+                  written_source = File.read(path, encoding: "UTF-8")
+                  unless written_source == source
+                    raise IOError, "candidate source differs from the requested write"
+                  end
                   candidate_results = tests.map { |test_path| execute_test(test_path) }
                   row = compare(baseline, candidate_results, tests)
                 rescue RestoreFailure
@@ -298,9 +302,13 @@ module Master
                 ensure
                   begin
                     writer.call(path, original)
+                    restored_source = File.read(path, encoding: "UTF-8")
+                    unless restored_source == original
+                      raise IOError, "restored source differs from the original snapshot"
+                    end
                   rescue StandardError => e
                     publish("repair_loop:user_simulation_restore_failed", path: relative, error: reason(e))
-                    raise RestoreFailure, "candidate simulation could not restore #{relative}: #{e.class}: #{e.message}"
+                    raise RestoreFailure, "candidate simulation could not verify restoration of #{relative}: #{e.class}: #{e.message}"
                   end
                 end
                 publish(
