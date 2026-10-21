@@ -164,6 +164,7 @@ nb:
   # The app's one hardcoded flash string, translated 2026-08-11.
   flash:
     cve_cross_reference_complete: "CVE-kryssreferansen er fullført."
+    cve_cross_reference_queued: "CVE-kryssreferansen er lagt i kø for bakgrunnsbehandling."
     review_issues: "MASTER-gjennomgang: %{issues}"
     review_clean: "MASTER-gjennomgang: ingen problemer funnet i den indekserte posten eller den lokale portkilden."
     review_source_unavailable: "MASTER-gjennomgang: ingen lokal portssamling er tilgjengelig; bare indekserte metadata ble kontrollert."
