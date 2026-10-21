@@ -35,7 +35,7 @@ module Master
       CENTER_SPAN = 0.16
       ON_PX = 1.0
       BLOCK_MIN_W = 24
-      VERSION = 2
+      VERSION = 3
       Result = Data.define(:score, :subs, :facts)
 
       module_function
@@ -44,11 +44,12 @@ module Master
         els = Array(payload["elements"]).select { |e| e["visible"] != false && e["onscreen"] != false && e["rect"] }
         gaps = stack_gaps(els, payload)
         facts = { "edges" => 0, "outliers" => 0 }
+        geometry = viewport_union_measure(blocks(els), vw: payload["vw"].to_f, vh: payload["vh"].to_f)
         subs = {
           "edges" => edges(els, facts), "grid" => grid(els, gaps, tokens),
           "scale" => on_scale(els, gaps, tokens), "measure" => measure(els, facts),
-          "heading" => heading(payload, els, tokens), "density" => density(payload, els),
-          "balance" => balance(gaps), "centering" => centering(payload, els)
+          "heading" => heading(payload, els, tokens), "density" => density(payload, els, geometry:),
+          "balance" => balance(gaps), "centering" => centering(payload, els, geometry:)
         }
         Result.new(score: combine(subs), subs:, facts:)
       end
@@ -145,13 +146,14 @@ module Master
         sizes[sizes.size / 2] unless sizes.empty?
       end
 
-      def density(payload, els)
+      def density(payload, els, geometry: nil)
         vw = payload["vw"].to_f
         vh = payload["vh"].to_f
         area = vw * vh
         return unless area.positive?
 
-        painted = viewport_union_area(blocks(els), vw:, vh:) / area
+        painted_area, = geometry || viewport_union_measure(blocks(els), vw:, vh:)
+        painted = painted_area / area
         painted = payload.dig("visual", "first_screen", "painted_area_ratio_approx").to_f if painted.zero?
         return clamp(painted / DENSITY_LO) if painted < DENSITY_LO
 
@@ -160,8 +162,9 @@ module Master
 
       # Bounding boxes are a painted-area proxy, not pixel segmentation. Clip
       # them to the first screen and union their area so overlaps and below-fold
-      # tails do not count as extra painted viewport.
-      def viewport_union_area(rows, vw:, vh:)
+      # tails do not count as extra painted viewport. The same union yields a
+      # centroid for layout alignment without double-weighting nested boxes.
+      def viewport_union_measure(rows, vw:, vh:)
         rects = rows.filter_map do |element|
           rect = element["frect"] || element["rect"]
           x = rect["x"].to_f
@@ -172,16 +175,18 @@ module Master
           bottom = [y + rect["h"].to_f, vh].min
           { left:, top:, right:, bottom: } if right > left && bottom > top
         end
-        return 0.0 if rects.empty?
+        return [0.0, nil] if rects.empty?
 
         xs = rects.flat_map { |rect| [rect[:left], rect[:right]] }.uniq.sort
-        xs.each_cons(2).sum do |left, right|
-          next 0.0 unless right > left
+        area = 0.0
+        x_moment = 0.0
+        xs.each_cons(2) do |left, right|
+          next unless right > left
 
           spans = rects.filter_map do |rect|
             [rect[:top], rect[:bottom]] if rect[:left] < right && rect[:right] > left
           end
-          next 0.0 if spans.empty?
+          next if spans.empty?
 
           spans.sort_by!(&:first)
           first, last = spans.first
@@ -194,8 +199,11 @@ module Master
               first, last = top, bottom
             end
           end
-          (right - left) * (covered + last - first)
+          slab_area = (right - left) * (covered + last - first)
+          area += slab_area
+          x_moment += slab_area * (left + right) / 2.0
         end
+        [area, area.positive? ? x_moment / area : nil]
       end
 
       def balance(gaps)
@@ -206,15 +214,15 @@ module Master
         clamp(1.0 - deviation / mean)
       end
 
-      def centering(payload, els)
+      def centering(payload, els, geometry: nil)
         vw = payload["vw"].to_f
+        vh = payload["vh"].to_f
         rows = blocks(els)
-        return unless vw.positive? && !rows.empty?
+        return unless vw.positive? && vh.positive? && !rows.empty?
 
-        weight = rows.sum { |e| e["rect"]["w"] * e["rect"]["h"] }
-        return unless weight.positive?
+        _area, centroid = geometry || viewport_union_measure(rows, vw:, vh:)
+        return unless centroid
 
-        centroid = rows.sum { |e| (e["rect"]["x"] + e["rect"]["w"] / 2.0) * e["rect"]["w"] * e["rect"]["h"] } / weight
         clamp(1.0 - [(centroid - vw / 2).abs / vw - CENTER_FREE, 0].max / CENTER_SPAN)
       end
 
