@@ -54,9 +54,9 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       [ -> { review_port_path(@port) },       :post,   :redirect, :any, {} ],
       [ -> { port_comments_path(@port) },     :post,   :redirect, :any,
         { comment: { content: "Builds clean on 7.6" } } ],
-      # crossref_cves reaches NvdCve.crossref, which talks to an external
-      # service. Only the guest row runs: the refusal is the security property,
-      # and a signed-in row would make this suite depend on the network.
+      # Cross-reference requests require the configured operator account.
+      # The dedicated mutation test covers signed-in non-operator refusal and
+      # the operator's queued path without allowing this matrix to call NVD.
       [ -> { crossref_cves_port_path(@port) }, :post,  :redirect, :guest_only, {} ]
     ]
   end
