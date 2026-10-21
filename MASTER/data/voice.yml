@@ -609,11 +609,11 @@ tts:
     fillers: [um, uh]
     seed: master-vocal-character-v1
 
-  # Latency. The first packet of a reply is cut at a clause boundary near
-  # this many characters, so the first words are synthesised from a short
-  # clause while the rest is prepared behind it. 0 turns it off.
+  # Latency. Keep the first spoken packet short enough to start promptly,
+  # while retaining a clause-boundary split and leaving the remaining text queued.
+  # This is a text-size target, not a wall-clock guarantee; 0 turns it off.
   streaming:
-    first_chunk_chars: 90
+    first_chunk_chars: 64
 
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
