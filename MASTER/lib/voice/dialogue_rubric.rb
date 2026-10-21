@@ -189,7 +189,6 @@ module Master
         topics << "trauma" if text.match?(TRAUMA_CUES)
         topics << "bipolar" if text.match?(BIPOLAR_CUES)
         topics << "coping" if text.match?(COPING_CUES)
-        topics << "clinical" if text.match?(CLINICAL_DETAIL_CUES)
         topics << "norway" if text.match?(NORWAY_CUES)
         topics << "general" if text.match?(RESEARCH_CUES) || topics.empty?
         topics.uniq
