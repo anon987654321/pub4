@@ -5,6 +5,8 @@ require "json"
 require "uri"
 
 class NvdCve
+  Result = Data.define(:status, :count, :error)
+
   BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
   # Request pacing belongs to NvdCveCrossrefJob, which reserves slots in a
@@ -16,10 +18,11 @@ class NvdCve
   end
 
   def crossref(limit: 5)
-    fetch(limit).filter_map { |v| record(v["cve"] || {}) }
+    advisories = fetch(limit).filter_map { |v| record(v["cve"] || {}) }
+    Result.new(status: :succeeded, count: advisories.size, error: nil)
   rescue StandardError => e
-    Rails.logger.warn("NVD CVE crossref failed for #{@port.name}: #{e.message}")
-    []
+    Rails.logger.warn("NVD CVE crossref failed for #{@port.name}: #{e.class}: #{e.message}")
+    Result.new(status: :failed, count: 0, error: e.class.name)
   end
 
   private
@@ -39,12 +42,13 @@ class NvdCve
       end
 
       res = http.request(req)
-      return [] unless res.is_a?(Net::HTTPSuccess)
+      raise IOError, "NVD returned HTTP #{res.code}" unless res.is_a?(Net::HTTPSuccess)
 
       data = JSON.parse(res.body)
-      data.dig("vulnerabilities") || []
-    rescue JSON::ParserError
-      []
+      vulnerabilities = data["vulnerabilities"]
+      raise JSON::ParserError, "NVD response has no vulnerabilities array" unless vulnerabilities.is_a?(Array)
+
+      vulnerabilities
     end
 
     # The advisory for one CVE, saved, or nil when it has no id or will not save.
