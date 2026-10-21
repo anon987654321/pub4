@@ -126,8 +126,10 @@ class Ports::ImporterTest < ActiveSupport::TestCase
 
   test "thin package-index imports preserve existing dependency edges" do
     platform = platforms(:openbsd)
-    category = Category.create!(platform:, name: "uncategorised", slug: "uncategorised",
-                                description: "Uncategorised package-index entries")
+    category = Category.find_or_create_by!(platform:, slug: "uncategorised") do |record|
+      record.name = "uncategorised"
+      record.description = "Uncategorised package-index entries"
+    end
     source = Port.create!(platform:, category:, name: "git", pkgpath: "packages/git", version: "1")
     target = Port.create!(platform:, category:, name: "lib", pkgpath: "packages/lib", version: "1")
     edge = Dependency.create!(port: source, depends_on: target, dep_type: "run")
