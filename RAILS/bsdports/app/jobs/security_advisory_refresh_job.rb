@@ -9,12 +9,9 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
   BATCH_SIZE = 50
   CURSOR_KEY = "bsdports:advisory_refresh_cursor"
 
-  # No sleep between ports.
-  #
-  # Fifty ports at six seconds apart holds the bulk queue for five minutes on a
-  # box with one core and a gigabyte of memory. Rate limiting belongs where the
-  # request is made — NvdCve owns the NVD budget — and concurrency belongs to the
-  # queue, so this loop does neither.
+  # This cursor job only enqueues a bounded batch. Each per-port job reserves a
+  # distinct shared NVD slot and checks actual request spacing again at execution,
+  # including after a delayed queue drain. No request thread or worker sleeps.
   #
   # The wrap is bounded too. When the cursor ran past the last id the batch came
   # back empty and the job restarted from the first row, forever, so it never
