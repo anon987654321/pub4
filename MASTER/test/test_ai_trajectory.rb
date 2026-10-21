@@ -25,6 +25,14 @@ class TestAiTrajectory < Minitest::Test
     assert_includes prompt, "authority, topology, runtime"
     assert_includes prompt, "pinned source and lockfile"
     assert_includes prompt, "target man pages"
+    assert_includes prompt, "interactive command shell: zsh"
+    assert_includes prompt, "scripts follow their shebang"
+    assert_includes prompt, "remote commands follow the verified target shell"
+    assert_includes prompt, "target-release manuals"
+    assert_includes prompt, "never assume GNU/Linux options or paths"
+    assert_includes prompt, "read-only evidence first"
+    assert_includes prompt, "preconditions, privilege, blast radius and recovery"
+    refute_includes prompt, "shell execution: zsh only"
     assert_operator prompt.bytesize, :<, 4_000
   end
 
