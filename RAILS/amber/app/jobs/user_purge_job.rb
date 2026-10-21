@@ -101,6 +101,11 @@ class UserPurgeJob < ApplicationJob
     CreatorWardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
     WardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
     Recommendation.where(item_id: item_ids).or(Recommendation.where(outfit_id: outfit_ids)).find_each(&:destroy!)
+    # These are per-user records, but Item declares them as has_one even
+    # though the schema allows multiple users to reference the same item.
+    # Explicitly remove every user's rows before erasing the target item.
+    DeclutterReview.where(item_id: item_ids).find_each(&:destroy!)
+    DeclutterOutcome.where(item_id: item_ids).find_each(&:destroy!)
     DeclutterChallenge.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
     Comment.where(commentable_type: "Item", commentable_id: item_ids).find_each(&:destroy!)
     Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids).find_each(&:destroy!)
