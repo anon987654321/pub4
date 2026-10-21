@@ -73,6 +73,30 @@ class ConversationTest < ActiveSupport::TestCase
     assert_nil Conversation.direct_between(@kari, @ola)
   end
 
+  test "nearby rooms remain available across city tenants" do
+    nearby = Conversation.create!(
+      conversation_type: "group", slug: "nearby-conversation-scope-test",
+      name: "Nearby chat", city: nil
+    )
+    nearby.join!(@kari)
+
+    ActsAsTenant.current_tenant = City.find_by!(domain: "oshlo.no")
+
+    assert_includes Conversation.for_user(@kari).pluck(:id), nearby.id
+  end
+
+  test "a host without a resolved city cannot enumerate or create private threads" do
+    Current.domain = "oshlo.no"
+    ActsAsTenant.current_tenant = nil
+
+    assert_empty Conversation.for_user(@kari)
+    assert_raises(ActiveRecord::RecordNotFound) do
+      Conversation.find_or_create_direct(@kari, @ola)
+    end
+  ensure
+    Current.reset
+  end
+
   # A group room is not a DM, however many people are in it.
   test "a group is never returned as a direct thread" do
     group = Conversation.create_group!(creator: @kari, name: "Turgruppa", users: [ @ola ])
