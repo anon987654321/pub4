@@ -62,7 +62,11 @@ class OmniauthCallbacksController < ::ApplicationController
       legacy_email = "#{auth.uid}@bankid.oauth"
       legacy_user = User.find_by(email_address: legacy_email)
       if legacy_user
-        eligible = !legacy_user.email_verified? && legacy_user.try(:deleted_at).blank? &&
+        has_unconsumed_synthetic_address = legacy_user.respond_to?(:has_attribute?) &&
+                                           legacy_user.has_attribute?(:email_verification_token) &&
+                                           legacy_user.email_verification_token.blank?
+        eligible = has_unconsumed_synthetic_address && !legacy_user.email_verified? &&
+                   legacy_user.try(:deleted_at).blank? &&
                    legacy_user.try(:deletion_scheduled_at).blank? && !legacy_user.try(:deletion_pending?)
         raise IdentityEmailConflict unless eligible
 
