@@ -556,7 +556,7 @@
 
     splatBasePositions = positions.slice();
     splatTargetPositions = buildSubjectPositions(semanticForm);
-    semanticMorphInProgress = semanticForm !== "face";
+    semanticMorphInProgress = !nativeSubjectField && semanticForm !== "face";
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
