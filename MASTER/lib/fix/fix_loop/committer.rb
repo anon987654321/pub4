@@ -38,6 +38,7 @@ module Master
           # to refuse.
           @commit_mutex = Mutex.new
           @transaction = nil
+          @related_owned_paths = []
           @known_good = root ? Ground::KnownGood.new(root:, bus:) : nil
           @boundary_scope = nil
         end
@@ -63,6 +64,7 @@ module Master
           @commit_mutex.synchronize do
             raise "fix transaction already active" if @transaction
 
+            @related_owned_paths = []
             transaction.begin!
             @transaction = transaction
           end
@@ -74,6 +76,7 @@ module Master
             @transaction = nil
             result = transaction&.rollback!
             @boundary_scope = nil
+            @related_owned_paths = []
             result
           end
         end
@@ -97,7 +100,10 @@ module Master
             Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
           end
         ensure
-          @boundary_scope = nil unless @transaction
+          unless @transaction
+            @boundary_scope = nil
+            @related_owned_paths = []
+          end
         end
 
         # Runs the two checks that can block delivery -- concurrent changes,
@@ -114,6 +120,52 @@ module Master
           return unless @ground_truth
 
           paths.flatten.each { |path| @ground_truth.record_read!(path) if File.file?(path) }
+        end
+
+        # Visual refinement may promote structural snapshots only after the
+        # rendered quality gate passes. Enlist those exact JSON baselines in the
+        # current /fix transaction before writing, and refuse operator-owned
+        # edits already dirty when this run started.
+        def enlist_related_visual_baselines!(paths)
+          @commit_mutex.synchronize do
+            return Result.err("visual baseline enlistment requires an active fix transaction", category: :policy) unless @transaction&.active?
+            return Result.err("visual baseline enlistment has no transaction baseline", category: :policy) if @baseline.nil?
+
+            relative_paths = Array(paths).map { |path| relative(path) }
+            return Result.err("visual baseline path is outside the allowed snapshot directory", category: :policy) if relative_paths.any?(&:nil?) ||
+              relative_paths.any? { |path| !path.match?(%r{\\AMASTER/gates/data/layout_snapshots/[A-Za-z0-9._-]+\\.json\\z}) }
+            return Result.err("visual baseline is already dirty at run start", category: :policy) if (relative_paths & @baseline).any?
+            return Result.err("visual baseline file is missing", category: :inconclusive) unless relative_paths.all? { |path| File.file?(File.join(@root, path)) }
+
+            boundaries = relative_paths.map { |path| Master::Phoenix.boundary_for(path, root: @root) }
+            return Result.err("visual baseline has no declared architecture boundary", category: :policy) if boundaries.any?(&:nil?)
+
+            expanded_scope = @boundary_scope.nil? ? nil : normalize_boundary_scope(@boundary_scope + boundaries)
+            enlisted = @transaction.enlist!(relative_paths)
+            return enlisted unless enlisted.ok?
+
+            @related_owned_paths = (@related_owned_paths + relative_paths).uniq
+            @boundary_scope = expanded_scope
+            Result.ok(paths: relative_paths)
+          end
+        rescue StandardError => e
+          Result.err("visual baseline enlistment failed: #{e.class}: #{e.message}", category: :infrastructure)
+        end
+
+        # Refresh concurrency evidence only for the related baseline paths that
+        # the visual gate just wrote itself; do not bless concurrent app edits.
+        def observe_related_visual_baseline_writes!(paths)
+          @commit_mutex.synchronize do
+            return Result.err("visual baseline observation requires an active fix transaction", category: :policy) unless @transaction&.active?
+
+            relative_paths = Array(paths).map { |path| relative(path) }
+            return Result.err("visual baseline observation includes an unenlisted path", category: :policy) if relative_paths.any?(&:nil?) ||
+              (relative_paths - @related_owned_paths).any?
+
+            @transaction.observe_paths!(relative_paths)
+          end
+        rescue StandardError => e
+          Result.err("visual baseline observation failed: #{e.class}: #{e.message}", category: :infrastructure)
         end
 
         def commit_if_dirty(message, findings: [], owned_paths: nil)
@@ -336,7 +388,9 @@ def stage_commit_mode?
           changed = @git.changed_paths
           return @baseline ? changed - @baseline : [] if owned_paths.nil?
 
-          owned = changed & Array(owned_paths).filter_map { |path| relative(path) }.uniq
+          requested = Array(owned_paths).filter_map { |path| relative(path) }
+          requested.concat(@related_owned_paths)
+          owned = changed & requested.uniq
           held_back = owned & Array(@baseline)
           @bus&.publish("fix_loop:baseline_dirty_excluded", paths: held_back) unless held_back.empty?
           owned - held_back
