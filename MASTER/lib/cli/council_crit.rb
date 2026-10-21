@@ -60,13 +60,16 @@ module Master
 
       def git_capture(root, *args)
         out, status = Master::Io::Exec.capture2e("git", "-C", root, *args)
-        text = out.to_s
+        # A pipe read comes back tagged binary, and the personas' prompts join this to UTF-8 text.
+        text = out.to_s.dup.force_encoding(Encoding::UTF_8).scrub
         unless status.success?
           detail = text.lines.last(8).join.strip
           raise "git #{args.join(" ")} failed#{detail.empty? ? "" : ": #{detail}"}"
         end
 
-        text.bytesize > MAX_DIFF_BYTES ? text.byteslice(0, MAX_DIFF_BYTES) + "\n... [truncated]" : text
+        return text if text.bytesize <= MAX_DIFF_BYTES
+
+        "#{text.byteslice(0, MAX_DIFF_BYTES).scrub}\n... [truncated]"
       end
 
       def tribunal_summary(feedback)

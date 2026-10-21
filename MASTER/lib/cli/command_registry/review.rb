@@ -145,7 +145,7 @@ module Master
           structural_review(deliberation:, bus:, targets:)
 
           writes_requested = writes_requested?(apply:, only:)
-          effective_critique = critique.nil? ? writes_requested : critique
+          effective_critique = critique.nil? ? writes_requested && council_default : critique
 
           results = targets.map do |fix_target|
             run_fix_target(
@@ -230,7 +230,7 @@ module Master
             "gate0", "verification changed #{gate_changed.size} file(s), re-entering /fix"
           )
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                           target:, apply: true, critique: critique.nil? ? true : critique,
+                           target:, apply: true, critique: critique.nil? ? council_default : critique,
                            aesthetic:, only: "fix")
           return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
         end
@@ -250,15 +250,20 @@ module Master
         value
       end
 
+      # The report footer, at the start of a line. A patch in the same report can quote these words, and
+      # a quoted one is not the pipeline failing.
+      FOOTER_INCOMPLETE = /\Areview\d+:\s*incomplete\b/i
+      FOOTER_CAUSE = /\Areview\d+:\s*cause,/i
+
       # run_pass returns a rendered report for compatibility. Do not allow its
       # textual failure state to fall through into gate success and publication.
       def incomplete_fix_pipeline?(value)
-        value.to_s.match?(/\breview\d+:\s*incomplete\b/i)
+        value.to_s.lines.any? { |line| line.match?(FOOTER_INCOMPLETE) }
       end
 
       def incomplete_fix_pipeline(value)
         lines = value.to_s.lines
-        detail = lines.find { |line| line.match?(/\breview\d+:\s*incomplete\b/i) }.to_s.strip
+        detail = lines.find { |line| line.match?(FOOTER_INCOMPLETE) }.to_s.strip
         cause = footer_cause(lines)
         head = detail.empty? ? "" : ": #{detail}"
         tail = cause.empty? ? "" : "; cause #{cause}"
@@ -269,9 +274,12 @@ module Master
 
       # The first `review0: cause, <stage>: <reason>` footer line, as `<stage>: <reason>`.
       def footer_cause(lines)
-        found = lines.find { |line| line.match?(/\breview\d+:\s*cause,/i) }.to_s.strip
+        found = lines.find { |line| line.match?(FOOTER_CAUSE) }.to_s.strip
         found.sub(/\Areview\d+:\s*cause,\s*/i, "")
       end
+
+      # Whether /fix convenes the council when no flag says: only when MASTER_FIX_COUNCIL=1.
+      def council_default = Master::Review::LLMDispatcher::PassClock.council_enabled?
 
       def execution_trace_scopes(target)
         raw = target.to_s.strip

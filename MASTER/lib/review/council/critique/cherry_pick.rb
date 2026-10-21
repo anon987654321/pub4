@@ -68,7 +68,7 @@ module Master
               [key, materially_distinct(ranked).first(PER_ISSUE_LIMIT)]
             end
             winners = ranked_groups.values.filter_map(&:first)
-            alternatives = ranked_groups.values.flat_map(&:drop)
+            alternatives = ranked_groups.values.flat_map { |lines| lines.drop(1) }
             (winners + alternatives).uniq.first(LIMIT)
           end
 

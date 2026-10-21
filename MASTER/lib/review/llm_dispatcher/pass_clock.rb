@@ -27,8 +27,9 @@ module Master
 
           def pass_budget_s = positive("MASTER_COUNCIL_PASS_BUDGET_S", PASS_BUDGET_S)
 
-          # MASTER_FIX_COUNCIL=0 turns the council off inside /fix: fixes only.
-          def council_enabled? = ENV.fetch("MASTER_FIX_COUNCIL", "1") != "0"
+          # The council is off inside /fix until MASTER_FIX_COUNCIL=1 or --critique asks for it: the run
+          # ends with an offer to convene it on the result, so a council fault cannot cost a repair.
+          def council_enabled?(env: ENV) = env["MASTER_FIX_COUNCIL"] == "1"
 
           def within(budget = nil)
             seconds = budget || pass_budget_s

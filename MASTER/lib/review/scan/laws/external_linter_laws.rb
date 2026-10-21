@@ -124,7 +124,9 @@ module Master
 
             # Only MASTER carries a .rubocop.yml, so a file in another tree would be judged by rubocop's
             # defaults, which prefer single quotes where the house style is double.
+            # A root without one, the repository root /fix probes from, is judged by MASTER's as well.
             config = File.join(@root, ".rubocop.yml")
+            config = File.join(Master::ROOT, ".rubocop.yml") unless File.file?(config)
             data = linter_json("rubocop", "--config", config, "--format", "json", "--no-color", path)
             files = data.is_a?(Hash) ? data["files"] : nil
             unless files.is_a?(Array) && !files.empty? &&

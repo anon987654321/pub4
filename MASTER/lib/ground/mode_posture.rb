@@ -68,7 +68,7 @@ module Master
       # the formatter the status line uses.
       def line(spec = current)
         council = case spec[:council]
-                  when true then "council on"
+                  when true then council_enabled? ? "council on" : "council on request"
                   when false then "council off"
                   else "council #{spec[:council]}"
                   end
@@ -78,6 +78,9 @@ module Master
       end
 
       private
+
+      # /fix convenes the council only when asked; the mode line says so rather than "on".
+      def council_enabled? = Master::Review::LLMDispatcher::PassClock.council_enabled?
 
       def resolve_name
         env = ENV["MASTER_MODE"].to_s.strip.downcase

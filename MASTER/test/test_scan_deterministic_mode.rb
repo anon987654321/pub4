@@ -24,6 +24,8 @@ require "cli/pipeline/pass"
 # an ordinary /scan is unchanged; these tests hold both halves and the default.
 class TestScanDeterministicMode < Minitest::Test
   ENV_KEY = "MASTER_SCAN_DETERMINISTIC"
+  Clock = Master::Review::LLMDispatcher::PassClock
+  Pass = Master::CLI::Pipeline::Pass
 
   def setup
     @saved = ENV[ENV_KEY]
@@ -81,20 +83,24 @@ class TestScanDeterministicMode < Minitest::Test
 
   # --- the council half ----------------------------------------------------
 
-  def test_the_through_pipeline_critiques_by_default
-    assert pipeline.send(:default_critique?),
-           "critique stopped defaulting on — /scan would silently lose the council"
+  def test_the_through_pipeline_leaves_the_council_to_be_asked_for
+    refute Pass.critique_by_default?, "the council is opt-in: --critique or MASTER_FIX_COUNCIL=1"
+  end
+
+  def test_asking_for_the_council_turns_the_default_critique_on
+    Clock.stub(:council_enabled?, true) { assert Pass.critique_by_default? }
   end
 
   def test_read_only_pass_suppresses_implicit_council
-    refute pipeline.send(:default_critique?, {}, apply: false)
+    refute Pass.critique_by_default?(apply: false)
   end
 
-  def test_deterministic_mode_suppresses_the_council
+  def test_deterministic_mode_suppresses_a_requested_council
     ENV[ENV_KEY] = "1"
 
-    refute pipeline.send(:default_critique?),
-           "a deterministic scan would still run a 354.8s deliberation"
+    Clock.stub(:council_enabled?, true) do
+      refute Pass.critique_by_default?, "a deterministic scan would still run a 354.8s deliberation"
+    end
   end
 
   # --- the switch is exact -------------------------------------------------
@@ -103,9 +109,17 @@ class TestScanDeterministicMode < Minitest::Test
     ["0", "", "true", "yes"].each do |value|
       ENV[ENV_KEY] = value
 
-      assert pipeline.send(:default_critique?),
-             "#{value.inspect} switched off the council; only \"1\" may"
+      Clock.stub(:council_enabled?, true) do
+        assert Pass.critique_by_default?, "#{value.inspect} switched off the council; only \"1\" may"
+      end
     end
+  end
+
+  def test_only_the_exact_value_asks_for_the_council
+    ["0", "", "true", "yes"].each do |value|
+      refute Clock.council_enabled?(env: { "MASTER_FIX_COUNCIL" => value }), "#{value.inspect} asked for the council"
+    end
+    assert Clock.council_enabled?(env: { "MASTER_FIX_COUNCIL" => "1" })
   end
 
   # bin/gate is the caller this exists for. If the wiring is dropped there, the

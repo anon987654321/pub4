@@ -14,6 +14,13 @@ module Master
         include Proof
         # PassResult defines this pass's Result and keeps this file small.
 
+        # Whether a pass convenes the council when no flag says: only when it is asked for (PassClock), a
+        # model is in play, and the pass writes or reads for a purpose.
+        def self.critique_by_default?(apply: nil)
+          apply != false && Master::Review::LLMDispatcher::PassClock.council_enabled? &&
+            ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
+        end
+
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
           @failed_stages = []
           @causes = {}
@@ -94,10 +101,16 @@ module Master
                                    "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
           end
           sections.concat(guarded_fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
+          sections << ["council", COUNCIL_OFFER] if offer_council?(critique)
           sections << critique_section(resolved, shell) if critique && run?("critique") && !run?("fix")
           sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
           sections
         end
+
+        COUNCIL_OFFER = "not run during /fix; /critique convenes it on this result"
+
+        # Offered after a /fix that read the tree and did not convene the council.
+        def offer_council?(critique) = run?("fix") && @apply && !critique && !@failed_stages.include?("instruments")
 
         # A run whose instruments are broken reports thousands of files as clean or as scan errors. Ask
         # first, in seconds, and stop with the reason, before the baseline suites and the scan spend an hour.
@@ -301,14 +314,11 @@ module Master
 
 def default_apply?(*) = false
 
-  # MASTER_SCAN_DETERMINISTIC=1 means "no model in this pass", and the
-  # council is the largest model call in it. Measured on lib/io, 46 files:
-  # the two scan phases cost 32s and this deliberation cost 354.8s, so 91%
-  # of a /scan was a critique the caller had not asked for. `bin/gate` then
-  # runs /critique again as its own separate stage, which is the tier that
-  # is supposed to own it.
+  # The council is the largest model call in a pass: measured on lib/io, 46 files, the two scan phases
+  # cost 32s and this deliberation cost 354.8s. It runs only when asked, by --critique or
+  # MASTER_FIX_COUNCIL=1, and the report ends with an offer to convene it.
 
-  def default_critique?(*, apply: nil) = apply != false && ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
+  def default_critique?(*, apply: nil) = self.class.critique_by_default?(apply:)
 
         def run_observation(arg, unit:, files: nil)
           # Stash unit so Scanner progress lines attach to this observation.
