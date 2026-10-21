@@ -35,7 +35,7 @@ module Master
       # scores remain in history but cannot veto a render scored by new rules.
       def baseline(root, surface)
         row = load(root, surface)&.dig("baseline")
-        row["score"] if row && row["version"] == LayoutScore::VERSION
+        row["score"] if row.is_a?(Hash) && row["version"] == LayoutScore::VERSION
       end
 
       # Stores the resting score as the state a fix must not worsen.
