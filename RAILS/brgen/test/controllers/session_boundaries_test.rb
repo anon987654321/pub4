@@ -35,6 +35,29 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
+  # RI-012: login transfers the persisted guest, rotates browser state and survives refresh.
+  def test_RI_012_authentication_rotates_session_and_survives_refresh
+    get new_session_path
+    guest_id = session[:guest_user_id]
+    assert_predicate guest_id, :present?
+    assert User.find(guest_id).guest?
+
+    post session_path, params: { email_address: @user.email_address, password: "password123" }
+
+    assert_response :redirect
+    authenticated_session = @user.sessions.reload.sole
+    assert_equal authenticated_session.id, cookies.signed[:session_id]
+    assert_equal guest_id, session[:previous_guest_user_id], "the pre-auth guest reference should survive only as migration context"
+    refute session[:guest_user_id], "the registered browser must not continue as the guest"
+    refute User.find(guest_id).guest?, "guest history must be transferred before sign-in completes"
+
+    get root_path
+
+    assert_response :success
+    assert_equal @user.id, controller.send(:current_user)&.id
+    assert Session.exists?(authenticated_session.id), "refresh lost the authenticated session"
+  end
+
   test "a same-origin csrf header is accepted for a write" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
