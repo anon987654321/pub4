@@ -29,8 +29,10 @@ module Shared
       raise ArgumentError, "scrape requires a public HTTP(S) URL" unless public_http_url?(url)
       raise LoadError, "gem install ferrum — required for Scrape.call" unless defined?(Ferrum::Browser)
 
-      browser = Ferrum::Browser.new(headless: true, timeout: 30,
-                                    browser_options: { "no-sandbox": nil })
+      # Keep Chromium's renderer sandbox enabled when processing untrusted pages.
+      # Run the scraper as an unprivileged account; do not trade isolation for
+      # convenience by passing Chromium's --no-sandbox switch.
+      browser = Ferrum::Browser.new(headless: true, timeout: 30)
       begin
         # A public page may redirect, load scripts, or embed images from another
         # origin. Check each browser request, not just the first URL, so a redirect
