@@ -150,6 +150,76 @@
     return positions;
   }
 
+  // The head's primary point field uses normalized coordinates around +/-0.62.
+  // Reuse its real vertex count so a theme morphs the face itself rather than only
+  // adding a second cloud around it.
+  function buildFaceSubjectPositions(form) {
+    const faceScatter = window.MASTER_FACE?.faceScatter;
+    if (!faceScatter || faceScatter.length < 3 || faceScatter.length % 3 !== 0) return null;
+
+    const count = faceScatter.length / 3;
+    const positions = new Float32Array(faceScatter.length);
+    const centers = [
+      [-0.38, -0.28, 0.02], [-0.16, 0.31, -0.08], [0.18, 0.12, 0.06],
+      [0.38, -0.24, -0.05], [0.08, -0.04, 0.24], [-0.28, 0.10, 0.18],
+      [0.28, 0.36, -0.18]
+    ];
+
+    for (let i = 0; i < count; i += 1) {
+      const u = (i + 0.5) / count;
+      const b = seeded(i, 32);
+      const c = seeded(i, 33);
+      let x = 0, y = 0, z = 0;
+
+      if (form === "fugue") {
+        const strand = i % 3;
+        const angle = u * Math.PI * 6 + strand * Math.PI * 2 / 3;
+        const radius = 0.20 + b * 0.11;
+        x = Math.cos(angle) * radius;
+        y = (u - 0.5) * 1.16;
+        z = Math.sin(angle) * radius;
+      } else if (form === "wave") {
+        x = (u - 0.5) * 1.14;
+        y = Math.sin(u * Math.PI * 6 + b * 0.45) * 0.24 + (b - 0.5) * 0.07;
+        z = (c - 0.5) * 0.16;
+      } else if (form === "orbit") {
+        const plane = i % 3;
+        const angle = u * Math.PI * 4 + (b - 0.5) * 0.22;
+        const radius = 0.34 + c * 0.12;
+        if (plane === 0) { x = Math.cos(angle) * radius; y = Math.sin(angle) * radius; z = (b - 0.5) * 0.06; }
+        else if (plane === 1) { x = Math.cos(angle) * radius; y = (b - 0.5) * 0.06; z = Math.sin(angle) * radius; }
+        else { x = (b - 0.5) * 0.06; y = Math.cos(angle) * radius; z = Math.sin(angle) * radius; }
+      } else if (form === "architecture") {
+        const level = Math.floor(u * 13);
+        const taper = 0.30 + 0.42 * (1 - level / 12);
+        x = (Math.floor(b * 7) - 3) * taper * 0.11;
+        y = (level / 12 - 0.5) * 1.16;
+        z = (Math.floor(c * 7) - 3) * 0.11;
+      } else if (form === "leaf") {
+        y = (u - 0.5) * 1.18;
+        const width = Math.sin(Math.PI * u) * 0.56;
+        x = (b - 0.5) * width;
+        z = (c - 0.5) * 0.12 + x * 0.06;
+        if (i % 9 === 0) { x = 0; z = 0.01; }
+      } else if (form === "network") {
+        x = (Math.floor(b * 9) - 4) * 0.125;
+        y = (Math.floor(u * 11) - 5) * 0.112;
+        z = (Math.floor(c * 9) - 4) * 0.125;
+      } else {
+        const center = centers[Math.floor(seeded(i, 34) * centers.length)];
+        x = center[0] + (b - 0.5) * 0.22;
+        y = center[1] + (seeded(i, 35) - 0.5) * 0.22;
+        z = center[2] + (c - 0.5) * 0.22;
+      }
+
+      const offset = i * 3;
+      positions[offset] = x;
+      positions[offset + 1] = y;
+      positions[offset + 2] = z;
+    }
+    return positions;
+  }
+
   function setSubjectForm(value) {
     const form = SUBJECT_FORMS.has(String(value || "").toLowerCase())
       ? String(value).toLowerCase()
