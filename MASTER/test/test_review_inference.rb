@@ -170,7 +170,7 @@ end
   end
 
   def test_open_findings_footer_is_not_allowed_to_reach_delivery
-    value = "review0: complete with open findings, 12 findings, 147s\\n"
+    value = "review0: complete with open findings, 12 findings, 147s\n"
     assert Master::CLI::CommandRegistry.incomplete_fix_pipeline?(value)
     result = Master::CLI::CommandRegistry.incomplete_fix_pipeline(value)
     assert result.err?
