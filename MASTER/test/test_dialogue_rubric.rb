@@ -80,6 +80,8 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Do not recommend joint counselling"
     assert_includes prompt, "shared sessions can create risk"
     assert_includes prompt, "safety planning"
+    assert_includes prompt, "112 for immediate risk from violence"
+    assert_includes prompt, "DARVO"
   end
 
   def test_crisis_prompt_has_direct_safety_and_local_resources
@@ -90,6 +92,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "Crisis and referral:"
     assert_includes prompt, "113 for immediate danger to life"
+    assert_includes prompt, "112 for immediate risk from violence"
     assert_includes prompt, "NICE NG225"
   end
 
@@ -127,6 +130,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes personal, "<master_support_practice>"
     assert_includes personal, "Practical response:"
+    assert_includes personal, "Reply in the language the person is using"
     assert_includes research, "Research starting points"
     assert_includes research, "NICE NG222"
   end
@@ -161,6 +165,20 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "NICE NG222"
     assert_includes prompt, "arXiv/ar5iv"
     assert_includes prompt, "ar5iv.labs.arxiv.org/html/2401.02984"
+    assert_includes prompt, "NICE CG31"
+    assert_includes prompt, "NICE NG116"
+    assert_includes prompt, "NICE CG185"
+  end
+
+  def test_martial_philosophy_preserves_boundaries_and_safety
+    prompt = Rubric.support_prompt_for(
+      "Can martial arts philosophy help me handle anger?",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Martial and contemplative practice:"
+    assert_includes prompt, "Do not turn non-attachment into emotional suppression"
+    assert_includes prompt, "mixed and limited findings"
   end
 
   def test_non_support_turns_do_not_receive_the_support_protocol
