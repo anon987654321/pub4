@@ -692,7 +692,7 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "<master_support_practice>"
     assert_includes prompt, "Practical response:"
     assert_includes prompt, "one to three high-value actions"
-    refute_includes prompt, "113 for immediate danger to life"
+    refute_includes prompt, "Helsenorge — mental-health help"
   end
 
   def test_nynorsk_self_worth_and_shame_phrasing_routes_to_support
