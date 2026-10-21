@@ -793,9 +793,10 @@
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
     shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
+    const subjectShellOpacity = nativeSubjectField ? (1 - semanticBlend) : (1 - semanticBlend * 0.68);
     shellMaterial.uniforms.uOpacity.value =
       geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1) *
-      (0.88 + (reducedMotion ? 0 : audioEnergy) * 0.12) * (1 - semanticBlend * 0.68);
+      (0.88 + (reducedMotion ? 0 : audioEnergy) * 0.12) * subjectShellOpacity;
     shellMaterial.uniforms.uEntropy.value = state.entropy;
     shellMaterial.uniforms.uColor.value.copy(colorFromCss());
 
@@ -874,6 +875,9 @@
     semanticBlend = reducedMotion
       ? semanticBlendTarget
       : semanticBlend + (semanticBlendTarget - semanticBlend) * 0.045;
+    if (nativeSubjectField && semanticForm === "face" && semanticBlend <= 0.012) {
+      nativeSubjectField = false;
+    }
     if (splatProxy) {
       const positionAttribute = splatProxy.geometry.getAttribute("position");
       const positions = positionAttribute?.array;
@@ -891,7 +895,8 @@
       }
       splatProxy.geometry.setDrawRange(0, activePoints);
       const subjectActive = semanticBlend > 0.012 || semanticBlendTarget > 0.012;
-      splatProxy.visible = activePoints > 0 && (!portrait || subjectActive);
+      const primaryMorphActive = nativeSubjectField && (semanticForm !== "face" || semanticBlend > 0.012);
+      splatProxy.visible = activePoints > 0 && (!portrait || (subjectActive && !primaryMorphActive));
       splatProxy.material.opacity = Math.min(
         0.28,
         0.03 + geometry.neural_density * 0.09 * density +
@@ -902,7 +907,7 @@
         (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
     }
     const faceCanvas = document.getElementById("face");
-    if (faceCanvas) faceCanvas.style.opacity = (1 - semanticBlend * 0.58).toFixed(3);
+    if (faceCanvas) faceCanvas.style.opacity = nativeSubjectField ? "1" : (1 - semanticBlend * 0.58).toFixed(3);
     document.documentElement.style.setProperty("--master-face-subject-blend", semanticBlend.toFixed(3));
 
     // All legacy visual projections consume this same frame; none schedules time.
