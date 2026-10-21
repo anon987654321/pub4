@@ -5,7 +5,11 @@ class CommentsController < ApplicationController
   before_action :set_port
 
   def create
-    @comment = @port.comments.build(comment_params.merge(user: Current.user))
+    parent_id = params.dig(:comment, :parent_id)
+    parent = @port.comments.find_by(id: parent_id) if parent_id.present?
+    return head(:unprocessable_entity) if parent_id.present? && parent.nil?
+
+    @comment = @port.comments.build(comment_params.merge(user: Current.user, parent: parent))
     if @comment.save
       Shared::DomainEvent.record!(actor: Current.user, action: "comment.created", subject: @comment, source_vertical: "bsdports")
       respond_to do |format|
@@ -41,5 +45,5 @@ class CommentsController < ApplicationController
   private
 
   def set_port = @port = Port.find(params[:port_id])
-  def comment_params = params.require(:comment).permit(:content, :parent_id)
+  def comment_params = params.require(:comment).permit(:content)
 end
