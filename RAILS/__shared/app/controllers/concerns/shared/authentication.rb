@@ -158,11 +158,14 @@ module Shared
     end
 
     # Registered identities confirm the address they claim. Guests keep their
-    # anonymous posting and chatting path; hosts without this capability are
-    # unaffected. Only actions that write under a claimed account opt in.
+    # anonymous posting and chatting path; a high-assurance BankID identity may
+    # also write under its own identity without inventing mailbox proof from a
+    # synthetic placeholder. Newsletter delivery has its own confirmed-address
+    # and explicit-consent gate, so this exception does not opt anyone into mail.
     def require_verified_email
       user = Current.user
-      return if user.nil? || user.try(:guest?) || !user.respond_to?(:email_verified?) || user.email_verified?
+      return if user.nil? || user.try(:guest?) || !user.respond_to?(:email_verified?) ||
+                user.email_verified? || verified_bankid_identity?(user)
 
       message = t(
         "verify.needed",
@@ -172,6 +175,21 @@ module Shared
         format.html { redirect_back fallback_location: Rails.application.routes.url_helpers.root_path, alert: message }
         format.any { head :forbidden }
       end
+    end
+
+    # BankID's verified identity token has high assurance but deliberately
+    # contains no mailbox claim. Require a persisted, post-validation subject
+    # record; do not trust provider text, a synthetic email, or a session flag.
+    # Apps without these tables (for example, a host with no federated login)
+    # retain the ordinary email-verification rule.
+    def verified_bankid_identity?(user)
+      return false unless user&.id
+      return false unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
+      return false unless ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
+
+      ::ExternalIdentity.joins(:identity_provider)
+                        .where(user_id: user.id, assurance_level: "verified", identity_providers: { slug: "bankid" })
+                        .exists?
     end
 
     def require_authentication
