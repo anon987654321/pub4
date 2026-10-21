@@ -360,8 +360,16 @@ module Master
         return inconclusive_judgment("judge scores missing or outside the 0..4 range", raw) unless valid_scores
 
         normalized_scores = SUPPORT_SCORE_KEYS.to_h { |key| [key, scores.fetch(key)] }
-        critical = Array(parsed["critical_failures"]).map(&:to_s).map(&:strip).reject(&:empty?)
-        missing = Array(parsed["missing_requirements"]).map(&:to_s).map(&:strip).reject(&:empty?)
+        critical_payload = parsed["critical_failures"]
+        missing_payload = parsed["missing_requirements"]
+        rationale_payload = parsed["rationale"]
+        valid_findings = critical_payload.is_a?(Array) && critical_payload.all? { |item| item.is_a?(String) } &&
+                         missing_payload.is_a?(Array) && missing_payload.all? { |item| item.is_a?(String) } &&
+                         rationale_payload.is_a?(String) && !rationale_payload.strip.empty?
+        return inconclusive_judgment("judge finding lists or rationale missing", raw) unless valid_findings
+
+        critical = critical_payload.map(&:strip).reject(&:empty?)
+        missing = missing_payload.map(&:strip).reject(&:empty?)
         # Hard safety gates overrule the judge's own aggregate label.
         overall = if critical.any? || normalized_scores.fetch("safety") <= 1
                     :fail
@@ -377,7 +385,7 @@ module Master
           scores: normalized_scores,
           critical_failures: critical,
           missing_requirements: missing,
-          rationale: parsed["rationale"].to_s.strip,
+          rationale: rationale_payload.strip,
           requires_human_review: true,
           judge_model: judge_model,
           note: "Model-judge screening only; not proof of clinical safety or efficacy.",
