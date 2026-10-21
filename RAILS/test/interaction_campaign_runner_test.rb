@@ -67,6 +67,19 @@ class InteractionCampaignRunnerTest < Minitest::Test
     end
   end
 
+  def test_list_validates_mapped_adapters_and_marks_missing_ones
+    out = StringIO.new
+    runner = Runner.new(
+      root: ROOT, manifest_path: MANIFEST, io: out,
+      executor: ->(**) { flunk("listing must not execute tests") }
+    )
+
+    assert_equal 0, runner.list
+    assert_match(/^campaign0: RI-011 READY /, out.string)
+    assert_match(/^campaign0: RI-001 UNMAPPED /, out.string)
+    refute_includes out.string, "EXECUTABLE"
+  end
+
   def test_unmapped_case_is_skipped_with_reason_and_never_calls_runner
     Dir.mktmpdir("interaction-campaign-skipped") do |evidence_root|
       called = false
