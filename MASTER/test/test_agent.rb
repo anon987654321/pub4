@@ -48,6 +48,39 @@ class TestAgent < Minitest::Test
     Fiber[:master_evidence_note] = nil
   end
 
+  def test_personal_support_preflight_minimizes_external_search_text
+    agent = @agent
+    knowledge = Object.new
+    knowledge.define_singleton_method(:call) { |query:| Master::Result.ok("(no results)") }
+    knowledge.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::SearchKnowledge" } }
+    queries = []
+    web = Object.new
+    web.define_singleton_method(:call) do |query:|
+      queries << query
+      Master::Result.ok("generic evidence for #{query}")
+    end
+    web.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::WebSearch" } }
+    agent.instance_variable_set(:@tools, [knowledge, web])
+    story = "I am scared because my boyfriend Alex checks my phone and controls my money. Research whether this is coercive control."
+
+    agent.send(:prepare_evidence, story)
+
+    assert_equal :deep_research, Fiber[:master_evidence_mode]
+    assert_equal 2, queries.size
+    queries.each do |query|
+      assert_includes query, "coercive control"
+      assert_includes query, "safety planning"
+      refute_includes query, "Alex"
+      refute_includes query, "my boyfriend"
+      refute_includes query, "checks my phone"
+      refute_includes query, "controls my money"
+    end
+    refute_includes Fiber[:master_evidence_note], "Alex"
+  ensure
+    Fiber[:master_evidence_mode] = nil
+    Fiber[:master_evidence_note] = nil
+  end
+
   def test_chat_keeps_browser_evidence_routing_for_current_site_requests
     message = "Go to www.nrk.no, give me today's news in norwegian"
 
