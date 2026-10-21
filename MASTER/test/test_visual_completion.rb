@@ -67,14 +67,14 @@ class TestVisualCompletion < Minitest::Test
     completion = Master::Fix::VisualCompletion
     path = File.join(repo, "RAILS/brgen/app/assets/stylesheets/application.scss")
     custody = AuthorizedCustody.new
-    original = ".card { gap: 8px; color: var(--text); font-family: 'Inter', sans-serif; }\\n"
+    original = ".card { gap: 8px; color: var(--text); font-family: 'Inter', sans-serif; }"
 
-    layout_change = ".card { gap: 16px; color: var(--text); font-family: 'Inter', sans-serif; }\\n"
-    colour_change = ".card { gap: 16px; color: var(--muted); font-family: 'Inter', sans-serif; }\\n"
-    font_change = ".card { gap: 16px; color: var(--text); font-family: 'Arial', sans-serif; }\\n"
+    layout_change = ".card { gap: 16px; color: var(--text); font-family: 'Inter', sans-serif; }"
+    colour_change = ".card { gap: 16px; color: var(--muted); font-family: 'Inter', sans-serif; }"
+    font_change = ".card { gap: 16px; color: var(--text); font-family: 'Arial', sans-serif; }"
 
     assert_nil completion.change_blocker(root: repo, path:, before: original, after: layout_change, custody:)
-    assert_match(/palette\\/semantic colours/, completion.change_blocker(root: repo, path:, before: original, after: colour_change, custody:))
+    assert_includes completion.change_blocker(root: repo, path:, before: original, after: colour_change, custody:), "palette/semantic colours"
     assert_match(/font-family/, completion.change_blocker(root: repo, path:, before: original, after: font_change, custody:))
 
     tokens = File.join(repo, "RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss")
