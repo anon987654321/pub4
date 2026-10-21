@@ -24,6 +24,9 @@ class FederatedIdentityContractTest < Minitest::Test
     end
     assert_includes migration, "index_external_identities_on_provider_and_subject"
     assert_includes migration, "foreign_key: true"
+    assert_includes migration, "ActiveRecord::IrreversibleMigration"
+    merge_migration = read("RAILS/amber/db/migrate/20261021230200_add_guest_account_merges_to_amber.rb")
+    assert_includes merge_migration, "ActiveRecord::IrreversibleMigration"
   end
 
   def test_email_less_bankid_login_is_looked_up_by_persisted_subject
