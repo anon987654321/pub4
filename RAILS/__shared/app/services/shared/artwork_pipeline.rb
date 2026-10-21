@@ -3,11 +3,13 @@
 require "digest"
 require "fileutils"
 require "json"
-require "open-uri"
+require "net/http"
+require "uri"
 require "shared/contracts"
 Shared::Contracts.require_contract("studio")
 require "tmpdir"
 require "time"
+require_relative "outbound_http"
 
 module Shared
   # One publication boundary for generated stills. A provider URL is never the
@@ -25,17 +27,22 @@ module Shared
       end
 
       def publish_remote(url:, destination:, surface:, city:, brief:, source:)
-        raise ArgumentError, "artwork source must be http(s)" unless url.to_s.match?(%r{\Ahttps?://})
-        raise "postpro is required before publishing generated artwork" unless postpro_script
+                raise "postpro is required before publishing generated artwork" unless postpro_script
 
         FileUtils.mkdir_p(File.dirname(destination))
         seed_value = seed(surface:, city:, brief:)
         Dir.mktmpdir("pub4-artwork") do |dir|
           input = File.join(dir, "source.webp")
           graded = File.join(dir, "graded.jpg")
-          URI.open(url, "rb", read_timeout: 60) do |remote|
-            File.binwrite(input, remote.read)
+          uri = URI.parse(url.to_s)
+          unless uri.is_a?(URI::HTTPS) && (uri.port.nil? || uri.port == 443)
+            raise ArgumentError, "artwork source must use HTTPS on port 443"
           end
+
+          response = Shared::OutboundHttp.request(uri, max_body: Shared::OutboundHttp::MAX_MEDIA_BODY)
+          raise "artwork source returned HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+
+          File.binwrite(input, response.body)
           grade!(input:, output: graded)
           raise "postpro produced no output" unless File.file?(graded) && File.size(graded).positive?
 
