@@ -258,6 +258,25 @@ class TestIoTools < Minitest::Test
     assert_equal "denied", result.message
   end
 
+  def test_web_search_extracts_ranked_html_results_with_source_urls
+    tool = Master::Io::WebSearch.new(governor: allow)
+    body = <<~HTML
+      <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fgithub.com%2Frails%2Frails">Rails on GitHub</a>
+      <a class="result__snippet" href="https://github.com/rails/rails">A web framework for Ruby.</a>
+      <a href="https://example.org/" class="result__a">Example documentation</a>
+      <span class="result__snippet">Primary documentation and usage guide.</span>
+    HTML
+    tool.define_singleton_method(:fetch_search_response) { |_query| Response.new("200", body) }
+
+    result = tool.call(query: "Rails web framework")
+
+    assert result.ok?, result.to_s
+    assert_includes result.value!, "Rails on GitHub"
+    assert_includes result.value!, "https://github.com/rails/rails"
+    assert_includes result.value!, "A web framework for Ruby."
+    assert_includes result.value!, "Example documentation"
+  end
+
   def test_web_search_truncates_a_long_query_and_extracts_the_answer
     governor = allow
     bus = Bus.new

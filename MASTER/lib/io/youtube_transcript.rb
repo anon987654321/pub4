@@ -14,7 +14,9 @@ module Master
       DESCRIPTION = "Fetch available public YouTube captions as untrusted transcript text; no audio execution.".freeze
       TIMEOUT = 15
       MAX_BYTES = 2 * 1024 * 1024
-      VIDEO_RE = %r{(?:v=|youtu\.be/|youtube\.com/shorts/|youtube\.com/embed/)([A-Za-z0-9_-]{11})}.freeze
+      VIDEO_ID_RE = /\A[A-Za-z0-9_-]{11}\z/.freeze
+      YOUTUBE_HOSTS = %w[youtube.com www.youtube.com m.youtube.com music.youtube.com].freeze
+      SHORT_HOSTS = %w[youtu.be www.youtu.be].freeze
       CLIENTS = %w[ANDROID WEB TVHTML5_SIMPLY_EMBEDDED_PLAYER].freeze
 
       def initialize(governor:, event_bus: nil)
@@ -44,10 +46,26 @@ module Master
       private
 
       def video_id_for(value)
-        text = value.to_s
-        return text if text.match?(/\A[A-Za-z0-9_-]{11}\z/)
+        text = value.to_s.strip
+        return text if text.match?(VIDEO_ID_RE)
 
-        VIDEO_RE.match(text)&.captures&.first
+        uri = URI.parse(text)
+        return unless uri.scheme == "https" && uri.userinfo.nil? && uri.port == 443
+
+        host = uri.host.to_s.downcase
+        video_id = if SHORT_HOSTS.include?(host)
+          uri.path.split("/").reject(&:empty?).first
+        elsif YOUTUBE_HOSTS.include?(host)
+          case uri.path
+          when "/watch"
+            URI.decode_www_form(uri.query.to_s).to_h["v"]
+          when %r{\A/(?:shorts|embed|live)/([^/]+)}
+            Regexp.last_match(1)
+          end
+        end
+        video_id if video_id.to_s.match?(VIDEO_ID_RE)
+      rescue URI::InvalidURIError, ArgumentError
+        nil
       end
 
       def caption_track(video_id, language:)
@@ -98,7 +116,8 @@ module Master
 
       def download(base_url, timestamps:)
         response = get_response(base_url)
-        return "Error: caption HTTP #{response.code}" unless response.code == "200"
+        raise "caption HTTP #{response.code}" unless response.code.to_s == "200"
+        raise "caption response exceeds #{MAX_BYTES} bytes" if response.body.to_s.bytesize > MAX_BYTES
 
         document = REXML::Document.new(response.body.to_s)
         lines = REXML::XPath.match(document, "//text").filter_map do |node|
@@ -107,7 +126,10 @@ module Master
 
           timestamps ? "[#{format_time(node.attributes["start"].to_f)}] #{text}" : text
         end
-        lines.join(timestamps ? "\n" : " ").byteslice(0, MAX_BYTES)
+        transcript = lines.join(timestamps ? "\n" : " ").byteslice(0, MAX_BYTES)
+        raise "caption track contained no transcript text" if transcript.to_s.empty?
+
+        transcript
       end
 
       def format_time(seconds)

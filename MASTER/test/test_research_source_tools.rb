@@ -81,6 +81,19 @@ class TestResearchSourceTools < Minitest::Test
     assert_equal "[00:00:01] hello", result.value!
   end
 
+  def test_youtube_transcript_rejects_lookalike_hosts_and_reports_caption_http_errors
+    tool = Master::Io::YoutubeTranscript.new(governor: allow)
+    refute tool.call(url: "https://evil.example/youtu.be/dQw4w9WgXcQ").ok?
+
+    tool.define_singleton_method(:caption_track) { |_video_id, language:| { "baseUrl" => "https://example.test/captions" } }
+    tool.define_singleton_method(:get_response) { |_url| Struct.new(:code, :body).new("503", "unavailable") }
+    result = tool.call(url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+    refute result.ok?
+    assert_equal :infrastructure, result.category
+    assert_match(/caption HTTP 503/, result.message)
+  end
+
   def test_youtube_transcript_rejects_an_unrelated_url
     result = Master::Io::YoutubeTranscript.new(governor: allow).call(
       url: "https://example.com/watch?v=dQw4w9WgXcQ",
