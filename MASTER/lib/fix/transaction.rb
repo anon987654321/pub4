@@ -72,6 +72,46 @@ module Master
         true
       end
 
+      # Add a narrowly approved related artifact to this transaction before
+      # its first write, so rollback and interrupted-run recovery keep its bytes.
+      def enlist!(paths)
+        raise "transaction not active" unless @active
+
+        raw = Array(paths)
+        selected = raw.map { |path| normalize(path) }
+        raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
+
+        added = selected.uniq - @paths
+        added.each { |path| @snapshots[path] = snapshot(path) }
+        @paths = (@paths + added).uniq
+        observe_paths!(added) unless added.empty?
+        emit("fix:transaction_paths_enlisted", id: @id, paths: added)
+        Result.ok(added)
+      rescue StandardError => e
+        emit("fix:transaction_enlist_failed", id: @id, error: e.message)
+        Result.err("transaction enlistment: #{e.message}", category: :infrastructure)
+      end
+
+      # Refresh only explicitly enlisted paths after the transaction's own
+      # verified write. Unrelated files retain their original concurrency guard.
+      def observe_paths!(paths)
+        raise "transaction not active" unless @active
+
+        selected = Array(paths).filter_map { |path| normalize(path) }.uniq
+        raise "observation includes a path outside the transaction" unless (selected - @paths).empty?
+
+        selected.each do |path|
+          @seen[path] << fingerprint(absolute(path))
+          @seen[path] = @seen[path].uniq.last(8)
+        end
+        persist!
+        emit("fix:transaction_paths_observed", id: @id, paths: selected)
+        Result.ok(selected)
+      rescue StandardError => e
+        emit("fix:transaction_observe_failed", id: @id, error: e.message)
+        Result.err("transaction observation: #{e.message}", category: :infrastructure)
+      end
+
       # The delivery sub-machine (begin_delivery! / record_commit! /
       # delivery_pending? / delivery_head_after / finalize_delivery!) lives in
       # Delivery, reached through this one accessor, so those five methods no
