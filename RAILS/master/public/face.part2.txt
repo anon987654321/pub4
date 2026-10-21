@@ -294,6 +294,8 @@ if (_hasWebGL && THREE) {
   facePoints = new THREE.Points(faceGeom, faceMat);
 }
 
+const FACE_SCATTER_HOME = faceScatter.slice();
+let semanticMorphTarget = null;
 let morphCurrent = 0.0, morphTarget = 0.88;
 let mouthPool = null;
 let eyePool = null;
