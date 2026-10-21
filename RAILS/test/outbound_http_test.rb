@@ -136,6 +136,10 @@ class FediverseSsrfTest < Minitest::Test
     assert_includes Shared::OutboundHttp::NETWORK_ERRORS, Shared::OutboundHttp::BodyTooLarge
   end
 
+  def test_fediverse_uses_the_shared_response_body_cap
+    assert_equal Shared::OutboundHttp::MAX_BODY, Fediverse::Client::MAX_BODY
+  end
+
   private
 
   ChunkedResponse = Struct.new(:chunks, :body, :chunks_read) do
