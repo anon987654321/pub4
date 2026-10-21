@@ -12,3 +12,4 @@ nb:
       oauth_email_conflict: "Denne e-postadressen har allerede en konto. Logg inn på den kontoen først; denne leverandøren har ikke bekreftet at den eier e-postadressen."
       signup_notice: "Konto opprettet. Sjekk innboksen for å bekrefte e-postadressen før du publiserer innlegg eller sender meldinger som registrert bruker."
       signup_notice_guest_merged: "Konto opprettet, og den anonyme aktiviteten din ble overført. Sjekk innboksen for å bekrefte e-postadressen før du publiserer innlegg eller sender meldinger som registrert bruker."
+      signup_guest_merge_failed: "Kontoen er opprettet og bekreftelses-e-post er sendt, men vi kunne ikke knytte den anonyme aktiviteten din trygt til kontoen. Gjestesesjonen er fortsatt aktiv; logg inn igjen senere for å prøve overføringen på nytt."
