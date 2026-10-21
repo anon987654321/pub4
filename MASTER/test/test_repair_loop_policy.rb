@@ -588,7 +588,7 @@ end
     private
 
     def response_for(prompt)
-      prompt.include?("Verify this proposed code fix is correct.") ? "SAFE" : "clean\\n"
+      prompt.include?("Verify this proposed code fix is correct.") ? "SAFE" : "clean\n"
     end
   end
 
@@ -597,7 +597,7 @@ end
     ENV["MASTER_FIX_SCAN_AGREEMENT"] = "0"
     Dir.mktmpdir("master-fix-known-defect") do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "violation\\n")
+      File.write(path, "violation\n")
       bus = FakeBus.new
       scanner = RecordingScanner.new
       scanner.define_singleton_method(:should_autofix?) do |_rule_id, _confidence, allow_deletions: false|
@@ -609,7 +609,7 @@ end
 
       assert_equal :fixed, result.fetch(:status)
       assert_equal 1, result.fetch(:fixed)
-      assert_equal "clean\\n", File.read(path)
+      assert_equal "clean\n", File.read(path)
       assert_operator scanner.paths.count(path), :>=, 2
       assert_includes bus.events.map(&:first), "repair_loop:fix_applied"
       selected = bus.events.find { |event, _| event == "repair_loop:candidate_selected_unverified" }

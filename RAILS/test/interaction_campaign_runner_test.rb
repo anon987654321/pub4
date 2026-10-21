@@ -163,6 +163,7 @@ class InteractionCampaignRunnerTest < Minitest::Test
     assert_match(/^campaign0: RI-003 READY /, out.string)
     assert_match(/^campaign0: RI-010 READY /, out.string)
     assert_match(/^campaign0: RI-011 READY /, out.string)
+    assert_match(/^campaign0: RI-341 READY /, out.string)
     assert_match(/^campaign0: RI-002 UNMAPPED /, out.string)
     refute_includes out.string, "EXECUTABLE"
   end
@@ -205,8 +206,8 @@ class InteractionCampaignRunnerTest < Minitest::Test
       results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
       ledger = JSON.parse(File.read(results_path))
       assert_equal 400, ledger.fetch("selected_case_count")
-      assert_equal 4, ledger.fetch("counts").fetch("PASS")
-      assert_equal 396, ledger.fetch("counts").fetch("SKIPPED")
+      assert_equal 5, ledger.fetch("counts").fetch("PASS")
+      assert_equal 395, ledger.fetch("counts").fetch("SKIPPED")
     end
   end
   def test_file_level_success_is_blocked_when_more_than_one_test_ran
