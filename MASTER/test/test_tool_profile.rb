@@ -87,6 +87,15 @@ class TestToolHabits < Minitest::Test
     assert_match(/SearchKnowledge/, note)
   end
 
+  def test_sensitive_research_habit_minimizes_external_queries
+    Fiber[:master_visitor] = false
+    note = Master::Ground::Tool::Profile.session_note
+
+    assert_match(/generic query/, note)
+    assert_match(/direct quotations/, note)
+    assert_match(/does not apply to technical repository or AI-system research/, note)
+  end
+
   def test_visitors_get_no_habits
     Fiber[:master_visitor] = true
     refute_match(/Tool habits:/, Master::Ground::Tool::Profile.session_note)
