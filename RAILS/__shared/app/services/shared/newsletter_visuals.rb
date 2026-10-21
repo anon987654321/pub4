@@ -153,35 +153,37 @@ module Shared
       }
       response = replicate_post(uri, token, payload)
       prediction = JSON.parse(response)
-      status_url = prediction.dig("urls", "get")
-      raise "Replicate response has no status URL" unless status_url
+      prediction_id = prediction["id"].to_s
+      unless prediction_id.match?(/\A[a-zA-Z0-9_-]{1,128}\z/)
+        raise "Replicate response has no valid prediction ID"
+      end
 
-      result = poll_prediction(status_url, token)
+      result = poll_prediction(prediction_id, token)
       Array(result).grep(%r{\Ahttps?://}).first
     end
 
     def replicate_post(uri, token, body)
-      request = Net::HTTP::Post.new(uri)
-      request["Authorization"] = "Bearer #{token}"
-      request["Content-Type"] = "application/json"
-      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) do |http|
-        response = http.request(request)
-        raise "Replicate HTTP #{response.code}: #{response.body.to_s[0, 300]}" unless response.is_a?(Net::HTTPSuccess)
+      response = Shared::OutboundHttp.request(
+        uri,
+        method: :post,
+        headers: { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" },
+        body: JSON.generate(body)
+      )
+      raise "Replicate HTTP #{response.code}: #{response.body.to_s[0, 300]}" unless response.is_a?(Net::HTTPSuccess)
 
-        response.body
-      end
+      response.body
     end
 
-    def poll_prediction(status_url, token, attempts: 60)
+    def poll_prediction(prediction_id, token, attempts: 60)
+      uri = URI("https://api.replicate.com/v1/predictions/#{prediction_id}")
       attempts.times do
-        uri = URI(status_url)
-        request = Net::HTTP::Get.new(uri)
-        request["Authorization"] = "Bearer #{token}"
-        body = JSON.parse(
-          Net::HTTP.start(uri.hostname, uri.port, read_timeout: 60) do |http|
-            http.request(request)
-          end.body
+        response = Shared::OutboundHttp.request(
+          uri,
+          headers: { "Authorization" => "Bearer #{token}", "Accept" => "application/json" }
         )
+        raise "Replicate polling returned HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+
+        body = JSON.parse(response.body)
         return body["output"] if body["status"] == "succeeded"
         raise "Replicate failed: #{body["error"]}" if body["status"] == "failed"
 
