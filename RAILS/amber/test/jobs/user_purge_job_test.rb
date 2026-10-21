@@ -136,13 +136,14 @@ class UserPurgeJobTest < ActiveJob::TestCase
   test "accounts outside the deletion grace period are untouched" do
     original_email = @user.email_address
     original_post = Post.create!(user: @user, body: "Keep this post")
-    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 1.day.from_now)
+    scheduled_at = 1.day.from_now
+    @user.update_columns(deleted_at: Time.current, deletion_scheduled_at: scheduled_at)
 
     UserPurgeJob.perform_now
 
     assert_equal original_email, @user.reload.email_address
     assert_equal "Keep this post", original_post.reload.body
-    assert_equal 1.day.from_now.to_date, @user.deletion_scheduled_at.to_date
+    assert_in_delta scheduled_at.to_f, @user.deletion_scheduled_at.to_f, 1
   end
 
   test "one failed erasure does not prevent other due accounts from being purged" do
