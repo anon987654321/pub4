@@ -419,6 +419,28 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "safety planning"
   end
 
+  def test_short_follow_up_retains_indirect_crisis_topic
+    prompt = SupportPromptHost.new(
+      "Go on.",
+      previous: "Everyone would be better off without me. I don't want to wake up tomorrow.",
+    ).support_practice_for_turn
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "NICE NG225"
+    assert_includes prompt, "Do not predict suicide using a low/medium/high label"
+  end
+
+  def test_short_follow_up_retains_manipulation_topic_without_support_keyword
+    prompt = SupportPromptHost.new(
+      "What should I do next?",
+      previous: "They deny what happened, twist my words and give me the silent treatment.",
+    ).support_practice_for_turn
+
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "Assess repeated observable behavior"
+    assert_includes prompt, "safety planning"
+  end
+
   def test_follow_up_chain_retains_the_nearest_support_topic
     prompt = SupportPromptHost.new(
       "Go on.",
