@@ -366,6 +366,7 @@ class TestDialogueRubric < Minitest::Test
       "I have no thoughts of suicide.",
       "I do not intend to harm myself.",
       "I feel safe and have no thoughts of self-harm.",
+      "Without any current thoughts of self-harm, I feel safe tonight.",
     ].each do |statement|
       refute Rubric.crisis_signal?(statement), statement
     end
