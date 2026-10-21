@@ -79,7 +79,7 @@ module Ports
         return "trusted signify key or signify executable unavailable" unless verification_ready?
 
         free = free_bytes(@workdir || Dir.tmpdir)
-        return nil if free.nil? # cannot measure — do not block on that alone
+        return "free disk space unknown" if free.nil?
         return nil if free >= REQUIRED_FREE_BYTES
 
         "needs #{REQUIRED_FREE_BYTES / 1024 / 1024} MB free, has #{free / 1024 / 1024} MB"
