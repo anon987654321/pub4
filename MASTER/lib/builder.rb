@@ -50,6 +50,7 @@ module Master
       "GitContext" => ->(r, i) { Io::GitContext.new(root: i.fetch(:workspace_root, r), event_bus: i[:bus]) },
       "WebFetch" => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebSearch" => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "HostFiles" => ->(_r, i) { Io::HostFiles.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebBrowse" => ->(_r, i) { Io::WebBrowse.new(governor: i[:governor], event_bus: i[:bus]) },
       "ExternalAudit" => ->(r, i) {
         browser = Io::BrowserAgent.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus])

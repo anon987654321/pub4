@@ -216,6 +216,23 @@ module Master
         def execute(query:) = forward(query: query.to_s)
       end
 
+      class HostFiles < RubyLLM::Tool
+        include ToolForwarding
+        description "Inspect the local Unix filesystem within this process's real OS and sandbox permissions. Relative paths start at HOME; absolute paths can inspect paths such as /etc when permitted. Read-only; never invoke doas/sudo or write files through this tool."
+        parameter :action, description: "list, read, search or info", required: true
+        parameter :path, description: "Path relative to HOME or an absolute path; default .", required: false
+        parameter :query, description: "Literal text to search for when action=search", required: false
+        parameter :depth, description: "Directory depth (0-5)", type: "integer", required: false
+        parameter :offset, description: "Zero-based line offset for read", type: "integer", required: false
+        parameter :limit, description: "Maximum lines or search matches", type: "integer", required: false
+        parameter :full, description: "Read all lines within the hard byte limit", type: "boolean", required: false
+
+        def execute(action:, path: ".", query: nil, depth: 1, offset: 0, limit: 200, full: false)
+          forward(action: action.to_s, path: path.to_s, query: query&.to_s,
+                  depth: depth.to_i, offset: offset.to_i, limit: limit.to_i, full: full == true)
+        end
+      end
+
       class WebFetch < RubyLLM::Tool
         include ToolForwarding
         description "Fetch a URL as plain text. Use full=true when the complete response is required; SSRF and governor guards still apply."

@@ -2,6 +2,8 @@
 
 require_relative "test_helper"
 require "json"
+require "tmpdir"
+require "fileutils"
 
 class TestResearchSourceTools < Minitest::Test
   Governor = Struct.new(:answer, :asked) do
@@ -88,11 +90,47 @@ class TestResearchSourceTools < Minitest::Test
     assert_equal :validation, result.category
   end
 
+  def test_host_files_inspects_home_and_absolute_paths_read_only
+    root = Dir.mktmpdir("host_files_")
+    home = File.join(root, "home")
+    FileUtils.mkdir_p(File.join(home, "Documents"))
+    File.write(File.join(home, "Documents", "notes.txt"), "readable host data\n")
+    tool = Master::Io::HostFiles.new(governor: allow, home:)
+    relative = tool.call(action: "read", path: "Documents/notes.txt")
+    absolute = tool.call(action: "info", path: File.join(home, "Documents", "notes.txt"))
+    assert relative.ok?, relative.to_s
+    assert_includes relative.value!, "readable host data"
+    assert absolute.ok?, absolute.to_s
+    assert_includes absolute.value!, "readable: true"
+    assert_equal "readable host data\n", File.read(File.join(home, "Documents", "notes.txt"))
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
+  def test_host_files_refuses_private_keys_but_can_read_ssh_config
+    root = Dir.mktmpdir("host_files_keys_")
+    FileUtils.mkdir_p(File.join(root, ".ssh"))
+    File.write(File.join(root, ".ssh", "id_ed25519"), "key")
+    File.write(File.join(root, ".ssh", "config"), "Host example\n")
+    tool = Master::Io::HostFiles.new(governor: allow, home: root)
+    key = tool.call(action: "read", path: ".ssh/id_ed25519")
+    config = tool.call(action: "read", path: ".ssh/config")
+    refute key.ok?
+    assert_equal :policy, key.category
+    assert config.ok?, config.to_s
+    assert_includes config.value!, "Host example"
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
   def test_research_sources_are_registered_once
     names = Master::Builder::DEFAULT_TOOL_MAP.keys
     assert_equal 1, names.count("CodePen")
     assert_equal 1, names.count("Gist")
     assert_equal 1, names.count("YouTubeTranscript")
+    assert_equal 1, names.count("HostFiles")
+    assert_equal 1, names.count("GitHubRepoMiner")
+    assert_equal 1, names.count("ArxivResearch")
   end
 
   def test_llm_dispatch_has_the_research_sources
@@ -100,5 +138,8 @@ class TestResearchSourceTools < Minitest::Test
     assert_equal Master::Io::LLM::CodePen, map.fetch(Master::Io::CodePen)
     assert_equal Master::Io::LLM::Gist, map.fetch(Master::Io::Gist)
     assert_equal Master::Io::LLM::YoutubeTranscript, map.fetch(Master::Io::YoutubeTranscript)
+    assert_equal Master::Io::LLM::HostFiles, map.fetch(Master::Io::HostFiles)
+    assert_equal Master::Io::LLM::GitHubRepoMiner, map.fetch(Master::Io::GitHubRepoMiner)
+    assert_equal Master::Io::LLM::ArxivResearch, map.fetch(Master::Io::ArxivResearch)
   end
 end

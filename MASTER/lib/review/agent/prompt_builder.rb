@@ -72,8 +72,6 @@ module Master
         end
 
         def dynamic_prompt
-          return casual_dynamic_prompt if casual_task?
-
           parts = []
           # Set by the web tier when a request arrives on a host that wears a
           # different face, and cleared when the turn ends. It carries a
@@ -83,6 +81,7 @@ module Master
           root = @config["root"] || Master::ROOT
           parts << Master::AI::Orientation.render(root:, target: root)
           parts << Master::AI::OperatorContract.prompt
+          parts << Master::AI::OperatorContract.filesystem_context(root:, profile: Ground::Tool::Profile.current)
           parts << CLI::SubagentContext.brief
           parts << conversational_register_line if casual_task?
           parts << support_practice_for_turn
@@ -117,26 +116,9 @@ module Master
           @config.respond_to?(:task_type) && @config.task_type.to_s == "chat"
         end
 
-        # The evidence rule prepare_evidence set for this turn rides along: a turn labelled casual
-        # still gets its repository or research route, and the model has to be told to take it.
-        def casual_dynamic_prompt
-          root = @config["root"] || Master::ROOT
-          [
-            conversational_register_line,
-            "Working in #{root}. You can read and search it with your tools; check before claiming anything about its current state.",
-            support_practice_for_turn,
-            Fiber[:master_evidence_note],
-            ("Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic),
-            (@memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)),
-          ].compact.join("\n\n")
-        end
-
         def conversational_register_line
-          "This turn is casual conversation, not a coding task: set aside the terse " \
-            "task-completion register and reply the way you'd talk — warm, " \
-            "a few natural sentences, genuinely present. Stay yourself. If the person " \
-            "asks something factual, use your tools to check instead of guessing, " \
-            "and give a real, specific answer."
+          "This is a conversation, not a task report: answer naturally and warmly in a few specific sentences. " +
+            "If a factual, research or repository question comes up, use the same tools and evidence standards as every other turn."
         end
 
         # Inject the relevant support protocol per turn; the static persona stays

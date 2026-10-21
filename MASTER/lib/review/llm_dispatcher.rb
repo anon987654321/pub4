@@ -67,6 +67,7 @@ module Master
         Io::SearchFiles => Io::LLM::SearchFiles,
         Io::Shell => Io::LLM::Shell,
         Io::WebSearch => Io::LLM::WebSearch,
+        Io::HostFiles => Io::LLM::HostFiles,
         Io::WebFetch => Io::LLM::WebFetch,
         Io::ExternalAudit => Io::LLM::ExternalAudit,
         Io::VulCheck => Io::LLM::VulCheck,
