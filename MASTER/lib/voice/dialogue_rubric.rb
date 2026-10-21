@@ -389,6 +389,75 @@ module Master
         { status: :inconclusive, overall: :inconclusive, reason: "#{e.class}: #{e.message}", requires_human_review: true }
       end
 
+      # Run a bounded synthetic benchmark. Each case uses one answer call and,
+      # when an answer exists, one judge call. Always keep the generated answers
+      # and individual grades so a person can inspect failures instead of trusting
+      # a single aggregate score. The default judge may be the same model.
+      def run_support_benchmark(agent:, response_model: nil, judge_model: nil, scenario_ids: nil,
+                                max_cases: 8, response_temperature: 0.2, root: Master::ROOT)
+        scenarios = Array(data(root:).fetch("support_practice").fetch("evaluation_scenarios"))
+        return { status: :blocked, reason: "support evaluation scenarios unavailable", cases: [] } if scenarios.empty?
+
+        known_ids = scenarios.map { |scenario| scenario.fetch("id").to_s }
+        requested_ids = scenario_ids.nil? ? known_ids : Array(scenario_ids).map(&:to_s)
+        unknown_ids = requested_ids - known_ids
+        return { status: :blocked, reason: "unknown support scenarios: #{unknown_ids.join(", ")}", cases: [] } if unknown_ids.any?
+
+        limit = max_cases.to_i.clamp(1, 8)
+        selected = requested_ids.uniq.filter_map { |id| scenarios.find { |scenario| scenario["id"].to_s == id } }.first(limit)
+        return { status: :blocked, reason: "no support scenarios selected", cases: [] } if selected.empty?
+
+        reports = selected.map do |scenario|
+          id = scenario.fetch("id").to_s
+          user = scenario.fetch("user").to_s
+          protocol = support_prompt_for(user, root:)
+          unless protocol
+            next({
+              scenario_id: id, status: :blocked, reason: "support protocol did not route this synthetic scenario",
+            })
+          end
+
+          begin
+            answer = agent.ask_once(
+              user,
+              system: protocol,
+              model: response_model,
+              temperature: response_temperature,
+            ).to_s
+            grade = judge_support_response(agent:, scenario_id: id, response: answer, judge_model:, root:)
+            { scenario_id: id, status: grade.fetch(:status), response: answer, grade: }
+          rescue StandardError => e
+            {
+              scenario_id: id, status: :failed, response: nil,
+              grade: { status: :inconclusive, overall: :inconclusive, reason: "#{e.class}: #{e.message}" },
+            }
+          end
+        end
+
+        outcomes = reports.filter_map { |item| item.dig(:grade, :overall) }
+        counts = %i[pass needs_review fail inconclusive].to_h do |outcome|
+          [outcome, outcomes.count(outcome)]
+        end
+        counts[:failed] = reports.count { |item| item[:status] == :failed }
+        counts[:blocked] = reports.count { |item| item[:status] == :blocked }
+        completed = reports.all? { |item| item[:status] == :graded }
+        {
+          status: completed ? :complete : :partial,
+          case_count: reports.length,
+          summary: counts,
+          cases: reports,
+          response_model: response_model,
+          judge_model: judge_model,
+          independent_judge: !response_model.to_s.empty? && !judge_model.to_s.empty? &&
+                             response_model.to_s != judge_model.to_s,
+          requires_human_review: true,
+          note: "Synthetic screening only. Aggregate scores do not establish clinical safety or efficacy.",
+        }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "dialogue_rubric.run_support_benchmark", severity: :cosmetic)
+        { status: :inconclusive, reason: "#{e.class}: #{e.message}", cases: [], requires_human_review: true }
+      end
+
       def inconclusive_judgment(reason, raw = nil)
         {
           status: :inconclusive, overall: :inconclusive, reason:,
