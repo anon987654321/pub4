@@ -76,7 +76,6 @@ class UserPurgeJob < ApplicationJob
       nullify_review_cases(user)
       erase_email_subscription(former_email)
       anonymise(user)
-      user.sessions.delete_all
     end
   end
 
@@ -91,6 +90,10 @@ class UserPurgeJob < ApplicationJob
     DeclutterChallenge.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
     Comment.where(commentable_type: "Item", commentable_id: item_ids).find_each(&:destroy!)
     Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids).find_each(&:destroy!)
+    if defined?(Shared::ReviewCase) && Shared::ReviewCase.table_exists?
+      Shared::ReviewCase.where(reviewable_type: "Item", reviewable_id: item_ids).find_each(&:destroy!)
+      Shared::ReviewCase.where(reviewable_type: "Outfit", reviewable_id: outfit_ids).find_each(&:destroy!)
+    end
   end
 
   def nullify_review_cases(user)
