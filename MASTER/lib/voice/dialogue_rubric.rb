@@ -104,7 +104,16 @@ module Master
         |psykisk\s+vold|kontrollerer\s+meg|sjekker\s+(?:mobilen|telefonen)|sporer\s+(?:mobilen|telefonen)
         |truer\s+meg|slår\s+meg|tvinger\s+meg|holder\s+meg\s+isolert
         |kontrollerer\s+(?:økonomien|pengene\s+mine)|leser\s+meldingene\s+mine|kaller\s+meg\s+gal
-        |sier\s+at\s+jeg\s+er\s+gal|nekter\s+meg\s+å)\b
+        |sier\s+at\s+jeg\s+er\s+gal|nekter\s+meg\s+å
+        |threatened\s+to\s+(?:kill|hurt)\s+me|threatens\s+to\s+(?:kill|hurt)\s+me
+        |pushed\s+me|shoved\s+me|choked\s+me|strangled\s+me|grabbed\s+me|locked\s+me\s+in
+        |won't\s+let\s+me\s+leave|blocks?\s+the\s+door|tracks?\s+my\s+location
+        |forced\s+(?:me\s+to\s+have\s+sex|sex)|sexual\s+assault|rape
+        |trugar\s+med\s+å\s+(?:drepe|skade)\s+meg|truer\s+med\s+å\s+(?:drepe|skade)\s+meg
+        |dytta\s+meg|skubba\s+meg|kvelte\s+meg|held\s+meg\s+fast|låsar\s+meg\s+inne
+        |låser\s+meg\s+inne|slepp\s+meg\s+ikkje\s+ut|nektar\s+meg\s+å\s+gå
+        |hindrar\s+meg\s+i\s+å\s+gå|tvinga\s+meg\s+til\s+sex|pressa\s+meg\s+til\s+sex
+        |seksuelle\s+overgrep|valdtekt|redd\s+for\s+å\s+dra\s+heim)\b
       }ix.freeze
 
       MARTIAL_CUES = %r{
@@ -123,7 +132,20 @@ module Master
         |fare\s+for\s+liv|akutt\s+fare|sjølvmord|sjølvmordstankar|sjølvskading
         |eg\s+vil\s+(?:døy|ikkje\s+leva)|eg\s+orkar\s+ikkje\s+meir
         |orkar\s+ikkje\s+meir|klarer\s+ikkje\s+(?:å\s+)?halde\s+meg\s+trygg
-        |klarar\s+ikkje\s+(?:å\s+)?halde\s+meg\s+trygg|ikkje\s+trygg|fare\s+for\s+livet)\b
+        |klarar\s+ikkje\s+(?:å\s+)?halde\s+meg\s+trygg|ikkje\s+trygg|fare\s+for\s+livet
+        |can't\s+go\s+on|cannot\s+go\s+on|can't\s+live\s+like\s+this|cannot\s+live\s+like\s+this
+        |wish\s+i\s+(?:were|was)\s+dead|wish\s+i\s+wasn't\s+alive|do\s+not\s+want\s+to\s+wake\s+up
+        |don't\s+want\s+to\s+wake\s+up|no\s+reason\s+to\s+live|nothing\s+left\s+to\s+live\s+for
+        |everyone\s+would\s+be\s+better\s+off\s+without\s+me|better\s+off\s+without\s+me
+        |i\s+don't\s+see\s+a\s+way\s+out|i\s+do\s+not\s+see\s+a\s+way\s+out
+        |eg\s+vil\s+ikkje\s+vakne|vil\s+ikkje\s+vakne|ikkje\s+noko\s+å\s+leve\s+for
+        |alle\s+hadde\s+hatt\s+det\s+betre\s+utan\s+meg|ser\s+ingen\s+utveg
+        |trugar\s+med\s+å\s+drepe\s+meg|truer\s+med\s+å\s+drepe\s+meg
+        |pushed\s+me|shoved\s+me|choked\s+me|strangled\s+me|locked\s+me\s+in
+        |won't\s+let\s+me\s+leave|blocks?\s+the\s+door|threatened\s+to\s+kill\s+me
+        |threatened\s+to\s+hurt\s+me|sexual\s+assault|rape|forced\s+(?:me\s+to\s+have\s+sex|sex)
+        |redd\s+for\s+å\s+dra\s+heim|dytta\s+meg|skubba\s+meg|kvelte\s+meg
+        |låsar\s+meg\s+inne|slepp\s+meg\s+ikkje\s+ut|valdtekt|seksuelle\s+overgrep)\b
       }ix.freeze
 
       RESEARCH_CUES = %r{
@@ -212,7 +234,7 @@ module Master
       # indicates that personal support is relevant, never into every coding turn.
       def support_prompt_for(message, root: Master::ROOT)
         text = message.to_s
-        return if text.empty? || !text.match?(SUPPORT_CUES)
+        return if text.empty? || ![SUPPORT_CUES, CRISIS_CUES, MANIPULATION_CUES].any? { |cue| text.match?(cue) }
 
         support = data(root:).fetch("support_practice")
         areas = %w[response_contract privacy_and_memory clinical_methods evidence_and_research crisis_and_referral]
