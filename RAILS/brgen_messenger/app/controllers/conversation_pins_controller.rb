@@ -17,11 +17,12 @@ class ConversationPinsController < ApplicationController
 
   private
 
-  # The viewer's own participant row is both the thing being pinned and the
-  # membership check: someone who is not in the conversation has no row, so they
-  # get a 404 rather than a pin on a thread they cannot read.
+  # Membership and city ownership are both required. A shared user identity
+  # must not let another city's host mutate this thread's personal ordering.
   def set_participant
-    @participant = ConversationParticipant.where(user_id: Current.user.id)
-                                          .find_by!(conversation_id: params[:conversation_id])
+    @participant = ConversationParticipant.joins(:conversation)
+                                          .merge(Conversation.current_city_scope)
+                                          .where(user_id: Current.user.id, conversation_id: params[:conversation_id])
+                                          .take!
   end
 end
