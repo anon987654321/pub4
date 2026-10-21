@@ -178,6 +178,12 @@ when "measure"
     exit 0
   end
   rows = Operator::Ratchets.all(deep:)
+  require_relative "../lib/review/council/inter_model_contract"
+  Master::Trace::Dmesg.status(
+    "intermodel0",
+    Master::Review::Council::InterModelContract.measure_line(root: ROOT),
+    io: $stderr
+  )
   if why
     Master::Trace::Dmesg::Report.print("measure", Operator::Ratchets.why(rows, why))
     exit 0

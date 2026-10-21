@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "inter_model_contract"
+
 module Master
   module Review
     module Council
@@ -15,13 +17,29 @@ module Master
 
         def build_judge_prompt(feedback:, code: nil, context: nil)
           rounds = feedback.map { |entry| format_round(entry) }.join("\n\n")
-          format(Deliberation.prompts.fetch("judge"),
-                 quality_brief: Deliberation.quality_brief(:general), rounds:)
+          prompt = format(Deliberation.prompts.fetch("judge"),
+                          quality_brief: Deliberation.quality_brief(:general), rounds:)
+          findings = feedback.flat_map { |entry| Array(entry[:structured_findings]) }
+          InterModelContract.wrap_prompt(
+            prompt, role: "judge", task: "Synthesize the supplied council findings and state evidence-backed concurrence or dissent.",
+            success_criteria: "Return a schema-valid JSON response with an explicit position and zero or more evidence-backed findings.",
+            constraints: %w[INTER_MODEL_CONTRACT ROBUSTNESS SINGULARITY],
+            artifact: rounds, prior_findings: findings,
+            forbidden: ["invent evidence", "claim tests passed", "expand review scope"],
+          )
         end
 
         def build_prompt(persona:, code:, context:)
           values = prompt_values(persona, code, context)
-          format(Deliberation.prompts.fetch("juror"), **values)
+          prompt = format(Deliberation.prompts.fetch("juror"), **values)
+          InterModelContract.wrap_prompt(
+            prompt, role: "critic",
+            task: "Review the supplied artifact against the assigned persona charge and named Laws.",
+            success_criteria: "Return a schema-valid JSON response with explicit position evidence and structured findings.",
+            constraints: (Array(persona.respond_to?(:emphasizes) ? persona.emphasizes : []) +
+                          %w[INTER_MODEL_CONTRACT ROBUSTNESS SINGULARITY]).map(&:to_s).uniq,
+            artifact: values.fetch(:safe_code), forbidden: ["edit files", "invent findings", "claim completion", "expand scope"],
+          )
         end
 
         def prompt_values(persona, code, context)

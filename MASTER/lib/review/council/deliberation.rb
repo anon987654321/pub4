@@ -2,6 +2,7 @@
 
 require_relative "quality_framework"
 require_relative "voice_profile"
+require_relative "inter_model_contract"
 
 module Master
   module Review
@@ -421,13 +422,22 @@ module Master
           return quota_skipped(persona) if Io::QuotaGate.blocked?(model)
 
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
-          prompt = build_prompt(persona:, code:, context:)
-          response = if model
-                       @agent.ask_once(prompt, model:, temperature:, image:)
-                     else
-                       @agent.ask(prompt, temperature:, image:)
-                     end
-          entry = persona_entry(persona, response, model)
+          request_prompt = build_prompt(persona:, code:, context:)
+          response = InterModelContract.exchange(
+            prompt: request_prompt, role: "critic", bus: @bus, model:,
+          ) do |outbound, retrying|
+            chosen_temperature = retrying ? 0.0 : temperature
+            if model
+              @agent.ask_once(outbound, model:, temperature: chosen_temperature, image:)
+            else
+              @agent.ask(outbound, temperature: chosen_temperature, image:)
+            end
+          end
+          entry = persona_entry(persona, response.fetch("feedback"), model)
+          entry[:position] = response.dig("data", "position")
+          entry[:position_reason] = response.dig("data", "position_reason")
+          entry[:structured_findings] = response.dig("data", "findings")
+          entry[:inter_model_repaired] = response.fetch("repair_attempted")
           @bus&.publish(:council_feedback, entry)
           answered = @persona_failures_lock.synchronize { @answered = @answered.to_i + 1 }
           @bus&.publish("council:progress", answered:, total: @panel_size || @personas.size)

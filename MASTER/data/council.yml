@@ -1,6 +1,8 @@
 # Council personas — deliberation panel for code review decisions.
 # Each persona carries a temperature (precise 0.1 … loose 0.5), a sharp question, and the laws it
 # emphasizes from laws.yml. can_veto: true blocks merge unconditionally.
+# Inter-model traffic is enforced by InterModelContract: return JSON findings with evidence,
+# explicit position, and a structured repair response on schema failure.
 
 schema: 1
 personas:

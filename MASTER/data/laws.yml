@@ -103,6 +103,25 @@ DENSITY:
     - name: "Signal-to-Noise Ratio in Code"
       url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
 
+# Executable counterpart lives in law/inter_model.rb and is enforced by the council adapter.
+INTER_MODEL_CONTRACT:
+  priority: 8
+  tier: constitutional
+  severity: error
+  statement: >
+    Every council turn uses a validated structured request envelope and returns
+    evidence-backed findings. Invalid responses receive one structured rejection
+    and retry; repeated invalidity is reported as a failed peer turn, never concurrence.
+  applies_to: [inter_model, council, chamber, multi_model]
+  research:
+    - name: "Signal-to-noise"
+      url: "internal:laws.yml#DENSITY"
+    - name: "Anti-simulation"
+      url: "internal:soul.yml#absolute.anti_simulation"
+  fixtures:
+    bad: "@agent.ask(prompt)"
+    good: "@agent.ask(request_prompt)"
+
 RENDERED_VALUES:
   priority: 7
   tier: constitutional

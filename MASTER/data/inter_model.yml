@@ -1,0 +1,76 @@
+# Machine-checked contract for MASTER-to-model and council peer turns.
+# Human dialogue remains governed by soul.yml#prompt_ordering.
+schema: 1
+version: "1.0.0"
+
+message:
+  roles: [proposer, critic, synthesizer, repair, judge]
+  required: [role, authority_boundary, task, success_criteria, constraints]
+  optional: [artifact_ref, prior_findings, budget, forbidden]
+  authority_boundary: one concise sentence naming what the model may and may not do
+  constraints: list of applicable Law identifiers or explicit hard limits
+  artifact_ref: sha256 of the exact bounded artifact supplied for this turn
+  prior_findings: structured finding objects, never a narrative summary
+  forbidden_in_body: [greetings, thanks, hedging_openers, reciprocal_persona, shared_team_language]
+
+response:
+  format: json
+  required: [position, position_reason, position_evidence, findings]
+  positions: [independent, concur, dissent, mixed]
+  additional_properties: false
+  position_evidence:
+    required: [location, evidence]
+    additional_properties: false
+  rules:
+    - Use independent when no prior findings were supplied.
+    - When prior findings exist, state concur, dissent, or mixed; silence is not concurrence.
+    - Concurrence and dissent need an explicit reason and evidence tied to the supplied artifact.
+    - Return a single info finding with the exact claim "no actionable issue under charge" when no actionable issue is found.
+    - Do not use encouragement, praise, agreement, or tone as a substitute for evidence.
+
+finding:
+  required: [severity, location, evidence, claim, proposed_repair]
+  severity: [info, warning, error, critical]
+  additional_properties: false
+  rules:
+    - claim is one sentence describing an observation or problem.
+    - evidence identifies the observed source, location, measurement, or command result; do not invent provenance.
+    - proposed_repair is a concrete action or the literal value "none".
+    - the no-actionable finding must be the only finding and use severity info.
+
+rejection:
+  required: [violated_rule, observed, required_shape, retry_allowed]
+  optional: [observed_sha256, validation_errors]
+  prose_negotiation: false
+  retry_attempts: 1
+  max_observed_bytes: 12000
+
+measures:
+  handoff_cleanliness:
+    description: Fraction of completed outbound turns that needed structured rejection or clarification.
+    numerator: repair_attempted
+    denominator: outbound_turns
+    direction: minimize
+    ceiling: null
+    baseline_status: required_before_blocking
+  schema_compliance:
+    description: Fraction of outbound message envelopes that pass required-field validation.
+    numerator: valid_outbound_envelopes
+    denominator: outbound_turns
+    direction: maximize
+  first_response_schema_compliance:
+    description: Fraction of turns whose first model response passed response validation without repair.
+    numerator: first_response_valid
+    denominator: outbound_turns
+    direction: maximize
+
+examples:
+  good_outbound:
+    role: critic
+    authority_boundary: Return evidence-backed findings only; do not edit or claim completion.
+    task: Review the supplied artifact for ROBUSTNESS and SINGULARITY.
+    success_criteria: A valid JSON response with explicit position, evidence, and findings.
+    constraints: [ROBUSTNESS, SINGULARITY, INTER_MODEL_CONTRACT]
+    artifact_ref: sha256:0123456789abcdef
+    forbidden: [invent findings, expand scope, social padding]
+  bad_outbound: "Hi, could you review this and share your thoughts? Thanks!"

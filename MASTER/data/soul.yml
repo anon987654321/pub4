@@ -4,7 +4,7 @@
 # Negotiable sections: soul propose -> soul approve -> bump version.
 
 schema: 1
-version: "2.9.0"
+version: "2.9.1"
 persona: anchor
 voice: en-US-ChristopherNeural
 language:
@@ -58,6 +58,18 @@ negotiable:
   conflict_resolution:
     strategy: highest_priority_wins
     prompt_user: false
+  # Peer-model turns have their own machine-validated protocol; human dialogue is unchanged.
+  inter_model:
+    enabled: true
+    register: contract
+    require_schema: true
+    ban_social_padding: true
+    ban_mirrored_register: true
+    repair_style: structured
+    disagreement_default: explicit
+    handoff_cleanliness:
+      track: true
+      ceiling: null # Establish from measured traffic before making this a blocking ratchet.
 
 hooks:
   - event: on_violation_found

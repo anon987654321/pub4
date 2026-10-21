@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../cognition/intelligence"
+require_relative "inter_model_contract"
 
 module Master
   module Review
@@ -20,13 +21,16 @@ module Master
           machine = Master::Cognition::Intelligence.synthesize_judgments(feedback)
           @bus&.publish(:council_reasoning_synthesis, synthesis: machine)
 
-          synthesis = @judge_enabled ? judge(feedback:, code:, context:, image:) : nil
-          return unless synthesis
+          result = @judge_enabled ? judge(feedback:, code:, context:, image:) : nil
+          return unless result
 
+          synthesis = result.fetch("feedback")
           @bus&.publish(:council_synthesis, synthesis:)
           feedback << {
             persona: "Judge", role: "Synthesis", veto_role: false, axiom: nil,
-            feedback: synthesis, cognition: machine
+            feedback: synthesis, structured_findings: result.dig("data", "findings"),
+            position: result.dig("data", "position"), position_reason: result.dig("data", "position_reason"),
+            cognition: machine
           }
         end
 
@@ -63,10 +67,15 @@ module Master
         end
 
         def judge(feedback:, code:, context:, image: nil)
-          prompt = build_judge_prompt(feedback:, code:, context:)
-          image ? @agent.ask(prompt, image:) : @agent.ask(prompt)
+          request_prompt = build_judge_prompt(feedback:, code:, context:)
+          prior_findings = feedback.flat_map { |entry| Array(entry[:structured_findings]) }
+          InterModelContract.exchange(
+            prompt: request_prompt, role: "judge", bus: @bus, prior_findings:,
+          ) do |outbound, _retrying|
+            image ? @agent.ask(outbound, image:) : @agent.ask(outbound)
+          end
         rescue StandardError => e
-          @bus&.publish(:council_judge_error, error: e.message)
+          @bus&.publish(:council_judge_error, error_class: e.class.name)
           nil
         end
       end
