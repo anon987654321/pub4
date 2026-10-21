@@ -35,6 +35,7 @@ module Master
       CENTER_SPAN = 0.16
       ON_PX = 1.0
       BLOCK_MIN_W = 24
+      VERSION = 2
       Result = Data.define(:score, :subs, :facts)
 
       module_function
@@ -145,14 +146,56 @@ module Master
       end
 
       def density(payload, els)
-        area = payload["vw"].to_f * payload["vh"].to_f
+        vw = payload["vw"].to_f
+        vh = payload["vh"].to_f
+        area = vw * vh
         return unless area.positive?
 
-        painted = blocks(els).sum { |e| e["rect"]["w"].to_f * e["rect"]["h"].to_f } / area
+        painted = viewport_union_area(blocks(els), vw:, vh:) / area
         painted = payload.dig("visual", "first_screen", "painted_area_ratio_approx").to_f if painted.zero?
         return clamp(painted / DENSITY_LO) if painted < DENSITY_LO
 
         painted <= DENSITY_HI ? 1.0 : clamp((1.0 - painted) / (1.0 - DENSITY_HI))
+      end
+
+      # Bounding boxes are a painted-area proxy, not pixel segmentation. Clip
+      # them to the first screen and union their area so overlaps and below-fold
+      # tails do not count as extra painted viewport.
+      def viewport_union_area(rows, vw:, vh:)
+        rects = rows.filter_map do |element|
+          rect = element["frect"] || element["rect"]
+          x = rect["x"].to_f
+          y = rect["y"].to_f
+          left = [x, 0.0].max
+          top = [y, 0.0].max
+          right = [x + rect["w"].to_f, vw].min
+          bottom = [y + rect["h"].to_f, vh].min
+          { left:, top:, right:, bottom: } if right > left && bottom > top
+        end
+        return 0.0 if rects.empty?
+
+        xs = rects.flat_map { |rect| [rect[:left], rect[:right]] }.uniq.sort
+        xs.each_cons(2).sum do |left, right|
+          next 0.0 unless right > left
+
+          spans = rects.filter_map do |rect|
+            [rect[:top], rect[:bottom]] if rect[:left] < right && rect[:right] > left
+          end
+          next 0.0 if spans.empty?
+
+          spans.sort_by!(&:first)
+          first, last = spans.first
+          covered = 0.0
+          spans.drop(1).each do |top, bottom|
+            if top <= last
+              last = [last, bottom].max
+            else
+              covered += last - first
+              first, last = top, bottom
+            end
+          end
+          (right - left) * (covered + last - first)
+        end
       end
 
       def balance(gaps)
