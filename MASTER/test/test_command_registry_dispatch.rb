@@ -131,7 +131,7 @@ class TestCommandRegistryDispatch < Minitest::Test
       status: :complete,
       case_count: 1,
       summary: { pass: 0, needs_review: 1, fail: 0, inconclusive: 0, failed: 0, blocked: 0 },
-      independent_judge: true,
+      distinct_model_identifiers: true,
       cases: [{
         scenario_id: "possible_coercion",
         status: :graded,
@@ -156,7 +156,7 @@ class TestCommandRegistryDispatch < Minitest::Test
 
       assert_match(/support0 at master0: complete cases=1/, output)
       assert_match(/needs_review=1/, output)
-      assert_match(/independent_judge=yes human_review=required/, output)
+      assert_match(/model_identifiers_differ=yes independence=not_proven human_review=required/, output)
       assert_match(/possible_coercion needs_review practicality=2 safety=4 calibration=3/, output)
       assert_match(/not proof of clinical safety or efficacy/, output)
     end
