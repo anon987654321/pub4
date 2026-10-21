@@ -221,6 +221,7 @@ nb:
       account_deletion_scheduled: "Kontoen slettes om 30 dager. Eksport sendes på e-post hvis det er satt opp."
       account_deletion_cancelled: "Sletting av kontoen er avbrutt."
       account_scheduled_for_deletion: "Denne kontoen er satt opp for sletting."
+      guest_history_transfer_failed: "Vi kunne ikke knytte den anonyme aktiviteten din trygt til kontoen. Gjestesesjonen din er fortsatt aktiv; prøv igjen senere før du logger ut."
       sign_in_required: "Logg inn for å fortsette."
       magic_link_sent: "Finnes det en konto på den adressen, er innloggingslenken på vei."
       magic_link_invalid: "Innloggingslenken er utløpt eller allerede brukt."
