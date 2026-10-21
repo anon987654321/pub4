@@ -419,9 +419,10 @@ end
       def specialized_web_source(message)
         return evidence_tool("CodePen") if message.match?(/codepen\.io|\bcodepen\b/i)
         return evidence_tool("Gist") if message.match?(/gist\.github\.com/i)
-        return evidence_tool("YoutubeTranscript") if message.match?(/youtube\.com|youtu\.be|youtube transcript/i)
+        return evidence_tool("YoutubeTranscript") if message.match?(%r{https?://(?:www\.)?youtube\.com/|https?://youtu\.be/})
+        return evidence_tool("YoutubeTranscript") if message.match?(/\byoutube transcript\b/i) && message.match?(/\b[A-Za-z0-9_-]{11}\b/)
         return evidence_tool("ArxivResearch") if message.match?(/\b(?:arxiv|ar5iv|academic papers?|research papers?|literature review)\b/i)
-        if message.match?(/\b(?:github repos?|github repositories|open[- ]source projects|repository mining|popular repositories|trending repositories|best (?:ruby )?(?:gems|libraries|frameworks)|find (?:a few )?(?:projects|repositories|libraries) on github)\b/i)
+        if message.match?(/\b(?:github repos?|github repositories|open[- ]source projects|repo(?:sitory)? mining|popular repositories|trending repositories|best (?:ruby )?(?:gems|libraries|frameworks)|find (?:a few )?(?:projects|repositories|libraries) on github)\b/i)
           return evidence_tool("GitHubRepoMiner")
         end
         nil
@@ -434,11 +435,14 @@ end
         when message.match?(%r{https://gist\.github\.com/})
           { url: message[%r{https://gist\.github\.com/[^\s)]+}], full: false }
         when message.match?(%r{https?://(?:www\.)?youtube\.com/|https?://youtu\.be/})
-          { url: message[/https?:\/\/(?:www\.)?youtube\.com\/[^\s)]+|https?:\/\/youtu\.be\/[^\s)]+/], timestamps: false }
-        when message.match?(/(?:arxiv|ar5iv|academic papers?|research papers?|literature review)/i)
+          url = message[%r{https?://(?:www\.)?youtube\.com/[^\s)]+|https?://youtu\.be/[^\s)]+}]
+          { url:, timestamps: message.match?(/\b(?:timestamps?|timed notes)\b/i) }
+        when message.match?(/\byoutube transcript\b/i) && (video_id = message[/\b[A-Za-z0-9_-]{11}\b/])
+          { url: video_id, timestamps: message.match?(/\b(?:timestamps?|timed notes)\b/i) }
+        when message.match?(/\b(?:arxiv|ar5iv|academic papers?|research papers?|literature review)\b/i)
           { query: message, sort_by: "relevance", limit: 5 }
-        when message.match?(/(?:github repos?|github repositories|open[- ]source projects|repository mining|popular repositories|trending repositories|best (?:ruby )?(?:gems|libraries|frameworks)|find (?:a few )?(?:projects|repositories|libraries) on github)/i)
-          { query: message, sort: message.match?(/(?:recent|latest|updated|active)/i) ? "updated" : "stars", limit: 5 }
+        when message.match?(/\b(?:github repos?|github repositories|open[- ]source projects|repo(?:sitory)? mining|popular repositories|trending repositories|best (?:ruby )?(?:gems|libraries|frameworks)|find (?:a few )?(?:projects|repositories|libraries) on github)\b/i)
+          { query: message, sort: message.match?(/\b(?:recent|latest|updated|active)\b/i) ? "updated" : "stars", limit: 5 }
         else
           { mode: "trending", limit: 8 }
         end

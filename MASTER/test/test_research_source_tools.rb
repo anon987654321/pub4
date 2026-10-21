@@ -123,6 +123,25 @@ class TestResearchSourceTools < Minitest::Test
     FileUtils.rm_rf(root) if root
   end
 
+  def test_research_source_routing_selects_matching_adapter_and_arguments
+    agent = Master::Review::Agent.allocate
+    agent.define_singleton_method(:evidence_tool) { |name| name }
+
+    assert_equal "GitHubRepoMiner", agent.send(:specialized_web_source, "Find popular GitHub repos for Ruby")
+    github = agent.send(:specialized_web_args, "Find recent GitHub repositories for Ruby")
+    assert_equal "updated", github.fetch(:sort)
+    assert_equal 5, github.fetch(:limit)
+
+    assert_equal "ArxivResearch", agent.send(:specialized_web_source, "Review arXiv research papers on rendering")
+    paper = agent.send(:specialized_web_args, "Review arXiv research papers on rendering")
+    assert_equal "Review arXiv research papers on rendering", paper.fetch(:query)
+
+    assert_equal "YoutubeTranscript", agent.send(:specialized_web_source, "Get YouTube transcript for dQw4w9WgXcQ with timestamps")
+    transcript = agent.send(:specialized_web_args, "Get YouTube transcript for dQw4w9WgXcQ with timestamps")
+    assert_equal "dQw4w9WgXcQ", transcript.fetch(:url)
+    assert transcript.fetch(:timestamps)
+  end
+
   def test_research_sources_are_registered_once
     names = Master::Builder::DEFAULT_TOOL_MAP.keys
     assert_equal 1, names.count("CodePen")

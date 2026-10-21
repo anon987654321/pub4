@@ -58,7 +58,8 @@ module Master
         when "search" then search_files(full_path, query: query.to_s, depth: depth.to_i.clamp(0, MAX_DEPTH), limit: limit.to_i)
         when "info" then file_info(full_path)
         end
-        return value if value.is_a?(Master::Result::Err) || value.is_a?(Master::Result::Ok)
+        return value if value.is_a?(Master::Result::Err)
+        value = value.value! if value.is_a?(Master::Result::Ok)
 
         @bus&.publish("tool:after", tool: NAME, action:, path: full_path, bytes: value.to_s.bytesize)
         Result.ok(value)
