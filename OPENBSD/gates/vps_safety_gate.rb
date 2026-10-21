@@ -155,14 +155,17 @@ if File.file?(admin_path) && !File.symlink?(admin_path)
   task_app_scope = admin.include?("known_apps = helper == RAILS_TASK ? RAILS_TASK_APPS : RAILS_APPS") &&
                    admin.include?("RAILS_TASK_APPS = %w[master brgen amber bsdports].freeze")
   failures << "pub4-admin must validate each helper against its own app allowlist" unless task_app_scope
-  safe_spawn = admin.include?('Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)') &&
+  fixed_spawn = 'Process.spawn(environment, "/bin/ksh", helper, *arguments, pgroup: true, unsetenv_others: true)'
+  safe_spawn = admin.include?(fixed_spawn) &&
+               admin.include?('exec(environment, "/bin/ksh", helper, *arguments, unsetenv_others: true)') &&
                admin.include?('raise "unknown helper" unless [CI_RUN, CI_SYNC, RAILS_TASK, RAILS_SYNC].include?(helper)') &&
                admin.include?("when RAILS_TASK then Array(helper_arguments)") &&
                admin.include?("when CI_RUN then [app, duration.to_s]") &&
                admin.include?("when CI_SYNC then [app]") &&
                admin.include?("when RAILS_SYNC then [app, *Array(helper_arguments)]") &&
-               admin.include?("spawn_options[:uid] = account.uid") &&
-               admin.include?("spawn_options[:gid] = account.gid") &&
+               admin.include?("Process.groups = groups") &&
+               admin.include?("Process::GID.change_privilege(account.gid)") &&
+               admin.include?("Process::UID.change_privilege(account.uid)") &&
                admin.include?("trusted_script!(helper)")
   unsafe_spawn = admin.include?("Process.spawn") &&
                  (admin.scan("Process.spawn").length != 1 || !safe_spawn)

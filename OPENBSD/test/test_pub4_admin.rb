@@ -320,9 +320,9 @@ class Pub4AdminTest < Minitest::Test
 
     assert_includes source, 'args[0] == "ci-sync" && RAILS_APPS.include?(args[1])'
     assert_includes source, "supervised_helper(CI_SYNC, app, 900)"
-    assert_includes source, "spawn_options[:uid] = account.uid"
-    assert_includes source, "spawn_options[:gid] = account.gid"
-    assert_includes source, "spawn_options[:groups] = [account.gid, shared_gid].uniq"
+    assert_includes source, "Process::UID.change_privilege(account.uid)"
+    assert_includes source, "Process::GID.change_privilege(account.gid)"
+    assert_includes source, "groups = [account.gid, Etc.getgrnam(\"_pub4ci\").gid].uniq"
     assert_includes helper, 'repo=/home/dev/pub4'
     assert_includes helper, '[ "$(id -un)" = "$app" ]'
     refute_match(/^\s*(?:doas|sudo|chown)\b/, helper)
@@ -393,10 +393,12 @@ class Pub4AdminTest < Minitest::Test
 
     refute_match(/system\s*\(|Open3\.|%x/, source)
     assert_equal 1, source.scan("Process.spawn").length
-    assert_match(/Process\.spawn\(environment, "\/bin\/ksh", helper, \*arguments, \*\*spawn_options\)/, source)
+    fixed_spawn = %q(Process.spawn(environment, "/bin/ksh", helper, *arguments, pgroup: true, unsetenv_others: true))
+    assert_includes source, fixed_spawn
+    assert_includes source, %q(exec(environment, "/bin/ksh", helper, *arguments, unsetenv_others: true))
     assert_includes source, "raise \"unknown helper\" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)"
-    assert_includes source, "spawn_options[:uid] = account.uid"
-    assert_includes source, "spawn_options[:groups] = [account.gid, shared_gid].uniq"
+    assert_includes source, "Process::UID.change_privilege(account.uid)"
+    assert_includes source, "Process.groups = groups"
     assert_includes source, "exec(*command)"
     assert_includes source, 'raise "must run as root through doas" unless Process.euid.zero?'
   end

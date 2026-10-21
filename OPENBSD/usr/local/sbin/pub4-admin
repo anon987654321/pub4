@@ -589,6 +589,29 @@ module Pub4Admin
     value.match?(/\A[0-9]{1,4}\z/) && (1..7200).cover?(value.to_i)
   end
 
+# Starts the helper in its own process group. With an account it drops to that UID, GID and
+# only the listed groups in the child before exec: the box runs Ruby 3.4, whose spawn takes
+# no groups: option. The order is groups, gid, uid, and it cannot be undone.
+def spawn_helper(environment:, helper:, arguments:, account: nil, groups: nil)
+  unless account
+    return Process.spawn(environment, "/bin/ksh", helper, *arguments, pgroup: true, unsetenv_others: true)
+  end
+
+  fork do
+    Process.setpgid(0, 0)
+
+    Process.groups = groups
+    Process::GID.change_privilege(account.gid)
+    Process::UID.change_privilege(account.uid)
+
+    exec(environment, "/bin/ksh", helper, *arguments, unsetenv_others: true)
+  rescue StandardError => error
+    warn "pub4-admin: cannot start #{File.basename(helper)} as #{account.name}: #{error.class}"
+  ensure
+    exit!(126)
+  end
+end
+
   # Supervise a single fixed helper with a bounded app name and wall-clock deadline.
   # CI execution starts as root only long enough to drop to the app via su; tree sync
   # is spawned directly with that app UID/GID and only the groups it needs.
@@ -626,16 +649,13 @@ module Pub4Admin
                     { "PATH" => "/usr/local/bin:/usr/bin:/bin", "HOME" => "/root" }
                   end
     environment["SECRET_KEY_BASE"] = environment_secret if environment_secret
-    spawn_options = { pgroup: true, unsetenv_others: true }
+    account = groups = nil
     if [CI_SYNC, RAILS_SYNC].include?(helper)
       account = Etc.getpwnam(app)
-      shared_gid = Etc.getgrnam("_pub4ci").gid
-      spawn_options[:uid] = account.uid
-      spawn_options[:gid] = account.gid
-      spawn_options[:groups] = [account.gid, shared_gid].uniq
+      groups = [account.gid, Etc.getgrnam("_pub4ci").gid].uniq
     end
 
-    pid = Process.spawn(environment, "/bin/ksh", helper, *arguments, **spawn_options)
+    pid = spawn_helper(environment:, helper:, arguments:, account:, groups:)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + duration
 
     loop do
