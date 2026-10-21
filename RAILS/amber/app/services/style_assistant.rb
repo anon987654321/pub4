@@ -37,10 +37,6 @@ class StyleAssistant
     accessory: %w[Accessories]
   }.freeze
 
-  # Offsets keep the zones from rotating in lockstep, so consecutive days
-  # differ by more than a wholesale swap.
-  ZONE_ROTATION = { outer: 0, top: 1, bottom: 3, dress: 2, shoes: 5, accessory: 7 }.freeze
-
   # Rotate within the top of each zone. Wider than this and "your best" turns
   # into "anything you own".
   SHORTLIST = 5

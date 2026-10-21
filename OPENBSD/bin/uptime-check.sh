@@ -14,8 +14,8 @@
 # would still name four domains after a fifth app ships, and nothing would
 # report that. --public-only is the scope that needs no
 # rcctl, no pfctl and no /etc/relayd.conf, which is what made this a wrapper
-# rather than a deletion: the entry point is documented in RUNBOOK.md and
-# RAILS/amber/HEIR.md, and it is the one health check that runs anywhere.
+# rather than a deletion: the procedure is documented in RUNBOOK.md and
+# RAILS/amber/README.md, and it is the one health check that runs anywhere.
 
 set -eu
 
