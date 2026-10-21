@@ -253,10 +253,12 @@ module Master
           lines.concat(items.map { |item| "- #{item}" })
         end
 
+        selected_topics = Array(topic_keys).map(&:to_s)
         sources = if include_sources
                     Array(support["research_sources"]).select do |source|
                       source_topics = Array(source["topics"]).map(&:to_s)
-                      source_topics.empty? || !(source_topics & Array(topic_keys).map(&:to_s)).empty?
+                      locality_matches = !source_topics.include?("norway") || selected_topics.include?("norway")
+                      locality_matches && (source_topics.empty? || !(source_topics & selected_topics).empty?)
                     end
                   else
                     []
