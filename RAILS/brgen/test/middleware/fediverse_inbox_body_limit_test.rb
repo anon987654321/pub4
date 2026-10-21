@@ -122,6 +122,15 @@ class FediverseInboxBodyLimitTest < ActiveSupport::TestCase
     assert_equal body.bytesize, request.fetch("rack.input").bytes_read
   end
 
+  test "output buffers return nil at end of a length-bounded read" do
+    limited = Fediverse::InboxBodyLimit::LimitedInput.new(StringIO.new("x"), 10)
+    buffer = +""
+
+    assert_equal "x", limited.read(1, buffer)
+    assert_nil limited.read(1, buffer)
+    assert_equal "", buffer
+  end
+
   test "negative read lengths cannot turn a bounded read into an unbounded one" do
     input = TrackingInput.new("x" * 100)
     limited = Fediverse::InboxBodyLimit::LimitedInput.new(input, 10)
