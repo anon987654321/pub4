@@ -209,6 +209,7 @@ end
 # call is refused outright, because it cannot be given one.
 class OutboundHttpTimeoutTest < Minitest::Test
   RAILS = File.expand_path("..", __dir__)
+  INVENTORY_ROOTS = %w[__shared amber brgen bsdports brgen_marketplace brgen_dating brgen_radio brgen_takeaway brgen_messenger brgen_maps].freeze
   SOURCES = "{__shared,amber,brgen,bsdports,brgen_marketplace,brgen_dating,brgen_radio,brgen_takeaway,brgen_messenger,brgen_maps}/{app,lib,engines}/**/*.rb"
 
   UNBOUNDABLE = /Net::HTTP\.(get|get_response|post|post_form)\s*\(/
@@ -224,6 +225,11 @@ class OutboundHttpTimeoutTest < Minitest::Test
   def test_no_app_file_makes_an_unbounded_call
     files = Dir.glob(File.join(RAILS, SOURCES)).reject { |path| path.include?("/test/") }
     assert_operator files.size, :>, 0, "the outbound HTTP inventory matched no Ruby files"
+    missing_roots = INVENTORY_ROOTS.reject do |root|
+      prefix = File.join(RAILS, root, "")
+      files.any? { |path| path.start_with?(prefix) }
+    end
+    assert_empty missing_roots, "the outbound HTTP inventory omitted app trees: #{missing_roots.join(", ")}"
 
     found = files.flat_map { |path| self.class.findings(File.read(path).scrub, path.delete_prefix("#{RAILS}/")) }
     assert_empty found, found.join("\n")
