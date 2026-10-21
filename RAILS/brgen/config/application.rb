@@ -17,6 +17,7 @@ require "action_cable/engine"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 require_relative "../lib/brgen/locale_bridge"
+require_relative "../app/lib/fediverse/inbox_body_limit"
 
 module App
   class Application < Rails::Application
@@ -29,6 +30,8 @@ module App
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
+
+    config.middleware.insert_before 0, Fediverse::InboxBodyLimit
 
     # Configuration for the application, engines, and railties goes here.
     #
