@@ -25,11 +25,16 @@ class EmailSubscriptionsController < ApplicationController
     with: -> { redirect_to root_path, alert: t("shared.flash.rate_limited") }
 
   def create
+    unless params.dig(:email_subscription, :agreed_to_marketing) == "1"
+      redirect_back fallback_location: root_path, alert: t("newsletter_popup.consent_required")
+      return
+    end
+
     sub = EmailSubscription.find_or_initialize_by(email: params[:email_subscription][:email])
     if sub.new_record?
       sub.city = params[:email_subscription][:city].presence
       sub.locale = I18n.locale.to_s
-      sub.agreed_to_marketing = params[:email_subscription][:agreed_to_marketing] == "1"
+      sub.agreed_to_marketing = true
       sub.interests = params[:email_subscription][:interests].presence
       if sub.save
         EmailSubscriptionConfirmationJob.perform_later(sub.id)
@@ -41,7 +46,6 @@ class EmailSubscriptionsController < ApplicationController
       redirect_back fallback_location: root_path, notice: t("flash.already_subscribed")
     end
   end
-
   def show
     @subscription = find_subscription
   end

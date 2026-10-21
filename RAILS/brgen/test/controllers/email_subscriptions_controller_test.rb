@@ -5,6 +5,34 @@ require "test_helper"
 class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
   setup { host! "brgen.no" }
 
+  test "create requires affirmative marketing consent before saving or sending mail" do
+    assert_no_difference -> { EmailSubscription.count } do
+      post email_subscriptions_path, params: {
+        email_subscription: { email: "no-consent@example.test" }
+      }
+    end
+
+    assert_redirected_to root_path
+    assert_equal I18n.t("newsletter_popup.consent_required"), flash[:alert]
+  end
+
+  test "create stores affirmative consent and waits for email confirmation" do
+    assert_difference -> { EmailSubscription.count }, 1 do
+      post email_subscriptions_path, params: {
+        email_subscription: {
+          email: "consented@example.test",
+          agreed_to_marketing: "1"
+        }
+      }
+    end
+
+    subscription = EmailSubscription.find_by!(email: "consented@example.test")
+    assert subscription.agreed_to_marketing?
+    refute subscription.confirmed?
+    assert_redirected_to root_path
+  end
+
+
   test "show renders without mutating the subscription" do
     subscription = EmailSubscription.create!(
       email: "preferences-show@example.com",

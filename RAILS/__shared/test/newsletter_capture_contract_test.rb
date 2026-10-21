@@ -6,6 +6,7 @@ class NewsletterCaptureContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   CONTROLLER = File.join(ROOT, "__shared/frontend/newsletter_capture_controller.js")
   VIEW = File.join(ROOT, "__shared/app/views/shared/_newsletter_signup_popup.html.erb")
+  CTA = File.join(ROOT, "__shared/app/views/shared/_newsletter_cta.html.erb")
   IMPORTMAP = File.join(ROOT, "__shared/config/importmap_baseline.rb")
   BOOT = File.join(ROOT, "__shared/frontend/stimulus_boot.js")
   FOOTER = File.join(ROOT, "__shared/app/views/shared/_site_legal_footer.html.erb")
@@ -19,7 +20,14 @@ class NewsletterCaptureContractTest < Minitest::Test
     controller = File.read(CONTROLLER)
 
     assert_includes body, %(data-controller="newsletter-capture")
-    assert_includes body, %(email_subscription[agreed_to_marketing])
+    assert_includes body, %(check_box :agreed_to_marketing)
+    assert_includes body, %(newsletter_popup.marketing_opt_in)
+    refute_includes body, %(hidden_field_tag "email_subscription[agreed_to_marketing]", "1")
+    assert_includes File.read(CTA), %(name="email_subscription[agreed_to_marketing]" value="1" required)
+    assert_includes File.read(File.join(ROOT, "brgen/app/views/shared/_email_subscribe.html.erb")),
+                    %(name="email_subscription[agreed_to_marketing]" value="1" required)
+    controller_source = File.read(File.join(ROOT, "brgen/app/controllers/email_subscriptions_controller.rb"))
+    assert_includes controller_source, %(params.dig(:email_subscription, :agreed_to_marketing) == "1")
     assert_includes body, %(newsletter_popup.reward)
     assert_includes controller, "7 * 24 * 60 * 60 * 1000"
     assert_includes controller, "showModal()"
