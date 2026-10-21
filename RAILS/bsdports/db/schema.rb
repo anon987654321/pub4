@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_21_143000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_21_144000) do
   create_table "categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -157,6 +157,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_143000) do
 
   create_table "nvd_rate_limits", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "last_request_at"
     t.string "name", null: false
     t.datetime "next_allowed_at"
     t.datetime "updated_at", null: false
