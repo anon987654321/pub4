@@ -93,6 +93,14 @@ support_practice:
       url: "https://www.nice.org.uk/guidance/NG222/chapter/recommendations"
       use: "Clinical guideline for depression, structured psychological treatment and behavioral activation."
       topics: [depression, treatment]
+    - name: "NICE CG113 — Generalised anxiety disorder and panic disorder in adults"
+      url: "https://www.nice.org.uk/guidance/cg113/chapter/Recommendations"
+      use: "Stepped-care guidance covering assessment, CBT-based interventions, self-help and clinician-led treatment options for GAD and panic disorder."
+      topics: [anxiety]
+    - name: "NICE NG87 — Attention deficit hyperactivity disorder: diagnosis and management"
+      url: "https://www.nice.org.uk/guidance/ng87/chapter/recommendations"
+      use: "Specialist assessment, functional impact, shared care and treatment planning for ADHD; not a basis for self-diagnosis."
+      topics: [adhd]
     - name: "NICE NG225 — Self-harm: assessment, management and preventing recurrence"
       url: "https://www.nice.org.uk/guidance/NG225/chapter/recommendations"
       use: "Person-centred assessment, safety planning, and limits of risk scales."
