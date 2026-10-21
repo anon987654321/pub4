@@ -57,6 +57,43 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
+  # RI-011: expire the authenticated session after the form opens. The bad
+  # CSRF request and the stale-session request must both leave server state alone.
+  def test_RI_011_expired_session_with_csrf_failure_refuses_mutation
+    original = ActionController::Base.allow_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+    https!
+
+    get new_session_path
+    login_token = controller.send(:form_authenticity_token)
+    same_origin = {
+      "Sec-Fetch-Site" => "same-origin",
+      "Origin" => "https://brgen.no"
+    }
+    post session_path,
+         params: { email_address: @user.email_address, password: "password123" },
+         headers: same_origin.merge("X-CSRF-Token" => login_token)
+    assert_response :redirect
+
+    get new_community_path
+    assert_response :success
+    form_token = controller.send(:form_authenticity_token)
+    session_row = @user.sessions.reload.sole
+    session_row.destroy
+    name = "RI011#{SecureRandom.hex(4)}"
+    params = { community: { name:, description: "interaction campaign session boundary" } }
+
+    post communities_path, params:, headers: same_origin.merge("X-CSRF-Token" => "invalid")
+    assert_response :unprocessable_entity
+    assert_equal 0, Community.where(name: name).count, "the CSRF refusal mutated server state"
+
+    post communities_path, params:, headers: same_origin.merge("X-CSRF-Token" => form_token)
+    assert_response :redirect
+    assert_equal 0, Community.where(name: name).count, "an expired server session mutated server state"
+  ensure
+    ActionController::Base.allow_forgery_protection = original
+  end
+
   test "a legacy hidden authenticity token cannot bypass cross-site csrf" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
