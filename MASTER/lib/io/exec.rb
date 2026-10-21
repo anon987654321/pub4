@@ -169,8 +169,38 @@ module Master
       # A cancelled turn closes the pipes under a reader mid-read. reap reads
       # the IOError as empty output, so it must not also print a backtrace over
       # the operator's prompt.
+      # Preserve already-read diagnostics when a deadline terminates the reader.
+      # Thread#value alone loses the block's partial String when Thread#kill wins.
+      class OutputReader
+        def initialize(io)
+          @io = io
+          @output = String.new(encoding: io.external_encoding || Encoding::BINARY)
+          @lock = Mutex.new
+          @thread = Thread.new { read }
+          @thread.report_on_exception = false
+        end
+
+        def kill = @thread.kill
+
+        def value
+          @thread.value
+          @lock.synchronize { @output.dup }
+        end
+
+        private
+
+        def read
+          loop do
+            chunk = @io.readpartial(16_384)
+            @lock.synchronize { @output << chunk }
+          end
+        rescue EOFError, IOError
+          nil
+        end
+      end
+
       def reader_for(io)
-        Thread.new { io.read }.tap { |thread| thread.report_on_exception = false }
+        OutputReader.new(io)
       end
 
       def reap(reader)

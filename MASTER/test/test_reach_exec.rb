@@ -93,6 +93,13 @@ class TestReachExec < Minitest::Test
     end
   end
 
+  def test_timeout_preserves_output_captured_before_killing_the_process_group
+    out, status = E.capture2e("sh", "-c", "printf before_timeout; sleep 30", timeout: 0.1)
+
+    assert_includes out, "before_timeout"
+    refute status.success?
+  end
+
   def test_timeout_returns_fast_non_success_and_reaps_tree
     marker = "master_exec_timeout_probe_#{Process.pid}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)

@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
+require "rbconfig"
 require_relative "../../MASTER/contracts/studio"
 
 class StudioContractTest < Minitest::Test
@@ -19,6 +20,20 @@ class StudioContractTest < Minitest::Test
     ensure
       ENV["PUB4_STUDIO_ROOT"] = original
     end
+  end
+
+  def test_bounded_runner_stops_a_hung_child_and_keeps_its_partial_output
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    output, status = Contracts::Studio.run_bounded(
+      [RbConfig.ruby, "-e", "STDOUT.sync = true; print 'started'; sleep 30"],
+      chdir: Dir.tmpdir,
+      timeout: 0.1
+    )
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+    assert_includes output, "started"
+    refute status.success?
+    assert_operator elapsed, :<, 3
   end
 
   def test_canonical_media_entrypoints_are_addressable

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../lib/io/exec"
 require "rbconfig"
 require "time"
 
@@ -70,33 +70,7 @@ module Contracts
     end
 
     def run_bounded(argv, chdir:, timeout: PHOTOGRAPH_TIMEOUT)
-      output = +""
-      status = nil
-
-      Open3.popen2e(*argv, chdir:) do |stdin, io, wait|
-        stdin.close
-        reader = Thread.new { output = io.read.to_s }
-
-        unless wait.join(timeout)
-          begin
-            Process.kill("TERM", wait.pid)
-          rescue Errno::ESRCH
-          end
-
-          unless wait.join(5)
-            begin
-              Process.kill("KILL", wait.pid)
-            rescue Errno::ESRCH
-            end
-            wait.join
-          end
-        end
-
-        reader.join
-        status = wait.value
-      end
-
-      [output, status]
+      Master::Io::Exec.capture2e(*argv, chdir:, timeout:)
     end
   end
 end
