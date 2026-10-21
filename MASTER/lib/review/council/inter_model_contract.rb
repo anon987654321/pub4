@@ -142,6 +142,8 @@ module Master
           end
           if Array(prior_findings).any?
             errors << "position_not_explicit_against_prior_findings" unless %w[concur dissent mixed].include?(position)
+          else
+            errors << "position_must_be_independent_without_prior_findings" unless position == "independent"
           end
 
           findings = data["findings"]
