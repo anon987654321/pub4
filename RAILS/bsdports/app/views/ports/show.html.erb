@@ -105,7 +105,7 @@
   <% else %>
     <p class="data-state"><%= t("ports.advisories_none") %></p>
   <% end %>
-  <%= button_to t("ports.crossref_nvd"), crossref_cves_port_path(@port), method: :post %>
+  <% if nvd_operator? %><%= button_to t("ports.crossref_nvd"), crossref_cves_port_path(@port), method: :post %><% end %>
 
   <%= tag.h2 t("ports.master_review") %>
   <%= tag.p t("ports.master_review_lead_html") %>
