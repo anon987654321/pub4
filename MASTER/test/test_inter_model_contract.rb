@@ -68,6 +68,14 @@ class TestInterModelContract < Minitest::Test
     assert_includes result.fetch("errors"), "unexpected_response_field"
   end
 
+  def test_position_must_be_independent_without_prior_findings
+    data = JSON.parse(valid_response).merge("position" => "concur").to_json
+    result = Contract.validate_response(data)
+
+    refute result.fetch("ok")
+    assert_includes result.fetch("errors"), "position_must_be_independent_without_prior_findings"
+  end
+
   def test_concurrence_requires_prior_findings_and_evidence
     data = JSON.parse(valid_response).merge(
       "position" => "concur",
