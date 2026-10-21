@@ -73,6 +73,9 @@ group :test do
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem "pub4-shared", path: "../__shared"
+# pub4-shared needs csv, but Bundler 4 looks for it only inside the path source while rails comes from
+# git, and the install fails; declaring it here resolves it from rubygems.
+gem "csv", ">= 3.3"
 # TV vertical as a mountable engine (vertical-as-engine pilot; see README.md).
 gem "brgen-tv", path: "../brgen_radio/tv", require: "tv"
 gem "brgen-marketplace", path: "../brgen_marketplace", require: "marketplace"

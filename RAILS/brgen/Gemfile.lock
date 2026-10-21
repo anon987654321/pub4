@@ -742,6 +742,7 @@ DEPENDENCIES
   bullet
   bundler-audit
   capybara
+  csv (>= 3.3)
   dartsass-rails (~> 0.5.1)
   faker
   falcon
