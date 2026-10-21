@@ -124,7 +124,9 @@ module Ports
         version: metadata[:version].presence || "unknown",
         last_updated: Date.current
       }
-      unless thin_metadata
+      if thin_metadata
+        attributes[:category] = category if port.new_record?
+      else
         attributes.merge!(
           category: category,
           comment: metadata[:comment],
