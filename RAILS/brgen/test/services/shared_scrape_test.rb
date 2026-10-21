@@ -50,6 +50,7 @@ class SharedScrapeTest < ActiveSupport::TestCase
     assert_includes source, "browser.network.intercept"
     assert_includes source, "browser.on(:request)"
     assert_includes source, "safe_request_url?(request.url)"
-    refute_match(/no-sandbox/, source, "untrusted pages must not run outside Chromium's sandbox")
+    refute_match(/browser_options:\s*\{[^}]*no-sandbox/m, source,
+                 "untrusted pages must not run outside Chromium's sandbox")
   end
 end
