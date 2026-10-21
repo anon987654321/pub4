@@ -72,6 +72,17 @@ class AiControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("shared.flash.rate_limited"), flash[:alert]
   end
 
+  test "saving a generated outfit is rate limited" do
+    sign_in_as("ai-generate-limit@example.com")
+
+    10.times { post ai_generate_outfit_path }
+    assert_response :redirect
+
+    post ai_generate_outfit_path
+    assert_redirected_to items_path
+    assert_equal I18n.t("shared.flash.rate_limited"), flash[:alert]
+  end
+
   test "a guest is sent to sign in" do
     get ai_suggest_outfits_path
 

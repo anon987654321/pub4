@@ -9,7 +9,7 @@ class AiController < ApplicationController
   # GET actions only suggest. The explicit generate_outfit POST owns persistence
   # and the optional single STUDIO photograph.
 
-  rate_limit to: 10, within: 10.minutes, only: :suggest_outfits,
+  rate_limit to: 10, within: 10.minutes, only: %i[suggest_outfits generate_outfit],
              by: -> { "u#{Current.user&.id}" },
              with: -> { redirect_to items_path, alert: t("shared.flash.rate_limited") }
 
