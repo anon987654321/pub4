@@ -162,6 +162,13 @@ if [ "$app" = brgen ]; then
     mkdir -p "$destination"
     tar cf - -C "$vertical" . | tar xf - -C "$destination"
   done
+
+  # test/importmap_engine_pins_test.rb requires ../../test/engine_roots: RAILS/test in the repo.
+  if [[ -f "$repo/RAILS/test/engine_roots.rb" && ! -L "$repo/RAILS/test/engine_roots.rb" ]]; then
+    mkdir -p "$app_home/test"
+    rm -f "$app_home/test/engine_roots.rb"
+    tar cf - -C "$repo/RAILS/test" engine_roots.rb | tar xf - -C "$app_home/test"
+  fi
 fi
 
 echo "ci-sync: refreshed tracked CI mirror and $app copy-tree as $app"
