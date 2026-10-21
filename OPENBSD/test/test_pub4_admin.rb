@@ -418,6 +418,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes runbook, "## Command selection and diagnosis"
     assert_includes runbook, "https://man.openbsd.org/OpenBSD-<release>/<page>"
     assert_includes runbook, "current-manual pages are not proof for an older host."
+    assert_includes runbook, "upgrades only to the immediately following release"
     assert_includes runbook, "`syspatch -c` lists available base patches"
     assert_includes runbook, "`syspatch -l` lists installed patches"
     assert_includes runbook, "`pfctl -nf /etc/pf.conf`"
