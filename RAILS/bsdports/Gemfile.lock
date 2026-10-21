@@ -517,7 +517,7 @@ GEM
       faraday-multipart (>= 1)
       faraday-net_http (>= 1)
       faraday-retry (>= 1)
-      json (< 3)
+      json (< 4)
       marcel (>= 1.0, < 3)
       schematist (~> 1.1)
       zeitwerk (~> 2)
@@ -647,7 +647,6 @@ DEPENDENCIES
   bullet
   bundler-audit
   capybara
-  csv (>= 3.3)
   dartsass-rails (~> 0.5.1)
   debug
   faker
