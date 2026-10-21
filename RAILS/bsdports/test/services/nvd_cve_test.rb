@@ -12,6 +12,40 @@ class NvdCveTest < ActiveSupport::TestCase
                            pkgpath: "security/beta", version: "1")
   end
 
+  test "cross-reference uses the shared outbound guard and reports an empty success" do
+    response = Net::HTTPOK.new("1.1", "200", "OK")
+    response.body = JSON.generate("vulnerabilities" => [])
+    request = nil
+
+    Shared::OutboundHttp.stub(:request, lambda { |uri, **options|
+      request = [ uri, options ]
+      response
+    }) do
+      result = NvdCve.crossref(@first)
+      assert_equal :succeeded, result.status
+      assert_equal 0, result.count
+    end
+
+    uri, options = request
+    assert_equal "https", uri.scheme
+    assert_equal "services.nvd.nist.gov", uri.host
+    assert_equal 5, URI.decode_www_form(uri.query).to_h.fetch("resultsPerPage").to_i
+    assert_equal 5, options[:open_timeout]
+    assert_equal 10, options[:read_timeout]
+  end
+
+  test "a failed NVD response is not reported as a successful empty result" do
+    response = Net::HTTPServiceUnavailable.new("1.1", "503", "Unavailable")
+    result = nil
+
+    Shared::OutboundHttp.stub(:request, ->(*, **_options) { response }) do
+      result = NvdCve.new(@first).crossref
+    end
+
+    assert_equal :failed, result.status
+    assert_equal "IOError", result.error
+  end
+
   test "one CVE discovered for two ports remains one advisory linked to both" do
     payload = {
       "id" => "CVE-2026-44002",
