@@ -133,8 +133,8 @@ class StyleAssistant
   def compatibility_ranker = @compatibility_ranker ||= OutfitCompatibility.new(user)
 
   def compatibility_weather
-    return "cold" if cold?
     return "rain" if wet?
+    return "cold" if cold?
     return "warm" if warm?
 
     nil

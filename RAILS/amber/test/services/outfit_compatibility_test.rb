@@ -42,6 +42,31 @@ class OutfitCompatibilityTest < ActiveSupport::TestCase
     assert_equal items.size, calls
   end
 
+  test "cold weather accepts cold, mild and dry material classes" do
+    scorer = OutfitCompatibility.new(user("compatibility-cold@example.com"))
+    items = [
+      Item.new(title: "Wool coat", category: "Outerwear", material: "wool"),
+      Item.new(title: "Cotton tee", category: "Tops", material: "cotton"),
+      Item.new(title: "Leather boots", category: "Shoes", material: "leather")
+    ]
+
+    assert_equal 1.0, scorer.send(:weather_fit, items, "cold")
+  end
+
+  test "rain favors shell materials over dry-only materials" do
+    scorer = OutfitCompatibility.new(user("compatibility-rain@example.com"))
+    shell = Item.new(title: "Shell jacket", category: "Outerwear", material: "nylon shell")
+    suede = Item.new(title: "Suede shoes", category: "Shoes", material: "suede")
+
+    assert_equal 0.5, scorer.send(:weather_fit, [shell, suede], "rain")
+  end
+
+  test "unknown weather remains neutral instead of guessing" do
+    scorer = OutfitCompatibility.new(user("compatibility-unknown-weather@example.com"))
+
+    assert_equal 0.75, scorer.send(:weather_fit, [Item.new(material: "wool")], "monsoon")
+  end
+
   test "an avoid preference lowers the score for a matching combination" do
     owner = user("compatibility-avoid@example.com")
     owner.style_preferences.create!(kind: :avoid, name: "polyester", weight: 1.0)

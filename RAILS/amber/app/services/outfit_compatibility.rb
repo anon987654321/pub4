@@ -10,6 +10,16 @@ class OutfitCompatibility
     "casual" => 0.35
   }.freeze
 
+  # GarmentTaxonomy describes what a material suits, not one exclusive forecast
+  # label. Wool is useful in cold weather, cotton can be a mild-weather layer,
+  # and leather footwear is not automatically wrong just because it is cold.
+  WEATHER_FIT_COMPATIBILITY = {
+    "cold" => %w[cold mild dry all_weather],
+    "warm" => %w[warm mild dry all_weather],
+    "rain" => %w[rain all_weather],
+    "dry" => %w[dry cold mild warm all_weather]
+  }.freeze
+
   def initialize(user)
     @user = user
   end
@@ -71,12 +81,12 @@ class OutfitCompatibility
 
   def weather_fit(items, weather)
     return 0.75 if weather.blank?
-    weather = weather.to_s.downcase
-    matches = items.count do |item|
-      fit = GarmentTaxonomy.weather_fit(item)
-      fit == weather || fit == "all_weather"
-    end
-    [ matches / items.size.to_f, 1.0 ].min
+
+    fits = WEATHER_FIT_COMPATIBILITY[weather.to_s.downcase]
+    return 0.75 unless fits
+
+    matches = items.count { |item| fits.include?(GarmentTaxonomy.weather_fit(item)) }
+    matches / items.size.to_f
   end
 
   def preference_fit(items)
