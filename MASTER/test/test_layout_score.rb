@@ -151,6 +151,16 @@ class LayoutScoreTest < Minitest::Test
     assert_equal 2, updated["history"].size, "keep the old measurement for archaeology"
   end
 
+  def test_malformed_score_baseline_is_unavailable_not_an_exception
+    S.seed(@surface, good_payload, root: @root)
+    entry = S.load(@root, @surface)
+    entry["baseline"] = "old malformed record"
+    File.write(S.path(@root, @surface), JSON.pretty_generate(entry))
+
+    assert_nil S.baseline(@root, @surface)
+    assert_empty S.judge(@surface, bad_payload, root: @root)
+  end
+
   def test_evidence_row_names_the_score
     capture = { surface: @surface, payload: good_payload.merge("composition" => { "state" => "resting" }) }
     row = S.row(capture, root: @root)
