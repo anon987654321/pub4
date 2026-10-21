@@ -270,6 +270,18 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "one decision-changing question"
   end
 
+  def test_workplace_problem_routes_without_an_explicit_request_for_advice
+    prompt = Rubric.support_prompt_for(
+      "My manager took credit for my work in a meeting. I am not sure how to handle it.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Practical response:"
+    assert_includes prompt, "one decision-changing question"
+    refute_includes prompt, "Couples and relationship safety:"
+  end
+
   def test_relationship_and_manipulation_guidance_is_targeted
     prompt = Rubric.support_prompt_for(
       "My partner checks my phone, controls money and says I am crazy when I object.",
