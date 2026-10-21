@@ -80,15 +80,17 @@ class StyleAssistant
   # is bounded to SHORTLIST candidates, so even a five-zone look evaluates at
   # most 3,125 combinations and writes no Outfit or Recommendation records.
   def choose_composition(zones)
-    pools = zones.filter_map do |zone|
+    zone_picks = zones.filter_map do |zone|
       items = shortlist_for(zone)
-      [ zone, items ] unless items.empty?
-    end
-    return [] if pools.empty?
+      next if items.empty?
 
-    combinations = pools.reduce([ [] ]) do |partials, (zone, items)|
+      items.map { |item| Pick.new(zone:, item:, reasons: reasons_for(zone, item)) }
+    end
+    return [] if zone_picks.empty?
+
+    combinations = zone_picks.reduce([ [] ]) do |partials, picks|
       partials.flat_map do |partial|
-        items.map { |item| partial + [ Pick.new(zone: zone, item: item, reasons: reasons_for(zone, item)) ] }
+        picks.map { |pick| partial + [ pick ] }
       end
     end
 

@@ -51,14 +51,20 @@ class StyleAssistantTest < ActiveSupport::TestCase
     assert_includes suggestion.picks.map(&:zone), :shoes
   end
 
-  test "each garment taste score is reused across outfit combinations" do
+  test "garment taste scores and reasons are computed once across combinations" do
     owner = stock(user("assistant-score-cache@example.com"))
     ranker = TasteRanker.new(owner)
-    calls = Hash.new(0)
-    original = ranker.method(:score_for)
+    score_calls = Hash.new(0)
+    explain_calls = Hash.new(0)
+    original_score = ranker.method(:score_for)
+    original_explain = ranker.method(:explain)
     ranker.define_singleton_method(:score_for) do |item|
-      calls[item.id] += 1
-      original.call(item)
+      score_calls[item.id] += 1
+      original_score.call(item)
+    end
+    ranker.define_singleton_method(:explain) do |item|
+      explain_calls[item.id] += 1
+      original_explain.call(item)
     end
 
     suggestion = nil
@@ -68,8 +74,10 @@ class StyleAssistantTest < ActiveSupport::TestCase
     end
 
     assert suggestion.any?
-    assert_operator calls.length, :>, 3
-    assert calls.values.all? { |count| count == 1 }, "repeated taste scores: #{calls.inspect}"
+    assert_operator score_calls.length, :>, 3
+    assert score_calls.values.all? { |count| count == 1 }, "repeated taste scores: #{score_calls.inspect}"
+    assert_operator explain_calls.length, :>, 3
+    assert explain_calls.values.all? { |count| count == 1 }, "repeated garment explanations: #{explain_calls.inspect}"
   end
 
   test "cold weather adds a layer and warm weather does not" do
