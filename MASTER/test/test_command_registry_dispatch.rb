@@ -111,6 +111,47 @@ class TestCommandRegistryDispatch < Minitest::Test
     Fiber[:master_visitor] = old_visitor
   end
 
+  def test_agenda_is_registered_and_requires_scoped_calendar_consent
+    assert Registry.slash_commands.include?("/agenda")
+    assert_includes Registry.help_text("agenda"), "/privacy grant calendar_read"
+
+    require "tmpdir"
+    old_subject = Fiber[:master_pair_subject]
+    old_paired = Fiber[:master_paired]
+    old_visitor = Fiber[:master_visitor]
+    Dir.mktmpdir("agenda-command") do |root|
+      Fiber[:master_pair_subject] = "agenda-subject"
+      Fiber[:master_paired] = true
+      Fiber[:master_visitor] = nil
+      denied = Registry.dispatch_agenda(
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/agenda today", args: "today"),
+      )
+      assert_match(/calendar access is disabled/, denied)
+
+      grant = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant calendar_read", args: "grant calendar_read"),
+      )
+      assert_match(/calendar reading enabled/, grant)
+
+      source = File.join(root, "sample.ics")
+      File.write(source, "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20261021\r\nSUMMARY:Test appointment\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n")
+      imported = Registry.dispatch_agenda(
+        root, ctx: Master::CLI::PipelineContext.new(
+          user_message: "/agenda import #{source}", args: "import #{source}",
+        ),
+      )
+      assert_match(/imported 1 events/, imported)
+      listed = Registry.dispatch_agenda(
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/agenda 2026-10-21", args: "2026-10-21"),
+      )
+      assert_match(/Test appointment/, listed)
+    end
+  ensure
+    Fiber[:master_pair_subject] = old_subject
+    Fiber[:master_paired] = old_paired
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_privacy_memory_export_and_explicit_forget_are_gated
     require "tmpdir"
     old_subject = Fiber[:master_pair_subject]

@@ -17,10 +17,11 @@ module Master
 
       SCOPES = %w[
         microphone speech_recognition camera location contacts messages
-        notifications personal_memory financial_data financial_actions
+        notifications personal_memory calendar_read financial_data financial_actions
         tradedoubler.claims.read tradedoubler.claims.prepare tradedoubler.claims.submit
         external_messages purchases deployment destructive_actions
       ].freeze
+      SUBJECT_SCOPES = %w[personal_memory calendar_read].freeze
       MAX_PURPOSE_BYTES = 500
       MAX_ACTOR_BYTES = 120
 
@@ -64,9 +65,9 @@ module Master
       def allowed?(scope:, purpose: nil, subject: nil)
         key = normalize_scope(scope)
         owner = optional_subject(subject)
-        return false if key == "personal_memory" && owner.nil?
+        return false if SUBJECT_SCOPES.include?(key) && owner.nil?
 
-        grant_key = record_key(key, key == "personal_memory" ? owner : nil)
+        grant_key = record_key(key, SUBJECT_SCOPES.include?(key) ? owner : nil)
         with_lock do
           grant = read_state.fetch("grants", {})[grant_key]
           next false unless grant.is_a?(Hash)
@@ -120,7 +121,7 @@ module Master
       end
 
       def subject_for_scope(scope, subject)
-        return nil unless scope == "personal_memory"
+        return nil unless SUBJECT_SCOPES.include?(scope)
 
         required_text(subject, "subject", MAX_ACTOR_BYTES)
       end
@@ -133,7 +134,7 @@ module Master
       end
 
       def record_key(scope, subject)
-        scope == "personal_memory" ? "#{scope}:#{subject}" : scope
+        SUBJECT_SCOPES.include?(scope) ? "#{scope}:#{subject}" : scope
       end
 
       def required_text(value, name, max_bytes)
@@ -161,7 +162,7 @@ module Master
 
       def active?(grant)
         return false unless grant.is_a?(Hash) && grant["revoked_at"].nil?
-        return false if grant["scope"] == "personal_memory" && optional_subject(grant["subject"]).nil?
+        return false if SUBJECT_SCOPES.include?(grant["scope"]) && optional_subject(grant["subject"]).nil?
 
         !grant["expires_at"] || Time.iso8601(grant["expires_at"]) > now
       end

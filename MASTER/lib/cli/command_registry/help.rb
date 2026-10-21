@@ -135,12 +135,22 @@ detail: [
           detail: ["/ios — begin onboarding on an iPhone or iPad through the browser/PWA.",
                    "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
+        "agenda" => {
+          summary: "read a paired owner's imported local calendar",
+          detail: [
+            "/agenda status — report whether an iCalendar export has been imported.",
+            "/agenda import /path/to/calendar.ics — import a local .ics file into the private paired workspace; quote paths containing spaces.",
+            "/agenda today or /agenda YYYY-MM-DD — list events for a date without changing the source calendar.",
+            "First run /privacy grant calendar_read in the paired local session. Import is local-only and read-only; remote calendar accounts are not connected. Events with RRULE or RDATE are flagged but recurrence is not expanded, so verify those series in the source calendar.",
+          ],
+        },
         "privacy" => {
           summary: "inspect personal-memory consent and manage the paired subject's stored data",
           detail: [
             "/privacy — show whether personal profile and memory are enabled for the paired subject.",
             "/privacy grant personal_memory — explicitly allow this local paired subject's profile and memory to be read and written.",
             "/privacy revoke personal_memory — immediately disable that scope for this subject.",
+            "/privacy grant calendar_read or /privacy revoke calendar_read — enable or immediately disable access to the paired subject's imported local calendar.",
             "/privacy memory show or /privacy memory export — inspect the paired subject's complete USER.md profile and MEMORY.md, within a bounded export size.",
             "/privacy memory forget --confirm — clear durable memory while preserving USER.md. The exact confirmation command is required.",
             "The command is local-only. Microphone, camera, location, messages, purchases, deployment and financial scopes cannot be granted here until their execution adapters enforce the same policy and native OS permissions.",
@@ -316,7 +326,7 @@ detail: [
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
         "session" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
-        "privacy" => "constitution",
+        "privacy" => "constitution", "agenda" => "session",
         "review" => "review", "critique" => "review", "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",

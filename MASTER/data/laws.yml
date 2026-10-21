@@ -2314,6 +2314,7 @@ personal_privacy:
     - messages
     - notifications
     - personal_memory
+    - calendar_read
     - financial_data
     - financial_actions
     - tradedoubler.claims.read

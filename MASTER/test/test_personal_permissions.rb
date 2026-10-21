@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "master"
 require_relative "../lib/ground/personal_permissions"
+require_relative "../lib/ground/personal_calendar"
 
 class TestPersonalPermissions < Minitest::Test
   def setup
@@ -17,7 +18,7 @@ class TestPersonalPermissions < Minitest::Test
 
   def test_every_scope_is_denied_by_default
     %w[microphone speech_recognition camera location contacts messages notifications
-       personal_memory financial_data financial_actions tradedoubler.claims.read
+       personal_memory calendar_read financial_data financial_actions tradedoubler.claims.read
        tradedoubler.claims.prepare tradedoubler.claims.submit external_messages purchases
        deployment destructive_actions].each do |scope|
       refute @permissions.allowed?(scope: scope), "#{scope} must default to deny"
@@ -75,6 +76,19 @@ class TestPersonalPermissions < Minitest::Test
     assert @permissions.revoke(scope: "personal_memory", subject: "subject-a",
                                confirmed_by: "owner", reason: "changed my mind")
     refute @permissions.allowed?(scope: "personal_memory", subject: "subject-a")
+  end
+
+  def test_calendar_read_grants_are_bound_to_subject_and_purpose
+    purpose = Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE
+    @permissions.grant(
+      scope: "calendar_read", subject: "subject-a", confirmed_by: "owner",
+      purpose: purpose,
+    )
+
+    assert @permissions.allowed?(scope: "calendar_read", subject: "subject-a", purpose:)
+    refute @permissions.allowed?(scope: "calendar_read", subject: "subject-b", purpose:)
+    refute @permissions.allowed?(scope: "calendar_read", purpose:)
+    refute @permissions.allowed?(scope: "calendar_read", subject: "subject-a", purpose: "send calendar data")
   end
 
   def test_state_is_persistent_and_inspectable

@@ -3,6 +3,7 @@
 require_relative "../../operator/capability_graph"
 require_relative "../../io/exec"
 require_relative "../../ground/personal_workspace"
+require_relative "../../ground/personal_calendar"
 
 module Master
   module CLI
@@ -47,9 +48,9 @@ module Master
         end
       end
 
-      # /privacy is intentionally local-only. The only wired personal capability
-      # is subject-scoped memory/profile; hardware, messaging and financial scopes
-      # remain unavailable until their own adapters enforce the ledger and OS grants.
+      # /privacy is local-only. Personal memory and the explicitly imported,
+      # read-only calendar use subject-bound grants; device, external messaging and
+      # financial capabilities remain unavailable until their adapters enforce policy.
       def dispatch_privacy(root, ctx: nil)
         return "privacy: local-only; visitors cannot grant personal capabilities" if Fiber[:master_visitor] == true
 
@@ -67,13 +68,29 @@ module Master
           active = permissions.allowed?(
             scope: "personal_memory", subject:, purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
           )
-          "privacy: personal profile and memory #{active ? "enabled" : "disabled"}; consent is bound to this paired subject"
+          calendar = permissions.allowed?(
+            scope: "calendar_read", subject:, purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE,
+          )
+          "privacy: personal profile and memory #{active ? "enabled" : "disabled"}; local calendar #{calendar ? "enabled" : "disabled"}; consent is bound to this paired subject"
         when "grant personal_memory"
           permissions.grant(
             scope: "personal_memory", subject:, confirmed_by: "local operator",
             purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
           )
           "privacy: personal profile and memory enabled for this paired subject"
+        when "grant calendar_read"
+          permissions.grant(
+            scope: "calendar_read", subject:, confirmed_by: "local operator",
+            purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE,
+          )
+          "privacy: local calendar reading enabled for this paired subject"
+        when /\Arevoke calendar_read(?:\s+(.+))?\z/
+          reason = Regexp.last_match(1).to_s.strip
+          revoked = permissions.revoke(
+            scope: "calendar_read", subject:, confirmed_by: "local operator",
+            reason: reason.empty? ? "calendar reading revoked by owner" : reason,
+          )
+          revoked ? "privacy: local calendar reading disabled immediately" : "privacy: no active calendar-reading grant"
         when "memory show", "memory export"
           data = Master::Ground::PersonalWorkspace.snapshot(root:, subject:)
           data.map { |name, body| "#{name}\n#{body}" }.join("\n\n")
@@ -94,6 +111,58 @@ module Master
         end
       rescue StandardError => e
         "privacy0: unavailable — #{e.class}: #{e.message}"
+      end
+
+      # /agenda reads an owner-imported local iCalendar export; it never mutates
+      # the provider calendar or reaches a remote service.
+      def dispatch_agenda(root, ctx: nil)
+        return "agenda: local-only; visitors cannot access a personal calendar" if Fiber[:master_visitor] == true
+
+        subject = Fiber[:master_pair_subject].to_s.strip
+        if subject.empty? && defined?(Master::Device::Agent) && Master::Device.respond_to?(:android?) &&
+            Master::Device.android? && Master::Device::Agent.paired?(root:)
+          subject = Master::Device::Agent.owner_subject(root:).to_s
+        end
+        return "agenda: pair this local session before accessing a personal calendar" if subject.empty?
+
+        calendar = Master::Ground::PersonalCalendar.new(root:)
+        arg = arg_for(ctx).to_s.strip
+        case arg
+        when "", "today", "status"
+          if arg == "status"
+            state = calendar.status(subject:)
+            return state[:imported] ?
+              "agenda: local calendar imported; #{state[:event_count]} events, #{state[:recurring_series]} recurring series not expanded" :
+              "agenda: no local calendar imported; use /agenda import /path/to/calendar.ics"
+          end
+          render_agenda(calendar.events_for(subject:, date: Date.today))
+        when /\Aimport\s+(.+)\z/m
+          source_args = Shellwords.split(Regexp.last_match(1))
+          return "agenda: usage is /agenda import /path/to/calendar.ics" unless source_args.size == 1
+
+          imported = calendar.import!(subject:, source: source_args.first)
+          "agenda: imported #{imported[:event_count]} events from #{imported[:filename]}; #{imported[:recurring_series]} recurring series will be reported but are not expanded"
+        when /\A\d{4}-\d{2}-\d{2}\z/
+          render_agenda(calendar.events_for(subject:, date: Date.iso8601(arg)))
+        else
+          "agenda: status | import /path/to/calendar.ics | today | YYYY-MM-DD"
+        end
+      rescue StandardError => e
+        "agenda0: unavailable — #{e.class}: #{e.message}"
+      end
+
+      def render_agenda(result)
+        events = result.fetch(:events)
+        date = result.fetch(:date).iso8601
+        lines = events.map do |event|
+          when_text = event.all_day ? "all day" : [event.clock, event.timezone].compact.reject(&:empty?).join(" ")
+          location = event.location.empty? ? "" : " — #{event.location}"
+          series = event.recurring ? " (recurring series; DTSTART only)" : ""
+          "#{when_text} #{event.summary}#{location}#{series}".strip
+        end
+        lines = ["agenda: no events for #{date} (#{result.fetch(:total_events)} imported)"] if lines.empty?
+        lines << "agenda: note: #{result.fetch(:recurring_series)} recurring series are not expanded; verify their occurrences in the source calendar" if result.fetch(:recurring_series).positive?
+        lines.join("\n")
       end
 
       SCREEN_NAME = /\A[\w.-]{1,40}\z/
