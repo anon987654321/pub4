@@ -284,10 +284,12 @@ module Master
               end
 
               baseline = tests.map { |test_path| execute_test(test_path) }
+              verify_unchanged_source!(path, original, relative, "focused baseline tests")
               sources.map do |source|
                 candidate_results = nil
                 row = nil
                 begin
+                  verify_unchanged_source!(path, original, relative, "candidate write")
                   writer.call(path, source)
                   written_source = File.read(path, encoding: "UTF-8")
                   unless written_source == source
@@ -301,11 +303,19 @@ module Master
                   row = result(:blocked, tests, baseline, candidate_results || [], reason(e))
                 ensure
                   begin
-                    writer.call(path, original)
+                    current_source = File.read(path, encoding: "UTF-8")
+                    if current_source == source
+                      writer.call(path, original)
+                    elsif current_source != original
+                      raise RestoreFailure, "source changed during simulation; refusing to overwrite concurrent content"
+                    end
                     restored_source = File.read(path, encoding: "UTF-8")
                     unless restored_source == original
                       raise IOError, "restored source differs from the original snapshot"
                     end
+                  rescue RestoreFailure => e
+                    publish("repair_loop:user_simulation_restore_failed", path: relative, error: reason(e))
+                    raise
                   rescue StandardError => e
                     publish("repair_loop:user_simulation_restore_failed", path: relative, error: reason(e))
                     raise RestoreFailure, "candidate simulation could not verify restoration of #{relative}: #{e.class}: #{e.message}"
@@ -571,6 +581,19 @@ module Master
             Array(sources).map do |_source|
               result(status, [], [], [], reason:)
             end
+          end
+
+          def verify_unchanged_source!(path, original, relative, phase)
+            actual = File.read(path, encoding: "UTF-8")
+            return true if actual == original
+
+            publish(
+              "repair_loop:user_simulation_blocked",
+              path: relative,
+              phase: phase,
+              reason: "source changed outside the candidate transaction; preserving current content"
+            )
+            raise RestoreFailure, "source changed during #{phase}; refusing candidate selection for #{relative}"
           end
 
           def test_timeout
