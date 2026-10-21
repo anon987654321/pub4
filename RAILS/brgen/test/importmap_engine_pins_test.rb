@@ -2,35 +2,25 @@
 
 require "test_helper"
 
-# Every vertical's Stimulus controllers must be pinned, not merely servable.
+# Engine JavaScript can be servable through the asset paths and still be missing
+# from the importmap. In that case data-controller looks normal, but Stimulus
+# never imports the controller and the interaction is silently inert.
 #
-# `pin_all_from "app/javascript/controllers"` resolves its path against
-# Rails.root, so it covers brgen's own controllers and nothing else. Each engine
-# pushes its app/javascript onto config.assets.paths, which makes those files
-# reachable over HTTP — but importmap needs a *pin* for the module specifier to
-# exist, and stimulus-loading's eagerLoadControllersFrom("controllers") only
-# walks what the importmap declares. So an engine controller was downloadable and
-# registered nowhere: no error, no 404, no console warning, a
-# data-controller attribute that nothing answered.
-#
-# Measured before the fix: 91 imports, 19 under controllers/, zero from any
-# engine. After: 95, 23, and four — dating_intro, marketplace_logo,
-# playlist_player, tv_player. Those are the dating landing-page toggle, the
-# marketplace animated logo, the playlist audio player and the TV video player on
-# all three watch pages, every one of them inert in production.
-#
-# This asserts the outcome rather than the mechanism, so it survives a rewrite of
-# how the pinning is done and fails if a vertical is added without pinning.
+# The host's relative pin_all_from only covers brgen/app/javascript/controllers.
+# Every sibling engine must be pinned from its own root. Assert actual module
+# specifiers derived from every controller filename, not an engine-name substring
+# or a hard-coded controller count.
 class ImportmapEnginePinsTest < ActiveSupport::TestCase
-  # Each vertical engine lives beside brgen under RAILS/, not inside it.
   ENGINE_ROOTS = {
     "dating" => "brgen_dating",
     "marketplace" => "brgen_marketplace",
     "playlist" => "brgen_radio/playlist",
     "takeaway" => "brgen_marketplace/engines/takeaway",
-    "tv" => "brgen_radio/tv"
+    "tv" => "brgen_radio/tv",
+    # Messenger keeps host-drawn routes but packages its browser controllers in
+    # a Rails engine so they can join the shared asset and importmap pipeline.
+    "messenger" => "brgen_messenger"
   }.freeze
-  VERTICALS = ENGINE_ROOTS.keys.freeze
 
   def imports
     @imports ||= JSON.parse(
@@ -42,43 +32,38 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
     imports.keys.select { |key| key.start_with?("controllers/") }
   end
 
-  # Guards the guard: if this ever reads zero controllers the assertions below
-  # would pass vacuously for the wrong reason.
   test "the importmap resolves and declares brgen's own controllers" do
     refute_empty imports, "importmap resolved to nothing — the check, not the tree"
     assert_operator controller_specifiers.size, :>=, 15,
                     "expected brgen's own controllers/* pins; got #{controller_specifiers.size}"
   end
 
-  test "every engine that ships Stimulus controllers has them pinned" do
-    shipping = VERTICALS.select do |vertical|
-      Dir.glob(Rails.root.join("..", ENGINE_ROOTS.fetch(vertical), "app/javascript/controllers/*_controller.js")).any?
+  test "every engine controller file has its exact importmap pin" do
+    expected = ENGINE_ROOTS.flat_map do |vertical, relative_root|
+      root = Rails.root.join("..", relative_root, "app/javascript/controllers").to_s
+      Dir.glob(File.join(root, "**", "*_controller.js")).sort.map do |path|
+        relative = path.delete_prefix("#{root}/").delete_suffix(".js")
+        [vertical, "controllers/#{relative}"]
+      end
     end
-    refute_empty shipping, "no engine ships controllers — the glob is wrong, not the tree"
 
-    unpinned = shipping.reject do |vertical|
-      controller_specifiers.any? { |spec| spec.include?(vertical) }
-    end
+    refute_empty expected, "no engine controllers were found — the scan roots are wrong, not the tree"
 
-    assert_empty unpinned, <<~MSG.strip
-      these engines ship Stimulus controllers that the importmap does not pin:
+    missing = expected.reject { |_vertical, specifier| controller_specifiers.include?(specifier) }
+    assert_empty missing.map { |vertical, specifier| "#{vertical}: #{specifier}" }, <<~MSG.strip
+      These engine controllers have no resolved importmap pin:
 
-        #{unpinned.join(", ")}
+        #{missing.map { |vertical, specifier| "#{vertical}: #{specifier}" }.join("\n")}
 
-      Their files are servable but no module specifier exists, so
-      eagerLoadControllersFrom never registers them and every data-controller
-      referring to them is dead. pin_all_from resolves against Rails.root — an
-      engine needs its own absolute root. See config/importmap.rb.
+      Adding an asset path makes a file servable, not importable. Keep each engine
+      root in config/importmap.rb and pin its controllers under controllers/.
     MSG
   end
 
-  # Named individually because each is a user-visible surface someone reported
-  # working from the source alone. dating_intro was the fourth; 37d66d956
-  # deleted it with the intro it drove, and no view names it.
-  test "the controllers that were dead in production are pinned" do
+  test "known user-facing vertical controllers remain pinned" do
     %w[marketplace_logo playlist_player tv_player].each do |name|
       assert_includes controller_specifiers, "controllers/#{name}_controller",
-                      "#{name} is unpinned again — it was inert in production before this was fixed"
+                      "#{name} is unpinned and its visible control would be inert"
     end
   end
 end

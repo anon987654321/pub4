@@ -33,17 +33,30 @@ class EngineRouteHelpersTest < Minitest::Test
 
   private
 
+  def test_duplicate_engine_helper_detector_catches_a_real_regression
+    pattern = duplicate_engine_helper_pattern("playlist")
+
+    assert_match pattern, "embed_playlist_playlist_url"
+    refute_match pattern, "embed_playlist_url"
+  end
+
+  private
+
   def leftovers_in(vertical)
-    pattern = /\b#{Regexp.escape(vertical)}_#{Regexp.escape(vertical)}_[a-z0-9_]+(?:_path|_url)\b/
-    pattern = File.join(ROOT, EngineRoots::PATHS.fetch(vertical), "app/{views,helpers,controllers}/**/*.{erb,rb}")
-    Dir.glob(pattern).flat_map do |path|
+    helper_pattern = duplicate_engine_helper_pattern(vertical)
+    glob = File.join(ROOT, EngineRoots::PATHS.fetch(vertical), "app/{views,helpers,controllers}/**/*.{erb,rb}")
+    Dir.glob(glob).flat_map do |path|
       File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, i|
         next if line.lstrip.start_with?("#", "<%#")
-        match = line[pattern]
+        match = line[helper_pattern]
         next unless match
 
         "#{path.sub("#{ROOT}/", "")}:#{i + 1}  #{match}"
       end
     end
+  end
+
+  def duplicate_engine_helper_pattern(vertical)
+    /(?<![a-z0-9])#{Regexp.escape(vertical)}_#{Regexp.escape(vertical)}(?=_|$)/
   end
 end
