@@ -26,7 +26,7 @@ module Maps
     end
 
     def show
-      @place = Place.includes(:city, :neighborhood).find(params[:id])
+      @place = places_in_current_city.includes(:city, :neighborhood).find(params[:id])
       @place.record_activity!("PlaceViewed", source_vertical: "maps") unless passive_request?
       @recent_check_ins = @place.place_check_ins.includes(:user).recent.limit(10)
       # Guests may check in (see the require_user_session gate on #check_in),
@@ -38,7 +38,7 @@ module Maps
     end
 
     def check_in
-      @place = Place.find(params[:id])
+      @place = places_in_current_city.find(params[:id])
       check_in = @place.place_check_ins.create!(
         user: Current.user,
         note: params[:note].to_s.strip.presence,
@@ -54,8 +54,7 @@ module Maps
     # The one place the list and its JSON twin decide which places match: city,
     # kind filter, then the live search.
     def places_scope
-      scope = Place.includes(:city, :neighborhood)
-      scope = scope.where(city: Current.city_record) if Current.city_record
+      scope = places_in_current_city.includes(:city, :neighborhood)
       scope = scope.where(kind: params[:kind]) if params[:kind].present?
       return scope if live_search_query.blank?
 
@@ -65,8 +64,7 @@ module Maps
     def nearby_places_for(place)
       return Place.none unless place.geo?
 
-      scope = Place.where.not(id: place.id)
-      scope = scope.where(city: Current.city_record) if Current.city_record
+      scope = places_in_current_city.where.not(id: place.id)
       scope.nearby(place.latitude, place.longitude, 5).limit(6)
     end
   end

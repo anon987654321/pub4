@@ -19,6 +19,10 @@ module Maps
     # One array, four layers. The Stimulus controller styles a marker from
     # point.type and reads title/subtitle/url.
     def map_points
+      # Domain resolution can succeed while a City row is missing. Do not fall
+      # back to a global map when that happens.
+      return [] unless Current.city_record
+
       places_layer + events_layer + stories_layer + courier_layer
     end
 
@@ -50,9 +54,9 @@ module Maps
     end
 
     def places_layer
-      scope = Place.includes(:neighborhood)
-      scope = scope.where(city: Current.city_record) if Current.city_record
-      within_bbox(scope).limit(500).map do |place|
+      scope = places_in_current_city.includes(:neighborhood)
+                   .where.not(latitude: nil).where.not(longitude: nil)
+      within_bbox(scope).limit(500).filter_map do |place|
         point(place.latitude, place.longitude,
               type: "place", title: place.name,
               subtitle: [ place_kind_label(place.kind), place.neighborhood&.name ].compact_blank.join(", "),
@@ -65,8 +69,9 @@ module Maps
     def events_layer
       scope = Event.upcoming.includes(:neighborhood)
                    .where.not(latitude: nil)
+                   .where.not(longitude: nil)
                    .where("starts_at <= ?", Time.current + EVENT_HORIZON)
-      within_bbox(scope).limit(200).map do |event|
+      within_bbox(scope).limit(200).filter_map do |event|
         point(event.latitude, event.longitude,
               type: "event", title: event.title,
               subtitle: I18n.l(event.starts_at, format: :event),
@@ -78,8 +83,9 @@ module Maps
     # so a pin says "around here" rather than "at this address" — which is the
     # only reason putting them on a public map is acceptable at all.
     def stories_layer
-      scope = Story.alive.in_current_city.includes(:user).where.not(latitude: nil)
-      within_bbox(scope).limit(200).map do |story|
+      scope = Story.alive.in_current_city.includes(:user)
+                    .where.not(latitude: nil).where.not(longitude: nil)
+      within_bbox(scope).limit(200).filter_map do |story|
         point(story.latitude, story.longitude,
               type: "story", title: story.user.display_name,
               subtitle: story.caption.to_s.truncate(60),
@@ -119,8 +125,13 @@ module Maps
     end
 
     def point(lat, lng, type:, title:, subtitle:, url:)
+      latitude = Float(lat, exception: false)
+      longitude = Float(lng, exception: false)
+      return unless latitude&.finite? && longitude&.finite?
+      return unless latitude.between?(-90, 90) && longitude.between?(-180, 180)
+
       { type: type, title: title, subtitle: subtitle.presence, url: url,
-        lat: lat.to_f, lng: lng.to_f }
+        lat: latitude, lng: longitude }
     end
   end
 end

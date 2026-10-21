@@ -24,8 +24,8 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
 
   def in_maps = host!("maps.brgen.no")
 
-  def sign_in_as(user)
-    host! "brgen.no"
+  def sign_in_as(user, host: "brgen.no")
+    host! host
     post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 
@@ -160,5 +160,36 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
 
     get "/", params: { sw_lat: 60.39, sw_lng: 5.32, ne_lat: 60.40, ne_lng: 5.33 }
     assert_equal [ "Bryggen" ], points.select { |p| p["type"] == "place" }.map { |p| p["title"] }
+  end
+  test "a place from another city cannot be read or checked into" do
+    place = Place.create!(city: @city, name: "Bergen-only place", kind: "attraction",
+                          latitude: 60.3974, longitude: 5.3244)
+
+    host! "maps.oshlo.no"
+    get "/places/#{place.id}"
+    assert_response :not_found
+
+    sign_in_as(@user, host: "oshlo.no")
+    host! "maps.oshlo.no"
+    post "/places/#{place.id}/check_in", params: { note: "not in this city" }
+    assert_response :not_found
+    assert_empty place.place_check_ins.reload
+  end
+
+  test "invalid map coordinates never become zero-valued pins" do
+    impossible = Place.create!(city: @city, name: "Impossible latitude", kind: "attraction",
+                               latitude: 60.3974, longitude: 5.3244)
+    impossible.update_column(:latitude, 120)
+    event = Event.create!(user: @user, title: "Missing longitude", starts_at: 2.days.from_now,
+                          latitude: 60.3925, longitude: 5.3242)
+    event.update_column(:longitude, nil)
+
+    in_maps
+    get "/"
+
+    assert_response :success
+    rendered = points
+    assert_nil rendered.find { |point| point["title"] == "Impossible latitude" }
+    assert_nil rendered.find { |point| point["title"] == "Missing longitude" }
   end
 end
