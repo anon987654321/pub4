@@ -82,8 +82,18 @@ class UserPurgeJobTest < ActiveJob::TestCase
     Follow.create!(follower: @other, followee: @user)
     Connection.create!(requester: @user, addressee: @other, status: "accepted")
     Shared::Reaction.create!(user: @user, reactable: item, kind: "like")
+    private_item_reaction = Shared::Reaction.create!(user: @other, reactable: item, kind: "love")
+    private_outfit_reaction = Shared::Reaction.create!(user: @other, reactable: outfit, kind: "love")
     Shared::Notification.create!(user: @user, actor: @other, kind: "alert")
     Shared::Notification.create!(user: @other, actor: @user, kind: "follow")
+    private_item_notification = Shared::Notification.create!(
+      user: @other, actor: @other, notifiable: item, kind: "reaction"
+    )
+    private_outfit_notification = Shared::Notification.create!(
+      user: @other, actor: @other, notifiable: outfit, kind: "reaction"
+    )
+    private_item_vote = Vote.create!(user: @other, votable: item, value: 1)
+    private_outfit_vote = Vote.create!(user: @other, votable: outfit, value: 1)
 
     other_creator = CreatorProfile.create!(
       user: @other, handle: "creator-#{@suffix}", display_name: "Other creator", public: true
@@ -127,7 +137,13 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_empty Follow.where("follower_id = :id OR followee_id = :id", id: @user.id)
     assert_empty Connection.where("requester_id = :id OR addressee_id = :id", id: @user.id)
     assert_empty Shared::Reaction.where(user_id: @user.id)
+    assert_not Shared::Reaction.exists?(private_item_reaction.id), "another user's reaction to a private item survived"
+    assert_not Shared::Reaction.exists?(private_outfit_reaction.id), "another user's reaction to a private outfit survived"
     assert_empty Shared::Notification.where("user_id = :id OR actor_id = :id", id: @user.id)
+    assert_not Shared::Notification.exists?(private_item_notification.id), "notification retained a private item target"
+    assert_not Shared::Notification.exists?(private_outfit_notification.id), "notification retained a private outfit target"
+    assert_not Vote.exists?(private_item_vote.id), "vote retained a private item target"
+    assert_not Vote.exists?(private_outfit_vote.id), "vote retained a private outfit target"
     assert_not Shared::OutboundClick.exists?(user_click.id), "outbound click tied to erased account survived"
     assert_not Shared::OutboundClick.exists?(private_item_click.id), "outbound click retained a private item target"
 
