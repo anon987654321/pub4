@@ -2,6 +2,7 @@
 require "net/http"
 require "uri"
 require "json"
+require_relative "../ground/evidence_router"
 
 module Master
   module Io
@@ -22,6 +23,9 @@ module Master
       end
 
       def call(query:)
+        # Enforce sensitive-query minimization at the tool boundary, including
+        # direct LLM tool calls that bypass the agent's evidence preflight.
+        query = Master::Ground::EvidenceRouter.web_search_query(query)
         query = truncate_query(query)
 
         perm = @governor.permit?(NAME, TIER, query)
