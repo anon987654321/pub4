@@ -53,6 +53,8 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "real time, money, energy"
     assert_includes prompt, "Clinical skills:"
     assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "Privacy and memory:"
+    assert_includes prompt, "do not write these details to persistent memory"
     refute_includes prompt, "Couples and relationship safety:"
     refute_includes prompt, "Martial and contemplative practice:"
     refute_includes prompt, "NICE NG222"
