@@ -8,8 +8,8 @@
             autocomplete: "email", class: "map-search-input", inputmode: "email" %>
     </div>
     <label class="field--check-label">
-      <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
-      <%= t("newsletter.marketing_consent") %>
+      <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1" required>
+      <%= t("newsletter_popup.marketing_opt_in") %>
     </label>
     <%= f.submit t("newsletter.subscribe"), class: "btn btn-primary btn-sm btn-block" %>
   <% end %>

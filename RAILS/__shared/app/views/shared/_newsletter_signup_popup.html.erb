@@ -26,7 +26,6 @@
     <%= form_with url: email_subscriptions_path, method: :post, scope: :email_subscription,
           data: { action: "submit->newsletter-capture#remember" } do |form| %>
       <%= hidden_field_tag "email_subscription[city]", local_assigns.fetch(:city, nil) %>
-      <%= hidden_field_tag "email_subscription[agreed_to_marketing]", "1" %>
       <div class="newsletter-capture-field">
         <%= form.email_field :email,
               placeholder: t("newsletter.email_placeholder"),
@@ -36,7 +35,11 @@
               required: true,
               data: { newsletter_capture_target: "email" } %>
       </div>
-      <p class="newsletter-capture-consent"><%= t("newsletter_popup.consent") %></p>
+      <label class="field--check-label newsletter-capture-consent">
+        <%= form.check_box :agreed_to_marketing, { required: true }, "1", "0" %>
+        <%= t("newsletter_popup.marketing_opt_in") %>
+      </label>
+      <p class="newsletter-capture-consent-note"><%= t("newsletter_popup.consent") %></p>
       <div class="newsletter-capture-actions">
         <%= form.submit t("newsletter_popup.submit") %>
         <button type="button" data-action="newsletter-capture#close"><%= t("newsletter_popup.not_now") %></button>

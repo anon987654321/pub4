@@ -9,8 +9,8 @@
               class: "map-search-input", autocomplete: "email", inputmode: "email" %>
       </div>
       <label class="field--check-label">
-        <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
-        <%= t("newsletter.marketing_opt_in") %>
+        <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1" required>
+        <%= t("newsletter_popup.marketing_opt_in") %>
       </label>
       <%= form.submit local_assigns.fetch(:button_label, t("newsletter.subscribe")), class: "btn btn-primary btn-sm btn-block" %>
     <% end %>
