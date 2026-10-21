@@ -110,7 +110,10 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     name = "RI011#{SecureRandom.hex(4)}"
     params = { community: { name:, description: "interaction campaign session boundary" } }
 
-    post communities_path, params:, headers: same_origin.merge("X-CSRF-Token" => "invalid")
+    # Rails accepts a same-origin request on the strength of Sec-Fetch-Site alone, so a forged one is
+    # cross-site; an invalid token on a same-origin request is not a forgery.
+    forged = { "Sec-Fetch-Site" => "cross-site", "Origin" => "https://attacker.example" }
+    post communities_path, params:, headers: forged.merge("X-CSRF-Token" => "invalid")
     assert_response :unprocessable_entity
     assert_equal 0, Community.where(name: name).count, "the CSRF refusal mutated server state"
 

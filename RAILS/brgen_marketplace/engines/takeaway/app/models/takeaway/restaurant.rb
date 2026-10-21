@@ -18,9 +18,11 @@ class Takeaway::Restaurant < ApplicationRecord
 
   belongs_to :user
   belongs_to :place, optional: true
-  has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
-  # Order history is a receipt, not a child resource the restaurant owner can erase.
+  # Order history is a receipt, not a child resource the restaurant owner can erase. It is declared
+  # before menu_items because dependent callbacks run in declaration order: the refusal has to come
+  # first, or destroy deletes menu items that order_items still reference and the database raises.
   has_many :orders, class_name: "Takeaway::Order", dependent: :restrict_with_error
+  has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
   has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
   has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
   has_many :opening_hours, class_name: "Takeaway::OpeningHour", dependent: :destroy
