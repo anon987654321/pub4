@@ -16,7 +16,6 @@ require "bundler/setup"
 require "open3"
 require "pty"
 require "rbconfig"
-require "timeout"
 require "net/http"
 require "uri"
 require "tmpdir"
@@ -38,6 +37,7 @@ end
 failures = []
 
 require "master"
+require_relative "../lib/io/exec"
 failures << "require" unless step("require master") { [true, nil] }
 
 container = nil
@@ -144,11 +144,11 @@ failures << "pipe" unless step("pipe command") do
   exe = File.expand_path("cli", __dir__)
   Master::Ground::EnvLoader.load!
   env = ENV.to_h.merge("MASTER_QUIET" => "1")
-  out, _st = Timeout.timeout(PIPE_TIMEOUT_SECONDS) { Open3.capture2e(env, exe, stdin_data: "/help\n") }
+  out, _st = Master::Io::Exec.capture2e(env, exe, stdin_data: "/help\n", timeout: PIPE_TIMEOUT_SECONDS, raise_on_timeout: true)
   bug = out =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i
   message = out.lines.find { |line| line =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i }
   [bug.nil?, message&.strip]
-rescue Timeout::Error
+rescue Master::Io::Exec::TimeoutError
   [false, "pipe command timed out after #{PIPE_TIMEOUT_SECONDS}s"]
 end
 

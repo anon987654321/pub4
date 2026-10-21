@@ -3,10 +3,9 @@
 
 # HTTP crawl + inventory sync — optional Ferrum via --browser.
 
-require "open3"
 require "optparse"
-require "timeout"
 require_relative "crawl_support"
+require_relative "../../lib/io/exec"
 
 MASTER_ROOT = File.join(CrawlSupport::ROOT, "MASTER")
 
@@ -16,9 +15,11 @@ def run_browser_crawl(public:, skip_closed:)
   args << "--public" if public
   args << "--strict" unless skip_closed
   env = { "BUNDLE_WITH" => "test", "BUNDLE_GEMFILE" => File.join(MASTER_ROOT, "Gemfile") }
-  out, status = Timeout.timeout(60) { Open3.capture2e(env, "bundle", *args, chdir: MASTER_ROOT) }
+  out, status = Master::Io::Exec.capture2e(env, "bundle", *args, chdir: MASTER_ROOT, timeout: 60, raise_on_timeout: true)
   puts out unless out.strip.empty?
   status.success? ? [] : ["browser crawl failed"]
+rescue Master::Io::Exec::TimeoutError => e
+  ["browser crawl timed out after 60s: #{e.message}"]
 rescue StandardError => e
   ["browser crawl: #{e.class}: #{e.message}"]
 end

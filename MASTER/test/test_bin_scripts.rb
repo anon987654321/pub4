@@ -61,6 +61,22 @@ class TestBinScripts < Minitest::Test
     end
   end
 
+  def test_smoke_pipe_command_uses_the_bounded_executor
+    source = File.read(File.join(ROOT, "bin", "smoke"))
+
+    assert_includes source, "Master::Io::Exec.capture2e(env, exe, stdin_data:"
+    assert_includes source, "rescue Master::Io::Exec::TimeoutError"
+    refute_match(/Timeout\\.timeout\\(PIPE_TIMEOUT_SECONDS\\).*Open3\\.capture2e/, source)
+  end
+
+  def test_crawl_browser_probe_uses_the_bounded_executor
+    source = File.read(File.join(ROOT, "tools", "rails", "crawl_probe.rb"))
+
+    assert_includes source, "Master::Io::Exec.capture2e(env, \"bundle\", *args"
+    assert_includes source, "rescue Master::Io::Exec::TimeoutError"
+    refute_includes source, 'require "timeout"'
+  end
+
   def test_smoke_web_passes_against_a_ready_face
     with_fake_face(ready: true) do |url|
       out, status = run_smoke_web(url)
