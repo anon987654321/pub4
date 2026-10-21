@@ -93,6 +93,8 @@ module Master
       def first_live(kind, env: ENV) = evaluate(kind, env:).first.first&.first
 
       def generate(kind, prompt, env: ENV, dir: nil, reuse: false, opts: {})
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        cache_status = reuse ? "miss" : "off"
         kind = kind.to_sym
         return fail_validation("unknown media kind #{kind.inspect}") unless KINDS.include?(kind)
         return fail_validation("empty prompt") if prompt.to_s.strip.empty?
@@ -100,11 +102,19 @@ module Master
         dir = output_dir(kind, dir)
         digest = Digest::SHA256.hexdigest(prompt)
         cached = reuse && cached_take(dir, digest)
-        return announce_cached(kind, cached) if cached
+        if cached
+          cache_status = "hit"
+          return announce_cached(kind, cached)
+        end
 
         attempt(kind, prompt, digest, dir, env, opts)
       rescue ArgumentError => e
         fail_validation(e.message)
+      ensure
+        if started_at && (!defined?(kind) || kind.nil? || KINDS.include?(kind))
+          elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
+          say("latency media=#{kind || "unknown"} reuse=#{cache_status || "off"} elapsed_ms=#{elapsed_ms}")
+        end
       end
 
       private
