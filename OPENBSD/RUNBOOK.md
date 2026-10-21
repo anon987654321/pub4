@@ -95,7 +95,7 @@ The target host determines command semantics. Begin with bounded, read-only fact
 the release and relevant PATH entries; do not dump the full environment, which
 may contain secrets. Use `man <utility>` and `man -k <topic>` on the target.
 If a local manual is unavailable, consult the explicit release path
-at https://man.openbsd.org/OpenBSD-<release>/<page> and cite the release actually
+at `https://man.openbsd.org/OpenBSD-<release>/<page>` and cite the release actually
 observed; current-manual pages are not proof for an older host. Never assume
 Linux `/proc`, GNU-only flags, or an optional package exists on the host.
 
