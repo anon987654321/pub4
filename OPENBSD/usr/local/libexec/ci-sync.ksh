@@ -138,6 +138,12 @@ fi
 mkdir -p "$shared_dir"
 tar cf - -C "$shared_src" . | tar xf - -C "$shared_dir"
 
+# Each app's .rubocop.yml inherits ../.rubocop.yml: RAILS/.rubocop.yml in the repo, the app home here.
+if [[ -f "$repo/RAILS/.rubocop.yml" && ! -L "$repo/RAILS/.rubocop.yml" ]]; then
+  rm -f "$app_home/.rubocop.yml"
+  tar cf - -C "$repo/RAILS" .rubocop.yml | tar xf - -C "$app_home"
+fi
+
 # Brgen's vertical Rails engines are sibling path gems in the copy-tree.
 if [ "$app" = brgen ]; then
   for vertical in "$repo"/RAILS/brgen_*/; do
