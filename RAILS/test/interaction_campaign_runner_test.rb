@@ -22,6 +22,34 @@ class InteractionCampaignRunnerTest < Minitest::Test
     attr_reader :exitstatus
   end
 
+  def test_RI_010_executes_the_exact_protected_route_test
+    Dir.mktmpdir("interaction-campaign-authz") do |evidence_root|
+      calls = []
+      executor = lambda do |command:, chdir:, timeout:|
+        calls << { command:, chdir:, timeout: }
+        ["1 runs, 1 assertions, 0 failures, 0 errors, 0 skips\n", Status.new(true, 0)]
+      end
+      runner = Runner.new(
+        case_ids: ["RI-010"], root: ROOT, manifest_path: MANIFEST,
+        evidence_root:, io: StringIO.new, executor:
+      )
+
+      assert_equal 0, runner.run
+      assert_equal [{
+        command: [
+          "bin/rails", "test", "test/integration/authorization_matrix_test.rb",
+          "--name", "\\Atest_RI_010_unauthorized_actor_cannot_open_protected_community\\z"
+        ],
+        chdir: File.join(ROOT, "RAILS", "brgen"),
+        timeout: Runner::DEFAULT_TIMEOUT
+      }], calls
+      results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
+      row = JSON.parse(File.read(results_path)).fetch("results").fetch(0)
+      assert_equal "PASS", row.fetch("status")
+      assert_equal "RI-010", row.fetch("case_id")
+    end
+  end
+
   def test_mapped_case_runs_exact_test_and_saves_verifiable_evidence
     Dir.mktmpdir("interaction-campaign-evidence") do |evidence_root|
       calls = []
