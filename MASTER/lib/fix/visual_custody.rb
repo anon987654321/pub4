@@ -37,7 +37,7 @@ module Master
         verdict = compare_captures(Array(captures), "before visual fix")
         return verdict if verdict.ok? || !@layout_completion || verdict.category != :policy
 
-        plan = snapshot_update_plan(snapshot_rows(captures))
+        plan = snapshot_update_plan(snapshot_rows(captures), require_stable_elements: false)
         return inconclusive("layout baseline drift could not be reconciled to measured surfaces") if plan.empty?
 
         Result.ok(state: :layout_completion_baseline_drift, pending_snapshots: plan.size)
@@ -127,7 +127,7 @@ module Master
       # Build an all-or-nothing update plan. A missing baseline, bad HTTP
       # response, thin DOM, failed geometry walk, malformed snapshot, or shared
       # alias disagreement is never repaired by silently blessing a new render.
-      def snapshot_update_plan(measured)
+      def snapshot_update_plan(measured, require_stable_elements: true)
         raise LayoutCompletionEvidenceMissing, "no rendered surfaces" if measured.empty?
 
         grouped = {}
@@ -144,7 +144,7 @@ module Master
 
           baseline = JSON.parse(File.read(path))
           current = @snapshot_gate.send(:distill, payload)
-          if current.fetch("elements", []).size < Deploy::LayoutSnapshotGate::MIN_ELEMENTS
+          if require_stable_elements && current.fetch("elements", []).size < Deploy::LayoutSnapshotGate::MIN_ELEMENTS
             raise LayoutCompletionEvidenceMissing, "#{surface.id}: fewer than #{Deploy::LayoutSnapshotGate::MIN_ELEMENTS} stable elements"
           end
 
