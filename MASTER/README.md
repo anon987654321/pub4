@@ -104,6 +104,17 @@ guards before it is committed and pushed. This is the default; set
 pre-existing dirty work is never part of the batch. An unsuccessful or
 unconfirmed push is a delivery failure, not a completed repair.
 
+For model-assisted findings, each /fix repair route proposes several materially
+different candidates (three by default), then selects one using the target Law and
+focused-test evidence. The candidate prompt draws action/fault oracles from
+RAILS/test/interaction_campaign_400.json for the relevant surface. Existing focused
+tests run against the baseline and each candidate in test mode; candidates that
+introduce failures are rejected and the exact original source is restored after
+each run. /fix records the command paths and distinguishes PASS, improved,
+no-regression, blocked and unavailable outcomes. The 400 natural-language
+campaign cases guide candidates but are not themselves 400 executable browser
+tests; a case stays NOT_RUN until that interaction is run and evidenced.
+
 Code that changes behavior, interfaces, commands, configuration or operations
 must carry matching changes to the relevant README or contract. Generated
 documentation is regenerated from its canonical source, never hand-edited, and
