@@ -3,8 +3,9 @@
 /* Two columns on a phone, four from md up. auto-fit with a floor would compute
    this and give the tablet a three-column step, which is the better answer — but
    the floor has to be measured against the real dashboard container, behind a
-   login the probe cannot reach, and a floor wider than the column would drop
-   desktop from four columns to three. TODO.md carries the measurement. */
+   login the probe cannot reach. Keep this conservative grid until the
+   authenticated browser measurement is recorded in
+   MASTER/data/operator_seams.yml as amber_dashboard_geometry. */
 .dash-stats dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

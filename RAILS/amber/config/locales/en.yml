@@ -491,9 +491,10 @@ en:
       photo_polish_skipped: "No photo polish"
       no_photos: "No photo polish"
       pending: "Pending media"
-      pending_no_worker: "Queued — media processing is off on this server"
+      pending_no_worker: "Queued — awaiting the next scheduled processing window"
+      pending_unknown: "Queued — processing status could not be checked"
       legacy: "Legacy media status (polish pipeline)"
-    photo_processing_html: "<strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates garment segmentation, background-cleanup, colour and responsive derivatives for outfit matching. Deleting the item removes its attachments; archiving keeps them and is reversible."
+    photo_processing_html: "<strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates responsive image variants, estimates a dominant colour, applies one optional portrait-polish pass, and records a local image fingerprint for change detection. It does not segment garments or remove backgrounds. Deleting the item removes its attachments; archiving keeps them and is reversible."
     archiving_safer: "Archiving is safer. Permanent deletion removes the item record and its attached photos."
     wears_on_page:
       one: "%{count} wear on this page"

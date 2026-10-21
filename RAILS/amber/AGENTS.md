@@ -4,7 +4,7 @@
 - **Shared engine:** `RAILS/__shared`.
 - **Inventory:** `apps.yml` (active); wardrobe horizon items in
   `apps.horizon.yml` (ignore).
-- **Heir ops:** `HEIR.md` (low-ops handoff).
+- **Operations:** `RAILS/amber/README.md` (deployment, queue and backup contract).
 - **Golden checks:** `OPENBSD/bin/check-rails --profile=contributor`.
 - **VPS:** `MASTER/bin/operator vps deploy amber --remote`.
 - **Honesty:** photo polish ≠ ML segment/matting; fingerprint ≠ embedding; tips

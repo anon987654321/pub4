@@ -146,6 +146,13 @@ seams:
     evidence: >-
       Authentication, upload, search, error and mobile-navigation journeys rechecked in Brgen, Amber and
       bsdports separately.
+  - id: amber_dashboard_geometry
+    tree: RAILS
+    needs: browser
+    evidence: >-
+      Authenticated Amber dashboard in Chrome at phone, tablet and desktop widths; saved screenshots and
+      measured .dash-stats container width prove the card-column floor and four-column desktop layout before
+      the grid is changed.
   # OPENBSD
   - id: unregistered_domains
     tree: OPENBSD

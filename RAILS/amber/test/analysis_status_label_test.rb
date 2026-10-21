@@ -3,14 +3,10 @@
 require "test_helper"
 require "minitest/mock"
 
-# "Pending media" is a promise, and on vm23 it is one amber cannot keep: no Solid
-# Queue supervisor is resident for this app (TODO.md multi_app_ram — 1 GB, one
-# resident worker, and it is brgen's), so the rc.d footer measured 103 jobs
-# enqueued and 0 finished. A garment uploaded today shows "Pending media" for as
-# long as the account exists.
-#
-# The label now asks whether anything is going to pick the job up. Same doctrine
-# as payment_honesty and affiliate_honesty: say the state, not the intention.
+# Amber's jobs use bounded hourly drains on vm23 rather than a resident
+# supervisor; see OPENBSD/etc/crontab.vm23 and
+# OPENBSD/usr/local/bin/drain-jobs.sh. The status label distinguishes an active
+# worker, work waiting for a scheduled drain, and an unreadable queue status.
 #
 # Three of these need solid_queue_processes, and no app in this tree has that
 # table in its test databases — brgen has declared four test databases all along
@@ -29,7 +25,7 @@ class AnalysisStatusLabelTest < ActionView::TestCase
       # The queue schema being absent is the case this setup is written for.
       # Anything else — a connection this test did not expect, a renamed
       # constant — now raises instead of arriving as a skipped assertion.
-      warn "analysis_status_label_test: queue unavailable (#{e.class}) — asserting the no-worker label"
+      warn "analysis_status_label_test: queue unavailable (#{e.class}) — asserting the unknown label"
       false
     end
   end
@@ -66,11 +62,13 @@ class AnalysisStatusLabelTest < ActionView::TestCase
     assert_equal I18n.t("items.analysis.pending_no_worker"), analysis_status_label("pending")
   end
 
-  # The check failing is not the same fact as the worker being absent, and it
-  # must not announce an outage on its own. This one needs no table — the missing
-  # table IS the failure it degrades through, which is why it runs everywhere.
-  test "an unreachable queue database leaves the ordinary label" do
-    assert_equal I18n.t("items.analysis.pending"), analysis_status_label("pending")
+  # An unreadable queue is neither proof of an active worker nor proof that no
+  # worker exists. Force the query failure so this assertion is deterministic
+  # whether the test database has the Solid Queue schema or not.
+  test "an unreachable queue database reports an unknown status" do
+    SolidQueue::Process.stub(:where, ->(**_kwargs) { raise ActiveRecord::StatementInvalid, "queue unavailable" }) do
+      assert_equal I18n.t("items.analysis.pending_unknown"), analysis_status_label("pending")
+    end
   end
 
   test "every other status is unaffected" do

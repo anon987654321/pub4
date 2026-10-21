@@ -39,24 +39,24 @@ module ApplicationHelper
     WardrobeAi.studio_photograph_available?
   end
 
-# "Pending media" is only true while something is going to pick the job up.
+# "Pending media" describes queued work, not immediate completion.
 #
-# amber enqueues its media work — polish, fingerprinting, analysis — and on
-# vm23 no Solid Queue supervisor is resident for this app: TODO.md
-# records the decision (1 GB, exactly one resident worker, brgen_jobs) and the
-# rc.d footer measured 103 jobs enqueued and 0 finished. So a garment uploaded
-# today shows "Pending media" and will show it forever, and the person who
-# uploaded it has no way to learn that pending is the terminal state here.
-#
-# That is the shape payment_honesty, affiliate_honesty and content_honesty all
-# exist to refuse: a label that describes an intention rather than a fact. When
-# no worker is registered the label says so instead.
+# vm23 runs Amber's Solid Queue jobs in bounded hourly drains rather than a
+# resident supervisor; see OPENBSD/etc/crontab.vm23 and
+# OPENBSD/usr/local/bin/drain-jobs.sh. A heartbeat means a worker is active now.
+# No heartbeat means work awaits a later drain; a failed status query means the
+# state is unknown. Keep those cases distinct in the interface.
 def analysis_status_label(status)
   key = case status.to_s
   when "photo_polish_done" then "photo_polish_done"
   when "photo_polish_failed" then "photo_polish_failed"
   when "photo_polish_skipped", "no_photos" then status.to_s
-  when "pending" then media_worker_running? ? "pending" : "pending_no_worker"
+  when "pending"
+    case media_worker_running?
+    when true then "pending"
+    when false then "pending_no_worker"
+    else "pending_unknown"
+    end
   when /segmentation|background/ then "legacy"
   end
   return t("items.analysis.#{key}") if key
@@ -64,16 +64,15 @@ def analysis_status_label(status)
   status.to_s.humanize
 end
 
-# One query per request at most, and it degrades to "yes" rather than
-# announcing an outage on its own: a missing table or an unreachable queue
-# database is this check failing, not the worker being absent.
+# One query per request at most. Failure to read the queue is unknown, not
+# evidence that a worker is either present or absent.
 def media_worker_running?
   return @media_worker_running if defined?(@media_worker_running)
 
   @media_worker_running = Rails.cache.fetch("amber:queue:worker_present", expires_in: 1.minute) do
     SolidQueue::Process.where(last_heartbeat_at: 5.minutes.ago..).exists?
   rescue StandardError
-    true
+    :unknown
   end
 end
 

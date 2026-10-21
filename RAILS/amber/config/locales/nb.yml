@@ -490,9 +490,10 @@ nb:
       photo_polish_skipped: "Ingen fotopolering"
       no_photos: "Ingen fotopolering"
       pending: "Venter på media"
-      pending_no_worker: "I kø — mediebehandling er av på denne serveren"
+      pending_no_worker: "I kø — venter på neste planlagte behandlingsøkt"
+      pending_unknown: "I kø — behandlingsstatus kunne ikke kontrolleres"
       legacy: "Eldre mediestatus (poleringspipeline)"
-    photo_processing_html: "<strong>Bildebehandling:</strong> opplastinger forblir knyttet til din private garderobeoppføring. Amber lager plaggsegmentering, bakgrunnsfjerning, farge og responsive varianter for antrekksmatching. Sletter du plagget, fjernes vedleggene; arkivering beholder dem og kan angres."
+    photo_processing_html: "<strong>Bildebehandling:</strong> opplastingene forblir knyttet til den private garderobeoppføringen din. Amber lager responsive bildevarianter, anslår en dominerende farge, bruker én valgfri poleringspassering for portrettbilder og lagrer et lokalt bildefingeravtrykk for endringskontroll. Den segmenterer ikke plagg eller fjerner bakgrunner. Sletter du plagget, fjernes vedleggene; arkivering beholder dem og kan angres."
     archiving_safer: "Arkivering er tryggere. Permanent sletting fjerner plaggoppføringen og bildene som hører til."
     wears_on_page:
       one: "%{count} gang brukt på denne siden"
