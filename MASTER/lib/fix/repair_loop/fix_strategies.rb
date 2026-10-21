@@ -22,9 +22,6 @@ module Master
           3. Name the risks and tests to preserve.
         TEXT
 
-        # Candidate generation and selection share one user-simulation contract.
-        # The JSON campaign supplies scenario oracles; only the command results below
-        # count as runtime evidence.
         private
 
         def reflexion_verify(violation, proposed_src)
