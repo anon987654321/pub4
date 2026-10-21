@@ -26,7 +26,9 @@ module Shared
       return false unless guest
 
       AccountMerger.new(guest_user: guest, user: user).call
-      true
+      # Concurrent signup tabs can both hold the same guest row. Only the
+      # destination named by the committed audit row actually received it.
+      AccountMerge.exists?(guest_user_id: guest.id, user_id: user.id, status: "merged")
     rescue StandardError => error
       Rails.logger.warn("guest merge on signup failed: #{error.class}: #{error.message}")
       false
