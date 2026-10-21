@@ -26,6 +26,7 @@ module Ports
       OPEN_TIMEOUT = 15
       READ_TIMEOUT = 300
       MAX_TARBALL_BYTES = 150 * 1024 * 1024
+      MAX_SIGNATURE_BYTES = 64 * 1024
 
       def self.enabled? = ENV["BSDPORTS_PORTS_TARBALL"] == "1"
 
@@ -50,7 +51,10 @@ module Ports
 
         Dir.mktmpdir("bsdports-ports-", @workdir) do |dir|
           tarball = File.join(dir, "ports.tar.gz")
-          return nil unless download(url, tarball)
+          signature = File.join(dir, "SHA256.sig")
+          return nil unless download("#{base}/#{release}/SHA256.sig", signature, max_bytes: MAX_SIGNATURE_BYTES)
+          return nil unless download(url, tarball, max_bytes: MAX_TARBALL_BYTES)
+          return nil unless verify_tarball(tarball, signature)
 
           out, status = Open3.capture2e("tar", "xzf", tarball, "-C", dir)
           unless status.success?
@@ -71,6 +75,8 @@ module Ports
       def decline_reason
         return "BSDPORTS_PORTS_TARBALL is not 1" unless self.class.enabled?
         return "release unknown" if release.blank?
+        return "invalid release identifier" unless release.to_s.match?(/\\A\\d+\\.\\d+\\z/)
+        return "trusted signify key or signify executable unavailable" unless verification_ready?
 
         free = free_bytes(@workdir || Dir.tmpdir)
         return nil if free.nil? # cannot measure — do not block on that alone
@@ -92,7 +98,37 @@ module Ports
         nil
       end
 
-      def download(from, to, limit: 3, origin: nil)
+
+      def trusted_signify_key
+        configured = ENV["BSDPORTS_SIGNIFY_KEY"].to_s
+        return File.file?(configured) ? configured : nil if configured.present?
+
+        candidate = "/etc/signify/openbsd-#{release.to_s.delete('.')}-base.pub"
+        File.file?(candidate) ? candidate : nil
+      end
+
+      def verification_ready?
+        trusted_signify_key.present? &&
+          ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
+            File.executable?(File.join(directory, "signify"))
+          end
+      end
+
+      def verify_tarball(archive, signature)
+        key = trusted_signify_key
+        return false unless key && verification_ready?
+
+        output, status = Open3.capture2e("signify", "-C", "-p", key, "-x", signature, archive)
+        return true if status.success?
+
+        Rails.logger.warn("bsdports ports.tar.gz signature verification failed: #{output.lines.last(3).join.strip}")
+        false
+      rescue StandardError => e
+        Rails.logger.warn("bsdports ports.tar.gz verification failed: #{e.class}: #{e.message}")
+        false
+      end
+
+      def download(from, to, limit: 3, origin: nil, max_bytes: MAX_TARBALL_BYTES)
         raise "too many redirects for #{from}" if limit.negative?
 
         uri = URI.parse(from)
@@ -106,10 +142,10 @@ module Ports
 
         # Resolve, reject private/reserved addresses, pin the socket destination,
         # and cap the body before writing it. Never follow a redirect to a new host.
-        response = Shared::OutboundHttp.request(uri, max_body: MAX_TARBALL_BYTES)
+        response = Shared::OutboundHttp.request(uri, max_body: max_bytes)
         if response.is_a?(Net::HTTPRedirection)
           target = URI.join(from, response["location"].to_s)
-          return download(target.to_s, to, limit: limit - 1, origin:)
+          return download(target.to_s, to, limit: limit - 1, origin:, max_bytes:)
         end
         unless response.is_a?(Net::HTTPSuccess)
           Rails.logger.warn("bsdports ports.tar.gz #{from} returned #{response.code}")
