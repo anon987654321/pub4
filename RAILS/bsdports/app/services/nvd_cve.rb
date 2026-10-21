@@ -54,26 +54,38 @@ class NvdCve
     # The advisory for one CVE, saved, or nil when it has no id or will not save.
     def record(cve)
       id = cve["id"]
-      return unless id
+      return if id.blank?
 
       desc = cve.dig("descriptions", 0, "value").to_s[0, 500]
+      title = desc[0, 200].presence || id
       metrics = cve.dig("metrics", "cvssMetricV31", 0, "cvssData") ||
                 cve.dig("metrics", "cvssMetricV2", 0, "cvssData") || {}
       score = metrics["baseScore"]
       pub = cve["published"]
 
-      adv = SecurityAdvisory.find_or_initialize_by(identifier: id)
-      adv.title = desc[0, 200] if adv.title.blank?
-      adv.description = desc if adv.description.blank?
-      adv.published_at ||= pub ? Time.parse(pub) : Time.current
+      # The unique identifier index is the race-safe identity boundary. Two
+      # ports can discover the same CVE at once; create_or_find_by! returns the
+      # single canonical advisory instead of losing the second port on a race.
+      adv = SecurityAdvisory.create_or_find_by!(identifier: id) do |record|
+        record.title = title
+        record.description = desc.presence
+        record.published_at = pub.present? ? Time.parse(pub) : Time.current
+        record.cvss_score = score if score
+        record.source_url = "https://nvd.nist.gov/vuln/detail/#{id}"
+        record.severity = severity(score) if score
+      end
+
+      adv.title = title if adv.title.blank?
+      adv.description = desc if adv.description.blank? && desc.present?
+      adv.published_at ||= pub.present? ? Time.parse(pub) : Time.current
       adv.cvss_score = score if score
       adv.source_url ||= "https://nvd.nist.gov/vuln/detail/#{id}"
       adv.severity = severity(score) if score
-      return unless adv.save
+      adv.save! if adv.changed?
 
       # One NVD identifier can affect many ports. The join's unique index and
-      # find_or_create_by! make repeated cross-references idempotent.
-      SecurityAdvisoryPort.find_or_create_by!(security_advisory: adv, port: @port)
+      # create_or_find_by! make repeated and concurrent cross-references safe.
+      SecurityAdvisoryPort.create_or_find_by!(security_advisory: adv, port: @port)
       adv
     end
 
