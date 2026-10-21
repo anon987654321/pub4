@@ -30,6 +30,12 @@ class UserPurgeJobTest < ActiveJob::TestCase
     item = Item.create!(user: @user, title: "Private wool coat", category: "Outerwear")
     item.photos.attach(io: StringIO.new("wardrobe-image"), filename: "coat.jpg", content_type: "image/jpeg")
     wardrobe_item = WardrobeItem.create!(user: @user, item: item, notes: "Personal notes")
+    other_item_review = DeclutterReview.create!(
+      user: @other, item: item, reason_kept: "memory", decision: "keep", notes: "Other user's private item review"
+    )
+    other_item_outcome = DeclutterOutcome.create!(
+      user: @other, item: item, action: "sold", notes: "Other user's reference to item"
+    )
     outfit = Outfit.create!(user: @user, name: "Private occasion outfit")
     outfit.image.attach(io: StringIO.new("outfit-image"), filename: "outfit.jpg", content_type: "image/jpeg")
 
@@ -107,6 +113,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
 
     assert_not Profile.exists?(profile.id), "profile survived erasure"
     assert_not Item.exists?(item.id), "private item survived erasure"
+    assert_not DeclutterReview.exists?(other_item_review.id), "another user's review retained a deleted item"
+    assert_not DeclutterOutcome.exists?(other_item_outcome.id), "another user's outcome retained a deleted item"
     assert_not Outfit.exists?(outfit.id), "private outfit survived erasure"
     assert_not WardrobeItem.exists?(wardrobe_item.id), "wardrobe record survived erasure"
     assert_not ExternalIdentity.exists?(provider_identity.id), "provider subject survived erasure"
