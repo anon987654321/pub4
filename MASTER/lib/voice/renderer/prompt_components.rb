@@ -82,17 +82,18 @@ module Master
         # used to: the caller prints it only when one of its values moves.
         def prompt_line(model, phase, **options)
           [
-            state_line(model, **options.merge(operator: operator_state(phase, options.fetch(:last_ok, true), focused: options.fetch(:focused, false)))),
+            state_line(model, **options),
             shell_prompt(
               phase,
               options.fetch(:last_ok, true),
+              destination: options.fetch(:destination, "llm"),
               focused: options.fetch(:focused, false)
             )
           ]
         end
 
         def state_line(model, **options)
-          bits = [options[:operator], "#{short_model(model)}", context_label(options[:tokens], model)].compact
+          bits = ["#{short_model(model)}", context_label(options[:tokens], model)]
           violations = options.fetch(:violations, 0).to_i
           bits << "#{violations} violations" if violations.positive?
           d(bits.join(", "))
@@ -127,18 +128,39 @@ module Master
           text.to_s.gsub(ANSI_ESCAPE, "")
         end
 
-        # OpenBSD Operator prompt, host:path$ . Git state, destination, phase
-        # and the last result ride the state line, so the prompt stays the
-        # shape every OpenBSD shell has.
-        def shell_prompt(_phase, _last_ok, **)
-          "#{Master::Face::Contract.shell_prompt(path: Dir.pwd, host: safe_hostname.to_s, root: @config["root"] || Master::ROOT)} "
+        # OpenBSD Operator prompt: one plain-text line, words and digits only.
+        # Host, checkout/tree, Git state, destination, phase, then input/error input.
+        # Reline owns editing; no punctuation or ANSI decoration in the prompt.
+        def shell_prompt(phase, last_ok, destination: "llm", focused: false)
+          host = prompt_host
+          suffix = prompt_suffix(phase, last_ok, destination:, focused:)
+
+          path = plain_prompt_segment(
+            prompt_path(suffix_length: visible_length(([host] + suffix).join(" ")) + 1),
+          )
+          path = "root" if path.empty?
+
+          [host, path, *suffix].reject(&:empty?).join(" ") + " "
         end
 
-        def operator_state(phase, last_ok, focused:)
-          words = [bounded_prompt_segment(git_prompt_text, 16)]
-          words << bounded_prompt_segment(phase_label(phase), 10) unless focused
-          words << "error" unless last_ok
-          words.reject(&:empty?).join(" ")
+        def prompt_host
+          host = bounded_prompt_segment(safe_hostname.to_s.split(".").first, 8)
+          host.empty? ? "openbsd" : host
+        end
+
+        def prompt_suffix(phase, last_ok, destination:, focused:)
+          phase_text = focused ? "" : bounded_prompt_segment(phase_label(phase), 10)
+          git = bounded_prompt_segment(git_prompt_text, 16)
+
+          [git, prompt_destination(destination), phase_text, phase_prompt(last_ok, phase)].reject(&:empty?)
+        end
+
+        def prompt_destination(value)
+          destination = plain_prompt_segment(value)
+          destination = "llm" if destination.empty?
+          bounded_prompt_segment(destination, 22)
+        rescue StandardError
+          "llm"
         end
 
         def plain_prompt_segment(value)
