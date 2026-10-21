@@ -104,32 +104,38 @@ module Master
         outline-color text-decoration-color text-shadow box-shadow fill stroke
         caret-color accent-color
       ].freeze
-      COLOR_TOKEN = /#[0-9a-f]{3,8}\\b|(?:rgba?|hsla?)\\s*\\([^)]*\\)|\\b(?:transparent|currentcolor|black|white|red|green|blue|yellow|orange|purple|gray|grey)\\b|var\\(\\s*--[\\w-]+\\s*\\)/i
+      COLOR_TOKEN = /#[0-9a-f]{3,8}\b|(?:rgba?|hsla?)\s*\([^)]*\)|\b(?:transparent|currentcolor|black|white|red|green|blue|yellow|orange|purple|gray|grey)\b|var\(\s*--[\w-]+\s*\)/i
 
       def protected_visual_signatures(source)
         color_rows = []
         font_rows = []
-        source.to_s.each_line do |line|
-          line.scan(/(?:\\A|[;{])\\s*([a-z-]+)\\s*:\\s*([^;{}\\n]+)\\s*;?/i).each do |property, value|
-            name = property.downcase
+        source.to_s.split(/[;{}]/).each do |declaration|
+          name, value = declaration.split(":", 2)
+          next unless name && value
+
+          property = name.strip.downcase
+          value = value.strip
+          next if value.empty?
+
+          if COLOR_PROPERTIES.include?(property)
+            tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
+            color_rows << [property, tokens.empty? ? value.gsub(/\s+/, " ").downcase : tokens]
+          elsif property == "font-family"
+            font_rows << value.gsub(/\s+/, " ").strip
+          end
+        end
+        source.to_s.scan(/style\s*=\s*["']([^"']*)["']/i).flatten.each do |inline|
+          inline.split(";").each do |declaration|
+            property, value = declaration.split(":", 2)
+            next unless property && value
+
+            name = property.strip.downcase
             value = value.strip
             if COLOR_PROPERTIES.include?(name)
               tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
-              signature = tokens.empty? ? value.gsub(/\\s+/, " ").downcase : tokens
-              color_rows << [name, signature]
+              color_rows << [name, tokens.empty? ? value.gsub(/\s+/, " ").downcase : tokens]
             elsif name == "font-family"
-              font_rows << value.gsub(/\\s+/, " ").strip
-            end
-          end
-          line.scan(/style\\s*=\\s*["']([^"']*)["']/i).flatten.each do |inline|
-            inline.scan(/\\b([a-z-]+)\\s*:\\s*([^;{}]+)\\s*;?/i).each do |property, value|
-              name = property.downcase
-              if COLOR_PROPERTIES.include?(name)
-                tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }.sort
-                color_rows << [name, tokens.empty? ? value.gsub(/\\s+/, " ").downcase : tokens]
-              elsif name == "font-family"
-                font_rows << value.gsub(/\\s+/, " ").strip
-              end
+              font_rows << value.gsub(/\s+/, " ").strip
             end
           end
         end
