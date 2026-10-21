@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class BankidIdentityPersistenceTest < ActiveSupport::TestCase
+class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
   Info = Struct.new(:email, :phone)
   Auth = Struct.new(:provider, :uid, :info, :extra)
 
@@ -49,6 +49,25 @@ class BankidIdentityPersistenceTest < ActiveSupport::TestCase
     Current.set(user:) do
       assert_nil controller.send(:require_verified_email)
     end
+  end
+
+  def test_bankid_identity_without_email_can_create_a_social_post
+    uid = "bankid-subject-#{SecureRandom.hex(8)}"
+    auth = Auth.new(
+      "bankid",
+      uid,
+      Info.new(nil, nil),
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod" } }
+    )
+    user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
+    session_record = user.sessions.create!(user_agent: "test", ip_address: "127.0.0.1")
+    cookies.signed[:session_id] = session_record.id
+
+    refute user.reload.email_verified?, "BankID must not fabricate mailbox verification"
+    assert_difference -> { Post.count }, 1 do
+      post posts_url, params: { post: { body: "A signed-in BankID member can post without an email claim" } }
+    end
+    assert_redirected_to posts_url
   end
 
   test "a non-BankID identity does not inherit the email-verification exception" do
