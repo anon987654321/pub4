@@ -1269,7 +1269,8 @@
       ],
       "focused_test_paths": [
         "RAILS/amber/test/integration/social_guards_test.rb",
-        "RAILS/amber/test/controllers/posts_controller_anonymous_test.rb"
+        "RAILS/amber/test/controllers/posts_controller_anonymous_test.rb",
+        "RAILS/amber/test/controllers/bankid_identity_persistence_test.rb"
       ]
     },
     {
@@ -4245,7 +4246,7 @@
       "id": "RI-241",
       "surface_id": "amber_social",
       "action_id": "01",
-      "fault_mode": "baseline",
+      "fault_mode": "empty_state",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
       "runtime_evidence": null
@@ -4254,10 +4255,14 @@
       "id": "RI-242",
       "surface_id": "amber_social",
       "action_id": "02",
-      "fault_mode": "empty_state",
+      "fault_mode": "baseline",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/amber/test/controllers/bankid_identity_persistence_test.rb",
+        "name": "test_bankid_identity_without_email_can_create_a_social_post"
+      }
     },
     {
       "id": "RI-243",
