@@ -28,7 +28,7 @@ class AccountMerger
       merge_messages
       merge_trust_signals
       merge_moderation_flags
-      merge_sessions
+      invalidate_guest_sessions
       record_merge
       guest_user.update!(guest: false) if guest_user.respond_to?(:guest=)
     end
@@ -46,7 +46,12 @@ class AccountMerger
 
   def merge_conversations = move_owned_rows(:conversation_participants)
 
-  def merge_sessions = move_owned_rows(:sessions)
+  # A guest cookie is not an authenticated-account credential. Destroy its
+  # session rows when history transfers; moving them would upgrade every copy
+  # of an old guest cookie into the new registered identity.
+  def invalidate_guest_sessions
+    guest_user.sessions.destroy_all if guest_user.respond_to?(:sessions)
+  end
 
   # Amber's one-to-one inbox stores the guest on either side of a message;
   # move both directions so signing up preserves the full conversation. Brgen
