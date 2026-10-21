@@ -2152,7 +2152,11 @@
       "fault_mode": "unauthorized_actor",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/brgen/test/integration/authorization_matrix_test.rb",
+        "name": "test_RI_010_unauthorized_actor_cannot_open_protected_community"
+      }
     },
     {
       "id": "RI-011",
