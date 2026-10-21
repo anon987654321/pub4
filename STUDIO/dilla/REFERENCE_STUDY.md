@@ -178,8 +178,8 @@ The next safe increments should be separate, independently testable contracts:
 1. **Onset proposals:** emit timestamped candidates plus detector/version/confidence; empty or low-confidence input returns an explicit insufficient-evidence status.
 2. **Grid hypotheses:** compare multiple plausible beat/subdivision grids and half/double time; retain competing hypotheses rather than silently picking one.
 3. **Per-lane timing:** only calculate kick/snare/hat offsets when stems or human-validated labels support those roles. Otherwise name the result mix-level onset proxy.
-4. **Window summaries:** summarize 4-, 8-, and 16-bar windows after a grid has been selected; preserve source time boundaries and all raw event times.
-5. **Golden fixtures:** use generated click tracks with known BPM, known per-lane offsets, missing hits, swung offbeats, tempo changes, silence, and noise. Assert expected values and uncertainty, not a hand-picked Dilla number.
+4. **Window summaries:** complete 4-, 8-, and 16-bar windows and 16-cell grid proxy vectors are now exported with source-time boundaries. Next, compare them against persistent grid hypotheses and export plot data without treating each local phase as a verified downbeat.
+5. **Golden fixtures:** regression tests now cover vector shape and normalization, complete 4-, 8-, and 16-bar boundaries, median aggregation, and report rendering. Extend them with generated click tracks containing known BPM, per-lane offsets, missing hits, swung offbeats, tempo changes, silence, and noise; assert uncertainty as well as expected values.
 6. **No hidden mutation:** analysis of a reference must not silently change global groove settings or generation defaults. Learned profiles remain attributable to source fingerprints, style scope, and explicit operator activation.
 
 ### Source additions
