@@ -573,6 +573,56 @@ end
     Thread.current[:reflexion_reason] = nil
   end
 
+  # This drives the complete one-file repair path, not only the private apply helper.
+  # The temporary target has no campaign surface of its own, so candidate selection
+  # must remain explicitly unverified while the enclosing test verifies the repair.
+  class RepairAndVerifyAgent
+    def ask(prompt)
+      response_for(prompt)
+    end
+
+    def ask_once(prompt, **)
+      response_for(prompt)
+    end
+
+    private
+
+    def response_for(prompt)
+      prompt.include?("Verify this proposed code fix is correct.") ? "SAFE" : "clean\\n"
+    end
+  end
+
+  def test_RI_341_fix_repairs_known_small_defect_and_verifies
+    previous_scan_agreement = ENV["MASTER_FIX_SCAN_AGREEMENT"]
+    ENV["MASTER_FIX_SCAN_AGREEMENT"] = "0"
+    Dir.mktmpdir("master-fix-known-defect") do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\\n")
+      bus = FakeBus.new
+      scanner = RecordingScanner.new
+      scanner.define_singleton_method(:should_autofix?) do |_rule_id, _confidence, allow_deletions: false|
+        true
+      end
+      loop = build_loop(root:, bus:, scanner:, agent: RepairAndVerifyAgent.new)
+
+      result = loop.run_once([path])
+
+      assert_equal :fixed, result.fetch(:status)
+      assert_equal 1, result.fetch(:fixed)
+      assert_equal "clean\\n", File.read(path)
+      assert_operator scanner.paths.count(path), :>=, 2
+      assert_includes bus.events.map(&:first), "repair_loop:fix_applied"
+      selected = bus.events.find { |event, _| event == "repair_loop:candidate_selected_unverified" }
+      refute_nil selected, "an unmapped scratch target must not claim focused-test proof"
+      assert_empty selected.last.fetch(:tests)
+      refute_includes bus.events.map(&:first), "repair_loop:candidate_selected"
+
+      assert_empty scanner.scan(path).value!, "a fresh scan must find no remaining violation"
+    end
+  ensure
+    previous_scan_agreement.nil? ? ENV.delete("MASTER_FIX_SCAN_AGREEMENT") : ENV["MASTER_FIX_SCAN_AGREEMENT"] = previous_scan_agreement
+  end
+
   class SilentAgent
     def ask(_prompt) = ""
     def ask_once(_prompt, **) = ""

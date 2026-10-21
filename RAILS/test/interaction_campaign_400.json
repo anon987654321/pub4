@@ -5148,7 +5148,12 @@
       "fault_mode": "baseline",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "runner": "ruby_minitest",
+        "path": "MASTER/test/test_repair_loop_policy.rb",
+        "name": "test_RI_341_fix_repairs_known_small_defect_and_verifies"
+      }
     },
     {
       "id": "RI-342",
