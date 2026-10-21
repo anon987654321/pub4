@@ -65,12 +65,13 @@ class MapsEngineWiringContractTest < Minitest::Test
     assert_includes controller, "city&.latitude"
     assert_includes home, 't("maps.aria_map")'
   end
+
   def test_missing_city_coordinates_fall_back_to_a_world_view_not_bergen
     controller = host_read("app/javascript/controllers/map_controller.js")
     home = read("app/views/maps/home/index.html.erb")
 
     assert_includes controller, "Number.isFinite(this.centerLatValue)"
-    assert_includes controller, "return [0, 0]"
+    assert_includes controller, ": [0, 0]"
     refute_includes controller, "60.39299"
     assert_includes home, 'data-map-zoom-value="<%= @map_center_lat.present? && @map_center_lng.present? ? 12 : 1.5 %>"'
   end

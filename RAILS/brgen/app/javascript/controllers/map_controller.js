@@ -46,8 +46,10 @@ export default class extends Controller {
   }
 
   _hasCenter() {
-    return this.hasCenterLatValue &&
-      this.hasCenterLngValue &&
+    const latitude = this.element.getAttribute("data-map-center-lat-value")
+    const longitude = this.element.getAttribute("data-map-center-lng-value")
+    return latitude !== null && latitude.trim() !== "" &&
+      longitude !== null && longitude.trim() !== "" &&
       Number.isFinite(this.centerLatValue) &&
       Number.isFinite(this.centerLngValue)
   }
