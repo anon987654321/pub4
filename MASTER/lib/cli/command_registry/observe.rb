@@ -25,10 +25,48 @@ module Master
         _arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
 
         Scan::Live.with_interrupt_dump(root:, snapshot: !dry_run) do |holder|
-          mechanically(scanner) do
+          text = mechanically(scanner) do
             scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:, on_total:)
           end
+          report_file_counts(holder, ctx&.dig(:on_counts), dry_run:)
+          text
         end
+      end
+
+      # The same reading of only the files named in context[:files], for a second look at what a repair
+      # changed. context[:on_counts] hears the count per file, as it does after a whole-tree reading.
+      def observe_files(scanner:, root:, context:, on_total: nil)
+        Scan::Live.ensure_sync!
+        _arg, dry_run, _no_autofix, _clean_arg, do_autofix = parse_scan_args(context)
+
+        requests = context.fetch(:files).map do |file|
+          Scan::Request.new(scanner:, root:, arg: file, autofix: do_autofix).call
+        end
+        report_files(requests, dry_run:, on_total:, on_counts: context[:on_counts])
+      end
+
+      def report_files(requests, dry_run:, on_total:, on_counts:)
+        pairs = requests.map(&:pairs).reject { |found| found.is_a?(String) }.flatten(1)
+        first = requests.first
+        filters = first ? [first.profile, first.law_filter, first.severity_filter] : []
+        profile, rule_filter, severity_filter = filters
+        report = Scan::Report.new(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, phase: "final")
+
+        on_total&.call(report.total_count)
+        report_file_counts({ pairs:, filters: }, on_counts, dry_run:)
+        pairs.empty? ? clean_scan_line(dry_run:) : report.render
+end
+
+      # Findings per file, the files with none left out, from the pairs scan_pass left in the holder.
+      def report_file_counts(holder, on_counts, dry_run:)
+        return unless on_counts && holder[:pairs]
+
+        profile, rule_filter, severity_filter = holder[:filters]
+        counts = holder[:pairs].to_h do |pair|
+          report = Scan::Report.new(pairs: [pair], profile:, rule_filter:, severity_filter:, dry_run:)
+          [pair.first.to_s, report.total_count]
+        end
+        on_counts.call(counts.reject { |_path, count| count.zero? })
       end
 
       # The reading is mechanical; the model tier belongs to the fix passes that
@@ -68,6 +106,8 @@ module Master
         text = render_final_scan_report(
           pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:, on_total:,
         )
+        holder[:pairs] = pairs
+        holder[:filters] = [profile, rule_filter, severity_filter]
         holder[:text] = text
         Scan::Live.snapshot!(text, root:, note: "final") unless dry_run
         text

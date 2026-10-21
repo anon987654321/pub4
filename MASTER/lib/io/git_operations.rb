@@ -112,6 +112,22 @@ module Master
           "#{lines.first(limit).join}… #{lines.size - limit} more lines of patch\n"
         end
 
+        # Every path that differs from a commit, committed, edited or new, relative to
+        # this root. A path that differs from the commit before the run may have been
+        # written by the run, so the list errs wide, never narrow.
+        def paths_since(from)
+          tracked, _diff_err, found = Master::Io::Exec.capture3(
+            "git", "-C", @root_path, "diff", "--name-only", "--relative", "-z", from, "--", "."
+          )
+
+          fresh, _list_err, listed = Master::Io::Exec.capture3(
+            "git", "-C", @root_path, "ls-files", "--others", "--exclude-standard", "-z", "--", "."
+          )
+          return unless found.success? && listed.success?
+
+          (tracked.split("\0") + fresh.split("\0")).reject(&:empty?).uniq
+        end
+
         def working_patch(limit: 400)
           out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "diff")
           return "" unless st.success?

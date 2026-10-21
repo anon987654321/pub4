@@ -4,6 +4,7 @@ require_relative "../../operator/gate_chain"
 require_relative "pass_result"
 require_relative "target_resolver"
 require_relative "proof"
+require_relative "reobservation"
 
 module Master
   module CLI
@@ -24,6 +25,7 @@ module Master
           @t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @unit = "review0"
           @observation_totals = {}
+          @observed_counts = {}
           @observe_units = []
         end
 
@@ -145,7 +147,7 @@ module Master
             run_fix(resolved)
           end]
           sections << ["changes", changes_section(before)]
-          sections << observe_section(title: "re-observe", unit: "obs1", shell:, aesthetic: run_aesthetic)
+          sections << reobserve_section(before:, resolved:, shell:, aesthetic: run_aesthetic)
           sections << proof_section(resolved, baseline)
         end
 
@@ -194,6 +196,38 @@ module Master
             readings << run_observation(shell, unit:)
             readings.join("\n")
           end]
+        end
+
+        # The second reading of a repair covers the files the repair changed; see Reobservation.
+        def reobserve_section(before:, resolved:, shell:, aesthetic:)
+          scope = reobservation&.scope(before, resolved) unless aesthetic
+          return observe_section(title: "re-observe", unit: "obs1", shell:, aesthetic:) unless scope
+
+          ["re-observe", reread(scope, shell)]
+        end
+
+        def reread(scope, shell)
+          @observe_units << "obs1"
+
+          log_phase("obs1", "observe", "path #{shell}, #{scope.changed.size} changed") do
+            @observed_counts["obs1"] = {}
+            reading =scope.files.empty? ? "" : run_observation(shell, unit: "obs1", files: scope.files)
+            @observation_totals["obs1"] = reobservation.total(scope.changed, @observed_counts["obs1"])
+            note = "re-read #{scope.files.size} changed files; the others carry obs0's counts"
+            [note, reading].reject(&:empty?).join("\n")
+          end
+        end
+
+        # Nil until a first reading has left its total and its counts to carry forward.
+        def reobservation
+          return unless @observation_totals.key?("obs0") && @observed_counts.key?("obs0")
+
+          Reobservation.new(
+            git: repo_git,
+            root: @root,
+            first_total: @observation_totals["obs0"],
+            first_counts: @observed_counts["obs0"],
+          )
         end
 
         def dmesg_boot(resolved, posture, apply, critique, aesthetic)
@@ -253,20 +287,23 @@ def default_apply?(*) = false
 
   def default_critique?(*, apply: nil) = apply != false && ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
 
-        def run_observation(arg, unit:)
+        def run_observation(arg, unit:, files: nil)
           # Stash unit so Scanner progress lines attach to this observation.
           if @scanner.respond_to?(:instance_variable_set)
             @scanner.instance_variable_set(:@through_scan_unit, unit)
           end
+
           # A read-only pass must not write through the observation's mechanical
           # autofix either.
           observe_arg = @apply == false ? "#{arg} --dry-run".strip : arg
-          Master::CLI::CommandRegistry.observe(
-            scanner: @scanner,
-            root: @root,
-            ctx: { args: observe_arg },
-            on_total: ->(total) { @observation_totals[unit] = total },
-          )
+          context = { args: observe_arg, on_counts: ->(counts) { @observed_counts[unit] = counts } }
+          on_total = ->(total) { @observation_totals[unit] = total }
+
+          registry = Master::CLI::CommandRegistry
+          reading = { scanner: @scanner, root: @root, on_total: }
+          return registry.observe_files(**reading, context: context.merge(files:)) if files
+
+          registry.observe(**reading, ctx: context)
         rescue StandardError => e
           stage_failure("observe", unit, e)
         end
