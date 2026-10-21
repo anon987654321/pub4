@@ -88,6 +88,36 @@ and full OpenBSD contract suites pass. Then narrow the `dev` rule and remove whe
 membership in one planned rollout, with an authenticated operator recovery path
 established first.
 
+## Command selection and diagnosis
+
+The target host determines command semantics. Begin with bounded, read-only facts:
+`uname -srm`, `uname -v`, `id`, `pwd`, and `command -v <utility>`. Record
+the release and relevant PATH entries; do not dump the full environment, which
+may contain secrets. Use `man <utility>` and `man -k <topic>` on the target.
+If a local manual is unavailable, consult the matching release at
+https://man.openbsd.org/ and cite the release actually observed. Never assume
+Linux `/proc`, GNU-only flags, or an optional package exists on the host.
+
+For a daemon incident, distinguish configured, enabled, running, locally healthy,
+and publicly reachable. Check the relevant `rcctl configtest` and `rcctl check`,
+then inspect the process, listening socket, and service logs. For a public outage,
+trace DNS and TLS, PF and relayd/httpd, the loopback listener, and the application
+in that order. A healthy TLS endpoint alone does not prove the backend is up;
+a failed immediate service check during startup does not by itself prove a crash.
+Verify independently with a service signal, an application-level request, and
+the actual public route where relevant.
+
+For patch state, `syspatch -c` lists available base patches and `syspatch -l`
+lists installed patches. Neither alone decides a release upgrade. Read the target
+release's upgrade instructions, establish a usable backup and console/recovery
+path, and assess service and package compatibility before proposing an upgrade.
+
+Before any mutation, preserve the observed state and establish a recovery route.
+Validate configuration with the service's supported test (for example,
+`rcctl configtest` or `pfctl -nf /etc/pf.conf`), make one scoped change, and
+verify its effect independently. Do not infer success from a wrapper's exit code
+when the underlying operation has its own receipt or health check.
+
 ## SSH
 
 One session at a time. Rapid reconnects trip pf bruteforce.
