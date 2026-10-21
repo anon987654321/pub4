@@ -343,6 +343,44 @@ class TestDialogueRubric < Minitest::Test
     refute_includes prompt, "Helsenorge — mental-health help"
   end
 
+  def test_explicit_self_harm_denial_does_not_trigger_crisis_specific_sources
+    prompt = Rubric.support_prompt_for(
+      "I had a terrible day, but I feel safe and have no thoughts of self-harm.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    refute_includes prompt, "NICE NG225"
+    refute_includes prompt, "Helsenorge — mental-health help"
+  end
+
+  def test_a_positive_crisis_signal_survives_an_adjacent_negation
+    prompt = Rubric.support_prompt_for(
+      "I feel safe and have no thoughts of self-harm, but I don't want to wake up tomorrow.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "NICE NG225"
+  end
+
+  def test_negated_suicidal_intent_does_not_hide_separate_violence_danger
+    prompt = Rubric.support_prompt_for(
+      "I am not suicidal, but my partner choked me and threatened to kill me if I leave.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "Manipulation resistance:"
+  end
+
+  def test_routine_family_member_mentions_do_not_force_personal_support
+    assert_nil Rubric.support_prompt_for(
+      "My mother lives in Oslo and my father works offshore; what is the weather?",
+      root: Master::ROOT,
+    )
+  end
+
   def test_missing_support_data_keeps_conservative_crisis_guidance
     prompt = nil
     Master::Ground::Swallow.stub(:log, nil) do
