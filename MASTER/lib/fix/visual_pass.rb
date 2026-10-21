@@ -76,6 +76,10 @@ module Master
         return Result.ok(state: :not_applicable) unless applicable?(target)
 
         @layout_completion_enabled = VisualCompletion.enabled_for_target?(root: repo_root, target:)
+        if @layout_completion_enabled
+          @bus&.publish("fix_loop:layout_completion_enabled", target:, policy: VisualCompletion::POLICY_PATH)
+          Master::Trace::Dmesg.status("visual0", "layout completion active: target=#{target}, policy=#{VisualCompletion::POLICY_PATH}")
+        end
         raise "visual review has no agent" unless @agent
 
         require File.expand_path("../../gates/support/geometry_probe", __dir__)
