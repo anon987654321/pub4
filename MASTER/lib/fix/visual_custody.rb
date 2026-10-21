@@ -11,10 +11,10 @@ require_relative "../../gates/lib/rendered/layout_snapshot"
 module Master
   module Fix
     # A visual fix gets a stricter commit boundary than a source-only fix.
-    # The committed layout snapshot is the protected surface contract: it must
-    # match before a visual proposal is trusted, and it must still match after
-    # the proposal is written. A mismatch restores the old source through
-    # RepairLoop#reject_fix instead of blessing the new render.
+    # Ordinarily the committed snapshot must match before and after a proposal.
+    # The explicitly authorized Rails completion campaign may reconcile a
+    # structural difference, but only after measurable renders and every other
+    # visual quality gate passes; its snapshot write joins the active transaction.
     class VisualCustody
       # Nothing was measured and no measurement here will change that without
       # someone fixing the setup: a fact, not a decision.
@@ -218,6 +218,10 @@ module Master
 
       def relative(path)
         path.delete_prefix("#{@root}/")
+      end
+
+      def inconclusive(message)
+        Result.err("visual custody: INCONCLUSIVE — #{message}", category: :inconclusive, gap: UNMEASURABLE)
       end
 
       def unavailable
