@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require_relative "../../test/engine_roots"
 
 # Engine JavaScript can be servable through the asset paths and still be missing
 # from the importmap. In that case data-controller looks normal, but Stimulus
@@ -11,17 +12,6 @@ require "test_helper"
 # specifiers derived from every controller filename, not an engine-name substring
 # or a hard-coded controller count.
 class ImportmapEnginePinsTest < ActiveSupport::TestCase
-  ENGINE_ROOTS = {
-    "dating" => "brgen_dating",
-    "marketplace" => "brgen_marketplace",
-    "playlist" => "brgen_radio/playlist",
-    "takeaway" => "brgen_marketplace/engines/takeaway",
-    "tv" => "brgen_radio/tv",
-    # Messenger keeps host-drawn routes but packages its browser controllers in
-    # a Rails engine so they can join the shared asset and importmap pipeline.
-    "messenger" => "brgen_messenger"
-  }.freeze
-
   def imports
     @imports ||= JSON.parse(
       Rails.application.importmap.to_json(resolver: ApplicationController.helpers),
@@ -39,7 +29,7 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
   end
 
   test "every engine controller file has its exact importmap pin" do
-    expected = ENGINE_ROOTS.flat_map do |vertical, relative_root|
+    expected = EngineRoots::ASSET_PATHS.flat_map do |vertical, relative_root|
       root = Rails.root.join("..", relative_root, "app/javascript/controllers").to_s
       Dir.glob(File.join(root, "**", "*_controller.js")).sort.map do |path|
         relative = path.delete_prefix("#{root}/").delete_suffix(".js")

@@ -16,4 +16,7 @@ module EngineRoots
     "playlist" => "brgen_radio/playlist",
     "takeaway" => "brgen_marketplace/engines/takeaway",
   }.freeze
+
+  # Messenger routes stay in brgen, but its Stimulus controllers ship in an engine.
+  ASSET_PATHS = PATHS.merge("messenger" => "brgen_messenger").freeze
 end

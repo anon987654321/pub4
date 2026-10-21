@@ -10,7 +10,7 @@ require_relative "engine_roots"
 # the owner section 500'd — the embed feature the page itself advertises.
 class EngineRouteHelpersTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  ENGINES = %w[playlist marketplace dating takeaway tv maps].freeze
+  ENGINES = EngineRoots::PATHS.keys.freeze
 
   def test_isolated_engine_views_do_not_call_host_namespaced_helpers
     leftovers = ENGINES.flat_map { |vertical| leftovers_in(vertical) }
@@ -30,8 +30,6 @@ class EngineRouteHelpersTest < Minitest::Test
       refute_empty views, "#{EngineRoots::PATHS.fetch(vertical)}/app/views is empty or gone"
     end
   end
-
-  private
 
   def test_duplicate_engine_helper_detector_catches_a_real_regression
     pattern = duplicate_engine_helper_pattern("playlist")
