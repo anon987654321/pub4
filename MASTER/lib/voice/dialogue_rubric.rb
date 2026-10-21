@@ -460,10 +460,10 @@ module Master
           cases: reports,
           response_model: response_model,
           judge_model: judge_model,
-          independent_judge: !response_model.to_s.empty? && !judge_model.to_s.empty? &&
-                             response_model.to_s != judge_model.to_s,
+          distinct_model_identifiers: !response_model.to_s.empty? && !judge_model.to_s.empty? &&
+                                      response_model.to_s != judge_model.to_s,
           requires_human_review: true,
-          note: "Synthetic screening only. Aggregate scores do not establish clinical safety or efficacy.",
+          note: "Synthetic screening only. Different model identifiers do not guarantee independent judgments; aggregate scores do not establish clinical safety or efficacy.",
         }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "dialogue_rubric.run_support_benchmark", severity: :cosmetic)
