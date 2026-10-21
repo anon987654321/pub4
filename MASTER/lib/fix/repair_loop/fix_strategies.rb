@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require "json"
 require "tmpdir"
+require_relative "../../io/exec"
+require_relative "../rails_app"
 
 module Master
   module Fix
@@ -675,15 +678,12 @@ module Master
 
         def council_fix(violation)
           path = violation[:file]
-          return unless File.exist?(path)
+          return unless File.file?(path)
+
           src = File.read(path, encoding: "UTF-8")
-          prompt = build_prompt_for(violation:, src:, path:, style: :council)
-          fix_attempt(violation, event: "repair_loop:council_error").first_code(
-            prompt:,
-            ext: File.extname(path).downcase,
-            source: src,
-            wait_context: { rule: @law.id, file: path, mode: :council },
-            image: @visual_image,
+          candidate_fix(
+            violation:, src:, path:, style: :council,
+            event: "repair_loop:council_error"
           )
         end
 
@@ -699,55 +699,75 @@ module Master
         end
 
         def diff_fix(violation:, src:, path:)
-          prompt = build_prompt_for(violation:, src:, path:, style: :diff)
-          MAX_FIX_RETRIES.times do |attempt|
-            wait_before_retry(attempt, rule: @law.id, file: path, mode: :diff)
+          count = UserSimulation.candidate_count
+          candidates = count.times.filter_map do |index|
+            prompt = candidate_prompt(
+              violation:, src:, path:, style: :diff, index:,
+              suffix: "Return one unified diff for this candidate only. Do not combine it with any other candidate."
+            )
             response = ask_agent(prompt, image: @visual_image).to_s
             next if response.strip == "UNCHANGED"
-            result = PatchApplier.apply(src, response)
-            return result.source if result.is_a?(PatchApplier::Success)
-            return whole_file_fallback(violation:, src:, path:, reason: result.reason)
+
+            applied = PatchApplier.apply(src, response)
+            if applied.is_a?(PatchApplier::Success)
+              @bus&.publish(
+                "repair_loop:candidate_proposed",
+                law: @law.id, file: path, candidate: index + 1,
+                approach: UserSimulation.approach(index).fetch(:name), format: :diff
+              )
+              applied.source
+            else
+              @bus&.publish(
+                "repair_loop:candidate_rejected",
+                law: @law.id, file: path, candidate: index + 1,
+                reason: "invalid diff: #{applied.reason.to_s[0, 140]}"
+              )
+              nil
+            end
           rescue StandardError => e
             action = handle_fix_exception(e, violation, event: "repair_loop:fix_error")
             next if action == :retry
-            return
-          end
-          nil
+
+            nil
+          end.uniq
+
+          selected = best_candidate(candidates, path, original: src, violation:)
+          return selected if selected
+
+          candidate_fix(
+            violation:, src:, path:, style: :file,
+            suffix: "The independent diff candidates were unusable or rejected by verification. Propose a fresh, materially different corrected-file candidate; do not repeat or merge the rejected diffs.",
+            event: "repair_loop:fix_error"
+          )
         end
 
         def genetic_fix(violation:, src:, path:)
-          ext = File.extname(path).downcase
-          prompt = build_prompt_for(violation:, src:, path:)
-          candidates = fix_attempt(violation, attempts: genetic_autofix_candidates, event: "repair_loop:fix_error").codes(
-            prompt:,
-            ext:,
-            source: src,
-            wait_context: { rule: @law.id, file: path, mode: :genetic },
-            image: @visual_image,
+          candidate_fix(
+            violation:, src:, path:, style: :file,
+            event: "repair_loop:fix_error"
           )
-          best_candidate(Array(candidates), path)
         end
 
         def architect_then_fix(violation:, src:, path:)
           strong_model = routing_model_ids[:strong]
           fast_model = routing_model_ids[:fast]
           plan = architecture_plan(violation:, src:, path:, model: strong_model)
-          return whole_file_fallback(violation:, src:, path:, reason: "no architecture plan") if plan.to_s.strip.empty?
-
-          prompt = build_prompt_for(
-            violation:,
-            src:,
-            path:,
-            style: :file,
-          ) + "\n\nArchitecture plan:\n#{plan}"
-          response = fast_model ? ask_once_agent(prompt, model: fast_model, image: @visual_image) : ask_once_agent(prompt, image: @visual_image)
-          response = extract_code(response.to_s, File.extname(path).downcase)
-          return whole_file_fallback(violation:, src:, path:, reason: "no code returned") if response.to_s.strip.empty?
-
-          response
+          suffix = if plan.to_s.strip.empty?
+                     "Architecture planning produced no usable plan. Still generate distinct, bounded repair alternatives from the verified source and user-simulation oracles."
+                   else
+                     "Architecture plan from a separate planning pass:\n#{plan}"
+                   end
+          candidate_fix(
+            violation:, src:, path:, style: :file, suffix:,
+            model: fast_model, event: "repair_loop:fix_error"
+          )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RepairLoop.architect_then_fix", rule: @law.id)
-          whole_file_fallback(violation:, src:, path:, reason: e.message)
+          candidate_fix(
+            violation:, src:, path:, style: :file,
+            suffix: "Architecture planning failed safely (#{e.class}). Propose materially different bounded alternatives without assuming a plan succeeded.",
+            event: "repair_loop:fix_error"
+          )
         end
 
         def fix_attempt(violation, attempts: MAX_FIX_RETRIES, event:)
@@ -772,16 +792,73 @@ module Master
           end
         end
 
-        def best_candidate(candidates, path)
+        def best_candidate(candidates, path, original: nil, violation: nil)
           return if candidates.empty?
 
-          original = File.read(path, encoding: "UTF-8")
-          baseline = rescan_candidate(original, path)
-          scored = candidates.filter_map do |candidate|
-            count = rescan_candidate(candidate, path)
-            [count, candidate] if count <= baseline
+          original ||= File.read(path, encoding: "UTF-8")
+          unless File.file?(path) && File.read(path, encoding: "UTF-8") == original
+            @bus&.publish(
+              "repair_loop:candidate_simulation_blocked",
+              law: @law.id, file: path, reason: "target changed since candidate generation"
+            )
+            return
           end
-          scored.empty? ? nil : scored.min_by(&:first).last
+
+          baseline = rescan_candidate(original, path)
+          viable = Array(candidates).map(&:to_s).reject(&:empty?).uniq.filter_map do |candidate|
+            count = rescan_candidate(candidate, path)
+            next if count > baseline
+
+            { source: candidate, findings: count, diff_bytes: (candidate.bytesize - original.bytesize).abs }
+          end
+          return if viable.empty?
+
+          simulation = user_simulation
+          simulations = simulation.evaluate_candidates(
+            path:, original:, candidates: viable.map { |row| row.fetch(:source) },
+            writer: ->(target, content) { write_atomic(target, content) }
+          )
+
+          ranked = viable.each_with_index.filter_map do |row, index|
+            proof = simulations[index] || { status: :unavailable, reason: "candidate has no simulation result", test_paths: [] }
+            status = proof.fetch(:status).to_sym
+            if %i[regression blocked].include?(status)
+              @bus&.publish(
+                "repair_loop:candidate_rejected",
+                law: @law.id, file: path, candidate: index + 1,
+                reason: "candidate simulation #{status}: #{proof[:reason] || proof[:regressions].to_a.first || "focused proof did not clear"}"
+              )
+              next
+            end
+
+            [
+              [UserSimulation.rank(status), row.fetch(:findings), row.fetch(:diff_bytes)],
+              row.fetch(:source),
+              proof
+            ]
+          end
+          selected = ranked.min_by(&:first)
+          unless selected
+            @bus&.publish(
+              "repair_loop:candidate_selection_blocked",
+              law: @law.id, file: path, candidates: viable.size,
+              reason: "every candidate introduced a test regression or focused verification was blocked"
+            )
+            return
+          end
+
+          proof = selected[2]
+          @bus&.publish(
+            "repair_loop:candidate_selected",
+            law: @law.id, file: path, candidates: viable.size,
+            status: proof.fetch(:status), tests: proof.fetch(:test_paths),
+            remaining_findings: selected[0][1], diff_bytes: selected[0][2],
+            regressions: proof.fetch(:regressions).length,
+            improvements: proof.fetch(:improvements).length
+          )
+          selected[1]
+        rescue UserSimulation::RestoreFailure
+          raise
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RepairLoop.best_candidate", rule: @law.id)
           nil
@@ -800,9 +877,62 @@ module Master
           raise
         end
 
+        def user_simulation
+          @user_simulation ||= UserSimulation.new(root: Master::REPO_ROOT, bus: @bus)
+        end
+
+        def candidate_prompt(violation:, src:, path:, style:, index:, suffix: nil)
+          approach = UserSimulation.approach(index)
+          [
+            build_prompt_for(violation:, src:, path:, style:),
+            "Independent candidate #{index + 1}/#{UserSimulation.candidate_count}: #{approach.fetch(:name)}. Return only this candidate, not a comparison or a combined patch.",
+            approach.fetch(:instruction),
+            user_simulation.scenario_context(path:),
+            suffix
+          ].compact.reject { |part| part.to_s.strip.empty? }.join("\n\n")
+        end
+
+        def propose_candidates(violation:, src:, path:, style:, suffix: nil, event: "repair_loop:fix_error", model: nil)
+          count = UserSimulation.candidate_count
+          ext = File.extname(path).downcase
+          count.times.filter_map do |index|
+            prompt = candidate_prompt(violation:, src:, path:, style:, index:, suffix:)
+            candidate = if model
+                          response = ask_once_agent(prompt, model:, image: @visual_image).to_s
+                          extract_code(response, ext)
+                        else
+                          fix_attempt(violation, attempts: 1, event:).codes(
+                            prompt:, ext:, source: src,
+                            wait_context: { rule: @law.id, file: path, mode: "candidate-#{index + 1}" },
+                            image: @visual_image
+                          ).first
+                        end
+            next if candidate.to_s.strip.empty? || candidate.strip == src.strip
+
+            @bus&.publish(
+              "repair_loop:candidate_proposed",
+              law: @law.id, file: path, candidate: index + 1,
+              approach: UserSimulation.approach(index).fetch(:name), format: style
+            )
+            candidate
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "RepairLoop.propose_candidates", rule: @law.id)
+            handle_fix_exception(e, violation, event:)
+            nil
+          end.uniq
+        end
+
+        def candidate_fix(violation:, src:, path:, style:, suffix: nil, event: "repair_loop:fix_error", model: nil)
+          candidates = propose_candidates(violation:, src:, path:, style:, suffix:, event:, model:)
+          best_candidate(candidates, path, original: src, violation:)
+        end
+
         def whole_file_fallback(violation:, src:, path:, reason:)
           @bus&.publish("repair_loop:edit_format_fallback", rule: @law.id, file: path, reason: reason.to_s[0, 160])
-          prompt = build_prompt_for(violation:, src:, path:, style: :file)
+          prompt = candidate_prompt(
+            violation:, src:, path:, style: :file, index: 0,
+            suffix: "A previous diff could not be applied (#{reason}). Return a corrected whole-file candidate, not a diff, and keep the change within the finding."
+          )
           model = routing_model_ids[:fast]
           raw = model ? ask_once_agent(prompt, model:, image: @visual_image).to_s : ask_once_agent(prompt, image: @visual_image).to_s
           # The reply, not the file: a fenced block, a sentence around it, or
