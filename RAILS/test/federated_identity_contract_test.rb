@@ -1,0 +1,44 @@
+# frozen_string_literal: true
+
+require "minitest/autorun"
+
+class FederatedIdentityContractTest < Minitest::Test
+  ROOT = File.expand_path("../..", __dir__)
+
+  def read(relative)
+    File.read(File.join(ROOT, relative))
+  end
+
+  def test_federated_identity_models_have_one_shared_owner
+    %w[external_identity.rb identity_provider.rb].each do |name|
+      assert File.file?(File.join(ROOT, "RAILS/__shared/app/models", name)), "shared model missing: #{name}"
+      refute File.exist?(File.join(ROOT, "RAILS/brgen/app/models", name)),
+             "Brgen must not shadow the shared #{name} implementation"
+    end
+  end
+
+  def test_amber_has_app_owned_migration_for_shared_oauth_callback_tables
+    migration = read("RAILS/amber/db/migrate/20261021230100_add_federated_identity_tables_to_amber.rb")
+    %w[identity_providers external_identities].each do |table|
+      assert_includes migration, "create_table :#{table}, if_not_exists: true"
+    end
+    assert_includes migration, "index_external_identities_on_provider_and_subject"
+    assert_includes migration, "foreign_key: true"
+  end
+
+  def test_email_less_bankid_login_is_looked_up_by_persisted_subject
+    callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
+    assert_includes callback, "ExternalIdentity.find_by(subject: auth.uid.to_s)"
+    assert_includes callback, "identity_provider_for(auth)"
+    assert_includes callback, "identity.save!"
+  end
+
+  def test_high_assurance_bankid_write_exception_does_not_mark_email_verified
+    auth = read("RAILS/__shared/app/controllers/concerns/shared/authentication.rb")
+    callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
+    assert_includes auth, "verified_bankid_identity?(user)"
+    assert_includes auth, 'identity_providers: { slug: "bankid" }'
+    assert_includes callback, 'when "vipps", "bankid" then "verified"'
+    assert_includes callback, 'user.require_email_verification = true unless verified_email'
+  end
+end
