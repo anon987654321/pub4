@@ -466,12 +466,14 @@ if (( lock_owner )); then
     deploy_stage=preflight-boot
     print "vps-deploy: preflight on $pin (syntax, law files, boot smoke)"
     back_to=$(git -C "$repo" symbolic-ref -q --short HEAD || print -r -- "$head_before")
+    # A box left detached (a killed deploy does that) comes back to its commit, not to a branch.
+    back_flag=(); git -C "$repo" symbolic-ref -q HEAD >/dev/null || back_flag=(--detach)
     git -C "$repo" switch -q --detach "$pin" || deploy_refuse "cannot check out $pin in $repo (local changes?)"
     if ! "$RUBY" "$repo/MASTER/lib/operator/canary.rb" --no-rehearse; then
-      git -C "$repo" switch -q "$back_to" || true
+      git -C "$repo" switch -q "${back_flag[@]}" "$back_to" || true
       deploy_refuse "preflight failed on $pin; the checkout is back on $back_to and the previous release is still serving"
     fi
-    git -C "$repo" switch -q "$back_to" || deploy_refuse "cannot return to $back_to"
+    git -C "$repo" switch -q "${back_flag[@]}" "$back_to" || deploy_refuse "cannot return to $back_to"
   fi
   git -C "$repo" merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
   deploy_stage=snapshot
