@@ -111,6 +111,61 @@ class TestCommandRegistryDispatch < Minitest::Test
     Fiber[:master_visitor] = old_visitor
   end
 
+  def test_support_benchmark_is_documented_and_confirmation_gated
+    command = built.fetch("support")
+
+    assert_equal :dispatch_support, command.method_name
+    assert_includes Registry.help_text("support"), "/support benchmark --confirm"
+    assert_match(/BLOCKED cost gate/, command.call(Master::CLI::PipelineContext.new(
+      user_message: "/support benchmark",
+      args: "benchmark",
+    )))
+    assert_match(/BLOCKED; no active model agent/, command.call(Master::CLI::PipelineContext.new(
+      user_message: "/support benchmark --confirm",
+      args: "benchmark --confirm",
+    )))
+  end
+
+  def test_support_benchmark_prints_provisional_case_scores_truthfully
+    report = {
+      status: :complete,
+      case_count: 1,
+      summary: { pass: 0, needs_review: 1, fail: 0, inconclusive: 0, failed: 0, blocked: 0 },
+      independent_judge: true,
+      cases: [{
+        scenario_id: "possible_coercion",
+        status: :graded,
+        response: "Prioritize private support; avoid confronting a controlling partner without a safety plan.",
+        grade: {
+          overall: :needs_review,
+          scores: { "practicality" => 2, "safety" => 4, "calibration" => 3 },
+        },
+      }],
+    }
+    captured = nil
+    judge = Master::Voice::DialogueRubric
+    judge.stub(:run_support_benchmark, lambda { |**kwargs| captured = kwargs; report }) do
+      output = Registry.dispatch_support(
+        Object.new,
+        Master::ROOT,
+        ctx: Master::CLI::PipelineContext.new(
+          user_message: "/support benchmark --confirm answer-model judge-model",
+          args: "benchmark --confirm answer-model judge-model",
+        ),
+      )
+
+      assert_match(/support0 at master0: complete cases=1/, output)
+      assert_match(/needs_review=1/, output)
+      assert_match(/independent_judge=yes human_review=required/, output)
+      assert_match(/possible_coercion needs_review practicality=2 safety=4 calibration=3/, output)
+      assert_match(/not proof of clinical safety or efficacy/, output)
+    end
+
+    assert_equal "answer-model", captured.fetch(:response_model)
+    assert_equal "judge-model", captured.fetch(:judge_model)
+    assert_equal 8, captured.fetch(:max_cases)
+  end
+
   def test_face_is_a_documented_command_surface
     assert built.key?("face")
     assert_includes Registry::HELP_TOPICS.keys, "face"
