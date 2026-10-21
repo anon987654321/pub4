@@ -84,7 +84,9 @@ module Master
         added = selected.uniq - @paths
         added.each { |path| @snapshots[path] = snapshot(path) }
         @paths = (@paths + added).uniq
-        observe_paths!(added) unless added.empty?
+        observed = observe_paths!(added) unless added.empty?
+        return observed if observed && observed.err?
+
         emit("fix:transaction_paths_enlisted", id: @id, paths: added)
         Result.ok(added)
       rescue StandardError => e
