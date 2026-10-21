@@ -96,6 +96,16 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  test "malformed comment payload shapes return 422 instead of raising" do
+    user = make_user("malformed-comment")
+    sign_in_bsdports(user)
+
+    assert_no_difference "Comment.count" do
+      post port_comments_path(@port), params: { comment: "not a parameter object" }
+    end
+    assert_response :unprocessable_entity
+  end
+
   test "only the configured operator can queue NVD cross-reference work" do
     previous_admin = ENV["BSDPORTS_ADMIN_EMAIL"]
     ENV["BSDPORTS_ADMIN_EMAIL"] = "different-person@example.test"
