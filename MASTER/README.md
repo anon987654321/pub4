@@ -219,7 +219,7 @@ When recognized personal stories trigger research, the agent and guarded
 search and its permission telemetry. This is lexical minimization, not a complete
 data-loss-prevention guarantee; verify its coverage in `test_evidence_router.rb`,
 `test_agent.rb` and `test_io_tools.rb`.
-English, Bokmål and Nynorsk routing examples—including family advice, indirect crisis language, violence-related wording and unlabeled manipulation patterns—are covered by `test/test_dialogue_rubric.rb`.
+English, Bokmål and Nynorsk routing examples—including factual family mentions, explicit self-harm denials, mixed-risk statements, indirect crisis language, violence-related wording and unlabeled manipulation patterns—are covered by `test/test_dialogue_rubric.rb`.
 Research URLs are starting points: the runtime must actually consult a source
 before claiming it performed research. Topic routing is lexical assistance, not
 a clinical classifier or suicide-risk assessment. MASTER must not diagnose a
