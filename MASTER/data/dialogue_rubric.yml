@@ -257,8 +257,8 @@ support_practice:
       topics: [martial]
     - name: "Couple therapy models for relationship distress — 2026 review"
       url: "https://pubmed.ncbi.nlm.nih.gov/42599011/"
-      use: "Current evidence appraisal; note modest support and limitations rather than declaring one model universally best."
-      topics: [relationship]
+      use: "Current evidence appraisal for ordinary relationship conflict; note modest support and limitations rather than declaring one model universally best."
+      topics: [couples_therapy]
     - name: "NICE CG31 — Obsessive-compulsive disorder and body dysmorphic disorder: treatment"
       url: "https://www.nice.org.uk/guidance/cg31/chapter/Recommendations"
       use: "Exposure and response prevention within CBT and other guideline-based OCD treatment options."
