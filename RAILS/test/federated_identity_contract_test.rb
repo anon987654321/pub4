@@ -71,4 +71,26 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes merge_migration, "create_table :account_merges, if_not_exists: true"
     assert_includes amber_user, "has_many :account_merges, dependent: :destroy"
   end
+
+  def test_authentication_paths_refuse_session_rotation_when_history_transfer_fails
+    auth = read("RAILS/__shared/app/controllers/concerns/shared/authentication.rb")
+    sessions = read("RAILS/__shared/app/controllers/concerns/shared/sessions_actions.rb")
+    callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
+    brgen = read("RAILS/brgen/app/controllers/users_controller.rb")
+    amber = read("RAILS/amber/app/controllers/registrations_controller.rb")
+
+    assert_includes auth, "def transfer_guest_history_to(user, guest)"
+    assert_includes auth, "AccountMerge.exists?(guest_user_id: guest.id, user_id: user.id, status: \"merged\")"
+    assert_includes auth, "def transfer_guest_history_from_session(user)"
+    assert_includes sessions, "transfer_guest_history_from_session(user)"
+    assert_includes sessions, 'transfer == false'
+    assert_operator sessions.index("transfer_guest_history_from_session(user)"),
+                    :<, sessions.index("start_new_session_for user")
+    assert_includes callback, 'transfer == false'
+    assert_includes callback, 't("shared.flash.guest_history_transfer_failed")'
+    assert_includes brgen, 't("shared.email_verification.signup_guest_merge_failed")'
+    assert_includes amber, 't("shared.email_verification.signup_guest_merge_failed")'
+    assert_includes read("RAILS/__shared/config/locales/social.en.yml"), "guest_history_transfer_failed:"
+    assert_includes read("RAILS/__shared/config/locales/social.nb.yml"), "guest_history_transfer_failed:"
+  end
 end
