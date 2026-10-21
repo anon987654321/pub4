@@ -17,6 +17,8 @@ class AddGuestAccountMergesToAmber < ActiveRecord::Migration[8.1]
   end
 
   def down
-    # Keep merge audit history rather than deleting account-conversion evidence.
+    # Refuse rollback rather than claim the migration was reverted while the
+    # account-conversion audit table remains present.
+    raise ActiveRecord::IrreversibleMigration, "guest account merge audit requires an explicit data-retention decision"
   end
 end
