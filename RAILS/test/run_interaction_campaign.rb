@@ -153,9 +153,9 @@ module Operator
         output, status = @executor.call(command:, chdir: command_data.fetch(:app_root), timeout: @timeout)
         exit_status = status.exitstatus
         summary = output.to_s.match(/(?:\A|\n)\s*(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?(?:, (\d+) skips?)?/m)
-        if summary.nil? || summary[1].to_i.zero?
+        if summary.nil? || summary[1].to_i != 1
           state = "BLOCKED"
-          reason = "test process did not report an executed Minitest run"
+          reason = "test process did not report exactly one executed mapped Minitest case"
         else
           runs, assertions, failures, errors, skips = summary.captures.map { |value| value.to_s.to_i }
           if skips.positive?
@@ -232,7 +232,7 @@ module Operator
       {
         app_root:,
         test_path: absolute,
-        command: ["bin/rails", "test", relative_test, "--name", name]
+        command: ["bin/rails", "test", relative_test, "--name", "\\A#{name}\\z"]
       }
     rescue KeyError => e
       { error: "runtime adapter is missing #{e.key}" }
