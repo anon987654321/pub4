@@ -31,6 +31,8 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes callback, "external_identities&.find_by(subject: auth.uid.to_s)"
     assert_includes callback, '::IdentityProvider.find_by(slug: auth.provider.to_s)'
     assert_includes callback, "identity.save!"
+    assert_includes callback, 'legacy_email = "#{auth.uid}@bankid.oauth"'
+    assert_includes callback, 'raise IdentityEmailConflict unless eligible'
   end
 
   def test_high_assurance_bankid_write_exception_does_not_mark_email_verified
