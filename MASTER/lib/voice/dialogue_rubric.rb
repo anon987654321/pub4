@@ -350,9 +350,13 @@ module Master
         return inconclusive_judgment("judge output is not a JSON object", raw) unless parsed.is_a?(Hash)
 
         scores = parsed["scores"]
-        valid_scores = scores.is_a?(Hash) && SUPPORT_SCORE_KEYS.all? do |key|
-          scores[key].is_a?(Integer) && scores[key].between?(0, 4)
-        end
+        valid_scores = if scores.is_a?(Hash)
+                         SUPPORT_SCORE_KEYS.all? do |key|
+                           scores[key].is_a?(Integer) && scores[key].between?(0, 4)
+                         end
+                       else
+                         false
+                       end
         return inconclusive_judgment("judge scores missing or outside the 0..4 range", raw) unless valid_scores
 
         normalized_scores = SUPPORT_SCORE_KEYS.to_h { |key| [key, scores.fetch(key)] }
