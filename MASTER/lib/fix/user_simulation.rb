@@ -9,6 +9,8 @@ require_relative "rails_app"
 
 module Master
   module Fix
+    # Maps user-facing scenario oracles to existing focused tests. It reports only
+    # commands actually run as evidence; the campaign descriptions are not passes.
     class UserSimulation
       APPROACHES = [
         {
