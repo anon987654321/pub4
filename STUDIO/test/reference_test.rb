@@ -167,6 +167,35 @@ class DillaReferenceTest < Minitest::Test
     assert_operator features.fetch("timing_spread_ms"), :<=, 20.0
     assert_operator features.fetch("offbeat_onset_share"), :>, 0.5
     assert_operator features.fetch("offbeat_onset_share"), :<=, 1.0
+    assert_equal "mix_level_onset_proxy_not_drum_transcription", features.fetch("grid_measurement")
+    assert_equal 16, features.fetch("sixteenth_grid_hits_per_bar").length
+    assert_equal 16, features.fetch("sixteenth_grid_strength_share").length
+    assert features.fetch("sixteenth_grid_hits_per_bar").all?(&:positive?)
+    assert_in_delta 1.0, features.fetch("sixteenth_grid_strength_share").sum, 0.002
+    assert_equal 150.0, features.fetch("sixteenth_cell_ms")
+  end
+
+  def test_rhythm_zoom_summaries_report_complete_eight_and_sixteen_bar_windows
+    sample_rate = 100
+    bpm = 120.0
+    subdivision = sample_rate * 60.0 / bpm / 4.0
+    samples = Array.new(sample_rate * 32, 0.0)
+    (0...(samples.size / subdivision).floor).each do |step|
+      position = (step * subdivision).round
+      samples[position] = 1.0 if position < samples.size
+      samples[position + 1] = 0.5 if position + 1 < samples.size
+    end
+
+    windows = Dilla::Reference.rhythm_zoom_summaries(samples, bpm:, sample_rate:)
+
+    assert_equal [[8, 0.0, 16.0], [16, 0.0, 32.0], [8, 16.0, 32.0]],
+                 windows.map { |window| [window.fetch("bars"), window.fetch("start_seconds"), window.fetch("end_seconds")] }
+    windows.each do |window|
+      features = window.fetch("features")
+      assert_equal 16, features.fetch("sixteenth_grid_strength_share").length
+      assert_equal "mix_level_onset_proxy_not_drum_transcription", features.fetch("grid_measurement")
+    end
+    assert_empty Dilla::Reference.rhythm_zoom_summaries(samples.first(1_000), bpm:, sample_rate:)
   end
 
   def test_rhythm_summary_declines_when_the_envelope_has_too_little_evidence
@@ -586,7 +615,15 @@ class DillaReferenceTest < Minitest::Test
         libsonare: { "status" => "analyzed", "summary" => { "bpm" => 143.2, "rhythm_groove_type" => "driving" } },
         tempo_crosscheck: { "status" => "agreement" },
         libsonare_tempo_crosscheck: { "status" => "half_double_ambiguity" },
-        rhythm_analysis: { "source" => "full_mix_proxy", "features" => { "timing_spread_ms" => 12.0 } },
+        rhythm_analysis: {
+          "source" => "full_mix_proxy",
+          "features" => { "timing_spread_ms" => 12.0, "grid_measurement" => "mix_level_onset_proxy_not_drum_transcription" },
+          "zoom_windows" => [{
+            "bars" => 8, "start_seconds" => 0.0, "end_seconds" => 16.0,
+            "features" => { "timing_spread_ms" => 12.0, "onset_density_per_bar" => 16.0,
+                            "offbeat_onset_share" => 0.6, "sixteenth_grid_strength_share" => Array.new(16, 0.0625) }
+          }]
+        },
         source: { "source_type" => "local_audio" }
       )
 
@@ -596,6 +633,9 @@ class DillaReferenceTest < Minitest::Test
       assert_includes report, "libsonare.rhythm_groove_type: driving"
       assert_includes report, "Tempo cross-check: FFmpeg versus libsonare"
       assert_includes report, "half_double_ambiguity"
+      assert_includes report, "Eight- and sixteen-bar rhythm windows"
+      assert_includes report, "mix/stem-envelope proxies"
+      assert_includes report, "| 8 | 0.0 | 16.0 | 12.0 | 16.0 | 0.6 |"
     end
   end
 
@@ -773,9 +813,15 @@ class DillaReferenceTest < Minitest::Test
 
   def test_rhythm_segment_summary_uses_the_median_to_limit_transition_outliers
     windows = [
-      { "timing_spread_ms" => 9.0, "onset_density_per_bar" => 14.0, "offbeat_onset_share" => 0.5 },
-      { "timing_spread_ms" => 12.0, "onset_density_per_bar" => 16.0, "offbeat_onset_share" => 0.7 },
-      { "timing_spread_ms" => 80.0, "onset_density_per_bar" => 20.0, "offbeat_onset_share" => 0.95 }
+      { "timing_spread_ms" => 9.0, "onset_density_per_bar" => 14.0, "offbeat_onset_share" => 0.5,
+        "sixteenth_cell_ms" => 100.0, "sixteenth_grid_hits_per_bar" => Array.new(16, 1.0),
+        "sixteenth_grid_strength_share" => Array.new(16, 0.01) },
+      { "timing_spread_ms" => 12.0, "onset_density_per_bar" => 16.0, "offbeat_onset_share" => 0.7,
+        "sixteenth_cell_ms" => 105.0, "sixteenth_grid_hits_per_bar" => Array.new(16, 2.0),
+        "sixteenth_grid_strength_share" => Array.new(16, 0.02) },
+      { "timing_spread_ms" => 80.0, "onset_density_per_bar" => 20.0, "offbeat_onset_share" => 0.95,
+        "sixteenth_cell_ms" => 120.0, "sixteenth_grid_hits_per_bar" => Array.new(16, 20.0),
+        "sixteenth_grid_strength_share" => Array.new(16, 0.9) }
     ]
     summary = Dilla::Reference.summarize_rhythm_segments(windows)
 
@@ -783,6 +829,10 @@ class DillaReferenceTest < Minitest::Test
     assert_equal 12.0, summary.fetch("timing_spread_ms")
     assert_equal 16.0, summary.fetch("onset_density_per_bar")
     assert_equal 0.7, summary.fetch("offbeat_onset_share")
+    assert_equal 105.0, summary.fetch("sixteenth_cell_ms")
+    assert_equal Array.new(16, 2.0), summary.fetch("sixteenth_grid_hits_per_bar")
+    assert_equal Array.new(16, 0.02), summary.fetch("sixteenth_grid_strength_share")
+    assert_equal "mix_level_onset_proxy_not_drum_transcription", summary.fetch("grid_measurement")
   end
 
 end
