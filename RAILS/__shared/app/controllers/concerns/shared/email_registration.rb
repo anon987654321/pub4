@@ -13,6 +13,25 @@ module Shared
       params[:accept_terms] == "1" && params[:accept_age] == "1"
     end
 
+    # Capture before creating the registered account or resetting the session.
+    # Only a persisted guest can own history that needs to be transferred.
+    def persisted_guest_for_registration
+      candidate = Current.user
+      candidate if candidate&.respond_to?(:guest?) && candidate.guest? && candidate.persisted?
+    end
+
+    # One merge contract for Brgen and Amber. A failed merge is logged, but it
+    # must not erase a valid registration; the untouched guest remains intact.
+    def merge_registration_guest(user, guest)
+      return false unless guest
+
+      AccountMerger.new(guest_user: guest, user: user).call
+      true
+    rescue StandardError => error
+      Rails.logger.warn("guest merge on signup failed: #{error.class}: #{error.message}")
+      false
+    end
+
     def prepare_email_registration(attributes)
       @user = User.new(attributes)
       @user.guest = false if @user.has_attribute?(:guest)
