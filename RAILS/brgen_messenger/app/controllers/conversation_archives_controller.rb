@@ -20,7 +20,9 @@ class ConversationArchivesController < ApplicationController
   private
 
   def set_participant
-    @participant = ConversationParticipant.where(user_id: Current.user.id)
-                                          .find_by!(conversation_id: params[:conversation_id])
+    @participant = ConversationParticipant.joins(:conversation)
+                                          .merge(Conversation.current_city_scope)
+                                          .where(user_id: Current.user.id, conversation_id: params[:conversation_id])
+                                          .take!
   end
 end
