@@ -175,16 +175,35 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "safety planning"
   end
 
-  def test_research_sources_are_added_for_clinical_and_research_questions
+  def test_research_sources_are_relevant_to_the_question
     prompt = Rubric.support_prompt_for("What is the evidence for CBT?", root: Master::ROOT)
 
     assert_includes prompt, "Research starting points"
-    assert_includes prompt, "NICE NG222"
+    assert_includes prompt, "Emotion regulation interventions — umbrella review"
+    assert_includes prompt, "American Psychological Association"
     assert_includes prompt, "arXiv/ar5iv"
     assert_includes prompt, "ar5iv.labs.arxiv.org/html/2401.02984"
-    assert_includes prompt, "NICE CG31"
-    assert_includes prompt, "NICE NG116"
-    assert_includes prompt, "NICE CG185"
+    refute_includes prompt, "NICE NG222"
+    refute_includes prompt, "NICE CG31"
+    refute_includes prompt, "NICE NG116"
+    refute_includes prompt, "NICE CG185"
+    refute_includes prompt, "Between Help and Harm"
+  end
+
+  def test_ai_therapist_research_includes_evaluation_code_and_limits
+    prompt = Rubric.support_prompt_for(
+      "How can MASTER become a safer AI therapist? Research GitHub and ar5iv.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Large Language Models in Mental Health Care"
+    assert_includes prompt, "AI Psychotherapy Evaluation (AIPsychEval)"
+    assert_includes prompt, "Between Help and Harm"
+    assert_includes prompt, "Mental Health Safety Evaluation framework"
+    assert_includes prompt, "SonderMind mental-health guardrail evaluation datasets"
+    assert_includes prompt, "verify reuse terms before using code or data"
+    refute_includes prompt, "NICE CG31"
+    refute_includes prompt, "Martial arts and adult mental health"
   end
 
   def test_martial_philosophy_preserves_boundaries_and_safety
