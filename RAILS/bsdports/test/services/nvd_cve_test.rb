@@ -14,7 +14,8 @@ class NvdCveTest < ActiveSupport::TestCase
 
   test "cross-reference uses the shared outbound guard and reports an empty success" do
     response = Net::HTTPOK.new("1.1", "200", "OK")
-    response.body = JSON.generate("vulnerabilities" => [])
+    response.instance_variable_set(:@read, true)
+    response.instance_variable_set(:@body, JSON.generate("vulnerabilities" => []))
     request = nil
 
     Shared::OutboundHttp.stub(:request, lambda { |uri, **options|
