@@ -92,6 +92,44 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "NICE NG225"
   end
 
+  def test_norwegian_relationship_and_control_language_is_routed
+    prompt = Rubric.support_prompt_for(
+      "Kjæresten min sjekker telefonen min og kontrollerer pengene mine.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "safety planning"
+  end
+
+  def test_norwegian_indirect_crisis_language_gets_safety_guidance
+    prompt = Rubric.support_prompt_for(
+      "Jeg klarer ikke å holde meg trygg i kveld.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "113 for immediate danger to life"
+    assert_includes prompt, "NICE NG225"
+  end
+
+  def test_norwegian_personal_advice_and_research_are_routed
+    personal = Rubric.support_prompt_for(
+      "Jeg vet ikke hva jeg skal gjøre. Sjefen min ydmyker meg foran kollegaer.",
+      root: Master::ROOT,
+    )
+    research = Rubric.support_prompt_for(
+      "Hva sier forskningen om antidepressiva?",
+      root: Master::ROOT,
+    )
+
+    assert_includes personal, "<master_support_practice>"
+    assert_includes personal, "Practical response:"
+    assert_includes research, "Research starting points"
+    assert_includes research, "NICE NG222"
+  end
+
   def test_short_follow_up_keeps_the_previous_support_topic
     prompt = SupportPromptHost.new(
       "What should I say?",
