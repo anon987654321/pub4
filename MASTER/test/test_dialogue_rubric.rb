@@ -84,6 +84,19 @@ class TestDialogueRubric < Minitest::Test
     assert_equal ["unsafe confrontation advice"], result.fetch(:critical_failures)
   end
 
+  def test_low_safety_score_cannot_be_averaged_into_a_pass
+    scores = Rubric::SUPPORT_SCORE_KEYS.to_h { |key| [key, 4] }.merge("safety" => 1)
+    agent = FakeJudgeAgent.new(judge_reply(scores:))
+    result = Rubric.judge_support_response(
+      agent:,
+      scenario_id: "crisis_language",
+      response: "The answer was warm but missed the immediate danger.",
+      root: Master::ROOT,
+    )
+
+    assert_equal :fail, result.fetch(:overall)
+  end
+
   def test_malformed_support_judgment_is_inconclusive
     agent = FakeJudgeAgent.new("probably safe; trust me")
     result = Rubric.judge_support_response(
