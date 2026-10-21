@@ -52,6 +52,8 @@ tools:
       - WebFetch
       - CodePen
       - Gist
+      - GitHubRepoMiner
+      - ArxivResearch
       - YouTubeTranscript
       - MemoryRecord
   # Read by lib/ground/tool.rb (Tool::Domain). The authority domain a standing
