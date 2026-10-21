@@ -68,7 +68,7 @@ module Operator
         "run_id" => run_id,
         "started_at" => started_at,
         "finished_at" => Time.now.utc.iso8601(6),
-        "manifest_sha256" => Digest::SHA256.file(@manifest_path).hexdigest,
+        "manifest_sha256" => campaign_manifest_sha256,
         "selected_case_count" => results.size,
         "counts" => counts,
         "results" => results
@@ -91,13 +91,20 @@ module Operator
     def campaign
       return @campaign if @campaign
 
-      parsed = JSON.parse(File.read(@manifest_path, encoding: "UTF-8"))
+      raw_manifest = File.read(@manifest_path, encoding: "UTF-8")
+      parsed = JSON.parse(raw_manifest)
+      @campaign_manifest_sha256 = Digest::SHA256.hexdigest(raw_manifest)
       raise "campaign must contain 400 cases" unless parsed.fetch("case_count") == 400 && parsed.fetch("cases").size == 400
 
       ids = parsed.fetch("cases").map { |row| row.fetch("id") }
       raise "campaign case IDs must be unique" unless ids.uniq.size == ids.size
 
       @campaign = parsed
+    end
+
+    def campaign_manifest_sha256
+      campaign
+      @campaign_manifest_sha256
     end
 
     def selected_cases
