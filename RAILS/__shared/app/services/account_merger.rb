@@ -3,7 +3,8 @@
 # Transfers the user-owned history of a persisted guest to a registered
 # account. Shared signup and OAuth use this one transaction, while optional
 # associations keep the contract portable across Brgen and Amber: Brgen owns
-# conversation participants/trust signals; Amber owns direct messages.
+# conversations, channel messages and trust signals; Amber owns direct inboxes.
+# Guest sessions are invalidated, never promoted into registered credentials.
 class AccountMerger
   def initialize(guest_user:, user:)
     @guest_user = guest_user
