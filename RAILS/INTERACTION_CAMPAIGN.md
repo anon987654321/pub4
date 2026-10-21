@@ -36,11 +36,11 @@ This cross-product makes the scenario inventory auditable; it does not assert th
 
 ## Evidence and status semantics
 
-Each case carries source paths, a specific action, an adversarial condition and an expected outcome. The current records use `assessment: SOURCE_EXPECTATION_ONLY` and `runtime_status: NOT_RUN`.
+Each case resolves a specific action, adversarial condition and expected outcome through canonical surface, action and fault records. Evidence paths and surface-level contracts are stored once. The current records use `assessment: SOURCE_EXPECTATION_ONLY` and `runtime_status: NOT_RUN`.
 
 A source-derived expectation is a test oracle, not an observed outcome. Do not change a case to `PASS` without saved runtime evidence, or to `FAIL` without a reproducible failure record. Use `BLOCKED` when the environment, credentials or fixture prerequisites prevent execution and `SKIPPED` only with a recorded reason. Keep production data and live payment endpoints out of this campaign.
 
-The manifest contract is covered by `test/interaction_campaign_contract_test.rb` and is included by the existing recursive `RAILS/test/run_all.rb` contract runner.
+The manifest contract is covered by `test/interaction_campaign_contract_test.rb` and is included by the existing recursive `RAILS/test/run_all.rb` contract runner. The fixture is normalized to avoid repeating surface contracts, action text, fault instructions and evidence paths in every row.
 
 ## Run order
 
