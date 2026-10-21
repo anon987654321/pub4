@@ -106,8 +106,9 @@ module Master
 
       RESEARCH_CUES = %r{
         \b(?:research|studies|evidence|clinical\s+guideline|systematic\s+review|meta-analysis|meta\s+analysis
-        |scientific\s+evidence|papers|citations|sources|forskning|studier|dokumentasjon|evidens
-        |systematisk\s+oversikt|meta-analyse|retningslinjer|kilder|referanser)\b
+        |scientific\s+evidence|papers|citations|sources|forskning(?:en)?|studie(?:r|ne)
+        |dokumentasjon(?:en)?|evidens|systematisk\s+oversikt|meta-analyse
+        |retningslinje(?:r|ne)|kilde(?:r|ne)|referanse(?:r|ne))\b
       }ix.freeze
 
       CLINICAL_DETAIL_CUES = %r{
