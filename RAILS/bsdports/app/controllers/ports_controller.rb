@@ -102,7 +102,7 @@ class PortsController < ApplicationController
   end
 
   def crossref_cves
-    NvdCveCrossrefJob.perform_later(port_id: @port.id)
+    NvdCveCrossrefJob.enqueue_for(port_id: @port.id)
     @port.record_activity!("PortCvesCrossrefQueued", source_vertical: "bsdports")
     redirect_to @port, notice: t("flash.cve_cross_reference_queued")
   end
