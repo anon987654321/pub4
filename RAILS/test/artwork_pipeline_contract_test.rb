@@ -21,6 +21,8 @@ class ArtworkPipelineContractTest < Minitest::Test
     pipeline = File.read(File.join(ROOT, "__shared/app/services/shared/artwork_pipeline.rb"))
     assert_includes source, 'VERSION = "v2"'
     assert_includes source, "ArtworkPipeline.publish_remote"
+    assert_includes source, 'source.start_with?("https://")'
+    refute_includes source, 'source.start_with?("http://", "https://")'
     assert_includes pipeline, "Shared::OutboundHttp.request(uri, max_body: Shared::OutboundHttp::MAX_MEDIA_BODY)"
     assert_includes pipeline, "uri.is_a?(URI::HTTPS)"
     refute_includes pipeline, "URI.open"
