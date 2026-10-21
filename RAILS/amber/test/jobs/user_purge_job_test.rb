@@ -55,6 +55,13 @@ class UserPurgeJobTest < ActiveJob::TestCase
     preserved_comment = Comment.create!(user: @user, commentable: other_post, content: "A public comment")
     private_item_comment = Comment.create!(user: @other, commentable: item, content: "Comment on private item")
     private_outfit_comment = Comment.create!(user: @other, commentable: outfit, content: "Comment on private outfit")
+    private_comment_reaction = Shared::Reaction.create!(
+      user: @other, reactable: private_item_comment, kind: "love"
+    )
+    private_comment_notification = Shared::Notification.create!(
+      user: @other, actor: @other, notifiable: private_outfit_comment, kind: "reply"
+    )
+    private_comment_vote = Vote.create!(user: @other, votable: private_item_comment, value: 1)
     item_review = Shared::ReviewCase.create!(
       reviewable: item, reporter: @other, reviewer: @user, state: "closed", reason: "other"
     )
@@ -162,6 +169,9 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert Comment.exists?(preserved_comment.id), "public discussion was removed with the account"
     refute Comment.exists?(private_item_comment.id), "comment on deleted private item was left dangling"
     refute Comment.exists?(private_outfit_comment.id), "comment on deleted private outfit was left dangling"
+    refute Shared::Reaction.exists?(private_comment_reaction.id), "reaction retained a deleted private comment"
+    refute Shared::Notification.exists?(private_comment_notification.id), "notification retained a deleted private comment"
+    refute Vote.exists?(private_comment_vote.id), "vote retained a deleted private comment"
     refute Shared::ReviewCase.exists?(item_review.id), "review case retained a deleted item target"
     refute Shared::ReviewCase.exists?(outfit_review.id), "review case retained a deleted outfit target"
     refute Shared::ReviewCase.exists?(reporter_review.id), "a report authored by the erased user survived"
