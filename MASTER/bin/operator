@@ -48,6 +48,12 @@ def usage
       bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]
       bin/operator post-pull
       bin/operator measure [--deep] [--json]
+      bin/operator affiliate status
+      bin/operator affiliate grant <claims.read|claims.prepare|claims.submit> --confirm "GRANT tradedoubler.claims.<scope>"
+      bin/operator affiliate revoke <scope> --confirm "REVOKE tradedoubler.claims.<scope>"
+      bin/operator affiliate claims list [--source brgen|amber] [--program KEY] [--status-id N] [--since DATE] [--until DATE]
+      bin/operator affiliate claims prepare <claim.json>
+      bin/operator affiliate claims submit <sha256> --confirm-hash <same-sha256>
       bin/operator measure --why <row>    the members behind one number
       bin/operator measure --since <ref>  which recorded ceilings moved since <ref>
       bin/operator lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
@@ -158,6 +164,66 @@ when "fix"
   trees << ARGV[ARGV.index("--trees") + 1].to_s if ARGV.include?("--trees")
   output = Operator::FixStatus.new(root: ROOT, trees: trees).render(json:)
   json ? puts(output) : Master::Trace::Dmesg::Report.print("/fix status", output)
+when "affiliate"
+  require_relative "../lib/finance/tradedoubler"
+  affiliate = Master::Finance::Tradedoubler.new(root: ROOT, master_root: File.join(ROOT, "MASTER"))
+  begin
+    action = ARGV.shift.to_s
+    case action
+    when "status"
+      die("affiliate", "usage: bin/operator affiliate status") unless ARGV.empty?
+      puts JSON.pretty_generate(affiliate.status)
+    when "grant", "revoke"
+      scope = ARGV.shift
+      confirmation = nil
+      OptionParser.new do |options|
+        options.on("--confirm VALUE") { |value| confirmation = value }
+      end.parse!(ARGV)
+      die("affiliate", "usage: bin/operator affiliate #{action} <scope> --confirm <exact-phrase>") unless
+        scope && confirmation && ARGV.empty?
+      report = if action == "grant"
+                 affiliate.grant_scope(scope, confirmation:)
+               else
+                 affiliate.revoke_scope(scope, confirmation:)
+               end
+      puts JSON.pretty_generate(report)
+    when "claims"
+      operation = ARGV.shift.to_s
+      case operation
+      when "list"
+        options = {}
+        OptionParser.new do |parser|
+          parser.on("--source KEY") { |value| options[:source] = value }
+          parser.on("--program KEY") { |value| options[:program_key] = value }
+          parser.on("--status-id VALUE") { |value| options[:status_id] = value }
+          parser.on("--since DATE") { |value| options[:since] = value }
+          parser.on("--until DATE") { |value| options[:until_date] = value }
+        end.parse!(ARGV)
+        die("affiliate", "unknown arguments: #{ARGV.join(' ')}") unless ARGV.empty?
+        puts JSON.pretty_generate(affiliate.list_claims(**options))
+      when "prepare"
+        path = ARGV.shift
+        die("affiliate", "usage: bin/operator affiliate claims prepare <claim.json>") unless path && ARGV.empty?
+        puts JSON.pretty_generate(affiliate.prepare_claim(path:))
+      when "submit"
+        sha256 = ARGV.shift
+        confirmation_hash = nil
+        OptionParser.new do |parser|
+          parser.on("--confirm-hash HASH") { |value| confirmation_hash = value }
+        end.parse!(ARGV)
+        die("affiliate", "usage: bin/operator affiliate claims submit <sha256> --confirm-hash <same-sha256>") unless
+          sha256 && confirmation_hash && ARGV.empty?
+        puts JSON.pretty_generate(affiliate.submit_claim(sha256, confirmation_hash:))
+      else
+        die("affiliate", "usage: bin/operator affiliate claims <list|prepare|submit>")
+      end
+    else
+      die("affiliate", "usage: status | grant <scope> --confirm PHRASE | revoke <scope> --confirm PHRASE | claims <list|prepare|submit>", 64)
+    end
+    exit 0
+  rescue Master::Finance::Tradedoubler::Error, ArgumentError, JSON::ParserError => e
+    die("affiliate", e.message)
+  end
 when "measure"
   # Every ratchet in the repo, current beside recorded. Non-zero when any is over
   # its ceiling OR slack beneath it, because a ceiling above the real number is

@@ -401,6 +401,39 @@ MANPATH="$PWD/MASTER/man" man master-fix
 The manuals describe operator interfaces; the executable command registry,
 implementation, Laws and tests remain authoritative.
 
+## Tradedoubler Claims API
+
+MASTER's first TradeDoubler adapter handles the documented token-based Claims API only. Product and voucher imports remain in `RAILS/__shared`; publisher-site/programme management and earnings remain disabled until an OAuth token exchange and one authenticated management GET establish the correct TD Connect routes. The local source registry deliberately contains no guessed site or programme IDs.
+
+Set `TRADEDOUBLER_CLAIMS_TOKEN` in the shell or secret manager used to invoke `bin/operator`. It is a distinct Claims-system token; do not reuse the RAILS Products token unless the publisher account confirms that it is the Claims token, and never commit or paste credentials.
+
+Check configuration without reading credentials or making a request:
+
+```sh
+bin/operator affiliate status
+```
+
+After confirming the publisher site's IDs in TradeDoubler, populate `MASTER/data/affiliate_sources.yml` for `brgen` and `amber`. Grant access for a short window with an exact confirmation phrase, read claims, then revoke:
+
+```sh
+bin/operator affiliate grant claims.read --confirm "GRANT tradedoubler.claims.read"
+bin/operator affiliate claims list
+bin/operator affiliate claims list --source brgen --since 2026-10-01
+bin/operator affiliate revoke claims.read --confirm "REVOKE tradedoubler.claims.read"
+```
+
+Claim creation is two-step. Prepare a local JSON file containing `source`, `program_key`, `timeStampEvent`, `eventId`, `orderNumber`, `orderValue`, and `expectedCommission` when `eventId` is 17, plus any allowed optional fields documented in `data/affiliate_sources.yml`. The source and program IDs are injected from the reviewed registry. Preparation writes a private local record and prints its SHA-256 without contacting TradeDoubler. After checking the full summary, submit only with a fresh five-minute grant and a second hash match:
+
+```sh
+bin/operator affiliate grant claims.prepare --confirm "GRANT tradedoubler.claims.prepare"
+bin/operator affiliate claims prepare ./claim.json
+bin/operator affiliate revoke claims.prepare --confirm "REVOKE tradedoubler.claims.prepare"
+bin/operator affiliate grant claims.submit --confirm "GRANT tradedoubler.claims.submit"
+bin/operator affiliate claims submit <sha256> --confirm-hash <same-sha256>
+```
+
+A submit attempt consumes the grant. MASTER never automatically retries a create request: an ambiguous timeout is recorded as uncertain and must be reconciled against the remote claims list before further action. HTTP acceptance means accepted for advertiser review, not approved or earned. Sources, programmes, compensation and earnings reports remain unavailable until the OAuth path is verified.
+
 ## Personal privacy and consent
 
 Read `personal_privacy` in `data/laws.yml` before enabling personal-device, companion or financial workflows. `Master::Ground::PersonalPermissions` is a local, default-deny ledger with expiry, immediate revocation and inspectable audit events. Personal-memory grants are bound to one paired subject; `PersonalWorkspace` and `OwnerProfile` refuse reads/writes without the exact `read and write personal profile and memory` purpose grant. Run `/privacy status`, `/privacy grant personal_memory`, or `/privacy revoke personal_memory` in a local, non-visitor paired session. An unpaired `MemoryRecord` user fact is refused rather than written to shared `data/project_context.yml`. Pairing no longer duplicates the owner label into memory before consent. These are source changes, not a claimed test pass: the Ruby suite and Android/Termux acceptance have not been run. Microphone, speech recognition, camera, location, contacts, messages, notifications, financial data/actions, purchases, deployment and destructive operations remain unintegrated and must stay disabled until their adapters enforce this policy and any native OS permission. A paired person is not automatically the operator; public visitors cannot grant. See the single repository backlog for remaining adapter integration and real-device proof.

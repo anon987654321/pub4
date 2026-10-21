@@ -8,6 +8,7 @@ _operator() {
     'gate:every gate in the repo, fixing as it goes'
     'status:what is dirty, per tree'
     'measure:every ratchet, current against ceiling'
+    'affiliate:permissioned Tradedoubler Claims API read, prepare and confirmed submit'
     'lint:judge files by the law, no model'
     'test:smallest complete proof for the paths'
     'land:commit path-scoped, re-check, push main'

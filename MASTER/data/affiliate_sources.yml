@@ -1,0 +1,22 @@
+# Publisher-owned IDs are intentionally unset until verified in TradeDoubler.
+# Products and vouchers remain in RAILS/__shared; MASTER handles Claims only.
+schema: 1
+network: tradedoubler
+claims_api:
+  base_url: "https://api.tradedoubler.com/1.0"
+  docs_url: "https://dev.tradedoubler.com/claims/publisher/"
+  token_env: TRADEDOUBLER_CLAIMS_TOKEN
+  page_size: 100
+  max_pages: 10
+apps:
+  brgen:
+    domain: "brgen.no"
+    affiliate_site_id: null
+    programs: {}
+  amber:
+    domain: "amberapp.art"
+    affiliate_site_id: null
+    programs: {}
+management_api:
+  enabled: false
+  reason: "OAuth/TD Connect endpoints are not enabled until token exchange and one authenticated GET are verified."

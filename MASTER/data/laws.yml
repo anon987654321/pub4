@@ -2316,6 +2316,9 @@ personal_privacy:
     - personal_memory
     - financial_data
     - financial_actions
+    - tradedoubler.claims.read
+    - tradedoubler.claims.prepare
+    - tradedoubler.claims.submit
     - external_messages
     - purchases
     - deployment

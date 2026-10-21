@@ -1,0 +1,36 @@
+# Fine-grained, expiring grants built on Master::Ground::PersonalPermissions.
+# The scope enum lives in the shared permission ledger; this file owns purpose,
+# confirmation text, and lifetime. OAuth-only surfaces stay disabled until proven.
+schema: 1
+scopes:
+  claims.read:
+    scope: tradedoubler.claims.read
+    enabled: true
+    purpose: "Read Tradedoubler claims for publisher reconciliation."
+    grant_confirmation: "GRANT tradedoubler.claims.read"
+    revoke_confirmation: "REVOKE tradedoubler.claims.read"
+    ttl_seconds: 3600
+    max_ttl_seconds: 3600
+  claims.prepare:
+    scope: tradedoubler.claims.prepare
+    enabled: true
+    purpose: "Prepare and hash one Tradedoubler claim payload locally without submitting it."
+    grant_confirmation: "GRANT tradedoubler.claims.prepare"
+    revoke_confirmation: "REVOKE tradedoubler.claims.prepare"
+    ttl_seconds: 1800
+    max_ttl_seconds: 1800
+  claims.submit:
+    scope: tradedoubler.claims.submit
+    enabled: true
+    purpose: "Submit one explicitly hash-confirmed Tradedoubler claim."
+    grant_confirmation: "GRANT tradedoubler.claims.submit"
+    revoke_confirmation: "REVOKE tradedoubler.claims.submit"
+    ttl_seconds: 300
+    max_ttl_seconds: 300
+oauth_surfaces:
+  sources.read:
+    enabled: false
+    reason: "Requires a verified OAuth/TD Connect token exchange and confirmed publisher route."
+  earnings.read:
+    enabled: false
+    reason: "Requires a verified OAuth/TD Connect token exchange and confirmed compensation route."

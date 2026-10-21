@@ -18,6 +18,7 @@ module Master
       SCOPES = %w[
         microphone speech_recognition camera location contacts messages
         notifications personal_memory financial_data financial_actions
+        tradedoubler.claims.read tradedoubler.claims.prepare tradedoubler.claims.submit
         external_messages purchases deployment destructive_actions
       ].freeze
       MAX_PURPOSE_BYTES = 500

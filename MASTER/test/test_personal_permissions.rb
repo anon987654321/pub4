@@ -17,7 +17,8 @@ class TestPersonalPermissions < Minitest::Test
 
   def test_every_scope_is_denied_by_default
     %w[microphone speech_recognition camera location contacts messages notifications
-       personal_memory financial_data financial_actions external_messages purchases
+       personal_memory financial_data financial_actions tradedoubler.claims.read
+       tradedoubler.claims.prepare tradedoubler.claims.submit external_messages purchases
        deployment destructive_actions].each do |scope|
       refute @permissions.allowed?(scope: scope), "#{scope} must default to deny"
     end
