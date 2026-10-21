@@ -21,8 +21,8 @@ class BankidIdentityPersistenceTest < ActiveSupport::TestCase
       first = callback.send(:find_or_create_user, auth)
     end
 
-    identity = ExternalIdentity.joins(:identity_provider)
-                               .find_by!(subject: uid, identity_providers: { slug: "bankid" })
+    provider = IdentityProvider.find_by!(slug: "bankid")
+    identity = ExternalIdentity.find_by!(identity_provider: provider, subject: uid)
     assert_equal first.id, identity.user_id
     assert_equal "verified", identity.assurance_level
     assert_nil identity.email_address
