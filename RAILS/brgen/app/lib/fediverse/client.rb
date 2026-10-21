@@ -14,15 +14,13 @@ module Fediverse
 
     # Remote servers are untrusted input. A malicious or broken one can answer a
     # gigabyte, so the body is capped rather than read whole into memory.
-    MAX_BODY = Shared::OutboundHttp::MAX_BODY
-
     module_function
 
     def get_json(url)
       response = request(:get, url, headers: { "Accept" => ACCEPT })
       return nil unless response&.is_a?(Net::HTTPSuccess)
 
-      JSON.parse(response.body.to_s[0, MAX_BODY])
+      JSON.parse(response.body.to_s)
     rescue JSON::ParserError
       nil
     end
