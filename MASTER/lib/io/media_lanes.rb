@@ -236,9 +236,17 @@ module Master
       def cached_take(dir, digest)
         Dir.glob(File.join(dir, "*-#{digest[0, 8]}*.json")).sort.reverse_each do |sidecar|
           take = JSON.parse(File.read(sidecar))
+          next unless take["prompt_sha256"] == digest
+
           path = sidecar.delete_suffix(".json")
-          return take.merge("path" => path) if take["prompt_sha256"] == digest && File.file?(path)
-        rescue JSON::ParserError
+          next unless File.file?(path)
+
+          expected = take["sha256"].to_s
+          next unless expected.match?(/\A[0-9a-f]{64}\z/)
+          next unless Digest::SHA256.file(path).hexdigest == expected
+
+          return take.merge("path" => path)
+        rescue JSON::ParserError, SystemCallError, IOError
           next
         end
         nil
