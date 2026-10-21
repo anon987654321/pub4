@@ -114,7 +114,8 @@ module Shared
     # ipaddr= pins the socket destination while Net::HTTP keeps the original host
     # for the Host header and SNI, so certificate verification still checks the
     # name rather than the address.
-    def request(uri, method: :get, headers: {}, body: nil, max_body: MAX_BODY, open_timeout: TIMEOUT, read_timeout: TIMEOUT)
+    def request(uri, method: :get, headers: {}, body: nil, max_body: MAX_BODY,
+                open_timeout: TIMEOUT, read_timeout: TIMEOUT)
       raise URI::InvalidURIError, "HTTPS required" unless uri.is_a?(URI::HTTPS)
       raise URI::InvalidURIError, "non-standard HTTPS port" unless uri.port.nil? || uri.port == 443
 
