@@ -54,7 +54,8 @@ module Master
           |i\s+hate\s+myself|i\s+can't\s+face\s+(?:the\s+day|anyone|people)|can't\s+get\s+out\s+of\s+bed
           |i\s+can't\s+forgive\s+myself|i(?:'m|\s+am)\s+struggling|i\s+can't\s+cope|i\s+cannot\s+cope
           |jeg\s+hater\s+meg\s+selv|eg\s+hatar\s+meg\s+sjølv|føler\s+meg\s+verdiløs|kjennest\s+verdilaus
-          |føler\s+meg\s+som\s+en\s+fiasko|eg\s+føler\s+meg\s+verdilaus|skammer\s+meg|skjemst\s+eg
+          |føler\s+meg\s+som\s+en\s+fiasko|eg\s+føler\s+meg\s+verdilaus|eg\s+føler\s+meg\s+som\s+ein\s+fiasko
+          |skammer\s+meg|skammar\s+meg|skammar\s+meg\s+over|eg\s+skjemst|skjemst\s+over
           |kommer\s+meg\s+ikke\s+ut\s+av\s+senga|kjem\s+meg\s+ikkje\s+ut\s+av\s+senga
           |klarer\s+ikke\s+å\s+tilgi\s+meg\s+selv|klarer\s+ikkje\s+å\s+tilgi\s+meg\s+sjølv
           |i\s+need\s+advice|need\s+personal\s+advice|personal\s+problem|help\s+me\s+think\s+through
