@@ -6970,13 +6970,13 @@ module Dilla
       features
     end
 
-    # Summarize complete 8- and 16-bar windows. This is a zoomed view of the
+    # Summarize complete 4-, 8- and 16-bar windows. This is a zoomed view of the
     # low-rate mix/stem envelope, not a note transcription. Partial windows are
     # omitted so every row compares the same number of bars.
     def rhythm_zoom_summaries(samples, bpm:, sample_rate: 100, time_offset: 0.0)
       return [] if samples.size < sample_rate * 4 || !bpm.to_f.between?(50.0, 200.0)
 
-      [8, 16].flat_map do |bar_count|
+      [4, 8, 16].flat_map do |bar_count|
         window_size = (bar_count * 240.0 / bpm.to_f * sample_rate).round
         next [] if window_size <= 0
 
@@ -7120,7 +7120,7 @@ module Dilla
                     "Grid positions, accent shares and timing spread are mix/stem-envelope proxies; they do not identify isolated kick, snare or hat hits."])
       rhythm_analysis.fetch("features", {}).each { |name, value| lines << "- #{name}: #{value}" }
       zoom_windows = rhythm_analysis.fetch("zoom_windows", [])
-      lines.concat(["", "## Eight- and sixteen-bar rhythm windows",
+      lines.concat(["", "## Four-, eight- and sixteen-bar rhythm windows",
                     "Each row is a complete window; times are offsets in the source audio.",
                     "| Bars | Start (s) | End (s) | Timing spread (ms) | Onsets/bar | Offbeat share | Sixteenth-grid strength share (cells 1–16) |",
                     "|---:|---:|---:|---:|---:|---:|---|"])
@@ -7133,7 +7133,7 @@ module Dilla
         shares_text = shares.is_a?(Array) ? shares.map { |value| format("%.3f", value) }.join(", ") : "unavailable"
         lines << "| #{window['bars']} | #{window['start_seconds']} | #{window['end_seconds']} | #{spread} | #{density} | #{offbeat} | #{shares_text} |"
       end
-      lines << "No complete 8- or 16-bar window had enough onset evidence." if zoom_windows.empty?
+      lines << "No complete 4-, 8- or 16-bar window had enough onset evidence." if zoom_windows.empty?
       lines.concat(["", "## Tempo cross-check"])
       tempo_crosscheck.each { |name, value| lines << "- #{name}: #{value}" }
       lines.concat(["", "## This reference", JSON.pretty_generate(profile),
