@@ -42,10 +42,11 @@ class PortsTarballTest < ActiveSupport::TestCase
 
   test "release identifiers reject path and URL components" do
     invalid = Ports::Openbsd::PortsTarball.new(platform: platforms(:openbsd), release: "../internal")
+    previous = ENV["BSDPORTS_PORTS_TARBALL"]
     ENV["BSDPORTS_PORTS_TARBALL"] = "1"
     invalid.define_singleton_method(:verification_ready?) { true }
     assert_equal "invalid release identifier", invalid.decline_reason
   ensure
-    ENV.delete("BSDPORTS_PORTS_TARBALL")
+    previous.nil? ? ENV.delete("BSDPORTS_PORTS_TARBALL") : ENV["BSDPORTS_PORTS_TARBALL"] = previous
   end
 end
