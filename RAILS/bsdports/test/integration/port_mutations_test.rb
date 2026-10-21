@@ -87,6 +87,13 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
       }
     end
     assert_response :unprocessable_entity
+
+    assert_no_difference "Comment.count" do
+      post port_comments_path(@port), params: {
+        comment: { content: "Malformed parent", parent_id: { id: parent.id } }
+      }
+    end
+    assert_response :unprocessable_entity
   end
 
   test "only the configured operator can queue NVD cross-reference work" do
