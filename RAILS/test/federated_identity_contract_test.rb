@@ -57,7 +57,9 @@ class FederatedIdentityContractTest < Minitest::Test
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/models/account_merge.rb"))
     assert_includes merger, "def merge_messages"
     assert_includes merger, "def invalidate_guest_sessions"
-    assert_includes merger, "guest_user.sessions.destroy_all"
+    assert_includes merger, '::Session.where(user_id: guest_user.id).find_each(&:destroy!)'
+    assert_includes merger, "ActiveRecord::MigrationError"
+    refute_includes merger, "guest_user.sessions.destroy_all"
     refute_includes merger, "merge_sessions"
     assert_includes merger, 'columns.include?("sender_id")'
     assert_includes merger, 'columns.include?("recipient_id")'
