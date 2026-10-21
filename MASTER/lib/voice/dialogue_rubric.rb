@@ -209,9 +209,13 @@ module Master
         areas << "martial_and_contemplative_practice" if text.match?(MARTIAL_CUES)
         include_sources = text.match?(RESEARCH_CUES) || text.match?(CLINICAL_DETAIL_CUES) ||
                           text.match?(CRISIS_CUES) || text.match?(AI_MENTAL_HEALTH_CUES) ||
-                          text.match?(ANXIETY_CUES) || text.match?(ADHD_CUES) ||
+                          text.match?(ANXIETY_CUES) || text.match?(DEPRESSION_CUES) ||
+                          text.match?(ADHD_CUES) || text.match?(OCD_CUES) ||
+                          text.match?(TRAUMA_CUES) || text.match?(BIPOLAR_CUES) ||
                           text.match?(PSYCHOSIS_CUES) || text.match?(EATING_DISORDER_CUES) ||
-                          text.match?(SUBSTANCE_CUES)
+                          text.match?(SUBSTANCE_CUES) || text.match?(COPING_CUES) ||
+                          text.match?(RELATIONSHIP_CUES) || text.match?(MANIPULATION_CUES) ||
+                          text.match?(MARTIAL_CUES)
         topic_keys = research_topics_for(text)
 
         support_practice_block(support, areas: areas.uniq, include_sources:, topic_keys:)
