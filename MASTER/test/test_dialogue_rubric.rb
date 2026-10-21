@@ -636,6 +636,29 @@ class TestDialogueRubric < Minitest::Test
     refute_includes alcohol, "NICE NG69"
   end
 
+  def test_martial_philosophy_questions_route_without_mental_health_keywords
+    prompt = Rubric.support_prompt_for(
+      "What can aikido philosophy teach me about patience and conflict?",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Martial and contemplative practice:"
+    assert_includes prompt, "Martial arts and adult mental health — systematic review"
+    refute_includes prompt, "Couples and relationship safety:"
+    refute_includes prompt, "NICE NG222"
+  end
+
+  def test_martial_technique_and_scoring_questions_do_not_force_support_protocol
+    [
+      "How is a point scored in karate competition?",
+      "What is the legal target area in taekwondo sparring?",
+      "How many rounds does an amateur boxing match have?",
+    ].each do |question|
+      assert_nil Rubric.support_prompt_for(question, root: Master::ROOT), question
+    end
+  end
+
   def test_martial_philosophy_preserves_boundaries_and_safety
     prompt = Rubric.support_prompt_for(
       "Can martial arts philosophy help me handle anger?",
