@@ -214,6 +214,11 @@ relationship conflict, coercive-control awareness, manipulation resistance,
 medication boundaries, martial-arts philosophy and research habits. Sensitive
 mental-health, relationship and abuse details are not persisted to shared memory
 or profiles without explicit opt-in and permission from the active privacy policy.
+When recognized personal stories trigger research, the agent and guarded
+`WebSearch` adapter reduce the query to generic evidence topics before external
+search and its permission telemetry. This is lexical minimization, not a complete
+data-loss-prevention guarantee; verify its coverage in `test_evidence_router.rb`,
+`test_agent.rb` and `test_io_tools.rb`.
 English and Bokmål routing examples are covered by `test/test_dialogue_rubric.rb`.
 Research URLs are starting points: the runtime must actually consult a source
 before claiming it performed research. Topic routing is lexical assistance, not
