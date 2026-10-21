@@ -170,7 +170,11 @@ module Master
         mapped = ids.flat_map { |id| focused_test_paths_for(id).first(1) }
         secondary = ids.flat_map { |id| focused_test_paths_for(id).drop(1) }
         candidates.concat(mapped).concat(secondary)
-        candidates.select { |candidate| File.file?(File.join(@root, candidate)) }.uniq.first(MAX_TEST_FILES)
+        target = File.expand_path(path.to_s)
+        candidates.select do |candidate|
+          candidate_path = File.expand_path(File.join(@root, candidate))
+          candidate_path != target && File.file?(candidate_path)
+        end.uniq.first(MAX_TEST_FILES)
       end
 
       # Test paths are run in a test bundle with bounded timeouts. The output
@@ -183,7 +187,14 @@ module Master
 
         data = campaign
         relative = relative_path(path)
-        return result_rows(sources, :unavailable, "target is outside the campaign repository") unless relative
+        unless relative
+          publish(
+            "repair_loop:user_simulation_blocked",
+            path: path.to_s,
+            reason: "target must be a regular, non-symlink file inside the repository"
+          )
+          return result_rows(sources, :blocked, "target is outside the safe regular-file boundary")
+        end
 
         tests = test_paths_for(path)
         return result_rows(sources, :unavailable, "no focused test path exists for this surface") if tests.empty?
@@ -293,10 +304,16 @@ module Master
           rows = cases.select { |row| row.fetch("surface_id") == surface.fetch("id") }
           actions = surface.fetch("actions")
           action_ids = actions.map { |row| row.fetch("id") }
+          focused_paths = surface.fetch("focused_test_paths")
           raise "#{surface.fetch("id")} must have 20 cases" unless rows.size == 20
           raise "#{surface.fetch("id")} must have 20 actions" unless actions.size == 20
           raise "#{surface.fetch("id")} has duplicate action ids" unless action_ids.uniq.size == action_ids.size
           raise "#{surface.fetch("id")} has duplicate action text" unless actions.map { |row| row.fetch("action") }.uniq.size == actions.size
+          raise "#{surface.fetch("id")} must have focused tests" if focused_paths.empty?
+          focused_paths.each do |focused_path|
+            raise "focused test path must be repository-relative" if focused_path.start_with?("/")
+            raise "focused test path escapes the repository" if focused_path.split("/").include?("..")
+          end
           raise "#{surface.fetch("id")} must cover all fault modes" unless rows.map { |row| row.fetch("fault_mode") }.sort == fault_ids.sort
         end
         cases.each do |row|
@@ -318,7 +335,21 @@ module Master
         prefix = "#{@root}/"
         return unless expanded.start_with?(prefix)
 
-        expanded.delete_prefix(prefix)
+        relative = expanded.delete_prefix(prefix)
+        cursor = @root
+        relative.split(File::SEPARATOR).each do |component|
+          cursor = File.join(cursor, component)
+          return if File.symlink?(cursor)
+        end
+
+        root_real = File.realpath(@root)
+        target_real = File.realpath(expanded)
+        return unless target_real.start_with?("#{root_real}/")
+        return unless File.file?(target_real)
+
+        relative
+      rescue SystemCallError
+        nil
       end
 
       def brgen_surfaces(relative)
