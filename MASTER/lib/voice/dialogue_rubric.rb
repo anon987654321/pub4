@@ -49,14 +49,29 @@ module Master
           |help\s+me\s+work\s+through|talk\s+this\s+through|having\s+a\s+hard\s+time
           |i\s+don't\s+know\s+what\s+to\s+do|i\s+do\s+not\s+know\s+what\s+to\s+do
           |someone\s+in\s+my\s+life|friendship|my\s+friend|my\s+boss|coworker|colleague
-          |workplace\s+bullying|bullying|humiliat\w*|martial\s+arts|mindfulness|meditat(?:e|ion)
-          |stoic(?:ism)?|zen|tai\s+chi|aikido|budo|coping
+          |workplace\s+bullying|bullying|humiliat\w*
+          |psykisk\s+helse|sliter|angst|angstlidelse|deprimert|depresjon|panikk|stresset|ensom|ensomhet
+          |sorg|utbrent|tankekjør|grubler|traume|terapi|terapeut|psykiatri|medisin|medisiner|antidepressiva
+          |psykose|mani|selvmord|selvmordstanker|selvskading|skade\s+meg\s+selv|vil\s+dø|vil\s+ikke\s+leve
+          |orker\s+ikke\s+mer|klarer\s+ikke\s+(?:å\s+)?holde\s+meg\s+trygg|fare\s+for\s+liv
+          |føler\s+meg\s+(?:trist|fastlåst|tom|håpløs|engstelig|sint|overveldet|utrygg|fortapt)
+          |jeg\s+(?:sliter|trenger\s+hjelp|trenger\s+råd|vet\s+ikke\s+hva\s+jeg\s+skal\s+gjøre)
+          |jeg\s+har\s+det\s+vanskelig|jeg\s+klarer\s+ikke|trenger\s+personlige\s+råd
+          |forhold|partner|kjæreste|samboer|ektefelle|ekteskap|parforhold|krangel|krangler|skilsmisse
+          |intimitet|familiekonflikt|gaslighting|manipulasjon|narsissist|psykisk\s+vold|kontrollerer\s+meg
+          |sjekker\s+(?:mobilen|telefonen)|sporer\s+(?:mobilen|telefonen)|truer\s+meg|slår\s+meg
+          |tvinger\s+meg|holder\s+meg\s+isolert|kontrollerer\s+(?:økonomien|pengene\s+mine)
+          |leser\s+meldingene\s+mine|kaller\s+meg\s+gal|sier\s+at\s+jeg\s+er\s+gal
+          |grenser|familiekonflikt|utsetter|prokrastinerer|motivasjon|sinne|skam|skyld|vennskap
+          |vennen\s+min|sjefen\s+min|kollega|mobbing|ydmyker\s+meg|kampkunst|kampsport|meditasjon
+          |tankefullt\s+nærvær|zen|tai\s+chi|aikido|budo|mestring
         )\b
       }ix.freeze
 
       RELATIONSHIP_CUES = %r{
         \b(?:relationship|partner|boyfriend|girlfriend|husband|wife|couple|marriage|breakup|break\s+up
-        |argument|fight\s+with|dating|intimacy|divorce|family\s+conflict)\b
+        |argument|fight\s+with|dating|intimacy|divorce|family\s+conflict|forhold|partner|kjæreste
+        |samboer|ektefelle|ekteskap|parforhold|krangel|krangler|skilsmisse|intimitet|familiekonflikt)\b
       }ix.freeze
 
       MANIPULATION_CUES = %r{
@@ -64,12 +79,16 @@ module Master
         |threat(?:en|s|ening)?|threatened\s+me|hit\s+me|hitting\s+me|forced\s+me|calls\s+me\s+crazy
         |says\s+i\s+am\s+crazy|says\s+i'm\s+crazy|isolation|financial\s+control|controls\s+my\s+money
         |checks\s+my\s+phone|reads\s+my\s+messages|demands\s+my\s+password|tracks\s+my\s+phone
-        |monitors\s+me|won't\s+let\s+me|doesn't\s+let\s+me)\b
+        |monitors\s+me|won't\s+let\s+me|doesn't\s+let\s+me|gaslighting|manipulasjon|narsissist
+        |psykisk\s+vold|kontrollerer\s+meg|sjekker\s+(?:mobilen|telefonen)|sporer\s+(?:mobilen|telefonen)
+        |truer\s+meg|slår\s+meg|tvinger\s+meg|holder\s+meg\s+isolert
+        |kontrollerer\s+(?:økonomien|pengene\s+mine)|leser\s+meldingene\s+mine|kaller\s+meg\s+gal
+        |sier\s+at\s+jeg\s+er\s+gal|nekter\s+meg\s+å)\b
       }ix.freeze
 
       MARTIAL_CUES = %r{
         \b(?:martial\s+arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai\s+chi|aikido|budo
-        |qi\s+gong|kung\s+fu|karate|judo|taekwondo|non[- ]?attachment)\b
+        |qi\s+gong|kung\s+fu|karate|judo|taekwondo|non[- ]?attachment|kampkunst|kampsport|meditasjon)\b
       }ix.freeze
 
       CRISIS_CUES = %r{
@@ -77,18 +96,23 @@ module Master
         |do\s+not\s+want\s+to\s+live|can't\s+keep\s+myself\s+safe|cannot\s+keep\s+myself\s+safe
         |(?:don't|do\s+not)\s+think\s+i\s+can\s+keep\s+myself\s+safe|not\s+sure\s+i\s+can\s+keep\s+myself\s+safe
         |can't\s+stay\s+safe|hurt\s+myself|self[- ]harm|overdos(?:e|ed)|hurt\s+someone
-        |going\s+to\s+hurt\s+someone|immediate\s+danger)\b
+        |going\s+to\s+hurt\s+someone|immediate\s+danger|selvmord|selvmordstanker|vil\s+ta\s+livet\s+mitt
+        |ta\s+livet\s+mitt|vil\s+dø|vil\s+ikke\s+leve|orker\s+ikke\s+mer
+        |klarer\s+ikke\s+(?:å\s+)?holde\s+meg\s+trygg|skade\s+meg\s+selv|selvskading|vil\s+skade\s+noen
+        |fare\s+for\s+liv|akutt\s+fare)\b
       }ix.freeze
 
       RESEARCH_CUES = %r{
         \b(?:research|studies|evidence|clinical\s+guideline|systematic\s+review|meta-analysis|meta\s+analysis
-        |scientific\s+evidence|papers|citations|sources)\b
+        |scientific\s+evidence|papers|citations|sources|forskning|studier|dokumentasjon|evidens
+        |systematisk\s+oversikt|meta-analyse|retningslinjer|kilder|referanser)\b
       }ix.freeze
 
       CLINICAL_DETAIL_CUES = %r{
         \b(?:depress(?:ed|ion)|psychiatr|diagnos(?:e|is|tic)|medication|antidepressant|bipolar|psychosis|mania
         |adhd|autis(?:m|tic)|ptsd|ocd|panic\s+disorder|therapy\s+options|treatment\s+options|side\s+effects
-        |mental\s+health\s+professional)\b
+        |mental\s+health\s+professional|depresjon|psykiatri|diagnose|medisin|antidepressiva|bipolar
+        |psykose|mani|autisme|panikklidelse|behandling|bivirkninger|psykolog|psykisk\s+helsepersonell)\b
       }ix.freeze
 
       def prompt_block(root: Master::ROOT)
