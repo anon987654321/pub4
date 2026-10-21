@@ -190,6 +190,16 @@ module Operator
         reason = "#{e.class}: #{e.message.to_s[0, 160]}"
       end
 
+      test_sha256_after = begin
+        Digest::SHA256.file(test_path).hexdigest
+      rescue SystemCallError
+        nil
+      end
+      if test_sha256_after != test_sha256
+        state = "BLOCKED"
+        reason = "mapped test source changed during execution; outcome cannot be attributed safely"
+      end
+
       log_name = "#{row.fetch("id")}.log"
       log_output = redact_output(output.to_s)
       File.write(File.join(run_dir, log_name), log_output)
@@ -197,6 +207,8 @@ module Operator
         "test_path" => adapter.fetch("path"),
         "test_name" => adapter.fetch("name"),
         "test_sha256" => test_sha256,
+        "test_sha256_after" => test_sha256_after,
+        "test_source_unchanged" => test_sha256_after == test_sha256,
         "command" => command,
         "exit_status" => exit_status,
         "runs" => runs,
