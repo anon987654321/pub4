@@ -23,15 +23,9 @@ module Shared
     # One merge contract for Brgen and Amber. A failed merge is logged, but it
     # must not erase a valid registration; the untouched guest remains intact.
     def merge_registration_guest(user, guest)
-      return false unless guest
+      return unless guest
 
-      AccountMerger.new(guest_user: guest, user: user).call
-      # Concurrent signup tabs can both hold the same guest row. Only the
-      # destination named by the committed audit row actually received it.
-      AccountMerge.exists?(guest_user_id: guest.id, user_id: user.id, status: "merged")
-    rescue StandardError => error
-      Rails.logger.warn("guest merge on signup failed: #{error.class}: #{error.message}")
-      false
+      transfer_guest_history_to(user, guest)
     end
 
     def prepare_email_registration(attributes)
