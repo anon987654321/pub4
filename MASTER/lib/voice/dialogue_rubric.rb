@@ -112,13 +112,13 @@ module Master
         |my\s+(?:family|brother|sister|sibling|parent|mother|father|mom|dad|roommate|flatmate|neighbour|neighbor)
           \s+(?:(?:is|was|can\s+be|has\s+been)\s+)?(?:controlling|coercive|abusive|threatening|intimidating)
         |abus(?:e|es|ed|ing)\s+me|emotionally\s+abusive|verbally\s+abusive
-        |puts?\s+me\s+down|belittles?\s+me|humiliates?\s+me|insults?\s+me
+        |puts?\s+me\s+down|belittl(?:e|es|ed|ing)\s+me|humiliat(?:e|es|ed|ing)\s+me|insult(?:s|ed|ing)?\s+me
         |calls?\s+me\s+(?:stupid|worthless|useless|crazy|lazy|pathetic)
         |threatens?\s+me|threatens?\s+(?:me\s+)?when\s+i\s+say\s+no
         |controls?\s+my\s+(?:finances?|money|phone|contacts?|relationships|movements?|clothes?|work|time)
         |controls?\s+who\s+i\s+(?:see|talk\s+to|meet)
         |won't\s+let\s+me\s+see\s+my\s+friends|doesn't\s+let\s+me\s+see\s+my\s+friends
-        |isolates?\s+me\s+from\s+(?:friends|family)|keeps?\s+me\s+from\s+(?:friends|family)
+        |isolates?\s+me\s+from\s+(?:friends|family)|keeps?\s+me\s+(?:isolated\s+from|from)\s+(?:friends|family)
         |kallar\s+meg\s+(?:dum|verdilaus|verdiløs|gal|lat)|kaller\s+meg\s+(?:dum|verdilaus|verdiløs|gal|lat)
         |truar\s+meg\s+når\s+eg\s+seier\s+nei|truer\s+meg\s+når\s+jeg\s+sier\s+nei
         |styrer\s+kven\s+eg\s+får\s+møte|kontrollerer\s+kven\s+eg\s+får\s+møte
