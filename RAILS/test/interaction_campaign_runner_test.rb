@@ -39,7 +39,7 @@ class InteractionCampaignRunnerTest < Minitest::Test
       assert_equal 1, calls.length
       assert_equal [
         "bin/rails", "test", "test/controllers/session_boundaries_test.rb",
-        "--name", "test_RI_011_expired_session_with_csrf_failure_refuses_mutation"
+        "--name", "\\Atest_RI_011_expired_session_with_csrf_failure_refuses_mutation\\z"
       ], calls.fetch(0).fetch(:command)
       assert_equal File.join(ROOT, "RAILS", "brgen"), calls.fetch(0).fetch(:chdir)
       assert_equal 30, calls.fetch(0).fetch(:timeout)
