@@ -24,6 +24,30 @@ class TestEvidenceRouter < Minitest::Test
     assert_equal :device, Router.classify("Scan nearby Wi-Fi and Bluetooth devices on Android.")
   end
 
+  def test_personal_support_stories_are_minimized_before_external_research
+    story = "I am scared because my boyfriend Alex checks my phone and controls my money. Research whether this is coercive control."
+    query = Router.web_search_query(story)
+
+    assert_includes query, "coercive control"
+    assert_includes query, "safety planning"
+    refute_includes query, "Alex"
+    refute_includes query, "my boyfriend"
+    refute_includes query, "checks my phone"
+    refute_includes query, "controls my money"
+  end
+
+  def test_technical_ai_therapist_research_keeps_its_requested_topic
+    request = "How can MASTER improve its AI therapist prompt? Research GitHub and ar5iv."
+
+    assert_equal request, Router.web_search_query(request)
+  end
+
+  def test_nonpersonal_current_search_keeps_the_original_query
+    request = "What is the latest Telegram Bot API?"
+
+    assert_equal request, Router.web_search_query(request)
+  end
+
   def test_questions_about_master_itself_are_answered_from_the_repository
     assert_equal :repository, Router.classify("why aren't you reading tts out loud?")
     assert_equal :repository, Router.classify("what does /fix do by default?")
