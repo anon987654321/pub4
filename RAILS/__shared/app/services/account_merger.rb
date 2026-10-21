@@ -51,7 +51,14 @@ class AccountMerger
   # session rows when history transfers; moving them would upgrade every copy
   # of an old guest cookie into the new registered identity.
   def invalidate_guest_sessions
-    guest_user.sessions.destroy_all if guest_user.respond_to?(:sessions)
+    unless defined?(::Session) && ::Session.table_exists?
+      raise ActiveRecord::MigrationError, "sessions table unavailable; refusing guest session promotion"
+    end
+
+    # Query by foreign key rather than lazily reading guest_user.sessions:
+    # strict loading is enabled throughout the apps and should not turn a
+    # security boundary into a silent skipped transfer.
+    ::Session.where(user_id: guest_user.id).find_each(&:destroy!)
   end
 
   # Amber's one-to-one inbox stores the guest on either side of a message;
