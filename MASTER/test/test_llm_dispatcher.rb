@@ -30,10 +30,15 @@ class TestLLMDispatcher < Minitest::Test
     end
   end
 
-  # RubyLLM 2 messages carry their usage in `tokens`.
+  # RubyLLM 2.1 separates regular input from cache reads and writes.
   Usage = Struct.new(:input, :output, :cache_read, :cache_write)
+  UsageWithDetails = Struct.new(
+    :input, :output, :cache_read, :cache_write, :cache_write_by_ttl, :server_tool_use, :reported_cost,
+  )
+  CacheWriteCost = Struct.new(:cache_write)
   ReplyWithUsage = Struct.new(:tokens)
   ReplyWithContent = Struct.new(:content)
+  ReplyWithCost = Struct.new(:tokens, :cost, :content)
 
   # 2026-09-16: a /fix ran 194 model calls and 178 failed — the free tier out
   # for the day, Gemini out of quota, the claude binary hung and killed, a 3B
@@ -94,15 +99,45 @@ class TestLLMDispatcher < Minitest::Test
 
     event = bus.events.find { |name, _payload| name == "llm:cost" }
     assert_equal "test-model", event.last[:model]
-    assert_equal 150, event.last[:tokens]
-    assert_match(/\A\[~\$\d+\.\d{4}, 150 tokens\]\z/, event.last[:line])
+    assert_equal 180, event.last[:tokens]
+    assert_equal 0.002468, event.last[:cost]
+    assert_match(/\A\[~\$0\.0025, 180 tokens\]\z/, event.last[:line])
     assert_equal event.last[:line], bus.events.find { |name, _| name == "llm:transparency" }.last[:line]
     complete = bus.events.find { |name, _payload| name == "llm:call_complete" }
-    assert_equal 100, complete.last[:tokens_in]
+    assert_equal 130, complete.last[:tokens_in]
     assert_equal 50, complete.last[:tokens_out]
     assert_equal true, complete.last[:cache_hit]
     assert_equal event.last[:cost], complete.last[:cost_usd]
     assert_equal 1, session.costs.size
+  end
+
+  def test_provider_reported_cost_overrides_estimate_and_preserves_reported_zero
+    [0.001234, 0.0].each do |reported_cost|
+      dispatcher, session, bus = build_dispatcher
+      usage = UsageWithDetails.new(100, 50, 20, 10, nil, nil, reported_cost)
+
+      dispatcher.send(:record_usage, ReplyWithUsage.new(usage), "test-model")
+
+      event = bus.events.find { |name, _payload| name == "llm:cost" }
+      assert_equal reported_cost, event.last[:cost]
+      assert_equal 180, event.last[:tokens]
+      refute event.last[:approximate]
+      assert_equal reported_cost, session.costs.last[:amount]
+    end
+  end
+
+  def test_cache_write_lifetime_uses_ruby_llm_priced_component
+    dispatcher, session, bus = build_dispatcher
+    usage = UsageWithDetails.new(100, 50, 0, 10, { "5m" => 10 }, nil, nil)
+    reply = ReplyWithCost.new(usage, CacheWriteCost.new(0.000099), "reply")
+
+    dispatcher.send(:record_usage, reply, "test-model")
+
+    event = bus.events.find { |name, _payload| name == "llm:cost" }
+    assert_equal 160, event.last[:tokens]
+    assert_equal 0.002349, event.last[:cost]
+    assert_equal true, event.last[:approximate], "unknown model pricing remains approximate"
+    assert_equal 160, session.costs.last[:tokens]
   end
 
   def test_record_usage_estimates_cost_when_provider_omits_usage

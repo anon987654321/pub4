@@ -129,18 +129,51 @@ end)
 
         def record_usage(reply, model)
           return unless @session
-          tokens = reply.respond_to?(:tokens) ? reply.tokens : nil
-          input = tokens&.input.to_i
-          output = tokens&.output.to_i
-          cached = tokens&.cache_read.to_i
-          cache_write = tokens&.cache_write.to_i
-          tokens = input + output
-          return record_estimated_usage(reply, model) if tokens.zero? && reply.respond_to?(:content)
-          return if tokens.zero?
 
-          record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:)
+          usage = reply.respond_to?(:tokens) ? reply.tokens : nil
+          input = usage&.input.to_i
+          output = usage&.output.to_i
+          cached = usage&.cache_read.to_i
+          cache_write = usage&.cache_write.to_i
+          total_tokens = input + cached + cache_write + output
+          reported_cost = usage.reported_cost if usage&.respond_to?(:reported_cost)
+          reported_cost = nonnegative_cost(reported_cost)
+          return record_estimated_usage(reply, model, cost_override: reported_cost) if total_tokens.zero? && reply.respond_to?(:content)
+          return if total_tokens.zero? && reported_cost.nil?
+
+          cache_write_details = usage.respond_to?(:cache_write_by_ttl) ? usage.cache_write_by_ttl : nil
+          cache_write_cost = cache_write_cost_from(reply, cache_write_details) if reported_cost.nil?
+          server_tool_use = usage.server_tool_use if usage&.respond_to?(:server_tool_use)
+          record_measured_usage(
+            model, input:, output:, cached:, cache_write:, tokens: total_tokens,
+            cost_override: reported_cost, cache_write_cost:, cache_write_details:, server_tool_use:,
+          )
         rescue StandardError => e
           @bus&.publish("cost:record_error", error: e.message)
+        end
+
+        # RubyLLM reports ordinary input separately from cache reads and writes.
+        # Use cache-write lifetime pricing only when the provider reports the TTL
+        # split and RubyLLM exposes the priced component; otherwise retain the
+        # marked estimate below rather than guessing a provider-specific rate.
+        def cache_write_cost_from(reply, cache_write_details)
+          return if !cache_write_details.respond_to?(:empty?) || cache_write_details.empty?
+          return unless reply.respond_to?(:cost)
+
+          cost = reply.cost
+          return unless cost.respond_to?(:cache_write)
+
+          nonnegative_cost(cost.cache_write)
+        rescue StandardError => e
+          @bus&.publish("cost:cache_write_pricing_error", error: e.message)
+          nil
+        end
+
+        def nonnegative_cost(value)
+          return unless value.is_a?(Numeric)
+
+          amount = value.to_f
+          amount if amount.finite? && amount >= 0
         end
 
         # ruby_llm's registry carries a real price for every model it knows, and
@@ -182,30 +215,40 @@ end)
           Master::Io::CatalogIndex.verified_free?(model)
         end
 
-        def record_estimated_usage(reply, model)
+        def record_estimated_usage(reply, model, cost_override: nil)
           tokens = Master::Trace::Session.estimate_tokens(reply.content)
-          return if tokens.zero?
+          return if tokens.zero? && cost_override.nil?
 
-          cost = (tokens * price_per_token(model, :output)).round(6)
-          approximate = flat_rate?(model)
+          cost = cost_override.nil? ? (tokens * price_per_token(model, :output)).round(6) : cost_override
+          approximate = cost_override.nil? && flat_rate?(model)
           @session.record_cost(cost, model:, tokens:, approximate:)
           Master::Io::PaidTail.spend!(model, cost)
           publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true, approximate:)
         end
 
-        def record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:)
-          regular = [input - cached - cache_write, 0].max
+        def record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:,
+                                  cost_override: nil, cache_write_cost: nil, cache_write_details: nil,
+                                  server_tool_use: nil)
           input_price = price_per_token(model, :input)
-          cost = ((regular * input_price) +
-                  (cached * input_price * CACHE_READ_RATIO) +
-                  (cache_write * input_price * CACHE_WRITE_RATIO) +
-                  (output * price_per_token(model, :output))).round(6)
-          approximate = flat_rate?(model)
+          write_cost = cache_write_cost.nil? ? cache_write * input_price * CACHE_WRITE_RATIO : cache_write_cost
+          input_total = input + cached + cache_write
+          cost = if cost_override.nil?
+                   ((input * input_price) +
+                    (cached * input_price * CACHE_READ_RATIO) +
+                    write_cost +
+                    (output * price_per_token(model, :output))).round(6)
+                 else
+                   cost_override
+                 end
+          lifetime_estimate = cache_write_details.respond_to?(:empty?) && !cache_write_details.empty? &&
+                              cache_write_cost.nil? && cost_override.nil?
+          unpriced_server_tools = server_tool_use.respond_to?(:empty?) && !server_tool_use.empty? && cost_override.nil?
+          approximate = cost_override.nil? && (flat_rate?(model) || lifetime_estimate || unpriced_server_tools)
           @session.record_cost(cost, model:, tokens:, approximate:)
           Master::Io::PaidTail.spend!(model, cost)
-          @session.record_input_tokens(input) if @session.respond_to?(:record_input_tokens)
-          publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:, approximate:)
-          Trace::CacheEfficiency.record(input:, cached:, cache_write:)
+          @session.record_input_tokens(input_total) if @session.respond_to?(:record_input_tokens)
+          publish_llm_cost(model:, cost:, tokens:, tokens_in: input_total, tokens_out: output, cached:, cache_write:, approximate:)
+          Trace::CacheEfficiency.record(input: input_total, cached:, cache_write:)
           @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
         end
 
