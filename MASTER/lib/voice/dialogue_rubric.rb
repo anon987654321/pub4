@@ -260,8 +260,13 @@ module Master
             |intent(?:ion)?\s+to\s+(?:die|hurt|harm)\s+myself
             |plans?\s+to\s+(?:die|hurt|harm|kill)\s+myself)
           |(?:i\s+am|i'm|im)\s+not\s+suicidal
+          |(?:i\s+am|i'm|im)\s+not\s+(?:currently\s+)?(?:thinking\s+(?:about|of)\s+(?:suicide|self[- ]harm)
+            |considering\s+(?:suicide|self[- ]harm)|planning\s+to\s+(?:hurt|harm|kill)\s+myself)
           |(?:not|never)\s+(?:currently\s+)?suicidal
           |(?:i\s+)?(?:don't|do\s+not|wouldn't|would\s+not)\s+want\s+to\s+(?:hurt|harm)\s+myself
+          |(?:i\s+)?(?:won't|will\s+not)\s+(?:hurt|harm|kill)\s+myself
+          |(?:i\s+)?(?:would\s+never|wouldn't|would\s+not|never)\s+(?:hurt|harm|kill)\s+myself
+          |(?:i\s+)?(?:don't|do\s+not)\s+(?:intend|plan)\s+to\s+(?:hurt|harm|kill)\s+myself
           |(?:i\s+)?(?:don't|do\s+not)\s+have\s+(?:any\s+)?
             (?:suicidal\s+thoughts?|thoughts?\s+of\s+(?:suicide|self[- ]harm)
             |a\s+plan\s+to\s+(?:hurt|harm|kill)\s+myself)
