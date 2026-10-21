@@ -29,14 +29,17 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
     end
 
     enqueued = 0
+    cursor_after_batch = cursor
     ports.each do |port|
       NvdCveCrossrefJob.enqueue_for(port_id: port.id)
       enqueued += 1
+      cursor_after_batch = port.id
     rescue StandardError => e
-      Rails.logger.warn("bsdports: advisory refresh could not queue #{port.name}: #{e.class}: #{e.message}")
+      Rails.logger.error("bsdports: advisory refresh stopped at #{port.name}: #{e.class}: #{e.message}")
+      break
     end
 
-    Rails.cache.write(CURSOR_KEY, ports.last.id, expires_in: 2.days)
-    Rails.logger.info("bsdports: queued #{enqueued} NVD cross-references across #{ports.size} ports")
+    Rails.cache.write(CURSOR_KEY, cursor_after_batch, expires_in: 2.days) if cursor_after_batch > cursor
+    Rails.logger.info("bsdports: queued #{enqueued} NVD cross-references across #{ports.size} selected ports")
   end
 end
