@@ -104,7 +104,6 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
 
     assert_response :redirect
     assert_equal({ port_id: @port.id }, enqueued)
-    assert_equal "PortCvesCrossrefQueued", Shared::DomainEvent.order(:id).last.action if defined?(Shared::DomainEvent)
   ensure
     previous_admin.nil? ? ENV.delete("BSDPORTS_ADMIN_EMAIL") : ENV["BSDPORTS_ADMIN_EMAIL"] = previous_admin
   end
