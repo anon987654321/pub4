@@ -2161,7 +2161,11 @@
       "fault_mode": "csrf_failure",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/brgen/test/controllers/session_boundaries_test.rb",
+        "name": "test_RI_011_expired_session_with_csrf_failure_refuses_mutation"
+      }
     },
     {
       "id": "RI-012",
