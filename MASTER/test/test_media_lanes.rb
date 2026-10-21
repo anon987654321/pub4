@@ -236,6 +236,22 @@ class TestMediaLanes < Minitest::Test
     assert_empty @calls
   end
 
+  def test_reuse_ignores_a_cached_image_whose_bytes_no_longer_match_its_digest
+    @replies[GEMINI_BASE] = gemini_image_reply
+    first, = generate(:image)
+    File.binwrite(first.value!.fetch("path"), "corrupt image bytes")
+    @calls.clear
+
+    second, printed = generate(:image, reuse: true)
+
+    assert second.ok?, second.to_s
+    refute_equal first.value!.fetch("path"), second.value!.fetch("path")
+    assert_equal false, second.value!.fetch("cached")
+    assert_equal PNG, File.binread(second.value!.fetch("path"))
+    assert_includes printed, "cached=no"
+    refute_empty @calls, "invalid cache entries must fall through to a real media lane"
+  end
+
   def test_output_inside_the_repo_is_refused
     result = Lanes.generate(:image, "x", env: ALL_KEYS, dir: File.join(MasterPaths.repo, "tmp_media"))
     assert_equal :validation, result.category
