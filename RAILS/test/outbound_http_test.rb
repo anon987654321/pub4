@@ -70,6 +70,18 @@ class FediverseSsrfTest < Minitest::Test
     old_proxy.nil? ? ENV.delete("https_proxy") : ENV["https_proxy"] = old_proxy
   end
 
+  def test_pinned_connection_respects_bounded_client_timeouts
+    http = Shared::OutboundHttp.pinned_connection(
+      URI("https://rebind.test/actor"),
+      "93.184.216.34",
+      open_timeout: 15,
+      read_timeout: 300
+    )
+
+    assert_equal 15, http.open_timeout
+    assert_equal 300, http.read_timeout
+  end
+
   def test_request_refuses_a_non_443_port
     assert_raises(URI::InvalidURIError) { Shared::OutboundHttp.request(URI("https://example.com:8443/actor")) }
   end
