@@ -69,7 +69,9 @@ class FediverseSsrfTest < Minitest::Test
   # time inside Net::HTTP and a rebinding answer would land on the private net.
   def test_the_checked_address_is_the_one_connected_to
     pinned = with_stubbed_dns("93.184.216.34") do
-      Shared::OutboundHttp.request(URI("https://rebind.test/actor"))
+      with_stubbed_request(->(http, _request, _block) { http.ipaddr }) do
+        Shared::OutboundHttp.request(URI("https://rebind.test/actor"))
+      end
     end
 
     assert_equal "93.184.216.34", pinned
@@ -124,29 +126,32 @@ class FediverseSsrfTest < Minitest::Test
   # Hands the request block a response that streams its chunks, instead of
   # opening a socket.
   def with_stubbed_exchange(response)
-    Net::HTTP.alias_method(:real_request, :request)
-    Net::HTTP.define_method(:request) { |_req, &block| block.call(response) }
-    with_stubbed_dns("93.184.216.34") { yield }
+    with_stubbed_dns("93.184.216.34") do
+      with_stubbed_request(->(_http, _request, block) { block.call(response) }) { yield }
+    end
+  end
+
+  def with_stubbed_request(handler)
+    Net::HTTP.alias_method(:saved_outbound_test_request, :request)
+    Net::HTTP.define_method(:request) do |request, &block|
+      handler.call(self, request, block)
+    end
+    yield
   ensure
-    Net::HTTP.alias_method(:request, :real_request)
+    Net::HTTP.alias_method(:request, :saved_outbound_test_request)
+    Net::HTTP.remove_method(:saved_outbound_test_request)
   end
 
   # Answers the lookup with fixed addresses and reports the ipaddr Net::HTTP was
   # left holding, instead of opening a socket.
   def with_stubbed_dns(*addresses)
-    seen = nil
     resolver = Shared::OutboundHttp.singleton_class
-    resolver.alias_method(:real_resolve_addresses, :resolve_addresses)
-    Net::HTTP.alias_method(:real_request, :request)
+    resolver.alias_method(:saved_outbound_test_resolver, :resolve_addresses)
     Shared::OutboundHttp.define_singleton_method(:resolve_addresses) { |_host| addresses }
-    Net::HTTP.define_method(:request) { |_req| seen = ipaddr }
-
     yield
-    seen
   ensure
-    resolver.alias_method(:resolve_addresses, :real_resolve_addresses)
-    resolver.remove_method(:real_resolve_addresses)
-    Net::HTTP.alias_method(:request, :real_request)
+    resolver.alias_method(:resolve_addresses, :saved_outbound_test_resolver)
+    resolver.remove_method(:saved_outbound_test_resolver)
   end
 end
 
