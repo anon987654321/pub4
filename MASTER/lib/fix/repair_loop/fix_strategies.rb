@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+require "fileutils"
 require "json"
 require "tmpdir"
 require_relative "../../io/exec"
@@ -578,8 +580,8 @@ module Master
             end
           end
 
-          def publish(event, payload)
-            @bus&.publish(event, payload)
+          def publish(event, payload = {}, **keywords)
+            @bus&.publish(event, payload.merge(keywords))
           rescue StandardError
             nil
           end
@@ -832,7 +834,7 @@ module Master
             end
 
             [
-              [UserSimulation.rank(status), row.fetch(:findings), row.fetch(:diff_bytes)],
+              [row.fetch(:findings), UserSimulation.rank(status), row.fetch(:diff_bytes)],
               row.fetch(:source),
               proof
             ]
@@ -852,7 +854,7 @@ module Master
             "repair_loop:candidate_selected",
             law: @law.id, file: path, candidates: viable.size,
             status: proof.fetch(:status), tests: proof.fetch(:test_paths),
-            remaining_findings: selected[0][1], diff_bytes: selected[0][2],
+            remaining_findings: selected[0][0], diff_bytes: selected[0][2],
             regressions: proof.fetch(:regressions).length,
             improvements: proof.fetch(:improvements).length
           )
