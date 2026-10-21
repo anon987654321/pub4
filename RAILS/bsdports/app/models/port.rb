@@ -18,7 +18,8 @@ class Port < ApplicationRecord
   has_many :watches, dependent: :destroy
   has_many :watchers, through: :watches, source: :user
   has_many :comments, dependent: :destroy
-  has_many :security_advisories, dependent: :destroy
+  has_many :security_advisory_ports, dependent: :destroy
+  has_many :security_advisories, through: :security_advisory_ports
 
   validates :name, :version, :pkgpath, presence: true
   validates :pkgpath, uniqueness: { scope: :platform_id }
@@ -63,7 +64,8 @@ class Port < ApplicationRecord
       fields << <<~SQL.squish
         EXISTS (
           SELECT 1 FROM security_advisories
-          WHERE security_advisories.port_id = ports.id AND (#{advisory_fields.join(" OR ")})
+          JOIN security_advisory_ports ON security_advisory_ports.security_advisory_id = security_advisories.id
+          WHERE security_advisory_ports.port_id = ports.id AND (#{advisory_fields.join(" OR ")})
         )
       SQL
       "(#{fields.join(' OR ')})"
