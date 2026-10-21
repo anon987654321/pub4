@@ -132,11 +132,13 @@ module Master
             "cross_cut" => %w[
               RAILS/brgen/test/integration/authorization_matrix_test.rb
               RAILS/amber/test/integration/authorization_matrix_test.rb
+              RAILS/bsdports/test/integration/authorization_matrix_test.rb
+              RAILS/master/test/face_boot.test.mjs
             ]
           }.transform_values(&:freeze).freeze
 
           RUNTIME_STATES = %w[NOT_RUN PASS FAIL BLOCKED SKIPPED].freeze
-          MAX_TEST_FILES = 2
+          MAX_TEST_FILES = 4
           DEFAULT_TIMEOUT_S = 60
 
           class RestoreFailure < StandardError; end
