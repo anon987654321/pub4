@@ -1990,20 +1990,49 @@ end
     assert_match(/\ABLOCKED: /, result.message)
   end
 
-  # 10 and 12. Every issue keeps its strongest proposal, the field is capped,
-  # and a heading is not a proposal.
-  def test_cherry_pick_keeps_one_repair_per_issue_and_caps_the_field
-    feedback = [{ feedback: "issue 1 the flag name hides what it gates" },
-                { feedback: "issue 2 the retry has no ceiling" }]
-    ideas = (["Solutions:"] +
-             Array.new(25) { |i| "issue 1 rename the flag, variant #{i} hides gates name" } +
-             ["issue 2 cap the retry with a ceiling and backoff"]).join("\n")
+  # Every issue receives several materially distinct options, and headings
+  # or near-duplicate paraphrases never take slots away from another issue.
+  def test_cherry_pick_keeps_three_distinct_candidates_per_issue
+    feedback = [
+      { feedback: "the flag name hides what it gates" },
+      { feedback: "the retry has no ceiling" }
+    ]
+    ideas = [
+      "Solutions:",
+      "issue 1 rename the flag to describe the feature it gates",
+      "issue 1 move the flag decision into the existing settings owner",
+      "issue 1 remove the duplicate branch and reuse canonical configuration",
+      "issue 1 rename the flag to describe the feature it gates again",
+      "issue 1 use a shorter name for the flag",
+      "issue 2 cap retry attempts and use bounded backoff",
+      "issue 2 stop retrying immediately when the error is permanent",
+      "issue 2 read the retry cap from the existing policy with a safe default",
+      "issue 2 cap retry attempts and use bounded backoff again"
+    ].join("\n")
 
     picks = Master::Review::Council::Critique::CherryPick.rank(feedback, ideas)
 
     assert_operator picks.size, :<=, Master::Review::Council::Critique::CherryPick::LIMIT
-    assert(picks.any? { |pick| pick.include?("cap the retry") }, "the second issue lost its only proposal")
+    assert_equal 3, picks.count { |pick| pick.match?(/\bissue 1\b/i) }
+    assert_equal 3, picks.count { |pick| pick.match?(/\bissue 2\b/i) }
     refute_includes picks, "Solutions:"
+  end
+
+  def test_clean_tree_improvement_uses_one_winner_per_issue_or_anchor
+    cherry = Master::Review::Council::Critique::CherryPick
+    picks = [
+      "issue 1 rename the flag to clarify behavior",
+      "issue 1 move flag ownership to settings",
+      "issue 2 cap retries with backoff",
+      "MASTER/lib/flags.rb line 12 simplify the parser",
+      "MASTER/lib/flags.rb line 12 reuse the existing parser",
+      "RAILS/brgen/app/models/post.rb line 40 remove repeated coercion"
+    ]
+
+    winners = cherry.one_per_issue(picks)
+
+    assert_equal 4, winners.size
+    assert_equal picks.values_at(0, 2, 3, 5), winners
   end
 
   def test_cherry_pick_reads_brainstorm_ideas_not_only_the_final_synthesis
