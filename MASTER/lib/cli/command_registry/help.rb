@@ -62,6 +62,15 @@ detail: [
   "Each audition writes a distinct dated WAV and leaves reference dilla.wav and dilla_norsk.wav untouched.",
 ],
         },
+        "support" => {
+          summary: "practical personal support and a bounded synthetic quality benchmark",
+          detail: [
+            "/support — practical personal-advice guidance is routed automatically when relevant.",
+            "/support benchmark --confirm [response-model] [judge-model] — evaluate up to eight synthetic cases, at most sixteen model calls.",
+            "Use distinct accessible models for the response and judge when possible; otherwise independence is not proven.",
+            "Review each answer, especially crisis and coercion cases. Scores are screening signals, not clinical certification.",
+          ],
+        },
         "screen" => {
           summary: "keep MASTER running in a screen session you can leave and reattach",
           detail: [
@@ -313,6 +322,7 @@ detail: [
         "reload" => "session", "incident" => "session",
         "size" => "interface",
         "play" => "media", "android" => "media", "ios" => "media",
+        "support" => "review",
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session",
       }.freeze
 
