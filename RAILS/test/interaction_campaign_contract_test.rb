@@ -7,8 +7,7 @@ class InteractionCampaignContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   MANIFEST = File.join(__dir__, "interaction_campaign_400.json")
   REQUIRED_CASE_FIELDS = %w[
-    id surface_id surface actor precondition action fault_mode fault_injection
-    expected evidence_paths assessment runtime_status
+    id surface_id action_id fault_mode assessment runtime_status runtime_evidence
   ].freeze
   VALID_RUNTIME_STATES = %w[NOT_RUN PASS FAIL BLOCKED SKIPPED].freeze
 
@@ -32,21 +31,29 @@ class InteractionCampaignContractTest < Minitest::Test
     assert_equal ids.length, ids.uniq.length
   end
 
-  def test_every_surface_has_exactly_twenty_cases
+  def test_every_surface_has_twenty_unique_actions_and_twenty_cases
     surfaces = @campaign.fetch("surfaces")
-    known_ids = surfaces.map { |surface| surface.fetch("id") }
-    actual = @campaign.fetch("cases").group_by { |row| row.fetch("surface_id") }
-    expected = known_ids.to_h { |surface_id| [surface_id, 20] }
+    ids = surfaces.map { |surface| surface.fetch("id") }
+    grouped = @campaign.fetch("cases").group_by { |row| row.fetch("surface_id") }
 
-    assert_equal expected.sort, actual.transform_values(&:length).sort
+    assert_equal ids.length, ids.uniq.length
+    assert_equal ids.sort, grouped.keys.sort
+
     surfaces.each do |surface|
-      rows = actual.fetch(surface.fetch("id"))
-      assert rows.all? { |row| row.fetch("surface") == surface.fetch("name") },
-             "#{surface.fetch("id")}: case surface names have drifted"
+      actions = surface.fetch("actions")
+      rows = grouped.fetch(surface.fetch("id"))
+
+      assert_equal 20, surface.fetch("expected_cases")
+      assert_equal 20, actions.length
+      assert_equal 20, rows.length
+      assert_equal (1..20).map { |n| format("%02d", n) }, actions.map { |action| action.fetch("id") }
+      assert_equal actions.length, actions.map { |action| action.fetch("action") }.uniq.length
+      refute_empty surface.fetch("actor").strip
+      refute_empty surface.fetch("contract").strip
     end
   end
 
-  def test_each_surface_covers_all_twenty_fault_modes_once
+  def test_each_surface_covers_all_fault_modes_once
     known_faults = @campaign.fetch("fault_modes").map { |mode| mode.fetch("id") }
     assert_equal 20, known_faults.length
     assert_equal known_faults.length, known_faults.uniq.length
@@ -54,21 +61,34 @@ class InteractionCampaignContractTest < Minitest::Test
     @campaign.fetch("surfaces").each do |surface|
       rows = @campaign.fetch("cases").select { |row| row.fetch("surface_id") == surface.fetch("id") }
       observed = rows.map { |row| row.fetch("fault_mode") }
+
       assert_equal known_faults.sort, observed.sort, "#{surface.fetch("id")}: fault-mode coverage gap"
       assert_equal observed.length, observed.uniq.length, "#{surface.fetch("id")}: repeated fault mode"
     end
   end
 
-  def test_every_case_has_an_actionable_oracle_and_required_fields
+  def test_each_case_resolves_to_one_existing_surface_action_and_fault_oracle
+    surfaces = @campaign.fetch("surfaces").to_h { |surface| [surface.fetch("id"), surface] }
+    faults = @campaign.fetch("fault_modes").to_h { |mode| [mode.fetch("id"), mode] }
+    action_pairs = []
+
     @campaign.fetch("cases").each do |row|
       missing = REQUIRED_CASE_FIELDS.reject { |field| row.key?(field) }
       assert_empty missing, "#{row["id"]}: missing fields #{missing.join(", ")}"
 
-      %w[actor precondition action fault_injection expected].each do |field|
-        refute_empty row.fetch(field).to_s.strip, "#{row["id"]}: #{field} is blank"
-      end
-      refute_empty row.fetch("evidence_paths"), "#{row["id"]}: no evidence paths"
+      surface = surfaces.fetch(row.fetch("surface_id"))
+      action = surface.fetch("actions").find { |item| item.fetch("id") == row.fetch("action_id") }
+      fault = faults.fetch(row.fetch("fault_mode"))
+
+      refute_nil action, "#{row.fetch("id")}: unknown action id"
+      refute_empty action.fetch("action").strip
+      refute_empty fault.fetch("setup").strip
+      refute_empty fault.fetch("expected").strip
+      action_pairs << [surface.fetch("id"), action.fetch("id")]
     end
+
+    assert_equal action_pairs.length, action_pairs.uniq.length,
+                 "a surface action is represented more than once"
   end
 
   def test_evidence_paths_are_repository_relative_and_exist
@@ -80,22 +100,16 @@ class InteractionCampaignContractTest < Minitest::Test
       refute relative.split("/").include?(".."), "evidence path escapes repository: #{relative}"
       assert File.file?(File.join(ROOT, relative)), "missing evidence path: #{relative}"
     end
-
-    @campaign.fetch("cases").each do |row|
-      row.fetch("evidence_paths").each do |relative|
-        assert File.file?(File.join(ROOT, relative)), "#{row.fetch("id")}: missing #{relative}"
-      end
-    end
   end
 
-  def test_runtime_statuses_cannot_claim_pass_without_execution_evidence
+  def test_runtime_statuses_cannot_claim_pass_or_fail_without_saved_evidence
     @campaign.fetch("cases").each do |row|
       state = row.fetch("runtime_status")
       assert_includes VALID_RUNTIME_STATES, state, "#{row.fetch("id")}: unknown runtime state"
 
       next unless %w[PASS FAIL].include?(state)
 
-      evidence = row["runtime_evidence"].to_s.strip
+      evidence = row.fetch("runtime_evidence").to_s.strip
       refute_empty evidence, "#{row.fetch("id")}: #{state} requires saved runtime evidence"
     end
   end
@@ -103,7 +117,10 @@ class InteractionCampaignContractTest < Minitest::Test
   def test_source_expectations_are_not_mislabeled_as_runtime_results
     @campaign.fetch("cases").each do |row|
       assert_equal "SOURCE_EXPECTATION_ONLY", row.fetch("assessment"), row.fetch("id")
-      refute_empty row.fetch("expected").to_s
+    end
+
+    @campaign.fetch("limitations").each do |limitation|
+      refute_empty limitation.strip
     end
   end
 end
