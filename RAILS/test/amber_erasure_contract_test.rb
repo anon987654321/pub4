@@ -46,6 +46,8 @@ class AmberErasureContractTest < Minitest::Test
     assert_includes job, "CreatorWardrobeItem.where(item_id: item_ids)"
     assert_includes job, "WardrobeItem.where(item_id: item_ids)"
     assert_includes job, "Recommendation.where(item_id: item_ids)"
+    assert_includes job, "DeclutterReview.where(item_id: item_ids)"
+    assert_includes job, "DeclutterOutcome.where(item_id: item_ids)"
     assert_includes job, 'Comment.where(commentable_type: "Item", commentable_id: item_ids)'
     assert_includes job, 'Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids)'
     assert_includes job, 'Shared::ReviewCase.where(reviewable_type: "Item", reviewable_id: item_ids)'
