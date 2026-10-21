@@ -59,4 +59,27 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
     assert_equal ports.map(&:id).sort, calls.sort
     assert_equal ports.last.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
+  test "a queue failure keeps the cursor at the last successfully queued port" do
+    platform = Platform.find_or_create_by!(slug: "openbsd") { |record| record.name = "OpenBSD" }
+    category = Category.find_or_create_by!(platform:, slug: "refresh-failure") do |record|
+      record.name = "refresh-failure"
+    end
+    ports = 2.times.map do |index|
+      Port.create!(
+        platform:, category:, name: "refresh-failure-#{index}",
+        version: "1", pkgpath: "devel/refresh-failure-#{index}"
+      )
+    end
+    attempted = []
+
+    NvdCveCrossrefJob.stub(:enqueue_for, lambda { |port_id:|
+      attempted << port_id
+      raise "queue unavailable" if port_id == ports.last.id
+    }) do
+      SecurityAdvisoryRefreshJob.perform_now(batch_size: 2)
+    end
+
+    assert_equal ports.map(&:id), attempted
+    assert_equal ports.first.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
+  end
 end
