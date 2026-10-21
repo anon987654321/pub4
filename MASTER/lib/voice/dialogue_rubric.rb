@@ -55,7 +55,9 @@ module Master
           |i\s+need\s+advice|need\s+personal\s+advice|personal\s+problem|help\s+me\s+think\s+through
           |help\s+me\s+work\s+through|talk\s+this\s+through|having\s+a\s+hard\s+time
           |i\s+don't\s+know\s+what\s+to\s+do|i\s+do\s+not\s+know\s+what\s+to\s+do
-          |someone\s+in\s+my\s+life|friendship|my\s+friend|my\s+boss|coworker|colleague
+          |someone\s+in\s+my\s+life|friendship|my\s+friend|my\s+boss|my\s+manager|manager|supervisor
+          |coworker|colleague|career|workplace|office\s+politics|job\s+security|promotion
+          |taking\s+credit|credit\s+for\s+my\s+work|unfair\s+treatment|disrespect|conflict\s+at\s+work
           |workplace\s+bullying|bullying|humiliat\w*
           |psykisk\s+helse|sliter|angst|angstlidelse|deprimert|depresjon|panikk|stresset|ensom|ensomhet
           |sorg|utbrent|tankekjør|grubler|traume|terapi|terapeut|psykiatri|medisin|medisiner|antidepressiva
