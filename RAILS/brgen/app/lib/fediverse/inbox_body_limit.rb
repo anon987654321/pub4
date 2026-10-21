@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "stringio"
-
 module Fediverse
   # Bound inbox reads before Rails turns the request stream into a String.
   # Content-Length is rejected early when present; LimitedInput also protects
@@ -64,12 +62,14 @@ module Fediverse
       end
 
       def read(length = nil, outbuf = nil)
-        return assign_outbuf("", outbuf) if length == 0
+        requested_length = length.nil? ? nil : Integer(length)
+        raise ArgumentError, "negative length" if requested_length&.negative?
+        return assign_outbuf("", outbuf) if requested_length == 0
 
         remaining = @limit - @bytes_read
         raise BodyTooLarge if remaining.negative?
 
-        requested = length.nil? ? remaining + 1 : [Integer(length), remaining + 1].min
+        requested = requested_length.nil? ? remaining + 1 : [requested_length, remaining + 1].min
         chunk = @input.read(requested)
         record!(chunk)
         assign_outbuf(chunk, outbuf)
