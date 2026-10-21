@@ -35,7 +35,7 @@ class Port < ApplicationRecord
       connection.select_values(sanitize_sql_array([ "SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", query ]))
     rescue ActiveRecord::StatementInvalid => e
       Rails.logger.warn("bsdports search index unavailable: #{e.message}")
-      []
+      nil
     end
 
     binds = {}
@@ -44,6 +44,7 @@ class Port < ApplicationRecord
       binds[key] = "%#{term}%"
       like = ->(column) { "#{column} LIKE :#{key}" }
       fields = %w[ports.pkgpath ports.version ports.description ports.maintainer].map(&like)
+      fields.concat(%w[ports.name ports.comment].map(&like)) if ids.nil?
       category_fields = %w[name slug description].map { |column| like.call("categories.#{column}") }
       fields << "EXISTS (SELECT 1 FROM categories WHERE categories.id = ports.category_id AND (#{category_fields.join(" OR ")}))"
       fields << "EXISTS (SELECT 1 FROM maintainers WHERE maintainers.id = ports.maintainer_id AND #{like.call('maintainers.name')})"
@@ -66,7 +67,7 @@ class Port < ApplicationRecord
     end
 
     related = where(predicates.join(" AND "), binds)
-    ids.any? ? related.or(where(id: ids)) : related
+    ids&.any? ? related.or(where(id: ids)) : related
   }
   scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)
 

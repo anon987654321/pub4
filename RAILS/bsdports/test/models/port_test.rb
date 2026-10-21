@@ -132,6 +132,21 @@ class PortTest < ActiveSupport::TestCase
     assert_includes Port.search("transf").to_a, curl
   end
 
+  test "search falls back to port text when the FTS index is unavailable" do
+    curl = port("curl", comment: "transfer tool")
+    connection = Port.connection
+    select_values = connection.method(:select_values)
+    failing = lambda do |sql, *rest|
+      raise ActiveRecord::StatementInvalid, "no such table: ports_fts" if sql.include?("ports_fts")
+
+      select_values.call(sql, *rest)
+    end
+
+    connection.stub(:select_values, failing) do
+      assert_includes Port.search("transfer").to_a, curl
+    end
+  end
+
   test "search covers pkgpaths, categories and associated maintainer names" do
     maintainer = Maintainer.create!(name: "Ola Nordmann")
     curl = port("curl", pkgpath: "net/curl", maintainer:)
