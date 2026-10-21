@@ -255,7 +255,7 @@ module Master
       # another positive danger phrase anywhere in the message still wins.
       CRISIS_NEGATION_CUES = %r{
         \b(?:
-          (?:no|without)\s+(?:(?:current|active|any)\s+)?
+          (?:no|without)\s+(?:(?:current|active|any)\s+)*
             (?:suicidal\s+thoughts?|thoughts?\s+of\s+(?:suicide|self[- ]harm)
             |intent(?:ion)?\s+to\s+(?:die|hurt|harm)\s+myself
             |plans?\s+to\s+(?:die|hurt|harm|kill)\s+myself)
