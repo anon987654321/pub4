@@ -36,7 +36,7 @@ module Master
           |burned\s+out|burnt\s+out|ruminat(?:e|ing|ion)|trauma|therap(?:y|ist)|mental\s+health|psychiatr
           |cbt|dbt|act\s+therapy|adhd|autis(?:m|tic)|medication|antidepressant|antipsychotic|stimulant
           |psychotropic|prescription|ssri|snri|dose|psychiatrist|psychologist|suicid|self[- ]harm|hurt\s+myself
-          |keep\s+myself\s+safe|can't\s+stay\s+safe|want\s+to\s+die|don't\s+want\s+to\s+live
+          |keep\s+myself\s+safe|can't\s+stay\s+safe|(?:don't|do\s+not)\s+think\s+i\s+can\s+keep\s+myself\s+safe|not\s+sure\s+i\s+can\s+keep\s+myself\s+safe|want\s+to\s+die|don't\s+want\s+to\s+live
           |do\s+not\s+want\s+to\s+live|overdos(?:e|ed)|hurt\s+someone|immediate\s+danger
           |unsafe\s+at\s+home|don't\s+feel\s+safe|do\s+not\s+feel\s+safe|threatened\s+me
           |hit\s+me|hitting\s+me|forced\s+me|afraid\s+of\s+my\s+partner|scared\s+of\s+my\s+partner
@@ -262,8 +262,12 @@ module Master
         sources = if include_sources
                     Array(support["research_sources"]).select do |source|
                       source_topics = Array(source["topics"]).map(&:to_s)
-                      locality_matches = !source_topics.include?("norway") || selected_topics.include?("norway")
-                      locality_matches && (source_topics.empty? || !(source_topics & selected_topics).empty?)
+                      local_source = source_topics.include?("norway")
+                      locality_matches = !local_source || selected_topics.include?("norway")
+                      topic_keys_for_source = local_source ? source_topics - ["norway"] : source_topics
+                      topical_match = topic_keys_for_source.empty? ||
+                        !(topic_keys_for_source & selected_topics).empty?
+                      locality_matches && topical_match
                     end
                   else
                     []
