@@ -26,8 +26,13 @@ module Shared
         # itself alive; erasure has teeth (see UserPurgeJob).
         redirect_to new_session_path, alert: t("shared.flash.account_scheduled_for_deletion")
       elsif user
-        start_new_session_for user
-        redirect_to after_authentication_url
+        transfer = transfer_guest_history_from_session(user)
+        if transfer == false
+          redirect_to new_session_path, alert: t("shared.flash.guest_history_transfer_failed")
+        else
+          start_new_session_for user
+          redirect_to after_authentication_url
+        end
       else
         redirect_to new_session_path, alert: t("shared.flash.credentials_invalid")
       end
@@ -45,8 +50,12 @@ module Shared
       user = find_by_magic_token
       return redirect_to(new_session_path, alert: t("shared.flash.magic_link_invalid")) unless user
 
-      # Single use. Cleared before the session starts, so a link replayed from a
-      # mail client's link-prefetcher cannot open a second one.
+      # Do not consume the link or rotate the guest session until history has
+      # transferred safely. The same link remains usable if a migration or
+      # database problem blocks the transfer.
+      transfer = transfer_guest_history_from_session(user)
+      return redirect_to(new_session_path, alert: t("shared.flash.guest_history_transfer_failed")) if transfer == false
+
       user.clear_magic_link!
       start_new_session_for user
       redirect_to after_authentication_url
