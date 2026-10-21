@@ -582,6 +582,43 @@ class TestDialogueRubric < Minitest::Test
     end
   end
 
+  def test_nynorsk_family_problem_gets_practical_guidance_without_couple_assumptions
+    prompt = Rubric.support_prompt_for(
+      "Broren min kritiserer meg heile tida. Kva bør eg gjere?",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Practical response:"
+    assert_includes prompt, "Reply in the language the person is using"
+    refute_includes prompt, "Couples and relationship safety:"
+  end
+
+  def test_nynorsk_relationship_conflict_gets_relationship_guidance
+    prompt = Rubric.support_prompt_for(
+      "Eg og kjærasten min kranglar stadig. Korleis kan eg snakke med henne utan at det endar i same krangelen?",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Research starting points"
+    assert_includes prompt, "Couple therapy models for relationship distress"
+    refute_includes prompt, "NICE NG222"
+  end
+
+  def test_nynorsk_indirect_crisis_language_gets_local_safety_guidance
+    prompt = Rubric.support_prompt_for(
+      "Eg orkar ikkje meir, og eg er redd for at eg ikkje klarer å halde meg trygg i kveld.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "113 for immediate danger to life"
+    assert_includes prompt, "NICE NG225"
+    assert_includes prompt, "Helsenorge — mental-health help"
+  end
+
   def test_forbidden_openers_are_rejected
     assert_equal ["no_ai_isms: Great question"], Rubric.evaluate("Great question! The answer is 42.", root: Master::ROOT)
     assert_empty Rubric.evaluate("The answer is 42.", root: Master::ROOT)
