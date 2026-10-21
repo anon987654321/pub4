@@ -66,7 +66,7 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "javascript:alert(1)"
-    refute_match(/href=["']javascript:alert\\(1\\)/i, response.body)
+    refute_match(/href=["']javascript:alert\(1\)/i, response.body)
   end
 
   test "cross-port comment parents are rejected by controller and model" do
