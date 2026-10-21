@@ -118,6 +118,39 @@ class InteractionCampaignContractTest < Minitest::Test
     end
   end
 
+  def test_declared_runtime_adapters_resolve_to_existing_focused_test_methods
+    surfaces = @campaign.fetch("surfaces").to_h { |surface| [surface.fetch("id"), surface] }
+    adapters = @campaign.fetch("cases").filter_map do |row|
+      [row, row.fetch("runtime_test")] if row.key?("runtime_test")
+    end
+
+    refute_empty adapters, "the campaign should have at least one executable case"
+    assert adapters.any? { |row, _| row.fetch("id") == "RI-011" }, "RI-011 must remain executable"
+
+    adapters.each do |row, adapter|
+      path = adapter.fetch("path")
+      name = adapter.fetch("name")
+      surface = surfaces.fetch(row.fetch("surface_id"))
+      allowed_paths = surface.fetch("focused_test_paths") + surface.fetch("evidence_paths")
+
+      refute path.start_with?("/"), "#{row.fetch("id")}: absolute runtime test path"
+      refute path.split("/").include?(".."), "#{row.fetch("id")}: runtime test path escapes repository"
+      assert_includes allowed_paths, path, "#{row.fetch("id")}: adapter path is not canonical"
+      assert_match(/\\Atest_[A-Za-z0-9_]+\\z/, name, "#{row.fetch("id")}: invalid Minitest method name")
+
+      source = File.read(File.join(ROOT, path), encoding: "UTF-8")
+      assert_match(/^\\s*def\\s+#{Regexp.escape(name)}(?:\\s|\\(|$)/, source,
+                   "#{row.fetch("id")}: method #{name} is not defined in #{path}")
+    end
+  end
+
+  def test_cases_without_runtime_adapters_remain_not_run
+    @campaign.fetch("cases").reject { |row| row.key?("runtime_test") }.each do |row|
+      assert_equal "NOT_RUN", row.fetch("runtime_status"), "#{row.fetch("id")}: no adapter may not imply execution"
+      assert_nil row.fetch("runtime_evidence"), "#{row.fetch("id")}: no adapter may not carry invented evidence"
+    end
+  end
+
   def test_runtime_statuses_cannot_claim_pass_or_fail_without_saved_evidence
     @campaign.fetch("cases").each do |row|
       state = row.fetch("runtime_status")
