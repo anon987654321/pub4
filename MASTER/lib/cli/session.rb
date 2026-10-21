@@ -73,9 +73,9 @@ module Master
         repl_loop
       end
 
-      # Interactive sessions open the face when face_on_start is enabled by the data.
-      # The default enables it; MASTER_FACE_ON_START=0 opts out. Command-line messages and
-      # non-TTY pipes stay plain so automation never receives terminal animation.
+      # Interactive sessions open on the original prompt. The face opens at start only when
+      # face_on_start is enabled by the data or MASTER_FACE_ON_START=1; /face opens it any time.
+      # Command-line messages and non-TTY pipes stay plain so automation never receives terminal animation.
       def face_on_start?(initial_message)
         return false if initial_message || ENV["MASTER_FACE_ON_START"] == "0"
         return false unless $stdin.tty? && $stdout.tty?

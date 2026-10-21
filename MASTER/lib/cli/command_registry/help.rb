@@ -273,9 +273,10 @@ detail: [
           detail: [
             "/face — open the MASTER face in the alternate terminal screen, as large as the terminal allows.",
             "/face size auto|small|large|WxH — choose the face's size (WxH is columns by rows) and open it; the choice holds for the session.",
-            "A bare interactive bin/master opens here by default; Ctrl-D or /exit returns to the shared Ruby REPL.",
+            "A bare interactive bin/master opens on the original prompt; /face opens the face.",
+            "Ctrl-D leaves the face for that prompt.",
             "The web chat and terminal share the location-aware Operator prompt, TurnRouter and command registry.",
-            "MASTER_FACE_ON_START=0 opts out. /fix and other long commands run on the shell surface.",
+            "MASTER_FACE_ON_START=1 opens the face at start. /fix and other long commands run on the shell surface.",
             "While idle it listens through the microphone and says so on its status line (mic on).",
             "Type to take the floor.",
             "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",
