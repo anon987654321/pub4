@@ -253,12 +253,13 @@ module Master
       # The report footer, at the start of a line. A patch in the same report can quote these words, and
       # a quoted one is not the pipeline failing.
       FOOTER_INCOMPLETE = /\Areview\d+:\s*incomplete\b/i
+      FOOTER_OPEN_FINDINGS = /\Areview\d+:\s*complete with open findings\b/i
       FOOTER_CAUSE = /\Areview\d+:\s*cause,/i
 
       # run_pass returns a rendered report for compatibility. Do not allow its
       # textual failure state to fall through into gate success and publication.
       def incomplete_fix_pipeline?(value)
-        value.to_s.lines.any? { |line| line.match?(FOOTER_INCOMPLETE) }
+        value.to_s.lines.any? { |line| line.match?(FOOTER_INCOMPLETE) || line.match?(FOOTER_OPEN_FINDINGS) }
       end
 
       def incomplete_fix_pipeline(value)
