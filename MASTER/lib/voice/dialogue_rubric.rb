@@ -84,7 +84,7 @@ module Master
           |vennen\s+min|sjefen\s+min|kollega|mobbing|ydmyker\s+meg|kampkunst|kampsport|meditasjon
           |tankefullt\s+nærvær|zen|tai\s+chi|aikido|budo|mestring
           |my\s+(?:family|brother|sister|sibling|parents|mother|father|mom|dad|son|daughter|roommate|flatmate|friend|neighbour|neighbor)
-            \s+(?:keeps?\s+)?(?:criticiz\w*|criticis\w*|insult\w*|humiliat\w*|yell\w*|threaten\w*|hit\w*|abus\w*|control\w*|manipulat\w*|ignore\w*|sham\w*|reject\w*|scare\w*|frighten\w*|disrespect\w*|hates?\s+me|calls?\s+me\s+(?:crazy|worthless|useless)|makes?\s+me\s+feel|won't\s+let\s+me|doesn't\s+let\s+me)
+            \s+(?:(?:keeps?|is|was|can\s+be|has\s+been)\s+)?(?:criticiz\w*|criticis\w*|insult\w*|humiliat\w*|yell\w*|threaten\w*|hit\w*|abus\w*|control\w*|manipulat\w*|neglect\w*|ignore\w*|sham\w*|reject\w*|scare\w*|frighten\w*|disrespect\w*|hates?\s+me|calls?\s+me\s+(?:crazy|worthless|useless)|makes?\s+me\s+feel|made\s+me\s+feel|won't\s+let\s+me|doesn't\s+let\s+me)
           |(?:argue|fight|conflict|problems?|issues?)\s+with\s+(?:my\s+)?(?:family|brother|sister|sibling|parents|mother|father|mom|dad|son|daughter|roommate|flatmate|friend|neighbour|neighbor)
           |(?:brother|sister|sibling|mother|father|parent|roommate|flatmate|neighbour|neighbor)\s+(?:hit|threatened|abused|controls?|criticizes?|criticises?|humiliates?|insults?|yells?\s+at|scares?|frightens?)\s+me
           |bror(?:en)?\s+min|syster(?:a)?\s+mi|søster\s+mi|mor\s+mi|far\s+min|foreldra\s+mine
@@ -108,7 +108,10 @@ module Master
         |threat(?:en|s|ening)?|threatened\s+me|hit\s+me|hitting\s+me|forced\s+me|calls\s+me\s+crazy
         |says\s+i\s+am\s+crazy|says\s+i'm\s+crazy|isolation|financial\s+control|controls\s+my\s+money
         |checks\s+my\s+phone|reads\s+my\s+messages|demands\s+my\s+password|tracks\s+my\s+phone
-        |monitors\s+me|won't\s+let\s+me|doesn't\s+let\s+me|gaslighting|manipulasjon|narsissist
+        |monitors\s+me|won't\s+let\s+me|doesn't\s+let\s+me
+        |my\s+(?:family|brother|sister|sibling|parent|mother|father|mom|dad|roommate|flatmate|neighbour|neighbor)
+          \s+(?:(?:is|was|can\s+be|has\s+been)\s+)?(?:controlling|coercive|abusive|threatening|intimidating)
+        |controls?\s+(?:the\s+)?(?:money|finances?|phone|movement|contacts?|relationships)|gaslighting|manipulasjon|narsissist
         |psykisk\s+vold|kontrollerer\s+meg|sjekker\s+(?:mobilen|telefonen)|sporer\s+(?:mobilen|telefonen)
         |truer\s+meg|slår\s+meg|tvinger\s+meg|holder\s+meg\s+isolert
         |kontrollerer\s+(?:økonomien|pengene\s+mine)|leser\s+meldingene\s+mine|kaller\s+meg\s+gal
