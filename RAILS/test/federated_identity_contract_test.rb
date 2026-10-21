@@ -32,6 +32,7 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes callback, '::IdentityProvider.find_by(slug: auth.provider.to_s)'
     assert_includes callback, "identity.save!"
     assert_includes callback, 'legacy_email = "#{auth.uid}@bankid.oauth"'
+    assert_includes callback, "legacy_user.email_verification_token.blank?"
     assert_includes callback, 'raise IdentityEmailConflict unless eligible'
   end
 
@@ -55,6 +56,9 @@ class FederatedIdentityContractTest < Minitest::Test
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/services/account_merger.rb"))
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/models/account_merge.rb"))
     assert_includes merger, "def merge_messages"
+    assert_includes merger, "def invalidate_guest_sessions"
+    assert_includes merger, "guest_user.sessions.destroy_all"
+    refute_includes merger, "merge_sessions"
     assert_includes merger, 'columns.include?("sender_id")'
     assert_includes merger, 'columns.include?("recipient_id")'
     assert_includes merger, "def merge_trust_signals"
