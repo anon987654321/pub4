@@ -111,6 +111,58 @@ class TestCommandRegistryDispatch < Minitest::Test
     Fiber[:master_visitor] = old_visitor
   end
 
+  def test_privacy_memory_export_and_explicit_forget_are_gated
+    require "tmpdir"
+    old_subject = Fiber[:master_pair_subject]
+    old_paired = Fiber[:master_paired]
+    old_visitor = Fiber[:master_visitor]
+
+    Dir.mktmpdir("privacy-memory-command") do |root|
+      Fiber[:master_pair_subject] = "subject-memory"
+      Fiber[:master_paired] = true
+      Fiber[:master_visitor] = nil
+      grant = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(
+          user_message: "/privacy grant personal_memory", args: "grant personal_memory",
+        ),
+      )
+      assert_match(/enabled/, grant)
+
+      dir = Master::Ground::PersonalWorkspace.ensure!(root: root, subject: "subject-memory")
+      File.write(File.join(dir, "USER.md"), "# USER\n- Name: Jules\n")
+      File.write(File.join(dir, "MEMORY.md"), "# MEMORY\n\nPrefers tea\n")
+
+      exported = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(
+          user_message: "/privacy memory export", args: "memory export",
+        ),
+      )
+      assert_includes exported, "Jules"
+      assert_includes exported, "Prefers tea"
+
+      refused = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(
+          user_message: "/privacy memory forget", args: "memory forget",
+        ),
+      )
+      assert_match(/requires the exact command/, refused)
+      assert_includes File.read(File.join(dir, "MEMORY.md")), "Prefers tea"
+
+      cleared = Registry.dispatch_privacy(
+        root, ctx: Master::CLI::PipelineContext.new(
+          user_message: "/privacy memory forget --confirm", args: "memory forget --confirm",
+        ),
+      )
+      assert_match(/durable memory cleared/, cleared)
+      assert_includes File.read(File.join(dir, "USER.md")), "Jules"
+      refute_includes File.read(File.join(dir, "MEMORY.md")), "Prefers tea"
+    end
+  ensure
+    Fiber[:master_pair_subject] = old_subject
+    Fiber[:master_paired] = old_paired
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_support_benchmark_is_documented_and_confirmation_gated
     command = built.fetch("support")
 

@@ -136,11 +136,13 @@ detail: [
                    "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
         "privacy" => {
-          summary: "inspect and revoke subject-specific personal-memory consent",
+          summary: "inspect personal-memory consent and manage the paired subject's stored data",
           detail: [
             "/privacy — show whether personal profile and memory are enabled for the paired subject.",
             "/privacy grant personal_memory — explicitly allow this local paired subject's profile and memory to be read and written.",
             "/privacy revoke personal_memory — immediately disable that scope for this subject.",
+            "/privacy memory show or /privacy memory export — inspect the paired subject's complete USER.md profile and MEMORY.md, within a bounded export size.",
+            "/privacy memory forget --confirm — clear durable memory while preserving USER.md. The exact confirmation command is required.",
             "The command is local-only. Microphone, camera, location, messages, purchases, deployment and financial scopes cannot be granted here until their execution adapters enforce the same policy and native OS permissions.",
           ],
         },

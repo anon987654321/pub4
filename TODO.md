@@ -20,6 +20,12 @@ Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-
 - [ ] Complete real voice-path checks: single Christopher voice, no overlapping voices, natural turn timing, interruption/barge-in, microphone permission denial, STT/TTS timeout, and declared fallbacks. Measure latency on the target machine rather than relying on a mocked worker.
 - [ ] Capture real-browser face boot/render evidence: first-tap behavior, failed asset recovery, context loss, lifecycle cleanup, reduced motion, renderer budget, phone thermal/battery behavior, and GPU/device performance claims.
 
+## MASTER personal assistance
+
+- [ ] Complete one real read-only calendar or email workflow end to end. Start with a narrowly scoped adapter, subject-bound permission, inspectable local state, current-data freshness, explicit failure states, and regression tests. Do not claim a live provider integration from a parser or fixture alone.
+- [ ] Add one external messaging channel through the existing MASTER runtime and shared session contract. Prove identity isolation, permission checks immediately before effects, reconnects, attachment limits, delivery receipts, and safe handling of untrusted inbound instructions before adding further channels.
+- [ ] Evaluate real advice quality against realistic personal-assistance scenarios for practical usefulness, factuality, calibration, safety and actionable next steps. Static contract fixtures are not evidence of model behavior; label mocked, model-backed and human-reviewed results separately.
+
 ## RAILS 8+ and mobile-first PWA products
 
 - [ ] Run an independent /fix and bin/ci pass for every active app in RAILS/apps.yml, plus RAILS/test/run_all.rb. Shared-engine changes must be verified in each consumer app and in the deploy copy-tree layout.

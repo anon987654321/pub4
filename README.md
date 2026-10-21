@@ -35,8 +35,9 @@ bin/operator gate --scan-only
 
 The gate's default mode can repair files; `--scan-only` is the read-only option. Use the tree's canonical test runner and record its real exit status. The main proof surfaces are `cd MASTER && rake test`, `ruby RAILS/test/run_all.rb`, `ruby OPENBSD/bin/check --profile=full`, and `cd STUDIO/test && rake`. Browser, device, paid-provider, DNS, backup, and production checks require their respective real environments.
 
-Work only the operator can finish is listed in [operator seams](MASTER/data/operator_seams.yml),
-each with the evidence that closes it. There is no backlog file; a decision lives beside the thing
-it decides.
+Agent-owned unfinished work is tracked in the single root [TODO.md](TODO.md). Work that only the
+operator can finish is listed in [operator seams](MASTER/data/operator_seams.yml), each with its
+required closure evidence. Decisions live beside the thing they decide; the two ledgers have
+different owners and are intentionally not duplicates.
 
 [MIT License](LICENSE).

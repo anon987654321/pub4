@@ -20,10 +20,58 @@ class TestPersonalWorkspace < Minitest::Test
     )
   end
 
-  def test_ensure_writes_user_and_memory
+  def test_ensure_writes_owner_only_user_and_memory_files
     dir = Master::Ground::PersonalWorkspace.ensure!(root: @root, subject: "abc123")
-    assert File.file?(File.join(dir, "USER.md"))
-    assert File.file?(File.join(dir, "MEMORY.md"))
+    user = File.join(dir, "USER.md")
+    memory = File.join(dir, "MEMORY.md")
+
+    assert File.file?(user)
+    assert File.file?(memory)
+    assert_equal 0o700, File.stat(File.dirname(dir)).mode & 0o777
+    assert_equal 0o700, File.stat(dir).mode & 0o777
+    [user, memory].each { |path| assert_equal 0o600, File.stat(path).mode & 0o777 }
+  end
+
+  def test_snapshot_requires_consent_and_returns_both_personal_files
+    assert_raises(Master::Ground::PersonalWorkspace::PermissionDenied) do
+      Master::Ground::PersonalWorkspace.snapshot(root: @root, subject: "sub1")
+    end
+
+    grant_personal_memory("sub1")
+    dir = Master::Ground::PersonalWorkspace.ensure!(root: @root, subject: "sub1")
+    File.write(File.join(dir, "USER.md"), "# USER\n- Name: Jules\n")
+    File.write(File.join(dir, "MEMORY.md"), "# MEMORY\nPrefers tea\n")
+
+    snapshot = Master::Ground::PersonalWorkspace.snapshot(root: @root, subject: "sub1")
+    assert_includes snapshot.fetch("USER.md"), "Jules"
+    assert_includes snapshot.fetch("MEMORY.md"), "Prefers tea"
+  end
+
+  def test_snapshot_refuses_symlinked_personal_files
+    grant_personal_memory("sub1")
+    dir = File.join(@root, Master::Ground::PersonalWorkspace::REL, "sub1")
+    FileUtils.mkdir_p(dir)
+    outside = File.join(@root, "outside.txt")
+    File.write(outside, "private external content")
+    File.symlink(outside, File.join(dir, "USER.md"))
+
+    assert_raises(Master::Ground::PersonalWorkspace::PermissionDenied) do
+      Master::Ground::PersonalWorkspace.snapshot(root: @root, subject: "sub1")
+    end
+  end
+
+  def test_forget_memory_clears_durable_notes_but_preserves_profile
+    grant_personal_memory("sub1")
+    dir = Master::Ground::PersonalWorkspace.ensure!(root: @root, subject: "sub1")
+    user = File.join(dir, "USER.md")
+    memory = File.join(dir, "MEMORY.md")
+    File.write(user, "# USER\n- Name: Jules\n")
+    File.write(memory, "# MEMORY\n\n## 2026-10-21 general secret\n\nPrefers tea\n")
+
+    assert Master::Ground::PersonalWorkspace.forget_memory!(root: @root, subject: "sub1")
+    assert_includes File.read(user), "Jules"
+    refute_includes File.read(memory), "Prefers tea"
+    assert_includes File.read(memory), "Durable notes"
   end
 
   def test_prompt_section_reads_the_fiber_subject

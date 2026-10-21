@@ -6,9 +6,9 @@
 # exists and is recorded in the commit that deletes the entry; nothing here is a changelog and nothing
 # here is a to-do for an agent. `bin/operator status` prints this file.
 #
-# The repo-wide TODO.md this replaces is gone. What it asked of the code was done or decided: decisions live
-# beside the thing they decide (MASTER/AGENTS.md and OPENBSD/CLAUDE.md "Refused, and why", RAILS/apps.yml,
-# OPENBSD/data/domain_released.yml), and what remained is below.
+# TODO.md tracks work an agent can still perform. This file tracks only evidence that requires
+# the operator or an external environment (a real device, credential, remote host, browser or decision).
+# Decisions live beside what they decide; this is a complementary evidence ledger, not a second code backlog.
 #
 # needs: console (vm23), registrar, device, provider (paid), browser, ears, material (photos, data),
 #        credential, rights (a decision about publication), idle-host.

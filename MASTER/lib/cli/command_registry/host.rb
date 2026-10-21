@@ -74,6 +74,14 @@ module Master
             purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
           )
           "privacy: personal profile and memory enabled for this paired subject"
+        when "memory show", "memory export"
+          data = Master::Ground::PersonalWorkspace.snapshot(root:, subject:)
+          data.map { |name, body| "#{name}\n#{body}" }.join("\n\n")
+        when "memory forget --confirm"
+          Master::Ground::PersonalWorkspace.forget_memory!(root:, subject:)
+          "privacy0 at master0: durable memory cleared; USER.md profile retained"
+        when /\Amemory forget(?:\s.*)?\z/
+          "privacy: erasing durable memory requires the exact command /privacy memory forget --confirm; the USER.md profile is retained"
         when /\Arevoke personal_memory(?:\s+(.+))?\z/
           reason = Regexp.last_match(1).to_s.strip
           revoked = permissions.revoke(
