@@ -149,12 +149,17 @@ module Master
             next unless (entry[:role] || entry["role"]).to_s == "user"
 
             (entry[:content] || entry["content"]).to_s
-          end.first(2)
+          end.first(8)
           current = user_messages.first || last_user_message
           return if current.empty?
 
-          follow_up = current.match?(SUPPORT_FOLLOW_UP)
-          topic = follow_up ? user_messages.join("\n") : current
+          topic = current
+          if current.match?(SUPPORT_FOLLOW_UP)
+            prior_support = user_messages.drop(1).find do |message|
+              message.match?(Master::Voice::DialogueRubric::SUPPORT_CUES)
+            end
+            topic = [prior_support, current].compact.join("\n")
+          end
           Master::Voice::DialogueRubric.support_prompt_for(topic, root: @config["root"] || Master::ROOT)
         end
 
