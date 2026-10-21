@@ -45,6 +45,17 @@ class TestEvidenceRouter < Minitest::Test
     refute_includes query, "kontrollerer meg"
   end
 
+  def test_personal_workplace_story_uses_a_generic_research_topic
+    story = "I am frustrated because my manager Taylor takes credit for my work. Research ways to respond."
+    query = Router.web_search_query(story)
+
+    assert_includes query, "workplace conflict"
+    assert_includes query, "boundary-setting"
+    refute_includes query, "Taylor"
+    refute_includes query, "my manager"
+    refute_includes query, "takes credit for my work"
+  end
+
   def test_technical_ai_therapist_research_keeps_its_requested_topic
     request = "How can MASTER improve its AI therapist prompt? Research GitHub and ar5iv."
 
