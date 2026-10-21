@@ -18,4 +18,16 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
     assert post.user.guest?
     assert_equal "Loving this linen capsule #ootd", post.body
   end
+
+  def test_guest_feed_shows_actionable_empty_state_when_no_posts_exist
+    Post.destroy_all
+
+    get posts_url
+
+    assert_response :success
+    assert_select "section.empty-state[role=status]"
+    assert_select "h2.empty-state-title", I18n.t("empty.no_posts_yet")
+    assert_select "a.empty-state-action[href='#{new_post_path}']", I18n.t("empty.first_post")
+    assert_includes response.body, "amber-compose-box"
+  end
 end
