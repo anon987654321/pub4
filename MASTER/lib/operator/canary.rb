@@ -2,11 +2,9 @@
 
 require "json"
 require "net/http"
-require "open3"
 require "optparse"
 require "rbconfig"
 require "socket"
-require "timeout"
 require "yaml"
 require_relative "../fix/routes_manifest"
 require_relative "../io/exec"
@@ -292,21 +290,13 @@ module Operator
       Result.new(ok:, detail: ok ? "" : out.to_s.lines.last(12).join)
     end
 
-    def capture(argv, chdir)
-      out = +""
-      status = nil
-      Open3.popen2e(*argv, chdir:) do |stdin, io, wait|
-        stdin.close
-        reader = Thread.new { io.each_line { |line| out << line } }
-        begin
-          Timeout.timeout(TIMEOUT) { status = wait.value }
-        rescue Timeout::Error
-          Process.kill("TERM", wait.pid)
-          out << "timed out after #{TIMEOUT}s\n"
-        end
-        reader.join(2)
-      end
-      [out, status&.success? || false]
+    def capture(argv, chdir, timeout: TIMEOUT)
+      out, status = Master::Io::Exec.capture2e(*argv, chdir:, timeout:, raise_on_timeout: true)
+      [out, status.success?]
+    rescue Master::Io::Exec::TimeoutError => error
+      out = Array(error.result).first.to_s
+      out << "\n" unless out.empty? || out.end_with?("\n")
+      [out + "timed out after #{timeout}s\n", false]
     end
 
     # `bin/operator vps deploy <app> --remote`: judge the commit here, then hand the

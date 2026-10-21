@@ -2,10 +2,9 @@
 
 require "fileutils"
 require "json"
-require "open3"
 require "rbconfig"
-require "timeout"
 require "yaml"
+require_relative "../../lib/io/exec"
 require_relative "models"
 require_relative "analyzer"
 
@@ -243,20 +242,11 @@ module Master
         body
       end
 
-      def capture(argv)
-        stdout = +""
-        status = nil
-        Timeout.timeout(COMMAND_TIMEOUT_S) do
-          Open3.popen3(*argv) do |_stdin, out, err, wait|
-            _stdin.close
-            stdout = out.read
-            stdout << err.read
-            status = wait.value
-          end
-        end
+      def capture(argv, timeout: COMMAND_TIMEOUT_S)
+        stdout, status = Master::Io::Exec.capture2e(*argv, timeout:, raise_on_timeout: true)
         [argv, status, stdout]
-      rescue Timeout::Error
-        raise Error, "air_superiority: command timed out: #{argv.first}"
+      rescue Master::Io::Exec::TimeoutError => error
+        raise Error, "air_superiority: command timed out: #{argv.first} (#{error.message})"
       end
     end
   end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "rbconfig"
 
 class TestPlugins < Minitest::Test
   def test_manifests_have_local_policy
@@ -89,6 +90,27 @@ class TestPlugins < Minitest::Test
         owned_account: false,
       )
     end
+  end
+
+  def test_air_command_capture_merges_output_and_status
+    plugin = Master::Plugin.load("air_superiority")
+    argv, status, output = plugin.send(:capture, [RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')"])
+
+    assert_equal [RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')"], argv
+    assert status.success?
+    assert_includes output, "out"
+    assert_includes output, "err"
+  end
+
+  def test_air_command_capture_times_out_without_waiting_for_the_child
+    plugin = Master::Plugin.load("air_superiority")
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    error = assert_raises(Master::Plugin::Error) do
+      plugin.send(:capture, [RbConfig.ruby, "-e", "sleep 10"], timeout: 0.1)
+    end
+
+    assert_match(/command timed out/, error.message)
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 3
   end
 
   def test_air_refuses_unknown_actions

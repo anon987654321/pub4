@@ -5,6 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "socket"
 require "open3"
+require "rbconfig"
 require "stringio"
 require_relative "../lib/operator/canary"
 
@@ -202,6 +203,20 @@ FLOW_OUTPUT = <<~OUT
     assert_match(/FAIL GET demo \/gone — status 500/, text)
     assert_match(/rollback \(manual; the canary changes nothing\)/, text)
     assert_match(/vps-deploy takes no SHA/, text)
+  end
+
+  def test_deploy_preflight_capture_kills_a_hung_process_group
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    output, ok = Canary::DeployPreflight.capture(
+      [RbConfig.ruby, "-e", "Process.spawn('sleep','10', out: STDOUT, err: STDERR); exit 0"],
+      @root,
+      timeout: 0.1
+    )
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+    refute ok
+    assert_includes output, "timed out after 0.1s"
+    assert_operator elapsed, :<, 3
   end
 
   def test_rollback_advice_names_previous_and_current_sha
