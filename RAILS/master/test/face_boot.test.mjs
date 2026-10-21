@@ -129,20 +129,32 @@ test("FaceWorld consumes the semantic layers and bounded render budget", () => {
   assert.match(state, /max_device_pixel_ratio/);
 });
 
-test("FaceWorld morphs to the submitted topic and returns to a reduced-motion-safe resting face", () => {
+test("FaceWorld morphs the primary face field into a topic with a bounded fallback", () => {
   const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  const part2 = readFileSync(join(publicDir, "face.part2.txt"), "utf8");
+  const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
   const runtime = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   assert.match(world, /const SUBJECT_FORMS = new Set\(\[.*fugue.*wave.*orbit.*architecture.*leaf.*network.*constellation/);
   assert.match(world, /function inferSubjectForm\(value\)/);
   assert.match(world, /counterpoint/);
+  assert.match(world, /function buildFaceSubjectPositions\(form\)/);
+  assert.match(world, /MASTER_FACE\?\.setSubjectScatter\?\.\(facePositions\)/);
+  assert.match(world, /MASTER_FACE\?\.resetSubjectScatter\?\.\(\)/);
+  assert.match(world, /faceSubjectRenderer/);
   assert.match(world, /function setSubjectForm\(value\)/);
   assert.match(world, /function setSubjectFromText\(value\)/);
   assert.match(world, /semanticMorphInProgress/);
   assert.match(world, /reducedMotion \? 1 : 0\.065/);
-  assert.match(world, /splatProxy\.visible = activePoints > 0 && \(!portrait \|\| subjectActive\)/);
+  assert.match(world, /splatProxy\.visible = activePoints > 0 && !primaryMorphActive/);
   assert.doesNotMatch(world, /splatProxy\.visible = activePoints > 0;/);
   assert.match(world, /faceCanvas\.style\.opacity/);
   assert.match(world, /detail\.type !== "speech:partial"/);
+  assert.match(part2, /FACE_SCATTER_HOME = faceScatter\.slice\(\)/);
+  assert.match(part2, /semanticMorphRestoreOnSettled/);
+  assert.match(part3, /semanticMorphTarget == null \? automaticMorphTarget/);
+  assert.match(part3, /faceMat\.uniforms\.uMorph\.value = morphCurrent/);
+  assert.match(runtime, /function setSubjectScatter\(positions\)/);
+  assert.match(runtime, /function resetSubjectScatter\(\)/);
   assert.match(runtime, /MASTER_FACE_WORLD\?\.setSubjectFromText\?\.\(v\)/);
 });
 
