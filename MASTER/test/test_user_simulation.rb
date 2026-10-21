@@ -130,6 +130,30 @@ class TestUserSimulation < Minitest::Test
     end
   end
 
+  def test_insufficient_file_budget_blocks_before_touching_source
+    Dir.mktmpdir("master-user-simulation") do |root|
+      path, = fixture_tree(root, "safe\n")
+      write_called = false
+      simulation = UserSimulation.new(
+        root:, campaign_path: CAMPAIGN,
+        deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 1
+      )
+      writer = lambda do |target, text|
+        write_called = true
+        File.write(target, text)
+      end
+
+      result = simulation.evaluate_candidates(
+        path:, original: "safe\n", candidates: ["candidate\n"], writer:
+      ).fetch(0)
+
+      assert_equal :blocked, result.fetch(:status)
+      assert_match(/file budget cannot reserve/, result.fetch(:reason))
+      refute write_called
+      assert_equal "safe\n", File.read(path)
+    end
+  end
+
   def test_missing_test_mapping_is_explicit_and_does_not_write_a_candidate
     Dir.mktmpdir("master-user-simulation") do |root|
       path = File.join(root, "misc", "sample.rb")
