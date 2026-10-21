@@ -107,12 +107,20 @@ class UserPurgeJob < ApplicationJob
       Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids).find_each(&:destroy!)
       Shared::Reaction.where(reactable_type: "Outfit", reactable_id: outfit_ids).find_each(&:destroy!)
     end
+    private_comment_ids = Comment.where(commentable_type: "Item", commentable_id: item_ids)
+                                  .or(Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids))
+                                  .select(:id)
+    if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
+      Shared::Reaction.where(reactable_type: "Comment", reactable_id: private_comment_ids).find_each(&:destroy!)
+    end
     if defined?(Shared::Notification) && Shared::Notification.table_exists?
       Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids).find_each(&:destroy!)
       Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids).find_each(&:destroy!)
+      Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids).find_each(&:destroy!)
     end
     Vote.where(votable_type: "Item", votable_id: item_ids).find_each(&:destroy!)
     Vote.where(votable_type: "Outfit", votable_id: outfit_ids).find_each(&:destroy!)
+    Vote.where(votable_type: "Comment", votable_id: private_comment_ids).find_each(&:destroy!)
     # These are per-user records, but Item declares them as has_one even
     # though the schema allows multiple users to reference the same item.
     # Explicitly remove every user's rows before erasing the target item.
