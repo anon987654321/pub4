@@ -167,4 +167,37 @@ class InteractionCampaignRunnerTest < Minitest::Test
     refute_equal Digest::SHA256.hexdigest(output), Digest::SHA256.hexdigest(redacted)
   end
 
+
+  def test_test_source_change_during_execution_blocks_attribution
+    Dir.mktmpdir("interaction-campaign-source-race") do |root|
+      manifest_path = File.join(root, "RAILS", "test", "interaction_campaign_400.json")
+      test_path = File.join(root, "RAILS", "brgen", "test", "controllers", "session_boundaries_test.rb")
+      rails_path = File.join(root, "RAILS", "brgen", "bin", "rails")
+      FileUtils.mkdir_p(File.dirname(manifest_path))
+      FileUtils.mkdir_p(File.dirname(test_path))
+      FileUtils.mkdir_p(File.dirname(rails_path))
+      File.write(manifest_path, File.read(MANIFEST))
+      File.write(test_path, File.read(File.join(ROOT, "RAILS", "brgen", "test", "controllers", "session_boundaries_test.rb")))
+      File.write(rails_path, "# fake app entrypoint\n")
+
+      executor = lambda do |**|
+        File.write(test_path, "# changed while the test ran\n")
+        ["1 runs, 4 assertions, 0 failures, 0 errors, 0 skips\n", Status.new(true, 0)]
+      end
+      evidence_root = File.join(root, ".master", "interaction_campaign_runs")
+      runner = Runner.new(
+        case_ids: ["RI-011"], root:, manifest_path:, evidence_root:,
+        io: StringIO.new, executor:
+      )
+
+      assert_equal 3, runner.run
+      results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
+      row = JSON.parse(File.read(results_path)).fetch("results").fetch(0)
+      assert_equal "BLOCKED", row.fetch("status")
+      assert_match(/test source changed during execution/, row.fetch("reason"))
+      assert_equal false, row.fetch("evidence").fetch("test_source_unchanged")
+      refute_equal row.fetch("evidence").fetch("test_sha256"), row.fetch("evidence").fetch("test_sha256_after")
+    end
+  end
+
 end
