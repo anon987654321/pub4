@@ -13,6 +13,7 @@ require_relative "visual_ghost_stack"
 require_relative "visual_evidence_rows"
 require_relative "visual_artifact"
 require_relative "visual_custody"
+require_relative "visual_completion"
 require_relative "../design/visual_language"
 require_relative "visual_runtime"
 require_relative "../../gates/support/mobile_journey_probe"
@@ -61,6 +62,7 @@ module Master
         @bus = bus
         @dir = nil
         @custody = nil
+        @layout_completion_enabled = false
         @runtime = VisualRuntime.new(root:, bus:)
       end
 
@@ -72,6 +74,8 @@ module Master
 
       def run(target:, files:, pass:)
         return Result.ok(state: :not_applicable) unless applicable?(target)
+
+        @layout_completion_enabled = VisualCompletion.enabled_for_target?(root: repo_root, target:)
         raise "visual review has no agent" unless @agent
 
         require File.expand_path("../../gates/support/geometry_probe", __dir__)
@@ -89,7 +93,9 @@ module Master
         captures = capture_surfaces(surfaces, pass:)
         return inconclusive("no surface was measured") if captures.empty?
 
-        @custody = VisualCustody.new(root: repo_root, surfaces:, bus: @bus)
+        @custody = VisualCustody.new(
+          root: repo_root, surfaces:, bus: @bus, layout_completion: @layout_completion_enabled
+        )
         custody = @custody.preflight!(captures)
         return inconclusive(custody.message) unless custody.ok?
 
@@ -347,6 +353,7 @@ module Master
           Apply the executable MASTER design/usability constitution below. These are laws, not a scoring checklist. Identify only laws supported by rendered evidence.
           #{Master::Fix::VisualUsability.context}
           #{visual_rubric_context}
+          #{VisualCompletion.prompt_context(root: repo_root, path: mapped.first, custody: @custody)}
           #{Master::Fix::VisualReference.context}
           #{cross_page_context(captures)}
           Every actionable issue must name the applicable law id(s), surface/viewport, and a stable selector or visible text anchor.
