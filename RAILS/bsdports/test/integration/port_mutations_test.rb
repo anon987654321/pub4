@@ -98,7 +98,7 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
     sign_in_bsdports(user)
     enqueued = nil
 
-    NvdCveCrossrefJob.stub(:perform_later, ->(**arguments) { enqueued = arguments }) do
+    NvdCveCrossrefJob.stub(:enqueue_for, ->(**arguments) { enqueued = arguments }) do
       post crossref_cves_port_path(@port)
     end
 
