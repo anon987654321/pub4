@@ -45,7 +45,12 @@ module Master
           |social\s+anxiety|sleep\s+problems|can't\s+stop\s+thinking|cannot\s+stop\s+thinking
           |keep\s+replaying|i\s+feel\s+(?:sad|stuck|empty|hopeless|anxious|angry|overwhelmed|unsafe|lost)
           |i(?:'m|\s+am)\s+struggling|i\s+can't\s+cope|i\s+cannot\s+cope
-          |martial\s+arts|mindfulness|meditat(?:e|ion)|stoic(?:ism)?|zen|tai\s+chi|aikido|budo|coping
+          |i\s+need\s+advice|need\s+personal\s+advice|personal\s+problem|help\s+me\s+think\s+through
+          |help\s+me\s+work\s+through|talk\s+this\s+through|having\s+a\s+hard\s+time
+          |i\s+don't\s+know\s+what\s+to\s+do|i\s+do\s+not\s+know\s+what\s+to\s+do
+          |someone\s+in\s+my\s+life|friendship|my\s+friend|my\s+boss|coworker|colleague
+          |workplace\s+bullying|bullying|humiliat\w*|martial\s+arts|mindfulness|meditat(?:e|ion)
+          |stoic(?:ism)?|zen|tai\s+chi|aikido|budo|coping
         )\b
       }ix.freeze
 
