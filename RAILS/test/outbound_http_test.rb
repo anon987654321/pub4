@@ -209,8 +209,11 @@ end
 # call is refused outright, because it cannot be given one.
 class OutboundHttpTimeoutTest < Minitest::Test
   RAILS = File.expand_path("..", __dir__)
-  INVENTORY_ROOTS = %w[__shared amber brgen bsdports brgen_marketplace brgen_dating brgen_radio brgen_messenger brgen_maps].freeze
-  SOURCES = "{__shared,amber,brgen,bsdports,brgen_marketplace,brgen_dating,brgen_radio,brgen_messenger,brgen_maps}/{app,lib,engines}/**/*.rb"
+  INVENTORY_ROOTS = %w[
+    __shared amber brgen bsdports brgen_marketplace brgen_dating
+    brgen_radio brgen_messenger brgen_maps
+  ].freeze
+  SOURCES = "{#{INVENTORY_ROOTS.join(",")}}/{app,lib,engines}/**/*.rb"
 
   UNBOUNDABLE = /Net::HTTP\.(get|get_response|post|post_form)\s*\(/
   OPENS = /Net::HTTP\.(start|new)\s*\(|URI\.open\s*\(/
