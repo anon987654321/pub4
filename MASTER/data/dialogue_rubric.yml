@@ -332,6 +332,14 @@ support_practice:
         Apache-2.0 licensed framework for simulated multi-session quality-of-care, therapeutic alliance
         and crisis-risk evaluation. Simulated results are research signals, not proof of clinical safety.
       topics: [ai_evaluation]
+    - name: "Mind-Eval 2 — multi-session AI counselor benchmark"
+      url: "https://github.com/SWORDHealth/mind-eval"
+      use: >-
+        Apache-2.0 licensed September 2026 benchmark using synthetic members across three sessions,
+        shared memory between sessions and per-reply quality judgments. Use for longitudinal consistency
+        and failure discovery; simulated patient behavior is not clinical efficacy evidence, and Mind-Eval
+        2 scores are not comparable with its legacy version.
+      topics: [ai_evaluation]
     - name: "Between Help and Harm — crisis-handling evaluation code"
       url: "https://github.com/ellisalicante/LLMs-Mental-Health-Crisis"
       use: >-
