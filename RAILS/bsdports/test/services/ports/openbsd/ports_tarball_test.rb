@@ -8,6 +8,32 @@ class PortsTarballTest < ActiveSupport::TestCase
     @tarball = Ports::Openbsd::PortsTarball.new(platform: platforms(:openbsd), release: "7.9")
   end
 
+  test "signature verification checks the manifest and archive basename" do
+    Dir.mktmpdir do |dir|
+      key = File.join(dir, "trusted.pub")
+      signature = File.join(dir, "SHA256.sig")
+      archive = File.join(dir, "ports.tar.gz")
+      [key, signature, archive].each { |path| File.write(path, "fixture") }
+      @tarball.define_singleton_method(:trusted_signify_key) { key }
+      @tarball.define_singleton_method(:verification_ready?) { true }
+      status = Object.new
+      status.define_singleton_method(:success?) { true }
+      invocation = nil
+
+      Open3.stub(:capture2e, lambda { |*arguments, **options|
+        invocation = [arguments, options]
+        ["verified", status]
+      }) do
+        assert @tarball.send(:verify_tarball, archive, signature)
+      end
+
+      assert_equal [
+        "signify", "-C", "-p", key, "-x", "SHA256.sig", "ports.tar.gz"
+      ], invocation.first
+      assert_equal dir, invocation.last.fetch(:chdir)
+    end
+  end
+
   test "an off-origin redirect is refused without a second request" do
     response = Net::HTTPFound.new("1.1", "302", "Found")
     response["location"] = "https://169.254.169.254/latest/meta-data"
