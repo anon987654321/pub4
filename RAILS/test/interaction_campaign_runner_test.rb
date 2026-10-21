@@ -51,7 +51,10 @@ class InteractionCampaignRunnerTest < Minitest::Test
       row = ledger.fetch("results").fetch(0)
       assert_equal "RI-011", row.fetch("case_id")
       assert_equal "PASS", row.fetch("status")
+      assert_equal Digest::SHA256.file(MANIFEST).hexdigest, ledger.fetch("manifest_sha256")
       evidence = row.fetch("evidence")
+      assert_equal evidence.fetch("test_sha256"), evidence.fetch("test_sha256_after")
+      assert evidence.fetch("test_source_unchanged")
       assert_equal Digest::SHA256.file(File.join(ROOT, evidence.fetch("test_path"))).hexdigest,
                    evidence.fetch("test_sha256")
       log_path = File.join(File.dirname(results_path), evidence.fetch("log"))
