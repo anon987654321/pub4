@@ -147,9 +147,9 @@ class TestScanSpeedPaths < Minitest::Test
       allowed = {
         "empty.rb" => "",
         "no_final_newline.rb" => "one line",
-        "final_newline.rb" => "one line\\n",
-        "max_without_newline.rb" => ("x\\n" * (max_lines - 1)) + "x",
-        "max_with_newline.rb" => "x\\n" * max_lines,
+        "final_newline.rb" => "one line\n",
+        "max_without_newline.rb" => ("x\n" * (max_lines - 1)) + "x",
+        "max_with_newline.rb" => "x\n" * max_lines,
       }
 
       allowed.each do |name, source|
@@ -162,7 +162,7 @@ class TestScanSpeedPaths < Minitest::Test
       end
 
       too_long = File.join(dir, "too_long.rb")
-      File.write(too_long, "x\\n" * (max_lines + 1))
+      File.write(too_long, "x\n" * (max_lines + 1))
       result = processor.send(:read_file, too_long)
 
       assert result.err?
