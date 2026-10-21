@@ -42,6 +42,18 @@ class UserPurgeJobTest < ActiveJob::TestCase
     preserved_comment = Comment.create!(user: @user, commentable: other_post, content: "A public comment")
     private_item_comment = Comment.create!(user: @other, commentable: item, content: "Comment on private item")
     private_outfit_comment = Comment.create!(user: @other, commentable: outfit, content: "Comment on private outfit")
+    item_review = Shared::ReviewCase.create!(
+      reviewable: item, reporter: @other, reviewer: @user, state: "closed", reason: "other"
+    )
+    outfit_review = Shared::ReviewCase.create!(
+      reviewable: outfit, reporter: @other, reviewer: @user, state: "closed", reason: "other"
+    )
+    reporter_review = Shared::ReviewCase.create!(
+      reviewable: other_post, reporter: @user, state: "open", reason: "other"
+    )
+    retained_review = Shared::ReviewCase.create!(
+      reviewable: other_post, reporter: @other, reviewer: @user, state: "closed", reason: "other"
+    )
 
     provider_identity = ExternalIdentity.create!(
       user: @user, identity_provider: @provider, subject: "subject-#{@suffix}",
@@ -114,6 +126,11 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert Comment.exists?(preserved_comment.id), "public discussion was removed with the account"
     refute Comment.exists?(private_item_comment.id), "comment on deleted private item was left dangling"
     refute Comment.exists?(private_outfit_comment.id), "comment on deleted private outfit was left dangling"
+    refute Shared::ReviewCase.exists?(item_review.id), "review case retained a deleted item target"
+    refute Shared::ReviewCase.exists?(outfit_review.id), "review case retained a deleted outfit target"
+    refute Shared::ReviewCase.exists?(reporter_review.id), "a report authored by the erased user survived"
+    assert_nil Shared::ReviewCase.find(retained_review.id).reviewer_id,
+               "reviewer identity must be removed while another person's audit is retained"
   end
 
   test "accounts outside the deletion grace period are untouched" do
