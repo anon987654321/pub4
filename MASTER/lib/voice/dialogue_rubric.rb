@@ -83,8 +83,10 @@ module Master
           |grenser|familiekonflikt|utsetter|prokrastinerer|motivasjon|sinne|skam|skyld|vennskap
           |vennen\s+min|sjefen\s+min|kollega|mobbing|ydmyker\s+meg|kampkunst|kampsport|meditasjon
           |tankefullt\s+nærvær|zen|tai\s+chi|aikido|budo|mestring
-          |my\s+(?:family|brother|sister|parents|mother|father|son|daughter|roommate|friend|neighbour|neighbor)
-          |brother|sister|sibling|mother|father|parent|roommate|flatmate|neighbour|neighbor
+          |my\s+(?:family|brother|sister|sibling|parents|mother|father|mom|dad|son|daughter|roommate|flatmate|friend|neighbour|neighbor)
+            \s+(?:keeps?\s+)?(?:criticiz\w*|criticis\w*|insult\w*|humiliat\w*|yell\w*|threaten\w*|hit\w*|abus\w*|control\w*|manipulat\w*|ignore\w*|sham\w*|reject\w*|scare\w*|frighten\w*|disrespect\w*|hates?\s+me|calls?\s+me\s+(?:crazy|worthless|useless)|makes?\s+me\s+feel|won't\s+let\s+me|doesn't\s+let\s+me)
+          |(?:argue|fight|conflict|problems?|issues?)\s+with\s+(?:my\s+)?(?:family|brother|sister|sibling|parents|mother|father|mom|dad|son|daughter|roommate|flatmate|friend|neighbour|neighbor)
+          |(?:brother|sister|sibling|mother|father|parent|roommate|flatmate|neighbour|neighbor)\s+(?:hit|threatened|abused|controls?|criticizes?|criticises?|humiliates?|insults?|yells?\s+at|scares?|frightens?)\s+me
           |bror(?:en)?\s+min|syster(?:a)?\s+mi|søster\s+mi|mor\s+mi|far\s+min|foreldra\s+mine
           |venen\s+min|veninna\s+mi|familien\s+min|kjærasten\s+min|sambuaren\s+min
           |eg\s+(?:slit|veit\s+ikkje|treng\s+(?:hjelp|råd)|klarer\s+ikkje|klarar\s+ikkje|har\s+det\s+vanskeleg)
@@ -248,12 +250,39 @@ module Master
         nil
       end
 
+      # Explicitly negated disclosures should not trigger crisis-specific
+      # escalation by themselves. Remove only narrowly matched denials first;
+      # another positive danger phrase anywhere in the message still wins.
+      CRISIS_NEGATION_CUES = %r{
+        \b(?:
+          (?:no|without)\s+(?:(?:current|active|any)\s+)?
+            (?:suicidal\s+thoughts?|thoughts?\s+of\s+(?:suicide|self[- ]harm)
+            |intent(?:ion)?\s+to\s+(?:die|hurt|harm)\s+myself
+            |plans?\s+to\s+(?:die|hurt|harm|kill)\s+myself)
+          |(?:i\s+am|i'm|im)\s+not\s+suicidal
+          |(?:not|never)\s+(?:currently\s+)?suicidal
+          |(?:i\s+)?(?:don't|do\s+not|wouldn't|would\s+not)\s+want\s+to\s+(?:hurt|harm)\s+myself
+          |(?:i\s+)?(?:don't|do\s+not)\s+have\s+(?:any\s+)?
+            (?:suicidal\s+thoughts?|thoughts?\s+of\s+(?:suicide|self[- ]harm)
+            |a\s+plan\s+to\s+(?:hurt|harm|kill)\s+myself)
+        )\b
+      }ix.freeze
+
+      def crisis_signal?(message)
+        text = message.to_s
+        return false if text.empty?
+
+        text.gsub(CRISIS_NEGATION_CUES, " ").match?(CRISIS_CUES)
+      end
+
       # A shared relevance check keeps initial routing and short follow-ups
       # consistent. Crisis and manipulation cues can be relevant even when they
       # do not contain one of the broader support words.
       def support_relevant?(message)
         text = message.to_s
-        !text.empty? && [SUPPORT_CUES, CRISIS_CUES, MANIPULATION_CUES, OCD_CUES].any? { |cue| text.match?(cue) }
+        return false if text.empty?
+
+        [SUPPORT_CUES, MANIPULATION_CUES, OCD_CUES].any? { |cue| text.match?(cue) } || crisis_signal?(text)
       end
 
       # The full clinical protocol is injected only when the current message
@@ -266,10 +295,10 @@ module Master
         areas = %w[response_contract privacy_and_memory clinical_methods evidence_and_research crisis_and_referral]
         areas << "relationship_safety" if text.match?(RELATIONSHIP_CUES)
         areas << "manipulation_resilience" if text.match?(MANIPULATION_CUES)
-        areas.concat(%w[relationship_safety manipulation_resilience]) if text.match?(CRISIS_CUES)
+        areas.concat(%w[relationship_safety manipulation_resilience]) if crisis_signal?(text)
         areas << "martial_and_contemplative_practice" if text.match?(MARTIAL_CUES)
         include_sources = text.match?(RESEARCH_CUES) || text.match?(CLINICAL_DETAIL_CUES) ||
-                          text.match?(CRISIS_CUES) || text.match?(AI_MENTAL_HEALTH_CUES) ||
+                          crisis_signal?(text) || text.match?(AI_MENTAL_HEALTH_CUES) ||
                           text.match?(ANXIETY_CUES) || text.match?(DEPRESSION_CUES) ||
                           text.match?(ADHD_CUES) || text.match?(OCD_CUES) ||
                           text.match?(TRAUMA_CUES) || text.match?(BIPOLAR_CUES) ||
@@ -288,12 +317,12 @@ module Master
       def research_topics_for(text)
         topics = []
         topics << "ai_evaluation" if text.match?(AI_MENTAL_HEALTH_CUES)
-        topics << "crisis" if text.match?(CRISIS_CUES)
+        topics << "crisis" if crisis_signal?(text)
         topics << "relationship" if text.match?(RELATIONSHIP_CUES)
         # Couple-therapy research is relevant only to ordinary relationship conflict.
         # Do not surface it when manipulation or immediate-safety cues are present.
         topics << "couples_therapy" if text.match?(RELATIONSHIP_CUES) &&
-                                      !text.match?(MANIPULATION_CUES) && !text.match?(CRISIS_CUES)
+                                      !text.match?(MANIPULATION_CUES) && !crisis_signal?(text)
         topics << "manipulation" if text.match?(MANIPULATION_CUES)
         topics << "martial" if text.match?(MARTIAL_CUES)
         topics << "depression" if text.match?(DEPRESSION_CUES)
@@ -325,7 +354,7 @@ module Master
           "For nontrivial clinical claims, use current clinical guidelines and systematic reviews when research tools are available. " \
             "Open and verify sources; never invent citations. If research is unavailable, state that limit.",
         ]
-        if text.match?(CRISIS_CUES)
+        if crisis_signal?(text)
           lines.concat([
             "Immediate safety takes priority. Ask directly whether there is immediate danger when needed, " \
               "encourage immediate contact with local emergency services and a trusted person, and do not delay help for a long intake.",
