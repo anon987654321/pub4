@@ -2071,7 +2071,11 @@
       "fault_mode": "baseline",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/brgen/test/controllers/session_boundaries_test.rb",
+        "name": "test_RI_001_valid_signup_persists_unverified_account"
+      }
     },
     {
       "id": "RI-002",
