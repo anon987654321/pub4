@@ -13,6 +13,10 @@ class NvdCve
   # shared database row and reschedules work instead of sleeping a request or
   # worker thread. Keep this service focused on fetching and recording data.
 
+  def self.crossref(port, limit: 5)
+    new(port).crossref(limit:)
+  end
+
   def initialize(port)
     @port = port
   end
