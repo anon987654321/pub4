@@ -58,6 +58,57 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
     end
   end
 
+
+  test "cross-port comment parents are rejected by controller and model" do
+    user = make_user("thread-owner")
+    other_port = Port.create!(
+      platform: @platform, category: @category, name: "other",
+      pkgpath: "net/other-#{SecureRandom.hex(3)}", version: "1"
+    )
+    parent = Comment.create!(user: user, port: other_port, content: "Parent on another port")
+    child = Comment.new(user: user, port: @port, parent: parent, content: "Invalid reply")
+    refute child.valid?
+    assert child.errors[:parent_id].any?
+
+    sign_in_bsdports(user)
+    assert_no_difference "Comment.count" do
+      post port_comments_path(@port), params: {
+        comment: { content: "Cross-port reply", parent_id: parent.id }
+      }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "only the configured operator can queue NVD cross-reference work" do
+    previous_admin = ENV["BSDPORTS_ADMIN_EMAIL"]
+    ENV["BSDPORTS_ADMIN_EMAIL"] = "different-person@example.test"
+    user = make_user("not-admin")
+    sign_in_bsdports(user)
+
+    post crossref_cves_port_path(@port)
+    assert_response :forbidden
+  ensure
+    previous_admin.nil? ? ENV.delete("BSDPORTS_ADMIN_EMAIL") : ENV["BSDPORTS_ADMIN_EMAIL"] = previous_admin
+  end
+
+  test "configured operator enqueues NVD work without calling NVD in the request" do
+    previous_admin = ENV["BSDPORTS_ADMIN_EMAIL"]
+    user = make_user("bsdports-operator")
+    ENV["BSDPORTS_ADMIN_EMAIL"] = user.email_address
+    sign_in_bsdports(user)
+    enqueued = nil
+
+    NvdCveCrossrefJob.stub(:perform_later, ->(**arguments) { enqueued = arguments }) do
+      post crossref_cves_port_path(@port)
+    end
+
+    assert_response :redirect
+    assert_equal({ port_id: @port.id }, enqueued)
+    assert_equal "PortCvesCrossrefQueued", Shared::DomainEvent.order(:id).last.action if defined?(Shared::DomainEvent)
+  ensure
+    previous_admin.nil? ? ENV.delete("BSDPORTS_ADMIN_EMAIL") : ENV["BSDPORTS_ADMIN_EMAIL"] = previous_admin
+  end
+
   test "authenticated user can comment on a port" do
     user = make_user("commenter")
     sign_in_bsdports(user)
