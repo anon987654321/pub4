@@ -6,8 +6,15 @@ class CommentsController < ApplicationController
 
   def create
     parent_id = params.dig(:comment, :parent_id)
-    parent = @port.comments.find_by(id: parent_id) if parent_id.present?
-    return head(:unprocessable_entity) if parent_id.present? && parent.nil?
+    parent = nil
+    if parent_id.present?
+      valid_id = parent_id.is_a?(Integer) && parent_id.positive? ||
+                 parent_id.is_a?(String) && parent_id.match?(/\A[1-9]\d*\z/)
+      return head(:unprocessable_entity) unless valid_id
+
+      parent = @port.comments.find_by(id: parent_id)
+      return head(:unprocessable_entity) unless parent
+    end
 
     @comment = @port.comments.build(comment_params.merge(user: Current.user, parent: parent))
     if @comment.save
