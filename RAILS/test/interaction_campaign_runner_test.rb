@@ -104,4 +104,22 @@ class InteractionCampaignRunnerTest < Minitest::Test
       assert_equal 399, ledger.fetch("counts").fetch("SKIPPED")
     end
   end
+  def test_file_level_success_is_blocked_when_more_than_one_test_ran
+    Dir.mktmpdir("interaction-campaign-not-exact") do |evidence_root|
+      executor = lambda do |**|
+        ["5 runs, 100 assertions, 0 failures, 0 errors, 0 skips\n", Status.new(true, 0)]
+      end
+      runner = Runner.new(
+        case_ids: ["RI-011"], root: ROOT, manifest_path: MANIFEST,
+        evidence_root:, io: StringIO.new, executor:
+      )
+
+      assert_equal 3, runner.run
+      results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
+      row = JSON.parse(File.read(results_path)).fetch("results").fetch(0)
+      assert_equal "BLOCKED", row.fetch("status")
+      assert_match(/exactly one executed mapped Minitest case/, row.fetch("reason"))
+    end
+  end
+
 end
