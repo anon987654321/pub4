@@ -8,8 +8,9 @@ Shared::Contracts.require_contract("studio")
 require "rbconfig"
 require "tmpdir"
 require "fileutils"
-require "open-uri"
+require "uri"
 require "securerandom"
+require_relative "outbound_http"
 require_relative "artwork_pipeline"
 
 module Shared
