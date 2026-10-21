@@ -140,6 +140,8 @@ module Master
           RUNTIME_STATES = %w[NOT_RUN PASS FAIL BLOCKED SKIPPED].freeze
           MAX_TEST_FILES = 4
           DEFAULT_TIMEOUT_S = 60
+          MIN_TEST_TIMEOUT_S = 5
+          POST_SIMULATION_RESERVE_S = 45
 
           class RestoreFailure < StandardError; end
 
@@ -153,14 +155,15 @@ module Master
             APPROACHES.fetch(index % APPROACHES.length)
           end
 
-          def initialize(root: Master::REPO_ROOT, campaign_path: nil, bus: nil, runner: nil, timeout: nil)
+          def initialize(root: Master::REPO_ROOT, campaign_path: nil, bus: nil, runner: nil, timeout: nil, deadline: nil)
             @root = File.expand_path(root)
             @campaign_path = campaign_path || File.join(
               Master::REPO_ROOT, "RAILS", "test", "interaction_campaign_400.json"
             )
             @bus = bus
             @runner = runner
-            @timeout = (timeout || test_timeout).to_i.clamp(5, 300)
+            @timeout = (timeout || test_timeout).to_i.clamp(MIN_TEST_TIMEOUT_S, 300)
+            @deadline = deadline
             @campaign = nil
           end
 
@@ -277,6 +280,12 @@ module Master
 
             tests = test_paths_for(path)
             return result_rows(sources, :unavailable, "no focused test path exists for this surface") if tests.empty?
+
+            @commands_remaining = tests.length * (sources.length + 1)
+            if (reason = budget_block_reason)
+              publish("repair_loop:candidate_simulation_blocked", path: relative, reason:)
+              return result_rows(sources, :blocked, reason)
+            end
 
             with_simulation_lock do
               disk_source = File.read(path, encoding: "UTF-8")
@@ -463,6 +472,8 @@ module Master
           end
 
           def execute_test(test_path)
+            timeout = timeout_for_next_test
+            return { path: test_path, state: :blocked, signature: "file-budget", detail: "insufficient file budget for focused test" } unless timeout
             return normalize_runner_result(test_path, @runner.call(test_path)) if @runner
 
             root, command, kind = command_for(test_path)
@@ -470,13 +481,13 @@ module Master
 
             if kind == :rails
               env = Master::Fix::RailsApp.env(root).merge("RAILS_ENV" => "test")
-              run = -> { Master::Io::Exec.capture2e(env, *command, chdir: root, timeout: @timeout, raise_on_timeout: true) }
+              run = -> { Master::Io::Exec.capture2e(env, *command, chdir: root, timeout:, raise_on_timeout: true) }
               output, status = defined?(Bundler) ? Bundler.with_unbundled_env(&run) : run.call
             elsif kind == :ruby
               env = Master::Fix::RailsApp.env(root)
-              output, status = Master::Io::Exec.capture2e(env, *command, chdir: root, timeout: @timeout, raise_on_timeout: true)
+              output, status = Master::Io::Exec.capture2e(env, *command, chdir: root, timeout:, raise_on_timeout: true)
             else
-              output, status = Master::Io::Exec.capture2e(*command, chdir: root, timeout: @timeout, raise_on_timeout: true)
+              output, status = Master::Io::Exec.capture2e(*command, chdir: root, timeout:, raise_on_timeout: true)
             end
             normalize_runner_result(test_path, [output, status])
           rescue Master::Io::Exec::TimeoutError => e
@@ -599,9 +610,35 @@ module Master
           end
 
           def test_timeout
-            Integer(ENV.fetch("MASTER_FIX_SIMULATION_TEST_TIMEOUT_S", DEFAULT_TIMEOUT_S.to_s)).clamp(5, 300)
+            Integer(ENV.fetch("MASTER_FIX_SIMULATION_TEST_TIMEOUT_S", DEFAULT_TIMEOUT_S.to_s)).clamp(MIN_TEST_TIMEOUT_S, 300)
           rescue ArgumentError
             DEFAULT_TIMEOUT_S
+          end
+
+          # Candidate trials share RepairLoop's per-file deadline. Reserve time
+          # for the independent verifier and consensus gate, then divide only the
+          # remaining time across commands still to run. This keeps timeouts from
+          # interrupting the reversible source transaction during unwinding.
+          def budget_block_reason
+            return unless @deadline
+
+            remaining = @deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            required = @commands_remaining * MIN_TEST_TIMEOUT_S + POST_SIMULATION_RESERVE_S
+            return if remaining >= required
+
+            "file budget cannot reserve #{POST_SIMULATION_RESERVE_S}s for final verification plus #{MIN_TEST_TIMEOUT_S}s for each of #{@commands_remaining} focused test commands"
+          end
+
+          def timeout_for_next_test
+            commands = [@commands_remaining.to_i, 1].max
+            @commands_remaining = [commands - 1, 0].max
+            return @timeout unless @deadline
+
+            remaining = @deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            available = remaining - POST_SIMULATION_RESERVE_S
+            return if available < MIN_TEST_TIMEOUT_S * commands
+
+            [@timeout, (available / commands).floor].min
           end
 
           def with_simulation_lock
@@ -917,7 +954,7 @@ module Master
         end
 
         def user_simulation
-          @user_simulation ||= UserSimulation.new(root: Master::REPO_ROOT, bus: @bus)
+          @user_simulation ||= UserSimulation.new(root: @root, bus: @bus, deadline: @file_deadline)
         end
 
         def candidate_prompt(violation:, src:, path:, style:, index:, suffix: nil)
