@@ -33,6 +33,8 @@ class AddFederatedIdentityTablesToAmber < ActiveRecord::Migration[8.1]
   end
 
   def down
-    # Provider subjects are login credentials; never drop them as an automatic rollback.
+    # Refuse rollback rather than claim the migration was reverted while its
+    # provider-subject tables remain present.
+    raise ActiveRecord::IrreversibleMigration, "federated provider identities require an explicit data-retention decision"
   end
 end
