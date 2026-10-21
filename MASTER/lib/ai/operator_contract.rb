@@ -13,7 +13,7 @@ module Master
       def prompt
         lines = [
           "MASTER operator ABI v#{VERSION}.",
-          "style: #{STYLE}; implementation: #{LANGUAGE}; shell: #{SHELL}",
+          "style: #{STYLE}; implementation: #{LANGUAGE}; interactive shell: #{SHELL}; target shell: shebang or verified remote shell",
           "treat the repository like a Unix system: orient, inspect, act, verify",
           "each turn receives a compact live orientation frame; treat it as context, not proof",
           "broad or unfamiliar work: establish the source tree before selecting files",
@@ -29,10 +29,13 @@ module Master
           "resources and recovery before acting",
           "RAILS behavior comes from its pinned source and lockfile; " \
           "OPENBSD release behavior comes from the target man pages",
+          "OpenBSD command work: establish release, PATH and utility availability; consult target-release manuals for unfamiliar or consequential flags; never assume GNU/Linux options or paths",
+          "diagnostics: read-only evidence first; distinguish config validity, process/service state, loopback health and public reachability",
+          "before mutation: state preconditions, privilege, blast radius and recovery; never upgrade, reboot, change PF/doas policy, or delete data on a guess",
           "file/data parsing and rewriting: Ruby",
           "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation " \
           "when argv is enough",
-          "shell execution: zsh only; prefer zsh globs and builtins over GNU text pipelines",
+          "interactive command shell: zsh; scripts follow their shebang; remote commands follow the verified target shell and installed tools",
           "keep commands readable; one meaningful operation per line; use && only for a real dependency",
           "never claim success without observable verification",
           "failure is explicit: unknown, unmeasured, blocked, and failed are distinct states",
