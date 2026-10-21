@@ -116,4 +116,27 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :unprocessable_entity
   end
+
+  # RI-003: malformed email input must be rejected before a real account exists.
+  def test_RI_003_malformed_email_is_rejected_without_account
+    email = "not-an-email"
+    username = "ri003_#{SecureRandom.hex(5)}"
+    params = {
+      accept_terms: "1",
+      accept_age: "1",
+      user: {
+        email_address: email,
+        username:,
+        password: "password123",
+        password_confirmation: "password123"
+      }
+    }
+
+    assert_no_difference -> { User.where(guest: false).count } do
+      post users_path, params:
+    end
+
+    assert_response :unprocessable_entity
+    assert_nil User.find_by(email_address: email)
+  end
 end

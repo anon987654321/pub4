@@ -107,7 +107,8 @@
       ],
       "focused_test_paths": [
         "RAILS/brgen/test/controllers/session_boundaries_test.rb",
-        "RAILS/brgen/test/integration/authorization_matrix_test.rb"
+        "RAILS/brgen/test/integration/authorization_matrix_test.rb",
+        "RAILS/brgen/test/controllers/users_controller_test.rb"
       ]
     },
     {
@@ -2093,7 +2094,11 @@
       "fault_mode": "invalid_input",
       "assessment": "SOURCE_EXPECTATION_ONLY",
       "runtime_status": "NOT_RUN",
-      "runtime_evidence": null
+      "runtime_evidence": null,
+      "runtime_test": {
+        "path": "RAILS/brgen/test/controllers/users_controller_test.rb",
+        "name": "test_RI_003_malformed_email_is_rejected_without_account"
+      }
     },
     {
       "id": "RI-004",

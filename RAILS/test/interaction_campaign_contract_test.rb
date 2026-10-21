@@ -125,6 +125,7 @@ class InteractionCampaignContractTest < Minitest::Test
     end
 
     refute_empty adapters, "the campaign should have at least one executable case"
+    assert adapters.any? { |row, _| row.fetch("id") == "RI-003" }, "RI-003 must remain executable"
     assert adapters.any? { |row, _| row.fetch("id") == "RI-011" }, "RI-011 must remain executable"
 
     adapters.each do |row, adapter|
