@@ -270,7 +270,8 @@ module Master
           # Test paths are run in a test bundle with bounded timeouts. The output
           # is summarized to a fingerprint; candidate selection never needs to log
           # raw test output, which may contain user data or secrets.
-          def evaluate_candidates(path:, original:, candidates:, writer:)
+          def evaluate_candidates(path:, original:, candidates:, writer:, deadline: @deadline)
+            @deadline = deadline
             sources = Array(candidates).map(&:to_s)
             return [] if sources.empty?
 
@@ -892,7 +893,8 @@ module Master
           simulation = user_simulation
           simulations = simulation.evaluate_candidates(
             path:, original:, candidates: viable.map { |row| row.fetch(:source) },
-            writer: ->(target, content) { write_atomic(target, content) }
+            writer: ->(target, content) { write_atomic(target, content) },
+            deadline: @file_deadline
           )
 
           ranked = viable.each_with_index.filter_map do |row, index|
@@ -954,7 +956,7 @@ module Master
         end
 
         def user_simulation
-          @user_simulation ||= UserSimulation.new(root: @root, bus: @bus, deadline: @file_deadline)
+          @user_simulation ||= UserSimulation.new(root: @root, bus: @bus)
         end
 
         def candidate_prompt(violation:, src:, path:, style:, index:, suffix: nil)
