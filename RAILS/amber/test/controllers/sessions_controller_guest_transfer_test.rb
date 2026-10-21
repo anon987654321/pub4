@@ -8,7 +8,7 @@ class SessionsControllerGuestTransferTest < ActionDispatch::IntegrationTest
     post posts_url, params: { post: { body: post_body, anonymous: true } }
     assert_redirected_to root_path
     guest_post = Post.find_by!(body: post_body)
-    guest = guest_post.user
+    guest = User.find(guest_post.user_id)
     assert guest.guest?
     assert_equal guest.id, session[:guest_user_id]
 
