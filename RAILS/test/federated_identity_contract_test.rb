@@ -43,4 +43,23 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes callback, 'when "vipps", "bankid" then "verified"'
     assert_includes callback, 'user.require_email_verification = true unless verified_email'
   end
+
+  def test_guest_history_merger_has_one_owner_and_preserves_amber_chat
+    merger = read("RAILS/__shared/app/services/account_merger.rb")
+    registration = read("RAILS/__shared/app/controllers/concerns/shared/email_registration.rb")
+    controller = read("RAILS/amber/app/controllers/registrations_controller.rb")
+    merge_migration = read("RAILS/amber/db/migrate/20261021230200_add_guest_account_merges_to_amber.rb")
+
+    refute File.exist?(File.join(ROOT, "RAILS/brgen/app/services/account_merger.rb"))
+    refute File.exist?(File.join(ROOT, "RAILS/brgen/app/models/account_merge.rb"))
+    assert_includes merger, "def merge_messages"
+    assert_includes merger, 'columns.include?("sender_id")'
+    assert_includes merger, 'columns.include?("recipient_id")'
+    assert_includes merger, "def merge_trust_signals"
+    assert_includes merger, "def record_merge"
+    assert_includes registration, "persisted_guest_for_registration"
+    assert_includes registration, "AccountMerger.new(guest_user: guest, user: user).call"
+    assert_includes controller, "merge_registration_guest(@user, guest)"
+    assert_includes merge_migration, "create_table :account_merges, if_not_exists: true"
+  end
 end
