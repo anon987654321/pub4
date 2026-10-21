@@ -30,6 +30,23 @@ class InboxStateTest < ActiveSupport::TestCase
 
   def membership(user) = ConversationParticipant.find_by!(conversation: @conversation, user: user)
 
+  test "the unread badge and per-thread counts are city-local" do
+    say(@friend, "Bergen message one")
+    say(@friend, "Bergen message two")
+
+    oslo = City.find_by!(domain: "oshlo.no")
+    ActsAsTenant.current_tenant = oslo
+    remote = Conversation.find_or_create_direct(@me, @friend)
+    remote.messages.create!(sender: @friend, content: "Oslo message", message_type: "text")
+
+    assert_equal 1, Conversation.unread_total_for(@me)
+    assert_equal({ remote.id => 1 }, Conversation.unread_counts_for(@me))
+
+    ActsAsTenant.current_tenant = @city
+    assert_equal 2, Conversation.unread_total_for(@me)
+    assert_equal({ @conversation.id => 2 }, Conversation.unread_counts_for(@me))
+  end
+
   test "the reader's own messages are not unread to them" do
     say(@me)
     say(@me)
