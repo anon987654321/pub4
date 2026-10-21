@@ -57,6 +57,33 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = original
   end
 
+  # RI-001: a successful public signup creates a real account but does not
+  # silently mark an unconfirmed email address as verified.
+  def test_RI_001_valid_signup_persists_unverified_account
+    email = "ri001-#{SecureRandom.hex(6)}@example.test"
+    username = "ri001_#{SecureRandom.hex(5)}"
+    params = {
+      user: {
+        email_address: email,
+        username:,
+        password: "password123",
+        password_confirmation: "password123"
+      },
+      accept_terms: "1",
+      accept_age: "1"
+    }
+
+    assert_difference("User.count", 1) do
+      post users_path, params:
+    end
+
+    assert_response :redirect
+    account = User.find_by!(email_address: email)
+    refute account.guest?
+    refute account.email_verified?
+    assert_predicate account.email_verification_token, :present?
+  end
+
   # RI-011: expire the authenticated session after the form opens. The bad
   # CSRF request and the stale-session request must both leave server state alone.
   def test_RI_011_expired_session_with_csrf_failure_refuses_mutation
