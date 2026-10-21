@@ -3,6 +3,7 @@
 require "securerandom"
 
 class User < ApplicationRecord
+  include Shared::EmailVerification
   has_secure_password
 
   has_one :profile, dependent: :destroy
@@ -46,7 +47,7 @@ class User < ApplicationRecord
 
   scope :publicly_visible, -> { where(guest: false, deleted_at: nil, deletion_scheduled_at: nil) }
 
-  validates :email_address, presence: true, uniqueness: true
+  validates :email_address, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
   after_create :ensure_identity_records, unless: :guest?
 

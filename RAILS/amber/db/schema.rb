@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_28_090000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_21_230000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -556,6 +556,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_28_090000) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.datetime "deletion_scheduled_at"
+    t.datetime "email_verified_at"
+    t.string "email_verification_token"
     t.string "email_address", null: false
     t.boolean "guest", default: false, null: false
     t.boolean "bot", default: false, null: false
@@ -569,6 +571,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_28_090000) do
     t.datetime "updated_at", null: false
     t.index ["bot"], name: "index_users_on_bot"
     t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"
+    t.index ["email_verification_token"], name: "index_users_on_email_verification_token", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["guest", "created_at"], name: "index_users_on_guest_and_created_at"
     t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true

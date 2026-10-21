@@ -26,18 +26,6 @@ class ApplicationController < ActionController::Base
     invite_path(token: token)
   end
 
-  # Registered accounts must confirm their email before posting under their
-  # identity. Anonymous guests are unaffected — brgen's anonymous posting stays.
-  def require_verified_email
-    return if Current.user.nil? || Current.user.try(:guest?) || Current.user.email_verified?
-
-    message = t("verify.needed")
-    respond_to do |format|
-      format.html { redirect_back fallback_location: main_app.root_path, alert: message }
-      format.any  { head :forbidden }
-    end
-  end
-
   def set_domain_context
     # City (and full branding/locale) is resolved automatically from the request's TLD/domain.
     # The city network footer links peer apexes without changing tenant context.

@@ -157,6 +157,23 @@ module Shared
       redirect_to sign_in_path, alert: t("shared.flash.sign_in_required")
     end
 
+    # Registered identities confirm the address they claim. Guests keep their
+    # anonymous posting and chatting path; hosts without this capability are
+    # unaffected. Only actions that write under a claimed account opt in.
+    def require_verified_email
+      user = Current.user
+      return if user.nil? || user.try(:guest?) || !user.respond_to?(:email_verified?) || user.email_verified?
+
+      message = t(
+        "verify.needed",
+        default: "Confirm your email address before posting or messaging from your account."
+      )
+      respond_to do |format|
+        format.html { redirect_back fallback_location: Rails.application.routes.url_helpers.root_path, alert: message }
+        format.any { head :forbidden }
+      end
+    end
+
     def require_authentication
       require_real_user
     end

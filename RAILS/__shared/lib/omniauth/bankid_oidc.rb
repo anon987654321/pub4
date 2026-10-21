@@ -83,10 +83,11 @@ module Shared
       def fetch_json(url, environment)
         uri = validate_endpoint!(url, environment)
         request = Net::HTTP::Get.new(uri.request_uri)
-        response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 8, write_timeout: 5) do |http|
-          http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-          http.request(request)
-        end
+        response = Net::HTTP.start(
+          uri.host, uri.port, use_ssl: true,
+          open_timeout: 5, read_timeout: 8, write_timeout: 5,
+          verify_mode: OpenSSL::SSL::VERIFY_PEER
+        ) { |http| http.request(request) }
         raise InvalidToken, "BankID metadata request failed" unless response.is_a?(Net::HTTPSuccess)
         raise InvalidToken, "BankID response too large" if response.body.to_s.bytesize > JSON_LIMIT
         JSON.parse(response.body)
