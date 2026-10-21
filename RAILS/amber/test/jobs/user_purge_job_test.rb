@@ -82,6 +82,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
       outfit: outfit, due_on: Date.current, status: "pending"
     )
 
+    original_password_digest = @user.password_digest
     schedule_purge!
     UserPurgeJob.perform_now
 
@@ -93,7 +94,9 @@ class UserPurgeJobTest < ActiveJob::TestCase
       assert_nil @user.public_send(field), "#{field} survived erasure"
     end
     assert_not_nil @user.password_digest
+    refute_equal original_password_digest, @user.password_digest, "old password credential survived erasure"
     refute Session.exists?(id: session.id)
+    assert_empty @user.sessions
 
     assert_not Profile.exists?(profile.id), "profile survived erasure"
     assert_not Item.exists?(item.id), "private item survived erasure"
