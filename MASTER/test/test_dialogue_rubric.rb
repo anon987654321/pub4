@@ -77,7 +77,8 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "Couples and relationship safety:"
     assert_includes prompt, "Manipulation resistance:"
-    assert_includes prompt, "no default couples therapy"
+    assert_includes prompt, "Do not recommend joint counselling"
+    assert_includes prompt, "shared sessions can create risk"
     assert_includes prompt, "safety planning"
   end
 
