@@ -714,6 +714,18 @@ class TestDialogueRubric < Minitest::Test
     end
   end
 
+  def test_english_family_control_and_neglect_get_practical_support
+    prompt = Rubric.support_prompt_for(
+      "My father is controlling and my mother neglects me.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "<master_support_practice>"
+    assert_includes prompt, "Practical response:"
+    assert_includes prompt, "Manipulation resistance:"
+    refute_includes prompt, "Couples and relationship safety:"
+  end
+
   def test_nynorsk_family_problem_gets_practical_guidance_without_couple_assumptions
     prompt = Rubric.support_prompt_for(
       "Broren min kritiserer meg heile tida. Kva bør eg gjere?",
