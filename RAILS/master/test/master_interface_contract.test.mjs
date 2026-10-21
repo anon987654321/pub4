@@ -227,3 +227,11 @@ test("canonical graphite theme reaches generated face CSS and the installed PWA"
   assert.doesNotMatch(faceMotion, /--c-accent: oklch\(82% 0\.12 222\)/);
   assert.doesNotMatch(faceMotion, /--radius-md: 12px/);
 });
+
+test("session chrome uses space, not decorative divider borders", () => {
+  const start = faceMotion.indexOf("/* Ghostty-inspired session chrome:");
+  assert.ok(start >= 0, "shared session chrome source is missing");
+  const chrome = faceMotion.slice(start);
+  assert.match(chrome, /gap: 0\.25rem/);
+  assert.doesNotMatch(chrome, /border-(?:block|inline)-end:\s*1px/);
+});

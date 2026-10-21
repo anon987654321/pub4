@@ -682,7 +682,6 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
   padding-block-start: var(--safe-top);
   padding-inline-start: var(--inset-l);
   padding-inline-end: calc(var(--inset-r) + var(--tap-min));
-  border-block-end: 1px solid var(--border-faint);
   background: var(--face-bg);
   color: var(--face-fg);
 }
@@ -711,6 +710,7 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
   flex: 1 1 auto;
   align-self: stretch;
   align-items: stretch;
+  gap: 0.25rem;
   min-inline-size: 0;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -728,7 +728,6 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
   min-inline-size: var(--tap-min);
   min-block-size: var(--tap-min);
   padding-inline: 0.875rem;
-  border-inline-end: 1px solid var(--border-faint);
   color: var(--face-muted);
   font: var(--text-meta)/1 var(--font-mono);
   text-decoration: none;
@@ -745,7 +744,7 @@ body.zen #zsh.revealed { transform: translate(-50%, 0); }
 .master-session-tab[aria-current="page"]::after {
   position: absolute;
   inset-inline: 0.65rem;
-  inset-block-end: -1px;
+  inset-block-end: 0;
   block-size: 2px;
   background: var(--pub4-signal);
   content: "";
