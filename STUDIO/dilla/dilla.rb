@@ -81,7 +81,7 @@ module WAV
   # Bounded-memory output for long renders. The final path appears only after
   # every block and the RIFF sizes have been written and synced; a crash or an
   # invalid block can leave a temporary file only, never a plausible partial WAV.
-  def self.write_stream(path, frames:, channels:, bits: 16, block_size: 8192)
+  def self.write_stream(path, frames:, channels:, bits: 16, block_size: 8192, replace: false)
     raise ArgumentError, "frames must be positive" unless frames.is_a?(Integer) && frames.positive?
     raise ArgumentError, "channels must be one or two" unless [1, 2].include?(channels)
     raise ArgumentError, "bits must be 16 or 24" unless [16, 24].include?(bits)
@@ -91,6 +91,8 @@ module WAV
     directory = File.dirname(destination)
     FileUtils.mkdir_p(directory)
 
+    previous_mode = File.file?(destination) ? File.stat(destination).mode & 0o7777 : nil
+    mode = replace && previous_mode ? previous_mode : 0o666 & ~File.umask
     width = bits / 8
     header = +"RIFF" + [0].pack("V") + "WAVEfmt " + [16].pack("V") + [1].pack("v")
     header << [channels, SAMPLE_RATE, SAMPLE_RATE * width * channels, width * channels, bits].pack("vVVvv")
@@ -119,14 +121,14 @@ module WAV
       file.write([36 + data_size].pack("V"))
       file.seek(40)
       file.write([data_size].pack("V"))
-      File.chmod(0o666 & ~File.umask, file.path)
+      File.chmod(mode, file.path)
       file.flush
       file.fsync
       file.close
 
-      # A hard link is an atomic create-if-absent publish. It does not silently
-      # replace an earlier take and cannot expose the temporary WAV's old header.
-      File.link(file.path, destination)
+      # Publish only after the complete header and payload are durable. A hard
+      # link refuses an existing take; rename is atomic when replacement was explicit.
+      replace ? File.rename(file.path, destination) : File.link(file.path, destination)
       fsync_directory(directory) if RUBY_PLATFORM !~ /win32|mingw/
     end
     path
@@ -571,7 +573,17 @@ module Stereo
   def self.fold(frame) = frame.size == 1 ? frame.first : frame[0].each_index.map { |i| 0.5 * (frame[0][i] + frame[1][i]) }
 
   # Pairs of samples, left then right, for a stereo frame; a mono frame as it is.
-  def self.interleave(frame) = frame.size == 1 ? frame.first : frame[0].zip(frame[1]).flatten
+  def self.interleave(frame)
+    return frame.first if frame.size == 1
+
+    left, right = frame
+    interleaved = Array.new(left.size * 2)
+    left.each_index do |index|
+      interleaved[index * 2] = left[index]
+      interleaved[(index * 2) + 1] = right[index]
+    end
+    interleaved
+  end
 
   def self.mid_side(frame) = [frame[0].each_index.map { |i| 0.5 * (frame[0][i] + frame[1][i]) }, frame[0].each_index.map { |i| 0.5 * (frame[0][i] - frame[1][i]) }]
 
@@ -7683,7 +7695,9 @@ def render_stream(data, options)
   bits = options.fetch(:bits, 16)
   out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
-  WAV.write(out, streamer.channels == 1 ? frame.first : frame, bits:, replace: options[:replace])
+  WAV.write_stream(out, frames: frame.first.size, channels: streamer.channels, bits:, replace: options[:replace]) do |offset, count|
+    frame.map { |channel| channel.slice(offset, count) }
+  end
   if options[:midi]
     FileUtils.mkdir_p(File.dirname(options[:midi]))
     MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, streamer.hits, search: plan.search, replace: options[:replace])

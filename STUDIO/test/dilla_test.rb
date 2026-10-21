@@ -330,6 +330,53 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_stereo_interleave_preserves_order_and_legacy_zip_shape
+    assert_equal [1, 4, 2, 5, 3, 6], Stereo.interleave([[1, 2, 3], [4, 5, 6]])
+    assert_equal [1, 4, 2, nil], Stereo.interleave([[1, 2], [4]])
+    assert_equal [1, 4, 2, 5], Stereo.interleave([[1, 2], [4, 5, 6]])
+
+    mono = [1, 2, 3]
+    assert_same mono, Stereo.interleave([mono])
+  end
+
+  def test_block_wav_writer_matches_whole_writer_for_mono_stereo_and_both_bit_depths
+    fixtures = [
+      [0.0, -1.0, -0.25, 0.125, 0.5, 0.999, 1.0],
+      [[0.0, -1.0, -0.25, 0.125, 0.5, 0.999, 1.0], [1.0, 0.5, 0.25, -0.125, -0.5, -0.999, -1.0]]
+    ]
+
+    Dir.mktmpdir do |dir|
+      fixtures.each_with_index do |samples, fixture_index|
+        channels = samples.first.is_a?(Array) ? samples : [samples]
+        [16, 24].each do |bits|
+          whole = File.join(dir, "whole-#{fixture_index}-#{bits}.wav")
+          streamed = File.join(dir, "streamed-#{fixture_index}-#{bits}.wav")
+          WAV.write(whole, samples, bits:)
+          WAV.write_stream(streamed, frames: channels.first.size, channels: channels.size, bits:, block_size: 3) do |offset, count|
+            channels.map { |channel| channel.slice(offset, count) }
+          end
+
+          assert_equal File.binread(whole), File.binread(streamed), "fixture=#{fixture_index} bits=#{bits}"
+        end
+      end
+    end
+  end
+
+  def test_stream_wav_writer_explicit_replace_preserves_existing_mode
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "take.wav")
+      File.binwrite(path, "old take")
+      File.chmod(0o640, path)
+
+      WAV.write_stream(path, frames: 3, channels: 1, replace: true) do |_offset, count|
+        [Array.new(count, 0.25)]
+      end
+
+      assert_equal 0o640, File.stat(path).mode & 0o777
+      assert_equal "RIFF", File.binread(path, 4)
+    end
+  end
+
   def test_wav_writer_preserves_an_existing_take_unless_replace_is_explicit
     Dir.mktmpdir do |dir|
       path = File.join(dir, "take.wav")
