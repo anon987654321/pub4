@@ -60,7 +60,7 @@ module Master
         return false unless ELIGIBLE_EXTENSIONS.include?(File.extname(path.to_s).downcase)
 
         relative = relative_path(root:, path:)
-        relative && relative.start_with?("RAILS/") && !excluded?(relative, config)
+        relative && relative.start_with?("RAILS/") && !excluded?(relative, config) && !canonical_token_path?(relative)
       end
 
       def authorized_visual_rule?(rule_id, root:, path:, custody:)
@@ -93,6 +93,10 @@ module Master
         candidate == repo ? "." : nil
       rescue ArgumentError
         nil
+      end
+
+      def canonical_token_path?(relative)
+        relative.match?(%r{\\ARAILS/(?:__shared|shared)/app/assets/stylesheets/_dialect_tokens\\.scss\\z})
       end
 
       def excluded?(relative, config)
