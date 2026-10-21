@@ -175,9 +175,9 @@ module Ports
 
     def queue_dependencies(port, metadata)
       keys = %i[build_depends run_depends test_depends lib_depends]
-      # Thin package-index rows do not describe dependency state. Preserve the
-      # existing graph unless the source explicitly carries dependency metadata.
-      return unless keys.any? { |key| metadata.key?(key) && !metadata[key].nil? }
+      # Thin or partial rows do not describe the full dependency state. Reconcile
+      # only when the source explicitly supplies all four dependency classes.
+      return unless keys.all? { |key| metadata.key?(key) && !metadata[key].nil? }
 
       dependency_sync_port_ids << port.id
       {
