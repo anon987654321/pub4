@@ -113,7 +113,18 @@ module Master
         |dytta\s+meg|skubba\s+meg|kvelte\s+meg|held\s+meg\s+fast|låsar\s+meg\s+inne
         |låser\s+meg\s+inne|slepp\s+meg\s+ikkje\s+ut|nektar\s+meg\s+å\s+gå
         |hindrar\s+meg\s+i\s+å\s+gå|tvinga\s+meg\s+til\s+sex|pressa\s+meg\s+til\s+sex
-        |seksuelle\s+overgrep|valdtekt|redd\s+for\s+å\s+dra\s+heim)\b
+        |seksuelle\s+overgrep|valdtekt|redd\s+for\s+å\s+dra\s+heim
+        |denies\s+(?:what\s+happened|what\s+they\s+said)|says\s+i\s+imagined|i\s+imagined\s+it
+        |twists?\s+my\s+words|turns?\s+it\s+around\s+on\s+me|blames?\s+me\s+for
+        |silent\s+treatment|stonewalling|love[- ]?bombing|moving\s+the\s+goalposts|moves?\s+the\s+goalposts
+        |triangulation|darvo|guilt[- ]?tripping|intermittent\s+reinforcement|coercive\s+control
+        |isolates?\s+me|doesn't\s+take\s+no\s+for\s+an\s+answer
+        |nektar\s+for\s+det\s+som\s+skjedde|benekter\s+det\s+som\s+skjedde|seier\s+at\s+eg\s+innbiller\s+meg
+        |sier\s+at\s+jeg\s+innbiller\s+meg|vrir\s+(?:orda|ordene)\s+mine|snur\s+det\s+mot\s+meg
+        |gir\s+meg\s+(?:skulda|skylda)\s+for|kjærleiksbombing|kjærlighetsbombing
+        |flyttar\s+målstolpane|flytter\s+målstolpene|triangulering|taus(?:hets)?behandling
+        |pressar\s+meg\s+etter\s+at\s+eg\s+har\s+sagt\s+nei|presser\s+meg\s+etter\s+at\s+jeg\s+har\s+sagt\s+nei
+        |tek\s+ikkje\s+nei\s+for\s+eit\s+svar|tar\s+ikke\s+nei\s+for\s+et\s+svar|isolerer\s+meg)\b
       }ix.freeze
 
       MARTIAL_CUES = %r{
