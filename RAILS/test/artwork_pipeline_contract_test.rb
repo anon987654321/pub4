@@ -18,9 +18,12 @@ class ArtworkPipelineContractTest < Minitest::Test
 
   def test_onboarding_artwork_uses_shared_publication_boundary
     source = File.read(File.join(ROOT, "__shared/app/services/shared/onboarding_artwork.rb"))
+    pipeline = File.read(File.join(ROOT, "__shared/app/services/shared/artwork_pipeline.rb"))
     assert_includes source, 'VERSION = "v2"'
     assert_includes source, "ArtworkPipeline.publish_remote"
-    refute_includes source, 'File.binwrite(temporary, URI.open(source'
+    assert_includes pipeline, "Shared::OutboundHttp.request(uri, max_body: Shared::OutboundHttp::MAX_MEDIA_BODY)"
+    assert_includes pipeline, "uri.is_a?(URI::HTTPS)"
+    refute_includes pipeline, "URI.open"
   end
 
   def test_newsletter_replicate_requests_are_seeded_and_published_through_postpro
@@ -29,6 +32,11 @@ class ArtworkPipelineContractTest < Minitest::Test
     assert_includes source, 'output_format: "webp"'
     assert_includes source, "ArtworkPipeline.publish_remote"
     assert_includes source, 'filename = "#{prefix.to_s.parameterize}-#{seed}.jpg"'
+    assert_includes source, 'prediction_id = prediction["id"].to_s'
+    assert_includes source, 'URI("https://api.replicate.com/v1/predictions/#{prediction_id}")'
+    assert_includes source, "Shared::OutboundHttp.request"
+    refute_includes source, 'prediction.dig("urls", "get")'
+    refute_includes source, "Net::HTTP.start(uri.hostname"
   end
 
   def test_seed_ledger_is_append_only_and_hashed
