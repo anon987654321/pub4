@@ -54,4 +54,21 @@ class AccountMergerTest < ActiveSupport::TestCase
     assert_equal destination.id, result.id
     assert_empty AccountMerge.where(guest_user_id: source.id, user_id: destination.id)
   end
+
+  test "a second destination cannot claim history already merged elsewhere" do
+    suffix = SecureRandom.hex(6)
+    guest = User.create!(email_address: "guest-#{suffix}@guest.local",
+                         password: SecureRandom.hex(24), guest: true)
+    first = User.create!(email_address: "first-#{suffix}@example.test", password: SecureRandom.hex(24))
+    second = User.create!(email_address: "second-#{suffix}@example.test", password: SecureRandom.hex(24))
+    post = guest.posts.create!(body: "Keep this history with the first account #{suffix}", anonymous: true)
+
+    AccountMerger.new(guest_user: guest, user: first).call
+    result = AccountMerger.new(guest_user: guest.reload, user: second).call
+
+    assert_equal second.id, result.id
+    assert_equal first.id, post.reload.user_id
+    assert AccountMerge.exists?(guest_user_id: guest.id, user_id: first.id, status: "merged")
+    refute AccountMerge.exists?(guest_user_id: guest.id, user_id: second.id, status: "merged")
+  end
 end
