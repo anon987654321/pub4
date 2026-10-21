@@ -90,7 +90,36 @@ MASTER-signed token at /sso/from_master.
 User carries a guest column, so an anonymous visitor gets a soft Current.user and can use the
 product without signing up. For that reason allow_unauthenticated_access is a no-op in amber,
 and require_real_user is the identity gate that means anything. A demo wardrobe at /demo is
-seeded for guests, and Shared::PruneGuestUsersJob prunes the guest rows every night.
+seeded for guests, and Shared::PruneGuestUsersJob prunes the guest rows every night. Guests can
+post and message without first creating an account.
+
+## Identity and account continuity
+
+Amber and Brgen use the same registration fields, email-verification policy and shared OAuth
+callback. Email/password, Google, Facebook, Vipps and BankID are available when the matching
+provider credentials and configuration are present. Email confirmation is separate from explicit
+newsletter marketing consent. A high-assurance BankID subject can authenticate without inventing
+mailbox proof from a synthetic email address.
+
+When a visitor registers or signs in while a persisted guest owns activity, the shared merger
+moves the guest's post/comment ownership and applicable conversation or message history inside
+one transaction, records an account-merge audit row, then destroys guest sessions before the
+registered session is created. An old guest cookie is never promoted into a full account session.
+If the merge cannot be committed and audited, the visitor is told that the transfer is blocked
+and the guest session remains available for retry; authentication must not silently strand the
+activity. The federated-identity and account-merge tables are app-owned migrations in
+`db/migrate`, so run Amber's migrations and dump the schema before enabling this path.
+
+## Account deletion
+
+Account deletion sets a 30-day grace period and revokes the active login immediately. Amber's
+`UserPurgeJob` is scheduled daily at 03:50. It removes private wardrobe, profile, connection,
+identity, session and inbox data; deletes attachments through model callbacks; and anonymises the
+user row. Public posts and comments remain attached to the anonymised row to preserve discussion,
+but references to removed wardrobe items/outfits and moderation cases targeting those private
+objects are removed. If a required erasure table is missing or an account cannot be purged, the
+transaction rolls back for that account, its deletion marker remains due for retry, and the job
+reports the failure rather than marking erasure complete.
 
 ## Running it
 
