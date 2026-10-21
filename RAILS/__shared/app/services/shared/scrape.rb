@@ -2,9 +2,9 @@
 
 require "json"
 require "ipaddr"
-require "resolv"
 require "socket"
 require "uri"
+require_relative "outbound_http"
 
 begin
   require "ferrum"
@@ -56,12 +56,13 @@ module Shared
     # Only public HTTP(S) targets are scrape entrypoints. Resolve names here and
     # at every intercepted request; any private/reserved answer fails closed.
     # This application-level guard complements, but does not replace, host firewalling.
-    def self.public_http_url?(value, resolver: ->(host) { Resolv.getaddresses(host) })
+    def self.public_http_url?(value, resolver: ->(host) { Shared::OutboundHttp.resolve_addresses(host) })
       uri = URI.parse(value.to_s)
       return false unless %w[http https].include?(uri.scheme&.downcase)
       return false if uri.userinfo || uri.hostname.to_s.empty?
 
       host = uri.hostname.downcase.delete_suffix(".")
+      return false unless Shared::OutboundHttp.valid_resolver_host?(host)
       return false if host == "localhost" || BLOCKED_HOST_SUFFIXES.any? { |suffix| host.end_with?(suffix) }
 
       addresses = begin
@@ -70,11 +71,11 @@ module Shared
         Array(resolver.call(host)).map { |address| IPAddr.new(address) }
       end
       addresses.any? && addresses.all? { |address| public_address?(address) }
-    rescue URI::InvalidURIError, IPAddr::InvalidAddressError, Resolv::ResolvError, SocketError, ArgumentError
+    rescue URI::InvalidURIError, IPAddr::InvalidAddressError, SocketError, ArgumentError
       false
     end
 
-    def self.safe_request_url?(value, resolver: ->(host) { Resolv.getaddresses(host) })
+    def self.safe_request_url?(value, resolver: ->(host) { Shared::OutboundHttp.resolve_addresses(host) })
       uri = URI.parse(value.to_s)
       return true if %w[data blob about].include?(uri.scheme&.downcase)
 

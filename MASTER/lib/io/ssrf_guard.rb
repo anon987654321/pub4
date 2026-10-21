@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "ipaddr"
 require "net/http"
-require "resolv"
+require "socket"
 # Without this, safe_uri?'s `uri.is_a?(URI::HTTP)` raised NameError into its own
 # blanket rescue and the guard answered false for every URL — web_fetch silently off.
 require "uri"
@@ -42,6 +42,38 @@ module Master
         fec0::/10
       ].map { |cidr| IPAddr.new(cidr) }.freeze
 
+      DNS_LABEL_MAX_BYTES = 63
+      DNS_MAX_WIRE_BYTES = 255
+
+      # Bound names before resolution. Addrinfo uses the operating-system
+      # resolver, avoiding the vulnerable Ruby Resolv parser for untrusted names.
+      def self.valid_resolver_host?(host)
+        candidate = host.to_s
+        candidate = candidate[1...-1] if candidate.start_with?("[") && candidate.end_with?("]")
+        candidate = candidate.delete_suffix(".")
+        return false if candidate.empty?
+
+        begin
+          IPAddr.new(candidate)
+          return true
+        rescue IPAddr::InvalidAddressError
+          # Continue with DNS-name limits.
+        end
+
+        labels = candidate.split(".", -1)
+        return false if labels.any? { |label| label.empty? || label.bytesize > DNS_LABEL_MAX_BYTES }
+
+        labels.sum { |label| label.bytesize + 1 } + 1 <= DNS_MAX_WIRE_BYTES
+      end
+
+      def self.resolve_addresses(host)
+        return [] unless valid_resolver_host?(host)
+
+        Addrinfo.getaddrinfo(host, nil, nil, :STREAM).map(&:ip_address).uniq
+      rescue SocketError, SystemCallError
+        []
+      end
+
       def self.safe_uri?(uri) = !pinned_address(uri).nil?
 
       # The address to connect to, or nil when the host is unsafe. Every answer
@@ -49,9 +81,12 @@ module Master
       # shape of a rebinding setup, not a choice.
       def self.pinned_address(uri)
         return unless uri.is_a?(URI::HTTP) && uri.host
-        return if uri.host.strip.casecmp("localhost").zero?
 
-        addresses = Resolv.getaddresses(uri.host)
+        host = uri.hostname
+        return unless valid_resolver_host?(host)
+        return if host.strip.casecmp("localhost").zero?
+
+        addresses = resolve_addresses(host)
         return if addresses.empty?
         return if addresses.any? { |addr| blocked_ip?(IPAddr.new(addr)) }
 
@@ -68,7 +103,7 @@ module Master
       def self.http_for(uri, address, timeout: DEFAULT_TIMEOUT_S)
         # Net::HTTP defaults its proxy argument to :ENV. An ambient HTTP_PROXY or
         # HTTPS_PROXY would move the socket to a proxy and defeat the IP pin.
-        Net::HTTP.new(uri.host, uri.port, nil).tap do |http|
+        Net::HTTP.new(uri.hostname, uri.port, nil).tap do |http|
           http.ipaddr = address
           http.use_ssl = uri.scheme == "https"
           http.open_timeout = timeout

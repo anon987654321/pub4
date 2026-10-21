@@ -23,6 +23,14 @@ class TestSecuritySweep < Minitest::Test
     end
   end
 
+  def test_api_key_detector_still_scans_a_file_with_provider_registry
+    source = %(API_KEY_PROVIDERS = ["openai"]\napi_key = "fake-secret-value-123456")
+    matches = secret_pattern_hits(source)
+
+    assert matches.any? { |pattern| pattern.source.include?("api_key") },
+           "provider-registry text must not suppress unrelated API-key assignments"
+  end
+
   def test_ignores_translated_interface_copy
     [
       %(forgot_password: "Glemt passord?"),

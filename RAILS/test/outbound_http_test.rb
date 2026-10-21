@@ -38,6 +38,24 @@ class FediverseSsrfTest < Minitest::Test
     assert Shared::OutboundHttp.unsafe_ip?("::ffff:169.254.169.254")
   end
 
+  def test_dns_name_limits_reject_overlong_labels_and_wire_names
+    assert Shared::OutboundHttp.valid_resolver_host?("example.com")
+    assert Shared::OutboundHttp.valid_resolver_host?("127.0.0.1")
+    refute Shared::OutboundHttp.valid_resolver_host?("#{"a" * 64}.example")
+    refute Shared::OutboundHttp.valid_resolver_host?(Array.new(4, "a" * 63).join("."))
+  end
+
+  def test_pinned_connection_ignores_environment_proxy
+    old_proxy = ENV["https_proxy"]
+    ENV["https_proxy"] = "http://127.0.0.1:9"
+    http = Shared::OutboundHttp.pinned_connection(URI("https://rebind.test/actor"), "93.184.216.34")
+
+    assert_equal "93.184.216.34", http.ipaddr
+    assert_nil http.proxy_address, "an environment proxy must not bypass the pinned destination"
+  ensure
+    old_proxy.nil? ? ENV.delete("https_proxy") : ENV["https_proxy"] = old_proxy
+  end
+
   def test_request_refuses_a_non_443_port
     assert_raises(URI::InvalidURIError) { Shared::OutboundHttp.request(URI("https://example.com:8443/actor")) }
   end
@@ -106,14 +124,10 @@ class FediverseSsrfTest < Minitest::Test
   # Hands the request block a response that streams its chunks, instead of
   # opening a socket.
   def with_stubbed_exchange(response)
-    Resolv.singleton_class.alias_method(:real_getaddresses, :getaddresses)
     Net::HTTP.alias_method(:real_request, :request)
-    Resolv.define_singleton_method(:getaddresses) { |_host| [ "93.184.216.34" ] }
     Net::HTTP.define_method(:request) { |_req, &block| block.call(response) }
-
-    yield
+    with_stubbed_dns("93.184.216.34") { yield }
   ensure
-    Resolv.singleton_class.alias_method(:getaddresses, :real_getaddresses)
     Net::HTTP.alias_method(:request, :real_request)
   end
 
@@ -121,15 +135,17 @@ class FediverseSsrfTest < Minitest::Test
   # left holding, instead of opening a socket.
   def with_stubbed_dns(*addresses)
     seen = nil
-    Resolv.singleton_class.alias_method(:real_getaddresses, :getaddresses)
+    resolver = Shared::OutboundHttp.singleton_class
+    resolver.alias_method(:real_resolve_addresses, :resolve_addresses)
     Net::HTTP.alias_method(:real_request, :request)
-    Resolv.define_singleton_method(:getaddresses) { |_host| addresses }
+    Shared::OutboundHttp.define_singleton_method(:resolve_addresses) { |_host| addresses }
     Net::HTTP.define_method(:request) { |_req| seen = ipaddr }
 
     yield
     seen
   ensure
-    Resolv.singleton_class.alias_method(:getaddresses, :real_getaddresses)
+    resolver.alias_method(:resolve_addresses, :real_resolve_addresses)
+    resolver.remove_method(:real_resolve_addresses)
     Net::HTTP.alias_method(:request, :real_request)
   end
 end

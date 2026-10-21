@@ -3,7 +3,7 @@
 require "ipaddr"
 require "net/http"
 require "openssl"
-require "resolv"
+require "socket"
 require "uri"
 
 module Shared
@@ -25,23 +25,61 @@ module Shared
     NETWORK_ERRORS = [
       Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ETIMEDOUT, Errno::ECONNRESET,
       Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError, SocketError, URI::InvalidURIError,
-      Resolv::ResolvError, BodyTooLarge,
+      BodyTooLarge,
     ].freeze
 
     # HTTPS alone is not enough: a URL of https://127.0.0.1/ or a name that
     # resolves to RFC1918 is SSRF against our own box.
     UNSAFE_NETS = %w[
-      0.0.0.0/8 10.0.0.0/8 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16
-      ::1/128 fc00::/7 fe80::/10
+      0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8
+      169.254.0.0/16 172.16.0.0/12 192.0.0.0/24 192.0.2.0/24
+      192.88.99.0/24 192.168.0.0/16 198.18.0.0/15 198.51.100.0/24
+      203.0.113.0/24 224.0.0.0/4 240.0.0.0/4
+      ::/128 ::1/128 64:ff9b::/96 64:ff9b:1::/48 100::/64
+      2001::/23 2001:db8::/32 2002::/16 fec0::/10 fc00::/7 fe80::/10 ff00::/8
     ].map { |cidr| IPAddr.new(cidr) }.freeze
 
+    DNS_LABEL_MAX_BYTES = 63
+    DNS_MAX_WIRE_BYTES = 255
+
     module_function
+
+    # Bound DNS names before resolution: 63 octets per label and 255 octets
+    # for the encoded name. IP literals are allowed through to the IP-range gate.
+    def valid_resolver_host?(host)
+      candidate = host.to_s
+      candidate = candidate[1...-1] if candidate.start_with?("[") && candidate.end_with?("]")
+      candidate = candidate.delete_suffix(".")
+      return false if candidate.empty?
+
+      begin
+        IPAddr.new(candidate)
+        return true
+      rescue IPAddr::InvalidAddressError
+        # Continue with DNS-name limits.
+      end
+
+      labels = candidate.split(".", -1)
+      return false if labels.any? { |label| label.empty? || label.bytesize > DNS_LABEL_MAX_BYTES }
+
+      labels.sum { |label| label.bytesize + 1 } + 1 <= DNS_MAX_WIRE_BYTES
+    end
+
+    # Use the operating-system resolver rather than the vulnerable Resolv parser.
+    def resolve_addresses(host)
+      return [] unless valid_resolver_host?(host)
+
+      Addrinfo.getaddrinfo(host, nil, nil, :STREAM).map(&:ip_address).uniq
+    rescue SocketError, SystemCallError
+      []
+    end
 
     def public_https?(uri)
       return false unless uri.is_a?(URI::HTTPS)
       return false unless uri.port.nil? || uri.port == 443
+      return false unless valid_resolver_host?(uri.hostname)
 
-      addrs = Resolv.getaddresses(uri.host)
+      addrs = resolve_addresses(uri.hostname)
       return false if addrs.empty?
 
       addrs.none? { |addr| unsafe_ip?(addr) }
@@ -71,7 +109,7 @@ module Shared
       raise URI::InvalidURIError, "HTTPS required" unless uri.is_a?(URI::HTTPS)
       raise URI::InvalidURIError, "non-standard HTTPS port" unless uri.port.nil? || uri.port == 443
 
-      address = Resolv.getaddresses(uri.host).reject { |addr| unsafe_ip?(addr) }.first
+      address = resolve_addresses(uri.hostname).reject { |addr| unsafe_ip?(addr) }.first
       raise SocketError, "unsafe or unresolvable remote host" unless address
 
       http = pinned_connection(uri, address)
@@ -83,7 +121,9 @@ module Shared
     end
 
     def pinned_connection(uri, address)
-      http = Net::HTTP.new(uri.host, uri.port || 443)
+      # Passing nil disables Net::HTTP's implicit :ENV proxy lookup; a proxy
+      # would otherwise route around the IP address this guard approved.
+      http = Net::HTTP.new(uri.hostname, uri.port || 443, nil)
       # Refuse rather than fall back: without pinning this is the same
       # validate-then-reresolve pair the method exists to remove.
       raise SocketError, "Net::HTTP cannot pin remote address" unless http.respond_to?(:ipaddr=)

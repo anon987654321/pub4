@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "ipaddr"
-require "resolv"
 require "time"
 require "fileutils"
 require_relative "exec"
@@ -101,7 +100,7 @@ module Master
           return Result.err("nmap: local-only hostnames need allow_private=true", category: :policy)
         end
 
-        addresses = Resolv.getaddresses(target).uniq
+        addresses = Master::Io::SsrfGuard.resolve_addresses(target).uniq
         return Result.err("nmap: DNS returned no addresses", category: :infrastructure) if addresses.empty?
         return Result.err("nmap: DNS returned too many addresses (maximum 8)", category: :validation) if addresses.size > 8
         parsed = addresses.map { |address| IPAddr.new(address) }

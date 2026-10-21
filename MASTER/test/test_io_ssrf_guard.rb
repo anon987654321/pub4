@@ -54,7 +54,7 @@ class SsrfGuardTest < Minitest::Test
   end
 
   def test_rejects_a_hostname_that_resolves_to_a_private_address
-    Resolv.stub(:getaddresses, ["10.1.2.3"]) do
+    Guard.stub(:resolve_addresses, ["10.1.2.3"]) do
       refute Guard.safe_uri?(URI.parse("http://internal.example.com/"))
     end
   end
@@ -62,21 +62,33 @@ class SsrfGuardTest < Minitest::Test
   # A name with one public and one private answer is a rebinding-shaped input;
   # `all?` has to mean all.
   def test_rejects_a_mixed_answer_set
-    Resolv.stub(:getaddresses, ["1.1.1.1", "127.0.0.1"]) do
+    Guard.stub(:resolve_addresses, ["1.1.1.1", "127.0.0.1"]) do
       refute Guard.safe_uri?(URI.parse("http://mixed.example.com/"))
     end
   end
 
   def test_accepts_a_hostname_that_resolves_publicly
-    Resolv.stub(:getaddresses, ["93.184.216.34"]) do
+    Guard.stub(:resolve_addresses, ["93.184.216.34"]) do
       assert Guard.safe_uri?(URI.parse("http://example.com/"))
     end
   end
 
   def test_rejects_a_name_that_does_not_resolve
-    Resolv.stub(:getaddresses, []) do
+    Guard.stub(:resolve_addresses, []) do
       refute Guard.safe_uri?(URI.parse("http://nx.example.invalid/"))
     end
+  end
+
+  def test_rejects_dns_names_over_protocol_limits_before_resolving
+    refute Guard.valid_resolver_host?("#{"a" * 64}.example")
+    long_name = Array.new(4, "a" * 63).join(".")
+    refute Guard.valid_resolver_host?(long_name)
+    called = false
+
+    Guard.stub(:resolve_addresses, ->(_host) { called = true; ["1.1.1.1"] }) do
+      refute Guard.safe_uri?(URI.parse("http://#{long_name}/"))
+    end
+    refute called, "overlong DNS name must be rejected before resolving"
   end
   # The socket goes to the address the check approved, so a second DNS answer
   # at connect time cannot move it; the hostname still carries TLS.
@@ -105,7 +117,7 @@ class SsrfGuardTest < Minitest::Test
     def governor.permit?(*) = Master::Result.ok(true)
     fetch = Master::Io::WebFetch.new(governor:)
 
-    Resolv.stub(:getaddresses, ["93.184.216.34"]) do
+    Guard.stub(:resolve_addresses, ["93.184.216.34"]) do
       Guard.stub(:http_for, ->(_uri, address) { pinned << address; fake }) do
         assert fetch.send(:fetch_one, "https://example.com/").ok?
       end
