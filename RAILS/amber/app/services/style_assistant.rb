@@ -88,18 +88,26 @@ class StyleAssistant
     end
     return [] if zone_picks.empty?
 
-    combinations = zone_picks.reduce([ [] ]) do |partials, picks|
-      partials.flat_map do |partial|
-        picks.map { |pick| partial + [ pick ] }
-      end
-    end
+    # Enumerate the Cartesian product lazily and retain only the leading shortlist.
+    # Increasing the best score can only narrow the tolerance window, so an entry
+    # discarded from the top five can never become eligible again.
+    finalists = []
+    best_score = nil
 
-    scored = combinations.map { |composition| [ composition_score(composition), composition ] }
-    best_score = scored.map(&:first).max
-    finalists = scored
-      .select { |score, _composition| best_score - score <= COMPOSITION_TOLERANCE }
-      .sort_by { |score, composition| [ -score, composition.map { |pick| pick.item.id } ] }
-      .first(SHORTLIST)
+    zone_picks.first.product(*zone_picks.drop(1)) do |composition|
+      score = composition_score(composition)
+      if best_score.nil? || score > best_score
+        best_score = score
+        minimum_score = best_score - COMPOSITION_TOLERANCE
+        finalists.reject! { |candidate_score, _candidate| candidate_score < minimum_score }
+      end
+
+      next if score < best_score - COMPOSITION_TOLERANCE
+
+      finalists << [ score, composition ]
+      finalists.sort_by! { |candidate_score, candidate| [ -candidate_score, candidate.map { |pick| pick.item.id } ] }
+      finalists.pop if finalists.size > SHORTLIST
+    end
 
     selected = finalists.fetch(date.jd % finalists.length).last
     order = ZONES.keys.each_with_index.to_h

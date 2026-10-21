@@ -51,6 +51,36 @@ class StyleAssistantTest < ActiveSupport::TestCase
     assert_includes suggestion.picks.map(&:zone), :shoes
   end
 
+  test "streamed combination selection matches exhaustive ranking" do
+    owner = stock(user("assistant-streaming@example.com"))
+    date = Date.new(2026, 8, 10)
+    weather = { temp: 2.0, description: "Rain" }
+    assistant = StyleAssistant.new(owner, weather:, date:)
+
+    zones = assistant.send(:dress_leads?) ? %i[dress shoes] : %i[top bottom shoes]
+    zones << :outer if assistant.send(:layer?)
+    zones << :accessory
+    zone_picks = zones.filter_map do |zone|
+      items = assistant.send(:shortlist_for, zone)
+      next if items.empty?
+
+      items.map do |item|
+        StyleAssistant::Pick.new(zone:, item:, reasons: assistant.send(:reasons_for, zone, item))
+      end
+    end
+    combinations = zone_picks.reduce([ [] ]) do |partials, picks|
+      partials.flat_map { |partial| picks.map { |pick| partial + [ pick ] } }
+    end
+    scored = combinations.map { |composition| [ assistant.send(:composition_score, composition), composition ] }
+    best_score = scored.map(&:first).max
+    finalists = scored.select { |score, _| best_score - score <= StyleAssistant::COMPOSITION_TOLERANCE }
+                      .sort_by { |score, composition| [ -score, composition.map { |pick| pick.item.id } ] }
+                      .first(StyleAssistant::SHORTLIST)
+    expected = finalists.fetch(date.jd % finalists.length).last.map { |pick| pick.item.id }
+
+    assert_equal expected, assistant.suggest.item_ids
+  end
+
   test "garment taste scores and reasons are computed once across combinations" do
     owner = stock(user("assistant-score-cache@example.com"))
     ranker = TasteRanker.new(owner)
