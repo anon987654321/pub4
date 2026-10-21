@@ -56,9 +56,13 @@ module Ports
 
       runtime = deps.select { |dep| dep.dep_type == "run" }.filter_map { |dep| dep.depends_on&.name }
       build = deps.select { |dep| dep.dep_type == "build" }.filter_map { |dep| dep.depends_on&.name }
+      tests = deps.select { |dep| dep.dep_type == "test" }.filter_map { |dep| dep.depends_on&.name }
+      libraries = deps.select { |dep| dep.dep_type == "lib" }.filter_map { |dep| dep.depends_on&.name }
       parts = []
       parts << t(:runtime_deps, names: runtime.first(6).join(", ")) if runtime.any?
       parts << t(:build_deps, names: build.first(4).join(", ")) if build.any?
+      parts << t(:test_deps, names: tests.first(4).join(", ")) if tests.any?
+      parts << t(:lib_deps, names: libraries.first(4).join(", ")) if libraries.any?
       parts.join(". ").presence || t(:no_dependencies)
     end
 

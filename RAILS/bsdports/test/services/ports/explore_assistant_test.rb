@@ -32,11 +32,35 @@ class PortsExploreAssistantTest < ActiveSupport::TestCase
     assert_includes summary, I18n.t("ports.explore_assistant.no_advisories", locale: :nb)
   end
 
+  test "summarize includes runtime, build, test and library dependencies" do
+    runtime = make_port("runtime-tool")
+    build = make_port("build-tool")
+    test_port = make_port("test-tool")
+    library = make_port("core-library")
+    Dependency.create!(port: @port, depends_on: runtime, dep_type: "run")
+    Dependency.create!(port: @port, depends_on: build, dep_type: "build")
+    Dependency.create!(port: @port, depends_on: test_port, dep_type: "test")
+    Dependency.create!(port: @port, depends_on: library, dep_type: "lib")
+
+    summary = Ports::ExploreAssistant.summarize(@port)
+
+    assert_includes summary, "runtime-tool"
+    assert_includes summary, "build-tool"
+    assert_includes summary, "test-tool"
+    assert_includes summary, "core-library"
+  end
+
   test "a preloaded maintainer is named, not inspected" do
     port = Port.includes(:category, :maintainer).find(@port.id)
     summary = Ports::ExploreAssistant.summarize(port)
 
     assert_includes summary, "Ola Nordmann"
     assert_not_includes summary, "#<Maintainer"
+  end
+  private
+
+  def make_port(name)
+    Port.create!(platform: @port.platform, category: @port.category, name:,
+                 pkgpath: "devel/#{name}", version: "1")
   end
 end

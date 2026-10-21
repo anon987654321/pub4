@@ -25,14 +25,48 @@ class Port < ApplicationRecord
   scope :by_category, ->(cat) { where(category: cat) }
   scope :by_maintainer, ->(maintainer) { where(maintainer_id: maintainer.id) }
   scope :search, ->(q) {
-    # Treat input as terms, not FTS5 syntax. A stray quote or parenthesis from a
-    # live search must be a miss rather than a database exception.
-    terms = q.to_s.scan(/[[:alnum:]_]+/)
+    terms = q.to_s.scan(/[[:alnum:]]+/).uniq
     next none if terms.empty?
 
-    query = terms.map { |term| "\"" + term.gsub('"', '""') + "\"" }.join(" AND ")
-    ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", query ]))
-    ids.any? ? where(id: ids) : none
+    # Prefix matching keeps live search useful before a word is complete. FTS
+    # covers name/comment; correlated lookups cover the other advertised fields.
+    query = terms.map { |term| %("#{term.gsub('"', '""')}"*) }.join(" AND ")
+    ids = begin
+      connection.select_values(sanitize_sql_array([ "SELECT rowid FROM ports_fts WHERE ports_fts MATCH ?", query ]))
+    rescue ActiveRecord::StatementInvalid => e
+      Rails.logger.warn("bsdports search index unavailable: #{e.message}")
+      []
+    end
+
+    binds = {}
+    predicates = terms.each_with_index.map do |term, index|
+      key = :"term_#{index}"
+      binds[key] = "%#{term}%"
+      like = ->(column) { "#{column} LIKE :#{key}" }
+      fields = %w[ports.pkgpath ports.version ports.description ports.maintainer].map(&like)
+      category_fields = %w[name slug description].map { |column| like.call("categories.#{column}") }
+      fields << "EXISTS (SELECT 1 FROM categories WHERE categories.id = ports.category_id AND (#{category_fields.join(" OR ")}))"
+      fields << "EXISTS (SELECT 1 FROM maintainers WHERE maintainers.id = ports.maintainer_id AND #{like.call('maintainers.name')})"
+      dependency_fields = %w[name pkgpath comment description].map { |column| like.call("dependency_ports.#{column}") }
+      fields << <<~SQL.squish
+        EXISTS (
+          SELECT 1 FROM dependencies
+          JOIN ports AS dependency_ports ON dependency_ports.id = dependencies.depends_on_id
+          WHERE dependencies.port_id = ports.id AND (#{dependency_fields.join(" OR ")})
+        )
+      SQL
+      advisory_fields = %w[identifier title description].map { |column| like.call("security_advisories.#{column}") }
+      fields << <<~SQL.squish
+        EXISTS (
+          SELECT 1 FROM security_advisories
+          WHERE security_advisories.port_id = ports.id AND (#{advisory_fields.join(" OR ")})
+        )
+      SQL
+      "(#{fields.join(' OR ')})"
+    end
+
+    related = where(predicates.join(" AND "), binds)
+    ids.any? ? related.or(where(id: ids)) : related
   }
   scope :semantic_search, ->(q) { search(q) } # stub for sqlite-vec embeddings on description (DG02)
 

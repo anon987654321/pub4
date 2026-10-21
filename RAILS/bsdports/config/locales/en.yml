@@ -113,6 +113,8 @@ en:
       no_dependencies: "No recorded dependencies."
       runtime_deps: "Runtime deps: %{names}"
       build_deps: "Build deps: %{names}"
+      test_deps: "Test deps: %{names}"
+      lib_deps: "Library deps: %{names}"
       no_advisories: "No recent security advisories in local DB."
       advisories: "Security notes: %{list}."
       reverse_deps: "Other ports depending on this: %{names}."

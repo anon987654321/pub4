@@ -125,6 +125,36 @@ class PortTest < ActiveSupport::TestCase
     assert_empty Port.search("a_term_that_matches_no_port").to_a
   end
 
+  test "prefix search finds a partially typed port name or comment" do
+    curl = port("curl", comment: "transfer tool")
+
+    assert_includes Port.search("cur").to_a, curl
+    assert_includes Port.search("transf").to_a, curl
+  end
+
+  test "search covers pkgpaths, categories and associated maintainer names" do
+    maintainer = Maintainer.create!(name: "Ola Nordmann")
+    curl = port("curl", pkgpath: "net/curl", maintainer:)
+
+    assert_includes Port.search("net/curl").to_a, curl
+    assert_includes Port.search("Ola Nordmann").to_a, curl
+    assert_includes Port.search("net").to_a, curl
+  end
+
+  test "search covers dependency names and security notes" do
+    app = port("sample-app", comment: "small application")
+    library = port("rare-library", comment: "shared library")
+    Dependency.create!(port: app, depends_on: library, dep_type: "run")
+    SecurityAdvisory.create!(
+      port: app, identifier: "CVE-2099-1234", title: "sample advisory",
+      description: "example security note", severity: :high
+    )
+
+    assert_includes Port.search("rare-library").to_a, app
+    assert_includes Port.search("CVE-2099-1234").to_a, app
+    assert_includes Port.search("security note").to_a, app
+  end
+
   test "malformed FTS punctuation cannot raise a search error" do
     port("curl", comment: "transfer tool")
 

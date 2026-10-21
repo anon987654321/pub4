@@ -113,6 +113,8 @@ nb:
       no_dependencies: "Ingen registrerte avhengigheter."
       runtime_deps: "Kjøretidsavhengigheter: %{names}"
       build_deps: "Byggavhengigheter: %{names}"
+      test_deps: "Testavhengigheter: %{names}"
+      lib_deps: "Bibliotekavhengigheter: %{names}"
       no_advisories: "Ingen nylige sikkerhetsvarsler i den lokale databasen."
       advisories: "Sikkerhetsnotater: %{list}."
       reverse_deps: "Andre porter som avhenger av denne: %{names}."
