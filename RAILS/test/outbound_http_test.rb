@@ -39,7 +39,7 @@ class FediverseSsrfTest < Minitest::Test
   end
 
   def test_ipv6_targets_must_be_global_unicast_and_not_documentation_space
-    %w[4000::1 5f00::1 3fff::1 2001:db8::1 fd00::1 fe80::1 ff02::1].each do |address|
+    %w[4000::1 5f00::1 3f00::1 3ffe::1 3fff::1 2001:db8::1 fd00::1 fe80::1 ff02::1].each do |address|
       assert Shared::OutboundHttp.unsafe_ip?(address), "#{address} must not be an outbound target"
     end
     refute Shared::OutboundHttp.unsafe_ip?("2606:4700:4700::1111")
