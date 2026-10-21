@@ -22,7 +22,7 @@ class SessionsControllerGuestTransferTest < ActionDispatch::IntegrationTest
       raise ActiveRecord::MigrationError, "simulated missing account_merges table"
     end
 
-    AccountMerger.stub(:new, merger) do
+    AccountMerger.stub(:new, ->(**_kwargs) { merger }) do
       post session_path, params: {
         email_address: member.email_address,
         password: "long-enough-password"
