@@ -65,7 +65,7 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes merger, "ActiveRecord::MigrationError"
     assert_includes merger, "def record_merge"
     assert_includes registration, "persisted_guest_for_registration"
-    assert_includes registration, "AccountMerger.new(guest_user: guest, user: user).call"
+    assert_includes registration, "transfer_guest_history_to(user, guest)"
     assert_includes brgen_controller, "merge_registration_guest(@user, guest)"
     assert_includes amber_controller, "merge_registration_guest(@user, guest)"
     assert_includes merge_migration, "create_table :account_merges, if_not_exists: true"
@@ -80,7 +80,7 @@ class FederatedIdentityContractTest < Minitest::Test
     amber = read("RAILS/amber/app/controllers/registrations_controller.rb")
 
     assert_includes auth, "def transfer_guest_history_to(user, guest)"
-    assert_includes auth, "AccountMerge.exists?(guest_user_id: guest.id, user_id: user.id, status: \"merged\")"
+    assert_includes auth, 'AccountMerge.exists?(guest_user_id: guest.id, user_id: user.id, status: "merged")'
     assert_includes auth, "def transfer_guest_history_from_session(user)"
     assert_includes sessions, "transfer_guest_history_from_session(user)"
     assert_includes sessions, 'transfer == false'
