@@ -67,7 +67,7 @@ module Ports
     end
 
     def advisory_summary
-      advisories = SecurityAdvisory.where(port_id: port.id).order(created_at: :desc).limit(3).to_a
+      advisories = port.security_advisories.order(created_at: :desc).limit(3).to_a
       return t(:no_advisories) if advisories.empty?
 
       t(:advisories, list: advisories.map { |adv| "#{adv.identifier} (#{adv.severity})" }.join(", "))
