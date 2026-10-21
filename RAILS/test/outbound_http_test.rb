@@ -74,6 +74,17 @@ class FediverseSsrfTest < Minitest::Test
     assert_raises(URI::InvalidURIError) { Shared::OutboundHttp.request(URI("https://example.com:8443/actor")) }
   end
 
+  def test_request_refuses_reserved_ipv6_before_connecting
+    %w[4000::1 3fff::1].each do |address|
+      error = with_stubbed_dns(address) do
+        assert_raises(SocketError) do
+          Shared::OutboundHttp.request(URI("https://reserved-ipv6.test/actor"))
+        end
+      end
+      assert_match(/unsafe or unresolvable/, error.message)
+    end
+  end
+
   def test_client_returns_nil_rather_than_raising_at_a_loopback_host
     assert_nil Fediverse::Client.request(:get, "https://127.0.0.1/actor")
   end
