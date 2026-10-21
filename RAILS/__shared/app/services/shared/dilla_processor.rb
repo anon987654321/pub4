@@ -4,7 +4,7 @@ require "shared/contracts"
 Shared::Contracts.require_contract("studio")
 require "rbconfig"
 require "fileutils"
-require "open3"
+require "shared/subprocess"
 
 module Shared
   # Runs STUDIO/dilla/dilla.rb and attaches audio to a record.
@@ -73,40 +73,17 @@ module Shared
     # the sketch stuck "rendering". popen3 + a wait timeout frees the worker AND kills
     # the child (capture3 wrapped in Timeout would leave it running). Reader threads
     # avoid a pipe-buffer deadlock.
+    # Delegate process lifecycle and descendant cleanup to the shared Rails boundary.
     def run_with_timeout(env, cmd)
-      require "timeout"
       seconds = Integer(ENV.fetch("DILLA_SH_TIMEOUT", "900"))
-      Open3.popen3(env, *cmd) do |stdin, stdout, stderr, wait_thr|
-        stdin.close
-        out_reader = Thread.new { stdout.read }
-        err_reader = Thread.new { stderr.read }
-        # On the timeout path popen3 closes these pipes out from under the readers,
-        # which would raise a stray IOError — we're abandoning that output anyway.
-        out_reader.report_on_exception = false
-        err_reader.report_on_exception = false
-        begin
-          status = Timeout.timeout(seconds) { wait_thr.value }
-        rescue Timeout::Error
-          # The process exiting between the timeout and the signal is the only
-          # failure worth ignoring here; a bare `rescue nil` would also hide a
-          # permissions problem, which is a real bug.
-          begin
-            Process.kill("TERM", wait_thr.pid)
-          rescue Errno::ESRCH, Errno::EPERM
-            nil
-          end
-          [ out_reader, err_reader ].each(&:kill)
-          log("dilla render timed out after #{seconds}s — killed pid #{wait_thr.pid}")
-          return false
-        end
-        out = out_reader.value.to_s
-        err = err_reader.value.to_s
-        log("dilla stdout: #{out.lines.last.to_s.strip}") if out.strip != ""
-        log("dilla stderr: #{err.lines.last.to_s.strip}") if !status.success? && err.strip != ""
-        status.success?
-      end
+      out, err, status = Shared::Subprocess.capture3(*cmd, env:, timeout: seconds)
+      log("dilla stdout: #{out.lines.last.to_s.strip}") if out.strip != ""
+      log("dilla stderr: #{err.lines.last.to_s.strip}") if !status.success? && err.strip != ""
+      status.success?
+    rescue Shared::Subprocess::TimeoutError => e
+      log("dilla render timed out after #{seconds}s — #{e.message}")
+      false
     end
-
     def log(message)
       return unless defined?(Rails)
 

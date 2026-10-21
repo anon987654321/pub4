@@ -12,6 +12,16 @@ require_relative "../../app/services/shared/dilla_processor"
 # dilla has hung indefinitely in the past, pinning a Solid Queue worker forever.
 # run_with_timeout must free the worker and kill the child instead of blocking.
 class DillaProcessorTest < Minitest::Test
+  def test_shared_subprocess_keeps_stdout_and_stderr_separate
+    stdout, stderr, status = Shared::Subprocess.capture3(
+      RbConfig.ruby, "-e", "STDOUT.write('out'); STDERR.write('err')", timeout: 2
+    )
+
+    assert_equal "out", stdout
+    assert_equal "err", stderr
+    assert status.success?
+  end
+
   def test_successful_command_returns_true
     ok = Shared::DillaProcessor.run_with_timeout({}, [ RbConfig.ruby, "-e", "STDOUT.puts 'done'" ])
     assert_equal true, ok

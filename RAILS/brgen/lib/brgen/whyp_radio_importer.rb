@@ -2,9 +2,8 @@
 
 require "digest"
 require "json"
-require "open3"
 require "uri"
-require "timeout"
+require "shared/subprocess"
 require "yaml"
 
 module Brgen
@@ -83,38 +82,13 @@ module Brgen
 
       detail = [ stderr, stdout ].compact_blank.join("\n").lines.last(20).join
       abort "radio: yt-dlp failed\n#{detail}"
-    rescue Timeout::Error
+    rescue Shared::Subprocess::TimeoutError
       abort "radio: yt-dlp exceeded #{timeout_seconds}s"
     end
 
     def run_bounded(argv)
-      Open3.popen3(*argv, pgroup: true) do |stdin, stdout, stderr, wait_thr|
-        stdin.close
-        readers = [stdout, stderr].map { |io| Thread.new { io.read } }
-        timed_out = false
-        status = begin
-          Timeout.timeout(timeout_seconds) { wait_thr.value }
-        rescue Timeout::Error
-          timed_out = true
-          kill_group(wait_thr.pid)
-          wait_thr.value
-        end
-        output, error = readers.map(&:value)
-        raise Timeout::Error if timed_out
-
-        [output, error, status]
-      end
+      Shared::Subprocess.capture3(*argv, timeout: timeout_seconds)
     end
-
-    def kill_group(pid)
-      pgid = Process.getpgid(pid)
-      Process.kill("TERM", -pgid)
-      sleep 0.2
-      Process.kill("KILL", -pgid)
-    rescue Errno::ESRCH
-      nil
-    end
-
     def build_manifest
       infos = Dir.glob(audio_root.join("*.info.json").to_s).filter_map do |path|
         JSON.parse(File.read(path, encoding: "UTF-8"))
