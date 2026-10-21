@@ -29,11 +29,11 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
                  name: "freebsd-only", version: "1.0", pkgpath: "devel/freebsd-only")
 
     calls = []
-    NvdCve.stub(:crossref, ->(port, limit: 5) { calls << [ port, limit ]; [] }) do
+    NvdCveCrossrefJob.stub(:perform_later, ->(**arguments) { calls << arguments[:port_id] }) do
       SecurityAdvisoryRefreshJob.perform_now(batch_size: 10)
     end
 
-    assert_equal [ openbsd_port ], calls.map(&:first)
+    assert_equal [ openbsd_port.id ], calls
     assert_equal openbsd_port.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
 
@@ -50,16 +50,13 @@ class SecurityAdvisoryRefreshJobTest < ActiveJob::TestCase
       )
     end
 
-    advisories = [ SecurityAdvisory.new(identifier: "CVE-TEST-1") ]
     calls = []
-    Kernel.stub(:sleep, nil) do
-      NvdCve.stub(:crossref, ->(port, limit: 5) { calls << [ port.id, limit ]; advisories }) do
-        SecurityAdvisoryRefreshJob.perform_now(batch_size: 2)
-      end
+    NvdCveCrossrefJob.stub(:perform_later, ->(**arguments) { calls << arguments[:port_id] }) do
+      SecurityAdvisoryRefreshJob.perform_now(batch_size: 2)
     end
 
     assert_equal 2, calls.size
-    assert_equal ports.map(&:id).sort, calls.map(&:first).sort
+    assert_equal ports.map(&:id).sort, calls.sort
     assert_equal ports.last.id, @memory_cache.read(SecurityAdvisoryRefreshJob::CURSOR_KEY)
   end
 end
