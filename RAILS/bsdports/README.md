@@ -22,8 +22,8 @@ available, and free disk space is sufficient. Otherwise it uses the thin package
 index updates package names and versions; it does not authoritatively describe dependency edges,
 so an index-only import preserves previously known dependencies.
 
-NVD cross-reference is asynchronous and operator-only. Set `BSDPORTS_ADMIN_EMAIL` in the
-production environment to the operator account's email address; leave it unset to disable manual
+NVD cross-reference is asynchronous and operator-only. Set `BSDPORTS_ADMIN_EMAIL` in
+`/etc/bsdports.env` to the operator account's email address; leave it unset to disable manual
 cross-reference requests. `NVD_API_KEY` is optional and changes the shared request interval, not
 the authorization boundary. Cross-reference jobs reserve distinct database-backed request slots,
 and the scheduled refresh queues work instead of making NVD requests inside a web request or
