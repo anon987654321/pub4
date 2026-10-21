@@ -171,7 +171,7 @@ This is the bridge between audio analysis and composition. RMS, tempo, and spect
 
 ### What this means for implementation and regression coverage
 
-The existing `Dilla::Reference` pipeline already provides bounded source retrieval, metadata, FFmpeg metrics, optional Essentia/Libsonare tempo cross-checks, Demucs stems, broad energy contours, and a low-rate rhythm-envelope proxy. It also explicitly warns that Demucs drums are not isolated kick/snare/hat tracks. That is a useful foundation, but it does **not** yet establish sample-accurate per-hit microtiming or reliable sixteenth-grid accent counts for a full mix.
+The existing `Dilla::Reference` pipeline provides bounded source retrieval, metadata, FFmpeg metrics, optional Essentia/Libsonare tempo cross-checks, Demucs stems, broad energy contours, and a low-rate rhythm-envelope proxy. Its latest report also emits 16-cell grid hit/strength summaries and complete 4-, 8- and 16-bar windows. These remain **mix/stem-envelope proxies**, not sample-accurate onset timestamps or reliable lane-specific kick/snare/hat counts. Demucs drums are not isolated kick/snare/hat tracks. This increment improves coarse phrase comparison, but does not establish exact microtiming for a full mix.
 
 The next safe increments should be separate, independently testable contracts:
 
