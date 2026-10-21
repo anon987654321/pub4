@@ -634,4 +634,22 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes consent, "Starts visuals, sound and the microphone"
     assert_includes consent, "text remains available if graphics fail"
   end
+  def test_brgen_horizon_matches_messenger_archive_and_has_one_premium_item
+    horizon = YAML.safe_load_file(File.join(ROOT, "apps.horizon.yml"))
+                   .fetch("horizon").fetch("brgen")
+    core = horizon.fetch("core")
+    dating = horizon.fetch("subapp_dating")
+
+    refute core.any? { |item| item.fetch("name") == "messenger conversation archive" },
+           "the archive is implemented and must not remain planned"
+    premium = dating.select { |item| item.fetch("name").to_s.start_with?("premium memberships / boost") }
+    assert_equal 1, premium.length, "dating premium/boost purchases should be one roadmap item"
+    assert_includes premium.first.fetch("name"), "super-like"
+
+    conversation = read("brgen_messenger/app/models/conversation.rb")
+    controller = read("brgen_messenger/app/controllers/conversations_controller.rb")
+    assert_includes conversation, "scope :in_archive"
+    assert_includes controller, "@archive = params[:arkiv].present?"
+  end
+
 end
