@@ -159,7 +159,7 @@ module Shared
       end
 
       result = poll_prediction(prediction_id, token)
-      Array(result).grep(%r{\Ahttps?://}).first
+      Array(result).grep(%r{\Ahttps://}).first
     end
 
     def replicate_post(uri, token, body)
