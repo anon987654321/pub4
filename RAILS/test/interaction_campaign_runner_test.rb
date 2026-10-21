@@ -50,6 +50,34 @@ class InteractionCampaignRunnerTest < Minitest::Test
     end
   end
 
+  def test_RI_003_executes_the_exact_malformed_email_test
+    Dir.mktmpdir("interaction-campaign-email") do |evidence_root|
+      calls = []
+      executor = lambda do |command:, chdir:, timeout:|
+        calls << { command:, chdir:, timeout: }
+        ["1 runs, 2 assertions, 0 failures, 0 errors, 0 skips\n", Status.new(true, 0)]
+      end
+      runner = Runner.new(
+        case_ids: ["RI-003"], root: ROOT, manifest_path: MANIFEST,
+        evidence_root:, io: StringIO.new, executor:
+      )
+
+      assert_equal 0, runner.run
+      assert_equal [{
+        command: [
+          "bin/rails", "test", "test/controllers/users_controller_test.rb",
+          "--name", "\\Atest_RI_003_malformed_email_is_rejected_without_account\\z"
+        ],
+        chdir: File.join(ROOT, "RAILS", "brgen"),
+        timeout: Runner::DEFAULT_TIMEOUT
+      }], calls
+      results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
+      row = JSON.parse(File.read(results_path)).fetch("results").fetch(0)
+      assert_equal "PASS", row.fetch("status")
+      assert_equal "RI-003", row.fetch("case_id")
+    end
+  end
+
   def test_RI_010_executes_the_exact_protected_route_test
     Dir.mktmpdir("interaction-campaign-authz") do |evidence_root|
       calls = []
@@ -132,9 +160,10 @@ class InteractionCampaignRunnerTest < Minitest::Test
 
     assert_equal 0, runner.list
     assert_match(/^campaign0: RI-001 READY /, out.string)
+    assert_match(/^campaign0: RI-003 READY /, out.string)
     assert_match(/^campaign0: RI-010 READY /, out.string)
     assert_match(/^campaign0: RI-011 READY /, out.string)
-    assert_match(/^campaign0: RI-001 UNMAPPED /, out.string)
+    assert_match(/^campaign0: RI-002 UNMAPPED /, out.string)
     refute_includes out.string, "EXECUTABLE"
   end
 
@@ -146,7 +175,7 @@ class InteractionCampaignRunnerTest < Minitest::Test
         ["1 runs, 1 assertions, 0 failures, 0 errors, 0 skips\n", Status.new(true, 0)]
       end
       runner = Runner.new(
-        case_ids: ["RI-001"], root: ROOT, manifest_path: MANIFEST,
+        case_ids: ["RI-002"], root: ROOT, manifest_path: MANIFEST,
         evidence_root:, io: StringIO.new, executor:
       )
 
@@ -176,8 +205,8 @@ class InteractionCampaignRunnerTest < Minitest::Test
       results_path = Dir.glob(File.join(evidence_root, "**", "results.json")).first
       ledger = JSON.parse(File.read(results_path))
       assert_equal 400, ledger.fetch("selected_case_count")
-      assert_equal 3, ledger.fetch("counts").fetch("PASS")
-      assert_equal 397, ledger.fetch("counts").fetch("SKIPPED")
+      assert_equal 4, ledger.fetch("counts").fetch("PASS")
+      assert_equal 396, ledger.fetch("counts").fetch("SKIPPED")
     end
   end
   def test_file_level_success_is_blocked_when_more_than_one_test_ran

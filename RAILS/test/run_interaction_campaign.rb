@@ -165,7 +165,7 @@ module Operator
         if summary.nil? || summary.fetch(:runs) != 1
           state = "BLOCKED"
           reason = "test process did not report exactly one executed mapped test"
-        elsif command_data.fetch(:runner) != "node_test" && summary.fetch(:assertions").to_i.zero?
+        elsif command_data.fetch(:runner) != "node_test" && summary.fetch(:assertions).to_i.zero?
           state = "BLOCKED"
           reason = "mapped test executed without assertions; no behavior was verified"
         else
@@ -247,7 +247,7 @@ module Operator
       return { error: "runtime test name is invalid" } unless name.match?(/\Atest_[A-Za-z0-9_]+\z/)
 
       surface = campaign.fetch("surfaces").find { |item| item.fetch("id") == row.fetch("surface_id") }
-      return { error: "runtime test surface is missing" unless surface
+      return { error: "runtime test surface is missing" } unless surface
       allowed = surface.fetch("focused_test_paths") + surface.fetch("evidence_paths")
       return { error: "runtime test path is not in the canonical surface evidence map" } unless allowed.include?(path)
 
