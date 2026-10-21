@@ -619,6 +619,43 @@ class TestDialogueRubric < Minitest::Test
     assert_includes prompt, "Helsenorge — mental-health help"
   end
 
+  def test_indirect_self_harm_language_routes_to_crisis_guidance
+    prompt = Rubric.support_prompt_for(
+      "Everyone would be better off without me. I don't want to wake up tomorrow.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "NICE NG225"
+    assert_includes prompt, "Do not predict suicide using a low/medium/high label"
+  end
+
+  def test_threat_and_assault_language_routes_to_crisis_and_manipulation_guidance
+    prompt = Rubric.support_prompt_for(
+      "My partner shoved me, choked me and threatened to kill me if I leave.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "Couples and relationship safety:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "Do not recommend joint counselling"
+    assert_includes prompt, "112 for immediate risk from violence"
+  end
+
+  def test_nynorsk_threat_routes_to_local_violence_and_crisis_resources
+    prompt = Rubric.support_prompt_for(
+      "Kjærasten min trugar med å drepe meg og slepp meg ikkje ut.",
+      root: Master::ROOT,
+    )
+
+    assert_includes prompt, "Crisis and referral:"
+    assert_includes prompt, "Manipulation resistance:"
+    assert_includes prompt, "Helsenorge — mental-health help"
+    assert_includes prompt, "Helsenorge — violence and abuse"
+    assert_includes prompt, "112 for immediate risk from violence"
+  end
+
   def test_forbidden_openers_are_rejected
     assert_equal ["no_ai_isms: Great question"], Rubric.evaluate("Great question! The answer is 42.", root: Master::ROOT)
     assert_empty Rubric.evaluate("The answer is 42.", root: Master::ROOT)
