@@ -105,8 +105,9 @@ module Master
       end
     end
 
-    # Maps user-facing scenario oracles to existing focused tests. It reports only
-    # commands actually run as evidence; the campaign descriptions are not passes.
+    # Shared candidate simulator for /fix: scenario oracles select existing
+    # focused tests, and only measured command results count as evidence. It lives
+    # beside BestOfN so the repository retains one existing candidate-selection owner.
     class UserSimulation
       APPROACHES = [
         {
@@ -130,8 +131,6 @@ module Master
           instruction: "Consider a materially different boundary or transformation from the other candidates. Keep the change reversible, retain compatibility, and reject a refactor that merely relocates complexity."
         }
       ].map(&:freeze).freeze
-
-
 
       RUNTIME_STATES = %w[NOT_RUN PASS FAIL BLOCKED SKIPPED].freeze
       MAX_TEST_FILES = 4
