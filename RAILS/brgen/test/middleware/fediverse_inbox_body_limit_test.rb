@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "stringio"
 
 class FediverseInboxBodyLimitTest < ActiveSupport::TestCase
   class TrackingInput < StringIO
