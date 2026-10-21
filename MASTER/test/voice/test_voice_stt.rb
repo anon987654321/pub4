@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require "tmpdir"
 require_relative "../../lib/voice/stt"
 
 class TestVoiceStt < Minitest::Test
@@ -45,7 +46,49 @@ class TestVoiceStt < Minitest::Test
     assert_kind_of Master::Voice::Stt::Result, result
   end
 
+  def test_whisper_cli_capture_preserves_text_and_diagnostics
+    with_whisper_binary("echo 'recognized words'; echo 'notice' >&2") do |binary|
+      backend = whisper_backend(binary, timeout: 2)
+      text, raw = backend.send(:run_whisper, "unused.wav")
+
+      assert_equal "recognized words", text
+      assert_equal "recognized words\n", raw[:stdout]
+      assert_equal "notice\n", raw[:stderr]
+      assert_equal 0, raw[:status]
+    end
+  end
+
+  def test_whisper_cli_timeout_kills_a_hung_process_promptly
+    with_whisper_binary("exec sleep 10") do |binary|
+      backend = whisper_backend(binary, timeout: 0.1)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      text, raw = backend.send(:run_whisper, "unused.wav")
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      assert_equal "", text
+      assert_match(/timed out/, raw.fetch(:error))
+      assert_operator elapsed, :<, 3
+    end
+  end
+
   def test_snapshot_frozen
     assert @stt.snapshot.frozen?
+  end
+
+  private
+
+  def whisper_backend(binary, timeout:)
+    Master::Voice::Stt::WhisperCppBackend.new(
+      binary:, model: "unused-model.bin", config: { whisper_timeout_s: timeout }
+    )
+  end
+
+  def with_whisper_binary(body)
+    Dir.mktmpdir("whisper-cpp-test") do |dir|
+      binary = File.join(dir, "whisper-cli")
+      File.write(binary, "#!/bin/sh\n#{body}\n")
+      File.chmod(0o755, binary)
+      yield binary
+    end
   end
 end

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "tmpdir"
-require "open3"
 require "securerandom"
 require "fileutils"
+require_relative "../../io/exec"
 
 module Master
   module Voice
@@ -126,21 +126,9 @@ module Master
             "-nt", # no timestamps in stdout
             "-np", # no prints progress noise when supported
           ]
-          out = +""
-          err = +""
-          status = nil
-          Open3.popen3(*cmd) do |stdin, stdout, stderr, wait|
-            stdin.close
-            deadline = Time.now + @timeout_s
-            until stdout.eof? && stderr.eof?
-              break if Time.now > deadline
-
-              out << (stdout.read_nonblock(4096) rescue "")
-              err << (stderr.read_nonblock(4096) rescue "")
-              sleep 0.01
-            end
-            status = wait.value
-          end
+          out, err, status = Master::Io::Exec.capture3(
+            *cmd, timeout: @timeout_s, raise_on_timeout: true
+          )
           text = out.to_s.gsub(/\[.*?\]/, "").lines.map(&:strip).reject(&:empty?).join(" ").strip
           [text, { stdout: out, stderr: err, status: status&.exitstatus }]
         rescue StandardError => e

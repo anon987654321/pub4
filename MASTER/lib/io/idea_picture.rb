@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
 require "rbconfig"
+require_relative "exec"
 
 module Master
   module Io
@@ -16,17 +16,21 @@ module Master
         @script = script
       end
 
-      def write(words, film: true, duration: 5)
+      def write(words, film: true, duration: 5, timeout: Master::Io::Exec::DEFAULT_TIMEOUT)
         raise "STUDIO photograph entrypoint is unavailable" unless File.file?(@script)
 
         argv = [RbConfig.ruby, @script]
         argv << "--film" if film
         argv << "--duration" << duration.to_i.to_s
         argv << words.to_s
-        stdout, status = Open3.capture2e(*argv, chdir: File.dirname(@script))
+        stdout, status = Master::Io::Exec.capture2e(
+          *argv, chdir: File.dirname(@script), timeout:, raise_on_timeout: true
+        )
         raise "STUDIO photograph failed: #{stdout.lines.last.to_s.strip}" unless status.success?
 
         JSON.parse(stdout).transform_keys(&:to_sym)
+      rescue Master::Io::Exec::TimeoutError => e
+        raise "STUDIO photograph timed out: #{e.message}"
       end
     end
   end
