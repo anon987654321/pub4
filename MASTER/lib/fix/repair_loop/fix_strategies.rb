@@ -256,7 +256,12 @@ module Master
           ranked = viable.each_with_index.filter_map do |row, index|
             proof = simulations[index] || { status: :unavailable, reason: "candidate has no simulation result", test_paths: [] }
             status = proof.fetch(:status).to_sym
-            if %i[regression blocked].include?(status)
+            # A mapped test that could not provide a verdict cannot qualify a
+            # candidate. Missing coverage is a separate source-only fallback,
+            # always reported as unverified rather than passed.
+            unavailable_with_tests = status == :unavailable && Array(proof[:test_paths]).any?
+            missing_proof = proof[:reason].to_s == "candidate has no simulation result"
+            if %i[regression blocked].include?(status) || unavailable_with_tests || missing_proof
               @bus&.publish(
                 "repair_loop:candidate_rejected",
                 law: @law.id, file: path, candidate: index + 1,
@@ -282,10 +287,14 @@ module Master
           end
 
           proof = selected[2]
+          proof_status = proof.fetch(:status).to_sym
+          selection_event = proof_status == :unavailable ?
+            "repair_loop:candidate_selected_unverified" : "repair_loop:candidate_selected"
           @bus&.publish(
-            "repair_loop:candidate_selected",
+            selection_event,
             law: @law.id, file: path, candidates: viable.size,
-            status: proof.fetch(:status), tests: proof.fetch(:test_paths),
+            status: proof_status, tests: proof.fetch(:test_paths),
+            reason: proof_status == :unavailable ? proof[:reason] : nil,
             remaining_findings: selected[0][0], diff_bytes: selected[0][2],
             regressions: proof.fetch(:regressions).length,
             improvements: proof.fetch(:improvements).length
