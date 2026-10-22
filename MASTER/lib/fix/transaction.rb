@@ -56,7 +56,7 @@ module Master
         acquire_lock
         raise "transaction id already exists: #{@id}" if File.exist?(@dir) || File.symlink?(@dir)
 
-        FileUtils.mkdir_p(@dir)
+        Dir.mkdir(@dir, 0o700)
         created_dir = true
         snapshot_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @paths.each do |path|
@@ -330,8 +330,9 @@ module Master
       def persisted? = File.file?(File.join(@dir, MANIFEST))
 
       def acquire_lock(nonblock: false)
+        verify_root_storage_tree!
         path = File.join(@root, LOCK)
-        FileUtils.mkdir_p(File.dirname(path))
+        raise "transaction lock path is a symlink" if File.symlink?(path)
         @lock = File.open(path, File::RDWR | File::CREAT, 0o600)
         flags = File::LOCK_EX
         flags |= File::LOCK_NB if nonblock
@@ -392,7 +393,7 @@ module Master
         raise "transaction parent is unavailable for #{path}: #{e.message}"
       end
 
-      def snapshot(path)
+      def snapshot(path, versioned: false)
         abs = absolute(path)
         return Snapshot.new(path, false, :missing, nil, nil, nil) unless File.exist?(abs) || File.symlink?(abs)
 
@@ -400,7 +401,9 @@ module Master
         if stat.symlink?
           Snapshot.new(path, true, :symlink, stat.mode & 0o7777, File.readlink(abs), nil)
         elsif stat.file?
-          store = File.join(@dir, "files", encoded(path))
+          name = encoded(path)
+          name = "#{name}.#{SecureRandom.hex(8)}" if versioned
+          store = File.join(@dir, "files", name)
           snapshot_file(abs, store)
           Snapshot.new(path, true, :file, stat.mode & 0o7777, nil, store)
         else
@@ -409,7 +412,9 @@ module Master
       end
 
       def snapshot_file(source, destination)
-        FileUtils.mkdir_p(File.dirname(destination))
+        verify_storage_tree!(create_files: true)
+        expected_dir = File.expand_path(File.join(@dir, "files"))
+        raise "snapshot store path escapes the transaction directory" unless File.dirname(File.expand_path(destination)) == expected_dir
         before = fingerprint(source)
         temporary = "#{destination}.tmp.#{Process.pid}.#{SecureRandom.hex(4)}"
         File.open(source, "rb") do |input|
@@ -452,7 +457,9 @@ module Master
       end
 
       def load_manifest!
+        verify_storage_tree!
         path = File.join(@dir, MANIFEST)
+        raise "transaction manifest is a symlink" if File.symlink?(path)
         raise "transaction manifest not found: #{@id}" unless File.file?(path)
 
         data = JSON.parse(File.read(path, encoding: "UTF-8"))
@@ -562,6 +569,61 @@ module Master
         FileUtils.rmdir(parent) if Dir.exist?(parent) && Dir.empty?(parent)
       rescue SystemCallError
         nil
+      end
+
+      def verify_root_storage_tree!
+        master_dir = File.join(@root, ".master")
+        transaction_root = File.join(@root, ROOT_DIR)
+        raise "MASTER state directory is a symlink" if File.symlink?(master_dir)
+        FileUtils.mkdir_p(master_dir)
+        raise "MASTER state path is not a real directory" unless File.directory?(master_dir) && !File.symlink?(master_dir)
+        raise "transaction root is a symlink" if File.symlink?(transaction_root)
+        FileUtils.mkdir_p(transaction_root)
+        raise "transaction root is not a real directory" unless File.directory?(transaction_root) && !File.symlink?(transaction_root)
+      end
+
+      def verify_storage_tree!(create_files: false)
+        verify_root_storage_tree!
+        raise "transaction directory is a symlink" if File.symlink?(@dir)
+        raise "transaction directory is unavailable" unless File.directory?(@dir)
+
+        files_dir = File.join(@dir, "files")
+        raise "transaction snapshot directory is a symlink" if File.symlink?(files_dir)
+        FileUtils.mkdir_p(files_dir) if create_files
+        return true unless File.exist?(files_dir)
+
+        raise "transaction snapshot path is not a real directory" unless File.directory?(files_dir) && !File.symlink?(files_dir)
+        true
+      end
+
+      def discard_snapshots!(snapshots)
+        root = File.expand_path(File.join(@dir, "files"))
+        Array(snapshots).each do |item|
+          next unless item&.kind == :file && item.store
+
+          path = File.expand_path(item.store)
+          next unless File.dirname(path) == root
+
+          File.delete(path) if File.file?(path) || File.symlink?(path)
+        rescue SystemCallError
+          nil
+        end
+      end
+
+      def cleanup_orphan_snapshots!
+        files_dir = File.join(@dir, "files")
+        return unless Dir.exist?(files_dir) && !File.symlink?(files_dir)
+
+        referenced = @snapshots.values.filter_map(&:store).map { |path| File.expand_path(path) }.to_set
+        Dir.children(files_dir).each do |name|
+          path = File.join(files_dir, name)
+          next if referenced.include?(File.expand_path(path))
+          next unless File.file?(path) || File.symlink?(path)
+
+          File.delete(path)
+        rescue SystemCallError
+          nil
+        end
       end
 
       def encoded(path) = Digest::SHA256.hexdigest(path)[0, 24]
