@@ -5,6 +5,57 @@ require_relative "test_helper"
 require_relative "../lib/fix/transaction"
 
 class TestFixTransaction < Minitest::Test
+  def test_transaction_id_collision_preserves_the_existing_manifest
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      id = "stable-id"
+      original = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:).begin!
+      manifest = File.join(dir, ".master", "fix_transactions", id, "manifest.json")
+      before_manifest = File.binread(manifest)
+      original.send(:release_lock)
+      original.instance_variable_set(:@active, false)
+
+      replacement = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:)
+      error = assert_raises(RuntimeError) { replacement.begin! }
+
+      assert_includes error.message, "transaction id already exists"
+      refute replacement.active?
+      assert_equal before_manifest, File.binread(manifest)
+      assert_equal "before", File.read(path)
+
+      recovered = Master::Fix::Transaction::Recovery.recover!(root: dir, id:)
+      assert recovered.ok?, -> { recovered.message.to_s }
+      refute File.exist?(manifest)
+    end
+  end
+
+  def test_begin_failure_after_durable_manifest_leaves_object_inactive_and_recoverable
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      id = "durable-start"
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:)
+      original_persist = tx.method(:persist!)
+      tx.define_singleton_method(:persist!) do
+        original_persist.call
+        raise "simulated post-persist failure"
+      end
+
+      error = assert_raises(RuntimeError) { tx.begin! }
+
+      assert_equal "simulated post-persist failure", error.message
+      refute tx.active?, "a failed begin cannot claim ownership after releasing its lock"
+      assert Master::Fix::Transaction::Recovery.persisted?(root: dir, id:)
+      assert_equal "before", File.read(path)
+
+      recovered = Master::Fix::Transaction::Recovery.recover!(root: dir, id:)
+      assert recovered.ok?, -> { recovered.message.to_s }
+      refute Master::Fix::Transaction::Recovery.persisted?(root: dir, id:)
+      assert_equal "before", File.read(path)
+    end
+  end
+
   def test_transaction_refuses_unsupported_directory_paths_without_leaving_a_partial_snapshot
     Dir.mktmpdir do |dir|
       tx = Master::Fix::Transaction.new(root: dir, paths: ["."], id: "directory-path")
