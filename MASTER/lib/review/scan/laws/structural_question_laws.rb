@@ -395,7 +395,7 @@ module Master
 
             classes(code).filter_map do |line, body|
               defs = body.scan(/^\s*def\s+/).size
-              delegates = body.scan(/^\s*(?:delegate\b|def\s+\w+[!?=]?\s*;?\s*@?\w+\.\w+)/).size
+              delegates = body.scan(/^\s*(?:delegate\b|def\s+(?!self\.)\w+[!?=]?\s*;?\s*@?\w+\.\w+)/).size
               if defs.positive? && delegates >= defs && body.lines.size < 50
                 finding(line:, message: "lazy class only delegates — inline it or give it a real responsibility")
               end
