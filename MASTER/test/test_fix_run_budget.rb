@@ -88,6 +88,9 @@ class TestFixRunBudget < Minitest::Test
     run.instance_variable_set(:@exit_reason, "disk pressure at 0.1 GB free")
     assert_equal :infrastructure, run.stop_category
 
+    run.instance_variable_set(:@exit_reason, "disk space measurement unavailable; stopping before filesystem exhaustion")
+    assert_equal :infrastructure, run.stop_category
+
     run.instance_variable_set(:@exit_reason, "stalled pass 2 phase scan")
     assert_equal :timeout, run.stop_category
   end
