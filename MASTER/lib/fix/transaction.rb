@@ -53,10 +53,18 @@ module Master
 
         acquire_lock
         FileUtils.mkdir_p(@dir)
+        snapshot_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @paths.each { |path| @snapshots[path] = snapshot(path) }
         @state = "open"
         @active = true
         observe!
+        emit(
+          "fix:transaction_snapshot_summary",
+          id: @id,
+          tracked_paths: @paths.size,
+          file_snapshots: @snapshots.values.count { |item| item.kind == :file },
+          elapsed_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - snapshot_started) * 1000).round,
+        )
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
