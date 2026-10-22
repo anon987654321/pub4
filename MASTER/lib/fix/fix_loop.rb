@@ -392,10 +392,18 @@ module Master
         return Result.err("delivery recovery HEAD mismatch", category: :policy) unless actual_head == expected_head
 
         @git.push
-        ahead, = @git.ahead_behind
-        return Result.err("delivery recovery left #{ahead} unpushed commit(s)", category: :infrastructure) unless ahead.zero?
+        head_after_push = @git.head
+        return Result.err("delivery recovery HEAD changed during push", category: :policy) unless head_after_push == expected_head
 
-        result = transaction.delivery.finalize!(head: actual_head)
+        ahead, behind = @git.ahead_behind
+        unless ahead.zero? && behind.zero?
+          return Result.err(
+            "delivery recovery left ahead=#{ahead} behind=#{behind} commit(s) after push",
+            category: :infrastructure,
+          )
+        end
+
+        result = transaction.delivery.finalize!(head: head_after_push)
         return result if result.err?
 
         Result.ok(:delivery_recovered)
