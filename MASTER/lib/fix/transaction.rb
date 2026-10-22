@@ -459,7 +459,9 @@ module Master
         raise "transaction manifest snapshots malformed" unless raw_snapshots.is_a?(Hash)
         raise "transaction manifest snapshot set mismatch" unless raw_snapshots.keys.sort == paths.sort
 
-        raw_snapshots.each { |path, snapshot| validate_snapshot_record!(path, snapshot) }
+        raw_snapshots.each do |path, snapshot|
+          validate_snapshot_record!(path, snapshot, require_store: data["state"] == "open")
+        end
         raw_seen = data["seen"]
         raise "transaction manifest fingerprints malformed" unless raw_seen.is_a?(Hash)
         raw_seen.each do |path, fingerprints|
@@ -471,7 +473,7 @@ module Master
         true
       end
 
-      def validate_snapshot_record!(path, snapshot)
+      def validate_snapshot_record!(path, snapshot, require_store:)
         raise "transaction manifest snapshot malformed: #{path}" unless snapshot.is_a?(Hash) && snapshot["path"] == path
         kind = snapshot["kind"]
         exists = snapshot["exists"]
@@ -485,8 +487,9 @@ module Master
           valid = exists == false && mode.nil? && link.nil? && store.nil?
         when "file"
           expected_store = File.expand_path(File.join(@dir, "files", encoded(path)))
-          valid = exists == true && valid_mode && link.nil? && store == expected_store &&
-                  File.file?(expected_store) && !File.symlink?(expected_store)
+          stored_path_valid = store == expected_store
+          stored_bytes_valid = !require_store || (File.file?(expected_store) && !File.symlink?(expected_store))
+          valid = exists == true && valid_mode && link.nil? && stored_path_valid && stored_bytes_valid
         when "symlink"
           valid = exists == true && valid_mode && link.is_a?(String) && store.nil?
         when "other"
