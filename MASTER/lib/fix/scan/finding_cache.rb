@@ -59,6 +59,9 @@ module Master
       # One entry per path, overwritten when its key changes, so the cache holds one answer per file.
       # MASTER_SCAN_CACHE=0 turns it off.
       class FindingCache
+        # One file's text, the laws asked about it, and whether they read it parsed.
+        Subject = Data.define(:relative, :code, :laws, :ast)
+
         DIR = File.join(".master", "scan_findings")
         SOURCES = %w[lib/review/**/*.rb lib/fix/scan/**/*.rb law/**/*.rb data/laws.yml
                      .rubocop.yml .reek.yml config.reek Gemfile.lock].freeze
@@ -77,33 +80,47 @@ module Master
           end
         end
 
-        def initialize(root: Master::ROOT)
+        def initialize(root: Master::ROOT, dir: DIR)
           @root = root
-          @dir = File.join(root, DIR)
+          @dir = File.join(root, dir)
         end
 
         def cacheable?(law) = self.class.enabled? && !law.class.reads_beyond_file?
 
         # The block's findings, from disk when this content was asked these laws before.
-        def fetch(relative, code:, laws:, ast:)
-          return yield unless self.class.enabled? && !laws.empty?
+        def fetch(subject)
+          return yield unless self.class.enabled? && !subject.laws.empty?
 
-          path = File.join(@dir, "#{Digest::SHA256.hexdigest(relative)}.json")
-          key = key(relative, code:, laws:, ast:)
-          hit = read(path, key)
+          hit = replay(subject)
           return hit unless hit.nil?
 
           findings = yield
-          write(path, key:, findings:)
+          record(subject, findings)
           findings
+        end
+
+        # The findings these laws gave this content last time, or nil when they have not been asked.
+        def replay(subject)
+          return unless self.class.enabled? && !subject.laws.empty?
+
+          read(entry_path(subject.relative), key(subject))
+        end
+
+        def record(subject, findings)
+          return unless self.class.enabled? && !subject.laws.empty?
+
+          write(entry_path(subject.relative), key: key(subject), findings:)
         end
 
         private
 
-        def key(relative, code:, laws:, ast:)
-          ids = laws.map { |law| law.id.to_s }.sort
-          Digest::SHA256.hexdigest([self.class.signature(@root), relative, Digest::SHA256.hexdigest(code),
-                                    ast ? "ast" : "text", *ids].join("\n"))
+        def entry_path(relative) = File.join(@dir, "#{Digest::SHA256.hexdigest(relative)}.json")
+
+        def key(subject)
+          ids = subject.laws.map { |law| law.id.to_s }.sort
+          text = Digest::SHA256.hexdigest(subject.code)
+          Digest::SHA256.hexdigest([self.class.signature(@root), subject.relative, text,
+                                    subject.ast ? "ast" : "text", *ids].join("\n"))
         end
 
         def read(path, key)

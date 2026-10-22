@@ -36,7 +36,7 @@ class TestFindingCache < Minitest::Test
   end
 
   def fetch(code, laws: [PureLaw.new], calls: [])
-    cache.fetch("a.rb", code:, laws:, ast: nil) do
+    cache.fetch(Master::Fix::Scan::FindingCache::Subject.new("a.rb", code, laws, nil)) do
       calls << code
       [finding(calls.size), { law: :PURE, line: 9, tags: [:X] }]
     end

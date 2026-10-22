@@ -8,7 +8,6 @@ require "prism"
 require "timeout"
 
 require_relative "law_timing"
-require_relative "semantic_verdicts"
 require_relative "finding_cache"
 require_relative "../gate_focus"
 require_relative "../../review/scan/semantic_fingerprint"
@@ -28,7 +27,9 @@ module Master
         STYLE_EXTENSIONS = %w[.css .scss].freeze
         STYLE_MAX_LINES = 12_000
         OUTSIDE_SAMPLE = "clean file, outside sample"
-        UNCHANGED = "unchanged since a clean semantic read"
+        UNCHANGED = "unchanged since its last semantic read"
+        # Model reads, kept apart from the deterministic findings so each is keyed on its own law set.
+        SEMANTIC_DIR = File.join(".master", "semantic_findings")
         PROGRESS_POLL_SECONDS = 1.0
         PROGRESS_IDLE_GRACE_SECONDS = 3.0
         PROGRESS_HEARTBEAT_SECONDS = 5.0
@@ -40,14 +41,15 @@ module Master
           STYLE_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? STYLE_MAX_LINES : MAX_LINES
         end
 
-        def initialize(event_bus: nil, skip_semantic: false)
+        def initialize(event_bus: nil, skip_semantic: false, cache_root: Master::ROOT)
           @bus = event_bus
           @skip_semantic = skip_semantic
           @semantic_gap_mutex = Mutex.new
           @semantic_gaps = {}
-          @verdicts = SemanticVerdicts.new
-          @finding_cache = FindingCache.new
+          @semantic_reads = FindingCache.new(root: cache_root, dir: SEMANTIC_DIR)
+          @finding_cache = FindingCache.new(root: cache_root)
           @semantic_gap_notice_emitted = false
+
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
           @progress_mutex = Mutex.new
@@ -194,6 +196,7 @@ module Master
         def apply_laws(code:, ast:, path:, law_set:)
           lexical, structural, semantic = partition_laws(law_set, ast)
           findings = deterministic_findings({ lexical:, structural: }, code:, ast:, path:)
+
           # Keep semantic violations/opportunities independent from lexical
           # findings. A fatal deterministic hit must not suppress meaning-based
           # assessment of the same file; otherwise one early result can hide the
@@ -203,13 +206,17 @@ module Master
             return findings
           end
 
-          if unchanged_clean?(path, code, semantic)
+          subject = FindingCache::Subject.new(relative_progress_path(path), code, semantic, ast)
+          replayed = @semantic_reads.replay(subject)
+          unless replayed.nil?
             note_skip(path:, laws: semantic, reason: UNCHANGED)
-            return findings
+            return findings + replayed
           end
 
           findings.concat(read_semantic(path:, code:, ast:, laws: semantic))
         end
+        # Public: the whole of what a scan concludes about a text, with no file read.
+        public :apply_laws
 
         # Laws that read only this file's text replay their findings when the text is unchanged
         # (FindingCache); the rest run every time.
@@ -218,7 +225,7 @@ module Master
           live = passes.to_h { |pass, laws| [pass, laws - pure[pass]] }
           relative = relative_progress_path(path)
 
-          replayed = @finding_cache.fetch(relative, code:, laws: pure.values.flatten, ast:) do
+          replayed = @finding_cache.fetch(FindingCache::Subject.new(relative, code, pure.values.flatten, ast)) do
             run_passes(pure, code:, ast:, path:)
           end
           replayed + run_passes(live, code:, ast:, path:)
@@ -267,17 +274,16 @@ module Master
           path.to_s.delete_prefix("#{Master::ROOT}/")
         end
 
-        # Content and semantic law set a model already read clean.
-        def unchanged_clean?(path, code, laws)
-          @verdicts.clean?(relative_progress_path(path), code:, laws:)
-        end
-
-        # Records the file clean only when every semantic law answered: an inconclusive read leaves a gap.
+        # A read is kept, clean or not, only when every semantic law answered: an inconclusive read leaves a
+        # gap and is asked again. Asking about unchanged text again re-rolls the answer and buys nothing,
+        # at 50 to 190 seconds a call; the next edit to the file, its laws or the scanner asks afresh.
         def read_semantic(path:, code:, ast:, laws:)
           semantic = run_law_pass(pass: :semantic, laws:, code:, ast:, path:)
           relative = relative_progress_path(path)
           answered = !@semantic_gap_mutex.synchronize { @semantic_gaps.key?(relative) }
-          @verdicts.record(relative, code:, laws:) if answered && semantic.empty? && !relative.start_with?("/")
+          return semantic unless answered && !relative.start_with?("/")
+
+          @semantic_reads.record(FindingCache::Subject.new(relative, code, laws, ast), semantic)
           semantic
         end
 
