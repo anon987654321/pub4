@@ -32,11 +32,28 @@ class TestFixWatchdog < Minitest::Test
     Pulse.new(max_passes: 8, clock: -> { @now }, load: -> { 0.0 }).tap { |p| p.observe("fix_loop:pass_start", pass: 1, file_count: 100) }
   end
 
-  def budget(resource_budget: nil)
+  # A grace of 0 kills on a stall at once, as these tests assert; the graceful stop has its own test.
+  def budget(resource_budget: nil, grace: "0")
     resource_budget ||= fake_resource_budget(free_gb: 100.0)
-    Budget.new(root: @root, max_passes: 8, env: {}, clock: -> { @now }, wall: -> { Time.at(1000) },
+    env = { "MASTER_FIX_STOP_GRACE_S" => grace }
+    Budget.new(root: @root, max_passes: 8, env:, clock: -> { @now }, wall: -> { Time.at(1000) },
                out: ->(_) {}, say: ->(text) { @said << text }, poll_seconds: 0,
                killer: ->(reason) { @killed << reason }, resource_budget:).start!
+  end
+
+  def test_a_stall_with_grace_stops_the_run_for_its_proof_before_any_kill
+    run = budget(grace: "600")
+    bus = Master::Trace::EventBus.new
+    run.announce(target: @root, bus:)
+    bus.publish("fix_loop:pass_start", pass: 1, file_count: 100)
+    bus.publish("fix_loop:phase", stage: :stream)
+    @now = Pulse::STALL_SECONDS + 1
+
+    run.watch_for_stall
+
+    assert_match(/stalled, pass 1/, run.stopping)
+    assert_empty @killed, "a run asked to stop is not killed before its grace"
+    assert(@said.any? { |line| line.start_with?("fix0: STOPPING") })
   end
 
   def fake_resource_budget(free_gb:)

@@ -72,7 +72,7 @@ module Master
           def scan_stop?(path, taken, deadline)
             limit = rank_worklist? ? nil : RunLedger.max_files
             return true if limit && taken >= limit
-            return false unless deadline && Time.now >= deadline
+            return false unless RunBudget.stopping || (deadline && Time.now >= deadline)
 
             @stream_stopped_at ||= path
             true
@@ -417,7 +417,7 @@ module Master
           # Disk and memory are read at most every thirty seconds; the budget's
           # measure shells out, and a file lands every second or two.
           def stream_repairs_allowed?(pass, deadline)
-            return false if Time.now >= deadline || circuit_open? || reload_due?
+            return false if Time.now >= deadline || circuit_open? || reload_due? || RunBudget.stopping
             fresh = @stream_resources_at && Time.now - @stream_resources_at < RESOURCE_CHECK_SECONDS
             return @stream_resources_ok if fresh
 

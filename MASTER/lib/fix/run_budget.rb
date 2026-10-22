@@ -26,6 +26,9 @@ module Master
       DEFAULT_LAW_SHARE = 0.10 # data/limits.yml#fix_budget overrides both
       DEFAULT_RUN_TOKENS = 10_000_000
       COSTS = File.join(".master", "costs.jsonl")
+      # A stalled run is asked to stop and prove what it did; it is killed only if it has not
+      # wound down after this many seconds (MASTER_FIX_STOP_GRACE_S; 0 kills at once).
+      STOP_GRACE_SECONDS = 300
 
       class << self
         attr_reader :current
@@ -40,9 +43,12 @@ module Master
           @current&.pass_end(pass)
         end
 
+        # Why the run is winding down after a stall, or nil.
+        def stopping = @current&.stopping
+
         # A Result.err naming the exhausted limit, or nil while the run may go on.
         def pass_boundary(pass)
-          reason = @current&.boundary(pass)
+          reason = @current&.stopping || @current&.boundary(pass)
           reason && Master::Result.err(reason, category: :timeout)
         end
 
@@ -84,6 +90,7 @@ module Master
         @warned = false
         @fix_budget = limits || fix_budget_limits
         @killer = killer || ->(_reason) { Process.kill("TERM", Process.pid) }
+        @stop_grace = Integer(env.fetch("MASTER_FIX_STOP_GRACE_S", STOP_GRACE_SECONDS.to_s), exception: false) || 0
         @exit_reason = nil
         @law_spend = Hash.new { |hash, law| hash[law] = [0.0, 0] }
         @laws_over = {}
@@ -251,10 +258,28 @@ module Master
         return unless stalled[:abort]
 
         reason = stalled[:line].sub(/\Afix0: STALLED /, "stalled, ")
-        # A non-advisory no-progress stall is a safety stop, not a preference.
-        # The report-only escape hatch must not turn an unattended deadlock into
-        # another hour of waiting; abort_run! still supports report-only callers.
-        abort_run!(reason, force: true)
+        # A non-advisory no-progress stall is a safety stop, not a preference. The run is asked to
+        # stop first, so its proof and scorecard still say what it did; a run that does not wind
+        # down within the grace is killed, so an unattended deadlock never waits another hour.
+        stop_gracefully!(reason)
+      end
+
+      attr_reader :stopping
+
+      def stop_gracefully!(reason)
+        return if @stopping || @exit_reason
+        unless @stop_grace.positive?
+          abort_run!(reason, force: true)
+          return
+        end
+
+        @stopping = reason
+        @say.call("fix0: STOPPING #{reason}; ending the repair to prove what it did")
+        Thread.new do
+          sleep @stop_grace
+          abort_run!("#{reason}; still running #{@stop_grace}s after the stop", force: true) unless @finished_said
+        end
+        nil
       end
 
       # One machine-readable heartbeat a minute, whatever the human line says.

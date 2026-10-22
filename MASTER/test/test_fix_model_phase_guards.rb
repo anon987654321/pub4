@@ -365,6 +365,17 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal "/r/a.rb", scan.stream_stopped_at
   end
 
+def test_a_stopping_run_scans_no_further
+  scan = Windowed.new
+
+  Master::Fix::RunBudget.stub(:stopping, "stalled, pass 1") do
+    scan.scan(%w[/r/a.rb /r/b.rb], Queue.new)
+  end
+
+  assert_empty scan.scanned
+  assert_equal "/r/a.rb", scan.stream_stopped_at
+end
+
   def test_a_limited_run_does_not_wait_for_a_ranked_scan
     previous = ENV["MASTER_FIX_RANK"]
     ENV.delete("MASTER_FIX_RANK")
