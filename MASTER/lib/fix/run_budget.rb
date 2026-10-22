@@ -301,7 +301,8 @@ module Master
         stop_gracefully!(reason)
       end
 
-      attr_reader :stopping
+      # Every abort reason, including startup disk/protected-path failures, must reach /fix.
+      def stopping = @stopping || @exit_reason
 
       def stop_gracefully!(reason)
         return if @stopping || @exit_reason
