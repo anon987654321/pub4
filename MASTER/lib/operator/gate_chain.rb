@@ -73,6 +73,7 @@ module Operator
     PICK_BUDGET = Integer(ENV.fetch("PUB4_GATE_COUNCIL_PICKS", "5"))
 
     class BaselineMutation < StandardError; end
+    class InvalidVerificationScope < StandardError; end
 
     # ok / failed / skipped; skipped is the one that matters.
     Result = Struct.new(:stage, :state, :summary, :changed, :body, keyword_init: true)
@@ -315,7 +316,19 @@ module Operator
       # another name. Council stays excluded because provider availability is
       # not a source-tree proof and can be separately reported by /critique.
       only = verification_only
-      only.empty? ? selected : selected.select { |stage| only.include?(stage.name) }
+      return selected if only.empty?
+
+      all_proof_stages = stages(scan_only: true, trees: TREES).map(&:name).reject { |name| name == "council" }
+      unknown = only - all_proof_stages
+      raise InvalidVerificationScope, "unknown/non-proof stage(s): #{unknown.join(", ")}" if unknown.any?
+
+      missing = only - selected.map(&:name)
+      if missing.any?
+        raise InvalidVerificationScope,
+              "stage(s) #{missing.join(", ")} do not apply to target #{target.inspect}; no proof was run"
+      end
+
+      selected.select { |stage| only.include?(stage.name) }
     end
 
     # MASTER_FIX_GATE_STAGES=lexical,openbsd limits the verification ladder to those stages.
