@@ -328,6 +328,23 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_rejects_non_string_delivery_head_metadata
+    Dir.mktmpdir do |dir|
+      tx = Master::Fix::Transaction.new(root: dir, paths: [], id: "bad-delivery-head").begin!
+      manifest = File.join(dir, ".master", "fix_transactions", tx.id, "manifest.json")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+      data = JSON.parse(File.read(manifest))
+      data["delivery_head_after"] = { "unexpected" => "object" }
+      File.write(manifest, JSON.generate(data))
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::Transaction::Recovery.load_persisted(root: dir, id: tx.id)
+      end
+      assert_match(/delivery heads malformed/, error.message)
+    end
+  end
+
   def test_recovery_refuses_to_race_with_a_live_transaction
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
