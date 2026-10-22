@@ -57,6 +57,24 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_refuses_to_race_with_a_live_transaction
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "live-lock").begin!
+
+      result = Master::Fix::Transaction::Recovery.recover!(root: dir, id: "live-lock")
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      assert_includes result.message, "active transaction holds the root lock"
+      assert tx.active?
+      assert_equal "before", File.read(path)
+      assert tx.rollback!.ok?
+      assert_equal "before", File.read(path)
+    end
+  end
+
   def test_recovery_restores_an_open_transaction_after_post_write_observation
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
