@@ -71,8 +71,12 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes merger, 'columns.include?("sender_id")'
     assert_includes merger, 'columns.include?("recipient_id")'
     assert_includes merger, "def merge_trust_signals"
+    assert_includes merger, '::TrustSignal.where(user_id: guest_user.id).update_all(user_id: user.id)'
+    assert_includes merger, '::ModerationFlag.where(user_id: guest_user.id).update_all(user_id: user.id)'
     assert_includes merger, "ActiveRecord::MigrationError"
     assert_includes merger, "def record_merge"
+    assert_includes brgen_controller, "has_many :account_merges_as_guest"
+    assert_includes amber_user, "has_many :account_merges_as_guest"
     assert_includes registration, "persisted_guest_for_registration"
     assert_includes registration, "transfer_guest_history_to(user, guest)"
     assert_includes brgen_controller, "merge_registration_guest(@user, guest)"
