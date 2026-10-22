@@ -512,7 +512,9 @@ class TestCliTerminalFace < Minitest::Test
       -> { @patterns[pattern].delete(handler) }
     end
     def publish(event)
-      @patterns.each_value { |handlers| handlers.each { |handler| handler.call(event:) } }
+      topic = event.to_s.split(":", 2).first
+      handlers = @patterns.fetch("#{topic}:**", [])
+      handlers.dup.each { |handler| handler.call(event:) }
     end
   end
 
