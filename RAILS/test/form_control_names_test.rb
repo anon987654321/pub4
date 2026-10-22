@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "set"
+require_relative "engine_roots"
 
 # Every form control needs an accessible name. The recorded `form_no_label` rule
 # asked a different question -- "does this file contain a <label> element" -- and
@@ -53,10 +54,12 @@ class FormControlNamesTest < Minitest::Test
   ].freeze
 
   def views
-    @views ||= %w[amber brgen bsdports shared].flat_map do |app|
-      Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) +
-        Dir.glob(File.join(ROOT, app, "engines/*/app/views/**/*.erb"))
-    end.reject { |f| f.include?("/vendor/") }.sort
+    own = %w[amber brgen bsdports __shared].flat_map { |app| Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) }
+    @views ||= (own + engine_views).reject { |f| f.include?("/vendor/") }.sort
+  end
+
+  def engine_views
+    Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app/views/**/*.erb"))
   end
 
   # ERB blanked so a `>` inside <%= %> cannot terminate an HTML tag early. The
@@ -157,7 +160,7 @@ class FormControlNamesTest < Minitest::Test
 
   def test_the_scan_reaches_engine_views
     refute_empty views, "no views found — the glob is wrong, not the tree"
-    assert views.any? { |v| v.include?("/engines/") },
+    assert (views & engine_views).any?,
            "engine views are missing, which is the blind spot that hid 57 views " \
            "when the brgen verticals moved"
   end

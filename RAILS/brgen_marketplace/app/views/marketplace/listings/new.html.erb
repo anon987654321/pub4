@@ -157,7 +157,8 @@
                 </label>
                 <%= f.collection_select :store_id, @stores, :id, :name,
                       { include_blank: t("marketplace.choose_shop") },
-                      { data: { listing_form_target: "store" } } %>
+                      { data: { listing_form_target: "store" },
+                        aria: { label: t("marketplace.choose_shop") } } %>
               <% end %>
             </div>
           </div>

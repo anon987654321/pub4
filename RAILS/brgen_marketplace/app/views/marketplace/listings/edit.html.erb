@@ -18,7 +18,9 @@
         <label class="listing-source-option"><%= f.radio_button :source, "person", checked: @listing.store_id.blank? %><span><%= t("marketplace.from_a_person") %></span></label>
         <% if @stores.any? %>
           <label class="listing-source-option"><%= f.radio_button :source, "shop", checked: @listing.store_id.present? %><span><%= t("marketplace.from_a_shop") %></span></label>
-          <%= f.collection_select :store_id, @stores, :id, :name, { include_blank: t("marketplace.choose_shop") } %>
+          <%= f.collection_select :store_id, @stores, :id, :name,
+                { include_blank: t("marketplace.choose_shop") },
+                { aria: { label: t("marketplace.choose_shop") } } %>
         <% end %>
       </div>
       <% if @stores.any? %>
