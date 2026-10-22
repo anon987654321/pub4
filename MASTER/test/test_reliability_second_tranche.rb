@@ -635,14 +635,14 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.instance_variable_set(:@active, false)
 
       push_attempted = false
+      competing_recovery_result = nil
       fake_git = Object.new
       fake_git.define_singleton_method(:head) { "commit-1" }
       fake_git.define_singleton_method(:ahead_behind) { [0, 0] }
       fake_git.define_singleton_method(:push) do
-        concurrent = Master::Fix::Transaction::Recovery.recover!(root:, id:)
-        refute concurrent.ok?, "another recovery must not enter between HEAD verification and push"
-        assert_equal :infrastructure, concurrent.category
-        assert_includes concurrent.message, "active transaction holds the root lock"
+        # define_singleton_method rebinds self to fake_git; capture evidence here
+        # and make the Minitest assertions in the enclosing test method.
+        competing_recovery_result = Master::Fix::Transaction::Recovery.recover!(root:, id:)
         push_attempted = true
         true
       end
@@ -655,6 +655,10 @@ class TestReliabilitySecondTranche < Minitest::Test
 
       assert result.ok?, -> { result.message.to_s }
       assert push_attempted
+      refute_nil competing_recovery_result
+      refute competing_recovery_result.ok?, "another recovery must not enter between HEAD verification and push"
+      assert_equal :infrastructure, competing_recovery_result.category
+      assert_includes competing_recovery_result.message, "active transaction holds the root lock"
       refute Master::Fix::Transaction::Recovery.persisted?(root:, id:)
     end
   end
