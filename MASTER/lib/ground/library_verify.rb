@@ -1,9 +1,23 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master
   module Ground
     # Gem, path, and binary pre-flight checks.
     class LibraryVerify
+      PIN = /\A {4}\S+ \([^)]*\)\s*\z/
+
+      # The gem versions a Gemfile.lock pins, as one digest. Two bundlers on this machine write the
+      # same lock with different dependency constraints, json (< 3) or json (< 4), and each rewrites
+      # it on boot, so a digest of the whole file changed while no version moved and every cache keyed
+      # on it missed. Only the pinned "    name (version)" lines count, not the constraints under them.
+      def self.pinned_digest(path)
+        return "none" unless File.file?(path)
+
+        Digest::SHA256.hexdigest(File.foreach(path).grep(PIN).join)[0, 16]
+      end
+
       def initialize(root: Master::ROOT)
         @root = root
         @gemfile_lock = File.join(root, "Gemfile.lock")

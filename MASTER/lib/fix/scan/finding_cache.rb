@@ -4,6 +4,7 @@ require "digest"
 require "fileutils"
 require "json"
 require_relative "../../trace/dmesg"
+require_relative "../../ground/library_verify"
 
 module Master
   module Fix
@@ -64,7 +65,7 @@ module Master
 
         DIR = File.join(".master", "scan_findings")
         SOURCES = %w[lib/review/**/*.rb lib/fix/scan/**/*.rb law/**/*.rb data/laws.yml
-                     .rubocop.yml .reek.yml config.reek Gemfile.lock].freeze
+                     .rubocop.yml .reek.yml config.reek].freeze
 
         def self.enabled? = ENV["MASTER_SCAN_CACHE"] != "0"
 
@@ -76,7 +77,9 @@ module Master
             files = SOURCES.flat_map { |glob| Dir.glob(File.join(root, glob)) }.select { |path| File.file?(path) }
             parts = files.sort.map { |path| "#{path.delete_prefix(root)}\0#{Digest::SHA256.file(path).hexdigest}" }
 
-            Digest::SHA256.hexdigest([RUBY_VERSION, ENV["MASTER_EXTERNAL_LINT"], *parts].join("\n"))
+            # The lock by its pinned versions: its constraint lines flip between bundlers with no change.
+            gems = Master::Ground::LibraryVerify.pinned_digest(File.join(root, "Gemfile.lock"))
+            Digest::SHA256.hexdigest([RUBY_VERSION, ENV["MASTER_EXTERNAL_LINT"], gems, *parts].join("\n"))
           end
         end
 

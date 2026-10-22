@@ -6,6 +6,7 @@ require "json"
 require "set"
 require "time"
 require_relative "../../../io/exec"
+require_relative "../../../ground/library_verify"
 require_relative "../../../trace/dmesg"
 
 module Master
@@ -114,9 +115,11 @@ module Master
             failing.any? { |key| key.match?(/\A(?:step|timeout) test\b/) } && failing.none? { |key| key.include?("#") }
           end
 
+          # The pinned gem versions, not the whole lock: its constraint lines flip between the bundlers
+          # on this machine, and a record judged stale by that would send every proof back to whole.
           def toolchain
-            lock = File.join(Master::ROOT, "Gemfile.lock")
-            [RUBY_VERSION, File.file?(lock) ? Digest::SHA256.file(lock).hexdigest[0, 16] : "none"].join(" ")
+            pins = Master::Ground::LibraryVerify.pinned_digest(File.join(Master::ROOT, "Gemfile.lock"))
+            [RUBY_VERSION, pins].join(" ")
           end
 
           def note_known_red(tree, reading)

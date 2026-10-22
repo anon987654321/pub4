@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../operator/ruby_runner"
+require_relative "../../../ground/library_verify"
 
 require "digest"
 require "fileutils"
@@ -63,8 +64,15 @@ module Master
 
             inputs = LINT_INPUTS.map { |name| File.join(@root, name) }.select { |path| File.file?(path) }
             parts = [argv.first(argv.size - 1), target, Digest::SHA256.file(target).hexdigest,
-                     inputs.map { |path| Digest::SHA256.file(path).hexdigest }]
+                     inputs.map { |path| input_digest(path) }]
             Digest::SHA256.hexdigest(JSON.generate(parts))
+          end
+
+          # The lock by the versions it pins; its constraint lines flip between bundlers with no change.
+          def input_digest(path)
+            return Master::Ground::LibraryVerify.pinned_digest(path) if File.basename(path) == "Gemfile.lock"
+
+            Digest::SHA256.file(path).hexdigest
           end
 
           def lint_cache_path(key) = File.join(@root, ".master", "lint_cache", "#{key}.json")
