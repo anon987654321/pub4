@@ -406,4 +406,22 @@ class GateLiveAndCssBudgetTest < Minitest::Test
 
     assert_equal [ "fixture.scss:1 1.5", "fixture.scss:4 20px" ], gate.tally.fetch("leading")
   end
+
+  def test_shared_component_partials_preserve_order_and_file_line_budget
+    root = File.expand_path("../..", __dir__)
+    styles = File.join(root, "RAILS", "__shared", "app", "assets", "stylesheets")
+    wrapper = File.read(File.join(styles, "_components.scss"))
+    names = %w[forms overlays feedback fields progress_and_uploads content_controls]
+    uses = wrapper.scan(/@use "components\\/([^"]+)"/).flatten
+    ceiling = Shared::FrontendLawSet::TYPOGRAPHY.fetch(:max_css_file_lines)
+
+    assert_equal names, uses, "the wrapper's module order is part of the existing cascade"
+    names.each do |name|
+      path = File.join(styles, "components", "_#{name}.scss")
+      assert File.file?(path), "#{name} component partial is missing"
+      assert_operator File.readlines(path).length, :<=, ceiling,
+                      "#{path} exceeds the shared CSS file line ceiling"
+    end
+  end
+
 end
