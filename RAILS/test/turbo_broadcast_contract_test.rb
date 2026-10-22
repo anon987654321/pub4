@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # A Turbo broadcast that names a partial which does not exist does not raise where
 # anyone sees it. `broadcast_*_later_to` enqueues a job; the job raises
@@ -45,10 +46,10 @@ class TurboBroadcastContractTest < Minitest::Test
   # multi-line call as implicit.
   def implicit_broadcasts(app)
     roots = { File.join(ROOT, app, "app/models") => nil, File.join(ROOT, "__shared/app/models") => "shared engine" }
-    # Verticals extracted to mountable engines (engines/*/app/models) carry their
+    # Verticals extracted to mountable engines (brgen_*/app/models) carry their
     # own models now — scan them too, or a broadcast that moves with tv/playlist
     # would slip the net. See brgen/README.md.
-    Dir.glob(File.join(ROOT, app, "engines/*/app/models")).each { |dir| roots[dir] = "engine" }
+    EngineRoots.glob(ROOT, app, "app/models").each { |dir| roots[dir] = "engine" }
     roots.flat_map do |root, _label|
       Dir.glob(File.join(root, "**", "*.rb")).flat_map do |path|
         lines = File.readlines(path)
@@ -72,7 +73,7 @@ class TurboBroadcastContractTest < Minitest::Test
       implicit_broadcasts(app).each do |row|
         wanted = partial_for(row[:file])
         found = [File.join(ROOT, app, "app/views", wanted), File.join(ROOT, "__shared/app/views", wanted)]
-        found += Dir.glob(File.join(ROOT, app, "engines/*/app/views", wanted))
+        found += EngineRoots.glob(ROOT, app, File.join("app/views", wanted))
         next if found.any? { |candidate| File.file?(candidate) }
 
         missing << "#{app}: #{row[:file]}:#{row[:line]} broadcasts with no partial: and no #{wanted}"
@@ -136,7 +137,7 @@ class TurboBroadcastContractTest < Minitest::Test
   # the subscriber later, this fails and points at the callback to restore.
   def test_the_removed_streams_still_have_no_subscribers
     views = APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) } +
-            APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "engines/*/app/views/**/*.erb")) } +
+            APPS.flat_map { |app| EngineRoots.glob(ROOT, app, "app/views/**/*.erb") } +
             Dir.glob(File.join(ROOT, "__shared/app/views/**/*.erb"))
     subscriptions = views.map { |path| File.read(path) }.join("\n")
 
@@ -150,15 +151,16 @@ class TurboBroadcastContractTest < Minitest::Test
   end
 
   # `_later` and `broadcasts_refreshes` enqueue Turbo::Streams::BroadcastStreamJob.
-  # vm23 has no Solid Queue worker, so those writes never happen. In-request
-  # `broadcast_refresh_to` / `broadcast_append_to` write Solid Cable now.
+  # On vm23 only brgen has a resident worker (rc.d/brgen_jobs); amber and bsdports
+  # drain their queues hourly, so a live update queued there lands an hour late.
+  # brgen and its engines may enqueue; the other apps and the shared engine, which
+  # runs inside them too, broadcast in-request.
   def test_models_do_not_enqueue_turbo_broadcast_jobs
     later = /broadcast_\w+_later_to\b|^\s*broadcasts_refreshes\b/
     hits = []
 
-    roots = APPS.flat_map { |app|
-      [ File.join(ROOT, app, "app/models"), File.join(ROOT, app, "engines/*/app/models") ]
-    } + [ File.join(ROOT, "__shared/app/models"), File.join(ROOT, "__shared/app/reflexes") ]
+    roots = (APPS - %w[brgen]).map { |app| File.join(ROOT, app, "app/models") } +
+            [ File.join(ROOT, "__shared/app/models"), File.join(ROOT, "__shared/app/reflexes") ]
 
     roots.each do |glob|
       Dir.glob(File.join(glob, "**", "*.rb")).each do |path|
@@ -171,7 +173,7 @@ class TurboBroadcastContractTest < Minitest::Test
       end
     end
 
-    assert_empty hits, "enqueueing a broadcast while no worker runs:\n#{hits.join("\n")}"
+    assert_empty hits, "enqueueing a broadcast where only the hourly drain runs jobs:\n#{hits.join("\n")}"
   end
 
   # Every named stream, read from both ends.
@@ -217,13 +219,13 @@ class TurboBroadcastContractTest < Minitest::Test
 
   def ruby_sources
     @ruby_sources ||= APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "app/**/*.rb")) } +
-                      APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "engines/*/app/**/*.rb")) } +
+                      APPS.flat_map { |app| EngineRoots.glob(ROOT, app, "app/**/*.rb") } +
                       Dir.glob(File.join(ROOT, "__shared/app/**/*.rb"))
   end
 
   def view_sources
     @view_sources ||= APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) } +
-                      APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "engines/*/app/views/**/*.erb")) } +
+                      APPS.flat_map { |app| EngineRoots.glob(ROOT, app, "app/views/**/*.erb") } +
                       Dir.glob(File.join(ROOT, "__shared/app/views/**/*.erb"))
   end
 
