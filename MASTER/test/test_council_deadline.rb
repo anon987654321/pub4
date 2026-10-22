@@ -2,7 +2,7 @@
 
 require "test_helper"
 require "minitest/mock"
-require_relative "support/council_answer"
+require_relative "support_council_answer"
 
 # A /fix run once sat 39 minutes in its first council, 186 seconds per call on a
 # free model, and never reached a file. The council is advisory: every call has a

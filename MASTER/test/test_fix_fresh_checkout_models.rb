@@ -2,6 +2,7 @@
 
 require "test_helper"
 require_relative "support_fake_config"
+require_relative "support_council_answer"
 require "tmpdir"
 require "fileutils"
 require_relative "../lib/fix/fix_loop"
@@ -211,7 +212,7 @@ class TestFixFreshCheckoutModels < Minitest::Test
 
     def initialize(models) = (@models = models; @asked = [])
     def candidate_models(_message = nil, task_type: nil) = @models
-    def ask_once(_prompt, model: nil, **) = (@asked << model; "No issue found.")
-    def ask(_prompt, **) = (@asked << :routed; "No issue found.")
+    def ask_once(_prompt, model: nil, **) = (@asked << model; CouncilAnswer.json)
+    def ask(_prompt, **) = (@asked << :routed; CouncilAnswer.json)
   end
 end

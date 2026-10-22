@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "support/council_answer"
+require_relative "support_council_answer"
 
 class TestCouncilDeliberation < Minitest::Test
   Gate = Master::Io::QuotaGate

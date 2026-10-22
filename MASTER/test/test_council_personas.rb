@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "review/council/personas"
 require "review/council/selector"
-require_relative "support/council_answer"
+require_relative "support_council_answer"
 
 class TestCouncilPersonas < Minitest::Test
   def test_personas_carry_temperature_not_weight
