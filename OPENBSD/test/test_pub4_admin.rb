@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "minitest/mock"
 load File.expand_path("../usr/local/sbin/pub4-admin", __dir__)
 
 class Pub4AdminTest < Minitest::Test
@@ -198,11 +197,21 @@ class Pub4AdminTest < Minitest::Test
     refute_nil cas_block
     refute_match(/\$\{_PRIV\}\s+(?:mkdir|cp|ln|chown)\b/, cas_block)
   end
+
+  # Swapped by hand, not with stub: minitest 6 ships stub in a separate gem.
+  def with_supervised_helper(dispatch)
+    real = ADMIN.method(:supervised_helper)
+    ADMIN.define_singleton_method(:supervised_helper, &dispatch)
+    yield
+  ensure
+    ADMIN.define_singleton_method(:supervised_helper, real)
+  end
+
   def test_rails_task_rejects_arbitrary_tasks_and_paths
     calls = []
     dispatch = ->(*args) { calls << args; 0 }
 
-    ADMIN.stub(:supervised_helper, dispatch) do
+    with_supervised_helper(dispatch) do
       assert_equal 64, ADMIN.run_rails_task("brgen", "shell")
       assert_equal 64, ADMIN.run_rails_task("brgen", "schema-load", "/etc/passwd")
       assert_equal 64, ADMIN.run_rails_task("bsdports", "demo-seed")
