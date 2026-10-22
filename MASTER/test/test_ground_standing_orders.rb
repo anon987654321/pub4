@@ -88,6 +88,9 @@ class StandingOrdersTest < Minitest::Test
       def publish(name, **payload)
         events << [name, payload]
       end
+
+      # StandingOrders subscribes to its events when it is built.
+      def subscribe(_name) = nil
     end.new([])
     orders = Orders.new(pipeline: nil, event_bus: bus)
     orders.wire_container(agent:, root: Master::ROOT, bus:)
@@ -333,8 +336,8 @@ class StandingOrdersTest < Minitest::Test
         events << [name, payload]
       end
     end.new([])
+    # The commit, then the push: Autocommit commits path-scoped with no `git add` before it.
     responses = [
-      ["", FakeStatus.new(true)],
       ["", FakeStatus.new(true)],
       ["rejected\n", FakeStatus.new(false)],
     ]
