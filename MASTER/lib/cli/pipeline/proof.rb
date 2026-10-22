@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+require "fileutils"
 require "set"
 require_relative "../../operator/gate_chain"
 require_relative "proof/reading"
@@ -134,15 +136,55 @@ module Master
           return unless runner
 
           sha = origin_main
-          kept = Proof.recall(name, sha:, repo: Master::REPO_ROOT)
+          kept = Proof.recall(name, sha:, repo: Master::REPO_ROOT) || stored_baseline(abs, name)
           return kept.tap { Master::Trace::Dmesg.status("gate0", "baseline kept: #{baseline_line(kept)}") } if kept
 
-          log_phase("gate0", "baseline", name) { measure_baseline(name, sha:, runner:) }
+          log_phase("gate0", "baseline", name) { measure_baseline(name, sha:, runner:) }.tap do |reading|
+            store_baseline(abs, name:, reading:)
+          end
         rescue StandardError => e
           raise if Pass::DEFECT_ERRORS.any? { |klass| e.is_a?(klass) }
 
           Master::Trace::Dmesg.status("gate0", "baseline unmeasured: #{e.class}: #{e.message}")
           nil
+        end
+
+        # The proof baseline was kept only in this process, so every /fix ran the whole suite again
+        # before its first edit. It is now kept on disk under the target tree's content: the same tree
+        # (committed and uncommitted bytes), proof and target reuse it; any change measures afresh.
+        # MASTER_PROOF_STORE=0 turns it off, as the tests do.
+        PROOF_STORE = File.join(Master::ROOT, ".master", "proof_baselines")
+
+        def store_dir = ENV.fetch("MASTER_PROOF_STORE_DIR", PROOF_STORE)
+
+        def store_path(abs, name)
+          return if ENV["MASTER_PROOF_STORE"] == "0"
+
+          tree = abs.delete_prefix("#{Master::REPO_ROOT}/").split("/").first
+          content = ::Operator::GateChain.baseline_key(tree, trees: [tree])
+          key = Digest::SHA256.hexdigest([content, name, abs].join("\0"))
+          File.join(store_dir, "#{key}.bin")
+        end
+
+        def stored_baseline(abs, name)
+          path = store_path(abs, name)
+          return unless path && File.file?(path)
+
+          # Written by store_baseline in this runtime's own .master directory.
+          reading, named = Marshal.load(File.binread(path))
+          Master::Fix::GateFocus.note(named)
+          reading
+        rescue StandardError => e
+          Master::Trace::Dmesg.status("gate0", "stored baseline unreadable, measuring again: #{e.class}")
+          nil
+        end
+
+        def store_baseline(abs, name:, reading:)
+          path = store_path(abs, name)
+          return unless path && reading&.measured?
+
+          FileUtils.mkdir_p(File.dirname(path))
+          File.binwrite(path, Marshal.dump([reading, Master::Fix::GateFocus.named.to_a]))
         end
 
         def measure_baseline(name, sha:, runner:)

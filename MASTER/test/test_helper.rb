@@ -8,6 +8,8 @@ ENV["MASTER_NO_POOL_PROBES"] = "1"
 # The suite is the proof: a test that drives a writing /fix pass must not start
 # the whole suite again from inside it.
 ENV["MASTER_IN_PROOF"] = "1"
+# A proof baseline kept on disk by a test would be reused by a real run on the same tree.
+ENV["MASTER_PROOF_STORE"] = "0"
 # Scripted CDP doubles answer only the verbs a test names; stress states and
 # extra engines are exercised by their own tests, which switch them on.
 ENV["MASTER_VISUAL_STRESS"] = "0"
