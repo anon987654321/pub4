@@ -60,6 +60,7 @@ class NvdCveTest < ActiveSupport::TestCase
 
     assert_equal first_record.id, second_record.id
     assert_equal 1, SecurityAdvisory.where(identifier: "CVE-2026-44002").count
-    assert_equal [ @first.id, @second.id ].sort, first_record.ports.pluck(:id).sort
+    linked = SecurityAdvisoryPort.where(security_advisory: first_record).pluck(:port_id)
+    assert_equal [ @first.id, @second.id ].sort, linked.sort
   end
 end

@@ -68,7 +68,9 @@ class NvdCve
       # The unique identifier index is the race-safe identity boundary. Two
       # ports can discover the same CVE at once; create_or_find_by! returns the
       # single canonical advisory instead of losing the second port on a race.
-      adv = SecurityAdvisory.create_or_find_by!(identifier: id) do |record|
+      # A known identifier is found first: the model's uniqueness validation
+      # would raise RecordInvalid, which create_or_find_by! does not rescue.
+      adv = SecurityAdvisory.find_by(identifier: id) || SecurityAdvisory.create_or_find_by!(identifier: id) do |record|
         record.title = title
         record.description = desc.presence
         record.published_at = pub.present? ? Time.parse(pub) : Time.current

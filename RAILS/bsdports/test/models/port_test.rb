@@ -193,12 +193,13 @@ class PortTest < ActiveSupport::TestCase
     curl = port("curl", comment: "transfer tool")
     assert_equal [ curl ], Port.search("transfer").to_a
 
-    curl.update!(name: "wcurl")
-    assert_equal [ curl ], Port.search("wcurl").to_a
+    # A new name that does not contain the old one, because search also matches pkgpath by substring.
+    curl.update!(name: "wget", pkgpath: "net/wget")
+    assert_equal [ curl ], Port.search("wget").to_a
     assert_empty Port.search("curl").to_a
 
     curl.destroy!
-    assert_empty Port.search("wcurl").to_a
+    assert_empty Port.search("wget").to_a
   end
 
   test "semantic_search is still the lexical search and says so" do

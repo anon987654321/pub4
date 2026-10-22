@@ -39,9 +39,11 @@ class SecurityAdvisoryTest < ActiveSupport::TestCase
     record.ports << @port
     record.ports << other
 
-    assert_equal [ @port.id, other.id ].sort, record.ports.pluck(:id).sort
-    assert_includes @port.security_advisories, record
-    assert_includes other.security_advisories, record
+    # Read back through queries: strict loading refuses a lazy association read in every environment.
+    assert_equal [ @port.id, other.id ].sort, SecurityAdvisoryPort.where(security_advisory: record).pluck(:port_id).sort
+    [ @port, other ].each do |port|
+      assert_includes SecurityAdvisory.joins(:security_advisory_ports).where(security_advisory_ports: { port: }), record
+    end
   end
 
   test "the four severities are ordered from low to critical" do
