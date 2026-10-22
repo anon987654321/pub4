@@ -73,11 +73,10 @@ module Master
           Master::Fix::GateFocus.blockers! if overrides[:blockers]
           Master::Fix::GateFocus.plan! if overrides[:plan]
           Master::Fix::GateFocus.until_gates! if overrides[:until_gates]
-          rendered = dispatch_fix_parsed(
+          dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:
           )
-          writes_requested?(apply:, only:) ? design_after_fix(rendered, target:) : rendered
         ensure
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
@@ -228,11 +227,18 @@ module Master
 
         require_relative "../../operator/design_run"
         code = ::Operator::DesignRun.main(["--app", apps.join(",")], root: Master::REPO_ROOT)
-        Master::Trace::Dmesg.status("design0", "layout loop finished with exit #{code}; its commits are local until you push")
+        unless code.to_i.zero?
+          message = "layout sweep failed with exit #{code}; the shared /fix gate and delivery phase will not claim success"
+          Master::Trace::Dmesg.status("design0", "VALIDATION_FAILED: #{message}")
+          return Master::Result.err(message, category: :validation)
+        end
+
+        Master::Trace::Dmesg.status("design0", "layout sweep finished; changes remain inside /fix until final gate verification and publication")
         rendered
       rescue StandardError => e
-        Master::Trace::Dmesg.status("design0", "FAILED: #{e.class}: #{e.message.lines.first.to_s.strip[0, 160]}")
-        rendered
+        message = "layout sweep failed: #{e.class}: #{e.message.lines.first.to_s.strip[0, 160]}"
+        Master::Trace::Dmesg.status("design0", "VALIDATION_FAILED: #{message}")
+        Master::Result.err(message, category: :validation)
       end
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
@@ -265,6 +271,12 @@ module Master
                          aesthetic:, only:)
         return value unless writes_requested
         return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
+
+        # The design sweep mutates and commits files. Keep it inside the same
+        # pre-repair baseline and before final gate verification/publication;
+        # running it after dispatch had already declared and pushed success.
+        value = design_after_fix(value, target:)
+        return value if value.is_a?(Master::Result::Err)
 
         gate_rounds = 0
         gate_status = 0
