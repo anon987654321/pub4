@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require "English"
 require "etc"
+require "json"
+
 module Master
   module Fix
     module Scan
@@ -14,8 +17,46 @@ module Master
         # rather than measuring. Keep manual collection opt-in for memory-heavy
         # diagnostics instead of making every normal scan pay for it.
         GC_EVERY_N_ITERATIONS = Integer(ENV.fetch("MASTER_SCAN_GC_EVERY", "0"))
+        FORK_MIN_ITEMS = 200
+
+        # A forked worker: the files it took, its pid, and the pipe its findings come back on.
+        ForkWorker = Data.define(:slice, :pid, :reader)
+
+        # Forked workers, each scanning a share of the files. The laws are pure Ruby, so threads share one
+        # GVL and a 5,400-file walk ran on one core whatever scan_workers said. MASTER_SCAN_PROCESSES (3 by
+        # default) sets how many; a small walk, or 1, stays in this process. A worker's findings come
+        # back as FindingCodec JSON, and a slice whose worker failed is scanned again here.
+        def fork_map(items, &block)
+          count = Integer(ENV.fetch("MASTER_SCAN_PROCESSES", "3"), exception: false) || 1
+          return block.call(items) if count <= 1 || items.size < FORK_MIN_ITEMS || Gem.win_platform?
+
+          workers = items.each_slice((items.size / count.to_f).ceil).map { |slice| fork_worker(slice, &block) }
+          workers.flat_map { |worker| collect_worker(worker, &block) }
+        end
 
         private
+
+        def fork_worker(slice, &block)
+          reader, writer = IO.pipe
+          pid = fork do
+            reader.close
+            writer.write(JSON.generate(FindingCodec.encode(block.call(slice))))
+            writer.close
+            exit!(0)
+          end
+
+          writer.close
+          ForkWorker.new(slice:, pid:, reader:)
+        end
+
+        def collect_worker(worker, &block)
+          text = worker.reader.read
+          worker.reader.close
+          Process.wait(worker.pid)
+          return block.call(worker.slice) unless $CHILD_STATUS&.success? && !text.empty?
+
+          FindingCodec.decode(JSON.parse(text))
+        end
 
         def git_capture(*argv)
           Master::Io::Exec.capture3(*argv, timeout: GIT_TIMEOUT_SECONDS)

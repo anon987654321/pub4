@@ -123,8 +123,10 @@ module Master
         # and the path is discarded unless the caller knows the unwrap. This is
         # the one documented way to get them out.
         def findings(paths, depth: :deep)
-          prefetch_linters(Array(paths).reject { |path| File.directory?(path) }, @laws)
-          Array(paths).flat_map { |path| findings_for(path, depth:) }
+          files, dirs = Array(paths).partition { |path| !File.directory?(path) }
+          prefetch_linters(files, @laws)
+          fork_map(files) { |slice| slice.flat_map { |path| findings_for(path, depth:) } } +
+            dirs.flat_map { |path| findings_for(path, depth:) }
         end
 
         # The external linters read every file of a walk in a few batched processes before the walk,

@@ -299,6 +299,18 @@ class TestScanner < Minitest::Test
     end
   end
 
+  # Forked workers answer what one process would, in order, and a dead worker is redone here.
+  def test_fork_map_matches_one_process_and_redoes_a_failed_worker
+    scanner = Master::Fix::Scanner.new
+    items = (1..450).to_a
+    double = ->(slice) { slice.map { |n| { n:, law: :X } } }
+
+    forked = with_processes("3") { scanner.fork_map(items, &double) }
+    redone = with_processes("3") { scanner.fork_map(items) { |slice| fail_in_child(slice, &double) } }
+
+    assert_equal [double.call(items)] * 2, [forked, redone]
+  end
+
   private
 
   def git(repo, *args)
@@ -315,5 +327,18 @@ class TestScanner < Minitest::Test
         @rule_findings
       end
     end.new(findings)
+  end
+  def fail_in_child(slice, &work)
+    exit!(1) unless Process.pid == MASTER_TEST_PID
+
+    work.call(slice)
+  end
+
+  def with_processes(count)
+    previous = ENV.fetch("MASTER_SCAN_PROCESSES", nil)
+    ENV["MASTER_SCAN_PROCESSES"] = count
+    yield
+  ensure
+    ENV["MASTER_SCAN_PROCESSES"] = previous
   end
 end
