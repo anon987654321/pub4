@@ -534,7 +534,7 @@ module Master
       def persisted_state_matches?
         data = JSON.parse(File.read(File.join(@dir, MANIFEST), encoding: "UTF-8"))
         data["state"] == @state && data["paths"] == @paths && data["seen"] == @seen &&
-          data["snapshots"] == JSON.parse(JSON.generate(@snapshots.transform_values(&:to_h))
+          data["snapshots"] == JSON.parse(JSON.generate(@snapshots.transform_values(&:to_h)))
       rescue StandardError
         false
       end
