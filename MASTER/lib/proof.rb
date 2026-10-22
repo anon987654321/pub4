@@ -6,27 +6,40 @@ module Master
   # scoring, generations, writes and council state. Stage 1 only gives consumers
   # one stable shape without changing those semantics.
   Proof = Data.define(
-    :claim, :rule, :subject, :evidence, :source, :status, :metadata
+    :claim, :law, :subject, :evidence, :source, :status, :metadata
   ) do
     SOURCES = { deterministic: 0, council: 1, llm: 2 }.freeze
     STATUSES = %i[proven failed open].freeze
 
-    def self.build(claim:, rule: nil, subject: nil, evidence: nil, source: :deterministic,
-                   status: :open, metadata: {})
-      source = source.to_sym
-      status = status.to_sym
-      raise ArgumentError, "unknown proof source: #{source}" unless SOURCES.key?(source)
-      raise ArgumentError, "unknown proof status: #{status}" unless STATUSES.include?(status)
+    ENVELOPE = %i[evidence source status metadata].freeze
+
+    # The claim and what it is about, then the envelope: evidence, source (:deterministic),
+    # status (:open) and metadata.
+    def self.build(claim:, law: nil, subject: nil, **envelope)
+      source, status = checked_envelope(envelope)
+      metadata = envelope.fetch(:metadata, {})
 
       new(
         claim: claim.to_s,
-        rule: rule&.to_s,
+        law: law&.to_s,
         subject: subject&.to_s,
-        evidence: freeze_value(evidence),
+        evidence: freeze_value(envelope[:evidence]),
         source:,
         status:,
         metadata: metadata.is_a?(Hash) ? freeze_value(metadata) : {}.freeze,
       )
+    end
+
+    def self.checked_envelope(envelope)
+      unknown = envelope.keys - ENVELOPE
+      raise ArgumentError, "unknown keyword: #{unknown.first}" if unknown.any?
+
+      source = envelope.fetch(:source, :deterministic).to_sym
+      status = envelope.fetch(:status, :open).to_sym
+      raise ArgumentError, "unknown proof source: #{source}" unless SOURCES.key?(source)
+      raise ArgumentError, "unknown proof status: #{status}" unless STATUSES.include?(status)
+
+      [source, status]
     end
 
     def self.source_rank(source) = SOURCES.fetch(source.to_sym)
@@ -52,7 +65,7 @@ module Master
     def to_h
       {
         claim:,
-        rule:,
+        law:,
         subject:,
         evidence:,
         source:,

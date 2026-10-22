@@ -9,16 +9,11 @@ module Master
       Result = Struct.new(:pass, :score, :reasons, keyword_init: true) do
         def pass? = pass
 
-        def to_proof(claim:, rule: nil, subject: nil, source: :council)
-          Master::Proof.build(
-            claim:,
-            rule:,
-            subject:,
-            evidence: reasons,
-            source:,
-            status: pass? ? :proven : :failed,
-            metadata: { score:, reasons: },
-          )
+        def to_proof(claim:, law: nil, subject: nil, source: :council)
+          status = pass? ? :proven : :failed
+          metadata = { score:, reasons: }
+
+          Master::Proof.build(claim:, law:, subject:, evidence: reasons, source:, status:, metadata:)
         end
       end
 

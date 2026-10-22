@@ -157,7 +157,7 @@ class TestFixWatchdog < Minitest::Test
     run.send(:watch_for_stall)
 
     assert_equal 1, @killed.size
-    assert_match(/phase scan \\+ stream fixes/, @killed.first)
+    assert_match(/phase scan \+ stream fixes/, @killed.first)
     assert(@said.any? { |line| line.include?("0 files attempted") })
   end
 

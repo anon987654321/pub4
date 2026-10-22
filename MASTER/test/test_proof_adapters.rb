@@ -5,7 +5,7 @@ require_relative "test_helper"
 class TestProofAdapters < Minitest::Test
   def test_finding_maps_to_deterministic_proof
     finding = Master::Review::Scan::Finding.build(
-      rule: "STYLE",
+      law: "STYLE",
       message: "style issue",
       line: 12,
       severity: :warning,
@@ -14,7 +14,7 @@ class TestProofAdapters < Minitest::Test
     proof = finding.to_proof(subject: "lib/example.rb")
 
     assert_equal "style issue", proof.claim
-    assert_equal "STYLE", proof.rule
+    assert_equal "STYLE", proof.law
     assert_equal "lib/example.rb", proof.subject
     assert_equal :deterministic, proof.source
     assert_equal :open, proof.status
@@ -27,10 +27,10 @@ class TestProofAdapters < Minitest::Test
       rubric_score: 0.9,
     )
 
-    proof = verdict.to_proof(claim: "review passed", rule: "REVIEW")
+    proof = verdict.to_proof(claim: "review passed", law: "REVIEW")
 
     assert_equal "review passed", proof.claim
-    assert_equal "REVIEW", proof.rule
+    assert_equal "REVIEW", proof.law
     assert_equal :council, proof.source
     assert_equal :proven, proof.status
     assert proof.proven?
