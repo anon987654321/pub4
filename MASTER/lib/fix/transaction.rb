@@ -238,6 +238,16 @@ module Master
       # -- nothing else calls an instance's own recover! directly, confirmed
       # by grepping every lib/ and test/ caller before making this private.
       def recover!
+        # Recovery is a writer too: serialize it against a live /fix transaction.
+        # Nonblocking acquisition avoids hanging an operator while another run
+        # owns the root-wide lock; preserve the manifest and report the blocker.
+        unless acquire_lock(nonblock: true)
+          return Result.err(
+            "transaction recovery refused: an active transaction holds the root lock",
+            category: :infrastructure,
+          )
+        end
+
         load_manifest!
         recover_for_state
       rescue StandardError => e
@@ -288,11 +298,20 @@ module Master
 
       def persisted? = File.file?(File.join(@dir, MANIFEST))
 
-      def acquire_lock
+      def acquire_lock(nonblock: false)
         path = File.join(@root, LOCK)
         FileUtils.mkdir_p(File.dirname(path))
         @lock = File.open(path, File::RDWR | File::CREAT, 0o600)
-        @lock.flock(File::LOCK_EX)
+        flags = File::LOCK_EX
+        flags |= File::LOCK_NB if nonblock
+        locked = @lock.flock(flags)
+        return true if locked
+
+        release_lock
+        false
+      rescue StandardError
+        release_lock
+        raise
       end
 
       def release_lock
