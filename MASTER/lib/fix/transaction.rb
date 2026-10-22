@@ -521,7 +521,7 @@ module Master
         when "symlink"
           valid = exists == true && valid_mode && link.is_a?(String) && store.nil?
         when "other"
-          valid = exists == true && valid_mode && link.nil? && store.nil?
+          valid = !require_store && exists == true && valid_mode && link.nil? && store.nil?
         else
           valid = false
         end
