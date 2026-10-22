@@ -638,7 +638,7 @@ module Master
           stored_path_valid = store_path && File.dirname(store_path) == files_dir &&
                               store_name.match?(store_name_pattern)
           stored_bytes_valid = !require_store || (
-            File.directory?(files_dir) && !File.symlink?(files_dir) &&
+            store_path && File.directory?(files_dir) && !File.symlink?(files_dir) &&
             File.file?(store_path) && !File.symlink?(store_path)
           )
           valid = exists == true && valid_mode && link.nil? && stored_path_valid && stored_bytes_valid
