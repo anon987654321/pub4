@@ -5,6 +5,7 @@ require_relative "../../operator/ruby_runner"
 require "pathname"
 require_relative "../../ground/known_good"
 require_relative "../../operator/ratchet_sponsor"
+require_relative "repo_scope"
 
 module Master
   module Fix
@@ -22,6 +23,8 @@ module Master
       # A commit or push that fails raises after the event is published: a fix
       # loop that asked to deliver and could not must stop, not report success.
       class Committer
+        include RepoScope
+
         LINT_TIMEOUT_SECONDS = 20
         FINDING_LINES = 40
 
@@ -44,7 +47,7 @@ module Master
         end
 
         def baseline!(scope: nil)
-          @baseline = @git.changed_paths
+          @baseline = changed_everywhere
           @boundary_scope = normalize_boundary_scope(scope)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
@@ -325,8 +328,9 @@ def stage_commit_mode?
           return :noop if paths.empty?
           return :blocked unless validate_paths(message, paths)
 
-          @git.commit(with_finding_ids(message, findings, paths), paths:)
+          commit_scoped(with_finding_ids(message, findings, paths), paths:)
           push_commit!(paths)
+
           promote_known_good(@git.head, paths)
           Master::Trace::Dmesg.status(
             "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
@@ -365,7 +369,7 @@ def stage_commit_mode?
         end
 
         def commit_paths(message, findings, paths, transaction:)
-          @git.commit(with_finding_ids(message, findings, paths), paths:)
+          commit_scoped(with_finding_ids(message, findings, paths), paths:)
           head_after = @git.head
           transaction.delivery.record_commit!(head_after:)
           push_commit!(paths)
@@ -394,7 +398,7 @@ def stage_commit_mode?
         end
 
         def own_changes(owned_paths)
-          changed = @git.changed_paths
+          changed = changed_everywhere
           return @baseline ? changed - @baseline : [] if owned_paths.nil?
 
           requested = Array(owned_paths).filter_map { |path| relative(path) }

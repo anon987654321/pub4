@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "pathname"
 require "securerandom"
 require_relative "../io/atomic_write"
 require_relative "transaction/delivery"
@@ -307,11 +308,21 @@ module Master
         return if value.empty?
 
         full = File.expand_path(value, @root)
-        root = File.expand_path(@root)
-        return unless full == root || full.start_with?(root + File::SEPARATOR)
+        return unless inside?(full, File.expand_path(@root)) || inside?(full, outer_root)
 
-        full.delete_prefix(root + File::SEPARATOR)
+        Pathname.new(full).relative_path_from(File.expand_path(@root)).to_s
       end
+
+      # A /fix run rooted in MASTER may repair a RAILS or OPENBSD file beside it: the transaction
+      # snapshots and restores any file in the repository MASTER sits in, named relative to MASTER.
+      def outer_root
+        return File.expand_path(@root) unless defined?(Master::REPO_ROOT)
+
+        repo = File.expand_path(Master::REPO_ROOT)
+        inside?(File.expand_path(@root), repo) ? repo : File.expand_path(@root)
+      end
+
+      def inside?(path, dir) = path == dir || path.start_with?(dir + File::SEPARATOR)
 
       def absolute(path) = File.join(@root, path)
 
