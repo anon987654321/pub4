@@ -1,8 +1,29 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/operator/gate_chain"
 
 class WorkflowInferenceTest < Minitest::Test
+  # The execution-trace preflight needs live collaborators; these tests assert what /fix renders.
+  # The real gate baseline and closing verification run every stage of the ladder; these tests
+  # assert what the pass renders.
+  def setup
+    @deep_trace = ENV["MASTER_FIX_DEEP_TRACE"]
+    ENV["MASTER_FIX_DEEP_TRACE"] = "0"
+    @real_baseline = Operator::GateChain.method(:baseline)
+    @real_verify = Operator::GateChain.method(:verify_fix)
+    Operator::GateChain.define_singleton_method(:baseline) { |**| {} }
+    Operator::GateChain.define_singleton_method(:verify_fix) { |**| [0, []] }
+  end
+
+  def teardown
+    @deep_trace ? ENV["MASTER_FIX_DEEP_TRACE"] = @deep_trace : ENV.delete("MASTER_FIX_DEEP_TRACE")
+    baseline = @real_baseline
+    verify = @real_verify
+    Operator::GateChain.define_singleton_method(:baseline) { |**kwargs| baseline.call(**kwargs) }
+    Operator::GateChain.define_singleton_method(:verify_fix) { |**kwargs| verify.call(**kwargs) }
+  end
+
   # A repair that says it repaired and shows nothing sends the operator to go
   # and look for it.
   def test_the_repair_shows_its_commits_and_its_patch
@@ -82,7 +103,8 @@ class WorkflowInferenceTest < Minitest::Test
       line = posture.line
 
       assert_includes line, "full mechanical scan"
-      assert_includes line, "semantic full"
+      # Strict reads a rotating tenth of clean files semantically (data/limits.yml).
+      assert_includes line, "semantic sampled"
     end
 
     with_env("MASTER_SCAN_SEMANTIC_SAMPLE", "0") do
@@ -115,7 +137,7 @@ class WorkflowInferenceTest < Minitest::Test
       )
     end
 
-    assert_includes out.lines.map(&:chomp), "critique"
+    assert_match(/^crit0 at review0: critique$/, out)
     refute_empty asked, "critique stage never reached the deliberation"
     refute_match(/NoMethodError/, out)
   end
@@ -149,11 +171,11 @@ class WorkflowInferenceTest < Minitest::Test
     def flaky.run(_, **) = raise(Errno::ENOENT, "scan target")
     def flaky.preview(_) = Master::Result.ok({ total: 0, rules: {}, files: {} })
 
-    out = dispatch(critique: false, fix_loop: flaky, apply: true)
+    result = dispatch(critique: false, fix_loop: flaky, apply: true)
 
-    assert_includes out, "fix failed: Errno::ENOENT"
-    assert_match(/review\d+: incomplete, failed fix/, out)
-    refute_includes out, "complete\n"
+    assert result.err?, "an incomplete pipeline is an error result"
+    assert_includes result.message, "Errno::ENOENT"
+    assert_match(/review\d+: incomplete, failed fix/, result.message)
   end
 
   def test_unconfigured_critique_marks_the_review_incomplete
@@ -215,6 +237,9 @@ class WorkflowInferenceTest < Minitest::Test
       @asked << context
       Master::Result.ok([{ role: "Synthesis", feedback: "ok for #{payload.to_s[0, 20]}" }])
     end
+
+    # The council gate asks through review; the tribunal path through review_convergent.
+    def review(payload, context:) = review_convergent(payload, context:)
   end
 
   class FakeScanner
@@ -227,6 +252,7 @@ class WorkflowInferenceTest < Minitest::Test
 
   class FakeFixLoop
     def run(_target, **) = Master::Result.ok("fix: nothing to do")
+    def publish_pending! = :nothing_to_publish
 
     def preview(_target)
       Master::Result.ok({ total: 0, rules: {}, files: {} })
