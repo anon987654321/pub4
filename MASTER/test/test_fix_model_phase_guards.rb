@@ -395,7 +395,7 @@ def test_a_stopping_run_scans_no_further
   assert_equal "/r/a.rb", scan.stream_stopped_at
 end
 
-  def test_one_law_repairs_at_most_the_cap_per_pass
+  def test_one_law_repairs_at_most_the_cap_per_ranked_batch
     cap = Master::Fix::FixLoop::PassRunner::StreamStage::LawCap.new(2, Hash.new(0))
     rows = Array.new(3) { { law: "LONG_LINE" } } + [{ law: "CQS" }]
 
