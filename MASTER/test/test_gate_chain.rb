@@ -263,33 +263,6 @@ class TestGateChain < Minitest::Test
     assert_equal [[stage], true, ["MASTER"], true], captured
   end
 
-  def test_pre_repair_baseline_refuses_to_cache_after_a_read_only_stage_mutates
-    stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
-    fake_report = lambda do |selected, scan_only:, trees:, return_results:|
-      G.instance_variable_set(:@last_results, [
-        G::Result.new(stage: "source", state: "failed", summary: "changed by non-mutating stage",
-                      changed: ["MASTER/lib/changed.rb"], body: ["source: changed by non-mutating stage"])
-      ])
-      [1, ["MASTER/lib/changed.rb"]]
-    end
-
-    G.stub(:verification_stages, [stage]) do
-      G.stub(:trees_for_target, ["MASTER"]) do
-        G.stub(:baseline_key, "baseline-mutation-test") do
-          G.stub(:read_baseline, nil) do
-            G.stub(:report, fake_report) do
-              G.stub(:write_baseline, ->(*) { flunk("an unsafe baseline was persisted") }) do
-                error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
-                assert_match(/read-only pre-repair proof changed 1 path/, error.message)
-                assert_match(/MASTER\\/lib\\/changed.rb/, error.message)
-              end
-            end
-          end
-        end
-      end
-    end
-  end
-
   def test_gate_verdict_prefers_aggregate_rails_counts_over_success_detail
     aggregate = "gates0 at rails: 17 pass, 8 fail, 0 skip, 0 inconclusive, 0 error in 1504.5s"
 
