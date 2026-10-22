@@ -317,9 +317,7 @@ class TestGateChain < Minitest::Test
 
   def test_pre_repair_baseline_blocks_mutation_of_a_preexisting_dirty_path_outside_target
     stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
-    # Target fingerprint remains stable while the complete repository fingerprint changes.
-    target_keys = ["target-same", "target-same"]
-    checkout_keys = ["whole-before", "whole-after"]
+    # The target key holds while a root-level path outside it changes.
     fake_report = lambda do |_selected, scan_only:, trees:, return_results:|
       G.instance_variable_set(:@last_results, [
         G::Result.new(stage: "source", state: "ok", summary: "no attributed change", changed: [], body: ["source: clean"])
@@ -327,50 +325,49 @@ class TestGateChain < Minitest::Test
       [0, []]
     end
 
-    G.stub(:verification_stages, [stage]) do
-      G.stub(:trees_for_target, ["MASTER"]) do
-        G.stub(:baseline_key, ->(*) { target_keys.shift }) do
-          G.stub(:checkout_fingerprint, ->(**_kwargs) { checkout_keys.shift }) do
-            G.stub(:read_baseline, nil) do
-              G.stub(:report, fake_report) do
-                G.stub(:dirty, ["README-untracked.md"]) do
-                  G.stub(:write_baseline, ->(*) { flunk("a mutated root-level file must not become the baseline") }) do
-                    error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
-                    assert_match(/changed checkout state/, error.message)
-                    assert_includes error.message, "README-untracked.md"
-                  end
-                end
-              end
-            end
-          end
-        end
-      end
+    stubs = {
+      verification_stages: [stage], trees_for_target: ["MASTER"], baseline_key: "target-same",
+      checkout_snapshot: {}, read_baseline: nil, report: fake_report,
+      checkout_changes: ["README-untracked.md"],
+      write_baseline: ->(*) { flunk("a mutated root-level file must not become the baseline") }
+    }
+
+    with_stubs(G, stubs) do
+      error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
+      assert_match(/changed checkout state/, error.message)
+      assert_includes error.message, "README-untracked.md"
     end
   end
 
-  def test_checkout_fingerprint_detects_root_level_tracked_and_untracked_changes
-    Dir.mktmpdir("checkout-fingerprint") do |root|
-      %w[MASTER RAILS].each { |tree| FileUtils.mkdir_p(File.join(root, tree)) }
-      File.write(File.join(root, "MASTER", "a.rb"), "A = 1\n")
-      File.write(File.join(root, "RAILS", "b.rb"), "B = 1\n")
-      File.write(File.join(root, "README.md"), "before\n")
-      git = lambda do |*args|
-        output, status = Open3.capture2e("git", "-C", root, *args)
-        assert status.success?, "git #{args.join(" ")} failed: #{output}"
-        output
-      end
-      git.call("init", "-q")
-      git.call("config", "user.name", "Test")
-      git.call("config", "user.email", "test@example.invalid")
-      git.call("add", "--all")
-      git.call("commit", "-q", "-m", "baseline")
-      baseline = G.checkout_fingerprint(root:)
+  # A committed repository with a MASTER file, a RAILS file and a root README; answers git.
+  def checkout_fixture(root)
+    { "MASTER/a.rb" => "A = 1\n", "RAILS/b.rb" => "B = 1\n", "README.md" => "before\n" }.each do |path, text|
+      FileUtils.mkdir_p(File.dirname(File.join(root, path)))
+      File.write(File.join(root, path), text)
+    end
+    git = ->(*args) { Open3.capture2e("git", "-C", root, *args).tap { |out, st| assert st.success?, out } }
 
+    git.call("init", "-q")
+    [%w[user.name Test], %w[user.email test@example.invalid]].each { |pair| git.call("config", *pair) }
+    git.call("add", "--all")
+    git.call("commit", "-q", "-m", "baseline")
+    git
+  end
+
+  def test_checkout_changes_see_root_level_edits_but_not_another_sessions_commit
+    Dir.mktmpdir("checkout-snapshot") do |root|
+      git = checkout_fixture(root)
+      File.write(File.join(root, "MASTER", "a.rb"), "A = 2\n")
+      baseline = G.checkout_snapshot(root:)
+
+      git.call("commit", "-q", "-m", "another session", "--", "MASTER/a.rb")
+      assert_empty G.checkout_changes(baseline, root:), "a commit is not the measurement writing"
       File.write(File.join(root, "README.md"), "after\n")
-      refute_equal baseline, G.checkout_fingerprint(root:), "root-level tracked change was missed"
+      assert_equal ["README.md"], G.checkout_changes(baseline, root:), "root-level tracked change was missed"
+
       File.write(File.join(root, "README.md"), "before\n")
       File.write(File.join(root, "operator-note.txt"), "untracked\n")
-      refute_equal baseline, G.checkout_fingerprint(root:), "root-level untracked file was missed"
+      assert_equal ["operator-note.txt"], G.checkout_changes(baseline, root:), "root-level untracked file was missed"
     end
   end
 
