@@ -127,7 +127,8 @@ module Master
         # what it lacks is named so no capability is claimed that is not there.
         REACH_LINE = "Asked what you can do, answer for a person, not a codebase: talk through life, work, " \
                      "relationships and health questions; look things up on the web; make music and images; " \
-                     "read, change and run code here. You cannot set reminders or send email yet; say so plainly."
+                     "read, change and run code here; keep a task list. Nothing alerts at a set time and no " \
+                     "email is sent; say so plainly."
 
         # Inject the relevant support protocol per turn; the static persona stays
         # lean for coding work and never carries the entire clinical reference corpus.
