@@ -150,6 +150,12 @@ module Master
 
       def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
                               apply:, critique:, aesthetic:, only:, target:)
+        Master::Fix::RunBudget.with_shared_run(
+          root: Master::ROOT,
+          max_passes: Master::Fix::FixLoop::ABSOLUTE_MAX_PASSES,
+          bus:,
+          target:,
+        ) do
         writes_requested = writes_requested?(apply:, only:)
         display_target = display_fix_target(target)
         mode = writes_requested ? "write" : "read-only"
@@ -213,6 +219,7 @@ module Master
         puts rendered
         Master::Fix::CodeWatch.reexec!(root, "/fix #{raw}")
         rendered
+        end
       end
 
       # The RAILS design sweep is part of the same /fix transaction boundary:
