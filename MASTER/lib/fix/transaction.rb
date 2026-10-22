@@ -52,8 +52,12 @@ module Master
         raise "transaction already active" if @active
         raise "transaction id is empty" if @id.empty?
 
+        created_dir = false
         acquire_lock
+        raise "transaction id already exists: #{@id}" if File.exist?(@dir) || File.symlink?(@dir)
+
         FileUtils.mkdir_p(@dir)
+        created_dir = true
         snapshot_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @paths.each do |path|
           captured = snapshot(path)
@@ -74,12 +78,14 @@ module Master
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
+        # begin! can fail after observe! has persisted a usable manifest. The
+        # Ruby object must no longer claim an active transaction after releasing
+        # the lock, while the durable state remains intact for next-run recovery.
+        @active = false
         if persisted?
-          # A durable manifest can be recovered on the next invocation.
           release_lock
         else
-          @active = false
-          cleanup!
+          cleanup! if created_dir
           release_lock
         end
         raise
