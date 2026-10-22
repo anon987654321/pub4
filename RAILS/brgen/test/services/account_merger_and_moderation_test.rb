@@ -18,6 +18,7 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
   teardown { ActsAsTenant.current_tenant = nil }
 
   test "merge hands the guest's posts and signals to the member and records itself" do
+    source_password_digest = @guest.password_digest
     post = Post.create!(title: "hei", content: "nabolagsfest på lørdag", user: @guest)
     TrustSignal.create!(user: @guest, kind: "account_created", source: "test", weight: 0)
 
@@ -29,7 +30,12 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     merge = AccountMerge.find_by(guest_user_id: @guest.id, user_id: @member.id)
     assert merge, "the merge must leave a record"
     assert_equal "merged", merge.status
-    assert_not @guest.reload.guest?, "the emptied guest row stops being a guest"
+    source = @guest.reload
+    refute source.guest?, "the source guest must stop being an active guest"
+    assert source.deleted_at.present?, "the source row must remain only as an anonymized audit referent"
+    assert_match(/\\Amerged-#{source.id}-[a-f0-9]+@deleted\\.invalid\\z/, source.email_address)
+    refute_equal source_password_digest, source.password_digest, "the guest password must not remain usable"
+    assert_empty Session.where(user_id: source.id)
   end
 
   test "merging duplicate messenger membership and receipts preserves state without violating unique indexes" do
