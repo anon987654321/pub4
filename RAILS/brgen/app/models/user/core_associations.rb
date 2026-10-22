@@ -6,6 +6,8 @@ class User
 
     included do
       has_many :account_merges, dependent: :destroy
+      has_many :account_merges_as_guest, class_name: "AccountMerge", foreign_key: :guest_user_id,
+               dependent: :destroy, inverse_of: :guest_user
       has_many :activity_events, foreign_key: :actor_id, dependent: :nullify, inverse_of: :actor
       has_many :comments, dependent: :destroy
       has_many :communities
