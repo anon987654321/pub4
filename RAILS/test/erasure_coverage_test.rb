@@ -101,6 +101,11 @@ class ErasureCoverageTest < Minitest::Test
     "events"                             => [ :nullify, "a venue is not a home, but the coordinates on one somebody hosted are theirs" ],
 
     "users"                              => [ :handled, "the account row itself, anonymised in place by anonymise" ],
+    "messages"                            => [ :handled, "authored messages are unsent and media purged while rows remain to preserve thread and reply structure" ],
+    "activity_events"                     => [ :handled, "events authored by the user and events pointing at private messages are destroyed by UserPurgeJob" ],
+    "reactions"                           => [ :handled, "the user's reactions and reactions targeting unsent private messages are removed by UserPurgeJob" ],
+    "votes"                               => [ :handled, "the user's votes and votes targeting unsent private messages are removed by UserPurgeJob" ],
+    "outbound_clicks"                     => [ :handled, "account-linked clicks and clicks targeting unsent private messages are removed by UserPurgeJob" ],
     "sessions"                            => [ :handled, "erase! calls user.sessions.delete_all" ],
     "email_subscriptions"                 => [ :handled, "keyed by address rather than user_id; erase_email_subscription reads the address before it is overwritten" ],
 
@@ -124,6 +129,19 @@ class ErasureCoverageTest < Minitest::Test
     assert File.exist?(SCHEMA), "schema.rb is not here — the check is wrong, not the tree"
     refute_empty tables_with_personal_columns,
                  "no personal columns found at all, which means PERSONAL matches nothing"
+  end
+
+  def test_private_messenger_content_is_unsent_and_message_references_are_removed
+    job = File.read(File.expand_path("../brgen/app/jobs/user_purge_job.rb", __dir__))
+
+    assert_includes job, "def erase_authored_messages(user)"
+    assert_includes job, "message.attachment.purge"
+    assert_includes job, "message.unsend! unless message.deleted?"
+    assert_includes job, '{ model: "Notification", key: :actor_id }'
+    assert_includes job, '{ model: "ActivityEvent", key: :actor_id }'
+    assert_includes job, '::ActivityEvent.where(subject_type: "Message", subject_id: message_ids)'
+    assert_includes job, '::Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids)'
+    assert_includes job, '::Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids)'
   end
 
   def test_every_table_with_personal_data_is_classified
