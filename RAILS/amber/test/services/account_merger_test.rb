@@ -14,6 +14,7 @@ class AccountMergerTest < ActiveSupport::TestCase
       email_address: "member-#{suffix}@example.test",
       password: SecureRandom.hex(24)
     )
+    source_password_digest = guest.password_digest
     post = guest.posts.create!(body: "Anonymous post retained #{suffix}", anonymous: true)
     stale_guest_session = guest.sessions.create!(user_agent: "stale guest browser", ip_address: "127.0.0.1")
     outgoing_body = "Guest to member #{suffix}"
@@ -36,7 +37,12 @@ class AccountMergerTest < ActiveSupport::TestCase
     merge = AccountMerge.find_by!(guest_user_id: guest.id, user_id: member.id)
     assert_equal "merged", merge.status
     assert merge.merged_at.present?
-    refute guest.reload.guest?
+    source = guest.reload
+    refute source.guest?
+    assert source.deleted_at.present?, "the source row must remain only as an anonymized audit referent"
+    assert_match(/\\Amerged-#{source.id}-[a-f0-9]+@deleted\\.invalid\\z/, source.email_address)
+    refute_equal source_password_digest, source.password_digest, "the guest password must not remain usable"
+    assert_empty Session.where(user_id: source.id)
   end
 
   test "a non-guest source is a no-op and creates no merge audit" do
