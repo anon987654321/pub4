@@ -10,7 +10,7 @@ module Master
     module RailsApp
       def self.tree_target?(target, repo_root:)
         relative = relative_path(target, repo_root:)
-        relative == "RAILS" || relative&.start_with?("RAILS/")
+        !!(relative == "RAILS" || relative&.start_with?("RAILS/"))
       end
 
       def self.named_apps(repo_root:)
@@ -24,7 +24,7 @@ module Master
 
       def self.app_name(target, repo_root:)
         relative = relative_path(target, repo_root:)
-        match = relative&.match(%r{\\ARAILS/([^/]+)(?:/|\\z)})
+        match = relative&.match(%r{\ARAILS/([^/]+)(?:/|\z)})
         name = match && match[1]
         name if name && named_apps(repo_root:).include?(name)
       end
