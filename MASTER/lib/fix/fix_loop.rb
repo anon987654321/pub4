@@ -184,10 +184,23 @@ module Master
             category: :validation,
           )
         end
+        # Open the durable run and start its single budget before graph building
+        # or research. Previously both expensive stages ran before the journal and
+        # watchdog existed, so they could consume the whole allowance invisibly.
+        current_phase = :journal
+        journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
+        run_id = journal["id"]
+        mission = mission_for(target:, requested:)
+        budget_error = exhausted_budget(journal:)
+        return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
+
+        RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
+        current_phase = :begin_run
+        @convergence_discipline.begin_run(files)
         if requested
           current_phase = :structure
           dependency_result = prepare_dependency_map!(files)
-          return dependency_result if dependency_result.is_a?(Master::Result)
+          return finish_run(dependency_result, target, run_id, mission:, requested:) if dependency_result.is_a?(Master::Result)
           current_phase = :research
           research = ResearchPass.new(
             agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
@@ -200,15 +213,6 @@ module Master
             "hosts=#{research.fetch(:independent_hosts, 0)} target=#{target}",
           )
         end
-        current_phase = :begin_run
-        @convergence_discipline.begin_run(files)
-        current_phase = :journal
-        journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
-        run_id = journal["id"]
-        mission = mission_for(target:, requested:)
-        budget_error = exhausted_budget(journal:)
-        return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
-
         current_phase = :pass
         run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
       rescue StandardError => e
@@ -443,9 +447,9 @@ module Master
       # an earlier process left, then the passes, then the terminal state.
       def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
         run_id = journal["id"]
-        RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
         files = StreamCursor.order(@root, target, files)
-        deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
+        remaining = [journal["remaining_seconds"].to_f - RunBudget.elapsed_seconds, 0].max
+        deadline = Ground::Reliability::Deadline.new(remaining)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
