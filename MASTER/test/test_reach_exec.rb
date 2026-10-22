@@ -184,7 +184,9 @@ class TestReachExec < Minitest::Test
   end
 
   def test_which_accepts_an_explicit_executable_path
-    Dir.mktmpdir do |dir|
+    Dir.mktmpdir do |tmp|
+      # macOS's tmpdir is a symlink to /private/var, and the cwd "./tool" resolves against is the real path.
+      dir = File.realpath(tmp)
       tool = File.join(dir, "tool")
       File.write(tool, "#!/bin/sh\n")
       File.chmod(0o755, tool)
