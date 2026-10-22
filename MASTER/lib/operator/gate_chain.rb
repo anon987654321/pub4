@@ -855,13 +855,13 @@ end
     # detail and "last line" read a detail row as the verdict.
     def verdict(body)
       lines = Array(body).map(&:to_s)
-      aggregate = lines.reverse.find { |line| line.match?(%r{\\Agates\\d+ at rails: \\d+ pass, \\d+ fail\\b}i) }
+      aggregate = lines.reverse.find { |line| line.match?(%r{\Agates\d+ at rails: \d+ pass, \d+ fail\b}i) }
       return aggregate.strip if aggregate
 
       failed = lines.reverse.find do |line|
-        line.match?(%r{\\A[a-z][a-z_0-9]*:\\s.*\\b(?:failed|inconclusive|blocked|error)\\b}i)
+        line.match?(%r{\A[a-z][a-z_0-9]*:\s.*\b(?:failed|inconclusive|blocked|error)\b}i)
       end
-      summary = lines.reverse.find { |line| line.match?(%r{\\A[a-z][a-z_0-9]*:\\s}) }
+      summary = lines.reverse.find { |line| line.match?(%r{\A[a-z][a-z_0-9]*:\s}) }
       (failed || summary || lines.last).to_s.strip
     end
 
