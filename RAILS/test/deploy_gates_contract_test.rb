@@ -121,10 +121,10 @@ class DeployGatesContractTest < Minitest::Test
 
   # A registered gate that nothing runs.
   #
-  # `runner.rb --all` exists and is called by nothing (the old backlog:
-  # rails_gates_not_wired), so a gate is only ever run if some script names it or
-  # names the composite that covers it. dns_zones was the one that neither
-  # applied to: registered in gates.yml, complete, and never once executed. When
+  # A gate runs when some script names it, names the composite that covers it, or
+  # runs `runner.rb --all`, which reaches every gate with no covered_by parent;
+  # bin/operator gate does that through Operator::GateChain. dns_zones predated
+  # that and was the one none of these applied to: registered in gates.yml, complete, and never once executed. When
   # it finally was, it hard-failed on a claim that was not true — one dropped UDP
   # packet out of ~500 queries, reported as a missing DNS record — because a gate
   # nobody runs is also a gate nobody has seen be wrong.
@@ -132,7 +132,7 @@ class DeployGatesContractTest < Minitest::Test
   # A count would have said 47 gates and meant 46. This asks the question the
   # count cannot.
   CALLER_GLOBS = %w[OPENBSD/bin/* OPENBSD/*.sh OPENBSD/*.rb OPENBSD/lib/*.rb
-                    RAILS/*.sh MASTER/bin/* bin/*].freeze
+                    RAILS/*.sh MASTER/bin/* MASTER/lib/operator/*.rb bin/*].freeze
 
   # Comment lines are stripped first, and that is not tidiness. Written without
   # it, this test passed with the wiring deleted — because the commit that added
@@ -149,9 +149,12 @@ class DeployGatesContractTest < Minitest::Test
 
   def test_every_registered_gate_is_named_by_some_caller
     text = caller_source
+    runs_all = text.match?(/"runner\.rb"\),\s*"--all"/)
 
     orphans = GATES.reject do |name, row|
       parent = row["covered_by"]
+      next true if runs_all && parent.nil?
+
       text.match?(/\b#{Regexp.escape(name)}\b/) || (parent && text.match?(/\b#{Regexp.escape(parent)}\b/))
     end.keys
 
@@ -215,8 +218,10 @@ class DeployGatesContractTest < Minitest::Test
     start = source.index("rails_runtime_gate()")
     body = source[start, source.index("\n}\n", start) - start + 3]
 
-    assert_match(/\[\[ -d \$app_dir \]\] \|\| \{.*log_err.*return 1/m, body)
-    refute_match(/\[\[ -d \$app_dir \]\] \|\| \{.*return 0/m, body)
+    missing = body[/\[\[ -d \$app_dir \]\] \|\| \{(.*?)\n  \}/m, 1].to_s
+
+    assert_match(/log_err.*return 1/m, missing)
+    refute_match(/return 0/, missing)
   end
 
   def test_rails_runtime_gate_fails_closed_when_named_app_ci_is_missing
@@ -255,8 +260,8 @@ class DeployGatesContractTest < Minitest::Test
     body = source[start, source.index("\n}\n", start) - start + 3]
 
     refute_match(/\|\s*(?:head|cut)\b/, body)
-    assert_includes body, 'for line in "${(@f)contents}"'
-    assert_includes body, 'secret=${line#SECRET_KEY_BASE=}'
+    assert_includes body, "pub4-admin ensure-secret", "the broker owns the secret file; nothing here parses it"
+    assert_match(/\*\[!0123456789abcdefABCDEF\]\*\)/, body, "a non-hex answer from the broker is refused")
   end
 
   def test_rails_runtime_gate_runs_production_in_process
@@ -329,7 +334,7 @@ class DeployGatesContractTest < Minitest::Test
     }.each do |leaf, parent|
       assert_equal parent, GATES.dig(leaf, "covered_by"), "#{leaf} should be covered by #{parent}"
     end
-    assert_includes File.read(File.join(MASTER_GATES, "runner.rb")), "resolve_gates"
+    assert_includes File.read(File.join(MASTER_GATES, "runner.rb")), %(["covered_by"])
   end
 
   def test_apps_yml_validator_points_at_the_canonical_rails_inventory
