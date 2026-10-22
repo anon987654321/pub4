@@ -4,6 +4,7 @@ require "open3"
 require "timeout"
 require "yaml"
 require_relative "../../gates/support/brgen_vertical_surfaces"
+require_relative "rails_app"
 
 module Master
   module Fix
@@ -86,8 +87,7 @@ module Master
       private
 
       def app_names
-        data = YAML.safe_load_file(File.join(@root, "RAILS", "apps.yml"), aliases: true)
-        data.fetch("apps").keys.map(&:to_s).sort
+        RailsApp.named_apps(repo_root: @root)
       end
 
       def app_roots
