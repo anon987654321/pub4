@@ -250,7 +250,7 @@ module Master
           semantic = run_law_pass(pass: :semantic, laws:, code:, ast:, path:)
           relative = relative_progress_path(path)
           answered = !@semantic_gap_mutex.synchronize { @semantic_gaps.key?(relative) }
-          @verdicts.record(relative, code:, laws:) if answered && semantic.empty?
+          @verdicts.record(relative, code:, laws:) if answered && semantic.empty? && !relative.start_with?("/")
           semantic
         end
 
