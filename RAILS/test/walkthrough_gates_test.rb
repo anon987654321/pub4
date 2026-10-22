@@ -70,11 +70,11 @@ class WalkthroughGatesTest < Minitest::Test
       brgen/app/assets/stylesheets/application.scss
       brgen/app/assets/stylesheets/_brgen_navigation.scss
       brgen/app/assets/stylesheets/_brgen_marketplace.scss
-      amber/app/assets/stylesheets/application.scss
+      amber/app/assets/stylesheets/_amber_chrome.scss
       bsdports/app/assets/stylesheets/_bsdports_layout.scss
-      shared/app/assets/stylesheets/_search_yep.scss
+      __shared/app/assets/stylesheets/_search_yep.scss
     ].to_h { |rel| [rel, FIRST_SCREEN_SHEET] }
-    sheets.merge("shared/app/assets/stylesheets/_dialect_tokens.scss" => ":root { --tap-min: #{tap_min}; }\n")
+    sheets.merge("__shared/app/assets/stylesheets/_dialect_tokens.scss" => ":root { --tap-min: #{tap_min}; }\n")
   end
 
   def gate(klass, files)
@@ -168,7 +168,7 @@ class WalkthroughGatesTest < Minitest::Test
 
   def test_first_screen_fails_when_the_token_file_declares_no_tap_minimum
     tree = first_screen_tree
-    tree["shared/app/assets/stylesheets/_dialect_tokens.scss"] = ":root { --font: 1rem; }\n"
+    tree["__shared/app/assets/stylesheets/_dialect_tokens.scss"] = ":root { --font: 1rem; }\n"
 
     assert_names gate(Deploy::FirstScreenGate, tree), /declares no --tap-min/
   end
@@ -177,12 +177,12 @@ class WalkthroughGatesTest < Minitest::Test
   # else in the same stylesheet is the file-scoped reading this gate left.
   def test_first_screen_fails_when_a_control_stops_declaring_a_touch_target
     tree = first_screen_tree
-    tree["amber/app/assets/stylesheets/application.scss"] = FIRST_SCREEN_SHEET.sub(
+    tree["amber/app/assets/stylesheets/_amber_chrome.scss"] = FIRST_SCREEN_SHEET.sub(
       ".btn { min-height: var(--tap-min); }", ".btn { height: 30px; }"
     )
 
     assert_names gate(Deploy::FirstScreenGate, tree),
-                 %r{amber/app/assets/stylesheets/application\.scss /\\A\\\.btn\\z/ rule missing min-height}
+                 %r{amber/app/assets/stylesheets/_amber_chrome\.scss /\\A\\\.btn\\z/ rule missing min-height}
   end
 
   def test_first_screen_fails_when_the_named_rule_is_gone
