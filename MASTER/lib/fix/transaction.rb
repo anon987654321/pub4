@@ -55,7 +55,12 @@ module Master
         acquire_lock
         FileUtils.mkdir_p(@dir)
         snapshot_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        @paths.each { |path| @snapshots[path] = snapshot(path) }
+        @paths.each do |path|
+          captured = snapshot(path)
+          raise "transaction cannot safely track unsupported filesystem object: #{path}" if captured.kind == :other
+
+          @snapshots[path] = captured
+        end
         @state = "open"
         @active = true
         observe!
@@ -69,7 +74,14 @@ module Master
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
-        release_lock
+        if persisted?
+          # A durable manifest can be recovered on the next invocation.
+          release_lock
+        else
+          @active = false
+          cleanup!
+          release_lock
+        end
         raise
       end
 
