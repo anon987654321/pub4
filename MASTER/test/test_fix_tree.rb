@@ -65,6 +65,17 @@ class TestFixTree < Minitest::Test
     assert_match(/outside repository root/, error.message)
   end
 
+  def test_a_git_inventory_failure_is_not_reported_as_an_empty_tree
+    Dir.mktmpdir("not-a-repository") do |root|
+      File.write(File.join(root, "app.rb"), "class App; end\\n")
+
+      error = assert_raises(RuntimeError) { Master::Fix::Tree.new(root:).files }
+
+      assert_match(/tree inventory failed/, error.message)
+      assert_match(/not a git repository|outside a work tree/i, error.message)
+    end
+  end
+
   def test_a_target_narrows_the_tree
     tree = Master::Fix::Tree.new(root: @root, target: "lib")
 
