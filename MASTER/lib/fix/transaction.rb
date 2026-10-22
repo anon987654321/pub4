@@ -466,6 +466,7 @@ module Master
         raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1 && data["id"] == @id
         state, paths, snapshots, seen = data.values_at("state", "paths", "snapshots", "seen")
         raise "transaction manifest state unsupported" unless %w[open delivering committed rolled_back conflict].include?(state)
+        raise "transaction manifest delivery heads malformed" unless data.values_at("delivery_head_before", "delivery_head_after").all? { |head| head.nil? || head.is_a?(String) }
         raise "transaction manifest paths malformed: unsafe or non-canonical path" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
         raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
 
