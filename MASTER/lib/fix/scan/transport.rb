@@ -38,11 +38,15 @@ module Master
 
         def fork_worker(slice, &block)
           reader, writer = IO.pipe
+          # exit! on both paths: a raise would run the parent's at_exit hooks in the child, and the
+          # parent redoes the slice of a worker that failed.
           pid = fork do
             reader.close
             writer.write(JSON.generate(FindingCodec.encode(block.call(slice))))
             writer.close
             exit!(0)
+          rescue StandardError
+            exit!(1)
           end
 
           writer.close
