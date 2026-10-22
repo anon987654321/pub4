@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# ActiveSupport comes from brgen's bundle: the contract suite runs under bare Ruby.
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../brgen/Gemfile", __dir__)
+require "bundler/setup"
 require "minitest/autorun"
 require "active_support/all"
 require_relative "../__shared/app/services/shared/link_converter"

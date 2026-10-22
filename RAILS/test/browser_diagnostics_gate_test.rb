@@ -4,7 +4,6 @@ require "minitest/autorun"
 require "yaml"
 require "tmpdir"
 require "digest"
-require "minitest/mock"
 require "set"
 require_relative "../../MASTER/gates/lib/rendered/browser_diagnostics"
 require_relative "../../MASTER/gates/lib/rendered_suite"
@@ -258,8 +257,17 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     end
   end
 
+  # Swapped by hand, not with stub: minitest 6 ships stub in a separate gem.
+  def with_visual_baseline(baseline)
+    real = Deploy::BrowserDiagnosticsGate.method(:visual_baseline_path)
+    Deploy::BrowserDiagnosticsGate.define_singleton_method(:visual_baseline_path) { |_surface| baseline }
+    yield
+  ensure
+    Deploy::BrowserDiagnosticsGate.define_singleton_method(:visual_baseline_path, real)
+  end
+
   def pixel_evidence(gate, baseline:, current:, dir:, surface: SURFACE)
-    Deploy::BrowserDiagnosticsGate.stub(:visual_baseline_path, ->(_surface) { baseline }) do
+    with_visual_baseline(baseline) do
       gate.send(:pixel_evidence, surface:, screenshot: current, screenshot_dir: dir,
                 screenshot_error: nil)
     end

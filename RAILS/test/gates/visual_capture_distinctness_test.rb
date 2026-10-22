@@ -20,13 +20,13 @@ require "json"
 # page counted many times, and the gate exited 0. This pins the check that says
 # so, including on the real manifests if they are ever recaptured that way.
 class VisualCaptureDistinctnessTest < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  GATES = File.expand_path("../../../MASTER/gates", __dir__)
 
   # Loaded rather than required: visual_contract.rb runs a crawl at the bottom
   # of the file, so requiring it would launch one. Evaluated once at load, not
   # per test, or every constant in the module re-initialises on each run.
   GATE = begin
-    source = File.read(File.join(ROOT, "gates/visual_contract.rb"))
+    source = File.read(File.join(GATES, "visual_contract.rb"))
     body = source[/module VisualContractGate.*?\nend\n/m] or raise "gate module not found"
     TOPLEVEL_BINDING.eval(body) # rubocop:disable Security/Eval
     ::VisualContractGate
