@@ -28,6 +28,14 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     ENV.delete("GATE_REQUIRE_LIVE")
   end
 
+  def with_env(pairs)
+    previous = pairs.keys.to_h { |key| [key, ENV[key]] }
+    pairs.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
   def result_with_skip
     result = Deploy::GateResult.new
     result.checked!(50)
