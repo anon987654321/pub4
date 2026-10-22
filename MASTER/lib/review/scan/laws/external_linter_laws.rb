@@ -44,6 +44,31 @@ module Master
 
           # Files that change a linter's verdict besides the file it reads.
           LINT_INPUTS = %w[.rubocop.yml .reek.yml config.reek Gemfile.lock].freeze
+          PREFETCH_BATCH = 200
+
+          # One linter process over many uncached files, its report split into the entries a run on each
+          # file alone would have kept. A scan of 4,900 files started rubocop and reek once per file, about
+          # three seconds each and nearly all of it boot, so a cold cache took hours to fill. A batch that
+          # fails leaves its files to the single-file run, as before.
+          def prefetch(paths)
+            return unless linter_available?(linter_name)
+
+            todo = paths.select { |path| path.end_with?(".rb") && File.file?(path) }
+            todo = todo.reject { |path| (key = lint_cache_key(single_argv(path))) && read_lint_cache(key) }
+            todo.each_slice(PREFETCH_BATCH) { |batch| prefetch_batch(batch) }
+          end
+
+          def prefetch_batch(batch)
+            report = run_linter_json(*single_argv(batch.first)[0...-1], *batch)
+            batch.each do |path|
+              key = lint_cache_key(single_argv(path))
+              write_lint_cache(key, report_for(report, path)) if key
+            end
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "linter prefetch #{linter_name}")
+          end
+
+          def same_file?(reported, path) = File.expand_path(reported.to_s, @root) == File.expand_path(path, @root)
 
           # A report is a function of the argv, the file and the linter's configuration, so it is kept by the
           # digest of all three: a gate over 1800 unchanged files spent its whole budget spawning rubocop and
@@ -133,9 +158,7 @@ module Master
             # Only MASTER carries a .rubocop.yml, so a file in another tree would be judged by rubocop's
             # defaults, which prefer single quotes where the house style is double.
             # A root without one, the repository root /fix probes from, is judged by MASTER's as well.
-            config = File.join(@root, ".rubocop.yml")
-            config = File.join(Master::ROOT, ".rubocop.yml") unless File.file?(config)
-            data = linter_json("rubocop", "--config", config, "--format", "json", "--no-color", path)
+            data = linter_json(*single_argv(path))
             files = data.is_a?(Hash) ? data["files"] : nil
             unless files.is_a?(Array) && !files.empty? &&
                    files.all? { |file| file.is_a?(Hash) && file["offenses"].is_a?(Array) }
@@ -152,6 +175,20 @@ module Master
             end
           rescue StandardError => e
             [finding(line: 1, message: "rubocop: scan error — #{e.message}")]
+          end
+
+          def linter_name = "rubocop"
+
+          def single_argv(path)
+            config = File.join(@root, ".rubocop.yml")
+            config = File.join(Master::ROOT, ".rubocop.yml") unless File.file?(config)
+            ["rubocop", "--config", config, "--format", "json", "--no-color", path]
+          end
+
+          # The batch report narrowed to one file, as rubocop would have answered for that file alone.
+          def report_for(report, path)
+            entry = Array(report["files"]).find { |file| same_file?(file["path"], path) }
+            report.merge("files" => [entry || { "path" => path, "offenses" => [] }])
           end
         end
 
@@ -170,7 +207,7 @@ module Master
           def check(_code, path:)
             return [] unless path.end_with?(".rb") && linter_available?("reek")
 
-            smells = linter_json("reek", "--format", "json", path)
+            smells = linter_json(*single_argv(path))
             unless smells.is_a?(Array) &&
                    smells.all? do |smell|
                      smell.is_a?(Hash) &&
@@ -193,6 +230,13 @@ module Master
           rescue StandardError => e
             [finding(line: 1, message: "reek: scan error — #{e.message}")]
           end
+
+          def linter_name = "reek"
+
+          def single_argv(path) = ["reek", "--format", "json", path]
+
+          # The smells the batch found in this file; a file with none answers an empty list.
+          def report_for(report, path) = Array(report).select { |smell| same_file?(smell["source"], path) }
         end
       end
     end

@@ -81,6 +81,7 @@ module Master
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           law_set = laws || active_laws(depth)
+          prefetch_linters(paths, law_set)
           reset_scan_progress(paths.size, laws: law_set) if stream
           unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
           pairs = Master::Trace::Dmesg.under(unit) do
@@ -122,7 +123,14 @@ module Master
         # and the path is discarded unless the caller knows the unwrap. This is
         # the one documented way to get them out.
         def findings(paths, depth: :deep)
+          prefetch_linters(Array(paths).reject { |path| File.directory?(path) }, @laws)
           Array(paths).flat_map { |path| findings_for(path, depth:) }
+        end
+
+        # The external linters read every file of a walk in a few batched processes before the walk,
+        # instead of one process per file during it.
+        def prefetch_linters(paths, laws)
+          laws.grep(Master::Review::Scan::Law).each { |law| law.prefetch(paths) }
         end
 
         def set_agent(agent)

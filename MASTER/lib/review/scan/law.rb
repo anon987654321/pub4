@@ -73,6 +73,9 @@ module Master
           @auto_fix = declared ? declared[:auto_fix] : false
         end
 
+        # Work a law can do for a whole walk before it reads each file; the linter laws batch their runs.
+        def prefetch(_paths) = nil
+
         # Project the DSL declaration into the Law-facing metadata contract.
         # Generated scanner laws keep language/mode/autofix on their class because
         # they are executable wrappers rather than YAML-backed Definitions.

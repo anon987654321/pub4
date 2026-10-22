@@ -217,4 +217,31 @@ class TestExternalLinterLaws < Minitest::Test
       assert_match(/Style\/Example/, findings.first.message)
     end
   end
+  # One reek process answers a whole batch, and each file then reads its own share from the cache.
+  def test_a_batch_prefetch_spawns_once_and_answers_each_file_from_the_cache
+    Dir.mktmpdir do |root|
+      files = %w[a.rb b.rb].map { |name| File.join(root, name).tap { |path| File.write(path, "x = 1\n") } }
+      spawns, findings = prefetch_then_check(root, files)
+
+      assert_equal [1, [1, 0]], [spawns, findings]
+    end
+  end
+
+  # Prefetches files with a fake reek that reports one smell in the first, then checks each file.
+  def prefetch_then_check(root, files)
+    report = JSON.generate([{ "smell_type" => "UtilityFunction", "message" => "doubts", "lines" => [1],
+                              "source" => files.first }])
+    spawns = 0
+    capture = ->(*, **) { (spawns += 1) && [report, "", Struct.new(:exitstatus).new(2)] }
+    law = Master::Review::Scan::Laws::ReekLaw.new(root:)
+
+    with_fake_reek(law, capture) { law.prefetch(files) }
+    [spawns, with_fake_reek(law, capture) { files.map { law.check("", path: _1).size } }]
+  end
+
+  def with_fake_reek(law, capture, &block)
+    law.stub(:linter_available?, true) do
+      Operator::RubyRunner.stub(:bundle_cmd, "bundle") { Master::Io::Exec.stub(:capture3, capture, &block) }
+    end
+  end
 end
