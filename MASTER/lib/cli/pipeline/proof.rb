@@ -258,17 +258,16 @@ module Master
 
         # What the repair left uncommitted — mostly the observation's
         # mechanical autofix — goes out once the proof holds, as one commit
-        # scoped to the target's tree and carrying the proof's verdict. Only in
-        # a linked worktree: in the shared checkout a path that changed during
-        # the pass may be another session's, and git cannot tell them apart.
+        # scoped to the target's tree and carrying the proof's verdict. In the
+        # shared checkout only the autofix's own writes go, matched by content.
         def deliver_leftovers(abs, verdict)
           return unless @start_dirty
 
           paths = leftover_paths(abs)
           return "delivery: nothing left uncommitted" if paths.empty?
-          unless File.file?(File.join(Master::REPO_ROOT, ".git"))
-            return "delivery: #{paths.size} file(s) left in the tree; the shared checkout is not a /fix worktree"
-          end
+
+          paths = attributed(paths) unless File.file?(File.join(Master::REPO_ROOT, ".git"))
+          return "delivery: nothing in the shared checkout is attributably this run's" if paths.empty?
 
           publish(delivery_message(abs, verdict:, paths:), paths)
           line = "delivery: #{repo_git.head} carries #{paths.size} file(s)"
@@ -276,6 +275,12 @@ module Master
           line
         rescue StandardError => e
           stage_failure("delivery", "gate0", e)
+        end
+
+        # In the shared checkout a changed path may be another session's. Only files the autofix wrote,
+        # still holding exactly the bytes it wrote, are this run's to deliver.
+        def attributed(paths)
+          paths.select { |path| Master::Fix::AutofixGuard.still_as_written?(File.join(Master::REPO_ROOT, path)) }
         end
 
         # A rejected push rebases once and retries; a commit still ahead

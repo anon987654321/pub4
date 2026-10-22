@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "json"
 require "prism"
 require "yaml"
@@ -44,6 +45,7 @@ module Master
       @mutex = Mutex.new
       @mode = nil
       @written = []
+      @written_digests = {}
       @refused = []
       @capped = []
       @patch = nil
@@ -79,6 +81,7 @@ module Master
           @mutex.synchronize do
             @mode = nil
             @written = []
+            @written_digests = {}
             @refused = []
             @capped = []
             @patch = nil
@@ -157,9 +160,23 @@ module Master
           @mutex.synchronize { @capped << path.to_s unless @capped.include?(path.to_s) }
         end
 
+        # Each written file's content is kept as its digest, so delivery can tell this run's bytes
+        # from another writer's later save to the same path.
         def note_written(path)
-          @mutex.synchronize { @written << path.to_s unless @written.include?(path.to_s) }
+          digest = content_digest(path)
+          @mutex.synchronize do
+            @written << path.to_s unless @written.include?(path.to_s)
+            @written_digests[File.expand_path(path.to_s)] = digest
+          end
         end
+
+        # The file still holds exactly what the autofix wrote.
+        def still_as_written?(path)
+          expected = @mutex.synchronize { @written_digests[File.expand_path(path.to_s)] }
+          !expected.nil? && expected == content_digest(path)
+        end
+
+        def content_digest(path) = File.file?(path) ? Digest::SHA256.file(path).hexdigest : nil
 
         def note_refused(path, reason)
           @mutex.synchronize { @refused << Record.new(path: path.to_s, reason:) }
