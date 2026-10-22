@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../operator/readers"
+require_relative "../rails_app"
 
 # frozen_string_literal: true
 
@@ -12,7 +13,6 @@ module Master
       # RAILS/__shared is the mixin engine all three apps mount, so a change there
       # is proved in all three.
       class RailsProof < Proof
-        APPS = %w[brgen amber bsdports].freeze
         # The test database, prepared first: a checkout has no development
         # database, and some controllers read the users table as they load.
         TEST_ENV = { "RAILS_ENV" => "test" }.freeze
@@ -56,11 +56,12 @@ module Master
         end
 
         def apps(plan)
+          registered = RailsApp.named_apps(repo_root: @repo_root)
           named = plan.paths.flat_map do |path|
             app = path.split("/")[1]
-            app == "__shared" ? APPS : [app]
+            app == "__shared" ? registered : [app]
           end
-          named.uniq & APPS
+          named.uniq & registered
         end
 
         def stylesheets?(plan) = plan.paths.any? { |path| path.end_with?(".scss", ".css") }
