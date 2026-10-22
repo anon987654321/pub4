@@ -62,6 +62,27 @@ class TestFixRunBudget < Minitest::Test
     assert_match(/MASTER_FIX_MAX_MINUTES/, run.boundary(2))
   end
 
+  def test_startup_disk_abort_is_exposed_as_a_stopping_reason
+    resource = Object.new
+    resource.define_singleton_method(:measure) { { values: { disk_free_gb: 0.1 } } }
+    resource.define_singleton_method(:disk_critical?) { |_measurement| true }
+
+    run = Budget.new(
+      root: @root,
+      max_passes: 3,
+      clock: -> { @now },
+      wall: -> { Time.at(1000) },
+      out: ->(line) { @lines << line },
+      say: ->(line) { @said << line },
+      poll_seconds: 0,
+      resource_budget: resource,
+      killer: ->(_reason) {},
+    ).start!
+
+    assert_match(/disk pressure at 0.1 GB free/, run.stopping)
+    assert @said.any? { |line| line.include?("ABORT") }
+  end
+
   def test_defaults_do_not_stop_and_zero_means_unlimited
     run = budget({"MASTER_FIX_MAX_COST" => "0"})
     cost(500, 1)
