@@ -54,7 +54,12 @@ class VerticalConsistencyTest < Minitest::Test
   # The blind spot that hid 57 views when the verticals moved, stated for the
   # styles: every engine that exists is a vertical scope the scan reads.
   def test_the_scan_reaches_the_engines
-    engines = Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}")).map { |dir| File.basename(dir) }
+    # Each vertical by its body.vertical-<name>; an engine EngineRoots does not
+    # name would be skipped, so that is checked first.
+    on_disk = Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app"))
+                 .map { |app| File.dirname(app).delete_prefix("#{ROOT}/") }
+    assert_empty on_disk - EngineRoots::ASSET_PATHS.values, "an engine EngineRoots does not name"
+    engines = EngineRoots::ASSET_PATHS.keys
 
     refute_empty brgen_stylesheets
     refute_empty engines, "brgen has no engines — this test is measuring nothing"

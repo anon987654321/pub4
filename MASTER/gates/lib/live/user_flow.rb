@@ -36,10 +36,11 @@ module Deploy
     # brgen/app/views scan never saw the 71 vertical pages — the blind spot that
     # let the sub-apps drift. Read off disk rather than listed, because a list is
     # only correct until the next engine, and the last one cost 71 pages of
-    # coverage before anybody noticed.
+    # coverage before anybody noticed. Some engines nest inside another
+    # (brgen_radio/tv, brgen_marketplace/engines/takeaway), hence the **.
     VIEW_PATHS = (%w[brgen/app/views amber/app/views bsdports/app/views] +
-                  Dir.glob(File.join(RAILS_ROOT, "brgen/../brgen_*/app/views"))
-                     .map { |path| path.sub("#{RAILS_ROOT}/", "") }.sort).freeze
+                  Dir.glob(File.join(RAILS_ROOT, "brgen_*/**/app/views"))
+                     .map { |path| path.sub("#{RAILS_ROOT}/", "") }.uniq.sort).freeze
 
     def self.run
       return run_once unless GateAutofix.enabled?
