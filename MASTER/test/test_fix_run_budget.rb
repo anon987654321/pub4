@@ -186,6 +186,7 @@ class TestFixRunBudget < Minitest::Test
     result = Budget.with_shared_run(root: @root, max_passes: 3) do
       first_run = Budget.current
       refute_nil first_run
+      Budget::RunLedger.reject("budget_scope_test", file: "sentinel.rb")
 
       nested_result = Budget.with_shared_run(root: @root, max_passes: 1) do
         assert_same first_run, Budget.current
@@ -194,6 +195,8 @@ class TestFixRunBudget < Minitest::Test
         # reset the watchdog, ledger, or start time.
         Budget.begin_run(root: @root, max_passes: 99)
         assert_same first_run, Budget.current
+        assert_equal({ "budget_scope_test" => 1 }, Budget::RunLedger.reasons,
+                     "nested begin_run must not reset command-level rejection accounting")
 
         # A nested caller cannot stop the budget owned by the command.
         Budget.finish_run(reason: "nested pass ended")
@@ -211,6 +214,7 @@ class TestFixRunBudget < Minitest::Test
     assert_equal 0, Budget.instance_variable_get(:@shared_depth)
   ensure
     Budget.finish_run
+    Budget::RunLedger.reset!
   end
 
   def test_shared_budget_is_finalized_when_a_nested_pass_raises
