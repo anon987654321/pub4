@@ -96,12 +96,14 @@ Minitest::Test.class_eval do
   end
 
   # A timeout that cannot land (an ensure joining worker threads) let TestRatchets run thirty
-  # minutes past its five, in silence. Past its limit, the test says where it is stuck.
+  # minutes past its five, in silence. Past its limit, the test says where it is stuck. It writes to
+  # STDERR, the process's own: a test that captures $stderr and does not restore it would take the
+  # watchdog's words with it.
   def overrun_watchdog(test_thread)
     Thread.new do
       sleep test_timeout + 30
-      $stderr.puts "test0: #{self.class}##{name} still running #{test_timeout + 30}s in, past its #{test_timeout}s"
-      test_thread.backtrace.to_a.first(12).each { |line| $stderr.puts "test0:   #{line}" }
+      STDERR.puts "test0: #{self.class}##{name} still running #{test_timeout + 30}s in, past its #{test_timeout}s"
+      test_thread.backtrace.to_a.first(12).each { |line| STDERR.puts "test0:   #{line}" }
     end
   end
 
