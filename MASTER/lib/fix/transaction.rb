@@ -465,20 +465,20 @@ module Master
 
         paths.each do |path|
           item = snapshots[path]
-          valid = item.is_a?(Hash) && item["path"] == path && %w[missing file symlink other].include?(item["kind"]) &&
+          valid = item.is_a?(Hash) && item["path"] == path && %w[missing file symlink].include?(item["kind"]) &&
                   (item["kind"] == "missing" ? item["exists"] == false && item["mode"].nil? :
                     item["exists"] == true && item["mode"].is_a?(Integer) && item["mode"].between?(0, 0o7777))
           raise "transaction manifest snapshot invalid: #{path}" unless valid
           if item["kind"] == "symlink"
             link = item["link"]
             target = link.is_a?(String) ? File.expand_path(link, File.dirname(File.join(@root, path))) : ""
-            raise "transaction manifest snapshot invalid: #{path}" unless link.is_a?(String) && item["store"].nil? && inside?(target, outer_root)
+            raise "transaction manifest snapshot invalid: #{path}" unless link.is_a?(String) && item["store"].nil? && path_guard.send(:within, target) == target
           elsif item["kind"] == "file"
             store = item["store"].to_s
             dir = File.expand_path(File.join(@dir, "files"))
             valid = item["link"].nil? && File.dirname(File.expand_path(store)) == dir &&
                     File.basename(store).match?(/\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/) &&
-                    (state != "open" || (File.file?(store) && !File.symlink?(store)))
+                    (!%w[open delivering].include?(state) || (File.file?(store) && !File.symlink?(store)))
             raise "transaction manifest snapshot invalid: #{path}" unless valid
           else
             raise "transaction manifest snapshot invalid: #{path}" if item["link"] || item["store"]
