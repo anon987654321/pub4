@@ -25,7 +25,8 @@ ZERO = "0" * 40
 # ignored locally, so this cannot turn a documentation artifact into a pushed commit.
 snapshot_root = File.expand_path("../../..", __dir__)
 snapshot_tool = File.join(snapshot_root, "MASTER", "tools", "snapshot.rb")
-if File.file?(snapshot_tool)
+repository_root = IO.popen(%w[git rev-parse --show-toplevel], &:read).to_s.strip
+if repository_root == snapshot_root && File.file?(snapshot_tool)
   system(RbConfig.ruby, snapshot_tool) or abort("pre-push: snapshot regeneration failed; push refused")
 end
 
