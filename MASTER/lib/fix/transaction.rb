@@ -104,16 +104,17 @@ module Master
         raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
 
         added = selected.uniq - @paths
-        staged = added.to_h { |path| [path, snapshot(path, versioned: true)] }
-        unsupported = staged.select { |_path, item| item.kind == :other }.keys
+        unsupported = added.select do |path|
+          abs = absolute(path)
+          (File.exist?(abs) || File.symlink?(abs)) && !File.file?(abs) && !File.symlink?(abs)
+        end
         return Result.err("transaction cannot safely enlist unsupported filesystem object(s): #{unsupported.join(", ")}",
                           category: :policy) unless unsupported.empty?
 
-        added.each do |path|
-          unless snapshot_matches_fingerprint?(staged.fetch(path), fingerprint(absolute(path)))
-            return Result.err("transaction source changed during enlistment: #{path}", category: :policy)
-          end
-        end
+        staged = added.to_h { |path| [path, snapshot(path)] }
+        return Result.err("transaction source changed during enlistment", category: :policy) unless
+          added.all? { |path| snapshot_matches_fingerprint?(staged.fetch(path), fingerprint(absolute(path))) }
+
         @snapshots.merge!(staged)
         @paths = (@paths + added).uniq
         observed = observe_paths!(added) unless added.empty?
@@ -146,6 +147,7 @@ module Master
         emit("fix:transaction_paths_observed", id: @id, paths: selected)
         Result.ok(selected)
       rescue StandardError => e
+        @seen = old_seen if defined?(old_seen) && !persisted_state_matches?
         emit("fix:transaction_observe_failed", id: @id, error: e.message)
         Result.err("transaction observation: #{e.message}", category: :infrastructure)
       end
@@ -485,27 +487,32 @@ module Master
 
       def validate_manifest!(data)
         raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1 && data["id"] == @id
-        raise "transaction manifest state unsupported" unless VALID_STATES.include?(data["state"])
-        paths = data["paths"]
+        state, paths, snapshots, seen = data.values_at("state", "paths", "snapshots", "seen")
+        raise "transaction manifest state unsupported" unless VALID_STATES.include?(state)
         raise "transaction manifest paths malformed" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
-        raise "transaction manifest contains duplicate paths" unless paths.uniq == paths
-        snapshots = data["snapshots"]
         raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
-        paths.each do |path|
-          item = snapshots.fetch(path)
-          valid = item.is_a?(Hash) && item["path"] == path && %w[missing file symlink other].include?(item["kind"]) &&
-                  [true, false].include?(item["exists"])
-          raise "transaction manifest snapshot invalid: #{path}" unless valid
-          next unless item["kind"] == "file"
+        raise "transaction manifest contains duplicate paths" unless paths.uniq == paths
 
-          dir = File.expand_path(File.join(@dir, "files"))
-          store = item["store"].to_s
-          valid_store = File.dirname(File.expand_path(store)) == dir &&
-                        File.basename(store).match?(/\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/)
-          valid_bytes = data["state"] != "open" || (File.file?(store) && !File.symlink?(store))
-          raise "transaction manifest snapshot invalid: #{path}" unless valid_store && valid_bytes
+        paths.each do |path|
+          item = snapshots[path]
+          valid = item.is_a?(Hash) && item["path"] == path && %w[missing file symlink other].include?(item["kind"]) &&
+                  [true, false].include?(item["exists"]) && item["mode"].is_a?(Integer) && item["mode"].between?(0, 0o7777)
+          raise "transaction manifest snapshot invalid: #{path}" unless valid
+          if item["kind"] == "symlink"
+            link = item["link"]
+            target = link.is_a?(String) ? File.expand_path(link, File.dirname(File.join(@root, path))) : ""
+            raise "transaction manifest snapshot invalid: #{path}" unless link.is_a?(String) && inside?(target, outer_root)
+          elsif item["kind"] == "file"
+            store = item["store"].to_s
+            dir = File.expand_path(File.join(@dir, "files"))
+            valid = File.dirname(File.expand_path(store)) == dir &&
+                    File.basename(store).match?(/\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/) &&
+                    (state != "open" || (File.file?(store) && !File.symlink?(store)))
+            raise "transaction manifest snapshot invalid: #{path}" unless valid
+          elsif item["link"] || item["store"]
+            raise "transaction manifest snapshot invalid: #{path}"
+          end
         end
-        seen = data["seen"]
         raise "transaction manifest fingerprints malformed" unless seen.is_a?(Hash) && paths.all? { |p| seen[p].is_a?(Array) && seen[p].all? { |v| v.is_a?(String) } }
       end
 
