@@ -309,10 +309,7 @@ module Master
         Result.ok(@state.to_sym)
       end
 
-      def recover_error_state(message, category)
-        cleanup!
-        Result.err(message, category:)
-      end
+      def recover_error_state(message, category) = Result.err(message, category:)
 
       def recover_open_state
         @active = true
