@@ -395,7 +395,7 @@ module Master
       end
 
       def snapshot_file(source, destination)
-        raise "transaction snapshot directory is a symlink" if File.symlink?(File.join(@dir, "files"))
+        raise "transaction snapshot storage is a symlink" if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir, File.join(@dir, "files")].any? { |path| File.symlink?(path) }
         FileUtils.mkdir_p(File.dirname(destination))
         before = fingerprint(source)
         temporary = "#{destination}.tmp.#{Process.pid}.#{SecureRandom.hex(4)}"
@@ -425,7 +425,7 @@ module Master
       end
 
       def persist!
-        raise "transaction storage path is a symlink" if [@dir, File.join(@dir, "files"), File.join(@dir, MANIFEST)].any? { |path| File.symlink?(path) }
+        raise "transaction storage path is a symlink" if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir, File.join(@dir, "files"), File.join(@dir, MANIFEST)].any? { |path| File.symlink?(path) }
         manifest = {
           "version" => 1,
           "id" => @id,
@@ -440,8 +440,7 @@ module Master
       end
 
       def load_manifest!
-        raise "transaction directory is a symlink" if File.symlink?(@dir)
-        raise "transaction snapshot directory is a symlink" if File.symlink?(File.join(@dir, "files"))
+        raise "transaction recovery storage is a symlink" if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir, File.join(@dir, "files")].any? { |item| File.symlink?(item) }
         path = File.join(@dir, MANIFEST)
         raise "transaction manifest is a symlink" if File.symlink?(path)
         raise "transaction manifest not found: #{@id}" unless File.file?(path)
@@ -534,6 +533,7 @@ module Master
       end
 
       def persisted_state_matches?
+        return false if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir, File.join(@dir, MANIFEST)].any? { |path| File.symlink?(path) }
         data = JSON.parse(File.read(File.join(@dir, MANIFEST), encoding: "UTF-8"))
         data["state"] == @state && data["paths"] == @paths && data["seen"] == @seen &&
           data["snapshots"] == JSON.parse(JSON.generate(@snapshots.transform_values(&:to_h)))
