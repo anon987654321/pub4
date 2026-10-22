@@ -123,8 +123,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
         city: @city
       )
       conversation = Conversation.create!(conversation_type: "direct")
-      ConversationParticipant.create!(conversation: conversation, user: @user)
-      ConversationParticipant.create!(conversation: conversation, user: other)
+      membership = ConversationParticipant.create!(conversation: conversation, user: @user)
+      other_membership = ConversationParticipant.create!(conversation: conversation, user: other)
       message = Message.create!(
         conversation: conversation, sender: @user,
         content: "private message body", message_type: "image"
@@ -175,6 +175,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
       assert_nil erased_message.link_preview_id
       assert_equal message.id, Message.find(reply.id).parent_id,
                    "reply structure should survive while its parent body is unsent"
+      refute ConversationParticipant.exists?(membership.id), "erased user remained attached to the conversation"
+      assert ConversationParticipant.exists?(other_membership.id), "the other participant must keep the thread"
       assert_empty ActiveStorage::Attachment.where(
         record_type: "Message", record_id: message.id, name: "attachment"
       ), "private message attachment survived erasure"
