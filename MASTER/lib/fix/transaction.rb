@@ -25,6 +25,7 @@ module Master
       ROOT_DIR = ".master/fix_transactions"
       LOCK = ".master/fix_transaction.lock"
       MANIFEST = "manifest.json"
+      VALID_STATES = %w[open delivering committed rolled_back conflict].freeze
 
       def self.normalize_id(id)
         value = id.to_s
@@ -152,6 +153,8 @@ module Master
         raise "transaction not active" unless @active
 
         selected = Array(paths).filter_map { |path| normalize(path) }.uniq
+        raise "checkpoint includes a path outside the transaction" unless (selected - @paths).empty?
+
         selected.each do |path|
           @snapshots[path] = snapshot(path)
           @seen[path] = [fingerprint(absolute(path))]
@@ -417,23 +420,79 @@ module Master
         raise "transaction manifest not found: #{@id}" unless File.file?(path)
 
         data = JSON.parse(File.read(path, encoding: "UTF-8"))
-        raise "transaction manifest version unsupported" unless data["version"].to_i == 1
-        raise "transaction manifest malformed" unless data["snapshots"].is_a?(Hash)
+        validate_manifest!(data)
 
         @state = data.fetch("state")
         @delivery_head_before = data["delivery_head_before"]
         @delivery_head_after = data["delivery_head_after"]
-        @paths = Array(data["paths"])
+        @paths = data.fetch("paths")
         @seen = Hash.new { |hash, key| hash[key] = [] }
-        data.fetch("seen", {}).each { |key, values| @seen[key] = Array(values) }
-        @snapshots = data["snapshots"].to_h.transform_values do |raw|
-          Snapshot.new(
-            raw["path"], raw["exists"], raw["kind"].to_sym, raw["mode"], raw["link"], raw["store"]
-          )
+        data.fetch("seen").each { |key, values| @seen[key] = values }
+        @snapshots = data.fetch("snapshots").to_h.transform_values do |raw|
+          Snapshot.new(raw["path"], raw["exists"], raw["kind"].to_sym, raw["mode"], raw["link"], raw["store"])
         end
         true
       rescue JSON::ParserError => e
         raise "transaction manifest is corrupt: #{e.message}"
+      end
+
+      # A recovery manifest is persisted local state, not authority to write
+      # arbitrary paths or to restore bytes from arbitrary files.
+      def validate_manifest!(data)
+        raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1
+        raise "transaction manifest identity mismatch" unless data["id"] == @id
+        raise "transaction manifest state unsupported" unless VALID_STATES.include?(data["state"])
+
+        raw_paths = data["paths"]
+        raise "transaction manifest paths malformed" unless raw_paths.is_a?(Array) && raw_paths.all? { |item| item.is_a?(String) }
+        paths = raw_paths.map do |item|
+          normalized = normalize(item)
+          raise "transaction manifest contains unsafe or non-canonical path: #{item}" unless normalized == item && item != "."
+
+          normalized
+        end
+        raise "transaction manifest contains duplicate paths" unless paths.uniq == paths
+
+        raw_snapshots = data["snapshots"]
+        raise "transaction manifest snapshots malformed" unless raw_snapshots.is_a?(Hash)
+        raise "transaction manifest snapshot set mismatch" unless raw_snapshots.keys.sort == paths.sort
+
+        raw_snapshots.each { |path, snapshot| validate_snapshot_record!(path, snapshot) }
+        raw_seen = data["seen"]
+        raise "transaction manifest fingerprints malformed" unless raw_seen.is_a?(Hash)
+        raw_seen.each do |path, fingerprints|
+          raise "transaction manifest fingerprint path is unsafe: #{path}" unless paths.include?(path)
+          raise "transaction manifest fingerprints malformed for #{path}" unless fingerprints.is_a?(Array) && fingerprints.all? { |item| item.is_a?(String) }
+        end
+        raise "transaction manifest is missing path fingerprints" unless (paths - raw_seen.keys).empty?
+
+        true
+      end
+
+      def validate_snapshot_record!(path, snapshot)
+        raise "transaction manifest snapshot malformed: #{path}" unless snapshot.is_a?(Hash) && snapshot["path"] == path
+        kind = snapshot["kind"]
+        exists = snapshot["exists"]
+        mode = snapshot["mode"]
+        link = snapshot["link"]
+        store = snapshot["store"]
+        valid_mode = mode.is_a?(Integer) && mode.between?(0, 0o7777)
+
+        case kind
+        when "missing"
+          valid = exists == false && mode.nil? && link.nil? && store.nil?
+        when "file"
+          expected_store = File.expand_path(File.join(@dir, "files", encoded(path)))
+          valid = exists == true && valid_mode && link.nil? && store.is_a?(String) &&
+                  File.expand_path(store) == expected_store && File.file?(expected_store)
+        when "symlink"
+          valid = exists == true && valid_mode && link.is_a?(String) && store.nil?
+        when "other"
+          valid = exists == true && valid_mode && link.nil? && store.nil?
+        else
+          valid = false
+        end
+        raise "transaction manifest snapshot invalid: #{path}" unless valid
       end
 
       def restore(path, snapshot)
