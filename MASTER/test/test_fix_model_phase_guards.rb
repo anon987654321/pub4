@@ -273,10 +273,13 @@ class TestFixModelPhaseGuards < Minitest::Test
 
     Stream.new.send(:enqueue_ranked, [["/r/early.rb", low_priority], ["/r/urgent.rb", urgent]], queue, Set.new)
 
-    assert_equal 1, queue.size
+    assert_equal 2, queue.size
     path, rows = queue.pop
     assert_equal "/r/urgent.rb", path
     assert_equal :error, rows.first[:severity]
+    deferred_path, deferred_rows = queue.pop
+    assert_equal "/r/early.rb", deferred_path
+    assert_equal Master::Fix::FixLoop::PassRunner::StreamStage::LAW_CAP - 1, deferred_rows.size
   end
 
   def test_an_unbounded_worklist_ranks_in_rolling_batches_by_default
