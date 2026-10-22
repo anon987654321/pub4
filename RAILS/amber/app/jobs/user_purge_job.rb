@@ -80,7 +80,8 @@ class UserPurgeJob < ApplicationJob
     ActiveRecord::Base.transaction do
       item_ids = Item.where(user_id: user.id).select(:id)
       outfit_ids = Outfit.where(user_id: user.id).select(:id)
-      detach_deleted_private_content(item_ids:, outfit_ids:)
+      message_ids = Message.where(sender_id: user.id).or(Message.where(recipient_id: user.id)).select(:id)
+      detach_deleted_private_content(item_ids:, outfit_ids:, message_ids:)
 
       DESTROY.each do |row|
         model = resolve!(row.fetch(:model))
@@ -93,7 +94,7 @@ class UserPurgeJob < ApplicationJob
     end
   end
 
-  def detach_deleted_private_content(item_ids:, outfit_ids:)
+  def detach_deleted_private_content(item_ids:, outfit_ids:, message_ids:)
     # Foreign-key inventory: items/outfits are referenced by content and
     # derived suggestions outside the deleted user's own associations.
     Post.where(item_id: item_ids).update_all(item_id: nil)
@@ -112,18 +113,22 @@ class UserPurgeJob < ApplicationJob
                                   .select(:id)
     if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
       Shared::Reaction.where(reactable_type: "Comment", reactable_id: private_comment_ids).find_each(&:destroy!)
+      Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids).find_each(&:destroy!)
     end
     if defined?(Shared::Notification) && Shared::Notification.table_exists?
       Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids).find_each(&:destroy!)
       Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids).find_each(&:destroy!)
       Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids).find_each(&:destroy!)
+      Shared::Notification.where(notifiable_type: "Message", notifiable_id: message_ids).find_each(&:destroy!)
     end
     if defined?(Shared::OutboundClick) && Shared::OutboundClick.table_exists?
       Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids).find_each(&:destroy!)
+      Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!)
     end
     Vote.where(votable_type: "Item", votable_id: item_ids).find_each(&:destroy!)
     Vote.where(votable_type: "Outfit", votable_id: outfit_ids).find_each(&:destroy!)
     Vote.where(votable_type: "Comment", votable_id: private_comment_ids).find_each(&:destroy!)
+    Vote.where(votable_type: "Message", votable_id: message_ids).find_each(&:destroy!)
     # These are per-user records, but Item declares them as has_one even
     # though the schema allows multiple users to reference the same item.
     # Explicitly remove every user's rows before erasing the target item.
