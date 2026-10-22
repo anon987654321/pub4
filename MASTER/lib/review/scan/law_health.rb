@@ -9,9 +9,22 @@ module Master
       module LawHealth
         module_function
 
+        # Kept until laws.yml changes on disk. annotate asks once per finding, and each Master.law call
+        # deep-copies the whole parsed laws.yml: 60ms a file, more than every law on it together.
         def measurement_only_ids
+          stat = File.stat(File.join(Master::ROOT, "data", "laws.yml"))
+          key = [stat.size, stat.ino, stat.mtime.to_r]
+          return @measurement_only_ids if @measurement_only_key == key
+
+          ids = read_measurement_only_ids
+          @measurement_only_key = key
+          @measurement_only_ids = ids
+        end
+
+        def read_measurement_only_ids
           config = Master.law("detection_calibration")
           rows = config.fetch("measurement_only", {})
+
           ids = case rows
                when Hash then rows.keys
                when Array then rows.flat_map { |row| row.is_a?(Hash) ? row.keys : Array(row) }
