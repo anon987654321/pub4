@@ -74,10 +74,43 @@ module Master
 
         def git!(*args)
           Master::Ground::LawHandshake::Admission.require!
+          refuse_sacred!(args) if args.first == "commit"
           output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
           raise "git #{args.first} failed: #{output.strip}" unless status.success?
 
           output
+        end
+
+        # Every runtime commit passes here: the fix loop's, a restructure's, a rename's and the
+        # proof's delivery. So this is the one place a sacred path is refused, whichever writer
+        # left it changed; on 2026-10-12 an autofix edited laws.yml, and the guards in front of
+        # each writer were all the protection there was.
+        def refuse_sacred!(args)
+          sacred = Master::Core::Constitution::Paths.new(root: toplevel)
+          refusal = committed_paths(args).filter_map { |path| sacred.commit_refusal(path) }.first
+          raise "git commit refused: #{refusal}" if refusal
+        end
+
+        # Absolute paths a commit takes: its pathspec file, the paths after --, or else the index.
+        def committed_paths(args)
+          named = named_paths(args)
+          # git answers --show-toplevel with the real path, so names resolve against the real root.
+          return named.reject(&:empty?).map { |path| File.expand_path(path, File.realpath(@root_path)) } if named
+
+          staged, = Master::Io::Exec.capture2("git", "-C", @root_path, "diff", "--cached", "--name-only", "-z")
+          staged.split("\0").reject(&:empty?).map { |path| File.join(toplevel, path) }
+        end
+
+        def named_paths(args)
+          listed = args.find { |arg| arg.start_with?("--pathspec-from-file=") }
+          return File.read(listed.delete_prefix("--pathspec-from-file=")).split("\0") if listed
+
+          separator = args.index { |arg| arg.match?(/\A-{2}\z/) }
+          args.drop(separator + 1) if separator
+        end
+
+        def toplevel
+          @toplevel ||= Master::Io::Exec.capture2("git", "-C", @root_path, "rev-parse", "--show-toplevel").first.strip
         end
 
         def reset_hard(ref = "origin/main")

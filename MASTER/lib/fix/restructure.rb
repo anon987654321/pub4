@@ -29,11 +29,6 @@ module Master
       MAX_FILES = 48
       MAX_DELETES = 32
       MAX_WRITES = 24
-      # What laws.yml paths.immutable names (the catalogue, the soul, the core
-      # spine), from the repository root. An effect reads them and never writes.
-      def self.immutable
-        @immutable ||= Array((Master.load_laws || {}).dig("paths", "immutable")).map { |entry| "MASTER/#{entry}" }
-      end
       REVIEW_DIFF_LINES = 800
       # Paths that mean something outside the tree. OPENBSD/etc, var, usr, home
       # and dotfiles mirror the box file for file; RAILS migrations and schema
@@ -144,8 +139,10 @@ module Master
           !path.match?(OFF_LIMITS)
       end
 
+      # soul.yml's sacred paths, as a runtime commit judges them; laws.yml has no paths.immutable.
       def immutable?(path)
-        Restructure.immutable.any? { |entry| entry.end_with?("/") ? path.start_with?(entry) : path == entry }
+        @sacred ||= Master::Core::Constitution::Paths.new(root: @root)
+        !@sacred.commit_refusal(File.join(@root, path)).nil?
       end
 
       def changed_paths

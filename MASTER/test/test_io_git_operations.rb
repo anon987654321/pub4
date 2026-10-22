@@ -219,6 +219,34 @@ class GitOperationsTest < Minitest::Test
     assert_equal ["lib/new.rb", "tracked.rb"], Master::Io::GitOperations.new(File.join(@repo, "sub")).changed_paths.sort
   end
 
+  def declare_sacred
+    write("MASTER/data/soul.yml", "absolute:\n  sacred_paths:\n    - data/\n")
+    write("MASTER/data/laws.yml", "a: 1\n")
+    write("MASTER/data/spine.yml", "spine: 1\n")
+  end
+
+  # Every runtime commit goes through git!, so a sacred path is refused there whichever
+  # writer changed it: named, listed in a pathspec file, or only staged.
+  def test_a_commit_naming_a_sacred_path_is_refused
+    declare_sacred
+
+    assert_raises(RuntimeError) { @git.commit("laws", paths: ["MASTER/data/laws.yml"]) }
+    assert_raises(RuntimeError) { @git.git!("commit", "-m", "laws", "--", "MASTER/data/laws.yml") }
+    sh("git", "add", "MASTER/data/laws.yml", chdir: @repo)
+    assert_raises(RuntimeError) { @git.git!("commit", "-m", "staged laws") }
+    assert_equal "first", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
+  end
+
+  # RatchetSponsor requires the spine ceiling beside a change that grows a tree.
+  def test_the_ratchet_ceiling_and_ordinary_paths_still_commit
+    declare_sacred
+    write("MASTER/lib/grown.rb", "# grown\n")
+
+    @git.commit("grow", paths: ["MASTER/data/spine.yml", "MASTER/lib/grown.rb"])
+
+    assert_equal "Grow", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
+  end
+
   def test_push_updates_the_remote
     write("lib/pushed.rb", "# pushed\n")
     @git.commit("pushes", paths: ["lib/pushed.rb"])

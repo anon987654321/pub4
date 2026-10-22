@@ -527,6 +527,7 @@ module Master::Core
     # without knowing how soul.yml is laid out.
     class Paths
       MANIFEST = "data/soul.yml"
+      RATCHET_CEILING = "data/spine.yml"
 
       def self.sacred_paths(root:)
         new(root:).sacred_paths
@@ -542,15 +543,10 @@ module Master::Core
 
       def sacred_paths
         @sacred_paths ||= begin
-          manifest_root = [@root, File.join(@root, "MASTER")].find do |candidate|
-            File.file?(File.join(candidate, MANIFEST))
-          end
-
           if manifest_root
             soul = YAML.safe_load_file(File.join(manifest_root, MANIFEST), aliases: true) || {}
-            prefix = manifest_root == @root ? "" : "MASTER/"
             Array(soul.dig("absolute", "sacred_paths")).map(&:to_s).map do |path|
-              entry = normalize("#{prefix}#{path}")
+              entry = normalize("#{manifest_prefix}#{path}")
               # normalize resolves the path and drops the slash that marks a subtree;
               # Constitution.immutable_hit? reads that slash to guard everything below.
               path.end_with?("/") ? "#{entry}/" : entry
@@ -572,7 +568,29 @@ module Master::Core
         true
       end
 
+      # nil when a runtime commit may carry this path, else why not. The one sacred file
+      # it may carry is the ceiling RatchetSponsor requires beside any change that grows
+      # or shrinks a tree.
+      def commit_refusal(path)
+        return if sacred_paths.empty? || !sacred?(path)
+
+        relative = normalize(path)
+        return if relative.delete_prefix(manifest_prefix) == RATCHET_CEILING
+
+        "#{relative} is sacred (soul.yml absolute.sacred_paths)"
+      rescue ArgumentError
+        "#{path} is outside #{@root}"
+      end
+
       private
+
+      def manifest_root
+        @manifest_root ||= [@root, File.join(@root, "MASTER")].find do |candidate|
+          File.file?(File.join(candidate, MANIFEST))
+        end
+      end
+
+      def manifest_prefix = manifest_root == @root ? "" : "MASTER/"
 
       def normalize(path)
         full = File.expand_path(path.to_s, @root)
