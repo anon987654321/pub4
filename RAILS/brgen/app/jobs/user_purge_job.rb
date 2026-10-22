@@ -58,6 +58,7 @@ class UserPurgeJob < ApplicationJob
     { model: "ReputationScore", key: :user_id },
     { model: "TrustSignal", key: :user_id },
     { model: "MessageReceipt", key: :user_id },
+    { model: "ConversationParticipant", key: :user_id },
     { model: "TypingIndicator", key: :user_id },
     { model: "AccountMerge", key: :user_id },
     { model: "AccountMerge", key: :guest_user_id },
