@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "pathname"
 require "yaml"
 
 module Master
@@ -8,9 +9,36 @@ module Master
     # visual graph and target selection. RAILS/apps.yml is the app registry;
     # filesystem presence alone must not invent a fourth Rails app.
     module RailsApp
-      def self.tree_target?(target, repo_root:) = relative_path(target, repo_root:).to_s.match?(/\ARAILS(?:\/|\z)/)
+      # Rails by what the tree holds, not by where it sits: a target is Rails when it is inside an app
+      # (config/application.rb) or an engine (lib/<name>/engine.rb), or below a directory that holds
+      # one, as RAILS/test and RAILS/apps.yml are. The search stops at the repository root, so a
+      # Rails project beside the checkout cannot make MASTER read as Rails.
+      def self.tree_target?(target, repo_root:)
+        root = File.expand_path(repo_root)
+        dir = File.expand_path(target.to_s, root)
+        dir = File.dirname(dir) unless File.directory?(dir)
+        return false unless dir == root || dir.start_with?("#{root}/")
 
-      def self.named_apps(repo_root:) = YAML.safe_load_file(File.join(File.expand_path(repo_root), "RAILS", "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
+        Pathname(dir).ascend.take_while { |path| path.to_s != root }.any? { |path| rails_dir?(path.to_s) }
+      end
+
+      def self.rails_dir?(dir)
+        return false unless File.directory?(dir)
+
+        app_or_engine?(dir) ||
+          Dir.children(dir).any? { |child| app_or_engine?(File.join(dir, child)) }
+      end
+
+      def self.app_or_engine?(dir)
+        File.file?(File.join(dir, "config", "application.rb")) ||
+          !Dir.glob(File.join(dir, "lib", "*", "engine.rb")).empty?
+      end
+      private_class_method :rails_dir?, :app_or_engine?
+
+      def self.named_apps(repo_root:)
+        registry = File.join(File.expand_path(repo_root), "RAILS", "apps.yml")
+        YAML.safe_load_file(registry, aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
+      end
 
       def self.app_name(target, repo_root:)
         name = relative_path(target, repo_root:)&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first

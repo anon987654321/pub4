@@ -7,6 +7,7 @@ require_relative "../../operator/gate_chain"
 require_relative "proof/reading"
 require_relative "proof/affected"
 require_relative "../../fix/gate_focus"
+require_relative "../../fix/rails_app"
 
 module Master
   module CLI
@@ -259,7 +260,7 @@ module Master
         # baseline compares are named deep in it, not in the last lines.
         def proof_runner(abs)
           chain = ::Operator::GateChain
-          if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
+          if Master::Fix::RailsApp.tree_target?(abs, repo_root: Master::REPO_ROOT)
             # The rails gates are the "source" stage. A run that named its stages
             # (MASTER_FIX_GATE_STAGES) without it asked for a source-only proof, and with
             # no apps up the rendered half could only report red.

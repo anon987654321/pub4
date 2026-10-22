@@ -7,23 +7,6 @@ require_relative "../lib/fix/rails_app"
 class TestRailsApp < Minitest::Test
   RailsApp = Master::Fix::RailsApp
 
-  def with_repository
-    Dir.mktmpdir("rails-app-registry") do |root|
-      rails = File.join(root, "RAILS")
-      FileUtils.mkdir_p(rails)
-      File.write(File.join(rails, "apps.yml"), "apps:\n  amber: {}\n  brgen: {}\n")
-
-      %w[amber brgen].each do |name|
-        app_root = File.join(rails, name)
-        FileUtils.mkdir_p(File.join(app_root, "bin"))
-        File.write(File.join(app_root, "Gemfile"), "source \"https://rubygems.org\"\n")
-        File.write(File.join(app_root, "bin", "rails"), "#!/usr/bin/env ruby\n")
-      end
-
-      yield root
-    end
-  end
-
   def test_named_apps_uses_the_canonical_registry_in_stable_order
     with_repository do |root|
       assert_equal %w[amber brgen], RailsApp.named_apps(repo_root: root)
@@ -58,6 +41,20 @@ class TestRailsApp < Minitest::Test
     end
   end
 
+# Rails is read from the tree: an engine counts, a tree-level file under RAILS counts, and a
+# Rails project beside the checkout does not make MASTER Rails.
+def test_tree_target_reads_rails_from_the_files
+  with_repository do |root|
+    FileUtils.mkdir_p(File.join(root, "RAILS", "brgen_maps", "lib", "maps"))
+    File.write(File.join(root, "RAILS", "brgen_maps", "lib", "maps", "engine.rb"), "module Maps; end\n")
+    FileUtils.mkdir_p(File.join(root, "MASTER", "lib"))
+
+    assert RailsApp.tree_target?("RAILS/brgen_maps/app/models/place.rb", repo_root: root)
+    assert RailsApp.tree_target?("RAILS/test/gate_test.rb", repo_root: root)
+    refute RailsApp.tree_target?("MASTER/lib", repo_root: root)
+  end
+end
+
   def test_invalid_app_registry_fails_loudly
     Dir.mktmpdir("rails-app-registry-invalid") do |root|
       FileUtils.mkdir_p(File.join(root, "RAILS"))
@@ -67,4 +64,24 @@ class TestRailsApp < Minitest::Test
       assert_includes error.message, "apps"
     end
   end
+
+  def with_repository
+    Dir.mktmpdir("rails-app-registry") do |root|
+      rails = File.join(root, "RAILS")
+      FileUtils.mkdir_p(rails)
+      File.write(File.join(rails, "apps.yml"), "apps:\n  amber: {}\n  brgen: {}\n")
+
+      %w[amber brgen].each do |name|
+        app_root = File.join(rails, name)
+        FileUtils.mkdir_p(File.join(app_root, "bin"))
+        File.write(File.join(app_root, "Gemfile"), "source \"https://rubygems.org\"\n")
+        File.write(File.join(app_root, "bin", "rails"), "#!/usr/bin/env ruby\n")
+        FileUtils.mkdir_p(File.join(app_root, "config"))
+        File.write(File.join(app_root, "config", "application.rb"), "module App; end\n")
+      end
+
+      yield root
+    end
+  end
+
 end
