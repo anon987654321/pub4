@@ -84,7 +84,7 @@ class TestPub4Alert < Minitest::Test
       run_alert(dir, "watch")
 
       assert_includes log(dir), "disk-home /home is 95% full"
-      assert_includes log(dir), "doas du -xk /home"
+      assert_includes log(dir), "doas /usr/local/sbin/pub4-admin disk-usage /home"
       refute_includes log(dir), "disk-root"
     end
   end
