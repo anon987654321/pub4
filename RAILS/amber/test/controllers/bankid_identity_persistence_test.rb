@@ -12,7 +12,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
     )
     callback = OmniauthCallbacksController.new
     first = nil
@@ -41,7 +41,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     legacy.require_email_verification = true
     legacy.save!
     auth = Auth.new("bankid", uid, Info.new(nil, nil),
-                    { id_info: { iss: "https://auth.bankid.no/auth/realms/prod" } })
+                    { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } })
     callback = OmniauthCallbacksController.new
 
     assert_no_difference -> { User.count } do
@@ -61,7 +61,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
     controller = ApplicationController.new
@@ -77,7 +77,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
     session_record = user.sessions.create!(user_agent: "test", ip_address: "127.0.0.1")
@@ -88,6 +88,23 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       post posts_url, params: { post: { body: "A signed-in BankID member can post without an email claim" } }
     end
     assert_redirected_to posts_url
+  end
+
+  test "BankID without the high-assurance ACR cannot bypass email verification" do
+    uid = "bankid-low-#{SecureRandom.hex(8)}"
+    auth = Auth.new(
+      "bankid",
+      uid,
+      Info.new(nil, nil),
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:low" } }
+    )
+    user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
+    identity = ExternalIdentity.find_by!(subject: uid)
+    controller = ApplicationController.new
+
+    assert_equal "account", identity.assurance_level
+    refute controller.send(:verified_bankid_identity?, user)
+    refute user.reload.email_verified?
   end
 
   test "a non-BankID identity does not inherit the email-verification exception" do
