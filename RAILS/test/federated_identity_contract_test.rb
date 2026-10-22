@@ -46,6 +46,10 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes auth, 'identity_providers: { slug: "bankid" }'
     assert_includes callback, 'when "bankid"'
     assert_includes callback, 'acr.to_s == "urn:bankid:bid" ? "verified" : "account"'
+    assert_includes callback, "assurance_level_for(auth.provider, auth:)"
+    assert_includes callback, "record.update!("
+    assert_includes read("RAILS/amber/test/controllers/bankid_identity_persistence_test.rb"),
+                    "test \"persisted BankID assurance follows the current verified token\""
     assert_includes read("RAILS/__shared/lib/omniauth/strategies/bankid.rb"), 'acr_values: "urn:bankid:bid"'
     assert_includes callback, '::ExternalIdentity.find_by(identity_provider_id: provider.id, subject: auth.uid.to_s)'
     assert_includes callback, '::ExternalIdentity.find_or_initialize_by(identity_provider_id: provider.id, subject: auth.uid.to_s)'
