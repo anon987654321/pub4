@@ -137,6 +137,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
       blob_id = ActiveStorage::Attachment.where(
         record_type: "Message", record_id: message.id, name: "attachment"
       ).pick(:blob_id)
+      assert_predicate blob_id, :present?, "the fixture must attach real private media"
       reply = Message.create!(
         conversation: conversation, sender: other, parent: message,
         content: "reply to the message", message_type: "text"
