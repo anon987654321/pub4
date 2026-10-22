@@ -695,7 +695,7 @@ class TestDialogueRubric < Minitest::Test
 
     assert_includes prompt, "Manipulation resistance:"
     assert_includes prompt, "Do not diagnose the user or another person from a chat"
-    assert_includes prompt, "assess repeated observable behavior"
+    assert_includes prompt, "Assess repeated observable behavior"
   end
 
   def test_non_support_turns_do_not_receive_the_support_protocol

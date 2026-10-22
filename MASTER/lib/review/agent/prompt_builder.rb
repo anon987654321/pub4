@@ -13,6 +13,7 @@ module Master
           \A\s*
           (?:
             and\s+then|what\s+now|what\s+next|what\s+should\s+i\s+say|what\s+do\s+i\s+do
+            |what\s+should\s+i\s+do(?:\s+(?:next|now|then))?|what\s+can\s+i\s+do
             |what\s+about\s+(?:it|this|that|him|her|them)|why|how|go\s+on|continue|tell\s+me\s+more
             |elaborate|more\s+detail|yes|no|okay|ok|that\s+makes\s+sense|what\s+do\s+you\s+mean
           )
