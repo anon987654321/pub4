@@ -47,6 +47,24 @@ class TestFixTree < Minitest::Test
     refute_includes paths, "lib/missing.rb"
   end
 
+  def test_a_parent_relative_tree_target_is_normalized_inside_the_repository
+    write("RAILS/app.rb", BODY)
+    git("add", "RAILS/app.rb")
+
+    tree = Master::Fix::Tree.new(root: @root, target: "../RAILS")
+
+    assert_equal ["RAILS/app.rb"], tree.files
+    assert_equal "RAILS", tree.metrics[:target]
+  end
+
+  def test_a_target_that_escapes_the_repository_is_rejected
+    error = assert_raises(ArgumentError) do
+      Master::Fix::Tree.new(root: @root, target: "../../outside")
+    end
+
+    assert_match(/outside repository root/, error.message)
+  end
+
   def test_a_target_narrows_the_tree
     tree = Master::Fix::Tree.new(root: @root, target: "lib")
 
