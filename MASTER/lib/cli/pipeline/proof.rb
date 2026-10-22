@@ -5,6 +5,7 @@ require "fileutils"
 require "set"
 require_relative "../../operator/gate_chain"
 require_relative "proof/reading"
+require_relative "proof/affected"
 require_relative "../../fix/gate_focus"
 
 module Master
@@ -138,9 +139,11 @@ module Master
           sha = origin_main
           kept = Proof.recall(name, sha:, repo: Master::REPO_ROOT) || stored_baseline(abs, name)
           return kept.tap { Master::Trace::Dmesg.status("gate0", "baseline kept: #{baseline_line(kept)}") } if kept
+          return if narrow_known(abs, nil)
 
           log_phase("gate0", "baseline", name) { measure_baseline(name, sha:, runner:) }.tap do |reading|
             store_baseline(abs, name:, reading:)
+            Affected.note_known_red("MASTER", reading) if abs == PROOF_ROOTS["MASTER"]
           end
         rescue StandardError => e
           raise if Pass::DEFECT_ERRORS.any? { |klass| e.is_a?(klass) }
@@ -199,18 +202,53 @@ module Master
         def proof_section(abs, baseline = nil)
           return ["proof", "proof skipped: already inside a proof run"] if ENV[PROOF_ENV] == "1"
 
-          _name, runner = proof_runner(abs)
+          known = narrow_known(abs, baseline)
+          tests = known && Affected.tests_for(repair_paths)
+          _name, runner = tests ? affected_runner(tests) : proof_runner(abs)
           return ["proof", "no proof command for #{shell_target(abs)} — nothing registered"] unless runner
 
-          ["proof", log_phase("gate0", "proof", nil) do
-            ok, out = inside_proof { runner.call }
-            reading = Reading.parse(ok, out)
-            held, verdict = Proof.judge(reading, baseline)
-            hard, soft = Master::Fix::GateTiers.split(reading.failing, target: abs)
-            @proof = { verdict:, hard:, soft:, unmeasured: reading.unmeasured.sort }
-            Master::Trace::Dmesg.status("gate0", verdict)
-            fail_stage("proof", verdict) unless held
-            [verdict, proof_body(held, out), (deliver_leftovers(abs, verdict) if held)].compact.join("\n")
+          narrow = known && (tests || baseline.nil?)
+          judge = narrow ? ->(r) { Affected.judge(r, known) } : ->(r) { Proof.judge(r, baseline) }
+          ["proof", log_phase("gate0", "proof", nil) { proof_verdict(abs, runner:, judge:, whole: tests.nil?) }]
+        end
+
+        def proof_verdict(abs, runner:, judge:, whole:)
+          ok, out = inside_proof { runner.call }
+          reading = Reading.parse(ok, out)
+          held, verdict = judge.call(reading)
+          record_proof(abs, reading, verdict:, whole: whole && held)
+
+          fail_stage("proof", verdict) unless held
+          [verdict, proof_body(held, out), (deliver_leftovers(abs, verdict) if held)].compact.join("\n")
+        end
+
+        # A whole suite that held is what the tree now leaves red, for the next narrow proof to judge by.
+        def record_proof(abs, reading, verdict:, whole:)
+          Affected.note_known_red("MASTER", reading) if whole && abs == PROOF_ROOTS["MASTER"]
+          hard, soft = Master::Fix::GateTiers.split(reading.failing, target: abs)
+          @proof = { verdict:, hard:, soft:, unmeasured: reading.unmeasured.sort }
+          Master::Trace::Dmesg.status("gate0", verdict)
+        end
+
+        # What the repair changed under this pass's root, its own and anything else written since.
+        def repair_paths = @repair_before ? Array(git.paths_since(@repair_before)) : []
+
+        # A whole-MASTER pass proves with the tests that name what it changed when it has what was red
+        # before to judge them by: its baseline if one was kept, else the tree's known-red record
+        # (Proof::Affected). Nil keeps the whole suite.
+        def narrow_known(abs, baseline)
+          return unless Affected.enabled? && abs == PROOF_ROOTS["MASTER"]
+          return Affected::Known.new(failing: baseline.failing, rows: baseline.rows) if baseline&.measured?
+
+          Affected.known_red("MASTER")
+        end
+
+        def affected_runner(tests)
+          chain = ::Operator::GateChain
+          script = "ARGV.each { |path| require File.expand_path(path) }"
+          ["MASTER tests for the changed files", lambda do
+            ok, out = chain.capture(chain::RUBY, "-Itest", "-e", script, *tests, chdir: chain::MASTER)
+            [ok, ["proof suite MASTER affected (#{tests.size} files): #{ok ? "ok" : "FAIL"}", *Array(out)]]
           end]
         end
 

@@ -233,6 +233,7 @@ module Master
           sections << ["repair", log_phase("fix0", "converge", "path #{shell}, max #{posture[:max_fix_passes]} passes") do
             run_fix(resolved)
           end]
+          @repair_before = before
           changes = changes_section(before)
           sections << ["changes", changes]
           return sections << ["proof", REPAIR_UNPROVEN] if repair_failed_without_changes?(changes)
