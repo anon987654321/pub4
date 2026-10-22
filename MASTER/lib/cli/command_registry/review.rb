@@ -156,12 +156,12 @@ module Master
           bus:,
           target:,
         ) do
-        writes_requested = writes_requested?(apply:, only:)
-        display_target = display_fix_target(target)
-        mode = writes_requested ? "write" : "read-only"
-        boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
-        with_dmesg_verbosity(raw, default: "trace") do
-          Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
+          writes_requested = writes_requested?(apply:, only:)
+          display_target = display_fix_target(target)
+          mode = writes_requested ? "write" : "read-only"
+          boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
+          with_dmesg_verbosity(raw, default: "trace") do
+            Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
         end
         targets = fix_targets(target, root:)
         ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
