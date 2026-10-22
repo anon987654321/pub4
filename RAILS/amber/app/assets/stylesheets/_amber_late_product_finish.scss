@@ -52,7 +52,7 @@ body[data-surface="luxury"] {
 body[data-surface="luxury"] .amber-editorial-nav {
   padding-block-end: 12px;
   border-color: var(--amber-rule);
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .amber-editorial-nav a {
@@ -80,11 +80,11 @@ body[data-surface="luxury"] .amber-editorial-nav a:focus-visible {
 
 body[data-surface="luxury"] .amber-masthead,
 body[data-surface="luxury"] .amber-masthead--home {
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .amber-looks {
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .amber-look {
@@ -124,7 +124,7 @@ body[data-surface="luxury"] .item-card--luxury {
   overflow: hidden;
   border: 1px solid var(--amber-rule);
   border-radius: 16px;
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .item-card--luxury .item-photo-wrap {
@@ -150,7 +150,7 @@ body[data-surface="luxury"] .item-card--luxury:nth-child(4n + 3) .item-photo-wra
 
 body[data-surface="luxury"] .item-card--luxury .item-photo {
   border-radius: 12px;
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .item-card--luxury .item-title,
@@ -184,7 +184,7 @@ body[data-surface="luxury"] .item-card--luxury nav .btn-sm:hover {
 body[data-surface="luxury"] .luxury-section {
   padding: 24px;
   border-radius: 24px;
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .btn {
@@ -208,7 +208,7 @@ body[data-surface="luxury"] select,
 body[data-surface="luxury"] textarea {
   border-color: var(--amber-rule);
   border-radius: 12px;
-  background: #fff;
+  background: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .badge,
