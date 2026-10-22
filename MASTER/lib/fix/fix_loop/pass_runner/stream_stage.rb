@@ -53,17 +53,19 @@ module Master
 
           def stream_violations(files, queue, streamed = Set.new, deadline: nil)
             flusher = ->(batch) { enqueue_ranked(batch, queue, streamed) }
-            worklist = Worklist.new(queue, rank_worklist? ? [] : nil, rank_window, flusher, 0)
+            ranked = rank_worklist?
+            worklist = Worklist.new(queue, ranked ? [] : nil, rank_window, flusher, 0)
+            # Bounded early-stop runs intentionally retain scan-order selection;
+            # ranked runs apply the allowance after priority is known per batch.
+            cap = LawCap.new(LAW_CAP, Hash.new(0)) unless ranked
             raw = []
             GateFocus.first(files).each do |path|
               break if scan_stop?(path, worklist.taken, deadline)
 
               rows = violations_for(path)
               raw.concat(rows)
-              # Rank each batch before spending its per-law allowance. Applying
-              # the cap while walking the filesystem let early low-priority files
-              # consume every slot and hide a later blocker in the same batch.
               repairs = resolve_violations(rows)
+              repairs = cap.take(repairs) if cap && !GateFocus.covers?(path)
               worklist.add([path, repairs]) unless repairs.empty?
             end
             worklist.flush
