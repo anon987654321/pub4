@@ -663,6 +663,76 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_delivery_recovery_refuses_to_finalize_if_head_moves_during_push
+    Dir.mktmpdir("master-delivery-head-race") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      id = "delivery-head-race"
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id:).begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.delivery.begin!(head_before: "parent")
+      tx.delivery.record_commit!(head_after: "commit-1")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      calls = 0
+      fake_git = Object.new
+      fake_git.define_singleton_method(:head) do
+        calls += 1
+        calls == 1 ? "commit-1" : "commit-2"
+      end
+      fake_git.define_singleton_method(:ahead_behind) { [0, 0] }
+      fake_git.define_singleton_method(:push) { true }
+      loop = Master::Fix::FixLoop.allocate
+      loop.instance_variable_set(:@root, root)
+      loop.instance_variable_set(:@git, fake_git)
+
+      result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_includes result.message, "HEAD changed during push"
+      assert Master::Fix::Transaction::Recovery.persisted?(root:, id:)
+      recovered = Master::Fix::Transaction::Recovery.load_persisted(root:, id:)
+      assert recovered.delivery.pending?
+      recovered.send(:release_lock)
+    end
+  end
+
+  def test_delivery_recovery_requires_zero_ahead_and_behind_after_push
+    Dir.mktmpdir("master-delivery-upstream-drift") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      id = "delivery-upstream-drift"
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id:).begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.delivery.begin!(head_before: "parent")
+      tx.delivery.record_commit!(head_after: "commit-1")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      fake_git = Object.new
+      fake_git.define_singleton_method(:head) { "commit-1" }
+      fake_git.define_singleton_method(:ahead_behind) { [0, 1] }
+      fake_git.define_singleton_method(:push) { true }
+      loop = Master::Fix::FixLoop.allocate
+      loop.instance_variable_set(:@root, root)
+      loop.instance_variable_set(:@git, fake_git)
+
+      result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      assert_includes result.message, "ahead=0 behind=1"
+      assert Master::Fix::Transaction::Recovery.persisted?(root:, id:)
+      recovered = Master::Fix::Transaction::Recovery.load_persisted(root:, id:)
+      assert recovered.delivery.pending?
+      recovered.send(:release_lock)
+    end
+  end
+
   private
 
   # pub4 ignores MASTER's state directory, so a fixture repo does too; without
