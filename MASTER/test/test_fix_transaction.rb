@@ -77,6 +77,32 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_does_not_overwrite_a_write_whose_owner_is_ambiguous
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      id = "unobserved-write"
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:).begin!
+
+      # Simulate a process dying between mutating a file and persisting its
+      # post-write fingerprint. Recovery cannot prove whether this was our
+      # incomplete write or another writer, so it must preserve the bytes and
+      # report a conflict instead of blindly restoring the old snapshot.
+      File.write(path, "after")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root: dir, id:)
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_includes result.message, "concurrent changes"
+      assert_equal "after", File.read(path)
+      assert Master::Fix::Transaction::Recovery.persisted?(root: dir, id:),
+             "the conflict manifest must remain for operator review"
+    end
+  end
+
   def test_checkpoint_advances_the_rollback_floor
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
