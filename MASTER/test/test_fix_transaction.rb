@@ -339,6 +339,95 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_initial_snapshot_refuses_a_source_changed_during_capture
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "source-race")
+      original_snapshot = tx.method(:snapshot)
+      tx.define_singleton_method(:snapshot) do |relative, versioned: false|
+        captured = original_snapshot.call(relative, versioned:)
+        File.write(File.join(dir, relative), "concurrent edit")
+        captured
+      end
+
+      error = assert_raises(RuntimeError) { tx.begin! }
+
+      assert_includes error.message, "source changed during initial snapshot"
+      refute tx.active?
+      assert_equal "concurrent edit", File.read(path)
+      refute Master::Fix::Transaction::Recovery.persisted?(root: dir, id: "source-race")
+      refute Dir.exist?(File.join(dir, ".master", "fix_transactions", "source-race"))
+    end
+  end
+
+  def test_enlistment_rejects_a_directory_without_corrupting_the_open_transaction
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "note.txt"), "before")
+      Dir.mkdir(File.join(dir, "assets"))
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "enlist-directory").begin!
+
+      result = tx.enlist!(["assets"])
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_equal ["note.txt"], tx.instance_variable_get(:@paths)
+      manifest = File.join(dir, ".master", "fix_transactions", tx.id, "manifest.json")
+      data = JSON.parse(File.read(manifest))
+      assert_equal ["note.txt"], data.fetch("paths")
+      assert_equal ["note.txt"], data.fetch("snapshots").keys
+      assert tx.rollback!.ok?
+      assert_equal "before", File.read(File.join(dir, "note.txt"))
+      assert Dir.exist?(File.join(dir, "assets"))
+    end
+  end
+
+  def test_checkpoint_refuses_a_file_replaced_with_a_directory_and_preserves_old_backup
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "checkpoint-directory").begin!
+      original_store = tx.instance_variable_get(:@snapshots).fetch("note.txt").store
+      original_bytes = File.binread(original_store)
+      File.delete(path)
+      Dir.mkdir(path)
+
+      result = tx.checkpoint!(["note.txt"])
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_equal original_bytes, File.binread(original_store)
+      assert_equal "before", File.binread(original_store)
+      rollback = tx.rollback!
+      refute rollback.ok?, "a concurrent filesystem type change is not safe to roll back automatically"
+      assert_equal :policy, rollback.category
+      assert Dir.exist?(path)
+    end
+  end
+
+  def test_checkpoint_uses_a_new_snapshot_generation_before_advancing_the_floor
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "checkpoint-generation").begin!
+      original_store = tx.instance_variable_get(:@snapshots).fetch("note.txt").store
+
+      File.write(path, "delivered")
+      result = tx.checkpoint!(["note.txt"])
+
+      assert result.ok?
+      current_store = tx.instance_variable_get(:@snapshots).fetch("note.txt").store
+      refute_equal original_store, current_store
+      assert_equal "delivered", File.read(current_store)
+      refute File.exist?(original_store), "the old snapshot may be deleted only after the new manifest is durable"
+
+      File.write(path, "later")
+      tx.observe!
+      assert tx.rollback!.ok?
+      assert_equal "delivered", File.read(path)
+    end
+  end
+
   def test_checkpoint_advances_the_rollback_floor
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
