@@ -39,6 +39,24 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def two_files(dir)
+    %w[ours.txt theirs.txt].map { |name| File.join(dir, name).tap { |path| File.write(path, "before") } }
+  end
+
+  def test_a_released_foreign_change_is_left_alone_and_the_rest_rolls_back
+    Dir.mktmpdir do |dir|
+      ours, theirs = two_files(dir)
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["ours.txt", "theirs.txt"], id: "release").begin!
+      File.write(ours, "after")
+      tx.observe!
+      File.write(theirs, "outside-change")
+
+      assert_equal ["theirs.txt"], tx.release!(tx.conflicts)
+      assert tx.rollback!.ok?
+      assert_equal %w[before outside-change], [File.read(ours), File.read(theirs)]
+    end
+  end
+
   def test_recovery_restores_an_open_transaction_after_post_write_observation
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")

@@ -191,6 +191,18 @@ module Master
         Result.err("transaction rollback: #{e.message}", category: :infrastructure)
       end
 
+      # Stops tracking paths that changed under the pass without its write: they are neither
+      # delivered nor rolled back, so another writer's work stays as that writer left it.
+      def release!(paths)
+        released = Array(paths).filter_map { |path| normalize(path) } & @paths
+        @paths -= released
+
+        released.each { |path| @snapshots.delete(path) && @seen.delete(path) }
+        persist!
+        emit("fix:transaction_release", id: @id, paths: released) unless released.empty?
+        released
+      end
+
       def conflicts
         @paths.reject { |path| @seen[path].include?(fingerprint(absolute(path))) }
       end

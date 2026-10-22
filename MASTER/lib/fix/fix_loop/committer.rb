@@ -86,7 +86,7 @@ module Master
             transaction = @transaction
             return Result.err("no active fix transaction", category: :infrastructure) unless transaction
 
-            paths = own_changes(owned_paths)
+            paths = own_changes(owned_paths) - release_foreign(transaction)
             return finish_empty_transaction(transaction) if paths.empty?
 
             prepared, blocked = prepare_for_delivery(transaction, message, paths)
@@ -273,26 +273,30 @@ def stage_commit_mode?
           end
         end
 
-        # Runs the two checks that can block delivery -- concurrent changes,
-        # then the same validate_paths finish_transaction always ran here --
-        # exactly once each, in the same order, with the same rollback on
-        # either failure. Returns [prepared, nil] to proceed or [nil, Result]
+        # Runs validate_paths, the check that can block delivery, exactly once,
+        # with a rollback on failure. Another writer's changes were released
+        # before it (release_foreign). Returns [prepared, nil] to proceed or [nil, Result]
         # to stop, so the caller never re-runs validate_paths (which lints
         # and re-checks intent, not a free call to repeat).
         def prepare_for_delivery(transaction, message, paths)
-          conflicts = transaction.conflicts
-          unless conflicts.empty?
-            @transaction = nil
-            transaction.rollback!
-            return [nil, Result.err("fix transaction detected concurrent changes in #{conflicts.join(", ")}", category: :policy)]
-          end
-
           prepared = validate_paths(message, paths)
           return [prepared, nil] if prepared
 
           @transaction = nil
           transaction.rollback!
           [nil, Result.err("fix transaction blocked before delivery", category: :policy)]
+        end
+
+        # A file that changed under the pass without its write belongs to another writer in the
+        # shared checkout. It is left as that writer left it and kept out of this commit; failing
+        # the whole pass for it threw away every verified fix the pass held.
+        def release_foreign(transaction)
+          foreign = transaction.release!(transaction.conflicts)
+          return foreign if foreign.empty?
+
+          Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) another writer changed: " \
+                                                  "#{foreign.first(3).join(", ")}")
+          foreign
         end
 
         def deliver_and_commit(transaction:, message:, findings:, prepared:)

@@ -130,6 +130,16 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  # These two pin the staged mode, where a fix waits for the pass to finish; checkpoint
+  # commits are the default.
+  def staging
+    previous = ENV.fetch("MASTER_FIX_COMMIT_STAGE", nil)
+    ENV["MASTER_FIX_COMMIT_STAGE"] = "1"
+    yield
+  ensure
+    previous ? ENV["MASTER_FIX_COMMIT_STAGE"] = previous : ENV.delete("MASTER_FIX_COMMIT_STAGE")
+  end
+
   def test_committer_defers_commit_until_transaction_finishes
     Dir.mktmpdir("master-committer") do |root|
       path = File.join(root, "a.rb")
@@ -171,7 +181,7 @@ class TestReliabilitySecondTranche < Minitest::Test
       committer.begin_transaction!(tx)
       File.write(path, "two\n")
 
-      assert_equal :staged, committer.commit_if_dirty("fix")
+      assert_equal :staged, staging { committer.commit_if_dirty("fix") }
       assert_empty fake_git.commits
       result = committer.finish_transaction("fix", owned_paths: [path])
 
@@ -181,38 +191,43 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
-  def test_committer_refuses_a_change_not_observed_by_master
-    Dir.mktmpdir("master-committer") do |root|
-      path = File.join(root, "a.rb")
+  # Lists the checkout's changes and refuses any commit: the pass must not commit another's edit.
+  class RefusingGit
+    def initialize(root) = @root = root
+
+    def changed_paths
+      out, status = Open3.capture2e("git", "-C", @root, "status", "--porcelain")
+      status.success? ? out.scan(/^...(.+?)\s*$/).flatten : []
+    end
+
+    def head = "head"
+    def push = true
+    def ahead_behind = [0, 0]
+    def commit(*) = raise "must not commit a concurrent edit"
+  end
+
+  def seeded(root)
+    File.join(root, "a.rb").tap do |path|
       File.write(path, "one\n")
       init_git(root)
       git(root, "add", "a.rb")
       git(root, "commit", "-m", "seed")
+    end
+  end
 
-      fake_git = Class.new do
-        def initialize(root) = @root = root
-        def changed_paths
-          out, status = Open3.capture2e("git", "-C", @root, "status", "--porcelain")
-          status.success? ? out.lines.map { |line| line[3..].to_s.strip } : []
-        end
-        def head = "head"
-        def push = true
-        def ahead_behind = [0, 0]
-        def commit(*) = raise "must not commit a concurrent edit"
-      end.new(root)
-
-      committer = Master::Fix::FixLoop::Committer.new(git: fake_git, root:)
+  def test_committer_leaves_a_change_not_observed_by_master
+    Dir.mktmpdir("master-committer") do |root|
+      path = seeded(root)
+      committer = Master::Fix::FixLoop::Committer.new(git: RefusingGit.new(root), root:)
       committer.baseline!
-      tx = Master::Fix::Transaction.new(root:, paths: [path])
-      committer.begin_transaction!(tx)
+      committer.begin_transaction!(Master::Fix::Transaction.new(root:, paths: [path]))
       File.write(path, "master-change\n")
-      committer.commit_if_dirty("fix")
+      staging { committer.commit_if_dirty("fix") }
       File.write(path, "human-change\n")
 
       result = committer.finish_transaction("fix", owned_paths: [path])
 
-      assert result.err?
-      assert_equal :policy, result.category
+      assert result.ok?, "another writer's edit no longer fails the pass"
       assert_equal "human-change\n", File.read(path)
     end
   end
