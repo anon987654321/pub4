@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require "date"
 require "digest"
 require "fileutils"
 require "json"
 require "prism"
 require "timeout"
+
 require_relative "law_timing"
 require_relative "semantic_verdicts"
 require_relative "../../review/scan/semantic_fingerprint"
@@ -222,8 +224,14 @@ module Master
           return true unless findings.empty?
           return false if semantic_sample <= 0
 
-          Digest::SHA256.hexdigest(sample_key(path))[0, 8].to_i(16) % 1000 < (semantic_sample * 1000).round
+          window = (semantic_sample * 1000).round
+          bucket = Digest::SHA256.hexdigest(sample_key(path))[0, 8].to_i(16) % 1000
+          (bucket - (rotation_day * window)) % 1000 < window
         end
+
+        # The slice moves by one window a day, so a tenth read per run covers the tree in ten days,
+        # and two scans on the same day still ask the same questions.
+        def rotation_day = Date.today.yday
 
         def semantic_sample
           return @semantic_sample_override if @semantic_sample_override

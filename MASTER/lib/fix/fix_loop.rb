@@ -130,9 +130,10 @@ module Master
 
         @pass_runner&.reset_gaps!
         @pass_runner.research_brief = nil if @pass_runner&.respond_to?(:research_brief=)
-        # An operator-requested /fix cannot finish on sampled semantic coverage.
-        # It must ask both semantic streams across the eligible corpus.
-        @pass_runner&.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
+        # A requested /fix reads every file with a cheap finding, and a rotating slice of the clean
+        # ones (Ground::ModePosture.semantic_sample), so every file is read across runs; a file read
+        # clean and unchanged is not read again (Scan::SemanticVerdicts). Reading every file on every
+        # run held the first repair for hours. MASTER_SCAN_SEMANTIC_SAMPLE=1 still reads them all.
         guidance = outcome_guidance(target:, incremental:)
         # A requested /fix lints every line of every eligible file; only an unattended run may sample.
         incremental = requested ? false : guidance.fetch(:incremental)

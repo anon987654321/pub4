@@ -310,10 +310,12 @@ session_modes:
       council: true
       autofix_llm: true
       autofix_mechanical: true
-      semantic_sample: 1.0
+      semantic_sample: 0.1
       max_fix_passes: 15
       severity_floor: warning
-      description: Default. Every Law, violations and opportunities, semantic read of every file, council at the end
+      description: >-
+        Default. Every Law, violations and opportunities; semantic read of every file with a
+        finding and a rotating tenth of the rest, the whole tree in ten days; council at the end
 
 # Read by nothing. Reference material for agents, kept
 # because it is worth reading and deleted from no-one's reach — but it does not
