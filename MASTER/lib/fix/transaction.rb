@@ -161,6 +161,7 @@ module Master
         emit("fix:transaction_paths_enlisted", id: @id, paths: added)
         Result.ok(added)
       rescue StandardError => e
+        discard_snapshots!(staged.values) if defined?(staged) && staged
         emit("fix:transaction_enlist_failed", id: @id, error: e.message)
         Result.err("transaction enlistment: #{e.message}", category: :infrastructure)
       end
@@ -733,11 +734,24 @@ module Master
 
         data = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
         return false unless data["state"] == state && data["paths"] == paths
+        return false unless data["delivery_head_before"] == @delivery_head_before
+        return false unless data["delivery_head_after"] == @delivery_head_after
+        return false unless data.fetch("snapshots", {}).keys.sort == snapshots.keys.sort
 
-        snapshots.all? do |path, item|
+        snapshots_match = snapshots.all? do |path, item|
           record = data.fetch("snapshots", {})[path]
-          record.is_a?(Hash) && record["store"] == item.store && record["kind"] == item.kind.to_s
+          expected = {
+            "path" => item.path,
+            "exists" => item.exists,
+            "kind" => item.kind.to_s,
+            "mode" => item.mode,
+            "link" => item.link,
+            "store" => item.store,
+          }
+          record == expected
         end
+        seen_matches = @seen.all? { |path, values| data.fetch("seen", {})[path] == values }
+        snapshots_match && seen_matches
       rescue StandardError
         false
       end
