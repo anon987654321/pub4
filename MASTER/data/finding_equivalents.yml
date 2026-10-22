@@ -1,0 +1,21 @@
+# Instruments that report the same problem under different names. Read by
+# Fix::ConflictResolver: on one file and line, findings that name the same
+# canonical law become one finding, so /fix decides once and the model is asked
+# once. The canonical law is kept; the others are listed on it as also:.
+#
+# Measured on the 2026-10-22 MASTER scan: LONG_LINE and Layout/LineLength fired
+# together on 2,699 lines.
+#
+# A key is a law id, or "<instrument>:<rule>" for rubocop and reek, whose rule
+# name opens the finding's message.
+LONG_LINE:
+  - rubocop:Layout/LineLength
+SMALL_FUNCTIONS:
+  - rubocop:Metrics/MethodLength
+CYCLOMATIC_COMPLEXITY:
+  - rubocop:Metrics/CyclomaticComplexity
+ABC_SIZE:
+  - rubocop:Metrics/AbcSize
+LONG_PARAMETER_LIST:
+  - rubocop:Metrics/ParameterLists
+  - reek:LongParameterList

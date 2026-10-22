@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "yaml"
 require "time"
 require_relative "severity"
 require_relative "priority"
@@ -32,8 +33,44 @@ module Master
       end
 
       def filter_findings(findings)
-        rows = findings.map { |finding| normalize(finding) }
+        rows = merge_equivalents(findings.map { |finding| normalize(finding) })
         suppress_dry_below_law_of_three(rows).then { |kept| suppress_lower_priority_laws(kept) }
+      end
+
+      EQUIVALENTS_FILE = File.expand_path("../../data/finding_equivalents.yml", __dir__)
+
+      # Alias ("rubocop:Layout/LineLength") => canonical law ("LONG_LINE"), from data/finding_equivalents.yml.
+      def self.equivalents
+        @equivalents ||= begin
+          table = YAML.safe_load_file(EQUIVALENTS_FILE) || {}
+          table.flat_map { |law, aliases| Array(aliases).map { |name| [name.to_s, law.to_s] } }.to_h.freeze
+        end
+      end
+
+      # One problem reported by two instruments on one line is one finding: the canonical law is
+      # kept, with the others listed on it as also:, so the repair is decided and asked for once.
+      def merge_equivalents(rows)
+        groups = rows.group_by { |row| [row["file"] || row["path"], row["line"], canonical_law(row)] }
+        groups.flat_map { |(*, law), group| group.size == 1 || law.nil? ? group : [merged(group, law)] }
+      end
+
+      def merged(group, law)
+        kept = group.find { |row| row["law"].to_s == law } || group.first
+        kept.merge("also" => (group - [kept]).map { |row| alias_name(row) })
+      end
+
+      def canonical_law(row)
+        name = alias_name(row)
+        table = self.class.equivalents
+        table.fetch(name) { table.value?(name) ? name : nil }
+      end
+
+      def alias_name(row)
+        law = row["law"].to_s
+        return law unless %w[rubocop reek].include?(law)
+
+        rule = row["message"].to_s[%r{\A(?:rubocop: |reek: )?([A-Z]\w+(?:/\w+)?)}, 1]
+        "#{law}:#{rule}"
       end
 
       # Would applying this fix trade the original violation for a worse one?
