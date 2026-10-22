@@ -50,10 +50,12 @@ module Master
 
       def begin!
         raise "transaction already active" if @active
+        created_dir = false
         acquire_lock
         raise "transaction id already exists: #{@id}" if File.exist?(@dir) || File.symlink?(@dir)
 
         Dir.mkdir(@dir, 0o700)
+        created_dir = true
         @paths.each do |path|
           @snapshots[path] = snapshot(path)
           raise "transaction cannot safely track unsupported filesystem object: #{path}" if @snapshots[path].kind == :other
@@ -66,7 +68,7 @@ module Master
         self
       rescue StandardError
         @active = false
-        persisted? ? release_lock : (cleanup!; release_lock)
+        persisted? || !created_dir ? release_lock : (cleanup!; release_lock)
         raise
       end
 
