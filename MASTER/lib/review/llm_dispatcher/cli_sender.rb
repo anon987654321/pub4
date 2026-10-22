@@ -198,7 +198,10 @@ CLAUDE_SESSION_ENV = {
 # edited files and ran git inside the /fix worktree on its own: it committed
 # twice there, past the verifier, the proof and the pass transaction. No
 # built-in tool and no MCP server; the dispatcher's caller does the writing.
-CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config"].freeze
+# The operator's Claude Code hooks are not MASTER's: in the 2026-10-22 trial a user Stop hook demanding
+# evidence of vps-deploy fired on every lane call, and each reply to a personal question opened by
+# explaining that no deploy had run.
+CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config", "--settings", '{"disableAllHooks":true}'].freeze
 
 # The subscription's own limit answers on stdout and exits 0. Taken as the
 # model's reply, "You've hit your session limit · resets 4:30pm" was proposed

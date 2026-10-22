@@ -28,8 +28,8 @@ module Master
 
       # Retrying reproduces it, a decision belongs to the operator, or the
       # outcome already describes a stable stop rather than a transient fault.
-      PERMANENT = %i[validation model_missing axiom_violation invalid_request budget no_api_key policy shutdown abort
-                     handler_exception crash skip human_decision plateau failed].freeze
+      PERMANENT = %i[validation model_missing axiom_violation invalid_request budget no_api_key auth_error policy
+                     shutdown abort handler_exception crash skip human_decision plateau failed].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
@@ -63,6 +63,7 @@ module Master
       llm_failure: "LLM returned unusable output",
       llm_call_failure: "LLM dispatch exception (network / SDK)",
       no_api_key: "no LLM API key configured in env",
+      auth_error: "the provider rejected the configured credentials",
       infrastructure: "system / disk / git error",
       delivery_failed: "verified work could not be published; retry the delivery step",
       human_decision: "operator decision required before work can continue",

@@ -10,10 +10,10 @@ module Master
         Unavailable = Class.new(StandardError)
 
         # `claude --print` inherits these two from a Claude Code session and
-        # hangs; unset, it answers in seconds. Text only, no tools: a narrator
-        # must not be able to touch the tree.
+        # hangs; unset, it answers in seconds. Text only, no tools and none of
+        # the operator's hooks: a narrator must not be able to touch the tree.
         SESSION_ENV = { "CLAUDECODE" => nil, "CLAUDE_CODE_ENTRYPOINT" => nil }.freeze
-        TEXT_ONLY = ["--tools", "", "--strict-mcp-config"].freeze
+        TEXT_ONLY = ["--tools", "", "--strict-mcp-config", "--settings", '{"disableAllHooks":true}'].freeze
         UNSUPPORTED_LANES = %w[grok-cli codex-cli agy web-chat].freeze
 
         def initialize(config, lanes: Master::Io::LaneSelection, runner: Master::Io::Exec)

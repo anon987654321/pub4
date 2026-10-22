@@ -438,6 +438,8 @@ end
     refute_nil tools, "the lane must pass --tools"
     assert_equal "", captured_args[tools + 1], "and pass it no tool"
     assert_includes captured_args, "--strict-mcp-config"
+    settings = captured_args[captured_args.index("--settings") + 1]
+    assert JSON.parse(settings)["disableAllHooks"], "the operator's Claude Code hooks must not run on MASTER's calls"
   end
 
   # A screenshot given to the claude lane used to be dropped: the lane sent the
