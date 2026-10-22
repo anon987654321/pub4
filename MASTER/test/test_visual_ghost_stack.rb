@@ -32,6 +32,18 @@ class VisualGhostStackContractTest < Minitest::Test
 
     def viewport(width, height, mobile:) = @viewports << [width, height, mobile]
     def navigate(url) = @navigated << url
+    def headers(*) = nil
+    def clear_cookies = nil
+    def press(*) = nil
+
+    def evaluate(script, **)
+      return "ltr" if script.include?("getComputedStyle(document.documentElement).direction")
+      return "nb" if script.include?("getAttribute('lang')")
+      return nil if script.include?("el.__gpKey")
+
+      nil
+    end
+
     def screenshot(path, capture_beyond_viewport:) = File.binwrite(path, VisualGhostStackContractTest.png(1800, 1400))
   end
 
