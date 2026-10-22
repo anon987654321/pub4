@@ -3,17 +3,18 @@
 require_relative "test_helper"
 require "open3"
 
-# Operator-only work lives in data/operator_seams.yml and nowhere else. A
-# TODO.md anywhere is a second queue; prevent the old layout returning.
+# There is one cross-tree backlog at the repository root. Structured
+# operator decisions live in operator_seams.yml; nested TODO files are second
+# work queues and must not be introduced.
 class TestSingleBacklogContract < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   SEAM_KEYS = %w[evidence id needs tree].freeze
 
-  def test_no_tracked_todo_file_exists
+  def test_only_the_root_backlog_is_tracked
     output, status = Open3.capture2("git", "-C", ROOT, "ls-files", "--", "TODO.md", "**/TODO.md")
 
     assert status.success?, "could not inspect tracked backlog paths"
-    assert_empty output.split
+    assert_equal ["TODO.md"], output.split.sort
   end
 
   def test_every_seam_names_its_tree_need_and_evidence
