@@ -89,6 +89,11 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes merger, '::ModerationFlag.where(user_id: guest_user.id).update_all(user_id: user.id)'
     assert_includes merger, "ActiveRecord::MigrationError"
     assert_includes merger, "def record_merge"
+    assert_includes merger, "def retire_guest_source"
+    assert_includes merger, "deleted_at: Time.current"
+    assert_includes merger, "email_address: \"merged-#{guest_user.id}-#{SecureRandom.hex(6)}@deleted.invalid\""
+    assert_includes merger, "password_digest: BCrypt::Password.create"
+    assert_includes merger, "guest_user.update_columns(attributes)"
     assert_includes read("RAILS/brgen/app/models/user/core_associations.rb"), "has_many :account_merges_as_guest"
     assert_includes amber_user, "has_many :account_merges_as_guest"
     assert_includes registration, "persisted_guest_for_registration"
