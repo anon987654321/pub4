@@ -45,7 +45,7 @@ class RunnerExplainTest < Minitest::Test
     sources = Dir.glob(File.expand_path("../../../MASTER/gates/**/*.{rb,yml}", __dir__)) +
               Dir.glob(File.expand_path("../../../OPENBSD/lib/**/*.rb", __dir__))
     body = sources.map { |path| File.read(path) }.join("\n")
-    documented = explain.scan(/^  (GATES?_[A-Z_]+|VISUAL_CAPTURE)\s/).flatten
+    documented = explain.scan(/^  (GATES?_[A-Z_]+|VISUAL_[A-Z_]+)\s/).flatten
     assert_operator documented.size, :>=, 8, "the switch list was not parsed"
     unread = documented.reject do |var|
       body.match?(/(?:ENV|env)(?:\[|\.fetch\()"#{var}"|flag\?\("#{var}"|^\s+#{var}: \w/)

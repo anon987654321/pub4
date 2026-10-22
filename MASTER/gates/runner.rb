@@ -180,13 +180,15 @@ def explain
     puts format("  %-24s %s", name, pass ? "pass: #{pass}" : "script: #{row['script'] || 'registered'}")
   end
   puts "  GATE_AUDITOR_STRICT advisory"
-
   puts "  GATE_STRICT_INCONCLUSIVE blocks inconclusive gates"
   puts "  GATE_STRICT_ERRORS blocks errored gates"
   puts "  GATE_STRICT_SOFT promotes soft failures"
   puts "  GATES_FILE selects the gate registry"
   puts "  GATE_AUTOFIX controls gate autofix where supported"
-  puts "  VISUAL_CAPTURE controls visual capture where supported"
+  puts "  GATE_SURFACES narrows the rendered surfaces to the named prefixes"
+  puts "  GATE_SNAPSHOT_UPDATE rewrites layout snapshots instead of comparing them"
+  puts "  VISUAL_STRICT fails on accessibility and console findings instead of warning"
+  puts "  VISUAL_DRIFT_MAX_RATIO fails pixel drift above this ratio"
 end
 
 def ledger_report
