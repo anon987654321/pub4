@@ -92,9 +92,14 @@ module Master
         raise
       end
 
-      def observe!
+      def observe!(verify_snapshot: false)
         @paths.each do |path|
-          @seen[path] << fingerprint(absolute(path))
+          current = fingerprint(absolute(path))
+          if verify_snapshot && !snapshot_matches_fingerprint?(path, @snapshots.fetch(path), current)
+            raise "transaction source changed during initial snapshot: #{path}"
+          end
+
+          @seen[path] << current
           @seen[path] = @seen[path].uniq.last(8)
         end
         persist! if @active
@@ -128,7 +133,14 @@ module Master
         new_paths = (@paths + added).uniq
         new_snapshots = @snapshots.merge(staged)
         new_seen = duplicate_seen
-        added.each { |path| new_seen[path] = [fingerprint(absolute(path))] }
+        added.each do |path|
+          current = fingerprint(absolute(path))
+          unless snapshot_matches_fingerprint?(path, staged.fetch(path), current)
+            discard_snapshots!(staged.values)
+            return Result.err("transaction source changed during enlistment: #{path}", category: :policy)
+          end
+          new_seen[path] = [current]
+        end
 
         @paths = new_paths
         @snapshots = new_snapshots
@@ -158,7 +170,9 @@ module Master
       def observe_paths!(paths)
         raise "transaction not active" unless @active
 
-        selected = Array(paths).filter_map { |path| normalize(path) }.uniq
+        selected = Array(paths).map { |path| normalize(path) }
+        raise "observation includes an unsafe path" if selected.any?(&:nil?)
+        selected = selected.uniq
         raise "observation includes a path outside the transaction" unless (selected - @paths).empty?
 
         selected.each do |path|
@@ -644,13 +658,53 @@ module Master
         true
       end
 
+      def duplicate_seen
+        copy = Hash.new { |hash, path| hash[path] = [] }
+        @seen.each { |path, values| copy[path] = values.dup }
+        copy
+      end
+
+      def snapshot_matches_fingerprint?(path, snapshot, current)
+        case snapshot.kind
+        when :missing
+          current == "missing"
+        when :file
+          current == "file:#{Digest::SHA256.file(snapshot.store)}"
+        when :symlink
+          absolute_path = absolute(path)
+          stat = File.lstat(absolute_path)
+          stat.symlink? && (stat.mode & 0o7777) == snapshot.mode && File.readlink(absolute_path) == snapshot.link
+        else
+          false
+        end
+      rescue StandardError
+        false
+      end
+
+      def persisted_state_matches?(state:, paths:, snapshots:)
+        manifest_path = File.join(@dir, MANIFEST)
+        return false if File.symlink?(manifest_path) || !File.file?(manifest_path)
+
+        data = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
+        return false unless data["state"] == state && data["paths"] == paths
+
+        snapshots.all? do |path, item|
+          record = data.fetch("snapshots", {})[path]
+          record.is_a?(Hash) && record["store"] == item.store && record["kind"] == item.kind.to_s
+        end
+      rescue StandardError
+        false
+      end
+
       def discard_snapshots!(snapshots)
         root = File.expand_path(File.join(@dir, "files"))
+        referenced = @snapshots.values.filter_map(&:store).map { |path| File.expand_path(path) }.to_set
         Array(snapshots).each do |item|
           next unless item&.kind == :file && item.store
 
           path = File.expand_path(item.store)
           next unless File.dirname(path) == root
+          next if referenced.include?(path)
 
           File.delete(path) if File.file?(path) || File.symlink?(path)
         rescue SystemCallError
