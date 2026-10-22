@@ -412,7 +412,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     styles = File.join(root, "RAILS", "__shared", "app", "assets", "stylesheets")
     wrapper = File.read(File.join(styles, "_components.scss"))
     names = %w[forms overlays feedback fields progress_and_uploads content_controls]
-    uses = wrapper.scan(/@use "components\\/([^"]+)"/).flatten
+    uses = wrapper.scan(/@use "components\/([^"]+)"/).flatten
     ceiling = Shared::FrontendLawSet::TYPOGRAPHY.fetch(:max_css_file_lines)
 
     assert_equal names, uses, "the wrapper's module order is part of the existing cascade"
