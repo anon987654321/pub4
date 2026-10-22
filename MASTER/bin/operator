@@ -243,7 +243,8 @@ when "measure"
     Master::Trace::Dmesg::Report.print("measure", Operator::Ratchets.since(since))
     exit 0
   end
-  rows = Operator::Ratchets.all(deep:)
+  trees = ARGV.filter_map { |arg| arg[/\A--trees=(.+)\z/, 1] }.flat_map { |value| value.split(",") }
+  rows = Operator::Ratchets.all(deep:, trees: trees.empty? ? nil : trees)
   require_relative "../lib/review/council/inter_model_contract"
   Master::Trace::Dmesg.status(
     "intermodel0",

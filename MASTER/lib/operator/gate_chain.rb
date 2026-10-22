@@ -496,7 +496,7 @@ module Operator
         openbsd_stage(trees:),
         rehearse_stage(trees:),
         suites_stage(trees:),
-        ratchets_stage,
+        ratchets_stage(trees:),
         sprawl_stage(scan_only:),
         council_stage(scan_only:, trees:),
       ].compact
@@ -561,12 +561,16 @@ module Operator
       "complete test suites over #{scope}"
     end
 
-    def ratchets_stage
+    # A narrower gate measures only its trees' ceilings: a MASTER proof spent fifteen
+    # minutes scanning every RAILS view for design_baseline, which no MASTER edit moves.
+    def ratchets_stage(trees:)
+      scope = trees == TREES ? [] : ["--trees=#{trees.join(",")}"]
+
       Stage.new(
         name: "ratchets",
         purpose: "every recorded ceiling, current beside it",
         mutates: false,
-        run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") },
+        run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep", *scope) },
       )
     end
 

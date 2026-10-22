@@ -91,14 +91,22 @@ module Operator
 
     module_function
 
-    def all(deep: false)
-      rows = spine_rows + master_yaml_rows + rails_lint_rows + pub4_growth_rows +
-             entrypoint_rows + command_rows + name_rows + file_length_rows + coverage_rows
+    # trees, when given, leaves out the RAILS-only rows unless RAILS is named: the
+    # lint ceilings, the CSS gates and design_baseline, which scans every view.
+    def all(deep: false, trees: nil)
+      rails = trees.nil? || trees.include?("RAILS")
+      rows = fast_rows(rails:)
+
       # The placeholders only when the real numbers are not being fetched, or
       # every css_budget rule would appear twice under --deep.
-      rows += deep ? css_constitution_rows : css_budget_rows
-      rows += deep_rows if deep
+      rows += deep && rails ? css_constitution_rows : css_budget_rows
+      rows += deep_rows(rails:) if deep
       rows.compact
+    end
+
+    def fast_rows(rails:)
+      spine_rows + master_yaml_rows + (rails ? rails_lint_rows : []) + pub4_growth_rows +
+        entrypoint_rows + command_rows + name_rows + file_length_rows + coverage_rows
     end
 
     # Rules that reach no detector, and files that declare no namespace. Both
@@ -657,7 +665,7 @@ end
       File.file?(path) ? YAML.safe_load_file(path).fetch("rules") : {}
     end
 
-def deep_rows
+def deep_rows(rails: true)
   # This ceiling belongs to the principle map, not this presentation layer.
   law_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "laws.yml")).dig("law_map", "law_trace_ceiling")
 
@@ -674,9 +682,11 @@ def deep_rows
                   /law_trace: (\d+)[\/ ]/, law_trace_ceiling),
         # Deep because it scans every RAILS view and stylesheet with the full
         # design rule set — the layout campaign's ratchet (2026-08-21).
-        shell_row("design_baseline", "MASTER", "bundle exec ruby tools/audit/design_baseline.rb",
-                  /design_baseline: (\d+) violation/,
-                  YAML.safe_load_file(File.join(MASTER, "data/design_baseline.yml")).fetch("total", nil)),
+        (if rails
+           shell_row("design_baseline", "MASTER", "bundle exec ruby tools/audit/design_baseline.rb",
+                     /design_baseline: (\d+) violation/,
+                     YAML.safe_load_file(File.join(MASTER, "data/design_baseline.yml")).fetch("total", nil))
+         end),
       ].compact
     end
     def shell_row(name, dir, command, pattern, ceiling)

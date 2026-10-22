@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+# Through the helper, which boots the bundle: bare minitest is the system 6.x, which has no mock.
+require_relative "test_helper"
 require "minitest/mock"
 require "tmpdir"
 require "fileutils"
@@ -30,6 +31,25 @@ class TestRatchets < Minitest::Test
   def rows = self.class.rows
 
   def readable = rows.reject { |row| row.current.nil? || row.ceiling.nil? }
+
+  QUIET = %i[spine_rows master_yaml_rows pub4_growth_rows entrypoint_rows command_rows
+             name_rows file_length_rows coverage_rows css_budget_rows].freeze
+  RAILS_ONLY = %i[rails_lint_rows css_constitution_rows].freeze
+
+  def with_stubs(names, value, &block)
+    return block.call if names.empty?
+
+    Operator::Ratchets.stub(names.first, value) { with_stubs(names.drop(1), value, &block) }
+  end
+
+  # A MASTER-only gate measures no RAILS ceiling: a MASTER proof spent fifteen minutes on them.
+  def test_a_tree_scope_leaves_the_rails_rows_unmeasured
+    rails_measured = ->(*) { flunk "a RAILS row was measured for a MASTER scope" }
+
+    with_stubs(QUIET, []) do
+      with_stubs(RAILS_ONLY, rails_measured) { assert_empty Operator::Ratchets.all(trees: ["MASTER"]) }
+    end
+  end
 
   def test_law_trace_reads_the_recorded_ceiling
     row = rows.find { |candidate| candidate.name == "law_trace" }
