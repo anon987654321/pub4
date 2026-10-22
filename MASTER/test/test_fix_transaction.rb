@@ -129,6 +129,17 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_transaction_rejects_paths_outside_its_workspace_instead_of_dropping_them
+    Dir.mktmpdir do |dir|
+      error = assert_raises(RuntimeError) do
+        Master::Fix::Transaction.new(root: dir, paths: ["../outside.txt"], id: "outside-path")
+      end
+
+      assert_includes error.message, "transaction contains an unsafe path"
+      refute File.exist?(File.join(dir, ".master", "fix_transactions", "outside-path"))
+    end
+  end
+
   def test_transaction_refuses_a_path_through_a_symlinked_parent
     Dir.mktmpdir do |base|
       root = File.join(base, "repo")
