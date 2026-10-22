@@ -1044,11 +1044,13 @@ end
   end
 
   def test_fix_reports_execution_trace_failure_as_validation_error
-    fake_trace = Struct.new(:clean?, :summary, :failures).new(
+    trace_result = Struct.new(:clean?, :summary, :failures).new(
       false,
       "execution_trace: failed",
       ["MASTER/test/broken.rb: syntax failed: Prism::ParseError"],
     )
+    fake_trace = Object.new
+    fake_trace.define_singleton_method(:run) { trace_result }
 
     fix_loop = Object.new
     fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
