@@ -78,6 +78,7 @@ Minitest::Test.class_eval do
   def test_timeout = MASTER_TEST_TIMEOUT
 
   def run(*args)
+    watchdog = overrun_watchdog(Thread.current)
     Timeout.timeout(test_timeout) { run_without_timeout(*args) }
   rescue Timeout::Error
     failed_with(Timeout::Error.new("timed out after #{test_timeout}s"))
@@ -86,6 +87,18 @@ Minitest::Test.class_eval do
   rescue SystemExit => e
     origin = e.backtrace&.find { |line| !line.include?("/gems/") }
     failed_with(RuntimeError.new("called exit(#{e.status}) at #{origin}"))
+  ensure
+    watchdog&.kill
+  end
+
+  # A timeout that cannot land (an ensure joining worker threads) let TestRatchets run thirty
+  # minutes past its five, in silence. Past its limit, the test says where it is stuck.
+  def overrun_watchdog(test_thread)
+    Thread.new do
+      sleep test_timeout + 30
+      $stderr.puts "test0: #{self.class}##{name} still running #{test_timeout + 30}s in, past its #{test_timeout}s"
+      test_thread.backtrace.to_a.first(12).each { |line| $stderr.puts "test0:   #{line}" }
+    end
   end
 
   # Minitest 5.27 requires run to return a Result; handing back the test itself raised
