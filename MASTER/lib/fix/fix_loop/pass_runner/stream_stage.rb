@@ -61,7 +61,10 @@ module Master
 
               rows = violations_for(path)
               raw.concat(rows)
-              repairs = GateFocus.covers?(path) ? resolve_violations(rows) : cap.take(resolve_violations(rows))
+              # Rank each batch before spending its per-law allowance. Applying
+              # the cap while walking the filesystem let early low-priority files
+              # consume every slot and hide a later blocker in the same batch.
+              repairs = resolve_violations(rows)
               worklist.add([path, repairs]) unless repairs.empty?
             end
             worklist.flush
@@ -131,6 +134,15 @@ module Master
             ordered = ranked.sort_by do |path, rows|
               peak, total, count = worklist_priority(rows)
               [GateFocus.covers?(path) ? 0 : 1, -peak, -total, -count, path]
+            end
+
+            # The stream intentionally starts repairs before the whole corpus has
+            # been scanned. Enforce the law allowance within each ranked batch,
+            # after priority is known, so scan order cannot starve urgent findings.
+            cap = LawCap.new(LAW_CAP, Hash.new(0))
+            ordered = ordered.filter_map do |path, rows|
+              selected = GateFocus.covers?(path) ? rows : cap.take(rows)
+              [path, selected] unless selected.empty?
             end
 
             limit = RunLedger.max_files
