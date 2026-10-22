@@ -5,6 +5,7 @@ require "json"
 require_relative "../io/exec"
 require "tmpdir"
 require_relative "../review/council/critique"
+require_relative "rails_app"
 require_relative "rails_visual_graph"
 require_relative "visual_usability"
 require_relative "visual_reference"
@@ -451,8 +452,7 @@ module Master
       end
 
       def rails_target?(target)
-        relative = repo_relative(target)
-        relative == "RAILS" || relative.start_with?("RAILS/")
+        RailsApp.tree_target?(target, repo_root:)
       end
 
       # /fix passes MASTER's own directory, so the repository is its parent.
