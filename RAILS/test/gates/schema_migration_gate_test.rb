@@ -159,9 +159,9 @@ class SchemaMigrationGateTest < Minitest::Test
   def test_amber_schema_matches_the_latest_identity_migrations
     repo = File.expand_path("../../..", __dir__)
     migration_paths = Dir.glob(File.join(repo, "RAILS/amber/db/migrate/*.rb"))
-    latest = migration_paths.filter_map { |path| File.basename(path)[/\\A\\d+/] }.max
+    latest = migration_paths.filter_map { |path| File.basename(path)[/\A\d+/] }.max
     schema = File.read(File.join(repo, "RAILS/amber/db/schema.rb"))
-    version = schema[/define\\(version:\\s*([\\d_]+)\\)/, 1]&.delete("_")
+    version = schema[/define\(version:\s*([\d_]+)\)/, 1]&.delete("_")
 
     assert_equal latest, version, "Amber's schema must be dumped at the latest migration version"
 
@@ -174,7 +174,7 @@ class SchemaMigrationGateTest < Minitest::Test
       definition = schema.match(/^  create_table "#{Regexp.escape(table)}".*?^  end/m)
       refute_nil definition, "schema is missing #{table}"
       columns.each do |column|
-        assert_match(/^    t\\.\\w+ "#{Regexp.escape(column)}"/, definition[0],
+        assert_match(/^    t\.\w+ "#{Regexp.escape(column)}"/, definition[0],
                      "#{table} is missing #{column}")
       end
     end
