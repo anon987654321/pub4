@@ -228,21 +228,26 @@ class TestScanner < Minitest::Test
     end
   end
 
-  def test_semantic_rule_skipped_when_static_errors_exist
+  def recording_semantic_law(ran)
+    law = Class.new
+    law.define_method(:id) { "semantic" }
+    law.define_method(:check) { |_code, path:| ran << path && [] }
+    law.new
+  end
+
+  def test_semantic_rule_still_runs_when_static_errors_exist
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
-      semantic = Class.new do
-        def id = "semantic"
-        def check(_code, path:) = raise "semantic should not run"
-      end.new
+      ran = []
       static_error = build_rule(findings: [{ law: "STATIC", severity: :error, line: 1, message: "stop" }])
-      scanner = Master::Fix::Scanner.new(laws: [static_error, semantic])
+      scanner = Master::Fix::Scanner.new(laws: [static_error, recording_semantic_law(ran)])
 
       result = scanner.scan(path)
 
       assert result.ok?
       assert_equal ["STATIC"], result.value!.map { |finding| finding[:law] }
+      assert_equal [path], ran, "a static error hid the semantic read of the same file"
     end
   end
 
