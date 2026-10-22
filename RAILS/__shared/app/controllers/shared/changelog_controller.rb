@@ -23,6 +23,7 @@ module Shared
         permitted_classes: [Date],
         aliases: false
       )
+
       render template: "shared/changelog", layout: "application"
     end
   end

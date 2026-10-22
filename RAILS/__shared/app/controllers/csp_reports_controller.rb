@@ -10,6 +10,7 @@ class CspReportsController < ActionController::API
   # Browsers post these unauthenticated, cross-origin, with no CSRF token and
   # with content-type application/csp-report.
   skip_forgery_protection if respond_to?(:skip_forgery_protection)
+
   include Shared::WriteThrottle
 
   MAX_BYTES = 8_192
@@ -29,6 +30,7 @@ class CspReportsController < ActionController::API
       "document=#{report['document-uri'].to_s.first(200)} " \
       "line=#{report['line-number']}",
     )
+
     head :no_content
   end
 end

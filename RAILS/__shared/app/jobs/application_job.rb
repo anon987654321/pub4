@@ -9,6 +9,7 @@ class ApplicationJob < ActiveJob::Base
   # raised AssociationNotFoundError on a name that does not exist, and every
   # scheduled run spent three attempts proving that again.
   retry_on ActiveRecord::Deadlocked, wait: :polynomially_longer, attempts: 3
+
   retry_on ActiveRecord::LockWaitTimeout, wait: 2.seconds, attempts: 3
   retry_on Net::OpenTimeout, Net::ReadTimeout, wait: 5.seconds, attempts: 3
   retry_on Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::EHOSTUNREACH, wait: 5.seconds, attempts: 3

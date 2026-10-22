@@ -14,6 +14,7 @@ module Shared
   # snapshots off the box, for true disaster recovery.
   class DatabaseSnapshotJob < ApplicationJob
     queue_as :bulk
+
     KEEP = 7
 
     def perform

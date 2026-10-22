@@ -5,6 +5,7 @@ module Shared
     # @stimulus-components/character-counter — countdown mode with maxlength.
     def character_counter_field(form, method, max:, **options)
       rows = options.delete(:rows)
+
       wrapper = tag.div(
         data: {
           controller: "character-counter",

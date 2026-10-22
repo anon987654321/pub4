@@ -8,6 +8,7 @@ class FleetHealthController < ActionController::API
       queue: queue_ok?,
       cable: cable_ok?,
     }
+
     critical = %i[database]
     critical_ok = critical.all? { |key| checks[key] }
     status = critical_ok ? (checks.values.all? ? "ok" : "degraded") : "unavailable"
@@ -32,6 +33,7 @@ class FleetHealthController < ActionController::API
   # Solid Cache.
   def cache_ok?
     token = SecureRandom.hex(8)
+
     Rails.cache.write("_fleet_health_probe", token, expires_in: 10)
     Rails.cache.read("_fleet_health_probe") == token
   rescue StandardError

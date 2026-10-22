@@ -46,6 +46,7 @@ module Shared
     # document. suggestions names the slot for the no-match terms the same way.
     def live_search_results(frame_id:, results_partial:, label:, target: "live_search_results", suggestions: nil)
       slot = suggestions ? tag.div(id: suggestions) : "".html_safe
+
       frame = turbo_frame_tag(frame_id, data: { turbo_action: "replace" }) do
         tag.div(render(results_partial), id: target, role: "region", aria: { label: "#{label} results" })
       end

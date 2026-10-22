@@ -36,6 +36,7 @@ module Shared
     def render_http_error(status, error, **details)
       respond_to do |format|
         format.html { render_static_error_page(status) }
+
         format.json { render json: { error: }.merge(details), status: }
         format.turbo_stream { head status }
         format.any { head status }

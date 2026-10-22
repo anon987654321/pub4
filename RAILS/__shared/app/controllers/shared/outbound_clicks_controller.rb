@@ -36,6 +36,7 @@ module Shared
         epi: params[:epi],
         user: Current.try(:user),
       )
+
       head :no_content
     rescue StandardError => e
       # A failed measurement must never be visible to the visitor: they clicked a

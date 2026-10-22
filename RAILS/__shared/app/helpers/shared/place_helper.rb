@@ -17,6 +17,7 @@ module Shared
   # inviting someone to triangulate.
   module PlaceHelper
     NEAR_KM = 1
+
     FAR_KM = 20
 
     def distance_stamp(record, viewer: Current.user)

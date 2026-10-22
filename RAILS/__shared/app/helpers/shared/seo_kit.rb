@@ -58,6 +58,7 @@ module Shared
         params = URI.decode_www_form(uri.query.to_s).to_h
         params["tag"] = AMAZON_TAG
         uri.query = URI.encode_www_form(params)
+
         uri.to_s
       else
         "https://www.amazon.com/dp/#{target}?tag=#{AMAZON_TAG}"

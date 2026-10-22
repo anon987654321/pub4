@@ -26,6 +26,7 @@ module SchemaHelper
   # ItemList for category / search result pages (marketplace index, etc.)
   def offer_schema(deal)
     listing = deal.try(:listing)
+
     {
       "@context" => "https://schema.org",
       "@type" => "Offer",
@@ -43,6 +44,7 @@ module SchemaHelper
     # Load once: `size` on an unloaded relation is a COUNT round-trip, and the
     # `.any?` most call sites guard with is a third.
     items = items.to_a
+
     {
       "@context" => "https://schema.org",
       "@type" => "ItemList",
@@ -81,6 +83,7 @@ module SchemaHelper
   # fallback. A leftover path is then joined to request.base_url.
   def schema_url_for(resource)
     href = (record_public_href(resource) if respond_to?(:record_public_href)).presence
+
     href ||= begin
       polymorphic_url(resource)
     rescue StandardError # scan: intentional — the schema omits what it cannot resolve
@@ -155,6 +158,7 @@ module SchemaHelper
 
   def article_schema(post)
     body = post.try(:content) || post.try(:body)
+
     {
       "@context" => "https://schema.org",
       "@type" => "Article",
@@ -204,6 +208,7 @@ module SchemaHelper
 
   def local_business_schema(place)
     pin = place.try(:place)
+
     {
       "@context" => "https://schema.org",
       "@type" => "LocalBusiness",
@@ -253,6 +258,7 @@ module SchemaHelper
     }
     latitude = event.try(:latitude)
     longitude = event.try(:longitude)
+
     if latitude.present? && longitude.present?
       location["geo"] = {
         "@type" => "GeoCoordinates",
@@ -315,6 +321,7 @@ module SchemaHelper
     track_rel = playlist.respond_to?(:tracks) ? playlist.tracks : []
     track_rel = track_rel.unexpired if track_rel.respond_to?(:unexpired)
     tracks = track_rel.respond_to?(:limit) ? track_rel.limit(50) : Array(track_rel).first(50)
+
     {
       "@context" => "https://schema.org",
       "@type" => "MusicPlaylist",

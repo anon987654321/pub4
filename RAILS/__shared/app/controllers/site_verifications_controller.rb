@@ -29,6 +29,7 @@ class SiteVerificationsController < ApplicationController
   # Ownership proof has to be reachable by a crawler with no session, and it
   # predates any consent the app asks for.
   skip_before_action :authenticate_user!, raise: false
+
   skip_before_action :verify_authenticity_token, raise: false
   allow_browser versions: :modern, block: -> { } if respond_to?(:allow_browser)
 

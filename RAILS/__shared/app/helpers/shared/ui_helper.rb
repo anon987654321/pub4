@@ -22,6 +22,7 @@ module Shared
     # have no Conversation model and should keep the handoff.
     def ambient_chat_frame_path
       return nearby_widget_path if respond_to?(:nearby_widget_path)
+
       return main_app.nearby_widget_path if respond_to?(:main_app) && main_app.respond_to?(:nearby_widget_path)
       return messages_widget_path if respond_to?(:messages_widget_path)
       return main_app.messages_widget_path if respond_to?(:main_app) && main_app.respond_to?(:messages_widget_path)
@@ -164,6 +165,7 @@ module Shared
     # does not have.
     def comment_destroy_arg(comment)
       parent = comment.try(:commentable)
+
       return comment unless parent.present? && parent.persisted?
 
       nested = :"#{parent.model_name.singular_route_key}_#{comment.model_name.singular_route_key}"
@@ -181,6 +183,7 @@ module Shared
 
     def comment_children(comment)
       klass = comment.class
+
       if klass.respond_to?(:best)
         klass.where(parent_id: comment.id).best
       elsif comment.respond_to?(:replies)
@@ -245,6 +248,7 @@ module Shared
     # main_app.url_for because those views render inside an isolated engine.
     def lazy_image_tag(source, alt:, blurhash: nil, **options)
       image_options = reserved_image_options(source, options, loading: "lazy")
+
       blurhash ||= source.try(:blurhash) || source.try(:blob).try(:blurhash) || source.try(:metadata).try(:[], "blurhash")
       image_options[:data] = (image_options[:data] || {}).merge(
         controller: "lazy-image",
@@ -272,6 +276,7 @@ module Shared
       blurhash = nil unless loading.to_s == "lazy"
 
       through_main_app = ->(variant) { main_app.url_for(variant) }
+
       responsive_picture_tag(
         attachment,
         alt: alt,
@@ -305,6 +310,7 @@ module Shared
     #                omitted, image_tag receives the variant itself
     def responsive_picture_tag(attachment, alt:, widths:, sizes:, srcset_url:, img_src: nil, blurhash: nil, **image_options)
       widths = Array(widths).map(&:to_i).uniq.sort
+
       largest = attachment.variant(resize_to_limit: [ widths.last, widths.last ])
       webp_srcset = widths.map do |width|
         "#{srcset_url.call(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
