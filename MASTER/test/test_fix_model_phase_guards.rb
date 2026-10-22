@@ -323,6 +323,48 @@ class TestFixModelPhaseGuards < Minitest::Test
     previous_limit ? ENV["MASTER_FIX_MAX_FILES"] = previous_limit : ENV.delete("MASTER_FIX_MAX_FILES")
   end
 
+  # Ranks in batches of two and records how many files were already queued as each file is read.
+  class Windowed < Scanning
+    attr_reader :queued_at_read, :stream_stopped_at
+
+    def initialize
+      super
+      @queued_at_read = []
+    end
+
+    def scan(files, queue, deadline: nil)
+      @queue = queue
+      stream_violations(files, queue, deadline:)
+    end
+
+    def rank_window = 2
+    def rank_worklist? = true
+
+    def violations_for(path)
+      @queued_at_read << @queue.size
+      super
+    end
+  end
+
+  def test_an_unbounded_scan_queues_repairs_before_it_finishes
+    queue = Queue.new
+    scan = Windowed.new
+
+    scan.scan(%w[/r/a.rb /r/b.rb /r/c.rb /r/d.rb], queue)
+
+    assert_equal [0, 0, 2, 2], scan.queued_at_read, "the first batch was queued while the scan went on"
+    assert_equal 4, queue.size
+  end
+
+  def test_the_scan_stops_at_the_run_deadline
+    scan = Windowed.new
+
+    scan.scan(%w[/r/a.rb /r/b.rb], Queue.new, deadline: Time.at(0))
+
+    assert_empty scan.scanned
+    assert_equal "/r/a.rb", scan.stream_stopped_at
+  end
+
   def test_a_limited_run_does_not_wait_for_a_ranked_scan
     previous = ENV["MASTER_FIX_RANK"]
     ENV.delete("MASTER_FIX_RANK")

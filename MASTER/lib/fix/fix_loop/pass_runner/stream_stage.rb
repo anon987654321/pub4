@@ -6,9 +6,9 @@ module Master
   module Fix
     class FixLoop
       class PassRunner
-        # An unbounded operator-requested run completes the eligible finding
-        # scan before repairs start, then queues files by impact. This replaces
-        # alphabetical/easiest-first selection with a traceable importance order.
+        # An unbounded operator-requested run ranks findings by impact in batches
+        # of RANK_WINDOW files and queues each batch as it is read, so repairs run
+        # while the scan continues.
         # An explicit --max-files cap retains early-stop behavior unless
         # MASTER_FIX_RANK=1 requests full-scan ranking under that cap.
         module StreamStage
@@ -38,8 +38,8 @@ module Master
             streamed = Set.new
             queue = Queue.new
             @stream_stopped_at = nil
-            workers = start_workers(queue, streamed, pass, [Time.now + PASS_BUDGET_SECONDS, deadline].min)
-            found = stream_violations(files, queue, streamed)
+            workers = start_workers(queue, streamed, pass, deadline)
+            found = stream_violations(files, queue, streamed, deadline:)
             WORKERS.times { queue << :done }
             finish_stream(workers.sum(&:value), found, files, pass)
             found = refresh_streamed_findings(found, streamed)
@@ -50,29 +50,55 @@ module Master
             stop_workers(queue, workers)
           end
 
-          def stream_violations(files, queue, streamed = Set.new)
+          def stream_violations(files, queue, streamed = Set.new, deadline: nil)
+            flusher = ->(batch) { enqueue_ranked(batch, queue, streamed) }
+            worklist = Worklist.new(queue, rank_worklist? ? [] : nil, rank_window, flusher, 0)
             raw = []
-            ranked = []
-            rank = rank_worklist?
-            limit = rank ? nil : RunLedger.max_files
-            taken = 0
             files.each do |path|
-              # A limited run stops reading once it holds its files: the semantic scan
-              # costs a model call or more per file, and reading all of a 1,666-file
-              # tree first kept the first repair hours away.
-              break if limit && taken >= limit
+              break if scan_stop?(path, worklist.taken, deadline)
 
               rows = violations_for(path)
               raw.concat(rows)
-              next if rows.empty?
-
-              item = [path, resolve_violations(rows)]
-              rank ? ranked << item : queue << item
-              taken += 1
+              worklist.add([path, resolve_violations(rows)]) unless rows.empty?
             end
-            enqueue_ranked(ranked, queue, streamed) if rank
+            worklist.flush
             resolve_violations(raw)
           end
+
+          # A limited run stops reading once it holds its files: the semantic scan costs a model call
+          # or more per file, and reading all of a 1,666-file tree first kept the first repair hours
+          # away. Every run stops at its deadline and records the file it stopped at.
+          def scan_stop?(path, taken, deadline)
+            limit = rank_worklist? ? nil : RunLedger.max_files
+            return true if limit && taken >= limit
+            return false unless deadline && Time.now >= deadline
+
+            @stream_stopped_at ||= path
+            true
+          end
+
+          # Queues each scanned file, or holds it for ranking and queues the batch once it is full.
+          Worklist = Struct.new(:queue, :ranked, :window, :flusher, :taken) do
+            def add(item)
+              self.taken += 1
+              return queue << item unless ranked
+
+              ranked << item
+              flush if ranked.size >= window
+            end
+
+            def flush
+              flusher.call(ranked.slice!(0..)) if ranked&.any?
+            end
+          end
+
+          # Files ranked together before they are queued. Ranking the whole corpus first held every
+          # repair until a model had read every file, hours on a large tree, while the workers' budget ran
+          # out; a window keeps severity order within each batch and repairs begin after the first one.
+          # A run limited by --max-files with MASTER_FIX_RANK=1 still ranks the full scan.
+          RANK_WINDOW = Integer(ENV.fetch("MASTER_FIX_RANK_WINDOW", 20))
+
+          def rank_window = RunLedger.max_files ? Float::INFINITY : RANK_WINDOW
 
           # An unbounded operator-requested run completes the eligible scan before
           # it starts repairs, then orders its worklist by impact. An explicit
@@ -106,8 +132,7 @@ module Master
                      end
             Master::Trace::Dmesg.status(
               "fix0",
-              "worklist ranked by impact (severity, weighted findings, stable path); " \
-              "full eligible scan completed before repair; #{detail}",
+              "worklist batch ranked by impact (severity, weighted findings, stable path); #{detail}",
             )
           end
 
@@ -129,7 +154,7 @@ module Master
           end
 
           def start_workers(queue, streamed, pass, budget)
-            Array.new(WORKERS) { Thread.new { drain_repairs(queue, streamed, pass, budget) } }
+            Array.new(WORKERS) { Thread.new { drain_repairs(queue, streamed:, pass:, run_deadline: budget) } }
           end
 
           # A scan that raised leaves the worker mid-queue: it finishes the
@@ -162,11 +187,15 @@ module Master
             untouched = found.reject { |finding| touched.include?(finding[:file].to_s) }
             resolve_violations(untouched + fresh)
           end
-          def drain_repairs(queue, streamed, pass, deadline)
+          # The pass budget starts when the worker receives its first file, not when the scan starts:
+          # a budget that began before a long scan expired before any file arrived.
+          def drain_repairs(queue, streamed:, pass:, run_deadline:)
             rules = @law_order.ordered(violation_counts: @violation_counts)
             stream = Stream.new(streamed, pass, Hash.new(0))
             fixed = 0
+            deadline = nil
             while (item = queue.pop) != :done
+              deadline ||= [Time.now + PASS_BUDGET_SECONDS, run_deadline].min
               unless stream_repairs_allowed?(pass, deadline)
                 # The first file the budget or a reload left unrepaired: the
                 # next run starts there.
