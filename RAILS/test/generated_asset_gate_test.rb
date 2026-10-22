@@ -67,9 +67,8 @@ class GeneratedAssetGateTest < Minitest::Test
       result = Deploy::GateResult.new
       gate.send(:stale?, dir, result, "amber")
 
-      refute result.ok?
-      assert result.respond_to?(:inconclusive?)
-      assert result.inconclusive?, result.failures.join(", ")
+      refute result.conclusive?, "a build that is not there was not measured"
+      assert_equal :inconclusive, result.outcome, result.failures.join(", ")
       assert_empty result.failures
     end
   end
