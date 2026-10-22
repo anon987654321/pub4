@@ -104,12 +104,8 @@ module Master
         raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
 
         added = selected.uniq - @paths
-        unsupported = added.select do |path|
-          abs = absolute(path)
-          (File.exist?(abs) || File.symlink?(abs)) && !File.file?(abs) && !File.symlink?(abs)
-        end
-        return Result.err("transaction cannot safely enlist unsupported filesystem object(s): #{unsupported.join(", ")}",
-                          category: :policy) unless unsupported.empty?
+        return Result.err("transaction cannot safely enlist a directory", category: :policy) if
+          added.any? { |path| File.directory?(absolute(path)) }
 
         staged = added.to_h { |path| [path, snapshot(path)] }
         return Result.err("transaction source changed during enlistment", category: :policy) unless
@@ -391,11 +387,7 @@ module Master
 
       def inside?(path, dir) = path == dir || path.start_with?(dir + File::SEPARATOR)
 
-      def absolute(path) = path_guard.send(:within, File.join(@root, path))
-
-      def path_guard
-        @path_guard ||= Master::Core::World.allocate.tap { |world| world.instance_variable_set(:@root, outer_root) }
-      end
+      def absolute(path) = (@path_guard ||= Master::Core::World.allocate.tap { |world| world.instance_variable_set(:@root, outer_root) }).send(:within, File.join(@root, path))
 
       def snapshot(path, versioned: false)
         abs = absolute(path)
@@ -446,9 +438,7 @@ module Master
       end
 
       def persist!
-        raise "transaction directory is a symlink" if File.symlink?(@dir)
-        raise "transaction snapshot directory is a symlink" if File.symlink?(File.join(@dir, "files"))
-        raise "transaction manifest is a symlink" if File.symlink?(File.join(@dir, MANIFEST))
+        raise "transaction storage path is a symlink" if [@dir, File.join(@dir, "files"), File.join(@dir, MANIFEST)].any? { |path| File.symlink?(path) }
         manifest = {
           "version" => 1,
           "id" => @id,
