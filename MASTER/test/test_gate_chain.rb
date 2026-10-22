@@ -317,8 +317,9 @@ class TestGateChain < Minitest::Test
 
   def test_pre_repair_baseline_blocks_mutation_of_a_preexisting_dirty_path_outside_target
     stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
-    # Target fingerprint remains stable while the whole-tree fingerprint changes.
-    keys = ["target-same", "whole-before", "target-same", "whole-after"]
+    # Target fingerprint remains stable while the complete repository fingerprint changes.
+    target_keys = ["target-same", "target-same"]
+    checkout_keys = ["whole-before", "whole-after"]
     fake_report = lambda do |selected, scan_only:, trees:, return_results:|
       G.instance_variable_set(:@last_results, [
         G::Result.new(stage: "source", state: "ok", summary: "no attributed change", changed: [], body: ["source: clean"])
@@ -328,8 +329,9 @@ class TestGateChain < Minitest::Test
 
     G.stub(:verification_stages, [stage]) do
       G.stub(:trees_for_target, ["MASTER"]) do
-        G.stub(:baseline_key, ->(*) { keys.shift }) do
-          G.stub(:read_baseline, nil) do
+        G.stub(:baseline_key, ->(*) { target_keys.shift }) do
+          G.stub(:checkout_fingerprint, ->(**_kwargs) { checkout_keys.shift }) do
+            G.stub(:read_baseline, nil) do
             G.stub(:report, fake_report) do
               G.stub(:dirty, ["RAILS/foreign-untracked.rb"]) do
                 G.stub(:write_baseline, ->(*) { flunk("a mutated foreign path must not become the baseline") }) do
@@ -340,8 +342,30 @@ class TestGateChain < Minitest::Test
               end
             end
           end
+          end
         end
       end
+    end
+  end
+
+  def test_checkout_fingerprint_detects_root_level_tracked_and_untracked_changes
+    Dir.mktmpdir("checkout-fingerprint") do |root|
+      %w[MASTER RAILS].each { |tree| FileUtils.mkdir_p(File.join(root, tree)) }
+      File.write(File.join(root, "MASTER", "a.rb"), "A = 1\n")
+      File.write(File.join(root, "RAILS", "b.rb"), "B = 1\n")
+      File.write(File.join(root, "README.md"), "before\n")
+      git!(root, "init", "-q")
+      git!(root, "config", "user.name", "Test")
+      git!(root, "config", "user.email", "test@example.invalid")
+      git!(root, "add", "--all")
+      git!(root, "commit", "-q", "-m", "baseline")
+      baseline = G.checkout_fingerprint(root:)
+
+      File.write(File.join(root, "README.md"), "after\n")
+      refute_equal baseline, G.checkout_fingerprint(root:), "root-level tracked change was missed"
+      File.write(File.join(root, "README.md"), "before\n")
+      File.write(File.join(root, "operator-note.txt"), "untracked\n")
+      refute_equal baseline, G.checkout_fingerprint(root:), "root-level untracked file was missed"
     end
   end
 
