@@ -429,6 +429,32 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_restores_a_versioned_checkpoint_after_process_loss
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      id = "checkpoint-recovery"
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:).begin!
+
+      File.write(path, "delivered")
+      checkpoint = tx.checkpoint!(["note.txt"])
+      assert checkpoint.ok?
+      versioned_store = tx.instance_variable_get(:@snapshots).fetch("note.txt").store
+      assert_match(/\.[0-9a-f]{16}\z/, versioned_store)
+
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+      File.write(path, "unobserved later edit")
+
+      recovery = Master::Fix::Transaction::Recovery.recover!(root: dir, id:)
+
+      refute recovery.ok?, "an edit after the checkpoint was not journaled and must not be overwritten"
+      assert_equal :policy, recovery.category
+      assert_equal "unobserved later edit", File.read(path)
+      assert Master::Fix::Transaction::Recovery.persisted?(root: dir, id:)
+    end
+  end
+
   def test_checkpoint_uses_a_new_snapshot_generation_before_advancing_the_floor
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
