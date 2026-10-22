@@ -29,4 +29,25 @@ class TestSynonymsContract < Minitest::Test
     assert_equal %w[inconclusive gap], terms.fetch("skip").fetch("not_synonyms_of")
     assert_equal %w[hard ops soft], vocabulary.fetch("not_enforced_tiers").sort
   end
+  EXECUTION_FIELDS = %w[class covered_by env_flags gap needs pass require script].freeze
+  POLICY_FIELDS = %w[law laws law_id law_ids rule rules policy severity tier statement rationale provenance].freeze
+
+  def check_registry
+    YAML.safe_load_file(File.join(Master::ROOT, "gates", "gates.yml"))
+  end
+
+  def test_check_registry_remains_execution_inventory_not_a_second_policy_catalogue
+    checks = check_registry
+
+    refute_empty checks
+    checks.each do |name, declaration|
+      assert_kind_of Hash, declaration, "#{name} must declare an instrument"
+      keys = declaration.keys.map(&:to_s)
+      assert_empty keys & POLICY_FIELDS,
+                   "#{name} duplicates normative metadata in gates.yml"
+      assert_empty keys - EXECUTION_FIELDS,
+                   "#{name} adds an unreviewed check-registry field"
+    end
+  end
+
 end
