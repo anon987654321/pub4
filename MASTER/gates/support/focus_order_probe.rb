@@ -51,13 +51,18 @@ module Deploy
       limit.times do
         cdp.press("Tab")
         stop = cdp.evaluate(ACTIVE_JS)
-        break if stop.nil? || same?(stops.first, stop) && stops.size > 1 || same?(stops.last, stop)
+        break if stop.nil?
+        break unless stop.is_a?(Hash) && stop["sel"].is_a?(String) && !stop["sel"].empty?
+
+        break if same?(stops.first, stop) && stops.size > 1 || same?(stops.last, stop)
 
         stops << stop
       end
       stops
     end
 
-    def same?(a, b) = !a.nil? && a.values_at("sel", "x", "y") == b.values_at("sel", "x", "y")
+    def same?(a, b)
+      a.is_a?(Hash) && b.is_a?(Hash) && a.values_at("sel", "x", "y") == b.values_at("sel", "x", "y")
+    end
   end
 end
