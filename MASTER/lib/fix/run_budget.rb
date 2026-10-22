@@ -80,7 +80,7 @@ module Master
         # A Result.err naming the exhausted limit, or nil while the run may go on.
         def pass_boundary(pass)
           reason = @current&.stopping || @current&.boundary(pass)
-          reason && Master::Result.err(reason, category: :timeout)
+          reason && Master::Result.err(reason, category: @current&.stopping ? @current.stop_category : :timeout)
         end
 
         def finish_run(reason: "completed")
