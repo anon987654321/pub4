@@ -188,6 +188,11 @@ module Operator
         Master::Trace::Dmesg.status("baseline0", "read-only pre-repair proof reused for #{key[0, 12]}, no ladder rerun")
         return cached
       end
+      # The target cache key fingerprints untracked files only in its scope.
+      # Preflight promises the entire shared checkout will remain read-only,
+      # including dirty/untracked paths from other trees, so use the whole-tree
+      # key as a second guard around the measurement.
+      checkout_before = baseline_key("all")
 
       Master::Trace::Dmesg.status(
         "baseline0",
@@ -200,7 +205,8 @@ module Operator
       # before saving any baseline; it includes tracked diffs and non-ignored
       # untracked files even when their paths were already dirty at stage start.
       after_key = baseline_key(target)
-      fingerprint_changed = after_key != key
+      checkout_after = baseline_key("all")
+      fingerprint_changed = after_key != key || checkout_after != checkout_before
       if changed.any? || fingerprint_changed
         paths = (changed + (fingerprint_changed ? dirty : [])).uniq
         details = paths.first(12).join(", ")
