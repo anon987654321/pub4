@@ -73,6 +73,7 @@ class TestVoiceBed < Minitest::Test
   end
 
   def test_a_disabled_or_missing_bed_never_starts
+    assert_equal false, Bed.start(config), "the suite sets MASTER_BED=0, so an enabled bed stays silent"
     assert_equal false, Bed.start(nil)
     assert_equal false, Bed.start(config.merge("enabled" => false))
     refute_predicate Bed, :running?

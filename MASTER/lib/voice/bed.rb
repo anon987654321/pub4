@@ -15,7 +15,9 @@ module Master
     module Bed
       module_function
 
+      # MASTER_BED=0 keeps the speakers quiet whatever voice.yml says: the test suite sets it.
       def start(config)
+        return false if ENV["MASTER_BED"] == "0"
         return false unless config.is_a?(Hash) && config["enabled"] == true
         return true if running?
 
