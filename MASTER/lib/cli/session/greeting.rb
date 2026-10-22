@@ -17,11 +17,15 @@ module Master
         Thread.new { deliver_greeting }
       end
 
+      # A greeting that arrives after the operator has started talking is stale, and it printed onto the end of
+      # the first reply ("...or mainly you?Late for hard conversations, Johann."), so it stands down.
       def deliver_greeting
         text = @refs.agent.ask_once(greeting_prompt, law: false).to_s.strip
         # A full-screen face owns the terminal until it closes.
         sleep 0.2 while @face_open
-        terminal_puts(@refs.renderer.render(text.lines.first.to_s.strip, mode: :dim)) unless text.empty?
+        return if text.empty? || @pipeline_thread
+
+        terminal_puts(@refs.renderer.render(text.lines.first.to_s.strip, mode: :dim))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.greeting", event_bus: @refs.bus)
       end
