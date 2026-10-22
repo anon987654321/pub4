@@ -621,6 +621,44 @@ class TestReliabilitySecondTranche < Minitest::Test
     end
   end
 
+  def test_delivery_recovery_holds_the_transaction_lock_while_pushing
+    Dir.mktmpdir("master-delivery-lock") do |root|
+      path = File.join(root, "a.rb")
+      File.write(path, "before\n")
+      id = "delivery-lock"
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id:).begin!
+      File.write(path, "committed-locally\n")
+      tx.observe!
+      tx.delivery.begin!(head_before: "parent")
+      tx.delivery.record_commit!(head_after: "commit-1")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      push_attempted = false
+      fake_git = Object.new
+      fake_git.define_singleton_method(:head) { "commit-1" }
+      fake_git.define_singleton_method(:ahead_behind) { [0, 0] }
+      fake_git.define_singleton_method(:push) do
+        concurrent = Master::Fix::Transaction::Recovery.recover!(root:, id:)
+        refute concurrent.ok?, "another recovery must not enter between HEAD verification and push"
+        assert_equal :infrastructure, concurrent.category
+        assert_includes concurrent.message, "active transaction holds the root lock"
+        push_attempted = true
+        true
+      end
+
+      loop = Master::Fix::FixLoop.allocate
+      loop.instance_variable_set(:@root, root)
+      loop.instance_variable_set(:@git, fake_git)
+
+      result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")
+
+      assert result.ok?, result.message
+      assert push_attempted
+      refute Master::Fix::Transaction::Recovery.persisted?(root:, id:)
+    end
+  end
+
   private
 
   # pub4 ignores MASTER's state directory, so a fixture repo does too; without
