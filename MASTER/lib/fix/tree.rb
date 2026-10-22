@@ -66,7 +66,9 @@ module Master
 
       def tracked
         out, status = Master::Io::Exec.capture2e("git", "-C", @root, "ls-files", "-z", "--", relative(@target))
-        status.success? ? out.split("\0").reject(&:empty?) : []
+        raise "tree inventory failed: #{out.to_s.strip}" unless status.success?
+
+        out.split("\0").reject(&:empty?)
       end
 
       def size(path) = File.size(File.join(@root, path))
