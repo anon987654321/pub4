@@ -95,6 +95,27 @@ class TestConflictResolverPriority < Minitest::Test
     end
   end
 
+  # Two laws on one line keep the higher one; findings on other lines stand untouched.
+  def test_one_line_keeps_the_higher_law_and_other_lines_stand
+    Dir.mktmpdir do |dir|
+      write_two_laws(dir)
+      rows = [%w[LOW_RULE 5], %w[HIGH_RULE 5], %w[LOW_RULE 6]].map do |law, line|
+        { "law" => law, "severity" => "warning", "file" => "f.rb", "line" => line.to_i, "message" => "m" }
+      end
+      kept = Master::Fix::ConflictResolver.new(root: dir, config: {}).filter_findings(rows)
+
+      assert_equal [["HIGH_RULE", 5], ["LOW_RULE", 6]], kept.map { |row| row.values_at("law", "line") }
+    end
+  end
+
+  def write_two_laws(dir)
+    FileUtils.mkdir_p(File.join(dir, "data"))
+    File.write(File.join(dir, "data", "laws.yml"), {
+      "HIGH_RULE" => { "priority" => 1, "statement" => "high", "violates_law" => "ROBUSTNESS" },
+      "LOW_RULE" => { "priority" => 3, "statement" => "low", "violates_law" => "DENSITY" },
+    }.to_yaml)
+  end
+
   def test_does_not_reject_when_nothing_new_was_introduced
     Dir.mktmpdir do |dir|
       resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
