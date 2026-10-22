@@ -5,6 +5,7 @@ require_relative "pass_result"
 require_relative "target_resolver"
 require_relative "proof"
 require_relative "reobservation"
+require_relative "residual"
 
 module Master
   module CLI
@@ -107,6 +108,7 @@ module Master
 
         def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil)
           resolved = resolve_target(target)
+          @resolved = resolved
           posture = Master::Ground::ModePosture.current(root: @root)
           @only = normalize_stages(only)
           apply = default_apply?(posture) if apply.nil?
@@ -156,6 +158,8 @@ module Master
           counts = @observation_totals.values_at("obs0", "obs1")
           line = self.class.scorecard(**@scored, counts:, proof: @proof, gaps: fix_gaps)
           Master::Trace::Dmesg.status("fix0", line)
+          Residual.write(target: File.basename(@resolved.to_s), scorecard: line, proof: @proof,
+                         named: Master::Fix::GateFocus.named)
           line
         end
 

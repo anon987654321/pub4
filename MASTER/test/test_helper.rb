@@ -10,6 +10,9 @@ ENV["MASTER_NO_POOL_PROBES"] = "1"
 ENV["MASTER_IN_PROOF"] = "1"
 # A proof baseline kept on disk by a test would be reused by a real run on the same tree.
 ENV["MASTER_PROOF_STORE"] = "0"
+# A test run must not leave the next real /fix a residual to resume from.
+require "tmpdir"
+ENV["MASTER_FIX_RESIDUAL"] = File.join(Dir.tmpdir, "master-test-residual-#{Process.pid}.json")
 # Scripted CDP doubles answer only the verbs a test names; stress states and
 # extra engines are exercised by their own tests, which switch them on.
 ENV["MASTER_VISUAL_STRESS"] = "0"

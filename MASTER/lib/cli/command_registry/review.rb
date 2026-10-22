@@ -3,6 +3,7 @@
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../fix/gate_focus"
+require_relative "../pipeline/residual"
 require_relative "../../operator/gate_chain"
 require_relative "../../boot/paths"
 
@@ -78,6 +79,15 @@ module Master
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
           Master::Fix::GateFocus.restore_blockers(previous_blockers)
         end
+      end
+
+      # The last run on this target named the files its red gates pointed at; they come first again.
+      def resume_from_residual(target)
+        left = Master::CLI::Pipeline::Residual.read(File.basename(target.to_s))
+        return unless left
+
+        Master::Fix::GateFocus.note(left["named"])
+        Master::Trace::Dmesg.status("fix0", "resuming: last run #{left["scorecard"].to_s[0, 120]}")
       end
 
       # A trace refuses bytes that changed while it read them. In a checkout other writers share,
@@ -227,6 +237,7 @@ module Master
         # gate is a baseline phase, not the requested repair's execution mode.
         baseline = nil
         Master::Fix::GateFocus.reset!
+        resume_from_residual(target)
         if writes_requested
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: capturing read-only pre-repair baseline")
           baseline = begin

@@ -65,12 +65,21 @@ module Master
       end
 
       # A hashed record only for the canonical four-tree repo: test roots and
-      # partial workspaces deliberately leave no learning receipt.
+      # partial workspaces deliberately leave no learning receipt. /fix runs from
+      # MASTER, so the repo is the root or the directory above it; checking only the
+      # root meant /fix never wrote a receipt at all.
+      def receipt_repo
+        [@root, File.dirname(@root)].find do |dir|
+          CANONICAL_TREES.all? { |tree| File.directory?(File.join(dir, tree)) }
+        end
+      end
+
       def write_outcome_receipt(run_id:, target:, state:, result:, convergence: nil)
-        return unless CANONICAL_TREES.all? { |tree| File.directory?(File.join(@root, tree)) }
+        repo = receipt_repo
+        return unless repo
 
         receipt = Master::Convergence::Receipt.write(
-          root: @root,
+          root: repo,
           command: "/fix",
           state:,
           details: {
@@ -81,7 +90,7 @@ module Master
             outcome_prior: prior_receipt(@outcome_prior, target:),
           },
         )
-        { source: receipt.fetch(:path).delete_prefix("#{@root}/"), sha256: receipt.fetch(:sha256) }
+        { source: receipt.fetch(:path).delete_prefix("#{repo}/"), sha256: receipt.fetch(:sha256) }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix_loop.outcome_receipt", event_bus: @bus)
         nil
