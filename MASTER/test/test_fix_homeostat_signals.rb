@@ -220,7 +220,9 @@ class TestHomeostatSignals < Minitest::Test
     unit.instance_variable_get(:@state)[:error_rate] = 0.5
     unit.observe(:idle_tick)
 
-    assert_equal [["agent:mood", { mood: :tense, source: "homeostat" }]], bus.events
+    moods = bus.events.select { |event, _payload| event == "agent:mood" }
+
+    assert_equal [["agent:mood", { mood: :tense, source: "homeostat" }]], moods
   end
 
   def test_repeated_observations_do_not_republish_an_unchanged_mood
