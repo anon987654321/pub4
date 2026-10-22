@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # controller_coverage_contract_test.rb and model_coverage_contract_test.rb assert
 # that source files contain particular class/def strings. They never boot Rails and
@@ -82,11 +83,11 @@ class CoverageRatchetTest < Minitest::Test
   }.freeze
 
   # The app's own app/ dir, plus any mounted vertical engines (engines/*/app).
-  # A vertical extracted to an engine keeps its controllers/models under
-  # engines/<name>/app, so counting only app/ would silently drop them and read
-  # the extraction as a coverage regression. See brgen/README.md.
+  # A vertical extracted to an engine keeps its controllers/models in its own
+  # app/, so counting only brgen's would silently drop them and read the
+  # extraction as a coverage regression. See brgen/README.md.
   def source_roots(app, kind)
-    [File.join(ROOT, app, "app", kind)] + Dir.glob(File.join(ROOT, app, "engines/*/app", kind))
+    [File.join(ROOT, app, "app", kind)] + EngineRoots.glob(ROOT, app, File.join("app", kind))
   end
 
   # Concerns are mixed into the classes above and tested through them;

@@ -2,6 +2,7 @@
 
 require_relative "../../support/fleet"
 require_relative "../../support/gate_result"
+require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../../tools/scss"
 
 module Deploy
@@ -113,7 +114,7 @@ module Deploy
     def css_files
       rails = APPS.flat_map do |app|
         bases = [File.join(RAILS, app, "app/assets/stylesheets")]
-        bases.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
+        bases.concat(EngineRoots.glob(RAILS, app, "app/assets/stylesheets"))
         bases.flat_map do |base|
           next [] unless File.directory?(base)
 

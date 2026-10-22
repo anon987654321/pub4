@@ -5,6 +5,7 @@ require "json"
 require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../support/design_metrics/type_checks"
 require_relative "../../support/gate_result"
+require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/deploy_inventory"
 
 require_relative "../../support/fleet"
@@ -89,7 +90,7 @@ module Deploy
       @source_stylesheets ||= APPS.flat_map do |app|
         roots = [File.join(RAILS, app, "app/assets/stylesheets")]
 
-        roots.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
+        roots.concat(EngineRoots.glob(RAILS, app, "app/assets/stylesheets"))
         roots.flat_map { |r| Dir.glob(File.join(r, "**/*.scss")) }
       end.uniq.sort
     end

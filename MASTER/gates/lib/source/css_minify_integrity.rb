@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/fleet"
 
 module Deploy
@@ -61,7 +62,7 @@ module Deploy
       load_paths = [
         File.join(RAILS_ROOT, "__shared", "app/assets/stylesheets"),
         File.join(RAILS_ROOT, app, "app/assets/stylesheets"),
-        *Dir.glob(File.join(RAILS_ROOT, app, "engines/*/app/assets/stylesheets")),
+        *EngineRoots.glob(RAILS_ROOT, app, "app/assets/stylesheets"),
       ]
 
       begin

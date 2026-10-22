@@ -2,6 +2,7 @@
 
 require "set"
 require_relative "../../support/gate_result"
+require_relative "../../support/brgen_vertical_surfaces"
 require_relative "stimulus_components"
 
 module Deploy
@@ -508,7 +509,7 @@ module Deploy
       file = "#{id.tr("-", "_")}_controller.js"
       [
         File.join(@rails_root, app, "app/javascript/controllers", file),
-        *Dir.glob(File.join(@rails_root, app, "engines/*/app/javascript/controllers", file)),
+        *EngineRoots.glob(@rails_root, app, File.join("app/javascript/controllers", file)),
         File.join(@rails_root, "__shared/frontend", file),
       ].find { |path| File.file?(path) }
     end

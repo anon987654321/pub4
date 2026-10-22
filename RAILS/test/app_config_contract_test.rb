@@ -19,8 +19,7 @@ class AppConfigContractTest < Minitest::Test
 
   def job_roots(app)
     [File.join(ROOT, app, "app", "jobs"), File.join(ROOT, "__shared", "app", "jobs"),
-     *Dir.glob(File.join(ROOT, app, "engines", "*", "app", "jobs")),
-     *(app == "brgen" ? Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "jobs")) : [])]
+     *EngineRoots.glob(ROOT, app, "app/jobs")]
   end
 
   def job_file(class_name)

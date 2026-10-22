@@ -3,6 +3,7 @@
 require "open3"
 require "timeout"
 require "yaml"
+require_relative "../../gates/support/brgen_vertical_surfaces"
 
 module Master
   module Fix
@@ -91,8 +92,9 @@ module Master
 
       def app_roots
         app_names.to_h { |name| [name, File.join(@root, "RAILS", name)] }.tap do |rows|
-          Dir.glob(File.join(@root, "RAILS", "brgen", "engines", "*")).each do |path|
-            rows[File.basename(path)] = path if File.directory?(path)
+          EngineRoots::PATHS.each do |name, dir|
+            path = File.join(@root, "RAILS", dir)
+            rows[name] = path if File.directory?(path)
           end
         end
       end

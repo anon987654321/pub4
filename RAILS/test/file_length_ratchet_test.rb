@@ -303,7 +303,7 @@ class FileLengthRatchetTest < Minitest::Test
       rb = apps.flat_map { |a| Dir.glob(File.join(ROOT, a, "**/*.rb")) }
       styled = BRGEN_AND_APPS
       scss = styled.flat_map { |a| Dir.glob(File.join(ROOT, a, "**/*.scss")) }
-      erb = styled.flat_map { |a| Dir.glob(File.join(ROOT, a, "{app,engines/*/app}/views/**/*.erb")) }
+      erb = styled.flat_map { |a| Dir.glob(File.join(ROOT, a, "{app,*/app,engines/*/app}/views/**/*.erb")) }
       { "rb" => rb, "scss" => scss, "erb" => erb }.transform_values do |paths|
         paths.reject { |p| p.match?(%r{/(vendor|node_modules|public)/|/db/migrate/}) || p.match?(GENERATED) }
              .uniq.sort

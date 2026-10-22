@@ -62,7 +62,7 @@ class LocaleContractTest < Minitest::Test
     refute_empty locale_files, "no locale files found — the glob is wrong, not the tree"
     assert_operator locale_files.size, :>=, 10,
                     "expected at least 10 locale files, found #{locale_files.size}"
-    assert_operator locale_units.count { |unit| unit.start_with?("brgen/engines/") }, :>=, 6,
+    assert_operator locale_units.count { |unit| unit.start_with?("brgen_") }, :>=, 6,
                     "fewer than six engine locale directories — the glob is wrong, not the tree"
   end
 

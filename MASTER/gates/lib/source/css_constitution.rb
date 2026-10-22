@@ -3,6 +3,7 @@
 require_relative "../../support/token_reads"
 require "yaml"
 require_relative "../../support/gate_result"
+require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/fleet"
 require_relative "../../../tools/master_design"
@@ -334,7 +335,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       rails = APPS.flat_map do |app|
         bases = [File.join(RAILS, app, "app/assets/stylesheets")]
 
-        bases.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
+        bases.concat(EngineRoots.glob(RAILS, app, "app/assets/stylesheets"))
         bases.flat_map do |base|
           next [] unless File.directory?(base)
 

@@ -226,3 +226,32 @@ module Deploy
     end
   end
 end
+
+# Where brgen's vertical engines live under RAILS/. They moved out of brgen/engines/ into sibling
+# brgen_* directories, some nested inside another, and every gate and test still globbing
+# brgen/engines/* went blind to them without failing. Gates and RAILS tests that walk every
+# engine take the layout from here, not from a literal that goes stale the next time one moves.
+module EngineRoots
+  GLOB = "{brgen_*,brgen_radio/*,brgen_marketplace/engines/*}"
+
+  # Each vertical's directory under RAILS/, by the name its tests use.
+  PATHS = {
+    "marketplace" => "brgen_marketplace",
+    "dating" => "brgen_dating",
+    "maps" => "brgen_maps",
+
+    "tv" => "brgen_radio/tv",
+    "playlist" => "brgen_radio/playlist",
+    "takeaway" => "brgen_marketplace/engines/takeaway",
+  }.freeze
+
+  # Messenger routes stay in brgen, but its Stimulus controllers ship in an engine.
+  ASSET_PATHS = PATHS.merge("messenger" => "brgen_messenger").freeze
+
+  # rest, globbed under every engine app hosts. brgen hosts them all; amber and bsdports none.
+  def self.glob(rails_root, app, rest)
+    return [] unless app == "brgen"
+
+    Dir.glob(File.join(rails_root, GLOB, rest))
+  end
+end

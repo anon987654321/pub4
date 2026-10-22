@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/deploy_inventory"
 
 module Deploy
@@ -18,9 +19,6 @@ module Deploy
     WATCHED = [
       "app/assets/stylesheets/application.scss",
       "app/assets/stylesheets/**/*.scss",
-      # brgen's application.scss @uses each vertical's partials from its engine
-      # (vertical_maps_shell and the rest), so an engine edit stales the build too.
-      "engines/*/app/assets/stylesheets/**/*.scss",
     ].freeze
 
     # An app's application.css is compiled from its own stylesheets *and* the
@@ -60,7 +58,10 @@ module Deploy
       shared_dir = File.join(RAILS_ROOT, "__shared")
       patterns = WATCHED.map { |pattern| File.join(app_dir, pattern) } +
                  SHARED_WATCHED.map { |pattern| File.join(shared_dir, pattern) }
-      patterns.flat_map { |pattern| Dir.glob(pattern) }
+      # brgen's application.scss @uses each vertical's partials from its engine
+      # (vertical_maps_shell and the rest), so an engine edit stales the build too.
+      engine = EngineRoots.glob(File.dirname(app_dir), File.basename(app_dir), "app/assets/stylesheets/**/*.scss")
+      (patterns.flat_map { |pattern| Dir.glob(pattern) } + engine)
         .uniq.select { |path| File.file?(path) }
     end
 

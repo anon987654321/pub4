@@ -4,6 +4,7 @@
 # Asserts contracts against current main paths (not the obsolete pub4_* renames).
 require "yaml"
 require "minitest/autorun"
+require_relative "engine_roots"
 require_relative "../../MASTER/tools/master_design"
 require_relative "../../MASTER/tools/scss"
 
@@ -598,8 +599,7 @@ class DesignContractTest < Minitest::Test
   end
 
   def tap_floor_stylesheets
-    rails = Dir.glob(File.join(ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
-            Dir.glob(File.join(ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
+    rails = Dir.glob(File.join(ROOT, "{*,#{EngineRoots::GLOB}}/app/assets/stylesheets/**/*.{scss,css}")) +
             Dir.glob(File.join(ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}")) +
             Dir.glob(File.join(ROOT, "__shared/frontend/**/*.css"))
     face = File.expand_path("../RAILS/master/public/face.css", ROOT)

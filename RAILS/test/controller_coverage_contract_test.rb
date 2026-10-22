@@ -45,7 +45,6 @@ class ControllerCoverageContractTest < Minitest::Test
 
   def routing_surface(app)
     files = [File.join(ROOT, app, "config", "routes.rb")] +
-            Dir.glob(File.join(ROOT, app, "engines", "*", "config", "routes.rb")).sort +
             ENGINE_ROOTS.values.map { |root| File.join(ROOT, root, "config", "routes.rb") }
     present = files.select { |f| File.file?(f) }
     assert present.any?, "missing #{app}/config/routes.rb"

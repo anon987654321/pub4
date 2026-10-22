@@ -319,7 +319,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   def test_light_theme_scan_preserves_nested_scope_and_covers_engine_stylesheets
     Dir.mktmpdir("design-metrics") do |root|
       fixtures = {
-        "shared/app/assets/stylesheets/nested.scss" => <<~SCSS,
+        "__shared/app/assets/stylesheets/nested.scss" => <<~SCSS,
           :root[data-theme="light"] {
             .first {
               color: var(--text);
@@ -330,7 +330,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
           }
           // Historical note: --vertical-marketplace-accent-hover was used outside this block.
         SCSS
-        "brgen/engines/sample/app/assets/stylesheets/engine.scss" => <<~SCSS,
+        "brgen_sample/app/assets/stylesheets/engine.scss" => <<~SCSS,
           :root[data-theme="light"] {
             .engine-action {
               color: var(--vertical-engine-accent-hover);

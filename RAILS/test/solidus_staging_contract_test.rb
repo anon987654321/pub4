@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # Staging-prep contract for Solidus (no gem install required).
 # Full cutover is operator-run on a non-1GB Postgres host.
@@ -27,7 +28,7 @@ class SolidusStagingContractTest < Minitest::Test
   # went with it. Read the host's routes plus the engine's, which is the app's
   # actual routing surface.
   def test_routes_mount_only_when_mountable
-    routes = [File.join(BRGEN, "config/routes.rb"), *Dir.glob(File.join(BRGEN, "engines/*/config/routes.rb")).sort]
+    routes = [File.join(BRGEN, "config/routes.rb"), *EngineRoots.glob(ROOT, "brgen", "config/routes.rb").sort]
              .select { |f| File.file?(f) }.map { |f| File.read(f) }.join("\n")
     assert_includes routes, "Brgen::SolidusMarketplace.mountable?"
     assert_includes routes, "Spree::Core::Engine"
