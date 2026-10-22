@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "../boot/paths"
 require_relative "../io/exec"
 require_relative "tree_sprawl"
 
@@ -16,7 +17,7 @@ module Master
 
       def initialize(root:, target: nil)
         @root = File.expand_path(root)
-        @target = target.to_s.empty? ? @root : File.expand_path(target.to_s, @root)
+        @target = normalize_target(target)
       end
 
       # Repository-relative paths of tracked files under the target, sorted.
@@ -48,6 +49,20 @@ module Master
       end
 
       private
+
+      def normalize_target(target)
+        text = target.to_s.strip
+        return @root if text.empty?
+
+        if text.start_with?("../")
+          candidate = text.delete_prefix("../")
+          text = candidate if MasterPaths::TREES.any? { |tree| candidate == tree || candidate.start_with?("#{tree}/") }
+        end
+        full = File.expand_path(text, @root)
+        return full if full == @root || full.start_with?("#{@root}#{File::SEPARATOR}")
+
+        raise ArgumentError, "tree target outside repository root: #{target.inspect}"
+      end
 
       def tracked
         out, status = Master::Io::Exec.capture2e("git", "-C", @root, "ls-files", "-z", "--", relative(@target))
