@@ -361,7 +361,12 @@ routes:
   review: fast
   council: fast
   name_review: fast
+  # The per-file semantic reads: one call per file per question across the whole tree, so the
+  # fast tier answers them, as it does comment drift; edits keep the strong lane.
   scan_comment_drift: fast
+  scan_semantic_violations: fast
+  scan_semantic_opportunities: fast
+  scan_adversarial: fast
   explanation: free
   exploration: free
   chitchat: free
@@ -416,8 +421,6 @@ operation_constraints:
   autoloop:         { min_quality: 0.88, preferred_tier: strong }
   sweep:            { min_quality: 0.88, preferred_tier: strong }
   council:          { min_quality: 0.88, preferred_tier: fast }
-  scan_semantic:  { min_quality: 0.88, preferred_tier: strong }
-  scan_adversarial: { min_quality: 0.88, preferred_tier: strong }
   detect_lexical: { min_quality: 0.70, preferred_tier: fast }
   code_generation: { min_quality: 0.80, preferred_tier: default }
   architecture:    { min_quality: 0.88, preferred_tier: strong }

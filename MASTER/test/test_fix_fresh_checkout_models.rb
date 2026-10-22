@@ -132,7 +132,8 @@ class TestFixFreshCheckoutModels < Minitest::Test
   # from the fast tier and the operation routes in data/models.yml, not from Ruby.
   def test_advisory_operations_lead_with_sonnet_and_edits_with_opus
     sonnet = "claude-cli:claude-sonnet-5-5"
-    %i[council name_review scan_comment_drift].each do |operation|
+    %i[council name_review scan_comment_drift scan_semantic_violations scan_semantic_opportunities
+       scan_adversarial].each do |operation|
       assert_equal sonnet, @router.constrained_for(operation:), operation.to_s
     end
     assert_equal sonnet, @router.fallback_chain(task_type: :review).first
