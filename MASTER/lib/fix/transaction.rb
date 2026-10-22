@@ -480,8 +480,8 @@ module Master
         state, paths, snapshots, seen = data.values_at("state", "paths", "snapshots", "seen")
         raise "transaction manifest state unsupported" unless VALID_STATES.include?(state)
         raise "transaction manifest paths malformed" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
-        raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
         raise "transaction manifest contains duplicate paths" unless paths.uniq == paths
+        raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
 
         paths.each do |path|
           item = snapshots[path]
@@ -500,8 +500,8 @@ module Master
                     File.basename(store).match?(/\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/) &&
                     (state != "open" || (File.file?(store) && !File.symlink?(store)))
             raise "transaction manifest snapshot invalid: #{path}" unless valid
-          elsif item["link"] || item["store"]
-            raise "transaction manifest snapshot invalid: #{path}"
+          else
+            raise "transaction manifest snapshot invalid: #{path}" if item["link"] || item["store"]
           end
         end
         raise "transaction manifest fingerprints malformed" unless seen.is_a?(Hash) && paths.all? { |p| seen[p].is_a?(Array) && seen[p].all? { |v| v.is_a?(String) } }
