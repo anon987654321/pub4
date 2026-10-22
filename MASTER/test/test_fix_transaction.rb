@@ -5,6 +5,18 @@ require_relative "test_helper"
 require_relative "../lib/fix/transaction"
 
 class TestFixTransaction < Minitest::Test
+  def test_transaction_refuses_unsupported_directory_paths_without_leaving_a_partial_snapshot
+    Dir.mktmpdir do |dir|
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["."], id: "directory-path")
+
+      error = assert_raises(RuntimeError) { tx.begin! }
+
+      assert_includes error.message, "unsupported filesystem object"
+      refute tx.active?
+      refute Dir.exist?(File.join(dir, ".master", "fix_transactions", "directory-path"))
+    end
+  end
+
   def test_rollback_restores_the_snapshot
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
