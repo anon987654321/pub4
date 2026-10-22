@@ -74,12 +74,24 @@ module Master
 
       def soft = @soft ||= Array(YAML.safe_load_file(FILE)&.fetch("soft", [])).map(&:to_s).freeze
 
-      def hard?(gate) = !soft.include?(gate.to_s)
+      def hard?(gate, extra = []) = !(soft + extra).include?(gate.to_s)
 
-      # [hard, soft] red gates, each sorted.
-      def split(failing)
-        hard, rest = Array(failing).map(&:to_s).partition { |gate| hard?(gate) }
+      # [hard, soft] red gates, each sorted. A run on one Rails app also reads that app's
+      # RAILS/<app>/fix.yml, whose soft: list adds to the global one for that app only.
+      def split(failing, target: nil)
+        extra = app_soft(target)
+        hard, rest = Array(failing).map(&:to_s).partition { |gate| hard?(gate, extra) }
         [hard.sort, rest.sort]
+      end
+
+      def repo_root = Master::REPO_ROOT
+
+      def app_soft(target)
+        app = target.to_s[%r{/RAILS/([^/]+)}, 1]
+        file = app && File.join(repo_root, "RAILS", app, "fix.yml")
+        return [] unless file && File.file?(file)
+
+        Array(YAML.safe_load_file(file)&.fetch("soft", [])).map(&:to_s)
       end
     end
   end

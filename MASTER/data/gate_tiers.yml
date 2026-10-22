@@ -3,6 +3,7 @@
 # A hard gate still red at the end of a run makes the run partial at best: the app is not
 # runnable, or a deploy would be refused. A soft gate still red is reported and left to a
 # later run. A gate not named here is hard, so a new gate never slips through unnoticed.
+# A Rails app may add soft gates for runs on it alone, in RAILS/<app>/fix.yml under soft:.
 #
 # The tier changes only the finish line. A run that makes any gate worse, hard or soft,
 # is refused delivery as before.

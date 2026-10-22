@@ -206,7 +206,7 @@ module Master
             ok, out = inside_proof { runner.call }
             reading = Reading.parse(ok, out)
             held, verdict = Proof.judge(reading, baseline)
-            hard, soft = Master::Fix::GateTiers.split(reading.failing)
+            hard, soft = Master::Fix::GateTiers.split(reading.failing, target: abs)
             @proof = { verdict:, hard:, soft:, unmeasured: reading.unmeasured.sort }
             Master::Trace::Dmesg.status("gate0", verdict)
             fail_stage("proof", verdict) unless held

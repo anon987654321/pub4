@@ -45,4 +45,20 @@ class TestGateFocus < Minitest::Test
   ensure
     Focus.restore_until_gates(false)
   end
+
+  def test_an_app_fix_yml_adds_soft_gates_for_runs_on_that_app_only
+    Dir.mktmpdir do |repo|
+      FileUtils.mkdir_p(File.join(repo, "RAILS", "amber"))
+      File.write(File.join(repo, "RAILS", "amber", "fix.yml"), "soft:\n  - flow_journey\n")
+      tiers = Master::Fix::GateTiers
+
+      amber, brgen = tiers.stub(:repo_root, repo) do
+        [tiers.split(%w[flow_journey release], target: "/x/RAILS/amber"),
+         tiers.split(%w[flow_journey], target: "/x/RAILS/brgen")]
+      end
+
+      assert_equal [%w[release], %w[flow_journey]], amber
+      assert_equal [%w[flow_journey], []], brgen
+    end
+  end
 end
