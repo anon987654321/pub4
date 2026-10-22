@@ -1,0 +1,54 @@
+# Vocabulary guidance only. This file is not loaded as runtime policy.
+schema: 1
+purpose: glossary_only
+runtime_effect: none
+
+authority:
+  constitution: MASTER/data/soul.yml
+  law_catalogue: MASTER/data/laws.yml
+  executable_laws:
+    - MASTER/law/*.rb
+    - MASTER/lib/review/scan/laws/*.rb
+  check_execution_registry: MASTER/gates/gates.yml
+
+terms:
+  law:
+    preferred: Law
+    meaning: A normative requirement whose authority comes from the constitutional Law system.
+    related_terms: [rule, standard, convention, guideline, design principle, preference, heuristic]
+    caution: Related terms are context-sensitive; a suggestion or preference does not become binding merely by being called a Law.
+  check:
+    preferred: check
+    meaning: An instrument that inspects source or runtime state and reports evidence.
+    legacy_aliases: [gate]
+    caution: The legacy word remains in class names, file names, environment variables, and compatibility commands; those names do not create a second policy system.
+  proof:
+    preferred: proof
+    meaning: Evidence that a check or test actually ran and supports a stated claim.
+    not_synonyms_of: [Law, check]
+  test:
+    preferred: test
+    meaning: A repeatable experiment with an expected result; it validates behavior rather than defining the policy it tests.
+    not_synonyms_of: [Law, check]
+  skip:
+    preferred: skip
+    meaning: A user-facing description for an instrument that did not measure its target.
+    not_synonyms_of: [inconclusive, gap]
+    caution: Preserve each machine outcome. Skipped means not run; inconclusive means evidence was insufficient to decide; gap means required coverage or evidence is absent.
+  inconclusive:
+    preferred: inconclusive
+    meaning: The instrument ran or was attempted but cannot support a definitive result.
+  gap:
+    preferred: gap
+    meaning: Required evidence, coverage, or a declared precondition is missing.
+  policy:
+    preferred: policy
+    meaning: A set of governing decisions; do not use as a casual synonym for one Law.
+  constraint:
+    preferred: constraint
+    meaning: A boundary on permissible states or operations; it may be expressed by a Law but is not another registry.
+not_enforced_tiers: [hard, soft, ops]
+notes:
+  - This glossary creates no Law, ID, severity, tier, or runtime behavior.
+  - Add no runtime loader merely to make this file active; cite it from agent guidance where useful.
+  - Do not add a second registry of Laws or checks.

@@ -35,8 +35,9 @@ def usage
     operator — repo-wide operator surface
 
     Usage:
-      bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every gate in the repo, fixing as it goes
-      bin/operator gate --fix-proof [--tree=T]  internal /fix final proof against a verified candidate baseline
+      bin/operator check [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every declared check in the repo, fixing as it goes
+      bin/operator check --fix-proof [--tree=T]  internal /fix final proof against a verified candidate baseline
+      bin/operator gate [same options]  compatibility alias for check
       bin/operator status [--json]
       bin/operator fix status [--trees=A,B] [--json]  /fix runs, queue, pass, logs, commits and retained worktrees; read-only
       bin/operator vps state [--json] [--remote]
@@ -107,7 +108,9 @@ end
 
 command = ARGV.shift
 case command
-when "gate"
+when "check", "gate"
+  # "check" is the preferred user-facing verb. "gate" stays as a compatibility
+  # alias for existing scripts and habits; both reach the same single ladder.
   # The whole ladder, autofixing, in one invocation — the default way to find
   # out whether this repo is conformant. The stages and the reasoning behind
   # their order live in lib/operator/gate_chain.rb.

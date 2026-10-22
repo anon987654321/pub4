@@ -1,5 +1,7 @@
 # Gates
 
+> **Terminology and authority.** The preferred user-facing term is **check**. This guide keeps **gate** where it names existing implementation classes, environment variables, or commands; this is a glossary banner, not a partial mass rename. A Law is a normative requirement, a check is an instrument, and proof is evidence about what was measured. The registry in gates.yml is an execution inventory, not a second Law catalogue. Normative authority remains soul.yml, laws.yml, and executable Laws. See MASTER/docs/synonyms.yml. Do not invent hard/soft/ops tiers. Machine outcomes such as skipped, inconclusive, and gaps remain distinct.
+
 **A gate is a promise the repository makes to itself and keeps by machine: that
 every page a visitor can reach is whole, honest and in the right language,
 checked before anyone has to notice it is not.**

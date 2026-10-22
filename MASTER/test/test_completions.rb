@@ -27,9 +27,17 @@ class TestCompletions < Minitest::Test
     assert_match(/\A#compdef master cli$/, File.read(File.join(COMPLETIONS, "_master")))
   end
 
+  def test_operator_check_is_primary_and_gate_is_a_compatibility_alias
+    source = File.read(File.join(Master::ROOT, "bin", "operator"))
+    assert_match(/^when "check", "gate"$/, source)
+    assert_includes source, "bin/operator check [--scan-only]"
+    assert_includes File.read(File.join(COMPLETIONS, "_operator")), "'check:"
+    assert_includes File.read(File.join(COMPLETIONS, "_operator")), "'gate:legacy alias for check'"
+  end
+
   def test_operator_completes_every_subcommand
     source = File.read(File.join(Master::ROOT, "bin", "operator"))
-    subcommands = source.scan(/^when "([a-z?-]+)"/).flatten.sort
+    subcommands = source.scan(/^when (.+)$/).flat_map { |clause| clause.scan(/"([a-z?-]+)"/).flatten }.sort
 
     assert_operator subcommands.size, :>=, 10, "a short list means the scan of bin/operator broke"
     assert_equal subcommands, completed("_operator")

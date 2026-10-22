@@ -1,7 +1,11 @@
-# The gate registry. One row per gate, and this file is the only place a gate
-# is declared.
+# The check execution registry. One row per instrument; the filename and existing
+# Gate class names retain the legacy “gate” term. This is not a policy catalogue:
+# MASTER/data/laws.yml and the executable Law layers define normative criteria.
+# Rows describe how checks run, which suite covers them, and their preconditions.
+# Do not duplicate Law text or invent Law IDs/tiers here. When a normative check has
+# no existing Law ID, record the coverage gap rather than creating a competing source.
 #
-# One registry, one runner, three trees. A gate's row lives here whatever tree
+# One registry, one runner, three trees. A check's row lives here whatever tree
 # holds its implementation: `require` names the tree when the check belongs to
 # one — MASTER/lib/operator/gates for the gates that measure MASTER's own face and scan
 # chain, OPENBSD/gates for the ones that measure the box (DNS, domains, the
@@ -41,11 +45,11 @@
 # says "unmeasured here" for the ones this machine has never run. A gate whose
 # median moves is visible in `runner.rb --ledger`.
 #
-# A gate is named for what it measures, never for the criterion near it, and owns
+# A check is named for what it measures, never for the criterion near it, and owns
 # one assertion. Two gates asserting one property are two places for it to rot,
 # and a gate named after a WCAG criterion invites the criterion's number to be
-# declared again inside it: MASTER names the law and holds the number, and the
-# gate reads it from there. Under lib/, the directory names what a gate needs
+# declared again inside it: MASTER names the Law and holds the number, and the
+# check reads it from there. Under lib/, the directory names what a gate needs
 # before it can measure: source/ files only, live/ a booted app, rendered/ a
 # browser, research/ scores rather than verdicts.
 #
