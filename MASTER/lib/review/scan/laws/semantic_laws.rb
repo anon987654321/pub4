@@ -40,6 +40,9 @@ module Master
               return true
             end
 
+            # No model attached is not a provider answer, and says nothing about a key or a balance.
+            return false if message.include?("no model agent configured")
+
             Master::Io::QuotaGate.trip_if_limited(source: "semantic Law #{@id}", message:)
           end
 

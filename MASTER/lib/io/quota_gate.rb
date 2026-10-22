@@ -70,7 +70,9 @@ module Master
       # these do not re-probe.
       # A provider the error text names outright, for a trip whose model is not known.
       PROVIDER_NAMED = /openrouter|anthropic|openai|deepseek|mistral|xai|gemini/i
-      REFUSED_RE = /unauthorized|invalid[ _-]?api[ _-]?key|revoked|forbidden|\b401\b|\b403\b/i
+      # Whole words only: a file named test_forbidden_patterns_guard.rb in an unrelated message read
+      # as a refused key and paused every paid call for the rest of the run.
+      REFUSED_RE = /\b(?:unauthorized|invalid[ _-]?api[ _-]?key|revoked|forbidden|401|403)\b/i
 
       @state = :available
       @resume_at = nil

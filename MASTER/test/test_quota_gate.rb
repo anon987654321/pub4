@@ -142,6 +142,12 @@ class TestQuotaGate < Minitest::Test
   end
 
   # The third state. A revoked key is not a balance that refills.
+  # A file path is not a provider answer: test_forbidden_patterns_guard.rb paused every paid call.
+  def test_a_refusal_word_inside_a_file_name_is_not_a_refusal
+    refute Master::Io::QuotaGate.refusal?("no model agent configured for test/test_forbidden_patterns_guard.rb")
+    assert Master::Io::QuotaGate.refusal?("HTTP 403 Forbidden")
+  end
+
   def test_a_refused_key_stops_instead_of_reprobing
     Gate.trip!(source: "agent single-shot", message: "401 Unauthorized: invalid api key")
 
