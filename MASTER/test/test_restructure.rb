@@ -27,6 +27,8 @@ class TestRestructure < Minitest::Test
     end
     write("MASTER/lib/big.rb", "class Big\n  def a = 1\n  def b = 2\nend\n")
     write("MASTER/lib/tiny.rb", "TINY = 1\n")
+    # RailsProof proves the apps RAILS/apps.yml registers.
+    write("RAILS/apps.yml", "apps:\n  brgen: {}\n  amber: {}\n  bsdports: {}\n")
     sh("git", "add", "-A", chdir: @repo)
     sh("git", "commit", "-m", "first", chdir: @repo)
     sh("git", "push", "-u", "origin", "main", chdir: @repo)
