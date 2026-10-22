@@ -23,7 +23,7 @@ module Master
 
       def self.app_name(target, repo_root:)
         relative = relative_path(target, repo_root:)
-        name = relative&.match(%r{\\ARAILS/([^/]+)(?:/|\\z)})&.captures&.first
+        name = relative&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first
         name if name && named_apps(repo_root:).include?(name)
       end
 
