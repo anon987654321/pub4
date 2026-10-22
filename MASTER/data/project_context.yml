@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 25
+  count: 27
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -358,3 +358,28 @@ entries:
     MASTER/tools/block_branching.rb (a Claude PreToolUse hook), bin/operator worktree refuses,
     /fix runs in the checkout (its worktree session was deleted). Removing a leftover worktree or
     branch stays allowed. Supersedes the older worktree-by-default memories and CLAUDE.md trap 1.
+- key: feedback_stream_long_runs_live_2026_10_22
+  name: stream long runs live
+  description: 2026-10-22 directive, Johann - a suite, gate or /fix run reports as it goes, never only at its end
+  type: feedback
+  body: >-
+    Johann, 2026-10-22: "why do i have to wait 20 minutes? why cant you read the result in real time?
+    ... i dont wanna have to wait days for some results only to find out it got stuck and never wrote
+    any output". Why - a run that reports only at its end hides a hang or a silent death until the
+    whole budget is spent; a MASTER rake test once stopped after 3,632 tests with no report at all.
+    How to apply - every long run writes its output as it happens and is watched: each failing test
+    named when it fails, progress at least once a minute, and a stall called when nothing finishes
+    for two minutes. bin/check streams each step to .master/check/<step>.log as it runs; fix-here
+    stops a run its StallWatch finds stalled. Run minitest with TESTOPTS="-v --seed=N" (the = form;
+    rake splits a space).
+- key: feedback_fix_the_fixer_offline_2026_10_22
+  name: fix /fix before running it
+  description: 2026-10-22 directive, Johann - /fix is repaired through its suites and code, not by trial runs
+  type: feedback
+  body: >-
+    Johann, 2026-10-22: "i told you to fully fix /fix before using it". Three bounded trials that day
+    each stopped on a /fix defect (a spent run journal resumed, HEAD in the baseline key, a known-red
+    record naming steps not tests, a test that exits ending the suite). Why - a trial costs over thirty
+    minutes, writes autofix edits into the shared checkout and finds defects the suites and code
+    should have shown. How to apply - find and fix /fix defects through test_fix_*, test_proof_*,
+    test_gate_chain and the full suite; run /fix only when Johann says so after hearing what is fixed.
