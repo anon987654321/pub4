@@ -266,7 +266,7 @@ module Law
     # eleven had neither, so they were blind to comment leaders and to the
     # `scan: intentional` opt-out this framework advertises — which is how
     # RATE_LIMITING_MISSING fired at :error on a sixteen-line controller with no
-    # actions, on the word "login" inside a comment. At :error that also gates
+    # actions, on the word "login" inside a comment. At :error that also checks
     # the file out of the semantic pass entirely.
     def scan_file(text, file)
       return [] if absent && text.match?(absent)
@@ -424,7 +424,7 @@ module Law
       "CHECK: apply every applicable law; do not stop at the first convenient rule.",
       "PREFER: resolve conflicts by declared priority and safety constraints.",
       "SIMULATE: inspect edge cases, security, scope, reversibility, and side effects.",
-      "ADMIT: only execute effects that pass the constitutional gate.",
+      "ADMIT: only execute effects that pass the constitutional check.",
       "VERIFY: inspect the actual result; never claim completion without evidence.",
       "REPAIR: if a law is violated, correct the artifact and re-check from the start.",
       "REPORT: state what happened, what was verified, and what remains unresolved.",

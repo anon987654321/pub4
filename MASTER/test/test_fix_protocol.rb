@@ -198,14 +198,14 @@ class TestFixProtocol < Minitest::Test
     finish = source.index("def mission_for", start)
     refute_nil start
     refute_nil finish
-    gate = source[start...finish]
+    check = source[start...finish]
 
-    assert_includes gate, "terminal_state_for(result) == :done"
-    assert_includes gate, "@file_collector.collect(target)"
-    assert_includes gate, "blocking_skips"
-    assert_includes gate, "@reachability.verify!(target, files: full_files)"
-    assert_includes gate, "@convergence_discipline.begin_run(full_files, preserve_run_baseline: true)"
-    assert_includes gate, "CLEAN_RUNS"
+    assert_includes check, "terminal_state_for(result) == :done"
+    assert_includes check, "@file_collector.collect(target)"
+    assert_includes check, "blocking_skips"
+    assert_includes check, "@reachability.verify!(target, files: full_files)"
+    assert_includes check, "@convergence_discipline.begin_run(full_files, preserve_run_baseline: true)"
+    assert_includes check, "CLEAN_RUNS"
   end
 
 end

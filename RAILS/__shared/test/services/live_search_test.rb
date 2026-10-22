@@ -15,7 +15,7 @@ end
 
 class SharedLiveSearchTest < Minitest::Test
   # By hand rather than Minitest's stub: minitest 6 moved stub into the
-  # minitest-mock gem, and the release gate runs this file under bare ruby
+  # minitest-mock gem, and the release check runs this file under bare ruby
   # without it, so the require failed and nothing here ran.
   def with_event_emitter(replacement)
     original = Shared::EventEmitter.method(:call)

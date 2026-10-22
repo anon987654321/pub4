@@ -85,7 +85,7 @@ class TestReplicateClientRetry < Minitest::Test
     requests = []
     exhausted = Struct.new(:code, :body).new("429", '{"detail":"Insufficient credit balance"}')
 
-    Master::Io::QuotaGate.stub(:trip!, ->(**_args) {}) do
+    Master::Io::QuotaCheck.stub(:trip!, ->(**_args) {}) do
       error = nil
       with_http_responses([exhausted], requests) do
         error = assert_raises(Client::ExhaustedError) do

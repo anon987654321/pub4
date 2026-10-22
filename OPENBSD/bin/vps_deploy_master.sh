@@ -100,18 +100,18 @@ BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails assets:precompile
 # (2026-10-12: chat and /health, while / and /up still answered).
 echo "==> runtime dirs"
 doas /usr/local/sbin/pub4-admin master-web-runtime-dirs
-# The asset gate, through whichever door exists. MASTER/gates/runner.rb was
+# The asset check, through whichever door exists. MASTER/checks/runner.rb was
 # deleted on 2026-09-16 and every deploy script still named it, so `vps-deploy
 # master` died here under set -e with the box half deployed: new assets on disk,
-# the old process still serving them. The gate itself lives in MASTER/gates and
+# the old process still serving them. The check itself lives in MASTER/checks and
 # runs either way.
-if [ -f "$ROOT/MASTER/gates/runner.rb" ]; then
-  BUNDLE_WITHOUT=development:test "$BUNDLE" exec ruby "$ROOT/MASTER/gates/runner.rb" master_web_assets
+if [ -f "$ROOT/MASTER/checks/runner.rb" ]; then
+  BUNDLE_WITHOUT=development:test "$BUNDLE" exec ruby "$ROOT/MASTER/checks/runner.rb" master_web_assets
 else
   BUNDLE_WITHOUT=development:test "$BUNDLE" exec ruby -e '
     require ARGV[0]
-    Deploy::MasterWebAssetsGate.run.report!("master web assets ok")
-  ' "$ROOT/MASTER/lib/operator/gates.rb"
+    Deploy::MasterWebAssetsCheck.run.report!("master web assets ok")
+  ' "$ROOT/MASTER/lib/operator/checks.rb"
 fi
 
 echo "==> sync rc.d master"

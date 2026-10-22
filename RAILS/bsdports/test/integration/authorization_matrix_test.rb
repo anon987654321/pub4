@@ -4,10 +4,10 @@ require "test_helper"
 
 # One row per (route, actor), each declaring ONE outcome.
 #
-# The flow gates cover this app with GETs carrying an `expect_status` list, and
+# The flow checks cover this app with GETs carrying an `expect_status` list, and
 # twelve of those steps accept 200 AND a redirect — so "serves a stranger" and
-# "sends a stranger to sign in" are the same result to the gate. amber grew this
-# matrix after `GET /items/new` served an anonymous 200 with every gate green
+# "sends a stranger to sign in" are the same result to the check. amber grew this
+# matrix after `GET /items/new` served an anonymous 200 with every check green
 # (RAILS/amber/test/integration/authorization_matrix_test.rb); this is the same
 # discipline for bsdports, and bsdports has its own version of that bug on
 # record: `PortsController` line 8 says watch/unwatch once called
@@ -45,7 +45,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
   #
   # Params are per row and carried for both actors, so the guest row is refused
   # on identity rather than on a missing parameter: comments#create calls
-  # params.require(:comment), and a bare POST returns 400 before any gate is
+  # params.require(:comment), and a bare POST returns 400 before any check is
   # consulted. A 400 would have passed the guest assertion for the wrong reason.
   def matrix
     [
@@ -91,7 +91,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       assert_response :success, "#{verb.upcase} #{route} as #{actor} should render"
     when :redirect
       assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served — " \
-                                 "got #{response.status}. An identity gate is missing, or it is " \
+                                 "got #{response.status}. An identity check is missing, or it is " \
                                  "inside the action body where its redirect does not halt."
     when :any
       assert_includes 200..399, response.status, "#{verb.upcase} #{route} as #{actor} errored"

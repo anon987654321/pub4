@@ -10,7 +10,7 @@ llm_prompt: |
   5. source pins: assert stable public names, never match against whole multi-MB files
   6. event topics: literal string publishers; no stale aliases (see MASTER/data/event_topics.yml)
   7. dual paths: after early return/exit, delete or share one function with the later twin
-  8. gates: label SKIPPED vs FAILED vs INCONCLUSIVE vs crash
+  8. checks: label SKIPPED vs FAILED vs INCONCLUSIVE vs crash
   9. limits/guidance: new limits keys need a reader, or stay under guidance: only
 
   When proposing a patch, name which checklist id (A–G) you satisfied or waive with one line.

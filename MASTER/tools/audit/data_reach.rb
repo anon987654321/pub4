@@ -26,7 +26,7 @@
 # radio_bergen_track_dossiers.yml by MASTER/tools/dilla). A member is a defect only
 # after all three are ruled out.
 #
-# That is also why no gate fails on an unread key. The tree reaches data through
+# That is also why no check fails on an unread key. The tree reaches data through
 # interpolated filenames (Ground::Rules joins "#{stem}.yml"), directory globs,
 # DATA_ALIASES and section loaders such as RuntimeCatalog.load(section), none of
 # which a literal search follows, so the unnamed list is wrong more often than

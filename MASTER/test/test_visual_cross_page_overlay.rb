@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "zlib"
-require File.expand_path("../../MASTER/gates/support/geometry_probe", __dir__)
+require File.expand_path("../../MASTER/checks/support/geometry_probe", __dir__)
 
 # The cross-page overlay layers different pages of one app. The browser does
 # the compositing, so these drive it with a fake CDP that records the page it

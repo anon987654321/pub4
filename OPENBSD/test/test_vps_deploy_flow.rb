@@ -304,7 +304,7 @@ class VpsDeployFlowTest < Minitest::Test
   def test_memory_heavy_steps_wait_for_booting_apps_and_flows_run_per_app
     assert_operator SOURCE.index("settle_boots\n  jobs_service"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
     assert_operator SOURCE.index("(assets precompile)\"\nsettle_boots"), :<, SOURCE.index("rails_assets_precompile_as_app")
-    assert_includes SOURCE, 'FLOW_APP="$app" MASTER_STRICT=deploy GATE_AUTOFIX=0 "$RUBY"'
+    assert_includes SOURCE, 'FLOW_APP="$app" MASTER_STRICT=deploy CHECK_AUTOFIX=0 "$RUBY"'
     assert_includes SOURCE, "FLOW_APP=master MASTER_STRICT=deploy"
   end
 

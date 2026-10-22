@@ -51,7 +51,7 @@ class EmailVerificationTest < ActionDispatch::IntegrationTest
   end
 
   test "an unverified signup is gated from posting until it confirms" do
-    email = "gate-#{SecureRandom.hex(4)}@brgen.no"
+    email = "check-#{SecureRandom.hex(4)}@brgen.no"
     post users_path, params: { accept_terms: "1", accept_age: "1", user: { email_address: email, username: "g_#{SecureRandom.hex(3)}", password: "password12345", password_confirmation: "password12345" } }
     community = Community.first
     assert_no_difference -> { Post.count } do

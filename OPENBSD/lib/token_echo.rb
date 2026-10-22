@@ -5,9 +5,9 @@
 # in ~/vps-deploy.log for anyone who reads it. Sending a token stays allowed: a
 # curl or a Rack env builds a request, and no log reads that line.
 #
-# Its own file rather than three more defs in deploy_smoke_gate.rb: MASTER's
+# Its own file rather than three more defs in deploy_smoke_check.rb: MASTER's
 # self_test counts an OPENBSD Ruby file past ten defs as a god class and refuses
-# to boot, and the smoke gate stood at ten. Scanning every tracked script is a
+# to boot, and the smoke check stood at ten. Scanning every tracked script is a
 # different job from checking the relayd and httpd templates anyway.
 module TokenEcho
   PATTERN = /token=(?:#\{|\$\{?\w|%s)/

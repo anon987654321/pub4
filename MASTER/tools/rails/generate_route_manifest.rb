@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# Writes MASTER/gates/data/route_manifest.yml: controller#action -> GET paths, per app.
+# Writes MASTER/checks/data/route_manifest.yml: controller#action -> GET paths, per app.
 #
 # PageInventory used to derive a URL from a view's filename through a ladder of
 # special cases (dating's singular :profile, TV nested under channels, partner
 # ids). Every route that did not follow the convention had to be added by hand,
 # and four that were not -- bookmarks#index at /saved, and the three legal pages
 # -- made page_simulation probe 404s and report them as broken pages. Routes are
-# the truth; this file carries them to the gate.
+# the truth; this file carries them to the check.
 #
 #   ruby MASTER/tools/rails/generate_route_manifest.rb [app ...]
 #
@@ -31,7 +31,7 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    PATH = File.join(ROOT, "MASTER", "gates", "data", "route_manifest.yml")
+    PATH = File.join(ROOT, "MASTER", "checks", "data", "route_manifest.yml")
     # Prefix and defaults are both optional and the prefix may be blank, so anchor
     # on the verb rather than counting columns.
     ROUTE_LINE = /^\s*(?<prefix>\S*)\s+(?<verb>[A-Z]+(?:\|[A-Z]+)*)\s+(?<pattern>\/\S*)\s+(?<endpoint>.+?)\s*$/

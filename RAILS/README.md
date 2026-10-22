@@ -36,7 +36,7 @@ The MASTER web face, which serves `ai.brgen.no`, is a fourth Rails surface in
 Everything that builds, tests or probes these apps now lives under MASTER. The
 old RAILS `bin` directory is gone, and its work moved into `MASTER/tools/rails`,
 reached through the operator: `triangle` boots brgen, amber, bsdports and the
-face on the ports the live gates probe, `premerge` runs the premerge proof, `ci`
+face on the ports the live checks probe, `premerge` runs the premerge proof, `ci`
 runs each app's own `bin/ci`, and `coverage` runs the full coverage pass. Each app
 also keeps its own `bin/ci` for RuboCop, Brakeman, bundler-audit and the tests.
 The design tokens come from `MASTER/data/tokens.yml`, and the shared engine's
@@ -56,13 +56,13 @@ Strict loading is on in every environment. Reading a lazy association off a reco
 fetched by id raises in test and in production, so check that before you report a
 server error. Money is stored as integer minor units.
 
-The gates are rows in `MASTER/gates/gates.yml`, run by `MASTER/gates/runner.rb`,
-which can list them. Most run in process. The source gates read text, and the
-rendered gates drive Chrome over the DevTools Protocol with a small stdlib
-session, and measure what the browser laid out. Without Chrome the rendered gates
+The checks are rows in `MASTER/checks/checks.yml`, run by `MASTER/checks/runner.rb`,
+which can list them. Most run in process. The source checks read text, and the
+rendered checks drive Chrome over the DevTools Protocol with a small stdlib
+session, and measure what the browser laid out. Without Chrome the rendered checks
 degrade to warnings, so a green run is not by itself evidence that anything was
-measured. A gate can only see what it globs. Shared views once sat outside every
-gate because the page inventory read each app's views and never the engine's, and
+measured. A check can only see what it globs. Shared views once sat outside every
+check because the page inventory read each app's views and never the engine's, and
 the inventory now names them explicitly.
 
 Media work goes through the contract in `MASTER/contracts/studio.rb`. STUDIO owns
@@ -85,8 +85,8 @@ tokens alone.
 ## Running it
 
 ```zsh
-ruby MASTER/gates/runner.rb --list
-ruby MASTER/gates/runner.rb --all
+ruby MASTER/checks/runner.rb --list
+ruby MASTER/checks/runner.rb --all
 MASTER/bin/operator triangle up
 MASTER/bin/operator premerge --list
 cd RAILS/brgen && bin/ci

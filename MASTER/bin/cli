@@ -78,7 +78,7 @@ end
 # /fix --no-critique, /fix --dry-run). The top-level parser does not know them and
 # must not reject them or drop them: a dropped --dry-run is a write run.
 COMMAND_FLAG = %r{\A--(?:(?:autofix|max-files|only)=|
-                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan|until-gates)\z)}x
+                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan|until-checks)\z)}x
 
 def initial_message_from_argv(argv)
   kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }
@@ -107,7 +107,7 @@ def parse_initial_message_options(argv)
         "Pipe: /status",
         "Fast: bin/cli --fast",
         "Headless: bin/cli --headless -p PROMPT",
-        "Gates: MASTER/bin/check --profile=contributor|agent|full",
+        "Checks: MASTER/bin/check --profile=contributor|agent|full",
         "Offline: MASTER_LOCAL_ONLY=1",
         "VPS: auto-skips TTS, boot-scan and web; scope scans to a path",
       ].join("\n")

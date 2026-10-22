@@ -12,7 +12,7 @@ require_relative "fix_loop/llm_router"
 require_relative "fix_loop/file_collector"
 require_relative "fix_loop/order"
 require_relative "fix_loop/pass_runner"
-require_relative "gate_focus"
+require_relative "check_focus"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
 require_relative "fix_loop/pass_runner_builder"
@@ -116,10 +116,10 @@ module Master
         @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
-      # --blockers: the corpus is the files a red gate named before the repair, nothing else.
+      # --blockers: the corpus is the files a red check named before the repair, nothing else.
       def blocker_files(files)
-        named = GateFocus.only(files)
-        Master::Trace::Dmesg.status("fix0", "blockers: #{named.size} of #{files.size} file(s) named by a red gate")
+        named = CheckFocus.only(files)
+        Master::Trace::Dmesg.status("fix0", "blockers: #{named.size} of #{files.size} file(s) named by a red check")
         named
       end
 
@@ -159,7 +159,7 @@ module Master
         Master::Io::LaneSelection.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        files = blocker_files(files) if GateFocus.blockers?
+        files = blocker_files(files) if CheckFocus.blockers?
         coverage = {
           candidates: @file_collector.candidate_count,
           collected: files.size,
@@ -410,7 +410,7 @@ module Master
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
-          blockers: GateFocus.only(files).map { |path| path.delete_prefix("#{@root}/") },
+          blockers: CheckFocus.only(files).map { |path| path.delete_prefix("#{@root}/") },
           gaps: @pass_runner.gaps,
           coverage: {
             candidates: @file_collector.candidate_count,
@@ -456,7 +456,7 @@ module Master
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
         InstrumentCheck.new(root: @root, bus: @bus).verify!
-        @reachability.verify!(target, files:, subset: GateFocus.blockers?)
+        @reachability.verify!(target, files:, subset: CheckFocus.blockers?)
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return finish_run(resumed, target, run_id, mission:, requested:) if resumed.err?
@@ -896,9 +896,9 @@ module Master
       end
 
       # Err, not ok. A run that stopped because the clock ran out did not
-      # finish fixing, and saying "ok" here is how the 2026-07-31 gate
+      # finish fixing, and saying "ok" here is how the 2026-07-31 check
       # reported a green MASTER phase whose /fix had completed exactly one
-      # pass: bin/cli exited 0, bin/gate saw success, and the /scan on
+      # pass: bin/cli exited 0, bin/check --ladder saw success, and the /scan on
       # either side of it printed the identical 110 violations.
       #
       # :timeout matches LLMDispatcher's category for the same situation, so

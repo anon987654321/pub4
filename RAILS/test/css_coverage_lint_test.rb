@@ -71,7 +71,7 @@ class CssCoverageLintTest < Minitest::Test
   end
 
   # Both lists must be non-empty for the counts to mean anything: an empty scan reads
-  # as a clean tree, which is the failure mode every gate here exists to catch.
+  # as a clean tree, which is the failure mode every check here exists to catch.
   def test_it_reads_something
     refute_empty L.defined_names
     refute_empty L.used_names

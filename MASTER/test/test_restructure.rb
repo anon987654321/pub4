@@ -424,7 +424,7 @@ class TestRestructure < Minitest::Test
     assert_includes prompt, "No source has changed during this phase"
   end
 
-  def test_proposal_carries_every_playbook_method_and_gate
+  def test_proposal_carries_every_playbook_method_and_check
     big = File.join(@repo, "MASTER/lib/big.rb")
     problem = Struct.new(:id, :findings, :files, :laws, :reason, :confidence, :candidate_operations, keyword_init: true).new(
       id: "p1",
@@ -441,7 +441,7 @@ class TestRestructure < Minitest::Test
     playbook = Master::Fix::TransformationPlan.new.refactoring_playbook
 
     playbook.fetch("methods").each { |entry| assert_includes prompt, "#{entry.fetch("id")}: #{entry.fetch("action")}" }
-    playbook.fetch("gates").each { |gate| assert_includes prompt, gate }
+    playbook.fetch("checks").each { |check| assert_includes prompt, check }
     assert_includes prompt, "Below three sites keep the duplication"
     assert_includes prompt, "Measured baseline scorecard"
     assert_includes prompt, "Co-change evidence"

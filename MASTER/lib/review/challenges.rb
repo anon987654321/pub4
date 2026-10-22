@@ -37,10 +37,10 @@ module Master
           directive: "Compare the current path with a simpler reference, prior behavior, or alternate implementation. Separate meaningful differences from expected differences and name the evidence.",
         ),
         Challenge.new(
-          id: :gate_gaming,
-          target: "the gate or metric itself",
-          artifact: "an attempted false-green input and the gate that should reject it",
-          directive: "Try to make the gate pass while violating the contract it claims to enforce. Use the smallest adversarial change and state exactly which check should catch it.",
+          id: :check_gaming,
+          target: "the check or metric itself",
+          artifact: "an attempted false-green input and the check that should reject it",
+          directive: "Try to make the check pass while violating the contract it claims to enforce. Use the smallest adversarial change and state exactly which check should catch it.",
         ),
         Challenge.new(
           id: :abstraction_assassination,

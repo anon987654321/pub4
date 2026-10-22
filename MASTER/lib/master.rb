@@ -198,7 +198,7 @@ end
     load_yaml(File.join(root, "data", "agent_taxonomy.yml")) || {}
   end
 
-  # The one reader of data/tokens.yml: the design values every gate, lint and generated view reads.
+  # The one reader of data/tokens.yml: the design values every check, lint and generated view reads.
   def self.tokens(root: ROOT)
     (load_yaml(File.join(root, "data", "tokens.yml"), default: {}) || {})["tokens"] || {}
   end

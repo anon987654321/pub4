@@ -206,7 +206,7 @@ module Master
     # A heredoc whose tag names another language is not Ruby, and a Ruby law
     # must not read it.
     #
-    # `cdp.evaluate(<<~JS)` in MASTER/gates/face_capture_probe.rb holds
+    # `cdp.evaluate(<<~JS)` in MASTER/checks/face_capture_probe.rb holds
     # `f && f.primerFired` — correct JavaScript, and four SAFE_NAVIGATION
     # findings telling it to use Ruby's `&.`, which JavaScript does not have.
     # the old backlog records the same shape costing more: RUBY_NUMERIC_UNDERSCORE fired
@@ -316,7 +316,7 @@ end end.join
     end
 
     # WCAG relative luminance: each sRGB channel is gamma-decoded before the
-    # weights apply, as RAILS/gates/support/design_metrics/contrast.rb does.
+    # weights apply, as RAILS/checks/support/design_metrics/contrast.rb does.
     def relative_luminance(hex)
       h = hex.length < 6 ? hex.chars.flat_map { |c| [c, c] }.join : hex
       r, g, b = h[0, 6].scan(/../).map { |pair| srgb_to_linear(pair.to_i(16) / 255.0) }

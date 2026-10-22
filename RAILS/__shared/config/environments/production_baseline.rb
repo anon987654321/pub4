@@ -25,7 +25,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
 
   # Optional global CDN for Propshaft assets (e.g. https://cdn.example.com).
   # Unset = serve from origin via public_file_server (OpenBSD/relayd). Never
-  # force_ssl here — TLS terminates at relayd (see production gates).
+  # force_ssl here — TLS terminates at relayd (see production checks).
   cdn_asset_host = ENV["CDN_ASSET_HOST"].to_s.strip
   config.asset_host = cdn_asset_host if cdn_asset_host.present?
 

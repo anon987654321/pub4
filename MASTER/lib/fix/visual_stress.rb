@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../gates/support/composition_probe"
-require_relative "../../gates/support/stress_states"
-require_relative "../../gates/support/engine_compare"
+require_relative "../../checks/support/composition_probe"
+require_relative "../../checks/support/stress_states"
+require_relative "../../checks/support/engine_compare"
 
 module Master
   module Fix

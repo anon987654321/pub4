@@ -7,7 +7,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # master-probe — one entrypoint for local and VPS readiness checks.
 # Usage:
 #   bin/probe              # quick local signal
-#   bin/probe all          # smoke + namespace + selftest + core + dogfood + ci + audit + rails gate
+#   bin/probe all          # smoke + namespace + selftest + core + dogfood + ci + audit + rails check
 #   bin/probe smoke rails  # selected checks
 
 Encoding.default_external = Encoding::UTF_8
@@ -94,13 +94,13 @@ CHECKS = {
     skip_reason: "no staged files",
   },
   "rails" => {
-    desc: "RAILS production gate",
-    cmd: [RUBY, File.join(MASTER_ROOT, "gates", "runner.rb"), "production"],
+    desc: "RAILS production check",
+    cmd: [RUBY, File.join(MASTER_ROOT, "checks", "runner.rb"), "production"],
     cwd: REPO_ROOT,
   },
   "phantom_fk" => {
     desc: "Rails schema phantom foreign-key targets",
-    cmd: [RUBY, File.join(MASTER_ROOT, "gates", "runner.rb"), "phantom_foreign_keys"],
+    cmd: [RUBY, File.join(MASTER_ROOT, "checks", "runner.rb"), "phantom_foreign_keys"],
     cwd: REPO_ROOT,
   },
   "playbook" => {
@@ -115,7 +115,7 @@ CHECKS = {
   },
   "health" => {
     desc: "OpenBSD VPS stack health",
-    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "gates", "health_check.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "checks", "health_check.rb")],
     cwd: REPO_ROOT,
     skip: -> { !File.file?("/etc/relayd.conf") },
     skip_reason: "not on OpenBSD VPS (/etc/relayd.conf missing)",
@@ -149,8 +149,8 @@ CHECKS = {
     skip_reason: "set MASTER_CRAWL_BROWSER=1 or PROBE_FORCE_BROWSER=1 (skipped on macOS by default)",
   },
   "integrity" => {
-    desc: "Full RAILS + OPENBSD/OpenBSD gate chain",
-    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "gates", "integrity_gate.rb")],
+    desc: "Full RAILS + OPENBSD/OpenBSD check chain",
+    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "checks", "integrity_check.rb")],
     cwd: REPO_ROOT,
   },
   "selfscan" => {

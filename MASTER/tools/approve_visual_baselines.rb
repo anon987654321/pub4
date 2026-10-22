@@ -6,16 +6,16 @@ require "fileutils"
 require "json"
 require "optparse"
 require "tempfile"
-require_relative "../gates/support/png_diff"
-require_relative "../gates/support/geometry_probe"
+require_relative "../checks/support/png_diff"
+require_relative "../checks/support/geometry_probe"
 
 # Promote the exact, inspected PNGs from one browser-diagnostics run. This tool
-# is deliberately outside the gate registry: ordinary /fix must never approve
+# is deliberately outside the check registry: ordinary /fix must never approve
 # its own visual changes.
 module VisualBaselineApproval
   ROOT = File.expand_path("../..", __dir__).freeze
-  BASELINE_DIR = File.join(ROOT, "MASTER", "gates", "data", "visual_baselines").freeze
-  INVENTORY = "MASTER/gates/data/geometry_surfaces.yml".freeze
+  BASELINE_DIR = File.join(ROOT, "MASTER", "checks", "data", "visual_baselines").freeze
+  INVENTORY = "MASTER/checks/data/geometry_surfaces.yml".freeze
   ApprovalError = Class.new(StandardError)
 
   module_function
@@ -117,10 +117,10 @@ module VisualBaselineApproval
   end
 
   def canonical_surfaces
-    previous = ENV.delete("GATE_SURFACES")
+    previous = ENV.delete("CHECK_SURFACES")
     Deploy::GeometryProbe.surfaces(root: ROOT)
   ensure
-    ENV["GATE_SURFACES"] = previous unless previous.nil?
+    ENV["CHECK_SURFACES"] = previous unless previous.nil?
   end
 
   def surface_id(row)

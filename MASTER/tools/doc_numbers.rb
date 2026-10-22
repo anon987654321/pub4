@@ -4,7 +4,7 @@
 # MASTER's canonical design system already owns.
 #
 # A document prescribing an 8px step while the canonical design system defines
-# space_sm as 0.75rem gives the tree two spacing scales, and the gates read different ones.
+# space_sm as 0.75rem gives the tree two spacing scales, and the checks read different ones.
 #
 # Mentioning a value is fine. Prescribing one without saying where it comes from
 # is what drifts, because the reader has no way to find the value that governs.

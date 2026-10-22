@@ -43,7 +43,7 @@ module Master
     # The REPL prints for a living, so the path it lives at is exempt. This
     # exemption carries the whole of lib/cli/session/ -- 100 deliberate puts --
     # and it has to move whenever that directory does. An exemption whose
-    # subject moves out from under it is a gate that starts firing on exactly
+    # subject moves out from under it is a check that starts firing on exactly
     # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
     # 105 findings arrived in selfcheck's largest actionable bucket overnight.
     next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
@@ -489,7 +489,7 @@ module Master
     # exemption above makes. A rescue whose whole body is `next` sits in a loop
     # over members, and skipping the member IS the handling: the method's answer
     # is that this one contributed nothing. All 17 in the four trees are that
-    # shape — a census walking files, a gate walking hosts — and 16 of them
+    # shape — a census walking files, a check walking hosts — and 16 of them
     # would land at error severity, so adding the token asks the fleet to
     # annotate its own idiom.
     def discard_token?(body)

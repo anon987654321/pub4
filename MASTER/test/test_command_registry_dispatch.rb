@@ -245,7 +245,7 @@ class TestCommandRegistryDispatch < Minitest::Test
 
     assert_equal :dispatch_support, command.method_name
     assert_includes Registry.help_text("support"), "/support benchmark --confirm"
-    assert_match(/BLOCKED cost gate/, command.call(Master::CLI::PipelineContext.new(
+    assert_match(/BLOCKED cost check/, command.call(Master::CLI::PipelineContext.new(
       user_message: "/support benchmark",
       args: "benchmark",
     )))

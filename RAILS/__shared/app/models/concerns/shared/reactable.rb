@@ -5,7 +5,7 @@ module Shared
     extend ActiveSupport::Concern
 
     # Only brgen ships a Reaction model and a reactions table. amber and
-    # bsdports gate their social stack behind *_SOCIAL until the migrations
+    # bsdports check their social stack behind *_SOCIAL until the migrations
     # land (see bsdports/config/routes.rb), so declaring the association there
     # made `dependent: :destroy` raise "no such table: reactions" on every
     # destroy — deleting a bsdports comment 500'd. Degrade instead, the way

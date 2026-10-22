@@ -280,10 +280,10 @@ can go stale relative to what's actually on disk if a newer build lands
 after the process booted. A file can exist, `curl` can 200 it directly,
 and the app can still 404 trying to `asset_path()` it — until restarted.
 
-This is why `master`'s `rc.d` script now runs `master_web_assets_gate.rb`
+This is why `master`'s `rc.d` script now runs `master_web_assets_check.rb`
 as a hard, load-bearing check before starting (added 2026-07-10, one retry
 via forced `assets:precompile` before it actually refuses to start). If
-`master` won't start and the log shows "assets gate failed", that's
+`master` won't start and the log shows "assets check failed", that's
 telling you the truth — don't work around it, find out what's actually
 missing.
 
@@ -291,7 +291,7 @@ missing.
 
 - `rcctl restart master` runs a real `rc_pre()`: kills stale processes,
   regenerates the face bundles if missing, precompiles assets if a content
-  digest changed, runs the gate above, then starts Falcon and waits for
+  digest changed, runs the check above, then starts Falcon and waits for
   `/up` before restarting `relayd` (relayd can keep routing to a dead
   backend connection after a restart until kicked).
 - A `/home/dev/pub4/.deploying-<app>` lock file is touched for the

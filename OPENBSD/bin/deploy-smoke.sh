@@ -4,7 +4,7 @@
 # is the one copy of that text.
 #
 # bsdports was the hole this script existed to cover and did not: it had no local
-# check at all and its public check was optional, so the one post-deploy gate that
+# check at all and its public check was optional, so the one post-deploy check that
 # is supposed to notice a dead app could not fail on the app that was found dead
 # (a deploy sheds amber and bsdports). The contract test passed
 # throughout, because it asserted the URL was present rather than required.
@@ -241,7 +241,7 @@ if [ "$run_public" = "1" ]; then
   # Required, and it fails today for a reason that is not the app: bsdports.org
   # is delegated to the registrar's parking nameservers, parking terminates no
   # TLS, and the answer is 000 whether or not port 47312 is healthy. A red line
-  # whose cause is unnamed is what teaches an operator to skim a red gate, so
+  # whose cause is unnamed is what teaches an operator to skim a red check, so
   # name it here. The local check above is the one that measures the app.
   bsdports_public_failed=$failed
   check_http bsdports_public "https://bsdports.org/up" "$bsdports_req"

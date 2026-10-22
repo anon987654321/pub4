@@ -19,7 +19,7 @@ class TestSynonymsContract < Minitest::Test
     assert_equal "none", data.fetch("runtime_effect")
     assert_equal "MASTER/data/soul.yml", data.fetch("authority").fetch("constitution")
     assert_equal "MASTER/data/laws.yml", data.fetch("authority").fetch("law_catalogue")
-    assert_equal "MASTER/gates/gates.yml", data.fetch("authority").fetch("check_execution_registry")
+    assert_equal "MASTER/checks/checks.yml", data.fetch("authority").fetch("check_execution_registry")
   end
 
   def test_check_proof_and_result_states_are_not_collapsed_into_synonyms
@@ -33,7 +33,7 @@ class TestSynonymsContract < Minitest::Test
     assert_equal %w[hard ops soft], vocabulary.fetch("not_enforced_tiers").sort
   end
   def check_registry
-    YAML.safe_load_file(File.join(Master::ROOT, "gates", "gates.yml"))
+    YAML.safe_load_file(File.join(Master::ROOT, "checks", "checks.yml"))
   end
 
   def test_check_registry_remains_execution_inventory_not_a_second_policy_catalogue
@@ -45,7 +45,7 @@ class TestSynonymsContract < Minitest::Test
       keys = declaration.keys.map(&:to_s)
       policy_keys = keys & POLICY_FIELDS
       unknown_keys = keys - EXECUTION_FIELDS
-      assert_empty policy_keys, "#{name} duplicates normative metadata in gates.yml"
+      assert_empty policy_keys, "#{name} duplicates normative metadata in checks.yml"
       assert_empty unknown_keys, "#{name} adds an unreviewed check-registry field"
     end
   end

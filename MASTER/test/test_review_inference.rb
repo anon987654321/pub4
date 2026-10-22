@@ -217,12 +217,12 @@ end
       result = pipe.call(target: "rails", apply: false, critique: false, aesthetic: false)
       # Strict equality: the old `end_with?("RAILS")` disjunct accepted
       # /Users/…/GitHub/RAILS — the nonexistent sibling ../RAILS used to
-      # resolve to — so the test passed while the gate scanned MASTER.
+      # resolve to — so the test passed while the check scanned MASTER.
       assert_equal Master::RAILS_ROOT, result.target
       # dmesg-style unit id (review0), not a literal "through:" label
       assert_match(/review\d+:\s*complete/, result.render)
 
-      # bin/gate's spelling. Expanding the ../ against the repo root walked
+      # bin/check --ladder's spelling. Expanding the ../ against the repo root walked
       # out of the repo, and a target that does not exist falls back to
       # scanning MASTER — the RAILS stage measured the wrong tree.
       assert_equal Master::RAILS_ROOT, pipe.send(:resolve_target, "../RAILS")
@@ -318,7 +318,7 @@ end
       target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],
       totals: { before: 567, after: 480 }
     )
-    Master::Io::QuotaGate.stub(:report, nil) do
+    Master::Io::QuotaCheck.stub(:report, nil) do
       assert_equal "review0: complete, 567 findings, 480 after the fix", result.footer
     end
   end
@@ -327,7 +327,7 @@ end
     result = Master::CLI::Pipeline::Pass::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],
     )
-    Master::Io::QuotaGate.stub(:report, "SKIPPED semantic rules — exhausted") do
+    Master::Io::QuotaCheck.stub(:report, "SKIPPED semantic rules — exhausted") do
       text = result.footer
 
       assert_includes text, "review0: complete"

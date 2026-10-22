@@ -5,7 +5,7 @@ require "open3"
 require "master"
 require_relative "../lib/fix/visual_pass"
 # VisualPass#run loads the probe only when it runs; capture_resting needs it here.
-require_relative "../../MASTER/gates/support/geometry_probe"
+require_relative "../../MASTER/checks/support/geometry_probe"
 
 # The web-platform probe gathers mobile evidence without touching the page, the
 # visual pass hands that evidence to the council, and the modern-web laws are

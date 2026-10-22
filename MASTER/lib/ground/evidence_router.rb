@@ -21,7 +21,7 @@ module Master
       # do?") is answered from this checkout, not from memory: it names the assistant and one of its
       # own parts, or a slash command.
       ASSISTANT = /\b(?:you|your|yourself|master)\b/i
-      OWN_PARTS = /\b(?:tts|voice|speech|narrat\w*|speak\w*|face|council|skills?|lanes?|models?|sessions?|memory|tools?|commands?|boot|config\w*|settings?|defaults?|fix|gates?|ratchets?|laws?)\b/i
+      OWN_PARTS = /\b(?:tts|voice|speech|narrat\w*|speak\w*|face|council|skills?|lanes?|models?|sessions?|memory|tools?|commands?|boot|config\w*|settings?|defaults?|fix|checks?|ratchets?|laws?)\b/i
       SLASH_COMMAND = %r{(?:^|\s)/[a-z][a-z-]+\b}
       DEVICE = /\b(?:android|termux|wifi|wi-?fi|bluetooth|sensor|camera|microphone|battery|torch|location|device)\b/i
       CONVERSATION = /\A(?:hi|hello|hey|thanks?|thank\s+you|good\s+(?:morning|evening|night)|how\s+are\s+you)[!?.,\s]*\z/i

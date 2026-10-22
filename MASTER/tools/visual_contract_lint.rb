@@ -11,7 +11,7 @@ module Operator
   #     build is what production wears (shared/README.md: "read the second table
   #     before the first"). Text pairs read large_text_contrast (AA 4.5) from
   #     laws.yml; UI/accent pairs stay at WCAG non-text 3:1. AAA 7.0
-  #     (normal_text_contrast) is design_metrics' budgeted gate — raising this
+  #     (normal_text_contrast) is design_metrics' budgeted check — raising this
   #     lint's floor to 7.0 floods the compiled bundles. Custom properties are
   #     resolved one var() hop within the same bundle; pairs that don't resolve
   #     to hex are skipped, not guessed.

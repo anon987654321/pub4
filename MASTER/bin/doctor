@@ -28,7 +28,7 @@ Master::Ground::EnvLoader.load!
 # `state` is :pass, :fail or :unmeasured. Unmeasured never fails the exit
 # code — an absent optional module is not a sick host — but it is printed as
 # its own word and counted in its own line, which is the whole point. The
-# gate runner already works this way: "2 gate(s) measured nothing, and why".
+# check runner already works this way: "2 check(s) measured nothing, and why".
 #
 # ok stays as a reader so nothing downstream breaks on the shape change.
 Check = Struct.new(:name, :state, :detail, keyword_init: true) do

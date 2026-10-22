@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "fileutils"
 require "open3"
 require_relative "../lib/operator/ratchet_sponsor"
-require_relative "../gates/support/fleet"
+require_relative "../checks/support/fleet"
 require_relative "../tools/audit/design_baseline"
 
 class TestRatchetSponsor < Minitest::Test

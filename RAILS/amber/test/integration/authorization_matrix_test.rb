@@ -4,13 +4,13 @@ require "test_helper"
 
 # One row per (route, actor), each declaring ONE outcome.
 #
-# The flow gates cover 24 journeys and 56 steps, and every one of them is a GET
+# The flow checks cover 24 journeys and 56 steps, and every one of them is a GET
 # with an `expect_status` list. Twelve of those steps accept 200 AND a redirect,
 # so "renders the form to anyone" and "sends a stranger to sign in" are the same
-# result to the gate. That is not a hypothetical: amber's ItemsController lost
-# its identity gate to a callback-narrowing bug (see
+# result to the check. That is not a hypothetical: amber's ItemsController lost
+# its identity check to a callback-narrowing bug (see
 # RAILS/test/callback_narrowing_test.rb), anonymous GET /items/new served 200,
-# and every gate stayed green.
+# and every check stayed green.
 #
 # Two rules make this catch that class:
 #
@@ -29,7 +29,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     [ "/outfits",          :get,  :redirect, :ok ],
     [ "/wardrobe_items",   :get,  :redirect, :ok ],
     [ "/wardrobe_items",   :post, :redirect, :any ],
-    # Writes. The gates exercise none of these, and a write is where an open
+    # Writes. The checks exercise none of these, and a write is where an open
     # door actually costs something.
     [ "/items",            :post, :redirect, :any ],
     [ "/outfits",          :post, :redirect, :any ]
@@ -58,7 +58,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       assert_response :success, "#{verb.upcase} #{route} as #{actor} should render"
     when :redirect
       assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served — " \
-                                 "got #{response.status}. An identity gate is missing or was " \
+                                 "got #{response.status}. An identity check is missing or was " \
                                  "narrowed by a duplicate before_action."
     when :any
       assert_includes 200..399, response.status, "#{verb.upcase} #{route} as #{actor} errored"

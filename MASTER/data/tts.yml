@@ -15,7 +15,7 @@ transcendent:
   warmth: 0.82
   depth: 0.68
   # Prefer expressive local engines when they are actually installed. Engines.attempt?
-  # remains the availability gate; missing MLX/Chatterbox falls through without delay.
+  # remains the availability check; missing MLX/Chatterbox falls through without delay.
   engine_chain: mlx, chatterbox, edge_melodic, edge, say
   emotion_enabled: true
   # Deterministic, capped Chatterbox Turbo events. No random speech effects.

@@ -109,7 +109,7 @@
 /* END:generated-face-root */
 
 /* Not a generated token. generate_face_root_css.rb owns the block above, so a
-   hand-added line inside it is drift the deploy gate stops. The wordmark
+   hand-added line inside it is drift the deploy check stops. The wordmark
    names its face as the brand, and the brand is the one sans family the owner
    set for every surface, so it reads --font-label rather than restating the
    stack. Helvetica Neue Pro is licensed per seat and cannot ship as a webfont;

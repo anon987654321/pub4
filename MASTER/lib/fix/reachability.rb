@@ -79,19 +79,19 @@ module Master
         shared = File.join(rails, "__shared")
         raise "RAILS __shared engine missing from filesystem" unless File.directory?(shared)
 
-        layout_path = File.join(@repo_root, "MASTER", "gates", "lib", "layout_suite.rb")
-        auditor_path = File.join(@repo_root, "MASTER", "gates", "lib", "source", "frontend_auditor.rb")
+        layout_path = File.join(@repo_root, "MASTER", "checks", "lib", "layout_suite.rb")
+        auditor_path = File.join(@repo_root, "MASTER", "checks", "lib", "source", "frontend_auditor.rb")
         raise "layout suite missing: #{layout_path}" unless File.file?(layout_path)
         raise "frontend auditor missing: #{auditor_path}" unless File.file?(auditor_path)
 
         require layout_path
         require auditor_path
 
-        leaves = Deploy::LayoutSuiteGate::LEAVES
+        leaves = Deploy::LayoutSuiteCheck::LEAVES
         broken = leaves.reject { |klass| klass.is_a?(Class) && klass.respond_to?(:run) }
         raise "layout suite wiring incomplete: #{broken.map(&:to_s).join(", ")}" if broken.any?
 
-        auditor_apps = Deploy::FrontendAuditorGate::APPS.map(&:to_s)
+        auditor_apps = Deploy::FrontendAuditorCheck::APPS.map(&:to_s)
         missing_apps = names - auditor_apps
         raise "frontend auditor misses Rails app(s): #{missing_apps.join(", ")}" if missing_apps.any?
 
@@ -100,9 +100,9 @@ module Master
       end
 
       def observe_layout_suite!
-        saved = ENV["GATE_AUTOFIX"]
-        ENV["GATE_AUTOFIX"] = "0"
-        result = Deploy::LayoutSuiteGate.run
+        saved = ENV["CHECK_AUTOFIX"]
+        ENV["CHECK_AUTOFIX"] = "0"
+        result = Deploy::LayoutSuiteCheck.run
 
         @bus&.publish(
           "fix_loop:layout_sweep",
@@ -121,9 +121,9 @@ module Master
         )
         report_layout_diagnostics!(result)
 
-        raise "layout suite gate errored: #{result.errors.first}" if result.errored?
+        raise "layout suite check errored: #{result.errors.first}" if result.errored?
       ensure
-        saved.nil? ? ENV.delete("GATE_AUTOFIX") : ENV["GATE_AUTOFIX"] = saved
+        saved.nil? ? ENV.delete("CHECK_AUTOFIX") : ENV["CHECK_AUTOFIX"] = saved
       end
 
       # A count tells the operator that the sweep failed, not what to repair.

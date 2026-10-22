@@ -4,7 +4,7 @@ module Master
   module Fix
     class RepairLoop
       # Whether a violation may be fixed without a person: deletions and fixes
-      # nobody can undo wait for one, and the scanner's confidence gate decides
+      # nobody can undo wait for one, and the scanner's confidence check decides
       # the rest -- separate from attempting a fix (fix_strategies.rb) or
       # verifying one (fix_verification.rb).
       module AutofixPolicy

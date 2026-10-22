@@ -681,7 +681,7 @@ historical_fossils:
     value: "persistent interrupted Git delivery/recovery transaction semantics"
   - repo: pub4
     commit: "830ec870fef43e087a6caee57c33a9f484432d70"
-    value: "gate blind spot involving citations into deleted directories"
+    value: "check blind spot involving citations into deleted directories"
   - repo: pub4
     commit: "d3b5107911818b7c51e06e540b68a73d56f36784"
     value: "2019 postpro house-grade/effect archaeology; explicit limits of DCP film emulation"
@@ -763,7 +763,7 @@ repository_refs:
 mass_change_reviews:
   - repo: pub4
     commit: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
-    finding: "Mass deletion event: prior tree roughly 5,477 entries, resulting tree 6 entries; message only says gate-path attribution."
+    finding: "Mass deletion event: prior tree roughly 5,477 entries, resulting tree 6 entries; message only says check-path attribution."
     disposition: "preserve-parent-and-archaeologize"
     evidence_branch: "archaeology/pre-main-collapse-20261003"
   - repo: pub3
@@ -786,7 +786,7 @@ reversion_reviews:
     disposition: "prefer-current-consolidated-boundary; inspect helper history for unique behavior only"
   - repo: pub4
     commit: "6c694e5de1b845e49add3570efd8f76b3ddd99fd"
-    finding: "Per-fix commits, a collapse guard, Boy Scout behavior and gates were added together."
+    finding: "Per-fix commits, a collapse guard, Boy Scout behavior and checks were added together."
     disposition: "high-value-safety-fossil"
   - repo: pub4
     commit: "7d4b5b1fc0e9022affc2075fdb6fb740869417be"
@@ -886,7 +886,7 @@ pub2_semantic_lineage:
       - "ask before destructive action"
       - "zero-trust, fail-fast, reversible and explicit guardrails"
       - "simplicity, modularity, single-responsibility and accessibility checks"
-    current_mapping: "Current Pipeline/Pass, gate chain, preserve-user-intent policy and design contracts retain these ideas without the old numeric thresholds or autonomous selection machinery."
+    current_mapping: "Current Pipeline/Pass, check chain, preserve-user-intent policy and design contracts retain these ideas without the old numeric thresholds or autonomous selection machinery."
     disposition: "absorbed-semantic"
   caution:
     - "The old JSON versions are historical reasoning evidence, not runtime configuration."
@@ -921,8 +921,8 @@ master2_lineage:
       current_mapping: "SelfModel, operator/sprawl/self-scan, Voice::Speech, tts-worker, tts.yml and FaceWorld now carry the corresponding concerns with stronger contracts."
       disposition: "absorbed-or-superseded"
     - commit: "60d3fb34a1cdfe0ad6c01d9a3df29aab5e6259e1"
-      value: "MASTER2 Executor default, auto_fixer, quality gates, speech and web integration."
-      current_mapping: "Current /fix, gate chain, Result pipeline, voice supervisor and FaceWorld provide evolved replacements."
+      value: "MASTER2 Executor default, auto_fixer, quality checks, speech and web integration."
+      current_mapping: "Current /fix, check chain, Result pipeline, voice supervisor and FaceWorld provide evolved replacements."
       disposition: "absorbed-or-superseded"
     - commit: "628f1223c4abd4304b57484dee4b94c99ec4ea26"
       value: "Preservation rules, persona system, language detection, HTML generation and simulated execution."
@@ -965,7 +965,7 @@ master_json_v43_review:
     - "PRESERVE_THEN_IMPROVE_NEVER_BREAK is current soul.yml golden_law."
     - "Ultra-minimalism is represented by current law/practice and design/system contracts."
     - "Adversarial review is current HOSTILE_AUDIT and /fix critique; structural surgery has a second hostile attack."
-    - "Incremental structural repair is represented by the bounded RestructureSweep, while full tree gates remain explicit."
+    - "Incremental structural repair is represented by the bounded RestructureSweep, while full tree checks remain explicit."
   not_restored:
     - "The old prediction_engine confidence-based autonomous mutation policy."
     - "The old permissions auto_accept/bypass_confirmation block."
@@ -980,10 +980,10 @@ mass_recovery_reviews:
     restored_tree_entries: 5507
     recovery_changes_vs_pre_collapse: 6
     meaningful_change:
-      - path: "MASTER/lib/operator/gate_chain.rb"
+      - path: "MASTER/lib/operator/check_chain.rb"
         finding: "Recovery preserved the renamed-path attribution parser rather than merely replaying the pre-collapse blob."
         disposition: "retain-current-recovery-improvement"
-      - path: "MASTER/test/test_gate_chain.rb"
+      - path: "MASTER/test/test_check_chain.rb"
         finding: "Recovery kept the regression test proving both sides of a Git rename remain attributable."
         disposition: "retain-current-recovery-test"
     disposition: "recovery-authoritative"
@@ -1002,7 +1002,7 @@ legacy_capability_reviews:
         current_mapping: "MASTER/lib/core/memory.rb, MASTER/lib/ground/memory/* and MASTER/lib/cli/session/*."
         disposition: "absorbed"
       - capability: "rate limits, provider cooldowns and spend protection"
-        current_mapping: "MASTER/lib/io/quota_gate.rb, MASTER/lib/io/circuit_breaker.rb and MASTER/lib/io/model_skip_cache.rb."
+        current_mapping: "MASTER/lib/io/quota_check.rb, MASTER/lib/io/circuit_breaker.rb and MASTER/lib/io/model_skip_cache.rb."
         disposition: "absorbed-and-strengthened"
       - capability: "filesystem operations and tool dispatch"
         current_mapping: "Current bounded IO/tool layer and operator permissions."
@@ -1052,7 +1052,7 @@ legacy_capability_reviews:
         finding: "offscreen ecology bundle was explicitly removed as obsolete."
     preserved_behavior:
       - "question, fracture, ear pulse, ripple, bloom and model-switch face signals remain in current face.part2/face.part3/face.runtime."
-      - "pixel comparison remains in current visual gates and snapshot drift tooling."
+      - "pixel comparison remains in current visual checks and snapshot drift tooling."
       - "offscreen canvas support remains in current face runtime bundles."
     disposition: "retired-by-consolidation; do-not-restore-duplicate-renderers"
     notable_fossil:
@@ -1086,14 +1086,14 @@ recovered_regression_reviews:
     current_mapping: "Ceilings live in data/spine.yml and are read by the namespace ratchet."
     disposition: "preserved-fix"
   - commit: "04be436060136d741b0a6c7d721199c2b6d31f1d"
-    area: gate_census
-    finding: "A merge silently lost eight DENSITY-related gate behaviors, including scan count reporting, ceiling warnings, list output and separated census rows."
-    current_mapping: "Current operator gates and ratchets contain the split helpers and explicit reporting."
+    area: check_census
+    finding: "A merge silently lost eight DENSITY-related check behaviors, including scan count reporting, ceiling warnings, list output and separated census rows."
+    current_mapping: "Current operator checks and ratchets contain the split helpers and explicit reporting."
     disposition: "preserved-fix"
   - commit: "d7440d24c961121284ff0c9cf0b384c196f2ef22"
     area: scanner
     finding: "A tree-loss episode removed scanner rules, reader/data/self censuses, glossary definitions and their tests."
-    current_mapping: "These surfaces are present in the current MASTER tree and remain part of gate evidence."
+    current_mapping: "These surfaces are present in the current MASTER tree and remain part of check evidence."
     disposition: "preserved-recovery"
   - commit: "32f1b7dd186571c1881da21bcb3abc474756b8a8"
     area: fix_loop
@@ -1122,9 +1122,9 @@ recovered_regression_reviews:
     current_mapping: "Voice::Policy builds browser payload aliases directly from Speech::VOICES; the face consumes that server table."
     disposition: "preserved-fix"
   - commit: "c2a43f2ab7d40d1c37b83fca804291611b84b572"
-    area: gate_workflow
-    finding: "The gate briefly used a writing scan path by default and had fragmented census/ownership handling."
-    current_mapping: "Current gate/operator flags distinguish measurement from mutation, while source ceilings and ownership live in canonical data registries."
+    area: check_workflow
+    finding: "The check briefly used a writing scan path by default and had fragmented census/ownership handling."
+    current_mapping: "Current check/operator flags distinguish measurement from mutation, while source ceilings and ownership live in canonical data registries."
     disposition: "preserved-fix"
   - commit: "cfe396535b9bcf3e46aff6a630937489e205c4d1"
     area: visual_topology
@@ -1150,7 +1150,7 @@ legacy_deploy_bundle_review:
       current_mapping: "Current app auth decisions and tracked application trees; no restored generator script."
       disposition: "absorbed-or-product-specific"
     - pattern: "Falcon/ActionCable"
-      current_mapping: "Current OpenBSD service files and Rails runtime/gates."
+      current_mapping: "Current OpenBSD service files and Rails runtime/checks."
       disposition: "absorbed"
     - pattern: "posts/comments/private visibility"
       current_mapping: "Current Brgen post/comment models, moderation and shared social services."

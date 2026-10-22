@@ -83,9 +83,9 @@ def test_scan_is_a_spelling_of_fix_not_a_command
   assert_equal "/fix lib/io", router.rewrite_slash("/scan lib/io")
 end
 
-# The RAILS constitutional gate asks for a reading it can grep and no writes.
+# The RAILS constitutional check asks for a reading it can grep and no writes.
 # The flag rides along rather than being eaten as a path.
-def test_a_read_only_fix_keeps_the_flag_the_rails_gate_passes
+def test_a_read_only_fix_keeps_the_flag_the_rails_check_passes
   rewritten = Master::CLI::TurnRouter.rewrite_slash("/fix --dry-run ../RAILS/amber")
 
   assert_equal "/fix --dry-run ../RAILS/amber", rewritten

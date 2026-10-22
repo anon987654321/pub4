@@ -64,7 +64,7 @@ class TestScanPathFilter < Minitest::Test
 
   def test_generated_reports_and_agent_worktrees_are_still_skipped
     root = Master::REPO_ROOT
-    skipped = %w[MASTER/gates/reports/run.json .claude/worktrees/a/MASTER/lib/x.rb]
+    skipped = %w[MASTER/checks/reports/run.json .claude/worktrees/a/MASTER/lib/x.rb]
 
     skipped.each { |relative| assert Scanner.skip_path?(File.join(root, relative), root:), relative }
   end

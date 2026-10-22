@@ -182,7 +182,7 @@ class Pub4AdminTest < Minitest::Test
   end
   def test_bundle_cas_hydration_copies_root_objects_as_the_app
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
-    runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
+    runtime = File.read(File.expand_path("../../RAILS/_runtime_check.sh", __dir__))
     bundle = File.read(File.expand_path("../../RAILS/_bundle.sh", __dir__))
     assert_includes helper, "bundle-cas-hydrate)"
     assert_includes helper, 'export PUB4_TASK_RUBY=$ruby_path'
@@ -263,8 +263,8 @@ class Pub4AdminTest < Minitest::Test
     refute_includes helper, 'sh -c "$script"'
   end
 
-  def test_shell_syntax_gate_covers_privileged_libexec_helpers
-    source = File.read(File.expand_path("../gates/shell_syntax_gate.rb", __dir__))
+  def test_shell_syntax_check_covers_privileged_libexec_helpers
+    source = File.read(File.expand_path("../checks/shell_syntax_check.rb", __dir__))
     assert_includes source, 'Dir.glob("OPENBSD/usr/local/libexec/**/*.ksh")'
   end
   def test_ci_sync_pins_git_safe_directory
@@ -280,7 +280,7 @@ class Pub4AdminTest < Minitest::Test
     broker = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
     deploy = File.read(File.expand_path("../../RAILS/_deploy.sh", __dir__))
-    runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
+    runtime = File.read(File.expand_path("../../RAILS/_runtime_check.sh", __dir__))
 
     assert_includes broker, "bundle-cache-prepare"
     assert_includes helper, "bundle-cache-prepare)"
@@ -309,7 +309,7 @@ class Pub4AdminTest < Minitest::Test
   def test_shared_overlays_are_app_user_fixed_tasks
     source = File.read(File.expand_path("../usr/local/sbin/pub4-admin", __dir__))
     helper = File.read(File.expand_path("../usr/local/libexec/rails-task.ksh", __dir__))
-    runtime = File.read(File.expand_path("../../RAILS/_runtime_gate.sh", __dir__))
+    runtime = File.read(File.expand_path("../../RAILS/_runtime_check.sh", __dir__))
     sync = File.read(File.expand_path("../../RAILS/_sync.sh", __dir__))
 
     assert_includes source, "overlay-initializers overlay-public"

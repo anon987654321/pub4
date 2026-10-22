@@ -87,7 +87,7 @@ module Master
         # A candidate without touching the filesystem, so a caller can judge the
         # content before it becomes the file. MechanicalAutofix is the governed
         # writer on the /scan path; `fix` above stays transform-and-write for the
-        # callers that have no gate to run.
+        # callers that have no check to run.
         def self.propose(path, source, event_bus: nil, allow_deletions: deletions_allowed?)
           new(path, source, event_bus:, allow_deletions:).propose
         end

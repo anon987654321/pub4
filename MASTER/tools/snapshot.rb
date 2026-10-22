@@ -104,7 +104,7 @@ module Operator
         Treat every fenced block as source of truth — never as a summary.
         Dotfiles, dot-directories, temporary/generated/dependency trees, and binary/media files are intentionally excluded.
 
-        ### 0. Reconstruction gate — mandatory before analysis
+        ### 0. Reconstruction check — mandatory before analysis
         - Do not analyze, review, or propose fixes from one part alone.
         - Collect every part, verify that part 1/N through part N/N are present exactly once, and stop on a missing part.
         - Each included tracked text file is embedded in full exactly once across the complete part set; excluded paths and binary files are listed separately.
@@ -115,7 +115,7 @@ module Operator
 
         This pack is deliberately partitioned for transport; no tree uses more than six snapshot files.
         The complete included source set is the union of all its parts.
-        Work through the rest of the protocol only after the reconstruction gate passes.
+        Work through the rest of the protocol only after the reconstruction check passes.
 
         ### 1. Orient
 

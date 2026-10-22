@@ -5,7 +5,7 @@ require "review/scan/law_dsl"
 require "fix/scanner"
 require "cli/pipeline/pass"
 
-# `bin/gate` calls /scan its lexical tier, and its own header says what that
+# `bin/check --ladder` calls /scan its lexical tier, and its own header says what that
 # means: "deterministic detectors, no model". The runtime disagreed with it in
 # two places at once, and the stage had never reached a verdict.
 #
@@ -17,7 +17,7 @@ require "cli/pipeline/pass"
 #
 # The first number is AdversarialRule, which sends a per-file prompt. The second
 # is the council: of that 390s, the two scan phases were 32s and crit0 was
-# 354.8s — 91% of a "scan" was a critique nobody asked for, and `bin/gate` runs
+# 354.8s — 91% of a "scan" was a critique nobody asked for, and `bin/check --ladder` runs
 # /critique separately anyway as the tier that owns it.
 #
 # MASTER_SCAN_DETERMINISTIC=1 turns both off and nothing else. It is opt-in, so
@@ -122,12 +122,12 @@ class TestScanDeterministicMode < Minitest::Test
     assert Clock.council_enabled?(env: { "MASTER_FIX_COUNCIL" => "1" })
   end
 
-  # bin/gate is the caller this exists for. If the wiring is dropped there, the
+  # bin/check --ladder is the caller this exists for. If the wiring is dropped there, the
   # switch works and the stage still never finishes.
-  def test_the_gate_asks_for_it
-    gate = File.read(File.join(Master::ROOT, "bin", "gate"))
+  def test_the_check_asks_for_it
+    check = File.read(File.join(Master::ROOT, "lib", "operator", "check_ladder.rb"))
 
-    assert_match(/"MASTER_SCAN_DETERMINISTIC"\s*=>\s*"1"/, gate,
-                 "bin/gate no longer requests a deterministic lexical stage")
+    assert_match(/"MASTER_SCAN_DETERMINISTIC"\s*=>\s*"1"/, check,
+                 "bin/check --ladder no longer requests a deterministic lexical stage")
   end
 end

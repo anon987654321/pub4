@@ -5,7 +5,7 @@ require "open3"
 
 # Every path an entry-point script resolves at load time must exist on disk.
 #
-# This gate exists because `MASTER/bin/operator` was dead on main for six days and nothing
+# This check exists because `MASTER/bin/operator` was dead on main for six days and nothing
 # reported it. `5203c698e` deleted `lib/operator/status_report.rb` as an orphan while
 # `MASTER/bin/operator` required it, so every subcommand -- including the `MASTER/bin/operator
 # status` CLAUDE.md documents as the repo-level check -- died with a LoadError
@@ -25,9 +25,9 @@ require "open3"
 # file is referenced, only that what a runnable script asks for is on disk. A
 # constant sweep can be fooled by an extension filter. A missing file cannot.
 #
-# Three forms, because the first version of this gate checked only the first and
+# Three forms, because the first version of this check checked only the first and
 # `3c17f848c` then broke the other two on the same day it moved `bin/` under
-# `MASTER/`. A gate that covers one spelling of a defect does not cover the
+# `MASTER/`. A check that covers one spelling of a defect does not cover the
 # defect:
 #
 #   - `require "x/y"` against MASTER/lib
@@ -46,7 +46,7 @@ class TestEntrypointRequires < Minitest::Test
   # path itself before use. Each entry names the script that does, and the test
   # below fails when that script stops creating it -- which is when the
   # exemption stops being true. Asserting the path is *missing* instead would
-  # have been a gate that fails as soon as someone runs the tool.
+  # have been a check that fails as soon as someone runs the tool.
   #
   # Gitignored paths need no entry: runtime state is absent from a fresh
   # checkout by definition, and this list would collect one line per socket and
@@ -154,7 +154,7 @@ class TestEntrypointRequires < Minitest::Test
     candidates = ruby_entrypoints.flat_map do |script, source|
       literal_paths(script, source).filter_map do |path|
         # A glob is a query, not a path: matching nothing is an empty list, not a
-        # crash, so it is not this gate's defect class.
+        # crash, so it is not this check's defect class.
         next if path.include?("*")
         next if File.exist?(path) || CREATED_AT_RUNTIME.key?(relative(path))
 
@@ -183,7 +183,7 @@ class TestEntrypointRequires < Minitest::Test
     assert_empty stale.keys, <<~MESSAGE
       A CREATED_AT_RUNTIME exemption names a script that no longer creates the
       path. Drop the entry -- an exemption that outlives its subject is a hole in
-      a gate nobody can see.
+      a check nobody can see.
 
       #{stale.map { |rel, creator| "#{rel} (was created by #{creator})" }.join("\n")}
     MESSAGE
@@ -202,7 +202,7 @@ class TestEntrypointRequires < Minitest::Test
 
   # Runtime state -- sockets, caches, .master/ -- is absent from a fresh
   # checkout and present here only because something has run. Reading git's own
-  # answer keeps this gate the same colour in both places; the first version of
+  # answer keeps this check the same colour in both places; the first version of
   # it was green locally and red in a clean worktree for exactly this reason.
   def gitignored(paths)
     return Set.new if paths.empty?
@@ -221,7 +221,7 @@ class TestEntrypointRequires < Minitest::Test
 
   # Roots a script assigns from __dir__, then every File.join off one of them
   # whose segments are all string literals. A join with a variable segment names
-  # a path only the run knows, and guessing at it produces a gate wrong in both
+  # a path only the run knows, and guessing at it produces a check wrong in both
   # directions.
   def literal_paths(script, source)
     roots = source.scan(/^\s*([A-Z][A-Z0-9_]*)\s*=\s*File\.expand_path\(\s*"([^"]+)"\s*,\s*__dir__\s*\)/)

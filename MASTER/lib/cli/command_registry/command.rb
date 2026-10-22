@@ -4,7 +4,7 @@ module Master
   module CLI
     module CommandRegistry
       class Command
-        # Matches OpenCrabs' skill-level `review_gate: true`: a command
+        # Matches OpenCrabs' skill-level `review_check: true`: a command
         # opts in to requiring an explicit, deliberate confirmation before
         # its side effects run, even under otherwise-autonomous operation.
         # /commit is the consumer: it commits the named paths under a
@@ -15,19 +15,19 @@ module Master
         # without calling it.
         attr_reader :method_name
 
-        def initialize(receiver = nil, method_name = nil, *args, review_gate: false, **kwargs, &handler)
+        def initialize(receiver = nil, method_name = nil, *args, review_check: false, **kwargs, &handler)
           @receiver = receiver
           @method_name = method_name
           @args = args
           @kwargs = kwargs
           @handler = handler
-          @review_gate = review_gate
+          @review_check = review_check
         end
 
         def call(ctx)
-          return review_gate_notice if @review_gate && !confirmed?(ctx)
+          return review_check_notice if @review_check && !confirmed?(ctx)
 
-          ctx = strip_confirm_flag(ctx) if @review_gate
+          ctx = strip_confirm_flag(ctx) if @review_check
           return @handler.call(ctx) if @handler
 
           @receiver.public_send(@method_name, *@args, **@kwargs.merge(ctx:))
@@ -50,8 +50,8 @@ module Master
           hash.merge(args: cleaned)
         end
 
-        def review_gate_notice
-          "review_gate: this command has side effects and needs explicit confirmation — " \
+        def review_check_notice
+          "review_check: this command has side effects and needs explicit confirmation — " \
             "re-run with #{CONFIRM_FLAG} to proceed"
         end
 

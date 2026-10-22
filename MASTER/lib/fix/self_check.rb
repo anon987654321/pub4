@@ -7,7 +7,7 @@ module Master
     class SelfCheck
       # The same three WriteGuard::BLOCKING refuses a write for. veto was missing
       # here, and it is the severity above error — laws.yml#veto_patterns calls
-      # them unconditional merge blockers — so the fast gate reported clean while
+      # them unconditional merge blockers — so the fast check reported clean while
       # four vetoes stood in the tree it had read. One severity set, two
       # readers, is the shape that let them disagree.
       QUICK_SEVERITIES = %i[veto critical error].freeze
@@ -45,7 +45,7 @@ module Master
       def quick = run(severity_filter: QUICK_SEVERITIES)
       def full = run(severity_filter: nil)
 
-      # Hard gate for callers about to start background autofix or other
+      # Hard check for callers about to start background autofix or other
       # self-mutation: refuse (by returning a non-clean report) when MASTER's
       # own lib/ tree already carries violations, and publish self_violation
       # so any subscriber (e.g. FixLoop#halt!) reacts the same way it would
@@ -54,7 +54,7 @@ module Master
       # finding as a true violation, a false positive, an exemption, a threshold
       # or known debt; never clear the count by exempting lib/core, which sits
       # inside lib/ so the law it applies measures it too.
-      def gate!(bus: nil)
+      def check!(bus: nil)
         report = quick
         return report if report.clean?
 

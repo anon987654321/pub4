@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_gate.rb\" record",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_check.rb\" record",
             "statusMessage": "Noting the edit",
             "timeout": 10
           },
@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_gate.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_check.rb\"",
             "statusMessage": "Judging what you changed before you finish",
             "timeout": 240
           },

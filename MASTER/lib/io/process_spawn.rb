@@ -17,7 +17,7 @@ module Master
       end
 
       # A variable naming a descriptor this process no longer holds made every spawn fail with
-      # EBADF, the disk check that guards each gate child included. Only an open one is closed.
+      # EBADF, the disk check that guards each check child included. Only an open one is closed.
       def open_fd?(descriptor)
         IO.for_fd(descriptor, autoclose: false)
 

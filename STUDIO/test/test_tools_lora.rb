@@ -182,7 +182,7 @@ class TestLora < Minitest::Test
     end
   end
 
-  # STUDIO/gate.rb parses Ruby only, so a shell script breaks unnoticed.
+  # STUDIO/check.rb parses Ruby only, so a shell script breaks unnoticed.
   def test_every_committed_shell_script_parses
     scripts = (Dir[File.join(LORA, "_toolkit", "*.sh")] + Dir[File.join(LORA, "*", "lora")] +
                Dir[File.join(ToolTest::ROOT, "dilla", "live", "*.sh")]).sort

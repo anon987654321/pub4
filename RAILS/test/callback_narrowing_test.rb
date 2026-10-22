@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Rails deduplicates before_action callbacks by FILTER NAME. Declaring the same
-# filter twice does not add a second gate -- the later declaration replaces the
+# filter twice does not add a second check -- the later declaration replaces the
 # earlier one, and its `only:`/`except:` becomes the whole scope.
 #
 # That turns an ordinary-looking edit into a silent authorisation hole, and it
@@ -9,13 +9,13 @@
 #
 #   amber ItemsController      before_action :require_real_user
 #                              before_action :require_real_user, only: [:share]
-#     The unrestricted gate on the first line became :share-only. index, new,
+#     The unrestricted check on the first line became :share-only. index, new,
 #     create, edit, update and destroy were left open; an anonymous
 #     GET /items/new returned 200 on the running app.
 #
 #   brgen PostsController      before_action :require_real_user, only: %i[edit update destroy]
 #                              before_action :require_real_user, only: [:share]
-#     edit/update/destroy lost the gate. authorize_owner still covered them, so
+#     edit/update/destroy lost the check. authorize_owner still covered them, so
 #     nothing failed visibly -- which is exactly why a source read did not catch
 #     it and the callback chain did.
 #
@@ -51,7 +51,7 @@ class CallbackNarrowingTest < Minitest::Test
     end.flatten
 
     assert_empty offenders,
-                 "A repeated before_action silently narrows the gate rather than adding one. " \
+                 "A repeated before_action silently narrows the check rather than adding one. " \
                  "Merge them into a single declaration:\n  " + offenders.join("\n  ")
   end
 end

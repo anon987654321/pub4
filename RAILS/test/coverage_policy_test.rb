@@ -70,9 +70,9 @@ class CoveragePolicyTest < Minitest::Test
     source = File.read(File.join(ROOT, "..", "MASTER", "tools", "rails", "premerge.rb"))
 
     assert_includes source, 'group: :coverage'
-    assert_includes source, 'else %i[apps pwa contracts coverage gates]'
+    assert_includes source, 'else %i[apps pwa contracts coverage checks]'
     assert_includes source, 'elsif ARGV.include?("--coverage") then [:coverage]'
-    assert_includes source, 'elsif ARGV.include?("--gates") then [:gates]'
+    assert_includes source, 'elsif ARGV.include?("--checks") then [:checks]'
   end
 
   def test_all_rails_apps_pin_the_same_simplecov_major_minor_line
@@ -101,7 +101,7 @@ class CoveragePolicyTest < Minitest::Test
     assert_includes source, 'FileUtils.rm_rf(COVERAGE_ROOT) if VERIFYING'
   end
 
-  # The enforced number is a recorded floor per app. Without an entry the gate would
+  # The enforced number is a recorded floor per app. Without an entry the check would
   # raise at load for that app, and a floor outside 1..100 would pass nothing or
   # everything.
   def test_every_app_has_a_recorded_coverage_floor_for_each_criterion

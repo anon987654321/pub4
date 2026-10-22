@@ -345,7 +345,7 @@ class TestReplicate < Minitest::Test
 
   # preprompt carries its own self-check over all seven vocabularies, the six
   # capability rows and the batch strides. It lived below the CLI guard, so no
-  # gate and no test could reach it and its only caller was a subcommand a human
+  # check and no test could reach it and its only caller was a subcommand a human
   # had to remember to type. Running it here is what makes it a check.
   def test_the_tools_own_self_check_passes
     assert_empty vocab_problems, "preprompt's vocab-check reports problems"

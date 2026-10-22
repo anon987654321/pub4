@@ -21,7 +21,7 @@ module Master
       MAX_HISTORY = 32
       PATH = File.join(Master::ROOT, ".master", "sensory_state.json")
       INTERESTING = %w[
-        heartbeat:** fix_loop:** stt:** tts:** voice:** model:** gate:**
+        heartbeat:** fix_loop:** stt:** tts:** voice:** model:** check:**
         scan:** task:** tool:** ui:** web:** system:**
       ].freeze
 
@@ -78,7 +78,7 @@ module Master
         when /\Atts:playback:start\z/, /\Avoice:speaking\z/ then { interaction: "speaking", voice: "speaking", visual: "attention" }
         when /\Atts:playback:end\z/, /\Avoice:idle\z/ then { interaction: "idle", voice: "idle", visual: "idle" }
         when /\Afix_loop:/ then { interaction: "processing", task: "fixing", visual: "working", system: "maintenance" }
-        when /\Agate:/, /\Ascan:/ then { interaction: "processing", task: "checking", visual: "working", system: "checking" }
+        when /\Acheck:/, /\Ascan:/ then { interaction: "processing", task: "checking", visual: "working", system: "checking" }
         when /\Aheartbeat:(?:run|mission_wake)/ then { task: "observing", system: "maintenance" }
         when /\Aheartbeat:(?:scan_clean|self_test)/ then { task: "idle", visual: "success", system: "ready" }
         when /\Aheartbeat:error\z/ then { task: "idle", visual: "error", system: "degraded" }

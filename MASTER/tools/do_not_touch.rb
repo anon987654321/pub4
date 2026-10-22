@@ -2,8 +2,8 @@
 
 require "open3"
 
-# A "Do Not Touch" entry must name the gate that fails when its claim stops
-# being true — or say plainly that no gate can hold it, and why.
+# A "Do Not Touch" entry must name the check that fails when its claim stops
+# being true — or say plainly that no check can hold it, and why.
 #
 # The list's item 2 once said the rule shards stayed split because they sat near
 # their consumers. That was false, and had been false for as long as the shards
@@ -19,10 +19,10 @@ require "open3"
 #
 # So every entry carries one of:
 #
-#   — gate: `rake lint:spine`, `test/test_core_no_lib_backedges.rb`
-#   — no gate: <why the claim cannot be mechanically held>
+#   — check: `rake lint:spine`, `test/test_core_no_lib_backedges.rb`
+#   — no check: <why the claim cannot be mechanically held>
 #
-# and this checks that the named rake tasks and files actually exist. A gate
+# and this checks that the named rake tasks and files actually exist. A check
 # reference that stops resolving is the same failure one level up.
 #
 #   ruby MASTER/tools/do_not_touch.rb
@@ -43,7 +43,7 @@ module Operator
     ENTRY = /^(\d+)\.\s+(.*)$/
     RAKE = /`rake ([a-z_]+(?::[a-z_]+)*)`/
     FILE = /`([A-Za-z0-9_.\-\/]+\.(?:rb|sh|yml))`/
-    NO_GATE = /—\s*no gate:\s*(.+)/
+    NO_CHECK = /—\s*no check:\s*(.+)/
 
     # Reasons shorter than this are a shrug, not an argument. Same threshold
     # doc_baselines.yml#doc_paths entries are held to.
@@ -54,9 +54,9 @@ module Operator
     end
 
     # An entry is its whole paragraph, not its first line. Prose here wraps at 80
-    # columns like the rest of the tree, so reading one line drops the gate
+    # columns like the rest of the tree, so reading one line drops the check
     # reference off any entry long enough to need two, and an entry that names its
-    # gate on the second line then reports as naming none. Separate from `entries`
+    # check on the second line then reports as naming none. Separate from `entries`
     # so a test can hand it a wrapped list instead of the live document.
     def self.parse(lines)
       start = lines.index { |line| line.match?(HEADING) }
@@ -87,14 +87,14 @@ module Operator
     end
 
     def self.check(number, text)
-      if (reason = text[NO_GATE, 1])
+      if (reason = text[NO_CHECK, 1])
         return [] if reason.strip.length >= MIN_REASON
 
-        return [finding(number, "declares no gate without saying why (reason must be a sentence)")]
+        return [finding(number, "declares no check without saying why (reason must be a sentence)")]
       end
 
-      gates = text.scan(RAKE).flatten + text.scan(FILE).flatten
-      return [finding(number, "names no gate and does not say why it cannot have one")] if gates.empty?
+      checks = text.scan(RAKE).flatten + text.scan(FILE).flatten
+      return [finding(number, "names no check and does not say why it cannot have one")] if checks.empty?
 
       missing(number, text)
     end
@@ -105,7 +105,7 @@ module Operator
 
       return [] if dead.empty?
 
-      [finding(number, "names a gate that does not exist: #{dead.join(', ')}")]
+      [finding(number, "names a check that does not exist: #{dead.join(', ')}")]
     end
 
     def self.finding(number, message)
@@ -114,7 +114,7 @@ module Operator
 
     def self.run
       findings = entries.flat_map { |number, text| check(number, text) }
-      gated = entries.count { |_, text| !text.match?(NO_GATE) }
+      gated = entries.count { |_, text| !text.match?(NO_CHECK) }
 
       { "entries" => entries.size, "gated" => gated, "ungated" => entries.size - gated,
         "rake_tasks" => rake_tasks.size, "findings" => findings }
@@ -128,7 +128,7 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
-    Master::Trace::Dmesg.attach("touch0", "master0", "#{report["entries"]} entries, #{report["gated"]} gated, #{report["ungated"]} without a gate")
+    Master::Trace::Dmesg.attach("touch0", "master0", "#{report["entries"]} entries, #{report["gated"]} gated, #{report["ungated"]} without a check")
     report["findings"].each { |row| Master::Trace::Dmesg.status("touch0", "entry #{row["entry"]}, #{row["message"]}", io: $stderr) }
     Master::Trace::Dmesg.status("touch0", report["findings"].empty? ? "clean" : "#{report["findings"].size} finding(s)")
   end

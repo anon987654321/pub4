@@ -4,13 +4,13 @@ require "minitest/autorun"
 require "open3"
 require "yaml"
 
-# What the repository may and may not hold, as distinct from what the gates
-# measure. These assertions share no subject with the gate registry: they are
+# What the repository may and may not hold, as distinct from what the checks
+# measure. These assertions share no subject with the check registry: they are
 # about scripts reaching for a utility OpenBSD lacks, key material and a
 # knowledge corpus that must never be tracked, zone files that must be
 # generated rather than hand-edited, and partials duplicated per app.
 #
-# They sat in deploy_gates_contract_test.rb until that file crossed its length
+# They sat in deploy_checks_contract_test.rb until that file crossed its length
 # ceiling, and the ceiling was right about the shape: one file was answering
 # two questions.
 class RepoHygieneContractTest < Minitest::Test
@@ -139,8 +139,8 @@ class RepoHygieneContractTest < Minitest::Test
     %w[
       OPENBSD/OPERATOR.sh
       OPENBSD/bin/check
-      OPENBSD/lib/gate_environment.rb
-      OPENBSD/gates/integrity_gate.rb
+      OPENBSD/lib/check_environment.rb
+      OPENBSD/checks/integrity_check.rb
       OPENBSD/bin/vps_ci.sh
     ].each do |rel|
       assert File.exist?(File.join(REPO_ROOT, rel)), "missing #{rel}"

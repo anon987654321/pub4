@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
-require_relative "../../MASTER/gates/support/page_inventory"
+require_relative "../../MASTER/checks/support/page_inventory"
 require_relative "../../MASTER/tools/rails/generate_route_manifest"
 
 # PageInventory derived a page's URL from its view filename through a ladder of
@@ -20,7 +20,7 @@ class RouteManifestInventoryTest < Minitest::Test
 
   def find(id) = inventory.find { |page| page[:id] == id }
 
-  # playlist.<apex> became radio.<apex> on 2026-09-12 and two gate support files
+  # playlist.<apex> became radio.<apex> on 2026-09-12 and two check support files
   # kept the old spelling, because both built the host by interpolation and the
   # rename swept literal hostnames. page_simulation then autofixed its own
   # inventory onto a host that 404s and failed against the fix. Both tables read

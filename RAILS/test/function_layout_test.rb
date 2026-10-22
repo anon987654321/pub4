@@ -5,7 +5,7 @@ require "net/http"
 require "socket"
 require "uri"
 require "yaml"
-require_relative "../../MASTER/gates/support/fleet"
+require_relative "../../MASTER/checks/support/fleet"
 
 # Per-app function + layout inventory. Each YAML row is one falsifiable check:
 # a file must contain (or omit) a marker, or a live GET must render one.
@@ -14,7 +14,7 @@ require_relative "../../MASTER/gates/support/fleet"
 #   ruby RAILS/test/function_layout_test.rb
 #
 # Live rows skip (do not fail) when the app port is closed, matching the rest
-# of the gate suite. Source rows always run.
+# of the check suite. Source rows always run.
 class FunctionLayoutTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   DATA = File.join(ROOT, "test", "data", "function_layout")

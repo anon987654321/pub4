@@ -3,17 +3,17 @@
 require "yaml"
 
 module Operator
-  # MASTER/data/tokens.yml, as the block map that gates
+  # MASTER/data/tokens.yml, as the block map that checks
   # and lints read.
   #
-  # Five gates and one lint each opened that file and dug `["design_rules"]`
+  # Five checks and one lint each opened that file and dug `["design_rules"]`
   # themselves, and each resolved the path its own way. When the design blocks
   # became rules -- `tier: design`, the old section under `config` -- that was
   # six edits for one shape change, and the next shape change would be six
   # again.
   #
-  # It lives here rather than under gates/ because shared/ is what each app
-  # vendors onto the VPS: rhythm_lint runs there, gates do not.
+  # It lives here rather than under checks/ because shared/ is what each app
+  # vendors onto the VPS: rhythm_lint runs there, checks do not.
   module MasterDesign
     module_function
 

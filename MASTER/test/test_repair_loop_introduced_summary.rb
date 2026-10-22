@@ -36,21 +36,21 @@ end
 
   # The semantic stream (an LLM) invents law names no registry holds and need not repeat itself between
   # two scans of one file, so by default its findings are read loosely: left out of the count, logged only.
-  def test_the_semantic_gate_is_loose_by_default_and_strict_on_request
+  def test_the_semantic_check_is_loose_by_default_and_strict_on_request
     mechanical = Struct.new(:id).new("ABC_SIZE")
     semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new
     loop = Master::Fix::RepairLoop.allocate
     loop.instance_variable_set(:@scanner, Struct.new(:laws).new([mechanical, semantic]))
     rows = [{ law: "ABC_SIZE", line: 3 }, { law: "RATE_LIMITING_MISSING", line: 25 }]
-    previous = ENV.delete("MASTER_FIX_SEMANTIC_GATE")
+    previous = ENV.delete("MASTER_FIX_SEMANTIC_CHECK")
 
-    assert_equal [{ law: "ABC_SIZE", line: 3 }], loop.gate_findings(rows)
+    assert_equal [{ law: "ABC_SIZE", line: 3 }], loop.check_findings(rows)
 
-    ENV["MASTER_FIX_SEMANTIC_GATE"] = "strict"
+    ENV["MASTER_FIX_SEMANTIC_CHECK"] = "strict"
 
-    assert_equal rows, loop.gate_findings(rows)
+    assert_equal rows, loop.check_findings(rows)
   ensure
-    previous ? ENV["MASTER_FIX_SEMANTIC_GATE"] = previous : ENV.delete("MASTER_FIX_SEMANTIC_GATE")
+    previous ? ENV["MASTER_FIX_SEMANTIC_CHECK"] = previous : ENV.delete("MASTER_FIX_SEMANTIC_CHECK")
   end
 
   def test_what_the_semantic_stream_added_is_logged_not_gated

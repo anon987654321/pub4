@@ -5,14 +5,14 @@ module Master
     module Scan
       # What the scanner refuses to look at. Every entry here is a path nobody
       # authored, so a finding against it is a finding against a generator and
-      # a fix to it is reverted by the next build. `bin/gate`'s full mode runs
+      # a fix to it is reverted by the next build. `bin/check --ladder`'s full mode runs
       # /fix over whatever the scan walked, so this list is also what stops an
       # autofix pass rewriting vendored and rendered output.
       module PathFilter
         module_function
 
         # `.cache` and `scratch` (2026-08-11): `cache` was listed and `.cache`
-        # was not, which bin/gate already warned about in a comment rather than
+        # was not, which bin/check --ladder already warned about in a comment rather than
         # fixing. `scratch` is the same shape — STUDIO/dilla/.cache holds a
         # demucs virtualenv, so `/scan ../STUDIO/dilla` walked 24,521 files,
         # about 5,000 of them pip's vendored copy of packaging, to reach the 36
@@ -52,7 +52,7 @@ module Master
 
         # Spelled relative to MASTER, and matched relative to whatever root the
         # scan was given — which are the same thing only when MASTER scans
-        # itself. `bin/gate` and every cross-tree run pass the repo root, where
+        # itself. `bin/check --ladder` and every cross-tree run pass the repo root, where
         # these paths arrive as `RAILS/master/public/face.runtime.js` and matched
         # nothing: the generated face runtime, the two bundles and the three
         # build were scanned, reported, and offered to /fix. face.runtime.js

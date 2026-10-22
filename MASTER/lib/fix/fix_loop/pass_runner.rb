@@ -16,7 +16,7 @@ require_relative "../scan_skip_guard"
 require_relative "../transaction"
 require_relative "../resource_budget"
 require_relative "../wishlist"
-require_relative "../constitutional_gate"
+require_relative "../constitutional_check"
 require_relative "../../review/scan/law_health"
 
 module Master
@@ -215,8 +215,8 @@ module Master
           return shed if shed
 
           @discipline.observe(pass:, findings: found, files:, progressed: @pass_progress)
-          unless Master::Fix::ConstitutionalGate.admit_clean?(found)
-            residual = Master::Fix::ConstitutionalGate.residual_errors(found)
+          unless Master::Fix::ConstitutionalCheck.admit_clean?(found)
+            residual = Master::Fix::ConstitutionalCheck.residual_errors(found)
             Master::Trace::Dmesg.status(
               "fix0",
               "pass #{pass}: #{residual.size} constitutional error(s) block clean/done",
@@ -224,7 +224,7 @@ module Master
             found = residual if found.empty?
           end
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
-          return blockers_cleared(files, pass) if GateFocus.cleared?(found)
+          return blockers_cleared(files, pass) if CheckFocus.cleared?(found)
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
           dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, run_id:) unless CodeWatch.requested?
@@ -284,7 +284,7 @@ module Master
         end
 
         def blockers_cleared(files, pass)
-          Master::Trace::Dmesg.status("fix0", "pass #{pass}: the files the red gates named are clean (--until-gates)")
+          Master::Trace::Dmesg.status("fix0", "pass #{pass}: the files the red checks named are clean (--until-checks)")
           finish_transaction(files, pass, PassResult.new(status: :blockers_cleared, consecutive_clean: 0,
                                                          message: "blockers cleared"))
         end

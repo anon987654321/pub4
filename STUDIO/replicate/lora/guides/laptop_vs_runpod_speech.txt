@@ -4,7 +4,7 @@ Both paths run the same pipeline: seventeen curated images, rank thirty-two LoRA
 
 On the laptop, render config automatically throttles the job. Quantization and low V RAM mode stay on, because FLUX is enormous and unified memory is tight. The optimizer falls back to full Adam W, because eight-bit Adam W only works on C U D A. Precision drops to F P sixteen, because B F sixteen can produce NaN loss on M P S. Learning rate lowers to one times ten to the minus five. And training resolution collapses to five twelve pixels only, instead of five twelve, seven sixty-eight, and ten twenty-four.
 
-Your Mac actually tried this. It passed the Hugging Face gate, downloaded FLUX, loaded the transformer and T five encoder, then crashed during latent caching with a Metal compiler service error. Training never reached step one. So the laptop is not slow but workable. On your machine, it failed.
+Your Mac actually tried this. It passed the Hugging Face check, downloaded FLUX, loaded the transformer and T five encoder, then crashed during latent caching with a Metal compiler service error. Training never reached step one. So the laptop is not slow but workable. On your machine, it failed.
 
 RunPod sets the device to C U D A and runs the full recipe. No quantization hacks. Eight-bit Adam W. B F sixteen. Learning rate five times ten to the minus five. Multi-resolution buckets at five twelve, seven sixty-eight, and ten twenty-four. You want at least twenty-four gigabytes of video memory, PyTorch with C U D A twelve, and fifty to eighty gigabytes of disk for the model cache and checkpoints. Setup runs in a tmux session named ragnhild, so you can close your laptop and training keeps going.
 

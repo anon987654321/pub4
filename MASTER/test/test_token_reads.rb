@@ -2,16 +2,16 @@
 
 require_relative "test_helper"
 require "yaml"
-require_relative "../gates/support/token_reads"
+require_relative "../checks/support/token_reads"
 
-# A threshold a gate cannot find reads as zero, and a zero threshold is a check
+# A threshold a check cannot find reads as zero, and a zero threshold is a check
 # that returns early. TokenReads is what turns that silence into a failure, so
 # each case here is one read and the verdict it has to produce.
 class TestTokenReads < Minitest::Test
   TR = Deploy::TokenReads
 
   def setup
-    @previous_strict_inconclusive = ENV.delete("GATE_STRICT_INCONCLUSIVE")
+    @previous_strict_inconclusive = ENV.delete("CHECK_STRICT_INCONCLUSIVE")
     TR.reset!
     @map = TR.wrap("typography" => { "hierarchy" => { "max_font_weights" => 3 } }, "flag" => false)
   end
@@ -19,9 +19,9 @@ class TestTokenReads < Minitest::Test
   def teardown
     TR.reset!
     if @previous_strict_inconclusive.nil?
-      ENV.delete("GATE_STRICT_INCONCLUSIVE")
+      ENV.delete("CHECK_STRICT_INCONCLUSIVE")
     else
-      ENV["GATE_STRICT_INCONCLUSIVE"] = @previous_strict_inconclusive
+      ENV["CHECK_STRICT_INCONCLUSIVE"] = @previous_strict_inconclusive
     end
   end
 

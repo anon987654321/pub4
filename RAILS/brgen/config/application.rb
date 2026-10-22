@@ -75,7 +75,7 @@ module App
     # tests rotting into NameErrors on a stale route helper while CI stayed
     # green; on 2026-08-10 a validation-i18n change broke two takeaway engine
     # tests and three sessions reported "brgen green" from the narrow command
-    # before the VPS gate caught it — 349 runs locally against CI's 381.
+    # before the VPS check caught it — 349 runs locally against CI's 381.
     #
     # Set here rather than documented again, because a third warning comment
     # would have been the third thing nobody read. ||= so an explicit

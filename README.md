@@ -30,10 +30,10 @@ Run the pinned MASTER operator from its own tree:
 cd MASTER
 bin/operator status
 bin/operator measure
-bin/operator gate --scan-only
+bin/operator check --scan-only
 ```
 
-The gate's default mode can repair files; `--scan-only` is the read-only option. Use the tree's canonical test runner and record its real exit status. The main proof surfaces are `cd MASTER && rake test`, `ruby RAILS/test/run_all.rb`, `ruby OPENBSD/bin/check --profile=full`, and `cd STUDIO/test && rake`. Browser, device, paid-provider, DNS, backup, and production checks require their respective real environments.
+The check's default mode can repair files; `--scan-only` is the read-only option. Use the tree's canonical test runner and record its real exit status. The main proof surfaces are `cd MASTER && rake test`, `ruby RAILS/test/run_all.rb`, `ruby OPENBSD/bin/check --profile=full`, and `cd STUDIO/test && rake`. Browser, device, paid-provider, DNS, backup, and production checks require their respective real environments.
 
 Agent-owned unfinished work is tracked in the single root [TODO.md](TODO.md). Work that only the
 operator can finish is listed in [operator seams](MASTER/data/operator_seams.yml), each with its

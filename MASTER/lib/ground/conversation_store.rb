@@ -32,7 +32,7 @@ module Master
         @clock = clock
       end
 
-      # Both gates are mandatory and must come from an explicit operator /
+      # Both checks are mandatory and must come from an explicit operator /
       # consent workflow; missing values are not treated as consent.
       def opt_in(platform:, contact_id:, consent:, ai_disclosed:)
         raise SecurityError, "recipient consent is required" unless consent == true

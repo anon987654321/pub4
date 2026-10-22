@@ -16,7 +16,7 @@ module Master
         return Master::Result.err("critique: deliberation unavailable", category: :infrastructure) unless deliberation
 
         bus&.publish("council:start", scope:, bytes: artifact.bytesize)
-        result = deliberation.review(artifact, context: "pre-ship council gate (#{scope})")
+        result = deliberation.review(artifact, context: "pre-ship council check (#{scope})")
         if result.err?
           bus&.publish("council:veto", message: result.message.to_s[0, 500])
           return result

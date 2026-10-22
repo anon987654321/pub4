@@ -287,7 +287,7 @@ def notebook_source(options, dataset_slug)
     # as true and still starts the box with no DNS unless the account is
     # phone-verified. Without this check the first symptom is apt retrying every
     # Ubuntu mirror until it gives up, which cost an hour of quota to learn once.
-    # Phone verification gates the GPU as well as the network, so report both
+    # Phone verification checks the GPU as well as the network, so report both
     # from one run: a box with neither has not been verified, and a box with a
     # GPU but no DNS is a different problem worth telling apart.
     # An unverified box has no nvidia-smi at all, so this raises rather than

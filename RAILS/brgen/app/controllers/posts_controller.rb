@@ -15,7 +15,7 @@ class PostsController < ApplicationController
     with: -> { redirect_to posts_path, alert: t("shared.flash.rate_limited") }
 
   # ONE declaration. Rails deduplicates callbacks by filter name, so declaring
-  # :require_real_user twice did not add a second gate -- the later `only:`
+  # :require_real_user twice did not add a second check -- the later `only:`
   # REPLACED the earlier one, and edit/update/destroy silently lost it. Read off
   # the callback chain: PostsController had exactly one require_real_user.
   # authorize_owner still covered those three here, which is why nothing broke

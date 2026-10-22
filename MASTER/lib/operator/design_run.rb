@@ -107,8 +107,8 @@ module Operator
 
     # Payload and screenshot for each surface in one browser session.
     def shoot(surfaces, root:, dir:)
-      require_relative "../../gates/support/geometry_probe"
-      require_relative "../../gates/support/surface_probes"
+      require_relative "../../checks/support/geometry_probe"
+      require_relative "../../checks/support/surface_probes"
       rows = []
       Deploy::GeometryProbe.with_browser(root:, warm: surfaces) do |cdp|
         cdp.on_new_document(DECIDED_CONSENT)
@@ -159,7 +159,7 @@ module Operator
       return if pixel.empty?
 
       say("pixel baselines may now differ on: #{pixel.join(', ')}")
-      say("review: ruby MASTER/gates/runner.rb browser_diagnostics; then ruby MASTER/tools/approve_visual_baselines.rb " \
+      say("review: ruby MASTER/checks/runner.rb browser_diagnostics; then ruby MASTER/tools/approve_visual_baselines.rb " \
           "--manifest <run>/manifest.json --replace")
     end
 

@@ -75,7 +75,7 @@ module Master
       offline: "no network route to the provider — a local model can still answer",
       rate_limit: "tier rate limit exceeded",
       budget: "cost limit hit",
-      exhausted: "paid provider spend limit — the tier could not run (Io::QuotaGate)",
+      exhausted: "paid provider spend limit — the tier could not run (Io::QuotaCheck)",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
       abort: "operation aborted",

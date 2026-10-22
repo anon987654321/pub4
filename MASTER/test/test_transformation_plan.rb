@@ -47,7 +47,7 @@ class TestTransformationPlan < Minitest::Test
     %w[ruby rails prose visual].each do |domain|
       refute_empty playbook.fetch("technique_by_domain").fetch(domain)
     end
-    assert_operator playbook.fetch("gates").length, :>=, 4
+    assert_operator playbook.fetch("checks").length, :>=, 4
   end
 
   def test_research_backed_cleanup_profile_is_complete
@@ -81,7 +81,7 @@ class TestTransformationPlan < Minitest::Test
     assert_includes @plan.loop_policy.fetch("convergence"), "DONE"
     assert_includes @plan.loop_policy.fetch("plateau"), "PLATEAU"
     assert_includes @plan.loop_policy.fetch("veto"), "VETO"
-    assert_includes @plan.structural_gates.fetch("UNALIASED_MOVE").fetch("detector"), "unaliased_move_failure"
+    assert_includes @plan.structural_checks.fetch("UNALIASED_MOVE").fetch("detector"), "unaliased_move_failure"
     assert_includes @plan.not_applicable_operations.fetch("FUZZY_MOVE"), "complete named file bodies"
 
     prompt = @plan.prompt

@@ -308,7 +308,7 @@ end
       def record_single_call_substitution(from, to, result, promote: true)
         if result.is_a?(Master::Result::Ok)
           promote_runtime_model(from:, to:) if promote
-          Io::QuotaGate.substituted(from:, to:)
+          Io::QuotaCheck.substituted(from:, to:)
         end
         result
       end

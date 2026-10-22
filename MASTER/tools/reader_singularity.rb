@@ -16,7 +16,7 @@
 # implementation was building the path and composing the result itself.
 #
 # 47 reader sites across 9 data files already exist, so this is a ratchet rather
-# than a clean gate: the counts in data/reader_singularity.yml may fall and never
+# than a clean check: the counts in data/reader_singularity.yml may fall and never
 # rise, and a data file not listed there may have at most one reader.
 #
 #   ruby MASTER/tools/reader_singularity.rb

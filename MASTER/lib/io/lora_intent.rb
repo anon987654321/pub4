@@ -12,7 +12,7 @@ module Master
     # "generate me a selfie", "train a lora of ragnhild", "make a video with the
     # lora of me", "lora status".
     #
-    # Recognition, the subjects and the spending gate are data (data/lora.yml).
+    # Recognition, the subjects and the spending check are data (data/lora.yml).
     # This module turns a sentence into calls to STUDIO/replicate/lora/lora.rb.
     # A source-refresh request coordinates independent subject preparations and
     # preflights; it never starts paid training in the same turn.

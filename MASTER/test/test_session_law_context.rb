@@ -43,7 +43,7 @@ class TestSessionLawContext < Minitest::Test
     commands = registered_commands
 
     assert(commands.any? { |command| command.include?("session_law_context.rb") })
-    assert(commands.any? { |command| command.include?("finish_gate.rb\" record") }, "the edit recorder")
-    assert(commands.any? { |command| command.end_with?("finish_gate.rb\"") }, "the Stop gate")
+    assert(commands.any? { |command| command.include?("finish_check.rb\" record") }, "the edit recorder")
+    assert(commands.any? { |command| command.end_with?("finish_check.rb\"") }, "the Stop check")
   end
 end

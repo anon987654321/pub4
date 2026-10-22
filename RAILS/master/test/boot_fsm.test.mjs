@@ -50,7 +50,7 @@ function loadBootFsm(now = 1000) {
   return { boot, body, html, advance: (ms) => { clock += ms; } };
 }
 
-test("boot fsm happy path reaches READY when all gates signal", () => {
+test("boot fsm happy path reaches READY when all checks signal", () => {
   const { boot, body } = loadBootFsm();
   assert.equal(boot.state(), "INIT");
   assert.ok(boot.transition("PRIMER", { source: "test" }));
@@ -89,7 +89,7 @@ test("boot fsm renderer_failed enters ERROR from any phase", () => {
   assert.equal(boot.state(), "ERROR");
 });
 
-test("boot fsm does not reach READY until all gates are set", () => {
+test("boot fsm does not reach READY until all checks are set", () => {
   const { boot } = loadBootFsm();
   boot.transition("PRIMER");
   boot.transition("ASSETS");

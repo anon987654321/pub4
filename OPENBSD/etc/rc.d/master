@@ -4,7 +4,7 @@
 # PATH has no /usr/local/bin, so every one of them resolved when an operator
 # restarted master from a login shell and none of them resolved when
 # resource_guard.sh's cron tick did. For master that was fatal rather than
-# degraded: the asset gate reported "bundle: not found", could not tell that
+# degraded: the asset check reported "bundle: not found", could not tell that
 # apart from broken assets, and took the exit-1 branch that refuses to start.
 # ai.brgen.no was down from 08:20 to 14:50 on 2026-07-31 for exactly this, and
 # again from 15:10 — twice, because the guard's restart is what triggers it.
@@ -235,18 +235,18 @@ rc_pre() {
       logger -t master "assets:precompile failed — stamp not written, will retry next start"
     fi
   fi
-  # Load-bearing asset gate: refuse to start serving a broken face.js/manifest
+  # Load-bearing asset check: refuse to start serving a broken face.js/manifest
   # mismatch (the exact class of bug that wedged the primer boot on 2026-07-10).
   # One self-heal precompile retry before actually blocking the start.
-  _gate=/home/dev/pub4/MASTER/gates/runner.rb
-  _gate_name=master_web_assets
-  if [[ -f "$_gate" ]]; then
-    _gate_out=$(cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec ruby "$_gate" "$_gate_name" 2>&1)
-    _gate_rc=$?
-    if [[ "$_gate_rc" != "0" ]]; then
-      logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
+  _check=/home/dev/pub4/MASTER/checks/runner.rb
+  _check_name=master_web_assets
+  if [[ -f "$_check" ]]; then
+    _check_out=$(cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec ruby "$_check" "$_check_name" 2>&1)
+    _check_rc=$?
+    if [[ "$_check_rc" != "0" ]]; then
+      logger -t master "assets check failed, forcing fresh precompile and retrying once: $_check_out"
       # Same rule as the stamp above, and this is the path where breaking it
-      # hurts most: the gate has already said the assets are wrong, so stamping
+      # hurts most: the check has already said the assets are wrong, so stamping
       # a precompile that failed makes every later start skip the retry.
       if (cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec rails assets:precompile) 2>/dev/null; then
         if [[ "$_force_precompile" = "1" ]]; then
@@ -256,16 +256,16 @@ rc_pre() {
           echo "$_digest" > "$_stamp"
         fi
       else
-        logger -t master "retry precompile failed — stamp not written, the gate below decides the start"
+        logger -t master "retry precompile failed — stamp not written, the check below decides the start"
       fi
-      _gate_out=$(cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec ruby "$_gate" "$_gate_name" 2>&1)
-      _gate_rc=$?
-      if [[ "$_gate_rc" != "0" ]]; then
-        logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"
+      _check_out=$(cd /home/dev/pub4/RAILS/master && RAILS_ENV=production "$_bundle" exec ruby "$_check" "$_check_name" 2>&1)
+      _check_rc=$?
+      if [[ "$_check_rc" != "0" ]]; then
+        logger -t master "CRITICAL: assets check still failing after retry, refusing to start with broken assets: $_check_out"
         rm -f /home/dev/pub4/.deploying 2>/dev/null || true
         exit 1
       fi
-      logger -t master "assets gate passed after retry precompile"
+      logger -t master "assets check passed after retry precompile"
     fi
   fi
   sleep 1
@@ -288,7 +288,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
       sleep 1
       _i=$((_i + 1))
     done
-    # Wait for MASTER container (smoke ping — metrics requires auth since tier gate).
+    # Wait for MASTER container (smoke ping — metrics requires auth since tier check).
     _ping_ok=0
     _j=0
     while [[ "$_j" -lt 120 ]]; do

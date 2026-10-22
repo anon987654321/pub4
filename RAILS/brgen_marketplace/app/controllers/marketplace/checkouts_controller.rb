@@ -57,7 +57,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     end
 
     # The cart lanes' provider check sits here — after empty-cart, before the
-    # address gate — so an unconfigured PSP still fails closed with its reason
+    # address check — so an unconfigured PSP still fails closed with its reason
     # instead of sending the buyer to the address form for a payment that
     # could never start.
     raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
@@ -127,7 +127,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   # listing_id is the ONE-CLICK lane (operator, 2026-08-22): the buy bar posts
   # here directly and the order is created and paid in the same request —
   # listing → Vipps app → done, one click on the site. The single-order path it
-  # joins has no address gate on purpose: classifieds delivery is negotiated
+  # joins has no address check on purpose: classifieds delivery is negotiated
   # between the parties, and Vipps carries the buyer's identity.
   def resolve_payable
     return create_buy_now_order if params[:listing_id].present?

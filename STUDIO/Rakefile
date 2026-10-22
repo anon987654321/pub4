@@ -14,7 +14,7 @@ require "rake/testtask"
 # an accidental dependency of the next.
 GENERAL_TEST_SUITES = FileList["test/*_test.rb"]
   .reject { |path| File.basename(path).match?(/\Atest_tools_/) }
-  .reject { |path| File.basename(path) == "test_studio_gate.rb" }
+  .reject { |path| File.basename(path) == "test_studio_check.rb" }
   .map { |path| File.basename(path, ".rb") }
 
 GENERAL_TEST_SUITES.each do |suite|
@@ -30,7 +30,7 @@ task "test:general" => GENERAL_TEST_SUITES.map { |suite| "test:#{suite}" }
 
 TOOL_SUITES = FileList["test/test_tools_*.rb"]
   .map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }
-  .reject { |name| name == "gate" }
+  .reject { |name| name == "check" }
 
 TOOL_SUITES.each do |tool|
   Rake::TestTask.new("test:#{tool}") do |t|
@@ -40,25 +40,25 @@ TOOL_SUITES.each do |tool|
   end
 end
 
-Rake::TestTask.new("test:gate") do |t|
+Rake::TestTask.new("test:check") do |t|
   t.libs << "test"
-  t.test_files = ["test/test_studio_gate.rb"]
+  t.test_files = ["test/test_studio_check.rb"]
   t.warning = false
 end
 
-desc "Studio suite — dilla, the media tools, and the Studio gate itself"
-task test: ["test:gate", "test:general", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
+desc "Studio suite — dilla, the media tools, and the Studio check itself"
+task test: ["test:check", "test:general", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
 
-desc "The STUDIO parse/boundary gate"
-task :gate do
-  ruby File.expand_path("gate.rb", __dir__)
+desc "The STUDIO parse/boundary check"
+task :check do
+  ruby File.expand_path("check.rb", __dir__)
 end
 
 namespace :postpro do
   desc "Install postpro's runtime dependencies (ruby-vips, tty-prompt, libvips)"
   task :bootstrap do
     # The one place installation is allowed. postpro.rb used to do this from
-    # file scope, so `rake gate` — which loads the file to check that it boots —
+    # file scope, so `rake check` — which loads the file to check that it boots —
     # could gem-install and reach for brew/apt/pkg_add. A check observes the
     # environment; repairing it is a separate command, and this is it.
     ENV["POSTPRO_INSTALL_DEPS"] = "1"
@@ -239,4 +239,4 @@ namespace :replicate do
   end
 end
 
-task default: %i[gate test]
+task default: %i[check test]

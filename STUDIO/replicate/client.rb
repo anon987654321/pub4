@@ -410,7 +410,7 @@ module Studio
 
           return attempt_request(req, uri)
         rescue ExhaustedError => e
-          # Out of the retry loop entirely, and onto the gate: no wait inside
+          # Out of the retry loop entirely, and onto the check: no wait inside
           # this run makes the account solvent, and the caller needs to know
           # the capability is gone rather than that one call failed.
           warn("replicate quota exhausted: #{e.message}")

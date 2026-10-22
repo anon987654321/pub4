@@ -96,7 +96,7 @@ end
 
 # Bootstrap-aware: with nothing listening at BASE this is a dev/local run without a
 # MASTER web face up. Skip cleanly (like crawl_probe on a closed port) instead of
-# aborting the deploy gate — the smoke only has meaning against a live server.
+# aborting the deploy check — the smoke only has meaning against a live server.
 def server_listening?
   fetch("/up", read_timeout: 4, open_timeout: 4)
   true

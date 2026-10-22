@@ -145,7 +145,7 @@ module Master
         warn "knowledge_store: #{e.message}"
       end
 
-      # A violation the rule never actually attempted (confidence gate,
+      # A violation the rule never actually attempted (confidence check,
       # stale fingerprint) is recorded as 'skipped' and excluded here --
       # only genuine attempt outcomes ('fixed'/'stuck') count toward
       # quality. See fix_batch's comment in repair_loop.rb for why: counting

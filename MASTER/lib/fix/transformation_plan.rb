@@ -61,7 +61,7 @@ module Master
           "",
           "Preflight: #{preflight.join(", ")}.",
           "Postflight: #{postflight.join(", ")}.",
-          "Hard invariants (encoded gates, not suggestions):",
+          "Hard invariants (encoded checks, not suggestions):",
           *invariants.map { |name, value| "  #{name}: #{value}" },
           "",
           "Read-only candidate map: consider at least #{candidate_map_policy.fetch("minimum_alternatives")} materially distinct alternatives and score payoff/risk #{candidate_map_policy.fetch("score_range").inspect}; compare at least #{candidate_map_policy.fetch("minimum_distinct_target_paths")} distinct target paths when they exist. #{candidate_map_policy.fetch("exhaustion")}",
@@ -83,8 +83,8 @@ module Master
           "",
           "Proof of equivalence must attach: #{proof_of_equivalence.fetch("required").join(", ")}.",
           "Narrative alone is not proof: #{proof_of_equivalence.fetch("no_narrative_substitute")}.",
-          "Existing structural gates and their bad/good fixtures:",
-          *structural_gates.map { |id, row| "  #{id}: #{row.fetch("detector")}; flags #{row.fetch("positive_fixture")}; spares #{row.fetch("negative_fixture")}" },
+          "Existing structural checks and their bad/good fixtures:",
+          *structural_checks.map { |id, row| "  #{id}: #{row.fetch("detector")}; flags #{row.fetch("positive_fixture")}; spares #{row.fetch("negative_fixture")}" },
           *not_applicable_operations.map { |id, why| "  #{id}: not applicable — #{why}" },
           "",
           "Evidence priority: characterization, structural, runtime, and visual evidence outrank semantic judgment; taste alone never authorizes mutation.",
@@ -118,7 +118,7 @@ module Master
         {
           "methods" => Array(playbook.fetch("methods")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze,
           "technique_by_domain" => playbook.fetch("technique_by_domain").transform_keys(&:to_s).transform_values { |values| Array(values).map(&:to_s).freeze }.freeze,
-          "gates" => Array(playbook.fetch("gates")).map(&:to_s).freeze,
+          "checks" => Array(playbook.fetch("checks")).map(&:to_s).freeze,
         }.freeze
       end
 
@@ -145,7 +145,7 @@ module Master
       def decision_table = policy_section("decision_table")
       def scorecard_policy = policy_section("scorecard")
       def proof_of_equivalence = policy_section("proof_of_equivalence")
-      def structural_gates = policy_section("structural_gates")
+      def structural_checks = policy_section("structural_checks")
       def not_applicable_operations = policy_section("not_applicable_operations")
 
       def research
@@ -225,7 +225,7 @@ module Master
         required_domains = %w[ruby rails prose visual]
         missing_domains = required_domains - playbook.fetch("technique_by_domain").keys
         raise ArgumentError, "refactoring domains missing: #{missing_domains.join(", ")}" unless missing_domains.empty?
-        raise ArgumentError, "refactoring gates missing" if playbook.fetch("gates").empty?
+        raise ArgumentError, "refactoring checks missing" if playbook.fetch("checks").empty?
         true
       end
 
@@ -342,9 +342,9 @@ module Master
         missing = required_evidence - Array(proof_of_equivalence.fetch("required")).map(&:to_s)
         raise ArgumentError, "equivalence evidence missing: #{missing.join(", ")}" unless missing.empty?
         %w[UNALIASED_MOVE MIXED_COMMIT SINGLE_CHILD_DIR BATCH_DELETE].each do |id|
-          row = structural_gates.fetch(id)
+          row = structural_checks.fetch(id)
           %w[detector positive_fixture negative_fixture].each do |key|
-            raise ArgumentError, "#{id} gate missing #{key}" if row.fetch(key).to_s.empty?
+            raise ArgumentError, "#{id} check missing #{key}" if row.fetch(key).to_s.empty?
           end
         end
         raise ArgumentError, "FUZZY_MOVE applicability must be explicit" if not_applicable_operations.fetch("FUZZY_MOVE").to_s.empty?

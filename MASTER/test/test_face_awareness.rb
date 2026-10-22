@@ -7,7 +7,7 @@ require_relative "test_helper"
 class TestFaceAwareness < Minitest::Test
   C = Master::Voice::Policy
 
-  def test_the_contract_declares_listening_speaking_and_the_echo_gate
+  def test_the_contract_declares_listening_speaking_and_the_echo_check
     spec = C.awareness
     assert_operator spec.dig("listening", "glance_scale"), :<, 1.0
     assert_operator spec.fetch("heard_hold_ms"), :>, 0
@@ -37,7 +37,7 @@ class TestFaceAwareness < Minitest::Test
     assert_operator listening, :<=, idle if idle.positive?
   end
 
-  def test_the_browser_feeds_awareness_only_through_the_echo_gate
+  def test_the_browser_feeds_awareness_only_through_the_echo_check
     part3 = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "public", "face.part3.txt"))
     part5 = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "public", "face.part5.txt"))
     assert_includes part3, "function faceEchoSafe"

@@ -4,7 +4,7 @@ require "cgi"
 
 module Operator
   # The self-contained index.html of a visual review: surfaces with thumbnails,
-  # measurements and gate results, then the council's picks beside the full
+  # measurements and check results, then the council's picks beside the full
   # critique text. No external asset; every image is a relative file in the
   # same folder, so the folder can be zipped and sent.
   module VisualReviewPage
@@ -92,7 +92,7 @@ module Operator
 
     def surface_card(row)
       bad = row[:problems].to_a
-      status = bad.empty? ? "<span class=\"ok\">gates clean</span>" : "<span class=\"bad\">#{bad.size} gate problem(s)</span>"
+      status = bad.empty? ? "<span class=\"ok\">checks clean</span>" : "<span class=\"bad\">#{bad.size} check problem(s)</span>"
       metrics = row[:metrics].to_h.map { |k, v| "#{h(k)}=#{h(v)}" }.join(" ")
       lines = bad.map { |line| "<li class=\"bad mono\">#{h(line)}</li>" }.join
       links = Array(row[:extras]).map { |e| "<a href=\"#{h(e[:path])}\">#{h(e[:label])}</a>" }.join(" &middot; ")

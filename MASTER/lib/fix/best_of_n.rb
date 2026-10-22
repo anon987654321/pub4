@@ -6,7 +6,7 @@ require "json"
 require_relative "../io/exec"
 require_relative "rails_app"
 require_relative "layout_score_render"
-require_relative "visual_quality_gates"
+require_relative "visual_quality_checks"
 require_relative "tool_breaker"
 
 module Master
@@ -15,7 +15,7 @@ module Master
     # of several drafts: the fixer proposes N distinct candidates, each is
     # written in turn, the affected surfaces are re-rendered and measured, and
     # the file goes back to its original before the next. A candidate is
-    # discarded when its layout score drops past the tolerance, a quality-gate
+    # discarded when its layout score drops past the tolerance, a quality-check
     # metric worsens, or chrome drifts off its budget. Of the survivors the
     # highest mean layout score wins, the smallest diff breaking a tie.
     #
@@ -85,9 +85,9 @@ module Master
       end
 
       def judge(surface, payload, root:, anchors:)
-        base = VisualQualityGates.load(root, surface)
-        cur = VisualQualityGates.measure(surface, payload, baseline_rects: base && base["rects"])
-        worse = base ? VisualQualityGates.worse(base, cur) : []
+        base = VisualQualityChecks.load(root, surface)
+        cur = VisualQualityChecks.measure(surface, payload, baseline_rects: base && base["rects"])
+        worse = base ? VisualQualityChecks.worse(base, cur) : []
         drift = VisualDriftBudget.check(surface, payload, root:, anchors:)
         worse + LayoutScoreStore.judge(surface, payload, root:) + (drift.empty? ? [] : ["chrome drift #{drift.first(2).join(", ")}"])
       end
@@ -241,7 +241,7 @@ module Master
           %w[master_chat]
         when %r{\A(?:OPENBSD|STUDIO)/}
           []
-        when %r{\AMASTER/gates/}
+        when %r{\AMASTER/checks/}
           relative.match?(%r{face|primer|page_simulation}) ? %w[master_face cross_cut] : %w[cross_cut]
         when %r{\AMASTER/}
           %w[master_fix]
@@ -660,7 +660,7 @@ module Master
       end
 
       # Candidate trials share RepairLoop's per-file deadline. Reserve time
-      # for the independent verifier and consensus gate, then divide only the
+      # for the independent verifier and consensus check, then divide only the
       # remaining time across commands still to run. This keeps timeouts from
       # interrupting the reversible source transaction during unwinding.
       def budget_block_reason

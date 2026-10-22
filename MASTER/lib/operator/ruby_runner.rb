@@ -120,19 +120,19 @@ module Operator
       File.file?(path) ? File.read(path).strip : ""
     end
 
-    def gate_ruby(root: Environment.repo_root)
+    def check_ruby(root: Environment.repo_root)
       ruby_cmd(root:)
     end
 
-    def runtime_gate_skipped?
-      return true if ENV["SKIP_RUNTIME_GATE"] == "1"
+    def runtime_check_skipped?
+      return true if ENV["SKIP_RUNTIME_CHECK"] == "1"
       return false if Environment.on_vps? || Environment.on_openbsd?
 
       !Environment.ruby_version_ok?
     end
 
     def runtime_skip_reason
-      return "SKIP_RUNTIME_GATE=1" if ENV["SKIP_RUNTIME_GATE"] == "1"
+      return "SKIP_RUNTIME_CHECK=1" if ENV["SKIP_RUNTIME_CHECK"] == "1"
       return if Environment.on_vps? || Environment.on_openbsd?
       return if Environment.ruby_version_ok?
 

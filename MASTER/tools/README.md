@@ -54,7 +54,7 @@ Declarations with no reader are the dominant defect. A preset names a setting
 that no effect consults, a call passes an argument that the callee does not
 accept and a rescue hides the error, and the feature never runs while every
 report says it did. Before you trust a setting, find its reader. Before you add
-a fix, consider adding the gate that would have caught the fault.
+a fix, consider adding the check that would have caught the fault.
 
 Use Ruby and zsh, not GNU text tools. The repository deploys to OpenBSD, where
 sed, awk, find, head, tail and wc behave differently, and perl and python are
@@ -67,12 +67,12 @@ work, and do not report done without its output.
 
 ## Checks
 
-The Rakefile in this directory defines the checks. The test task runs the gate
-and event-bus suites, the gate task parses and loads every tool, and the voice
+The Rakefile in this directory defines the checks. The test task runs the check
+and event-bus suites, the check task parses and loads every tool, and the voice
 quality task runs the speech regression harness without synthesizing anything.
 
 ```zsh
 cd MASTER/tools && rake test
-cd MASTER/tools && rake gate
+cd MASTER/tools && rake check
 cd MASTER/tools && rake voice_quality
 ```

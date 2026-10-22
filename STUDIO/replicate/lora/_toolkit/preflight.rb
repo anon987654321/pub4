@@ -208,7 +208,7 @@ module Preflight
 
   # Preflight ceiling uses the more expensive of the published guide runtime and
   # the observed run, priced at the explicitly pinned trainer version. This is a
-  # hard pre-call estimate gate, not a guarantee that provider billing cannot vary.
+  # hard pre-call estimate check, not a guarantee that provider billing cannot vary.
   def training_estimate_usd(steps)
     count = Integer(steps)
     raise ArgumentError, "steps must be a positive integer" unless count.positive?

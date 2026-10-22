@@ -83,12 +83,12 @@ app/jobs app/reflexes].each do |dir|
       end
     end
 
-    # shared/_ad_slot gates on advertising_consent?, and it is an engine partial —
+    # shared/_ad_slot checks on advertising_consent?, and it is an engine partial —
     # available to all three apps. The helper was included in brgen's
     # ApplicationController only, so placing an ad slot in amber or bsdports would
     # have raised NoMethodError and taken the page down instead of rendering
     # nothing, which is exactly what brgen's own comment warns about. Registered
-    # here so the gate travels with the partial.
+    # here so the check travels with the partial.
     initializer "shared.consent_helper" do
       ActiveSupport.on_load(:action_controller_base) do
         require_dependency Shared::Engine.root.join("app/helpers/shared/consent_helper").to_s

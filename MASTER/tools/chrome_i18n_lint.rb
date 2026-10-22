@@ -34,7 +34,7 @@ module Operator
 
     # aria-label="…" / aria: { label: "…" } with a literal string.
     #
-    # MASTER/gates/GATE_ADEQUACY.md gap 2: "chrome_i18n_lint only empty titles +
+    # MASTER/checks/CHECK_ADEQUACY.md gap 2: "chrome_i18n_lint only empty titles +
     # search placeholders; secondary aria-labels still EN." A screen-reader user on
     # :nb hears English for every one of them, and until this rule existed the number
     # was unknown — which is the actual problem. It is 172 (measured 2026-08-01, all
@@ -142,7 +142,7 @@ module Operator
       # It cost something real. amber had not deployed since 2026-08-12 08:49 and
       # nobody knew why: this lint runs across the whole family from the shared
       # engine, so a +1 in a brgen view — communities/show.html.erb, edited by
-      # another session at 15:35 today — failed amber's CI gate, and amber's
+      # another session at 15:35 today — failed amber's CI check, and amber's
       # rendered pages were still preloading morphdom from ga.jspm.io and
       # @rails/request.js from jsDelivr, three weeks after both were vendored.
       #

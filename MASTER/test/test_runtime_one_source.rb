@@ -9,8 +9,8 @@ class TestRuntimeOneSource < Minitest::Test
     File.read(File.join(ROOT, path), encoding: "UTF-8")
   end
 
-  def test_release_gate_delegates_runtime_selection
-    source = read("../MASTER/gates/release.rb")
+  def test_release_check_delegates_runtime_selection
+    source = read("../MASTER/checks/release.rb")
     assert_includes source, 'require_relative "../../MASTER/lib/operator/ruby_runner"'
     assert_includes source, "[Operator::RubyRunner.ruby_cmd]"
     assert_includes source, "Operator::RubyRunner.bundle_cmd"
@@ -24,8 +24,8 @@ class TestRuntimeOneSource < Minitest::Test
     refute_includes source, '["rbenv", "exec", "bundle"]'
   end
 
-  def test_style_gate_delegates_bundler_and_ruby
-    source = read("../MASTER/tools/style_gate.rb")
+  def test_style_check_delegates_bundler_and_ruby
+    source = read("../MASTER/tools/style_check.rb")
     assert_includes source, 'require_relative "../lib/operator/ruby_runner"'
     assert_includes source, %([BUNDLE, "exec", RUBY, "-S", "rubocop")
     assert_includes source, %([BUNDLE, "exec", RUBY, shared_rubocop])

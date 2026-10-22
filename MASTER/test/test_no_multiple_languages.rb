@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # NO_MULTIPLE_LANGUAGES matched every `<%`, so it reported 6,619 of the 14,552
-# findings across RAILS and no Rails view could ever have cleared it. A gate
+# findings across RAILS and no Rails view could ever have cleared it. A check
 # whose zero is unreachable measures nothing.
 #
 # Since the 2026-08-21 twin retirement the duty is split where the law files

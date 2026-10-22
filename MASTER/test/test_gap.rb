@@ -5,15 +5,15 @@ require "open3"
 require "rbconfig"
 require "tmpdir"
 require "yaml"
-require_relative "../gates/support/gate_result"
+require_relative "../checks/support/check_result"
 
 # A flat "inconclusive" says nothing about whether waiting helps, what checking
 # costs, or whose call the answer is. Gap carries those three, and each has a
-# reader: the dmesg clause, the gate renderer, and /fix, which lists a
+# reader: the dmesg clause, the check renderer, and /fix, which lists a
 # :decision_for_operator finding and never attempts it.
 class TestGap < Minitest::Test
   Rule = Struct.new(:id, :severity)
-  GATES_DIR = File.expand_path("../gates", __dir__)
+  CHECKS_DIR = File.expand_path("../checks", __dir__)
 
   def test_gap_validates_and_speaks_in_one_clause
     gap = Master::Gap::DEPLOY_HOST_ONLY
@@ -40,9 +40,9 @@ class TestGap < Minitest::Test
     assert_equal "test0: plain\n", out
   end
 
-  def test_gate_result_renders_the_gap_beside_its_reason_and_keeps_it_through_merge
-    leaf = Deploy::GateResult.new.inconclusive!("no stamps", gap: Master::Gap::DEPLOY_HOST_ONLY).inconclusive!("other")
-    suite = Deploy::GateResult.new.merge!(leaf, label: "leaf")
+  def test_check_result_renders_the_gap_beside_its_reason_and_keeps_it_through_merge
+    leaf = Deploy::CheckResult.new.inconclusive!("no stamps", gap: Master::Gap::DEPLOY_HOST_ONLY).inconclusive!("other")
+    suite = Deploy::CheckResult.new.merge!(leaf, label: "leaf")
 
     _, err = capture_io { suite.render }
     assert_includes err, "[leaf] no stamps (gap: never resolves alone, checking costs a trip to the deploy host, a fact)"
@@ -52,23 +52,23 @@ class TestGap < Minitest::Test
 
   def run_runner(script_row)
     Dir.mktmpdir("gap") do |dir|
-      registry = File.join(dir, "gates.yml")
+      registry = File.join(dir, "checks.yml")
       File.write(registry, YAML.dump("probe" => { "script" => "fixtures/gap/inconclusive.rb" }.merge(script_row)))
-      out, = Open3.capture2e({ "GATES_FILE" => registry, "GATE_LEDGER" => File.join(dir, "l.jsonl") },
-                             RbConfig.ruby, File.join(GATES_DIR, "runner.rb"), "probe")
+      out, = Open3.capture2e({ "CHECKS_FILE" => registry, "CHECK_LEDGER" => File.join(dir, "l.jsonl") },
+                             RbConfig.ruby, File.join(CHECKS_DIR, "runner.rb"), "probe")
       out
     end
   end
 
-  def test_runner_prints_the_gap_a_script_gate_declares
+  def test_runner_prints_the_gap_a_script_check_declares
     declared = run_runner("gap" => { "horizon" => "operator", "cost_to_check" => "minutes", "decidability" => "fact" })
     assert_match(/probe inconclusive, gap: waits for the operator, checking costs minutes, a fact/, declared)
 
     assert_match(/probe inconclusive$/, run_runner({}))
   end
 
-  def test_the_real_gate_registry_declares_gaps_the_runner_can_build
-    YAML.safe_load_file(File.join(GATES_DIR, "gates.yml")).each do |name, row|
+  def test_the_real_check_registry_declares_gaps_the_runner_can_build
+    YAML.safe_load_file(File.join(CHECKS_DIR, "checks.yml")).each do |name, row|
       next unless row.is_a?(Hash) && row["gap"]
 
       spec = row["gap"].to_h { |key, value| [key.to_sym, value.is_a?(String) ? value.to_sym : value] }
@@ -134,16 +134,16 @@ class TestGap < Minitest::Test
     assert_equal Master::Gap::OPERATOR_DECISION, missing.gap
   end
 
-  # OPENBSD carries the gate kernel and does not reach into MASTER for it. The
+  # OPENBSD carries the check kernel and does not reach into MASTER for it. The
   # runner loads both files into one class, so the later load redefines every
   # method the first one set: a copy two commits behind turned
   # inconclusive!(reason, gap:) into an ArgumentError and ended the ladder at the
-  # first gate with no browser. Only the ownership line differs.
-  def test_openbsd_carries_the_gate_kernel_unchanged
-    kernel = File.readlines(File.join(Master::ROOT, "gates", "support", "gate_result.rb"))
-    carried = File.readlines(File.join(Master::ROOT, "..", "OPENBSD", "lib", "gate_result.rb"))
+  # first check with no browser. Only the ownership line differs.
+  def test_openbsd_carries_the_check_kernel_unchanged
+    kernel = File.readlines(File.join(Master::ROOT, "checks", "support", "check_result.rb"))
+    carried = File.readlines(File.join(Master::ROOT, "..", "OPENBSD", "lib", "check_result.rb"))
     differing = (0...[kernel.size, carried.size].max).reject { |index| kernel[index] == carried[index] }
 
-    assert_equal [2], differing, "OPENBSD/lib/gate_result.rb drifted from MASTER/gates/support/gate_result.rb"
+    assert_equal [2], differing, "OPENBSD/lib/check_result.rb drifted from MASTER/checks/support/check_result.rb"
   end
 end

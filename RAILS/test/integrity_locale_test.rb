@@ -6,13 +6,13 @@ require "rbconfig"
 
 class IntegrityLocaleTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  GATE = File.join(ROOT, "OPENBSD", "gates", "integrity_gate.rb")
+  CHECK = File.join(ROOT, "OPENBSD", "checks", "integrity_check.rb")
 
   def test_integrity_chain_is_independent_of_operator_locale
-    assert_path_exists GATE
+    assert_path_exists CHECK
 
     env = { "LANG" => nil, "LC_ALL" => "C", "LC_CTYPE" => nil }
-    output, status = Open3.capture2e(env, RbConfig.ruby, GATE, chdir: ROOT)
+    output, status = Open3.capture2e(env, RbConfig.ruby, CHECK, chdir: ROOT)
 
     assert status.success?, output
     assert_includes output, "integrity: clean"

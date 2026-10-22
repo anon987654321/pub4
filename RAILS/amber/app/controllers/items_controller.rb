@@ -9,20 +9,20 @@ class ItemsController < ApplicationController
   before_action :authorize!, only: %i[edit update destroy spark_joy clear_joy declutter wear archive restore]
   # show was in the set_ list but not the authorize! list, and set_item is an
   # unscoped Item.find — so GET /items/:id returned any user's item (brand,
-  # price, purchase date, photos). Gate on viewability rather than ownership so
+  # price, purchase date, photos). Check on viewability rather than ownership so
   # public and follower wardrobes still browse.
   before_action :authorize_view!, only: %i[show]
   # /share is the PWA Web Share Target: the OS posts multipart form data with no
   # CSRF token, so the skip below is required rather than optional. That leaves
   # the action reachable by a cross-site POST, and it creates a record with a
   # caller-supplied title and attached photos. Guests get a soft Current.user
-  # here (Shared::Authentication), so without an identity gate the write
+  # here (Shared::Authentication), so without an identity check the write
   # succeeded for anyone. brgen's posts#share has carried require_real_user for
   # this reason; amber's did not.
   # NO `only:` here, and no second declaration: `before_action :require_real_user`
   # above already covers every action including :share, and Rails DEDUPLICATES
   # callbacks by filter name -- so re-declaring the same filter with
-  # `only: [:share]` did not add a second gate, it REPLACED the unrestricted one
+  # `only: [:share]` did not add a second check, it REPLACED the unrestricted one
   # and narrowed it to :share. Read off the callback chain rather than the
   # source: ItemsController had exactly ONE require_real_user callback and it
   # carried @conditional_key=:only.

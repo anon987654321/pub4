@@ -71,7 +71,7 @@ end
 # The root the repo has, not the root this disk has.
 #
 # A working checkout accumulates entries git was already told to forget —
-# .DS_Store, the gate ledger the runner appends to, the four generated
+# .DS_Store, the check ledger the runner appends to, the four generated
 # snapshot_*.md — and Dir.children reports every one of them as a
 # non-canonical top-level file. That is a report nobody acts on, and it only
 # appears in the main checkout: a fresh worktree has none of them, so the

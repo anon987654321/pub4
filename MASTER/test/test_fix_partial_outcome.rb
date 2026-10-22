@@ -63,19 +63,19 @@ class TestFixPartialOutcome < Minitest::Test
     assert_includes Pass.scorecard(outcome: :failed, delivered: 0, counts: [10]), "no proof ran"
   end
 
-  def test_a_clean_run_with_a_hard_gate_red_is_partial
+  def test_a_clean_run_with_a_hard_check_red_is_partial
     proof = { verdict: "proof: 18 of 20", hard: %w[production], soft: [] }
 
     assert_match(/\Afix partial /, Pass.scorecard(outcome: :done, delivered: 1, proof:))
   end
 
-  def test_the_scorecard_names_how_many_gates_went_unmeasured
+  def test_the_scorecard_names_how_many_checks_went_unmeasured
     proof = { verdict: "proof: 18 of 20", hard: [], soft: [], unmeasured: %w[deploy_drift] }
 
     assert_includes Pass.scorecard(outcome: :done, delivered: 1, proof:), "unmeasured 1"
   end
 
-  def test_a_clean_run_with_only_soft_gates_red_is_done
+  def test_a_clean_run_with_only_soft_checks_red_is_done
     proof = { verdict: "proof: 18 of 20", hard: [], soft: %w[layout_suite] }
 
     assert_match(/\Afix done /, Pass.scorecard(outcome: :done, delivered: 1, proof:))

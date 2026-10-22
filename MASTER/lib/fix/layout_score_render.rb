@@ -14,8 +14,8 @@ module Master
 
       # [[surface, payload], ...] for the given surfaces, in one browser session.
       def measure(surfaces, root:)
-        require_relative "../../gates/support/geometry_probe"
-        require_relative "../../gates/support/surface_probes"
+        require_relative "../../checks/support/geometry_probe"
+        require_relative "../../checks/support/surface_probes"
         return [] unless Deploy::GeometryProbe.available?
 
         rows = []

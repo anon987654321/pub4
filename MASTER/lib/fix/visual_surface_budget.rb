@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../gates/support/cdp_session"
+require_relative "../../checks/support/cdp_session"
 
 module Master
   module Fix

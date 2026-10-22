@@ -42,11 +42,11 @@ ownership:
     purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
     risk: high
     check: bin/check --profile=web
-  gates/:
-    purpose: gates that measure MASTER itself — its face, its assets, its own scan
-      chain — declared in MASTER/gates/gates.yml and run by that runner
+  checks/:
+    purpose: checks that measure MASTER itself — its face, its assets, its own scan
+      chain — declared in MASTER/checks/checks.yml and run by that runner
     risk: medium
-    check: ruby MASTER/gates/runner.rb master_tts master_web_assets constitutional_scan
+    check: ruby MASTER/checks/runner.rb master_tts master_web_assets constitutional_scan
   bin/:
     purpose: executable entry points and validation wrappers
     risk: high
@@ -169,7 +169,7 @@ ownership:
     check: none
   tools/:
     purpose: repo-hygiene and verification one-offs (security sweep, inventory,
-      convergence evidence gate) — distinct from script/'s style/canon gates
+      convergence evidence check) — distinct from script/'s style/canon checks
       and bin/'s runtime entry points
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
@@ -190,7 +190,7 @@ ownership:
     risk: medium
     check: cd MASTER && ruby -Ilib:test test/test_capability_inventory.rb
   script/:
-    purpose: style guide sync and canon generation gates run from Rakefile
+    purpose: style guide sync and canon generation checks run from Rakefile
     risk: medium
     check: bin/check
   loop*.gif:

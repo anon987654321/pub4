@@ -2,9 +2,9 @@
 
 require_relative "test_helper"
 
-# /fix --plan takes the read-only gate baseline and prints the worklist, blockers first, writing nothing.
+# /fix --plan takes the read-only check baseline and prints the worklist, blockers first, writing nothing.
 class TestFixPlan < Minitest::Test
-  Focus = Master::Fix::GateFocus
+  Focus = Master::Fix::CheckFocus
 
   def setup
     @deep_trace = ENV["MASTER_FIX_DEEP_TRACE"]
@@ -18,8 +18,8 @@ class TestFixPlan < Minitest::Test
 
   def test_plan_is_a_dry_run_that_holds_for_its_own_dispatch
     seen = nil
-    # The real baseline runs every gate stage; this test asserts what the flag selects.
-    ::Operator::GateChain.stub(:baseline, {}) do
+    # The real baseline runs every check stage; this test asserts what the flag selects.
+    ::Operator::CheckChain.stub(:baseline, {}) do
       recorder = ->(_deps, **kwargs) { seen = [Focus.plan?, kwargs[:apply]] }
 
       Master::CLI::CommandRegistry.stub(:run_pass, recorder) do
@@ -43,6 +43,6 @@ class TestFixPlan < Minitest::Test
   def test_the_preview_names_the_blockers_first
     lines = Previewing.new.show({ total: 3, files: {}, blockers: %w[lib/fix/c.rb] }).lines
 
-    assert_equal "preview blockers: 1 file(s) named by a red gate, first: lib/fix/c.rb\n", lines.first
+    assert_equal "preview blockers: 1 file(s) named by a red check, first: lib/fix/c.rb\n", lines.first
   end
 end

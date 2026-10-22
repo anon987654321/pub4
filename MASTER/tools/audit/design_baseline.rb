@@ -16,7 +16,7 @@
 # Wired into Operator::Ratchets#deep_rows, so `bin/check --profile=full` holds it.
 require "yaml"
 require_relative "../../lib/trace/dmesg"
-require_relative "../../gates/support/fleet"
+require_relative "../../checks/support/fleet"
 
 module Operator
   module DesignBaseline
@@ -128,7 +128,7 @@ module Operator
       current.sort.each { |app, count| Master::Trace::Dmesg.status("design0", "#{app}, #{count}, ceiling #{recorded.dig("apps", app) || "unrecorded"}") }
 
       # The machine-readable verdict line, last. Two consumers match it — the
-      # ratchet stage's /design_baseline: (\d+) violation/ and gate_chain's
+      # ratchet stage's /design_baseline: (\d+) violation/ and check_chain's
       # verdict scan, which takes the last bare "name:" line — and a7a8cf4b8
       # dropped it in favour of the dmesg detail above, leaving both reading
       # the current count as "?" and the ratchet row unreadable.

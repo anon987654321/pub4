@@ -5,7 +5,7 @@
 # MASTER converges on "no rule fires". That is not the same as "nothing left
 # worth doing", and the gap is most of what a refinement pass finds: a rake task
 # nothing calls, a backoff that never sleeps, a mailer aimed at a route that does
-# not exist, a gate asserting on the word "rubocop" rather than on whether it
+# not exist, a check asserting on the word "rubocop" rather than on whether it
 # ran. No rule in data/laws.yml names any of those, because they are not
 # properties of a file — they are properties of a claim and its reader.
 #
@@ -65,12 +65,12 @@ module Operator
 # stopped agreeing.
 Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
           run: -> { sibling("OPENBSD", "bin/reach") }),
-# MASTER/tools's coverage was never thin, only unreported here: gate.rb parses
+# MASTER/tools's coverage was never thin, only unreported here: check.rb parses
 # every first-party file, checks dilla's manifest against the disk, and
 # boots the guarded entry points. `rake tools` already runs it; this is
 # what makes its result visible in a sweep.
 Probe.new(unit: "toolsgate", trees: %w[MASTER],
-          run: -> { tool("gate.rb") }),
+          run: -> { tool("check.rb") }),
         Probe.new(unit: "instruments", trees: %w[MASTER], run: -> { tool("instruments.rb") }),
         Probe.new(unit: "constcoll", trees: %w[MASTER], run: -> { tool("constant_collisions.rb") }),
         Probe.new(unit: "secsweep", trees: %w[MASTER], run: -> { tool("security_sweep.rb") }),
@@ -83,7 +83,7 @@ Probe.new(unit: "toolsgate", trees: %w[MASTER],
 
 # Run from the sibling's own directory. MASTER requires nothing from the
 # other trees and they resolve their own relative paths; a probe is a
-# subprocess for the same reason rake tools gate is one.
+# subprocess for the same reason rake tools check is one.
 def sibling(tree, script, *args)
   dir = File.join(ROOT, tree)
   capture(RbConfig.ruby, File.join(dir, script), *args, chdir: dir)

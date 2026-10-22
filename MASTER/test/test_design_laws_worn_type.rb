@@ -10,10 +10,10 @@ class TestDesignRulesWornType < Minitest::Test
   def setup
     @data = Master::Design::Thresholds.load(root: Master::ROOT)
     @worn = @data.fetch("worn_type")
-    # gates/support/, not gates/lib/. A reader path that stops resolving errors
+    # checks/support/, not checks/lib/. A reader path that stops resolving errors
     # on ENOENT rather than failing, which reports a missing file where this
     # test's subject is "every profile has a reader".
-    @reader = File.join(Master::ROOT, "gates", "support", "geometry_type.rb")
+    @reader = File.join(Master::ROOT, "checks", "support", "geometry_type.rb")
   end
 
   def test_worn_type_profiles_exist
@@ -52,7 +52,7 @@ class TestDesignRulesWornType < Minitest::Test
   # Named rather than deleted, because the intent is worth keeping and removing
   # it would quietly drop a legibility rule from the constitution. Named rather
   # than wired, because enforcing it means measuring rendered label sizes on the
-  # map surface, which is a rendered-gate change and an operator's call about
+  # map surface, which is a rendered-check change and an operator's call about
   # what the map should look like — not something to invent inside a test.
   #
   # When it gains a reader, delete it from here. When another key joins it, this
@@ -61,7 +61,7 @@ class TestDesignRulesWornType < Minitest::Test
   # The profile GeometryType.check builds is returned to rendered_geometry.rb,
   # whose check_rhythm reads rhythm_off_max_pct from it, so both files are the
   # reader. Reading geometry_type.rb alone listed that key as unread in all
-  # seven profiles while the rhythm gate enforced it in every one.
+  # seven profiles while the rhythm check enforced it in every one.
   UNREAD_PROFILE_KEYS = Hash.new([].freeze).merge(
     "map" => %w[label_min_px],
   ).freeze

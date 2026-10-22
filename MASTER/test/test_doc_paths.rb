@@ -25,9 +25,9 @@ class TestDocPaths < Minitest::Test
   # omission. It cites 428 repo paths; 34 of them name subjects that are gone on
   # purpose — MASTER/DEBT.md, RAILS/BLOCKERS.md, docs/SEVERANCE.md, the deleted
   # io/lora_pipeline.rb — because a register that records what was removed has to
-  # be able to say what it was. A gate demanding every cited path exist would
+  # be able to say what it was. A check demanding every cited path exist would
   # need a 34-row baseline that a fresh entry breaks the same week, and would
-  # turn the register's own function into a red gate. Its citations go stale as
+  # turn the register's own function into a red check. Its citations go stale as
   # numbers rather than as paths, which is why every section carries the date it
   # was measured.
   DOCS = %w[
@@ -177,7 +177,7 @@ class TestDocPaths < Minitest::Test
     # a deleted directory leaves behind, and that is when this check matters
     # most. `docs/SEVERANCE.md` was cited as a source of truth by two governing
     # documents for weeks: docs/ had been deleted, so the token was dropped as
-    # "not a path" before anything looked for the file. The gate written to catch
+    # "not a path" before anything looked for the file. The check written to catch
     # a stale citation was blind to the one kind of staleness it cannot recover
     # from.
     #
@@ -217,7 +217,7 @@ class TestDocPaths < Minitest::Test
         # line number makes the extension unrecognisable, so the whole citation
         # is dropped as prose — and the file:line form is how this repo's
         # documents point at code, which left the commonest citation shape
-        # outside the gate written to check citations.
+        # outside the check written to check citations.
         .map { |c| c.sub(/:\d+(?:-\d+)?\z/, "") }
         .reject { |c| c.match?(/[*${}<]/) }
         .reject { |c| exempt.include?(c) }
@@ -256,7 +256,7 @@ class TestDocPaths < Minitest::Test
   # A path the repo ignores is generated, and a clean checkout is entitled not to
   # have it. `web/storage/` and `web/log/` are Rails' own runtime directories and
   # MASTER/README.md lists them under "Local/generated", which is the citation this
-  # gate is least able to check and most likely to punish: the prose is correct
+  # check is least able to check and most likely to punish: the prose is correct
   # and the directory only appears after the app has run once.
   #
   # A live query rather than another allow-list entry, because an exemption whose
@@ -269,7 +269,7 @@ class TestDocPaths < Minitest::Test
   # `!priv/ssh/*.pub`, but git cannot re-include a file inside an excluded
   # directory, so the root form of that public key reads as ignored while
   # `OPENBSD/priv/ssh/…` does not. The operator's decision there is that the file
-  # is missing and should be added, which is a citation this gate must keep.
+  # is missing and should be added, which is a citation this check must keep.
   def generated?(candidate, doc)
     Dir.chdir(REPO) { system("git", "check-ignore", "-q", File.join(File.dirname(doc), candidate)) }
   end
@@ -279,12 +279,12 @@ class TestDocPaths < Minitest::Test
   end
 
   # Both directions, because a predicate that answered true for everything would
-  # switch this gate off while reading exactly like a fix.
+  # switch this check off while reading exactly like a fix.
   def test_only_an_ignored_path_counts_as_generated
     assert generated?("web/storage/", "MASTER/README.md"),
            "RAILS/master/.gitignore names storage, so a clean checkout cannot be asked for it"
     refute generated?("web/nowhere/", "MASTER/README.md"),
-           "a path nothing ignores is a citation this gate must still check"
+           "a path nothing ignores is a citation this check must still check"
     refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/RUNBOOK.md"),
            "the root reading of that path is ignored and the document's reading is not"
   end

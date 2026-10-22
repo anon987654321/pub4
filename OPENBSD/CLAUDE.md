@@ -71,20 +71,20 @@ if anyone widens that listener again, pf becomes the exposure's only guard.
 - **Default** (`SKIP_CI` unset): `vps_ci.sh <app>` syncs the repo into a CI
   mirror and runs `bin/ci` (see below) against a throwaway test DB.
 - **`SKIP_CI=1`**: skips `vps_ci.sh` and runs `RAILS/<app>/<app>.sh`, which
-  calls `deploy_tracked_app` → `rails_runtime_gate`. That gate bundles,
+  calls `deploy_tracked_app` → `rails_runtime_check`. That check bundles,
   prepares the databases, precompiles assets and runs `bin/ci` inside the
   deployed `/home/<app>/app` tree. CI still runs, in a different place.
 
-The fast hotfix path uses `SKIP_RUNTIME_GATE=1` and `SKIP_CI=1`, but the
+The fast hotfix path uses `SKIP_RUNTIME_CHECK=1` and `SKIP_CI=1`, but the
 runtime skip is now protected by the human-only `I_UNDERSTAND_FAST_DEPLOY=1`
-acknowledgement. Without that exact acknowledgement, `rails_runtime_gate`
+acknowledgement. Without that exact acknowledgement, `rails_runtime_check`
 refuses to bypass CI. When the acknowledgement is supplied, the hotfix path
-runs no `bin/ci`; only the loopback gates `vps-deploy` runs after each
+runs no `bin/ci`; only the loopback checks `vps-deploy` runs after each
 restart.
 
 ## `bin/ci`'s `Setup` step behaves differently locally vs. on the VPS
 
-`RAILS/__shared/config/ci.rb` gates several steps on `vps_host` (true when
+`RAILS/__shared/config/ci.rb` checks several steps on `vps_host` (true when
 `PUB4_CI_GUARD=1`, `/var/db/pub4_vps` exists, or `/etc/relayd.conf` exists):
 
 - `Security: Importmap audit` and `Tests: System (a11y)` — **skipped on the
@@ -93,7 +93,7 @@ restart.
   have on hand (a booted environment, a browser).
 - `Style: Ruby` (RuboCop) — **runs on the VPS too**, and this list said
   otherwise until 2026-08-25. `ci.rb` carries the reason next to the step: vm23
-  is where the deploy gate actually runs, so skipping it there left enforcement
+  is where the deploy check actually runs, so skipping it there left enforcement
   to a local `bin/ci` that nothing runs automatically. It is a source-text check
   needing no browser and no database, so the reasons the other two are skipped
   do not apply. A RuboCop failure on the box is a real deploy blocker — do not
@@ -187,9 +187,9 @@ in `/var/db/resource_guard_shed`). Check that file first to confirm a down app
 is the guard and not a real crash.
 
 But do not stop there and call it self-recovering, which is what this section
-used to say. Shed and restore are separate gates and they can drift one way.
+used to say. Shed and restore are separate checks and they can drift one way.
 Measured on 2026-07-29 over 916 ticks: shedding fired on 48% of ticks while the
-restore gate opened on 19%, and restore only releases one service per tick — so
+restore check opened on 19%, and restore only releases one service per tick — so
 amber and bsdports had been down for days, not oscillating. `MEM_RESTORE` was
 20% against a median availability of 13%, i.e. the window sat outside the box's
 operating range, so that pass set 8/14 and `LOAD_RESTORE` 2.0.
@@ -248,7 +248,7 @@ file sits in a comment on that file; these have no single file to sit on.
   checks.
 - **No speed work on deploy or health tooling without a symptom.** The box's
   measured problem is memory, which is why `core-reclaim.sh` and `keep-warm.sh`
-  exist, not the cost of a gate's system calls. A health check made faster by
+  exist, not the cost of a check's system calls. A health check made faster by
   proving less is a regression. Latency work starts from a symptom a visitor or a
   log names, and is measured on vm23.
 - **No idempotency keys, cart expiry, stuck-order alarms or edit locks for

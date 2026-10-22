@@ -2,12 +2,12 @@
 
 # A test nothing runs is a test that passes forever.
 #
-# OPENBSD/test held four files -- gate library, health check, restore scripts,
-# VPS safety gate, 80 assertions -- reachable from no entrypoint in the repo.
+# OPENBSD/test held four files -- check library, health check, restore scripts,
+# VPS safety check, 80 assertions -- reachable from no entrypoint in the repo.
 # They passed. They had always passed, because they had never run. bin/check's
 # own comments record the same thing happening to test:subsystems, and
-# the old backlog records it for four RAILS gates under
-# `rails_gates_not_wired`.
+# the old backlog records it for four RAILS checks under
+# `rails_checks_not_wired`.
 #
 # This asserts every test file is reachable from some entrypoint.
 
@@ -64,9 +64,9 @@ class TestRuns < Minitest::Test
   end
 
   # STUDIO was the fourth tree and the census never looked at it: 23 test files
-  # outside every question this gate asks. A runner that names one file outright
+  # outside every question this check asks. A runner that names one file outright
   # runs it, which a glob-only extractor could not see — STUDIO's Rakefile lists
-  # test_studio_gate.rb by name on purpose.
+  # test_studio_check.rb by name on purpose.
   def test_every_governed_tree_contributes_tests_to_the_census
     minimums = {
       "MASTER/" => 250,
@@ -110,13 +110,13 @@ class TestRuns < Minitest::Test
     studio = Operator::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
 
     assert_operator studio.size, :>, 15, "STUDIO's suite is not being read"
-    assert_includes Operator::Runs.who_runs("STUDIO/test/test_studio_gate.rb"), "STUDIO/Rakefile"
+    assert_includes Operator::Runs.who_runs("STUDIO/test/test_studio_check.rb"), "STUDIO/Rakefile"
     assert_includes Operator::Runs.who_runs("STUDIO/test/dilla_test.rb"), "STUDIO/Rakefile"
   end
 
   # What makes a file a test is the directory, not the name — three source files
   # were named like tests and one of them, tools/test_naming.rb, was reported as
-  # an orphan permanently. The narrowing must not turn the gate off, so both
+  # an orphan permanently. The narrowing must not turn the check off, so both
   # directions: a lint named test_naming is not a test, and a real test a
   # runner's glob does not reach is still unreached.
   def test_the_directory_is_what_makes_a_file_a_test

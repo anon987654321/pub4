@@ -20,14 +20,14 @@ require "tmpdir"
 # Counted in *code* lines — non-blank, non-comment, inside the body — not the raw
 # span. MASTER's SMALL_FUNCTIONS rule made the same choice for the same reason:
 # this tree's convention is a paragraph of rationale above the tricky line, and a
-# span-based limit charges you for writing it. `stale?` in gates/lib/
+# span-based limit charges you for writing it. `stale?` in checks/lib/
 # generated_asset.rb is 25 code lines inside a 47-line span; the only way to
 # satisfy a span limit there is to delete the explanation.
 class MethodLengthRatchetTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   LIMIT = 30
 
-  # The gates and tools left RAILS for MASTER, where SMALL_FUNCTIONS and its own ratchet govern them.
+  # The checks and tools left RAILS for MASTER, where SMALL_FUNCTIONS and its own ratchet govern them.
   BRGEN_TREES = %w[brgen brgen_dating brgen_maps brgen_marketplace brgen_messenger brgen_radio].freeze
   ROOTS = (%w[__shared amber bsdports test lib] + BRGEN_TREES).freeze
 
@@ -45,7 +45,7 @@ class MethodLengthRatchetTest < Minitest::Test
   # brgen_route_by_convention (75 -> 24, behaviour proved identical over 585
   # route inputs). Lower a number when you split something; never raise one.
   #
-  # gates is by far the worst and that is the honest shape of it: these are
+  # checks is by far the worst and that is the honest shape of it: these are
   # audit routines that walk a tree and accumulate findings, and several want
   # the same treatment production.rb's check_app got — split at the
   # responsibility bound, then mutation-test each half.
@@ -54,10 +54,10 @@ class MethodLengthRatchetTest < Minitest::Test
     # lowered with it, which is the slack the counterpart test exists to catch.
     # 38 -> 37 when page_inventory's apex_route_by_convention went with the rest
     # of the filename ladder.
-    # 37 -> 35: six gates moved to the tree they measure, and two of them carried
+    # 37 -> 35: six checks moved to the tree they measure, and two of them carried
     # a long method with them. The count follows the code rather than the
     # directory, so this falls without anyone writing a shorter method.
-    # 35 -> 34 when the gates that listed partial paths learned to read rules out
+    # 35 -> 34 when the checks that listed partial paths learned to read rules out
     # of each app's one application.scss, and two long checks got shorter.
     # 57 -> 48 on 2026-08-23. record_public_href was the 52: one case statement
     # over every routable class in the city, split into the apex, the verticals

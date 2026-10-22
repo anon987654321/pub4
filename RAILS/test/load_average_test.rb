@@ -80,7 +80,7 @@ class LoadAverageTest < Minitest::Test
   end
 
   def ruby_sources
-    Dir.glob("#{ROOT}/{shared,brgen,amber,bsdports,gates,test}/**/*.rb")
+    Dir.glob("#{ROOT}/{shared,brgen,amber,bsdports,checks,test}/**/*.rb")
        .reject { |p| p.include?("/vendor/") || p.include?("/node_modules/") }
   end
 end

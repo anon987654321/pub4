@@ -26,7 +26,7 @@ directory owned by `output_paths.rb`.
 MASTER governs these tools and reaches each through its canonical path
 `MASTER/tools/<tool>/<tool>.rb`. Those paths are compatibility symlinks into this tree, and new
 automation should name the STUDIO path. Each tool is standalone: the entry points load without
-the MASTER process booted, and a gate refuses any file here that requires from MASTER, RAILS or
+the MASTER process booted, and a check refuses any file here that requires from MASTER, RAILS or
 OPENBSD. Read the README beside a tool before changing it.
 
 ## Visual identity
@@ -60,9 +60,9 @@ refuse existing paths by default, stage new bytes before publish, and require th
 
 ## Verification
 
-The folder `test/` holds every suite, one file per subject. The `Rakefile` runs the gate,
+The folder `test/` holds every suite, one file per subject. The `Rakefile` runs the check,
 then starts each suite in its own process because the tools define constants at top level and
-would collide in a shared process. The script `gate.rb` parses every Ruby file, checks the
+would collide in a shared process. The script `check.rb` parses every Ruby file, checks the
 sibling-import boundary and verifies the entry points have load guards.
 
 The folder `visual/` holds the generator behind `photograph.rb`.

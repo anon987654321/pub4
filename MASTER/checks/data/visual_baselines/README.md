@@ -1,0 +1,59 @@
+# Approved visual baselines
+
+This directory holds **approved reference PNGs**, not the latest run's screenshots.
+Only a deliberately small set of surfaces opt into pixel comparison via
+`pixel_snapshot: true` in `MASTER/checks/data/geometry_surfaces.yml` or the
+`pixel_snapshot: true` field on a row in `MASTER/checks/support/brgen_vertical_surfaces.rb`.
+Structural `snapshot: true` does not automatically opt a page into PNG tests.
+The filename is `<app>-<surface>-<viewport>.png`, derived from the same canonical
+surface inventory. The rendered check never copies a fresh screenshot here during
+an ordinary run or through `CHECK_AUTOFIX`.
+
+## Compare
+
+Run the rendered diagnostics with the apps serving and Chromium available:
+
+```zsh
+ruby MASTER/checks/runner.rb browser_diagnostics
+```
+
+The manifest and PNGs go to the system temporary directory under
+`pub4-browser-diagnostics/<run-id>/`. For a surface with an approved PNG, its
+row records exact changed-pixel count, ratio, approved reference path and a
+red/transparent difference image when pixels changed. The default blocking
+budget is 1% of pixels per viewport; set `CHECK_PIXEL_DIFF_MAX_RATIO=0` for exact
+pixel equality or choose an explicit ratio between 0 and 1. An image-dimension
+change is always a failure, not a skipped comparison.
+
+Surfaces without an approved PNG remain explicitly marked as missing and are
+reported as soft findings by default, while the structural layout snapshots
+continue to run. Set `CHECK_PIXEL_BASELINE_STRICT=1` to make missing or
+unsupported pixel baselines blocking. This lets the inventory be seeded
+gradually without claiming that un-compared pixels passed.
+
+## Approve the reviewed capture
+
+First run the diagnostics without approval and inspect the screenshots and manifest
+path printed by the check. Then promote the exact files you reviewed; this does not
+navigate again or silently replace your inspection with a new capture.
+
+```zsh
+ruby MASTER/checks/runner.rb browser_diagnostics
+ruby MASTER/tools/approve_visual_baselines.rb --manifest /tmp/pub4-browser-diagnostics/<run-id>/manifest.json
+git diff -- MASTER/checks/data/visual_baselines
+```
+
+The tool verifies that each source PNG is inside that run's screenshots directory,
+matches its recorded SHA-256 and dimensions, belongs to a declared `pixel_snapshot`
+surface, and has no runtime failures. Failed/inconclusive captures cannot be
+approved. Existing baselines are protected from accidental overwrite: review the
+diff and explicitly pass `--replace` when accepting a deliberate design change.
+Use `--surface app/label/viewport` (repeatable) to approve a chosen subset.
+
+This tool is never part of `/fix` or `CHECK_AUTOFIX`; baseline approval is a
+separate operator action.
+PNG comparisons use a dependency-free Ruby decoder for Chromium's non-interlaced
+8-bit RGB/RGBA screenshots. Unsupported/corrupt images are reported rather than
+silently treated as equal. Keep the browser, operating system, device scale,
+fonts, locale and viewport stable when producing a baseline; use separate
+references when the rendering environment deliberately differs.

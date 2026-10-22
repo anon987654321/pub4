@@ -3,7 +3,7 @@
 require "yaml"
 require_relative "../../io/atomic_write"
 require_relative "../../io/model_quota"
-require_relative "../../io/quota_gate"
+require_relative "../../io/quota_check"
 require_relative "../../io/catalog_index"
 
 module Master
@@ -333,7 +333,7 @@ module Master
 
         def quota_state(id)
           return :exhausted if Master::Io::ModelQuota.over_quota?(id)
-          return Master::Io::QuotaGate.state if paid_model?(id)
+          return Master::Io::QuotaCheck.state if paid_model?(id)
 
           :available
         rescue StandardError

@@ -10,7 +10,7 @@ require File.expand_path("../lib/fix/violation", __dir__)
 # survive finding -> Violation -> RepairLoop#apply -> custody -> drift budget.
 class TestVisualAnchorThreading < Minitest::Test
   Surface = Struct.new(:id, :viewport, :snapshot)
-  Q = Master::Fix::VisualQualityGates
+  Q = Master::Fix::VisualQualityChecks
 
   def test_violation_carries_the_finding_anchor
     v = Master::Fix::Violation.from_finding({ law: "X", line: 1, anchor: ".site-nav" }, file: "/a.scss")

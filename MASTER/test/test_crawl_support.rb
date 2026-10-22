@@ -16,16 +16,16 @@ class CrawlSupportTest < Minitest::Test
     assert_kind_of Hash, CrawlSupport.load_master_json
   end
 
-  def test_optional_crawler_reuses_the_live_gates_transport
-    gate_path = File.join(Master::ROOT, "gates", "support", "crawl_support.rb")
+  def test_optional_crawler_reuses_the_live_checks_transport
+    check_path = File.join(Master::ROOT, "checks", "support", "crawl_support.rb")
     crawler_path = File.join(Master::ROOT, "tools", "rails", "crawl_support.rb")
-    gate_source = File.read(gate_path, encoding: "UTF-8")
+    check_source = File.read(check_path, encoding: "UTF-8")
     crawler_source = File.read(crawler_path, encoding: "UTF-8")
 
-    assert_includes crawler_source, 'require_relative "../../gates/support/crawl_support"'
-    assert_match(/^\s*def fetch\(/, gate_source)
-    assert_match(/^\s*def port_open\?\(/, gate_source)
-    assert_match(/on_error:/, gate_source)
+    assert_includes crawler_source, 'require_relative "../../checks/support/crawl_support"'
+    assert_match(/^\s*def fetch\(/, check_source)
+    assert_match(/^\s*def port_open\?\(/, check_source)
+    assert_match(/on_error:/, check_source)
     assert_match(/^\s*def crawler_port_open\?\(/, crawler_source)
     refute_match(/^\s*def fetch\(/, crawler_source)
     refute_match(/^\s*def port_open\?\(/, crawler_source)

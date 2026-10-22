@@ -120,7 +120,7 @@ proposals:
     claim: "Ground::Policy::Sandbox.decide is called only from tests; Io::Shell carries its own BLOCKLIST"
     landed_by: a64e93157
     note: >
-      Two shell-safety gates, and the live one is not the hardened one.
+      Two shell-safety checks, and the live one is not the hardened one.
       lib/io/shell.rb:11 has its own BLOCKLIST and consults nothing else, while
       Policy::Sandbox is the module whose header documents catching `rm -fr ~`,
       arbitrary flag ordering, `rm --recursive --force ~`, fork bombs and
@@ -177,25 +177,25 @@ proposals:
       `module Master` block, itself the residue of an earlier collapse. 38970 to
       38966, ratcheted three times.
 
-  - id: openbsd-lib-gate-family
+  - id: openbsd-lib-check-family
     tree: OPENBSD
     state: refuted
-    claim: "OPENBSD/lib has gate_environment.rb, gate_ledger.rb and gate_result.rb wanting lib/gate/"
+    claim: "OPENBSD/lib has check_environment.rb, check_ledger.rb and check_result.rb wanting lib/check/"
     reason: >
       Three findings, and the first one alone settles it. OPENBSD/lib holds six
       Ruby files; a three-file family is cohesion's MIN_FAMILY exactly, which is
       the floor rather than a signal. Half a directory is not a drawer.
       Second, the shelf would cost 69 files and 101 constant references across a
-      tree boundary — RAILS requires gate_result by relative path from four
+      tree boundary — RAILS requires check_result by relative path from four
       different depths, 62 files deep — and the intermediate state does not build,
       so it wants a PUB4_CROSS_TREE commit to tidy a directory that is not untidy.
       Third, this ledger row said it waits on a boundary decision. That decision was
       already made and closed on 2026-08-13, and its argument is the comment atop
-      OPENBSD/lib/gate_result.rb, with the old backlog recording that a
+      OPENBSD/lib/check_result.rb, with the old backlog recording that a
       repo-level shared kernel was considered and rejected. Revisit when a fifth
       consumer appears, which is the trigger that entry names — not before, and not
       for a rename.
-    refuted_by: the old backlog entry gate_result_is_a_shared_kernel_filed_under_deploy
+    refuted_by: the old backlog entry check_result_is_a_shared_kernel_filed_under_deploy
 
   - id: de-fr-nl-locales-are-five-keys
     tree: RAILS
@@ -234,14 +234,14 @@ proposals:
       bought, not coverage — the constant-collision and early-exit hazards are real
       but were not firing.
 
-  - id: runtime-gate-passes-when-unavailable
+  - id: runtime-check-passes-when-unavailable
     tree: OPENBSD
     state: landed
-    claim: "a gate that cannot reach the app reads green"
+    claim: "a check that cannot reach the app reads green"
     landed_by: c8d705fd3
     note: >
       Half true, and the half that was true was not where the claim pointed.
-      GATE_REQUIRE_LIVE already existed and already turned skipped_live into a
+      CHECK_REQUIRE_LIVE already existed and already turned skipped_live into a
       failure; it was set in one of check-rails' two loops. The source tier, holding
       page_simulation and flow_journey, ran soft on the VPS as well as off it, and
       check-openbsd's dns_zones never set it from the box that serves the zone.
@@ -249,7 +249,7 @@ proposals:
       beside Environment.on_vps?, which is the one that honours DEPLOY_ASSUME_VPS=1
       and can therefore be rehearsed.
 
-  - id: journey-gate-measures-production
+  - id: journey-check-measures-production
     tree: RAILS
     state: landed
     claim: "found while checking the above, not in the audit"
@@ -259,9 +259,9 @@ proposals:
       FlowClient took it at face value: the next hop left 127.0.0.1:38182 for the
       real brgen.no on port 80, where relayd's TLS redirect reads to Net::HTTP as
       "EOFError: end of file reached". The error is the good case — an absolute
-      redirect that happens to succeed makes the gate fetch the live site and report
+      redirect that happens to succeed makes the check fetch the live site and report
       it as a local journey. Verify the instrument first: this was found while
-      running the gate, not while reading it.
+      running the check, not while reading it.
 
   - id: gdpr-erasure-stops-at-the-users-row
     tree: RAILS
@@ -296,7 +296,7 @@ proposals:
   - id: chmod-a-rx-over-the-rails-tree
     tree: OPENBSD
     state: refuted
-    claim: "RAILS/_runtime_gate.sh:73 runs a recursive a+rX over a tree holding production databases and master.key files"
+    claim: "RAILS/_runtime_check.sh:73 runs a recursive a+rX over a tree holding production databases and master.key files"
     reason: >
       The tree holds neither, and this row asserted both from a laptop by listing
       what the repo contains rather than what the box does. Measured on vm23:

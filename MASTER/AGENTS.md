@@ -26,11 +26,11 @@ pub4 is governed by MASTER. Read the authority chain before editing:
 3. `MASTER/law/*.rb` — executable Laws with required bad/good fixtures.
 4. `MASTER/lib/review/scan/laws/*.rb` — the scanner registry and remaining detectors.
 
-Authority is `soul.yml` > `laws.yml` > executable Laws > checks and tree contracts > agent-harness prose. Harness files route work to the Laws; they do not override them. `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/gates/gates.yml` routes existing instruments; it does not create policy, Law IDs, or tiers. The glossary cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
+Authority is `soul.yml` > `laws.yml` > executable Laws > checks and tree contracts > agent-harness prose. Harness files route work to the Laws; they do not override them. `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/checks/checks.yml` routes existing instruments; it does not create policy, Law IDs, or tiers. The glossary cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
 
 The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `MASTER/bin/operator triangle up`), `OPENBSD/` (deployment and vm23), and `STUDIO/` (Dilla, postpro, Replicate and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
-Use `MASTER/bin/operator check` for the full check ladder (`gate` remains a compatibility alias) and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
+Use `MASTER/bin/operator check` for the full check ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
 
 `/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and
 verify until DONE or a truthful terminal state. Bare `/fix` is write-enabled; its read-only
@@ -152,7 +152,7 @@ file loads.** `Rules::AstOmissionRule` raises NameError cold. `require
 at 0% CPU with an empty pipe for up to sixteen minutes while personas think.
 Count the `claude --print` subprocesses in `ps` before killing it.
 
-**A gate that passes bare and fails under `bin/check` is an environment leak.**
+**A check that passes bare and fails under `bin/check` is an environment leak.**
 `bin/check` runs rake under `bundle exec`, and a child that inherits MASTER's
 bundle cannot load STUDIO's gems. Wrap the child in
 `Bundler.with_unbundled_env`; a hand-kept list of bundler variables is wrong on
@@ -191,7 +191,7 @@ Do not silently narrow the scope, and do not stop with nothing delivered because
 one part was doubtful. Scaling the work down is the operator's call.
 
 Report what happened rather than what was hoped for. If a check was skipped, say
-which. If a gate reported a pass having measured nothing — several here do when
+which. If a check reported a pass having measured nothing — several here do when
 the triangle is down — that is not a pass, and calling it one is worse than
 failing.
 
@@ -218,9 +218,9 @@ absence of a property into evidence of it:
 7. **A root constant resolves one level too high.** A fallback that ends in "use
    the last candidate anyway" is not a fallback; assert what the root holds.
 
-So a new gate's first run is against a known-bad input, since a green first run
+So a new check's first run is against a known-bad input, since a green first run
 is equally consistent with nothing measured. Registration is not execution: a
-gate listed in `gates.yml` with no class-level `.run` never ran. A gate reads the
+check listed in `checks.yml` with no class-level `.run` never ran. A check reads the
 source of truth rather than restating it, and a test that turns green while
 asserting only what every subclass inherits is worse than one that errors,
 because it reads as coverage.
@@ -299,9 +299,9 @@ appeared. On exit, normal or not, it prints one summary: the exit reason, the
 counts, the autofix and reject accounts, and a self-check naming any protected
 path the run changed. `bin/fix-here` stops a run that prints the no-yield line.
 
-**A red gate that names no finding is usually a gate that cannot load.**
+**A red check that names no finding is usually a check that cannot load.**
 `rails_runtime` failed at `require` time for months and read as a normal
-failure. Check the gate before chasing its verdict.
+failure. Check the check before chasing its verdict.
 
 **When you cannot verify, stop and say so.** An unverified claim costs more than
 an unfinished task, because the next reader builds on it.
@@ -346,18 +346,18 @@ cannot arrive silently. Every census here records its members beside the count,
 because a ceiling that says "over by two" and cannot name the two leaves the
 next reader deriving the pair by hand.
 
-**Inconclusive** is the third gate state, and the one that matters. A gate that
+**Inconclusive** is the third check state, and the one that matters. A check that
 could not measure — no Chrome, no booted app, no deploy stamps — is neither a
 pass nor a failure, and reporting it as a pass is the worst failure this suite
-has: it claims the code was reviewed when nothing was read. In-process gates say
-it with `GateResult#inconclusive!`, subprocesses with exit 3.
+has: it claims the code was reviewed when nothing was read. In-process checks say
+it with `CheckResult#inconclusive!`, subprocesses with exit 3.
 
 **Verdict.** What the constitution answers a proposed effect with, and there are
 four: `Block` refuses with a reason, `Request` stops to ask a person, `Revise`
 hands back an amended effect, `Allow` applies it against a checkpoint. Nothing
 touches disk on any other path.
 
-**Tier.** Two meanings, both live. `bin/gate` runs a *lexical* tier (law and the
+**Tier.** Two meanings, both live. `bin/check --ladder` runs a *lexical* tier (law and the
 scan registry, deterministic, no model) and a *semantic* tier (the critique
 stage, `/review --only critique`, which reaches a provider); the semantic one is
 currently unreachable
@@ -366,7 +366,7 @@ Law's category — `clean_code`, `style`, `safety` — and is what resolves a
 conflict between two Laws firing on one line.
 
 **The triangle** is `MASTER/bin/operator triangle`: brgen, amber, bsdports and the MASTER
-face, booted locally on the ports every gate probes. Without it the live half of
+face, booted locally on the ports every check probes. Without it the live half of
 the suite passes having measured nothing.
 
 **Vertical.** One of brgen's mounted Rails engines — `RAILS/brgen_* packages/`
@@ -389,62 +389,62 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | Persona / voice policy | `topics.persona` |
 | Law / scanners / loop | all scanner law is `data/laws.yml`; the executable law is `law/` |
 | Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
-| Worn type / layout gates | `data/laws.yml` `design_rules.worn_type` + `MASTER/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
+| Worn type / layout checks | `data/laws.yml` `design_rules.worn_type` + `MASTER/checks/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
 Touch-map: `data/agent_map.yml`. Law sections live in `data/laws.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/android` `/ios` `/doctor` `/help` `/clear`.
 
 ## Checks
 
-Run the smallest proof: `bin/check` for ordinary code, `bin/check --profile=agent` for law, scanners and the loop, `bin/check --profile=web` for the face, `OPENBSD/bin/check-rails --profile=contributor` for deploy and Rails, and `MASTER/bin/operator gate` for the whole ladder. On failure: `bin/check --profile=agent --format=brief`.
+Run the smallest proof: `bin/check` for ordinary code, `bin/check --profile=agent` for law, scanners and the loop, `bin/check --profile=web` for the face, `OPENBSD/bin/check-rails --profile=contributor` for deploy and Rails, and `MASTER/bin/operator check` for the whole ladder. On failure: `bin/check --profile=agent --format=brief`.
 
 `--profile=agent` may fail on known debt tagged `agent-ignore`.
 Do not chase scan noise on unrelated patches.
 
 ## Do Not Touch
 
-Every entry names the gate that fails when its claim stops being true, or says
-why no gate can hold it. This is not decoration: item 2 of this list used to be
+Every entry names the check that fails when its claim stops being true, or says
+why no check can hold it. This is not decoration: item 2 of this list used to be
 "rule data stays split, because each shard sits near its consumers", and that
 reason had been false since the day the shards were created — the four of them
 had one consumer between them. A conclusion does not rot loudly. A test does.
 `rake lint:do_not_touch` checks that every entry below carries one and that the
-gates it names exist.
+checks it names exist.
 
 1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require
    the rest of `lib/`. The two-spine *directory* split ended 2026-08-12
    (the record of it went with `docs/`); the dependency direction it was
    protecting did not, and is now a test rather than a folder boundary. `core_files: 7` in
    `data/spine.yml` makes a new concept a design decision — raised from 6 on
-   2026-08-12 for `Proof`, the first raise since the spine was written. — gate:
+   2026-08-12 for `Proof`, the first raise since the spine was written. — check:
    `test/test_core_no_lib_backedges.rb`, `rake lint:spine`
 2. `knowledge/` is local-only — do not commit without updating
-   `SearchKnowledge`. — gate: `rake security_sweep`
-3. WebGL / face boot stays deferred until primer tap. — gate: `rake
+   `SearchKnowledge`. — check: `rake security_sweep`
+3. WebGL / face boot stays deferred until primer tap. — check: `rake
    test:web_ui`, `test/test_web_ui.rb`
 4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement
-   unprompted. — no gate: a horizon file is a list of things deliberately not
+   unprompted. — no check: a horizon file is a list of things deliberately not
    built, so there is no artefact to assert on; the failure mode is an agent
    building one, which only a reader of the diff can catch.
-5. VPS: one app CI/deploy at a time on vm23. — no gate: concurrency on a remote
+5. VPS: one app CI/deploy at a time on vm23. — no check: concurrency on a remote
    host, enforced by the deploy lock on vm23 rather than by anything in this
    repo; a local check would assert against state it cannot see.
 6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets. —
-   gate: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
+   check: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
 7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no
-   gate: an ordering rule for two commands run on the VPS; nothing in the repo
+   check: an ordering rule for two commands run on the VPS; nothing in the repo
    observes whether the box was deployed after its last pull.
 8. Feature truth: `RAILS/apps.yml`; operator-only work: `MASTER/data/operator_seams.yml`. —
-   gate: `MASTER/gates/lib/source/apps_yml.rb`
+   check: `MASTER/checks/lib/source/apps_yml.rb`
 9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 —
-   see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a
+   see `OPENBSD/RUNBOOK.md`. — no check: a prohibition on an action, not a
    property of the tree; the guard is the human-only env var in item 11.
-10. Production VM is vm23 only (`dev@brgen.no`). — no gate: a deployment fact
+10. Production VM is vm23 only (`dev@brgen.no`). — no check: a deployment fact
     about the world; the repo cannot assert which host is production, only which
     one its scripts name.
 11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only
-    gates. — gate: `OPENBSD/gates/vps_safety_gate.rb`
-12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`. — no gate: a habit for the
+    checks. — check: `OPENBSD/checks/vps_safety_check.rb`
+12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`. — no check: a habit for the
     operator's own audit trail, checkable only against a session transcript,
     which is not an artefact this repo keeps.
 
@@ -489,7 +489,7 @@ in `OPENBSD/CLAUDE.md`.
   surface.
 - **No browser verification by the agent.** Driving a browser to confirm its
   own clicks is a computer-use driver, and so are screenshot and VNC workers.
-  Rendered pages are measured by the gates over CDP, on the deploy host.
+  Rendered pages are measured by the checks over CDP, on the deploy host.
 - **No parallel change streams.** One checkout, written straight to main: no
   worktree, branch or PR, and the fix loop commits only the paths its own pass
   changed. Docker, Modal and Daytona
@@ -513,7 +513,7 @@ in `OPENBSD/CLAUDE.md`.
 - **No golden traces or golden renders.** A model call's output and timing, and
   a dilla render, are not deterministic to the byte, so a golden file fails on
   noise or overwrites a take. A/B is interleaved listening.
-- **No telemetry, score or gate without a reader.** The face's audio clock
+- **No telemetry, score or check without a reader.** The face's audio clock
   closes the gap a TTS state enum, a timestamped event stream or a sync budget
   measures, and frame-time, thermal and soak data have no consumer. dilla's
   `TIMBRAL_FIT`-style scores, research ledgers and NaN checks on delivered PCM
@@ -542,7 +542,7 @@ in `OPENBSD/CLAUDE.md`.
   clone-to-extract-method autofix wait for a finding in hand.
 - **No performance machinery ahead of a measured slowness.** No benchmark,
   profile or hotpath commands, scan cache, per-detector budget, verdict cache or
-  concurrent gates. An optimisation lands with its instrument in the commit, the
+  concurrent checks. An optimisation lands with its instrument in the commit, the
   number before and after, and a check that the output did not change; a cache
   keys facts by what invalidates them, never verdicts.
 - **No audit without a path.** An intake item names a file, a caller or a
@@ -560,7 +560,7 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
 - **No synonym beside an established concept.** Law is the word; alternate names such as
   rule, axiom, principle, guideline, doctrine, heuristic, standard and norm are not
   introduced for it. `Ground::Policy` is authorisation, a different concept.
-  Whether `gate`, `lint`, `probe`, `audit` and `verify` name one act is
+  Whether `check`, `lint`, `probe`, `audit` and `verify` name one act is
   unmeasured.
 - **No docs/ directory.** Human documentation is one `README.md` per boundary,
   held by `test/test_doc_paths.rb`; Aegis, cognition and the contract examples

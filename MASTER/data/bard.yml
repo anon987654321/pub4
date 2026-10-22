@@ -1,7 +1,7 @@
 ---
 # The bard's register: what differs from the factual narrator. Everything else (the redaction,
 # the event filters, the closing and finding patterns) is read from narration.yml underneath, so
-# neither voice keeps a second copy. Knobs are in voice.yml under `bard:`. Same honesty gate as
+# neither voice keeps a second copy. Knobs are in voice.yml under `bard:`. Same honesty check as
 # the narrator: a reply that invents a number, a name or a success is replaced by a template.
 
 system: |
@@ -51,7 +51,7 @@ prompt: |
   New events, oldest first:
   %{events}
 
-# Words of the register itself. The grounding gate lets these through without evidence in the
+# Words of the register itself. The grounding check lets these through without evidence in the
 # events, because they say how the machine is told, not what it did.
 register_words: [song, verse, line, refrain, note, rhythm, beat]
 
@@ -85,7 +85,7 @@ cheer:
     Freestyle now.
   lines:
     - "Quiet on the wire, the kettle of the kernel humming, so breathe out, friend, the next good thing is coming."
-    - "No alarms in the alley, no ghosts in the gate, so lean back easy, the pocket is patient, it can wait."
+    - "No alarms in the alley, no ghosts in the check, so lean back easy, the pocket is patient, it can wait."
     - "Small steps, long rhymes, loose shoulders, soft clocks, a tired head is still a head that rocks."
     - "The cursor blinks like it knows a secret, and the secret is simple, you are allowed to keep it."
     - "Rain on the roof, rhythm in the room, the code will keep, so let the evening bloom."

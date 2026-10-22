@@ -12,6 +12,7 @@
 #   ruby MASTER/tools/rename.rb                       # what deserves a rename
 #   ruby MASTER/tools/rename.rb Old New               # what that rename touches
 #   ruby MASTER/tools/rename.rb Old New --apply       # do it
+#   ruby MASTER/tools/rename.rb --word old new        # a word in every spelling, contents and paths
 #
 # Proposals, not autofix, and the line is where the judgement is. This tool can
 # prove a name is free and that a rewrite reached every reference; it cannot
@@ -272,6 +273,12 @@ module Operator
       0
     end
   end
+end
+
+if $PROGRAM_NAME == __FILE__ && ARGV.first == "--word"
+  # A word rather than a constant: every spelling, in contents and paths. See lib/operator/word_rename.rb.
+  require_relative "../lib/operator/word_rename"
+  exit Operator::WordRename.cli(ARGV.drop(1), root: Operator::Rename::ROOT, dirty: Operator::Rename.dirty)
 end
 
 if $PROGRAM_NAME == __FILE__

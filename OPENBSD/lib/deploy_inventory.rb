@@ -32,8 +32,8 @@ module Deploy
 
     # apps.yml is the fleet's source of truth and is edited by hand, so a missing
     # key has to say which app and which key. It used to raise a bare
-    # `KeyError: key not found: "deploy_root"` six frames inside a gate, which reads
-    # as a broken gate rather than an incomplete entry — every gate that reads the
+    # `KeyError: key not found: "deploy_root"` six frames inside a check, which reads
+    # as a broken check rather than an incomplete entry — every check that reads the
     # inventory died the same anonymous way.
     def load_apps
       path = File.join(root, "RAILS", "apps.yml")

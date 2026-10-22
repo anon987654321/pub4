@@ -5,7 +5,7 @@ module Master::Core
   #
   # The seventh concept in the fold, and the first raise of `core_files` since
   # the spine was written. It came out of Memory, which was three objects wearing
-  # one name: a transcript, an evidence ledger, and the risk gates. That is why
+  # one name: a transcript, an evidence ledger, and the risk checks. That is why
   # it measured 16 public methods against ABSTRACTION's 10 — not an idiom this
   # time, the way Constitution's class methods were, but the count telling the
   # truth about the design.
@@ -35,8 +35,8 @@ module Master::Core
       # `ruby ... test/x.rb` rather than `ruby -I<something>test`: the real
       # invocation in this repo is `ruby -Ilib -Itest test/test_core_world.rb`,
       # where the include flags come first and an adjacency pattern misses it.
-      test_pass: %r{\b(?:rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check|gate)|ruby\S*\s[^;|]*\btest/)},
-      scan_clean: %r{\b(?:bin/(?:check|gate|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan))},
+      test_pass: %r{\b(?:rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check)|ruby\S*\s[^;|]*\btest/)},
+      scan_clean: %r{\b(?:bin/(?:check|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan))},
       code_review: %r{\b(?:bin/(?:review|critique)|rake\s+(?:review|critique))},
       log_analysis: %r{\b(?:journalctl|dmesg|rcctl|/var/log|\.log\b)},
       profiling_data: %r{\b(?:benchmark|stackprof|ruby-prof|memory_profiler|--profile)},
@@ -76,7 +76,7 @@ module Master::Core
     end
 
     # writable and cleared are the preconditions the Model reads to leave write
-    # and done out of the reply schema, so the offer and the gate ask one object.
+    # and done out of the reply schema, so the offer and the check ask one object.
     def scope
       { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines,
         read_paths: @read_paths.dup, asked: @asked, evidence: evidence_score, proved: proved?,

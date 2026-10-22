@@ -106,7 +106,7 @@ module Master
 
       # MASTER/ is the runtime's own root; the tree the fold edits is the repository
       # around it. The Constitution and the World both take this one answer, so a
-      # relative path means the same file to the gate that judges it and the hand that writes it.
+      # relative path means the same file to the check that judges it and the hand that writes it.
       def workspace_root_for(root)
         path = File.expand_path(root)
         path == Master::ROOT ? Master::REPO_ROOT : path
@@ -340,7 +340,7 @@ module Master
 
       # And the Fold EXECS through World, not through Io::Shell — the same
       # sentence, one verb over. Io::Shell has consulted Ground::Policy::Sandbox
-      # since that gate was wired in, so the hardened policy was live on the tool
+      # since that check was wired in, so the hardened policy was live on the tool
       # path and absent from the constitutional one, which is the path that runs
       # unattended. Handed in rather than required, because core reaches nothing
       # in lib/ (test_no_lib_backedges).

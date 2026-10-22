@@ -2,9 +2,9 @@
 
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
-require_relative "../../fix/gate_focus"
+require_relative "../../fix/check_focus"
 require_relative "../pipeline/residual"
-require_relative "../../operator/gate_chain"
+require_relative "../../operator/check_chain"
 require_relative "../../boot/paths"
 
 module Master
@@ -53,7 +53,7 @@ module Master
         end
       end
 
-      MAX_FIX_GATE_ROUNDS = Integer(ENV.fetch("MASTER_FIX_GATE_ROUNDS", "5"))
+      MAX_FIX_CHECK_ROUNDS = Integer(ENV.fetch("MASTER_FIX_CHECK_ROUNDS", "5"))
 
       # Command-line overrides are temporary: a setting on one turn must
       # not change how the next command repairs the repository.
@@ -63,16 +63,16 @@ module Master
         overrides = execution_overrides(raw)
         previous_mode = Master::Fix::AutofixGuard.explicit_mode_override
         previous_max_files = Master::Fix::RunLedger.max_files_override
-        previous_blockers = Master::Fix::GateFocus.blockers?
-        previous_plan = Master::Fix::GateFocus.plan?
-        previous_until = Master::Fix::GateFocus.until_gates?
+        previous_blockers = Master::Fix::CheckFocus.blockers?
+        previous_plan = Master::Fix::CheckFocus.plan?
+        previous_until = Master::Fix::CheckFocus.until_checks?
 
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
           Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
-          Master::Fix::GateFocus.blockers! if overrides[:blockers]
-          Master::Fix::GateFocus.plan! if overrides[:plan]
-          Master::Fix::GateFocus.until_gates! if overrides[:until_gates]
+          Master::Fix::CheckFocus.blockers! if overrides[:blockers]
+          Master::Fix::CheckFocus.plan! if overrides[:plan]
+          Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
           dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:
@@ -80,18 +80,18 @@ module Master
         ensure
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
-          Master::Fix::GateFocus.restore_blockers(previous_blockers)
-          Master::Fix::GateFocus.restore_plan(previous_plan)
-          Master::Fix::GateFocus.restore_until_gates(previous_until)
+          Master::Fix::CheckFocus.restore_blockers(previous_blockers)
+          Master::Fix::CheckFocus.restore_plan(previous_plan)
+          Master::Fix::CheckFocus.restore_until_checks(previous_until)
         end
       end
 
-      # The last run on this target named the files its red gates pointed at; they come first again.
+      # The last run on this target named the files its red checks pointed at; they come first again.
       def resume_from_residual(target)
         left = Master::CLI::Pipeline::Residual.read(File.basename(target.to_s))
         return unless left
 
-        Master::Fix::GateFocus.note(left["named"])
+        Master::Fix::CheckFocus.note(left["named"])
         Master::Trace::Dmesg.status("fix0", "resuming: last run #{left["scorecard"].to_s[0, 120]}")
       end
 
@@ -164,7 +164,7 @@ module Master
             Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
           end
           targets = fix_targets(target, root:)
-          ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
+          ::Operator::CheckChain.clear_verified_fix_snapshots! if writes_requested
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
           trace_scope = execution_trace_scopes(target)
 
@@ -208,7 +208,7 @@ module Master
                   Master::Trace::Dmesg.status("deliver0", "DELIVERY_FAILED: #{message}")
                   next Master::Result.err("DELIVERY_FAILED: #{message}", category: :delivery_failed)
                 end
-                ::Operator::GateChain.persist_verified_baselines!(targets)
+                ::Operator::CheckChain.persist_verified_baselines!(targets)
               end
               results.join("\n")
             end
@@ -224,28 +224,28 @@ module Master
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
                          writes_requested:, effective_critique:, critique:, aesthetic:, only:)
-        gate_label = ::Operator::GateChain.baseline_scope_key(target)
+        check_label = ::Operator::CheckChain.baseline_scope_key(target)
         # What already fails, taken before any repair, so delivery can be judged on
         # what the run added instead of on debt it did not create. This scan-only
-        # gate is a baseline phase, not the requested repair's execution mode.
+        # check is a baseline phase, not the requested repair's execution mode.
         baseline = nil
-        Master::Fix::GateFocus.reset!
+        Master::Fix::CheckFocus.reset!
         resume_from_residual(target)
-        if writes_requested || Master::Fix::GateFocus.plan?
-          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: capturing read-only pre-repair baseline")
+        if writes_requested || Master::Fix::CheckFocus.plan?
+          Master::Trace::Dmesg.status("check0", "scope #{check_label}: capturing read-only pre-repair baseline")
           baseline = begin
-            ::Operator::GateChain.baseline(target:)
-          rescue ::Operator::GateChain::BaselineMutation => e
-            Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: pre-repair baseline blocked; no repair started")
+            ::Operator::CheckChain.baseline(target:)
+          rescue ::Operator::CheckChain::BaselineMutation => e
+            Master::Trace::Dmesg.status("check0", "scope #{check_label}: pre-repair baseline blocked; no repair started")
             return Master::Result.err("pre-repair proof blocked: #{e.message}", category: :validation)
-          rescue ::Operator::GateChain::InvalidVerificationScope => e
-            Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: invalid verification scope; no repair started")
+          rescue ::Operator::CheckChain::InvalidVerificationScope => e
+            Master::Trace::Dmesg.status("check0", "scope #{check_label}: invalid verification scope; no repair started")
             return Master::Result.err("verification scope invalid: #{e.message}", category: :validation)
           end
-          # The lexical stage lists every finding; the other stages name what keeps a gate red.
-          Master::Fix::GateFocus.note(baseline.except("lexical").values.flatten)
+          # The lexical stage lists every finding; the other stages name what keeps a check red.
+          Master::Fix::CheckFocus.note(baseline.except("lexical").values.flatten)
           next_step = writes_requested ? "starting write-enabled /fix pass" : "planning, nothing is written"
-          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; #{next_step}")
+          Master::Trace::Dmesg.status("check0", "scope #{check_label}: baseline ready; #{next_step}")
         end
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                          target:, apply: writes_requested, critique: effective_critique,
@@ -253,17 +253,17 @@ module Master
         return value unless writes_requested
         return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
 
-        gate_rounds = 0
-        gate_status = 0
-        gate_changed = []
+        check_rounds = 0
+        check_status = 0
+        check_changed = []
         loop do
-          gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:, baseline:)
-          gate_rounds += 1
-          break if gate_status == 0 && gate_changed.empty?
-          break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
+          check_status, check_changed = ::Operator::CheckChain.verify_fix(target:, baseline:)
+          check_rounds += 1
+          break if check_status == 0 && check_changed.empty?
+          break if check_changed.empty? || check_rounds >= MAX_FIX_CHECK_ROUNDS
 
           Master::Trace::Dmesg.status(
-            "gate0", "verification changed #{gate_changed.size} file(s), re-entering /fix"
+            "check0", "verification changed #{check_changed.size} file(s), re-entering /fix"
           )
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                            target:, apply: true, critique: critique.nil? ? council_default : critique,
@@ -271,18 +271,18 @@ module Master
           return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
         end
 
-        if gate_status != 0
-          message = "gate verification did not pass (status #{gate_status})"
-          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: #{message}")
+        if check_status != 0
+          message = "check verification did not pass (status #{check_status})"
+          Master::Trace::Dmesg.status("check0", "scope #{check_label}: #{message}")
           return Master::Result.err(message, category: :validation)
         end
-        if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_changed.any?
-          message = "gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"
-          Master::Trace::Dmesg.status("gate0", "#{target}: #{message}")
+        if check_rounds >= MAX_FIX_CHECK_ROUNDS && check_changed.any?
+          message = "check verification reached #{MAX_FIX_CHECK_ROUNDS} rounds without a stable tree"
+          Master::Trace::Dmesg.status("check0", "#{target}: #{message}")
           return Master::Result.err(message, category: :validation)
         end
 
-        Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: delivery verified")
+        Master::Trace::Dmesg.status("check0", "scope #{check_label}: delivery verified")
         value
       end
 
@@ -293,7 +293,7 @@ module Master
       FOOTER_CAUSE = /\Areview\d+:\s*cause,/i
 
       # run_pass returns a rendered report for compatibility. Do not allow its
-      # textual failure state to fall through into gate success and publication.
+      # textual failure state to fall through into check success and publication.
       def incomplete_fix_pipeline?(value)
         value.to_s.lines.any? { |line| line.match?(FOOTER_INCOMPLETE) || line.match?(FOOTER_OPEN_FINDINGS) }
       end
@@ -363,7 +363,7 @@ module Master
       # no /scan stage; observation is the first step of /fix.
       # Every spelling a flag answers to, and the flag it sets. A table rather
       # than a `case`, because the spellings are data: `--no-autofix` is
-      # bin/gate's, and while it was missing it fell through to the path,
+      # bin/check --ladder's, and while it was missing it fell through to the path,
       # resolved nowhere, and the scan quietly ran over MASTER instead.
       DMESG_FLAGS = {
         "--quiet" => "quiet", "quiet" => "quiet",
@@ -392,11 +392,11 @@ module Master
       # How many files the model phase takes, easiest first (Fix::RunLedger.max_files).
       MAX_FILES_FLAG = /\A--max-files=(\d+)\z/i
 
-      # Repair only the files a red gate names, without semantic reads (Fix::GateFocus).
+      # Repair only the files a red check names, without semantic reads (Fix::CheckFocus).
       BLOCKERS_FLAG = /\A--blockers\z/i
 
       # Flags read per dispatch (execution_overrides), never part of the target.
-      DISPATCH_FLAG = Regexp.union(AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, /\A--until-gates\z/i)
+      DISPATCH_FLAG = Regexp.union(AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, /\A--until-checks\z/i)
 
       # Status messages are one-line operator evidence. Do not let a path label
       # inject terminal controls or forged log lines into the dmesg stream.
@@ -410,7 +410,7 @@ module Master
       def execution_overrides(raw)
         tokens = raw.to_s.split(/\s+/).map(&:downcase)
         overrides = { autofix_mode: nil, max_files: nil, blockers: false, plan: tokens.include?("--plan"),
-                      until_gates: tokens.include?("--until-gates") }
+                      until_checks: tokens.include?("--until-checks") }
         raw.to_s.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))
             overrides[:autofix_mode] = match[1]

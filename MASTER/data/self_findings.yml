@@ -252,7 +252,7 @@ registry_by_rule:
 registry_finding_members:
   - NO_GOD_CLASS RAILS/master/app/services/chat_service.rb:7
   - NO_GOD_CLASS RAILS/master/app/services/tts_job.rb:7
-  - NO_GOD_CLASS OPENBSD/lib/gate_result.rb:33
+  - NO_GOD_CLASS OPENBSD/lib/check_result.rb:33
   - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:5
   - NO_GOD_CLASS RAILS/amber/app/controllers/items_controller.rb:3
   - NO_GOD_CLASS RAILS/amber/app/controllers/outfits_controller.rb:3
@@ -270,12 +270,12 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:8
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:7
-  - NO_GOD_CLASS MASTER/gates/lib/rendered/rendered_geometry.rb:26
-  - NO_GOD_CLASS MASTER/gates/lib/research/design_metrics.rb:17
-  - NO_GOD_CLASS MASTER/gates/support/cdp_session.rb:31
-  - NO_GOD_CLASS MASTER/gates/support/geometry_probe.rb:20
+  - NO_GOD_CLASS MASTER/checks/lib/rendered/rendered_geometry.rb:26
+  - NO_GOD_CLASS MASTER/checks/lib/research/design_metrics.rb:17
+  - NO_GOD_CLASS MASTER/checks/support/cdp_session.rb:31
+  - NO_GOD_CLASS MASTER/checks/support/geometry_probe.rb:20
   - SILENT_RESCUE MASTER/lib/core/routing/model_catalog.rb:30
-  - SILENT_RESCUE MASTER/tools/gate.rb:474
+  - SILENT_RESCUE MASTER/tools/check.rb:474
   - SILENT_RESCUE MASTER/tools/lora/_toolkit/curate.rb:163
   - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:291
   - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:302

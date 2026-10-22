@@ -70,7 +70,7 @@ class TestCommitCommand < Minitest::Test
   end
 
   def test_the_built_verb_waits_for_confirmation
-    command = Registry::Command.new(Registry, :dispatch_commit, @agent, @root, review_gate: true)
+    command = Registry::Command.new(Registry, :dispatch_commit, @agent, @root, review_check: true)
 
     assert_includes command.call(args: "mine.rb"), Registry::Command::CONFIRM_FLAG
     assert_equal "base", git("log", "-1", "--format=%s").strip

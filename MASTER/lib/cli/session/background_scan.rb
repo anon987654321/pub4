@@ -7,8 +7,8 @@ module Master
 
       def start_background_loop
         # Built on the main thread, before either scanner thread exists, so both
-        # find the same gate rather than racing to create one.
-        @scan_gate = Mutex.new
+        # find the same check rather than racing to create one.
+        @scan_check = Mutex.new
         @bg_thread = Thread.new do
           loop do
             break if background_stop_requested?
@@ -45,7 +45,7 @@ module Master
           # "hello" waited behind it for 58 seconds. MRI scales a thread's slice by its
           # priority; the lowest keeps the prompt's turns short while the scan lands.
           Thread.current.priority = -3
-          @scan_gate.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } }
+          @scan_check.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } }
         end
       end
 
@@ -103,12 +103,12 @@ module Master
       # that waited its turn would only start a redundant rescan of a tree the
       # in-flight scan is already covering.
       def background_cycle
-        return unless @scan_gate.try_lock
+        return unless @scan_check.try_lock
 
         begin
           Master::Trace::Dmesg.under("scan0") { background_cycle! }
         ensure
-          @scan_gate.unlock
+          @scan_check.unlock
         end
       end
 

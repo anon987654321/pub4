@@ -537,7 +537,7 @@ end
 
 # Everything below this line is the CLI: it reads ARGV, and the `case` at the
 # end runs a command or aborts with usage. Without this guard, *loading* the file
-# ran a command — so nothing could ever require it, and MASTER/tools/gate.rb could
+# ran a command — so nothing could ever require it, and MASTER/tools/check.rb could
 # check it no further than "it parses", which is the check an autofix passes
 # while leaving the tool dead.
 #
@@ -643,7 +643,7 @@ end
 
 return unless __FILE__ == $PROGRAM_NAME
 
-# The reporter. vocab_problems sits above the CLI guard so a test or a gate
+# The reporter. vocab_problems sits above the CLI guard so a test or a check
 # can ask the question without a process exit; this half is the command-line
 # face of the same answer.
 def vocab_check

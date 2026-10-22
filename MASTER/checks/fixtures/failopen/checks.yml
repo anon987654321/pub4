@@ -1,0 +1,27 @@
+# A three-check registry used by RAILS/test/check_failopen_test.rb and nothing
+# else. Pointed at with CHECKS_FILE.
+#
+# The order matters and is the whole point: a check that passes, then one that
+# raises, then another that passes. Before the fail-open rescue in runner.rb the
+# third row never ran — the exception escaped the `to_h` that builds `outcomes`
+# and the process died at row two. A fixture registry is the only way to prove
+# that from outside, because checks.yml deliberately contains no check that raises.
+ok_before:
+  require: fixtures/failopen/checks_fixture
+  class: Deploy::FailOpenFixtures::PassingCheck
+  pass: "fixture check passed"
+
+raiser:
+  require: fixtures/failopen/checks_fixture
+  class: Deploy::FailOpenFixtures::RaisingCheck
+  pass: "unreachable — this check raises"
+
+ok_after:
+  require: fixtures/failopen/checks_fixture
+  class: Deploy::FailOpenFixtures::PassingCheck
+  pass: "fixture check passed"
+
+missing_class:
+  require: fixtures/failopen/checks_fixture
+  class: Deploy::FailOpenFixtures::NoSuchCheck
+  pass: "unreachable — this class does not exist"

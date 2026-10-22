@@ -83,8 +83,8 @@ module Shared
 
     # ApplicationController's allow_browser before_action calls this instance
     # method. Overridden so worker install never gets 406/422 from the
-    # modern-browser gate — the fetch that installs a worker does not carry the
-    # user agent that gate reads.
+    # modern-browser check — the fetch that installs a worker does not carry the
+    # user agent that check reads.
     def allow_browser(*); end
 
     def service_worker_source

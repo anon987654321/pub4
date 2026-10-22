@@ -37,7 +37,7 @@ Law.define(:FROZEN_STRING_LITERAL) do
   # A shebang may precede it, and Ruby still honours it — proved rather than
   # assumed: a file whose line 1 is #!/usr/bin/env ruby and line 2 is the magic
   # comment freezes its literals, and the same file without the comment does not.
-  # Anchored at \A this flagged all 24 executables in OPENBSD, RAILS/gates and
+  # Anchored at \A this flagged all 24 executables in OPENBSD, RAILS/checks and
   # MASTER/tools that carry the comment in the only place a shebang leaves for it.
   detect { |text| !text.match?(/\A(?:#![^\n]*\n)?# frozen_string_literal/) }
   fix "Add '# frozen_string_literal: true' as the first line, or the line after a shebang."

@@ -22,7 +22,7 @@ class OnboardingPromptOrderTest < Minitest::Test
 
   # kind => the file that decides whether that prompt appears.
   #
-  # This list is the gate. A fourth onboarding interruption added without a row
+  # This list is the check. A fourth onboarding interruption added without a row
   # here is exactly the failure the queue exists to prevent, so adding one means
   # adding it here and giving it a threshold.
   PROMPTS = {
@@ -60,7 +60,7 @@ class OnboardingPromptOrderTest < Minitest::Test
       body = File.read(File.join(ROOT, relative))
       assert_includes body, %(from "pub4/onboarding"), "#{relative} does not import the queue"
       assert_includes body, %(mayPrompt("#{kind}")),
-                      "#{relative} must gate on mayPrompt(\"#{kind}\") before revealing"
+                      "#{relative} must check on mayPrompt(\"#{kind}\") before revealing"
     end
   end
 

@@ -69,14 +69,14 @@ class TestFixHere < Minitest::Test
     end
   end
 
-  def test_no_critique_and_the_gate_list_reach_the_run
+  def test_no_critique_and_the_check_list_reach_the_run
     with_worktree do |_main, worker, tools_bin|
-      output, status = run_fix_here(worker, tools_bin, "MASTER", "--model", "none", "--no-probe", "--no-critique", "--gates=lexical,sprawl")
+      output, status = run_fix_here(worker, tools_bin, "MASTER", "--model", "none", "--no-probe", "--no-critique", "--checks=lexical,sprawl")
 
       assert_equal 0, status.exitstatus, output
       log = File.read(File.join(worker, "MASTER/.master/fix-MASTER.log"))
       assert_includes log, "args=/fix MASTER --no-critique"
-      assert_includes log, "gates=lexical,sprawl"
+      assert_includes log, "checks=lexical,sprawl"
     end
   end
 
@@ -181,7 +181,7 @@ class TestFixHere < Minitest::Test
       %w[parse_sweep stall_watch].each { |n| FileUtils.cp(File.expand_path("../lib/operator/#{n}.rb", __dir__), File.join(main, "MASTER/lib/operator")) }
       File.write(
         File.join(main, "MASTER/bin/master"),
-        "#!/usr/bin/env ruby\ntrap('TERM', 'IGNORE') if ENV['FAKE_IGNORE_TERM']\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\n\"\nputs 'no-publish=' + ENV.fetch('MASTER_FIX_NO_PUBLISH', 'UNSET') + \"\n\"\nputs 'args=' + ARGV.join(' ') + \"\n\"\nputs 'gates=' + ENV.fetch('MASTER_FIX_GATE_STAGES', 'UNSET') + \"\n\"\n",
+        "#!/usr/bin/env ruby\ntrap('TERM', 'IGNORE') if ENV['FAKE_IGNORE_TERM']\nputs ENV.fetch('FAKE_FIRST_LINE', 'fix0 fake run')\n$stdout.flush\nexit ENV['FAKE_EXIT'].to_i if ENV['FAKE_EXIT']\nif ENV['FAKE_PIDFILE'] then File.write(ENV['FAKE_PIDFILE'], Process.pid.to_s); sleep 60 end\nputs 'child-model=' + ENV.fetch('MASTER_MODEL', 'UNSET') + \"\n\"\nputs 'no-publish=' + ENV.fetch('MASTER_FIX_NO_PUBLISH', 'UNSET') + \"\n\"\nputs 'args=' + ARGV.join(' ') + \"\n\"\nputs 'checks=' + ENV.fetch('MASTER_FIX_CHECK_STAGES', 'UNSET') + \"\n\"\n",
       )
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/fix-here"))
       FileUtils.chmod(0o755, File.join(main, "MASTER/bin/master"))

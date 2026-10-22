@@ -51,7 +51,7 @@ module Master
         # A clean deterministic scan is not a proof of design quality or code quality.
         # One exploratory council pass gives /fix the same opportunity we use when
         # reviewing a change by hand: find a real micro-smell, simplify it, and then
-        # let RepairLoop apply the repair under the normal verification gates.
+        # let RepairLoop apply the repair under the normal verification checks.
         # Only the first clean streak pass asks, so the next pass can confirm the
         # result without paying for the same exploratory review twice.
         def improve(files:, pass:, deadline:)
@@ -95,7 +95,7 @@ module Master
           - evidence: distinguish measured behavior from comments, prompts, assumptions, and model opinion; never count "could not check" as "passed"
           - duplication: look for semantic duplicates even when filenames, classes, or registries differ; prefer one executable authority
           - generated and private material: detect stale copies, generated outputs, secrets, personal media, caches, and tracked material that should have a custody boundary
-          - runtime/deployment: inspect the path from source change to real execution, including packaging, sync, restart, browser/device, network, and production gates where applicable
+          - runtime/deployment: inspect the path from source change to real execution, including packaging, sync, restart, browser/device, network, and production checks where applicable
           - complexity: challenge new abstractions, orchestration, scoring, registries, and layers; delete machinery when an existing primitive is sufficient
           - leverage: rank concerns by proven causal reach across consumers, boundaries and contracts, not by finding count
           - scales: inspect local code first, then subsystem, tree, repository, production and human consequences when the evidence crosses those boundaries

@@ -518,7 +518,7 @@ guidance:
       - chaos
       - user
       introspect: What assumptions did we make?
-      gates:
+      checks:
       - no_vague_words
       - audience_identified
       - success_measurable
@@ -530,7 +530,7 @@ guidance:
       - skeptic
       - maintainer
       introspect: What did we miss?
-      gates:
+      checks:
       - components_distinct
       - dependencies_acyclic
     ideate:
@@ -541,7 +541,7 @@ guidance:
       - minimalist
       - chaos
       introspect: Which ideas surprised us?
-      gates:
+      checks:
       - count_gte_15
       - trade_offs_documented
     design:
@@ -552,7 +552,7 @@ guidance:
       - security
       - accessibility
       introspect: What could break?
-      gates:
+      checks:
       - interfaces_explicit
       - errors_documented
     implement:
@@ -563,7 +563,7 @@ guidance:
       - performance
       - security
       introspect: Is this the simplest solution?
-      gates:
+      checks:
       - tests_pass
       - zero_violations
     validate:
@@ -574,7 +574,7 @@ guidance:
       - skeptic
       - security
       introspect: What evidence proves it works?
-      gates:
+      checks:
       - zero_test_failures
       - edge_cases_covered
     deliver:
@@ -584,7 +584,7 @@ guidance:
       personas:
       - realist
       introspect: What would the user complain about?
-      gates:
+      checks:
       - deployed
       - monitoring_configured
     learn:
@@ -595,7 +595,7 @@ guidance:
       - skeptic
       - chaos
       introspect: What would we do differently next time?
-      gates:
+      checks:
       - lessons_captured
       - defaults_updated
   session_startup:
@@ -636,12 +636,12 @@ guidance:
       silently propagate error strings as LLM output
   quality_phases:
     prototype:
-      gates:
+      checks:
       - functional
       debt_allowed: high
       speed: maximize
     production:
-      gates:
+      checks:
       - functional
       - secure
       - maintainable
@@ -649,7 +649,7 @@ guidance:
       debt_allowed: none
       speed: sustainable
     legacy:
-      gates:
+      checks:
       - functional
       - secure
       changes: surgical_only
@@ -673,7 +673,7 @@ guidance:
         debug: decision_points
         info: phase_transitions
         warn: evidence_below_threshold
-        error: gate_failures
+        error: check_failures
     metrics:
       track:
       - evidence_score
@@ -757,7 +757,7 @@ guidance:
     forbidden_for:
     - mutating_shared_state
     - schema_migrations
-  live_preview_gate:
+  live_preview_check:
     triggers:
     - edit under web/app/views/
     - edit under web/app/assets/
@@ -803,7 +803,7 @@ guidance:
     resource_guard_shedding: OPENBSD/bin/resource_guard.sh stops optional Rails apps when load/mem thresholds
       hit unless /var/db/pub4_all_apps exists — run ksh OPENBSD/bin/start_all_apps.sh as dev, which uses the fixed root broker to create the pin.
     rails_phantom_fk: 'references with foreign_key: true alone creates phantom buyers/listings/likers/orders
-      tables on SQLite — always set to_table. Run ruby MASTER/gates/runner.rb phantom_foreign_keys.'
+      tables on SQLite — always set to_table. Run ruby MASTER/checks/runner.rb phantom_foreign_keys.'
     todo_checkbox_drift: Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb,
       and per-app bin/ci instead of checkbox backlogs.
     tts_broken: Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing
@@ -844,7 +844,7 @@ guidance:
 # first run, nine of twelve subsystems were already over, `lib/pub4` by 54%.
 #
 # So these are not a record of a low that was held. They are today's measurement,
-# taken once, at the moment the gate acquired a caller.
+# taken once, at the moment the check acquired a caller.
 #
 # `core: 916` is gone rather than corrected-in-place. It budgeted `MASTER/core`,
 # which has never existed — the spine is `lib/core` — and the task skipped a
@@ -880,7 +880,7 @@ guidance:
 # design and ops are single files, and the keys said `lib/design` and `lib/ops`
 # — the same shape as the `core: 916` this table's guard was written against,
 # and the guard caught them the moment `rake audit` stopped stopping at its
-# fourth gate. Both budgets were measured against the file; only the extension
+# fourth check. Both budgets were measured against the file; only the extension
 # was missing. ops re-measured down, 251 to 234.
 #
 # Measured once at the rename. Down only from here.
@@ -918,7 +918,7 @@ guidance:
 # Once a subsystem is past its ceiling, every further line it grows is invisible
 # to this task, because the row already reads OVER and cannot read more so. Eight
 # of twenty-four had stopped measuring, and `rake audit` failed on loc_budget on
-# every pass regardless of what the pass changed -- which is how a gate becomes
+# every pass regardless of what the pass changed -- which is how a check becomes
 # noise, and this table's own history is that it spent its whole life uncalled
 # for exactly that kind of reason.
 #
@@ -939,13 +939,13 @@ guidance:
 #             deterministically instead: 9b9e8c88f +260 for four detectors,
 #             dcbff6ae8 +143 reading the parse tree, 9e97f861d +67 for structural
 #             clones, 9a2c9427c +60 for MIDDLE_MAN. Plus 04904f43d +148 giving
-#             PATH_OWNERSHIP.yml a reader, 9e25ff7a8 +156 for the quota gate,
+#             PATH_OWNERSHIP.yml a reader, 9e25ff7a8 +156 for the quota check,
 #             e7e96b2d1 +122 for the boot receipt and a public-method count that
 #             reads Ruby, 692cc8069 +117 restoring an audit that had been dead,
 #             and ~260 across four commits giving every registry rule the worked
 #             example that proves it can fire. Paid down by real deletions in the
 #             same window -- 996e3c0f3 -298, e3489813c -99, ca5b642f9 -67.
-#   lib/pub4  470 -> 696. One commit: 0dc71bb15, the gate ladder, +299 less 56 of
+#   lib/pub4  470 -> 696. One commit: 0dc71bb15, the check ladder, +299 less 56 of
 #             helpers that had outlived their subject. It buys one command where
 #             five invocations nobody ran together used to be, the record of which
 #             stage wrote which file, and a third state so a tier that could not
@@ -972,7 +972,7 @@ guidance:
 # onto another session's in-flight number.
 loc_body_budgets:
   lib/boot: 276
-  # 252 -> 251: the PhaseGates boot wire, deleted with PhaseGates.
+  # 252 -> 251: the PhaseChecks boot wire, deleted with PhaseChecks.
   lib/builder: 251
   # 214 -> 216 for the two lines that construct Voice::OutputGuard in each of
   # the two boot paths, so the evidence contract on MASTER's own reply reaches
@@ -980,7 +980,7 @@ loc_body_budgets:
   lib/builder.rb: 216
   # 5892 -> 5827: run_rebuild, run_context, run_checkpoint, run_verify and
   # changed_lib_files, unreachable from any dispatch, deleted; 5827 -> 5826 for
-  # the container field PhaseGates no longer fills.
+  # the container field PhaseChecks no longer fills.
   lib/cli: 5826
   # 253 -> 294 for the loop the subsystem did not have. Everything the row
   # priced at introduction was perception; tick! had one caller, at boot, once,
@@ -997,7 +997,7 @@ loc_body_budgets:
   # ProposeTree#describe_entry's lost `subs` assignment.
   lib/fix: 2792
   # 4812 -> 4460: context_provider.rb, reachable only from run_context, and
-  # phase_gates.rb, built at boot and never called.
+  # phase_checks.rb, built at boot and never called.
   lib/ground: 4460
   lib/io: 4175
   # 136 -> 137 for Master.git_checkout?, one line and one comment. It tests
@@ -1010,7 +1010,7 @@ loc_body_budgets:
   lib/result.rb: 95
   lib/security_error.rb: 1
   lib/unwrap_error.rb: 103
-  # 696 -> 713 for `gate --tree <TREE>`, which drops the stages that prove
+  # 696 -> 713 for `check --tree <TREE>`, which drops the stages that prove
   # another tree instead of shrinking them: five stages against six for a
   # MASTER-scoped run, one suite against seven, and the clean-tree assertion
   # still covering MASTER whatever was named.

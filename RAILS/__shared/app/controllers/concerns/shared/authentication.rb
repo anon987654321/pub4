@@ -22,7 +22,7 @@ module Shared
     class_methods do
       # Public pages still run resume_session when guests are supported so
       # anonymous visitors get a soft Current.user (Craigslist-style: use the
-      # product without signup). require_real_user remains the identity gate.
+      # product without signup). require_real_user remains the identity check.
       def allow_unauthenticated_access(**options)
         if ::User.column_names.include?("guest")
           # It reads like a control and does nothing here: guests already get a soft
@@ -31,7 +31,7 @@ module Shared
           # quiet in production, where it would be boot noise on every controller.
           if defined?(Rails) && (Rails.env.development? || Rails.env.test?)
             Rails.logger&.warn("[auth] allow_unauthenticated_access is a no-op in #{name}: " \
-                               "guests get a soft Current.user by design — gate identity-bound " \
+                               "guests get a soft Current.user by design — check identity-bound " \
                                "actions with require_real_user instead.")
           end
 
@@ -185,7 +185,7 @@ module Shared
     # anonymous posting and chatting path; a high-assurance BankID identity may
     # also write under its own identity without inventing mailbox proof from a
     # synthetic placeholder. Newsletter delivery has its own confirmed-address
-    # and explicit-consent gate, so this exception does not opt anyone into mail.
+    # and explicit-consent check, so this exception does not opt anyone into mail.
     def require_verified_email
       user = Current.user
       return if user.nil? || user.try(:guest?) || !user.respond_to?(:email_verified?) ||

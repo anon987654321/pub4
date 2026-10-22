@@ -34,7 +34,7 @@ module Master
       end
 
       # The findings a model may take on: none that waits for a person or that
-      # the scanner's confidence gate refuses.
+      # the scanner's confidence check refuses.
       def repairable
         @findings.reject { |finding| needs_a_person?(finding) }.select { |finding| autofix_allowed?(finding) }
       end
@@ -42,7 +42,7 @@ module Master
       def scope = @law
 
       # The rules this repair put to the model, once run has filtered out what
-      # waits for a person or fails the confidence gate.
+      # waits for a person or fails the confidence check.
       def asked_rules
         repairable.map { |finding| finding[:law].to_s }.uniq
       end

@@ -128,7 +128,7 @@ FLOW_OUTPUT = <<~OUT
   OUT
 
   def test_flow_journeys_are_reported_one_result_per_flow_scoped_to_the_apps
-    write("MASTER/gates/runner.rb", "")
+    write("MASTER/checks/runner.rb", "")
     asked = []
     shell = lambda do |*argv|
       asked << argv
@@ -142,11 +142,11 @@ FLOW_OUTPUT = <<~OUT
     assert_equal "inconclusive", got["flow demo/demo_signed_in"].detail
     call = asked.find { |a| a.include?("flow_journey") }
     assert_includes call, "FLOW_APP=demo"
-    assert_includes call, "GATE_AUTOFIX=0"
+    assert_includes call, "CHECK_AUTOFIX=0"
   end
 
   def test_a_crashed_flow_runner_is_one_failed_result_and_no_flows_skips_it
-    write("MASTER/gates/runner.rb", "")
+    write("MASTER/checks/runner.rb", "")
     crash = ->(*_) { ["boom\n", Ok.new(false)] }
     got = by_name(runner(shell: crash).run)
     refute got["flows"].ok
@@ -155,7 +155,7 @@ FLOW_OUTPUT = <<~OUT
   end
 
   def test_public_mode_never_runs_flows_because_they_read_the_box_loopback
-    write("MASTER/gates/runner.rb", "")
+    write("MASTER/checks/runner.rb", "")
     asked = []
     runner(mode: :public, shell: ->(*argv) { asked << argv; ["", Ok.new(true)] }).run
     assert(asked.none? { |a| a.include?("flow_journey") })

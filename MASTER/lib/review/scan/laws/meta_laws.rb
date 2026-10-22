@@ -318,7 +318,7 @@ module Master
         # files in lib/ alone; the operator's standing instruction is a clean,
         # minimal tree. Findings only — the merge itself changes requires,
         # Zeitwerk names and tests, which is the LLM fix lane's job under its
-        # normal accept gates, never a mechanical rewrite.
+        # normal accept checks, never a mechanical rewrite.
         #
         # A finding here is a candidate, not a debt. lib/ sits under
         # push_dir(lib, namespace: Master), so every merge moves a constant, and a

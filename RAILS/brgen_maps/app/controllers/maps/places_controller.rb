@@ -29,7 +29,7 @@ module Maps
       @place = places_in_current_city.includes(:city, :neighborhood).find(params[:id])
       @place.record_activity!("PlaceViewed", source_vertical: "maps") unless passive_request?
       @recent_check_ins = @place.place_check_ins.includes(:user).recent.limit(10)
-      # Guests may check in (see the require_user_session gate on #check_in),
+      # Guests may check in (see the require_user_session check on #check_in),
       # so the "already here" flag has to follow the same identity. With
       # authenticated? it stayed false for a guest who had just checked in and
       # the page kept offering the form.

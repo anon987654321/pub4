@@ -100,7 +100,7 @@ class TestFixLoopCommitter < Minitest::Test
     assert blocked?(bus)
   end
 
-  # A fix that passed every gate and was still not committed has to say why in the log, not only
+  # A fix that passed every check and was still not committed has to say why in the log, not only
   # on the bus.
   def test_a_blocked_commit_says_why_in_the_log
     write_file("lib/bad2.rb", "def x\n  1\n")

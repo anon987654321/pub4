@@ -49,9 +49,9 @@ class TestPlugins < Minitest::Test
     assert_includes %w[ferrum unavailable], result[:browser]
   end
 
-  def test_travel_status_exposes_hard_purchase_gate
+  def test_travel_status_exposes_hard_purchase_check
     result = Master::Plugin.load("travel_browser").call(action: "status")
-    assert_equal true, result[:final_purchase_gate]
+    assert_equal true, result[:final_purchase_check]
     assert_equal true, result[:sensitive_fields_manual]
     assert_includes %w[ferrum unavailable], result[:browser]
   end

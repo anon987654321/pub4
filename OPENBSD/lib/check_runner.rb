@@ -26,8 +26,8 @@ module Deploy
     # a budget is how `rake test` at 247s started failing a 360s limit on any
     # machine that was also doing something else, and reported it as
     # "first_failure: test / category: true_violation", i.e. as if a unit test
-    # had broken. A gate that goes red for reasons unrelated to the code is a
-    # gate people learn to ignore.
+    # had broken. A check that goes red for reasons unrelated to the code is a
+    # check people learn to ignore.
     #
     # So: warn as soon as a step spends most of its allowance, while it is still
     # passing. The next person then finds out from a green run that a step is

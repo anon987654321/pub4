@@ -3,7 +3,7 @@
 #
 # /etc/daily inherits cron's environment, which does not include /usr/local/bin —
 # where every interpreter on this box lives. `ruby` on line 2 and the versioned Ruby on the
-# config_drift_gate line both failed to exec on every run, and the second one was
+# config_drift_check line both failed to exec on every run, and the second one was
 # invisible because its `2>&1` sent the shell's own "not found" into the output
 # file it was writing. See etc/crontab.vm23 for the full accounting; the PATH line
 # there is the real fix, and this is the belt to its braces — daily.local is also
@@ -20,12 +20,12 @@ done
 
 "$RUBY" /usr/local/bin/nsd-resign
 # Two different questions. config-drift-check: do relayd routes, acme SANs and
-# nsd zones agree with each other on this box? config_drift_gate.rb: does every
+# nsd zones agree with each other on this box? config_drift_check.rb: does every
 # tracked /etc and /usr/local/bin file match its repo mirror byte for byte?
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
 # Installed copy only. Root must not execute the writable checkout.
-if [ -x /usr/local/bin/config_drift_gate.rb ]; then
-  "$RUBY" /usr/local/bin/config_drift_gate.rb >/var/log/config-drift.out 2>&1 || \
+if [ -x /usr/local/bin/config_drift_check.rb ]; then
+  "$RUBY" /usr/local/bin/config_drift_check.rb >/var/log/config-drift.out 2>&1 || \
     logger -t daily.local "repo/live config drift — see /var/log/config-drift.out"
 fi
 # su without -l, and its failure is now audible. `su -l` runs dev's login profile,

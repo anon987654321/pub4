@@ -5,7 +5,7 @@ require "json"
 require_relative "design_edit"
 require_relative "design_prompts"
 require_relative "layout_score_store"
-require_relative "visual_quality_gates"
+require_relative "visual_quality_checks"
 
 module Master
   module Fix
@@ -70,7 +70,7 @@ module Master
       end
 
       def row(surface:, payload:, shot:)
-        found = VisualQualityGates.measure(surface, payload)["offenders"]
+        found = VisualQualityChecks.measure(surface, payload)["offenders"]
         counts = found.transform_values(&:size).reject { |_, count| count.zero? }
         { surface:, payload:, shot:, score: score(payload), offenders: counts, offender_keys: found.reject { |_, keys| keys.empty? } }
       end
@@ -270,7 +270,7 @@ module Master
         lower = lower_surfaces(before, others)
         notes << "scored lower: #{lower.join(', ')}" unless lower.empty?
         added = new_offenders(before, after)
-        notes << "new gate offenders: #{added.join(', ')}" unless added.empty?
+        notes << "new check offenders: #{added.join(', ')}" unless added.empty?
         notes
       end
 

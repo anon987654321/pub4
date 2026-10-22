@@ -101,7 +101,7 @@ module Master
       elsif !self_test.value!.ok?
         summary = self_test.value!
         bus&.publish("builder:self_test", ok: false, violations: summary.violation_count)
-        # A full self-test is a diagnostic, not a production-startup gate.
+        # A full self-test is a diagnostic, not a production-startup check.
         # MASTER_STRICT_BOOT=1 explicitly turns its findings into a boot failure.
         # Keeping strictness opt-in lets an operator inspect known debt without
         # making the application disappear merely because the diagnostic is dirty.
@@ -177,7 +177,7 @@ module Master
     # top of an existing violation is exactly the runaway-loop shape the
     # oscillation/cycle/plateau detectors exist to catch after the fact.
     def start_fix_loop_background(fix_loop, root:, bus:)
-      report = Fix::SelfCheck.new(root:).gate!(bus:)
+      report = Fix::SelfCheck.new(root:).check!(bus:)
       unless report.clean?
         bus&.publish("fix_loop:background_refused", reason: "selfcheck dirty", total: report.total)
         return
@@ -238,15 +238,15 @@ module Master
     # up threads that nothing ever joins.
     def subscribe_single_proposer(bus:, propose_tree:)
       proposing = { busy: false }
-      gate = Mutex.new
+      check = Mutex.new
       propose_once = lambda do
-        claimed = gate.synchronize { proposing[:busy] ? false : (proposing[:busy] = true) }
+        claimed = check.synchronize { proposing[:busy] ? false : (proposing[:busy] = true) }
         next unless claimed
 
         watched_thread(bus, "propose_tree") do
           propose_tree.call
         ensure
-          gate.synchronize { proposing[:busy] = false }
+          check.synchronize { proposing[:busy] = false }
         end
       end
       bus.subscribe("fix_loop:clean") { propose_once.call }

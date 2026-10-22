@@ -39,7 +39,7 @@ module Operator
       [%r{(\A|/)\.(git|master|bundle|claude|idea|vscode)/}, "tool state"],
       [%r{/public/assets/|/app/assets/builds/}, "built assets"],
       [/\.map\z/, "source map"],
-      [%r{/gates/data/layout_snapshots/}, "stored layout snapshots"],
+      [%r{/checks/data/layout_snapshots/}, "stored layout snapshots"],
       [/\.(ipynb|jsonl)\z/, "notebook or log data"],
     ].freeze
 

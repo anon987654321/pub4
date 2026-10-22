@@ -158,7 +158,7 @@ class CiGuardTest < Minitest::Test
   end
 
   # An unreadable load average must not read as an idle box. CiGuard fails open
-  # -- a gate in front of CI that treats unknown as busy is indistinguishable
+  # -- a check in front of CI that treats unknown as busy is indistinguishable
   # from a permanently locked one -- but it says so instead of returning 0.0 in
   # silence, which in a log looks like a machine with nothing to do.
   def test_unreadable_load_warns_rather_than_reporting_zero

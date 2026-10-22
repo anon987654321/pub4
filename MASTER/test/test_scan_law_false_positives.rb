@@ -205,7 +205,7 @@ end
   # 26 Ruby's exclusive range, 3 the source of the rules that detect TODO.
   #
   # Zero real findings, at :veto — the strongest severity there is. A veto that
-  # is wrong every time does not gate anything; it teaches the reader that a
+  # is wrong every time does not check anything; it teaches the reader that a
   # veto is noise. Narrowed 2026-08-12 to 0 in lib/.
 
   def test_veto_unfinished_ignores_ruby_range_pending_and_quoted_markers
@@ -412,7 +412,7 @@ end
 
     assert_empty findings(:NO_PUTS, "#!/usr/bin/env ruby\n#{printed}", path: "tools/sync.rb")
     assert_empty findings(:NO_PUTS, "#{printed}Sync.run if $PROGRAM_NAME == __FILE__\n", path: "tools/sync.rb")
-    assert_empty findings(:NO_PUTS, "#{printed}return unless __FILE__ == $0\n", path: "gates/sync.rb")
+    assert_empty findings(:NO_PUTS, "#{printed}return unless __FILE__ == $0\n", path: "checks/sync.rb")
     assert_empty findings(:NO_PUTS, printed, path: "RAILS/brgen/lib/tasks/sync.rake")
     assert_empty findings(:NO_PUTS, printed, path: "RAILS/brgen/db/seeds.rb")
     assert_empty findings(:NO_PUTS, printed, path: "test/test_sync.rb")

@@ -10,7 +10,7 @@
 .Nm
 .Cm measure
 .Nm
-.Cm gate
+.Cm check
 .Op Fl -scan-only
 .Nm
 .Cm test
@@ -25,11 +25,11 @@
 .Nm
 is the repository-wide operator entry point at
 .Pa MASTER/bin/operator .
-It coordinates repository state, measurement, gates, tests and the approved
+It coordinates repository state, measurement, checks, tests and the approved
 VPS operation interface.
 .Pp
-.Cm gate
-runs the gate ladder and may repair files by default.
+.Cm check
+runs the check ladder and may repair files by default.
 .Fl -scan-only
 selects the read-only scan mode.
 Do not use the default mode when only a
@@ -54,12 +54,12 @@ Keep this page synchronized with those executable interfaces.
 .Bd -literal -offset indent
 MASTER/bin/operator status
 MASTER/bin/operator measure
-MASTER/bin/operator gate --scan-only
+MASTER/bin/operator check --scan-only
 MASTER/bin/operator test
 MASTER/bin/operator vps state
 .Ed
 .Sh SECURITY
-The gate can write by default.
+The check can write by default.
 Use
 .Fl -scan-only
 for a read-only scan.

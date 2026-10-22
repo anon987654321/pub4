@@ -12,7 +12,7 @@ out_dir = File.join(root, ".master", "voice_benchmark")
 FileUtils.mkdir_p(out_dir)
 
 unless Master::Voice::Benchmark.available?
-  Master::Trace::Dmesg.status("voice0", "ffmpeg/ffprobe unavailable, audio gate skipped", io: $stderr)
+  Master::Trace::Dmesg.status("voice0", "ffmpeg/ffprobe unavailable, audio check skipped", io: $stderr)
   exit 0
 end
 

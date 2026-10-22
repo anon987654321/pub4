@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
-require File.expand_path("../gates/support/geometry_probe", __dir__)
+require File.expand_path("../checks/support/geometry_probe", __dir__)
 require File.expand_path("../lib/fix/visual_contact_sheet", __dir__)
 
 # A sweep of hundreds of states made the contact sheet taller than Chrome will

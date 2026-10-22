@@ -122,7 +122,7 @@ module Master
       renderer = Voice::Renderer.new(config:)
       output_check = Review::OutputCheck.load(root:)
       # The evidence contract on MASTER's own reply. Built here beside the other
-      # output gate rather than reached off the renderer, because a test that
+      # output check rather than reached off the renderer, because a test that
       # hands the pipeline a stub renderer must still get a container it can run.
       output_guard = Voice::OutputGuard.new
       code_index = Review::CodeIndex.new(root: workspace, event_bus: bus, persist: true)

@@ -75,7 +75,7 @@ LOAD_RESTORE=2.0
 # was correct in shape but sat outside this box's operating range: median
 # availability is 13%, one point above MEM_WARN, and MEM_RESTORE=20 was above
 # the median entirely. Memory alone caused 334 of the 436 shed events, and the
-# combined restore gate opened on 19% of ticks against shedding on 48% — so the
+# combined restore check opened on 19% of ticks against shedding on 48% — so the
 # drift was one-way and amber/bsdports stayed down for days rather than
 # self-recovering, which is not what OPENBSD/CLAUDE.md claims. 8/14 keeps the
 # same 6-point hysteresis gap, straddling p50 instead of sitting above it.
@@ -88,12 +88,12 @@ LOAD_RESTORE=2.0
 # more than it did — so 14 had drifted back above p75, which is the exact
 # condition that pass was fixing. Second occurrence of one failure.
 #
-# Measured against the real gate, not guessed: it opened on 7% of ticks, and
+# Measured against the real check, not guessed: it opened on 7% of ticks, and
 # memory alone blocked 89% of the non-shed ones. Sweeping the floor: 14 -> 7%,
 # 12 -> 9%, 10 -> 23%, 9 -> 67%, 8 -> 83%. 10 is p75 and buys a restore
 # opportunity roughly every 20 minutes instead of every 70.
 #
-# Why not 9, which opens the gate on two thirds of ticks: it leaves one point of
+# Why not 9, which opens the check on two thirds of ticks: it leaves one point of
 # hysteresis above MEM_WARN, so a shed at 7% would restore at 9% and shed again.
 # 10 keeps a 2-point band. It is narrower than the 6 points this file has
 # defended twice, and that is the deliberate trade — a wide band on a box whose
@@ -108,7 +108,7 @@ LOAD_RESTORE=2.0
 # What made it recur is that nothing watched the window at all. health_check.rb
 # now fails while anything the guard shed is still down, which is the outage
 # rather than a theory about thresholds — an earlier version of that check did
-# reason from this log about whether the gate was reachable, and measured against
+# reason from this log about whether the check was reachable, and measured against
 # the real 1550 ticks it stayed silent through the very incident it was written
 # for.
 MEM_WARN=8

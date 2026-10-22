@@ -75,13 +75,13 @@ module Master
             data = JSON.parse(File.read(path))
             stale = staleness(data)
             if stale
-              Master::Trace::Dmesg.status("gate0", "known-red record #{stale}, proving whole")
+              Master::Trace::Dmesg.status("check0", "known-red record #{stale}, proving whole")
               return
             end
 
             Known.new(failing: data.fetch("failing").to_set, rows: data.fetch("rows"))
           rescue JSON::ParserError, KeyError, SystemCallError, ArgumentError => e
-            Master::Trace::Dmesg.status("gate0", "known-red record unreadable, proving whole: #{e.class}")
+            Master::Trace::Dmesg.status("check0", "known-red record unreadable, proving whole: #{e.class}")
             nil
           end
 

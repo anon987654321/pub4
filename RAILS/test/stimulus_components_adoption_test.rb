@@ -5,27 +5,27 @@ require "minitest/autorun"
 class StimulusComponentsAdoptionTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  def gate
-    require_relative "../../MASTER/gates/lib/source/stimulus_components"
-    Deploy::StimulusComponentsGate
+  def check
+    require_relative "../../MASTER/checks/lib/source/stimulus_components"
+    Deploy::StimulusComponentsCheck
   end
 
-  def test_gate_is_registered
+  def test_check_is_registered
     require "yaml"
-    row = YAML.safe_load_file(File.expand_path("../../MASTER/gates/gates.yml", __dir__)).fetch("stimulus_components")
-    assert_equal "Deploy::StimulusComponentsGate", row.fetch("class")
-    assert File.file?(File.expand_path("../../MASTER/gates/lib/source/stimulus_components.rb", __dir__))
+    row = YAML.safe_load_file(File.expand_path("../../MASTER/checks/checks.yml", __dir__)).fetch("stimulus_components")
+    assert_equal "Deploy::StimulusComponentsCheck", row.fetch("class")
+    assert File.file?(File.expand_path("../../MASTER/checks/lib/source/stimulus_components.rb", __dir__))
   end
 
   def test_full_catalogue_is_pinned_and_vendored
     baseline = File.read(File.join(ROOT, "__shared/config/importmap_baseline.rb"))
-    pinned = gate.pinned_components(baseline)
+    pinned = check.pinned_components(baseline)
 
-    gate::COMPONENT_PACKAGES.each do |name, package|
+    check::COMPONENT_PACKAGES.each do |name, package|
       pinned_ok = package.start_with?("@stimulus-components/") ? pinned.include?(name) : baseline.include?(%(pin "#{package}"))
       assert pinned_ok, "missing importmap pin for #{package}"
 
-      filename = gate::VENDOR_FILES.fetch(name, "@stimulus-components--#{name}.js")
+      filename = check::VENDOR_FILES.fetch(name, "@stimulus-components--#{name}.js")
       path = File.join(ROOT, "__shared/vendor/javascript", filename)
       assert File.file?(path), "missing #{path}"
       assert_operator File.size(path), :>, 100
@@ -34,7 +34,7 @@ class StimulusComponentsAdoptionTest < Minitest::Test
 
   def test_full_catalogue_is_registered_from_shared_boot
     boot = File.read(File.join(ROOT, "__shared/frontend/stimulus_boot.js"))
-    gate::REQUIRED_CONTROLLERS.each do |name|
+    check::REQUIRED_CONTROLLERS.each do |name|
       assert_match(/\[\s*"#{Regexp.escape(name)}",/, boot, "shared boot does not register #{name}")
     end
   end

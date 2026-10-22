@@ -28,7 +28,7 @@ module Master
       class ConstitutionTriage
         SCANNER_SELF_PATHS = %r{\Alib/review/scan/(?:rules/|rule|law_dsl|law_factory|scanner|file_processor|self_scan|self_test|infra_helpers|law_registry_audit)}.freeze
 
-        # Laws under active retune: noisy enough that gating on them would gate
+        # Laws under active retune: noisy enough that gating on them would check
         # on the detector rather than on the code. Every id here must name a law
         # the scanner, data/laws.yml or law/ still defines.
         #

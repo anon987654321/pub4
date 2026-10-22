@@ -87,14 +87,14 @@ test("felt_state uses seven-field pipe format", () => {
   assert.match(felt, /feltStateOrFallback/);
 });
 
-test("container gate polls runtime status endpoint", () => {
-  const gate = readFileSync(join(publicDir, "container_gate.js"), "utf8");
-  assert.match(gate, /\/runtime\/status/);
-  assert.match(gate, /MASTER_CONTAINER_READY/);
-  assert.match(gate, /blockingSend/);
-  assert.match(gate, /MAX_POLLS/);
-  assert.match(gate, /POLL_MS_FAST/);
-  assert.match(gate, /master:container-timeout/);
+test("container check polls runtime status endpoint", () => {
+  const check = readFileSync(join(publicDir, "container_check.js"), "utf8");
+  assert.match(check, /\/runtime\/status/);
+  assert.match(check, /MASTER_CONTAINER_READY/);
+  assert.match(check, /blockingSend/);
+  assert.match(check, /MAX_POLLS/);
+  assert.match(check, /POLL_MS_FAST/);
+  assert.match(check, /master:container-timeout/);
 });
 
 test("visual_bridge owns runtime SSE connection", () => {

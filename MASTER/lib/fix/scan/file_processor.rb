@@ -9,7 +9,7 @@ require "timeout"
 
 require_relative "law_timing"
 require_relative "finding_cache"
-require_relative "../gate_focus"
+require_relative "../check_focus"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
 require_relative "../../operator/lock_sweep"
@@ -50,7 +50,7 @@ module Master
           @finding_cache = FindingCache.new(root: cache_root)
           @semantic_gap_notice_emitted = false
 
-          @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
+          @progress_path = ENV.fetch("CHECK_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
           @progress_mutex = Mutex.new
           @active_law_checks = {}
@@ -241,11 +241,11 @@ module Master
         # questions — and reported "0 findings", which is a claim about the whole
         # law set rather than about the third of it that ran.
         #
-        # The cost gate is real: one LLM call per file is not free on a tree this
+        # The cost check is real: one LLM call per file is not free on a tree this
         # size. Keeping it, but sampling a deterministic slice so clean files are
         # not permanently exempt, and saying so when a file is skipped.
         def semantic_due?(findings, path)
-          return false if @skip_semantic || GateFocus.blockers?
+          return false if @skip_semantic || CheckFocus.blockers?
           return true unless findings.empty?
           return false if semantic_sample <= 0
 

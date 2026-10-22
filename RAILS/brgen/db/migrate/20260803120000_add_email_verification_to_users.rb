@@ -11,7 +11,7 @@ class AddEmailVerificationToUsers < ActiveRecord::Migration[8.1]
     add_column :users, :email_verification_token, :string unless column_exists?(:users, :email_verification_token)
     add_index :users, :email_verification_token, unique: true unless index_exists?(:users, :email_verification_token)
 
-    # Existing real accounts predate the gate — grandfather them in so nobody is
+    # Existing real accounts predate the check — grandfather them in so nobody is
     # locked out. Guests are irrelevant (they never post under an identity).
     say_with_time "grandfathering existing accounts as verified" do
       execute("UPDATE users SET email_verified_at = CURRENT_TIMESTAMP WHERE email_verified_at IS NULL AND guest = 0")

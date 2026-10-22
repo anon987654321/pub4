@@ -15,7 +15,7 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 . "${_deploy_sh_dir}/_sync.sh"
 . "${_deploy_sh_dir}/_database.sh"
 . "${_deploy_sh_dir}/_assets.sh"
-. "${_deploy_sh_dir}/_runtime_gate.sh"
+. "${_deploy_sh_dir}/_runtime_check.sh"
 . "${_deploy_sh_dir}/_service.sh"
 
 # deploy_tracked_app APP_NAME — copy the app tree, install bundle/db/service, then restart.
@@ -79,7 +79,7 @@ deploy_tracked_app() {
   migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
   # Stop the running app before touching its SQLite db: db:prepare/migrate hangs
   # indefinitely waiting on the write lock a live Falcon worker already holds,
-  # which silently swallowed every deploy's runtime gate (precompile + bin/ci)
+  # which silently swallowed every deploy's runtime check (precompile + bin/ci)
   # behind it -- this app_name may not have a running service yet on first deploy.
   pub4_rcctl stop "$app_name" 2>/dev/null || true
   deploy_status "$app_name" "db migrate"
@@ -95,7 +95,7 @@ deploy_tracked_app() {
   install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
   [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_NAME" "$APP_DOMAIN" "$APP_PORT"
 
-  rails_runtime_gate "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "runtime gate" "failed"; exit 1; }
+  rails_runtime_check "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "runtime check" "failed"; exit 1; }
   if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
     deploy_status "$app_name" "demo seed"
     if [[ $app_name == brgen || $app_name == amber ]]; then

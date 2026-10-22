@@ -1320,7 +1320,7 @@ tokens:
       implementation, not the exception.
     constraint_that_still_holds: >-
       Deferred WebGL boot is sacred (DECISIONS.md). A point cloud is cheaper than
-      a mesh, which makes the primer gate easier to honour, not optional.
+      a mesh, which makes the primer check easier to honour, not optional.
 
   visual_design:
     semantics:
@@ -1442,11 +1442,11 @@ tokens:
       require_advanced_hidden: true
       action: Advanced/secondary controls should start collapsed or on secondary surfaces.
 
-  # The type thresholds that Design::Thresholds, DesignMetricsGate, CssConstitutionGate,
+  # The type thresholds that Design::Thresholds, DesignMetricsCheck, CssConstitutionCheck,
   # the rendered geometry checks and visual_contract_lint read as typography.*. Without
   # them every reader returned early on a zero threshold and reported "body>=0px". Each
   # value is one a reader's own fallback or Design::Typography.bringhurst already states.
-  # Operator-owned under RENDERED_VALUES: correct a number here and every gate follows.
+  # Operator-owned under RENDERED_VALUES: correct a number here and every check follows.
   typography:
     accessibility:
       body_min_px: 16
@@ -1631,7 +1631,7 @@ tokens:
     flat_ui:
       action: >
         No ornamental box-shadow/text-shadow/backdrop-filter/filter blur.
-        Floating chrome uses 1px border + elevated surface. GATE_AUTOFIX strips
+        Floating chrome uses 1px border + elevated surface. CHECK_AUTOFIX strips
         shadows. Exception policy under pixel_perfection.exception_policy.
     btn_aliases:
       action: >
@@ -1658,10 +1658,10 @@ tokens:
         engineering afterthoughts. The apps already ship a manifest, a service worker
         and offline controllers; the budget is what is missing.
     weight:
-      ceiling_lives_in: MASTER/gates/data/, in the css_budget.yml ratchet shape —
+      ceiling_lives_in: MASTER/checks/data/, in the css_budget.yml ratchet shape —
         a number measured from a real run that only ever ratchets down.
       baseline_source: generated application.css is deliberately untracked and rebuilt
-        from the checked-in SCSS before asset gates or deployment. JS builds are also
+        from the checked-in SCSS before asset checks or deployment. JS builds are also
         ignored, so budgets are measured only after an explicit source-to-build pass.
       action: Set a ceiling from a run of this tree, never from another product's
         published figure — Pinterest's 150KB and Tinder's 20KB CSS describe their

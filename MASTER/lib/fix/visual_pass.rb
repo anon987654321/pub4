@@ -17,9 +17,9 @@ require_relative "visual_custody"
 require_relative "visual_completion"
 require_relative "../design/visual_language"
 require_relative "visual_runtime"
-require_relative "../../gates/support/mobile_journey_probe"
-require_relative "../../gates/support/composition_probe"
-require_relative "../../gates/support/web_platform_probe"
+require_relative "../../checks/support/mobile_journey_probe"
+require_relative "../../checks/support/composition_probe"
+require_relative "../../checks/support/web_platform_probe"
 
 module Master
   module Fix
@@ -83,7 +83,7 @@ module Master
         end
         raise "visual review has no agent" unless @agent
 
-        require File.expand_path("../../gates/support/geometry_probe", __dir__)
+        require File.expand_path("../../checks/support/geometry_probe", __dir__)
 
         @dir = Dir.mktmpdir("master-visual")
         @ghost_stack = VisualGhostStack.new(root: repo_root, dir: @dir)

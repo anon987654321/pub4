@@ -43,9 +43,9 @@
     <%= link_to t("maps.open_in_map"),
         "https://www.openstreetmap.org/?mlat=#{@place.latitude}&mlon=#{@place.longitude}#map=16/#{@place.latitude}/#{@place.longitude}",
         class: "btn", target: "_blank", rel: "noopener" %>
-    <%# PlacesController#check_in asks for require_user_session -- the gate that
+    <%# PlacesController#check_in asks for require_user_session -- the check that
         means "any identity, guests included". Gating the form on authenticated?
-        hid it from exactly the visitors that gate exists to admit. %>
+        hid it from exactly the visitors that check exists to admit. %>
     <% if authenticated? || guest? %>
       <% unless @checked_in %>
         <%= form_with url: check_in_place_path(@place), method: :post, local: true, html: { style: "display:inline" } do |f| %>

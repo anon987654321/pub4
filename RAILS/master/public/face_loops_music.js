@@ -245,7 +245,7 @@ window._faceMusic = (() => {
 
 // Ambient: once the face is up, the loop is on low as the bed and ducks
 // under the voice. The module itself is loaded post-primer, so starting here
-// honours the gesture gate without touching the boot contract.
+// honours the gesture check without touching the boot contract.
 window._faceMusic.__ambientArmed = false;
 setTimeout(() => {
   if (window._faceMusic.__ambientArmed) return;

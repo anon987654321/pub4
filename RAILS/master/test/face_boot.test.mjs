@@ -331,7 +331,7 @@ test("every face part is named by the runtime loader", () => {
 });
 
 
-test("calm profile is default and gates rich idle motion", () => {
+test("calm profile is default and checks rich idle motion", () => {
   const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
   assert.match(part1, /\['calm', 'full', 'crt', 'battery'\]/);
   assert.match(part1, /function isRichMotionProfile/);

@@ -167,9 +167,9 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
-  # Ground::Policy::Sandbox is the gate written from an adversarial corpus, and
+  # Ground::Policy::Sandbox is the check written from an adversarial corpus, and
   # until it was wired into preflight it was reached only by its own tests while
-  # Io::Shell consulted a separate BLOCKLIST. Two gates, and the hardened one was
+  # Io::Shell consulted a separate BLOCKLIST. Two checks, and the hardened one was
   # not the live one. These assert the wiring rather than the policy —
   # test_sandbox_policy.rb already covers what decide() decides.
   DENIED_COMMANDS = [

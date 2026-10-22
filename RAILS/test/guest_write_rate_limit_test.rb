@@ -21,7 +21,7 @@ require_relative "engine_roots"
 #   amber RegistrationsController#create  unlimited accounts, while brgen's
 #                                         equivalent had carried 10/10min all along
 #
-# This is the gate rather than only the fix, because the fix is three lines that
+# This is the check rather than only the fix, because the fix is three lines that
 # a refactor removes without noticing. It reads source text and never boots
 # Rails, like every other file in this directory.
 class GuestWriteRateLimitTest < Minitest::Test
@@ -29,14 +29,14 @@ class GuestWriteRateLimitTest < Minitest::Test
 
   WRITE_ACTIONS = %w[create update destroy].freeze
 
-  # brgen gates guests with a `require_real_user` before_action rather than with
+  # brgen checks guests with a `require_real_user` before_action rather than with
   # Rails' own allow_unauthenticated_access, so skipping it is the second way an
   # action becomes guest-reachable. Missing this is how a checker reports zero.
   # unauthenticated_access_only grants the same access and adds a redirect for
   # the signed-in, so it opens an action exactly as its sibling does.
   UNAUTHENTICATED = /(?:allow_unauthenticated_access|unauthenticated_access_only)/
 
-  GUEST_GATES = [
+  GUEST_CHECKS = [
     /#{UNAUTHENTICATED}(?!\s*,?\s*only)/,
     /skip_before_action\s+:require_real_user/,
   ].freeze
@@ -61,7 +61,7 @@ class GuestWriteRateLimitTest < Minitest::Test
     defined_writes = WRITE_ACTIONS.select { |a| src.match?(/^\s*def #{a}\b/) }
     return [] if defined_writes.empty?
 
-    return defined_writes if GUEST_GATES.any? { |re| src.match?(re) }
+    return defined_writes if GUEST_CHECKS.any? { |re| src.match?(re) }
 
     scoped = src.scan(/#{UNAUTHENTICATED}\s+only:\s*(%i\[[^\]]*\]|\[[^\]]*\]|:\w+)/).flatten
     defined_writes & scoped.flat_map { |fragment| action_list(fragment) }
@@ -92,7 +92,7 @@ class GuestWriteRateLimitTest < Minitest::Test
 
   # The instrument, not the tree. A source-text checker that stops matching
   # reports zero gaps and reads exactly like a clean tree — which is the failure
-  # this repo has already had (RAILS gates stopped seeing 57 views when the
+  # this repo has already had (RAILS checks stopped seeing 57 views when the
   # verticals moved to engines, and the falling count read as improvement).
   #
   # So: prove the detector still finds guest writes at all, and prove it still

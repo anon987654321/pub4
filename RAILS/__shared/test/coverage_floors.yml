@@ -1,6 +1,6 @@
 # Coverage floors, in percent, per app. Measured on 2026-10-10 from full passing
 # suites (brgen on vm23's copy-tree: 1381 runs; amber 314; bsdports 141) and set a
-# few points under the measurement so run order and layout do not flap the gate:
+# few points under the measurement so run order and layout do not flap the check:
 #
 #   brgen     line 72.85  branch 42.14  method 62.21
 #   amber     line 52.16  branch 18.08  method 35.40

@@ -7,7 +7,7 @@ require "test_helper"
 # reachable cookie policy (support thread, 2026-08-07). Those three things are
 # an external dependency on our markup: if a refactor drops them, nothing else
 # in the suite notices and the next verification attempt fails for a reason no
-# gate reports.
+# check reports.
 class PublisherVerificationTest < ActionDispatch::IntegrationTest
   # brgen routes through Brgen::DomainRegistry, so an integration request with
   # no host is "Unknown host", not the front page.

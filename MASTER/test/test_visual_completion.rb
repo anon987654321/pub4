@@ -3,9 +3,9 @@
 require_relative "test_helper"
 require_relative "../lib/fix/visual_completion"
 require_relative "../lib/fix/visual_custody_blocking"
-require_relative "../lib/fix/visual_quality_gates"
+require_relative "../lib/fix/visual_quality_checks"
 require_relative "../lib/fix/transaction"
-require_relative "../gates/support/geometry_probe"
+require_relative "../checks/support/geometry_probe"
 
 class TestVisualCompletion < Minitest::Test
   class AuthorizedCustody
@@ -30,7 +30,7 @@ class TestVisualCompletion < Minitest::Test
     refute completion.enabled_for_path?(root: repo, path: File.join(repo, "RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss"))
   end
 
-  def test_reflow_gate_covers_core_mobile_tablet_and_desktop_widths
+  def test_reflow_check_covers_core_mobile_tablet_and_desktop_widths
     required = [320, 360, 375, 390, 430, 480, 640, 768, 1024, 1280]
 
     assert_empty required - Deploy::GeometryProbe.reflow_widths
@@ -91,8 +91,8 @@ class TestVisualCompletion < Minitest::Test
       "offenders" => { "layout_shift" => [], "overflow" => ["#main"] },
     }
 
-    allowed = Master::Fix::VisualQualityGates.worse(before, after, allow_layout_change: true)
-    ordinary = Master::Fix::VisualQualityGates.worse(before, after)
+    allowed = Master::Fix::VisualQualityChecks.worse(before, after, allow_layout_change: true)
+    ordinary = Master::Fix::VisualQualityChecks.worse(before, after)
 
     assert_equal 1, allowed.size
     assert_match(/overflow/, allowed.first)
@@ -103,7 +103,7 @@ class TestVisualCompletion < Minitest::Test
   def test_related_snapshot_enlistment_rolls_back_with_the_fix_transaction
     Dir.mktmpdir("master-layout-transaction") do |root|
       source = File.join(root, "RAILS", "layout.scss")
-      snapshot = File.join(root, "MASTER", "gates", "data", "layout_snapshots", "app-home-mobile.json")
+      snapshot = File.join(root, "MASTER", "checks", "data", "layout_snapshots", "app-home-mobile.json")
       FileUtils.mkdir_p(File.dirname(source))
       FileUtils.mkdir_p(File.dirname(snapshot))
       File.write(source, ".page { display: block; }\n")
@@ -112,18 +112,18 @@ class TestVisualCompletion < Minitest::Test
 
       transaction = Master::Fix::Transaction.new(root:, paths: ["RAILS/layout.scss"], id: "visual-layout-test")
       transaction.begin!
-      enlisted = transaction.enlist!(["MASTER/gates/data/layout_snapshots/app-home-mobile.json"])
+      enlisted = transaction.enlist!(["MASTER/checks/data/layout_snapshots/app-home-mobile.json"])
       assert_predicate enlisted, :ok?
 
       File.write(snapshot, "{\"title\":\"after\"}\n")
-      observed = transaction.observe_paths!(["MASTER/gates/data/layout_snapshots/app-home-mobile.json"])
+      observed = transaction.observe_paths!(["MASTER/checks/data/layout_snapshots/app-home-mobile.json"])
       assert_predicate observed, :ok?
-      assert transaction.observed_current?("MASTER/gates/data/layout_snapshots/app-home-mobile.json")
+      assert transaction.observed_current?("MASTER/checks/data/layout_snapshots/app-home-mobile.json")
 
       File.write(snapshot, '{"title":"concurrent"}' + "\n")
-      refute transaction.observed_current?("MASTER/gates/data/layout_snapshots/app-home-mobile.json")
+      refute transaction.observed_current?("MASTER/checks/data/layout_snapshots/app-home-mobile.json")
       File.write(snapshot, '{"title":"after"}' + "\n")
-      assert transaction.observed_current?("MASTER/gates/data/layout_snapshots/app-home-mobile.json")
+      assert transaction.observed_current?("MASTER/checks/data/layout_snapshots/app-home-mobile.json")
 
       rolled_back = transaction.rollback!
 

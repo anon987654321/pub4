@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Pipeline unit tests — Result-monadic chaining and deploy-gate contract.
+# Pipeline unit tests — Result-monadic chaining and deploy-check contract.
 class TestPipeline < Minitest::Test
   include Master
 
@@ -229,7 +229,7 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_deploy_gate_blocks_when_self_scan_has_violations
+  def test_deploy_check_blocks_when_self_scan_has_violations
     Dir.mktmpdir do |dir|
       write_rules(dir)
       bus = FakeBus.new
@@ -245,7 +245,7 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_deploy_gate_blocks_tier1_critical_principles_first
+  def test_deploy_check_blocks_tier1_critical_principles_first
     Dir.mktmpdir do |dir|
       write_rules(dir)
       bus = FakeBus.new
@@ -257,7 +257,7 @@ class TestPipeline < Minitest::Test
       refute result.ok?
       assert_equal :policy, result.category
       assert_match(/tier1 critical/, result.message)
-      assert_equal "tier1_critical", bus.events.find { |event, _| event == "pipeline:blocked" }.last[:gate]
+      assert_equal "tier1_critical", bus.events.find { |event, _| event == "pipeline:blocked" }.last[:check]
     end
   end
 
@@ -282,7 +282,7 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_deploy_gate_blocks_when_evidence_score_is_too_low
+  def test_deploy_check_blocks_when_evidence_score_is_too_low
     Dir.mktmpdir do |dir|
       write_rules(dir)
       scanner = FakeScanner.new([])
@@ -296,7 +296,7 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_deploy_gate_passes_with_enough_evidence
+  def test_deploy_check_passes_with_enough_evidence
     Dir.mktmpdir do |dir|
       write_rules(dir)
       scanner = FakeScanner.new([])
@@ -312,7 +312,7 @@ class TestPipeline < Minitest::Test
     end
   end
 
-  def test_deploy_gate_skips_non_deploy_messages
+  def test_deploy_check_skips_non_deploy_messages
     Dir.mktmpdir do |dir|
       scanner = FakeScanner.new([{ law: "SELF_RULE", line: 1, message: "violation" }])
       pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:)

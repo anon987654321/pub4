@@ -15,7 +15,7 @@ require_relative "../lib/guard_state"
 # An earlier version of this rule asked whether resource_guard.sh's restore
 # thresholds were still reachable, computed from its history log. Measured
 # against the real 1550-tick log it stayed silent through the incident it was
-# written for, so it was replaced rather than shipped: the gate does open, just
+# written for, so it was replaced rather than shipped: the check does open, just
 # rarely, and the log never records whether anything was shed at the time. The
 # rule below observes the outage instead of modelling the mechanism.
 class TestGuardState < Minitest::Test

@@ -11,7 +11,7 @@ usage() {
 Usage: lora [--check | --prepare | --train | --train-kaggle | --train-colab | --train-replicate
              | --generate | --generate-replicate | --video-replicate | --postpro | --all]
 
-  --check            HF FLUX gate, toolkit, dataset
+  --check            HF FLUX check, toolkit, dataset
   --prepare          Rank sources/, write dataset/ with stub captions (report only without --write)
   --train            Train LoRA locally / RunPod via ai-toolkit
   --train-kaggle     Train on a free Kaggle T4: push notebook, poll, pull weights
@@ -58,7 +58,7 @@ RunPod (24GB+ GPU — RTX 4090 / A5000 / L4):
   4. tmux attach -t $SUBJECT
   5. scp weights/$MODEL/*.safetensors back to Mac when done
 
-Exit: 0 ok | 1 setup | 2 HF gate | 3 no weights
+Exit: 0 ok | 1 setup | 2 HF check | 3 no weights
 EOF
 }
 
@@ -86,7 +86,7 @@ if [ "${LORA_SKIP_POSTPRO:-0}" = "1" ]; then
   skip_postpro=1
 fi
 
-run_gate_check() {
+run_check_check() {
   ruby "$CHECK_SCRIPT"
 }
 
@@ -140,13 +140,13 @@ report_weights() {
 
 case "$mode" in
   check)
-    run_gate_check
+    run_check_check
     check_dataset
     report_weights
     echo "ok: images $OUT_DIR"
     ;;
   train)
-    run_gate_check
+    run_check_check
     check_dataset
     sh "$SCRIPT_DIR/run_train.sh"
     sync_samples_to_out
@@ -176,7 +176,7 @@ case "$mode" in
     ruby "$SCRIPT_DIR/run_video_replicate.rb" "$@"
     ;;
   generate)
-    run_gate_check
+    run_check_check
     run_generate_samples
     maybe_postpro
     ;;
@@ -184,7 +184,7 @@ case "$mode" in
     run_postpro
     ;;
   all)
-    run_gate_check
+    run_check_check
     require_lora_weights
     run_generate_samples
     maybe_postpro

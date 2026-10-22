@@ -6,19 +6,19 @@ require_relative "../lib/check_runner"
 require_relative "../lib/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = Deploy::RubyRunner.gate_ruby
+RUBY = Deploy::RubyRunner.check_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
   parser.banner = <<~BANNER
     Usage: OPENBSD/bin/check [--profile=operator|contributor|full]
 
-    Local deploy gates, no box required:
+    Local deploy checks, no box required:
       openbsd              OPENBSD/bin/check-openbsd (identity, installed targets, ports,
                            dns zones, deploy smoke, resource guard, shell syntax, vps safety)
-      production           MASTER/gates/runner.rb production
-      phantom fk           MASTER/gates/runner.rb phantom_foreign_keys
-      domain align         MASTER/gates/runner.rb domain_alignment
+      production           MASTER/checks/runner.rb production
+      phantom fk           MASTER/checks/runner.rb phantom_foreign_keys
+      domain align         MASTER/checks/runner.rb domain_alignment
       dr freshness         OPENBSD/bin/dr-pull --check (skips off the operator Mac)
       openbsd contracts    OPENBSD/test/run_all.rb, one process per file
 
@@ -30,12 +30,12 @@ end.parse!
 runner = Deploy::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-# check-openbsd owns identity and the deploy smoke gate, and brings installed
+# check-openbsd owns identity and the deploy smoke check, and brings installed
 # targets, dns zones and vps safety into the one command most people type.
 failures << "openbsd" unless runner.run("openbsd", RUBY, "OPENBSD/bin/check-openbsd")
-failures << "production" unless runner.run("production", RUBY, "MASTER/gates/runner.rb", "production")
-failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "MASTER/gates/runner.rb", "phantom_foreign_keys")
-failures << "domain_align" unless runner.run("domain align", RUBY, "MASTER/gates/runner.rb", "domain_alignment")
+failures << "production" unless runner.run("production", RUBY, "MASTER/checks/runner.rb", "production")
+failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "MASTER/checks/runner.rb", "phantom_foreign_keys")
+failures << "domain_align" unless runner.run("domain align", RUBY, "MASTER/checks/runner.rb", "domain_alignment")
 
 # The only copy of production data that leaves vm23 is dr-pull's, and it stopped
 # for seven nights without anything noticing. This asks how old the newest pull
@@ -47,7 +47,7 @@ failures << "openbsd_contracts" unless runner.run("openbsd contracts", RUBY, "OP
 
 if profile == "full"
   failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
-  failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/gates/integrity_gate.rb")
+  failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/checks/integrity_check.rb")
 end
 
 if profile == "contributor"

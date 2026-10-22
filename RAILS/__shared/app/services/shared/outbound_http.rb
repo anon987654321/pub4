@@ -52,7 +52,7 @@ module Shared
     module_function
 
     # Bound DNS names before resolution: 63 octets per label and 255 octets
-    # for the encoded name. IP literals are allowed through to the IP-range gate.
+    # for the encoded name. IP literals are allowed through to the IP-range check.
     def valid_resolver_host?(host)
       candidate = host.to_s
       candidate = candidate[1...-1] if candidate.start_with?("[") && candidate.end_with?("]")

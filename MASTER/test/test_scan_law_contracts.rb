@@ -334,7 +334,7 @@ class TestScanLawContracts < Minitest::Test
             Review: boundaries
               Coupling: interface shapes
     YAML
-    assert_empty Laws::ConfigHierarchyLaw.new.check(flows, path: "gates/data/flows.yml")
+    assert_empty Laws::ConfigHierarchyLaw.new.check(flows, path: "checks/data/flows.yml")
 
     locale = "en:\n  brgen:\n    posts:\n      form:\n        title: Title\n"
     assert_empty Laws::ConfigHierarchyLaw.new.check(locale, path: "brgen/config/locales/en.yml")

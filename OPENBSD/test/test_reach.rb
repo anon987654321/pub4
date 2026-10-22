@@ -76,8 +76,8 @@ class ReachTest < Minitest::Test
     assert_includes checks("cron").map(&:subject), "/opt"
   end
 
-  # The uptime-check shape. reach reads cron lines through the drift gate's
-  # scheduled_commands, so an environment prefix is the gate's parsing, proved
+  # The uptime-check shape. reach reads cron lines through the drift check's
+  # scheduled_commands, so an environment prefix is the check's parsing, proved
   # here from reach's side.
   def test_an_environment_prefix_is_not_mistaken_for_the_command
     line = "*/5 * * * * ALLOW_X=1 /usr/local/bin/b.sh >> /var/log/b.log 2>&1"

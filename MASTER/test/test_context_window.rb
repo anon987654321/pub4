@@ -47,7 +47,7 @@ class TestContextWindow < Minitest::Test
         decisions: ["keep one execution slot"],
         facts: ["vm23 is the production host"],
         files: ["MASTER/lib/ops/control_plane.rb"],
-        open_work: ["run the live gate"],
+        open_work: ["run the live check"],
         constraints: ["no GitHub Actions"],
         uncertainty: ["browser proof remains pending"],
       )
@@ -59,7 +59,7 @@ class TestContextWindow < Minitest::Test
     assert_match(/schema 1/, body)
     assert_match(/decisions:\n- keep one execution slot/, body)
     assert_match(/files:\n- MASTER\/lib\/ops\/control_plane\.rb/, body)
-    assert_match(/open_work:\n- run the live gate/, body)
+    assert_match(/open_work:\n- run the live check/, body)
   end
 
   def test_the_providers_input_count_raises_pressure_past_the_estimate

@@ -47,7 +47,7 @@ class TestInstruments < Minitest::Test
   end
 
   # Comments are not length — the 2026-08-10 decision that made lint:spine and
-  # [DENSITY] agree. If this flips, one of the two gates has drifted back.
+  # [DENSITY] agree. If this flips, one of the two checks has drifted back.
   def test_comments_do_not_count_as_length
     source = File.read(File.expand_path("fixtures/documented_method.rb", __dir__))
 

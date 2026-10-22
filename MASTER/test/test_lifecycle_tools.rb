@@ -17,7 +17,7 @@ class LifecycleToolsSpec < Minitest::Test
     repo = File.expand_path("..", ROOT)
     # The tool own reading rather than a second one beside it: root_entries
     # drops what git ignores, and a spec that re-derived the list from
-    # Dir.children failed on .DS_Store and the gate ledger while the tool was
+    # Dir.children failed on .DS_Store and the check ledger while the tool was
     # right.
     present = root_entries
     files, dirs = present.partition { |name| File.file?(File.join(repo, name)) }

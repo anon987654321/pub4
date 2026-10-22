@@ -9,7 +9,7 @@ require "minitest/autorun"
 # instance of the unprompted-blurting class in this file's history (spoken
 # 'scanning' filler, the 'still here' idle nudge, the STT-hears-its-own-TTS echo
 # loop); the previous three were silenced too." Each was fixed where it was
-# found, and the class came back somewhere else. This is the gate the fourth fix
+# found, and the class came back somewhere else. This is the check the fourth fix
 # did not get.
 #
 # The fifth was the welcome greeting, and it was the worst of them because it
@@ -123,7 +123,7 @@ class TestUnpromptedSpeech < Minitest::Test
     assert_match(/if \(opts\.reason !== 'unreliable'\) setVoiceAuto\(false\);/, source,
                  "deliberate voice-mode exit no longer holds")
     assert_match(/function voiceAutoEnabled\(\) \{\n\s*return !_micOptedOut;/, source,
-                 "the exit no longer gates the next automatic entry")
+                 "the exit no longer checks the next automatic entry")
   end
 
   # The ambient loop may play. It may not talk.

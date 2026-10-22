@@ -5,7 +5,7 @@ require "test_helper"
 # Subscribing to a TV channel looked its subscription up by `tv_channel:`, an
 # association that does not exist (the belongs_to is `channel`, the column
 # `tv_channel_id`), so both subscribe and unsubscribe answered 500. Found by the
-# flow gate (MASTER/gates/data/flows.yml, brgen_tv_subscribe_and_leave).
+# flow check (MASTER/checks/data/flows.yml, brgen_tv_subscribe_and_leave).
 class Tv::ChannelSubscriptionTest < ActionDispatch::IntegrationTest
   setup do
     Brgen::CitySeed.sync! if City.table_exists?

@@ -4,7 +4,7 @@ require "prism"
 require "yaml"
 
 module Master::Core
-  # Constitution — the single gate. Every Effect the agent proposes folds
+  # Constitution — the single check. Every Effect the agent proposes folds
   # through the rules here before the World performs anything. This is where the
   # old council, scan, judge, biases, veto, evidence, sharp_edges, and the Guard
   # all live now: not as subsystems, but as rules over effects. One `admit`.
@@ -37,8 +37,8 @@ module Master::Core
     # safe_exec_rule's veto regex over the joined argv. Io::Shell has consulted
     # Ground::Policy::Sandbox — an adversarial corpus covering dangerous rm in any
     # flag order, fork bombs, curl-piped-to-shell, device truncation — since that
-    # gate was wired in, but the Fold does not exec through Io::Shell. It execs
-    # through World. So the hardened gate was live for the tool path and absent
+    # check was wired in, but the Fold does not exec through Io::Shell. It execs
+    # through World. So the hardened check was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
     def self.load(data_dir:, workspace_root: nil, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
       rules_data = YAML.safe_load_file(File.join(data_dir, "laws.yml"), aliases: true)
@@ -245,7 +245,7 @@ module Master::Core
     # is what it returns for anything it does not recognise — which is most real
     # commands — so treating :ask as a refusal would stop the fold running its own
     # tests. Io::Shell made the same call for the same reason; this keeps the two
-    # gates saying the same thing rather than inventing a second opinion.
+    # checks saying the same thing rather than inventing a second opinion.
     # The sandbox answers one of three things, and the third is new:
     #
     #   nil                 nothing to say; later rules decide

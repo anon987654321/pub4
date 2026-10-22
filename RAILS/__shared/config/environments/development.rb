@@ -41,8 +41,8 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = false
 
   # Mail lands in tmp/mails/<recipient>. Nothing listens on localhost:25, so the
-  # default SMTP delivery dropped every message and nobody, the flow gate
-  # included, could follow a sign-up confirmation (MASTER/gates/data/flows.yml
+  # default SMTP delivery dropped every message and nobody, the flow check
+  # included, could follow a sign-up confirmation (MASTER/checks/data/flows.yml
   # reads the file and opens the emailed link).
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings = { location: Rails.root.join("tmp", "mails").to_s }
@@ -63,7 +63,7 @@ Rails.application.configure do
   config.active_support.deprecation = :log
 
   # Debug suits a developer reading the newest few hundred lines at a console.
-  # It does not suit a server left up for days answering gate probes: Rails 8.2
+  # It does not suit a server left up for days answering check probes: Rails 8.2
   # ships two debug-level view subscribers, the classic LogSubscriber and the
   # structured one, so every partial render costs two lines in a file nothing
   # rotates. A long-lived caller says which it is; operator triangle is one.
@@ -114,7 +114,7 @@ Rails.application.configure do
   # seed data was unviewable by the person who wrote it.
   #
   # Read from the registry rather than restated. The registry is already the
-  # source for routing, for DNS, for acme and for the gates' host lists, and a
+  # source for routing, for DNS, for acme and for the checks' host lists, and a
   # hand-kept copy beside it drifts the day a city is added: markedsplass is
   # spelled per-country (marknadsplats, marktplatz), so even the vertical list
   # above was only ever right for Norway.
@@ -130,7 +130,7 @@ Rails.application.configure do
   # it: probing the local server with its real Host header returned 403.
   config.hosts << "bsdports.org"
   config.hosts << /\A([a-z0-9-]+\.)*bsdports\.org\z/i
-  # amber is not a city either; its one name is amberapp.art, and the live gates probe it by that Host.
+  # amber is not a city either; its one name is amberapp.art, and the live checks probe it by that Host.
   config.hosts << "amberapp.art"
   config.hosts << /\A([a-z0-9-]+\.)*amberapp\.art\z/i
 end

@@ -10,7 +10,7 @@
 # which loads every contract test into a single process. There are 131 contract
 # files today. It works, but the two reasons it works are accidental:
 #
-#   Constants. Nearly every file declares ROOT, and several declare APPS, GATES,
+#   Constants. Nearly every file declares ROOT, and several declare APPS, CHECKS,
 #   LINT and SKIP at class scope. They happen not to collide because they happen
 #   to be nested inside differently-named test classes. The first one that is
 #   not gets `already initialized constant` on a good day and another file's
@@ -19,11 +19,11 @@
 #
 #   Termination. One `exit` or one `abort` anywhere in sixty-nine files ends the
 #   run, and Minitest reports on whatever had already been collected. Several of
-#   these files shell out to gates that call `exit` on their own failure paths.
+#   these files shell out to checks that call `exit` on their own failure paths.
 #
-# There is also nothing local: `check-full` is the release gate, so the only way
+# There is also nothing local: `check-full` is the release check, so the only way
 # to run the contract suite was to run the deploy chain, which shells out to the
-# integrity gate and the Rails gates and takes minutes. That is why files in this
+# integrity check and the Rails checks and takes minutes. That is why files in this
 # directory have been found red on main -- not because nobody ran them, but
 # because running them cost a deploy check.
 #
@@ -42,7 +42,7 @@ module Operator
     RAILS_ROOT = File.expand_path("..", __dir__)
 
     # Per file. These read source and assert; a second is generous. The bound is
-    # high because four of them shell out to the gate runner, which is slow and
+    # high because four of them shell out to the check runner, which is slow and
     # is a separate problem from this one.
     TIMEOUT = Integer(ENV.fetch("CONTRACT_TIMEOUT", "300"))
     REPLAY = Integer(ENV.fetch("CONTRACT_REPLAY", "0")).clamp(0, 5)
@@ -55,7 +55,7 @@ module Operator
     end
 
     def files
-      # Recursive: test/gates/ is part of the contract suite. This currently
+      # Recursive: test/checks/ is part of the contract suite. This currently
       # selects all 131 files; a narrower glob would make a green result dishonest.
       # Written from the repository root so MASTER/tools/runs.rb reads the glob
       # and counts every file it selects as run.

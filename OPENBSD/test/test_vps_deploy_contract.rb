@@ -114,7 +114,7 @@ class VpsDeployContractTest < Minitest::Test
     refute_match(/^\s*doas\s+rcctl\b/, SOURCE)
     refute_match(/^\s*doas\s+(?:tee|chmod|mkdir)\b/, SOURCE)
     refute_includes SOURCE, 'doas ksh "$repo/OPENBSD/bin/resource_guard.sh"'
-    refute_includes SOURCE, 'doas "$RUBY" "$repo/OPENBSD/gates/solid_queue_proof.rb"'
+    refute_includes SOURCE, 'doas "$RUBY" "$repo/OPENBSD/checks/solid_queue_proof.rb"'
     refute_includes SOURCE, 'doas tee "$file"'
   end
   def test_deploy_uses_the_fixed_root_broker_when_installed
@@ -134,7 +134,7 @@ class VpsDeployContractTest < Minitest::Test
     assert_includes sync, "verticals"
   end
   def test_rails_task_runner_fails_closed_without_broker
-    runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
+    runtime = File.read(File.join(ROOT, "RAILS", "_runtime_check.sh"), encoding: "UTF-8")
     runner = runtime[/run_rails_as_app\(\) \{.*?^\}/m]
     refute_nil runner
     assert_includes runner, '[[ -x /usr/local/sbin/pub4-admin ]]'
@@ -190,7 +190,7 @@ class VpsDeployContractTest < Minitest::Test
 
     assert_equal 1, core.scan("bundle_install_as_app() {").length
     assert_includes core, 'run_rails_as_app "$app_name" "$app_dir" "bundle-install"'
-    assert_includes File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh")), '/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"'
+    assert_includes File.read(File.join(ROOT, "RAILS", "_runtime_check.sh")), '/usr/local/sbin/pub4-admin rails-task "$app_name" "$task"'
     assert_includes deploy, "[[ -x /usr/local/sbin/pub4-admin ]] || {"
     refute_includes deploy, 'doas chown -R "$app_name:$app_name" "${APP_DIR}/.bundle"'
     refute_includes deploy, 'doas tee "${APP_DIR}/.bundle/config"'
@@ -241,7 +241,7 @@ class VpsDeployContractTest < Minitest::Test
   end
   def test_rails_database_tasks_use_closed_dispatcher
     database = File.read(File.join(ROOT, "RAILS", "_database.sh"), encoding: "UTF-8")
-    runtime = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
+    runtime = File.read(File.join(ROOT, "RAILS", "_runtime_check.sh"), encoding: "UTF-8")
 
     assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "db-prepare"'
     assert_includes database, 'run_rails_as_app "$app_name" "$app_dir" "schema-load" "$db"'
@@ -304,9 +304,9 @@ class VpsDeployContractTest < Minitest::Test
   def test_ci_source_permissions_do_not_grant_world_read
     assert_includes CI_SOURCE, 'chmod -R u+rX,g+rX "${repo}/MASTER/tools"'
     refute_includes CI_SOURCE, 'chmod -R a+rX "${repo}/MASTER/tools"'
-    runtime_gate = File.read(File.join(ROOT, "RAILS", "_runtime_gate.sh"), encoding: "UTF-8")
-    assert_includes runtime_gate, 'chmod -R u+rX,g+rX "$rails_tree"'
-    refute_includes runtime_gate, 'chmod -R a+rX "$rails_tree"'
+    runtime_check = File.read(File.join(ROOT, "RAILS", "_runtime_check.sh"), encoding: "UTF-8")
+    assert_includes runtime_check, 'chmod -R u+rX,g+rX "$rails_tree"'
+    refute_includes runtime_check, 'chmod -R a+rX "$rails_tree"'
   end
 
   def test_ci_does_not_escalate_permission_changes_on_the_checkout
@@ -360,16 +360,16 @@ class VpsDeployContractTest < Minitest::Test
     assert_match(/exit 2/, guard, "the root guard must exit, not warn")
   end
 
-  # SKIP_CI=1 does not mean no gate runs: it takes the ${app}.sh branch, which
-  # reaches rails_runtime_gate through deploy_tracked_app. The name says otherwise,
+  # SKIP_CI=1 does not mean no check runs: it takes the ${app}.sh branch, which
+  # reaches rails_runtime_check through deploy_tracked_app. The name says otherwise,
   # and a hotfix pushed on that belief is how something bin/ci would have caught
   # gets onto the box. The branch must keep running the app script.
-  def test_skip_ci_takes_the_narrower_gate_rather_than_no_gate
+  def test_skip_ci_takes_the_narrower_check_rather_than_no_check
     branch = SOURCE[/if \[\[ \$\{SKIP_CI:-\} == 1 \]\]; then(.*?)^else$/m]
 
     refute_nil branch, "the SKIP_CI branch is gone — the scan broke, or the path did"
     assert_match(%r{RAILS/\$\{app\}/\$\{app\}\.sh}, branch,
-                 "SKIP_CI=1 must still run the app script, which is what reaches rails_runtime_gate")
+                 "SKIP_CI=1 must still run the app script, which is what reaches rails_runtime_check")
   end
 
   GUARD = File.read(File.join(ROOT, "OPENBSD", "usr", "local", "bin", "resource_guard.sh"), encoding: "UTF-8")
@@ -379,7 +379,7 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   # resource_guard stops shedding while a .deploying* flag is fresh. rc.d holds
-  # one only across the restart, so CI and the gates ran as strikes and the app
+  # one only across the restart, so CI and the checks ran as strikes and the app
   # deployed last was shed on the first tick after its flag came off. The flag
   # this script holds has to be one the guard reads, live across the deploy,
   # and gone when the script exits.
@@ -552,7 +552,7 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_the_flag_is_taken_before_ci_and_the_app_is_checked_before_ok
     assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
-    assert_operator SOURCE.rindex(%(admin_service check "$app")), :>, SOURCE.index(%(GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb"))
+    assert_operator SOURCE.rindex(%(admin_service check "$app")), :>, SOURCE.index(%(CHECK_AUTOFIX=0 "$RUBY" "$repo/MASTER/checks/runner.rb"))
   end
 
   # The copy-tree on vm23 keeps path gems beside app/, so every ../X an app

@@ -334,7 +334,7 @@ prompt_archaeology:
 
       '
     sharpen_master:
-    - Default to silent success for internal gates.
+    - Default to silent success for internal checks.
     - Emit compact diffs/summaries for landed changes.
     - Use structured YAML/JSON only when downstream code consumes it.
   - id: memory_and_personalization
@@ -783,7 +783,7 @@ motd:
     - "face: WebGL particle UI at /chat"
     - "council: multi-persona deliberation"
     - "engine: pub4-shared across active Rails apps"
-    - "deploy: relayd health + OPERATOR.sh gates"
+    - "deploy: relayd health + OPERATOR.sh checks"
     - "core: 5-file spine smoke in core/"
     - "synth: say \"improvise\" and it plays, live, until you say \"stop\""
 
@@ -943,7 +943,7 @@ operator_playbook:
       area: openbsd
       signal: "relayctl show hosts marks backend empty/down while curl http://127.0.0.1:PORT/up returns 200; HTTPS empty reply"
       action: "doas rcctl restart relayd after mass app restarts. Cron runs /usr/local/bin/relayd-watchdog every 5 min to auto-heal stale tables."
-      proof: "relayctl show hosts → all tables active; ruby34 OPENBSD/gates/health_check.rb"
+      proof: "relayctl show hosts → all tables active; ruby34 OPENBSD/checks/health_check.rb"
 
     - id: resource_guard_shedding
       area: openbsd
@@ -954,8 +954,8 @@ operator_playbook:
     - id: rails_phantom_foreign_keys
       area: rails
       signal: "SQLite no such table main.listings|buyers|likers|orders|menu_items during seed or insert"
-      action: "Never use foreign_key: true alone on namespaced refs — use foreign_key: { to_table: :users } or :marketplace_listings. Run MASTER/gates/runner.rb phantom_foreign_keys."
-      proof: "ruby MASTER/gates/runner.rb phantom_foreign_keys exits 0"
+      action: "Never use foreign_key: true alone on namespaced refs — use foreign_key: { to_table: :users } or :marketplace_listings. Run MASTER/checks/runner.rb phantom_foreign_keys."
+      proof: "ruby MASTER/checks/runner.rb phantom_foreign_keys exits 0"
 
     - id: rails_model_schema_drift
       area: rails
@@ -991,13 +991,13 @@ operator_playbook:
       area: master_web
       signal: "White page, silent TTS, or voice/lang regressions after persona changes"
       action: "Single-voice policy in data/voice.yml (tts.single_voice). Ruby reads Voice::Policy; JS reads MASTER_VOICE_POLICY; guardVoice returns whatever that policy names, so no file should carry the voice by name. rc.d/master fingerprints face_*.js + sw.js. vps_deploy_master.sh runs bundle install before precompile."
-      proof: "curl page includes MASTER_VOICE_POLICY; GET /chat/tts status returns audio; GET /health checks.tts true and deploy.tts_socket true; ruby OPENBSD/gates/health_check.rb --core; bin/smoke --web clean"
+      proof: "curl page includes MASTER_VOICE_POLICY; GET /chat/tts status returns audio; GET /health checks.tts true and deploy.tts_socket true; ruby OPENBSD/checks/health_check.rb --core; bin/smoke --web clean"
 
     - id: master_deploy_confidence
       area: master_web
       signal: "Code pushed but unsure prod serves new face.runtime digest or TTS socket is down"
       action: "GET /health returns deploy.git_sha, deploy.face_runtime_digest, deploy.tts_socket, deploy.assets_precompile_at. Face status strip shows tts: socket down or tts: waiting Ns on rate limit. After deploy run probe_http and curl /health on vm23."
-      proof: "curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'; OPENBSD/gates/health_check.rb asserts deploy.tts_socket; face #tts-live shows health hints when degraded"
+      proof: "curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'; OPENBSD/checks/health_check.rb asserts deploy.tts_socket; face #tts-live shows health hints when degraded"
 
     - id: ecology_layer_visibility
       area: master_web
@@ -1009,12 +1009,12 @@ operator_playbook:
       area: process
       signal: "Backlog marked done but production gaps remain"
       action: "Ship readiness requires bin/probe repo, per-app bin/ci, health_check.rb, and db:seed — not checkbox files. Fix executable failures only."
-      proof: "bin/probe deploy; ruby OPENBSD/gates/health_check.rb on VPS"
+      proof: "bin/probe deploy; ruby OPENBSD/checks/health_check.rb on VPS"
 
     - id: post_sync_vps_proof
       area: deploy
       signal: "Code pushed but services stale or untested on vm23"
-      action: "After git pull: SKIP_MASTER_SCAN=1 I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/gates/health_check.rb; curl https://ai.brgen.no/up"
+      action: "After git pull: SKIP_MASTER_SCAN=1 I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/checks/health_check.rb; curl https://ai.brgen.no/up"
       proof: "doas rcctl check master brgen amber bsdports; browser smoke on ai.brgen.no face"
 
     - id: rails_rcd_canonical_names
@@ -1172,7 +1172,7 @@ skills_registry:
     triggers:
     - "\\b(?:growth|marketing|seo|newsletter|affiliate|conversion|acquisition)\\b"
     body: |-
-      The growth skill audits pub4's public growth surfaces as one system: search and local discovery, permission marketing, partner and affiliate measurement, and the conversion path. Use current code and runtime evidence first: shared SEO and schema helpers, consent and newsletter jobs, outbound-click and partner-marketing models, and the existing frontend and production gates.
+      The growth skill audits pub4's public growth surfaces as one system: search and local discovery, permission marketing, partner and affiliate measurement, and the conversion path. Use current code and runtime evidence first: shared SEO and schema helpers, consent and newsletter jobs, outbound-click and partner-marketing models, and the existing frontend and production checks.
 
       Separate observed instrumentation from inferred opportunity. Preserve consent, disclosure, local relevance, and first-party measurement; never invent traffic, conversions, or attribution. Prefer one small measurable experiment over broad promotional machinery. End with concrete file-backed gaps and the smallest next change.
 

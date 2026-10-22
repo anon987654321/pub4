@@ -165,7 +165,7 @@ class TestSpeechSelftestProbe < Minitest::Test
     end
   end
 
-  # The cheap probe keeps its job. It gates the synthesis path, which runs per
+  # The cheap probe keeps its job. It checks the synthesis path, which runs per
   # utterance, and a subprocess there would cost more than the failed attempt
   # it avoids.
   def test_the_cheap_probe_still_spawns_nothing

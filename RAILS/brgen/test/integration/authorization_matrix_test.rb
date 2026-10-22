@@ -4,21 +4,21 @@ require "test_helper"
 
 # One row per (route, actor), each declaring ONE outcome.
 #
-# The flow gates cover this app with GETs carrying an `expect_status` list, and
+# The flow checks cover this app with GETs carrying an `expect_status` list, and
 # twelve of those steps accept 200 AND a redirect — so "serves a stranger" and
-# "sends a stranger to sign in" are the same result to the gate. amber grew this
-# matrix after `GET /items/new` served an anonymous 200 with every gate green;
+# "sends a stranger to sign in" are the same result to the check. amber grew this
+# matrix after `GET /items/new` served an anonymous 200 with every check green;
 # this is the same discipline for brgen, and brgen carries the sharper version
 # of the bug on record: `PostsController` line 18 says two `require_real_user`
-# lines did not make two gates, because the later `only:` replaced the earlier
+# lines did not make two checks, because the later `only:` replaced the earlier
 # one on the same callback rather than adding to it. The chain looked doubly
-# guarded and had exactly one gate.
+# guarded and had exactly one check.
 #
 # The distinction this file exists to hold is brgen's own: an anonymous visitor
 # here is not a visitor with no user. brgen mints `guest_*@guest.local` accounts
 # for people who have not signed up — 5,886 of them in production as of
 # 2026-09-01 — so `Current.user` is present for a stranger and "is there a user"
-# answers nothing. `require_real_user` is the gate that separates a soft guest
+# answers nothing. `require_real_user` is the check that separates a soft guest
 # from an account, which makes every row below a test of that word "real".
 #
 # `vertical_mutations_test.rb` beside this file covers the signed-in half of the
@@ -67,7 +67,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       { event: { title: "Authz", description: "d", starts_at: "2027-01-01 19:00" } } ],
     # reports#create requires a signed GlobalID for a real target before it
     # does anything, so a signed-in row here would be a test of GlobalID
-    # signing rather than of the gate. The refusal is the security property and
+    # signing rather than of the check. The refusal is the security property and
     # `before_action :require_real_user` carries no `only:`, so the guest row
     # covers every action on the controller.
     [ "/reports",         :post, :redirect, :guest_only, { reason: "spam" } ]
@@ -107,7 +107,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       assert_response :success, "#{verb.upcase} #{route} as #{actor} should render"
     when :redirect
       assert_response :redirect, "#{verb.upcase} #{route} as #{actor} must NOT be served — " \
-                                 "got #{response.status}. An identity gate is missing, or a " \
+                                 "got #{response.status}. An identity check is missing, or a " \
                                  "second require_real_user replaced the first instead of adding to it."
     when :any
       assert_includes 200..399, response.status, "#{verb.upcase} #{route} as #{actor} errored"

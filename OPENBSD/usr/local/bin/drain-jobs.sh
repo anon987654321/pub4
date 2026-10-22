@@ -52,7 +52,7 @@ stamp() {
 }
 
 # The 5-minute average. The 1-minute figure spikes on anything that starts,
-# including the boot this script is about to do, so a gate reading it refuses
+# including the boot this script is about to do, so a check reading it refuses
 # the spike it caused itself — see the header of prune-guests.sh, where that
 # cost a night's work before anyone noticed.
 load_is_low() {

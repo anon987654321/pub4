@@ -3,6 +3,15 @@
 
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+# The ladder, law/ and the scan registry and then the critique tier, is a mode of this command rather than
+# a second one: --ladder, or any of its own flags, hands the arguments to lib/operator/check_ladder.rb.
+LADDER_FLAGS = %w[--ladder --scan-only --lexical-only --semantic-only --explain].freeze
+if ARGV.any? { |arg| LADDER_FLAGS.include?(arg) || arg.start_with?("--tree=") }
+  ARGV.delete("--ladder")
+  load File.expand_path("../lib/operator/check_ladder.rb", __dir__)
+  exit
+end
 #
 # One check entrypoint. A profile is a named list of steps — pick one:
 #
@@ -13,10 +22,10 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #   agent        law/agent changes: selftest + data singularity
 #   web          the face: static web UI (+ live web when MASTER_WEB_LIVE=1)
 #   ci           the canonical local CI floor; MASTER_CI_FULL/WEB/BROWSER widen it
-#   full         operator-grade gate: ci + bin/probe all + rake audit
+#   full         operator-grade check: ci + bin/probe all + rake audit
 #
-# `bin/operator gate` runs this as one stage of the repo-wide chain, alongside the
-# scanner, the RAILS gates, the ratchets and the sprawl census.
+# `bin/operator check` runs this as one stage of the repo-wide chain, alongside the
+# scanner, the RAILS checks, the ratchets and the sprawl census.
 #
 # Steps compose from two makers (rake / bin), so a new profile is one line of data.
 
@@ -61,12 +70,12 @@ end
 
 # test:subsystems groups the cli/io/fix suites for a focused run, and the step
 # is in the operator and contributor profiles and the ci list so a break there
-# is caught by the gates contributors actually run, not only under full.
+# is caught by the checks contributors actually run, not only under full.
 # 17s, measured 2026-08-01.
 # rake["tools"] is in agent as well as the two heavy profiles, and it is the
 # only step that is. The agent profile is what runs around law and fix-loop work,
-# which is exactly the work that has silently broken tools before — `bin/gate`'s
-# /fix step rewrites the whole shared worktree, and until MASTER/tools/gate.rb there
+# which is exactly the work that has silently broken tools before — `bin/check --ladder`'s
+# /fix step rewrites the whole shared worktree, and until MASTER/tools/check.rb there
 # was nothing in any profile that noticed. It costs ~3s: parse is in-process AST
 # and the two load probes are about a second each.
 
@@ -158,7 +167,7 @@ Master::Trace::Dmesg.status("web0", "live web checks skipped, set MASTER_WEB_LIV
 
 # Hang guard, not a performance budget — see CheckRunner::SLOW_STEP_FRACTION.
 # 360 was under `rake test`'s real cost the moment anything else used the CPU
-# (247s measured idle, 2026-08-02), so the gate reported starved-clock timeouts
+# (247s measured idle, 2026-08-02), so the check reported starved-clock timeouts
 # as failing unit tests. CheckRunner now warns on a *passing* step that eats
 # most of its allowance, which is the signal that was missing.
 timeout = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", profile == "full" ? "1200" : "900"))

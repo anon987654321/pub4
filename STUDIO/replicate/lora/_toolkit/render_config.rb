@@ -189,7 +189,7 @@ def apply_sdxl!(process)
   # Reach verified in ai-toolkit's source rather than assumed, because switching
   # a flag on and finding out three runs later that nothing read it is this
   # repo's most expensive recurring mistake. train_text_encoder reaches the
-  # network builder (BaseSDTrainProcess 214, 228), gates gradient preparation
+  # network builder (BaseSDTrainProcess 214, 228), checks gradient preparation
   # (740) and is read by the trainer (SDTrainer 310, 1442). SDXL's TWO text
   # encoders are handled explicitly — line 741 branches on isinstance(list) and
   # prepares both — so this is not a single-encoder assumption quietly training
@@ -222,7 +222,7 @@ end
 # above test ENV.key? to hold off their own figure, and then nothing set the
 # one you asked for. LORA_FLUX_MODEL and LORA_FLUX_MODEL_PATH were worse: they
 # moved the licence check in check_hf_flux_access.rb to a repo the trainer did
-# not then load, so a local FLUX checkout passed the gate and downloaded the
+# not then load, so a local FLUX checkout passed the check and downloaded the
 # gated one anyway.
 def apply_env_overrides!(process)
   apply_sdxl!(process) if ENV["LORA_BASE"].to_s.strip.downcase == "sdxl"

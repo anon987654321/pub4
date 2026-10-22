@@ -103,7 +103,7 @@ shell_boot:
 shell_early:
   - face_ascii.js
   - face_2d_fallback.js
-  - container_gate.js
+  - container_check.js
   - face_deferred_loader.js
 
 # javascript_include_tag, deferred, in this order. Written as bare names because

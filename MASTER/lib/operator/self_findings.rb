@@ -17,9 +17,9 @@ require_relative "../io/exec"
 # rules find in our own trees" while measuring the law alone, and nothing
 # anywhere counted what the registry finds: law_audit runs those rules over a
 # sixth of the tree and measures blindness rather than findings, and `bin/operator
-# gate` runs them over all four trees on every pass and records nothing.
+# check` runs them over all four trees on every pass and records nothing.
 #
-# Lexical only, on purpose. The full gate runs /scan with the semantic pass and
+# Lexical only, on purpose. The full check runs /scan with the semantic pass and
 # blocks on a model call — measured 2026-08-25 at 17 minutes elapsed against 4
 # minutes of CPU, idle in a TLS read, on its way to a 20-minute stage timeout.
 # A number that needs a network and an API key is a number nobody has. Both
@@ -201,7 +201,7 @@ module Operator
         # Through Master.language_for, not the raw map: the map answers by
         # extension alone, so this census called Rakefile and every shebang
         # executable unknown while the scanner resolved them. Two answers to the
-        # same question is how a census and a gate disagree about one file.
+        # same question is how a census and a check disagree about one file.
         lang = Master.language_for(path)&.to_sym
         relative = path.delete_prefix("#{ROOT}/")
 

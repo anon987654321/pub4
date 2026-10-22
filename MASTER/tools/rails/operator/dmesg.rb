@@ -6,7 +6,7 @@ module Operator
   # Operator output in OpenBSD's dmesg grammar: `unitN at parent: detail`, one
   # line per fact. MASTER/lib/trace/dmesg.rb speaks the same shape; this copy
   # exists because bin/ci runs from a copy-tree on vm23 with no MASTER beside it,
-  # and the gate runner and the deploy scripts read it from here.
+  # and the check runner and the deploy scripts read it from here.
   module Dmesg
     ANSI = /\e\[[0-9;?]*[A-Za-z]/
     # A line naming a file position or a verdict. Minitest's `[test/x.rb:12]`,

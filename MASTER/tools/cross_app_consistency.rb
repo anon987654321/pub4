@@ -13,7 +13,7 @@
 require "optparse"
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
-require File.expand_path("../gates/support/geometry_probe", __dir__)
+require File.expand_path("../checks/support/geometry_probe", __dir__)
 require_relative "../lib/fix/cross_app_consistency"
 require_relative "../lib/fix/cross_app_probe"
 

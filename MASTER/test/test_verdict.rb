@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Hybrid-Norm verdict: deterministic hard signals gate; rubric decides the rest.
+# Hybrid-Norm verdict: deterministic hard signals check; rubric decides the rest.
 class TestVerdict < Minitest::Test
   def test_hard_failure_blocks_regardless_of_rubric
     result = Master::Review::Verdict.new.call(

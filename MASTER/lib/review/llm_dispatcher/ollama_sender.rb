@@ -12,7 +12,7 @@ module Master
       # models.yml has declared `ollama:` ids since the tier was written and
       # ModelRouter learned to exclude them when OLLAMA_BASE_URL is unset. The
       # half nobody had built is this one, and provider_availability.rb says so
-      # in a comment: with no branch here, an id that *passed* the gate fell
+      # in a comment: with no branch here, an id that *passed* the check fell
       # through to RubyLLM, which handed `ollama:llama3:latest` to OpenRouter and
       # got an error back. So enabling the tier was the way to break it.
       #

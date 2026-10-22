@@ -6,7 +6,7 @@ require "open3"
 # A suite that reports 106 tests and runs 10 is an instrument reporting on itself.
 #
 # A file can be loaded by the suite and contribute none of its own runs: its
-# tests never execute, its failures reach no gate, and the aggregate count hides
+# tests never execute, its failures reach no check, and the aggregate count hides
 # it, because the aggregate is the number being misreported. Asking each file
 # what it reports alone is the only view from outside.
 #

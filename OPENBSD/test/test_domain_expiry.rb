@@ -29,7 +29,7 @@ class TestDomainExpiry < Minitest::Test
   def setup
     released = File.exist?(RELEASED) ? (YAML.safe_load_file(RELEASED) || {}) : {}
     # A domain we have decided to let go is not an alarm. Recording the decision
-    # is the only way this gate can be greened without renewing, and it leaves a
+    # is the only way this check can be greened without renewing, and it leaves a
     # reason next to the name rather than a silent skip.
     @released = released.keys
     @rows = YAML.safe_load_file(SNAPSHOT).reject { |domain, _| @released.include?(domain) }
@@ -66,7 +66,7 @@ class TestDomainExpiry < Minitest::Test
     end
 
     assert_empty missing,
-                 "renewable owned domains absent from the expiry gate; refresh using " \
+                 "renewable owned domains absent from the expiry check; refresh using " \
                  "OPENBSD/bin/domain_watch.rb --update and verify the registrar results:\n  " \
                  "#{missing.join("\n  ")}"
   end

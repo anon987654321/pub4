@@ -11,7 +11,7 @@ module Master
 
     # What /fix depends on to measure anything, tried once before the first file. A run whose disk probe,
     # patch tool or linter is broken does not fail; it reports thousands of files as scanned and clean, or
-    # each as a "scan error", and the numbers look like a result. Today's gate refused every stage on a
+    # each as a "scan error", and the numbers look like a result. Today's check refused every stage on a
     # NameError a rescue had swallowed. This names the broken instrument instead, and stops.
     #
     # Each probe returns nil when the instrument works and a one-line reason when it does not.
@@ -66,7 +66,7 @@ module Master
         found ? nil : "patch(1) is not on PATH, so no model diff can be applied"
       end
 
-      # A child ruby is how every gate and test runs; it must be the ruby running this process.
+      # A child ruby is how every check and test runs; it must be the ruby running this process.
       def probe_ruby_child
         out, status = Master::Io::Exec.capture2e(RbConfig.ruby, "-e", "print RUBY_VERSION")
         return "#{RbConfig.ruby} did not start" unless status.success?

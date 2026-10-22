@@ -31,7 +31,7 @@ class FoldDeliberationTest < Minitest::Test
     assert_match(/critique/, verdict.reason)
   end
 
-  def test_critique_clears_council_gate
+  def test_critique_clears_council_check
     memory = Master::Core::Memory.new(risk: :high)
     memory.record(Master::Core::Effect.critique, Master::Core::Observation.ok("council pass"))
 

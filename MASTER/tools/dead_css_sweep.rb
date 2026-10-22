@@ -32,7 +32,7 @@ end.parse!
 sweep = Master::Fix::DeadCssSweep.new
 
 if opts[:capture]
-  require File.expand_path("../gates/support/geometry_probe", __dir__)
+  require File.expand_path("../checks/support/geometry_probe", __dir__)
   repo = sweep.root
   abort "dead_css_sweep: no browser available" unless Deploy::GeometryProbe.available?
 

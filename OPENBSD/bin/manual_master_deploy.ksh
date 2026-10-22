@@ -57,9 +57,9 @@ else
   "$BUNDLE" exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle || _fail=1
   "$BUNDLE" exec rails assets:precompile || _fail=1
 fi
-"$RUBY" /home/dev/pub4/MASTER/gates/runner.rb master_web_assets || _fail=1
+"$RUBY" /home/dev/pub4/MASTER/checks/runner.rb master_web_assets || _fail=1
 if [[ "$_fail" -ne 0 ]]; then
-  echo FAILED precompile_or_gate
+  echo FAILED precompile_or_check
   exit 1
 fi
 

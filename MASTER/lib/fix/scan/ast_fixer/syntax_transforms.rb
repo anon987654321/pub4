@@ -140,7 +140,7 @@ module Master
               next line if protected_lines.include?(index + 1)
               # A leading-dot continuation below means the literal heads a
               # method chain — .freeze there freezes a temporary the chain
-              # immediately replaces (OPENBSD/gates/health_check.rb CURL).
+              # immediately replaces (OPENBSD/checks/health_check.rb CURL).
               next line if lines[index + 1]&.lstrip&.start_with?(".")
 
               name = line[/\A\s*([A-Z][A-Z_]*)\s*=/, 1]

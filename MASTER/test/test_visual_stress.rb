@@ -2,8 +2,8 @@
 
 require_relative "test_helper"
 require "tmpdir"
-require File.expand_path("../gates/support/geometry_probe", __dir__)
-require File.expand_path("../gates/support/stress_states", __dir__)
+require File.expand_path("../checks/support/geometry_probe", __dir__)
+require File.expand_path("../checks/support/stress_states", __dir__)
 require File.expand_path("../lib/fix/visual_stress", __dir__)
 
 # Stress states: the decisions (which states, how findings are filtered, what

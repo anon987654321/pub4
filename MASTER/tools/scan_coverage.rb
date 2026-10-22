@@ -2,8 +2,8 @@
 
 # No first-party Ruby tree is silently outside MASTER's own law.
 #
-# A gate whose scope is a path literal loses coverage without failing. `core/`
-# lived outside the scanned `lib/` for three weeks and the gates stayed green;
+# A check whose scope is a path literal loses coverage without failing. `core/`
+# lived outside the scanned `lib/` for three weeks and the checks stayed green;
 # the engines migration made four scanners stop seeing 57 views and the falling
 # lint baseline read as improvement. Shrinking looks like winning.
 #
@@ -60,7 +60,7 @@ module Operator
     # This globbed "**/*.rb" alone, and every executable in bin/ is extensionless
     # by convention -- so bin/ counted zero Ruby files, failed ruby_dir?, never
     # entered ruby_dirs, and could not be reported as unclassified. The directory
-    # holding gate, check, pub4 and master was in neither list, and the one file
+    # holding check, check, pub4 and master was in neither list, and the one file
     # whose job is to say so could not see it.
     def self.ruby_files(dir)
       Dir.glob(File.join(MASTER, dir, "**", "*")).select do |path|
@@ -94,7 +94,7 @@ module Operator
         next if ruby_dirs.include?(dir)
 
         findings << { "kind" => "empty_root", "dir" => dir, "files" => 0,
-                      "message" => "listed as scanned but holds no Ruby — the gates that " \
+                      "message" => "listed as scanned but holds no Ruby — the checks that " \
                                    "read this root are measuring nothing" }
       end
 
@@ -102,7 +102,7 @@ module Operator
         unless File.directory?(File.join(MASTER, dir))
           findings << { "kind" => "stale_exemption", "dir" => dir, "files" => 0,
                         "message" => "exempt from the scan but no longer exists — an " \
-                                     "exemption outliving its subject is a hole in a gate " \
+                                     "exemption outliving its subject is a hole in a check " \
                                      "nobody can see (soul.yml EXEMPTIONS_EXPIRE)" }
           next
         end

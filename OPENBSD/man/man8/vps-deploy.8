@@ -52,15 +52,15 @@ When set to
 .Cm 1 ,
 skips
 .Pa vps_ci.sh ;
-the per-application deploy script and runtime gate still run.
+the per-application deploy script and runtime check still run.
 .It Ev VPS_DEPLOY_DRIFT
 Setting this to
 .Cm fail
 refuses deployment when machine configuration differs from the repository.
-.It Ev PUB4_DEPLOY_BROWSER_GATES
+.It Ev PUB4_DEPLOY_BROWSER_CHECKS
 Setting this to
 .Cm 1
-adds the browser gates after restart.
+adds the browser checks after restart.
 .El
 .Sh SECURITY
 Do not run as root.

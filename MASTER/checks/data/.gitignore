@@ -1,0 +1,4 @@
+# Regenerated on every page_simulation run (PageSimulationCheck writes both).
+# Outputs, not baselines — keep out of git; layout_snapshots/ stays tracked.
+page_sim_report.yml
+page_sim_inventory.yml

@@ -19,7 +19,7 @@ module Master
           #
           # Here rather than beside TRAILING_COMMAS, because the autofix is the
           # half that writes. The rule consulted it and the fixer did not, so a
-          # RAILS gate run still added 351 commas the apps' own lint rejects.
+          # RAILS check run still added 351 commas the apps' own lint rejects.
           def self.rubocop_forbids_trailing_comma?(path)
             @rubocop_configs ||= {}
             dir = File.dirname(File.expand_path(path.to_s))

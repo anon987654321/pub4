@@ -9,7 +9,7 @@ authority:
   executable_laws:
     - MASTER/law/*.rb
     - MASTER/lib/review/scan/laws/*.rb
-  check_execution_registry: MASTER/gates/gates.yml
+  check_execution_registry: MASTER/checks/checks.yml
 
 terms:
   law:
@@ -21,7 +21,7 @@ terms:
     preferred: check
     meaning: An instrument that inspects source or runtime state and reports evidence.
     legacy_aliases: [gate]
-    caution: The legacy word remains in class names, file names, environment variables, and compatibility commands; those names do not create a second policy system.
+    caution: The legacy word was renamed out of class names, file names, environment variables and commands on 2026-10-22; read it in older commits and notes as check.
   proof:
     preferred: proof
     meaning: Evidence that a check or test actually ran and supports a stated claim.

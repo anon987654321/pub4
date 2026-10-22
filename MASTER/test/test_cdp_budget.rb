@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "stringio"
-require File.expand_path("../gates/support/cdp_session", __dir__)
+require File.expand_path("../checks/support/cdp_session", __dir__)
 require File.expand_path("../lib/trace/dmesg", __dir__)
 require File.expand_path("../lib/fix/visual_surface_budget", __dir__)
 

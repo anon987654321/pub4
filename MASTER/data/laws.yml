@@ -373,7 +373,7 @@ transformation_policy:
       not_when: "The removed distinction carries a real invariant, useful name, or failure boundary."
     recommend:
       when: "The evidence identifies a plausible improvement but cannot prove safe automatic mutation."
-      not_when: "Recommendation is being used to hide a deterministic gate that should be run."
+      not_when: "Recommendation is being used to hide a deterministic check that should be run."
   decision_table:
     - condition: "Fewer than three independent sites."
       choose: "KISS; retain duplication."
@@ -400,7 +400,7 @@ transformation_policy:
   proof_of_equivalence:
     required: [pass_set_before_after, public_constant_diff, require_path_diff, source_hashes_before_after, scorecard_before_after, ratchet_delta, residual_risk]
     no_narrative_substitute: true
-  structural_gates:
+  structural_checks:
     UNALIASED_MOVE:
       detector: "Master::Fix::Restructure::Proof#unaliased_move_failure"
       positive_fixture: "MASTER/test/test_restructure.rb#test_unaliased_move_is_refused"
@@ -625,7 +625,7 @@ transformation_policy:
         - remove_decorative_compensation
         - verify_accessibility
         - verify_visual_regression
-    gates:
+    checks:
       - "No transformation without an identified smell, seam, or contract improvement."
       - "No automatic mutation when evidence is weaker than the transformation mode requires."
       - "After every mutation, re-run the same evidence used to justify it."
@@ -805,7 +805,7 @@ architecture:
       owner: rails
       depends_on:
         - master
-      check: MASTER/gates/runner.rb --all
+      check: MASTER/checks/runner.rb --all
     openbsd:
       path: OPENBSD
       entry: OPENBSD/bin/vps-deploy
@@ -820,10 +820,10 @@ architecture:
       check: OPENBSD/bin/check
     studio:
       path: STUDIO
-      entry: STUDIO/gate.rb
+      entry: STUDIO/check.rb
       owner: studio
       depends_on: []
-      check: STUDIO/gate.rb
+      check: STUDIO/check.rb
 
 runtime_policy:
   concurrency:

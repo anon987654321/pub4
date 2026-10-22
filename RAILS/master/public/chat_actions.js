@@ -47,7 +47,7 @@ function loopsMusicUrl() {
 }
 
 // The music chip: same toggle the server action means, for a visitor the
-// chat command path never reaches (the visitor gate sits above MediaIntent),
+// chat command path never reaches (the visitor check sits above MediaIntent),
 // the chip is the only way the loop answers a hand.
 function wireMusicChip() {
   const chip = document.getElementById("music-btn");

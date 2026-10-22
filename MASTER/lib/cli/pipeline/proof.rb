@@ -3,10 +3,10 @@
 require "digest"
 require "fileutils"
 require "set"
-require_relative "../../operator/gate_chain"
+require_relative "../../operator/check_chain"
 require_relative "proof/reading"
 require_relative "proof/affected"
-require_relative "../../fix/gate_focus"
+require_relative "../../fix/check_focus"
 require_relative "../../fix/rails_app"
 
 module Master
@@ -17,7 +17,7 @@ module Master
       #
       # Main is rarely green on a shared repository: other sessions' work in
       # flight, and ceilings an approved design change went over, keep some
-      # gate or test red whatever /fix does. A proof that demanded green
+      # check or test red whatever /fix does. A proof that demanded green
       # delivered nothing from a pass that left the tree no worse. So the proof
       # holds when every failure after the repair was failing before it, no
       # ratchet row counts higher, and no suite that finished before stopped
@@ -33,19 +33,19 @@ module Master
         # skips it.
         PROOF_ENV = "MASTER_IN_PROOF"
 
-        # runner.rb exits 3 when no gate failed and some measured nothing — off
+        # runner.rb exits 3 when no check failed and some measured nothing — off
         # the deploy host that is deploy_drift's stamps, and the rendered half
-        # when Chrome or the apps are absent. A normal contribution gate may
+        # when Chrome or the apps are absent. A normal contribution check may
         # report that state without blocking, but /fix cannot call an unmeasured
         # proof green. Set strict inconclusive handling only inside the proof
         # and restore the caller's policy afterwards.
         RUNNER_INCONCLUSIVE = 3
-        STRICT_ENV = "GATE_STRICT_INCONCLUSIVE"
+        STRICT_ENV = "CHECK_STRICT_INCONCLUSIVE"
 
         PROOF_ROOTS = {
-          "MASTER" => ::Operator::GateChain::MASTER,
-          "OPENBSD" => File.join(::Operator::GateChain::ROOT, "OPENBSD"),
-          "STUDIO" => File.join(::Operator::GateChain::ROOT, "STUDIO"),
+          "MASTER" => ::Operator::CheckChain::MASTER,
+          "OPENBSD" => File.join(::Operator::CheckChain::ROOT, "OPENBSD"),
+          "STUDIO" => File.join(::Operator::CheckChain::ROOT, "STUDIO"),
         }.freeze
 
         # Every commit this runtime delivers opens with it. A baseline outlives
@@ -139,17 +139,17 @@ module Master
 
           sha = origin_main
           kept = Proof.recall(name, sha:, repo: Master::REPO_ROOT) || stored_baseline(abs, name)
-          return kept.tap { Master::Trace::Dmesg.status("gate0", "baseline kept: #{baseline_line(kept)}") } if kept
+          return kept.tap { Master::Trace::Dmesg.status("check0", "baseline kept: #{baseline_line(kept)}") } if kept
           return if narrow_known(abs, nil)
 
-          log_phase("gate0", "baseline", name) { measure_baseline(name, sha:, runner:) }.tap do |reading|
+          log_phase("check0", "baseline", name) { measure_baseline(name, sha:, runner:) }.tap do |reading|
             store_baseline(abs, name:, reading:)
             Affected.note_known_red("MASTER", reading) if abs == PROOF_ROOTS["MASTER"]
           end
         rescue StandardError => e
           raise if Pass::DEFECT_ERRORS.any? { |klass| e.is_a?(klass) }
 
-          Master::Trace::Dmesg.status("gate0", "baseline unmeasured: #{e.class}: #{e.message}")
+          Master::Trace::Dmesg.status("check0", "baseline unmeasured: #{e.class}: #{e.message}")
           nil
         end
 
@@ -165,7 +165,7 @@ module Master
           return if ENV["MASTER_PROOF_STORE"] == "0"
 
           tree = abs.delete_prefix("#{Master::REPO_ROOT}/").split("/").first
-          content = ::Operator::GateChain.baseline_key(tree, trees: [tree])
+          content = ::Operator::CheckChain.baseline_key(tree, trees: [tree])
           key = Digest::SHA256.hexdigest([content, name, abs].join("\0"))
           File.join(store_dir, "#{key}.bin")
         end
@@ -176,10 +176,10 @@ module Master
 
           # Written by store_baseline in this runtime's own .master directory.
           reading, named = Marshal.load(File.binread(path))
-          Master::Fix::GateFocus.note(named)
+          Master::Fix::CheckFocus.note(named)
           reading
         rescue StandardError => e
-          Master::Trace::Dmesg.status("gate0", "stored baseline unreadable, measuring again: #{e.class}")
+          Master::Trace::Dmesg.status("check0", "stored baseline unreadable, measuring again: #{e.class}")
           nil
         end
 
@@ -188,15 +188,15 @@ module Master
           return unless path && reading&.measured?
 
           FileUtils.mkdir_p(File.dirname(path))
-          File.binwrite(path, Marshal.dump([reading, Master::Fix::GateFocus.named.to_a]))
+          File.binwrite(path, Marshal.dump([reading, Master::Fix::CheckFocus.named.to_a]))
         end
 
         def measure_baseline(name, sha:, runner:)
           ok, out = inside_proof { runner.call }
-          Master::Fix::GateFocus.note(out) unless ok
+          Master::Fix::CheckFocus.note(out) unless ok
           reading = Reading.parse(ok, out)
           Proof.remember(name, sha: (sha if reading.measured?), reading:)
-          Master::Trace::Dmesg.status("gate0", "baseline: #{baseline_line(reading)}")
+          Master::Trace::Dmesg.status("check0", "baseline: #{baseline_line(reading)}")
           reading
         end
 
@@ -210,7 +210,7 @@ module Master
 
           narrow = known && (tests || baseline.nil?)
           judge = narrow ? ->(r) { Affected.judge(r, known) } : ->(r) { Proof.judge(r, baseline) }
-          ["proof", log_phase("gate0", "proof", nil) { proof_verdict(abs, runner:, judge:, whole: tests.nil?) }]
+          ["proof", log_phase("check0", "proof", nil) { proof_verdict(abs, runner:, judge:, whole: tests.nil?) }]
         end
 
         def proof_verdict(abs, runner:, judge:, whole:)
@@ -226,9 +226,9 @@ module Master
         # A whole suite that held is what the tree now leaves red, for the next narrow proof to judge by.
         def record_proof(abs, reading, verdict:, whole:)
           Affected.note_known_red("MASTER", reading) if whole && abs == PROOF_ROOTS["MASTER"]
-          hard, soft = Master::Fix::GateTiers.split(reading.failing, target: abs)
+          hard, soft = Master::Fix::CheckTiers.split(reading.failing, target: abs)
           @proof = { verdict:, hard:, soft:, unmeasured: reading.unmeasured.sort }
-          Master::Trace::Dmesg.status("gate0", verdict)
+          Master::Trace::Dmesg.status("check0", verdict)
         end
 
         # What the repair changed under this pass's root, its own and anything else written since.
@@ -245,7 +245,7 @@ module Master
         end
 
         def affected_runner(tests)
-          chain = ::Operator::GateChain
+          chain = ::Operator::CheckChain
           script = "ARGV.each { |path| require File.expand_path(path) }"
           ["MASTER tests for the changed files", lambda do
             ok, out = chain.capture(chain::RUBY, "-Itest", "-e", script, *tests, chdir: chain::MASTER)
@@ -253,21 +253,21 @@ module Master
           end]
         end
 
-        # RAILS proves by `runner.rb --all` (GATE_AUTOFIX=0: the fix loop owns
+        # RAILS proves by `runner.rb --all` (CHECK_AUTOFIX=0: the fix loop owns
         # the writes, the proof measures); the other trees prove by their whole
         # suites, which is `bin/operator test`'s mapping, unchanged. Each suite
         # keeps its whole output under its own header, because the failures a
         # baseline compares are named deep in it, not in the last lines.
         def proof_runner(abs)
-          chain = ::Operator::GateChain
+          chain = ::Operator::CheckChain
           if Master::Fix::RailsApp.tree_target?(abs, repo_root: Master::REPO_ROOT)
-            # The rails gates are the "source" stage. A run that named its stages
-            # (MASTER_FIX_GATE_STAGES) without it asked for a source-only proof, and with
+            # The rails checks are the "source" stage. A run that named its stages
+            # (MASTER_FIX_CHECK_STAGES) without it asked for a source-only proof, and with
             # no apps up the rendered half could only report red.
             return unless chain.verification_stage?("source")
 
-            return ["rails gates", -> {
-              rails_proof(*chain.rails_gates(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
+            return ["rails checks", -> {
+              rails_proof(*chain.rails_checks(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
             }]
           end
 
@@ -296,8 +296,8 @@ module Master
 
         def suite_proof(chain, tree)
           # A suite runs minutes with its output captured; the heartbeat keeps
-          # the terminal saying so, as it does for the rails gates.
-          runs = ::Operator::GateHeartbeat.around("#{tree} suites") do |_progress|
+          # the terminal saying so, as it does for the rails checks.
+          runs = ::Operator::CheckHeartbeat.around("#{tree} suites") do |_progress|
             chain.suite_jobs([tree]).map do |name, cmd, dir, env, _tree, unbundled|
               # bin/check prints a passing step's output only when asked, and a
               # suite that passed must still count as one that finished.
@@ -313,9 +313,9 @@ module Master
           return [ok, out] unless !ok && status == RUNNER_INCONCLUSIVE
 
           if ENV[STRICT_ENV] == "1"
-            [false, Array(out) + ["proof: gates measured nothing and #{STRICT_ENV}=1 forbids passing on that"]]
+            [false, Array(out) + ["proof: checks measured nothing and #{STRICT_ENV}=1 forbids passing on that"]]
           else
-            [true, Array(out) + ["proof: no gate failed; the inconclusive gates above measured nothing here " \
+            [true, Array(out) + ["proof: no check failed; the inconclusive checks above measured nothing here " \
                                  "(#{STRICT_ENV}=1 blocks on them)"]]
           end
         end
@@ -352,10 +352,10 @@ module Master
 
           publish(delivery_message(abs, verdict:, paths:), paths)
           line = "delivery: #{repo_git.head} carries #{paths.size} file(s)"
-          Master::Trace::Dmesg.status("gate0", line)
+          Master::Trace::Dmesg.status("check0", line)
           line
         rescue StandardError => e
-          stage_failure("delivery", "gate0", e)
+          stage_failure("delivery", "check0", e)
         end
 
         # In the shared checkout a changed path may be another session's. Only files the autofix wrote,
@@ -375,10 +375,10 @@ module Master
 
         def leftover_paths(abs)
           tree = abs.delete_prefix("#{Master::REPO_ROOT}/").split("/").first
-          return [] unless ::Operator::GateChain::TREES.include?(tree)
+          return [] unless ::Operator::CheckChain::TREES.include?(tree)
 
           (repo_git.changed_paths - @start_dirty).select { |path| path.start_with?("#{tree}/") }
-                                                 .grep_v(::Operator::GateChain::GENERATED)
+                                                 .grep_v(::Operator::CheckChain::GENERATED)
         end
 
         def delivery_message(abs, verdict:, paths:)

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# No dependencies: the gate kernel under gates/ loads this file without the runtime.
+# No dependencies: the check kernel under checks/ loads this file without the runtime.
 module Master
   # What a flat "inconclusive" or "offline" leaves out: whether the question
   # answers itself, what asking it costs, and whose call the answer is. Each
   # field has a reader. `decidability` is what /fix branches on (a
   # :decision_for_operator gap is listed, never attempted); all three print in
-  # one clause through Trace::Dmesg.gap and the gate renderer.
+  # one clause through Trace::Dmesg.gap and the check renderer.
   #
   #   horizon        :never (this environment cannot), :operator (waits for a
   #                  person to act), or seconds-from-now when it resolves alone

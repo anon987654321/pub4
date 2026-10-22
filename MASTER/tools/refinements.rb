@@ -6,7 +6,7 @@
 # This exists because a list of refinements written by hand goes stale the day
 # it is written, and because the alternative — inventing plausible-sounding
 # improvements — produces work nobody measured. Every line below comes out of
-# the same scanner the gate runs.
+# the same scanner the check runs.
 #
 #   ruby MASTER/tools/refinements.rb            # the groups, largest first
 #   ruby MASTER/tools/refinements.rb --items    # every refinement, one per line

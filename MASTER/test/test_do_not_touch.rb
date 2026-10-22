@@ -19,11 +19,11 @@ class TestDoNotTouch < Minitest::Test
     @report = self.class.report
   end
 
-  def test_every_entry_names_a_gate_or_says_why_it_cannot
+  def test_every_entry_names_a_check_or_says_why_it_cannot
     findings = @report["findings"].map { |row| "entry #{row['entry']}: #{row['message']}" }
 
     assert_empty findings,
-                 "add `— gate: \`rake some:task\`` or `— no gate: <reason>` to the entry:\n  " \
+                 "add `— check: \`rake some:task\`` or `— no check: <reason>` to the entry:\n  " \
                  "#{findings.join("\n  ")}"
   end
 
@@ -38,16 +38,16 @@ class TestDoNotTouch < Minitest::Test
   end
 
   # The parser read one line per entry, so wrapping an entry to the tree's own
-  # 80-column prose width moved its gate reference out of view and the entry
-  # reported as naming no gate. Eight of twelve failed that way at once.
-  def test_a_wrapped_entry_keeps_its_gate
+  # 80-column prose width moved its check reference out of view and the entry
+  # reported as naming no check. Eight of twelve failed that way at once.
+  def test_a_wrapped_entry_keeps_its_check
     doc = <<~MD.lines
       ## Do Not Touch (unless the task requires it)
 
       1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not
-         reach into the application half of `lib/`. — gate:
+         reach into the application half of `lib/`. — check:
          `test/test_core_no_lib_backedges.rb`
-      2. Secrets live in `/etc/*.env` on the VPS. — no gate: a fact about a
+      2. Secrets live in `/etc/*.env` on the VPS. — no check: a fact about a
          remote host that nothing in this repo can observe.
 
       ## Next Section
@@ -61,18 +61,18 @@ class TestDoNotTouch < Minitest::Test
     assert_empty parsed.flat_map { |number, text| Operator::DoNotTouch.check(number, text) }
   end
 
-  # Both halves must be able to fail, or the gate is decorative.
-  def test_a_missing_gate_is_a_finding
-    assert_empty Operator::DoNotTouch.check("1", "something — gate: `rake lint:spine`")
-    refute_empty Operator::DoNotTouch.check("1", "something — gate: `rake lint:no_such_task`")
-    refute_empty Operator::DoNotTouch.check("1", "something — gate: `test/no_such_test.rb`")
+  # Both halves must be able to fail, or the check is decorative.
+  def test_a_missing_check_is_a_finding
+    assert_empty Operator::DoNotTouch.check("1", "something — check: `rake lint:spine`")
+    refute_empty Operator::DoNotTouch.check("1", "something — check: `rake lint:no_such_task`")
+    refute_empty Operator::DoNotTouch.check("1", "something — check: `test/no_such_test.rb`")
   end
 
-  def test_an_entry_with_no_gate_and_no_reason_is_a_finding
+  def test_an_entry_with_no_check_and_no_reason_is_a_finding
     refute_empty Operator::DoNotTouch.check("1", "just do not touch it")
-    refute_empty Operator::DoNotTouch.check("1", "do not touch it — no gate: because")
+    refute_empty Operator::DoNotTouch.check("1", "do not touch it — no check: because")
     assert_empty Operator::DoNotTouch.check(
-      "1", "do not touch it — no gate: a fact about a remote host that this repo cannot observe"
+      "1", "do not touch it — no check: a fact about a remote host that this repo cannot observe"
     )
   end
 end

@@ -2,8 +2,8 @@
 
 require_relative "test_helper"
 require "open3"
-require File.expand_path("../../MASTER/gates/support/geometry_probe", __dir__)
-require File.expand_path("../../MASTER/gates/visual_contract", __dir__)
+require File.expand_path("../../MASTER/checks/support/geometry_probe", __dir__)
+require File.expand_path("../../MASTER/checks/visual_contract", __dir__)
 
 # The rendered half of /fix: the geometry walk Chrome runs, the screenshot
 # contract that shares its browser, the anchors a visual finding must carry, and
@@ -45,7 +45,7 @@ class TestRenderedVisualConvergence < Minitest::Test
         walk = cdp.evaluate(Deploy::GeometryProbe::WALK)
         # An expression, not a Selenium script body: a leading `return` would
         # be a SyntaxError here.
-        a11y = cdp.evaluate(VisualContractGate::ACCESSIBILITY_PROBE)
+        a11y = cdp.evaluate(VisualContractCheck::ACCESSIBILITY_PROBE)
       end
 
       first = walk.dig("visual", "first_screen")
@@ -92,18 +92,18 @@ class TestRenderedVisualConvergence < Minitest::Test
       swap(Deploy::GeometryProbe, :with_browser, browser) do
         swap(Open3, :capture3, no_process) do
           swap(Process, :spawn, no_process) do
-            VisualContractGate.capture(base: "http://127.0.0.1:1", app: "bsdports", output: dir)
+            VisualContractCheck.capture(base: "http://127.0.0.1:1", app: "bsdports", output: dir)
           end
         end
       end
     end
 
     assert_equal [[REPO, []]], opened, "one browser, rooted at the repo, warming nothing"
-    assert_equal VisualContractGate.matrix("bsdports").length, results.length
+    assert_equal VisualContractCheck.matrix("bsdports").length, results.length
     navigations = cdp.calls.each_index.select { |i| cdp.calls[i].is_a?(Array) }
     assert_equal results.length, navigations.length
     navigations.each { |i| assert_includes cdp.calls[(i - 4)...i], :clear_events }
-    assert_nil defined?(Selenium), "the gate loaded Selenium"
+    assert_nil defined?(Selenium), "the check loaded Selenium"
   end
 
   def test_visual_contract_without_chrome_cannot_measure
@@ -111,8 +111,8 @@ class TestRenderedVisualConvergence < Minitest::Test
 
     swap(Deploy::GeometryProbe, :with_browser, unavailable) do
       Dir.mktmpdir do |dir|
-        assert_raises(VisualContractGate::CannotMeasure) do
-          VisualContractGate.capture(base: "http://127.0.0.1:1", app: "brgen", output: dir)
+        assert_raises(VisualContractCheck::CannotMeasure) do
+          VisualContractCheck.capture(base: "http://127.0.0.1:1", app: "brgen", output: dir)
         end
       end
     end

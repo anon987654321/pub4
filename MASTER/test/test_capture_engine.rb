@@ -2,9 +2,9 @@
 
 require_relative "test_helper"
 require "tmpdir"
-require File.expand_path("../gates/support/geometry_probe", __dir__)
-require File.expand_path("../gates/support/capture_engine", __dir__)
-require File.expand_path("../gates/support/engine_compare", __dir__)
+require File.expand_path("../checks/support/geometry_probe", __dir__)
+require File.expand_path("../checks/support/capture_engine", __dir__)
+require File.expand_path("../checks/support/engine_compare", __dir__)
 
 # The engine interface and the cross-engine comparison, on a fake engine. No
 # real WebKit or Firefox is driven here: whether safaridriver or geckodriver

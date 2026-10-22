@@ -51,7 +51,7 @@ module Master
           The image is the current render of #{@target[:surface].id}.
           Its layout score is #{@target[:score].round(1)} of 100.
           Weakest measures (0 to 1): #{weakest_measures}.
-          Elements the gates flagged (kind: element keys): #{@target[:offender_keys].inspect}.
+          Elements the checks flagged (kind: element keys): #{@target[:offender_keys].inspect}.
           The largest elements on this page, as key [x y w h]:
           #{page_map}
           Edit a rule whose selector matches one of these classes or ids, or it will change nothing you can see.

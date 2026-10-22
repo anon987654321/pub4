@@ -9,7 +9,7 @@ require "socket"
 # models.yml has declared `ollama:` ids since the tier was written, and
 # ModelRouter learned to drop them when OLLAMA_BASE_URL is unset — but
 # provider_availability.rb's own comment records the other half: with no branch
-# in the dispatcher, an id that *passed* the gate fell through to RubyLLM, which
+# in the dispatcher, an id that *passed* the check fell through to RubyLLM, which
 # handed `ollama:llama3:latest` to OpenRouter and got an error. Enabling the tier
 # was the way to break it.
 #

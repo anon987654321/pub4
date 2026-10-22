@@ -53,7 +53,7 @@ class WriteGuardTest < Minitest::Test
   end
 
   # Without this the first repair of any file carrying debt is refused, and the
-  # gate that was meant to stop new violations freezes the old ones in place.
+  # check that was meant to stop new violations freezes the old ones in place.
   def test_editing_a_file_that_already_carries_the_violation_is_allowed
     File.write(path, DIRTY)
 
@@ -82,7 +82,7 @@ class WriteGuardTest < Minitest::Test
   end
 
   # Semantic laws are 126 of the 225 and cost an LLM call per file. A per-write
-  # gate would pay that twice for every write, so the guard holds the mechanical
+  # check would pay that twice for every write, so the guard holds the mechanical
   # half and the per-turn pass holds the rest.
   def test_semantic_laws_are_not_on_the_write_path
     agent_backed = Master::Fix::Scanner.build(root: Master::ROOT)

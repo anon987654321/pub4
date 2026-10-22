@@ -154,7 +154,7 @@ module Postpro
     # On cases whose answer is known, a bright disc on a dark field keeps 0.94 and a
     # field of uniform noise keeps 0.03. There is no measured line yet between a
     # strong composition and a weak one, so this is a reading and not a verdict: a
-    # rule that cannot be checked is a principle, not a gate.
+    # rule that cannot be checked is a principle, not a check.
     SQUINT_DIVISOR = 40.0
 
     def self.squint_image(image)

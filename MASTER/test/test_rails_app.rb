@@ -50,7 +50,7 @@ def test_tree_target_reads_rails_from_the_files
     FileUtils.mkdir_p(File.join(root, "MASTER", "lib"))
 
     assert RailsApp.tree_target?("RAILS/brgen_maps/app/models/place.rb", repo_root: root)
-    assert RailsApp.tree_target?("RAILS/test/gate_test.rb", repo_root: root)
+    assert RailsApp.tree_target?("RAILS/test/check_test.rb", repo_root: root)
     refute RailsApp.tree_target?("MASTER/lib", repo_root: root)
   end
 end

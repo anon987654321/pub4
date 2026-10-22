@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../MASTER/gates/support/cdp_network"
+require_relative "../../MASTER/checks/support/cdp_network"
 
 class CdpNetworkDiagnosticsTest < Minitest::Test
   def client(events)
@@ -12,7 +12,7 @@ class CdpNetworkDiagnosticsTest < Minitest::Test
 
   def test_shared_cdp_session_installs_the_network_event_reader
     root = File.expand_path("../..", __dir__)
-    source = File.read(File.join(root, "MASTER", "gates", "support", "cdp_session.rb"))
+    source = File.read(File.join(root, "MASTER", "checks", "support", "cdp_session.rb"))
 
     assert_includes source, 'require_relative "cdp_network"'
     assert_includes source, "include CdpNetwork"

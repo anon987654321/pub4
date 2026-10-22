@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../gates/support/design_quality"
+require_relative "../checks/support/design_quality"
 
 class TestDesignQuality < Minitest::Test
   def element(x:, y:, w: 100, h: 44, font_size: 16, font_weight: 400, text: "text", is_control: false, is_image: false)

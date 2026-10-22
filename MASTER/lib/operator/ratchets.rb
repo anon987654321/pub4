@@ -7,7 +7,7 @@ require_relative "../io/exec"
 # recorded one.
 #
 # The truth was spread across ten instruments — rake selftest, rake selfcheck,
-# lint:spine, four Operator::*Lint modules, gates/data/css_budget.yml,
+# lint:spine, four Operator::*Lint modules, checks/data/css_budget.yml,
 # coverage_ratchet_test.rb and file_length_ratchet_test.rb — each with its own
 # invocation and its own idea of where the number lives. On 2026-08-11 four of
 # them were stale and were found by accident, one at a time, while doing unrelated
@@ -83,7 +83,7 @@ module Operator
       # `ok?` said `!over? && !slack?`, and both of those are false when there is
       # no number, so a row that could not be measured reported as fine. That is
       # the shape of every defect this file exists to catch: the instrument goes
-      # blind and the gate goes green. Seen 2026-08-15 running the ratchets from
+      # blind and the check goes green. Seen 2026-08-15 running the ratchets from
       # a detached worktree, where `require "master"` does not resolve and the
       # spine row vanished from the output entirely rather than failing.
       def ok? = readable? && !over? && !slack?
@@ -92,7 +92,7 @@ module Operator
     module_function
 
     # trees, when given, leaves out the RAILS-only rows unless RAILS is named: the
-    # lint ceilings, the CSS gates and design_baseline, which scans every view.
+    # lint ceilings, the CSS checks and design_baseline, which scans every view.
     def all(deep: false, trees: nil)
       rails = trees.nil? || trees.include?("RAILS")
       rows = fast_rows(rails:)
@@ -219,7 +219,7 @@ module Operator
     # The row above read "what our own rules find in our own trees" and
     # counted the law alone, so this second population counts the 145 rules
     # the scanner builds: law_audit runs them over a sixth of the tree and
-    # measures blindness, and bin/operator gate runs them over all four top-level trees
+    # measures blindness, and bin/operator check runs them over all four top-level trees
     # and records nothing.
     def self_findings_rows
       [master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
@@ -533,26 +533,26 @@ end
       Operator.const_get(constant) if Operator.const_defined?(constant)
     end
 
-    # Ceilings that live in gates/data rather than in a lint.
+    # Ceilings that live in checks/data rather than in a lint.
 
-    # css_budget's numbers need the gate to run (it compiles nothing, but it does
+    # css_budget's numbers need the check to run (it compiles nothing, but it does
     # walk 94 stylesheets), so the ceiling is read here and the current value is
     # deep-only.
     def css_budget_rows
-      path = File.join(MASTER, "gates/data/css_budget.yml")
+      path = File.join(MASTER, "checks/data/css_budget.yml")
       unless File.file?(path)
         return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
-                        source: "MASTER/gates/data/css_budget.yml",
+                        source: "MASTER/checks/data/css_budget.yml",
                         note: "unreadable: budget missing")]
       end
 
       YAML.safe_load_file(path).fetch("rules").map do |rule, ceiling|
         Row.new(name: "css_budget.#{rule}", current: nil, ceiling:, direction: :down,
-                source: "MASTER/gates/data/css_budget.yml",
+                source: "MASTER/checks/data/css_budget.yml",
                 note: "current value is --deep (runs css_constitution)")
       end
     rescue StandardError => e
-      [unreadable_row("css_budget", "MASTER/gates/data/css_budget.yml", e.class)]
+      [unreadable_row("css_budget", "MASTER/checks/data/css_budget.yml", e.class)]
     end
 
     # Ceilings a test file owns.
@@ -593,7 +593,7 @@ end
 
     # Deep rows: these shell out to a scanner and cost minutes.
 
-    # css_budget's seven rules, from one gate run.
+    # css_budget's seven rules, from one check run.
     #
     # css_budget_rows above has said "current value is --deep (runs
     # css_constitution)" since it was written, and --deep did not run it: the
@@ -607,23 +607,23 @@ end
     # blind exactly where the failures were, which is how they accumulated
     # without anyone noticing they had.
     #
-    # One invocation for all seven, not seven: the gate walks 94 stylesheets and
+    # One invocation for all seven, not seven: the check walks 94 stylesheets and
     # running it per rule would turn a slow command into an unusable one.
     def css_constitution_rows
       ceilings = css_budget_ceilings
       if ceilings.empty?
         return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
-                        source: "MASTER/gates/data/css_budget.yml",
+                        source: "MASTER/checks/data/css_budget.yml",
                         note: "unreadable: no CSS ceilings available")]
       end
 
-      # Both gates, because the seven rules are split across them: rhythm,
+      # Both checks, because the seven rules are split across them: rhythm,
       # important, magic_hex, type_scale and weight_ladder come from
       # css_constitution, and the two contrast rules from design_metrics. The
       # ceilings all live in one file, which is what made them look like one
-      # gate's business.
-      output = %w[css_constitution design_metrics].map do |gate|
-        Master::Io::Exec.capture2e(RUBY, File.join(MASTER, "gates", "runner.rb"), gate, chdir: ROOT, timeout: 1_800).first
+      # check's business.
+      output = %w[css_constitution design_metrics].map do |check|
+        Master::Io::Exec.capture2e(RUBY, File.join(MASTER, "checks", "runner.rb"), check, chdir: ROOT, timeout: 1_800).first
       end.join("\n")
 
       ceilings.map { |rule, ceiling| css_budget_row(rule, ceiling, output) }
@@ -637,7 +637,7 @@ end
     # rhythm was the one rule with findings to print, so it was the one rule
     # this got wrong, which is the shape a looser regex always has.
     #
-    # Three spellings, all of them the gates' own:
+    # Three spellings, all of them the checks' own:
     #   "rule: 59, under its 66 ceiling (-7)"   passing with slack
     #   "rule: 91 exceeds ceiling 90 (+1)"      over
     #   "rule: at its 0 ceiling"                exactly on it
@@ -654,14 +654,14 @@ end
                   summary[/#{name}: (\d+)/, 1]&.to_i
                 end
       Row.new(name: "css_budget.#{rule}", current:, ceiling:, direction: :down,
-              source: "RAILS: gates/runner.rb css_constitution",
-              note: current.nil? ? "neither gate printed a count for #{rule} (silent when it passes)" : nil)
+              source: "RAILS: checks/runner.rb css_constitution",
+              note: current.nil? ? "neither check printed a count for #{rule} (silent when it passes)" : nil)
     end
 
     # Empty when the file is missing, so --deep reports the unreadable row
     # instead of raising out of the whole register.
     def css_budget_ceilings
-      path = File.join(MASTER, "gates/data/css_budget.yml")
+      path = File.join(MASTER, "checks/data/css_budget.yml")
       File.file?(path) ? YAML.safe_load_file(path).fetch("rules") : {}
     end
 

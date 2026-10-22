@@ -40,7 +40,7 @@ The final text-corpus pass found four genuinely missing executable invariants an
 - `STYLE_FOLLOWS_STRUCTURE`: semantic structure and information hierarchy are corrected before selector complexity or decoration is added.
 - `HTML_HEADING_HIERARCHY`: headings express document hierarchy without skipped levels or using tags as visual-size shortcuts.
 
-The old `master.json` backup under `pub/__OLD_BACKUPS` was also checked. Its 2025-07 snapshot belongs to a different `pubhealthcare` framework branch and carries general ideas such as bounded iterations, seven-item working memory, resource monitoring and validation gates; those ideas are archaeological evidence, not authority for pub4, and the current constitution already owns the corresponding modern mechanisms.
+The old `master.json` backup under `pub/__OLD_BACKUPS` was also checked. Its 2025-07 snapshot belongs to a different `pubhealthcare` framework branch and carries general ideas such as bounded iterations, seven-item working memory, resource monitoring and validation checks; those ideas are archaeological evidence, not authority for pub4, and the current constitution already owns the corresponding modern mechanisms.
 
 The archive inventory is broader than the Rails snapshots alone: `BRGEN_OLD.zip`, `brgen_ANCIENT_20240622.tgz`, `arch_20240622.tgz`, `__docs_20240804.tgz`, the 2024 Rails/Amber/brgen vertical tarballs, bsdports snapshots, shell snapshots, and the old framework text files are all present in the source repository.
 

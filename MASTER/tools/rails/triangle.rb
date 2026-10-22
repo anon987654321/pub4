@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Boots brgen, amber, bsdports and the MASTER face on the ports every gate
+# Boots brgen, amber, bsdports and the MASTER face on the ports every check
 # probes, so the live half of the suite measures something.
 #
 #   bin/operator triangle up      boot, migrate, wait for /up, print status
@@ -9,9 +9,9 @@
 #   bin/operator triangle status  which ports answer
 #   bin/operator triangle down    stop what this script started
 #
-# Why this exists: the browser and live-HTTP gates belong on the deploy host,
+# Why this exists: the browser and live-HTTP checks belong on the deploy host,
 # and vm23 has no headroom to run them (the old backlog item 2). So they ran nowhere,
-# and every gate whose live half was skipped still printed PASSED. None of the
+# and every check whose live half was skipped still printed PASSED. None of the
 # three apps ships bin/dev, so this is the one way to boot them together.
 #
 # Pending migrations are the usual reason a booted app answers 500 rather than
@@ -32,7 +32,7 @@ module Deploy
     RUN_DIR = File.join(RAILS_ROOT, "tmp", "triangle")
     BOOT_TIMEOUT = Integer(ENV.fetch("TRIANGLE_BOOT_TIMEOUT", "180"))
 
-    # Ports come from apps.yml so this file cannot disagree with the gates.
+    # Ports come from apps.yml so this file cannot disagree with the checks.
     def self.apps
       @apps ||= begin
         config = YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml")).fetch("apps")
@@ -132,7 +132,7 @@ module Deploy
 
     # application.css is built output and git-ignored, so a fresh worktree has
     # none: every page of an app whose layout links it answered 500 and the
-    # rendered gates screenshotted Rails' error page instead of the layout.
+    # rendered checks screenshotted Rails' error page instead of the layout.
     def self.build_css(app)
       return true unless File.file?(File.join(app[:dir], "app", "assets", "stylesheets", "application.scss"))
       return true if File.file?(File.join(app[:dir], "app", "assets", "builds", "application.css"))
@@ -159,7 +159,7 @@ module Deploy
     # and Rails says so out loud when you precompile in development: "Rails will
     # not serve any changed assets until you delete public/assets/.manifest.json".
     # So a stylesheet edit plus dartsass:build changes the file on disk and
-    # nothing that a browser — or a rendered gate — actually reads. On 2026-08-24
+    # nothing that a browser — or a rendered check — actually reads. On 2026-08-24
     # that cost three edit/build/measure rounds against an unchanged number while
     # the fix was already compiled in.
     #
@@ -200,7 +200,7 @@ module Deploy
 
     # Named surfaces only, when names are given. One app with a prepared
     # database boots in about a minute, where all four wait on brgen's
-    # db:prepare, so a rendered gate can measure one app cheaply.
+    # db:prepare, so a rendered check can measure one app cheaply.
     def self.selected(names)
       return apps if names.empty?
 

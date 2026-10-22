@@ -89,7 +89,7 @@ MASTER-signed token at /sso/from_master.
 
 User carries a guest column, so an anonymous visitor gets a soft Current.user and can use the
 product without signing up. For that reason allow_unauthenticated_access is a no-op in amber,
-and require_real_user is the identity gate that means anything. A demo wardrobe at /demo is
+and require_real_user is the identity check that means anything. A demo wardrobe at /demo is
 seeded for guests, and Shared::PruneGuestUsersJob prunes the guest rows every night. Guests can
 post and message without first creating an account.
 

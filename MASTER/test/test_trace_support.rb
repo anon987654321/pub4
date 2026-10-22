@@ -116,7 +116,7 @@ class TestTraceSupport < Minitest::Test
               io: StringIO.new,
             )
             Master::Trace::Dmesg.forward(
-              "gate0: rails gates gate 15/25 rendered_suite running 4m43s, elapsed 6m08s",
+              "check0: rails checks check 15/25 rendered_suite running 4m43s, elapsed 6m08s",
               io: StringIO.new,
             )
             Master::Trace::Dmesg.forward("debug0: selenium protocol frame", io: StringIO.new)
@@ -316,8 +316,8 @@ class TestTraceSupport < Minitest::Test
   end
 
   def test_dmesg_finding_filters_accept_ansi_and_verdict_lines
-    text = "\e[31mfix0: MASTER/lib/example.rb:12: missing gate\e[0m\r\n"
-    assert_equal ["fix0: MASTER/lib/example.rb:12: missing gate"], Master::Trace::Dmesg.findings(text)
+    text = "\e[31mfix0: MASTER/lib/example.rb:12: missing check\e[0m\r\n"
+    assert_equal ["fix0: MASTER/lib/example.rb:12: missing check"], Master::Trace::Dmesg.findings(text)
     assert_equal "plain line", Master::Trace::Dmesg.plain("plain line\r")
   end
 

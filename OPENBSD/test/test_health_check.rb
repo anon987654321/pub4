@@ -7,7 +7,7 @@ require "json"
 require "yaml"
 # Under a C locale -- which is how the weekly integrity run invokes these on
 # vm23 -- Ruby defaults file reads to US-ASCII. Same require, same reason, as
-# MASTER/gates/runner.rb.
+# MASTER/checks/runner.rb.
 require_relative "../lib/utf8"
 
 # Behaviour, not spelling. These run health_check.rb the way the laptop and the
@@ -15,7 +15,7 @@ require_relative "../lib/utf8"
 # CURL pointed at a stub, so the verdict is the script's and not a grep of it.
 class HealthCheckBehaviourTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
-  SCRIPT = File.join(OPENBSD, "gates", "health_check.rb")
+  SCRIPT = File.join(OPENBSD, "checks", "health_check.rb")
   APPS = YAML.safe_load_file(File.join(OPENBSD, "..", "RAILS", "apps.yml")).fetch("apps")
   FACE = JSON.parse(File.read(File.join(OPENBSD, "deploy_inventory.json"))).fetch("master_face")
 

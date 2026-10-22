@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/fix/gate_focus"
+require_relative "../lib/fix/check_focus"
 
-# /fix --blockers repairs only the files a red gate names, and reads none of them semantically.
+# /fix --blockers repairs only the files a red check names, and reads none of them semantically.
 class TestFixBlockers < Minitest::Test
-  Focus = Master::Fix::GateFocus
+  Focus = Master::Fix::CheckFocus
 
   # The execution trace needs live collaborators; this file asserts what the flag selects.
   def setup

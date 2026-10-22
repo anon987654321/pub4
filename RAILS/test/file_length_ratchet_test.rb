@@ -14,7 +14,7 @@ require "tmpdir"
 # paragraph of rationale above the tricky line. Four of the recorded 24 findings
 # were only ever over the limit on their comments: _brand.scss (441 raw / 379
 # code), _chrome_polish.scss (405/366), amber's application layout (153/143) and
-# gates/lib/live/page_simulation.rb (360/295).
+# checks/lib/live/page_simulation.rb (360/295).
 #
 # Generated files are excluded rather than exempted-in-place, because "split it"
 # is not an available action for them: db/schema.rb is written by Rails from the
@@ -74,14 +74,14 @@ class FileLengthRatchetTest < Minitest::Test
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
 # was split off the same subject at the other layer in
-# gates/support/design_metrics/contrast.rb.
+# checks/support/design_metrics/contrast.rb.
 #
 # The move broke something first, in the way this repo keeps finding: the
 # budget path was `File.expand_path("../../data/css_budget.yml", __dir__)`
-# and one directory deeper that resolves to gates/lib/data, which does not
-# exist. No exception — a rescue logged "rules unreadable" and ran the gate
-# unbudgeted, so the contrast ceiling stopped being enforced while the gate
-# still printed ok. Caught by diffing the gate's whole output before and
+# and one directory deeper that resolves to checks/lib/data, which does not
+# exist. No exception — a rescue logged "rules unreadable" and ran the check
+# unbudgeted, so the contrast ceiling stopped being enforced while the check
+# still printed ok. Caught by diffing the check's whole output before and
 # after, which is now the standard for a split in this file.
 #
 # 442 -> 345 on 2026-09-08, the next subject in the same file: input size,
@@ -89,15 +89,15 @@ class FileLengthRatchetTest < Minitest::Test
 # are design_metrics/type_checks.rb. Every one of them reads a font
 # declaration out of the SCSS and judges it against typography, and they were
 # the largest of the four groups left. Verified the way this file asks for:
-# the gate's whole output, sorted, is identical to the tree before the split.
+# the check's whole output, sorted, is identical to the tree before the split.
 #
 # That diff also caught a live one. Moving contrast_checks.rb into
 # design_metrics/ the day before broke `File.expand_path("../data/...", __dir__)`
-# a second time, in the same file whose comment records the first -- the gate
-# ran unbudgeted and still reported ok. The path is anchored on the gates root
-# now, and gate_live_and_css_budget_test asserts every budget reader returns
+# a second time, in the same file whose comment records the first -- the check
+# ran unbudgeted and still reported ok. The path is anchored on the checks root
+# now, and check_live_and_css_budget_test asserts every budget reader returns
 # something, which is the assertion that was missing both times.
-# 345 -> 342 when the gate learned to count what it checked. The thirteen
+# 345 -> 342 when the check learned to count what it checked. The thirteen
 # check_* calls in #run are SOURCE_CHECKS, a symbol list, so checked! reports
 # the list's size rather than a hand-typed thirteen that drifts the first time
 # a check is added. Fourteen call lines became two, which is what paid for the
@@ -106,11 +106,11 @@ class FileLengthRatchetTest < Minitest::Test
 # selector families out of each app's one application.scss instead.
 
 # 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
-# rendered_geometry/contrast_checks.rb — the one subject in this gate that
+# rendered_geometry/contrast_checks.rb — the one subject in this check that
 # is colour rather than geometry, and the rendered counterpart to the
 # source-side checks split out of design_metrics the same day.
 #
-# Verified by diffing the gate's whole output, and that diff is worth
+# Verified by diffing the check's whole output, and that diff is worth
 # recording because it was not empty: subpixel and type_scale findings
 # moved by a component or two. Running it a third time with no edit between
 # moved them again, so those two checks are non-deterministic run to run
@@ -120,20 +120,20 @@ class FileLengthRatchetTest < Minitest::Test
 # 449 -> 422: the palette half is token_checks.rb, the same split as
 # contrast_checks and for the same reason — colour is not geometry.
 #
-# 422 -> 344 on 2026-09-09 along a seam the gate already carried as a banner
-# comment: "Placement, not size. Everything else in this gate asks whether an
+# 422 -> 344 on 2026-09-09 along a seam the check already carried as a banner
+# comment: "Placement, not size. Everything else in this check asks whether an
 # element is big enough, legible enough or on the grid; these four ask whether
 # it is anywhere sensible." Those four — Hick's law on peer choices, Gestalt
 # proximity, the phone thumb zone and the weak bottom-left of an F-pattern scan
-# — are placement_checks.rb, and they are the only checks in the gate that read
+# — are placement_checks.rb, and they are the only checks in the check that read
 # ux_laws, layout_rules.reading_patterns and layout_rules.whitespace.
 #
 # It stays at 341, over the 300 rb limit, because what is left does not divide,
 # and this row is the place to say so rather than leave the next session hunting
 # a third seam. Two cuts look available and neither survives reading. By the
-# gate's own principle labels, fitts_law and fitts own four of the eleven checks
+# check's own principle labels, fitts_law and fitts own four of the eleven checks
 # — target size, occlusion, chrome occlusion, target spacing — so lifting the
-# occlusion pair out separates siblings the gate itself files together, and they
+# occlusion pair out separates siblings the check itself files together, and they
 # share critical? with check_fitts. By probe field, the one clean separation is
 # the two checks that read `hit`; but frect is read by four checks across three
 # different principles, so "reads the unrounded rect" names a data source, not a
@@ -141,12 +141,12 @@ class FileLengthRatchetTest < Minitest::Test
 # name. Everything left asks one thing in different units: is this box, as the
 # browser computed it, the size, position, gap or spacing design_rules states.
 # The two things in here that were not that have already gone — colour to
-# token_checks.rb, placement to placement_checks.rb. The gate reaches every
+# token_checks.rb, placement to placement_checks.rb. The check reaches every
 # placement check through check_layout, one call where four stood.
 #
-# Both live under gates/support/rendered_geometry/, and token_checks.rb moved
-# there from gates/lib/ to join it: deploy_gates_contract_test asserts gates/lib/
-# holds exactly the gates gates.yml declares, and a check module is not a gate.
+# Both live under checks/support/rendered_geometry/, and token_checks.rb moved
+# there from checks/lib/ to join it: deploy_checks_contract_test asserts checks/lib/
+# holds exactly the checks checks.yml declares, and a check module is not a check.
 # That test had been red on token_checks.rb since it was split out.
 #
 # 341 -> 326 on 2026-09-25. 8dd5f4d34 added check_visual_composition and took
@@ -163,7 +163,7 @@ class FileLengthRatchetTest < Minitest::Test
     # `--- websocket framing ---` banner the file already carried. The second
     # took the other seam: finding Chrome, launching it, waiting for
     # DevToolsActivePort, discovering the page target and reaping the process
-    # are gates/support/chrome_process.rb. What is left speaks the DevTools
+    # are checks/support/chrome_process.rb. What is left speaks the DevTools
     # Protocol to a browser that is already running.
     #
     # The same constant trap as the first split, and avoided rather than paid:
@@ -192,16 +192,16 @@ class FileLengthRatchetTest < Minitest::Test
 
     # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
     # limit, so a ceiling here would only re-admit it. Its own header admitted
-    # to being two gates in one — "critical-path user flows + MASTER
+    # to being two checks in one — "critical-path user flows + MASTER
     # design/principle semantics" — and the second half is
-    # gates/support/user_flow_design_contracts.rb: the seven-rule contract
+    # checks/support/user_flow_design_contracts.rb: the seven-rule contract
     # table and the four methods that read it off source text. Not one of them
     # opens a socket or asks whether an app is up, which is what everything
     # left in user_flow.rb does. The earlier 313 -> 308 was the private
-    # Net::HTTP client becoming CrawlSupport.fetch, shared by every live gate.
+    # Net::HTTP client becoming CrawlSupport.fetch, shared by every live check.
     #
     # The contract table is a method there, not a frozen constant, because it
-    # reads VIEW_PATHS and the gate class builds that in its own body after the
+    # reads VIEW_PATHS and the check class builds that in its own body after the
     # require. That is the load-order half of the trap this file already
     # records twice for __dir__ paths.
     # 455 -> 449: the same inline-notice rule, in the sheet amber and
@@ -222,7 +222,7 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 189,
     "test/critique_implementation_test.rb" => 515,
     "test/design_contract_test.rb" => 501,
-    "test/gates/flow_coverage_test.rb" => 360,
+    "test/checks/flow_coverage_test.rb" => 360,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
@@ -297,7 +297,7 @@ class FileLengthRatchetTest < Minitest::Test
 
   def candidates
     @candidates ||= begin
-      # The gates and tools moved to MASTER, whose own ratchet governs them; the verticals are sibling gems.
+      # The checks and tools moved to MASTER, whose own ratchet governs them; the verticals are sibling gems.
       apps = BRGEN_AND_APPS + %w[test lib]
       rb = apps.flat_map { |a| Dir.glob(File.join(ROOT, a, "**/*.rb")) }
       styled = BRGEN_AND_APPS

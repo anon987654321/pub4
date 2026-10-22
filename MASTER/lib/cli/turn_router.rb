@@ -25,7 +25,7 @@ module Master
         # gated only the advertised LLM tool list (tool_registry.rb), never the
         # Fold or the command registry.
         #
-        # MediaIntent used to sit above this gate. "generate a photo" / "make me
+        # MediaIntent used to sit above this check. "generate a photo" / "make me
         # a beat" / a VHS look on a path then ran replicate/dilla/postpro as the
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
@@ -91,7 +91,7 @@ module Master
       end
 
       # A sentence that is exactly a registry word, "status" or "help", runs that
-      # command without a model's inference. Below the visitor gate, as every route
+      # command without a model's inference. Below the visitor check, as every route
       # to the registry is: a visitor typing "status" gets a conversation.
       def deterministic_intercept(text, container:)
         commands = container[:commands]

@@ -55,7 +55,7 @@ module Master
       def visitor_slash_blocked
         body = source(CHAT)
         ok = body.include?('visitor? && input.start_with?("/")')
-        Check.new(ok:, name: "visitor-slash", detail: ok ? "chat slash forbidden for visitors" : "visitor slash gate missing")
+        Check.new(ok:, name: "visitor-slash", detail: ok ? "chat slash forbidden for visitors" : "visitor slash check missing")
       end
 
       def visitor_fiber_set

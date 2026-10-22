@@ -27,8 +27,8 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
     resumes.
   TEXT
   fix "before writing a new file, class, or dependency, try nine moves first and in this order."
-  bad  "adds a second gate script"
-  good "extends the gate that exists"
+  bad  "adds a second check script"
+  good "extends the check that exists"
 end
 
 # Three of the rules here share an id with a catalogue rule in data/laws.yml,
@@ -200,11 +200,11 @@ Law.define(:EXEMPTIONS_EXPIRE) do
   severity :warn
   practice <<~TEXT
     an allowlist entry, baseline row or opt-out that outlives its subject is a
-    hole in a gate nobody can see, because the thing it excuses is invisible.
+    hole in a check nobody can see, because the thing it excuses is invisible.
     Every exemption names what it excuses, and a check fails when the named
     thing stops existing.
   TEXT
-  fix "an allowlist entry, baseline row or opt-out that outlives its subject is a hole in a gate nobody can see, beca"
+  fix "an allowlist entry, baseline row or opt-out that outlives its subject is a hole in a check nobody can see, beca"
   bad  "an allowlist entry outliving its subject"
   good "an exemption naming what it excuses, checked"
 end
@@ -227,8 +227,8 @@ Law.define(:EXECUTE_NOT_INSTRUCT) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    run the probes, gates, tests and fixes here. Never close with "you should
-    run X" when X is executable. Gate stdout beats narrative completion; on
+    run the probes, checks, tests and fixes here. Never close with "you should
+    run X" when X is executable. Check stdout beats narrative completion; on
     failure, diagnose and retry rather than handing the chore back. Commit and
     push each owned, verified repair batch before moving on unless the operator
     explicitly withholds publication or a safety/delivery guard blocks it.
@@ -287,7 +287,7 @@ Law.define(:PROBE_BEFORE_SHIP) do
   severity :warn
   practice <<~TEXT
     after an OPENBSD/ or RAILS/master/ edit, run bin/probe integrity before
-    declaring done. A failing gate means the task is still open.
+    declaring done. A failing check means the task is still open.
   TEXT
   fix "after an OPENBSD/ or RAILS/master/ edit, run bin/probe integrity before declaring done."
   bad  "declares done after the edit"
@@ -324,11 +324,11 @@ Law.define(:DEVICE_LIMITS) do
   severity :warn
   practice <<~TEXT
     heavy work belongs on the VPS. The Mac edits and HTTP-probes; browser
-    gates run on the deploy host unless explicitly forced local.
+    checks run on the deploy host unless explicitly forced local.
   TEXT
   fix "heavy work belongs on the VPS."
-  bad  "browser gates on the laptop"
-  good "browser gates on the deploy host"
+  bad  "browser checks on the laptop"
+  good "browser checks on the deploy host"
 end
 
 Law.define(:CONFIGURATION_AS_CODE) do
@@ -523,7 +523,7 @@ Law.define(:FLAT_HIERARCHY) do
     Flat Hierarchy — aggressive merge/rename on every write; paths are dense
     Rails-parameterize slugs (snake_case, Strunk-clean tokens); no main, misc,
     util, helper or abbreviation filler; fold *_support into parents and
-    extend an existing gate rather than adding a script; lib/ depth 4 unless
+    extend an existing check rather than adding a script; lib/ depth 4 unless
     the domain warrants more.
   TEXT
   fix "Flat Hierarchy — aggressive merge/rename on every write;"

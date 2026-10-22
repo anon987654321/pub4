@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 require "digest"
 require "json"
-require_relative "../lib/operator/gate_chain"
+require_relative "../lib/operator/check_chain"
 
 # /fix is the whole improvement operation: it observes, lets the council argue,
 # repairs, and observes again, and it ends in a state that says what actually
@@ -54,14 +54,14 @@ class TestFixConvergence < Minitest::Test
     # The collector fails closed without a Git inventory, so the fixture is a checkout.
     system("git", "-C", @root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL) || raise("git init failed")
     @bus = FakeBus.new
-    # The real baseline runs every gate stage; this file asserts what /fix does
-    # with a baseline, not how one is measured (test_gate_chain.rb owns that).
-    @real_baseline = Operator::GateChain.method(:baseline)
-    Operator::GateChain.define_singleton_method(:baseline) { |**| {} }
+    # The real baseline runs every check stage; this file asserts what /fix does
+    # with a baseline, not how one is measured (test_check_chain.rb owns that).
+    @real_baseline = Operator::CheckChain.method(:baseline)
+    Operator::CheckChain.define_singleton_method(:baseline) { |**| {} }
   end
 
   def teardown
-    Operator::GateChain.define_singleton_method(:baseline, @real_baseline)
+    Operator::CheckChain.define_singleton_method(:baseline, @real_baseline)
     @previous_deep_trace.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = @previous_deep_trace
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
@@ -606,23 +606,23 @@ end
     refute_equal Master::REPO_ROOT, resolver.resolve_target("MASTER RAILS")
   end
 
-  def test_gate_chain_recognizes_all_four_tree_names
+  def test_check_chain_recognizes_all_four_tree_names
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
-                 Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD STUDIO")
+                 Operator::CheckChain.trees_for_target("MASTER RAILS OPENBSD STUDIO")
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
-                 Operator::GateChain.trees_for_target("openbsd,rails,master,studio")
+                 Operator::CheckChain.trees_for_target("openbsd,rails,master,studio")
   end
 
-  def test_gate_chain_resolves_default_and_dot_to_master_only
-    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("")
-    assert_equal ["MASTER"], Operator::GateChain.trees_for_target(".")
-    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("master")
-    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Operator::GateChain.trees_for_target("all")
-    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Operator::GateChain.trees_for_target("everything")
+  def test_check_chain_resolves_default_and_dot_to_master_only
+    assert_equal ["MASTER"], Operator::CheckChain.trees_for_target("")
+    assert_equal ["MASTER"], Operator::CheckChain.trees_for_target(".")
+    assert_equal ["MASTER"], Operator::CheckChain.trees_for_target("master")
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Operator::CheckChain.trees_for_target("all")
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO], Operator::CheckChain.trees_for_target("everything")
   end
 
-  def test_gate_chain_resolves_master_relative_internal_paths
-    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("lib/io")
+  def test_check_chain_resolves_master_relative_internal_paths
+    assert_equal ["MASTER"], Operator::CheckChain.trees_for_target("lib/io")
   end
 
   def test_studio_recursive_tree_globs_resolve_to_the_tree_root
@@ -648,13 +648,13 @@ end
     end
   end
 
-  def test_gate_verification_is_read_only
+  def test_check_verification_is_read_only
     seen = []
-    result = Operator::GateChain.stub(
+    result = Operator::CheckChain.stub(
       :report,
       ->(_selected, scan_only:, trees:, return_results:) { seen << { scan_only:, trees:, return_results: }; [0, []] },
     ) do
-      Operator::GateChain.verify_fix(target: "RAILS")
+      Operator::CheckChain.verify_fix(target: "RAILS")
     end
 
     assert_equal [true], seen.map { |row| row[:scan_only] }
@@ -704,7 +704,7 @@ end
     assert_equal before, checkout_digest(@root), "preview changed the checkout"
   end
 
-  def test_dry_run_does_not_run_mutating_gate_verification
+  def test_dry_run_does_not_run_mutating_check_verification
     File.write(File.join(@root, "tracked.rb"), "puts 1\n")
     commit_fixture!
     File.write(File.join(@root, "untracked.rb"), "puts 2\n")
@@ -718,7 +718,7 @@ end
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    Operator::GateChain.stub(:verify_fix, ->(**) { flunk("dry-run reached GateChain.verify_fix") }) do
+    Operator::CheckChain.stub(:verify_fix, ->(**) { flunk("dry-run reached CheckChain.verify_fix") }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         result = Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: @root, bus: nil,
@@ -808,9 +808,9 @@ end
     end
 
     stubs = [
-      [Operator::GateChain, :baseline, {}],
-      [Operator::GateChain, :verify_fix, ->(**) { [0, []] }],
-      [Operator::GateChain, :persist_verified_baselines!, true],
+      [Operator::CheckChain, :baseline, {}],
+      [Operator::CheckChain, :verify_fix, ->(**) { [0, []] }],
+      [Operator::CheckChain, :persist_verified_baselines!, true],
       [Master::CLI::CommandRegistry, :run_pass, repair],
       [Master::Trace::Dmesg, :status, ->(*) {}],
       [Master::Fix::CodeWatch, :requested?, false],
@@ -905,7 +905,7 @@ end
     assert_equal false, captured[:apply]
   end
 
-  def test_named_trees_fix_command_runs_each_tree_in_order_and_preserves_gate_scope
+  def test_named_trees_fix_command_runs_each_tree_in_order_and_preserves_check_scope
     repaired = []
     verified = []
     fix_loop = Object.new
@@ -916,7 +916,7 @@ end
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { verified << target; [0, []] }) do
+    Operator::CheckChain.stub(:verify_fix, ->(target:, baseline: nil) { verified << target; [0, []] }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -942,7 +942,7 @@ end
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { events << [:verify, File.basename(target)]; [0, []] }) do
+    Operator::CheckChain.stub(:verify_fix, ->(target:, baseline: nil) { events << [:verify, File.basename(target)]; [0, []] }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -964,10 +964,10 @@ end
     no_cache = ->(*) { flunk("failed publish must not cache a delivered baseline") }
     stubs = [
       [Master::CLI::CommandRegistry, :run_pass, ->(_deps, **_kwargs) { "DONE: clean" }],
-      [Operator::GateChain, :baseline, ->(target:) { {} }],
-      [Operator::GateChain, :verify_fix, ->(target:, baseline:) { [0, []] }],
-      [Operator::GateChain, :persist_verified_baselines!, no_cache],
-      [Operator::GateChain, :clear_verified_fix_snapshots!, nil],
+      [Operator::CheckChain, :baseline, ->(target:) { {} }],
+      [Operator::CheckChain, :verify_fix, ->(target:, baseline:) { [0, []] }],
+      [Operator::CheckChain, :persist_verified_baselines!, no_cache],
+      [Operator::CheckChain, :clear_verified_fix_snapshots!, nil],
     ]
 
     stubbed(stubs) do
@@ -988,10 +988,10 @@ end
     fix_loop.define_singleton_method(:run) { |*| flunk("repair must not start after the proof changed the checkout") }
 
     result = nil
-    Operator::GateChain.stub(:baseline_scope_key, ->(*) { "RAILS" }) do
-      Operator::GateChain.stub(
+    Operator::CheckChain.stub(:baseline_scope_key, ->(*) { "RAILS" }) do
+      Operator::CheckChain.stub(
         :baseline,
-        ->(**) { raise Operator::GateChain::BaselineMutation, "read-only pre-repair proof changed 1 path: MASTER/lib/changed.rb" },
+        ->(**) { raise Operator::CheckChain::BaselineMutation, "read-only pre-repair proof changed 1 path: MASTER/lib/changed.rb" },
       ) do
         result = Master::CLI::CommandRegistry.run_fix_target(
           scanner: Object.new, fix_loop:, root: Master::ROOT, deliberation: nil, bus: nil, swarm: nil,
@@ -1007,7 +1007,7 @@ end
     assert_includes result.message, "MASTER/lib/changed.rb"
   end
 
-  def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
+  def test_fix_reenters_after_check_repairs_until_the_tree_stabilises
     verified = []
     states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
     fix_loop = Object.new
@@ -1018,7 +1018,7 @@ end
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    result = Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { verified << target; states.shift }) do
+    result = Operator::CheckChain.stub(:verify_fix, ->(target:, baseline: nil) { verified << target; states.shift }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -1118,7 +1118,7 @@ end
 
     saved = ENV.delete("MASTER_FIX_DEEP_TRACE")
     result = Master::Fix::ExecutionTrace.stub(:new, ->(**) { fake_trace }) do
-      Operator::GateChain.stub(:verify_fix, ->(**) { [0, []] }) do
+      Operator::CheckChain.stub(:verify_fix, ->(**) { [0, []] }) do
         Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -1156,7 +1156,7 @@ end
     pass = Master::CLI::Pipeline::Pass.allocate
     target = File.join(Master::ROOT, "lib", "cli", "fold_risk.rb")
     ran = []
-    Operator::GateChain.stub(:capture, ->(*cmd, **) { ran << cmd; [true, ["ok"], 0] }) do
+    Operator::CheckChain.stub(:capture, ->(*cmd, **) { ran << cmd; [true, ["ok"], 0] }) do
       name, runner = pass.proof_runner(target)
       ok, = runner.call
 
@@ -1171,7 +1171,7 @@ end
 
   def test_a_target_no_test_maps_to_is_not_a_failed_repair
     pass = Master::CLI::Pipeline::Pass.allocate
-    Operator::GateChain.stub(:capture, ->(*_cmd, **) { [false, ["test0: failed, no suite maps to lib/x.rb"], 1] }) do
+    Operator::CheckChain.stub(:capture, ->(*_cmd, **) { [false, ["test0: failed, no suite maps to lib/x.rb"], 1] }) do
       _name, runner = pass.proof_runner(File.join(Master::ROOT, "lib", "x.rb"))
       ok, = runner.call
 
@@ -1182,20 +1182,20 @@ end
 def test_a_named_stage_list_without_source_leaves_rails_with_no_proof_runner
   pass = Master::CLI::Pipeline::Pass.allocate
   rails = File.join(Master::RAILS_ROOT, "brgen_dating")
-  previous = ENV.delete("MASTER_FIX_GATE_STAGES")
+  previous = ENV.delete("MASTER_FIX_CHECK_STAGES")
 
-  assert_equal "rails gates", pass.proof_runner(rails).first
+  assert_equal "rails checks", pass.proof_runner(rails).first
 
-  ENV["MASTER_FIX_GATE_STAGES"] = "lexical,sprawl"
+  ENV["MASTER_FIX_CHECK_STAGES"] = "lexical,sprawl"
 
   assert_nil pass.proof_runner(rails)
   assert_equal "MASTER", pass.proof_runner(Master::ROOT).first
 
-  ENV["MASTER_FIX_GATE_STAGES"] = "source"
+  ENV["MASTER_FIX_CHECK_STAGES"] = "source"
 
-  assert_equal "rails gates", pass.proof_runner(rails).first
+  assert_equal "rails checks", pass.proof_runner(rails).first
 ensure
-  previous ? ENV["MASTER_FIX_GATE_STAGES"] = previous : ENV.delete("MASTER_FIX_GATE_STAGES")
+  previous ? ENV["MASTER_FIX_CHECK_STAGES"] = previous : ENV.delete("MASTER_FIX_CHECK_STAGES")
 end
 
   def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
@@ -1208,7 +1208,7 @@ end
     def scanner.scan_dir(*) = Master::Result.ok([])
 
     Master::Trace::Dmesg.stub(:with_verbosity, ->(level, &block) { levels << level; block.call }) do
-      Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { [0, []] }) do
+      Operator::CheckChain.stub(:verify_fix, ->(target:, baseline: nil) { [0, []] }) do
         Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -1222,7 +1222,7 @@ end
     assert_equal ["trace"], levels.uniq
   end
 
-  def test_fix_surfaces_a_gate_failure_when_it_makes_no_changes
+  def test_fix_surfaces_a_check_failure_when_it_makes_no_changes
     fix_loop = Object.new
     fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
@@ -1230,7 +1230,7 @@ end
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    result = Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { [1, []] }) do
+    result = Operator::CheckChain.stub(:verify_fix, ->(target:, baseline: nil) { [1, []] }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -1241,7 +1241,7 @@ end
 
     assert_instance_of Master::Result::Err, result
     assert_equal :validation, result.category
-    assert_equal "gate verification did not pass (status 1)", result.message
+    assert_equal "check verification did not pass (status 1)", result.message
   end
 
   # 2-4. /fix observes, repairs what the reading found, and observes again.
@@ -1259,9 +1259,9 @@ end
     # The proof after a writing pass is MASTER's whole suite, which holds this
     # test; stubbed, so the test measures the pass rather than the suite.
     suites = ->(*) { [true, ["suites: 1/1 green"], 0] }
-    # verify_fix would run the real gate stages in a subprocess; this test is about the pass.
-    out = Operator::GateChain.stub(:verify_fix, ->(**) { [0, []] }) do
-      Operator::GateChain.stub(:suites, suites) do
+    # verify_fix would run the real check stages in a subprocess; this test is about the pass.
+    out = Operator::CheckChain.stub(:verify_fix, ->(**) { [0, []] }) do
+      Operator::CheckChain.stub(:suites, suites) do
         Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -1284,7 +1284,7 @@ end
     ran = false
     saved = ENV["MASTER_IN_PROOF"]
     ENV["MASTER_IN_PROOF"] = "1"
-    name, body = Operator::GateChain.stub(:suites, ->(*) { ran = true; [true, [], 0] }) do
+    name, body = Operator::CheckChain.stub(:suites, ->(*) { ran = true; [true, [], 0] }) do
       pass.send(:proof_section, Master::ROOT)
     end
 
@@ -1295,51 +1295,51 @@ end
     ENV["MASTER_IN_PROOF"] = saved
   end
 
-  # Contribution gates may remain inconclusive outside /fix, but a proof that
+  # Contribution checks may remain inconclusive outside /fix, but a proof that
   # measured nothing cannot certify the repaired tree. The proof owns strictness
   # for its duration and restores the environment afterwards.
   def test_rails_proof_blocks_inconclusive_measurements_inside_a_proof
     pass = Master::CLI::Pipeline::Pass.allocate
     _name, runner = pass.proof_runner(Master::RAILS_ROOT)
-    previous_strict = ENV["GATE_STRICT_INCONCLUSIVE"]
+    previous_strict = ENV["CHECK_STRICT_INCONCLUSIVE"]
     # test_helper.rb sets MASTER_IN_PROOF for the whole suite; the ordinary
     # call below must run outside a proof, so the flag is lifted for this test.
     previous_proof = ENV.delete("MASTER_IN_PROOF")
-    ENV.delete("GATE_STRICT_INCONCLUSIVE")
+    ENV.delete("CHECK_STRICT_INCONCLUSIVE")
     strict_calls = []
     inconclusive = lambda do |strict_inconclusive: false, **|
       strict_calls << strict_inconclusive
       [false, ["deploy_drift measured nothing"], 3]
     end
 
-    ok, out = Operator::GateChain.stub(:rails_gates, inconclusive) { runner.call }
+    ok, out = Operator::CheckChain.stub(:rails_checks, inconclusive) { runner.call }
     assert ok, "ordinary contribution mode should preserve its inconclusive policy"
-    assert_match(/GATE_STRICT_INCONCLUSIVE/, out.last)
+    assert_match(/CHECK_STRICT_INCONCLUSIVE/, out.last)
 
     ok, out = pass.send(:inside_proof) do
-      Operator::GateChain.stub(:rails_gates, inconclusive) { runner.call }
+      Operator::CheckChain.stub(:rails_checks, inconclusive) { runner.call }
     end
-    refute ok, "an inconclusive gate passed a proof"
+    refute ok, "an inconclusive check passed a proof"
     assert_match(/forbids passing/, out.last)
-    assert_equal [false, true], strict_calls, "the proof did not request strict child-gate handling"
-    assert_nil ENV["GATE_STRICT_INCONCLUSIVE"], "the proof did not restore its strictness override"
+    assert_equal [false, true], strict_calls, "the proof did not request strict child-check handling"
+    assert_nil ENV["CHECK_STRICT_INCONCLUSIVE"], "the proof did not restore its strictness override"
 
     failed = ->(**) { [false, ["port_inventory failed"], 1] }
-    ok, = Operator::GateChain.stub(:rails_gates, failed) { runner.call }
-    refute ok, "a failed gate passed the proof"
+    ok, = Operator::CheckChain.stub(:rails_checks, failed) { runner.call }
+    refute ok, "a failed check passed the proof"
   ensure
-    previous_strict.nil? ? ENV.delete("GATE_STRICT_INCONCLUSIVE") : ENV["GATE_STRICT_INCONCLUSIVE"] = previous_strict
+    previous_strict.nil? ? ENV.delete("CHECK_STRICT_INCONCLUSIVE") : ENV["CHECK_STRICT_INCONCLUSIVE"] = previous_strict
     ENV["MASTER_IN_PROOF"] = previous_proof if previous_proof
   end
 
-  def test_rails_gates_launches_a_runner_that_exists
+  def test_rails_checks_launches_a_runner_that_exists
     seen = nil
     capture = ->(*cmd, **) { seen = cmd; [true, [], 0] }
-    Operator::GateChain.stub(:capture, capture) { Operator::GateChain.rails_gates(scan_only: true) }
+    Operator::CheckChain.stub(:capture, capture) { Operator::CheckChain.rails_checks(scan_only: true) }
 
     script = seen.map(&:to_s).find { |arg| arg.end_with?("runner.rb") }
-    refute_nil script, "rails_gates launched no runner.rb"
-    assert File.file?(script), "rails_gates launches #{script}, which does not exist"
+    refute_nil script, "rails_checks launched no runner.rb"
+    assert File.file?(script), "rails_checks launches #{script}, which does not exist"
   end
 
   def test_rails_fix_verification_runs_premerge_after_the_repair_aware_runner
@@ -1349,8 +1349,8 @@ end
       [true, ["ok"], 0]
     }
 
-    Operator::GateChain.stub(:capture, capture) do
-      ok, _body, status = Operator::GateChain.rails_verification(scan_only: true)
+    Operator::CheckChain.stub(:capture, capture) do
+      ok, _body, status = Operator::CheckChain.rails_verification(scan_only: true)
       assert ok
       assert_equal 0, status
     end
@@ -1363,12 +1363,12 @@ end
   end
 
   def test_rails_source_stage_uses_the_full_verification_path
-    stage = Operator::GateChain.stages(scan_only: true, trees: ["RAILS"])
+    stage = Operator::CheckChain.stages(scan_only: true, trees: ["RAILS"])
                          .find { |candidate| candidate.name == "source" }
     refute_nil stage
     seen = nil
 
-    Operator::GateChain.stub(:rails_verification, ->(**args) { seen = args; [true, [], 0] }) do
+    Operator::CheckChain.stub(:rails_verification, ->(**args) { seen = args; [true, [], 0] }) do
       ok, _body, status = stage.run.call
       assert ok
       assert_equal 0, status
@@ -1433,7 +1433,7 @@ end
     asked = []
     council.define_singleton_method(:run) do |files:, pass:, deadline:|
       asked << { files:, pass: }
-      { feedback: [{ feedback: "the name hides the intent" }], cherry_picks: ["rename the flag to what it gates"] }
+      { feedback: [{ feedback: "the name hides the intent" }], cherry_picks: ["rename the flag to what it checks"] }
     end
     loop = build_loop([{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "x" }],
                       council:)
@@ -1442,8 +1442,8 @@ end
     loop.run(@root, max_passes: 1)
 
     refute_empty asked, "the council never ran inside the pass"
-    preamble = runner.send(:council_preamble, { cherry_picks: ["rename the flag to what it gates"] })
-    assert_includes preamble, "rename the flag to what it gates"
+    preamble = runner.send(:council_preamble, { cherry_picks: ["rename the flag to what it checks"] })
+    assert_includes preamble, "rename the flag to what it checks"
     assert_nil runner.send(:council_preamble, { cherry_picks: [] })
   end
 
@@ -2021,15 +2021,15 @@ end
   # or near-duplicate paraphrases never take slots away from another issue.
   def test_cherry_pick_keeps_three_distinct_candidates_per_issue
     feedback = [
-      { feedback: "the flag name hides what it gates" },
+      { feedback: "the flag name hides what it checks" },
       { feedback: "the retry has no ceiling" }
     ]
     ideas = [
       "Solutions:",
-      "issue 1 rename the flag to describe the feature it gates",
+      "issue 1 rename the flag to describe the feature it checks",
       "issue 1 move the flag decision into the existing settings owner",
       "issue 1 remove the duplicate branch and reuse canonical configuration",
-      "issue 1 rename the flag to describe the feature it gates again",
+      "issue 1 rename the flag to describe the feature it checks again",
       "issue 1 use a shorter name for the flag",
       "issue 2 cap retry attempts and use bounded backoff",
       "issue 2 stop retrying immediately when the error is permanent",
@@ -2099,9 +2099,9 @@ end
                  pass.preview_lines(total: 1, laws: {}, files: {}).lines.first.chomp
   end
 
-  def test_gate_chain_is_explicitly_top_level_from_master_namespace
-    assert defined?(::Operator::GateChain)
-    refute defined?(Master::Operator::GateChain)
+  def test_check_chain_is_explicitly_top_level_from_master_namespace
+    assert defined?(::Operator::CheckChain)
+    refute defined?(Master::Operator::CheckChain)
   end
 
   def test_structural_context_uses_real_file_predicates

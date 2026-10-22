@@ -1,27 +1,27 @@
 # frozen_string_literal: true
 
 module Operator
-  # One switch for gate behaviour. Individual GATE_* flags remain supported by
+  # One switch for check behaviour. Individual CHECK_* flags remain supported by
   # lower-level tools, but callers that mean "ship this" use one mode.
   module StrictMode
     MODES = {
       contribute: {
-        "GATE_STRICT_INCONCLUSIVE" => "0",
-        "GATE_STRICT_ERRORS" => "0",
-        "GATE_STRICT_SOFT" => "0",
-        "GATE_REQUIRE_LIVE" => "0",
+        "CHECK_STRICT_INCONCLUSIVE" => "0",
+        "CHECK_STRICT_ERRORS" => "0",
+        "CHECK_STRICT_SOFT" => "0",
+        "CHECK_REQUIRE_LIVE" => "0",
       },
       deploy: {
-        "GATE_STRICT_INCONCLUSIVE" => "1",
-        "GATE_STRICT_ERRORS" => "1",
-        "GATE_STRICT_SOFT" => "1",
-        "GATE_REQUIRE_LIVE" => "1",
+        "CHECK_STRICT_INCONCLUSIVE" => "1",
+        "CHECK_STRICT_ERRORS" => "1",
+        "CHECK_STRICT_SOFT" => "1",
+        "CHECK_REQUIRE_LIVE" => "1",
       },
       strict: {
-        "GATE_STRICT_INCONCLUSIVE" => "1",
-        "GATE_STRICT_ERRORS" => "1",
-        "GATE_STRICT_SOFT" => "1",
-        "GATE_REQUIRE_LIVE" => "1",
+        "CHECK_STRICT_INCONCLUSIVE" => "1",
+        "CHECK_STRICT_ERRORS" => "1",
+        "CHECK_STRICT_SOFT" => "1",
+        "CHECK_REQUIRE_LIVE" => "1",
       },
     }.freeze
 

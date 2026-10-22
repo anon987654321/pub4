@@ -21,30 +21,30 @@ module Master
         PULSE = %w[pulseaudio --start --load=module-sles-source --exit-idle-time=-1].freeze
         PAREC = %w[parec --raw --format=s16le --rate=16000 --channels=1 --latency-msec=20].freeze
         SOX = %w[sox -q -d -r 16000 -c 1 -b 16 -e signed -t raw -].freeze
-        # The gate sits above the room, not at a fixed level: a fixed 1%
+        # The check sits above the room, not at a fixed level: a fixed 1%
         # never opened in a quiet room, and a fixed 0.05% opened on a
         # laptop's own noise, which peaks near 0.4%, so every take was a
         # sixth of a second of hiss. Half a second of the room is measured,
         # and speech must rise to three times its level to start a take.
         ROOM_S = 0.5
         ROOM_TTL_S = 60
-        GATE_OVER_ROOM = 3.0
-        GATE_FLOOR = 0.3
-        # High enough that a loud room still puts the gate above its noise:
+        CHECK_OVER_ROOM = 3.0
+        CHECK_FLOOR = 0.3
+        # High enough that a loud room still puts the check above its noise:
         # under the room, every take would be twelve seconds of it.
-        GATE_CEILING = 60.0
+        CHECK_CEILING = 60.0
         MAX_TAKE_S = 12
         RATE_HZ = 16_000
         FRAME_BYTES = 640 # 20 ms
-        START_FRAMES = 3 # 60 ms over the gate starts a take
+        START_FRAMES = 3 # 60 ms over the check starts a take
         END_FRAMES = 40 # 0.8 s under half of it ends one
         PREROLL_FRAMES = 12
         PARTIAL_EVERY_S = 1.0
         # Under this the take is a click or a breath, not a phrase.
         MIN_TAKE_S = 0.4
 
-        # The start gate, in percent of full scale, for a room at room_percent.
-        def self.gate_for(room_percent) = (room_percent * GATE_OVER_ROOM).clamp(GATE_FLOOR, GATE_CEILING)
+        # The start check, in percent of full scale, for a room at room_percent.
+        def self.check_for(room_percent) = (room_percent * CHECK_OVER_ROOM).clamp(CHECK_FLOOR, CHECK_CEILING)
 
         # transcriber takes the whole take and interim the take so far; both
         # default to words, which picks whisper or Gemini.
@@ -142,16 +142,16 @@ module Master
         # Reads 20 ms frames until speech has started and then paused, or the
         # caller stops.
         def capture_take(stream, stop:, on_partial:)
-          gate = gate_percent * 327.68
+          check = check_percent * 327.68
           @finished = false
-          take = await_speech(stream, gate, stop)
+          take = await_speech(stream, check, stop)
           quiet = last_partial = 0
           until take.nil? || stop.call
             frame = stream.read(FRAME_BYTES)
             break if frame.nil? || frame.empty?
 
             take << frame
-            quiet = peak(frame) < gate / 2 ? quiet + 1 : 0
+            quiet = peak(frame) < check / 2 ? quiet + 1 : 0
             break if quiet >= END_FRAMES || take.bytesize >= MAX_TAKE_S * RATE_HZ * 2
 
             # A second more of speech since the last interim, counted in the
@@ -166,9 +166,9 @@ module Master
 
         # The start of a take, or nil when the caller stops or the stream
         # ends first. A quarter second before the start is kept, so the first
-        # syllable is not clipped by the gate that found it. A stream with no
+        # syllable is not clipped by the check that found it. A stream with no
         # first frame at all marks the ear mute.
-        def await_speech(stream, gate, stop)
+        def await_speech(stream, check, stop)
           preroll = []
           loud = 0
           until stop.call
@@ -178,7 +178,7 @@ module Master
 
             preroll << frame
             preroll.shift while preroll.size > PREROLL_FRAMES
-            loud = peak(frame) > gate ? loud + 1 : 0
+            loud = peak(frame) > check ? loud + 1 : 0
             return preroll.join if loud >= START_FRAMES
           end
         end
@@ -211,18 +211,18 @@ module Master
         end
 
         # The room is measured again after a minute, so a fan that starts or
-        # stops moves the gate with it.
-        def gate_percent
+        # stops moves the check with it.
+        def check_percent
           now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           if @room.nil? || now - @room_at > ROOM_TTL_S
             @room = room_peak_percent
             @room_at = now
           end
-          self.class.gate_for(@room)
+          self.class.check_for(@room)
         end
 
         # The room's level as a percent: the 99th-percentile sample, so one
-        # knock does not raise the gate, taken after the first 150 ms, where
+        # knock does not raise the check, taken after the first 150 ms, where
         # opening the device clicks at up to 5%.
         def room_peak_percent
           stream = open_stream

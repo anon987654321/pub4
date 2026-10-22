@@ -131,7 +131,7 @@ private
 
     # Run only a declared compensation, only after the original command failed,
     # and only after the same Constitution has admitted it and the operator says
-    # yes. The compensation is a new exec effect; no inverse bypasses the gate.
+    # yes. The compensation is a new exec effect; no inverse bypasses the check.
     def compensate(failure, contract)
       action = contract.compensation
       inverse = Effect.exec(action.argv)
@@ -140,13 +140,13 @@ private
         return Observation.no("#{failure.message} [compensation blocked by #{by}: #{reason}]")
       in Verdict::Request(prompt:, reason:, by:)
         approval_context = "#{by} requested approval: #{reason}. "
-        gate_prompt = prompt
+        check_prompt = prompt
       in Verdict::Allow
         approval_context = ""
-        gate_prompt = "The original command failed. Approve compensation #{action.argv.inspect}? #{action.reason}"
+        check_prompt = "The original command failed. Approve compensation #{action.argv.inspect}? #{action.reason}"
       end
 
-      prompt = "#{approval_context}#{gate_prompt} Compensation: #{action.argv.inspect}. Reason: #{action.reason}"
+      prompt = "#{approval_context}#{check_prompt} Compensation: #{action.argv.inspect}. Reason: #{action.reason}"
       answer = @world.perform(Effect.ask(prompt))
       unless answer.ok? && affirmative?(answer.detail)
         detail = answer.ok? ? "operator declined" : answer.message

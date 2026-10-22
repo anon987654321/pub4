@@ -7,7 +7,7 @@
 # handover, and this is what it hands over to. Same split as every other lane:
 # Ruby owns the chain, Python appears only where ai-toolkit's run.py does.
 #
-# Why Colab at all: Kaggle gates both GPU and internet behind phone
+# Why Colab at all: Kaggle checks both GPU and internet behind phone
 # verification. An unverified account gets a CPU box with no network — measured,
 # not assumed: a probe kernel reported torch 2.10.0+cpu, no nvidia-smi, no DNS,
 # and no ruby. Colab's free tier asks for a Google account and nothing else.

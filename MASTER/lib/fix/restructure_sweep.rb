@@ -78,8 +78,8 @@ module Master
         Refactoring technique playbook:
         %<refactoring_playbook>s
 
-        Refactoring gates (what a kept change must satisfy):
-        %<refactoring_gates>s
+        Refactoring checks (what a kept change must satisfy):
+        %<refactoring_checks>s
 
         Automatic vetoes:
         %<automatic_vetoes>s
@@ -359,7 +359,7 @@ module Master
           domain_profile: @transformation_plan.domain_adapters.map { |domain, adapter| "  #{domain}: #{adapter}; smells=#{@transformation_plan.smell_catalog.fetch(domain, []).join(", ")}" }.join("\n"),
           refactoring_methods: playbook_lines("methods") { |entry| "  #{entry.fetch("id")}: #{entry.fetch("action")}" },
           refactoring_playbook: playbook_lines("technique_by_domain") { |domain, techniques| "  #{domain}: #{techniques.join(", ")}" },
-          refactoring_gates: playbook_lines("gates") { |gate| "  - #{gate}" },
+          refactoring_checks: playbook_lines("checks") { |check| "  - #{check}" },
           automatic_vetoes: @transformation_plan.automatic_vetoes.map { |veto| "  - #{veto}" }.join("\n"),
           law: problem.laws.join(", "),
           path: relative(problem.files.first),
@@ -375,7 +375,7 @@ module Master
         )
       end
 
-      # Methods and gates were validated at boot but never shown to the model;
+      # Methods and checks were validated at boot but never shown to the model;
       # a declared method no prompt carries governs nothing.
       def playbook_lines(section, &)
         @transformation_plan.refactoring_playbook.fetch(section).map(&).join("\n")

@@ -54,7 +54,7 @@ class TestRatchets < Minitest::Test
     Operator::Ratchets.stub(names.first, value) { with_stubs(names.drop(1), value, &block) }
   end
 
-  # A MASTER-only gate measures no RAILS ceiling: a MASTER proof spent fifteen minutes on them.
+  # A MASTER-only check measures no RAILS ceiling: a MASTER proof spent fifteen minutes on them.
   def test_a_tree_scope_leaves_the_rails_rows_unmeasured
     rails_measured = ->(*) { flunk "a RAILS row was measured for a MASTER scope" }
 
@@ -117,7 +117,7 @@ class TestRatchets < Minitest::Test
     end
   end
 
-  def test_css_budget_invokes_the_canonical_gate_runner_from_repo_root
+  def test_css_budget_invokes_the_canonical_check_runner_from_repo_root
     invocations = []
     fake_capture = lambda do |*args, chdir:, **_opts|
       invocations << [args, chdir]
@@ -128,10 +128,10 @@ class TestRatchets < Minitest::Test
       Operator::Ratchets.css_constitution_rows
     end
 
-    assert_equal 2, invocations.size, "both CSS gates contribute to the shared budget"
+    assert_equal 2, invocations.size, "both CSS checks contribute to the shared budget"
     invocations.each do |args, working_dir|
       assert_equal RbConfig.ruby, args.fetch(0)
-      assert_equal File.join(Operator::Ratchets::MASTER, "gates", "runner.rb"), args.fetch(1)
+      assert_equal File.join(Operator::Ratchets::MASTER, "checks", "runner.rb"), args.fetch(1)
       assert_includes %w[css_constitution design_metrics], args.fetch(2)
       assert_equal Operator::Ratchets::ROOT, working_dir
     end

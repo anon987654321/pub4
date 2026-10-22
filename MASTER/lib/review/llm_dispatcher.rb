@@ -510,9 +510,9 @@ module Master
         Io::ModelQuota.record(model) if status == :success
         # Every model call in the tree passes here, so this is the one place a
         # provider limit can be observed to have lifted. A paid call that came
-        # back is the only evidence that matters; the gate re-probes on its own
+        # back is the only evidence that matters; the check re-probes on its own
         # backoff and this is what closes the loop when the probe succeeds.
-        Io::QuotaGate.clear! if status == :success
+        Io::QuotaCheck.clear! if status == :success
         unless status == :success
           Io::ModelSkipCache.skip!(model, reason: error || status.to_s, category: status)
         end

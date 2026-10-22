@@ -53,14 +53,14 @@ thin wrappers, because routing and the autoloader resolve them by bare name.
 
 On the JavaScript side, `frontend/hotwire.js` and `frontend/stimulus_boot.js` are
 the entry points. The Stimulus components are vendored, never fetched from a CDN,
-and the stimulus components gate holds that line. Plain HTML must work without
+and the stimulus components check holds that line. Plain HTML must work without
 scripts, so every live search ships server-rendered content and its loading, empty
 and error states. Toggles answer with a redirect, and Turbo's morphing refresh makes
 that cheap.
 
 Some decisions are recorded so that no one reopens them. An agent may not choose or
 change a rendered value: a colour, a radius, a breakpoint or a layout belongs to
-the operator. The agent may add a token that holds an existing value, add a gate, or
+the operator. The agent may add a token that holds an existing value, add a check, or
 repair an ambiguity, and then must say so in the commit. Pages that carry
 per-viewer chrome are never cached for everyone. Nothing is preloaded or
 pre-connected beyond what is there, because the box has one core and 1 GB. Findings
@@ -90,6 +90,6 @@ ruby RAILS/test/layout_contract_test.rb
 ruby RAILS/test/design_contract_test.rb
 ruby MASTER/tools/rails/build_all_css.rb --check
 ruby MASTER/tools/rails/build_face_css.rb --check
-ruby MASTER/gates/runner.rb stimulus_components
-ruby MASTER/gates/runner.rb frontend_auditor
+ruby MASTER/checks/runner.rb stimulus_components
+ruby MASTER/checks/runner.rb frontend_auditor
 ```

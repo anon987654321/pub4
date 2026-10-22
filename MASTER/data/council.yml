@@ -81,7 +81,7 @@ personas:
     cognitive_lens: evidence
     emphasizes: [ROBUSTNESS]
     can_veto: false
-    prompt: Locate missing tests, flaky patterns, and propose deterministic validation gates.
+    prompt: Locate missing tests, flaky patterns, and propose deterministic validation checks.
 
   - name: Pragmatist
     aliases: [pragmatist, realist, minimalist]

@@ -25,8 +25,8 @@ class SharedStimulusComponentsTest < Minitest::Test
 
   def test_shared_stimulus_components_are_registered
     source = registry_source
-    require File.join(Shared::Contracts.root, "MASTER", "gates", "lib", "source", "stimulus_components")
-    Deploy::StimulusComponentsGate::REQUIRED_CONTROLLERS.each do |component|
+    require File.join(Shared::Contracts.root, "MASTER", "checks", "lib", "source", "stimulus_components")
+    Deploy::StimulusComponentsCheck::REQUIRED_CONTROLLERS.each do |component|
       assert_match(/\[ "#{Regexp.escape(component)}",/, source, "missing registration for #{component}")
     end
   end

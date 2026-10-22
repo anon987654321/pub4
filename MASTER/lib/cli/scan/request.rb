@@ -43,7 +43,7 @@ module Master
           return file_pairs(target) if target && File.file?(target)
           # A target that was asked for and does not resolve must not quietly
           # become the root — that fallback is how `/scan ../RAILS` measured
-          # MASTER and called it RAILS. bin/gate reads this prefix as
+          # MASTER and called it RAILS. bin/check --ladder reads this prefix as
           # inconclusive, which is what an unmeasured stage is.
           return "scan failed: no such target: #{target}" if target && !File.directory?(target)
 
@@ -101,7 +101,7 @@ module Master
           # A word can name both a scan profile and a target — "rails" is a
           # limits.yml profile AND pub4/RAILS. When it names both, it is the
           # target: reading `/scan rails` as "scan MASTER with the rails
-          # ruleset" sent the gate's whole deploy stage back over MASTER.
+          # ruleset" sent the check's whole deploy stage back over MASTER.
           # requested_profile still sees the word, so the rails tree is scanned
           # under the rails profile, which is the only reading that uses both.
           return parts[1..]&.join(" ").to_s.strip if profile_keyword?(parts.first) && !target_word?(parts.first)

@@ -42,7 +42,7 @@
 }
 
 /* One refresh gesture, not two. The document is the scroll container on every
-   RAILS surface -- pull_to_refresh_controller gates on window.scrollY -- so
+   RAILS surface -- pull_to_refresh_controller checks on window.scrollY -- so
    .app-shell's own overscroll-behavior:contain (_shell.scss) applies to an
    element that never scrolls, and <html> measured `auto`. Without containment
    the browser's native pull-to-refresh runs alongside brgen's custom one, so a
@@ -141,10 +141,10 @@ body[data-layout="document"] {
   max-width: var(--measure);
 }
 
-/* Touch floor — buttons and primary nav hits (geometry gate also measures this).
+/* Touch floor — buttons and primary nav hits (geometry check also measures this).
    min-height alone is half a floor: Fitts is about area, and an icon-only
    control can be 44px tall and 24px wide and satisfy this rule while failing
-   the thing it exists to guarantee. The rendered gate measured exactly that —
+   the thing it exists to guarantee. The rendered check measured exactly that —
    pagination arrows at 10x44 and a close control at 34x22 — because the CSS
    only ever constrained one axis. min-inline-size costs nothing on the
    full-width members, which are already wider than the floor. */

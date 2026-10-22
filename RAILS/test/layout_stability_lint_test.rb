@@ -6,8 +6,8 @@ require_relative "../../MASTER/tools/layout_stability_lint"
 
 # Whether the layout holds still, asserted from source.
 #
-# The tree has visual gates already, and every one of them measures a finished
-# frame: design_contract reads the compiled CSS, visual_contract_gate reads a
+# The tree has visual checks already, and every one of them measures a finished
+# frame: design_contract reads the compiled CSS, visual_contract_check reads a
 # rendered screenshot. A finished frame cannot show a shift, because by the time
 # it is finished the shift has happened and the reader has already lost their
 # place. This asks the question the frame cannot answer -- is there anything on

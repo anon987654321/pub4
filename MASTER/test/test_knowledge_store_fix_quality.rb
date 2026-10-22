@@ -4,9 +4,9 @@ require_relative "test_helper"
 require "sqlite3"
 
 class TestKnowledgeStoreFixQuality < Minitest::Test
-  # A violation skipped by policy (confidence gate, stale fingerprint) was
+  # A violation skipped by policy (confidence check, stale fingerprint) was
   # never actually attempted -- counting it the same as a genuine failed
-  # fix silently poisons that rule's quality score every time the gate
+  # fix silently poisons that rule's quality score every time the check
   # fires, without it ever having actually failed. fix_quality/top_rules
   # must exclude 'skipped' from the denominator, matching OpenCrabs'
   # feedback_policy.rs lesson (recorded, but never counted against success).

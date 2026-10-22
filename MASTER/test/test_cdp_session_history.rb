@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
-require File.expand_path("../gates/support/cdp_session", __dir__)
+require File.expand_path("../checks/support/cdp_session", __dir__)
 
 # Chrome has no Page.goBack; CdpSession#back and #forward move through
 # Page.getNavigationHistory. This proves it in a real headless Chrome and is
@@ -50,7 +50,7 @@ end
 class TestWebPlatformProbeOnSvg < Minitest::Test
   def test_a_tall_inline_svg_does_not_break_the_probe
     skip "no headless Chrome" unless Deploy::CdpSession.available?
-    require File.expand_path("../gates/support/web_platform_probe", __dir__)
+    require File.expand_path("../checks/support/web_platform_probe", __dir__)
     surface = Struct.new(:viewport).new("mobile")
     html = "<body><svg width='300' height='260' style='height:260px'><rect width='9' height='9'/></svg></body>"
     Deploy::CdpSession.open do |cdp|

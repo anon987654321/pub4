@@ -179,7 +179,7 @@ class TestCLI < Minitest::Test
     bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
     deliberation = Object.new
     deliberation.define_singleton_method(:review) do |_artifact, context:|
-      raise "unexpected context: #{context}" unless context == "pre-ship council gate (staged)"
+      raise "unexpected context: #{context}" unless context == "pre-ship council check (staged)"
 
       Master::Result.err("blocked", category: :policy)
     end
@@ -240,7 +240,7 @@ class TestCLI < Minitest::Test
     Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
       result = runner.call(root: "/tmp/master")
 
-      assert_includes result.value!, "Rhea: pre-ship council gate (diff)"
+      assert_includes result.value!, "Rhea: pre-ship council check (diff)"
     end
   end
 
@@ -258,8 +258,8 @@ class TestCLI < Minitest::Test
     assert_includes fix, "--dry-run", "the flag that holds the repair back is the detail"
   end
 
-# /commit is built with review_gate: true, so the page has to name the flag
-# the gate asks for, and the path list that scopes what goes in.
+# /commit is built with review_check: true, so the page has to name the flag
+# the check asks for, and the path list that scopes what goes in.
 def test_commit_help_names_the_paths_and_the_confirm_flag
   detail = Master::CLI::CommandRegistry.help_text("commit")
 

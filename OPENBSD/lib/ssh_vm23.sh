@@ -14,7 +14,7 @@ set -euo pipefail
 # Env: SSH_USER SSH_HOST SSH_KEY REMOTE_PUB4
 #
 # SSH_HOST here is the host ALONE — the login is SSH_USER, and they are joined as
-# ${SSH_USER}@${SSH_HOST} below. config_drift_gate.rb and bin/deploy-diff.sh give
+# ${SSH_USER}@${SSH_HOST} below. config_drift_check.rb and bin/deploy-diff.sh give
 # the same variable the opposite meaning, login@host in one string, so exporting
 # one file's SSH_HOST into another's yields dev@dev@brgen.no and every ssh fails.
 

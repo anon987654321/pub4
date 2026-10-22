@@ -91,7 +91,7 @@ ignore_events:
   - '\Aobs\d+: \d+/\d+ files\b'
   - '\Alaw\d+: lexical (?:scan pass|scanner idle)\b'
   - '\A[+x] route \d+s\z'
-  - '\Agate\d+: .*\brunning \d+s, elapsed \d+s\z'
+  - '\Acheck\d+: .*\brunning \d+s, elapsed \d+s\z'
   - '\A[\W_]*\z'
 
 # Redaction, applied to every event before it reaches a model or a speaker.

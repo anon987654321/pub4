@@ -3,10 +3,10 @@
 require "json"
 require_relative "../result"
 require_relative "../gap"
-require_relative "visual_quality_gates"
-require_relative "../../gates/support/geometry_probe"
-require_relative "../../gates/support/surface_probes"
-require_relative "../../gates/lib/rendered/layout_snapshot"
+require_relative "visual_quality_checks"
+require_relative "../../checks/support/geometry_probe"
+require_relative "../../checks/support/surface_probes"
+require_relative "../../checks/lib/rendered/layout_snapshot"
 
 module Master
   module Fix
@@ -14,7 +14,7 @@ module Master
     # Ordinarily the committed snapshot must match before and after a proposal.
     # The explicitly authorized Rails completion campaign may reconcile a
     # structural difference, but only after measurable renders and every other
-    # visual quality gate passes; its snapshot write joins the active transaction.
+    # visual quality check passes; its snapshot write joins the active transaction.
     class VisualCustody
       # Nothing was measured and no measurement here will change that without
       # someone fixing the setup: a fact, not a decision.
@@ -28,14 +28,14 @@ module Master
         @bus = bus
         @layout_completion = !!layout_completion
         @preflight_verified = false
-        @snapshot_gate = Deploy::LayoutSnapshotGate.new
+        @snapshot_check = Deploy::LayoutSnapshotCheck.new
       end
 
       def layout_completion? = @layout_completion && @preflight_verified
 
       def preflight!(captures)
         @preflight_verified = false
-        VisualQualityGates.record(captures, root: @root)
+        VisualQualityChecks.record(captures, root: @root)
         verdict = compare_captures(Array(captures), "before visual fix")
         if verdict.ok?
           @preflight_verified = true
@@ -82,7 +82,7 @@ module Master
           return enlisted unless enlisted.ok?
         end
 
-        quality = VisualQualityGates.judge(
+        quality = VisualQualityChecks.judge(
           measured, root: @root, prior:, anchors:, allow_layout_change: updates.any? && layout_completion?
         )
         return quality unless quality.ok?
@@ -90,7 +90,7 @@ module Master
 
         original_bytes = updates.keys.to_h { |path| [path, File.binread(path)] }
         begin
-          updates.each { |path, data| @snapshot_gate.send(:write, path, data) }
+          updates.each { |path, data| @snapshot_check.send(:write, path, data) }
           observed = committer.observe_related_visual_baseline_writes!(updates.keys)
           raise observed.message unless observed.ok?
         rescue StandardError => e
@@ -152,9 +152,9 @@ module Master
           raise LayoutCompletionEvidenceMissing, "#{surface.id}: baseline missing" unless File.file?(path)
 
           baseline = JSON.parse(File.read(path))
-          current = @snapshot_gate.send(:distill, payload)
-          if require_stable_elements && current.fetch("elements", []).size < Deploy::LayoutSnapshotGate::MIN_ELEMENTS
-            raise LayoutCompletionEvidenceMissing, "#{surface.id}: fewer than #{Deploy::LayoutSnapshotGate::MIN_ELEMENTS} stable elements"
+          current = @snapshot_check.send(:distill, payload)
+          if require_stable_elements && current.fetch("elements", []).size < Deploy::LayoutSnapshotCheck::MIN_ELEMENTS
+            raise LayoutCompletionEvidenceMissing, "#{surface.id}: fewer than #{Deploy::LayoutSnapshotCheck::MIN_ELEMENTS} stable elements"
           end
 
           if grouped.key?(path) && grouped.fetch(path).fetch(:current) != current
@@ -164,7 +164,7 @@ module Master
         end
 
         grouped.filter_map do |path, row|
-          changed = @snapshot_gate.send(:compare, row.fetch(:baseline), row.fetch(:current))
+          changed = @snapshot_check.send(:compare, row.fetch(:baseline), row.fetch(:current))
           [path, row.fetch(:current)] unless changed.empty?
         end.to_h
       rescue JSON::ParserError => e
@@ -195,8 +195,8 @@ module Master
           end
 
           baseline = JSON.parse(File.read(path))
-          current = @snapshot_gate.send(:distill, payload)
-          diffs = @snapshot_gate.send(:compare, baseline, current)
+          current = @snapshot_check.send(:distill, payload)
+          diffs = @snapshot_check.send(:compare, baseline, current)
           checked += 1
           next if diffs.empty?
 
@@ -222,7 +222,7 @@ module Master
       end
 
       def baseline_path(surface)
-        @snapshot_gate.send(:baseline_path, surface)
+        @snapshot_check.send(:baseline_path, surface)
       end
 
       def relative(path)

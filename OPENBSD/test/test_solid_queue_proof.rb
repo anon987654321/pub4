@@ -4,15 +4,15 @@ require "minitest/autorun"
 require "tmpdir"
 require "time"
 require_relative "../lib/utf8"
-require_relative "../gates/solid_queue_proof"
+require_relative "../checks/solid_queue_proof"
 
-# The gate exists so an app whose jobs never run cannot deploy green. It used to
+# The check exists so an app whose jobs never run cannot deploy green. It used to
 # assert a registered SolidQueue::Process, which vm23 deliberately does not have
 # — rc.d/<app>_jobs is disabled at boot and drain-jobs.sh runs the queue hourly
 # instead — so every Rails deploy stamped failed while the app was healthy, and
 # `vps-deploy all` could never get past brgen.
 #
-# Both halves are pinned here. Widening a gate is only safe if the failure it
+# Both halves are pinned here. Widening a check is only safe if the failure it
 # was built for is still reachable, so the "nothing is running these jobs" case
 # gets as much attention as the passing one.
 class SolidQueueProofTest < Minitest::Test
@@ -71,7 +71,7 @@ class SolidQueueProofTest < Minitest::Test
     end
   end
 
-  # The failure the gate is built for. An app the drain never mentions has
+  # The failure the check is built for. An app the drain never mentions has
   # nothing running its jobs, and must not pass.
   def test_an_app_the_drain_never_ran_does_not_pass
     with_log do |path|

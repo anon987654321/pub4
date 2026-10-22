@@ -70,9 +70,9 @@ class DeploySmokeContractTest < Minitest::Test
     end
   end
 
-  # A waiver variable that no longer gates anything is an exemption outliving its
+  # A waiver variable that no longer checks anything is an exemption outliving its
   # subject (soul.yml EXEMPTIONS_EXPIRE), and it reads as a considered decision.
-  def test_each_waiver_variable_is_read_and_gates_a_check
+  def test_each_waiver_variable_is_read_and_checks_a_check
     WAIVERS.each do |app, variable|
       assert_includes smoke_code, variable, "#{variable} is documented but never read"
       assert_match(/#{app}_req=0/, smoke_code, "#{variable} does not actually waive #{app}")
@@ -80,10 +80,10 @@ class DeploySmokeContractTest < Minitest::Test
     end
   end
 
-  def test_deploy_smoke_gate_static_contract
-    gate = File.join(OPENBSD_ROOT, "gates", "deploy_smoke_gate.rb")
-    assert File.file?(gate)
-    body = File.read(gate)
+  def test_deploy_smoke_check_static_contract
+    check = File.join(OPENBSD_ROOT, "checks", "deploy_smoke_check.rb")
+    assert File.file?(check)
+    body = File.read(check)
     assert_includes body, "relayd.conf"
     assert_includes body, 'check http "/up"'
     assert_includes body, "assume_ssl"
@@ -115,7 +115,7 @@ class DeploySmokeContractTest < Minitest::Test
     refute_match(/chat\/metrics.*"model"/, master)
   end
 
-  def test_rails_runtime_gate_precompiles_assets
+  def test_rails_runtime_check_precompiles_assets
     shared = read(File.join(ROOT, "_assets.sh"))
     assert_includes shared, "rails_assets_precompile_as_app"
     assert_includes shared, "assets:precompile"

@@ -30,7 +30,6 @@ module Operator
       MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
-      MASTER/bin/gate
       RAILS/master/bin/ci
       OPENBSD/bin/check
       OPENBSD/bin/check-rails
@@ -41,14 +40,14 @@ module Operator
       RAILS/package.json
       MASTER/tools/rails/premerge.rb
       STUDIO/Rakefile
-      MASTER/gates/runner.rb
-      MASTER/gates/release.rb
+      MASTER/checks/runner.rb
+      MASTER/checks/release.rb
     ].freeze
 
     # `rails test` globs inside the framework, not in any file here. An app's
     # bin/ci reaching its own test tree is a convention, so it is written down
     # rather than inferred -- and named as an assumption, because an assumption
-    # that looks like a measurement is how a gate ends up measuring nothing.
+    # that looks like a measurement is how a check ends up measuring nothing.
     CONVENTIONS = {
       "RAILS/amber/bin/ci" => ["RAILS/amber/test/**/*_test.rb"],
       "RAILS/brgen/bin/ci" => ["RAILS/brgen/test/**/*_test.rb", "RAILS/brgen/engines/*/test/**/*_test.rb"],
@@ -70,7 +69,7 @@ module Operator
     GLOB = /["']([A-Za-z0-9_.\-\/*\[\]{}]*\*[A-Za-z0-9_.\-\/*\[\]{}]*\.rb)["']/
 
     # A runner naming one file outright runs it just as surely. tools/Rakefile
-    # lists test_tools_gate.rb by name — deliberately, its comment says, because
+    # lists test_tools_check.rb by name — deliberately, its comment says, because
     # the glob beside it would pull in the dilla and tool suites — and a
     # glob-only extractor read that as a test nothing runs. A path literal that
     # matches no test file matches nothing here, so this cannot invent coverage.

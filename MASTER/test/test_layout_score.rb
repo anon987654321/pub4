@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require File.expand_path("../lib/fix/layout_score_store", __dir__)
-require File.expand_path("../lib/fix/visual_quality_gates", __dir__)
+require File.expand_path("../lib/fix/visual_quality_checks", __dir__)
 
 # Synthetic payloads in the GeometryProbe shape. Each sub-score gets a clean
 # and a broken layout; the store cases prove a drop past tolerance is a
@@ -169,9 +169,9 @@ class LayoutScoreTest < Minitest::Test
     assert_nil S.row(capture.merge(payload: good_payload.merge("composition" => { "state" => "open" })), root: @root)
   end
 
-  def test_quality_gates_judge_rejects_a_layout_score_regression
-    Master::Fix::VisualQualityGates.record([{ surface: @surface, payload: good_payload.merge("composition" => { "state" => "resting" }) }], root: @root)
-    verdict = Master::Fix::VisualQualityGates.judge([[@surface, bad_payload]], root: @root, prior: Master::Result.ok(state: :preserved))
+  def test_quality_checks_judge_rejects_a_layout_score_regression
+    Master::Fix::VisualQualityChecks.record([{ surface: @surface, payload: good_payload.merge("composition" => { "state" => "resting" }) }], root: @root)
+    verdict = Master::Fix::VisualQualityChecks.judge([[@surface, bad_payload]], root: @root, prior: Master::Result.ok(state: :preserved))
     assert verdict.err?
     assert_match(/layout score/, verdict.message)
   end

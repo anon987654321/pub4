@@ -69,7 +69,7 @@ git -C "$repo" fetch -q origin
 # An existing worktree may hold somebody's unfinished work, and handing it over
 # is the shared-checkout hazard this command exists to avoid. Two agents were
 # given the same tree in one afternoon: one noticed a stranger's eleven modified
-# gate files and moved out, the other worked beside them for an hour. The line
+# check files and moved out, the other worked beside them for an hour. The line
 # that told them both was "worktree already exists", which reads as success.
 #
 # Dirty means occupied. A clean one is a leftover and is safe to reuse.

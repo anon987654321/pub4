@@ -157,7 +157,7 @@ end
 #
 # SilentRescue reads a line that starts with `rescue`, so both rules above are
 # blind to the modifier form by construction. These four are the pair the
-# gate doctrine asks for: the shape it must flag and the shapes it must not.
+# check doctrine asks for: the shape it must flag and the shapes it must not.
 
 def modifier_rule
   Master::Review::Scan::Law.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new

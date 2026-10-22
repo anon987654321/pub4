@@ -2117,11 +2117,11 @@ Law.define(:INSTRUMENT_MUST_PROVE_ITSELF) do
   severity :error
   lifecycle :trusted
   autofix :never
-  ask "Does every detector or gate that can influence a decision have a known-positive and known-negative proof, or an explicit semantic evaluation path?"
+  ask "Does every detector or check that can influence a decision have a known-positive and known-negative proof, or an explicit semantic evaluation path?"
   practice "A measuring instrument must demonstrate what it catches and what it spares before its findings can drive automatic action."
   fix "Add polarity fixtures or a semantic evaluation contract before trusting the instrument."
   bad "A new veto regex is enabled with no false-positive fixture."
-  good "The detector has a failing fixture, a clean fixture, and its evaluation surface is covered by a gate."
+  good "The detector has a failing fixture, a clean fixture, and its evaluation surface is covered by a check."
 end
 
 Law.define(:VERIFICATION_REQUIRED_FOR_COMPLETION) do
@@ -2141,11 +2141,11 @@ Law.define(:INCONCLUSIVE_IS_NOT_PASS) do
   severity :error
   lifecycle :trusted
   autofix :never
-  ask "Did an unavailable dependency, skipped probe, timeout, missing permission, or unmeasured gate get treated as success?"
+  ask "Did an unavailable dependency, skipped probe, timeout, missing permission, or unmeasured check get treated as success?"
   practice "Unknown, skipped and unavailable are distinct from pass."
   fix "Return an explicit inconclusive/degraded result and preserve the unresolved evidence."
-  bad "Browser unavailable, therefore visual gate passed."
-  good "Browser unavailable, visual gate inconclusive, no completion claim."
+  bad "Browser unavailable, therefore visual check passed."
+  good "Browser unavailable, visual check inconclusive, no completion claim."
 end
 
 Law.define(:RATCHET_INTEGRITY) do

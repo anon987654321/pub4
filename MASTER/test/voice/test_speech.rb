@@ -878,7 +878,7 @@ class TestSpeech < Minitest::Test
       skip "say missing" unless system("say", "-v", "?", out: File::NULL, err: File::NULL)
 
       spoken = File.join(dir, "speech.aiff")
-      assert system("say", "-o", spoken, "The gate passed on all four trees. Nothing was skipped, and the room is ready to hear.")
+      assert system("say", "-o", spoken, "The check passed on all four trees. Nothing was skipped, and the room is ready to hear.")
       source = File.join(dir, "speech.wav")
       assert system("ffmpeg", "-y", "-loglevel", "error", "-i", spoken, "-ac", "1", "-ar", "24000", source)
       loudness = lambda do |chain|

@@ -74,7 +74,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
         cuisine_type: "Norwegian",
         city: @city
       )
-      order = ticket!(restaurant, delivery_address: "Kong Oscars gate 1")
+      order = ticket!(restaurant, delivery_address: "Kong Oscars check 1")
 
       assert order.confirm!
       assert order.prepare!

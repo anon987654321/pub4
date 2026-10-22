@@ -6,7 +6,7 @@ require_relative "test_helper"
 # A /fix run leaves its target a residual, and the next run starts from it.
 class TestFixResidual < Minitest::Test
   Residual = Master::CLI::Pipeline::Residual
-  Focus = Master::Fix::GateFocus
+  Focus = Master::Fix::CheckFocus
 
   def setup
     @saved = ENV["MASTER_FIX_RESIDUAL"]
@@ -21,7 +21,7 @@ class TestFixResidual < Minitest::Test
     Focus.reset!
   end
 
-  def test_a_hard_gate_left_red_points_the_next_run_at_the_blocker_lane
+  def test_a_hard_check_left_red_points_the_next_run_at_the_blocker_lane
     proof = { verdict: "proof: 9 of 20", hard: %w[release], soft: %w[layout_suite] }
 
     entry = Residual.write(target: "RAILS", scorecard: "fix partial · …", proof:, named: %w[app/a.rb])

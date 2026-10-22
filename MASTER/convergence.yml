@@ -137,8 +137,8 @@ workstreams:
   - id: browser_proof
     state: partial
     title: Rendered geometry, accessibility and performance evidence
-    implementation: RAILS/gates
-    proof: RAILS/gates
+    implementation: RAILS/checks
+    proof: RAILS/checks
   - id: search_quality
     state: partial
     title: Search relevance, explanations and quality corpus

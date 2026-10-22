@@ -6,8 +6,8 @@ require "test_helper"
 # fields posted as user[password]; the shared PasswordsActions#update permits the
 # top-level password and password_confirmation. update therefore saw nothing,
 # changed nothing, and answered "Password has been reset". The new password never
-# took and the old one kept working. Found by the flow gate
-# (MASTER/gates/data/flows.yml, amber_password_reset_by_email).
+# took and the old one kept working. Found by the flow check
+# (MASTER/checks/data/flows.yml, amber_password_reset_by_email).
 class PasswordsResetFormTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.create!(email_address: "reset-me@example.com", password: "old-long-password", password_confirmation: "old-long-password")

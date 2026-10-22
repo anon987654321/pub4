@@ -24,7 +24,7 @@ class NvdRateLimit < ApplicationRecord
   end
 
   # Atomically reserve the actual request start too. Scheduled jobs can become
-  # overdue while a queue is drained; this gate prevents overdue work bursting
+  # overdue while a queue is drained; this check prevents overdue work bursting
   # against NVD even when its original reserved time has passed.
   def self.claim_or_defer
     row = create_or_find_by!(name: NAME)

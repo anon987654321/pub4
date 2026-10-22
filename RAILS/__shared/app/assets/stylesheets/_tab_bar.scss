@@ -93,7 +93,7 @@ html.chrome-hidden .tab-bar {
 
 /* A revealed drawer is min(300px, 85vw) of opaque, full-height panel anchored to
    an edge. Below md its inner edge is past the horizontal centre, so it lands on
-   top of the bottom-centre peel: the geometry gate measured the peel's own centre
+   top of the bottom-centre peel: the geometry check measured the peel's own centre
    pixel owned by aside.sidebar on all 16 brgen mobile surfaces, first visit, with
    the drawer showing itself as the operator asked it to.
    Withdrawing the peel while a drawer is open states what is already true — it is

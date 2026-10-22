@@ -145,7 +145,7 @@ module Master
         # actually looked.
         def log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:)
           parts = ["done", Master::Trace::Dmesg.counted(total, "file"), tally(viol_total, dirty), "#{elapsed.round}s"]
-          skipped = Master::Io::QuotaGate.report
+          skipped = Master::Io::QuotaCheck.report
           parts << skipped if skipped
           Master::Trace::Dmesg.status(unit, parts.join(", "))
           log_law_timing(unit)

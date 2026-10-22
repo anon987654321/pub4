@@ -63,7 +63,7 @@ module Deploy
       # A closed/refused/timed-out port is the routine, expected negative
       # result this method exists to report -- not worth Master::Ground::
       # Swallow's ledger, which also isn't loaded in this module's standalone
-      # callers (bin/vps-state, integrity_gate.rb) that never boot the full
+      # callers (bin/vps-state, integrity_check.rb) that never boot the full
       # Master:: namespace. Referencing it here raised NameError and masked
       # the real (harmless) connection-refused underneath it.
       false

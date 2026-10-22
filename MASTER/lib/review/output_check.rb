@@ -2,7 +2,7 @@
 
 module Master
   module Review
-    # Regex-backed quality gate for final assistant output.
+    # Regex-backed quality check for final assistant output.
     class OutputCheck
       CATEGORY_SEVERITY = {
         "hallucination" => :error,

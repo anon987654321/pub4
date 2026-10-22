@@ -67,7 +67,7 @@ spine:
   # 38148 -> 38120, and the fall cleared both standing raises.
   #
   # Two changes landed above the ceiling after it was sponsored — 17 lines for
-  # `gate --tree <TREE>` and 6 for the local model tier's gate — and a third
+  # `check --tree <TREE>` and 6 for the local model tier's check — and a third
   # raise was not available: consecutive_raises_allowed is 2 and both were
   # spent. The cap did what it is for. It was paid out of lib/trace/metrics.rb,
   # which recorded four things and was called for one: record_latency,
@@ -86,7 +86,7 @@ spine:
   # both lexical sets are empty, which stays. BootReceipt#commit shed six lines
   # by asking git rev-parse instead of walking .git by hand. Against them,
   # LawRegistryAudit#mechanical adds thirteen and buys one statement of a
-  # population three gate banners and rule_reach were each spelling for
+  # population three check banners and rule_reach were each spelling for
   # themselves, at two different answers.
   # 38096 -> 38108, and /rules is most of it. The law had no lister: the only
   # way to enumerate 242 rules was a YAML one-liner in CLAUDE.md that iterated
@@ -176,14 +176,14 @@ spine:
   # write in three was damage. It proposes a candidate now and MechanicalAutofix
   # is the governed writer, judging it with the same WriteGuard every
   # constitutional write passes. The other twelve are the deleting-transform
-  # gate: Scanner#should_autofix? refused remove_immediate_dead_code on the
+  # check: Scanner#should_autofix? refused remove_immediate_dead_code on the
   # rule-driven path while AstFixer ran it unasked on this one.
   #
   # 38197 -> 38298 for the local tier, 97 of it lib/review/llm_dispatcher/
   # ollama_sender.rb. models.yml has declared ollama: ids since the tier was
   # written and ModelRouter drops them when OLLAMA_BASE_URL is unset, but the
   # dispatcher had no branch — provider_availability.rb says so in a comment —
-  # so an id that passed the gate fell through to RubyLLM, which handed
+  # so an id that passed the check fell through to RubyLLM, which handed
   # ollama:llama3:latest to OpenRouter and got an error. Enabling the tier was
   # the way to break it. Not through RubyLLM: that is a registry of paid
   # endpoints with prices and capability flags, and a local daemon is one POST
@@ -238,9 +238,9 @@ spine:
 # given back: ProposeTree#describe_entry lost its `subs =` assignment in an
 # extraction and raised NameError on every directory under lib/, so the
 # proposal it runs on fix_loop:clean never reached a model.
-# 38011 -> 37802: Ground::PhaseGates, 207 body lines plus its two boot wires.
+# 38011 -> 37802: Ground::PhaseChecks, 207 body lines plus its two boot wires.
 # Boot built it into the CLI container and nothing ever called advance!,
-# meet_gate! or status; the seven phases it gated are Policy::Workflow::PHASES,
+# meet_check! or status; the seven phases it gated are Policy::Workflow::PHASES,
 # the copy the brain overlay reads.
 # 35558 -> 35196: Trace::Snapshot::Publisher, Collector and AgentGuide, 362 body
 # lines net of the skip list moving into CommandRegistry. Their route went with
@@ -298,7 +298,7 @@ spine:
 # The coarse sprawl net over the four top-level trees: one source-file ceiling each, so a
 # new file anywhere fails `bin/operator measure` until it folds into an existing one
 # or the ceiling is raised here with the reason in the commit. dilla's engine has
-# a finer per-part guard in MASTER/tools/gate.rb. On-disk source files (code, style,
+# a finer per-part guard in MASTER/tools/check.rb. On-disk source files (code, style,
 # markup, config, docs), vendored/generated excluded.
 pub4_source_ceilings:
   # UNIT CHANGED 2026-09-13: source files only. A path under a test/
@@ -329,16 +329,16 @@ pub4_source_ceilings:
   # is the swallowing the note warns about.
   #
   # 1040 -> 1038 is a fall, not a raise. After face_points_gl.js, MASTER
-  # measured 1036 against a ceiling of 1040. quota_gate.rb and
-  # test/test_quota_gate.rb take it to 1038. Named, both of them: the gate is
+  # measured 1036 against a ceiling of 1040. quota_check.rb and
+  # test/test_quota_check.rb take it to 1038. Named, both of them: the check is
   # the one place that answers "is the paid tier reachable right now", and it
   # folds into neither failure_taxonomy.rb (which classifies and holds no
   # state) nor model_skip_cache.rb (which parks one endpoint and cannot speak
   # for a tier). Locking the number here is what stops the remaining two files
   # of slack from being spent without an argument.
   #
-  # 1038 -> 1040 is lib/operator/gate_chain.rb and test/test_gate_chain.rb: the one
-  # ladder `bin/operator gate` runs, and the test that pins its order, which of its
+  # 1038 -> 1040 is lib/operator/check_chain.rb and test/test_check_chain.rb: the one
+  # ladder `bin/operator check` runs, and the test that pins its order, which of its
   # stages may write, and its third state. Two files against five invocations
   # nobody ran together. bin/test-safety went the other way in the same commit
   # and costs nothing here, having no extension to count.
@@ -360,8 +360,8 @@ pub4_source_ceilings:
   # 1044 -> 1045 is test/test_scan_deterministic_mode.rb, which holds
   # MASTER_SCAN_DETERMINISTIC: that the model-backed rules lose their agent
   # under it, that the council stops running inside /scan, that neither happens
-  # by default, and that bin/gate still asks for it. Four claims about a switch
-  # whose absence meant the gate's first stage had never once reported; a switch
+  # by default, and that bin/check --ladder still asks for it. Four claims about a switch
+  # whose absence meant the check's first stage had never once reported; a switch
   # nothing requests is the same as no switch, so the last of those is the
   # load-bearing one. It folds into no existing test: nothing else here tests a
   # scan the runtime is not allowed to spend money on.
@@ -401,7 +401,7 @@ pub4_source_ceilings:
   # so both files hid a god class behind a second `class X ... end` block in the
   # same file -- Propose measured 447 code lines and RepoEcology 354 against a
   # limit of 300, and selfcheck read clean. With the rule counting the class,
-  # both surfaced, and SelfCheck#gate! publishes self_violation, so background
+  # both surfaced, and SelfCheck#check! publishes self_violation, so background
   # autofix was halted for every session until they were split.
   # Each seam was already drawn: CandidateSources is the fourteen from_* sources
   # a proposal can come from, CoChangeGraph is the pair counting behind the
@@ -536,10 +536,10 @@ pub4_source_ceilings:
   # plus a word-boundary rewrite. It folds into nothing: no other file here
   # moves a constant, and its test needs a planted repository rather than this
   # one.
-  # 1040 -> 1043 and RAILS 2372 -> 2366: six gates moved to the tree they
+  # 1040 -> 1043 and RAILS 2372 -> 2366: six checks moved to the tree they
   # measure. master_tts, master_web_assets and constitutional_scan check
   # MASTER; dns_zones, domain_alignment and port_inventory check the box. The
-  # repo holds the same number of gates it did before — this is one move
+  # repo holds the same number of checks it did before — this is one move
   # crossing three ledgers, which is why RAILS falls by the six that MASTER
   # and OPENBSD gain.
   # 1043 -> 1045 for two files, and the count is two rather than one because a
@@ -575,7 +575,7 @@ pub4_source_ceilings:
   # its test was not, which is the accounting this row exists to force.
   # 1048 -> 1050 for tools/stale_exemptions.rb and its test. EXEMPTIONS_EXPIRE
   # is declared conduct in law/practice.rb — an opt-out that outlives its
-  # subject is a hole in a gate nobody can see — and 143 markers across 89
+  # subject is a hole in a check nobody can see — and 143 markers across 89
   # files had never been checked by anything. It folds into self_findings.rb
   # only by making that census answer a second question against a modified
   # copy of every file, which is not what a ratchet over the tree as it stands
@@ -657,8 +657,8 @@ pub4_source_ceilings:
   # 718 -> 719: ratchet_sponsor.rb is the one new governed MASTER source file in this series.
   MASTER: 719
 
-  # 2359 -> 2360 for MASTER/gates/face_capture_probe.rb, which gets the
-  # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
+  # 2359 -> 2360 for MASTER/checks/face_capture_probe.rb, which gets the
+  # MASTER face past its primer check so it can be recorded. A probe, not a check:
   # it belongs beside the other probes and folds into nothing.
   #
   # 2360 -> 2356 locks four collapses into RAILS/__shared: fingerprints_controller.rb
@@ -675,9 +675,9 @@ pub4_source_ceilings:
   # for the raise: authorization_matrix_test.rb in brgen and in bsdports (who may
   # reach what, which nothing asserted), marketplace/deal_test.rb, city_seed_test.rb,
   # mention_test.rb, activity_trackable_concern_test.rb, fallback_drift_lint_test.rb,
-  # flow_client_write_test.rb, generated_asset_gate_test.rb and
+  # flow_client_write_test.rb, generated_asset_check_test.rb and
   # visual_contract_lint_test.rb. The rest is source and each folds into nothing:
-  # gates/lib/source/scale_ratchet.rb, gates/support/css_spacing_scans.rb and
+  # checks/lib/source/scale_ratchet.rb, checks/support/css_spacing_scans.rb and
   # css_weight.rb (two scans lifted out of a support file doing three jobs),
   # shared/concerns/shared/mentionable.rb, shared/lib/operator/master_design.rb, and
   # the migration that drops streams. Out: brgen/app/models/stream.rb,
@@ -693,10 +693,10 @@ pub4_source_ceilings:
   # the other, so the split has to be worth a named line here.
   # brgen/test/services/playlist_wiring_test.rb takes four playlist contracts
   # out of a bundle of forty (deploy_backlog_test 631 -> 557), and
-  # gates/support/design_metrics/type_checks.rb takes the five source checks
+  # checks/support/design_metrics/type_checks.rb takes the five source checks
   # that read a font declaration (design_metrics 462 -> 345). Both are one
   # subject, and both fold into nothing that exists.
-  # 2373 -> 2374 for gates/support/chrome_process.rb, the third file
+  # 2373 -> 2374 for checks/support/chrome_process.rb, the third file
   # cdp_session.rb has been split into and the one that takes it off the
   # length list outright (339 -> 288, under the limit). Finding Chrome,
   # launching it, waiting for its debugging port and reaping it is a subject;
@@ -710,12 +710,12 @@ pub4_source_ceilings:
   # the controller concern, and `.table_exists?` on a Module raising NoMethodError
   # in every OAuth callback. ExternalIdentity and IdentityProvider are the real
   # persistence and were already doing the work.
-  # 2373 -> 2374 for gates/lib/rendered/web_vitals_budget.rb. The vitals
+  # 2373 -> 2374 for checks/lib/rendered/web_vitals_budget.rb. The vitals
   # sampler in shared/frontend/hotwire.js has beaconed LCP, CLS and INP at one
   # percent for months and nothing has ever failed on the numbers, so a
-  # regression that doubles LCP ships and lands in a log line; GATE_ADEQUACY.md
-  # carries the hole as its own item 8. A gate is the only thing that closes it,
-  # and it folds into nothing: no existing gate opens a browser to read a paint
+  # regression that doubles LCP ships and lands in a log line; CHECK_ADEQUACY.md
+  # carries the hole as its own item 8. A check is the only thing that closes it,
+  # and it folds into nothing: no existing check opens a browser to read a paint
   # metric, and the source half it carries — that hotwire.js still observes all
   # three entry types — is what stops the field collection dying quietly under
   # a passing budget.
@@ -728,9 +728,9 @@ pub4_source_ceilings:
   # prepends on a tap. It folds into no existing controller: pull_to_refresh
   # reloads on a gesture and typing_controller watches a field, and neither
   # owns a stream that must not paint.
-  # 2375 -> 2376 for gates/lib/source/pwa_installable.rb. Three manifests, and
+  # 2375 -> 2376 for checks/lib/source/pwa_installable.rb. Three manifests, and
   # nothing checked that the icons they declare exist or that brgen names the
-  # city it is being served as. It folds into no existing gate: generated_asset
+  # city it is being served as. It folds into no existing check: generated_asset
   # checks build freshness and frontend_production reads the shell, and neither
   # reads a manifest.
   #
@@ -747,8 +747,8 @@ pub4_source_ceilings:
   # keys were being shadowed by the file that sorts last. Against that,
   # user_flow_design_contracts.rb and rendered_geometry/placement_checks.rb are
   # two real splits the file-length ratchet asked for, and each is one subject.
-  # 2371 -> 2372 for gates/support/bounded_command.rb. Six gate subprocesses
-  # called capture2e with no timeout, so a gate could hang on a browser or a
+  # 2371 -> 2372 for checks/support/bounded_command.rb. Six check subprocesses
+  # called capture2e with no timeout, so a check could hang on a browser or a
   # remote host and the run would report nothing at all rather than a failure.
   # One place that bounds a command, because six places that each remember to
   # is how five of them forget.
@@ -767,14 +767,14 @@ pub4_source_ceilings:
   # property that would have caught it, and lives outside this count.
 # 2366 -> 2386, and it is three things a reader should be able to tell apart.
 #
-# Twenty files are the first test each for the twenty gates that had none, plus
-# the two harnesses they share — test/gates/gate_fixture.rb, which installs a
-# planted tree under a gate whose root is a constant fixed at load time and puts
-# the constants back after, and test/gates/gate_probe_harness.rb, which answers
-# a CDP evaluate from a block so a browser gate can be fed a measurement it
-# never took. Each test writes the defect its gate exists to catch, watches the
-# gate fail and name it, removes it and watches it pass. A test that only runs a
-# gate over this tree and asserts clean passes equally against a gate whose body
+# Twenty files are the first test each for the twenty checks that had none, plus
+# the two harnesses they share — test/checks/check_fixture.rb, which installs a
+# planted tree under a check whose root is a constant fixed at load time and puts
+# the constants back after, and test/checks/check_probe_harness.rb, which answers
+# a CDP evaluate from a block so a browser check can be fed a measurement it
+# never took. Each test writes the defect its check exists to catch, watches the
+# check fail and name it, removes it and watches it pass. A test that only runs a
+# check over this tree and asserts clean passes equally against a check whose body
 # is `return ok`.
 #
 # One file is repo_hygiene_contract_test.rb, from the split that landed in
@@ -782,7 +782,7 @@ pub4_source_ceilings:
 #
 # Seven were already owed, and that is the uncomfortable part: git ls-files
 # counted 2373 RAILS source files at 816b86424, the commit that lowered this row
-# to 2366. The six-gate move subtracted six from a number nobody re-measured,
+# to 2366. The six-check move subtracted six from a number nobody re-measured,
 # and the row read at-ceiling for an afternoon while the tree held seven more
 # files than it claimed. This records the tree rather than adding to it.
 # 2392 -> 2391: amber/_fonts_editorial.scss left with the serif it vendored.
@@ -792,7 +792,7 @@ pub4_source_ceilings:
 # on amber every page load. Both users take var(--font) now, which is the same
 # token brgen sets, and amber renders in one family where it rendered in two.
 # 2391 -> 2393 for two files that close a coverage hole rather than add a
-# feature. gates/probes/accent_contrast_probe.rb measures text contrast on
+# feature. checks/probes/accent_contrast_probe.rb measures text contrast on
 # every filled control across all 39 declared surfaces; the suites run axe
 # against each app home page only, so the seven brgen verticals had none, and
 # nine failures were sitting there. amber/test/wardrobe_swatch_ink_test.rb
@@ -801,27 +801,27 @@ pub4_source_ceilings:
 # Neither folds anywhere: no existing probe walks the verticals, and no
 # existing amber test asks the contrast module anything.
 # 2393 -> 2394, which is two files in and one out. The contrast probe added
-# yesterday is a gate now — gates/lib/rendered/accent_contrast.rb and its
-# test — and gates/probes/accent_contrast_probe.rb went with the change
+# yesterday is a check now — checks/lib/rendered/accent_contrast.rb and its
+# test — and checks/probes/accent_contrast_probe.rb went with the change
 # rather than staying beside it, because the same JS in two files is what the
 # single registry exists to prevent. A probe is a thing somebody has to
 # remember to run, and nine contrast failures across four surfaces are what
 # remembering had produced.
-# 2394 -> 2392: the contrast gate came back out, and this is the honest half of
+# 2394 -> 2392: the contrast check came back out, and this is the honest half of
 # that entry. rendered_geometry already measures contrast on every text pair it
 # can resolve, across 76 surface-viewport cells against 39, and it reports the
-# same failures — measured by reverting tv's accent ink and watching both gates
+# same failures — measured by reverting tv's accent ink and watching both checks
 # name the same element on the same surfaces. It is also strictly broader: it
-# caught the storefront cart count, which the new gate walked straight past
+# caught the storefront cart count, which the new check walked straight past
 # because that count is a span inside an anchor rather than a control painting
 # its own background.
 #
 # So the nine findings were never found by a new instrument. They were found by
 # running the suite and reading its output, which nobody had done since August
 # because fifteen layout_snapshot failures were sitting on top of them. The
-# gate, its test and its registry row are gone; the one genuinely new check —
-# a literal backslash in gate JavaScript — stayed, folded into
-# gate_requires_resolve_test, whose subject is already half-landed moves.
+# check, its test and its registry row are gone; the one genuinely new check —
+# a literal backslash in check JavaScript — stayed, folded into
+# check_requires_resolve_test, whose subject is already half-landed moves.
 # 2392 -> 2393 for amber/test/controllers/pwa_serving_test.rb. The manifest and
 # the service worker were served by a shared concern and asked for by nothing:
 # pwa_master_contract_test greps the ERB and pwa_offline_test covers the
@@ -844,8 +844,8 @@ pub4_source_ceilings:
 # are off this tree's scales — 1.6rem, 1.62 and .12em are on no list in
 # design_tokens — and snapping them is a separate decision, because every one
 # of those numbers is something somebody sees.
-  # 2394 -> 2393, a fall. gates/data/page_sim_inventory.yml and
-  # page_sim_report.yml left the index: gates/data/.gitignore already named both
+  # 2394 -> 2393, a fall. checks/data/page_sim_inventory.yml and
+  # page_sim_report.yml left the index: checks/data/.gitignore already named both
   # under "Outputs, not baselines -- keep out of git", and both were tracked
   # anyway, so every page_simulation run dirtied a shared checkout. Nothing reads
   # them. This row is what caught the first attempt not landing -- it read 2395
@@ -863,12 +863,12 @@ pub4_source_ceilings:
   # repository, because a hook is installed behaviour: a unit test of its logic
   # would not catch a lost chmod or a core.hooksPath pointing elsewhere. It
   # folds into no existing OPENBSD test; every one of those is about the box.
-  # 107 -> 108 is test/test_config_drift_gate.rb. The drift gate compared
+  # 107 -> 108 is test/test_config_drift_check.rb. The drift check compared
   # eighteen files, found every one identical, and reported the box clean while
-  # a root cron job existed only in the repo — a gate whose blind spot was
+  # a root cron job existed only in the repo — a check whose blind spot was
   # invisible precisely because it passed. The rewrite that taught it to compare
   # root's crontab as a set of commands needs a test that fails when that
-  # comparison is dropped again, and no existing OPENBSD test boots a gate.
+  # comparison is dropped again, and no existing OPENBSD test boots a check.
   # 111 -> 110: dotfiles/mov.sh left the repo. 2,343 lines of torrent-and-
   # transcode, the largest shell file here, and nothing to do with vm23 — the
   # owner's dotfile, kept because moving it was framed as a growth argument
@@ -894,26 +894,26 @@ pub4_source_ceilings:
 # The test allows the doc to name a threshold and refuses to let it name a
 # different one from the script, skipping sentences that carry a date because
 # those recount what a value WAS. It folds into no existing OPENBSD test:
-# test_config_drift_gate compares the box against the repo, and this compares
+# test_config_drift_check compares the box against the repo, and this compares
 # the repo's prose against the repo's code.
-# 112 -> 113 for shell_syntax_gate.rb. check-openbsd named two shell scripts by
+# 112 -> 113 for shell_syntax_check.rb. check-openbsd named two shell scripts by
 # hand out of 43 and ran zsh -n on both. The deploy path was not among them:
 # bin/vps-deploy, vps_ci.sh and deploy_all.sh are what a deploy actually runs, so
 # a syntax error in any of the three was discovered by the deploy. resource_guard.sh
 # is ksh and a zsh list could not have covered it at all.
 #
-# The gate reads each script's shebang, which is both the complete set and the
+# The check reads each script's shebang, which is both the complete set and the
 # right parser per file, and a script added tomorrow is covered by having a
 # shebang rather than by somebody remembering a list. It replaces the two lines
 # it supersedes, so check-openbsd got shorter. All 43 parse today.
 # 113 -> 114 for test/test_dns_facts_agree.rb. Four DNS facts were written down
 # twice and had already drifted: OPERATOR.sh led its resolver list with 8.8.8.8
-# while gates/dns_zones.rb used Cloudflare and Quad9 and had written down why.
-# The nameserver IP was a third literal in the gate that checks the delegation
-# data/dns.yml renders, so the gate could have passed on both halves of a
+# while checks/dns_zones.rb used Cloudflare and Quad9 and had written down why.
+# The nameserver IP was a third literal in the check that checks the delegation
+# data/dns.yml renders, so the check could have passed on both halves of a
 # disagreement with the zones it was checking.
 #
-# The gate reads the policy file now. OPERATOR.sh cannot: its constants are
+# The check reads the policy file now. OPERATOR.sh cannot: its constants are
 # sourced before anything runs, and making the deploy script shell out to ruby34
 # to boot would put it behind an interpreter it installs. The duplication stays
 # and this test is what it costs.
@@ -995,7 +995,7 @@ pub4_source_ceilings:
   #
   # Three subjects and an entry point, not one subject split four ways: the
   # first writes music, the second plays over it, the third knows nothing about
-  # music at all. MASTER/tools/gate.rb's DILLA_SUPPORT_CEILING carries the same
+  # music at all. MASTER/tools/check.rb's DILLA_SUPPORT_CEILING carries the same
   # reasoning for the same three modules.
   # 153 -> 148, a fall. CATALOGUE.md arrived from the old backlog and six files left:
   # a test asserting render_rand, a method the engine has never defined, and
@@ -1003,7 +1003,7 @@ pub4_source_ceilings:
   # belongs beside the three sets it was written after.
   # 148 -> 145: the trymbot skin is retired. It was one deletable file by
   # design — the same MASTER process wearing a different host — plus its README
-  # and its test, and MASTER/tools/gate.rb no longer registers a subsystem that is not
+  # and its test, and MASTER/tools/check.rb no longer registers a subsystem that is not
   # there.
   # 145 -> 143, a fall nobody recorded. postpro/motion.rb and
   # test/test_tools_motion.rb went and the ceiling stayed, so the row sat two
@@ -1013,7 +1013,7 @@ pub4_source_ceilings:
   # the broadcast loop and the bed digger are dilla.rb (module Livesets) behind
   # `dilla.rb live`; the sine stream and its player are lib/sine_stream.rb;
   # bin/crate, bin/demo_full.rb, scripts/generate_tts.rb and the librosa script
-  # left with nothing reading them. MASTER/tools/gate.rb fails if any of the three
+  # left with nothing reading them. MASTER/tools/check.rb fails if any of the three
   # directories returns. 117 -> 108.
   # 108 -> 70: dilla lib/ folds forty-four modules into six subjects -- sound,
   # sampling, ledger, harmony, groove, listen -- and radio_bergen_study.rb, a
@@ -1028,7 +1028,7 @@ pub4_source_ceilings:
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
 # reached 28 without a single failure, because prose in a doc is not an
-# instrument. Twelve of those overlap on "check things": check, gate, ci, audit,
+# instrument. Twelve of those overlap on "check things": check, check, ci, audit,
 # dogfood, preflight, probe, smoke, smoke-web, doctor, nsaudit, and test-safety
 # until it folded into `bin/check --profile=ci`'s superset.
 #
@@ -1087,8 +1087,8 @@ name_candidates: 23
 # this row went 16 to 43 without a script being written. Those 27 had always been
 # doors; the census had never opened the directory they sat in. OPENBSD's root
 # held 33 executables at that commit, so the honest count before the move was 49
-# and after it is 46 — a fall of three, because deploy_smoke_gate, integrity_gate
-# and solid_queue_proof went to gates/, and a gate is run by a check rather than
+# and after it is 46 — a fall of three, because deploy_smoke_check, integrity_check
+# and solid_queue_proof went to checks/, and a check is run by a check rather than
 # typed. Three still sit at the OPENBSD root because vm23 runs them from the
 # checkout by path: backup_priv.sh, emergency_cpu.sh and ptr_openbsd_amsterdam.rb.
 #
@@ -1107,7 +1107,7 @@ name_candidates: 23
 # a fall — and loops joined for the boot film (3959c382e). Net -6, read from
 # the census, not from the fold count.
 #
-# OPENBSD 46 -> 45, locked 2026-09-23. 7452c9837 collapsed the deploy gates
+# OPENBSD 46 -> 45, locked 2026-09-23. 7452c9837 collapsed the deploy checks
 # into one file and bin/vps_deploy_master.sh lost its executable bit — no
 # caller ever typed it as a door; every one reaches it through `zsh <path>`
 # (agent_map.yml, ssh_vm23.sh), and a script run through another shell is not

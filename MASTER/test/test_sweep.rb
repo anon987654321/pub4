@@ -72,7 +72,7 @@ def test_sibling_probes_point_at_a_script_that_exists
   # when OPENBSD/tools/ was deleted (6e09c6919), because require cannot load an
   # extensionless file, and bin/reach stayed as the executable shim the probe
   # names. STUDIO's own probe was removed from sweep.rb; this list still names
-  # gate.rb for it, which is what the STUDIO failure below measures.
+  # check.rb for it, which is what the STUDIO failure below measures.
   { "OPENBSD" => "bin/reach" }.each do |tree, script|
     path = File.join(S::ROOT, tree, script)
 

@@ -135,7 +135,7 @@ module Operator
       return(prose ? :mention : :constant) if line.match?(pats[:constant])
       # A test that names the file is the tripwire that fires on delete, even
       # when nothing in the app reaches it. _search_loading has no renderer at
-      # all — its only reference is deploy_gates_contract_test asserting it is
+      # all — its only reference is deploy_checks_contract_test asserting it is
       # there — and reporting that as an ordinary mention is how it got deleted.
       # The basename only. Matching the bare word here made `def
       # constitution(sandbox: nil)` a reference to ground/policy/sandbox.rb —

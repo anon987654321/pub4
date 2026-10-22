@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../gates/support/bounded_command"
+require_relative "../checks/support/bounded_command"
 
 class TestBoundedCommand < Minitest::Test
   def test_success_returns_output_and_process_status

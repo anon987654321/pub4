@@ -18,15 +18,15 @@ unless Deploy::Environment.on_vps?
   exit 0
 end
 
-RUBY = Deploy::RubyRunner.gate_ruby
+RUBY = Deploy::RubyRunner.check_ruby
 runner = Deploy::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-failures << "health core" unless runner.run("health core", RUBY, "OPENBSD/gates/health_check.rb", "--core")
-failures << "public health" unless runner.run("public health", RUBY, "OPENBSD/gates/health_check.rb", "--public", "--all-ready-apps")
-failures << "config drift" unless runner.run("config drift", RUBY, "OPENBSD/gates/config_drift_gate.rb")
+failures << "health core" unless runner.run("health core", RUBY, "OPENBSD/checks/health_check.rb", "--core")
+failures << "public health" unless runner.run("public health", RUBY, "OPENBSD/checks/health_check.rb", "--public", "--all-ready-apps")
+failures << "config drift" unless runner.run("config drift", RUBY, "OPENBSD/checks/config_drift_check.rb")
 
-# One closeout receipt around the existing gates. The historical operator flow
+# One closeout receipt around the existing checks. The historical operator flow
 # reported one compact answer: what commit is here, what deployment can be
 # rolled back to, which services and ports were checked, and whether the proof
 # finished clean. Keep the checks themselves authoritative; this only composes

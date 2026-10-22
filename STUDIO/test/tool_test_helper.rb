@@ -2,7 +2,7 @@
 #
 # MASTER/tools's first test suite.
 #
-# MASTER/tools/gate.rb parses every file and probes that three entry points boot.
+# MASTER/tools/check.rb parses every file and probes that three entry points boot.
 # That is the floor, and it is the wrong floor for a tree whose defects are
 # arithmetic: a swing offset applied to the wrong role, a seed that reads as
 # pinned and is not, a chord template that voices a ninth as a second. All of
@@ -51,10 +51,10 @@ module ToolTest
   # somebody else's `git commit -a`.
   #
   # This lives in the shared helper rather than in test/dilla_helper.rb, where it
-  # started, because test_tools_gate.rb dirties them too: the gate's load probe
+  # started, because test_tools_check.rb dirties them too: the check's load probe
   # boots dilla in a subprocess of its own. With the guard only on the dilla
   # suite, `rake test` came out clean solely because test:dilla runs after
-  # test:gate and restored what the gate had written — and `rake test:gate` alone
+  # test:check and restored what the check had written — and `rake test:check` alone
   # left three modified files behind. Ordering luck is not a guard.
   #
   # The engine writing session state at load is dilla's business and not a
@@ -107,7 +107,7 @@ at_exit { ToolTest.restore_engine_state! }
 module ToolTest
 
   # Bound every test. A dilla method that shells out to ffmpeg without a file
-  # will sit on a pipe forever, and an unbounded suite hangs the gate that runs
+  # will sit on a pipe forever, and an unbounded suite hangs the check that runs
   # it rather than failing it.
   TIMEOUT = Integer(ENV.fetch("MASTER_TOOLS_TEST_TIMEOUT", "30"))
 

@@ -128,8 +128,8 @@ module Master
       load_yaml(rules_path)
     end
 
-    # The directories MASTER's self-directed gates scan, from
-    # data/scan_coverage.yml instead of a path literal repeated in each gate.
+    # The directories MASTER's self-directed checks scan, from
+    # data/scan_coverage.yml instead of a path literal repeated in each check.
     #
     # `File.join(root, "lib")` was written into Fix::SelfCheck and rake
     # constitution, and core/ therefore sat outside the law for three weeks

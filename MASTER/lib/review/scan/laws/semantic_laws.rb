@@ -18,14 +18,14 @@ module Master
           # the only one a provider spend limit can silently delete. Returning
           # [] on every file without recording why is what makes a run of
           # unscanned files read as a clean bill of health, so the skip is
-          # named on the gate before it is taken.
+          # named on the check before it is taken.
           OFFLINE_ERRORS_PATTERN = /missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path/i.freeze
           LANE_SILENCE_PATTERN = /\Ano lane answered \d+ calls in a row; model work is skipped for \d+ minutes\./i.freeze
 
           def quota_paused?
-            return false unless Master::Io::QuotaGate.blocked?
+            return false unless Master::Io::QuotaCheck.blocked?
 
-            Master::Io::QuotaGate.skipped("semantic Laws")
+            Master::Io::QuotaCheck.skipped("semantic Laws")
             true
           end
 
@@ -36,14 +36,14 @@ module Master
           def note_model_failure(error)
             message = error.message.to_s
             if message.match?(LANE_SILENCE_PATTERN)
-              Master::Io::QuotaGate.skipped("semantic Laws")
+              Master::Io::QuotaCheck.skipped("semantic Laws")
               return true
             end
 
             # No model attached is not a provider answer, and says nothing about a key or a balance.
             return false if message.include?("no model agent configured")
 
-            Master::Io::QuotaGate.trip_if_limited(source: "semantic Law #{@id}", message:)
+            Master::Io::QuotaCheck.trip_if_limited(source: "semantic Law #{@id}", message:)
           end
 
           # The file is already in the prompt and the reply is a list of lines,
@@ -174,7 +174,7 @@ module Master
             return [] unless lang
             raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}" unless @agent
             if quota_paused?
-              raise "semantic assessment INCONCLUSIVE: quota gate paused model assessment for #{path}"
+              raise "semantic assessment INCONCLUSIVE: quota check paused model assessment for #{path}"
             end
 
             reload_semantic_laws_if_stale

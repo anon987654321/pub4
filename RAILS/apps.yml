@@ -3,7 +3,7 @@
 # deploy_root: tracked tree copied to /home/<app>/app by <app>.sh
 # status: done | port | missing | planned
 #
-# Verify claims: cd MASTER && bundle exec ruby bin/gate --scan-only --tree=RAILS
+# Verify claims: cd MASTER && bundle exec ruby bin/check --scan-only --tree=RAILS
 # Human summary: RAILS/README.md and per-app README.md
 # Shared layer: RAILS/__shared (pub4-shared gem)
 #
@@ -12,7 +12,7 @@
 # Feature statuses are verified against landed code, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
 
-# The stack every app pins. Read by the production gate, the stack contract test
+# The stack every app pins. Read by the production check, the stack contract test
 # (RAILS/test/rails_stack_contract_test.rb) and nothing else; the Gemfiles and
 # Gemfile.locks must agree with rails, rails_source and rails_ref.
 rails_stack:
@@ -204,7 +204,7 @@ apps:
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see __shared/README.md" }
         - { name: unified Activity graph emission,                         status: done, notes: "ActivityTrackable + EventEmitter across playlist/marketplace/takeaway/tv/dating verticals; see shared/README.md" }
         - { name: "shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted)", status: done, notes: "reduced local duplication/sprawl; see __shared/app/models/concerns + __shared/README.md" }
-        - { name: "MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor)", status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
+        - { name: "MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor)", status: done, notes: "scan_profiles.cosmetic + frontend_production_check + frontend_auditor_check" }
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeed + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: affiliate inventory persistence (AffiliateProduct),         status: done, notes: "affiliate_products table + upsert_from_feed! + rake affiliate:{import,health,seed_placeholders,drop_placeholders}; deals read the table, not a live call per render" }
@@ -259,7 +259,7 @@ apps:
         items:
         - { name: "Marketplace::Product (name, description, price, image)", status: done, notes: "Marketplace::Listing native Rails 8" }
         - { name: "Marketplace::Category", status: done }
-        - { name: "Marketplace::Review", status: done, notes: "reviews table + Marketplace::ReviewsController; buyer-order gate + rating refresh" }
+        - { name: "Marketplace::Review", status: done, notes: "reviews table + Marketplace::ReviewsController; buyer-order check + rating refresh" }
         - { name: schema.org Product microdata in views,                    status: done }
         - { name: "Marketplace::Order (state machine)", status: done }
         - { name: buyer–seller Chat,                                        status: done, notes: "Conversation#create from listing show" }
@@ -275,7 +275,7 @@ apps:
         - { name: solidus core mount (catalog/cart/checkout/admin),         status: planned, notes: "Gemfile + initializer + /solidus mount stub ready; solidus:install remains staging-only on a database supported by the target Solidus deployment. Native Marketplace::* stays public until an explicit cutover." }
         - { name: solidus_starter_frontend storefront,                     status: planned, notes: "Amazon-like PDP/cart/checkout UI after solidus:install" }
         - { name: Solidus native marketplace features,                   status: planned, notes: "Evaluate against BRGEN seller/order domain; do not install the legacy solidus_marketplace gem." }
-        - { name: Dintero split checkout,                                 status: planned, notes: "Signed callback/webhook verification, replay-safe event deliveries, seller ACTIVE payout gate, Shopping draft/order/session adapter, inline per-line splits, seller capture and refund routes, and conversion tracking. Enable checkout only after Dintero staging validation." }
+        - { name: Dintero split checkout,                                 status: planned, notes: "Signed callback/webhook verification, replay-safe event deliveries, seller ACTIVE payout check, Shopping draft/order/session adapter, inline per-line splits, seller capture and refund routes, and conversion tracking. Enable checkout only after Dintero staging validation." }
         - { name: Amazon feature parity map,                               status: planned, notes: "PDP, search facets, cart, multi-seller, reviews, order history — see SOLIDUS_MARKETPLACE.md" }
         - { name: AI recommendations,                                       status: planned, agent: ignore }
       subapp_playlist:

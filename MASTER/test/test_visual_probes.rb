@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require File.expand_path("../lib/fix/visual_quality_gates", __dir__)
-require File.expand_path("../gates/support/painted_fonts", __dir__)
-require File.expand_path("../gates/support/focus_order_probe", __dir__)
-require File.expand_path("../gates/support/locale_probe", __dir__)
+require File.expand_path("../lib/fix/visual_quality_checks", __dir__)
+require File.expand_path("../checks/support/painted_fonts", __dir__)
+require File.expand_path("../checks/support/focus_order_probe", __dir__)
+require File.expand_path("../checks/support/locale_probe", __dir__)
 
 # Painted fonts, both locales and the recorded Tab order, each on synthetic
 # payloads or a scripted CDP double: no browser is needed to prove the
@@ -12,7 +12,7 @@ require File.expand_path("../gates/support/locale_probe", __dir__)
 class TestVisualProbes < Minitest::Test
   Surface = Struct.new(:id, :viewport, :url)
   VC = Master::Fix::VisualConformance
-  Q = Master::Fix::VisualQualityGates
+  Q = Master::Fix::VisualQualityChecks
   I18N = Master::Fix::VisualI18n
   FO = Master::Fix::VisualFocusOrder
 
@@ -127,7 +127,7 @@ class TestVisualProbes < Minitest::Test
     assert_empty I18N.rows(pinned)
   end
 
-  def test_the_gate_counts_second_locale_defects_in_the_i18n_metric
+  def test_the_check_counts_second_locale_defects_in_the_i18n_metric
     payload = { "vw" => 390, "vh" => 800, "scroll_width" => 390, "client_width" => 390, "elements" => [] }
     bad = locales(texts(a: ["Hjem", "a"]), texts(a: ["home.index.title", "a"]))
     assert_equal 1, Q.measure(surface, payload.merge(bad))["metrics"]["i18n"]
@@ -214,7 +214,7 @@ class TestVisualProbes < Minitest::Test
     assert_empty FO.inversions([], payload)
   end
 
-  def test_the_gate_metric_uses_the_recorded_order
+  def test_the_check_metric_uses_the_recorded_order
     payload = order([stop("a", 0, 500), stop("b", 0, 10)], "vw" => 390, "vh" => 800, "scroll_width" => 390, "client_width" => 390)
     assert_equal 1, Q.measure(surface, payload)["metrics"]["focus_order"]
   end

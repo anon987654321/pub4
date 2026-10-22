@@ -272,7 +272,7 @@ module Master
         @stage_commit || ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
       end
 
-      # High-risk fixes always pass through the independent consensus gate.
+      # High-risk fixes always pass through the independent consensus check.
       # Lower-risk fixes may still opt into consensus with MASTER_CONSENSUS_FIXES=1.
       # A safety interlock must not become optional merely because the operator
       # forgot an environment variable.
@@ -307,10 +307,10 @@ module Master
         return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@law.id, old_src, new_src)
         raw_before = scan_all(path)
         log_scan_agreement(path, raw_before)
-        before = gate_findings(raw_before)
+        before = check_findings(raw_before)
         write_atomic(path, new_src)
         raw_after = scan_all(path)
-        after = gate_findings(raw_after)
+        after = check_findings(raw_after)
         note_semantic_drift(path, raw_before, raw_after)
         return reject_fix(path, old_src, "new_violations", before:, after:, introduced: introduced_summary(before, after, source: new_src)) if after.size > before.size
         if (scouts = boyscout_violations(before, after, old_src, new_src)).any?

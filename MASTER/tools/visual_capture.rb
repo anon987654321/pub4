@@ -7,8 +7,8 @@ require "json"
 require "optparse"
 require "uri"
 require "yaml"
-require_relative "../gates/support/cdp_session"
-require_relative "../gates/support/geometry_probe"
+require_relative "../checks/support/cdp_session"
+require_relative "../checks/support/geometry_probe"
 
 module MasterVisualCapture
   ROOT = File.expand_path("..", __dir__).freeze
@@ -64,7 +64,7 @@ module MasterVisualCapture
 
   def mask_volatile(cdp)
     selectors = YAML.safe_load_file(
-      File.join(ROOT, "gates", "data", "geometry_surfaces.yml"),
+      File.join(ROOT, "checks", "data", "geometry_surfaces.yml"),
       aliases: false,
     )["volatile_selectors"]
     return if Array(selectors).empty?

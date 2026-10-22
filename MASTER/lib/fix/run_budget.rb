@@ -34,7 +34,7 @@ module Master
         attr_reader :current
 
         def begin_run(root:, max_passes:, bus: nil, target: nil)
-          # Nested tree passes and gate re-entries belong to the command's one
+          # Nested tree passes and check re-entries belong to the command's one
           # budget. Do not restart its clock, watchdog, lane failures, or ledger.
           return @current if (@shared_depth || 0).to_i.positive? && @current
 
@@ -49,7 +49,7 @@ module Master
           begin_run(root:, max_passes:, bus:, target:) if outer
           @shared_depth = (@shared_depth || 0).to_i + 1
           # A startup disk/protected-path abort is already a terminal safety
-          # decision. Do not run trace, research, gates, or model work afterwards.
+          # decision. Do not run trace, research, checks, or model work afterwards.
           result = if @current&.stopping
                      Master::Result.err(@current.stopping, category: @current.stop_category)
                    else

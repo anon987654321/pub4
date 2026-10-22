@@ -6,7 +6,7 @@
 # tree exempt from the law they enforce. Nobody decided that and nothing said it;
 # it fell out of a string. The 2026-08-12 merge moved the fold under `lib/` and
 # the exemption closed silently, which is the same failure in the other
-# direction — a gate's coverage changing without anyone reading a number.
+# direction — a check's coverage changing without anyone reading a number.
 #
 # This file is that number. `rake lint:scan_coverage` fails when a top-level
 # directory of MASTER holds Ruby and appears in neither list, so a new tree is a
@@ -14,21 +14,21 @@
 # the lint — a coverage manifest nothing loads is the inert-config defect this
 # repo already has enough of.
 #
-# An exemption with no subject is a hole in a gate nobody can see
+# An exemption with no subject is a hole in a check nobody can see
 # (`soul.yml` EXEMPTIONS_EXPIRE), so an `exempt` entry naming a directory that no
 # longer exists fails too.
 scan_coverage:
-  # Scanned by the self-directed gates. Relative to MASTER/.
+  # Scanned by the self-directed checks. Relative to MASTER/.
   roots:
   - lib
   # The rules are subject to the rules. law/ arrived with 85 rules migrated out
   # of laws.yml and was classified as neither, which is the state this file
-  # exists to make impossible — 91 Ruby files that no gate looked at, in the one
-  # tree whose whole subject is what the gates look at.
+  # exists to make impossible — 91 Ruby files that no check looked at, in the one
+  # tree whose whole subject is what the checks look at.
   #
   # Scanned rather than exempt because it scans clean: adding it here produces no
   # finding beyond the one constitution.rb already carries. The `bad` fixture in
-  # each Law.define does trip the security sweep, which is a different gate and
+  # each Law.define does trip the security sweep, which is a different check and
   # is handled where it belongs, in tools/security_sweep.rb.
   - law
   - plugins
@@ -49,20 +49,20 @@ scan_coverage:
       here is extensionless by convention. roots is what SelfCheck reads,
       so moving bin/ there would declare coverage that SCAN_GLOB still
       will not deliver. A full /scan already reports 103 findings across
-      18 of these files, gate, check and pub4 among them, and nothing acts
+      18 of these files, check, check and pub4 among them, and nothing acts
       on them. Closing this means one glob, not one list entry.
     test: >-
       Tests are the instrument, not the subject. Scanning them makes every
       fixture that deliberately contains a violation into a violation, which is
-      how a self-scanning gate learns to fail on its own evidence.
+      how a self-scanning check learns to fail on its own evidence.
     tools: >-
       Standalone scripts run by rake and by hand, outside the Zeitwerk loader and
       outside the runtime. Exempt from SelfCheck only: lib/operator/self_findings.rb
       counts MASTER/tools under its ratchet, so a finding here is measured and
       cannot grow silently.
-    gates: >-
-      Gates are executable instruments, not runtime source. They have their own
-      manifest (gates/gates.yml) and runner, and the gate suite is the check that
+    checks: >-
+      Checks are executable instruments, not runtime source. They have their own
+      manifest (checks/checks.yml) and runner, and the check suite is the check that
       governs them. Scanning the instruments with the runtime constitution would
       mix the measuring apparatus into the subject and make every fixture-shaped
       assertion part of the measured corpus.

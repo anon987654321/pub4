@@ -4,7 +4,7 @@
 #
 # Why vendored rather than pinned to a CDN: STIMULUS_COMPONENTS_BASELINE.md
 # states the rule for this tree ("Packages are vendored, not fetched") and
-# StimulusComponentsGate enforces it for the 19 @stimulus-components packages.
+# StimulusComponentsCheck enforces it for the 19 @stimulus-components packages.
 # Tiptap was the exception, pinned to esm.sh, so every compose box on the site
 # depended on a third party being reachable at the moment someone started
 # writing. The pattern here is RAILS/master/script/build_three_face.sh: npm-install

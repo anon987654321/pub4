@@ -66,6 +66,6 @@ class WhyExplainerTest < Minitest::Test
 
     assert_includes out, "boundary: rails"
     assert_includes out, "entry: MASTER/bin/operator triangle"
-    assert_includes out, "proof: MASTER/gates/runner.rb --all"
+    assert_includes out, "proof: MASTER/checks/runner.rb --all"
   end
 end

@@ -1,0 +1,188 @@
+# frozen_string_literal: true
+
+require "minitest/autorun"
+require "tmpdir"
+require_relative "check_fixture"
+require_relative "../../../MASTER/checks/lib/source/schema_migration"
+
+# Four defects that all read as "the app is fine" until something migrates.
+#
+# A schema.rb pinned behind its own migrations, two migrations creating one
+# table, a route pointing at a controller nobody wrote, and a column declared
+# twice on one table. Each is planted here, proved to fail the check, then
+# removed and proved to pass.
+#
+# The check walks the fleet through Deploy::Inventory, which reads apps.yml under
+# root:, so a fixture tree with its own apps.yml is the whole fleet.
+class SchemaMigrationCheckTest < Minitest::Test
+  include CheckFixture
+
+  CHECK = Deploy::SchemaMigrationCheck
+  VERSION = "20260101000000"
+
+  # A tree the check calls clean, so each test can spoil exactly one thing.
+  def sound_tree(dir)
+    plant_apps_yml(dir, "demo")
+    plant(dir, "RAILS/demo/db/schema.rb", schema(VERSION, "posts", %w[title body]))
+    plant(dir, "RAILS/demo/db/migrate/#{VERSION}_create_posts.rb", migration("posts"))
+    plant(dir, "RAILS/demo/config/routes.rb", %(Rails.application.routes.draw do\n  get "/p", to: "posts#index"\nend\n))
+    plant(dir, "RAILS/demo/app/controllers/posts_controller.rb", "class PostsController; end\n")
+  end
+
+  def schema(version, table, columns)
+    body = columns.map { |name| %(    t.string "#{name}"\n) }.join
+    "ActiveRecord::Schema[8.0].define(version: #{version}) do\n" +
+      %(  create_table "#{table}", force: :cascade do |t|\n) + body + "  end\nend\n"
+  end
+
+  # The symbol form, because that is what every migration in this fleet writes.
+  # The scan read a colon as an opening delimiter and demanded a quote to close
+  # it, so this fixture had to use quotes to be seen at all.
+  def migration(table, body = nil)
+    "class Create#{table.capitalize} < ActiveRecord::Migration[8.0]\n" \
+      "  def change\n    #{body || "create_table :#{table}"}\n  end\nend\n"
+  end
+
+  def check_over
+    Dir.mktmpdir do |dir|
+      sound_tree(dir)
+      yield dir
+      CHECK.run(root: dir)
+    end
+  end
+
+  def test_a_sound_tree_passes_and_says_it_measured_something
+    result = check_over { nil }
+
+    assert result.ok?, result.failures.join(", ")
+    assert_equal 1, result.checks_ran
+  end
+
+  def test_a_schema_behind_its_latest_migration_fails
+    result = check_over do |dir|
+      plant(dir, "RAILS/demo/db/migrate/20260202000000_add_slug.rb", migration("slugs"))
+    end
+
+    refute result.ok?, "a schema pinned behind its migrations passed"
+    assert_match(/schema version #{VERSION} != latest migration 20260202000000/, result.failures.first)
+  end
+
+  # Rails writes the version as 2026_01_01_000000, and a digits-only read of
+  # that never matched, so the comparison above never ran on a real schema.rb.
+  def test_a_schema_dumped_with_digit_separators_is_read
+    behind = check_over do |dir|
+      plant(dir, "RAILS/demo/db/schema.rb", schema("2026_01_01_000000", "posts", %w[title body]))
+      plant(dir, "RAILS/demo/db/migrate/20260202000000_add_slug.rb", migration("slugs"))
+    end
+    current = check_over do |dir|
+      plant(dir, "RAILS/demo/db/schema.rb", schema("2026_01_01_000000", "posts", %w[title body]))
+    end
+
+    assert_match(/schema version #{VERSION} != latest migration 20260202000000/, behind.failures.first.to_s)
+    assert current.ok?, current.failures.join(", ")
+  end
+
+  def test_two_migrations_creating_one_table_fail
+    result = check_over do |dir|
+      plant(dir, "RAILS/demo/db/migrate/#{VERSION}_create_posts.rb", migration("posts"))
+      plant(dir, "RAILS/demo/db/migrate/20260102000000_create_posts_again.rb", migration("posts"))
+      plant(dir, "RAILS/demo/db/schema.rb", schema("20260102000000", "posts", %w[title body]))
+    end
+
+    refute result.ok?, "a table created twice passed"
+    assert(result.failures.any? { |line| line.match?(/second create_table posts/) }, result.failures.join(", "))
+  end
+
+# Sixteen second create_table calls exist across this fleet and every one is
+  # guarded. A check that counted calls would fail all sixteen; this one reads
+  # the guard, so each of the three forms in use here is spared.
+  GUARDS = [
+    "create_table :posts, if_not_exists: true",
+    "return if table_exists?(:posts)\n    create_table :posts",
+    "drop_table :posts if table_exists?(:posts)\n    create_table :posts",
+  ].freeze
+
+  def test_a_second_create_table_is_spared_when_the_migration_expects_one
+    GUARDS.each do |guard|
+      result = check_over do |dir|
+        plant(dir, "RAILS/demo/db/migrate/20260102000000_again.rb", migration("posts", guard))
+        plant(dir, "RAILS/demo/db/schema.rb", schema("20260102000000", "posts", %w[title body]))
+      end
+
+      spared = result.failures.none? { |line| line.include?("create_table posts") }
+      assert spared, "#{guard[0, 40]} is a guard this fleet uses: #{result.failures.join(", ")}"
+    end
+  end
+
+  def test_a_route_naming_a_controller_nobody_wrote_fails
+    result = check_over do |dir|
+      plant(dir, "RAILS/demo/config/routes.rb",
+            %(Rails.application.routes.draw do\n  get "/g", to: "ghosts#index"\nend\n))
+    end
+
+    refute result.ok?, "a route to a missing controller passed"
+    assert_match(%r{route target ghosts#index missing controller}, result.failures.first)
+  end
+
+  # Nested controllers resolve through the glob, so a namespaced target must not
+  # be reported as missing just because the directory is not the flat one.
+  def test_a_namespaced_route_target_resolves_to_a_nested_controller
+    result = check_over do |dir|
+      plant(dir, "RAILS/demo/config/routes.rb",
+            %(Rails.application.routes.draw do\n  get "/a", to: "admin/reports#index"\nend\n))
+      plant(dir, "RAILS/demo/app/controllers/admin/reports_controller.rb", "class ReportsController; end\n")
+    end
+
+    assert result.ok?, result.failures.join(", ")
+  end
+
+  def test_a_column_declared_twice_on_one_table_fails
+    result = check_over do |dir|
+      plant(dir, "RAILS/demo/db/schema.rb", schema(VERSION, "posts", %w[title title]))
+    end
+
+    refute result.ok?, "a column declared twice passed"
+    assert_match(/duplicate column title on posts/, result.failures.first)
+  end
+
+  # No apps is an unread inventory rather than a clean fleet.
+  def test_an_empty_inventory_is_inconclusive
+    result = Dir.mktmpdir do |dir|
+      plant(dir, "RAILS/apps.yml", "apps: {}\n")
+      CHECK.run(root: dir)
+    end
+
+    assert_equal :inconclusive, result.outcome
+    assert_match(/nothing was read/, result.unchecked.first)
+  end
+
+  def test_amber_schema_matches_the_latest_identity_migrations
+    repo = File.expand_path("../../..", __dir__)
+    migration_paths = Dir.glob(File.join(repo, "RAILS/amber/db/migrate/*.rb"))
+    latest = migration_paths.filter_map { |path| File.basename(path)[/\A\d+/] }.max
+    schema = File.read(File.join(repo, "RAILS/amber/db/schema.rb"))
+    version = schema[/define\(version:\s*([\d_]+)\)/, 1]&.delete("_")
+
+    assert_equal latest, version, "Amber's schema must be dumped at the latest migration version"
+
+    expected_columns = {
+      "account_merges" => %w[guest_user_id user_id status merged_at created_at updated_at],
+      "external_identities" => %w[user_id identity_provider_id subject email_address phone_number assurance_level last_used_at created_at updated_at],
+      "identity_providers" => %w[name slug issuer client_id active created_at updated_at],
+    }
+    expected_columns.each do |table, columns|
+      definition = schema.match(/^  create_table "#{Regexp.escape(table)}".*?^  end/m)
+      refute_nil definition, "schema is missing #{table}"
+      columns.each do |column|
+        assert_match(/^    t\.\w+ "#{Regexp.escape(column)}"/, definition[0],
+                     "#{table} is missing #{column}")
+      end
+    end
+
+    assert_includes schema, 'add_foreign_key "account_merges", "users", column: "guest_user_id"'
+    assert_includes schema, 'add_foreign_key "account_merges", "users"'
+    assert_includes schema, 'add_foreign_key "external_identities", "users"'
+    assert_includes schema, 'add_foreign_key "external_identities", "identity_providers"'
+  end
+
+end

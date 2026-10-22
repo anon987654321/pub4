@@ -314,7 +314,7 @@ class ChatService
   end
 
   def subscribe(event, &block)
-    # The container bus is process-wide. Without this gate, every named
+    # The container bus is process-wide. Without this check, every named
     # subscribe (and the "**" dmesg/thought catch-alls) writes other visitors'
     # tool paths, prompts, and council speech into this SSE.
     mine = @conversation

@@ -143,7 +143,7 @@ module Master
         BRIEFS = {
           general: [
             "questions over commands; evidence over opinion; execution over explanation",
-            "content integrity, critical security, accessibility, and reversibility are hard gates",
+            "content integrity, critical security, accessibility, and reversibility are hard checks",
             "prefer surgical, reversible changes; preserve working behavior and user-curated content",
             "generate alternatives, red-team assumptions, then cherry-pick the simplest validated option",
           ].freeze,

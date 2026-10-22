@@ -57,7 +57,7 @@ class TestFixFailFast < Minitest::Test
     refute_includes failed_result(failed_stages: [], ok: true).footer, "cause"
   end
 
-  def test_the_error_the_gate_reads_carries_the_cause
+  def test_the_error_the_check_reads_carries_the_cause
     footer = "review0: incomplete, failed fix, 650 findings\nreview0: cause, fix: rubocop config not found\n"
     message = Master::CLI::CommandRegistry.incomplete_fix_pipeline(footer).message
 

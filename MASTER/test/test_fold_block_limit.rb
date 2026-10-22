@@ -56,7 +56,7 @@ class FoldBlockLimitTest < Minitest::Test
       observer: ->(**event) { emitted << event },
     )
 
-    result = fold.run("exercise one constitutional gate")
+    result = fold.run("exercise one constitutional check")
 
     assert_equal :blocked, result.reason
     assert_equal 3, result.turns

@@ -25,7 +25,7 @@ module Master
         key.to_s.include?("translation_missing") || text.match?(MISSING) || (text.match?(KEY) && !text.match?(TLD))
       end
 
-      # Rows shaped like the quality gate's other offenders: {"key" => label}.
+      # Rows shaped like the quality check's other offenders: {"key" => label}.
       def rows(payload)
         locales = payload["locales"]
         return [] unless locales.is_a?(Hash)

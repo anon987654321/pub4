@@ -6,7 +6,7 @@ require_relative "../../review/verdict"
 module Master
   module CLI
     module Stages
-      # DestructiveReview — pre-execute council gate for destructive slash commands.
+      # DestructiveReview — pre-execute council check for destructive slash commands.
       class DestructiveReview
         def initialize(deliberation:, event_bus: nil, **_)
           @deliberation = deliberation

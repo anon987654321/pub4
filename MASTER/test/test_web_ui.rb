@@ -579,7 +579,7 @@ class TestWebUI < Minitest::Test
 
   # A template literal followed immediately by "(" calls the resulting string,
   # which is a TypeError every time that line runs. It parses, so `node --check`
-  # and every syntax gate pass it.
+  # and every syntax check pass it.
   #
   # This is not hypothetical: e7e48eed1's mechanical sweep ("template_literals"
   # among the AstFixer autofixes it names) rewrote four working concatenations

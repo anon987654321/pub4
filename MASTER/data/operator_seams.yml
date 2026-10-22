@@ -79,7 +79,7 @@ seams:
     tree: MASTER
     needs: idle-host
     evidence: >-
-      bin/operator gate, MASTER rake test, RAILS/test/run_all.rb, each app's bin/ci, OPENBSD check
+      bin/operator check, MASTER rake test, RAILS/test/run_all.rb, each app's bin/ci, OPENBSD check
       --profile=full, OPENBSD/test/run_all.rb and the STUDIO suites run on an idle machine with HEAD and real
       exit codes recorded. The 2026-10-20 runs were on a machine at load 40 to 160 and timed out.
   - id: external_assessment_on_authorised_targets
@@ -246,7 +246,7 @@ seams:
     needs: material
     evidence: >-
       About twenty new reference photographs per person (sharp, even daylight, 50–85 mm), a face-embedding
-      identity gate thresholded from them, a Veo 3.1, Kling, Seedance and Wan bake-off with cost per second, and
+      identity check thresholded from them, a Veo 3.1, Kling, Seedance and Wan bake-off with cost per second, and
       a look bible the operator approves. Closes when the operator accepts a render.
   - id: dilla_by_ear
     tree: STUDIO

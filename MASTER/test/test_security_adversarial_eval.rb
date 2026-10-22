@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestSecurityAdversarialEval < Minitest::Test
   # Matches OpenCrabs' security-eval: an adversarial corpus of destructive
-  # commands run against the real gate (Policy::Sandbox), not a hypothetical
+  # commands run against the real check (Policy::Sandbox), not a hypothetical
   # one. Their README distinguishes two tiers -- deterministic
   # destructive-command cases (testable without a live model, safe for a
   # normal test run) vs exfiltration/impersonation cases (need a real
@@ -41,7 +41,7 @@ class TestSecurityAdversarialEval < Minitest::Test
   # A sentinel: patterns that must stay usable (not everything with "rm"
   # or "force" in it should get blocked) -- an eval that only measures
   # false negatives and never checks for false positives would let the
-  # gate ratchet toward uselessly blocking everything.
+  # check ratchet toward uselessly blocking everything.
   NOT_DENY_CASES = {
     "rm_relative_tmp_dir" => "rm -rf ./tmp_build_dir",
     "read_only_git_status" => "git status",

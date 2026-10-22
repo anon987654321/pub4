@@ -37,7 +37,7 @@ topics:
       - RAILS/master/public/face_speech_runtime.js
       - RAILS/master/public/face_speech_playback.js
       - RAILS/master/public/face.runtime.js
-      - RAILS/master/public/container_gate.js
+      - RAILS/master/public/container_check.js
       - RAILS/master/public/boot_fsm.js
       - OPENBSD/etc/rc.d/master
     tests:
@@ -64,12 +64,12 @@ topics:
     files:
       - data/laws.yml
       - lib/design/thresholds.rb
-      - MASTER/gates/support/geometry_type.rb
-      - MASTER/gates/support/geometry_type_walk.js
-      - MASTER/gates/support/geometry_probe.rb
+      - MASTER/checks/support/geometry_type.rb
+      - MASTER/checks/support/geometry_type_walk.js
+      - MASTER/checks/support/geometry_probe.rb
     tests:
       - test/test_design_laws_worn_type.rb
-      - RAILS/test/gates/rendered_gates_test.rb
+      - RAILS/test/checks/rendered_checks_test.rb
     note: >
       Judge rendered type, not stylesheet tokens. Feed is a short measure
       (--feed-max 600px). Legal/prose keeps 66ch. Profiles in worn_type.
@@ -78,7 +78,7 @@ topics:
     files:
       - OPENBSD/bin/vps_deploy_master.sh
       - OPENBSD/etc/rc.d/master
-      - MASTER/lib/operator/gates.rb
+      - MASTER/lib/operator/checks.rb
       - OPENBSD/bin/vps-deploy
     tests:
       - RAILS/master/script/probe_http

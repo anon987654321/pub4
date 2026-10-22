@@ -132,7 +132,7 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   # template. Regexes stay masked, since `/<%|<script\b/` is a detector.
   detect do |line|
     next false if line.match?(/\A\s*[A-Z][A-Z0-9_]*\s*=\s*<<[~-]/)
-    # A needle is not a template. The source gates search a file for the exact
+    # A needle is not a template. The source checks search a file for the exact
     # text they require — `body.include?('import("<%= asset_path(...) %>")')` —
     # and the ERB tag there is the thing being looked for, not a second language
     # this file speaks.

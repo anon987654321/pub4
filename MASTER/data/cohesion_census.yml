@@ -10,7 +10,7 @@ family_members:
 - MASTER/lib/review/council#deliberation
 - MASTER/lib/review/scan#rule
 - MASTER/tools#rule
-- OPENBSD/lib#gate
+- OPENBSD/lib#check
 - RAILS/amber/app/models#declutter
 - RAILS/amber/app/models#item
 - RAILS/amber/app/services#declutter
@@ -20,8 +20,8 @@ family_members:
 - RAILS/brgen/app/models#story
 - RAILS/brgen/app/models/user#associations
 - RAILS/brgen/app/services/marketplace/payments#stripe
-- MASTER/gates/lib/source#honesty
-- MASTER/gates/support#geometry
+- MASTER/checks/lib/source#honesty
+- MASTER/checks/support#geometry
 - RAILS/__shared/app/controllers/concerns/shared#actions
 - RAILS/__shared/app/controllers/concerns/shared#auth
 - RAILS/__shared/app/models/shared#affiliate

@@ -20,7 +20,7 @@ module Operator
   #   routes     every public GET route from the route manifest: 200..399, under
   #              the latency budget, response headers under relayd's 8 KB limit,
   #              no "translation missing" in the body.
-  #   flows      the HTTP-only user journeys in gates/data/flows.yml (local mode only:
+  #   flows      the HTTP-only user journeys in checks/data/flows.yml (local mode only:
   #              they read the apps on 127.0.0.1), one result per journey.
   #   smoke      OPENBSD/bin/deploy-smoke.sh, the rehearsal subset that needs only
   #              the box itself.
@@ -172,15 +172,15 @@ module Operator
       FLOW_LINE = %r{surface0: (?<app>[\w-]+)/(?<id>\S+) (?<state>PASS|FAIL|INCONCLUSIVE|SKIPPED|ERROR)\b}
       FLOW_PROBLEM = /^\s*- flow:(?<id>\S+?)[\s:\/](?<why>.*)$/
 
-      # The flow_journey gate, scoped to the apps under test, reported per journey.
+      # The flow_journey check, scoped to the apps under test, reported per journey.
       # A journey that could not run (no credentials, port closed) is not a failure
       # here: the port and rcctl checks own "down", and an unmeasured journey is
       # named as such rather than counted as passed.
       def flow_checks
-        script = File.join(@root, "MASTER", "gates", "runner.rb")
+        script = File.join(@root, "MASTER", "checks", "runner.rb")
         return [] unless File.file?(script)
 
-        out, status = @shell.call("env", "GATE_AUTOFIX=0", "FLOW_APP=#{@apps.keys.join(',')}", RbConfig.ruby, script, "flow_journey")
+        out, status = @shell.call("env", "CHECK_AUTOFIX=0", "FLOW_APP=#{@apps.keys.join(',')}", RbConfig.ruby, script, "flow_journey")
         rows = out.to_s.lines.filter_map { |line| FLOW_LINE.match(line) }
         return [Result.new(name: "flows", ok: false, detail: out.to_s.lines.last(3).join.strip)] if rows.empty? && !status.success?
 

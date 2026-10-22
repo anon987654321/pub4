@@ -156,7 +156,7 @@ module Master
           #
           # which is a template literal invoked as a function — a TypeError on
           # every execution, and valid syntax, so it passes `node --check` and
-          # every parser gate. This shipped four times in `e7e48eed1` across
+          # every parser check. This shipped four times in `e7e48eed1` across
           # web/public/chat.js and face_speech_runtime.js and sat in the tree
           # until a rebuild surfaced it.
           #
@@ -175,7 +175,7 @@ module Master
           # Every duplicate selector key comes back "undefined]". `node --check`
           # passes, because the result is valid JavaScript and a different
           # program — the worst shape this transform has. It reached
-          # RAILS/gates/support/geometry_probe/walk.js on the trial run recorded
+          # RAILS/checks/support/geometry_probe/walk.js on the trial run recorded
           # in TODO.md and a person reverted it by hand.
           TRAILING_ACCESS = ["(", "[", ".", "`"].freeze
           private_constant :TRAILING_ACCESS

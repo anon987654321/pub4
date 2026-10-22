@@ -362,7 +362,7 @@ module Master
         end
       end
 
-      # /deploy — canonical remote vm23 deployment. Command#review_gate requires
+      # /deploy — canonical remote vm23 deployment. Command#review_check requires
       # --confirm before this handler can mutate production.
       def dispatch_deploy(_root, ctx: nil)
         target = arg_for(ctx).split(/\s+/).reject { |token| token.start_with?("--") }.first.to_s.downcase

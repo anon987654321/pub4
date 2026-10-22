@@ -10,7 +10,7 @@ require "cli/command_registry"
 #
 # - "rails" names both a limits.yml scan profile and pub4/RAILS, and the
 #   profile reading won, leaving an empty target.
-# - parse_pass_flags did not know --no-autofix (bin/gate's scan-only
+# - parse_pass_flags did not know --no-autofix (bin/check --ladder's scan-only
 #   spelling), so the flag polluted the target string.
 # - Both fed the same amplifier: a target that resolved nowhere quietly
 #   became the scan root, so the wrong tree was measured with a green exit.

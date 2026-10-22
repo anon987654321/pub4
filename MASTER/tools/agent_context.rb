@@ -13,7 +13,7 @@
 # Designed for a UserPromptSubmit hook, so it has to be small: data/laws.yml is
 # 4,609 lines and injecting it every turn would drown the turn. Six kilobytes
 # go out — the binding half: the conduct rules that govern how to work, what the
-# gate can actually block on, and how much of the law is unmeasured right now.
+# check can actually block on, and how much of the law is unmeasured right now.
 
 require_relative "../lib/fix/protocol"
 

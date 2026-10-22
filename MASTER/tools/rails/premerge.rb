@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 # One local command for the two premerge groups: the Rails app CI entrypoints and
-# the repository layout/inventory gates. It never relies on hosted CI and never
+# the repository layout/inventory checks. It never relies on hosted CI and never
 # repairs the tree while measuring it.
 #
-# The exit codes follow the gate runner rather than a shell's 0/1:
+# The exit codes follow the check runner rather than a shell's 0/1:
 #
 #   0  every step ran and passed
 #   1  a step ran and failed
@@ -17,7 +17,7 @@
 #   bin/operator premerge --pwa       # executable PWA runtime tests only
 #   bin/operator premerge --contracts  # isolated root contract suite only
 #   bin/operator premerge --coverage   # full Rails coverage only
-#   bin/operator premerge --gates      # layout_suite + inventory only
+#   bin/operator premerge --checks      # layout_suite + inventory only
 #   bin/operator premerge --list       # what would run, and skip nothing
 
 require "yaml"
@@ -95,18 +95,18 @@ def coverage_step
   })
 end
 
-def gate_steps
+def check_steps
   [
-    Step.new(name: "layout_suite (source + fixture gates)", group: :gates, run: lambda {
-      runner = File.join(ROOT, "..", "MASTER", "gates", "runner.rb")
-      next [BLOCKED, "MASTER/gates/runner.rb is missing"] unless File.file?(runner)
+    Step.new(name: "layout_suite (source + fixture checks)", group: :checks, run: lambda {
+      runner = File.join(ROOT, "..", "MASTER", "checks", "runner.rb")
+      next [BLOCKED, "MASTER/checks/runner.rb is missing"] unless File.file?(runner)
 
       # A pre-merge check that repairs the tree while measuring it is measuring a
       # tree that does not exist yet, so this stays explicitly read-only.
-      ok = system({ "GATE_AUTOFIX" => "0" }, *RUBY, runner, "layout_suite")
+      ok = system({ "CHECK_AUTOFIX" => "0" }, *RUBY, runner, "layout_suite")
       ok ? [PASSED, nil] : [FAILED, "layout_suite reported failures"]
     }),
-    Step.new(name: "apps.yml inventory", group: :gates, run: lambda {
+    Step.new(name: "apps.yml inventory", group: :checks, run: lambda {
       path = File.join(ROOT, "apps.yml")
       next [BLOCKED, "apps.yml is missing"] unless File.file?(path)
 
@@ -128,15 +128,15 @@ def gate_steps
 end
 
 def steps_for(groups)
-  (app_steps + pwa_steps + [contracts_step, coverage_step] + gate_steps).select { |s| groups.include?(s.group) }
+  (app_steps + pwa_steps + [contracts_step, coverage_step] + check_steps).select { |s| groups.include?(s.group) }
 end
 
 groups = if ARGV.include?("--apps") then [:apps]
          elsif ARGV.include?("--pwa") then [:pwa]
          elsif ARGV.include?("--contracts") then [:contracts]
          elsif ARGV.include?("--coverage") then [:coverage]
-         elsif ARGV.include?("--gates") then [:gates]
-         else %i[apps pwa contracts coverage gates]
+         elsif ARGV.include?("--checks") then [:checks]
+         else %i[apps pwa contracts coverage checks]
          end
 
 steps = steps_for(groups)

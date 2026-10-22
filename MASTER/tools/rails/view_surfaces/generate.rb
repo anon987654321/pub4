@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Regenerates the generated block of gates/data/geometry_surfaces.yml: every
+# Regenerates the generated block of checks/data/geometry_surfaces.yml: every
 # HTML GET route of amber, bsdports and brgen that renders for a guest.
 #
 #   MASTER/bin/operator triangle up
@@ -28,9 +28,9 @@ end
 
 REPO = File.expand_path("../../../..", HERE)
 MASTER = File.join(REPO, "MASTER")
-# The gates tree now lives under MASTER, and the rendered gates read this
+# The checks tree now lives under MASTER, and the rendered checks read this
 # sheet from there — a RAILS-prefixed join here pointed at a tree without a
-# gates/data at all and the writer had nowhere to land (2026-10-03, the same
+# checks/data at all and the writer had nowhere to land (2026-10-03, the same
 # missed retarget the css_budget readers had).
 
 Dir.mktmpdir("view_surfaces") do |work|
@@ -42,5 +42,5 @@ Dir.mktmpdir("view_surfaces") do |work|
     run!("bin/rails", "runner", File.join(HERE, "resolve_route_params.rb"), routes, chdir: app_dir, out: resolved)
     print run!("ruby", File.join(HERE, "probe_routes.rb"), app, resolved, chdir: RAILS)
   end
-  print run!("ruby", File.join(HERE, "write_surfaces.rb"), work, File.join(MASTER, "gates/data/geometry_surfaces.yml"), chdir: RAILS)
+  print run!("ruby", File.join(HERE, "write_surfaces.rb"), work, File.join(MASTER, "checks/data/geometry_surfaces.yml"), chdir: RAILS)
 end

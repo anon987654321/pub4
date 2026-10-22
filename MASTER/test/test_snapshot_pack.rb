@@ -93,7 +93,7 @@ end
     assert_equal "lockfile", Pack.omit_reason("MASTER/Gemfile.lock")
     assert_equal "vendored library", Pack.omit_reason("RAILS/master/public/three.face.module.js")
     assert_equal "generated bundle", Pack.omit_reason("RAILS/master/public/face_vision.bundle.js")
-    assert_equal "stored layout snapshots", Pack.omit_reason("MASTER/gates/data/layout_snapshots/a-b.json")
+    assert_equal "stored layout snapshots", Pack.omit_reason("MASTER/checks/data/layout_snapshots/a-b.json")
     assert_nil Pack.omit_reason("MASTER/lib/fix/fix_loop.rb")
   end
 

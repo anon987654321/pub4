@@ -25,7 +25,7 @@ code, card, security code or passport field, so those fields can only be filled
 by hand. A CAPTCHA, an access-denied page or any other security challenge stops
 the run and waits for a person.
 
-The book action is the final gate. It does nothing unless the call carries
+The book action is the final check. It does nothing unless the call carries
 confirm_purchase set to true, and it compares the total on the page with the
 expected total when the caller supplies one. A mismatch refuses the click. The
 result holds the URL, the page title, the visible total and screenshots from

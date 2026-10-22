@@ -6,7 +6,6 @@ _operator() {
   local -a commands
   commands=(
     'check:every declared check in the repo, fixing as it goes'
-    'gate:legacy alias for check'
     'status:what is dirty, per tree'
     'measure:every ratchet, current against ceiling'
     'affiliate:permissioned Tradedoubler Claims API read, prepare and confirmed submit'

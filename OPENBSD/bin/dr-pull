@@ -73,7 +73,7 @@ end
 # other half is somebody noticing when it stops.
 #
 # A missing directory is a skip, not a failure. This runs from the repo's local
-# gate, and every machine that is not the operator's Mac correctly has no pulls.
+# check, and every machine that is not the operator's Mac correctly has no pulls.
 if ARGV.include?("--check")
   unless Dir.exist?(DEST)
     puts "dr-pull: skip — no #{DEST} on this machine"

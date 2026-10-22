@@ -165,8 +165,8 @@ module Master
         end
 
         # The tiers exist for provider 429s, so the sleep is the point. It is
-        # opt-out rather than opt-in because a gate that must be switched on is
-        # a gate nothing switches on: the old MASTER_STRICT_BACKOFF switch was
+        # opt-out rather than opt-in because a check that must be switched on is
+        # a check nothing switches on: the old MASTER_STRICT_BACKOFF switch was
         # set in no environment, no test and no rc.d script, so every retry went
         # straight back at the provider while this method published an event
         # saying it had waited. `slept:` rides along so the trace cannot claim a

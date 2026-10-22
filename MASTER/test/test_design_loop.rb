@@ -189,7 +189,7 @@ class TestDesignLoop < Minitest::Test
     store = Master::Fix::LayoutScoreStore
     result = Struct.new(:score, :subs)
     store.stub(:measure, ->(_root, payload) { result.new(payload["score"], { "alignment" => 0.5 }) }) do
-      Master::Fix::VisualQualityGates.stub(:measure, ->(_surface, _payload) { { "offenders" => {} } }, &block)
+      Master::Fix::VisualQualityChecks.stub(:measure, ->(_surface, _payload) { { "offenders" => {} } }, &block)
     end
   end
 

@@ -54,7 +54,6 @@ beside itself, unless `--out` says otherwise.
 MASTER/bin/operator check                 # every declared check in the repo, fixing as it goes
 MASTER/bin/operator check --explain       # the ladder, without running it
 MASTER/bin/operator check --scan-only     # the same ladder, writing nothing
-MASTER/bin/operator gate                 # compatibility alias for check
 MASTER/bin/operator status               # what is dirty, per tree
 MASTER/bin/operator test                 # the suites
 MASTER/bin/operator measure              # every ratchet, current vs ceiling
@@ -64,8 +63,8 @@ MASTER/bin/operator vps state | deploy   # the box
 cd MASTER && bin/check               # ordinary code
 cd MASTER && bin/check --profile=agent   # law, scanners, fix loop
 cd MASTER && bin/check --profile=web     # the face
-cd MASTER && bin/check --profile=full    # release gate
-ruby MASTER/gates/runner.rb --all     # every RAILS gate
+cd MASTER && bin/check --profile=full    # release check
+ruby MASTER/checks/runner.rb --all     # every RAILS check
 ```
 
 Run the smallest check that proves the work, and do not report done without its
@@ -73,7 +72,7 @@ output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
 chase scan noise on unrelated patches.
 
 `bin/operator check` is the whole ladder in one command: the scanner over all four
-governed trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
+governed trees with autofix on, every RAILS check, every suite, the ratchets, the sprawl
 census, and last the council. It writes by default and says which files each
 stage changed, under that stage's name, so a bad fix is attributable to the
 stage that made it. Everything already modified when it starts is listed first

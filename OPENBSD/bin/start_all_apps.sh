@@ -26,5 +26,5 @@ doas "$broker" start-all-apps
 
 ROOT=/home/dev/pub4
 . "$ROOT/OPENBSD/lib/ruby_select.sh"
-"$RUBY" "$ROOT/OPENBSD/gates/health_check.rb" --all-ready-apps
+"$RUBY" "$ROOT/OPENBSD/checks/health_check.rb" --all-ready-apps
 echo "all apps up (resource_guard shedding disabled via /var/db/pub4_all_apps)"

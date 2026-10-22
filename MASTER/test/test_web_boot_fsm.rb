@@ -41,8 +41,8 @@ class BootFsmSpec < Minitest::Test
     assert_includes index, "MASTER?.boot?.transition?.('ERROR'"
   end
 
-  def test_container_gate_signals_boot_fsm
-    source = read("../RAILS/master/public/container_gate.js")
+  def test_container_check_signals_boot_fsm
+    source = read("../RAILS/master/public/container_check.js")
 
     assert_includes source, 'MASTER?.boot?.signal?.("container_ready"'
     assert_includes source, 'MASTER?.boot?.transition?.("RECOVERING"'

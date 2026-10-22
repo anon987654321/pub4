@@ -99,8 +99,8 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
-  log "Authoritative remote health gate..."
-  if ! vssh "cd ${REMOTE_PUB4} && $(remote_ruby OPENBSD/gates/health_check.rb --public --all-ready-apps)"; then
+  log "Authoritative remote health check..."
+  if ! vssh "cd ${REMOTE_PUB4} && $(remote_ruby OPENBSD/checks/health_check.rb --public --all-ready-apps)"; then
     [[ $ALLOW_PARTIAL_DEPLOY == 1 ]] \
       && log "WARN: remote health failed — ALLOW_PARTIAL_DEPLOY=1 set" \
       || error "remote health failed"
@@ -109,4 +109,4 @@ fi
 
 log "Deploy finished."
 log "VPS: ssh ${VM23_SSH_OPTS[*]} ${SSH_USER}@${SSH_HOST}"
-log "Health: ruby_select.sh, then ${REMOTE_PUB4}/OPENBSD/gates/health_check.rb --public --all-ready-apps (on VPS)"
+log "Health: ruby_select.sh, then ${REMOTE_PUB4}/OPENBSD/checks/health_check.rb --public --all-ready-apps (on VPS)"

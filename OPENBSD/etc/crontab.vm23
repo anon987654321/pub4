@@ -47,7 +47,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # terminates no TLS, and the answer is 000 whatever the app is doing — so the
 # waiver removes a check that cannot pass rather than one that is failing. The
 # app itself stays covered: deploy-smoke keeps http://127.0.0.1:47312/up
-# required, and `ruby MASTER/gates/runner.rb dns_zones` is the check that stays
+# required, and `ruby MASTER/checks/runner.rb dns_zones` is the check that stays
 # red until the delegation comes back. Drop this line's prefix the day it does.
 #
 # The redirect is the reason this waiver is hygiene rather than an alert change:
@@ -103,10 +103,10 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # relayd-watchdog and uptime-check raise their own alerts when a symptom recurs.
 */15 * * * * /usr/local/bin/pub4-alert watch
 
-# weekly-integrity — integrity_gate plus a public health pass, once a week.
+# weekly-integrity — integrity_check plus a public health pass, once a week.
 #
 # No redirect: the script writes /var/log/pub4/weekly_integrity.log itself, so
-# anything cron mails root is a failure of the wrapper rather than of a gate.
+# anything cron mails root is a failure of the wrapper rather than of a check.
 # It takes the pub4 CI lock and stands down when a deploy holds it, and 03:30
 # on a Sunday is the quietest hour on a box this small.
 30 3 * * 0 /usr/local/bin/vps_weekly_integrity.sh

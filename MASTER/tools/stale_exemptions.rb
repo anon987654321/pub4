@@ -4,7 +4,7 @@
 # nothing.
 #
 # `law/practice.rb` declares EXEMPTIONS_EXPIRE — an allowlist entry, baseline row
-# or opt-out that outlives its subject is a hole in a gate nobody can see,
+# or opt-out that outlives its subject is a hole in a check nobody can see,
 # because the thing it excuses is invisible. The tree carries 143 of these
 # markers across 90 files and nothing checked a single one. Declared conduct with
 # no detector is the defect this repo names most often, and this is the detector.

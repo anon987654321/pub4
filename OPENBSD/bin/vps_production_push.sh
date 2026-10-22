@@ -1,17 +1,17 @@
 #!/usr/bin/env zsh
 # Production push, the fast path: `bin/vps-deploy all` with the CI and runtime
-# gates skipped only after an explicit human acknowledgement, then an optional demo seed.
+# checks skipped only after an explicit human acknowledgement, then an optional demo seed.
 #
 # Usage (on vm23, as dev):
 #   zsh OPENBSD/bin/vps_production_push.sh
 #   DEMO_SEED_ON_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh   # also seed brgen's guest demo
 #
 # One deploy path, not two. vps-deploy owns the order (master first, amber and
-# bsdports last), the pull, the per-app health gate, the deploy stamp, the
-# restore of shed apps and the post-restart gates; this file only chooses the
-# fast flags. SKIP_CI=1 skips vps_ci.sh and SKIP_RUNTIME_GATE=1 skips the bin/ci
-# runtime gate inside ${app}.sh, which is OOM-prone on 1 GB. What still runs is
-# the loopback gate set vps-deploy runs after every restart.
+# bsdports last), the pull, the per-app health check, the deploy stamp, the
+# restore of shed apps and the post-restart checks; this file only chooses the
+# fast flags. SKIP_CI=1 skips vps_ci.sh and SKIP_RUNTIME_CHECK=1 skips the bin/ci
+# runtime check inside ${app}.sh, which is OOM-prone on 1 GB. What still runs is
+# the loopback check set vps-deploy runs after every restart.
 #
 # The demo seed is opt-in. A hotfix is the wrong moment to write demo content
 # into production, so it takes an explicit DEMO_SEED_ON_DEPLOY=1.
@@ -30,7 +30,7 @@ if [[ ${I_UNDERSTAND_FAST_DEPLOY:-0} != 1 ]]; then
 fi
 
 export SKIP_CI=1
-export SKIP_RUNTIME_GATE=1
+export SKIP_RUNTIME_CHECK=1
 zsh "$repo/OPENBSD/bin/vps-deploy" all
 
 if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then

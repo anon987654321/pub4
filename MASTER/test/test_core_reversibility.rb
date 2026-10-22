@@ -234,7 +234,7 @@ class TestCoreReversibility < Minitest::Test
     assert_match(/requires explicit paths/, verdict.reason)
   end
 
-  def test_commit_requests_approval_only_after_its_evidence_gate_passes
+  def test_commit_requests_approval_only_after_its_evidence_check_passes
     memory = Master::Core::Memory.new
     [
       E.exec(%w[rake test], evidence: :test_pass),

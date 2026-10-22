@@ -5,8 +5,8 @@ require "test_helper"
 # GET /conversations/new is the people picker: "start a conversation" without
 # knowing anybody's exact username. The action called apply_live_search and
 # finish_live_search without including Shared::LiveSearchable, so the page
-# answered 500 for everybody; found by the signed-in flow gate
-# (MASTER/gates/data/flows.yml, brgen_messenger_send_and_read).
+# answered 500 for everybody; found by the signed-in flow check
+# (MASTER/checks/data/flows.yml, brgen_messenger_send_and_read).
 class ConversationPeoplePickerTest < ActionDispatch::IntegrationTest
   setup do
     Brgen::CitySeed.sync! if City.table_exists?

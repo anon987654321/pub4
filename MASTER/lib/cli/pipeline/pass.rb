@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../operator/gate_chain"
+require_relative "../../operator/check_chain"
 require_relative "pass_result"
 require_relative "target_resolver"
 require_relative "proof"
@@ -39,7 +39,7 @@ module Master
         end
 
         # The run in one line: how it ended, what it delivered, the findings before and after, the
-        # proof's verdict with the hard and soft gates it left red, and the gaps.
+        # proof's verdict with the hard and soft checks it left red, and the gaps.
         def self.scorecard(outcome:, delivered:, counts: [], proof: nil, gaps: 0)
           before, after = counts
           findings = after && before ? "#{after} finding(s), was #{before}" : "#{before || after || "?"} finding(s)"
@@ -47,7 +47,7 @@ module Master
            *proof_parts(proof), "#{gaps} gap(s)"].join(" · ")
         end
 
-        # A run that reached DONE while a hard gate is still red has not finished the app.
+        # A run that reached DONE while a hard check is still red has not finished the app.
         def self.final_outcome(outcome, proof)
           outcome == :done && Array(proof&.fetch(:hard, nil)).any? ? :partial : outcome
         end
@@ -55,7 +55,7 @@ module Master
         def self.proof_parts(proof)
           return ["no proof ran"] unless proof
 
-          hard, soft, unmeasured = proof.values_at(:hard, :soft, :unmeasured).map { |gates| Array(gates) }
+          hard, soft, unmeasured = proof.values_at(:hard, :soft, :unmeasured).map { |checks| Array(checks) }
           [proof[:verdict], "hard red #{hard.size}#{" (#{hard.first(3).join(", ")})" if hard.any?}",
            "soft red #{soft.size}", ("unmeasured #{unmeasured.size}" if unmeasured.any?)].compact
         end
@@ -92,14 +92,14 @@ module Master
         #
         # Both readings keep their aesthetic half for a second reason: the RAILS
         # constitutional budget is measured off the aesthetic one, so splitting
-        # them would change what that gate compares against.
+        # them would change what that check compares against.
         SWARM_EXCERPT = 400
 
-        # A writing pass ends in a proof stage: the target tree's own gates, run
+        # A writing pass ends in a proof stage: the target tree's own checks, run
         # once after the repair converges. /fix used to report convergence on
-        # scanner findings while the gates could still fail, with no way to
-        # know. Per-pass proofs are refused — `bin/operator gate` runs the same
-        # instruments on its own cadence, and a gates stage inside every pass
+        # scanner findings while the checks could still fail, with no way to
+        # know. Per-pass proofs are refused — `bin/operator check` runs the same
+        # instruments on its own cadence, and a checks stage inside every pass
         # would double them and blow the pass budget — and the RAILS rendered
         # half stays with the ladder, which already reaches the deploy host's
         # browser.
@@ -161,7 +161,7 @@ module Master
           line = self.class.scorecard(**@scored, counts:, proof: @proof, gaps: fix_gaps)
           Master::Trace::Dmesg.status("fix0", line)
           Residual.write(target: File.basename(@resolved.to_s), scorecard: line, proof: @proof,
-                         named: Master::Fix::GateFocus.named)
+                         named: Master::Fix::CheckFocus.named)
           line
         end
 
@@ -226,7 +226,7 @@ module Master
             sections << critique_section(resolved, shell)
           end
           unless @apply
-            # MASTER_FIX_PREVIEW=0: a gate tier's read-only pass wants the reading alone.
+            # MASTER_FIX_PREVIEW=0: a check tier's read-only pass wants the reading alone.
             return sections if ENV["MASTER_FIX_PREVIEW"] == "0"
 
             return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
@@ -382,7 +382,7 @@ module Master
 # 333 of 1109 files before it was interrupted and wrote nothing, and that
 # was luck rather than design.
 #
-# The ladder still writes, because writing is its job: bin/gate says
+# The ladder still writes, because writing is its job: bin/check --ladder says
 # --apply in full-fix mode and --no-autofix in scan-only. Making both
 # explicit is the point — a caller that wants a write now says so, and
 # nothing arrives at one by being misread.
@@ -541,13 +541,13 @@ def default_apply?(*) = false
         # The preview's wording, read from a preview's value alone.
         public :preview_lines
 
-        # --plan: the files a red gate names come first, because the run would repair them first.
+        # --plan: the files a red check names come first, because the run would repair them first.
         def blocker_line(blockers)
           named = Array(blockers)
           return if named.empty?
 
           shown = named.first(PREVIEW_SHOWN).join(", ")
-          "preview blockers: #{named.size} file(s) named by a red gate, first: #{shown}"
+          "preview blockers: #{named.size} file(s) named by a red check, first: #{shown}"
         end
 
         def finding_lines(value) = (summary_rows(value) + detail_rows(value)).compact.join("\n")

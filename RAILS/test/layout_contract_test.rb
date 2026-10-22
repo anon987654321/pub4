@@ -44,7 +44,7 @@ class LayoutContractTest < Minitest::Test
   # A heading is written three ways in this tree and only one of them is a tag.
   #
   # This scanned /<h([1-6])\b/ — literal markup only — while the dominant form
-  # here is `tag.h1`, so the gate has been reading a fraction of the headings and
+  # here is `tag.h1`, so the check has been reading a fraction of the headings and
   # passing on what it could not see. posts/show, communities/index and
   # dating/home all head themselves with tag.h1 and were invisible to it.
   #

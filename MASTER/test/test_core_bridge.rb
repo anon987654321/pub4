@@ -106,7 +106,7 @@ class CoreBridgeTest < Minitest::Test
   end
 
   # Constitution and World each used to resolve the root on their own, so a
-  # relative path could name one file to the gate and another to the writer.
+  # relative path could name one file to the check and another to the writer.
   def test_the_constitution_and_the_world_share_the_resolved_workspace_root
     Dir.mktmpdir do |given|
       Dir.mktmpdir do |resolved|

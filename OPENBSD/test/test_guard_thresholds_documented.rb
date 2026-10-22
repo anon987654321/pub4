@@ -18,7 +18,7 @@ class GuardThresholdsDocumentedTest < Minitest::Test
   SCRIPT = File.join(OPENBSD, "usr", "local", "bin", "resource_guard.sh")
   DOC = File.join(OPENBSD, "CLAUDE.md")
 
-  # The gates the prose discusses by name.
+  # The checks the prose discusses by name.
   VARIABLES = %w[MEM_WARN MEM_RESTORE LOAD_WARN LOAD_RESTORE].freeze
 
   def script_values

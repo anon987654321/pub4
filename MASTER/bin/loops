@@ -84,7 +84,7 @@ def wordmark_png
 
   script = File.join(Dir.tmpdir, "ai_wordmark.rb")
   File.write(script, <<~RUBY)
-    $LOAD_PATH.unshift #{File.join(ROOT, 'RAILS', 'gates', 'support').inspect}
+    $LOAD_PATH.unshift #{File.join(ROOT, 'RAILS', 'checks', 'support').inspect}
     require "cdp_session"
     require "json"
     Deploy::CdpSession.open do |s|
@@ -129,7 +129,7 @@ end
 
 def build_shell
   Master::Trace::Dmesg.attach("loop2", "loops0", "shell")
-  sh("ruby", File.join(ROOT, "MASTER", "gates", "shell_loop_record.rb"),
+  sh("ruby", File.join(ROOT, "MASTER", "checks", "shell_loop_record.rb"),
      "--out", File.join(MASTER, "loop2.mp4"), "--audio", DEMO, "--fps", "20")
   report(File.join(MASTER, "loop2.mp4"))
   gif_for(File.join(MASTER, "loop2.mp4"), seconds: 9)

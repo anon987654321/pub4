@@ -20,8 +20,8 @@ module Deploy
   # running — rather than reasoning about whether the restore thresholds are
   # reachable. The first version of this check did the latter, and measured
   # against the real 1550-tick history it stayed silent through the very
-  # incident it was written for: the gate does open, but rarely, and the log
-  # does not record whether anything was shed at the time, so "the gate opened
+  # incident it was written for: the check does open, but rarely, and the log
+  # does not record whether anything was shed at the time, so "the check opened
   # recently" answers a question nobody asked. The shed list plus rcctl answers
   # the one that matters, with no model of the box in between.
   #

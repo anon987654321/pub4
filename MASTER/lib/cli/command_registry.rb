@@ -38,8 +38,8 @@ module Master
         d = command_deps(ai:, root:, infra:)
         review_verbs(d).merge(session_verbs(infra[:session], infra[:undo])).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
-          "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
-          "deploy" => command(:dispatch_deploy, root, review_gate: true),
+          "commit" => command(:dispatch_commit, ai[:agent], root, review_check: true),
+          "deploy" => command(:dispatch_deploy, root, review_check: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
           "play" => command(:dispatch_play, d[:root]),
@@ -171,7 +171,7 @@ module Master
         return "support0 at master0: usage: /support benchmark --confirm [response-model] [judge-model]" unless action == "benchmark"
 
         unless args.delete("--confirm")
-          return "support0 at master0: BLOCKED cost gate; this runs up to eight synthetic cases and sixteen model calls. Repeat with --confirm."
+          return "support0 at master0: BLOCKED cost check; this runs up to eight synthetic cases and sixteen model calls. Repeat with --confirm."
         end
         return "support0 at master0: usage: /support benchmark --confirm [response-model] [judge-model]" if args.size > 2
         return "support0 at master0: BLOCKED; no active model agent" unless agent

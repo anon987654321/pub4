@@ -13,17 +13,17 @@ subsystems:
     status: verified
     meaning: LLM fix stage only skips when every fallback-chain model is exhausted, not any one
     evidence: 'commits 2caa7e7ac, d0f488c77 -- was blocking on any unrelated model (e.g. a dead
-      free-tier fallback) even when the actually-used model was healthy; found live via round 22-26 gate output.
+      free-tier fallback) even when the actually-used model was healthy; found live via round 22-26 check output.
       Re-verified 2026-09-10 by reading the predicate: lib/fix/fix_loop/llm_router.rb:26 returns the model
       list only when models.all? { |m| registry.open?(m) }, and [] otherwise, so one open breaker skips nothing.'
     last_checked: '2026-09-10'
-  fix_loop.self_test_gate:
+  fix_loop.self_test_check:
     status: verified
-    meaning: constitutional self-violation gate (8 laws) halts /fix only on a genuine violation
+    meaning: constitutional self-violation check (8 laws) halts /fix only on a genuine violation
     evidence: 'commit bf02780f7 -- a DENSITY regression from an earlier same-session fix was
       silently halting /fix entirely; SelfTest confirmed 0 violations after the fix.
       Re-verified 2026-09-10: rake selftest reads 0 across all eight laws, and the halt is still wired —
-      SelfCheck#gate! at lib/builder/ai_boot.rb:158 publishes self_violation, which :183 subscribes to
+      SelfCheck#check! at lib/builder/ai_boot.rb:158 publishes self_violation, which :183 subscribes to
       fix_loop.halt!, so a red selfcheck stops background autofix for the session.'
     last_checked: '2026-09-10'
   fix_loop.fast_stage_rubocop:
@@ -69,7 +69,7 @@ subsystems:
     last_checked: '2026-09-10'
   fix_loop.rule_outcome_classification:
     status: verified
-    meaning: a policy-skipped violation (confidence gate, stale fingerprint) doesn't count against
+    meaning: a policy-skipped violation (confidence check, stale fingerprint) doesn't count against
       a rule's fix_quality the same way a genuine failed attempt does
     evidence: 'commit a77b3fb22 -- matches OpenCrabs feedback_policy.rs (issue #236): treating
       every non-fix as a defect risked deprioritizing rules that were never actually attempted.

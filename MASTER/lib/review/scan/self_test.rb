@@ -132,7 +132,7 @@ module Master
           end
         end
 
-        # Cross-file YAML registry integrity is a separate gate. Keeping it out of the
+        # Cross-file YAML registry integrity is a separate check. Keeping it out of the
         # constitutional SINGULARITY runtime check prevents generic registry keys such
         # as law or dimensions from turning unrelated data files into boot failures.
         def data_singularity_findings

@@ -71,7 +71,7 @@ module Master
           def same_file?(reported, path) = File.expand_path(reported.to_s, @root) == File.expand_path(path, @root)
 
           # A report is a function of the argv, the file and the linter's configuration, so it is kept by the
-          # digest of all three: a gate over 1800 unchanged files spent its whole budget spawning rubocop and
+          # digest of all three: a check over 1800 unchanged files spent its whole budget spawning rubocop and
           # reek once each and never finished.
           def linter_json(*argv)
             key = lint_cache_key(argv)

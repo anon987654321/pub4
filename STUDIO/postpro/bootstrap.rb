@@ -35,13 +35,13 @@ module PostproBootstrap
   # This is conditional. Unconditional, with `BOOTSTRAP = PostproBootstrap.run`
   # running at file scope, *loading* postpro.rb can `gem install ruby-vips`, and on a
   # miss go on to `brew install vips`, `apt install libvips-dev` or
-  # `doas pkg_add -I libvips`. STUDIO's own gate loads this file to check that it
-  # boots, which made `rake gate` a command that could mutate the machine it was
+  # `doas pkg_add -I libvips`. STUDIO's own check loads this file to check that it
+  # boots, which made `rake check` a command that could mutate the machine it was
   # supposed to be measuring. A check observes; it does not repair.
   #
   # Default is observe. POSTPRO_INSTALL_DEPS=1 opts in, and `rake
   # postpro:bootstrap` is the spelling meant for a human. Never inferred from a
-  # tty: the gate's probe inherits one when rake is run from a terminal, which
+  # tty: the check's probe inherits one when rake is run from a terminal, which
   # would put the mutation right back under the check.
   def self.install_allowed? = ENV["POSTPRO_INSTALL_DEPS"] == "1"
 

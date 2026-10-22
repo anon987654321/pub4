@@ -4,15 +4,15 @@ require_relative "test_helper"
 require "cli/pipeline/pass"
 
 # /fix delivers when its proof holds, and main is rarely green: the proof is
-# judged against the same proof run before the repair. These stub the gate
+# judged against the same proof run before the repair. These stub the check
 # runner and the suites; the real ladder takes minutes and is not the subject.
 class TestProofBaseline < Minitest::Test
   Proof = Master::CLI::Pipeline::Proof
   Reading = Proof::Reading
 
   RAILS_RED = [
-    "gates0 at rails: running production",
-    "gates0 at rails: 10 pass, 3 fail, 0 skip, 7 inconclusive, 0 error in 102.0s, autofix off; " \
+    "checks0 at rails: running production",
+    "checks0 at rails: 10 pass, 3 fail, 0 skip, 7 inconclusive, 0 error in 102.0s, autofix off; " \
     "failed=generated_asset,release,layout_suite; inconclusive=deploy_drift,flow_journey",
   ].freeze
 
@@ -28,14 +28,14 @@ class TestProofBaseline < Minitest::Test
   end
 
   def test_studio_tree_has_a_full_tree_proof_runner
-    target = File.join(Operator::GateChain::ROOT, "STUDIO")
+    target = File.join(Operator::CheckChain::ROOT, "STUDIO")
     name, runner = Master::CLI::Pipeline::Pass.allocate.proof_runner(target)
 
     assert_equal "STUDIO", name
     assert_respond_to runner, :call
   end
 
-  def test_the_runner_verdict_names_each_failed_gate
+  def test_the_runner_verdict_names_each_failed_check
     reading = Reading.parse(false, RAILS_RED)
 
     assert reading.measured?
@@ -43,8 +43,8 @@ class TestProofBaseline < Minitest::Test
     assert_equal [10, 20], [reading.passed, reading.total]
   end
 
-  # A gate the runner could not measure is neither passed nor failed, and is named as such.
-  def test_the_runner_verdict_names_each_unmeasured_gate
+  # A check the runner could not measure is neither passed nor failed, and is named as such.
+  def test_the_runner_verdict_names_each_unmeasured_check
     assert_equal %w[deploy_drift flow_journey].to_set, Reading.parse(false, RAILS_RED).unmeasured
   end
 
@@ -59,12 +59,12 @@ class TestProofBaseline < Minitest::Test
     assert_equal [body.lines.first.chomp], @delivered, "a proof that held delivered nothing"
   end
 
-  def test_a_new_failing_gate_refuses
+  def test_a_new_failing_check_refuses
     pass = pass_with(RAILS_RED)
     baseline = pass.send(:proof_baseline, Master::RAILS_ROOT)
     worse = [RAILS_RED.last.sub("release,layout_suite;", "release,layout_suite,schema_migration;")
                            .sub("10 pass, 3 fail", "9 pass, 4 fail")]
-    pass.define_singleton_method(:proof_runner) { |_abs| ["rails gates", -> { [false, worse] }] }
+    pass.define_singleton_method(:proof_runner) { |_abs| ["rails checks", -> { [false, worse] }] }
     _title, body = pass.send(:proof_section, Master::RAILS_ROOT, baseline)
 
     assert_equal ["proof"], pass.instance_variable_get(:@failed_stages)
@@ -114,7 +114,7 @@ class TestProofBaseline < Minitest::Test
   def test_a_baseline_is_kept_until_origin_main_moves
     pass = pass_with(RAILS_RED)
     runs = 0
-    pass.define_singleton_method(:proof_runner) { |_abs| ["rails gates", -> { runs += 1; [false, RAILS_RED] }] }
+    pass.define_singleton_method(:proof_runner) { |_abs| ["rails checks", -> { runs += 1; [false, RAILS_RED] }] }
     2.times { pass.send(:proof_baseline, Master::RAILS_ROOT) }
     assert_equal 1, runs, "the baseline ran twice on an unmoved origin/main"
 
@@ -132,12 +132,12 @@ class TestProofBaseline < Minitest::Test
         `git -C #{repo} rev-parse HEAD`.strip
       end
       first = commit.call("start")
-      Proof.remember("rails gates", sha: first, reading: :kept)
+      Proof.remember("rails checks", sha: first, reading: :kept)
       own = commit.call("#{Proof::OWN_SUBJECT} pass 1")
-      assert_equal :kept, Proof.recall("rails gates", sha: own, repo:)
+      assert_equal :kept, Proof.recall("rails checks", sha: own, repo:)
 
       other = commit.call("feat(rails): another session")
-      assert_nil Proof.recall("rails gates", sha: other, repo:)
+      assert_nil Proof.recall("rails checks", sha: other, repo:)
     end
   end
 
@@ -151,15 +151,15 @@ class TestProofBaseline < Minitest::Test
   end
 
   # A baseline suite proof runs minutes with its output captured: it speaks on
-  # the gate heartbeat cadence like the rails gates do.
-  def test_a_suite_proof_runs_under_the_gate_heartbeat
+  # the check heartbeat cadence like the rails checks do.
+  def test_a_suite_proof_runs_under_the_check_heartbeat
     chain = Object.new
     chain.define_singleton_method(:suite_jobs) { |_trees| [["suite MASTER", ["true"], "/", {}, "MASTER", false]] }
     chain.define_singleton_method(:capture) { |*, **| [true, ["fine"]] }
     labels = []
     around = ->(label, **, &block) { labels << label; block.call({}) }
 
-    ok, framed = Operator::GateHeartbeat.stub(:around, around) do
+    ok, framed = Operator::CheckHeartbeat.stub(:around, around) do
       Master::CLI::Pipeline::Pass.allocate.send(:suite_proof, chain, "MASTER")
     end
 
@@ -172,7 +172,7 @@ class TestProofBaseline < Minitest::Test
     delivered = @delivered
     pass = Master::CLI::Pipeline::Pass.allocate
     pass.instance_variable_set(:@failed_stages, [])
-    pass.define_singleton_method(:proof_runner) { |_abs| ["rails gates", -> { [false, out] }] }
+    pass.define_singleton_method(:proof_runner) { |_abs| ["rails checks", -> { [false, out] }] }
     pass.define_singleton_method(:origin_main) { "a" * 40 }
     pass.define_singleton_method(:deliver_leftovers) { |_abs, verdict| delivered << verdict; "delivery: stubbed" }
     pass

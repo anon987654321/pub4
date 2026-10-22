@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Shared
-  # Shared-secret gate for loopback/internal service callers (MASTER bridges).
+  # Shared-secret check for loopback/internal service callers (MASTER bridges).
   module InternalTokenAuth
     extend ActiveSupport::Concern
 

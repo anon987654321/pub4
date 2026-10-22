@@ -55,7 +55,7 @@ module Master
                     end
             base = "#{base}, #{counts}" if counts
             base = [base, *cause_lines].join("\n")
-            skipped = Master::Io::QuotaGate.report
+            skipped = Master::Io::QuotaCheck.report
             skipped ? "#{base}\n\n#{unit}: #{skipped}" : base
           end
 

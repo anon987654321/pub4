@@ -237,7 +237,7 @@ def test_an_empty_destination_still_regroups
   assert_equal "regroup", Operator::Cohesion.plans_for(@tmp).first[:plan]
 end
 
-# ---- the two gates a merge needs ------------------------------------------
+# ---- the two checks a merge needs ------------------------------------------
 #
 # Both were missing, and STUDIO/dilla is where that showed. The tool proposed
 # six merges there; every one of them was wrong, for two different reasons.

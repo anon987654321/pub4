@@ -1,0 +1,469 @@
+# The check execution registry. One row per instrument; the filename and existing
+# Check class names retain the legacy “check” term. This is not a policy catalogue:
+# MASTER/data/laws.yml and the executable Law layers define normative criteria.
+# Rows describe how checks run, which suite covers them, and their preconditions.
+# Do not duplicate Law text or invent Law IDs/tiers here. When a normative check has
+# no existing Law ID, record the coverage gap rather than creating a competing source.
+#
+# One registry, one runner, three trees. A check's row lives here whatever tree
+# holds its implementation: `require` names the tree when the check belongs to
+# one — MASTER/lib/operator/checks for the checks that measure MASTER's own face and scan
+# chain, OPENBSD/checks for the ones that measure the box (DNS, domains, the
+# port inventory), and a bare path for the RAILS checks, which are most of them.
+#
+# The runner stays single: three runners would be three ideas of what a check
+# result is, which is the shape OPENBSD/lib/check_result.rb exists to prevent.
+#
+# It replaces four hand-maintained tables that had to agree with each other:
+# runner.rb's CHECK_MAP (name -> file), IN_PROCESS (name -> class),
+# SUBPROCESS_ONLY (the set difference of those two, stored by hand) and
+# CHECK_COVERED_BY (leaf -> composite). Adding a check meant editing up to four
+# places, and CHECK_MAP's file paths outlived the shims they pointed at.
+#
+# Fields
+#   require     path under MASTER/checks/, loaded before the class is named
+#   class       Deploy::* constant answering .run and returning a CheckResult
+#   pass        success line; %{apps} / %{schemas} / %{assets} resolve via
+#               runner.rb's COUNTERS
+#   covered_by  the composite that already runs this check as a leaf, so --all
+#               does not run it twice
+#   script      set instead of require/class for checks that stay subprocesses
+#   env_flags   ENV name -> keyword argument, passed to .run when the var is "1"
+#   needs       preconditions the machine must satisfy for this check to measure
+#               anything. Today the only value is `browser`, which was runner.rb's
+#               hardcoded BROWSER_BACKED list — a fifth hand-maintained table of
+#               exactly the kind this file replaced.
+#
+# There is deliberately no `cost` field, and it is not an oversight.
+#
+# A cost declared here is a number somebody typed once, and this registry exists
+# because four such tables drifted from each other. The failure a cost field is
+# meant to catch is a check that DOUBLES — constitutional_scan at 48 minutes on
+# brgen, rendered_suite at an hour on a Mac — and a declaration can never show a
+# doubling; only a history can. The ledger already records duration_ms per check
+# per run, so runner.rb prints each check's measured median before it starts and
+# says "unmeasured here" for the ones this machine has never run. A check whose
+# median moves is visible in `runner.rb --ledger`.
+#
+# A check is named for what it measures, never for the criterion near it, and owns
+# one assertion. Two checks asserting one property are two places for it to rot,
+# and a check named after a WCAG criterion invites the criterion's number to be
+# declared again inside it: MASTER names the Law and holds the number, and the
+# check reads it from there. Under lib/, the directory names what a check needs
+# before it can measure: source/ files only, live/ a booted app, rendered/ a
+# browser, research/ scores rather than verdicts.
+#
+# Order is run order.
+
+architecture:
+  script: architecture.rb
+
+production:
+  require: lib/production
+  class: Deploy::ProductionCheck
+  pass: "Production check passed for %{apps} Rails apps."
+  env_flags:
+    CHECK_SKIP_NESTED: skip_nested
+
+rendered_invariants:
+  needs: [browser]
+  require: lib/rendered/rendered_invariants
+  class: Deploy::RenderedInvariants
+  pass: "Rendered invariants passed (theme served matches theme declared; chat tab corner consistent or declared)."
+  covered_by: rendered_suite
+
+dns_zones:
+  require: OPENBSD/checks/dns_zones
+  class: Deploy::DnsZonesCheck
+  pass: "dns_zones: repo and nsd agree (zones, nsd.conf, acme-client.conf)."
+
+domain_alignment:
+  require: OPENBSD/checks/domain_alignment
+  class: Deploy::DomainAlignmentCheck
+  pass: "Domain alignment check passed (city domains + deploy_inventory.json/relayd checks)."
+  covered_by: release
+
+frontend_auditor:
+  require: lib/source/frontend_auditor
+  class: Deploy::FrontendAuditorCheck
+  pass: "auditor: 0 warnings"
+  covered_by: layout_suite
+
+frontend_production:
+  require: lib/source/frontend_production
+  class: Deploy::FrontendProductionCheck
+  pass: "Frontend production check passed (%{apps} apps + RAILS/master layouts)."
+  covered_by: release
+
+generated_asset:
+  require: lib/source/generated_asset
+  class: Deploy::GeneratedAssetCheck
+  pass: "Generated asset freshness check passed for %{apps} Rails apps."
+
+human_walkthrough:
+  require: lib/live/human_walkthrough
+  class: Deploy::HumanWalkthroughCheck
+  pass: "Human walkthrough check passed for %{apps} Rails apps."
+
+master_tts:
+  require: MASTER/lib/operator/checks
+  class: Deploy::MasterTtsCheck
+  pass: "MASTER TTS check passed."
+  covered_by: production
+
+master_web_assets:
+  require: MASTER/lib/operator/checks
+  class: Deploy::MasterWebAssetsCheck
+  pass: "RAILS/master assets check passed (%{assets} required assets present)."
+  covered_by: production
+
+phantom_foreign_keys:
+  require: lib/source/phantom_foreign_keys
+  class: Deploy::PhantomForeignKeysCheck
+  pass: "phantom_foreign_keys: clean (%{schemas} schemas)"
+
+# isolate_namespace isolates tables and routes, not constants; this holds the
+# one deliberate cross-engine read at one.
+engine_boundaries:
+  require: lib/source/engine_boundaries
+  class: Deploy::EngineBoundariesCheck
+  pass: "engine_boundaries: no engine names another's constants beyond its declared reads"
+
+port_inventory:
+  require: OPENBSD/checks/port_inventory
+  class: Deploy::PortInventoryCheck
+  pass: "Port inventory check passed for %{apps} Rails apps."
+
+# Boots each app under its own bundle, so it stays a subprocess.
+rails_runtime:
+  script: rails_runtime.rb
+
+# Multi-step: shells out to rbenv, bundler and per-app CI.
+release:
+  script: release.rb
+
+schema_migration:
+  require: lib/source/schema_migration
+  class: Deploy::SchemaMigrationCheck
+  pass: "Schema/migration check passed for %{apps} Rails apps."
+
+stimulus_components:
+  require: lib/source/stimulus_components
+  class: Deploy::StimulusComponentsCheck
+  pass: "Stimulus Components adoption check passed."
+  covered_by: release
+
+# Forwards --capture/--app/--base, so it stays a subprocess.
+visual_contract:
+  needs: [browser]
+  script: visual_contract.rb
+  # Exit 3 is "no state navigated": it waits for VISUAL_CAPTURE=1 and a booted app.
+  gap: { horizon: operator, cost_to_check: minutes, decidability: fact }
+
+user_flow:
+  require: lib/live/user_flow
+  class: Deploy::UserFlowCheck
+  pass: "User flow + MASTER design-principle check passed."
+  covered_by: layout_suite
+
+css_constitution:
+  require: lib/source/css_constitution
+  class: Deploy::CssConstitutionCheck
+  pass: "CSS constitution check passed (all stylesheets)."
+  covered_by: layout_suite
+
+css_brace_balance:
+  require: lib/source/css_brace_balance
+  class: Deploy::CssBraceBalanceCheck
+  pass: "CSS brace balance check passed (all source stylesheets)."
+  covered_by: layout_suite
+
+scale_ratchet:
+  require: lib/source/scale_ratchet
+  class: Deploy::ScaleRatchetCheck
+  pass: "Spacing, leading, radius and weight are on the declared scale."
+  covered_by: layout_suite
+
+# Source-side Bringhurst/Butterick contract. Rendered geometry remains the authority for optical results.
+typography_contract:
+  require: lib/source/typography_contract
+  class: Deploy::TypographyContractCheck
+  pass: "Typography contract passed (source declarations match the contextual reading profiles)."
+  covered_by: layout_suite
+
+css_minify_integrity:
+  require: lib/source/css_minify_integrity
+  class: Deploy::CssMinifyIntegrityCheck
+  pass: "css_minify_integrity: ok"
+  covered_by: layout_suite
+
+first_screen:
+  require: lib/live/first_screen
+  class: Deploy::FirstScreenCheck
+  pass: "ok: first-screen markers present, tap minimum declared"
+  covered_by: layout_suite
+
+dialect_purity:
+  require: lib/source/dialect_purity
+  class: Deploy::DialectPurityCheck
+  pass: "Dialect purity check passed."
+  covered_by: layout_suite
+
+payment_honesty:
+  require: lib/source/payment_honesty
+  class: Deploy::PaymentHonestyCheck
+  pass: "Payment honesty check passed."
+  covered_by: layout_suite
+
+affiliate_honesty:
+  require: lib/source/affiliate_honesty
+  class: Deploy::AffiliateHonestyCheck
+  pass: "Affiliate honesty check passed."
+  covered_by: layout_suite
+
+content_honesty:
+  require: lib/source/content_honesty
+  class: Deploy::ContentHonestyCheck
+  pass: "Content honesty check passed (no Faker filler on public surfaces)."
+  covered_by: layout_suite
+
+content_for_yield:
+  require: lib/source/content_for_yield
+  class: Deploy::ContentForYieldCheck
+  pass: "content_for_yield: every produced content slot has a consumer"
+  covered_by: layout_suite
+
+layout_search:
+  require: lib/research/layout_search
+  class: Deploy::LayoutSearchCheck
+  pass: "Layout search (least-resistance) check passed."
+  covered_by: layout_suite
+
+# Owns the professional layout + CSS stack, frontend_auditor included.
+stimulus_wiring:
+  require: lib/source/stimulus_wiring
+  class: Deploy::StimulusWiringCheck
+  pass: "Stimulus wiring check passed."
+  covered_by: layout_suite
+
+layout_suite:
+  require: lib/layout_suite
+  class: Deploy::LayoutSuiteCheck
+  pass: "Layout suite passed (source laws plus complete rendered geometry, snapshots and browser diagnostics)."
+
+surface_schema:
+  require: lib/live/surface_schema
+  class: Deploy::SurfaceSchemaCheck
+  pass: "surface_schema: ok"
+  covered_by: layout_suite
+
+design_metrics:
+  require: lib/research/design_metrics
+  class: Deploy::DesignMetricsCheck
+  pass: "design_metrics: ok"
+  covered_by: layout_suite
+
+visual_quality:
+  require: lib/research/visual_quality
+  class: Deploy::VisualQualityCheck
+  pass: "visual_quality: ok"
+  covered_by: layout_suite
+
+calibration:
+  require: lib/research/calibration
+  class: Deploy::CalibrationCheck
+  pass: "calibration: ok"
+  covered_by: layout_suite
+
+apps_yml:
+  require: lib/source/apps_yml
+  class: Deploy::AppsYmlValidator
+  pass: "apps.yml validator: OK"
+  covered_by: production
+
+shared_wiring:
+  require: lib/source/shared_wiring
+  class: Deploy::SharedWiringCheck
+  pass: "Shared wiring check passed (routes, importmap, public assets, Stimulus)."
+
+# An app translation and a shared one for the same key leaves one value dead.
+# Rails::Engine loads shared/config/locales before the host app's locales, so the
+# app value wins. LocaleShadowingCheck bounds those deliberate overrides; a second
+# registration after the app would reverse precedence and is forbidden.
+locale_shadowing:
+  require: lib/source/locale_shadowing
+  class: Deploy::LocaleShadowingCheck
+  pass: "locale_shadowing: ok"
+  covered_by: production
+
+# MASTER's 164 executable rules reach this tree through exactly one door, and
+# until now it was a door nobody opened: no covered_by meant this ran only when
+# named by hand, so a RAILS deploy was gated by RuboCop, Brakeman and the app
+# suite and by none of the constitution. Two trailing commas blocked brgen for
+# ten hours on 2026-08-25 while NO_COLUMN_ALIGN, which exists for exactly that,
+# never ran.
+#
+# release rather than production: this is scan-only and takes about eleven
+# minutes, which is right for the check that fronts a release and wrong for every
+# CI run on a 1 vCPU box.
+constitutional_scan:
+  require: MASTER/lib/operator/checks
+  class: Deploy::ConstitutionalScanCheck
+  pass: "Constitutional scan preflight completed."
+  covered_by: release
+
+# One Chromium pass records console/runtime failures, resource errors, and a screenshot
+# for each declared route/viewport. It is also included in rendered_suite below.
+browser_diagnostics:
+  needs: [browser]
+  require: lib/rendered/browser_diagnostics
+  class: Deploy::BrowserDiagnosticsCheck
+  pass: "ok: Chromium diagnostics recorded for the RAILS route inventory"
+  covered_by: rendered_suite
+
+# Owns every browser-backed check below it. Each leaf launches Chrome, so running
+# one twice in a single invocation is pure wall-clock waste.
+rendered_suite:
+  needs: [browser]
+  require: lib/rendered_suite
+  class: Deploy::RenderedSuiteCheck
+  pass: "ok: rendered browser suite clean"
+  covered_by: layout_suite
+
+# Browser probes kept as first-class checks so a probe cannot exist as an
+# unmeasured side script. Each uses the shared CDP transport and is inconclusive
+# when Chromium is absent; CHECK_STRICT_INCONCLUSIVE=1 makes that blocking.
+tap_target_probe:
+  needs: [browser]
+  script: tap_target_probe.rb
+  pass: "ok: tap targets meet the 44px floor"
+
+face_capture_probe:
+  needs: [browser]
+  script: face_capture_probe.rb
+  pass: "ok: face capture drew after primer"
+
+focus_walk_probe:
+  needs: [browser]
+  script: focus_walk_probe.rb
+  pass: "ok: every focus stop shows a ring"
+
+rendered_geometry:
+  needs: [browser]
+  require: lib/rendered/rendered_geometry
+  class: Deploy::RenderedGeometryCheck
+  pass: "ok: rendered geometry contracts satisfied"
+  covered_by: rendered_suite
+
+webgl_surfaces:
+  needs: [browser]
+  require: lib/rendered/webgl_surfaces
+  class: Deploy::WebglSurfacesCheck
+  pass: "ok: webgl surfaces draw"
+  covered_by: rendered_suite
+
+viewport_spill:
+  needs: [browser]
+  require: lib/rendered/viewport_spill
+  class: Deploy::ViewportSpillCheck
+  pass: "ok: nothing hangs off the right edge at 390px"
+  covered_by: rendered_suite
+
+layout_snapshot:
+  needs: [browser]
+  require: lib/rendered/layout_snapshot
+  class: Deploy::LayoutSnapshotCheck
+  pass: "ok: layout snapshots match committed baselines"
+  covered_by: rendered_suite
+
+journey_invariant:
+  needs: [browser]
+  require: lib/rendered/journey_invariant
+  class: Deploy::JourneyInvariantCheck
+  pass: "ok: journey invariants hold"
+  covered_by: rendered_suite
+
+reflow:
+  needs: [browser]
+  require: lib/rendered/reflow
+  class: Deploy::ReflowCheck
+  pass: "ok: no overflow across the width sweep"
+  covered_by: rendered_suite
+
+keyboard_flow:
+  needs: [browser]
+  require: lib/rendered/keyboard_flow
+  class: Deploy::KeyboardFlowCheck
+  pass: "ok: keyboard tab order is sound"
+  covered_by: rendered_suite
+
+# Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
+mobile_flow:
+  needs: [browser]
+  require: lib/rendered/mobile_flow
+  class: Deploy::MobileFlowCheck
+  pass: "ok: mobile journey floor holds"
+  covered_by: rendered_suite
+
+cross_app:
+  needs: [browser]
+  require: lib/rendered/cross_app
+  class: Deploy::CrossAppEquivalenceCheck
+  pass: "ok: shared chrome agrees across apps"
+  covered_by: rendered_suite
+
+deploy_drift:
+  require: lib/live/deploy_drift
+  class: Deploy::DeployDriftCheck
+  pass: "ok: no deploy drift detected"
+
+flow_journey:
+  require: lib/live/flow_journey
+  class: Deploy::FlowJourneyCheck
+  pass: "ok: user journeys pass with postconditions"
+
+# Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
+# Source always; live HTTP when triangle ports are open.
+page_simulation:
+  require: lib/live/page_simulation
+  class: Deploy::PageSimulationCheck
+  pass: "ok: page UI/UX simulations clean across inventory"
+
+check_mutation:
+  require: lib/check_mutation
+  class: Deploy::CheckMutationCheck
+  pass: "ok: checks detect the defects they exist to prevent"
+
+# Does a press on this control reach this control? elementFromPoint at each
+# control centre, so deliberate stacking (fixed nav, modal, chat widget) is
+# not mistaken for a defect the way rect intersection would.
+occlusion:
+  needs: [browser]
+  require: lib/rendered/occlusion
+  class: Deploy::OcclusionCheck
+  pass: "ok: every control answers a press at its own centre"
+  covered_by: rendered_suite
+
+# PERF-100. The vitals sampler in hotwire.js has beaconed LCP/CLS/INP at one
+# percent for some time and nothing ever failed on the numbers; CHECK_ADEQUACY
+# item 8 records the hole. Source half asserts the field collection still runs,
+# live half measures the two paint metrics against a budget.
+web_vitals_budget:
+  require: lib/rendered/web_vitals_budget
+  class: Deploy::WebVitalsBudget
+  pass: "ok: LCP and CLS within budget, field collection intact"
+
+# PWA-100 and BRGEN-115. Three manifests, and nothing checked that the icons
+# they declare exist or that brgen's name follows the host's city. An icon
+# resolves from two public roots — the app's and the shared engine's, which
+# mounts its own ActionDispatch::Static — so a check that reads one of them
+# reports two apps as broken when they are not.
+pwa_installable:
+  require: lib/source/pwa_installable
+  class: Deploy::PwaInstallable
+  pass: "ok: three manifests installable, icons resolve, brgen follows its host"
+
+browser_policy:
+  require: lib/source/browser_policy
+  class: Deploy::BrowserPolicyCheck
+  pass: "browser policy intact"

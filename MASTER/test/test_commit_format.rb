@@ -10,27 +10,27 @@ class TestCommitFormat < Minitest::Test
   Format = Master::Ground::CommitFormat
   HOOK = File.expand_path("../../OPENBSD/dev/githooks/commit-msg", __dir__)
 
-  GOOD = "Gate preflight measures free space\n\nIt loaded the runtime first.\n\nCo-authored-by: MASTER"
+  GOOD = "Check preflight measures free space\n\nIt loaded the runtime first.\n\nCo-authored-by: MASTER"
 
   def test_a_message_in_masters_shape_has_no_problems
     assert_empty Format.problems(GOOD)
   end
 
   def test_the_body_is_optional_as_it_is_in_masters_own_commits
-    assert_empty Format.problems("Fix the gate\n\nCo-authored-by: MASTER")
+    assert_empty Format.problems("Fix the check\n\nCo-authored-by: MASTER")
   end
 
   def test_each_departure_from_the_shape_is_named
     cases = {
-      "feat(gate): fix the gate\n\nCo-authored-by: x" => /type prefix/,
-      "fix: the gate\n\nCo-authored-by: x" => /type prefix/,
-      "fix the gate\n\nCo-authored-by: x" => /lowercase/,
-      "Fix the gate.\n\nCo-authored-by: x" => /ends with/,
+      "feat(check): fix the check\n\nCo-authored-by: x" => /type prefix/,
+      "fix: the check\n\nCo-authored-by: x" => /type prefix/,
+      "fix the check\n\nCo-authored-by: x" => /lowercase/,
+      "Fix the check.\n\nCo-authored-by: x" => /ends with/,
 
       "#{"A" * 73}\n\nCo-authored-by: x" => /over 72/,
-      "Fix the gate\nbody on line two\n\nCo-authored-by: x" => /blank line/,
-      "Fix the gate\n\nwhat changed" => /trailer/,
-      "Fix the gate" => /trailer/,
+      "Fix the check\nbody on line two\n\nCo-authored-by: x" => /blank line/,
+      "Fix the check\n\nwhat changed" => /trailer/,
+      "Fix the check" => /trailer/,
     }
 
     cases.each do |message, expected|
@@ -45,7 +45,7 @@ class TestCommitFormat < Minitest::Test
   end
 
   def test_the_runtime_subject_normaliser_agrees_with_the_checker
-    raws = ["feat: add the gate.", "fix(scope)!: the gate!", "  spaced   out  "]
+    raws = ["feat: add the check.", "fix(scope)!: the check!", "  spaced   out  "]
 
     raws.each do |raw|
       subject = Format.normalize_subject(raw)

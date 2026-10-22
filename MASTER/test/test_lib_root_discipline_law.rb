@@ -39,7 +39,7 @@ class TestLibRootDisciplineRule < Minitest::Test
 
   # Both directions at once, against the tree rather than a fixture, because the
   # tree is where the drift happens. An allowance for a file nobody can add back
-  # is a hole in the gate that nobody can see, precisely because the thing it
+  # is a hole in the check that nobody can see, precisely because the thing it
   # excuses is invisible — the rule's own comment says so about autonomy.rb and
   # nothing enforced it. And a root file missing from the list is the deliberate
   # decision the rule exists to force, which had not been made for two of them:

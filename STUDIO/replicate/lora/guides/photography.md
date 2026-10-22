@@ -84,7 +84,7 @@ stay unproven until a test frame passes.
 - Clips run three to five seconds, on a locked or slow camera, with no hands and no
   speech, and the face stays at medium close-up or wider. Cut on the beat; one bar at
   92 bpm is about 2.6 seconds.
-- Every clip starts from a still that passed the identity gate. Test one clip per model at
+- Every clip starts from a still that passed the identity check. Test one clip per model at
   low resolution before any batch.
 - Grade once, in this order: exposure and white balance matched to one reference frame per
   scene, curve, saturation with skin exempt, halation, vignette, then a single grain pass
@@ -97,14 +97,14 @@ stay unproven until a test frame passes.
   1% of pixels, adjacent-shot colour distance under 6 (Lab), grain spread under 15%
   across shots.
 
-### The identity gate
+### The identity check
 
 Replicate hosts `apna-mart/face-match` (Facenet512 by default), which takes two images and
 returns a verdict, a distance and the model's threshold. It is the cheap embedder to
 calibrate first. Calibrate on real photographs as positives against 200 or more other
 faces as negatives, set the threshold at a fixed false-accept rate, and add a second
 embedder, because one model is gameable. Embeddings pass plastic skin and dead eyes, so
-the gate also needs texture, eye and flicker checks, and it must fail the rejected renders
+the check also needs texture, eye and flicker checks, and it must fail the rejected renders
 of 2026-10-19 before it is trusted. Score every Nth video frame and take the worst.
 
 Verified on 2026-10-19 through the Replicate API: `flux-2-pro` (`input_images`),

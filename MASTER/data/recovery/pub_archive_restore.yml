@@ -66,14 +66,14 @@ pub3:
     - "Redis deployment assumptions"
     - "PF rule exposing 10000:65535"
     - "random production port allocation"
-    - "bash/sed/grep-only gates"
+    - "bash/sed/grep-only checks"
   environment_constraints:
     cygwin:
       - "Do not assume tool sandbox PATH matches the user's Cygwin terminal."
       - "After two failed local audio/GUI attempts, give a terminal command instead of fighting the environment."
       - "Translate paths explicitly between Windows and POSIX forms."
     openbsd:
-      - "Prefer Ruby gates and rc.d/ksh services over ad hoc shell."
+      - "Prefer Ruby checks and rc.d/ksh services over ad hoc shell."
       - "Keep Rails app ports on loopback behind relayd."
       - "DNS, TLS, relayd, pf, and rcctl checks must be separately observable."
     github_archives:
@@ -82,8 +82,8 @@ pub3:
       - "Record do-not-restore decisions beside restored artifacts."
       - "Retired app names must not reappear in active deploy scripts."
 
-gates:
+checks:
   required:
-    - "ruby MASTER/tools/convergence/evidence_gate.rb"
-    - "ruby RAILS/archive_restore_gate.rb"
-    - "ruby RAILS/check_production_gate.rb"
+    - "ruby MASTER/tools/convergence/evidence_check.rb"
+    - "ruby RAILS/archive_restore_check.rb"
+    - "ruby RAILS/check_production_check.rb"

@@ -87,7 +87,7 @@ Operator::CiGuard.run! do
     # found in — valid Ruby at the wrong nesting level, exactly where RuboCop
     # was not pointed.
     #
-    # No `unless vps_host`: vm23 is where the deploy gate actually runs, so
+    # No `unless vps_host`: vm23 is where the deploy check actually runs, so
     # skipping it there left the only enforcement a local bin/ci or operator premerge
     # that nothing runs automatically. It is a source-text check needing no
     # browser and no database, so the reasons the system tests and the importmap
@@ -140,11 +140,11 @@ Operator::CiGuard.run! do
     # widening the glob without widening the exclude would sweep in an engine's
     # test/system or test/dummy.
     #
-    # Setting them here fixed the gate and left `bin/rails test` narrow, so the
+    # Setting them here fixed the check and left `bin/rails test` narrow, so the
     # two commands disagreed about what the suite is and the local one was the
     # weaker. That bit a second time on 2026-08-10: a validation-i18n change
     # broke two takeaway engine tests, three sessions reported brgen green from
-    # the narrow command — 349 runs against this step's 381 — and the VPS gate
+    # the narrow command — 349 runs against this step's 381 — and the VPS check
     # was the only thing that caught it, at the cost of a blocked deploy.
     #
     # brgen sets the same two values in config/application.rb now (9506d1db6),
@@ -160,7 +160,7 @@ Operator::CiGuard.run! do
       step "rails_test", "bin/rails test"
     end
     # System tests spin up a real headless-Chrome session -- too heavy for the
-    # 1-vCPU VPS gate (see resource_guard.sh), but must run in local/dev CI.
+    # 1-vCPU VPS check (see resource_guard.sh), but must run in local/dev CI.
     # This is also where axe-core accessibility checks live (see
     # test/application_system_test_case.rb's assert_accessible).
     step("system_test", "env FULL_COVERAGE=1 bin/rails test:system") unless vps_host

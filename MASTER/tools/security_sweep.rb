@@ -23,15 +23,15 @@ SECRET_PATTERNS = [
 # /password\s*[:=]\s*["'][^"'\[\]]{8,}["']/i — it flagged sixteen i18n strings
 # across three apps ("Glemt passord?", "Confirm password", "Update your
 # password"), so `bin/check --profile=contributor` and the operator profile were
-# both failing on translated UI copy. A gate whose failure is always noise is a
-# gate people learn to skip.
+# both failing on translated UI copy. A check whose failure is always noise is a
+# check people learn to skip.
 PASSWORD_ASSIGNMENT = /(?<![a-z_])password\s*[:=]\s*["']([^"'\[\]]{8,})["']/i
 PLACEHOLDERS = /\A(?:password123|changeme|example|secret|\[your password\])\z/i
 # Prose, not a credential: one word or hyphenated words with no digit or symbol.
 PROSE_VALUE = /\A[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*[?.!]?\z/
 # A value that is nothing but an indirection names where the credential comes
 # from; the credential itself lives in the environment or a locale file.
-# MASTER/gates/data/flows.yml posts "$FLOW_AMBER_PASSWORD" to a login form, and a
+# MASTER/checks/data/flows.yml posts "$FLOW_AMBER_PASSWORD" to a login form, and a
 # sweep that reads a variable name as the secret it stands for is the same
 # always-noise failure the i18n strings above already caused once.
 INDIRECTION = /\A(?:\$\{?[A-Za-z_]\w*\}?|%\{[^}]+\}|<%=[^%]*%>|\#\{[^}]+\})\z/
@@ -68,7 +68,7 @@ TRACKED_DENY_GLOBS = [
   # gitignored, and .gitignore is exactly what failed for the seven master.key
   # blobs still readable in this repo's history: a pattern stops a mistake only
   # until someone adds a path explicitly. MASTER/AGENTS.md "Do Not Touch" names
-  # this sweep as its gate, so the claim has a reader.
+  # this sweep as its check, so the claim has a reader.
   "MASTER/knowledge/**",
   "MASTER/output/**",
   "**/.master/**",

@@ -208,7 +208,7 @@ class TurboBroadcastContractTest < Minitest::Test
   ANY_BROADCAST = /broadcast_\w*to\s*\(?\s*"([^"]*)"/m
 
   # A stream written with no reader, tolerated with the reason. Each entry is a
-  # claim; an entry that stops matching is a hole in the gate and fails below.
+  # claim; an entry that stops matching is a hole in the check and fails below.
   UNREAD_STREAMS = {
     "brgen:notifications:*" =>
       "NotificationDeliveryJob is enqueued by nothing and kept only until vm23 confirms no " \

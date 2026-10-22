@@ -6,11 +6,11 @@ require "yaml"
 require_relative "../bin/render_dns"
 
 # Four DNS facts were written down twice: data/dns.yml declares them, OPERATOR.sh
-# restates them as shell literals, and gates/dns_zones.rb had its own third copy
+# restates them as shell literals, and checks/dns_zones.rb had its own third copy
 # of two. The copies had already drifted — OPERATOR.sh's resolver list led with
-# 8.8.8.8 while the gate used Cloudflare and Quad9 and had written down why.
+# 8.8.8.8 while the check used Cloudflare and Quad9 and had written down why.
 #
-# The gate now reads the policy file. OPERATOR.sh cannot: that block is sourced
+# The check now reads the policy file. OPERATOR.sh cannot: that block is sourced
 # before anything else runs, and making the deploy script shell out to ruby34 to
 # boot would put it behind an interpreter it is itself responsible for
 # installing. So the duplication stays and this makes it cost something.
@@ -71,8 +71,8 @@ class DnsFactsAgreeTest < Minitest::Test
   end
 end
 
-require_relative "../gates/dns_zones"
-require_relative "../gates/domain_alignment"
+require_relative "../checks/dns_zones"
+require_relative "../checks/domain_alignment"
 require_relative "../bin/domain_watch"
 
 # domain_watch asks the registry about every zone the policy declares, including
@@ -94,12 +94,12 @@ class DomainWatchPopulationTest < Minitest::Test
   end
 end
 
-# The two gates that hold those facts to the zones and the registry, each beside
+# The two checks that hold those facts to the zones and the registry, each beside
 # the drift it exists to catch (decision 2026-08-22). The network half of
 # dns_zones is handed a resolver that answers what the fixture says, so the
-# verdict is the gate's and no packet leaves the machine.
-class DnsZonesGateFixtureTest < Minitest::Test
-  GATE = Deploy::DnsZonesGate
+# verdict is the check's and no packet leaves the machine.
+class DnsZonesCheckFixtureTest < Minitest::Test
+  CHECK = Deploy::DnsZonesCheck
 
   # A resolver whose every name answers `addresses`, or raises `error`.
   Resolver = Struct.new(:addresses, :error) do
@@ -107,37 +107,37 @@ class DnsZonesGateFixtureTest < Minitest::Test
     def getaddress(_name) = error ? raise(error) : addresses.first
   end
 
-  def gate
-    @gate ||= GATE.new.tap { |g| g.instance_variable_set(:@result, Deploy::GateResult.new) }
+  def subject
+    @subject ||= CHECK.new.tap { |g| g.instance_variable_set(:@result, Deploy::CheckResult.new) }
   end
 
-  def result = gate.instance_variable_get(:@result)
+  def result = subject.instance_variable_get(:@result)
 
   # RenderDns answers `name` with `replacement` applied to its real answer while
-  # the gate runs `check`.
+  # the check runs `check`.
   def with_render(name, replacement, check)
     original = RenderDns.method(name)
     RenderDns.define_singleton_method(name) { replacement.call(original.call) }
-    gate.send(check)
+    subject.send(check)
   ensure
     RenderDns.define_singleton_method(name, original)
   end
 
   # bsdports.org, owned and paid and parked at the registrar.
   def test_an_app_domain_that_resolves_nowhere_fails
-    gate.send(:check_delegation, Resolver.new([]), "bsdports", "bsdports.org")
+    subject.send(:check_delegation, Resolver.new([]), "bsdports", "bsdports.org")
 
     assert_match(/bsdports\.org \(bsdports\) resolves nowhere/, result.failures.join)
   end
 
   def test_an_app_domain_delegated_somewhere_else_fails
-    gate.send(:check_delegation, Resolver.new(["192.0.2.1"]), "brgen", "brgen.no")
+    subject.send(:check_delegation, Resolver.new(["192.0.2.1"]), "brgen", "brgen.no")
 
-    assert_match(/resolves to 192\.0\.2\.1, not #{Regexp.escape(GATE::NAMESERVER)}/, result.failures.join)
+    assert_match(/resolves to 192\.0\.2\.1, not #{Regexp.escape(CHECK::NAMESERVER)}/, result.failures.join)
   end
 
   def test_an_app_domain_pointing_here_passes_and_counts
-    gate.send(:check_delegation, Resolver.new([GATE::NAMESERVER]), "brgen", "brgen.no")
+    subject.send(:check_delegation, Resolver.new([CHECK::NAMESERVER]), "brgen", "brgen.no")
 
     assert_empty result.failures
     assert_equal 1, result.checks_ran
@@ -146,11 +146,11 @@ class DnsZonesGateFixtureTest < Minitest::Test
   # A dropped packet is not a missing record: three timeouts skip, three
   # NXDOMAINs fail.
   def test_a_vertical_our_nameserver_does_not_answer_fails_and_a_timeout_only_skips
-    gate.send(:check_domain, Resolver.new(nil, Resolv::ResolvError), "brgen.no", %w[tv])
+    subject.send(:check_domain, Resolver.new(nil, Resolv::ResolvError), "brgen.no", %w[tv])
 
     assert_match(/does not answer for brgen\.no, tv\.brgen\.no, www\.brgen\.no/, result.failures.join)
 
-    timed_out = GATE.new.tap { |g| g.instance_variable_set(:@result, Deploy::GateResult.new) }
+    timed_out = CHECK.new.tap { |g| g.instance_variable_set(:@result, Deploy::CheckResult.new) }
     timed_out.send(:check_domain, Resolver.new(nil, Resolv::ResolvTimeout), "brgen.no", %w[tv])
     outcome = timed_out.instance_variable_get(:@result)
 
@@ -173,27 +173,27 @@ class DnsZonesGateFixtureTest < Minitest::Test
   end
 
   def test_the_committed_zones_match_what_the_generator_renders
-    gate.send(:generated_output_matches)
-    gate.send(:every_domain_has_a_zone)
+    subject.send(:generated_output_matches)
+    subject.send(:every_domain_has_a_zone)
 
     assert_empty result.failures
     assert_operator result.checks_ran, :>, 50
   end
 end
 
-class DomainAlignmentGateFixtureTest < Minitest::Test
-  GATE = Deploy::DomainAlignmentGate
+class DomainAlignmentCheckFixtureTest < Minitest::Test
+  CHECK = Deploy::DomainAlignmentCheck
 
   def setup
-    @gate = GATE.new
-    @registry = @gate.send(:parse_registry_entries).keys
-    @keys = @gate.send(:parse_relayd_keypairs)
-    @declared = @gate.send(:extract_constant, GATE::REGISTRY.read, "LIVE_DOMAINS")
+    @check = CHECK.new
+    @registry = @check.send(:parse_registry_entries).keys
+    @keys = @check.send(:parse_relayd_keypairs)
+    @declared = @check.send(:extract_constant, CHECK::REGISTRY.read, "LIVE_DOMAINS")
   end
 
   def alignment_failures(keys)
-    result = Deploy::GateResult.new
-    @gate.send(:live_domains_check, result, @registry, keys)
+    result = Deploy::CheckResult.new
+    @check.send(:live_domains_check, result, @registry, keys)
     result.failures.join(" | ")
   end
 
@@ -214,27 +214,27 @@ class DomainAlignmentGateFixtureTest < Minitest::Test
   # A commented-out keypair is a certificate relayd does not load, so the city it
   # names is linked with nothing serving it.
   def test_a_commented_out_keypair_does_not_count_as_live
-    commented = GATE::RELAYD.read.sub(/^(\s*)(tls keypair "#{Regexp.escape(@declared.last)}")/, '\1# \2')
-    keys = @gate.send(:parse_relayd_keypairs, commented)
+    commented = CHECK::RELAYD.read.sub(/^(\s*)(tls keypair "#{Regexp.escape(@declared.last)}")/, '\1# \2')
+    keys = @check.send(:parse_relayd_keypairs, commented)
 
     refute_includes keys, @declared.last
     assert_equal @keys.size - 1, keys.size
     assert_match(/LIVE_DOMAINS names #{Regexp.escape(@declared.last)} with no tls keypair/, alignment_failures(keys))
   end
 
-  # The gate compares the registry against the fleet render_dns writes zones for,
+  # The check compares the registry against the fleet render_dns writes zones for,
   # and the zsh expansion test above holds that reader to OPERATOR.sh.
-  def test_the_gate_reads_all_domains_through_render_dns
+  def test_the_check_reads_all_domains_through_render_dns
     original = RenderDns.method(:city_zones)
     RenderDns.define_singleton_method(:city_zones) { original.call.except("brgen.no") }
 
-    assert_match(/missing DNS brgen\.no/, GATE.run.failures.join(" | "))
+    assert_match(/missing DNS brgen\.no/, CHECK.run.failures.join(" | "))
   ensure
     RenderDns.define_singleton_method(:city_zones, original)
   end
 
   def test_the_committed_tree_passes
-    result = GATE.run
+    result = CHECK.run
 
     assert_equal :passed, result.outcome, result.failures.join("\n")
     assert_equal @declared.size, result.checks_ran

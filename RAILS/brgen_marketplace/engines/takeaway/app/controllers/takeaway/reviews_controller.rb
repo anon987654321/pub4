@@ -17,7 +17,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
       return
     end
 
-    # note: unique(order,user) + delivered gate; no mutex needed
+    # note: unique(order,user) + delivered check; no mutex needed
     # law_of_demeter: direct model context here is fine for reviews
     review = @restaurant.reviews.build(review_params.merge(user: user, order: delivered_orders.first))
     Shared::ReviewGeoStamp.apply!(review, user)

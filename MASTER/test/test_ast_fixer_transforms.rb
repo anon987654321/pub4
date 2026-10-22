@@ -111,7 +111,7 @@ class TestAstFixerTransforms < Minitest::Test
   #   ' — c — ' + text.slice(cut + 1)  ->  ` — c — ${text.slice}`(cut + 1)
   #
   # That parses. It is a template literal invoked as a function, so it throws
-  # TypeError every time the line runs, and `node --check` and every syntax gate
+  # TypeError every time the line runs, and `node --check` and every syntax check
   # wave it through. It shipped four times in e7e48eed1 across
   # web/public/chat.js and face_speech_runtime.js.
   def test_string_concat_declines_a_chain_that_ends_in_a_call
@@ -134,7 +134,7 @@ class TestAstFixerTransforms < Minitest::Test
   #   sel + '[' + seen[sel] + ']'  ->  `${sel}[${seen}`[sel] + ']'
   #
   # Every duplicate key comes back "undefined]", and `node --check` passes. This
-  # was written into MASTER/gates/support/geometry_probe/walk.js on the trial run
+  # was written into MASTER/checks/support/geometry_probe/walk.js on the trial run
   # recorded in TODO.md and reverted by hand. `'a'.repeat(3)` is the member-access
   # half: converting it moves the call onto the whole template.
   def test_string_concat_declines_a_chain_followed_by_a_subscript_or_member
@@ -238,7 +238,7 @@ class TestAstFixerTransforms < Minitest::Test
         FAILURES << msg
       end
     RUBY
-    result = fix("gate.rb", src)
+    result = fix("check.rb", src)
 
     assert_includes result[:content], "FAILURES = []\n", "froze an accumulator — FrozenError on first append"
     assert_includes result[:content], "APPS = %w[amber brgen].freeze"
@@ -325,7 +325,7 @@ class TestAstFixerTransforms < Minitest::Test
   # anyone who does not already know what stood there. Scanner#should_autofix?
   # has said so since the safety tier was written, and AstFixer ran the deleting
   # transform anyway — the tier covered the law-driven path and MechanicalAutofix
-  # went the other way, so an unattended `bin/operator gate` deleted code no rule
+  # went the other way, so an unattended `bin/operator check` deleted code no rule
   # had asked it to. MASTER_AUTOFIX=1 is what a person asking looks like, the same
   # signal Fix::RepairLoop reads.
   BOTH_HALVES = <<~RUBY
@@ -531,7 +531,7 @@ class TestAstFixerTransforms < Minitest::Test
 
   # The RAILS apps inherit rubocop-rails-omakase, whose trailing-comma cops
   # forbid the comma, and their bin/ci runs it. The rule already stood down for
-  # them; the fixer did not, and a gate run over RAILS added 351.
+  # them; the fixer did not, and a check run over RAILS added 351.
   def test_trailing_commas_leave_an_omakase_app_alone
     source = <<~RUBY
       # frozen_string_literal: true

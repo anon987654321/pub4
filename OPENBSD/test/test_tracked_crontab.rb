@@ -11,7 +11,7 @@ require "tmpdir"
 # under a C locale, where Ruby reads files as US-ASCII and every read of this
 # UTF-8 source raises "invalid byte sequence".
 require_relative "../lib/utf8"
-require_relative "../gates/config_drift_gate"
+require_relative "../checks/config_drift_check"
 
 # etc/crontab.vm23 is the tracked half of root's crontab, and OPERATOR.sh's
 # install_tracked_crontab merges it onto the box. Both halves can be complete
@@ -33,9 +33,9 @@ class TrackedCrontabTest < Minitest::Test
 
   def operator_source = @operator_source ||= File.read(OPERATOR)
 
-  # One parser for a cron line, the drift gate's, so the shapes it must and must
+  # One parser for a cron line, the drift check's, so the shapes it must and must
   # not read (an env prefix, a redirect, a PATH line) have one set of fixtures, in
-  # test_config_drift_gate.rb, and a new cron line is proved once.
+  # test_config_drift_check.rb, and a new cron line is proved once.
   def scheduled = scheduled_commands(crontab_source)
 
   def test_env_prefixed_lines_are_parsed

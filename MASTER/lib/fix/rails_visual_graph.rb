@@ -3,7 +3,7 @@
 require "open3"
 require "timeout"
 require "yaml"
-require_relative "../../gates/support/brgen_vertical_surfaces"
+require_relative "../../checks/support/brgen_vertical_surfaces"
 require_relative "rails_app"
 
 module Master

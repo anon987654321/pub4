@@ -96,7 +96,7 @@ module Master
           "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health",
           "inventory_alignment: #{inventory_alignment(repo_root)}",
           "bridge: MASTER/data/soul.yml + MASTER/data/laws.yml are law; " +
-          "MASTER/gates/ is the cross-tree verification plane",
+          "MASTER/checks/ is the cross-tree verification plane",
           "research pointers: Rails=RAILS/CLAUDE.md + RAILS/apps.yml; " +
           "OpenBSD=OPENBSD/CLAUDE.md + OPENBSD/RUNBOOK.md + OPENBSD/data/operator.yml",
         ].compact
@@ -133,7 +133,7 @@ module Master
         "shared=RAILS/__shared; tools=MASTER/tools/rails; design=MASTER/data/laws.yml; entry=MASTER/bin/operator triangle; " +
         "coupling=shared engine + sibling copy-tree affects every Rails app; " +
         "deployed_copy=/home/<app>/app + /home/<app>/shared; " +
-        "proof=MASTER/gates/gates.yml+MASTER/bin/operator triangle+<app>/bin/ci; " +
+        "proof=MASTER/checks/checks.yml+MASTER/bin/operator triangle+<app>/bin/ci; " +
         "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
         "rendered=Chrome/CDP via rendered_suite; " +
         "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; active_apps=#{rows.join(", ")}"
@@ -143,7 +143,7 @@ module Master
 
       def inventory_alignment(repo_root)
                 unless defined?(Deploy::Inventory)
-          require_relative "../../gates/support/deploy_inventory"
+          require_relative "../../checks/support/deploy_inventory"
         end
         return "unmeasured" unless defined?(Deploy::Inventory)
 

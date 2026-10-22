@@ -82,7 +82,7 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes concern, 'response.headers["Service-Worker-Allowed"] = "/"',
                     "a worker without this controls only its own directory"
     assert_match(/def allow_browser\(\*\)/, concern,
-                 "the install fetch does not carry the user agent the modern-browser gate reads")
+                 "the install fetch does not carry the user agent the modern-browser check reads")
 
     each_app do |app, root|
       controller = read(root, "app/controllers/rails/pwa_controller.rb")

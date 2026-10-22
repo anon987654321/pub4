@@ -92,4 +92,4 @@ Dir.chdir(ROOT) do
   abort "coverage: collate failed" unless ok
 end
 
-puts "coverage: full Rails line/branch/method coverage gate passed"
+puts "coverage: full Rails line/branch/method coverage check passed"

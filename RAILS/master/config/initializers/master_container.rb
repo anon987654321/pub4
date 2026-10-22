@@ -25,7 +25,7 @@ module MasterContainerLoader
   # for every precompile, which is why rc_pre kept accumulating orphaned
   # workers.
   #
-  # It is not why master would not start. That was the master_web_assets gate
+  # It is not why master would not start. That was the master_web_assets check
   # refusing on face.css :root drift, which rc_pre logs to syslog while rcctl
   # prints nothing -- so the refusal read as a hang. spawn_daemon already
   # redirects the child's stdio to a log and passes close_others, so no worker

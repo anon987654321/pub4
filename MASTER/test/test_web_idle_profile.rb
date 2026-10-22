@@ -17,7 +17,7 @@ class IdleProfileSpec < Minitest::Test
     assert_includes part1, ": 'calm'"
   end
 
-  def test_rich_motion_gates_decorative_idle_features
+  def test_rich_motion_checks_decorative_idle_features
     part1 = read("../RAILS/master/public/face.part1.txt")
     part3 = read("../RAILS/master/public/face.part3.txt")
 

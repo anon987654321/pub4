@@ -159,7 +159,7 @@ end
 # left behind, caught only when renders died with a SyntaxError at boot.
 # `ruby -c` costs milliseconds against that, so a staged engine file must parse
 # before it lands. Scoped to STUDIO/dilla deliberately: that is the measured
-# incident, and no broader parse gate has been proved against the rest of the repo.
+# incident, and no broader parse check has been proved against the rest of the repo.
 engine_staged = staged.select { |path| path == "STUDIO/dilla/dilla.rb" }
 unless engine_staged.empty? || ENV["PUB4_PARSE_SKIP"] == "1"
   require "open3"

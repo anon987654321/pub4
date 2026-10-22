@@ -6,13 +6,13 @@ module Master
   module CLI
     class Pipeline
       module Proof
-        # What a proof's output names: failed gates from runner.rb's verdict,
+        # What a proof's output names: failed checks from runner.rb's verdict,
         # failed bin/check steps, minitest failures, killed steps, and the
         # ratchet rows selftest and measure print.
         SUITE_HEADER = /\Aproof suite (.+): (ok|FAIL)\z/
-        GATE_VERDICT = /\b(\d+) pass, (\d+) fail, \d+ skip, (\d+) inconclusive, (\d+) error in [^;]*autofix (?:on|off)/
-        GATE_FAILED = /\A(?:failed|errored)=(.+)\z/
-        GATE_UNMEASURED = /\Ainconclusive=(.+)\z/
+        CHECK_VERDICT = /\b(\d+) pass, (\d+) fail, \d+ skip, (\d+) inconclusive, (\d+) error in [^;]*autofix (?:on|off)/
+        CHECK_FAILED = /\A(?:failed|errored)=(.+)\z/
+        CHECK_UNMEASURED = /\Ainconclusive=(.+)\z/
         CHECK_FAILURES = /\Acheck\d+ at \S+: \d+ failure\(s\), (.+)\z/
         TEST_HEAD = /\A\s*(?:\d+\)\s+)?(?:Failure|Error):\s*\z/
         TEST_NAME = /\A\s*(\S+#\S+?)(?: \[[^\]]*\])?:?\s*\z/
@@ -39,27 +39,27 @@ module Master
           end
 
           def self.sections(lines)
-            lines.each_with_object([["gates", nil, []]]) do |line, out|
+            lines.each_with_object([["checks", nil, []]]) do |line, out|
               header = line.match(SUITE_HEADER)
               header ? out << [header[1], header[2] == "ok", []] : out.last.last << line
-            end.reject { |name, ok, body| name == "gates" && ok.nil? && body.empty? }
+            end.reject { |name, ok, body| name == "checks" && ok.nil? && body.empty? }
           end
 
           def self.unit(ok, lines)
             keys = Set.new
             counted = nil
             lines.each_with_index do |line, index|
-              counted = gate_keys(line, keys) || counted
+              counted = check_keys(line, keys) || counted
               other_keys(line, lines[index + 1].to_s, keys)
             end
             passed, total = counted || [ok ? 1 : 0, 1]
-            { ok:, keys:, passed:, total:, unmeasured: unmeasured_gates(lines) }
+            { ok:, keys:, passed:, total:, unmeasured: unmeasured_checks(lines) }
           end
 
-          # Gates the runner could not measure: neither passed nor failed, and never green.
-          def self.unmeasured_gates(lines)
+          # Checks the runner could not measure: neither passed nor failed, and never green.
+          def self.unmeasured_checks(lines)
             parts = lines.flat_map { |line| line.split(";").drop(1) }
-            named = parts.filter_map { |part| part.strip[GATE_UNMEASURED, 1] }
+            named = parts.filter_map { |part| part.strip[CHECK_UNMEASURED, 1] }
             named.flat_map { |list| list.split(",").map(&:strip) }.to_set
           end
 
@@ -73,11 +73,11 @@ module Master
 
           def self.bare(line) = line.sub(UNIT_PREFIX, "")
 
-          def self.gate_keys(line, keys)
-            verdict = line.match(GATE_VERDICT)
+          def self.check_keys(line, keys)
+            verdict = line.match(CHECK_VERDICT)
             return unless verdict
 
-            named = line.split(";").drop(1).filter_map { |part| part.strip[GATE_FAILED, 1] }
+            named = line.split(";").drop(1).filter_map { |part| part.strip[CHECK_FAILED, 1] }
             keys.merge(named.flat_map { |list| list.split(",").map(&:strip) })
             passed = verdict[1].to_i
             [passed, passed + verdict[2].to_i + verdict[3].to_i + verdict[4].to_i]

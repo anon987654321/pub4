@@ -88,7 +88,7 @@ class TestVoiceNarrator < Minitest::Test
 
   def test_dead_air_gets_a_still_at_it_line_twice_then_silence
     n = build
-    n.observe("gate1: running suites")
+    n.observe("check1: running suites")
     window(n)
     n.tick
     @clock.advance(15)
@@ -102,7 +102,7 @@ class TestVoiceNarrator < Minitest::Test
 
   def test_idle_task_closes_silently
     n = build
-    n.observe("gate1: running suites")
+    n.observe("check1: running suites")
     window(n)
     n.tick
     @clock.advance(200)
@@ -162,10 +162,10 @@ class TestVoiceNarrator < Minitest::Test
     refute_match(/sorry/i, @spoken.join)
 
     m = build(writer: ->(**) { "The suite is running." })
-    m.observe("gate1: running")
+    m.observe("check1: running")
     window(m)
     m.tick
-    m.observe("gate1: still running")
+    m.observe("check1: still running")
     window(m)
     m.tick
     assert_equal 2, @spoken.size
@@ -284,7 +284,7 @@ class TestVoiceNarrator < Minitest::Test
     n.observe("scan0: reading")
     window(n)
     n.tick
-    n.observe("gate2: failed, timeout in suite")
+    n.observe("check2: failed, timeout in suite")
     window(n)
     n.tick
     assert_match(/turned up|problem/i, @spoken.last)

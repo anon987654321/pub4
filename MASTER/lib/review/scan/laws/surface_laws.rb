@@ -118,7 +118,7 @@ module Master
         # named here so the rule carries its book, not just its number.
         # Grid structure is a composition law, not a requirement that every page use CSS Grid.
         # The static pass catches only a high-signal anti-pattern; it leaves unusual
-        # but legitimate overlays to the semantic review and rendered geometry gates.
+        # but legitimate overlays to the semantic review and rendered geometry checks.
         LawDSL.law :GRID_STRUCTURE,
           severity: :warning, tags: %i[DESIGN LAYOUT], applies_to: CSS_LANGS, autofix: false,
           description: "grid structure — shared tracks, consistent alignment and parent-owned gap",

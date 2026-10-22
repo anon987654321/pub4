@@ -12,7 +12,7 @@ module Master
 
         # Only a genuine, attempted-and-failed fix should count as :stuck for
         # fix_quality's purposes -- a violation skipped by policy (confidence
-        # gate, stale fingerprint) was never actually attempted, and counting
+        # check, stale fingerprint) was never actually attempted, and counting
         # it the same as a real defect silently poisons that rule's quality
         # score, which then deprioritizes it further next round: exactly the
         # "banned a working tool over recoverable failures" trap OpenCrabs

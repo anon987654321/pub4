@@ -1,27 +1,27 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/operator/gate_chain"
+require_relative "../lib/operator/check_chain"
 
 class WorkflowInferenceTest < Minitest::Test
   # The execution-trace preflight needs live collaborators; these tests assert what /fix renders.
-  # The real gate baseline and closing verification run every stage of the ladder; these tests
+  # The real check baseline and closing verification run every stage of the ladder; these tests
   # assert what the pass renders.
   def setup
     @deep_trace = ENV["MASTER_FIX_DEEP_TRACE"]
     ENV["MASTER_FIX_DEEP_TRACE"] = "0"
-    @real_baseline = Operator::GateChain.method(:baseline)
-    @real_verify = Operator::GateChain.method(:verify_fix)
-    Operator::GateChain.define_singleton_method(:baseline) { |**| {} }
-    Operator::GateChain.define_singleton_method(:verify_fix) { |**| [0, []] }
+    @real_baseline = Operator::CheckChain.method(:baseline)
+    @real_verify = Operator::CheckChain.method(:verify_fix)
+    Operator::CheckChain.define_singleton_method(:baseline) { |**| {} }
+    Operator::CheckChain.define_singleton_method(:verify_fix) { |**| [0, []] }
   end
 
   def teardown
     @deep_trace ? ENV["MASTER_FIX_DEEP_TRACE"] = @deep_trace : ENV.delete("MASTER_FIX_DEEP_TRACE")
     baseline = @real_baseline
     verify = @real_verify
-    Operator::GateChain.define_singleton_method(:baseline) { |**kwargs| baseline.call(**kwargs) }
-    Operator::GateChain.define_singleton_method(:verify_fix) { |**kwargs| verify.call(**kwargs) }
+    Operator::CheckChain.define_singleton_method(:baseline) { |**kwargs| baseline.call(**kwargs) }
+    Operator::CheckChain.define_singleton_method(:verify_fix) { |**kwargs| verify.call(**kwargs) }
   end
 
   # A repair that says it repaired and shows nothing sends the operator to go
@@ -125,8 +125,8 @@ class WorkflowInferenceTest < Minitest::Test
     refute_match(/^obs1 at review0: re-observe/, out)
   end
 
-  # A gate tier's read-only pass reads and stops: no preview, which bin/gate switches off.
-  def test_a_gate_tier_dry_run_reads_without_a_preview
+  # A check tier's read-only pass reads and stops: no preview, which bin/check --ladder switches off.
+  def test_a_check_tier_dry_run_reads_without_a_preview
     out = with_env("MASTER_FIX_PREVIEW", "0") { dispatch(critique: false) }
 
     assert_match(/^obs0 at review0: observe/, out)
@@ -246,7 +246,7 @@ class WorkflowInferenceTest < Minitest::Test
       Master::Result.ok([{ role: "Synthesis", feedback: "ok for #{payload.to_s[0, 20]}" }])
     end
 
-    # The council gate asks through review; the tribunal path through review_convergent.
+    # The council check asks through review; the tribunal path through review_convergent.
     def review(payload, context:) = review_convergent(payload, context:)
   end
 

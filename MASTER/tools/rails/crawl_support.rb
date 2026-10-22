@@ -2,7 +2,7 @@
 
 require "json"
 require "yaml"
-require_relative "../../gates/support/crawl_support"
+require_relative "../../checks/support/crawl_support"
 
 module CrawlSupport
   ROOT = File.expand_path("../../..", __dir__)
@@ -13,7 +13,7 @@ module CrawlSupport
   module_function
 
   # Preserve the CLI crawler's diagnostic policy without duplicating socket
-  # handling used by live gates. A failed diagnostic must never mask the probe.
+  # handling used by live checks. A failed diagnostic must never mask the probe.
   def crawler_port_open?(host, port, timeout: 0.4)
     port_open?(
       host, port, timeout:,

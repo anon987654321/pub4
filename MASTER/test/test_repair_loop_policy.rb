@@ -205,7 +205,7 @@ class TestRepairLoopPolicy < Minitest::Test
 
   # A confidence-gated skip was never actually attempted -- recording it as
   # :stuck (same as a genuine failed fix) would silently poison that rule's
-  # fix_quality every time the gate fires, deprioritizing it further with no
+  # fix_quality every time the check fires, deprioritizing it further with no
   # real defect behind it (the OpenCrabs feedback_policy.rs lesson).
   class RecordingLearnings
     attr_reader :calls

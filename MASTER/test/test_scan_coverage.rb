@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-# A gate whose scope is a path literal loses coverage without failing.
+# A check whose scope is a path literal loses coverage without failing.
 #
 # Fix::SelfCheck and rake constitution scanned File.join(root, "lib"). core/ sat
 # beside lib/ from 2026-07-20 to 2026-08-12, so the six files that judge every
 # effect were the only files in the tree exempt from the law they enforce — and
-# every gate stayed green throughout. The engines migration is the same defect:
+# every check stayed green throughout. The engines migration is the same defect:
 # four scanners stopped seeing 57 views and the falling lint baseline read as
 # improvement rather than blindness.
 #
@@ -30,7 +30,7 @@ class TestScanCoverage < Minitest::Test
                  "argument for exempting it:\n  #{findings.join("\n  ")}"
   end
 
-  # The manifest is only worth anything if the gates read it. If this fails,
+  # The manifest is only worth anything if the checks read it. If this fails,
   # scan_coverage.yml has become the inert config it exists to prevent.
   def test_the_runtime_reads_the_manifest_rather_than_a_path_literal
     $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
@@ -53,7 +53,7 @@ class TestScanCoverage < Minitest::Test
   def test_the_scan_actually_reaches_the_runtime
     assert_operator @report["covered"].values.sum, :>, 300,
                     "the scanned roots hold #{@report['covered'].values.sum} files — " \
-                    "coverage collapsed, which reads as a clean gate"
+                    "coverage collapsed, which reads as a clean check"
     assert_includes @report["covered"].keys, "lib"
   end
 
@@ -68,7 +68,7 @@ class TestScanCoverage < Minitest::Test
              "#{path} is outside every scanned root — the fold is exempt from its own law again"
     end
   end
-  # bin/ held gate, check, pub4 and master and appeared in neither list, and this
+  # bin/ held check, check, pub4 and master and appeared in neither list, and this
   # file could not report it: ruby_count globbed "**/*.rb", every executable there
   # is extensionless, so the count was zero, ruby_dir? said no, and the directory
   # never reached the comparison. A blind spot in the instrument reads exactly
@@ -92,7 +92,7 @@ class TestScanCoverage < Minitest::Test
 
       assert_includes Operator::ScanCoverage.ruby_dirs, child,
                       "#{child}/ holds Ruby but never enters ruby_dirs, so it can " \
-                      "be in neither list without this gate saying so"
+                      "be in neither list without this check saying so"
     end
   end
 

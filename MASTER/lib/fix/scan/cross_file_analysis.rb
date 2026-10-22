@@ -356,7 +356,7 @@ module Master
           nil
         end
 
-        # Warning, always, so a cross-file finding never blocks a write or a gate.
+        # Warning, always, so a cross-file finding never blocks a write or a check.
         # Each family counts literals, words or shapes across files, which is
         # advice about ownership rather than a verdict: reproduce a count with
         # CrossFileAnalysis.new(root:).call(paths) and read the findings before

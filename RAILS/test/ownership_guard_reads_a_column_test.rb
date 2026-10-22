@@ -34,7 +34,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
   # The risky side is the *record's* association — the object that came back
   # from a finder with nothing preloaded. `Current.user` is never risky: it is
   # already materialised by the time any guard runs, and `Current.user.id` is a
-  # column read on it. Matching it was this gate's own first bug, and it flagged
+  # column read on it. Matching it was this check's own first bug, and it flagged
   # the two fixes in this commit as violations.
   RECORD = /(?!Current\b)(?:@\w+|\b[a-z_]\w*)/
   ASSOCIATION_COMPARE = /
@@ -75,7 +75,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
 
     assert_empty stale,
                  "PRELOADED names files that no longer exist — an exemption whose subject is gone " \
-                 "is a hole in this gate that nobody can see"
+                 "is a hole in this check that nobody can see"
   end
 
   private
@@ -89,7 +89,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
   end
 
   # Inside a guard method only: an association read in an ordinary action is an
-  # N+1, not a broken authorization check, and this gate is about the latter.
+  # N+1, not a broken authorization check, and this check is about the latter.
   def association_compares_in(path)
     inside = false
     File.readlines(File.join(ROOT, path)).each_with_index.filter_map do |line, index|

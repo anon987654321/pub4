@@ -65,7 +65,7 @@ class PostModeration
   # Weighted signals rather than one rule, because no single deterministic test
   # separates all 57 spam posts from every real one.
   #
-  # Authorship gates the whole thing: every one of the 57 came from a
+  # Authorship checks the whole thing: every one of the 57 came from a
   # guest_*@guest.local account and every legitimate post from a named one. But
   # guests posting anonymously is a feature here, so being a guest is the
   # precondition, not the verdict.

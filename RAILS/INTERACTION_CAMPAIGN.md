@@ -67,7 +67,7 @@ ruby MASTER/tools/rails/premerge.rb --contracts
 ruby MASTER/tools/rails/premerge.rb --apps
 ruby MASTER/tools/rails/premerge.rb --pwa
 ruby MASTER/tools/rails/premerge.rb --coverage
-ruby MASTER/tools/rails/premerge.rb --gates
+ruby MASTER/tools/rails/premerge.rb --checks
 ```
 
 After the contract suite is green, execute the applicable Rails system/request tests with isolated databases, deterministic seed data and provider stubs. Use the existing MASTER browser and smoke runners for the face and transport. Persist a per-case runtime evidence record before changing any status. Run concurrency and load tests separately: 400 scenarios run sequentially are not a 400-user load test.

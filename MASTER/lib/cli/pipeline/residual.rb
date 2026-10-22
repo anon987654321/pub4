@@ -7,9 +7,9 @@ require "time"
 module Master
   module CLI
     class Pipeline
-      # What a /fix run left for the next one on the same target: how it ended, the gates still red,
-      # the files those gates named, and the command to run next. The next run reads it back, so its
-      # gate-first worklist starts where this one stopped instead of rediscovering it.
+      # What a /fix run left for the next one on the same target: how it ended, the checks still red,
+      # the files those checks named, and the command to run next. The next run reads it back, so its
+      # check-first worklist starts where this one stopped instead of rediscovering it.
       module Residual
         FILE = File.join(Master::ROOT, ".master", "fix_residual.json")
 
@@ -36,7 +36,7 @@ module Master
           {}
         end
 
-        # A hard gate left red is the blocker lane's work; otherwise a plain run continues.
+        # A hard check left red is the blocker lane's work; otherwise a plain run continues.
         def next_command(target, hard)
           tree = File.basename(target.to_s)
           Array(hard).any? ? "MASTER/bin/fix-here #{tree} --blockers" : "MASTER/bin/fix-here #{tree}"

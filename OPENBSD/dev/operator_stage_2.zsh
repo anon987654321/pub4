@@ -300,9 +300,9 @@ stage_2() {
   log INFO "MASTER: building face runtime + precompiling assets"
   RAILS_ENV=production bundle exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:precompile \
     || log WARN "MASTER assets:precompile failed"
-  ruby "${REPO_ROOT}/MASTER/gates/runner.rb" master_web_assets 2>/dev/null \
-    || ruby "$m3dir/../MASTER/gates/runner.rb" master_web_assets 2>/dev/null \
-    || log WARN "MASTER master_web_assets_gate skipped"
+  ruby "${REPO_ROOT}/MASTER/checks/runner.rb" master_web_assets 2>/dev/null \
+    || ruby "$m3dir/../MASTER/checks/runner.rb" master_web_assets 2>/dev/null \
+    || log WARN "MASTER master_web_assets_check skipped"
   typeset master_secret
   typeset -a _master_secret_lines
   _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")

@@ -7,7 +7,7 @@ require_relative "test_helper"
 require_relative "../lib/review/challenges"
 require_relative "../tools/llm_challenges"
 require_relative "../lib/core"
-require_relative "../gates/support/gate_result"
+require_relative "../checks/support/check_result"
 
 class ReviewChallengePackTest < Minitest::Test
   def test_every_challenge_has_an_executable_artifact
@@ -118,12 +118,12 @@ class WorldExternalContractTest < Minitest::Test
   end
 end
 
-class GateOutcomeContractTest < Minitest::Test
+class CheckOutcomeContractTest < Minitest::Test
   def setup
-    @klass = Deploy::GateResult
+    @klass = Deploy::CheckResult
   end
 
-  def test_clean_gate_is_passed
+  def test_clean_check_is_passed
     result = @klass.new.checked!
     assert_equal :passed, result.outcome
     assert_predicate result, :ok?
@@ -140,12 +140,12 @@ class GateOutcomeContractTest < Minitest::Test
     assert_includes result.nothing_measured_reason, "nothing listening"
   end
 
-  def test_gate_error_stays_distinct_from_a_failed_contract
-    result = @klass.from_error(RuntimeError.new("boom"), gate: "example")
+  def test_check_error_stays_distinct_from_a_failed_contract
+    result = @klass.from_error(RuntimeError.new("boom"), check: "example")
 
     assert_equal :errored, result.outcome
     assert result.errored?
-    assert_predicate result, :ok?, "errored is fail-open unless strict gate mode is enabled"
+    assert_predicate result, :ok?, "errored is fail-open unless strict check mode is enabled"
   end
 
   def test_strict_inconclusive_blocks
@@ -154,10 +154,10 @@ class GateOutcomeContractTest < Minitest::Test
 
     assert_equal :inconclusive, result.outcome
 
-    ENV["GATE_STRICT_INCONCLUSIVE"] = "1"
+    ENV["CHECK_STRICT_INCONCLUSIVE"] = "1"
     assert_equal :failed, result.outcome
   ensure
-    ENV.delete("GATE_STRICT_INCONCLUSIVE")
+    ENV.delete("CHECK_STRICT_INCONCLUSIVE")
   end
 end
 

@@ -61,7 +61,7 @@ cd "${PUB4}/RAILS/master"
 bundle config set --local path vendor/bundle
 bundle install
 RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
-bundle exec ruby "${PUB4}/MASTER/gates/runner.rb" master_web_assets
+bundle exec ruby "${PUB4}/MASTER/checks/runner.rb" master_web_assets
 admin_service restart master 2>/dev/null || admin_service start master
 admin_service check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
 

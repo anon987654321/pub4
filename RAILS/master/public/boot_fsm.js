@@ -1,4 +1,4 @@
-// MASTER boot finite-state machine: deterministic boot phases + readiness gates.
+// MASTER boot finite-state machine: deterministic boot phases + readiness checks.
 (() => {
   "use strict";
 
@@ -26,7 +26,7 @@
 
   let state = STATES.INIT;
   const history = [];
-  const gates = {
+  const checks = {
     faceReady: false,
     voiceReady: false,
     containerReady: false,
@@ -48,7 +48,7 @@
   function snapshot(detail = {}) {
     return {
       state,
-      gates: { faceReady: gates.faceReady, voiceReady: gates.voiceReady, containerReady: gates.containerReady },
+      checks: { faceReady: checks.faceReady, voiceReady: checks.voiceReady, containerReady: checks.containerReady },
       at: performance.now(),
       detail,
     };
@@ -60,9 +60,9 @@
   }
 
   function maybeReady(detail = {}) {
-    if (!gates.faceReady || !gates.voiceReady || !gates.containerReady) return false;
+    if (!checks.faceReady || !checks.voiceReady || !checks.containerReady) return false;
     if (state === STATES.READY || state === STATES.ERROR) return false;
-    return transition(STATES.READY, { ...detail, reason: "all_gates" });
+    return transition(STATES.READY, { ...detail, reason: "all_checks" });
   }
 
   function transition(next, detail = {}) {
@@ -83,17 +83,17 @@
     return true;
   }
 
-  function setGate(name, value, detail = {}) {
-    if (!(name in gates)) return false;
+  function setCheck(name, value, detail = {}) {
+    if (!(name in checks)) return false;
     const next = !!value;
-    if (gates[name] === next) {
-      if (next) maybeReady({ ...detail, gate: name });
+    if (checks[name] === next) {
+      if (next) maybeReady({ ...detail, check: name });
       return false;
     }
-    gates[name] = next;
-    log(`gate ${name}=${next}`, detail);
-    emit(state, { ...detail, gate: name, value: next });
-    if (next) maybeReady({ ...detail, gate: name });
+    checks[name] = next;
+    log(`check ${name}=${next}`, detail);
+    emit(state, { ...detail, check: name, value: next });
+    if (next) maybeReady({ ...detail, check: name });
     return true;
   }
 
@@ -107,21 +107,21 @@
     transition(STATES.RECOVERING, recovery);
     transition(STATES.ASSETS, recovery);
     transition(STATES.FACE, recovery);
-    if (gates.voiceReady) transition(STATES.VOICE, recovery);
+    if (checks.voiceReady) transition(STATES.VOICE, recovery);
   }
 
   function signal(kind, detail = {}) {
     switch (kind) {
       case "face_ready":
         recoverOnPaint(detail);
-        return setGate("faceReady", true, detail);
+        return setCheck("faceReady", true, detail);
       case "voice_ready":
-        return setGate("voiceReady", true, detail);
+        return setCheck("voiceReady", true, detail);
       case "container_ready":
-        return setGate("containerReady", true, detail);
+        return setCheck("containerReady", true, detail);
       case "container_warmup":
-        gates.containerReady = false;
-        emit(state, { ...detail, gate: "containerReady", value: false });
+        checks.containerReady = false;
+        emit(state, { ...detail, check: "containerReady", value: false });
         return true;
       case "renderer_failed":
         return transition(STATES.ERROR, { ...detail, reason: "renderer_failed" });
@@ -130,11 +130,11 @@
     }
   }
 
-  function resetGates(detail = {}) {
-    gates.faceReady = false;
-    gates.voiceReady = false;
-    gates.containerReady = false;
-    emit(state, { ...detail, reason: "gates_reset" });
+  function resetChecks(detail = {}) {
+    checks.faceReady = false;
+    checks.voiceReady = false;
+    checks.containerReady = false;
+    emit(state, { ...detail, reason: "checks_reset" });
   }
 
   window.addEventListener("master:face-ready", () => {
@@ -158,14 +158,14 @@
     TRANSITIONS,
     state: () => state,
     history: () => history.slice(),
-    gates: () => ({
-      faceReady: gates.faceReady,
-      voiceReady: gates.voiceReady,
-      containerReady: gates.containerReady,
+    checks: () => ({
+      faceReady: checks.faceReady,
+      voiceReady: checks.voiceReady,
+      containerReady: checks.containerReady,
     }),
     transition,
     signal,
-    resetGates,
+    resetChecks,
     canTransition: (next) => next === STATES.ERROR || (TRANSITIONS[state] || []).includes(next),
   });
 

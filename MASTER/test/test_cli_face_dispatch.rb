@@ -7,10 +7,10 @@ class TestCliFaceDispatch < Minitest::Test
     assert defined?(Master::Operator::Mode), "interactive fold routing needs Master::Operator::Mode"
   end
 
-  def test_fix_registry_loads_the_foreign_gate_chain_before_dispatch
+  def test_fix_registry_loads_the_foreign_check_chain_before_dispatch
     require_relative "../lib/cli/command_registry/review"
 
-    assert defined?(::Operator::GateChain), "fix registry must load top-level Operator::GateChain"
+    assert defined?(::Operator::CheckChain), "fix registry must load top-level Operator::CheckChain"
   end
 
   def test_face_pauses_the_repl_background_scanner

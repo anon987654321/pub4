@@ -47,7 +47,7 @@ pub4_ci_lock_path() {
 #
 # Note what this function does and does not do. It ENSURES the file — creates it
 # with the right owner and mode. It does not lock anything. vps_ci.sh calls it
-# and prints "sync + mutex + load gate"; the mutex in that sentence is the one
+# and prints "sync + mutex + load check"; the mutex in that sentence is the one
 # bin/ci takes through CiGuard, on this same path since 2026-08-14. Before that
 # CiGuard locked /var/tmp/pub4-ci.lock instead, so the file created here was
 # never locked by anyone and the file that was locked was the world-writable one

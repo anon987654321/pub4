@@ -9,7 +9,7 @@ require_relative "test_helper"
 # remove_immediate_dead_code takes code out, and a wrong deletion is invisible to
 # anyone who does not already know what stood there.
 #
-# The gate this replaces could never refuse anything. Its thresholds were keyed
+# The check this replaces could never refuse anything. Its thresholds were keyed
 # null_usage, abbreviation and nesting_depth, which name no rule in the catalogue
 # and no transform in the tree, so the lookup missed every time and the method
 # answered true for every rule on every run — under a backlog entry recording

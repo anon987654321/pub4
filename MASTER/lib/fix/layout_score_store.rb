@@ -9,7 +9,7 @@ module Master
   module Fix
     # History, baseline and verdict for LayoutScore. The baseline is the best
     # score a surface has held; a visual fix whose score falls more than the
-    # tolerance below it is a regression, the same contract as VisualQualityGates.
+    # tolerance below it is a regression, the same contract as VisualQualityChecks.
     # History is a trail under MASTER/.master/layout_score/ and never an input.
     module LayoutScoreStore
       KEEP = 50
@@ -56,7 +56,7 @@ module Master
         ["layout score #{base} -> #{now.score} (tolerance #{TOLERANCE})"]
       end
 
-      # Called once every gate has passed: the new render becomes history, and
+      # Called once every check has passed: the new render becomes history, and
       # the baseline only ever moves up.
       def settle(measured, root:)
         measured.each { |surface, payload| write(root, surface, measure(root, payload), advance: true) }

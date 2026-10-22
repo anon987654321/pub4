@@ -40,7 +40,7 @@ module Master
         def finding?(text) = match_any?(@data["finding_events"], text)
         def ignored?(text) = match_any?(@data["ignore_events"], text)
 
-        # The line with its dmesg unit ("scan0:", "gate1 at master0:") removed.
+        # The line with its dmesg unit ("scan0:", "check1 at master0:") removed.
         def gist_of(text)
           text.to_s.sub(UNIT_PREFIX, "").strip.sub(/[.:;,\s]+\z/, "")
         end

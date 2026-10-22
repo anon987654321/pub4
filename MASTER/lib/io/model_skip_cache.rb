@@ -6,7 +6,7 @@ module Master
   module Io
     # Skip models that recently failed auth/rate/quota so failover chains do not
     # hammer the same dead endpoint. A skip is per model and expires; a spent
-    # paid tier is QuotaGate (test/test_quota_gate.rb), and a free model's daily
+    # paid tier is QuotaCheck (test/test_quota_check.rb), and a free model's daily
     # count is ModelQuota.
     module ModelSkipCache
       SKIP_CATEGORIES = %i[

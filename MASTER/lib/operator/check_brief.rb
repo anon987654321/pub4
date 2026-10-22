@@ -36,7 +36,7 @@ module Operator
       "web ui static" => {
         category: "true_violation",
         debt_tag: nil,
-        suggested_action: "fix web UI static gate; see web/CLAUDE.md for face boot",
+        suggested_action: "fix web UI static check; see web/CLAUDE.md for face boot",
       },
       "test:web" => {
         category: "true_violation",
@@ -49,17 +49,17 @@ module Operator
         suggested_action: "fix integration web test (MASTER_WEB_LIVE=1)",
       },
       "bin/ci" => {
-        category: "operator_gate",
+        category: "operator_check",
         debt_tag: "operator-priority",
         suggested_action: "run bin/ci locally and fix first failure class",
       },
       "bin/probe all" => {
-        category: "operator_gate",
+        category: "operator_check",
         debt_tag: "operator-priority",
         suggested_action: "run bin/probe all and fix readiness matrix gap",
       },
       "audit" => {
-        category: "operator_gate",
+        category: "operator_check",
         debt_tag: "operator-priority",
         suggested_action: "resolve rake audit finding",
       },

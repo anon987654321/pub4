@@ -144,7 +144,7 @@ module Master
         end
 
         # Visual refinement may promote structural snapshots only after the
-        # rendered quality gate passes. Enlist those exact JSON baselines in the
+        # rendered quality check passes. Enlist those exact JSON baselines in the
         # current /fix transaction before writing, and refuse operator-owned
         # edits already dirty when this run started.
         def enlist_related_visual_baselines!(paths)
@@ -154,7 +154,7 @@ module Master
 
             relative_paths = Array(paths).map { |path| relative(path) }
             return Result.err("visual baseline path is outside the allowed snapshot directory", category: :policy) if relative_paths.any?(&:nil?) ||
-              relative_paths.any? { |path| !path.match?(%r{\AMASTER/gates/data/layout_snapshots/[A-Za-z0-9._-]+\.json\z}) }
+              relative_paths.any? { |path| !path.match?(%r{\AMASTER/checks/data/layout_snapshots/[A-Za-z0-9._-]+\.json\z}) }
             return Result.err("visual baseline is already dirty at run start", category: :policy) if (relative_paths & @baseline).any?
             current_changes = Array(@git.changed_paths)
             newly_dirty = (relative_paths - @related_owned_paths) & current_changes
@@ -179,7 +179,7 @@ module Master
         end
 
         # Refresh concurrency evidence only for the related baseline paths that
-        # the visual gate just wrote itself; do not bless concurrent app edits.
+        # the visual check just wrote itself; do not bless concurrent app edits.
         def observe_related_visual_baseline_writes!(paths)
           @commit_mutex.synchronize do
             return Result.err("visual baseline observation requires an active fix transaction", category: :policy) unless @transaction&.active?
@@ -485,7 +485,7 @@ def stage_commit_mode?
         end
 
         # The bus event for subscribers, and one dmesg line so the log says why a fix that passed
-        # every gate was still not committed.
+        # every check was still not committed.
         def refuse_commit(**payload)
           published = @bus&.publish("fix_loop:commit_blocked", **payload)
           detail = payload.except(:reason).map { |key, value| "#{key} #{Array(value).map { |item| item.to_s.delete_prefix("#{@root}/") }.join(",")[0, 120]}" }

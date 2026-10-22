@@ -5,33 +5,33 @@ master0: MASTER_MODEL forces claude-cli:claude-sonnet-5-5 on every lane
 tree0: 1936 files in 106 dirs, 0 proposal(s)
 trace0: execution_trace: clean, 1940 files, 12619020 bytes, 1705 ruby files
 look0: 1936 files, 0 finding(s)
-gate0: scope MASTER: capturing read-only pre-repair baseline
+check0: scope MASTER: capturing read-only pre-repair baseline
 baseline0: read-only pre-repair proof starting, trees=MASTER, stages=lexical, ratchets, sprawl; repair follows
-gate0 at master0: scan-only, writes nothing, 3 stages, MASTER
-foreign0 at gate0: 48 pre-existing change(s), left untouched
+check0 at master0: scan-only, writes nothing, 3 stages, MASTER
+foreign0 at check0: 48 pre-existing change(s), left untouched
 foreign0: MASTER/Gemfile.lock
 foreign0: MASTER/data/sprawl_census.yml
-foreign0: MASTER/gates/release.rb
-foreign0: MASTER/gates/support/cdp_session.rb
-foreign0: MASTER/gates/support/chrome_process.rb
-foreign0: MASTER/gates/support/crawl_support.rb
-foreign0: MASTER/gates/support/css_caps_tracking.rb
-foreign0: MASTER/gates/support/css_spacing_scans.rb
-foreign0: MASTER/gates/support/css_weight.rb
-foreign0: MASTER/gates/support/deploy_inventory.rb
-foreign0: MASTER/gates/support/design_metrics.rb
-foreign0: MASTER/gates/support/design_metrics/contrast.rb
-foreign0: MASTER/gates/support/design_metrics/contrast_checks.rb
-foreign0: MASTER/gates/support/design_quality.rb
-foreign0: MASTER/gates/support/dom_surface_schema.rb
-foreign0: MASTER/gates/support/engine_compare.rb
-foreign0: MASTER/gates/support/exemplar_structure.rb
-foreign0: MASTER/gates/support/fleet.rb
-foreign0: MASTER/gates/support/gate_autofix.rb
-foreign0: MASTER/gates/support/gate_calibration.rb
+foreign0: MASTER/checks/release.rb
+foreign0: MASTER/checks/support/cdp_session.rb
+foreign0: MASTER/checks/support/chrome_process.rb
+foreign0: MASTER/checks/support/crawl_support.rb
+foreign0: MASTER/checks/support/css_caps_tracking.rb
+foreign0: MASTER/checks/support/css_spacing_scans.rb
+foreign0: MASTER/checks/support/css_weight.rb
+foreign0: MASTER/checks/support/deploy_inventory.rb
+foreign0: MASTER/checks/support/design_metrics.rb
+foreign0: MASTER/checks/support/design_metrics/contrast.rb
+foreign0: MASTER/checks/support/design_metrics/contrast_checks.rb
+foreign0: MASTER/checks/support/design_quality.rb
+foreign0: MASTER/checks/support/dom_surface_schema.rb
+foreign0: MASTER/checks/support/engine_compare.rb
+foreign0: MASTER/checks/support/exemplar_structure.rb
+foreign0: MASTER/checks/support/fleet.rb
+foreign0: MASTER/checks/support/check_autofix.rb
+foreign0: MASTER/checks/support/check_calibration.rb
 foreign0: 28 more
-law0 at gate0: law/ and the scan registry over MASTER, measuring without writes
-gate: mode=scan-only tier=lexical trees=MASTER
+law0 at check0: law/ and the scan registry over MASTER, measuring without writes
+check: mode=scan-only tier=lexical trees=MASTER
 master> /fix --dry-run .
 master0: internal child, parent owns control plane
 fix0: mode=read-only target=MASTER boundary=no-write-or-publish
@@ -52,13 +52,13 @@ obs0: 75/1891 files, 678 violations in 52 files, 5s, eta 127s; top LONG_LINE 274
 law0: lexical scan pass=lexical law=ALL_CAPS_NO_TRACKING file=MASTER/data/recovery/legacy_manifest.yml checks=14395 active=1 laws=48/150, check elapsed 0s, last update 0s ago, stage elapsed 1m11s
 obs0: 172/1891 files, 1319 violations in 136 files, 10s, eta 103s; top LONG_LINE 689, CONFIG_HIERARCHY 132, VERTICAL_BREATH 130, TYPOGRAPHIC_GRID 101, CONFIGURATION_SHAPE 81, TRAILING_COMMENT 29
 obs0: 190/1891 files, 1335 violations in 152 files, 11s, eta 100s; top LONG_LINE 689, CONFIG_HIERARCHY 132, VERTICAL_BREATH 130, TYPOGRAPHIC_GRID 101, CONFIGURATION_SHAPE 97, TRAILING_COMMENT 29
-law0: lexical scan pass=lexical law=rubocop file=MASTER/gates/face_capture_probe.rb checks=31838 active=1 laws=125/134, check elapsed 0s, last update 0s ago, stage elapsed 1m16s
+law0: lexical scan pass=lexical law=rubocop file=MASTER/checks/face_capture_probe.rb checks=31838 active=1 laws=125/134, check elapsed 0s, last update 0s ago, stage elapsed 1m16s
 obs0: 214/1891 files, 2064 violations in 176 files, 16s, eta 122s; top LONG_LINE 768, RUBOCOP 235, VERTICAL_BREATH 191, CONFIG_HIERARCHY 164, REEK 131, TYPOGRAPHIC_GRID 102
-law0: lexical scan pass=lexical law=PLEDGE_STAGED file=MASTER/gates/lib/research/design_metrics.rb checks=37322 active=3 laws=106/134, check elapsed 0s, last update 0s ago, stage elapsed 1m21s
+law0: lexical scan pass=lexical law=PLEDGE_STAGED file=MASTER/checks/lib/research/design_metrics.rb checks=37322 active=3 laws=106/134, check elapsed 0s, last update 0s ago, stage elapsed 1m21s
 obs0: 263/1891 files, 2958 violations in 225 files, 21s, eta 129s; top LONG_LINE 882, RUBOCOP 561, VERTICAL_BREATH 298, REEK 263, CONFIG_HIERARCHY 164, TYPOGRAPHIC_GRID 102
-law0: lexical scan pass=lexical law=PWA_MANIFEST_HINT file=MASTER/gates/support/design_metrics/type_checks.rb checks=46126 active=2 laws=88/134, check elapsed 0s, last update 0s ago, stage elapsed 1m26s
+law0: lexical scan pass=lexical law=PWA_MANIFEST_HINT file=MASTER/checks/support/design_metrics/type_checks.rb checks=46126 active=2 laws=88/134, check elapsed 0s, last update 0s ago, stage elapsed 1m26s
 obs0: 297/1891 files, 3426 violations in 259 files, 26s, eta 141s; top LONG_LINE 906, RUBOCOP 688, VERTICAL_BREATH 389, REEK 361, CONFIG_HIERARCHY 164, SMALL_FUNCTIONS 103
-law0: lexical scan pass=lexical law=reek file=MASTER/gates/support/focus_order_probe.rb checks=50048 active=1 laws=126/134, check elapsed 1s, last update 1s ago, stage elapsed 1m31s
+law0: lexical scan pass=lexical law=reek file=MASTER/checks/support/focus_order_probe.rb checks=50048 active=1 laws=126/134, check elapsed 1s, last update 1s ago, stage elapsed 1m31s
 obs0: 339/1891 files, 4183 violations in 301 files, 32s, eta 144s; top LONG_LINE 971, RUBOCOP 932, VERTICAL_BREATH 654, REEK 404, CONFIG_HIERARCHY 164, SMALL_FUNCTIONS 115
 law0: lexical scan pass=lexical law=NO_JS_ERB file=MASTER/lib/ai/operator_contract.rb checks=59459 active=2 laws=40/134, check elapsed 0s, last update 0s ago, stage elapsed 1m36s
 law0: lexical scan pass=laws.yml/violation law=WHY_NOT_WHAT file=MASTER/lib/ai/operator_contract.rb checks=63784 active=3 laws=40/40, check elapsed 0s, last update 0s ago, stage elapsed 1m41s
@@ -85,7 +85,7 @@ law0: lexical scan pass=lexical law=reek file=MASTER/lib/fix/scan/cross_file_ana
 obs0: 616/1891 files, 11116 violations in 568 files, 83s, eta 172s; top RUBOCOP 2994, VERTICAL_BREATH 2014, REEK 1785, LONG_LINE 1636, SMALL_FUNCTIONS 295, FEW_ARGUMENTS 267
 law0: lexical scan pass=lexical law=reek file=MASTER/lib/fix/tree.rb checks=117482 active=3 laws=126/134, check elapsed 0s, last update 0s ago, stage elapsed 2m32s
 obs0: 646/1891 files, 11551 violations in 592 files, 89s, eta 172s; top RUBOCOP 3110, VERTICAL_BREATH 2086, REEK 1879, LONG_LINE 1688, SMALL_FUNCTIONS 300, FEW_ARGUMENTS 276
-law0: lexical scan pass=lexical law=rubocop file=MASTER/lib/fix/visual_quality_gates.rb checks=119382 active=3 laws=125/134, check elapsed 0s, last update 0s ago, stage elapsed 2m37s
+law0: lexical scan pass=lexical law=rubocop file=MASTER/lib/fix/visual_quality_checks.rb checks=119382 active=3 laws=125/134, check elapsed 0s, last update 0s ago, stage elapsed 2m37s
 obs0: 658/1891 files, 11815 violations in 604 files, 94s, eta 177s; top RUBOCOP 3183, VERTICAL_BREATH 2113, REEK 1932, LONG_LINE 1727, SMALL_FUNCTIONS 306, FEW_ARGUMENTS 285
 law0: lexical scan pass=lexical law=rubocop file=MASTER/lib/ground/assistant_tasks.rb checks=122233 active=1 laws=125/134, check elapsed 1s, last update 1s ago, stage elapsed 2m42s
 obs0: 683/1891 files, 12260 violations in 626 files, 99s, eta 176s; top RUBOCOP 3324, VERTICAL_BREATH 2197, REEK 1994, LONG_LINE 1807, SMALL_FUNCTIONS 320, FEW_ARGUMENTS 297
@@ -185,12 +185,12 @@ obs0: 367.1s
 fix0 at review0: preview path=master
 law0: semantic assessment inconclusive; details recorded for MASTER/.reek.yml
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/README.md checks=351713 active=0 laws=3/3, no active law check, last update 1s ago, stage elapsed 7m14s
-law0: lexical scan pass=semantic law=semantic file=MASTER/gates/data/layout_snapshots/brgen-maps-mobile.json checks=358323 active=1 laws=1/3, check elapsed 0s, last update 0s ago, stage elapsed 7m19s
-law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/gates/lib/production.rb checks=363609 active=0 laws=3/3, no active law check, last update 1s ago, stage elapsed 7m24s
-law0: lexical scanner idle; last pass=structural law=NUMBERED_NAME file=MASTER/gates/lib/source/css_brace_balance.rb checks=366846 active=0 laws=16/16, no active law check, last update 0s ago, stage elapsed 7m29s
-law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/gates/support/cdp_session.rb checks=370764 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 7m34s
-law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/gates/support/geometry_autofix.rb checks=373869 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 7m39s
-law0: lexical scan pass=lexical law=PLEDGE_STAGED file=MASTER/gates/support/token_reads.rb checks=377788 active=1 laws=49/76, check elapsed 0s, last update 0s ago, stage elapsed 7m44s
+law0: lexical scan pass=semantic law=semantic file=MASTER/checks/data/layout_snapshots/brgen-maps-mobile.json checks=358323 active=1 laws=1/3, check elapsed 0s, last update 0s ago, stage elapsed 7m19s
+law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/checks/lib/production.rb checks=363609 active=0 laws=3/3, no active law check, last update 1s ago, stage elapsed 7m24s
+law0: lexical scanner idle; last pass=structural law=NUMBERED_NAME file=MASTER/checks/lib/source/css_brace_balance.rb checks=366846 active=0 laws=16/16, no active law check, last update 0s ago, stage elapsed 7m29s
+law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/checks/support/cdp_session.rb checks=370764 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 7m34s
+law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/checks/support/geometry_autofix.rb checks=373869 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 7m39s
+law0: lexical scan pass=lexical law=PLEDGE_STAGED file=MASTER/checks/support/token_reads.rb checks=377788 active=1 laws=49/76, check elapsed 0s, last update 0s ago, stage elapsed 7m44s
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/lib/ai/orientation.rb checks=381501 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 7m49s
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/lib/cli/command_registry/host.rb checks=384604 active=0 laws=3/3, no active law check, last update 1s ago, stage elapsed 7m54s
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/lib/cli/face/head.rb checks=387380 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 7m59s
@@ -255,7 +255,7 @@ law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/tes
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/test/test_law_registry_audit.rb checks=521751 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 12m59s
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/test/test_llm_dispatcher.rb checks=523323 active=0 laws=3/3, no active law check, last update 2s ago, stage elapsed 13m04s
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/test/test_master_loop.rb checks=524761 active=0 laws=3/3, no active law check, last update 1s ago, stage elapsed 13m09s
-law0: lexical scan pass=lexical law=NO_DEBUG file=MASTER/test/test_ops_gate_contract.rb checks=529341 active=1 laws=1/76, check elapsed 0s, last update 0s ago, stage elapsed 13m14s
+law0: lexical scan pass=lexical law=NO_DEBUG file=MASTER/test/test_ops_check_contract.rb checks=529341 active=1 laws=1/76, check elapsed 0s, last update 0s ago, stage elapsed 13m14s
 law0: lexical scanner idle; last pass=semantic law=comment_drift file=MASTER/test/test_reliability_second_tranche.rb checks=536104 active=0 laws=3/3, no active law check, last update 0s ago, stage elapsed 13m19s
 law0: lexical scan pass=laws.yml/violation law=NO_TRANSPORT_WRAPPER_IN_SOURCE file=MASTER/test/test_restructure.rb checks=538145 active=1 laws=4/36, check elapsed 0s, last update 0s ago, stage elapsed 13m24s
 law0: lexical scan pass=lexical law=COMMENTS_AS_DEODORANT file=MASTER/test/test_runtime_jit.rb checks=539931 active=1 laws=31/76, check elapsed 0s, last update 0s ago, stage elapsed 13m29s

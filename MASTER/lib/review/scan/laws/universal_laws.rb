@@ -180,7 +180,7 @@ module Master
         # error, and the catalogue outranks the implementation (CLAUDE.md's
         # authority order). Measured before the change: this rule finds nothing
         # in any of the four trees today, so the severity is a promise about the
-        # next collision rather than a new gate failure.
+        # next collision rather than a new check failure.
         LawDSL.law :ONE_SOURCE,
           severity: :error, tags: %i[COUPLING],
           fires: %(COUNCIL_PATH = "data/council.yml"\n),

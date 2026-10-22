@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Match Brgen's account-verification boundary. Existing accounts are grandfathered
-# verified so deploying the gate never locks out people who already use Amber.
+# verified so deploying the check never locks out people who already use Amber.
 class AddEmailVerificationToAmberUsers < ActiveRecord::Migration[8.1]
   def up
     add_column :users, :email_verified_at, :datetime unless column_exists?(:users, :email_verified_at)

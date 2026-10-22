@@ -37,7 +37,7 @@ if bullet_loaded
   Bullet.bullet_logger = true
   Bullet.rails_logger = true
   Bullet.add_footer = false
-  # Raising in test is what makes this a gate rather than a log nobody reads.
+  # Raising in test is what makes this a check rather than a log nobody reads.
   # strict_loading_by_default is development-only and set to :log, so before
   # this line neither N+1 guard could fail anything in any environment.
   Bullet.raise = true if Rails.env.test?

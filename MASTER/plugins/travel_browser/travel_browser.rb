@@ -54,7 +54,7 @@ module Master
           runtime:,
           browser: ferrum_available? ? "ferrum" : "unavailable",
           sessions: Dir.glob(File.join(session_root, "*")).select { |p| File.directory?(p) }.map { |p| File.basename(p) }.sort,
-          final_purchase_gate: true,
+          final_purchase_check: true,
           sensitive_fields_manual: true,
         }
       end

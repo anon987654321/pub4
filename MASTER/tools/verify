@@ -7,8 +7,8 @@ root = File.expand_path("../..", __dir__)
 ruby = ENV.fetch("RUBY", "ruby")
 
 commands = [
-  [ruby, File.join(root, "OPENBSD", "gates", "verify_deploy_identity.rb")],
-  [ruby, File.join(root, "MASTER", "gates", "runner.rb"), "domain_alignment"],
+  [ruby, File.join(root, "OPENBSD", "checks", "verify_deploy_identity.rb")],
+  [ruby, File.join(root, "MASTER", "checks", "runner.rb"), "domain_alignment"],
 ]
 
 commands.each do |cmd|

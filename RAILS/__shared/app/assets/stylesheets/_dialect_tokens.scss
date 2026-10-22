@@ -49,7 +49,7 @@ $vertical-accent-ink: #110f19;
   $danger: #e46151,
   // The --c-* channel is the MASTER face's, not the apps'. It keeps its chroma
   // and stays pinned to MASTER/data/tokens.yml#tokens.face_root.anchors, which the production
-  // gate asserts — zeroing it here to match the greyscale broke that link and
+  // check asserts — zeroing it here to match the greyscale broke that link and
   // would have recoloured the face, a surface this scheme does not cover.
   $c-text: oklch(86% 0.02 300),
   $c-accent: oklch(78% 0.10 300),

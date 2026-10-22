@@ -40,7 +40,7 @@ class TestSandboxPolicy < Minitest::Test
     assert_equal "unknown command risk", decision.reason
   end
 
-  # The shapes this gate must flag: on OpenBSD the escalation is doas, and dev's
+  # The shapes this check must flag: on OpenBSD the escalation is doas, and dev's
   # rule is nopass. The shapes it must not: a word that merely starts with those
   # letters, and dilla's su_tunnel, which the engine names on every render.
   def test_privilege_escalation_is_denied_in_every_spelling

@@ -5,13 +5,13 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
-require_relative "../../MASTER/gates/lib/source/stimulus_components"
+require_relative "../../MASTER/checks/lib/source/stimulus_components"
 
-# The gate suggests an upstream Stimulus Component only where a custom
-# controller duplicates one and a view actually mounts it. These run the gate
+# The check suggests an upstream Stimulus Component only where a custom
+# controller duplicates one and a view actually mounts it. These run the check
 # over a fixture tree, so the suggestion is measured rather than its wording.
 class TestStimulusComponentsPreference < Minitest::Test
-  Gate = Deploy::StimulusComponentsGate
+  Check = Deploy::StimulusComponentsCheck
   REPO = File.expand_path("../..", __dir__)
   CLIPBOARD_JS = "export default class { copy() { navigator.clipboard.writeText(this.text) } }\n"
 
@@ -30,9 +30,9 @@ class TestStimulusComponentsPreference < Minitest::Test
     %w[animated-number carousel chartjs color-picker confirmation dialog dropdown
        glow hotkey lightbox places-autocomplete prefetch remote-rails reveal-controller
        scroll-progress scroll-to sortable sound speech-recognition timeago].each do |name|
-      assert_includes Gate::UPSTREAM_COMPONENTS, name
+      assert_includes Check::UPSTREAM_COMPONENTS, name
     end
-    assert_empty Gate::COMPONENT_OPPORTUNITIES.keys - Gate::UPSTREAM_COMPONENTS,
+    assert_empty Check::COMPONENT_OPPORTUNITIES.keys - Check::UPSTREAM_COMPONENTS,
                  "an opportunity names a component the inventory does not have"
   end
 
@@ -71,7 +71,7 @@ class TestStimulusComponentsPreference < Minitest::Test
     with_tree(
       "RAILS/app1/app/views/a.html.erb" => %(<p>\n<div data-controller = "copy toast"></div>\n),
     ) do
-      usages = Gate.view_controller_usages
+      usages = Check.view_controller_usages
       assert_equal ["RAILS/app1/app/views/a.html.erb:2"], usages["copy"]
       assert_equal ["RAILS/app1/app/views/a.html.erb:2"], usages["toast"]
     end
@@ -91,10 +91,10 @@ class TestStimulusComponentsPreference < Minitest::Test
   private
 
   def soft_failures_for(files)
-    with_tree(files) { Gate.run.soft_failures.map { |failure| failure.is_a?(Hash) ? failure[:message].to_s : failure.to_s } }
+    with_tree(files) { Check.run.soft_failures.map { |failure| failure.is_a?(Hash) ? failure[:message].to_s : failure.to_s } }
   end
 
-  # Points the gate's roots at a throwaway tree for the length of the block.
+  # Points the check's roots at a throwaway tree for the length of the block.
   def with_tree(files)
     Dir.mktmpdir do |root|
       files.each do |rel, body|
@@ -109,7 +109,7 @@ class TestStimulusComponentsPreference < Minitest::Test
         BASELINE: File.join(rails, "shared/config/importmap_baseline.rb"),
         VENDOR: File.join(rails, "shared/vendor/javascript")
       }
-      saved = overrides.keys.to_h { |name| [name, Gate.const_get(name)] }
+      saved = overrides.keys.to_h { |name| [name, Check.const_get(name)] }
       begin
         overrides.each { |name, value| replace_const(name, value) }
         yield
@@ -120,8 +120,8 @@ class TestStimulusComponentsPreference < Minitest::Test
   end
 
   def replace_const(name, value)
-    Gate.send(:remove_const, name)
-    Gate.const_set(name, value)
+    Check.send(:remove_const, name)
+    Check.const_set(name, value)
   end
 
   # Bare specifiers resolve to one stub module, so the boot file runs under

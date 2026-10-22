@@ -41,7 +41,7 @@ entries:
   body: |-
     MASTER is the constitutional AI runtime in pure Ruby. The repository is governed as four top-level trees: MASTER, RAILS, OPENBSD and STUDIO; STUDIO owns media implementations and `MASTER/tools/` exposes compatibility symlinks.
 
-    The public runtime surfaces are `MASTER/bin/master` for the agent session and `MASTER/bin/operator` for repository-wide operations. `/review` is read-only; `/critique` invokes council; `/fix` is the write/convergence operation. `MASTER/bin/operator gate` runs the repository ladder with autofix enabled, while `--scan-only` is the measurement-only variant.
+    The public runtime surfaces are `MASTER/bin/master` for the agent session and `MASTER/bin/operator` for repository-wide operations. `/review` is read-only; `/critique` invokes council; `/fix` is the write/convergence operation. `MASTER/bin/operator check` runs the repository ladder with autofix enabled, while `--scan-only` is the measurement-only variant.
 
     Production is vm23. OpenBSD deploy behavior belongs under `OPENBSD/`; Rails product truth belongs under `RAILS/apps.yml`. `MASTER/data/soul.yml` and `MASTER/data/laws.yml` are the law. Current runtime structure is the code under `MASTER/lib/`, the media implementations under `STUDIO/`, and the MASTER-owned utilities under `MASTER/tools/`; do not substitute an abandoned module target or a historical shell workflow for the present tree.
 - key: project_master_dual_gemfile
@@ -129,7 +129,7 @@ entries:
 
     (a) A NEW AGE IN COMPUTING — the first pure-Ruby AI. No Python in the spine; Ruby all the way down. Influences the operator cites (to be credited in a forthcoming book): Jeremy Evans (author of Roda + Sequel, and maintainer of the OpenBSD Ruby port — the exact Ruby<->OpenBSD nexus MASTER sits on); adam12 / Adam Daniels (Roda/Sequel/Rack/Hanami minimalist-Ruby school, Gemdocs.org — the operator designed the new Gemdocs logo); DHH (Rails); J Dilla's mastering engineer Dave Cooley (craft and feel); the architecture firm Snohetta; and the wider OpenBSD / Ruby / Rails communities.
 
-    (b) OPENBSD DESIGN, MIRRORED AS CLOSELY AS POSSIBLE. Correctness and simplicity above all; secure-by-default; ruthless removal of unused code; a small closed surface; sane defaults; docs as first-class. Respect to Theo de Raadt. A future OpenBSD Rust port is planned, likely with a higher-level Ruby overlay. Concretely in MASTER: the core/ fold is an OpenBSD-style minimal kernel — a fixed 7-verb World surface (the syscall table), the immutability rule as pledge(2) (the agent cannot rewrite its own constitution or spine), the Constitution as a security gate before every effect, atomic writes.
+    (b) OPENBSD DESIGN, MIRRORED AS CLOSELY AS POSSIBLE. Correctness and simplicity above all; secure-by-default; ruthless removal of unused code; a small closed surface; sane defaults; docs as first-class. Respect to Theo de Raadt. A future OpenBSD Rust port is planned, likely with a higher-level Ruby overlay. Concretely in MASTER: the core/ fold is an OpenBSD-style minimal kernel — a fixed 7-verb World surface (the syscall table), the immutability rule as pledge(2) (the agent cannot rewrite its own constitution or spine), the Constitution as a security check before every effect, atomic writes.
 
     (c) SNOHETTA-STYLE NORWEGIAN PARAMETRIC ARCHITECTURE. The operator studied architecture (in Malaysia, their father is from there) and favours timeless, well-thought-out design: one clear organizing idea, nothing decorative, form follows the idea.
 
@@ -187,10 +187,10 @@ entries:
   type: reference
   body: 'Ideas, never frameworks (all Python). (1) SWE-Milestone: instruments must
     measure LONGITUDINAL decay — isolated task rate can hold while sustained behavior
-    collapses (80%→38%); run past gates across evolution cycles and record the curve.
+    collapses (80%→38%); run past checks across evolution cycles and record the curve.
     (2) Agent0: derive curriculum from the failure ledger — unresolved scan debts/flaky
-    gates become synthesized gate cases, difficulty escalating. (3) Competition: candidate
-    diffs in parallel worktrees, gate ladder scores them, verifier merges only the
+    checks become synthesized check cases, difficulty escalating. (3) Competition: candidate
+    diffs in parallel worktrees, check ladder scores them, verifier merges only the
     survivor. (4) Agent Workflow Memory: distill successful repair sequences keyed
     by failure class; consult before improvising. (5) A-MEM: memory notes auto-linked;
     a new note may rewrite an older one it contradicts. (6) MemoryBank: forgetting
@@ -202,7 +202,7 @@ entries:
     stays possible. (10) TMLR survey taxonomy: triggers declare their target (prompt/memory/rule)
     and timing (intra/between session) as YAML. (11) Latitude: cluster past failures
     by rule id, auto-generate regression cases per cluster. (12) ReflAct: state the
-    intended terminal gate-ladder state BEFORE a repair pass, diff actual against
+    intended terminal check-ladder state BEFORE a repair pass, diff actual against
     it. Already stronger than the lists: adversarial critique council, governance
     corpus, worktree isolation, self-consistency. Known gap: no runtime benchmark
     loop like SWE-bench.'
@@ -319,7 +319,7 @@ entries:
 
     Existing pub4 mechanisms already embody much of this: soul.yml sets PRESERVE_THEN_IMPROVE_NEVER_BREAK and truthful-evidence constraints; laws.yml defines ROBUSTNESS, SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION and DENSITY, plus evidence-ranked transformation policy preserving semantics, public contracts, references, and side-effect order. The four-tree ownership and dependency contract lives in MASTER/data/laws.yml#architecture; the live Core::Fold, Constitution, World, Memory and Proof implementations plus their tests enforce the runtime sequence and separate observation/planning/verification from mutation. Core::World has atomic writes, symlink-aware workspace containment, secret-path refusal, and path-scoped rollback for a failed write. Core::Proof checks real command producers and distinct evidence kinds. Reinforce these; do not add duplicate registries or grow the kernel spine merely to resemble another project.
 
-    Rubik (MIT, https://github.com/ozgurulukir/rubik): source docs describe fail-closed command/path/synthesis gates, atomic writes, audit records, a reviewable file buffer, and an LIFO inverse runtime. SECURITY.md explicitly says the optional OS sandbox is disabled by default; policy gating and OS isolation must be treated as separate controls. Study only bounded inverse/compensation semantics if a demonstrated gap justifies them; do not import Rubik's full agent/runtime architecture.
+    Rubik (MIT, https://github.com/ozgurulukir/rubik): source docs describe fail-closed command/path/synthesis checks, atomic writes, audit records, a reviewable file buffer, and an LIFO inverse runtime. SECURITY.md explicitly says the optional OS sandbox is disabled by default; policy gating and OS isolation must be treated as separate controls. Study only bounded inverse/compensation semantics if a demonstrated gap justifies them; do not import Rubik's full agent/runtime architecture.
 
     Ruby Agent (https://github.com/stiller/ruby-agent): approved patch flow, Git checkpoint, rollback and transcript. Those primitives overlap MASTER's effect admission, scoped checkpoints and observations; no dependency is justified.
 
@@ -360,7 +360,7 @@ entries:
     branch stays allowed. Supersedes the older worktree-by-default memories and CLAUDE.md trap 1.
 - key: feedback_stream_long_runs_live_2026_10_22
   name: stream long runs live
-  description: 2026-10-22 directive, Johann - a suite, gate or /fix run reports as it goes, never only at its end
+  description: 2026-10-22 directive, Johann - a suite, check or /fix run reports as it goes, never only at its end
   type: feedback
   body: >-
     Johann, 2026-10-22: "why do i have to wait 20 minutes? why cant you read the result in real time?
@@ -382,4 +382,4 @@ entries:
     record naming steps not tests, a test that exits ending the suite). Why - a trial costs over thirty
     minutes, writes autofix edits into the shared checkout and finds defects the suites and code
     should have shown. How to apply - find and fix /fix defects through test_fix_*, test_proof_*,
-    test_gate_chain and the full suite; run /fix only when Johann says so after hearing what is fixed.
+    test_check_chain and the full suite; run /fix only when Johann says so after hearing what is fixed.

@@ -89,7 +89,7 @@ cognitive_spine:
   - orchestration_refinement
   rollout_order:
   - Land runtime primitives and policy files
-  - Make smoke and stale-namespace audit hard refactor gates
+  - Make smoke and stale-namespace audit hard refactor checks
   - Route all model calls through provider policy
   - Wrap tool execution with contracts and event logging
   - Add failure digest and provider health jobs to heartbeat
@@ -2469,10 +2469,10 @@ routing_architecture:
     entry: budget governor reports zero spendable balance
   - tier: C
     name: headless web-chat
-    gate: MASTER_WEB_CHAT env flag — opt-in only, ToS-sensitive
+    check: MASTER_WEB_CHAT env flag — opt-in only, ToS-sensitive
   - tier: D
     name: local Ollama
-    gate: env-gated offline fallback
+    check: env-gated offline fallback
   governor_rules:
   - pick entry tier once at turn start
   - escalate upward only on low confidence for critical operations
@@ -2710,8 +2710,8 @@ style_guides:
     css: bare_tag_first_rem_units
     a11y: wcag_2_2_aaa_target
     seo: shared/seo_kit_json_ld_canonical
-  gates:
-  - bin/style_gate
+  checks:
+  - bin/style_check
   - bundle exec rubocop
   - RAILS/__shared/bin/rubocop
 tts_phrases:
@@ -2905,7 +2905,7 @@ ui_philosophy:
       action: canonical render — 2D phosphor pixels on invisible 3D topology; WebGL face retired
     - item: tts_true_streaming
       action: partial bytes shipped; full MSE playback deferred
-    - item: release_gate_local_ruby
+    - item: release_check_local_ruby
       action: run via bundle exec ruby34 on VPS; Mac system Ruby 2.6 is not authoritative
     brutalist_opportunities:
       cli:

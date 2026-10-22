@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  # Immutable claim/evidence envelope shared by scan, review and gate adapters.
+  # Immutable claim/evidence envelope shared by scan, review and check adapters.
   # This is intentionally not Master::Core::Proof: that object owns Fold evidence
   # scoring, generations, writes and council state. Stage 1 only gives consumers
   # one stable shape without changing those semantics.

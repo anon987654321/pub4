@@ -40,7 +40,7 @@ class TestReachabilityScope < Minitest::Test
     assert_equal [:fleet], sweeps
   end
 
-  # --blockers narrows the corpus to the files a red gate named: fewer than the collector's, never more.
+  # --blockers narrows the corpus to the files a red check named: fewer than the collector's, never more.
   def test_a_declared_subset_is_reached_and_a_file_outside_it_is_not
     dir = File.join(Master::ROOT, "lib", "cli", "pipeline")
     reach = reachability([])

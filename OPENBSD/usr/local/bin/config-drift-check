@@ -24,7 +24,7 @@ failures = []
 # all — it had been failing at exec for months on cron's PATH — and the trigger
 # was an em dash in a relayd.conf comment written the same afternoon. Same fault
 # as OPENBSD/bin/render_dns.rb, and RAILS/test/integrity_locale_test.rb pins the
-# shape of it for the integrity gate.
+# shape of it for the integrity check.
 def read(path)
   File.read(path, encoding: "UTF-8")
 rescue Errno::ENOENT

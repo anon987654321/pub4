@@ -79,7 +79,7 @@ class AssetUrlLintTest < Minitest::Test
            "a CDN fallback and a data: URI are not files this tree owns"
   end
 
-  # An empty scan reads as a clean tree, which is the failure mode every gate here
+  # An empty scan reads as a clean tree, which is the failure mode every check here
   # exists to catch.
   def test_it_reads_something
     assert_operator L.sheets.size, :>, 100, "the stylesheet glob stopped matching"

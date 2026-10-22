@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Run one Rails app CI on vm23 with mutex + load gate (serial operator entrypoint).
+# Run one Rails app CI on vm23 with mutex + load check (serial operator entrypoint).
 # Usage: zsh OPENBSD/bin/vps_ci.sh brgen
 set -euo pipefail
 
@@ -27,7 +27,7 @@ app_dir=/home/${app}/app
 [[ -x /usr/local/sbin/pub4-admin ]] || { print -u2 "vps_ci: pub4-admin missing; run reviewed OPENBSD/OPERATOR.sh first"; exit 1 }
 
 # deploy_status (from RAILS/_core.sh) -- same in-progress status file the
-# SKIP_CI=1 path (_deploy.sh/_runtime_gate.sh) writes, so `bin/vps-state`
+# SKIP_CI=1 path (_deploy.sh/_runtime_check.sh) writes, so `bin/vps-state`
 # is one place to check regardless of which deploy path is running.
 [[ -f ${repo}/RAILS/_core.sh ]] && . "${repo}/RAILS/_core.sh"
 command -v deploy_status >/dev/null 2>&1 || deploy_status() { :; }
@@ -91,7 +91,7 @@ sync_from_repo() {
   doas /usr/local/sbin/pub4-admin ci-sync "$app"
 }
 
-print "vps_ci: $app (sync + mutex + load gate)"
+print "vps_ci: $app (sync + mutex + load check)"
 # Establish group access and the private-storage mode before the app-owned
 # synchronizer reads the checkout and updates the CI copy-tree.
 pub4_ensure_ci_lock >/dev/null

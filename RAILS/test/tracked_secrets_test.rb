@@ -63,7 +63,7 @@ class TrackedSecretsTest < Minitest::Test
                  "from /etc/<app>.env — so the fix is deletion, not a re-key."
   end
 
-  # The gate above only sees what is tracked now. This one keeps `git add` from
+  # The check above only sees what is tracked now. This one keeps `git add` from
   # making it tracked in the first place, which is the layer that was missing when
   # RAILS/master/config/master.key was committed.
   def test_gitignore_still_covers_master_key

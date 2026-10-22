@@ -75,7 +75,7 @@ module Master
       # in any flag order, fork bombs, curl and wget piped to a shell, truncating
       # a raw device by redirection — and nothing but its own tests reached it.
       # This class carried a separate BLOCKLIST and consulted no one, so
-      # the tree had two shell gates and the hardened one was not the live one.
+      # the tree had two shell checks and the hardened one was not the live one.
       #
       # Only :deny. :ask is what decide() returns for anything it does not
       # recognise, and @governor already owns approval — mapping :ask to a hard

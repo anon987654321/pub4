@@ -8,7 +8,7 @@ const LEGACY_DISMISSED_KEY = "install-prompt-dismissed"
 const ENGAGEMENT = [ "scroll", "pointerdown", "keydown" ]
 
 // A phone that is not already installed gets asked on the first visit.
-// beforeinstallprompt is Chrome's native dialog, not a gate: it often never
+// beforeinstallprompt is Chrome's native dialog, not a check: it often never
 // fires on a first sitting, and it never fires on iOS. Waiting for it was
 // why opening brgen.no in Chrome on a phone showed nothing.
 export default class extends Controller {

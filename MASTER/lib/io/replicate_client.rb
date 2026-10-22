@@ -4,7 +4,7 @@ require "json"
 require "net/http"
 require "uri"
 require_relative "../ground/failure_taxonomy"
-require_relative "../io/quota_gate"
+require_relative "../io/quota_check"
 # model_exists?, cancel_prediction and cancel_training all rescue into
 # Ground::Swallow, and nothing required it. Under a full MASTER boot something
 # else had loaded it first; loaded standalone -- which is how MASTER/tools/replicate
@@ -306,10 +306,10 @@ module Master
         attempts.times do |attempt|
           return attempt_request(req, uri)
         rescue ExhaustedError => e
-          # Out of the retry loop entirely, and onto the gate: no wait inside
+          # Out of the retry loop entirely, and onto the check: no wait inside
           # this run makes the account solvent, and the caller needs to know
           # the capability is gone rather than that one call failed.
-          Master::Io::QuotaGate.trip!(source: "replicate", message: e.message, model: uri.path)
+          Master::Io::QuotaCheck.trip!(source: "replicate", message: e.message, model: uri.path)
           raise
         rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
           # GET is safe to retry. Replicate throttling 429 explicitly rejects
@@ -343,7 +343,7 @@ module Master
       # separates "you are going too fast" from "you have no budget", and both
       # arrive as 429.
       def exhausted?(code, body)
-        code == 402 || Master::Io::QuotaGate.exhaustion?(body.to_s)
+        code == 402 || Master::Io::QuotaCheck.exhaustion?(body.to_s)
       end
 
       def cancel_prediction(id)

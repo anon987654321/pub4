@@ -21,7 +21,7 @@ module Master
           #
           # The weighted average that stood here averaged registry coverage against
           # a term reading `(wired + unwired) * 100 / (wired + unwired)` — 100.0 for
-          # every possible corpus — so the score floored at 55.0 and the gate below
+          # every possible corpus — so the score floored at 55.0 and the check below
           # 35 could not fail whatever the tree did.
           def adherence_pct
             return 100.0 if yaml_laws.zero?
@@ -58,7 +58,7 @@ module Master
           )
         end
 
-        # One statement of "something can run this rule", because three gate
+        # One statement of "something can run this rule", because three check
         # banners and lib/operator/law_reach.rb all print a count of it and three
         # separate spellings of the question gave two answers.
         #

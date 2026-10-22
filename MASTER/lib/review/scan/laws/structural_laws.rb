@@ -344,7 +344,7 @@ module Master
           # Cli::TurnRouter.call was reported at 22 lines while containing 10 lines
           # of code and 8 lines of comment, so the only way to satisfy the law was
           # to delete the explanation. Penalising documentation is the opposite of
-          # what a quality gate should do.
+          # what a quality check should do.
           def check_ast(ast, code, path:)
             return [] unless ast
 

@@ -10,7 +10,7 @@ class TestParameterizedSlug < Minitest::Test
 
   def test_filler_only_detected
     assert Master::Ground::ParameterizedSlug.filler_only?("misc_util_helper")
-    refute Master::Ground::ParameterizedSlug.filler_only?("domain_alignment_gate")
+    refute Master::Ground::ParameterizedSlug.filler_only?("domain_alignment_check")
   end
 
   def test_fold_target_for_support_suffix

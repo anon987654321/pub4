@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Secret redaction for sync.rb, the return leg of the drift gate.
+# Secret redaction for sync.rb, the return leg of the drift check.
 #
 # The patterns are a floor, not a ceiling. A secret whose name carries no
 # `_KEY=`-shaped suffix, or whose value does not start with the one prefix a

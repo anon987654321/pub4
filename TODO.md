@@ -4,10 +4,10 @@ Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-
 
 ## P0 — evidence before calling the system complete
 
-- [ ] Run a fresh bounded release pass against the exact commit intended for deployment: constitutional and repository gates, all RAILS contract tests, active app suites, OPENBSD tests, and STUDIO fast tests. Record PASS, FAIL, INCONCLUSIVE, BLOCKED, or TIMEOUT separately. GitHub returned no status entries for the audit head; that is not a green result.
+- [ ] Run a fresh bounded release pass against the exact commit intended for deployment: constitutional and repository checks, all RAILS contract tests, active app suites, OPENBSD tests, and STUDIO fast tests. Record PASS, FAIL, INCONCLUSIVE, BLOCKED, or TIMEOUT separately. GitHub returned no status entries for the audit head; that is not a green result.
 - [ ] Complete the requested 200–400 scenario interaction matrix across MASTER CLI, MASTER web, keyboard/touch, session state, routes, errors, models/tools, speech, reconnects, offline mode, and PWA updates. Exercise success and failure paths. Record scenario ID, setup, action, observed result, and evidence; scripted mocks do not substitute for real browser/CLI smoke tests.
 - [ ] Run the live rendered-layout suite with screenshots and geometry evidence at 320, 360, 375, 390, 430, 480, 640, 768, 1024, and 1280 CSS-pixel widths. Include keyboard-only use, zoom/reflow, safe-area, forced-colors, and reduced-motion checks. Do not report visual completion from source inspection alone.
-- [ ] Run MASTER/bin/operator triangle up before relying on rendered gates, then run the repository gate runner. Inspect every INCONCLUSIVE or BLOCKED result rather than counting it as success.
+- [ ] Run MASTER/bin/operator triangle up before relying on rendered checks, then run the repository check runner. Inspect every INCONCLUSIVE or BLOCKED result rather than counting it as success.
 - [ ] Prove deploy and recovery on the intended OpenBSD host. Check the deployed commit, service health, logs, backups, and a restore path. Keep deployment separate from local-source test evidence.
 
 ## MASTER CLI, web, voice, and shared session

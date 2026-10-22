@@ -174,7 +174,7 @@ class TestKeylessRouting < Minitest::Test
     end
   end
 
-  def test_local_models_rank_what_the_daemon_holds_without_the_env_gate
+  def test_local_models_rank_what_the_daemon_holds_without_the_env_check
     local_ollama!
     ENV.delete("OLLAMA_BASE_URL")
     router = Master::CLI::Routing::ModelRouter.new(

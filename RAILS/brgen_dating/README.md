@@ -23,7 +23,7 @@ reviewed by a human. Face matching is not automatic, since it fails on the peopl
 serve, and a wrong rejection on a dating profile is worse than a slow approval. Only a
 reviewer, the same admin who works the moderation queue, may approve or reject one.
 
-The Vipps gate fails open. When `VIPPS_CLIENT_ID` and its secret are absent, the Vipps provider
+The Vipps check fails open. When `VIPPS_CLIENT_ID` and its secret are absent, the Vipps provider
 never registers, the check is skipped, and anyone signed in can put a profile in the deck. A
 missing variable should not lock a whole city out of the vertical. Production must therefore
 carry both Vipps keys in `/etc/brgen.env`, or dating runs with no identity check at all.

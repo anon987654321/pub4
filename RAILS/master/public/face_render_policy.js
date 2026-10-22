@@ -1,5 +1,5 @@
 // Capability and performance policy for the face.
-// This is measurement/projection only; visual_governor remains the sole RAF gate.
+// This is measurement/projection only; visual_governor remains the sole RAF check.
 (() => {
   "use strict";
 

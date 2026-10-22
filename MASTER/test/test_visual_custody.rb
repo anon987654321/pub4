@@ -3,7 +3,7 @@
 require "json"
 require "minitest/autorun"
 require_relative "../lib/fix/visual_custody"
-require_relative "../gates/support/geometry_probe"
+require_relative "../checks/support/geometry_probe"
 
 class TestVisualCustody < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -51,14 +51,14 @@ class TestVisualCustody < Minitest::Test
   end
 
   def baseline
-    path = File.join(ROOT, "gates", "data", "layout_snapshots", "brgen-messenger-desktop.json")
+    path = File.join(ROOT, "checks", "data", "layout_snapshots", "brgen-messenger-desktop.json")
     JSON.parse(File.read(path))
   end
 
   def test_equivalent_routes_share_one_baseline_without_skipping_either_surface
-    previous = ENV.delete("GATE_SURFACES")
+    previous = ENV.delete("CHECK_SURFACES")
     surfaces = Deploy::GeometryProbe.surfaces
-    gate = Deploy::LayoutSnapshotGate.new
+    check = Deploy::LayoutSnapshotCheck.new
     aliases = {
       "bsdports/ports_index/mobile" => "bsdports/home/mobile",
       "bsdports/ports_index/desktop" => "bsdports/home/desktop",
@@ -72,8 +72,8 @@ class TestVisualCustody < Minitest::Test
       refute_nil aliased, "missing independently measured alias surface #{alias_id}"
       refute_nil canonical, "missing canonical surface #{canonical_id}"
       assert_includes surfaces, aliased
-      assert_equal gate.send(:baseline_path, canonical), gate.send(:baseline_path, aliased)
-      assert File.file?(gate.send(:baseline_path, canonical)), "canonical baseline missing: #{canonical_id}"
+      assert_equal check.send(:baseline_path, canonical), check.send(:baseline_path, aliased)
+      assert File.file?(check.send(:baseline_path, canonical)), "canonical baseline missing: #{canonical_id}"
     end
 
     %w[
@@ -81,11 +81,11 @@ class TestVisualCustody < Minitest::Test
       bsdports-ports_index-desktop.json
       brgen-conversations-desktop.json
     ].each do |name|
-      refute File.exist?(File.join(ROOT, "gates", "data", "layout_snapshots", name)),
+      refute File.exist?(File.join(ROOT, "checks", "data", "layout_snapshots", name)),
              "duplicate snapshot survived canonicalization: #{name}"
     end
   ensure
-    ENV["GATE_SURFACES"] = previous unless previous.nil?
+    ENV["CHECK_SURFACES"] = previous unless previous.nil?
   end
 
   def test_matching_snapshot_is_preserved

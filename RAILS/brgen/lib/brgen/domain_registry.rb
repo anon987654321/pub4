@@ -42,7 +42,7 @@ module Brgen
     # same word in every language these cities speak, so it belongs to that second
     # group. `spilleliste` was once here as a Norwegian-language second host and was
     # the odd one out; it also never resolved — spilleliste.brgen.no and
-    # spilleliste.oshlo.no were both NXDOMAIN, so every gate pointing at it was
+    # spilleliste.oshlo.no were both NXDOMAIN, so every check pointing at it was
     # measuring nothing.
     #
     # The engine is still Playlist: its directory, module and tables keep that name,
@@ -148,7 +148,7 @@ module Brgen
     #
     # This is a separate constant rather than a seventh field on Entry because
     # domain_alignment parses these lines with a six-argument regex. A seventh
-    # field makes that scan return nothing, and the gate then compares two empty
+    # field makes that scan return nothing, and the check then compares two empty
     # sets and passes having measured nothing.
     LIVE_DOMAINS = %w[
       brgen.no oshlo.no stvanger.no trndheim.no cardff.uk edinbrgh.uk frankfrt.de

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
-require_relative "../../gate_focus"
+require_relative "../../check_focus"
 
 module Master
   module Fix
@@ -59,13 +59,13 @@ module Master
             # ranked runs apply the allowance after priority is known per batch.
             cap = LawCap.new(LAW_CAP, Hash.new(0)) unless ranked
             raw = []
-            GateFocus.first(files).each do |path|
+            CheckFocus.first(files).each do |path|
               break if scan_stop?(path, worklist.taken, deadline)
 
               rows = violations_for(path)
               raw.concat(rows)
               repairs = resolve_violations(rows)
-              repairs = cap.take(repairs) if cap && !GateFocus.covers?(path)
+              repairs = cap.take(repairs) if cap && !CheckFocus.covers?(path)
               worklist.add([path, repairs]) unless repairs.empty?
             end
             worklist.flush
@@ -86,7 +86,7 @@ module Master
 
           # Repairs per law per ranked batch. LONG_LINE alone fired on 2,699 lines of one scan, and every one went
           # to the model before any other law got a turn. Priority is established before the cap is applied;
-          # excess findings still count and report, and red-gate files are never capped.
+          # excess findings still count and report, and red-check files are never capped.
           LAW_CAP = Integer(ENV.fetch("MASTER_FIX_LAW_CAP", 25))
 
           LawCap = Struct.new(:limit, :counts) do
@@ -126,14 +126,14 @@ module Master
             ENV.fetch("MASTER_FIX_RANK", "1") != "0"
           end
 
-          # A file a red gate names comes first (GateFocus). Then severity wins before volume: one
+          # A file a red check names comes first (CheckFocus). Then severity wins before volume: one
           # error is more urgent than many style findings. Weighted total impact and finding count
           # break ties, then the stable path makes the order reproducible. LawOrder separately
           # enforces the declared dependency order inside each file's repair.
           def enqueue_ranked(ranked, queue, streamed)
             ordered = ranked.sort_by do |path, rows|
               peak, total, count = worklist_priority(rows)
-              [GateFocus.covers?(path) ? 0 : 1, -peak, -total, -count, path]
+              [CheckFocus.covers?(path) ? 0 : 1, -peak, -total, -count, path]
             end
 
             # The stream intentionally starts repairs before the whole corpus has
@@ -141,7 +141,7 @@ module Master
             # after priority is known, so scan order cannot starve urgent findings.
             cap = LawCap.new(LAW_CAP, Hash.new(0))
             ordered = ordered.filter_map do |path, rows|
-              selected = GateFocus.covers?(path) ? rows : cap.take(rows)
+              selected = CheckFocus.covers?(path) ? rows : cap.take(rows)
               [path, selected] unless selected.empty?
             end
 

@@ -37,7 +37,7 @@ module Master
         # 600s covers roughly three batches, so around twelve personas answer
         # instead of three. Hearing all twenty-six needs ~1421s, which is a
         # legitimate choice and a 24-minute critique per subsystem — three of
-        # them in a full gate. The arithmetic is written down so that is an
+        # them in a full check. The arithmetic is written down so that is an
         # informed one-line change rather than a guess.
         TOTAL_BUDGET_S = 600
         MIN_QUORUM = 3
@@ -125,7 +125,7 @@ module Master
         # TOTAL_BUDGET_S discovering it per persona.
         #
         # Reachability includes subscription CLIs and local models, not just API
-        # keys. Keep this gate aligned with LLMDispatcher's own refusal check.
+        # keys. Keep this check aligned with LLMDispatcher's own refusal check.
         def self.reachable_for?(agent)
           router = agent.respond_to?(:model_router) ? agent.model_router : nil
           return Master.llm_reachable?(agent.respond_to?(:model) ? agent.model : nil) unless router.respond_to?(:pool)
@@ -147,7 +147,7 @@ module Master
             return unconvened("council: no personas, or no provider reached", :validation, Gap.new(horizon: :never, cost_to_check: :minutes))
           end
 
-          # The gate answers before the panel is convened, not per persona.
+          # The check answers before the panel is convened, not per persona.
           # Blocked here means the provider said "out of credit" recently
           # enough that the re-probe is not due yet; the council is a paid
           # tier, so it is skipped and says so rather than spending 26 calls
@@ -212,11 +212,11 @@ module Master
         # The paid tier is closed for the panel only when every lane it could
         # speak through is closed. One provider out of credit leaves the rest.
         def panel_blocked?
-          return false unless Io::QuotaGate.blocked?
+          return false unless Io::QuotaCheck.blocked?
 
           lanes = Array(@agent.candidate_models(task_type: :review)) if @agent.class.method_defined?(:candidate_models)
           lanes ||= []
-          lanes.empty? || lanes.all? { |model| Io::QuotaGate.blocked?(model) }
+          lanes.empty? || lanes.all? { |model| Io::QuotaCheck.blocked?(model) }
         end
 
         def local_floor_available?
@@ -270,24 +270,24 @@ module Master
           # A spend limit gets its own category so a chain stage can branch on
           # "this tier could not run" instead of parsing prose, and so the
           # verdict never folds "could not run" into "timed out".
-          limited = Io::QuotaGate.tripped?
+          limited = Io::QuotaCheck.tripped?
           message = "council: quorum not reached (#{feedback.size}/#{@personas.size})#{failure_summary}#{quota_note}"
-          return unconvened(message, Io::QuotaGate::CATEGORY, spend_gap) if limited
+          return unconvened(message, Io::QuotaCheck::CATEGORY, spend_gap) if limited
 
           Result.err(message, category: :timeout)
         end
 
         # The council did not run and the answer is not "clean". Carries the
-        # gate's own report so the reason and the re-probe ETA travel with the
+        # check's own report so the reason and the re-probe ETA travel with the
         # verdict rather than living only in a log line.
         def exhausted_error
-          Io::QuotaGate.skipped("council")
-          unconvened("council: #{Io::QuotaGate.report}", Io::QuotaGate::CATEGORY, spend_gap)
+          Io::QuotaCheck.skipped("council")
+          unconvened("council: #{Io::QuotaCheck.report}", Io::QuotaCheck::CATEGORY, spend_gap)
         end
 
-        # Credits are money, so the operator restores them; the gate re-probes on its own clock.
+        # Credits are money, so the operator restores them; the check re-probes on its own clock.
         def spend_gap
-          wait = Io::QuotaGate.seconds_until_probe
+          wait = Io::QuotaCheck.seconds_until_probe
           Gap.new(horizon: wait ? [wait, 1].max : :operator, cost_to_check: :operator)
         end
 
@@ -302,10 +302,10 @@ module Master
         # not two readings of the same thing, and silence here is what would
         # let them compare as though they were.
         def announce_substitution
-          note = Io::QuotaGate.substitution_note
+          note = Io::QuotaCheck.substitution_note
           return unless note
 
-          @bus&.publish("council:substituted", swaps: Io::QuotaGate.substitutions)
+          @bus&.publish("council:substituted", swaps: Io::QuotaCheck.substitutions)
           Master::Trace::Dmesg.status("council0", note)
         end
 
@@ -313,8 +313,8 @@ module Master
         # substitution half stands alone, because a panel that answered on a
         # stand-in model has something to declare even when nothing tripped.
         def quota_note
-          Io::QuotaGate.skipped("council") if Io::QuotaGate.tripped?
-          parts = [Io::QuotaGate.report, Io::QuotaGate.substitution_note].compact
+          Io::QuotaCheck.skipped("council") if Io::QuotaCheck.tripped?
+          parts = [Io::QuotaCheck.report, Io::QuotaCheck.substitution_note].compact
           parts.empty? ? "" : " — #{parts.join(" — ")}"
         end
 
@@ -419,7 +419,7 @@ module Master
           # queue behind the dispatcher's CLI slots, so the ones still waiting
           # when the first comes back refused can be spared their own refusal.
           model = lane_for(persona, image:)
-          return quota_skipped(persona) if Io::QuotaGate.blocked?(model)
+          return quota_skipped(persona) if Io::QuotaCheck.blocked?(model)
 
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           request_prompt = build_prompt(persona:, code:, context:)
@@ -469,12 +469,12 @@ module Master
         end
 
         # One spend limit is one fact about the account, not N facts about N
-        # personas. QuotaGate announces the first and returns false to everyone
+        # personas. QuotaCheck announces the first and returns false to everyone
         # after it, so the remaining personas only add to the tally — which is
         # what the operator reads anyway.
         def note_persona_failure(persona, error)
           @bus&.publish("council:persona_error", persona: persona.name, error: error.message)
-          limited = Io::QuotaGate.trip_if_limited(
+          limited = Io::QuotaCheck.trip_if_limited(
             source: "council persona #{persona.name}", message: error.message,
             model: lane_for(persona)
           )

@@ -17,7 +17,7 @@
 # Pick-a-Pic (ar5iv 2305.01569), and multimodal models judge aesthetics poorly
 # (AesBench, arXiv 2401.08276). A scorer that ranks renders belongs here only as
 # HPSv2.1 or PickScore with pyiqa's qalign beside it, and it answers a different
-# question from this gate, which is whether a frame is worse than a photograph.
+# question from this check, which is whether a frame is worse than a photograph.
 #
 # Thresholds are CALIBRATED, not chosen. They come from the subject's own
 # training photographs, on the argument that a generated frame has no business
@@ -32,7 +32,7 @@
 #   ruby _toolkit/judge.rb ~/Downloads --match 000001000
 #   ruby _toolkit/judge.rb <dir> --quarantine     # move rejects to <dir>/rejected
 #
-# Exits non-zero when anything is rejected, so it can gate a render.
+# Exits non-zero when anything is rejected, so it can check a render.
 
 require "optparse"
 require "pathname"

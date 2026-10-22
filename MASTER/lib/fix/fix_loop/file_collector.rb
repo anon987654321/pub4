@@ -182,7 +182,7 @@ module Master
         end
 
         # Rails migrations are historical record, not repairable source. They
-        # remain visible to migration-safety gates, but /fix must never rewrite
+        # remain visible to migration-safety checks, but /fix must never rewrite
         # them as ordinary violations because changing history does not repair
         # the deployed database.
         def rails_history?(path)

@@ -52,7 +52,7 @@ SimpleCov.start "rails" do
   coverage :method, ignore: :eval_generated
   track_tests
 
-  # Coverage is reported on every run and enforced on a full one: the CI gate sets
+  # Coverage is reported on every run and enforced on a full one: the CI check sets
   # PUB4_CI_GUARD, `FULL_COVERAGE=1` asks for it, and a one-file run enforces nothing
   # because it cannot reach a whole-app number. The enforced number is a recorded
   # floor per app (coverage_floors.yml) that only rises. It used to demand 100% of

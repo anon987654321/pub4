@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require File.expand_path("../../MASTER/gates/support/geometry_probe", __dir__)
+require File.expand_path("../../MASTER/checks/support/geometry_probe", __dir__)
 require "operator/visual_review"
 require "fix/visual_pass_review_entry"
 

@@ -6,7 +6,7 @@
 # time has come, and bsdports holds no resident worker. drain-jobs.sh cannot
 # substitute for it: it only starts a worker for an app that already has due
 # rows, and this job's sole trigger is the recurring schedule itself, so
-# drain-jobs.sh never has a reason to start one. Same load-gate shape as
+# drain-jobs.sh never has a reason to start one. Same load-check shape as
 # prune-guests.sh, next door.
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin

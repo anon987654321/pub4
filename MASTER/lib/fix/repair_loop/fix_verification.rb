@@ -23,7 +23,7 @@ module Master
           false
         end
 
-        # A control for the semantic gate (MASTER_FIX_SCAN_AGREEMENT=1): the unchanged file is scanned once
+        # A control for the semantic check (MASTER_FIX_SCAN_AGREEMENT=1): the unchanged file is scanned once
         # more and the two scans compared, mechanical and semantic findings apart, so how often the
         # semantic stream disagrees with itself is measured instead of assumed. One extra scan per repair.
         # A diagnostic of the scanner itself: the unchanged file scanned a second time. Asked for with
@@ -52,24 +52,24 @@ module Master
             "#{gained.empty? ? " same laws" : " (second minus first: #{gained.map { |law, n| "#{law} #{n.positive? ? "+" : ""}#{n}" }.join(", ")})"}"
         end
 
-        # The findings the new-violations gate counts. The semantic stream (an LLM reading the file) names
+        # The findings the new-violations check counts. The semantic stream (an LLM reading the file) names
         # its findings freely: RATE_LIMITING_MISSING, NO_CHANGELOG_COMMENT and MERGE_BEFORE_MULTIPLY are in
         # no registry, and two scans of one file need not agree on them, so a rejection on their count can
         # be noise. The default reads them loosely: only findings of registered mechanical laws are counted,
         # and what the semantic stream added is logged, not gated; the reflexion verifier still reads the
-        # change itself. MASTER_FIX_SEMANTIC_GATE=strict counts every finding.
-        def gate_findings(rows)
-          return rows if strict_semantic_gate?
+        # change itself. MASTER_FIX_SEMANTIC_CHECK=strict counts every finding.
+        def check_findings(rows)
+          return rows if strict_semantic_check?
 
           ids = mechanical_law_ids
           ids.empty? ? rows : rows.select { |row| ids.include?(row[:law].to_s) }
         end
 
-        def strict_semantic_gate? = ENV.fetch("MASTER_FIX_SEMANTIC_GATE", "loose") == "strict"
+        def strict_semantic_check? = ENV.fetch("MASTER_FIX_SEMANTIC_CHECK", "loose") == "strict"
 
-        # What the semantic stream added by a repair, named in the log so a loose gate is still visible.
+        # What the semantic stream added by a repair, named in the log so a loose check is still visible.
         def note_semantic_drift(path, raw_before, raw_after)
-          return if strict_semantic_gate?
+          return if strict_semantic_check?
 
           ids = mechanical_law_ids
           return if ids.empty?

@@ -42,7 +42,7 @@ checks:
   - {id: posts.show, in: amber/app/views/posts/show.html.erb, has: [comments/form, json_ld]}
   - {id: posts.new, in: amber/app/views/posts/new.html.erb, has: ["text_area :body"]}
   - {id: posts.card, in: amber/app/views/posts/_post.html.erb, has: [shared/post_card, author_name]}
-  - {id: comments.auth_gate, in: amber/app/views/posts/show.html.erb, has: ["if authenticated?"]}
+  - {id: comments.auth_check, in: amber/app/views/posts/show.html.erb, has: ["if authenticated?"]}
   - {id: comments.stream, in: amber/app/views/comments/create.turbo_stream.erb, has: [comment_form, comments]}
   # --- wardrobe items ---
   - {id: items.form_title, in: amber/app/views/items/_form.html.erb, has: ["f.label :title", "f.text_field :title"]}

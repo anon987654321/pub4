@@ -32,7 +32,7 @@ module Operator
     TREES = (APPS + %w[shared]).freeze
     OPT_OUT = "css_coverage: ok"
 
-    # Applied by JS, by the framework, or by a gate — never written in a stylesheet.
+    # Applied by JS, by the framework, or by a check — never written in a stylesheet.
     #
     # The last three are styled by an inline attribute on the element, each for a
     # documented reason: the icon sprite must be width/height 0 rather than

@@ -71,7 +71,7 @@ class TestReaders < Minitest::Test
   def test_a_file_only_a_test_asserts_is_not_unreferenced
     with_tree do |root|
       write(root, "RAILS/__shared/app/views/shared/_orphan.html.erb", "<div></div>\n")
-      write(root, "RAILS/test/deploy_gates_contract_test.rb", <<~RUBY)
+      write(root, "RAILS/test/deploy_checks_contract_test.rb", <<~RUBY)
         %w[_orphan.html.erb].each { |partial| assert File.exist?(partial) }
       RUBY
 

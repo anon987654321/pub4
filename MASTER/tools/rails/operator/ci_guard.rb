@@ -5,7 +5,7 @@ require "timeout"
 require File.join(ENV.fetch("PUB4_ROOT", File.expand_path("../../../../", __dir__)), "OPENBSD", "lib", "load_average")
 
 module Operator
-  # VPS-only mutex + load gate for Rails bin/ci (prevents parallel CI pile-ups on vm23).
+  # VPS-only mutex + load check for Rails bin/ci (prevents parallel CI pile-ups on vm23).
   module CiGuard
     # The one CI lock, shared with the shell side.
     #
@@ -110,7 +110,7 @@ module Operator
     end
 
     # Unreadable load fails open here, unlike PruneGuestUsersJob, and on
-    # purpose: this gate stands in front of CI, so treating unknown as busy
+    # purpose: this check stands in front of CI, so treating unknown as busy
     # would make an unreadable sysctl look exactly like a permanently locked
     # box and block every deploy. The warning is the difference between failing
     # open and not noticing — the old version returned 0.0 in silence, which

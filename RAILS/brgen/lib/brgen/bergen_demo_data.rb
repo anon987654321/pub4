@@ -150,7 +150,7 @@ module Brgen
       { slug: "nordnesparken", name: "Nordnesparken", kind: "park", neighborhood: "nordnes",
         latitude: 60.3998, longitude: 5.3078, address: "Nordnes", image: "bergen-place-nordnesparken" },
       { slug: "vilvite", name: "VilVite", kind: "museum", neighborhood: "sentrum",
-        latitude: 60.3814, longitude: 5.3321, address: "Thormøhlens gate 51", image: "bergen-place-vilvite" }
+        latitude: 60.3814, longitude: 5.3321, address: "Thormøhlens check 51", image: "bergen-place-vilvite" }
     ].freeze
 
     RESTAURANTS = [
@@ -178,7 +178,7 @@ module Brgen
       },
       {
         user: "henrik_vestland", name: "Potetkjelleren", cuisine_type: "Pizza",
-        address: "Kong Oscars gate 1A", neighborhood: "sentrum",
+        address: "Kong Oscars check 1A", neighborhood: "sentrum",
         latitude: 60.3936, longitude: 5.3258,
         delivery_fee_cents: 3_900, min_order_cents: 12_000, rating: 4.4,
         menu: [

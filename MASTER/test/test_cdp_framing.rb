@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "socket"
-require File.expand_path("../gates/support/cdp_session", __dir__)
+require File.expand_path("../checks/support/cdp_session", __dir__)
 
 # The WebSocket reader against scripted server frames, with no browser. The
 # 127-byte case is the one that desynchronised a real brgen review: a frame

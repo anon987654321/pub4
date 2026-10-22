@@ -4,7 +4,7 @@
 #
 # The whole thing is one sentence: fold proposed effects through a constitution
 # that admits each one before it touches the world. Four concepts carry it —
-# Fold, Constitution (the gate), World (the effects), Memory (the record) — and
+# Fold, Constitution (the check), World (the effects), Memory (the record) — and
 # this file holds the vocabulary they share.
 #
 # Until 2026-08-12 this was `core/master.rb`, the root of a second spine loaded

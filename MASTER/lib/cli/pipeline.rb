@@ -22,7 +22,7 @@ module Master
         timings = {}
         @orchestrator&.execute(intent_type: :llm_call, workflow_id: wf_id, payload: { stage: "start" }) { nil }
         wrapped = initial_context_result(initial)
-        gated = wrapped.and_then("deploy_gate") { |ctx| deploy_gate(ctx) }
+        gated = wrapped.and_then("deploy_check") { |ctx| deploy_check(ctx) }
         final = @stages.reduce(gated) do |result, stage|
           result.and_then(stage_label(stage)) { |ctx| run_stage(stage:, ctx:, timings:) }
         end
@@ -131,7 +131,7 @@ module Master
         Result.wrap(initial).map { |h| PipelineContext.wrap(h) }
       end
 
-      def deploy_gate(ctx)
+      def deploy_check(ctx)
         return Result.ok(ctx) unless deploy_intent?(ctx)
         return Result.ok(ctx) unless @scanner && @root
 
@@ -142,25 +142,25 @@ module Master
         score = evidence_score(summary, ctx)
         @bus&.publish("pipeline:evidence_score", score:, threshold: evidence_threshold, violations: summary.violation_count)
 
-        blocked = check_violation_gates(summary, score)
+        blocked = check_violation_checks(summary, score)
         return blocked if blocked
 
         return Result.ok(ctx) if score >= evidence_threshold
 
-        @bus&.publish("pipeline:blocked", gate: "evidence_score", violations: 0, score:)
+        @bus&.publish("pipeline:blocked", check: "evidence_score", violations: 0, score:)
         Result.err("deploy blocked: evidence score #{score} below #{evidence_threshold}", category: :policy)
       end
 
-      def check_violation_gates(summary, score)
+      def check_violation_checks(summary, score)
         tier1_violations = tier1_critical_violations(summary)
         unless tier1_violations.empty?
-          @bus&.publish("pipeline:blocked", gate: "tier1_critical", violations: tier1_violations.size, score:)
+          @bus&.publish("pipeline:blocked", check: "tier1_critical", violations: tier1_violations.size, score:)
           return Result.err("deploy blocked: tier1 critical violation(s): #{tier1_violations.uniq.join(", ")}",
                             category: :policy)
         end
 
         if summary.violation_count.positive?
-          @bus&.publish("pipeline:blocked", gate: "self_scan", violations: summary.violation_count, score:)
+          @bus&.publish("pipeline:blocked", check: "self_scan", violations: summary.violation_count, score:)
           return Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
         end
 

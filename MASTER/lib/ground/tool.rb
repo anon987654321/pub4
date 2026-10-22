@@ -8,7 +8,7 @@ module Master
     module Tool
       # Three tool surfaces. public is the open internet; messaging is a paired
       # visitor (fetch + personal memory, never Shell); full is an authenticated
-      # operator. Elevation still gates dangerous tools inside full.
+      # operator. Elevation still checks dangerous tools inside full.
       module Profile
         CONFIG_PATH = Master.data_path("security.yml").freeze
         NAMES = %i[public messaging full elevated].freeze

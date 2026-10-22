@@ -9,7 +9,7 @@ class OutfitsController < ApplicationController
   # reorder mutates outfit_items via update_all and was set_ but never
   # authorized — any signed-in user could reorder another user's outfit.
   before_action :authorize!, only: %i[edit update destroy share wear reorder]
-  # show and like were likewise unauthorized. Gate them on viewability rather
+  # show and like were likewise unauthorized. Check them on viewability rather
   # than ownership: liking someone else's outfit is legitimate, reading a
   # private wardrobe is not.
   before_action :authorize_view!, only: %i[show like]

@@ -16,7 +16,7 @@ require "minitest/autorun"
 # in #call writes to the stream directly, and #rendered_text returns text that
 # #write_fallback later hands to #write_chunk.
 #
-# This spec asserts both ends. A gate that pinned only the server would pass
+# This spec asserts both ends. A check that pinned only the server would pass
 # while the client stopped honouring the prefix, and vice versa — and that is
 # the shape of a check that measures nothing.
 class ErrorSpeechSpec < Minitest::Test

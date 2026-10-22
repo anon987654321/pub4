@@ -9,7 +9,7 @@ class SolidusStagingContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   BRGEN = File.join(ROOT, "brgen")
 
-  def test_gemfile_gates_solidus_behind_env_flag
+  def test_gemfile_checks_solidus_behind_env_flag
     gemfile = File.read(File.join(BRGEN, "Gemfile"))
     assert_includes gemfile, 'ENV["SOLIDUS_MARKETPLACE"] == "1"'
     assert_includes gemfile, 'gem "solidus"'

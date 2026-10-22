@@ -5,7 +5,7 @@ require_relative "../ground/host_budget"
 
 module Master
   module CLI
-    # FoldRisk — classify goal risk for conditional ideation and council gates.
+    # FoldRisk — classify goal risk for conditional ideation and council checks.
     module FoldRisk
       HIGH_PATTERNS = /\b(commit|ship|push|deploy|tribunal|full\s+pass|refactor\s+all|delete\s+all)\b/i.freeze
       # A goal that starts a process or session executes, and only the repair profile may

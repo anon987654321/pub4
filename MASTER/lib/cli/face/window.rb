@@ -199,7 +199,7 @@ module Master
         # character stops that take; the keys stay on this thread.
         # The user is speaking while recogniser partials keep arriving, and only
         # when the mic cannot be hearing MASTER (Policy.echo_safe?). The terminal
-        # listens between utterances, so the gate holds, and it stays the one
+        # listens between utterances, so the check holds, and it stays the one
         # place that says so.
         def user_speaking?(state)
           return false unless @heard_at && state == :listening

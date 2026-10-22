@@ -63,7 +63,7 @@ module Operator
     # Same reason as the ceiling itself: a census that reads nothing finds no
     # duplicates and passes. `git ls-files` coming back empty -- a wrong root, a
     # git that failed -- looks exactly like a clean tree from here, which is how
-    # STUDIO gate spent a worktree reporting on a corpus of zero files.
+    # STUDIO check spent a worktree reporting on a corpus of zero files.
     def check_corpus!(files)
       return files if files.size >= 500
 

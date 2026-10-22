@@ -420,12 +420,12 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes card, "respond_to?(:post_path)"
   end
 
-  def test_rails_runtime_gate_scans_the_rails_tree
-    gate = read("_runtime_gate.sh")
+  def test_rails_runtime_check_scans_the_rails_tree
+    check = read("_runtime_check.sh")
 
-    assert_includes gate, "--scan-only --tree=RAILS"
-    refute_includes gate, "--scan-only --tree=OPENBSD"
-    assert_match(/total violations|scan[0-9]*:.*violations/, gate)
+    assert_includes check, "--scan-only --tree=RAILS"
+    refute_includes check, "--scan-only --tree=OPENBSD"
+    assert_match(/total violations|scan[0-9]*:.*violations/, check)
   end
 
   def test_brgen_post_detail_renders_all_attached_media

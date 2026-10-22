@@ -13,7 +13,7 @@ stage_1() {
   typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
   (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
 
-  # ffmpeg is required, not optional: lib/voice/engines.rb gates concat_mp3 and
+  # ffmpeg is required, not optional: lib/voice/engines.rb checks concat_mp3 and
   # the WAV->MP3 conversion on `ffmpeg?` and returns *quietly* when it is absent.
   # Without it TTS produced un-concatenated or unconverted audio on the VPS with
   # no error anywhere — working on a Mac and silently degrading in production,

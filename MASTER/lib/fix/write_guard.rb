@@ -7,7 +7,7 @@ module Master
       # carrying debt has to stay editable, or the first repair of it is refused.
       #
       # Semantic rules are excluded deliberately. They are 126 of the 225 and
-      # cost one LLM call per file, which a per-write gate would pay twice — the
+      # cost one LLM call per file, which a per-write check would pay twice — the
       # before and the after. They belong to the per-turn pass, not here.
       #
       # The mechanical half costs 1.2 ms on a 5-line file and 286 ms on a

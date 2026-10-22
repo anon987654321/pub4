@@ -3,7 +3,7 @@
 require "cgi"
 
 module Shared
-  # Server-side gate for purposes that may load optional client technology.
+  # Server-side check for purposes that may load optional client technology.
   # The browser writes the same versioned, purpose-scoped signal.
   module ConsentHelper
     CONSENT_COOKIE = "pub4_consent"

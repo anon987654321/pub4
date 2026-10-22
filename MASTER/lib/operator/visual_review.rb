@@ -5,7 +5,7 @@ require "json"
 require "optparse"
 require "time"
 require_relative "visual_review_page"
-require_relative "visual_review_gates"
+require_relative "visual_review_checks"
 require_relative "visual_review_triangle"
 
 module Operator
@@ -84,7 +84,7 @@ module Operator
     end
 
     def browser_ready!(probe)
-      require_relative "../../gates/support/geometry_probe" unless probe
+      require_relative "../../checks/support/geometry_probe" unless probe
       ready = probe ? probe.call : Deploy::GeometryProbe.available?
       raise Failure, "Chrome is missing or cannot start" unless ready
     end
@@ -112,8 +112,8 @@ module Operator
       line = "captured #{(surfaces.map(&:id) - missing).size}/#{surfaces.size} declared surfaces (#{captures.size} states)"
       say(line)
       missing.each { |id| say("missed #{id}") }
-      rows = captures.map { |c| VisualReviewGates.row(c, root:, dir: opts.out) }
-      rows.each { |r| say("gates #{r[:title]}: #{r[:problems].empty? ? "clean" : r[:problems].join("; ")}") }
+      rows = captures.map { |c| VisualReviewChecks.row(c, root:, dir: opts.out) }
+      rows.each { |r| say("checks #{r[:title]}: #{r[:problems].empty? ? "clean" : r[:problems].join("; ")}") }
       model = base_model(pass, opts, line, missing, rows, notes, captures)
       critique(pass, captures, graph, opts, model) if opts.critique
       model[:critique_note] ||= "Skipped, --no-critique: captured and measured only."
@@ -123,10 +123,10 @@ module Operator
     def base_model(pass, opts, line, missing, rows, notes, captures)
       sheet = pass.review_sheet(captures)
       overlays = Master::Fix::VisualCrossPageOverlay.collect(captures).map do |o|
-        { label: o[:key].to_s, path: VisualReviewGates.relative(o[:screenshot], opts.out), text: o[:text] }
+        { label: o[:key].to_s, path: VisualReviewChecks.relative(o[:screenshot], opts.out), text: o[:text] }
       end
       { generated_at: Time.now.utc.iso8601, coverage_line: line, missing:, rows:, notes:, overlays:,
-        contact_sheet: VisualReviewGates.relative(sheet.is_a?(String) ? sheet : File.join(opts.out, "rendered-ui-contact-sheet.png"), opts.out),
+        contact_sheet: VisualReviewChecks.relative(sheet.is_a?(String) ? sheet : File.join(opts.out, "rendered-ui-contact-sheet.png"), opts.out),
         extras: optional_sections(captures) }
     end
 
@@ -171,7 +171,7 @@ module Operator
     def finish(model, opts, rows)
       problems = rows.sum { |r| r[:problems].size }
       picks = Array(model[:picks])
-      model[:summary] = "#{rows.size} states, #{problems} gate problem(s), #{picks.size} pick(s), #{picks.count { |p| p[:anchored] }} anchored"
+      model[:summary] = "#{rows.size} states, #{problems} check problem(s), #{picks.size} pick(s), #{picks.count { |p| p[:anchored] }} anchored"
       File.write(File.join(opts.out, "index.html"), VisualReviewPage.render(model))
       say("review folder #{opts.out}")
       say(model[:summary])

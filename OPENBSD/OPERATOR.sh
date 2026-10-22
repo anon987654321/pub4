@@ -14,7 +14,7 @@
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
-# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/gates/health_check.rb
+# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/checks/health_check.rb
 # Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
 
 set -euo pipefail
@@ -41,7 +41,7 @@ log_info()  { log INFO "$@" }
 log_error() { log ERROR "$@" }
 
 # Production db:seed is never part of a default deploy. The one-off escape hatch
-# is gated here, in the entrypoint the deploy smoke gate reads, so
+# is gated here, in the entrypoint the deploy smoke check reads, so
 # dev/operator_stage_2.zsh inherits the contract instead of carrying its own copy.
 production_seeds_gated() { [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]] }
 
@@ -195,7 +195,7 @@ install_root_configs() {
     usr/local/libexec/ci-sync.ksh
     usr/local/libexec/rails-task.ksh
     usr/local/libexec/rails-sync.ksh
-    gates/solid_queue_proof.rb
+    checks/solid_queue_proof.rb
     usr/local/bin/resource_guard.sh
   )
   typeset rel
@@ -205,7 +205,7 @@ install_root_configs() {
       return 1
     fi
   done
-  for rel in usr usr/local usr/local/bin usr/local/sbin usr/local/libexec gates bin; do
+  for rel in usr usr/local usr/local/bin usr/local/sbin usr/local/libexec checks bin; do
     if [[ -L $src/$rel ]]; then
       log ERROR "refusing symlinked privileged source directory: $src/$rel"
       return 1
@@ -373,7 +373,7 @@ sync_openbsd_apply() {
     mkdir -p "$scan_log_dir" || { log ERROR "cannot create $scan_log_dir"; return 1 }
     chmod 700 "$scan_log_dir"
     log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per laws.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c "cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 $BUNDLE exec $RUBY bin/gate --scan-only --tree=OPENBSD" 2>&1 | tee "$scan_log"; then
+    if ! su dev -c "cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 $BUNDLE exec $RUBY bin/check --scan-only --tree=OPENBSD" 2>&1 | tee "$scan_log"; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per laws.yml)"
       return 1
     fi
@@ -399,7 +399,7 @@ sync_openbsd_apply() {
     log ERROR "cannot prepare /usr/local/libexec/pub4"
     return 1
   fi
-  if ! install -o root -g wheel -m 555 "${SCRIPT_DIR}/gates/solid_queue_proof.rb" /usr/local/libexec/pub4/solid_queue_proof.rb; then
+  if ! install -o root -g wheel -m 555 "${SCRIPT_DIR}/checks/solid_queue_proof.rb" /usr/local/libexec/pub4/solid_queue_proof.rb; then
     log ERROR "solid_queue_proof install failed — deploy proof would run untrusted checkout code"
     return 1
   fi
@@ -442,7 +442,7 @@ sync_openbsd_apply() {
 
   # daily.local runs this as ROOT, and it guards on `[ -x /usr/local/bin/... ]`,
   # so the guard is exactly as load-bearing as the install. Nothing installed it:
-  # config_drift_gate.rb sits under gates/ rather than under usr/local/bin/,
+  # config_drift_check.rb sits under checks/ rather than under usr/local/bin/,
   # so install_root_configs never carried it, and the guard was false on every
   # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead —
   # root executing a file the dev user can rewrite, every morning, which is the
@@ -451,10 +451,10 @@ sync_openbsd_apply() {
   #
   # One file, and nothing beside it. It used to need lib/utf8.rb installed into a
   # /usr/local/bin/lib/ made for the purpose, because `require_relative` resolves
-  # beside the installed copy; the gate sets its own encoding now, so the install
+  # beside the installed copy; the check sets its own encoding now, so the install
   # cannot half-succeed and the box carries no directory holding six lines.
-  if ! install -m 755 "${SCRIPT_DIR}/gates/config_drift_gate.rb" /usr/local/bin/config_drift_gate.rb; then
-    log ERROR "config_drift_gate install failed — daily.local would skip the drift check in silence"
+  if ! install -m 755 "${SCRIPT_DIR}/checks/config_drift_check.rb" /usr/local/bin/config_drift_check.rb; then
+    log ERROR "config_drift_check install failed — daily.local would skip the drift check in silence"
     return 1
   fi
   install_tracked_crontab || return 1
@@ -514,7 +514,7 @@ sync_openbsd_apply() {
   fi
   wait_for_up 38182 brgen 24 5 || return 1
 
-  "$RUBY" "${SCRIPT_DIR}/gates/health_check.rb" --core && log INFO "health_check ok" \
+  "$RUBY" "${SCRIPT_DIR}/checks/health_check.rb" --core && log INFO "health_check ok" \
     || { log ERROR "health_check failed"; return 1; }
 }
 
@@ -658,8 +658,8 @@ main() {
         log ERROR "first_install rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
         exit 1
       }
-      "$RUBY" "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
-      "$RUBY" "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/checks/verify_openbsd_idempotency.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/checks/verify_deploy_identity.rb" || exit 1
       stage_1
       stage_2
       ;;
@@ -668,13 +668,13 @@ main() {
         log ERROR "stage_1 rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
         exit 1
       }
-      "$RUBY" "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
-      "$RUBY" "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/checks/verify_openbsd_idempotency.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/checks/verify_deploy_identity.rb" || exit 1
       stage_1
       ;;
     --stage-2|--stage2)
-      "$RUBY" "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
-      "$RUBY" "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/checks/verify_openbsd_idempotency.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/checks/verify_deploy_identity.rb" || exit 1
       stage_2
       ;;
     "")

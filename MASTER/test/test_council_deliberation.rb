@@ -4,17 +4,17 @@ require_relative "test_helper"
 require_relative "support_council_answer"
 
 class TestCouncilDeliberation < Minitest::Test
-  Gate = Master::Io::QuotaGate
+  Check = Master::Io::QuotaCheck
   CREDITS = "Insufficient credits. Add more using https://openrouter.ai"
 
   Persona = Struct.new(:name, :role, :bias, :prompt, :veto_role, :emphasizes, keyword_init: true) do
     def veto? = !!veto_role
   end
 
-  # The gate is process-wide by design — one account, one fact — so a test
+  # The check is process-wide by design — one account, one fact — so a test
   # that trips it hands the next test a closed council unless it puts it back.
-  def setup = Gate.reset!
-  def teardown = Gate.reset!
+  def setup = Check.reset!
+  def teardown = Check.reset!
 
   # Counts calls, so "did not spend the call" is a measurement and not a
   # reading of the log.
@@ -141,10 +141,10 @@ class TestCouncilDeliberation < Minitest::Test
 
     assert_equal 1, failing.calls, "the second call was guaranteed to fail; it must not be spent"
     assert result.err?
-    assert_equal Gate::CATEGORY, result.category, "a chain stage branches on this, not on prose"
+    assert_equal Check::CATEGORY, result.category, "a chain stage branches on this, not on prose"
     assert_match(/SKIPPED council/, result.message, "could not run must not read as a pass")
     assert_match(/spend limit/, result.message)
-    assert_includes Gate.skipped_tiers, "council"
+    assert_includes Check.skipped_tiers, "council"
   end
 
   # Once tripped, a second council in the same run does not re-buy the refusal.
@@ -158,14 +158,14 @@ class TestCouncilDeliberation < Minitest::Test
     spent = failing.calls
     second = Master.stub(:any_api_key_present?, true) { delib.review("puts :other") }
 
-    assert_equal spent, failing.calls, "the gate is still closed; nothing more is spent"
-    assert_equal Gate::CATEGORY, second.category
+    assert_equal spent, failing.calls, "the check is still closed; nothing more is spent"
+    assert_equal Check::CATEGORY, second.category
     assert_match(/SKIPPED council/, second.message)
   end
 
   # Resume, with no code change and no manual reset: the limit lifts, the
   # backoff elapses, and the next round runs. A breaker that latched for the
-  # process would have deleted the tier for the rest of a long gate.
+  # process would have deleted the tier for the rest of a long check.
   def test_the_council_resumes_when_the_limit_lifts
     agent = BrokeAgent.new(fail_times: 1)
     personas = Array.new(4) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
@@ -173,10 +173,10 @@ class TestCouncilDeliberation < Minitest::Test
 
     first = Master.stub(:any_api_key_present?, true) { delib.review("puts :ok") }
     assert first.err?
-    assert Gate.blocked?
+    assert Check.blocked?
 
     second = Master::Ground::FailureTaxonomy.stub(:backoff_seconds, 0) do
-      Gate.trip!(source: "test", message: CREDITS) # re-arm with the backoff elapsed
+      Check.trip!(source: "test", message: CREDITS) # re-arm with the backoff elapsed
       Master.stub(:any_api_key_present?, true) { delib.review("puts :ok") }
     end
 

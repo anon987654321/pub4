@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 
-# `bin/rails test` and the VPS gate must agree about what the suite is.
+# `bin/rails test` and the VPS check must agree about what the suite is.
 #
 # Rails globs test/**/*_test.rb from the app root, which never reached the
 # mountable verticals under engines/*/test. shared/config/ci.rb sets
@@ -12,7 +12,7 @@ require "minitest/autorun"
 # It has bitten twice. ci.rb's comment records four engine tests rotting into
 # NameErrors on a stale route helper while CI stayed green. On 2026-08-10 a
 # validation-i18n change broke two takeaway engine tests, three sessions reported
-# "brgen green" from the narrow command, and the VPS gate caught it — 349 runs
+# "brgen green" from the narrow command, and the VPS check caught it — 349 runs
 # locally against CI's 381, and a blocked deploy.
 #
 # brgen sets the same globs in config/application.rb now. This asserts the two

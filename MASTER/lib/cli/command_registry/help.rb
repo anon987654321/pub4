@@ -83,7 +83,7 @@ detail: [
           detail: [
             "/plugin — list installed plugins.",
             "/plugin info <id> — show one manifest.",
-            "/plugin run <id> <action> <json> — invoke through the constitutional gate.",
+            "/plugin run <id> <action> <json> — invoke through the constitutional check.",
             "social_browser covers OnlyFans and FetLife on supported desktop or Android/Termux runtimes.",
             "It permits explicit operator-owned or authorized actions and inbound replies only; no bulk outreach, friendship farming, deception or challenge bypass.",
             "air_superiority performs defensive Wi-Fi/Bluetooth observation and keeps only a local known-device baseline.",
