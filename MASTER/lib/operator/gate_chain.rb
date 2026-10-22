@@ -237,10 +237,11 @@ module Operator
     BASELINE_FILE = File.join(MASTER, ".master", "gate_baseline.json")
 
     def baseline_key(target, root: ROOT, trees: trees_for_target(target))
-      head, head_status = Master::Io::Exec.capture2("git", "rev-parse", "HEAD", chdir: root)
-      raise "gate baseline fingerprint: git rev-parse failed" unless head_status.success?
-
-      diff, diff_status = Master::Io::Exec.capture2("git", "diff", "HEAD", "--binary", chdir: root)
+      # The target trees' own content, not the whole checkout's: another writer's commit or edit
+      # in a different tree changed the key and the baseline ladder ran again.
+      tree_names = Array(trees).map(&:to_s).reject(&:empty?)
+      head = tree_names.map { |tree| committed_version(root, tree) }.join(",")
+      diff, diff_status = Master::Io::Exec.capture2("git", "diff", "HEAD", "--binary", "--", *tree_names, chdir: root)
       raise "gate baseline fingerprint: git diff failed" unless diff_status.success?
 
       untracked, untracked_status = Master::Io::Exec.capture2(
@@ -248,13 +249,19 @@ module Operator
       )
       raise "gate baseline fingerprint: git ls-files failed" unless untracked_status.success?
 
-      tree_names = Array(trees).map(&:to_s).reject(&:empty?)
       paths = untracked.split("\0").reject(&:empty?).select do |relative|
         tree_names.any? { |tree| relative == tree || relative.start_with?("#{tree}/") }
       end
       untracked_fingerprint = paths.sort.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
       scope = baseline_scope_key_for(tree_names)
       Digest::SHA256.hexdigest([head.strip, scope, diff, untracked_fingerprint, verification_only.join(",")].join("\0"))
+    end
+
+    def committed_version(root, tree)
+      out, status = Master::Io::Exec.capture2("git", "rev-parse", "HEAD:#{tree}", chdir: root)
+      raise "gate baseline fingerprint: git rev-parse failed for HEAD:#{tree}" unless status.success?
+
+      out.strip
     end
 
     def baseline_scope_key(target)
@@ -310,13 +317,15 @@ module Operator
       end
     end
 
+    PASS_PROVEN_TREES = %w[MASTER OPENBSD RAILS].freeze
+
     def verification_stages(target)
       trees = trees_for_target(target)
       selected = stages(scan_only: true, trees:).reject { |stage| stage.name == "council" }
-      # The Rails source stage now owns the complete Rails premerge proof
-      # (application suites, contracts, coverage, PWA/runtime and gates). Do not
-      # immediately run the generic Rails suite a second time.
-      selected = selected.reject { |stage| stage.name == "suites" } if trees == ["RAILS"]
+      # The /fix pass proves these trees itself, before and after its repair: MASTER and OPENBSD
+      # with their suites (Pass's proof), RAILS with the source stage, which owns the complete
+      # Rails premerge proof. Running the suites here as well ran them four times per /fix.
+      selected = selected.reject { |stage| stage.name == "suites" } if (trees - PASS_PROVEN_TREES).empty?
       # Verification is measurement only. Every selected stage is scan-only;
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is

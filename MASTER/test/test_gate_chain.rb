@@ -237,7 +237,7 @@ class TestGateChain < Minitest::Test
     assert_equal %w[lexical openbsd rehearse suites ratchets sprawl council], scoped
   end
 
-  def test_fix_verification_does_not_duplicate_the_lexical_stage
+  def test_fix_verification_leaves_the_suites_to_the_pass_proof
     lexical = G::Stage.new(name: "lexical", purpose: "lexical", mutates: false, run: -> {})
     suites = G::Stage.new(name: "suites", purpose: "suites", mutates: false, run: -> {})
     captured = nil
@@ -248,9 +248,32 @@ class TestGateChain < Minitest::Test
       end
     end
 
-    assert_equal %w[lexical suites], captured.map(&:name)
+    assert_equal %w[lexical], captured.map(&:name)
   end
 
+  def committed_repo(root)
+    %w[MASTER RAILS].each { |tree| FileUtils.mkdir_p(File.join(root, tree)) }
+    File.write(File.join(root, "MASTER", "a.rb"), "A = 1\n")
+    File.write(File.join(root, "RAILS", "b.rb"), "B = 1\n")
+    git = ->(*args) { system("git", "-C", root, *args, out: File::NULL, err: File::NULL) }
+    git.call("init", "-q")
+    git.call("add", ".")
+    git.call("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base")
+  end
+
+  def test_the_baseline_key_ignores_changes_outside_the_target_trees
+    Dir.mktmpdir do |root|
+      committed_repo(root)
+      key = -> { G.baseline_key("MASTER", root:, trees: ["MASTER"]) }
+      before = key.call
+
+      File.write(File.join(root, "RAILS", "b.rb"), "B = 2\n")
+      assert_equal before, key.call
+
+      File.write(File.join(root, "MASTER", "a.rb"), "A = 2\n")
+      refute_equal before, key.call
+    end
+  end
 
   def test_pre_repair_baseline_names_its_read_only_phase_and_subsequent_repair
     stage = G::Stage.new(name: "lexical", purpose: "measurement", mutates: false, run: -> {})
