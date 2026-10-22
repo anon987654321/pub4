@@ -222,31 +222,6 @@ module Master
         end
       end
 
-      # The RAILS design sweep is part of the same /fix transaction boundary:
-      # it runs before final gate verification and publication. A nonzero result
-      # is a validation failure, never a successful repair with unverified edits.
-      def design_after_fix(rendered, target:)
-        return rendered if rendered.is_a?(Master::Result::Err)
-
-        apps = Master::Fix::DesignScope.apps_for(target)
-        return rendered if apps.empty?
-
-        require_relative "../../operator/design_run"
-        code = ::Operator::DesignRun.main(["--app", apps.join(",")], root: Master::REPO_ROOT)
-        unless code.to_i.zero?
-          message = "layout sweep failed with exit #{code}; the shared /fix gate and delivery phase will not claim success"
-          Master::Trace::Dmesg.status("design0", "VALIDATION_FAILED: #{message}")
-          return Master::Result.err(message, category: :validation)
-        end
-
-        Master::Trace::Dmesg.status("design0", "layout sweep finished; changes remain inside /fix until final gate verification and publication")
-        rendered
-      rescue StandardError => e
-        message = "layout sweep failed: #{e.class}: #{e.message.lines.first.to_s.strip[0, 160]}"
-        Master::Trace::Dmesg.status("design0", "VALIDATION_FAILED: #{message}")
-        Master::Result.err(message, category: :validation)
-      end
-
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
                          writes_requested:, effective_critique:, critique:, aesthetic:, only:)
         gate_label = ::Operator::GateChain.baseline_scope_key(target)
@@ -277,12 +252,6 @@ module Master
                          aesthetic:, only:)
         return value unless writes_requested
         return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
-
-        # The design sweep mutates and commits files. Keep it inside the same
-        # pre-repair baseline and before final gate verification/publication;
-        # running it after dispatch had already declared and pushed success.
-        value = design_after_fix(value, target:)
-        return value if value.is_a?(Master::Result::Err)
 
         gate_rounds = 0
         gate_status = 0
