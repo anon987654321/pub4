@@ -33,10 +33,10 @@ body[data-surface="luxury"] {
   --amber-ink: #2d2831;
   --amber-muted: #746d77;
   --amber-rule: #ebe4ee;
-  --bg: #ffffff;
-  --surface: #ffffff;
+  --bg: var(--luxury-surface);
+  --surface: var(--luxury-surface);
   --surface-elevated: #fcf8fd;
-  --luxury-bg: #ffffff;
+  --luxury-bg: var(--luxury-surface);
   --luxury-surface: #ffffff;
   --luxury-text: var(--amber-ink);
   --luxury-muted: var(--amber-muted);
@@ -46,7 +46,7 @@ body[data-surface="luxury"] {
   --border: var(--amber-rule);
   --accent: #a96e96;
   --color-black: var(--amber-ink);
-  --color-white: #ffffff;
+  --color-white: var(--luxury-surface);
 }
 
 body[data-surface="luxury"] .amber-editorial-nav {
