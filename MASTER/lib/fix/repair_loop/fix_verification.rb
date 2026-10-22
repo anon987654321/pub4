@@ -124,11 +124,18 @@ module Master
         # every test sharing a common stem. nil means the test passed or there
         # is none; a string names the failure.
         def failing_test_for(path)
+          suite, test = FixVerification.rails_test_for(File.expand_path(path.to_s, @root))
+          return run_own_test([RbConfig.ruby, "bin/rails", "test", test], suite:, test:) if test
+
           test = own_test_for(path)
           return unless test
 
           suite = File.dirname(File.dirname(test))
-          out, status = Master::Io::Exec.capture2e(*own_test_command(suite, test), chdir: suite)
+          run_own_test(own_test_command(suite, test), suite:, test:)
+        end
+
+        def run_own_test(command, suite:, test:)
+          out, status = Master::Io::Exec.capture2e(*command, chdir: suite)
           status.success? ? nil : "#{File.basename(test)}: #{out.lines.last(3).join.strip}"
         end
 
@@ -139,6 +146,18 @@ module Master
         def own_test_command(suite, test)
           ruby = [RbConfig.ruby, "-Ilib", "-Itest", test]
           File.file?(File.join(suite, "Gemfile")) ? [::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *ruby] : ruby
+        end
+
+        # A Rails file's test follows the Rails layout: app/models/user.rb is tested by
+        # test/models/user_test.rb in the same app, and runs through that app's bin/rails.
+        RAILS_FILE = %r{\A(?<app>.+/RAILS/[^/]+)/app/(?<kind>[^/]+)/(?<rest>.+)\.rb\z}
+
+        def self.rails_test_for(path)
+          found = path.to_s.match(RAILS_FILE)
+          return unless found
+
+          test = File.join(found[:app], "test", found[:kind], "#{found[:rest]}_test.rb")
+          [found[:app], test] if File.file?(test) && File.file?(File.join(found[:app], "bin", "rails"))
         end
 
         def own_test_for(path)

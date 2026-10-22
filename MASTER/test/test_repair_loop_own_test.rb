@@ -13,4 +13,18 @@ class TestRepairLoopOwnTest < Minitest::Test
 
     assert_nil loop.send(:failing_test_for, File.join(Master::ROOT, "bin", "doctor"))
   end
+
+  def test_a_rails_file_maps_to_its_app_test
+    app = File.join(Master::REPO_ROOT, "RAILS", "brgen")
+    model = File.join(app, "app", "models", "bookmark.rb")
+
+    suite, test = Master::Fix::RepairLoop::FixVerification.rails_test_for(model)
+
+    assert_equal app, suite
+    assert_equal File.join(app, "test", "models", "bookmark_test.rb"), test
+  end
+
+  def test_a_file_outside_rails_has_no_rails_test
+    assert_nil Master::Fix::RepairLoop::FixVerification.rails_test_for(File.join(Master::ROOT, "lib", "master.rb"))
+  end
 end
