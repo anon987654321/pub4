@@ -14,8 +14,7 @@ module Master
       end
 
       def self.named_apps(repo_root:)
-        path = File.join(File.expand_path(repo_root), "RAILS", "apps.yml")
-        data = YAML.safe_load_file(path, aliases: true)
+        data = YAML.safe_load_file(File.join(File.expand_path(repo_root), "RAILS", "apps.yml"), aliases: true)
         apps = data.is_a?(Hash) ? data["apps"] : nil
         raise ArgumentError, "RAILS/apps.yml has no apps mapping" unless apps.is_a?(Hash)
 
@@ -24,30 +23,28 @@ module Master
 
       def self.app_name(target, repo_root:)
         relative = relative_path(target, repo_root:)
-        match = relative&.match(%r{\ARAILS/([^/]+)(?:/|\z)})
-        name = match && match[1]
+        name = relative&.match(%r{\\ARAILS/([^/]+)(?:/|\\z)})&.captures&.first
         name if name && named_apps(repo_root:).include?(name)
       end
 
       def self.app_root?(target, repo_root:)
         name = app_name(target, repo_root:)
-        return false unless name
+        return false unless name && relative_path(target, repo_root:) == "RAILS/#{name}"
 
-        relative = relative_path(target, repo_root:)
-        return false unless relative == "RAILS/#{name}"
-
-        path = File.join(File.expand_path(repo_root), relative)
+        path = File.join(File.expand_path(repo_root), "RAILS", name)
         File.directory?(path) && File.file?(File.join(path, "Gemfile")) &&
           File.file?(File.join(path, "bin", "rails"))
       end
 
       def self.relative_path(target, repo_root:)
         root = File.expand_path(repo_root)
-        raw = target.to_s
-        absolute = raw.start_with?(File::SEPARATOR) ? File.expand_path(raw) : File.expand_path(raw, root)
-        return unless absolute == root || absolute.start_with?("#{root}#{File::SEPARATOR}")
+        absolute = File.expand_path(target.to_s, root)
+        return "." if absolute == root
 
-        absolute == root ? "." : absolute.delete_prefix("#{root}#{File::SEPARATOR}")
+        prefix = "#{root}#{File::SEPARATOR}"
+        return unless absolute.start_with?(prefix)
+
+        absolute.delete_prefix(prefix)
       end
       private_class_method :relative_path
 
