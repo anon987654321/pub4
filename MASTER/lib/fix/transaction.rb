@@ -97,10 +97,14 @@ module Master
         return Result.err("transaction source changed during enlistment", category: :policy) unless
           added.all? { |path| snapshot_matches_fingerprint?(staged.fetch(path), fingerprint(absolute(path))) }
 
-        @snapshots.merge!(staged)
+        old = [@paths, @snapshots]
+        @snapshots = @snapshots.merge(staged)
         @paths = (@paths + added).uniq
         observed = observe_paths!(added) unless added.empty?
-        return observed if observed && observed.err?
+        if observed&.err?
+          @paths, @snapshots = old unless persisted_state_matches?
+          return observed
+        end
 
         emit("fix:transaction_paths_enlisted", id: @id, paths: added)
         Result.ok(added)
