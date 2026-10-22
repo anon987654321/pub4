@@ -68,7 +68,7 @@ module Master
         end
         @state = "open"
         @active = true
-        observe!
+        observe!(verify_snapshot: true)
         emit(
           "fix:transaction_snapshot_summary",
           id: @id,
