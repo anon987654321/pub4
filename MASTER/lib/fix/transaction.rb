@@ -220,14 +220,60 @@ module Master
         selected = selected.uniq
         raise "checkpoint includes a path outside the transaction" unless (selected - @paths).empty?
 
-        selected.each do |path|
-          @snapshots[path] = snapshot(path)
-          @seen[path] = [fingerprint(absolute(path))]
+        staged = {}
+        begin
+          selected.each { |path| staged[path] = snapshot(path, versioned: true) }
+        rescue StandardError
+          discard_snapshots!(staged.values)
+          raise
         end
+        unsupported = staged.select { |_path, item| item.kind == :other }.keys
+        unless unsupported.empty?
+          discard_snapshots!(staged.values)
+          return Result.err(
+            "transaction checkpoint cannot safely capture unsupported filesystem object(s): #{unsupported.join(", ")}",
+            category: :policy,
+          )
+        end
+
+        next_seen = duplicate_seen
+        selected.each do |path|
+          current = fingerprint(absolute(path))
+          unless snapshot_matches_fingerprint?(path, staged.fetch(path), current)
+            discard_snapshots!(staged.values)
+            return Result.err("transaction source changed while checkpointing: #{path}", category: :policy)
+          end
+          next_seen[path] = [current]
+        end
+
+        old_snapshots = @snapshots
+        old_seen = @seen
+        old_state = @state
+        old_delivery_head_before = @delivery_head_before
+        old_delivery_head_after = @delivery_head_after
+        next_snapshots = @snapshots.merge(staged)
+        @snapshots = next_snapshots
+        @seen = next_seen
         @state = "open"
         @delivery_head_before = nil
         @delivery_head_after = nil
-        persist!
+        begin
+          persist!
+        rescue StandardError
+          unless persisted_state_matches?(state: @state, paths: @paths, snapshots: next_snapshots)
+            @snapshots = old_snapshots
+            @seen = old_seen
+            @state = old_state
+            @delivery_head_before = old_delivery_head_before
+            @delivery_head_after = old_delivery_head_after
+          end
+          discard_snapshots!(staged.values)
+          raise
+        end
+
+        obsolete = selected.filter_map { |path| old_snapshots[path] }
+          .reject { |item| item.store && next_snapshots.values.any? { |current| current.store == item.store } }
+        discard_snapshots!(obsolete)
         emit("fix:transaction_checkpoint", id: @id, paths: selected)
         Result.ok(selected)
       rescue StandardError => e
