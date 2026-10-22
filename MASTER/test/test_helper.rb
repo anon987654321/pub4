@@ -80,8 +80,19 @@ Minitest::Test.class_eval do
   def run(*args)
     Timeout.timeout(test_timeout) { run_without_timeout(*args) }
   rescue Timeout::Error
-    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{test_timeout}s"))
-    self
+    failed_with(Timeout::Error.new("timed out after #{test_timeout}s"))
+  # Minitest passes SystemExit through, so a test that reached exit or abort ended the whole run
+  # with no report: on 2026-10-22 rake test stopped after 3,632 tests and named no failure.
+  rescue SystemExit => e
+    origin = e.backtrace&.find { |line| !line.include?("/gems/") }
+    failed_with(RuntimeError.new("called exit(#{e.status}) at #{origin}"))
+  end
+
+  # Minitest 5.27 requires run to return a Result; handing back the test itself raised
+  # "must return a Result" and ended the run at the first timed-out test.
+  def failed_with(error)
+    failures << Minitest::UnexpectedError.new(error)
+    Minitest::Result.from(self)
   end
 
   # Shared by every scan-law test (test_cosmetic_laws, test_web_laws,
