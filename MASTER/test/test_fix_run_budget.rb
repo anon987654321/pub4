@@ -217,6 +217,32 @@ class TestFixRunBudget < Minitest::Test
     Master::Fix::RunLedger.reset!
   end
 
+  def test_shared_finish_guard_clears_even_if_finalization_raises
+    original_finish = Budget.method(:finish_run)
+    calls = 0
+    failing_finish = lambda do |reason: "completed"|
+      calls += 1
+      raise "simulated finish failure" if calls == 2
+
+      original_finish.call(reason:)
+    end
+
+    error = assert_raises(RuntimeError) do
+      Budget.stub(:finish_run, failing_finish) do
+        Budget.with_shared_run(root: @root, max_passes: 3) { :command_complete }
+      end
+    end
+
+    assert_equal "simulated finish failure", error.message
+    assert_equal false, Budget.instance_variable_get(:@shared_finishing)
+    assert_equal 0, Budget.instance_variable_get(:@shared_depth)
+  ensure
+    Budget.finish_run
+    Master::Fix::RunLedger.reset!
+    Budget.instance_variable_set(:@shared_finishing, false)
+    Budget.instance_variable_set(:@shared_depth, 0)
+  end
+
   def test_shared_budget_is_finalized_when_a_nested_pass_raises
     started = nil
 
