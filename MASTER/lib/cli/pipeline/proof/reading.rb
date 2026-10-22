@@ -12,7 +12,7 @@ module Master
         SUITE_HEADER = /\Aproof suite (.+): (ok|FAIL)\z/
         GATE_VERDICT = /\b(\d+) of (\d+) passed in [^;]*autofix (?:on|off)/
         GATE_FAILED = /\A(.+?) (?:failed|errored)\z/
-        CHECK_FAILURES = /\Acheck\[\w+\]: \d+ failure\(s\): (.+)\z/
+        CHECK_FAILURES = /\Acheck\d+ at \S+: \d+ failure\(s\), (.+)\z/
         TEST_HEAD = /\A\s*(?:\d+\)\s+)?(?:Failure|Error):\s*\z/
         TEST_NAME = /\A\s*(\S+#\S+?)(?: \[[^\]]*\])?:?\s*\z/
         TIMEOUT = /step timed out after \d+s: (.+)\z/

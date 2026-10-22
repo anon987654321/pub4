@@ -169,6 +169,6 @@ class TestProofBaseline < Minitest::Test
     heads = failing.flat_map { |name| ["  1) Failure:", "#{name} [test/x.rb:1]:", "Expected true"] }
     ["proof suite MASTER: #{ok ? "ok" : "FAIL"}", *heads,
      "9 runs, 9 assertions, #{failing.size} failures, 0 errors, 0 skips",
-     "check[ci]: 1 failure(s): test"]
+     "check0 at master0: 1 failure(s), test"]
   end
 end

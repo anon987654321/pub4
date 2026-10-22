@@ -407,7 +407,7 @@ def default_apply?(*) = false
         # Marks a stage failed and keeps its first reason, which the report footer prints.
         def fail_stage(label, cause)
           @failed_stages << label unless @failed_stages.include?(label)
-          @causes[label] ||= cause.to_s.strip[0, 240]
+          (@causes ||= {})[label] ||= cause.to_s.strip[0, 240]
         end
 
         def run_fix_preview(abs)
