@@ -527,7 +527,10 @@ def stage_commit_mode?
         def ground_truth_fresh?(paths)
           return true unless @ground_truth && @root
 
-          stale = ruby_files(paths).reject { |path| @ground_truth.fresh?(path) }
+          # A write this run recorded and no one changed since is fresh however long the repair took;
+          # the age window is for what was read, and expired a slow repair's own commit.
+          truth = @ground_truth
+          stale = ruby_files(paths).reject { |path| truth.fresh?(path) || truth.recorded_unchanged?(path) }
           return true if stale.empty?
 
           stale.each { |path| @ground_truth.assert_fresh!(path, reason: "commit_creation") }

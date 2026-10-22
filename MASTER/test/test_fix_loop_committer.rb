@@ -264,6 +264,20 @@ def test_a_file_fix_did_not_write_stays_out_of_its_commit
   assert_equal ["lib/ok.rb"], committed
 end
 
+# A repair that took longer than the freshness window still commits its own unchanged write.
+def test_a_slow_repairs_own_write_still_commits
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  truth = Master::Ground::Truth.new(max_age_seconds: -1)
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: truth)
+  committer.baseline!
+  committer.attest_written!(File.join(@dir, "lib/ok.rb"))
+
+  capture_io { committer.commit_if_dirty("fix: ok") }
+
+  assert_equal 1, git.commits.size
+end
+
 # fix-here --no-publish: the commits stay local and the operator pushes.
 def test_no_publish_holds_the_commits_instead_of_pushing
   write_file("lib/ok.rb", "OK = 1\n")
