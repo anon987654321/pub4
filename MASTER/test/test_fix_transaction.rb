@@ -121,6 +121,34 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_failed_delivery_finalization_releases_lock_for_a_safe_retry
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      id = "delivery-retry"
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:).begin!
+      File.write(path, "after")
+      tx.observe!
+      tx.delivery.begin!(head_before: "parent")
+      tx.delivery.record_commit!(head_after: "commit-1")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      recovered = Master::Fix::Transaction::Recovery.load_persisted(root: dir, id:)
+      failed = recovered.delivery.finalize!(head: "wrong-head")
+      refute failed.ok?
+      assert_includes failed.message, "delivery HEAD mismatch"
+      assert Master::Fix::Transaction::Recovery.persisted?(root: dir, id:)
+
+      retrying = Master::Fix::Transaction::Recovery.load_persisted(root: dir, id:)
+      assert retrying.delivery.pending?
+      completed = retrying.delivery.finalize!(head: "commit-1")
+
+      assert completed.ok?
+      refute Master::Fix::Transaction::Recovery.persisted?(root: dir, id:)
+    end
+  end
+
   def test_recovery_does_not_overwrite_a_write_whose_owner_is_ambiguous
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
