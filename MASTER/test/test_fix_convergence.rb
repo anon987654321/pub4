@@ -2084,18 +2084,19 @@ end
     pass = Master::CLI::Pipeline::Pass.allocate
     counts = { "FEW_ARGUMENTS" => 28, "magic_number" => 26, "FEATURE_ENVY" => 14,
                "CQS" => 9, "SMALL_FILES" => 6, "COUPLER_SMELLS" => 5, "duplicate_code" => 4 }
-    lines = pass.send(:preview_lines, total: 107, rules: counts, files: { "lib/voice/engines.rb" => 20 })
+    lines = pass.preview_lines(total: 107, laws: counts, files: { "lib/voice/engines.rb" => 20 })
 
-    assert_equal "preview: 107 repairs", lines.lines.first.chomp
-    assert_match(/^preview rules: FEW_ARGUMENTS 28, /, lines)
+    assert_equal "preview: 107 findings at warning or above to repair", lines.lines.first.chomp
+    assert_match(/^preview laws: FEW_ARGUMENTS 28, /, lines)
     assert_match(/, and 1 more$/, lines.lines[1].chomp)
     assert_equal "preview files: engines.rb 20", lines.lines[2].chomp
     refute_match(/lib.voice.engines/, lines)
   end
 
-  def test_one_repair_is_not_repairs
+  def test_one_finding_is_not_findings
     pass = Master::CLI::Pipeline::Pass.allocate
-    assert_equal "preview: 1 repair", pass.send(:preview_lines, total: 1, rules: {}, files: {}).lines.first.chomp
+    assert_equal "preview: 1 finding at warning or above to repair",
+                 pass.preview_lines(total: 1, laws: {}, files: {}).lines.first.chomp
   end
 
   def test_gate_chain_is_explicitly_top_level_from_master_namespace

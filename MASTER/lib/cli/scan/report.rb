@@ -25,7 +25,7 @@ module Master
 
           lines = []
           lines << phase_line if phase_line
-          lines << "#{prefix}#{header}#{total} total violations#{suffix}"
+          lines << "#{prefix}#{header}#{total} total violations#{grouped}#{suffix}"
           lines << delta_line if delta_line
           lines << autofix_line if autofix_line
           cross_file_line = cross_file_drifts_line
@@ -42,7 +42,7 @@ module Master
         # One dmesg line: "12 violations; top LONG_LINE 5, DEAD_CODE 2".
         def brief
           top = ranked.first(8).map { |rule, vs| "#{rule} #{vs.size}" }.join(", ")
-          parts = [total.zero? ? "#{prefix}#{header}clean#{suffix}" : "#{prefix}#{header}#{total} violations"]
+          parts = [total.zero? ? "#{prefix}#{header}clean#{suffix}" : "#{prefix}#{header}#{total} violations#{grouped}"]
           parts << "top #{top}" unless top.empty?
           parts << autofix_line
           parts << delta_line
@@ -143,6 +143,14 @@ module Master
 
         def total
           @total ||= by_rule.values.sum(&:size)
+        end
+
+        # A violation is one law and message, however many places carry it, so the total is not the number
+        # of findings: MASTER's 19,112 findings read as 2,283 violations, and the scanner's 28,711 before
+        # conflicts were resolved. The line says both when they differ.
+        def grouped
+          findings = by_rule.values.flatten.sum { |violation| violation[:count] }
+          " from #{findings} findings" if findings != total
         end
 
         # Blast radius, not firing count: an error across five files outranks an

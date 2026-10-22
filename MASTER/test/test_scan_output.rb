@@ -43,6 +43,15 @@ class TestScanOutput < Minitest::Test
     }
   end
 
+  # One law and message in two files is one violation, and the line says how many findings it groups.
+  def test_a_grouped_total_names_the_findings_behind_it
+    pairs = %w[/tmp/a.rb /tmp/b.rb].map { |file| [file, Master::Result.ok([finding("LONG_LINE").except(:dedupe_key)])] }
+    report = Master::CLI::Scan::Report.new(pairs:, profile: nil, rule_filter: nil)
+
+    assert_match(/\A1 violations from 2 findings/, report.brief)
+    assert_includes report.render, "1 total violations from 2 findings"
+  end
+
   def test_scan_report_brief_and_delta
     pairs = [[
       "/tmp/a.rb",

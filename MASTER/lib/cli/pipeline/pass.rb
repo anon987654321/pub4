@@ -535,6 +535,8 @@ def default_apply?(*) = false
         def preview_lines(value)
           [blocker_line(value[:blockers]), *finding_lines(value)].compact.join("\n")
         end
+        # The preview's wording, read from a preview's value alone.
+        public :preview_lines
 
         # --plan: the files a red gate names come first, because the run would repair them first.
         def blocker_line(blockers)
@@ -548,7 +550,7 @@ def default_apply?(*) = false
         def finding_lines(value) = (summary_rows(value) + detail_rows(value)).compact.join("\n")
 
         def summary_rows(value)
-          [total_line(value[:total].to_i), semantic_note(value[:gaps]), preview_row("rules", value[:rules])]
+          [total_line(value[:total].to_i), semantic_note(value[:gaps]), preview_row("laws", value[:laws])]
         end
 
         def detail_rows(value)
@@ -558,7 +560,9 @@ def default_apply?(*) = false
            preview_row("transformations", { "order" => order })]
         end
 
-        def total_line(total) = "preview: #{total} #{total == 1 ? "repair" : "repairs"}"
+        # The repair's queue: every finding at warning or above once conflicts are resolved, one per place, where
+        # the observation's report groups findings by law and message. "repairs" read as work already decided.
+        def total_line(total) = "preview: #{total} #{total == 1 ? "finding" : "findings"} at warning or above to repair"
 
         def semantic_note(gaps)
           gaps = (gaps || {}).to_h
