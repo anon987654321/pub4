@@ -374,7 +374,8 @@ module Master
 
       def inside?(path, dir) = path == dir || path.start_with?(dir + File::SEPARATOR)
 
-      def absolute(path) = (@path_guard ||= Master::Core::World.allocate.tap { |world| world.instance_variable_set(:@root, outer_root) }).send(:within, File.join(@root, path))
+      def absolute(path) = path_guard.send(:within, File.join(@root, path))
+      def path_guard = (@path_guard ||= Master::Core::World.allocate.tap { |world| world.instance_variable_set(:@root, outer_root) })
 
       def snapshot(path, versioned: false)
         abs = absolute(path)
