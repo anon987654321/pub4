@@ -20,7 +20,7 @@ class TestMarkdownStyleReachesThePrompt < Minitest::Test
   class Host
     include Master::Voice::PersonalityPromptBuilder
 
-    def initialize(rules) = @rules = rules
+    def initialize(laws) = @laws = laws
     def sections_for(section) = {}.tap { |s| add_markdown_style(s) }.fetch(section, "")
   end
 

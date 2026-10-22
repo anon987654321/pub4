@@ -93,15 +93,19 @@ class TestEvidenceRouter < Minitest::Test
 
   # A turn labelled casual still has an evidence route; its rule has to reach the prompt.
   class CasualHost
+    include Master::Review::PromptFilter
     include Master::Review::Agent::PromptBuilder
 
+    REPO = File.expand_path("../..", __dir__)
+
     Config = Struct.new(:task_type) do
-      def [](key) = key == "root" ? "/work/pub4" : nil
+      def [](key) = key == "root" ? REPO : nil
     end
     Session = Struct.new(:messages, :topic)
 
     def initialize = (@config = Config.new("chat"); @session = Session.new([{ role: :user, content: "why no tts?" }], nil))
-    def prompt = casual_dynamic_prompt
+    # Casual turns share dynamic_prompt since the prompts were unified.
+    def prompt = dynamic_prompt
   end
 
   def test_the_casual_prompt_carries_the_evidence_rule_and_the_working_directory
@@ -109,7 +113,7 @@ class TestEvidenceRouter < Minitest::Test
     out = CasualHost.new.prompt
 
     assert_includes out, "this turn concerns the repository"
-    assert_includes out, "Working in /work/pub4"
+    assert_includes out, "repository=#{CasualHost::REPO}"
   ensure
     Fiber[:master_evidence_note] = nil
   end
