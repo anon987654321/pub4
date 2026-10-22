@@ -117,7 +117,7 @@ Account deletion sets a 30-day grace period and revokes the active login immedia
 `UserPurgeJob` is scheduled daily at 03:50. It removes private wardrobe, profile, connection,
 identity, session, inbox and account-linked outbound-attribution data; deletes click records tied to private wardrobe objects, purges attachments through model callbacks, and anonymises the
 user row. Public posts and comments remain attached to the anonymised row to preserve discussion,
-but references to removed wardrobe items/outfits are removed from posts, recommendations,
+but references to removed wardrobe items/outfits and deleted inbox messages are removed from posts, recommendations,
 declutter history, reactions, notifications, votes, outbound-click attribution and moderation
 cases so another user's row cannot retain a pointer to erased private data. If a required erasure table is missing or an account cannot be purged, the
 transaction rolls back for that account, its deletion marker remains due for retry, and the job
