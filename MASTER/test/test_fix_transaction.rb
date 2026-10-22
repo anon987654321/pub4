@@ -17,6 +17,25 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_transaction_refuses_a_path_through_a_symlinked_parent
+    Dir.mktmpdir do |base|
+      root = File.join(base, "repo")
+      outside = File.join(base, "outside")
+      FileUtils.mkdir_p([root, outside])
+      outside_file = File.join(outside, "note.txt")
+      File.write(outside_file, "outside bytes")
+      File.symlink(outside, File.join(root, "linked"))
+
+      tx = Master::Fix::Transaction.new(root:, paths: ["linked/note.txt"], id: "symlink-parent")
+      error = assert_raises(RuntimeError) { tx.begin! }
+
+      assert_includes error.message, "symlinked parent"
+      refute tx.active?
+      assert_equal "outside bytes", File.read(outside_file)
+      refute Dir.exist?(File.join(root, ".master", "fix_transactions", "symlink-parent"))
+    end
+  end
+
   def test_rollback_restores_the_snapshot
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
