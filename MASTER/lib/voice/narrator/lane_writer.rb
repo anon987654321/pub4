@@ -38,8 +38,9 @@ module Master
         def supported?(id) = UNSUPPORTED_LANES.none? { |lane| id.start_with?(lane) }
 
         def via_claude_cli(model, system, prompt)
+          claude = Master::Io::Exec.cli_binary("claude") || "claude"
           out, _err, status = @runner.capture3(
-            SESSION_ENV, "claude", "--print", "--model", model.split(":", 2).last, *TEXT_ONLY, "--system-prompt", system,
+            SESSION_ENV, claude, "--print", "--model", model.split(":", 2).last, *TEXT_ONLY, "--system-prompt", system,
             stdin_data: prompt, timeout: Float(@config.fetch("model_timeout_s", 20))
           )
           raise Unavailable, "claude-cli exited #{status.exitstatus.inspect}" unless status.success?

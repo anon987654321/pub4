@@ -234,12 +234,7 @@ module Master
         %i[up started].include?(LaneHealth.ensure_ollama.state)
       end
 
-      def on_path?(binary)
-        ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
-          exe = File.join(dir, binary)
-          File.file?(exe) && File.executable?(exe)
-        end
-      end
+      def on_path?(binary) = !Master::Io::Exec.cli_binary(binary).nil?
 
       # "online: yes via X" or "online: NO (all lanes dead) ..." over the catalogue.
       def online_line(cfg: config)

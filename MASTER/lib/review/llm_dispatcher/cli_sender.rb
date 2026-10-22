@@ -178,8 +178,10 @@ def claude_on_path?
   return false if ENV["MASTER_NO_CLAUDE_CLI"] == "1"
   return @claude_on_path unless @claude_on_path.nil?
 
-  @claude_on_path = Master::Io::Exec.on_path?("claude")
+  @claude_on_path = !claude_binary.nil?
 end
+
+def claude_binary = (@claude_binary ||= Master::Io::Exec.cli_binary("claude"))
 
 # The first two mark the parent as a Claude Code session, and a `claude --print`
 # that inherits them from one hangs until killed. The second two are keys MASTER
@@ -205,7 +207,7 @@ CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config"].freeze
 CLAUDE_CLI_LIMIT = /\A\s*(?:You've hit your \w*\s*limit|Claude (?:AI )?usage limit reached)/i
 
 def claude_cli_call(model_alias, messages, sys, image = nil)
-  args = ["claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
+  args = [claude_binary || "claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
   args += ["--system-prompt", sys] if sys && !sys.empty?
   blocks = claude_image_blocks(image)
   stdin = text_prompt_for(messages)

@@ -74,10 +74,7 @@ module Master
           def claude_cli_available?
             return false if ENV["MASTER_NO_CLAUDE_CLI"] == "1"
             return @claude_cli_available unless @claude_cli_available.nil?
-            @claude_cli_available = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
-              exe = File.join(dir, "claude")
-              File.file?(exe) && File.executable?(exe)
-            end
+            @claude_cli_available = !Master::Io::Exec.cli_binary("claude").nil?
           end
 
           # API-backed free models remain ahead of browser-mediated free chat.

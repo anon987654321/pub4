@@ -284,4 +284,25 @@ class TestLaneSelection < Minitest::Test
 
     assert_equal [OPUS], sent, "the first live lane of the tier, not the dead agy and not a free nemotron"
   end
+
+  # A launch script whose PATH leaves out ~/.local/bin, where the installer puts claude, still finds it there.
+  def test_claude_outside_path_is_found_in_the_user_bin
+    Dir.mktmpdir do |bin|
+      File.write(File.join(bin, "claude"), "#!/bin/sh\n")
+      File.chmod(0o755, File.join(bin, "claude"))
+      found, missing = with_path("/usr/bin:/bin") do
+        [Master::Io::Exec.cli_binary("claude", user_bins: [bin]), Master::Io::Exec.cli_binary("claude", user_bins: [])]
+      end
+
+      assert_equal [File.join(bin, "claude"), nil], [found, missing]
+    end
+  end
+
+  def with_path(path)
+    previous = ENV.fetch("PATH")
+    ENV["PATH"] = path
+    yield
+  ensure
+    ENV["PATH"] = previous
+  end
 end

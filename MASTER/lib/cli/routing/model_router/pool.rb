@@ -288,11 +288,7 @@ module Master
             nil
           end
 
-          def executable_on_path?(binary)
-            home = File.expand_path("~/.local/bin/#{binary}")
-            ([home] + ENV["PATH"].to_s.split(File::PATH_SEPARATOR).map { |dir| File.join(dir, binary.to_s) })
-              .any? { |path| File.file?(path) && File.executable?(path) }
-          end
+          def executable_on_path?(binary) = !Master::Io::Exec.cli_binary(binary.to_s).nil?
 
           # A key the provider takes, from providers.yml; an owner/name id and
           # any id the registry does not know go to OpenRouter, as the sender

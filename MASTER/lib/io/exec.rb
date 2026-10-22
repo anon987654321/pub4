@@ -100,6 +100,16 @@ module Master
 
       def on_path?(name, **) = !name.to_s.include?(File::SEPARATOR) && !which(name, **).nil?
 
+      # Where a user-installed CLI lands when PATH does not name it: the Claude Code installer puts claude in
+      # ~/.local/bin. A /fix launched from a script whose PATH left that out found "no claude on PATH" on every
+      # call, skipped MASTER's first lane, and ran on the next one without saying why.
+      USER_BINS = [File.expand_path("~/.local/bin")].freeze
+
+      # A subscription CLI (claude, grok) by full path: PATH first, then USER_BINS and HOMEBREW_BINS.
+      def cli_binary(name, user_bins: USER_BINS)
+        which(name, path: [ENV.fetch("PATH", ""), *user_bins, *HOMEBREW_BINS].join(File::PATH_SEPARATOR))
+      end
+
       # Open3.capture* consume stdin_data and binmode; all other options belong
       # to spawn and must pass through, including env, chdir, and redirects.
       def split_opts(opts)
