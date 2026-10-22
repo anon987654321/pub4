@@ -28,15 +28,15 @@ class TestFixPartialOutcome < Minitest::Test
       git!(root, "init", "-q")
       git!(root, "config", "user.name", "Test")
       git!(root, "config", "user.email", "test@example.invalid")
-      File.write(File.join(root, "file.rb"), "base\\n")
+      File.write(File.join(root, "file.rb"), "base\n")
       git!(root, "add", "--", "file.rb")
       git!(root, "commit", "-q", "-m", "baseline")
       head = git!(root, "rev-parse", "HEAD").strip
 
-      File.write(File.join(root, "file.rb"), "fix\\n")
+      File.write(File.join(root, "file.rb"), "fix\n")
       git!(root, "add", "--", "file.rb")
       git!(root, "commit", "-q", "-m", "fix_loop: pass 1", "-m", Master::Core::World::COMMIT_TRAILER)
-      File.write(File.join(root, "file.rb"), "other\\n")
+      File.write(File.join(root, "file.rb"), "other\n")
       git!(root, "add", "--", "file.rb")
       git!(root, "commit", "-q", "-m", "ordinary writer", "-m", Master::Core::World::COMMIT_TRAILER)
 
