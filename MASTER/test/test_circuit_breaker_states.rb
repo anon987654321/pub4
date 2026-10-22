@@ -30,6 +30,20 @@ class TestCircuitBreakerStates < Minitest::Test
     breaker.call(0.0) { raise StandardError, "backend down" }
   end
 
+  # A fault in MASTER's own code is not the provider's, so it never opens the circuit.
+  def test_a_local_encoding_fault_does_not_open_it
+    circuit = breaker
+    result = nil
+    with_keys do
+      (Master::Io::CircuitBreaker::FAILURE_THRESHOLD + 2).times do
+        result = circuit.call(0.0) { "spørsmål " + "\xC3\xA6".b + "ø" }
+      end
+    end
+
+    assert_equal :closed, circuit.state
+    assert_equal :crash, result.category
+  end
+
   def test_a_new_breaker_is_closed
     assert_equal :closed, breaker.state
   end
@@ -101,7 +115,7 @@ class TestCircuitBreakerStates < Minitest::Test
     circuit = breaker
     with_keys do
       (Master::Io::CircuitBreaker::FAILURE_THRESHOLD * 2).times do
-        circuit.call(0.0) { raise RubyLLM::RateLimitError.new(nil, "slow down") }
+        circuit.call(0.0) { raise RubyLLM::RateLimitError.new("slow down") }
       end
     end
 
@@ -115,7 +129,7 @@ class TestCircuitBreakerStates < Minitest::Test
     result = nil
     with_keys do
       (Master::Io::CircuitBreaker::FAILURE_THRESHOLD * 2).times do
-        result = circuit.call(0.0) { raise RubyLLM::BadRequestError.new(nil, "bad schema") }
+        result = circuit.call(0.0) { raise RubyLLM::BadRequestError.new("bad schema") }
       end
     end
 

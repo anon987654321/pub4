@@ -277,6 +277,19 @@ class TestIoTools < Minitest::Test
     assert_includes result.value!, "Example documentation"
   end
 
+  # Net::HTTP bodies arrive as BINARY; joined to a UTF-8 prompt, Norwegian text raised on every lane.
+  def test_web_search_results_are_utf8_whatever_the_body_encoding
+    tool = Master::Io::WebSearch.new(governor: allow)
+    body = %(<a class="result__a" href="https://nrk.no/">Været i Bergen</a>).b
+    tool.define_singleton_method(:fetch_search_response) { |_query| Response.new("200", body) }
+
+    result = tool.call(query: "været bergen")
+
+    assert result.ok?, result.to_s
+    assert_equal Encoding::UTF_8, result.value!.encoding
+    assert_includes "spørsmål: #{result.value!}", "Været i Bergen"
+  end
+
   def test_web_search_truncates_a_long_query_and_extracts_the_answer
     governor = allow
     bus = Bus.new

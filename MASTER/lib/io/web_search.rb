@@ -38,7 +38,11 @@ module Master
 
         return Result.err("web_search: response exceeds #{MAX_RESPONSE_BYTES} bytes", category: :validation) if response.body.to_s.bytesize > MAX_RESPONSE_BYTES
 
-        results = extract_results(response.body.to_s)
+        # Net::HTTP hands the body over as BINARY. Left so, a Norwegian result joined to the UTF-8 prompt
+        # raised "incompatible character encodings" on every lane and benched them all.
+        body = String.new(response.body.to_s, encoding: Encoding::UTF_8).scrub
+
+        results = extract_results(body)
         results = injection_guard.screen(results, tool: NAME, source: "duckduckgo", bus: @bus)
         @bus&.publish("tool:untrusted_output", tool: NAME, source: "duckduckgo")
         @bus&.publish("tool:after", tool: NAME, query:)

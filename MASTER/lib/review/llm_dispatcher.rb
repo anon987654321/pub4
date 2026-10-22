@@ -349,6 +349,9 @@ module Master
       # The model is stamped after MASTER_MODEL and the vision swap, so it names
       # the model that was actually asked rather than the one the caller passed.
       def settle(result, selected_model, started)
+        # MASTER's own fault says nothing about the lane, so it is neither silenced nor scored.
+        return result if result.is_a?(Master::Result::Err) && result.category == :crash
+
         result = reclassify_provider_error(result, model: selected_model)
         note_lane_silence(result, selected_model)
         record_provider_result(model: selected_model, result:, started:)

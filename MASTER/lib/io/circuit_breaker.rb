@@ -85,6 +85,10 @@ module Master
         # The provider refused the request itself. Sending it again gets the same
         # refusal, and a refusal says nothing about whether the backend is up.
         Result.err(e.message, category: :validation)
+      rescue EncodingError, NoMethodError, TypeError => e
+        # A fault in MASTER's own code, not the provider's. On 2026-10-22 a BINARY web result raised
+        # "incompatible character encodings" here, every lane took the blame and every circuit opened.
+        Result.err("MASTER fault, not the provider: #{e.class}: #{e}", category: :crash)
       rescue StandardError => e
         error_message = e.message.to_s
 

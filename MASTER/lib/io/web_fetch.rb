@@ -90,7 +90,8 @@ module Master
       def deliver(url, response, full: false)
         return Result.err("web_fetch: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
-        raw_body = response.body.to_s
+        # BINARY from Net::HTTP; a page's non-ASCII text must reach the prompt as UTF-8.
+        raw_body = String.new(response.body.to_s, encoding: Encoding::UTF_8).scrub
         return Result.err("web_fetch: response exceeds #{MAX_FULL_BYTES} bytes; narrow the request", category: :validation) if raw_body.bytesize > MAX_FULL_BYTES
 
         stripped = strip_html(raw_body)
