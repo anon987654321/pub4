@@ -236,6 +236,7 @@ en:
       invalid_code: "Invalid code."
       verified: "Verified."
       oauth_failed: "OAuth sign-in failed."
+      oauth_storage_unavailable: "Sign-in is temporarily unavailable because account identity storage is not ready. No account was created; please try again later."
       signed_in_with: "Signed in with %{provider}."
       signed_in_via_master: "Signed in via MASTER."
       sso_link_invalid: "SSO link expired or invalid."
