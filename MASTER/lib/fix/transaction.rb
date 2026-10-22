@@ -50,13 +50,10 @@ module Master
 
       def begin!
         raise "transaction already active" if @active
-        raise "transaction id is empty" if @id.empty?
-
         acquire_lock
         raise "transaction id already exists: #{@id}" if File.exist?(@dir) || File.symlink?(@dir)
 
         Dir.mkdir(@dir, 0o700)
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @paths.each do |path|
           @snapshots[path] = snapshot(path)
           raise "transaction cannot safely track unsupported filesystem object: #{path}" if @snapshots[path].kind == :other
@@ -64,8 +61,7 @@ module Master
         @state = "open"
         @active = true
         observe!(verify_snapshot: true)
-        emit("fix:transaction_snapshot_summary", id: @id, tracked_paths: @paths.size,
-             elapsed_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round)
+        emit("fix:transaction_snapshot_summary", id: @id, tracked_paths: @paths.size)
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
