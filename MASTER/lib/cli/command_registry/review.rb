@@ -161,15 +161,15 @@ module Master
           mode = writes_requested ? "write" : "read-only"
           boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
           with_dmesg_verbosity(raw, default: "trace") do
-              Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
-            end
-            targets = fix_targets(target, root:)
-            ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
-            Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
-            trace_scope = execution_trace_scopes(target)
+            Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
+          end
+          targets = fix_targets(target, root:)
+          ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
+          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+          trace_scope = execution_trace_scopes(target)
 
-            rendered = Master::Trace::Dmesg.with_log_voice do
-              with_dmesg_verbosity(raw, default: "trace") do
+          rendered = Master::Trace::Dmesg.with_log_voice do
+            with_dmesg_verbosity(raw, default: "trace") do
               first_read(deliberation:, bus:, targets:)
 
               unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
