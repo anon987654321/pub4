@@ -368,7 +368,23 @@ module Master
 
       def inside?(path, dir) = path == dir || path.start_with?(dir + File::SEPARATOR)
 
-      def absolute(path) = File.join(@root, path)
+      # Resolve the parent directory before every snapshot/restore. Lexical
+      # containment alone permits a path below a symlinked directory to escape
+      # the checkout and make rollback write outside the repository.
+      def absolute(path)
+        candidate = File.expand_path(path, @root)
+        return File.realpath(@root) if candidate == File.expand_path(@root)
+
+        parent = File.realpath(File.dirname(candidate))
+        allowed_roots = [@root, outer_root].map { |root| File.realpath(root) }.uniq
+        unless allowed_roots.any? { |root| inside?(parent, root) }
+          raise "transaction path escapes through a symlinked parent: #{path}"
+        end
+
+        File.join(parent, File.basename(candidate))
+      rescue Errno::ENOENT => e
+        raise "transaction parent is unavailable for #{path}: #{e.message}"
+      end
 
       def snapshot(path)
         abs = absolute(path)
