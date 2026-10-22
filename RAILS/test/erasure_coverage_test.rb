@@ -139,6 +139,7 @@ class ErasureCoverageTest < Minitest::Test
     assert_includes job, "message.unsend! unless message.deleted?"
     assert_includes job, '{ model: "Notification", key: :actor_id }'
     assert_includes job, '{ model: "ActivityEvent", key: :actor_id }'
+    assert_includes job, '{ model: "ConversationParticipant", key: :user_id }'
     assert_includes job, '::ActivityEvent.where(subject_type: "Message", subject_id: message_ids)'
     assert_includes job, '::Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids)'
     assert_includes job, '::Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids)'
