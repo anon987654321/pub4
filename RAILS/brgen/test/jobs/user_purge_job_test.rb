@@ -115,6 +115,81 @@ class UserPurgeJobTest < ActiveJob::TestCase
     end
   end
 
+  test "private Messenger text, media and other users' message metadata are erased" do
+    ActsAsTenant.with_tenant(@city) do
+      other = User.create!(
+        email_address: "message-recipient-#{SecureRandom.hex(4)}@brgen.no",
+        password: "password123",
+        city: @city
+      )
+      conversation = Conversation.create!(conversation_type: "direct")
+      ConversationParticipant.create!(conversation: conversation, user: @user)
+      ConversationParticipant.create!(conversation: conversation, user: other)
+      message = Message.create!(
+        conversation: conversation, sender: @user,
+        content: "private message body", message_type: "image"
+      )
+      message.attachment.attach(
+        io: StringIO.new("private-message-image"),
+        filename: "private-message.jpg",
+        content_type: "image/jpeg"
+      )
+      blob_id = ActiveStorage::Attachment.where(
+        record_type: "Message", record_id: message.id, name: "attachment"
+      ).pick(:blob_id)
+      reply = Message.create!(
+        conversation: conversation, sender: other, parent: message,
+        content: "reply to the message", message_type: "text"
+      )
+
+      notification = Notification.create!(
+        user: other, actor: other, notifiable: message, source_type: "Message",
+        source_id: message.id, kind: "message", title: "private message",
+        body: "private message preview"
+      )
+      authored_notification = Notification.create!(
+        user: other, actor: @user, kind: "message", title: "sender identity",
+        body: "private sender"
+      )
+      message_event = ActivityEvent.create!(
+        actor: other, event_name: "MessageSent", source_vertical: "messages",
+        subject_type: "Message", subject_id: message.id, visibility: "private"
+      )
+      authored_event = ActivityEvent.create!(
+        actor: @user, event_name: "MessageSent", source_vertical: "messages",
+        subject_type: "Message", subject_id: message.id, visibility: "private"
+      )
+      reaction = Shared::Reaction.create!(user: other, reactable: message, kind: "love")
+      vote = Vote.create!(user: other, votable: message, value: 1)
+      click = Shared::OutboundClick.create!(
+        app: "brgen", url_host: "merchant.example", subject_type: "Message",
+        subject_id: message.id, user_id: other.id, guest: false, created_at: Time.current
+      )
+
+      purge!
+
+      erased_message = Message.find(message.id)
+      assert erased_message.deleted?, "private message body was not unsent"
+      assert_equal "", erased_message.content
+      assert_nil erased_message.link_preview_id
+      assert_equal message.id, Message.find(reply.id).parent_id,
+                   "reply structure should survive while its parent body is unsent"
+      assert_empty ActiveStorage::Attachment.where(
+        record_type: "Message", record_id: message.id, name: "attachment"
+      ), "private message attachment survived erasure"
+      assert_not ActiveStorage::Blob.exists?(blob_id), "private message blob survived erasure"
+      refute Notification.exists?(notification.id), "message-targeted notification survived erasure"
+      refute Notification.exists?(authored_notification.id), "notification retained the erased sender"
+      refute ActivityEvent.exists?(message_event.id), "activity pointed at a private message"
+      refute ActivityEvent.exists?(authored_event.id), "activity retained the erased sender"
+      refute Shared::Reaction.exists?(reaction.id), "reaction pointed at a private message"
+      refute Vote.exists?(vote.id), "vote pointed at a private message"
+      refute Shared::OutboundClick.exists?(click.id), "outbound attribution pointed at a private message"
+      assert_empty MessageReceipt.where(message_id: message.id),
+                   "message read/delivery metadata survived unsend"
+    end
+  end
+
   test "the account itself is anonymised" do
     ActsAsTenant.with_tenant(@city) do
       purge!
