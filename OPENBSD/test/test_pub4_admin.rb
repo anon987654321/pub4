@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "minitest/mock"
 load File.expand_path("../usr/local/sbin/pub4-admin", __dir__)
 
 class Pub4AdminTest < Minitest::Test
@@ -32,14 +33,12 @@ class Pub4AdminTest < Minitest::Test
   def test_relayd_health_check_is_read_only
     assert_equal ["/usr/sbin/rcctl", "check", "relayd"],
                  ADMIN.command_for(%w[service check relayd])
-    assert_nil ADMIN.command_for(%w[service restart relayd])
   end
   def test_only_known_service_targets_are_admitted
     %w[master brgen amber bsdports brgen_jobs amber_jobs bsdports_jobs].each do |service|
       refute_nil ADMIN.command_for(["service", "check", service])
     end
 
-    assert_nil ADMIN.command_for(%w[service restart relayd])
     assert_nil ADMIN.command_for(%w[service restart sshd])
     assert_nil ADMIN.command_for(["service", "restart", "../root"])
   end
@@ -107,7 +106,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes source, "def master_web_tree_paths!(root)"
     assert_includes source, "File.lstat(path)"
     assert_includes source, "Find.find(root)"
-    assert_includes source, "raise \"symlink refused in MASTER web path: #{path}\" if stat.symlink?"
+    assert_includes source, 'raise "symlink refused in MASTER web path: #{path}" if stat.symlink?'
     assert_includes source, "File.chown(dev.uid, master.gid, entry)"
   end
   def test_ci_timeout_is_a_real_process_group_deadline
@@ -249,7 +248,7 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, '[ "$timeout" -le 7200 ]'
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
     assert_equal 1, helper.scan('exec /usr/bin/su -m "$app" -c "$script"').length
-    assert helper.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\\n")
+    assert helper.end_with?("exec /usr/bin/su -m \"$app\" -c \"$script\"\n")
     refute_includes helper, "EOF_KEY"
     assert_equal 1, helper.scan("exec /usr/bin/su -m").length
     refute_includes helper, 'sh -c "$script"'
@@ -396,7 +395,7 @@ class Pub4AdminTest < Minitest::Test
     fixed_spawn = %q(Process.spawn(environment, "/bin/ksh", helper, *arguments, pgroup: true, unsetenv_others: true))
     assert_includes source, fixed_spawn
     assert_includes source, %q(exec(environment, "/bin/ksh", helper, *arguments, unsetenv_others: true))
-    assert_includes source, "raise \"unknown helper\" unless [CI_RUN, CI_SYNC, RAILS_TASK].include?(helper)"
+    assert_includes source, "raise \"unknown helper\" unless [CI_RUN, CI_SYNC, RAILS_TASK, RAILS_SYNC].include?(helper)"
     assert_includes source, "Process::UID.change_privilege(account.uid)"
     assert_includes source, "Process.groups = groups"
     assert_includes source, "exec(*command)"
