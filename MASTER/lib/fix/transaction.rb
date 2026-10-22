@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "pathname"
 require "securerandom"
+require "set"
 require_relative "../io/atomic_write"
 require_relative "transaction/delivery"
 require_relative "transaction/recovery"
@@ -443,6 +444,9 @@ module Master
       end
 
       def persist!
+        verify_storage_tree!
+        manifest_path = File.join(@dir, MANIFEST)
+        raise "transaction manifest is a symlink" if File.symlink?(manifest_path)
         manifest = {
           "version" => 1,
           "id" => @id,
@@ -453,7 +457,7 @@ module Master
           "seen" => @seen,
           "snapshots" => @snapshots.transform_values(&:to_h),
         }
-        write_atomic(File.join(@dir, MANIFEST), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
+        write_atomic(manifest_path, JSON.pretty_generate(manifest) + "\n", mode: 0o600)
       end
 
       def load_manifest!
@@ -474,6 +478,7 @@ module Master
         @snapshots = data.fetch("snapshots").to_h.transform_values do |raw|
           Snapshot.new(raw["path"], raw["exists"], raw["kind"].to_sym, raw["mode"], raw["link"], raw["store"])
         end
+        cleanup_orphan_snapshots!
         true
       rescue JSON::ParserError => e
         raise "transaction manifest is corrupt: #{e.message}"
@@ -527,9 +532,16 @@ module Master
         when "missing"
           valid = exists == false && mode.nil? && link.nil? && store.nil?
         when "file"
-          expected_store = File.expand_path(File.join(@dir, "files", encoded(path)))
-          stored_path_valid = store == expected_store
-          stored_bytes_valid = !require_store || (File.file?(expected_store) && !File.symlink?(expected_store))
+          files_dir = File.expand_path(File.join(@dir, "files"))
+          store_path = store.is_a?(String) ? File.expand_path(store) : nil
+          store_name = store_path && File.basename(store_path)
+          store_name_pattern = /\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/
+          stored_path_valid = store_path && File.dirname(store_path) == files_dir &&
+                              store_name.match?(store_name_pattern)
+          stored_bytes_valid = !require_store || (
+            File.directory?(files_dir) && !File.symlink?(files_dir) &&
+            File.file?(store_path) && !File.symlink?(store_path)
+          )
           valid = exists == true && valid_mode && link.nil? && stored_path_valid && stored_bytes_valid
         when "symlink"
           valid = exists == true && valid_mode && link.is_a?(String) && store.nil?
@@ -564,10 +576,16 @@ module Master
       end
 
       def cleanup!
+        verify_root_storage_tree!
+        raise "transaction directory changed type" if File.symlink?(@dir)
+        return nil unless Dir.exist?(@dir)
+
+        expected_parent = File.realpath(File.join(@root, ROOT_DIR))
+        raise "transaction directory parent changed" unless File.realpath(File.dirname(@dir)) == expected_parent
         FileUtils.rm_rf(@dir)
         parent = File.dirname(@dir)
         FileUtils.rmdir(parent) if Dir.exist?(parent) && Dir.empty?(parent)
-      rescue SystemCallError
+      rescue SystemCallError, RuntimeError
         nil
       end
 
