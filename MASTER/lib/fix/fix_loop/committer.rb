@@ -6,6 +6,7 @@ require "pathname"
 require_relative "../../ground/known_good"
 require_relative "../../operator/ratchet_sponsor"
 require_relative "repo_scope"
+require_relative "../autofix_guard"
 
 module Master
   module Fix
@@ -47,7 +48,8 @@ module Master
         end
 
         def baseline!(scope: nil)
-          @baseline = changed_everywhere
+          # The observation's own autofix writes are this run's, not another writer's dirty work.
+          @baseline = changed_everywhere.reject { |path| AutofixGuard.still_as_written?(File.expand_path(path, @root)) }
           @boundary_scope = normalize_boundary_scope(scope)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
