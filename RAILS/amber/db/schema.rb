@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_21_230000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_21_230200) do
+  create_table "account_merges", force: :cascade do |t|
+    t.integer "guest_user_id", null: false
+    t.integer "user_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "merged_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["guest_user_id"], name: "index_account_merges_on_guest_user_id"
+    t.index ["guest_user_id", "user_id"], name: "index_account_merges_on_guest_user_id_and_user_id", unique: true
+    t.index ["user_id"], name: "index_account_merges_on_user_id"
+  end
+
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -251,6 +263,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_230000) do
     t.index ["user_id"], name: "index_declutter_reviews_on_user_id"
   end
 
+  create_table "external_identities", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "identity_provider_id", null: false
+    t.string "subject", null: false
+    t.string "email_address"
+    t.string "phone_number"
+    t.string "assurance_level", default: "account", null: false
+    t.datetime "last_used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["identity_provider_id"], name: "index_external_identities_on_identity_provider_id"
+    t.index ["identity_provider_id", "subject"], name: "index_external_identities_on_provider_and_subject", unique: true
+    t.index ["user_id"], name: "index_external_identities_on_user_id"
+  end
+
   create_table "follows", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "followee_id", null: false
@@ -271,6 +298,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_230000) do
     t.datetime "updated_at", null: false
     t.json "vector"
     t.index ["item_id"], name: "index_garment_embeddings_on_item_id", unique: true
+  end
+
+  create_table "identity_providers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "issuer"
+    t.string "client_id"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_identity_providers_on_slug", unique: true
   end
 
   create_table "identity_verifications", force: :cascade do |t|
@@ -630,6 +668,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_230000) do
     t.index ["worn_on"], name: "index_wear_logs_on_worn_on"
   end
 
+  add_foreign_key "account_merges", "users", column: "guest_user_id"
+  add_foreign_key "account_merges", "users"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "affiliate_links", "items"
@@ -650,6 +690,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_230000) do
   add_foreign_key "follows", "users", column: "followee_id"
   add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "garment_embeddings", "items"
+  add_foreign_key "external_identities", "identity_providers"
+  add_foreign_key "external_identities", "users"
   add_foreign_key "identity_verifications", "users"
   add_foreign_key "items", "users"
   add_foreign_key "live_streams", "users"
