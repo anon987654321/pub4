@@ -177,9 +177,9 @@ Account deletion has a 30-day grace period and is processed by the daily
 records are removed; personal location fields are cleared from retained public
 content. Messenger preserves message rows so replies and thread ordering do not
 break, but messages authored by the erased account are unsent: text is cleared,
-attachments are purged, and message-targeted receipts, notifications, activity,
-reactions, votes and outbound-attribution rows are removed. The sender's identity
-and associated activity references are removed as well. The regression tests in
+attachments are purged, the erased sender's conversation memberships are removed, and
+message-targeted receipts, notifications, activity, reactions, votes and outbound-attribution
+rows are removed. The sender's identity and associated activity references are removed as well. The regression tests in
 `test/jobs/user_purge_job_test.rb` cover erasure behavior; runtime execution is
 required before treating the full erasure path as verified.
 
