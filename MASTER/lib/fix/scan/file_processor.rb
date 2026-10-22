@@ -231,7 +231,8 @@ module Master
 
         # The slice moves by one window a day, so a tenth read per run covers the tree in ten days,
         # and two scans on the same day still ask the same questions.
-        def rotation_day = Date.today.yday
+        # Julian day is monotonic across New Year; yday would repeat sampling buckets at the year boundary.
+        def rotation_day = Date.today.jd
 
         def semantic_sample
           return @semantic_sample_override if @semantic_sample_override
