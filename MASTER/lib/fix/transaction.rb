@@ -37,7 +37,9 @@ module Master
 
       def initialize(root:, paths:, id: SecureRandom.hex(10), bus: nil)
         @root = File.expand_path(root)
-        @paths = Array(paths).filter_map { |path| normalize(path) }.uniq
+        @paths = Array(paths).map { |path| normalize(path) }
+        raise "transaction contains an unsafe path" if @paths.any?(&:nil?)
+        @paths.uniq!
         @id = self.class.send(:normalize_id, id)
         @bus = bus
         @seen = Hash.new { |hash, path| hash[path] = [] }
