@@ -29,8 +29,9 @@ class TestGitHooks < Minitest::Test
     git("config", "core.hooksPath", HOOKS)
     # A first commit, so every case below has a HEAD to diff against.
     write("README.md", "seed\n")
-    git("add", "README.md")
-    commit("seed", env: { "PUB4_UNTRACKED" => "1" })
+    git!("add", "README.md")
+    out, status = commit("seed", env: { "PUB4_UNTRACKED" => "1" })
+    assert status.success?, "seed commit failed; later hook assertions would be cascading noise: #{out}"
   end
 
   def teardown
@@ -59,8 +60,14 @@ class TestGitHooks < Minitest::Test
     File.write(full, body)
   end
 
+  # These tests exercise tree ownership and push guards, not the separate
+  # commit-message policy. Keep fixture messages valid so an invalid seed cannot
+  # leave README staged and cascade into unrelated assertions.
   def commit(message, env: {})
-    git("commit", "-m", message, env:)
+    subject = message.to_s.lines.first.to_s.strip
+    subject = subject.sub(/\A([a-z])/) { |first| first.upcase }.sub(/\.\z/, "")
+    body = "Temporary Git hook test fixture.\n\nCo-authored-by: TestGitHooks"
+    git("commit", "-m", subject, "-m", body, env:)
   end
 
   def refute_committed(out, status, matching)
@@ -71,7 +78,7 @@ class TestGitHooks < Minitest::Test
   # --- the hooks are actually installed ------------------------------------
 
   def test_every_hook_is_executable_and_runnable
-    %w[pre-commit pre-push post-commit].each do |hook|
+    %w[pre-commit commit-msg pre-push post-commit].each do |hook|
       path = File.join(HOOKS, hook)
 
       assert File.file?(path), "#{hook} is missing"
@@ -277,7 +284,7 @@ class TestGitHooks < Minitest::Test
     add_commits(3)
     out, _status = git("push", "origin", "main")
 
-    3.times { |i| assert_match(/commit #{i}/, out, "commit #{i} was held back without being named") }
+    3.times { |i| assert_match(/Commit #{i}/, out, "commit #{i} was held back without being named") }
     assert_match(/Hook Test/, out, "each held commit should carry its author")
   ensure
     FileUtils.remove_entry(remote) if remote && File.directory?(remote)
