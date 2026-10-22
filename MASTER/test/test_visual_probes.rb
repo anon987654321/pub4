@@ -242,4 +242,17 @@ class TestVisualProbes < Minitest::Test
     cdp = TabCdp.new(Array.new(500) { |i| { "sel" => "a.n#{i}", "x" => i, "y" => 0 } })
     assert_equal 60, Deploy::FocusOrderProbe.probe(cdp)["tab_order"].size
   end
+
+  def test_malformed_active_element_response_is_unverified
+    cdp = Object.new
+    cdp.define_singleton_method(:press) { |_key| nil }
+    cdp.define_singleton_method(:evaluate) do |js, **|
+      js.include?("direction") ? "ltr" : "not-an-element"
+    end
+
+    result = Deploy::FocusOrderProbe.probe(cdp)
+
+    assert_match(/unverified/, result["tab_order_status"])
+    refute result.key?("tab_order")
+  end
 end
