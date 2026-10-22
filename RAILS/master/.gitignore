@@ -5,3 +5,5 @@
 *.pid
 *.log
 .bundle
+# The startup sound, rendered from MASTER/data/voice.yml by assets:build_boot_sound.
+/public/boot_sound_*.ogg

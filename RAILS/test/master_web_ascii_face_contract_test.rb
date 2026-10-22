@@ -21,7 +21,7 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
 
   def test_the_generated_runtime_names_its_parts_by_their_current_digest
     runtime = read(PUBLIC, "face.runtime.js")
-    listed = runtime[/FACE_RUNTIME_SOURCES = (\[.*?\]);/, 1]
+    listed = runtime[/FACE_RUNTIME_SOURCES = (\[.*?\]);/m, 1]
     refute_nil listed, "face.runtime.js lost its source list"
     named = listed.scan(/"([^"?]+)\?v=([0-9a-f]{10})"/)
 

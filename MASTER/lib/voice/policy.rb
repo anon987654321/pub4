@@ -379,29 +379,39 @@ module Master
         Speech::VOICES.reject { |name, _| name.to_s.end_with?("Neural") }.transform_keys(&:to_s)
       end
 
-      # edge-tts --volume. Raises the synthesised signal itself, so the browser
-      # chain is not the only place loudness comes from.
-      def browser_payload
+      # What the face reads as MASTER_VOICE_POLICY: which voice speaks, how it
+      # is shaped, and the startup sound, so the page sounds like the server.
+      def browser_payload = voice_payload.merge(shaping_payload, boot_sound: BootSound.browser_payload)
+
+      def voice_payload
         {
           single_voice: single_voice_key.to_s,
           neural: neural_voice,
           rotation: rotation_keys.map(&:to_s),
           language_voices: language_voices.transform_values(&:to_s),
-          language_voice_families: language_voice_families.transform_values { |family| family.transform_values(&:to_s) },
+          language_voice_families: language_voice_families.transform_values { |set| set.transform_values(&:to_s) },
           voices: voice_aliases,
-          post_chain:,
-          room:,
-          dilla_fx: fx_payload,
-          character: character_names.map { |name| { id: name, filter: data["character"][name]["filter"] } },
-          awareness:,
-          mouth:,
-          prosody:,
+
           profile: profile_name,
-          layers:,
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
           default_rate:,
           default_pitch:,
+        }
+      end
+
+      def shaping_payload
+        {
+          post_chain:,
+          room:,
+          dilla_fx: fx_payload,
+
+          character: character_names.map { |name| { id: name, filter: data["character"][name]["filter"] } },
+
+          awareness:,
+          mouth:,
+          prosody:,
+          layers:,
         }
       end
     end

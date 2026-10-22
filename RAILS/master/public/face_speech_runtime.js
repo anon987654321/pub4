@@ -49,36 +49,50 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-function bootChime() {
-  if (!actx || document.documentElement.dataset.masterBootChime === '1') return;
-  document.documentElement.dataset.masterBootChime = '1';
-  const notes = [261.63, 329.63, 392.0, 523.25];
-  const start = actx.currentTime + 0.03;
-  notes.forEach((freq, index) => {
-    const carrier = actx.createOscillator();
-    const modulator = actx.createOscillator();
-    const modDepth = actx.createGain();
-    const gain = actx.createGain();
-    carrier.type = 'square';
-    carrier.frequency.value = freq;
-    modulator.type = 'sine';
-    modulator.frequency.value = freq * 2;
-    modDepth.gain.value = freq * 0.06;
-    modulator.connect(modDepth);
-    modDepth.connect(carrier.frequency);
-    carrier.connect(gain);
-    gain.connect(actx.destination);
-    const t = start + index * 0.085;
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.045, t + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.145);
-    modDepth.gain.setValueAtTime(freq * 0.06, t);
-    modDepth.gain.exponentialRampToValueAtTime(freq * 0.015, t + 0.11);
-    carrier.start(t);
-    modulator.start(t);
-    carrier.stop(t + 0.15);
-    modulator.stop(t + 0.15);
+// Resolves once the context runs. A context created before the first gesture
+// starts suspended, and anything scheduled on it would sound at that gesture.
+function whenAudioRunning() {
+  return new Promise((resolve) => {
+    if (actx.state === 'running') { resolve(); return; }
+
+    const onChange = () => {
+      if (actx.state !== 'running') return;
+      actx.removeEventListener('statechange', onChange);
+      resolve();
+    };
+    actx.addEventListener('statechange', onChange);
   });
+}
+
+// The startup sound is the file MASTER renders for the terminal too (voice.yml
+// boot_sound, surface web), so the two surfaces share one score. It plays only
+// once the context runs, and not at all when the first gesture comes after
+// late_gesture_s, because by then the user is already working. The gain ramp
+// guards the onset even if the file's own fade were lost.
+async function bootChime() {
+  const spec = window.MASTER_VOICE_POLICY?.boot_sound;
+  if (!actx || !spec?.url || document.documentElement.dataset.masterBootChime === '1') return;
+
+  document.documentElement.dataset.masterBootChime = '1';
+  try {
+    const response = await fetch(new URL(spec.url, document.baseURI).href, { cache: 'force-cache' });
+    if (!response.ok) return;
+
+    const buffer = await actx.decodeAudioData(await response.arrayBuffer());
+    await whenAudioRunning();
+    if (tts.muted || performance.now() > (spec.late_gesture_s || 15) * 1000) return;
+
+    const source = actx.createBufferSource();
+    const gain = actx.createGain();
+    const t = actx.currentTime;
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(1, t + (spec.fade_ms || 300) / 1000);
+    source.buffer = buffer;
+    source.connect(gain);
+    gain.connect(actx.destination);
+    source.start(t);
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:boot_chime", err); }
 }
 
 function systemMotif(kind) {
