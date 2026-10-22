@@ -162,63 +162,63 @@ module Master
           boundary = writes_requested ? "current-checkout" : "no-write-or-publish"
           with_dmesg_verbosity(raw, default: "trace") do
             Master::Trace::Dmesg.status("fix0", "mode=#{mode} target=#{display_target} boundary=#{boundary}")
-        end
-        targets = fix_targets(target, root:)
-        ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
-        Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
-        trace_scope = execution_trace_scopes(target)
-
-        rendered = Master::Trace::Dmesg.with_log_voice do
-          with_dmesg_verbosity(raw, default: "trace") do
-          first_read(deliberation:, bus:, targets:)
-
-          unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
-            trace = steady_trace(scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: })
-            Master::Trace::Dmesg.status("trace0", trace.summary)
-            unless trace.clean?
-              details = trace.failures.first(12).join(" | ")
-              message = "fix: execution trace failed — #{details}"
-              Master::Trace::Dmesg.status("trace0", message)
-              next Master::Result.err(message, category: :validation)
+          end
+          targets = fix_targets(target, root:)
+          ::Operator::GateChain.clear_verified_fix_snapshots! if writes_requested
+          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+          trace_scope = execution_trace_scopes(target)
+  
+          rendered = Master::Trace::Dmesg.with_log_voice do
+            with_dmesg_verbosity(raw, default: "trace") do
+            first_read(deliberation:, bus:, targets:)
+  
+            unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
+              trace = steady_trace(scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: })
+              Master::Trace::Dmesg.status("trace0", trace.summary)
+              unless trace.clean?
+                details = trace.failures.first(12).join(" | ")
+                message = "fix: execution trace failed — #{details}"
+                Master::Trace::Dmesg.status("trace0", message)
+                next Master::Result.err(message, category: :validation)
+              end
+            end
+  
+            structural_review(deliberation:, bus:, targets:)
+  
+            writes_requested = writes_requested?(apply:, only:)
+            effective_critique = critique.nil? ? writes_requested && council_default : critique
+  
+            results = targets.map do |fix_target|
+              run_fix_target(
+                scanner:, fix_loop:, root:, deliberation:, bus:, swarm:,
+                target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:
+              )
+            end
+            failure = results.find { |result| result.is_a?(Master::Result::Err) }
+            next failure if failure
+  
+            # One push for the whole run, after every tree has verified.
+            # A verified local repair is not a delivered repair: do not save the
+            # candidate baseline as the published state when its final push fails.
+            if writes_requested
+              begin
+                fix_loop.publish_pending!
+              rescue StandardError => e
+                message = "final publish failed after verification (#{e.class})"
+                Master::Trace::Dmesg.status("deliver0", "DELIVERY_FAILED: #{message}")
+                next Master::Result.err("DELIVERY_FAILED: #{message}", category: :delivery_failed)
+              end
+              ::Operator::GateChain.persist_verified_baselines!(targets)
+            end
+            results.join("\n")
             end
           end
-
-          structural_review(deliberation:, bus:, targets:)
-
-          writes_requested = writes_requested?(apply:, only:)
-          effective_critique = critique.nil? ? writes_requested && council_default : critique
-
-          results = targets.map do |fix_target|
-            run_fix_target(
-              scanner:, fix_loop:, root:, deliberation:, bus:, swarm:,
-              target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:
-            )
-          end
-          failure = results.find { |result| result.is_a?(Master::Result::Err) }
-          next failure if failure
-
-          # One push for the whole run, after every tree has verified.
-          # A verified local repair is not a delivered repair: do not save the
-          # candidate baseline as the published state when its final push fails.
-          if writes_requested
-            begin
-              fix_loop.publish_pending!
-            rescue StandardError => e
-              message = "final publish failed after verification (#{e.class})"
-              Master::Trace::Dmesg.status("deliver0", "DELIVERY_FAILED: #{message}")
-              next Master::Result.err("DELIVERY_FAILED: #{message}", category: :delivery_failed)
-            end
-            ::Operator::GateChain.persist_verified_baselines!(targets)
-          end
-          results.join("\n")
-          end
-        end
-        return rendered unless Master::Fix::CodeWatch.requested?
-
-        # A run that stopped for newer code continues on it, in this process.
-        puts rendered
-        Master::Fix::CodeWatch.reexec!(root, "/fix #{raw}")
-        rendered
+          return rendered unless Master::Fix::CodeWatch.requested?
+  
+          # A run that stopped for newer code continues on it, in this process.
+          puts rendered
+          Master::Fix::CodeWatch.reexec!(root, "/fix #{raw}")
+          rendered
         end
       end
 
