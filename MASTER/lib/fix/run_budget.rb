@@ -54,8 +54,11 @@ module Master
           if outer
             @shared_depth = 0
             @shared_finishing = true
-            finish_run(reason: "command scope ended")
-            @shared_finishing = false
+            begin
+              finish_run(reason: "command scope ended")
+            ensure
+              @shared_finishing = false
+            end
           else
             @shared_depth = [(@shared_depth || 0).to_i - 1, 0].max
           end
