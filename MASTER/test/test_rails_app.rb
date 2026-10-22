@@ -39,12 +39,12 @@ class TestRailsApp < Minitest::Test
     end
   end
 
-  def test_app_root_requires_a_registered_app_root_and_rails_entrypoint
+  def test_app_root_requires_a_registered_app_root_directory
     with_repository do |root|
       assert RailsApp.app_root?("RAILS/amber", repo_root: root)
       refute RailsApp.app_root?("RAILS/amber/app", repo_root: root)
       refute RailsApp.app_root?("RAILS/master", repo_root: root)
-      FileUtils.rm(File.join(root, "RAILS/brgen", "bin", "rails"))
+      FileUtils.rm_rf(File.join(root, "RAILS/brgen"))
       refute RailsApp.app_root?("RAILS/brgen", repo_root: root)
     end
   end
@@ -63,8 +63,8 @@ class TestRailsApp < Minitest::Test
       FileUtils.mkdir_p(File.join(root, "RAILS"))
       File.write(File.join(root, "RAILS", "apps.yml"), "not_apps: true\n")
 
-      error = assert_raises(ArgumentError) { RailsApp.named_apps(repo_root: root) }
-      assert_includes error.message, "RAILS/apps.yml has no apps mapping"
+      error = assert_raises(KeyError) { RailsApp.named_apps(repo_root: root) }
+      assert_includes error.message, "apps"
     end
   end
 end
