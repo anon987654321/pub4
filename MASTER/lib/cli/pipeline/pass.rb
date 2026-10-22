@@ -428,7 +428,11 @@ def default_apply?(*) = false
         def fix_commits_since(head)
           return 0 if head.to_s.empty?
 
-          greps = ["--all-match", "--grep=^Fix_loop:", "--grep=#{Master::Core::World::COMMIT_TRAILER}"]
+          # Committer subjects are deliberately lowercase (for example,
+          # "fix_loop: pass 1"). Git's --grep is case-sensitive unless told
+          # otherwise; the old Fix_loop spelling counted zero of those commits.
+          greps = ["--all-match", "--regexp-ignore-case", "--grep=^fix_loop:",
+                   "--grep=#{Master::Core::World::COMMIT_TRAILER}"]
           command = ["git", "-C", @root.to_s, "rev-list", "--count", *greps, "#{head}..HEAD"]
           out, status = Master::Io::Exec.capture2e(*command)
           status.success? ? out.to_i : 0
