@@ -27,6 +27,14 @@ class TestProofBaseline < Minitest::Test
     ENV[Proof::PROOF_ENV] = @saved
   end
 
+  def test_studio_tree_has_a_full_tree_proof_runner
+    target = File.join(Operator::GateChain::ROOT, "STUDIO")
+    name, runner = Master::CLI::Pipeline::Pass.allocate.proof_runner(target)
+
+    assert_equal "STUDIO", name
+    assert_respond_to runner, :call
+  end
+
   def test_the_runner_verdict_names_each_failed_gate
     reading = Reading.parse(false, RAILS_RED)
 
