@@ -99,7 +99,8 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:low" } }
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
-    identity = ExternalIdentity.find_by!(subject: uid)
+    provider = IdentityProvider.find_by!(slug: "bankid")
+    identity = ExternalIdentity.find_by!(identity_provider_id: provider.id, subject: uid)
     controller = ApplicationController.new
 
     assert_equal "account", identity.assurance_level
