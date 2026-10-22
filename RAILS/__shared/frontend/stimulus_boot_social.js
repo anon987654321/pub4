@@ -11,6 +11,7 @@ import MediaPicker from "pub4/media_picker"
 import FeedCompose from "pub4/feed_compose"
 import VisualSurface from "pub4/visual_surface"
 import OutboundClick from "pub4/outbound_click"
+import ConversationLog from "pub4/conversation_log"
 export function bootSocialStimulus(application) {
   application.register("media-exclusive", MediaExclusive)
   application.register("browser-fingerprint", BrowserFingerprint)
@@ -22,6 +23,7 @@ export function bootSocialStimulus(application) {
   application.register("feed-compose", FeedCompose)
   application.register("visual-field", VisualSurface)
   application.register("outbound-click", OutboundClick)
+  application.register("conversation-log", ConversationLog)
 
 
 }
