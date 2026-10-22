@@ -44,6 +44,8 @@ class User < ApplicationRecord
   has_many :sessions,        dependent: :destroy, inverse_of: :user
   has_many :external_identities, dependent: :destroy
   has_many :account_merges, dependent: :destroy
+  has_many :account_merges_as_guest, class_name: "AccountMerge", foreign_key: :guest_user_id,
+           dependent: :destroy, inverse_of: :guest_user
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
