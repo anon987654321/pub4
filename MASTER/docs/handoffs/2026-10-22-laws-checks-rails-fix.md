@@ -44,7 +44,8 @@ Rationale: C1 is the reported problem that main starts red, C2 is the reported l
 ## P1 — prove write-path admission and transaction safety
 
 - [ ] Trace every write, stage, and commit path from the actual call sites before writing tests: World Effect execution, Constitution#admit, Master::Io::Base, DiffStager, Committer, Fix::Transaction, rollback/recovery, direct File.write/IO.write and FileUtils mutation paths.
-- [ ] Add a write-path audit test against the real API. Instrument a representative /fix run and assert each write/commit has a prior Constitution#admit verdict for the same normalized target path. If the audit finds a bypass, repair only that path. Do not refactor the already-centralized paths without evidence.
+- [ ] Define the property before building the write-path audit. Core::Fold-proposed Effects must pass Master::Core::Constitution#admit before Master::Core::World performs them. Master::Io::Base, DiffStager, Fix::Transaction, Committer, and other /fix mutation sites are distinct write planes with their own guards and transaction responsibilities; they must not be assumed to be literal Core Effects.
+- [ ] Instrument representative flows in each write plane and correlate every agent-originated write with the applicable admission/guard decision, normalized path, transactional owner, and outcome evidence. If a write bypasses its intended protection, fix that exact path. Only unify all planes behind Constitution#admit if source tracing proves that is the intended invariant and the shared API can preserve the distinct transaction and staging contracts.
 - [ ] Add transaction end-to-end tests after inspecting the existing Transaction API. Cover atomic snapshot ownership, crash recovery, concurrent run serialization, rollback evidence/orphans, attempts to roll back after commit, and rollback on verification failure. Any assumed class or method signature in old notes is unverified until fetched from main.
 - [ ] Prove semantic scan coverage: every applicable detector evaluates every target file in scope, and a Law change invalidates cached findings. Verify that FindingCache keys include all inputs a detector reads, including the Law/catalogue digest where needed.
 - [ ] Implement or locate a trial-hygiene command that proves baseline and repair share the same source SHA or pinned worktree, laws digest, and toolchain identity. If an earlier artifact exists, inspect and repair it rather than creating a second command.
@@ -52,7 +53,7 @@ Rationale: C1 is the reported problem that main starts red, C2 is the reported l
 - [ ] Audit swallowed exceptions, including rescue nil, in load-bearing paths. Separate intentional nil-return contracts from true failure swallowing and make unhandled failure evidence visible.
 - [ ] Prove a fresh clone can run the documented setup and canonical Minitest suite. Record actual wall time; the five-minute setup target is a measurement, not an assertion to fake.
 
-Rationale: The central architectural property is one admission decision per Effect, not a simplistic replacement of all existing protection layers. Transaction, immutable-path, staging and commit checks may have different jobs. The evidence must prove they compose and do not bypass the governing admission path.
+Rationale: The central architectural property is one admission decision per Core Effect, not a simplistic replacement of all existing protection layers. Transaction, immutable-path, staging, I/O-tool and commit checks may have different jobs and operate on different APIs. The evidence must prove that each relevant write plane is governed and that the protections compose; it must not manufacture an architectural requirement that all internal writes literally call Constitution#admit.
 
 ## P1 — keep DesignSweep inside the transaction boundary
 
@@ -87,6 +88,7 @@ Rationale: A detector ID, a constitutional Law ID, a check ID, and a test name c
 - [x] Add a glossary-only vocabulary file outside sacred data/, clarify Law/check/proof/result-state terms, and state that the execution registry has no policy authority.
 - [x] Make bin/operator check the primary user-facing command while preserving gate as a compatibility alias to the same path.
 - [x] Keep shell completion and its Minitest drift check in sync with both spellings.
+- [x] Add a Minitest contract that keeps gates.yml limited to execution metadata, preventing policy IDs/severity/tiers from silently growing into a parallel Law catalogue.
 - [ ] Run rake docs:agent_contracts and rake lint:agent_contracts on a real checkout after synchronizing the generated agent files.
 - [ ] Consider man pages for vocabulary and the write path only if they become the single source for command/help generation; avoid a second prose source.
 - [ ] Derive CLI help from canonical command/docs once the existing registry supports it and test for drift rather than hand-maintaining another help list.
