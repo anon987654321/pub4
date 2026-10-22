@@ -236,7 +236,7 @@ def test_a_repair_the_run_wrote_itself_commits_once_attested_and_not_after_a_lat
 
   out, = capture_io { committer.commit_if_dirty("fix: ok") }
   assert_empty git.commits
-  assert_includes out, "commit blocked, ground_truth"
+  assert_includes out, "/fix did not write: lib/ok.rb"
 
   committer.attest_written!(File.join(@dir, "lib/ok.rb"))
   committer.commit_if_dirty("fix: ok")
@@ -245,7 +245,23 @@ def test_a_repair_the_run_wrote_itself_commits_once_attested_and_not_after_a_lat
   write_file("lib/ok.rb", "OK = 2\n")
   out, = capture_io { committer.commit_if_dirty("fix: again") }
   assert_equal 1, git.commits.size
-  assert_includes out, "commit blocked, ground_truth"
+  assert_includes out, "/fix did not write: lib/ok.rb"
+end
+
+# Another writer saving a corpus file mid-pass must not ride along in /fix's commit.
+def test_a_file_fix_did_not_write_stays_out_of_its_commit
+  write_file("lib/ok.rb", "OK = 1\n")
+  write_file("app/page.html.erb", "<p>theirs</p>\n")
+  git = FakeGit.new([], ["lib/ok.rb", "app/page.html.erb"])
+  truth = Master::Ground::Truth.new
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: truth)
+  committer.baseline!
+  committer.attest_written!(File.join(@dir, "lib/ok.rb"))
+
+  capture_io { committer.commit_if_dirty("fix: ok") }
+  committed = git.commits.flat_map(&:last)
+
+  assert_equal ["lib/ok.rb"], committed
 end
 
 # fix-here --no-publish: the commits stay local and the operator pushes.

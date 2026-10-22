@@ -188,6 +188,7 @@ module Master
               @bus&.publish("fix_loop:ast_skipped_dirty", file: rel)
               Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix skipped, #{rel} was dirty before the pass")
             when :written
+              @committer&.attest_written!(path)
               @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: outcome.transforms)
               Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix, #{rel}: #{outcome.transforms.join(", ")}")
               return [outcome.transforms.size, outcome.content]

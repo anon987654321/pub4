@@ -45,6 +45,13 @@ module Master
         false
       end
 
+      # A file this session recorded and whose bytes have not changed since: /fix's own write,
+      # and no one else's save after it.
+      def recorded_unchanged?(path)
+        resolved = File.expand_path(path)
+        @mutex.synchronize { @reads.key?(resolved) } && !changed_since_read?(resolved)
+      end
+
       # True only for a file this session read whose bytes differ now. No age
       # limit, unlike fresh?: a read an hour old is still the version a whole
       # overwrite was composed against. A file never read answers false.

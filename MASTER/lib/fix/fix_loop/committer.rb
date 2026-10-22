@@ -127,6 +127,22 @@ module Master
           paths.flatten.each { |path| @ground_truth.record_read!(path) if File.file?(path) }
         end
 
+        def written_unchanged?(path) = @ground_truth.recorded_unchanged?(File.expand_path(path, @root))
+
+        # A mid-pass commit owns the whole corpus, so another writer's save to any corpus file would
+        # ride along as /fix's work. It takes only files this run recorded writing (attest_written!)
+        # and that no one changed since; the rest are left as they are and named.
+        def written_here(paths)
+          return paths unless @ground_truth
+
+          mine, foreign = paths.partition { |path| written_unchanged?(path) }
+          unless foreign.empty?
+            named = foreign.first(3).join(", ")
+            Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) /fix did not write: #{named}")
+          end
+          mine
+        end
+
         # Visual refinement may promote structural snapshots only after the
         # rendered quality gate passes. Enlist those exact JSON baselines in the
         # current /fix transaction before writing, and refuse operator-owned
@@ -248,7 +264,7 @@ def stage_commit_mode?
         # rollback floor for its own paths.
         def checkpoint_transaction(message, findings:, owned_paths:)
           transaction = @transaction
-          paths = own_changes(owned_paths)
+          paths = written_here(own_changes(owned_paths))
           return :noop if paths.empty?
 
           prepared = validate_paths(message, paths)
@@ -326,7 +342,7 @@ def stage_commit_mode?
         end
 
         def commit_if_dirty!(message, findings: [], owned_paths: nil)
-          paths = own_changes(owned_paths)
+          paths = written_here(own_changes(owned_paths))
           return :noop if paths.empty?
           return :blocked unless validate_paths(message, paths)
 
