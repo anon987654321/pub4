@@ -88,8 +88,16 @@ module Master
           # record was made would be blamed on the repair, so the record ages out, and a new Ruby or
           # lockfile changes what fails. No commit count: main moves dozens of commits a day.
           def staleness(data)
+            valid = data.is_a?(Hash) &&
+                    data["failing"].is_a?(Array) && data["failing"].all? { |failure| failure.is_a?(String) } &&
+                    data["rows"].is_a?(Hash) && data["rows"].all? { |row, value| row.is_a?(String) && value.is_a?(Integer) && value.positive? } &&
+                    data["at"].is_a?(String)
+            return "malformed record" unless valid
             return "made under another toolchain" unless data["toolchain"] == toolchain
-            return "older than #{MAX_AGE_S / 3600}h" if Time.now.utc - Time.iso8601(data.fetch("at")) > MAX_AGE_S
+
+            age = Time.now.utc - Time.iso8601(data["at"])
+            return "timestamp is in the future" if age.negative?
+            return "older than #{MAX_AGE_S / 3600}h" if age > MAX_AGE_S
 
             nil
           end
