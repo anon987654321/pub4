@@ -131,34 +131,37 @@ class UserPurgeJob < ApplicationJob
     end
   end
 
+  # Other users' rows on a private message: the model, its type column when the
+  # pointer is polymorphic, and the column holding the message id.
+  MESSAGE_METADATA = [
+    [ "MessageReceipt", nil, :message_id ],
+    [ "Notification", :notifiable_type, :notifiable_id ],
+    [ "Notification", :source_type, :source_id ],
+
+    [ "ActivityEvent", :subject_type, :subject_id ],
+    [ "Shared::Reaction", :reactable_type, :reactable_id ],
+    [ "Vote", :votable_type, :votable_id ],
+    [ "Shared::OutboundClick", :subject_type, :subject_id ],
+  ].freeze
+
   # Private Messenger rows preserve their thread and reply shape, but
   # neither message bodies nor attached media survive the sender's erasure.
   # Remove other users' metadata that points at those private messages before
-  # unsending the row. Reactions and receipts do not make the body public.
+  # unsending the row. Reactions and receipts do not make the body public. Their
+  # destroy callbacks read the record they point at, which strict loading refuses.
   def erase_authored_messages(user)
     return unless defined?(::Message) && ::Message.table_exists?
 
     message_ids = ::Message.where(sender_id: user.id).select(:id)
     return unless message_ids.exists?
 
-    if defined?(::MessageReceipt) && ::MessageReceipt.table_exists?
-      ::MessageReceipt.where(message_id: message_ids).find_each(&:destroy!)
-    end
-    if defined?(::Notification) && ::Notification.table_exists?
-      ::Notification.where(notifiable_type: "Message", notifiable_id: message_ids).find_each(&:destroy!)
-      ::Notification.where(source_type: "Message", source_id: message_ids).find_each(&:destroy!)
-    end
-    if defined?(::ActivityEvent) && ::ActivityEvent.table_exists?
-      ::ActivityEvent.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!)
-    end
-    if defined?(::Shared::Reaction) && ::Shared::Reaction.table_exists?
-      ::Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids).find_each(&:destroy!)
-    end
-    if defined?(::Vote) && ::Vote.table_exists?
-      ::Vote.where(votable_type: "Message", votable_id: message_ids).find_each(&:destroy!)
-    end
-    if defined?(::Shared::OutboundClick) && ::Shared::OutboundClick.table_exists?
-      ::Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!)
+    MESSAGE_METADATA.each do |name, type_column, id_column|
+      model = name.safe_constantize
+      next unless model&.table_exists?
+
+      rows = model.strict_loading(false).where(id_column => message_ids)
+      rows = rows.where(type_column => "Message") if type_column
+      rows.find_each(&:destroy!)
     end
 
     ::Message.strict_loading(false).where(sender_id: user.id).find_each do |message|
