@@ -64,6 +64,10 @@ module Master
 
         def run_spend = @current&.spend || [0.0, 0]
 
+        # Monotonic elapsed time for the one active run, including preflight.
+        # The pass deadline subtracts this so graph/research cannot reset the clock.
+        def elapsed_seconds = @current&.elapsed_seconds || 0.0
+
         def note_law_cost(law_id, usd, tokens = 0) = @current&.note_law_cost(law_id, usd, tokens)
 
         def law_limit_exceeded?(law_id) = @current&.law_limit_exceeded?(law_id) || false
@@ -119,6 +123,12 @@ module Master
         @last_resource_check = @started
         @watchdog = Thread.new { watch } if @poll.positive?
         self
+      end
+
+      def elapsed_seconds
+        return 0.0 unless @started
+
+        [@clock.call - @started, 0.0].max
       end
 
       def stop!
