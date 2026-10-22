@@ -104,6 +104,20 @@ guards before it is committed and pushed. This is the default; set
 pre-existing dirty work is never part of the batch. An unsuccessful or
 unconfirmed push is a delivery failure, not a completed repair.
 
+Every repair is proved against what was already red. Before its first edit,
+`/fix` measures the target read-only; a commit another session lands meanwhile
+leaves that measurement valid, while a file edited under it does not. A
+whole-MASTER repair is then proved by the tests that name the files it changed,
+judged against the known-red record the last whole suite left, so a failing test
+that record does not name refuses the repair. The record names failing tests,
+lapses after a day or a change of Ruby or lockfile, and a record naming only
+failed steps sends the proof back to the whole suite. A target is Rails when its
+files say so, an application or an engine above it, and a Rails target is proved
+by the gate runner over the apps `RAILS/apps.yml` registers. A run whose budget
+ran out while no process held it is closed, and the next `/fix` starts afresh.
+Every commit the runtime makes refuses the sacred paths `data/soul.yml`
+declares, whichever writer left them changed.
+
 For model-assisted findings, each /fix repair route proposes several materially
 different candidates (three by default), then selects one using the target Law and
 focused-test evidence. The candidate prompt draws action/fault oracles from
@@ -319,11 +333,15 @@ searches the checkout before it answers; only an instruction or a slash command
 reaches a command. `bin/cli` is the same runtime without the
 repository-wide setup. `bin/operator` is the operator's surface: it runs the
 gate ladder, reports status, lints files by the laws with no model, runs the
-tests that prove a change, manages worktrees and the production box, boots the
+tests that prove a change, manages the production box, boots the
 Rails apps with `triangle`, and writes snapshots. `bin/operator snapshot` writes
 one snapshot per tree for another model to read, and `--mirror` writes the
 byte-exact pack. `bin/check` runs the checks for a profile, among operator,
-contributor, agent, web, ci and full.
+contributor, agent, web, ci and full. Each step writes to `.master/check` as it
+runs, and the check names a failing test when it fails, counts the tests run
+each minute and calls a step stuck after two silent minutes. `rake test` deals
+the suite across three processes, `MASTER_TEST_JOBS` sets how many, and a test
+that overruns its limit prints the line it is stuck on.
 
 The `gates` directory holds the Rails and web gates, and `tools` holds the
 scanners, audits and censuses behind the operator. Plugins in `plugins` extend
