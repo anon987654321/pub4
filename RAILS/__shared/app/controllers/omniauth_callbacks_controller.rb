@@ -49,11 +49,23 @@ class OmniauthCallbacksController < ::ApplicationController
 
   def find_or_create_user(auth)
     record = external_identity_for(auth)
-    return record.user if record&.user
+    if record
+      # Never lazy-load record.user here: strict loading is enabled in every
+      # host. Resolve the persisted FK directly and refuse deleted identities
+      # instead of silently creating a second account for the same provider ID.
+      user = User.find_by(id: record.user_id)
+      raise IdentityEmailConflict unless user && user.try(:deleted_at).blank? && !user.try(:deletion_pending?)
+
+      record.update_column(:last_used_at, Time.current)
+      return user
+    end
 
     email = auth.info.email.to_s.downcase.strip
     verified_email = verified_provider_email?(auth)
     user = User.find_by(email_address: email) if email.present?
+    if user && (user.try(:deleted_at).present? || user.try(:deletion_pending?))
+      raise IdentityEmailConflict
+    end
     legacy_bankid_placeholder = false
 
     # Before the shared subject tables existed, BankID accounts were created
@@ -124,7 +136,11 @@ class OmniauthCallbacksController < ::ApplicationController
     return unless ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
 
     provider = ::IdentityProvider.find_by(slug: auth.provider.to_s)
-    provider&.external_identities&.find_by(subject: auth.uid.to_s)
+    return unless provider
+
+    # Query by the foreign key rather than provider.external_identities; the
+    # latter is a lazy association read and raises under the hosts' strict-loading policy.
+    ::ExternalIdentity.find_by(identity_provider_id: provider.id, subject: auth.uid.to_s)
   end
 
   def persist_external_identity(user, auth)
@@ -136,19 +152,24 @@ class OmniauthCallbacksController < ::ApplicationController
       record.issuer = auth.extra&.dig(:id_info, :iss) if auth.extra.respond_to?(:dig)
       record.client_id = ENV["#{auth.provider.to_s.upcase}_CLIENT_ID"]
     end
-    identity = provider.external_identities.find_or_initialize_by(subject: auth.uid.to_s)
-    identity.user = user
+    identity = ::ExternalIdentity.find_or_initialize_by(identity_provider_id: provider.id, subject: auth.uid.to_s)
+    identity.user_id = user.id
     identity.email_address = auth.info&.email.to_s.downcase.presence
     identity.phone_number = auth.info&.phone.to_s.presence
-    identity.assurance_level = assurance_level_for(auth.provider)
+    identity.assurance_level = assurance_level_for(auth.provider, auth:)
     identity.last_used_at = Time.current
     identity.save!
   end
 
-  def assurance_level_for(provider)
+  def assurance_level_for(provider, auth:)
     case provider.to_s
-    when "vipps", "bankid" then "verified"
-    else "account"
+    when "vipps"
+      "verified"
+    when "bankid"
+      acr = hash_value(hash_value(auth.extra, :id_info), :acr)
+      acr.to_s == "urn:bankid:bid" ? "verified" : "account"
+    else
+      "account"
     end
   end
 
