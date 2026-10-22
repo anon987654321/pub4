@@ -67,6 +67,9 @@ class TestProofAffected < Minitest::Test
     refute_nil known_after({})
     assert_nil known_after("toolchain" => "3.3.0 0000")
     assert_nil known_after({}, omit: ["toolchain"])
+    assert_nil known_after("failing" => "not-an-array")
+    assert_nil known_after("rows" => ["not-a-map"])
+    assert_nil known_after("at" => (Time.now.utc + 3600).iso8601)
     assert_nil known_after("at" => (Time.now.utc - Affected::MAX_AGE_S - 60).iso8601)
   end
 
