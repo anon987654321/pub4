@@ -44,7 +44,7 @@ class TestSelfTest < Minitest::Test
       result = Master::Review::Scan::SelfTest.new(root:).call
       singularity = result.value!.checks.find { |check| check.law == "SINGULARITY" }
 
-      assert singularity.findings.any? { |finding| finding[:message].include?("duplicate law id DUPLICATE_RULE") }
+      assert singularity.findings.any? { |finding| finding[:message].include?("duplicate law id DUPLICATE_LAW") }
       refute singularity.findings.any? { |finding| finding[:message].include?("duplicate law id DUPLICATE_PATTERN") }
     end
   end
