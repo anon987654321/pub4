@@ -44,7 +44,10 @@ class FederatedIdentityContractTest < Minitest::Test
     callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
     assert_includes auth, "verified_bankid_identity?(user)"
     assert_includes auth, 'identity_providers: { slug: "bankid" }'
-    assert_includes callback, 'when "vipps", "bankid" then "verified"'
+    assert_includes callback, 'when "bankid"'
+    assert_includes callback, 'acr.to_s == "urn:bankid:bid" ? "verified" : "account"'
+    assert_includes callback, "external_identity =="
+    refute_includes callback, "provider&.external_identities"
     assert_includes callback, 'user.require_email_verification = true unless verified_email'
   end
 
