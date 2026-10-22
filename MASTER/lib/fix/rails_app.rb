@@ -10,10 +10,7 @@ module Master
     module RailsApp
       def self.tree_target?(target, repo_root:) = relative_path(target, repo_root:).to_s.match?(/\ARAILS(?:\/|\z)/)
 
-      def self.named_apps(repo_root:)
-        path = File.join(File.expand_path(repo_root), "RAILS", "apps.yml")
-        YAML.safe_load_file(path, aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
-      end
+      def self.named_apps(repo_root:) = YAML.safe_load_file(File.join(File.expand_path(repo_root), "RAILS", "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
 
       def self.app_name(target, repo_root:)
         name = relative_path(target, repo_root:)&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first
@@ -21,10 +18,9 @@ module Master
       end
 
       def self.app_root?(target, repo_root:)
-        relative = relative_path(target, repo_root:)
         name = app_name(target, repo_root:)
-        !!(relative == "RAILS/#{name}" && name &&
-          File.directory?(File.join(File.expand_path(repo_root), relative)))
+        !!(name && relative_path(target, repo_root:) == "RAILS/#{name}" &&
+          File.directory?(File.join(File.expand_path(repo_root), "RAILS", name)))
       end
 
       def self.relative_path(target, repo_root:)
