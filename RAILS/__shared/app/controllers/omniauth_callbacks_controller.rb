@@ -4,6 +4,7 @@
 
 class OmniauthCallbacksController < ::ApplicationController
   class IdentityEmailConflict < StandardError; end
+  class IdentityStorageUnavailable < StandardError; end
 
   allow_unauthenticated_access
   # create calls User.create! for an unrecognised uid, so a callback that gets
@@ -41,6 +42,8 @@ class OmniauthCallbacksController < ::ApplicationController
     start_new_session_for user
 
     redirect_to after_authentication_url, notice: t("shared.flash.signed_in_with", provider: auth.provider)
+  rescue IdentityStorageUnavailable
+    redirect_to new_session_path, alert: t("shared.flash.oauth_storage_unavailable")
   rescue IdentityEmailConflict
     redirect_to new_session_path, alert: t("shared.email_verification.oauth_email_conflict")
   end
@@ -48,6 +51,10 @@ class OmniauthCallbacksController < ::ApplicationController
   private
 
   def find_or_create_user(auth)
+    # Never create a user while durable provider-subject storage is unavailable.
+    # Otherwise each OAuth return creates a new account and the next login has
+    # no stable subject mapping with which to recover the original account.
+    ensure_identity_storage!
     record = external_identity_for(auth)
     if record
       # Never lazy-load record.user here: strict loading is enabled in every
@@ -87,8 +94,9 @@ class OmniauthCallbacksController < ::ApplicationController
         has_unconsumed_synthetic_address = legacy_user.respond_to?(:has_attribute?) &&
                                            legacy_user.has_attribute?(:email_verification_token) &&
                                            legacy_user.email_verification_token.blank?
-        eligible = has_unconsumed_synthetic_address && !legacy_user.email_verified? &&
-                   legacy_user.try(:deleted_at).blank? &&
+        high_assurance_subject = assurance_level_for(auth.provider, auth:) == "verified"
+        eligible = high_assurance_subject && has_unconsumed_synthetic_address &&
+                   !legacy_user.email_verified? && legacy_user.try(:deleted_at).blank? &&
                    legacy_user.try(:deletion_scheduled_at).blank? && !legacy_user.try(:deletion_pending?)
         raise IdentityEmailConflict unless eligible
 
@@ -137,9 +145,14 @@ class OmniauthCallbacksController < ::ApplicationController
     hash[key] || hash[key.to_s] || hash[key.to_sym]
   end
 
+  def ensure_identity_storage!
+    available = defined?(::ExternalIdentity) && defined?(::IdentityProvider) &&
+                ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
+    raise IdentityStorageUnavailable unless available
+  end
+
   def external_identity_for(auth)
-    return unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
-    return unless ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
+    ensure_identity_storage!
 
     provider = ::IdentityProvider.find_by(slug: auth.provider.to_s)
     return unless provider
@@ -150,8 +163,7 @@ class OmniauthCallbacksController < ::ApplicationController
   end
 
   def persist_external_identity(user, auth)
-    return unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
-    return unless ::ExternalIdentity.table_exists? && ::IdentityProvider.table_exists?
+    ensure_identity_storage!
 
     provider = ::IdentityProvider.find_or_create_by!(slug: auth.provider.to_s) do |record|
       record.name = auth.provider.to_s.tr("_", " ").titleize
