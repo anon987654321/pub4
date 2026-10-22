@@ -183,11 +183,15 @@ module Master
             end
             next if hits.empty?
 
-            refs = hits.first(3).flat_map do |file, lines|
-              lines.first(4).map { |line, text| "#{file}:#{line}: #{text.strip[0, 100]}" }
-            end
-            "#{path} still has production references: #{refs.join("; ")}"
+            "#{path} still has production references: #{references(hits).join("; ")}"
           end.first
+        end
+
+        # hits pairs each file with its matching [text, line] rows.
+        def references(hits)
+          hits.first(3).flat_map do |file, lines|
+            lines.first(4).map { |text, line| "#{file}:#{line}: #{text.strip[0, 100]}" }
+          end
         end
 
         def production_files(plan)

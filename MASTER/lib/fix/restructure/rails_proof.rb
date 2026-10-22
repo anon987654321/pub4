@@ -57,8 +57,9 @@ module Master
 
         def apps(plan)
           registered = RailsApp.named_apps(repo_root: @repo_root)
+          # A brgen vertical is an engine at RAILS/brgen_<name>, proved through brgen.
           named = plan.paths.flat_map do |path|
-            app = path.split("/")[1]
+            app = path.split("/")[1].to_s.sub(/\Abrgen_\w+\z/, "brgen")
             app == "__shared" ? registered : [app]
           end
           named.uniq & registered
