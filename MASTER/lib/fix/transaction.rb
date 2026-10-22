@@ -737,6 +737,7 @@ module Master
       end
 
       def persisted_state_matches?(state:, paths:, snapshots:)
+        verify_storage_tree!
         manifest_path = File.join(@dir, MANIFEST)
         return false if File.symlink?(manifest_path) || !File.file?(manifest_path)
 
@@ -765,6 +766,10 @@ module Master
       end
 
       def discard_snapshots!(snapshots)
+        return if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir,
+                   File.join(@dir, "files")].any? { |path| File.symlink?(path) }
+
+        verify_storage_tree!
         root = File.expand_path(File.join(@dir, "files"))
         referenced = @snapshots.values.filter_map(&:store).map { |path| File.expand_path(path) }.to_set
         Array(snapshots).each do |item|
@@ -781,6 +786,7 @@ module Master
       end
 
       def cleanup_orphan_snapshots!
+        verify_storage_tree!
         files_dir = File.join(@dir, "files")
         return unless Dir.exist?(files_dir) && !File.symlink?(files_dir)
 
