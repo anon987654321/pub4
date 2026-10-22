@@ -301,6 +301,33 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_rejects_a_symlinked_snapshot_store_even_after_terminal_state
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "note.txt"), "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "symlink-store").begin!
+      manifest = File.join(dir, ".master", "fix_transactions", tx.id, "manifest.json")
+      data = JSON.parse(File.read(manifest))
+      store = data.fetch("snapshots").fetch("note.txt").fetch("store")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+      tx.send(:cleanup!)
+
+      outside = File.join(dir, "outside")
+      File.write(outside, "do not read")
+      storage = File.join(dir, ".master", "fix_transactions", tx.id, "files")
+      FileUtils.mkdir_p(storage)
+      File.symlink(outside, store)
+      data["state"] = "committed"
+      File.write(manifest, JSON.generate(data))
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::Transaction::Recovery.load_persisted(root: dir, id: tx.id)
+      end
+      assert_match(/snapshot invalid/, error.message)
+      assert_equal "do not read", File.read(outside)
+    end
+  end
+
   def test_recovery_refuses_to_race_with_a_live_transaction
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
