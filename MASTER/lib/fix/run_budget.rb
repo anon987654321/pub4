@@ -334,7 +334,7 @@ module Master
       end
 
       # Distinguish an infrastructure abort from a graceful/progress timeout.
-      def stop_category = @exit_reason.to_s.match?(/disk (?:pressure|space)|protected path changed/) ? :infrastructure : :timeout
+      def stop_category = @exit_reason.to_s.match?(/disk (?:pressure|space|measurement unavailable)|protected path changed/) ? :infrastructure : :timeout
 
       # One machine-readable heartbeat a minute, whatever the human line says.
       def machine_beat(now)
