@@ -124,7 +124,7 @@ class TestFixTransaction < Minitest::Test
       tx = Master::Fix::Transaction.new(root:, paths: ["linked/note.txt"], id: "symlink-parent")
       error = assert_raises(RuntimeError) { tx.begin! }
 
-      assert_includes error.message, "symlinked parent"
+      assert_includes error.message, "path escapes workspace"
       refute tx.active?
       assert_equal "outside bytes", File.read(outside_file)
       refute Dir.exist?(File.join(root, ".master", "fix_transactions", "symlink-parent"))
