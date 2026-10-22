@@ -40,6 +40,7 @@ module Master
         PROOF_ROOTS = {
           "MASTER" => ::Operator::GateChain::MASTER,
           "OPENBSD" => File.join(::Operator::GateChain::ROOT, "OPENBSD"),
+          "STUDIO" => File.join(::Operator::GateChain::ROOT, "STUDIO"),
         }.freeze
 
         # Every commit this runtime delivers opens with it. A baseline outlives
