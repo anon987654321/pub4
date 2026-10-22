@@ -57,6 +57,14 @@ SAFE_ENV = {
   "MASTER_INTERNAL_CHILD" => "1",
   "MASTER_CONTROL_PLANE" => "0",
   "MASTER_PROCESS_LOCK_FD" => nil,
+  # A tier measures; it is not a /fix run of its own. The first model read of the tree, the execution
+  # trace, the structural review and the repair preview printed no line the baseline keeps, and the
+  # /fix that asked for this tier ran the first three already: they held every write-enabled /fix for
+  # minutes before its first repair.
+  "MASTER_FIX_TREE" => "0",
+  "MASTER_FIX_DEEP_TRACE" => "0",
+  "MASTER_FIX_STRUCTURAL_REVIEW" => "0",
+  "MASTER_FIX_PREVIEW" => "0",
 }.freeze
 
 # An unknown argument is refused, because ignoring it means "run everything and

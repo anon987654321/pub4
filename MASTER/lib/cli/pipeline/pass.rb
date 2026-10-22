@@ -226,6 +226,9 @@ module Master
             sections << critique_section(resolved, shell)
           end
           unless @apply
+            # MASTER_FIX_PREVIEW=0: a gate tier's read-only pass wants the reading alone.
+            return sections if ENV["MASTER_FIX_PREVIEW"] == "0"
+
             return sections << ["would repair", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]
           end
 

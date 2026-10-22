@@ -125,6 +125,14 @@ class WorkflowInferenceTest < Minitest::Test
     refute_match(/^obs1 at review0: re-observe/, out)
   end
 
+  # A gate tier's read-only pass reads and stops: no preview, which bin/gate switches off.
+  def test_a_gate_tier_dry_run_reads_without_a_preview
+    out = with_env("MASTER_FIX_PREVIEW", "0") { dispatch(critique: false) }
+
+    assert_match(/^obs0 at review0: observe/, out)
+    refute_match(/would repair/, out)
+  end
+
   # /review is where the council is a stage of its own. Inside /fix it argues
   # per repair instead, which test_fix_council covers.
   def test_review_reaches_deliberation_when_critique_is_on
