@@ -111,11 +111,41 @@ module Master
         raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
 
         added = selected.uniq - @paths
-        added.each { |path| @snapshots[path] = snapshot(path) }
-        @paths = (@paths + added).uniq
-        observed = observe_paths!(added) unless added.empty?
-        return observed if observed && observed.err?
+        staged = {}
+        added.each { |path| staged[path] = snapshot(path, versioned: true) }
+        unsupported = staged.select { |_path, item| item.kind == :other }.keys
+        unless unsupported.empty?
+          discard_snapshots!(staged.values)
+          return Result.err(
+            "transaction cannot safely enlist unsupported filesystem object(s): #{unsupported.join(", ")}",
+            category: :policy,
+          )
+        end
 
+        old_paths = @paths
+        old_snapshots = @snapshots
+        old_seen = @seen
+        new_paths = (@paths + added).uniq
+        new_snapshots = @snapshots.merge(staged)
+        new_seen = duplicate_seen
+        added.each { |path| new_seen[path] = [fingerprint(absolute(path))] }
+
+        @paths = new_paths
+        @snapshots = new_snapshots
+        @seen = new_seen
+        begin
+          persist!
+        rescue StandardError
+          unless persisted_state_matches?(state: @state, paths: new_paths, snapshots: new_snapshots)
+            @paths = old_paths
+            @snapshots = old_snapshots
+            @seen = old_seen
+            discard_snapshots!(staged.values)
+          end
+          raise
+        end
+
+        emit("fix:transaction_paths_observed", id: @id, paths: added) unless added.empty?
         emit("fix:transaction_paths_enlisted", id: @id, paths: added)
         Result.ok(added)
       rescue StandardError => e
