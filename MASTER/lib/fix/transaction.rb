@@ -26,7 +26,6 @@ module Master
       ROOT_DIR = ".master/fix_transactions"
       LOCK = ".master/fix_transaction.lock"
       MANIFEST = "manifest.json"
-      VALID_STATES = %w[open delivering committed rolled_back conflict].freeze
 
       def self.normalize_id(id)
         value = id.to_s
@@ -66,8 +65,7 @@ module Master
         @active = true
         observe!(verify_snapshot: true)
         emit("fix:transaction_snapshot_summary", id: @id, tracked_paths: @paths.size,
-                                                  file_snapshots: @snapshots.values.count { |item| item.kind == :file },
-                                                  elapsed_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round)
+             elapsed_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round)
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
@@ -465,7 +463,7 @@ module Master
       def validate_manifest!(data)
         raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1 && data["id"] == @id
         state, paths, snapshots, seen = data.values_at("state", "paths", "snapshots", "seen")
-        raise "transaction manifest state unsupported" unless VALID_STATES.include?(state)
+        raise "transaction manifest state unsupported" unless %w[open delivering committed rolled_back conflict].include?(state)
         raise "transaction manifest paths malformed" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
         raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
 
