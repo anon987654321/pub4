@@ -57,7 +57,9 @@ module Master
       # The key is the file's path and content, the set of laws asked, and the scanner's own source: the
       # law code, laws.yml and the linter configs. A change to any of them asks again. Only laws that
       # declare they read nothing else (Law.reads_beyond_file?) are replayed; the others run every time.
-      # One entry per path, overwritten when its key changes, so the cache holds one answer per file.
+      # One entry per path and set of laws asked, overwritten when its key changes. One per path alone let
+      # two walks asking different laws of a file overwrite each other, and the self-findings ratchet
+      # missed half its files on a second run over an unchanged tree.
       # MASTER_SCAN_CACHE=0 turns it off.
       class FindingCache
         # One file's text, the laws asked about it, and whether they read it parsed.
@@ -106,18 +108,21 @@ module Master
         def replay(subject)
           return unless self.class.enabled? && !subject.laws.empty?
 
-          read(entry_path(subject.relative), key(subject))
+          read(entry_path(subject), key(subject))
         end
 
         def record(subject, findings)
           return unless self.class.enabled? && !subject.laws.empty?
 
-          write(entry_path(subject.relative), key: key(subject), findings:)
+          write(entry_path(subject), key: key(subject), findings:)
         end
 
         private
 
-        def entry_path(relative) = File.join(@dir, "#{Digest::SHA256.hexdigest(relative)}.json")
+        def entry_path(subject)
+          asked = subject.laws.map { |law| law.id.to_s }.sort
+          File.join(@dir, "#{Digest::SHA256.hexdigest([subject.relative, *asked].join("\n"))}.json")
+        end
 
         def key(subject)
           ids = subject.laws.map { |law| law.id.to_s }.sort

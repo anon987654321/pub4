@@ -51,6 +51,15 @@ class TestFindingCache < Minitest::Test
     assert_equal first, second
   end
 
+  # Two walks asking different laws of one file keep an answer each instead of overwriting the other.
+  def test_two_law_sets_on_one_file_both_replay
+    calls = []
+    both = [PureLaw.new, PureLaw.new.tap { |law| law.define_singleton_method(:id) { "OTHER" } }]
+    2.times { [[both.first], both].each { |laws| fetch("x = 1\n", laws:, calls:) } }
+
+    assert_equal 2, calls.size
+  end
+
   # Symbols and Finding survive the trip, or a replayed finding matches no reader.
   def test_the_replay_keeps_findings_and_symbols
     fetch("x = 1\n")
