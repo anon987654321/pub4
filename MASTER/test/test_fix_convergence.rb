@@ -983,6 +983,30 @@ end
     refute_includes result.message, "push token"
   end
 
+  def test_fix_does_not_start_repair_when_read_only_baseline_mutates
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |*| flunk("repair must not start after the proof changed the checkout") }
+
+    result = nil
+    Operator::GateChain.stub(:baseline_scope_key, ->(*) { "RAILS" }) do
+      Operator::GateChain.stub(
+        :baseline,
+        ->(**) { raise Operator::GateChain::BaselineMutation, "read-only pre-repair proof changed 1 path: MASTER/lib/changed.rb" },
+      ) do
+        result = Master::CLI::CommandRegistry.run_fix_target(
+          scanner: Object.new, fix_loop:, root: Master::ROOT, deliberation: nil, bus: nil, swarm: nil,
+          target: "RAILS", writes_requested: true, effective_critique: false, critique: false,
+          aesthetic: false, only: "fix",
+        )
+      end
+    end
+
+    assert_instance_of Master::Result::Err, result
+    assert_equal :validation, result.category
+    assert_match(/pre-repair proof blocked/, result.message)
+    assert_includes result.message, "MASTER/lib/changed.rb"
+  end
+
   def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
     verified = []
     states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
