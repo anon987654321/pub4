@@ -58,6 +58,24 @@ class TestGateChain < Minitest::Test
     previous ? ENV["MASTER_FIX_GATE_STAGES"] = previous : ENV.delete("MASTER_FIX_GATE_STAGES")
   end
 
+  def test_invalid_or_inapplicable_verification_filters_are_rejected
+    previous = ENV["MASTER_FIX_GATE_STAGES"]
+
+    ENV["MASTER_FIX_GATE_STAGES"] = "lexical,not_a_stage"
+    error = assert_raises(G::InvalidVerificationScope) { G.verification_stages("RAILS") }
+    assert_includes error.message, "not_a_stage"
+
+    ENV["MASTER_FIX_GATE_STAGES"] = "council"
+    error = assert_raises(G::InvalidVerificationScope) { G.verification_stages("RAILS") }
+    assert_match(/council/, error.message)
+
+    ENV["MASTER_FIX_GATE_STAGES"] = "suites"
+    error = assert_raises(G::InvalidVerificationScope) { G.verification_stages("RAILS") }
+    assert_match(/do not apply/, error.message)
+  ensure
+    previous.nil? ? ENV.delete("MASTER_FIX_GATE_STAGES") : ENV["MASTER_FIX_GATE_STAGES"] = previous
+  end
+
   def test_the_baseline_cache_is_not_shared_between_stage_selections
     previous = ENV.delete("MASTER_FIX_GATE_STAGES")
     full = G.baseline_key("RAILS")
