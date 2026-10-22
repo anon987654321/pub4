@@ -93,19 +93,25 @@ class InferStageTest < Minitest::Test
     refute_nil rejected
   end
 
-  def test_destructive_inference_requires_anchored_positive_consent
-    blocked = @infer.call(ctx("please clear context"))
-    assert blocked.err?
-    assert_equal :policy, blocked.category
+  # Clearing the transcript the operator asked to clear needs no consent ritual; the guard is for
+  # rebuild, resync, shell and rollback.
+  def test_clearing_context_in_plain_words_needs_no_consent
+    result = @infer.call(ctx("please clear context"))
+    assert result.ok?
+    assert_equal :command, result.value!.intent
+    assert_equal "clear", result.value!.command
+  end
 
-    negated = @infer.call(ctx("yes, do not clear context"))
-    assert negated.err?
-    assert_equal :policy, negated.category
+  def test_a_long_line_ending_in_again_is_not_a_repeat
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
 
-    allowed = @infer.call(ctx("yes, clear context"))
-    assert allowed.ok?
-    assert_equal :command, allowed.value!.intent
-    assert_equal "clear", allowed.value!.command
+    result = infer.call(ctx("can you explain how the face renders its contours once again"))
+
+    assert result.ok?
+    assert_equal :llm, result.value!.intent
   end
 
   def test_detects_coding_task_type

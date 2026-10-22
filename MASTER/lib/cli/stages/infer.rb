@@ -29,6 +29,10 @@ module Master
 
         PATTERNS_PATH = Master.data_path("patterns.yml").freeze
         REPEAT_BIAS = /\A(?:again|same|repeat|once\s+more|do\s+that|one\s+more\s+time)\b/i.freeze
+        # "yes, again" and "please confirm again" ask for a repeat too, so a short line that ends in one
+        # counts; the destructive guard then judges its consent. A long one ("tell me again what X is") does not.
+        REPEAT_TAIL = /\b(?:again|repeat|once\s+more|one\s+more\s+time)[.!]*\z/i.freeze
+        REPEAT_TAIL_WORDS = 6
         NB_LOCALE = /[æøåÆØÅ]|\b(?:ikke|jeg|deg|eller|dette|skal|vil|kan|hva|hvor|nå|gjør|kjør|fiks|rydd)\b/i.freeze
 
         INFER_ALIASES = {
@@ -37,7 +41,7 @@ module Master
           "principles" => "axioms",
         }.freeze
 
-        INFER_DESTRUCTIVE = %w[clear rebuild resync shell rollback].freeze
+        INFER_DESTRUCTIVE = %w[rebuild resync shell rollback].freeze
         CONSENT_PREFIX = /\A\s*(?:yes|do\s+it|confirm(?:ed)?|go\s+ahead|i\s+mean\s+it)\b/i.freeze
         CONSENT_NEGATION = /\b(?:no|not|don['’]t|do\s+not|never|stop|cancel|without)\b/i.freeze
         # The words Pipeline::Pass#resolve_target maps to a tree.
@@ -104,11 +108,15 @@ module Master
         end
 
         def bias_repeat_command(msg)
-          return unless @session && msg.match?(REPEAT_BIAS)
+          return unless @session && repeat_request?(msg)
           cmd = @session.last_inferred_command.to_s
           return if cmd.empty?
 
           { command: cmd, args: @session.last_inferred_args.to_s, msg:, confidence: 0.92, match: nil, capture: "" }
+        end
+
+        def repeat_request?(msg)
+          msg.match?(REPEAT_BIAS) || (msg.split.size <= REPEAT_TAIL_WORDS && msg.match?(REPEAT_TAIL))
         end
 
         def find_best_match(msg, locale)

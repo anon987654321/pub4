@@ -181,7 +181,9 @@ infer:
     blocks: [explain]
   - pattern: "\\bscan\\s+(?:my\\s+)?(?:inbox|email|calendar)\\b"
     blocks: [scan]
-  destructive: [clear, rebuild, resync, shell, rollback]
+  # clear is not here: it empties the session transcript the operator asked to empty and touches no file,
+  # and a council review of it took 104s on 2026-10-22 before vetoing it.
+  destructive: [rebuild, resync, shell, rollback]
 
 media:
   postprocess:

@@ -5,9 +5,10 @@ require_relative "test_helper"
 class TestDestructiveRoutes < Minitest::Test
   def test_destructive_commands_include_infer_defaults
     commands = Master::CLI::DestructiveRoutes.destructive_commands
-    %w[clear rebuild resync shell rollback].each do |cmd|
+    %w[rebuild resync shell rollback].each do |cmd|
       assert_includes commands, cmd
     end
+    refute_includes commands, "clear", "/clear empties the transcript the operator asked to empty"
   end
 
   def test_destructive_route_detects_slash_command
