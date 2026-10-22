@@ -46,7 +46,8 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes auth, 'identity_providers: { slug: "bankid" }'
     assert_includes callback, 'when "bankid"'
     assert_includes callback, 'acr.to_s == "urn:bankid:bid" ? "verified" : "account"'
-    assert_includes callback, "external_identity =="
+    assert_includes callback, '::ExternalIdentity.find_by(identity_provider_id: provider.id, subject: auth.uid.to_s)'
+    assert_includes callback, '::ExternalIdentity.find_or_initialize_by(identity_provider_id: provider.id, subject: auth.uid.to_s)'
     refute_includes callback, "provider&.external_identities"
     assert_includes callback, 'user.require_email_verification = true unless verified_email'
   end
