@@ -232,6 +232,8 @@ module Master
           return sections << ["proof", REPAIR_UNPROVEN] if repair_failed_without_changes?(changes)
 
           sections << reobserve_section(before:, resolved:, shell:, aesthetic: run_aesthetic)
+          return sections << ["proof", NOTHING_DELIVERED] if nothing_delivered?(before)
+
           sections << proof_section(resolved, baseline)
         end
 
@@ -286,6 +288,16 @@ module Master
 
         # A repair that died before writing leaves the tree as the first reading saw it.
         def repair_failed_without_changes?(changes) = @failed_stages.include?("fix") && changes == "nothing changed"
+
+        NOTHING_DELIVERED = "skipped: the run committed nothing and its autofix left nothing, so the baseline stands"
+
+        # In the shared checkout the working tree always holds someone's changes, so "nothing changed"
+        # rarely reads true; what this run delivered is its commits and its autofix writes.
+        def nothing_delivered?(before)
+          git.log_between(before).empty? && Master::Fix::AutofixGuard.written.none? do |path|
+            Master::Fix::AutofixGuard.still_as_written?(path)
+          end
+        end
 
         # The second reading of a repair covers the files the repair changed; see Reobservation.
         def reobserve_section(before:, resolved:, shell:, aesthetic:)
