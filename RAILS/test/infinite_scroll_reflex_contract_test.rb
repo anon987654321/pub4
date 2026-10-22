@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # The 21 infinite-scroll reflexes share one spine: paginate a scope, render one
 # partial per row, join. Only the scope differs. That spine now lives in
@@ -18,6 +19,7 @@ require "minitest/autorun"
 # exactly what a typo in the refactor would break.
 class InfiniteScrollReflexContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
+  ENGINE_VIEWS = Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views")).freeze
 
   def reflexes
     @reflexes ||= Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}", "app", "reflexes", "*infinite_scroll*.rb")).sort
@@ -53,8 +55,8 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   # product question in the backlog — the messenger inbox is a rail capped at 30
   # with no sentinel anywhere, so there was no page for it to append to. Deleted.
   def test_every_reflex_is_mounted_by_a_view
-    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.erb")) +
-            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb"))
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.erb")) +
+            ENGINE_VIEWS.flat_map { |root| Dir.glob(File.join(root, "**", "*.erb")) }
     mounted = views.flat_map { |v| File.read(v).scan(/reflex:\s*"([^"#]+)/).flatten }.to_set
 
     # The class name a reflex file defines, derived the way Zeitwerk does.
@@ -85,8 +87,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   def test_every_declared_partial_exists_on_disk
     missing = reflexes.flat_map do |path|
       app = path.delete_prefix("#{ROOT}/").split("/").first
-      roots = [File.join(ROOT, app, "app", "views"), File.join(ROOT, "__shared", "app", "views")] +
-              Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views"))
+      roots = [File.join(ROOT, app, "app", "views"), File.join(ROOT, "__shared", "app", "views")] + ENGINE_VIEWS
 
       code(path).scan(/partial:\s*"([^"]+)"|renders\s+"([^"]+)"/).flatten.compact.uniq.filter_map do |partial|
         dir, base = File.split(partial)

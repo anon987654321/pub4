@@ -3,6 +3,7 @@
 # Family layout contract: MASTER face + RAILS apps share chrome vars, skip-link,
 # main landmark, and 44px tap floor. Dialects may restyle; structure stays.
 require "minitest/autorun"
+require_relative "engine_roots"
 require_relative "../../MASTER/tools/scss"
 
 class LayoutContractTest < Minitest::Test
@@ -77,7 +78,7 @@ class LayoutContractTest < Minitest::Test
 
   def test_no_view_skips_a_heading_level
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.html.erb")) +
-            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.html.erb"))
+            Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views", "**", "*.html.erb"))
 
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
 
@@ -104,7 +105,7 @@ class LayoutContractTest < Minitest::Test
   # the marketplace nav, which the storefront flatten removed outright.
   def test_nbsp_is_typography_not_spacing
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.erb")) +
-            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb"))
+            Dir.glob(File.join(ROOT, EngineRoots::GLOB, "app", "views", "**", "*.erb"))
 
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
 
@@ -239,11 +240,12 @@ class LayoutContractTest < Minitest::Test
   end
 
   def test_shared_chrome_tokens_declare_layout_floor
+    # The generator writes these unquoted; the value is the contract, not the quoting.
     yml = File.read(TOKENS)
-    assert_match(/chrome_inset:\s*"12px"/, yml)
-    assert_match(/tap_min:\s*"44px"/, yml)
-    assert_match(/bar_height:\s*"44px"/, yml)
-    assert_match(/measure_body:\s*"66ch"/, yml)
+    assert_match(/chrome_inset:\s*"?12px"?$/, yml)
+    assert_match(/tap_min:\s*"?44px"?$/, yml)
+    assert_match(/bar_height:\s*"?44px"?$/, yml)
+    assert_match(/measure_body:\s*"?66ch"?$/, yml)
   end
 
   def test_face_root_shares_chrome_inset_and_tap
@@ -419,7 +421,8 @@ class LayoutContractTest < Minitest::Test
   end
 
   def test_messenger_dock_reads_keyboard_inset
-    assert app_rules("brgen", /\Abody\.vertical-messenger #new_message\z/).any? { |rule| rule.declares?(/var\(--keyboard-inset/) },
+    composer = /\Abody\.vertical-messenger #new_message(?::not\([^)]*\))?\z/
+    assert app_rules("brgen", composer).any? { |rule| rule.declares?(/var\(--keyboard-inset/) },
            "the messenger composer must sit above the on-screen keyboard"
   end
 end

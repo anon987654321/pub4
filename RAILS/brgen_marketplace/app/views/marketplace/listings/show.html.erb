@@ -153,7 +153,7 @@
 
     <% if @buy_box_reasons.present? %>
       <section class="buy-box-reasons" aria-label="<%= t("marketplace.buy_box_seller_feedback") %>">
-        <h3><%= t("marketplace.buy_box_seller_feedback") %></h3>
+        <%= tag.h2 t("marketplace.buy_box_seller_feedback") %>
         <ul><% @buy_box_reasons.each do |reason| %><li><%= reason %></li><% end %></ul>
         <% if (score = @buy_box_result&.score_for(@listing)) %>
           <p><%= t("marketplace.buy_box_score", score: (score.total * 100).round) %></p>

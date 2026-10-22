@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "engine_roots"
 
 # `isolate_namespace Tv` strips the namespace from model_name, so
 # `form_with model: @video` posts video[title] — not tv_video[title]. Sixteen
@@ -20,7 +21,7 @@ class EngineParamKeyTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   ENGINES = %w[marketplace dating playlist takeaway tv maps].freeze
 
-  def engine_root(engine) = File.join(ROOT, "brgen/engines", engine)
+  def engine_root(engine) = File.join(ROOT, EngineRoots::PATHS.fetch(engine))
 
   def scoped_keys(engine)
     Dir.glob(File.join(engine_root(engine), "app/views/**/*.erb"))
@@ -33,6 +34,11 @@ class EngineParamKeyTest < Minitest::Test
       File.read(path).scan(/params\.(?:require|dig)\(:(#{engine}_[a-z_]+)/).flatten
           .map { |key| [ path.sub("#{ROOT}/", ""), key ] }
     end
+  end
+
+  # A root that moved reads as an engine with no forms and no controllers, which passes.
+  def test_every_engine_root_exists
+    ENGINES.each { |engine| assert File.directory?(engine_root(engine)), "#{engine} root moved" }
   end
 
   def test_every_namespaced_param_key_is_one_a_form_actually_posts
