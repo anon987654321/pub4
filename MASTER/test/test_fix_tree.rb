@@ -67,7 +67,7 @@ class TestFixTree < Minitest::Test
 
   def test_a_git_inventory_failure_is_not_reported_as_an_empty_tree
     Dir.mktmpdir("not-a-repository") do |root|
-      File.write(File.join(root, "app.rb"), "class App; end\\n")
+      File.write(File.join(root, "app.rb"), "class App; end\n")
 
       error = assert_raises(RuntimeError) { Master::Fix::Tree.new(root:).files }
 
