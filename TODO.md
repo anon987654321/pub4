@@ -89,14 +89,18 @@ browser evidence recorded in the commit.
   voice (71a3a97ff and 7ad060f92); a BINARY web result raised "incompatible character encodings"
   on every lane and opened every circuit (c1e3cef26); "what can you do" described only the
   repository (59e067d1f). Still open, unmeasured since the fixes:
-  - Rerun the same trial on the fixed commit and record per-turn latency; replies took 4–8s and
-    boot ~23s.
+  - Rerun 2026-10-23 on f507369b4: every answer was direct and useful, the capability answer
+    covers a person's needs, and the reminder was kept as a task with an honest "nothing will
+    ring". It found one more: "write an email asking him to fix the broken heater" started /fix
+    in write mode (fixed in 6806b6fdc; its blank-line edits were restored). Still slow: boot
+    17.6s, the greeting at 26.7s, each reply 13–16s end to end. Make replies stream their first
+    words.
   - "does god exist? give me your actual view" ran two web searches (the second appending
     "official documentation") for a question that asks for a view, not evidence. Weather then
     said web tools were unavailable, and no answer cited a source. Decide whether ordinary
     lookups need approval at all.
-  - "remind me tomorrow at 9" has no reminder path; either add one bound to the shared session
-    or say so once.
+  - "remind me tomorrow at 9" is kept as a task, but nothing alerts at the time; an alert needs
+    a delivery channel (the face, a push, or the operator's messaging channel above).
   - Pre-existing reds found on the way: `test/test_media_intent.rb` went green in d8efe79db
     (each failure was a real misreading of postpro requests) and
     `test/test_ground_standing_orders.rb` in 40fd09ff7 (stale fakes), the two prompt tests in
