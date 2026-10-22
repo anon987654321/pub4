@@ -155,4 +155,34 @@ class SchemaMigrationGateTest < Minitest::Test
     assert_equal :inconclusive, result.outcome
     assert_match(/nothing was read/, result.unchecked.first)
   end
+
+  def test_amber_schema_matches_the_latest_identity_migrations
+    repo = File.expand_path("../../..", __dir__)
+    migration_paths = Dir.glob(File.join(repo, "RAILS/amber/db/migrate/*.rb"))
+    latest = migration_paths.filter_map { |path| File.basename(path)[/\\A\\d+/] }.max
+    schema = File.read(File.join(repo, "RAILS/amber/db/schema.rb"))
+    version = schema[/define\\(version:\\s*([\\d_]+)\\)/, 1]&.delete("_")
+
+    assert_equal latest, version, "Amber's schema must be dumped at the latest migration version"
+
+    expected_columns = {
+      "account_merges" => %w[guest_user_id user_id status merged_at created_at updated_at],
+      "external_identities" => %w[user_id identity_provider_id subject email_address phone_number assurance_level last_used_at created_at updated_at],
+      "identity_providers" => %w[name slug issuer client_id active created_at updated_at],
+    }
+    expected_columns.each do |table, columns|
+      definition = schema.match(/^  create_table "#{Regexp.escape(table)}".*?^  end/m)
+      refute_nil definition, "schema is missing #{table}"
+      columns.each do |column|
+        assert_match(/^    t\\.\\w+ "#{Regexp.escape(column)}"/, definition[0],
+                     "#{table} is missing #{column}")
+      end
+    end
+
+    assert_includes schema, 'add_foreign_key "account_merges", "users", column: "guest_user_id"'
+    assert_includes schema, 'add_foreign_key "account_merges", "users"'
+    assert_includes schema, 'add_foreign_key "external_identities", "users"'
+    assert_includes schema, 'add_foreign_key "external_identities", "identity_providers"'
+  end
+
 end
