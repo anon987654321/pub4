@@ -116,10 +116,9 @@ module Master
 
           def rank_window = RunLedger.max_files ? Float::INFINITY : RANK_WINDOW
 
-          # An unbounded operator-requested run completes the eligible scan before
-          # it starts repairs, then orders its worklist by impact. An explicit
-          # --max-files bound keeps its early-stop behavior unless ranking was
-          # explicitly requested, so bounded runs do not silently become full scans.
+          # Unbounded runs rank rolling windows by impact, so repair can begin
+          # before the full scan ends. --max-files keeps early-stop behavior
+          # unless MASTER_FIX_RANK=1 explicitly requests a full ranked scan.
           def rank_worklist?
             return true if ENV["MASTER_FIX_RANK"] == "1"
             return false if RunLedger.max_files
