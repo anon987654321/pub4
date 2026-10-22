@@ -404,6 +404,14 @@ class TestGateChain < Minitest::Test
     G.instance_variable_set(:@last_results, previous_results)
   end
 
+  # Each stub in turn around the block, without one more level of nesting per stub.
+  def with_stubs(object, stubs, &block)
+    return yield if stubs.empty?
+
+    (name, value), *rest = stubs.to_a
+    object.stub(name, value) { with_stubs(object, rest.to_h, &block) }
+  end
+
   def test_pre_repair_baseline_refuses_to_cache_after_a_read_only_stage_mutates
     stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
     fake_report = lambda do |selected, scan_only:, trees:, return_results:|
@@ -414,21 +422,14 @@ class TestGateChain < Minitest::Test
       [1, ["MASTER/lib/changed.rb"]]
     end
 
-    G.stub(:verification_stages, [stage]) do
-      G.stub(:trees_for_target, ["MASTER"]) do
-        G.stub(:baseline_key, "baseline-mutation-test") do
-          G.stub(:read_baseline, nil) do
-            G.stub(:report, fake_report) do
-              G.stub(:write_baseline, ->(*) { flunk("an unsafe baseline was persisted") }) do
-                error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
-                assert_match(/read-only pre-repair proof changed 1 path/, error.message)
-                assert_includes error.message, "MASTER/lib/changed.rb"
-              end
-            end
-          end
-        end
-      end
-    end
+    stubs = { verification_stages: [stage], trees_for_target: ["MASTER"], baseline_key: "baseline-mutation-test",
+              read_baseline: nil, report: fake_report,
+              write_baseline: ->(*) { flunk("an unsafe baseline was persisted") } }
+
+    error = with_stubs(G, stubs) { assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") } }
+
+    assert_match(/read-only pre-repair proof changed 1 attributed path/, error.message)
+    assert_includes error.message, "MASTER/lib/changed.rb"
   end
 
 
