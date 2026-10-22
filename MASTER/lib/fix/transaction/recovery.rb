@@ -25,7 +25,9 @@ module Master
           end
 
           def recover!(root:, id:, bus: nil)
-            load_persisted(root:, id:, bus:).send(:recover!)
+            # Construct without loading the manifest: Transaction#recover! must
+            # acquire the root lock before it reads recovery state.
+            Transaction.new(root:, paths: [], id:, bus:).send(:recover!)
           end
         end
       end
