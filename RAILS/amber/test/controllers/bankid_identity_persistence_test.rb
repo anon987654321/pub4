@@ -108,6 +108,36 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     refute user.reload.email_verified?
   end
 
+  test "persisted BankID assurance follows the current verified token" do
+    uid = "bankid-refresh-#{SecureRandom.hex(8)}"
+    make_auth = lambda do |acr|
+      Auth.new(
+        "bankid",
+        uid,
+        Info.new(nil, nil),
+        { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: acr } }
+      )
+    end
+    callback = OmniauthCallbacksController.new
+
+    first = callback.send(:find_or_create_user, make_auth.call("urn:bankid:low"))
+    provider = IdentityProvider.find_by!(slug: "bankid")
+    identity = ExternalIdentity.find_by!(identity_provider_id: provider.id, subject: uid)
+    assert_equal "account", identity.assurance_level
+
+    high_user = nil
+    assert_no_difference -> { User.count } do
+      high_user = callback.send(:find_or_create_user, make_auth.call("urn:bankid:bid"))
+    end
+    assert_equal first.id, high_user.id
+    assert_equal "verified", identity.reload.assurance_level
+
+    assert_no_difference -> { User.count } do
+      callback.send(:find_or_create_user, make_auth.call("urn:bankid:low"))
+    end
+    assert_equal "account", identity.reload.assurance_level
+  end
+
   test "a non-BankID identity does not inherit the email-verification exception" do
     user = User.new(email_address: "unverified-#{SecureRandom.hex(6)}@example.test",
                     password: SecureRandom.hex(24))
