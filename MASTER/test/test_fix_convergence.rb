@@ -1904,6 +1904,7 @@ end
 
     loop = build_loop([])
     loop.instance_variable_set(:@wishlist, wishlist)
+    loop.define_singleton_method(:wishlist_rounds) { 3 }
     journal = loop.instance_variable_get(:@run_journal)
     journal.define_singleton_method(:remaining_seconds) { |_run_id| 600 }
     journal.define_singleton_method(:history) { |limit:| [{ "id" => "r1", "next_pass" => 1 }] }

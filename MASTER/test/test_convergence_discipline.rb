@@ -148,10 +148,10 @@ class TestConvergenceDiscipline < Minitest::Test
     assert_equal "files unread", proof.fetch(:reason)
   end
 
-  def test_clean_proof_requires_the_historical_clean_streak
+  def test_clean_proof_requires_a_clean_pass
     @discipline.begin_run([@path])
 
-    proof = @discipline.clean_proof(files: [@path], pass: 1, clean_runs: 1)
+    proof = @discipline.clean_proof(files: [@path], pass: 1, clean_runs: 0)
 
     refute proof.fetch(:eligible)
     refute proof.fetch(:fatal)

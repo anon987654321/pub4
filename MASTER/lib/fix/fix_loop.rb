@@ -67,9 +67,13 @@ module Master
       MAX_PASSES = 15
       ADAPTIVE_PASS_CHUNK = Integer(ENV.fetch("MASTER_FIX_ADAPTIVE_PASS_CHUNK", 3))
       ABSOLUTE_MAX_PASSES = Integer(ENV.fetch("MASTER_FIX_ABSOLUTE_MAX_PASSES", 60))
-      CLEAN_RUNS = 2
+      # One clean pass, then the proof decides. Two clean full passes in a row, with the semantic
+      # read of every file in each, kept DONE out of reach on any tree of size.
+      CLEAN_RUNS = Integer(ENV.fetch("MASTER_FIX_CLEAN_RUNS", 1))
       PLATEAU_WINDOW = 3
-      WISHLIST_MAX_ROUNDS = 3
+      # Rounds of improvement proposals after a run finishes: asked for, never by default, because
+      # each round is up to three more passes once the work requested is done.
+      WISHLIST_MAX_ROUNDS = Integer(ENV.fetch("MASTER_FIX_WISHLIST_ROUNDS", 0))
       WISHLIST_MAX_PASSES = 3
       WISHLIST_MIN_REMAINING_SECONDS = 60
       # Thirty minutes suits API lanes. A run whose every call goes through a
@@ -730,15 +734,17 @@ module Master
         continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
       end
 
+      def wishlist_rounds = WISHLIST_MAX_ROUNDS
+
       def continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         state = terminal_state_for(result)
-        return result unless %i[done plateau].include?(state)
+        return result unless wishlist_rounds.positive? && %i[done plateau].include?(state)
 
         wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:)
         @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message)
 
         rounds = 0
-        while rounds < WISHLIST_MAX_ROUNDS
+        while rounds < wishlist_rounds
           pending = @wishlist.claimable(target:, limit: Wishlist::BATCH_SIZE, run_id:)
           break if pending.empty?
 
