@@ -356,6 +356,31 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_preserves_conflict_manifest_and_snapshots_for_diagnosis
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "conflict-evidence").begin!
+      File.write(path, "master change")
+      tx.observe!
+      File.write(path, "operator change")
+
+      result = tx.rollback!
+      assert result.err?
+      assert_equal :policy, result.category
+      assert_equal "operator change", File.read(path)
+
+      manifest = File.join(dir, ".master", "fix_transactions", tx.id, "manifest.json")
+      assert File.file?(manifest)
+      recovery = Master::Fix::Transaction::Recovery.recover!(root: dir, id: tx.id)
+
+      assert recovery.err?
+      assert_equal :policy, recovery.category
+      assert File.file?(manifest), "conflict evidence must remain available for operator diagnosis"
+      assert_equal "operator change", File.read(path)
+    end
+  end
+
   def test_recovery_refuses_to_race_with_a_live_transaction
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
