@@ -377,6 +377,17 @@ module Master
       end
 
       def retry_delivery(transaction_id:, expected_head:)
+        # The root transaction lock covers HEAD verification, push, and finalize.
+        # Checking or pushing before locking lets a second /fix publish commits
+        # between the recovery proof and the delivery that proof authorizes.
+        transaction = Transaction::Recovery.load_persisted(root: @root, id: transaction_id, bus: @bus)
+        unless transaction.delivery.pending?
+          return Result.err("delivery recovery transaction has no recorded commit", category: :policy)
+        end
+        unless transaction.delivery.head_after.to_s == expected_head.to_s
+          return Result.err("delivery recovery commit identity mismatch", category: :policy)
+        end
+
         actual_head = @git.head
         return Result.err("delivery recovery HEAD mismatch", category: :policy) unless actual_head == expected_head
 
@@ -384,13 +395,14 @@ module Master
         ahead, = @git.ahead_behind
         return Result.err("delivery recovery left #{ahead} unpushed commit(s)", category: :infrastructure) unless ahead.zero?
 
-        transaction = Transaction::Recovery.load_persisted(root: @root, id: transaction_id, bus: @bus)
         result = transaction.delivery.finalize!(head: actual_head)
         return result if result.err?
 
         Result.ok(:delivery_recovered)
       rescue StandardError => e
         Result.err("delivery recovery: #{e.message}", category: :infrastructure)
+      ensure
+        transaction&.send(:release_lock)
       end
 
       def preview(target = @root)
