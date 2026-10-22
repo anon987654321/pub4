@@ -354,11 +354,16 @@ class TestGateChain < Minitest::Test
       File.write(File.join(root, "MASTER", "a.rb"), "A = 1\n")
       File.write(File.join(root, "RAILS", "b.rb"), "B = 1\n")
       File.write(File.join(root, "README.md"), "before\n")
-      git!(root, "init", "-q")
-      git!(root, "config", "user.name", "Test")
-      git!(root, "config", "user.email", "test@example.invalid")
-      git!(root, "add", "--all")
-      git!(root, "commit", "-q", "-m", "baseline")
+      git = lambda do |*args|
+        output, status = Open3.capture2e("git", "-C", root, *args)
+        assert status.success?, "git #{args.join(" ")} failed: #{output}"
+        output
+      end
+      git.call("init", "-q")
+      git.call("config", "user.name", "Test")
+      git.call("config", "user.email", "test@example.invalid")
+      git.call("add", "--all")
+      git.call("commit", "-q", "-m", "baseline")
       baseline = G.checkout_fingerprint(root:)
 
       File.write(File.join(root, "README.md"), "after\n")
