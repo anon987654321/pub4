@@ -315,6 +315,20 @@ class TestFixRunBudget < Minitest::Test
     Budget.finish_run
   end
 
+  def test_finish_run_clears_current_budget_if_final_reporting_raises
+    run = budget
+    Budget.instance_variable_set(:@current, run)
+    run.instance_variable_set(:@say, ->(_text) { raise "simulated report failure" })
+
+    error = assert_raises(RuntimeError) { Budget.finish_run }
+
+    assert_equal "simulated report failure", error.message
+    assert_nil Budget.current, "a stopped watchdog must not leave a dead run registered"
+  ensure
+    Budget.instance_variable_set(:@current, nil)
+    Master::Fix::RunLedger.reset!
+  end
+
   def test_pass_boundary_returns_a_timeout_result
     Master::Trace::Dmesg.with_verbosity("quiet") do
       Budget.begin_run(root: @root, max_passes: 3)
