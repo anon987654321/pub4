@@ -320,7 +320,7 @@ class TestGateChain < Minitest::Test
     # Target fingerprint remains stable while the complete repository fingerprint changes.
     target_keys = ["target-same", "target-same"]
     checkout_keys = ["whole-before", "whole-after"]
-    fake_report = lambda do |selected, scan_only:, trees:, return_results:|
+    fake_report = lambda do |_selected, scan_only:, trees:, return_results:|
       G.instance_variable_set(:@last_results, [
         G::Result.new(stage: "source", state: "ok", summary: "no attributed change", changed: [], body: ["source: clean"])
       ])
@@ -332,16 +332,16 @@ class TestGateChain < Minitest::Test
         G.stub(:baseline_key, ->(*) { target_keys.shift }) do
           G.stub(:checkout_fingerprint, ->(**_kwargs) { checkout_keys.shift }) do
             G.stub(:read_baseline, nil) do
-            G.stub(:report, fake_report) do
-              G.stub(:dirty, ["RAILS/foreign-untracked.rb"]) do
-                G.stub(:write_baseline, ->(*) { flunk("a mutated foreign path must not become the baseline") }) do
-                  error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
-                  assert_match(/changed checkout state/, error.message)
-                  assert_includes error.message, "RAILS/foreign-untracked.rb"
+              G.stub(:report, fake_report) do
+                G.stub(:dirty, ["README-untracked.md"]) do
+                  G.stub(:write_baseline, ->(*) { flunk("a mutated root-level file must not become the baseline") }) do
+                    error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
+                    assert_match(/changed checkout state/, error.message)
+                    assert_includes error.message, "README-untracked.md"
+                  end
                 end
               end
             end
-          end
           end
         end
       end
