@@ -72,6 +72,7 @@ require "master"
 # honest work and not a hang. Raising the default to cover that would stop the
 # other 1593 tests from catching a real one.
 MASTER_TEST_TIMEOUT = Integer(ENV.fetch("MASTER_TEST_TIMEOUT", "30"))
+MASTER_TEST_PID = Process.pid
 Minitest::Test.class_eval do
   alias_method :run_without_timeout, :run
 
@@ -85,6 +86,9 @@ Minitest::Test.class_eval do
   # Minitest passes SystemExit through, so a test that reached exit or abort ended the whole run
   # with no report: on 2026-10-22 rake test stopped after 3,632 tests and named no failure.
   rescue SystemExit => e
+    # A forked child's exit ends that child: caught there, the child ran the rest of the suite too.
+    raise unless Process.pid == MASTER_TEST_PID
+
     origin = e.backtrace&.find { |line| !line.include?("/gems/") }
     failed_with(RuntimeError.new("called exit(#{e.status}) at #{origin}"))
   ensure
