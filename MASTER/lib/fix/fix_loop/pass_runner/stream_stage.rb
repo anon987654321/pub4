@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "../../gate_focus"
 
 module Master
   module Fix
@@ -54,7 +55,7 @@ module Master
             flusher = ->(batch) { enqueue_ranked(batch, queue, streamed) }
             worklist = Worklist.new(queue, rank_worklist? ? [] : nil, rank_window, flusher, 0)
             raw = []
-            files.each do |path|
+            GateFocus.first(files).each do |path|
               break if scan_stop?(path, worklist.taken, deadline)
 
               rows = violations_for(path)
@@ -111,15 +112,16 @@ module Master
             ENV.fetch("MASTER_FIX_RANK", "1") != "0"
           end
 
-          # Severity wins before volume: one error is more urgent than many style
-          # findings. Weighted total impact and finding count break ties, then the
-          # stable path makes the order reproducible. LawOrder separately enforces
-          # the declared dependency order inside each file's repair.
+          # A file a red gate names comes first (GateFocus). Then severity wins before volume: one
+          # error is more urgent than many style findings. Weighted total impact and finding count
+          # break ties, then the stable path makes the order reproducible. LawOrder separately
+          # enforces the declared dependency order inside each file's repair.
           def enqueue_ranked(ranked, queue, streamed)
             ordered = ranked.sort_by do |path, rows|
               peak, total, count = worklist_priority(rows)
-              [-peak, -total, -count, path]
+              [GateFocus.covers?(path) ? 0 : 1, -peak, -total, -count, path]
             end
+
             limit = RunLedger.max_files
             taken, left = limit ? ordered.partition.with_index { |_, index| index < limit } : [ordered, []]
             taken.each { |item| queue << item }

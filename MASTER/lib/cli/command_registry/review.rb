@@ -2,6 +2,7 @@
 
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
+require_relative "../../fix/gate_focus"
 require_relative "../../operator/gate_chain"
 require_relative "../../boot/paths"
 
@@ -206,6 +207,7 @@ module Master
         # what the run added instead of on debt it did not create. This scan-only
         # gate is a baseline phase, not the requested repair's execution mode.
         baseline = nil
+        Master::Fix::GateFocus.reset!
         if writes_requested
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: capturing read-only pre-repair baseline")
           baseline = begin
@@ -217,6 +219,8 @@ module Master
             Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: invalid verification scope; no repair started")
             return Master::Result.err("verification scope invalid: #{e.message}", category: :validation)
           end
+          # The lexical stage lists every finding; the other stages name what keeps a gate red.
+          Master::Fix::GateFocus.note(baseline.except("lexical").values.flatten)
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; starting write-enabled /fix pass")
         end
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },

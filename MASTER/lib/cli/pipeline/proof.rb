@@ -3,6 +3,7 @@
 require "set"
 require_relative "../../operator/gate_chain"
 require_relative "proof/reading"
+require_relative "../../fix/gate_focus"
 
 module Master
   module CLI
@@ -145,7 +146,9 @@ module Master
         end
 
         def measure_baseline(name, sha:, runner:)
-          reading = Reading.parse(*inside_proof { runner.call })
+          ok, out = inside_proof { runner.call }
+          Master::Fix::GateFocus.note(out) unless ok
+          reading = Reading.parse(ok, out)
           Proof.remember(name, sha: (sha if reading.measured?), reading:)
           Master::Trace::Dmesg.status("gate0", "baseline: #{baseline_line(reading)}")
           reading
