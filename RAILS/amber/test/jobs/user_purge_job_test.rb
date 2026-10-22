@@ -49,12 +49,17 @@ class UserPurgeJobTest < ActiveJob::TestCase
       app: "amber", url_host: "merchant.example", subject_type: "Item", subject_id: item.id,
       user_id: @other.id, guest: false, created_at: Time.current
     )
+    private_comment_click = Shared::OutboundClick.create!(
+      app: "amber", url_host: "merchant.example", subject_type: "Comment", subject_id: 987_654,
+      user_id: @other.id, guest: false, created_at: Time.current
+    )
     user_click = Shared::OutboundClick.create!(
       app: "amber", url_host: "merchant.example", user_id: @user.id, guest: false, created_at: Time.current
     )
     preserved_comment = Comment.create!(user: @user, commentable: other_post, content: "A public comment")
     private_item_comment = Comment.create!(user: @other, commentable: item, content: "Comment on private item")
     private_outfit_comment = Comment.create!(user: @other, commentable: outfit, content: "Comment on private outfit")
+    private_comment_click.update!(subject_id: private_item_comment.id)
     private_comment_reaction = Shared::Reaction.create!(
       user: @other, reactable: private_item_comment, kind: "love"
     )
@@ -111,6 +116,9 @@ class UserPurgeJobTest < ActiveJob::TestCase
       user: @other, item: Item.create!(user: @other, title: "Other garment", category: "Tops"),
       outfit: outfit, due_on: Date.current, status: "pending"
     )
+    other_item_challenge = DeclutterChallenge.create!(
+      user: @other, item: item, due_on: Date.current, status: "pending"
+    )
 
     original_password_digest = @user.password_digest
     schedule_purge!
@@ -126,7 +134,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_not_nil @user.password_digest
     refute_equal original_password_digest, @user.password_digest, "old password credential survived erasure"
     refute Session.exists?(id: session.id)
-    assert_empty @user.sessions
+    assert_empty Session.where(user_id: @user.id)
 
     assert_not Profile.exists?(profile.id), "profile survived erasure"
     assert_not Item.exists?(item.id), "private item survived erasure"
@@ -153,6 +161,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_not Vote.exists?(private_outfit_vote.id), "vote retained a private outfit target"
     assert_not Shared::OutboundClick.exists?(user_click.id), "outbound click tied to erased account survived"
     assert_not Shared::OutboundClick.exists?(private_item_click.id), "outbound click retained a private item target"
+    assert_not Shared::OutboundClick.exists?(private_comment_click.id), "outbound click retained a private comment target"
+    refute DeclutterChallenge.exists?(other_item_challenge.id), "another user's challenge retained a deleted item"
 
     [*profile_blob_ids, *item_blob_ids, *outfit_blob_ids].each do |blob_id|
       assert_empty ActiveStorage::Attachment.where(blob_id: blob_id), "an erased user's attachment survived"
