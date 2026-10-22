@@ -279,7 +279,7 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_equal :error, rows.first[:severity]
   end
 
-  def test_an_unbounded_worklist_ranks_after_the_complete_scan_by_default
+  def test_an_unbounded_worklist_ranks_in_rolling_batches_by_default
     previous = ENV["MASTER_FIX_RANK"]
     previous_limit = ENV["MASTER_FIX_MAX_FILES"]
     ENV.delete("MASTER_FIX_RANK")
@@ -287,6 +287,7 @@ class TestFixModelPhaseGuards < Minitest::Test
     Ledger.reset!
 
     assert Stream.new.send(:rank_worklist?)
+    assert_equal 20, Stream.new.send(:rank_window), "unbounded scans rank in bounded windows to start repairs early"
   ensure
     previous ? ENV["MASTER_FIX_RANK"] = previous : ENV.delete("MASTER_FIX_RANK")
     previous_limit ? ENV["MASTER_FIX_MAX_FILES"] = previous_limit : ENV.delete("MASTER_FIX_MAX_FILES")
