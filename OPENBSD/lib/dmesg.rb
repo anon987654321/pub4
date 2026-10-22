@@ -15,6 +15,7 @@ module Deploy
     VERDICT = /\b(?:fail(?:ed|ures?)?|errors?|offen[cs]es?|violations?|exceed(?:s|ed)?|missing|expected|refused)\b/i
     FINDING = Regexp.union(/:\d+\b/, VERDICT)
     FINDING_LIMIT = 8
+    TEST_FAILURE = %r{\A\s*(?:\S+#test_\S+|bin/rails test \S+:\d+)}
 
     module_function
 
@@ -88,9 +89,14 @@ module Deploy
     # The lines of a failed command's output worth a person's first look: the
     # ones naming a position or a verdict, or its last lines when none does —
     # a test run killed mid-suite prints dots and nothing else.
+    #
+    # A test failure leads: the line naming the test and the line that reruns it. Rails printed 24
+    # deprecation warnings carrying engine.rb:60-style positions before brgen's first test on 2026-10-22,
+    # they took all eight places, and the one failing test that held the deploy was not shown.
     def findings(text, limit: FINDING_LIMIT)
       lines = collapse(plain(text).lines).reject { |candidate| candidate.strip.empty? }
-      hits = lines.grep(FINDING)
+      hits = lines.grep(TEST_FAILURE)
+      hits = lines.grep(FINDING) if hits.empty?
       picked = hits.empty? ? lines.last(limit) : hits.first(limit)
       picked.map { |finding| finding.strip[0, 200] }
     end

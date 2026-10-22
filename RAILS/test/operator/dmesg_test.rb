@@ -28,6 +28,17 @@ class DmesgTest < Minitest::Test
                  Operator::Dmesg.findings(output)
   end
 
+  # brgen's CI log of 2026-10-22: deprecation warnings carrying positions came first and filled every place.
+  def test_a_failing_test_leads_ahead_of_positions_in_warnings
+    warnings = "  (called from block in <class:Engine> at /home/brgen/__shared/lib/shared/engine.rb:60)\n" * 9
+    failure = "Failure:\nSessionBoundariesTest#test_RI_012 [test/controllers/session_boundaries_test.rb:42]:\n" \
+              "Expected nil to be present?.\n\nbin/rails test test/controllers/session_boundaries_test.rb:39\n"
+
+    assert_equal [ "SessionBoundariesTest#test_RI_012 [test/controllers/session_boundaries_test.rb:42]:",
+                   "bin/rails test test/controllers/session_boundaries_test.rb:39" ],
+                 Operator::Dmesg.findings(warnings + failure)
+  end
+
   # A runner killed mid-suite prints dots and no verdict. Its last lines are the
   # evidence, so they stand in for findings rather than an empty list.
   def test_findings_fall_back_to_the_last_lines
