@@ -301,6 +301,44 @@ class TestGateChain < Minitest::Test
     ])
   end
 
+  def test_pre_repair_baseline_refuses_to_cache_after_a_read_only_stage_mutates
+    stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
+    fake_report = lambda do |selected, scan_only:, trees:, return_results:|
+      G.instance_variable_set(:@last_results, [
+        G::Result.new(stage: "source", state: "failed", summary: "changed by non-mutating stage",
+                      changed: ["MASTER/lib/changed.rb"], body: ["source: changed by non-mutating stage"])
+      ])
+      [1, ["MASTER/lib/changed.rb"]]
+    end
+
+    G.stub(:verification_stages, [stage]) do
+      G.stub(:trees_for_target, ["MASTER"]) do
+        G.stub(:baseline_key, "baseline-mutation-test") do
+          G.stub(:read_baseline, nil) do
+            G.stub(:report, fake_report) do
+              G.stub(:write_baseline, ->(*) { flunk("an unsafe baseline was persisted") }) do
+                error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
+                assert_match(/read-only pre-repair proof changed 1 path/, error.message)
+                assert_includes error.message, "MASTER/lib/changed.rb"
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def test_gate_verdict_prefers_aggregate_rails_counts_over_success_detail
+    aggregate = "gates0 at rails: 17 pass, 8 fail, 0 skip, 0 inconclusive, 0 error in 1504.5s"
+
+    assert_equal aggregate, G.verdict([
+      "Failures:",
+      "  - layout_suite failed",
+      "ok: page UI/UX simulations clean across inventory",
+      aggregate,
+    ])
+  end
+
   def test_rails_fix_verification_uses_the_rails_source_proof_without_generic_suite_duplication
     source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
     suites = G::Stage.new(name: "suites", purpose: "suites", mutates: false, run: -> {})
