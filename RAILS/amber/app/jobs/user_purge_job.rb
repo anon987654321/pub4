@@ -118,6 +118,9 @@ class UserPurgeJob < ApplicationJob
       Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids).find_each(&:destroy!)
       Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids).find_each(&:destroy!)
     end
+    if defined?(Shared::OutboundClick) && Shared::OutboundClick.table_exists?
+      Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids).find_each(&:destroy!)
+    end
     Vote.where(votable_type: "Item", votable_id: item_ids).find_each(&:destroy!)
     Vote.where(votable_type: "Outfit", votable_id: outfit_ids).find_each(&:destroy!)
     Vote.where(votable_type: "Comment", votable_id: private_comment_ids).find_each(&:destroy!)
@@ -126,6 +129,7 @@ class UserPurgeJob < ApplicationJob
     # Explicitly remove every user's rows before erasing the target item.
     DeclutterReview.where(item_id: item_ids).find_each(&:destroy!)
     DeclutterOutcome.where(item_id: item_ids).find_each(&:destroy!)
+    DeclutterChallenge.where(item_id: item_ids).find_each(&:destroy!)
     DeclutterChallenge.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
     Comment.where(commentable_type: "Item", commentable_id: item_ids).find_each(&:destroy!)
     Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids).find_each(&:destroy!)
