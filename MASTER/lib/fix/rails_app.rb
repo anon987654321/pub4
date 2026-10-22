@@ -8,43 +8,30 @@ module Master
     # visual graph and target selection. RAILS/apps.yml is the app registry;
     # filesystem presence alone must not invent a fourth Rails app.
     module RailsApp
-      def self.tree_target?(target, repo_root:)
-        relative = relative_path(target, repo_root:)
-        !!(relative == "RAILS" || relative&.start_with?("RAILS/"))
-      end
+      def self.tree_target?(target, repo_root:) = relative_path(target, repo_root:).to_s.match?(/\ARAILS(?:\/|\z)/)
 
       def self.named_apps(repo_root:)
-        data = YAML.safe_load_file(File.join(File.expand_path(repo_root), "RAILS", "apps.yml"), aliases: true)
-        apps = data.is_a?(Hash) ? data["apps"] : nil
-        raise ArgumentError, "RAILS/apps.yml has no apps mapping" unless apps.is_a?(Hash)
-
-        apps.keys.map(&:to_s).sort.freeze
+        path = File.join(File.expand_path(repo_root), "RAILS", "apps.yml")
+        YAML.safe_load_file(path, aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
       end
 
       def self.app_name(target, repo_root:)
-        relative = relative_path(target, repo_root:)
-        name = relative&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first
+        name = relative_path(target, repo_root:)&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first
         name if name && named_apps(repo_root:).include?(name)
       end
 
       def self.app_root?(target, repo_root:)
+        relative = relative_path(target, repo_root:)
         name = app_name(target, repo_root:)
-        return false unless name && relative_path(target, repo_root:) == "RAILS/#{name}"
-
-        path = File.join(File.expand_path(repo_root), "RAILS", name)
-        File.directory?(path) && File.file?(File.join(path, "Gemfile")) &&
-          File.file?(File.join(path, "bin", "rails"))
+        !!(relative == "RAILS/#{name}" && name &&
+          File.directory?(File.join(File.expand_path(repo_root), relative)))
       end
 
       def self.relative_path(target, repo_root:)
         root = File.expand_path(repo_root)
         absolute = File.expand_path(target.to_s, root)
-        return "." if absolute == root
-
         prefix = "#{root}#{File::SEPARATOR}"
-        return unless absolute.start_with?(prefix)
-
-        absolute.delete_prefix(prefix)
+        absolute == root ? "." : (absolute.delete_prefix(prefix) if absolute.start_with?(prefix))
       end
       private_class_method :relative_path
 
