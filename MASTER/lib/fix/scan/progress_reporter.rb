@@ -52,7 +52,7 @@ module Master
           done, total, viol_total, dirty, top = update_scan_progress_state(count, law_hits)
 
           elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @scan_progress[:started_at]
-          eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
+          eta_s = recent_eta(done:, total:, elapsed:)
           unit = @scan_progress[:unit] || "scan0"
 
           log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
@@ -102,6 +102,21 @@ module Master
 
         def tally_law_hits(sp, law_hits)
           law_hits.each { |rid| sp[:laws][rid.upcase] += 1 }
+        end
+
+        # The rate over the last ETA_WINDOW files, not since the start: a scan whose fast lexical
+        # files came first and slow model-backed reads later quoted 78,000 seconds left, then nothing.
+        ETA_WINDOW = 50
+
+        def recent_eta(done:, total:, elapsed:)
+          samples = (@scan_progress[:samples] ||= [])
+          samples << [done, elapsed]
+          samples.shift while samples.size > ETA_WINDOW
+          first_done, first_at = samples.first
+          span = elapsed - first_at
+          return unless done > first_done && span.positive?
+
+          ((total - done) * span / (done - first_done)).round
         end
 
         def log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
