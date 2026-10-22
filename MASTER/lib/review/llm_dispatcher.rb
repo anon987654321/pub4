@@ -436,7 +436,9 @@ module Master
         end
 
         return send_agy_cli(selected_model.delete_prefix("agy:"), messages, sys:, stream:, &blk) if agy_model?(selected_model)
-        return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:, image:) if claude_cli_model?(selected_model)
+        if claude_cli_model?(selected_model)
+          return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:, image:, &(blk if stream))
+        end
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
         return send_cli_lane(selected_model, messages, sys:) if cli_lane_model?(selected_model)
         return send_local_server(selected_model, messages, sys:, temperature:) if local_server_model?(selected_model)

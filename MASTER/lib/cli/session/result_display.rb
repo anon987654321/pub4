@@ -48,6 +48,7 @@ module Master
 
         if streamed
           puts unless text.end_with?("\n")
+          text = print_unstreamed_reply(ok, streamed_text: text)
         elsif command
           # Pipeline commands already streamed their live dmesg units. Other
           # commands get their human-readable result attached to their command
@@ -173,6 +174,16 @@ module Master
         return if lines.empty?
 
         Master::Trace::Dmesg.status("parallel0", lines.first(3).join("; "))
+      end
+
+      # A streamed turn whose answer came from a later step (a tool loop's final reply, or the next lane after
+      # one failed mid-stream) printed only what led up to it; the answer itself is printed here.
+      def print_unstreamed_reply(ok, streamed_text:)
+        final = success_text(ok).to_s.strip
+        return streamed_text if final.empty? || streamed_text.include?(final[0, 120])
+
+        display_prepared_terminal_output(@refs.renderer.measure(final, width: reply_measure))
+        final
       end
 
       def success_text(ok)

@@ -51,15 +51,18 @@ module Master
       # The body the three captures share: spawn in its own process group, drain
       # every output stream on a thread, feed stdin on another, wait with a bound
       # and return the reaped streams in popen order followed by the status.
+      # on_stdout: receives each chunk of the first output stream as it is read, so a caller can show a
+      # reply while the child is still writing it; the whole output is still returned at the end.
       def run_capture(opener, cmd, timeout, opts, raise_on_timeout: false)
         stdin_data, binmode, spawn_opts = split_opts(opts)
+        on_stdout = spawn_opts.delete(:on_stdout)
         options = ProcessSpawn.options(spawn_opts.merge(pgroup: true))
         Open3.public_send(opener, *cmd, **options) do |stdin, *streams, wait_thr|
           if binmode
             stdin.binmode
             streams.each(&:binmode)
           end
-          readers = streams.map { |stream| reader_for(stream) }
+          readers = streams.each_with_index.map { |stream, index| reader_for(stream, (on_stdout if index.zero?)) }
           writer = writer_for(stdin, stdin_data)
           status, timed_out = bounded_wait(wait_thr, timeout, readers)
           writer&.join
@@ -195,8 +198,9 @@ module Master
       # Preserve already-read diagnostics when a deadline terminates the reader.
       # Thread#value alone loses the block's partial String when Thread#kill wins.
       class OutputReader
-        def initialize(io)
+        def initialize(io, on_chunk = nil)
           @io = io
+          @on_chunk = on_chunk
           @output = String.new(encoding: io.external_encoding || Encoding::BINARY)
           @lock = Mutex.new
           @thread = Thread.new { read }
@@ -216,14 +220,22 @@ module Master
           loop do
             chunk = @io.readpartial(16_384)
             @lock.synchronize { @output << chunk }
+            notify(chunk)
           end
         rescue EOFError, IOError
           nil
         end
+
+        # A listener that raises must not stop the read: the whole output is still owed to the caller.
+        def notify(chunk)
+          @on_chunk&.call(chunk)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Exec.on_stdout")
+        end
       end
 
-      def reader_for(io)
-        OutputReader.new(io)
+      def reader_for(io, on_chunk = nil)
+        OutputReader.new(io, on_chunk)
       end
 
       def reap(reader)

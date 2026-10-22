@@ -218,7 +218,7 @@ module Master
         return Master::Result.err("turn cancelled before dispatch", category: :abort) if turn_cancel_requested?
 
         on_turn = build_on_turn_handler(accumulated, state)
-        @pipeline_thread = spawn_pipeline_thread(input, on_turn)
+        @pipeline_thread = spawn_pipeline_thread(input, on_turn:, on_chunk: build_on_chunk_handler(accumulated, state))
         cancel_turn(@pipeline_thread, @turn_children) if turn_cancel_requested? && @pipeline_thread&.alive?
         fetch_pipeline_result
       end
@@ -241,8 +241,17 @@ module Master
         end
       end
 
-      def spawn_pipeline_thread(input, on_turn)
+      # The reply as the model writes it: the first words reach the terminal seconds before the last.
+      def build_on_chunk_handler(accumulated, state)
+        lambda do |chunk|
+          accumulated << chunk
+          handle_stream_text(chunk, state) if $stdout.isatty
+        end
+      end
+
+      def spawn_pipeline_thread(input, on_turn:, on_chunk:)
         @turn_children = Master::Io::Exec::Children.new
+
         Thread.new do
           Thread.current.report_on_exception = false
           Fiber[:master_children] = @turn_children
@@ -252,6 +261,7 @@ module Master
             container: @container,
             felt_sense: cli_felt_sense,
             on_turn:,
+            on_chunk:,
           )
         end
       end

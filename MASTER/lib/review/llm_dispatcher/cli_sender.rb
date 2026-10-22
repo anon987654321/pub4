@@ -5,6 +5,7 @@ require "json"
 require "tempfile"
 require "timeout"
 require_relative "../../io/exec"
+require_relative "claude_stream"
 
 module Master
   module Review
@@ -134,10 +135,14 @@ end
       # waiting beats thrashing.
       CLI_SLOTS = Integer(ENV.fetch("MASTER_CLI_SLOTS", 2)).then { |n| SizedQueue.new(n).tap { |queue| n.times { queue << true } } }
 
-def send_claude_cli(model_alias, messages, sys:, image: nil)
+# With a block the reply streams: its text reaches the block as the model writes it (see ClaudeStream), and
+# the result is still the whole reply.
+def send_claude_cli(model_alias, messages, **request, &on_text)
   return Result.err("claude-cli: no claude on PATH", category: :no_api_key) unless claude_on_path?
 
-  with_cli_slot { claude_cli_call(model_alias, messages, sys, image) }
+  run = claude_request(model_alias, messages, **request)
+  run = run.streaming(&on_text) if on_text
+  with_cli_slot { claude_execute(run) }
 end
 
 # The images a request carries, as the content blocks `claude --print` takes on
@@ -210,43 +215,78 @@ CLAUDE_CLI_TEXT_ONLY = ["--tools", "", "--strict-mcp-config", "--settings", '{"d
 CLAUDE_CLI_LIMIT = /\A\s*(?:You've hit your \w*\s*limit|Claude (?:AI )?usage limit reached)/i
 
 def claude_cli_call(model_alias, messages, sys, image = nil)
-  args = [claude_binary || "claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
-  args += ["--system-prompt", sys] if sys && !sys.empty?
-  blocks = claude_image_blocks(image)
-  stdin = text_prompt_for(messages)
-  unless blocks.empty?
-    args += ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
-    stdin = JSON.generate(type: "user", message: { role: "user", content: [*blocks, { type: "text", text: stdin }] }) + "\n"
-  end
-  timeout_s = claude_cli_timeout_s
-  out, err, status = capture3_with_timeout(timeout_s, *args, stdin_data: stdin, env: CLAUDE_SESSION_ENV)
-  # A CLI that dies with nothing on either stream taught the operator nothing:
-  # the 2026-09-16 /fix printed "claude-cli:" and a blank a hundred and
-  # seventy-eight times. `claude --print` from inside a session hangs and is
-  # killed, which is exit 124 and two empty streams.
-  unless status.success?
-    said = cli_lane_complaint(out, err) || "exited #{status.exitstatus} with nothing on either stream"
-    return Result.err("claude-cli: #{said}", category: :provider_error)
-  end
-  out = claude_stream_reply(out) || "" unless blocks.empty?
-  return Result.err("claude-cli: #{out.strip.lines.first.strip}", category: :exhausted) if out.match?(CLAUDE_CLI_LIMIT)
-  return Result.err("claude-cli: no reply on stream-json output", category: :provider_error) if out.strip.empty? && !blocks.empty?
+  claude_execute(claude_request(model_alias, messages, sys:, image:))
+end
 
-  Result.ok(out.strip)
+CLAUDE_IMAGE_FLAGS = ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"].freeze
+CLAUDE_STREAM_FLAGS = ["--output-format", "stream-json", "--verbose", "--include-partial-messages"].freeze
+
+# One `claude --print` run: its arguments, its stdin, the stream reader when it streams, and whether its
+# stdout is stream-json events rather than the reply itself.
+ClaudeRun = Data.define(:args, :stdin, :stream, :json) do
+  # The same run, its reply passed to the block as it is written. An image run already speaks stream-json
+  # on stdin and is left whole.
+  def streaming(&on_text)
+    return self if json
+
+    with(args: args + CLAUDE_STREAM_FLAGS, stream: ClaudeStream.new(&on_text), json: true)
+  end
+end
+
+def claude_execute(run)
+  out, err, status = claude_capture(run)
+  return claude_cli_failure(out, err, status:) unless status.success?
+
+  run.stream&.finish
+  claude_cli_reply(run.json ? claude_stream_reply(out).to_s : out, json: run.json)
 rescue Timeout::Error
-  Result.err("claude-cli: timed out after #{timeout_s}s", category: :timeout)
+  Result.err("claude-cli: timed out after #{claude_cli_timeout_s}s", category: :timeout)
 rescue StandardError => e
   Result.err("claude-cli: #{e.message}", category: :provider_error)
+end
+
+def claude_capture(run)
+  capture3_with_timeout(claude_cli_timeout_s, *run.args, stdin_data: run.stdin, env: CLAUDE_SESSION_ENV,
+                                                         on_stdout: run.stream&.method(:feed))
+end
+
+# Images ride stream-json input; plain text goes on stdin as it is.
+def claude_request(model_alias, messages, sys: nil, image: nil)
+  args = [claude_binary || "claude", "--print", "--model", model_alias, *CLAUDE_CLI_TEXT_ONLY]
+  args += ["--system-prompt", sys] if sys && !sys.empty?
+  text = text_prompt_for(messages)
+  blocks = claude_image_blocks(image)
+  return ClaudeRun.new(args:, stdin: text, stream: nil, json: false) if blocks.empty?
+
+  content = [*blocks, { type: "text", text: }]
+  stdin = "#{JSON.generate(type: "user", message: { role: "user", content: })}\n"
+  ClaudeRun.new(args: args + CLAUDE_IMAGE_FLAGS, stdin:, stream: nil, json: true)
+end
+
+# A CLI that dies with nothing on either stream taught the operator nothing:
+# the 2026-09-16 /fix printed "claude-cli:" and a blank a hundred and
+# seventy-eight times. `claude --print` from inside a session hangs and is
+# killed, which is exit 124 and two empty streams.
+def claude_cli_failure(out, err, status:)
+  said = cli_lane_complaint(out, err) || "exited #{status.exitstatus} with nothing on either stream"
+  Result.err("claude-cli: #{said}", category: :provider_error)
+end
+
+def claude_cli_reply(out, json:)
+  reply = out.strip
+  return Result.err("claude-cli: #{reply.lines.first.strip}", category: :exhausted) if reply.match?(CLAUDE_CLI_LIMIT)
+  return Result.err("claude-cli: no reply on stream-json output", category: :provider_error) if json && reply.empty?
+
+  Result.ok(reply)
 end
 
       # Keep the dispatcher-specific timeout contract, but let the sanctioned
       # runner own stream draining, child tracking and process-group cleanup.
       # Exec reads the pipes as bytes. A lane replies in UTF-8 text, and left BINARY its reply broke the
       # first regex that met a non-ASCII letter: the "å" of a Norwegian greeting killed the CLI turn.
-      def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil, env: {})
-        out, err, status = Master::Io::Exec.capture3(
-          env, *cmd, stdin_data:, timeout: timeout_s, raise_on_timeout: true
-        )
+      def capture3_with_timeout(timeout_s, *cmd, env: {}, **opts)
+        opts.delete(:on_stdout) if opts[:on_stdout].nil?
+        out, err, status = Master::Io::Exec.capture3(env, *cmd, timeout: timeout_s, raise_on_timeout: true, **opts)
         [out.to_s.dup.force_encoding(Encoding::UTF_8).scrub, err.to_s.dup.force_encoding(Encoding::UTF_8).scrub, status]
       rescue Master::Io::Exec::TimeoutError
         raise Timeout::Error
