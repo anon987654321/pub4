@@ -117,6 +117,17 @@ class TestCliOperatorLayer < Minitest::Test
     refute evidence
   end
 
+  # An installed command's name at the start of a sentence does not make the sentence a command.
+  def test_prose_that_starts_with_a_command_name_goes_to_the_agent
+    grammar = Master::CLI::OperatorGrammar
+
+    assert_nil grammar.parse("what is the meaning of life, honestly?")
+    assert_nil grammar.parse("open the door for me please")
+    assert_nil grammar.parse("which one should I pick?")
+    assert_equal :direct_shell, grammar.parse("which ruby").kind
+    assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
+  end
+
   def test_direct_shell_accepts_read_only_chains_but_not_pipes
     grammar = Master::CLI::OperatorGrammar
 

@@ -39,7 +39,21 @@ module Master
         end
       end
 
+      # A line that reads as prose is never shell, whatever its first word: on 2026-10-22 "what is the meaning of
+      # life, honestly?" ran /usr/bin/what with six arguments, because `what` is installed. Prose ends in ? or !,
+      # holds a comma, or runs four words or more with no flag, path, assignment, glob or file name among them.
+      SHELL_ARGUMENT = %r{\A-|[/=~$*{}\[\]<>]|\.\w+\z}
+
+      def prose?(text)
+        return true if text.match?(/[?!]\s*\z|,\s/)
+
+        words = text.split
+        words.size >= 4 && words.drop(1).none? { |word| word.match?(SHELL_ARGUMENT) }
+      end
+
       def shell_command_name?(part)
+        return false if prose?(part)
+
         argv = Shellwords.split(part)
         name = argv.first.to_s
         return false if name.empty?
