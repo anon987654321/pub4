@@ -183,10 +183,22 @@ module Operator
         "read-only pre-repair proof starting, trees=#{trees.join(", ")}, stages=#{selected.map(&:name).join(", ")}; repair follows",
       )
       status, changed = report(selected, scan_only: true, trees:, return_results: true)
-      if changed.any?
-        paths = changed.first(12).join(", ")
-        more = changed.size > 12 ? " and #{changed.size - 12} more" : ""
-        message = "read-only pre-repair proof changed #{changed.size} path(s): #{paths}#{more}"
+      # Stage attribution excludes pre-existing dirty paths so /fix never claims
+      # another session's edits. That means it cannot, alone, detect a read-only
+      # stage overwriting one of those files. Fingerprint the checkout again
+      # before saving any baseline; it includes tracked diffs and non-ignored
+      # untracked files even when their paths were already dirty at stage start.
+      after_key = baseline_key(target)
+      fingerprint_changed = after_key != key
+      if changed.any? || fingerprint_changed
+        paths = (changed + (fingerprint_changed ? dirty : [])).uniq
+        details = paths.first(12).join(", ")
+        more = paths.size > 12 ? " and #{paths.size - 12} more" : ""
+        message = if changed.any?
+                    "read-only pre-repair proof changed #{changed.size} attributed path(s): #{details}#{more}"
+                  else
+                    "read-only pre-repair proof changed checkout state; visible path(s): #{details}#{more}"
+                  end
         Master::Trace::Dmesg.status("baseline0", "BLOCKED — #{message}")
         raise BaselineMutation, message
       end
