@@ -215,10 +215,9 @@ module Master
         rendered
       end
 
-      # A verified, write-enabled /fix on one RAILS app is followed by `bin/operator design` on
-      # that app: the loop that keeps a layout edit only when the measured score rises. There is
-      # no flag, so /fix alone is the whole request. Its commits stay local for the operator to
-      # review, and a failure here is reported without changing what /fix already delivered.
+      # The RAILS design sweep is part of the same /fix transaction boundary:
+      # it runs before final gate verification and publication. A nonzero result
+      # is a validation failure, never a successful repair with unverified edits.
       def design_after_fix(rendered, target:)
         return rendered if rendered.is_a?(Master::Result::Err)
 
