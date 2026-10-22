@@ -34,10 +34,31 @@ module Master
         attr_reader :current
 
         def begin_run(root:, max_passes:, bus: nil, target: nil)
+          # Nested tree passes and gate re-entries belong to the command's one
+          # budget. Do not restart its clock, watchdog, lane failures, or ledger.
+          return @current if @shared_depth.to_i.positive? && @current
+
           finish_run
           ToolBreaker.reset!
           RunLedger.begin_run!
           @current = new(root:, max_passes:).start!.tap { |run| run.announce(target:, bus:) }
+        end
+
+        def with_shared_run(root:, max_passes:, bus: nil, target: nil)
+          outer = @shared_depth.to_i.zero?
+          begin_run(root:, max_passes:, bus:, target:) if outer
+          @shared_depth = @shared_depth.to_i + 1
+          result = yield
+          result
+        ensure
+          if outer
+            @shared_depth = 0
+            @shared_finishing = true
+            finish_run(reason: "command scope ended")
+            @shared_finishing = false
+          else
+            @shared_depth = [@shared_depth.to_i - 1, 0].max
+          end
         end
 
         def pass_end(pass)
@@ -54,6 +75,8 @@ module Master
         end
 
         def finish_run(reason: "completed")
+          return @current if @shared_depth.to_i.positive? && !@shared_finishing
+
           @current&.finish!(reason)
           @current = nil
         end
