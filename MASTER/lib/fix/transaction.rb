@@ -72,12 +72,7 @@ module Master
         self
       rescue StandardError
         @active = false
-        if persisted?
-          release_lock
-        else
-          cleanup! if File.directory?(@dir) && !File.symlink?(@dir)
-          release_lock
-        end
+        persisted? ? release_lock : (cleanup!; release_lock)
         raise
       end
 
@@ -187,8 +182,7 @@ module Master
           return Result.err("transaction source changed while checkpointing", category: :policy)
         end
 
-        old_snapshots, old_seen, old_state = @snapshots, @seen, @state
-        old_before, old_after = @delivery_head_before, @delivery_head_after
+        old = [@snapshots, @seen, @state, @delivery_head_before, @delivery_head_after]
         old_stores = selected.filter_map { |path| @snapshots[path]&.store }
         @snapshots = @snapshots.merge(staged)
         @seen = @seen.to_h.transform_values(&:dup)
@@ -201,10 +195,7 @@ module Master
         emit("fix:transaction_checkpoint", id: @id, paths: selected)
         Result.ok(selected)
       rescue StandardError => e
-        unless persisted_state_matches?
-          @snapshots, @seen, @state = old_snapshots, old_seen, old_state if defined?(old_snapshots)
-          @delivery_head_before, @delivery_head_after = old_before, old_after if defined?(old_before)
-        end
+        @snapshots, @seen, @state, @delivery_head_before, @delivery_head_after = old if defined?(old) && !persisted_state_matches?
         emit("fix:transaction_checkpoint_failed", id: @id, error: e.message)
         Result.err("transaction checkpoint: #{e.message}", category: :infrastructure)
       end
@@ -539,12 +530,10 @@ module Master
       end
 
       def snapshot_matches_fingerprint?(snapshot, current)
-        case snapshot.kind
-        when :missing then current == "missing"
-        when :file then current == fingerprint(snapshot.store)
-        when :symlink then current.start_with?("symlink:") && current.split(":", 3).last == snapshot.link
-        else false
-        end
+        return current == "missing" if snapshot.kind == :missing
+        return current == fingerprint(snapshot.store) if snapshot.kind == :file
+
+        snapshot.kind == :symlink && current.start_with?("symlink:") && current.split(":", 3).last == snapshot.link
       rescue StandardError
         false
       end
