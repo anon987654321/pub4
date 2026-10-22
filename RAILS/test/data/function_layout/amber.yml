@@ -19,9 +19,13 @@ checks:
   # The luxury item card, the guest compose box and the dressing room, by the
   # selectors that style them: amber has one stylesheet, so a partial name no
   # longer marks them.
-  - {id: design.luxury_items, in: amber/app/assets/stylesheets/application.scss, has: [.item-card--luxury, .amber-compose-box, .mannequin-stage]}
-  - {id: design.tap_min, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
-  - {id: design.focus_ring, in: shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
+  - {id: design.luxury_items,
+     in: [amber/app/assets/stylesheets/_amber_wardrobe.scss,
+          amber/app/assets/stylesheets/_amber_guest_compose.scss,
+          amber/app/assets/stylesheets/_amber_dressing_room.scss],
+     has: [.item-card--luxury, .amber-compose-box, .mannequin-stage]}
+  - {id: design.tap_min, in: __shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
+  - {id: design.focus_ring, in: __shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
   - {id: design.no_dialog_compose, in: amber/app/views/shared/_feed_compose.html.erb, lack: ["<dialog", form-submit, requestSubmit]}
   # --- home / compose / posts ---
   # The home page is the mark, four looks on the particle mannequin and the
@@ -31,7 +35,8 @@ checks:
   - {id: compose.box, in: amber/app/views/shared/_feed_compose.html.erb, has: [amber-compose-box, "text_area :body", posts_path, feed-compose]}
   - {id: compose.guest_anon, in: amber/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}
   - {id: compose.expand, in: amber/app/views/shared/_feed_compose.html.erb, has: [feed-compose#expand, amber-compose-footer]}
-  - {id: compose.blur_keeps_filled, in: shared/frontend/feed_compose_controller.js, has: ["inputTarget.value.trim().length > 0"]}
+  - {id: compose.blur_keeps_filled, in: __shared/frontend/feed_compose_controller.js,
+     has: ["inputTarget.value.trim().length > 0"]}
   - {id: posts.create_guest, in: amber/app/controllers/posts_controller.rb, has: ["def create", AnonymousPost, "except: %i[index show create]"]}
   - {id: posts.body_limit, in: amber/app/models/post.rb, has: ["validates :body", "maximum: 500"]}
   - {id: posts.show, in: amber/app/views/posts/show.html.erb, has: [comments/form, json_ld]}

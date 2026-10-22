@@ -21,19 +21,19 @@ checks:
   # The partial is the engine's, not brgen's — amber's row above already points
   # at it through the layout. brgen/ never held a copy, so this row matched
   # nothing and asserted nothing about the three legal links it names.
-  - {id: chrome.legal_footer, in: shared/app/views/shared/_site_legal_footer.html.erb, has: [privacy, terms, cookies]}
+  - {id: chrome.legal_footer, in: __shared/app/views/shared/_site_legal_footer.html.erb, has: [privacy, terms, cookies]}
   - {id: chrome.mobile_tab_bar,
      in: brgen/app/views/shared/_mobile_chrome.html.erb,
      has: [tab-bar, nav.home, nav.explore]}
   - {id: chrome.nav_swiper, in: brgen/app/views/shared/_nav_swiper.html.erb, has: [nav_swiper, nav.primary_nav]}
   # --- design tokens / layout standards ---
   - {id: design.tap_min,
-     in: shared/app/assets/stylesheets/_layout_chrome.scss,
+     in: __shared/app/assets/stylesheets/_layout_chrome.scss,
      has: ["--tap-min: 44px", "--bar-height: 44px"]}
-  - {id: design.feed_max, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--feed-max: 600px"]}
+  - {id: design.feed_max, in: __shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--feed-max: 600px"]}
   - {id: design.stack_entry, in: brgen/app/assets/stylesheets/application.scss, has: ['@use "stack_brgen"']}
-  - {id: design.focus_ring, in: shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
-  - {id: design.skip_clip, in: shared/app/assets/stylesheets/_shell.scss, has: [skip-link]}
+  - {id: design.focus_ring, in: __shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
+  - {id: design.skip_clip, in: __shared/app/assets/stylesheets/_shell.scss, has: [skip-link]}
   - {id: design.compose_no_requestsubmit,
      in: brgen/app/javascript/controllers/form_submit_controller.js, lack: [".requestSubmit("]}
   # --- feed / compose ---
@@ -54,7 +54,8 @@ checks:
      has: ["accept: \"image/*\"", "accept: \"video/*\"", "accept: \"audio/*\""]}
   - {id: feed.compose_nearby, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["hidden_field :nearby"]}
   - {id: feed.card_frame_top, in: brgen/app/views/posts/_post.html.erb, has: ['target: "_top"']}
-  - {id: feed.card_vote, in: brgen/app/views/posts/_post.html.erb, has: [post_vote_path, action#toggle]}
+  - {id: feed.card_vote, in: [brgen/app/views/posts/_post.html.erb, __shared/app/views/shared/_post_vote_rail.html.erb],
+     has: [post_vote_path, "vote: { value: 1 }", "vote: { value: -1 }"]}
   - {id: feed.card_comment, in: brgen/app/views/posts/_post.html.erb, has: [comments-section]}
   - {id: feed.card_repost, in: brgen/app/views/posts/_post.html.erb, has: [post_repost_path]}
   - {id: feed.posts_controller_create,
@@ -69,10 +70,10 @@ checks:
      has: [comments_empty, 'append "comments"']}
   - {id: comments.stream_reply, in: brgen/app/views/comments/create.turbo_stream.erb, has: [parent_id, replies]}
   - {id: comments.form_textarea,
-     in: shared/app/views/comments/_form_fields.html.erb,
-     has: ["text_area :content", textarea-autogrow, character-counter]}
-  - {id: comments.row_body, in: shared/app/views/comments/_comment.html.erb, has: [comment-body, comment-author]}
-  - {id: comments.row_replies, in: shared/app/views/comments/_comment.html.erb, has: [comment-replies, ":replies"]}
+     in: __shared/app/views/comments/_form_fields.html.erb,
+     has: ["text_area :content", tiptap-editor, character-counter]}
+  - {id: comments.row_body, in: __shared/app/views/comments/_comment.html.erb, has: [comment-body, comment-author]}
+  - {id: comments.row_replies, in: __shared/app/views/comments/_comment.html.erb, has: [comment-replies, ":replies"]}
   - {id: comments.guest_form, in: brgen/app/views/posts/show.html.erb, has: ["authenticated? || guest?"]}
   - {id: votes.stream, in: brgen/app/views/votes/create.turbo_stream.erb, has: [posts/post, comments/comment]}
   # --- communities / events / stories ---
@@ -97,7 +98,7 @@ checks:
   # --- auth ---
   - {id: auth.sign_in, in: brgen/app/views/sessions/new.html.erb, has: [session_path, password_visibility_field]}
   - {id: auth.sign_up_form,
-     in: brgen/app/views/users/new.html.erb,
+     in: [brgen/app/views/users/new.html.erb, __shared/app/views/shared/_registration_fields.html.erb],
      has: [users_path, accept_terms, accept_age, homepage]}
   # Was application_helper.rb, which no longer builds any auth nav. What a
   # signed-out visitor is offered lives in the mobile chrome, and the lack:
@@ -107,9 +108,9 @@ checks:
      has: ["nav.sign_in", "main_app.new_session_path"], lack: ["sign up\", main_app.new_session_path"]}
   - {id: auth.create_account_from_sign_in, in: brgen/app/views/sessions/new.html.erb, has: [new_user_path]}
   - {id: auth.verified_email_gate,
-     in: shared/app/controllers/concerns/shared/authentication.rb,
+     in: __shared/app/controllers/concerns/shared/authentication.rb,
      has: ["def require_verified_email", guest?]}
-  - {id: auth.passwords, in: shared/app/views/passwords/new.html.erb, has: [email]}
+  - {id: auth.passwords, in: __shared/app/views/passwords/new.html.erb, has: [email]}
   # --- dating ---
   - {id: dating.home_deck,
      in: brgen_dating/app/views/dating/home/index.html.erb,
@@ -151,7 +152,9 @@ checks:
   - {id: playlist.sets, in: brgen_radio/playlist/app/views/playlist/sets/index.html.erb, has: [set]}
   - {id: playlist.hosted, in: brgen_radio/playlist/app/views/playlist/hosted_tracks/index.html.erb, has: [track]}
   # --- maps ---
-  - {id: maps.canvas, in: brgen_maps/app/views/maps/home/index.html.erb, has: [map-canvas, maplibre, role="region"]}
+  - {id: maps.canvas,
+     in: [brgen_maps/app/views/maps/home/index.html.erb, brgen/app/javascript/controllers/map_controller.js],
+     has: [map-canvas, maplibre, role="region"]}
   - {id: maps.places, in: brgen_maps/app/views/maps/places/index.html.erb, has: [place]}
   - {id: maps.search, in: brgen_maps/app/views/maps/home/index.html.erb, has: [map-search, browse_list]}
   # --- messenger / pwa / seo ---
@@ -159,7 +162,7 @@ checks:
   - {id: pwa.manifest, in: brgen/app/views/pwa/manifest.json.erb, has: [name, icons]}
   - {id: pwa.offline, in: brgen/app/views/pwa/service-worker.js, has: [offline]}
   - {id: seo.json_ld, in: brgen/app/views/posts/show.html.erb, has: [json_ld]}
-  - {id: legal.privacy, in: shared/app/views/pages/privacy.html.erb, has: [privacy]}
+  - {id: legal.privacy, in: __shared/app/views/pages/privacy.html.erb, has: [privacy]}
   # --- live (local brgen) ---
   - {id: live.home, live: {path: /, host: brgen.no, status: 200,
      has: [compose-launcher, main-content, skip-link], lack: [Routing Error, "Exception"]}}
