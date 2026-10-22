@@ -26,8 +26,10 @@ module Master
         # A control for the semantic gate (MASTER_FIX_SCAN_AGREEMENT=1): the unchanged file is scanned once
         # more and the two scans compared, mechanical and semantic findings apart, so how often the
         # semantic stream disagrees with itself is measured instead of assumed. One extra scan per repair.
+        # A diagnostic of the scanner itself: the unchanged file scanned a second time. Asked for with
+        # MASTER_FIX_SCAN_AGREEMENT=1; by default it cost one more full scan of every repaired file.
         def log_scan_agreement(path, first)
-          return if ENV["MASTER_FIX_SCAN_AGREEMENT"] == "0"
+          return unless ENV["MASTER_FIX_SCAN_AGREEMENT"] == "1"
 
           line = scan_agreement_line(File.basename(path.to_s), first, scan_all(path))
           Master::Trace::Dmesg.status("fix0", line)

@@ -515,14 +515,31 @@ module Master
 
       def genetic_autofix_candidates = RepairLoop::GENETIC_AUTOFIX_CANDIDATES
 
+      # A file repaired several times in a row is scanned after each fix and again before the
+      # next one, on the same bytes. The scan of given content is kept, so identical bytes are
+      # read once; any edit changes the digest and scans afresh.
+      SCAN_MEMO_SIZE = 64
+
       def scan_all(path)
+        key = [File.expand_path(path), Digest::SHA256.file(path).hexdigest] if File.file?(path)
+        kept = key && scan_memo[key]
+        return kept.dup if kept
+
         result = Master::Result.wrap(@scanner.scan(path))
         raise "rule scan failed for #{path}: #{result.message}" unless result.ok?
 
-        result.value!
+        key ? remember_scan(key, result.value!) : result.value!
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "repair_loop.scan_all", event_bus: @bus, path:)
         raise
+      end
+
+      def scan_memo = @scan_memo ||= {}
+
+      def remember_scan(key, rows)
+        scan_memo.shift if scan_memo.size >= SCAN_MEMO_SIZE
+        scan_memo[key] = rows.dup
+        rows
       end
 
       def handle_fix_exception(error, violation, event:)
