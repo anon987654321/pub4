@@ -138,6 +138,47 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     assert_equal "account", identity.reload.assurance_level
   end
 
+  test "OAuth does not create a duplicate account while federated identity storage is unavailable" do
+    auth = Auth.new(
+      "google_oauth2",
+      "missing-storage-#{SecureRandom.hex(8)}",
+      Info.new("person@example.test", nil),
+      { raw_info: { email_verified: true } }
+    )
+    callback = OmniauthCallbacksController.new
+
+    assert_no_difference -> { User.count } do
+      ExternalIdentity.stub(:table_exists?, false) do
+        assert_raises(OmniauthCallbacksController::IdentityStorageUnavailable) do
+          callback.send(:find_or_create_user, auth)
+        end
+      end
+    end
+  end
+
+  test "lower-assurance BankID cannot reclaim a legacy synthetic account" do
+    uid = "legacy-bankid-low-#{SecureRandom.hex(8)}"
+    legacy = User.new(email_address: "#{uid}@bankid.oauth", password: SecureRandom.hex(24))
+    legacy.require_email_verification = true
+    legacy.save!
+    auth = Auth.new(
+      "bankid",
+      uid,
+      Info.new(nil, nil),
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:low" } }
+    )
+    callback = OmniauthCallbacksController.new
+
+    assert_no_difference -> { User.count } do
+      assert_raises(OmniauthCallbacksController::IdentityEmailConflict) do
+        callback.send(:find_or_create_user, auth)
+      end
+    end
+
+    refute legacy.reload.email_verified?
+    refute ExternalIdentity.where(user_id: legacy.id).exists?
+  end
+
   test "a non-BankID identity does not inherit the email-verification exception" do
     user = User.new(email_address: "unverified-#{SecureRandom.hex(6)}@example.test",
                     password: SecureRandom.hex(24))
