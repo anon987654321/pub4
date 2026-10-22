@@ -66,15 +66,16 @@ class TestProofAffected < Minitest::Test
   def test_a_stale_record_proves_whole
     refute_nil known_after({})
     assert_nil known_after("toolchain" => "3.3.0 0000")
+    assert_nil known_after({}, omit: ["toolchain"])
     assert_nil known_after("at" => (Time.now.utc - Affected::MAX_AGE_S - 60).iso8601)
   end
 
-  def known_after(change)
+  def known_after(change, omit: [])
     Dir.mktmpdir do |dir|
       ENV["MASTER_PROOF_KNOWN_RED_DIR"] = dir
       ENV["MASTER_PROOF_STORE"] = "1"
       record = { "failing" => [], "rows" => {}, "at" => Time.now.utc.iso8601, "toolchain" => Affected.toolchain }
-      File.write(File.join(dir, "MASTER.json"), JSON.generate(record.merge(change)))
+      File.write(File.join(dir, "MASTER.json"), JSON.generate(record.merge(change).reject { |key, _| omit.include?(key) }))
 
       Affected.known_red("MASTER")
     ensure
