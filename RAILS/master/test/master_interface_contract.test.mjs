@@ -201,7 +201,7 @@ test("mission control distinguishes fresh, failed and terminal live states", () 
 
 test("chat and mission control share accessible Ghostty-inspired session tabs", () => {
   for (const page of [chatIndex, dashboard]) {
-    assert.match(page, /class="master-titlebar/);
+    assert.match(page, /class="[^"]*\bmaster-titlebar\b/);
     assert.match(page, /class="master-session-tabs" aria-label=/);
     assert.match(page, /class="master-session-tab"/);
     assert.match(page, /href="\/" /);
