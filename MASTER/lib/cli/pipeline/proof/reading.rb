@@ -10,8 +10,8 @@ module Master
         # failed bin/check steps, minitest failures, killed steps, and the
         # ratchet rows selftest and measure print.
         SUITE_HEADER = /\Aproof suite (.+): (ok|FAIL)\z/
-        GATE_VERDICT = /\b(\d+) of (\d+) passed in [^;]*autofix (?:on|off)/
-        GATE_FAILED = /\A(.+?) (?:failed|errored)\z/
+        GATE_VERDICT = /\b(\d+) pass, (\d+) fail, \d+ skip, (\d+) inconclusive, (\d+) error in [^;]*autofix (?:on|off)/
+        GATE_FAILED = /\A(?:failed|errored)=(.+)\z/
         CHECK_FAILURES = /\Acheck\d+ at \S+: \d+ failure\(s\), (.+)\z/
         TEST_HEAD = /\A\s*(?:\d+\)\s+)?(?:Failure|Error):\s*\z/
         TEST_NAME = /\A\s*(\S+#\S+?)(?: \[[^\]]*\])?:?\s*\z/
@@ -63,10 +63,10 @@ module Master
             verdict = line.match(GATE_VERDICT)
             return unless verdict
 
-            line.split(";").drop(1).each do |part|
-              part.strip.match(GATE_FAILED) { |m| m[1].split(", ").each { |gate| keys << gate.strip } }
-            end
-            [verdict[1].to_i, verdict[2].to_i]
+            named = line.split(";").drop(1).filter_map { |part| part.strip[GATE_FAILED, 1] }
+            keys.merge(named.flat_map { |list| list.split(",").map(&:strip) })
+            passed = verdict[1].to_i
+            [passed, passed + verdict[2].to_i + verdict[3].to_i + verdict[4].to_i]
           end
 
           def self.rows(lines)

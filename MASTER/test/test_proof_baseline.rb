@@ -12,8 +12,8 @@ class TestProofBaseline < Minitest::Test
 
   RAILS_RED = [
     "gates0 at rails: running production",
-    "gates0 at rails: 10 of 20 passed in 1m 42s, autofix off; generated_asset, release, layout_suite failed; " \
-    "deploy_drift, flow_journey inconclusive; 36 covered by composites",
+    "gates0 at rails: 10 pass, 3 fail, 0 skip, 7 inconclusive, 0 error in 102.0s, autofix off; " \
+    "failed=generated_asset,release,layout_suite; inconclusive=deploy_drift,flow_journey",
   ].freeze
 
   def setup
@@ -49,8 +49,8 @@ class TestProofBaseline < Minitest::Test
   def test_a_new_failing_gate_refuses
     pass = pass_with(RAILS_RED)
     baseline = pass.send(:proof_baseline, Master::RAILS_ROOT)
-    worse = [RAILS_RED.last.sub("release, layout_suite failed", "release, layout_suite, schema_migration failed")
-                           .sub("10 of 20", "9 of 20")]
+    worse = [RAILS_RED.last.sub("release,layout_suite;", "release,layout_suite,schema_migration;")
+                           .sub("10 pass, 3 fail", "9 pass, 4 fail")]
     pass.define_singleton_method(:proof_runner) { |_abs| ["rails gates", -> { [false, worse] }] }
     _title, body = pass.send(:proof_section, Master::RAILS_ROOT, baseline)
 
