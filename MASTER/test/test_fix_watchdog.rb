@@ -70,18 +70,21 @@ class TestFixWatchdog < Minitest::Test
     probe
   end
 
-  def test_no_fix_after_twenty_minutes_and_five_attempts_is_a_stall_that_aborts
+  # A run that keeps attempting and never fixes: files keep finishing, so the pass-stall rule
+  # (nothing finished in five minutes) stays quiet, and the no-yield rule ends it at twenty.
+  def test_no_fix_after_twenty_minutes_of_attempts_is_a_stall_that_aborts
     p = pulse
-    5.times do |i|
+    20.times do |i|
       @now = 60.0 * (i + 1)
       p.observe("repair_loop:proposal_rejected", reason: "new_violations")
     end
+
     @now = 1199.0
     refute p.stall(@now)&.fetch(:abort, nil), "under twenty minutes it only reports"
 
     @now = 1261.0
     stalled = p.stall(@now)
-    assert_equal "fix0: STALLED no yield: 0 fixed after 20m, 5 attempts", stalled[:line]
+    assert_equal "fix0: STALLED no yield: 0 fixed after 20m, 20 attempts", stalled[:line]
     assert stalled[:abort]
   end
 
