@@ -18,6 +18,9 @@ module Master
         TEST_NAME = /\A\s*(\S+#\S+?)(?: \[[^\]]*\])?:?\s*\z/
         TIMEOUT = /step timed out after \d+s: (.+)\z/
         MINITEST_SUMMARY = /\A\d+ runs, \d+ assertions/
+        # bin/check prints a step's output under its own unit (check_ci30: ...), and the test
+        # name and summary patterns above are anchored at the start of a bare line.
+        UNIT_PREFIX = /\A[a-z][a-z0-9_]*\d+(?: at \S+)?: /
         ROWS = {
           /\A\s*\[([A-Z][A-Z_]*)\]\s+(\d+)\s*\z/ => "selftest %s",
           %r{\A\s*([a-z][\w.]*)\s+(\d+)\s*/\s*\d+\s+OVER\b} => "%s",
@@ -31,7 +34,8 @@ module Master
           def self.parse(ok, out)
             lines = Array(out).map { |line| line.to_s.chomp }
             units = sections(lines).to_h { |name, unit_ok, body| [name, unit(unit_ok.nil? ? ok : unit_ok, body)] }
-            new(ok:, units:, rows: rows(lines), finished: lines.count { |line| line.match?(MINITEST_SUMMARY) })
+            finished = lines.count { |line| bare(line).match?(MINITEST_SUMMARY) }
+            new(ok:, units:, rows: rows(lines), finished:)
           end
 
           def self.sections(lines)
@@ -64,8 +68,10 @@ module Master
           def self.other_keys(line, following, keys)
             line.match(CHECK_FAILURES) { |m| m[1].split(", ").each { |step| keys << "step #{step.strip}" } }
             line.match(TIMEOUT) { |m| keys << "timeout #{m[1]}" }
-            following.match(TEST_NAME) { |m| keys << m[1] } if line.match?(TEST_HEAD)
+            bare(following).match(TEST_NAME) { |m| keys << m[1] } if bare(line).match?(TEST_HEAD)
           end
+
+          def self.bare(line) = line.sub(UNIT_PREFIX, "")
 
           def self.gate_keys(line, keys)
             verdict = line.match(GATE_VERDICT)

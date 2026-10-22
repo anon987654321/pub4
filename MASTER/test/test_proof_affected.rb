@@ -36,6 +36,16 @@ class TestProofAffected < Minitest::Test
     assert_match(/TestX#test_old/, verdict)
   end
 
+  # bin/check prints a failed step under its unit; the names under it are what a narrow run compares.
+  def test_a_check_step_names_its_failing_tests_through_the_unit_prefix
+    lines = ["check_ci30:   1) Failure:", "check_ci30: TestX#test_old [test/x.rb:1]:",
+             "check_ci40 at check:ci0: #{SUMMARY}"]
+    whole = Reading.parse(false, ["proof suite MASTER: FAIL", *lines])
+
+    assert_equal Set["TestX#test_old"], whole.failing
+    assert_equal 1, whole.finished
+  end
+
   def test_a_run_that_never_reached_its_summary_does_not_hold
     refute Affected.judge(reading("LoadError: cannot load such file"), NONE).first
   end
@@ -65,12 +75,15 @@ class TestProofAffected < Minitest::Test
   # A record from another toolchain, or past its age, no longer says what is red.
   def test_a_stale_record_proves_whole
     refute_nil known_after({})
-    assert_nil known_after("toolchain" => "3.3.0 0000")
+    # Braced: with omit: beside it, Ruby reads a bare string-keyed hash as keywords.
+    assert_nil known_after({ "toolchain" => "3.3.0 0000" })
     assert_nil known_after({}, omit: ["toolchain"])
-    assert_nil known_after("failing" => "not-an-array")
-    assert_nil known_after("rows" => ["not-a-map"])
-    assert_nil known_after("at" => (Time.now.utc + 3600).iso8601)
-    assert_nil known_after("at" => (Time.now.utc - Affected::MAX_AGE_S - 60).iso8601)
+    assert_nil known_after({ "failing" => "not-an-array" })
+    assert_nil known_after({ "rows" => ["not-a-map"] })
+    assert_nil known_after({ "at" => (Time.now.utc + 3600).iso8601 })
+    assert_nil known_after({ "failing" => ["step test", "step selftest"] })
+    refute_nil known_after({ "failing" => ["step test", "TestX#test_old"] })
+    assert_nil known_after({ "at" => (Time.now.utc - Affected::MAX_AGE_S - 60).iso8601 })
   end
 
   def known_after(change, omit: [])
@@ -78,7 +91,7 @@ class TestProofAffected < Minitest::Test
       ENV["MASTER_PROOF_KNOWN_RED_DIR"] = dir
       ENV["MASTER_PROOF_STORE"] = "1"
       record = { "failing" => [], "rows" => {}, "at" => Time.now.utc.iso8601, "toolchain" => Affected.toolchain }
-      File.write(File.join(dir, "MASTER.json"), JSON.generate(record.merge(change).reject { |key, _| omit.include?(key) }))
+      File.write(File.join(dir, "MASTER.json"), JSON.generate(record.merge(change).except(*omit)))
 
       Affected.known_red("MASTER")
     ensure

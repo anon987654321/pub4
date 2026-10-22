@@ -88,18 +88,30 @@ module Master
           # record was made would be blamed on the repair, so the record ages out, and a new Ruby or
           # lockfile changes what fails. No commit count: main moves dozens of commits a day.
           def staleness(data)
-            valid = data.is_a?(Hash) &&
-                    data["failing"].is_a?(Array) && data["failing"].all? { |failure| failure.is_a?(String) } &&
-                    data["rows"].is_a?(Hash) && data["rows"].all? { |row, value| row.is_a?(String) && value.is_a?(Integer) && value.positive? } &&
-                    data["at"].is_a?(String)
-            return "malformed record" unless valid
+            return "malformed record" unless well_formed?(data)
             return "made under another toolchain" unless data["toolchain"] == toolchain
+            return "names a failed test step but none of its tests" if unnamed_tests?(data["failing"])
 
             age = Time.now.utc - Time.iso8601(data["at"])
             return "timestamp is in the future" if age.negative?
             return "older than #{MAX_AGE_S / 3600}h" if age > MAX_AGE_S
 
             nil
+          end
+
+          # Failing names as strings, rows as positive counts by name, and a timestamp.
+          def well_formed?(data)
+            return false unless data.is_a?(Hash) && data["at"].is_a?(String)
+
+            failing, rows = data.values_at("failing", "rows")
+            failing.is_a?(Array) && failing.all?(String) && rows.is_a?(Hash) &&
+              rows.all? { |row, value| row.is_a?(String) && value.is_a?(Integer) && value.positive? }
+          end
+
+          # A test step that stopped before its report left "step test" and no test name, and a
+          # narrow run names only tests, so nothing it found could be told from what was already red.
+          def unnamed_tests?(failing)
+            failing.any? { |key| key.match?(/\A(?:step|timeout) test\b/) } && failing.none? { |key| key.include?("#") }
           end
 
           def toolchain
