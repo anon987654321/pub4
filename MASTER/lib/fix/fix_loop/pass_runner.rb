@@ -224,6 +224,7 @@ module Master
             found = residual if found.empty?
           end
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
+          return blockers_cleared(files, pass) if GateFocus.cleared?(found)
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
           dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, run_id:) unless CodeWatch.requested?
@@ -280,6 +281,12 @@ module Master
           transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
           @committer.begin_transaction!(transaction)
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size, run_id:)
+        end
+
+        def blockers_cleared(files, pass)
+          Master::Trace::Dmesg.status("fix0", "pass #{pass}: the files the red gates named are clean (--until-gates)")
+          finish_transaction(files, pass, PassResult.new(status: :blockers_cleared, consecutive_clean: 0,
+                                                         message: "blockers cleared"))
         end
 
         def plateau_result

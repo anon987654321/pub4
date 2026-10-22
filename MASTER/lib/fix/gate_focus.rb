@@ -16,6 +16,7 @@ module Master
       @named = Set.new
       @blockers = false
       @plan = false
+      @until_gates = false
       @lock = Mutex.new
 
       module_function
@@ -39,6 +40,15 @@ module Master
       def plan! = @lock.synchronize { @plan = true }
       def plan? = @lock.synchronize { @plan == true }
       def restore_plan(value) = @lock.synchronize { @plan = value }
+
+      # --until-gates: the run ends once no file a red gate named has a finding left.
+      def until_gates! = @lock.synchronize { @until_gates = true }
+      def until_gates? = @lock.synchronize { @until_gates == true }
+      def restore_until_gates(value) = @lock.synchronize { @until_gates = value }
+
+      def cleared?(found)
+        until_gates? && named.any? && Array(found).none? { |finding| covers?(finding[:file] || finding["file"]) }
+      end
 
       def covers?(path)
         text = path.to_s

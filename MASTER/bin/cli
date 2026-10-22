@@ -78,7 +78,7 @@ end
 # /fix --no-critique, /fix --dry-run). The top-level parser does not know them and
 # must not reject them or drop them: a dropped --dry-run is a write run.
 COMMAND_FLAG = %r{\A--(?:(?:autofix|max-files|only)=|
-                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan)\z)}x
+                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan|until-gates)\z)}x
 
 def initial_message_from_argv(argv)
   kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }

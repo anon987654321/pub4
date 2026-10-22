@@ -55,7 +55,7 @@ module Master
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
       TERMINAL_STATES = %i[done plateau crash skip blocked validation_failed delivery_failed timeout human_decision inconclusive failed reloading].freeze
       # A pass status that ends the run, and the state it ends in.
-      PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
+      PASS_ENDINGS = { clean: :done, blockers_cleared: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, human_decision: :human_decision,
                        reloading: :reloading }.freeze
       MEASURED_REPAIR_OUTCOMES = {

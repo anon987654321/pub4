@@ -65,12 +65,14 @@ module Master
         previous_max_files = Master::Fix::RunLedger.max_files_override
         previous_blockers = Master::Fix::GateFocus.blockers?
         previous_plan = Master::Fix::GateFocus.plan?
+        previous_until = Master::Fix::GateFocus.until_gates?
 
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
           Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
           Master::Fix::GateFocus.blockers! if overrides[:blockers]
           Master::Fix::GateFocus.plan! if overrides[:plan]
+          Master::Fix::GateFocus.until_gates! if overrides[:until_gates]
           rendered = dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:
@@ -81,6 +83,7 @@ module Master
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
           Master::Fix::GateFocus.restore_blockers(previous_blockers)
           Master::Fix::GateFocus.restore_plan(previous_plan)
+          Master::Fix::GateFocus.restore_until_gates(previous_until)
         end
       end
 
@@ -405,6 +408,9 @@ module Master
       # Repair only the files a red gate names, without semantic reads (Fix::GateFocus).
       BLOCKERS_FLAG = /\A--blockers\z/i
 
+      # Flags read per dispatch (execution_overrides), never part of the target.
+      DISPATCH_FLAG = Regexp.union(AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, /\A--until-gates\z/i)
+
       # Status messages are one-line operator evidence. Do not let a path label
       # inject terminal controls or forged log lines into the dmesg stream.
       def display_fix_target(target)
@@ -415,8 +421,9 @@ module Master
       end
 
       def execution_overrides(raw)
-        plan = raw.to_s.split(/\s+/).any? { |token| token.casecmp?("--plan") }
-        overrides = { autofix_mode: nil, max_files: nil, blockers: false, plan: }
+        tokens = raw.to_s.split(/\s+/).map(&:downcase)
+        overrides = { autofix_mode: nil, max_files: nil, blockers: false, plan: tokens.include?("--plan"),
+                      until_gates: tokens.include?("--until-gates") }
         raw.to_s.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))
             overrides[:autofix_mode] = match[1]
@@ -437,7 +444,7 @@ module Master
             flags[flag.first] = flag.last
           elsif DMESG_FLAGS.key?(token.downcase)
             next
-          elsif token =~ AUTOFIX_FLAG || token =~ MAX_FILES_FLAG || token =~ BLOCKERS_FLAG
+          elsif token.match?(DISPATCH_FLAG)
             # Parsed below as per-dispatch options; parsing must not mutate the
             # next command's behavior in a long-lived interactive session.
             next

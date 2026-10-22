@@ -29,4 +29,20 @@ class TestGateFocus < Minitest::Test
 
     assert_equal %w[/r/lib/fix/c.rb /r/lib/a.rb /r/lib/b.rb], Focus.first(%w[/r/lib/a.rb /r/lib/b.rb /r/lib/fix/c.rb])
   end
+
+  # --until-gates ends the run once no file a red gate named has a finding left.
+  def test_the_run_ends_only_when_asked_and_no_named_file_has_a_finding
+    Focus.note(["lib/fix/c.rb:3:in 'z'"])
+    named = { file: "/r/lib/fix/c.rb", law: "CQS" }
+    elsewhere = { file: "/r/lib/other.rb", law: "LONG_LINE" }
+    refute Focus.cleared?([elsewhere]), "without the flag the run goes on"
+
+    Focus.until_gates!
+
+    refute Focus.cleared?([named, elsewhere]), "a named file still has a finding"
+    assert Focus.cleared?([elsewhere]), "only findings elsewhere are left"
+    assert_equal :done, Master::Fix::FixLoop::PASS_ENDINGS.fetch(:blockers_cleared)
+  ensure
+    Focus.restore_until_gates(false)
+  end
 end
