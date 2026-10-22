@@ -84,6 +84,11 @@ class TestFixTransaction < Minitest::Test
       File.write(path, "before")
       tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "live-lock").begin!
 
+      load_error = assert_raises(RuntimeError) do
+        Master::Fix::Transaction::Recovery.load_persisted(root: dir, id: "live-lock")
+      end
+      assert_includes load_error.message, "active transaction holds the root lock"
+
       result = Master::Fix::Transaction::Recovery.recover!(root: dir, id: "live-lock")
 
       refute result.ok?
