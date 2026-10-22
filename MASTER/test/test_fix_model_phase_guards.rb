@@ -376,6 +376,15 @@ def test_a_stopping_run_scans_no_further
   assert_equal "/r/a.rb", scan.stream_stopped_at
 end
 
+  def test_one_law_repairs_at_most_the_cap_per_pass
+    cap = Master::Fix::FixLoop::PassRunner::StreamStage::LawCap.new(2, Hash.new(0))
+    rows = Array.new(3) { { law: "LONG_LINE" } } + [{ law: "CQS" }]
+
+    taken = cap.take(rows)
+
+    assert_equal %w[LONG_LINE LONG_LINE CQS], taken.map { |row| row[:law] }
+  end
+
   def test_a_limited_run_does_not_wait_for_a_ranked_scan
     previous = ENV["MASTER_FIX_RANK"]
     ENV.delete("MASTER_FIX_RANK")

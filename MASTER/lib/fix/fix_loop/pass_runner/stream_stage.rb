@@ -54,13 +54,15 @@ module Master
           def stream_violations(files, queue, streamed = Set.new, deadline: nil)
             flusher = ->(batch) { enqueue_ranked(batch, queue, streamed) }
             worklist = Worklist.new(queue, rank_worklist? ? [] : nil, rank_window, flusher, 0)
+            cap = LawCap.new(LAW_CAP, Hash.new(0))
             raw = []
             GateFocus.first(files).each do |path|
               break if scan_stop?(path, worklist.taken, deadline)
 
               rows = violations_for(path)
               raw.concat(rows)
-              worklist.add([path, resolve_violations(rows)]) unless rows.empty?
+              repairs = GateFocus.covers?(path) ? resolve_violations(rows) : cap.take(resolve_violations(rows))
+              worklist.add([path, repairs]) unless repairs.empty?
             end
             worklist.flush
             resolve_violations(raw)
@@ -76,6 +78,15 @@ module Master
 
             @stream_stopped_at ||= path
             true
+          end
+
+          # Repairs per law per pass. LONG_LINE alone fired on 2,699 lines of one scan, and every one went
+          # to the model before any other law got a turn. Findings past the cap still count and report;
+          # they wait for the next pass. Files a red gate named are never capped.
+          LAW_CAP = Integer(ENV.fetch("MASTER_FIX_LAW_CAP", 25))
+
+          LawCap = Struct.new(:limit, :counts) do
+            def take(rows) = rows.select { |row| (counts[row[:law].to_s] += 1) <= limit }
           end
 
           # Queues each scanned file, or holds it for ranking and queues the batch once it is full.
