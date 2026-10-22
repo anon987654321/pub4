@@ -88,7 +88,7 @@ module Master
           # record was made would be blamed on the repair, so the record ages out, and a new Ruby or
           # lockfile changes what fails. No commit count: main moves dozens of commits a day.
           def staleness(data)
-            return "made under another toolchain" unless data.fetch("toolchain", toolchain) == toolchain
+            return "made under another toolchain" unless data["toolchain"] == toolchain
             return "older than #{MAX_AGE_S / 3600}h" if Time.now.utc - Time.iso8601(data.fetch("at")) > MAX_AGE_S
 
             nil
