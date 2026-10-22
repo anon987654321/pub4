@@ -45,7 +45,94 @@ class AccountMerger
 
   def merge_comments = move_owned_rows(:comments)
 
-  def merge_conversations = move_owned_rows(:conversation_participants)
+  # Conversation membership and receipts both have pair-unique indexes. Merge them
+  # by their natural key instead of a bulk user_id update, which would fail when
+  # the registered account already belongs to the same thread.
+  def merge_conversations
+    reflection = guest_user.class.reflect_on_association(:conversation_participants)
+    if reflection&.macro == :has_many
+      model = reflection.klass
+      if model.table_exists? && %w[user_id conversation_id].all? { |column| model.column_names.include?(column) }
+        model.where(user_id: guest_user.id).find_each do |source|
+          destination = model.find_by(conversation_id: source.conversation_id, user_id: user.id)
+          if destination
+            merge_participant_state(destination, source, model)
+            source.delete
+          else
+            source.update_columns(user_id: user.id, updated_at: Time.current)
+          end
+        end
+      end
+    end
+    merge_message_receipts
+    clear_guest_typing_indicators
+  end
+
+  def merge_participant_state(destination, source, model)
+    columns = model.column_names
+    values = {}
+    if columns.include?("last_read_at")
+      values[:last_read_at] = [destination.last_read_at, source.last_read_at].compact.max
+    end
+    %i[pinned_at muted_at].each do |column|
+      next unless columns.include?(column.to_s)
+
+      values[column] = [destination.public_send(column), source.public_send(column)].compact.max
+    end
+    if columns.include?("archived_at")
+      # Keep the thread visible if either identity had it in the inbox.
+      archive_times = [destination.archived_at, source.archived_at]
+      values[:archived_at] = archive_times.all?(&:present?) ? archive_times.compact.max : nil
+    end
+    if columns.include?("role") && model.const_defined?(:RANK, false)
+      rank = model.const_get(:RANK)
+      values[:role] = [destination.role, source.role].max_by { |role| rank.fetch(role, 0) }
+    end
+    values[:updated_at] = Time.current if columns.include?("updated_at")
+    destination.update_columns(values) unless values.empty?
+  end
+
+  # At least one identity may have read or received the same message. Keep that
+  # fact on the surviving receipt rather than colliding with the unique index.
+  def merge_message_receipts
+    reflection = guest_user.class.reflect_on_association(:message_receipts)
+    return unless reflection&.macro == :has_many
+
+    model = reflection.klass
+    return unless model.table_exists? && %w[user_id message_id].all? { |column| model.column_names.include?(column) }
+
+    model.where(user_id: guest_user.id).find_each do |source|
+      destination = model.find_by(message_id: source.message_id, user_id: user.id)
+      if destination
+        values = {}
+        %w[delivered_at read_at].each do |column|
+          next unless model.column_names.include?(column)
+
+          times = [destination.public_send(column), source.public_send(column)].compact
+          values[column] = times.min if times.any?
+        end
+        values[:updated_at] = Time.current if model.column_names.include?("updated_at")
+        destination.update_columns(values) unless values.empty?
+        source.delete
+      else
+        values = { user_id: user.id }
+        values[:updated_at] = Time.current if model.column_names.include?("updated_at")
+        source.update_columns(values)
+      end
+    end
+  end
+
+  # Typing state is ephemeral, not account history. Invalidate it rather than
+  # carrying a stale "is typing" signal into the authenticated account.
+  def clear_guest_typing_indicators
+    reflection = guest_user.class.reflect_on_association(:typing_indicators)
+    return unless reflection&.macro == :has_many
+
+    model = reflection.klass
+    return unless model.table_exists? && model.column_names.include?("user_id")
+
+    model.where(user_id: guest_user.id).delete_all
+  end
 
   # A guest cookie is not an authenticated-account credential. Destroy its
   # session rows when history transfers; moving them would upgrade every copy
