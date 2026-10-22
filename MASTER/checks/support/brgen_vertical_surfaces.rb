@@ -16,7 +16,7 @@ module Deploy
     REGISTRY = File.expand_path("../../../RAILS/brgen/lib/brgen/domain_registry.rb", __dir__)
 
     def self.registry_subdomain(constant)
-      @registry_text ||= File.read(REGISTRY)
+      @registry_text ||= File.read(REGISTRY, encoding: "UTF-8")
       match = @registry_text.match(/#{constant}\s*=\s*%w\[([^\]]+)\]/)
       raise "missing #{constant} in domain_registry.rb" unless match
 
