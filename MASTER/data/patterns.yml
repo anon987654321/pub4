@@ -869,10 +869,10 @@ cli:
   dmesg_buffer_lines: 80
   multiline_max_lines: 500
   history_limit: 2000
-  # A bare interactive `bin/master` opens on the original prompt, the only prompt the
-  # CLI starts with. /face opens the full-screen face on request; MASTER_FACE_ON_START=1
-  # opens on it instead. Command-line messages and pipes remain non-visual.
-  face_on_start: false
+  # A bare interactive `bin/master` opens on the face (Johann, 2026-10-22: "the face went away
+  # again"). MASTER_FACE_ON_START=0 opens on the plain prompt instead; /face opens it any time.
+  # Command-line messages and pipes remain non-visual.
+  face_on_start: true
   # The radios on the startup lines: net0 (wifi) and bth0 (bluetooth), as a kernel prints them.
   boot_devices: true
   # The face listens by itself while idle and MASTER is quiet, ends a take on silence and answers without Enter.

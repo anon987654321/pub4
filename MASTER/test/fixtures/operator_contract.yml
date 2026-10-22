@@ -1,7 +1,7 @@
 cases:
+  # A greeting is the model's to answer, not a canned line: no grammar claims it.
   - id: greeting
     input: "hello"
-    grammar: chitchat
   - id: repeat
     input: "again"
     grammar: repeat

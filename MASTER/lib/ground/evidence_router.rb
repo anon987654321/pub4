@@ -7,8 +7,14 @@ module Master
 
       CURRENT = /\b(?:latest|current|today|tonight|now|recent|recently|this\s+(?:week|month|year)|as\s+of|newest|up[-\s]?to[-\s]?date|20\d{2})\b/i
       RESEARCH = /\b(?:research|investigate|deep\s+dive|look\s+into|study|compare\s+(?:sources|options|approaches)|survey|literature|find\s+out)\b/i
+      # Not "master": it is the assistant's name, and "hei master, hvordan går det?" was routed as a
+      # repository question with tools and a long model wait.
+      REPOSITORY_TERMS = %w[repo repository codebase code file files module class method gemfile rails git commit
+                            branch diff source].freeze
+      REPOSITORY_WORDS = /\b(?:#{REPOSITORY_TERMS.join("|")})\b/i
       # %r{} because the path class holds a literal slash.
-      REPOSITORY = %r{\b(?:repo(?:sitory)?|codebase|code|file|files|module|class|method|gemfile|rails|master|git|commit|branch|diff|source)\b|(?:^|\s)[\w./-]+\.(?:rb|yml|yaml|json|md|js|mjs|ts|tsx|erb|css|scss|sh|zsh)\b}i
+      FILE_NAME = %r{(?:^|\s)[\w./-]+\.(?:rb|yml|yaml|json|md|js|mjs|ts|tsx|erb|css|scss|sh|zsh)\b}i
+      REPOSITORY = Regexp.union(REPOSITORY_WORDS, FILE_NAME)
       BROWSER = /\b(?:browser|web\s+page|navigate|click|log\s+in|login|open\s+(?:the\s+)?(?:site|website|page)|inspect\s+(?:the\s+)?(?:site|page|account)|onlyfans|fetlife|whatsapp\s+account)\b/i
       # An account on one of these is the governed social_browser's work; any other site is a
       # page to render. Kept apart so a shopping request never runs a social-account preflight.

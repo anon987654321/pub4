@@ -238,10 +238,13 @@ end
 
       # Keep the dispatcher-specific timeout contract, but let the sanctioned
       # runner own stream draining, child tracking and process-group cleanup.
+      # Exec reads the pipes as bytes. A lane replies in UTF-8 text, and left BINARY its reply broke the
+      # first regex that met a non-ASCII letter: the "å" of a Norwegian greeting killed the CLI turn.
       def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil, env: {})
-        Master::Io::Exec.capture3(
+        out, err, status = Master::Io::Exec.capture3(
           env, *cmd, stdin_data:, timeout: timeout_s, raise_on_timeout: true
         )
+        [out.to_s.dup.force_encoding(Encoding::UTF_8).scrub, err.to_s.dup.force_encoding(Encoding::UTF_8).scrub, status]
       rescue Master::Io::Exec::TimeoutError
         raise Timeout::Error
       end

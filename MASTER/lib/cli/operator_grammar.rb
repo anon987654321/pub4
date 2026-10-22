@@ -9,7 +9,6 @@ module Master
     module OperatorGrammar
       Interpretation = Data.define(:kind, :value)
 
-      GREETING = /\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i
       REPEAT = /\A(?:again|repeat)(?:\s+(?:that|it))?[.!?]*\z/i
       REPEAT_AGAIN = /\b(?:do|run)\s+(?:that|it)\s+again\b/i
       FOCUS = /\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i
@@ -21,7 +20,6 @@ module Master
       def parse(input)
         text = input.to_s.strip
         return if text.start_with?("/")
-        return Interpretation.new(:chitchat, nil) if text.match?(GREETING)
         return Interpretation.new(:repeat, nil) if text.match?(REPEAT) || text.match?(REPEAT_AGAIN)
         return Interpretation.new(:toggle_focus, nil) if text.match?(FOCUS)
         return Interpretation.new(:direct_shell, text) if direct_shell?(text)

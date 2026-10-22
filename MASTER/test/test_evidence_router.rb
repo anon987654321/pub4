@@ -76,6 +76,12 @@ class TestEvidenceRouter < Minitest::Test
     assert_equal :conversation, Router.classify("hello")
   end
 
+  # Saying the assistant's name is not a question about the repository.
+  def test_greeting_master_by_name_is_conversation
+    assert_equal :conversation, Router.classify("hei master, hvordan går det?")
+    assert_equal :repository, Router.classify("master, how does your voice get chosen?")
+  end
+
   def test_unknown_questions_are_told_to_inspect_the_project_too
     assert_match(/inspect them with your tools/, Router.prompt_for(:unknown))
   end

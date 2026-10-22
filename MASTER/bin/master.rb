@@ -59,6 +59,13 @@ if ARGV.first == "--help" || ARGV.first == "-h"
   exit 0
 end
 
+# An interactive session says something at once, from live state, before the boot below. In its own
+# process: it reads JSON and git before the bundle pins json, date and psych, and loading them here first
+# made Bundler refuse to activate.
+if ARGV.empty? && $stdout.tty? && ENV["MASTER_INTERNAL_CHILD"] != "1"
+  system(RbConfig.ruby, "--disable-gems", File.join(MASTER, "lib", "cli", "welcome.rb"), MASTER)
+end
+
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: MASTER)
 

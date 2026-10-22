@@ -154,7 +154,6 @@ module Master
         end
 
         case Master::CLI::OperatorGrammar.parse(stripped)&.kind
-        when :chitchat then return run_chitchat
         when :repeat then return repeat_last
         when :toggle_focus then return toggle_focus
         when :direct_shell then return run_direct_shell(stripped)
@@ -219,10 +218,6 @@ module Master
         nil
       ensure
         start_background_loop if was_running && @running
-      end
-
-      def run_chitchat
-        terminal_puts(@refs.renderer.render("hello — goal?", mode: :dim))
       end
 
       # !command runs one zsh line through the Io::Shell the model's zsh tool

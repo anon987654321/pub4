@@ -8,6 +8,7 @@ require_relative "activity"
 require_relative "session/result_display"
 require_relative "session/background_scan"
 require_relative "session/repl_flow"
+require_relative "session/greeting"
 require_relative "session/bridge_run"
 require_relative "operator_grammar"
 
@@ -66,10 +67,15 @@ module Master
         print_repo_tree unless booted_before?
         terminal_puts
         run_input(initial_message) if initial_message
+        greet_from_model unless initial_message
         @running = true
         play_boot_sound
         start_bard_bed
-        run_face if face_on_start?(initial_message)
+        if face_on_start?(initial_message)
+          @face_open = true
+          run_face
+          @face_open = false
+        end
         repl_loop
       end
 
