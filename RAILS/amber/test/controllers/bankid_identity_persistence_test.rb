@@ -12,7 +12,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid;LOA=4" } }
     )
     callback = OmniauthCallbacksController.new
     first = nil
@@ -41,7 +41,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     legacy.require_email_verification = true
     legacy.save!
     auth = Auth.new("bankid", uid, Info.new(nil, nil),
-                    { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } })
+                    { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid;LOA=4" } })
     callback = OmniauthCallbacksController.new
 
     assert_no_difference -> { User.count } do
@@ -61,7 +61,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid;LOA=4" } }
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
     controller = ApplicationController.new
@@ -77,7 +77,7 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid;LOA=4" } }
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
     session_record = user.sessions.create!(user_agent: "test", ip_address: "127.0.0.1")
@@ -90,13 +90,13 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     assert_redirected_to posts_url
   end
 
-  test "BankID without the high-assurance ACR cannot bypass email verification" do
+  test "BankID ACR without returned LOA=4 cannot bypass email verification" do
     uid = "bankid-low-#{SecureRandom.hex(8)}"
     auth = Auth.new(
       "bankid",
       uid,
       Info.new(nil, nil),
-      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:low" } }
+      { id_info: { iss: "https://auth.bankid.no/auth/realms/prod", acr: "urn:bankid:bid" } }
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
     provider = IdentityProvider.find_by!(slug: "bankid")
