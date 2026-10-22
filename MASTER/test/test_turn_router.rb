@@ -215,6 +215,19 @@ end
     end
   end
 
+  # /fix writes code; a person asking about a heater or a bike is not asking for it.
+  def test_fix_about_things_that_are_not_code_is_not_the_command
+    fix = Master::CLI::TurnRouter::FIX_COMMAND
+
+    ["fix the heater in my flat", "fix my bike", "fix it", "fixing things is hard"].each do |text|
+      refute_match fix, text
+    end
+
+    ["fix", "fix lib/cli", "fix rails", "fix the failing tests", "fix the lint violations"].each do |text|
+      assert_match fix, text
+    end
+  end
+
   def test_fix_language_is_promoted_to_operator_command_not_fold
     inferred = Master::CLI::TurnRouter.infer_operator_command("fix the bug", container: build_container)
 

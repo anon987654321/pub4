@@ -29,7 +29,7 @@ module Master
         # a beat" / a VHS look on a path then ran replicate/dilla/postpro as the
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
-        if text.match?(%r{\A(?:fix|review|critique)\b}i)
+        if text.match?(%r{\A(?:review|critique)\b}i) || text.match?(FIX_COMMAND)
           return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
         end
         if deployment_intent?(text)
@@ -55,6 +55,13 @@ module Master
       end
 
       def visitor? = Fiber[:master_visitor] == true
+
+      # /fix writes code, so a line opening with "fix" is the command only when it names a file path or a
+      # tree, is about code, or is the word alone; "fix the broken heater in my flat" is a person talking.
+      FIX_TREES = /(?:lib|test|app|master|rails|openbsd|studio|itself|self|face)\b/i
+      FIX_TARGET = %r{\s+(?:the\s+)?(?:\S*/\S*|\S+\.\w{1,5}\b|#{FIX_TREES})}i
+      FIX_SUBJECT = /\b(?:bugs?|violations?|lint|tests?|specs?|errors?|failures?|code|build|checks?)\b/i
+      FIX_COMMAND = /\A\s*fix(?:\s*[.!]?\s*\z|#{FIX_TARGET}|\b(?=.*#{FIX_SUBJECT}))/i
 
       DEPLOY_ACTION_WORDS = %w[deploy release ship publish launch push promote rollout].freeze
       DEPLOY_DESTINATION_WORDS = %w[vm23 production prod live].freeze

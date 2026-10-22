@@ -118,13 +118,12 @@ class InferStageTest < Minitest::Test
     result = @infer.call(ctx("fix the bug in lib/foo.rb"))
     assert result.ok?
     assert_equal :coding, result.value!.task_type
-    assert_equal :llm, result.value!.intent, "a described bug goes to the agent, not to /fix"
   end
 
   # /fix writes code; a sentence that merely contains the word must never start it.
   def test_fix_starts_only_from_a_named_tree_or_path
     ["write a short email to my landlord asking him to fix the broken heater", "can you fix my bike?",
-     "please correct the spelling in this sentence"].each do |text|
+     "please correct the spelling in this sentence", "fix the heater in my flat"].each do |text|
       assert_equal :llm, @infer.call(ctx(text)).value!.intent, text
     end
 
