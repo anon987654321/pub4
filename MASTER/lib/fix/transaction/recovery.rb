@@ -20,8 +20,15 @@ module Master
 
           def load_persisted(root:, id:, bus: nil)
             transaction = Transaction.new(root:, paths: [], id:, bus:)
+            unless transaction.send(:acquire_lock, nonblock: true)
+              raise "transaction load refused: an active transaction holds the root lock"
+            end
+
             transaction.send(:load_manifest!)
             transaction
+          rescue StandardError
+            transaction&.send(:release_lock)
+            raise
           end
 
           def recover!(root:, id:, bus: nil)
