@@ -239,6 +239,7 @@ nb:
       invalid_code: "Ugyldig kode."
       verified: "Bekreftet."
       oauth_failed: "Innlogging med OAuth mislyktes."
+      oauth_storage_unavailable: "Innlogging er midlertidig utilgjengelig fordi identitetslagringen ikke er klar. Ingen konto ble opprettet; prøv igjen senere."
       signed_in_with: "Logget inn med %{provider}."
       signed_in_via_master: "Logget inn via MASTER."
       sso_link_invalid: "SSO-lenken er utløpt eller ugyldig."
