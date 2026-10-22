@@ -49,7 +49,8 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
   test "a returning BankID subject reuses its unverified legacy placeholder" do
     controller = OmniauthCallbacksController.new
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
-    auth = auth_for("bankid", email_verified: false, email: nil)
+    # Only a high-assurance login (LOA=4) may reclaim the legacy placeholder.
+    auth = auth_for("bankid", email_verified: false, email: nil, acr: "urn:bankid:bid;LOA=4")
     legacy = User.new(email_address: "#{auth.uid}@bankid.oauth", password: SecureRandom.hex(24))
     legacy.require_email_verification = true
     legacy.save!
@@ -87,12 +88,9 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def auth_for(provider, email_verified:, email: "person@example.test")
-    Auth.new(
-      provider,
-      "subject-#{provider}",
-      Info.new(email),
-      { raw_info: { email_verified: email_verified } }
-    )
+  def auth_for(provider, email_verified:, email: "person@example.test", acr: nil)
+    extra = { raw_info: { email_verified: } }
+    extra[:id_info] = { acr: } if acr
+    Auth.new(provider, "subject-#{provider}", Info.new(email), extra)
   end
 end

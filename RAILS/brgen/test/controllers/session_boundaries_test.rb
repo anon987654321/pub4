@@ -18,6 +18,13 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
 
   teardown { ActsAsTenant.current_tenant = nil }
 
+  # An integration test's jar holds the raw signed value; a request jar can verify it.
+  def signed_session_id
+    jar = ActionDispatch::TestRequest.create.cookie_jar
+    jar[:session_id] = cookies[:session_id]
+    jar.signed[:session_id]
+  end
+
   test "a cross-site write without csrf metadata is refused" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
@@ -36,7 +43,11 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
   end
 
   # RI-012: login transfers the persisted guest, rotates browser state and survives refresh.
+  # A guest is persisted by a write, never by a page view (ensure_guest_user! skips
+  # GET and HEAD), so the visitor votes before signing in, as in guest_session_cost_test.
   def test_RI_012_authentication_rotates_session_and_survives_refresh
+    target = Post.create!(user: @user, title: "Vote target #{SecureRandom.hex(3)}", content: "…")
+    post post_vote_path(target), params: { vote: { value: 1 } }
     get new_session_path
     guest_id = session[:guest_user_id]
     assert_predicate guest_id, :present?
@@ -46,7 +57,7 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
 
     assert_response :redirect
     authenticated_session = @user.sessions.reload.sole
-    assert_equal authenticated_session.id, cookies.signed[:session_id]
+    assert_equal authenticated_session.id, signed_session_id
     assert_equal guest_id, session[:previous_guest_user_id], "the pre-auth guest reference should survive only as migration context"
     refute session[:guest_user_id], "the registered browser must not continue as the guest"
     refute User.find(guest_id).guest?, "guest history must be transferred before sign-in completes"
@@ -54,7 +65,8 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_equal @user.id, controller.send(:current_user)&.id
+    # Current.user is reset after each request, so the refresh is proved by the cookie it kept.
+    assert_equal authenticated_session.id, signed_session_id, "refresh dropped the signed-in session cookie"
     assert Session.exists?(authenticated_session.id), "refresh lost the authenticated session"
   end
 
